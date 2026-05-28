@@ -189,10 +189,8 @@
   "add-bookmark": "Označi",
   "play-audio": "Reproduciraj zvuk",
   "play": "Igrati",
-
   "discovery": "Otkriće",
   "chat": "Razgovor",
-
   "today": "Danas",
   "you": "Vas",
   "bible": "Biblija",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Ovdje još nema oznaka.",
   "bookmark-options": "Opcije oznaka",
   "new-folder-placeholder": "Naziv mape",
-
   "tasks": "Zadaci",
   "bookmarks": "Oznake",
   "hide-bookmarks": "Sakrij oznake",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Mapa s tim nazivom već postoji.",
   "add-to-new": "Dodaj u novo",
   "save": "Uštedjeti",
-  "bookmark-verses": "Označi stihove"
+  "bookmark-verses": "Označi stihove",
+  "today-coming-soon": "Današnji ekran uskoro stiže",
+  "chat-coming-soon": "Chat uskoro stiže",
+  "more-coming-soon": "Uskoro više opcija",
+  "discovery-coming-soon": "Otkriće uskoro stiže",
+  "login-to-use-feature": "Morate se prijaviti da biste koristili ovu značajku."
 }

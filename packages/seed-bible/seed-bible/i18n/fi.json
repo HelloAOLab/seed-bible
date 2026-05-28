@@ -189,10 +189,8 @@
   "add-bookmark": "Kirjanmerkki",
   "play-audio": "Toista ääntä",
   "play": "Pelata",
-
   "discovery": "Löytö",
   "chat": "Chat",
-
   "today": "Tänään",
   "you": "Sinä",
   "bible": "raamattu",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Ei vielä kirjanmerkkejä.",
   "bookmark-options": "Kirjanmerkkiasetukset",
   "new-folder-placeholder": "Kansion nimi",
-
   "tasks": "Tehtävät",
   "bookmarks": "Kirjanmerkit",
   "hide-bookmarks": "Piilota kirjanmerkit",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Samanniminen kansio on jo olemassa.",
   "add-to-new": "Lisää uuteen",
   "save": "Tallentaa",
-  "bookmark-verses": "Kirjanmerkkien säkeet"
+  "bookmark-verses": "Kirjanmerkkien säkeet",
+  "today-coming-soon": "Tämän päivän näyttö tulee pian",
+  "chat-coming-soon": "Chat on tulossa pian",
+  "more-coming-soon": "Lisää vaihtoehtoja tulossa pian",
+  "discovery-coming-soon": "Löytö on tulossa pian",
+  "login-to-use-feature": "Sinun on kirjauduttava sisään käyttääksesi tätä ominaisuutta."
 }

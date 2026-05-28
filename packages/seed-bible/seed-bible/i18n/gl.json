@@ -189,10 +189,8 @@
   "add-bookmark": "Marcador",
   "play-audio": "Reproducir audio",
   "play": "Reproducir",
-
   "discovery": "Descubrimento",
   "chat": "Chat",
-
   "today": "Hoxe",
   "you": "Ti",
   "bible": "Biblia",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Aínda non hai marcadores aquí.",
   "bookmark-options": "Opcións de marcadores",
   "new-folder-placeholder": "Nome do cartafol",
-
   "tasks": "Tarefas",
   "bookmarks": "Marcadores",
   "hide-bookmarks": "Ocultar marcadores",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Xa existe unha carpeta con ese nome.",
   "add-to-new": "Engadir a novo",
   "save": "Gardar",
-  "bookmark-verses": "Versos de marcadores"
+  "bookmark-verses": "Versos de marcadores",
+  "today-coming-soon": "A pantalla de hoxe chegará en breve",
+  "chat-coming-soon": "O chat estará dispoñible en breve",
+  "more-coming-soon": "Máis opcións próximamente",
+  "discovery-coming-soon": "Discovery chegará en breve",
+  "login-to-use-feature": "Tes que iniciar sesión para usar esta función."
 }

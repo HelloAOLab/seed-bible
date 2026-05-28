@@ -189,10 +189,8 @@
   "add-bookmark": "Marcaj",
   "play-audio": "Redare audio",
   "play": "Juca",
-
   "discovery": "Descoperire",
   "chat": "Chat",
-
   "today": "Astăzi",
   "you": "Tu",
   "bible": "Biblie",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Nu există marcaje aici încă.",
   "bookmark-options": "Opțiuni pentru marcaje",
   "new-folder-placeholder": "Numele folderului",
-
   "tasks": "Sarcini",
   "bookmarks": "Semne de carte",
   "hide-bookmarks": "Ascunde marcajele",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Există deja un folder cu acest nume.",
   "add-to-new": "Adăugați la nou",
   "save": "Salva",
-  "bookmark-verses": "Versuri în semnături"
+  "bookmark-verses": "Versuri în semnături",
+  "today-coming-soon": "Ecranul de astăzi va apărea în curând",
+  "chat-coming-soon": "Chatul va fi disponibil în curând",
+  "more-coming-soon": "Mai multe opțiuni în curând",
+  "discovery-coming-soon": "Discovery va fi disponibil în curând",
+  "login-to-use-feature": "Trebuie să vă conectați pentru a utiliza această funcție."
 }

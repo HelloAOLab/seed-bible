@@ -189,10 +189,8 @@
   "add-bookmark": "Järjehoidja",
   "play-audio": "Esita heli",
   "play": "Mängi",
-
   "discovery": "Avastus",
   "chat": "Vestlus",
-
   "today": "Täna",
   "you": "Sina",
   "bible": "Piibel",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Siin pole veel järjehoidjaid.",
   "bookmark-options": "Järjehoidjate valikud",
   "new-folder-placeholder": "Kausta nimi",
-
   "tasks": "Ülesanded",
   "bookmarks": "Järjehoidjad",
   "hide-bookmarks": "Peida järjehoidjad",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Selle nimega kaust on juba olemas.",
   "add-to-new": "Lisa uude",
   "save": "Salvesta",
-  "bookmark-verses": "Lisa salmid järjehoidjatesse"
+  "bookmark-verses": "Lisa salmid järjehoidjatesse",
+  "today-coming-soon": "Tänane ekraan tuleb varsti",
+  "chat-coming-soon": "Vestlus on peagi saadaval",
+  "more-coming-soon": "Rohkem valikuid on peagi saadaval",
+  "discovery-coming-soon": "Avastus on peagi tulemas",
+  "login-to-use-feature": "Selle funktsiooni kasutamiseks peate sisse logima."
 }

@@ -189,10 +189,8 @@
   "add-bookmark": "Marcador",
   "play-audio": "Reprodueix àudio",
   "play": "Reprodueix",
-
   "discovery": "Descobriment",
   "chat": "Xat",
-
   "today": "Avui",
   "you": "Tu",
   "bible": "Bíblia",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Encara no hi ha marcadors aquí.",
   "bookmark-options": "Opcions de marcadors",
   "new-folder-placeholder": "Nom de la carpeta",
-
   "tasks": "Tasques",
   "bookmarks": "Adreces d'interès",
   "hide-bookmarks": "Amaga els marcadors",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Ja existeix una carpeta amb aquest nom.",
   "add-to-new": "Afegeix a nou",
   "save": "Desa",
-  "bookmark-verses": "Versos de marcador"
+  "bookmark-verses": "Versos de marcador",
+  "today-coming-soon": "La pantalla d'avui arribarà aviat",
+  "chat-coming-soon": "El xat estarà disponible aviat",
+  "more-coming-soon": "Més opcions aviat",
+  "discovery-coming-soon": "El descobriment arribarà aviat",
+  "login-to-use-feature": "Heu d'iniciar sessió per utilitzar aquesta funció."
 }

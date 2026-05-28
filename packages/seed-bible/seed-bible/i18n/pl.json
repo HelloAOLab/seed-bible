@@ -189,10 +189,8 @@
   "add-bookmark": "Zakładka w książce",
   "play-audio": "Odtwórz dźwięk",
   "play": "Grać",
-
   "discovery": "Odkrycie",
   "chat": "Pogawędzić",
-
   "today": "Dzisiaj",
   "you": "Ty",
   "bible": "Biblia",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Nie ma tu jeszcze żadnych zakładek.",
   "bookmark-options": "Opcje zakładek",
   "new-folder-placeholder": "Nazwa folderu",
-
   "tasks": "Zadania",
   "bookmarks": "Zakładki",
   "hide-bookmarks": "Ukryj zakładki",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Folder o takiej nazwie już istnieje.",
   "add-to-new": "Dodaj do nowego",
   "save": "Ratować",
-  "bookmark-verses": "Dodaj wersety do zakładek"
+  "bookmark-verses": "Dodaj wersety do zakładek",
+  "today-coming-soon": "Już wkrótce pojawi się ekran dzisiejszy",
+  "chat-coming-soon": "Czat wkrótce",
+  "more-coming-soon": "Więcej opcji wkrótce",
+  "discovery-coming-soon": "Discovery już wkrótce",
+  "login-to-use-feature": "Aby skorzystać z tej funkcji, musisz się zalogować."
 }

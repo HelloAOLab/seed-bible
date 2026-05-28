@@ -189,10 +189,8 @@
   "add-bookmark": "Bladwijzer",
   "play-audio": "Audio afspelen",
   "play": "Toneelstuk",
-
   "discovery": "Ontdekking",
   "chat": "Chat",
-
   "today": "Vandaag",
   "you": "Jij",
   "bible": "Bijbel",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Nog geen bladwijzers.",
   "bookmark-options": "Bladwijzeropties",
   "new-folder-placeholder": "Mapnaam",
-
   "tasks": "Taken",
   "bookmarks": "Bladwijzers",
   "hide-bookmarks": "Bladwijzers verbergen",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Er bestaat al een map met die naam.",
   "add-to-new": "Toevoegen aan nieuw",
   "save": "Redden",
-  "bookmark-verses": "Verzen markeren"
+  "bookmark-verses": "Verzen markeren",
+  "today-coming-soon": "Vandaag verschijnt het scherm binnenkort.",
+  "chat-coming-soon": "De chatfunctie is binnenkort beschikbaar.",
+  "more-coming-soon": "Binnenkort meer opties beschikbaar",
+  "discovery-coming-soon": "Discovery komt er binnenkort aan.",
+  "login-to-use-feature": "Je moet inloggen om deze functie te kunnen gebruiken."
 }

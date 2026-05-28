@@ -189,10 +189,8 @@
   "add-bookmark": "Ibhukhimakhi",
   "play-audio": "Dlala umsindo",
   "play": "Dlala",
-
   "discovery": "Ukutholwa",
   "chat": "Ingxoxo",
-
   "today": "Namuhla",
   "you": "Wena",
   "bible": "IBhayibheli",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Awekho amabhukhimakhi lapha okwamanje.",
   "bookmark-options": "Izinketho zokubhukhimakhi",
   "new-folder-placeholder": "Igama lefolda",
-
   "tasks": "Imisebenzi",
   "bookmarks": "Amabhukhimakhi",
   "hide-bookmarks": "Fihla amabhukumaka",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Ifolda enalelo gama isivele ikhona.",
   "add-to-new": "Engeza kokusha",
   "save": "Londoloza",
-  "bookmark-verses": "Beka uphawu lokumaka amavesi"
+  "bookmark-verses": "Beka uphawu lokumaka amavesi",
+  "today-coming-soon": "Isikrini sanamuhla siyeza maduze",
+  "chat-coming-soon": "Ingxoxo iyeza maduze",
+  "more-coming-soon": "Izinketho ezengeziwe ziyeza maduze",
+  "discovery-coming-soon": "Ukutholwa kuyeza maduze",
+  "login-to-use-feature": "Kufanele ungene ngemvume ukuze usebenzise lesi sici."
 }

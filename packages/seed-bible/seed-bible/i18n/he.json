@@ -189,10 +189,8 @@
   "add-bookmark": "סימניה",
   "play-audio": "הפעלת אודיו",
   "play": "לְשַׂחֵק",
-
   "discovery": "תַגלִית",
   "chat": "לְשׂוֹחֵחַ",
-
   "today": "הַיוֹם",
   "you": "אַתָה",
   "bible": "כִּתבֵי הַקוֹדֶשׁ",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "אין כאן עדיין סימניות.",
   "bookmark-options": "אפשרויות סימניות",
   "new-folder-placeholder": "שם התיקייה",
-
   "tasks": "משימות",
   "bookmarks": "סימניות",
   "hide-bookmarks": "הסתר סימניות",
@@ -217,5 +214,10 @@
   "folder-name-taken": "תיקייה בשם זה כבר קיימת.",
   "add-to-new": "הוסף לחדש",
   "save": "לְהַצִיל",
-  "bookmark-verses": "פסוקים בסימניות"
+  "bookmark-verses": "פסוקים בסימניות",
+  "today-coming-soon": "מסך היום יגיע בקרוב",
+  "chat-coming-soon": "צ'אט בקרוב",
+  "more-coming-soon": "אפשרויות נוספות בקרוב",
+  "discovery-coming-soon": "גילוי בקרוב",
+  "login-to-use-feature": "עליך להתחבר כדי להשתמש בתכונה זו."
 }

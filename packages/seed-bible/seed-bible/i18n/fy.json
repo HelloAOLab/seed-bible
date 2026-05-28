@@ -189,10 +189,8 @@
   "add-bookmark": "Blêdwizer",
   "play-audio": "Audio ôfspylje",
   "play": "Toanielstik",
-
   "discovery": "Ûntdekking",
   "chat": "Chat",
-
   "today": "Hjoed",
   "you": "Jo",
   "bible": "bibel",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Gjin blêdwizers hjir noch.",
   "bookmark-options": "Opsjes foar blêdwizers",
   "new-folder-placeholder": "Mapnamme",
-
   "tasks": "Taken",
   "bookmarks": "Blêdwizers",
   "hide-bookmarks": "Blêdwizers ferbergje",
@@ -217,5 +214,10 @@
   "folder-name-taken": "In map mei dy namme bestiet al.",
   "add-to-new": "Tafoegje oan nij",
   "save": "Rêde",
-  "bookmark-verses": "Blêdwizerferzen"
+  "bookmark-verses": "Blêdwizerferzen",
+  "today-coming-soon": "It skerm fan hjoed komt gau",
+  "chat-coming-soon": "De petearen komme gau",
+  "more-coming-soon": "Mear opsjes komme gau",
+  "discovery-coming-soon": "De ûntdekking komt gau",
+  "login-to-use-feature": "Jo moatte ynlogge om dizze funksje te brûken."
 }

@@ -189,10 +189,8 @@
   "add-bookmark": "စာညှပ်",
   "play-audio": "အသံဖွင့်ပါ",
   "play": "ကစားပါ",
-
   "discovery": "ရှာဖွေတွေ့ရှိမှု",
   "chat": "ချတ်",
-
   "today": "ယနေ့",
   "you": "မင်း",
   "bible": "သမ္မာကျမ်းစာ",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "ဤနေရာတွင် bookmark များ မရှိသေးပါ။",
   "bookmark-options": "Bookmark ရွေးချယ်စရာများ",
   "new-folder-placeholder": "ဖိုလ်ဒါအမည်",
-
   "tasks": "လုပ်ဆောင်စရာများ",
   "bookmarks": "စာညှပ်များ",
   "hide-bookmarks": "စာညှပ်များကို ဝှက်ပါ",
@@ -217,5 +214,10 @@
   "folder-name-taken": "ထိုအမည်ဖြင့် ဖိုင်တွဲတစ်ခု ရှိနှင့်ပြီးဖြစ်သည်။",
   "add-to-new": "အသစ်ထဲသို့ထည့်ရန်",
   "save": "သိမ်းဆည်းပါ",
-  "bookmark-verses": "ကျမ်းပိုဒ်များကို မှတ်သားထားပါ"
+  "bookmark-verses": "ကျမ်းပိုဒ်များကို မှတ်သားထားပါ",
+  "today-coming-soon": "ဒီနေ့ မျက်နှာပြင် မကြာခင် လာတော့မယ်",
+  "chat-coming-soon": "ချတ်မကြာမီလာမည်",
+  "more-coming-soon": "နောက်ထပ်ရွေးချယ်စရာများ မကြာမီလာမည်",
+  "discovery-coming-soon": "ရှာဖွေတွေ့ရှိမှု မကြာမီ ရောက်ရှိလာတော့မှာပါ",
+  "login-to-use-feature": "ဒီ feature ကိုသုံးဖို့ login ဝင်ရပါမယ်။"
 }

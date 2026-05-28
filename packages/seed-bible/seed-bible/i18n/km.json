@@ -189,10 +189,8 @@
   "add-bookmark": "ចំណាំ",
   "play-audio": "ចាក់សំឡេង",
   "play": "លេង",
-
   "discovery": "ការរកឃើញ",
   "chat": "ជជែក",
-
   "today": "ថ្ងៃនេះ",
   "you": "អ្នក",
   "bible": "ព្រះគម្ពីរ",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "មិនទាន់មានចំណាំនៅទីនេះនៅឡើយទេ។",
   "bookmark-options": "ជម្រើសចំណាំ",
   "new-folder-placeholder": "ឈ្មោះ​ថតឯកសារ",
-
   "tasks": "ភារកិច្ច",
   "bookmarks": "ចំណាំ",
   "hide-bookmarks": "លាក់ចំណាំ",
@@ -217,5 +214,10 @@
   "folder-name-taken": "ថតឯកសារដែលមានឈ្មោះនោះមានរួចហើយ។",
   "add-to-new": "បន្ថែមទៅថ្មី",
   "save": "រក្សាទុក",
-  "bookmark-verses": "ចំណាំខគម្ពីរ"
+  "bookmark-verses": "ចំណាំខគម្ពីរ",
+  "today-coming-soon": "អេក្រង់ថ្ងៃនេះនឹងមកដល់ឆាប់ៗនេះ",
+  "chat-coming-soon": "ការជជែកនឹងមកដល់ឆាប់ៗនេះ",
+  "more-coming-soon": "ជម្រើសច្រើនទៀតនឹងមកដល់ឆាប់ៗនេះ",
+  "discovery-coming-soon": "ការរកឃើញនឹងមកដល់ឆាប់ៗនេះ",
+  "login-to-use-feature": "អ្នកត្រូវតែចូលដើម្បីប្រើមុខងារនេះ។"
 }

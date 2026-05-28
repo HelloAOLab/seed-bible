@@ -188,10 +188,8 @@
   "add-bookmark": "Yer imi",
   "play-audio": "Ses dosyasını oynat",
   "play": "Oynamak",
-
   "discovery": "Keşif",
   "chat": "Sohbet",
-
   "today": "Bugün",
   "you": "Sen",
   "bible": "İncil",
@@ -206,7 +204,6 @@
   "bookmark-folder-empty": "Henüz burada yer imi yok.",
   "bookmark-options": "Yer imi seçenekleri",
   "new-folder-placeholder": "Klasör adı",
-
   "tasks": "Görevler",
   "bookmarks": "Yer işaretleri",
   "hide-bookmarks": "Yer işaretlerini gizle",
@@ -217,5 +214,10 @@
   "folder-name-taken": "O isimde bir klasör zaten mevcut.",
   "add-to-new": "Yeniye ekle",
   "save": "Kaydetmek",
-  "bookmark-verses": "Ayeti yer imlerine ekle"
+  "bookmark-verses": "Ayeti yer imlerine ekle",
+  "today-coming-soon": "Bugünkü ekran yakında geliyor.",
+  "chat-coming-soon": "Sohbet özelliği yakında geliyor.",
+  "more-coming-soon": "Yakında daha fazla seçenek eklenecektir.",
+  "discovery-coming-soon": "Keşif yakında geliyor",
+  "login-to-use-feature": "Bu özelliği kullanmak için giriş yapmanız gerekiyor."
 }

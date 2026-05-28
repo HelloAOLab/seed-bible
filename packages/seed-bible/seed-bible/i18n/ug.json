@@ -188,10 +188,8 @@
   "add-bookmark": "خەتكۈچ",
   "play-audio": "ئاۋاز قويۇش",
   "play": "ئويناش",
-
   "discovery": "بايقاش",
   "chat": "پاراڭلىشىش",
-
   "today": "بۈگۈن",
   "you": "سىز",
   "bible": "ئىنجىل",
@@ -206,7 +204,6 @@
   "bookmark-folder-empty": "بۇ يەردە ھازىرغىچە ھېچقانداق خەتكۈچ يوق.",
   "bookmark-options": "خەتكۈچ تاللانمىلىرى",
   "new-folder-placeholder": "قىسقۇچ نامى",
-
   "tasks": "ۋەزىپىلەر",
   "bookmarks": "خەتكۈچلەر",
   "hide-bookmarks": "خەتكۈچلەرنى يوشۇرۇش",
@@ -217,5 +214,10 @@
   "folder-name-taken": "بۇنداق ئىسىمدىكى بىر قىسقۇچ مەۋجۇت.",
   "add-to-new": "يېڭىسىغا قوشۇش",
   "save": "ساقلاش",
-  "bookmark-verses": "ئايەتلەرنى خاتىرىلەڭ"
+  "bookmark-verses": "ئايەتلەرنى خاتىرىلەڭ",
+  "today-coming-soon": "بۈگۈنكى ئېكران تېزلا كېلىدۇ",
+  "chat-coming-soon": "پاراڭلىشىش تېزلا باشلىنىدۇ",
+  "more-coming-soon": "تېخىمۇ كۆپ تاللاشلار تېز كېلىدۇ",
+  "discovery-coming-soon": "بايقاش تېزلا كېلىدۇ",
+  "login-to-use-feature": "بۇ ئىقتىدارنى ئىشلىتىش ئۈچۈن كىرىشىڭىز كېرەك."
 }

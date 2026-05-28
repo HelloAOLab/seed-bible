@@ -188,10 +188,8 @@
   "add-bookmark": "ブックマーク",
   "play-audio": "音声を再生",
   "play": "遊ぶ",
-
   "discovery": "発見",
   "chat": "チャット",
-
   "today": "今日",
   "you": "あなた",
   "bible": "聖書",
@@ -206,7 +204,6 @@
   "bookmark-folder-empty": "まだブックマークはありません。",
   "bookmark-options": "ブックマークオプション",
   "new-folder-placeholder": "フォルダ名",
-
   "tasks": "タスク",
   "bookmarks": "ブックマーク",
   "hide-bookmarks": "ブックマークを非表示にする",
@@ -217,5 +214,10 @@
   "folder-name-taken": "その名前のフォルダは既に存在します。",
   "add-to-new": "新規に追加",
   "save": "保存",
-  "bookmark-verses": "ブックマークした聖句"
+  "bookmark-verses": "ブックマークした聖句",
+  "today-coming-soon": "本日のスクリーンはまもなく登場します",
+  "chat-coming-soon": "チャット機能は近日公開予定です",
+  "more-coming-soon": "近日中にさらに多くのオプションが登場予定",
+  "discovery-coming-soon": "ディスカバリーがまもなく登場します",
+  "login-to-use-feature": "この機能を使用するにはログインが必要です。"
 }

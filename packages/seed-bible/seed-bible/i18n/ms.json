@@ -189,10 +189,8 @@
   "add-bookmark": "Penanda buku",
   "play-audio": "Mainkan audio",
   "play": "Main",
-
   "discovery": "Penemuan",
   "chat": "Sembang",
-
   "today": "Hari ini",
   "you": "Awak",
   "bible": "Bible",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Tiada penanda buku di sini lagi.",
   "bookmark-options": "Pilihan penanda buku",
   "new-folder-placeholder": "Nama folder",
-
   "tasks": "Tugasan",
   "bookmarks": "Penanda Halaman",
   "hide-bookmarks": "Sembunyikan penanda buku",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Folder dengan nama itu sudah wujud.",
   "add-to-new": "Tambah kepada yang baharu",
   "save": "Simpan",
-  "bookmark-verses": "Tandakan ayat"
+  "bookmark-verses": "Tandakan ayat",
+  "today-coming-soon": "Skrin hari ini akan datang tidak lama lagi",
+  "chat-coming-soon": "Sembang akan datang tidak lama lagi",
+  "more-coming-soon": "Lebih banyak pilihan akan datang tidak lama lagi",
+  "discovery-coming-soon": "Penemuan akan datang tidak lama lagi",
+  "login-to-use-feature": "Anda perlu log masuk untuk menggunakan ciri ini."
 }

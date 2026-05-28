@@ -189,10 +189,8 @@
   "add-bookmark": "Grāmatzīme",
   "play-audio": "Atskaņot audio",
   "play": "Spēlēt",
-
   "discovery": "Atklājums",
   "chat": "Tērzēšana",
-
   "today": "Šodien",
   "you": "Tu",
   "bible": "Bībele",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Šeit vēl nav grāmatzīmju.",
   "bookmark-options": "Grāmatzīmju opcijas",
   "new-folder-placeholder": "Mapes nosaukums",
-
   "tasks": "Uzdevumi",
   "bookmarks": "Grāmatzīmes",
   "hide-bookmarks": "Slēpt grāmatzīmes",
@@ -217,5 +214,10 @@
   "folder-name-taken": "Mape ar šādu nosaukumu jau pastāv.",
   "add-to-new": "Pievienot jaunam",
   "save": "Saglabāt",
-  "bookmark-verses": "Grāmatzīmju panti"
+  "bookmark-verses": "Grāmatzīmju panti",
+  "today-coming-soon": "Šodienas ekrāns drīz būs pieejams",
+  "chat-coming-soon": "Tērzēšana drīzumā būs pieejama",
+  "more-coming-soon": "Vairāk iespēju drīzumā",
+  "discovery-coming-soon": "Atklājums drīzumā",
+  "login-to-use-feature": "Lai izmantotu šo funkciju, jums ir jāpiesakās."
 }
