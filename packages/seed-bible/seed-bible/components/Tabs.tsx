@@ -560,105 +560,167 @@ export function Tabs(props: TabsProps) {
   return (
     <>
       <div className="sb-sidebar-tabs-header">
-        <h3 className="sb-sidebar-tabs-title">
-          {t("tabs", { defaultValue: "Tabs" })}
-        </h3>
-        <div className="sb-sidebar-tabs-header-actions">
-          <button
-            type="button"
-            className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-tasks-button"
-            aria-label={t("tasks", { defaultValue: "Tasks" })}
-            title={t("tasks", { defaultValue: "Tasks" })}
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
-              <path
-                d="M11.5 21H6C5.46957 21 4.96086 20.7893 4.58579 20.4142C4.21071 20.0391 4 19.5304 4 19V5C4 4.46957 4.21071 3.96086 4.58579 3.58579C4.96086 3.21071 5.46957 3 6 3H18C18.5304 3 19.0391 3.21071 19.4142 3.58579C19.7893 3.96086 20 4.46957 20 5V13"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M9 18H11"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M15 19L17 21L21 17"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
+        {!app.isMobile && (
+          <>
+            <h3 className="sb-sidebar-tabs-title">
+              {t("tabs", { defaultValue: "Tabs" })}
+            </h3>
+            <div className="sb-sidebar-tabs-header-actions">
+              <button
+                type="button"
+                className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-tasks-button"
+                aria-label={t("tasks", { defaultValue: "Tasks" })}
+                title={t("tasks", { defaultValue: "Tasks" })}
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M11.5 21H6C5.46957 21 4.96086 20.7893 4.58579 20.4142C4.21071 20.0391 4 19.5304 4 19V5C4 4.46957 4.21071 3.96086 4.58579 3.58579C4.96086 3.21071 5.46957 3 6 3H18C18.5304 3 19.0391 3.21071 19.4142 3.58579C19.7893 3.96086 20 4.46957 20 5V13"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M9 18H11"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M15 19L17 21L21 17"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
 
-          <button
-            type="button"
-            className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button${
-              isBookmarkFilterActive
-                ? " sb-sidebar-tabs-header-bookmarks-button-active"
-                : ""
-            }`}
-            aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
-            aria-pressed={isBookmarkFilterActive}
-            title={
-              isBookmarkFilterActive
-                ? t("show-all-tabs", { defaultValue: "Show all tabs" })
-                : t("show-bookmarked-tabs", {
-                    defaultValue: "Show bookmarked tabs",
-                  })
-            }
-            onClick={() => {
-              bookmarks.toggleFilter();
-            }}
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill={isBookmarkFilterActive ? "currentColor" : "none"}
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
+              <button
+                type="button"
+                className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button${
+                  isBookmarkFilterActive
+                    ? " sb-sidebar-tabs-header-bookmarks-button-active"
+                    : ""
+                }`}
+                aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
+                aria-pressed={isBookmarkFilterActive}
+                title={
+                  isBookmarkFilterActive
+                    ? t("show-all-tabs", { defaultValue: "Show all tabs" })
+                    : t("show-bookmarked-tabs", {
+                        defaultValue: "Show bookmarked tabs",
+                      })
+                }
+                onClick={() => {
+                  bookmarks.toggleFilter();
+                }}
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill={isBookmarkFilterActive ? "currentColor" : "none"}
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-close-button"
+                onClick={state.sidebar.closeSidebar}
+                aria-label={t("close", { defaultValue: "Close" })}
+                title={t("close", { defaultValue: "Close" })}
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+              <button
+                onClick={() => {
+                  app.addTab();
+                }}
+                className="sb-tab-add-button"
+                aria-label={t("create-new-tab", {
+                  defaultValue: "Create new tab",
+                })}
+                title={t("new-tab", { defaultValue: "New tab" })}
+              >
+                <span className="material-symbols-outlined">add</span>
+              </button>
+            </div>
+          </>
+        )}
+        {app.isMobile && (
+          <>
+            <button
+              type="button"
+              className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-close-button"
+              onClick={() => {
+                state.sidebar.closeSidebar();
+                state.selector.setOpen(true);
+              }}
+              aria-label={t("close", { defaultValue: "Close" })}
+              title={t("close", { defaultValue: "Close" })}
             >
-              <path
-                d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
-          <button
-            type="button"
-            className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-close-button"
-            onClick={state.sidebar.closeSidebar}
-            aria-label={t("close", { defaultValue: "Close" })}
-            title={t("close", { defaultValue: "Close" })}
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
-          <button
-            onClick={() => {
-              app.addTab();
-            }}
-            className="sb-tab-add-button"
-            aria-label={t("create-new-tab", { defaultValue: "Create new tab" })}
-            title={t("new-tab", { defaultValue: "New tab" })}
-          >
-            <span className="material-symbols-outlined">add</span>
-          </button>
-        </div>
+              <span className="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h3 className="sb-sidebar-tabs-title">
+              {t("tabs", { defaultValue: "Tabs" })}
+            </h3>
+            <button
+              type="button"
+              className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button${
+                isBookmarkFilterActive
+                  ? " sb-sidebar-tabs-header-bookmarks-button-active"
+                  : ""
+              }`}
+              aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
+              aria-pressed={isBookmarkFilterActive}
+              title={
+                isBookmarkFilterActive
+                  ? t("show-all-tabs", { defaultValue: "Show all tabs" })
+                  : t("show-bookmarked-tabs", {
+                      defaultValue: "Show bookmarked tabs",
+                    })
+              }
+              onClick={() => {
+                bookmarks.toggleFilter();
+              }}
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill={isBookmarkFilterActive ? "currentColor" : "none"}
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+          </>
+        )}
       </div>
 
       <SidebarSearch state={state} closeLayoutMenu={closeLayoutMenu} />
@@ -963,14 +1025,14 @@ export function Tabs(props: TabsProps) {
         onClick={() => {
           app.addTab();
         }}
-        className="sb-tab-mobile-add-inline"
+        className="sb-tab-mobile-add-inline sb-tab-row"
         aria-label={t("create-new-tab", { defaultValue: "Create new tab" })}
       >
-        <span className="sb-tab-mobile-add-inline-icon" aria-hidden="true">
-          <span className="material-symbols-outlined">add</span>
-        </span>
         <span className="sb-tab-mobile-add-inline-label">
           {t("add-new-tab", { defaultValue: "Add new tab" })}
+        </span>
+        <span className="sb-tab-mobile-add-inline-icon" aria-hidden="true">
+          <span className="material-symbols-outlined">add</span>
         </span>
       </button>
     </>

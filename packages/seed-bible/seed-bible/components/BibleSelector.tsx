@@ -12,11 +12,14 @@ import {
   AddIcon,
   MinusIcon,
   ShareIcon,
+  BookOutlineIcon,
+  AddTab,
+  SbTabsIcon,
 } from "seed-bible.components.icons";
 import type { Translation } from "seed-bible.managers.FreeUseBibleAPI";
 import { computed, signal } from "@preact/signals";
 import type { BibleDataManager } from "seed-bible.managers.BibleDataManager";
-const { useEffect, useMemo, useRef, useState } = os.appHooks;
+const { useEffect, useMemo, useRef, useState, useCallback } = os.appHooks;
 
 interface BibleSelectorProps {
   isOpen: boolean;
@@ -57,8 +60,15 @@ const SearchBar = (props: {
 }) => {
   const { bibleSelectorState, bibleDataManager } = props;
   const { t } = useI18n();
-  const { search, setSearch, selectedTranslationBooks, selectedTranslation } =
-    bibleSelectorState;
+  const {
+    search,
+    setSearch,
+    selectedTranslationBooks,
+    selectedTranslation,
+    openTabs,
+    selectPopUp,
+    showApocryphaInfo,
+  } = bibleSelectorState;
 
   const selectedTestament = bibleSelectorState.selectedTestament;
   const apocryphaAvailable = bibleSelectorState.apocryphaAvailable;
@@ -70,80 +80,89 @@ const SearchBar = (props: {
 
   return (
     <>
-      <div class="testament-selection starterAnimation">
-        <span class="sidebar-select flex-col-between-center-gap-sm">
-          <div class="sidebar-book-selector flex-between-center-gap-md">
-            <div
-              class="sidebar-translation-selector flex-between-center"
-              onClick={() => {
-                selectingTranslation.value = !selectingTranslation.value;
-                setSearch("");
-              }}
-            >
-              <span class="sidebar-selected-title flex-align-center">
-                {selectedTranslation?.value?.shortName}
-              </span>
-              <span
-                style={{ transition: "transform 0.3s" }}
-                class={`material-symbols-outlined ${selectingTranslation.value ? "upside-down" : ""}`}
-                // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
+      {!selectingTranslation.value && (
+        <div class="testament-selection starterAnimation">
+          {viewportWidth.value > 768 && (
+            <>
+              <div
+                class="sidebar-translation-selector flex-between-center"
+                onClick={() => {
+                  selectingTranslation.value = !selectingTranslation.value;
+                  setSearch("");
+                }}
               >
-                expand_more
-              </span>
-            </div>
+                <span class="sidebar-selected-title flex-align-center">
+                  {selectedTranslation?.value?.shortName}
+                </span>
+                <span
+                  style={{
+                    transition: "transform 0.3s",
+                    color: selectingTranslation.value
+                      ? "var(--sb-primary-color)"
+                      : "",
+                  }}
+                  class={`material-symbols-outlined ${selectingTranslation.value ? "upside-down" : ""}`}
+                  // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
+                >
+                  expand_more
+                </span>
+              </div>
 
-            <div className="searchbar flex-align-center">
-              <span className="search-icon material-symbols-outlined">
-                Search
-              </span>
-              <input
-                type="text"
-                placeholder={t("search-books", {
-                  defaultValue: "Search books...",
-                })}
-                value={search.value}
-                className="flex-1"
-                onInput={(e) => {
-                  setSearch((e.target as HTMLInputElement).value);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.keyCode === 13) {
-                    handleEnter();
-                  }
-                }}
-              />
-            </div>
-            <div class="dropdown">
-              <select
-                value={selectedTestament.value}
-                onChange={(e) => {
-                  selectedTestament.value = Number(
-                    (e.target as HTMLSelectElement).value
-                  );
-                }}
-                class="dropdown-select"
-              >
-                <option value={2} class="dropdown-option">
-                  {t("allBooks", { defaultValue: "All Books" })}
-                </option>
-                <option value={0} class="dropdown-option">
-                  {viewportWidth.value > 750
-                    ? t("old-testament", { defaultValue: "Old Testament" })
-                    : t("old-testament_short", { defaultValue: "OT" })}
-                </option>
-                <option value={1} class="dropdown-option">
-                  {viewportWidth.value > 750
-                    ? t("new-testament", { defaultValue: "New Testament" })
-                    : t("new-testament_short", { defaultValue: "NT" })}
-                </option>
-                {apocryphaAvailable.value && (
-                  <option value={3} class="dropdown-option">
-                    {t("apocrypha", { defaultValue: "Apocrypha" })}
+              <div className="searchbar flex-align-center">
+                <span className="search-icon material-symbols-outlined">
+                  Search
+                </span>
+                <input
+                  type="text"
+                  placeholder={t("search-books", {
+                    defaultValue: "Search books...",
+                  })}
+                  value={search.value}
+                  className="flex-1"
+                  onInput={(e) => {
+                    setSearch((e.target as HTMLInputElement).value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.keyCode === 13) {
+                      handleEnter();
+                    }
+                  }}
+                />
+              </div>
+              <div class="dropdown">
+                <select
+                  value={selectedTestament.value}
+                  onChange={(e) => {
+                    selectedTestament.value = Number(
+                      (e.target as HTMLSelectElement).value
+                    );
+                  }}
+                  class="dropdown-select"
+                >
+                  <option value={2} class="dropdown-option">
+                    {t("allBooks", { defaultValue: "All Books" })}
                   </option>
-                )}
-              </select>
-            </div>
-            {viewportWidth.value <= 768 && (
+                  <option value={0} class="dropdown-option">
+                    {viewportWidth.value > 750
+                      ? t("old-testament", { defaultValue: "Old Testament" })
+                      : t("old-testament_short", { defaultValue: "OT" })}
+                  </option>
+                  <option value={1} class="dropdown-option">
+                    {viewportWidth.value > 750
+                      ? t("new-testament", { defaultValue: "New Testament" })
+                      : t("new-testament_short", { defaultValue: "NT" })}
+                  </option>
+                  {apocryphaAvailable.value && (
+                    <option value={3} class="dropdown-option">
+                      {t("apocrypha", { defaultValue: "Apocrypha" })}
+                    </option>
+                  )}
+                </select>
+              </div>
+            </>
+          )}
+          {viewportWidth.value <= 768 && (
+            <>
               <button
                 class="sb-selector-mobile-close"
                 onClick={() => {
@@ -154,12 +173,22 @@ const SearchBar = (props: {
               >
                 <span class="material-symbols-outlined">close</span>
               </button>
-            )}
-          </div>
-        </span>
-      </div>
+              <span class="sb-bible-reader-mobile-header-title">
+                {t("books", { defaultValue: "Books" })}
+              </span>
+              <button
+                class="sb-selector-mobile-close"
+                onClick={() => openTabs()}
+              >
+                <SbTabsIcon />
+              </button>
+            </>
+          )}
+        </div>
+      )}
       <div class="sidebar-results starterAnimation flex-wrap-start">
-        {selectedTranslationBooks.value?.books &&
+        {!selectingTranslation.value &&
+          selectedTranslationBooks.value?.books &&
           selectedTestamentData.value &&
           selectedTranslation.value && (
             <SideBarBooks bibleSelectorState={bibleSelectorState} />
@@ -171,6 +200,12 @@ const SearchBar = (props: {
           />
         )}
       </div>
+      {selectPopUp.value && bibleSelectorState.viewportWidth.value <= 768 && (
+        <SelectPopUp bibleSelectorState={bibleSelectorState} />
+      )}
+      {showApocryphaInfo.value && (
+        <ApocryphaInfo bibleSelectorState={bibleSelectorState} />
+      )}
     </>
   );
 };
@@ -191,6 +226,8 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
     calcChapterPos,
     isBook,
     ghostArray,
+    apocryphaAvailable,
+    showApocryphaInfo,
   } = bibleSelectorState;
 
   const RenderBooksByTestament = computed(() => {
@@ -250,7 +287,10 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
                 {book.commonName}
               </span>
               <span
-                style={{ transition: "transform 0.3s" }}
+                style={{
+                  transition: "transform 0.3s",
+                  color: isSelected ? "var(--sb-primary-color)" : "",
+                }}
                 class={`material-symbols-outlined ${isSelected ? "upside-down" : ""}`}
                 // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
               >
@@ -289,6 +329,7 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
       const NTChapterPos = calcChapterPos(lbc, NTSep);
       const OTBooks = ghostArray(oldTestament, OTSep);
       const NTBooks = ghostArray(newTestament, NTSep);
+      const APBooks = ghostArray(apocrypha, NTSep);
       return (
         <div
           class="books-container flex-gap-md"
@@ -329,6 +370,47 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
               )}
             </div>
           </div>
+          {ws <= 768 && apocryphaAvailable.value && (
+            <>
+              <div
+                className="separator"
+                style={{ display: "flex", opacity: 1 }}
+              />
+              <div
+                class="testament-container flex-col-gap-sm"
+                style={{
+                  width: `100%`,
+                  color: "var(--sb-font-color)",
+                  opacity: "0.7",
+                }}
+              >
+                <span class="testament-title">
+                  {t("apocrypha", { defaultValue: "Apocrypha" })}
+                  <span
+                    class="material-symbols-outlined"
+                    onClick={() => {
+                      showApocryphaInfo.value = true;
+                    }}
+                  >
+                    info
+                  </span>
+                </span>
+                <div class="books-item flex-row-wrap-around">
+                  {APBooks.map((book: BibleSelectorBookItem, index: number) =>
+                    renderBook(
+                      book,
+                      index,
+                      NTChapterPos,
+                      NTSep,
+                      1,
+                      undefined,
+                      true
+                    )
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       );
     }
@@ -448,6 +530,13 @@ const SideBarChapters = (props: { bibleSelectorState: BibleSelectorState }) => {
       isLast?: boolean;
     }) => {
       const { chapterNumber, isVisible, isLast } = props;
+      const chapterPressHandler = useLongPress(() => {
+        if (bibleSelectorState.viewportWidth.value > 768) return;
+        bibleSelectorState.selectPopUp.value = {
+          bookId: bd.id,
+          chapterNumber: chapterNumber,
+        };
+      }, 1500);
       return (
         <button
           style={
@@ -460,6 +549,7 @@ const SideBarChapters = (props: { bibleSelectorState: BibleSelectorState }) => {
             selectChapter(bd.id, chapterNumber);
             isOpen.value = false;
           }}
+          {...chapterPressHandler}
         >
           <span
             className={`sidebar-chapter-itm ${hlb[chapterNumber] ? "highlight" : "un-highlight"}`}
@@ -586,6 +676,7 @@ const TranslationModal = (props: {
     showTranslationSettings,
     showTranslationInfo,
     filteredApiTranslations,
+    setOpen,
   } = bibleSelectorState;
 
   const { t } = useI18n();
@@ -684,7 +775,7 @@ const TranslationModal = (props: {
         >
           <div
             class="sidebar-book-selector flex-between-center-gap-md"
-            style={{ marginBottom: "5px", height: "30px" }}
+            style={{ marginBottom: "5px", height: "30px", padding: "0 0px" }}
           >
             <div
               className="searchbar flex-align-center"
@@ -715,6 +806,17 @@ const TranslationModal = (props: {
               className="filters-icon"
             >
               <FiltersIcon />
+            </span>
+            <span
+              class="material-symbols-outlined"
+              onClick={() => {
+                selectingTranslation.value = false;
+                showTranslationSettings.value = false;
+                showTranslationInfo.value = null;
+                setOpen(false);
+              }}
+            >
+              close
             </span>
           </div>
           {LanguageList}
@@ -847,7 +949,10 @@ const LanguageComponent = (props: {
           {languageEnglishName}
         </span>
         <span
-          style={{ transition: "transform 0.3s" }}
+          style={{
+            transition: "transform 0.3s",
+            color: showSig.value ? "var(--sb-primary-color)" : "",
+          }}
           class={`material-symbols-outlined ${showSig.value ? "upside-down" : ""}`}
           // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
         >
@@ -1137,5 +1242,162 @@ const TranslationInfo = (props: {
     </div>
   );
 };
+
+const SelectPopUp = (props: { bibleSelectorState: BibleSelectorState }) => {
+  const { selectChapter, selectPopUp, isOpen, forceNewTab } =
+    props.bibleSelectorState;
+  const { t } = useI18n();
+
+  const openInCurrentTab = () => {
+    console.log("Opening in current tab", selectPopUp.value);
+    selectChapter(
+      selectPopUp.value?.bookId ?? "",
+      selectPopUp.value?.chapterNumber ?? 0
+    );
+    selectPopUp.value = null;
+    isOpen.value = false;
+  };
+
+  const openInNewTab = () => {
+    console.log("Opening in new tab", selectPopUp.value);
+    forceNewTab.value = true;
+    selectChapter(
+      selectPopUp.value?.bookId ?? "",
+      selectPopUp.value?.chapterNumber ?? 0
+    );
+    selectPopUp.value = null;
+    forceNewTab.value = false;
+    isOpen.value = false;
+  };
+
+  return (
+    <div
+      id="select-popup"
+      class="sb-select-modal-overlay"
+      onClick={(e) => {
+        if ((e.target as HTMLElement).id === "select-popup") {
+          selectPopUp.value = null;
+        }
+      }}
+    >
+      <div className="sb-select-modal flex-center">
+        <div class="sb-select-modal-content flex-col-gap-md">
+          <span class="sb-select-modal-title-icon">
+            <BookOutlineIcon />
+          </span>
+          <span class="sb-select-modal-title">
+            {t("open-new-chapter-in-new-or-current-tab", {
+              defaultValue: "Open the new chapter in new or current tab",
+            })}
+          </span>
+        </div>
+        <div class="sb-select-modal-actions flex-gap-md">
+          <button
+            style={{
+              background: "var(--sb-secondary-color)",
+              color: "var(--sb-secondary-font-color)",
+            }}
+            onClick={openInCurrentTab}
+            class="sb-select-modal-action-btn flex-start-center-gap-sm"
+          >
+            <SbTabsIcon />
+            {t("current-tab", { defaultValue: "Current Tab" })}
+          </button>
+          <button
+            style={{
+              background: "var(--sb-primary-color)",
+              color: "var(--sb-primary-font-color)",
+            }}
+            onClick={openInNewTab}
+            class="sb-select-modal-action-btn flex-start-center-gap-sm"
+          >
+            <AddTab />
+            {t("new-tab", { defaultValue: "New Tab" })}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ApocryphaInfo = (props: { bibleSelectorState: BibleSelectorState }) => {
+  const { showApocryphaInfo } = props.bibleSelectorState;
+  const { t } = useI18n();
+
+  return (
+    <div
+      id="apocrypha-info"
+      class="sb-select-modal-overlay"
+      onClick={(e) => {
+        if ((e.target as HTMLElement).id === "apocrypha-info") {
+          showApocryphaInfo.value = false;
+        }
+      }}
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <div
+        className="sb-select-modal flex-center"
+        style={{ position: "relative", width: "90%", borderRadius: "10px" }}
+      >
+        <div
+          class="flex-between-center-gap-md"
+          style={{ width: "100%", marginBottom: "15px" }}
+        >
+          <span class="sb-mobile-settings-sheet-title">
+            {t("about-extrabiblical-writings", {
+              defaultValue: "About Extrabiblical writings",
+            })}
+          </span>
+          <span
+            class="material-symbols-outlined"
+            onClick={() => {
+              showApocryphaInfo.value = false;
+            }}
+          >
+            close
+          </span>
+        </div>
+        <span>
+          {t("apocrypha-info-text", {
+            defaultValue:
+              "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
+          })}
+        </span>
+      </div>
+    </div>
+  );
+};
+
+export function useLongPress(onLongPress: () => void, duration = 1500) {
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const start = useCallback(
+    (e: MouseEvent | TouchEvent) => {
+      e.preventDefault();
+      timerRef.current = setTimeout(onLongPress, duration);
+    },
+    [onLongPress, duration]
+  );
+
+  const cancel = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  return {
+    onMouseDown: start,
+    onMouseUp: cancel,
+    onMouseLeave: cancel,
+    onTouchStart: start,
+    onTouchEnd: cancel,
+    onTouchCancel: cancel,
+  };
+}
 
 export default SearchBar;
