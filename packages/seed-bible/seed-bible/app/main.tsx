@@ -80,6 +80,20 @@ export function Main() {
   );
 }
 
+// From https://rnwest.engineer/detect-webkit/
+function isWebKit() {
+  const ua = navigator.userAgent;
+  // As far as I can tell, Chromium-based desktop browsers are the only browsers
+  // that pretend to be WebKit-based but aren't.
+  return (
+    (/AppleWebKit/.test(ua) && !/Chrome/.test(ua)) ||
+    /\b(iPad|iPhone|iPod)\b/.test(ua)
+  );
+}
+
+const isWebKitBrowser = isWebKit();
+const webkitClass = isWebKitBrowser ? "is-webkit" : "";
+
 function MainContent(props: {
   state: ReturnType<typeof createSeedBibleState>;
   fontSizeClass: string;
@@ -92,7 +106,7 @@ function MainContent(props: {
   return (
     <>
       <div
-        className={`sb-app-root ${fontSizeClass}`}
+        className={`sb-app-root ${fontSizeClass} ${webkitClass}`}
         dir={appDirection}
         onClick={(e) => {
           if (!e.defaultPrevented) {
@@ -122,7 +136,7 @@ function MainContent(props: {
               themeCssClasses={theme.themeCssClasses}
             />
             <BibleSelector
-              className={fontSizeClass}
+              className={`${fontSizeClass} ${webkitClass}`}
               isOpen={selector.isOpen.value}
               onClose={() => selector.setOpen(false)}
               selectorState={selector}

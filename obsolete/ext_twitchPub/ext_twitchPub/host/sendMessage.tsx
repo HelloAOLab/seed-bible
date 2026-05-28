@@ -2,14 +2,19 @@ const sendMessage = async ({
   message,
   to_user,
   deleteMessageFlag,
+  toChannel = false,
+  encript = true,
 }: {
   message: string;
   to_user?: string;
   deleteMessageFlag?: boolean;
+  toChannel?: boolean;
+  encript?: boolean;
 }) => {
   if (
     !masks?.broadcasterId ||
     !masks?.senderId ||
+    !masks?.channelId ||
     !message ||
     !masks?.userAccessToken ||
     !masks?.clientId
@@ -19,12 +24,17 @@ const sendMessage = async ({
   console.log("Sending message with token:", masks?.userAccessToken);
 
   try {
+    const finalMessage = encript
+      ? bytes.toBase64String(
+          new Uint8Array([...message].map((c) => c.charCodeAt(0)))
+        )
+      : message;
     const response = await web.post(
       "https://api.twitch.tv/helix/chat/messages",
       JSON.stringify({
-        broadcaster_id: masks?.broadcasterId,
+        broadcaster_id: toChannel ? masks?.channelId : masks?.broadcasterId,
         sender_id: masks?.senderId,
-        message,
+        message: finalMessage,
         reply_parent_message_id: to_user,
       }),
       {

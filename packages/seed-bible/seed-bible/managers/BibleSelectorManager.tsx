@@ -300,6 +300,7 @@ export function createBibleSelectorState(
         )?.id ??
         dataManager.availableTranslations.value[0]?.id ??
         null;
+
       if (!nextTranslationId) {
         throw new Error("No available translations found.");
       }
@@ -328,7 +329,6 @@ export function createBibleSelectorState(
     options?: BibleSelectorSetOpenOptions
   ) => {
     if (open) {
-      console.log("Opening Bible selector with pane:", nextPane, options);
       if (nextPane) {
         pane.value = nextPane;
       }
@@ -473,16 +473,14 @@ export function createBibleSelectorState(
       return;
     }
 
-    const newTab = tabsManager.addTab();
+    const newTab = tabsManager.addTab(undefined, {
+      initialTranslationId: selectedTranslationId.value,
+      initialBookId: selectedBookId,
+      initialChapterNumber: chapter,
+    });
     panesManager.openInPane(pane.value.id, {
       tabId: newTab.id,
     });
-
-    await newTab.readingState.selectTranslationAndChapter(
-      selectedTranslationId.value,
-      selectedBookId,
-      chapter
-    );
     setOpen(false);
   };
 
@@ -511,10 +509,24 @@ export function createBibleSelectorState(
         expandedBookId.value = firstBook.id;
       }
 
+      const previousTranslation = selectedTranslation.value;
       selectedTranslationId.value = nextTranslationId;
       search.value = "";
       languageQuery.value = "";
       selectingTranslation.value = false;
+      if (previousTranslation && isOpen.value) {
+        const currentBook = books.books.find(
+          (b) => b.id === currentBookId.value
+        );
+        if (currentBook) {
+          await handleChapterSelect(
+            currentBook.id,
+            currentChapterNumber.value ?? 1
+          );
+        } else {
+          await handleChapterSelect(firstBook?.id ?? "GEN", 1);
+        }
+      }
     } catch (err) {
       error.value =
         err instanceof Error

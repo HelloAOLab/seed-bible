@@ -173,34 +173,12 @@ function getMissingEnglishResources(
   return missing;
 }
 
-function setNestedValue(
-  resources: TranslationResources,
-  flattenedKey: string,
-  value: string
-): void {
-  const keyParts = flattenedKey.split(".");
-  let cursor: TranslationResources = resources;
-
-  for (let i = 0; i < keyParts.length - 1; i++) {
-    const keyPart = keyParts[i]!;
-    const current = cursor[keyPart];
-
-    if (!current || typeof current !== "object" || Array.isArray(current)) {
-      cursor[keyPart] = {};
-    }
-
-    cursor = cursor[keyPart] as TranslationResources;
-  }
-
-  cursor[keyParts[keyParts.length - 1]!] = value;
-}
-
 function applyFlatResources(
   resources: TranslationResources,
   values: Record<string, string>
 ): void {
   for (const [key, value] of Object.entries(values)) {
-    setNestedValue(resources, key, value);
+    resources[key] = value;
   }
 }
 
@@ -421,6 +399,174 @@ async function translateMissingKeysCommand(options: {
   await translateMissingExtensionKeys(translationConfig);
 }
 
+async function addLanguagesCommand(
+  languages: string[],
+  options: { projectId?: string }
+): Promise<void> {
+  if (languages.length === 0) {
+    console.error("No languages specified.");
+    process.exit(1);
+  }
+
+  const translationConfig = getTranslationClientConfig(options);
+
+  // --- Core app keys ---
+  const files = await readdir(I18N_DIR, { withFileTypes: true });
+  const existingLanguageCodes = files
+    .filter((file) => file.isFile() && file.name.endsWith(".json"))
+    .map((file) => path.basename(file.name, ".json"));
+
+  if (!existingLanguageCodes.includes(ENGLISH_LANGUAGE)) {
+    throw new Error(`Missing ${ENGLISH_LANGUAGE}.json in ${I18N_DIR}`);
+  }
+
+  const englishFilePath = path.join(I18N_DIR, `${ENGLISH_LANGUAGE}.json`);
+  const englishRaw = JSON.parse(
+    await readFile(englishFilePath, "utf-8")
+  ) as TranslationResources;
+  const englishResources = flattenTranslationKeys(englishRaw);
+  const allEnglishResources = Object.fromEntries(englishResources) as Record<
+    string,
+    string
+  >;
+
+  console.log("Adding/updating core app languages...");
+
+  for (const language of languages.sort((a, b) => a.localeCompare(b))) {
+    if (language === ENGLISH_LANGUAGE) {
+      console.log(`  ${language}: skipped (English is the source language)`);
+      continue;
+    }
+
+    const languageFilePath = path.join(I18N_DIR, `${language}.json`);
+    const languageExists = existingLanguageCodes.includes(language);
+    const languageRaw: TranslationResources = languageExists
+      ? (JSON.parse(
+          await readFile(languageFilePath, "utf-8")
+        ) as TranslationResources)
+      : {};
+
+    const resourcesToTranslate = languageExists
+      ? getMissingEnglishResources(
+          englishResources,
+          flattenTranslationKeys(languageRaw)
+        )
+      : allEnglishResources;
+
+    const count = Object.keys(resourcesToTranslate).length;
+
+    if (count === 0) {
+      console.log(`  ${language}: no missing keys`);
+      continue;
+    }
+
+    const translated = await translateResources(
+      translationConfig.projectId,
+      { language: ENGLISH_LANGUAGE, resources: resourcesToTranslate },
+      language
+    );
+
+    applyFlatResources(languageRaw, translated.resources);
+    await writeFile(
+      languageFilePath,
+      `${JSON.stringify(languageRaw, null, 2)}\n`,
+      "utf-8"
+    );
+
+    if (languageExists) {
+      console.log(`  ${language}: translated ${count} missing key(s)`);
+    } else {
+      console.log(`  ${language}: created and translated ${count} key(s)`);
+    }
+  }
+
+  // --- Extension keys ---
+  const extensions = await readExtensionDefinitions();
+
+  if (extensions.length === 0) {
+    console.log("No extension.json files were found in packages.");
+    return;
+  }
+
+  console.log("Adding/updating extension languages...");
+
+  for (const extension of extensions) {
+    const englishExtRaw = extension.translations[ENGLISH_LANGUAGE];
+
+    if (!englishExtRaw) {
+      console.log(
+        `  ${extension.packageName}: skipped (missing ${ENGLISH_LANGUAGE} translations)`
+      );
+      continue;
+    }
+
+    const englishExtResources = flattenTranslationKeys(englishExtRaw);
+    const allEnglishExtResources = Object.fromEntries(
+      englishExtResources
+    ) as Record<string, string>;
+    const translations =
+      (extension.raw.translations as ExtensionTranslationMap | undefined) ?? {};
+    let extensionUpdated = false;
+
+    console.log(`  ${extension.packageName}:`);
+
+    for (const language of languages.sort((a, b) => a.localeCompare(b))) {
+      if (language === ENGLISH_LANGUAGE) {
+        console.log(
+          `    ${language}: skipped (English is the source language)`
+        );
+        continue;
+      }
+
+      const languageExists = language in translations;
+      const languageRawResources: TranslationResources = languageExists
+        ? (translations[language] as TranslationResources)
+        : {};
+
+      const resourcesToTranslate = languageExists
+        ? getMissingEnglishResources(
+            englishExtResources,
+            flattenTranslationKeys(languageRawResources)
+          )
+        : allEnglishExtResources;
+
+      const count = Object.keys(resourcesToTranslate).length;
+
+      if (count === 0) {
+        console.log(`    ${language}: no missing keys`);
+        continue;
+      }
+
+      const translated = await translateResources(
+        translationConfig.projectId,
+        { language: ENGLISH_LANGUAGE, resources: resourcesToTranslate },
+        language
+      );
+
+      applyFlatResources(languageRawResources, translated.resources);
+      translations[language] = languageRawResources;
+      extensionUpdated = true;
+
+      if (languageExists) {
+        console.log(`    ${language}: translated ${count} missing key(s)`);
+      } else {
+        console.log(
+          `    ${language}: added language and translated ${count} key(s)`
+        );
+      }
+    }
+
+    if (extensionUpdated) {
+      extension.raw.translations = translations;
+      await writeFile(
+        extension.filePath,
+        `${JSON.stringify(extension.raw, null, 2)}\n`,
+        "utf-8"
+      );
+    }
+  }
+}
+
 async function translateAllCommand(options: {
   projectId?: string;
 }): Promise<void> {
@@ -521,6 +667,19 @@ program
   )
   .action(async (options) => {
     await translateAllCommand(options);
+  });
+
+program
+  .command("add-languages <languages...>")
+  .description(
+    "Adds one or more languages to the core app and all extensions. For languages that already exist, only missing keys are translated. For new languages, all keys are translated."
+  )
+  .option(
+    "--project-id <projectId>",
+    "Google Cloud project ID. Defaults to GOOGLE_CLOUD_PROJECT_ID env var."
+  )
+  .action(async (languages: string[], options) => {
+    await addLanguagesCommand(languages, options);
   });
 
 await program.parseAsync();

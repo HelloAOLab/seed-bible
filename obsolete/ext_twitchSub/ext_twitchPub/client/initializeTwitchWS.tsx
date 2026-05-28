@@ -6,17 +6,19 @@ const {
   CLIENT_ID,
   CHAT_CHANNEL_USER_ID,
   EVENTSUB_WEBSOCKET_URL,
-} = getConfig();
+  CHANNEL_ID,
+} = await getConfig();
 
 if (
   !BOT_USER_ID ||
   !OAUTH_TOKEN ||
   !CLIENT_ID ||
   !CHAT_CHANNEL_USER_ID ||
-  !EVENTSUB_WEBSOCKET_URL
+  !EVENTSUB_WEBSOCKET_URL ||
+  !CHANNEL_ID
 ) {
   throw new Error(
-    "Missing required configuration. Please ensure BOT_USER_ID, OAUTH_TOKEN, CLIENT_ID, CHAT_CHANNEL_USER_ID, and EVENTSUB_WEBSOCKET_URL are all set."
+    "Missing required configuration. Please ensure BOT_USER_ID, OAUTH_TOKEN, CLIENT_ID, CHAT_CHANNEL_USER_ID, EVENTSUB_WEBSOCKET_URL, and CHANNEL_ID are all set."
   );
 }
 
@@ -66,7 +68,10 @@ function startWebSocketClient() {
 }
 // data.payload.event.chatter_user_id
 function handleWebSocketMessage(data: any) {
-  console.log("wsss:- " + data.metadata.message_type);
+  if (globalThis?.twitchWebsocketClientPaused) {
+    return;
+  }
+  console.log("wsss:- " + "WebSocket message received:", data);
   switch (data.metadata.message_type) {
     case "session_welcome": // First message you get from the WebSocket server when connecting
       // Listen to EventSub, which joins the chatroom from your bot's account
@@ -79,9 +84,16 @@ function handleWebSocketMessage(data: any) {
           // First, print the message to the program's console.
           console.log("wsss:- " + data);
 
-          if (data.payload.event.chatter_user_id === BOT_USER_ID) {
+          if (
+            data.payload.event.broadcaster_user_id === CHANNEL_ID &&
+            data.payload.event.chatter_user_id === CHAT_CHANNEL_USER_ID
+          ) {
             try {
-              const config = JSON.parse(data.payload.event.message.text);
+              const stateUnit8Array = bytes.fromBase64String(
+                data.payload.event.message.text || ""
+              );
+              const configString = new TextDecoder().decode(stateUnit8Array);
+              const config = JSON.parse(configString);
               whisper(thisBot, "handleEvents", {
                 config: config,
               });
@@ -107,7 +119,8 @@ async function registerEventSubListeners() {
     OAUTH_TOKEN,
     CLIENT_ID,
     CHAT_CHANNEL_USER_ID,
-    EVENTSUB_WEBSOCKET_URL
+    EVENTSUB_WEBSOCKET_URL,
+    CHANNEL_ID
   );
 
   const response = await web.post(
@@ -116,7 +129,7 @@ async function registerEventSubListeners() {
       type: "channel.chat.message",
       version: "1",
       condition: {
-        broadcaster_user_id: CHAT_CHANNEL_USER_ID,
+        broadcaster_user_id: CHANNEL_ID,
         user_id: BOT_USER_ID,
       },
       transport: {
@@ -154,9 +167,21 @@ const handleWS = async () => {
   if (!isAuthValid) {
     return;
   }
+  setTagMask(thisBot, "translationEnabled", true, "local");
+
+  setTagMask(thisBot, "highlightEnabled", true, "local");
+
+  setTagMask(thisBot, "chapterFollowEnabled", true, "local");
+
+  setTagMask(thisBot, "WSStarted", true, "local");
 
   startWebSocketClient();
-  setTagMask(thisBot, "uiLoaded", true, "local");
+
+  const existingIcon = document.getElementById("twitch-extension-icon");
+  if (existingIcon) {
+    existingIcon.style.boxShadow =
+      "0px 1px 14px 0px color-mix(in srgb, var(--secondaryColor) 25%, transparent)";
+  }
 };
 
 handleWS();

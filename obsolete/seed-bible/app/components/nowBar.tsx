@@ -1,4 +1,9 @@
 const { useState, useRef, useEffect } = os.appHooks;
+import { useBibleContext } from "app.hooks.bibleVariables";
+const G = globalThis as any;
+
+const isMobileSmall =
+  (window?.innerWidth || G.gridPortalBot.tags.pixelWidth) < 480;
 
 function NowBar() {
   const [apps, setApps] = useState([]);
@@ -8,9 +13,16 @@ function NowBar() {
   const [startY, setStartY] = useState(0);
   const [startDragIndex, setStartDragIndex] = useState(0);
   const [extraHeight, setExtraHeight] = useState(0);
+  const { showNavArrows } = useBibleContext();
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== "undefined" ? window.innerWidth : 400
   );
+  const [isFullWidth, setIsFullWidth] = useState(G.NowBarFullWidth || false);
+  const [isBottomBar, setIsBottomBar] = useState(false);
+  const [isVerseToolBarOpen, setIsVerseToolBarOpen] = useState(false);
+
+  G.SetIsVerseToolBarOpen = setIsVerseToolBarOpen;
+  G.SetIsBottomBar = setIsBottomBar;
   const cardRef = useRef(null);
 
   // Track window resize for responsive behavior
@@ -21,20 +33,28 @@ function NowBar() {
 
     globalThis.SetExtraHeight = setExtraHeight;
 
+    G.SetIsFullWidth = setIsFullWidth;
+
     window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
       globalThis.SetExtraHeight = null;
+      G.SetIsFullWidth = null;
     };
   }, []);
 
   // Global function to add apps to NowBar
   useEffect(() => {
-    globalThis.AddNowBarApp = (appComponent, appId = null) => {
+    globalThis.AddNowBarApp = (
+      appComponent,
+      appId = null,
+      transparent = false
+    ) => {
       const id = appId || Date.now() + Math.random();
       const newApp = {
         id,
         component: appComponent,
+        transparent,
       };
 
       setApps((prevApps) => {
@@ -227,22 +247,27 @@ function NowBar() {
     return null;
   }
 
+  const anyAppTransparent = apps.some((app) => app.transparent);
+
   return (
     <div
       style={{
         position: "fixed",
-        bottom: dimensions.bottom,
+        bottom:
+          isBottomBar && !isVerseToolBarOpen ? "1.2rem" : dimensions.bottom,
         left: "50%",
         transform: "translateX(-50%)",
-        width: `${dimensions.width}px`,
+        width: isFullWidth && isMobileSmall ? "96dvw" : `${dimensions.width}px`,
         transition: "all 0.3s linear",
         // Shall be min height not exact height
-        minHeight: `${dimensions.height + extraHeight}px`,
+        minHeight: anyAppTransparent
+          ? "auto"
+          : `${dimensions.height + extraHeight}px`,
         zIndex: "999999",
         // Ensure it doesn't overflow on very small screens
-        maxWidth: "95vw",
         display: "flex",
         alignItems: "flex-end",
+        maxWidth: isFullWidth ? "96dvw" : "min(95vw, calc(100vw - 150px))",
       }}
     >
       {apps.map((app, index) => {
@@ -290,7 +315,7 @@ function NowBar() {
               width: "100%",
               height: "100%",
               borderRadius: dimensions.borderRadius,
-              boxShadow: shadowBlur,
+              boxShadow: app.transparent ? "none" : shadowBlur,
               cursor: isTopApp ? (isDragging ? "grabbing" : "grab") : "default",
               transform,
               opacity,
@@ -298,13 +323,15 @@ function NowBar() {
               transition: isDragging
                 ? "none"
                 : "transform 0.3s ease, opacity 0.3s ease",
-              overflow: "hidden",
+              overflow: app.transparent ? "visible" : "hidden",
               userSelect: "none",
               touchAction: "none",
               // Prevent text selection on mobile
               WebkitUserSelect: "none",
               WebkitTouchCallout: "none",
-              backgroundColor: "var(--pageBackground)",
+              backgroundColor: app.transparent
+                ? "transparent"
+                : "var(--pageBackground)",
             }}
           >
             {app.component}

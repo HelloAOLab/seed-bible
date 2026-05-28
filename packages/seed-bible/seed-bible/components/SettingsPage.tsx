@@ -27,10 +27,6 @@ import {
 } from "seed-bible.managers.ExtensionManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import {
-  ContextMenuItem,
-  ContextMenuWithButton,
-} from "seed-bible.components.ContextMenu";
-import {
   ExtensionsIcon,
   MarginIcon,
   MaterialIcon,
@@ -43,14 +39,7 @@ import {
 } from "seed-bible.components.KeyboardNav";
 import { useRef } from "preact/hooks";
 import { z } from "zod";
-
-type SettingsView =
-  | null
-  | "account"
-  | "display-and-theme"
-  | "all-settings"
-  | "toolbar"
-  | "extensions";
+import type { RequestedSettingsView } from "seed-bible.managers.SidebarManager";
 
 const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
 
@@ -81,31 +70,83 @@ const TEXT_COLOR_PALETTE = [
 const HEX_6 = /^#[0-9a-fA-F]{6}$/;
 
 const LANG_META: Record<string, { cc: string; display: string }> = {
+  af: { cc: "za", display: "Afrikaans" },
   am: { cc: "et", display: "አማርኛ" },
   ar: { cc: "sa", display: "العربية" },
+  az: { cc: "az", display: "Azərbaycan dili" },
+  be: { cc: "by", display: "Беларуская" },
+  bg: { cc: "bg", display: "Български" },
   bn: { cc: "bd", display: "বাংলা" },
-  zh: { cc: "cn", display: "中文" },
+  bs: { cc: "ba", display: "Bosanski" },
+  ca: { cc: "es", display: "Català" },
+  cs: { cc: "cz", display: "Čeština" },
+  cy: { cc: "gb", display: "Cymraeg" },
+  da: { cc: "dk", display: "Dansk" },
+  de: { cc: "de", display: "Deutsch" },
+  el: { cc: "gr", display: "Ελληνικά" },
   en: { cc: "us", display: "English" },
-  fr: { cc: "fr", display: "Français" },
-  hi: { cc: "in", display: "हिन्दी" },
-  ind: { cc: "id", display: "Bahasa Indonesia" },
-  ja: { cc: "jp", display: "日本語" },
-  ko: { cc: "kr", display: "한국어" },
-  mn: { cc: "mn", display: "Монгол хэл" },
-  ne: { cc: "np", display: "नेपाली" },
-  ps: { cc: "af", display: "پښتو" },
-  fa: { cc: "ir", display: "فارسی" },
-  pt: { cc: "br", display: "Português" },
-  ru: { cc: "ru", display: "Русский" },
   es: { cc: "es", display: "Español" },
+  et: { cc: "ee", display: "Eesti" },
+  fa: { cc: "ir", display: "فارسی" },
+  fi: { cc: "fi", display: "Suomi" },
+  fil: { cc: "ph", display: "Filipino" },
+  fr: { cc: "fr", display: "Français" },
+  fy: { cc: "nl", display: "Frysk" },
+  gl: { cc: "es", display: "Galego" },
+  gn: { cc: "py", display: "Avañe'ẽ" },
+  gu: { cc: "in", display: "ગુજરાતી" },
+  he: { cc: "il", display: "עברית" },
+  hi: { cc: "in", display: "हिन्दी" },
+  hr: { cc: "hr", display: "Hrvatski" },
+  hu: { cc: "hu", display: "Magyar" },
+  ind: { cc: "id", display: "Bahasa Indonesia" },
+  is: { cc: "is", display: "Íslenska" },
+  it: { cc: "it", display: "Italiano" },
+  iw: { cc: "il", display: "עברית" },
+  ja: { cc: "jp", display: "日本語" },
+  ka: { cc: "ge", display: "ქართული" },
+  km: { cc: "kh", display: "ខ្មែរ" },
+  kn: { cc: "in", display: "ಕನ್ನಡ" },
+  ko: { cc: "kr", display: "한국어" },
+  ky: { cc: "kg", display: "Кыргызча" },
+  ln: { cc: "cd", display: "Lingála" },
+  lo: { cc: "la", display: "ລາວ" },
+  lt: { cc: "lt", display: "Lietuvių" },
+  lv: { cc: "lv", display: "Latviešu" },
+  mk: { cc: "mk", display: "Македонски" },
+  mn: { cc: "mn", display: "Монгол хэл" },
+  ml: { cc: "in", display: "മലയാളം" },
+  mr: { cc: "in", display: "मराठी" },
+  ms: { cc: "my", display: "Bahasa Melayu" },
+  my: { cc: "mm", display: "မြန်မာ" },
+  nb: { cc: "no", display: "Norsk bokmål" },
+  ne: { cc: "np", display: "नेपाली" },
+  nl: { cc: "nl", display: "Nederlands" },
+  no: { cc: "no", display: "Norsk" },
+  pa: { cc: "in", display: "ਪੰਜਾਬੀ" },
+  pl: { cc: "pl", display: "Polski" },
+  ps: { cc: "af", display: "پښتو" },
+  pt: { cc: "br", display: "Português" },
+  ro: { cc: "ro", display: "Română" },
+  ru: { cc: "ru", display: "Русский" },
+  sk: { cc: "sk", display: "Slovenčina" },
+  sl: { cc: "si", display: "Slovenščina" },
+  sq: { cc: "al", display: "Shqip" },
+  sv: { cc: "se", display: "Svenska" },
   sw: { cc: "tz", display: "Kiswahili" },
+  ta: { cc: "in", display: "தமிழ்" },
+  te: { cc: "in", display: "తెలుగు" },
+  th: { cc: "th", display: "ไทย" },
   ti: { cc: "er", display: "ትግርኛ" },
+  tl: { cc: "ph", display: "Tagalog" },
   tr: { cc: "tr", display: "Türkçe" },
+  ug: { cc: "cn", display: "ئۇيغۇرچە" },
   uk: { cc: "ua", display: "Українська" },
   ur: { cc: "pk", display: "اردو" },
-  ug: { cc: "cn", display: "ئۇيغۇرچە" },
+  uz: { cc: "uz", display: "Oʻzbekcha" },
   vi: { cc: "vn", display: "Tiếng Việt" },
-  de: { cc: "de", display: "Deutsch" },
+  zh: { cc: "cn", display: "中文" },
+  zu: { cc: "za", display: "isiZulu" },
 };
 
 function FlagImg({ cc }: { cc: string }) {
@@ -504,7 +545,8 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
   };
 
   const onOpenAllSettings = () => {
-    state.sidebar.requestedSettingsView.value = "all-settings";
+    state.sidebar.requestedSettingsView.value =
+      "display-and-theme-all-settings";
   };
 
   const handleDecreaseFontSize = () => {
@@ -855,7 +897,7 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
             <option value="traditional">
               {t("traditional", { defaultValue: "Traditional" })}
             </option>
-            <option value="tanak">
+            <option value="tanakh">
               {t("tanakh", { defaultValue: "Tanakh" })}
             </option>
           </select>
@@ -988,9 +1030,8 @@ function getExtensionInstallState(
 function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { extensions } = state;
-  const extensionsList = extensions.getExtensions();
+  const extensionsList = extensions.extensions.value;
   const installingIds = useSignal<Set<string>>(new Set());
-  const openMenuId = useSignal<string | null>(null);
   const isDownloadingSet = useSignal(false);
   const isUploadingSet = useSignal(false);
 
@@ -999,7 +1040,6 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   };
 
   const handleInstall = async (extensionId: string) => {
-    openMenuId.value = null;
     const extensionData = extensionsList.find(
       (e) => e.extension?.meta.id === extensionId
     );
@@ -1013,7 +1053,6 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   };
 
   const handleUninstall = (extensionId: string) => {
-    openMenuId.value = null;
     extensions.unloadExtension(extensionId);
   };
 
@@ -1127,7 +1166,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
               return (
                 <li key={id} className="sb-extension-row">
-                  <button className="sb-extension-row-button" disabled>
+                  <div className="sb-extension-row-body">
                     <span
                       className={`material-symbols-outlined sb-extension-state-icon sb-extension-state-${installState}`}
                       title={stateLabel}
@@ -1143,39 +1182,38 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                         {t("description", { ns: id, defaultValue: "" })}
                       </span>
                     </div>
-                  </button>
-
-                  <ContextMenuWithButton>
-                    {installState === "none" && (
-                      <ContextMenuItem onClick={() => void handleInstall(id)}>
-                        {t("install", { defaultValue: "Install" })}
-                      </ContextMenuItem>
-                    )}
-                    {(installState === "installed" ||
-                      installState === "downloaded") && (
-                      <ContextMenuItem onClick={() => handleUninstall(id)}>
-                        {t("uninstall", { defaultValue: "Uninstall" })}
-                      </ContextMenuItem>
-                    )}
-                  </ContextMenuWithButton>
-                  {/* <div className="sb-context-menu-anchor">
-                    <button
-                      className="sb-context-menu-button"
-                      aria-label="Extension options"
-                      title="Extension options"
-                      onClick={() => {
-                        openMenuId.value = openMenuId.value === id ? null : id;
-                      }}
-                    >
-                      <span className="material-symbols-outlined sb-context-more-icon">
-                        more_vert
-                      </span>
-                    </button>
-
-                    <ContextMenu isOpen={openMenuId.value === id}>
-                      
-                    </ContextMenu>
-                  </div> */}
+                    <div className="sb-extension-row-actions">
+                      {installState === "none" && (
+                        <button
+                          type="button"
+                          className="sb-extension-row-action-button"
+                          onClick={() => void handleInstall(id)}
+                          aria-label={t("install", { defaultValue: "Install" })}
+                          title={t("install", { defaultValue: "Install" })}
+                        >
+                          <span className="material-symbols-outlined">
+                            download
+                          </span>
+                        </button>
+                      )}
+                      {(installState === "installed" ||
+                        installState === "downloaded") && (
+                        <button
+                          type="button"
+                          className="sb-extension-row-action-button"
+                          onClick={() => handleUninstall(id)}
+                          aria-label={t("uninstall", {
+                            defaultValue: "Uninstall",
+                          })}
+                          title={t("uninstall", { defaultValue: "Uninstall" })}
+                        >
+                          <span className="material-symbols-outlined">
+                            delete
+                          </span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </li>
               );
             })}
@@ -1922,7 +1960,7 @@ function SettingsMainView(props: { state: SeedBibleState }) {
   const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
   const languageMenuRef = useRef<HTMLDivElement | null>(null);
 
-  const onNavigate = (view: SettingsView) => {
+  const onNavigate = (view: RequestedSettingsView) => {
     state.sidebar.requestedSettingsView.value = view;
   };
 
@@ -2154,7 +2192,7 @@ export function SettingsPage(props: { state: SeedBibleState }) {
     return <DisplayAndThemeSettingsView state={state} />;
   }
 
-  if (currentView.value === "all-settings") {
+  if (currentView.value === "display-and-theme-all-settings") {
     return <AllSettingsView state={state} />;
   }
 

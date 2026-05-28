@@ -23,7 +23,7 @@ if ((isMobile || that?.force) && G.makingPlaylist) {
     G[`defaultToggleGreyCheckPLayingPlaylist`] &&
       G[`defaultToggleGreyCheckPLayingPlaylist`](null);
     G.IS_PLAYLIST_ACTIVE = false;
-    G.SetSplitAppPanel2(null);
+    G.SetSplitAppPanel2 && G.SetSplitAppPanel2(null);
     G.makingPlaylist = false;
     G.RemoveApplicationByLabel(G.ActiveMoreApp);
     G.makingApp = null;

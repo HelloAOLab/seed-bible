@@ -574,6 +574,11 @@ export function createSeedBibleState(): SeedBibleState {
   const handleCreateSharedSession = async () => {
     closeSidebarAndSettings();
     const session = await sessions.createSession();
+    if (typeof posthog !== "undefined" && posthog) {
+      posthog.capture("create_session", {
+        sessionId: session.id,
+      });
+    }
     locallyHostedSessionIds.add(session.id);
     wrapSessionLifecycle(session);
     // Auto-publish: the moment a shared tab is created, other logged-in
@@ -588,6 +593,11 @@ export function createSeedBibleState(): SeedBibleState {
   const handleJoinSharedSession = async (id: string) => {
     closeSidebarAndSettings();
     const session = await sessions.joinSession(id);
+    if (typeof posthog !== "undefined" && posthog) {
+      posthog.capture("join_session", {
+        sessionId: session.id,
+      });
+    }
     wrapSessionLifecycle(session);
     const tab = tabs.addTab(session);
     panes.setSelectedPaneTab(tab.id);
@@ -597,6 +607,17 @@ export function createSeedBibleState(): SeedBibleState {
   const invitations = createInvitationsManager(login, async (sessionId) => {
     await handleJoinSharedSession(sessionId);
   });
+
+  const setupInitialSession = async () => {
+    const initialSessionId = configBot.tags.sessionId;
+    if (!initialSessionId) {
+      return;
+    }
+
+    await handleJoinSharedSession(initialSessionId);
+  };
+
+  void setupInitialSession();
 
   const state: SeedBibleState = {
     bibleData: data,

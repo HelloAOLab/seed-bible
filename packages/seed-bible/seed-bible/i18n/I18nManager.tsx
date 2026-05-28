@@ -36,10 +36,6 @@ export function addTranslations(
   options?: { overwrite?: boolean }
 ) {
   for (const [lang, resources] of Object.entries(translations)) {
-    console.log(
-      `[I18n] Adding translations for language "${lang}" and namespace "${ns}":`,
-      resources
-    );
     i18n.addResourceBundle(lang, ns, resources, true, options?.overwrite);
   }
 }

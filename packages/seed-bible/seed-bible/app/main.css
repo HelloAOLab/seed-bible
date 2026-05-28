@@ -78,7 +78,8 @@
   --sb-selected-verse-font-family: inherit;
   --sb-selected-verse-font-color: inherit;
   --sb-selected-verse-background-color: inherit;
-  --sb-selected-verse-text-decoration: underline;
+  --sb-selected-verse-border-bottom: 2px dashed currentColor;
+  --sb-selected-verse-text-decoration: none;
   --sb-selected-verse-text-decoration-color: currentColor;
 
   --sb-hebrew-subtitle-font-family: "Newsreader", serif;
@@ -255,10 +256,46 @@ h6 {
   padding-bottom: 96px;
   margin: 0 auto;
   box-sizing: border-box;
+  position: relative;
 
   background: var(--sb-reader-background);
   color: var(--sb-reader-font-color);
   font-family: var(--sb-reader-font-family);
+}
+
+.sb-bible-reader-bookmark-button {
+  position: absolute;
+  top: 16px;
+  inset-inline-end: 16px;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+  z-index: 1;
+}
+
+.sb-bible-reader-bookmark-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+}
+
+.sb-bible-reader-bookmark-button-active,
+.sb-bible-reader-bookmark-button-active:hover {
+  color: var(--sb-primary-color);
+}
+
+.sb-bible-reader-bookmark-button:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 /* Force a tight 1% reader margin in mobile view, regardless of the
@@ -969,7 +1006,7 @@ h6 {
   will-change: transform;
 }
 
-[dir="rtl"] .sb-reader-swipe-track {
+.sb-bible-reader[dir="rtl"] .sb-reader-swipe-track {
   transform: translateX(33.333%);
 }
 
@@ -1273,7 +1310,12 @@ h6 {
 }
 
 .sb-verse-selected {
-  text-decoration: underline;
+  font-family: var(--sb-selected-verse-font-family);
+  color: var(--sb-selected-verse-font-color);
+  background-color: var(--sb-selected-verse-background-color);
+  border-bottom: var(--sb-selected-verse-border-bottom);
+  text-decoration: var(--sb-selected-verse-text-decoration);
+  text-decoration-color: var(--sb-selected-verse-text-decoration-color);
 }
 
 .sb-verse-number {
@@ -1285,6 +1327,7 @@ h6 {
   vertical-align: middle;
   margin-inline-start: 6px;
   margin-inline-end: 3px;
+  color: color-mix(in srgb, var(--sb-verse-font-color), transparent 30%);
 }
 
 .sb-poem-line-1 {
@@ -1695,7 +1738,7 @@ h6 {
     border-radius: 14px;
     box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
     display: flex;
-    flex-direction: column;
+    flex-direction: column-reverse;
     gap: 6px;
     z-index: 100;
   }
@@ -1938,8 +1981,17 @@ h6 {
 .sb-verse-toolbar-back .material-symbols-outlined,
 .sb-verse-toolbar-plus .material-symbols-outlined,
 .sb-verse-toolbar-clear .material-symbols-outlined,
-.sb-verse-toolbar-highlight-trigger .material-symbols-outlined {
+.sb-verse-toolbar-highlight-trigger .material-symbols-outlined,
+.sb-verse-toolbar-bookmark-trigger .material-symbols-outlined {
   font-size: 20px;
+}
+
+/* The bookmark trigger lights up in the theme primary color when the current
+ * selection already matches a saved bookmark, so the verse toolbar reads as
+ * a toggle. */
+.sb-verse-toolbar-bookmark-trigger-active,
+.sb-verse-toolbar-bookmark-trigger-active:hover {
+  color: var(--sb-primary-color);
 }
 
 .sb-verse-toolbar-color-input {
@@ -2025,6 +2077,10 @@ h6 {
   transform: translateX(-50%);
 }
 
+.sb-open-selector-icon {
+  flex: 1;
+}
+
 .sb-selector-overlay {
   pointer-events: none;
   position: fixed;
@@ -2042,6 +2098,33 @@ h6 {
 .sb-selector-overlay.open {
   pointer-events: all;
   /* background: rgba(0, 0, 0, 0.3); */
+}
+
+/* Fix for iOS devices */
+/* For some reason, pointer-events doesn't get set properly on iOS sometimes */
+/* On mobile, we can just hide and show the selector anyways because we disable transitions for mobile devices */
+.is-webkit {
+  & .sb-selector-overlay,
+  &.sb-selector-overlay {
+    display: none;
+    pointer-events: all;
+  }
+
+  & .sb-selector-overlay.open,
+  &.sb-selector-overlay.open {
+    display: flex;
+  }
+}
+
+@media (max-width: 768px) {
+  .sb-selector-overlay {
+    display: none;
+    pointer-events: all;
+  }
+
+  .sb-selector-overlay.open {
+    display: flex;
+  }
 }
 
 .sb-selector-panel {
@@ -2459,30 +2542,22 @@ h6 {
   display: none;
 }
 
-/* Bookmark filter button in the Tabs header — turns orange when the
- * bookmarks-only filter is active and stays orange on hover so the
+/* Bookmark filter button in the Tabs header — picks up the theme primary
+ * color when the bookmarks view is active and stays tinted on hover so the
  * active state reads clearly. */
 .sb-sidebar-tabs-header-bookmarks-button-active,
 .sb-sidebar-tabs-header-bookmarks-button-active:hover {
-  color: #f59e0b;
-  background: color-mix(in srgb, #f59e0b, transparent 88%);
+  color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 88%);
 }
 
 .sb-sidebar-tabs-header-bookmarks-button-active svg {
-  color: #f59e0b;
+  color: var(--sb-primary-color);
 }
 
-/* Empty state shown inside the tab list when the bookmark filter is
- * active and there are no matching tabs. */
-.sb-sidebar-tab-list-empty {
-  padding: 16px 12px;
-  text-align: center;
-  font-size: 13px;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-}
-
-/* Per-tab bookmark toggle button — sits between the tab body and the
- * "more" menu. Filled + orange when bookmarked, outlined + dim otherwise. */
+/* Per-tab bookmark toggle button — rendered between the tab body and the
+ * "more" menu, but only on the currently selected row. Filled + orange when
+ * the chapter is already in a bookmark folder, outlined when not. */
 .sb-tab-bookmark-button {
   display: inline-flex;
   align-items: center;
@@ -2509,18 +2584,377 @@ h6 {
 
 .sb-tab-bookmark-button-active,
 .sb-tab-bookmark-button-active:hover {
-  color: #f59e0b;
+  color: var(--sb-primary-color);
 }
 
-.sb-tab-row-bookmarked .sb-tab-main-title::before {
+/* ---- Bookmarks section (pinned above the tab list when the bookmark
+ *      toggle in the sidebar header is on) -------------------------------- */
+
+.sb-bookmarks-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.sb-sidebar-tabs-divider {
+  height: 1px;
+  background: var(--sb-divider-color);
+  margin: 8px 0 10px;
+}
+
+.sb-bookmark-category {
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-bookmark-category-header {
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+
+.sb-bookmark-category-header:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-bookmark-category-toggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 4px;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+  text-align: start;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sb-bookmark-category-icon {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.sb-bookmark-category-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-bookmark-category-chevron {
+  display: inline-flex;
+  align-items: center;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  transition: transform 0.15s ease;
+}
+
+.sb-bookmark-category-chevron .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.sb-bookmark-category-chevron-open {
+  transform: rotate(180deg);
+}
+
+.sb-bookmark-category-rename-input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 6px;
+  padding: 2px 6px;
+  outline: none;
+}
+
+.sb-bookmark-category-rename-input:focus {
+  border-color: var(--sb-primary-color);
+}
+
+.sb-bookmark-category-menu-anchor {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.sb-bookmark-category-menu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  cursor: pointer;
+}
+
+.sb-bookmark-category-menu-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  color: var(--sb-font-color);
+}
+
+.sb-bookmark-category-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-inline-start: 22px;
+}
+
+.sb-bookmark-category-empty {
+  padding: 6px 8px;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+}
+
+.sb-bookmark-item {
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+}
+
+.sb-bookmark-item:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+/* Verse-scoped bookmark rows get a small themed marker on the start edge so
+ * the user can tell at a glance which entries are pinned to a verse vs. the
+ * whole chapter. */
+.sb-bookmark-item-verse {
+  position: relative;
+}
+
+.sb-bookmark-item-verse::before {
   content: "";
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  margin-inline-end: 6px;
+  position: absolute;
+  inset-inline-start: 2px;
+  top: 50%;
+  width: 3px;
+  height: 18px;
+  margin-top: -9px;
+  border-radius: 2px;
+  background: var(--sb-primary-color);
+}
+
+.sb-bookmark-item-verse .sb-bookmark-item-button {
+  padding-inline-start: 10px;
+}
+
+.sb-bookmark-item-button {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 6px 6px;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+  text-align: start;
+  font-size: 13px;
+}
+
+/* ------------------------------------------------------------------
+ * Bookmark category picker (modal)
+ * ------------------------------------------------------------------ */
+
+.sb-bookmark-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sb-bookmark-picker-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sb-bookmark-picker-category {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-size: 14px;
+  cursor: pointer;
+  text-align: start;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.sb-bookmark-picker-category:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
+}
+
+.sb-bookmark-picker-category-selected {
+  border-color: var(--sb-primary-color);
+}
+
+.sb-bookmark-picker-category-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+}
+
+.sb-bookmark-picker-radio {
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: #f59e0b;
-  vertical-align: middle;
+  border: 2px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
+  flex-shrink: 0;
+  position: relative;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.sb-bookmark-picker-radio-checked {
+  border-color: var(--sb-primary-color);
+}
+
+.sb-bookmark-picker-radio-checked::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--sb-primary-color);
+}
+
+.sb-bookmark-picker-divider {
+  height: 1px;
+  background: var(--sb-divider-color);
+  margin: 0;
+}
+
+.sb-bookmark-picker-add-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.sb-bookmark-picker-add-new .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.sb-bookmark-picker-new-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-bookmark-picker-new-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.sb-bookmark-picker-new-input:focus {
+  outline: none;
+  border-color: var(--sb-primary-color);
+}
+
+.sb-bookmark-picker-new-error {
+  color: #b91c1c;
+  font-size: 12px;
+}
+
+.sb-bookmark-picker-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.sb-bookmark-picker-cancel,
+.sb-bookmark-picker-save {
+  min-width: 84px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.sb-bookmark-picker-cancel {
+  background: transparent;
+  color: var(--sb-font-color);
+  border-color: color-mix(in srgb, var(--sb-font-color), transparent 80%);
+}
+
+.sb-bookmark-picker-cancel:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-bookmark-picker-save {
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  border-color: var(--sb-primary-color);
+}
+
+.sb-bookmark-picker-save:hover {
+  background: color-mix(in srgb, var(--sb-primary-color), #000 8%);
+}
+
+.sb-bookmark-picker-save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Mobile: dock the picker modal to the bottom of the screen as a sheet
+ * (matches the design spec). The modal frame itself is reused, but the
+ * outer overlay aligns it to the bottom and stretches it to full width. */
+@media (max-width: 768px) {
+  .sb-footnote-modal-overlay:has(.sb-bookmark-picker) {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .sb-footnote-modal:has(.sb-bookmark-picker) {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    border-bottom: none;
+    box-shadow: 0 -8px 28px #00000033;
+  }
 }
 
 .sb-sidebar-search-shell {
@@ -2618,7 +3052,8 @@ h6 {
   gap: 6px;
 }
 
-.sb-verse-decoration-search-result {
+.sb-verse-decoration-search-result,
+.sb-verse-decoration-initial-verse-highlight {
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 28%);
 }
 
@@ -3623,6 +4058,10 @@ h6 {
   width: 35px;
 }
 
+.sb-sidebar-icon-button path {
+  stroke: currentColor;
+}
+
 .sb-sidebar-icon-button-selected {
   box-shadow: inset 0 0 0 2px var(--sb-primary-color);
 }
@@ -4097,14 +4536,15 @@ h6 {
 .sb-extension-row {
   display: flex;
   align-items: stretch;
+  gap: 8px;
   position: relative;
 }
 
-.sb-extension-row-button {
+.sb-extension-row-body {
   text-align: left;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
   border-radius: 8px;
-  padding: 10px 44px 10px 12px;
+  padding: 10px 12px;
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 75%);
   color: var(--sb-font-color);
   display: flex;
@@ -4113,9 +4553,33 @@ h6 {
   flex: 1;
 }
 
-.sb-extension-row-button:disabled {
-  opacity: 1;
-  cursor: default;
+.sb-extension-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.sb-extension-row-action-button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 70%);
+  color: var(--sb-font-color);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.sb-extension-row-action-button:hover {
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 56%);
+}
+
+.sb-extension-row-action-button .material-symbols-outlined {
+  font-size: 18px;
 }
 
 .sb-extension-row-content {
@@ -4123,6 +4587,7 @@ h6 {
   flex-direction: column;
   min-width: 0;
   gap: 2px;
+  flex: 1;
 }
 
 .sb-extension-name {
@@ -4561,7 +5026,7 @@ h6 {
 
 .sb-settings-action-button {
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 12px 16px;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
@@ -5506,7 +5971,7 @@ h6 {
 
 .sb-account-picture-preview,
 .sb-account-picture-placeholder {
-  width: 62px !important;
+  width: 62px;
   height: 62px !important;
   border-radius: 999px;
   flex-shrink: 0;
@@ -5773,6 +6238,12 @@ h6 {
   opacity: 0.1;
 }
 
+.dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
 .dropdown-select {
   appearance: none;
   -webkit-appearance: none;
@@ -5798,6 +6269,13 @@ h6 {
   margin-right: 0;
   font-family: "Satoshi", system-ui, sans-serif;
   color: var(--sb-font-color);
+}
+
+.dropdown-select-icon {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  font-size: 24px;
 }
 
 .dropdown-option {
@@ -6297,7 +6775,7 @@ h6 {
 @media only screen and (max-width: 768px) {
   .dropdown {
     /* display: none; */
-    width: 100px;
+    width: 62%;
   }
 
   .searchbar {
@@ -6305,7 +6783,7 @@ h6 {
   }
 
   .sidebar-translation-selector {
-    width: 75px;
+    width: 90px;
   }
 
   .testament-selection {
@@ -6314,6 +6792,7 @@ h6 {
 
   .sidebar-selected-title {
     font-size: 16px;
+    font-weight: bold;
   }
 
   .sidebar {
@@ -6339,11 +6818,12 @@ h6 {
   }
 
   .dropdown-select {
-    width: 100px;
+    width: 100%;
+    font-weight: bold;
   }
 
   .dropdown-option {
-    width: 100px;
+    width: 100%;
   }
 
   .testament-title {
@@ -6412,6 +6892,7 @@ h6 {
 
   .sidebar-select {
     font-size: 18px;
+    padding-left: 0px;
   }
 
   .show-sidebar-chapter {
@@ -6615,7 +7096,7 @@ h6 {
   gap: 10px;
   padding: 6px 10px;
   border-radius: 10px;
-  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+  background: var(--sb-reader-background);
   flex-shrink: 0;
 }
 
@@ -6815,8 +7296,9 @@ h6 {
 }
 
 @media (max-width: 768px) {
-  /* Search becomes a full-screen view on mobile with input at the top and
-     scrollable results below. Leaves room at the bottom for the 5-tab bar. */
+  /* Search becomes a full-screen view on mobile with scrollable results above
+     and the input pinned at the bottom. Leaves room at the bottom for the
+     5-tab bar. */
   .sb-floating-search-panel {
     left: 0;
     right: 0;
@@ -6830,13 +7312,14 @@ h6 {
     border: none;
     box-shadow: none;
     padding: 14px 16px;
-    background: var(--sb-reader-background);
+    background: transparent;
     gap: 14px;
     animation: none;
+    backdrop-filter: blur(4px);
   }
 
   .sb-floating-search-panel .sb-floating-search-input-wrap {
-    order: -1;
+    margin-top: auto;
   }
 
   /* No hover on touch — keep the action icon visible on each card. */

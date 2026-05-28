@@ -2,6 +2,7 @@ import QRCodeComponent from "ext_twitchPub.host.QRCode";
 import { TwitchIcon, SettingsIcon } from "ext_twitchPub.host.icons";
 import sendAnnouncement from "ext_twitchPub.host.sendAnnouncement";
 import initializeTwitchBot from "ext_twitchPub.host.initializeTwitchBot";
+import getUrl from "ext_twitchPub.host.getUrl";
 
 const { useState, useEffect, useRef } = os.appHooks;
 const TwitchInterface = (props: {
@@ -12,9 +13,16 @@ const TwitchInterface = (props: {
     s: "login" | "authorization" | "interface" | "settings"
   ) => void;
   annoucementTimer: number;
+  channelId: string;
 }) => {
-  const { broadcasterId, clientId, token, setCurrentPage, annoucementTimer } =
-    props;
+  const {
+    broadcasterId,
+    clientId,
+    token,
+    setCurrentPage,
+    annoucementTimer,
+    channelId,
+  } = props;
   const [uiHidden, setUiHidden] = useState(false);
   const [announcementSend, setAnnouncementSend] = useState(false);
 
@@ -23,7 +31,11 @@ const TwitchInterface = (props: {
   );
 
   const [qrValue, setQrValue] = useState<string>(
-    `https://ao.bot/?pattern=SeedBibleDev&book=GEN&chapter=1&translation=AAB&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`
+    getUrl({
+      clientId: clientId || "",
+      broadcasterId: broadcasterId || "",
+      channelId: channelId || "",
+    })
   );
 
   useEffect(() => {
@@ -44,7 +56,7 @@ const TwitchInterface = (props: {
         token,
         broadcasterId,
         broadcasterId,
-        `Join me at https://ao.bot/?pattern=SeedBibleDev&book=GEN&chapter=1&translation=AAB&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`,
+        `Join me at ${getUrl({ clientId: clientId || "", broadcasterId: broadcasterId || "", channelId: channelId || "" })}`,
         clientId || ""
       );
       setAnnouncementSend(true);
@@ -52,15 +64,39 @@ const TwitchInterface = (props: {
     if (currentBookDataRef.current) {
       const currentBookData = JSON.parse(currentBookDataRef.current);
       setQrValue(
-        `https://ao.bot/?pattern=SeedBibleDev&book=${currentBookData.bookId}&chapter=${currentBookData.chapter}&translation=${currentBookData.translation}&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`
+        getUrl({
+          clientId: clientId || "",
+          broadcasterId: broadcasterId || "",
+          channelId: channelId || "",
+          book: currentBookData.bookId,
+          chapter: currentBookData.chapter,
+          translation: currentBookData.translation,
+        })
       );
     } else {
       setQrValue(
-        `https://ao.bot/?pattern=SeedBibleDev&book=GEN&chapter=1&translation=AAB&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`
+        getUrl({
+          clientId: clientId || "",
+          broadcasterId: broadcasterId || "",
+          channelId: channelId || "",
+          book: "GEN",
+          chapter: 1,
+          translation: "AAB",
+        })
       );
     }
   }, [broadcasterId, clientId, token, announcementSend]);
   const hideUI = () => {
+    if (masks?.hideUITimeout) {
+      clearTimeout(masks.hideUITimeout);
+    }
+    const st = setTimeout(() => {
+      setUiHidden(true);
+    }, 4000);
+    setTagMask(thisBot, "hideUITimeout", st, "local");
+  };
+
+  const hideUIOnTouch = () => {
     if (masks?.hideUITimeout) {
       clearTimeout(masks.hideUITimeout);
     }
@@ -77,21 +113,38 @@ const TwitchInterface = (props: {
     setUiHidden(false);
   };
 
+  const showUIOnTouch = () => {
+    if (masks?.hideUITimeout) {
+      clearTimeout(masks.hideUITimeout);
+    }
+    setUiHidden(false);
+  };
   useEffect(() => {
     const draggableElement = document.getElementById("draggable-container");
     if (!draggableElement) return;
 
     draggableElement.addEventListener("mousedown", showUI);
     draggableElement.addEventListener("mouseleave", hideUI);
+    draggableElement.addEventListener("touchstart", showUIOnTouch);
+    draggableElement.addEventListener("touchend", hideUIOnTouch);
     hideUI();
     return () => {
       draggableElement.removeEventListener("mousedown", showUI);
       draggableElement.removeEventListener("mouseleave", hideUI);
+      draggableElement.removeEventListener("touchstart", showUIOnTouch);
+      draggableElement.removeEventListener("touchend", hideUIOnTouch);
     };
   }, []);
 
   useEffect(() => {
-    if (!annoucementTimer || !broadcasterId || !clientId || !token) return;
+    if (
+      !annoucementTimer ||
+      annoucementTimer === 0 ||
+      !broadcasterId ||
+      !clientId ||
+      !token
+    )
+      return;
     const st = setInterval(() => {
       if (masks?.uiLoaded) {
         console.log("Announcement timer tick");
@@ -101,7 +154,7 @@ const TwitchInterface = (props: {
             token,
             broadcasterId,
             broadcasterId,
-            `Join me at https://ao.bot/?pattern=SeedBibleDev&book=${currentBookData.bookId}&chapter=${currentBookData.chapter}&translation=${currentBookData.translation}&ext_twitchSub=true&broadcasterId=${broadcasterId}&clientId=${clientId}&token=${token}`,
+            `Join me at ${getUrl({ clientId: clientId || "", broadcasterId: broadcasterId || "", channelId: channelId || "", book: currentBookData.bookId, chapter: currentBookData.chapter, translation: currentBookData.translation })}`,
             clientId || ""
           );
         }
@@ -213,10 +266,10 @@ const TwitchInterface = (props: {
               <SettingsIcon width={18} height={18} />
             </button>
             <button
-              className="icon-btn"
+              className="icon-btn material-symbols-outlined"
               onClick={() => whisper(thisBot, "closeInterface")}
             >
-              <span className="material-symbols-outlined">close</span>
+              close
             </button>
           </div>
         </div>

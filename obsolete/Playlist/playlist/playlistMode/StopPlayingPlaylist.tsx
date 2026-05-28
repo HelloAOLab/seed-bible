@@ -9,10 +9,12 @@ G[`${parentId}ToggleGreyCheckPLayingPlaylist`] &&
 G.IsQueuePresent = false;
 // os.unregisterApp("playing-playlist");
 G.IS_PLAYLIST_ACTIVE = false;
-G.SetSplitAppPanel2(null);
+G.SetSplitAppPanel2 && G.SetSplitAppPanel2(null);
 G.StopPlayingPlaylistModal(false);
 if (G.RemoveNowBarApp) {
   G.RemoveNowBarApp("player-playlist-bar");
 }
 os.unregisterApp("playing-playlist-flaot");
 thisBot.CloseFloatingApp();
+G.SetDontShowMobileBottomNavbar(false);
+G.SetMobileHeaderBar(null);

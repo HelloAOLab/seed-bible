@@ -12,12 +12,9 @@ const fnnn = async function () {
 
 const openSelf = async function () {
   if (globalThis["Playlist_package"]) {
-    console.log("2222");
     globalThis["Playlist_package"].onClick();
   } else {
-    console.log("2222");
     const PlayList = await Playlist.tryInitPlaylistMaker();
-    console.log(PlayList);
     if (PlayList) {
       const id = uuid();
       globalThis.PLAYLIST_PANEL_ID = id;

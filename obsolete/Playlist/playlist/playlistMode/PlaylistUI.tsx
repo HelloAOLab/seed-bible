@@ -22,6 +22,7 @@ const ShowPlayingContentAnnotation =
 const EditRichText = await thisBot.EditRichText();
 const EditAttachment = await thisBot.EditAttachment();
 const AddToPlaylist = await thisBot.AddToPlaylist();
+const ConfirmLinkModal = await thisBot.ConfirmLinkModal();
 
 const bibleVizUtils = getBot("system", "bibleVizUtils.main");
 
@@ -106,6 +107,8 @@ const Playlist = () => {
   const [openModal, setOpenModal] = useState(false);
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const [openExternalLink, setOpenExternalLink] = useState<string | null>(null);
 
   useLayoutEffect(() => {
     G.SetSidebarOpen = setSidebarOpen;
@@ -354,6 +357,7 @@ const Playlist = () => {
     id: G.EditRichText?.id,
     text: G.EditRichText?.text,
     parentID: G.EditRichText?.parentID,
+    isQuotedText: G.EditRichText?.isQuotedText,
   });
 
   // Restore edit rich text data
@@ -371,6 +375,7 @@ const Playlist = () => {
       link: "",
       mediaType: "",
       text: null,
+      isQuotedText: false,
     }
   );
 
@@ -384,6 +389,7 @@ const Playlist = () => {
       id: null,
       text: null,
       parentID: null,
+      isQuotedText: false,
     });
   };
 
@@ -397,6 +403,7 @@ const Playlist = () => {
       data: "",
       link: "",
       mediaType: "",
+      isQuotedText: false,
     });
   };
 
@@ -438,6 +445,14 @@ const Playlist = () => {
     document.addEventListener("keyup", onKeyUp);
     document.addEventListener("keydown", onKeyDown);
 
+    G.SetOpenExternalLinkHigh = (link: string) => {
+      if (isMobile) {
+        setOpenExternalLink(link);
+      } else {
+        os.openURL(link);
+      }
+    };
+
     return () => {
       G.makingPlaylist = false;
       document.removeEventListener("keyup", onKeyUp);
@@ -470,6 +485,7 @@ const Playlist = () => {
       G.SetAnnotationData = null;
       G.SetPlaylistForforcedHeight && G.SetPlaylistForforcedHeight(0);
       G.SetShowAddToPlaylist = null;
+      G.SetOpenExternalLinkHigh = null;
     };
   }, []);
 
@@ -510,11 +526,13 @@ const Playlist = () => {
           parentID={editRichText.parentID}
           onClose={onCloseEditRichText}
           contentId={editRichText.id}
+          isQuotedText={editRichText.isQuotedText}
           text={editRichText.text}
         />
       )}
       {!!editAttachmentItem.id && (
         <EditAttachment
+          isQuotedText={editAttachmentItem.isQuotedText}
           parentID={editAttachmentItem.parentId}
           onClose={onCloseEditAttachmentItem}
           contentId={editAttachmentItem.id}
@@ -523,6 +541,13 @@ const Playlist = () => {
           data={editAttachmentItem.data}
           link={editAttachmentItem.link}
           mediaType={editAttachmentItem.mediaType}
+        />
+      )}
+
+      {openExternalLink && (
+        <ConfirmLinkModal
+          onClose={() => setOpenExternalLink(null)}
+          link={openExternalLink}
         />
       )}
 

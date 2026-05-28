@@ -28,8 +28,6 @@
   border-radius: 5px;
   cursor: pointer;
   width: max-content;
-  margin-left: auto;
-  margin-right: auto;
 }
 
 .twitchBtn:disabled {
@@ -71,7 +69,7 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  width: 100%;
+  align-items: center;
   gap: 5px;
 }
 

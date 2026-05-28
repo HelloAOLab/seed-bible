@@ -270,13 +270,21 @@ export const DEFAULT_TRANSLATION_LANGUAGE = DEFAULT_TRANSLATION.language;
 export const DEFAULT_BOOK_ID = "GEN";
 export const DEFAULT_CHAPTER_NUMBER = 1;
 
-interface InitialBibleReadingOptions {
+export interface InitialBibleReadingOptions {
   initialTranslationId?: string | null;
   initialBookId?: string | null;
   initialChapterNumber?: number | null;
+
+  /**
+   * The verse to scroll to after the initial chapter loads. Should be a valid verse number within the initial chapter, otherwise it will be ignored.
+   */
+  scrollToVerse?: number;
 }
 
 export interface SelectTranslationAndChapterOptions {
+  /**
+   * The verse to scroll to after the chapter loads. Should be a valid verse number within the chapter, otherwise it will be ignored.
+   */
   scrollToVerse?: number;
 }
 
@@ -957,14 +965,12 @@ export function createBibleReadingState(
     error.value = null;
 
     try {
-      console.log("Loading available translations...");
       const loadedTranslations =
         await dataManager.getTranslations(getActiveEndpoint());
       availableTranslations.value = toAvailableTranslations(
         dataManager.availableTranslations.value
       );
 
-      console.log("loaded", availableTranslations.value);
       const firstAvailableTranslation = loadedTranslations[0];
       const requestedTranslation = translationId.value
         ? availableTranslations.value.translations.find(
@@ -1021,9 +1027,11 @@ export function createBibleReadingState(
         nextChapterNumber
       );
 
-      await syncStateFromChapter(chapter);
-      console.log("Initial chapter loaded:", chapter);
+      await syncStateFromChapter(chapter, {
+        scrollToVerse: options.scrollToVerse,
+      });
     } catch (err) {
+      console.error("Error loading initial Bible data:", err);
       error.value =
         err instanceof Error ? err.message : "Failed to load Bible data.";
     } finally {
