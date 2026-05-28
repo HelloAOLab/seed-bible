@@ -44,6 +44,7 @@ interface TabsHeaderProps {
   isLayoutMenuOpen: boolean;
   toggleLayoutMenu: () => void;
   setLayout: (layout: PaneLayoutId) => void;
+  createSharedSession: () => void;
 }
 
 /**
@@ -371,6 +372,7 @@ export function TabsHeader(props: TabsHeaderProps) {
     isLayoutMenuOpen,
     toggleLayoutMenu,
     setLayout,
+    createSharedSession,
   } = props;
   const { sidebar, settings } = state;
   const isAwake = settings.settings.value.keepScreenAwake;
@@ -447,6 +449,13 @@ export function TabsHeader(props: TabsHeaderProps) {
             aria-label={t("more", { defaultValue: "More" })}
             title={t("more", { defaultValue: "More" })}
           >
+            <ContextMenuItem
+              onClick={() => {
+                createSharedSession();
+              }}
+            >
+              {t("new-shared-session", { defaultValue: "New shared session" })}
+            </ContextMenuItem>
             <ContextMenuItem
               onClick={() => {
                 window.open(
@@ -1761,6 +1770,9 @@ export function Sidebar(props: SidebarProps) {
           setLayout={(layout) => {
             panes.setLayout(layout);
             closeLayoutMenu();
+          }}
+          createSharedSession={() => {
+            void state.app.createSharedSession();
           }}
         />
       )}
