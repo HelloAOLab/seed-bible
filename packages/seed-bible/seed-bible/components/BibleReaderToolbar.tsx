@@ -451,6 +451,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const nextChapterTool = useComputed(
     () => tools.value.find((tool) => tool.id === "next-chapter") ?? null
   );
+  const openSelectorTool = useComputed(
+    () => tools.value.find((tool) => tool.id === "open-selector") ?? null
+  );
 
   const floatingAnchor = useComputed(() =>
     readingState.value!.selectedVerses.value.reduce<{
@@ -745,7 +748,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     sidebar.closeChatPanel();
                     sidebar.closeSettings();
                     sidebar.closeSidebar();
-                    void selector.setOpen(false);
+                    openSelectorTool.value?.onSelect();
                     selectedToolbarToolId.value = null;
                   }}
                 />
