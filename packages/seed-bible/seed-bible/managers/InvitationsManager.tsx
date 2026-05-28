@@ -250,7 +250,9 @@ export function createInvitationsManager(
 
   // Kick off the registry connection immediately — discoverability doesn't
   // require the current user to be logged in.
-  void openRegistry();
+
+  // TODO: Re-enable this when we can only listen for entries from users the current one follows (subscribes to).
+  // void openRegistry();
 
   const publishSession = async (
     session: BibleReadingSession
