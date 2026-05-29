@@ -185,8 +185,14 @@ export function createSeedBibleState(): SeedBibleState {
   const bookmarks = createBookmarksManager(login);
   const config = createConfig(login);
   const themeManager = createTheme(login);
-  const sidebar = createSidebar();
   const chats = createChatsManager(login);
+  const sidebar = createSidebar({
+    onOpenChatPanel: () => {
+      if (chats.chats.value.length === 0) {
+        chats.createLocalSession();
+      }
+    },
+  });
   const tabs = createTabs(data, highlights, chats);
   const panes = createPanes(tabs, tabs.selectedTabId);
   const settings = createSettings(login);

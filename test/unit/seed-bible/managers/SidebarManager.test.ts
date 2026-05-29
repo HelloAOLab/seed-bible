@@ -179,4 +179,25 @@ describe("createSidebar", () => {
     sidebar.closeSidebar();
     expect(configBot.tags.sidebar).toBe(null);
   });
+
+  it("openChatPanel() calls onOpenChatPanel callback", () => {
+    const onOpenChatPanel = jest.fn();
+    const sidebar = createSidebar({ onOpenChatPanel });
+
+    sidebar.openChatPanel();
+
+    expect(onOpenChatPanel).toHaveBeenCalledTimes(1);
+    expect(sidebar.isChatPanelOpen.value).toBe(true);
+  });
+
+  it("toggleChatPanel() calls onOpenChatPanel only when opening", () => {
+    const onOpenChatPanel = jest.fn();
+    const sidebar = createSidebar({ onOpenChatPanel });
+
+    sidebar.toggleChatPanel();
+    sidebar.toggleChatPanel();
+
+    expect(onOpenChatPanel).toHaveBeenCalledTimes(1);
+    expect(sidebar.isChatPanelOpen.value).toBe(false);
+  });
 });

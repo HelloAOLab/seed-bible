@@ -14,7 +14,11 @@ export type RequestedSettingsView =
   | "toolbar"
   | "extensions";
 
-export function createSidebar() {
+export interface CreateSidebarOptions {
+  onOpenChatPanel?: () => void;
+}
+
+export function createSidebar(options?: CreateSidebarOptions) {
   const initialView = configBot.tags.settingsView ?? null;
   const isSidebarCollapsed = signal(false);
   const isMobileOpen = signal(false);
@@ -48,6 +52,7 @@ export function createSidebar() {
   };
 
   const openChatPanel = () => {
+    options?.onOpenChatPanel?.();
     isSearchPanelOpen.value = false;
     isChatPanelOpen.value = true;
   };
