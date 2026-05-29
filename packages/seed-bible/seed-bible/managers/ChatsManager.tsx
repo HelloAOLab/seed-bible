@@ -41,14 +41,23 @@ export type ChatMessageOptions = z.infer<typeof chatMessageOptionsSchema>;
 
 export interface ChatParticipant {
   id: string;
-  name: string;
+
+  /**
+   * The display name of the participant. May be null if the participant is anonymous.
+   */
+  name: string | null;
+
+  /**
+   * Whether this participant is the current user.
+   */
+  isSelf: boolean;
 }
 
 export interface ChatSession {
   /** Chat messages ordered from oldest to most recent. */
   messages: ReadonlySignal<ChatMessage[]>;
   /** Sends a message and notifies the other participants. */
-  sendMessage: (message: ChatMessage) => Promise<void>;
+  sendMessage: (message: ChatMessageOptions) => Promise<void>;
   participants: ReadonlySignal<ChatParticipant[]>;
 
   /**
@@ -61,6 +70,26 @@ export interface ChatSession {
 
 export interface ChatsManager {
   createSharedSession: (session: BibleReadingSession) => ChatSession;
+  createLocalSession: (participant?: ChatParticipant) => ChatSession;
+}
+
+const DEFAULT_LOCAL_PARTICIPANT: ChatParticipant = {
+  id: "local-user",
+  name: null,
+  isSelf: true,
+};
+
+function createChatMessage(
+  options: ChatMessageOptions,
+  authorId: string | null
+): ChatMessage {
+  const validMessage = chatMessageOptionsSchema.parse(options);
+  return {
+    id: uuid(),
+    timeMs: Date.now(),
+    authorId,
+    ...validMessage,
+  };
 }
 
 function createSharedChatSession(session: BibleReadingSession): ChatSession {
@@ -87,24 +116,20 @@ function createSharedChatSession(session: BibleReadingSession): ChatSession {
       name:
         (user.profile?.name && user.profile.name.trim().length > 0
           ? user.profile.name
-          : null) ??
-        user.userId ??
-        user.connectionId,
+          : null) ?? null,
+      isSelf: user.isSelf,
     }))
   );
 
   const sendMessage = async (message: ChatMessageOptions) => {
-    const validMessage = chatMessageOptionsSchema.parse(message);
-
-    chats.push({
-      id: uuid(),
-      timeMs: Date.now(),
-      authorId:
+    chats.push(
+      createChatMessage(
+        message,
         session.currentUser.value?.userId ??
-        session.currentUser.value?.connectionId ??
-        null,
-      ...validMessage,
-    });
+          session.currentUser.value?.connectionId ??
+          null
+      )
+    );
   };
 
   return {
@@ -124,8 +149,36 @@ function createSharedChatSession(session: BibleReadingSession): ChatSession {
   };
 }
 
+function createLocalChatSession(participant?: ChatParticipant): ChatSession {
+  const localParticipant = participant ?? DEFAULT_LOCAL_PARTICIPANT;
+  const participants = signal<ChatParticipant[]>([localParticipant]);
+  const messages = signal<ChatMessage[]>([]);
+
+  const sendMessage = async (message: ChatMessageOptions) => {
+    messages.value = [
+      ...messages.value,
+      createChatMessage(message, localParticipant.id),
+    ];
+  };
+
+  const getMessageAuthor = (message: ChatMessage) => {
+    if (message.authorId !== localParticipant.id) {
+      return null;
+    }
+    return localParticipant;
+  };
+
+  return {
+    messages,
+    sendMessage,
+    participants,
+    getMessageAuthor,
+  };
+}
+
 export function createChatsManager(): ChatsManager {
   return {
     createSharedSession: createSharedChatSession,
+    createLocalSession: createLocalChatSession,
   };
 }
