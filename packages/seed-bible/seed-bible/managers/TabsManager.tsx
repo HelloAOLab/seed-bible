@@ -213,9 +213,9 @@ export interface TabsManager {
  */
 export function createTabs(
   dataManager: BibleDataManager,
-  highlightsManager: HighlightsManager
+  highlightsManager: HighlightsManager,
+  chatsManager: ReturnType<typeof createChatsManager>
 ): TabsManager {
-  const chatsManager = createChatsManager();
   const tabs = signal<ReaderTab[]>(
     createInitialTabs(dataManager, highlightsManager)
   );

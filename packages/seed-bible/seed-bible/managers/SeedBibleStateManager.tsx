@@ -186,7 +186,8 @@ export function createSeedBibleState(): SeedBibleState {
   const config = createConfig(login);
   const themeManager = createTheme(login);
   const sidebar = createSidebar();
-  const tabs = createTabs(data, highlights);
+  const chats = createChatsManager(login);
+  const tabs = createTabs(data, highlights, chats);
   const panes = createPanes(tabs, tabs.selectedTabId);
   const settings = createSettings(login);
   const selector = createBibleSelectorState(
@@ -200,7 +201,6 @@ export function createSeedBibleState(): SeedBibleState {
   const tools = createBibleToolsManager();
   const readingHistory = createReadingHistoryManager(login);
   const annotations = createAnnotationsManager(login);
-  const chats = createChatsManager();
   const sessions = createSessionsManager(data, login, highlights);
   const extensions = createExtensionManager();
   const modals = createModalManager();

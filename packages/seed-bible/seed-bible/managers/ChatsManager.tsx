@@ -1,5 +1,9 @@
 import { computed, signal, type ReadonlySignal } from "@preact/signals";
 import { z } from "zod";
+import type {
+  LoginManager,
+  UserProfile,
+} from "seed-bible.managers.LoginManager";
 import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
 
 export const chatMessageBaseSchema = z.object({
@@ -70,14 +74,19 @@ export interface ChatSession {
 
 export interface ChatsManager {
   createSharedSession: (session: BibleReadingSession) => ChatSession;
-  createLocalSession: (participant?: ChatParticipant) => ChatSession;
+  createLocalSession: () => ChatSession;
 }
 
-const DEFAULT_LOCAL_PARTICIPANT: ChatParticipant = {
-  id: "local-user",
-  name: null,
-  isSelf: true,
-};
+const DEFAULT_LOCAL_PARTICIPANT_ID = "local-user";
+
+function getParticipantName(profile: UserProfile | null): string | null {
+  const name = profile?.name;
+  if (typeof name !== "string") {
+    return null;
+  }
+  const trimmed = name.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
 
 function createChatMessage(
   options: ChatMessageOptions,
@@ -149,23 +158,30 @@ function createSharedChatSession(session: BibleReadingSession): ChatSession {
   };
 }
 
-function createLocalChatSession(participant?: ChatParticipant): ChatSession {
-  const localParticipant = participant ?? DEFAULT_LOCAL_PARTICIPANT;
-  const participants = signal<ChatParticipant[]>([localParticipant]);
+function createLocalChatSession(loginManager: LoginManager): ChatSession {
+  const localParticipant = computed<ChatParticipant>(() => ({
+    id: loginManager.userId.value ?? DEFAULT_LOCAL_PARTICIPANT_ID,
+    name: getParticipantName(loginManager.profile.value),
+    isSelf: true,
+  }));
+  const participants = computed<ChatParticipant[]>(() => [
+    localParticipant.value,
+  ]);
   const messages = signal<ChatMessage[]>([]);
 
   const sendMessage = async (message: ChatMessageOptions) => {
+    const participant = localParticipant.value;
     messages.value = [
       ...messages.value,
-      createChatMessage(message, localParticipant.id),
+      createChatMessage(message, participant.id),
     ];
   };
 
   const getMessageAuthor = (message: ChatMessage) => {
-    if (message.authorId !== localParticipant.id) {
+    if (message.authorId !== localParticipant.value.id) {
       return null;
     }
-    return localParticipant;
+    return localParticipant.value;
   };
 
   return {
@@ -176,9 +192,9 @@ function createLocalChatSession(participant?: ChatParticipant): ChatSession {
   };
 }
 
-export function createChatsManager(): ChatsManager {
+export function createChatsManager(loginManager: LoginManager): ChatsManager {
   return {
     createSharedSession: createSharedChatSession,
-    createLocalSession: createLocalChatSession,
+    createLocalSession: () => createLocalChatSession(loginManager),
   };
 }
