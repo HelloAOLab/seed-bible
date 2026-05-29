@@ -715,6 +715,45 @@ describe("createChatsManager", () => {
     expect(providerResponse).toHaveBeenCalledTimes(1);
   });
 
+  it("sendMessage() defaults to first local AI target when no targets are resolved", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const chats = createChatsManager(loginManager);
+    const session = chats.createLocalSession();
+    const firstProviderResponse = jest.fn().mockResolvedValue({
+      type: "text",
+      text: "First provider reply",
+    });
+    const secondProviderResponse = jest.fn().mockResolvedValue({
+      type: "text",
+      text: "Second provider reply",
+    });
+
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      generateResponse: firstProviderResponse,
+    });
+    chats.registerProvider({
+      id: "provider-2",
+      name: "Helper AI 2",
+      generateResponse: secondProviderResponse,
+    });
+
+    await session.sendMessage({
+      type: "text",
+      text: "Hello there",
+    });
+
+    expect(session.messages.value[0]).toMatchObject({
+      targets: ["provider-1"],
+    });
+    expect(firstProviderResponse).toHaveBeenCalledTimes(1);
+    expect(secondProviderResponse).not.toHaveBeenCalled();
+  });
+
   it("createSharedSession() stores targets matched by remote participant name and local AI name", async () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);

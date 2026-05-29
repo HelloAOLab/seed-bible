@@ -476,10 +476,19 @@ function createLocalChatSession(
 
   const sendMessage = async (message: ChatMessageOptions) => {
     const participant = localParticipant.value;
-    const targetParticipants =
+    const resolvedTargetParticipants =
       message.type === "text"
         ? resolveMessageTargets(participants.value, message.text)
         : [];
+    const targetParticipants =
+      resolvedTargetParticipants.length > 0
+        ? resolvedTargetParticipants
+        : (() => {
+            const defaultParticipant = participants.value.find(
+              (entry) => entry.isAI && !entry.isRemote
+            );
+            return defaultParticipant ? [defaultParticipant] : [];
+          })();
     const nextMessage = createChatMessage(
       message,
       participant.id ? [participant.id] : [],
