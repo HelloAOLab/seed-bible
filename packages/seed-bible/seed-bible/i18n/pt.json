@@ -200,8 +200,8 @@
 
   "add-verse": "Adicionar verso",
   "add": "Adicionar",
-  "chat-empty-title": "O bate-papo estará disponível em breve.",
-  "chat-empty-body": "Aqui você poderá fazer perguntas e explorar referências cruzadas.",
+  "chat-coming-soon": "O bate-papo estará disponível em breve.",
+  "chat-coming-soon-body": "Aqui você poderá fazer perguntas e explorar referências cruzadas.",
   "category-options": "Opções de pasta",
   "rename": "Renomear",
   "delete": "Excluir",

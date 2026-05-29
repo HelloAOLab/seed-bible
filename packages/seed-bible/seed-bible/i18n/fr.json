@@ -200,8 +200,8 @@
 
   "add-verse": "Ajouter un verset",
   "add": "Ajouter",
-  "chat-empty-title": "Le chat arrive bientôt",
-  "chat-empty-body": "C'est ici que vous pourrez poser des questions et explorer les références croisées.",
+  "chat-coming-soon": "Le chat arrive bientôt",
+  "chat-coming-soon-body": "C'est ici que vous pourrez poser des questions et explorer les références croisées.",
   "category-options": "Options de dossier",
   "rename": "Rebaptiser",
   "delete": "Supprimer",

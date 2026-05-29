@@ -200,8 +200,8 @@
 
   "add-verse": "添加诗句",
   "add": "添加",
-  "chat-empty-title": "聊天功能即将上线",
-  "chat-empty-body": "在这里您可以提出问题并查阅交叉引用。",
+  "chat-coming-soon": "聊天功能即将上线",
+  "chat-coming-soon-body": "在这里您可以提出问题并查阅交叉引用。",
   "category-options": "文件夹选项",
   "rename": "重命名",
   "delete": "删除",

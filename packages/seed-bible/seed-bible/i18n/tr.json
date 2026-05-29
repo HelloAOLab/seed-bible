@@ -200,8 +200,8 @@
 
   "add-verse": "Ayeti ekle",
   "add": "Eklemek",
-  "chat-empty-title": "Sohbet özelliği yakında geliyor.",
-  "chat-empty-body": "Burada sorular sorabilir ve çapraz referansları inceleyebilirsiniz.",
+  "chat-coming-soon": "Sohbet özelliği yakında geliyor.",
+  "chat-coming-soon-body": "Burada sorular sorabilir ve çapraz referansları inceleyebilirsiniz.",
   "category-options": "Klasör seçenekleri",
   "rename": "Yeniden isimlendirmek",
   "delete": "Silmek",

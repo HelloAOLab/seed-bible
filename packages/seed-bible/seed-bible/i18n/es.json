@@ -200,8 +200,8 @@
 
   "add-verse": "Añadir verso",
   "add": "Agregar",
-  "chat-empty-title": "El chat estará disponible próximamente.",
-  "chat-empty-body": "Aquí podrás hacer preguntas y explorar referencias cruzadas.",
+  "chat-coming-soon": "El chat estará disponible próximamente.",
+  "chat-coming-soon-body": "Aquí podrás hacer preguntas y explorar referencias cruzadas.",
   "category-options": "Opciones de carpeta",
   "rename": "Rebautizar",
   "delete": "Borrar",

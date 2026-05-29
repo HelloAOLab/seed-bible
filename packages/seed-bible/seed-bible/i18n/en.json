@@ -204,8 +204,8 @@
 
   "add-verse": "Add verse",
   "add": "Add",
-  "chat-empty-title": "Chat is coming soon",
-  "chat-empty-body": "This is where you'll be able to ask questions and explore cross-references.",
+  "chat-coming-soon": "Chat is coming soon",
+  "chat-coming-soon-body": "This is where you'll be able to ask questions and explore cross-references.",
   "category-options": "Folder options",
   "rename": "Rename",
   "delete": "Delete",
@@ -228,5 +228,9 @@
   "more-coming-soon": "More options coming soon",
   "discovery-coming-soon": "Discovery is coming soon",
   "login-to-use-feature": "You have to log in to use this feature.",
-  "link-to-join-shared-session-copied": "A link to join the shared session was copied to your clipboard"
+  "link-to-join-shared-session-copied": "A link to join the shared session was copied to your clipboard",
+  "no-chat-messages": "No messages yet",
+  "unable-to-send-message": "Unable to send message.",
+  "type-a-message": "Type a message...",
+  "send-message": "Send message"
 }

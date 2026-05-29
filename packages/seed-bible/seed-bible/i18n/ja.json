@@ -200,8 +200,8 @@
 
   "add-verse": "詩を追加する",
   "add": "追加",
-  "chat-empty-title": "チャット機能は近日公開予定です",
-  "chat-empty-body": "ここでは、質問をしたり、相互参照を調べたりすることができます。",
+  "chat-coming-soon": "チャット機能は近日公開予定です",
+  "chat-coming-soon-body": "ここでは、質問をしたり、相互参照を調べたりすることができます。",
   "category-options": "フォルダーオプション",
   "rename": "名前を変更する",
   "delete": "消去",

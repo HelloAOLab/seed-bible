@@ -1,5 +1,6 @@
 import { useSignal } from "@preact/signals";
 import { useI18n } from "seed-bible.i18n.I18nManager";
+import { ChatView } from "./ChatView";
 import { closeContextMenus } from "seed-bible.components.ContextMenu";
 import {
   DEFAULT_TRANSLATION_ID,
@@ -429,6 +430,7 @@ function FloatingChatPanel(props: FloatingReaderPanelsProps) {
   const { sidebar } = state;
   const { t } = useI18n();
   const isOpen = sidebar.isChatPanelOpen.value;
+  const chat = state.chats.chats.value[0] ?? null;
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -463,23 +465,23 @@ function FloatingChatPanel(props: FloatingReaderPanelsProps) {
       role="dialog"
       aria-label={t("chat", { defaultValue: "Chat" })}
     >
-      <div className="sb-floating-chat-empty">
-        <span
-          className="material-symbols-outlined sb-floating-chat-empty-icon"
-          aria-hidden="true"
-        >
-          chat_bubble_outline
-        </span>
-        <p className="sb-floating-chat-empty-title">
-          {t("chat-empty-title", { defaultValue: "Chat is coming soon" })}
-        </p>
-        {/* <p className="sb-floating-chat-empty-body">
-          {t("chat-empty-body", {
-            defaultValue:
-              "This is where you'll be able to ask questions and explore cross-references.",
-          })}
-        </p> */}
-      </div>
+      {chat ? (
+        <ChatView chat={chat} />
+      ) : (
+        <div className="sb-floating-chat-empty">
+          <span
+            className="material-symbols-outlined sb-floating-chat-empty-icon"
+            aria-hidden="true"
+          >
+            chat_bubble_outline
+          </span>
+          <p className="sb-floating-chat-empty-title">
+            {t("chat-coming-soon", {
+              defaultValue: "No chat session available",
+            })}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
