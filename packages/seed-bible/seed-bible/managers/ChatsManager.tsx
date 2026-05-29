@@ -131,6 +131,7 @@ export interface ChatSession {
 }
 
 export interface ChatsManager {
+  chats: ReadonlySignal<ChatSession[]>;
   createSharedSession: (session: BibleReadingSession) => ChatSession;
   createLocalSession: () => ChatSession;
   registerProvider: (provider: ChatProvider) => () => void;
@@ -519,6 +520,7 @@ function createLocalChatSession(
 }
 
 export function createChatsManager(loginManager: LoginManager): ChatsManager {
+  const chats = signal<ChatSession[]>([]);
   const chatProviders = signal<ChatProvider[]>([]);
 
   const registerProvider = (provider: ChatProvider) => {
@@ -541,11 +543,22 @@ export function createChatsManager(loginManager: LoginManager): ChatsManager {
     };
   };
 
+  const createLocalSession = () => {
+    const chat = createLocalChatSession(loginManager, chatProviders);
+    chats.value = [...chats.value, chat];
+    return chat;
+  };
+
+  const createSharedSession = (session: BibleReadingSession) => {
+    const chat = createSharedChatSession(session, chatProviders);
+    chats.value = [...chats.value, chat];
+    return chat;
+  };
+
   return {
-    createSharedSession: (session) =>
-      createSharedChatSession(session, chatProviders),
-    createLocalSession: () =>
-      createLocalChatSession(loginManager, chatProviders),
+    chats,
+    createSharedSession,
+    createLocalSession,
     registerProvider,
   };
 }

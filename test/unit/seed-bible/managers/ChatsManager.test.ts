@@ -185,6 +185,34 @@ describe("createChatsManager", () => {
     ]);
   });
 
+  it("tracks created chats in creation order", () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager);
+    const { session: sharedReadingSession } = createSharedSessionMock({
+      currentUserId: "shared-user",
+    });
+
+    expect(chats.chats.value).toEqual([]);
+
+    const localChat = chats.createLocalSession();
+    const sharedChat = chats.createSharedSession(sharedReadingSession);
+
+    expect(chats.chats.value).toEqual([localChat, sharedChat]);
+  });
+
+  it("tracks multiple created local chats as distinct sessions", () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager);
+
+    const firstChat = chats.createLocalSession();
+    const secondChat = chats.createLocalSession();
+
+    expect(chats.chats.value).toHaveLength(2);
+    expect(chats.chats.value[0]).toBe(firstChat);
+    expect(chats.chats.value[1]).toBe(secondChat);
+    expect(firstChat).not.toBe(secondChat);
+  });
+
   it("resolveMessageTargets() matches by participant id", () => {
     const participants: ChatParticipant[] = [
       {
