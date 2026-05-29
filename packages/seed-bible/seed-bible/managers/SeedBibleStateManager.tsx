@@ -41,6 +41,10 @@ import {
   type BookmarksManager,
 } from "seed-bible.managers.BookmarksManager";
 import {
+  createChatsManager,
+  type ChatsManager,
+} from "seed-bible.managers.ChatsManager";
+import {
   createSessionsManager,
   type BibleReadingSession,
   type SessionsManager,
@@ -148,6 +152,8 @@ export interface SeedBibleState {
   bookmarks: BookmarksManager;
   /** Annotation manager for notes/metadata. */
   annotations: AnnotationsManager;
+  /** Chat session manager for in-app chat state. */
+  chats: ChatsManager;
   /** Shared reading sessions manager. */
   sessions: SessionsManager;
   /** Modal manager for app-wide dialog state and rendering. */
@@ -194,6 +200,7 @@ export function createSeedBibleState(): SeedBibleState {
   const tools = createBibleToolsManager();
   const readingHistory = createReadingHistoryManager(login);
   const annotations = createAnnotationsManager(login);
+  const chats = createChatsManager();
   const sessions = createSessionsManager(data, login, highlights);
   const extensions = createExtensionManager();
   const modals = createModalManager();
@@ -637,6 +644,7 @@ export function createSeedBibleState(): SeedBibleState {
     highlights,
     bookmarks,
     annotations,
+    chats,
     sessions,
     modals,
     settings,
