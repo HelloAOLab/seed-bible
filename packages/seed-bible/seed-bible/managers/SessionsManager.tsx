@@ -1,4 +1,4 @@
-import { effect, signal, type ReadonlySignal } from "@preact/signals";
+import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
 import {
   createBibleReadingState,
   type BibleReadingState,
@@ -307,6 +307,7 @@ export interface BibleReadingSession {
   updateOptions: (newOptions: Partial<SessionOptions>) => void;
   readingState: BibleReadingState;
   connectedUsers: ReadonlySignal<ConnectedSessionUser[]>;
+  currentUser: ReadonlySignal<ConnectedSessionUser | null>;
   /**
    * Removes a decoration by id from the session's shared CRDT map. Use
    * this instead of `readingState.removeDecoration` when you need the
@@ -384,6 +385,10 @@ async function createBibleReadingSession(
     (typeof configBot !== "undefined" ? toStringOrNull(configBot?.id) : null) ??
     "local";
   const decorationOwners = new Map<string, string>();
+
+  const currentUser = computed(
+    () => connectedUsers.value.find((user) => user.isSelf) ?? null
+  );
 
   if (defaultOptions) {
     document.transact(() => {
@@ -923,6 +928,7 @@ async function createBibleReadingSession(
     updateOptions,
     readingState,
     connectedUsers,
+    currentUser,
     removeSharedDecoration,
     dispose,
   };

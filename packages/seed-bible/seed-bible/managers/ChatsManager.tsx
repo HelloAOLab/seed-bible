@@ -9,6 +9,12 @@ export const chatMessageBaseSchema = z.object({
   id: z.string(),
 
   /**
+   * The ID of the user who sent the message.
+   * Null if the user is anonymous.
+   */
+  authorId: z.string().nullable(),
+
+  /**
    * The unix time in milliseconds when the message was sent.
    */
   timeMs: z.number().int().nonnegative(),
@@ -27,11 +33,11 @@ export type ChatMessageBase = z.infer<typeof chatMessageBaseSchema>;
 export type TextChatMessage = z.infer<typeof textChatMessageSchema>;
 export type ChatMessage = z.infer<typeof chatMessageSchema>;
 
-export const chatMessageOptions = z.discriminatedUnion("type", [
-  textChatMessageSchema.omit({ timeMs: true, id: true }),
+export const chatMessageOptionsSchema = z.discriminatedUnion("type", [
+  textChatMessageSchema.omit({ timeMs: true, id: true, authorId: true }),
 ]);
 
-export type ChatMessageOptions = z.infer<typeof chatMessageOptions>;
+export type ChatMessageOptions = z.infer<typeof chatMessageOptionsSchema>;
 
 export interface ChatParticipant {
   id: string;
@@ -44,6 +50,13 @@ export interface ChatSession {
   /** Sends a message and notifies the other participants. */
   sendMessage: (message: ChatMessage) => Promise<void>;
   participants: ReadonlySignal<ChatParticipant[]>;
+
+  /**
+   * Gets the author of a given message. Returns null if the author is anonymous or has left the session.
+   * @param message The message to get the author of.
+   * @returns The author of the message, or null if the author is anonymous or has left the session.
+   */
+  getMessageAuthor: (message: ChatMessage) => ChatParticipant | null;
 }
 
 export interface ChatsManager {
@@ -81,11 +94,16 @@ function createSharedChatSession(session: BibleReadingSession): ChatSession {
   );
 
   const sendMessage = async (message: ChatMessageOptions) => {
-    const validMessage = chatMessageSchema.parse(message);
+    const validMessage = chatMessageOptionsSchema.parse(message);
+
     chats.push({
       id: uuid(),
       timeMs: Date.now(),
-      validMessage,
+      authorId:
+        session.currentUser.value?.userId ??
+        session.currentUser.value?.connectionId ??
+        null,
+      ...validMessage,
     });
   };
 
@@ -93,6 +111,16 @@ function createSharedChatSession(session: BibleReadingSession): ChatSession {
     messages,
     sendMessage,
     participants,
+    getMessageAuthor: (message: ChatMessage) => {
+      if (!message.authorId) {
+        return null;
+      }
+      return (
+        participants.value.find(
+          (participant) => participant.id === message.authorId
+        ) ?? null
+      );
+    },
   };
 }
 
