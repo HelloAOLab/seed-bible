@@ -20,14 +20,22 @@ function getMessageText(message: ChatMessage): string {
   }
 }
 
-function getAuthorLabel(chat: ChatSession, message: ChatMessage): string {
+function getAuthorLabel(
+  chat: ChatSession,
+  message: ChatMessage,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
   const authors = chat
     .getMessageAuthors(message)
-    .map((author) => author.name ?? author.id)
+    .map((author) =>
+      author.isSelf
+        ? t("you", { defaultValue: "You" })
+        : (author.name ?? author.id)
+    )
     .filter((name) => name && name.trim().length > 0);
 
   if (authors.length === 0) {
-    return "Anonymous";
+    return t("anonymous", { defaultValue: "Anonymous" });
   }
 
   return authors.join(", ");
@@ -99,7 +107,7 @@ export function ChatView(props: ChatViewProps) {
             <article className="sb-chat-view-message" key={message.id}>
               <header className="sb-chat-view-message-header">
                 <span className="sb-chat-view-message-author">
-                  {getAuthorLabel(chat, message)}
+                  {getAuthorLabel(chat, message, t)}
                 </span>
               </header>
               <p className="sb-chat-view-message-body">
