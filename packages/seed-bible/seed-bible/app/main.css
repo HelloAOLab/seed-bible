@@ -1456,6 +1456,7 @@ h6 {
   color: var(--sb-reader-toolbar-font-color);
 
   transition: transform 0.3s ease;
+  user-select: none;
 }
 
 .sb-reader-toolbar-wrap {
@@ -1876,9 +1877,14 @@ h6 {
   /* When the user is scrolling down on a mobile reader, slide the bottom
    * toolbar (and its floating prev/next arrows) off the bottom of the
    * viewport. Scrolling back up removes the body class and the toolbar
-   * slides back into view. */
+   * slides back into view. The extra offset past 100% accounts for the
+   * floating arrow buttons, which sit `top: -68px` above the wrap and
+   * would otherwise remain visible after the wrap itself slides off. */
   body.sb-scroll-hide-bars .sb-reader-toolbar-wrap {
-    transform: translateX(-50%) translateY(100%);
+    transform: translateX(-50%)
+      translateY(
+        calc(100% - var(--sb-reader-toolbar-floating-button-top) + 8px)
+      );
     /* pointer-events: none; */
   }
 }
@@ -2445,6 +2451,7 @@ h6 {
   color: var(--sb-font-color);
   flex-shrink: 0;
   position: relative;
+  user-select: none;
 }
 
 .sb-tabs-sidebar-collapsed {
