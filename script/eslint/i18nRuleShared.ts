@@ -53,7 +53,12 @@ function flattenTranslationKeys(
 
 function parseJsonFile(filePath: string): unknown {
   const content = fs.readFileSync(filePath, "utf8");
-  return JSON.parse(content) as unknown;
+  try {
+    return JSON.parse(content) as unknown;
+  } catch (err) {
+    console.error(`Failed to parse JSON file: ${filePath}`, err);
+    throw err;
+  }
 }
 
 function collectExtensionManifestPaths(packagesDir: string): string[] {

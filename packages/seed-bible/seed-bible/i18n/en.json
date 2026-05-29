@@ -65,7 +65,6 @@
   "no-chapter-content-found": "No chapter content found.",
   "no-translations-available": "No translations available.",
   "more": "More",
-
   "exit-full-screen": "Exit Full Screen",
   "themes": "Themes",
   "page-settings": "Page settings",
@@ -169,6 +168,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apocrypha",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Custom translations",
   "no-translation-results-found": "No results found. Would you like to expand your search to include partially complete translations as well?",
   "show-all-translations": "Show all translations",
@@ -212,7 +212,6 @@
   "bookmark-folder-empty": "No bookmarks here yet.",
   "bookmark-options": "Bookmark options",
   "new-folder-placeholder": "Folder name",
-
   "tasks": "Tasks",
   "bookmarks": "Bookmarks",
   "hide-bookmarks": "Hide bookmarks",
