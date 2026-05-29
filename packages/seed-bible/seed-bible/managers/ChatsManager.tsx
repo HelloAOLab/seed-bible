@@ -62,6 +62,7 @@ export type ChatMessageOptions = z.infer<typeof chatMessageOptionsSchema>;
 export interface ChatContext {
   messages: ChatMessage[];
   participant: ChatParticipant;
+  participants: ChatParticipant[];
 }
 
 export interface ChatProvider {
@@ -72,7 +73,7 @@ export interface ChatProvider {
   /** Generates a response for the given chat context. */
   generateResponse: (
     context: ChatContext
-  ) => ChatMessageOptions | Promise<ChatMessageOptions>;
+  ) => ChatMessageOptions | Promise<ChatMessageOptions | null> | null;
 }
 
 export interface ChatParticipant {
@@ -416,7 +417,11 @@ function createSharedChatSession(
         const response = await provider.generateResponse({
           messages: [...messages.value, nextMessage],
           participant,
+          participants: participants.value,
         });
+        if (!response) {
+          return;
+        }
         const responseTargets =
           response.type === "text"
             ? resolveMessageTargets(participants.value, response.text)
@@ -499,7 +504,11 @@ function createLocalChatSession(
         const response = await provider.generateResponse({
           messages: [...messages.value],
           participant: target,
+          participants: participants.value,
         });
+        if (!response) {
+          return;
+        }
         const responseTargets =
           response.type === "text"
             ? resolveMessageTargets(participants.value, response.text)

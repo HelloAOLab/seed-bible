@@ -7,3 +7,5 @@ bun.lock
 .vscode/*
 !.vscode/settings.json
 ./cursor/*
+
+secrets.json
