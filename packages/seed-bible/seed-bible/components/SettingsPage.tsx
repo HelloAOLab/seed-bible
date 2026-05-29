@@ -1957,6 +1957,7 @@ function SettingsMainView(props: { state: SeedBibleState }) {
   const { t, language, availableLanguages, setLanguage } = useI18n();
   const isAwake = state.settings.settings.value.keepScreenAwake;
   const isLanguageMenuOpen = useSignal(false);
+  const languageSearchQuery = useSignal("");
   const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
   const languageMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -1972,6 +1973,19 @@ function SettingsMainView(props: { state: SeedBibleState }) {
     cc: "",
     display: language.toUpperCase(),
   };
+
+  const filteredLanguages = useComputed(() => {
+    const query = languageSearchQuery.value.trim().toLowerCase();
+    if (!query) return availableLanguages;
+    return availableLanguages.filter((code) => {
+      const meta = LANG_META[code];
+      const display = meta?.display ?? code;
+      return (
+        code.toLowerCase().includes(query) ||
+        display.toLowerCase().includes(query)
+      );
+    });
+  });
 
   return (
     <div className="sb-settings-page">
@@ -2097,12 +2111,20 @@ function SettingsMainView(props: { state: SeedBibleState }) {
                       className="sb-language-picker-overlay"
                       onClick={() => {
                         isLanguageMenuOpen.value = false;
+                        languageSearchQuery.value = "";
                       }}
                     />
                     <div
                       ref={(el) => {
                         languageMenuRef.current = el;
                         if (el && !el.contains(document.activeElement)) {
+                          const search = el.querySelector<HTMLInputElement>(
+                            ".sb-language-picker-search-input"
+                          );
+                          if (search) {
+                            search.focus();
+                            return;
+                          }
                           const selected = el.querySelector<HTMLElement>(
                             '[role="option"][aria-selected="true"]:not([disabled])'
                           );
@@ -2118,38 +2140,90 @@ function SettingsMainView(props: { state: SeedBibleState }) {
                         if (event.key === "Escape") {
                           event.preventDefault();
                           isLanguageMenuOpen.value = false;
+                          languageSearchQuery.value = "";
                           languageTriggerRef.current?.focus();
+                          return;
+                        }
+                        const target = event.target as HTMLElement | null;
+                        const isSearchInput = target?.classList.contains(
+                          "sb-language-picker-search-input"
+                        );
+                        if (isSearchInput) {
+                          if (
+                            event.key === "ArrowDown" ||
+                            event.key === "Enter"
+                          ) {
+                            event.preventDefault();
+                            const firstOption =
+                              event.currentTarget.querySelector<HTMLElement>(
+                                '[role="option"]:not([disabled])'
+                              );
+                            firstOption?.focus();
+                          }
                           return;
                         }
                         handleVerticalListKeyNav(event, event.currentTarget);
                       }}
                     >
-                      {availableLanguages.map((languageCode) => {
-                        const meta = LANG_META[languageCode];
-                        const isSelected = languageCode === language;
-                        return (
-                          <button
-                            key={languageCode}
-                            type="button"
-                            role="option"
-                            aria-selected={isSelected}
-                            className={`sb-language-picker-item${
-                              isSelected
-                                ? " sb-language-picker-item-selected"
-                                : ""
-                            }`}
-                            onClick={() => {
-                              void setLanguage(languageCode);
-                              isLanguageMenuOpen.value = false;
-                            }}
-                          >
-                            {meta?.cc && <FlagImg cc={meta.cc} />}
-                            <span>
-                              {meta?.display ?? languageCode.toUpperCase()}
-                            </span>
-                          </button>
-                        );
-                      })}
+                      <div className="sb-language-picker-search">
+                        <span
+                          className="material-symbols-outlined sb-language-picker-search-icon"
+                          aria-hidden="true"
+                        >
+                          search
+                        </span>
+                        <input
+                          type="text"
+                          className="sb-language-picker-search-input"
+                          placeholder={t("search-languages", {
+                            defaultValue: "Search languages...",
+                          })}
+                          aria-label={t("search-languages", {
+                            defaultValue: "Search languages...",
+                          })}
+                          value={languageSearchQuery.value}
+                          onInput={(event: Event) => {
+                            languageSearchQuery.value = (
+                              event.currentTarget as HTMLInputElement
+                            ).value;
+                          }}
+                        />
+                      </div>
+                      {filteredLanguages.value.length === 0 ? (
+                        <div className="sb-language-picker-empty">
+                          {t("no-languages-found", {
+                            defaultValue: "No languages found",
+                          })}
+                        </div>
+                      ) : (
+                        filteredLanguages.value.map((languageCode) => {
+                          const meta = LANG_META[languageCode];
+                          const isSelected = languageCode === language;
+                          return (
+                            <button
+                              key={languageCode}
+                              type="button"
+                              role="option"
+                              aria-selected={isSelected}
+                              className={`sb-language-picker-item${
+                                isSelected
+                                  ? " sb-language-picker-item-selected"
+                                  : ""
+                              }`}
+                              onClick={() => {
+                                void setLanguage(languageCode);
+                                isLanguageMenuOpen.value = false;
+                                languageSearchQuery.value = "";
+                              }}
+                            >
+                              {meta?.cc && <FlagImg cc={meta.cc} />}
+                              <span>
+                                {meta?.display ?? languageCode.toUpperCase()}
+                              </span>
+                            </button>
+                          );
+                        })
+                      )}
                     </div>
                   </>
                 )}
