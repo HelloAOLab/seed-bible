@@ -1037,9 +1037,6 @@
       "tabernacle.domain.ports.botAdapter": [
         "./packages/Tabernacle/tabernacle/domain/ports/botAdapter.tsx"
       ],
-      "tabernacle.domain.ports.hitboxConfig": [
-        "./packages/Tabernacle/tabernacle/domain/ports/hitboxConfig.tsx"
-      ],
       "tabernacle.domain.ports.pieceConfig": [
         "./packages/Tabernacle/tabernacle/domain/ports/pieceConfig.tsx"
       ],
@@ -1288,6 +1285,63 @@
       ],
       "tabernacle.manager.UpdateVerseOptions": [
         "./packages/Tabernacle/tabernacle/manager/UpdateVerseOptions.tsx"
+      ],
+      "todayScreen.infrastructure.di.bootstrap": [
+        "./packages/today-screen/todayScreen/infrastructure/di/bootstrap.tsx"
+      ],
+      "todayScreen.infrastructure.entrypoints.botAdapter": [
+        "./packages/today-screen/todayScreen/infrastructure/entrypoints/botAdapter.tsx"
+      ],
+      "todayScreen.infrastructure.entrypoints.onExtensionInstalled": [
+        "./packages/today-screen/todayScreen/infrastructure/entrypoints/onExtensionInstalled.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.components.containers.Divider": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/Divider.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.components.containers.Header": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/Header.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.components.containers.RecommendationsSection": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/RecommendationsSection.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.components.containers.ResumeReadingSection": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/ResumeReadingSection.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.components.containers.SearchSection": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/SearchSection.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.components.containers.SocialSection": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/SocialSection.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.components.containers.TodayContent": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/TodayContent.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.components.Today": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/Today.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.components.ui.TodayContainer": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/ui/TodayContainer.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.contexts.today.TodayContext": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/contexts/today/TodayContext.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.contexts.today.useTodayProvider": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/contexts/today/useTodayProvider.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.hooks.useHeader": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useHeader.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.hooks.useResumeReadingSection": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useResumeReadingSection.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.hooks.useTodayContent": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useTodayContent.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.styles.adapter": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/styles/adapter.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.styles.botAdapter": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/styles/botAdapter.tsx"
       ],
       "ext_twitchPub.host.App": [
         "./packages/twitchPub-extension/ext_twitchPub/host/App.tsx"

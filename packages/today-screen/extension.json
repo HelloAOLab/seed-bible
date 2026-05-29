@@ -1,0 +1,10 @@
+{
+  "id": "today-screen",
+  "dependencies": [],
+  "translations": {
+    "en": {
+      "title": "Today screen",
+      "description": ""
+    }
+  }
+}

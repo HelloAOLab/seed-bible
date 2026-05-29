@@ -327,6 +327,7 @@ export const DEFAULT_EXTENSIONS = [
   "Scripture Map",
   "twitchSub-extension",
   "twitchPub-extension",
+  "today-screen",
   // "BookSelector",
   // "Object Pooler",
   // "GeoImporter",
