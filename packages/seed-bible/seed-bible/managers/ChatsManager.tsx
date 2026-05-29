@@ -116,6 +116,11 @@ const chatParticipantSchema = z.object({
 const chatParticipantArraySchema = z.array(chatParticipantSchema);
 
 export interface ChatSession {
+  /**
+   * The ID of the chat.
+   */
+  id: string;
+
   /** Chat messages ordered from oldest to most recent. */
   messages: ReadonlySignal<ChatMessage[]>;
   /** Sends a message and notifies the other participants. */
@@ -132,9 +137,11 @@ export interface ChatSession {
 
 export interface ChatsManager {
   chats: ReadonlySignal<ChatSession[]>;
+  selectedChat: ReadonlySignal<ChatSession | null>;
   createSharedSession: (session: BibleReadingSession) => ChatSession;
   createLocalSession: () => ChatSession;
   registerProvider: (provider: ChatProvider) => () => void;
+  selectChat: (chatId: string | null) => void;
 }
 
 const DEFAULT_LOCAL_PARTICIPANT_ID = "local-user";
@@ -426,6 +433,7 @@ function createSharedChatSession(
   };
 
   return {
+    id: uuid(),
     messages,
     sendMessage,
     participants,
@@ -512,6 +520,7 @@ function createLocalChatSession(
     resolveMessageAuthors(participants.value, message);
 
   return {
+    id: uuid(),
     messages,
     sendMessage,
     participants,
@@ -522,6 +531,10 @@ function createLocalChatSession(
 export function createChatsManager(loginManager: LoginManager): ChatsManager {
   const chats = signal<ChatSession[]>([]);
   const chatProviders = signal<ChatProvider[]>([]);
+  const selectedChatId = signal<string | null>(null);
+  const selectedChat = computed(
+    () => chats.value.find((chat) => chat.id === selectedChatId.value) ?? null
+  );
 
   const registerProvider = (provider: ChatProvider) => {
     chatProviders.value = [
@@ -560,5 +573,9 @@ export function createChatsManager(loginManager: LoginManager): ChatsManager {
     createSharedSession,
     createLocalSession,
     registerProvider,
+    selectedChat,
+    selectChat: (chatId: string | null) => {
+      selectedChatId.value = chatId;
+    },
   };
 }
