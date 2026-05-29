@@ -203,7 +203,7 @@ describe("createChatsManager", () => {
       },
     ];
 
-    expect(resolveMessageTargets(participants, "Hi @{provider-1}")).toEqual([
+    expect(resolveMessageTargets(participants, "Hi @provider-1")).toEqual([
       participants[1]!,
     ]);
   });
@@ -226,7 +226,7 @@ describe("createChatsManager", () => {
       },
     ];
 
-    expect(resolveMessageTargets(participants, "Hi @{Alpha}")).toEqual([
+    expect(resolveMessageTargets(participants, "Hi @Alpha")).toEqual([
       participants[0]!,
     ]);
   });
@@ -249,7 +249,7 @@ describe("createChatsManager", () => {
       },
     ];
 
-    expect(resolveMessageTargets(participants, "Hi @{Helper AI}")).toEqual([
+    expect(resolveMessageTargets(participants, "Hi @Helper AI")).toEqual([
       participants[0]!,
     ]);
   });
@@ -272,7 +272,7 @@ describe("createChatsManager", () => {
       },
     ];
 
-    expect(resolveMessageTargets(participants, "Hi @{Alpha}")).toEqual([]);
+    expect(resolveMessageTargets(participants, "Hi @Alpha")).toEqual([]);
   });
 
   it("resolveMessageTargets() dedupes repeated and overlapping matches", () => {
@@ -287,7 +287,7 @@ describe("createChatsManager", () => {
     ];
 
     expect(
-      resolveMessageTargets(participants, "@{user-1} @{Alpha} @{user-1}")
+      resolveMessageTargets(participants, "@user-1 @Alpha @user-1")
     ).toEqual([participants[0]!]);
   });
 
@@ -678,7 +678,7 @@ describe("createChatsManager", () => {
 
     await session.sendMessage({
       type: "text",
-      text: "Hello @{provider-1}",
+      text: "Hello @provider-1",
     });
 
     expect(session.messages.value[0]).toMatchObject({
@@ -723,7 +723,7 @@ describe("createChatsManager", () => {
 
     await chatSession.sendMessage({
       type: "text",
-      text: "Hi @{Alpha} and @{Helper AI}",
+      text: "Hi @Alpha and @Helper AI",
     });
 
     expect(sharedChats.toArray()[0]).toMatchObject({

@@ -169,41 +169,69 @@ function createProviderParticipantId(
   return `${ownerParticipantId}_${providerId}`;
 }
 
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function extractMentionTokens(text: string): string[] {
-  return Array.from(text.matchAll(/@\{([^}]+)\}/g), (match) => match[1] ?? "")
-    .map((token) => token.trim())
-    .filter((token) => token.length > 0);
+  const tokens = new Set<string>();
+
+  for (const match of text.matchAll(/(?:^|[^\w])@\{([^}]+)\}/g)) {
+    const token = (match[1] ?? "").trim();
+    if (token.length > 0) {
+      tokens.add(token);
+    }
+  }
+
+  for (const match of text.matchAll(/(?:^|[^\w])@([^\s@.,!?;:)}\]]+)/g)) {
+    const token = (match[1] ?? "").trim();
+    if (token.length > 0) {
+      tokens.add(token);
+    }
+  }
+
+  return Array.from(tokens);
+}
+
+function textIncludesMention(text: string, value: string): boolean {
+  const token = value.trim();
+  if (token.length === 0) {
+    return false;
+  }
+
+  const escapedToken = escapeRegExp(token);
+  const mentionPattern = new RegExp(
+    `(?:^|[^\\w])@(?:\\{${escapedToken}\\}|${escapedToken})(?=$|[\\s.,!?;:)}\\]])`
+  );
+  return mentionPattern.test(text);
 }
 
 export function resolveMessageTargets(
   participants: ChatParticipant[],
   text: string
 ): ChatParticipant[] {
-  const tokens = extractMentionTokens(text);
-  if (tokens.length === 0) {
+  if (extractMentionTokens(text).length === 0) {
     return [];
   }
 
   const matches = new Map<string, ChatParticipant>();
 
-  for (const token of tokens) {
-    for (const participant of participants) {
-      if (participant.id === token) {
-        matches.set(participant.id, participant);
-      }
+  for (const participant of participants) {
+    if (textIncludesMention(text, participant.id)) {
+      matches.set(participant.id, participant);
+    }
+  }
+
+  for (const participant of participants) {
+    if (!participant.name || !textIncludesMention(text, participant.name)) {
+      continue;
     }
 
-    for (const participant of participants) {
-      if (participant.name !== token) {
-        continue;
-      }
-
-      if (
-        (participant.isRemote && !participant.isAI) ||
-        (!participant.isRemote && participant.isAI)
-      ) {
-        matches.set(participant.id, participant);
-      }
+    if (
+      (participant.isRemote && !participant.isAI) ||
+      (!participant.isRemote && participant.isAI)
+    ) {
+      matches.set(participant.id, participant);
     }
   }
 
