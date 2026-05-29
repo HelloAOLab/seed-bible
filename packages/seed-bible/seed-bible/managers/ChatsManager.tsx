@@ -1,4 +1,4 @@
-import { computed, signal, type ReadonlySignal } from "@preact/signals";
+import { computed, Signal, signal, type ReadonlySignal } from "@preact/signals";
 import { z } from "zod";
 import type {
   LoginManager,
@@ -43,6 +43,22 @@ export const chatMessageOptionsSchema = z.discriminatedUnion("type", [
 
 export type ChatMessageOptions = z.infer<typeof chatMessageOptionsSchema>;
 
+export interface ChatContext {
+  messages: ChatMessage[];
+  participant: ChatParticipant;
+}
+
+export interface ChatProvider {
+  /** The name of the chat provider. */
+  name: string;
+  /** The ID of the chat provider. */
+  id: string;
+  /** Generates a response for the given chat context. */
+  generateResponse: (
+    context: ChatContext
+  ) => ChatMessageOptions | Promise<ChatMessageOptions>;
+}
+
 export interface ChatParticipant {
   id: string;
 
@@ -55,6 +71,11 @@ export interface ChatParticipant {
    * Whether this participant is the current user.
    */
   isSelf: boolean;
+
+  /**
+   * Whether this participant is an AI.
+   */
+  isAI: boolean;
 }
 
 export interface ChatSession {
@@ -127,6 +148,7 @@ function createSharedChatSession(session: BibleReadingSession): ChatSession {
           ? user.profile.name
           : null) ?? null,
       isSelf: user.isSelf,
+      isAI: false,
     }))
   );
 
@@ -158,14 +180,28 @@ function createSharedChatSession(session: BibleReadingSession): ChatSession {
   };
 }
 
-function createLocalChatSession(loginManager: LoginManager): ChatSession {
+function createLocalChatSession(
+  loginManager: LoginManager,
+  chatProviders: Signal<ChatProvider[]>
+): ChatSession {
   const localParticipant = computed<ChatParticipant>(() => ({
     id: loginManager.userId.value ?? DEFAULT_LOCAL_PARTICIPANT_ID,
     name: getParticipantName(loginManager.profile.value),
     isSelf: true,
+    isAI: false,
   }));
+  const chatProviderParticipants = computed<ChatParticipant[]>(() =>
+    chatProviders.value.map((provider) => ({
+      id: provider.id,
+      name: provider.name,
+      isSelf: false,
+      isAI: true,
+    }))
+  );
+
   const participants = computed<ChatParticipant[]>(() => [
     localParticipant.value,
+    ...chatProviderParticipants.value,
   ]);
   const messages = signal<ChatMessage[]>([]);
 
@@ -193,8 +229,10 @@ function createLocalChatSession(loginManager: LoginManager): ChatSession {
 }
 
 export function createChatsManager(loginManager: LoginManager): ChatsManager {
+  const chatProviders = signal<ChatProvider[]>([]);
   return {
     createSharedSession: createSharedChatSession,
-    createLocalSession: () => createLocalChatSession(loginManager),
+    createLocalSession: () =>
+      createLocalChatSession(loginManager, chatProviders),
   };
 }
