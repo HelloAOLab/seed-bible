@@ -28,6 +28,11 @@ export const chatMessageBaseSchema = z.object({
    * The unix time in milliseconds when the message was sent.
    */
   timeMs: z.number().int().nonnegative(),
+
+  /**
+   * The IDs of the participants targeted by the message.
+   */
+  targets: z.array(z.string()),
 });
 
 export const textChatMessageSchema = chatMessageBaseSchema.extend({
@@ -44,7 +49,12 @@ export type TextChatMessage = z.infer<typeof textChatMessageSchema>;
 export type ChatMessage = z.infer<typeof chatMessageSchema>;
 
 export const chatMessageOptionsSchema = z.discriminatedUnion("type", [
-  textChatMessageSchema.omit({ timeMs: true, id: true, authors: true }),
+  textChatMessageSchema.omit({
+    timeMs: true,
+    id: true,
+    authors: true,
+    targets: true,
+  }),
 ]);
 
 export type ChatMessageOptions = z.infer<typeof chatMessageOptionsSchema>;
@@ -57,7 +67,7 @@ export interface ChatContext {
 export interface ChatProvider {
   /** The name of the chat provider. */
   name: string;
-  /** The ID of the chat provider. */
+  /** The ID of the chat provider */
   id: string;
   /** Generates a response for the given chat context. */
   generateResponse: (
@@ -66,6 +76,9 @@ export interface ChatProvider {
 }
 
 export interface ChatParticipant {
+  /**
+   * The ID of the participant.
+   */
   id: string;
 
   /**
@@ -136,15 +149,78 @@ function getParticipantName(profile: UserProfile | null): string | null {
 
 function createChatMessage(
   options: ChatMessageOptions,
-  authorId: string | null
+  authors: string[],
+  targets: string[]
 ): ChatMessage {
   const validMessage = chatMessageOptionsSchema.parse(options);
   return {
     id: uuid(),
     timeMs: Date.now(),
-    authors: authorId ? [authorId] : [],
+    authors,
+    targets,
     ...validMessage,
   };
+}
+
+function createProviderParticipantId(
+  ownerParticipantId: string,
+  providerId: string
+): string {
+  return `${ownerParticipantId}_${providerId}`;
+}
+
+function extractMentionTokens(text: string): string[] {
+  return Array.from(text.matchAll(/@\{([^}]+)\}/g), (match) => match[1] ?? "")
+    .map((token) => token.trim())
+    .filter((token) => token.length > 0);
+}
+
+export function resolveMessageTargets(
+  participants: ChatParticipant[],
+  text: string
+): ChatParticipant[] {
+  const tokens = extractMentionTokens(text);
+  if (tokens.length === 0) {
+    return [];
+  }
+
+  const matches = new Map<string, ChatParticipant>();
+
+  for (const token of tokens) {
+    for (const participant of participants) {
+      if (participant.id === token) {
+        matches.set(participant.id, participant);
+      }
+    }
+
+    for (const participant of participants) {
+      if (participant.name !== token) {
+        continue;
+      }
+
+      if (
+        (participant.isRemote && !participant.isAI) ||
+        (!participant.isRemote && participant.isAI)
+      ) {
+        matches.set(participant.id, participant);
+      }
+    }
+  }
+
+  return Array.from(matches.values());
+}
+
+function resolveMessageAuthors(
+  participants: ChatParticipant[],
+  message: ChatMessage
+): ChatParticipant[] {
+  if (message.authors.length === 0) {
+    return [];
+  }
+
+  return message.authors
+    .map((id) => participants.find((p) => p.id === id))
+    .filter((p) => p) as ChatParticipant[];
 }
 
 function createSharedChatSession(
@@ -229,7 +305,7 @@ function createSharedChatSession(
 
     const localProviderParticipants = localParticipantId
       ? chatProviders.value.map((provider) => ({
-          id: `${localParticipantId}_${provider.id}`,
+          id: createProviderParticipantId(localParticipantId, provider.id),
           name: provider.name,
           isAI: true,
         }))
@@ -265,13 +341,58 @@ function createSharedChatSession(
   });
 
   const sendMessage = async (message: ChatMessageOptions) => {
-    chats.push(
-      createChatMessage(
-        message,
-        session.currentUser.value?.userId ??
-          session.currentUser.value?.connectionId ??
-          null
-      )
+    const authorId =
+      session.currentUser.value?.userId ??
+      session.currentUser.value?.connectionId ??
+      null;
+    const targetParticipants =
+      message.type === "text"
+        ? resolveMessageTargets(participants.value, message.text)
+        : [];
+    const nextMessage = createChatMessage(
+      message,
+      authorId ? [authorId] : [],
+      targetParticipants.map((participant) => participant.id)
+    );
+
+    chats.push(nextMessage);
+
+    await Promise.all(
+      targetParticipants.map(async (participant) => {
+        if (!participant.isAI || participant.isRemote || !authorId) {
+          return;
+        }
+
+        const providerId = participant.id.startsWith(`${authorId}_`)
+          ? participant.id.slice(authorId.length + 1)
+          : null;
+        if (!providerId) {
+          return;
+        }
+
+        const provider = chatProviders.value.find(
+          (entry) => entry.id === providerId
+        );
+        if (!provider) {
+          return;
+        }
+
+        const response = await provider.generateResponse({
+          messages: [...messages.value, nextMessage],
+          participant,
+        });
+        const responseTargets =
+          response.type === "text"
+            ? resolveMessageTargets(participants.value, response.text)
+            : [];
+        chats.push(
+          createChatMessage(
+            response,
+            [participant.id],
+            responseTargets.map((target) => target.id)
+          )
+        );
+      })
     );
   };
 
@@ -279,14 +400,8 @@ function createSharedChatSession(
     messages,
     sendMessage,
     participants,
-    getMessageAuthors: (message: ChatMessage) => {
-      if (message.authors.length === 0) {
-        return [];
-      }
-      return message.authors
-        .map((id) => participants.value.find((p) => p.id === id))
-        .filter((p) => p) as ChatParticipant[];
-    },
+    getMessageAuthors: (message: ChatMessage) =>
+      resolveMessageAuthors(participants.value, message),
   };
 }
 
@@ -319,20 +434,53 @@ function createLocalChatSession(
 
   const sendMessage = async (message: ChatMessageOptions) => {
     const participant = localParticipant.value;
-    messages.value = [
-      ...messages.value,
-      createChatMessage(message, participant.id),
-    ];
+    const targetParticipants =
+      message.type === "text"
+        ? resolveMessageTargets(participants.value, message.text)
+        : [];
+    const nextMessage = createChatMessage(
+      message,
+      participant.id ? [participant.id] : [],
+      targetParticipants.map((target) => target.id)
+    );
+
+    messages.value = [...messages.value, nextMessage];
+
+    await Promise.all(
+      targetParticipants.map(async (target) => {
+        if (!target.isAI || target.isRemote) {
+          return;
+        }
+
+        const provider = chatProviders.value.find(
+          (entry) => entry.id === target.id
+        );
+        if (!provider) {
+          return;
+        }
+
+        const response = await provider.generateResponse({
+          messages: [...messages.value],
+          participant: target,
+        });
+        const responseTargets =
+          response.type === "text"
+            ? resolveMessageTargets(participants.value, response.text)
+            : [];
+        messages.value = [
+          ...messages.value,
+          createChatMessage(
+            response,
+            [target.id],
+            responseTargets.map((entry) => entry.id)
+          ),
+        ];
+      })
+    );
   };
 
-  const getMessageAuthors = (message: ChatMessage) => {
-    if (message.authors.length === 0) {
-      return [];
-    }
-    return message.authors
-      .map((id) => participants.value.find((p) => p.id === id))
-      .filter((p) => p) as ChatParticipant[];
-  };
+  const getMessageAuthors = (message: ChatMessage) =>
+    resolveMessageAuthors(participants.value, message);
 
   return {
     messages,

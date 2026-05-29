@@ -1,6 +1,7 @@
 import { signal } from "@preact/signals";
 import {
   createChatsManager,
+  resolveMessageTargets,
   type ChatMessage,
   type ChatParticipant,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
@@ -184,6 +185,112 @@ describe("createChatsManager", () => {
     ]);
   });
 
+  it("resolveMessageTargets() matches by participant id", () => {
+    const participants: ChatParticipant[] = [
+      {
+        id: "user-1",
+        name: "Alice",
+        isSelf: true,
+        isAI: false,
+        isRemote: false,
+      },
+      {
+        id: "provider-1",
+        name: "Helper AI",
+        isSelf: false,
+        isAI: true,
+        isRemote: false,
+      },
+    ];
+
+    expect(resolveMessageTargets(participants, "Hi @{provider-1}")).toEqual([
+      participants[1]!,
+    ]);
+  });
+
+  it("resolveMessageTargets() matches remote non-AI participants by name", () => {
+    const participants: ChatParticipant[] = [
+      {
+        id: "u1",
+        name: "Alpha",
+        isSelf: false,
+        isAI: false,
+        isRemote: true,
+      },
+      {
+        id: "u2",
+        name: "Alpha",
+        isSelf: false,
+        isAI: true,
+        isRemote: true,
+      },
+    ];
+
+    expect(resolveMessageTargets(participants, "Hi @{Alpha}")).toEqual([
+      participants[0]!,
+    ]);
+  });
+
+  it("resolveMessageTargets() matches local AI participants by name", () => {
+    const participants: ChatParticipant[] = [
+      {
+        id: "provider-1",
+        name: "Helper AI",
+        isSelf: false,
+        isAI: true,
+        isRemote: false,
+      },
+      {
+        id: "user-1",
+        name: "Helper AI",
+        isSelf: false,
+        isAI: false,
+        isRemote: false,
+      },
+    ];
+
+    expect(resolveMessageTargets(participants, "Hi @{Helper AI}")).toEqual([
+      participants[0]!,
+    ]);
+  });
+
+  it("resolveMessageTargets() does not match local non-AI or remote AI by name", () => {
+    const participants: ChatParticipant[] = [
+      {
+        id: "user-1",
+        name: "Alpha",
+        isSelf: false,
+        isAI: false,
+        isRemote: false,
+      },
+      {
+        id: "provider-1",
+        name: "Alpha",
+        isSelf: false,
+        isAI: true,
+        isRemote: true,
+      },
+    ];
+
+    expect(resolveMessageTargets(participants, "Hi @{Alpha}")).toEqual([]);
+  });
+
+  it("resolveMessageTargets() dedupes repeated and overlapping matches", () => {
+    const participants: ChatParticipant[] = [
+      {
+        id: "user-1",
+        name: "Alpha",
+        isSelf: false,
+        isAI: false,
+        isRemote: true,
+      },
+    ];
+
+    expect(
+      resolveMessageTargets(participants, "@{user-1} @{Alpha} @{user-1}")
+    ).toEqual([participants[0]!]);
+  });
+
   it("createLocalSession() updates participant when login profile changes", () => {
     const { loginManager, userId, profile } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);
@@ -218,6 +325,7 @@ describe("createChatsManager", () => {
     expect(session.messages.value[0]).toMatchObject({
       id: "msg-1",
       authors: ["user-3"],
+      targets: [],
       timeMs: 1_717_000_000_000,
       type: "text",
       text: "Hello local",
@@ -234,6 +342,7 @@ describe("createChatsManager", () => {
         {
           id: "existing-1",
           authors: ["user-a"],
+          targets: [],
           timeMs: 100,
           type: "text",
           text: "valid",
@@ -251,6 +360,7 @@ describe("createChatsManager", () => {
       {
         id: "existing-1",
         authors: ["user-a"],
+        targets: [],
         timeMs: 100,
         type: "text",
         text: "valid",
@@ -268,6 +378,7 @@ describe("createChatsManager", () => {
     sharedChats.push({
       id: "existing-2",
       authors: [],
+      targets: [],
       timeMs: 200,
       type: "text",
       text: "from peer",
@@ -298,6 +409,7 @@ describe("createChatsManager", () => {
     expect(pushed).toMatchObject({
       id: "msg-1",
       authors: ["self-user"],
+      targets: [],
       timeMs: 1_717_000_000_000,
       type: "text",
       text: "hello shared",
@@ -321,6 +433,7 @@ describe("createChatsManager", () => {
         {
           id: "m1",
           authors: ["u1"],
+          targets: [],
           timeMs: 10,
           type: "text",
           text: "hey",
@@ -544,5 +657,82 @@ describe("createChatsManager", () => {
       isAI: true,
       isRemote: true,
     });
+  });
+
+  it("sendMessage() stores targets matched by participant id and remote user name", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const chats = createChatsManager(loginManager);
+    const session = chats.createLocalSession();
+    const providerResponse = jest.fn().mockResolvedValue({
+      type: "text",
+      text: "Provider reply",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      generateResponse: providerResponse,
+    });
+
+    await session.sendMessage({
+      type: "text",
+      text: "Hello @{provider-1}",
+    });
+
+    expect(session.messages.value[0]).toMatchObject({
+      targets: ["provider-1"],
+    });
+    expect(providerResponse).toHaveBeenCalledTimes(1);
+  });
+
+  it("createSharedSession() stores targets matched by remote participant name and local AI name", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager);
+    const providerResponse = jest.fn().mockResolvedValue({
+      type: "text",
+      text: "I can help",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      generateResponse: providerResponse,
+    });
+
+    const { session, sharedChats } = createSharedSessionMock({
+      currentUserId: "self-user",
+      connectedUsers: [
+        {
+          id: "self-user",
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+        },
+        {
+          id: "u1",
+          name: "Alpha",
+          isSelf: false,
+          isAI: false,
+          isRemote: true,
+        },
+      ],
+    });
+    const chatSession = chats.createSharedSession(session);
+
+    await chatSession.sendMessage({
+      type: "text",
+      text: "Hi @{Alpha} and @{Helper AI}",
+    });
+
+    expect(sharedChats.toArray()[0]).toMatchObject({
+      targets: ["u1", "self-user_provider-1"],
+    });
+    expect(sharedChats.toArray()[1]).toMatchObject({
+      authors: ["self-user_provider-1"],
+      text: "I can help",
+    });
+    expect(providerResponse).toHaveBeenCalledTimes(1);
   });
 });
