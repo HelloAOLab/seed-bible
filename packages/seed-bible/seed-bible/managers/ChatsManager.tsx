@@ -4,6 +4,11 @@ import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
 
 export const chatMessageBaseSchema = z.object({
   /**
+   * The ID of the message, which should be unique within the chat session.
+   */
+  id: z.string(),
+
+  /**
    * The unix time in milliseconds when the message was sent.
    */
   timeMs: z.number().int().nonnegative(),
@@ -21,6 +26,12 @@ export const chatMessageSchema = z.discriminatedUnion("type", [
 export type ChatMessageBase = z.infer<typeof chatMessageBaseSchema>;
 export type TextChatMessage = z.infer<typeof textChatMessageSchema>;
 export type ChatMessage = z.infer<typeof chatMessageSchema>;
+
+export const chatMessageOptions = z.discriminatedUnion("type", [
+  textChatMessageSchema.omit({ timeMs: true, id: true }),
+]);
+
+export type ChatMessageOptions = z.infer<typeof chatMessageOptions>;
 
 export interface ChatParticipant {
   id: string;
@@ -69,9 +80,13 @@ function createSharedChatSession(session: BibleReadingSession): ChatSession {
     }))
   );
 
-  const sendMessage = async (message: ChatMessage) => {
+  const sendMessage = async (message: ChatMessageOptions) => {
     const validMessage = chatMessageSchema.parse(message);
-    chats.push(validMessage);
+    chats.push({
+      id: uuid(),
+      timeMs: Date.now(),
+      validMessage,
+    });
   };
 
   return {
