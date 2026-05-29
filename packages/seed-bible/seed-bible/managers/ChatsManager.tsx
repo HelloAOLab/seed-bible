@@ -13,10 +13,10 @@ export const chatMessageBaseSchema = z.object({
   id: z.string(),
 
   /**
-   * The ID of the user who sent the message.
-   * Null if the user is anonymous.
+   * The IDs of the participants who sent the message.
+   * If empty, the message is considered anonymous and has no author.
    */
-  authorId: z.string().nullable(),
+  authors: z.array(z.string()),
 
   /**
    * The unix time in milliseconds when the message was sent.
@@ -38,7 +38,7 @@ export type TextChatMessage = z.infer<typeof textChatMessageSchema>;
 export type ChatMessage = z.infer<typeof chatMessageSchema>;
 
 export const chatMessageOptionsSchema = z.discriminatedUnion("type", [
-  textChatMessageSchema.omit({ timeMs: true, id: true, authorId: true }),
+  textChatMessageSchema.omit({ timeMs: true, id: true, authors: true }),
 ]);
 
 export type ChatMessageOptions = z.infer<typeof chatMessageOptionsSchema>;
@@ -86,11 +86,11 @@ export interface ChatSession {
   participants: ReadonlySignal<ChatParticipant[]>;
 
   /**
-   * Gets the author of a given message. Returns null if the author is anonymous or has left the session.
-   * @param message The message to get the author of.
-   * @returns The author of the message, or null if the author is anonymous or has left the session.
+   * Gets the authors of a given message. Returns an empty array if the authors are anonymous or have left the session.
+   * @param message The message to get the authors of.
+   * @returns The authors of the message, or an empty array if the authors are anonymous or have left the session.
    */
-  getMessageAuthor: (message: ChatMessage) => ChatParticipant | null;
+  getMessageAuthors: (message: ChatMessage) => ChatParticipant[];
 }
 
 export interface ChatsManager {
@@ -117,7 +117,7 @@ function createChatMessage(
   return {
     id: uuid(),
     timeMs: Date.now(),
-    authorId,
+    authors: authorId ? [authorId] : [],
     ...validMessage,
   };
 }
@@ -167,15 +167,13 @@ function createSharedChatSession(session: BibleReadingSession): ChatSession {
     messages,
     sendMessage,
     participants,
-    getMessageAuthor: (message: ChatMessage) => {
-      if (!message.authorId) {
-        return null;
+    getMessageAuthors: (message: ChatMessage) => {
+      if (message.authors.length === 0) {
+        return [];
       }
-      return (
-        participants.value.find(
-          (participant) => participant.id === message.authorId
-        ) ?? null
-      );
+      return message.authors
+        .map((id) => participants.value.find((p) => p.id === id))
+        .filter((p) => p) as ChatParticipant[];
     },
   };
 }
@@ -213,18 +211,20 @@ function createLocalChatSession(
     ];
   };
 
-  const getMessageAuthor = (message: ChatMessage) => {
-    if (message.authorId !== localParticipant.value.id) {
-      return null;
+  const getMessageAuthors = (message: ChatMessage) => {
+    if (message.authors.length === 0) {
+      return [];
     }
-    return localParticipant.value;
+    return message.authors
+      .map((id) => participants.value.find((p) => p.id === id))
+      .filter((p) => p) as ChatParticipant[];
   };
 
   return {
     messages,
     sendMessage,
     participants,
-    getMessageAuthor,
+    getMessageAuthors,
   };
 }
 
