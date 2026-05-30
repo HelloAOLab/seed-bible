@@ -1,0 +1,12 @@
+export const ta: Record<string, string> = {
+  "resume-reading": "நீங்கள் விட்ட இடத்திலிருந்து தொடரவும்",
+  "greeting-morning": "காலை வணக்கம்",
+  "greeting-afternoon": "மதிய வணக்கம்",
+  "greeting-evening": "மாலை வணக்கம்",
+  "greeting-night": "இரவு வணக்கம்",
+  "go-somewhere-new": "புதிய இடத்திற்கு செல்லுங்கள்",
+  community: "சமூகம்",
+  "this-month": "இந்த மாதம்",
+  "this-week": "இந்த வாரம்",
+  "last-48-hours": "கடந்த 48 மணி நேரம்",
+};

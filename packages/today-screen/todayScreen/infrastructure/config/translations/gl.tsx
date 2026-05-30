@@ -1,0 +1,12 @@
+export const gl: Record<string, string> = {
+  "resume-reading": "CONTINÚA ONDE O DEIXACHES",
+  "greeting-morning": "Bos días",
+  "greeting-afternoon": "Boa tarde",
+  "greeting-evening": "Boa tarde",
+  "greeting-night": "Boas noites",
+  "go-somewhere-new": "VAI A UN LUGAR NOVO",
+  community: "COMUNIDADE",
+  "this-month": "Este mes",
+  "this-week": "Esta semana",
+  "last-48-hours": "Últimas 48 horas",
+};

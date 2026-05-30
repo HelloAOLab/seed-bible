@@ -1,0 +1,12 @@
+export const gn: Record<string, string> = {
+  "resume-reading": "EMOÑEPYRŨ RIRE OÑEMOPYTA PEVE",
+  "greeting-morning": "Porãite ko'ê",
+  "greeting-afternoon": "Porãite ko'ẽ",
+  "greeting-evening": "Porãite ka'aru",
+  "greeting-night": "Porãite pyhare",
+  "go-somewhere-new": "EHO AMBUE TENDÁPE",
+  community: "TEKOHA",
+  "this-month": "Ko jasykuépe",
+  "this-week": "Ko arapokõindy",
+  "last-48-hours": "Mokõi arasy 48 sapy'a",
+};

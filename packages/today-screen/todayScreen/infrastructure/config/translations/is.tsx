@@ -1,0 +1,12 @@
+export const is: Record<string, string> = {
+  "resume-reading": "HALTU ÁFRAM ÞAR SEM ÞÚ HAFÐIR SKILIÐ VIÐ",
+  "greeting-morning": "Góðan morgun",
+  "greeting-afternoon": "Gott kvöld",
+  "greeting-evening": "Gott kvöld",
+  "greeting-night": "Góða nótt",
+  "go-somewhere-new": "FARÐU EINHVERS STAÐAR NÝTT",
+  community: "SAMFÉLAG",
+  "this-month": "Þennan mánuð",
+  "this-week": "Þessa viku",
+  "last-48-hours": "Síðustu 48 klukkustundir",
+};

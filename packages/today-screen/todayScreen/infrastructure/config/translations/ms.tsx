@@ -1,0 +1,12 @@
+export const ms: Record<string, string> = {
+  "resume-reading": "TERUSKAN DARI TEMPAT ANDA BERHENTI",
+  "greeting-morning": "Selamat pagi",
+  "greeting-afternoon": "Selamat tengah hari",
+  "greeting-evening": "Selamat petang",
+  "greeting-night": "Selamat malam",
+  "go-somewhere-new": "PERGI KE TEMPAT BARU",
+  community: "KOMUNITI",
+  "this-month": "Bulan ini",
+  "this-week": "Minggu ini",
+  "last-48-hours": "48 jam terakhir",
+};

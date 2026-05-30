@@ -1,0 +1,12 @@
+export const hr: Record<string, string> = {
+  "resume-reading": "NASTAVITE GDJE STE STALI",
+  "greeting-morning": "Dobro jutro",
+  "greeting-afternoon": "Dobar dan",
+  "greeting-evening": "Dobra večer",
+  "greeting-night": "Laku noć",
+  "go-somewhere-new": "IDI NEGDJE NOVO",
+  community: "ZAJEDNICA",
+  "this-month": "Ovaj mjesec",
+  "this-week": "Ovaj tjedan",
+  "last-48-hours": "Posljednjih 48 sati",
+};

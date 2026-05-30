@@ -1,0 +1,12 @@
+export const uz: Record<string, string> = {
+  "resume-reading": "TO'XTATGAN JOYINGIZDAN DAVOM ETING",
+  "greeting-morning": "Xayrli tong",
+  "greeting-afternoon": "Xayrli kun",
+  "greeting-evening": "Xayrli kech",
+  "greeting-night": "Xayrli tun",
+  "go-somewhere-new": "YANGI JOYGA BORING",
+  community: "JAMOA",
+  "this-month": "Bu oy",
+  "this-week": "Bu hafta",
+  "last-48-hours": "Oxirgi 48 soat",
+};

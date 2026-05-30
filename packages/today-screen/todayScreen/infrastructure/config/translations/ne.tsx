@@ -1,0 +1,12 @@
+export const ne: Record<string, string> = {
+  "resume-reading": "जहाँ छाड्नुभएको थियो त्यहाँबाट जारी राख्नुहोस्",
+  "greeting-morning": "शुभ प्रभात",
+  "greeting-afternoon": "शुभ दिउँसो",
+  "greeting-evening": "शुभ साँझ",
+  "greeting-night": "शुभ रात्रि",
+  "go-somewhere-new": "कुनै नयाँ ठाउँमा जाओ",
+  community: "समुदाय",
+  "this-month": "यो महिना",
+  "this-week": "यो हप्ता",
+  "last-48-hours": "पछिल्लो ४८ घण्टा",
+};

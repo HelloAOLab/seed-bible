@@ -1,6 +1,6 @@
 {
   "id": "today-screen",
-  "dependencies": [],
+  "dependencies": ["bible-visualization-utils"],
   "translations": {
     "en": {
       "title": "Today screen",

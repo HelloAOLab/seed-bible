@@ -1,15 +1,25 @@
 import { useResumeReadingSection } from "../../hooks/useResumeReadingSection";
 
+export interface ResumeReadingCardData {
+  title: string;
+  book: string;
+  chapter: number;
+  buttonIcon: string;
+}
+
 export const ResumeReadingSection = () => {
-  const { MaterialIcon } = useResumeReadingSection();
+  const { MaterialIcon, cardData, handleButtonClick } =
+    useResumeReadingSection();
+
   return (
     <div className="today-resume-card">
-      <span>CONTINUE WHERE YOU LEFT</span>
+      <span>{cardData.title}</span>
       <h1>
-        Genesis <span>2</span>
+        {`${cardData.book} `}
+        <span>{cardData.chapter}</span>
       </h1>
-      <button>
-        <MaterialIcon>arrow_right_alt</MaterialIcon>
+      <button onClick={handleButtonClick}>
+        <MaterialIcon>{cardData.buttonIcon}</MaterialIcon>
       </button>
     </div>
   );

@@ -13,7 +13,7 @@ type UseHeader = () => {
 const { useMemo } = os.appHooks;
 
 export const useHeader: UseHeader = () => {
-  const { language, username, MaterialIcon } = useTodayContext();
+  const { language, username, MaterialIcon, translate } = useTodayContext();
 
   const { day, month, greeting } = useMemo(() => {
     const date = new Date();
@@ -22,20 +22,20 @@ export const useHeader: UseHeader = () => {
       .toLocaleString(language, { month: "short" })
       .toUpperCase();
     const hour = date.getHours();
-    const greeting =
+    const greetingKey =
       hour >= 5 && hour < 12
-        ? "Good morning"
+        ? "greeting-morning"
         : hour >= 12 && hour < 18
-          ? "Good afternoon"
+          ? "greeting-afternoon"
           : hour >= 18 && hour < 21
-            ? "Good evening"
-            : "Good night";
+            ? "greeting-evening"
+            : "greeting-night";
     return {
       day,
       month,
-      greeting,
+      greeting: translate(greetingKey),
     };
-  }, [language]);
+  }, [language, translate]);
 
   return {
     date: `${day} ${month}`,

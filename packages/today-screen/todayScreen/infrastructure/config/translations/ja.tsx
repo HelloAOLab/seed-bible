@@ -1,0 +1,12 @@
+export const ja: Record<string, string> = {
+  "resume-reading": "続きから読む",
+  "greeting-morning": "おはようございます",
+  "greeting-afternoon": "こんにちは",
+  "greeting-evening": "こんばんは",
+  "greeting-night": "おやすみなさい",
+  "go-somewhere-new": "新しい場所へ行く",
+  community: "コミュニティ",
+  "this-month": "今月",
+  "this-week": "今週",
+  "last-48-hours": "過去48時間",
+};

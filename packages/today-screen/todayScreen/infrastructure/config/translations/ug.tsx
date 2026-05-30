@@ -1,0 +1,12 @@
+export const ug: Record<string, string> = {
+  "resume-reading": "توختىغان يېرىڭدىن داۋاملاشتۇر",
+  "greeting-morning": "يەرتىلى خەيرلىك",
+  "greeting-afternoon": "كۈندۈز خەيرلىك",
+  "greeting-evening": "كەچ خەيرلىك",
+  "greeting-night": "كەچ خەيرلىك",
+  "go-somewhere-new": "يېڭى جايغا بار",
+  community: "جامائەت",
+  "this-month": "بۇ ئايدا",
+  "this-week": "بۇ ھەپتىدە",
+  "last-48-hours": "ئۆتكەن 48 سائەت",
+};

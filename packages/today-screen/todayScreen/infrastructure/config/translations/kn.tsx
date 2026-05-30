@@ -1,0 +1,12 @@
+export const kn: Record<string, string> = {
+  "resume-reading": "ನೀವು ಬಿಟ್ಟ ಜಾಗದಿಂದ ಮುಂದುವರಿಯಿರಿ",
+  "greeting-morning": "ಶುಭೋದಯ",
+  "greeting-afternoon": "ಶುಭ ಮಧ್ಯಾಹ್ನ",
+  "greeting-evening": "ಶುಭ ಸಂಜೆ",
+  "greeting-night": "ಶುಭ ರಾತ್ರಿ",
+  "go-somewhere-new": "ಹೊಸ ಸ್ಥಳಕ್ಕೆ ಹೋಗಿ",
+  community: "ಸಮುದಾಯ",
+  "this-month": "ಈ ತಿಂಗಳು",
+  "this-week": "ಈ ವಾರ",
+  "last-48-hours": "ಕೊನೆಯ 48 ಗಂಟೆಗಳು",
+};

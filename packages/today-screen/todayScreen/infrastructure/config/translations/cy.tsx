@@ -1,0 +1,12 @@
+export const cy: Record<string, string> = {
+  "resume-reading": "PARHEWCH O LLE GADAWOCH CHI",
+  "greeting-morning": "Bore da",
+  "greeting-afternoon": "Prynhawn da",
+  "greeting-evening": "Noswaith dda",
+  "greeting-night": "Nos da",
+  "go-somewhere-new": "EWCH I RYWLE NEWYDD",
+  community: "CYMUNED",
+  "this-month": "Y mis hwn",
+  "this-week": "Yr wythnos hon",
+  "last-48-hours": "48 awr diwethaf",
+};

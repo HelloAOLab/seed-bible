@@ -1,0 +1,12 @@
+export const uk: Record<string, string> = {
+  "resume-reading": "ПРОДОВЖТЕ З ТОГО МІСЦЯ",
+  "greeting-morning": "Доброго ранку",
+  "greeting-afternoon": "Добрий день",
+  "greeting-evening": "Добрий вечір",
+  "greeting-night": "На добраніч",
+  "go-somewhere-new": "ВИРУШИТИ В НОВЕ МІСЦЕ",
+  community: "СПІЛЬНОТА",
+  "this-month": "Цього місяця",
+  "this-week": "Цього тижня",
+  "last-48-hours": "Останні 48 годин",
+};

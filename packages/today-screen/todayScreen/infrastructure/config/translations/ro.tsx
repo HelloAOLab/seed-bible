@@ -1,0 +1,12 @@
+export const ro: Record<string, string> = {
+  "resume-reading": "CONTINUAȚI DE UNDE AȚI RĂMAS",
+  "greeting-morning": "Bună dimineața",
+  "greeting-afternoon": "Bună ziua",
+  "greeting-evening": "Bună seara",
+  "greeting-night": "Noapte bună",
+  "go-somewhere-new": "MERGI UNDEVA NOU",
+  community: "COMUNITATE",
+  "this-month": "Luna aceasta",
+  "this-week": "Săptămâna aceasta",
+  "last-48-hours": "Ultimele 48 de ore",
+};

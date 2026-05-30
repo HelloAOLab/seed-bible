@@ -1,0 +1,12 @@
+export const hi: Record<string, string> = {
+  "resume-reading": "जहाँ छोड़ा था वहाँ से जारी रखें",
+  "greeting-morning": "सुप्रभात",
+  "greeting-afternoon": "शुभ दोपहर",
+  "greeting-evening": "शुभ संध्या",
+  "greeting-night": "शुभ रात्रि",
+  "go-somewhere-new": "कहीं नए जाएं",
+  community: "समुदाय",
+  "this-month": "इस महीने",
+  "this-week": "इस सप्ताह",
+  "last-48-hours": "पिछले 48 घंटे",
+};

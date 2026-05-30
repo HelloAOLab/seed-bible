@@ -1,0 +1,12 @@
+export const lo: Record<string, string> = {
+  "resume-reading": "ຕໍ່ຈາກທີ່ທ່ານຢຸດ",
+  "greeting-morning": "ສະບາຍດີຕອນເຊົ້າ",
+  "greeting-afternoon": "ສະບາຍດີຕອນສວາຍ",
+  "greeting-evening": "ສະບາຍດີຕອນແລງ",
+  "greeting-night": "ຝັນດີ",
+  "go-somewhere-new": "ໄປບ່ອນໃໝ່",
+  community: "ຊຸມຊົນ",
+  "this-month": "ເດືອນນີ້",
+  "this-week": "ອາທິດນີ້",
+  "last-48-hours": "48 ຊົ່ວໂມງທີ່ຜ່ານມາ",
+};

@@ -1,0 +1,12 @@
+export const gu: Record<string, string> = {
+  "resume-reading": "જ્યાં છોડ્યું ત્યાંથી ચાલુ રાખો",
+  "greeting-morning": "સુપ્રભાત",
+  "greeting-afternoon": "શુભ બપોર",
+  "greeting-evening": "શુભ સાંજ",
+  "greeting-night": "શુભ રાત્રિ",
+  "go-somewhere-new": "કોઈ નવી જગ્યાએ જાઓ",
+  community: "સમુદાય",
+  "this-month": "આ મહિને",
+  "this-week": "આ અઠવાડિયે",
+  "last-48-hours": "છેલ્લા 48 કલાક",
+};

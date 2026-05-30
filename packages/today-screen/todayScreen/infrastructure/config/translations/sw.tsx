@@ -1,0 +1,12 @@
+export const sw: Record<string, string> = {
+  "resume-reading": "ENDELEA ULIPOACHA",
+  "greeting-morning": "Habari ya asubuhi",
+  "greeting-afternoon": "Habari ya mchana",
+  "greeting-evening": "Habari ya jioni",
+  "greeting-night": "Usiku mwema",
+  "go-somewhere-new": "NENDA MAHALI MPYA",
+  community: "JAMII",
+  "this-month": "Mwezi huu",
+  "this-week": "Wiki hii",
+  "last-48-hours": "Masaa 48 ya mwisho",
+};

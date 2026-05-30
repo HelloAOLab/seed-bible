@@ -1,0 +1,12 @@
+export const ky: Record<string, string> = {
+  "resume-reading": "Калган жериңден улант",
+  "greeting-morning": "Кайырлуу таң",
+  "greeting-afternoon": "Кайырлуу күн",
+  "greeting-evening": "Кайырлуу кеч",
+  "greeting-night": "Жакшы түн",
+  "go-somewhere-new": "Жаңы жерге бар",
+  community: "КООМДОШТУК",
+  "this-month": "Бул айда",
+  "this-week": "Бул аптада",
+  "last-48-hours": "Акыркы 48 саат",
+};

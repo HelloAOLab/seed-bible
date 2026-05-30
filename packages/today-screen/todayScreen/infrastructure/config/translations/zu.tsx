@@ -1,0 +1,12 @@
+export const zu: Record<string, string> = {
+  "resume-reading": "QHUBEKA LAPHO OWASHIYA KHONA",
+  "greeting-morning": "Sawubona ekuseni",
+  "greeting-afternoon": "Sawubona emini",
+  "greeting-evening": "Sawubona kusihlwa",
+  "greeting-night": "Lala kahle",
+  "go-somewhere-new": "HAMBA ENDAWENI ENTSHA",
+  community: "UMPHAKATHI",
+  "this-month": "Le nyanga",
+  "this-week": "Le sonto",
+  "last-48-hours": "Amahora angu-48 adlule",
+};

@@ -1,0 +1,12 @@
+export const bg: Record<string, string> = {
+  "resume-reading": "ПРОДЪЛЖЕТЕ ОТ ТАМ, КЪДЕТО СТЕ СПРЕЛИ",
+  "greeting-morning": "Добро утро",
+  "greeting-afternoon": "Добър ден",
+  "greeting-evening": "Добър вечер",
+  "greeting-night": "Лека нощ",
+  "go-somewhere-new": "ОТИДЕТЕ НА НОВО МЯСТО",
+  community: "ОБЩНОСТ",
+  "this-month": "Този месец",
+  "this-week": "Тази седмица",
+  "last-48-hours": "Последните 48 часа",
+};

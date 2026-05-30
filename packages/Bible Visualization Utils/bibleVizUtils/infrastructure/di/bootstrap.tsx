@@ -422,6 +422,15 @@ export const bootstrapExtension = () => {
       });
       const bookNames = signal<Map<string, string>>(new Map());
       effect(() => {
+        const selectedTabId = context.tabs.selectedTabId.value;
+        const selectedTab = context.tabs.tabs.value.find(
+          (tab) => tab.id === selectedTabId
+        );
+
+        if (!selectedTabId || !selectedTab) {
+          return;
+        }
+
         const translationId =
           context.app.currentReadingState.value?.translationId;
         if (!translationId) {

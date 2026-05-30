@@ -1,0 +1,12 @@
+export const fi: Record<string, string> = {
+  "resume-reading": "JATKA SIITÄ, MIHIN JÄIT",
+  "greeting-morning": "Hyvää huomenta",
+  "greeting-afternoon": "Hyvää päivää",
+  "greeting-evening": "Hyvää iltaa",
+  "greeting-night": "Hyvää yötä",
+  "go-somewhere-new": "MENE JOHONKIN UUTEEN",
+  community: "YHTEISÖ",
+  "this-month": "Tänä kuuna",
+  "this-week": "Tällä viikolla",
+  "last-48-hours": "Viimeiset 48 tuntia",
+};

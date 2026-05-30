@@ -1,0 +1,12 @@
+export const fr: Record<string, string> = {
+  "resume-reading": "CONTINUEZ LÀ OÙ VOUS EN ÉTIEZ",
+  "greeting-morning": "Bonjour",
+  "greeting-afternoon": "Bon après-midi",
+  "greeting-evening": "Bonsoir",
+  "greeting-night": "Bonne nuit",
+  "go-somewhere-new": "ALLER QUELQUE PART DE NOUVEAU",
+  community: "COMMUNAUTÉ",
+  "this-month": "Ce mois-ci",
+  "this-week": "Cette semaine",
+  "last-48-hours": "Dernières 48 heures",
+};

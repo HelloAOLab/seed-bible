@@ -1,0 +1,12 @@
+export const ur: Record<string, string> = {
+  "resume-reading": "جہاں چھوڑا تھا وہاں سے جاری رکھیں",
+  "greeting-morning": "صبح بخیر",
+  "greeting-afternoon": "دوپہر بخیر",
+  "greeting-evening": "شام بخیر",
+  "greeting-night": "رات بخیر",
+  "go-somewhere-new": "کہیں نئے جاؤ",
+  community: "کمیونٹی",
+  "this-month": "اس ماہ",
+  "this-week": "اس ہفتے",
+  "last-48-hours": "پچھلے 48 گھنٹے",
+};

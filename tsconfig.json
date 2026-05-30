@@ -581,11 +581,23 @@
       "scriptureMap.config.botAdapter": [
         "./packages/Scripture Map/scriptureMap/config/botAdapter.tsx"
       ],
+      "scriptureMap.config.translations.af": [
+        "./packages/Scripture Map/scriptureMap/config/translations/af.tsx"
+      ],
       "scriptureMap.config.translations.am": [
         "./packages/Scripture Map/scriptureMap/config/translations/am.tsx"
       ],
       "scriptureMap.config.translations.ar": [
         "./packages/Scripture Map/scriptureMap/config/translations/ar.tsx"
+      ],
+      "scriptureMap.config.translations.az": [
+        "./packages/Scripture Map/scriptureMap/config/translations/az.tsx"
+      ],
+      "scriptureMap.config.translations.be": [
+        "./packages/Scripture Map/scriptureMap/config/translations/be.tsx"
+      ],
+      "scriptureMap.config.translations.bg": [
+        "./packages/Scripture Map/scriptureMap/config/translations/bg.tsx"
       ],
       "scriptureMap.config.translations.bn": [
         "./packages/Scripture Map/scriptureMap/config/translations/bn.tsx"
@@ -593,20 +605,71 @@
       "scriptureMap.config.translations.botAdapter": [
         "./packages/Scripture Map/scriptureMap/config/translations/botAdapter.tsx"
       ],
+      "scriptureMap.config.translations.bs": [
+        "./packages/Scripture Map/scriptureMap/config/translations/bs.tsx"
+      ],
+      "scriptureMap.config.translations.ca": [
+        "./packages/Scripture Map/scriptureMap/config/translations/ca.tsx"
+      ],
+      "scriptureMap.config.translations.cs": [
+        "./packages/Scripture Map/scriptureMap/config/translations/cs.tsx"
+      ],
+      "scriptureMap.config.translations.cy": [
+        "./packages/Scripture Map/scriptureMap/config/translations/cy.tsx"
+      ],
+      "scriptureMap.config.translations.da": [
+        "./packages/Scripture Map/scriptureMap/config/translations/da.tsx"
+      ],
+      "scriptureMap.config.translations.de": [
+        "./packages/Scripture Map/scriptureMap/config/translations/de.tsx"
+      ],
+      "scriptureMap.config.translations.el": [
+        "./packages/Scripture Map/scriptureMap/config/translations/el.tsx"
+      ],
       "scriptureMap.config.translations.en": [
         "./packages/Scripture Map/scriptureMap/config/translations/en.tsx"
       ],
       "scriptureMap.config.translations.es": [
         "./packages/Scripture Map/scriptureMap/config/translations/es.tsx"
       ],
+      "scriptureMap.config.translations.et": [
+        "./packages/Scripture Map/scriptureMap/config/translations/et.tsx"
+      ],
       "scriptureMap.config.translations.fa": [
         "./packages/Scripture Map/scriptureMap/config/translations/fa.tsx"
+      ],
+      "scriptureMap.config.translations.fi": [
+        "./packages/Scripture Map/scriptureMap/config/translations/fi.tsx"
+      ],
+      "scriptureMap.config.translations.fil": [
+        "./packages/Scripture Map/scriptureMap/config/translations/fil.tsx"
       ],
       "scriptureMap.config.translations.fr": [
         "./packages/Scripture Map/scriptureMap/config/translations/fr.tsx"
       ],
+      "scriptureMap.config.translations.fy": [
+        "./packages/Scripture Map/scriptureMap/config/translations/fy.tsx"
+      ],
+      "scriptureMap.config.translations.gl": [
+        "./packages/Scripture Map/scriptureMap/config/translations/gl.tsx"
+      ],
+      "scriptureMap.config.translations.gn": [
+        "./packages/Scripture Map/scriptureMap/config/translations/gn.tsx"
+      ],
+      "scriptureMap.config.translations.gu": [
+        "./packages/Scripture Map/scriptureMap/config/translations/gu.tsx"
+      ],
+      "scriptureMap.config.translations.he": [
+        "./packages/Scripture Map/scriptureMap/config/translations/he.tsx"
+      ],
       "scriptureMap.config.translations.hi": [
         "./packages/Scripture Map/scriptureMap/config/translations/hi.tsx"
+      ],
+      "scriptureMap.config.translations.hr": [
+        "./packages/Scripture Map/scriptureMap/config/translations/hr.tsx"
+      ],
+      "scriptureMap.config.translations.hu": [
+        "./packages/Scripture Map/scriptureMap/config/translations/hu.tsx"
       ],
       "scriptureMap.config.translations.ind": [
         "./packages/Scripture Map/scriptureMap/config/translations/ind.tsx"
@@ -614,17 +677,80 @@
       "scriptureMap.config.translations.index": [
         "./packages/Scripture Map/scriptureMap/config/translations/index.tsx"
       ],
+      "scriptureMap.config.translations.is": [
+        "./packages/Scripture Map/scriptureMap/config/translations/is.tsx"
+      ],
+      "scriptureMap.config.translations.it": [
+        "./packages/Scripture Map/scriptureMap/config/translations/it.tsx"
+      ],
+      "scriptureMap.config.translations.iw": [
+        "./packages/Scripture Map/scriptureMap/config/translations/iw.tsx"
+      ],
       "scriptureMap.config.translations.ja": [
         "./packages/Scripture Map/scriptureMap/config/translations/ja.tsx"
+      ],
+      "scriptureMap.config.translations.ka": [
+        "./packages/Scripture Map/scriptureMap/config/translations/ka.tsx"
+      ],
+      "scriptureMap.config.translations.km": [
+        "./packages/Scripture Map/scriptureMap/config/translations/km.tsx"
+      ],
+      "scriptureMap.config.translations.kn": [
+        "./packages/Scripture Map/scriptureMap/config/translations/kn.tsx"
       ],
       "scriptureMap.config.translations.ko": [
         "./packages/Scripture Map/scriptureMap/config/translations/ko.tsx"
       ],
+      "scriptureMap.config.translations.ky": [
+        "./packages/Scripture Map/scriptureMap/config/translations/ky.tsx"
+      ],
+      "scriptureMap.config.translations.ln": [
+        "./packages/Scripture Map/scriptureMap/config/translations/ln.tsx"
+      ],
+      "scriptureMap.config.translations.lo": [
+        "./packages/Scripture Map/scriptureMap/config/translations/lo.tsx"
+      ],
+      "scriptureMap.config.translations.lt": [
+        "./packages/Scripture Map/scriptureMap/config/translations/lt.tsx"
+      ],
+      "scriptureMap.config.translations.lv": [
+        "./packages/Scripture Map/scriptureMap/config/translations/lv.tsx"
+      ],
+      "scriptureMap.config.translations.mk": [
+        "./packages/Scripture Map/scriptureMap/config/translations/mk.tsx"
+      ],
+      "scriptureMap.config.translations.ml": [
+        "./packages/Scripture Map/scriptureMap/config/translations/ml.tsx"
+      ],
       "scriptureMap.config.translations.mn": [
         "./packages/Scripture Map/scriptureMap/config/translations/mn.tsx"
       ],
+      "scriptureMap.config.translations.mr": [
+        "./packages/Scripture Map/scriptureMap/config/translations/mr.tsx"
+      ],
+      "scriptureMap.config.translations.ms": [
+        "./packages/Scripture Map/scriptureMap/config/translations/ms.tsx"
+      ],
+      "scriptureMap.config.translations.my": [
+        "./packages/Scripture Map/scriptureMap/config/translations/my.tsx"
+      ],
+      "scriptureMap.config.translations.nb": [
+        "./packages/Scripture Map/scriptureMap/config/translations/nb.tsx"
+      ],
       "scriptureMap.config.translations.ne": [
         "./packages/Scripture Map/scriptureMap/config/translations/ne.tsx"
+      ],
+      "scriptureMap.config.translations.nl": [
+        "./packages/Scripture Map/scriptureMap/config/translations/nl.tsx"
+      ],
+      "scriptureMap.config.translations.no": [
+        "./packages/Scripture Map/scriptureMap/config/translations/no.tsx"
+      ],
+      "scriptureMap.config.translations.pa": [
+        "./packages/Scripture Map/scriptureMap/config/translations/pa.tsx"
+      ],
+      "scriptureMap.config.translations.pl": [
+        "./packages/Scripture Map/scriptureMap/config/translations/pl.tsx"
       ],
       "scriptureMap.config.translations.ps": [
         "./packages/Scripture Map/scriptureMap/config/translations/ps.tsx"
@@ -632,14 +758,41 @@
       "scriptureMap.config.translations.pt": [
         "./packages/Scripture Map/scriptureMap/config/translations/pt.tsx"
       ],
+      "scriptureMap.config.translations.ro": [
+        "./packages/Scripture Map/scriptureMap/config/translations/ro.tsx"
+      ],
       "scriptureMap.config.translations.ru": [
         "./packages/Scripture Map/scriptureMap/config/translations/ru.tsx"
+      ],
+      "scriptureMap.config.translations.sk": [
+        "./packages/Scripture Map/scriptureMap/config/translations/sk.tsx"
+      ],
+      "scriptureMap.config.translations.sl": [
+        "./packages/Scripture Map/scriptureMap/config/translations/sl.tsx"
+      ],
+      "scriptureMap.config.translations.sq": [
+        "./packages/Scripture Map/scriptureMap/config/translations/sq.tsx"
+      ],
+      "scriptureMap.config.translations.sv": [
+        "./packages/Scripture Map/scriptureMap/config/translations/sv.tsx"
       ],
       "scriptureMap.config.translations.sw": [
         "./packages/Scripture Map/scriptureMap/config/translations/sw.tsx"
       ],
+      "scriptureMap.config.translations.ta": [
+        "./packages/Scripture Map/scriptureMap/config/translations/ta.tsx"
+      ],
+      "scriptureMap.config.translations.te": [
+        "./packages/Scripture Map/scriptureMap/config/translations/te.tsx"
+      ],
+      "scriptureMap.config.translations.th": [
+        "./packages/Scripture Map/scriptureMap/config/translations/th.tsx"
+      ],
       "scriptureMap.config.translations.ti": [
         "./packages/Scripture Map/scriptureMap/config/translations/ti.tsx"
+      ],
+      "scriptureMap.config.translations.tl": [
+        "./packages/Scripture Map/scriptureMap/config/translations/tl.tsx"
       ],
       "scriptureMap.config.translations.tr": [
         "./packages/Scripture Map/scriptureMap/config/translations/tr.tsx"
@@ -653,11 +806,17 @@
       "scriptureMap.config.translations.ur": [
         "./packages/Scripture Map/scriptureMap/config/translations/ur.tsx"
       ],
+      "scriptureMap.config.translations.uz": [
+        "./packages/Scripture Map/scriptureMap/config/translations/uz.tsx"
+      ],
       "scriptureMap.config.translations.vi": [
         "./packages/Scripture Map/scriptureMap/config/translations/vi.tsx"
       ],
       "scriptureMap.config.translations.zh": [
         "./packages/Scripture Map/scriptureMap/config/translations/zh.tsx"
+      ],
+      "scriptureMap.config.translations.zu": [
+        "./packages/Scripture Map/scriptureMap/config/translations/zu.tsx"
       ],
       "scriptureMap.contexts.botAdapter": [
         "./packages/Scripture Map/scriptureMap/contexts/botAdapter.tsx"
@@ -1286,6 +1445,255 @@
       "tabernacle.manager.UpdateVerseOptions": [
         "./packages/Tabernacle/tabernacle/manager/UpdateVerseOptions.tsx"
       ],
+      "todayScreen.application.ports.in.todayReadingHistory": [
+        "./packages/today-screen/todayScreen/application/ports/in/todayReadingHistory.tsx"
+      ],
+      "todayScreen.application.ports.out.todayReadingHistory": [
+        "./packages/today-screen/todayScreen/application/ports/out/todayReadingHistory.tsx"
+      ],
+      "todayScreen.application.services.TodayReadingHistoryService": [
+        "./packages/today-screen/todayScreen/application/services/TodayReadingHistoryService.tsx"
+      ],
+      "todayScreen.domain.models.readingHistory": [
+        "./packages/today-screen/todayScreen/domain/models/readingHistory.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.af": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/af.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.am": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/am.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.ar": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/ar.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.az": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/az.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.be": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/be.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.bg": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/bg.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.bn": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/bn.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.botAdapter": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/botAdapter.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.bs": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/bs.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.ca": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/ca.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.cs": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/cs.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.cy": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/cy.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.da": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/da.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.de": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/de.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.el": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/el.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.en": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/en.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.es": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/es.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.et": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/et.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.fa": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/fa.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.fi": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/fi.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.fil": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/fil.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.fr": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/fr.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.fy": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/fy.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.gl": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/gl.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.gn": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/gn.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.gu": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/gu.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.he": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/he.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.hi": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/hi.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.hr": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/hr.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.hu": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/hu.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.ind": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/ind.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.index": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/index.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.is": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/is.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.it": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/it.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.iw": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/iw.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.ja": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/ja.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.ka": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/ka.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.km": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/km.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.kn": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/kn.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.ko": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/ko.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.ky": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/ky.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.ln": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/ln.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.lo": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/lo.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.lt": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/lt.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.lv": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/lv.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.mk": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/mk.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.ml": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/ml.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.mn": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/mn.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.mr": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/mr.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.ms": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/ms.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.my": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/my.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.nb": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/nb.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.ne": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/ne.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.nl": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/nl.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.no": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/no.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.pa": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/pa.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.pl": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/pl.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.ps": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/ps.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.pt": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/pt.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.ro": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/ro.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.ru": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/ru.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.sk": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/sk.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.sl": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/sl.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.sq": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/sq.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.sv": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/sv.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.sw": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/sw.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.ta": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/ta.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.te": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/te.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.th": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/th.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.ti": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/ti.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.tl": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/tl.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.tr": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/tr.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.ug": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/ug.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.uk": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/uk.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.ur": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/ur.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.uz": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/uz.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.vi": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/vi.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.zh": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/zh.tsx"
+      ],
+      "todayScreen.infrastructure.config.translations.zu": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/zu.tsx"
+      ],
       "todayScreen.infrastructure.di.bootstrap": [
         "./packages/today-screen/todayScreen/infrastructure/di/bootstrap.tsx"
       ],
@@ -1307,20 +1715,29 @@
       "todayScreen.infrastructure.presentation.components.containers.ResumeReadingSection": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/ResumeReadingSection.tsx"
       ],
+      "todayScreen.infrastructure.presentation.components.containers.SearchBar": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/SearchBar.tsx"
+      ],
       "todayScreen.infrastructure.presentation.components.containers.SearchSection": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/SearchSection.tsx"
       ],
       "todayScreen.infrastructure.presentation.components.containers.SocialSection": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/SocialSection.tsx"
       ],
+      "todayScreen.infrastructure.presentation.components.containers.TodayContainer": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/TodayContainer.tsx"
+      ],
       "todayScreen.infrastructure.presentation.components.containers.TodayContent": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/TodayContent.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.components.containers.Welcome": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/Welcome.tsx"
       ],
       "todayScreen.infrastructure.presentation.components.Today": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/Today.tsx"
       ],
-      "todayScreen.infrastructure.presentation.components.ui.TodayContainer": [
-        "./packages/today-screen/todayScreen/infrastructure/presentation/components/ui/TodayContainer.tsx"
+      "todayScreen.infrastructure.presentation.components.ui.TitledSection": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/ui/TitledSection.tsx"
       ],
       "todayScreen.infrastructure.presentation.contexts.today.TodayContext": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/contexts/today/TodayContext.tsx"
@@ -1333,6 +1750,18 @@
       ],
       "todayScreen.infrastructure.presentation.hooks.useResumeReadingSection": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useResumeReadingSection.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.hooks.useSearchBar": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useSearchBar.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.hooks.useSearchSection": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useSearchSection.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.hooks.useSocialSection": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useSocialSection.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.hooks.useTodayContainer": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useTodayContainer.tsx"
       ],
       "todayScreen.infrastructure.presentation.hooks.useTodayContent": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useTodayContent.tsx"

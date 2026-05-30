@@ -1,0 +1,12 @@
+export const cs: Record<string, string> = {
+  "resume-reading": "POKRAČUJTE TAM, KDE JSTE SKONČILI",
+  "greeting-morning": "Dobré ráno",
+  "greeting-afternoon": "Dobré odpoledne",
+  "greeting-evening": "Dobrý večer",
+  "greeting-night": "Dobrou noc",
+  "go-somewhere-new": "JÍT NĚKAM NOVÉHO",
+  community: "KOMUNITA",
+  "this-month": "Tento měsíc",
+  "this-week": "Tento týden",
+  "last-48-hours": "Posledních 48 hodin",
+};

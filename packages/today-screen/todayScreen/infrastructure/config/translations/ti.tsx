@@ -1,0 +1,12 @@
+export const ti: Record<string, string> = {
+  "resume-reading": "ካበይ ኣቋሪፅካ ቀጽል",
+  "greeting-morning": "ጽቡቕ ጽባሕ",
+  "greeting-afternoon": "ጽቡቕ ቀትሪ",
+  "greeting-evening": "ጽቡቕ ምሸት",
+  "greeting-night": "ጽቡቕ ለይቲ",
+  "go-somewhere-new": "ናብ ሓድሽ ቦታ ኪድ",
+  community: "ማሕበረሰብ",
+  "this-month": "ኣብዚ ወርሒ",
+  "this-week": "ኣብዚ ሰሙን",
+  "last-48-hours": "ዝሓለፉ 48 ሰዓታት",
+};

@@ -1,0 +1,12 @@
+export const sv: Record<string, string> = {
+  "resume-reading": "FORTSÄTT DÄR DU SLUTADE",
+  "greeting-morning": "God morgon",
+  "greeting-afternoon": "God eftermiddag",
+  "greeting-evening": "God kväll",
+  "greeting-night": "God natt",
+  "go-somewhere-new": "GÅ NÅGONSTANS NYTT",
+  community: "GEMENSKAP",
+  "this-month": "Den här månaden",
+  "this-week": "Den här veckan",
+  "last-48-hours": "Senaste 48 timmarna",
+};

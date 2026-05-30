@@ -1,0 +1,12 @@
+export const nl: Record<string, string> = {
+  "resume-reading": "GA VERDER WAAR JE GEBLEVEN WAS",
+  "greeting-morning": "Goedemorgen",
+  "greeting-afternoon": "Goedemiddag",
+  "greeting-evening": "Goedenavond",
+  "greeting-night": "Goedenacht",
+  "go-somewhere-new": "ERGENS NIEUW NAARTOE GAAN",
+  community: "GEMEENSCHAP",
+  "this-month": "Deze maand",
+  "this-week": "Deze week",
+  "last-48-hours": "Laatste 48 uur",
+};

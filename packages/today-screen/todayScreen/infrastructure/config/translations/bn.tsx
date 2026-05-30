@@ -1,0 +1,12 @@
+export const bn: Record<string, string> = {
+  "resume-reading": "যেখানে ছেড়েছিলেন সেখান থেকে চালিয়ে যান",
+  "greeting-morning": "শুভ সকাল",
+  "greeting-afternoon": "শুভ বিকেল",
+  "greeting-evening": "শুভ সন্ধ্যা",
+  "greeting-night": "শুভ রাত্রি",
+  "go-somewhere-new": "একটি নতুন জায়গায় যান",
+  community: "সম্প্রদায়",
+  "this-month": "এই মাসে",
+  "this-week": "এই সপ্তাহে",
+  "last-48-hours": "গত ৪৮ ঘণ্টা",
+};

@@ -1,0 +1,12 @@
+export const ps: Record<string, string> = {
+  "resume-reading": "له هغه ځایه ادامه ورکه چیرته چې پاتې وې",
+  "greeting-morning": "سهار مو پخیر",
+  "greeting-afternoon": "غرمه مو پخیر",
+  "greeting-evening": "ماښام مو پخیر",
+  "greeting-night": "شپه مو پخیر",
+  "go-somewhere-new": "يو نوې ځای ته لاړ شه",
+  community: "ټولنه",
+  "this-month": "دا میاشت",
+  "this-week": "دا اونۍ",
+  "last-48-hours": "وروستي ۴۸ ساعتونه",
+};

@@ -1,0 +1,12 @@
+export const ca: Record<string, string> = {
+  "resume-reading": "CONTINUA ON HO HAVIES DEIXAT",
+  "greeting-morning": "Bon dia",
+  "greeting-afternoon": "Bona tarda",
+  "greeting-evening": "Bona tarda",
+  "greeting-night": "Bona nit",
+  "go-somewhere-new": "VÉS A UN LLOC NOU",
+  community: "COMUNITAT",
+  "this-month": "Aquest mes",
+  "this-week": "Aquesta setmana",
+  "last-48-hours": "Últimes 48 hores",
+};

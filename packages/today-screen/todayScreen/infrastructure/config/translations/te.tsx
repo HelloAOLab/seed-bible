@@ -1,0 +1,12 @@
+export const te: Record<string, string> = {
+  "resume-reading": "మీరు వదిలిపెట్టిన చోటు నుండి కొనసాగించండి",
+  "greeting-morning": "శుభోదయం",
+  "greeting-afternoon": "శుభ మధ్యాహ్నం",
+  "greeting-evening": "శుభ సాయంత్రం",
+  "greeting-night": "శుభ రాత్రి",
+  "go-somewhere-new": "కొత్త స్థలానికి వెళ్ళండి",
+  community: "సమాజం",
+  "this-month": "ఈ నెల",
+  "this-week": "ఈ వారం",
+  "last-48-hours": "గత 48 గంటలు",
+};

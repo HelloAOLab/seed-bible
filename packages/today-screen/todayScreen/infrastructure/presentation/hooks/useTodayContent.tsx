@@ -9,9 +9,9 @@ type UseTodayContent = () => {
 };
 
 export const useTodayContent: UseTodayContent = () => {
-  const { userId } = useTodayContext();
+  const { userLastReading } = useTodayContext();
 
-  const showResumeReading = !!userId;
+  const showResumeReading = !!userLastReading.value;
   const showSearch = true;
   const showRecommendations = false;
   const showSocial = true;
