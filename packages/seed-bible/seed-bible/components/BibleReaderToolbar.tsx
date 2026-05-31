@@ -450,6 +450,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const selectedToolbarToolId = useSignal<string | null>(null);
   const selectedVerseToolId = useSignal<string | null>(null);
 
+  // Single source of truth for which bottom-bar tab is highlighted orange.
+  // "more"/"search"/"you" are derived from real panel state; "today" and
+  // "bible" have no panel of their own, so we remember the last one the user
+  // tapped and use it as the fallback. Exactly one tab is ever active.
+  const localBottomTab = useSignal<"today" | "bible">("bible");
+  const activeMobileTab = useComputed<
+    "today" | "you" | "bible" | "search" | "more"
+  >(() => {
+    if (isMoreMenuOpen.value) return "more";
+    if (sidebar.isSearchPanelOpen.value) return "search";
+    if (sidebar.isSettingsOpen.value) return "you";
+    return localBottomTab.value;
+  });
+
   const previousChapterTool = useComputed(
     () => tools.value.find((tool) => tool.id === "previous-chapter") ?? null
   );
@@ -716,8 +730,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     </svg>
                   }
                   label={t("today", { defaultValue: "Today" })}
+                  active={activeMobileTab.value === "today"}
                   onClick={() => {
                     isMoreMenuOpen.value = false;
+                    sidebar.closeSearchPanel();
+                    sidebar.closeChatPanel();
+                    sidebar.closeSettings();
+                    sidebar.closeSidebar();
+                    localBottomTab.value = "today";
                     os.toast(
                       t("today-coming-soon", {
                         defaultValue: "Today screen is coming soon",
@@ -729,6 +749,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 <MobileBottomTab
                   iconNode={<SelfAvatarVisual state={props.state} />}
                   label={t("you", { defaultValue: "You" })}
+                  active={activeMobileTab.value === "you"}
                   aria-label={`Open account settings (${getSelfDisplayName(
                     props.state
                   )})`}
@@ -742,18 +763,22 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 />
 
                 <MobileBottomTab
-                  iconNode={<SeedBibleIcon size={24} />}
-                  label={t("bible", { defaultValue: "Bible" })}
-                  active={
-                    !sidebar.isSearchPanelOpen.value && !isMoreMenuOpen.value
+                  iconNode={
+                    <SeedBibleIcon
+                      size={24}
+                      className="sb-reader-toolbar-seed-icon"
+                    />
                   }
+                  label={t("bible", { defaultValue: "Bible" })}
+                  active={activeMobileTab.value === "bible"}
                   onClick={() => {
                     isMoreMenuOpen.value = false;
                     sidebar.closeSearchPanel();
                     sidebar.closeChatPanel();
                     sidebar.closeSettings();
                     sidebar.closeSidebar();
-                    openSelectorTool.value?.onSelect();
+                    localBottomTab.value = "bible";
+                    // openSelectorTool.value?.onSelect();
                     selectedToolbarToolId.value = null;
                   }}
                 />
@@ -761,7 +786,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 <MobileBottomTab
                   iconName="search"
                   label={t("search", { defaultValue: "Search" })}
-                  active={sidebar.isSearchPanelOpen.value}
+                  active={activeMobileTab.value === "search"}
                   onClick={() => {
                     isMoreMenuOpen.value = false;
                     if (sidebar.isSearchPanelOpen.value) {
@@ -780,7 +805,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         isMoreMenuOpen.value = !isMoreMenuOpen.value;
                       }}
                       className={`sb-reader-toolbar-button sb-reader-toolbar-mobile-tab-button${
-                        isMoreMenuOpen.value
+                        activeMobileTab.value === "more"
                           ? " sb-reader-toolbar-mobile-tab-button-active"
                           : ""
                       }`}

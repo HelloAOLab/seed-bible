@@ -1651,7 +1651,10 @@ h6 {
     left: 50%;
     bottom: 0;
     transform: translateX(-50%);
-    z-index: 99;
+    /* Sit above the mobile sidebar/settings overlay (z-index: 100) so the
+     * bottom bar of options stays visible while the account panel is open.
+     * The overlay already reserves `padding-bottom: 68px` for it. */
+    z-index: 101;
     width: 100vw;
     /* max-width: 420px; */
   }
@@ -1709,8 +1712,14 @@ h6 {
     transition: color 0.15s ease;
   }
 
+  /* Exclude the active tab from hover: on touch devices `:hover` sticks after
+   * a tap, and (being more specific than the active rule) it would otherwise
+   * override the active tab's theme color back to the dark font color — which
+   * left the label black while the icon stayed colored. */
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
-    .sb-reader-toolbar-mobile-tab-button:hover:not(:disabled) {
+    .sb-reader-toolbar-mobile-tab-button:hover:not(:disabled):not(
+      .sb-reader-toolbar-mobile-tab-button-active
+    ) {
     background: transparent;
     color: var(--sb-font-color);
   }
@@ -1718,6 +1727,16 @@ h6 {
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
     .sb-reader-toolbar-mobile-tab-button-active {
     color: var(--sb-primary-color);
+  }
+
+  /* The Bible tab uses the Seed Bible logo (a PNG <img>), which can't follow
+   * the active text color like the material-symbol icons do. Tint it to the
+   * primary orange when its tab is active so it matches the orange label.
+   * `brightness(0)` first flattens the logo to a solid silhouette (preserving
+   * its alpha), then the chain recolors that silhouette toward #e07b4c. */
+  .sb-reader-toolbar-mobile-tab-button-active .sb-reader-toolbar-seed-icon {
+    filter: brightness(0) saturate(100%) invert(58%) sepia(48%) saturate(700%)
+      hue-rotate(334deg) brightness(95%) contrast(88%);
   }
 
   .sb-reader-toolbar-mobile-tab-icon {
@@ -3129,7 +3148,7 @@ h6 {
 
 .sb-collapsed-tab-tile {
   width: 53px;
-  height: 40px;
+  height: 53px;
   border-radius: 10px;
   border: var(--sb-tab-border);
   background: var(--sb-tab-background);
@@ -3654,7 +3673,7 @@ h6 {
 
   &.sb-collapsed-tab-add-button {
     width: 53px;
-    height: 40px;
+    height: 53px;
   }
 }
 
@@ -4204,6 +4223,12 @@ h6 {
   /* Show the mobile X close inside the header-actions. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header-close-button {
     display: inline-flex;
+  }
+
+  /* On mobile the account panel is dismissed via the bottom bar of options
+   * (e.g. the "Bible" tab), so the redundant X close button is hidden. */
+  .sb-sidebar-settings-close-button-account {
+    display: none;
   }
 
   /* The desktop bottom-actions row (settings cog + self avatar) is hidden
@@ -7353,7 +7378,7 @@ h6 {
     border: none;
     box-shadow: none;
     padding: 14px 16px;
-    /* background: transparent; */
+    background: transparent;
     gap: 14px;
     animation: none;
   }

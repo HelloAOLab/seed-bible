@@ -29,6 +29,8 @@ import {
   handleHorizontalListKeyNav,
 } from "seed-bible.components.KeyboardNav";
 
+const { useEffect, useRef } = os.appHooks;
+
 interface SidebarProps {
   state: SeedBibleState;
 }
@@ -46,6 +48,7 @@ interface TabsHeaderProps {
   paneLayout: PaneLayoutId | "single";
   isLayoutMenuOpen: boolean;
   toggleLayoutMenu: () => void;
+  closeLayoutMenu: () => void;
   setLayout: (layout: PaneLayoutId) => void;
   createSharedSession: () => void;
 }
@@ -374,12 +377,29 @@ export function TabsHeader(props: TabsHeaderProps) {
     paneLayout,
     isLayoutMenuOpen,
     toggleLayoutMenu,
+    closeLayoutMenu,
     setLayout,
     createSharedSession,
   } = props;
   const { sidebar, settings } = state;
   const isAwake = settings.settings.value.keepScreenAwake;
   const { t } = useI18n();
+  const layoutAnchorRef = useRef<HTMLDivElement | null>(null);
+
+  // Close the pane-layout menu when clicking anywhere outside its anchor.
+  useEffect(() => {
+    if (!isLayoutMenuOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      const anchor = layoutAnchorRef.current;
+      if (anchor && !anchor.contains(event.target as Node)) {
+        closeLayoutMenu();
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isLayoutMenuOpen, closeLayoutMenu]);
 
   return (
     <div className="sb-sidebar-top-row">
@@ -398,7 +418,7 @@ export function TabsHeader(props: TabsHeaderProps) {
 
       <div className="sb-sidebar-top-actions">
         {panelsEnabled && !effectivelyCollapsed && (
-          <div className="sb-pane-layout-anchor">
+          <div className="sb-pane-layout-anchor" ref={layoutAnchorRef}>
             <button
               onClick={toggleLayoutMenu}
               className="sb-sidebar-top-icon-button"
@@ -516,6 +536,7 @@ export function Settings(props: SettingsProps) {
   const { state } = props;
   const { sidebar } = state;
   const { t } = useI18n();
+  const isAccountView = sidebar.requestedSettingsView.value === "account";
 
   return (
     <div className="sb-sidebar-settings-view">
@@ -523,7 +544,9 @@ export function Settings(props: SettingsProps) {
         <h3 className="sb-sidebar-tabs-title">{t("settings")}</h3>
         <button
           onClick={sidebar.closeSettings}
-          className="sb-sidebar-settings-close-button"
+          className={`sb-sidebar-settings-close-button${
+            isAccountView ? " sb-sidebar-settings-close-button-account" : ""
+          }`}
           aria-label={t("close-settings", { defaultValue: "Close Settings" })}
           title={t("close-settings", { defaultValue: "Close Settings" })}
         >
@@ -1830,6 +1853,7 @@ export function Sidebar(props: SidebarProps) {
             closeContextMenus();
             isLayoutMenuOpen.value = !isLayoutMenuOpen.value;
           }}
+          closeLayoutMenu={closeLayoutMenu}
           setLayout={(layout) => {
             panes.setLayout(layout);
             closeLayoutMenu();
