@@ -1880,6 +1880,12 @@ export function Sidebar(props: SidebarProps) {
   const effectivelyCollapsed = isCollapsed && !isMobileOpen && !isSettingsOpen;
   const isLayoutMenuOpen = useSignal(false);
 
+  // The guided tour opens the pane-layout menu while its step is active so the
+  // layout options are visible behind the coachmark.
+  const tourWantsLayoutMenu =
+    state.tutorial.running.value &&
+    state.tutorial.currentStep.value?.id === "pane-layout";
+
   const closeLayoutMenu = () => {
     isLayoutMenuOpen.value = false;
   };
@@ -1896,7 +1902,7 @@ export function Sidebar(props: SidebarProps) {
           effectivelyCollapsed={effectivelyCollapsed}
           panelsEnabled={panelsEnabled}
           paneLayout={paneLayout}
-          isLayoutMenuOpen={isLayoutMenuOpen.value}
+          isLayoutMenuOpen={isLayoutMenuOpen.value || tourWantsLayoutMenu}
           toggleLayoutMenu={() => {
             closeContextMenus();
             isLayoutMenuOpen.value = !isLayoutMenuOpen.value;

@@ -5,7 +5,7 @@ import type {
   TutorialPlacement,
 } from "seed-bible.managers.TutorialManager";
 
-const { useEffect } = os.appHooks;
+const { useEffect, useRef } = os.appHooks;
 
 interface Rect {
   top: number;
@@ -26,9 +26,16 @@ const GAP = 14;
 export function Tutorial({
   tutorial,
   className = "",
+  groupFilter,
 }: {
   tutorial: TutorialManager;
   className?: string;
+  /**
+   * Limits which steps this instance renders. Selector-group steps are drawn by
+   * the selector itself (it owns the elements they spotlight); this instance
+   * renders the rest.
+   */
+  groupFilter?: "selector" | "non-selector";
 }) {
   const { t } = useI18n();
   const running = tutorial.running.value;
@@ -36,11 +43,23 @@ export function Tutorial({
   const index = tutorial.index.value;
   const total = tutorial.steps.length;
 
-  // Target rect in viewport coordinates, or null when the element is missing.
+  const matchesFilter =
+    !groupFilter ||
+    !step ||
+    (groupFilter === "selector"
+      ? step.group === "selector"
+      : step.group !== "selector");
+
+  // Target rect, expressed relative to the overlay element (not the viewport),
+  // so positioning is correct even when the overlay lives inside a zoomed or
+  // transformed ancestor (e.g. the book selector's portal). Null when missing.
   const rect = useSignal<Rect | null>(null);
+  // The overlay's own size, used as the bounds for popover fit/clamping.
+  const frame = useSignal<{ w: number; h: number } | null>(null);
+  const overlayRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!running || !step) {
+    if (!running || !step || !matchesFilter) {
       return;
     }
 
@@ -55,29 +74,37 @@ export function Tutorial({
         rect.value = null;
         return;
       }
+      // Subtract the overlay's own offset so coordinates are relative to it
+      // (getBoundingClientRect is always viewport-relative for both).
+      const base = overlayRef.current?.getBoundingClientRect();
+      const baseX = base?.left ?? 0;
+      const baseY = base?.top ?? 0;
+      if (base) {
+        frame.value = { w: base.width, h: base.height };
+      }
       rect.value = {
-        top: r.top,
-        left: r.left,
+        top: r.top - baseY,
+        left: r.left - baseX,
         width: r.width,
         height: r.height,
       };
     };
 
     measure();
-    // A couple of delayed re-measures catch layout/animation settling.
-    const t1 = window.setTimeout(measure, 60);
-    const t2 = window.setTimeout(measure, 250);
+    // Poll while the step is active so the spotlight locks on as soon as its
+    // target appears/settles — the book selector, for example, lives in its own
+    // app portal and opens with an animation a beat after the step begins.
+    const interval = window.setInterval(measure, 150);
     window.addEventListener("resize", measure);
     window.addEventListener("scroll", measure, true);
     return () => {
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
+      window.clearInterval(interval);
       window.removeEventListener("resize", measure);
       window.removeEventListener("scroll", measure, true);
     };
   }, [running, step?.id]);
 
-  if (!running || !step) {
+  if (!running || !step || !matchesFilter) {
     return null;
   }
 
@@ -94,10 +121,11 @@ export function Tutorial({
       }
     : null;
 
-  const popoverStyle = computePopoverStyle(spotlight, step.placement);
+  const popover = computePopover(spotlight, step.placement, frame.value);
 
   return (
     <div
+      ref={overlayRef}
       className={`sb-tour-overlay ${className}`}
       role="dialog"
       aria-modal="true"
@@ -116,17 +144,16 @@ export function Tutorial({
 
       <div
         className={`sb-tour-popover${spotlight ? "" : " sb-tour-popover-centered"}`}
-        style={popoverStyle}
+        style={popover.style}
         onClick={(event: MouseEvent) => event.stopPropagation()}
       >
-        <div className="sb-tour-popover-progress">
-          {tutorial.steps.map((s, i) => (
-            <span
-              key={s.id}
-              className={`sb-tour-dot${i === index ? " sb-tour-dot-active" : ""}`}
-            />
-          ))}
-        </div>
+        {popover.side && (
+          <span
+            className={`sb-tour-arrow sb-tour-arrow-${popover.side}`}
+            style={popover.arrowStyle}
+            aria-hidden="true"
+          />
+        )}
 
         <h3 className="sb-tour-popover-title">
           {t(step.titleKey, { defaultValue: step.titleDefault })}
@@ -141,52 +168,58 @@ export function Tutorial({
             className="sb-tour-btn sb-tour-btn-text"
             onClick={tutorial.finish}
           >
-            {t("tutorial.skip", { defaultValue: "Skip" })}
+            {t("tutorial.skip", { defaultValue: "Skip Tutorial" })}
           </button>
-          <div className="sb-tour-popover-actions-right">
-            {index > 0 && (
-              <button
-                type="button"
-                className="sb-tour-btn sb-tour-btn-secondary"
-                onClick={tutorial.prev}
-              >
-                {t("tutorial.back", { defaultValue: "Back" })}
-              </button>
-            )}
-            <button
-              type="button"
-              className="sb-tour-btn sb-tour-btn-primary"
-              onClick={tutorial.next}
-            >
-              {isLast
-                ? t("tutorial.done", { defaultValue: "Done" })
-                : t("tutorial.next", { defaultValue: "Next" })}
-            </button>
-          </div>
+          <button
+            type="button"
+            className="sb-tour-btn sb-tour-btn-next"
+            onClick={tutorial.next}
+          >
+            {isLast
+              ? t("tutorial.done", { defaultValue: "Done" })
+              : t("tutorial.next", { defaultValue: "Next" })}
+            <span className="sb-tour-next-arrow" aria-hidden="true">
+              →
+            </span>
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
+interface PopoverLayout {
+  style: Record<string, string>;
+  /** Resolved side the popover sits on, or null when centered (no target). */
+  side: TutorialPlacement | null;
+  /** Inline position of the pointer arrow along the popover edge. */
+  arrowStyle: Record<string, string>;
+}
+
+const clampValue = (value: number, min: number, max: number) =>
+  Math.max(min, Math.min(value, max));
+
 /**
  * Positions the popover next to the spotlight on the preferred side, flipping
- * to the opposite side or centering when there isn't enough room. When there's
- * no target it centers on screen.
+ * to the opposite side when there isn't room, and computes where the pointer
+ * arrow sits so it aims at the target's center. Centers (no arrow) when there's
+ * no target on screen.
  */
-function computePopoverStyle(
+function computePopover(
   spotlight: Rect | null,
-  placement: TutorialPlacement = "bottom"
-): Record<string, string> {
+  placement: TutorialPlacement = "bottom",
+  frame: { w: number; h: number } | null = null
+): PopoverLayout {
   if (typeof window === "undefined" || !spotlight) {
-    return {};
+    return { style: {}, side: null, arrowStyle: {} };
   }
 
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const estHeight = 200;
+  // Coordinates are relative to the overlay, so bounds/clamping use the
+  // overlay's size (falling back to the viewport).
+  const vw = frame?.w || window.innerWidth;
+  const vh = frame?.h || window.innerHeight;
+  const estHeight = 180;
 
-  // Resolve a placement that fits, falling back through sensible alternatives.
   const fits: Record<TutorialPlacement, boolean> = {
     bottom: spotlight.top + spotlight.height + GAP + estHeight < vh,
     top: spotlight.top - GAP - estHeight > 0,
@@ -200,33 +233,50 @@ function computePopoverStyle(
     "right",
     "left",
   ];
-  const resolved = order.find((p) => fits[p]) ?? placement;
+  const side = order.find((p) => fits[p]) ?? placement;
 
-  const clamp = (value: number, min: number, max: number) =>
-    Math.max(min, Math.min(value, max));
+  const targetCenterX = spotlight.left + spotlight.width / 2;
+  const targetCenterY = spotlight.top + spotlight.height / 2;
 
   let top: number;
   let left: number;
 
-  if (resolved === "bottom" || resolved === "top") {
-    const centerLeft = spotlight.left + spotlight.width / 2 - POPOVER_WIDTH / 2;
-    left = clamp(centerLeft, GAP, vw - POPOVER_WIDTH - GAP);
+  if (side === "bottom" || side === "top") {
+    left = clampValue(
+      targetCenterX - POPOVER_WIDTH / 2,
+      GAP,
+      vw - POPOVER_WIDTH - GAP
+    );
     top =
-      resolved === "bottom"
+      side === "bottom"
         ? spotlight.top + spotlight.height + GAP
         : spotlight.top - GAP - estHeight;
   } else {
-    const centerTop = spotlight.top + spotlight.height / 2 - estHeight / 2;
-    top = clamp(centerTop, GAP, vh - estHeight - GAP);
+    top = clampValue(targetCenterY - estHeight / 2, GAP, vh - estHeight - GAP);
     left =
-      resolved === "right"
+      side === "right"
         ? spotlight.left + spotlight.width + GAP
         : spotlight.left - GAP - POPOVER_WIDTH;
   }
 
+  top = Math.max(GAP, top);
+  left = clampValue(left, GAP, vw - POPOVER_WIDTH - GAP);
+
+  // Point the arrow at the target's center along the facing edge.
+  const arrowStyle: Record<string, string> =
+    side === "bottom" || side === "top"
+      ? {
+          left: `${clampValue(targetCenterX - left, 18, POPOVER_WIDTH - 18)}px`,
+        }
+      : { top: `${clampValue(targetCenterY - top, 18, estHeight - 18)}px` };
+
   return {
-    top: `${Math.max(GAP, top)}px`,
-    left: `${clamp(left, GAP, vw - POPOVER_WIDTH - GAP)}px`,
-    width: `${POPOVER_WIDTH}px`,
+    style: {
+      top: `${top}px`,
+      left: `${left}px`,
+      width: `${POPOVER_WIDTH}px`,
+    },
+    side,
+    arrowStyle,
   };
 }

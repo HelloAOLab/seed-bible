@@ -1564,7 +1564,7 @@ h6 {
 }
 
 .sb-tour-spotlight {
-  position: fixed;
+  position: absolute;
   border-radius: 10px;
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
   border: 2px solid var(--sb-primary-color);
@@ -1577,7 +1577,7 @@ h6 {
 }
 
 .sb-tour-popover {
-  position: fixed;
+  position: absolute;
   box-sizing: border-box;
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
@@ -1670,9 +1670,51 @@ h6 {
 .sb-tour-btn-text {
   background: transparent;
   color: var(--sb-font-color);
-  opacity: 0.7;
-  padding-left: 4px;
-  padding-right: 4px;
+  opacity: 0.65;
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+.sb-tour-btn-next {
+  background: transparent;
+  color: var(--sb-primary-color);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 2px;
+  padding-right: 2px;
+}
+
+.sb-tour-next-arrow {
+  font-size: 1.05em;
+  line-height: 1;
+}
+
+/* Pointer arrow — a rotated square that merges with the card edge. */
+.sb-tour-arrow {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: var(--sb-reader-background);
+  transform: rotate(45deg);
+}
+
+/* `side` = where the popover sits relative to the target, so the arrow goes on
+   the opposite edge of the card (pointing back toward the target). */
+.sb-tour-arrow-bottom {
+  top: -7px;
+}
+
+.sb-tour-arrow-top {
+  bottom: -7px;
+}
+
+.sb-tour-arrow-right {
+  left: -7px;
+}
+
+.sb-tour-arrow-left {
+  right: -7px;
 }
 
 .sb-reader-toolbar {

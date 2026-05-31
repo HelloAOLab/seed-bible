@@ -137,12 +137,17 @@ function MainContent(props: {
               themeCssVariables={theme.themeCssVariables}
               themeCssClasses={theme.themeCssClasses}
             />
+            {/* The selector draws its own tour spotlight/popover internally
+                (CSS dim toggled off the tutorial signals), since its elements
+                live in this portal's shadow root and can't be measured from
+                the main tour overlay. */}
             <BibleSelector
               className={`${fontSizeClass} ${webkitClass}`}
               isOpen={selector.isOpen.value}
               onClose={() => selector.setOpen(false)}
               selectorState={selector}
               bibleDataManager={state.bibleData}
+              tutorial={state.tutorial}
             />
           </>
         </CasualOSApp>
@@ -177,6 +182,7 @@ function MainContent(props: {
             <Tutorial
               tutorial={state.tutorial}
               className={`${fontSizeClass} ${webkitClass}`}
+              groupFilter="non-selector"
             />
           </>
         </CasualOSApp>

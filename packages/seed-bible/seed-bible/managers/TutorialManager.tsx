@@ -1,6 +1,7 @@
 import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
 import type { LoginManager } from "seed-bible.managers.LoginManager";
 import type { OnboardingManager } from "seed-bible.managers.OnboardingManager";
+import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
@@ -27,6 +28,16 @@ export interface TutorialStep {
   bodyDefault: string;
   /** Preferred popover placement; the component flips it if there's no room. */
   placement?: TutorialPlacement;
+  /** Optional side effect run when the step becomes active (e.g. open a panel). */
+  onEnter?: () => void;
+  /** Optional cleanup run when leaving the step (e.g. close that panel). */
+  onLeave?: () => void;
+  /**
+   * Steps whose target lives inside the book-selector portal are grouped as
+   * "selector" so the tour overlay can render in that same portal (otherwise it
+   * would be hidden behind the selector, which is its own stacking context).
+   */
+  group?: "selector";
 }
 
 /**
@@ -37,14 +48,56 @@ export interface TutorialStep {
  */
 export const TUTORIAL_STEPS: TutorialStep[] = [
   {
-    id: "selector",
-    target: ".sb-bible-reader-title",
-    titleKey: "tutorial.selectorTitle",
-    titleDefault: "Select books & chapters",
-    bodyKey: "tutorial.selectorBody",
-    bodyDefault:
-      "Tap the title to open the picker and jump to any book, chapter, or translation.",
+    id: "selector-books",
+    target: ".sidebar-results",
+    titleKey: "tutorial.selectorBooksTitle",
+    titleDefault: "Select books and chapters",
+    bodyKey: "tutorial.selectorBooksBody",
+    bodyDefault: "Choose a chapter from here to begin your reading journey.",
+    placement: "right",
+    group: "selector",
+  },
+  {
+    id: "selector-translation",
+    target: ".sidebar-translation-selector",
+    titleKey: "tutorial.selectorTranslationTitle",
+    titleDefault: "Select bible translations",
+    bodyKey: "tutorial.selectorTranslationBody",
+    bodyDefault: "Choose from any of the available Bible translation versions.",
     placement: "bottom",
+    group: "selector",
+  },
+  {
+    id: "selector-testament",
+    target: ".dropdown",
+    titleKey: "tutorial.selectorTestamentTitle",
+    titleDefault: "Filter by testament",
+    bodyKey: "tutorial.selectorTestamentBody",
+    bodyDefault: "Show all books, or narrow to just the Old or New Testament.",
+    placement: "bottom",
+    group: "selector",
+  },
+  {
+    id: "selector-search",
+    target: ".searchbar",
+    titleKey: "tutorial.selectorSearchTitle",
+    titleDefault: "Search by",
+    bodyKey: "tutorial.selectorSearchBody",
+    bodyDefault: "Search by chapter, verse or book from here.",
+    placement: "bottom",
+    group: "selector",
+  },
+  {
+    id: "pane-layout",
+    // The menu is opened by the Sidebar while this step is active; spotlight it
+    // (it holds the layout options) rather than just the button that opens it.
+    target: ".sb-pane-layout-menu",
+    titleKey: "tutorial.paneLayoutTitle",
+    titleDefault: "Arrange your panes",
+    bodyKey: "tutorial.paneLayoutBody",
+    bodyDefault:
+      "Choose how many passages to read side by side from this layout menu.",
+    placement: "right",
   },
   {
     id: "tabs",
@@ -85,6 +138,54 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     bodyDefault:
       "Customize themes, text, and more here — and install the app to your device.",
     placement: "right",
+  },
+];
+
+/**
+ * The mobile tour. Below 768px the desktop selector sub-controls (translation,
+ * testament, search) and the pane-layout menu aren't rendered, and the chrome
+ * is different — so mobile gets its own step list targeting the mobile header,
+ * the book selector grid, and the bottom toolbar. The book step reuses the
+ * `selector-books` id so the selector's built-in spotlight/open logic applies.
+ */
+export const MOBILE_TUTORIAL_STEPS: TutorialStep[] = [
+  {
+    id: "m-passage",
+    target: ".sb-bible-reader-mobile-header-title",
+    titleKey: "tutorial.mobilePassageTitle",
+    titleDefault: "Your current passage",
+    bodyKey: "tutorial.mobilePassageBody",
+    bodyDefault: "Tap the book name to jump to a different book or chapter.",
+    placement: "bottom",
+  },
+  {
+    id: "selector-books",
+    target: ".sidebar-results",
+    titleKey: "tutorial.selectorBooksTitle",
+    titleDefault: "Select books and chapters",
+    bodyKey: "tutorial.selectorBooksBody",
+    bodyDefault: "Choose a chapter from here to begin your reading journey.",
+    placement: "bottom",
+    group: "selector",
+  },
+  {
+    id: "toolbar",
+    target: ".sb-reader-toolbar",
+    titleKey: "tutorial.toolbarTitle",
+    titleDefault: "Reading tools",
+    bodyKey: "tutorial.mobileToolbarBody",
+    bodyDefault:
+      "Switch between the Bible, search, and more from the bottom bar.",
+    placement: "top",
+  },
+  {
+    id: "m-settings",
+    target: ".sb-bible-reader-mobile-header-settings",
+    titleKey: "tutorial.mobileSettingsTitle",
+    titleDefault: "Settings",
+    bodyKey: "tutorial.mobileSettingsBody",
+    bodyDefault: "Customize text, themes, and reading options here.",
+    placement: "bottom",
   },
 ];
 
@@ -132,10 +233,28 @@ export interface TutorialManager {
  */
 export function createTutorialManager(
   login: LoginManager,
-  onboarding: OnboardingManager
+  onboarding: OnboardingManager,
+  selector: BibleSelectorState
 ): TutorialManager {
   const running = signal<boolean>(false);
   const index = signal<number>(0);
+
+  // The active step set is chosen by viewport at `start()` (snapshotted in
+  // `mode`, so a resize mid-tour doesn't swap the steps out from under us).
+  const mode = signal<"desktop" | "mobile">("desktop");
+  const activeSteps = computed<TutorialStep[]>(() =>
+    mode.value === "mobile" ? MOBILE_TUTORIAL_STEPS : TUTORIAL_STEPS
+  );
+
+  // Steps that spotlight elements inside the book selector. The selector is
+  // kept open for the whole group (no open/close flicker between them) and
+  // closed again once the tour moves past it.
+  const SELECTOR_GROUP = new Set([
+    "selector-books",
+    "selector-translation",
+    "selector-testament",
+    "selector-search",
+  ]);
 
   const seenLocally = signal<boolean>(readFlag(TUTORIAL_SEEN_KEY));
 
@@ -151,8 +270,70 @@ export function createTutorialManager(
   });
 
   const currentStep = computed<TutorialStep | null>(() =>
-    running.value ? (TUTORIAL_STEPS[index.value] ?? null) : null
+    running.value ? (activeSteps.value[index.value] ?? null) : null
   );
+
+  // Run each step's onEnter when it becomes active and the previous step's
+  // onLeave when moving away (including when the tour ends).
+  let prevStepId: string | null = null;
+  effect(() => {
+    const active = running.value
+      ? (activeSteps.value[index.value] ?? null)
+      : null;
+    const activeId = active?.id ?? null;
+    if (activeId === prevStepId) {
+      return;
+    }
+    activeSteps.value.find((s) => s.id === prevStepId)?.onLeave?.();
+    active?.onEnter?.();
+    prevStepId = activeId;
+  });
+
+  // Keep the book selector open while any selector-group step is active, and
+  // close it (only if the tour opened it) once the tour moves past the group.
+  // Clicking the reader title reuses the app's own open logic (correct pane).
+  let selectorOpenedByTour = false;
+  effect(() => {
+    const active = running.value
+      ? (activeSteps.value[index.value] ?? null)
+      : null;
+    const inGroup = active ? SELECTOR_GROUP.has(active.id) : false;
+    if (inGroup) {
+      if (!selector.isOpen.value) {
+        // Desktop opens via the reader title; mobile via the mobile header's
+        // book label. Either reuses the app's own open logic (correct pane).
+        const title = (document.querySelector(".sb-bible-reader-title") ??
+          document.querySelector(
+            ".sb-bible-reader-mobile-header-book"
+          )) as HTMLElement | null;
+        title?.click();
+        selectorOpenedByTour = true;
+      }
+    } else if (selectorOpenedByTour) {
+      void selector.setOpen(false);
+      selectorOpenedByTour = false;
+    }
+  });
+
+  // Open the translation dropdown while its step is active so the tour shows it
+  // expanded, and collapse it again when the tour moves on (only if the tour
+  // opened it — don't fight a user who opened it themselves).
+  let translationOpenedByTour = false;
+  effect(() => {
+    const active = running.value
+      ? (activeSteps.value[index.value] ?? null)
+      : null;
+    const wantTranslation = active?.id === "selector-translation";
+    if (wantTranslation) {
+      if (!selector.selectingTranslation.value) {
+        selector.selectingTranslation.value = true;
+        translationOpenedByTour = true;
+      }
+    } else if (translationOpenedByTour) {
+      selector.selectingTranslation.value = false;
+      translationOpenedByTour = false;
+    }
+  });
 
   const markSeen = () => {
     writeFlag(TUTORIAL_SEEN_KEY);
@@ -161,7 +342,9 @@ export function createTutorialManager(
   };
 
   const start = () => {
-    if (TUTORIAL_STEPS.length === 0) {
+    // Pick the step set for the current viewport before showing the tour.
+    mode.value = selector.viewportWidth.value <= 768 ? "mobile" : "desktop";
+    if (activeSteps.value.length === 0) {
       return;
     }
     index.value = 0;
@@ -174,7 +357,7 @@ export function createTutorialManager(
   };
 
   const next = () => {
-    if (index.value >= TUTORIAL_STEPS.length - 1) {
+    if (index.value >= activeSteps.value.length - 1) {
       finish();
       return;
     }
@@ -209,7 +392,9 @@ export function createTutorialManager(
   });
 
   return {
-    steps: TUTORIAL_STEPS,
+    get steps() {
+      return activeSteps.value;
+    },
     running,
     index,
     currentStep,

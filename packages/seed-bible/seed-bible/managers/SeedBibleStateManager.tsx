@@ -211,7 +211,7 @@ export function createSeedBibleState(): SeedBibleState {
   const modals = createModalManager();
   const search = createSearchManager();
   const onboarding = createOnboardingManager(login);
-  const tutorial = createTutorialManager(login, onboarding);
+  const tutorial = createTutorialManager(login, onboarding, selector);
 
   const { currentTheme } = themeManager;
   const theme = computed(() => currentTheme.value);
