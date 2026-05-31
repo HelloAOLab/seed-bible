@@ -2070,6 +2070,23 @@ function SettingsMainView(props: { state: SeedBibleState }) {
             </li>
           )}
           <li>
+            <button
+              className="sb-settings-nav-item"
+              onClick={() => {
+                state.sidebar.closeSettings();
+                state.tutorial.start();
+              }}
+            >
+              <span className="sb-settings-nav-icon">
+                <MaterialIcon>school</MaterialIcon>
+              </span>
+              <span className="sb-settings-nav-label">
+                {t("replay-tutorial", { defaultValue: "Replay tutorial" })}
+              </span>
+              <span className="material-symbols-outlined">chevron_right</span>
+            </button>
+          </li>
+          <li>
             <div className="sb-settings-toggle-row">
               <label
                 className="sb-settings-toggle-label"

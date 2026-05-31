@@ -12,6 +12,7 @@ import type { ReadonlySignal } from "@preact/signals";
 import { closeContextMenus } from "seed-bible.components.ContextMenu";
 import { ModalHost } from "seed-bible.components.ModalHost";
 import { OnboardingModals } from "seed-bible.components.Onboarding";
+import { Tutorial } from "seed-bible.components.Tutorial";
 
 const { useMemo } = os.appHooks;
 
@@ -162,6 +163,19 @@ function MainContent(props: {
             />
             <OnboardingModals
               onboarding={state.onboarding}
+              className={`${fontSizeClass} ${webkitClass}`}
+            />
+          </>
+        </CasualOSApp>
+
+        <CasualOSApp id="tutorial">
+          <>
+            <ExternalResourceDependencies
+              themeCssVariables={theme.themeCssVariables}
+              themeCssClasses={theme.themeCssClasses}
+            />
+            <Tutorial
+              tutorial={state.tutorial}
               className={`${fontSizeClass} ${webkitClass}`}
             />
           </>

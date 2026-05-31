@@ -66,6 +66,10 @@ import {
   createOnboardingManager,
   type OnboardingManager,
 } from "seed-bible.managers.OnboardingManager";
+import {
+  createTutorialManager,
+  type TutorialManager,
+} from "seed-bible.managers.TutorialManager";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
@@ -164,6 +168,8 @@ export interface SeedBibleState {
   search: SearchManager;
   /** First-run onboarding flow (welcome + install-to-home-screen prompt). */
   onboarding: OnboardingManager;
+  /** Guided coachmark tour of the main UI. */
+  tutorial: TutorialManager;
   /** Aggregated computed app state and top-level UI actions. */
   app: AppState;
   /** Extension loading and runtime manager. */
@@ -205,6 +211,7 @@ export function createSeedBibleState(): SeedBibleState {
   const modals = createModalManager();
   const search = createSearchManager();
   const onboarding = createOnboardingManager(login);
+  const tutorial = createTutorialManager(login, onboarding);
 
   const { currentTheme } = themeManager;
   const theme = computed(() => currentTheme.value);
@@ -650,6 +657,7 @@ export function createSeedBibleState(): SeedBibleState {
     invitations,
     search,
     onboarding,
+    tutorial,
     extensions,
     app: {
       createSharedSession: handleCreateSharedSession,

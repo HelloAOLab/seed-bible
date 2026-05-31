@@ -110,6 +110,9 @@
       "seed-bible.components.Tabs": [
         "./packages/seed-bible/seed-bible/components/Tabs.tsx"
       ],
+      "seed-bible.components.Tutorial": [
+        "./packages/seed-bible/seed-bible/components/Tutorial.tsx"
+      ],
       "seed-bible.components.Utils": [
         "./packages/seed-bible/seed-bible/components/Utils.tsx"
       ],
@@ -190,6 +193,9 @@
       ],
       "seed-bible.managers.ThemeManager": [
         "./packages/seed-bible/seed-bible/managers/ThemeManager.tsx"
+      ],
+      "seed-bible.managers.TutorialManager": [
+        "./packages/seed-bible/seed-bible/managers/TutorialManager.tsx"
       ],
       "ext_Example.init": [
         "./packages/seed-bible-refresh-example-extension/ext_Example/init.tsx"

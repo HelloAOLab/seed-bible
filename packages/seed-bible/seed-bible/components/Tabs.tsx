@@ -1937,6 +1937,7 @@ export function Sidebar(props: SidebarProps) {
       >
         <button
           onClick={sidebar.toggleSettings}
+          data-tutorial="settings"
           className={`sb-sidebar-icon-button${
             isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
           }`}
