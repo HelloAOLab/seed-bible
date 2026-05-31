@@ -4061,7 +4061,7 @@ h6 {
   position: absolute;
   right: 0;
   top: calc(100% + 6px);
-  min-width: 160px;
+  min-width: 210px;
   padding: 6px;
   border: 1px solid var(--sb-secondary-color);
   border-radius: 8px;
@@ -4072,7 +4072,10 @@ h6 {
 }
 
 .sb-tab-menu-item {
-  width: 100%;
+  /* width: 100%; */
+  display: flex;
+  align-items: center;
+  gap: 10px;
   border: none;
   background: transparent;
   color: var(--sb-font-color);
@@ -4080,6 +4083,12 @@ h6 {
   padding: 8px 10px;
   border-radius: 6px;
   cursor: pointer;
+}
+
+.sb-tab-menu-item-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+  opacity: 0.85;
 }
 
 .sb-tab-menu-item:hover {
@@ -4647,6 +4656,7 @@ h6 {
   color: var(--sb-menu-font-color);
   box-shadow: 0 10px 30px #00000014;
   z-index: 40;
+  width: 200px;
 }
 
 .sb-context-menu-item {

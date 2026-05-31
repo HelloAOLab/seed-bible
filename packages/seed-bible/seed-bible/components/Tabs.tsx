@@ -794,9 +794,17 @@ function TabRow(props: TabRowProps) {
                 }
               }}
             >
-              {t("share-session", {
-                defaultValue: `Share session`,
-              })}
+              <span
+                className="material-symbols-outlined sb-tab-menu-item-icon"
+                aria-hidden="true"
+              >
+                ios_share
+              </span>
+              <span>
+                {t("share-session", {
+                  defaultValue: `Share session`,
+                })}
+              </span>
             </ContextMenuItem>
             {(() => {
               const hostId = tab.sharedSession.options.value.hostUserId;
@@ -834,7 +842,17 @@ function TabRow(props: TabRowProps) {
                     });
                   }}
                 >
-                  {t("session-settings", { defaultValue: "Session settings" })}
+                  <span
+                    className="material-symbols-outlined sb-tab-menu-item-icon"
+                    aria-hidden="true"
+                  >
+                    settings
+                  </span>
+                  <span>
+                    {t("session-settings", {
+                      defaultValue: "Session settings",
+                    })}
+                  </span>
                 </ContextMenuItem>
               );
             })()}
@@ -847,9 +865,17 @@ function TabRow(props: TabRowProps) {
               handleBookmarkAction();
             }}
           >
-            {isTabBookmarked
-              ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
-              : t("add-bookmark", { defaultValue: "Bookmark tab" })}
+            <span
+              className="material-symbols-outlined sb-tab-menu-item-icon"
+              aria-hidden="true"
+            >
+              {isTabBookmarked ? "bookmark_remove" : "bookmark_add"}
+            </span>
+            <span>
+              {isTabBookmarked
+                ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
+                : t("add-bookmark", { defaultValue: "Bookmark tab" })}
+            </span>
           </ContextMenuItem>
         )}
         <ContextMenuItem
@@ -858,7 +884,13 @@ function TabRow(props: TabRowProps) {
             state.tabs.removeTab(tab.id);
           }}
         >
-          {t("close", { defaultValue: "Close" })}
+          <span
+            className="material-symbols-outlined sb-tab-menu-item-icon"
+            aria-hidden="true"
+          >
+            close
+          </span>
+          <span>{t("close", { defaultValue: "Close" })}</span>
         </ContextMenuItem>
         {panelsEnabled && (
           <>
@@ -868,7 +900,15 @@ function TabRow(props: TabRowProps) {
               }}
               className="sb-tab-menu-item"
             >
-              {t("open-in-new-panel", { defaultValue: "Open in new panel" })}
+              <span
+                className="material-symbols-outlined sb-tab-menu-item-icon"
+                aria-hidden="true"
+              >
+                splitscreen_right
+              </span>
+              <span>
+                {t("open-in-new-panel", { defaultValue: "Open in new panel" })}
+              </span>
             </ContextMenuItem>
             <ContextMenuItem
               onClick={() => {
@@ -876,9 +916,17 @@ function TabRow(props: TabRowProps) {
               }}
               className="sb-tab-menu-item"
             >
-              {t("open-in-detached-panel", {
-                defaultValue: "Open in detached panel",
-              })}
+              <span
+                className="material-symbols-outlined sb-tab-menu-item-icon"
+                aria-hidden="true"
+              >
+                open_in_new
+              </span>
+              <span>
+                {t("open-in-detached-panel", {
+                  defaultValue: "Open in detached panel",
+                })}
+              </span>
             </ContextMenuItem>
           </>
         )}
