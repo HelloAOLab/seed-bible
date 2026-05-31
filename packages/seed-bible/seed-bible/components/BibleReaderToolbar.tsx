@@ -664,7 +664,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           dir={readingState.value?.translation.value?.textDirection ?? "auto"}
         >
           {isSmallScreen.value &&
-            !sidebar.isSearchPanelOpen.value &&
+            activeMobileTab.value === "bible" &&
             settings.settings.value.showNavArrows &&
             previousChapterTool.value && (
               <button
@@ -678,7 +678,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
             )}
 
           {isSmallScreen.value &&
-            !sidebar.isSearchPanelOpen.value &&
+            activeMobileTab.value === "bible" &&
             settings.settings.value.showNavArrows &&
             nextChapterTool.value && (
               <button

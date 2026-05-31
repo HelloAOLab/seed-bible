@@ -1381,7 +1381,7 @@ h6 {
 }
 
 .sb-footnote-modal {
-  width: min(720px, 100%);
+  width: min(455px, 100%);
   max-height: min(640px, calc(100dvh - 32px));
   background: var(--sb-reader-background);
   color: var(--sb-font-color);

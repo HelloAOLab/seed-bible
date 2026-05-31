@@ -18,6 +18,8 @@ import { useI18n } from "seed-bible.i18n.I18nManager";
 import { MobileSettingsSheet } from "seed-bible.components.MobileSettingsSheet";
 import { InfoSettingsIcon } from "seed-bible.components.icons";
 
+const { useRef } = os.appHooks;
+
 interface ReaderBookmarkButtonProps {
   state: SeedBibleState;
   translationId: string | null;
@@ -840,6 +842,7 @@ export function BibleReader(props: BibleReaderProps) {
     loading,
     error,
     selectVerse,
+    clearSelectedVerses,
     selectedFootnote,
     selectFootnote,
   } = readingState;
@@ -902,6 +905,78 @@ export function BibleReader(props: BibleReaderProps) {
     selectorState.selectingTranslation.value = true;
   };
 
+  // True for the click that trails a drag-to-select gesture, so the verse's
+  // own onClick doesn't toggle the verse back off after we've just selected
+  // it from the text selection. Reset at the start of every new gesture.
+  const justConvertedSelectionRef = useRef(false);
+
+  // Turn a native text selection (mouse drag on desktop, touch text-selection
+  // on mobile) into an app verse selection: select every verse the selection
+  // touches — exactly as if the user had clicked each of them — which opens
+  // the verse toolbar. No-op for a collapsed/empty selection, so plain taps
+  // keep their single-verse toggle behaviour.
+  const selectVersesFromTextSelection = () => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+      return;
+    }
+    const data = chapterData.value;
+    if (!data) return;
+
+    const range = selection.getRangeAt(0);
+    const ancestor =
+      range.commonAncestorContainer instanceof Element
+        ? range.commonAncestorContainer
+        : range.commonAncestorContainer.parentElement;
+    const root = ancestor?.closest(".sb-chapter-content");
+    if (!root) return;
+
+    const verseEls = Array.from(
+      root.querySelectorAll<HTMLElement>(".sb-verse[data-verse-number]")
+    ).filter((el) => range.intersectsNode(el));
+    if (verseEls.length === 0) return;
+
+    // verse number -> full ChapterVerse, so we can rebuild selection entries.
+    const verseByNumber = new Map<number, ChapterVerse>();
+    for (const entry of data.chapter.content) {
+      if (
+        entry &&
+        typeof entry === "object" &&
+        entry.type === "verse" &&
+        typeof entry.number === "number"
+      ) {
+        verseByNumber.set(entry.number, entry as ChapterVerse);
+      }
+    }
+
+    // Anchor the floating verse toolbar near the selected text.
+    const rect = range.getBoundingClientRect();
+    const anchorX = rect.left + rect.width / 2;
+    const anchorY = rect.top;
+
+    // Drop the native selection so only the app's verse highlight shows and
+    // the trailing click can't toggle a verse back off.
+    selection.removeAllRanges();
+    justConvertedSelectionRef.current = true;
+
+    // Mirror clicking each covered verse: deselect everything, then reselect.
+    clearSelectedVerses();
+    for (const el of verseEls) {
+      const verseValue = verseByNumber.get(Number(el.dataset.verseNumber));
+      if (!verseValue) continue;
+      selectVerse(
+        {
+          bookId: data.book.id,
+          chapterNumber: data.chapter.number,
+          verse: verseValue,
+          translationId: data.translation.id,
+        },
+        anchorX,
+        anchorY
+      );
+    }
+  };
+
   const renderMainContent = () => (
     <>
       {error.value && !loading.value && (
@@ -909,10 +984,22 @@ export function BibleReader(props: BibleReaderProps) {
       )}
 
       {!error.value && chapterData.value && (
-        <div className="sb-chapter-content">
+        <div
+          className="sb-chapter-content"
+          onPointerDown={() => {
+            justConvertedSelectionRef.current = false;
+          }}
+          onPointerUp={selectVersesFromTextSelection}
+        >
           {renderChapterContent(
             chapterData.value,
             (verse, event) => {
+              // Swallow the click that trails a drag-to-select gesture so it
+              // doesn't toggle the just-selected verse back off.
+              if (justConvertedSelectionRef.current) {
+                justConvertedSelectionRef.current = false;
+                return;
+              }
               selectVerse(verse, event.clientX, event.clientY);
             },
             selectedVerses.value,
