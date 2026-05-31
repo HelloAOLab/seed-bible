@@ -89,11 +89,14 @@
       "seed-bible.components.KeyboardNav": [
         "./packages/seed-bible/seed-bible/components/KeyboardNav.tsx"
       ],
+      "seed-bible.components.MobileSettingsSheet": [
+        "./packages/seed-bible/seed-bible/components/MobileSettingsSheet.tsx"
+      ],
       "seed-bible.components.ModalHost": [
         "./packages/seed-bible/seed-bible/components/ModalHost.tsx"
       ],
-      "seed-bible.components.MobileSettingsSheet": [
-        "./packages/seed-bible/seed-bible/components/MobileSettingsSheet.tsx"
+      "seed-bible.components.Onboarding": [
+        "./packages/seed-bible/seed-bible/components/Onboarding.tsx"
       ],
       "seed-bible.components.PaneLayout": [
         "./packages/seed-bible/seed-bible/components/PaneLayout.tsx"
@@ -155,6 +158,9 @@
       "seed-bible.managers.ModalManager": [
         "./packages/seed-bible/seed-bible/managers/ModalManager.tsx"
       ],
+      "seed-bible.managers.OnboardingManager": [
+        "./packages/seed-bible/seed-bible/managers/OnboardingManager.tsx"
+      ],
       "seed-bible.managers.PanesManager": [
         "./packages/seed-bible/seed-bible/managers/PanesManager.tsx"
       ],
@@ -206,6 +212,9 @@
       "ext_twitchPub.host.Authenticate": [
         "./packages/twitchPub-extension/ext_twitchPub/host/Authenticate.tsx"
       ],
+      "ext_twitchPub.host.closeInterface": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/closeInterface.tsx"
+      ],
       "ext_twitchPub.host.DraggableContainer": [
         "./packages/twitchPub-extension/ext_twitchPub/host/DraggableContainer.tsx"
       ],
@@ -224,6 +233,18 @@
       "ext_twitchPub.host.Login": [
         "./packages/twitchPub-extension/ext_twitchPub/host/Login.tsx"
       ],
+      "ext_twitchPub.host.onEggHatch": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/onEggHatch.tsx"
+      ],
+      "ext_twitchPub.host.onExtensionInstalled": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/onExtensionInstalled.tsx"
+      ],
+      "ext_twitchPub.host.onExtensionUninstalled": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/onExtensionUninstalled.tsx"
+      ],
+      "ext_twitchPub.host.onInstJoined": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/onInstJoined.tsx"
+      ],
       "ext_twitchPub.host.openInterface": [
         "./packages/twitchPub-extension/ext_twitchPub/host/openInterface.tsx"
       ],
@@ -233,17 +254,14 @@
       "ext_twitchPub.host.sendMessage": [
         "./packages/twitchPub-extension/ext_twitchPub/host/sendMessage.tsx"
       ],
-      "ext_twitchPub.host.sendWhispers": [
-        "./packages/twitchPub-extension/ext_twitchPub/host/sendWhispers.tsx"
-      ],
       "ext_twitchPub.host.TwitchInterface": [
         "./packages/twitchPub-extension/ext_twitchPub/host/TwitchInterface.tsx"
       ],
-      "ext_twitchPub.host.TwitchSettings": [
-        "./packages/twitchPub-extension/ext_twitchPub/host/TwitchSettings.tsx"
-      ],
       "ext_twitchPub.host.twitchPubManager": [
         "./packages/twitchPub-extension/ext_twitchPub/host/twitchPubManager.tsx"
+      ],
+      "ext_twitchPub.host.TwitchSettings": [
+        "./packages/twitchPub-extension/ext_twitchPub/host/TwitchSettings.tsx"
       ],
       "ext_twitchPub.host.utils": [
         "./packages/twitchPub-extension/ext_twitchPub/host/utils.tsx"
@@ -277,9 +295,6 @@
       ],
       "ext_twitchSub.client.onInstJoined": [
         "./packages/twitchSub-extension/ext_twitchSub/client/onInstJoined.tsx"
-      ],
-      "ext_twitchSub.client.toggleInterface": [
-        "./packages/twitchSub-extension/ext_twitchSub/client/toggleInterface.tsx"
       ],
       "ext_twitchSub.client.TwitchSettings": [
         "./packages/twitchSub-extension/ext_twitchSub/client/TwitchSettings.tsx"

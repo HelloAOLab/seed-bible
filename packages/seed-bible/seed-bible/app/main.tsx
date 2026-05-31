@@ -11,6 +11,7 @@ import { useEffect } from "preact/hooks";
 import type { ReadonlySignal } from "@preact/signals";
 import { closeContextMenus } from "seed-bible.components.ContextMenu";
 import { ModalHost } from "seed-bible.components.ModalHost";
+import { OnboardingModals } from "seed-bible.components.Onboarding";
 
 const { useMemo } = os.appHooks;
 
@@ -152,6 +153,19 @@ function MainContent(props: {
         <SharedSessionsToasts state={state} />
 
         <ModalHost manager={state.modals} />
+
+        <CasualOSApp id="onboarding">
+          <>
+            <ExternalResourceDependencies
+              themeCssVariables={theme.themeCssVariables}
+              themeCssClasses={theme.themeCssClasses}
+            />
+            <OnboardingModals
+              onboarding={state.onboarding}
+              className={`${fontSizeClass} ${webkitClass}`}
+            />
+          </>
+        </CasualOSApp>
       </div>
     </>
   );

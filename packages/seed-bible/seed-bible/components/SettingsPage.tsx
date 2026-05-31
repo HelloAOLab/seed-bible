@@ -28,6 +28,7 @@ import {
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import {
   ExtensionsIcon,
+  InstallAppsIcon,
   MarginIcon,
   MaterialIcon,
   ThemeIcon,
@@ -2050,6 +2051,24 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
           </li>
+          {/* Only offered while the app isn't installed yet. Once installed
+              (standalone session or recorded on the profile) this disappears. */}
+          {!state.onboarding.installed.value && (
+            <li>
+              <button
+                className="sb-settings-nav-item"
+                onClick={() => state.onboarding.openInstall()}
+              >
+                <span className="sb-settings-nav-icon">
+                  <InstallAppsIcon size={24} />
+                </span>
+                <span className="sb-settings-nav-label">
+                  {t("install-app", { defaultValue: "Install app" })}
+                </span>
+                <span className="material-symbols-outlined">chevron_right</span>
+              </button>
+            </li>
+          )}
           <li>
             <div className="sb-settings-toggle-row">
               <label
