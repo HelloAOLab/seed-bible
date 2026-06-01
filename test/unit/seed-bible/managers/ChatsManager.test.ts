@@ -3,6 +3,7 @@ import {
   createChatsManager,
   resolveMessageTargets,
   type ChatMessage,
+  type ChatMessageOptions,
   type ChatParticipant,
   type UserChatParticipant,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
@@ -97,6 +98,20 @@ function createLoginManagerMock() {
     userId,
     profile,
     loginManager,
+  };
+}
+
+function createDeferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return {
+    promise,
+    resolve,
+    reject,
   };
 }
 
@@ -1283,6 +1298,101 @@ describe("createChatsManager", () => {
       type: "text",
       text: "First provider reply",
     });
+  });
+
+  it("sendMessage() marks local AI participant as typing while generating response", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const deferred = createDeferred<ChatMessageOptions | null>();
+    const chats = createChatsManager(loginManager);
+    const session = chats.createLocalSession();
+
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      generateResponse: jest.fn().mockImplementation(() => deferred.promise),
+    });
+
+    const sendPromise = session.sendMessage({
+      type: "text",
+      text: "Hello there",
+    });
+
+    expect(session.typingParticipants.value).toContainEqual(
+      expect.objectContaining({
+        id: "provider-1",
+        isAI: true,
+      })
+    );
+
+    deferred.resolve({
+      type: "text",
+      text: "Provider reply",
+    });
+    await sendPromise;
+
+    expect(session.typingParticipants.value).not.toContainEqual(
+      expect.objectContaining({
+        id: "provider-1",
+      })
+    );
+  });
+
+  it("createSharedSession() marks local AI participant as typing while generating response", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const deferred = createDeferred<ChatMessageOptions | null>();
+    const chats = createChatsManager(loginManager);
+
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      generateResponse: jest.fn().mockImplementation(() => deferred.promise),
+    });
+
+    const { session } = createSharedSessionMock({
+      currentUserId: "user-a",
+      connectedUsers: [
+        {
+          id: "user-a",
+          userId: "user-a",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+        },
+      ],
+    });
+    const chat = chats.createSharedSession(session);
+
+    const sendPromise = chat.sendMessage({
+      type: "text",
+      text: "Hello @user-a_provider-1",
+    });
+    await Promise.resolve();
+
+    expect(chat.typingParticipants.value).toContainEqual(
+      expect.objectContaining({
+        id: "user-a_provider-1",
+        isAI: true,
+      })
+    );
+
+    deferred.resolve({
+      type: "text",
+      text: "Shared provider reply",
+    });
+    await sendPromise;
+    await Promise.resolve();
+
+    expect(chat.typingParticipants.value).not.toContainEqual(
+      expect.objectContaining({
+        id: "user-a_provider-1",
+      })
+    );
   });
 
   it("createSharedSession() stores targets matched by remote participant name and local AI name", async () => {

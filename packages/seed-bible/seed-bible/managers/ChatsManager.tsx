@@ -401,6 +401,10 @@ function parseTypingParticipantId(value: unknown): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value : null;
 }
 
+function createParticipantTypingMapKey(participantId: string): string {
+  return `participant:${participantId}`;
+}
+
 function getMostRecentProviderParticipant(
   participants: ChatParticipant[],
   messages: ChatMessage[]
@@ -769,25 +773,41 @@ function createSharedChatSession(
           return;
         }
 
-        const response = await provider.generateResponse({
-          messages: [...messages.value, nextMessage],
-          participant,
-          participants: participants.value,
+        const typingKey = createParticipantTypingMapKey(participant.id);
+        session.document.transact(() => {
+          const existingTyping = parseTypingParticipantId(
+            chatTypingMap.get(typingKey)
+          );
+          if (existingTyping !== participant.id) {
+            chatTypingMap.set(typingKey, participant.id);
+          }
         });
-        if (!response) {
-          return;
+
+        try {
+          const response = await provider.generateResponse({
+            messages: [...messages.value, nextMessage],
+            participant,
+            participants: participants.value,
+          });
+          if (!response) {
+            return;
+          }
+          const responseTargets =
+            response.type === "text"
+              ? resolveMessageTargets(participants.value, response.text)
+              : [];
+          chats.push(
+            createChatMessage(
+              response,
+              [participant.id],
+              responseTargets.map((target) => target.id)
+            )
+          );
+        } finally {
+          session.document.transact(() => {
+            chatTypingMap.delete(typingKey);
+          });
         }
-        const responseTargets =
-          response.type === "text"
-            ? resolveMessageTargets(participants.value, response.text)
-            : [];
-        chats.push(
-          createChatMessage(
-            response,
-            [participant.id],
-            responseTargets.map((target) => target.id)
-          )
-        );
       })
     );
   };
@@ -840,10 +860,23 @@ function createLocalChatSession(
   ]);
   const messages = signal<ChatMessage[]>([]);
   const localIsTyping = signal(false);
+  const providerTypingParticipantIds = signal<string[]>([]);
 
-  const typingParticipants = computed<ChatParticipant[]>(() =>
-    localIsTyping.value ? [localParticipant.value] : []
-  );
+  const typingParticipants = computed<ChatParticipant[]>(() => {
+    const typing = new Map<string, ChatParticipant>();
+    if (localIsTyping.value) {
+      typing.set(localParticipant.value.id, localParticipant.value);
+    }
+
+    const providerIds = new Set(providerTypingParticipantIds.value);
+    for (const participant of chatProviderParticipants.value) {
+      if (providerIds.has(participant.id)) {
+        typing.set(participant.id, participant);
+      }
+    }
+
+    return Array.from(typing.values());
+  });
 
   const sendMessage = async (message: ChatMessageOptions) => {
     const participant = localParticipant.value;
@@ -881,26 +914,35 @@ function createLocalChatSession(
           return;
         }
 
-        const response = await provider.generateResponse({
-          messages: [...messages.value],
-          participant: target,
-          participants: participants.value,
-        });
-        if (!response) {
-          return;
+        providerTypingParticipantIds.value = Array.from(
+          new Set([...providerTypingParticipantIds.value, target.id])
+        );
+
+        try {
+          const response = await provider.generateResponse({
+            messages: [...messages.value],
+            participant: target,
+            participants: participants.value,
+          });
+          if (!response) {
+            return;
+          }
+          const responseTargets =
+            response.type === "text"
+              ? resolveMessageTargets(participants.value, response.text)
+              : [];
+          messages.value = [
+            ...messages.value,
+            createChatMessage(
+              response,
+              [target.id],
+              responseTargets.map((entry) => entry.id)
+            ),
+          ];
+        } finally {
+          providerTypingParticipantIds.value =
+            providerTypingParticipantIds.value.filter((id) => id !== target.id);
         }
-        const responseTargets =
-          response.type === "text"
-            ? resolveMessageTargets(participants.value, response.text)
-            : [];
-        messages.value = [
-          ...messages.value,
-          createChatMessage(
-            response,
-            [target.id],
-            responseTargets.map((entry) => entry.id)
-          ),
-        ];
       })
     );
   };
