@@ -393,6 +393,43 @@ function resolveMessageTargetsWithAliases(
   return Array.from(matches.values());
 }
 
+function getMostRecentProviderParticipant(
+  participants: ChatParticipant[],
+  messages: ChatMessage[]
+): AIChatParticipant | null {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (!message) {
+      continue;
+    }
+
+    for (
+      let authorIndex = message.authors.length - 1;
+      authorIndex >= 0;
+      authorIndex -= 1
+    ) {
+      const authorId = message.authors[authorIndex];
+      if (!authorId) {
+        continue;
+      }
+
+      const participant = participants.find(
+        (entry): entry is AIChatParticipant =>
+          entry.isAI && !entry.isRemote && entry.id === authorId
+      );
+      if (participant) {
+        return participant;
+      }
+    }
+  }
+
+  return (
+    participants.find(
+      (entry): entry is AIChatParticipant => entry.isAI && !entry.isRemote
+    ) ?? null
+  );
+}
+
 function createSharedChatSession(
   session: BibleReadingSession,
   chatProviders: Signal<ChatProvider[]>
@@ -714,8 +751,9 @@ function createLocalChatSession(
       message.type === "text"
         ? resolveMessageTargets(participants.value, message.text)
         : [];
-    const defaultProviderParticipant = participants.value.find(
-      (entry): entry is AIChatParticipant => entry.isAI && !entry.isRemote
+    const defaultProviderParticipant = getMostRecentProviderParticipant(
+      participants.value,
+      messages.value
     );
     const targetParticipants =
       resolvedTargetParticipants.length > 0

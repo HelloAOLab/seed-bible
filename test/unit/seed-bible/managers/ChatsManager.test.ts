@@ -1100,6 +1100,54 @@ describe("createChatsManager", () => {
     expect(secondProviderResponse).not.toHaveBeenCalled();
   });
 
+  it("sendMessage() defaults to the provider that authored the most recent message", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const chats = createChatsManager(loginManager);
+    const session = chats.createLocalSession();
+    const firstProviderResponse = jest.fn().mockResolvedValue({
+      type: "text",
+      text: "First provider reply",
+    });
+    const secondProviderResponse = jest.fn().mockResolvedValue({
+      type: "text",
+      text: "Second provider reply",
+    });
+
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      generateResponse: firstProviderResponse,
+    });
+    chats.registerProvider({
+      id: "provider-2",
+      name: "Helper AI 2",
+      generateResponse: secondProviderResponse,
+    });
+
+    await session.sendMessage({
+      type: "text",
+      text: "Hello @provider-2",
+    });
+
+    await session.sendMessage({
+      type: "text",
+      text: "Hello again",
+    });
+
+    expect(secondProviderResponse).toHaveBeenCalledTimes(2);
+    expect(firstProviderResponse).toHaveBeenCalledTimes(0);
+    expect(session.messages.value).toHaveLength(4);
+    expect(session.messages.value[2]).toMatchObject({
+      authors: ["user-1"],
+      targets: ["provider-2"],
+      type: "text",
+      text: "Hello again",
+    });
+  });
+
   it("sendMessage() appends first provider response when no targets are resolved", async () => {
     const { loginManager, userId, profile } = createLoginManagerMock();
     userId.value = "user-1";
