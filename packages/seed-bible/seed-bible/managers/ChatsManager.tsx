@@ -157,7 +157,11 @@ export interface ChatSession {
   messages: ReadonlySignal<ChatMessage[]>;
   /** Sends a message and notifies the other participants. */
   sendMessage: (message: ChatMessageOptions) => Promise<void>;
+  /** Updates whether the local participant is currently typing. */
+  setTypingStatus: (isTyping: boolean) => void;
   participants: ReadonlySignal<ChatParticipant[]>;
+  /** Participants currently typing. */
+  typingParticipants: ReadonlySignal<ChatParticipant[]>;
 
   /**
    * Gets the authors of a given message. Returns an empty array if the authors are anonymous or have left the session.
@@ -393,6 +397,10 @@ function resolveMessageTargetsWithAliases(
   return Array.from(matches.values());
 }
 
+function parseTypingParticipantId(value: unknown): string | null {
+  return typeof value === "string" && value.trim().length > 0 ? value : null;
+}
+
 function getMostRecentProviderParticipant(
   participants: ChatParticipant[],
   messages: ChatMessage[]
@@ -439,9 +447,12 @@ function createSharedChatSession(
   const participantAliasesMap = session.document.getMap<unknown>(
     "chat_participant_aliases"
   );
+  const chatTypingMap = session.document.getMap<unknown>("chat_typing");
   const chatProvidersMapVersion = signal(0);
   const participantAliasesMapVersion = signal(0);
+  const chatTypingMapVersion = signal(0);
   const participantIdAliases = signal<Record<string, string>>({});
+  const localIsTyping = signal(false);
   chatProvidersMap.changes.subscribe(() => {
     // Avoid updating reactive graph synchronously during shared-doc
     // transactions to prevent dependency cycles.
@@ -452,6 +463,11 @@ function createSharedChatSession(
   participantAliasesMap.changes.subscribe(() => {
     queueMicrotask(() => {
       participantAliasesMapVersion.value += 1;
+    });
+  });
+  chatTypingMap.changes.subscribe(() => {
+    queueMicrotask(() => {
+      chatTypingMapVersion.value += 1;
     });
   });
 
@@ -591,6 +607,22 @@ function createSharedChatSession(
     return [...allUserParticipants, ...sharedProviderParticipants];
   });
 
+  const typingParticipants = computed(() => {
+    void chatTypingMapVersion.value;
+    const typingParticipantIds = new Set<string>();
+    chatTypingMap.forEach((value) => {
+      const participantId = parseTypingParticipantId(value);
+      if (participantId) {
+        typingParticipantIds.add(participantId);
+      }
+    });
+
+    return participants.value.filter(
+      (participant) =>
+        participant.isActive && typingParticipantIds.has(participant.id)
+    );
+  });
+
   let previousLocalParticipantId: string | null = null;
   effect(() => {
     const localUserId = session.currentUser.value?.userId ?? null;
@@ -634,6 +666,65 @@ function createSharedChatSession(
         chatProvidersMap.set(localParticipantId, localProviderParticipants);
       }
       previousLocalParticipantId = localParticipantId;
+    });
+  });
+
+  let previousLocalTypingConnectionId: string | null = null;
+  effect(() => {
+    const localConnectionId = session.currentUser.value?.connectionId ?? null;
+    const localUserId = session.currentUser.value?.userId ?? null;
+    const localParticipantId = localUserId ?? localConnectionId;
+
+    session.document.transact(() => {
+      if (
+        previousLocalTypingConnectionId &&
+        previousLocalTypingConnectionId !== localConnectionId
+      ) {
+        chatTypingMap.delete(previousLocalTypingConnectionId);
+      }
+
+      if (!localConnectionId || !localParticipantId || !localIsTyping.value) {
+        if (localConnectionId) {
+          chatTypingMap.delete(localConnectionId);
+        }
+        previousLocalTypingConnectionId = localConnectionId;
+        return;
+      }
+
+      const existingTyping = parseTypingParticipantId(
+        chatTypingMap.get(localConnectionId)
+      );
+      if (existingTyping !== localParticipantId) {
+        chatTypingMap.set(localConnectionId, localParticipantId);
+      }
+      previousLocalTypingConnectionId = localConnectionId;
+    });
+  });
+
+  effect(() => {
+    void chatTypingMapVersion.value;
+    const activeParticipantIds = new Set(
+      participants.value
+        .filter((entry) => entry.isActive)
+        .map((entry) => entry.id)
+    );
+    const staleTypingKeys: string[] = [];
+
+    chatTypingMap.forEach((value, key) => {
+      const participantId = parseTypingParticipantId(value);
+      if (!participantId || !activeParticipantIds.has(participantId)) {
+        staleTypingKeys.push(key);
+      }
+    });
+
+    if (staleTypingKeys.length === 0) {
+      return;
+    }
+
+    session.document.transact(() => {
+      for (const key of staleTypingKeys) {
+        chatTypingMap.delete(key);
+      }
     });
   });
 
@@ -705,7 +796,11 @@ function createSharedChatSession(
     id: uuid(),
     messages,
     sendMessage,
+    setTypingStatus: (isTyping: boolean) => {
+      localIsTyping.value = isTyping;
+    },
     participants,
+    typingParticipants,
     getMessageAuthors: (message: ChatMessage) =>
       resolveMessageAuthors(participants.value, message),
   };
@@ -744,6 +839,11 @@ function createLocalChatSession(
     ...chatProviderParticipants.value,
   ]);
   const messages = signal<ChatMessage[]>([]);
+  const localIsTyping = signal(false);
+
+  const typingParticipants = computed<ChatParticipant[]>(() =>
+    localIsTyping.value ? [localParticipant.value] : []
+  );
 
   const sendMessage = async (message: ChatMessageOptions) => {
     const participant = localParticipant.value;
@@ -812,7 +912,11 @@ function createLocalChatSession(
     id: uuid(),
     messages,
     sendMessage,
+    setTypingStatus: (isTyping: boolean) => {
+      localIsTyping.value = isTyping;
+    },
     participants,
+    typingParticipants,
     getMessageAuthors,
   };
 }

@@ -114,6 +114,7 @@ function createSharedSessionMock(options?: {
   const sharedChats = new MockSharedArray<unknown>(options?.initialChats ?? []);
   const sharedChatProviders = new MockSharedMap<unknown>();
   const sharedParticipantAliases = new MockSharedMap<unknown>();
+  const sharedTyping = new MockSharedMap<unknown>();
   const mappedConnectedUsers = options?.connectedUsers
     ? options.connectedUsers.map((user) => ({
         userId: user.id,
@@ -172,6 +173,9 @@ function createSharedSessionMock(options?: {
         if (name === "chat_participant_aliases") {
           return sharedParticipantAliases;
         }
+        if (name === "chat_typing") {
+          return sharedTyping;
+        }
         return new MockSharedMap<unknown>();
       }),
       transact: (callback: () => void) => callback(),
@@ -186,6 +190,7 @@ function createSharedSessionMock(options?: {
     sharedChats,
     sharedChatProviders,
     sharedParticipantAliases,
+    sharedTyping,
     connectedUsers,
     allUsers,
     currentUser,
@@ -437,6 +442,27 @@ describe("createChatsManager", () => {
     ).toEqual([session.participants.value[0]]);
   });
 
+  it("createLocalSession() tracks local typing participant", () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-typing";
+    profile.value = { name: "Typer" };
+
+    const chats = createChatsManager(loginManager);
+    const session = chats.createLocalSession();
+
+    expect(session.typingParticipants.value).toEqual([]);
+
+    session.setTypingStatus(true);
+
+    expect(session.typingParticipants.value).toEqual([
+      session.participants.value[0],
+    ]);
+
+    session.setTypingStatus(false);
+
+    expect(session.typingParticipants.value).toEqual([]);
+  });
+
   it("createSharedSession() reads only schema-valid messages", () => {
     const { loginManager } = createLoginManagerMock();
     const { session } = createSharedSessionMock({
@@ -516,6 +542,67 @@ describe("createChatsManager", () => {
       type: "text",
       text: "hello shared",
     });
+  });
+
+  it("createSharedSession() tracks typing participants from shared typing map", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const { session, sharedTyping } = createSharedSessionMock({
+      connectedSessionUsers: [
+        {
+          userId: "u1",
+          connectionId: "conn-u1",
+          name: "Alpha",
+          isSelf: false,
+        },
+      ],
+    });
+    const chats = createChatsManager(loginManager);
+    const chatSession = chats.createSharedSession(session);
+
+    expect(chatSession.typingParticipants.value).toEqual([]);
+
+    sharedTyping.set("conn-u1", "u1");
+    await Promise.resolve();
+
+    expect(chatSession.typingParticipants.value).toEqual([
+      expect.objectContaining({
+        id: "u1",
+        isActive: true,
+      }),
+    ]);
+  });
+
+  it("createSharedSession() removes inactive participants from typing list", () => {
+    const { loginManager } = createLoginManagerMock();
+    const { session, allUsers, sharedTyping } = createSharedSessionMock({
+      connectedSessionUsers: [
+        {
+          userId: "u1",
+          connectionId: "conn-u1",
+          name: "Alpha",
+          isSelf: false,
+        },
+      ],
+    });
+    const chats = createChatsManager(loginManager);
+    const chatSession = chats.createSharedSession(session);
+
+    sharedTyping.set("conn-u1", "u1");
+    expect(chatSession.typingParticipants.value).toHaveLength(1);
+
+    allUsers.value = [
+      {
+        userId: "u1",
+        connectionId: "conn-u1",
+        profile: { name: "Alpha" },
+        isSelf: false,
+        isActive: false,
+        color: "#000000",
+        sessionId: null,
+      },
+    ];
+
+    expect(chatSession.typingParticipants.value).toEqual([]);
   });
 
   it("createSharedSession() maps participants and resolves message authors", () => {
@@ -941,7 +1028,7 @@ describe("createChatsManager", () => {
     });
   });
 
-  it("createSharedSession() replaces provider participant entry in chat_providers by provider id", () => {
+  it("createSharedSession() replaces provider participant entry in chat_providers by provider id", async () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);
     chats.registerProvider({
@@ -972,6 +1059,8 @@ describe("createChatsManager", () => {
       name: "New Name",
       generateResponse: jest.fn(),
     });
+
+    await Promise.resolve();
 
     expect(sharedChatProviders.get("user-a")).toEqual([
       {

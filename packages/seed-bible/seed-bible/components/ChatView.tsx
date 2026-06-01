@@ -148,6 +148,12 @@ export function ChatView(props: ChatViewProps) {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }, [messages.length]);
 
+  useEffect(() => {
+    return () => {
+      chat.setTypingStatus(false);
+    };
+  }, []);
+
   const selectMention = (participant: ChatParticipant) => {
     if (!mentionContext) {
       return;
@@ -160,6 +166,7 @@ export function ChatView(props: ChatViewProps) {
       cursorPosition.value,
       mentionText
     );
+    chat.setTypingStatus(draft.value.trim().length > 0);
 
     queueMicrotask(() => {
       const input = inputRef.current;
@@ -222,6 +229,7 @@ export function ChatView(props: ChatViewProps) {
 
     isSubmitting.value = true;
     submitError.value = null;
+    chat.setTypingStatus(false);
 
     try {
       await chat.sendMessage({
@@ -229,6 +237,7 @@ export function ChatView(props: ChatViewProps) {
         text,
       });
       draft.value = "";
+      chat.setTypingStatus(false);
     } catch (error) {
       submitError.value =
         error instanceof Error
@@ -340,12 +349,16 @@ export function ChatView(props: ChatViewProps) {
               const input = event.currentTarget as HTMLInputElement;
               draft.value = input.value;
               cursorPosition.value = input.selectionStart ?? input.value.length;
+              chat.setTypingStatus(input.value.trim().length > 0);
             }}
             onKeyDown={handleMentionKeyDown}
             onClick={handleInputPositionUpdate}
             onKeyUp={handleInputPositionUpdate}
             onSelect={handleInputPositionUpdate}
             onFocus={handleInputPositionUpdate}
+            onBlur={() => {
+              chat.setTypingStatus(false);
+            }}
             disabled={isSubmitting.value}
             aria-autocomplete="list"
             aria-expanded={isMentionPickerOpen}
