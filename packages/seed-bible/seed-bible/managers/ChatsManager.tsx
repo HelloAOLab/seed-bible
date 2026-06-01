@@ -76,7 +76,7 @@ export interface ChatProvider {
   ) => ChatMessageOptions | Promise<ChatMessageOptions | null> | null;
 }
 
-export interface ChatParticipant {
+export interface BaseChatParticipant {
   /**
    * The ID of the participant.
    */
@@ -103,18 +103,39 @@ export interface ChatParticipant {
   isRemote: boolean;
 }
 
-export type RemoteChatParticipant = Omit<
-  ChatParticipant,
-  "isSelf" | "isRemote"
+export interface UserChatParticipant extends BaseChatParticipant {
+  /** The user ID for this participant, if known. */
+  userId: string | null;
+  /** The connection ID for this participant, if known. */
+  connectionId: string | null;
+  isAI: false;
+}
+
+export interface AIChatParticipant extends BaseChatParticipant {
+  /** The user ID that this AI participant is associated with, if any. */
+  userId: string | null;
+  connectionId: null;
+  isSelf: false;
+  isAI: true;
+}
+
+export type ChatParticipant = UserChatParticipant | AIChatParticipant;
+
+type SharedAIChatParticipant = Pick<
+  AIChatParticipant,
+  "id" | "name" | "userId" | "isAI"
 >;
 
-const chatParticipantSchema = z.object({
+const sharedAIChatParticipantSchema = z.object({
   id: z.string(),
   name: z.string().nullable(),
-  isAI: z.boolean(),
+  userId: z.string().nullable(),
+  isAI: z.literal(true),
 });
 
-const chatParticipantArraySchema = z.array(chatParticipantSchema);
+const sharedAIChatParticipantArraySchema = z.array(
+  sharedAIChatParticipantSchema
+);
 
 export interface ChatSession {
   /**
@@ -276,8 +297,8 @@ function createSharedChatSession(
   });
 
   const participantsMatch = (
-    left: RemoteChatParticipant[],
-    right: RemoteChatParticipant[]
+    left: SharedAIChatParticipant[],
+    right: SharedAIChatParticipant[]
   ): boolean => {
     return JSON.stringify(left) === JSON.stringify(right);
   };
@@ -298,35 +319,53 @@ function createSharedChatSession(
   });
 
   const participants = computed(() => {
-    const localParticipantId =
-      session.currentUser.value?.userId ??
-      session.currentUser.value?.connectionId ??
-      null;
+    const localUserId = session.currentUser.value?.userId ?? null;
+    const localConnectionId = session.currentUser.value?.connectionId ?? null;
+    const localParticipantId = localUserId ?? localConnectionId;
 
-    const connectedParticipants = session.connectedUsers.value.map((user) => ({
-      id: user.userId ?? user.connectionId,
-      name:
-        (user.profile?.name && user.profile.name.trim().length > 0
-          ? user.profile.name
-          : null) ?? null,
-      isSelf: user.isSelf,
-      isAI: false,
-      isRemote: !user.isSelf,
-    }));
+    const connectedParticipants = session.connectedUsers.value
+      .map((user): UserChatParticipant | null => {
+        const userId = user.userId ?? null;
+        const connectionId = user.connectionId ?? null;
+        const id = userId ?? connectionId;
+        if (!id) {
+          return null;
+        }
+
+        return {
+          id,
+          userId,
+          connectionId,
+          name:
+            (user.profile?.name && user.profile.name.trim().length > 0
+              ? user.profile.name
+              : null) ?? null,
+          isSelf: user.isSelf,
+          isAI: false,
+          isRemote: !user.isSelf,
+        };
+      })
+      .filter(
+        (participant): participant is UserChatParticipant =>
+          participant !== null
+      );
 
     void chatProvidersMapVersion.value;
-    const sharedProviderParticipants: ChatParticipant[] = [];
+    const sharedProviderParticipants: AIChatParticipant[] = [];
     chatProvidersMap.forEach((value, ownerParticipantId) => {
-      const parsed = chatParticipantArraySchema.safeParse(value);
+      const parsed = sharedAIChatParticipantArraySchema.safeParse(value);
       if (!parsed.success) {
         return;
       }
       sharedProviderParticipants.push(
-        ...parsed.data.map((p) => ({
-          ...p,
-          isSelf: false,
-          isRemote: ownerParticipantId !== localParticipantId,
-        }))
+        ...parsed.data.map(
+          (p): AIChatParticipant => ({
+            ...p,
+            connectionId: null,
+            isSelf: false,
+            isRemote: ownerParticipantId !== localParticipantId,
+          })
+        )
       );
     });
 
@@ -335,18 +374,21 @@ function createSharedChatSession(
 
   let previousLocalParticipantId: string | null = null;
   effect(() => {
-    const localParticipantId =
-      session.currentUser.value?.userId ??
-      session.currentUser.value?.connectionId ??
-      null;
+    const localUserId = session.currentUser.value?.userId ?? null;
+    const localConnectionId = session.currentUser.value?.connectionId ?? null;
+    const localParticipantId = localUserId ?? localConnectionId;
 
-    const localProviderParticipants = localParticipantId
-      ? chatProviders.value.map((provider) => ({
-          id: createProviderParticipantId(localParticipantId, provider.id),
-          name: provider.name,
-          isAI: true,
-        }))
-      : [];
+    const localProviderParticipants: SharedAIChatParticipant[] =
+      localParticipantId
+        ? chatProviders.value.map(
+            (provider): SharedAIChatParticipant => ({
+              id: createProviderParticipantId(localParticipantId, provider.id),
+              name: provider.name,
+              userId: localUserId,
+              isAI: true,
+            })
+          )
+        : [];
 
     session.document.transact(() => {
       if (
@@ -364,7 +406,7 @@ function createSharedChatSession(
         return;
       }
 
-      const existingParticipants = chatParticipantArraySchema.safeParse(
+      const existingParticipants = sharedAIChatParticipantArraySchema.safeParse(
         chatProvidersMap.get(localParticipantId)
       );
       const currentValue = existingParticipants.success
@@ -451,16 +493,20 @@ function createLocalChatSession(
   loginManager: LoginManager,
   chatProviders: Signal<ChatProvider[]>
 ): ChatSession {
-  const localParticipant = computed<ChatParticipant>(() => ({
+  const localParticipant = computed<UserChatParticipant>(() => ({
     id: loginManager.userId.value ?? DEFAULT_LOCAL_PARTICIPANT_ID,
+    userId: loginManager.userId.value ?? null,
+    connectionId: null,
     name: getParticipantName(loginManager.profile.value),
     isSelf: true,
     isAI: false,
     isRemote: false,
   }));
-  const chatProviderParticipants = computed<ChatParticipant[]>(() =>
+  const chatProviderParticipants = computed<AIChatParticipant[]>(() =>
     chatProviders.value.map((provider) => ({
       id: provider.id,
+      userId: loginManager.userId.value ?? null,
+      connectionId: null,
       name: provider.name,
       isSelf: false,
       isAI: true,

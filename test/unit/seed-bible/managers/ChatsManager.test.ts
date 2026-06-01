@@ -4,6 +4,7 @@ import {
   resolveMessageTargets,
   type ChatMessage,
   type ChatParticipant,
+  type UserChatParticipant,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type { BibleReadingSession } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
@@ -101,7 +102,7 @@ function createLoginManagerMock() {
 
 function createSharedSessionMock(options?: {
   initialChats?: unknown[];
-  connectedUsers?: ChatParticipant[];
+  connectedUsers?: UserChatParticipant[];
   currentUserId?: string | null;
 }) {
   const sharedChats = new MockSharedArray<unknown>(options?.initialChats ?? []);
@@ -177,6 +178,8 @@ describe("createChatsManager", () => {
     expect(session.participants.value).toEqual([
       {
         id: "user-1",
+        userId: "user-1",
+        connectionId: null,
         name: "Alice",
         isSelf: true,
         isAI: false,
@@ -217,6 +220,8 @@ describe("createChatsManager", () => {
     const participants: ChatParticipant[] = [
       {
         id: "user-1",
+        userId: "user-1",
+        connectionId: null,
         name: "Alice",
         isSelf: true,
         isAI: false,
@@ -224,6 +229,8 @@ describe("createChatsManager", () => {
       },
       {
         id: "provider-1",
+        userId: null,
+        connectionId: null,
         name: "Helper AI",
         isSelf: false,
         isAI: true,
@@ -240,6 +247,8 @@ describe("createChatsManager", () => {
     const participants: ChatParticipant[] = [
       {
         id: "u1",
+        userId: "u1",
+        connectionId: null,
         name: "Alpha",
         isSelf: false,
         isAI: false,
@@ -247,6 +256,8 @@ describe("createChatsManager", () => {
       },
       {
         id: "u2",
+        userId: null,
+        connectionId: null,
         name: "Alpha",
         isSelf: false,
         isAI: true,
@@ -263,6 +274,8 @@ describe("createChatsManager", () => {
     const participants: ChatParticipant[] = [
       {
         id: "provider-1",
+        userId: null,
+        connectionId: null,
         name: "Helper AI",
         isSelf: false,
         isAI: true,
@@ -270,6 +283,8 @@ describe("createChatsManager", () => {
       },
       {
         id: "user-1",
+        userId: "user-1",
+        connectionId: null,
         name: "Helper AI",
         isSelf: false,
         isAI: false,
@@ -286,6 +301,8 @@ describe("createChatsManager", () => {
     const participants: ChatParticipant[] = [
       {
         id: "user-1",
+        userId: "user-1",
+        connectionId: null,
         name: "Alpha",
         isSelf: false,
         isAI: false,
@@ -293,6 +310,8 @@ describe("createChatsManager", () => {
       },
       {
         id: "provider-1",
+        userId: null,
+        connectionId: null,
         name: "Alpha",
         isSelf: false,
         isAI: true,
@@ -307,6 +326,8 @@ describe("createChatsManager", () => {
     const participants: ChatParticipant[] = [
       {
         id: "user-1",
+        userId: "user-1",
+        connectionId: null,
         name: "Alpha",
         isSelf: false,
         isAI: false,
@@ -329,6 +350,8 @@ describe("createChatsManager", () => {
 
     expect(session.participants.value[0]).toEqual({
       id: "user-2",
+      userId: "user-2",
+      connectionId: null,
       name: "Bob",
       isSelf: true,
       isAI: false,
@@ -450,12 +473,22 @@ describe("createChatsManager", () => {
       connectedUsers: [
         {
           id: "u1",
+          userId: "u1",
+          connectionId: null,
           name: "Alpha",
           isSelf: false,
           isAI: false,
           isRemote: true,
         },
-        { id: "u2", name: null, isSelf: true, isAI: false, isRemote: false },
+        {
+          id: "u2",
+          userId: "u2",
+          connectionId: null,
+          name: null,
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+        },
       ],
       initialChats: [
         {
@@ -473,14 +506,32 @@ describe("createChatsManager", () => {
     const chatSession = chats.createSharedSession(session);
 
     expect(chatSession.participants.value).toEqual([
-      { id: "u1", name: "Alpha", isSelf: false, isAI: false, isRemote: true },
-      { id: "u2", name: null, isSelf: true, isAI: false, isRemote: false },
+      {
+        id: "u1",
+        userId: "u1",
+        connectionId: "conn-u1",
+        name: "Alpha",
+        isSelf: false,
+        isAI: false,
+        isRemote: true,
+      },
+      {
+        id: "u2",
+        userId: "u2",
+        connectionId: "conn-u2",
+        name: null,
+        isSelf: true,
+        isAI: false,
+        isRemote: false,
+      },
     ]);
 
     const firstMessage = chatSession.messages.value[0] as ChatMessage;
     expect(chatSession.getMessageAuthors(firstMessage)).toEqual([
       {
         id: "u1",
+        userId: "u1",
+        connectionId: "conn-u1",
         name: "Alpha",
         isSelf: false,
         isAI: false,
@@ -517,6 +568,8 @@ describe("createChatsManager", () => {
 
     expect(session.participants.value).toContainEqual({
       id: "provider-1",
+      userId: null,
+      connectionId: null,
       name: "Helper AI",
       isSelf: false,
       isAI: true,
@@ -577,6 +630,8 @@ describe("createChatsManager", () => {
 
     expect(session.participants.value).toContainEqual({
       id: "provider-1",
+      userId: null,
+      connectionId: null,
       name: "New Name",
       isSelf: false,
       isAI: true,
@@ -598,6 +653,8 @@ describe("createChatsManager", () => {
       connectedUsers: [
         {
           id: "user-a",
+          userId: "user-a",
+          connectionId: null,
           name: "Alice",
           isSelf: true,
           isAI: false,
@@ -611,6 +668,7 @@ describe("createChatsManager", () => {
       {
         id: "user-a_provider-1",
         name: "Helper AI",
+        userId: "user-a",
         isAI: true,
       },
     ]);
@@ -630,6 +688,8 @@ describe("createChatsManager", () => {
       connectedUsers: [
         {
           id: "user-a",
+          userId: "user-a",
+          connectionId: null,
           name: "Alice",
           isSelf: true,
           isAI: false,
@@ -649,6 +709,7 @@ describe("createChatsManager", () => {
       {
         id: "user-a_provider-1",
         name: "New Name",
+        userId: "user-a",
         isAI: true,
       },
     ]);
@@ -661,6 +722,8 @@ describe("createChatsManager", () => {
       connectedUsers: [
         {
           id: "u1",
+          userId: "u1",
+          connectionId: null,
           name: "Alpha",
           isSelf: false,
           isAI: false,
@@ -672,6 +735,7 @@ describe("createChatsManager", () => {
       {
         id: "u1_provider-x",
         name: "Remote AI",
+        userId: "u1",
         isAI: true,
       },
     ]);
@@ -680,6 +744,8 @@ describe("createChatsManager", () => {
 
     expect(chatSession.participants.value).toContainEqual({
       id: "u1_provider-x",
+      userId: "u1",
+      connectionId: null,
       name: "Remote AI",
       isSelf: false,
       isAI: true,
@@ -772,6 +838,8 @@ describe("createChatsManager", () => {
       connectedUsers: [
         {
           id: "self-user",
+          userId: "self-user",
+          connectionId: null,
           name: "Alice",
           isSelf: true,
           isAI: false,
@@ -779,6 +847,8 @@ describe("createChatsManager", () => {
         },
         {
           id: "u1",
+          userId: "u1",
+          connectionId: null,
           name: "Alpha",
           isSelf: false,
           isAI: false,
