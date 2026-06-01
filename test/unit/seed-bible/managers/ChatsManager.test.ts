@@ -113,6 +113,7 @@ function createSharedSessionMock(options?: {
 }) {
   const sharedChats = new MockSharedArray<unknown>(options?.initialChats ?? []);
   const sharedChatProviders = new MockSharedMap<unknown>();
+  const sharedParticipantAliases = new MockSharedMap<unknown>();
   const mappedConnectedUsers = options?.connectedUsers
     ? options.connectedUsers.map((user) => ({
         userId: user.id,
@@ -160,6 +161,9 @@ function createSharedSessionMock(options?: {
         if (name === "chat_providers") {
           return sharedChatProviders;
         }
+        if (name === "chat_participant_aliases") {
+          return sharedParticipantAliases;
+        }
         return new MockSharedMap<unknown>();
       }),
       transact: (callback: () => void) => callback(),
@@ -172,6 +176,7 @@ function createSharedSessionMock(options?: {
     session,
     sharedChats,
     sharedChatProviders,
+    sharedParticipantAliases,
     connectedUsers,
     currentUser,
   };
@@ -1092,6 +1097,71 @@ describe("createChatsManager", () => {
     });
 
     expect(sharedChats.toArray()[0]).toMatchObject({
+      targets: ["u1"],
+    });
+  });
+
+  it("createSharedSession() lets late joiners resolve anonymous mentions after login handoff", async () => {
+    const { loginManager: firstLoginManager } = createLoginManagerMock();
+    const { session, connectedUsers, sharedParticipantAliases, sharedChats } =
+      createSharedSessionMock({
+        currentUserId: "self-user",
+        connectedSessionUsers: [
+          {
+            userId: "self-user",
+            connectionId: "conn-self-user",
+            name: "Alice",
+            isSelf: true,
+          },
+          {
+            userId: null,
+            connectionId: "anon-1",
+            name: "Guest",
+            isSelf: false,
+          },
+        ],
+      });
+
+    const firstChatsManager = createChatsManager(firstLoginManager);
+    firstChatsManager.createSharedSession(session);
+
+    connectedUsers.value = [
+      {
+        userId: "self-user",
+        connectionId: "conn-self-user",
+        profile: { name: "Alice" },
+        isSelf: true,
+        color: "#000000",
+        sessionId: null,
+      },
+      {
+        userId: "u1",
+        connectionId: "anon-1",
+        profile: { name: "Guest" },
+        isSelf: false,
+        color: "#000000",
+        sessionId: null,
+      },
+    ];
+
+    await Promise.resolve();
+    expect(sharedParticipantAliases.get("anon-1")).toBe("u1");
+
+    const { loginManager: lateJoinerLoginManager } = createLoginManagerMock();
+    const lateJoinerChatsManager = createChatsManager(lateJoinerLoginManager);
+    const lateJoinerChatSession =
+      lateJoinerChatsManager.createSharedSession(session);
+
+    await lateJoinerChatSession.sendMessage({
+      type: "text",
+      text: "Hi @anon-1",
+    });
+
+    const latestMessage = sharedChats.toArray().at(-1) as Record<
+      string,
+      unknown
+    >;
+    expect(latestMessage).toMatchObject({
       targets: ["u1"],
     });
   });

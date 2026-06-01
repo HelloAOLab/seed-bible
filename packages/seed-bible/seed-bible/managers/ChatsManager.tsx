@@ -332,13 +332,22 @@ function createSharedChatSession(
 ): ChatSession {
   const chats = session.document.getArray<unknown>("chats");
   const chatProvidersMap = session.document.getMap<unknown>("chat_providers");
+  const participantAliasesMap = session.document.getMap<unknown>(
+    "chat_participant_aliases"
+  );
   const chatProvidersMapVersion = signal(0);
+  const participantAliasesMapVersion = signal(0);
   const participantIdAliases = signal<Record<string, string>>({});
   chatProvidersMap.changes.subscribe(() => {
     // Avoid updating reactive graph synchronously during shared-doc
     // transactions to prevent dependency cycles.
     queueMicrotask(() => {
       chatProvidersMapVersion.value += 1;
+    });
+  });
+  participantAliasesMap.changes.subscribe(() => {
+    queueMicrotask(() => {
+      participantAliasesMapVersion.value += 1;
     });
   });
 
@@ -362,6 +371,18 @@ function createSharedChatSession(
   const messages = signal<ChatMessage[]>(readValidChats());
   chats.changes.subscribe(() => {
     messages.value = readValidChats();
+  });
+
+  effect(() => {
+    void participantAliasesMapVersion.value;
+    const nextAliases: Record<string, string> = {};
+    participantAliasesMap.forEach((value, key) => {
+      if (typeof key !== "string" || typeof value !== "string") {
+        return;
+      }
+      nextAliases[key] = value;
+    });
+    participantIdAliases.value = nextAliases;
   });
 
   let previousParticipantIdByConnectionId = new Map<string, string>();
@@ -388,7 +409,19 @@ function createSharedChatSession(
         previousParticipantId !== currentParticipantId &&
         previousParticipantId === connectionId
       ) {
-        if (aliases[previousParticipantId] !== currentParticipantId) {
+        const existingSharedAlias = participantAliasesMap.get(
+          previousParticipantId
+        );
+        if (existingSharedAlias !== currentParticipantId) {
+          participantAliasesMap.set(
+            previousParticipantId,
+            currentParticipantId
+          );
+        }
+        if (
+          participantIdAliases.value[previousParticipantId] !==
+          currentParticipantId
+        ) {
           aliases[previousParticipantId] = currentParticipantId;
           aliasesChanged = true;
         }
