@@ -114,22 +114,21 @@ export interface UserChatParticipant extends BaseChatParticipant {
 export interface AIChatParticipant extends BaseChatParticipant {
   /** The user ID that this AI participant is associated with, if any. */
   userId: string | null;
-  connectionId: null;
+  /**
+   * The connection ID that this AI participant is associated with, if any. This may be null even if userId is not null, in which case the participant is associated with the user but not with any specific connection of that user.
+   */
+  connectionId: string | null;
   isSelf: false;
   isAI: true;
 }
 
 export type ChatParticipant = UserChatParticipant | AIChatParticipant;
 
-type SharedAIChatParticipant = Pick<
-  AIChatParticipant,
-  "id" | "name" | "userId" | "isAI"
->;
+type SharedAIChatParticipant = Pick<AIChatParticipant, "id" | "name" | "isAI">;
 
 const sharedAIChatParticipantSchema = z.object({
   id: z.string(),
   name: z.string().nullable(),
-  userId: z.string().nullable(),
   isAI: z.literal(true),
 });
 
@@ -357,11 +356,18 @@ function createSharedChatSession(
       if (!parsed.success) {
         return;
       }
+      const owner = connectedParticipants.find(
+        (p) => p.id === ownerParticipantId
+      );
+      if (!owner) {
+        return;
+      }
       sharedProviderParticipants.push(
         ...parsed.data.map(
           (p): AIChatParticipant => ({
             ...p,
-            connectionId: null,
+            userId: owner.userId,
+            connectionId: owner.connectionId,
             isSelf: false,
             isRemote: ownerParticipantId !== localParticipantId,
           })
@@ -384,7 +390,6 @@ function createSharedChatSession(
             (provider): SharedAIChatParticipant => ({
               id: createProviderParticipantId(localParticipantId, provider.id),
               name: provider.name,
-              userId: localUserId,
               isAI: true,
             })
           )

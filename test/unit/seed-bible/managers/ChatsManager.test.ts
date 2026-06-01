@@ -662,16 +662,24 @@ describe("createChatsManager", () => {
         },
       ],
     });
-    chats.createSharedSession(session);
+    const chat = chats.createSharedSession(session);
 
     expect(sharedChatProviders.get("user-a")).toEqual([
       {
         id: "user-a_provider-1",
         name: "Helper AI",
-        userId: "user-a",
         isAI: true,
       },
     ]);
+    expect(chat.participants.value).toContainEqual({
+      id: "user-a_provider-1",
+      userId: "user-a",
+      connectionId: "conn-user-a",
+      name: "Helper AI",
+      isSelf: false,
+      isAI: true,
+      isRemote: false,
+    });
   });
 
   it("createSharedSession() replaces provider participant entry in chat_providers by provider id", () => {
@@ -697,7 +705,7 @@ describe("createChatsManager", () => {
         },
       ],
     });
-    chats.createSharedSession(session);
+    const chat = chats.createSharedSession(session);
 
     chats.registerProvider({
       id: "provider-1",
@@ -709,10 +717,18 @@ describe("createChatsManager", () => {
       {
         id: "user-a_provider-1",
         name: "New Name",
-        userId: "user-a",
         isAI: true,
       },
     ]);
+    expect(chat.participants.value).toContainEqual({
+      id: "user-a_provider-1",
+      userId: "user-a",
+      connectionId: "conn-user-a",
+      name: "New Name",
+      isSelf: false,
+      isAI: true,
+      isRemote: false,
+    });
   });
 
   it("createSharedSession() merges shared provider participants from chat_providers map", () => {
@@ -735,7 +751,6 @@ describe("createChatsManager", () => {
       {
         id: "u1_provider-x",
         name: "Remote AI",
-        userId: "u1",
         isAI: true,
       },
     ]);
@@ -745,7 +760,7 @@ describe("createChatsManager", () => {
     expect(chatSession.participants.value).toContainEqual({
       id: "u1_provider-x",
       userId: "u1",
-      connectionId: null,
+      connectionId: "conn-u1",
       name: "Remote AI",
       isSelf: false,
       isAI: true,
