@@ -210,6 +210,7 @@ describe("createChatsManager", () => {
         isSelf: true,
         isAI: false,
         isRemote: false,
+        isActive: true,
       },
     ]);
   });
@@ -252,6 +253,7 @@ describe("createChatsManager", () => {
         isSelf: true,
         isAI: false,
         isRemote: false,
+        isActive: true,
       },
       {
         id: "provider-1",
@@ -262,6 +264,7 @@ describe("createChatsManager", () => {
         isSelf: false,
         isAI: true,
         isRemote: false,
+        isActive: true,
       },
     ];
 
@@ -280,6 +283,7 @@ describe("createChatsManager", () => {
         isSelf: false,
         isAI: false,
         isRemote: true,
+        isActive: true,
       },
       {
         id: "u2",
@@ -290,6 +294,7 @@ describe("createChatsManager", () => {
         isSelf: false,
         isAI: true,
         isRemote: true,
+        isActive: true,
       },
     ];
 
@@ -309,6 +314,7 @@ describe("createChatsManager", () => {
         isSelf: false,
         isAI: true,
         isRemote: false,
+        isActive: true,
       },
       {
         id: "user-1",
@@ -318,6 +324,7 @@ describe("createChatsManager", () => {
         isSelf: false,
         isAI: false,
         isRemote: false,
+        isActive: true,
       },
     ];
 
@@ -336,6 +343,7 @@ describe("createChatsManager", () => {
         isSelf: false,
         isAI: false,
         isRemote: false,
+        isActive: true,
       },
       {
         id: "provider-1",
@@ -346,6 +354,7 @@ describe("createChatsManager", () => {
         isSelf: false,
         isAI: true,
         isRemote: true,
+        isActive: true,
       },
     ];
 
@@ -362,6 +371,7 @@ describe("createChatsManager", () => {
         isSelf: false,
         isAI: false,
         isRemote: true,
+        isActive: true,
       },
     ];
 
@@ -386,6 +396,7 @@ describe("createChatsManager", () => {
       isSelf: true,
       isAI: false,
       isRemote: false,
+      isActive: true,
     });
   });
 
@@ -509,6 +520,7 @@ describe("createChatsManager", () => {
           isSelf: false,
           isAI: false,
           isRemote: true,
+          isActive: true,
         },
         {
           id: "u2",
@@ -518,6 +530,7 @@ describe("createChatsManager", () => {
           isSelf: true,
           isAI: false,
           isRemote: false,
+          isActive: true,
         },
       ],
       initialChats: [
@@ -544,6 +557,7 @@ describe("createChatsManager", () => {
         isSelf: false,
         isAI: false,
         isRemote: true,
+        isActive: true,
       },
       {
         id: "u2",
@@ -553,6 +567,7 @@ describe("createChatsManager", () => {
         isSelf: true,
         isAI: false,
         isRemote: false,
+        isActive: true,
       },
     ]);
 
@@ -566,6 +581,7 @@ describe("createChatsManager", () => {
         isSelf: false,
         isAI: false,
         isRemote: true,
+        isActive: true,
       },
     ]);
   });
@@ -601,6 +617,7 @@ describe("createChatsManager", () => {
         isSelf: false,
         isAI: false,
         isRemote: true,
+        isActive: true,
       },
     ]);
   });
@@ -636,6 +653,7 @@ describe("createChatsManager", () => {
         isSelf: false,
         isAI: false,
         isRemote: true,
+        isActive: true,
       },
       {
         id: "anon-2",
@@ -645,8 +663,101 @@ describe("createChatsManager", () => {
         isSelf: false,
         isAI: false,
         isRemote: true,
+        isActive: true,
       },
     ]);
+  });
+
+  it("createSharedSession() keeps previously connected users as inactive participants", () => {
+    const { loginManager } = createLoginManagerMock();
+    const { session, connectedUsers } = createSharedSessionMock({
+      connectedSessionUsers: [
+        {
+          userId: "u1",
+          connectionId: "conn-u1",
+          name: "Alpha",
+          isSelf: false,
+        },
+      ],
+    });
+
+    const chats = createChatsManager(loginManager);
+    const chatSession = chats.createSharedSession(session);
+
+    expect(chatSession.participants.value).toContainEqual({
+      id: "u1",
+      userId: "u1",
+      connectionId: "conn-u1",
+      name: "Alpha",
+      isSelf: false,
+      isAI: false,
+      isRemote: true,
+      isActive: true,
+    });
+
+    connectedUsers.value = [];
+
+    expect(chatSession.participants.value).toContainEqual({
+      id: "u1",
+      userId: "u1",
+      connectionId: "conn-u1",
+      name: "Alpha",
+      isSelf: false,
+      isAI: false,
+      isRemote: true,
+      isActive: false,
+    });
+  });
+
+  it("createSharedSession() keeps AI participants active only while owner is active", () => {
+    const { loginManager } = createLoginManagerMock();
+    const { session, connectedUsers, sharedChatProviders } =
+      createSharedSessionMock({
+        connectedSessionUsers: [
+          {
+            userId: "u1",
+            connectionId: "conn-u1",
+            name: "Alpha",
+            isSelf: false,
+          },
+        ],
+      });
+    sharedChatProviders.set("u1", [
+      {
+        id: "u1_provider-x",
+        name: "Remote AI",
+        isAI: true,
+      },
+    ]);
+
+    const chats = createChatsManager(loginManager);
+    const chatSession = chats.createSharedSession(session);
+
+    expect(chatSession.participants.value).toContainEqual({
+      id: "u1_provider-x",
+      ownerParticipantId: "u1",
+      userId: "u1",
+      connectionId: "conn-u1",
+      name: "Remote AI",
+      isSelf: false,
+      isAI: true,
+      isRemote: true,
+      isActive: true,
+    });
+
+    connectedUsers.value = [];
+
+    expect(chatSession.participants.value).toContainEqual({
+      id: "u1_provider-x",
+      ownerParticipantId: "u1",
+      userId: "u1",
+      connectionId: "conn-u1",
+      name: "Remote AI",
+      isSelf: false,
+      isAI: true,
+      isRemote: true,
+      isActive: false,
+    });
   });
 
   it("sendMessage() rejects invalid message payloads", async () => {
@@ -684,6 +795,7 @@ describe("createChatsManager", () => {
       isSelf: false,
       isAI: true,
       isRemote: false,
+      isActive: true,
     });
 
     unregister();
@@ -747,6 +859,7 @@ describe("createChatsManager", () => {
       isSelf: false,
       isAI: true,
       isRemote: false,
+      isActive: true,
     });
   });
 
@@ -770,6 +883,7 @@ describe("createChatsManager", () => {
           isSelf: true,
           isAI: false,
           isRemote: false,
+          isActive: true,
         },
       ],
     });
@@ -791,6 +905,7 @@ describe("createChatsManager", () => {
       isSelf: false,
       isAI: true,
       isRemote: false,
+      isActive: true,
     });
   });
 
@@ -814,6 +929,7 @@ describe("createChatsManager", () => {
           isSelf: true,
           isAI: false,
           isRemote: false,
+          isActive: true,
         },
       ],
     });
@@ -841,6 +957,7 @@ describe("createChatsManager", () => {
       isSelf: false,
       isAI: true,
       isRemote: false,
+      isActive: true,
     });
   });
 
@@ -857,6 +974,7 @@ describe("createChatsManager", () => {
           isSelf: false,
           isAI: false,
           isRemote: true,
+          isActive: true,
         },
       ],
     });
@@ -879,6 +997,7 @@ describe("createChatsManager", () => {
       isSelf: false,
       isAI: true,
       isRemote: true,
+      isActive: true,
     });
   });
 
@@ -1021,6 +1140,7 @@ describe("createChatsManager", () => {
           isSelf: true,
           isAI: false,
           isRemote: false,
+          isActive: true,
         },
         {
           id: "u1",
@@ -1030,6 +1150,7 @@ describe("createChatsManager", () => {
           isSelf: false,
           isAI: false,
           isRemote: true,
+          isActive: true,
         },
       ],
     });

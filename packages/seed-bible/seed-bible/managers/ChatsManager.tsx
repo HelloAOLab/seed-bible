@@ -101,6 +101,11 @@ export interface BaseChatParticipant {
    * Whether this participant is from a remote user.
    */
   isRemote: boolean;
+
+  /**
+   * Whether this participant is currently connected to the session.
+   */
+  isActive: boolean;
 }
 
 export interface UserChatParticipant extends BaseChatParticipant {
@@ -195,6 +200,59 @@ function getConnectedUserName(user: {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+type ConnectedUserLike = {
+  userId?: string | null;
+  connectionId?: string | null;
+  profile?: {
+    name?: string | null;
+  } | null;
+  isSelf: boolean;
+};
+
+type GroupedConnectedUser = {
+  id: string;
+  userId: string | null;
+  connectionId: string | null;
+  name: string | null;
+  isSelf: boolean;
+};
+
+function groupConnectedUsers(
+  users: ConnectedUserLike[]
+): GroupedConnectedUser[] {
+  const groups = new Map<string, ConnectedUserLike[]>();
+
+  for (const user of users) {
+    const userId = user.userId ?? null;
+    const connectionId = user.connectionId ?? null;
+    const id = userId ?? connectionId;
+    if (!id) {
+      continue;
+    }
+
+    const group = groups.get(id);
+    if (group) {
+      group.push(user);
+    } else {
+      groups.set(id, [user]);
+    }
+  }
+
+  return Array.from(groups.entries()).map(([id, group]) => {
+    const representative = group[0]!;
+    return {
+      id,
+      userId: representative.userId ?? null,
+      connectionId: representative.connectionId ?? null,
+      name:
+        group
+          .map((entry) => getConnectedUserName(entry))
+          .find((name) => name) ?? null,
+      isSelf: group.some((entry) => entry.isSelf),
+    };
+  });
+}
+
 function createChatMessage(
   options: ChatMessageOptions,
   authors: string[],
@@ -265,12 +323,18 @@ export function resolveMessageTargets(
   const matches = new Map<string, ChatParticipant>();
 
   for (const participant of participants) {
+    if (!participant.isActive) {
+      continue;
+    }
     if (textIncludesMention(text, participant.id)) {
       matches.set(participant.id, participant);
     }
   }
 
   for (const participant of participants) {
+    if (!participant.isActive) {
+      continue;
+    }
     if (!participant.name || !textIncludesMention(text, participant.name)) {
       continue;
     }
@@ -338,6 +402,11 @@ function createSharedChatSession(
   const chatProvidersMapVersion = signal(0);
   const participantAliasesMapVersion = signal(0);
   const participantIdAliases = signal<Record<string, string>>({});
+  let knownUserParticipants: Record<
+    string,
+    Pick<UserChatParticipant, "id" | "userId" | "connectionId" | "name">
+  > = {};
+  const knownUserParticipantsVersion = signal(0);
   chatProvidersMap.changes.subscribe(() => {
     // Avoid updating reactive graph synchronously during shared-doc
     // transactions to prevent dependency cycles.
@@ -383,6 +452,40 @@ function createSharedChatSession(
       nextAliases[key] = value;
     });
     participantIdAliases.value = nextAliases;
+  });
+
+  effect(() => {
+    const connectedGroups = groupConnectedUsers(
+      session.connectedUsers.value as ConnectedUserLike[]
+    );
+
+    let changed = false;
+    const nextKnownUserParticipants = {
+      ...knownUserParticipants,
+    };
+
+    for (const participant of connectedGroups) {
+      const existing = knownUserParticipants[participant.id];
+      if (
+        !existing ||
+        existing.userId !== participant.userId ||
+        existing.connectionId !== participant.connectionId ||
+        existing.name !== participant.name
+      ) {
+        nextKnownUserParticipants[participant.id] = {
+          id: participant.id,
+          userId: participant.userId,
+          connectionId: participant.connectionId,
+          name: participant.name,
+        };
+        changed = true;
+      }
+    }
+
+    if (changed) {
+      knownUserParticipants = nextKnownUserParticipants;
+      knownUserParticipantsVersion.value += 1;
+    }
   });
 
   let previousParticipantIdByConnectionId = new Map<string, string>();
@@ -441,54 +544,40 @@ function createSharedChatSession(
     const localConnectionId = session.currentUser.value?.connectionId ?? null;
     const localParticipantId = localUserId ?? localConnectionId;
 
-    const participantGroups = new Map<
-      string,
-      {
-        id: string;
-        userId: string | null;
-        users: (typeof session.connectedUsers.value)[number][];
-      }
-    >();
-    for (const user of session.connectedUsers.value) {
-      const userId = user.userId ?? null;
-      const connectionId = user.connectionId ?? null;
-      const id = userId ?? connectionId;
-      if (!id) {
-        continue;
-      }
-
-      const existing = participantGroups.get(id);
-      if (existing) {
-        existing.users.push(user);
-      } else {
-        participantGroups.set(id, {
-          id,
-          userId,
-          users: [user],
-        });
-      }
-    }
-
-    const connectedParticipants = Array.from(participantGroups.values()).map(
-      (group): UserChatParticipant => {
-        const representative = group.users[0]!;
-        const isSelf = group.users.some((user) => user.isSelf);
-        const name =
-          group.users
-            .map((user) => getConnectedUserName(user))
-            .find((entry) => entry !== null) ?? null;
-
-        return {
-          id: group.id,
-          userId: group.userId,
-          connectionId: representative.connectionId ?? null,
-          name,
-          isSelf,
-          isAI: false,
-          isRemote: !isSelf,
-        };
-      }
+    const connectedParticipants = groupConnectedUsers(
+      session.connectedUsers.value as ConnectedUserLike[]
+    ).map(
+      (group): UserChatParticipant => ({
+        id: group.id,
+        userId: group.userId,
+        connectionId: group.connectionId,
+        name: group.name,
+        isSelf: group.isSelf,
+        isAI: false,
+        isRemote: !group.isSelf,
+        isActive: true,
+      })
     );
+
+    const activeParticipantIds = new Set(
+      connectedParticipants.map((participant) => participant.id)
+    );
+    void knownUserParticipantsVersion.value;
+    const inactiveParticipants = Object.values(knownUserParticipants)
+      .filter((participant) => !activeParticipantIds.has(participant.id))
+      .map(
+        (participant): UserChatParticipant => ({
+          ...participant,
+          isSelf: localParticipantId === participant.id,
+          isAI: false,
+          isRemote: localParticipantId !== participant.id,
+          isActive: false,
+        })
+      );
+    const allUserParticipants = [
+      ...connectedParticipants,
+      ...inactiveParticipants,
+    ];
 
     void chatProvidersMapVersion.value;
     const sharedProviderParticipants: AIChatParticipant[] = [];
@@ -497,7 +586,7 @@ function createSharedChatSession(
       if (!parsed.success) {
         return;
       }
-      const owner = connectedParticipants.find(
+      const owner = allUserParticipants.find(
         (p) => p.id === ownerParticipantId
       );
       if (!owner) {
@@ -512,12 +601,13 @@ function createSharedChatSession(
             connectionId: owner.connectionId,
             isSelf: false,
             isRemote: ownerParticipantId !== localParticipantId,
+            isActive: owner.isActive,
           })
         )
       );
     });
 
-    return [...connectedParticipants, ...sharedProviderParticipants];
+    return [...allUserParticipants, ...sharedProviderParticipants];
   });
 
   let previousLocalParticipantId: string | null = null;
@@ -652,6 +742,7 @@ function createLocalChatSession(
     isSelf: true,
     isAI: false,
     isRemote: false,
+    isActive: true,
   }));
   const chatProviderParticipants = computed<AIChatParticipant[]>(() =>
     chatProviders.value.map((provider) => ({
@@ -663,6 +754,7 @@ function createLocalChatSession(
       isSelf: false,
       isAI: true,
       isRemote: false,
+      isActive: localParticipant.value.isActive,
     }))
   );
 
