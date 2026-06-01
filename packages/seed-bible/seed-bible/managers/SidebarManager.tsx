@@ -1,4 +1,5 @@
 import { computed, effect, signal } from "@preact/signals";
+import type { ChatsManager } from "seed-bible.managers.ChatsManager";
 
 /**
  * Which settings subpage the SettingsPage should jump to on its next mount.
@@ -15,10 +16,11 @@ export type RequestedSettingsView =
   | "extensions";
 
 export interface CreateSidebarOptions {
+  chatsManager: ChatsManager;
   onOpenChatPanel?: () => void;
 }
 
-export function createSidebar(options?: CreateSidebarOptions) {
+export function createSidebar(options: CreateSidebarOptions) {
   const initialView = configBot.tags.settingsView ?? null;
   const isSidebarCollapsed = signal(false);
   const isMobileOpen = signal(false);
@@ -31,7 +33,7 @@ export function createSidebar(options?: CreateSidebarOptions) {
   // from the sidebar drawer. Only one can be open at a time so clicking
   // one closes the other.
   const isSearchPanelOpen = signal(false);
-  const isChatPanelOpen = signal(false);
+  const isChatPanelOpen = options.chatsManager.isOpen;
 
   const openSearchPanel = () => {
     isChatPanelOpen.value = false;

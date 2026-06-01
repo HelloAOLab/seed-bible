@@ -1,4 +1,11 @@
 import { createSidebar } from "@packages/seed-bible/seed-bible/managers/SidebarManager";
+import { signal } from "@preact/signals";
+
+function createChatsManagerMock() {
+  return {
+    isOpen: signal(false),
+  } as any;
+}
 
 describe("createSidebar", () => {
   let addBotListenerMock: jest.Mock;
@@ -22,7 +29,7 @@ describe("createSidebar", () => {
   });
 
   it("initializes with settings closed, sidebar expanded, and mobile closed", () => {
-    const sidebar = createSidebar();
+    const sidebar = createSidebar({ chatsManager: createChatsManagerMock() });
 
     expect(sidebar.isSettingsOpen.value).toBe(false);
     expect(sidebar.isSidebarCollapsed.value).toBe(false);
@@ -30,7 +37,7 @@ describe("createSidebar", () => {
   });
 
   it("openSettings() opens settings without changing mobile sidebar state", () => {
-    const sidebar = createSidebar();
+    const sidebar = createSidebar({ chatsManager: createChatsManagerMock() });
     sidebar.openSidebar();
 
     expect(sidebar.isSettingsOpen.value).toBe(false);
@@ -42,7 +49,7 @@ describe("createSidebar", () => {
   });
 
   it("toggleSettings() toggles settings without changing mobile sidebar state", () => {
-    const sidebar = createSidebar();
+    const sidebar = createSidebar({ chatsManager: createChatsManagerMock() });
     sidebar.openSidebar();
     sidebar.requestedSettingsView.value = null;
 
@@ -55,7 +62,7 @@ describe("createSidebar", () => {
   });
 
   it("toggleSettings() closes settings when already open", () => {
-    const sidebar = createSidebar();
+    const sidebar = createSidebar({ chatsManager: createChatsManagerMock() });
     sidebar.openSidebar();
     sidebar.openSettings();
 
@@ -69,7 +76,7 @@ describe("createSidebar", () => {
   });
 
   it("closeSettings() closes settings and dismisses the mobile drawer", () => {
-    const sidebar = createSidebar();
+    const sidebar = createSidebar({ chatsManager: createChatsManagerMock() });
     sidebar.openSettings();
     sidebar.openSidebar();
 
@@ -80,7 +87,7 @@ describe("createSidebar", () => {
   });
 
   it("toggleSidebarCollapsed() toggles collapsed state", () => {
-    const sidebar = createSidebar();
+    const sidebar = createSidebar({ chatsManager: createChatsManagerMock() });
 
     sidebar.toggleSidebarCollapsed();
     expect(sidebar.isSidebarCollapsed.value).toBe(true);
@@ -90,7 +97,7 @@ describe("createSidebar", () => {
   });
 
   it("openSidebar() and closeSidebar() control mobile open state", () => {
-    const sidebar = createSidebar();
+    const sidebar = createSidebar({ chatsManager: createChatsManagerMock() });
 
     sidebar.openSidebar();
     expect(sidebar.isMobileOpen.value).toBe(true);
@@ -100,8 +107,8 @@ describe("createSidebar", () => {
   });
 
   it("keeps state isolated across sidebar instances", () => {
-    const first = createSidebar();
-    const second = createSidebar();
+    const first = createSidebar({ chatsManager: createChatsManagerMock() });
+    const second = createSidebar({ chatsManager: createChatsManagerMock() });
 
     first.openSettings();
     first.toggleSidebarCollapsed();
@@ -117,7 +124,7 @@ describe("createSidebar", () => {
   });
 
   it("syncs configBot.tags.settingsView when requestedSettingsView changes", () => {
-    const sidebar = createSidebar();
+    const sidebar = createSidebar({ chatsManager: createChatsManagerMock() });
 
     expect(configBot.tags.settingsView).toBe(null);
 
@@ -129,7 +136,7 @@ describe("createSidebar", () => {
   });
 
   it("syncs requestedSettingsView when configBot.settingsView changes", async () => {
-    const sidebar = createSidebar();
+    const sidebar = createSidebar({ chatsManager: createChatsManagerMock() });
     const listener = addBotListenerMock.mock.calls[0]?.[2] as
       | ((that: unknown) => Promise<void>)
       | undefined;
@@ -149,7 +156,7 @@ describe("createSidebar", () => {
   });
 
   it("syncs isMobileOpen when configBot.sidebar changes", async () => {
-    const sidebar = createSidebar();
+    const sidebar = createSidebar({ chatsManager: createChatsManagerMock() });
     const listener = addBotListenerMock.mock.calls[0]?.[2] as
       | ((that: unknown) => Promise<void>)
       | undefined;
@@ -169,7 +176,7 @@ describe("createSidebar", () => {
   });
 
   it("syncs configBot.tags.sidebar when isMobileOpen changes", () => {
-    const sidebar = createSidebar();
+    const sidebar = createSidebar({ chatsManager: createChatsManagerMock() });
 
     expect(configBot.tags.sidebar).toBe(null);
 
@@ -182,7 +189,10 @@ describe("createSidebar", () => {
 
   it("openChatPanel() calls onOpenChatPanel callback", () => {
     const onOpenChatPanel = jest.fn();
-    const sidebar = createSidebar({ onOpenChatPanel });
+    const sidebar = createSidebar({
+      chatsManager: createChatsManagerMock(),
+      onOpenChatPanel,
+    });
 
     sidebar.openChatPanel();
 
@@ -192,7 +202,10 @@ describe("createSidebar", () => {
 
   it("toggleChatPanel() calls onOpenChatPanel only when opening", () => {
     const onOpenChatPanel = jest.fn();
-    const sidebar = createSidebar({ onOpenChatPanel });
+    const sidebar = createSidebar({
+      chatsManager: createChatsManagerMock(),
+      onOpenChatPanel,
+    });
 
     sidebar.toggleChatPanel();
     sidebar.toggleChatPanel();

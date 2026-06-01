@@ -174,6 +174,7 @@ export interface ChatSession {
 }
 
 export interface ChatsManager {
+  isOpen: Signal<boolean>;
   chats: ReadonlySignal<ChatSession[]>;
   selectedChat: ReadonlySignal<ChatSession | null>;
   createSharedSession: (session: BibleReadingSession) => ChatSession;
@@ -1017,6 +1018,7 @@ function createLocalChatSession(
 
 export function createChatsManager(loginManager: LoginManager): ChatsManager {
   const chats = signal<ChatSession[]>([]);
+  const isOpen = signal<boolean>(false);
   const chatProviders = signal<ChatProvider[]>([]);
   const selectedChatId = signal<string | null>(null);
   const selectedChat = computed(
@@ -1056,6 +1058,7 @@ export function createChatsManager(loginManager: LoginManager): ChatsManager {
   };
 
   return {
+    isOpen,
     chats,
     createSharedSession,
     createLocalSession,

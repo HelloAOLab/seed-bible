@@ -187,6 +187,7 @@ export function createSeedBibleState(): SeedBibleState {
   const themeManager = createTheme(login);
   const chats = createChatsManager(login);
   const sidebar = createSidebar({
+    chatsManager: chats,
     onOpenChatPanel: () => {
       if (chats.chats.value.length === 0) {
         chats.createLocalSession();
