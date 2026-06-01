@@ -567,6 +567,30 @@ async function createBibleReadingSession(
       nextUsersByConnectionId.set(nextUser.connectionId, nextUser);
     }
 
+    userProfilesMap.forEach((value, connectionId) => {
+      if (typeof connectionId !== "string") {
+        return;
+      }
+      if (nextUsersByConnectionId.has(connectionId)) {
+        return;
+      }
+
+      const sharedEntry = parseSharedUserProfileEntry(value);
+      if (!sharedEntry) {
+        return;
+      }
+
+      nextUsersByConnectionId.set(connectionId, {
+        isSelf: connectionId === localConnectionId,
+        connectionId,
+        sessionId: null,
+        userId: sharedEntry.userId,
+        profile: sharedEntry.profile,
+        color: getRandomColor(connectionId),
+        isActive: false,
+      });
+    });
+
     allUsers.value = Array.from(nextUsersByConnectionId.values());
   };
 
@@ -697,6 +721,8 @@ async function createBibleReadingSession(
       void syncConnectedUsers(nextVersion);
     }
   );
+
+  void syncConnectedUsers(++remoteClientsVersion);
 
   const stopSync = effect(() => {
     if (applyingRemoteState) {

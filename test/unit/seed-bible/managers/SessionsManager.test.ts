@@ -1266,4 +1266,41 @@ describe("SessionsManager", () => {
       ])
     );
   });
+
+  it("joins with inactive users seeded from user_profiles map", async () => {
+    mockUserProfilesMap.set("conn-old", {
+      userId: "user-old",
+      profile: {
+        name: "Old User",
+      },
+    });
+
+    const manager = createSessionsManager(
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any
+    );
+    const session = await manager.joinSession("group-abc");
+
+    await waitFor(() =>
+      session.allUsers.value.some((user) => user.connectionId === "conn-old")
+    );
+
+    expect(session.connectedUsers.value).toHaveLength(0);
+    expect(session.allUsers.value).toEqual(
+      expect.arrayContaining([
+        {
+          connectionId: "conn-old",
+          sessionId: null,
+          userId: "user-old",
+          profile: {
+            name: "Old User",
+          },
+          isSelf: false,
+          color: expect.any(String),
+          isActive: false,
+        },
+      ])
+    );
+  });
 });
