@@ -42,6 +42,56 @@ function getAuthorLabel(
   return authors.join(", ");
 }
 
+function getAvatarInitials(label: string): string {
+  const words = label
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word.length > 0);
+  if (words.length === 0) {
+    return "?";
+  }
+
+  if (words.length === 1) {
+    return words[0]!.slice(0, 2).toUpperCase();
+  }
+
+  return `${words[0]![0] ?? ""}${words[1]![0] ?? ""}`.toUpperCase();
+}
+
+function getMessageAvatar(
+  chat: ChatSession,
+  message: ChatMessage,
+  t: (key: string, options?: Record<string, unknown>) => string
+): {
+  imageUrl: string | null;
+  label: string;
+  initials: string;
+} {
+  const authors = chat.getMessageAuthors(message);
+  const primaryAuthor = authors[0] ?? null;
+
+  if (!primaryAuthor) {
+    const anonymous = t("anonymous", { defaultValue: "Anonymous" });
+    return {
+      imageUrl: null,
+      label: anonymous,
+      initials: getAvatarInitials(anonymous),
+    };
+  }
+
+  const label = getParticipantDisplayLabel(primaryAuthor, t);
+  const imageUrl =
+    !primaryAuthor.isAI && typeof primaryAuthor.profile?.pictureUrl === "string"
+      ? primaryAuthor.profile.pictureUrl
+      : null;
+
+  return {
+    imageUrl,
+    label,
+    initials: getAvatarInitials(label),
+  };
+}
+
 function getParticipantDisplayLabel(
   participant: ChatParticipant,
   t: (key: string, options?: Record<string, unknown>) => string
@@ -295,18 +345,39 @@ export function ChatView(props: ChatViewProps) {
             </p>
           </div>
         ) : (
-          messages.map((message) => (
-            <article className="sb-chat-view-message" key={message.id}>
-              <header className="sb-chat-view-message-header">
-                <span className="sb-chat-view-message-author">
-                  {getAuthorLabel(chat, message, t)}
-                </span>
-              </header>
-              <p className="sb-chat-view-message-body">
-                {getMessageText(message)}
-              </p>
-            </article>
-          ))
+          messages.map((message) => {
+            const avatar = getMessageAvatar(chat, message, t);
+            return (
+              <article className="sb-chat-view-message" key={message.id}>
+                <div className="sb-chat-view-message-avatar-shell">
+                  {avatar.imageUrl ? (
+                    <img
+                      src={avatar.imageUrl}
+                      alt={`${avatar.label} avatar`}
+                      className="sb-chat-view-message-avatar"
+                    />
+                  ) : (
+                    <span
+                      className="sb-chat-view-message-avatar sb-chat-view-message-avatar-fallback"
+                      aria-hidden="true"
+                    >
+                      {avatar.initials}
+                    </span>
+                  )}
+                </div>
+                <div className="sb-chat-view-message-content">
+                  <header className="sb-chat-view-message-header">
+                    <span className="sb-chat-view-message-author">
+                      {getAuthorLabel(chat, message, t)}
+                    </span>
+                  </header>
+                  <p className="sb-chat-view-message-body">
+                    {getMessageText(message)}
+                  </p>
+                </div>
+              </article>
+            );
+          })
         )}
       </div>
 
