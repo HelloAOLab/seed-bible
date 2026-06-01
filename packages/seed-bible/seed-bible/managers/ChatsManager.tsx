@@ -113,6 +113,8 @@ export interface UserChatParticipant extends BaseChatParticipant {
   userId: string | null;
   /** The connection ID for this participant, if known. */
   connectionId: string | null;
+  /** The user's profile information, if available. */
+  profile?: UserProfile | null;
   isAI: false;
 }
 
@@ -207,9 +209,7 @@ function getConnectedUserName(user: {
 type ConnectedUserLike = {
   userId?: string | null;
   connectionId?: string | null;
-  profile?: {
-    name?: string | null;
-  } | null;
+  profile?: UserProfile | null;
   isSelf: boolean;
   isActive?: boolean;
 };
@@ -218,6 +218,7 @@ type GroupedConnectedUser = {
   id: string;
   userId: string | null;
   connectionId: string | null;
+  profile: UserProfile | null;
   name: string | null;
   isSelf: boolean;
   isActive: boolean;
@@ -250,6 +251,8 @@ function groupConnectedUsers(
       id,
       userId: representative.userId ?? null,
       connectionId: representative.connectionId ?? null,
+      profile:
+        group.find((entry) => entry.profile !== undefined)?.profile ?? null,
       name:
         group
           .map((entry) => getConnectedUserName(entry))
@@ -572,6 +575,7 @@ function createSharedChatSession(
         id: group.id,
         userId: group.userId,
         connectionId: group.connectionId,
+        profile: group.profile,
         name: group.name,
         isSelf: group.isSelf,
         isAI: false,
@@ -834,6 +838,7 @@ function createLocalChatSession(
     id: loginManager.userId.value ?? DEFAULT_LOCAL_PARTICIPANT_ID,
     userId: loginManager.userId.value ?? null,
     connectionId: null,
+    profile: loginManager.profile.value,
     name: getParticipantName(loginManager.profile.value),
     isSelf: true,
     isAI: false,
