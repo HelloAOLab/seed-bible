@@ -207,6 +207,7 @@ type ConnectedUserLike = {
     name?: string | null;
   } | null;
   isSelf: boolean;
+  isActive?: boolean;
 };
 
 type GroupedConnectedUser = {
@@ -215,6 +216,7 @@ type GroupedConnectedUser = {
   connectionId: string | null;
   name: string | null;
   isSelf: boolean;
+  isActive: boolean;
 };
 
 function groupConnectedUsers(
@@ -239,7 +241,7 @@ function groupConnectedUsers(
   }
 
   return Array.from(groups.entries()).map(([id, group]) => {
-    const representative = group[0]!;
+    const representative = group.find((entry) => entry.isActive) ?? group[0]!;
     return {
       id,
       userId: representative.userId ?? null,
@@ -249,6 +251,7 @@ function groupConnectedUsers(
           .map((entry) => getConnectedUserName(entry))
           .find((name) => name) ?? null,
       isSelf: group.some((entry) => entry.isSelf),
+      isActive: group.some((entry) => entry.isActive !== false),
     };
   });
 }
@@ -402,11 +405,6 @@ function createSharedChatSession(
   const chatProvidersMapVersion = signal(0);
   const participantAliasesMapVersion = signal(0);
   const participantIdAliases = signal<Record<string, string>>({});
-  let knownUserParticipants: Record<
-    string,
-    Pick<UserChatParticipant, "id" | "userId" | "connectionId" | "name">
-  > = {};
-  const knownUserParticipantsVersion = signal(0);
   chatProvidersMap.changes.subscribe(() => {
     // Avoid updating reactive graph synchronously during shared-doc
     // transactions to prevent dependency cycles.
@@ -452,40 +450,6 @@ function createSharedChatSession(
       nextAliases[key] = value;
     });
     participantIdAliases.value = nextAliases;
-  });
-
-  effect(() => {
-    const connectedGroups = groupConnectedUsers(
-      session.connectedUsers.value as ConnectedUserLike[]
-    );
-
-    let changed = false;
-    const nextKnownUserParticipants = {
-      ...knownUserParticipants,
-    };
-
-    for (const participant of connectedGroups) {
-      const existing = knownUserParticipants[participant.id];
-      if (
-        !existing ||
-        existing.userId !== participant.userId ||
-        existing.connectionId !== participant.connectionId ||
-        existing.name !== participant.name
-      ) {
-        nextKnownUserParticipants[participant.id] = {
-          id: participant.id,
-          userId: participant.userId,
-          connectionId: participant.connectionId,
-          name: participant.name,
-        };
-        changed = true;
-      }
-    }
-
-    if (changed) {
-      knownUserParticipants = nextKnownUserParticipants;
-      knownUserParticipantsVersion.value += 1;
-    }
   });
 
   let previousParticipantIdByConnectionId = new Map<string, string>();
@@ -544,8 +508,8 @@ function createSharedChatSession(
     const localConnectionId = session.currentUser.value?.connectionId ?? null;
     const localParticipantId = localUserId ?? localConnectionId;
 
-    const connectedParticipants = groupConnectedUsers(
-      session.connectedUsers.value as ConnectedUserLike[]
+    const allUserParticipants = groupConnectedUsers(
+      session.allUsers.value as ConnectedUserLike[]
     ).map(
       (group): UserChatParticipant => ({
         id: group.id,
@@ -555,29 +519,9 @@ function createSharedChatSession(
         isSelf: group.isSelf,
         isAI: false,
         isRemote: !group.isSelf,
-        isActive: true,
+        isActive: group.isActive,
       })
     );
-
-    const activeParticipantIds = new Set(
-      connectedParticipants.map((participant) => participant.id)
-    );
-    void knownUserParticipantsVersion.value;
-    const inactiveParticipants = Object.values(knownUserParticipants)
-      .filter((participant) => !activeParticipantIds.has(participant.id))
-      .map(
-        (participant): UserChatParticipant => ({
-          ...participant,
-          isSelf: localParticipantId === participant.id,
-          isAI: false,
-          isRemote: localParticipantId !== participant.id,
-          isActive: false,
-        })
-      );
-    const allUserParticipants = [
-      ...connectedParticipants,
-      ...inactiveParticipants,
-    ];
 
     void chatProvidersMapVersion.value;
     const sharedProviderParticipants: AIChatParticipant[] = [];
