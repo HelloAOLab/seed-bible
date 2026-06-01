@@ -240,5 +240,6 @@
   "x-is-typing": "{{name}} is typing...",
   "x-is-typing-and-more": "{{name}} and {{count}} others are typing...",
   "x-is-typing-and-more_one": "{{name}} and one other is typing...",
-  "x-is-typing-and-more_other": "{{name}} and {{count}} others are typing..."
+  "x-is-typing-and-more_other": "{{name}} and {{count}} others are typing...",
+  "now": "Now"
 }

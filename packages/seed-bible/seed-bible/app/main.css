@@ -7291,7 +7291,7 @@ h6 {
   flex: 0 0 auto;
 }
 
-.sb-chat-view-message-avatar {
+img.sb-chat-view-message-avatar {
   width: 30px;
   height: 30px;
   border-radius: 999px;
@@ -7319,12 +7319,17 @@ h6 {
   display: flex;
   align-items: center;
   margin-bottom: 4px;
+  gap: 8px;
 }
 
 .sb-chat-view-message-author {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+}
+
+.sb-chat-view-message-timestamp {
+  font-size: 11px;
 }
 
 .sb-chat-view-message-body {

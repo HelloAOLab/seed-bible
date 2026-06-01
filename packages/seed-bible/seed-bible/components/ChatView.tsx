@@ -42,6 +42,19 @@ function getAuthorLabel(
   return authors.join(", ");
 }
 
+function RelativeDateTime({ timeMs }: { timeMs: number }) {
+  const { t, language } = useI18n();
+  const date = DateTime.fromMillis(timeMs);
+  date.setLocale(language);
+
+  const str =
+    Date.now() - timeMs < 60000
+      ? t("now", { defaultValue: "Now" })
+      : date.toRelative();
+
+  return <span className="relative-date-time">{str}</span>;
+}
+
 function getAvatarInitials(label: string): string {
   const words = label
     .trim()
@@ -369,6 +382,9 @@ export function ChatView(props: ChatViewProps) {
                   <header className="sb-chat-view-message-header">
                     <span className="sb-chat-view-message-author">
                       {getAuthorLabel(chat, message, t)}
+                    </span>
+                    <span className="sb-chat-view-message-timestamp">
+                      <RelativeDateTime timeMs={message.timeMs} />
                     </span>
                   </header>
                   <p className="sb-chat-view-message-body">
