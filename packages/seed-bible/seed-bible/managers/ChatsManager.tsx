@@ -118,6 +118,12 @@ export interface AIChatParticipant extends BaseChatParticipant {
    * The connection ID that this AI participant is associated with, if any. This may be null even if userId is not null, in which case the participant is associated with the user but not with any specific connection of that user.
    */
   connectionId: string | null;
+
+  /**
+   * The ID of the participant that owns this AI participant.
+   */
+  ownerParticipantId: string;
+
   isSelf: false;
   isAI: true;
 }
@@ -366,6 +372,7 @@ function createSharedChatSession(
         ...parsed.data.map(
           (p): AIChatParticipant => ({
             ...p,
+            ownerParticipantId,
             userId: owner.userId,
             connectionId: owner.connectionId,
             isSelf: false,
@@ -510,6 +517,7 @@ function createLocalChatSession(
   const chatProviderParticipants = computed<AIChatParticipant[]>(() =>
     chatProviders.value.map((provider) => ({
       id: provider.id,
+      ownerParticipantId: localParticipant.value.id,
       userId: loginManager.userId.value ?? null,
       connectionId: null,
       name: provider.name,

@@ -229,6 +229,7 @@ describe("createChatsManager", () => {
       },
       {
         id: "provider-1",
+        ownerParticipantId: "user-1",
         userId: null,
         connectionId: null,
         name: "Helper AI",
@@ -256,6 +257,7 @@ describe("createChatsManager", () => {
       },
       {
         id: "u2",
+        ownerParticipantId: "user-1",
         userId: null,
         connectionId: null,
         name: "Alpha",
@@ -274,6 +276,7 @@ describe("createChatsManager", () => {
     const participants: ChatParticipant[] = [
       {
         id: "provider-1",
+        ownerParticipantId: "user-1",
         userId: null,
         connectionId: null,
         name: "Helper AI",
@@ -310,6 +313,7 @@ describe("createChatsManager", () => {
       },
       {
         id: "provider-1",
+        ownerParticipantId: "user-1",
         userId: null,
         connectionId: null,
         name: "Alpha",
@@ -568,6 +572,7 @@ describe("createChatsManager", () => {
 
     expect(session.participants.value).toContainEqual({
       id: "provider-1",
+      ownerParticipantId: session.participants.value[0]!.id,
       userId: null,
       connectionId: null,
       name: "Helper AI",
@@ -630,6 +635,7 @@ describe("createChatsManager", () => {
 
     expect(session.participants.value).toContainEqual({
       id: "provider-1",
+      ownerParticipantId: session.participants.value[0]!.id,
       userId: null,
       connectionId: null,
       name: "New Name",
@@ -673,6 +679,7 @@ describe("createChatsManager", () => {
     ]);
     expect(chat.participants.value).toContainEqual({
       id: "user-a_provider-1",
+      ownerParticipantId: "user-a",
       userId: "user-a",
       connectionId: "conn-user-a",
       name: "Helper AI",
@@ -722,6 +729,7 @@ describe("createChatsManager", () => {
     ]);
     expect(chat.participants.value).toContainEqual({
       id: "user-a_provider-1",
+      ownerParticipantId: "user-a",
       userId: "user-a",
       connectionId: "conn-user-a",
       name: "New Name",
@@ -759,6 +767,7 @@ describe("createChatsManager", () => {
 
     expect(chatSession.participants.value).toContainEqual({
       id: "u1_provider-x",
+      ownerParticipantId: "u1",
       userId: "u1",
       connectionId: "conn-u1",
       name: "Remote AI",
