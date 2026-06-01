@@ -274,6 +274,138 @@ describe("createChatsManager", () => {
     expect(firstChat).not.toBe(secondChat);
   });
 
+  it("createLocalSession() exposes lastMessageRead and markAsRead()", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const chats = createChatsManager(loginManager);
+    const session = chats.createLocalSession();
+
+    expect(session.lastMessageRead.value).toBeNull();
+
+    await session.sendMessage({
+      type: "text",
+      text: "hello",
+    });
+
+    expect(session.lastMessageRead.value).toBeNull();
+
+    session.markAsRead();
+
+    expect(session.lastMessageRead.value).toBe("msg-1");
+  });
+
+  it("tracks unreadMessages and wasMentioned across chats", () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager);
+    const { session, sharedChats } = createSharedSessionMock({
+      currentUserId: "self-user",
+      connectedUsers: [
+        {
+          id: "self-user",
+          userId: "self-user",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+        },
+        {
+          id: "u1",
+          userId: "u1",
+          connectionId: null,
+          name: "Alpha",
+          isSelf: false,
+          isAI: false,
+          isRemote: true,
+          isActive: true,
+        },
+      ],
+    });
+
+    const chatSession = chats.createSharedSession(session);
+
+    expect(chats.unreadMessages.value).toBe(0);
+    expect(chats.wasMentioned.value).toBe(false);
+
+    sharedChats.push({
+      id: "m1",
+      authors: ["u1"],
+      targets: [],
+      timeMs: 1,
+      type: "text",
+      text: "hello",
+    });
+
+    expect(chats.unreadMessages.value).toBe(1);
+    expect(chats.wasMentioned.value).toBe(false);
+
+    sharedChats.push({
+      id: "m2",
+      authors: ["u1"],
+      targets: ["self-user"],
+      timeMs: 2,
+      type: "text",
+      text: "hi @self-user",
+    });
+
+    expect(chats.unreadMessages.value).toBe(2);
+    expect(chats.wasMentioned.value).toBe(true);
+
+    chatSession.markAsRead();
+
+    expect(chats.unreadMessages.value).toBe(0);
+    expect(chats.wasMentioned.value).toBe(false);
+  });
+
+  it("automatically marks selected chat as read when messages arrive", () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager);
+    const { session, sharedChats } = createSharedSessionMock({
+      currentUserId: "self-user",
+      connectedUsers: [
+        {
+          id: "self-user",
+          userId: "self-user",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+        },
+        {
+          id: "u1",
+          userId: "u1",
+          connectionId: null,
+          name: "Alpha",
+          isSelf: false,
+          isAI: false,
+          isRemote: true,
+          isActive: true,
+        },
+      ],
+    });
+    const chatSession = chats.createSharedSession(session);
+
+    chats.selectChat(chatSession.id);
+
+    sharedChats.push({
+      id: "m1",
+      authors: ["u1"],
+      targets: ["self-user"],
+      timeMs: 1,
+      type: "text",
+      text: "mention",
+    });
+
+    expect(chatSession.lastMessageRead.value).toBe("m1");
+    expect(chats.unreadMessages.value).toBe(0);
+    expect(chats.wasMentioned.value).toBe(false);
+  });
+
   it("resolveMessageTargets() matches by participant id", () => {
     const participants: ChatParticipant[] = [
       {

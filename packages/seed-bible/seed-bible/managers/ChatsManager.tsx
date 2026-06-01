@@ -157,6 +157,10 @@ export interface ChatSession {
 
   /** Chat messages ordered from oldest to most recent. */
   messages: ReadonlySignal<ChatMessage[]>;
+  /** The message ID of the latest message the user has read, if any. */
+  lastMessageRead: ReadonlySignal<string | null>;
+  /** Marks all current messages as read by moving lastMessageRead to the latest message ID. */
+  markAsRead: () => void;
   /** Sends a message and notifies the other participants. */
   sendMessage: (message: ChatMessageOptions) => Promise<void>;
   /** Updates whether the local participant is currently typing. */
@@ -176,6 +180,10 @@ export interface ChatSession {
 export interface ChatsManager {
   isOpen: Signal<boolean>;
   chats: ReadonlySignal<ChatSession[]>;
+  /** Total number of unread messages across all chat sessions. */
+  unreadMessages: ReadonlySignal<number>;
+  /** Whether any unread message targets the local participant in any chat session. */
+  wasMentioned: ReadonlySignal<boolean>;
   selectedChat: ReadonlySignal<ChatSession | null>;
   createSharedSession: (session: BibleReadingSession) => ChatSession;
   createLocalSession: () => ChatSession;
@@ -430,6 +438,24 @@ function createParticipantTypingMapKey(participantId: string): string {
   return `participant:${participantId}`;
 }
 
+function getUnreadMessagesSinceLastRead(
+  messages: ChatMessage[],
+  lastMessageRead: string | null
+): ChatMessage[] {
+  if (!lastMessageRead) {
+    return messages;
+  }
+
+  const lastReadIndex = messages.findIndex(
+    (message) => message.id === lastMessageRead
+  );
+  if (lastReadIndex < 0) {
+    return messages;
+  }
+
+  return messages.slice(lastReadIndex + 1);
+}
+
 function getMostRecentProviderParticipant(
   participants: ChatParticipant[],
   messages: ChatMessage[]
@@ -518,9 +544,15 @@ function createSharedChatSession(
   };
 
   const messages = signal<ChatMessage[]>(readValidChats());
+  const lastMessageRead = signal<string | null>(null);
   chats.changes.subscribe(() => {
     messages.value = readValidChats();
   });
+
+  const markAsRead = () => {
+    const latestMessageId = messages.value.at(-1)?.id ?? null;
+    lastMessageRead.value = latestMessageId;
+  };
 
   effect(() => {
     void participantAliasesMapVersion.value;
@@ -841,6 +873,8 @@ function createSharedChatSession(
   return {
     id: uuid(),
     messages,
+    lastMessageRead,
+    markAsRead,
     sendMessage,
     setTypingStatus: (isTyping: boolean) => {
       localIsTyping.value = isTyping;
@@ -890,6 +924,7 @@ function createLocalChatSession(
     ...chatProviderParticipants.value,
   ]);
   const messages = signal<ChatMessage[]>([]);
+  const lastMessageRead = signal<string | null>(null);
   const localIsTyping = signal(false);
   const participantIdAliases = signal<Record<string, string>>({});
   const providerTypingParticipantIds = signal<string[]>([]);
@@ -1003,9 +1038,16 @@ function createLocalChatSession(
       participantIdAliases.value
     );
 
+  const markAsRead = () => {
+    const latestMessageId = messages.value.at(-1)?.id ?? null;
+    lastMessageRead.value = latestMessageId;
+  };
+
   return {
     id: uuid(),
     messages,
+    lastMessageRead,
+    markAsRead,
     sendMessage,
     setTypingStatus: (isTyping: boolean) => {
       localIsTyping.value = isTyping;
@@ -1024,6 +1066,59 @@ export function createChatsManager(loginManager: LoginManager): ChatsManager {
   const selectedChat = computed(
     () => chats.value.find((chat) => chat.id === selectedChatId.value) ?? null
   );
+  const unreadMessages = computed(() => {
+    return chats.value.reduce((total, chat) => {
+      return (
+        total +
+        getUnreadMessagesSinceLastRead(
+          chat.messages.value,
+          chat.lastMessageRead.value
+        ).length
+      );
+    }, 0);
+  });
+
+  const wasMentioned = computed(() => {
+    for (const chat of chats.value) {
+      const selfParticipantIds = new Set(
+        chat.participants.value
+          .filter((participant) => participant.isSelf)
+          .map((participant) => participant.id)
+      );
+      if (selfParticipantIds.size === 0) {
+        continue;
+      }
+
+      const unread = getUnreadMessagesSinceLastRead(
+        chat.messages.value,
+        chat.lastMessageRead.value
+      );
+      if (
+        unread.some((message) =>
+          message.targets.some((targetId) => selfParticipantIds.has(targetId))
+        )
+      ) {
+        return true;
+      }
+    }
+
+    return false;
+  });
+
+  effect(() => {
+    const currentSelectedChat = selectedChat.value;
+    if (!currentSelectedChat) {
+      return;
+    }
+
+    const latestMessageId =
+      currentSelectedChat.messages.value.at(-1)?.id ?? null;
+    if (currentSelectedChat.lastMessageRead.value === latestMessageId) {
+      return;
+    }
+
+    currentSelectedChat.markAsRead();
+  });
 
   const registerProvider = (provider: ChatProvider) => {
     chatProviders.value = [
@@ -1060,6 +1155,8 @@ export function createChatsManager(loginManager: LoginManager): ChatsManager {
   return {
     isOpen,
     chats,
+    unreadMessages,
+    wasMentioned,
     createSharedSession,
     createLocalSession,
     registerProvider,
