@@ -48,11 +48,44 @@ function getParticipantDisplayLabel(
 ): string {
   return participant.isSelf
     ? t("you", { defaultValue: "You" })
-    : (participant.name ?? participant.id);
+    : (participant.name ?? t("anonymous", { defaultValue: "Anonymous" }));
 }
 
 function getParticipantMentionLabel(participant: ChatParticipant): string {
   return participant.name?.trim() || participant.id;
+}
+
+function getTypingIndicatorLabel(
+  participants: ChatParticipant[],
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  const names = participants
+    .map((participant) => getParticipantDisplayLabel(participant, t))
+    .filter((name) => name.trim().length > 0);
+
+  if (names.length === 0) {
+    return t("someone-is-typing", { defaultValue: "Someone is typing..." });
+  }
+
+  if (names.length === 2) {
+    return t("x-and-x-are-typing", {
+      defaultValue: "{{first}} and {{second}} are typing...",
+      first: names[0],
+      second: names[1],
+    });
+  } else if (names.length === 1) {
+    return t("x-is-typing", {
+      defaultValue: "{{name}} is typing...",
+      name: names[0],
+    });
+  }
+
+  const remainingCount = names.length - 1;
+  return t("x-is-typing-and-more", {
+    defaultValue: "{{name}} and {{count}} others are typing...",
+    name: names[0],
+    count: remainingCount,
+  });
 }
 
 function getMentionContext(
@@ -100,17 +133,12 @@ export function ChatView(props: ChatViewProps) {
   const messagesRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const activeParticipants = chat.participants.value
-    .filter((participant) => participant.isActive)
-    .slice()
-    .sort((left, right) => {
-      const leftLabel = getParticipantDisplayLabel(left, t).toLowerCase();
-      const rightLabel = getParticipantDisplayLabel(right, t).toLowerCase();
-      if (leftLabel === rightLabel) {
-        return left.id.localeCompare(right.id);
-      }
-      return leftLabel.localeCompare(rightLabel);
-    });
+  const activeParticipants = chat.participants.value.filter(
+    (participant) => participant.isActive
+  );
+  const typingParticipants = chat.typingParticipants.value.filter(
+    (p) => !p.isSelf
+  );
 
   const mentionContext = getMentionContext(draft.value, cursorPosition.value);
   const mentionQuery = mentionContext?.query.toLowerCase() ?? "";
@@ -283,6 +311,24 @@ export function ChatView(props: ChatViewProps) {
       </div>
 
       <div className="sb-chat-view-compose-shell">
+        {typingParticipants.length > 0 && (
+          <div
+            className="sb-chat-view-typing-indicator"
+            role="status"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <span className="sb-chat-view-typing-dots" aria-hidden="true">
+              <span className="sb-chat-view-typing-dot" />
+              <span className="sb-chat-view-typing-dot" />
+              <span className="sb-chat-view-typing-dot" />
+            </span>
+            <span className="sb-chat-view-typing-text">
+              {getTypingIndicatorLabel(typingParticipants, t)}
+            </span>
+          </div>
+        )}
+
         {isMentionPickerOpen && (
           <div
             className="sb-chat-view-mention-picker"
