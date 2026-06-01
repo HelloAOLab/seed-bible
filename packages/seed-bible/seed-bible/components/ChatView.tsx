@@ -1,4 +1,4 @@
-import { useSignal } from "@preact/signals";
+import { useSignal, useSignalEffect } from "@preact/signals";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import type {
   ChatParticipant,
@@ -251,6 +251,14 @@ export function ChatView(props: ChatViewProps) {
       chat.setTypingStatus(false);
     };
   }, []);
+
+  useSignalEffect(() => {
+    const latestMessageId = chat.messages.value.at(-1)?.id ?? null;
+    if (chat.lastMessageRead.value === latestMessageId) {
+      return;
+    }
+    chat.markAsRead();
+  });
 
   const selectMention = (participant: ChatParticipant) => {
     if (!mentionContext) {

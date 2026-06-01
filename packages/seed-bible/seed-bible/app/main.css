@@ -1480,6 +1480,7 @@ h6 {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
   border: none;
   background-color: transparent;
   cursor: pointer;
@@ -1529,6 +1530,25 @@ h6 {
   white-space: nowrap;
   line-height: var(--sb-reader-toolbar-button-label-line-height);
   height: var(--sb-reader-toolbar-button-label-height);
+}
+
+.sb-reader-toolbar-unread-indicator {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  pointer-events: none;
 }
 
 .sb-reader-toolbar-item-arrow .sb-reader-toolbar-button {

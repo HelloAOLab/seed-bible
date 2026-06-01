@@ -337,6 +337,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     selector,
     panes,
     sidebar,
+    chats,
     tools: toolsManager,
     settings,
     bookmarks,
@@ -393,6 +394,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       openChat: sidebar.openChatPanel,
     });
     return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
+  });
+
+  const unreadChatIndicator = useComputed(() => {
+    if (chats.unreadMessages.value <= 0) {
+      return null;
+    }
+
+    if (chats.wasMentioned.value) {
+      return "@";
+    }
+
+    return chats.unreadMessages.value > 99
+      ? "99+"
+      : `${chats.unreadMessages.value}`;
   });
 
   const hiddenToolIds = new Set([
@@ -847,6 +862,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       ) : (
                         <span className="sb-reader-toolbar-button-label">
                           {label}
+                        </span>
+                      )}
+                      {tool.id === "open-chat" && unreadChatIndicator.value && (
+                        <span
+                          className="sb-reader-toolbar-unread-indicator"
+                          aria-label={
+                            chats.wasMentioned.value
+                              ? "Unread mention"
+                              : `Unread messages: ${unreadChatIndicator.value}`
+                          }
+                        >
+                          {unreadChatIndicator.value}
                         </span>
                       )}
                     </button>
