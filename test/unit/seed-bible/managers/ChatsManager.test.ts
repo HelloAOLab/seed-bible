@@ -459,6 +459,30 @@ describe("createChatsManager", () => {
     ).toEqual([session.participants.value[0]]);
   });
 
+  it("createLocalSession() resolves old local author id to current participant after login", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager);
+    const session = chats.createLocalSession();
+
+    await session.sendMessage({
+      type: "text",
+      text: "Sent while anonymous",
+    });
+
+    const firstMessage = session.messages.value[0] as ChatMessage;
+    expect(firstMessage.authors).toEqual(["local-user"]);
+
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    expect(session.getMessageAuthors(firstMessage)).toEqual([
+      expect.objectContaining({
+        id: "user-1",
+        isSelf: true,
+      }),
+    ]);
+  });
+
   it("createLocalSession() tracks local typing participant", () => {
     const { loginManager, userId, profile } = createLoginManagerMock();
     userId.value = "user-typing";
@@ -1592,5 +1616,79 @@ describe("createChatsManager", () => {
     expect(latestMessage).toMatchObject({
       targets: ["u1"],
     });
+  });
+
+  it("createSharedSession() resolves old anonymous author ids to aliased participant", async () => {
+    const { loginManager: firstLoginManager } = createLoginManagerMock();
+    const {
+      session,
+      connectedUsers,
+      allUsers,
+      sharedParticipantAliases,
+      sharedChats,
+    } = createSharedSessionMock({
+      connectedSessionUsers: [
+        {
+          userId: null,
+          connectionId: "anon-1",
+          name: "Guest",
+          isSelf: false,
+        },
+      ],
+      initialChats: [
+        {
+          id: "m-anon",
+          authors: ["anon-1"],
+          targets: [],
+          timeMs: 100,
+          type: "text",
+          text: "before login",
+        },
+      ],
+    });
+
+    const firstChatsManager = createChatsManager(firstLoginManager);
+    firstChatsManager.createSharedSession(session);
+
+    connectedUsers.value = [
+      {
+        userId: "u1",
+        connectionId: "anon-1",
+        profile: { name: "Guest" },
+        isSelf: false,
+        isActive: true,
+        color: "#000000",
+        sessionId: null,
+      },
+    ];
+    allUsers.value = connectedUsers.value.map((user) => ({
+      ...user,
+      isActive: true,
+    }));
+
+    await Promise.resolve();
+    expect(sharedParticipantAliases.get("anon-1")).toBe("u1");
+
+    const { loginManager: lateJoinerLoginManager } = createLoginManagerMock();
+    const lateJoinerChatsManager = createChatsManager(lateJoinerLoginManager);
+    const lateJoinerChatSession =
+      lateJoinerChatsManager.createSharedSession(session);
+
+    // Wait for participant-alias map subscription to update the late joiner's local alias cache.
+    await Promise.resolve();
+
+    const legacyAuthorMessage = (sharedChats.toArray()[0] ??
+      null) as ChatMessage | null;
+    expect(legacyAuthorMessage).not.toBeNull();
+    expect(
+      lateJoinerChatSession.getMessageAuthors(
+        legacyAuthorMessage as ChatMessage
+      )
+    ).toEqual([
+      expect.objectContaining({
+        id: "u1",
+        isAI: false,
+      }),
+    ]);
   });
 });

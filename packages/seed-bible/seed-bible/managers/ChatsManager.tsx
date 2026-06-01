@@ -362,15 +362,36 @@ export function resolveMessageTargets(
 
 function resolveMessageAuthors(
   participants: ChatParticipant[],
-  message: ChatMessage
+  message: ChatMessage,
+  participantIdAliases: Readonly<Record<string, string>> = {}
 ): ChatParticipant[] {
   if (message.authors.length === 0) {
     return [];
   }
 
-  return message.authors
-    .map((id) => participants.find((p) => p.id === id))
-    .filter((p) => p) as ChatParticipant[];
+  const resolvedAuthors = new Map<string, ChatParticipant>();
+
+  for (const authorId of message.authors) {
+    let resolvedId: string | null = authorId;
+    const visited = new Set<string>();
+
+    while (resolvedId && participantIdAliases[resolvedId]) {
+      if (visited.has(resolvedId)) {
+        break;
+      }
+      visited.add(resolvedId);
+      resolvedId = participantIdAliases[resolvedId] ?? null;
+    }
+
+    const participant = participants.find(
+      (p) => p.id === (resolvedId ?? authorId)
+    );
+    if (participant) {
+      resolvedAuthors.set(participant.id, participant);
+    }
+  }
+
+  return Array.from(resolvedAuthors.values());
 }
 
 function resolveMessageTargetsWithAliases(
@@ -826,7 +847,11 @@ function createSharedChatSession(
     participants,
     typingParticipants,
     getMessageAuthors: (message: ChatMessage) =>
-      resolveMessageAuthors(participants.value, message),
+      resolveMessageAuthors(
+        participants.value,
+        message,
+        participantIdAliases.value
+      ),
   };
 }
 
@@ -865,7 +890,25 @@ function createLocalChatSession(
   ]);
   const messages = signal<ChatMessage[]>([]);
   const localIsTyping = signal(false);
+  const participantIdAliases = signal<Record<string, string>>({});
   const providerTypingParticipantIds = signal<string[]>([]);
+
+  let previousLocalParticipantId: string | null = null;
+  effect(() => {
+    const currentLocalParticipantId = localParticipant.value.id;
+    if (
+      previousLocalParticipantId &&
+      previousLocalParticipantId !== currentLocalParticipantId &&
+      participantIdAliases.value[previousLocalParticipantId] !==
+        currentLocalParticipantId
+    ) {
+      participantIdAliases.value = {
+        ...participantIdAliases.value,
+        [previousLocalParticipantId]: currentLocalParticipantId,
+      };
+    }
+    previousLocalParticipantId = currentLocalParticipantId;
+  });
 
   const typingParticipants = computed<ChatParticipant[]>(() => {
     const typing = new Map<string, ChatParticipant>();
@@ -953,7 +996,11 @@ function createLocalChatSession(
   };
 
   const getMessageAuthors = (message: ChatMessage) =>
-    resolveMessageAuthors(participants.value, message);
+    resolveMessageAuthors(
+      participants.value,
+      message,
+      participantIdAliases.value
+    );
 
   return {
     id: uuid(),
