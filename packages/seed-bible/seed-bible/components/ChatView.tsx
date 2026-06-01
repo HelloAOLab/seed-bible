@@ -43,16 +43,23 @@ function getAuthorLabel(
 }
 
 function RelativeDateTime({ timeMs }: { timeMs: number }) {
-  const { t, language } = useI18n();
-  const date = DateTime.fromMillis(timeMs);
-  date.setLocale(language);
+  const { language } = useI18n();
+  const refreshTick = useSignal(0);
 
-  const str =
-    Date.now() - timeMs < 60000
-      ? t("now", { defaultValue: "Now" })
-      : date.toRelative();
+  useEffect(() => {
+    const timerId = setInterval(() => {
+      refreshTick.value += 1;
+    }, 15_000);
 
-  return <span className="relative-date-time">{str}</span>;
+    return () => {
+      clearInterval(timerId);
+    };
+  }, []);
+
+  void refreshTick.value;
+  const date = DateTime.fromMillis(timeMs).setLocale(language);
+
+  return <span className="relative-date-time">{date.toRelative()}</span>;
 }
 
 function getAvatarInitials(label: string): string {
