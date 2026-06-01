@@ -1,7 +1,10 @@
 import { useTodayContext } from "../contexts/today/TodayContext";
-import { useSignal, useComputed } from "@preact/signals";
+import { useSignal, useComputed, effect } from "@preact/signals";
 import type { TimespanFilterOptionData } from "../components/containers/SocialSection";
-import type { CommunityReadingSpanId } from "@packages/today-screen/todayScreen/domain/models/readingHistory";
+import type {
+  CommunityReadingSpanId,
+  FilteredReading,
+} from "@packages/today-screen/todayScreen/domain/models/readingHistory";
 
 const { useMemo, useCallback } = os.appHooks;
 
@@ -25,7 +28,7 @@ const TimespanOptionLabelMap: Record<CommunityReadingSpanId | "all", string> = {
 };
 
 export const useSocialSection: UseSocialSection = () => {
-  const { translate, MaterialIcon } = useTodayContext();
+  const { translate, MaterialIcon, communityReading } = useTodayContext();
 
   const userFilterOpen = useSignal<boolean>(false);
   const selectedTimespanOptionId = useSignal<CommunityReadingSpanId | "all">(
@@ -63,6 +66,20 @@ export const useSocialSection: UseSocialSection = () => {
       }));
     }
   );
+
+  const filteredReading = useComputed<FilteredReading | undefined>(() => {
+    if (selectedTimespanOptionId.value === "all") {
+      return undefined;
+    }
+
+    return communityReading.value[selectedTimespanOptionId.value];
+  });
+
+  effect(() => {
+    console.log(`[Debug] useSocialSection`, {
+      filteredReading: filteredReading.value,
+    });
+  });
 
   return {
     title,
