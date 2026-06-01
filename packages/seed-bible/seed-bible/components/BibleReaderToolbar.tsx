@@ -410,6 +410,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       : `${chats.unreadMessages.value}`;
   });
 
+  const hasTypingInChats = useComputed(() =>
+    chats.chats.value.some((chat) =>
+      chat.typingParticipants.value.some((participant) => !participant.isSelf)
+    )
+  );
+
   const hiddenToolIds = new Set([
     "previous-chapter",
     "next-chapter",
@@ -875,6 +881,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         >
                           {unreadChatIndicator.value}
                         </span>
+                      )}
+                      {tool.id === "open-chat" && hasTypingInChats.value && (
+                        <span
+                          className="sb-reader-toolbar-typing-indicator"
+                          aria-label={t("someone-is-typing", {
+                            defaultValue: "Someone is typing...",
+                          })}
+                        />
                       )}
                     </button>
                     {hasMenuItems &&
