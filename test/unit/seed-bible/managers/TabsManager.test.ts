@@ -200,7 +200,9 @@ describe("createTabs", () => {
       updateOptions: jest.fn(),
       removeSharedDecoration: jest.fn(),
       dispose: jest.fn(),
+      allUsers: signal([]),
       connectedUsers: signal([]),
+      currentUser: signal(null),
     } as BibleReadingSession;
 
     const nextTab = manager.addTab(sharedSession);

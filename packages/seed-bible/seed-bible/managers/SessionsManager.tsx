@@ -22,6 +22,11 @@ export interface ConnectedSessionUser extends SessionConnectionInfo {
    * A color assigned to this user for display purposes. This is generated based on the connection ID.
    */
   color: string;
+
+  /**
+   * Whether this user is currently connected to the session.
+   */
+  isActive: boolean;
 }
 
 export interface SessionConnectionInfo extends ConnectionInfo {
@@ -306,6 +311,7 @@ export interface BibleReadingSession {
   options: ReadonlySignal<SessionOptions>;
   updateOptions: (newOptions: Partial<SessionOptions>) => void;
   readingState: BibleReadingState;
+  allUsers: ReadonlySignal<ConnectedSessionUser[]>;
   connectedUsers: ReadonlySignal<ConnectedSessionUser[]>;
   currentUser: ReadonlySignal<ConnectedSessionUser | null>;
   /**
@@ -378,6 +384,7 @@ async function createBibleReadingSession(
   const userProfilesMap =
     document.getMap<SharedUserProfileEntry>("user_profiles");
   const options = signal<SessionOptions>(DEFAULT_SESSION_OPTIONS);
+  const allUsers = signal<ConnectedSessionUser[]>([]);
   const connectedUsers = signal<ConnectedSessionUser[]>([]);
   const connectedClients = new Map<string, SessionConnectionInfo>();
   const profileCache = new Map<string, UserProfile>();
@@ -533,6 +540,7 @@ async function createBibleReadingSession(
           userId: effectiveUserId,
           profile,
           color: color,
+          isActive: true,
         };
       })
     );
@@ -542,6 +550,24 @@ async function createBibleReadingSession(
     }
 
     connectedUsers.value = nextUsers;
+
+    const previousUsersByConnectionId = new Map(
+      allUsers.value.map((user) => [user.connectionId, user] as const)
+    );
+    const nextUsersByConnectionId = new Map<string, ConnectedSessionUser>();
+
+    for (const previousUser of previousUsersByConnectionId.values()) {
+      nextUsersByConnectionId.set(previousUser.connectionId, {
+        ...previousUser,
+        isActive: false,
+      });
+    }
+
+    for (const nextUser of nextUsers) {
+      nextUsersByConnectionId.set(nextUser.connectionId, nextUser);
+    }
+
+    allUsers.value = Array.from(nextUsersByConnectionId.values());
   };
 
   const syncReadingStateFromSessionData = async (
@@ -927,6 +953,7 @@ async function createBibleReadingSession(
     options,
     updateOptions,
     readingState,
+    allUsers,
     connectedUsers,
     currentUser,
     removeSharedDecoration,

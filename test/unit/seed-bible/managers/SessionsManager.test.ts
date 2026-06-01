@@ -1178,6 +1178,7 @@ describe("SessionsManager", () => {
           },
           isSelf: false,
           color: expect.any(String),
+          isActive: true,
         },
         {
           connectionId: "conn-2",
@@ -1186,6 +1187,32 @@ describe("SessionsManager", () => {
           profile: null,
           isSelf: false,
           color: expect.any(String),
+          isActive: true,
+        },
+      ])
+    );
+
+    expect(session.allUsers.value).toEqual(
+      expect.arrayContaining([
+        {
+          connectionId: "conn-1",
+          sessionId: "group-abc",
+          userId: "user-1",
+          profile: {
+            name: "Profile user-1",
+          },
+          isSelf: false,
+          color: expect.any(String),
+          isActive: true,
+        },
+        {
+          connectionId: "conn-2",
+          sessionId: "group-abc",
+          userId: null,
+          profile: null,
+          isSelf: false,
+          color: expect.any(String),
+          isActive: true,
         },
       ])
     );
@@ -1222,5 +1249,21 @@ describe("SessionsManager", () => {
     });
 
     await waitFor(() => session.connectedUsers.value.length === 0);
+
+    expect(session.allUsers.value).toEqual(
+      expect.arrayContaining([
+        {
+          connectionId: "conn-1",
+          sessionId: "group-abc",
+          userId: "user-1",
+          profile: {
+            name: "Profile user-1",
+          },
+          isSelf: false,
+          color: expect.any(String),
+          isActive: false,
+        },
+      ])
+    );
   });
 });
