@@ -103,19 +103,40 @@ function createLoginManagerMock() {
 function createSharedSessionMock(options?: {
   initialChats?: unknown[];
   connectedUsers?: UserChatParticipant[];
+  connectedSessionUsers?: Array<{
+    userId: string | null;
+    connectionId: string | null;
+    name: string | null;
+    isSelf: boolean;
+  }>;
   currentUserId?: string | null;
 }) {
   const sharedChats = new MockSharedArray<unknown>(options?.initialChats ?? []);
   const sharedChatProviders = new MockSharedMap<unknown>();
-  const connectedUsers = signal(
-    (options?.connectedUsers ?? []).map((user) => ({
-      userId: user.id,
-      connectionId: `conn-${user.id}`,
+  const mappedConnectedUsers = options?.connectedUsers
+    ? options.connectedUsers.map((user) => ({
+        userId: user.id,
+        connectionId: `conn-${user.id}`,
+        profile: user.name ? { name: user.name } : null,
+        isSelf: user.isSelf,
+        color: "#000000",
+        sessionId: null,
+      }))
+    : [];
+  const explicitConnectedUsers = (options?.connectedSessionUsers ?? []).map(
+    (user) => ({
+      userId: user.userId,
+      connectionId: user.connectionId,
       profile: user.name ? { name: user.name } : null,
       isSelf: user.isSelf,
       color: "#000000",
       sessionId: null,
-    }))
+    })
+  );
+  const connectedUsers = signal(
+    options?.connectedSessionUsers
+      ? explicitConnectedUsers
+      : mappedConnectedUsers
   );
 
   const currentUser = signal(
@@ -544,6 +565,85 @@ describe("createChatsManager", () => {
     ]);
   });
 
+  it("createSharedSession() groups multiple connections for the same user into one participant", () => {
+    const { loginManager } = createLoginManagerMock();
+    const { session } = createSharedSessionMock({
+      connectedSessionUsers: [
+        {
+          userId: "u1",
+          connectionId: "conn-u1-a",
+          name: "Alpha",
+          isSelf: false,
+        },
+        {
+          userId: "u1",
+          connectionId: "conn-u1-b",
+          name: "Alpha",
+          isSelf: false,
+        },
+      ],
+    });
+
+    const chats = createChatsManager(loginManager);
+    const chatSession = chats.createSharedSession(session);
+
+    expect(chatSession.participants.value).toEqual([
+      {
+        id: "u1",
+        userId: "u1",
+        connectionId: "conn-u1-a",
+        name: "Alpha",
+        isSelf: false,
+        isAI: false,
+        isRemote: true,
+      },
+    ]);
+  });
+
+  it("createSharedSession() keeps anonymous connections as separate participants", () => {
+    const { loginManager } = createLoginManagerMock();
+    const { session } = createSharedSessionMock({
+      connectedSessionUsers: [
+        {
+          userId: null,
+          connectionId: "anon-1",
+          name: "Guest",
+          isSelf: false,
+        },
+        {
+          userId: null,
+          connectionId: "anon-2",
+          name: "Guest",
+          isSelf: false,
+        },
+      ],
+    });
+
+    const chats = createChatsManager(loginManager);
+    const chatSession = chats.createSharedSession(session);
+
+    expect(chatSession.participants.value).toEqual([
+      {
+        id: "anon-1",
+        userId: null,
+        connectionId: "anon-1",
+        name: "Guest",
+        isSelf: false,
+        isAI: false,
+        isRemote: true,
+      },
+      {
+        id: "anon-2",
+        userId: null,
+        connectionId: "anon-2",
+        name: "Guest",
+        isSelf: false,
+        isAI: false,
+        isRemote: true,
+      },
+    ]);
+  });
+
   it("sendMessage() rejects invalid message payloads", async () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);
@@ -943,5 +1043,56 @@ describe("createChatsManager", () => {
       text: "I can help",
     });
     expect(providerResponse).toHaveBeenCalledTimes(1);
+  });
+
+  it("createSharedSession() resolves mentions of old anonymous id to logged-in user participant", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager);
+    const { session, sharedChats, connectedUsers } = createSharedSessionMock({
+      currentUserId: "self-user",
+      connectedSessionUsers: [
+        {
+          userId: "self-user",
+          connectionId: "conn-self-user",
+          name: "Alice",
+          isSelf: true,
+        },
+        {
+          userId: null,
+          connectionId: "anon-1",
+          name: "Guest",
+          isSelf: false,
+        },
+      ],
+    });
+    const chatSession = chats.createSharedSession(session);
+
+    connectedUsers.value = [
+      {
+        userId: "self-user",
+        connectionId: "conn-self-user",
+        profile: { name: "Alice" },
+        isSelf: true,
+        color: "#000000",
+        sessionId: null,
+      },
+      {
+        userId: "u1",
+        connectionId: "anon-1",
+        profile: { name: "Guest" },
+        isSelf: false,
+        color: "#000000",
+        sessionId: null,
+      },
+    ];
+
+    await chatSession.sendMessage({
+      type: "text",
+      text: "Hi @anon-1",
+    });
+
+    expect(sharedChats.toArray()[0]).toMatchObject({
+      targets: ["u1"],
+    });
   });
 });

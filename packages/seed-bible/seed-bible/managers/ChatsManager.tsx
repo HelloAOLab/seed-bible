@@ -182,6 +182,19 @@ function getParticipantName(profile: UserProfile | null): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function getConnectedUserName(user: {
+  profile?: {
+    name?: string | null;
+  } | null;
+}): string | null {
+  const name = user.profile?.name;
+  if (typeof name !== "string") {
+    return null;
+  }
+  const trimmed = name.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 function createChatMessage(
   options: ChatMessageOptions,
   authors: string[],
@@ -286,6 +299,33 @@ function resolveMessageAuthors(
     .filter((p) => p) as ChatParticipant[];
 }
 
+function resolveMessageTargetsWithAliases(
+  participants: ChatParticipant[],
+  text: string,
+  participantIdAliases: Readonly<Record<string, string>>
+): ChatParticipant[] {
+  const matches = new Map<string, ChatParticipant>(
+    resolveMessageTargets(participants, text).map((participant) => [
+      participant.id,
+      participant,
+    ])
+  );
+
+  for (const token of extractMentionTokens(text)) {
+    const resolvedId = participantIdAliases[token];
+    if (!resolvedId) {
+      continue;
+    }
+
+    const resolvedParticipant = participants.find((p) => p.id === resolvedId);
+    if (resolvedParticipant) {
+      matches.set(resolvedParticipant.id, resolvedParticipant);
+    }
+  }
+
+  return Array.from(matches.values());
+}
+
 function createSharedChatSession(
   session: BibleReadingSession,
   chatProviders: Signal<ChatProvider[]>
@@ -293,6 +333,7 @@ function createSharedChatSession(
   const chats = session.document.getArray<unknown>("chats");
   const chatProvidersMap = session.document.getMap<unknown>("chat_providers");
   const chatProvidersMapVersion = signal(0);
+  const participantIdAliases = signal<Record<string, string>>({});
   chatProvidersMap.changes.subscribe(() => {
     // Avoid updating reactive graph synchronously during shared-doc
     // transactions to prevent dependency cycles.
@@ -323,37 +364,98 @@ function createSharedChatSession(
     messages.value = readValidChats();
   });
 
+  let previousParticipantIdByConnectionId = new Map<string, string>();
+  effect(() => {
+    const nextParticipantIdByConnectionId = new Map<string, string>();
+    const aliases = {
+      ...participantIdAliases.value,
+    };
+    let aliasesChanged = false;
+
+    for (const connectedUser of session.connectedUsers.value) {
+      const connectionId = connectedUser.connectionId ?? null;
+      const userId = connectedUser.userId ?? null;
+      const currentParticipantId = userId ?? connectionId;
+
+      if (!connectionId || !currentParticipantId) {
+        continue;
+      }
+
+      const previousParticipantId =
+        previousParticipantIdByConnectionId.get(connectionId) ?? null;
+      if (
+        previousParticipantId &&
+        previousParticipantId !== currentParticipantId &&
+        previousParticipantId === connectionId
+      ) {
+        if (aliases[previousParticipantId] !== currentParticipantId) {
+          aliases[previousParticipantId] = currentParticipantId;
+          aliasesChanged = true;
+        }
+      }
+
+      nextParticipantIdByConnectionId.set(connectionId, currentParticipantId);
+    }
+
+    previousParticipantIdByConnectionId = nextParticipantIdByConnectionId;
+    if (aliasesChanged) {
+      participantIdAliases.value = aliases;
+    }
+  });
+
   const participants = computed(() => {
     const localUserId = session.currentUser.value?.userId ?? null;
     const localConnectionId = session.currentUser.value?.connectionId ?? null;
     const localParticipantId = localUserId ?? localConnectionId;
 
-    const connectedParticipants = session.connectedUsers.value
-      .map((user): UserChatParticipant | null => {
-        const userId = user.userId ?? null;
-        const connectionId = user.connectionId ?? null;
-        const id = userId ?? connectionId;
-        if (!id) {
-          return null;
-        }
+    const participantGroups = new Map<
+      string,
+      {
+        id: string;
+        userId: string | null;
+        users: (typeof session.connectedUsers.value)[number][];
+      }
+    >();
+    for (const user of session.connectedUsers.value) {
+      const userId = user.userId ?? null;
+      const connectionId = user.connectionId ?? null;
+      const id = userId ?? connectionId;
+      if (!id) {
+        continue;
+      }
 
-        return {
+      const existing = participantGroups.get(id);
+      if (existing) {
+        existing.users.push(user);
+      } else {
+        participantGroups.set(id, {
           id,
           userId,
-          connectionId,
-          name:
-            (user.profile?.name && user.profile.name.trim().length > 0
-              ? user.profile.name
-              : null) ?? null,
-          isSelf: user.isSelf,
+          users: [user],
+        });
+      }
+    }
+
+    const connectedParticipants = Array.from(participantGroups.values()).map(
+      (group): UserChatParticipant => {
+        const representative = group.users[0]!;
+        const isSelf = group.users.some((user) => user.isSelf);
+        const name =
+          group.users
+            .map((user) => getConnectedUserName(user))
+            .find((entry) => entry !== null) ?? null;
+
+        return {
+          id: group.id,
+          userId: group.userId,
+          connectionId: representative.connectionId ?? null,
+          name,
+          isSelf,
           isAI: false,
-          isRemote: !user.isSelf,
+          isRemote: !isSelf,
         };
-      })
-      .filter(
-        (participant): participant is UserChatParticipant =>
-          participant !== null
-      );
+      }
+    );
 
     void chatProvidersMapVersion.value;
     const sharedProviderParticipants: AIChatParticipant[] = [];
@@ -438,7 +540,11 @@ function createSharedChatSession(
       null;
     const targetParticipants =
       message.type === "text"
-        ? resolveMessageTargets(participants.value, message.text)
+        ? resolveMessageTargetsWithAliases(
+            participants.value,
+            message.text,
+            participantIdAliases.value
+          )
         : [];
     const nextMessage = createChatMessage(
       message,
