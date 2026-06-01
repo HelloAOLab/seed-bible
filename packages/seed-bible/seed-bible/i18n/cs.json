@@ -167,6 +167,7 @@
   "old-testament_short": "Prodloužení",
   "new-testament_short": "NT",
   "apocrypha": "Apokryfy",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Překlady na zakázku",
   "no-translation-results-found": "Nenalezeny žádné výsledky. Chcete rozšířit vyhledávání i o částečně kompletní překlady?",
   "show-all-translations": "Zobrazit všechny překlady",
@@ -189,14 +190,11 @@
   "add-bookmark": "Záložka",
   "play-audio": "Přehrát zvuk",
   "play": "Hrát",
-
   "discovery": "Objev",
   "chat": "Povídání",
-
   "today": "Dnes",
   "you": "Vy",
   "bible": "bible",
-  "view-switcher": "Přepínač zobrazení",
   "add-verse": "Přidat verš",
   "add": "Přidat",
   "chat-empty-title": "Chat bude brzy k dispozici",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Zatím zde nejsou žádné záložky.",
   "bookmark-options": "Možnosti záložek",
   "new-folder-placeholder": "Název složky",
-
   "tasks": "Úkoly",
   "bookmarks": "Záložky",
   "hide-bookmarks": "Skrýt záložky",
@@ -217,5 +214,15 @@
   "folder-name-taken": "Složka s tímto názvem již existuje.",
   "add-to-new": "Přidat k novému",
   "save": "Uložit",
-  "bookmark-verses": "Záložka veršů"
+  "bookmark-verses": "Záložka veršů",
+  "open-new-chapter-in-new-or-current-tab": "Otevřít novou kapitolu v nové nebo aktuální kartě",
+  "current-tab": "Aktuální karta",
+  "about-extrabiblical-writings": "O mimobiblických spisech",
+  "apocrypha-info-text": "Žádný ze spisů v této části nebyl ranými židovskými ani křesťanskými komunitami nikdy považován za Písmo. Bible je specifická sbírka knih. Židé a křesťané se vždy shodovali na Starém zákoně, který pochází z pevně stanoveného souboru posvátných spisů, které Židé nazývají Tanach a křesťané Starý zákon. Obsah Tanachu a Starého zákona je naprosto stejný, ale obvykle se liší uspořádáním. Křesťané dále uznávají Nový zákon, který vypráví příběh Ježíše, jeho učení a spisy jeho následovníků. Níže uvedené spisy byly v době psaní Bible známé a široce čtené, ale nikdy nebyly považovány za Písmo. Zatímco starověcí autoři někdy citovali širokou škálu textů, včetně básníků, filozofů a dalších spisů, citovat něco není totéž jako to považovat za Písmo. Tyto spisy jsou zde uvedeny pouze pro historický a literární účel.",
+  "today-coming-soon": "Dnešní obrazovka bude brzy k dispozici",
+  "chat-coming-soon": "Chat bude brzy k dispozici",
+  "more-coming-soon": "Další možnosti budou brzy k dispozici",
+  "discovery-coming-soon": "Objev se blíží",
+  "login-to-use-feature": "Pro použití této funkce se musíte přihlásit.",
+  "link-to-join-shared-session-copied": "Odkaz pro připojení ke sdílené relaci byl zkopírován do schránky."
 }

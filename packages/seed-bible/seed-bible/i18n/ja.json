@@ -150,6 +150,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "外典",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "カスタム翻訳",
   "no-translation-results-found": "検索結果が見つかりませんでした。部分的に翻訳されたものも検索対象に含めますか？",
   "show-all-translations": "すべての翻訳を表示",
@@ -162,6 +163,10 @@
   "all-translations": "すべての翻訳",
   "popular-translations": "人気の翻訳",
   "copied-translation-share-link": "翻訳共有リンクをコピーしました",
+  "open-new-chapter-in-new-or-current-tab": "Open the new chapter in new or current tab",
+  "current-tab": "Current Tab",
+  "about-extrabiblical-writings": "About Extrabiblical writings",
+  "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "詩篇1篇",
   "2-psalms": "詩篇２篇",
   "3-psalms": "詩篇３篇",
@@ -188,14 +193,12 @@
   "add-bookmark": "ブックマーク",
   "play-audio": "音声を再生",
   "play": "遊ぶ",
-
   "discovery": "発見",
   "chat": "チャット",
-
   "today": "今日",
   "you": "あなた",
   "bible": "聖書",
-  "view-switcher": "ビュー切り替え",
+
   "add-verse": "詩を追加する",
   "add": "追加",
   "chat-empty-title": "チャット機能は近日公開予定です",
@@ -206,7 +209,6 @@
   "bookmark-folder-empty": "まだブックマークはありません。",
   "bookmark-options": "ブックマークオプション",
   "new-folder-placeholder": "フォルダ名",
-
   "tasks": "タスク",
   "bookmarks": "ブックマーク",
   "hide-bookmarks": "ブックマークを非表示にする",
@@ -217,5 +219,11 @@
   "folder-name-taken": "その名前のフォルダは既に存在します。",
   "add-to-new": "新規に追加",
   "save": "保存",
-  "bookmark-verses": "ブックマークした聖句"
+  "bookmark-verses": "ブックマークした聖句",
+  "today-coming-soon": "本日のスクリーンはまもなく登場します",
+  "chat-coming-soon": "チャット機能は近日公開予定です",
+  "more-coming-soon": "近日中にさらに多くのオプションが登場予定",
+  "discovery-coming-soon": "ディスカバリーがまもなく登場します",
+  "login-to-use-feature": "この機能を使用するにはログインが必要です。",
+  "link-to-join-shared-session-copied": "共有セッションに参加するためのリンクがクリップボードにコピーされました。"
 }

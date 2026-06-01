@@ -18,7 +18,10 @@ import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { SettingsIcon } from "seed-bible.components.icons";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
 import type { UserProfile } from "seed-bible.managers.LoginManager";
-import type { ConnectedSessionUser } from "seed-bible.managers.SessionsManager";
+import type {
+  BibleReadingSession,
+  ConnectedSessionUser,
+} from "seed-bible.managers.SessionsManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import { SidebarSearch } from "seed-bible.components.SidebarSearch";
 import {
@@ -45,7 +48,6 @@ interface TabsHeaderProps {
   toggleLayoutMenu: () => void;
   setLayout: (layout: PaneLayoutId) => void;
   createSharedSession: () => void;
-  openJoinSessionModal: () => void;
 }
 
 /**
@@ -374,9 +376,9 @@ export function TabsHeader(props: TabsHeaderProps) {
     toggleLayoutMenu,
     setLayout,
     createSharedSession,
-    openJoinSessionModal,
   } = props;
-  const { sidebar } = state;
+  const { sidebar, settings } = state;
+  const isAwake = settings.settings.value.keepScreenAwake;
   const { t } = useI18n();
 
   return (
@@ -447,10 +449,8 @@ export function TabsHeader(props: TabsHeaderProps) {
               closeContextMenus();
             }}
             buttonClassName="sb-sidebar-top-icon-button"
-            aria-label={t("session-options", {
-              defaultValue: "Session options",
-            })}
-            title={t("session-options", { defaultValue: "Session options" })}
+            aria-label={t("more", { defaultValue: "More" })}
+            title={t("more", { defaultValue: "More" })}
           >
             <ContextMenuItem
               onClick={() => {
@@ -461,13 +461,41 @@ export function TabsHeader(props: TabsHeaderProps) {
             </ContextMenuItem>
             <ContextMenuItem
               onClick={() => {
-                openJoinSessionModal();
+                window.open(
+                  "https://docs.google.com/forms/d/e/1FAIpQLSejiuVM8xguEHKZ2Kv5DX-jE98zYwxFiPwpYrFSmvVgMejZzQ/viewform",
+                  "_blank"
+                );
               }}
             >
-              {t("join-shared-session", {
-                defaultValue: "Join shared session",
-              })}
+              {t("report-a-bug", { defaultValue: "Report a bug" })}
             </ContextMenuItem>
+            <ContextMenuItem
+              className="sb-context-menu-toggle-item"
+              role="menuitemcheckbox"
+              aria-checked={isAwake}
+              onClick={(event: Event) => {
+                event.preventDefault();
+                settings.setKeepScreenAwake(!isAwake);
+              }}
+              style={{ width: "230px" }}
+            >
+              <span>
+                {t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
+              </span>
+              <span
+                className={`sb-pill-toggle${isAwake ? " is-on" : ""}`}
+                aria-hidden="true"
+              />
+            </ContextMenuItem>
+            {/* <ContextMenuItem
+              onClick={() => {
+                sidebar.openSettings();
+              }}
+            >
+              {t("go-to-all-settings", {
+                defaultValue: "Go to all settings",
+              })}
+            </ContextMenuItem> */}
           </ContextMenuWithButton>
         )}
       </div>
@@ -569,12 +597,7 @@ function TabRow(props: TabRowProps) {
   const currentChapter = tab.readingState.chapterNumber.value;
   const currentTranslation =
     tab.readingState.translationId.value ?? DEFAULT_TRANSLATION_ID;
-  const title = tab.sharedSession
-    ? t("shared-tab_title", {
-        book: currentBookName,
-        defaultValue: "Shared",
-      })
-    : currentBookName;
+  const title = currentBookName;
   const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
   const isTabBookmarked = bookmarks.isLocationBookmarked(
     tab.readingState.translationId.value,
@@ -739,13 +762,7 @@ function TabRow(props: TabRowProps) {
               })}
               onClick={() => {
                 if (tab.sharedSession) {
-                  const url = new URL(configBot.tags.url);
-                  const pattern = url.searchParams.get("pattern");
-                  url.search = "";
-                  url.searchParams.set("sessionId", tab.sharedSession.id);
-                  if (pattern) {
-                    url.searchParams.set("pattern", pattern);
-                  }
+                  const url = getSessionUrl(tab.sharedSession);
 
                   os.share({
                     title: configBot.tags.title,
@@ -856,6 +873,17 @@ export interface BookmarkLocation {
   bookId: string;
   chapterNumber: number;
   verse?: BookmarkVerse;
+}
+
+function getSessionUrl(session: BibleReadingSession) {
+  const url = new URL(configBot.tags.url);
+  const pattern = url.searchParams.get("pattern");
+  url.search = "";
+  url.searchParams.set("sessionId", session.id);
+  if (pattern) {
+    url.searchParams.set("pattern", pattern);
+  }
+  return url;
 }
 
 /**
@@ -1395,103 +1423,170 @@ export function Tabs(props: TabsProps) {
   return (
     <>
       <div className="sb-sidebar-tabs-header">
-        <h3 className="sb-sidebar-tabs-title">
-          {t("tabs", { defaultValue: "Tabs" })}
-        </h3>
-        <div className="sb-sidebar-tabs-header-actions">
-          <button
-            type="button"
-            className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-tasks-button"
-            aria-label={t("tasks", { defaultValue: "Tasks" })}
-            title={t("tasks", { defaultValue: "Tasks" })}
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
-            >
-              <path
-                d="M11.5 21H6C5.46957 21 4.96086 20.7893 4.58579 20.4142C4.21071 20.0391 4 19.5304 4 19V5C4 4.46957 4.21071 3.96086 4.58579 3.58579C4.96086 3.21071 5.46957 3 6 3H18C18.5304 3 19.0391 3.21071 19.4142 3.58579C19.7893 3.96086 20 4.46957 20 5V13"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M9 18H11"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M15 19L17 21L21 17"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
+        {!app.isMobile.value && (
+          <>
+            <h3 className="sb-sidebar-tabs-title">
+              {t("tabs", { defaultValue: "Tabs" })}
+            </h3>
+            <div className="sb-sidebar-tabs-header-actions">
+              <button
+                type="button"
+                className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-tasks-button"
+                aria-label={t("tasks", { defaultValue: "Tasks" })}
+                title={t("tasks", { defaultValue: "Tasks" })}
+                onClick={() => {
+                  os.toast(
+                    t("today-coming-soon", {
+                      defaultValue: "Today screen is coming soon",
+                    })
+                  );
+                }}
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M11.5 21H6C5.46957 21 4.96086 20.7893 4.58579 20.4142C4.21071 20.0391 4 19.5304 4 19V5C4 4.46957 4.21071 3.96086 4.58579 3.58579C4.96086 3.21071 5.46957 3 6 3H18C18.5304 3 19.0391 3.21071 19.4142 3.58579C19.7893 3.96086 20 4.46957 20 5V13"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M9 18H11"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M15 19L17 21L21 17"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
 
-          <button
-            type="button"
-            className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button${
-              isBookmarkFilterActive
-                ? " sb-sidebar-tabs-header-bookmarks-button-active"
-                : ""
-            }`}
-            aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
-            aria-pressed={isBookmarkFilterActive}
-            title={
-              isBookmarkFilterActive
-                ? t("hide-bookmarks", { defaultValue: "Hide bookmarks" })
-                : t("show-bookmarks", { defaultValue: "Show bookmarks" })
-            }
-            onClick={() => {
-              bookmarks.toggleFilter();
-            }}
-          >
-            <svg
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill={isBookmarkFilterActive ? "currentColor" : "none"}
-              xmlns="http://www.w3.org/2000/svg"
-              aria-hidden="true"
+              <button
+                type="button"
+                className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button${
+                  isBookmarkFilterActive
+                    ? " sb-sidebar-tabs-header-bookmarks-button-active"
+                    : ""
+                }`}
+                aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
+                aria-pressed={isBookmarkFilterActive}
+                title={
+                  isBookmarkFilterActive
+                    ? t("hide-bookmarks", { defaultValue: "Hide bookmarks" })
+                    : t("show-bookmarks", { defaultValue: "Show bookmarks" })
+                }
+                onClick={() => {
+                  bookmarks.toggleFilter();
+                }}
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill={isBookmarkFilterActive ? "currentColor" : "none"}
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-close-button"
+                onClick={state.sidebar.closeSidebar}
+                aria-label={t("close", { defaultValue: "Close" })}
+                title={t("close", { defaultValue: "Close" })}
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+              <button
+                onClick={() => {
+                  app.addTab();
+                }}
+                className="sb-tab-add-button"
+                aria-label={t("create-new-tab", {
+                  defaultValue: "Create new tab",
+                })}
+                title={t("new-tab", { defaultValue: "New tab" })}
+              >
+                <span className="material-symbols-outlined">add</span>
+              </button>
+            </div>
+          </>
+        )}
+        {app.isMobile.value && (
+          <>
+            <button
+              type="button"
+              className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-close-button"
+              onClick={() => {
+                state.sidebar.closeSidebar();
+                state.selector.setOpen(true);
+              }}
+              aria-label={t("close", { defaultValue: "Close" })}
+              title={t("close", { defaultValue: "Close" })}
             >
-              <path
-                d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
-          <button
-            type="button"
-            className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-close-button"
-            onClick={state.sidebar.closeSidebar}
-            aria-label={t("close", { defaultValue: "Close" })}
-            title={t("close", { defaultValue: "Close" })}
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
-          <button
-            onClick={() => {
-              app.addTab();
-            }}
-            className="sb-tab-add-button"
-            aria-label={t("create-new-tab", { defaultValue: "Create new tab" })}
-            title={t("new-tab", { defaultValue: "New tab" })}
-          >
-            <span className="material-symbols-outlined">add</span>
-          </button>
-        </div>
+              <span className="material-symbols-outlined">arrow_back</span>
+            </button>
+            <h3 className="sb-sidebar-tabs-title">
+              {t("tabs", { defaultValue: "Tabs" })}
+            </h3>
+            <button
+              type="button"
+              className={`sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-bookmarks-button${
+                isBookmarkFilterActive
+                  ? " sb-sidebar-tabs-header-bookmarks-button-active"
+                  : ""
+              }`}
+              aria-label={t("bookmarks", { defaultValue: "Bookmarks" })}
+              aria-pressed={isBookmarkFilterActive}
+              title={
+                isBookmarkFilterActive
+                  ? t("hide-bookmarks", { defaultValue: "Hide bookmarks" })
+                  : t("show-bookmarks", { defaultValue: "Show bookmarks" })
+              }
+              onClick={() => {
+                bookmarks.toggleFilter();
+              }}
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill={isBookmarkFilterActive ? "currentColor" : "none"}
+                xmlns="http://www.w3.org/2000/svg"
+                aria-hidden="true"
+              >
+                <path
+                  d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+          </>
+        )}
       </div>
 
       <SidebarSearch state={state} closeLayoutMenu={closeLayoutMenu} />
@@ -1522,14 +1617,14 @@ export function Tabs(props: TabsProps) {
         onClick={() => {
           app.addTab();
         }}
-        className="sb-tab-mobile-add-inline"
+        className="sb-tab-mobile-add-inline sb-tab-row"
         aria-label={t("create-new-tab", { defaultValue: "Create new tab" })}
       >
-        <span className="sb-tab-mobile-add-inline-icon" aria-hidden="true">
-          <span className="material-symbols-outlined">add</span>
-        </span>
         <span className="sb-tab-mobile-add-inline-label">
           {t("add-new-tab", { defaultValue: "Add new tab" })}
+        </span>
+        <span className="sb-tab-mobile-add-inline-icon" aria-hidden="true">
+          <span className="material-symbols-outlined">add</span>
         </span>
       </button>
     </>
@@ -1713,69 +1808,6 @@ export function Sidebar(props: SidebarProps) {
   const isMobileOpen = sidebar.isMobileOpen.value;
   const effectivelyCollapsed = isCollapsed && !isMobileOpen && !isSettingsOpen;
   const isLayoutMenuOpen = useSignal(false);
-  const joinSessionId = useSignal("");
-
-  const openJoinSessionModal = () => {
-    closeContextMenus();
-    isLayoutMenuOpen.value = false;
-    state.modals.openModal({
-      id: "join-shared-session",
-      title: {
-        key: "join-shared-session",
-        defaultValue: "Join Shared Session",
-      },
-      content: ({ t }) => (
-        <>
-          <label>
-            <span>{t("session-id", { defaultValue: "Session ID" })}</span>
-            <input
-              value={joinSessionId.value}
-              onInput={(event) => {
-                joinSessionId.value = (
-                  event.currentTarget as HTMLInputElement
-                ).value;
-              }}
-              placeholder={t("enter-shared-session-id", {
-                defaultValue: "Enter shared session ID",
-              })}
-            />
-          </label>
-          <div>
-            <button
-              onClick={() => {
-                state.modals.closeModal("join-shared-session");
-              }}
-            >
-              {t("cancel", { defaultValue: "Cancel" })}
-            </button>
-            <button
-              onClick={() => {
-                void handleJoinSharedSession();
-              }}
-              disabled={!joinSessionId.value.trim()}
-            >
-              {t("join-session", { defaultValue: "Join Session" })}
-            </button>
-          </div>
-        </>
-      ),
-    });
-  };
-
-  const closeJoinSessionModal = () => {
-    state.modals.closeModal("join-shared-session");
-    joinSessionId.value = "";
-  };
-
-  const handleJoinSharedSession = async () => {
-    const sessionId = joinSessionId.value.trim();
-    if (!sessionId) {
-      return;
-    }
-
-    await state.app.joinSharedSession(sessionId);
-    closeJoinSessionModal();
-  };
 
   const closeLayoutMenu = () => {
     isLayoutMenuOpen.value = false;
@@ -1802,10 +1834,17 @@ export function Sidebar(props: SidebarProps) {
             panes.setLayout(layout);
             closeLayoutMenu();
           }}
-          createSharedSession={() => {
-            void state.app.createSharedSession();
+          createSharedSession={async () => {
+            const session = await state.app.createSharedSession();
+            const url = getSessionUrl(session);
+            os.setClipboard(url.href);
+            os.toast(
+              t("link-to-join-shared-session-copied", {
+                defaultValue:
+                  "A link to join the shared session was copied to your clipboard",
+              })
+            );
           }}
-          openJoinSessionModal={openJoinSessionModal}
         />
       )}
 

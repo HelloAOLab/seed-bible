@@ -72,17 +72,7 @@ function MobileMoreMenu(props: MobileMoreMenuProps) {
   const { onClose, tools } = props;
   const { t } = useI18n();
 
-  const hiddenToolIds = new Set([
-    "previous-chapter",
-    "next-chapter",
-    "open-selector",
-    "open-sidebar",
-    "open-search",
-    "open-chat",
-  ]);
-
   const extraItems = tools
-    .filter((tool) => tool.visible.value && !hiddenToolIds.has(tool.id))
     .sort((a, b) => a.priority - b.priority)
     .map((tool) => {
       const ToolIcon = tool.icon;
@@ -108,23 +98,29 @@ function MobileMoreMenu(props: MobileMoreMenuProps) {
     onClick: () => void;
   }> = [
     // {
-    //   id: "ask",
-    //   label: t("ask", { defaultValue: "Ask" }),
-    //   iconName: "auto_awesome",
-    //   onClick: onClose,
+    //   id: "discovery",
+    //   label: t("discovery", { defaultValue: "Discovery" }),
+    //   iconName: "explore",
+    //   onClick: () => {
+    //     onClose();
+    //     os.toast(
+    //       t("discovery-coming-soon", {
+    //         defaultValue: "Discovery is coming soon",
+    //       })
+    //     );
+    //   },
     // },
-    {
-      id: "discovery",
-      label: t("discovery", { defaultValue: "Discovery" }),
-      iconName: "explore",
-      onClick: onClose,
-    },
-    {
-      id: "chat",
-      label: t("chat", { defaultValue: "Chat" }),
-      iconName: "chat_bubble_outline",
-      onClick: onClose,
-    },
+    // {
+    //   id: "chat",
+    //   label: t("chat", { defaultValue: "Chat" }),
+    //   iconName: "chat_bubble_outline",
+    //   onClick: () => {
+    //     onClose();
+    //     os.toast(
+    //       t("chat-coming-soon", { defaultValue: "Chat is coming soon" })
+    //     );
+    //   },
+    // },
     ...extraItems,
   ];
 
@@ -398,6 +394,21 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     });
     return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
   });
+
+  const hiddenToolIds = new Set([
+    "previous-chapter",
+    "next-chapter",
+    "open-selector",
+    "open-sidebar",
+    "open-search",
+    "open-chat",
+  ]);
+
+  const moreTools = useComputed(() =>
+    tools.value.filter(
+      (tool) => tool.visible.value && !hiddenToolIds.has(tool.id)
+    )
+  );
 
   const verseToolbarTools = useComputed(() => {
     const resolved = toolsManager.getVerseToolbarTools({
@@ -706,8 +717,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   }
                   label={t("today", { defaultValue: "Today" })}
                   onClick={() => {
-                    // Placeholder — not wired up yet.
                     isMoreMenuOpen.value = false;
+                    os.toast(
+                      t("today-coming-soon", {
+                        defaultValue: "Today screen is coming soon",
+                      })
+                    );
                   }}
                 />
 
@@ -736,8 +751,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     isMoreMenuOpen.value = false;
                     sidebar.closeSearchPanel();
                     sidebar.closeChatPanel();
-                    selectedToolbarToolId.value = null;
+                    sidebar.closeSettings();
+                    sidebar.closeSidebar();
                     openSelectorTool.value?.onSelect();
+                    selectedToolbarToolId.value = null;
                   }}
                 />
 
@@ -755,40 +772,42 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   }}
                 />
 
-                <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab sb-reader-toolbar-more-anchor">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      isMoreMenuOpen.value = !isMoreMenuOpen.value;
-                    }}
-                    className={`sb-reader-toolbar-button sb-reader-toolbar-mobile-tab-button${
-                      isMoreMenuOpen.value
-                        ? " sb-reader-toolbar-mobile-tab-button-active"
-                        : ""
-                    }`}
-                    aria-label={t("more", { defaultValue: "More" })}
-                    aria-expanded={isMoreMenuOpen.value}
-                  >
-                    <span
-                      className="material-symbols-outlined sb-reader-toolbar-mobile-tab-icon"
-                      aria-hidden="true"
-                    >
-                      menu
-                    </span>
-                    <span className="sb-reader-toolbar-mobile-tab-label">
-                      {t("more", { defaultValue: "More" })}
-                    </span>
-                  </button>
-
-                  {isMoreMenuOpen.value && (
-                    <MobileMoreMenu
-                      tools={tools.value}
-                      onClose={() => {
-                        isMoreMenuOpen.value = false;
+                {moreTools.value.length > 0 && (
+                  <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab sb-reader-toolbar-more-anchor">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        isMoreMenuOpen.value = !isMoreMenuOpen.value;
                       }}
-                    />
-                  )}
-                </div>
+                      className={`sb-reader-toolbar-button sb-reader-toolbar-mobile-tab-button${
+                        isMoreMenuOpen.value
+                          ? " sb-reader-toolbar-mobile-tab-button-active"
+                          : ""
+                      }`}
+                      aria-label={t("more", { defaultValue: "More" })}
+                      aria-expanded={isMoreMenuOpen.value}
+                    >
+                      <span
+                        className="material-symbols-outlined sb-reader-toolbar-mobile-tab-icon"
+                        aria-hidden="true"
+                      >
+                        menu
+                      </span>
+                      <span className="sb-reader-toolbar-mobile-tab-label">
+                        {t("more", { defaultValue: "More" })}
+                      </span>
+                    </button>
+
+                    {isMoreMenuOpen.value && (
+                      <MobileMoreMenu
+                        tools={moreTools.value}
+                        onClose={() => {
+                          isMoreMenuOpen.value = false;
+                        }}
+                      />
+                    )}
+                  </div>
+                )}
               </>
             ) : (
               tools.value.flatMap((tool) => {

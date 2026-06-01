@@ -167,6 +167,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apocrifa rehegua",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Traducciones personalizadas",
   "no-translation-results-found": "Ndojejuhúi resultado. ¿Rembotuichavesépa nde jeheka reike hag̃ua avei umi traduksión parcialmente kompletoite?",
   "show-all-translations": "Ehechauka opaite traduksión",
@@ -189,14 +190,11 @@
   "add-bookmark": "Marcador rehegua",
   "play-audio": "Embopu audio",
   "play": "Ñembosarái",
-
   "discovery": "Ojejuhúva",
   "chat": "Mongeta",
-
   "today": "Ko árape",
   "you": "Nde",
   "bible": "Biblia",
-  "view-switcher": "Ojehecha conmutador",
   "add-verse": "Oñemoĩve versíkulo",
   "add": "Moinge",
   "chat-empty-title": "Chat oúta pya'e",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Ndaipóri gueteri marcador ko’ápe.",
   "bookmark-options": "Umi opción marcador rehegua",
   "new-folder-placeholder": "Carpeta réra",
-
   "tasks": "Tembiaporã",
   "bookmarks": "Marcadores rehegua",
   "hide-bookmarks": "Oñomi umi marcador",
@@ -217,5 +214,15 @@
   "folder-name-taken": "Oĩma peteĩ kundaha orekóva upe téra.",
   "add-to-new": "Oñemoĩ pyahúpe",
   "save": "Pysyrõ",
-  "bookmark-verses": "Umi versíkulo oñemoĩ marcador-pe"
+  "bookmark-verses": "Umi versíkulo oñemoĩ marcador-pe",
+  "open-new-chapter-in-new-or-current-tab": "Eipe’a pe kapítulo pyahu ficha pyahu térã ko’áĝaguápe",
+  "current-tab": "Tab ko’áĝagua",
+  "about-extrabiblical-writings": "Umi kuatiahaipyre Extrabíblico rehegua",
+  "apocrypha-info-text": "Ni peteĩva umi kuatiañe’ẽ oĩva ko sección-pe araka’eve noñekonsidérái Escritura ramo umi comunidad judía térã cristiana ypykue. La Biblia ningo peteĩ koleksión espesífiko de lívro. Umi hudío ha cristiano ymaite guive oñemoĩ peteĩ ñe’ẽme Antiguo Testamento rehe, oúva peteĩ conjunto fijo de escrituras sagrada-gui umi pueblo judío ohenóiva Tanakh ha umi cristiano ohenóiva Antiguo Testamento. Umi mbaʼe oĩva pe Tanakh ha pe Antiguo Testaméntope ojoguaiterei, péro jepiveguaicha oñemohenda diferénte. Umi kristiáno ohechakuaa adicionalmente pe Nuevo Testamento, omombeʼúva Jesús rembiasakue, umi mbaʼe omboʼéva ha umi mbaʼe ohaivaʼekue isegidorkuéra. Umi kuatiañeʼẽ oĩva koʼápe ojekuaa ha ojelee heta hendápe ojehai jave la Biblia, péro arakaʼeve noñetratáiva Escritura-icha. Umi haihára yma guare sapy’ánte ocita ramo jepe hetaiterei téxto oikehápe ñe’ẽpapára, filósofo ha ambue kuatiahaipyre, ocita peteĩ mba’e ndaha’éi peteĩchagua otratávo Escritura ramo. Ko’ã kuatiañe’ẽ oñemoĩ ko’ápe ojehecha haguã tembiasakue ha literario-pe añoite.",
+  "today-coming-soon": "Ko árape pantalla oúta pya'e",
+  "chat-coming-soon": "Chat oúta pya'e",
+  "more-coming-soon": "Hetave opción oúta pya'e",
+  "discovery-coming-soon": "Pya’e oúta pe descubrimiento",
+  "login-to-use-feature": "Reikeva’erã reipuru hag̃ua ko mba’ekuaarã.",
+  "link-to-join-shared-session-copied": "Peteĩ enlace ojeike hag̃ua sesión compartida-pe ojekopia nde portapapeles-pe"
 }

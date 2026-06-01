@@ -167,6 +167,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apokrif",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Maxsus tarjimalar",
   "no-translation-results-found": "Hech qanday natija topilmadi. Qidiruvingizni qisman to'liq tarjimalarni ham qo'shish uchun kengaytirmoqchimisiz?",
   "show-all-translations": "Barcha tarjimalarni ko'rsatish",
@@ -189,14 +190,11 @@
   "add-bookmark": "Xatcho'p",
   "play-audio": "Audio ijro etish",
   "play": "O'yin",
-
   "discovery": "Kashfiyot",
   "chat": "Chat",
-
   "today": "Bugun",
   "you": "Siz",
   "bible": "Muqaddas Kitob",
-  "view-switcher": "Ko'rish almashtirgichi",
   "add-verse": "Oyat qo'shish",
   "add": "Qo'shish",
   "chat-empty-title": "Chat tez orada chiqadi",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Bu yerda hali xatcho'plar yo'q.",
   "bookmark-options": "Xatcho'p parametrlari",
   "new-folder-placeholder": "Papka nomi",
-
   "tasks": "Vazifalar",
   "bookmarks": "Xatcho'plar",
   "hide-bookmarks": "Xatcho'plarni yashirish",
@@ -217,5 +214,15 @@
   "folder-name-taken": "Bu nomli papka allaqachon mavjud.",
   "add-to-new": "Yangisiga qo'shish",
   "save": "Saqlash",
-  "bookmark-verses": "Oyatlarni xatcho'pga qo'ying"
+  "bookmark-verses": "Oyatlarni xatcho'pga qo'ying",
+  "open-new-chapter-in-new-or-current-tab": "Yangi yoki joriy yorliqda yangi bobni oching",
+  "current-tab": "Joriy yorliq",
+  "about-extrabiblical-writings": "Muqaddas Kitobdan tashqari yozuvlar haqida",
+  "apocrypha-info-text": "Ushbu bo'limdagi yozuvlarning hech biri ilk yahudiy yoki nasroniy jamoalari tomonidan hech qachon Muqaddas Kitob deb hisoblanmagan. Muqaddas Kitob o'ziga xos kitoblar to'plamidir. Yahudiylar va nasroniylar har doim Eski Ahd haqida kelishib olishgan, bu yahudiy xalqi Tanax va nasroniylar Eski Ahd deb ataydigan muqaddas yozuvlarning belgilangan to'plamidan kelib chiqadi. Tanax va Eski Ahdning mazmuni bir xil, ammo odatda turlicha joylashtirilgan. Xristianlar shuningdek, Iso, uning ta'limotlari va izdoshlarining yozuvlari haqidagi hikoyani hikoya qiluvchi Yangi Ahdni tan olishadi. Quyidagi yozuvlar Muqaddas Kitob yozilgan paytda ma'lum bo'lgan va keng o'qilgan, ammo ular hech qachon Muqaddas Kitob sifatida qabul qilinmagan. Qadimgi mualliflar ba'zan shoirlar, faylasuflar va boshqa yozuvlarni o'z ichiga olgan turli xil matnlarni iqtibos qilgan bo'lsalar-da, biror narsani iqtibos qilish uni Muqaddas Kitob sifatida qabul qilish bilan bir xil emas. Bu yozuvlar bu yerda faqat tarixiy va adabiy ma'lumotnoma uchun keltirilgan.",
+  "today-coming-soon": "Bugungi ekran tez orada chiqadi",
+  "chat-coming-soon": "Chat tez orada chiqadi",
+  "more-coming-soon": "Tez orada boshqa variantlar ham qo'shiladi",
+  "discovery-coming-soon": "Tez orada kashfiyot bo'ladi",
+  "login-to-use-feature": "Ushbu funksiyadan foydalanish uchun tizimga kirishingiz kerak.",
+  "link-to-join-shared-session-copied": "Umumiy sessiyaga qo'shilish havolasi clipboardga nusxalandi"
 }

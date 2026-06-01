@@ -167,6 +167,7 @@
   "old-testament_short": "Hosszabbítás",
   "new-testament_short": "NT",
   "apocrypha": "Jelenések könyve",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Egyedi fordítások",
   "no-translation-results-found": "Nincs találat. Szeretné kiterjeszteni a keresést, hogy a részben teljes fordításokat is tartalmazza?",
   "show-all-translations": "Összes fordítás megjelenítése",
@@ -189,14 +190,11 @@
   "add-bookmark": "Könyvjelző",
   "play-audio": "Hang lejátszása",
   "play": "Játék",
-
   "discovery": "Felfedezés",
   "chat": "Csevegés",
-
   "today": "Ma",
   "you": "Te",
   "bible": "Biblia",
-  "view-switcher": "Nézetváltó",
   "add-verse": "Vers hozzáadása",
   "add": "Hozzáadás",
   "chat-empty-title": "Hamarosan csevegés",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Még nincsenek könyvjelzők.",
   "bookmark-options": "Könyvjelző beállítások",
   "new-folder-placeholder": "Mappa neve",
-
   "tasks": "Feladatok",
   "bookmarks": "Könyvjelzők",
   "hide-bookmarks": "Könyvjelzők elrejtése",
@@ -217,5 +214,15 @@
   "folder-name-taken": "Már létezik egy ilyen nevű mappa.",
   "add-to-new": "Hozzáadás az újhoz",
   "save": "Megtakarítás",
-  "bookmark-verses": "Könyvjelző versek"
+  "bookmark-verses": "Könyvjelző versek",
+  "open-new-chapter-in-new-or-current-tab": "Új fejezet megnyitása új vagy aktuális lapon",
+  "current-tab": "Aktuális lap",
+  "about-extrabiblical-writings": "A biblián kívüli írásokról",
+  "apocrypha-info-text": "A korai zsidó vagy keresztény közösségek soha nem tekintették Szentírásnak ebben a részben található írásokat. A Biblia egy meghatározott könyvgyűjtemény. A zsidók és a keresztények mindig is egyetértettek az Ószövetségben, amely a zsidó nép által Tanakhnak, a keresztények pedig Ószövetségnek nevezett szent írások rögzített gyűjteményéből származik. A Tanakh és az Ószövetség tartalma pontosan ugyanaz, de általában eltérően vannak elrendezve. A keresztények elismerik az Újszövetséget is, amely Jézus történetét, tanításait és követőinek írásait meséli el. Az alábbi írások ismertek és széles körben olvasottak voltak a Biblia írásakor, de soha nem tekintették őket Szentírásnak. Bár az ókori szerzők néha sokféle szöveget idéztek, beleértve költőket, filozófusokat és más írásokat, valaminek az idézése nem ugyanaz, mint Szentírásként kezelni. Ezeket az írásokat csak történelmi és irodalmi hivatkozásként szerepeltetjük itt.",
+  "today-coming-soon": "Hamarosan érkezik a mai képernyő",
+  "chat-coming-soon": "Hamarosan csevegés",
+  "more-coming-soon": "Hamarosan további lehetőségek érkeznek",
+  "discovery-coming-soon": "A felfedezés hamarosan érkezik",
+  "login-to-use-feature": "Be kell jelentkezned a funkció használatához.",
+  "link-to-join-shared-session-copied": "A megosztott munkamenethez való csatlakozás linkjét átmásoltuk a vágólapra."
 }

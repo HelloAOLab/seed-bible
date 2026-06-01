@@ -150,6 +150,7 @@
   "old-testament_short": "ОТ",
   "new-testament_short": "NT",
   "apocrypha": "Апокриф",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Захиалгат орчуулга",
   "no-translation-results-found": "Илэрц олдсонгүй. Та хайлтаа хэсэгчлэн бүрэн орчуулгыг оруулахын тулд өргөжүүлэхийг хүсэж байна уу?",
   "show-all-translations": "Бүх орчуулгыг харуулах",
@@ -162,6 +163,10 @@
   "all-translations": "Бүх орчуулга",
   "popular-translations": "Алдартай орчуулга",
   "copied-translation-share-link": "Орчуулгын хуваалцах холбоосыг хуулсан",
+  "open-new-chapter-in-new-or-current-tab": "Open the new chapter in new or current tab",
+  "current-tab": "Current Tab",
+  "about-extrabiblical-writings": "About Extrabiblical writings",
+  "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 Дуулал",
   "2-psalms": "2 Дуулал",
   "3-psalms": "3 Дуулал",
@@ -188,14 +193,12 @@
   "add-bookmark": "Хавчуурга",
   "play-audio": "Аудио тоглуулах",
   "play": "Тоглох",
-
   "discovery": "Нээлт",
   "chat": "Чат",
-
   "today": "Өнөөдөр",
   "you": "Чи",
   "bible": "Библи",
-  "view-switcher": "Харах шилжүүлэгч",
+
   "add-verse": "Шүлэг нэмэх",
   "add": "Нэмэх",
   "chat-empty-title": "Чат удахгүй гарах болно",
@@ -206,7 +209,6 @@
   "bookmark-folder-empty": "Энд одоогоор хавчуурга алга байна.",
   "bookmark-options": "Хавчуургын сонголтууд",
   "new-folder-placeholder": "Фолдерын нэр",
-
   "tasks": "Даалгаварууд",
   "bookmarks": "Хавчуурга",
   "hide-bookmarks": "Хавчуургыг нуух",
@@ -217,5 +219,11 @@
   "folder-name-taken": "Ийм нэртэй фолдер аль хэдийн байна.",
   "add-to-new": "Шинэ зүйлд нэмэх",
   "save": "Хадгалах",
-  "bookmark-verses": "Шүлгүүдийг хавчуурга болгон хадгалах"
+  "bookmark-verses": "Шүлгүүдийг хавчуурга болгон хадгалах",
+  "today-coming-soon": "Өнөөдрийн дэлгэц удахгүй гарах болно",
+  "chat-coming-soon": "Чат удахгүй гарах болно",
+  "more-coming-soon": "Удахгүй бусад сонголтууд гарах болно",
+  "discovery-coming-soon": "Нээлт удахгүй болно",
+  "login-to-use-feature": "Энэ функцийг ашиглахын тулд та нэвтрэх шаардлагатай.",
+  "link-to-join-shared-session-copied": "Хуваалцсан хуралдаанд нэгдэх холбоосыг таны санах ой руу хуулсан"
 }

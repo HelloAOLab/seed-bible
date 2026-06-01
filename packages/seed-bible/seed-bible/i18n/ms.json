@@ -167,6 +167,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apokrifa",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Terjemahan tersuai",
   "no-translation-results-found": "Tiada hasil ditemui. Adakah anda ingin mengembangkan carian anda untuk memasukkan terjemahan yang separa lengkap juga?",
   "show-all-translations": "Tunjukkan semua terjemahan",
@@ -189,14 +190,11 @@
   "add-bookmark": "Penanda buku",
   "play-audio": "Mainkan audio",
   "play": "Main",
-
   "discovery": "Penemuan",
   "chat": "Sembang",
-
   "today": "Hari ini",
   "you": "Awak",
   "bible": "Bible",
-  "view-switcher": "Penukar paparan",
   "add-verse": "Tambah ayat",
   "add": "Tambah",
   "chat-empty-title": "Sembang akan datang tidak lama lagi",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Tiada penanda buku di sini lagi.",
   "bookmark-options": "Pilihan penanda buku",
   "new-folder-placeholder": "Nama folder",
-
   "tasks": "Tugasan",
   "bookmarks": "Penanda Halaman",
   "hide-bookmarks": "Sembunyikan penanda buku",
@@ -217,5 +214,15 @@
   "folder-name-taken": "Folder dengan nama itu sudah wujud.",
   "add-to-new": "Tambah kepada yang baharu",
   "save": "Simpan",
-  "bookmark-verses": "Tandakan ayat"
+  "bookmark-verses": "Tandakan ayat",
+  "open-new-chapter-in-new-or-current-tab": "Buka bab baharu dalam tab baharu atau semasa",
+  "current-tab": "Tab Semasa",
+  "about-extrabiblical-writings": "Mengenai tulisan-tulisan di luar Alkitab",
+  "apocrypha-info-text": "Tiada satu pun tulisan dalam bahagian ini yang pernah dianggap sebagai Kitab Suci oleh komuniti Yahudi atau Kristian awal. Bible merupakan himpunan buku yang khusus. Orang Yahudi dan Kristian sentiasa bersetuju tentang Perjanjian Lama, yang berasal daripada satu set tulisan suci yang tetap yang dipanggil oleh orang Yahudi sebagai Tanakh dan orang Kristian sebagai Perjanjian Lama. Kandungan Tanakh dan Perjanjian Lama adalah sama, tetapi biasanya disusun secara berbeza. Orang Kristian juga mengiktiraf Perjanjian Baru, yang menceritakan kisah Yesus, ajarannya, dan tulisan para pengikutnya. Tulisan-tulisan di bawah diketahui dan dibaca secara meluas pada masa Bible ditulis, tetapi ia tidak pernah dianggap sebagai Kitab Suci. Walaupun penulis purba kadangkala memetik pelbagai teks termasuk penyair, ahli falsafah, dan tulisan lain, memetik sesuatu tidak sama dengan menganggapnya sebagai Kitab Suci. Tulisan-tulisan ini disertakan di sini untuk rujukan sejarah dan sastera sahaja.",
+  "today-coming-soon": "Skrin hari ini akan datang tidak lama lagi",
+  "chat-coming-soon": "Sembang akan datang tidak lama lagi",
+  "more-coming-soon": "Lebih banyak pilihan akan datang tidak lama lagi",
+  "discovery-coming-soon": "Penemuan akan datang tidak lama lagi",
+  "login-to-use-feature": "Anda perlu log masuk untuk menggunakan ciri ini.",
+  "link-to-join-shared-session-copied": "Pautan untuk menyertai sesi kongsi telah disalin ke papan keratan anda"
 }

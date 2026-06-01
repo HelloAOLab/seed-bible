@@ -150,6 +150,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "ئاپوكرىپا",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "خاسلاشتۇرۇلغان تەرجىمە",
   "no-translation-results-found": "ھېچقانداق نەتىجە تېپىلمىدى. ئىزدەش دائىرىسىنى كېڭەيتىپ، قىسمەن تولۇق تەرجىمە قىلىشلارنىمۇ ئۆز ئىچىگە ئالماقچىمۇ؟",
   "show-all-translations": "بارلىق تەرجىمىلەرنى كۆرسىتىش",
@@ -162,6 +163,10 @@
   "all-translations": "بارلىق تەرجىمىلەر",
   "popular-translations": "ئالقىشقا ئېرىشكەن تەرجىمىلەر",
   "copied-translation-share-link": "تەرجىمە ھەمبەھىرلەش ئۇلىنىشى كۆچۈرۈلدى",
+  "open-new-chapter-in-new-or-current-tab": "Open the new chapter in new or current tab",
+  "current-tab": "Current Tab",
+  "about-extrabiblical-writings": "About Extrabiblical writings",
+  "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 زەبۇر",
   "2-psalms": "2 زەبۇر",
   "3-psalms": "3 زەبۇر",
@@ -188,14 +193,12 @@
   "add-bookmark": "خەتكۈچ",
   "play-audio": "ئاۋاز قويۇش",
   "play": "ئويناش",
-
   "discovery": "بايقاش",
   "chat": "پاراڭلىشىش",
-
   "today": "بۈگۈن",
   "you": "سىز",
   "bible": "ئىنجىل",
-  "view-switcher": "كۆرۈنۈش ئالماشتۇرغۇچ",
+
   "add-verse": "ئايەت قوشۇش",
   "add": "قوشۇش",
   "chat-empty-title": "پاراڭلىشىش تېزلا باشلىنىدۇ",
@@ -206,7 +209,6 @@
   "bookmark-folder-empty": "بۇ يەردە ھازىرغىچە ھېچقانداق خەتكۈچ يوق.",
   "bookmark-options": "خەتكۈچ تاللانمىلىرى",
   "new-folder-placeholder": "قىسقۇچ نامى",
-
   "tasks": "ۋەزىپىلەر",
   "bookmarks": "خەتكۈچلەر",
   "hide-bookmarks": "خەتكۈچلەرنى يوشۇرۇش",
@@ -217,5 +219,11 @@
   "folder-name-taken": "بۇنداق ئىسىمدىكى بىر قىسقۇچ مەۋجۇت.",
   "add-to-new": "يېڭىسىغا قوشۇش",
   "save": "ساقلاش",
-  "bookmark-verses": "ئايەتلەرنى خاتىرىلەڭ"
+  "bookmark-verses": "ئايەتلەرنى خاتىرىلەڭ",
+  "today-coming-soon": "بۈگۈنكى ئېكران تېزلا كېلىدۇ",
+  "chat-coming-soon": "پاراڭلىشىش تېزلا باشلىنىدۇ",
+  "more-coming-soon": "تېخىمۇ كۆپ تاللاشلار تېز كېلىدۇ",
+  "discovery-coming-soon": "بايقاش تېزلا كېلىدۇ",
+  "login-to-use-feature": "بۇ ئىقتىدارنى ئىشلىتىش ئۈچۈن كىرىشىڭىز كېرەك.",
+  "link-to-join-shared-session-copied": "ئورتاقلىشىش يىغىنىغا قاتنىشىش ئۇلىنىشى سىزنىڭ چاپلاش تاختىسىڭىزغا كۆچۈرۈلدى"
 }

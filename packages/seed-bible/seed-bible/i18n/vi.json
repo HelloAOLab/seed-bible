@@ -150,6 +150,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Sách Ngoại Kinh",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Bản dịch theo yêu cầu",
   "no-translation-results-found": "Không tìm thấy kết quả nào. Bạn có muốn mở rộng phạm vi tìm kiếm để bao gồm cả các bản dịch chưa hoàn chỉnh không?",
   "show-all-translations": "Hiển thị tất cả các bản dịch",
@@ -162,6 +163,10 @@
   "all-translations": "Tất cả các bản dịch",
   "popular-translations": "Các bản dịch phổ biến",
   "copied-translation-share-link": "Đã sao chép liên kết chia sẻ bản dịch",
+  "open-new-chapter-in-new-or-current-tab": "Open the new chapter in new or current tab",
+  "current-tab": "Current Tab",
+  "about-extrabiblical-writings": "About Extrabiblical writings",
+  "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 Thi Thiên",
   "2-psalms": "2 Thi Thiên",
   "3-psalms": "3 Thánh vịnh",
@@ -188,14 +193,12 @@
   "add-bookmark": "Đánh dấu trang",
   "play-audio": "Phát âm thanh",
   "play": "Chơi",
-
   "discovery": "Khám phá",
   "chat": "Trò chuyện",
-
   "today": "Hôm nay",
   "you": "Bạn",
   "bible": "Kinh Thánh",
-  "view-switcher": "Bộ chuyển đổi chế độ xem",
+
   "add-verse": "Thêm câu thơ",
   "add": "Thêm vào",
   "chat-empty-title": "Tính năng trò chuyện sẽ sớm ra mắt.",
@@ -206,7 +209,6 @@
   "bookmark-folder-empty": "Chưa có dấu trang nào ở đây.",
   "bookmark-options": "Tùy chọn đánh dấu trang",
   "new-folder-placeholder": "Tên thư mục",
-
   "tasks": "Nhiệm vụ",
   "bookmarks": "Dấu trang",
   "hide-bookmarks": "Ẩn dấu trang",
@@ -217,5 +219,11 @@
   "folder-name-taken": "Thư mục có tên đó đã tồn tại.",
   "add-to-new": "Thêm vào mục mới",
   "save": "Cứu",
-  "bookmark-verses": "Đánh dấu các câu thơ"
+  "bookmark-verses": "Đánh dấu các câu thơ",
+  "today-coming-soon": "Màn hình hôm nay sẽ sớm ra mắt.",
+  "chat-coming-soon": "Tính năng trò chuyện sẽ sớm ra mắt.",
+  "more-coming-soon": "Sẽ có thêm nhiều lựa chọn trong thời gian tới.",
+  "discovery-coming-soon": "Khám phá sắp ra mắt",
+  "login-to-use-feature": "Bạn cần đăng nhập để sử dụng tính năng này.",
+  "link-to-join-shared-session-copied": "Một liên kết để tham gia phiên họp chung đã được sao chép vào khay nhớ tạm của bạn."
 }

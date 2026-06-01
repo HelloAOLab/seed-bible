@@ -14,6 +14,8 @@ import type {
   BookOrientation,
   SettingsManager,
 } from "seed-bible.managers.SettingsManager";
+import { createSidebar } from "seed-bible.managers.SidebarManager";
+import { type BookmarksManager } from "seed-bible.managers.BookmarksManager";
 import {
   computed,
   effect,
@@ -21,6 +23,8 @@ import {
   Signal,
   type ReadonlySignal,
 } from "@preact/signals";
+
+type SidebarManager = ReturnType<typeof createSidebar>;
 
 /** Optional options used when opening the selector. */
 export interface BibleSelectorOptions {
@@ -113,7 +117,7 @@ export interface BibleSelectorState {
    * selections create a brand new tab and bind it to the target pane
    * instead of reusing the pane's existing tab.
    */
-  forceNewTab: ReadonlySignal<boolean>;
+  forceNewTab: Signal<boolean>;
 
   /** All panes available as targets for the selector. */
   availablePanes: ReadonlySignal<Pane[]>;
@@ -182,6 +186,10 @@ export interface BibleSelectorState {
   inputValue: Signal<string>;
   filteredApiTranslations: ReadonlySignal<TranslationLanguageGroup[]>;
   handleTranslationAddition: () => void;
+  openTabs: () => void;
+  bookmarks: BookmarksManager;
+  selectPopUp: Signal<{ bookId: string; chapterNumber: number } | null>;
+  showApocryphaInfo: Signal<boolean>;
 }
 
 function groupBooks(translationBooks: TranslationBooks | null, search: string) {
@@ -226,11 +234,16 @@ export function createBibleSelectorState(
   dataManager: BibleDataManager,
   tabsManager: TabsManager,
   panesManager: PanesManager,
-  settings?: SettingsManager
+  settings: SettingsManager,
+  sidebar: SidebarManager,
+  bookmarks: BookmarksManager
 ): BibleSelectorState {
   const isOpen = signal(false);
   const pane = signal<Pane | null>(null);
+  const isDrawerOpen = sidebar.isMobileOpen.value;
   const forceNewTab = signal(false);
+  const selectPopUp = signal(null);
+  const showApocryphaInfo = signal(false);
   const availablePanes = computed(() => panesManager.panes.value);
   const availableTranslations = computed(
     () => dataManager.availableTranslations.value
@@ -355,6 +368,12 @@ export function createBibleSelectorState(
   const isSelectorOpenInHistory = () => {
     const state = getHistoryState();
     return state.bibleSelectorOpen === true;
+  };
+
+  const openTabs = () => {
+    if (isDrawerOpen) return;
+    void setOpen(false);
+    sidebar.openSidebar();
   };
 
   effect(() => {
@@ -1002,5 +1021,9 @@ export function createBibleSelectorState(
     inputValue,
     filteredApiTranslations,
     handleTranslationAddition,
+    openTabs,
+    bookmarks,
+    selectPopUp,
+    showApocryphaInfo,
   };
 }

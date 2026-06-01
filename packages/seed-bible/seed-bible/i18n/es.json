@@ -150,6 +150,7 @@
   "old-testament_short": "Antiguo Testamento",
   "new-testament_short": "Nuevo Testamento",
   "apocrypha": "Libros apócrifos",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Traducciones personalizadas",
   "no-translation-results-found": "No se encontraron resultados. ¿Desea ampliar su búsqueda para incluir también traducciones parcialmente completas?",
   "show-all-translations": "Mostrar todas las traducciones",
@@ -162,6 +163,10 @@
   "all-translations": "Todas las traducciones",
   "popular-translations": "Traducciones populares",
   "copied-translation-share-link": "Enlace para compartir la traducción copiada",
+  "open-new-chapter-in-new-or-current-tab": "Open the new chapter in new or current tab",
+  "current-tab": "Current Tab",
+  "about-extrabiblical-writings": "About Extrabiblical writings",
+  "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "Salmo 1",
   "2-psalms": "2 Salmos",
   "3-psalms": "3 Salmos",
@@ -188,14 +193,12 @@
   "add-bookmark": "Marcador",
   "play-audio": "Reproducir audio",
   "play": "Jugar",
-
   "discovery": "Descubrimiento",
   "chat": "Charlar",
-
   "today": "Hoy",
   "you": "Tú",
   "bible": "Biblia",
-  "view-switcher": "selector de vista",
+
   "add-verse": "Añadir verso",
   "add": "Agregar",
   "chat-empty-title": "El chat estará disponible próximamente.",
@@ -206,7 +209,6 @@
   "bookmark-folder-empty": "Aún no hay marcadores aquí.",
   "bookmark-options": "Opciones de marcadores",
   "new-folder-placeholder": "Nombre de la carpeta",
-
   "tasks": "Tareas",
   "bookmarks": "Marcadores",
   "hide-bookmarks": "Ocultar marcadores",
@@ -217,5 +219,11 @@
   "folder-name-taken": "Ya existe una carpeta con ese nombre.",
   "add-to-new": "Agregar a nuevo",
   "save": "Ahorrar",
-  "bookmark-verses": "Versos para marcar"
+  "bookmark-verses": "Versos para marcar",
+  "today-coming-soon": "La pantalla de hoy estará disponible pronto.",
+  "chat-coming-soon": "El chat estará disponible próximamente.",
+  "more-coming-soon": "Próximamente habrá más opciones.",
+  "discovery-coming-soon": "El descubrimiento llegará pronto",
+  "login-to-use-feature": "Debes iniciar sesión para usar esta función.",
+  "link-to-join-shared-session-copied": "Se ha copiado en el portapapeles un enlace para unirse a la sesión compartida."
 }

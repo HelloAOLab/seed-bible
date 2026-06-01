@@ -167,6 +167,7 @@
   "old-testament_short": "OT",
   "new-testament_short": "NT",
   "apocrypha": "Apokripa",
+  "extrabiblical-writings": "Extrabiblical Writings",
   "custom-translations": "Mga pasadyang pagsasalin",
   "no-translation-results-found": "Walang nakitang resulta. Gusto mo bang palawakin ang iyong paghahanap para maisama rin ang mga bahagyang kumpletong pagsasalin?",
   "show-all-translations": "Ipakita ang lahat ng pagsasalin",
@@ -189,14 +190,11 @@
   "add-bookmark": "I-bookmark",
   "play-audio": "Magpatugtog ng audio",
   "play": "Maglaro",
-
   "discovery": "Pagtuklas",
   "chat": "Makipag-chat",
-
   "today": "Ngayon",
   "you": "Ikaw",
   "bible": "Bibliya",
-  "view-switcher": "Tagalipat ng view",
   "add-verse": "Magdagdag ng talata",
   "add": "Idagdag",
   "chat-empty-title": "Malapit na ang chat",
@@ -207,7 +205,6 @@
   "bookmark-folder-empty": "Wala pang mga bookmark dito.",
   "bookmark-options": "Mga opsyon sa pag-bookmark",
   "new-folder-placeholder": "Pangalan ng folder",
-
   "tasks": "Mga Gawain",
   "bookmarks": "Mga Bookmark",
   "hide-bookmarks": "Itago ang mga bookmark",
@@ -217,5 +214,15 @@
   "folder-name-taken": "Mayroon nang folder na may ganoong pangalan.",
   "add-to-new": "Idagdag sa bago",
   "save": "I-save",
-  "bookmark-verses": "I-bookmark ang mga bersikulo"
+  "bookmark-verses": "I-bookmark ang mga bersikulo",
+  "open-new-chapter-in-new-or-current-tab": "Buksan ang bagong kabanata sa bago o kasalukuyang tab",
+  "current-tab": "Kasalukuyang Tab",
+  "about-extrabiblical-writings": "Tungkol sa mga sulating hindi sakop ng Bibliya",
+  "apocrypha-info-text": "Wala sa mga sulatin sa seksyong ito ang kailanman itinuring na Kasulatan ng mga sinaunang komunidad ng mga Hudyo o Kristiyano. Ang Bibliya ay isang partikular na koleksyon ng mga aklat. Ang mga Hudyo at Kristiyano ay palaging nagkakasundo sa Lumang Tipan, na nagmula sa isang takdang hanay ng mga sagradong sulatin na tinatawag ng mga Hudyo na Tanakh at tinatawag ng mga Kristiyano na Lumang Tipan. Ang nilalaman ng Tanakh at Lumang Tipan ay eksaktong pareho, ngunit karaniwang magkaiba ang pagkakaayos. Kinikilala rin ng mga Kristiyano ang Bagong Tipan, na nagsasalaysay ng kuwento ni Hesus, ng kanyang mga turo, at ng mga sulatin ng kanyang mga tagasunod. Ang mga sulatin sa ibaba ay kilala at malawakang binabasa noong panahong isinulat ang Bibliya, ngunit hindi kailanman itinuring ang mga ito bilang Kasulatan. Bagama't minsan ay sumisipi ang mga sinaunang may-akda ng iba't ibang teksto kabilang ang mga makata, pilosopo, at iba pang mga sulatin, ang pagsipi sa isang bagay ay hindi katulad ng pagtrato dito bilang Kasulatan. Ang mga sulating ito ay kasama rito para sa sanggunian sa kasaysayan at panitikan lamang.",
+  "today-coming-soon": "Malapit nang lumabas ang screen ngayon",
+  "chat-coming-soon": "Malapit na ang chat",
+  "more-coming-soon": "Mas maraming opsyon ang paparating",
+  "discovery-coming-soon": "Malapit nang matuklasan",
+  "login-to-use-feature": "Kailangan mong mag-log in para magamit ang feature na ito.",
+  "link-to-join-shared-session-copied": "Nakopya na sa iyong clipboard ang isang link para sumali sa nakabahaging sesyon"
 }

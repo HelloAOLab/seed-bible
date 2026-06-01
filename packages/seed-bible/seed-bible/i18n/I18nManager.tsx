@@ -8,7 +8,7 @@ import {
 
 const { useMemo } = os.appHooks;
 
-export const DEFAULT_LANGUAGE =
+export const DEFAULT_LANGUAGE: string =
   configBot.tags.lang ?? getLanguage(navigator.languages[0]) ?? "en";
 
 export { i18n };
