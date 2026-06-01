@@ -205,7 +205,6 @@
 
   "add-verse": "Add verse",
   "add": "Add",
-  "chat-coming-soon": "Chat is coming soon",
   "chat-coming-soon-body": "This is where you'll be able to ask questions and explore cross-references.",
   "category-options": "Folder options",
   "rename": "Rename",
@@ -233,5 +232,7 @@
   "no-chat-messages": "No messages yet",
   "unable-to-send-message": "Unable to send message.",
   "type-a-message": "Type a message...",
-  "send-message": "Send message"
+  "send-message": "Send message",
+  "active-participants": "Active participants",
+  "no-active-participants-match": "No active participants match"
 }

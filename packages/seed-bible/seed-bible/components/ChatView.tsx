@@ -1,6 +1,7 @@
 import { useSignal } from "@preact/signals";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import type {
+  ChatParticipant,
   ChatMessage,
   ChatSession,
 } from "seed-bible.managers.ChatsManager";
@@ -41,14 +42,103 @@ function getAuthorLabel(
   return authors.join(", ");
 }
 
+function getParticipantDisplayLabel(
+  participant: ChatParticipant,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  return participant.isSelf
+    ? t("you", { defaultValue: "You" })
+    : (participant.name ?? participant.id);
+}
+
+function getParticipantMentionLabel(participant: ChatParticipant): string {
+  return participant.name?.trim() || participant.id;
+}
+
+function getMentionContext(
+  text: string,
+  cursorPosition: number
+): { startIndex: number; query: string } | null {
+  const beforeCursor = text.slice(0, cursorPosition);
+  const atIndex = beforeCursor.lastIndexOf("@");
+  if (atIndex < 0) {
+    return null;
+  }
+
+  if (atIndex > 0 && /[\w]/.test(beforeCursor[atIndex - 1]!)) {
+    return null;
+  }
+
+  const query = beforeCursor.slice(atIndex + 1);
+  if (/[\s@.,!?;:)}\]]/.test(query)) {
+    return null;
+  }
+
+  return {
+    startIndex: atIndex,
+    query,
+  };
+}
+
+function replaceMentionText(
+  text: string,
+  startIndex: number,
+  endIndex: number,
+  mentionText: string
+): string {
+  return `${text.slice(0, startIndex)}${mentionText}${text.slice(endIndex)}`;
+}
+
 export function ChatView(props: ChatViewProps) {
   const { chat } = props;
   const { t } = useI18n();
   const messages = chat.messages.value;
   const draft = useSignal("");
+  const cursorPosition = useSignal(0);
   const isSubmitting = useSignal(false);
   const submitError = useSignal<string | null>(null);
   const messagesRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const activeParticipants = chat.participants.value
+    .filter((participant) => participant.isActive)
+    .slice()
+    .sort((left, right) => {
+      const leftLabel = getParticipantDisplayLabel(left, t).toLowerCase();
+      const rightLabel = getParticipantDisplayLabel(right, t).toLowerCase();
+      if (leftLabel === rightLabel) {
+        return left.id.localeCompare(right.id);
+      }
+      return leftLabel.localeCompare(rightLabel);
+    });
+
+  const mentionContext = getMentionContext(draft.value, cursorPosition.value);
+  const mentionQuery = mentionContext?.query.toLowerCase() ?? "";
+  const mentionSuggestions = mentionContext
+    ? activeParticipants.filter((participant) => {
+        if (!mentionQuery) {
+          return true;
+        }
+
+        const displayLabel = getParticipantDisplayLabel(
+          participant,
+          t
+        ).toLowerCase();
+        const mentionLabel =
+          getParticipantMentionLabel(participant).toLowerCase();
+        return (
+          displayLabel.includes(mentionQuery) ||
+          mentionLabel.includes(mentionQuery) ||
+          participant.id.toLowerCase().includes(mentionQuery)
+        );
+      })
+    : [];
+  const isMentionPickerOpen = mentionContext !== null;
+  const mentionActiveIndex = useSignal(0);
+
+  useEffect(() => {
+    mentionActiveIndex.value = 0;
+  }, [mentionQuery, mentionSuggestions.length]);
 
   useEffect(() => {
     const messagesContainer = messagesRef.current;
@@ -57,6 +147,71 @@ export function ChatView(props: ChatViewProps) {
     }
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
   }, [messages.length]);
+
+  const selectMention = (participant: ChatParticipant) => {
+    if (!mentionContext) {
+      return;
+    }
+
+    const mentionText = `@${getParticipantMentionLabel(participant)} `;
+    draft.value = replaceMentionText(
+      draft.value,
+      mentionContext.startIndex,
+      cursorPosition.value,
+      mentionText
+    );
+
+    queueMicrotask(() => {
+      const input = inputRef.current;
+      if (!input) {
+        return;
+      }
+      const nextCursor = mentionContext.startIndex + mentionText.length;
+      input.focus();
+      input.setSelectionRange(nextCursor, nextCursor);
+      cursorPosition.value = nextCursor;
+    });
+  };
+
+  const handleInputPositionUpdate = (event: Event) => {
+    const target = event.currentTarget as HTMLInputElement;
+    cursorPosition.value = target.selectionStart ?? target.value.length;
+  };
+
+  const handleMentionKeyDown = (event: KeyboardEvent) => {
+    if (!isMentionPickerOpen) {
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      mentionActiveIndex.value =
+        (mentionActiveIndex.value + 1) % mentionSuggestions.length;
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      mentionActiveIndex.value =
+        (mentionActiveIndex.value - 1 + mentionSuggestions.length) %
+        mentionSuggestions.length;
+      return;
+    }
+
+    if (event.key === "Enter") {
+      const suggestion = mentionSuggestions[mentionActiveIndex.value];
+      if (suggestion) {
+        event.preventDefault();
+        selectMention(suggestion);
+      }
+      return;
+    }
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      cursorPosition.value = 0;
+    }
+  };
 
   const handleSubmit = async (event: Event) => {
     event.preventDefault();
@@ -118,31 +273,97 @@ export function ChatView(props: ChatViewProps) {
         )}
       </div>
 
-      <form className="sb-chat-view-compose" onSubmit={handleSubmit}>
-        <input
-          type="text"
-          className="sb-chat-view-input"
-          placeholder={t("type-a-message", {
-            defaultValue: "Type a message...",
-          })}
-          value={draft.value}
-          onInput={(event) => {
-            draft.value = (event.currentTarget as HTMLInputElement).value;
-          }}
-          disabled={isSubmitting.value}
-        />
-        <button
-          type="submit"
-          className="sb-chat-view-send"
-          disabled={!canSubmit}
-          aria-label={t("send-message", { defaultValue: "Send message" })}
-          title={t("send-message", { defaultValue: "Send message" })}
-        >
-          <span className="material-symbols-outlined" aria-hidden="true">
-            send
-          </span>
-        </button>
-      </form>
+      <div className="sb-chat-view-compose-shell">
+        {isMentionPickerOpen && (
+          <div
+            className="sb-chat-view-mention-picker"
+            role="listbox"
+            aria-label={t("active-participants", {
+              defaultValue: "Active participants",
+            })}
+          >
+            <p className="sb-chat-view-mention-picker-title">
+              {t("active-participants", {
+                defaultValue: "Active participants",
+              })}
+            </p>
+            {mentionSuggestions.length === 0 ? (
+              <div className="sb-chat-view-mention-picker-empty">
+                {t("no-active-participants-match", {
+                  defaultValue: "No active participants match",
+                })}
+              </div>
+            ) : (
+              <div className="sb-chat-view-mention-picker-list">
+                {mentionSuggestions.map((participant, index) => {
+                  const isSelected = index === mentionActiveIndex.value;
+                  return (
+                    <button
+                      key={participant.id}
+                      type="button"
+                      className={`sb-chat-view-mention-picker-item${
+                        isSelected ? " is-selected" : ""
+                      }`}
+                      role="option"
+                      aria-selected={isSelected}
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                      }}
+                      onClick={() => {
+                        selectMention(participant);
+                      }}
+                    >
+                      <span className="sb-chat-view-mention-picker-name">
+                        {getParticipantDisplayLabel(participant, t)}
+                      </span>
+                      <span className="sb-chat-view-mention-picker-meta">
+                        @{getParticipantMentionLabel(participant)}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        <form className="sb-chat-view-compose" onSubmit={handleSubmit}>
+          <input
+            ref={inputRef}
+            type="text"
+            className="sb-chat-view-input"
+            placeholder={t("type-a-message", {
+              defaultValue: "Type a message...",
+            })}
+            value={draft.value}
+            onInput={(event) => {
+              const input = event.currentTarget as HTMLInputElement;
+              draft.value = input.value;
+              cursorPosition.value = input.selectionStart ?? input.value.length;
+            }}
+            onKeyDown={handleMentionKeyDown}
+            onClick={handleInputPositionUpdate}
+            onKeyUp={handleInputPositionUpdate}
+            onSelect={handleInputPositionUpdate}
+            onFocus={handleInputPositionUpdate}
+            disabled={isSubmitting.value}
+            aria-autocomplete="list"
+            aria-expanded={isMentionPickerOpen}
+            aria-haspopup="listbox"
+          />
+          <button
+            type="submit"
+            className="sb-chat-view-send"
+            disabled={!canSubmit}
+            aria-label={t("send-message", { defaultValue: "Send message" })}
+            title={t("send-message", { defaultValue: "Send message" })}
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">
+              send
+            </span>
+          </button>
+        </form>
+      </div>
 
       {submitError.value && (
         <p className="sb-chat-view-error" role="alert">

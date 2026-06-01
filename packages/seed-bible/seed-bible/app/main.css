@@ -7311,6 +7311,86 @@ h6 {
   align-items: center;
 }
 
+.sb-chat-view-compose-shell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sb-chat-view-mention-picker {
+  position: absolute;
+  left: 0;
+  right: 46px;
+  bottom: calc(100% + 8px);
+  z-index: 20;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--sb-background, #fff), transparent 1%);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+}
+
+.sb-chat-view-mention-picker-title {
+  margin: 0;
+  padding: 10px 12px 8px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 36%);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-chat-view-mention-picker-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.sb-chat-view-mention-picker-empty {
+  padding: 10px 12px 12px;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 36%);
+}
+
+.sb-chat-view-mention-picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--sb-font-color);
+  padding: 10px 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sb-chat-view-mention-picker-item:hover,
+.sb-chat-view-mention-picker-item.is-selected {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+}
+
+.sb-chat-view-mention-picker-name {
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-chat-view-mention-picker-meta {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 42%);
+  white-space: nowrap;
+}
+
 .sb-chat-view-input {
   flex: 1;
   min-width: 0;

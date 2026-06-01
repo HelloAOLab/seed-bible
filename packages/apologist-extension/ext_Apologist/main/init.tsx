@@ -11,21 +11,30 @@ registerExtension({
     yield context.chats.registerProvider({
       id: "apologist-chat-provider",
       name: "Apologist",
-      generateResponse: async (context) => {
-        const lastMessage = context.messages[context.messages.length - 1];
+      generateResponse: async (chatContext) => {
+        const lastMessage =
+          chatContext.messages[chatContext.messages.length - 1];
         console.log("Generating response for message:", lastMessage);
+
+        const contextMessage = {
+          role: "user",
+          content: `Currently reading: ${context.app.selectedTab.value?.readingState.bookId} ${context.app.selectedTab.value?.readingState.chapterNumber}`,
+        };
 
         const response = await web.post(
           "https://ao.discipleship.bot/api/v1/chat/completions",
           {
             model: "openai/gpt/5-mini",
             stream: false,
-            messages: context.messages.map((m) => ({
-              role: m.authors.some((a) => a === context.participant.id)
-                ? "user"
-                : "assistant",
-              content: m.text,
-            })),
+            messages: [
+              contextMessage,
+              ...chatContext.messages.map((m) => ({
+                role: m.authors.some((a) => a === chatContext.participant.id)
+                  ? "user"
+                  : "assistant",
+                content: m.text,
+              })),
+            ],
           },
           {
             headers: {
