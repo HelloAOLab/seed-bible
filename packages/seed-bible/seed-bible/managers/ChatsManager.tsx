@@ -539,15 +539,18 @@ function createLocalChatSession(
       message.type === "text"
         ? resolveMessageTargets(participants.value, message.text)
         : [];
+    const defaultProviderParticipant = participants.value.find(
+      (entry): entry is AIChatParticipant => entry.isAI && !entry.isRemote
+    );
     const targetParticipants =
       resolvedTargetParticipants.length > 0
         ? resolvedTargetParticipants
-        : (() => {
-            const defaultParticipant = participants.value.find(
-              (entry) => entry.isAI && !entry.isRemote
-            );
-            return defaultParticipant ? [defaultParticipant] : [];
-          })();
+        : defaultProviderParticipant
+          ? [defaultProviderParticipant]
+          : [];
+    const providerTargets = targetParticipants.filter(
+      (target): target is AIChatParticipant => target.isAI && !target.isRemote
+    );
     const nextMessage = createChatMessage(
       message,
       participant.id ? [participant.id] : [],
@@ -557,11 +560,7 @@ function createLocalChatSession(
     messages.value = [...messages.value, nextMessage];
 
     await Promise.all(
-      targetParticipants.map(async (target) => {
-        if (!target.isAI || target.isRemote) {
-          return;
-        }
-
+      providerTargets.map(async (target) => {
         const provider = chatProviders.value.find(
           (entry) => entry.id === target.id
         );
