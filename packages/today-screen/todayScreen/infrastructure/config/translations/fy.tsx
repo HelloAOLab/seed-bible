@@ -9,4 +9,7 @@ export const fy: Record<string, string> = {
   "this-month": "Dizze moanne",
   "this-week": "Dizze wike",
   "last-48-hours": "Lêste 48 oeren",
+  Everyone: "Elkenien",
+  Custom: "Oanpast",
+  None: "Gjin",
 };

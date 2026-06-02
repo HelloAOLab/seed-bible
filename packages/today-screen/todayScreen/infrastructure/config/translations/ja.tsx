@@ -9,4 +9,7 @@ export const ja: Record<string, string> = {
   "this-month": "今月",
   "this-week": "今週",
   "last-48-hours": "過去48時間",
+  Everyone: "みんな",
+  Custom: "カスタム",
+  None: "なし",
 };

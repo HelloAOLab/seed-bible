@@ -9,4 +9,7 @@ export const ps: Record<string, string> = {
   "this-month": "دا میاشت",
   "this-week": "دا اونۍ",
   "last-48-hours": "وروستي ۴۸ ساعتونه",
+  Everyone: "ټول",
+  Custom: "دودیز",
+  None: "هیڅ نه",
 };

@@ -44,6 +44,7 @@ import type { ReadingHistoryConfigProvider } from "bibleVizUtils.infrastructure.
 import type { SectionInfoMapper } from "../../infrastructure/mappers/SectionInfoMapper";
 import type { SessionProvider } from "../adapters/session/SessionProvider";
 import type { Signal } from "@preact/signals";
+import type { ConnectedSessionUser } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 
 export interface BibleVizAPI {
   bibleVizDataRepository: BibleVizDataRepository;
@@ -89,4 +90,5 @@ export interface BibleVizAPI {
   sectionInfoMapper: SectionInfoMapper;
   sessionProvider: SessionProvider;
   bookNames: Signal<Map<string, string>>;
+  connectedUsers: Signal<ConnectedSessionUser[]>;
 }

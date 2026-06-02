@@ -9,4 +9,7 @@ export const sv: Record<string, string> = {
   "this-month": "Den här månaden",
   "this-week": "Den här veckan",
   "last-48-hours": "Senaste 48 timmarna",
+  Everyone: "Alla",
+  Custom: "Anpassad",
+  None: "Ingen",
 };

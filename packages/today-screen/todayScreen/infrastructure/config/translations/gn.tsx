@@ -9,4 +9,7 @@ export const gn: Record<string, string> = {
   "this-month": "Ko jasykuépe",
   "this-week": "Ko arapokõindy",
   "last-48-hours": "Mokõi arasy 48 sapy'a",
+  Everyone: "Opavave",
+  Custom: "Ñemoañete",
+  None: "Mavave",
 };

@@ -9,4 +9,7 @@ export const bs: Record<string, string> = {
   "this-month": "Ovaj mjesec",
   "this-week": "Ova sedmica",
   "last-48-hours": "Posljednjih 48 sati",
+  Everyone: "Svi",
+  Custom: "Prilagođeno",
+  None: "Nijedan",
 };

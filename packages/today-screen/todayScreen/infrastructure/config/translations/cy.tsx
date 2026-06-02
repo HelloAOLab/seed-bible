@@ -9,4 +9,7 @@ export const cy: Record<string, string> = {
   "this-month": "Y mis hwn",
   "this-week": "Yr wythnos hon",
   "last-48-hours": "48 awr diwethaf",
+  Everyone: "Pawb",
+  Custom: "Personol",
+  None: "Dim un",
 };

@@ -9,4 +9,7 @@ export const ml: Record<string, string> = {
   "this-month": "ഈ മാസം",
   "this-week": "ഈ ആഴ്ച",
   "last-48-hours": "കഴിഞ്ഞ 48 മണിക്കൂർ",
+  Everyone: "എല്ലാവരും",
+  Custom: "കസ്റ്റം",
+  None: "ഒന്നും ഇല്ല",
 };

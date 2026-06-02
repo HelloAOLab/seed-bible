@@ -9,4 +9,7 @@ export const ne: Record<string, string> = {
   "this-month": "यो महिना",
   "this-week": "यो हप्ता",
   "last-48-hours": "पछिल्लो ४८ घण्टा",
+  Everyone: "सबै",
+  Custom: "कस्टम",
+  None: "कुनै पनि छैन",
 };

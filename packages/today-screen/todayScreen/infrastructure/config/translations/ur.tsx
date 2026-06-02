@@ -9,4 +9,7 @@ export const ur: Record<string, string> = {
   "this-month": "اس ماہ",
   "this-week": "اس ہفتے",
   "last-48-hours": "پچھلے 48 گھنٹے",
+  Everyone: "سب",
+  Custom: "حسب ضرورت",
+  None: "کوئی نہیں",
 };

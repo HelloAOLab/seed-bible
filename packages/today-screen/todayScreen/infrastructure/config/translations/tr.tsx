@@ -9,4 +9,7 @@ export const tr: Record<string, string> = {
   "this-month": "Bu ay",
   "this-week": "Bu hafta",
   "last-48-hours": "Son 48 saat",
+  Everyone: "Herkes",
+  Custom: "Özel",
+  None: "Hiçbiri",
 };

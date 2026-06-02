@@ -9,4 +9,7 @@ export const th: Record<string, string> = {
   "this-month": "เดือนนี้",
   "this-week": "สัปดาห์นี้",
   "last-48-hours": "48 ชั่วโมงที่ผ่านมา",
+  Everyone: "ทุกคน",
+  Custom: "กำหนดเอง",
+  None: "ไม่มี",
 };

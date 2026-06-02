@@ -9,4 +9,7 @@ export const ln: Record<string, string> = {
   "this-month": "Sanza oyo",
   "this-week": "Mposo oyo",
   "last-48-hours": "Ngonga 48 ya suka",
+  Everyone: "Bato nyonso",
+  Custom: "Ya moto moko",
+  None: "Eloko te",
 };

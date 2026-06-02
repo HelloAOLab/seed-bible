@@ -9,4 +9,7 @@ export const sq: Record<string, string> = {
   "this-month": "Këtë muaj",
   "this-week": "Këtë javë",
   "last-48-hours": "48 orët e fundit",
+  Everyone: "Të gjithë",
+  Custom: "I personalizuar",
+  None: "Asnjë",
 };

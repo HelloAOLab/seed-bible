@@ -9,4 +9,7 @@ export const bg: Record<string, string> = {
   "this-month": "Този месец",
   "this-week": "Тази седмица",
   "last-48-hours": "Последните 48 часа",
+  Everyone: "Всички",
+  Custom: "Персонализиран",
+  None: "Няма",
 };

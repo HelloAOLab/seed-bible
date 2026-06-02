@@ -1,6 +1,8 @@
 import type { CommunityReadingSpanId } from "@packages/today-screen/todayScreen/domain/models/readingHistory";
 import { useSocialSection } from "../../hooks/useSocialSection";
 import { TitledSection } from "../ui/TitledSection";
+import { ReadingHistoryTimeline } from "./ReadingHistoryTimeline";
+import { FilteredReadingContainer } from "./FilteredReadingContainer";
 
 export interface TimespanFilterOptionData {
   label: string;
@@ -17,6 +19,11 @@ export const SocialSection = () => {
     userFilterOpen,
     userFilterIcon,
     timespanFilterOptionsData,
+    selectedTimespanOptionId,
+
+    userFilters,
+    handleFilterOptionClick,
+    userFilterText,
   } = useSocialSection();
 
   return (
@@ -26,16 +33,23 @@ export const SocialSection = () => {
           onClick={() => handleUserFilterClick()}
           className="user-filter-container"
         >
-          <span className="user-filter-label">Everyone</span>
+          <span className="user-filter-label">{userFilterText}</span>
           <MaterialIcon>{userFilterIcon}</MaterialIcon>
           {userFilterOpen && (
             <div className="user-filter-options">
-              <button>User 1</button>
-              <button>User 2</button>
-              <button>User 3</button>
-              <button>User 4</button>
-              <button>User 5</button>
-              <button>User 6</button>
+              {userFilters.map((filter) => {
+                return (
+                  <button
+                    onClick={(e) => {
+                      handleFilterOptionClick(e, filter.id);
+                    }}
+                    className={`user-filter-option${filter.selected ? " user-filter-option-selected" : ""}`}
+                  >
+                    <div style={{ backgroundColor: filter.color }}></div>
+                    {filter.name}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
@@ -52,6 +66,14 @@ export const SocialSection = () => {
             );
           })}
         </div>
+        {selectedTimespanOptionId === "all" ? (
+          <ReadingHistoryTimeline />
+        ) : (
+          <FilteredReadingContainer
+            timespanId={selectedTimespanOptionId}
+            userFilters={userFilters}
+          />
+        )}
       </div>
     </TitledSection>
   );

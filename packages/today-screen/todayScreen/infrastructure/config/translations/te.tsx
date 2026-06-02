@@ -9,4 +9,7 @@ export const te: Record<string, string> = {
   "this-month": "ఈ నెల",
   "this-week": "ఈ వారం",
   "last-48-hours": "గత 48 గంటలు",
+  Everyone: "అందరూ",
+  Custom: "అనుకూలీకరించిన",
+  None: "ఏదీ లేదు",
 };

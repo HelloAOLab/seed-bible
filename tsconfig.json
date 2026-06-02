@@ -1457,6 +1457,9 @@
       "todayScreen.domain.models.readingHistory": [
         "./packages/today-screen/todayScreen/domain/models/readingHistory.tsx"
       ],
+      "todayScreen.infrastructure.adapters.fake.FakeSubscribedUsersProvider": [
+        "./packages/today-screen/todayScreen/infrastructure/adapters/fake/FakeSubscribedUsersProvider.tsx"
+      ],
       "todayScreen.infrastructure.config.translations.af": [
         "./packages/today-screen/todayScreen/infrastructure/config/translations/af.tsx"
       ],
@@ -1706,8 +1709,17 @@
       "todayScreen.infrastructure.presentation.components.containers.Divider": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/Divider.tsx"
       ],
+      "todayScreen.infrastructure.presentation.components.containers.FilteredReadingBook": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/FilteredReadingBook.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.components.containers.FilteredReadingContainer": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/FilteredReadingContainer.tsx"
+      ],
       "todayScreen.infrastructure.presentation.components.containers.Header": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/Header.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.components.containers.ReadingHistoryTimeline": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/ReadingHistoryTimeline.tsx"
       ],
       "todayScreen.infrastructure.presentation.components.containers.RecommendationsSection": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/RecommendationsSection.tsx"
@@ -1744,6 +1756,9 @@
       ],
       "todayScreen.infrastructure.presentation.contexts.today.useTodayProvider": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/contexts/today/useTodayProvider.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.hooks.useFilteredReadingContainer": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useFilteredReadingContainer.tsx"
       ],
       "todayScreen.infrastructure.presentation.hooks.useHeader": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useHeader.tsx"

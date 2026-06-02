@@ -68,12 +68,18 @@ export class TodayReadingHistoryService
           const { from, to } = span;
 
           if (from <= end && end <= to) {
-            const readingKey = `${bookId} ${chapter}`;
-            const group = communityReading[id] as Record<string, string[]>;
-            if (!group[readingKey]) {
-              group[readingKey] = [];
+            // const readingKey = `${bookId} ${chapter}`;
+            const bookIds = communityReading[id] as Record<
+              string,
+              Record<number, string[]>
+            >;
+            if (!bookIds[bookId]) {
+              bookIds[bookId] = {};
             }
-            group[readingKey].push(userId);
+            if (!bookIds[bookId][chapter]) {
+              bookIds[bookId][chapter] = [];
+            }
+            bookIds[bookId][chapter].push(userId);
           }
         }
       }

@@ -9,4 +9,7 @@ export const sl: Record<string, string> = {
   "this-month": "Ta mesec",
   "this-week": "Ta teden",
   "last-48-hours": "Zadnjih 48 ur",
+  Everyone: "Vsi",
+  Custom: "Po meri",
+  None: "Nobeden",
 };

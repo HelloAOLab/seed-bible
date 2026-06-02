@@ -9,4 +9,7 @@ export const ru: Record<string, string> = {
   "this-month": "В этом месяце",
   "this-week": "На этой неделе",
   "last-48-hours": "Последние 48 часов",
+  Everyone: "Все",
+  Custom: "Настраиваемый",
+  None: "Нет",
 };

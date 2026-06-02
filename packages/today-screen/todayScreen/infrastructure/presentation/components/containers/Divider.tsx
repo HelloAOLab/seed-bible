@@ -1,3 +1,3 @@
 export const Divider = () => {
-  return <></>;
+  return <div className="divider"></div>;
 };

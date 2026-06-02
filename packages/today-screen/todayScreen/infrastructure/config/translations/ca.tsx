@@ -9,4 +9,7 @@ export const ca: Record<string, string> = {
   "this-month": "Aquest mes",
   "this-week": "Aquesta setmana",
   "last-48-hours": "Últimes 48 hores",
+  Everyone: "Tothom",
+  Custom: "Personalitzat",
+  None: "Cap",
 };

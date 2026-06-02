@@ -9,4 +9,7 @@ export const az: Record<string, string> = {
   "this-month": "Bu ay",
   "this-week": "Bu həftə",
   "last-48-hours": "Son 48 saat",
+  Everyone: "Hamı",
+  Custom: "Xüsusi",
+  None: "Heç biri",
 };

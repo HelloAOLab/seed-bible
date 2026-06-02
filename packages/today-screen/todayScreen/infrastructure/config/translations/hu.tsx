@@ -9,4 +9,7 @@ export const hu: Record<string, string> = {
   "this-month": "Ebben a hónapban",
   "this-week": "Ezen a héten",
   "last-48-hours": "Utolsó 48 óra",
+  Everyone: "Mindenki",
+  Custom: "Egyéni",
+  None: "Egyik sem",
 };

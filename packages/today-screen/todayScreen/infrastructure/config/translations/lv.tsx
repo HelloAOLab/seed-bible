@@ -9,4 +9,7 @@ export const lv: Record<string, string> = {
   "this-month": "Šomēnes",
   "this-week": "Šonedēļ",
   "last-48-hours": "Pēdējās 48 stundas",
+  Everyone: "Visi",
+  Custom: "Pielāgots",
+  None: "Neviens",
 };

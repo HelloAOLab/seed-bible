@@ -9,4 +9,7 @@ export const am: Record<string, string> = {
   "this-month": "በዚህ ወር",
   "this-week": "በዚህ ሳምንት",
   "last-48-hours": "ባለፉት 48 ሰዓታት",
+  Everyone: "ሁሉም",
+  Custom: "ብጁ",
+  None: "የለም",
 };

@@ -9,4 +9,5 @@ export const ar: Record<string, string> = {
   "this-month": "هذا الشهر",
   "this-week": "هذا الأسبوع",
   "last-48-hours": "آخر 48 ساعة",
+  Everyone: "الجميع",
 };

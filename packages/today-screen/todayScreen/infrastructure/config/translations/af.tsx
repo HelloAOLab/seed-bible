@@ -9,4 +9,7 @@ export const af: Record<string, string> = {
   "this-month": "Hierdie maand",
   "this-week": "Hierdie week",
   "last-48-hours": "Laaste 48 uur",
+  Everyone: "Almal",
+  Custom: "Aangepas",
+  None: "Geen",
 };

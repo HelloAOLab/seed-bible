@@ -6,6 +6,7 @@ import type {
   CommunityReadingSpanId,
   UserLastReading,
 } from "todayScreen.domain.models.readingHistory";
+// import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 
 const { memo } = os.appCompat;
 
@@ -36,6 +37,19 @@ export interface TodayConfig {
   translationBooks: Signal<{
     books: Array<{ id: string; name: string; commonName?: string }>;
   } | null>;
+  subscribedUsersProfileProvider: {
+    getUserProfile(id: string):
+      | {
+          name: string;
+          pictureUrl?: string | null | undefined;
+          color: string;
+          icon: string;
+        }
+      | undefined;
+  };
+  subscribedUsersIdsProvider: {
+    getUsersIds(): string[];
+  };
 }
 
 type TodayProps = {

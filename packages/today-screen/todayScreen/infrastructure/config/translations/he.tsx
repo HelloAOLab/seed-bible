@@ -9,4 +9,7 @@ export const he: Record<string, string> = {
   "this-month": "החודש הזה",
   "this-week": "השבוע הזה",
   "last-48-hours": "48 שעות אחרונות",
+  Everyone: "כולם",
+  Custom: "מותאם אישית",
+  None: "אף אחד",
 };

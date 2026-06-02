@@ -9,4 +9,7 @@ export const ug: Record<string, string> = {
   "this-month": "بۇ ئايدا",
   "this-week": "بۇ ھەپتىدە",
   "last-48-hours": "ئۆتكەن 48 سائەت",
+  Everyone: "ھەممە",
+  Custom: "ئىختىيارى",
+  None: "يوق",
 };

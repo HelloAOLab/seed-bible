@@ -9,4 +9,7 @@ export const ky: Record<string, string> = {
   "this-month": "Бул айда",
   "this-week": "Бул аптада",
   "last-48-hours": "Акыркы 48 саат",
+  Everyone: "Баары",
+  Custom: "Ыңгайлаштырылган",
+  None: "Жок",
 };

@@ -9,4 +9,7 @@ export const et: Record<string, string> = {
   "this-month": "Sel kuul",
   "this-week": "Sel nädalal",
   "last-48-hours": "Viimased 48 tundi",
+  Everyone: "Kõik",
+  Custom: "Kohandatud",
+  None: "Mitte ükski",
 };

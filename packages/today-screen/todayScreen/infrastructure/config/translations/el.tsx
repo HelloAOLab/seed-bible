@@ -9,4 +9,7 @@ export const el: Record<string, string> = {
   "this-month": "Αυτόν τον μήνα",
   "this-week": "Αυτή την εβδομάδα",
   "last-48-hours": "Τελευταίες 48 ώρες",
+  Everyone: "Όλοι",
+  Custom: "Προσαρμοσμένο",
+  None: "Κανένα",
 };

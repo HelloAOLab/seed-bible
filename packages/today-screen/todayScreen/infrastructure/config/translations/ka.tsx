@@ -9,4 +9,7 @@ export const ka: Record<string, string> = {
   "this-month": "ამ თვეში",
   "this-week": "ამ კვირაში",
   "last-48-hours": "ბოლო 48 საათი",
+  Everyone: "ყველა",
+  Custom: "მორგებული",
+  None: "არცერთი",
 };

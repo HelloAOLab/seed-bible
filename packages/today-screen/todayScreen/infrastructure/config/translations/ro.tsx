@@ -9,4 +9,7 @@ export const ro: Record<string, string> = {
   "this-month": "Luna aceasta",
   "this-week": "Săptămâna aceasta",
   "last-48-hours": "Ultimele 48 de ore",
+  Everyone: "Toți",
+  Custom: "Personalizat",
+  None: "Niciunul",
 };

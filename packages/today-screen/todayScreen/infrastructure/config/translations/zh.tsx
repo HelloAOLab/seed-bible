@@ -9,4 +9,7 @@ export const zh: Record<string, string> = {
   "this-month": "本月",
   "this-week": "本周",
   "last-48-hours": "过去48小时",
+  Everyone: "所有人",
+  Custom: "自定义",
+  None: "无",
 };

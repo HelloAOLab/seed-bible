@@ -272,6 +272,18 @@ export const bootstrapExtension = () => {
           "#8B5CF6",
           "#14B8A6",
         ],
+        icons: [
+          "forest", // tree
+          "park", // log
+          "eco", // leaf
+          "pets", // cat/dog
+          "cruelty_free", // bunny-style
+          "local_cafe", // coffee
+          "local_florist", // flower
+          "grass", // grass
+          "potted_plant", // plant
+          "nature", // mountain/tree
+        ],
       });
       const userDatabase = new UserDatabase();
       const labelsConfigProvider = new LabelsConfigProvider();
@@ -389,9 +401,13 @@ export const bootstrapExtension = () => {
       const unsubscribeLogin = context.login.userId.subscribe(() => {
         userColorController?.handleUserLogin();
       });
+      const connectedUsers = signal(
+        context.tabs.tabs.value.flatMap(
+          (tab) => tab.sharedSession?.connectedUsers.value ?? []
+        )
+      );
       const unsubscribeOnlineUsersChanged = effect(() => {
-        // eslint-disable-next-line
-        const connectedUsers = context.tabs.tabs.value.flatMap((tab) => {
+        connectedUsers.value = context.tabs.tabs.value.flatMap((tab) => {
           return tab.sharedSession?.connectedUsers.value ?? [];
         });
         userColorController?.handleOnlineUsersChanged();
@@ -543,6 +559,7 @@ export const bootstrapExtension = () => {
         readingHistoryConfigProvider,
         sessionProvider,
         bookNames,
+        connectedUsers,
       };
 
       return api;

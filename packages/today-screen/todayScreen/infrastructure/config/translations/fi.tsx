@@ -9,4 +9,7 @@ export const fi: Record<string, string> = {
   "this-month": "Tänä kuuna",
   "this-week": "Tällä viikolla",
   "last-48-hours": "Viimeiset 48 tuntia",
+  Everyone: "Kaikki",
+  Custom: "Mukautettu",
+  None: "Ei mitään",
 };

@@ -9,4 +9,7 @@ export const ti: Record<string, string> = {
   "this-month": "ኣብዚ ወርሒ",
   "this-week": "ኣብዚ ሰሙን",
   "last-48-hours": "ዝሓለፉ 48 ሰዓታት",
+  Everyone: "ኩሎም",
+  Custom: "ብሉይ",
+  None: "የለም",
 };

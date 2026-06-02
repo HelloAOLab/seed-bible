@@ -9,4 +9,7 @@ export const mk: Record<string, string> = {
   "this-month": "Овој месец",
   "this-week": "Оваа недела",
   "last-48-hours": "Последните 48 часа",
+  Everyone: "Сите",
+  Custom: "Прилагодено",
+  None: "Ниедно",
 };

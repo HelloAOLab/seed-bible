@@ -9,4 +9,7 @@ export const mn: Record<string, string> = {
   "this-month": "Энэ сард",
   "this-week": "Энэ долоо хоногт",
   "last-48-hours": "Сүүлийн 48 цаг",
+  Everyone: "Бүгд",
+  Custom: "Өөрчлөгдөх",
+  None: "Байхгүй",
 };

@@ -9,4 +9,7 @@ export const sk: Record<string, string> = {
   "this-month": "Tento mesiac",
   "this-week": "Tento týždeň",
   "last-48-hours": "Posledných 48 hodín",
+  Everyone: "Všetci",
+  Custom: "Vlastné",
+  None: "Žiadne",
 };

@@ -9,4 +9,7 @@ export const hi: Record<string, string> = {
   "this-month": "इस महीने",
   "this-week": "इस सप्ताह",
   "last-48-hours": "पिछले 48 घंटे",
+  Everyone: "सभी",
+  Custom: "कस्टम",
+  None: "कोई नहीं",
 };

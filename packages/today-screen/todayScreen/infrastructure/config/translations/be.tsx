@@ -9,4 +9,7 @@ export const be: Record<string, string> = {
   "this-month": "У гэтым месяцы",
   "this-week": "На гэтым тыдні",
   "last-48-hours": "Апошнія 48 гадзін",
+  Everyone: "Усе",
+  Custom: "Настройваны",
+  None: "Ніякі",
 };

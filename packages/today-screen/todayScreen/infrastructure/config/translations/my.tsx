@@ -9,4 +9,7 @@ export const my: Record<string, string> = {
   "this-month": "ဤလတွင်",
   "this-week": "ဤအပတ်တွင်",
   "last-48-hours": "ကြောင်း 48 နာရီ",
+  Everyone: "အားလုံး",
+  Custom: "စိတ်တိုင်းကျ",
+  None: "မရှိ",
 };

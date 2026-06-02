@@ -9,4 +9,7 @@ export const sw: Record<string, string> = {
   "this-month": "Mwezi huu",
   "this-week": "Wiki hii",
   "last-48-hours": "Masaa 48 ya mwisho",
+  Everyone: "Kila mtu",
+  Custom: "Maalum",
+  None: "Hakuna",
 };

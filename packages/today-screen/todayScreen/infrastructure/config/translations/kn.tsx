@@ -9,4 +9,7 @@ export const kn: Record<string, string> = {
   "this-month": "ಈ ತಿಂಗಳು",
   "this-week": "ಈ ವಾರ",
   "last-48-hours": "ಕೊನೆಯ 48 ಗಂಟೆಗಳು",
+  Everyone: "ಎಲ್ಲರೂ",
+  Custom: "ಕಸ್ಟಮ್",
+  None: "ಯಾವುದೂ ಇಲ್ಲ",
 };

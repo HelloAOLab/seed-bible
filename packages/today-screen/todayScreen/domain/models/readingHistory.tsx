@@ -1,5 +1,7 @@
 export interface FilteredReading {
-  [reading: string]: string[];
+  [bookId: string]: {
+    [chapter: number]: string[];
+  };
 }
 
 export type CommunityReading<T extends string> = {

@@ -9,4 +9,7 @@ export const pa: Record<string, string> = {
   "this-month": "ਇਸ ਮਹੀਨੇ",
   "this-week": "ਇਸ ਹਫ਼ਤੇ",
   "last-48-hours": "ਪਿਛਲੇ 48 ਘੰਟੇ",
+  Everyone: "ਸਾਰੇ",
+  Custom: "ਕਸਟਮ",
+  None: "ਕੋਈ ਨਹੀਂ",
 };

@@ -1,10 +1,8 @@
 import { useTodayContext } from "../contexts/today/TodayContext";
-import { useSignal, useComputed, effect } from "@preact/signals";
+import { useSignal, useComputed } from "@preact/signals";
 import type { TimespanFilterOptionData } from "../components/containers/SocialSection";
-import type {
-  CommunityReadingSpanId,
-  FilteredReading,
-} from "@packages/today-screen/todayScreen/domain/models/readingHistory";
+import type { CommunityReadingSpanId } from "@packages/today-screen/todayScreen/domain/models/readingHistory";
+import { useEffect, useState } from "preact/hooks";
 
 const { useMemo, useCallback } = os.appHooks;
 
@@ -18,6 +16,10 @@ type UseSocialSection = () => {
   userFilterOpen: boolean;
   handleUserFilterClick: () => void;
   timespanFilterOptionsData: TimespanFilterOptionData[];
+  selectedTimespanOptionId: CommunityReadingSpanId | "all";
+  userFilters: { id: string; name: string; selected: boolean; color: string }[];
+  handleFilterOptionClick: (event: MouseEvent, id: string) => void;
+  userFilterText: string;
 };
 
 const TimespanOptionLabelMap: Record<CommunityReadingSpanId | "all", string> = {
@@ -28,7 +30,12 @@ const TimespanOptionLabelMap: Record<CommunityReadingSpanId | "all", string> = {
 };
 
 export const useSocialSection: UseSocialSection = () => {
-  const { translate, MaterialIcon, communityReading } = useTodayContext();
+  const {
+    translate,
+    MaterialIcon,
+    subscribedUsersProfileProvider,
+    subscribedUsersIdsProvider,
+  } = useTodayContext();
 
   const userFilterOpen = useSignal<boolean>(false);
   const selectedTimespanOptionId = useSignal<CommunityReadingSpanId | "all">(
@@ -54,12 +61,18 @@ export const useSocialSection: UseSocialSection = () => {
     []
   );
 
+  const translateSignal = useSignal(translate);
+
+  useEffect(() => {
+    translateSignal.value = translate;
+  }, [translate]);
+
   const timespanFilterOptionsData = useComputed<TimespanFilterOptionData[]>(
     () => {
       const keys = ["twoDays", "week", "month", "all"] as const;
 
       return keys.map((key) => ({
-        label: translate(TimespanOptionLabelMap[key]),
+        label: translateSignal.value(TimespanOptionLabelMap[key]),
         id: key,
         onClick: () => handleTimespanOptionClick(key),
         isSelected: selectedTimespanOptionId.value === key,
@@ -67,19 +80,46 @@ export const useSocialSection: UseSocialSection = () => {
     }
   );
 
-  const filteredReading = useComputed<FilteredReading | undefined>(() => {
-    if (selectedTimespanOptionId.value === "all") {
-      return undefined;
+  const [userFilters, setUserFilters] = useState(() =>
+    subscribedUsersIdsProvider.getUsersIds().map((id) => {
+      const profile = subscribedUsersProfileProvider.getUserProfile(id)!;
+      return {
+        id,
+        name: profile.name,
+        color: profile.color,
+        selected: true,
+      };
+    })
+  );
+
+  const handleFilterOptionClick = useCallback(
+    (e: MouseEvent, id: string) => {
+      e.stopPropagation();
+
+      setUserFilters((prev) => {
+        return prev.map((filter) => {
+          return {
+            ...filter,
+            selected: filter.id === id ? !filter.selected : filter.selected,
+          };
+        });
+      });
+    },
+    [setUserFilters]
+  );
+
+  const userFilterText = useMemo(() => {
+    const count = userFilters.filter((filter) => filter.selected).length;
+    if (count === userFilters.length) {
+      return translate("Everyone");
     }
 
-    return communityReading.value[selectedTimespanOptionId.value];
-  });
+    if (count === 0) {
+      return translate("None");
+    }
 
-  effect(() => {
-    console.log(`[Debug] useSocialSection`, {
-      filteredReading: filteredReading.value,
-    });
-  });
+    return translate("Custom");
+  }, [userFilters, translate]);
 
   return {
     title,
@@ -89,5 +129,9 @@ export const useSocialSection: UseSocialSection = () => {
     handleUserFilterClick,
     timespanFilterOptionsData: timespanFilterOptionsData.value,
     handleTimespanOptionClick,
+    selectedTimespanOptionId: selectedTimespanOptionId.value,
+    userFilters,
+    handleFilterOptionClick,
+    userFilterText,
   };
 };

@@ -9,4 +9,7 @@ export const ko: Record<string, string> = {
   "this-month": "이번 달",
   "this-week": "이번 주",
   "last-48-hours": "지난 48시간",
+  Everyone: "모두",
+  Custom: "사용자 지정",
+  None: "없음",
 };

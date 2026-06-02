@@ -9,4 +9,7 @@ export const gl: Record<string, string> = {
   "this-month": "Este mes",
   "this-week": "Esta semana",
   "last-48-hours": "Últimas 48 horas",
+  Everyone: "Todos",
+  Custom: "Personalizado",
+  None: "Ningún",
 };

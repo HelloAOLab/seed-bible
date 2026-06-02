@@ -9,4 +9,7 @@ export const gu: Record<string, string> = {
   "this-month": "આ મહિને",
   "this-week": "આ અઠવાડિયે",
   "last-48-hours": "છેલ્લા 48 કલાક",
+  Everyone: "બધા",
+  Custom: "કસ્ટમ",
+  None: "કોઈ નહીં",
 };

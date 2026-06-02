@@ -5,7 +5,7 @@ import { getCustomStyles } from "todayScreen.infrastructure.presentation.styles.
 import { Today } from "../presentation/components/Today";
 import { addTranslations, useI18n } from "seed-bible.i18n.I18nManager";
 import { TodayReadingHistoryService } from "todayScreen.application.services.TodayReadingHistoryService";
-import { getReadingHistoryEvents } from "seed-bible.managers.ReadingHistoryManager";
+import { FakeSubscribedUsersProvider } from "todayScreen.infrastructure.adapters.fake.FakeSubscribedUsersProvider";
 import {
   COMMUNITY_READING_SPAN_IDS,
   type CommunityReading,
@@ -14,6 +14,7 @@ import {
 } from "todayScreen.domain.models.readingHistory";
 import { translations } from "todayScreen.infrastructure.config.translations.index";
 import type { BibleVizAPI } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/seedBible";
+import { getReadingHistoryEvents } from "seed-bible.managers.ReadingHistoryManager";
 
 const Icon = () => {
   return <MaterialIcon>home</MaterialIcon>;
@@ -37,28 +38,35 @@ export const bootstrapExtension = () => {
     id: extensionId,
     init: function* (context: SeedBibleState, dependenciesMap) {
       addTranslations(extensionId, translations);
-      const { bookNames } = dependenciesMap[
+      const { bookNames, sessionProvider } = dependenciesMap[
         bibleVizUtilsId
       ] as DependenciesMap[typeof bibleVizUtilsId];
 
+      const fakeSubscribedUsersProvider = new FakeSubscribedUsersProvider(
+        sessionProvider
+      );
+
       const todayReadingHistoryService = new TodayReadingHistoryService({
         readingEventsProviderPort: {
-          getReadingHistoryEvents: (recordName, startTime, endTime) =>
-            getReadingHistoryEvents(recordName, startTime, endTime),
-        },
-        usersIdProviderPort: {
-          getUsersIds: () => {
-            const connectedUsers = context.tabs.tabs.value.flatMap(
-              (tab) => tab.sharedSession?.connectedUsers.value ?? []
+          getReadingHistoryEvents: (
+            recordName: string,
+            startTime: number,
+            endTime: number
+          ) => {
+            if (
+              context.login.userId.value &&
+              recordName === context.login.userId.value
+            ) {
+              return getReadingHistoryEvents(recordName, startTime, endTime);
+            }
+            return fakeSubscribedUsersProvider.getReadingHistoryEvents(
+              recordName,
+              startTime,
+              endTime
             );
-            const uniqueIds = new Set(
-              connectedUsers
-                .map((user) => user.userId)
-                .filter((userId): userId is string => userId !== null)
-            );
-            return [...uniqueIds];
           },
         },
+        usersIdProviderPort: fakeSubscribedUsersProvider,
       });
 
       const userLastReading = signal<UserLastReading>(undefined);
@@ -194,6 +202,8 @@ export const bootstrapExtension = () => {
                     }
                   },
                   translationBooks: lastTranslationBooks,
+                  subscribedUsersProfileProvider: fakeSubscribedUsersProvider,
+                  subscribedUsersIdsProvider: fakeSubscribedUsersProvider,
                 }}
                 customCSS={customCSS}
               />

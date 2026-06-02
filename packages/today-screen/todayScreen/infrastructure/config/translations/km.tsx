@@ -9,4 +9,7 @@ export const km: Record<string, string> = {
   "this-month": "ខែនេះ",
   "this-week": "សប្តាហ៍នេះ",
   "last-48-hours": "48 ម៉ោងចុងក្រោយ",
+  Everyone: "ទាំងអស់គ្នា",
+  Custom: "ផ្ទាល់ខ្លួន",
+  None: "គ្មាន",
 };

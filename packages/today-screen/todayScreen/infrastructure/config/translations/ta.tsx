@@ -9,4 +9,7 @@ export const ta: Record<string, string> = {
   "this-month": "இந்த மாதம்",
   "this-week": "இந்த வாரம்",
   "last-48-hours": "கடந்த 48 மணி நேரம்",
+  Everyone: "அனைவரும்",
+  Custom: "தனிப்பயன்",
+  None: "எதுவும் இல்லை",
 };

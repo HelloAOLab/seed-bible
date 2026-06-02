@@ -9,4 +9,7 @@ export const fa: Record<string, string> = {
   "this-month": "این ماه",
   "this-week": "این هفته",
   "last-48-hours": "۴۸ ساعت گذشته",
+  Everyone: "همه",
+  Custom: "سفارشی",
+  None: "هیچکدام",
 };

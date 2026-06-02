@@ -9,4 +9,7 @@ export const zu: Record<string, string> = {
   "this-month": "Le nyanga",
   "this-week": "Le sonto",
   "last-48-hours": "Amahora angu-48 adlule",
+  Everyone: "Bonke",
+  Custom: "Okwezifiso",
+  None: "Akukho",
 };

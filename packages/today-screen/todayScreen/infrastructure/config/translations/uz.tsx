@@ -9,4 +9,7 @@ export const uz: Record<string, string> = {
   "this-month": "Bu oy",
   "this-week": "Bu hafta",
   "last-48-hours": "Oxirgi 48 soat",
+  Everyone: "Hammasi",
+  Custom: "Maxsus",
+  None: "Hech biri",
 };

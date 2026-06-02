@@ -9,4 +9,7 @@ export const is: Record<string, string> = {
   "this-month": "Þennan mánuð",
   "this-week": "Þessa viku",
   "last-48-hours": "Síðustu 48 klukkustundir",
+  Everyone: "Allir",
+  Custom: "Sérsniðinn",
+  None: "Enginn",
 };

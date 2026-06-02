@@ -9,4 +9,7 @@ export const vi: Record<string, string> = {
   "this-month": "Tháng này",
   "this-week": "Tuần này",
   "last-48-hours": "48 giờ qua",
+  Everyone: "Mọi người",
+  Custom: "Tùy chỉnh",
+  None: "Không có",
 };

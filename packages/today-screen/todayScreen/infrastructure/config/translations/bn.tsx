@@ -9,4 +9,7 @@ export const bn: Record<string, string> = {
   "this-month": "এই মাসে",
   "this-week": "এই সপ্তাহে",
   "last-48-hours": "গত ৪৮ ঘণ্টা",
+  Everyone: "সবাই",
+  Custom: "কাস্টম",
+  None: "কেউ না",
 };

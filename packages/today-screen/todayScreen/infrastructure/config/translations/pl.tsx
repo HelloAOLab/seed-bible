@@ -9,4 +9,7 @@ export const pl: Record<string, string> = {
   "this-month": "Ten miesiąc",
   "this-week": "Ten tydzień",
   "last-48-hours": "Ostatnie 48 godzin",
+  Everyone: "Wszyscy",
+  Custom: "Niestandardowy",
+  None: "Brak",
 };

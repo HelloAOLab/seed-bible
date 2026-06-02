@@ -9,4 +9,7 @@ export const fr: Record<string, string> = {
   "this-month": "Ce mois-ci",
   "this-week": "Cette semaine",
   "last-48-hours": "Dernières 48 heures",
+  Everyone: "Tout le monde",
+  Custom: "Personnalisé",
+  None: "Aucun",
 };

@@ -10,15 +10,18 @@ interface ConnectedUserData extends UserIds {
 interface ProviderParams {
   state: SeedBibleState;
   colors: string[];
+  icons: string[];
 }
 
 export class SessionProvider implements SessionProviderPort {
   #state: ProviderParams["state"];
   #colors: ProviderParams["colors"];
+  #icons: ProviderParams["icons"];
 
-  constructor({ state, colors }: ProviderParams) {
+  constructor({ state, colors, icons }: ProviderParams) {
     this.#state = state;
     this.#colors = colors;
+    this.#icons = icons;
   }
 
   getConnectedUsers(): ConnectedUserData[] {
@@ -72,6 +75,10 @@ export class SessionProvider implements SessionProviderPort {
     return this.#getDeterministicColor(id);
   }
 
+  getUserIconById(id: string): string {
+    return this.#getDeterministicIcon(id);
+  }
+
   getAuthIdByConnectionId(id: string): string | undefined {
     return (
       this.getConnectedUsers().find((user) => {
@@ -94,5 +101,12 @@ export class SessionProvider implements SessionProviderPort {
 
     const color = this.#colors[colorIndex];
     return color ?? "#E5E7EB";
+  }
+
+  #getDeterministicIcon(id: string): string {
+    const normalized = id && id.length > 0 ? id : "anonymous";
+    const hash = this.#getHashString(normalized);
+    const iconIndex = hash % this.#icons.length;
+    return this.#icons[iconIndex]!;
   }
 }

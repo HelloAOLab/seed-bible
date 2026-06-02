@@ -9,4 +9,7 @@ export const uk: Record<string, string> = {
   "this-month": "Цього місяця",
   "this-week": "Цього тижня",
   "last-48-hours": "Останні 48 годин",
+  Everyone: "Всі",
+  Custom: "Налаштований",
+  None: "Немає",
 };

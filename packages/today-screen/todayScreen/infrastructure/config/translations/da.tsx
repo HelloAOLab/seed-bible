@@ -9,4 +9,7 @@ export const da: Record<string, string> = {
   "this-month": "Denne måned",
   "this-week": "Denne uge",
   "last-48-hours": "Sidste 48 timer",
+  Everyone: "Alle",
+  Custom: "Brugerdefineret",
+  None: "Ingen",
 };

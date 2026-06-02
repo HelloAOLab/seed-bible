@@ -9,4 +9,7 @@ export const lo: Record<string, string> = {
   "this-month": "ເດືອນນີ້",
   "this-week": "ອາທິດນີ້",
   "last-48-hours": "48 ຊົ່ວໂມງທີ່ຜ່ານມາ",
+  Everyone: "ທຸກຄົນ",
+  Custom: "ກຳນົດເອງ",
+  None: "ບໍ່ມີ",
 };

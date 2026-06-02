@@ -9,4 +9,7 @@ export const lt: Record<string, string> = {
   "this-month": "Šį mėnesį",
   "this-week": "Šią savaitę",
   "last-48-hours": "Paskutinės 48 valandos",
+  Everyone: "Visi",
+  Custom: "Tinkinta",
+  None: "Nėra",
 };

@@ -9,4 +9,7 @@ export const ms: Record<string, string> = {
   "this-month": "Bulan ini",
   "this-week": "Minggu ini",
   "last-48-hours": "48 jam terakhir",
+  Everyone: "Semua",
+  Custom: "Tersuai",
+  None: "Tiada",
 };

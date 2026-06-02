@@ -9,4 +9,7 @@ export const tl: Record<string, string> = {
   "this-month": "Ngayong buwan",
   "this-week": "Ngayong linggo",
   "last-48-hours": "Huling 48 oras",
+  Everyone: "Lahat",
+  Custom: "Pasadya",
+  None: "Wala",
 };
