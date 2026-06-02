@@ -277,7 +277,7 @@ export function ChatView(props: ChatViewProps) {
     );
     chat.setTypingStatus(draft.value.trim().length > 0);
 
-    queueMicrotask(() => {
+    window.queueMicrotask(() => {
       const input = inputRef.current;
       if (!input) {
         return;

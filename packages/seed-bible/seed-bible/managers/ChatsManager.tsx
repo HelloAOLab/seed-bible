@@ -706,22 +706,22 @@ function createSharedChatSession(
   chatProvidersMap.changes.subscribe(() => {
     // Avoid updating reactive graph synchronously during shared-doc
     // transactions to prevent dependency cycles.
-    queueMicrotask(() => {
+    window.queueMicrotask(() => {
       chatProvidersMapVersion.value += 1;
     });
   });
   participantAliasesMap.changes.subscribe(() => {
-    queueMicrotask(() => {
+    window.queueMicrotask(() => {
       participantAliasesMapVersion.value += 1;
     });
   });
   chatTypingMap.changes.subscribe(() => {
-    queueMicrotask(() => {
+    window.queueMicrotask(() => {
       chatTypingMapVersion.value += 1;
     });
   });
   chatSelectedParticipantsMap.changes.subscribe(() => {
-    queueMicrotask(() => {
+    window.queueMicrotask(() => {
       chatSelectedParticipantsMapVersion.value += 1;
     });
   });
