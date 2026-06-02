@@ -224,6 +224,7 @@ function renderPaneReader(
           title: "Tab 1",
           readingState,
           sharedSession: null,
+          sharedChat: null,
         }}
         state={state}
         pane={pane}

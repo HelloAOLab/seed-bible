@@ -170,7 +170,8 @@ async function createManagersWithSelectedPane(): Promise<{
   const dataManager = createDataManager();
   const tabsManager = createTabs(
     dataManager,
-    createHighlightsManagerMock() as any
+    createHighlightsManagerMock() as any,
+    {} as any
   );
   const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
 
@@ -448,7 +449,8 @@ describe("createBibleSelectorState", () => {
     const dataManager = createDataManager();
     const tabsManager = createTabs(
       dataManager,
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      {} as any
     );
     const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
 
@@ -535,7 +537,8 @@ describe("createBibleSelectorState", () => {
     const dataManager = createDataManager();
     const tabsManager = createTabs(
       dataManager,
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      {} as any
     );
     const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
 
@@ -574,7 +577,8 @@ describe("createBibleSelectorState", () => {
       const dataManager = createDataManager();
       const tabsManager = createTabs(
         dataManager,
-        createHighlightsManagerMock() as any
+        createHighlightsManagerMock() as any,
+        {} as any
       );
       const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
 

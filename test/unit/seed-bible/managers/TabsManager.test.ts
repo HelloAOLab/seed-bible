@@ -158,7 +158,8 @@ describe("createTabs", () => {
     setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
       createDataManager(),
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      {} as any
     );
     await waitForTabsToLoad(manager.tabs.value);
 
@@ -182,7 +183,8 @@ describe("createTabs", () => {
     setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
       createDataManager(),
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      {} as any
     );
     await waitForTabsToLoad(manager.tabs.value);
 
@@ -203,6 +205,7 @@ describe("createTabs", () => {
       allUsers: signal([]),
       connectedUsers: signal([]),
       currentUser: signal(null),
+      isHost: jest.fn().mockReturnValue(false),
     } as BibleReadingSession;
 
     const nextTab = manager.addTab(sharedSession);
@@ -217,7 +220,8 @@ describe("createTabs", () => {
     const dataManager = createDataManager();
     const manager = createTabs(
       dataManager,
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      {} as any
     );
     await waitForTabsToLoad(manager.tabs.value);
 
@@ -237,7 +241,8 @@ describe("createTabs", () => {
     setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
       createDataManager(),
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      {} as any
     );
     await waitForTabsToLoad(manager.tabs.value);
 
@@ -251,7 +256,8 @@ describe("createTabs", () => {
     setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
       createDataManager(),
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      {} as any
     );
     await waitForTabsToLoad(manager.tabs.value);
 
@@ -264,7 +270,8 @@ describe("createTabs", () => {
     setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
       createDataManager(),
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      {} as any
     );
     await waitForTabsToLoad(manager.tabs.value);
     const secondTab = manager.addTab();
@@ -296,7 +303,8 @@ describe("createTabs", () => {
 
     const manager = createTabs(
       createDataManager(),
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      {} as any
     );
     await waitForTabsToLoad(manager.tabs.value);
 
@@ -313,7 +321,8 @@ describe("createTabs", () => {
 
     const manager = createTabs(
       createDataManager(),
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      {} as any
     );
     await waitForTabsToLoad(manager.tabs.value);
 
@@ -336,7 +345,8 @@ describe("createTabs", () => {
 
     const manager = createTabs(
       dataManager,
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      {} as any
     );
     await waitForTabsToLoad(manager.tabs.value);
 
@@ -351,7 +361,8 @@ describe("createTabs", () => {
     setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
       createDataManager(),
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      {} as any
     );
     await waitForTabsToLoad(manager.tabs.value);
 
@@ -385,7 +396,8 @@ describe("createTabs", () => {
     setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
       createDataManager(),
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      {} as any
     );
     await waitForTabsToLoad(manager.tabs.value);
 
@@ -412,7 +424,8 @@ describe("createTabs", () => {
     setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
       createDataManager(),
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      {} as any
     );
     await waitForTabsToLoad(manager.tabs.value);
 
@@ -464,7 +477,8 @@ describe("createTabs", () => {
     try {
       const manager = createTabs(
         createDataManager(),
-        createHighlightsManagerMock() as any
+        createHighlightsManagerMock() as any,
+        {} as any
       );
       await waitForTabsToLoad(manager.tabs.value);
 
@@ -492,7 +506,8 @@ describe("createTabs", () => {
     try {
       const manager = createTabs(
         createDataManager(),
-        createHighlightsManagerMock() as any
+        createHighlightsManagerMock() as any,
+        {} as any
       );
       await waitForTabsToLoad(manager.tabs.value);
 

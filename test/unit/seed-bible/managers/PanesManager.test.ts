@@ -89,7 +89,8 @@ async function createManagers(options: { extraTabs?: number } = {}) {
   setWebResponses(createExampleManagerResponseMap());
   const tabsManager = createTabs(
     createDataManager(),
-    createHighlightsManagerMock() as any
+    createHighlightsManagerMock() as any,
+    {} as any
   );
   await waitForTabsToLoad(tabsManager.tabs.value);
   const initialSelectedTabId = tabsManager.selectedTabId.value;
