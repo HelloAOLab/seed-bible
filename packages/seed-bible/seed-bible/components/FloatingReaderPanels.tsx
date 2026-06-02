@@ -47,6 +47,10 @@ function getChatTitle(
     .filter((name) => name.length > 0);
 
   if (names.length === 0) {
+    if ("isShared" in chat && chat.isShared) {
+      return t("shared-chat", { defaultValue: "Shared Chat" });
+    }
+
     return t("chat", { defaultValue: "Chat" });
   }
 

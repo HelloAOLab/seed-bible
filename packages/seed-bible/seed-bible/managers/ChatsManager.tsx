@@ -214,9 +214,15 @@ export interface ChatSession {
   getMessageAuthors: (message: ChatMessage) => ChatParticipant[];
 }
 
+export interface SharedChatSession extends ChatSession {
+  isShared: true;
+  session: BibleReadingSession;
+}
+
 export interface ChatsManager {
   isOpen: Signal<boolean>;
   chats: ReadonlySignal<ChatSession[]>;
+  providers: ReadonlySignal<ChatProvider[]>;
   /** Total number of unread messages across all chat sessions. */
   numberOfUnreadMessages: ReadonlySignal<number>;
   /** Whether any unread message targets the local participant in any chat session. */
@@ -562,7 +568,7 @@ function getMostRecentProviderParticipant(
 function createSharedChatSession(
   session: BibleReadingSession,
   chatProviders: Signal<ChatProvider[]>
-): ChatSession {
+): SharedChatSession {
   const chats = session.document.getArray<unknown>("chats");
   const chatProvidersMap = session.document.getMap<unknown>("chat_providers");
   const participantAliasesMap = session.document.getMap<unknown>(
@@ -1136,6 +1142,8 @@ function createSharedChatSession(
         message,
         participantIdAliases.value
       ),
+    isShared: true,
+    session,
   };
 }
 
@@ -1532,6 +1540,7 @@ export function createChatsManager(loginManager: LoginManager): ChatsManager {
   return {
     isOpen,
     chats,
+    providers: chatProviders,
     numberOfUnreadMessages,
     wasMentioned,
     createSharedSession,
