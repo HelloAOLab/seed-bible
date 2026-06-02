@@ -163,6 +163,12 @@ export interface ChatSession {
   unreadMessages: ReadonlySignal<ChatMessage[]>;
   /** The message ID of the latest message the user has read, if any. */
   lastMessageRead: ReadonlySignal<string | null>;
+
+  /**
+   * Whether any unread messages target the local participant.
+   */
+  wasMentioned: ReadonlySignal<boolean>;
+
   /** Marks all current messages as read by moving lastMessageRead to the latest message ID. */
   markAsRead: () => void;
   /** Sends a message and notifies the other participants. */
@@ -878,11 +884,14 @@ function createSharedChatSession(
     );
   };
 
+  const wasMentioned = getWasMentionedSignal(participants, unreadMessages);
+
   return {
     id: uuid(),
     messages,
     unreadMessages,
     lastMessageRead,
+    wasMentioned,
     markAsRead,
     sendMessage,
     setTypingStatus: (isTyping: boolean) => {
@@ -897,6 +906,41 @@ function createSharedChatSession(
         participantIdAliases.value
       ),
   };
+}
+
+function getWasMentionedSignal(
+  participants: ReadonlySignal<(UserChatParticipant | AIChatParticipant)[]>,
+  unreadMessages: ReadonlySignal<
+    {
+      id: string;
+      authors: string[];
+      timeMs: number;
+      targets: string[];
+      type: "text";
+      text: string;
+    }[]
+  >
+) {
+  return computed(() => {
+    const selfParticipantIds = new Set(
+      participants.value
+        .filter((participant) => participant.isSelf)
+        .map((participant) => participant.id)
+    );
+    if (selfParticipantIds.size === 0) {
+      return false;
+    }
+
+    const unread = unreadMessages.value;
+    if (
+      unread.some((message) =>
+        message.targets.some((targetId) => selfParticipantIds.has(targetId))
+      )
+    ) {
+      return true;
+    }
+    return false;
+  });
 }
 
 function createLocalChatSession(
@@ -1056,11 +1100,14 @@ function createLocalChatSession(
     getUnreadMessagesSinceLastRead(messages.value, lastMessageRead.value)
   );
 
+  const wasMentioned = getWasMentionedSignal(participants, unreadMessages);
+
   return {
     id: uuid(),
     messages,
     unreadMessages,
     lastMessageRead,
+    wasMentioned,
     markAsRead,
     sendMessage,
     setTypingStatus: (isTyping: boolean) => {
@@ -1087,29 +1134,9 @@ export function createChatsManager(loginManager: LoginManager): ChatsManager {
     );
   });
 
-  const wasMentioned = computed(() => {
-    for (const chat of chats.value) {
-      const selfParticipantIds = new Set(
-        chat.participants.value
-          .filter((participant) => participant.isSelf)
-          .map((participant) => participant.id)
-      );
-      if (selfParticipantIds.size === 0) {
-        continue;
-      }
-
-      const unread = chat.unreadMessages.value;
-      if (
-        unread.some((message) =>
-          message.targets.some((targetId) => selfParticipantIds.has(targetId))
-        )
-      ) {
-        return true;
-      }
-    }
-
-    return false;
-  });
+  const wasMentioned = computed(() =>
+    chats.value.some((chat) => chat.wasMentioned.value)
+  );
 
   effect(() => {
     const currentSelectedChat = selectedChat.value;
