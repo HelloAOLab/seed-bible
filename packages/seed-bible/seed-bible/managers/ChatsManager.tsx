@@ -176,8 +176,14 @@ export interface ChatSession {
   /** Updates whether the local participant is currently typing. */
   setTypingStatus: (isTyping: boolean) => void;
   participants: ReadonlySignal<ChatParticipant[]>;
+  /** Participants that can be added to this chat session. */
+  availableParticipants: ReadonlySignal<ChatParticipant[]>;
   /** Participants currently typing. */
   typingParticipants: ReadonlySignal<ChatParticipant[]>;
+  /** Adds a participant to this chat session. */
+  addParticipant: (participantId: string) => void;
+  /** Removes a participant from this chat session. */
+  removeParticipant: (participantId: string) => void;
 
   /**
    * Gets the authors of a given message. Returns an empty array if the authors are anonymous or have left the session.
@@ -444,6 +450,35 @@ function parseTypingParticipantId(value: unknown): string | null {
   return typeof value === "string" && value.trim().length > 0 ? value : null;
 }
 
+function parseStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const entry of value) {
+    if (typeof entry !== "string") {
+      continue;
+    }
+    const trimmed = entry.trim();
+    if (trimmed.length === 0 || seen.has(trimmed)) {
+      continue;
+    }
+    seen.add(trimmed);
+    result.push(trimmed);
+  }
+
+  return result;
+}
+
+function stringArraysEqual(left: string[], right: string[]): boolean {
+  return (
+    left.length === right.length &&
+    left.every((value, index) => value === right[index])
+  );
+}
+
 function createParticipantTypingMapKey(participantId: string): string {
   return `participant:${participantId}`;
 }
@@ -513,9 +548,13 @@ function createSharedChatSession(
     "chat_participant_aliases"
   );
   const chatTypingMap = session.document.getMap<unknown>("chat_typing");
+  const chatSelectedParticipantsMap = session.document.getMap<unknown>(
+    "chat_selected_participants"
+  );
   const chatProvidersMapVersion = signal(0);
   const participantAliasesMapVersion = signal(0);
   const chatTypingMapVersion = signal(0);
+  const chatSelectedParticipantsMapVersion = signal(0);
   const participantIdAliases = signal<Record<string, string>>({});
   const localIsTyping = signal(false);
   chatProvidersMap.changes.subscribe(() => {
@@ -533,6 +572,11 @@ function createSharedChatSession(
   chatTypingMap.changes.subscribe(() => {
     queueMicrotask(() => {
       chatTypingMapVersion.value += 1;
+    });
+  });
+  chatSelectedParticipantsMap.changes.subscribe(() => {
+    queueMicrotask(() => {
+      chatSelectedParticipantsMapVersion.value += 1;
     });
   });
 
@@ -631,14 +675,15 @@ function createSharedChatSession(
     }
   });
 
-  const participants = computed(() => {
-    const localUserId = session.currentUser.value?.userId ?? null;
-    const localConnectionId = session.currentUser.value?.connectionId ?? null;
-    const localParticipantId = localUserId ?? localConnectionId;
+  const localParticipantId = computed(
+    () =>
+      session.currentUser.value?.userId ??
+      session.currentUser.value?.connectionId ??
+      null
+  );
 
-    const allUserParticipants = groupConnectedUsers(
-      session.allUsers.value as ConnectedUserLike[]
-    ).map(
+  const allUserParticipants = computed<UserChatParticipant[]>(() =>
+    groupConnectedUsers(session.allUsers.value as ConnectedUserLike[]).map(
       (group): UserChatParticipant => ({
         id: group.id,
         userId: group.userId,
@@ -650,22 +695,25 @@ function createSharedChatSession(
         isRemote: !group.isSelf,
         isActive: group.isActive,
       })
-    );
+    )
+  );
 
+  const sharedProviderParticipants = computed<AIChatParticipant[]>(() => {
+    const currentLocalParticipantId = localParticipantId.value;
+    const users = allUserParticipants.value;
     void chatProvidersMapVersion.value;
-    const sharedProviderParticipants: AIChatParticipant[] = [];
+
+    const providerParticipants: AIChatParticipant[] = [];
     chatProvidersMap.forEach((value, ownerParticipantId) => {
       const parsed = sharedAIChatParticipantArraySchema.safeParse(value);
       if (!parsed.success) {
         return;
       }
-      const owner = allUserParticipants.find(
-        (p) => p.id === ownerParticipantId
-      );
+      const owner = users.find((p) => p.id === ownerParticipantId);
       if (!owner) {
         return;
       }
-      sharedProviderParticipants.push(
+      providerParticipants.push(
         ...parsed.data.map(
           (p): AIChatParticipant => ({
             ...p,
@@ -673,14 +721,47 @@ function createSharedChatSession(
             userId: owner.userId,
             connectionId: owner.connectionId,
             isSelf: false,
-            isRemote: ownerParticipantId !== localParticipantId,
+            isRemote: ownerParticipantId !== currentLocalParticipantId,
             isActive: owner.isActive,
           })
         )
       );
     });
 
-    return [...allUserParticipants, ...sharedProviderParticipants];
+    return providerParticipants;
+  });
+
+  const selectedProviderParticipantIds = computed(() => {
+    void chatSelectedParticipantsMapVersion.value;
+    const ids = new Set<string>();
+    chatSelectedParticipantsMap.forEach((value) => {
+      for (const participantId of parseStringArray(value)) {
+        ids.add(participantId);
+      }
+    });
+    return ids;
+  });
+
+  const participants = computed(() => {
+    const selectedIds = selectedProviderParticipantIds.value;
+    return [
+      ...allUserParticipants.value,
+      ...sharedProviderParticipants.value.filter((p) => selectedIds.has(p.id)),
+    ];
+  });
+
+  const availableParticipants = computed<ChatParticipant[]>(() => {
+    const currentLocalParticipantId = localParticipantId.value;
+    if (!currentLocalParticipantId) {
+      return [];
+    }
+
+    const selectedIds = selectedProviderParticipantIds.value;
+    return sharedProviderParticipants.value.filter(
+      (participant) =>
+        participant.ownerParticipantId === currentLocalParticipantId &&
+        !selectedIds.has(participant.id)
+    );
   });
 
   const typingParticipants = computed(() => {
@@ -701,15 +782,15 @@ function createSharedChatSession(
 
   let previousLocalParticipantId: string | null = null;
   effect(() => {
-    const localUserId = session.currentUser.value?.userId ?? null;
-    const localConnectionId = session.currentUser.value?.connectionId ?? null;
-    const localParticipantId = localUserId ?? localConnectionId;
-
+    const currentLocalParticipantId = localParticipantId.value;
     const localProviderParticipants: SharedAIChatParticipant[] =
-      localParticipantId
+      currentLocalParticipantId
         ? chatProviders.value.map(
             (provider): SharedAIChatParticipant => ({
-              id: createProviderParticipantId(localParticipantId, provider.id),
+              id: createProviderParticipantId(
+                currentLocalParticipantId,
+                provider.id
+              ),
               name: provider.name,
               isAI: true,
             })
@@ -719,29 +800,61 @@ function createSharedChatSession(
     session.document.transact(() => {
       if (
         previousLocalParticipantId &&
-        previousLocalParticipantId !== localParticipantId
+        previousLocalParticipantId !== currentLocalParticipantId
       ) {
         chatProvidersMap.delete(previousLocalParticipantId);
+        chatSelectedParticipantsMap.delete(previousLocalParticipantId);
       }
 
-      if (!localParticipantId) {
+      if (!currentLocalParticipantId) {
         if (previousLocalParticipantId) {
           chatProvidersMap.delete(previousLocalParticipantId);
+          chatSelectedParticipantsMap.delete(previousLocalParticipantId);
         }
         previousLocalParticipantId = null;
         return;
       }
 
       const existingParticipants = sharedAIChatParticipantArraySchema.safeParse(
-        chatProvidersMap.get(localParticipantId)
+        chatProvidersMap.get(currentLocalParticipantId)
       );
       const currentValue = existingParticipants.success
         ? existingParticipants.data
         : [];
       if (!participantsMatch(currentValue, localProviderParticipants)) {
-        chatProvidersMap.set(localParticipantId, localProviderParticipants);
+        chatProvidersMap.set(
+          currentLocalParticipantId,
+          localProviderParticipants
+        );
       }
-      previousLocalParticipantId = localParticipantId;
+
+      const validParticipantIds = new Set(
+        localProviderParticipants.map((participant) => participant.id)
+      );
+      const currentSelectedParticipantIds = parseStringArray(
+        chatSelectedParticipantsMap.get(currentLocalParticipantId)
+      );
+      const nextSelectedParticipantIds = currentSelectedParticipantIds.filter(
+        (participantId) => validParticipantIds.has(participantId)
+      );
+
+      if (nextSelectedParticipantIds.length === 0) {
+        if (currentSelectedParticipantIds.length > 0) {
+          chatSelectedParticipantsMap.delete(currentLocalParticipantId);
+        }
+      } else if (
+        !stringArraysEqual(
+          currentSelectedParticipantIds,
+          nextSelectedParticipantIds
+        )
+      ) {
+        chatSelectedParticipantsMap.set(
+          currentLocalParticipantId,
+          nextSelectedParticipantIds
+        );
+      }
+
+      previousLocalParticipantId = currentLocalParticipantId;
     });
   });
 
@@ -898,7 +1011,67 @@ function createSharedChatSession(
       localIsTyping.value = isTyping;
     },
     participants,
+    availableParticipants,
     typingParticipants,
+    addParticipant: (participantId: string) => {
+      const currentLocalParticipantId = localParticipantId.value;
+      if (!currentLocalParticipantId) {
+        return;
+      }
+
+      const localProvider = sharedProviderParticipants.value.find(
+        (participant) =>
+          participant.id === participantId &&
+          participant.ownerParticipantId === currentLocalParticipantId
+      );
+      if (!localProvider) {
+        return;
+      }
+
+      session.document.transact(() => {
+        const currentSelectedParticipantIds = parseStringArray(
+          chatSelectedParticipantsMap.get(currentLocalParticipantId)
+        );
+        if (currentSelectedParticipantIds.includes(participantId)) {
+          return;
+        }
+        chatSelectedParticipantsMap.set(currentLocalParticipantId, [
+          ...currentSelectedParticipantIds,
+          participantId,
+        ]);
+      });
+    },
+    removeParticipant: (participantId: string) => {
+      const currentLocalParticipantId = localParticipantId.value;
+      if (!currentLocalParticipantId) {
+        return;
+      }
+
+      session.document.transact(() => {
+        const currentSelectedParticipantIds = parseStringArray(
+          chatSelectedParticipantsMap.get(currentLocalParticipantId)
+        );
+        const nextSelectedParticipantIds = currentSelectedParticipantIds.filter(
+          (id) => id !== participantId
+        );
+
+        if (nextSelectedParticipantIds.length === 0) {
+          chatSelectedParticipantsMap.delete(currentLocalParticipantId);
+        } else if (
+          !stringArraysEqual(
+            currentSelectedParticipantIds,
+            nextSelectedParticipantIds
+          )
+        ) {
+          chatSelectedParticipantsMap.set(
+            currentLocalParticipantId,
+            nextSelectedParticipantIds
+          );
+        }
+
+        chatTypingMap.delete(createParticipantTypingMapKey(participantId));
+      });
+    },
     getMessageAuthors: (message: ChatMessage) =>
       resolveMessageAuthors(
         participants.value,
@@ -958,7 +1131,7 @@ function createLocalChatSession(
     isRemote: false,
     isActive: true,
   }));
-  const chatProviderParticipants = computed<AIChatParticipant[]>(() =>
+  const allProviderParticipants = computed<AIChatParticipant[]>(() =>
     chatProviders.value.map((provider) => ({
       id: provider.id,
       ownerParticipantId: localParticipant.value.id,
@@ -971,16 +1144,60 @@ function createLocalChatSession(
       isActive: localParticipant.value.isActive,
     }))
   );
+  const selectedProviderParticipantIds = signal<string[]>([]);
+  const providerTypingParticipantIds = signal<string[]>([]);
 
-  const participants = computed<ChatParticipant[]>(() => [
-    localParticipant.value,
-    ...chatProviderParticipants.value,
-  ]);
+  effect(() => {
+    const validIds = new Set(
+      allProviderParticipants.value.map((participant) => participant.id)
+    );
+    const nextSelectedProviderParticipantIds =
+      selectedProviderParticipantIds.value.filter((participantId) =>
+        validIds.has(participantId)
+      );
+    if (
+      !stringArraysEqual(
+        selectedProviderParticipantIds.value,
+        nextSelectedProviderParticipantIds
+      )
+    ) {
+      selectedProviderParticipantIds.value = nextSelectedProviderParticipantIds;
+    }
+
+    const nextTypingParticipantIds = providerTypingParticipantIds.value.filter(
+      (participantId) =>
+        validIds.has(participantId) &&
+        nextSelectedProviderParticipantIds.includes(participantId)
+    );
+    if (
+      !stringArraysEqual(
+        providerTypingParticipantIds.value,
+        nextTypingParticipantIds
+      )
+    ) {
+      providerTypingParticipantIds.value = nextTypingParticipantIds;
+    }
+  });
+
+  const participants = computed<ChatParticipant[]>(() => {
+    const selectedIds = new Set(selectedProviderParticipantIds.value);
+    return [
+      localParticipant.value,
+      ...allProviderParticipants.value.filter((participant) =>
+        selectedIds.has(participant.id)
+      ),
+    ];
+  });
+  const availableParticipants = computed<ChatParticipant[]>(() => {
+    const selectedIds = new Set(selectedProviderParticipantIds.value);
+    return allProviderParticipants.value.filter(
+      (participant) => !selectedIds.has(participant.id)
+    );
+  });
   const messages = signal<ChatMessage[]>([]);
   const lastMessageRead = signal<string | null>(null);
   const localIsTyping = signal(false);
   const participantIdAliases = signal<Record<string, string>>({});
-  const providerTypingParticipantIds = signal<string[]>([]);
 
   let previousLocalParticipantId: string | null = null;
   effect(() => {
@@ -1006,8 +1223,8 @@ function createLocalChatSession(
     }
 
     const providerIds = new Set(providerTypingParticipantIds.value);
-    for (const participant of chatProviderParticipants.value) {
-      if (providerIds.has(participant.id)) {
+    for (const participant of participants.value) {
+      if (participant.isAI && providerIds.has(participant.id)) {
         typing.set(participant.id, participant);
       }
     }
@@ -1114,7 +1331,43 @@ function createLocalChatSession(
       localIsTyping.value = isTyping;
     },
     participants,
+    availableParticipants,
     typingParticipants,
+    addParticipant: (participantId: string) => {
+      const isKnownProvider = allProviderParticipants.value.some(
+        (participant) => participant.id === participantId
+      );
+      if (!isKnownProvider) {
+        return;
+      }
+
+      if (selectedProviderParticipantIds.value.includes(participantId)) {
+        return;
+      }
+
+      selectedProviderParticipantIds.value = [
+        ...selectedProviderParticipantIds.value,
+        participantId,
+      ];
+    },
+    removeParticipant: (participantId: string) => {
+      const nextSelectedProviderParticipantIds =
+        selectedProviderParticipantIds.value.filter(
+          (id) => id !== participantId
+        );
+      if (
+        stringArraysEqual(
+          selectedProviderParticipantIds.value,
+          nextSelectedProviderParticipantIds
+        )
+      ) {
+        return;
+      }
+
+      selectedProviderParticipantIds.value = nextSelectedProviderParticipantIds;
+      providerTypingParticipantIds.value =
+        providerTypingParticipantIds.value.filter((id) => id !== participantId);
+    },
     getMessageAuthors,
   };
 }

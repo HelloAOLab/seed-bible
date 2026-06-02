@@ -122,6 +122,7 @@ export function ContextMenuWithButton({
   className,
   onClick,
   onKeyDown,
+  icon = "more_vert",
   ...props
 }: {
   children: ComponentChildren;
@@ -129,6 +130,7 @@ export function ContextMenuWithButton({
   buttonClassName?: string;
   menuClassName?: string;
   iconClassName?: string;
+  icon?: string;
 } & ComponentProps<"button">) {
   const menuId = useSignal("");
   const menuStyle = useSignal<ComponentProps<"div">["style"]>(undefined);
@@ -277,9 +279,8 @@ export function ContextMenuWithButton({
             "sb-context-more-icon",
             iconClassName
           )}
-          // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
         >
-          more_vert
+          {icon}
         </span>
       </button>
       <ContextMenu

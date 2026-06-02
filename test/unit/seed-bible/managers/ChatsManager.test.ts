@@ -130,6 +130,7 @@ function createSharedSessionMock(options?: {
   const sharedChatProviders = new MockSharedMap<unknown>();
   const sharedParticipantAliases = new MockSharedMap<unknown>();
   const sharedTyping = new MockSharedMap<unknown>();
+  const sharedSelectedParticipants = new MockSharedMap<unknown>();
   const mappedConnectedUsers = options?.connectedUsers
     ? options.connectedUsers.map((user) => ({
         userId: user.id,
@@ -191,6 +192,9 @@ function createSharedSessionMock(options?: {
         if (name === "chat_typing") {
           return sharedTyping;
         }
+        if (name === "chat_selected_participants") {
+          return sharedSelectedParticipants;
+        }
         return new MockSharedMap<unknown>();
       }),
       transact: (callback: () => void) => callback(),
@@ -206,6 +210,7 @@ function createSharedSessionMock(options?: {
     sharedChatProviders,
     sharedParticipantAliases,
     sharedTyping,
+    sharedSelectedParticipants,
     connectedUsers,
     allUsers,
     currentUser,
@@ -1000,17 +1005,22 @@ describe("createChatsManager", () => {
 
   it("createSharedSession() keeps AI participants active only while owner is active", () => {
     const { loginManager } = createLoginManagerMock();
-    const { session, connectedUsers, allUsers, sharedChatProviders } =
-      createSharedSessionMock({
-        connectedSessionUsers: [
-          {
-            userId: "u1",
-            connectionId: "conn-u1",
-            name: "Alpha",
-            isSelf: false,
-          },
-        ],
-      });
+    const {
+      session,
+      connectedUsers,
+      allUsers,
+      sharedChatProviders,
+      sharedSelectedParticipants,
+    } = createSharedSessionMock({
+      connectedSessionUsers: [
+        {
+          userId: "u1",
+          connectionId: "conn-u1",
+          name: "Alpha",
+          isSelf: false,
+        },
+      ],
+    });
     sharedChatProviders.set("u1", [
       {
         id: "u1_provider-x",
@@ -1018,6 +1028,7 @@ describe("createChatsManager", () => {
         isAI: true,
       },
     ]);
+    sharedSelectedParticipants.set("u1", ["u1_provider-x"]);
 
     const chats = createChatsManager(loginManager);
     const chatSession = chats.createSharedSession(session);
@@ -1072,7 +1083,7 @@ describe("createChatsManager", () => {
     ).rejects.toThrow();
   });
 
-  it("registerProvider() adds AI provider participants to local sessions", () => {
+  it("registerProvider() adds AI provider participants to availableParticipants", () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);
     const session = chats.createLocalSession();
@@ -1086,7 +1097,7 @@ describe("createChatsManager", () => {
       }),
     });
 
-    expect(session.participants.value).toContainEqual({
+    expect(session.availableParticipants.value).toContainEqual({
       id: "provider-1",
       ownerParticipantId: session.participants.value[0]!.id,
       userId: null,
@@ -1098,9 +1109,21 @@ describe("createChatsManager", () => {
       isActive: true,
     });
 
-    unregister();
+    session.addParticipant("provider-1");
+    expect(session.participants.value).toContainEqual(
+      expect.objectContaining({
+        id: "provider-1",
+      })
+    );
+
+    session.removeParticipant("provider-1");
     expect(
       session.participants.value.find((p) => p.id === "provider-1")
+    ).toBeUndefined();
+
+    unregister();
+    expect(
+      session.availableParticipants.value.find((p) => p.id === "provider-1")
     ).toBeUndefined();
   });
 
@@ -1121,7 +1144,7 @@ describe("createChatsManager", () => {
       generateResponse: jest.fn(),
     });
 
-    const providerParticipants = session.participants.value.filter(
+    const providerParticipants = session.availableParticipants.value.filter(
       (p) => p.isAI
     );
     expect(providerParticipants).toHaveLength(1);
@@ -1150,7 +1173,7 @@ describe("createChatsManager", () => {
 
     unregisterOld();
 
-    expect(session.participants.value).toContainEqual({
+    expect(session.availableParticipants.value).toContainEqual({
       id: "provider-1",
       ownerParticipantId: session.participants.value[0]!.id,
       userId: null,
@@ -1163,7 +1186,7 @@ describe("createChatsManager", () => {
     });
   });
 
-  it("createSharedSession() publishes local providers into chat_providers map", () => {
+  it("createSharedSession() publishes local providers into chat_providers map", async () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);
     chats.registerProvider({
@@ -1196,7 +1219,7 @@ describe("createChatsManager", () => {
         isAI: true,
       },
     ]);
-    expect(chat.participants.value).toContainEqual({
+    expect(chat.availableParticipants.value).toContainEqual({
       id: "user-a_provider-1",
       ownerParticipantId: "user-a",
       userId: "user-a",
@@ -1207,6 +1230,14 @@ describe("createChatsManager", () => {
       isRemote: false,
       isActive: true,
     });
+
+    chat.addParticipant("user-a_provider-1");
+    await Promise.resolve();
+    expect(chat.participants.value).toContainEqual(
+      expect.objectContaining({
+        id: "user-a_provider-1",
+      })
+    );
   });
 
   it("createSharedSession() replaces provider participant entry in chat_providers by provider id", async () => {
@@ -1250,7 +1281,7 @@ describe("createChatsManager", () => {
         isAI: true,
       },
     ]);
-    expect(chat.participants.value).toContainEqual({
+    expect(chat.availableParticipants.value).toContainEqual({
       id: "user-a_provider-1",
       ownerParticipantId: "user-a",
       userId: "user-a",
@@ -1266,20 +1297,21 @@ describe("createChatsManager", () => {
   it("createSharedSession() merges shared provider participants from chat_providers map", () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);
-    const { session, sharedChatProviders } = createSharedSessionMock({
-      connectedUsers: [
-        {
-          id: "u1",
-          userId: "u1",
-          connectionId: null,
-          name: "Alpha",
-          isSelf: false,
-          isAI: false,
-          isRemote: true,
-          isActive: true,
-        },
-      ],
-    });
+    const { session, sharedChatProviders, sharedSelectedParticipants } =
+      createSharedSessionMock({
+        connectedUsers: [
+          {
+            id: "u1",
+            userId: "u1",
+            connectionId: null,
+            name: "Alpha",
+            isSelf: false,
+            isAI: false,
+            isRemote: true,
+            isActive: true,
+          },
+        ],
+      });
     sharedChatProviders.set("u1", [
       {
         id: "u1_provider-x",
@@ -1287,6 +1319,7 @@ describe("createChatsManager", () => {
         isAI: true,
       },
     ]);
+    sharedSelectedParticipants.set("u1", ["u1_provider-x"]);
 
     const chatSession = chats.createSharedSession(session);
 
@@ -1319,6 +1352,7 @@ describe("createChatsManager", () => {
       name: "Helper AI",
       generateResponse: providerResponse,
     });
+    session.addParticipant("provider-1");
 
     await session.sendMessage({
       type: "text",
@@ -1357,6 +1391,8 @@ describe("createChatsManager", () => {
       name: "Helper AI 2",
       generateResponse: secondProviderResponse,
     });
+    session.addParticipant("provider-1");
+    session.addParticipant("provider-2");
 
     await session.sendMessage({
       type: "text",
@@ -1396,6 +1432,8 @@ describe("createChatsManager", () => {
       name: "Helper AI 2",
       generateResponse: secondProviderResponse,
     });
+    session.addParticipant("provider-1");
+    session.addParticipant("provider-2");
 
     await session.sendMessage({
       type: "text",
@@ -1444,6 +1482,8 @@ describe("createChatsManager", () => {
       name: "Helper AI 2",
       generateResponse: secondProviderResponse,
     });
+    session.addParticipant("provider-1");
+    session.addParticipant("provider-2");
 
     await session.sendMessage({
       type: "text",
@@ -1480,6 +1520,7 @@ describe("createChatsManager", () => {
       name: "Helper AI",
       generateResponse: jest.fn().mockImplementation(() => deferred.promise),
     });
+    session.addParticipant("provider-1");
 
     const sendPromise = session.sendMessage({
       type: "text",
@@ -1533,6 +1574,8 @@ describe("createChatsManager", () => {
       ],
     });
     const chat = chats.createSharedSession(session);
+    chat.addParticipant("user-a_provider-1");
+    await Promise.resolve();
 
     const sendPromise = chat.sendMessage({
       type: "text",
@@ -1600,6 +1643,8 @@ describe("createChatsManager", () => {
       ],
     });
     const chatSession = chats.createSharedSession(session);
+    chatSession.addParticipant("self-user_provider-1");
+    await Promise.resolve();
 
     await chatSession.sendMessage({
       type: "text",

@@ -1,7 +1,11 @@
 import { useSignal } from "@preact/signals";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import { ChatView } from "./ChatView";
-import { closeContextMenus } from "seed-bible.components.ContextMenu";
+import {
+  closeContextMenus,
+  ContextMenuItem,
+  ContextMenuWithButton,
+} from "seed-bible.components.ContextMenu";
 import {
   DEFAULT_TRANSLATION_ID,
   DEFAULT_TRANSLATION_LANGUAGE,
@@ -59,6 +63,32 @@ function getParticipantLabel(
   return (
     participant.name?.trim() || t("anonymous", { defaultValue: "Anonymous" })
   );
+}
+
+function getAvatarInitials(label: string): string {
+  const words = label
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word.length > 0);
+  if (words.length === 0) {
+    return "?";
+  }
+
+  if (words.length === 1) {
+    return words[0]!.slice(0, 2).toUpperCase();
+  }
+
+  return `${words[0]![0] ?? ""}${words[1]![0] ?? ""}`.toUpperCase();
+}
+
+function getParticipantAvatar(participant: ChatParticipant): string | null {
+  if (participant.isAI) {
+    return null;
+  }
+  if (typeof participant.profile?.pictureUrl !== "string") {
+    return null;
+  }
+  return participant.profile.pictureUrl;
 }
 
 function getChatMessageText(message: ChatMessage): string {
@@ -576,6 +606,54 @@ function FloatingChatPanel(props: FloatingReaderPanelsProps) {
             ? getChatTitle(selectedChat, t)
             : t("chat", { defaultValue: "Chat" })}
         </p>
+
+        {selectedChat ? (
+          <ContextMenuWithButton
+            anchorClassName="sb-floating-chat-header-members-anchor"
+            buttonClassName="sb-floating-chat-header-members-button"
+            menuClassName="sb-floating-chat-members-menu"
+            icon="groups"
+            aria-label={t("active-participants", {
+              defaultValue: "Active participants",
+            })}
+            title={t("active-participants", {
+              defaultValue: "Active participants",
+            })}
+            onClick={() => {
+              closeContextMenus();
+            }}
+          >
+            {selectedChat.participants.value.map((participant) => {
+              const label = getParticipantLabel(participant, t);
+              const imageUrl = getParticipantAvatar(participant);
+              return (
+                <ContextMenuItem
+                  key={participant.id}
+                  className="sb-floating-chat-members-item"
+                  onClick={(event) => {
+                    event.preventDefault();
+                  }}
+                >
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt={`${label} avatar`}
+                      className="sb-floating-chat-members-avatar"
+                    />
+                  ) : (
+                    <span
+                      className="sb-floating-chat-members-avatar sb-floating-chat-members-avatar-fallback"
+                      aria-hidden="true"
+                    >
+                      {getAvatarInitials(label)}
+                    </span>
+                  )}
+                  <span className="sb-floating-chat-members-name">{label}</span>
+                </ContextMenuItem>
+              );
+            })}
+          </ContextMenuWithButton>
+        ) : null}
       </header>
 
       {selectedChat ? (

@@ -7342,10 +7342,57 @@ h6 {
 .sb-floating-chat-header-title {
   margin: 0;
   min-width: 0;
+  flex: 1;
   font-size: 15px;
   line-height: 1.3;
   font-weight: 700;
   color: var(--sb-font-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sb-floating-chat-header-members-anchor {
+  flex-shrink: 0;
+}
+
+.sb-floating-chat-header-members-button {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+}
+
+.sb-floating-chat-members-menu {
+  min-width: 220px;
+}
+
+.sb-floating-chat-members-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--sb-menu-font-color);
+}
+
+.sb-floating-chat-members-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.sb-floating-chat-members-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 87%);
+  color: color-mix(in srgb, var(--sb-font-color), transparent 14%);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.sb-floating-chat-members-name {
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
