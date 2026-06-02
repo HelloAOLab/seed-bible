@@ -190,7 +190,14 @@ export function createSeedBibleState(): SeedBibleState {
     chatsManager: chats,
     onOpenChatPanel: () => {
       if (chats.chats.value.length === 0) {
-        chats.createLocalSession();
+        const chat = chats.createLocalSession();
+        const availableParticipants = chat.availableParticipants.value;
+        const firstAvailableAIParticipant = availableParticipants.find(
+          (p) => p.isAI
+        );
+        if (firstAvailableAIParticipant) {
+          chat.addParticipant(firstAvailableAIParticipant.id);
+        }
       }
     },
   });
