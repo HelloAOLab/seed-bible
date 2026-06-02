@@ -17,12 +17,10 @@ import {
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { SettingsIcon } from "seed-bible.components.icons";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
-import type { UserProfile } from "seed-bible.managers.LoginManager";
 import {
   getSelfVisualKey,
   getUserAnimalVisual,
   type BibleReadingSession,
-  type ConnectedSessionUser,
 } from "seed-bible.managers.SessionsManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import { SidebarSearch } from "seed-bible.components.SidebarSearch";

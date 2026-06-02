@@ -8,7 +8,10 @@ import {
   type UserChatParticipant,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
-import type { BibleReadingSession } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
+import {
+  getUserAnimalVisual,
+  type BibleReadingSession,
+} from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 
 class MockSharedArray<T> {
   private values: T[];
@@ -247,6 +250,7 @@ describe("createChatsManager", () => {
         isAI: false,
         isRemote: false,
         isActive: true,
+        visual: getUserAnimalVisual("user-1"),
       },
     ]);
   });
@@ -316,6 +320,7 @@ describe("createChatsManager", () => {
           isAI: false,
           isRemote: false,
           isActive: true,
+          visual: getUserAnimalVisual("self-user"),
         },
         {
           id: "u1",
@@ -326,6 +331,7 @@ describe("createChatsManager", () => {
           isAI: false,
           isRemote: true,
           isActive: true,
+          visual: getUserAnimalVisual("u1"),
         },
       ],
     });
@@ -380,6 +386,7 @@ describe("createChatsManager", () => {
           isAI: false,
           isRemote: false,
           isActive: true,
+          visual: getUserAnimalVisual("self-user"),
         },
         {
           id: "u1",
@@ -390,6 +397,7 @@ describe("createChatsManager", () => {
           isAI: false,
           isRemote: true,
           isActive: true,
+          visual: getUserAnimalVisual("u1"),
         },
       ],
     });
@@ -422,6 +430,7 @@ describe("createChatsManager", () => {
         isAI: false,
         isRemote: false,
         isActive: true,
+        visual: getUserAnimalVisual("user-1"),
       },
       {
         id: "provider-1",
@@ -453,6 +462,7 @@ describe("createChatsManager", () => {
         isAI: false,
         isRemote: true,
         isActive: true,
+        visual: getUserAnimalVisual("u1"),
       },
       {
         id: "u2",
@@ -496,6 +506,7 @@ describe("createChatsManager", () => {
         isAI: false,
         isRemote: false,
         isActive: true,
+        visual: getUserAnimalVisual("user-1"),
       },
     ];
 
@@ -515,6 +526,7 @@ describe("createChatsManager", () => {
         isAI: false,
         isRemote: false,
         isActive: true,
+        visual: getUserAnimalVisual("user-1"),
       },
       {
         id: "provider-1",
@@ -544,6 +556,7 @@ describe("createChatsManager", () => {
         isAI: false,
         isRemote: true,
         isActive: true,
+        visual: getUserAnimalVisual("user-1"),
       },
     ];
 
@@ -570,6 +583,7 @@ describe("createChatsManager", () => {
       isAI: false,
       isRemote: false,
       isActive: true,
+      visual: getUserAnimalVisual("user-2"),
     });
   });
 
@@ -800,6 +814,7 @@ describe("createChatsManager", () => {
           isAI: false,
           isRemote: true,
           isActive: true,
+          visual: getUserAnimalVisual("u1"),
         },
         {
           id: "u2",
@@ -810,6 +825,7 @@ describe("createChatsManager", () => {
           isAI: false,
           isRemote: false,
           isActive: true,
+          visual: getUserAnimalVisual("u2"),
         },
       ],
       initialChats: [
@@ -838,6 +854,10 @@ describe("createChatsManager", () => {
         isAI: false,
         isRemote: true,
         isActive: true,
+        sessionUser: session.connectedUsers.value.find(
+          (u) => u.connectionId === "conn-u1"
+        )!,
+        visual: getUserAnimalVisual("u1"),
       },
       {
         id: "u2",
@@ -849,6 +869,10 @@ describe("createChatsManager", () => {
         isAI: false,
         isRemote: false,
         isActive: true,
+        sessionUser: session.connectedUsers.value.find(
+          (u) => u.connectionId === "conn-u2"
+        )!,
+        visual: getUserAnimalVisual("u2"),
       },
     ]);
 
@@ -864,6 +888,10 @@ describe("createChatsManager", () => {
         isAI: false,
         isRemote: true,
         isActive: true,
+        sessionUser: session.connectedUsers.value.find(
+          (u) => u.connectionId === "conn-u1"
+        )!,
+        visual: getUserAnimalVisual("u1"),
       },
     ]);
   });
@@ -901,6 +929,10 @@ describe("createChatsManager", () => {
         isAI: false,
         isRemote: true,
         isActive: true,
+        sessionUser: session.connectedUsers.value.find(
+          (u) => u.connectionId === "conn-u1-a"
+        )!,
+        visual: getUserAnimalVisual("u1"),
       },
     ]);
   });
@@ -938,6 +970,10 @@ describe("createChatsManager", () => {
         isAI: false,
         isRemote: true,
         isActive: true,
+        sessionUser: session.connectedUsers.value.find(
+          (u) => u.connectionId === "anon-1"
+        )!,
+        visual: getUserAnimalVisual("anon-1"),
       },
       {
         id: "anon-2",
@@ -949,6 +985,10 @@ describe("createChatsManager", () => {
         isAI: false,
         isRemote: true,
         isActive: true,
+        sessionUser: session.connectedUsers.value.find(
+          (u) => u.connectionId === "anon-2"
+        )!,
+        visual: getUserAnimalVisual("anon-2"),
       },
     ]);
   });
@@ -979,6 +1019,10 @@ describe("createChatsManager", () => {
       isAI: false,
       isRemote: true,
       isActive: true,
+      sessionUser: session.connectedUsers.value.find(
+        (u) => u.connectionId === "conn-u1"
+      )!,
+      visual: getUserAnimalVisual("u1"),
     });
 
     connectedUsers.value = [];
@@ -1004,6 +1048,8 @@ describe("createChatsManager", () => {
       isAI: false,
       isRemote: true,
       isActive: false,
+      sessionUser: allUsers.value.find((u) => u.connectionId === "conn-u1")!,
+      visual: getUserAnimalVisual("u1"),
     });
   });
 
@@ -1272,6 +1318,7 @@ describe("createChatsManager", () => {
           isAI: false,
           isRemote: false,
           isActive: true,
+          visual: getUserAnimalVisual("user-a"),
         },
       ],
     });
@@ -1335,6 +1382,7 @@ describe("createChatsManager", () => {
           isAI: false,
           isRemote: false,
           isActive: true,
+          visual: getUserAnimalVisual("user-a"),
         },
       ],
     });
@@ -1417,6 +1465,7 @@ describe("createChatsManager", () => {
           isAI: false,
           isRemote: false,
           isActive: true,
+          visual: getUserAnimalVisual("user-a"),
         },
       ],
     });
@@ -1474,6 +1523,7 @@ describe("createChatsManager", () => {
           isAI: false,
           isRemote: false,
           isActive: true,
+          visual: getUserAnimalVisual("user-a"),
         },
       ],
     });
@@ -1525,6 +1575,7 @@ describe("createChatsManager", () => {
             isAI: false,
             isRemote: true,
             isActive: true,
+            visual: getUserAnimalVisual("u1"),
           },
         ],
       });
@@ -1797,6 +1848,7 @@ describe("createChatsManager", () => {
           isAI: false,
           isRemote: false,
           isActive: true,
+          visual: getUserAnimalVisual("user-a"),
         },
       ],
     });
@@ -1857,6 +1909,7 @@ describe("createChatsManager", () => {
           isAI: false,
           isRemote: false,
           isActive: true,
+          visual: getUserAnimalVisual("self-user"),
         },
         {
           id: "u1",
@@ -1867,6 +1920,7 @@ describe("createChatsManager", () => {
           isAI: false,
           isRemote: true,
           isActive: true,
+          visual: getUserAnimalVisual("u1"),
         },
       ],
     });

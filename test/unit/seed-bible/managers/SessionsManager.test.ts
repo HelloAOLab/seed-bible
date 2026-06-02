@@ -1,6 +1,7 @@
 import { batch, signal } from "@preact/signals";
 import {
   createSessionsManager,
+  getUserAnimalVisual,
   type BibleReadingSession,
 } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import { createBibleReadingState } from "seed-bible.managers.BibleReadingManager";
@@ -1177,8 +1178,8 @@ describe("SessionsManager", () => {
             name: "Profile user-1",
           },
           isSelf: false,
-          color: expect.any(String),
           isActive: true,
+          visual: getUserAnimalVisual("conn-1"),
         },
         {
           connectionId: "conn-2",
@@ -1186,8 +1187,8 @@ describe("SessionsManager", () => {
           userId: null,
           profile: null,
           isSelf: false,
-          color: expect.any(String),
           isActive: true,
+          visual: getUserAnimalVisual("conn-2"),
         },
       ])
     );
@@ -1202,8 +1203,8 @@ describe("SessionsManager", () => {
             name: "Profile user-1",
           },
           isSelf: false,
-          color: expect.any(String),
           isActive: true,
+          visual: getUserAnimalVisual("conn-1"),
         },
         {
           connectionId: "conn-2",
@@ -1211,8 +1212,8 @@ describe("SessionsManager", () => {
           userId: null,
           profile: null,
           isSelf: false,
-          color: expect.any(String),
           isActive: true,
+          visual: getUserAnimalVisual("conn-2"),
         },
       ])
     );
@@ -1260,8 +1261,8 @@ describe("SessionsManager", () => {
             name: "Profile user-1",
           },
           isSelf: false,
-          color: expect.any(String),
           isActive: false,
+          visual: getUserAnimalVisual("conn-1"),
         },
       ])
     );
@@ -1297,8 +1298,8 @@ describe("SessionsManager", () => {
             name: "Old User",
           },
           isSelf: false,
-          color: expect.any(String),
           isActive: false,
+          visual: getUserAnimalVisual("conn-old"),
         },
       ])
     );
