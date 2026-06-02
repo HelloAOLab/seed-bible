@@ -221,8 +221,10 @@ function createSharedSessionMock(options?: {
 }
 
 describe("createChatsManager", () => {
+  let uuidCount = 0;
   beforeEach(() => {
-    (globalThis as any).uuid = jest.fn(() => "msg-1");
+    uuidCount = 0;
+    (globalThis as any).uuid = jest.fn(() => `msg-${++uuidCount}`);
     jest.spyOn(Date, "now").mockReturnValue(1_717_000_000_000);
   });
 
@@ -302,7 +304,7 @@ describe("createChatsManager", () => {
 
     session.markAsRead();
 
-    expect(session.lastMessageRead.value).toBe("msg-1");
+    expect(session.lastMessageRead.value).toBe("msg-2");
   });
 
   it("tracks unreadMessages and wasMentioned across chats", () => {
@@ -602,7 +604,7 @@ describe("createChatsManager", () => {
 
     expect(session.messages.value).toHaveLength(1);
     expect(session.messages.value[0]).toMatchObject({
-      id: "msg-1",
+      id: "msg-2",
       authors: ["user-3"],
       targets: [],
       timeMs: 1_717_000_000_000,
@@ -1881,6 +1883,142 @@ describe("createChatsManager", () => {
         id: "user-a_provider-1",
       })
     );
+  });
+
+  it("sendMessage() incrementally updates local provider responses when streaming", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const firstChunk = createDeferred<IteratorResult<string>>();
+    const secondChunk = createDeferred<IteratorResult<string>>();
+
+    const stream = {
+      next: jest
+        .fn<Promise<IteratorResult<string>>, []>()
+        .mockImplementationOnce(() => firstChunk.promise)
+        .mockImplementationOnce(() => secondChunk.promise)
+        .mockResolvedValue({ done: true, value: undefined as any }),
+    };
+
+    const chats = createChatsManager(loginManager);
+    const session = chats.createLocalSession();
+
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: jest.fn().mockResolvedValue({
+        type: "text",
+        text: stream,
+      }),
+    });
+    session.addParticipant("provider-1");
+
+    const sendPromise = session.sendMessage({
+      type: "text",
+      text: "Hello there",
+    });
+
+    await Promise.resolve();
+    expect(session.messages.value).toHaveLength(1);
+
+    firstChunk.resolve({ done: false, value: "Hel" });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(session.messages.value).toHaveLength(2);
+    expect(session.messages.value[1]).toMatchObject({
+      authors: ["provider-1"],
+      type: "text",
+      text: "Hel",
+    });
+
+    secondChunk.resolve({ done: false, value: "lo" });
+    await sendPromise;
+
+    expect(session.messages.value).toHaveLength(2);
+    expect(session.messages.value[1]).toMatchObject({
+      authors: ["provider-1"],
+      type: "text",
+      text: "Hello",
+    });
+  });
+
+  it("createSharedSession() incrementally updates provider responses when streaming", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager);
+
+    const firstChunk = createDeferred<IteratorResult<string>>();
+    const secondChunk = createDeferred<IteratorResult<string>>();
+
+    const stream = {
+      next: jest
+        .fn<Promise<IteratorResult<string>>, []>()
+        .mockImplementationOnce(() => firstChunk.promise)
+        .mockImplementationOnce(() => secondChunk.promise)
+        .mockResolvedValue({ done: true, value: undefined as any }),
+    };
+
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: jest.fn().mockResolvedValue({
+        type: "text",
+        text: stream,
+      }),
+    });
+
+    const { session } = createSharedSessionMock({
+      currentUserId: "user-a",
+      connectedUsers: [
+        {
+          id: "user-a",
+          userId: "user-a",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+          visual: getUserAnimalVisual("user-a"),
+        },
+      ],
+    });
+    const chat = chats.createSharedSession(session);
+    chat.addParticipant("user-a_provider-1");
+    await Promise.resolve();
+
+    const sendPromise = chat.sendMessage({
+      type: "text",
+      text: "Hello @user-a_provider-1",
+    });
+
+    await Promise.resolve();
+    expect(chat.messages.value).toHaveLength(1);
+
+    firstChunk.resolve({ done: false, value: "Sha" });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(chat.messages.value).toHaveLength(2);
+    expect(chat.messages.value[1]).toMatchObject({
+      authors: ["user-a_provider-1"],
+      type: "text",
+      text: "Sha",
+    });
+
+    secondChunk.resolve({ done: false, value: "red" });
+    await sendPromise;
+    await Promise.resolve();
+
+    expect(chat.messages.value).toHaveLength(2);
+    expect(chat.messages.value[1]).toMatchObject({
+      authors: ["user-a_provider-1"],
+      type: "text",
+      text: "Shared",
+    });
   });
 
   it("createSharedSession() stores targets matched by remote participant name and local AI name", async () => {

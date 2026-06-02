@@ -65,6 +65,21 @@ export const chatMessageOptionsSchema = z.discriminatedUnion("type", [
 
 export type ChatMessageOptions = z.infer<typeof chatMessageOptionsSchema>;
 
+export type ChatProviderTextStream =
+  | Iterable<string>
+  | AsyncIterable<string>
+  | Iterator<string>
+  | AsyncIterator<string>;
+
+export interface StreamingTextChatMessageOptions {
+  type: "text";
+  text: ChatProviderTextStream;
+}
+
+export type ChatProviderMessageOptions =
+  | ChatMessageOptions
+  | StreamingTextChatMessageOptions;
+
 export interface ChatContext {
   messages: ChatMessage[];
   participant: ChatParticipant;
@@ -89,7 +104,10 @@ export interface ChatProvider {
   /** Generates a response for the given chat context. */
   generateResponse: (
     context: ChatContext
-  ) => ChatMessageOptions | Promise<ChatMessageOptions | null> | null;
+  ) =>
+    | ChatProviderMessageOptions
+    | Promise<ChatProviderMessageOptions | null>
+    | null;
   /** Called when this provider is added as a participant to a chat. */
   onJoinChat?: (context: JoinLeaveChatContext) => void | Promise<void>;
   /** Called when this provider is removed as a participant from a chat. */
@@ -327,12 +345,16 @@ function groupConnectedUsers(
 function createChatMessage(
   options: ChatMessageOptions,
   authors: string[],
-  targets: string[]
+  targets: string[],
+  metadata?: {
+    id?: string;
+    timeMs?: number;
+  }
 ): ChatMessage {
   const validMessage = chatMessageOptionsSchema.parse(options);
   return {
-    id: uuid(),
-    timeMs: Date.now(),
+    id: metadata?.id ?? uuid(),
+    timeMs: metadata?.timeMs ?? Date.now(),
     authors,
     targets,
     ...validMessage,
@@ -344,6 +366,77 @@ function createProviderParticipantId(
   providerId: string
 ): string {
   return `${ownerParticipantId}_${providerId}`;
+}
+
+function toAsyncTextIterator(
+  stream: ChatProviderTextStream
+): AsyncIterator<string> {
+  if (
+    typeof (stream as AsyncIterable<string>)[Symbol.asyncIterator] ===
+    "function"
+  ) {
+    return (stream as AsyncIterable<string>)[Symbol.asyncIterator]();
+  }
+  if (typeof (stream as Iterable<string>)[Symbol.iterator] === "function") {
+    const iterator = (stream as Iterable<string>)[Symbol.iterator]();
+    return {
+      next: async () => {
+        const next = iterator.next();
+        return {
+          done: next.done ?? false,
+          value: (next.value ?? "") as string,
+        };
+      },
+    };
+  }
+  if (typeof (stream as AsyncIterator<string>).next === "function") {
+    return stream as AsyncIterator<string>;
+  }
+
+  return {
+    next: async () => ({
+      done: true,
+      value: undefined as unknown as string,
+    }),
+  };
+}
+
+async function consumeProviderTextStream(options: {
+  stream: ChatProviderTextStream;
+  onChunk: (currentText: string) => void;
+}): Promise<string> {
+  const iterator = toAsyncTextIterator(options.stream);
+  let text = "";
+
+  while (true) {
+    const next = await iterator.next();
+    if (next.done) {
+      break;
+    }
+    if (typeof next.value !== "string") {
+      continue;
+    }
+
+    text += next.value;
+    options.onChunk(text);
+  }
+
+  return text;
+}
+
+function upsertMessageInList(
+  messages: ChatMessage[],
+  nextMessage: ChatMessage
+) {
+  const existingIndex = messages.findIndex(
+    (message) => message.id === nextMessage.id
+  );
+  if (existingIndex < 0) {
+    return [...messages, nextMessage];
+  }
+  return messages.map((message, index) =>
+    index === existingIndex ? nextMessage : message
+  );
 }
 
 function escapeRegExp(text: string): string {
@@ -624,13 +717,21 @@ function createSharedChatSession(
   };
 
   const readValidChats = (): ChatMessage[] => {
-    return chats
+    const validMessages = chats
       .toArray()
       .map((rawMessage) => {
         const parsed = chatMessageSchema.safeParse(rawMessage);
         return parsed.success ? parsed.data : null;
       })
       .filter((message): message is ChatMessage => message !== null);
+
+    // Keep only the latest version of each message ID to support streaming
+    // updates when a shared array backend cannot replace items in place.
+    const deduped = new Map<string, ChatMessage>();
+    for (const message of validMessages) {
+      deduped.set(message.id, message);
+    }
+    return Array.from(deduped.values()).sort((a, b) => a.timeMs - b.timeMs);
   };
 
   const messages = signal<ChatMessage[]>(readValidChats());
@@ -638,6 +739,28 @@ function createSharedChatSession(
   chats.changes.subscribe(() => {
     messages.value = readValidChats();
   });
+
+  const upsertSharedMessage = (nextMessage: ChatMessage) => {
+    session.document.transact(() => {
+      const existingMessages = chats.toArray();
+      const existingIndex = existingMessages.findIndex(
+        (entry) =>
+          typeof entry === "object" &&
+          entry !== null &&
+          (entry as { id?: unknown }).id === nextMessage.id
+      );
+
+      if (existingIndex >= 0 && typeof chats.delete === "function") {
+        chats.delete(existingIndex, 1);
+        if (typeof chats.insert === "function") {
+          chats.insert(existingIndex, [nextMessage]);
+          return;
+        }
+      }
+
+      chats.push(nextMessage);
+    });
+  };
 
   const unreadMessages = computed(() =>
     getUnreadMessagesSinceLastRead(messages.value, lastMessageRead.value)
@@ -1021,13 +1144,58 @@ function createSharedChatSession(
           if (!response) {
             return;
           }
-          const responseTargets =
-            response.type === "text"
-              ? resolveMessageTargets(participants.value, response.text)
-              : [];
+
+          const streamingText =
+            response.type === "text" && typeof response.text !== "string"
+              ? response.text
+              : null;
+
+          if (streamingText) {
+            const messageId = uuid();
+            const messageTimeMs = Date.now();
+
+            const upsertStreamingResponse = (text: string) => {
+              const responseTargets = resolveMessageTargets(
+                participants.value,
+                text
+              );
+              const nextResponseMessage = createChatMessage(
+                {
+                  type: "text",
+                  text,
+                },
+                [participant.id],
+                responseTargets.map((target) => target.id),
+                {
+                  id: messageId,
+                  timeMs: messageTimeMs,
+                }
+              );
+              upsertSharedMessage(nextResponseMessage);
+            };
+
+            const finalText = await consumeProviderTextStream({
+              stream: streamingText,
+              onChunk: upsertStreamingResponse,
+            });
+            upsertStreamingResponse(finalText);
+            return;
+          }
+
+          if (response.type !== "text" || typeof response.text !== "string") {
+            return;
+          }
+
+          const responseTargets = resolveMessageTargets(
+            participants.value,
+            response.text
+          );
           chats.push(
             createChatMessage(
-              response,
+              {
+                type: "text",
+                text: response.text,
+              },
               [participant.id],
               responseTargets.map((target) => target.id)
             )
@@ -1360,14 +1528,62 @@ function createLocalChatSession(
           if (!response) {
             return;
           }
-          const responseTargets =
-            response.type === "text"
-              ? resolveMessageTargets(participants.value, response.text)
-              : [];
+
+          const streamingText =
+            response.type === "text" && typeof response.text !== "string"
+              ? response.text
+              : null;
+
+          if (streamingText) {
+            const messageId = uuid();
+            const messageTimeMs = Date.now();
+
+            const upsertStreamingResponse = (text: string) => {
+              const responseTargets = resolveMessageTargets(
+                participants.value,
+                text
+              );
+              const nextResponseMessage = createChatMessage(
+                {
+                  type: "text",
+                  text,
+                },
+                [target.id],
+                responseTargets.map((entry) => entry.id),
+                {
+                  id: messageId,
+                  timeMs: messageTimeMs,
+                }
+              );
+              messages.value = upsertMessageInList(
+                messages.value,
+                nextResponseMessage
+              );
+            };
+
+            const finalText = await consumeProviderTextStream({
+              stream: streamingText,
+              onChunk: upsertStreamingResponse,
+            });
+            upsertStreamingResponse(finalText);
+            return;
+          }
+
+          if (response.type !== "text" || typeof response.text !== "string") {
+            return;
+          }
+
+          const responseTargets = resolveMessageTargets(
+            participants.value,
+            response.text
+          );
           messages.value = [
             ...messages.value,
             createChatMessage(
-              response,
+              {
+                type: "text",
+                text: response.text,
+              },
               [target.id],
               responseTargets.map((entry) => entry.id)
             ),
