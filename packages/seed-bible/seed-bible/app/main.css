@@ -7307,6 +7307,95 @@ h6 {
   padding: 22px 24px;
 }
 
+.sb-floating-chat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 360px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.sb-floating-chat-list-item {
+  width: 100%;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  background: color-mix(in srgb, var(--sb-background, #fff), transparent 8%);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.sb-floating-chat-list-item:hover,
+.sb-floating-chat-list-item:focus-visible {
+  border-color: color-mix(in srgb, var(--sb-primary-color), transparent 45%);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 92%);
+}
+
+.sb-floating-chat-list-item:active {
+  transform: translateY(1px);
+}
+
+.sb-floating-chat-list-item-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sb-floating-chat-list-item-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--sb-font-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sb-floating-chat-list-item-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.sb-floating-chat-list-item-time {
+  font-size: 12px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-floating-chat-list-item-unread {
+  min-width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--sb-primary-color);
+}
+
+.sb-floating-chat-list-item-preview {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .sb-chat-view {
   display: flex;
   flex-direction: column;

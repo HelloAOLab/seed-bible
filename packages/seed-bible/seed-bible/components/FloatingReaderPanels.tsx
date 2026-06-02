@@ -6,6 +6,11 @@ import {
   DEFAULT_TRANSLATION_ID,
   DEFAULT_TRANSLATION_LANGUAGE,
 } from "seed-bible.managers.BibleReadingManager";
+import type {
+  ChatMessage,
+  ChatParticipant,
+  ChatSession,
+} from "seed-bible.managers.ChatsManager";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
 
@@ -19,6 +24,89 @@ interface SearchResult {
   verseNumber: number | null;
   reference: string;
   text: string;
+}
+
+function getLatestChatMessage(chat: ChatSession): ChatMessage | null {
+  return chat.messages.value.at(-1) ?? null;
+}
+
+function getChatTitle(
+  chat: ChatSession,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  const participants = chat.participants.value;
+  const preferred = participants.filter((participant) => !participant.isSelf);
+  const pool = preferred.length > 0 ? preferred : participants;
+
+  const names = pool
+    .map((participant) => participant.name?.trim() ?? "")
+    .filter((name) => name.length > 0);
+
+  if (names.length === 0) {
+    return t("chat", { defaultValue: "Chat" });
+  }
+
+  return names.slice(0, 3).join(", ");
+}
+
+function getParticipantLabel(
+  participant: ChatParticipant,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  if (participant.isSelf) {
+    return t("you", { defaultValue: "You" });
+  }
+  return (
+    participant.name?.trim() || t("anonymous", { defaultValue: "Anonymous" })
+  );
+}
+
+function getChatMessageText(message: ChatMessage): string {
+  switch (message.type) {
+    case "text":
+      return message.text;
+    default:
+      return "";
+  }
+}
+
+function getChatPreview(
+  chat: ChatSession,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  const latestMessage = getLatestChatMessage(chat);
+  if (!latestMessage) {
+    return t("no-chat-messages", { defaultValue: "No messages yet" });
+  }
+
+  const author = chat.getMessageAuthors(latestMessage)[0] ?? null;
+  const authorLabel = author
+    ? getParticipantLabel(author, t)
+    : t("anonymous", { defaultValue: "Anonymous" });
+  const text = getChatMessageText(latestMessage).trim();
+  if (!text) {
+    return authorLabel;
+  }
+  return `${authorLabel}: ${text}`;
+}
+
+function ChatListRelativeDateTime({ timeMs }: { timeMs: number }) {
+  const { language } = useI18n();
+  const refreshTick = useSignal(0);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      refreshTick.value += 1;
+    }, 30_000);
+
+    return () => {
+      window.clearInterval(id);
+    };
+  }, []);
+
+  void refreshTick.value;
+  const date = DateTime.fromMillis(timeMs).setLocale(language);
+  return <span>{date.toRelative()}</span>;
 }
 
 function getOrCreateSearchTargetTab(state: SeedBibleState): ReaderTab {
@@ -430,7 +518,8 @@ function FloatingChatPanel(props: FloatingReaderPanelsProps) {
   const { sidebar } = state;
   const { t } = useI18n();
   const isOpen = sidebar.isChatPanelOpen.value;
-  const chat = state.chats.chats.value[0] ?? null;
+  const selectedChat = state.chats.selectedChat.value;
+  const chats = state.chats.chats.value;
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -465,23 +554,91 @@ function FloatingChatPanel(props: FloatingReaderPanelsProps) {
       role="dialog"
       aria-label={t("chat", { defaultValue: "Chat" })}
     >
-      {chat ? (
-        <ChatView chat={chat} />
+      {selectedChat ? (
+        <ChatView chat={selectedChat} />
       ) : (
-        <div className="sb-floating-chat-empty">
-          <span
-            className="material-symbols-outlined sb-floating-chat-empty-icon"
-            aria-hidden="true"
-          >
-            chat_bubble_outline
-          </span>
-          <p className="sb-floating-chat-empty-title">
-            {t("chat-coming-soon", {
-              defaultValue: "No chat session available",
-            })}
-          </p>
-        </div>
+        <>
+          {chats.length > 0 ? (
+            <ChatList chats={chats} state={state} />
+          ) : (
+            <NoChatsAvailable />
+          )}
+        </>
       )}
+    </div>
+  );
+}
+
+function NoChatsAvailable() {
+  const { t } = useI18n();
+  return (
+    <div className="sb-floating-chat-empty">
+      <span
+        className="material-symbols-outlined sb-floating-chat-empty-icon"
+        aria-hidden="true"
+      >
+        chat_bubble_outline
+      </span>
+      <p className="sb-floating-chat-empty-title">
+        {t("chat-coming-soon", {
+          defaultValue: "No chat session available",
+        })}
+      </p>
+    </div>
+  );
+}
+
+function ChatList({
+  chats,
+  state,
+}: {
+  chats: ChatSession[];
+  state: SeedBibleState;
+}) {
+  const { t } = useI18n();
+
+  return (
+    <div className="sb-floating-chat-list" role="listbox">
+      {chats.map((chat) => {
+        const latestMessage = getLatestChatMessage(chat);
+        const unreadCount = chat.unreadMessages.value.length;
+        return (
+          <button
+            key={chat.id}
+            type="button"
+            className="sb-floating-chat-list-item"
+            onClick={() => {
+              state.chats.selectChat(chat.id);
+            }}
+            role="option"
+            aria-selected="false"
+            title={getChatTitle(chat, t)}
+          >
+            <div className="sb-floating-chat-list-item-header">
+              <span className="sb-floating-chat-list-item-title">
+                {getChatTitle(chat, t)}
+              </span>
+              <div className="sb-floating-chat-list-item-meta">
+                {latestMessage ? (
+                  <span className="sb-floating-chat-list-item-time">
+                    <ChatListRelativeDateTime timeMs={latestMessage.timeMs} />
+                  </span>
+                ) : null}
+
+                {unreadCount > 0 ? (
+                  <span className="sb-floating-chat-list-item-unread">
+                    {unreadCount > 99 ? "99+" : `${unreadCount}`}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+
+            <p className="sb-floating-chat-list-item-preview">
+              {getChatPreview(chat, t)}
+            </p>
+          </button>
+        );
+      })}
     </div>
   );
 }
