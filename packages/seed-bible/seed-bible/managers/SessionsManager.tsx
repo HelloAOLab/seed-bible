@@ -12,16 +12,19 @@ import type {
   UserProfile,
 } from "seed-bible.managers.LoginManager";
 
+export interface ConnectionSessionUserVisual {
+  defaultIcon: string;
+  color: string;
+}
+
 export interface ConnectedSessionUser extends SessionConnectionInfo {
   /**
    * The user's profile information. Null if the user is not logged in or if the profile information could not be loaded.
    */
   profile: UserProfile | null;
 
-  /**
-   * A color assigned to this user for display purposes. This is generated based on the connection ID.
-   */
-  color: string;
+  /** The visual representation of the user, including icon and color. */
+  visual: ConnectionSessionUserVisual;
 
   /**
    * Whether this user is currently connected to the session.
@@ -305,6 +308,109 @@ function canLoadSessionData(sessionData: SessionData): sessionData is {
   );
 }
 
+/**
+ * Deterministic animal-icon + color assignment for a user.
+ *
+ * One function, one rule: a given user key always maps to the same
+ * `(icon, color)` pair — everywhere on every client. No list context, no
+ * walk-forward. Used for:
+ *   - The sidebar self-avatar (bottom-right)
+ *   - The connected-users list inside a shared tab
+ *   - The "Shared with you" toasts
+ *
+ * We lift the palette to 10 icons × 12 colors = 120 combos. Collision
+ * probability for N users visible at the same time is `1 - Π(1 - i/120)`
+ * for i ∈ [0..N-1] — ~4% for 3 users, ~8% for 5 users. In exchange we get
+ * full cross-client and cross-surface consistency: the color you see on
+ * the sidebar is the same color the tab shows is the same color every
+ * other participant sees for you.
+ */
+const USER_ANIMAL_ICONS = [
+  "forest", // tree
+  "park", // log
+  "eco", // leaf
+  "pets", // cat/dog
+  "cruelty_free", // bunny-style
+  "local_cafe", // coffee
+  "local_florist", // flower
+  "grass", // grass
+  "potted_plant", // plant
+  "nature", // mountain/tree
+] as const;
+
+const USER_PRESENCE_COLORS = [
+  "#34D399", // emerald
+  "#60A5FA", // blue
+  "#F472B6", // pink
+  "#FBBF24", // amber
+  "#A78BFA", // violet
+  "#F87171", // red
+  "#10B981", // green
+  "#F59E0B", // orange
+  "#06B6D4", // cyan
+  "#EC4899", // rose
+  "#8B5CF6", // purple
+  "#14B8A6", // teal
+] as const;
+
+function hashUserKey(key: string): number {
+  let h = 5381;
+  for (let i = 0; i < key.length; i++) {
+    h = ((h << 5) + h) ^ key.charCodeAt(i);
+  }
+  return h >>> 0;
+}
+
+/**
+ * Pure-hash user visual. Same input → same output, forever. The icon and
+ * color are derived independently from the hash so small changes to the
+ * key (e.g. user id suffix) distribute across the whole palette.
+ */
+export function getUserAnimalVisual(key: string): ConnectionSessionUserVisual {
+  const normalized = key && key.length > 0 ? key : "anonymous";
+  const hash = hashUserKey(normalized);
+  const iconIndex = hash % USER_ANIMAL_ICONS.length;
+  const colorIndex =
+    Math.floor(hash / USER_ANIMAL_ICONS.length) % USER_PRESENCE_COLORS.length;
+  return {
+    defaultIcon: USER_ANIMAL_ICONS[iconIndex]!,
+    color: USER_PRESENCE_COLORS[colorIndex]!,
+  };
+}
+
+/**
+ * Returns the current client's identity key. For a user visible inside a
+ * session, use whatever the `ConnectedSessionUser` entry exposes (userId
+ * if logged in, otherwise connectionId). For the sidebar self-avatar we
+ * derive the SAME thing from `login.userId` with a fallback to
+ * `configBot.id` — so the two call sites always agree on the key and
+ * therefore on the visual.
+ */
+export function getSelfVisualKey(userId: string | null): string {
+  if (userId) return userId;
+  try {
+    if (typeof configBot !== "undefined" && configBot?.id) {
+      return String(configBot.id);
+    }
+  } catch {
+    /* ignore */
+  }
+  return "me";
+}
+
+/**
+ * Given a `ConnectedSessionUser`, returns the SAME key that the sidebar
+ * self-avatar would use for this same person on their own client. This
+ * guarantees visual consistency between "how I see myself in the sidebar"
+ * and "how others see me in the connected users row".
+ */
+export function getConnectedUserVisualKey(user: {
+  userId?: string | null;
+  connectionId?: string | null;
+}): string {
+  return user.userId ?? user.connectionId ?? "anonymous";
+}
+
 export interface BibleReadingSession {
   id: string;
   document: SharedDocument;
@@ -314,6 +420,13 @@ export interface BibleReadingSession {
   allUsers: ReadonlySignal<ConnectedSessionUser[]>;
   connectedUsers: ReadonlySignal<ConnectedSessionUser[]>;
   currentUser: ReadonlySignal<ConnectedSessionUser | null>;
+
+  /**
+   * Whether the given user is the session host, based on the session's current options.
+   * @param user The user to check.
+   */
+  isHost(user: ConnectedSessionUser | null): boolean;
+
   /**
    * Removes a decoration by id from the session's shared CRDT map. Use
    * this instead of `readingState.removeDecoration` when you need the
@@ -337,29 +450,6 @@ function toPositiveIntOrNull(value: unknown): number | null {
   return typeof value === "number" && Number.isFinite(value) && value > 0
     ? Math.floor(value)
     : null;
-}
-
-export const connectedUserColors = [
-  "#34D399",
-  "#60A5FA",
-  "#F472B6",
-  "#FBBF24",
-  "#A78BFA",
-  "#F87171",
-  "#10B981",
-  "#F59E0B",
-];
-
-function hashString(str: string): number {
-  let h = 5381;
-  for (let i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
-  return h >>> 0;
-}
-
-function getRandomColor(key: string): string {
-  const color =
-    connectedUserColors[hashString(key) % connectedUserColors.length];
-  return color ?? "#E5E7EB";
 }
 
 async function createBibleReadingSession(
@@ -531,7 +621,7 @@ async function createBibleReadingSession(
           }
         }
 
-        const color = getRandomColor(client.connectionId);
+        const visual = getUserAnimalVisual(client.connectionId);
 
         return {
           isSelf: client.isSelf,
@@ -539,7 +629,7 @@ async function createBibleReadingSession(
           sessionId: client.sessionId,
           userId: effectiveUserId,
           profile,
-          color: color,
+          visual,
           isActive: true,
         };
       })
@@ -586,7 +676,7 @@ async function createBibleReadingSession(
         sessionId: null,
         userId: sharedEntry.userId,
         profile: sharedEntry.profile,
-        color: getRandomColor(connectionId),
+        visual: getUserAnimalVisual(connectionId),
         isActive: false,
       });
     });
@@ -973,6 +1063,15 @@ async function createBibleReadingSession(
     document.unsubscribe();
   };
 
+  const isHost = (user: ConnectedSessionUser | null): boolean => {
+    if (!user) return false;
+    const hostUserId = options.value.hostUserId;
+    if (!hostUserId) {
+      return false;
+    }
+    return user.userId === hostUserId || user.connectionId === hostUserId;
+  };
+
   return {
     id,
     document,
@@ -984,6 +1083,7 @@ async function createBibleReadingSession(
     currentUser,
     removeSharedDecoration,
     dispose,
+    isHost,
   };
 }
 

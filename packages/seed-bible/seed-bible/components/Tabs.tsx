@@ -18,9 +18,11 @@ import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { SettingsIcon } from "seed-bible.components.icons";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
 import type { UserProfile } from "seed-bible.managers.LoginManager";
-import type {
-  BibleReadingSession,
-  ConnectedSessionUser,
+import {
+  getSelfVisualKey,
+  getUserAnimalVisual,
+  type BibleReadingSession,
+  type ConnectedSessionUser,
 } from "seed-bible.managers.SessionsManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import { SidebarSearch } from "seed-bible.components.SidebarSearch";
@@ -48,110 +50,6 @@ interface TabsHeaderProps {
   toggleLayoutMenu: () => void;
   setLayout: (layout: PaneLayoutId) => void;
   createSharedSession: () => void;
-}
-
-/**
- * Deterministic animal-icon + color assignment for a user.
- *
- * One function, one rule: a given user key always maps to the same
- * `(icon, color)` pair — everywhere on every client. No list context, no
- * walk-forward. Used for:
- *   - The sidebar self-avatar (bottom-right)
- *   - The connected-users list inside a shared tab
- *   - The "Shared with you" toasts
- *
- * We lift the palette to 10 icons × 12 colors = 120 combos. Collision
- * probability for N users visible at the same time is `1 - Π(1 - i/120)`
- * for i ∈ [0..N-1] — ~4% for 3 users, ~8% for 5 users. In exchange we get
- * full cross-client and cross-surface consistency: the color you see on
- * the sidebar is the same color the tab shows is the same color every
- * other participant sees for you.
- */
-const USER_ANIMAL_ICONS = [
-  "forest", // tree
-  "park", // log
-  "eco", // leaf
-  "pets", // cat/dog
-  "cruelty_free", // bunny-style
-  "local_cafe", // coffee
-  "local_florist", // flower
-  "grass", // grass
-  "potted_plant", // plant
-  "nature", // mountain/tree
-] as const;
-
-const USER_PRESENCE_COLORS = [
-  "#34D399", // emerald
-  "#60A5FA", // blue
-  "#F472B6", // pink
-  "#FBBF24", // amber
-  "#A78BFA", // violet
-  "#F87171", // red
-  "#10B981", // green
-  "#F59E0B", // orange
-  "#06B6D4", // cyan
-  "#EC4899", // rose
-  "#8B5CF6", // purple
-  "#14B8A6", // teal
-] as const;
-
-function hashUserKey(key: string): number {
-  let h = 5381;
-  for (let i = 0; i < key.length; i++) {
-    h = ((h << 5) + h) ^ key.charCodeAt(i);
-  }
-  return h >>> 0;
-}
-
-/**
- * Pure-hash user visual. Same input → same output, forever. The icon and
- * color are derived independently from the hash so small changes to the
- * key (e.g. user id suffix) distribute across the whole palette.
- */
-function getUserAnimalVisual(key: string): { icon: string; color: string } {
-  const normalized = key && key.length > 0 ? key : "anonymous";
-  const hash = hashUserKey(normalized);
-  const iconIndex = hash % USER_ANIMAL_ICONS.length;
-  const colorIndex =
-    Math.floor(hash / USER_ANIMAL_ICONS.length) % USER_PRESENCE_COLORS.length;
-  return {
-    icon: USER_ANIMAL_ICONS[iconIndex]!,
-    color: USER_PRESENCE_COLORS[colorIndex]!,
-  };
-}
-
-/**
- * Returns the current client's identity key. For a user visible inside a
- * session, use whatever the `ConnectedSessionUser` entry exposes (userId
- * if logged in, otherwise connectionId). For the sidebar self-avatar we
- * derive the SAME thing from `login.userId` with a fallback to
- * `configBot.id` — so the two call sites always agree on the key and
- * therefore on the visual.
- */
-function getSelfVisualKey(state: SeedBibleState): string {
-  const userId = state.login.userId.value;
-  if (userId) return userId;
-  try {
-    if (typeof configBot !== "undefined" && configBot?.id) {
-      return String(configBot.id);
-    }
-  } catch {
-    /* ignore */
-  }
-  return "me";
-}
-
-/**
- * Given a `ConnectedSessionUser`, returns the SAME key that the sidebar
- * self-avatar would use for this same person on their own client. This
- * guarantees visual consistency between "how I see myself in the sidebar"
- * and "how others see me in the connected users row".
- */
-function getConnectedUserVisualKey(user: {
-  userId?: string | null;
-  connectionId?: string | null;
-}): string {
-  return user.userId ?? user.connectionId ?? "anonymous";
 }
 
 interface SettingsProps {
@@ -217,7 +115,7 @@ function SessionSettingsModalContent(props: {
   const { state, session, onEndSession, onClose } = props;
   const options = session.options.value;
   const hostId = options.hostUserId;
-  const currentIdentity = getSelfVisualKey(state);
+  const currentIdentity = getSelfVisualKey(state.login.userId.value);
   const isHost =
     hostId !== null &&
     (state.login.userId.value === hostId || currentIdentity === hostId);
@@ -659,10 +557,7 @@ function TabRow(props: TabRowProps) {
                 const displayName = user.isSelf
                   ? getSelfDisplayName(state)
                   : getUserDisplayName(user);
-                const visualKey = user.isSelf
-                  ? getSelfVisualKey(state)
-                  : getConnectedUserVisualKey(user);
-                const visual = getUserAnimalVisual(visualKey);
+                const visual = user.visual;
 
                 if (imageUrl) {
                   return (
@@ -689,7 +584,7 @@ function TabRow(props: TabRowProps) {
                     }}
                   >
                     <span className="material-symbols-outlined">
-                      {visual.icon}
+                      {visual.defaultIcon}
                     </span>
                   </span>
                 );
@@ -776,12 +671,9 @@ function TabRow(props: TabRowProps) {
               })}
             </ContextMenuItem>
             {(() => {
-              const hostId = tab.sharedSession.options.value.hostUserId;
-              const selfIdentity = getSelfVisualKey(state);
-              const isHost =
-                hostId !== null &&
-                (state.login.userId.value === hostId ||
-                  selfIdentity === hostId);
+              const isHost = tab.sharedSession.isHost(
+                tab.sharedSession.currentUser.value
+              );
               if (!isHost) return null;
               return (
                 <ContextMenuItem
@@ -1695,7 +1587,7 @@ export function SharedSessionsToasts(props: { state: SeedBibleState }) {
                   }}
                 >
                   <span className="material-symbols-outlined">
-                    {visual.icon}
+                    {visual.defaultIcon}
                   </span>
                 </span>
               )}
@@ -1738,7 +1630,7 @@ export function SelfAvatarVisual(props: { state: SeedBibleState }) {
   const profile = login.profile.value;
   // Share identity with connected-user rendering so the avatar shows the
   // same icon/color as the user's row inside a shared session.
-  const visualKey = getSelfVisualKey(state);
+  const visualKey = getSelfVisualKey(state.login.userId.value);
   const visual = getUserAnimalVisual(visualKey);
   const imageUrl = profile?.pictureUrl ?? null;
 
@@ -1762,7 +1654,7 @@ export function SelfAvatarVisual(props: { state: SeedBibleState }) {
         backgroundColor: visual.color,
       }}
     >
-      <span className="material-symbols-outlined">{visual.icon}</span>
+      <span className="material-symbols-outlined">{visual.defaultIcon}</span>
     </span>
   );
 }
