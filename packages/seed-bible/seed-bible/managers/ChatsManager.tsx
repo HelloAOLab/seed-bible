@@ -76,6 +76,10 @@ export interface ChatProvider {
   name: string;
   /** The ID of the chat provider */
   id: string;
+
+  /** Whether this provider supports being added to shared chats. If false, then the provider can only be used in local (single user) chats. */
+  supportsSharedChats: boolean;
+
   /** Generates a response for the given chat context. */
   generateResponse: (
     context: ChatContext
@@ -800,17 +804,19 @@ function createSharedChatSession(
   const localProviderParticipants = computed(() => {
     const currentLocalParticipantId = localParticipantId.value;
     return currentLocalParticipantId
-      ? chatProviders.value.map(
-          (provider): SharedAIChatParticipant => ({
-            id: createProviderParticipantId(
-              currentLocalParticipantId,
-              provider.id
-            ),
-            name: provider.name,
-            isAI: true,
-            providerId: provider.id,
-          })
-        )
+      ? chatProviders.value
+          .filter((p) => p.supportsSharedChats)
+          .map(
+            (provider): SharedAIChatParticipant => ({
+              id: createProviderParticipantId(
+                currentLocalParticipantId,
+                provider.id
+              ),
+              name: provider.name,
+              isAI: true,
+              providerId: provider.id,
+            })
+          )
       : [];
   });
 

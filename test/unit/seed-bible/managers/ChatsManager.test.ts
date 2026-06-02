@@ -1098,6 +1098,7 @@ describe("createChatsManager", () => {
     const unregister = chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
+      supportsSharedChats: true,
       generateResponse: jest.fn().mockResolvedValue({
         type: "text",
         text: "response",
@@ -1143,12 +1144,14 @@ describe("createChatsManager", () => {
     chats.registerProvider({
       id: "provider-1",
       name: "Old Name",
+      supportsSharedChats: true,
       generateResponse: jest.fn(),
     });
 
     chats.registerProvider({
       id: "provider-1",
       name: "New Name",
+      supportsSharedChats: true,
       generateResponse: jest.fn(),
     });
 
@@ -1170,12 +1173,14 @@ describe("createChatsManager", () => {
     const unregisterOld = chats.registerProvider({
       id: "provider-1",
       name: "Old Name",
+      supportsSharedChats: true,
       generateResponse: jest.fn(),
     });
 
     chats.registerProvider({
       id: "provider-1",
       name: "New Name",
+      supportsSharedChats: true,
       generateResponse: jest.fn(),
     });
 
@@ -1205,6 +1210,7 @@ describe("createChatsManager", () => {
     chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
+      supportsSharedChats: true,
       generateResponse: jest.fn(),
       onJoinChat,
       onLeaveChat,
@@ -1220,6 +1226,10 @@ describe("createChatsManager", () => {
       })
     );
 
+    expect(
+      session.participants.value.find((p) => p.id === "provider-1")
+    ).toBeDefined();
+
     session.removeParticipant("provider-1");
     await Promise.resolve();
 
@@ -1229,6 +1239,10 @@ describe("createChatsManager", () => {
         chatId: session.id,
       })
     );
+
+    expect(
+      session.participants.value.find((p) => p.id === "provider-1")
+    ).toBeUndefined();
   });
 
   it("addParticipant()/removeParticipant() call onJoinChat() and onLeaveChat() for shared chats", async () => {
@@ -1240,6 +1254,7 @@ describe("createChatsManager", () => {
     chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
+      supportsSharedChats: true,
       generateResponse: jest.fn(),
       onJoinChat,
       onLeaveChat,
@@ -1273,6 +1288,10 @@ describe("createChatsManager", () => {
       })
     );
 
+    expect(
+      chatSession.participants.value.find((p) => p.id === "user-a_provider-1")
+    ).toBeDefined();
+
     chatSession.removeParticipant("user-a_provider-1");
     await Promise.resolve();
     await Promise.resolve();
@@ -1283,6 +1302,69 @@ describe("createChatsManager", () => {
         chatId: session.id,
       })
     );
+
+    expect(
+      chatSession.participants.value.find((p) => p.id === "user-a_provider-1")
+    ).toBeUndefined();
+  });
+
+  it("addParticipant() does nothing when trying to add a provider that doesnt support shared chats", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager);
+
+    const onJoinChat = jest.fn();
+    const onLeaveChat = jest.fn();
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: false,
+      generateResponse: jest.fn(),
+      onJoinChat,
+      onLeaveChat,
+    });
+
+    const { session } = createSharedSessionMock({
+      currentUserId: "user-a",
+      connectedUsers: [
+        {
+          id: "user-a",
+          userId: "user-a",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+        },
+      ],
+    });
+
+    const chatSession = chats.createSharedSession(session);
+
+    expect(chatSession.availableParticipants.value).not.toContainEqual(
+      expect.objectContaining({
+        id: "user-a_provider-1",
+        providerId: "provider-1",
+      })
+    );
+
+    chatSession.addParticipant("user-a_provider-1");
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(onJoinChat).toHaveBeenCalledTimes(0);
+    expect(
+      chatSession.participants.value.find((p) => p.id === "provider-1")
+    ).toBeUndefined();
+
+    chatSession.removeParticipant("user-a_provider-1");
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(onLeaveChat).toHaveBeenCalledTimes(0);
+    expect(
+      chatSession.participants.value.find((p) => p.id === "provider-1")
+    ).toBeUndefined();
   });
 
   it("registerProvider() unregister triggers onLeaveChat() for chats that selected the provider", async () => {
@@ -1294,6 +1376,7 @@ describe("createChatsManager", () => {
     const unregister = chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
+      supportsSharedChats: true,
       generateResponse: jest.fn(),
       onLeaveChat,
     });
@@ -1318,6 +1401,7 @@ describe("createChatsManager", () => {
     chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
+      supportsSharedChats: true,
       generateResponse: jest.fn(),
     });
 
@@ -1374,6 +1458,7 @@ describe("createChatsManager", () => {
     chats.registerProvider({
       id: "provider-1",
       name: "Old Name",
+      supportsSharedChats: true,
       generateResponse: jest.fn(),
     });
 
@@ -1397,6 +1482,7 @@ describe("createChatsManager", () => {
     chats.registerProvider({
       id: "provider-1",
       name: "New Name",
+      supportsSharedChats: true,
       generateResponse: jest.fn(),
     });
 
@@ -1482,6 +1568,7 @@ describe("createChatsManager", () => {
     chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
+      supportsSharedChats: true,
       generateResponse: providerResponse,
     });
     session.addParticipant("provider-1");
@@ -1516,11 +1603,13 @@ describe("createChatsManager", () => {
     chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
+      supportsSharedChats: true,
       generateResponse: firstProviderResponse,
     });
     chats.registerProvider({
       id: "provider-2",
       name: "Helper AI 2",
+      supportsSharedChats: true,
       generateResponse: secondProviderResponse,
     });
     session.addParticipant("provider-1");
@@ -1557,11 +1646,13 @@ describe("createChatsManager", () => {
     chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
+      supportsSharedChats: true,
       generateResponse: firstProviderResponse,
     });
     chats.registerProvider({
       id: "provider-2",
       name: "Helper AI 2",
+      supportsSharedChats: true,
       generateResponse: secondProviderResponse,
     });
     session.addParticipant("provider-1");
@@ -1607,11 +1698,13 @@ describe("createChatsManager", () => {
     chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
+      supportsSharedChats: true,
       generateResponse: firstProviderResponse,
     });
     chats.registerProvider({
       id: "provider-2",
       name: "Helper AI 2",
+      supportsSharedChats: true,
       generateResponse: secondProviderResponse,
     });
     session.addParticipant("provider-1");
@@ -1650,6 +1743,7 @@ describe("createChatsManager", () => {
     chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
+      supportsSharedChats: true,
       generateResponse: jest.fn().mockImplementation(() => deferred.promise),
     });
     session.addParticipant("provider-1");
@@ -1687,6 +1781,7 @@ describe("createChatsManager", () => {
     chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
+      supportsSharedChats: true,
       generateResponse: jest.fn().mockImplementation(() => deferred.promise),
     });
 
@@ -1746,6 +1841,7 @@ describe("createChatsManager", () => {
     chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
+      supportsSharedChats: true,
       generateResponse: providerResponse,
     });
 

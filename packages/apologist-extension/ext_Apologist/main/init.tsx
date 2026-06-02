@@ -11,6 +11,7 @@ registerExtension({
     yield context.chats.registerProvider({
       id: "apologist-chat-provider",
       name: "Apologist",
+      supportsSharedChats: true,
       generateResponse: async (chatContext) => {
         const lastMessage =
           chatContext.messages[chatContext.messages.length - 1];
