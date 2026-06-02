@@ -65,6 +65,12 @@ export interface ChatContext {
   participants: ChatParticipant[];
 }
 
+export interface JoinLeaveChatContext {
+  chatId: string;
+  messages: ChatMessage[];
+  participants: ChatParticipant[];
+}
+
 export interface ChatProvider {
   /** The name of the chat provider. */
   name: string;
@@ -74,6 +80,10 @@ export interface ChatProvider {
   generateResponse: (
     context: ChatContext
   ) => ChatMessageOptions | Promise<ChatMessageOptions | null> | null;
+  /** Called when this provider is added as a participant to a chat. */
+  onJoinChat?: (context: JoinLeaveChatContext) => void | Promise<void>;
+  /** Called when this provider is removed as a participant from a chat. */
+  onLeaveChat?: (context: JoinLeaveChatContext) => void | Promise<void>;
 }
 
 export interface BaseChatParticipant {
@@ -131,16 +141,23 @@ export interface AIChatParticipant extends BaseChatParticipant {
    */
   ownerParticipantId: string;
 
+  /** The ID of the AI provider. */
+  providerId: string;
+
   isSelf: false;
   isAI: true;
 }
 
 export type ChatParticipant = UserChatParticipant | AIChatParticipant;
 
-type SharedAIChatParticipant = Pick<AIChatParticipant, "id" | "name" | "isAI">;
+type SharedAIChatParticipant = Pick<
+  AIChatParticipant,
+  "id" | "name" | "isAI" | "providerId"
+>;
 
 const sharedAIChatParticipantSchema = z.object({
   id: z.string(),
+  providerId: z.string(),
   name: z.string().nullable(),
   isAI: z.literal(true),
 });
@@ -675,13 +692,6 @@ function createSharedChatSession(
     }
   });
 
-  const localParticipantId = computed(
-    () =>
-      session.currentUser.value?.userId ??
-      session.currentUser.value?.connectionId ??
-      null
-  );
-
   const allUserParticipants = computed<UserChatParticipant[]>(() =>
     groupConnectedUsers(session.allUsers.value as ConnectedUserLike[]).map(
       (group): UserChatParticipant => ({
@@ -696,6 +706,13 @@ function createSharedChatSession(
         isActive: group.isActive,
       })
     )
+  );
+
+  const localParticipantId = computed(
+    () =>
+      session.currentUser.value?.userId ??
+      session.currentUser.value?.connectionId ??
+      null
   );
 
   const sharedProviderParticipants = computed<AIChatParticipant[]>(() => {
@@ -780,22 +797,26 @@ function createSharedChatSession(
     );
   });
 
+  const localProviderParticipants = computed(() => {
+    const currentLocalParticipantId = localParticipantId.value;
+    return currentLocalParticipantId
+      ? chatProviders.value.map(
+          (provider): SharedAIChatParticipant => ({
+            id: createProviderParticipantId(
+              currentLocalParticipantId,
+              provider.id
+            ),
+            name: provider.name,
+            isAI: true,
+            providerId: provider.id,
+          })
+        )
+      : [];
+  });
+
   let previousLocalParticipantId: string | null = null;
   effect(() => {
     const currentLocalParticipantId = localParticipantId.value;
-    const localProviderParticipants: SharedAIChatParticipant[] =
-      currentLocalParticipantId
-        ? chatProviders.value.map(
-            (provider): SharedAIChatParticipant => ({
-              id: createProviderParticipantId(
-                currentLocalParticipantId,
-                provider.id
-              ),
-              name: provider.name,
-              isAI: true,
-            })
-          )
-        : [];
 
     session.document.transact(() => {
       if (
@@ -821,15 +842,15 @@ function createSharedChatSession(
       const currentValue = existingParticipants.success
         ? existingParticipants.data
         : [];
-      if (!participantsMatch(currentValue, localProviderParticipants)) {
+      if (!participantsMatch(currentValue, localProviderParticipants.value)) {
         chatProvidersMap.set(
           currentLocalParticipantId,
-          localProviderParticipants
+          localProviderParticipants.value
         );
       }
 
       const validParticipantIds = new Set(
-        localProviderParticipants.map((participant) => participant.id)
+        localProviderParticipants.value.map((participant) => participant.id)
       );
       const currentSelectedParticipantIds = parseStringArray(
         chatSelectedParticipantsMap.get(currentLocalParticipantId)
@@ -999,8 +1020,10 @@ function createSharedChatSession(
 
   const wasMentioned = getWasMentionedSignal(participants, unreadMessages);
 
+  const chatId = session.id;
+
   return {
-    id: uuid(),
+    id: chatId,
     messages,
     unreadMessages,
     lastMessageRead,
@@ -1019,10 +1042,8 @@ function createSharedChatSession(
         return;
       }
 
-      const localProvider = sharedProviderParticipants.value.find(
-        (participant) =>
-          participant.id === participantId &&
-          participant.ownerParticipantId === currentLocalParticipantId
+      const localProvider = localProviderParticipants.value.find(
+        (participant) => participant.id === participantId
       );
       if (!localProvider) {
         return;
@@ -1040,10 +1061,30 @@ function createSharedChatSession(
           participantId,
         ]);
       });
+
+      const provider = chatProviders.value.find(
+        (entry) => entry.id === localProvider.providerId
+      );
+      if (provider && provider.onJoinChat) {
+        provider.onJoinChat({
+          chatId,
+          messages: messages.value,
+          participants: participants.value,
+        });
+      }
     },
     removeParticipant: (participantId: string) => {
       const currentLocalParticipantId = localParticipantId.value;
       if (!currentLocalParticipantId) {
+        return;
+      }
+
+      const localProvider = sharedProviderParticipants.value.find(
+        (participant) =>
+          participant.id === participantId &&
+          participant.ownerParticipantId === currentLocalParticipantId
+      );
+      if (!localProvider) {
         return;
       }
 
@@ -1071,6 +1112,17 @@ function createSharedChatSession(
 
         chatTypingMap.delete(createParticipantTypingMapKey(participantId));
       });
+
+      const provider = chatProviders.value.find(
+        (entry) => entry.id === localProvider.providerId
+      );
+      if (provider && provider.onLeaveChat) {
+        provider.onLeaveChat({
+          chatId,
+          messages: messages.value,
+          participants: participants.value,
+        });
+      }
     },
     getMessageAuthors: (message: ChatMessage) =>
       resolveMessageAuthors(
@@ -1134,6 +1186,7 @@ function createLocalChatSession(
   const allProviderParticipants = computed<AIChatParticipant[]>(() =>
     chatProviders.value.map((provider) => ({
       id: provider.id,
+      providerId: provider.id,
       ownerParticipantId: localParticipant.value.id,
       userId: loginManager.userId.value ?? null,
       connectionId: null,
@@ -1318,9 +1371,10 @@ function createLocalChatSession(
   );
 
   const wasMentioned = getWasMentionedSignal(participants, unreadMessages);
+  const chatId = uuid();
 
   return {
-    id: uuid(),
+    id: chatId,
     messages,
     unreadMessages,
     lastMessageRead,
@@ -1349,6 +1403,17 @@ function createLocalChatSession(
         ...selectedProviderParticipantIds.value,
         participantId,
       ];
+
+      const provider = chatProviders.value.find(
+        (entry) => entry.id === participantId
+      );
+      if (provider && provider.onJoinChat) {
+        provider.onJoinChat({
+          chatId,
+          messages: messages.value,
+          participants: participants.value,
+        });
+      }
     },
     removeParticipant: (participantId: string) => {
       const nextSelectedProviderParticipantIds =
@@ -1367,6 +1432,17 @@ function createLocalChatSession(
       selectedProviderParticipantIds.value = nextSelectedProviderParticipantIds;
       providerTypingParticipantIds.value =
         providerTypingParticipantIds.value.filter((id) => id !== participantId);
+
+      const provider = chatProviders.value.find(
+        (entry) => entry.id === participantId
+      );
+      if (provider && provider.onLeaveChat) {
+        provider.onLeaveChat({
+          chatId,
+          messages: messages.value,
+          participants: participants.value,
+        });
+      }
     },
     getMessageAuthors,
   };
@@ -1418,6 +1494,15 @@ export function createChatsManager(loginManager: LoginManager): ChatsManager {
       );
       if (currentProvider !== provider) {
         return;
+      }
+
+      for (const chat of chats.value) {
+        const participant = chat.participants.value.find(
+          (p) => p.isAI && !p.isRemote && p.providerId === provider.id
+        );
+        if (participant) {
+          chat.removeParticipant(participant.id);
+        }
       }
 
       chatProviders.value = chatProviders.value.filter(

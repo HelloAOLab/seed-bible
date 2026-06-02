@@ -425,6 +425,7 @@ describe("createChatsManager", () => {
       },
       {
         id: "provider-1",
+        providerId: "provider-1",
         ownerParticipantId: "user-1",
         userId: null,
         connectionId: null,
@@ -455,6 +456,7 @@ describe("createChatsManager", () => {
       },
       {
         id: "u2",
+        providerId: "u2",
         ownerParticipantId: "user-1",
         userId: null,
         connectionId: null,
@@ -475,6 +477,7 @@ describe("createChatsManager", () => {
     const participants: ChatParticipant[] = [
       {
         id: "provider-1",
+        providerId: "provider-1",
         ownerParticipantId: "user-1",
         userId: null,
         connectionId: null,
@@ -515,6 +518,7 @@ describe("createChatsManager", () => {
       },
       {
         id: "provider-1",
+        providerId: "provider-1",
         ownerParticipantId: "user-1",
         userId: null,
         connectionId: null,
@@ -1024,6 +1028,7 @@ describe("createChatsManager", () => {
     sharedChatProviders.set("u1", [
       {
         id: "u1_provider-x",
+        providerId: "provider-x",
         name: "Remote AI",
         isAI: true,
       },
@@ -1035,6 +1040,7 @@ describe("createChatsManager", () => {
 
     expect(chatSession.participants.value).toContainEqual({
       id: "u1_provider-x",
+      providerId: "provider-x",
       ownerParticipantId: "u1",
       userId: "u1",
       connectionId: "conn-u1",
@@ -1060,6 +1066,7 @@ describe("createChatsManager", () => {
 
     expect(chatSession.participants.value).toContainEqual({
       id: "u1_provider-x",
+      providerId: "provider-x",
       ownerParticipantId: "u1",
       userId: "u1",
       connectionId: "conn-u1",
@@ -1099,6 +1106,7 @@ describe("createChatsManager", () => {
 
     expect(session.availableParticipants.value).toContainEqual({
       id: "provider-1",
+      providerId: "provider-1",
       ownerParticipantId: session.participants.value[0]!.id,
       userId: null,
       connectionId: null,
@@ -1175,6 +1183,7 @@ describe("createChatsManager", () => {
 
     expect(session.availableParticipants.value).toContainEqual({
       id: "provider-1",
+      providerId: "provider-1",
       ownerParticipantId: session.participants.value[0]!.id,
       userId: null,
       connectionId: null,
@@ -1184,6 +1193,123 @@ describe("createChatsManager", () => {
       isRemote: false,
       isActive: true,
     });
+  });
+
+  it("addParticipant()/removeParticipant() call onJoinChat() and onLeaveChat() for local chats", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager);
+    const session = chats.createLocalSession();
+
+    const onJoinChat = jest.fn();
+    const onLeaveChat = jest.fn();
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      generateResponse: jest.fn(),
+      onJoinChat,
+      onLeaveChat,
+    });
+
+    session.addParticipant("provider-1");
+    await Promise.resolve();
+
+    expect(onJoinChat).toHaveBeenCalledTimes(1);
+    expect(onJoinChat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chatId: session.id,
+      })
+    );
+
+    session.removeParticipant("provider-1");
+    await Promise.resolve();
+
+    expect(onLeaveChat).toHaveBeenCalledTimes(1);
+    expect(onLeaveChat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chatId: session.id,
+      })
+    );
+  });
+
+  it("addParticipant()/removeParticipant() call onJoinChat() and onLeaveChat() for shared chats", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager);
+
+    const onJoinChat = jest.fn();
+    const onLeaveChat = jest.fn();
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      generateResponse: jest.fn(),
+      onJoinChat,
+      onLeaveChat,
+    });
+
+    const { session } = createSharedSessionMock({
+      currentUserId: "user-a",
+      connectedUsers: [
+        {
+          id: "user-a",
+          userId: "user-a",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+        },
+      ],
+    });
+    const chatSession = chats.createSharedSession(session);
+
+    chatSession.addParticipant("user-a_provider-1");
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(onJoinChat).toHaveBeenCalledTimes(1);
+    expect(onJoinChat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chatId: session.id,
+      })
+    );
+
+    chatSession.removeParticipant("user-a_provider-1");
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(onLeaveChat).toHaveBeenCalledTimes(1);
+    expect(onLeaveChat).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chatId: session.id,
+      })
+    );
+  });
+
+  it("registerProvider() unregister triggers onLeaveChat() for chats that selected the provider", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager);
+    const session = chats.createLocalSession();
+
+    const onLeaveChat = jest.fn();
+    const unregister = chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      generateResponse: jest.fn(),
+      onLeaveChat,
+    });
+
+    session.addParticipant("provider-1");
+    await Promise.resolve();
+
+    unregister();
+    await Promise.resolve();
+
+    expect(onLeaveChat).toHaveBeenCalledTimes(1);
+    expect(
+      session.participants.value.find(
+        (participant) => participant.id === "provider-1"
+      )
+    ).toBeUndefined();
   });
 
   it("createSharedSession() publishes local providers into chat_providers map", async () => {
@@ -1215,12 +1341,14 @@ describe("createChatsManager", () => {
     expect(sharedChatProviders.get("user-a")).toEqual([
       {
         id: "user-a_provider-1",
+        providerId: "provider-1",
         name: "Helper AI",
         isAI: true,
       },
     ]);
     expect(chat.availableParticipants.value).toContainEqual({
       id: "user-a_provider-1",
+      providerId: "provider-1",
       ownerParticipantId: "user-a",
       userId: "user-a",
       connectionId: "conn-user-a",
@@ -1277,12 +1405,14 @@ describe("createChatsManager", () => {
     expect(sharedChatProviders.get("user-a")).toEqual([
       {
         id: "user-a_provider-1",
+        providerId: "provider-1",
         name: "New Name",
         isAI: true,
       },
     ]);
     expect(chat.availableParticipants.value).toContainEqual({
       id: "user-a_provider-1",
+      providerId: "provider-1",
       ownerParticipantId: "user-a",
       userId: "user-a",
       connectionId: "conn-user-a",
@@ -1315,6 +1445,7 @@ describe("createChatsManager", () => {
     sharedChatProviders.set("u1", [
       {
         id: "u1_provider-x",
+        providerId: "provider-x",
         name: "Remote AI",
         isAI: true,
       },
@@ -1325,6 +1456,7 @@ describe("createChatsManager", () => {
 
     expect(chatSession.participants.value).toContainEqual({
       id: "u1_provider-x",
+      providerId: "provider-x",
       ownerParticipantId: "u1",
       userId: "u1",
       connectionId: "conn-u1",
