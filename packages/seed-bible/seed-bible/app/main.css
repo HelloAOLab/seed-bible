@@ -7305,6 +7305,50 @@ h6 {
   bottom: 100px;
   width: min(420px, calc(100vw - 32px));
   padding: 22px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sb-floating-chat-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 26px;
+}
+
+.sb-floating-chat-header-back {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 22%);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 93%);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.sb-floating-chat-header-back:hover,
+.sb-floating-chat-header-back:focus-visible {
+  color: var(--sb-font-color);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
+}
+
+.sb-floating-chat-header-title {
+  margin: 0;
+  min-width: 0;
+  font-size: 15px;
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--sb-font-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sb-floating-chat-list {

@@ -554,6 +554,30 @@ function FloatingChatPanel(props: FloatingReaderPanelsProps) {
       role="dialog"
       aria-label={t("chat", { defaultValue: "Chat" })}
     >
+      <header className="sb-floating-chat-header">
+        {selectedChat ? (
+          <button
+            type="button"
+            className="sb-floating-chat-header-back"
+            onClick={() => {
+              state.chats.selectChat(null);
+            }}
+            aria-label={t("back", { defaultValue: "Back" })}
+            title={t("back", { defaultValue: "Back" })}
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">
+              arrow_back
+            </span>
+          </button>
+        ) : null}
+
+        <p className="sb-floating-chat-header-title">
+          {selectedChat
+            ? getChatTitle(selectedChat, t)
+            : t("chat", { defaultValue: "Chat" })}
+        </p>
+      </header>
+
       {selectedChat ? (
         <ChatView chat={selectedChat} />
       ) : (
