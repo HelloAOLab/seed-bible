@@ -453,6 +453,38 @@ describe("createChatsManager", () => {
     ]);
   });
 
+  it("resolveMessageTargets() matches by partial participant id", () => {
+    const participants: ChatParticipant[] = [
+      {
+        id: "user-1",
+        userId: "user-1",
+        connectionId: null,
+        name: "Alice",
+        isSelf: true,
+        isAI: false,
+        isRemote: false,
+        isActive: true,
+        visual: getUserAnimalVisual("user-1"),
+      },
+      {
+        id: "d7d90348-fc03-4272-b7c1-b565d968bb5c",
+        providerId: "provider-1",
+        ownerParticipantId: "user-1",
+        userId: null,
+        connectionId: null,
+        name: "Helper AI",
+        isSelf: false,
+        isAI: true,
+        isRemote: false,
+        isActive: true,
+      },
+    ];
+
+    expect(resolveMessageTargets(participants, "Hi @d7d903")).toEqual([
+      participants[1]!,
+    ]);
+  });
+
   it("resolveMessageTargets() matches remote non-AI participants by name", () => {
     const participants: ChatParticipant[] = [
       {

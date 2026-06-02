@@ -37,7 +37,7 @@ function getAuthorLabel(
     .map((author) =>
       author.isSelf
         ? t("you", { defaultValue: "You" })
-        : (author.name ?? author.id)
+        : (author.name ?? author.id.slice(0, 6))
     )
     .filter((name) => name && translateTitle(t, name).trim().length > 0);
 
@@ -123,7 +123,7 @@ function getParticipantMentionLabel(
   t: (key: string, options?: Record<string, unknown>) => string
 ): string {
   const name = participant.name ? translateTitle(t, participant.name) : null;
-  return name?.trim() || participant.id;
+  return name?.trim() || participant.id.slice(0, 6);
 }
 
 function getTypingIndicatorLabel(

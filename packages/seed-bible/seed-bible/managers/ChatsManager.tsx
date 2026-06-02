@@ -493,7 +493,10 @@ export function resolveMessageTargets(
     if (!participant.isActive) {
       continue;
     }
-    if (textIncludesMention(text, participant.id)) {
+    if (
+      textIncludesMention(text, participant.id) ||
+      textIncludesMention(text, participant.id.slice(0, 6))
+    ) {
       matches.set(participant.id, participant);
     }
   }
