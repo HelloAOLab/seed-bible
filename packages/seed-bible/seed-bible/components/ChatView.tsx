@@ -5,6 +5,11 @@ import type {
   ChatMessage,
   ChatSession,
 } from "seed-bible.managers.ChatsManager";
+import {
+  getUserAnimalVisual,
+  type ConnectionSessionUserVisual,
+} from "../managers/SessionsManager";
+import { Avatar } from "./Avatar";
 
 const { useEffect, useRef } = os.appHooks;
 
@@ -62,22 +67,6 @@ function RelativeDateTime({ timeMs }: { timeMs: number }) {
   return <span className="relative-date-time">{date.toRelative()}</span>;
 }
 
-function getAvatarInitials(label: string): string {
-  const words = label
-    .trim()
-    .split(/\s+/)
-    .filter((word) => word.length > 0);
-  if (words.length === 0) {
-    return "?";
-  }
-
-  if (words.length === 1) {
-    return words[0]!.slice(0, 2).toUpperCase();
-  }
-
-  return `${words[0]![0] ?? ""}${words[1]![0] ?? ""}`.toUpperCase();
-}
-
 function getMessageAvatar(
   chat: ChatSession,
   message: ChatMessage,
@@ -85,7 +74,8 @@ function getMessageAvatar(
 ): {
   imageUrl: string | null;
   label: string;
-  initials: string;
+  visual: ConnectionSessionUserVisual;
+  isSelf: boolean;
 } {
   const authors = chat.getMessageAuthors(message);
   const primaryAuthor = authors[0] ?? null;
@@ -95,7 +85,8 @@ function getMessageAvatar(
     return {
       imageUrl: null,
       label: anonymous,
-      initials: getAvatarInitials(anonymous),
+      visual: getUserAnimalVisual(message.id),
+      isSelf: false,
     };
   }
 
@@ -108,7 +99,10 @@ function getMessageAvatar(
   return {
     imageUrl,
     label,
-    initials: getAvatarInitials(label),
+    visual: primaryAuthor.isAI
+      ? getUserAnimalVisual(primaryAuthor.providerId)
+      : primaryAuthor.visual,
+    isSelf: primaryAuthor.isSelf,
   };
 }
 
@@ -378,20 +372,12 @@ export function ChatView(props: ChatViewProps) {
             return (
               <article className="sb-chat-view-message" key={message.id}>
                 <div className="sb-chat-view-message-avatar-shell">
-                  {avatar.imageUrl ? (
-                    <img
-                      src={avatar.imageUrl}
-                      alt={`${avatar.label} avatar`}
-                      className="sb-chat-view-message-avatar"
-                    />
-                  ) : (
-                    <span
-                      className="sb-chat-view-message-avatar sb-chat-view-message-avatar-fallback"
-                      aria-hidden="true"
-                    >
-                      {avatar.initials}
-                    </span>
-                  )}
+                  <Avatar
+                    imageUrl={avatar.imageUrl}
+                    visual={avatar.visual}
+                    title={avatar.label}
+                    isSelf={avatar.isSelf}
+                  />
                 </div>
                 <div className="sb-chat-view-message-content">
                   <header className="sb-chat-view-message-header">
