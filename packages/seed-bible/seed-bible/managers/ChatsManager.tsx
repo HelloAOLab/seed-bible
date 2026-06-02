@@ -157,6 +157,10 @@ export interface ChatSession {
 
   /** Chat messages ordered from oldest to most recent. */
   messages: ReadonlySignal<ChatMessage[]>;
+  /**
+   * Unread messages that have been sent since the last time the user marked messages as read.
+   */
+  unreadMessages: ReadonlySignal<ChatMessage[]>;
   /** The message ID of the latest message the user has read, if any. */
   lastMessageRead: ReadonlySignal<string | null>;
   /** Marks all current messages as read by moving lastMessageRead to the latest message ID. */
@@ -181,7 +185,7 @@ export interface ChatsManager {
   isOpen: Signal<boolean>;
   chats: ReadonlySignal<ChatSession[]>;
   /** Total number of unread messages across all chat sessions. */
-  unreadMessages: ReadonlySignal<number>;
+  numberOfUnreadMessages: ReadonlySignal<number>;
   /** Whether any unread message targets the local participant in any chat session. */
   wasMentioned: ReadonlySignal<boolean>;
   selectedChat: ReadonlySignal<ChatSession | null>;
@@ -549,6 +553,10 @@ function createSharedChatSession(
     messages.value = readValidChats();
   });
 
+  const unreadMessages = computed(() =>
+    getUnreadMessagesSinceLastRead(messages.value, lastMessageRead.value)
+  );
+
   const markAsRead = () => {
     const latestMessageId = messages.value.at(-1)?.id ?? null;
     lastMessageRead.value = latestMessageId;
@@ -873,6 +881,7 @@ function createSharedChatSession(
   return {
     id: uuid(),
     messages,
+    unreadMessages,
     lastMessageRead,
     markAsRead,
     sendMessage,
@@ -1043,9 +1052,14 @@ function createLocalChatSession(
     lastMessageRead.value = latestMessageId;
   };
 
+  const unreadMessages = computed(() =>
+    getUnreadMessagesSinceLastRead(messages.value, lastMessageRead.value)
+  );
+
   return {
     id: uuid(),
     messages,
+    unreadMessages,
     lastMessageRead,
     markAsRead,
     sendMessage,
@@ -1066,16 +1080,11 @@ export function createChatsManager(loginManager: LoginManager): ChatsManager {
   const selectedChat = computed(
     () => chats.value.find((chat) => chat.id === selectedChatId.value) ?? null
   );
-  const unreadMessages = computed(() => {
-    return chats.value.reduce((total, chat) => {
-      return (
-        total +
-        getUnreadMessagesSinceLastRead(
-          chat.messages.value,
-          chat.lastMessageRead.value
-        ).length
-      );
-    }, 0);
+  const numberOfUnreadMessages = computed(() => {
+    return chats.value.reduce(
+      (acc, chat) => acc + chat.unreadMessages.value.length,
+      0
+    );
   });
 
   const wasMentioned = computed(() => {
@@ -1089,10 +1098,7 @@ export function createChatsManager(loginManager: LoginManager): ChatsManager {
         continue;
       }
 
-      const unread = getUnreadMessagesSinceLastRead(
-        chat.messages.value,
-        chat.lastMessageRead.value
-      );
+      const unread = chat.unreadMessages.value;
       if (
         unread.some((message) =>
           message.targets.some((targetId) => selfParticipantIds.has(targetId))
@@ -1155,7 +1161,7 @@ export function createChatsManager(loginManager: LoginManager): ChatsManager {
   return {
     isOpen,
     chats,
-    unreadMessages,
+    numberOfUnreadMessages,
     wasMentioned,
     createSharedSession,
     createLocalSession,

@@ -397,7 +397,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   });
 
   const unreadChatIndicator = useComputed(() => {
-    if (chats.unreadMessages.value <= 0) {
+    if (chats.numberOfUnreadMessages.value <= 0) {
       return null;
     }
 
@@ -405,9 +405,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       return "@";
     }
 
-    return chats.unreadMessages.value > 99
+    return chats.numberOfUnreadMessages.value > 99
       ? "99+"
-      : `${chats.unreadMessages.value}`;
+      : `${chats.numberOfUnreadMessages.value}`;
   });
 
   const hasTypingInChats = useComputed(() =>

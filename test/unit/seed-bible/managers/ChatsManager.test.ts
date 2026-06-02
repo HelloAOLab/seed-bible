@@ -327,7 +327,7 @@ describe("createChatsManager", () => {
 
     const chatSession = chats.createSharedSession(session);
 
-    expect(chats.unreadMessages.value).toBe(0);
+    expect(chats.numberOfUnreadMessages.value).toBe(0);
     expect(chats.wasMentioned.value).toBe(false);
 
     sharedChats.push({
@@ -339,7 +339,7 @@ describe("createChatsManager", () => {
       text: "hello",
     });
 
-    expect(chats.unreadMessages.value).toBe(1);
+    expect(chats.numberOfUnreadMessages.value).toBe(1);
     expect(chats.wasMentioned.value).toBe(false);
 
     sharedChats.push({
@@ -351,12 +351,12 @@ describe("createChatsManager", () => {
       text: "hi @self-user",
     });
 
-    expect(chats.unreadMessages.value).toBe(2);
+    expect(chats.numberOfUnreadMessages.value).toBe(2);
     expect(chats.wasMentioned.value).toBe(true);
 
     chatSession.markAsRead();
 
-    expect(chats.unreadMessages.value).toBe(0);
+    expect(chats.numberOfUnreadMessages.value).toBe(0);
     expect(chats.wasMentioned.value).toBe(false);
   });
 
@@ -402,7 +402,7 @@ describe("createChatsManager", () => {
     });
 
     expect(chatSession.lastMessageRead.value).toBe("m1");
-    expect(chats.unreadMessages.value).toBe(0);
+    expect(chats.numberOfUnreadMessages.value).toBe(0);
     expect(chats.wasMentioned.value).toBe(false);
   });
 
