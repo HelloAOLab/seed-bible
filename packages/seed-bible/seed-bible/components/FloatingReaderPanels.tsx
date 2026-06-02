@@ -17,6 +17,7 @@ import type {
 } from "seed-bible.managers.ChatsManager";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
+import { translateTitle } from "./Utils";
 
 interface SearchResult {
   id: string;
@@ -43,7 +44,9 @@ function getChatTitle(
   const pool = preferred.length > 0 ? preferred : participants;
 
   const names = pool
-    .map((participant) => participant.name?.trim() ?? "")
+    .map((participant) =>
+      participant.name ? translateTitle(t, participant.name) : ""
+    )
     .filter((name) => name.length > 0);
 
   if (names.length === 0) {
@@ -64,9 +67,11 @@ function getParticipantLabel(
   if (participant.isSelf) {
     return t("you", { defaultValue: "You" });
   }
-  return (
-    participant.name?.trim() || t("anonymous", { defaultValue: "Anonymous" })
-  );
+  if (participant.name) {
+    return translateTitle(t, participant.name);
+  }
+
+  return t("anonymous", { defaultValue: "Anonymous" });
 }
 
 function getAvatarInitials(label: string): string {

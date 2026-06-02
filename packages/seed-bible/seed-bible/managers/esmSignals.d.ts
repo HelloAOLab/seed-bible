@@ -7,6 +7,7 @@ declare module "https://esm.sh/*" {
     changeLanguage(language: string): Promise<unknown>;
     on(event: string, callback: (lng: string) => void): void;
     off(event: string, callback: (lng: string) => void): void;
+    t: (key: string, options?: Record<string, unknown>) => string;
 
     addResourceBundle(
       lng: string,

@@ -10,7 +10,11 @@ registerExtension({
 
     yield context.chats.registerProvider({
       id: "apologist-chat-provider",
-      name: "Apologist",
+      name: {
+        key: "title",
+        defaultValue: "Apologist",
+        ns: "ext_Apologist",
+      },
       supportsSharedChats: true,
       generateResponse: async (chatContext) => {
         const lastMessage =

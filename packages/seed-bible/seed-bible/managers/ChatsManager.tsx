@@ -17,6 +17,9 @@ import {
   type ConnectedSessionUser,
   type ConnectionSessionUserVisual,
 } from "seed-bible.managers.SessionsManager";
+import type { TranslatableTitle } from "./BibleToolsManager";
+import i18n from "https://esm.sh/i18next@23.16.8";
+import { translateTitle } from "../components/Utils";
 
 export const chatMessageBaseSchema = z.object({
   /**
@@ -94,7 +97,7 @@ export interface JoinLeaveChatContext {
 
 export interface ChatProvider {
   /** The name of the chat provider. */
-  name: string;
+  name: TranslatableTitle;
   /** The ID of the chat provider */
   id: string;
 
@@ -123,7 +126,7 @@ export interface BaseChatParticipant {
   /**
    * The display name of the participant. May be null if the participant is anonymous.
    */
-  name: string | null;
+  name: TranslatableTitle | null;
 
   /**
    * Whether this participant is the current user.
@@ -499,8 +502,19 @@ export function resolveMessageTargets(
     if (!participant.isActive) {
       continue;
     }
-    if (!participant.name || !textIncludesMention(text, participant.name)) {
+    if (!participant.name) {
       continue;
+    }
+
+    const name = participant.name;
+    if (typeof name === "string" && !textIncludesMention(text, name)) {
+      continue;
+    } else if (typeof name === "object") {
+      const { t } = i18n;
+      const translatedName = translateTitle(t, name);
+      if (!textIncludesMention(text, translatedName)) {
+        continue;
+      }
     }
 
     if (

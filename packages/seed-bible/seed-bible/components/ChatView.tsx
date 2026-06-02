@@ -10,6 +10,7 @@ import {
   type ConnectionSessionUserVisual,
 } from "../managers/SessionsManager";
 import { Avatar } from "./Avatar";
+import { translateTitle } from "./Utils";
 
 const { useEffect, useRef } = os.appHooks;
 
@@ -38,7 +39,7 @@ function getAuthorLabel(
         ? t("you", { defaultValue: "You" })
         : (author.name ?? author.id)
     )
-    .filter((name) => name && name.trim().length > 0);
+    .filter((name) => name && translateTitle(t, name).trim().length > 0);
 
   if (authors.length === 0) {
     return t("anonymous", { defaultValue: "Anonymous" });
@@ -110,13 +111,19 @@ function getParticipantDisplayLabel(
   participant: ChatParticipant,
   t: (key: string, options?: Record<string, unknown>) => string
 ): string {
+  const name = participant.name ? translateTitle(t, participant.name) : null;
+
   return participant.isSelf
     ? t("you", { defaultValue: "You" })
-    : (participant.name ?? t("anonymous", { defaultValue: "Anonymous" }));
+    : (name ?? t("anonymous", { defaultValue: "Anonymous" }));
 }
 
-function getParticipantMentionLabel(participant: ChatParticipant): string {
-  return participant.name?.trim() || participant.id;
+function getParticipantMentionLabel(
+  participant: ChatParticipant,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  const name = participant.name ? translateTitle(t, participant.name) : null;
+  return name?.trim() || participant.id;
 }
 
 function getTypingIndicatorLabel(
@@ -216,8 +223,10 @@ export function ChatView(props: ChatViewProps) {
           participant,
           t
         ).toLowerCase();
-        const mentionLabel =
-          getParticipantMentionLabel(participant).toLowerCase();
+        const mentionLabel = getParticipantMentionLabel(
+          participant,
+          t
+        ).toLowerCase();
         return (
           displayLabel.includes(mentionQuery) ||
           mentionLabel.includes(mentionQuery) ||
@@ -259,7 +268,7 @@ export function ChatView(props: ChatViewProps) {
       return;
     }
 
-    const mentionText = `@${getParticipantMentionLabel(participant)} `;
+    const mentionText = `@${getParticipantMentionLabel(participant, t)} `;
     draft.value = replaceMentionText(
       draft.value,
       mentionContext.startIndex,
@@ -460,7 +469,7 @@ export function ChatView(props: ChatViewProps) {
                         {getParticipantDisplayLabel(participant, t)}
                       </span>
                       <span className="sb-chat-view-mention-picker-meta">
-                        @{getParticipantMentionLabel(participant)}
+                        @{getParticipantMentionLabel(participant, t)}
                       </span>
                     </button>
                   );
