@@ -57,17 +57,6 @@ interface SettingsProps {
   state: SeedBibleState;
 }
 
-function getUserDisplayName(user: ConnectedSessionUser): string {
-  return (
-    user.profile?.name ??
-    `User ${(user.userId ?? user.connectionId).slice(0, 8)}`
-  );
-}
-
-function getUserImageUrl(profile: UserProfile | null): string | null {
-  return profile?.pictureUrl ?? null;
-}
-
 function renderLayoutPreview(layoutId: PaneLayoutId) {
   const slotCount =
     PANE_LAYOUT_OPTIONS.find((layout) => layout.id === layoutId)?.slotCount ??
