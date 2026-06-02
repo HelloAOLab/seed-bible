@@ -10,7 +10,13 @@ import type {
   LoginManager,
   UserProfile,
 } from "seed-bible.managers.LoginManager";
-import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
+import {
+  getSelfVisualKey,
+  getUserAnimalVisual,
+  type BibleReadingSession,
+  type ConnectedSessionUser,
+  type ConnectionSessionUserVisual,
+} from "seed-bible.managers.SessionsManager";
 
 export const chatMessageBaseSchema = z.object({
   /**
@@ -129,6 +135,15 @@ export interface UserChatParticipant extends BaseChatParticipant {
   connectionId: string | null;
   /** The user's profile information, if available. */
   profile?: UserProfile | null;
+
+  /** The session user associated with this participant, if available. */
+  sessionUser?: ConnectedSessionUser | null;
+
+  /**
+   * The visual information for this participant.
+   */
+  visual: ConnectionSessionUserVisual;
+
   isAI: false;
 }
 
@@ -258,28 +273,21 @@ function getConnectedUserName(user: {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-type ConnectedUserLike = {
-  userId?: string | null;
-  connectionId?: string | null;
-  profile?: UserProfile | null;
-  isSelf: boolean;
-  isActive?: boolean;
-};
-
 type GroupedConnectedUser = {
   id: string;
   userId: string | null;
   connectionId: string | null;
   profile: UserProfile | null;
+  sessionUser: ConnectedSessionUser | null;
   name: string | null;
   isSelf: boolean;
   isActive: boolean;
 };
 
 function groupConnectedUsers(
-  users: ConnectedUserLike[]
+  users: ConnectedSessionUser[]
 ): GroupedConnectedUser[] {
-  const groups = new Map<string, ConnectedUserLike[]>();
+  const groups = new Map<string, ConnectedSessionUser[]>();
 
   for (const user of users) {
     const userId = user.userId ?? null;
@@ -305,6 +313,7 @@ function groupConnectedUsers(
       connectionId: representative.connectionId ?? null,
       profile:
         group.find((entry) => entry.profile !== undefined)?.profile ?? null,
+      sessionUser: representative,
       name:
         group
           .map((entry) => getConnectedUserName(entry))
@@ -703,12 +712,14 @@ function createSharedChatSession(
   });
 
   const allUserParticipants = computed<UserChatParticipant[]>(() =>
-    groupConnectedUsers(session.allUsers.value as ConnectedUserLike[]).map(
+    groupConnectedUsers(session.allUsers.value).map(
       (group): UserChatParticipant => ({
         id: group.id,
         userId: group.userId,
         connectionId: group.connectionId,
         profile: group.profile,
+        sessionUser: group.sessionUser,
+        visual: group.sessionUser?.visual ?? getUserAnimalVisual(group.id),
         name: group.name,
         isSelf: group.isSelf,
         isAI: false,
@@ -1192,6 +1203,7 @@ function createLocalChatSession(
     connectionId: null,
     profile: loginManager.profile.value,
     name: getParticipantName(loginManager.profile.value),
+    visual: getUserAnimalVisual(getSelfVisualKey(loginManager.userId.value)),
     isSelf: true,
     isAI: false,
     isRemote: false,
