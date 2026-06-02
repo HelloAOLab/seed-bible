@@ -8,10 +8,14 @@ import {
 } from "seed-bible.managers.ProfileConfigSync";
 
 const TUTORIAL_SEEN_KEY = "sb-tutorial-seen";
+const TUTORIAL_OPTED_OUT_KEY = "sb-tutorial-opted-out";
+const TUTORIAL_FEATURES_KEY = "sb-tutorial-features-seen";
 
 // Stored unprefixed on profile.config (matching `fontSize`, `appInstalled`,
 // etc.) — the backend record that the user has completed/skipped the tour.
 const PROFILE_TUTORIAL_SEEN = "tutorialSeen";
+const PROFILE_TUTORIAL_OPTED_OUT = "tutorialOptedOut";
+const PROFILE_TUTORIAL_FEATURES_SEEN = "tutorialFeaturesSeen";
 
 /** Where the popover sits relative to its highlighted target. */
 export type TutorialPlacement = "top" | "bottom" | "left" | "right";
@@ -41,29 +45,28 @@ export interface TutorialStep {
 }
 
 /**
- * The guided tour steps. This is the single place to edit copy or re-target a
- * step — each `target` is a CSS selector resolved against the live DOM, and the
- * text is rendered through i18n with the given fallback. Steps whose target
- * isn't on screen are skipped automatically.
+ * First-run onboarding tour: just the basics needed to start reading. Advanced
+ * surfaces (pane layout, add-tab, search) are taught contextually the first
+ * time the user interacts with them — see CONTEXTUAL_TUTORIALS.
  */
-export const TUTORIAL_STEPS: TutorialStep[] = [
+export const ONBOARDING_STEPS: TutorialStep[] = [
   {
     id: "selector-books",
     target: ".sidebar-results",
     titleKey: "tutorial.selectorBooksTitle",
     titleDefault: "Select books and chapters",
     bodyKey: "tutorial.selectorBooksBody",
-    bodyDefault: "Choose a chapter from here to begin your reading journey.",
-    placement: "right",
+    bodyDefault: "Choose a chapter from here to begin reading.",
+    placement: "top",
     group: "selector",
   },
   {
     id: "selector-translation",
     target: ".sidebar-translation-selector",
     titleKey: "tutorial.selectorTranslationTitle",
-    titleDefault: "Select bible translations",
+    titleDefault: "Select a Bible text",
     bodyKey: "tutorial.selectorTranslationBody",
-    bodyDefault: "Choose from any of the available Bible translation versions.",
+    bodyDefault: "Choose from any of the available versions.",
     placement: "bottom",
     group: "selector",
   },
@@ -71,82 +74,56 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     id: "selector-testament",
     target: ".dropdown",
     titleKey: "tutorial.selectorTestamentTitle",
-    titleDefault: "Filter by testament",
+    titleDefault: "Filter book options",
     bodyKey: "tutorial.selectorTestamentBody",
-    bodyDefault: "Show all books, or narrow to just the Old or New Testament.",
-    placement: "bottom",
-    group: "selector",
-  },
-  {
-    id: "selector-search",
-    target: ".searchbar",
-    titleKey: "tutorial.selectorSearchTitle",
-    titleDefault: "Search by",
-    bodyKey: "tutorial.selectorSearchBody",
-    bodyDefault: "Search by chapter, verse or book from here.",
-    placement: "bottom",
-    group: "selector",
-  },
-  {
-    id: "pane-layout",
-    // The menu is opened by the Sidebar while this step is active; spotlight it
-    // (it holds the layout options) rather than just the button that opens it.
-    target: ".sb-pane-layout-menu",
-    titleKey: "tutorial.paneLayoutTitle",
-    titleDefault: "Arrange your panes",
-    bodyKey: "tutorial.paneLayoutBody",
     bodyDefault:
-      "Choose how many passages to read side by side from this layout menu.",
-    placement: "right",
+      "Show all books, or narrow to just the Old Testament, New Testament, or extra-biblical writings.",
+    placement: "bottom",
+    group: "selector",
   },
   {
     id: "tabs",
     target: ".sb-sidebar-tabs-header",
     titleKey: "tutorial.tabsTitle",
-    titleDefault: "Manage tabs",
+    titleDefault: "Tabs and bookmarks",
     bodyKey: "tutorial.tabsBody",
-    bodyDefault:
-      "Your open passages live here. Switch between them or filter to your bookmarks.",
+    bodyDefault: "Your open passages and bookmarks live here.",
     placement: "right",
-  },
-  {
-    id: "add-tab",
-    target: ".sb-tab-add-button",
-    titleKey: "tutorial.addTabTitle",
-    titleDefault: "Open more passages",
-    bodyKey: "tutorial.addTabBody",
-    bodyDefault:
-      "Add a new tab to read several books or translations side by side.",
-    placement: "left",
   },
   {
     id: "toolbar",
     target: ".sb-reader-toolbar",
     titleKey: "tutorial.toolbarTitle",
-    titleDefault: "Reading tools",
+    titleDefault: "Toolbar",
     bodyKey: "tutorial.toolbarBody",
     bodyDefault:
-      "Navigate chapters, search, and open study tools from the toolbar.",
+      "You can customize the toolbar to your liking. By default, book selection, navigation, and search are built in.",
     placement: "top",
   },
   {
     id: "settings",
     target: '[data-tutorial="settings"]',
     titleKey: "tutorial.settingsTitle",
-    titleDefault: "Settings & install",
+    titleDefault: "Settings",
     bodyKey: "tutorial.settingsBody",
     bodyDefault:
-      "Customize themes, text, and more here — and install the app to your device.",
+      "Customize themes, text, and more here, or install the app to your device.",
     placement: "right",
   },
 ];
 
 /**
+ * Back-compat alias. Some callers (settings page replay, mobile tour
+ * fallbacks) still reference TUTORIAL_STEPS by name.
+ */
+export const TUTORIAL_STEPS = ONBOARDING_STEPS;
+
+/**
  * The mobile tour. Below 768px the desktop selector sub-controls (translation,
- * testament, search) and the pane-layout menu aren't rendered, and the chrome
- * is different — so mobile gets its own step list targeting the mobile header,
- * the book selector grid, and the bottom toolbar. The book step reuses the
- * `selector-books` id so the selector's built-in spotlight/open logic applies.
+ * testament) and the pane-layout menu aren't rendered, so mobile gets its own
+ * step list targeting the mobile header, the book selector grid, and the
+ * bottom toolbar. The book step reuses the `selector-books` id so the
+ * selector's built-in spotlight/open logic applies.
  */
 export const MOBILE_TUTORIAL_STEPS: TutorialStep[] = [
   {
@@ -164,7 +141,7 @@ export const MOBILE_TUTORIAL_STEPS: TutorialStep[] = [
     titleKey: "tutorial.selectorBooksTitle",
     titleDefault: "Select books and chapters",
     bodyKey: "tutorial.selectorBooksBody",
-    bodyDefault: "Choose a chapter from here to begin your reading journey.",
+    bodyDefault: "Choose a chapter from here to begin reading.",
     placement: "bottom",
     group: "selector",
   },
@@ -172,7 +149,7 @@ export const MOBILE_TUTORIAL_STEPS: TutorialStep[] = [
     id: "toolbar",
     target: ".sb-reader-toolbar",
     titleKey: "tutorial.toolbarTitle",
-    titleDefault: "Reading tools",
+    titleDefault: "Toolbar",
     bodyKey: "tutorial.mobileToolbarBody",
     bodyDefault:
       "Switch between the Bible, search, and more from the bottom bar.",
@@ -188,6 +165,53 @@ export const MOBILE_TUTORIAL_STEPS: TutorialStep[] = [
     placement: "bottom",
   },
 ];
+
+/**
+ * Contextual single-feature tutorials. Triggered the first time the user
+ * actually uses the feature (e.g. clicks the panels button), so we don't
+ * front-load advanced UI in the first-run experience. Each feature gets its
+ * own seen-flag so a completed/skipped contextual tour never reappears.
+ */
+export const CONTEXTUAL_TUTORIALS: Record<string, TutorialStep[]> = {
+  "pane-layout": [
+    {
+      id: "pane-layout",
+      // The menu is opened by the Sidebar while this step is active; spotlight
+      // it (it holds the layout options) rather than just the button.
+      target: ".sb-pane-layout-menu",
+      titleKey: "tutorial.paneLayoutTitle",
+      titleDefault: "Arrange your panes",
+      bodyKey: "tutorial.paneLayoutBody",
+      bodyDefault:
+        "Choose how many passages to read side by side from this layout menu.",
+      placement: "right",
+    },
+  ],
+  "add-tab": [
+    {
+      id: "add-tab",
+      target: ".sb-tab-add-button",
+      titleKey: "tutorial.addTabTitle",
+      titleDefault: "Open more passages",
+      bodyKey: "tutorial.addTabBody",
+      bodyDefault:
+        "Add a new tab to read several books or translations side by side.",
+      placement: "left",
+    },
+  ],
+  search: [
+    {
+      id: "selector-search",
+      target: ".searchbar",
+      titleKey: "tutorial.selectorSearchTitle",
+      titleDefault: "Search by",
+      bodyKey: "tutorial.selectorSearchBody",
+      bodyDefault: "Search by chapter, verse or book from here.",
+      placement: "bottom",
+      group: "selector",
+    },
+  ],
+};
 
 function readFlag(key: string): boolean {
   try {
@@ -205,8 +229,33 @@ function writeFlag(key: string): void {
   }
 }
 
+function readFeaturesFlag(key: string): Record<string, boolean> {
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as Record<string, boolean>;
+    }
+  } catch {
+    // ignore
+  }
+  return {};
+}
+
+function writeFeaturesFlag(key: string, value: Record<string, boolean>): void {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Best-effort; profile record is the durable source of truth.
+  }
+}
+
+/** Which tour is currently running — controls what `finish()` records. */
+type TutorialMode = "onboarding-desktop" | "onboarding-mobile" | "contextual";
+
 export interface TutorialManager {
-  /** All steps in order. */
+  /** All steps in the currently active tour. */
   steps: TutorialStep[];
   /** Whether the tour is currently showing. */
   running: ReadonlySignal<boolean>;
@@ -214,16 +263,30 @@ export interface TutorialManager {
   index: ReadonlySignal<number>;
   /** The active step, or null when not running. */
   currentStep: ReadonlySignal<TutorialStep | null>;
-  /** Whether the user has already completed/skipped the tour (profile/local). */
+  /** Whether the user has already completed/skipped the onboarding tour. */
   completed: ReadonlySignal<boolean>;
-  /** Starts (or restarts) the tour from the first step. */
+  /** Whether the user has opted out of all future tutorial prompts. */
+  optedOut: ReadonlySignal<boolean>;
+  /** Per-feature contextual tutorial completion flags. */
+  featuresSeen: ReadonlySignal<Record<string, boolean>>;
+  /** Starts (or restarts) the onboarding tour from the first step. */
   start: () => void;
+  /**
+   * Starts a contextual single-feature tour, if not already seen and the user
+   * hasn't opted out. Safe to call from event handlers without pre-checking.
+   */
+  startContextual: (featureId: string) => void;
   /** Advances to the next step, finishing after the last one. */
   next: () => void;
   /** Goes back one step (no-op on the first). */
   prev: () => void;
-  /** Ends the tour and records it as seen. */
+  /** Ends the tour, recording completion for the active tour type. */
   finish: () => void;
+  /**
+   * Ends the current tour and records that the user does not want future
+   * tutorial prompts. Marks the onboarding tour completed too.
+   */
+  optOut: () => void;
 }
 
 /**
@@ -239,12 +302,11 @@ export function createTutorialManager(
   const running = signal<boolean>(false);
   const index = signal<number>(0);
 
-  // The active step set is chosen by viewport at `start()` (snapshotted in
-  // `mode`, so a resize mid-tour doesn't swap the steps out from under us).
-  const mode = signal<"desktop" | "mobile">("desktop");
-  const activeSteps = computed<TutorialStep[]>(() =>
-    mode.value === "mobile" ? MOBILE_TUTORIAL_STEPS : TUTORIAL_STEPS
-  );
+  // The active step set is chosen at `start()` / `startContextual()` time
+  // (snapshotted so a resize mid-tour doesn't swap the steps out from under us).
+  const mode = signal<TutorialMode>("onboarding-desktop");
+  const activeFeatureId = signal<string | null>(null);
+  const activeSteps = signal<TutorialStep[]>(ONBOARDING_STEPS);
 
   // Steps that spotlight elements inside the book selector. The selector is
   // kept open for the whole group (no open/close flicker between them) and
@@ -257,6 +319,10 @@ export function createTutorialManager(
   ]);
 
   const seenLocally = signal<boolean>(readFlag(TUTORIAL_SEEN_KEY));
+  const optedOutLocally = signal<boolean>(readFlag(TUTORIAL_OPTED_OUT_KEY));
+  const featuresSeenLocal = signal<Record<string, boolean>>(
+    readFeaturesFlag(TUTORIAL_FEATURES_KEY)
+  );
 
   const completed = computed<boolean>(() => {
     if (seenLocally.value) {
@@ -267,6 +333,32 @@ export function createTutorialManager(
       PROFILE_TUTORIAL_SEEN
     );
     return fromProfile === true || fromProfile === "true";
+  });
+
+  const optedOut = computed<boolean>(() => {
+    if (optedOutLocally.value) {
+      return true;
+    }
+    const fromProfile = getProfileConfigValue(
+      login.profile.value,
+      PROFILE_TUTORIAL_OPTED_OUT
+    );
+    return fromProfile === true || fromProfile === "true";
+  });
+
+  const featuresSeen = computed<Record<string, boolean>>(() => {
+    const local = featuresSeenLocal.value;
+    const fromProfile = getProfileConfigValue(
+      login.profile.value,
+      PROFILE_TUTORIAL_FEATURES_SEEN
+    );
+    if (fromProfile && typeof fromProfile === "object") {
+      return {
+        ...(fromProfile as Record<string, boolean>),
+        ...local,
+      };
+    }
+    return local;
   });
 
   const currentStep = computed<TutorialStep | null>(() =>
@@ -335,15 +427,45 @@ export function createTutorialManager(
     }
   });
 
-  const markSeen = () => {
+  const markOnboardingSeen = () => {
     writeFlag(TUTORIAL_SEEN_KEY);
     seenLocally.value = true;
     saveProfileConfigValue(login, PROFILE_TUTORIAL_SEEN, true);
   };
 
+  const markFeatureSeen = (featureId: string) => {
+    const next = { ...featuresSeenLocal.value, [featureId]: true };
+    featuresSeenLocal.value = next;
+    writeFeaturesFlag(TUTORIAL_FEATURES_KEY, next);
+
+    // Merge with whatever the profile already has so we don't clobber other
+    // features' flags written from another device.
+    const existing = getProfileConfigValue(
+      login.profile.value,
+      PROFILE_TUTORIAL_FEATURES_SEEN
+    );
+    const base =
+      existing && typeof existing === "object"
+        ? (existing as Record<string, boolean>)
+        : {};
+    saveProfileConfigValue(login, PROFILE_TUTORIAL_FEATURES_SEEN, {
+      ...base,
+      [featureId]: true,
+    });
+  };
+
+  const markOptedOut = () => {
+    writeFlag(TUTORIAL_OPTED_OUT_KEY);
+    optedOutLocally.value = true;
+    saveProfileConfigValue(login, PROFILE_TUTORIAL_OPTED_OUT, true);
+  };
+
   const start = () => {
     // Pick the step set for the current viewport before showing the tour.
-    mode.value = selector.viewportWidth.value <= 768 ? "mobile" : "desktop";
+    const isMobile = selector.viewportWidth.value <= 768;
+    mode.value = isMobile ? "onboarding-mobile" : "onboarding-desktop";
+    activeSteps.value = isMobile ? MOBILE_TUTORIAL_STEPS : ONBOARDING_STEPS;
+    activeFeatureId.value = null;
     if (activeSteps.value.length === 0) {
       return;
     }
@@ -351,9 +473,54 @@ export function createTutorialManager(
     running.value = true;
   };
 
+  const startContextual = (featureId: string) => {
+    if (running.value) {
+      return;
+    }
+    if (optedOut.value) {
+      return;
+    }
+    if (featuresSeen.value[featureId]) {
+      return;
+    }
+    const steps = CONTEXTUAL_TUTORIALS[featureId];
+    if (!steps || steps.length === 0) {
+      return;
+    }
+    mode.value = "contextual";
+    activeFeatureId.value = featureId;
+    activeSteps.value = steps;
+    index.value = 0;
+    running.value = true;
+  };
+
   const finish = () => {
     running.value = false;
-    markSeen();
+    if (mode.value === "contextual") {
+      const featureId = activeFeatureId.value;
+      if (featureId) {
+        markFeatureSeen(featureId);
+      }
+      activeFeatureId.value = null;
+    } else {
+      markOnboardingSeen();
+    }
+  };
+
+  const optOut = () => {
+    // Record opt-out first so contextual tours can't restart during teardown.
+    markOptedOut();
+    // Also mark the current tour as resolved so it doesn't replay.
+    if (mode.value === "contextual") {
+      const featureId = activeFeatureId.value;
+      if (featureId) {
+        markFeatureSeen(featureId);
+      }
+    } else {
+      markOnboardingSeen();
+    }
+    running.value = false;
+    activeFeatureId.value = null;
   };
 
   const next = () => {
@@ -370,7 +537,7 @@ export function createTutorialManager(
     }
   };
 
-  // Auto-start once for new users, but only after the welcome/install
+  // Auto-start onboarding once for new users, but only after the welcome/install
   // onboarding is out of the way, and (when logged in) after the profile has
   // loaded — otherwise a returning user could see the tour flash before their
   // recorded completion arrives. One-shot via `autoStartChecked`.
@@ -386,7 +553,7 @@ export function createTutorialManager(
       return;
     }
     autoStartChecked = true;
-    if (!completed.value) {
+    if (!completed.value && !optedOut.value) {
       start();
     }
   });
@@ -399,9 +566,13 @@ export function createTutorialManager(
     index,
     currentStep,
     completed,
+    optedOut,
+    featuresSeen,
     start,
+    startContextual,
     next,
     prev,
     finish,
+    optOut,
   };
 }

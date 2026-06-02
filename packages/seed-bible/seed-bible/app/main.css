@@ -1632,13 +1632,28 @@ h6 {
 .sb-tour-popover-actions {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+.sb-tour-popover-actions-spacer {
+  flex: 1 1 auto;
 }
 
 .sb-tour-popover-actions-right {
   display: flex;
   gap: 8px;
+}
+
+.sb-tour-btn-back {
+  background: transparent;
+  color: var(--sb-font-color);
+  opacity: 0.75;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 2px;
+  padding-right: 2px;
 }
 
 .sb-tour-btn {

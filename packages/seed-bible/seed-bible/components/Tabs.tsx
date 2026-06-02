@@ -1905,7 +1905,12 @@ export function Sidebar(props: SidebarProps) {
           isLayoutMenuOpen={isLayoutMenuOpen.value || tourWantsLayoutMenu}
           toggleLayoutMenu={() => {
             closeContextMenus();
-            isLayoutMenuOpen.value = !isLayoutMenuOpen.value;
+            const willOpen = !isLayoutMenuOpen.value;
+            isLayoutMenuOpen.value = willOpen;
+            // Teach the panel layout the first time the user opens it.
+            if (willOpen) {
+              state.tutorial.startContextual("pane-layout");
+            }
           }}
           closeLayoutMenu={closeLayoutMenu}
           setLayout={(layout) => {

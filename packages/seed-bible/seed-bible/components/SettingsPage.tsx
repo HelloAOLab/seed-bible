@@ -2081,7 +2081,7 @@ function SettingsMainView(props: { state: SeedBibleState }) {
                 <MaterialIcon>school</MaterialIcon>
               </span>
               <span className="sb-settings-nav-label">
-                {t("replay-tutorial", { defaultValue: "Replay tutorial" })}
+                {t("launch-tutorial", { defaultValue: "Launch tutorial" })}
               </span>
               <span className="material-symbols-outlined">chevron_right</span>
             </button>

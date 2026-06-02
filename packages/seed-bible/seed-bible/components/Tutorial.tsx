@@ -42,6 +42,7 @@ export function Tutorial({
   const step = tutorial.currentStep.value;
   const index = tutorial.index.value;
   const total = tutorial.steps.length;
+  const canGoBack = index > 0;
 
   const matchesFilter =
     !groupFilter ||
@@ -168,8 +169,25 @@ export function Tutorial({
             className="sb-tour-btn sb-tour-btn-text"
             onClick={tutorial.finish}
           >
-            {t("tutorial.skip", { defaultValue: "Skip Tutorial" })}
+            {t("tutorial.skip", { defaultValue: "Skip" })}
           </button>
+          <button
+            type="button"
+            className="sb-tour-btn sb-tour-btn-text"
+            onClick={tutorial.optOut}
+          >
+            {t("tutorial.optOut", { defaultValue: "Don't show tutorials" })}
+          </button>
+          <div className="sb-tour-popover-actions-spacer" />
+          {canGoBack && (
+            <button
+              type="button"
+              className="sb-tour-btn sb-tour-btn-back"
+              onClick={tutorial.prev}
+            >
+              {t("tutorial.back", { defaultValue: "Back" })}
+            </button>
+          )}
           <button
             type="button"
             className="sb-tour-btn sb-tour-btn-next"

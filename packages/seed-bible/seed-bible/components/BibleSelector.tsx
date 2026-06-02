@@ -70,6 +70,7 @@ export function BibleSelector(props: BibleSelectorProps) {
   const isLastStep = tutorial
     ? tutorial.index.value >= tutorial.steps.length - 1
     : false;
+  const canGoBack = tutorial ? tutorial.index.value > 0 : false;
 
   return (
     <>
@@ -123,8 +124,25 @@ export function BibleSelector(props: BibleSelectorProps) {
               className="sb-tour-btn sb-tour-btn-text"
               onClick={() => tutorial?.finish()}
             >
-              {t("tutorial.skip", { defaultValue: "Skip Tutorial" })}
+              {t("tutorial.skip", { defaultValue: "Skip" })}
             </button>
+            <button
+              type="button"
+              className="sb-tour-btn sb-tour-btn-text"
+              onClick={() => tutorial?.optOut()}
+            >
+              {t("tutorial.optOut", { defaultValue: "Don't show tutorials" })}
+            </button>
+            <div className="sb-tour-popover-actions-spacer" />
+            {canGoBack && (
+              <button
+                type="button"
+                className="sb-tour-btn sb-tour-btn-back"
+                onClick={() => tutorial?.prev()}
+              >
+                {t("tutorial.back", { defaultValue: "Back" })}
+              </button>
+            )}
             <button
               type="button"
               className="sb-tour-btn sb-tour-btn-next"
