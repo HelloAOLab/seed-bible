@@ -30,6 +30,7 @@ import {
   handleGridKeyNav,
   handleHorizontalListKeyNav,
 } from "seed-bible.components.KeyboardNav";
+import { SessionUserAvatar } from "./Avatar";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -550,43 +551,8 @@ function TabRow(props: TabRowProps) {
           <div className="sb-tab-users-section">
             <div className="sb-tab-users-list">
               {connectedUsers.map((user) => {
-                const effectiveProfile = user.isSelf
-                  ? state.login.profile.value
-                  : user.profile;
-                const imageUrl = getUserImageUrl(effectiveProfile);
-                const displayName = user.isSelf
-                  ? getSelfDisplayName(state)
-                  : getUserDisplayName(user);
-                const visual = user.visual;
-
-                if (imageUrl) {
-                  return (
-                    <span
-                      key={user.connectionId}
-                      className={`sb-tab-user-icon sb-tab-user-icon-has-image${user.isSelf ? " sb-tab-user-icon-self" : ""}`}
-                      title={displayName}
-                      style={{
-                        borderColor: visual.color,
-                        backgroundImage: `url(${imageUrl})`,
-                      }}
-                    />
-                  );
-                }
-
                 return (
-                  <span
-                    key={user.connectionId}
-                    className={`sb-tab-user-icon sb-tab-user-icon-animal${user.isSelf ? " sb-tab-user-icon-self" : ""}`}
-                    title={displayName}
-                    style={{
-                      borderColor: visual.color,
-                      backgroundColor: visual.color,
-                    }}
-                  >
-                    <span className="material-symbols-outlined">
-                      {visual.defaultIcon}
-                    </span>
-                  </span>
+                  <SessionUserAvatar key={user.connectionId} user={user} />
                 );
               })}
             </div>
