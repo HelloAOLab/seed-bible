@@ -6,8 +6,6 @@ registerExtension({
   init: function* (context: SeedBibleState) {
     console.log("Apologist extension initialized with context:", context);
 
-    const apiKey = thisBot.tags.secrets.apologistApiKey;
-
     yield context.chats.registerProvider({
       id: "apologist-chat-provider",
       name: {
@@ -27,7 +25,7 @@ registerExtension({
         };
 
         const response = await web.post(
-          "https://ao.discipleship.bot/api/v1/chat/completions",
+          "https://apologist.ao.bot/api/v1/chat/completions",
           {
             model: "openai/gpt/5-mini",
             stream: false,
@@ -40,11 +38,6 @@ registerExtension({
                 content: m.text,
               })),
             ],
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${apiKey}`,
-            },
           }
         );
 
