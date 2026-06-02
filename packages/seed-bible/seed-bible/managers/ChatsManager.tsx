@@ -1728,7 +1728,7 @@ export function createChatsManager(loginManager: LoginManager): ChatsManager {
 
   effect(() => {
     const currentSelectedChat = selectedChat.value;
-    if (!currentSelectedChat) {
+    if (!currentSelectedChat || !isOpen.value) {
       return;
     }
 
