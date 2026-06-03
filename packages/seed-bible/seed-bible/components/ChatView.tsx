@@ -37,7 +37,9 @@ function getAuthorLabel(
     .map((author) =>
       author.isSelf
         ? t("you", { defaultValue: "You" })
-        : (author.name ?? author.id.slice(0, 6))
+        : author.name
+          ? translateTitle(t, author.name)
+          : author.id.slice(0, 6)
     )
     .filter((name) => name && translateTitle(t, name).trim().length > 0);
 
