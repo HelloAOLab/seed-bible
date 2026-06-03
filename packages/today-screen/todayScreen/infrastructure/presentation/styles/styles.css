@@ -20,7 +20,7 @@
 
 .today-content {
   width: 90%;
-  max-width: 600px;
+  max-width: 820px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -366,15 +366,34 @@
   border: solid 1px var(--sb-divider-color);
   padding: 12px;
   background-color: var(--sb-reader-background);
-  border-radius: 8px;
+  border-radius: 16px;
   justify-content: flex-start;
   align-items: flex-start;
   gap: 8px;
+  max-width: 302px;
+  height: fit-content;
 }
 
-.today-container .filtered-reading-book > div {
+.today-container .filtered-reading-book.expanded {
+  border-color: var(--sb-primary-color);
+}
+
+.today-container .filtered-reading-book > .icons-container {
   display: flex;
   align-items: center;
+}
+
+.today-container .filtered-reading-book > .chapters-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.today-container .filtered-reading-book > span {
+  font-weight: 500;
 }
 
 .today-container .filtered-reading-book-icon {
@@ -398,4 +417,50 @@
 }
 
 .today-container .filtered-reading-book-extra {
+}
+
+.today-container .filtered-reading-chapter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 24px;
+  height: 24px;
+  background-color: var(--sb-divider-color);
+  border-radius: 2px;
+  font-size: 12px;
+  position: relative;
+}
+
+.today-container
+  .filtered-reading-chapter.filtered-reading-chapter-highlighted {
+  background-color: var(--sb-primary-color);
+  color: var(--sb-reader-background);
+}
+
+.today-container .filtered-reading-chapter > div {
+  position: absolute;
+  display: flex;
+  top: -8px;
+  left: calc(100% - 8px);
+  z-index: 1;
+}
+
+.today-container .filtered-reading-chapter > div > div:first-child {
+  margin-left: 0;
+}
+
+.today-container .filtered-reading-chapter > div > div {
+  width: 16px;
+  height: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  border: solid 1px var(--sb-reader-background);
+  margin-left: -12px;
+}
+
+.today-container .filtered-reading-chapter > div > div > span {
+  font-size: 8px;
+  color: var(--sb-reader-font-color);
 }

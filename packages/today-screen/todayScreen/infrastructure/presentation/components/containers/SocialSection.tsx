@@ -2,7 +2,7 @@ import type { CommunityReadingSpanId } from "@packages/today-screen/todayScreen/
 import { useSocialSection } from "../../hooks/useSocialSection";
 import { TitledSection } from "../ui/TitledSection";
 import { ReadingHistoryTimeline } from "./ReadingHistoryTimeline";
-import { FilteredReadingContainer } from "./FilteredReadingContainer";
+import { FilteredReading } from "./FilteredReading";
 
 export interface TimespanFilterOptionData {
   label: string;
@@ -24,19 +24,26 @@ export const SocialSection = () => {
     userFilters,
     handleFilterOptionClick,
     userFilterText,
+    optionsRef,
+    optionsContainerRef,
   } = useSocialSection();
 
   return (
     <TitledSection title={title}>
       <div className="history-card">
         <div
-          onClick={() => handleUserFilterClick()}
+          onClick={(e) => handleUserFilterClick(e)}
           className="user-filter-container"
+          ref={optionsContainerRef}
         >
           <span className="user-filter-label">{userFilterText}</span>
           <MaterialIcon>{userFilterIcon}</MaterialIcon>
           {userFilterOpen && (
-            <div className="user-filter-options">
+            <div
+              ref={optionsRef}
+              className="user-filter-options"
+              onClick={(e) => e.stopPropagation()}
+            >
               {userFilters.map((filter) => {
                 return (
                   <button
@@ -69,7 +76,7 @@ export const SocialSection = () => {
         {selectedTimespanOptionId === "all" ? (
           <ReadingHistoryTimeline />
         ) : (
-          <FilteredReadingContainer
+          <FilteredReading
             timespanId={selectedTimespanOptionId}
             userFilters={userFilters}
           />

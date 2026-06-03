@@ -2,9 +2,10 @@ import { useTodayContext } from "../contexts/today/TodayContext";
 import { useSignal, useComputed } from "@preact/signals";
 import type { TimespanFilterOptionData } from "../components/containers/SocialSection";
 import type { CommunityReadingSpanId } from "@packages/today-screen/todayScreen/domain/models/readingHistory";
-import { useEffect, useState } from "preact/hooks";
+import { useEffect, useState, type MutableRef } from "preact/hooks";
+import { useClickOutside } from "./useClickOutside";
 
-const { useMemo, useCallback } = os.appHooks;
+const { useRef, useMemo, useCallback } = os.appHooks;
 
 type UseSocialSection = () => {
   title: string;
@@ -14,12 +15,14 @@ type UseSocialSection = () => {
   }) => preact.JSX.Element;
   userFilterIcon: string;
   userFilterOpen: boolean;
-  handleUserFilterClick: () => void;
+  handleUserFilterClick: (e: MouseEvent) => void;
   timespanFilterOptionsData: TimespanFilterOptionData[];
   selectedTimespanOptionId: CommunityReadingSpanId | "all";
   userFilters: { id: string; name: string; selected: boolean; color: string }[];
   handleFilterOptionClick: (event: MouseEvent, id: string) => void;
   userFilterText: string;
+  optionsRef: MutableRef<HTMLDivElement | null>;
+  optionsContainerRef: MutableRef<HTMLDivElement | null>;
 };
 
 const TimespanOptionLabelMap: Record<CommunityReadingSpanId | "all", string> = {
@@ -38,6 +41,13 @@ export const useSocialSection: UseSocialSection = () => {
   } = useTodayContext();
 
   const userFilterOpen = useSignal<boolean>(false);
+  const optionsRef = useRef<HTMLDivElement | null>(null);
+  const optionsContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useClickOutside([optionsRef, optionsContainerRef], () => {
+    userFilterOpen.value = false;
+  });
+
   const selectedTimespanOptionId = useSignal<CommunityReadingSpanId | "all">(
     "twoDays"
   );
@@ -50,7 +60,8 @@ export const useSocialSection: UseSocialSection = () => {
     userFilterOpen.value ? "keyboard_arrow_up" : "keyboard_arrow_down"
   );
 
-  const handleUserFilterClick = useCallback(() => {
+  const handleUserFilterClick = useCallback((e: MouseEvent) => {
+    e.stopPropagation();
     userFilterOpen.value = !userFilterOpen.value;
   }, []);
 
@@ -133,5 +144,7 @@ export const useSocialSection: UseSocialSection = () => {
     userFilters,
     handleFilterOptionClick,
     userFilterText,
+    optionsRef,
+    optionsContainerRef,
   };
 };

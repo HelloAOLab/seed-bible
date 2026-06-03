@@ -1706,14 +1706,17 @@
       "todayScreen.infrastructure.entrypoints.onExtensionInstalled": [
         "./packages/today-screen/todayScreen/infrastructure/entrypoints/onExtensionInstalled.tsx"
       ],
+      "todayScreen.infrastructure.presentation.components.containers.Book": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/Book.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.components.containers.Chapter": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/Chapter.tsx"
+      ],
       "todayScreen.infrastructure.presentation.components.containers.Divider": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/Divider.tsx"
       ],
-      "todayScreen.infrastructure.presentation.components.containers.FilteredReadingBook": [
-        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/FilteredReadingBook.tsx"
-      ],
-      "todayScreen.infrastructure.presentation.components.containers.FilteredReadingContainer": [
-        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/FilteredReadingContainer.tsx"
+      "todayScreen.infrastructure.presentation.components.containers.FilteredReading": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/FilteredReading.tsx"
       ],
       "todayScreen.infrastructure.presentation.components.containers.Header": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/Header.tsx"
@@ -1757,11 +1760,14 @@
       "todayScreen.infrastructure.presentation.contexts.today.useTodayProvider": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/contexts/today/useTodayProvider.tsx"
       ],
-      "todayScreen.infrastructure.presentation.hooks.useFilteredReadingBook": [
-        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useFilteredReadingBook.tsx"
+      "todayScreen.infrastructure.presentation.hooks.useBook": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useBook.tsx"
       ],
-      "todayScreen.infrastructure.presentation.hooks.useFilteredReadingContainer": [
-        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useFilteredReadingContainer.tsx"
+      "todayScreen.infrastructure.presentation.hooks.useClickOutside": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useClickOutside.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.hooks.useFilteredReading": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useFilteredReading.tsx"
       ],
       "todayScreen.infrastructure.presentation.hooks.useHeader": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useHeader.tsx"

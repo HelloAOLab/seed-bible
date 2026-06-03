@@ -1,4 +1,4 @@
-import { effect, signal } from "@preact/signals";
+import { computed, effect, signal } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
 import { MaterialIcon, SeedBibleIcon } from "seed-bible.components.icons";
 import { getCustomStyles } from "todayScreen.infrastructure.presentation.styles.adapter";
@@ -135,7 +135,12 @@ export const bootstrapExtension = () => {
       });
 
       const lastTranslationBooks = signal<{
-        books: Array<{ id: string; name: string; commonName?: string }>;
+        books: Array<{
+          id: string;
+          name: string;
+          commonName?: string;
+          numberOfChapters: number;
+        }>;
       } | null>(null);
       const cleanupTranslationBooks = effect(() => {
         const books =
@@ -144,6 +149,11 @@ export const bootstrapExtension = () => {
         if (books !== null) {
           lastTranslationBooks.value = books;
         }
+      });
+
+      const translationBooksMap = computed(() => {
+        const books = lastTranslationBooks.value?.books ?? [];
+        return new Map(books.map((book) => [book.id, book]));
       });
 
       yield context.tools.registerToolbarTool({
@@ -202,6 +212,7 @@ export const bootstrapExtension = () => {
                     }
                   },
                   translationBooks: lastTranslationBooks,
+                  translationBooksMap,
                   subscribedUsersProfileProvider: fakeSubscribedUsersProvider,
                   subscribedUsersIdsProvider: fakeSubscribedUsersProvider,
                 }}

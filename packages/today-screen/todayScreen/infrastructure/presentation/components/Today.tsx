@@ -35,8 +35,24 @@ export interface TodayConfig {
   getDefaultTranslation: () => string | undefined;
   openBookSelector: () => void;
   translationBooks: Signal<{
-    books: Array<{ id: string; name: string; commonName?: string }>;
+    books: Array<{
+      id: string;
+      name: string;
+      commonName?: string;
+      numberOfChapters: number;
+    }>;
   } | null>;
+  translationBooksMap: Signal<
+    Map<
+      string,
+      {
+        id: string;
+        name: string;
+        commonName?: string;
+        numberOfChapters: number;
+      }
+    >
+  >;
   subscribedUsersProfileProvider: {
     getUserProfile(id: string):
       | {

@@ -1,22 +1,19 @@
 import type { CommunityReadingSpanId } from "@packages/today-screen/todayScreen/domain/models/readingHistory";
-import { FilteredReadingBook } from "./FilteredReadingBook";
-import { useFilteredReadingContainer } from "../../hooks/useFilteredReadingContainer";
+import { Book, type BookProps } from "./Book";
+import { useFilteredReading } from "../../hooks/useFilteredReading";
 
-export interface BookData {
-  bookId: string;
-  chapter: number;
-  usersId: string[];
+export interface BookData extends BookProps {
   key: string;
 }
 
-export const FilteredReadingContainer = ({
+export const FilteredReading = ({
   timespanId,
   userFilters,
 }: {
   timespanId: CommunityReadingSpanId;
   userFilters: { id: string; name: string; selected: boolean; color: string }[];
 }) => {
-  const { booksData } = useFilteredReadingContainer({
+  const { booksData } = useFilteredReading({
     timespanId,
     userFilters,
   });
@@ -24,7 +21,7 @@ export const FilteredReadingContainer = ({
   return (
     <div className="filtered-reading-container">
       {booksData.map(({ key, ...rest }) => (
-        <FilteredReadingBook key={key} {...rest} />
+        <Book key={key} {...rest} />
       ))}
     </div>
   );
