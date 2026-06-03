@@ -272,6 +272,10 @@ export function ChatView(props: ChatViewProps) {
   }, [messages.length]);
 
   useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
     return () => {
       chat.setTypingStatus(false);
     };
