@@ -70,7 +70,7 @@ function RelativeDateTime({ timeMs }: { timeMs: number }) {
   return <span className="relative-date-time">{date.toRelative()}</span>;
 }
 
-function getMessageAvatar(
+export function getMessageAvatar(
   chat: ChatSession,
   message: ChatMessage,
   t: (key: string, options?: Record<string, unknown>) => string
@@ -93,23 +93,35 @@ function getMessageAvatar(
     };
   }
 
-  const label = getParticipantDisplayLabel(primaryAuthor, t);
+  return getParticipantAvatar(primaryAuthor, t);
+}
+
+export function getParticipantAvatar(
+  participant: ChatParticipant,
+  t: (key: string, options?: Record<string, unknown>) => string
+): {
+  imageUrl: string | null;
+  label: string;
+  visual: ConnectionSessionUserVisual;
+  isSelf: boolean;
+} {
+  const label = getParticipantDisplayLabel(participant, t);
   const imageUrl =
-    !primaryAuthor.isAI && typeof primaryAuthor.profile?.pictureUrl === "string"
-      ? primaryAuthor.profile.pictureUrl
+    !participant.isAI && typeof participant.profile?.pictureUrl === "string"
+      ? participant.profile.pictureUrl
       : null;
 
   return {
     imageUrl,
     label,
-    visual: primaryAuthor.isAI
-      ? getUserAnimalVisual(primaryAuthor.providerId)
-      : primaryAuthor.visual,
-    isSelf: primaryAuthor.isSelf,
+    visual: participant.isAI
+      ? getUserAnimalVisual(participant.providerId)
+      : participant.visual,
+    isSelf: participant.isSelf,
   };
 }
 
-function getParticipantDisplayLabel(
+export function getParticipantDisplayLabel(
   participant: ChatParticipant,
   t: (key: string, options?: Record<string, unknown>) => string
 ): string {
@@ -120,7 +132,7 @@ function getParticipantDisplayLabel(
     : (name ?? t("anonymous", { defaultValue: "Anonymous" }));
 }
 
-function getParticipantMentionLabel(
+export function getParticipantMentionLabel(
   participant: ChatParticipant,
   t: (key: string, options?: Record<string, unknown>) => string
 ): string {

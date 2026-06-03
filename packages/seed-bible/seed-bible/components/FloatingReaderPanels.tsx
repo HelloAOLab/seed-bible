@@ -1,6 +1,11 @@
 import { useSignal } from "@preact/signals";
 import { useI18n } from "seed-bible.i18n.I18nManager";
-import { ChatView } from "./ChatView";
+import {
+  ChatView,
+  getMessageAvatar,
+  getParticipantAvatar,
+  getParticipantDisplayLabel,
+} from "./ChatView";
 import {
   closeContextMenus,
   ContextMenuItem,
@@ -19,6 +24,7 @@ import type {
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import type { ReaderTab } from "seed-bible.managers.TabsManager";
 import { translateTitle } from "./Utils";
+import { Avatar } from "./Avatar";
 
 interface SearchResult {
   id: string;
@@ -61,46 +67,6 @@ function getChatTitle(
   return names.slice(0, 3).join(", ");
 }
 
-function getParticipantLabel(
-  participant: ChatParticipant,
-  t: (key: string, options?: Record<string, unknown>) => string
-): string {
-  if (participant.isSelf) {
-    return t("you", { defaultValue: "You" });
-  }
-  if (participant.name) {
-    return translateTitle(t, participant.name);
-  }
-
-  return t("anonymous", { defaultValue: "Anonymous" });
-}
-
-function getAvatarInitials(label: string): string {
-  const words = label
-    .trim()
-    .split(/\s+/)
-    .filter((word) => word.length > 0);
-  if (words.length === 0) {
-    return "?";
-  }
-
-  if (words.length === 1) {
-    return words[0]!.slice(0, 2).toUpperCase();
-  }
-
-  return `${words[0]![0] ?? ""}${words[1]![0] ?? ""}`.toUpperCase();
-}
-
-function getParticipantAvatar(participant: ChatParticipant): string | null {
-  if (participant.isAI) {
-    return null;
-  }
-  if (typeof participant.profile?.pictureUrl !== "string") {
-    return null;
-  }
-  return participant.profile.pictureUrl;
-}
-
 function getChatMessageText(message: ChatMessage): string {
   switch (message.type) {
     case "text":
@@ -121,7 +87,7 @@ function getChatPreview(
 
   const author = chat.getMessageAuthors(latestMessage)[0] ?? null;
   const authorLabel = author
-    ? getParticipantLabel(author, t)
+    ? getParticipantDisplayLabel(author, t)
     : t("anonymous", { defaultValue: "Anonymous" });
   const text = getChatMessageText(latestMessage).trim();
   if (!text) {
@@ -634,8 +600,8 @@ function FloatingChatPanel(props: FloatingReaderPanelsProps) {
             }}
           >
             {selectedChat.participants.value.map((participant) => {
-              const label = getParticipantLabel(participant, t);
-              const imageUrl = getParticipantAvatar(participant);
+              const label = getParticipantDisplayLabel(participant, t);
+              const avatar = getParticipantAvatar(participant, t);
               return (
                 <ContextMenuItem
                   key={participant.id}
@@ -644,20 +610,12 @@ function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                     event.preventDefault();
                   }}
                 >
-                  {imageUrl ? (
-                    <img
-                      src={imageUrl}
-                      alt={`${label} avatar`}
-                      className="sb-floating-chat-members-avatar"
-                    />
-                  ) : (
-                    <span
-                      className="sb-floating-chat-members-avatar sb-floating-chat-members-avatar-fallback"
-                      aria-hidden="true"
-                    >
-                      {getAvatarInitials(label)}
-                    </span>
-                  )}
+                  <Avatar
+                    imageUrl={avatar.imageUrl}
+                    visual={avatar.visual}
+                    title={avatar.label}
+                    isSelf={avatar.isSelf}
+                  />
                   <span className="sb-floating-chat-members-name">{label}</span>
                 </ContextMenuItem>
               );
