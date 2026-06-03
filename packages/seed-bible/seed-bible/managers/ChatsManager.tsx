@@ -1752,21 +1752,6 @@ export function createChatsManager(loginManager: LoginManager): ChatsManager {
     chats.value.some((chat) => chat.wasMentioned.value)
   );
 
-  effect(() => {
-    const currentSelectedChat = selectedChat.value;
-    if (!currentSelectedChat || !isOpen.value) {
-      return;
-    }
-
-    const latestMessageId =
-      currentSelectedChat.messages.value.at(-1)?.id ?? null;
-    if (currentSelectedChat.lastMessageRead.value === latestMessageId) {
-      return;
-    }
-
-    currentSelectedChat.markAsRead();
-  });
-
   const registerProvider = (provider: ChatProvider) => {
     chatProviders.value = [
       ...chatProviders.value.filter((p) => p.id !== provider.id),

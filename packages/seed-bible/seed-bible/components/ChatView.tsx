@@ -1,4 +1,4 @@
-import { useSignal, useSignalEffect } from "@preact/signals";
+import { useSignal } from "@preact/signals";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import type {
   ChatParticipant,
@@ -203,6 +203,8 @@ export function ChatView(props: ChatViewProps) {
   const submitError = useSignal<string | null>(null);
   const messagesRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const isFirstRenderRef = useRef(true);
+  const wasAtBottomRef = useRef(true);
 
   const activeParticipants = chat.participants.value.filter(
     (participant) => participant.isActive
@@ -242,11 +244,31 @@ export function ChatView(props: ChatViewProps) {
   }, [mentionQuery, mentionSuggestions.length]);
 
   useEffect(() => {
-    const messagesContainer = messagesRef.current;
-    if (!messagesContainer) {
-      return;
+    const container = messagesRef.current;
+    if (!container) return;
+
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
+      const lastReadId = chat.lastMessageRead.value;
+      const lastReadIndex = lastReadId
+        ? messages.findIndex((m) => m.id === lastReadId)
+        : -1;
+      const firstUnread = messages[lastReadIndex + 1] ?? null;
+      if (firstUnread) {
+        const el = container.querySelector(
+          `[data-message-id="${firstUnread.id}"]`
+        );
+        if (el) {
+          el.scrollIntoView({ block: "center" });
+          wasAtBottomRef.current = false;
+          return;
+        }
+      }
     }
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    if (wasAtBottomRef.current || !chat.lastMessageRead.value) {
+      container.scrollTop = container.scrollHeight;
+    }
   }, [messages.length]);
 
   useEffect(() => {
@@ -255,13 +277,36 @@ export function ChatView(props: ChatViewProps) {
     };
   }, []);
 
-  useSignalEffect(() => {
-    const latestMessageId = chat.messages.value.at(-1)?.id ?? null;
-    if (chat.lastMessageRead.value === latestMessageId) {
-      return;
-    }
-    chat.markAsRead();
-  });
+  useEffect(() => {
+    const container = messagesRef.current;
+    if (!container || messages.length === 0) return;
+
+    const lastMessageId = messages.at(-1)?.id ?? null;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const messageId = (entry.target as HTMLElement).dataset.messageId;
+          if (!messageId) continue;
+          if (messageId === lastMessageId) {
+            wasAtBottomRef.current = entry.isIntersecting;
+            if (entry.isIntersecting) {
+              chat.markAsRead();
+            }
+          } else if (entry.isIntersecting) {
+            chat.markAsRead(messageId);
+          }
+        }
+      },
+      { root: container, threshold: 0 }
+    );
+
+    container
+      .querySelectorAll("[data-message-id]")
+      .forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [messages.length]);
 
   const selectMention = (participant: ChatParticipant) => {
     if (!mentionContext) {
@@ -379,7 +424,11 @@ export function ChatView(props: ChatViewProps) {
           messages.map((message) => {
             const avatar = getMessageAvatar(chat, message, t);
             return (
-              <article className="sb-chat-view-message" key={message.id}>
+              <article
+                className="sb-chat-view-message"
+                key={message.id}
+                data-message-id={message.id}
+              >
                 <div className="sb-chat-view-message-avatar-shell">
                   <Avatar
                     imageUrl={avatar.imageUrl}
