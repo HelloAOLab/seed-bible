@@ -189,16 +189,16 @@ export function createSeedBibleState(): SeedBibleState {
   const sidebar = createSidebar({
     chatsManager: chats,
     onOpenChatPanel: () => {
-      if (chats.chats.value.length === 0) {
-        const chat = chats.createLocalSession();
-        const availableParticipants = chat.availableParticipants.value;
-        const firstAvailableAIParticipant = availableParticipants.find(
-          (p) => p.isAI
-        );
-        if (firstAvailableAIParticipant) {
-          chat.addParticipant(firstAvailableAIParticipant.id);
-        }
-      }
+      // if (chats.chats.value.length === 0) {
+      //   const chat = chats.createLocalSession();
+      //   const availableParticipants = chat.availableParticipants.value;
+      //   const firstAvailableAIParticipant = availableParticipants.find(
+      //     (p) => p.isAI
+      //   );
+      //   if (firstAvailableAIParticipant) {
+      //     chat.addParticipant(firstAvailableAIParticipant.id);
+      //   }
+      // }
     },
   });
   const tabs = createTabs(data, highlights, chats);

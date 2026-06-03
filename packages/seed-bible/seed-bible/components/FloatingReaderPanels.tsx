@@ -13,6 +13,7 @@ import {
 import type {
   ChatMessage,
   ChatParticipant,
+  ChatProvider,
   ChatSession,
 } from "seed-bible.managers.ChatsManager";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
@@ -668,13 +669,7 @@ function FloatingChatPanel(props: FloatingReaderPanelsProps) {
       {selectedChat ? (
         <ChatView chat={selectedChat} />
       ) : (
-        <>
-          {chats.length > 0 ? (
-            <ChatList chats={chats} state={state} />
-          ) : (
-            <NoChatsAvailable />
-          )}
-        </>
+        <ChatList chats={chats} state={state} />
       )}
     </div>
   );
@@ -691,12 +686,23 @@ function NoChatsAvailable() {
         chat_bubble_outline
       </span>
       <p className="sb-floating-chat-empty-title">
-        {t("chat-coming-soon", {
-          defaultValue: "No chat session available",
+        {t("you-have-no-chats", {
+          defaultValue:
+            "You have no chats. Create one using the + button below.",
         })}
       </p>
     </div>
   );
+}
+
+function createLocalChatFromProvider(
+  state: SeedBibleState,
+  provider: ChatProvider
+) {
+  closeContextMenus();
+  const chat = state.chats.createLocalSession();
+  chat.addParticipant(provider.id);
+  state.chats.selectChat(chat.id);
 }
 
 function ChatList({
@@ -707,49 +713,81 @@ function ChatList({
   state: SeedBibleState;
 }) {
   const { t } = useI18n();
+  const providers = state.chats.providers.value;
 
   return (
-    <div className="sb-floating-chat-list" role="listbox">
-      {chats.map((chat) => {
-        const latestMessage = getLatestChatMessage(chat);
-        const unreadCount = chat.unreadMessages.value.length;
-        return (
-          <button
-            key={chat.id}
-            type="button"
-            className="sb-floating-chat-list-item"
-            onClick={() => {
-              state.chats.selectChat(chat.id);
-            }}
-            role="option"
-            aria-selected="false"
-            title={getChatTitle(chat, t)}
-          >
-            <div className="sb-floating-chat-list-item-header">
-              <span className="sb-floating-chat-list-item-title">
-                {getChatTitle(chat, t)}
-              </span>
-              <div className="sb-floating-chat-list-item-meta">
-                {latestMessage ? (
-                  <span className="sb-floating-chat-list-item-time">
-                    <ChatListRelativeDateTime timeMs={latestMessage.timeMs} />
+    <div className="sb-floating-chat-list-shell">
+      {chats.length === 0 ? (
+        <NoChatsAvailable />
+      ) : (
+        <div className="sb-floating-chat-list" role="listbox">
+          {chats.map((chat) => {
+            const latestMessage = getLatestChatMessage(chat);
+            const unreadCount = chat.unreadMessages.value.length;
+            return (
+              <button
+                key={chat.id}
+                type="button"
+                className="sb-floating-chat-list-item"
+                onClick={() => {
+                  state.chats.selectChat(chat.id);
+                }}
+                role="option"
+                aria-selected="false"
+                title={getChatTitle(chat, t)}
+              >
+                <div className="sb-floating-chat-list-item-header">
+                  <span className="sb-floating-chat-list-item-title">
+                    {getChatTitle(chat, t)}
                   </span>
-                ) : null}
+                  <div className="sb-floating-chat-list-item-meta">
+                    {latestMessage ? (
+                      <span className="sb-floating-chat-list-item-time">
+                        <ChatListRelativeDateTime
+                          timeMs={latestMessage.timeMs}
+                        />
+                      </span>
+                    ) : null}
 
-                {unreadCount > 0 ? (
-                  <span className="sb-floating-chat-list-item-unread">
-                    {unreadCount > 99 ? "99+" : `${unreadCount}`}
-                  </span>
-                ) : null}
-              </div>
-            </div>
+                    {unreadCount > 0 ? (
+                      <span className="sb-floating-chat-list-item-unread">
+                        {unreadCount > 99 ? "99+" : `${unreadCount}`}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
 
-            <p className="sb-floating-chat-list-item-preview">
-              {getChatPreview(chat, t)}
-            </p>
-          </button>
-        );
-      })}
+                <p className="sb-floating-chat-list-item-preview">
+                  {getChatPreview(chat, t)}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {providers.length > 0 ? (
+        <ContextMenuWithButton
+          anchorClassName="sb-floating-chat-list-create-anchor"
+          buttonClassName="sb-floating-chat-list-create-button"
+          menuClassName="sb-floating-chat-list-create-menu"
+          icon="add"
+          aria-label={t("add", { defaultValue: "Add" })}
+          title={t("add", { defaultValue: "Add" })}
+        >
+          {providers.map((provider) => (
+            <ContextMenuItem
+              key={provider.id}
+              className="sb-floating-chat-list-create-item"
+              onClick={() => {
+                createLocalChatFromProvider(state, provider);
+              }}
+            >
+              {translateTitle(t, provider.name)}
+            </ContextMenuItem>
+          ))}
+        </ContextMenuWithButton>
+      ) : null}
     </div>
   );
 }

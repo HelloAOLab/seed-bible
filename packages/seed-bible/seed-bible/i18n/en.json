@@ -241,5 +241,6 @@
   "x-is-typing-and-more": "{{name}} and {{count}} others are typing...",
   "x-is-typing-and-more_one": "{{name}} and one other is typing...",
   "x-is-typing-and-more_other": "{{name}} and {{count}} others are typing...",
-  "shared-chat": "Shared Chat"
+  "shared-chat": "Shared Chat",
+  "you-have-no-chats": "You have no chats. Create one using the + button below."
 }
