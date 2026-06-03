@@ -190,17 +190,14 @@ export interface AIChatParticipant extends BaseChatParticipant {
 
 export type ChatParticipant = UserChatParticipant | AIChatParticipant;
 
-type SharedAIChatParticipant = Pick<
-  AIChatParticipant,
-  "id" | "name" | "isAI" | "providerId"
->;
-
 const sharedAIChatParticipantSchema = z.object({
   id: z.string(),
   providerId: z.string(),
   name: z.string().nullable(),
   isAI: z.literal(true),
 });
+
+type SharedAIChatParticipant = z.infer<typeof sharedAIChatParticipantSchema>;
 
 const sharedAIChatParticipantArraySchema = z.array(
   sharedAIChatParticipantSchema
@@ -596,41 +593,11 @@ function resolveMessageTargetsWithAliases(
   return Array.from(matches.values());
 }
 
-function parseTypingParticipantId(value: unknown): string | null {
-  return typeof value === "string" && value.trim().length > 0 ? value : null;
-}
-
-function parseStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  const seen = new Set<string>();
-  const result: string[] = [];
-  for (const entry of value) {
-    if (typeof entry !== "string") {
-      continue;
-    }
-    const trimmed = entry.trim();
-    if (trimmed.length === 0 || seen.has(trimmed)) {
-      continue;
-    }
-    seen.add(trimmed);
-    result.push(trimmed);
-  }
-
-  return result;
-}
-
 function stringArraysEqual(left: string[], right: string[]): boolean {
   return (
     left.length === right.length &&
     left.every((value, index) => value === right[index])
   );
-}
-
-function createParticipantTypingMapKey(participantId: string): string {
-  return `participant:${participantId}`;
 }
 
 function getUnreadMessagesSinceLastRead(
@@ -697,16 +664,13 @@ function createSharedChatSession(
   const participantAliasesMap = session.document.getMap<unknown>(
     "chat_participant_aliases"
   );
-  const chatTypingMap = session.document.getMap<unknown>("chat_typing");
-  const chatSelectedParticipantsMap = session.document.getMap<unknown>(
-    "chat_selected_participants"
-  );
+  const chatTypingMap = session.document.getMap<boolean>("chat_typing");
   const chatProvidersMapVersion = signal(0);
   const participantAliasesMapVersion = signal(0);
   const chatTypingMapVersion = signal(0);
-  const chatSelectedParticipantsMapVersion = signal(0);
   const participantIdAliases = signal<Record<string, string>>({});
   const localIsTyping = signal(false);
+  const selectedProviderParticipantIds = signal<string[]>([]);
   chatProvidersMap.changes.subscribe(() => {
     // Avoid updating reactive graph synchronously during shared-doc
     // transactions to prevent dependency cycles.
@@ -724,18 +688,6 @@ function createSharedChatSession(
       chatTypingMapVersion.value += 1;
     });
   });
-  chatSelectedParticipantsMap.changes.subscribe(() => {
-    window.queueMicrotask(() => {
-      chatSelectedParticipantsMapVersion.value += 1;
-    });
-  });
-
-  const participantsMatch = (
-    left: SharedAIChatParticipant[],
-    right: SharedAIChatParticipant[]
-  ): boolean => {
-    return JSON.stringify(left) === JSON.stringify(right);
-  };
 
   const readValidChats = (): ChatMessage[] => {
     const validMessages = chats
@@ -891,6 +843,10 @@ function createSharedChatSession(
       null
   );
 
+  const localParticipant = computed(
+    () => allUserParticipants.value.find((p) => p.isSelf) ?? null
+  );
+
   const sharedProviderParticipants = computed<AIChatParticipant[]>(() => {
     const currentLocalParticipantId = localParticipantId.value;
     const users = allUserParticipants.value;
@@ -900,69 +856,56 @@ function createSharedChatSession(
     chatProvidersMap.forEach((value, ownerParticipantId) => {
       const parsed = sharedAIChatParticipantArraySchema.safeParse(value);
       if (!parsed.success) {
+        console.error(
+          "Invalid chat provider data for participant ID",
+          ownerParticipantId,
+          parsed.error
+        );
         return;
       }
       const owner = users.find((p) => p.id === ownerParticipantId);
       if (!owner) {
+        console.error("Owner not found for shared participant", value);
         return;
       }
-      providerParticipants.push(
-        ...parsed.data.map(
-          (p): AIChatParticipant => ({
-            ...p,
-            ownerParticipantId,
-            userId: owner.userId,
-            connectionId: owner.connectionId,
-            isSelf: false,
-            isRemote: ownerParticipantId !== currentLocalParticipantId,
-            isActive: owner.isActive,
-          })
-        )
-      );
+      const isRemote = ownerParticipantId !== currentLocalParticipantId;
+
+      for (const p of parsed.data) {
+        if (!isRemote) {
+          const localParticipants = localProviderParticipants.peek();
+          const localParticipant = localParticipants.find((l) => l.id === p.id);
+
+          if (localParticipant) {
+            providerParticipants.push(localParticipant);
+            continue;
+          }
+        }
+
+        providerParticipants.push({
+          ...p,
+          ownerParticipantId,
+          userId: owner.userId,
+          connectionId: owner.connectionId,
+          isSelf: false,
+          isRemote,
+          isActive: owner.isActive,
+        });
+      }
     });
 
     return providerParticipants;
   });
 
-  const selectedProviderParticipantIds = computed(() => {
-    void chatSelectedParticipantsMapVersion.value;
-    const ids = new Set<string>();
-    chatSelectedParticipantsMap.forEach((value) => {
-      for (const participantId of parseStringArray(value)) {
-        ids.add(participantId);
-      }
-    });
-    return ids;
-  });
-
   const participants = computed(() => {
-    const selectedIds = selectedProviderParticipantIds.value;
-    return [
-      ...allUserParticipants.value,
-      ...sharedProviderParticipants.value.filter((p) => selectedIds.has(p.id)),
-    ];
-  });
-
-  const availableParticipants = computed<ChatParticipant[]>(() => {
-    const currentLocalParticipantId = localParticipantId.value;
-    if (!currentLocalParticipantId) {
-      return [];
-    }
-
-    const selectedIds = selectedProviderParticipantIds.value;
-    return sharedProviderParticipants.value.filter(
-      (participant) =>
-        participant.ownerParticipantId === currentLocalParticipantId &&
-        !selectedIds.has(participant.id)
-    );
+    return [...allUserParticipants.value, ...sharedProviderParticipants.value];
   });
 
   const typingParticipants = computed(() => {
     void chatTypingMapVersion.value;
     const typingParticipantIds = new Set<string>();
-    chatTypingMap.forEach((value) => {
-      const participantId = parseTypingParticipantId(value);
-      if (participantId) {
+
+    chatTypingMap.forEach((value, participantId) => {
+      if (value) {
         typingParticipantIds.add(participantId);
       }
     });
@@ -973,23 +916,44 @@ function createSharedChatSession(
     );
   });
 
-  const localProviderParticipants = computed(() => {
+  const localProviderParticipants = computed<AIChatParticipant[]>(() => {
+    const p = localParticipant.value;
+    if (!p) {
+      return [];
+    }
+    return chatProviders.value
+      .filter((p) => p.supportsSharedChats)
+      .map((provider) => ({
+        id: createProviderParticipantId(p.id, provider.id),
+        providerId: provider.id,
+        ownerParticipantId: p.id,
+        userId: p.userId ?? null,
+        connectionId: p.connectionId ?? null,
+        name: provider.name,
+        isSelf: false,
+        isAI: true,
+        isRemote: false,
+        isActive: p.isActive,
+      }));
+  });
+
+  const selectedProviderParticipants = computed(() => {
+    const selectedIds = new Set(selectedProviderParticipantIds.value);
+    return localProviderParticipants.value.filter((participant) =>
+      selectedIds.has(participant.id)
+    );
+  });
+
+  const availableParticipants = computed<ChatParticipant[]>(() => {
     const currentLocalParticipantId = localParticipantId.value;
-    return currentLocalParticipantId
-      ? chatProviders.value
-          .filter((p) => p.supportsSharedChats)
-          .map(
-            (provider): SharedAIChatParticipant => ({
-              id: createProviderParticipantId(
-                currentLocalParticipantId,
-                provider.id
-              ),
-              name: provider.name,
-              isAI: true,
-              providerId: provider.id,
-            })
-          )
-      : [];
+    if (!currentLocalParticipantId) {
+      return [];
+    }
+
+    const selectedIds = new Set(selectedProviderParticipantIds.value);
+    return localProviderParticipants.value.filter(
+      (p) => !selectedIds.has(p.id)
+    );
   });
 
   let previousLocalParticipantId: string | null = null;
@@ -1002,117 +966,37 @@ function createSharedChatSession(
         previousLocalParticipantId !== currentLocalParticipantId
       ) {
         chatProvidersMap.delete(previousLocalParticipantId);
-        chatSelectedParticipantsMap.delete(previousLocalParticipantId);
       }
 
       if (!currentLocalParticipantId) {
         if (previousLocalParticipantId) {
           chatProvidersMap.delete(previousLocalParticipantId);
-          chatSelectedParticipantsMap.delete(previousLocalParticipantId);
         }
         previousLocalParticipantId = null;
         return;
       }
 
-      const existingParticipants = sharedAIChatParticipantArraySchema.safeParse(
-        chatProvidersMap.get(currentLocalParticipantId)
-      );
-      const currentValue = existingParticipants.success
-        ? existingParticipants.data
-        : [];
-      if (!participantsMatch(currentValue, localProviderParticipants.value)) {
-        chatProvidersMap.set(
-          currentLocalParticipantId,
-          localProviderParticipants.value
-        );
-      }
-
-      const validParticipantIds = new Set(
-        localProviderParticipants.value.map((participant) => participant.id)
-      );
-      const currentSelectedParticipantIds = parseStringArray(
-        chatSelectedParticipantsMap.get(currentLocalParticipantId)
-      );
-      const nextSelectedParticipantIds = currentSelectedParticipantIds.filter(
-        (participantId) => validParticipantIds.has(participantId)
-      );
-
-      if (nextSelectedParticipantIds.length === 0) {
-        if (currentSelectedParticipantIds.length > 0) {
-          chatSelectedParticipantsMap.delete(currentLocalParticipantId);
-        }
-      } else if (
-        !stringArraysEqual(
-          currentSelectedParticipantIds,
-          nextSelectedParticipantIds
+      // const existingParticipants = sharedAIChatParticipantArraySchema.safeParse(
+      //   chatProvidersMap.get(currentLocalParticipantId)
+      // );
+      // const currentValue = existingParticipants.success
+      //   ? existingParticipants.data
+      //   : [];
+      // if (!participantsMatch(currentValue, localProviderParticipants.value)) {
+      // }
+      chatProvidersMap.set(
+        currentLocalParticipantId,
+        selectedProviderParticipants.value.map(
+          (p): SharedAIChatParticipant => ({
+            id: p.id,
+            providerId: p.providerId,
+            name: p.name ? translateTitle(i18n.t, p.name) : null,
+            isAI: p.isAI,
+          })
         )
-      ) {
-        chatSelectedParticipantsMap.set(
-          currentLocalParticipantId,
-          nextSelectedParticipantIds
-        );
-      }
+      );
 
       previousLocalParticipantId = currentLocalParticipantId;
-    });
-  });
-
-  let previousLocalTypingConnectionId: string | null = null;
-  effect(() => {
-    const localConnectionId = session.currentUser.value?.connectionId ?? null;
-    const localUserId = session.currentUser.value?.userId ?? null;
-    const localParticipantId = localUserId ?? localConnectionId;
-
-    session.document.transact(() => {
-      if (
-        previousLocalTypingConnectionId &&
-        previousLocalTypingConnectionId !== localConnectionId
-      ) {
-        chatTypingMap.delete(previousLocalTypingConnectionId);
-      }
-
-      if (!localConnectionId || !localParticipantId || !localIsTyping.value) {
-        if (localConnectionId) {
-          chatTypingMap.delete(localConnectionId);
-        }
-        previousLocalTypingConnectionId = localConnectionId;
-        return;
-      }
-
-      const existingTyping = parseTypingParticipantId(
-        chatTypingMap.get(localConnectionId)
-      );
-      if (existingTyping !== localParticipantId) {
-        chatTypingMap.set(localConnectionId, localParticipantId);
-      }
-      previousLocalTypingConnectionId = localConnectionId;
-    });
-  });
-
-  effect(() => {
-    void chatTypingMapVersion.value;
-    const activeParticipantIds = new Set(
-      participants.value
-        .filter((entry) => entry.isActive)
-        .map((entry) => entry.id)
-    );
-    const staleTypingKeys: string[] = [];
-
-    chatTypingMap.forEach((value, key) => {
-      const participantId = parseTypingParticipantId(value);
-      if (!participantId || !activeParticipantIds.has(participantId)) {
-        staleTypingKeys.push(key);
-      }
-    });
-
-    if (staleTypingKeys.length === 0) {
-      return;
-    }
-
-    session.document.transact(() => {
-      for (const key of staleTypingKeys) {
-        chatTypingMap.delete(key);
-      }
     });
   });
 
@@ -1129,18 +1013,14 @@ function createSharedChatSession(
       return;
     }
 
-    session.document.transact(() => {
-      const currentSelectedParticipantIds = parseStringArray(
-        chatSelectedParticipantsMap.get(currentLocalParticipantId)
-      );
-      if (currentSelectedParticipantIds.includes(participantId)) {
-        return;
-      }
-      chatSelectedParticipantsMap.set(currentLocalParticipantId, [
-        ...currentSelectedParticipantIds,
-        participantId,
-      ]);
-    });
+    if (selectedProviderParticipantIds.value.includes(participantId)) {
+      return;
+    }
+
+    selectedProviderParticipantIds.value = [
+      ...selectedProviderParticipantIds.value,
+      participantId,
+    ];
 
     const provider = chatProviders.value.find(
       (entry) => entry.id === localProvider.providerId
@@ -1152,6 +1032,16 @@ function createSharedChatSession(
         participants: participants.value,
       });
     }
+  };
+
+  const setParticipantTyping = (participantId: string, isTyping: boolean) => {
+    session.document.transact(() => {
+      if (isTyping) {
+        chatTypingMap.set(participantId, true);
+      } else {
+        chatTypingMap.delete(participantId);
+      }
+    });
   };
 
   const sendMessage = async (message: ChatMessageOptions) => {
@@ -1195,29 +1085,14 @@ function createSharedChatSession(
           return;
         }
 
-        const providerId = participant.id.startsWith(`${authorId}_`)
-          ? participant.id.slice(authorId.length + 1)
-          : null;
-        if (!providerId) {
-          return;
-        }
-
         const provider = chatProviders.value.find(
-          (entry) => entry.id === providerId
+          (entry) => entry.id === participant.providerId
         );
         if (!provider) {
           return;
         }
 
-        const typingKey = createParticipantTypingMapKey(participant.id);
-        session.document.transact(() => {
-          const existingTyping = parseTypingParticipantId(
-            chatTypingMap.get(typingKey)
-          );
-          if (existingTyping !== participant.id) {
-            chatTypingMap.set(typingKey, participant.id);
-          }
-        });
+        setParticipantTyping(participant.id, true);
 
         try {
           const response = await provider.generateResponse({
@@ -1285,9 +1160,7 @@ function createSharedChatSession(
             )
           );
         } finally {
-          session.document.transact(() => {
-            chatTypingMap.delete(typingKey);
-          });
+          setParticipantTyping(participant.id, false);
         }
       })();
     }
@@ -1327,30 +1200,12 @@ function createSharedChatSession(
         return;
       }
 
-      session.document.transact(() => {
-        const currentSelectedParticipantIds = parseStringArray(
-          chatSelectedParticipantsMap.get(currentLocalParticipantId)
-        );
-        const nextSelectedParticipantIds = currentSelectedParticipantIds.filter(
+      selectedProviderParticipantIds.value =
+        selectedProviderParticipantIds.value.filter(
           (id) => id !== participantId
         );
 
-        if (nextSelectedParticipantIds.length === 0) {
-          chatSelectedParticipantsMap.delete(currentLocalParticipantId);
-        } else if (
-          !stringArraysEqual(
-            currentSelectedParticipantIds,
-            nextSelectedParticipantIds
-          )
-        ) {
-          chatSelectedParticipantsMap.set(
-            currentLocalParticipantId,
-            nextSelectedParticipantIds
-          );
-        }
-
-        chatTypingMap.delete(createParticipantTypingMapKey(participantId));
-      });
+      setParticipantTyping(participantId, false);
 
       const provider = chatProviders.value.find(
         (entry) => entry.id === localProvider.providerId

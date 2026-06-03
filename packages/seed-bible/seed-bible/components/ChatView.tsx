@@ -128,6 +128,23 @@ function getParticipantMentionLabel(
   return name?.trim() || participant.id.slice(0, 6);
 }
 
+function matchesMentionQuery(
+  participant: ChatParticipant,
+  query: string,
+  t: (key: string, options?: Record<string, unknown>) => string
+): boolean {
+  if (!query) {
+    return true;
+  }
+  const displayLabel = getParticipantDisplayLabel(participant, t).toLowerCase();
+  const mentionLabel = getParticipantMentionLabel(participant, t).toLowerCase();
+  return (
+    displayLabel.includes(query) ||
+    mentionLabel.includes(query) ||
+    participant.id.toLowerCase().includes(query)
+  );
+}
+
 function getTypingIndicatorLabel(
   participants: ChatParticipant[],
   t: (key: string, options?: Record<string, unknown>) => string
@@ -211,39 +228,39 @@ export function ChatView(props: ChatViewProps) {
   const activeParticipants = chat.participants.value.filter(
     (participant) => participant.isActive
   );
+  const inactiveParticipants = chat.participants.value.filter(
+    (participant) => !participant.isActive
+  );
   const typingParticipants = chat.typingParticipants.value.filter(
     (p) => !p.isSelf
   );
 
   const mentionContext = getMentionContext(draft.value, cursorPosition.value);
   const mentionQuery = mentionContext?.query.toLowerCase() ?? "";
-  const mentionSuggestions = mentionContext
-    ? activeParticipants.filter((participant) => {
-        if (!mentionQuery) {
-          return true;
-        }
-
-        const displayLabel = getParticipantDisplayLabel(
-          participant,
-          t
-        ).toLowerCase();
-        const mentionLabel = getParticipantMentionLabel(
-          participant,
-          t
-        ).toLowerCase();
-        return (
-          displayLabel.includes(mentionQuery) ||
-          mentionLabel.includes(mentionQuery) ||
-          participant.id.toLowerCase().includes(mentionQuery)
-        );
-      })
+  const activeSuggestions = mentionContext
+    ? activeParticipants.filter((p) => matchesMentionQuery(p, mentionQuery, t))
     : [];
+  const inactiveSuggestions = mentionContext
+    ? inactiveParticipants.filter((p) =>
+        matchesMentionQuery(p, mentionQuery, t)
+      )
+    : [];
+  const availableSuggestions = mentionContext
+    ? chat.availableParticipants.value.filter((p) =>
+        matchesMentionQuery(p, mentionQuery, t)
+      )
+    : [];
+  const allMentionSuggestions = [
+    ...activeSuggestions,
+    ...inactiveSuggestions,
+    ...availableSuggestions,
+  ];
   const isMentionPickerOpen = mentionContext !== null;
   const mentionActiveIndex = useSignal(0);
 
   useEffect(() => {
     mentionActiveIndex.value = 0;
-  }, [mentionQuery, mentionSuggestions.length]);
+  }, [mentionQuery, allMentionSuggestions.length]);
 
   useEffect(() => {
     const container = messagesRef.current;
@@ -366,20 +383,20 @@ export function ChatView(props: ChatViewProps) {
     if (event.key === "ArrowDown") {
       event.preventDefault();
       mentionActiveIndex.value =
-        (mentionActiveIndex.value + 1) % mentionSuggestions.length;
+        (mentionActiveIndex.value + 1) % allMentionSuggestions.length;
       return;
     }
 
     if (event.key === "ArrowUp") {
       event.preventDefault();
       mentionActiveIndex.value =
-        (mentionActiveIndex.value - 1 + mentionSuggestions.length) %
-        mentionSuggestions.length;
+        (mentionActiveIndex.value - 1 + allMentionSuggestions.length) %
+        allMentionSuggestions.length;
       return;
     }
 
     if (event.key === "Enter") {
-      const suggestion = mentionSuggestions[mentionActiveIndex.value];
+      const suggestion = allMentionSuggestions[mentionActiveIndex.value];
       if (suggestion) {
         event.preventDefault();
         selectMention(suggestion);
@@ -499,50 +516,79 @@ export function ChatView(props: ChatViewProps) {
           <div
             className="sb-chat-view-mention-picker"
             role="listbox"
-            aria-label={t("active-participants", {
-              defaultValue: "Active participants",
-            })}
+            aria-label={t("participants", { defaultValue: "Participants" })}
           >
-            <p className="sb-chat-view-mention-picker-title">
-              {t("active-participants", {
-                defaultValue: "Active participants",
-              })}
-            </p>
-            {mentionSuggestions.length === 0 ? (
+            {allMentionSuggestions.length === 0 ? (
               <div className="sb-chat-view-mention-picker-empty">
-                {t("no-active-participants-match", {
-                  defaultValue: "No active participants match",
+                {t("no-participants-match", {
+                  defaultValue: "No participants match",
                 })}
               </div>
             ) : (
               <div className="sb-chat-view-mention-picker-list">
-                {mentionSuggestions.map((participant, index) => {
-                  const isSelected = index === mentionActiveIndex.value;
-                  return (
-                    <button
-                      key={participant.id}
-                      type="button"
-                      className={`sb-chat-view-mention-picker-item${
-                        isSelected ? " is-selected" : ""
-                      }`}
-                      role="option"
-                      aria-selected={isSelected}
-                      onMouseDown={(event) => {
-                        event.preventDefault();
-                      }}
-                      onClick={() => {
-                        selectMention(participant);
-                      }}
+                {(
+                  [
+                    {
+                      key: "active",
+                      label: t("active", { defaultValue: "Active" }),
+                      items: activeSuggestions,
+                      offset: 0,
+                    },
+                    {
+                      key: "inactive",
+                      label: t("inactive", { defaultValue: "Inactive" }),
+                      items: inactiveSuggestions,
+                      offset: activeSuggestions.length,
+                    },
+                    {
+                      key: "available",
+                      label: t("available", { defaultValue: "Available" }),
+                      items: availableSuggestions,
+                      offset:
+                        activeSuggestions.length + inactiveSuggestions.length,
+                    },
+                  ] as const
+                ).map(({ key, label, items, offset }) =>
+                  items.length === 0 ? null : (
+                    <div
+                      key={key}
+                      className="sb-chat-view-mention-picker-category"
                     >
-                      <span className="sb-chat-view-mention-picker-name">
-                        {getParticipantDisplayLabel(participant, t)}
-                      </span>
-                      <span className="sb-chat-view-mention-picker-meta">
-                        @{getParticipantMentionLabel(participant, t)}
-                      </span>
-                    </button>
-                  );
-                })}
+                      <p className="sb-chat-view-mention-picker-category-title">
+                        {label}
+                      </p>
+                      {items.map((participant, index) => {
+                        const globalIndex = offset + index;
+                        const isSelected =
+                          globalIndex === mentionActiveIndex.value;
+                        return (
+                          <button
+                            key={participant.id}
+                            type="button"
+                            className={`sb-chat-view-mention-picker-item${
+                              isSelected ? " is-selected" : ""
+                            }`}
+                            role="option"
+                            aria-selected={isSelected}
+                            onMouseDown={(event) => {
+                              event.preventDefault();
+                            }}
+                            onClick={() => {
+                              selectMention(participant);
+                            }}
+                          >
+                            <span className="sb-chat-view-mention-picker-name">
+                              {getParticipantDisplayLabel(participant, t)}
+                            </span>
+                            <span className="sb-chat-view-mention-picker-meta">
+                              @{getParticipantMentionLabel(participant, t)}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )
+                )}
               </div>
             )}
           </div>

@@ -133,7 +133,6 @@ function createSharedSessionMock(options?: {
   const sharedChatProviders = new MockSharedMap<unknown>();
   const sharedParticipantAliases = new MockSharedMap<unknown>();
   const sharedTyping = new MockSharedMap<unknown>();
-  const sharedSelectedParticipants = new MockSharedMap<unknown>();
   const mappedConnectedUsers = options?.connectedUsers
     ? options.connectedUsers.map((user) => ({
         userId: user.id,
@@ -195,9 +194,6 @@ function createSharedSessionMock(options?: {
         if (name === "chat_typing") {
           return sharedTyping;
         }
-        if (name === "chat_selected_participants") {
-          return sharedSelectedParticipants;
-        }
         return new MockSharedMap<unknown>();
       }),
       transact: (callback: () => void) => callback(),
@@ -213,7 +209,6 @@ function createSharedSessionMock(options?: {
     sharedChatProviders,
     sharedParticipantAliases,
     sharedTyping,
-    sharedSelectedParticipants,
     connectedUsers,
     allUsers,
     currentUser,
@@ -890,7 +885,7 @@ describe("createChatsManager", () => {
 
     expect(chatSession.typingParticipants.value).toEqual([]);
 
-    sharedTyping.set("conn-u1", "u1");
+    sharedTyping.set("u1", true);
     await Promise.resolve();
 
     expect(chatSession.typingParticipants.value).toEqual([
@@ -916,7 +911,7 @@ describe("createChatsManager", () => {
     const chats = createChatsManager(loginManager);
     const chatSession = chats.createSharedSession(session);
 
-    sharedTyping.set("conn-u1", "u1");
+    sharedTyping.set("u1", true);
     expect(chatSession.typingParticipants.value).toHaveLength(1);
 
     allUsers.value = [
@@ -1188,22 +1183,17 @@ describe("createChatsManager", () => {
 
   it("createSharedSession() keeps AI participants active only while owner is active", () => {
     const { loginManager } = createLoginManagerMock();
-    const {
-      session,
-      connectedUsers,
-      allUsers,
-      sharedChatProviders,
-      sharedSelectedParticipants,
-    } = createSharedSessionMock({
-      connectedSessionUsers: [
-        {
-          userId: "u1",
-          connectionId: "conn-u1",
-          name: "Alpha",
-          isSelf: false,
-        },
-      ],
-    });
+    const { session, connectedUsers, allUsers, sharedChatProviders } =
+      createSharedSessionMock({
+        connectedSessionUsers: [
+          {
+            userId: "u1",
+            connectionId: "conn-u1",
+            name: "Alpha",
+            isSelf: false,
+          },
+        ],
+      });
     sharedChatProviders.set("u1", [
       {
         id: "u1_provider-x",
@@ -1212,7 +1202,6 @@ describe("createChatsManager", () => {
         isAI: true,
       },
     ]);
-    sharedSelectedParticipants.set("u1", ["u1_provider-x"]);
 
     const chats = createChatsManager(loginManager);
     const chatSession = chats.createSharedSession(session);
@@ -1535,7 +1524,7 @@ describe("createChatsManager", () => {
 
     expect(onJoinChat).toHaveBeenCalledTimes(0);
     expect(
-      chatSession.participants.value.find((p) => p.id === "provider-1")
+      chatSession.participants.value.find((p) => p.id === "user-a_provider-1")
     ).toBeUndefined();
 
     chatSession.removeParticipant("user-a_provider-1");
@@ -1576,7 +1565,7 @@ describe("createChatsManager", () => {
     ).toBeUndefined();
   });
 
-  it("createSharedSession() publishes local providers into chat_providers map", async () => {
+  it("createSharedSession() does not publish local providers into chat_providers map until they are added to the session", async () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);
     chats.registerProvider({
@@ -1592,7 +1581,7 @@ describe("createChatsManager", () => {
         {
           id: "user-a",
           userId: "user-a",
-          connectionId: null,
+          connectionId: "conn-user-a",
           name: "Alice",
           isSelf: true,
           isAI: false,
@@ -1604,14 +1593,7 @@ describe("createChatsManager", () => {
     });
     const chat = chats.createSharedSession(session);
 
-    expect(sharedChatProviders.get("user-a")).toEqual([
-      {
-        id: "user-a_provider-1",
-        providerId: "provider-1",
-        name: "Helper AI",
-        isAI: true,
-      },
-    ]);
+    expect(sharedChatProviders.get("user-a")).toEqual([]);
     expect(chat.availableParticipants.value).toContainEqual({
       id: "user-a_provider-1",
       providerId: "provider-1",
@@ -1671,6 +1653,10 @@ describe("createChatsManager", () => {
 
     await Promise.resolve();
 
+    chat.addParticipant("user-a_provider-1");
+
+    await Promise.resolve();
+
     expect(sharedChatProviders.get("user-a")).toEqual([
       {
         id: "user-a_provider-1",
@@ -1679,39 +1665,26 @@ describe("createChatsManager", () => {
         isAI: true,
       },
     ]);
-    expect(chat.availableParticipants.value).toContainEqual({
-      id: "user-a_provider-1",
-      providerId: "provider-1",
-      ownerParticipantId: "user-a",
-      userId: "user-a",
-      connectionId: "conn-user-a",
-      name: "New Name",
-      isSelf: false,
-      isAI: true,
-      isRemote: false,
-      isActive: true,
-    });
   });
 
   it("createSharedSession() merges shared provider participants from chat_providers map", () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);
-    const { session, sharedChatProviders, sharedSelectedParticipants } =
-      createSharedSessionMock({
-        connectedUsers: [
-          {
-            id: "u1",
-            userId: "u1",
-            connectionId: null,
-            name: "Alpha",
-            isSelf: false,
-            isAI: false,
-            isRemote: true,
-            isActive: true,
-            visual: getUserAnimalVisual("u1"),
-          },
-        ],
-      });
+    const { session, sharedChatProviders } = createSharedSessionMock({
+      connectedUsers: [
+        {
+          id: "u1",
+          userId: "u1",
+          connectionId: null,
+          name: "Alpha",
+          isSelf: false,
+          isAI: false,
+          isRemote: true,
+          isActive: true,
+          visual: getUserAnimalVisual("u1"),
+        },
+      ],
+    });
     sharedChatProviders.set("u1", [
       {
         id: "u1_provider-x",
@@ -1720,7 +1693,6 @@ describe("createChatsManager", () => {
         isAI: true,
       },
     ]);
-    sharedSelectedParticipants.set("u1", ["u1_provider-x"]);
 
     const chatSession = chats.createSharedSession(session);
 
@@ -2553,23 +2525,22 @@ describe("createChatsManager", () => {
       generateResponse,
     });
 
-    const { session, sharedSelectedParticipants, sharedChats } =
-      createSharedSessionMock({
-        currentUserId: "user-a",
-        connectedUsers: [
-          {
-            id: "user-a",
-            userId: "user-a",
-            connectionId: null,
-            name: "Alice",
-            isSelf: true,
-            isAI: false,
-            isRemote: false,
-            isActive: true,
-            visual: getUserAnimalVisual("user-a"),
-          },
-        ],
-      });
+    const { session, sharedChats } = createSharedSessionMock({
+      currentUserId: "user-a",
+      connectedUsers: [
+        {
+          id: "user-a",
+          userId: "user-a",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+          visual: getUserAnimalVisual("user-a"),
+        },
+      ],
+    });
     const chat = chats.createSharedSession(session);
 
     expect(chat.availableParticipants.value).toContainEqual(
@@ -2579,9 +2550,6 @@ describe("createChatsManager", () => {
     await chat.sendMessage({ type: "text", text: "Hey @user-a_provider-1" });
     await Promise.resolve();
 
-    expect(sharedSelectedParticipants.get("user-a")).toContain(
-      "user-a_provider-1"
-    );
     expect(chat.participants.value).toContainEqual(
       expect.objectContaining({ id: "user-a_provider-1" })
     );
