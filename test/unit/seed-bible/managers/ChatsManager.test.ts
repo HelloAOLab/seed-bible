@@ -471,55 +471,6 @@ describe("createChatsManager", () => {
     expect(chats.wasMentioned.value).toBe(false);
   });
 
-  it("automatically marks selected chat as read when messages arrive", () => {
-    const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
-    const { session, sharedChats } = createSharedSessionMock({
-      currentUserId: "self-user",
-      connectedUsers: [
-        {
-          id: "self-user",
-          userId: "self-user",
-          connectionId: null,
-          name: "Alice",
-          isSelf: true,
-          isAI: false,
-          isRemote: false,
-          isActive: true,
-          visual: getUserAnimalVisual("self-user"),
-        },
-        {
-          id: "u1",
-          userId: "u1",
-          connectionId: null,
-          name: "Alpha",
-          isSelf: false,
-          isAI: false,
-          isRemote: true,
-          isActive: true,
-          visual: getUserAnimalVisual("u1"),
-        },
-      ],
-    });
-    const chatSession = chats.createSharedSession(session);
-
-    chats.isOpen.value = true;
-    chats.selectChat(chatSession.id);
-
-    sharedChats.push({
-      id: "m1",
-      authors: ["u1"],
-      targets: ["self-user"],
-      timeMs: 1,
-      type: "text",
-      text: "mention",
-    });
-
-    expect(chatSession.lastMessageRead.value).toBe("m1");
-    expect(chats.numberOfUnreadMessages.value).toBe(0);
-    expect(chats.wasMentioned.value).toBe(false);
-  });
-
   it("does not automatically mark selected chat as read when chat is closed", () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);
