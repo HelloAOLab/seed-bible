@@ -1137,8 +1137,8 @@ function createSharedChatSession(
 
     chats.push(nextMessage);
 
-    void Promise.all(
-      targetParticipants.map(async (participant) => {
+    for (const participant of targetParticipants) {
+      void (async () => {
         if (!participant.isAI || participant.isRemote || !authorId) {
           return;
         }
@@ -1237,8 +1237,8 @@ function createSharedChatSession(
             chatTypingMap.delete(typingKey);
           });
         }
-      })
-    );
+      })();
+    }
   };
 
   const wasMentioned = getWasMentionedSignal(participants, unreadMessages);
@@ -1538,8 +1538,8 @@ function createLocalChatSession(
 
     messages.value = [...messages.value, nextMessage];
 
-    void Promise.all(
-      providerTargets.map(async (target) => {
+    for (const target of providerTargets) {
+      void (async () => {
         const provider = chatProviders.value.find(
           (entry) => entry.id === target.id
         );
@@ -1624,8 +1624,8 @@ function createLocalChatSession(
           providerTypingParticipantIds.value =
             providerTypingParticipantIds.value.filter((id) => id !== target.id);
         }
-      })
-    );
+      })();
+    }
   };
 
   const getMessageAuthors = (message: ChatMessage) =>
