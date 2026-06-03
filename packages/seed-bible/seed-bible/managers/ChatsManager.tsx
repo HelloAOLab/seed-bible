@@ -226,8 +226,12 @@ export interface ChatSession {
    */
   wasMentioned: ReadonlySignal<boolean>;
 
-  /** Marks all current messages as read by moving lastMessageRead to the latest message ID. */
-  markAsRead: () => void;
+  /**
+   * Marks messages as read.
+   * If `messageId` is provided, advances `lastMessageRead` to that ID only if it is more recent than the current value.
+   * If omitted, advances `lastMessageRead` to the most recent message.
+   */
+  markAsRead: (messageId?: string) => void;
   /** Sends a message and notifies the other participants. */
   sendMessage: (message: ChatMessageOptions) => Promise<void>;
   /** Updates whether the local participant is currently typing. */
@@ -783,9 +787,20 @@ function createSharedChatSession(
     getUnreadMessagesSinceLastRead(messages.value, lastMessageRead.value)
   );
 
-  const markAsRead = () => {
-    const latestMessageId = messages.value.at(-1)?.id ?? null;
-    lastMessageRead.value = latestMessageId;
+  const markAsRead = (messageId?: string) => {
+    const msgs = messages.value;
+    if (messageId !== undefined) {
+      const newIndex = msgs.findIndex((m) => m.id === messageId);
+      if (newIndex < 0) return;
+      const currentIndex = lastMessageRead.value
+        ? msgs.findIndex((m) => m.id === lastMessageRead.value)
+        : -1;
+      if (newIndex > currentIndex) {
+        lastMessageRead.value = messageId;
+      }
+    } else {
+      lastMessageRead.value = msgs.at(-1)?.id ?? null;
+    }
   };
 
   effect(() => {
@@ -1620,9 +1635,20 @@ function createLocalChatSession(
       participantIdAliases.value
     );
 
-  const markAsRead = () => {
-    const latestMessageId = messages.value.at(-1)?.id ?? null;
-    lastMessageRead.value = latestMessageId;
+  const markAsRead = (messageId?: string) => {
+    const msgs = messages.value;
+    if (messageId !== undefined) {
+      const newIndex = msgs.findIndex((m) => m.id === messageId);
+      if (newIndex < 0) return;
+      const currentIndex = lastMessageRead.value
+        ? msgs.findIndex((m) => m.id === lastMessageRead.value)
+        : -1;
+      if (newIndex > currentIndex) {
+        lastMessageRead.value = messageId;
+      }
+    } else {
+      lastMessageRead.value = msgs.at(-1)?.id ?? null;
+    }
   };
 
   const unreadMessages = computed(() =>

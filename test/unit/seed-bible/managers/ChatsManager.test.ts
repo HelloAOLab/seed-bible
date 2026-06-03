@@ -307,6 +307,104 @@ describe("createChatsManager", () => {
     expect(session.lastMessageRead.value).toBe("msg-2");
   });
 
+  it("markAsRead(messageId) advances lastMessageRead to the given message when it is more recent", () => {
+    const { loginManager } = createLoginManagerMock();
+    const { session, sharedChats } = createSharedSessionMock();
+
+    sharedChats.push({
+      id: "m1",
+      authors: [],
+      targets: [],
+      timeMs: 1,
+      type: "text",
+      text: "a",
+    });
+    sharedChats.push({
+      id: "m2",
+      authors: [],
+      targets: [],
+      timeMs: 2,
+      type: "text",
+      text: "b",
+    });
+    sharedChats.push({
+      id: "m3",
+      authors: [],
+      targets: [],
+      timeMs: 3,
+      type: "text",
+      text: "c",
+    });
+
+    const chats = createChatsManager(loginManager);
+    const chatSession = chats.createSharedSession(session);
+
+    chatSession.markAsRead("m1");
+    expect(chatSession.lastMessageRead.value).toBe("m1");
+
+    chatSession.markAsRead("m3");
+    expect(chatSession.lastMessageRead.value).toBe("m3");
+  });
+
+  it("markAsRead(messageId) does not retreat lastMessageRead to an older message", () => {
+    const { loginManager } = createLoginManagerMock();
+    const { session, sharedChats } = createSharedSessionMock();
+
+    sharedChats.push({
+      id: "m1",
+      authors: [],
+      targets: [],
+      timeMs: 1,
+      type: "text",
+      text: "a",
+    });
+    sharedChats.push({
+      id: "m2",
+      authors: [],
+      targets: [],
+      timeMs: 2,
+      type: "text",
+      text: "b",
+    });
+    sharedChats.push({
+      id: "m3",
+      authors: [],
+      targets: [],
+      timeMs: 3,
+      type: "text",
+      text: "c",
+    });
+
+    const chats = createChatsManager(loginManager);
+    const chatSession = chats.createSharedSession(session);
+
+    chatSession.markAsRead("m3");
+    chatSession.markAsRead("m1");
+
+    expect(chatSession.lastMessageRead.value).toBe("m3");
+  });
+
+  it("markAsRead(messageId) is a no-op when the message id is not found", () => {
+    const { loginManager } = createLoginManagerMock();
+    const { session, sharedChats } = createSharedSessionMock();
+
+    sharedChats.push({
+      id: "m1",
+      authors: [],
+      targets: [],
+      timeMs: 1,
+      type: "text",
+      text: "a",
+    });
+
+    const chats = createChatsManager(loginManager);
+    const chatSession = chats.createSharedSession(session);
+
+    chatSession.markAsRead("unknown-id");
+
+    expect(chatSession.lastMessageRead.value).toBeNull();
+  });
+
   it("tracks unreadMessages and wasMentioned across chats", () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);
