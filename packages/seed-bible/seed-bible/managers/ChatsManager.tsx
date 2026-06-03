@@ -1137,7 +1137,7 @@ function createSharedChatSession(
 
     chats.push(nextMessage);
 
-    await Promise.all(
+    void Promise.all(
       targetParticipants.map(async (participant) => {
         if (!participant.isAI || participant.isRemote || !authorId) {
           return;
@@ -1538,7 +1538,7 @@ function createLocalChatSession(
 
     messages.value = [...messages.value, nextMessage];
 
-    await Promise.all(
+    void Promise.all(
       providerTargets.map(async (target) => {
         const provider = chatProviders.value.find(
           (entry) => entry.id === target.id
