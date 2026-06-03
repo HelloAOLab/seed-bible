@@ -53,12 +53,9 @@ const NAMES = [
   "Ava",
 ];
 
-export class FakeSubscribedUsersProvider
-  implements
-    ReadingEventsProviderPort,
-    UsersIdProviderPort,
-    UserProfileProviderPort
-{
+// TODO: On commit the implements statement makes a line break, resulting on an import error at runtime
+// prettier-ignore
+export class FakeSubscribedUsersProvider implements ReadingEventsProviderPort, UsersIdProviderPort, UserProfileProviderPort {
   #users: Map<string, FakeUser>;
 
   constructor(visualIdentity: UserVisualIdentityPort) {

@@ -1757,6 +1757,9 @@
       "todayScreen.infrastructure.presentation.contexts.today.useTodayProvider": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/contexts/today/useTodayProvider.tsx"
       ],
+      "todayScreen.infrastructure.presentation.hooks.useFilteredReadingBook": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useFilteredReadingBook.tsx"
+      ],
       "todayScreen.infrastructure.presentation.hooks.useFilteredReadingContainer": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useFilteredReadingContainer.tsx"
       ],
