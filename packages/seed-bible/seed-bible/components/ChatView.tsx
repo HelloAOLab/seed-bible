@@ -268,7 +268,20 @@ export function ChatView(props: ChatViewProps) {
       }
     }
 
-    if (wasAtBottomRef.current || !chat.lastMessageRead.value) {
+    if (!chat.lastMessageRead.value) {
+      container.scrollTop = container.scrollHeight;
+    } else if (wasAtBottomRef.current) {
+      // Scroll to the most recent message
+      const lastMessageId = messages.at(-1)?.id;
+      if (lastMessageId) {
+        const el = container.querySelector(
+          `[data-message-id="${lastMessageId}"]`
+        );
+        if (el) {
+          el.scrollIntoView({ block: "nearest" });
+          return;
+        }
+      }
       container.scrollTop = container.scrollHeight;
     }
   }, [messages.length]);
