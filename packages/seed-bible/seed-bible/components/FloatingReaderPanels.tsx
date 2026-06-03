@@ -695,6 +695,26 @@ function NoChatsAvailable() {
   );
 }
 
+function NoProvidersAvailable() {
+  const { t } = useI18n();
+  return (
+    <div className="sb-floating-chat-empty">
+      <span
+        className="material-symbols-outlined sb-floating-chat-empty-icon"
+        aria-hidden="true"
+      >
+        chat_bubble_outline
+      </span>
+      <p className="sb-floating-chat-empty-title">
+        {t("no-chat-providers", {
+          defaultValue:
+            "No chat providers are available. Connect an AI or messaging provider to start chatting.",
+        })}
+      </p>
+    </div>
+  );
+}
+
 function createLocalChatFromProvider(
   state: SeedBibleState,
   provider: ChatProvider
@@ -717,7 +737,9 @@ function ChatList({
 
   return (
     <div className="sb-floating-chat-list-shell">
-      {chats.length === 0 ? (
+      {chats.length === 0 && providers.length === 0 ? (
+        <NoProvidersAvailable />
+      ) : chats.length === 0 ? (
         <NoChatsAvailable />
       ) : (
         <div className="sb-floating-chat-list" role="listbox">
