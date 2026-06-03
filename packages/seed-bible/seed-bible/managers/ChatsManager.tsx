@@ -1116,15 +1116,67 @@ function createSharedChatSession(
     });
   });
 
+  const addSharedProviderParticipant = (participantId: string) => {
+    const currentLocalParticipantId = localParticipantId.value;
+    if (!currentLocalParticipantId) {
+      return;
+    }
+
+    const localProvider = localProviderParticipants.value.find(
+      (participant) => participant.id === participantId
+    );
+    if (!localProvider) {
+      return;
+    }
+
+    session.document.transact(() => {
+      const currentSelectedParticipantIds = parseStringArray(
+        chatSelectedParticipantsMap.get(currentLocalParticipantId)
+      );
+      if (currentSelectedParticipantIds.includes(participantId)) {
+        return;
+      }
+      chatSelectedParticipantsMap.set(currentLocalParticipantId, [
+        ...currentSelectedParticipantIds,
+        participantId,
+      ]);
+    });
+
+    const provider = chatProviders.value.find(
+      (entry) => entry.id === localProvider.providerId
+    );
+    if (provider?.onJoinChat) {
+      provider.onJoinChat({
+        chatId,
+        messages: messages.value,
+        participants: participants.value,
+      });
+    }
+  };
+
   const sendMessage = async (message: ChatMessageOptions) => {
     const authorId =
       session.currentUser.value?.userId ??
       session.currentUser.value?.connectionId ??
       null;
+
+    // Auto-add available participants that are mentioned before resolving targets
+    const mentionedAvailable =
+      message.type === "text"
+        ? resolveMessageTargetsWithAliases(
+            availableParticipants.value,
+            message.text,
+            participantIdAliases.value
+          )
+        : [];
+    for (const newParticipant of mentionedAvailable) {
+      addSharedProviderParticipant(newParticipant.id);
+    }
+
     const targetParticipants =
       message.type === "text"
         ? resolveMessageTargetsWithAliases(
-            participants.value,
+            [...participants.value, ...mentionedAvailable],
             message.text,
             participantIdAliases.value
           )
@@ -1259,43 +1311,7 @@ function createSharedChatSession(
     participants,
     availableParticipants,
     typingParticipants,
-    addParticipant: (participantId: string) => {
-      const currentLocalParticipantId = localParticipantId.value;
-      if (!currentLocalParticipantId) {
-        return;
-      }
-
-      const localProvider = localProviderParticipants.value.find(
-        (participant) => participant.id === participantId
-      );
-      if (!localProvider) {
-        return;
-      }
-
-      session.document.transact(() => {
-        const currentSelectedParticipantIds = parseStringArray(
-          chatSelectedParticipantsMap.get(currentLocalParticipantId)
-        );
-        if (currentSelectedParticipantIds.includes(participantId)) {
-          return;
-        }
-        chatSelectedParticipantsMap.set(currentLocalParticipantId, [
-          ...currentSelectedParticipantIds,
-          participantId,
-        ]);
-      });
-
-      const provider = chatProviders.value.find(
-        (entry) => entry.id === localProvider.providerId
-      );
-      if (provider && provider.onJoinChat) {
-        provider.onJoinChat({
-          chatId,
-          messages: messages.value,
-          participants: participants.value,
-        });
-      }
-    },
+    addParticipant: addSharedProviderParticipant,
     removeParticipant: (participantId: string) => {
       const currentLocalParticipantId = localParticipantId.value;
       if (!currentLocalParticipantId) {
@@ -1511,8 +1527,48 @@ function createLocalChatSession(
     return Array.from(typing.values());
   });
 
+  const addLocalProviderParticipant = (participantId: string) => {
+    const isKnownProvider = allProviderParticipants.value.some(
+      (participant) => participant.id === participantId
+    );
+    if (!isKnownProvider) {
+      return;
+    }
+
+    if (selectedProviderParticipantIds.value.includes(participantId)) {
+      return;
+    }
+
+    selectedProviderParticipantIds.value = [
+      ...selectedProviderParticipantIds.value,
+      participantId,
+    ];
+
+    const provider = chatProviders.value.find(
+      (entry) => entry.id === participantId
+    );
+    if (provider?.onJoinChat) {
+      provider.onJoinChat({
+        chatId,
+        messages: messages.value,
+        participants: participants.value,
+      });
+    }
+  };
+
   const sendMessage = async (message: ChatMessageOptions) => {
     const participant = localParticipant.value;
+
+    // Auto-add available participants that are mentioned
+    if (message.type === "text") {
+      for (const newParticipant of resolveMessageTargets(
+        availableParticipants.value,
+        message.text
+      )) {
+        addLocalProviderParticipant(newParticipant.id);
+      }
+    }
+
     const resolvedTargetParticipants =
       message.type === "text"
         ? resolveMessageTargets(participants.value, message.text)
@@ -1672,34 +1728,7 @@ function createLocalChatSession(
     participants,
     availableParticipants,
     typingParticipants,
-    addParticipant: (participantId: string) => {
-      const isKnownProvider = allProviderParticipants.value.some(
-        (participant) => participant.id === participantId
-      );
-      if (!isKnownProvider) {
-        return;
-      }
-
-      if (selectedProviderParticipantIds.value.includes(participantId)) {
-        return;
-      }
-
-      selectedProviderParticipantIds.value = [
-        ...selectedProviderParticipantIds.value,
-        participantId,
-      ];
-
-      const provider = chatProviders.value.find(
-        (entry) => entry.id === participantId
-      );
-      if (provider && provider.onJoinChat) {
-        provider.onJoinChat({
-          chatId,
-          messages: messages.value,
-          participants: participants.value,
-        });
-      }
-    },
+    addParticipant: addLocalProviderParticipant,
     removeParticipant: (participantId: string) => {
       const nextSelectedProviderParticipantIds =
         selectedProviderParticipantIds.value.filter(

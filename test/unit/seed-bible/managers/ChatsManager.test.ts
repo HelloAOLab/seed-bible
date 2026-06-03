@@ -2419,4 +2419,304 @@ describe("createChatsManager", () => {
       }),
     ]);
   });
+
+  it("sendMessage() auto-adds available participant when mentioned by id (local session)", async () => {
+    const { loginManager, userId } = createLoginManagerMock();
+    userId.value = "user-1";
+
+    const chats = createChatsManager(loginManager);
+    const session = chats.createLocalSession();
+    const generateResponse = jest.fn().mockResolvedValue({
+      type: "text",
+      text: "reply",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse,
+    });
+
+    expect(session.availableParticipants.value).toContainEqual(
+      expect.objectContaining({ id: "provider-1" })
+    );
+    expect(session.participants.value).not.toContainEqual(
+      expect.objectContaining({ id: "provider-1" })
+    );
+
+    await session.sendMessage({ type: "text", text: "Hey @provider-1" });
+
+    expect(session.participants.value).toContainEqual(
+      expect.objectContaining({ id: "provider-1" })
+    );
+    expect(session.availableParticipants.value).not.toContainEqual(
+      expect.objectContaining({ id: "provider-1" })
+    );
+    expect(session.messages.value[0]).toMatchObject({
+      targets: ["provider-1"],
+    });
+    expect(generateResponse).toHaveBeenCalledTimes(1);
+  });
+
+  it("sendMessage() auto-adds available participant when mentioned by name (local session)", async () => {
+    const { loginManager, userId } = createLoginManagerMock();
+    userId.value = "user-1";
+
+    const chats = createChatsManager(loginManager);
+    const session = chats.createLocalSession();
+    const generateResponse = jest.fn().mockResolvedValue({
+      type: "text",
+      text: "reply",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "HelperAI",
+      supportsSharedChats: true,
+      generateResponse,
+    });
+
+    await session.sendMessage({ type: "text", text: "Hey @HelperAI" });
+
+    expect(session.participants.value).toContainEqual(
+      expect.objectContaining({ id: "provider-1" })
+    );
+    expect(session.messages.value[0]).toMatchObject({
+      targets: ["provider-1"],
+    });
+    expect(generateResponse).toHaveBeenCalledTimes(1);
+  });
+
+  it("sendMessage() calls onJoinChat when auto-adding mentioned available participant (local session)", async () => {
+    const { loginManager, userId } = createLoginManagerMock();
+    userId.value = "user-1";
+
+    const chats = createChatsManager(loginManager);
+    const session = chats.createLocalSession();
+    const onJoinChat = jest.fn();
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: jest
+        .fn()
+        .mockResolvedValue({ type: "text", text: "reply" }),
+      onJoinChat,
+    });
+
+    await session.sendMessage({ type: "text", text: "Hey @provider-1" });
+
+    expect(onJoinChat).toHaveBeenCalledTimes(1);
+    expect(onJoinChat).toHaveBeenCalledWith(
+      expect.objectContaining({ chatId: session.id })
+    );
+  });
+
+  it("sendMessage() does not re-add an already-participating provider when mentioned (local session)", async () => {
+    const { loginManager, userId } = createLoginManagerMock();
+    userId.value = "user-1";
+
+    const chats = createChatsManager(loginManager);
+    const session = chats.createLocalSession();
+    const onJoinChat = jest.fn();
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: jest
+        .fn()
+        .mockResolvedValue({ type: "text", text: "reply" }),
+      onJoinChat,
+    });
+
+    session.addParticipant("provider-1");
+    expect(onJoinChat).toHaveBeenCalledTimes(1);
+
+    await session.sendMessage({ type: "text", text: "Hey @provider-1" });
+
+    expect(onJoinChat).toHaveBeenCalledTimes(1);
+    expect(
+      session.participants.value.filter((p) => p.id === "provider-1")
+    ).toHaveLength(1);
+  });
+
+  it("sendMessage() auto-adds available participant when mentioned by id (shared session)", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager);
+    const generateResponse = jest.fn().mockResolvedValue({
+      type: "text",
+      text: "reply",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse,
+    });
+
+    const { session, sharedSelectedParticipants, sharedChats } =
+      createSharedSessionMock({
+        currentUserId: "user-a",
+        connectedUsers: [
+          {
+            id: "user-a",
+            userId: "user-a",
+            connectionId: null,
+            name: "Alice",
+            isSelf: true,
+            isAI: false,
+            isRemote: false,
+            isActive: true,
+            visual: getUserAnimalVisual("user-a"),
+          },
+        ],
+      });
+    const chat = chats.createSharedSession(session);
+
+    expect(chat.availableParticipants.value).toContainEqual(
+      expect.objectContaining({ id: "user-a_provider-1" })
+    );
+
+    await chat.sendMessage({ type: "text", text: "Hey @user-a_provider-1" });
+    await Promise.resolve();
+
+    expect(sharedSelectedParticipants.get("user-a")).toContain(
+      "user-a_provider-1"
+    );
+    expect(chat.participants.value).toContainEqual(
+      expect.objectContaining({ id: "user-a_provider-1" })
+    );
+    expect(sharedChats.toArray()[0]).toMatchObject({
+      targets: ["user-a_provider-1"],
+    });
+    expect(generateResponse).toHaveBeenCalledTimes(1);
+  });
+
+  it("sendMessage() auto-adds available participant when mentioned by name (shared session)", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager);
+    const generateResponse = jest.fn().mockResolvedValue({
+      type: "text",
+      text: "reply",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "HelperAI",
+      supportsSharedChats: true,
+      generateResponse,
+    });
+
+    const { session, sharedChats } = createSharedSessionMock({
+      currentUserId: "user-a",
+      connectedUsers: [
+        {
+          id: "user-a",
+          userId: "user-a",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+          visual: getUserAnimalVisual("user-a"),
+        },
+      ],
+    });
+    const chat = chats.createSharedSession(session);
+
+    await chat.sendMessage({ type: "text", text: "Hey @HelperAI" });
+    await Promise.resolve();
+
+    expect(chat.participants.value).toContainEqual(
+      expect.objectContaining({ id: "user-a_provider-1" })
+    );
+    expect(sharedChats.toArray()[0]).toMatchObject({
+      targets: ["user-a_provider-1"],
+    });
+    expect(generateResponse).toHaveBeenCalledTimes(1);
+  });
+
+  it("sendMessage() calls onJoinChat when auto-adding mentioned available participant (shared session)", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager);
+    const onJoinChat = jest.fn();
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: jest
+        .fn()
+        .mockResolvedValue({ type: "text", text: "reply" }),
+      onJoinChat,
+    });
+
+    const { session } = createSharedSessionMock({
+      currentUserId: "user-a",
+      connectedUsers: [
+        {
+          id: "user-a",
+          userId: "user-a",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+          visual: getUserAnimalVisual("user-a"),
+        },
+      ],
+    });
+    const chat = chats.createSharedSession(session);
+
+    await chat.sendMessage({ type: "text", text: "Hey @user-a_provider-1" });
+
+    expect(onJoinChat).toHaveBeenCalledTimes(1);
+    expect(onJoinChat).toHaveBeenCalledWith(
+      expect.objectContaining({ chatId: session.id })
+    );
+  });
+
+  it("sendMessage() does not re-add an already-participating provider when mentioned (shared session)", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager);
+    const onJoinChat = jest.fn();
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: jest
+        .fn()
+        .mockResolvedValue({ type: "text", text: "reply" }),
+      onJoinChat,
+    });
+
+    const { session } = createSharedSessionMock({
+      currentUserId: "user-a",
+      connectedUsers: [
+        {
+          id: "user-a",
+          userId: "user-a",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+          visual: getUserAnimalVisual("user-a"),
+        },
+      ],
+    });
+    const chat = chats.createSharedSession(session);
+
+    chat.addParticipant("user-a_provider-1");
+    await Promise.resolve();
+    expect(onJoinChat).toHaveBeenCalledTimes(1);
+
+    await chat.sendMessage({ type: "text", text: "Hey @user-a_provider-1" });
+    await Promise.resolve();
+
+    expect(onJoinChat).toHaveBeenCalledTimes(1);
+    expect(
+      chat.participants.value.filter((p) => p.id === "user-a_provider-1")
+    ).toHaveLength(1);
+  });
 });
