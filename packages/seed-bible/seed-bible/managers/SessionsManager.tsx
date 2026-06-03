@@ -15,6 +15,7 @@ import type {
 export interface ConnectionSessionUserVisual {
   defaultIcon: string;
   color: string;
+  colorName: string;
 }
 
 export interface ConnectedSessionUser extends SessionConnectionInfo {
@@ -329,28 +330,28 @@ const USER_ANIMAL_ICONS = [
   "forest", // tree
   "park", // log
   "eco", // leaf
-  "pets", // cat/dog
+  "pets", // dog
   "cruelty_free", // bunny-style
   "local_cafe", // coffee
   "local_florist", // flower
   "grass", // grass
   "potted_plant", // plant
-  "nature", // mountain/tree
+  "nature", // tree
 ] as const;
 
 const USER_PRESENCE_COLORS = [
-  "#34D399", // emerald
-  "#60A5FA", // blue
-  "#F472B6", // pink
-  "#FBBF24", // amber
-  "#A78BFA", // violet
-  "#F87171", // red
-  "#10B981", // green
-  "#F59E0B", // orange
-  "#06B6D4", // cyan
-  "#EC4899", // rose
-  "#8B5CF6", // purple
-  "#14B8A6", // teal
+  ["#34D399", "emerald"], // emerald
+  ["#60A5FA", "blue"], // blue
+  ["#F472B6", "pink"], // pink
+  ["#FBBF24", "amber"], // amber
+  ["#A78BFA", "violet"], // violet
+  ["#F87171", "red"], // red
+  ["#10B981", "green"], // green
+  ["#F59E0B", "orange"], // orange
+  ["#06B6D4", "cyan"], // cyan
+  ["#EC4899", "rose"], // rose
+  ["#8B5CF6", "purple"], // purple
+  ["#14B8A6", "teal"], // teal
 ] as const;
 
 function hashUserKey(key: string): number {
@@ -372,9 +373,11 @@ export function getUserAnimalVisual(key: string): ConnectionSessionUserVisual {
   const iconIndex = hash % USER_ANIMAL_ICONS.length;
   const colorIndex =
     Math.floor(hash / USER_ANIMAL_ICONS.length) % USER_PRESENCE_COLORS.length;
+  const color = USER_PRESENCE_COLORS[colorIndex]!;
   return {
     defaultIcon: USER_ANIMAL_ICONS[iconIndex]!,
-    color: USER_PRESENCE_COLORS[colorIndex]!,
+    color: color[0],
+    colorName: color[1],
   };
 }
 

@@ -34,14 +34,7 @@ function getAuthorLabel(
 ): string {
   const authors = chat
     .getMessageAuthors(message)
-    .map((author) =>
-      author.isSelf
-        ? t("you", { defaultValue: "You" })
-        : author.name
-          ? translateTitle(t, author.name)
-          : author.id.slice(0, 6)
-    )
-    .filter((name) => name && translateTitle(t, name).trim().length > 0);
+    .map((author) => getParticipantDisplayLabel(author, t));
 
   if (authors.length === 0) {
     return t("anonymous", { defaultValue: "Anonymous" });
@@ -114,11 +107,30 @@ export function getParticipantAvatar(
   return {
     imageUrl,
     label,
-    visual: participant.isAI
-      ? getUserAnimalVisual(participant.providerId)
-      : participant.visual,
+    visual: getParticipantVisual(participant),
     isSelf: participant.isSelf,
   };
+}
+
+function getParticipantVisual(
+  participant: ChatParticipant
+): ConnectionSessionUserVisual {
+  return participant.isAI
+    ? getUserAnimalVisual(participant.providerId)
+    : participant.visual;
+}
+
+function getVisualLabel(
+  visual: ConnectionSessionUserVisual,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  return t(`visual-color-animal-anonymous`, {
+    defaultValue: `{{color}} {{animal}} (Anonymous)`,
+    color: t(`color-${visual.colorName}`, { defaultValue: visual.colorName }),
+    animal: t(`animal-${visual.defaultIcon}`, {
+      defaultValue: visual.defaultIcon,
+    }),
+  });
 }
 
 export function getParticipantDisplayLabel(
@@ -127,9 +139,17 @@ export function getParticipantDisplayLabel(
 ): string {
   const name = participant.name ? translateTitle(t, participant.name) : null;
 
-  return participant.isSelf
-    ? t("you", { defaultValue: "You" })
-    : (name ?? t("anonymous", { defaultValue: "Anonymous" }));
+  if (participant.isSelf) {
+    return t("you", { defaultValue: "You" });
+  }
+
+  if (name) {
+    return name;
+  }
+
+  const visual = getParticipantVisual(participant);
+  const visualLabel = getVisualLabel(visual, t);
+  return visualLabel;
 }
 
 export function getParticipantMentionLabel(
