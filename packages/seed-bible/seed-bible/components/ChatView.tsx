@@ -411,6 +411,7 @@ export function ChatView(props: ChatViewProps) {
       });
       draft.value = "";
       chat.setTypingStatus(false);
+      inputRef.current?.focus();
     } catch (error) {
       submitError.value =
         error instanceof Error
@@ -570,7 +571,6 @@ export function ChatView(props: ChatViewProps) {
             onBlur={() => {
               chat.setTypingStatus(false);
             }}
-            disabled={isSubmitting.value}
             aria-autocomplete="list"
             aria-expanded={isMentionPickerOpen}
             aria-haspopup="listbox"
