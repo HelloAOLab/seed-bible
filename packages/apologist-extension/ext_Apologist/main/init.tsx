@@ -24,37 +24,24 @@ registerExtension({
           content: `Currently reading: ${context.app.selectedTab.value?.readingState.bookId} ${context.app.selectedTab.value?.readingState.chapterNumber}`,
         };
 
-        const response = await window.fetch(
+        const response = await web.post(
           "https://apologist.ao.bot/api/v1/chat/completions",
           {
-            body: JSON.stringify({
-              model: "openai/gpt/5-mini",
-              stream: false,
-              messages: [
-                contextMessage,
-                ...chatContext.messages.map((m) => ({
-                  role: m.authors.some((a) => a === chatContext.participant.id)
-                    ? "user"
-                    : "assistant",
-                  content: m.text,
-                })),
-              ],
-            }),
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            model: "openai/gpt/5-mini",
+            stream: false,
+            messages: [
+              contextMessage,
+              ...chatContext.messages.map((m) => ({
+                role: m.authors.some((a) => a === chatContext.participant.id)
+                  ? "user"
+                  : "assistant",
+                content: m.text,
+              })),
+            ],
           }
         );
 
-        if (!response.ok) {
-          throw new Error(
-            `Failed to generate response: ${response.statusText}`
-          );
-        }
-
-        const data = await response.json();
-        const message = data.choices[0].message;
+        const message = response.data.choices[0].message;
 
         if (message) {
           return {
