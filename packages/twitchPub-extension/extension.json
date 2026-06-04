@@ -2,9 +2,9 @@
   "id": "ext_twitchPub",
   "translations": {
     "en": {
-      "title": "Twitch Pub Extension",
+      "title": "Twitch Host Extension",
       "toolbarTitle": "Twitch Panel",
-      "description": "An extension for the Seed Bible to integrate with Twitch Pub.",
+      "description": "An extension for the Seed Bible to integrate with Twitch Host.",
       "authorization": "Authenticating with Twitch",
       "waitingForAuthorization": "Waiting for Twitch authorization",
       "authorizationInstructions": "Please complete the authorization process in the opened Twitch page.",
@@ -28,8 +28,8 @@
       "qrError": "QR Error: {{error}}"
     },
     "es": {
-      "title": "Extensión de Twitch Pub",
-      "description": "Una extensión para el Seed Bible para integrarse con Twitch Pub.",
+      "title": "Extensión de Twitch Host",
+      "description": "Una extensión para el Seed Bible para integrarse con Twitch Host.",
       "authorization": "Autenticando con Twitch",
       "waitingForAuthorization": "Esperando autorización de Twitch",
       "authorizationInstructions": "Por favor, completa el proceso de autorización en la página de Twitch abierta.",
@@ -54,8 +54,8 @@
       "toolbarTitle": "Panel de Twitch"
     },
     "am": {
-      "title": "የTwitch Pub ኤክስቴንሽን",
-      "description": "ለ Seed Bible ከTwitch Pub ጋር ለመያዝ ኤክስቴንሽን ነው።",
+      "title": "የTwitch Host ኤክስቴንሽን",
+      "description": "ለ Seed Bible ከTwitch Host ጋር ለመያዝ ኤክስቴንሽን ነው።",
       "authorization": "ከTwitch ጋር እያረጋገጡ ነው",
       "waitingForAuthorization": "ለTwitch ፈቃድ እየተጠበቀ ነው",
       "authorizationInstructions": "እባክዎ በተከፈተው የTwitch ገጽ ላይ የፈቃዱን ሂደት ያጠናቁ።",
@@ -80,8 +80,8 @@
       "toolbarTitle": "የትዊች ፓነል"
     },
     "ar": {
-      "title": "امتداد Twitch Pub",
-      "description": "امتداد لمشروع Seed Bible للتكامل مع Twitch Pub.",
+      "title": "امتداد Twitch Host",
+      "description": "امتداد لمشروع Seed Bible للتكامل مع Twitch Host.",
       "authorization": "جارٍ المصادقة مع Twitch",
       "waitingForAuthorization": "في انتظار إذن Twitch",
       "authorizationInstructions": "يرجى إتمام عملية التفويض في صفحة Twitch المفتوحة.",
@@ -106,8 +106,8 @@
       "toolbarTitle": "لوحة تحكم تويتش"
     },
     "bn": {
-      "title": "Twitch Pub এক্সটেনশন",
-      "description": "Seed Bible প্রকল্পের সাথে Twitch Pub একত্রিত করার জন্য একটি এক্সটেনশন।",
+      "title": "Twitch Host এক্সটেনশন",
+      "description": "Seed Bible প্রকল্পের সাথে Twitch Host একত্রিত করার জন্য একটি এক্সটেনশন।",
       "authorization": "Twitch-এর সাথে প্রমাণীকরণ হচ্ছে",
       "waitingForAuthorization": "Twitch অনুমোদনের জন্য অপেক্ষা করছে",
       "authorizationInstructions": "অনুগ্রহ করে খোলা Twitch পৃষ্ঠায় অনুমোদন প্রক্রিয়া সম্পন্ন করুন।",
@@ -132,8 +132,8 @@
       "toolbarTitle": "টুইচ প্যানেল"
     },
     "fa": {
-      "title": "افزونه Twitch Pub",
-      "description": "یک افزونه برای پروژه Seed Bible برای ادغام با Twitch Pub.",
+      "title": "افزونه Twitch Host",
+      "description": "یک افزونه برای پروژه Seed Bible برای ادغام با Twitch Host.",
       "authorization": "در حال احراز هویت با Twitch",
       "waitingForAuthorization": "در انتظار مجوز Twitch",
       "authorizationInstructions": "لطفاً فرآیند مجوز را در صفحه Twitch باز شده تکمیل کنید.",
@@ -158,8 +158,8 @@
       "toolbarTitle": "پنل توییچ"
     },
     "fr": {
-      "title": "Extension Twitch Pub",
-      "description": "Une extension pour le projet Seed Bible pour s'intégrer avec Twitch Pub.",
+      "title": "Extension Twitch Host",
+      "description": "Une extension pour le projet Seed Bible pour s'intégrer avec Twitch Host.",
       "authorization": "Authentification avec Twitch",
       "waitingForAuthorization": "En attente de l'autorisation Twitch",
       "authorizationInstructions": "Veuillez compléter le processus d'autorisation dans la page Twitch ouverte.",
@@ -184,8 +184,8 @@
       "toolbarTitle": "Panneau Twitch"
     },
     "hi": {
-      "title": "Twitch Pub एक्सटेंशन",
-      "description": "Seed Bible परियोजना के साथ Twitch Pub को एकीकृत करने के लिए एक एक्सटेंशन।",
+      "title": "Twitch Host एक्सटेंशन",
+      "description": "Seed Bible परियोजना के साथ Twitch Host को एकीकृत करने के लिए एक एक्सटेंशन।",
       "authorization": "Twitch के साथ प्रमाणीकरण हो रहा है",
       "waitingForAuthorization": "Twitch प्राधिकरण की प्रतीक्षा है",
       "authorizationInstructions": "कृपया खुले हुए Twitch पृष्ठ में प्राधिकरण प्रक्रिया पूरी करें।",
@@ -210,8 +210,8 @@
       "toolbarTitle": "ट्विच पैनल"
     },
     "id": {
-      "title": "Ekstensi Twitch Pub",
-      "description": "Sebuah ekstensi untuk proyek Seed Bible untuk terintegrasi dengan Twitch Pub.",
+      "title": "Ekstensi Twitch Host",
+      "description": "Sebuah ekstensi untuk proyek Seed Bible untuk terintegrasi dengan Twitch Host.",
       "authorization": "Mengautentikasi dengan Twitch",
       "waitingForAuthorization": "Menunggu otorisasi Twitch",
       "authorizationInstructions": "Harap selesaikan proses otorisasi di halaman Twitch yang dibuka.",
@@ -236,8 +236,8 @@
       "toolbarTitle": "Panel Twitch"
     },
     "ja": {
-      "title": "Twitch Pub 拡張機能",
-      "description": "Seed Bible プロジェクトと Twitch Pub を統合するための拡張機能。",
+      "title": "Twitch Host 拡張機能",
+      "description": "Seed Bible プロジェクトと Twitch Host を統合するための拡張機能。",
       "authorization": "Twitchで認証中",
       "waitingForAuthorization": "Twitch認証を待っています",
       "authorizationInstructions": "開いたTwitchページで認証プロセスを完了してください。",
@@ -262,8 +262,8 @@
       "toolbarTitle": "Twitchパネル"
     },
     "ko": {
-      "title": "Twitch Pub 확장 기능",
-      "description": "Seed Bible 프로젝트와 Twitch Pub를 통합하기 위한 확장 기능입니다.",
+      "title": "Twitch Host 확장 기능",
+      "description": "Seed Bible 프로젝트와 Twitch Host를 통합하기 위한 확장 기능입니다.",
       "authorization": "Twitch로 인증 중",
       "waitingForAuthorization": "Twitch 승인을 기다리는 중",
       "authorizationInstructions": "열린 Twitch 페이지에서 승인 절차를 완료해 주세요.",
@@ -288,8 +288,8 @@
       "toolbarTitle": "트위치 패널"
     },
     "mn": {
-      "title": "Twitch Pub өргөтгөл",
-      "description": "Seed Bible төслийг Twitch Pub-той нэгтгэхийн тулд өргөтгөл.",
+      "title": "Twitch Host өргөтгөл",
+      "description": "Seed Bible төслийг Twitch Host-той нэгтгэхийн тулд өргөтгөл.",
       "authorization": "Twitch-тэй нэвтрэлт шалгалт хийж байна",
       "waitingForAuthorization": "Twitch зөвшөөрлийг хүлээж байна",
       "authorizationInstructions": "Нээгдсэн Twitch хуудсан дээр зөвшөөрлийн үйл явцыг дуусгана уу.",
@@ -314,8 +314,8 @@
       "toolbarTitle": "Twitch Panel"
     },
     "ne": {
-      "title": "Twitch Pub विस्तार",
-      "description": "Seed Bible परियोजनालाई Twitch Pub सँग एकीकृत गर्नको लागि विस्तार।",
+      "title": "Twitch Host विस्तार",
+      "description": "Seed Bible परियोजनालाई Twitch Host सँग एकीकृत गर्नको लागि विस्तार।",
       "authorization": "Twitch सँग प्रमाणिकरण गर्दै",
       "waitingForAuthorization": "Twitch प्राधिकरणको लागि प्रतीक्षा गर्दै",
       "authorizationInstructions": "कृपया खोलिएको Twitch पृष्ठमा प्राधिकरण प्रक्रिया पूरा गर्नुहोस्।",
@@ -340,8 +340,8 @@
       "toolbarTitle": "ट्विच प्यानल"
     },
     "ps": {
-      "title": "د Twitch Pub توسیع",
-      "description": "د Seed Bible پروژې لپاره د Twitch Pub سره د یوځای کولو توسیع.",
+      "title": "د Twitch Host توسیع",
+      "description": "د Seed Bible پروژې لپاره د Twitch Host سره د یوځای کولو توسیع.",
       "authorization": "د Twitch سره تصدیق کیږي",
       "waitingForAuthorization": "د Twitch اجازې انتظار دی",
       "authorizationInstructions": "مهرباني وکړئ د خلاص شوي Twitch پاڼه کې د اجازې پروسه بشپړه کړئ.",
@@ -366,8 +366,8 @@
       "toolbarTitle": "د ټویچ پینل"
     },
     "pt": {
-      "title": "Extensão Twitch Pub",
-      "description": "Uma extensão para o projeto Seed Bible para se integrar com o Twitch Pub.",
+      "title": "Extensão Twitch Host",
+      "description": "Uma extensão para o projeto Seed Bible para se integrar com o Twitch Host.",
       "authorization": "Autenticando com o Twitch",
       "waitingForAuthorization": "Aguardando autorização do Twitch",
       "authorizationInstructions": "Por favor, conclua o processo de autorização na página do Twitch aberta.",
@@ -392,8 +392,8 @@
       "toolbarTitle": "Painel do Twitch"
     },
     "ru": {
-      "title": "Расширение Twitch Pub",
-      "description": "Расширение для проекта Seed Bible для интеграции с Twitch Pub.",
+      "title": "Расширение Twitch Host",
+      "description": "Расширение для проекта Seed Bible для интеграции с Twitch Host.",
       "authorization": "Аутентификация с Twitch",
       "waitingForAuthorization": "Ожидание авторизации Twitch",
       "authorizationInstructions": "Пожалуйста, завершите процесс авторизации на открытой странице Twitch.",
@@ -418,8 +418,8 @@
       "toolbarTitle": "Панель Twitch"
     },
     "sw": {
-      "title": "Upanuzi wa Twitch Pub",
-      "description": "Upanuzi kwa mradi wa Seed Bible ili kuunganishwa na Twitch Pub.",
+      "title": "Upanuzi wa Twitch Host",
+      "description": "Upanuzi kwa mradi wa Seed Bible ili kuunganishwa na Twitch Host.",
       "authorization": "Kuthibitisha na Twitch",
       "waitingForAuthorization": "Kusubiri idhini ya Twitch",
       "authorizationInstructions": "Tafadhali kamilisha mchakato wa idhini katika ukurasa wa Twitch uliofunguliwa.",
@@ -444,8 +444,8 @@
       "toolbarTitle": "Paneli ya Twitch"
     },
     "ti": {
-      "title": "Twitch Pub ኤክስቴንሽን",
-      "description": "Seed Bible ፕሮጀክትን ከTwitch Pub ጋር ለመያዝ ኤክስቴንሽን ነው።",
+      "title": "Twitch Host ኤክስቴንሽን",
+      "description": "Seed Bible ፕሮጀክትን ከTwitch Host ጋር ለመያዝ ኤክስቴንሽን ነው።",
       "authorization": "ምስ Twitch ኣረጋጊጽካ ኣለኻ",
       "waitingForAuthorization": "ናይ Twitch ፍቓድ ይጽበ ኣሎ",
       "authorizationInstructions": "እባክኻ ኣብቲ ዝተኸፍተ ናይ Twitch ገጽ ናይ ፍቓድ ሂደት ኣጠናቅቖ።",
@@ -470,8 +470,8 @@
       "toolbarTitle": "ትዊች ፓነል"
     },
     "tr": {
-      "title": "Twitch Pub Uzantısı",
-      "description": "Seed Bible projesi ile Twitch Pub'u entegre etmek için bir uzantı.",
+      "title": "Twitch Host Uzantısı",
+      "description": "Seed Bible projesi ile Twitch Host'u entegre etmek için bir uzantı.",
       "authorization": "Twitch ile kimlik doğrulanıyor",
       "waitingForAuthorization": "Twitch yetkilendirmesi bekleniyor",
       "authorizationInstructions": "Lütfen açılan Twitch sayfasındaki yetkilendirme işlemini tamamlayın.",
@@ -496,8 +496,8 @@
       "toolbarTitle": "Twitch Panel"
     },
     "ug": {
-      "title": "Twitch Pub كېڭەيتىلمىسى",
-      "description": "Seed Bible پروژىسىنى Twitch Pub بىلەن بىرلەشتۈرۈش ئۈچۈن كېڭەيتىلمە.",
+      "title": "Twitch Host كېڭەيتىلمىسى",
+      "description": "Seed Bible پروژىسىنى Twitch Host بىلەن بىرلەشتۈرۈش ئۈچۈن كېڭەيتىلمە.",
       "authorization": "Twitch بىلەن كىملىك دەلىللىنىۋاتىدۇ",
       "waitingForAuthorization": "Twitch ئىجازەتنامىسى كۈتۈلىۋاتىدۇ",
       "authorizationInstructions": "ئېچىلغان Twitch بەتتە ئىجازەت بېرىش جەريانىنى تاماملاڭ.",
@@ -522,8 +522,8 @@
       "toolbarTitle": "Twitch Panel"
     },
     "uk": {
-      "title": "Розширення Twitch Pub",
-      "description": "Розширення для проєкту Seed Bible для інтеграції з Twitch Pub.",
+      "title": "Розширення Twitch Host",
+      "description": "Розширення для проєкту Seed Bible для інтеграції з Twitch Host.",
       "authorization": "Автентифікація з Twitch",
       "waitingForAuthorization": "Очікування авторизації Twitch",
       "authorizationInstructions": "Будь ласка, завершіть процес авторизації на відкритій сторінці Twitch.",
@@ -548,8 +548,8 @@
       "toolbarTitle": "Панель Twitch"
     },
     "ur": {
-      "title": "Twitch Pub ایکسٹینشن",
-      "description": "Seed Bible پروجیکٹ کے لیے Twitch Pub کے ساتھ انضمام کے لیے ایک ایکسٹینشن۔",
+      "title": "Twitch Host ایکسٹینشن",
+      "description": "Seed Bible پروجیکٹ کے لیے Twitch Host کے ساتھ انضمام کے لیے ایک ایکسٹینشن۔",
       "authorization": "Twitch کے ساتھ تصدیق ہو رہی ہے",
       "waitingForAuthorization": "Twitch اجازت کا انتظار ہے",
       "authorizationInstructions": "براہ کرم کھلے ہوئے Twitch صفحے میں اجازت کا عمل مکمل کریں۔",
@@ -574,8 +574,8 @@
       "toolbarTitle": "ٹویچ پینل"
     },
     "vi": {
-      "title": "Tiện ích mở rộng Twitch Pub",
-      "description": "Một tiện ích mở rộng cho dự án Seed Bible để tích hợp với Twitch Pub.",
+      "title": "Tiện ích mở rộng Twitch Host",
+      "description": "Một tiện ích mở rộng cho dự án Seed Bible để tích hợp với Twitch Host.",
       "authorization": "Đang xác thực với Twitch",
       "waitingForAuthorization": "Đang chờ ủy quyền Twitch",
       "authorizationInstructions": "Vui lòng hoàn tất quá trình ủy quyền trên trang Twitch đã mở.",
@@ -600,8 +600,8 @@
       "toolbarTitle": "Bảng điều khiển Twitch"
     },
     "zh": {
-      "title": "Twitch Pub 扩展",
-      "description": "Seed Bible 项目与 Twitch Pub 集成的扩展。",
+      "title": "Twitch Host 扩展",
+      "description": "Seed Bible 项目与 Twitch Host 集成的扩展。",
       "authorization": "正在与 Twitch 进行身份验证",
       "waitingForAuthorization": "等待 Twitch 授权",
       "authorizationInstructions": "请在打开的 Twitch 页面中完成授权流程。",
@@ -626,8 +626,8 @@
       "toolbarTitle": "Twitch 面板"
     },
     "ind": {
-      "title": "Ekstensi Twitch Pub",
-      "description": "Ekstensi untuk proyek Seed Bible untuk terintegrasi dengan Twitch Pub.",
+      "title": "Ekstensi Twitch Host",
+      "description": "Ekstensi untuk proyek Seed Bible untuk terintegrasi dengan Twitch Host.",
       "authorization": "Mengautentikasi dengan Twitch",
       "waitingForAuthorization": "Menunggu otorisasi Twitch",
       "authorizationInstructions": "Harap selesaikan proses otorisasi di halaman Twitch yang dibuka.",
@@ -652,9 +652,9 @@
       "toolbarTitle": "Panel Twitch"
     },
     "af": {
-      "title": "Twitch Pub-uitbreiding",
+      "title": "Twitch Host-uitbreiding",
       "toolbarTitle": "Twitch-paneel",
-      "description": "'n Uitbreiding vir die Seed Bible om met Twitch Pub te integreer.",
+      "description": "'n Uitbreiding vir die Seed Bible om met Twitch Host te integreer.",
       "authorization": "Verifikasie met Twitch",
       "waitingForAuthorization": "Wag vir Twitch-magtiging",
       "authorizationInstructions": "Voltooi asseblief die magtigingsproses op die oopgemaakte Twitch-bladsy.",
@@ -678,9 +678,9 @@
       "qrError": "QR-fout: {{error}}"
     },
     "az": {
-      "title": "Twitch Pub Genişləndirməsi",
+      "title": "Twitch Host Genişləndirməsi",
       "toolbarTitle": "Twitch Panel",
-      "description": "Toxum Müqəddəs Kitabının Twitch Pub ilə inteqrasiyası üçün genişləndirmə.",
+      "description": "Toxum Müqəddəs Kitabının Twitch Host ilə inteqrasiyası üçün genişləndirmə.",
       "authorization": "Twitch ilə təsdiqləmə",
       "waitingForAuthorization": "Twitch icazəsi gözlənilir",
       "authorizationInstructions": "Zəhmət olmasa, açılmış Twitch səhifəsində avtorizasiya prosesini tamamlayın.",
@@ -704,9 +704,9 @@
       "qrError": "QR Xətası: {{error}}"
     },
     "be": {
-      "title": "Пашырэнне Twitch Pub",
+      "title": "Пашырэнне Twitch Host",
       "toolbarTitle": "Панэль Twitch",
-      "description": "Пашырэнне для інтэграцыі Seed Bible з Twitch Pub.",
+      "description": "Пашырэнне для інтэграцыі Seed Bible з Twitch Host.",
       "authorization": "Аўтэнтыфікацыя з дапамогай Twitch",
       "waitingForAuthorization": "Чаканне аўтарызацыі Twitch",
       "authorizationInstructions": "Калі ласка, прайдзіце працэс аўтарызацыі на адкрытай старонцы Twitch.",
@@ -730,9 +730,9 @@
       "qrError": "Памылка QR-кода: {{error}}"
     },
     "bg": {
-      "title": "Разширение за Twitch Pub",
+      "title": "Разширение за Twitch Host",
       "toolbarTitle": "Панел на Twitch",
-      "description": "Разширение за интеграция на Seed Bible с Twitch Pub.",
+      "description": "Разширение за интеграция на Seed Bible с Twitch Host.",
       "authorization": "Удостоверяване с Twitch",
       "waitingForAuthorization": "Чака се оторизация от Twitch",
       "authorizationInstructions": "Моля, завършете процеса на оторизация на отворената страница на Twitch.",
@@ -756,9 +756,9 @@
       "qrError": "Грешка в QR кода: {{error}}"
     },
     "bs": {
-      "title": "Twitch Pub ekstenzija",
+      "title": "Twitch Host ekstenzija",
       "toolbarTitle": "Twitch panel",
-      "description": "Proširenje za Seed Bible radi integracije sa Twitch Pubom.",
+      "description": "Proširenje za Seed Bible radi integracije sa Twitch Hostom.",
       "authorization": "Autentifikacija putem Twitcha",
       "waitingForAuthorization": "Čekanje na Twitch autorizaciju",
       "authorizationInstructions": "Molimo Vas da završite proces autorizacije na otvorenoj Twitch stranici.",
@@ -782,9 +782,9 @@
       "qrError": "Greška u QR kodu: {{error}}"
     },
     "ca": {
-      "title": "Extensió de Twitch Pub",
+      "title": "Extensió de Twitch Host",
       "toolbarTitle": "Panell de Twitch",
-      "description": "Una extensió per a la Seed Bible per integrar-se amb Twitch Pub.",
+      "description": "Una extensió per a la Seed Bible per integrar-se amb Twitch Host.",
       "authorization": "Autenticació amb Twitch",
       "waitingForAuthorization": "Esperant l'autorització de Twitch",
       "authorizationInstructions": "Si us plau, completeu el procés d'autorització a la pàgina de Twitch que s'ha obert.",
@@ -808,9 +808,9 @@
       "qrError": "Error de codi QR: {{error}}"
     },
     "cs": {
-      "title": "Rozšíření pro Twitch Pub",
+      "title": "Rozšíření pro Twitch Host",
       "toolbarTitle": "Panel Twitche",
-      "description": "Rozšíření pro integraci Seed Bible s Twitch Pubem.",
+      "description": "Rozšíření pro integraci Seed Bible s Twitch Hostem.",
       "authorization": "Ověřování pomocí Twitche",
       "waitingForAuthorization": "Čekání na autorizaci na Twitchi",
       "authorizationInstructions": "Dokončete prosím proces autorizace na otevřené stránce Twitche.",
@@ -836,7 +836,7 @@
     "cy": {
       "title": "Estyniad Tafarn Twitch",
       "toolbarTitle": "Panel Twitch",
-      "description": "Estyniad ar gyfer y Beibl Seed i integreiddio â Twitch Pub.",
+      "description": "Estyniad ar gyfer y Beibl Seed i integreiddio â Twitch Host.",
       "authorization": "Dilysu gyda Twitch",
       "waitingForAuthorization": "Yn aros am awdurdodiad Twitch",
       "authorizationInstructions": "Cwblhewch y broses awdurdodi yn y dudalen Twitch sydd wedi agor.",
@@ -860,9 +860,9 @@
       "qrError": "Gwall QR: {{error}}"
     },
     "da": {
-      "title": "Twitch Pub-udvidelse",
+      "title": "Twitch Host-udvidelse",
       "toolbarTitle": "Twitch-panel",
-      "description": "En udvidelse til Seed Bible til integration med Twitch Pub.",
+      "description": "En udvidelse til Seed Bible til integration med Twitch Host.",
       "authorization": "Godkendelse med Twitch",
       "waitingForAuthorization": "Venter på Twitch-godkendelse",
       "authorizationInstructions": "Fuldfør venligst godkendelsesprocessen på den åbnede Twitch-side.",
@@ -886,9 +886,9 @@
       "qrError": "QR-fejl: {{error}}"
     },
     "de": {
-      "title": "Twitch Pub-Erweiterung",
+      "title": "Twitch Host-Erweiterung",
       "toolbarTitle": "Twitch-Panel",
-      "description": "Eine Erweiterung für die Seed Bible zur Integration mit Twitch Pub.",
+      "description": "Eine Erweiterung für die Seed Bible zur Integration mit Twitch Host.",
       "authorization": "Authentifizierung mit Twitch",
       "waitingForAuthorization": "Warten auf Twitch-Autorisierung",
       "authorizationInstructions": "Bitte schließen Sie den Autorisierungsprozess auf der geöffneten Twitch-Seite ab.",
@@ -912,9 +912,9 @@
       "qrError": "QR-Fehler: {{error}}"
     },
     "el": {
-      "title": "Επέκταση Twitch Pub",
+      "title": "Επέκταση Twitch Host",
       "toolbarTitle": "Πίνακας Twitch",
-      "description": "Μια επέκταση για το Seed Bible για ενσωμάτωση με το Twitch Pub.",
+      "description": "Μια επέκταση για το Seed Bible για ενσωμάτωση με το Twitch Host.",
       "authorization": "Έλεγχος ταυτότητας με το Twitch",
       "waitingForAuthorization": "Αναμονή για εξουσιοδότηση Twitch",
       "authorizationInstructions": "Ολοκληρώστε τη διαδικασία εξουσιοδότησης στην ανοιχτή σελίδα του Twitch.",
@@ -940,7 +940,7 @@
     "et": {
       "title": "Twitchi pubi laiendus",
       "toolbarTitle": "Twitchi paneel",
-      "description": "Seed Bible'i laiendus Twitch Pubiga integreerumiseks.",
+      "description": "Seed Bible'i laiendus Twitch Hostiga integreerumiseks.",
       "authorization": "Autentimine Twitchi abil",
       "waitingForAuthorization": "Ootan Twitchi autoriseerimist",
       "authorizationInstructions": "Palun viige autoriseerimisprotsess avatud Twitchi lehel lõpule.",
@@ -964,9 +964,9 @@
       "qrError": "QR-koodi viga: {{error}}"
     },
     "fi": {
-      "title": "Twitch Pub -laajennus",
+      "title": "Twitch Host -laajennus",
       "toolbarTitle": "Twitch-paneeli",
-      "description": "Seed Biblen laajennus Twitch Pubin integroimiseksi.",
+      "description": "Seed Biblen laajennus Twitch Hostin integroimiseksi.",
       "authorization": "Twitchin avulla tunnistautuminen",
       "waitingForAuthorization": "Odotetaan Twitchin valtuutusta",
       "authorizationInstructions": "Suorita valtuutusprosessi loppuun avatulla Twitch-sivulla.",
@@ -990,9 +990,9 @@
       "qrError": "QR-virhe: {{error}}"
     },
     "fil": {
-      "title": "Ekstensyon ng Twitch Pub",
+      "title": "Ekstensyon ng Twitch Host",
       "toolbarTitle": "Panel ng Twitch",
-      "description": "Isang extension para sa Seed Bible para maisama sa Twitch Pub.",
+      "description": "Isang extension para sa Seed Bible para maisama sa Twitch Host.",
       "authorization": "Pagpapatotoo gamit ang Twitch",
       "waitingForAuthorization": "Naghihintay para sa pahintulot ng Twitch",
       "authorizationInstructions": "Pakikumpleto ang proseso ng awtorisasyon sa binuksang pahina ng Twitch.",
@@ -1016,9 +1016,9 @@
       "qrError": "Error sa QR: {{error}}"
     },
     "fy": {
-      "title": "Twitch Pub-útwreiding",
+      "title": "Twitch Host-útwreiding",
       "toolbarTitle": "Twitch-paniel",
-      "description": "In útwreiding foar de Seed Bible om te yntegrearjen mei Twitch Pub.",
+      "description": "In útwreiding foar de Seed Bible om te yntegrearjen mei Twitch Host.",
       "authorization": "Autentikaasje mei Twitch",
       "waitingForAuthorization": "Wachtsje op Twitch-autorisaasje",
       "authorizationInstructions": "Foltôgje asjebleaft it autorisaasjeproses op 'e iepene Twitch-pagina.",
@@ -1042,9 +1042,9 @@
       "qrError": "QR-flater: {{error}}"
     },
     "gl": {
-      "title": "Extensión de Twitch Pub",
+      "title": "Extensión de Twitch Host",
       "toolbarTitle": "Panel de Twitch",
-      "description": "Unha extensión para a Biblia das Sementes para integrarse con Twitch Pub.",
+      "description": "Unha extensión para a Biblia das Sementes para integrarse con Twitch Host.",
       "authorization": "Autenticación con Twitch",
       "waitingForAuthorization": "Agardando a autorización de Twitch",
       "authorizationInstructions": "Completa o proceso de autorización na páxina de Twitch que se abriu.",
@@ -1068,9 +1068,9 @@
       "qrError": "Erro de código QR: {{error}}"
     },
     "gn": {
-      "title": "Twitch Pub Ñembotuichave",
+      "title": "Twitch Host Ñembotuichave",
       "toolbarTitle": "Panel de Twitch rehegua",
-      "description": "Peteĩ extensión pe Biblia Semilla-pe g̃uarã oñeintegra hag̃ua Twitch Pub ndive.",
+      "description": "Peteĩ extensión pe Biblia Semilla-pe g̃uarã oñeintegra hag̃ua Twitch Host ndive.",
       "authorization": "Oñemoañete haguã Twitch rupive",
       "waitingForAuthorization": "Oha’arõvo Twitch autorización",
       "authorizationInstructions": "Emohu’ã pe proceso autorización rehegua Twitch página ojepe’ávape.",
@@ -1122,7 +1122,7 @@
     "he": {
       "title": "הרחבת פאב של טוויץ'",
       "toolbarTitle": "פאנל טוויץ'",
-      "description": "הרחבה עבור Seed Bible לשילוב עם Twitch Pub.",
+      "description": "הרחבה עבור Seed Bible לשילוב עם Twitch Host.",
       "authorization": "אימות עם טוויץ'",
       "waitingForAuthorization": "מחכה לאישור של טוויץ'",
       "authorizationInstructions": "אנא השלם את תהליך ההרשאה בדף טוויץ' הפתוח.",
@@ -1146,9 +1146,9 @@
       "qrError": "שגיאת QR: {{error}}"
     },
     "hr": {
-      "title": "Twitch Pub ekstenzija",
+      "title": "Twitch Host ekstenzija",
       "toolbarTitle": "Twitch panel",
-      "description": "Proširenje za integraciju Seed Bible s Twitch Pubom.",
+      "description": "Proširenje za integraciju Seed Bible s Twitch Hostom.",
       "authorization": "Autentifikacija putem Twitcha",
       "waitingForAuthorization": "Čekanje Twitch autorizacije",
       "authorizationInstructions": "Molimo vas da dovršite postupak autorizacije na otvorenoj Twitch stranici.",
@@ -1172,9 +1172,9 @@
       "qrError": "QR greška: {{error}}"
     },
     "hu": {
-      "title": "Twitch Pub bővítmény",
+      "title": "Twitch Host bővítmény",
       "toolbarTitle": "Twitch Panel",
-      "description": "Egy kiterjesztés a Seed Bible-hez, hogy integrálható legyen a Twitch Pubbal.",
+      "description": "Egy kiterjesztés a Seed Bible-hez, hogy integrálható legyen a Twitch Hostbal.",
       "authorization": "Hitelesítés Twitch-kel",
       "waitingForAuthorization": "Twitch-engedélyezésre várok",
       "authorizationInstructions": "Kérjük, fejezd be az engedélyezési folyamatot a megnyitott Twitch oldalon.",
@@ -1198,9 +1198,9 @@
       "qrError": "QR-kód hiba: {{error}}"
     },
     "is": {
-      "title": "Twitch Pub viðbót",
+      "title": "Twitch Host viðbót",
       "toolbarTitle": "Twitch-spjaldið",
-      "description": "Viðbót fyrir Seed Bible til að samþætta við Twitch Pub.",
+      "description": "Viðbót fyrir Seed Bible til að samþætta við Twitch Host.",
       "authorization": "Auðkenning með Twitch",
       "waitingForAuthorization": "Bíð eftir heimild á Twitch",
       "authorizationInstructions": "Vinsamlegast ljúktu við heimildarferlið á opnuðu Twitch síðunni.",
@@ -1224,9 +1224,9 @@
       "qrError": "QR-villa: {{error}}"
     },
     "it": {
-      "title": "Estensione Twitch Pub",
+      "title": "Estensione Twitch Host",
       "toolbarTitle": "Pannello Twitch",
-      "description": "Un'estensione per la Seed Bible per l'integrazione con Twitch Pub.",
+      "description": "Un'estensione per la Seed Bible per l'integrazione con Twitch Host.",
       "authorization": "Autenticazione con Twitch",
       "waitingForAuthorization": "In attesa dell'autorizzazione di Twitch",
       "authorizationInstructions": "Completa la procedura di autorizzazione nella pagina di Twitch che si aprirà.",
@@ -1252,7 +1252,7 @@
     "iw": {
       "title": "הרחבת פאב של טוויץ'",
       "toolbarTitle": "פאנל טוויץ'",
-      "description": "הרחבה עבור Seed Bible לשילוב עם Twitch Pub.",
+      "description": "הרחבה עבור Seed Bible לשילוב עם Twitch Host.",
       "authorization": "אימות עם טוויץ'",
       "waitingForAuthorization": "מחכה לאישור של טוויץ'",
       "authorizationInstructions": "אנא השלם את תהליך ההרשאה בדף טוויץ' הפתוח.",
@@ -1276,9 +1276,9 @@
       "qrError": "שגיאת QR: {{error}}"
     },
     "ka": {
-      "title": "Twitch Pub გაფართოება",
+      "title": "Twitch Host გაფართოება",
       "toolbarTitle": "Twitch პანელი",
-      "description": "Seed Bible-ის გაფართოება Twitch Pub-თან ინტეგრაციისთვის.",
+      "description": "Seed Bible-ის გაფართოება Twitch Host-თან ინტეგრაციისთვის.",
       "authorization": "Twitch-ის მეშვეობით ავთენტიფიკაცია",
       "waitingForAuthorization": "Twitch-ის ავტორიზაციის მოლოდინში",
       "authorizationInstructions": "გთხოვთ, ავტორიზაციის პროცესი გახსნილ Twitch გვერდზე დაასრულოთ.",
@@ -1302,9 +1302,9 @@
       "qrError": "QR შეცდომა: {{error}}"
     },
     "km": {
-      "title": "ផ្នែកបន្ថែម Twitch Pub",
+      "title": "ផ្នែកបន្ថែម Twitch Host",
       "toolbarTitle": "បន្ទះ Twitch",
-      "description": "ផ្នែកបន្ថែមសម្រាប់ Seed Bible ដើម្បីរួមបញ្ចូលជាមួយ Twitch Pub។",
+      "description": "ផ្នែកបន្ថែមសម្រាប់ Seed Bible ដើម្បីរួមបញ្ចូលជាមួយ Twitch Host។",
       "authorization": "ការផ្ទៀងផ្ទាត់ជាមួយ Twitch",
       "waitingForAuthorization": "កំពុងរង់ចាំការអនុញ្ញាត Twitch",
       "authorizationInstructions": "សូមបំពេញដំណើរការអនុញ្ញាតនៅក្នុងទំព័រ Twitch ដែលបានបើក។",
@@ -1354,9 +1354,9 @@
       "qrError": "QR ದೋಷ: {{error}}"
     },
     "ky": {
-      "title": "Twitch Pub кеңейтүүсү",
+      "title": "Twitch Host кеңейтүүсү",
       "toolbarTitle": "Twitch Panel",
-      "description": "Twitch Pub менен интеграциялоо үчүн Seed Bible кеңейтүүсү.",
+      "description": "Twitch Host менен интеграциялоо үчүн Seed Bible кеңейтүүсү.",
       "authorization": "Twitch менен аутентификациялоо",
       "waitingForAuthorization": "Twitch уруксаты күтүлүүдө",
       "authorizationInstructions": "Ачылган Twitch барагында авторизация процессин аягына чыгарыңыз.",
@@ -1380,9 +1380,9 @@
       "qrError": "QR катасы: {{error}}"
     },
     "ln": {
-      "title": "Twitch Pub Bobakisi",
+      "title": "Twitch Host Bobakisi",
       "toolbarTitle": "Panneau ya Twitch",
-      "description": "Bobakisi mpo na Biblia ya Momboto mpo na kosangana na Twitch Pub.",
+      "description": "Bobakisi mpo na Biblia ya Momboto mpo na kosangana na Twitch Host.",
       "authorization": "Ko authentiquer na Twitch",
       "waitingForAuthorization": "Kozela ndingisa ya Twitch",
       "authorizationInstructions": "Svp silisa mosala ya ndingisa na lokasa ya Twitch oyo efungwami.",
@@ -1406,9 +1406,9 @@
       "qrError": "Libunga ya QR: {{error}}"
     },
     "lo": {
-      "title": "ສ່ວນຂະຫຍາຍ Twitch Pub",
+      "title": "ສ່ວນຂະຫຍາຍ Twitch Host",
       "toolbarTitle": "ແຜງ Twitch",
-      "description": "ສ່ວນຂະຫຍາຍສຳລັບ Seed Bible ເພື່ອເຊື່ອມໂຍງກັບ Twitch Pub.",
+      "description": "ສ່ວນຂະຫຍາຍສຳລັບ Seed Bible ເພື່ອເຊື່ອມໂຍງກັບ Twitch Host.",
       "authorization": "ການພິສູດຢືນຢັນຕົວຕົນກັບ Twitch",
       "waitingForAuthorization": "ກຳລັງລໍຖ້າການອະນຸຍາດ Twitch",
       "authorizationInstructions": "ກະລຸນາເຮັດສຳເລັດຂັ້ນຕອນການອະນຸຍາດໃນໜ້າ Twitch ທີ່ເປີດຢູ່.",
@@ -1434,7 +1434,7 @@
     "lt": {
       "title": "„Twitch“ pubo plėtinys",
       "toolbarTitle": "„Twitch“ skydelis",
-      "description": "„Seed Bible“ plėtinys, skirtas integracijai su „Twitch Pub“.",
+      "description": "„Seed Bible“ plėtinys, skirtas integracijai su „Twitch Host“.",
       "authorization": "Autentifikavimas naudojant „Twitch“",
       "waitingForAuthorization": "Laukiama „Twitch“ leidimo",
       "authorizationInstructions": "Atidarytame „Twitch“ puslapyje užbaikite autorizacijos procesą.",
@@ -1458,9 +1458,9 @@
       "qrError": "QR klaida: {{error}}"
     },
     "lv": {
-      "title": "Twitch Pub paplašinājums",
+      "title": "Twitch Host paplašinājums",
       "toolbarTitle": "Twitch panelis",
-      "description": "Seed Bible paplašinājums integrācijai ar Twitch Pub.",
+      "description": "Seed Bible paplašinājums integrācijai ar Twitch Host.",
       "authorization": "Autentifikācija ar Twitch",
       "waitingForAuthorization": "Gaida Twitch autorizāciju",
       "authorizationInstructions": "Lūdzu, pabeidziet autorizācijas procesu atvērtajā Twitch lapā.",
@@ -1484,9 +1484,9 @@
       "qrError": "QR kļūda: {{error}}"
     },
     "mk": {
-      "title": "Проширување на Twitch Pub",
+      "title": "Проширување на Twitch Host",
       "toolbarTitle": "Twitch панел",
-      "description": "Додаток за Seed Bible за интеграција со Twitch Pub.",
+      "description": "Додаток за Seed Bible за интеграција со Twitch Host.",
       "authorization": "Автентикација со Twitch",
       "waitingForAuthorization": "Чекам авторизација од Twitch",
       "authorizationInstructions": "Ве молиме завршете го процесот на авторизација на отворената страница на Twitch.",
@@ -1564,7 +1564,7 @@
     "ms": {
       "title": "Sambungan Pub Twitch",
       "toolbarTitle": "Panel Twitch",
-      "description": "Sambungan untuk Seed Bible untuk disepadukan dengan Twitch Pub.",
+      "description": "Sambungan untuk Seed Bible untuk disepadukan dengan Twitch Host.",
       "authorization": "Pengesahan dengan Twitch",
       "waitingForAuthorization": "Menunggu kebenaran Twitch",
       "authorizationInstructions": "Sila lengkapkan proses kebenaran di halaman Twitch yang dibuka.",
@@ -1588,9 +1588,9 @@
       "qrError": "Ralat QR: {{error}}"
     },
     "my": {
-      "title": "Twitch Pub တိုးချဲ့မှု",
+      "title": "Twitch Host တိုးချဲ့မှု",
       "toolbarTitle": "Twitch Panel",
-      "description": "Twitch Pub နှင့် ပေါင်းစပ်ရန် Seed Bible အတွက် extension တစ်ခု။",
+      "description": "Twitch Host နှင့် ပေါင်းစပ်ရန် Seed Bible အတွက် extension တစ်ခု။",
       "authorization": "Twitch ဖြင့် အတည်ပြုခြင်း",
       "waitingForAuthorization": "Twitch ခွင့်ပြုချက်ကို စောင့်ဆိုင်းနေသည်",
       "authorizationInstructions": "ဖွင့်ထားသော Twitch စာမျက်နှာတွင် ခွင့်ပြုချက်လုပ်ငန်းစဉ်ကို ပြီးမြောက်အောင်လုပ်ပါ။",
@@ -1614,9 +1614,9 @@
       "qrError": "QR အမှား- {{error}}"
     },
     "nb": {
-      "title": "Twitch Pub-utvidelse",
+      "title": "Twitch Host-utvidelse",
       "toolbarTitle": "Twitch-panelet",
-      "description": "En utvidelse for Seed Bible for integrering med Twitch Pub.",
+      "description": "En utvidelse for Seed Bible for integrering med Twitch Host.",
       "authorization": "Autentisering med Twitch",
       "waitingForAuthorization": "Venter på Twitch-autorisasjon",
       "authorizationInstructions": "Vennligst fullfør autorisasjonsprosessen på den åpnede Twitch-siden.",
@@ -1640,9 +1640,9 @@
       "qrError": "QR-feil: {{error}}"
     },
     "nl": {
-      "title": "Twitch Pub-extensie",
+      "title": "Twitch Host-extensie",
       "toolbarTitle": "Twitch-panel",
-      "description": "Een uitbreiding voor de Seed Bible om te integreren met Twitch Pub.",
+      "description": "Een uitbreiding voor de Seed Bible om te integreren met Twitch Host.",
       "authorization": "Authenticatie met Twitch",
       "waitingForAuthorization": "Wachten op toestemming van Twitch",
       "authorizationInstructions": "Voltooi de autorisatieprocedure op de geopende Twitch-pagina.",
@@ -1666,9 +1666,9 @@
       "qrError": "QR-fout: {{error}}"
     },
     "no": {
-      "title": "Twitch Pub-utvidelse",
+      "title": "Twitch Host-utvidelse",
       "toolbarTitle": "Twitch-panelet",
-      "description": "En utvidelse for Seed Bible for integrering med Twitch Pub.",
+      "description": "En utvidelse for Seed Bible for integrering med Twitch Host.",
       "authorization": "Autentisering med Twitch",
       "waitingForAuthorization": "Venter på Twitch-autorisasjon",
       "authorizationInstructions": "Vennligst fullfør autorisasjonsprosessen på den åpnede Twitch-siden.",
@@ -1718,9 +1718,9 @@
       "qrError": "QR ਗਲਤੀ: {{error}}"
     },
     "pl": {
-      "title": "Rozszerzenie Twitch Pub",
+      "title": "Rozszerzenie Twitch Host",
       "toolbarTitle": "Panel Twitcha",
-      "description": "Rozszerzenie Seed Bible umożliwiające integrację z Twitch Pub.",
+      "description": "Rozszerzenie Seed Bible umożliwiające integrację z Twitch Host.",
       "authorization": "Uwierzytelnianie za pomocą Twitcha",
       "waitingForAuthorization": "Oczekiwanie na autoryzację Twitcha",
       "authorizationInstructions": "Proszę ukończyć proces autoryzacji na otwartej stronie Twitch.",
@@ -1744,9 +1744,9 @@
       "qrError": "Błąd QR: {{error}}"
     },
     "ro": {
-      "title": "Extensie Twitch Pub",
+      "title": "Extensie Twitch Host",
       "toolbarTitle": "Panelul Twitch",
-      "description": "O extensie pentru Biblia Semințelor pentru a se integra cu Twitch Pub.",
+      "description": "O extensie pentru Biblia Semințelor pentru a se integra cu Twitch Host.",
       "authorization": "Autentificare cu Twitch",
       "waitingForAuthorization": "Aștept autorizarea Twitch",
       "authorizationInstructions": "Te rugăm să finalizezi procesul de autorizare pe pagina Twitch deschisă.",
@@ -1770,9 +1770,9 @@
       "qrError": "Eroare QR: {{error}}"
     },
     "sk": {
-      "title": "Rozšírenie Twitch Pub",
+      "title": "Rozšírenie Twitch Host",
       "toolbarTitle": "Panel Twitch",
-      "description": "Rozšírenie pre Seed Bible na integráciu s Twitch Pub.",
+      "description": "Rozšírenie pre Seed Bible na integráciu s Twitch Host.",
       "authorization": "Autentifikácia pomocou Twitchu",
       "waitingForAuthorization": "Čaká sa na autorizáciu na Twitchi",
       "authorizationInstructions": "Dokončite proces autorizácie na otvorenej stránke Twitch.",
@@ -1798,7 +1798,7 @@
     "sl": {
       "title": "Razširitev za pub Twitch",
       "toolbarTitle": "Twitch Panel",
-      "description": "Razširitev za Seed Bible za integracijo s Twitch Pubom.",
+      "description": "Razširitev za Seed Bible za integracijo s Twitch Hostom.",
       "authorization": "Preverjanje pristnosti s Twitchom",
       "waitingForAuthorization": "Čakanje na avtorizacijo Twitcha",
       "authorizationInstructions": "Prosimo, dokončajte postopek avtorizacije na odprti strani Twitch.",
@@ -1822,9 +1822,9 @@
       "qrError": "Napaka kode QR: {{error}}"
     },
     "sq": {
-      "title": "Zgjerimi i Twitch Pub",
+      "title": "Zgjerimi i Twitch Host",
       "toolbarTitle": "Paneli Twitch",
-      "description": "Një zgjerim për Seed Bible për t'u integruar me Twitch Pub.",
+      "description": "Një zgjerim për Seed Bible për t'u integruar me Twitch Host.",
       "authorization": "Autentifikimi me Twitch",
       "waitingForAuthorization": "Duke pritur autorizimin e Twitch",
       "authorizationInstructions": "Ju lutemi përfundoni procesin e autorizimit në faqen e hapur të Twitch.",
@@ -1848,9 +1848,9 @@
       "qrError": "Gabim QR: {{error}}"
     },
     "sv": {
-      "title": "Twitch Pub-tillägg",
+      "title": "Twitch Host-tillägg",
       "toolbarTitle": "Twitch-panelen",
-      "description": "En tillägg för Seed Bible för integration med Twitch Pub.",
+      "description": "En tillägg för Seed Bible för integration med Twitch Host.",
       "authorization": "Autentisering med Twitch",
       "waitingForAuthorization": "Väntar på Twitch-auktorisering",
       "authorizationInstructions": "Slutför auktoriseringsprocessen på den öppnade Twitch-sidan.",
@@ -1926,9 +1926,9 @@
       "qrError": "QR లోపం: {{error}}"
     },
     "th": {
-      "title": "ส่วนขยาย Twitch Pub",
+      "title": "ส่วนขยาย Twitch Host",
       "toolbarTitle": "Twitch Panel",
-      "description": "ส่วนเสริมสำหรับ Seed Bible เพื่อเชื่อมต่อกับ Twitch Pub",
+      "description": "ส่วนเสริมสำหรับ Seed Bible เพื่อเชื่อมต่อกับ Twitch Host",
       "authorization": "กำลังยืนยันตัวตนกับ Twitch",
       "waitingForAuthorization": "กำลังรอการอนุมัติจาก Twitch",
       "authorizationInstructions": "โปรดดำเนินการตามขั้นตอนการอนุญาตในหน้า Twitch ที่เปิดอยู่ให้เสร็จสมบูรณ์",
@@ -1952,9 +1952,9 @@
       "qrError": "ข้อผิดพลาด QR: {{error}}"
     },
     "tl": {
-      "title": "Ekstensyon ng Twitch Pub",
+      "title": "Ekstensyon ng Twitch Host",
       "toolbarTitle": "Panel ng Twitch",
-      "description": "Isang extension para sa Seed Bible para maisama sa Twitch Pub.",
+      "description": "Isang extension para sa Seed Bible para maisama sa Twitch Host.",
       "authorization": "Pagpapatotoo gamit ang Twitch",
       "waitingForAuthorization": "Naghihintay para sa pahintulot ng Twitch",
       "authorizationInstructions": "Pakikumpleto ang proseso ng awtorisasyon sa binuksang pahina ng Twitch.",
@@ -1978,9 +1978,9 @@
       "qrError": "Error sa QR: {{error}}"
     },
     "uz": {
-      "title": "Twitch Pub kengaytmasi",
+      "title": "Twitch Host kengaytmasi",
       "toolbarTitle": "Twitch Panel",
-      "description": "Seed Bible uchun Twitch Pub bilan integratsiyalashuv kengaytmasi.",
+      "description": "Seed Bible uchun Twitch Host bilan integratsiyalashuv kengaytmasi.",
       "authorization": "Twitch bilan autentifikatsiya qilish",
       "waitingForAuthorization": "Twitch avtorizatsiyasi kutilmoqda",
       "authorizationInstructions": "Iltimos, ochilgan Twitch sahifasida avtorizatsiya jarayonini yakunlang.",
@@ -2004,9 +2004,9 @@
       "qrError": "QR xatosi: {{error}}"
     },
     "zu": {
-      "title": "Isandiso se-Twitch Pub",
+      "title": "Isandiso se-Twitch Host",
       "toolbarTitle": "Iphaneli ye-Twitch",
-      "description": "Isandiso seSeed Bible ukuze sihlanganiswe neTwitch Pub.",
+      "description": "Isandiso seSeed Bible ukuze sihlanganiswe neTwitch Host.",
       "authorization": "Ukuqinisekisa nge-Twitch",
       "waitingForAuthorization": "Ilinde ukugunyazwa kwe-Twitch",
       "authorizationInstructions": "Sicela uqedele inqubo yokugunyazwa ekhasini le-Twitch elivuliwe.",
