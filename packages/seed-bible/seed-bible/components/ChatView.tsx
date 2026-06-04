@@ -268,13 +268,12 @@ function PresencePrompt({ others }: { others: ChatParticipant[] }) {
 
   const { t } = useI18n();
   const avatarsToShow = others.slice(0, 5);
+  const overflowCount = others.length - avatarsToShow.length;
+  const totalVisible = avatarsToShow.length + (overflowCount > 0 ? 1 : 0);
 
   return (
     <div className="sb-chat-view-presence">
-      <div
-        className="sb-chat-view-presence-avatars"
-        data-count={avatarsToShow.length}
-      >
+      <div className="sb-chat-view-presence-avatars" data-count={totalVisible}>
         {avatarsToShow.map((participant) => {
           const av = getParticipantAvatar(participant, t);
           return (
@@ -287,6 +286,12 @@ function PresencePrompt({ others }: { others: ChatParticipant[] }) {
             />
           );
         })}
+        {overflowCount > 0 && (
+          // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
+          <span className="sb-chat-view-presence-overflow">
+            +{overflowCount}
+          </span>
+        )}
       </div>
       <p className="sb-chat-view-presence-label">
         {getPresenceLabel(others, t)}
