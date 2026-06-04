@@ -1480,7 +1480,7 @@ describe("createChatsManager", () => {
     });
     const chatSession = chats.createSharedSession(session);
 
-    chatSession.addParticipant("user-a_provider-1");
+    chatSession.addParticipant("conn-user-a_provider-1");
     await Promise.resolve();
     await Promise.resolve();
 
@@ -1492,10 +1492,12 @@ describe("createChatsManager", () => {
     );
 
     expect(
-      chatSession.participants.value.find((p) => p.id === "user-a_provider-1")
+      chatSession.participants.value.find(
+        (p) => p.id === "conn-user-a_provider-1"
+      )
     ).toBeDefined();
 
-    chatSession.removeParticipant("user-a_provider-1");
+    chatSession.removeParticipant("conn-user-a_provider-1");
     await Promise.resolve();
     await Promise.resolve();
 
@@ -1507,7 +1509,9 @@ describe("createChatsManager", () => {
     );
 
     expect(
-      chatSession.participants.value.find((p) => p.id === "user-a_provider-1")
+      chatSession.participants.value.find(
+        (p) => p.id === "conn-user-a_provider-1"
+      )
     ).toBeUndefined();
   });
 
@@ -1547,21 +1551,23 @@ describe("createChatsManager", () => {
 
     expect(chatSession.availableParticipants.value).not.toContainEqual(
       expect.objectContaining({
-        id: "user-a_provider-1",
+        id: "conn-user-a_provider-1",
         providerId: "provider-1",
       })
     );
 
-    chatSession.addParticipant("user-a_provider-1");
+    chatSession.addParticipant("conn-user-a_provider-1");
     await Promise.resolve();
     await Promise.resolve();
 
     expect(onJoinChat).toHaveBeenCalledTimes(0);
     expect(
-      chatSession.participants.value.find((p) => p.id === "user-a_provider-1")
+      chatSession.participants.value.find(
+        (p) => p.id === "conn-user-a_provider-1"
+      )
     ).toBeUndefined();
 
-    chatSession.removeParticipant("user-a_provider-1");
+    chatSession.removeParticipant("conn-user-a_provider-1");
     await Promise.resolve();
     await Promise.resolve();
 
@@ -1629,7 +1635,7 @@ describe("createChatsManager", () => {
 
     expect(sharedChatProviders.get("user-a")).toEqual([]);
     expect(chat.availableParticipants.value).toContainEqual({
-      id: "user-a_provider-1",
+      id: "conn-user-a_provider-1",
       providerId: "provider-1",
       ownerParticipantId: "user-a",
       userId: "user-a",
@@ -1641,11 +1647,11 @@ describe("createChatsManager", () => {
       isActive: true,
     });
 
-    chat.addParticipant("user-a_provider-1");
+    chat.addParticipant("conn-user-a_provider-1");
     await Promise.resolve();
     expect(chat.participants.value).toContainEqual(
       expect.objectContaining({
-        id: "user-a_provider-1",
+        id: "conn-user-a_provider-1",
       })
     );
   });
@@ -1687,13 +1693,13 @@ describe("createChatsManager", () => {
 
     await Promise.resolve();
 
-    chat.addParticipant("user-a_provider-1");
+    chat.addParticipant("conn-user-a_provider-1");
 
     await Promise.resolve();
 
     expect(sharedChatProviders.get("user-a")).toEqual([
       {
-        id: "user-a_provider-1",
+        id: "conn-user-a_provider-1",
         providerId: "provider-1",
         name: "New Name",
         isAI: true,
@@ -1992,18 +1998,18 @@ describe("createChatsManager", () => {
       ],
     });
     const chat = chats.createSharedSession(session);
-    chat.addParticipant("user-a_provider-1");
+    chat.addParticipant("conn-user-a_provider-1");
     await Promise.resolve();
 
     const sendPromise = chat.sendMessage({
       type: "text",
-      text: "Hello @user-a_provider-1",
+      text: "Hello @conn-user-a_provider-1",
     });
     await Promise.resolve();
 
     expect(chat.typingParticipants.value).toContainEqual(
       expect.objectContaining({
-        id: "user-a_provider-1",
+        id: "conn-user-a_provider-1",
         isAI: true,
       })
     );
@@ -2017,7 +2023,7 @@ describe("createChatsManager", () => {
 
     expect(chat.typingParticipants.value).not.toContainEqual(
       expect.objectContaining({
-        id: "user-a_provider-1",
+        id: "conn-user-a_provider-1",
       })
     );
   });
@@ -2124,12 +2130,12 @@ describe("createChatsManager", () => {
       ],
     });
     const chat = chats.createSharedSession(session);
-    chat.addParticipant("user-a_provider-1");
+    chat.addParticipant("conn-user-a_provider-1");
     await Promise.resolve();
 
     const sendPromise = chat.sendMessage({
       type: "text",
-      text: "Hello @user-a_provider-1",
+      text: "Hello @conn-user-a_provider-1",
     });
 
     await Promise.resolve();
@@ -2141,7 +2147,7 @@ describe("createChatsManager", () => {
 
     expect(chat.messages.value).toHaveLength(2);
     expect(chat.messages.value[1]).toMatchObject({
-      authors: ["user-a_provider-1"],
+      authors: ["conn-user-a_provider-1"],
       type: "text",
       text: "Sha",
     });
@@ -2152,7 +2158,7 @@ describe("createChatsManager", () => {
 
     expect(chat.messages.value).toHaveLength(2);
     expect(chat.messages.value[1]).toMatchObject({
-      authors: ["user-a_provider-1"],
+      authors: ["conn-user-a_provider-1"],
       type: "text",
       text: "Shared",
     });
@@ -2200,7 +2206,7 @@ describe("createChatsManager", () => {
       ],
     });
     const chatSession = chats.createSharedSession(session);
-    chatSession.addParticipant("self-user_provider-1");
+    chatSession.addParticipant("conn-self-user_provider-1");
     await Promise.resolve();
 
     await chatSession.sendMessage({
@@ -2209,10 +2215,10 @@ describe("createChatsManager", () => {
     });
 
     expect(sharedChats.toArray()[0]).toMatchObject({
-      targets: ["u1", "self-user_provider-1"],
+      targets: ["u1", "conn-self-user_provider-1"],
     });
     expect(sharedChats.toArray()[1]).toMatchObject({
-      authors: ["self-user_provider-1"],
+      authors: ["conn-self-user_provider-1"],
       text: "I can help",
     });
     expect(providerResponse).toHaveBeenCalledTimes(1);
@@ -2578,17 +2584,20 @@ describe("createChatsManager", () => {
     const chat = chats.createSharedSession(session);
 
     expect(chat.availableParticipants.value).toContainEqual(
-      expect.objectContaining({ id: "user-a_provider-1" })
+      expect.objectContaining({ id: "conn-user-a_provider-1" })
     );
 
-    await chat.sendMessage({ type: "text", text: "Hey @user-a_provider-1" });
+    await chat.sendMessage({
+      type: "text",
+      text: "Hey @conn-user-a_provider-1",
+    });
     await Promise.resolve();
 
     expect(chat.participants.value).toContainEqual(
-      expect.objectContaining({ id: "user-a_provider-1" })
+      expect.objectContaining({ id: "conn-user-a_provider-1" })
     );
     expect(sharedChats.toArray()[0]).toMatchObject({
-      targets: ["user-a_provider-1"],
+      targets: ["conn-user-a_provider-1"],
     });
     expect(generateResponse).toHaveBeenCalledTimes(1);
   });
@@ -2629,10 +2638,10 @@ describe("createChatsManager", () => {
     await Promise.resolve();
 
     expect(chat.participants.value).toContainEqual(
-      expect.objectContaining({ id: "user-a_provider-1" })
+      expect.objectContaining({ id: "conn-user-a_provider-1" })
     );
     expect(sharedChats.toArray()[0]).toMatchObject({
-      targets: ["user-a_provider-1"],
+      targets: ["conn-user-a_provider-1"],
     });
     expect(generateResponse).toHaveBeenCalledTimes(1);
   });
@@ -2669,7 +2678,10 @@ describe("createChatsManager", () => {
     });
     const chat = chats.createSharedSession(session);
 
-    await chat.sendMessage({ type: "text", text: "Hey @user-a_provider-1" });
+    await chat.sendMessage({
+      type: "text",
+      text: "Hey @conn-user-a_provider-1",
+    });
 
     expect(onJoinChat).toHaveBeenCalledTimes(1);
     expect(onJoinChat).toHaveBeenCalledWith(
@@ -2709,16 +2721,19 @@ describe("createChatsManager", () => {
     });
     const chat = chats.createSharedSession(session);
 
-    chat.addParticipant("user-a_provider-1");
+    chat.addParticipant("conn-user-a_provider-1");
     await Promise.resolve();
     expect(onJoinChat).toHaveBeenCalledTimes(1);
 
-    await chat.sendMessage({ type: "text", text: "Hey @user-a_provider-1" });
+    await chat.sendMessage({
+      type: "text",
+      text: "Hey @conn-user-a_provider-1",
+    });
     await Promise.resolve();
 
     expect(onJoinChat).toHaveBeenCalledTimes(1);
     expect(
-      chat.participants.value.filter((p) => p.id === "user-a_provider-1")
+      chat.participants.value.filter((p) => p.id === "conn-user-a_provider-1")
     ).toHaveLength(1);
   });
 
@@ -2876,7 +2891,7 @@ describe("createChatsManager", () => {
       ],
     });
     const chat = chats.createSharedSession(session);
-    chat.addParticipant("user-a_provider-1");
+    chat.addParticipant("conn-user-a_provider-1");
     await Promise.resolve();
 
     await chat.sendMessage({ type: "text", text: "@everyone Hello!" });
@@ -2923,8 +2938,8 @@ describe("createChatsManager", () => {
       ],
     });
     const chat = chats.createSharedSession(session);
-    chat.addParticipant("user-a_provider-1");
-    chat.addParticipant("user-a_provider-2");
+    chat.addParticipant("conn-user-a_provider-1");
+    chat.addParticipant("conn-user-a_provider-2");
     await Promise.resolve();
 
     await chat.sendMessage({ type: "text", text: "@everyone Hello!" });

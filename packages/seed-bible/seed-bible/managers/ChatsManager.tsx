@@ -366,10 +366,10 @@ function createChatMessage(
 }
 
 function createProviderParticipantId(
-  ownerParticipantId: string,
+  ownerConnectionId: string,
   providerId: string
 ): string {
-  return `${ownerParticipantId}_${providerId}`;
+  return `${ownerConnectionId}_${providerId}`;
 }
 
 function toAsyncTextIterator(
@@ -928,7 +928,7 @@ function createSharedChatSession(
     return chatProviders.value
       .filter((p) => p.supportsSharedChats)
       .map((provider) => ({
-        id: createProviderParticipantId(p.id, provider.id),
+        id: createProviderParticipantId(p.connectionId ?? p.id, provider.id),
         providerId: provider.id,
         ownerParticipantId: p.id,
         userId: p.userId ?? null,
