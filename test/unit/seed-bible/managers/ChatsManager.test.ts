@@ -868,6 +868,40 @@ describe("createChatsManager", () => {
     });
   });
 
+  it("createSharedSession() setTypingStatus(true) writes true into chatTypingMap for local participant", () => {
+    const { loginManager } = createLoginManagerMock();
+    const { session, sharedTyping } = createSharedSessionMock({
+      currentUserId: "user-a",
+    });
+
+    const chats = createChatsManager(loginManager);
+    chats.createSharedSession(session);
+
+    expect(sharedTyping.get("user-a")).toBe(false);
+
+    const chatSession = chats.chats.value[0]!;
+    chatSession.setTypingStatus(true);
+
+    expect(sharedTyping.get("user-a")).toBe(true);
+  });
+
+  it("createSharedSession() setTypingStatus(false) writes false into chatTypingMap for local participant", () => {
+    const { loginManager } = createLoginManagerMock();
+    const { session, sharedTyping } = createSharedSessionMock({
+      currentUserId: "user-a",
+    });
+
+    const chats = createChatsManager(loginManager);
+    chats.createSharedSession(session);
+
+    const chatSession = chats.chats.value[0]!;
+    chatSession.setTypingStatus(true);
+    expect(sharedTyping.get("user-a")).toBe(true);
+
+    chatSession.setTypingStatus(false);
+    expect(sharedTyping.get("user-a")).toBe(false);
+  });
+
   it("createSharedSession() tracks typing participants from shared typing map", async () => {
     const { loginManager } = createLoginManagerMock();
     const { session, sharedTyping } = createSharedSessionMock({

@@ -960,6 +960,14 @@ function createSharedChatSession(
     );
   });
 
+  effect(() => {
+    if (!localParticipantId.value) {
+      return;
+    }
+    const isTyping = localIsTyping.value;
+    chatTypingMap.set(localParticipantId.value, isTyping);
+  });
+
   let previousLocalParticipantId: string | null = null;
   effect(() => {
     const currentLocalParticipantId = localParticipantId.value;
