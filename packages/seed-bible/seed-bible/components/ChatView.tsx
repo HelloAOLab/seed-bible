@@ -273,7 +273,10 @@ function PresencePrompt({ others }: { others: ChatParticipant[] }) {
 
   return (
     <div className="sb-chat-view-presence">
-      <div className="sb-chat-view-presence-avatars" data-count={totalVisible}>
+      <div
+        className={`sb-chat-view-presence-avatars${overflowCount > 0 ? " overflow" : ""}`}
+        data-count={totalVisible}
+      >
         {avatarsToShow.map((participant) => {
           const av = getParticipantAvatar(participant, t);
           return (

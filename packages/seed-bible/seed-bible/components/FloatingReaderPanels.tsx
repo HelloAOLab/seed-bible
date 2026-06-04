@@ -697,7 +697,8 @@ function ChatListAvatarCluster({ chat }: { chat: ChatSession }) {
   const nonSelf = participants.filter((p) => !p.isSelf);
   const pool = nonSelf.length > 0 ? nonSelf : participants;
   const toShow = pool.slice(0, 3);
-  const count = Math.max(toShow.length, 1);
+  const overflowCount = pool.length - toShow.length;
+  const count = overflowCount > 0 ? 4 : Math.max(toShow.length, 1);
 
   return (
     <div
@@ -716,6 +717,10 @@ function ChatListAvatarCluster({ chat }: { chat: ChatSession }) {
           />
         );
       })}
+      {overflowCount > 0 && (
+        // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
+        <span className="sb-chat-list-avatar-overflow">+{overflowCount}</span>
+      )}
     </div>
   );
 }

@@ -7587,6 +7587,44 @@ h6 {
   right: 0;
 }
 
+/* Four items: 2×2 grid with overflow badge in the 4th cell */
+.sb-chat-list-avatar-cluster-4 {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  grid-template-columns: 17px 17px;
+  grid-template-rows: 17px 17px;
+  gap: 2px;
+}
+
+.sb-chat-list-avatar-cluster-4 .sb-tab-user-icon {
+  width: 17px;
+  height: 17px;
+}
+
+.sb-chat-list-avatar-cluster-4
+  .sb-tab-user-icon-animal
+  .material-symbols-outlined {
+  font-size: 11px;
+}
+
+.sb-chat-list-avatar-overflow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 80%);
+  color: color-mix(in srgb, var(--sb-font-color), transparent 10%);
+  box-shadow: 0 0 0 2px var(--sb-reader-toolbar-background);
+}
+
+.sb-chat-list-avatar-cluster-4 .sb-chat-list-avatar-overflow {
+  width: 17px;
+  height: 17px;
+}
+
 .sb-floating-chat-list-item-header {
   display: flex;
   align-items: center;
@@ -7725,7 +7763,8 @@ h6 {
 
 .sb-chat-view-presence-avatars[data-count="5"]
   .sb-tab-user-icon
-  + .sb-tab-user-icon {
+  + .sb-tab-user-icon,
+.sb-chat-view-presence-avatars.overflow .sb-tab-user-icon + .sb-tab-user-icon {
   margin-left: -14px;
 }
 
