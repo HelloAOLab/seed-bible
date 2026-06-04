@@ -1,5 +1,6 @@
 import { useComputed } from "@preact/signals";
 import { useTodayContext } from "../contexts/today/TodayContext";
+import { useSocialSectionContext } from "../contexts/socialSection/SocialSectionContext";
 import type {
   BookProps,
   UserIconData,
@@ -27,12 +28,8 @@ export const useBook: UseBook = ({
   chaptersReading,
   usersId,
 }) => {
-  const {
-    bookNames,
-    subscribedUsersProfileProvider,
-    MaterialIcon,
-    translationBooksMap,
-  } = useTodayContext();
+  const { bookNames, MaterialIcon, translationBooksMap } = useTodayContext();
+  const { userProfileMap } = useSocialSectionContext();
 
   const [isExpanded, setIsExpanded] = useState(false);
   const handleBookClick = useCallback(() => {
@@ -47,7 +44,7 @@ export const useBook: UseBook = ({
   }>(() => {
     const iconsDataMap = new Map(
       usersId.slice(0, MAX_ICONS).map((id) => {
-        const profile = subscribedUsersProfileProvider.getUserProfile(id);
+        const profile = userProfileMap.get(id);
         if (!profile) {
           throw new Error(`useBook: profile not found for id "${id}"`);
         }
@@ -83,13 +80,12 @@ export const useBook: UseBook = ({
     const chaptersData: ChapterData[] = blankChapters.map((_, index) => {
       const chapter = index + 1;
       const usersData =
-        chaptersReading[chapter]?.map((id) => {
-          const iconData = iconsDataMap.get(id);
-          if (!iconData) {
-            throw new Error(`useBook: iconData not found.`);
-          }
-          return iconData;
-        }) ?? [];
+        (chaptersReading[chapter]
+          ?.map((id) => {
+            const iconData = iconsDataMap.get(id);
+            return iconData;
+          })
+          .filter(Boolean) as ChapterData["usersData"] | undefined) ?? [];
       return {
         key: String(chapter),
         number: chapter,

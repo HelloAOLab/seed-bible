@@ -45,8 +45,41 @@ import type { SectionInfoMapper } from "../../infrastructure/mappers/SectionInfo
 import type { SessionProvider } from "../adapters/session/SessionProvider";
 import type { Signal } from "@preact/signals";
 import type { ConnectedSessionUser } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
+import type {
+  ReadingHistoryTimelineComponent,
+  ReadingHistoryContentData,
+  ReadingHistoryItemData,
+  ReadingHistoryLabelData,
+  ReadingHistoryItemProps,
+  ReadingHistoryLabelProps,
+  ReadingHistoryTimelineProps,
+  ReadingHistoryTimelineFooterData,
+  ReadingHistoryLegendSquareData,
+  ReadingHistoryYearSelectorOptionData,
+  ReadingHistoryTooltip,
+  TooltipAnchor,
+  Range as ReadingHistoryRange,
+} from "bibleVizUtils.infrastructure.presentation.components.ui.ReadingHistoryTimeline";
+
+export type {
+  ReadingHistoryTimelineComponent,
+  ReadingHistoryContentData,
+  ReadingHistoryItemData,
+  ReadingHistoryLabelData,
+  ReadingHistoryItemProps,
+  ReadingHistoryLabelProps,
+  ReadingHistoryTimelineProps,
+  ReadingHistoryTimelineFooterData,
+  ReadingHistoryLegendSquareData,
+  ReadingHistoryYearSelectorOptionData,
+  ReadingHistoryTooltip,
+  TooltipAnchor,
+  ReadingHistoryRange,
+};
 
 export interface BibleVizAPI {
+  ReadingHistoryTimeline: ReadingHistoryTimelineComponent;
+  readingHistoryTimelineStyles: string;
   bibleVizDataRepository: BibleVizDataRepository;
   scriptureService: ScriptureService;
   readingHistoryService: ReadingHistoryService;

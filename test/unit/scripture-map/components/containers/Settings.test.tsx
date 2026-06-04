@@ -18,6 +18,12 @@ jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
     MaterialIcon: ({ children }: { children: string }) => (
       <span>{children}</span>
     ),
+    ReadingHistoryTimeline: ({ footer }: { footer?: unknown }) => (
+      <div
+        data-testid="reading-history-timeline"
+        data-has-footer={footer ? "true" : "false"}
+      />
+    ),
   })),
 }));
 
@@ -42,8 +48,15 @@ jest.mock(
   })
 );
 
-jest.mock("scriptureMap.components.containers.ReadingHistoryTimeline", () => ({
-  ReadingHistoryTimeline: () => <div data-testid="reading-history-timeline" />,
+jest.mock("scriptureMap.hooks.useReadingHistoryTimeline", () => ({
+  useReadingHistoryTimeline: jest.fn(() => ({
+    itemsData: [],
+    timelineRef: { current: null },
+  })),
+}));
+
+jest.mock("scriptureMap.components.containers.Tooltip", () => ({
+  Tooltip: () => null,
 }));
 
 function makeStaticOption(
@@ -341,57 +354,25 @@ describe("Settings", () => {
     });
   });
 
-  describe("settings footer", () => {
-    it("renders .settings-footer when shouldShowReadingHistory is true and not collapsed", () => {
+  describe("reading-history footer", () => {
+    // The footer (legend + year selector) now lives inside the shared
+    // ReadingHistoryTimeline. Settings only decides whether to pass it.
+    it("passes a footer to the timeline when shouldShowReadingHistory and not collapsed", () => {
       setup({ shouldShowReadingHistory: true, collapsed: false });
-      expect(container.querySelector(".settings-footer")).not.toBeNull();
-    });
-
-    it("does not render .settings-footer when shouldShowReadingHistory is false", () => {
-      setup({ shouldShowReadingHistory: false, collapsed: false });
-      expect(container.querySelector(".settings-footer")).toBeNull();
-    });
-
-    it("does not render .settings-footer when collapsed is true", () => {
-      setup({ shouldShowReadingHistory: true, collapsed: true });
-      expect(container.querySelector(".settings-footer")).toBeNull();
-    });
-
-    it("renders legend lessText and moreText in the footer", () => {
-      setup({
-        shouldShowReadingHistory: true,
-        collapsed: false,
-        lessText: "Poco",
-        moreText: "Mucho",
-      });
-      const footer = container.querySelector(".settings-footer")!;
-      expect(footer.querySelector(".legend")!.textContent).toContain("Poco");
-      expect(footer.querySelector(".legend")!.textContent).toContain("Mucho");
-    });
-
-    it("renders one LegendSquare per legendSquaresData entry", () => {
-      setup({
-        shouldShowReadingHistory: true,
-        collapsed: false,
-        legendSquaresData: [
-          { key: 0, style: { backgroundColor: "#aaa" } },
-          { key: 1, style: { backgroundColor: "#bbb" } },
-          { key: 2, style: { backgroundColor: "#ccc" } },
-        ],
-      });
-      const legend = container.querySelector(".legend")!;
-      expect(legend.querySelectorAll("span[style]")).toHaveLength(3);
-    });
-
-    it("renders the year selector label text in the footer", () => {
-      setup({
-        shouldShowReadingHistory: true,
-        collapsed: false,
-        yearSelectorLabelTextContent: "Year: 2023",
-      });
       expect(
-        container.querySelector(".year-selector-label")!.textContent
-      ).toContain("Year: 2023");
+        container
+          .querySelector("[data-testid='reading-history-timeline']")
+          ?.getAttribute("data-has-footer")
+      ).toBe("true");
+    });
+
+    it("does not pass a footer when collapsed is true", () => {
+      setup({ shouldShowReadingHistory: true, collapsed: true });
+      expect(
+        container
+          .querySelector("[data-testid='reading-history-timeline']")
+          ?.getAttribute("data-has-footer")
+      ).toBe("false");
     });
   });
 });

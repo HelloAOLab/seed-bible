@@ -77,6 +77,7 @@ export const bootstrapExtension = () => {
         readingHistoryConfigProvider,
         sessionProvider,
         bookNames,
+        ReadingHistoryTimeline,
       } = dependenciesMap[
         bibleVizUtilsId
       ] as DependenciesMap[typeof bibleVizUtilsId];
@@ -197,6 +198,7 @@ export const bootstrapExtension = () => {
                     sessionProvider,
                     bookNames,
                     MaterialIcon,
+                    ReadingHistoryTimeline,
                   }}
                   customCSS={customCSS}
                 />

@@ -4,7 +4,7 @@ import { useTimeContext } from "scriptureMap.contexts.Time.TimeContext";
 import { useScriptureMapContext } from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
 import { useReadingHistoryContext } from "scriptureMap.contexts.ReadingHistory.ReadingHistoryContext";
 import type { MutableRef } from "../../../../typings/AuxLibraryDefinitions";
-import type { ReadingHistoryContentData } from "scriptureMap.components.containers.ReadingHistoryTimeline";
+import type { ReadingHistoryContentData } from "bibleVizUtils.infrastructure.presentation.components.ui.ReadingHistoryTimeline";
 import type { Range } from "scriptureMap.models.commonTypes";
 
 const { useCallback, useMemo, useEffect, useRef } = os.appHooks;
@@ -13,7 +13,7 @@ const step = 0.25;
 type ItemsColorMap = Map<string, React.CSSProperties["color"]>;
 
 interface UseReadingHistoryTimelineType {
-  itemsData: ReadingHistoryContentData[];
+  itemsData: ReadingHistoryContentData<TooltipContentData>[];
   timelineRef: MutableRef<HTMLDivElement | null>;
 }
 

@@ -38,7 +38,12 @@ export const bootstrapExtension = () => {
     id: extensionId,
     init: function* (context: SeedBibleState, dependenciesMap) {
       addTranslations(extensionId, translations);
-      const { bookNames, sessionProvider } = dependenciesMap[
+      const {
+        bookNames,
+        sessionProvider,
+        ReadingHistoryTimeline,
+        getDayRangeSeconds,
+      } = dependenciesMap[
         bibleVizUtilsId
       ] as DependenciesMap[typeof bibleVizUtilsId];
 
@@ -99,12 +104,6 @@ export const bootstrapExtension = () => {
       });
 
       const cleanupCommunityReading = effect(() => {
-        // Reactive dependency on connectedUsers across all shared sessions
-        context.tabs.tabs.value.forEach((tab) => {
-          // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-          tab.sharedSession?.connectedUsers.value;
-        });
-
         const now = Math.floor(Date.now() / 1000);
         const twoDaysAgo = now - 2 * 24 * 60 * 60;
         const aWeekAgo = now - 7 * 24 * 60 * 60;
@@ -215,6 +214,8 @@ export const bootstrapExtension = () => {
                   translationBooksMap,
                   subscribedUsersProfileProvider: fakeSubscribedUsersProvider,
                   subscribedUsersIdsProvider: fakeSubscribedUsersProvider,
+                  ReadingHistoryTimeline,
+                  getDayRangeSeconds,
                 }}
                 customCSS={customCSS}
               />

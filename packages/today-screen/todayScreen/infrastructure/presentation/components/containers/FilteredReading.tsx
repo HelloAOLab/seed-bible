@@ -8,15 +8,14 @@ export interface BookData extends BookProps {
 
 export const FilteredReading = ({
   timespanId,
-  userFilters,
 }: {
-  timespanId: CommunityReadingSpanId;
-  userFilters: { id: string; name: string; selected: boolean; color: string }[];
+  timespanId: CommunityReadingSpanId | "all";
 }) => {
-  const { booksData } = useFilteredReading({
-    timespanId,
-    userFilters,
-  });
+  const { booksData } = useFilteredReading({ timespanId });
+
+  if (booksData.length === 0) {
+    return <></>;
+  }
 
   return (
     <div className="filtered-reading-container">

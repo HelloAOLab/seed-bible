@@ -1,14 +1,16 @@
 import { ProjectFiltersSelector } from "scriptureMap.components.containers.ProjectFiltersSelector";
 import { ProjectStateSetter } from "scriptureMap.components.containers.ProjectStateSetter";
 import { ReadingHistoryUserFiltersSelector } from "scriptureMap.components.containers.ReadingHistoryUserFiltersSelector";
-import { ReadingHistoryTimeline } from "scriptureMap.components.containers.ReadingHistoryTimeline";
+import { Tooltip } from "scriptureMap.components.containers.Tooltip";
+import { useReadingHistoryTimeline } from "scriptureMap.hooks.useReadingHistoryTimeline";
 import { useSettings } from "scriptureMap.hooks.useSettings";
 import { useClickOutside } from "scriptureMap.hooks.useClickOutside";
 import type { StateUpdater } from "../../../../../typings/AuxLibraryDefinitions";
 import { ScriptureMapModes } from "scriptureMap.models.scriptureMap";
 import { useScriptureMapContext } from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
+import type { ReadingHistoryTimelineFooterData } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/seedBible";
 
-const { useState, useRef } = os.appHooks;
+const { useRef } = os.appHooks;
 
 export type BaseSettingsOptionProps = {
   callback: () => void;
@@ -81,70 +83,6 @@ export interface SettingsYearselectorOptionProps {
 
 const SETTINGS_ICON =
   "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/5a87cdff4617c9047e44ec47ddd8a101aa317e2223d83dd40f615e3f9740f03a.svg";
-
-const LegendSquare = ({ style }: SettingsLegendSquareProps) => {
-  return <span style={style}></span>;
-};
-
-const Legend = ({
-  legendSquaresData,
-  lessText,
-  moreText,
-}: SettingsLegendProps) => {
-  return (
-    <div className={"legend"}>
-      <span>{lessText}</span>
-      {legendSquaresData.map((data) => (
-        <LegendSquare {...data} />
-      ))}
-      <span>{moreText}</span>
-    </div>
-  );
-};
-
-const YearSelectorOption = ({
-  className,
-  onClick,
-  content,
-}: SettingsYearselectorOptionProps) => {
-  return (
-    <span className={className} onClick={onClick}>
-      {content}
-    </span>
-  );
-};
-
-const YearSelector = ({
-  yearSelectorLabelTextContent,
-  yearSelectorOptionsData,
-}: SettingsYearselectorProps) => {
-  const optionsRef = useRef<HTMLDivElement | null>(null);
-  const labelRef = useRef<HTMLDivElement | null>(null);
-
-  const [showOptions, setShowOptions] = useState<boolean>(false);
-
-  useClickOutside([optionsRef, labelRef], () => setShowOptions(false));
-
-  return (
-    <div className={"year-selector"}>
-      <div
-        ref={labelRef}
-        className={"year-selector-label"}
-        onClick={() => setShowOptions((prev) => !prev)}
-      >
-        <span>{yearSelectorLabelTextContent}</span>
-        <span className="material-symbols-outlined">keyboard_arrow_down</span>
-      </div>
-      {showOptions && (
-        <div ref={optionsRef} className={"year-selector-options"}>
-          {yearSelectorOptionsData.map((data) => (
-            <YearSelectorOption {...data} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
 
 const Option = (props: SettingsOptionProps) => {
   const { MaterialIcon } = useScriptureMapContext();
@@ -277,6 +215,24 @@ const SettingsOptions = ({
 //   </defs>
 // </svg>
 
+const ReadingHistoryTimelineSection = ({
+  footer,
+}: {
+  footer?: ReadingHistoryTimelineFooterData;
+}) => {
+  const { ReadingHistoryTimeline } = useScriptureMapContext();
+  const { itemsData, timelineRef } = useReadingHistoryTimeline();
+
+  return (
+    <ReadingHistoryTimeline
+      itemsData={itemsData}
+      timelineRef={timelineRef}
+      Tooltip={Tooltip}
+      footer={footer}
+    />
+  );
+};
+
 export const Settings = () => {
   const {
     settingsClass,
@@ -335,24 +291,19 @@ export const Settings = () => {
       {shouldShowReadingHistory && (
         <>
           <ReadingHistoryUserFiltersSelector />
-          <ReadingHistoryTimeline />
-        </>
-      )}
-
-      {shouldShowReadingHistory && !collapsed && (
-        <>
-          <div className={"settings-footer"}>
-            <Legend
-              legendSquaresData={legendSquaresData}
-              lessText={lessText}
-              moreText={moreText}
-            />
-            <YearSelector
-              yearSelectorLabelTextContent={yearSelectorLabelTextContent}
-              yearSelectorOptionsData={yearSelectorOptionsData}
-            />
-          </div>
-          <span className={"horizontal-divider"}></span>
+          <ReadingHistoryTimelineSection
+            footer={
+              collapsed
+                ? undefined
+                : {
+                    legendSquaresData,
+                    lessText,
+                    moreText,
+                    yearSelectorLabelTextContent,
+                    yearSelectorOptionsData,
+                  }
+            }
+          />
         </>
       )}
     </div>

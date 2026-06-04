@@ -29,8 +29,8 @@
   width: 100%;
   gap: 4px;
   display: grid;
-  grid-template-columns: 16px 1fr 40px 40px 16px;
-  grid-template-rows: 40px 20px auto auto 16px 32px;
+  grid-template-columns: 16px 1fr 40px 16px;
+  grid-template-rows: 40px 20px auto auto;
 }
 
 .scripture-map-settings.collapsed {
@@ -79,7 +79,7 @@
 }
 
 .settings-button {
-  grid-column: 4 / 5;
+  grid-column: 3 / 4;
   font-size: 28px !important;
   /* border: 1px solid var(--sb-divider-color); */
   border-radius: 4px;
@@ -175,97 +175,9 @@
   border-top: 1px solid var(--sb-divider-color);
 }
 
-.scripture-map-settings > .settings-footer {
-  grid-column: 2 / 5;
-  grid-row: 5 / 6;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.settings-footer > .legend {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 4px;
-  color: var(--sb-reader-font-color);
-}
-
-.settings-footer > .legend > span:nth-of-type(2),
-.settings-footer > .legend > span:nth-of-type(3),
-.settings-footer > .legend > span:nth-of-type(4),
-.settings-footer > .legend > span:nth-of-type(5),
-.settings-footer > .legend > span:nth-of-type(6) {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-}
-
-.settings-footer > .year-selector {
-  font-size: 12px;
-  position: relative;
-}
-
-.settings-footer > .year-selector > .year-selector-label {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-}
-
-.settings-footer > .year-selector > .year-selector-label > span {
-  color: var(--sb-reader-font-color);
-}
-
-.settings-footer > .year-selector > .year-selector-label > span:nth-of-type(2) {
-  font-size: 16px;
-}
-
-.settings-footer > .year-selector > .year-selector-options {
-  position: absolute;
-  left: 0;
-  top: calc(100% + 4px);
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  justify-content: flex-start;
-  align-items: center;
-  background-color: var(--sb-background);
-  color: var(--sb-reader-font-color);
-  border-radius: 4px;
-  border: solid 1px var(--sb-secondary-color);
-  padding: 4px;
-  gap: 4px;
-  box-shadow: 0 0 4px 0px var(--sb-divider-color);
-  z-index: 1;
-}
-
-.settings-footer
-  > .year-selector
-  > .year-selector-options
-  > .year-selector-option {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border-radius: 2px;
-  cursor: pointer;
-}
-
-.settings-footer
-  > .year-selector
-  > .year-selector-options
-  > .year-selector-option:hover {
-  background-color: var(--sb-secondary-color);
-}
-
-.settings-footer
-  > .year-selector
-  > .year-selector-options
-  > .year-selector-option.selected {
-  background-color: var(--sb-primary-color);
-  color: var(--sb-background);
-}
+/* The reading-history footer (legend + year selector) moved into the shared
+   ReadingHistoryTimeline component (Bible Visualization Utils). Its styles now
+   live in readingHistoryTimelineStyles.css. */
 
 .project-state-setter {
   width: 100%;
@@ -393,67 +305,16 @@
   display: none;
 }
 
+/* Scripture-Map-specific placement for the shared ReadingHistoryTimeline.
+   The timeline's intrinsic appearance now lives in Bible Visualization Utils
+   (readingHistoryTimelineStyles.css), injected by the shared component. */
 .reading-history-timeline-container {
-  width: 100%;
-  padding: 8px;
   grid-column: 2 / 5;
   grid-row: 4 / 5;
 }
 
 .scripture-map-settings.collapsed .reading-history-timeline-container {
   display: none;
-}
-
-.reading-history-timeline {
-  width: 100%;
-  display: grid;
-  gap: 2px;
-  align-items: start;
-  overflow-x: scroll;
-  scroll-behavior: smooth;
-  justify-content: start;
-  /* scrollbar-width: thin !important; */
-}
-
-.reading-history-timeline-item {
-  width: var(--timelineItemSize);
-  height: var(--timelineItemSize);
-  background: var(--sb-divider-color);
-  border-radius: 2px;
-  border-style: solid;
-  border-width: 0px;
-  border-color: transparent;
-  cursor: pointer;
-}
-
-.reading-history-timeline-item.upcoming,
-.reading-history-timeline-item.selected {
-  border-width: 2px;
-}
-
-.reading-history-timeline-item.upcoming {
-  background: var(--background);
-  border-color: var(--sb-divider-color);
-  border-style: dashed;
-}
-
-.reading-history-timeline-item.selected {
-  border-color: var(--sb-primary-color);
-}
-
-.reading-history-timeline-label {
-  font-family: system-ui;
-  font-size: 12px;
-  color: var(--text1);
-}
-
-.reading-history-timeline-label-month {
-  margin-bottom: 4px;
-}
-
-.reading-history-timeline-label-day {
-  margin-right: 4px;
-  height: var(--timelineItemSize);
 }
 
 .project-state-button {

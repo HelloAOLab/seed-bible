@@ -18,7 +18,16 @@ type UseSocialSection = () => {
   handleUserFilterClick: (e: MouseEvent) => void;
   timespanFilterOptionsData: TimespanFilterOptionData[];
   selectedTimespanOptionId: CommunityReadingSpanId | "all";
-  userFilters: { id: string; name: string; selected: boolean; color: string }[];
+  userProfileMap: Map<
+    string,
+    {
+      name: string;
+      pictureUrl?: string | null | undefined;
+      color: string;
+      icon: string;
+    }
+  >;
+  userFilters: Map<string, boolean>;
   handleFilterOptionClick: (event: MouseEvent, id: string) => void;
   userFilterText: string;
   optionsRef: MutableRef<HTMLDivElement | null>;
@@ -91,37 +100,39 @@ export const useSocialSection: UseSocialSection = () => {
     }
   );
 
-  const [userFilters, setUserFilters] = useState(() =>
-    subscribedUsersIdsProvider.getUsersIds().map((id) => {
-      const profile = subscribedUsersProfileProvider.getUserProfile(id)!;
-      return {
-        id,
-        name: profile.name,
-        color: profile.color,
-        selected: true,
-      };
-    })
+  const [userProfileMap] = useState(
+    () =>
+      new Map(
+        subscribedUsersIdsProvider.getUsersIds().map((id) => {
+          const profile = subscribedUsersProfileProvider.getUserProfile(id)!;
+          return [id, profile];
+        })
+      )
   );
+
+  const [userFilters, setUserFilters] = useState(() => {
+    return new Map(
+      [...userProfileMap.entries()].map(([id]) => {
+        return [id, true];
+      })
+    );
+  });
 
   const handleFilterOptionClick = useCallback(
     (e: MouseEvent, id: string) => {
       e.stopPropagation();
 
       setUserFilters((prev) => {
-        return prev.map((filter) => {
-          return {
-            ...filter,
-            selected: filter.id === id ? !filter.selected : filter.selected,
-          };
-        });
+        prev.set(id, !prev.get(id));
+        return new Map(prev);
       });
     },
     [setUserFilters]
   );
 
   const userFilterText = useMemo(() => {
-    const count = userFilters.filter((filter) => filter.selected).length;
-    if (count === userFilters.length) {
+    const count = [...userFilters.values()].filter((value) => value).length;
+    if (count === userFilters.size) {
       return translate("Everyone");
     }
 
@@ -142,6 +153,7 @@ export const useSocialSection: UseSocialSection = () => {
     handleTimespanOptionClick,
     selectedTimespanOptionId: selectedTimespanOptionId.value,
     userFilters,
+    userProfileMap,
     handleFilterOptionClick,
     userFilterText,
     optionsRef,

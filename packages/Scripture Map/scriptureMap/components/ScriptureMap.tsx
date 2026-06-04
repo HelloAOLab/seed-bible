@@ -42,6 +42,7 @@ import type { ReadingHistoryConfigProvider } from "bibleVizUtils.infrastructure.
 import type { SectionInfoMapper } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/mappers/SectionInfoMapper";
 import type { SessionProvider } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/session/SessionProvider";
 import type { Signal } from "@preact/signals";
+import type { ReadingHistoryTimelineComponent } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/seedBible";
 
 const { memo } = os.appCompat;
 
@@ -131,6 +132,7 @@ export interface ScriptureMapConfig {
     children: string;
     className?: string;
   }) => preact.JSX.Element;
+  ReadingHistoryTimeline: ReadingHistoryTimelineComponent;
 }
 
 type ScriptureMapProps = {

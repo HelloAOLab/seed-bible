@@ -93,6 +93,8 @@ import { entrypoints } from "bibleVizUtils.infrastructure.entrypoints.casualos.b
 import { connectedUserColors } from "seed-bible.managers.SessionsManager";
 import { effect, signal } from "@preact/signals";
 import { RadingInstanceProvider } from "bibleVizUtils.infrastructure.adapters.userPresence.ReadingInstanceProvider";
+import { ReadingHistoryTimeline } from "bibleVizUtils.infrastructure.presentation.components.ui.ReadingHistoryTimeline";
+import { getReadingHistoryTimelineStyles } from "bibleVizUtils.infrastructure.presentation.styles.adapter";
 
 export let userColorController: UserColorController | undefined = undefined;
 export let sessionController: SessionController | undefined = undefined;
@@ -527,6 +529,8 @@ export const bootstrapExtension = () => {
       }
 
       const api: BibleVizAPI = {
+        ReadingHistoryTimeline,
+        readingHistoryTimelineStyles: getReadingHistoryTimelineStyles(),
         bibleVizDataRepository,
         scriptureService,
         readingHistoryService,

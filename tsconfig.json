@@ -482,6 +482,12 @@
       "bibleVizUtils.infrastructure.prefabs.infoLabelTransformer.botAdapter": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/prefabs/infoLabelTransformer/botAdapter.tsx"
       ],
+      "bibleVizUtils.infrastructure.presentation.components.ui.ReadingHistoryTimeline": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/presentation/components/ui/ReadingHistoryTimeline.tsx"
+      ],
+      "bibleVizUtils.infrastructure.presentation.styles.adapter": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/presentation/styles/adapter.tsx"
+      ],
       "bibleVizUtils.infrastructure.utils.DebouncerService": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/utils/DebouncerService.tsx"
       ],
@@ -532,9 +538,6 @@
       ],
       "scriptureMap.components.containers.ProjectStateSetter": [
         "./packages/Scripture Map/scriptureMap/components/containers/ProjectStateSetter.tsx"
-      ],
-      "scriptureMap.components.containers.ReadingHistoryTimeline": [
-        "./packages/Scripture Map/scriptureMap/components/containers/ReadingHistoryTimeline.tsx"
       ],
       "scriptureMap.components.containers.ReadingHistoryUserFiltersSelector": [
         "./packages/Scripture Map/scriptureMap/components/containers/ReadingHistoryUserFiltersSelector.tsx"
@@ -1721,9 +1724,6 @@
       "todayScreen.infrastructure.presentation.components.containers.Header": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/Header.tsx"
       ],
-      "todayScreen.infrastructure.presentation.components.containers.ReadingHistoryTimeline": [
-        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/ReadingHistoryTimeline.tsx"
-      ],
       "todayScreen.infrastructure.presentation.components.containers.RecommendationsSection": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/RecommendationsSection.tsx"
       ],
@@ -1754,6 +1754,18 @@
       "todayScreen.infrastructure.presentation.components.ui.TitledSection": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/ui/TitledSection.tsx"
       ],
+      "todayScreen.infrastructure.presentation.contexts.readingHistory.useReadingHistoryProvider": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/contexts/readingHistory/useReadingHistoryProvider.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.contexts.socialSection.SocialSectionContext": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/contexts/socialSection/SocialSectionContext.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.contexts.time.TimeContext": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/contexts/time/TimeContext.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.contexts.time.useTimeProvider": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/contexts/time/useTimeProvider.tsx"
+      ],
       "todayScreen.infrastructure.presentation.contexts.today.TodayContext": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/contexts/today/TodayContext.tsx"
       ],
@@ -1771,6 +1783,9 @@
       ],
       "todayScreen.infrastructure.presentation.hooks.useHeader": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useHeader.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.hooks.useReadingHistoryTimeline": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useReadingHistoryTimeline.tsx"
       ],
       "todayScreen.infrastructure.presentation.hooks.useResumeReadingSection": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useResumeReadingSection.tsx"

@@ -1,31 +1,25 @@
 import type { CommunityReadingSpanId } from "@packages/today-screen/todayScreen/domain/models/readingHistory";
 import { useComputed, useSignal } from "@preact/signals";
 import { useTodayContext } from "../contexts/today/TodayContext";
+import { useSocialSectionContext } from "../contexts/socialSection/SocialSectionContext";
 import type { BookData } from "../components/containers/FilteredReading";
 
 const { useEffect } = os.appHooks;
 
 type UseFilteredReading = (props: {
-  timespanId: CommunityReadingSpanId;
-  userFilters: { id: string; name: string; selected: boolean; color: string }[];
+  timespanId: CommunityReadingSpanId | "all";
 }) => {
   booksData: BookData[];
 };
 
-export const useFilteredReading: UseFilteredReading = ({
-  timespanId,
-  userFilters,
-}) => {
+export const useFilteredReading: UseFilteredReading = ({ timespanId }) => {
   const { communityReading } = useTodayContext();
+  const { userFilters } = useSocialSectionContext();
 
-  const filtersMap = useSignal(
-    new Map(userFilters.map((filter) => [filter.id, filter.selected]))
-  );
+  const filtersMap = useSignal(new Map(userFilters));
 
   useEffect(() => {
-    filtersMap.value = new Map(
-      userFilters.map((filter) => [filter.id, filter.selected])
-    );
+    filtersMap.value = new Map(userFilters);
   }, [userFilters]);
 
   const timespanSignal = useSignal(timespanId);
@@ -36,6 +30,10 @@ export const useFilteredReading: UseFilteredReading = ({
 
   const booksData = useComputed<BookData[]>(() => {
     const data: BookData[] = [];
+
+    if (timespanSignal.value === "all") {
+      return [];
+    }
 
     const filteredReading = communityReading.value[timespanSignal.value];
 

@@ -1,4 +1,5 @@
 import { TodayProvider } from "todayScreen.infrastructure.presentation.contexts.today.TodayContext";
+import { TimeProvider } from "todayScreen.infrastructure.presentation.contexts.time.TimeContext";
 import { TodayContainer } from "./containers/TodayContainer";
 import type { Signal } from "@preact/signals";
 import type {
@@ -6,6 +7,8 @@ import type {
   CommunityReadingSpanId,
   UserLastReading,
 } from "todayScreen.domain.models.readingHistory";
+import type { ReadingHistoryTimelineComponent } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/seedBible";
+import type { GetDayRangeSecondsType } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/functions/time";
 // import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 
 const { memo } = os.appCompat;
@@ -66,6 +69,8 @@ export interface TodayConfig {
   subscribedUsersIdsProvider: {
     getUsersIds(): string[];
   };
+  ReadingHistoryTimeline: ReadingHistoryTimelineComponent;
+  getDayRangeSeconds: GetDayRangeSecondsType;
 }
 
 type TodayProps = {
@@ -79,7 +84,9 @@ export const Today = memo<(args: TodayProps) => preact.JSX.Element | null>(
       <>
         {customCSS && <style>{customCSS}</style>}
         <TodayProvider config={config}>
-          <TodayContainer />
+          <TimeProvider>
+            <TodayContainer />
+          </TimeProvider>
         </TodayProvider>
       </>
     );

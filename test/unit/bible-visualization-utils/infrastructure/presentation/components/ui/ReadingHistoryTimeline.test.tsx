@@ -1,17 +1,14 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { ReadingHistoryTimeline } from "scriptureMap.components.containers.ReadingHistoryTimeline";
-import { useReadingHistoryTimeline } from "scriptureMap.hooks.useReadingHistoryTimeline";
+import { ReadingHistoryTimeline } from "bibleVizUtils.infrastructure.presentation.components.ui.ReadingHistoryTimeline";
 
-jest.mock("scriptureMap.hooks.useReadingHistoryTimeline", () => ({
-  useReadingHistoryTimeline: jest.fn(),
+jest.mock("bibleVizUtils.infrastructure.presentation.styles.adapter", () => ({
+  getReadingHistoryTimelineStyles: () => "",
 }));
 
-jest.mock("scriptureMap.components.containers.Tooltip", () => ({
-  Tooltip: ({ anchor }: { anchor: unknown; contentsData: unknown[] }) => (
-    <div data-testid="tooltip" data-anchor={JSON.stringify(anchor)} />
-  ),
-}));
+const Tooltip = ({ anchor }: { anchor: unknown; contentsData: unknown[] }) => (
+  <div data-testid="tooltip" data-anchor={JSON.stringify(anchor)} />
+);
 
 type Range = { start: number; end: number };
 
@@ -64,20 +61,12 @@ function makeLabel(overrides: Partial<LabelData> = {}): LabelData {
   };
 }
 
-function makeHookResult(
-  itemsData: (ItemData | LabelData)[] = [],
-  timelineRef: { current: HTMLDivElement | null } = { current: null }
-) {
-  return { itemsData, timelineRef };
-}
-
-describe("ReadingHistoryTimeline", () => {
+describe("ReadingHistoryTimeline (shared, presentational)", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useReadingHistoryTimeline as jest.Mock).mockReturnValue(makeHookResult());
   });
 
   afterEach(() => {
@@ -87,10 +76,16 @@ describe("ReadingHistoryTimeline", () => {
   });
 
   function setup(itemsData: (ItemData | LabelData)[] = []) {
-    (useReadingHistoryTimeline as jest.Mock).mockReturnValue(
-      makeHookResult(itemsData)
+    act(() =>
+      render(
+        <ReadingHistoryTimeline
+          itemsData={itemsData}
+          timelineRef={{ current: null }}
+          Tooltip={Tooltip}
+        />,
+        container
+      )
     );
-    act(() => render(<ReadingHistoryTimeline />, container));
     return container;
   }
 
@@ -284,6 +279,113 @@ describe("ReadingHistoryTimeline", () => {
       expect(
         container.querySelector(".reading-history-timeline-item")
       ).not.toBeNull();
+    });
+  });
+
+  describe("footer (legend + year selector)", () => {
+    type Footer = {
+      legendSquaresData: { key: number; style: React.CSSProperties }[];
+      lessText: string;
+      moreText: string;
+      yearSelectorLabelTextContent: string;
+      yearSelectorOptionsData: {
+        key: number;
+        className: string;
+        onClick: () => void;
+        content: number;
+      }[];
+    };
+
+    function makeFooter(overrides: Partial<Footer> = {}): Footer {
+      return {
+        legendSquaresData: [
+          { key: 0, style: { backgroundColor: "#aaa" } },
+          { key: 1, style: { backgroundColor: "#bbb" } },
+          { key: 2, style: { backgroundColor: "#ccc" } },
+        ],
+        lessText: "Less",
+        moreText: "More",
+        yearSelectorLabelTextContent: "Year: 2024",
+        yearSelectorOptionsData: [
+          {
+            key: 0,
+            className: "year-selector-option",
+            onClick: jest.fn(),
+            content: 2023,
+          },
+          {
+            key: 1,
+            className: "year-selector-option",
+            onClick: jest.fn(),
+            content: 2024,
+          },
+        ],
+        ...overrides,
+      };
+    }
+
+    function setupWithFooter(footer?: Footer) {
+      act(() =>
+        render(
+          <ReadingHistoryTimeline
+            itemsData={[]}
+            timelineRef={{ current: null }}
+            footer={footer}
+          />,
+          container
+        )
+      );
+      return container;
+    }
+
+    it("does not render the footer when footer prop is omitted", () => {
+      setupWithFooter(undefined);
+      expect(
+        container.querySelector(".reading-history-timeline-footer")
+      ).toBeNull();
+    });
+
+    it("renders the footer when footer prop is provided", () => {
+      setupWithFooter(makeFooter());
+      expect(
+        container.querySelector(".reading-history-timeline-footer")
+      ).not.toBeNull();
+    });
+
+    it("renders legend lessText and moreText", () => {
+      setupWithFooter(makeFooter({ lessText: "Poco", moreText: "Mucho" }));
+      const legend = container.querySelector(".legend")!;
+      expect(legend.textContent).toContain("Poco");
+      expect(legend.textContent).toContain("Mucho");
+    });
+
+    it("renders one legend square per legendSquaresData entry", () => {
+      setupWithFooter(makeFooter());
+      const legend = container.querySelector(".legend")!;
+      expect(legend.querySelectorAll("span[style]")).toHaveLength(3);
+    });
+
+    it("renders the year selector label text", () => {
+      setupWithFooter(
+        makeFooter({ yearSelectorLabelTextContent: "Year: 2023" })
+      );
+      expect(
+        container.querySelector(".year-selector-label")!.textContent
+      ).toContain("Year: 2023");
+    });
+
+    it("toggles the year selector options on label click", () => {
+      setupWithFooter(makeFooter());
+      expect(container.querySelector(".year-selector-options")).toBeNull();
+      act(() => {
+        container
+          .querySelector(".year-selector-label")!
+          .dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+      expect(container.querySelector(".year-selector-options")).not.toBeNull();
+      expect(container.querySelectorAll(".year-selector-option")).toHaveLength(
+        2
+      );
     });
   });
 });

@@ -278,7 +278,9 @@
   gap: 4px;
   padding: 8px;
   background-color: rgb(247 247 247);
-  box-shadow: 0 0 12px 0 #00000021;
+  box-shadow: 0 0 12px 0 #00000038;
+  z-index: 10;
+  border-radius: 4px;
 }
 
 .today-container .user-filter-option {
