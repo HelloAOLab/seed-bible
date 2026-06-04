@@ -7,11 +7,19 @@ registerExtension({
   init: function* (context: SeedBibleState) {
     console.log("Apologist extension initialized with context:", context);
 
-    const apologistIconUrl = configBot.tags.apologistIconUrl ?? null;
     const apologistName = configBot.tags.apologistName ?? null;
-    const apologistDomain =
-      configBot.tags.apologistDomain ?? "apologist.ao.bot";
+    const apologistIconUrl = configBot.tags.apologistIconUrl ?? null;
+    const customApologistDomain = configBot.tags.apologistDomain ?? null;
+    const apologistDomain = customApologistDomain ?? "apologist.ao.bot";
     const apologistApiKey = configBot.tags.apologistApiKey ?? null;
+    const apologistModel = configBot.tags.apologistModel ?? "openai/gpt/5-mini";
+
+    if (customApologistDomain && !apologistApiKey) {
+      console.error(
+        "[Apologist] Using a custom domain requires an API key to be set."
+      );
+      return;
+    }
 
     // TODO: Add logo for apologist
     yield context.chats.registerProvider({
@@ -36,7 +44,7 @@ registerExtension({
         const response = await web.post(
           `https://${apologistDomain}/api/v1/chat/completions`,
           {
-            model: "openai/gpt/5-mini",
+            model: apologistModel,
             stream: false,
             metadata: {
               bible: "bsb",
