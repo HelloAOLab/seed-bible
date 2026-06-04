@@ -11,6 +11,7 @@ import {
 } from "../managers/SessionsManager";
 import { Avatar } from "./Avatar";
 import { translateTitle } from "./Utils";
+import { AskIcon } from "./icons";
 
 const { useEffect, useRef } = os.appHooks;
 
@@ -243,6 +244,55 @@ function replaceMentionText(
   mentionText: string
 ): string {
   return `${text.slice(0, startIndex)}${mentionText}${text.slice(endIndex)}`;
+}
+
+function getPresenceLabel(
+  others: ChatParticipant[],
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  const names = others.map((p) => getParticipantDisplayLabel(p, t));
+  if (names.length === 1) {
+    return t("presence-one-is-here", {
+      defaultValue: "{{name}} is here",
+      name: names[0],
+    });
+  }
+  return t("presence-many-are-here", {
+    defaultValue: "{{count}} people are here",
+    count: others.length,
+  });
+}
+
+function PresencePrompt({ others }: { others: ChatParticipant[] }) {
+  if (others.length === 0) return null;
+
+  const { t } = useI18n();
+  const avatarsToShow = others.slice(0, 5);
+
+  return (
+    <div className="sb-chat-view-presence">
+      <div
+        className="sb-chat-view-presence-avatars"
+        data-count={avatarsToShow.length}
+      >
+        {avatarsToShow.map((participant) => {
+          const av = getParticipantAvatar(participant, t);
+          return (
+            <Avatar
+              key={participant.id}
+              imageUrl={av.imageUrl}
+              visual={av.visual}
+              title={av.label}
+              isSelf={av.isSelf}
+            />
+          );
+        })}
+      </div>
+      <p className="sb-chat-view-presence-label">
+        {getPresenceLabel(others, t)}
+      </p>
+    </div>
+  );
 }
 
 export function ChatView(props: ChatViewProps) {
@@ -490,6 +540,8 @@ export function ChatView(props: ChatViewProps) {
 
   const canSubmit = draft.value.trim().length > 0 && !isSubmitting.value;
 
+  const othersPresent = activeParticipants.filter((p) => !p.isSelf);
+
   return (
     <div className="sb-chat-view">
       <div
@@ -500,9 +552,13 @@ export function ChatView(props: ChatViewProps) {
       >
         {messages.length === 0 ? (
           <div className="sb-chat-view-empty">
+            <AskIcon className="sb-chat-view-empty-icon" />
             <p className="sb-chat-view-empty-title">
-              {t("no-chat-messages", { defaultValue: "No messages yet" })}
+              {t("start-conversation", {
+                defaultValue: "Start a conversation",
+              })}
             </p>
+            <PresencePrompt others={othersPresent} />
           </div>
         ) : (
           messages.map((message) => {

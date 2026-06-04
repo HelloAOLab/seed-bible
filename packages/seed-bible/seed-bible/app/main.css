@@ -7549,13 +7549,8 @@ h6 {
   font-size: 16px;
 }
 
-.sb-chat-list-avatar-cluster-2 .sb-tab-user-icon:first-child {
-  z-index: 2;
-}
-
 .sb-chat-list-avatar-cluster-2 .sb-tab-user-icon + .sb-tab-user-icon {
   margin-left: -10px;
-  z-index: 1;
 }
 
 /* Three avatars: triangle (one top-center, two bottom) */
@@ -7566,8 +7561,8 @@ h6 {
 
 .sb-chat-list-avatar-cluster-3 .sb-tab-user-icon {
   position: absolute;
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
 }
 
 .sb-chat-list-avatar-cluster-3
@@ -7580,19 +7575,16 @@ h6 {
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 3;
 }
 
 .sb-chat-list-avatar-cluster-3 .sb-tab-user-icon:nth-child(2) {
   bottom: 0;
   left: 0;
-  z-index: 2;
 }
 
 .sb-chat-list-avatar-cluster-3 .sb-tab-user-icon:nth-child(3) {
   bottom: 0;
   right: 0;
-  z-index: 1;
 }
 
 .sb-floating-chat-list-item-header {
@@ -7666,6 +7658,80 @@ h6 {
   flex-direction: column;
   gap: 10px;
   padding-right: 4px;
+}
+
+.sb-chat-view-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+}
+
+.sb-chat-view-empty-icon {
+  width: 36px;
+  height: 36px;
+}
+
+.sb-chat-view-empty-title {
+  margin: 0;
+  font-size: 14px;
+}
+
+.sb-chat-view-presence {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.sb-chat-view-presence-avatars {
+  display: flex;
+  align-items: center;
+}
+
+.sb-chat-view-presence-avatars .sb-tab-user-icon {
+  width: 26px;
+  height: 26px;
+  box-shadow: 0 0 0 2px var(--sb-reader-toolbar-background, #fff);
+}
+
+.sb-chat-view-presence-avatars
+  .sb-tab-user-icon-animal
+  .material-symbols-outlined {
+  font-size: 15px;
+}
+
+.sb-chat-view-presence-avatars[data-count="2"]
+  .sb-tab-user-icon
+  + .sb-tab-user-icon {
+  margin-left: -6px;
+}
+
+.sb-chat-view-presence-avatars[data-count="3"]
+  .sb-tab-user-icon
+  + .sb-tab-user-icon {
+  margin-left: -9px;
+}
+
+.sb-chat-view-presence-avatars[data-count="4"]
+  .sb-tab-user-icon
+  + .sb-tab-user-icon {
+  margin-left: -12px;
+}
+
+.sb-chat-view-presence-avatars[data-count="5"]
+  .sb-tab-user-icon
+  + .sb-tab-user-icon {
+  margin-left: -14px;
+}
+
+.sb-chat-view-presence-label {
+  margin: 0;
+  font-size: 12px;
 }
 
 .sb-chat-view-message {

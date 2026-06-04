@@ -584,6 +584,7 @@ function FloatingChatPanel(props: FloatingReaderPanelsProps) {
           </button>
         ) : null}
 
+        {selectedChat && <ChatListAvatarCluster chat={selectedChat} />}
         <p className="sb-floating-chat-header-title">
           {selectedChat
             ? getChatTitle(selectedChat, t)
@@ -690,13 +691,8 @@ function createLocalChatFromProvider(
   state.chats.selectChat(chat.id);
 }
 
-function ChatListAvatarCluster({
-  chat,
-  t,
-}: {
-  chat: ChatSession;
-  t: (key: string, options?: Record<string, unknown>) => string;
-}) {
+function ChatListAvatarCluster({ chat }: { chat: ChatSession }) {
+  const { t } = useI18n();
   const participants = chat.participants.value;
   const nonSelf = participants.filter((p) => !p.isSelf);
   const pool = nonSelf.length > 0 ? nonSelf : participants;
@@ -757,7 +753,7 @@ function ChatList({
                 aria-selected="false"
                 title={getChatTitle(chat, t)}
               >
-                <ChatListAvatarCluster chat={chat} t={t} />
+                <ChatListAvatarCluster chat={chat} />
                 <div className="sb-floating-chat-list-item-content">
                   <div className="sb-floating-chat-list-item-header">
                     <span className="sb-floating-chat-list-item-title">
