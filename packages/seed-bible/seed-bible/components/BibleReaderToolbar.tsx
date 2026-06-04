@@ -672,6 +672,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         >
           {isSmallScreen.value &&
             !sidebar.isSearchPanelOpen.value &&
+            !sidebar.isChatPanelOpen.value &&
             settings.settings.value.showNavArrows &&
             previousChapterTool.value && (
               <button
@@ -686,6 +687,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
           {isSmallScreen.value &&
             !sidebar.isSearchPanelOpen.value &&
+            !sidebar.isChatPanelOpen.value &&
             settings.settings.value.showNavArrows &&
             nextChapterTool.value && (
               <button

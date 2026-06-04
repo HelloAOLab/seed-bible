@@ -8114,7 +8114,7 @@ img.sb-chat-view-message-avatar {
     right: auto;
     transform: translateX(-50%);
     bottom: 72px;
-    width: calc(100vw - 16px);
+    width: 100%;
     animation: sb-floating-panel-rise 0.18s ease-out;
   }
 }
