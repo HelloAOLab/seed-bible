@@ -1,0 +1,13 @@
+{
+  "id": "ext_Bonfire",
+  "translations": {
+    "en": {
+      "title": "Bonfire",
+      "description": "Bonfire AI Agent"
+    },
+    "es": {
+      "title": "Bonfire",
+      "description": "Agente de IA Bonfire"
+    }
+  }
+}
