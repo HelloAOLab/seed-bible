@@ -8,13 +8,18 @@ registerExtension({
 
     const orgId = configBot.tags.bonfireOrgId;
     const aiId = configBot.tags.bonfireAiId;
+    const apiKey = configBot.tags.bonfireApiKey;
 
-    if (!orgId || !aiId) {
+    if (!orgId || !aiId || !apiKey) {
       console.error(
-        "Bonfire extension requires bonfireOrgId and bonfireAiId to be set in configBot tags"
+        "Bonfire extension requires bonfireOrgId, bonfireAiId, and bonfireApiKey to be set in configBot tags"
       );
       return;
     }
+
+    const headers = {
+      "X-API-Key": apiKey,
+    };
 
     // Map of chat IDs to bonfire session IDs
     const chatSessionMap = new Map<string, string>();
@@ -36,6 +41,9 @@ registerExtension({
           {
             org_id: orgId,
             ai_id: aiId,
+          },
+          {
+            headers,
           }
         );
         console.log("[Bonfire] Session created", response.data);
@@ -48,11 +56,17 @@ registerExtension({
         console.log("[Bonfire] Deleting session for chat", chatContext.chatId);
         const sessionId = chatSessionMap.get(chatContext.chatId);
         if (sessionId) {
-          await web.post(`https://api.heybonfire.com/api/v1/sessions/end`, {
-            org_id: orgId,
-            ai_id: aiId,
-            session_id: sessionId,
-          });
+          await web.post(
+            `https://api.heybonfire.com/api/v1/sessions/end`,
+            {
+              org_id: orgId,
+              ai_id: aiId,
+              session_id: sessionId,
+            },
+            {
+              headers,
+            }
+          );
           console.log("[Bonfire] Session deleted");
           chatSessionMap.delete(chatContext.chatId);
         }
@@ -89,6 +103,9 @@ registerExtension({
               content: lastMessage?.text,
             },
             custom_instructions: `You are chatting with a user who is reading the Bible. They are currently reading: ${readingState?.bookId} ${readingState?.chapterNumber}. Keep responses tweet-length. Your responses should be in the same language as the user's messages.`,
+          },
+          {
+            headers,
           }
         );
 
