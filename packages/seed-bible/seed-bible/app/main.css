@@ -7302,12 +7302,28 @@ h6 {
 /* --- Chat panel --- */
 
 .sb-floating-chat-panel {
-  bottom: 100px;
+  inset-inline-start: auto;
+  inset-inline-end: 16px;
+  transform: none;
+  bottom: 8px;
   width: min(420px, calc(100vw - 32px));
-  padding: 22px 24px;
+  min-height: 400px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  border-radius: 8px;
+  animation: sb-floating-chat-panel-rise 0.18s ease-out;
+}
+
+@keyframes sb-floating-chat-panel-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .sb-floating-chat-header {
@@ -7315,6 +7331,8 @@ h6 {
   align-items: center;
   gap: 10px;
   min-height: 26px;
+  padding: 12px;
+  border-bottom: 1px solid var(--sb-divider-color);
 }
 
 .sb-floating-chat-header-back {
@@ -7401,24 +7419,25 @@ h6 {
 .sb-floating-chat-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
   max-height: 360px;
   overflow: auto;
-  padding-right: 4px;
+  padding: 4px;
+  flex: 1 1 auto;
 }
 
 .sb-floating-chat-list-shell {
   position: relative;
-}
-
-.sb-floating-chat-list-shell .sb-floating-chat-list {
-  padding-bottom: 48px;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .sb-floating-chat-list-create-anchor {
   position: absolute;
-  right: 0;
-  bottom: 0;
+  right: 14px;
+  bottom: 14px;
 }
 
 .sb-floating-chat-list-create-button {
@@ -7448,25 +7467,23 @@ h6 {
 
 .sb-floating-chat-list-item {
   width: 100%;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 88%);
-  background: color-mix(in srgb, var(--sb-background, #fff), transparent 8%);
-  border-radius: 12px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   text-align: left;
-  padding: 10px 12px;
+  padding: 8px;
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
     background-color 0.15s ease,
     transform 0.15s ease;
 }
 
 .sb-floating-chat-list-item:hover,
 .sb-floating-chat-list-item:focus-visible {
-  border-color: color-mix(in srgb, var(--sb-primary-color), transparent 45%);
-  background: color-mix(in srgb, var(--sb-primary-color), transparent 92%);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
 }
 
 .sb-floating-chat-list-item:active {
@@ -7531,6 +7548,8 @@ h6 {
   flex-direction: column;
   gap: 12px;
   min-height: 220px;
+  padding: 12px 16px 16px;
+  flex: 1 1 auto;
 }
 
 .sb-chat-view-messages {
@@ -7796,9 +7815,11 @@ img.sb-chat-view-message-avatar {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
   gap: 8px;
-  margin-bottom: 40px;
+  padding: 20px 16px 56px;
+  flex: 1 1 auto;
 }
 
 .sb-floating-chat-empty-icon {
@@ -7854,7 +7875,11 @@ img.sb-chat-view-message-avatar {
 
   /* Chat keeps the floating-card look on mobile, anchored above the bar. */
   .sb-floating-chat-panel {
-    bottom: 110px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    bottom: 72px;
     width: calc(100vw - 16px);
+    animation: sb-floating-panel-rise 0.18s ease-out;
   }
 }
