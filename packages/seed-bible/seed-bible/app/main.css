@@ -8067,6 +8067,16 @@ img.sb-chat-view-message-avatar {
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
 
+@media (max-width: 1400px) {
+  .sb-floating-chat-panel {
+    left: 50%;
+    right: auto;
+    bottom: 100px;
+    transform: translateX(-50%);
+    animation: sb-floating-panel-rise 0.18s ease-out;
+  }
+}
+
 @media (max-width: 768px) {
   /* Search becomes a full-screen view on mobile with scrollable results above
      and the input pinned at the bottom. Leaves room at the bottom for the
