@@ -49,7 +49,7 @@ const getUrl = (
 ) => {
   const redirectUri = new URL(configBot.tags.url ?? "https://ao.bot/");
   redirectUri.search = "";
-  if (redirectUri.origin === "https://ao.bot") {
+  if (redirectUri.origin !== "https://seedbible.org") {
     redirectUri.searchParams.set(
       "pattern",
       configBot.tags.pattern || "SeedBible"
