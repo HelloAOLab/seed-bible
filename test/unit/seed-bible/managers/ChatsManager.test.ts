@@ -1200,7 +1200,7 @@ describe("createChatsManager", () => {
       },
     ];
 
-    expect(chatSession.participants.value).toContainEqual({
+    expect(chatSession.totalParticipants.value).toContainEqual({
       id: "u1",
       userId: "u1",
       connectionId: "conn-u1",
@@ -1266,7 +1266,7 @@ describe("createChatsManager", () => {
       },
     ];
 
-    expect(chatSession.participants.value).toContainEqual({
+    expect(chatSession.totalParticipants.value).toContainEqual({
       id: "u1_provider-x",
       providerId: "provider-x",
       ownerParticipantId: "u1",

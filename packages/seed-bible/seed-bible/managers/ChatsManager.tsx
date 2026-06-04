@@ -241,7 +241,10 @@ export interface ChatSession {
   sendMessage: (message: ChatMessageOptions) => Promise<void>;
   /** Updates whether the local participant is currently typing. */
   setTypingStatus: (isTyping: boolean) => void;
+  /** Active participants only. */
   participants: ReadonlySignal<ChatParticipant[]>;
+  /** All participants, including inactive ones. */
+  totalParticipants: ReadonlySignal<ChatParticipant[]>;
   /** Participants that can be added to this chat session. */
   availableParticipants: ReadonlySignal<ChatParticipant[]>;
   /** Participants currently typing. */
@@ -908,9 +911,13 @@ function createSharedChatSession(
     return providerParticipants;
   });
 
-  const participants = computed(() => {
+  const totalParticipants = computed(() => {
     return [...allUserParticipants.value, ...sharedProviderParticipants.value];
   });
+
+  const participants = computed(() =>
+    totalParticipants.value.filter((p) => p.isActive)
+  );
 
   const typingParticipants = computed(() => {
     void chatTypingMapVersion.value;
@@ -1211,6 +1218,7 @@ function createSharedChatSession(
       localIsTyping.value = isTyping;
     },
     participants,
+    totalParticipants,
     availableParticipants,
     typingParticipants,
     addParticipant: addSharedProviderParticipant,
@@ -1249,7 +1257,7 @@ function createSharedChatSession(
     },
     getMessageAuthors: (message: ChatMessage) =>
       resolveMessageAuthors(
-        participants.value,
+        totalParticipants.value,
         message,
         participantIdAliases.value
       ),
@@ -1361,7 +1369,7 @@ function createLocalChatSession(
     }
   });
 
-  const participants = computed<ChatParticipant[]>(() => {
+  const totalParticipants = computed<ChatParticipant[]>(() => {
     const selectedIds = new Set(selectedProviderParticipantIds.value);
     return [
       localParticipant.value,
@@ -1370,6 +1378,10 @@ function createLocalChatSession(
       ),
     ];
   });
+
+  const participants = computed<ChatParticipant[]>(() =>
+    totalParticipants.value.filter((p) => p.isActive)
+  );
   const availableParticipants = computed<ChatParticipant[]>(() => {
     const selectedIds = new Set(selectedProviderParticipantIds.value);
     return allProviderParticipants.value.filter(
@@ -1587,7 +1599,7 @@ function createLocalChatSession(
 
   const getMessageAuthors = (message: ChatMessage) =>
     resolveMessageAuthors(
-      participants.value,
+      totalParticipants.value,
       message,
       participantIdAliases.value
     );
@@ -1627,6 +1639,7 @@ function createLocalChatSession(
       localIsTyping.value = isTyping;
     },
     participants,
+    totalParticipants,
     availableParticipants,
     typingParticipants,
     addParticipant: addLocalProviderParticipant,
