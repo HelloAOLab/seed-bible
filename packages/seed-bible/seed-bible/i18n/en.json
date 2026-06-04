@@ -241,7 +241,7 @@
   "x-is-typing-and-more": "{{name}} and {{count}} others are typing...",
   "x-is-typing-and-more_one": "{{name}} and one other is typing...",
   "x-is-typing-and-more_other": "{{name}} and {{count}} others are typing...",
-  "shared-chat": "Shared Chat",
+  "session-chat-just-you": "Session Chat (Just You)",
   "you-have-no-chats": "You have no chats. Create one using the + button below.",
   "no-chat-providers": "No chat providers are available. Connect an AI or messaging provider to start chatting.",
   "color-emerald": "Emerald",

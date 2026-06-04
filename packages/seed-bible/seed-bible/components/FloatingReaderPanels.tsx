@@ -45,18 +45,27 @@ function getChatTitle(
   t: (key: string, options?: Record<string, unknown>) => string
 ): string {
   const participants = chat.participants.value;
+
+  const onlySelf = participants.every((p) => p.isSelf);
+
+  if (onlySelf && "isShared" in chat && chat.isShared) {
+    return t("session-chat-just-you", {
+      defaultValue: "Session Chat (Just You)",
+    });
+  }
+
   const preferred = participants.filter((participant) => !participant.isSelf);
   const pool = preferred.length > 0 ? preferred : participants;
 
   const names = pool
-    .map((participant) =>
-      participant.name ? translateTitle(t, participant.name) : ""
-    )
+    .map((participant) => getParticipantDisplayLabel(participant, t))
     .filter((name) => name.length > 0);
 
   if (names.length === 0) {
     if ("isShared" in chat && chat.isShared) {
-      return t("shared-chat", { defaultValue: "Shared Chat" });
+      return t("session-chat-just-you", {
+        defaultValue: "Session Chat (Just You)",
+      });
     }
 
     return t("chat", { defaultValue: "Chat" });
