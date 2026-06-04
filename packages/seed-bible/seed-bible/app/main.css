@@ -7459,6 +7459,7 @@ h6 {
 
 .sb-floating-chat-list-create-menu {
   min-width: 220px;
+  bottom: 0;
 }
 
 .sb-floating-chat-list-create-item {

@@ -71,7 +71,7 @@ function getChatTitle(
     return t("chat", { defaultValue: "Chat" });
   }
 
-  return names.slice(0, 3).join(", ");
+  return names.join(", ");
 }
 
 function getChatMessageText(message: ChatMessage): string {
@@ -561,6 +561,10 @@ function FloatingChatPanel(props: FloatingReaderPanelsProps) {
 
   if (!isOpen) return null;
 
+  // Only display non-anonymous inactive participants
+  const inactiveParticipants =
+    selectedChat?.inactiveParticipants.value.filter((p) => p.name) ?? [];
+
   return (
     <div
       className="sb-floating-chat-panel"
@@ -597,11 +601,11 @@ function FloatingChatPanel(props: FloatingReaderPanelsProps) {
             buttonClassName="sb-floating-chat-header-members-button"
             menuClassName="sb-floating-chat-members-menu"
             icon="groups"
-            aria-label={t("active-participants", {
-              defaultValue: "Active participants",
+            aria-label={t("participants", {
+              defaultValue: "Participants",
             })}
-            title={t("active-participants", {
-              defaultValue: "Active participants",
+            title={t("participants", {
+              defaultValue: "Participants",
             })}
             onClick={() => {
               closeContextMenus();
@@ -628,6 +632,42 @@ function FloatingChatPanel(props: FloatingReaderPanelsProps) {
                 </ContextMenuItem>
               );
             })}
+            {inactiveParticipants.length > 0 && (
+              <>
+                <div
+                  className="sb-floating-chat-members-sep"
+                  role="separator"
+                />
+                <span className="sb-floating-chat-members-inactive-label">
+                  {t("inactive", {
+                    defaultValue: "Inactive",
+                  })}
+                </span>
+                {inactiveParticipants.map((participant) => {
+                  const label = getParticipantDisplayLabel(participant, t);
+                  const avatar = getParticipantAvatar(participant, t);
+                  return (
+                    <ContextMenuItem
+                      key={participant.id}
+                      className="sb-floating-chat-members-item"
+                      onClick={(event) => {
+                        event.preventDefault();
+                      }}
+                    >
+                      <Avatar
+                        imageUrl={avatar.imageUrl}
+                        visual={avatar.visual}
+                        title={avatar.label}
+                        isSelf={avatar.isSelf}
+                      />
+                      <span className="sb-floating-chat-members-name">
+                        {label}
+                      </span>
+                    </ContextMenuItem>
+                  );
+                })}
+              </>
+            )}
           </ContextMenuWithButton>
         ) : null}
       </header>

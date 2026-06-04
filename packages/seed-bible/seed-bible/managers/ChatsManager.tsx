@@ -245,6 +245,10 @@ export interface ChatSession {
   participants: ReadonlySignal<ChatParticipant[]>;
   /** All participants, including inactive ones. */
   totalParticipants: ReadonlySignal<ChatParticipant[]>;
+  /**
+   * Only inactive participants.
+   */
+  inactiveParticipants: ReadonlySignal<ChatParticipant[]>;
   /** Participants that can be added to this chat session. */
   availableParticipants: ReadonlySignal<ChatParticipant[]>;
   /** Participants currently typing. */
@@ -919,6 +923,10 @@ function createSharedChatSession(
     totalParticipants.value.filter((p) => p.isActive)
   );
 
+  const inactiveParticipants = computed(() =>
+    totalParticipants.value.filter((p) => !p.isActive)
+  );
+
   const typingParticipants = computed(() => {
     void chatTypingMapVersion.value;
     const typingParticipantIds = new Set<string>();
@@ -1219,6 +1227,7 @@ function createSharedChatSession(
     },
     participants,
     totalParticipants,
+    inactiveParticipants,
     availableParticipants,
     typingParticipants,
     addParticipant: addSharedProviderParticipant,
@@ -1382,6 +1391,11 @@ function createLocalChatSession(
   const participants = computed<ChatParticipant[]>(() =>
     totalParticipants.value.filter((p) => p.isActive)
   );
+
+  const inactiveParticipants = computed(() =>
+    totalParticipants.value.filter((p) => !p.isActive)
+  );
+
   const availableParticipants = computed<ChatParticipant[]>(() => {
     const selectedIds = new Set(selectedProviderParticipantIds.value);
     return allProviderParticipants.value.filter(
@@ -1640,6 +1654,7 @@ function createLocalChatSession(
     },
     participants,
     totalParticipants,
+    inactiveParticipants,
     availableParticipants,
     typingParticipants,
     addParticipant: addLocalProviderParticipant,
