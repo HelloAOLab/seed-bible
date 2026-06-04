@@ -49,11 +49,8 @@ const getUrl = (
 ) => {
   const redirectUri = new URL(configBot.tags.url ?? "https://ao.bot/");
   redirectUri.search = "";
-  if (redirectUri.searchParams.get("pattern") === null) {
-    redirectUri.searchParams.set(
-      "pattern",
-      configBot.tags.pattern || "SeedBible"
-    );
+  if (configBot.tags.pattern !== null) {
+    redirectUri.searchParams.set("pattern", configBot.tags.pattern);
   }
   redirectUri.searchParams.set("autoinstall-ext_twitchSub", "true");
 
