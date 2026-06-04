@@ -84,6 +84,7 @@ export type ChatProviderMessageOptions =
   | StreamingTextChatMessageOptions;
 
 export interface ChatContext {
+  chatId: string;
   messages: ChatMessage[];
   participant: ChatParticipant;
   participants: ChatParticipant[];
@@ -1123,6 +1124,7 @@ function createSharedChatSession(
 
         try {
           const response = await provider.generateResponse({
+            chatId,
             messages: [...messages.value, nextMessage],
             participant,
             participants: participants.value,
@@ -1507,6 +1509,7 @@ function createLocalChatSession(
 
         try {
           const response = await provider.generateResponse({
+            chatId,
             messages: [...messages.value],
             participant: target,
             participants: participants.value,
