@@ -101,6 +101,9 @@ export interface ChatProvider {
   /** The ID of the chat provider */
   id: string;
 
+  /** An optional URL to an icon image for this provider. */
+  iconUrl?: string;
+
   /** Whether this provider supports being added to shared chats. If false, then the provider can only be used in local (single user) chats. */
   supportsSharedChats: boolean;
 
@@ -184,6 +187,9 @@ export interface AIChatParticipant extends BaseChatParticipant {
   /** The ID of the AI provider. */
   providerId: string;
 
+  /** An optional URL to an icon image for this AI participant's provider. */
+  iconUrl?: string | null;
+
   isSelf: false;
   isAI: true;
 }
@@ -195,6 +201,7 @@ const sharedAIChatParticipantSchema = z.object({
   providerId: z.string(),
   name: z.string().nullable(),
   isAI: z.literal(true),
+  iconUrl: z.string().optional(),
 });
 
 type SharedAIChatParticipant = z.infer<typeof sharedAIChatParticipantSchema>;
@@ -934,6 +941,7 @@ function createSharedChatSession(
         userId: p.userId ?? null,
         connectionId: p.connectionId ?? null,
         name: provider.name,
+        iconUrl: provider.iconUrl ?? null,
         isSelf: false,
         isAI: true,
         isRemote: false,
@@ -1309,6 +1317,7 @@ function createLocalChatSession(
       userId: loginManager.userId.value ?? null,
       connectionId: null,
       name: provider.name,
+      iconUrl: provider.iconUrl ?? null,
       isSelf: false,
       isAI: true,
       isRemote: false,

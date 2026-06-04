@@ -99,8 +99,9 @@ export function getParticipantAvatar(
   isSelf: boolean;
 } {
   const label = getParticipantDisplayLabel(participant, t);
-  const imageUrl =
-    !participant.isAI && typeof participant.profile?.pictureUrl === "string"
+  const imageUrl = participant.isAI
+    ? (participant.iconUrl ?? null)
+    : typeof participant.profile?.pictureUrl === "string"
       ? participant.profile.pictureUrl
       : null;
 
