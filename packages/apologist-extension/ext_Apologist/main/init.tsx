@@ -7,14 +7,21 @@ registerExtension({
   init: function* (context: SeedBibleState) {
     console.log("Apologist extension initialized with context:", context);
 
+    const apologistIconUrl = configBot.tags.apologistIconUrl ?? null;
+    const apologistName = configBot.tags.apologistName ?? null;
+    const apologistDomain =
+      configBot.tags.apologistDomain ?? "apologist.ao.bot";
+    const apologistApiKey = configBot.tags.apologistApiKey ?? null;
+
     // TODO: Add logo for apologist
     yield context.chats.registerProvider({
       id: "apologist-chat-provider",
-      name: {
+      name: apologistName ?? {
         key: "title",
         defaultValue: "Apologist",
         ns: "ext_Apologist",
       },
+      iconUrl: apologistIconUrl,
       supportsSharedChats: true,
       generateResponse: async (chatContext) => {
         const lastMessage =
@@ -27,7 +34,7 @@ registerExtension({
         };
 
         const response = await web.post(
-          "https://apologist.ao.bot/api/v1/chat/completions",
+          `https://${apologistDomain}/api/v1/chat/completions`,
           {
             model: "openai/gpt/5-mini",
             stream: false,
@@ -44,6 +51,13 @@ registerExtension({
                 content: m.text,
               })),
             ],
+          },
+          {
+            headers: apologistApiKey
+              ? {
+                  Authorization: `Bearer ${apologistApiKey}`,
+                }
+              : {},
           }
         );
 
