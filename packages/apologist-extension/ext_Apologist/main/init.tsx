@@ -1,11 +1,13 @@
 /* eslint-disable seed-bible-i18n/i18n-untranslated-content */
 import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
+import { i18n } from "seed-bible.i18n.I18nManager";
 
 registerExtension({
   id: "ext_Apologist",
   init: function* (context: SeedBibleState) {
     console.log("Apologist extension initialized with context:", context);
 
+    // TODO: Add logo for apologist
     yield context.chats.registerProvider({
       id: "apologist-chat-provider",
       name: {
@@ -29,6 +31,10 @@ registerExtension({
           {
             model: "openai/gpt/5-mini",
             stream: false,
+            metadata: {
+              bible: "bsb",
+              language: i18n.language,
+            },
             messages: [
               contextMessage,
               ...chatContext.messages.map((m) => ({
