@@ -2687,4 +2687,267 @@ describe("createChatsManager", () => {
       chat.participants.value.filter((p) => p.id === "user-a_provider-1")
     ).toHaveLength(1);
   });
+
+  it("resolveMessageTargets() does not match @everyone", () => {
+    const participants: ChatParticipant[] = [
+      {
+        id: "user-1",
+        userId: "user-1",
+        connectionId: null,
+        name: "Alice",
+        isSelf: true,
+        isAI: false,
+        isRemote: false,
+        isActive: true,
+        visual: getUserAnimalVisual("user-1"),
+      },
+      {
+        id: "provider-1",
+        providerId: "provider-1",
+        ownerParticipantId: "user-1",
+        userId: null,
+        connectionId: null,
+        name: "Helper AI",
+        isSelf: false,
+        isAI: true,
+        isRemote: false,
+        isActive: true,
+      },
+    ];
+
+    expect(resolveMessageTargets(participants, "Hello @everyone")).toEqual([]);
+  });
+
+  it("sendMessage() sets targets to true when @everyone is mentioned (local session)", async () => {
+    const { loginManager, userId } = createLoginManagerMock();
+    userId.value = "user-1";
+
+    const chats = createChatsManager(loginManager);
+    const session = chats.createLocalSession();
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: jest
+        .fn()
+        .mockResolvedValue({ type: "text", text: "reply" }),
+    });
+    session.addParticipant("provider-1");
+
+    await session.sendMessage({ type: "text", text: "@everyone Hello!" });
+
+    expect(session.messages.value[0]).toMatchObject({ targets: true });
+  });
+
+  it("sendMessage() calls all active local AI providers when @everyone is mentioned (local session)", async () => {
+    const { loginManager, userId } = createLoginManagerMock();
+    userId.value = "user-1";
+
+    const chats = createChatsManager(loginManager);
+    const session = chats.createLocalSession();
+    const firstResponse = jest
+      .fn()
+      .mockResolvedValue({ type: "text", text: "reply 1" });
+    const secondResponse = jest
+      .fn()
+      .mockResolvedValue({ type: "text", text: "reply 2" });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: firstResponse,
+    });
+    chats.registerProvider({
+      id: "provider-2",
+      name: "Helper AI 2",
+      supportsSharedChats: true,
+      generateResponse: secondResponse,
+    });
+    session.addParticipant("provider-1");
+    session.addParticipant("provider-2");
+
+    await session.sendMessage({ type: "text", text: "@everyone Hello!" });
+
+    expect(session.messages.value[0]).toMatchObject({ targets: true });
+    expect(firstResponse).toHaveBeenCalledTimes(1);
+    expect(secondResponse).toHaveBeenCalledTimes(1);
+  });
+
+  it("sendMessage() auto-adds all available participants when @everyone is mentioned (local session)", async () => {
+    const { loginManager, userId } = createLoginManagerMock();
+    userId.value = "user-1";
+
+    const chats = createChatsManager(loginManager);
+    const session = chats.createLocalSession();
+    const firstResponse = jest
+      .fn()
+      .mockResolvedValue({ type: "text", text: "reply 1" });
+    const secondResponse = jest
+      .fn()
+      .mockResolvedValue({ type: "text", text: "reply 2" });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: firstResponse,
+    });
+    chats.registerProvider({
+      id: "provider-2",
+      name: "Helper AI 2",
+      supportsSharedChats: true,
+      generateResponse: secondResponse,
+    });
+
+    expect(session.availableParticipants.value).toHaveLength(2);
+
+    await session.sendMessage({ type: "text", text: "@everyone Hello!" });
+
+    expect(session.participants.value).toContainEqual(
+      expect.objectContaining({ id: "provider-1" })
+    );
+    expect(session.participants.value).toContainEqual(
+      expect.objectContaining({ id: "provider-2" })
+    );
+    expect(session.messages.value[0]).toMatchObject({ targets: true });
+    expect(firstResponse).toHaveBeenCalledTimes(1);
+    expect(secondResponse).toHaveBeenCalledTimes(1);
+  });
+
+  it("sendMessage() sets targets to true when @everyone is mentioned (shared session)", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager);
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: jest
+        .fn()
+        .mockResolvedValue({ type: "text", text: "reply" }),
+    });
+
+    const { session, sharedChats } = createSharedSessionMock({
+      currentUserId: "user-a",
+      connectedUsers: [
+        {
+          id: "user-a",
+          userId: "user-a",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+          visual: getUserAnimalVisual("user-a"),
+        },
+      ],
+    });
+    const chat = chats.createSharedSession(session);
+    chat.addParticipant("user-a_provider-1");
+    await Promise.resolve();
+
+    await chat.sendMessage({ type: "text", text: "@everyone Hello!" });
+
+    expect(sharedChats.toArray()[0]).toMatchObject({ targets: true });
+  });
+
+  it("sendMessage() calls all local AI providers when @everyone is mentioned (shared session)", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager);
+    const firstResponse = jest
+      .fn()
+      .mockResolvedValue({ type: "text", text: "reply 1" });
+    const secondResponse = jest
+      .fn()
+      .mockResolvedValue({ type: "text", text: "reply 2" });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: firstResponse,
+    });
+    chats.registerProvider({
+      id: "provider-2",
+      name: "Helper AI 2",
+      supportsSharedChats: true,
+      generateResponse: secondResponse,
+    });
+
+    const { session, sharedChats } = createSharedSessionMock({
+      currentUserId: "user-a",
+      connectedUsers: [
+        {
+          id: "user-a",
+          userId: "user-a",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+          visual: getUserAnimalVisual("user-a"),
+        },
+      ],
+    });
+    const chat = chats.createSharedSession(session);
+    chat.addParticipant("user-a_provider-1");
+    chat.addParticipant("user-a_provider-2");
+    await Promise.resolve();
+
+    await chat.sendMessage({ type: "text", text: "@everyone Hello!" });
+
+    expect(sharedChats.toArray()[0]).toMatchObject({ targets: true });
+    expect(firstResponse).toHaveBeenCalledTimes(1);
+    expect(secondResponse).toHaveBeenCalledTimes(1);
+  });
+
+  it("wasMentioned is true for an unread message with targets: true", () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager);
+    const { session, sharedChats } = createSharedSessionMock({
+      currentUserId: "self-user",
+      connectedUsers: [
+        {
+          id: "self-user",
+          userId: "self-user",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+          visual: getUserAnimalVisual("self-user"),
+        },
+        {
+          id: "u1",
+          userId: "u1",
+          connectionId: null,
+          name: "Bob",
+          isSelf: false,
+          isAI: false,
+          isRemote: true,
+          isActive: true,
+          visual: getUserAnimalVisual("u1"),
+        },
+      ],
+    });
+    const chatSession = chats.createSharedSession(session);
+
+    expect(chats.wasMentioned.value).toBe(false);
+
+    sharedChats.push({
+      id: "m1",
+      authors: ["u1"],
+      targets: true,
+      timeMs: 1,
+      type: "text",
+      text: "@everyone Hello!",
+    });
+
+    expect(chats.numberOfUnreadMessages.value).toBe(1);
+    expect(chats.wasMentioned.value).toBe(true);
+
+    chatSession.markAsRead();
+
+    expect(chats.wasMentioned.value).toBe(false);
+  });
 });

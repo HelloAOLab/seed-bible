@@ -271,5 +271,6 @@
   "no-participants-match": "No participants match",
   "active": "Active",
   "inactive": "Inactive",
-  "available": "Available"
+  "available": "Available",
+  "everyone": "Everyone"
 }

@@ -39,9 +39,9 @@ export const chatMessageBaseSchema = z.object({
   timeMs: z.number().int().nonnegative(),
 
   /**
-   * The IDs of the participants targeted by the message.
+   * The IDs of the participants targeted by the message, or true if the message targets everyone.
    */
-  targets: z.array(z.string()),
+  targets: z.union([z.array(z.string()), z.literal(true)]),
 });
 
 export const textChatMessageSchema = chatMessageBaseSchema.extend({
@@ -349,7 +349,7 @@ function groupConnectedUsers(
 function createChatMessage(
   options: ChatMessageOptions,
   authors: string[],
-  targets: string[],
+  targets: string[] | true,
   metadata?: {
     id?: string;
     timeMs?: number;
@@ -478,6 +478,10 @@ function textIncludesMention(text: string, value: string): boolean {
     `(?:^|[^\\w])@(?:\\{${escapedToken}\\}|${escapedToken})(?=$|[\\s.,!?;:)}\\]])`
   );
   return mentionPattern.test(text);
+}
+
+function textMentionsEveryone(text: string): boolean {
+  return textIncludesMention(text, "everyone");
 }
 
 export function resolveMessageTargets(
@@ -1050,9 +1054,12 @@ function createSharedChatSession(
       session.currentUser.value?.connectionId ??
       null;
 
+    const isEveryoneMentioned =
+      message.type === "text" && textMentionsEveryone(message.text);
+
     // Auto-add available participants that are mentioned before resolving targets
     const mentionedAvailable =
-      message.type === "text"
+      !isEveryoneMentioned && message.type === "text"
         ? resolveMessageTargetsWithAliases(
             availableParticipants.value,
             message.text,
@@ -1063,18 +1070,22 @@ function createSharedChatSession(
       addSharedProviderParticipant(newParticipant.id);
     }
 
-    const targetParticipants =
-      message.type === "text"
+    const targetParticipants: ChatParticipant[] = isEveryoneMentioned
+      ? participants.value.filter((p) => p.isActive && p.isAI && !p.isRemote)
+      : message.type === "text"
         ? resolveMessageTargetsWithAliases(
             [...participants.value, ...mentionedAvailable],
             message.text,
             participantIdAliases.value
           )
         : [];
+    const messageTargets: string[] | true = isEveryoneMentioned
+      ? true
+      : targetParticipants.map((participant) => participant.id);
     const nextMessage = createChatMessage(
       message,
       authorId ? [authorId] : [],
-      targetParticipants.map((participant) => participant.id)
+      messageTargets
     );
 
     chats.push(nextMessage);
@@ -1236,7 +1247,7 @@ function getWasMentionedSignal(
       id: string;
       authors: string[];
       timeMs: number;
-      targets: string[];
+      targets: string[] | true;
       type: "text";
       text: string;
     }[]
@@ -1254,8 +1265,10 @@ function getWasMentionedSignal(
 
     const unread = unreadMessages.value;
     if (
-      unread.some((message) =>
-        message.targets.some((targetId) => selfParticipantIds.has(targetId))
+      unread.some(
+        (message) =>
+          message.targets === true ||
+          message.targets.some((targetId) => selfParticipantIds.has(targetId))
       )
     ) {
       return true;
@@ -1414,37 +1427,50 @@ function createLocalChatSession(
   const sendMessage = async (message: ChatMessageOptions) => {
     const participant = localParticipant.value;
 
+    const isEveryoneMentioned =
+      message.type === "text" && textMentionsEveryone(message.text);
+
     // Auto-add available participants that are mentioned
     if (message.type === "text") {
-      for (const newParticipant of resolveMessageTargets(
-        availableParticipants.value,
-        message.text
-      )) {
+      const toAdd = isEveryoneMentioned
+        ? availableParticipants.value
+        : resolveMessageTargets(availableParticipants.value, message.text);
+      for (const newParticipant of toAdd) {
         addLocalProviderParticipant(newParticipant.id);
       }
     }
 
-    const resolvedTargetParticipants =
-      message.type === "text"
-        ? resolveMessageTargets(participants.value, message.text)
-        : [];
-    const defaultProviderParticipant = getMostRecentProviderParticipant(
-      participants.value,
-      messages.value
-    );
-    const targetParticipants =
-      resolvedTargetParticipants.length > 0
-        ? resolvedTargetParticipants
-        : defaultProviderParticipant
-          ? [defaultProviderParticipant]
+    let messageTargets: string[] | true;
+    let providerTargets: AIChatParticipant[];
+    if (isEveryoneMentioned) {
+      messageTargets = true;
+      providerTargets = participants.value.filter(
+        (p): p is AIChatParticipant => p.isAI && !p.isRemote && p.isActive
+      );
+    } else {
+      const resolvedTargetParticipants =
+        message.type === "text"
+          ? resolveMessageTargets(participants.value, message.text)
           : [];
-    const providerTargets = targetParticipants.filter(
-      (target): target is AIChatParticipant => target.isAI && !target.isRemote
-    );
+      const defaultProviderParticipant = getMostRecentProviderParticipant(
+        participants.value,
+        messages.value
+      );
+      const targetParticipants =
+        resolvedTargetParticipants.length > 0
+          ? resolvedTargetParticipants
+          : defaultProviderParticipant
+            ? [defaultProviderParticipant]
+            : [];
+      messageTargets = targetParticipants.map((target) => target.id);
+      providerTargets = targetParticipants.filter(
+        (target): target is AIChatParticipant => target.isAI && !target.isRemote
+      );
+    }
     const nextMessage = createChatMessage(
       message,
       participant.id ? [participant.id] : [],
-      targetParticipants.map((target) => target.id)
+      messageTargets
     );
 
     messages.value = [...messages.value, nextMessage];

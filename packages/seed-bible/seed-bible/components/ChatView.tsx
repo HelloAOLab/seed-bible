@@ -269,6 +269,8 @@ export function ChatView(props: ChatViewProps) {
 
   const mentionContext = getMentionContext(draft.value, cursorPosition.value);
   const mentionQuery = mentionContext?.query.toLowerCase() ?? "";
+  const showEveryoneSuggestion =
+    mentionContext !== null && "everyone".startsWith(mentionQuery);
   const activeSuggestions = mentionContext
     ? activeParticipants.filter((p) => matchesMentionQuery(p, mentionQuery, t))
     : [];
@@ -287,12 +289,14 @@ export function ChatView(props: ChatViewProps) {
     ...inactiveSuggestions,
     ...availableSuggestions,
   ];
+  const totalMentionCount =
+    (showEveryoneSuggestion ? 1 : 0) + allMentionSuggestions.length;
   const isMentionPickerOpen = mentionContext !== null;
   const mentionActiveIndex = useSignal(0);
 
   useEffect(() => {
     mentionActiveIndex.value = 0;
-  }, [mentionQuery, allMentionSuggestions.length]);
+  }, [mentionQuery, totalMentionCount]);
 
   useEffect(() => {
     const container = messagesRef.current;
@@ -376,12 +380,10 @@ export function ChatView(props: ChatViewProps) {
     return () => observer.disconnect();
   }, [messages.length]);
 
-  const selectMention = (participant: ChatParticipant) => {
+  const insertMentionText = (mentionText: string) => {
     if (!mentionContext) {
       return;
     }
-
-    const mentionText = `@${getParticipantMentionLabel(participant, t)} `;
     draft.value = replaceMentionText(
       draft.value,
       mentionContext.startIndex,
@@ -389,7 +391,6 @@ export function ChatView(props: ChatViewProps) {
       mentionText
     );
     chat.setTypingStatus(draft.value.trim().length > 0);
-
     window.queueMicrotask(() => {
       const input = inputRef.current;
       if (!input) {
@@ -400,6 +401,14 @@ export function ChatView(props: ChatViewProps) {
       input.setSelectionRange(nextCursor, nextCursor);
       cursorPosition.value = nextCursor;
     });
+  };
+
+  const selectMention = (participant: ChatParticipant) => {
+    insertMentionText(`@${getParticipantMentionLabel(participant, t)} `);
+  };
+
+  const selectEveryoneMention = () => {
+    insertMentionText("@everyone ");
   };
 
   const handleInputPositionUpdate = (event: Event) => {
@@ -415,23 +424,28 @@ export function ChatView(props: ChatViewProps) {
     if (event.key === "ArrowDown") {
       event.preventDefault();
       mentionActiveIndex.value =
-        (mentionActiveIndex.value + 1) % allMentionSuggestions.length;
+        (mentionActiveIndex.value + 1) % totalMentionCount;
       return;
     }
 
     if (event.key === "ArrowUp") {
       event.preventDefault();
       mentionActiveIndex.value =
-        (mentionActiveIndex.value - 1 + allMentionSuggestions.length) %
-        allMentionSuggestions.length;
+        (mentionActiveIndex.value - 1 + totalMentionCount) % totalMentionCount;
       return;
     }
 
     if (event.key === "Enter") {
-      const suggestion = allMentionSuggestions[mentionActiveIndex.value];
-      if (suggestion) {
-        event.preventDefault();
-        selectMention(suggestion);
+      event.preventDefault();
+      if (showEveryoneSuggestion && mentionActiveIndex.value === 0) {
+        selectEveryoneMention();
+      } else {
+        const participantIndex =
+          mentionActiveIndex.value - (showEveryoneSuggestion ? 1 : 0);
+        const suggestion = allMentionSuggestions[participantIndex];
+        if (suggestion) {
+          selectMention(suggestion);
+        }
       }
       return;
     }
@@ -550,7 +564,7 @@ export function ChatView(props: ChatViewProps) {
             role="listbox"
             aria-label={t("participants", { defaultValue: "Participants" })}
           >
-            {allMentionSuggestions.length === 0 ? (
+            {totalMentionCount === 0 ? (
               <div className="sb-chat-view-mention-picker-empty">
                 {t("no-participants-match", {
                   defaultValue: "No participants match",
@@ -558,26 +572,52 @@ export function ChatView(props: ChatViewProps) {
               </div>
             ) : (
               <div className="sb-chat-view-mention-picker-list">
+                {showEveryoneSuggestion && (
+                  <button
+                    type="button"
+                    className={`sb-chat-view-mention-picker-item${
+                      mentionActiveIndex.value === 0 ? " is-selected" : ""
+                    }`}
+                    role="option"
+                    aria-selected={mentionActiveIndex.value === 0}
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                    }}
+                    onClick={selectEveryoneMention}
+                  >
+                    <span className="sb-chat-view-mention-picker-name">
+                      {t("everyone", { defaultValue: "Everyone" })}
+                    </span>
+                    {/* eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content */}
+                    <span className="sb-chat-view-mention-picker-meta">
+                      @everyone
+                    </span>
+                  </button>
+                )}
                 {(
                   [
                     {
                       key: "active",
                       label: t("active", { defaultValue: "Active" }),
                       items: activeSuggestions,
-                      offset: 0,
+                      offset: (showEveryoneSuggestion ? 1 : 0) + 0,
                     },
                     {
                       key: "inactive",
                       label: t("inactive", { defaultValue: "Inactive" }),
                       items: inactiveSuggestions,
-                      offset: activeSuggestions.length,
+                      offset:
+                        (showEveryoneSuggestion ? 1 : 0) +
+                        activeSuggestions.length,
                     },
                     {
                       key: "available",
                       label: t("available", { defaultValue: "Available" }),
                       items: availableSuggestions,
                       offset:
-                        activeSuggestions.length + inactiveSuggestions.length,
+                        (showEveryoneSuggestion ? 1 : 0) +
+                        activeSuggestions.length +
+                        inactiveSuggestions.length,
                     },
                   ] as const
                 ).map(({ key, label, items, offset }) =>
