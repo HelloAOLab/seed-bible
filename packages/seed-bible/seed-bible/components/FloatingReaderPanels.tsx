@@ -690,6 +690,40 @@ function createLocalChatFromProvider(
   state.chats.selectChat(chat.id);
 }
 
+function ChatListAvatarCluster({
+  chat,
+  t,
+}: {
+  chat: ChatSession;
+  t: (key: string, options?: Record<string, unknown>) => string;
+}) {
+  const participants = chat.participants.value;
+  const nonSelf = participants.filter((p) => !p.isSelf);
+  const pool = nonSelf.length > 0 ? nonSelf : participants;
+  const toShow = pool.slice(0, 3);
+  const count = Math.max(toShow.length, 1);
+
+  return (
+    <div
+      className={`sb-chat-list-avatar-cluster sb-chat-list-avatar-cluster-${count}`}
+      aria-hidden="true"
+    >
+      {toShow.map((participant) => {
+        const av = getParticipantAvatar(participant, t);
+        return (
+          <Avatar
+            key={participant.id}
+            imageUrl={av.imageUrl}
+            visual={av.visual}
+            title={av.label}
+            isSelf={av.isSelf}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
 function ChatList({
   chats,
   state,
@@ -723,30 +757,33 @@ function ChatList({
                 aria-selected="false"
                 title={getChatTitle(chat, t)}
               >
-                <div className="sb-floating-chat-list-item-header">
-                  <span className="sb-floating-chat-list-item-title">
-                    {getChatTitle(chat, t)}
-                  </span>
-                  <div className="sb-floating-chat-list-item-meta">
-                    {latestMessage ? (
-                      <span className="sb-floating-chat-list-item-time">
-                        <ChatListRelativeDateTime
-                          timeMs={latestMessage.timeMs}
-                        />
-                      </span>
-                    ) : null}
+                <ChatListAvatarCluster chat={chat} t={t} />
+                <div className="sb-floating-chat-list-item-content">
+                  <div className="sb-floating-chat-list-item-header">
+                    <span className="sb-floating-chat-list-item-title">
+                      {getChatTitle(chat, t)}
+                    </span>
+                    <div className="sb-floating-chat-list-item-meta">
+                      {latestMessage ? (
+                        <span className="sb-floating-chat-list-item-time">
+                          <ChatListRelativeDateTime
+                            timeMs={latestMessage.timeMs}
+                          />
+                        </span>
+                      ) : null}
 
-                    {unreadCount > 0 ? (
-                      <span className="sb-floating-chat-list-item-unread">
-                        {unreadCount > 99 ? "99+" : `${unreadCount}`}
-                      </span>
-                    ) : null}
+                      {unreadCount > 0 ? (
+                        <span className="sb-floating-chat-list-item-unread">
+                          {unreadCount > 99 ? "99+" : `${unreadCount}`}
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
 
-                <p className="sb-floating-chat-list-item-preview">
-                  {getChatPreview(chat, t)}
-                </p>
+                  <p className="sb-floating-chat-list-item-preview">
+                    {getChatPreview(chat, t)}
+                  </p>
+                </div>
               </button>
             );
           })}
