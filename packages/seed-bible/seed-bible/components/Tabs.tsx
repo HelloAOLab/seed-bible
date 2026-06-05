@@ -623,6 +623,23 @@ function TabRow(props: TabRowProps) {
                 defaultValue: `Share session`,
               })}
             </ContextMenuItem>
+            {tab.sharedChat && (
+              <ContextMenuItem
+                className="sb-tab-menu-item"
+                title={t("open-chat", {
+                  defaultValue: `Open chat`,
+                })}
+                onClick={() => {
+                  if (tab.sharedChat) {
+                    state.app.openChat(tab.sharedChat);
+                  }
+                }}
+              >
+                {t("open-chat", {
+                  defaultValue: `Open chat`,
+                })}
+              </ContextMenuItem>
+            )}
             {(() => {
               const isHost = tab.sharedSession.isHost(
                 tab.sharedSession.currentUser.value

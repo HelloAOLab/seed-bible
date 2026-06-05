@@ -43,6 +43,7 @@ import {
 } from "seed-bible.managers.BookmarksManager";
 import {
   createChatsManager,
+  type ChatSession,
   type ChatsManager,
 } from "seed-bible.managers.ChatsManager";
 import {
@@ -117,6 +118,9 @@ export interface AppState {
   createSharedSession: () => Promise<BibleReadingSession>;
   /** Joins an existing shared session and opens it in a new tab. */
   joinSharedSession: (id: string) => Promise<BibleReadingSession>;
+
+  /** Opens a chat session. */
+  openChat: (sharedChat: ChatSession) => void;
 
   /** Opens a verse reference. */
   openVerseReference: (ref: VerseRef) => Promise<void>;
@@ -668,6 +672,11 @@ export function createSeedBibleState(): SeedBibleState {
     }
   };
 
+  const handleOpenChat = (sharedChat: ChatSession) => {
+    sidebar.openChatPanel();
+    chats.selectChat(sharedChat.id);
+  };
+
   const invitations = createInvitationsManager(login, async (sessionId) => {
     await handleJoinSharedSession(sessionId);
   });
@@ -723,6 +732,7 @@ export function createSeedBibleState(): SeedBibleState {
       openInDetachedPane: handleOpenInDetachedPane,
       selectPane: handleSelectPane,
       openVerseReference: handleOpenVerseReference,
+      openChat: handleOpenChat,
     },
   };
 

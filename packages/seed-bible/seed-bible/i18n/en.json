@@ -273,5 +273,6 @@
   "active": "Active",
   "inactive": "Inactive",
   "available": "Available",
-  "everyone": "Everyone"
+  "everyone": "Everyone",
+  "open-chat": "Open chat"
 }
