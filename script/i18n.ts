@@ -283,18 +283,28 @@ async function translateMissingCoreKeys(options: {
 
 async function translateExtensionKeys(
   options: { projectId: string },
-  mode: "missing" | "all"
+  mode: "missing" | "all",
+  extensionId?: string
 ): Promise<void> {
   const coreResourcesByLanguage = await readMainAppResourcesByLanguage();
   const coreLanguages = [...coreResourcesByLanguage.keys()]
     .filter((language) => language !== ENGLISH_LANGUAGE)
     .sort((a, b) => a.localeCompare(b));
 
-  const extensions = await readExtensionDefinitions();
+  const allExtensions = await readExtensionDefinitions();
 
-  if (extensions.length === 0) {
+  if (allExtensions.length === 0) {
     console.log("No extension.json files were found in packages.");
     return;
+  }
+
+  const extensions = extensionId
+    ? allExtensions.filter((e) => e.extensionId === extensionId)
+    : allExtensions;
+
+  if (extensionId && extensions.length === 0) {
+    console.error(`No extension found with id "${extensionId}".`);
+    process.exit(1);
   }
 
   const label =
@@ -569,10 +579,13 @@ async function addLanguagesCommand(
 
 async function translateAllCommand(options: {
   projectId?: string;
+  extensionId?: string;
 }): Promise<void> {
   const translationConfig = getTranslationClientConfig(options);
-  await translateCoreKeys(translationConfig, "all");
-  await translateExtensionKeys(translationConfig, "all");
+  if (!options.extensionId) {
+    await translateCoreKeys(translationConfig, "all");
+  }
+  await translateExtensionKeys(translationConfig, "all", options.extensionId);
 }
 
 function getExtensionResourcesByLanguage(
@@ -664,6 +677,10 @@ program
   .option(
     "--project-id <projectId>",
     "Google Cloud project ID. Defaults to GOOGLE_CLOUD_PROJECT_ID env var."
+  )
+  .option(
+    "--extension-id <extensionId>",
+    "When specified, only translates keys for the given extension (skips core app)."
   )
   .action(async (options) => {
     await translateAllCommand(options);
