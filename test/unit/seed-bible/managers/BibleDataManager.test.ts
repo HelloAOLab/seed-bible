@@ -287,10 +287,24 @@ describe("parseVerseReference()", () => {
       "Hab.3.8-15",
       { book: "HAB", chapter: 3, verse: 8, endVerse: 15 },
     ] as const,
+    ["Hab.3", { book: "HAB", chapter: 3 }] as const,
+    ["Hab.3-5", { book: "HAB", chapter: 3, endChapter: 5 }] as const,
     ["2Sam.15.8", { book: "2SA", chapter: 15, verse: 8 }] as const,
     [
       "1Kgs.1.31-32",
       { book: "1KI", chapter: 1, verse: 31, endVerse: 32 },
+    ] as const,
+
+    // verse-optional formats
+    ["GEN 1", { book: "GEN", chapter: 1 }] as const,
+    ["GEN 5-7", { book: "GEN", chapter: 5, endChapter: 7 }] as const,
+    [
+      "GEN 5:16-19",
+      { book: "GEN", chapter: 5, verse: 16, endVerse: 19 },
+    ] as const,
+    [
+      "GEN 1:1-2:10",
+      { book: "GEN", chapter: 1, verse: 1, endChapter: 2, endVerse: 10 },
     ] as const,
   ];
 

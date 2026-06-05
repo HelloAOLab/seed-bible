@@ -178,51 +178,64 @@ export interface VerseRef {
  * @param text The reference to parse.
  */
 export function parseVerseReference(text: string): VerseRef | null {
+  // Formats supported:
+  //   GEN 1          – chapter only
+  //   GEN 1:1        – chapter + verse
+  //   GEN 5-7        – chapter range
+  //   GEN 5:16-19    – verse range within one chapter
+  //   GEN 1:1-2:10   – cross-chapter verse range
   const match = text.match(
-    /^\s*([0-9A-Za-z\s]+)[\s\.]+(\d+)[:\.](\d+)(?:-([0-9]+)(?:[\s:\.]([0-9]+))?)?/
+    /^\s*([0-9A-Za-z\s]+)[\s\.]+(\d+)(?:[:\.](\d+))?(?:-(\d+)(?:[:\.](\d+))?)?/
   );
 
   if (!match) {
     return null;
   }
 
-  const [reference, book, chapterStr, verseStr, endChapterStr, endVerseStr] =
+  const [reference, book, chapterStr, verseStr, rangeStartStr, rangeEndStr] =
     match;
 
-  if (!book || !chapterStr || !verseStr) {
+  if (!book || !chapterStr) {
     return null;
   }
 
   const chapter = parseInt(chapterStr);
-  const verse = parseInt(verseStr);
-
-  let endChapter = endChapterStr ? parseInt(endChapterStr) : undefined;
-  let endVerse = endVerseStr ? parseInt(endVerseStr) : undefined;
-
-  if (endChapter && !endVerse) {
-    endVerse = endChapter;
-    endChapter = undefined;
-  }
-
-  if (isNaN(chapter) || isNaN(verse)) {
+  if (isNaN(chapter)) {
     return null;
   }
 
-  if (reference.length !== text.length) {
-    return {
-      book: (getBookId(book) ?? book) as BookId,
-      chapter,
-      verse,
-      content: text.substring(reference.length).trim(),
-      endChapter,
-      endVerse,
-    };
+  const verse = verseStr !== undefined ? parseInt(verseStr) : undefined;
+  if (verse !== undefined && isNaN(verse)) {
+    return null;
   }
 
+  let endChapter: number | undefined;
+  let endVerse: number | undefined;
+
+  if (rangeStartStr) {
+    if (verse === undefined) {
+      // No verse → range is chapter-based: "GEN 5-7"
+      endChapter = parseInt(rangeStartStr);
+    } else if (rangeEndStr) {
+      // Both sides have a colon separator: "GEN 1:1-2:10"
+      endChapter = parseInt(rangeStartStr);
+      endVerse = parseInt(rangeEndStr);
+    } else {
+      // Verse present, no colon on range end: "GEN 5:16-19"
+      endVerse = parseInt(rangeStartStr);
+    }
+  }
+
+  const content =
+    reference.length !== text.length
+      ? text.substring(reference.length).trim() || undefined
+      : undefined;
+
   return {
-    book: getBookId(book) ?? (book as BookId),
+    book: (getBookId(book) ?? book) as BookId,
     chapter,
     verse,
+    content,
     endChapter,
     endVerse,
   };
