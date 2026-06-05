@@ -1,4 +1,10 @@
 export const uz: Record<string, string> = {
+  "live-now": "HOZIR JONLI",
+  Join: "Qo'shilish",
+  "selected-year": "Yil: {{year}}",
+  "monday-short": "Du",
+  "wednesday-short": "Ch",
+  "friday-short": "Ju",
   "resume-reading": "TO'XTATGAN JOYINGIZDAN DAVOM ETING",
   "greeting-morning": "Xayrli tong",
   "greeting-afternoon": "Xayrli kun",

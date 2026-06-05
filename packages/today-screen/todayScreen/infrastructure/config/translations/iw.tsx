@@ -1,4 +1,10 @@
 export const iw: Record<string, string> = {
+  "live-now": "שידור חי עכשיו",
+  Join: "הצטרף",
+  "selected-year": "שנה: {{year}}",
+  "monday-short": "שני",
+  "wednesday-short": "רבי",
+  "friday-short": "שישי",
   "resume-reading": "המשך מהמקום שעצרת",
   "greeting-morning": "בוקר טוב",
   "greeting-afternoon": "צהריים טובים",

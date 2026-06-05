@@ -1,4 +1,10 @@
 export const ps: Record<string, string> = {
+  "live-now": "اوس مستقیم",
+  Join: "ګډون وکړئ",
+  "selected-year": "کال: {{year}}",
+  "monday-short": "دوش",
+  "wednesday-short": "چهار",
+  "friday-short": "جمعه",
   "resume-reading": "له هغه ځایه ادامه ورکه چیرته چې پاتې وې",
   "greeting-morning": "سهار مو پخیر",
   "greeting-afternoon": "غرمه مو پخیر",

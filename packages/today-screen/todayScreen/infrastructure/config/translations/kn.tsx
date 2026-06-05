@@ -1,4 +1,10 @@
 export const kn: Record<string, string> = {
+  "live-now": "ಈಗ ಲೈವ್",
+  Join: "ಸೇರಿ",
+  "selected-year": "ವರ್ಷ: {{year}}",
+  "monday-short": "ಸೋಮ",
+  "wednesday-short": "ಬುಧ",
+  "friday-short": "ಶುಕ್ರ",
   "resume-reading": "ನೀವು ಬಿಟ್ಟ ಜಾಗದಿಂದ ಮುಂದುವರಿಯಿರಿ",
   "greeting-morning": "ಶುಭೋದಯ",
   "greeting-afternoon": "ಶುಭ ಮಧ್ಯಾಹ್ನ",

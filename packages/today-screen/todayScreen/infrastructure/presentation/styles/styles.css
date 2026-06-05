@@ -237,14 +237,17 @@
   background-color: var(--sb-secondary-color);
 }
 
+.today-container .today-section-card {
+  padding: 12px 16px;
+  border: solid 1px var(--sb-divider-color);
+  width: 100%;
+  border-radius: 8px;
+}
+
 .today-container .history-card {
   display: grid;
   grid-template-columns: auto 1fr;
   grid-template-rows: auto;
-  padding: 12px;
-  border: solid 1px var(--sb-divider-color);
-  width: 100%;
-  border-radius: 8px;
   gap: 8px;
 }
 
@@ -281,6 +284,10 @@
   box-shadow: 0 0 12px 0 #00000038;
   z-index: 10;
   border-radius: 4px;
+  cursor: default;
+}
+
+.today-container .history-card .user-filter-container .date-label {
 }
 
 .today-container .user-filter-option {
@@ -356,7 +363,7 @@
 
 .today-container .filtered-reading-container {
   grid-column: 1 / 3;
-  grid-row: 2 / 3;
+  /* grid-row: 2 / 3; */
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
@@ -392,6 +399,7 @@
   align-items: flex-start;
   gap: 4px;
   margin-top: 12px;
+  cursor: default;
 }
 
 .today-container .filtered-reading-book > span {
@@ -465,4 +473,82 @@
 .today-container .filtered-reading-chapter > div > div > span {
   font-size: 8px;
   color: var(--sb-reader-font-color);
+}
+
+.today-container .reading-history-timeline-container {
+  grid-column: 1 / 3;
+}
+
+.today-container .reading-history-timeline {
+  scrollbar-width: none;
+}
+
+.today-container .presence-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.today-container .presence-card .presence-card-left-section,
+.today-container .presence-card .presence-card-right-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.today-container .presence-card .presence-card-left-section {
+  gap: 8px;
+}
+
+.today-container .presence-card .presence-card-right-section {
+  gap: 20px;
+}
+
+.today-container .presence-card .presence-card-left-section-dot {
+  width: 4px;
+  height: 4px;
+  background-color: var(--sb-reader-font-color);
+  border-radius: 50%;
+}
+
+.today-container .presence-card .presence-card-status {
+  color: #28c244;
+  font-weight: 600;
+  font-size: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.today-container .presence-card .presence-card-status > div {
+  background-color: #28c244;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 2px 2px #28c2449c;
+}
+
+.today-container .presence-card .presence-card-reading {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.today-container .presence-card .presence-card-avatar-group {
+  display: flex;
+  align-items: center;
+}
+
+.today-container .presence-card .filtered-reading-book-icon {
+}
+
+.today-container .presence-card .presence-card-join-button {
+  appearance: none;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sb-primary-color);
+  background-color: var(--sb-secondary-color);
 }

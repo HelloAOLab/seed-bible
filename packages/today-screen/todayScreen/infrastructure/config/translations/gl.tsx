@@ -1,4 +1,10 @@
 export const gl: Record<string, string> = {
+  "live-now": "EN DIRECTO AGORA",
+  Join: "Unirse",
+  "selected-year": "Ano: {{year}}",
+  "monday-short": "Lun",
+  "wednesday-short": "Mér",
+  "friday-short": "Ven",
   "resume-reading": "CONTINÚA ONDE O DEIXACHES",
   "greeting-morning": "Bos días",
   "greeting-afternoon": "Boa tarde",

@@ -1,4 +1,10 @@
 export const gu: Record<string, string> = {
+  "live-now": "હમણાં લાઇવ",
+  Join: "જોડાઓ",
+  "selected-year": "વર્ષ: {{year}}",
+  "monday-short": "સોમ",
+  "wednesday-short": "બુધ",
+  "friday-short": "શુક્ર",
   "resume-reading": "જ્યાં છોડ્યું ત્યાંથી ચાલુ રાખો",
   "greeting-morning": "સુપ્રભાત",
   "greeting-afternoon": "શુભ બપોર",

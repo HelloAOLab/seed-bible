@@ -1,4 +1,10 @@
 export const az: Record<string, string> = {
+  "live-now": "İNDİ CANLI",
+  Join: "Qoşul",
+  "selected-year": "İl: {{year}}",
+  "monday-short": "Be",
+  "wednesday-short": "Ça",
+  "friday-short": "Cu",
   "resume-reading": "Dayandığın yerdən davam et",
   "greeting-morning": "Sabahınız xeyir",
   "greeting-afternoon": "Günortanız xeyir",

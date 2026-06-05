@@ -6,11 +6,9 @@ import { Today } from "../presentation/components/Today";
 import { addTranslations, useI18n } from "seed-bible.i18n.I18nManager";
 import { TodayReadingHistoryService } from "todayScreen.application.services.TodayReadingHistoryService";
 import { FakeSubscribedUsersProvider } from "todayScreen.infrastructure.adapters.fake.FakeSubscribedUsersProvider";
-import {
-  COMMUNITY_READING_SPAN_IDS,
-  type CommunityReading,
-  type CommunityReadingSpanId,
-  type UserLastReading,
+import type {
+  FilteredReading,
+  UserLastReading,
 } from "todayScreen.domain.models.readingHistory";
 import { translations } from "todayScreen.infrastructure.config.translations.index";
 import type { BibleVizAPI } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/seedBible";
@@ -43,6 +41,9 @@ export const bootstrapExtension = () => {
         sessionProvider,
         ReadingHistoryTimeline,
         getDayRangeSeconds,
+        GetPastDateInfo,
+        CapitalizeFirstLetter,
+        readingHistoryService,
       } = dependenciesMap[
         bibleVizUtilsId
       ] as DependenciesMap[typeof bibleVizUtilsId];
@@ -51,37 +52,44 @@ export const bootstrapExtension = () => {
         sessionProvider
       );
 
+      const fakeGetReadingHistoryEvents = (
+        recordName: string,
+        startTime: number,
+        endTime: number
+      ) => {
+        if (
+          context.login.userId.value &&
+          recordName === context.login.userId.value
+        ) {
+          return getReadingHistoryEvents(recordName, startTime, endTime);
+        }
+        return fakeSubscribedUsersProvider.getReadingHistoryEvents(
+          recordName,
+          startTime,
+          endTime
+        );
+      };
+
       const todayReadingHistoryService = new TodayReadingHistoryService({
         readingEventsProviderPort: {
-          getReadingHistoryEvents: (
-            recordName: string,
-            startTime: number,
-            endTime: number
-          ) => {
-            if (
-              context.login.userId.value &&
-              recordName === context.login.userId.value
-            ) {
-              return getReadingHistoryEvents(recordName, startTime, endTime);
-            }
-            return fakeSubscribedUsersProvider.getReadingHistoryEvents(
-              recordName,
-              startTime,
-              endTime
-            );
-          },
+          getReadingHistoryEvents: fakeGetReadingHistoryEvents,
         },
         usersIdProviderPort: fakeSubscribedUsersProvider,
       });
 
       const userLastReading = signal<UserLastReading>(undefined);
-      const communityReading = signal<CommunityReading<CommunityReadingSpanId>>(
-        {
-          [COMMUNITY_READING_SPAN_IDS.twoDays]: {},
-          [COMMUNITY_READING_SPAN_IDS.week]: {},
-          [COMMUNITY_READING_SPAN_IDS.month]: {},
-        }
-      );
+
+      /**
+       * Fetches the community reading for one exact period. The presentation
+       * layer drives this reactively from the selected `timespan`.
+       */
+      const getCommunityReading = (timespan: {
+        from: number;
+        to: number;
+      }): Promise<FilteredReading> =>
+        todayReadingHistoryService
+          .getCommunityReading([{ id: "value", span: timespan }])
+          .then((result) => result.value);
 
       const cleanupUserLastReading = effect(() => {
         const userId = context.login.userId.value;
@@ -100,36 +108,6 @@ export const bootstrapExtension = () => {
           .getUserLastReading(userId, { from: oneYearAgo, to: now })
           .then((result) => {
             userLastReading.value = result;
-          });
-      });
-
-      const cleanupCommunityReading = effect(() => {
-        const now = Math.floor(Date.now() / 1000);
-        const twoDaysAgo = now - 2 * 24 * 60 * 60;
-        const aWeekAgo = now - 7 * 24 * 60 * 60;
-        const aMonthAgo = now - 30 * 24 * 60 * 60;
-        const spansData: Array<{
-          id: CommunityReadingSpanId;
-          span: { from: number; to: number };
-        }> = [
-          {
-            id: COMMUNITY_READING_SPAN_IDS.twoDays,
-            span: { from: twoDaysAgo, to: now },
-          },
-          {
-            id: COMMUNITY_READING_SPAN_IDS.week,
-            span: { from: aWeekAgo, to: now },
-          },
-          {
-            id: COMMUNITY_READING_SPAN_IDS.month,
-            span: { from: aMonthAgo, to: now },
-          },
-        ];
-
-        void todayReadingHistoryService
-          .getCommunityReading(spansData)
-          .then((result) => {
-            communityReading.value = result;
           });
       });
 
@@ -155,6 +133,11 @@ export const bootstrapExtension = () => {
         return new Map(books.map((book) => [book.id, book]));
       });
 
+      const sharedSessions = computed(() => {
+        const tabs = context.tabs.tabs.value.filter((tab) => tab.sharedSession);
+        return tabs.map((tab) => tab.sharedSession!);
+      });
+
       yield context.tools.registerToolbarTool({
         id: "today",
         priority: 0,
@@ -172,7 +155,7 @@ export const bootstrapExtension = () => {
                   username: context.login.profile.value?.name,
                   userId: context.login.userId.value ?? undefined,
                   userLastReading,
-                  communityReading,
+                  getCommunityReading,
                   translate: (key, options) =>
                     t(key, {
                       ns: [extensionId, "seed-bible"],
@@ -216,6 +199,20 @@ export const bootstrapExtension = () => {
                   subscribedUsersIdsProvider: fakeSubscribedUsersProvider,
                   ReadingHistoryTimeline,
                   getDayRangeSeconds,
+                  getReadingHistoryEvents: fakeGetReadingHistoryEvents,
+                  GetPastDateInfo,
+                  CapitalizeFirstLetter,
+                  theme: context.theme.currentTheme.value,
+                  readingHistoryService,
+                  sharedSessions,
+                  userDeterministicIdentityProvider: {
+                    getColorById: (id: string) =>
+                      sessionProvider.getUserColorById(id),
+                    getIconById: (id: string) =>
+                      sessionProvider.getUserIconById(id),
+                  },
+                  joinSharedSession: (id: string) =>
+                    context.app.joinSharedSession(id),
                 }}
                 customCSS={customCSS}
               />
@@ -232,7 +229,6 @@ export const bootstrapExtension = () => {
 
       yield () => {
         cleanupUserLastReading();
-        cleanupCommunityReading();
         cleanupTranslationBooks();
         destroy([]);
       };

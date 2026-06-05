@@ -1,4 +1,10 @@
 export const km: Record<string, string> = {
+  "live-now": "ផ្សាយផ្ទាល់ឥឡូវនេះ",
+  Join: "ចូលរួម",
+  "selected-year": "ឆ្នាំ: {{year}}",
+  "monday-short": "ច",
+  "wednesday-short": "ព",
+  "friday-short": "សុ",
   "resume-reading": "បន្តពីចំណុចដែលអ្នកបានឈប់",
   "greeting-morning": "អរុណសួស្តី",
   "greeting-afternoon": "ទិវាសួស្តី",

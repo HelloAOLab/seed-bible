@@ -1,4 +1,10 @@
 export const ca: Record<string, string> = {
+  "live-now": "EN DIRECTE ARA",
+  Join: "Uneix-te",
+  "selected-year": "Any: {{year}}",
+  "monday-short": "Dl",
+  "wednesday-short": "Dc",
+  "friday-short": "Dv",
   "resume-reading": "CONTINUA ON HO HAVIES DEIXAT",
   "greeting-morning": "Bon dia",
   "greeting-afternoon": "Bona tarda",

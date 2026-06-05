@@ -1,5 +1,6 @@
 import { useBook } from "../../hooks/useBook";
 import { Chapter, type Props as ChapterProps } from "./Chapter";
+import { UserIcon, type UserIconProps } from "../ui/UserIcon";
 
 export interface BookProps {
   bookId: string;
@@ -9,37 +10,12 @@ export interface BookProps {
   usersId: string[];
 }
 
-export type UserIconProps = {
-  pictureUrl?: string;
-  color: string;
-  icon: string;
-  MaterialIcon: (props: {
-    children: string;
-    className?: string | undefined;
-  }) => preact.JSX.Element;
-};
-
 export interface ChapterData extends ChapterProps {
   key: string;
 }
 
 export type UserIconData = UserIconProps & {
   key: string;
-};
-
-const UserIcon = (props: UserIconProps) => {
-  if (props.pictureUrl) {
-    return <></>;
-  }
-
-  return (
-    <div
-      className="filtered-reading-book-icon"
-      style={{ backgroundColor: props.color }}
-    >
-      <props.MaterialIcon>{props.icon}</props.MaterialIcon>
-    </div>
-  );
 };
 
 export const Book = (props: BookProps) => {
@@ -55,7 +31,7 @@ export const Book = (props: BookProps) => {
 
   return (
     <div
-      className={`filtered-reading-book${isExpanded ? " expanded" : ""}`}
+      className={`filtered-reading-book${isExpanded ? " expanded" : ""} clickable`}
       onClick={handleBookClick}
     >
       <span>{name}</span>
@@ -68,7 +44,12 @@ export const Book = (props: BookProps) => {
         )}
       </div>
       {isExpanded && (
-        <div className="chapters-container">
+        <div
+          className="chapters-container"
+          onClick={(e) => {
+            e.stopPropagation();
+          }}
+        >
           {chaptersData.map(({ key, ...rest }) => {
             return <Chapter key={key} {...rest} />;
           })}

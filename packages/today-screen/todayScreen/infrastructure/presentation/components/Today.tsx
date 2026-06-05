@@ -1,14 +1,18 @@
 import { TodayProvider } from "todayScreen.infrastructure.presentation.contexts.today.TodayContext";
 import { TimeProvider } from "todayScreen.infrastructure.presentation.contexts.time.TimeContext";
 import { TodayContainer } from "./containers/TodayContainer";
-import type { Signal } from "@preact/signals";
+import type { ReadonlySignal, Signal } from "@preact/signals";
 import type {
-  CommunityReading,
-  CommunityReadingSpanId,
+  FilteredReading,
   UserLastReading,
 } from "todayScreen.domain.models.readingHistory";
 import type { ReadingHistoryTimelineComponent } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/seedBible";
 import type { GetDayRangeSecondsType } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/functions/time";
+import type { CapitalizeFirstLetterType } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/functions/string";
+import type { ReadingEvent } from "@packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
+import type { BibleTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
+import type { ReadingHistoryServicePort } from "todayScreen.infrastructure.ports.readingHistoryService";
+import type { BibleReadingSession } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 // import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 
 const { memo } = os.appCompat;
@@ -27,7 +31,10 @@ export interface TodayConfig {
   username: string | undefined;
   userId: string | undefined;
   userLastReading: Signal<UserLastReading>;
-  communityReading: Signal<CommunityReading<CommunityReadingSpanId>>;
+  getCommunityReading: (timespan: {
+    from: number;
+    to: number;
+  }) => Promise<FilteredReading>;
   translate: (key: string, options?: Record<string, unknown>) => string;
   bookNames: Signal<Map<string, string>>;
   addTab: (
@@ -71,6 +78,30 @@ export interface TodayConfig {
   };
   ReadingHistoryTimeline: ReadingHistoryTimelineComponent;
   getDayRangeSeconds: GetDayRangeSecondsType;
+  getReadingHistoryEvents: (
+    recordName: string,
+    startTime: number,
+    endTime: number
+  ) => Promise<Iterable<ReadingEvent>>;
+  GetPastDateInfo: (
+    time: number,
+    lang?: string | undefined
+  ) => {
+    weekday: string | undefined;
+    day: number;
+    month: number;
+    monthName: string;
+    year: number;
+  };
+  CapitalizeFirstLetter: CapitalizeFirstLetterType;
+  theme: BibleTheme;
+  readingHistoryService: ReadingHistoryServicePort;
+  sharedSessions: ReadonlySignal<BibleReadingSession[]>;
+  userDeterministicIdentityProvider: {
+    getColorById(id: string): string;
+    getIconById(id: string): string;
+  };
+  joinSharedSession: (id: string) => Promise<BibleReadingSession>;
 }
 
 type TodayProps = {

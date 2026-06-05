@@ -1,4 +1,10 @@
 export const it: Record<string, string> = {
+  "live-now": "IN DIRETTA ORA",
+  Join: "Partecipa",
+  "selected-year": "Anno: {{year}}",
+  "monday-short": "Lun",
+  "wednesday-short": "Mer",
+  "friday-short": "Ven",
   "resume-reading": "CONTINUA DA DOVE HAI LASCIATO",
   "greeting-morning": "Buongiorno",
   "greeting-afternoon": "Buon pomeriggio",

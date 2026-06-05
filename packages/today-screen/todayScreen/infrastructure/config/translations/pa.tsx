@@ -1,4 +1,10 @@
 export const pa: Record<string, string> = {
+  "live-now": "ਹੁਣੇ ਲਾਈਵ",
+  Join: "ਸ਼ਾਮਲ ਹੋਵੋ",
+  "selected-year": "ਸਾਲ: {{year}}",
+  "monday-short": "ਸੋਮ",
+  "wednesday-short": "ਬੁੱਧ",
+  "friday-short": "ਸ਼ੁੱਕ",
   "resume-reading": "ਜਿੱਥੇ ਛੱਡਿਆ ਸੀ ਉੱਥੋਂ ਜਾਰੀ ਰੱਖੋ",
   "greeting-morning": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ",
   "greeting-afternoon": "ਸ਼ੁਭ ਦੁਪਹਿਰ",

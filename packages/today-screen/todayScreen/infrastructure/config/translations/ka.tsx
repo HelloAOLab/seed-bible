@@ -1,4 +1,10 @@
 export const ka: Record<string, string> = {
+  "live-now": "ახლა პირდაპირ ეთერში",
+  Join: "შეერთება",
+  "selected-year": "წელი: {{year}}",
+  "monday-short": "ორშ",
+  "wednesday-short": "ოთხ",
+  "friday-short": "პარ",
   "resume-reading": "გააგრძელე სადაც შეჩერდი",
   "greeting-morning": "დილა მშვიდობისა",
   "greeting-afternoon": "შუადღე მშვიდობისა",

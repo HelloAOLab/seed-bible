@@ -1,4 +1,10 @@
 export const ky: Record<string, string> = {
+  "live-now": "АЗЫР ТҮЗ ЭФИРДЕ",
+  Join: "Кошулуу",
+  "selected-year": "Жыл: {{year}}",
+  "monday-short": "Дш",
+  "wednesday-short": "Шр",
+  "friday-short": "Жм",
   "resume-reading": "Калган жериңден улант",
   "greeting-morning": "Кайырлуу таң",
   "greeting-afternoon": "Кайырлуу күн",

@@ -1,4 +1,10 @@
 export const sw: Record<string, string> = {
+  "live-now": "MOJA KWA MOJA SASA",
+  Join: "Jiunge",
+  "selected-year": "Mwaka: {{year}}",
+  "monday-short": "Jtu",
+  "wednesday-short": "Jtn",
+  "friday-short": "Iju",
   "resume-reading": "ENDELEA ULIPOACHA",
   "greeting-morning": "Habari ya asubuhi",
   "greeting-afternoon": "Habari ya mchana",

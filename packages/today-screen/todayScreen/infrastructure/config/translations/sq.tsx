@@ -1,4 +1,10 @@
 export const sq: Record<string, string> = {
+  "live-now": "DREJTPËRDREJT TANI",
+  Join: "Bashkohu",
+  "selected-year": "Viti: {{year}}",
+  "monday-short": "Hën",
+  "wednesday-short": "Mër",
+  "friday-short": "Pre",
   "resume-reading": "VAZHDONI NGA KU KENI LËNË",
   "greeting-morning": "Mirëmëngjes",
   "greeting-afternoon": "Mirëdita",

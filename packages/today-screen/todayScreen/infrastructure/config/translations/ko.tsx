@@ -1,4 +1,10 @@
 export const ko: Record<string, string> = {
+  "live-now": "지금 라이브",
+  Join: "참여",
+  "selected-year": "연도: {{year}}",
+  "monday-short": "월",
+  "wednesday-short": "수",
+  "friday-short": "금",
   "resume-reading": "이어서 읽기",
   "greeting-morning": "좋은 아침이에요",
   "greeting-afternoon": "좋은 오후예요",

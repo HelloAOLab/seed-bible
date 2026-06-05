@@ -1,4 +1,10 @@
 export const nb: Record<string, string> = {
+  "live-now": "DIREKTE NÅ",
+  Join: "Bli med",
+  "selected-year": "År: {{year}}",
+  "monday-short": "Man",
+  "wednesday-short": "Ons",
+  "friday-short": "Fre",
   "resume-reading": "FORTSETT DER DU SLAPP",
   "greeting-morning": "God morgen",
   "greeting-afternoon": "God ettermiddag",

@@ -1,4 +1,10 @@
 export const ms: Record<string, string> = {
+  "live-now": "LANGSUNG SEKARANG",
+  Join: "Sertai",
+  "selected-year": "Tahun: {{year}}",
+  "monday-short": "Isn",
+  "wednesday-short": "Rab",
+  "friday-short": "Jum",
   "resume-reading": "TERUSKAN DARI TEMPAT ANDA BERHENTI",
   "greeting-morning": "Selamat pagi",
   "greeting-afternoon": "Selamat tengah hari",

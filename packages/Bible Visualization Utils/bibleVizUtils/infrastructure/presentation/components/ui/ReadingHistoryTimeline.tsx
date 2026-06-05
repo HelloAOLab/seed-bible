@@ -136,8 +136,8 @@ const Label = memo(
 );
 
 type ItemProps =
-  ReadingHistoryItemProps<// eslint-disable-next-line @typescript-eslint/no-explicit-any
-  any> & {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ReadingHistoryItemProps<any> & {
     Tooltip?: ReadingHistoryTooltip;
   };
 
@@ -154,7 +154,10 @@ const Item = memo(
   }: ItemProps) => {
     const [containerRect, setContainerRect] = useState<DOMRect | null>(null);
 
-    const selected = range === readingHistoryRangeSeconds;
+    const selected =
+      readingHistoryRangeSeconds &&
+      range.start === readingHistoryRangeSeconds.start &&
+      range.end === readingHistoryRangeSeconds.end;
 
     const { tooltipAnchor } = useMemo<{
       tooltipAnchor: TooltipAnchor | undefined;

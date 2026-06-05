@@ -352,7 +352,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
             key: `${week}-${day}-${dayOfTheMonth}-${monthName}-${year}`,
             tooltipContentsData: tooltipContentsData,
             range: range,
-            handleItemClick: handleItemClick,
+            handleItemClick,
             readingHistoryRangeSeconds: readingHistoryRangeSeconds,
             style: style,
             isUpcoming: isUpcoming,

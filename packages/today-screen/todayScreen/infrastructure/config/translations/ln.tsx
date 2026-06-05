@@ -1,4 +1,10 @@
 export const ln: Record<string, string> = {
+  "live-now": "LIVE SIKAWA",
+  Join: "Kokɔta",
+  "selected-year": "Mobu: {{year}}",
+  "monday-short": "Lun",
+  "wednesday-short": "Mer",
+  "friday-short": "Ven",
   "resume-reading": "KOTIYA APE OYI KOKOBA",
   "greeting-morning": "Mbote na ntɔ́ngɔ́",
   "greeting-afternoon": "Mbote na mídí",

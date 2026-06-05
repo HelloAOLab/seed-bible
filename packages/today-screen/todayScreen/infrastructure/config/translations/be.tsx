@@ -1,4 +1,10 @@
 export const be: Record<string, string> = {
+  "live-now": "ЗАРАЗ У ЭФІРЫ",
+  Join: "Далучыцца",
+  "selected-year": "Год: {{year}}",
+  "monday-short": "Пн",
+  "wednesday-short": "Ср",
+  "friday-short": "Пт",
   "resume-reading": "ПРАЦЯГВАЙЦЕ З ТАГО МЕСЦА",
   "greeting-morning": "Добрай раніцы",
   "greeting-afternoon": "Добры дзень",

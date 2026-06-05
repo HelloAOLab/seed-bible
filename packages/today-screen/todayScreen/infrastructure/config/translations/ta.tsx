@@ -1,4 +1,10 @@
 export const ta: Record<string, string> = {
+  "live-now": "இப்போது நேரலை",
+  Join: "சேர்",
+  "selected-year": "ஆண்டு: {{year}}",
+  "monday-short": "திங்",
+  "wednesday-short": "புதன்",
+  "friday-short": "வெள்ளி",
   "resume-reading": "நீங்கள் விட்ட இடத்திலிருந்து தொடரவும்",
   "greeting-morning": "காலை வணக்கம்",
   "greeting-afternoon": "மதிய வணக்கம்",

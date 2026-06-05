@@ -1,4 +1,10 @@
 export const ur: Record<string, string> = {
+  "live-now": "ابھی لائیو",
+  Join: "شامل ہوں",
+  "selected-year": "سال: {{year}}",
+  "monday-short": "پیر",
+  "wednesday-short": "بدھ",
+  "friday-short": "جمعہ",
   "resume-reading": "جہاں چھوڑا تھا وہاں سے جاری رکھیں",
   "greeting-morning": "صبح بخیر",
   "greeting-afternoon": "دوپہر بخیر",

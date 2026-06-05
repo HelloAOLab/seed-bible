@@ -1,4 +1,10 @@
 export const ug: Record<string, string> = {
+  "live-now": "ھازىر جانلىق",
+  Join: "قاتنىشىش",
+  "selected-year": "يىل: {{year}}",
+  "monday-short": "دۈش",
+  "wednesday-short": "چار",
+  "friday-short": "جۈمە",
   "resume-reading": "توختىغان يېرىڭدىن داۋاملاشتۇر",
   "greeting-morning": "يەرتىلى خەيرلىك",
   "greeting-afternoon": "كۈندۈز خەيرلىك",

@@ -1,4 +1,10 @@
 export const th: Record<string, string> = {
+  "live-now": "ถ่ายทอดสดตอนนี้",
+  Join: "เข้าร่วม",
+  "selected-year": "ปี: {{year}}",
+  "monday-short": "จ",
+  "wednesday-short": "พ",
+  "friday-short": "ศ",
   "resume-reading": "ดำเนินการต่อจากที่คุณหยุด",
   "greeting-morning": "สวัสดีตอนเช้า",
   "greeting-afternoon": "สวัสดีตอนบ่าย",

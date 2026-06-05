@@ -28,7 +28,13 @@ export const useBook: UseBook = ({
   chaptersReading,
   usersId,
 }) => {
-  const { bookNames, MaterialIcon, translationBooksMap } = useTodayContext();
+  const {
+    bookNames,
+    MaterialIcon,
+    translationBooksMap,
+    addTab,
+    getDefaultTranslation,
+  } = useTodayContext();
   const { userProfileMap } = useSocialSectionContext();
 
   const [isExpanded, setIsExpanded] = useState(false);
@@ -86,10 +92,14 @@ export const useBook: UseBook = ({
             return iconData;
           })
           .filter(Boolean) as ChapterData["usersData"] | undefined) ?? [];
+      const handleChapterClick = () => {
+        addTab(bookId, chapter, getDefaultTranslation());
+      };
       return {
         key: String(chapter),
         number: chapter,
         usersData,
+        handleClick: handleChapterClick,
       };
     });
 

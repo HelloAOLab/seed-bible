@@ -1,4 +1,10 @@
 export const ml: Record<string, string> = {
+  "live-now": "ഇപ്പോൾ ലൈവ്",
+  Join: "ചേരുക",
+  "selected-year": "വർഷം: {{year}}",
+  "monday-short": "തിങ്ക",
+  "wednesday-short": "ബുധ",
+  "friday-short": "വെള്ളി",
   "resume-reading": "നിങ്ങൾ നിർത്തിയ ഇടത്ത് നിന്ന് തുടരുക",
   "greeting-morning": "സുപ്രഭാതം",
   "greeting-afternoon": "ശുഭ ഉച്ചയ്ക്ക്",

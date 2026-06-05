@@ -1,4 +1,10 @@
 export const ar: Record<string, string> = {
+  "live-now": "مباشر الآن",
+  Join: "انضم",
+  "selected-year": "السنة: {{year}}",
+  "monday-short": "إث",
+  "wednesday-short": "أرب",
+  "friday-short": "جمع",
   "resume-reading": "تابع من حيث توقفت",
   "greeting-morning": "صباح الخير",
   "greeting-afternoon": "مساء الخير",

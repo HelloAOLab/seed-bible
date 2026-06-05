@@ -1,4 +1,10 @@
 export const el: Record<string, string> = {
+  "live-now": "ΖΩΝΤΑΝΑ ΤΩΡΑ",
+  Join: "Συμμετοχή",
+  "selected-year": "Έτος: {{year}}",
+  "monday-short": "Δευ",
+  "wednesday-short": "Τετ",
+  "friday-short": "Παρ",
   "resume-reading": "ΣΥΝΕΧΊΣΤΕ ΑΠΌ ΕΚΕΊ ΠΟΥ ΤΟ ΑΦΉΣΑΤΕ",
   "greeting-morning": "Καλημέρα",
   "greeting-afternoon": "Καλό απόγευμα",

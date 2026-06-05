@@ -18,7 +18,7 @@ export const ResumeReadingSection = () => {
         {`${cardData.book} `}
         <span>{cardData.chapter}</span>
       </h1>
-      <button onClick={handleButtonClick}>
+      <button onClick={handleButtonClick} className="clickable">
         <MaterialIcon>{cardData.buttonIcon}</MaterialIcon>
       </button>
     </div>

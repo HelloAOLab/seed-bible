@@ -1,4 +1,10 @@
 export const bg: Record<string, string> = {
+  "live-now": "НА ЖИВО СЕГА",
+  Join: "Присъедини се",
+  "selected-year": "Година: {{year}}",
+  "monday-short": "Пн",
+  "wednesday-short": "Ср",
+  "friday-short": "Пт",
   "resume-reading": "ПРОДЪЛЖЕТЕ ОТ ТАМ, КЪДЕТО СТЕ СПРЕЛИ",
   "greeting-morning": "Добро утро",
   "greeting-afternoon": "Добър ден",

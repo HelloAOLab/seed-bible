@@ -1,4 +1,10 @@
 export const am: Record<string, string> = {
+  "live-now": "አሁን በቀጥታ",
+  Join: "ይቀላቀሉ",
+  "selected-year": "ዓመት: {{year}}",
+  "monday-short": "ሰኞ",
+  "wednesday-short": "ረቡዕ",
+  "friday-short": "አርብ",
   "resume-reading": "እናቆምንበት ቦታ ቀጥሉ",
   "greeting-morning": "እንደምን አደርክ",
   "greeting-afternoon": "ምሽቱ ደህና ይሁን",

@@ -1,4 +1,10 @@
 export const sv: Record<string, string> = {
+  "live-now": "LIVE NU",
+  Join: "Gå med",
+  "selected-year": "År: {{year}}",
+  "monday-short": "Mån",
+  "wednesday-short": "Ons",
+  "friday-short": "Fre",
   "resume-reading": "FORTSÄTT DÄR DU SLUTADE",
   "greeting-morning": "God morgon",
   "greeting-afternoon": "God eftermiddag",

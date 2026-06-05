@@ -1,4 +1,10 @@
 export const mn: Record<string, string> = {
+  "live-now": "ОДОО ШУУД",
+  Join: "Нэгдэх",
+  "selected-year": "Жил: {{year}}",
+  "monday-short": "Дав",
+  "wednesday-short": "Лха",
+  "friday-short": "Баас",
   "resume-reading": "Зогссон газраасаа үргэлжлүүл",
   "greeting-morning": "Өглөөний мэнд",
   "greeting-afternoon": "Өдрийн мэнд",

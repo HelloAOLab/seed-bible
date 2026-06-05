@@ -1,4 +1,10 @@
 export const fil: Record<string, string> = {
+  "live-now": "LIVE NGAYON",
+  Join: "Sumali",
+  "selected-year": "Taon: {{year}}",
+  "monday-short": "Lun",
+  "wednesday-short": "Miy",
+  "friday-short": "Biy",
   "resume-reading": "IPAGPATULOY KUNG SAAN MO NATIGIL",
   "greeting-morning": "Magandang umaga",
   "greeting-afternoon": "Magandang hapon",

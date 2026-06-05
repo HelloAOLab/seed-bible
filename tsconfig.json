@@ -1709,6 +1709,9 @@
       "todayScreen.infrastructure.entrypoints.onExtensionInstalled": [
         "./packages/today-screen/todayScreen/infrastructure/entrypoints/onExtensionInstalled.tsx"
       ],
+      "todayScreen.infrastructure.ports.readingHistoryService": [
+        "./packages/today-screen/todayScreen/infrastructure/ports/readingHistoryService.tsx"
+      ],
       "todayScreen.infrastructure.presentation.components.containers.Book": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/Book.tsx"
       ],
@@ -1723,6 +1726,12 @@
       ],
       "todayScreen.infrastructure.presentation.components.containers.Header": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/Header.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.components.containers.HistoryCard": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/HistoryCard.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.components.containers.PresenceCard": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/PresenceCard.tsx"
       ],
       "todayScreen.infrastructure.presentation.components.containers.RecommendationsSection": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/RecommendationsSection.tsx"
@@ -1754,6 +1763,9 @@
       "todayScreen.infrastructure.presentation.components.ui.TitledSection": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/ui/TitledSection.tsx"
       ],
+      "todayScreen.infrastructure.presentation.components.ui.UserIcon": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/ui/UserIcon.tsx"
+      ],
       "todayScreen.infrastructure.presentation.contexts.readingHistory.useReadingHistoryProvider": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/contexts/readingHistory/useReadingHistoryProvider.tsx"
       ],
@@ -1772,6 +1784,9 @@
       "todayScreen.infrastructure.presentation.contexts.today.useTodayProvider": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/contexts/today/useTodayProvider.tsx"
       ],
+      "todayScreen.infrastructure.presentation.hooks.timespanOptions": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/timespanOptions.tsx"
+      ],
       "todayScreen.infrastructure.presentation.hooks.useBook": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useBook.tsx"
       ],
@@ -1783,6 +1798,12 @@
       ],
       "todayScreen.infrastructure.presentation.hooks.useHeader": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useHeader.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.hooks.useHistoryCard": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useHistoryCard.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.hooks.usePresenceCard": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/usePresenceCard.tsx"
       ],
       "todayScreen.infrastructure.presentation.hooks.useReadingHistoryTimeline": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useReadingHistoryTimeline.tsx"

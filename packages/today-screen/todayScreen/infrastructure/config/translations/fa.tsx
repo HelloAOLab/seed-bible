@@ -1,4 +1,10 @@
 export const fa: Record<string, string> = {
+  "live-now": "پخش زنده",
+  Join: "پیوستن",
+  "selected-year": "سال: {{year}}",
+  "monday-short": "دوش",
+  "wednesday-short": "چهار",
+  "friday-short": "جمع",
   "resume-reading": "از جایی که ماندی ادامه بده",
   "greeting-morning": "صبح بخیر",
   "greeting-afternoon": "بعد از ظهر بخیر",

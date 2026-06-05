@@ -1,4 +1,10 @@
 export const cy: Record<string, string> = {
+  "live-now": "YN FYW NAWR",
+  Join: "Ymuno",
+  "selected-year": "Blwyddyn: {{year}}",
+  "monday-short": "Llun",
+  "wednesday-short": "Mer",
+  "friday-short": "Gwe",
   "resume-reading": "PARHEWCH O LLE GADAWOCH CHI",
   "greeting-morning": "Bore da",
   "greeting-afternoon": "Prynhawn da",

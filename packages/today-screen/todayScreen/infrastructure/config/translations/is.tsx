@@ -1,4 +1,10 @@
 export const is: Record<string, string> = {
+  "live-now": "Í BEINNI NÚNA",
+  Join: "Taka þátt",
+  "selected-year": "Ár: {{year}}",
+  "monday-short": "Mán",
+  "wednesday-short": "Mið",
+  "friday-short": "Fös",
   "resume-reading": "HALTU ÁFRAM ÞAR SEM ÞÚ HAFÐIR SKILIÐ VIÐ",
   "greeting-morning": "Góðan morgun",
   "greeting-afternoon": "Gott kvöld",

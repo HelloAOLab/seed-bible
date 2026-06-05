@@ -1,4 +1,10 @@
 export const et: Record<string, string> = {
+  "live-now": "OTSE PRAEGU",
+  Join: "Liitu",
+  "selected-year": "Aasta: {{year}}",
+  "monday-short": "E",
+  "wednesday-short": "K",
+  "friday-short": "R",
   "resume-reading": "JÄTKA SEALT, KUS POOLELI JÄID",
   "greeting-morning": "Tere hommikust",
   "greeting-afternoon": "Tere päevast",

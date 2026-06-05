@@ -1,4 +1,10 @@
 export const bs: Record<string, string> = {
+  "live-now": "UŽIVO SADA",
+  Join: "Pridruži se",
+  "selected-year": "Godina: {{year}}",
+  "monday-short": "Pon",
+  "wednesday-short": "Sri",
+  "friday-short": "Pet",
   "resume-reading": "NASTAVITE GDJE STE STALI",
   "greeting-morning": "Dobro jutro",
   "greeting-afternoon": "Dobar dan",

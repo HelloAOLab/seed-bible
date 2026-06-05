@@ -1,4 +1,10 @@
 export const gn: Record<string, string> = {
+  "live-now": "EN VIVO AĞA",
+  Join: "Eike",
+  "selected-year": "Año: {{year}}",
+  "monday-short": "Lu",
+  "wednesday-short": "Mi",
+  "friday-short": "Vi",
   "resume-reading": "EMOÑEPYRŨ RIRE OÑEMOPYTA PEVE",
   "greeting-morning": "Porãite ko'ê",
   "greeting-afternoon": "Porãite ko'ẽ",

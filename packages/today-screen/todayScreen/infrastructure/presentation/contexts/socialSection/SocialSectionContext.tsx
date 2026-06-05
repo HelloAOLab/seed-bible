@@ -1,3 +1,5 @@
+import type { FilteredReading } from "@packages/today-screen/todayScreen/domain/models/readingHistory";
+
 const { createContext, useContext } = os.appHooks;
 
 export interface SocialSectionUserProfile {
@@ -7,11 +9,25 @@ export interface SocialSectionUserProfile {
   icon: string;
 }
 
+export type Timespan = { from: number; to: number };
+
 export interface SocialSectionContextType {
   /** Map of subscribed user id → whether their reading is currently shown. */
   userFilters: Map<string, boolean>;
   /** Map of subscribed user id → their visual profile. */
   userProfileMap: Map<string, SocialSectionUserProfile>;
+  /** Year of the currently selected time filter (for the timeline). */
+  year: number;
+  /** Currently selected time window; `undefined` means "all" (no window). */
+  timespan: Timespan | undefined;
+  /** Community reading for the selected `timespan` (empty when "all"). */
+  communityReading: FilteredReading;
+  /** Selects a timeline year: sets `year` and clears `timespan`. */
+  selectYear: (year: number) => void;
+  /** Selects a timeline day: sets `timespan` to that day's range. */
+  selectDay: (timespan: Timespan | undefined) => void;
+  /** Toggles whether the given subscribed user's reading is shown. */
+  toggleUserFilter: (id: string) => void;
 }
 
 interface SocialSectionProviderProps {

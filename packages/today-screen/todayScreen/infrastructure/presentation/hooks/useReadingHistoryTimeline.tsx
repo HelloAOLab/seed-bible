@@ -1,45 +1,58 @@
-import type { ReadingHistoryContentData } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/seedBible";
-import type { ReadingHistoryContextType } from "scriptureMap.contexts.ReadingHistory.ReadingHistoryContext";
 import type {
-  RangedReadingEventsByBook,
+  ReadingHistoryContentData,
+  ReadingHistoryTimelineFooterData,
+} from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/seedBible";
+import type {
   ReadingEventsByDay,
   DailyReadingHistorySummaries,
-  ReadingHistoryUserFilters,
   DateRange,
   KeyRangesMap,
   TimelineRangesMap,
 } from "scriptureMap.models.readingHistory";
 import { useTimeContext } from "todayScreen.infrastructure.presentation.contexts.time.TimeContext";
 import {
-  getReadingHistoryEvents,
   flat,
   calculateReadingHistorySummary,
 } from "seed-bible.managers.ReadingHistoryManager";
 import type { ReadingHistorySummary } from "seed-bible.managers.ReadingHistoryManager";
-import type { Range } from "scriptureMap.models.commonTypes";
-import { ScriptureMapModes } from "scriptureMap.models.scriptureMap";
 import { useTodayContext } from "../contexts/today/TodayContext";
+import { useSocialSectionContext } from "../contexts/socialSection/SocialSectionContext";
+
+type ItemsColorMap = Map<string, React.CSSProperties["color"]>;
 
 type UseReadingHistoryTimeline = () => {
   itemsData: ReadingHistoryContentData[];
   timelineRef: { current: HTMLDivElement | null };
+  footer: ReadingHistoryTimelineFooterData;
 };
 
-const { useState, useMemo, useEffect, useCallback, useRef } = os.appHooks;
+const { useState, useMemo, useEffect, useRef } = os.appHooks;
 
 const timelineMinYear = 2023;
+const step = 0.25;
 
-const initialTimelineYear = new Date().getFullYear();
+// const initialTimelineYear = new Date().getFullYear();
 
 export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
   const timelineRef = useRef<HTMLDivElement | null>(null);
 
-  const { getDayRangeSeconds } = useTodayContext();
+  const {
+    getDayRangeSeconds,
+    getReadingHistoryEvents,
+    translate,
+    GetPastDateInfo,
+    language,
+    CapitalizeFirstLetter,
+    theme,
+    readingHistoryService,
+  } = useTodayContext();
+  const { selectYear, selectDay, year, timespan, userFilters } =
+    useSocialSectionContext();
 
   const { tick } = useTimeContext();
 
-  const timelineRangesMap = useMemo<TimelineRangesMap>(() => {
-    const rangesMap = new Map<number, DateRange>();
+  const yearTimespanMap = useMemo<TimelineRangesMap>(() => {
+    const timespanMap = new Map<number, DateRange>();
 
     const nowDate = new Date();
     const endOfToday = new Date(nowDate);
@@ -54,20 +67,18 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
       startDate.setFullYear(year - 1);
       startDate.setHours(0, 0, 0, 0);
       if (startDate && endDate) {
-        rangesMap.set(year, {
+        timespanMap.set(year, {
           startDate,
           endDate,
         });
       }
     }
 
-    return rangesMap;
+    return timespanMap;
   }, []);
 
-  const [selectedTimelineYear, setSelectedTimelineYear] =
-    useState<number>(initialTimelineYear);
   const timelineRange = useMemo<DateRange>(() => {
-    let range = timelineRangesMap.get(selectedTimelineYear);
+    let range = yearTimespanMap.get(year);
     if (!range) {
       const now = new Date();
       range = {
@@ -76,35 +87,19 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
       };
     }
     return range;
-  }, [timelineRangesMap, selectedTimelineYear]);
+  }, [yearTimespanMap, year]);
 
-  const [readingHistoryRangeSeconds, setReadingHistoryRangeSeconds] =
-    useState<Range | null>(null);
-  const [userFiltersMap, setReadingHistoryUserFilters] =
-    useState<ReadingHistoryUserFilters>(new Map());
   const [yearlyReadingHistorySummary, setYearlyReadingHistorySummary] =
     useState<ReadingHistorySummary | null>(null);
-  const [rangedReadingEventsByBook, setRangedReadingEventsByBook] =
-    useState<RangedReadingEventsByBook>(new Map());
   const [dailyReadingHistorySummaries, setDailyReadingHistorySummaries] =
     useState<DailyReadingHistorySummaries | null>(null);
-  const [selectedUsersCount, setSelectedUsersCount] = useState<number>(0);
-  const [readingEventsByDay, setReadingEventsByDay] =
-    useState<ReadingEventsByDay | null>(null);
 
   const {
     startDateStartOfWeek,
-    endDateStartOfWeek,
     weeksCount,
     SEC_PER_MINUTE,
     SEC_PER_HOUR,
     SEC_PER_DAY,
-    SEC_PER_WEEK,
-    MS_PER_SECOND,
-    MS_PER_MINUTE,
-    MS_PER_HOUR,
-    MS_PER_DAY,
-    MS_PER_WEEK,
     dayRangesMap,
   } = useMemo(() => {
     const getStartOfWeek = (date: Date) => {
@@ -123,9 +118,9 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
     const SEC_PER_WEEK = SEC_PER_DAY * 7;
 
     const MS_PER_SECOND = 1000;
-    const MS_PER_MINUTE = MS_PER_SECOND * SEC_PER_MINUTE;
-    const MS_PER_HOUR = MS_PER_SECOND * SEC_PER_HOUR;
-    const MS_PER_DAY = MS_PER_SECOND * SEC_PER_DAY;
+    // const MS_PER_MINUTE = MS_PER_SECOND * SEC_PER_MINUTE;
+    // const MS_PER_HOUR = MS_PER_SECOND * SEC_PER_HOUR;
+    // const MS_PER_DAY = MS_PER_SECOND * SEC_PER_DAY;
     const MS_PER_WEEK = MS_PER_SECOND * SEC_PER_WEEK;
 
     const weeksCount =
@@ -148,13 +143,13 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
 
     return {
       startDateStartOfWeek,
-      endDateStartOfWeek,
+      // endDateStartOfWeek,
       weeksCount,
-      MS_PER_SECOND,
-      MS_PER_MINUTE,
-      MS_PER_HOUR,
-      MS_PER_DAY,
-      MS_PER_WEEK,
+      // MS_PER_SECOND,
+      // MS_PER_MINUTE,
+      // MS_PER_HOUR,
+      // MS_PER_DAY,
+      // MS_PER_WEEK,
       SEC_PER_MINUTE,
       SEC_PER_HOUR,
       SEC_PER_DAY,
@@ -167,24 +162,20 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
     let isMounted = true;
     const selectedUsers = [];
 
-    for (const [userId, selected] of userFiltersMap) {
+    for (const [userId, selected] of userFilters) {
       if (selected) {
         selectedUsers.push(userId);
       }
     }
 
-    setSelectedUsersCount(selectedUsers.length);
-
     let summary;
-    const rangedEventsByBook: RangedReadingEventsByBook = new Map();
+    // const rangedEventsByBook: RangedReadingEventsByBook = new Map();
     const eventsByDay: ReadingEventsByDay = new Map();
     const dailySummaries: DailyReadingHistorySummaries = new Map();
 
     if (selectedUsers.length === 0) {
       summary = calculateReadingHistorySummary([]);
       setYearlyReadingHistorySummary(summary);
-      setRangedReadingEventsByBook(rangedEventsByBook);
-      setReadingEventsByDay(eventsByDay);
       setDailyReadingHistorySummaries(dailySummaries);
       return;
     }
@@ -201,10 +192,6 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
     );
 
     const dayKeys = Array.from(dayRangesMap.keys());
-    const {
-      start: rangeStart = startDateStartOfWeekSeconds,
-      end: rangeEnd = endSeconds,
-    } = readingHistoryRangeSeconds ?? {};
 
     const yieldToMain = () =>
       new Promise<void>((resolve) => setTimeout(resolve, 0));
@@ -215,27 +202,9 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
         const flattenedEvents = Array.from(flat(allEvents));
 
         for (const event of flattenedEvents) {
-          const { start, end, /*chapter,*/ bookId } = event;
+          const { start, end } = event;
           const duration = end - start;
           if (duration < SEC_PER_MINUTE) continue;
-          if (start >= rangeStart && start <= rangeEnd) {
-            // if (bookId === "PSA") {
-            //   const { bookId: dividedPsalmId, chapter: dividedPsalmChapter } =
-            //     scriptureService.convertCompletePsalmsToDivided({
-            //       chapter,
-            //     });
-            //   event = {
-            //     ...event,
-            //     bookId: dividedPsalmId,
-            //     chapter: dividedPsalmChapter,
-            //   };
-            //   bookId = dividedPsalmId;
-            // }
-            if (!rangedEventsByBook.has(bookId)) {
-              rangedEventsByBook.set(bookId, []);
-            }
-            rangedEventsByBook.get(bookId)?.push(event);
-          }
 
           const dayIndex = Math.floor(
             (start - startDateStartOfWeekSeconds) / SEC_PER_DAY
@@ -270,8 +239,6 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
         if (!isMounted) return;
 
         setYearlyReadingHistorySummary(summary);
-        setRangedReadingEventsByBook(rangedEventsByBook);
-        setReadingEventsByDay(eventsByDay);
         setDailyReadingHistorySummaries(dailySummaries);
       })
       .catch((error) => {
@@ -283,124 +250,254 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
     return () => {
       isMounted = false;
     };
-  }, [
-    tick,
-    selectedTabId,
-    userFiltersMap,
-    readingHistoryRangeSeconds,
-    timelineRange,
-    startDateStartOfWeek,
-  ]);
+  }, [tick, userFilters, timespan, timelineRange, startDateStartOfWeek]);
 
-  const handleReadingHistoryUserSelectorClick = useCallback<
-    (key: string) => void
-  >(
-    (key) => {
-      const copy = new Map(userFiltersMap);
-      if (key === "all") {
-        for (const [stateKey] of userFiltersMap) {
-          copy.set(stateKey, true);
+  const prevItemsColorMapRef = useRef<ItemsColorMap>(new Map());
+
+  const itemsColorMap = useMemo<ItemsColorMap>(() => {
+    const colorMap: ItemsColorMap = new Map();
+    if (!dailyReadingHistorySummaries || !yearlyReadingHistorySummary)
+      return colorMap;
+
+    const yearlySummaryUsersCount = Object.keys(
+      yearlyReadingHistorySummary.users
+    ).length;
+
+    let shouldReassign = false;
+    const fullColorTimeSeconds = yearlySummaryUsersCount * SEC_PER_HOUR; // 1 hour per selected user
+    for (let week = 0; week < weeksCount; week++) {
+      for (let day = 0; day < 7; day++) {
+        if (week === weeksCount - 1 && day > timelineRange.endDate.getDay())
+          break;
+
+        const key = `${week}-${day}`;
+
+        const summary = dailyReadingHistorySummaries.get(key);
+        let color: React.CSSProperties["color"] | undefined;
+        const prevColor = prevItemsColorMapRef.current.get(key);
+
+        if (summary && summary.totalTimeSpentReading > SEC_PER_MINUTE) {
+          const colorData = {
+            baseColor:
+              theme.variables.readerToolbarFloatingButtonBackground ??
+              "#dfdede",
+            step,
+            readingTimeSeconds: summary.totalTimeSpentReading,
+            fullColorTimeSeconds,
+            userColor: theme.variables.secondaryColor,
+          };
+          color = readingHistoryService.getColorByReadingTime(colorData);
         }
-      } else {
-        const allSelected = Array.from(userFiltersMap).every(([, value]) => {
-          return value;
-        });
-        if (allSelected && copy.size > 1) {
-          for (const [stateKey] of userFiltersMap) {
-            copy.set(stateKey, stateKey === key);
-          }
-        } else {
-          copy.set(key, !copy.get(key));
-        }
+
+        if (!shouldReassign && prevColor !== color) shouldReassign = true;
+
+        colorMap.set(key, color);
       }
-      // console.log(
-      //   `[Debug] useReadingHistoryProvider calling setReadingHistoryUserFilters from handleReadingHistoryUserSelectorClick`
-      // );
-
-      setReadingHistoryUserFilters(copy);
-    },
-    [userFiltersMap, setReadingHistoryUserFilters]
-  );
-
-  const handleReadingHistoryRangeSelectorClick = useCallback<
-    (range: Range | null) => void
-  >(
-    (range) => {
-      setReadingHistoryRangeSeconds(range);
-    },
-    [setReadingHistoryRangeSeconds]
-  );
-
-  const shouldShowReadingHistory = useMemo<boolean>(() => {
-    return (
-      mode === ScriptureMapModes.Viewer &&
-      isReadingHistoryEnabled &&
-      usersDataMap.size > 0
-    );
-  }, [mode, isReadingHistoryEnabled, usersDataMap, ScriptureMapModes]);
-
-  useEffect(() => {
-    if (shouldShowReadingHistory) {
-      setShowingBooksColors(false);
     }
-  }, [shouldShowReadingHistory]);
+
+    if (shouldReassign) {
+      prevItemsColorMapRef.current = colorMap;
+      return colorMap;
+    }
+
+    return prevItemsColorMapRef.current;
+  }, [tick, dailyReadingHistorySummaries, yearlyReadingHistorySummary, theme]);
 
   const itemsData = useMemo<ReadingHistoryContentData[]>(() => {
+    const monthsSet = new Set();
+    const monthLabelGridRow = `1 / 2`;
+    const dayLabelGridColumn = `1 / 2`;
+    const todayDate = new Date();
+
+    const translatedMonday = translate("monday-short");
+    const translatedWednesday = translate("wednesday-short");
+    const translatedFriday = translate("friday-short");
+
     const items: ReadingHistoryContentData[] = [
       {
         type: "label",
-        key: "mon",
+        key: translatedMonday,
         gridRow: "3 / 4",
-        gridColumn: "1 / 2",
+        gridColumn: dayLabelGridColumn,
         isDay: true,
-        children: "Mon",
+        children: translatedMonday,
       },
       {
         type: "label",
-        key: "wed",
+        key: translatedWednesday,
         gridRow: "5 / 6",
-        gridColumn: "1 / 2",
+        gridColumn: dayLabelGridColumn,
         isDay: true,
-        children: "Wed",
+        children: translatedWednesday,
       },
       {
         type: "label",
-        key: "fri",
+        key: translatedFriday,
         gridRow: "7 / 8",
-        gridColumn: "1 / 2",
+        gridColumn: dayLabelGridColumn,
         isDay: true,
-        children: "Fri",
+        children: translatedFriday,
       },
     ];
 
-    for (let week = 0; week < WEEKS; week++) {
-      for (let day = 0; day < 7; day++) {
-        const intensity = (week * 7 + day) % 5;
-        const background =
-          intensity === 0
-            ? undefined
-            : `color-mix(in srgb, var(--sb-primary-color) ${intensity * 22}%, var(--sb-divider-color))`;
+    for (let week = 0; week < weeksCount; week++) {
+      const lastDayIndex =
+        week === weeksCount - 1 ? timelineRange.endDate.getDay() : 6;
+      const labelDate = new Date(startDateStartOfWeek.getTime());
+      labelDate.setDate(labelDate.getDate() + week * 7 + lastDayIndex);
+      const labelDateInfo = GetPastDateInfo(labelDate.getTime(), language);
+      const uniqueMonthKey = `${labelDateInfo.month}-${labelDateInfo.year}`;
 
-        items.push({
-          type: "item",
-          key: `${week}-${day}`,
-          id: `mock-${week}-${day}`,
-          style: {
-            gridRow: `${day + 2} / ${day + 3}`,
-            gridColumn: `${week + 2} / ${week + 3}`,
-            background,
-          },
-          tooltipContentsData: [],
-          range: { start: week * 7 + day, end: week * 7 + day + 1 },
-          readingHistoryRangeSeconds: null,
-          handleItemClick: () => {},
-          isUpcoming: false,
-        });
+      if (!monthsSet.has(uniqueMonthKey)) {
+        monthsSet.add(uniqueMonthKey);
+
+        const nextWeek = week + 1;
+        let nextWeekMonthKey: string | null = null;
+        if (nextWeek < weeksCount) {
+          const nextLastDayIndex =
+            nextWeek === weeksCount - 1 ? timelineRange.endDate.getDay() : 6;
+          const nextLabelDate = new Date(startDateStartOfWeek.getTime());
+          nextLabelDate.setDate(
+            nextLabelDate.getDate() + nextWeek * 7 + nextLastDayIndex
+          );
+          const nextLabelDateInfo = GetPastDateInfo(
+            nextLabelDate.getTime(),
+            language
+          );
+          nextWeekMonthKey = `${nextLabelDateInfo.month}-${nextLabelDateInfo.year}`;
+        }
+
+        if (!nextWeekMonthKey || nextWeekMonthKey === uniqueMonthKey) {
+          const monthLabelGridColumn = `${week + 2} / ${week + 4}`;
+          const fixedName = CapitalizeFirstLetter(labelDateInfo.monthName);
+
+          items.push({
+            type: "label",
+            gridRow: monthLabelGridRow,
+            gridColumn: monthLabelGridColumn,
+            isDay: false,
+            key: `label-${uniqueMonthKey}`,
+            children: fixedName,
+          });
+        }
+      }
+
+      for (let day = 0; day < 7; day++) {
+        if (week === weeksCount - 1 && day > timelineRange.endDate.getDay())
+          break;
+
+        const key = `${week}-${day}`;
+        const dayDate = new Date(startDateStartOfWeek);
+        dayDate.setDate(dayDate.getDate() + week * 7 + day);
+        const time = dayDate.getTime();
+        const range = dayRangesMap.get(key);
+
+        const {
+          day: dayOfTheMonth,
+          monthName,
+          year,
+        } = GetPastDateInfo(time, language);
+
+        const itemGridRow = `${day + 2} / ${day + 3}`;
+        const itemGridColumn = `${week + 2} / ${week + 3}`;
+        const style = {
+          gridRow: itemGridRow,
+          gridColumn: itemGridColumn,
+          background: itemsColorMap?.get?.(key),
+        };
+        const isUpcoming = time > todayDate.getTime();
+
+        if (range) {
+          items.push({
+            type: "item",
+            id: key,
+            key: `${week}-${day}-${dayOfTheMonth}-${monthName}-${year}`,
+            tooltipContentsData: [], // tooltipContentsData,
+            range,
+            handleItemClick: (clickedRange) => {
+              selectDay(
+                clickedRange
+                  ? { from: clickedRange.start, to: clickedRange.end }
+                  : undefined
+              );
+            },
+            readingHistoryRangeSeconds: {
+              start: timespan?.from ?? 0,
+              end: timespan?.to ?? 0,
+            },
+            style: style,
+            isUpcoming,
+          });
+        }
       }
     }
 
     return items;
+  }, [weeksCount, dayRangesMap, selectDay, itemsColorMap, timespan]);
+
+  // The year selector sets the timeline year (and clears the timespan via
+  // selectYear). Legend is currently placeholder data.
+  const footer = useMemo<ReadingHistoryTimelineFooterData>(() => {
+    const yearSelectorOptionsData = [...yearTimespanMap.keys()].map(
+      (selectableYear) => ({
+        key: selectableYear,
+        className: `year-selector-option${selectableYear === year ? " selected" : ""}`,
+        onClick: () => {
+          selectYear(selectableYear);
+        },
+        content: selectableYear,
+      })
+    );
+
+    const legendSquaresData = Array.from({ length: 5 }, (_, index) => ({
+      key: index,
+      style: {
+        backgroundColor: `color-mix(in srgb, var(--sb-primary-color) ${(index + 1) * 20}%, var(--sb-divider-color))`,
+      },
+    }));
+
+    return {
+      legendSquaresData,
+      lessText: "Less",
+      moreText: "More",
+      yearSelectorLabelTextContent: translate("selected-year", { year }),
+      yearSelectorOptionsData,
+    };
+  }, [yearTimespanMap, year, selectYear, translate]);
+
+  useEffect(() => {
+    const lastKey = Array.from(dayRangesMap.keys()).pop();
+    if (lastKey) {
+      const element = document.getElementById(lastKey);
+
+      if (element) {
+        element.scrollIntoView({
+          behavior: "smooth", // smooth scrolling animation
+          block: "center", // scroll so it's centered in the viewport
+        });
+      }
+    }
+    const el = timelineRef.current;
+
+    if (!el) return;
+
+    const handleWheel: (event: WheelEvent) => void = (e) => {
+      if (e.deltaY === 0) return;
+
+      const isScrollable = el.scrollWidth > el.clientWidth;
+
+      if (isScrollable) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY;
+      }
+    };
+
+    el.addEventListener("wheel", handleWheel, { passive: false });
+
+    return () => {
+      el.removeEventListener("wheel", handleWheel);
+    };
   }, []);
 
-  return { itemsData, timelineRef };
+  return { itemsData, timelineRef, footer };
 };

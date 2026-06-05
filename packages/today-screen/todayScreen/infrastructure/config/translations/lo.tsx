@@ -1,4 +1,10 @@
 export const lo: Record<string, string> = {
+  "live-now": "ຖ່າຍທອດສົດດຽວນີ້",
+  Join: "ເຂົ້າຮ່ວມ",
+  "selected-year": "ປີ: {{year}}",
+  "monday-short": "ຈ",
+  "wednesday-short": "ພ",
+  "friday-short": "ສ",
   "resume-reading": "ຕໍ່ຈາກທີ່ທ່ານຢຸດ",
   "greeting-morning": "ສະບາຍດີຕອນເຊົ້າ",
   "greeting-afternoon": "ສະບາຍດີຕອນສວາຍ",

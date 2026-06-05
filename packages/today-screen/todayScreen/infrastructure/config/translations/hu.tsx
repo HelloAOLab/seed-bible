@@ -1,4 +1,10 @@
 export const hu: Record<string, string> = {
+  "live-now": "ÉLŐBEN MOST",
+  Join: "Csatlakozás",
+  "selected-year": "Év: {{year}}",
+  "monday-short": "H",
+  "wednesday-short": "Sze",
+  "friday-short": "P",
   "resume-reading": "FOLYTASSA OTT, AHOL ABBAHAGYTA",
   "greeting-morning": "Jó reggelt",
   "greeting-afternoon": "Jó napot",

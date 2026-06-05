@@ -10,7 +10,7 @@ export const SearchSection = () => {
     <TitledSection title={title}>
       <div className="search-container">
         <button
-          className="book-selector-button"
+          className="book-selector-button clickable"
           type="button"
           onClick={openBookSelector}
         >

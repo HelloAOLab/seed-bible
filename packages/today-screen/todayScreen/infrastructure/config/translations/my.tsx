@@ -1,4 +1,10 @@
 export const my: Record<string, string> = {
+  "live-now": "ယခု တိုက်ရိုက်လွှင့်နေသည်",
+  Join: "ပါဝင်ရန်",
+  "selected-year": "နှစ်: {{year}}",
+  "monday-short": "တနင်္လာ",
+  "wednesday-short": "ဗုဒ္ဓဟူး",
+  "friday-short": "သောကြာ",
   "resume-reading": "ရပ်တန့်ခဲ့သည့်နေရာမှ ဆက်လက်ဖတ်ပါ",
   "greeting-morning": "မင်္ဂလာနံနက်ခင်းပါ",
   "greeting-afternoon": "မင်္ဂလာနေ့လည်ခင်းပါ",

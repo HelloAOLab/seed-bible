@@ -1,4 +1,10 @@
 export const zu: Record<string, string> = {
+  "live-now": "BUKHOMA MANJE",
+  Join: "Joyina",
+  "selected-year": "Unyaka: {{year}}",
+  "monday-short": "Mso",
+  "wednesday-short": "Qha",
+  "friday-short": "Lwe",
   "resume-reading": "QHUBEKA LAPHO OWASHIYA KHONA",
   "greeting-morning": "Sawubona ekuseni",
   "greeting-afternoon": "Sawubona emini",

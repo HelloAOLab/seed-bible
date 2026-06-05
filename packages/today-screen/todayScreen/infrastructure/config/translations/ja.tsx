@@ -1,4 +1,10 @@
 export const ja: Record<string, string> = {
+  "live-now": "ライブ配信中",
+  Join: "参加",
+  "selected-year": "年: {{year}}",
+  "monday-short": "月",
+  "wednesday-short": "水",
+  "friday-short": "金",
   "resume-reading": "続きから読む",
   "greeting-morning": "おはようございます",
   "greeting-afternoon": "こんにちは",

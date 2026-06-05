@@ -1,4 +1,10 @@
 export const lv: Record<string, string> = {
+  "live-now": "TIEŠRAIDĒ TAGAD",
+  Join: "Pievienoties",
+  "selected-year": "Gads: {{year}}",
+  "monday-short": "Pr",
+  "wednesday-short": "Tr",
+  "friday-short": "Pk",
   "resume-reading": "TURPINI NO TURIENES, KUR APSTĀJIES",
   "greeting-morning": "Labrīt",
   "greeting-afternoon": "Labdien",

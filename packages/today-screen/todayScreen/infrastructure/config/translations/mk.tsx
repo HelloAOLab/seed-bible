@@ -1,4 +1,10 @@
 export const mk: Record<string, string> = {
+  "live-now": "ВО ЖИВО СЕГА",
+  Join: "Приклучи се",
+  "selected-year": "Година: {{year}}",
+  "monday-short": "Пон",
+  "wednesday-short": "Сре",
+  "friday-short": "Пет",
   "resume-reading": "ПРОДОЛЖЕТЕ ОД КАДЕ СТЕ ЗАСТАНАЛЕ",
   "greeting-morning": "Добро утро",
   "greeting-afternoon": "Добар ден",

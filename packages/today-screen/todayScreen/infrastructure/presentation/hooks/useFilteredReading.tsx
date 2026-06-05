@@ -1,43 +1,19 @@
-import type { CommunityReadingSpanId } from "@packages/today-screen/todayScreen/domain/models/readingHistory";
-import { useComputed, useSignal } from "@preact/signals";
-import { useTodayContext } from "../contexts/today/TodayContext";
 import { useSocialSectionContext } from "../contexts/socialSection/SocialSectionContext";
 import type { BookData } from "../components/containers/FilteredReading";
 
-const { useEffect } = os.appHooks;
+const { useMemo } = os.appHooks;
 
-type UseFilteredReading = (props: {
-  timespanId: CommunityReadingSpanId | "all";
-}) => {
+type UseFilteredReading = () => {
   booksData: BookData[];
 };
 
-export const useFilteredReading: UseFilteredReading = ({ timespanId }) => {
-  const { communityReading } = useTodayContext();
-  const { userFilters } = useSocialSectionContext();
+export const useFilteredReading: UseFilteredReading = () => {
+  const { communityReading, userFilters } = useSocialSectionContext();
 
-  const filtersMap = useSignal(new Map(userFilters));
-
-  useEffect(() => {
-    filtersMap.value = new Map(userFilters);
-  }, [userFilters]);
-
-  const timespanSignal = useSignal(timespanId);
-
-  useEffect(() => {
-    timespanSignal.value = timespanId;
-  }, [timespanId]);
-
-  const booksData = useComputed<BookData[]>(() => {
+  const booksData = useMemo<BookData[]>(() => {
     const data: BookData[] = [];
 
-    if (timespanSignal.value === "all") {
-      return [];
-    }
-
-    const filteredReading = communityReading.value[timespanSignal.value];
-
-    const bookEntries = Object.entries(filteredReading);
+    const bookEntries = Object.entries(communityReading);
     for (const [bookId, chapters] of bookEntries) {
       const chapterEntries = Object.entries(chapters);
       const ids = [
@@ -48,7 +24,7 @@ export const useFilteredReading: UseFilteredReading = ({ timespanId }) => {
         ),
       ];
       const filteredIds = ids.filter((id) => {
-        return filtersMap.value.get(id);
+        return userFilters.get(id);
       });
       if (filteredIds.length > 0) {
         data.push({
@@ -61,7 +37,7 @@ export const useFilteredReading: UseFilteredReading = ({ timespanId }) => {
     }
 
     return data;
-  });
+  }, [communityReading, userFilters]);
 
-  return { booksData: booksData.value };
+  return { booksData };
 };

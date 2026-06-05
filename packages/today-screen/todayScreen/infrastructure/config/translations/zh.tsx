@@ -1,4 +1,10 @@
 export const zh: Record<string, string> = {
+  "live-now": "正在直播",
+  Join: "加入",
+  "selected-year": "年份：{{year}}",
+  "monday-short": "周一",
+  "wednesday-short": "周三",
+  "friday-short": "周五",
   "resume-reading": "从你离开的地方继续",
   "greeting-morning": "早上好",
   "greeting-afternoon": "下午好",

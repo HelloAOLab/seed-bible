@@ -1,4 +1,10 @@
 export const fi: Record<string, string> = {
+  "live-now": "SUORANA NYT",
+  Join: "Liity",
+  "selected-year": "Vuosi: {{year}}",
+  "monday-short": "Ma",
+  "wednesday-short": "Ke",
+  "friday-short": "Pe",
   "resume-reading": "JATKA SIITÄ, MIHIN JÄIT",
   "greeting-morning": "Hyvää huomenta",
   "greeting-afternoon": "Hyvää päivää",

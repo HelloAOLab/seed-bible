@@ -1,4 +1,10 @@
 export const te: Record<string, string> = {
+  "live-now": "ఇప్పుడు ప్రత్యక్షం",
+  Join: "చేరండి",
+  "selected-year": "సంవత్సరం: {{year}}",
+  "monday-short": "సోమ",
+  "wednesday-short": "బుధ",
+  "friday-short": "శుక్ర",
   "resume-reading": "మీరు వదిలిపెట్టిన చోటు నుండి కొనసాగించండి",
   "greeting-morning": "శుభోదయం",
   "greeting-afternoon": "శుభ మధ్యాహ్నం",

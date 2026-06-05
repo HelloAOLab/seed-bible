@@ -1,4 +1,10 @@
 export const ti: Record<string, string> = {
+  "live-now": "ሕጂ ብቐጥታ",
+  Join: "ተጸንበር",
+  "selected-year": "ዓመት: {{year}}",
+  "monday-short": "ሰኑይ",
+  "wednesday-short": "ሮብዕ",
+  "friday-short": "ዓርቢ",
   "resume-reading": "ካበይ ኣቋሪፅካ ቀጽል",
   "greeting-morning": "ጽቡቕ ጽባሕ",
   "greeting-afternoon": "ጽቡቕ ቀትሪ",

@@ -10,6 +10,7 @@ export interface Props {
       className?: string | undefined;
     }) => preact.JSX.Element;
   }[];
+  handleClick: () => void;
 }
 
 const Icon = ({
@@ -22,10 +23,11 @@ const Icon = ({
   return <div style={style}>{children}</div>;
 };
 
-export const Chapter = ({ number, usersData }: Props) => {
+export const Chapter = ({ number, usersData, handleClick }: Props) => {
   return (
     <div
-      className={`filtered-reading-chapter${usersData.length > 0 ? " filtered-reading-chapter-highlighted" : ""}`}
+      className={`filtered-reading-chapter${usersData.length > 0 ? " filtered-reading-chapter-highlighted" : ""} clickable`}
+      onClick={handleClick}
     >
       {number}
       {usersData.length > 0 && (

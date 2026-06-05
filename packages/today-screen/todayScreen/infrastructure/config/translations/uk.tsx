@@ -1,4 +1,10 @@
 export const uk: Record<string, string> = {
+  "live-now": "ЗАРАЗ У ПРЯМОМУ ЕФІРІ",
+  Join: "Приєднатися",
+  "selected-year": "Рік: {{year}}",
+  "monday-short": "Пн",
+  "wednesday-short": "Ср",
+  "friday-short": "Пт",
   "resume-reading": "ПРОДОВЖТЕ З ТОГО МІСЦЯ",
   "greeting-morning": "Доброго ранку",
   "greeting-afternoon": "Добрий день",

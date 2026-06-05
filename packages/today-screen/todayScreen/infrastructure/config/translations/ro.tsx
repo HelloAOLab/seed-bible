@@ -1,4 +1,10 @@
 export const ro: Record<string, string> = {
+  "live-now": "ÎN DIRECT ACUM",
+  Join: "Alătură-te",
+  "selected-year": "An: {{year}}",
+  "monday-short": "Lun",
+  "wednesday-short": "Mie",
+  "friday-short": "Vin",
   "resume-reading": "CONTINUAȚI DE UNDE AȚI RĂMAS",
   "greeting-morning": "Bună dimineața",
   "greeting-afternoon": "Bună ziua",

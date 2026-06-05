@@ -1,4 +1,10 @@
 export const vi: Record<string, string> = {
+  "live-now": "TRỰC TIẾP NGAY",
+  Join: "Tham gia",
+  "selected-year": "Năm: {{year}}",
+  "monday-short": "Thứ 2",
+  "wednesday-short": "Thứ 4",
+  "friday-short": "Thứ 6",
   "resume-reading": "TIẾP TỤC TỪ NƠI BẠN ĐÃ DỪNG",
   "greeting-morning": "Chào buổi sáng",
   "greeting-afternoon": "Chào buổi chiều",

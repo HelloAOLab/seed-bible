@@ -1,4 +1,10 @@
 export const hi: Record<string, string> = {
+  "live-now": "अभी लाइव",
+  Join: "शामिल हों",
+  "selected-year": "वर्ष: {{year}}",
+  "monday-short": "सोम",
+  "wednesday-short": "बुध",
+  "friday-short": "शुक्र",
   "resume-reading": "जहाँ छोड़ा था वहाँ से जारी रखें",
   "greeting-morning": "सुप्रभात",
   "greeting-afternoon": "शुभ दोपहर",

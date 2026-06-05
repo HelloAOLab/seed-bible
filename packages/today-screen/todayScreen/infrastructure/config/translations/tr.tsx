@@ -1,4 +1,10 @@
 export const tr: Record<string, string> = {
+  "live-now": "ŞİMDİ CANLI",
+  Join: "Katıl",
+  "selected-year": "Yıl: {{year}}",
+  "monday-short": "Pzt",
+  "wednesday-short": "Çrş",
+  "friday-short": "Cum",
   "resume-reading": "KALDĞIN YERDEN DEVAM ET",
   "greeting-morning": "Günaydın",
   "greeting-afternoon": "İyi günler",
