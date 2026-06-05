@@ -38,6 +38,14 @@ export function decodeValueFromHtml(html: string): string {
   return decode(html.replace(/<span translate="no">(.*?)<\/span>/gs, "$1"));
 }
 
+export function addTranslationKeyHint(key: string, value: string): string {
+  return `<!-- ${key} -->` + value;
+}
+
+export function removeTranslationKeyHint(value: string): string {
+  return value.replace(/<!--\s*[^>]+\s*-->/g, "");
+}
+
 const languageMap = new Map([
   ["ind", "id"], // Google Translate uses "id" for Indonesian, but we use "ind" because "id" is a reserved tag in CasualOS.
 ]);
@@ -67,7 +75,9 @@ export async function translateResources(
         sourceLanguageCode: languageMap.get(input.language) ?? input.language,
         targetLanguageCode: languageMap.get(outputLanguage) ?? outputLanguage,
         mimeType: "text/html",
-        contents: batch.map(([, value]) => encodeValueForHtml(value)),
+        contents: batch.map(([key, value]) =>
+          addTranslationKeyHint(key, encodeValueForHtml(value))
+        ),
       });
 
       if (response.translations) {
@@ -80,7 +90,9 @@ export async function translateResources(
           const [key] = batch[j]!;
 
           if (t?.translatedText) {
-            resources[key] = decodeValueFromHtml(t.translatedText);
+            resources[key] = decodeValueFromHtml(
+              removeTranslationKeyHint(t.translatedText)
+            );
           } else {
             console.warn(
               `Missing translated text for language "${outputLanguage}" in batch starting at index ${i}. Original key was: "${key}".`
