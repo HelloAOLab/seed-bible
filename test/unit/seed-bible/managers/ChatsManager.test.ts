@@ -2961,7 +2961,7 @@ describe("createChatsManager", () => {
 
       await session.sendMessage({ type: "text", text: "Hello world" });
 
-      expect(session.parsedMessages.value).toEqual([
+      expect(session.parsedMessages.value).toMatchObject([
         { type: "text", text: "Hello world", parts: ["Hello world"] },
       ]);
     });
@@ -2987,7 +2987,7 @@ describe("createChatsManager", () => {
       const provider = session.participants.value.find(
         (p) => p.id === "provider-1"
       )!;
-      expect(session.parsedMessages.value[0]).toEqual({
+      expect(session.parsedMessages.value[0]).toMatchObject({
         type: "text",
         text: "Hey @provider-1 how are you?",
         parts: [
@@ -3016,7 +3016,7 @@ describe("createChatsManager", () => {
       const provider = session.participants.value.find(
         (p) => p.id === "provider-1"
       )!;
-      expect(session.parsedMessages.value[0]).toEqual({
+      expect(session.parsedMessages.value[0]).toMatchObject({
         type: "text",
         text: "Hey @{provider-1}!",
         parts: [
@@ -3035,7 +3035,7 @@ describe("createChatsManager", () => {
 
       await session.sendMessage({ type: "text", text: "Hi @ghost there" });
 
-      expect(session.parsedMessages.value[0]).toEqual({
+      expect(session.parsedMessages.value[0]).toMatchObject({
         type: "text",
         text: "Hi @ghost there",
         parts: [
@@ -3054,7 +3054,7 @@ describe("createChatsManager", () => {
 
       await session.sendMessage({ type: "text", text: "@everyone Hello!" });
 
-      expect(session.parsedMessages.value[0]).toEqual({
+      expect(session.parsedMessages.value[0]).toMatchObject({
         type: "text",
         text: "@everyone Hello!",
         parts: [
@@ -3091,7 +3091,7 @@ describe("createChatsManager", () => {
 
       const p1 = session.participants.value.find((p) => p.id === "provider-1")!;
       const p2 = session.participants.value.find((p) => p.id === "provider-2")!;
-      expect(session.parsedMessages.value[0]).toEqual({
+      expect(session.parsedMessages.value[0]).toMatchObject({
         type: "text",
         text: "@provider-1 and @provider-2",
         parts: [
@@ -3204,7 +3204,7 @@ describe("createChatsManager", () => {
         text: "Hello world",
       });
 
-      expect(chatSession.parsedMessages.value).toEqual([
+      expect(chatSession.parsedMessages.value).toMatchObject([
         { type: "text", text: "Hello world", parts: ["Hello world"] },
       ]);
     });
@@ -3236,7 +3236,7 @@ describe("createChatsManager", () => {
       const u1 = chatSession.totalParticipants.value.find(
         (p) => p.id === "u1"
       )!;
-      expect(chatSession.parsedMessages.value[0]).toEqual({
+      expect(chatSession.parsedMessages.value[0]).toMatchObject({
         type: "text",
         text: "Hey @u1!",
         parts: ["Hey ", { type: "mention", text: "@u1", participant: u1 }, "!"],
@@ -3258,7 +3258,7 @@ describe("createChatsManager", () => {
         text: "Hi @unknown!",
       });
 
-      expect(chatSession.parsedMessages.value[0]).toEqual({
+      expect(chatSession.parsedMessages.value[0]).toMatchObject({
         type: "text",
         text: "Hi @unknown!",
         parts: [
@@ -3290,6 +3290,143 @@ describe("createChatsManager", () => {
       expect(chatSession.parsedMessages.value[0]).toMatchObject({
         type: "text",
         text: "Hello",
+      });
+    });
+
+    it("parses a single verse reference", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({ type: "text", text: "See GEN 1:1" });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "See ",
+          {
+            type: "verse_reference",
+            text: "GEN 1:1",
+            ref: { book: "GEN", chapter: 1, verse: 1 },
+          },
+        ],
+      });
+    });
+
+    it("parses a chapter-only verse reference", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({ type: "text", text: "Read GEN 1 today" });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Read ",
+          {
+            type: "verse_reference",
+            text: "GEN 1",
+            ref: { book: "GEN", chapter: 1 },
+          },
+          " today",
+        ],
+      });
+    });
+
+    it("parses a verse range reference", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({ type: "text", text: "Check GEN 1:1-5" });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Check ",
+          {
+            type: "verse_reference",
+            text: "GEN 1:1-5",
+            ref: { book: "GEN", chapter: 1, verse: 1, endVerse: 5 },
+          },
+        ],
+      });
+    });
+
+    it("parses multiple verse references in one message", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({
+        type: "text",
+        text: "Compare John 3:16 and Romans 8:1",
+      });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Compare ",
+          {
+            type: "verse_reference",
+            text: "John 3:16",
+            ref: { book: "JHN", chapter: 3, verse: 16 },
+          },
+          " and ",
+          {
+            type: "verse_reference",
+            text: "Romans 8:1",
+            ref: { book: "ROM", chapter: 8, verse: 1 },
+          },
+        ],
+      });
+    });
+
+    it("parses a verse reference alongside a mention", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager);
+      const session = chats.createLocalSession();
+      chats.registerProvider({
+        id: "provider-1",
+        name: "Helper AI",
+        supportsSharedChats: true,
+        generateResponse: jest.fn().mockResolvedValue(null),
+      });
+      session.addParticipant("provider-1");
+
+      await session.sendMessage({
+        type: "text",
+        text: "@provider-1 explain GEN 1:1",
+      });
+
+      const provider = session.participants.value.find(
+        (p) => p.id === "provider-1"
+      )!;
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          { type: "mention", text: "@provider-1", participant: provider },
+          " explain ",
+          {
+            type: "verse_reference",
+            text: "GEN 1:1",
+            ref: { book: "GEN", chapter: 1, verse: 1 },
+          },
+        ],
+      });
+    });
+
+    it("does not produce verse_reference parts for plain text", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({ type: "text", text: "Hello world" });
+
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: ["Hello world"],
       });
     });
 

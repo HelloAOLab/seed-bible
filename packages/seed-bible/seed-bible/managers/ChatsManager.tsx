@@ -20,6 +20,8 @@ import {
 import type { TranslatableTitle } from "./BibleToolsManager";
 import i18n from "https://esm.sh/i18next@23.16.8";
 import { translateTitle } from "../components/Utils";
+import type { VerseRef } from "./BibleDataManager";
+import { parseVerseReferences } from "./BibleDataManager";
 
 export const chatMessageBaseSchema = z.object({
   /**
@@ -94,11 +96,25 @@ export interface ParsedChatTextMessage extends ChatMessageBase {
   parts: ParsedTextPart[];
 }
 
-export type ParsedTextPart = string | ParsedTextMentionPart;
+export type ParsedTextPart =
+  | string
+  | ParsedTextMentionPart
+  | ParsedVerseReferencePart;
 export interface ParsedTextMentionPart {
   type: "mention";
   text: string;
   participant: ChatParticipant | null;
+}
+
+export interface ParsedVerseReferencePart {
+  type: "verse_reference";
+  /**
+   * The original text of the verse reference, e.g. "John 3:16-17".
+   */
+  text: string;
+
+  /** The verse reference. */
+  ref: VerseRef;
 }
 
 export interface ChatContext {
@@ -557,29 +573,64 @@ function parseTextMessage(
 ): ParsedChatTextMessage {
   const { text } = message;
   const mentionRegex = /(?<!\w)@(?:\{([^}]+)\}|([^\s@.,!?;:)}\]]+))/g;
-  const parts: ParsedTextPart[] = [];
-  let lastIndex = 0;
+
+  type PendingMatch =
+    | { kind: "mention"; start: number; end: number; raw: RegExpMatchArray }
+    | {
+        kind: "verse_ref";
+        start: number;
+        end: number;
+        ref: import("./BibleDataManager").VerseRef;
+      };
+
+  const pending: PendingMatch[] = [];
 
   for (const match of text.matchAll(mentionRegex)) {
     const token = (match[1] ?? match[2] ?? "").trim();
     if (!token) continue;
+    pending.push({
+      kind: "mention",
+      start: match.index ?? 0,
+      end: (match.index ?? 0) + match[0].length,
+      raw: match,
+    });
+  }
 
-    const matchIndex = match.index ?? 0;
-    if (lastIndex < matchIndex) {
-      parts.push(text.slice(lastIndex, matchIndex));
+  for (const { ref, start, end } of parseVerseReferences(text)) {
+    pending.push({ kind: "verse_ref", start, end, ref });
+  }
+
+  // Sort by position; on overlap keep the earlier-starting match.
+  pending.sort((a, b) => a.start - b.start);
+
+  const parts: ParsedTextPart[] = [];
+  let lastIndex = 0;
+
+  for (const m of pending) {
+    if (m.start < lastIndex) continue; // skip overlapping matches
+    if (lastIndex < m.start) {
+      parts.push(text.slice(lastIndex, m.start));
     }
 
-    parts.push({
-      type: "mention",
-      text: match[0],
-      participant: resolveParticipantFromToken(
-        token,
-        participants,
-        participantIdAliases
-      ),
-    });
+    if (m.kind === "mention") {
+      parts.push({
+        type: "mention",
+        text: m.raw[0],
+        participant: resolveParticipantFromToken(
+          (m.raw[1] ?? m.raw[2] ?? "").trim(),
+          participants,
+          participantIdAliases
+        ),
+      });
+    } else {
+      parts.push({
+        type: "verse_reference",
+        text: text.slice(m.start, m.end),
+        ref: m.ref,
+      });
+    }
 
-    lastIndex = matchIndex + match[0].length;
+    lastIndex = m.end;
   }
 
   if (lastIndex < text.length) {

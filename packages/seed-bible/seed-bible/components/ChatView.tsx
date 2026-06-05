@@ -26,6 +26,13 @@ function MessageBody({ message }: { message: ParsedChatTextMessage }) {
     if (typeof part === "string") {
       return part;
     }
+    if (part.type === "verse_reference") {
+      return (
+        <span key={index} className="sb-chat-verse-reference">
+          {part.text}
+        </span>
+      );
+    }
     const isSelf = part.participant?.isSelf ?? false;
     const label = part.participant
       ? `@${getParticipantMentionLabel(part.participant, t)}`
