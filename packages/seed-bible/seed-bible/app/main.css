@@ -1327,7 +1327,7 @@ h6 {
   }
 }
 
-.sb-verse-selected {
+.sb-verse-selected .sb-verse-decorator {
   font-family: var(--sb-selected-verse-font-family);
   color: var(--sb-selected-verse-font-color);
   background-color: var(--sb-selected-verse-background-color);
