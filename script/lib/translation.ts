@@ -39,7 +39,7 @@ export function decodeValueFromHtml(html: string): string {
 }
 
 export function addTranslationKeyHint(key: string, value: string): string {
-  return `<!-- ${key} -->` + value;
+  return `<!-- key: ${key} -->` + value;
 }
 
 export function removeTranslationKeyHint(value: string): string {
