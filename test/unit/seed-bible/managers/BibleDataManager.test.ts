@@ -2,6 +2,7 @@ import {
   createBibleDataManager,
   getBookId,
   parseVerseReference,
+  parseVerseReferences,
   type BibleDataManager,
 } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
@@ -360,6 +361,86 @@ describe("parseVerseReference()", () => {
       expect(parseVerseReference(input)).toEqual(expected);
     }
   );
+});
+
+describe("parseVerseReferences()", () => {
+  const cases = [
+    ["GEN 1:1", { ref: { book: "GEN", chapter: 1, verse: 1 } }] as const,
+    ["EXO 1:1", { ref: { book: "EXO", chapter: 1, verse: 1 } }] as const,
+    ["PSA 110:1", { ref: { book: "PSA", chapter: 110, verse: 1 } }] as const,
+    ["psalms 110:1", { ref: { book: "PSA", chapter: 110, verse: 1 } }] as const,
+    ["JHN 1:50", { ref: { book: "JHN", chapter: 1, verse: 50 } }] as const,
+    ["John 1:50", { ref: { book: "JHN", chapter: 1, verse: 50 } }] as const,
+
+    ["1CO 1:2", { ref: { book: "1CO", chapter: 1, verse: 2 } }] as const,
+    [
+      "1 Corinthians 1:2",
+      { ref: { book: "1CO", chapter: 1, verse: 2 } },
+    ] as const,
+
+    [
+      "Gen.1.1-2.3",
+      {
+        ref: { book: "GEN", chapter: 1, verse: 1, endChapter: 2, endVerse: 3 },
+      },
+    ] as const,
+    ["Obad.1.11", { ref: { book: "OBA", chapter: 1, verse: 11 } }] as const,
+    [
+      "Hab.3.8-15",
+      { ref: { book: "HAB", chapter: 3, verse: 8, endVerse: 15 } },
+    ] as const,
+    ["Hab.3", { ref: { book: "HAB", chapter: 3 } }] as const,
+    ["Hab.3-5", { ref: { book: "HAB", chapter: 3, endChapter: 5 } }] as const,
+    ["2Sam.15.8", { ref: { book: "2SA", chapter: 15, verse: 8 } }] as const,
+    [
+      "1Kgs.1.31-32",
+      { ref: { book: "1KI", chapter: 1, verse: 31, endVerse: 32 } },
+    ] as const,
+
+    // verse-optional formats
+    ["GEN 1", { ref: { book: "GEN", chapter: 1 } }] as const,
+    ["GEN 5-7", { ref: { book: "GEN", chapter: 5, endChapter: 7 } }] as const,
+    [
+      "GEN 5:16-19",
+      { ref: { book: "GEN", chapter: 5, verse: 16, endVerse: 19 } },
+    ] as const,
+    [
+      "GEN 1:1-2:10",
+      {
+        ref: { book: "GEN", chapter: 1, verse: 1, endChapter: 2, endVerse: 10 },
+      },
+    ] as const,
+  ];
+
+  it.each(cases)("should find %s", (input, expected) => {
+    expect(parseVerseReferences(input)).toContainEqual(
+      expect.objectContaining(expected)
+    );
+  });
+
+  it("should find a single reference", () => {
+    expect(parseVerseReferences("This is GEN 1:1.")).toEqual([
+      { ref: { book: "GEN", chapter: 1, verse: 1 }, start: 8, end: 15 },
+    ]);
+  });
+
+  it("should find multiple chapter-only references", () => {
+    expect(parseVerseReferences("This is GEN 5 and this is GEN 40")).toEqual([
+      { ref: { book: "GEN", chapter: 5 }, start: 8, end: 13 },
+      { ref: { book: "GEN", chapter: 40 }, start: 26, end: 32 },
+    ]);
+  });
+
+  it("should find multiple references with ranges", () => {
+    expect(parseVerseReferences("This is MAT 1:1-3 and John 3:16")).toEqual([
+      {
+        ref: { book: "MAT", chapter: 1, verse: 1, endVerse: 3 },
+        start: 8,
+        end: 17,
+      },
+      { ref: { book: "JHN", chapter: 3, verse: 16 }, start: 22, end: 31 },
+    ]);
+  });
 });
 
 describe("getBookId()", () => {

@@ -171,6 +171,14 @@ export interface VerseRef {
   endVerse?: number;
 }
 
+export interface VerseRefMatch {
+  ref: VerseRef;
+  /** Inclusive start index of the match within the source text. */
+  start: number;
+  /** Exclusive end index of the match within the source text. */
+  end: number;
+}
+
 /**
  * Parses the given verse reference.
  * Formatted like "GEN 1:1".
@@ -239,6 +247,70 @@ export function parseVerseReference(text: string): VerseRef | null {
     endChapter,
     endVerse,
   };
+}
+
+/**
+ * Finds and parses all verse references in the given text, returning each
+ * with its character offsets (start inclusive, end exclusive).
+ */
+export function parseVerseReferences(text: string): VerseRefMatch[] {
+  const results: VerseRefMatch[] = [];
+  // Book name patterns:
+  //   (?:\d+\s?)? — optional leading digit (with optional space) for "1SA", "1 Kings"
+  //   [A-Za-z][A-Za-z0-9]* — word starting with a letter, e.g. "GEN", "John", "Kings"
+  const pattern =
+    /\b((?:\d+\s?)?[A-Za-z][A-Za-z0-9]*)[\s\.]+(\d+)(?:[:\.](\d+))?(?:-(\d+)(?:[:\.](\d+))?)?/g;
+
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(text)) !== null) {
+    const [
+      fullMatch,
+      bookStr,
+      chapterStr,
+      verseStr,
+      rangeStartStr,
+      rangeEndStr,
+    ] = match;
+
+    if (!bookStr || !chapterStr) continue;
+
+    const bookId = getBookId(bookStr);
+    if (!bookId) continue;
+
+    const chapter = parseInt(chapterStr);
+    if (isNaN(chapter)) continue;
+
+    const verse = verseStr !== undefined ? parseInt(verseStr) : undefined;
+    if (verse !== undefined && isNaN(verse)) continue;
+
+    let endChapter: number | undefined;
+    let endVerse: number | undefined;
+
+    if (rangeStartStr) {
+      if (verse === undefined) {
+        endChapter = parseInt(rangeStartStr);
+      } else if (rangeEndStr) {
+        endChapter = parseInt(rangeStartStr);
+        endVerse = parseInt(rangeEndStr);
+      } else {
+        endVerse = parseInt(rangeStartStr);
+      }
+    }
+
+    results.push({
+      ref: {
+        book: bookId as BookId,
+        chapter,
+        verse,
+        endChapter,
+        endVerse,
+      },
+      start: match.index,
+      end: match.index + fullMatch.length,
+    });
+  }
+
+  return results;
 }
 
 /**
