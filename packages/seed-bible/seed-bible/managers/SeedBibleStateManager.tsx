@@ -3,6 +3,7 @@ import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManage
 import {
   createBibleDataManager,
   type BibleDataManager,
+  type VerseRef,
 } from "seed-bible.managers.BibleDataManager";
 import { createBibleToolsManager } from "seed-bible.managers.BibleToolsManager";
 import type { ToolsManager } from "seed-bible.managers.BibleToolsManager";
@@ -66,6 +67,8 @@ import {
   type InvitationsManager,
 } from "seed-bible.managers.InvitationsManager";
 import { createSearchManager } from "seed-bible.managers.SearchManager";
+import { DEFAULT_TRANSLATION_ID } from "./BibleReadingManager";
+import { range } from "es-toolkit";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
@@ -114,6 +117,9 @@ export interface AppState {
   createSharedSession: () => Promise<BibleReadingSession>;
   /** Joins an existing shared session and opens it in a new tab. */
   joinSharedSession: (id: string) => Promise<BibleReadingSession>;
+
+  /** Opens a verse reference. */
+  openVerseReference: (ref: VerseRef) => Promise<void>;
 }
 
 /**
@@ -625,6 +631,43 @@ export function createSeedBibleState(): SeedBibleState {
     return session;
   };
 
+  const handleOpenVerseReference = async (ref: VerseRef) => {
+    let tab = selectedTab.value;
+
+    if (!tab) {
+      tab = tabs.tabs.value[0] ?? null;
+    }
+
+    if (tab) {
+      const translationid =
+        tab.readingState.translationId.value ?? DEFAULT_TRANSLATION_ID;
+      await tab.readingState.selectTranslationAndChapter(
+        translationid,
+        ref.book,
+        ref.chapter,
+        {
+          scrollToVerse: ref.verse,
+        }
+      );
+    } else {
+      tab = tabs.addTab(undefined, {
+        initialBookId: ref.book,
+        initialChapterNumber: ref.chapter,
+        scrollToVerse: ref.verse,
+      });
+    }
+
+    if (ref.verse) {
+      const verses = ref.endVerse
+        ? range(ref.verse, ref.endVerse + 1)
+        : ref.verse;
+      tab.readingState.decorateVerses(ref.book, ref.chapter, verses, {
+        className: "sb-verse-decoration-open-reference-highlight",
+        removeAfterMs: 3000,
+      });
+    }
+  };
+
   const invitations = createInvitationsManager(login, async (sessionId) => {
     await handleJoinSharedSession(sessionId);
   });
@@ -679,6 +722,7 @@ export function createSeedBibleState(): SeedBibleState {
       openInNewPane: handleOpenInNewPane,
       openInDetachedPane: handleOpenInDetachedPane,
       selectPane: handleSelectPane,
+      openVerseReference: handleOpenVerseReference,
     },
   };
 

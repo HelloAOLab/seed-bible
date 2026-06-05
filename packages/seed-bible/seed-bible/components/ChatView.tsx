@@ -15,6 +15,7 @@ import { translateTitle } from "./Utils";
 import { AskIcon } from "./icons";
 import { VerseReferenceLink } from "./VerseReferenceLink";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import type { VerseRef } from "../managers/BibleDataManager";
 
 const { useEffect, useRef } = os.appHooks;
 
@@ -25,10 +26,10 @@ interface ChatViewProps {
 
 function MessageBody({
   message,
-  state,
+  onVerseReferenceClick,
 }: {
   message: ParsedChatTextMessage;
-  state: SeedBibleState;
+  onVerseReferenceClick?: (ref: VerseRef) => void;
 }) {
   const { t } = useI18n();
   return message.parts.map((part, index) => {
@@ -37,7 +38,14 @@ function MessageBody({
     }
     if (part.type === "verse_reference") {
       return (
-        <VerseReferenceLink key={index} state={state} reference={part.ref}>
+        <VerseReferenceLink
+          key={index}
+          reference={part.ref}
+          onClick={(e) => {
+            e.preventDefault();
+            onVerseReferenceClick?.(part.ref);
+          }}
+        >
           {part.text}
         </VerseReferenceLink>
       );
@@ -624,7 +632,12 @@ export function ChatView(props: ChatViewProps) {
                     </span>
                   </header>
                   <p className="sb-chat-view-message-body">
-                    <MessageBody message={message} state={state} />
+                    <MessageBody
+                      message={message}
+                      onVerseReferenceClick={(ref) =>
+                        state.app.openVerseReference(ref)
+                      }
+                    />
                   </p>
                 </div>
               </article>
