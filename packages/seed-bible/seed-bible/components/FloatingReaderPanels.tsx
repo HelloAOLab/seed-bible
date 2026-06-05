@@ -673,7 +673,7 @@ function FloatingChatPanel(props: FloatingReaderPanelsProps) {
       </header>
 
       {selectedChat ? (
-        <ChatView chat={selectedChat} />
+        <ChatView chat={selectedChat} state={state} />
       ) : (
         <ChatList chats={chats} state={state} />
       )}

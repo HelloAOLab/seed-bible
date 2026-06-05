@@ -13,14 +13,23 @@ import {
 import { Avatar } from "./Avatar";
 import { translateTitle } from "./Utils";
 import { AskIcon } from "./icons";
+import { VerseReferenceLink } from "./VerseReferenceLink";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 
 const { useEffect, useRef } = os.appHooks;
 
 interface ChatViewProps {
   chat: ChatSession;
+  state: SeedBibleState;
 }
 
-function MessageBody({ message }: { message: ParsedChatTextMessage }) {
+function MessageBody({
+  message,
+  state,
+}: {
+  message: ParsedChatTextMessage;
+  state: SeedBibleState;
+}) {
   const { t } = useI18n();
   return message.parts.map((part, index) => {
     if (typeof part === "string") {
@@ -28,9 +37,9 @@ function MessageBody({ message }: { message: ParsedChatTextMessage }) {
     }
     if (part.type === "verse_reference") {
       return (
-        <span key={index} className="sb-chat-verse-reference">
+        <VerseReferenceLink key={index} state={state} reference={part.ref}>
           {part.text}
-        </span>
+        </VerseReferenceLink>
       );
     }
     const isSelf = part.participant?.isSelf ?? false;
@@ -324,7 +333,7 @@ function PresencePrompt({ others }: { others: ChatParticipant[] }) {
 }
 
 export function ChatView(props: ChatViewProps) {
-  const { chat } = props;
+  const { chat, state } = props;
   const { t } = useI18n();
   const messages = chat.parsedMessages.value;
   const draft = useSignal("");
@@ -615,7 +624,7 @@ export function ChatView(props: ChatViewProps) {
                     </span>
                   </header>
                   <p className="sb-chat-view-message-body">
-                    <MessageBody message={message} />
+                    <MessageBody message={message} state={state} />
                   </p>
                 </div>
               </article>
