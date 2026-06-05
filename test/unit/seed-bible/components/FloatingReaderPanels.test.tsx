@@ -3,6 +3,7 @@ import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import {
   ChatList,
+  FloatingChatPanel,
   FloatingReaderPanels,
 } from "@packages/seed-bible/seed-bible/components/FloatingReaderPanels";
 import type {
@@ -20,6 +21,18 @@ jest.mock("seed-bible.i18n.I18nManager", () => ({
     language: "en",
   }),
 }));
+
+jest.mock("@packages/seed-bible/seed-bible/components/ChatView", () => {
+  const actual = jest.requireActual(
+    "@packages/seed-bible/seed-bible/components/ChatView"
+  );
+  return {
+    ...actual,
+    ChatView: ({ chat }: { chat: { id: string } }) => (
+      <div className="sb-chat-view-stub" data-chat-id={chat.id} />
+    ),
+  };
+});
 
 jest.mock("seed-bible.components.ContextMenu", () => ({
   closeContextMenus: jest.fn(),
@@ -464,5 +477,207 @@ describe("ChatList", () => {
     expect(
       container.querySelectorAll(".sb-floating-chat-list-item")
     ).toHaveLength(2);
+  });
+});
+
+interface MockFloatingChatPanelResult {
+  state: SeedBibleState;
+  closeChatPanel: jest.Mock;
+  selectChat: jest.Mock;
+}
+
+function createMockFloatingChatPanelState(
+  opts: {
+    isChatPanelOpen?: boolean;
+    selectedChat?: ChatSession | null;
+    chats?: ChatSession[];
+  } = {}
+): MockFloatingChatPanelResult {
+  const closeChatPanel = jest.fn();
+  const selectChat = jest.fn();
+  const state = {
+    sidebar: {
+      isChatPanelOpen: signal(opts.isChatPanelOpen ?? true),
+      closeChatPanel,
+    },
+    chats: {
+      selectedChat: signal(opts.selectedChat ?? null),
+      chats: signal(opts.chats ?? []),
+      selectChat,
+      providers: signal([]),
+    },
+  } as unknown as SeedBibleState;
+  return { state, closeChatPanel, selectChat };
+}
+
+describe("FloatingChatPanel", () => {
+  let container: HTMLDivElement;
+  let originalDateTime: unknown;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    originalDateTime = (globalThis as Record<string, unknown>).DateTime;
+    (globalThis as Record<string, unknown>).DateTime = {
+      fromMillis: () => ({
+        setLocale: () => ({ toRelative: () => "just now" }),
+      }),
+    };
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    (globalThis as Record<string, unknown>).DateTime = originalDateTime;
+    jest.useRealTimers();
+  });
+
+  it("renders nothing when the panel is closed", () => {
+    const { state } = createMockFloatingChatPanelState({
+      isChatPanelOpen: false,
+    });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-floating-chat-panel")).toBeNull();
+  });
+
+  it("renders the panel when open", () => {
+    const { state } = createMockFloatingChatPanelState();
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-floating-chat-panel")).not.toBeNull();
+  });
+
+  it("shows ChatList when no chat is selected", () => {
+    const { state } = createMockFloatingChatPanelState({ selectedChat: null });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    expect(
+      container.querySelector(".sb-floating-chat-list-shell")
+    ).not.toBeNull();
+    expect(container.querySelector(".sb-chat-view-stub")).toBeNull();
+  });
+
+  it("shows ChatView when a chat is selected", () => {
+    const chat = createMockChatSession();
+    const { state } = createMockFloatingChatPanelState({ selectedChat: chat });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-chat-view-stub")).not.toBeNull();
+    expect(container.querySelector(".sb-floating-chat-list-shell")).toBeNull();
+  });
+
+  it("shows the generic 'Chat' title and no back button when no chat is selected", () => {
+    const { state } = createMockFloatingChatPanelState({ selectedChat: null });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-floating-chat-header-back")).toBeNull();
+    expect(
+      container.querySelector(".sb-floating-chat-header-title")?.textContent
+    ).toBe("Chat");
+  });
+
+  it("shows the back button and chat title when a chat is selected", () => {
+    const participant = createMockParticipant({ name: "Alice" });
+    const chat = createMockChatSession({
+      participants: signal([participant]),
+    });
+    const { state } = createMockFloatingChatPanelState({ selectedChat: chat });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    expect(
+      container.querySelector(".sb-floating-chat-header-back")
+    ).not.toBeNull();
+    expect(
+      container.querySelector(".sb-floating-chat-header-title")?.textContent
+    ).toBe("Alice");
+  });
+
+  it("clicking the back button calls selectChat with null", () => {
+    const chat = createMockChatSession();
+    const { state, selectChat } = createMockFloatingChatPanelState({
+      selectedChat: chat,
+    });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    const backBtn = container.querySelector(
+      ".sb-floating-chat-header-back"
+    ) as HTMLButtonElement;
+    act(() => {
+      backBtn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(selectChat).toHaveBeenCalledWith(null);
+  });
+
+  it("a pointerdown outside the panel calls closeChatPanel", () => {
+    const { state, closeChatPanel } = createMockFloatingChatPanelState();
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    const outsideEl = document.createElement("div");
+    document.body.appendChild(outsideEl);
+    act(() => {
+      outsideEl.dispatchEvent(new MouseEvent("pointerdown", { bubbles: true }));
+    });
+    outsideEl.remove();
+
+    expect(closeChatPanel).toHaveBeenCalled();
+  });
+
+  it("pressing Escape calls closeChatPanel", () => {
+    const { state, closeChatPanel } = createMockFloatingChatPanelState();
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    act(() => {
+      document.dispatchEvent(
+        new KeyboardEvent("keydown", { key: "Escape", bubbles: true })
+      );
+    });
+
+    expect(closeChatPanel).toHaveBeenCalled();
+  });
+
+  it("shows the members button when a chat is selected", () => {
+    const participant = createMockParticipant();
+    const chat = createMockChatSession({
+      participants: signal([participant]),
+    });
+    const { state } = createMockFloatingChatPanelState({ selectedChat: chat });
+
+    act(() => {
+      render(<FloatingChatPanel state={state} />, container);
+    });
+
+    expect(
+      container.querySelector(".sb-floating-chat-header-members-button")
+    ).not.toBeNull();
   });
 });

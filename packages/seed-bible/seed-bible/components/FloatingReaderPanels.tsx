@@ -526,7 +526,7 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
   );
 }
 
-function FloatingChatPanel(props: FloatingReaderPanelsProps) {
+export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
   const { state } = props;
   const { sidebar } = state;
   const { t } = useI18n();
