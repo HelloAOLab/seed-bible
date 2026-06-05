@@ -471,7 +471,6 @@ async function createBibleReadingSession(
         if (currentDecorationIds.has(decorationId)) {
           readingState.removeDecoration(decorationId);
         }
-
         readingState.decorateVerses(
           entry.decoration.bookId,
           entry.decoration.chapterNumber,
@@ -725,6 +724,9 @@ async function createBibleReadingSession(
     void readingState.translationId.value;
     void readingState.bookId.value;
     void readingState.chapterNumber.value;
+    // We need to read the decorations signal before
+    // checking any early-exit conditions, so that this effect re-runs whenever decorations change
+    const currentDecorations = readingState.decorations.value;
 
     if (applyingRemoteDecorations) {
       return;
@@ -740,7 +742,6 @@ async function createBibleReadingSession(
       }
     }
 
-    const currentDecorations = readingState.decorations.value;
     const localDecorations = currentDecorations.filter((decoration) => {
       const owner = decorationOwners.get(decoration.id);
       if (!owner) {
@@ -762,6 +763,7 @@ async function createBibleReadingSession(
     const keysToDelete = localSharedDecorations
       .filter((entry) => !localDecorationIds.has(entry.decoration.id))
       .map((entry) => entry.key);
+
     const decorationsToUpsert = localDecorations.filter((decoration) => {
       const existingDecoration = sharedDecorationEntries.get(
         decoration.id

@@ -313,16 +313,20 @@ function applyHighlightWithSession(
     customFontColor?: string;
   }
 ): void {
-  const duration = session?.options.value.highlightDurationSeconds ?? null;
-  const isTransient = session !== null && duration !== null && duration > 0;
+  // const duration = session?.options.value.highlightDurationSeconds ?? null;
+  // const isTransient = session !== null && duration !== null && duration > 0;
 
-  if (isTransient) {
-    // Wipe any prior permanent highlight on these verses so the timer is
-    // the sole source of truth for how long the highlight shows.
-    void rs.unhighlightSelectedVerses();
-  } else {
+  if (!session) {
     void rs.highlightSelectedVerses(details);
   }
+
+  // if (isTransient) {
+  //   // Wipe any prior permanent highlight on these verses so the timer is
+  //   // the sole source of truth for how long the highlight shows.
+  //   void rs.unhighlightSelectedVerses();
+  // } else {
+  //   void rs.highlightSelectedVerses(details);
+  // }
 
   broadcastHighlightToSession(session, rs, details);
 }
