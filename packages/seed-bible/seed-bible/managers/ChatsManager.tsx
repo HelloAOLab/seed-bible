@@ -83,6 +83,24 @@ export type ChatProviderMessageOptions =
   | ChatMessageOptions
   | StreamingTextChatMessageOptions;
 
+export interface ParsedChatTextMessage {
+  type: "text";
+  /** The original text of the message. */
+  text: string;
+
+  /**
+   * The parts of the text.
+   */
+  parts: ParsedTextPart[];
+}
+
+export type ParsedTextPart = string | ParsedTextMentionPart;
+export interface ParsedTextMentionPart {
+  type: "mention";
+  text: string;
+  participant: ChatParticipant | null;
+}
+
 export interface ChatContext {
   chatId: string;
   messages: ChatMessage[];
@@ -219,6 +237,10 @@ export interface ChatSession {
 
   /** Chat messages ordered from oldest to most recent. */
   messages: ReadonlySignal<ChatMessage[]>;
+
+  /** Parsed chat messages ordered from oldest to most recent. */
+  parsedMessages: ReadonlySignal<ParsedChatTextMessage[]>;
+
   /**
    * Unread messages that have been sent since the last time the user marked messages as read.
    */
@@ -497,6 +519,78 @@ function textIncludesMention(text: string, value: string): boolean {
 
 function textMentionsEveryone(text: string): boolean {
   return textIncludesMention(text, "everyone");
+}
+
+function resolveParticipantFromToken(
+  token: string,
+  participants: ChatParticipant[],
+  participantIdAliases: Readonly<Record<string, string>>
+): ChatParticipant | null {
+  const byId = participants.find(
+    (p) => p.id === token || p.id.slice(0, 6) === token
+  );
+  if (byId) return byId;
+
+  const resolvedId = participantIdAliases[token];
+  if (resolvedId) {
+    const aliased = participants.find((p) => p.id === resolvedId);
+    if (aliased) return aliased;
+  }
+
+  const { t } = i18n;
+  for (const participant of participants) {
+    if (!participant.name) continue;
+    const displayName =
+      typeof participant.name === "string"
+        ? participant.name
+        : translateTitle(t, participant.name);
+    if (displayName === token) return participant;
+  }
+
+  return null;
+}
+
+function parseTextMessage(
+  message: TextChatMessage,
+  participants: ChatParticipant[],
+  participantIdAliases: Readonly<Record<string, string>>
+): ParsedChatTextMessage {
+  const { text } = message;
+  const mentionRegex = /(?<!\w)@(?:\{([^}]+)\}|([^\s@.,!?;:)}\]]+))/g;
+  const parts: ParsedTextPart[] = [];
+  let lastIndex = 0;
+
+  for (const match of text.matchAll(mentionRegex)) {
+    const token = (match[1] ?? match[2] ?? "").trim();
+    if (!token) continue;
+
+    const matchIndex = match.index ?? 0;
+    if (lastIndex < matchIndex) {
+      parts.push(text.slice(lastIndex, matchIndex));
+    }
+
+    parts.push({
+      type: "mention",
+      text: match[0],
+      participant: resolveParticipantFromToken(
+        token,
+        participants,
+        participantIdAliases
+      ),
+    });
+
+    lastIndex = matchIndex + match[0].length;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return {
+    type: "text",
+    text,
+    parts: parts.length > 0 ? parts : [text],
+  };
 }
 
 export function resolveMessageTargets(
@@ -1210,6 +1304,14 @@ function createSharedChatSession(
     }
   };
 
+  const parsedMessages = computed<ParsedChatTextMessage[]>(() =>
+    messages.value
+      .filter((m): m is TextChatMessage => m.type === "text")
+      .map((m) =>
+        parseTextMessage(m, totalParticipants.value, participantIdAliases.value)
+      )
+  );
+
   const wasMentioned = getWasMentionedSignal(participants, unreadMessages);
 
   const chatId = session.id;
@@ -1217,6 +1319,7 @@ function createSharedChatSession(
   return {
     id: chatId,
     messages,
+    parsedMessages,
     unreadMessages,
     lastMessageRead,
     wasMentioned,
@@ -1638,12 +1741,21 @@ function createLocalChatSession(
     getUnreadMessagesSinceLastRead(messages.value, lastMessageRead.value)
   );
 
+  const parsedMessages = computed<ParsedChatTextMessage[]>(() =>
+    messages.value
+      .filter((m): m is TextChatMessage => m.type === "text")
+      .map((m) =>
+        parseTextMessage(m, totalParticipants.value, participantIdAliases.value)
+      )
+  );
+
   const wasMentioned = getWasMentionedSignal(participants, unreadMessages);
   const chatId = uuid();
 
   return {
     id: chatId,
     messages,
+    parsedMessages,
     unreadMessages,
     lastMessageRead,
     wasMentioned,

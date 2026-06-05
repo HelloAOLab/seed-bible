@@ -2952,6 +2952,386 @@ describe("createChatsManager", () => {
     expect(secondResponse).toHaveBeenCalledTimes(1);
   });
 
+  describe("parsedMessages", () => {
+    it("returns a single string part for plain text without mentions (local session)", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({ type: "text", text: "Hello world" });
+
+      expect(session.parsedMessages.value).toEqual([
+        { type: "text", text: "Hello world", parts: ["Hello world"] },
+      ]);
+    });
+
+    it("splits on @id mention resolving to a known participant (local session)", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager);
+      const session = chats.createLocalSession();
+      chats.registerProvider({
+        id: "provider-1",
+        name: "Helper AI",
+        supportsSharedChats: true,
+        generateResponse: jest.fn().mockResolvedValue(null),
+      });
+      session.addParticipant("provider-1");
+
+      await session.sendMessage({
+        type: "text",
+        text: "Hey @provider-1 how are you?",
+      });
+
+      const provider = session.participants.value.find(
+        (p) => p.id === "provider-1"
+      )!;
+      expect(session.parsedMessages.value[0]).toEqual({
+        type: "text",
+        text: "Hey @provider-1 how are you?",
+        parts: [
+          "Hey ",
+          { type: "mention", text: "@provider-1", participant: provider },
+          " how are you?",
+        ],
+      });
+    });
+
+    it("splits on @{id} bracketed mention (local session)", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager);
+      const session = chats.createLocalSession();
+      chats.registerProvider({
+        id: "provider-1",
+        name: "Helper AI",
+        supportsSharedChats: true,
+        generateResponse: jest.fn().mockResolvedValue(null),
+      });
+      session.addParticipant("provider-1");
+
+      await session.sendMessage({ type: "text", text: "Hey @{provider-1}!" });
+
+      const provider = session.participants.value.find(
+        (p) => p.id === "provider-1"
+      )!;
+      expect(session.parsedMessages.value[0]).toEqual({
+        type: "text",
+        text: "Hey @{provider-1}!",
+        parts: [
+          "Hey ",
+          { type: "mention", text: "@{provider-1}", participant: provider },
+          "!",
+        ],
+      });
+    });
+
+    it("resolves unknown mention token to participant: null (local session)", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({ type: "text", text: "Hi @ghost there" });
+
+      expect(session.parsedMessages.value[0]).toEqual({
+        type: "text",
+        text: "Hi @ghost there",
+        parts: [
+          "Hi ",
+          { type: "mention", text: "@ghost", participant: null },
+          " there",
+        ],
+      });
+    });
+
+    it("treats @everyone as a mention with null participant (local session)", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager);
+      const session = chats.createLocalSession();
+
+      await session.sendMessage({ type: "text", text: "@everyone Hello!" });
+
+      expect(session.parsedMessages.value[0]).toEqual({
+        type: "text",
+        text: "@everyone Hello!",
+        parts: [
+          { type: "mention", text: "@everyone", participant: null },
+          " Hello!",
+        ],
+      });
+    });
+
+    it("handles multiple mentions in a single message (local session)", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager);
+      const session = chats.createLocalSession();
+      chats.registerProvider({
+        id: "provider-1",
+        name: "Helper AI",
+        supportsSharedChats: true,
+        generateResponse: jest.fn().mockResolvedValue(null),
+      });
+      chats.registerProvider({
+        id: "provider-2",
+        name: "Helper AI 2",
+        supportsSharedChats: true,
+        generateResponse: jest.fn().mockResolvedValue(null),
+      });
+      session.addParticipant("provider-1");
+      session.addParticipant("provider-2");
+
+      await session.sendMessage({
+        type: "text",
+        text: "@provider-1 and @provider-2",
+      });
+
+      const p1 = session.participants.value.find((p) => p.id === "provider-1")!;
+      const p2 = session.participants.value.find((p) => p.id === "provider-2")!;
+      expect(session.parsedMessages.value[0]).toEqual({
+        type: "text",
+        text: "@provider-1 and @provider-2",
+        parts: [
+          { type: "mention", text: "@provider-1", participant: p1 },
+          " and ",
+          { type: "mention", text: "@provider-2", participant: p2 },
+        ],
+      });
+    });
+
+    it("resolves mention by short id (first 6 chars) (local session)", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager);
+      const session = chats.createLocalSession();
+      chats.registerProvider({
+        id: "d7d90348-fc03-4272-b7c1-b565d968bb5c",
+        name: "Helper AI",
+        supportsSharedChats: true,
+        generateResponse: jest.fn().mockResolvedValue(null),
+      });
+      session.addParticipant("d7d90348-fc03-4272-b7c1-b565d968bb5c");
+
+      await session.sendMessage({ type: "text", text: "Hey @d7d903" });
+
+      const provider = session.participants.value.find(
+        (p) => p.id === "d7d90348-fc03-4272-b7c1-b565d968bb5c"
+      )!;
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Hey ",
+          { type: "mention", text: "@d7d903", participant: provider },
+        ],
+      });
+    });
+
+    it("resolves mention by AI participant display name (local session)", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager);
+      const session = chats.createLocalSession();
+      chats.registerProvider({
+        id: "provider-1",
+        name: "HelperAI",
+        supportsSharedChats: true,
+        generateResponse: jest.fn().mockResolvedValue(null),
+      });
+      session.addParticipant("provider-1");
+
+      await session.sendMessage({ type: "text", text: "Hey @HelperAI!" });
+
+      const provider = session.participants.value.find(
+        (p) => p.id === "provider-1"
+      )!;
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: [
+          "Hey ",
+          { type: "mention", text: "@HelperAI", participant: provider },
+          "!",
+        ],
+      });
+    });
+
+    it("resolves mention via participant id alias (local session)", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      const chats = createChatsManager(loginManager);
+      const session = chats.createLocalSession();
+
+      // Send while anonymous (id = DEFAULT_LOCAL_PARTICIPANT_ID = "local-user")
+      await session.sendMessage({ type: "text", text: "Hi @local-user" });
+
+      // Log in — triggers alias local-user → user-1
+      userId.value = "user-1";
+
+      const participant = session.participants.value.find(
+        (p) => p.id === "user-1"
+      )!;
+      expect(session.parsedMessages.value[0]).toMatchObject({
+        parts: ["Hi ", { type: "mention", text: "@local-user", participant }],
+      });
+    });
+
+    it("updates reactively as messages are added (local session)", async () => {
+      const { loginManager, userId } = createLoginManagerMock();
+      userId.value = "user-1";
+      const chats = createChatsManager(loginManager);
+      const session = chats.createLocalSession();
+
+      expect(session.parsedMessages.value).toEqual([]);
+
+      await session.sendMessage({ type: "text", text: "first" });
+      expect(session.parsedMessages.value).toHaveLength(1);
+
+      await session.sendMessage({ type: "text", text: "second" });
+      expect(session.parsedMessages.value).toHaveLength(2);
+    });
+
+    it("returns a single string part for plain text without mentions (shared session)", () => {
+      const { loginManager } = createLoginManagerMock();
+      const { session, sharedChats } = createSharedSessionMock();
+      const chats = createChatsManager(loginManager);
+      const chatSession = chats.createSharedSession(session);
+
+      sharedChats.push({
+        id: "m1",
+        authors: [],
+        targets: [],
+        timeMs: 1,
+        type: "text",
+        text: "Hello world",
+      });
+
+      expect(chatSession.parsedMessages.value).toEqual([
+        { type: "text", text: "Hello world", parts: ["Hello world"] },
+      ]);
+    });
+
+    it("splits on @id mention resolving to a known participant (shared session)", () => {
+      const { loginManager } = createLoginManagerMock();
+      const { session, sharedChats } = createSharedSessionMock({
+        connectedSessionUsers: [
+          {
+            userId: "u1",
+            connectionId: "conn-u1",
+            name: "Alpha",
+            isSelf: false,
+          },
+        ],
+      });
+      const chats = createChatsManager(loginManager);
+      const chatSession = chats.createSharedSession(session);
+
+      sharedChats.push({
+        id: "m1",
+        authors: ["u1"],
+        targets: [],
+        timeMs: 1,
+        type: "text",
+        text: "Hey @u1!",
+      });
+
+      const u1 = chatSession.totalParticipants.value.find(
+        (p) => p.id === "u1"
+      )!;
+      expect(chatSession.parsedMessages.value[0]).toEqual({
+        type: "text",
+        text: "Hey @u1!",
+        parts: ["Hey ", { type: "mention", text: "@u1", participant: u1 }, "!"],
+      });
+    });
+
+    it("resolves unknown mention token to participant: null (shared session)", () => {
+      const { loginManager } = createLoginManagerMock();
+      const { session, sharedChats } = createSharedSessionMock();
+      const chats = createChatsManager(loginManager);
+      const chatSession = chats.createSharedSession(session);
+
+      sharedChats.push({
+        id: "m1",
+        authors: [],
+        targets: [],
+        timeMs: 1,
+        type: "text",
+        text: "Hi @unknown!",
+      });
+
+      expect(chatSession.parsedMessages.value[0]).toEqual({
+        type: "text",
+        text: "Hi @unknown!",
+        parts: [
+          "Hi ",
+          { type: "mention", text: "@unknown", participant: null },
+          "!",
+        ],
+      });
+    });
+
+    it("updates reactively when the shared array receives a new message (shared session)", () => {
+      const { loginManager } = createLoginManagerMock();
+      const { session, sharedChats } = createSharedSessionMock();
+      const chats = createChatsManager(loginManager);
+      const chatSession = chats.createSharedSession(session);
+
+      expect(chatSession.parsedMessages.value).toEqual([]);
+
+      sharedChats.push({
+        id: "m1",
+        authors: [],
+        targets: [],
+        timeMs: 1,
+        type: "text",
+        text: "Hello",
+      });
+
+      expect(chatSession.parsedMessages.value).toHaveLength(1);
+      expect(chatSession.parsedMessages.value[0]).toMatchObject({
+        type: "text",
+        text: "Hello",
+      });
+    });
+
+    it("resolves mention by shared participant id alias (shared session)", async () => {
+      const { loginManager } = createLoginManagerMock();
+      const { session, sharedChats, sharedParticipantAliases } =
+        createSharedSessionMock({
+          connectedSessionUsers: [
+            {
+              userId: "u1",
+              connectionId: "anon-1",
+              name: "Guest",
+              isSelf: false,
+            },
+          ],
+        });
+      sharedParticipantAliases.set("anon-1", "u1");
+      await Promise.resolve();
+
+      const chats = createChatsManager(loginManager);
+      const chatSession = chats.createSharedSession(session);
+
+      await Promise.resolve();
+
+      sharedChats.push({
+        id: "m1",
+        authors: ["u1"],
+        targets: [],
+        timeMs: 1,
+        type: "text",
+        text: "Hi @anon-1",
+      });
+
+      const u1 = chatSession.totalParticipants.value.find(
+        (p) => p.id === "u1"
+      )!;
+      expect(chatSession.parsedMessages.value[0]).toMatchObject({
+        parts: ["Hi ", { type: "mention", text: "@anon-1", participant: u1 }],
+      });
+    });
+  });
+
   it("wasMentioned is true for an unread message with targets: true", () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);
