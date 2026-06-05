@@ -83,7 +83,7 @@ export type ChatProviderMessageOptions =
   | ChatMessageOptions
   | StreamingTextChatMessageOptions;
 
-export interface ParsedChatTextMessage {
+export interface ParsedChatTextMessage extends ChatMessageBase {
   type: "text";
   /** The original text of the message. */
   text: string;
@@ -588,6 +588,10 @@ function parseTextMessage(
 
   return {
     type: "text",
+    id: message.id,
+    authors: message.authors,
+    targets: message.targets,
+    timeMs: message.timeMs,
     text,
     parts: parts.length > 0 ? parts : [text],
   };

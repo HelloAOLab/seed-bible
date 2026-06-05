@@ -8118,3 +8118,11 @@ img.sb-chat-view-message-avatar {
     animation: sb-floating-panel-rise 0.18s ease-out;
   }
 }
+
+.sb-chat-mention {
+  font-weight: 600;
+}
+
+.sb-chat-mention.sb-chat-mention-self {
+  color: var(--sb-primary-color);
+}

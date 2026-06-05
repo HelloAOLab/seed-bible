@@ -4,6 +4,7 @@ import type {
   ChatParticipant,
   ChatMessage,
   ChatSession,
+  ParsedChatTextMessage,
 } from "seed-bible.managers.ChatsManager";
 import {
   getUserAnimalVisual,
@@ -19,13 +20,25 @@ interface ChatViewProps {
   chat: ChatSession;
 }
 
-function getMessageText(message: ChatMessage): string {
-  switch (message.type) {
-    case "text":
-      return message.text;
-    default:
-      return "";
-  }
+function MessageBody({ message }: { message: ParsedChatTextMessage }) {
+  const { t } = useI18n();
+  return message.parts.map((part, index) => {
+    if (typeof part === "string") {
+      return part;
+    }
+    const isSelf = part.participant?.isSelf ?? false;
+    const label = part.participant
+      ? `@${getParticipantMentionLabel(part.participant, t)}`
+      : part.text;
+    return (
+      <span
+        key={index}
+        className={`sb-chat-mention${isSelf ? " sb-chat-mention-self" : ""}`}
+      >
+        {label}
+      </span>
+    );
+  });
 }
 
 function getAuthorLabel(
@@ -306,7 +319,7 @@ function PresencePrompt({ others }: { others: ChatParticipant[] }) {
 export function ChatView(props: ChatViewProps) {
   const { chat } = props;
   const { t } = useI18n();
-  const messages = chat.messages.value;
+  const messages = chat.parsedMessages.value;
   const draft = useSignal("");
   const cursorPosition = useSignal(0);
   const isSubmitting = useSignal(false);
@@ -595,7 +608,7 @@ export function ChatView(props: ChatViewProps) {
                     </span>
                   </header>
                   <p className="sb-chat-view-message-body">
-                    {getMessageText(message)}
+                    <MessageBody message={message} />
                   </p>
                 </div>
               </article>
