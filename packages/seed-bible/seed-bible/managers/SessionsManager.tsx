@@ -325,6 +325,8 @@ function canLoadSessionData(sessionData: SessionData): sessionData is {
  * full cross-client and cross-surface consistency: the color you see on
  * the sidebar is the same color the tab shows is the same color every
  * other participant sees for you.
+ *
+ * NOTE: Make sure to keep icons updated in the translation files (e.g. `en.json`)
  */
 const USER_ANIMAL_ICONS = [
   "forest", // tree
@@ -339,6 +341,7 @@ const USER_ANIMAL_ICONS = [
   "nature", // tree
 ] as const;
 
+// NOTE: Make sure to keep colors updated in the translation files (e.g. `en.json`)
 const USER_PRESENCE_COLORS = [
   ["#34D399", "emerald"], // emerald
   ["#60A5FA", "blue"], // blue

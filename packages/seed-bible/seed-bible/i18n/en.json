@@ -236,8 +236,6 @@
   "unable-to-send-message": "Unable to send message.",
   "type-a-message": "Type a message...",
   "send-message": "Send message",
-  "active-participants": "Active participants",
-  "no-active-participants-match": "No active participants match",
   "someone-is-typing": "Someone is typing...",
   "x-and-x-are-typing": "{{first}} and {{second}} are typing...",
   "x-is-typing": "{{name}} is typing...",
