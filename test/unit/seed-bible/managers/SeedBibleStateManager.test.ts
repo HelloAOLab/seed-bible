@@ -5,6 +5,7 @@ import {
   waitForInitialLoad,
 } from "../testUtils/createTestSeedBibleState";
 import { signal } from "@preact/signals";
+import { DEFAULT_TRANSLATION_ID } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 
 const mockSaveReadingHistory = jest.fn();
 const mockHighlightsManager = {
@@ -615,6 +616,161 @@ describe("createSeedBibleState", () => {
         translationId: "esv",
         bookId: "genesis",
         chapter: "2",
+      });
+    });
+  });
+
+  describe("openVerseReference", () => {
+    it("navigates the selected tab to the given book and chapter", async () => {
+      const state = await createState();
+      const tab = state.tabs.tabs.value[0]!;
+      const selectSpy = jest
+        .spyOn(tab.readingState, "selectTranslationAndChapter")
+        .mockResolvedValue(undefined);
+
+      await state.app.openVerseReference({ book: "GEN", chapter: 2 });
+
+      expect(selectSpy).toHaveBeenCalledWith(expect.any(String), "GEN", 2, {
+        scrollToVerse: undefined,
+      });
+    });
+
+    it("uses the tab's current translationId when navigating", async () => {
+      const state = await createState();
+      const tab = state.tabs.tabs.value[0]!;
+      tab.readingState.translationId.value = "niv";
+      const selectSpy = jest
+        .spyOn(tab.readingState, "selectTranslationAndChapter")
+        .mockResolvedValue(undefined);
+
+      await state.app.openVerseReference({ book: "GEN", chapter: 1 });
+
+      expect(selectSpy).toHaveBeenCalledWith("niv", "GEN", 1, {
+        scrollToVerse: undefined,
+      });
+    });
+
+    it("falls back to DEFAULT_TRANSLATION_ID when the tab has no translationId", async () => {
+      const state = await createState();
+      const tab = state.tabs.tabs.value[0]!;
+      tab.readingState.translationId.value = null;
+      const selectSpy = jest
+        .spyOn(tab.readingState, "selectTranslationAndChapter")
+        .mockResolvedValue(undefined);
+
+      await state.app.openVerseReference({ book: "EXO", chapter: 3 });
+
+      expect(selectSpy).toHaveBeenCalledWith(DEFAULT_TRANSLATION_ID, "EXO", 3, {
+        scrollToVerse: undefined,
+      });
+    });
+
+    it("falls back to the first tab when the selected tab id does not match any tab", async () => {
+      const state = await createStateWithTwoTabs();
+      const firstTab = state.tabs.tabs.value[0]!;
+      const secondTab = state.tabs.tabs.value[1]!;
+      state.tabs.selectedTabId.value = "nonexistent";
+      const firstTabSpy = jest
+        .spyOn(firstTab.readingState, "selectTranslationAndChapter")
+        .mockResolvedValue(undefined);
+      const secondTabSpy = jest
+        .spyOn(secondTab.readingState, "selectTranslationAndChapter")
+        .mockResolvedValue(undefined);
+
+      await state.app.openVerseReference({ book: "JHN", chapter: 3 });
+
+      expect(firstTabSpy).toHaveBeenCalledTimes(1);
+      expect(secondTabSpy).not.toHaveBeenCalled();
+    });
+
+    it("passes the verse number as scrollToVerse when navigating", async () => {
+      const state = await createState();
+      const tab = state.tabs.tabs.value[0]!;
+      const selectSpy = jest
+        .spyOn(tab.readingState, "selectTranslationAndChapter")
+        .mockResolvedValue(undefined);
+
+      await state.app.openVerseReference({
+        book: "JHN",
+        chapter: 3,
+        verse: 16,
+      });
+
+      expect(selectSpy).toHaveBeenCalledWith(expect.any(String), "JHN", 3, {
+        scrollToVerse: 16,
+      });
+    });
+
+    it("decorates the verse after navigating when a single verse is specified", async () => {
+      const state = await createState();
+      const tab = state.tabs.tabs.value[0]!;
+      jest
+        .spyOn(tab.readingState, "selectTranslationAndChapter")
+        .mockResolvedValue(undefined);
+      const decorateSpy = jest.spyOn(tab.readingState, "decorateVerses");
+
+      await state.app.openVerseReference({
+        book: "JHN",
+        chapter: 3,
+        verse: 16,
+      });
+
+      expect(decorateSpy).toHaveBeenCalledWith("JHN", 3, 16, {
+        className: "sb-verse-decoration-open-reference-highlight",
+        removeAfterMs: 3000,
+      });
+    });
+
+    it("decorates a range of verses when endVerse is specified", async () => {
+      const state = await createState();
+      const tab = state.tabs.tabs.value[0]!;
+      jest
+        .spyOn(tab.readingState, "selectTranslationAndChapter")
+        .mockResolvedValue(undefined);
+      const decorateSpy = jest.spyOn(tab.readingState, "decorateVerses");
+
+      await state.app.openVerseReference({
+        book: "PSA",
+        chapter: 23,
+        verse: 1,
+        endVerse: 3,
+      });
+
+      expect(decorateSpy).toHaveBeenCalledWith("PSA", 23, [1, 2, 3], {
+        className: "sb-verse-decoration-open-reference-highlight",
+        removeAfterMs: 3000,
+      });
+    });
+
+    it("does not decorate when no verse is specified", async () => {
+      const state = await createState();
+      const tab = state.tabs.tabs.value[0]!;
+      jest
+        .spyOn(tab.readingState, "selectTranslationAndChapter")
+        .mockResolvedValue(undefined);
+      const decorateSpy = jest.spyOn(tab.readingState, "decorateVerses");
+
+      await state.app.openVerseReference({ book: "GEN", chapter: 1 });
+
+      expect(decorateSpy).not.toHaveBeenCalled();
+    });
+
+    it("creates a new tab when no tabs exist", async () => {
+      const state = await createState();
+      const initialTabId = state.tabs.tabs.value[0]!.id;
+      state.tabs.removeTab(initialTabId);
+      const addTabSpy = jest.spyOn(state.tabs, "addTab");
+
+      await state.app.openVerseReference({
+        book: "GEN",
+        chapter: 1,
+        verse: 1,
+      });
+
+      expect(addTabSpy).toHaveBeenCalledWith(undefined, {
+        initialBookId: "GEN",
+        initialChapterNumber: 1,
+        scrollToVerse: 1,
       });
     });
   });
