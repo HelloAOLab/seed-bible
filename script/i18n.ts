@@ -203,7 +203,8 @@ function getTranslationClientConfig(options: { projectId?: string }): {
 
 async function translateCoreKeys(
   options: { projectId: string },
-  mode: "missing" | "all"
+  mode: "missing" | "all",
+  language?: string
 ): Promise<void> {
   const files = await readdir(I18N_DIR, { withFileTypes: true });
   const languageCodes = files
@@ -230,11 +231,17 @@ async function translateCoreKeys(
       : "Translating all core app keys...";
   console.log(label);
 
-  for (const language of languageCodes.sort((a, b) => a.localeCompare(b))) {
-    if (language === ENGLISH_LANGUAGE) {
-      continue;
-    }
+  const languagesToProcess = languageCodes
+    .filter((l) => l !== ENGLISH_LANGUAGE)
+    .filter((l) => !language || l === language)
+    .sort((a, b) => a.localeCompare(b));
 
+  if (language && languagesToProcess.length === 0) {
+    console.error(`No core language file found for "${language}".`);
+    process.exit(1);
+  }
+
+  for (const language of languagesToProcess) {
     const languageFilePath = path.join(I18N_DIR, `${language}.json`);
     const languageRaw = JSON.parse(
       await readFile(languageFilePath, "utf-8")
@@ -284,7 +291,8 @@ async function translateMissingCoreKeys(options: {
 async function translateExtensionKeys(
   options: { projectId: string },
   mode: "missing" | "all",
-  extensionId?: string
+  extensionId?: string,
+  language?: string
 ): Promise<void> {
   const coreResourcesByLanguage = await readMainAppResourcesByLanguage();
   const coreLanguages = [...coreResourcesByLanguage.keys()]
@@ -339,7 +347,9 @@ async function translateExtensionKeys(
     );
     const supportedLanguages = [
       ...new Set([...existingLanguages, ...coreLanguages]),
-    ].sort((a, b) => a.localeCompare(b));
+    ]
+      .filter((l) => !language || l === language)
+      .sort((a, b) => a.localeCompare(b));
 
     if (supportedLanguages.length === 0) {
       console.log("    no non-English languages to update");
@@ -580,12 +590,18 @@ async function addLanguagesCommand(
 async function translateAllCommand(options: {
   projectId?: string;
   extensionId?: string;
+  language?: string;
 }): Promise<void> {
   const translationConfig = getTranslationClientConfig(options);
   if (!options.extensionId) {
-    await translateCoreKeys(translationConfig, "all");
+    await translateCoreKeys(translationConfig, "all", options.language);
   }
-  await translateExtensionKeys(translationConfig, "all", options.extensionId);
+  await translateExtensionKeys(
+    translationConfig,
+    "all",
+    options.extensionId,
+    options.language
+  );
 }
 
 function getExtensionResourcesByLanguage(
@@ -681,6 +697,10 @@ program
   .option(
     "--extension-id <extensionId>",
     "When specified, only translates keys for the given extension (skips core app)."
+  )
+  .option(
+    "--language <language>",
+    "When specified, only updates translations for that language."
   )
   .action(async (options) => {
     await translateAllCommand(options);
