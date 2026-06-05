@@ -765,7 +765,7 @@ function ChatListAvatarCluster({ chat }: { chat: ChatSession }) {
   );
 }
 
-function ChatList({
+export function ChatList({
   chats,
   state,
 }: {
