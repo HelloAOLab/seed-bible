@@ -1,4 +1,7 @@
 export const sq: Record<string, string> = {
+  "VIEW-MORE": "SHIKO MË SHUMË",
+  BOOKMARKS: "FAQERUAJTËSIT:",
+  "search-verses": "Kërko libra, kapituj, vargje...",
   "live-now": "DREJTPËRDREJT TANI",
   Join: "Bashkohu",
   "selected-year": "Viti: {{year}}",

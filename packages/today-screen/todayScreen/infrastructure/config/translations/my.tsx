@@ -1,4 +1,7 @@
 export const my: Record<string, string> = {
+  "VIEW-MORE": "ပိုမိုကြည့်ရန်",
+  BOOKMARKS: "မှတ်သားချက်များ:",
+  "search-verses": "စာအုပ်များ၊ အခန်းများ၊ အခန်းငယ်များ ရှာရန်...",
   "live-now": "ယခု တိုက်ရိုက်လွှင့်နေသည်",
   Join: "ပါဝင်ရန်",
   "selected-year": "နှစ်: {{year}}",

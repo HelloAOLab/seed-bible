@@ -13,6 +13,11 @@ import type {
 import { translations } from "todayScreen.infrastructure.config.translations.index";
 import type { BibleVizAPI } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/seedBible";
 import { getReadingHistoryEvents } from "seed-bible.managers.ReadingHistoryManager";
+import {
+  DEFAULT_TRANSLATION_ID,
+  DEFAULT_TRANSLATION_LANGUAGE,
+} from "seed-bible.managers.BibleReadingManager";
+import type { VerseSearchResult } from "todayScreen.domain.models.search";
 
 const Icon = () => {
   return <MaterialIcon>home</MaterialIcon>;
@@ -91,6 +96,41 @@ export const bootstrapExtension = () => {
           .getCommunityReading([{ id: "value", span: timespan }])
           .then((result) => result.value);
 
+      /**
+       * Full-text verse search over the active translation/language (falling
+       * back to the defaults when there is no current reading state). Mirrors
+       * the search performed by the reader's FloatingSearchPanel.
+       */
+      const searchVerses = async (
+        query: string
+      ): Promise<VerseSearchResult[]> => {
+        const trimmed = query.trim();
+        if (!trimmed) return [];
+
+        const readingState = context.app.currentReadingState.value;
+        const activeTranslationId =
+          readingState?.translationId ?? DEFAULT_TRANSLATION_ID;
+        const activeLanguage =
+          readingState?.tab.readingState.translation.value?.language ??
+          DEFAULT_TRANSLATION_LANGUAGE;
+
+        const response = await context.search.searchVerses(
+          activeLanguage,
+          activeTranslationId,
+          trimmed
+        );
+
+        return (response.hits ?? []).map((hit) => ({
+          id: hit.document.id,
+          translationId: hit.document.translation,
+          bookId: hit.document.book,
+          chapterNumber: hit.document.chapter,
+          verseNumber: hit.document.verse,
+          reference: hit.document.reference,
+          text: hit.document.text,
+        }));
+      };
+
       const cleanupUserLastReading = effect(() => {
         const userId = context.login.userId.value;
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -165,13 +205,23 @@ export const bootstrapExtension = () => {
                   addTab: (
                     bookId: string,
                     chapter: number,
-                    translationId: string | undefined
+                    translationId: string | undefined,
+                    verse: number | undefined
                   ) => {
                     const tab = context.tabs.addTab(undefined, {
                       initialBookId: bookId,
                       initialChapterNumber: chapter,
                       initialTranslationId: translationId,
+                      scrollToVerse: verse,
                     });
+                    // `scrollToVerse` only scrolls; the highlight is a separate
+                    // decoration (same pattern as the reader's search panel).
+                    if (verse !== undefined) {
+                      tab.readingState.decorateVerses(bookId, chapter, verse, {
+                        className: "sb-verse-decoration-search-result",
+                        removeAfterMs: 3000,
+                      });
+                    }
                     const paneId = context.panes.selectedPaneId.value;
                     if (paneId) {
                       context.panes.openInPane(paneId, { tabId: tab.id });
@@ -184,6 +234,7 @@ export const bootstrapExtension = () => {
                       configBot.tags.translation;
                     return typeof id === "string" ? id : undefined;
                   },
+                  searchVerses,
                   openBookSelector: () => {
                     const pane =
                       context.panes.panes.value.find(
@@ -213,6 +264,12 @@ export const bootstrapExtension = () => {
                   },
                   joinSharedSession: (id: string) =>
                     context.app.joinSharedSession(id),
+                  bookmarks: context.bookmarks.bookmarks,
+                  getTranslationBooks: (translation: string) => {
+                    return context.bibleData.translationBooks.value.get(
+                      translation
+                    );
+                  },
                 }}
                 customCSS={customCSS}
               />

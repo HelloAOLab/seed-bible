@@ -1,4 +1,7 @@
 export const ti: Record<string, string> = {
+  "VIEW-MORE": "ተወሳኺ ርአ",
+  BOOKMARKS: "ምልክታት:",
+  "search-verses": "መጻሕፍቲ፣ ምዕራፋት፣ ጥቕስታት ድለ...",
   "live-now": "ሕጂ ብቐጥታ",
   Join: "ተጸንበር",
   "selected-year": "ዓመት: {{year}}",

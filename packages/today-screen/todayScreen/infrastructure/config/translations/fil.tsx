@@ -1,4 +1,7 @@
 export const fil: Record<string, string> = {
+  "VIEW-MORE": "TINGNAN PA",
+  BOOKMARKS: "MGA BOOKMARK:",
+  "search-verses": "Maghanap ng mga aklat, kabanata, talata...",
   "live-now": "LIVE NGAYON",
   Join: "Sumali",
   "selected-year": "Taon: {{year}}",

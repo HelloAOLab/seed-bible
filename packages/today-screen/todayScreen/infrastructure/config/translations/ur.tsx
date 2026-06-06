@@ -1,4 +1,7 @@
 export const ur: Record<string, string> = {
+  "VIEW-MORE": "مزید دیکھیں",
+  BOOKMARKS: "بُک مارکس:",
+  "search-verses": "کتابیں، ابواب، آیات تلاش کریں...",
   "live-now": "ابھی لائیو",
   Join: "شامل ہوں",
   "selected-year": "سال: {{year}}",

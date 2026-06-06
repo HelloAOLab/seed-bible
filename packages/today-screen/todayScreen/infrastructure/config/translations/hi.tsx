@@ -1,4 +1,7 @@
 export const hi: Record<string, string> = {
+  "VIEW-MORE": "और देखें",
+  BOOKMARKS: "बुकमार्क:",
+  "search-verses": "पुस्तकें, अध्याय, छंद खोजें...",
   "live-now": "अभी लाइव",
   Join: "शामिल हों",
   "selected-year": "वर्ष: {{year}}",

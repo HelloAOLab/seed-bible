@@ -1,4 +1,7 @@
 export const fi: Record<string, string> = {
+  "VIEW-MORE": "NÄYTÄ LISÄÄ",
+  BOOKMARKS: "KIRJANMERKIT:",
+  "search-verses": "Hae kirjoja, lukuja, jakeita...",
   "live-now": "SUORANA NYT",
   Join: "Liity",
   "selected-year": "Vuosi: {{year}}",

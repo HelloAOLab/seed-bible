@@ -1,4 +1,7 @@
 export const ne: Record<string, string> = {
+  "VIEW-MORE": "थप हेर्नुहोस्",
+  BOOKMARKS: "बुकमार्क:",
+  "search-verses": "पुस्तक, अध्याय, पद खोज्नुहोस्...",
   "live-now": "अहिले प्रत्यक्ष",
   Join: "सामेल हुनुहोस्",
   "selected-year": "वर्ष: {{year}}",

@@ -1,4 +1,7 @@
 export const fy: Record<string, string> = {
+  "VIEW-MORE": "MEAR SJEN",
+  BOOKMARKS: "BLÊDWIZERS:",
+  "search-verses": "Sykje boeken, haadstikken, fersen...",
   "live-now": "NO LIVE",
   Join: "Meidwaan",
   "selected-year": "Jier: {{year}}",

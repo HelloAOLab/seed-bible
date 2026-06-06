@@ -1,4 +1,7 @@
 export const az: Record<string, string> = {
+  "VIEW-MORE": "DAHA ÇOX BAX",
+  BOOKMARKS: "ƏLFƏCİNLƏR:",
+  "search-verses": "Kitabları, fəsilləri, ayələri axtarın...",
   "live-now": "İNDİ CANLI",
   Join: "Qoşul",
   "selected-year": "İl: {{year}}",

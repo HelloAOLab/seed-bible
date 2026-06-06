@@ -1,4 +1,7 @@
 export const te: Record<string, string> = {
+  "VIEW-MORE": "మరింత చూడండి",
+  BOOKMARKS: "బుక్‌మార్క్‌లు:",
+  "search-verses": "పుస్తకాలు, అధ్యాయాలు, వచనాలను శోధించండి...",
   "live-now": "ఇప్పుడు ప్రత్యక్షం",
   Join: "చేరండి",
   "selected-year": "సంవత్సరం: {{year}}",

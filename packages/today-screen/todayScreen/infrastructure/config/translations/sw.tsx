@@ -1,4 +1,7 @@
 export const sw: Record<string, string> = {
+  "VIEW-MORE": "TAZAMA ZAIDI",
+  BOOKMARKS: "ALAMISHO:",
+  "search-verses": "Tafuta vitabu, sura, mistari...",
   "live-now": "MOJA KWA MOJA SASA",
   Join: "Jiunge",
   "selected-year": "Mwaka: {{year}}",

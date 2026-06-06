@@ -1,4 +1,7 @@
 export const ind: Record<string, string> = {
+  "VIEW-MORE": "LIHAT LAINNYA",
+  BOOKMARKS: "MARKAH:",
+  "search-verses": "Cari kitab, pasal, ayat...",
   "live-now": "LIVE SEKARANG",
   Join: "Gabung",
   "selected-year": "Tahun: {{year}}",

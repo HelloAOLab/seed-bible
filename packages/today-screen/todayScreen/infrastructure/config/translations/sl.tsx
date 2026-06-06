@@ -1,4 +1,7 @@
 export const sl: Record<string, string> = {
+  "VIEW-MORE": "PRIKAŽI VEČ",
+  BOOKMARKS: "ZAZNAMKI:",
+  "search-verses": "Iskanje knjig, poglavij, vrstic...",
   "live-now": "V ŽIVO ZDAJ",
   Join: "Pridruži se",
   "selected-year": "Leto: {{year}}",

@@ -1,4 +1,7 @@
 export const hu: Record<string, string> = {
+  "VIEW-MORE": "TÖBB MEGTEKINTÉSE",
+  BOOKMARKS: "KÖNYVJELZŐK:",
+  "search-verses": "Könyvek, fejezetek, versek keresése...",
   "live-now": "ÉLŐBEN MOST",
   Join: "Csatlakozás",
   "selected-year": "Év: {{year}}",

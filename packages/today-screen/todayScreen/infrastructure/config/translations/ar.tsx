@@ -1,4 +1,7 @@
 export const ar: Record<string, string> = {
+  "VIEW-MORE": "عرض المزيد",
+  BOOKMARKS: "الإشارات المرجعية:",
+  "search-verses": "ابحث عن الكتب والفصول والآيات...",
   "live-now": "مباشر الآن",
   Join: "انضم",
   "selected-year": "السنة: {{year}}",

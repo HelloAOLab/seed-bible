@@ -1,4 +1,7 @@
 export const lv: Record<string, string> = {
+  "VIEW-MORE": "SKATĪT VAIRĀK",
+  BOOKMARKS: "GRĀMATZĪMES:",
+  "search-verses": "Meklēt grāmatas, nodaļas, pantus...",
   "live-now": "TIEŠRAIDĒ TAGAD",
   Join: "Pievienoties",
   "selected-year": "Gads: {{year}}",

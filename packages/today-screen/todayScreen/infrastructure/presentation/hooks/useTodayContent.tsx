@@ -9,15 +9,19 @@ type UseTodayContent = () => {
 };
 
 export const useTodayContent: UseTodayContent = () => {
-  const { userLastReading } = useTodayContext();
+  const { userLastReading, bookmarks } = useTodayContext();
 
   const showResumeReading = !!userLastReading.value;
+  const showBookmarks = bookmarks.value.length > 0;
   const showSearch = true;
   const showRecommendations = false;
   const showSocial = true;
 
   const dividedSectionsIds = useMemo<DividedSection[]>(() => {
     const sectionsData: DividedSection[] = [];
+    if (showBookmarks) {
+      sectionsData.push("bookmarks");
+    }
     if (showSearch) {
       sectionsData.push("search");
     }

@@ -1,4 +1,7 @@
 export const ja: Record<string, string> = {
+  "VIEW-MORE": "もっと見る",
+  BOOKMARKS: "ブックマーク:",
+  "search-verses": "書籍、章、節を検索...",
   "live-now": "ライブ配信中",
   Join: "参加",
   "selected-year": "年: {{year}}",

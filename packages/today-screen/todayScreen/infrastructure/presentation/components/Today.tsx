@@ -13,6 +13,9 @@ import type { ReadingEvent } from "@packages/seed-bible/seed-bible/managers/Read
 import type { BibleTheme } from "@packages/seed-bible/seed-bible/managers/ThemeManager";
 import type { ReadingHistoryServicePort } from "todayScreen.infrastructure.ports.readingHistoryService";
 import type { BibleReadingSession } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
+import type { VerseSearchResult } from "todayScreen.domain.models.search";
+import type { Bookmark } from "@packages/seed-bible/seed-bible/managers/BookmarksManager";
+import type { TranslationBooks } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 // import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 
 const { memo } = os.appCompat;
@@ -40,9 +43,12 @@ export interface TodayConfig {
   addTab: (
     bookId: string,
     chapter: number,
-    translationId?: string | undefined
+    translationId?: string | undefined,
+    verse?: number | undefined
   ) => void;
   getDefaultTranslation: () => string | undefined;
+  /** Full-text verse search using the active translation/language. */
+  searchVerses: (query: string) => Promise<VerseSearchResult[]>;
   openBookSelector: () => void;
   translationBooks: Signal<{
     books: Array<{
@@ -102,6 +108,8 @@ export interface TodayConfig {
     getIconById(id: string): string;
   };
   joinSharedSession: (id: string) => Promise<BibleReadingSession>;
+  bookmarks: ReadonlySignal<Array<Bookmark>>;
+  getTranslationBooks: (translation: string) => TranslationBooks | undefined;
 }
 
 type TodayProps = {

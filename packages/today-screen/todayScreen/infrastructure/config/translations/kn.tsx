@@ -1,4 +1,7 @@
 export const kn: Record<string, string> = {
+  "VIEW-MORE": "ಇನ್ನಷ್ಟು ವೀಕ್ಷಿಸಿ",
+  BOOKMARKS: "ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು:",
+  "search-verses": "ಪುಸ್ತಕಗಳು, ಅಧ್ಯಾಯಗಳು, ವಚನಗಳನ್ನು ಹುಡುಕಿ...",
   "live-now": "ಈಗ ಲೈವ್",
   Join: "ಸೇರಿ",
   "selected-year": "ವರ್ಷ: {{year}}",

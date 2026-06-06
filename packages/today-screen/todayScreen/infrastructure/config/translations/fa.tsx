@@ -1,4 +1,7 @@
 export const fa: Record<string, string> = {
+  "VIEW-MORE": "مشاهده بیشتر",
+  BOOKMARKS: "نشانک‌ها:",
+  "search-verses": "جستجوی کتاب‌ها، فصل‌ها، آیه‌ها...",
   "live-now": "پخش زنده",
   Join: "پیوستن",
   "selected-year": "سال: {{year}}",

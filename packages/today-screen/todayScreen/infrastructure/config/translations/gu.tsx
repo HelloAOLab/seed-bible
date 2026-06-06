@@ -1,4 +1,7 @@
 export const gu: Record<string, string> = {
+  "VIEW-MORE": "વધુ જુઓ",
+  BOOKMARKS: "બુકમાર્ક્સ:",
+  "search-verses": "પુસ્તકો, અધ્યાય, કલમો શોધો...",
   "live-now": "હમણાં લાઇવ",
   Join: "જોડાઓ",
   "selected-year": "વર્ષ: {{year}}",

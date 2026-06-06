@@ -1,4 +1,7 @@
 export const cy: Record<string, string> = {
+  "VIEW-MORE": "GWELD MWY",
+  BOOKMARKS: "NODAU TUDALEN:",
+  "search-verses": "Chwilio llyfrau, penodau, adnodau...",
   "live-now": "YN FYW NAWR",
   Join: "Ymuno",
   "selected-year": "Blwyddyn: {{year}}",

@@ -1,4 +1,7 @@
 export const ko: Record<string, string> = {
+  "VIEW-MORE": "더 보기",
+  BOOKMARKS: "북마크:",
+  "search-verses": "책, 장, 절 검색...",
   "live-now": "지금 라이브",
   Join: "참여",
   "selected-year": "연도: {{year}}",

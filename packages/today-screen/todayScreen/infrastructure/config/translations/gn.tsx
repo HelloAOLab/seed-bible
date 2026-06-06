@@ -1,4 +1,7 @@
 export const gn: Record<string, string> = {
+  "VIEW-MORE": "VER MÁS",
+  BOOKMARKS: "MARCADORES:",
+  "search-verses": "Eheka libros, capítulos, versículos...",
   "live-now": "EN VIVO AĞA",
   Join: "Eike",
   "selected-year": "Año: {{year}}",

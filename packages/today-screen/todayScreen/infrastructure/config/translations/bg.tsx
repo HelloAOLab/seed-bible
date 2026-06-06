@@ -1,4 +1,7 @@
 export const bg: Record<string, string> = {
+  "VIEW-MORE": "ВИЖ ОЩЕ",
+  BOOKMARKS: "ОТМЕТКИ:",
+  "search-verses": "Търсене на книги, глави, стихове...",
   "live-now": "НА ЖИВО СЕГА",
   Join: "Присъедини се",
   "selected-year": "Година: {{year}}",

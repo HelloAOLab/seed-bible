@@ -1,4 +1,7 @@
 export const ca: Record<string, string> = {
+  "VIEW-MORE": "MOSTRA MÉS",
+  BOOKMARKS: "MARCADORS:",
+  "search-verses": "Cerca llibres, capítols, versets...",
   "live-now": "EN DIRECTE ARA",
   Join: "Uneix-te",
   "selected-year": "Any: {{year}}",

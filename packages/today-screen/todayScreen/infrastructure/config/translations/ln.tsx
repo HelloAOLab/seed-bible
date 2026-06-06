@@ -1,4 +1,7 @@
 export const ln: Record<string, string> = {
+  "VIEW-MORE": "TALA MINGI",
+  BOOKMARKS: "BOOKMARKS:",
+  "search-verses": "Luka mikanda, kapitre, verse...",
   "live-now": "LIVE SIKAWA",
   Join: "Kokɔta",
   "selected-year": "Mobu: {{year}}",

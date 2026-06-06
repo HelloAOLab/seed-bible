@@ -1,4 +1,7 @@
 export const mn: Record<string, string> = {
+  "VIEW-MORE": "ИЛҮҮГ ХАРАХ",
+  BOOKMARKS: "ХАВЧУУРГА:",
+  "search-verses": "Ном, бүлэг, ишлэл хайх...",
   "live-now": "ОДОО ШУУД",
   Join: "Нэгдэх",
   "selected-year": "Жил: {{year}}",

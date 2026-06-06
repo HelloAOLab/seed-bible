@@ -1,4 +1,7 @@
 export const et: Record<string, string> = {
+  "VIEW-MORE": "VAATA ROHKEM",
+  BOOKMARKS: "JÄRJEHOIDJAD:",
+  "search-verses": "Otsi raamatuid, peatükke, salme...",
   "live-now": "OTSE PRAEGU",
   Join: "Liitu",
   "selected-year": "Aasta: {{year}}",

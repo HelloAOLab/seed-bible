@@ -1,4 +1,7 @@
 export const sv: Record<string, string> = {
+  "VIEW-MORE": "VISA MER",
+  BOOKMARKS: "BOKMÄRKEN:",
+  "search-verses": "Sök böcker, kapitel, verser...",
   "live-now": "LIVE NU",
   Join: "Gå med",
   "selected-year": "År: {{year}}",

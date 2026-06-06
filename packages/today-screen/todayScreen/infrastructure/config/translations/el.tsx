@@ -1,4 +1,7 @@
 export const el: Record<string, string> = {
+  "VIEW-MORE": "ΔΕΙΤΕ ΠΕΡΙΣΣΟΤΕΡΑ",
+  BOOKMARKS: "ΣΕΛΙΔΟΔΕΙΚΤΕΣ:",
+  "search-verses": "Αναζήτηση βιβλίων, κεφαλαίων, στίχων...",
   "live-now": "ΖΩΝΤΑΝΑ ΤΩΡΑ",
   Join: "Συμμετοχή",
   "selected-year": "Έτος: {{year}}",

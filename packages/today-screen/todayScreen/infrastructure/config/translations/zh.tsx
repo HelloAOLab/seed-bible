@@ -1,4 +1,7 @@
 export const zh: Record<string, string> = {
+  "VIEW-MORE": "查看更多",
+  BOOKMARKS: "书签:",
+  "search-verses": "搜索书卷、章、节...",
   "live-now": "正在直播",
   Join: "加入",
   "selected-year": "年份：{{year}}",

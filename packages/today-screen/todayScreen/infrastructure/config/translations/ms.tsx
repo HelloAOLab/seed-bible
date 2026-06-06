@@ -1,4 +1,7 @@
 export const ms: Record<string, string> = {
+  "VIEW-MORE": "LIHAT LAGI",
+  BOOKMARKS: "PENANDA BUKU:",
+  "search-verses": "Cari buku, bab, ayat...",
   "live-now": "LANGSUNG SEKARANG",
   Join: "Sertai",
   "selected-year": "Tahun: {{year}}",

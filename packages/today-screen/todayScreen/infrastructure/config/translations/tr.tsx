@@ -1,4 +1,7 @@
 export const tr: Record<string, string> = {
+  "VIEW-MORE": "DAHA FAZLA GÖSTER",
+  BOOKMARKS: "YER İMLERİ:",
+  "search-verses": "Kitap, bölüm, ayet ara...",
   "live-now": "ŞİMDİ CANLI",
   Join: "Katıl",
   "selected-year": "Yıl: {{year}}",

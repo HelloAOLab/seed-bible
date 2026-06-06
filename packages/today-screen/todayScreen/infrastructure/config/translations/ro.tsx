@@ -1,4 +1,7 @@
 export const ro: Record<string, string> = {
+  "VIEW-MORE": "VEZI MAI MULT",
+  BOOKMARKS: "MARCAJE:",
+  "search-verses": "Caută cărți, capitole, versete...",
   "live-now": "ÎN DIRECT ACUM",
   Join: "Alătură-te",
   "selected-year": "An: {{year}}",

@@ -1,4 +1,7 @@
 export const lt: Record<string, string> = {
+  "VIEW-MORE": "RODYTI DAUGIAU",
+  BOOKMARKS: "ŽYMĖS:",
+  "search-verses": "Ieškoti knygų, skyrių, eilučių...",
   "live-now": "TIESIOGIAI DABAR",
   Join: "Prisijungti",
   "selected-year": "Metai: {{year}}",

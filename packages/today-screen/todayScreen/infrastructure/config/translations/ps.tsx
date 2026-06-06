@@ -1,4 +1,7 @@
 export const ps: Record<string, string> = {
+  "VIEW-MORE": "نور وګورئ",
+  BOOKMARKS: "بوک مارکونه:",
+  "search-verses": "کتابونه، فصلونه، آیتونه ولټوئ...",
   "live-now": "اوس مستقیم",
   Join: "ګډون وکړئ",
   "selected-year": "کال: {{year}}",

@@ -1,4 +1,7 @@
 export const bn: Record<string, string> = {
+  "VIEW-MORE": "আরও দেখুন",
+  BOOKMARKS: "বুকমার্ক:",
+  "search-verses": "বই, অধ্যায়, পদ অনুসন্ধান করুন...",
   "live-now": "এখন লাইভ",
   Join: "যোগ দিন",
   "selected-year": "বছর: {{year}}",

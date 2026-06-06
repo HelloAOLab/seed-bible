@@ -1,4 +1,7 @@
 export const ky: Record<string, string> = {
+  "VIEW-MORE": "КӨБҮРӨӨК КӨРҮҮ",
+  BOOKMARKS: "КЫСТАРМАЛАР:",
+  "search-verses": "Китептерди, бөлүмдөрдү, аяттарды издөө...",
   "live-now": "АЗЫР ТҮЗ ЭФИРДЕ",
   Join: "Кошулуу",
   "selected-year": "Жыл: {{year}}",

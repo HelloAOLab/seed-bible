@@ -1,4 +1,7 @@
 export const am: Record<string, string> = {
+  "VIEW-MORE": "ተጨማሪ ይመልከቱ",
+  BOOKMARKS: "ዕልባቶች:",
+  "search-verses": "መጻሕፍትን፣ ምዕራፎችን፣ ቁጥሮችን ይፈልጉ...",
   "live-now": "አሁን በቀጥታ",
   Join: "ይቀላቀሉ",
   "selected-year": "ዓመት: {{year}}",

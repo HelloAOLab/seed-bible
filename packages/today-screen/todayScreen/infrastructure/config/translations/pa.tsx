@@ -1,4 +1,7 @@
 export const pa: Record<string, string> = {
+  "VIEW-MORE": "ਹੋਰ ਵੇਖੋ",
+  BOOKMARKS: "ਬੁੱਕਮਾਰਕ:",
+  "search-verses": "ਕਿਤਾਬਾਂ, ਅਧਿਆਏ, ਆਇਤਾਂ ਖੋਜੋ...",
   "live-now": "ਹੁਣੇ ਲਾਈਵ",
   Join: "ਸ਼ਾਮਲ ਹੋਵੋ",
   "selected-year": "ਸਾਲ: {{year}}",

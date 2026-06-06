@@ -1457,8 +1457,17 @@
       "todayScreen.application.services.TodayReadingHistoryService": [
         "./packages/today-screen/todayScreen/application/services/TodayReadingHistoryService.tsx"
       ],
+      "todayScreen.domain.models.commonTypes": [
+        "./packages/today-screen/todayScreen/domain/models/commonTypes.tsx"
+      ],
       "todayScreen.domain.models.readingHistory": [
         "./packages/today-screen/todayScreen/domain/models/readingHistory.tsx"
+      ],
+      "todayScreen.domain.models.search": [
+        "./packages/today-screen/todayScreen/domain/models/search.tsx"
+      ],
+      "todayScreen.domain.models.tooltip": [
+        "./packages/today-screen/todayScreen/domain/models/tooltip.tsx"
       ],
       "todayScreen.infrastructure.adapters.fake.FakeSubscribedUsersProvider": [
         "./packages/today-screen/todayScreen/infrastructure/adapters/fake/FakeSubscribedUsersProvider.tsx"
@@ -1715,6 +1724,9 @@
       "todayScreen.infrastructure.presentation.components.containers.Book": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/Book.tsx"
       ],
+      "todayScreen.infrastructure.presentation.components.containers.BookmarksSection": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/BookmarksSection.tsx"
+      ],
       "todayScreen.infrastructure.presentation.components.containers.Chapter": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/Chapter.tsx"
       ],
@@ -1789,6 +1801,9 @@
       ],
       "todayScreen.infrastructure.presentation.hooks.useBook": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useBook.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.hooks.useBookmarksSection": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useBookmarksSection.tsx"
       ],
       "todayScreen.infrastructure.presentation.hooks.useClickOutside": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useClickOutside.tsx"

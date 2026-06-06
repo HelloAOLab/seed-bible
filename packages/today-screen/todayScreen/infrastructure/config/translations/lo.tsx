@@ -1,4 +1,7 @@
 export const lo: Record<string, string> = {
+  "VIEW-MORE": "ເບິ່ງເພີ່ມເຕີມ",
+  BOOKMARKS: "ບຸກມາກ:",
+  "search-verses": "ຄົ້ນຫາໜັງສື, ບົດ, ຂໍ້...",
   "live-now": "ຖ່າຍທອດສົດດຽວນີ້",
   Join: "ເຂົ້າຮ່ວມ",
   "selected-year": "ປີ: {{year}}",

@@ -1,4 +1,7 @@
 export const be: Record<string, string> = {
+  "VIEW-MORE": "ПАКАЗАЦЬ БОЛЬШ",
+  BOOKMARKS: "ЗАКЛАДКІ:",
+  "search-verses": "Шукайце кнігі, главы, вершы...",
   "live-now": "ЗАРАЗ У ЭФІРЫ",
   Join: "Далучыцца",
   "selected-year": "Год: {{year}}",

@@ -8,7 +8,7 @@ import type {
   DateRange,
   KeyRangesMap,
   TimelineRangesMap,
-} from "scriptureMap.models.readingHistory";
+} from "@packages/today-screen/todayScreen/domain/models/readingHistory";
 import { useTimeContext } from "todayScreen.infrastructure.presentation.contexts.time.TimeContext";
 import {
   flat,
@@ -17,6 +17,7 @@ import {
 import type { ReadingHistorySummary } from "seed-bible.managers.ReadingHistoryManager";
 import { useTodayContext } from "../contexts/today/TodayContext";
 import { useSocialSectionContext } from "../contexts/socialSection/SocialSectionContext";
+import type { TooltipContentData } from "@packages/today-screen/todayScreen/domain/models/tooltip";
 
 type ItemsColorMap = Map<string, React.CSSProperties["color"]>;
 
@@ -407,12 +408,23 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
         };
         const isUpcoming = time > todayDate.getTime();
 
+        const formattedDate = new Intl.DateTimeFormat(language, {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        }).format(time);
+
+        const tooltipContentData: TooltipContentData = {
+          type: "text",
+          content: formattedDate,
+        };
+
         if (range) {
           items.push({
             type: "item",
             id: key,
             key: `${week}-${day}-${dayOfTheMonth}-${monthName}-${year}`,
-            tooltipContentsData: [], // tooltipContentsData,
+            tooltipContentsData: [tooltipContentData],
             range,
             handleItemClick: (clickedRange) => {
               selectDay(

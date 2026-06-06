@@ -1,4 +1,7 @@
 export const is: Record<string, string> = {
+  "VIEW-MORE": "SJÁ MEIRA",
+  BOOKMARKS: "BÓKAMERKI:",
+  "search-verses": "Leita að bókum, köflum, versum...",
   "live-now": "Í BEINNI NÚNA",
   Join: "Taka þátt",
   "selected-year": "Ár: {{year}}",

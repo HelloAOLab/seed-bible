@@ -1,4 +1,7 @@
 export const nl: Record<string, string> = {
+  "VIEW-MORE": "MEER WEERGEVEN",
+  BOOKMARKS: "BLADWIJZERS:",
+  "search-verses": "Zoek boeken, hoofdstukken, verzen...",
   "live-now": "NU LIVE",
   Join: "Deelnemen",
   "selected-year": "Jaar: {{year}}",

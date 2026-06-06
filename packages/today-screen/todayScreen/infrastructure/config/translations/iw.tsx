@@ -1,4 +1,7 @@
 export const iw: Record<string, string> = {
+  "VIEW-MORE": "הצג עוד",
+  BOOKMARKS: "סימניות:",
+  "search-verses": "חפש ספרים, פרקים, פסוקים...",
   "live-now": "שידור חי עכשיו",
   Join: "הצטרף",
   "selected-year": "שנה: {{year}}",

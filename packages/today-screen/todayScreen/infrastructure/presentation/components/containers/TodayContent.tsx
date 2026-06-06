@@ -6,13 +6,19 @@ import { Fragment } from "preact/jsx-runtime";
 import { RecommendationsSection } from "todayScreen.infrastructure.presentation.components.containers.RecommendationsSection";
 import { SearchSection } from "todayScreen.infrastructure.presentation.components.containers.SearchSection";
 import { SocialSection } from "todayScreen.infrastructure.presentation.components.containers.SocialSection";
+import { BookmarksSection } from "./BookmarksSection";
 
-export type DividedSection = "search" | "recommendations" | "social";
+export type DividedSection =
+  | "search"
+  | "recommendations"
+  | "social"
+  | "bookmarks";
 
 const sectionComponentMap: Record<DividedSection, () => preact.JSX.Element> = {
   recommendations: RecommendationsSection,
   search: SearchSection,
   social: SocialSection,
+  bookmarks: BookmarksSection,
 };
 
 export const TodayContent = () => {

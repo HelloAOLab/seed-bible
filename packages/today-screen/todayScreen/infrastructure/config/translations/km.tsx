@@ -1,4 +1,7 @@
 export const km: Record<string, string> = {
+  "VIEW-MORE": "មើលច្រើនទៀត",
+  BOOKMARKS: "ចំណាំ:",
+  "search-verses": "ស្វែងរកសៀវភៅ ជំពូក ខ...",
   "live-now": "ផ្សាយផ្ទាល់ឥឡូវនេះ",
   Join: "ចូលរួម",
   "selected-year": "ឆ្នាំ: {{year}}",
