@@ -42,8 +42,9 @@ const makeState = (overrides: any = {}): any => ({
 
 const makeProvider = (
   state = makeState(),
-  colors: string[] = ["#ff0000", "#00ff00", "#0000ff"]
-) => new SessionProvider({ state, colors });
+  colors: string[] = ["#ff0000", "#00ff00", "#0000ff"],
+  icons: string[] = ["home", "star", "face"]
+) => new SessionProvider({ state, colors, icons });
 
 // ─── getConnectedUsers ────────────────────────────────────────────────────────
 
@@ -234,15 +235,12 @@ describe("getUserColorById", () => {
   });
 
   it("returns '#E5E7EB' when the colors array is empty", () => {
-    const provider = new SessionProvider({ state: makeState(), colors: [] });
+    const provider = makeProvider(makeState(), []);
     expect(provider.getUserColorById("any-id")).toBe("#E5E7EB");
   });
 
   it("always returns the single available color when colors has one entry", () => {
-    const provider = new SessionProvider({
-      state: makeState(),
-      colors: ["#unique"],
-    });
+    const provider = makeProvider(makeState(), ["#unique"]);
     expect(provider.getUserColorById("id-1")).toBe("#unique");
     expect(provider.getUserColorById("id-2")).toBe("#unique");
     expect(provider.getUserColorById("id-3")).toBe("#unique");
@@ -250,14 +248,14 @@ describe("getUserColorById", () => {
 
   it("returns a color from within the provided colors array", () => {
     const colors = ["#aaa", "#bbb", "#ccc"];
-    const provider = new SessionProvider({ state: makeState(), colors });
+    const provider = makeProvider(makeState(), colors);
     const result = provider.getUserColorById("test-id");
     expect(colors).toContain(result);
   });
 
   it("may return different colors for different ids", () => {
     const colors = ["#111", "#222", "#333", "#444", "#555"];
-    const provider = new SessionProvider({ state: makeState(), colors });
+    const provider = makeProvider(makeState(), colors);
     const results = new Set(
       [
         "alpha",
