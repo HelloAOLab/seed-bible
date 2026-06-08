@@ -317,7 +317,7 @@ function applyHighlightWithSession(
   // const duration = session?.options.value.highlightDurationSeconds ?? null;
   // const isTransient = session !== null && duration !== null && duration > 0;
 
-  if (!session) {
+  if (!session || session.userCanDecorate(session.localSessionId.value)) {
     void rs.highlightSelectedVerses(details);
   }
 
@@ -585,7 +585,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     const rs = readingState.value;
     if (!rs) return false;
 
-    if (sessionState.value) {
+    if (
+      sessionState.value &&
+      sessionState.value.userCanDecorate(
+        sessionState.value.localSessionId.value
+      )
+    ) {
       // Shared sessions use decorations, not highlights
       const currentBookId = rs.bookId.value;
       const currentChapterNumber = rs.chapterNumber.value;
@@ -1081,7 +1086,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 onClick={() => {
                   const rs = readingState.value;
                   if (!rs) return;
-                  if (sessionState.value) {
+                  if (
+                    sessionState.value &&
+                    sessionState.value.userCanDecorate(
+                      sessionState.value.localSessionId.value
+                    )
+                  ) {
                     // Clean up the shared decoration first so the removal
                     // propagates to other clients even if the local
                     // unhighlight is a no-op (e.g. user isn't logged in
@@ -1214,6 +1224,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 const bookmarkLabel = isSelectionBookmarked
                   ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
                   : t("bookmark-verses", { defaultValue: "Bookmark" });
+
+                // const canHighlight = !sessionState.value || sessionState.value.userCanDecorate(sessionState.value.localSessionId.value);
                 return (
                   <>
                     {selectionUI.value.showHighlightColors && (
