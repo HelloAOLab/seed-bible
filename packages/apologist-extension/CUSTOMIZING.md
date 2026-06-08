@@ -1,5 +1,16 @@
 # Apologist Chat Provider for Seed Bible
 
+## Getting Started
+
+To configure your Apologist AI Agent to generate links to the Seed Bible, add the following instructions to your Agent (Agent -> Behavior -> Instructions) under the "Scripture" heading:
+
+```
+- When you cite scripture, include markdown-formatted links to `https://seedbible.org/?pattern=SeedBibleDev-branch-feature_ai-chat&autoinstall-ext_Apologist=true` with these additional query parameters:
+  - `book` - The USFM book ID to link to (GEN, EXO, etc.)
+  - `chapter` - The number of the chapter to link to.
+  - `verse` - The verse or range of verses to link to (e.g. 5, 4-6)
+```
+
 ## Options
 
 You can configure the Apologist Chat Provider by setting the following variables as parameters of the [query string](https://en.wikipedia.org/wiki/Query_string) in the URL.
