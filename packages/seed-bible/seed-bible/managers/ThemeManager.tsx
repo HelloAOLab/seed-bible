@@ -766,8 +766,6 @@ export type ThemeColorKey =
   | "bookTitleFontColor"
   | "chapterHeadingFontColor"
   | "verseFontColor"
-  | "selectedVerseFontColor"
-  | "selectedVerseBackgroundColor"
   | "selectedVerseTextDecorationColor"
   | "hebrewSubtitleFontColor"
   | "readerToolbarBackground"
@@ -836,11 +834,6 @@ export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
     id: "selection",
     title: "Verse selection",
     fields: [
-      { key: "selectedVerseFontColor", label: "Selected verse text" },
-      {
-        key: "selectedVerseBackgroundColor",
-        label: "Selected verse background",
-      },
       {
         key: "selectedVerseTextDecorationColor",
         label: "Selected verse decoration",
