@@ -2,6 +2,8 @@
 
 ## Getting Started
 
+#### Deep-linking to the Seed Bible
+
 To configure your Apologist AI Agent to generate links to the Seed Bible, add the following instructions to your Agent (Agent -> Behavior -> Instructions) under the "Scripture" heading:
 
 ```
@@ -10,6 +12,29 @@ To configure your Apologist AI Agent to generate links to the Seed Bible, add th
   - `chapter` - The number of the chapter to link to.
   - `verse` - The verse or range of verses to link to (e.g. 5, 4-6)
 ```
+
+#### Conversation hand-off
+
+If you want to prompt users to continue the conversation in the Seed Bible, you can follow these steps to configure your Agent:
+
+1. Go to your Agent's settings in the [Apologist AI Dashboard](https://app.apologist.com/)
+2. Enable the Calls to Action capability
+   1. Agent -> General -> Capabilities -> Orchestration -> Calls to Action
+   2. Once enabled, you will see a section near the bottom of the page called "Calls to Action".
+3. Click "Add Call to Action"
+4. In the modal, enter the following information:
+   1. For name, enter "Open in Seed Bible"
+   2. Make sure that "Active" is checked on
+   3. In the Content tab, do the following:
+      1. type "Open in Seed Bible"
+      2. Select the text you just typed
+      3. Click the "Link" button in the text editor toolbar
+      4. Enter the following for the URL:
+      ```
+      https://seedbible.org/?autoinstall-ext_Apologist=true&apologistConversation={conversation}
+      ```
+
+      5. Click "Submit"
 
 ## Options
 
