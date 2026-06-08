@@ -277,6 +277,7 @@ export interface ChatSession {
   markAsRead: (messageId?: string) => void;
   /** Sends a message and notifies the other participants. */
   sendMessage: (message: ChatMessageOptions) => Promise<void>;
+
   /** Updates whether the local participant is currently typing. */
   setTypingStatus: (isTyping: boolean) => void;
   /** Active participants only. */
@@ -309,6 +310,11 @@ export interface SharedChatSession extends ChatSession {
   session: BibleReadingSession;
 }
 
+export interface ChatSessionHistory {
+  messages: ChatMessage[];
+  providerIds: string[];
+}
+
 export interface ChatsManager {
   isOpen: Signal<boolean>;
   chats: ReadonlySignal<ChatSession[]>;
@@ -319,7 +325,7 @@ export interface ChatsManager {
   wasMentioned: ReadonlySignal<boolean>;
   selectedChat: ReadonlySignal<ChatSession | null>;
   createSharedSession: (session: BibleReadingSession) => ChatSession;
-  createLocalSession: () => ChatSession;
+  createLocalSession: (history?: ChatSessionHistory) => ChatSession;
   registerProvider: (provider: ChatProvider) => () => void;
   selectChat: (chatId: string | null) => void;
 }
@@ -1472,7 +1478,8 @@ function getWasMentionedSignal(
 
 function createLocalChatSession(
   loginManager: LoginManager,
-  chatProviders: Signal<ChatProvider[]>
+  chatProviders: Signal<ChatProvider[]>,
+  history?: ChatSessionHistory
 ): ChatSession {
   const localParticipant = computed<UserChatParticipant>(() => ({
     id: loginManager.userId.value ?? DEFAULT_LOCAL_PARTICIPANT_ID,
@@ -1501,7 +1508,9 @@ function createLocalChatSession(
       isActive: localParticipant.value.isActive,
     }))
   );
-  const selectedProviderParticipantIds = signal<string[]>([]);
+  const selectedProviderParticipantIds = signal<string[]>(
+    history?.providerIds ?? []
+  );
   const providerTypingParticipantIds = signal<string[]>([]);
 
   effect(() => {
@@ -1560,7 +1569,7 @@ function createLocalChatSession(
       (participant) => !selectedIds.has(participant.id)
     );
   });
-  const messages = signal<ChatMessage[]>([]);
+  const messages = signal<ChatMessage[]>(history?.messages ?? []);
   const lastMessageRead = signal<string | null>(null);
   const localIsTyping = signal(false);
   const participantIdAliases = signal<Record<string, string>>({});
@@ -1906,8 +1915,8 @@ export function createChatsManager(loginManager: LoginManager): ChatsManager {
     };
   };
 
-  const createLocalSession = () => {
-    const chat = createLocalChatSession(loginManager, chatProviders);
+  const createLocalSession = (history?: ChatSessionHistory) => {
+    const chat = createLocalChatSession(loginManager, chatProviders, history);
     chats.value = [...chats.value, chat];
     return chat;
   };
