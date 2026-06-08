@@ -18,6 +18,7 @@ You can configure the Apologist Chat Provider by setting the following variables
 ### Supported Parameters
 
 - `autoinstall-ext_Apologist` - Set to `true` to automatically install the Apologist AI Chat provider.
+- `apologistConversation` - The conversation ID that should be loaded at start. If specified, then the conversation history will be fetched and automatically loaded into the chat window and focused.
 - `apologistDomain` - The domain of the agent that should be used. If not specified, then a Seed Bible provided agent will be used.
 - `apologistApiKey` - The API key that should be used to access your agent. Required
 - `apologistName` - The name that should be used for the chat provider. If not specified, then "Apologist" will be used.
