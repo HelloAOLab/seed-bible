@@ -121,21 +121,6 @@ export interface BibleThemeVariables {
   verseCursor?: string | null;
 
   /**
-   * The font family for selected verses. This can be used to differentiate selected verses from unselected verses, but can be customized as needed. If not set, it will default to the verseFontFamily.
-   */
-  selectedVerseFontFamily?: string | null;
-
-  /**
-   * The font color for selected verses. This can be used to differentiate selected verses from unselected verses, but should generally have good contrast against the readerBackground color for readability. If not set, it will default to the verseFontColor.
-   */
-  selectedVerseFontColor?: string | null;
-
-  /**
-   * The background color for selected verses. This can be used to highlight selected verses, but should generally be a light color with good contrast against the selectedVerseFontColor for readability. If not set, selected verses will not have a different background color than unselected verses.
-   */
-  selectedVerseBackgroundColor?: string | null;
-
-  /**
    * The text decoration for selected verses (e.g. "underline", "line-through", "none"). This can be used to further differentiate selected verses from unselected verses, but can be customized as needed. If not set, it will default to "none".
    */
   selectedVerseTextDecoration?: string | null;
@@ -520,9 +505,6 @@ const LIGHT_THEME: BibleTheme = {
     verseFontColor: "#333",
     verseCursor: "pointer",
 
-    selectedVerseFontFamily: "inherit",
-    selectedVerseFontColor: "inherit",
-    selectedVerseBackgroundColor: "inherit",
     selectedVerseBorderBottom: "2px dashed currentColor",
     selectedVerseTextDecoration: "none",
     selectedVerseTextDecorationColor: "currentColor",
@@ -663,9 +645,6 @@ const DARK_THEME: BibleTheme = {
     verseFontColor: "#d7deef",
     verseCursor: "pointer",
 
-    selectedVerseFontFamily: "inherit",
-    selectedVerseFontColor: "inherit",
-    selectedVerseBackgroundColor: "inherit",
     selectedVerseBorderBottom: "2px dashed currentColor",
     selectedVerseTextDecoration: "none",
     selectedVerseTextDecorationColor: "currentColor",

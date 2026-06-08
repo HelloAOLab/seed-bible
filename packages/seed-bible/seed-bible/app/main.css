@@ -75,9 +75,6 @@
   --sb-verse-words-of-jesus-font-family: inherit;
   --sb-verse-words-of-jesus-font-style: inherit;
 
-  --sb-selected-verse-font-family: inherit;
-  --sb-selected-verse-font-color: inherit;
-  --sb-selected-verse-background-color: inherit;
   --sb-selected-verse-border-bottom: 2px dashed currentColor;
   --sb-selected-verse-text-decoration: none;
   --sb-selected-verse-text-decoration-color: currentColor;
@@ -1328,9 +1325,6 @@ h6 {
 }
 
 .sb-verse-selected .sb-verse-decorator {
-  font-family: var(--sb-selected-verse-font-family);
-  color: var(--sb-selected-verse-font-color);
-  background-color: var(--sb-selected-verse-background-color);
   border-bottom: var(--sb-selected-verse-border-bottom);
   text-decoration: var(--sb-selected-verse-text-decoration);
   text-decoration-color: var(--sb-selected-verse-text-decoration-color);
