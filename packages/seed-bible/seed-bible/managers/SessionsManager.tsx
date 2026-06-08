@@ -1,4 +1,4 @@
-import { effect, signal, type ReadonlySignal } from "@preact/signals";
+import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
 import {
   createBibleReadingState,
   type BibleReadingState,
@@ -316,6 +316,22 @@ export interface BibleReadingSession {
    */
   removeSharedDecoration: (decorationId: string) => void;
   dispose: () => void;
+
+  localSessionId: ReadonlySignal<string>;
+
+  /**
+   * Returns true if the given session ID (userId or connectionId) is
+   * permitted to navigate in this session. When `allowedNavigators` is
+   * null or empty every participant may navigate.
+   */
+  userCanNavigate: (sessionId: string) => boolean;
+
+  /**
+   * Returns true if the given session ID (userId or connectionId) is
+   * permitted to add decorations in this session. When `allowedDecorators`
+   * is null or empty every participant may decorate.
+   */
+  userCanDecorate: (sessionId: string) => boolean;
 }
 
 function createSessionId(): string {
@@ -384,6 +400,9 @@ async function createBibleReadingSession(
     (typeof configBot !== "undefined" ? toStringOrNull(configBot?.id) : null) ??
     "local";
   const decorationOwners = new Map<string, string>();
+  const localSessionId = computed(
+    () => loginManager.userId.value ?? localConnectionId
+  );
 
   if (defaultOptions) {
     document.transact(() => {
@@ -411,6 +430,22 @@ async function createBibleReadingSession(
   let pendingRemoteTarget: SessionData | null = null;
   let remoteClientsVersion = 0;
   let applyingRemoteDecorations = false;
+
+  const userCanNavigate = (sessionId: string): boolean => {
+    const { allowedNavigators } = options.value;
+    if (!allowedNavigators || allowedNavigators.length === 0) {
+      return true;
+    }
+    return allowedNavigators.includes(sessionId);
+  };
+
+  const userCanDecorate = (sessionId: string): boolean => {
+    const { allowedDecorators } = options.value;
+    if (!allowedDecorators || allowedDecorators.length === 0) {
+      return true;
+    }
+    return allowedDecorators.includes(sessionId);
+  };
 
   const getSharedDecorationEntries = () => {
     const entries = new Map<
@@ -471,7 +506,6 @@ async function createBibleReadingSession(
         if (currentDecorationIds.has(decorationId)) {
           readingState.removeDecoration(decorationId);
         }
-
         readingState.decorateVerses(
           entry.decoration.bookId,
           entry.decoration.chapterNumber,
@@ -672,18 +706,8 @@ async function createBibleReadingSession(
       return;
     }
 
-    if (
-      options.value.allowedNavigators &&
-      options.value.allowedNavigators.length > 0
-    ) {
-      // A logged-in user is identified by their userId; an anonymous user
-      // by their connectionId. Combining both into a single key avoids
-      // the bug where a logged-in user in the allow-list was still
-      // blocked because their connectionId wasn't *also* in the list.
-      const myKey = loginManager.userId.value ?? localConnectionId;
-      if (!options.value.allowedNavigators.includes(myKey)) {
-        return;
-      }
+    if (!userCanNavigate(localSessionId.value)) {
+      return;
     }
 
     const nextSessionData = getSessionDataSnapshot(readingState);
@@ -725,22 +749,18 @@ async function createBibleReadingSession(
     void readingState.translationId.value;
     void readingState.bookId.value;
     void readingState.chapterNumber.value;
+    // We need to read the decorations signal before
+    // checking any early-exit conditions, so that this effect re-runs whenever decorations change
+    const currentDecorations = readingState.decorations.value;
 
     if (applyingRemoteDecorations) {
       return;
     }
 
-    if (
-      options.value.allowedDecorators &&
-      options.value.allowedDecorators.length > 0
-    ) {
-      const myKey = loginManager.userId.value ?? localConnectionId;
-      if (!options.value.allowedDecorators.includes(myKey)) {
-        return;
-      }
+    if (!userCanDecorate(localSessionId.value)) {
+      return;
     }
 
-    const currentDecorations = readingState.decorations.value;
     const localDecorations = currentDecorations.filter((decoration) => {
       const owner = decorationOwners.get(decoration.id);
       if (!owner) {
@@ -762,6 +782,7 @@ async function createBibleReadingSession(
     const keysToDelete = localSharedDecorations
       .filter((entry) => !localDecorationIds.has(entry.decoration.id))
       .map((entry) => entry.key);
+
     const decorationsToUpsert = localDecorations.filter((decoration) => {
       const existingDecoration = sharedDecorationEntries.get(
         decoration.id
@@ -925,6 +946,9 @@ async function createBibleReadingSession(
     connectedUsers,
     removeSharedDecoration,
     dispose,
+    localSessionId,
+    userCanNavigate,
+    userCanDecorate,
   };
 }
 

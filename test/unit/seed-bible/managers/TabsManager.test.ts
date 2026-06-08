@@ -201,6 +201,9 @@ describe("createTabs", () => {
       removeSharedDecoration: jest.fn(),
       dispose: jest.fn(),
       connectedUsers: signal([]),
+      localSessionId: signal("session-123"),
+      userCanDecorate: jest.fn().mockReturnValue(true),
+      userCanNavigate: jest.fn().mockReturnValue(true),
     } as BibleReadingSession;
 
     const nextTab = manager.addTab(sharedSession);
