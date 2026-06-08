@@ -1,6 +1,20 @@
 /* eslint-disable seed-bible-i18n/i18n-untranslated-content */
 import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
 import { i18n } from "seed-bible.i18n.I18nManager";
+import { z } from "zod";
+
+const completionsSchema = z.object({
+  data: z.array(
+    z.object({
+      prompt: z.string(),
+      response: z.string(),
+      prompted_at: z.string(),
+      response_completed_at: z.string(),
+    })
+  ),
+});
+
+const PROVIDER_ID = "apologist-chat-provider";
 
 registerExtension({
   id: "ext_Apologist",
@@ -13,6 +27,8 @@ registerExtension({
     const apologistDomain = customApologistDomain ?? "apologist.ao.bot";
     const apologistApiKey = configBot.tags.apologistApiKey ?? null;
     const apologistModel = configBot.tags.apologistModel ?? "openai/gpt/5-mini";
+    const apologistConversationId: string | null =
+      configBot.tags.apologistConversation ?? null;
 
     if (customApologistDomain && !apologistApiKey) {
       console.error(
@@ -23,7 +39,7 @@ registerExtension({
 
     // TODO: Add logo for apologist
     yield context.chats.registerProvider({
-      id: "apologist-chat-provider",
+      id: PROVIDER_ID,
       name: apologistName ?? {
         key: "title",
         defaultValue: "Apologist",
@@ -81,6 +97,79 @@ registerExtension({
         return null;
       },
     });
+
+    if (apologistConversationId) {
+      // init conversation
+      const initConversation = async () => {
+        try {
+          console.log(
+            "[Apologist] Getting conversation history for conversation ID:",
+            apologistConversationId
+          );
+          const response = await web.get(
+            `https://${apologistDomain}/api/v1/chat/completions?conversation_id=${encodeURIComponent(apologistConversationId)}`,
+            {
+              headers: apologistApiKey
+                ? {
+                    Authorization: `Bearer ${apologistApiKey}`,
+                  }
+                : {},
+            }
+          );
+
+          const completions = completionsSchema.parse(response.data);
+
+          // build conversation
+          const messages = [];
+          for (const completion of completions.data) {
+            messages.push({
+              role: "user",
+              content: completion.prompt,
+              timeMs: DateTime.fromSQL(completion.prompted_at, {
+                zone: "utc",
+              }).toMillis(),
+            });
+            messages.push({
+              role: "assistant",
+              content: completion.response,
+              timeMs: DateTime.fromSQL(completion.response_completed_at, {
+                zone: "utc",
+              }).toMillis(),
+            });
+          }
+
+          const session = context.chats.createLocalSession({
+            messages: messages.map((m) => ({
+              type: "text",
+              id: uuid(),
+              text: m.content,
+              authors: [
+                m.role === "user"
+                  ? (context.login.userId.value ?? "local-user")
+                  : PROVIDER_ID,
+              ],
+              targets: [],
+              timeMs: m.timeMs,
+            })),
+            providerIds: [PROVIDER_ID],
+          });
+
+          session.markAsRead();
+          context.sidebar.openChatPanel();
+          context.chats.selectChat(session.id);
+
+          console.log("[Apologist] Conversation history:", messages);
+        } catch (err) {
+          console.error("[Apologist] Failed to initialize conversation:", err);
+
+          const session = context.chats.createLocalSession();
+          context.sidebar.openChatPanel();
+          context.chats.selectChat(session.id);
+        }
+      };
+
+      initConversation();
+    }
 
     return {};
   },
