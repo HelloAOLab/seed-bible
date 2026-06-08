@@ -189,11 +189,11 @@ export function parseVerseReference(text: string): VerseRef | null {
   // Formats supported:
   //   GEN 1          – chapter only
   //   GEN 1:1        – chapter + verse
-  //   GEN 5-7        – chapter range
+  //   GEN 5-7        – chapter range (hyphen, en dash, or em dash)
   //   GEN 5:16-19    – verse range within one chapter
   //   GEN 1:1-2:10   – cross-chapter verse range
   const match = text.match(
-    /^\s*([0-9A-Za-z\s]+)[\s\.]+(\d+)(?:[:\.](\d+))?(?:-(\d+)(?:[:\.](\d+))?)?/
+    /^\s*([0-9A-Za-z\s]+)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/
   );
 
   if (!match) {
@@ -259,7 +259,7 @@ export function parseVerseReferences(text: string): VerseRefMatch[] {
   //   (?:\d+\s?)? — optional leading digit (with optional space) for "1SA", "1 Kings"
   //   [A-Za-z][A-Za-z0-9]* — word starting with a letter, e.g. "GEN", "John", "Kings"
   const pattern =
-    /\b((?:\d+\s?)?[A-Za-z][A-Za-z0-9]*)[\s\.]+(\d+)(?:[:\.](\d+))?(?:-(\d+)(?:[:\.](\d+))?)?/g;
+    /\b((?:\d+\s?)?[A-Za-z][A-Za-z0-9]*)[\s\.]+(\d+)(?:[:\.](\d+))?(?:[-–—](\d+)(?:[:\.](\d+))?)?/g;
 
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(text)) !== null) {

@@ -307,6 +307,21 @@ describe("parseVerseReference()", () => {
       "GEN 1:1-2:10",
       { book: "GEN", chapter: 1, verse: 1, endChapter: 2, endVerse: 10 },
     ] as const,
+
+    // em dash range separator
+    ["GEN 5—7", { book: "GEN", chapter: 5, endChapter: 7 }] as const,
+    [
+      "GEN 5:16—19",
+      { book: "GEN", chapter: 5, verse: 16, endVerse: 19 },
+    ] as const,
+    [
+      "GEN 1:1—2:10",
+      { book: "GEN", chapter: 1, verse: 1, endChapter: 2, endVerse: 10 },
+    ] as const,
+    [
+      "Hab.3.8—15",
+      { book: "HAB", chapter: 3, verse: 8, endVerse: 15 },
+    ] as const,
   ];
 
   it.each(cases)("should parse %s", (input, expected) => {
@@ -410,6 +425,23 @@ describe("parseVerseReferences()", () => {
         ref: { book: "GEN", chapter: 1, verse: 1, endChapter: 2, endVerse: 10 },
       },
     ] as const,
+
+    // em dash range separator
+    ["GEN 5—7", { ref: { book: "GEN", chapter: 5, endChapter: 7 } }] as const,
+    [
+      "GEN 5:16—19",
+      { ref: { book: "GEN", chapter: 5, verse: 16, endVerse: 19 } },
+    ] as const,
+    [
+      "GEN 1:1—2:10",
+      {
+        ref: { book: "GEN", chapter: 1, verse: 1, endChapter: 2, endVerse: 10 },
+      },
+    ] as const,
+    [
+      "Hab.3.8—15",
+      { ref: { book: "HAB", chapter: 3, verse: 8, endVerse: 15 } },
+    ] as const,
   ];
 
   it.each(cases)("should find %s", (input, expected) => {
@@ -440,6 +472,23 @@ describe("parseVerseReferences()", () => {
       },
       { ref: { book: "JHN", chapter: 3, verse: 16 }, start: 22, end: 31 },
     ]);
+  });
+
+  it("should find references with em dash ranges", () => {
+    expect(parseVerseReferences("See MAT 1:1—3 and also John 3:16—18")).toEqual(
+      [
+        {
+          ref: { book: "MAT", chapter: 1, verse: 1, endVerse: 3 },
+          start: 4,
+          end: 13,
+        },
+        {
+          ref: { book: "JHN", chapter: 3, verse: 16, endVerse: 18 },
+          start: 23,
+          end: 35,
+        },
+      ]
+    );
   });
 });
 
