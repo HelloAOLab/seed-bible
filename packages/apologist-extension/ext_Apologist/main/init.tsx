@@ -10,6 +10,7 @@ const completionsSchema = z.object({
       response: z.string(),
       prompted_at: z.string(),
       response_completed_at: z.string(),
+      language: z.string().optional(),
     })
   ),
 });
@@ -118,6 +119,15 @@ registerExtension({
           );
 
           const completions = completionsSchema.parse(response.data);
+
+          const lastLanguage =
+            completions.data[completions.data.length - 1]?.language;
+          if (lastLanguage) {
+            console.log(
+              `[Apologist] Setting language to ${lastLanguage} based on conversation history.`
+            );
+            i18n.changeLanguage(lastLanguage);
+          }
 
           // build conversation
           const messages = [];
