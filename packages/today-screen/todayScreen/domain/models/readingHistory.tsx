@@ -3,6 +3,30 @@ import type {
   ReadingHistorySummary,
 } from "@packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
 import type { Range } from "./commonTypes";
+import type { Timespan } from "./commonTypes";
+
+export const COMMUNITY_READING_SPAN_IDS = {
+  twoDays: "twoDays",
+  week: "week",
+  month: "month",
+} as const;
+export type CommunityReadingSpanId =
+  (typeof COMMUNITY_READING_SPAN_IDS)[keyof typeof COMMUNITY_READING_SPAN_IDS];
+
+export type TimespanOptionId = CommunityReadingSpanId | "all";
+
+export type TimespanOption = {
+  year: number;
+  timespan: Timespan | undefined;
+};
+
+/** Data for a single timespan-filter button in the history card. */
+export interface TimespanFilterOptionData {
+  label: string;
+  id: TimespanOptionId;
+  onClick: () => void;
+  isSelected: boolean;
+}
 
 export interface FilteredReading {
   [bookId: string]: {
@@ -31,13 +55,5 @@ export type TimelineRangesMap = Map<number, DateRange>;
 export type CommunityReading<T extends string> = {
   [K in T]: FilteredReading;
 };
-
-export const COMMUNITY_READING_SPAN_IDS = {
-  twoDays: "twoDays",
-  week: "week",
-  month: "month",
-} as const;
-export type CommunityReadingSpanId =
-  (typeof COMMUNITY_READING_SPAN_IDS)[keyof typeof COMMUNITY_READING_SPAN_IDS];
 
 export type UserLastReading = { bookId: string; chapter: number } | undefined;

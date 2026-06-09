@@ -1,4 +1,5 @@
 export const gl: Record<string, string> = {
+  All: "Todo",
   "VIEW-MORE": "VER MÁIS",
   BOOKMARKS: "MARCADORES:",
   "search-verses": "Buscar libros, capítulos, versículos...",

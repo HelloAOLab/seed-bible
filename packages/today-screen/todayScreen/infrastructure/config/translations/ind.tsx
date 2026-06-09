@@ -1,4 +1,5 @@
 export const ind: Record<string, string> = {
+  All: "Semua",
   "VIEW-MORE": "LIHAT LAINNYA",
   BOOKMARKS: "MARKAH:",
   "search-verses": "Cari kitab, pasal, ayat...",

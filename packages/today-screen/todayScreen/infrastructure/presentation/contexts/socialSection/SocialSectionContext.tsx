@@ -1,3 +1,4 @@
+import type { Timespan } from "@packages/today-screen/todayScreen/domain/models/commonTypes";
 import type { FilteredReading } from "@packages/today-screen/todayScreen/domain/models/readingHistory";
 
 const { createContext, useContext } = os.appHooks;
@@ -8,8 +9,6 @@ export interface SocialSectionUserProfile {
   color: string;
   icon: string;
 }
-
-export type Timespan = { from: number; to: number };
 
 export interface SocialSectionContextType {
   /** Map of subscribed user id → whether their reading is currently shown. */

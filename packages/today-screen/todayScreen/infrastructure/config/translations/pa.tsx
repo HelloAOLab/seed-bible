@@ -1,4 +1,5 @@
 export const pa: Record<string, string> = {
+  All: "ਸਾਰੇ",
   "VIEW-MORE": "ਹੋਰ ਵੇਖੋ",
   BOOKMARKS: "ਬੁੱਕਮਾਰਕ:",
   "search-verses": "ਕਿਤਾਬਾਂ, ਅਧਿਆਏ, ਆਇਤਾਂ ਖੋਜੋ...",

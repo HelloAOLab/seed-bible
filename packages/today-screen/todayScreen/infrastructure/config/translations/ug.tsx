@@ -1,4 +1,5 @@
 export const ug: Record<string, string> = {
+  All: "ھەممىسى",
   "VIEW-MORE": "تېخىمۇ كۆپ كۆرۈش",
   BOOKMARKS: "خەتكۈشلەر:",
   "search-verses": "كىتاب، باب، ئايەتلەرنى ئىزدەش...",

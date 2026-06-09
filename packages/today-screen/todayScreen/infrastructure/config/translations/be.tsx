@@ -1,4 +1,5 @@
 export const be: Record<string, string> = {
+  All: "Усе",
   "VIEW-MORE": "ПАКАЗАЦЬ БОЛЬШ",
   BOOKMARKS: "ЗАКЛАДКІ:",
   "search-verses": "Шукайце кнігі, главы, вершы...",

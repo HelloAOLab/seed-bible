@@ -7,12 +7,10 @@ import {
   type SocialSectionUserProfile,
 } from "../contexts/socialSection/SocialSectionContext";
 import { useClickOutside } from "./useClickOutside";
-import {
-  buildTimespanOptionsMap,
-  TimespanOptionLabelMap,
-  type TimespanFilterOptionData,
-  type TimespanOptionId,
-} from "./timespanOptions";
+import type {
+  TimespanFilterOptionData,
+  TimespanOptionId,
+} from "@packages/today-screen/todayScreen/domain/models/readingHistory";
 
 const { useRef, useMemo, useCallback } = os.appHooks;
 
@@ -36,7 +34,8 @@ type UseHistoryCard = () => {
 };
 
 export const useHistoryCard: UseHistoryCard = () => {
-  const { translate, MaterialIcon, language } = useTodayContext();
+  const { translate, MaterialIcon, language, readingHistoryConfigProvider } =
+    useTodayContext();
   const {
     userFilters,
     userProfileMap,
@@ -69,7 +68,7 @@ export const useHistoryCard: UseHistoryCard = () => {
     (id: TimespanOptionId) => {
       if (selectedTimespanOptionId.value === id) return;
 
-      const option = buildTimespanOptionsMap()[id];
+      const option = readingHistoryConfigProvider.buildTimespanOptionsMap()[id];
       selectedTimespanOptionId.value = id;
       // `selectYear` sets the year and clears the timespan; `selectDay` then
       // narrows to the option's window. Both writes batch within this handler.
@@ -92,7 +91,9 @@ export const useHistoryCard: UseHistoryCard = () => {
       const keys = ["twoDays", "week", "month", "all"] as const;
 
       return keys.map((key) => ({
-        label: translateSignal.value(TimespanOptionLabelMap[key]),
+        label: translateSignal.value(
+          readingHistoryConfigProvider.getTimespanOptionLabelMap()[key]
+        ),
         id: key,
         onClick: () => handleTimespanOptionClick(key),
         isSelected: selectedTimespanOptionId.value === key,

@@ -1,4 +1,5 @@
 export const mk: Record<string, string> = {
+  All: "Сите",
   "VIEW-MORE": "ПРИКАЖИ ПОВЕЌЕ",
   BOOKMARKS: "ОБЕЛЕЖУВАЧИ:",
   "search-verses": "Пребарувај книги, поглавја, стихови...",

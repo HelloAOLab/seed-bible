@@ -1,4 +1,5 @@
 export const sq: Record<string, string> = {
+  All: "Të gjitha",
   "VIEW-MORE": "SHIKO MË SHUMË",
   BOOKMARKS: "FAQERUAJTËSIT:",
   "search-verses": "Kërko libra, kapituj, vargje...",

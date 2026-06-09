@@ -1,4 +1,5 @@
 export const et: Record<string, string> = {
+  All: "Kõik",
   "VIEW-MORE": "VAATA ROHKEM",
   BOOKMARKS: "JÄRJEHOIDJAD:",
   "search-verses": "Otsi raamatuid, peatükke, salme...",

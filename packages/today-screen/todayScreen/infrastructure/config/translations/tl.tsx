@@ -1,4 +1,5 @@
 export const tl: Record<string, string> = {
+  All: "Lahat",
   "VIEW-MORE": "TINGNAN PA",
   BOOKMARKS: "MGA BOOKMARK:",
   "search-verses": "Maghanap ng mga aklat, kabanata, talata...",

@@ -1472,6 +1472,9 @@
       "todayScreen.infrastructure.adapters.fake.FakeSubscribedUsersProvider": [
         "./packages/today-screen/todayScreen/infrastructure/adapters/fake/FakeSubscribedUsersProvider.tsx"
       ],
+      "todayScreen.infrastructure.config.readingHistory.readingHistoryConfigProvider": [
+        "./packages/today-screen/todayScreen/infrastructure/config/readingHistory/readingHistoryConfigProvider.tsx"
+      ],
       "todayScreen.infrastructure.config.translations.af": [
         "./packages/today-screen/todayScreen/infrastructure/config/translations/af.tsx"
       ],
@@ -1777,9 +1780,6 @@
       ],
       "todayScreen.infrastructure.presentation.components.ui.UserIcon": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/ui/UserIcon.tsx"
-      ],
-      "todayScreen.infrastructure.presentation.contexts.readingHistory.useReadingHistoryProvider": [
-        "./packages/today-screen/todayScreen/infrastructure/presentation/contexts/readingHistory/useReadingHistoryProvider.tsx"
       ],
       "todayScreen.infrastructure.presentation.contexts.socialSection.SocialSectionContext": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/contexts/socialSection/SocialSectionContext.tsx"

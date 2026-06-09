@@ -1,4 +1,5 @@
 export const el: Record<string, string> = {
+  All: "Όλα",
   "VIEW-MORE": "ΔΕΙΤΕ ΠΕΡΙΣΣΟΤΕΡΑ",
   BOOKMARKS: "ΣΕΛΙΔΟΔΕΙΚΤΕΣ:",
   "search-verses": "Αναζήτηση βιβλίων, κεφαλαίων, στίχων...",

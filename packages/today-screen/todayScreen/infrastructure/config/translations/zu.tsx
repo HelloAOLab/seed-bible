@@ -1,4 +1,5 @@
 export const zu: Record<string, string> = {
+  All: "Konke",
   "VIEW-MORE": "BUKA OKUNINGI",
   BOOKMARKS: "AMABHUKIMAKI:",
   "search-verses": "Sesha izincwadi, izahluko, amavesi...",

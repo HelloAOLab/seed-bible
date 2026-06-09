@@ -1,4 +1,5 @@
 export const ml: Record<string, string> = {
+  All: "എല്ലാം",
   "VIEW-MORE": "കൂടുതൽ കാണുക",
   BOOKMARKS: "ബുക്ക്മാർക്കുകൾ:",
   "search-verses": "പുസ്തകങ്ങൾ, അധ്യായങ്ങൾ, വാക്യങ്ങൾ തിരയുക...",

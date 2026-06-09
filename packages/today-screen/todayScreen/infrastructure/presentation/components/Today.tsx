@@ -4,6 +4,8 @@ import { TodayContainer } from "./containers/TodayContainer";
 import type { ReadonlySignal, Signal } from "@preact/signals";
 import type {
   FilteredReading,
+  TimespanOption,
+  TimespanOptionId,
   UserLastReading,
 } from "todayScreen.domain.models.readingHistory";
 import type { ReadingHistoryTimelineComponent } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/seedBible";
@@ -110,6 +112,10 @@ export interface TodayConfig {
   joinSharedSession: (id: string) => Promise<BibleReadingSession>;
   bookmarks: ReadonlySignal<Array<Bookmark>>;
   getTranslationBooks: (translation: string) => TranslationBooks | undefined;
+  readingHistoryConfigProvider: {
+    buildTimespanOptionsMap: () => Record<TimespanOptionId, TimespanOption>;
+    getTimespanOptionLabelMap(): Record<TimespanOptionId, string>;
+  };
 }
 
 type TodayProps = {

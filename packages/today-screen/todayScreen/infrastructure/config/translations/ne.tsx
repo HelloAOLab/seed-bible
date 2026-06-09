@@ -1,4 +1,5 @@
 export const ne: Record<string, string> = {
+  All: "सबै",
   "VIEW-MORE": "थप हेर्नुहोस्",
   BOOKMARKS: "बुकमार्क:",
   "search-verses": "पुस्तक, अध्याय, पद खोज्नुहोस्...",

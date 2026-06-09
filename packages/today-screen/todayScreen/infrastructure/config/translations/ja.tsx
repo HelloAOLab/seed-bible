@@ -1,4 +1,5 @@
 export const ja: Record<string, string> = {
+  All: "すべて",
   "VIEW-MORE": "もっと見る",
   BOOKMARKS: "ブックマーク:",
   "search-verses": "書籍、章、節を検索...",

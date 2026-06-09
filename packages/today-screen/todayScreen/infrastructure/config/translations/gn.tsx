@@ -1,4 +1,5 @@
 export const gn: Record<string, string> = {
+  All: "Opaite",
   "VIEW-MORE": "VER MÁS",
   BOOKMARKS: "MARCADORES:",
   "search-verses": "Eheka libros, capítulos, versículos...",

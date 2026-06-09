@@ -1,4 +1,5 @@
 export const fa: Record<string, string> = {
+  All: "همه",
   "VIEW-MORE": "مشاهده بیشتر",
   BOOKMARKS: "نشانک‌ها:",
   "search-verses": "جستجوی کتاب‌ها، فصل‌ها، آیه‌ها...",

@@ -1,4 +1,5 @@
 export const ms: Record<string, string> = {
+  All: "Semua",
   "VIEW-MORE": "LIHAT LAGI",
   BOOKMARKS: "PENANDA BUKU:",
   "search-verses": "Cari buku, bab, ayat...",

@@ -1,4 +1,5 @@
 export const lv: Record<string, string> = {
+  All: "Visi",
   "VIEW-MORE": "SKATĪT VAIRĀK",
   BOOKMARKS: "GRĀMATZĪMES:",
   "search-verses": "Meklēt grāmatas, nodaļas, pantus...",

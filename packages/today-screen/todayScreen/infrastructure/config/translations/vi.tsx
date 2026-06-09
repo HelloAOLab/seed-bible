@@ -1,4 +1,5 @@
 export const vi: Record<string, string> = {
+  All: "Tất cả",
   "VIEW-MORE": "XEM THÊM",
   BOOKMARKS: "DẤU TRANG:",
   "search-verses": "Tìm sách, chương, câu...",

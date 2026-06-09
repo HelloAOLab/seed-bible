@@ -1,4 +1,5 @@
 export const ka: Record<string, string> = {
+  All: "ყველა",
   "VIEW-MORE": "მეტის ნახვა",
   BOOKMARKS: "სანიშნეები:",
   "search-verses": "მოძებნეთ წიგნები, თავები, მუხლები...",

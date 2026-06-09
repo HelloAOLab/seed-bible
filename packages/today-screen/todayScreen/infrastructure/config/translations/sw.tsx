@@ -1,4 +1,5 @@
 export const sw: Record<string, string> = {
+  All: "Zote",
   "VIEW-MORE": "TAZAMA ZAIDI",
   BOOKMARKS: "ALAMISHO:",
   "search-verses": "Tafuta vitabu, sura, mistari...",

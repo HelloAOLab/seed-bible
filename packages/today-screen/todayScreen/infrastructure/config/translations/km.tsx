@@ -1,4 +1,5 @@
 export const km: Record<string, string> = {
+  All: "ទាំងអស់",
   "VIEW-MORE": "មើលច្រើនទៀត",
   BOOKMARKS: "ចំណាំ:",
   "search-verses": "ស្វែងរកសៀវភៅ ជំពូក ខ...",

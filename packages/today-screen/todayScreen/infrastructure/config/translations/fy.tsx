@@ -1,4 +1,5 @@
 export const fy: Record<string, string> = {
+  All: "Alle",
   "VIEW-MORE": "MEAR SJEN",
   BOOKMARKS: "BLÊDWIZERS:",
   "search-verses": "Sykje boeken, haadstikken, fersen...",

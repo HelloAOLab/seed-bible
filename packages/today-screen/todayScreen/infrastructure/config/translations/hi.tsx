@@ -1,4 +1,5 @@
 export const hi: Record<string, string> = {
+  All: "सभी",
   "VIEW-MORE": "और देखें",
   BOOKMARKS: "बुकमार्क:",
   "search-verses": "पुस्तकें, अध्याय, छंद खोजें...",

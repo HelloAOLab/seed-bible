@@ -1,4 +1,5 @@
 export const he: Record<string, string> = {
+  All: "הכול",
   "VIEW-MORE": "הצג עוד",
   BOOKMARKS: "סימניות:",
   "search-verses": "חפש ספרים, פרקים, פסוקים...",

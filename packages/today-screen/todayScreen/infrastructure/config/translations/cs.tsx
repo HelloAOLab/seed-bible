@@ -1,4 +1,5 @@
 export const cs: Record<string, string> = {
+  All: "Vše",
   "VIEW-MORE": "ZOBRAZIT VÍCE",
   BOOKMARKS: "ZÁLOŽKY:",
   "search-verses": "Hledat knihy, kapitoly, verše...",

@@ -1,4 +1,5 @@
 export const hu: Record<string, string> = {
+  All: "Összes",
   "VIEW-MORE": "TÖBB MEGTEKINTÉSE",
   BOOKMARKS: "KÖNYVJELZŐK:",
   "search-verses": "Könyvek, fejezetek, versek keresése...",

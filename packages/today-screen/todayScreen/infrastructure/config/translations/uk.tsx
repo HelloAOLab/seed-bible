@@ -1,4 +1,5 @@
 export const uk: Record<string, string> = {
+  All: "Усі",
   "VIEW-MORE": "ПОКАЗАТИ БІЛЬШЕ",
   BOOKMARKS: "ЗАКЛАДКИ:",
   "search-verses": "Пошук книг, розділів, віршів...",

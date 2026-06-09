@@ -1,4 +1,5 @@
 export const my: Record<string, string> = {
+  All: "အားလုံး",
   "VIEW-MORE": "ပိုမိုကြည့်ရန်",
   BOOKMARKS: "မှတ်သားချက်များ:",
   "search-verses": "စာအုပ်များ၊ အခန်းများ၊ အခန်းငယ်များ ရှာရန်...",

@@ -1,4 +1,5 @@
 export const af: Record<string, string> = {
+  All: "Alle",
   "VIEW-MORE": "WYS MEER",
   BOOKMARKS: "BLADWYSERS:",
   "search-verses": "Soek boeke, hoofstukke, verse...",

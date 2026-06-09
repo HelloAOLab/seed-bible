@@ -1,4 +1,5 @@
 export const ko: Record<string, string> = {
+  All: "전체",
   "VIEW-MORE": "더 보기",
   BOOKMARKS: "북마크:",
   "search-verses": "책, 장, 절 검색...",

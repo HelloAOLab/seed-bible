@@ -1,4 +1,5 @@
 export const ta: Record<string, string> = {
+  All: "அனைத்தும்",
   "VIEW-MORE": "மேலும் காண்க",
   BOOKMARKS: "புக்மார்க்குகள்:",
   "search-verses": "புத்தகங்கள், அதிகாரங்கள், வசனங்களைத் தேடுங்கள்...",

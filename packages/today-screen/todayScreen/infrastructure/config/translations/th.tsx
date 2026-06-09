@@ -1,4 +1,5 @@
 export const th: Record<string, string> = {
+  All: "ทั้งหมด",
   "VIEW-MORE": "ดูเพิ่มเติม",
   BOOKMARKS: "บุ๊กมาร์ก:",
   "search-verses": "ค้นหาหนังสือ บท ข้อ...",

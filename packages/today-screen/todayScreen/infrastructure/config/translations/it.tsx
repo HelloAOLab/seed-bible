@@ -1,4 +1,5 @@
 export const it: Record<string, string> = {
+  All: "Tutti",
   "VIEW-MORE": "MOSTRA ALTRO",
   BOOKMARKS: "SEGNALIBRI:",
   "search-verses": "Cerca libri, capitoli, versetti...",

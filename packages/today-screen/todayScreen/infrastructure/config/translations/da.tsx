@@ -1,4 +1,5 @@
 export const da: Record<string, string> = {
+  All: "Alle",
   "VIEW-MORE": "SE MERE",
   BOOKMARKS: "BOGMÆRKER:",
   "search-verses": "Søg efter bøger, kapitler, vers...",

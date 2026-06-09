@@ -1,4 +1,5 @@
 export const bn: Record<string, string> = {
+  All: "সব",
   "VIEW-MORE": "আরও দেখুন",
   BOOKMARKS: "বুকমার্ক:",
   "search-verses": "বই, অধ্যায়, পদ অনুসন্ধান করুন...",

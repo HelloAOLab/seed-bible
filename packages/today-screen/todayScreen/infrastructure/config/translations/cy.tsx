@@ -1,4 +1,5 @@
 export const cy: Record<string, string> = {
+  All: "Popeth",
   "VIEW-MORE": "GWELD MWY",
   BOOKMARKS: "NODAU TUDALEN:",
   "search-verses": "Chwilio llyfrau, penodau, adnodau...",

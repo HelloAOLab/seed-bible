@@ -1,4 +1,5 @@
 export const gu: Record<string, string> = {
+  All: "બધા",
   "VIEW-MORE": "વધુ જુઓ",
   BOOKMARKS: "બુકમાર્ક્સ:",
   "search-verses": "પુસ્તકો, અધ્યાય, કલમો શોધો...",

@@ -18,6 +18,7 @@ import {
   DEFAULT_TRANSLATION_LANGUAGE,
 } from "seed-bible.managers.BibleReadingManager";
 import type { VerseSearchResult } from "todayScreen.domain.models.search";
+import { ReadingHistoryConfigProvider } from "../config/readingHistory/readingHistoryConfigProvider";
 
 const Icon = () => {
   return <MaterialIcon>home</MaterialIcon>;
@@ -178,6 +179,8 @@ export const bootstrapExtension = () => {
         return tabs.map((tab) => tab.sharedSession!);
       });
 
+      const readingHistoryConfigProvider = new ReadingHistoryConfigProvider();
+
       yield context.tools.registerToolbarTool({
         id: "today",
         priority: 0,
@@ -270,6 +273,7 @@ export const bootstrapExtension = () => {
                       translation
                     );
                   },
+                  readingHistoryConfigProvider,
                 }}
                 customCSS={customCSS}
               />

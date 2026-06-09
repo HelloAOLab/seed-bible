@@ -1,4 +1,5 @@
 export const te: Record<string, string> = {
+  All: "అన్నీ",
   "VIEW-MORE": "మరింత చూడండి",
   BOOKMARKS: "బుక్‌మార్క్‌లు:",
   "search-verses": "పుస్తకాలు, అధ్యాయాలు, వచనాలను శోధించండి...",

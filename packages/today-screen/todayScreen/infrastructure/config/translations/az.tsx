@@ -1,4 +1,5 @@
 export const az: Record<string, string> = {
+  All: "Hamısı",
   "VIEW-MORE": "DAHA ÇOX BAX",
   BOOKMARKS: "ƏLFƏCİNLƏR:",
   "search-verses": "Kitabları, fəsilləri, ayələri axtarın...",

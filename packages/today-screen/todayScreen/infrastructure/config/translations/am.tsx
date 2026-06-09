@@ -1,4 +1,5 @@
 export const am: Record<string, string> = {
+  All: "ሁሉም",
   "VIEW-MORE": "ተጨማሪ ይመልከቱ",
   BOOKMARKS: "ዕልባቶች:",
   "search-verses": "መጻሕፍትን፣ ምዕራፎችን፣ ቁጥሮችን ይፈልጉ...",

@@ -1,4 +1,5 @@
 export const ln: Record<string, string> = {
+  All: "Nyonso",
   "VIEW-MORE": "TALA MINGI",
   BOOKMARKS: "BOOKMARKS:",
   "search-verses": "Luka mikanda, kapitre, verse...",

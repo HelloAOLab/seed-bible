@@ -1,12 +1,9 @@
 import { useTodayContext } from "../contexts/today/TodayContext";
 import { useSignal, useSignalEffect } from "@preact/signals";
 import type { FilteredReading } from "@packages/today-screen/todayScreen/domain/models/readingHistory";
-import type {
-  SocialSectionUserProfile,
-  Timespan,
-} from "../contexts/socialSection/SocialSectionContext";
+import type { SocialSectionUserProfile } from "../contexts/socialSection/SocialSectionContext";
 import { useState } from "preact/hooks";
-import { buildTimespanOptionsMap } from "./timespanOptions";
+import type { Timespan } from "@packages/today-screen/todayScreen/domain/models/commonTypes";
 
 const { useMemo, useCallback } = os.appHooks;
 
@@ -28,9 +25,13 @@ export const useSocialSection: UseSocialSection = () => {
     subscribedUsersProfileProvider,
     subscribedUsersIdsProvider,
     getCommunityReading,
+    readingHistoryConfigProvider,
   } = useTodayContext();
 
-  const initialOption = useMemo(() => buildTimespanOptionsMap().twoDays, []);
+  const initialOption = useMemo(
+    () => readingHistoryConfigProvider.buildTimespanOptionsMap().twoDays,
+    []
+  );
   const year = useSignal<number>(initialOption.year);
   const timespan = useSignal<Timespan | undefined>(initialOption.timespan);
   const communityReading = useSignal<FilteredReading>({});

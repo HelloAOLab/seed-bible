@@ -1,4 +1,5 @@
 export const lo: Record<string, string> = {
+  All: "ທັງໝົດ",
   "VIEW-MORE": "ເບິ່ງເພີ່ມເຕີມ",
   BOOKMARKS: "ບຸກມາກ:",
   "search-verses": "ຄົ້ນຫາໜັງສື, ບົດ, ຂໍ້...",
