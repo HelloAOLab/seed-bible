@@ -90,7 +90,8 @@ function getInitialFirstTabChapter(): number {
 }
 
 function getInitialHighlightedVerses(): number[] {
-  const value = configBot.tags.verse;
+  const query = new URLSearchParams(window.location.search);
+  const value = query.get("verse");
   return typeof value === "string"
     ? parseVerseSelection(value)
     : typeof value === "number"

@@ -4,7 +4,7 @@ import Authorization from "./Authenticate";
 import TwitchInterface from "./TwitchInterface";
 import TwitchSettings from "./TwitchSettings";
 import { type TwitchPubState } from "./interface";
-const style = thisBot.tags["App.css"];
+import style from "./App.css";
 
 function App(props: { state: TwitchPubState }) {
   const { state } = props;

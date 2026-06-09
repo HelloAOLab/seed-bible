@@ -2,6 +2,8 @@ import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { CreateTwitchPubState } from "./twitchPubManager";
 import initializeTwitchBot from "./initializeTwitchBot";
+import { closeInterface } from "./closeInterface";
+import { openInterface } from "./openInterface";
 
 registerExtension({
   id: "ext_twitchPub",
@@ -29,10 +31,10 @@ registerExtension({
       onSelect: () => {
         if (!twitchPubState.interfaceEnabled.value) {
           twitchPubState.interfaceEnabled.value = true;
-          thisBot.openInterface({ state: twitchPubState });
+          openInterface({ state: twitchPubState });
         } else {
           twitchPubState.interfaceEnabled.value = false;
-          thisBot.closeInterface();
+          closeInterface();
         }
       },
       priority: 950,

@@ -1,5 +1,6 @@
 import { Loading, TwitchIcon } from "./icons";
 import { useI18n } from "seed-bible/i18n";
+import { closeInterface } from "./closeInterface";
 
 const Authorization = () => {
   const { t } = useI18n();
@@ -31,10 +32,7 @@ const Authorization = () => {
             defaultValue: "Authenticating with Twitch",
           })}
         </span>
-        <button
-          className="icon-btn"
-          onClick={() => whisper(thisBot, "closeInterface")}
-        >
+        <button className="icon-btn" onClick={() => closeInterface()}>
           <span className="material-symbols-outlined">close</span>
         </button>
       </div>

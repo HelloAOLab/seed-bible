@@ -14,7 +14,8 @@
   "keywords": [],
   "dependencies": {
     "seed-bible": "workspace:*",
-    "base64-js": "1.5.1"
+    "base64-js": "1.5.1",
+    "preact": "10.29.2"
   },
   "author": "",
   "license": "ISC",

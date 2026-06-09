@@ -1,13 +1,13 @@
 import { signal } from "@preact/signals";
-import { CreateTwitchSubState } from "./twitchSubManager";
+import { CreateTwitchSubState } from "@packages/twitchSub-extension/ext_twitchSub/client/twitchSubManager";
 import { TextDecoder } from "node:util";
 
-jest.mock("./App", () => ({
+jest.mock("@packages/twitchSub-extension/ext_twitchSub/client/App", () => ({
   __esModule: true,
   default: () => null,
 }));
 
-jest.mock("./icons", () => ({
+jest.mock("@packages/twitchSub-extension/ext_twitchSub/client/icons", () => ({
   __esModule: true,
   TwitchIcon: () => null,
 }));
@@ -159,7 +159,7 @@ describe("CreateTwitchSubState", () => {
         translation: "ESV",
       })
     );
-    configBot.tags.url = `https://example.com/#access_token=token-1&state=${encodeURIComponent(statePayload)}`;
+    location.href = `https://example.com/#access_token=token-1&state=${encodeURIComponent(statePayload)}`;
 
     const { seedBibleState } = createSeedBibleStateMock();
     CreateTwitchSubState(seedBibleState as any);

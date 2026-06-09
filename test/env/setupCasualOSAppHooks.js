@@ -1,11 +1,11 @@
-import * as appHooks from "preact/hooks";
-import { render } from "preact";
+// import * as appHooks from "preact/hooks";
+// import { render } from "preact";
 
-if (!globalThis.os) {
-  globalThis.os = {};
-}
+// if (!globalThis.os) {
+//   globalThis.os = {};
+// }
 
-globalThis.os.appHooks = {
-  ...appHooks,
-  render,
-};
+// globalThis.os.appHooks = {
+//   ...appHooks,
+//   render,
+// };

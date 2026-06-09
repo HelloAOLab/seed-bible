@@ -1,7 +1,6 @@
 import { useI18n } from "seed-bible/i18n";
 import QRCode from "https://esm.run/qrcode";
-
-const { useEffect, useRef, useState, useCallback } = os.appHooks;
+import { useEffect, useRef, useState, useCallback } from "preact/hooks";
 
 const MIN = 150;
 const MAX = 300;
@@ -23,7 +22,7 @@ function QRCodeComponent(props: {
   const { t } = useI18n();
   const canvasRef = useRef(null);
   const [error, setError] = useState(null);
-  const [dim, setDim] = useState(masks?.qrDim || size);
+  const [dim, setDim] = useState(size);
   const dragRef = useRef<{
     startX: number;
     startY: number;
@@ -86,9 +85,9 @@ function QRCodeComponent(props: {
     [dim]
   );
 
-  useEffect(() => {
-    setTagMask(thisBot, "qrDim", dim, "local");
-  }, [dim]);
+  // useEffect(() => {
+  //   setTagMask(thisBot, "qrDim", dim, "local");
+  // }, [dim]);
 
   if (error)
     return (
@@ -118,8 +117,10 @@ function QRCodeComponent(props: {
           ref={canvasRef}
           style={{ display: "block" }}
           onClick={() => {
-            os.setClipboard(value);
-            os.toast("Link copied to clipboard!");
+            navigator.clipboard.writeText(value);
+
+            // TODO: Support toasts
+            // os.toast("Link copied to clipboard!");
           }}
         />
 

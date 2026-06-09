@@ -3,6 +3,7 @@ import QRCodeComponent from "./QRCode";
 import { TwitchIcon, SettingsIcon } from "./icons";
 import { type TwitchPubState } from "./interface";
 import { useI18n } from "seed-bible/i18n";
+import { closeInterface } from "./closeInterface";
 
 const TwitchInterface = (props: { state: TwitchPubState }) => {
   const { uiHidden, qrValue, setCurrentPage, hideUI, showUI } = props.state;
@@ -83,10 +84,7 @@ const TwitchInterface = (props: { state: TwitchPubState }) => {
             >
               <SettingsIcon width={18} height={18} />
             </button>
-            <button
-              className="icon-btn"
-              onClick={() => whisper(thisBot, "closeInterface")}
-            >
+            <button className="icon-btn" onClick={() => closeInterface()}>
               <span className="material-symbols-outlined">close</span>
             </button>
           </div>

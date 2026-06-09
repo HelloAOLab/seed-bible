@@ -1,11 +1,14 @@
-import { CreateTwitchPubState } from "./twitchPubManager";
-import sendMessage from "./sendMessage";
+import { CreateTwitchPubState } from "@packages/twitchPub-extension/ext_twitchPub/host/twitchPubManager";
+import sendMessage from "@packages/twitchPub-extension/ext_twitchPub/host/sendMessage";
 import { TextEncoder } from "node:util";
 
-jest.mock("./sendMessage", () => ({
-  __esModule: true,
-  default: jest.fn(),
-}));
+jest.mock(
+  "@packages/twitchPub-extension/ext_twitchPub/host/sendMessage",
+  () => ({
+    __esModule: true,
+    default: jest.fn(),
+  })
+);
 
 const sendMessageMock = sendMessage as jest.Mock;
 
@@ -176,7 +179,7 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("builds the QR redirect URI from the current location first", () => {
-    configBot.tags.url = `https://example.com/twitch-pub?existing=1`;
+    location.href = `https://example.com/twitch-pub?existing=1`;
 
     const state = CreateTwitchPubState();
 
@@ -234,7 +237,7 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("sends an announcement with the join URL once the user is logged in", async () => {
-    configBot.tags.url = `https://example.com/reader?chapter=1`;
+    location.href = `https://example.com/reader?chapter=1`;
 
     const state = CreateTwitchPubState();
 
@@ -279,7 +282,7 @@ describe("CreateTwitchPubState", () => {
 
   it("sends announcements on a timer when announcementTimer is configured", () => {
     jest.useFakeTimers();
-    configBot.tags.url = `https://example.com/reader?chapter=1`;
+    location.href = "https://example.com/twitch-pub?existing=1";
 
     const state = CreateTwitchPubState();
 

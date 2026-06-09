@@ -299,15 +299,27 @@ importers:
 
   packages/twitchPub-extension:
     dependencies:
+      base64-js:
+        specifier: 1.5.1
+        version: 1.5.1
+      preact:
+        specifier: 10.29.2
+        version: 10.29.2
       seed-bible:
         specifier: workspace:*
         version: link:../seed-bible
+      uuid:
+        specifier: ^13.0.0
+        version: 13.0.0
 
   packages/twitchSub-extension:
     dependencies:
       base64-js:
         specifier: 1.5.1
         version: 1.5.1
+      preact:
+        specifier: 10.29.2
+        version: 10.29.2
       seed-bible:
         specifier: workspace:*
         version: link:../seed-bible

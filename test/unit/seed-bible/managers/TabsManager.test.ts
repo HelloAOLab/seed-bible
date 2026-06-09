@@ -18,6 +18,8 @@ import {
   createExampleManagerResponseMap,
 } from "./testUtils/mockBibleApiData";
 import { signal } from "@preact/signals";
+import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+// import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 
 let webGetMock: jest.Mock;
 let botChangedListener: ((that: unknown) => Promise<void> | void) | null;
@@ -157,6 +159,7 @@ describe("createTabs", () => {
   it("addTab() creates a new tab with new reading state", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
+      createNavigationManager(),
       createDataManager(),
       createHighlightsManagerMock() as any
     );
@@ -181,6 +184,7 @@ describe("createTabs", () => {
   it("addTab() accepts a shared reading session for the new tab", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
+      createNavigationManager(),
       createDataManager(),
       createHighlightsManagerMock() as any
     );
@@ -217,6 +221,7 @@ describe("createTabs", () => {
     setWebResponses(createExampleManagerResponseMap());
     const dataManager = createDataManager();
     const manager = createTabs(
+      createNavigationManager(),
       dataManager,
       createHighlightsManagerMock() as any
     );
@@ -237,6 +242,7 @@ describe("createTabs", () => {
   it("removeTab() removes the given tab", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
+      createNavigationManager(),
       createDataManager(),
       createHighlightsManagerMock() as any
     );
@@ -251,6 +257,7 @@ describe("createTabs", () => {
   it("selectTab() sets the selected tab", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
+      createNavigationManager(),
       createDataManager(),
       createHighlightsManagerMock() as any
     );
@@ -264,6 +271,7 @@ describe("createTabs", () => {
   it("syncs the selected tab to match configBot", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
+      createNavigationManager(),
       createDataManager(),
       createHighlightsManagerMock() as any
     );
@@ -296,6 +304,7 @@ describe("createTabs", () => {
     setWebResponses(createExampleManagerResponseMap());
 
     const manager = createTabs(
+      createNavigationManager(),
       createDataManager(),
       createHighlightsManagerMock() as any
     );
@@ -313,6 +322,7 @@ describe("createTabs", () => {
     setWebResponses(createExampleManagerResponseMap());
 
     const manager = createTabs(
+      createNavigationManager(),
       createDataManager(),
       createHighlightsManagerMock() as any
     );
@@ -336,6 +346,7 @@ describe("createTabs", () => {
       .mockReturnValue(customTranslationUrl);
 
     const manager = createTabs(
+      createNavigationManager(),
       dataManager,
       createHighlightsManagerMock() as any
     );
@@ -351,6 +362,7 @@ describe("createTabs", () => {
   it("updates configBot.tags.verse from selected verses in the current chapter", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
+      createNavigationManager(),
       createDataManager(),
       createHighlightsManagerMock() as any
     );
@@ -385,6 +397,7 @@ describe("createTabs", () => {
   it("clears configBot.tags.verse when selected verses become empty", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
+      createNavigationManager(),
       createDataManager(),
       createHighlightsManagerMock() as any
     );
@@ -412,6 +425,7 @@ describe("createTabs", () => {
   it("uses selected tab verses when syncing configBot.tags.verse", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const manager = createTabs(
+      createNavigationManager(),
       createDataManager(),
       createHighlightsManagerMock() as any
     );
@@ -464,6 +478,7 @@ describe("createTabs", () => {
 
     try {
       const manager = createTabs(
+        createNavigationManager(),
         createDataManager(),
         createHighlightsManagerMock() as any
       );
@@ -492,6 +507,7 @@ describe("createTabs", () => {
 
     try {
       const manager = createTabs(
+        createNavigationManager(),
         createDataManager(),
         createHighlightsManagerMock() as any
       );

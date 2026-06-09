@@ -13,7 +13,10 @@
   },
   "keywords": [],
   "dependencies": {
-    "seed-bible": "workspace:*"
+    "seed-bible": "workspace:*",
+    "preact": "10.29.2",
+    "base64-js": "1.5.1",
+    "uuid": "^13.0.0"
   },
   "author": "",
   "license": "ISC",
