@@ -305,6 +305,9 @@ importers:
 
   packages/twitchSub-extension:
     dependencies:
+      base64-js:
+        specifier: 1.5.1
+        version: 1.5.1
       seed-bible:
         specifier: workspace:*
         version: link:../seed-bible

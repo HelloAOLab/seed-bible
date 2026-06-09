@@ -4,6 +4,7 @@ import { initializeTwitchWS } from "./initializeTwitchWS";
 import { signal, effect, type Signal } from "@preact/signals";
 import { type TwitchSubInterface } from "./interface";
 import { type SeedBibleState } from "seed-bible";
+import { toByteArray } from "base64-js";
 const { render } = os.appHooks;
 
 function getBooleanMaskValue(value: unknown, defaultValue: boolean) {
@@ -303,7 +304,7 @@ async function getConfig({
     }
   }
 
-  const baseUrl = configBot.tags.url;
+  const baseUrl = location.href;
   const hash = new URLSearchParams(new URL(baseUrl).hash.slice(1));
 
   const accessToken = hash.get("access_token");
@@ -312,7 +313,7 @@ async function getConfig({
     return null;
   }
 
-  const stateBytes = bytes.fromBase64String(hash.get("state") || "");
+  const stateBytes = toByteArray(hash.get("state") || "");
   const stateString = new TextDecoder().decode(stateBytes);
   if (!stateString) {
     console.error("No state found in URL hash. Full hash:", hash.toString());
@@ -327,17 +328,19 @@ async function getConfig({
     translation,
   } = JSON.parse(stateString);
 
-  const res = await web.get("https://id.twitch.tv/oauth2/validate", {
+  const res = await fetch("https://id.twitch.tv/oauth2/validate", {
     headers: { Authorization: `OAuth ${accessToken}` },
   });
 
-  if (!res.data.user_id) {
-    console.error("Failed to validate access token. Response:", res);
+  const data = await res.json();
+
+  if (!data.user_id) {
+    console.error("Failed to validate access token. Response:", data);
     return null;
   }
 
   const config = {
-    botUserId: res.data.user_id,
+    botUserId: data.user_id,
     accessToken,
     clientId,
     broadcasterId,
@@ -353,7 +356,8 @@ async function getConfig({
     posthog.capture("twitch_sub_client_joined", {});
   }
 
-  os.goToURL(baseUrl.split("#")[0]);
+  // TODO: Update URL
+  // os.goToURL(baseUrl.split("#")[0]);
   return null;
 }
 

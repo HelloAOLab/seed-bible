@@ -1,7 +1,7 @@
 import DraggableContainer from "./DraggableContainer";
 import TwitchSettings from "./TwitchSettings";
 import { type TwitchSubInterface } from "./interface";
-const style = thisBot.tags["App.css"];
+import style from "./App.css";
 
 function App(props: {
   settings: TwitchSubInterface["settings"];
