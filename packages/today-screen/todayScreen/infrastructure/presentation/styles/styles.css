@@ -524,6 +524,17 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  border-radius: 50%;
+  border: solid 1px var(--sb-reader-background);
+  margin-left: -12px;
+}
+
+.today-container .filtered-reading-chapter > div > div > span {
+  font-size: 8px;
+  color: var(--sb-reader-font-color);
+}
+
+.today-container .reading-history-timeline-container {
   grid-column: 1 / 3;
 }
 
