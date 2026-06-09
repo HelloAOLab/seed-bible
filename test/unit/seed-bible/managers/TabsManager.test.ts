@@ -19,6 +19,7 @@ import {
 } from "./testUtils/mockBibleApiData";
 import { signal } from "@preact/signals";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 // import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 
 let webGetMock: jest.Mock;
