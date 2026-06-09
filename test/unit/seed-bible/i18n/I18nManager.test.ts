@@ -45,7 +45,8 @@ describe("I18nManager DEFAULT_LANGUAGE", () => {
       value: languages,
     });
 
-    const module = await import("../i18n/I18nManager");
+    const module =
+      await import("@packages/seed-bible/seed-bible/i18n/I18nManager");
     return module.DEFAULT_LANGUAGE;
   }
 
