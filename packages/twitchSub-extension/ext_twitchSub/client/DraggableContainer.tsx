@@ -1,4 +1,4 @@
-const { useState, useRef, useEffect } = os.appHooks;
+import { useState, useRef, useEffect } from "preact/hooks";
 
 const DraggableContainer = (props: { children: HTMLElement }) => {
   const { children } = props;

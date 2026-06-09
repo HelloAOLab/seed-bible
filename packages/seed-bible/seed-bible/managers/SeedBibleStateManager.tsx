@@ -187,7 +187,7 @@ export function createSeedBibleState(): SeedBibleState {
   const os = CasualOSManager();
   const login = createLoginManager({ os });
   const highlights = createHighlightsManager(os, login);
-  const bookmarks = createBookmarksManager(login);
+  const bookmarks = createBookmarksManager(os, login);
   const config = createConfig(login);
   const themeManager = createTheme(login);
   const sidebar = createSidebar(navigation);

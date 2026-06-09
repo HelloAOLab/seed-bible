@@ -12,4 +12,4 @@
 //   </div>,
 //   app
 // );
-import "seed-bible.app.init";
+import "../packages/seed-bible/seed-bible/app/init";

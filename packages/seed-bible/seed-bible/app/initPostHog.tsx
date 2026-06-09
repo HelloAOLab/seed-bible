@@ -3,13 +3,13 @@
 /* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable no-var */
-if (thisBot.tags.disablePostHog) {
-  console.log(
-    "[app] PostHog initialization is disabled via config. Skipping setup."
-  );
-  // @ts-ignore
-  return;
-}
+// if (import.meta.env.VITE_DISABLE_POSTHOG === "true") {
+//   console.log(
+//     "[app] PostHog initialization is disabled via config. Skipping setup."
+//   );
+//   // @ts-ignore
+//   return;
+// }
 console.log("[app] Initializing PostHog for error reporting...");
 
 // @ts-ignore

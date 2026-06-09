@@ -61,7 +61,8 @@ registerExtension({
           },
           onSelect: () => {
             console.log("Item 1 clicked with context:", context);
-            os.toast("Item 1 clicked!");
+            // TODO: toast
+            // os.toast("Item 1 clicked!");
           },
         },
         {
@@ -74,7 +75,8 @@ registerExtension({
           },
           onSelect: () => {
             console.log("Item 2 clicked with context:", context);
-            os.toast("Item 2 clicked!");
+            // TODO: toast
+            // os.toast("Item 2 clicked!");
           },
         },
       ],
@@ -110,10 +112,11 @@ registerExtension({
             pane.id !== context.currentPane.id
         ),
       onSelect: (context) => {
-        create({
-          home: true,
-          color: "red",
-        });
+        // TODO: fix
+        // create({
+        //   home: true,
+        //   color: "red",
+        // });
         context.panesManager.openInPane(context.currentPane.id, {
           gridPortal: "home",
         });

@@ -619,11 +619,11 @@ export interface ToolsManager {
  * @returns A URL object representing the sharable link for the current reading state.
  */
 export function getShareUrl(readingState: BibleReadingState) {
-  const url = new URL(configBot.tags.url);
+  const url = new URL(window.location.href);
   url.search = "";
-  if (configBot.tags.pattern) {
-    url.searchParams.set("pattern", configBot.tags.pattern);
-  }
+  // if (configBot.tags.pattern) {
+  //   url.searchParams.set("pattern", configBot.tags.pattern);
+  // }
   const translation =
     readingState.translation.value?.id ?? DEFAULT_TRANSLATION_ID;
   const bookId = readingState.bookId.value ?? DEFAULT_BOOK_ID;

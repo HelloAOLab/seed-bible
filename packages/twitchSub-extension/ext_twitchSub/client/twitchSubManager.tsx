@@ -5,7 +5,7 @@ import { signal, effect, type Signal } from "@preact/signals";
 import { type TwitchSubInterface } from "./interface";
 import { type SeedBibleState } from "seed-bible";
 import { toByteArray } from "base64-js";
-const { render } = os.appHooks;
+import { render } from "preact";
 
 function getBooleanMaskValue(value: unknown, defaultValue: boolean) {
   if (typeof value === "boolean") {

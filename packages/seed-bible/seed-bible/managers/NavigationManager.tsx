@@ -34,8 +34,8 @@ export function createNavigationManager() {
     window.addEventListener("popstate", onLocationChange);
     window.addEventListener("hashchange", onLocationChange);
 
-    const originalPushState = history.pushState.bind(history);
-    history.pushState = ((
+    const originalPushState = window.history.pushState.bind(window.history);
+    window.history.pushState = ((
       data: unknown,
       unused: string,
       url?: string | URL | null
@@ -44,8 +44,10 @@ export function createNavigationManager() {
       syncCurrentUrl();
     }) as History["pushState"];
 
-    const originalReplaceState = history.replaceState.bind(history);
-    history.replaceState = ((
+    const originalReplaceState = window.history.replaceState.bind(
+      window.history
+    );
+    window.history.replaceState = ((
       data: unknown,
       unused: string,
       url?: string | URL | null
@@ -54,7 +56,7 @@ export function createNavigationManager() {
       syncCurrentUrl();
     }) as History["replaceState"];
 
-    navigation.addEventListener("navigate", (event: NavigateEvent) => {
+    window.navigation.addEventListener("navigate", (event: NavigateEvent) => {
       if (event.downloadRequest || !event.destination?.sameDocument) {
         return;
       }
@@ -69,7 +71,7 @@ export function createNavigationManager() {
       return;
     }
 
-    history.pushState(history.state, "", toAbsoluteUrl(url));
+    window.history.pushState(window.history.state, "", toAbsoluteUrl(url));
   };
 
   const replace = (url: string | URL) => {
@@ -77,7 +79,7 @@ export function createNavigationManager() {
       return;
     }
 
-    history.replaceState(history.state, "", toAbsoluteUrl(url));
+    window.history.replaceState(window.history.state, "", toAbsoluteUrl(url));
   };
 
   const go = (destination: NavigationDestination) => {
@@ -86,7 +88,7 @@ export function createNavigationManager() {
     }
 
     if (typeof destination === "number") {
-      history.go(destination);
+      window.history.go(destination);
       return;
     }
 

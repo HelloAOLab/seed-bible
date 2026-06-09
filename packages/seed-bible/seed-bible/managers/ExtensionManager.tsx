@@ -541,7 +541,7 @@ export function createExtensionManager() {
       return;
     }
     console.log("Loading default extension set:", defaultExtensions.value);
-    const url = new URL(configBot.tags.url);
+    const url = new URL(window.location.href);
     await loadExtensionSet(
       defaultExtensions.value,
       (ext) =>
