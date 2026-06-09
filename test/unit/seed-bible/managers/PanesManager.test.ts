@@ -12,6 +12,7 @@ import {
   createExampleManagerResponseMap,
 } from "./testUtils/mockBibleApiData";
 import { signal } from "@preact/signals";
+import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 
 let webGetMock: jest.Mock;
 let logSpy: jest.SpyInstance;
@@ -88,6 +89,7 @@ async function waitForTabsToLoad(tabs: ReaderTab[]): Promise<void> {
 async function createManagers(options: { extraTabs?: number } = {}) {
   setWebResponses(createExampleManagerResponseMap());
   const tabsManager = createTabs(
+    createNavigationManager(),
     createDataManager(),
     createHighlightsManagerMock() as any
   );

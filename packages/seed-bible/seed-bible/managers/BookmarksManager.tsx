@@ -8,6 +8,7 @@ import {
 import { z } from "zod";
 import type { LoginManager } from "../managers/LoginManager";
 import type { ReaderTab } from "../managers/TabsManager";
+import type { CasualOSManager } from "./OsManager";
 
 /**
  * Verse target for a bookmark: a single verse number or an inclusive `[start, end]`
@@ -312,7 +313,10 @@ export interface BookmarksManager {
   deleteCategory: (name: string) => Promise<void>;
 }
 
-export function createBookmarksManager(login: LoginManager): BookmarksManager {
+export function createBookmarksManager(
+  os: CasualOSManager,
+  login: LoginManager
+): BookmarksManager {
   const bookmarks = signal<Bookmark[]>([]);
   const categories = signal<BookmarkCategory[]>([
     { name: DEFAULT_BOOKMARK_CATEGORY },

@@ -3,6 +3,7 @@ import {
   type Annotation,
 } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { signal } from "@preact/signals";
 
 function createCommentAnnotation(
@@ -26,8 +27,10 @@ describe("AnnotationsManager", () => {
   let eraseDataMock: jest.Mock;
   let listDataByMarkerMock: jest.Mock;
   let login: jest.Mocked<LoginManager>;
+  let os: CasualOSManager;
 
   beforeEach(() => {
+    os = CasualOSManager();
     recordDataMock = jest.fn().mockResolvedValue({ success: true });
     eraseDataMock = jest.fn().mockResolvedValue({ success: true });
     listDataByMarkerMock = jest
@@ -54,7 +57,7 @@ describe("AnnotationsManager", () => {
   });
 
   it("saveAnnotation() stores annotation using default marker", async () => {
-    const manager = createAnnotationsManager(login);
+    const manager = createAnnotationsManager(os, login);
     const annotation = createCommentAnnotation();
 
     const saved = await manager.saveAnnotation(annotation);
@@ -66,7 +69,7 @@ describe("AnnotationsManager", () => {
   });
 
   it("saveAnnotation() supports custom record and marker group", async () => {
-    const manager = createAnnotationsManager(login);
+    const manager = createAnnotationsManager(os, login);
     const annotation = createCommentAnnotation({ id: "ann-2" });
 
     await manager.saveAnnotation(annotation, {
@@ -89,7 +92,7 @@ describe("AnnotationsManager", () => {
     login.login.mockImplementation(async () => {
       login.userId.value = "user-after-login";
     });
-    const manager = createAnnotationsManager(login);
+    const manager = createAnnotationsManager(os, login);
 
     await manager.saveAnnotation(createCommentAnnotation());
 
@@ -105,7 +108,7 @@ describe("AnnotationsManager", () => {
   });
 
   it("deleteAnnotation() deletes the record by annotation id", async () => {
-    const manager = createAnnotationsManager(login);
+    const manager = createAnnotationsManager(os, login);
 
     await manager.deleteAnnotation("ann-5");
 
@@ -113,7 +116,7 @@ describe("AnnotationsManager", () => {
   });
 
   it("deleteAnnotation() supports record names", async () => {
-    const manager = createAnnotationsManager(login);
+    const manager = createAnnotationsManager(os, login);
 
     await manager.deleteAnnotation("ann-5", {
       recordName: "shared-record",
@@ -151,7 +154,7 @@ describe("AnnotationsManager", () => {
         items: [],
       });
 
-    const manager = createAnnotationsManager(login);
+    const manager = createAnnotationsManager(os, login);
     const annotations = await manager.listAnnotationsForChapter("GEN", 1);
 
     expect(listDataByMarkerMock).toHaveBeenNthCalledWith(
@@ -200,7 +203,7 @@ describe("AnnotationsManager", () => {
       })
       .mockResolvedValueOnce({ success: true, items: [] });
 
-    const manager = createAnnotationsManager(login);
+    const manager = createAnnotationsManager(os, login);
     const annotations = await manager.listAnnotationsForChapter("GEN", 1);
 
     expect(annotations).toHaveLength(1);
@@ -210,7 +213,7 @@ describe("AnnotationsManager", () => {
   it("operations throw when login cannot resolve a user record", async () => {
     login.userId.value = null;
     login.login.mockResolvedValue(undefined);
-    const manager = createAnnotationsManager(login);
+    const manager = createAnnotationsManager(os, login);
 
     await expect(
       manager.saveAnnotation(createCommentAnnotation())
@@ -237,7 +240,7 @@ describe("AnnotationsManager", () => {
       errorCode: "server_error",
     });
 
-    const manager = createAnnotationsManager(login);
+    const manager = createAnnotationsManager(os, login);
 
     await expect(
       manager.saveAnnotation(createCommentAnnotation())

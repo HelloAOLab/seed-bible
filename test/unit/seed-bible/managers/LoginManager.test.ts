@@ -2,22 +2,9 @@ import {
   createLoginManager,
   userProfileSchema,
 } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 
 jest.setTimeout(3000);
-
-function createBot(id: string): Bot {
-  return {
-    id,
-    link: `bot://${id}`,
-    tags: {},
-    masks: {},
-    links: {},
-    vars: {},
-    raw: {},
-    changes: {},
-    maskChanges: {},
-  };
-}
 
 async function waitFor(
   condition: () => boolean,
@@ -33,33 +20,32 @@ async function waitFor(
 }
 
 describe("createLoginManager", () => {
-  let requestAuthBotInBackgroundMock: jest.Mock;
-  let requestAuthBotMock: jest.Mock;
-  let getDataMock: jest.Mock;
-  let recordDataMock: jest.Mock;
-  let signOutMock: jest.Mock;
+  let requestAuthBotInBackgroundMock: jest.SpyInstance;
+  let requestAuthBotMock: jest.SpyInstance;
+  let getDataMock: jest.SpyInstance;
+  let recordDataMock: jest.SpyInstance;
+  let signOutMock: jest.SpyInstance;
   let warnSpy: jest.SpyInstance;
+  let os: CasualOSManager;
 
   beforeEach(() => {
-    requestAuthBotInBackgroundMock = jest.fn().mockResolvedValue(null);
-    requestAuthBotMock = jest.fn().mockResolvedValue(null);
-    getDataMock = jest.fn().mockResolvedValue({
+    os = CasualOSManager();
+    requestAuthBotInBackgroundMock = jest
+      .spyOn(os, "requestAuthBotInBackground")
+      .mockResolvedValue(null);
+    requestAuthBotMock = jest
+      .spyOn(os, "requestAuthBot")
+      .mockResolvedValue(null);
+    getDataMock = jest.spyOn(os, "getData").mockResolvedValue({
       success: false,
       errorCode: "data_not_found",
       errorMessage: "No data found for the given key.",
     });
-    recordDataMock = jest.fn().mockResolvedValue(undefined);
-    signOutMock = jest.fn().mockResolvedValue(undefined);
+    recordDataMock = jest
+      .spyOn(os, "recordData")
+      .mockResolvedValue(undefined as any);
+    signOutMock = jest.spyOn(os, "signOut").mockResolvedValue(undefined);
     warnSpy = jest.spyOn(console, "warn").mockImplementation(() => undefined);
-
-    (globalThis as any).os = {
-      ...(globalThis as any).os,
-      requestAuthBotInBackground: requestAuthBotInBackgroundMock,
-      requestAuthBot: requestAuthBotMock,
-      getData: getDataMock,
-      recordData: recordDataMock,
-      signOut: signOutMock,
-    };
   });
 
   afterEach(() => {
@@ -67,17 +53,17 @@ describe("createLoginManager", () => {
   });
 
   it("requests the auth bot in the background on init", () => {
-    createLoginManager();
+    createLoginManager({ os });
 
     expect(requestAuthBotInBackgroundMock).toHaveBeenCalledTimes(1);
   });
 
   it("loads userId and profile when background auth succeeds", async () => {
-    const bot = createBot("user-1");
-    requestAuthBotInBackgroundMock.mockResolvedValue(bot);
+    // const bot = createBot("user-1");
+    // requestAuthBotInBackgroundMock.mockResolvedValue(bot);
     getDataMock.mockResolvedValue({ success: true, data: { name: "Alice" } });
 
-    const manager = createLoginManager();
+    const manager = createLoginManager({ os });
 
     await waitFor(() => manager.userId.value === "user-1");
     await waitFor(() => manager.profile.value?.name === "Alice");
@@ -86,11 +72,11 @@ describe("createLoginManager", () => {
   });
 
   it("login() authenticates and loads profile", async () => {
-    const bot = createBot("user-2");
-    requestAuthBotMock.mockResolvedValue(bot);
+    // const bot = createBot("user-2");
+    // requestAuthBotMock.mockResolvedValue(bot);
     getDataMock.mockResolvedValue({ success: true, data: { name: "Bob" } });
 
-    const manager = createLoginManager();
+    const manager = createLoginManager({ os });
 
     await manager.login();
 
@@ -102,11 +88,11 @@ describe("createLoginManager", () => {
   });
 
   it("logout() signs out and clears user state", async () => {
-    const bot = createBot("user-3");
-    requestAuthBotInBackgroundMock.mockResolvedValue(bot);
+    // const bot = createBot("user-3");
+    // requestAuthBotInBackgroundMock.mockResolvedValue(bot);
     getDataMock.mockResolvedValue({ success: true, data: { name: "Carol" } });
 
-    const manager = createLoginManager();
+    const manager = createLoginManager({ os });
 
     await waitFor(() => manager.userId.value === "user-3");
     await waitFor(() => manager.profile.value?.name === "Carol");
@@ -119,10 +105,10 @@ describe("createLoginManager", () => {
   });
 
   it("updateProfile() persists profile when authenticated", async () => {
-    const bot = createBot("user-4");
-    requestAuthBotInBackgroundMock.mockResolvedValue(bot);
+    // const bot = createBot("user-4");
+    // requestAuthBotInBackgroundMock.mockResolvedValue(bot);
 
-    const manager = createLoginManager();
+    const manager = createLoginManager({ os });
 
     await waitFor(() => manager.userId.value === "user-4");
 
@@ -138,7 +124,7 @@ describe("createLoginManager", () => {
   });
 
   it("updateProfile() does not persist when unauthenticated", () => {
-    const manager = createLoginManager();
+    const manager = createLoginManager({ os });
 
     manager.updateProfile({ name: "Ignored" });
 
@@ -153,10 +139,10 @@ describe("createLoginManager", () => {
     (globalThis as any).posthog = { identify: mockIdentify };
 
     try {
-      const bot = createBot("user-posthog");
-      requestAuthBotMock.mockResolvedValue(bot);
+      // const bot = createBot("user-posthog");
+      // requestAuthBotMock.mockResolvedValue(bot);
 
-      const manager = createLoginManager();
+      const manager = createLoginManager({ os });
       await manager.login();
 
       await waitFor(() => manager.userId.value === "user-posthog");
@@ -171,7 +157,7 @@ describe("createLoginManager", () => {
   it("getUserProfile() retrieves the user profile from storage", async () => {
     getDataMock.mockResolvedValue({ success: true, data: { name: "Dave" } });
 
-    const manager = createLoginManager();
+    const manager = createLoginManager({ os });
 
     const profile = await manager.getUserProfile("custom-user");
 
@@ -195,7 +181,7 @@ describe("createLoginManager", () => {
     });
 
     it("does nothing when no user is authenticated", async () => {
-      const manager = createLoginManager();
+      const manager = createLoginManager({ os });
 
       await manager.uploadProfilePicture();
 
@@ -207,11 +193,11 @@ describe("createLoginManager", () => {
     });
 
     it("throws an error when the user cancels file selection", async () => {
-      const bot = createBot("user-upload");
-      requestAuthBotInBackgroundMock.mockResolvedValue(bot);
+      // const bot = createBot("user-upload");
+      // requestAuthBotInBackgroundMock.mockResolvedValue(bot);
       showUploadFilesMock.mockResolvedValue([]);
 
-      const manager = createLoginManager();
+      const manager = createLoginManager({ os });
       await waitFor(() => manager.userId.value === "user-upload");
 
       await expect(manager.uploadProfilePicture()).rejects.toThrow(
@@ -222,8 +208,8 @@ describe("createLoginManager", () => {
     });
 
     it("uploads the file and saves the URL to the profile on success", async () => {
-      const bot = createBot("user-upload");
-      requestAuthBotInBackgroundMock.mockResolvedValue(bot);
+      // const bot = createBot("user-upload");
+      // requestAuthBotInBackgroundMock.mockResolvedValue(bot);
 
       const fakeFile = {
         data: new Uint8Array([1, 2, 3]),
@@ -236,7 +222,7 @@ describe("createLoginManager", () => {
         url: "https://example.com/avatar.png",
       });
 
-      const manager = createLoginManager();
+      const manager = createLoginManager({ os });
       await waitFor(() => manager.userId.value === "user-upload");
 
       await manager.uploadProfilePicture();
@@ -252,8 +238,8 @@ describe("createLoginManager", () => {
     });
 
     it("throws an error and does not update the profile when the upload fails", async () => {
-      const bot = createBot("user-upload-fail");
-      requestAuthBotInBackgroundMock.mockResolvedValue(bot);
+      // const bot = createBot("user-upload-fail");
+      // requestAuthBotInBackgroundMock.mockResolvedValue(bot);
 
       const fakeFile = {
         data: new Uint8Array([1, 2, 3]),
@@ -267,7 +253,7 @@ describe("createLoginManager", () => {
         errorMessage: "Upload failed.",
       });
 
-      const manager = createLoginManager();
+      const manager = createLoginManager({ os });
       await waitFor(() => manager.userId.value === "user-upload-fail");
 
       await expect(manager.uploadProfilePicture()).rejects.toThrow(

@@ -5,6 +5,7 @@ import {
   waitForInitialLoad,
 } from "../testUtils/createTestSeedBibleState";
 import { signal } from "@preact/signals";
+import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 
 const mockSaveReadingHistory = jest.fn();
 const mockHighlightsManager = {

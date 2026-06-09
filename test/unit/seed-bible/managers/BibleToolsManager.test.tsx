@@ -1,7 +1,7 @@
 import { signal } from "@preact/signals";
 
 jest.mock(
-  "../components/icons",
+  "@packages/seed-bible/seed-bible/components/icons",
   () => ({
     MaterialIcon: () => null,
     SeedBibleIcon: () => null,
@@ -51,9 +51,8 @@ function createShareUrlReadingState(overrides?: Partial<any>) {
 
 describe("getShareUrl", () => {
   beforeEach(() => {
-    (globalThis as any).configBot.tags.url =
-      "https://example.test/reader?existing=1";
-    (globalThis as any).configBot.tags.pattern = "pattern-123";
+    window.location.href = "https://example.test/reader?existing=1";
+    // (globalThis as any).configBot.tags.pattern = "pattern-123";
   });
 
   it("builds a share URL with the current translation, book, pattern, and selected verses", () => {

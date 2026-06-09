@@ -1,3 +1,4 @@
+import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import {
   getTodayTimeSpan,
   getPastYearTimeSpan,
@@ -229,6 +230,7 @@ describe("ReadingHistoryManager", () => {
 
   describe("createReadingHistoryManager", () => {
     let loginManager: any;
+    let os: CasualOSManager;
     let eventsType: { get: jest.Mock; length: number };
     let eventsArray: {
       type: { get: jest.Mock; length: number };
@@ -238,6 +240,7 @@ describe("ReadingHistoryManager", () => {
     let getSharedDocumentMock: jest.Mock;
 
     beforeEach(() => {
+      os = CasualOSManager();
       loginManager = {
         userId: {
           value: "user-1",
@@ -280,7 +283,7 @@ describe("ReadingHistoryManager", () => {
     });
 
     it("creates a manager with saveReadingHistory and getReadingEvents", () => {
-      const manager = createReadingHistoryManager(loginManager);
+      const manager = createReadingHistoryManager(os, loginManager);
 
       expect(manager.saveReadingHistory).toBeDefined();
       expect(typeof manager.saveReadingHistory).toBe("function");
@@ -290,7 +293,7 @@ describe("ReadingHistoryManager", () => {
 
     it("saveReadingHistory does nothing when user is not logged in", async () => {
       loginManager.userId.value = null;
-      const manager = createReadingHistoryManager(loginManager);
+      const manager = createReadingHistoryManager(os, loginManager);
 
       manager.saveReadingHistory("genesis", 1);
       await jest.advanceTimersByTimeAsync(300);
@@ -299,7 +302,7 @@ describe("ReadingHistoryManager", () => {
     });
 
     it("saves reading history to the document when logged in", async () => {
-      const manager = createReadingHistoryManager(loginManager);
+      const manager = createReadingHistoryManager(os, loginManager);
 
       manager.saveReadingHistory("genesis", 3);
       await jest.advanceTimersByTimeAsync(300);
@@ -318,7 +321,7 @@ describe("ReadingHistoryManager", () => {
 
     it("getReadingEvents returns empty array when user is not logged in", async () => {
       loginManager.userId.value = null;
-      const manager = createReadingHistoryManager(loginManager);
+      const manager = createReadingHistoryManager(os, loginManager);
 
       const events = await manager.getReadingEvents(1000, 2000);
 
@@ -326,7 +329,7 @@ describe("ReadingHistoryManager", () => {
     });
 
     it("returns events between start and end time when logged in", async () => {
-      const manager = createReadingHistoryManager(loginManager);
+      const manager = createReadingHistoryManager(os, loginManager);
       eventsType.length = 3;
       eventsType.get
         .mockReturnValueOnce({
@@ -375,11 +378,13 @@ describe("ReadingHistoryManager", () => {
   });
 
   describe("Shared document retrieval and event extraction", () => {
-    let getSharedDocumentMock: jest.Mock;
+    let getSharedDocumentMock: jest.SpyInstance;
     let mockSharedDocument: any;
     let mockEventsArray: any;
+    let os: CasualOSManager;
 
     beforeEach(() => {
+      os = CasualOSManager();
       mockEventsArray = {
         type: {
           get: jest.fn(),
@@ -392,15 +397,9 @@ describe("ReadingHistoryManager", () => {
         createMap: jest.fn(),
       };
 
-      getSharedDocumentMock = jest.fn().mockResolvedValue(mockSharedDocument);
-
-      (globalThis as any).os = {
-        getSharedDocument: getSharedDocumentMock,
-      };
-
-      (globalThis as any).bot = {
-        vars: {},
-      };
+      getSharedDocumentMock = jest
+        .spyOn(os, "getSharedDocument")
+        .mockResolvedValue(mockSharedDocument);
     });
 
     afterEach(() => {
@@ -411,7 +410,7 @@ describe("ReadingHistoryManager", () => {
     it("calls os.getSharedDocument with correct parameters", async () => {
       mockEventsArray.type.length = 0;
 
-      await getReadingHistoryEvents("user-123", 1000, 2000);
+      await getReadingHistoryEvents(os, "user-123", 1000, 2000);
 
       expect(getSharedDocumentMock).toHaveBeenCalled();
     });
@@ -422,7 +421,7 @@ describe("ReadingHistoryManager", () => {
       const startTime = 1000;
       const endTime = 2000;
 
-      await getReadingHistoryEvents(recordName, startTime, endTime);
+      await getReadingHistoryEvents(os, recordName, startTime, endTime);
 
       expect(getSharedDocumentMock).toHaveBeenNthCalledWith(
         1,
@@ -452,7 +451,7 @@ describe("ReadingHistoryManager", () => {
       mockEventsArray.type.length = 1;
       mockEventsArray.type.get = jest.fn().mockReturnValue(event1);
 
-      const events = await getReadingHistoryEvents("user-123", 1000, 2000);
+      const events = await getReadingHistoryEvents(os, "user-123", 1000, 2000);
       const eventsArray = Array.from(events);
 
       expect(eventsArray).toHaveLength(1);
@@ -498,7 +497,7 @@ describe("ReadingHistoryManager", () => {
         .mockReturnValueOnce(event1)
         .mockReturnValueOnce(event2);
 
-      const events = await getReadingHistoryEvents("user-123", 1000, 2000);
+      const events = await getReadingHistoryEvents(os, "user-123", 1000, 2000);
       const eventsArray = Array.from(events);
 
       expect(eventsArray).toHaveLength(1);
@@ -526,7 +525,7 @@ describe("ReadingHistoryManager", () => {
       const startTime = new Date("2024-12-01").getTime() / 1000;
       const endTime = new Date("2025-02-01").getTime() / 1000;
 
-      await getReadingHistoryEvents("user-123", startTime, endTime);
+      await getReadingHistoryEvents(os, "user-123", startTime, endTime);
 
       // Should have called getSharedDocument for both 2024 and 2025
       expect(getSharedDocumentMock).toHaveBeenCalledTimes(2);
@@ -552,11 +551,11 @@ describe("ReadingHistoryManager", () => {
       mockEventsArray.type.length = 0;
 
       // First call
-      await getReadingHistoryEvents("user-123", 1000, 2000);
+      await getReadingHistoryEvents(os, "user-123", 1000, 2000);
       expect(getSharedDocumentMock).toHaveBeenCalledTimes(1);
 
       // Second call with same parameters
-      await getReadingHistoryEvents("user-123", 1000, 2000);
+      await getReadingHistoryEvents(os, "user-123", 1000, 2000);
       expect(getSharedDocumentMock).toHaveBeenCalledTimes(1); // No new call
     });
   });
@@ -592,11 +591,12 @@ describe("ReadingHistoryManager", () => {
   });
 
   describe("getReadingHistorySummary", () => {
-    let getSharedDocumentMock: jest.Mock;
     let mockSharedDocument: any;
     let mockEventsArray: any;
+    let os: CasualOSManager;
 
     beforeEach(() => {
+      os = CasualOSManager();
       mockEventsArray = {
         type: {
           get: jest.fn(),
@@ -608,15 +608,7 @@ describe("ReadingHistoryManager", () => {
         getArray: jest.fn().mockReturnValue(mockEventsArray),
       };
 
-      getSharedDocumentMock = jest.fn().mockResolvedValue(mockSharedDocument);
-
-      (globalThis as any).os = {
-        getSharedDocument: getSharedDocumentMock,
-      };
-
-      (globalThis as any).bot = {
-        vars: {},
-      };
+      jest.spyOn(os, "getSharedDocument").mockResolvedValue(mockSharedDocument);
     });
 
     afterEach(() => {
@@ -641,7 +633,12 @@ describe("ReadingHistoryManager", () => {
       mockEventsArray.type.length = 1;
       mockEventsArray.type.get = jest.fn().mockReturnValue(event);
 
-      const summary = await getReadingHistorySummary("user-123", 1000, 2000);
+      const summary = await getReadingHistorySummary(
+        os,
+        "user-123",
+        1000,
+        2000
+      );
 
       expect(summary.totalBooksRead).toBe(1);
       expect(summary.totalChaptersRead).toBe(1);
@@ -665,7 +662,12 @@ describe("ReadingHistoryManager", () => {
       mockEventsArray.type.length = 1;
       mockEventsArray.type.get = jest.fn().mockReturnValue(event);
 
-      const summary = await getReadingHistorySummary("user-123", 1000, 3000);
+      const summary = await getReadingHistorySummary(
+        os,
+        "user-123",
+        1000,
+        3000
+      );
 
       expect(summary.startTime).toBe(1500);
       expect(summary.endTime).toBe(2500);

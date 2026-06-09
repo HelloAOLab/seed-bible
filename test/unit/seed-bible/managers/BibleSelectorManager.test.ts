@@ -23,6 +23,7 @@ import {
   makeChapter,
   nivBooks,
 } from "./testUtils/mockBibleApiData";
+import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 
 let webGetMock: jest.Mock;
 
@@ -169,6 +170,7 @@ async function createManagersWithSelectedPane(): Promise<{
 }> {
   const dataManager = createDataManager();
   const tabsManager = createTabs(
+    createNavigationManager(),
     dataManager,
     createHighlightsManagerMock() as any
   );
@@ -447,6 +449,7 @@ describe("createBibleSelectorState", () => {
 
     const dataManager = createDataManager();
     const tabsManager = createTabs(
+      createNavigationManager(),
       dataManager,
       createHighlightsManagerMock() as any
     );
@@ -534,6 +537,7 @@ describe("createBibleSelectorState", () => {
 
     const dataManager = createDataManager();
     const tabsManager = createTabs(
+      createNavigationManager(),
       dataManager,
       createHighlightsManagerMock() as any
     );
@@ -573,6 +577,7 @@ describe("createBibleSelectorState", () => {
     function createManagersWithTablessPane() {
       const dataManager = createDataManager();
       const tabsManager = createTabs(
+        createNavigationManager(),
         dataManager,
         createHighlightsManagerMock() as any
       );

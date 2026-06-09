@@ -3,13 +3,14 @@ import {
   createSessionsManager,
   type BibleReadingSession,
 } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
-import { createBibleReadingState } from "../managers/BibleReadingManager";
+import { createBibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type {
   VerseDecoration,
   VerseDecorationInput,
-} from "../managers/BibleReadingManager";
-import type { UserProfile } from "../managers/LoginManager";
+} from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
+import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 
 jest.mock("../managers/BibleReadingManager", () => ({
   createBibleReadingState: jest.fn(),
@@ -248,7 +249,10 @@ describe("SessionsManager", () => {
     getChapterHighlights: jest.Mock;
   };
 
+  let os: CasualOSManager;
+
   beforeEach(() => {
+    os = CasualOSManager();
     mockMap = createMockSharedMap();
     mockOptionsMap = createMockSharedMap();
     mockDecorationsMap = createMockSharedMap();
@@ -306,9 +310,10 @@ describe("SessionsManager", () => {
   });
 
   it("createSession() creates a session with a UUID and loads session_data in a public inst", async () => {
-    const spy = jest.spyOn(globalThis, "uuid").mockReturnValue("123");
+    const spy = jest.spyOn(globalThis as any, "uuid").mockReturnValue("123");
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -326,6 +331,7 @@ describe("SessionsManager", () => {
 
   it("createSession() stores the default session options in the options map", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -347,6 +353,7 @@ describe("SessionsManager", () => {
 
   it("joinSession(id) loads and returns a session with the given ID", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -363,6 +370,7 @@ describe("SessionsManager", () => {
 
   it("joinSession(id) does not set default options in the options map", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -401,6 +409,7 @@ describe("SessionsManager", () => {
     });
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -420,6 +429,7 @@ describe("SessionsManager", () => {
 
   it("updates the options signal when the shared options map changes", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -451,6 +461,7 @@ describe("SessionsManager", () => {
 
   it("updateOptions(newOptions) writes options to the shared options map", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -483,6 +494,7 @@ describe("SessionsManager", () => {
     mockLoginManager.userId.value = "user-blocked";
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -512,6 +524,7 @@ describe("SessionsManager", () => {
     };
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -541,6 +554,7 @@ describe("SessionsManager", () => {
     };
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -583,6 +597,7 @@ describe("SessionsManager", () => {
     };
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -620,6 +635,7 @@ describe("SessionsManager", () => {
     mockLoginManager.userId.value = "user-blocked";
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -656,6 +672,7 @@ describe("SessionsManager", () => {
     };
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -722,6 +739,7 @@ describe("SessionsManager", () => {
     });
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -771,6 +789,7 @@ describe("SessionsManager", () => {
     });
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -818,6 +837,7 @@ describe("SessionsManager", () => {
     });
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -862,6 +882,7 @@ describe("SessionsManager", () => {
     mockDocument.getMap.mockReturnValue(mockMap);
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -887,6 +908,7 @@ describe("SessionsManager", () => {
     mockDocument.getMap.mockReturnValue(mockMap);
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -902,6 +924,7 @@ describe("SessionsManager", () => {
 
   it("syncs reading state changes to the shared document", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -924,6 +947,7 @@ describe("SessionsManager", () => {
 
   it("does not update the shared document when only scrollToVerse changes", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -943,6 +967,7 @@ describe("SessionsManager", () => {
     mockMap.setEmitOnSet(true);
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -965,6 +990,7 @@ describe("SessionsManager", () => {
 
   it("applies shared document changes to the session reading state", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -1003,6 +1029,7 @@ describe("SessionsManager", () => {
     const chapterDeferred = deferred<any>();
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -1044,6 +1071,7 @@ describe("SessionsManager", () => {
     const chapterDeferred2 = deferred<any>();
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -1125,6 +1153,7 @@ describe("SessionsManager", () => {
 
   it("dispose() unsubscribes from the shared document", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -1138,6 +1167,7 @@ describe("SessionsManager", () => {
 
   it("tracks connected users from remoteClients and loads profiles for authenticated users", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any
@@ -1193,6 +1223,7 @@ describe("SessionsManager", () => {
 
   it("removes disconnected users from the connected users list", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
       mockHighlightsManager as any

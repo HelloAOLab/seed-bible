@@ -1,17 +1,17 @@
-import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 
-jest.mock("../i18n/I18nManager", () => ({
+jest.mock("@packages/seed-bible/seed-bible/managers/i18n/I18nManager", () => ({
   addTranslations: jest.fn(),
 }));
 
-import { addTranslations } from "../i18n/I18nManager";
+import { addTranslations } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 
 import {
   createExtensionManager,
   ExtensionInitalizer,
   registerExtension,
   type ExtensionSet,
-} from "../managers/ExtensionManager";
+} from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 
 describe("ExtensionInitalizer", () => {
   let initializer: ExtensionInitalizer;
@@ -373,8 +373,7 @@ describe("createExtensionManager", () => {
       recordName: "record",
       extensions: [
         {
-          recordName: "record",
-          address: "pkg://dependent",
+          url: "pkg://dependent",
           meta: {
             id: "ext.dependent",
             translations: {
@@ -387,8 +386,7 @@ describe("createExtensionManager", () => {
           },
         },
         {
-          recordName: "record",
-          address: "pkg://dependency",
+          url: "pkg://dependency",
           meta: {
             id: "ext.dependency",
             translations: {
@@ -416,8 +414,7 @@ describe("createExtensionManager", () => {
       recordName: "record",
       extensions: [
         {
-          recordName: "record",
-          address: "pkg://catalog-dependency",
+          url: "pkg://catalog-dependency",
           meta: {
             id: "ext.catalog-dependency",
             translations: {
@@ -434,8 +431,7 @@ describe("createExtensionManager", () => {
     installPackage.mockClear();
 
     const loaded = await manager.loadExtension({
-      recordName: "record",
-      address: "pkg://catalog-dependent",
+      url: "pkg://catalog-dependent",
       meta: {
         id: "ext.catalog-dependent",
         translations: {
@@ -457,8 +453,7 @@ describe("createExtensionManager", () => {
     const manager = createExtensionManager();
 
     const loaded = await manager.loadExtension({
-      recordName: "record",
-      address: "pkg://missing-dependent",
+      url: "pkg://missing-dependent",
       meta: {
         id: "ext.missing-dependent",
         translations: {
@@ -484,8 +479,7 @@ describe("createExtensionManager", () => {
 
     try {
       const loaded = await manager.loadExtension({
-        recordName: "record",
-        address: "pkg://registered-dependent",
+        url: "pkg://registered-dependent",
         meta: {
           id: "ext.registered-dependent",
           translations: {
@@ -513,8 +507,7 @@ describe("createExtensionManager", () => {
       recordName: "record",
       extensions: [
         {
-          recordName: "record",
-          address: "pkg://single",
+          url: "pkg://single",
           meta: {
             id: "ext.single",
             translations: {
@@ -553,16 +546,14 @@ describe("createExtensionManager", () => {
       recordName: "record",
       extensions: [
         {
-          recordName: "record",
-          address: "pkg://translation-a",
+          url: "pkg://translation-a",
           meta: {
             id: "ext.translation-a",
             translations: translationsA,
           },
         },
         {
-          recordName: "record",
-          address: "pkg://translation-b",
+          url: "pkg://translation-b",
           meta: {
             id: "ext.translation-b",
             translations: translationsB,
@@ -584,7 +575,7 @@ describe("createExtensionManager", () => {
   });
 
   it("loadDefaultExtensions() auto-installs extensions when the matching query param is true", async () => {
-    configBot.tags.url =
+    window.location.href =
       "https://example.com/?autoinstall-ext.autoinstall=true";
 
     const manager = createExtensionManager();
@@ -593,8 +584,7 @@ describe("createExtensionManager", () => {
       recordName: "record",
       extensions: [
         {
-          recordName: "record",
-          address: "pkg://autoinstall",
+          url: "pkg://autoinstall",
           meta: {
             id: "ext.autoinstall",
             translations: {
@@ -621,8 +611,8 @@ describe("createExtensionManager", () => {
       recordName: "record",
       extensions: [
         {
-          recordName: "record",
-          address: "pkg://known-only",
+          // recordName: "record",
+          url: "pkg://known-only",
           meta: {
             id: "ext.known-only",
             translations: {
@@ -654,8 +644,8 @@ describe("createExtensionManager", () => {
   it("getExtensions() marks direct extensions as known without an owning set", async () => {
     const manager = createExtensionManager();
     const extension = {
-      recordName: "record",
-      address: "pkg://direct",
+      // recordName: "record",
+      url: "pkg://direct",
       meta: {
         id: "ext.direct",
         translations: {
@@ -694,8 +684,8 @@ describe("createExtensionManager", () => {
     );
 
     const extension = {
-      recordName: "record",
-      address: "pkg://slow",
+      // recordName: "record",
+      url: "pkg://slow",
       meta: {
         id: "ext.slow",
         translations: {
@@ -741,8 +731,8 @@ describe("createExtensionManager", () => {
   it("getExtensions() returns the union of registered extensions and extension packages", async () => {
     const manager = createExtensionManager();
     const packageOnlyExtension = {
-      recordName: "record",
-      address: "pkg://package-only",
+      // recordName: "record",
+      url: "pkg://package-only",
       meta: {
         id: "ext.package-only",
         translations: {
@@ -809,8 +799,7 @@ describe("createExtensionManager", () => {
   it("unloadExtension() marks the extension as not installed", async () => {
     const manager = createExtensionManager();
     const extension = {
-      recordName: "record",
-      address: "pkg://unload-me",
+      url: "pkg://unload-me",
       meta: {
         id: "ext.unload-me",
         translations: {
@@ -834,8 +823,7 @@ describe("createExtensionManager", () => {
   it("unloadExtension() unregisters the extension", async () => {
     const manager = createExtensionManager();
     const extension = {
-      recordName: "record",
-      address: "pkg://unload-reg",
+      url: "pkg://unload-reg",
       meta: {
         id: "ext.unload-reg",
         translations: {
@@ -864,8 +852,7 @@ describe("createExtensionManager", () => {
   it("unloadExtension() shouts onExtensionUninstalled", async () => {
     const manager = createExtensionManager();
     const extension = {
-      recordName: "record",
-      address: "pkg://unload-shout",
+      url: "pkg://unload-shout",
       meta: {
         id: "ext.unload-shout",
         translations: {
@@ -890,8 +877,8 @@ describe("createExtensionManager", () => {
   it("unloadExtension() keeps the extension in the known list", async () => {
     const manager = createExtensionManager();
     const extension = {
-      recordName: "record",
-      address: "pkg://unload-known",
+      // recordName: "record",
+      url: "pkg://unload-known",
       meta: {
         id: "ext.unload-known",
         translations: {
@@ -935,8 +922,7 @@ describe("createExtensionManager", () => {
   it("getAllExtensionsAsSet() returns a sorted extension set with a hash-based id", async () => {
     const manager = createExtensionManager();
     const extensionB = {
-      recordName: "record",
-      address: "pkg://b",
+      url: "pkg://b",
       meta: {
         id: "ext.b",
         translations: {
@@ -948,8 +934,7 @@ describe("createExtensionManager", () => {
       },
     };
     const extensionA = {
-      recordName: "record",
-      address: "pkg://a",
+      url: "pkg://a",
       meta: {
         id: "ext.a",
         translations: {

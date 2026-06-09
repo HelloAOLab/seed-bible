@@ -11,16 +11,19 @@ type WebResponse<T> = {
 
 describe("FreeUseBibleAPI", () => {
   let webGetMock: jest.Mock;
+  let originalFetch: typeof globalThis.fetch;
+
+  beforeAll(() => {
+    originalFetch = globalThis.fetch;
+  });
 
   beforeEach(() => {
     webGetMock = jest.fn();
-    (globalThis as any).web = {
-      get: webGetMock,
-    };
+    globalThis.fetch = webGetMock;
   });
 
   afterEach(() => {
-    delete (globalThis as any).web;
+    globalThis.fetch = originalFetch;
   });
 
   function createResponse<T>(

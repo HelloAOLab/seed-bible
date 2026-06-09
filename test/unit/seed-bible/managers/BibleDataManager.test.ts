@@ -17,16 +17,15 @@ import {
 const ALT_ENDPOINT = "https://alt-two.example";
 
 let webGetMock: jest.Mock;
+const originalFetch = globalThis.fetch;
 
 beforeEach(() => {
   webGetMock = jest.fn();
-  (globalThis as any).web = {
-    get: webGetMock,
-  };
+  globalThis.fetch = webGetMock;
 });
 
 afterEach(() => {
-  delete (globalThis as any).web;
+  globalThis.fetch = originalFetch;
 });
 
 function setWebResponses(responses: WebResponseMap): void {

@@ -3,21 +3,27 @@ import {
   createHighlightsManager,
 } from "@packages/seed-bible/seed-bible/managers/HighlightsManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { signal } from "@preact/signals";
 
 describe("HighlightsManager", () => {
-  let getDataMock: jest.Mock;
-  let recordDataMock: jest.Mock;
+  let getDataMock: jest.SpyInstance;
+  let recordDataMock: jest.SpyInstance;
   let warnSpy: jest.SpyInstance;
   let login: jest.Mocked<LoginManager>;
+  let os: CasualOSManager;
+
   const flushPromises = async () => {
     await Promise.resolve();
     await Promise.resolve();
   };
 
   beforeEach(() => {
-    getDataMock = jest.fn().mockResolvedValue(null);
-    recordDataMock = jest.fn().mockResolvedValue(undefined);
+    os = CasualOSManager();
+    getDataMock = jest.spyOn(os, "getData").mockResolvedValue(null);
+    recordDataMock = jest
+      .spyOn(os, "recordData")
+      .mockResolvedValue(undefined as any);
     warnSpy = jest.spyOn(console, "warn").mockImplementation(() => undefined);
     login = {
       authBot: signal(null),
@@ -29,12 +35,6 @@ describe("HighlightsManager", () => {
       getUserProfile: jest.fn().mockResolvedValue(null),
       uploadProfilePicture: jest.fn().mockResolvedValue(undefined),
     };
-
-    (globalThis as any).os = {
-      ...(globalThis as any).os,
-      getData: getDataMock,
-      recordData: recordDataMock,
-    };
   });
 
   afterEach(() => {
@@ -43,7 +43,7 @@ describe("HighlightsManager", () => {
 
   it("getChapterHighlights() returns empty highlights when unauthenticated", async () => {
     login.userId.value = null;
-    const manager = createHighlightsManager(login);
+    const manager = createHighlightsManager(os, login);
 
     const result = manager.getChapterHighlights("BSB", "GEN", 1);
 
@@ -61,7 +61,7 @@ describe("HighlightsManager", () => {
         ],
       },
     });
-    const manager = createHighlightsManager(login);
+    const manager = createHighlightsManager(os, login);
 
     const result = manager.getChapterHighlights("BSB", "GEN", 1);
     await flushPromises();
@@ -85,7 +85,7 @@ describe("HighlightsManager", () => {
         ],
       },
     });
-    const manager = createHighlightsManager(login);
+    const manager = createHighlightsManager(os, login);
 
     const result = manager.getChapterHighlights("BSB", "GEN", 1);
     await flushPromises();
@@ -105,7 +105,7 @@ describe("HighlightsManager", () => {
         highlights: [{ colorId: "color-1", verse: 3 }],
       },
     });
-    const manager = createHighlightsManager(login);
+    const manager = createHighlightsManager(os, login);
 
     // First call fetches from network
     manager.getChapterHighlights("BSB", "GEN", 1);
@@ -128,7 +128,7 @@ describe("HighlightsManager", () => {
       success: true,
       data: { highlights: [{ colorId: "#fff" }] },
     });
-    const manager = createHighlightsManager(login);
+    const manager = createHighlightsManager(os, login);
 
     const result = manager.getChapterHighlights("BSB", "GEN", 1);
     await flushPromises();
@@ -138,7 +138,7 @@ describe("HighlightsManager", () => {
   });
 
   it("saveChapterHighlights() stores highlights at the chapter address", async () => {
-    const manager = createHighlightsManager(login);
+    const manager = createHighlightsManager(os, login);
 
     await manager.saveChapterHighlights("BSB", "GEN", 1, [
       { colorId: "color-1", verse: 1 },
@@ -165,7 +165,7 @@ describe("HighlightsManager", () => {
     login.login.mockImplementation(async () => {
       login.userId.value = "user-2";
     });
-    const manager = createHighlightsManager(login);
+    const manager = createHighlightsManager(os, login);
 
     await manager.saveChapterHighlights("BSB", "GEN", 1, [
       { colorId: "color-1", verse: 1 },
@@ -186,7 +186,7 @@ describe("HighlightsManager", () => {
 
   it("saveChapterHighlights() warns and does not save when login does not authenticate", async () => {
     login.userId.value = null;
-    const manager = createHighlightsManager(login);
+    const manager = createHighlightsManager(os, login);
 
     await manager.saveChapterHighlights("BSB", "GEN", 1, [
       { colorId: "color-1", verse: 1 },
@@ -200,7 +200,7 @@ describe("HighlightsManager", () => {
   });
 
   it("saveChapterHighlights() stores normalized highlights without overlap", async () => {
-    const manager = createHighlightsManager(login);
+    const manager = createHighlightsManager(os, login);
 
     await manager.saveChapterHighlights("BSB", "GEN", 1, [
       { colorId: "color-4", verse: [1, 4] },
@@ -229,7 +229,7 @@ describe("HighlightsManager", () => {
         highlights: [{ colorId: "color-1", verse: 3 }],
       },
     });
-    const manager = createHighlightsManager(login);
+    const manager = createHighlightsManager(os, login);
 
     // Load and cache initial highlights
     const initial = manager.getChapterHighlights("BSB", "GEN", 1);
@@ -262,7 +262,7 @@ describe("HighlightsManager", () => {
           resolveRecordData = resolve;
         })
     );
-    const manager = createHighlightsManager(login);
+    const manager = createHighlightsManager(os, login);
     const chapterHighlights = manager.getChapterHighlights("BSB", "GEN", 1);
 
     const savePromise = manager.saveChapterHighlights("BSB", "GEN", 1, [
@@ -287,7 +287,7 @@ describe("HighlightsManager", () => {
         ],
       },
     });
-    const manager = createHighlightsManager(login);
+    const manager = createHighlightsManager(os, login);
 
     await manager.highlightVerse("BSB", "GEN", 1, {
       colorId: "color-5",
@@ -317,7 +317,7 @@ describe("HighlightsManager", () => {
         highlights: [{ colorId: "color-6", verse: [1, 2] }],
       },
     });
-    const manager = createHighlightsManager(login);
+    const manager = createHighlightsManager(os, login);
 
     await manager.highlightVerse("BSB", "GEN", 1, {
       colorId: "color-6",
@@ -343,7 +343,7 @@ describe("HighlightsManager", () => {
         highlights: [{ colorId: "color-6", verse: [1, 8] }],
       },
     });
-    const manager = createHighlightsManager(login);
+    const manager = createHighlightsManager(os, login);
 
     await manager.highlightVerses("BSB", "GEN", 1, [2, 3, 6], {
       colorId: "custom",
@@ -387,7 +387,7 @@ describe("HighlightsManager", () => {
         highlights: [{ colorId: "color-6", verse: [1, 7] }],
       },
     });
-    const manager = createHighlightsManager(login);
+    const manager = createHighlightsManager(os, login);
 
     await manager.unhighlightVerse("BSB", "GEN", 1, [3, 5]);
 
@@ -413,7 +413,7 @@ describe("HighlightsManager", () => {
         highlights: [{ colorId: "color-6", verse: 4 }],
       },
     });
-    const manager = createHighlightsManager(login);
+    const manager = createHighlightsManager(os, login);
 
     await manager.unhighlightVerse("BSB", "GEN", 1, 4);
 
@@ -439,7 +439,7 @@ describe("HighlightsManager", () => {
         ],
       },
     });
-    const manager = createHighlightsManager(login);
+    const manager = createHighlightsManager(os, login);
 
     await manager.unhighlightVerses("BSB", "GEN", 1, [2, 3, 6, 7]);
 
@@ -472,7 +472,7 @@ describe("HighlightsManager", () => {
         ],
       },
     });
-    const manager = createHighlightsManager(login);
+    const manager = createHighlightsManager(os, login);
 
     await manager.unhighlightVerses("BSB", "GEN", 1, [2, 3, 6, 7]);
 
