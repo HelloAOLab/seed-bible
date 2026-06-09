@@ -1796,9 +1796,6 @@
       "todayScreen.infrastructure.presentation.contexts.today.useTodayProvider": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/contexts/today/useTodayProvider.tsx"
       ],
-      "todayScreen.infrastructure.presentation.hooks.timespanOptions": [
-        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/timespanOptions.tsx"
-      ],
       "todayScreen.infrastructure.presentation.hooks.useBook": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useBook.tsx"
       ],
@@ -1816,6 +1813,9 @@
       ],
       "todayScreen.infrastructure.presentation.hooks.useHistoryCard": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useHistoryCard.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.hooks.useMicroGrid": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useMicroGrid.tsx"
       ],
       "todayScreen.infrastructure.presentation.hooks.usePresenceCard": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/usePresenceCard.tsx"
