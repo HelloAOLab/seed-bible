@@ -5,6 +5,7 @@ import {
   useTranslation,
 } from "react-i18next";
 import { useMemo } from "preact/hooks";
+import en from "./en.json";
 
 const languages = import.meta.glob("./*.json", { eager: true });
 
@@ -68,9 +69,9 @@ export function addTranslations(
 // }
 
 const seedBibleTranslations = languages;
-if (!seedBibleTranslations[DEFAULT_LANGUAGE]) {
-  seedBibleTranslations[DEFAULT_LANGUAGE] = {};
-}
+// if (!seedBibleTranslations[DEFAULT_LANGUAGE]) {
+//   seedBibleTranslations[DEFAULT_LANGUAGE] = {};
+// }
 
 const availableLanguages = Object.keys(seedBibleTranslations).sort();
 
@@ -92,7 +93,16 @@ if (!i18n.isInitialized) {
     ns: ["seed-bible"],
   });
 
-  addTranslations("seed-bible", seedBibleTranslations);
+  i18n.addResourceBundle("en", "seed-bible", en, true);
+
+  (async () => {
+    for (const [lang, resources] of Object.entries(seedBibleTranslations)) {
+      const json = await resources();
+      i18n.addResourceBundle(lang, "seed-bible", json, true);
+    }
+  })();
+
+  // addTranslations("seed-bible", seedBibleTranslations);
 }
 
 export function I18nProvider(props: { children: unknown }) {
