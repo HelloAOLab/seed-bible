@@ -1,6 +1,7 @@
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
   createTestSeedBibleState,
+  type CreateTestSeedBibleStateOptions,
   waitForInitialLoad,
 } from "../testUtils/createTestSeedBibleState";
 import { signal } from "@preact/signals";
@@ -84,6 +85,37 @@ async function waitFor(
 
 async function createState() {
   return createTestSeedBibleState();
+}
+
+function createMockSharedSession(id: string) {
+  return {
+    id,
+    readingState: {
+      translationId: signal<string | null>(null),
+      bookId: signal<string | null>(null),
+      chapterNumber: signal<number | null>(null),
+      chapterData: signal(null),
+      selectedVerses: signal([]),
+    },
+    document: {} as SharedDocument,
+    options: signal({
+      allowedNavigators: null,
+      allowedDecorators: null,
+      hostUserId: null,
+      highlightDurationSeconds: 16,
+      endedAt: null,
+    }),
+    connectedUsers: signal([]),
+    updateOptions: jest.fn(),
+    removeSharedDecoration: jest.fn(),
+    dispose: jest.fn(),
+  } as any;
+}
+
+async function createStateWithOptions(
+  options: CreateTestSeedBibleStateOptions
+) {
+  return createTestSeedBibleState(options);
 }
 
 async function createStateWithTwoTabs() {
@@ -196,6 +228,27 @@ describe("createSeedBibleState", () => {
     );
   });
 
+  it("createSharedSession() captures a create_session posthog event", async () => {
+    const mockPosthogCapture = jest.fn();
+    (globalThis as any).posthog = {
+      capture: mockPosthogCapture,
+    };
+
+    try {
+      const state = await createState();
+      const session = createMockSharedSession("session-create-event");
+      mockSessionsManager.createSession.mockResolvedValue(session);
+
+      await state.app.createSharedSession();
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("create_session", {
+        sessionId: "session-create-event",
+      });
+    } finally {
+      delete (globalThis as any).posthog;
+    }
+  });
+
   it("joinSharedSession(id) joins a shared session and adds a tab for its reading state", async () => {
     const state = await createStateWithTwoTabs();
     const previousTabCount = state.tabs.tabs.value.length;
@@ -232,6 +285,58 @@ describe("createSeedBibleState", () => {
     expect(state.tabs.selectedTabId.value).toBe(
       state.tabs.tabs.value[previousTabCount]?.id
     );
+  });
+
+  it("joinSharedSession(id) captures a join_session posthog event", async () => {
+    const mockPosthogCapture = jest.fn();
+    (globalThis as any).posthog = {
+      capture: mockPosthogCapture,
+    };
+
+    try {
+      const state = await createStateWithTwoTabs();
+      const session = createMockSharedSession("session-join-event");
+      mockSessionsManager.joinSession.mockResolvedValue(session);
+
+      await state.app.joinSharedSession("group-abc");
+
+      expect(mockPosthogCapture).toHaveBeenCalledWith("join_session", {
+        sessionId: "session-join-event",
+      });
+    } finally {
+      delete (globalThis as any).posthog;
+    }
+  });
+
+  it("does not auto-join a shared session when sessionId is missing from URL tags", async () => {
+    const state = await createState();
+
+    await waitFor(() => state.tabs.tabs.value.length >= 1);
+
+    expect(mockSessionsManager.joinSession).not.toHaveBeenCalled();
+    expect(state.tabs.tabs.value).toHaveLength(1);
+  });
+
+  it("auto-joins a shared session when sessionId is present in URL tags", async () => {
+    const session = createMockSharedSession("url-session-123");
+    mockSessionsManager.joinSession.mockResolvedValue(session);
+
+    const state = await createStateWithOptions({
+      configTags: {
+        sessionId: "url-session-123",
+      },
+    });
+
+    await waitFor(
+      () => mockSessionsManager.joinSession.mock.calls.length === 1
+    );
+
+    expect(mockSessionsManager.joinSession).toHaveBeenCalledWith(
+      "url-session-123"
+    );
+    expect(state.tabs.tabs.value).toHaveLength(2);
+    expect(state.tabs.tabs.value[1]?.sharedSession).toBe(session);
+    expect(state.tabs.selectedTabId.value).toBe("tab-2");
   });
 
   it("tabs can be opened in new panes", async () => {

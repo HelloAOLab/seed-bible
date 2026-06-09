@@ -38,7 +38,7 @@
   --text-verse-margin-right: 0;
   --text-verse-line-height: 2;
 
-  --sb-background: #f8fafc;
+  --sb-background: #f1f1f2;
   --sb-font-family: "Satoshi", system-ui, sans-serif;
   --sb-font-color: #333;
 
@@ -75,10 +75,8 @@
   --sb-verse-words-of-jesus-font-family: inherit;
   --sb-verse-words-of-jesus-font-style: inherit;
 
-  --sb-selected-verse-font-family: inherit;
-  --sb-selected-verse-font-color: inherit;
-  --sb-selected-verse-background-color: inherit;
-  --sb-selected-verse-text-decoration: underline;
+  --sb-selected-verse-border-bottom: 2px dashed currentColor;
+  --sb-selected-verse-text-decoration: none;
   --sb-selected-verse-text-decoration-color: currentColor;
 
   --sb-hebrew-subtitle-font-family: "Newsreader", serif;
@@ -122,11 +120,11 @@
   --sb-verse-toolbar-gap: 2px;
   --sb-verse-toolbar-padding: 4px 8px;
   --sb-verse-toolbar-border-radius: 10px;
-  --sb-verse-toolbar-border: 1px solid #00000024;
-  --sb-verse-toolbar-box-shadow: 0 26px 10px #0000001a;
+  --sb-verse-toolbar-border: 1px solid var(--sb-divider-color);
+  --sb-verse-toolbar-box-shadow: 0 26px 10px var(--sb-shadow-color);
   --sb-verse-toolbar-z-index: 100;
   --sb-verse-toolbar-min-height: 0;
-  --sb-verse-toolbar-background: #fff;
+  --sb-verse-toolbar-background: var(--sb-menu-background);
 
   --sb-reader-toolbar-mobile-layout-height: auto;
   --sb-reader-toolbar-mobile-layout-padding: 10px 35px;
@@ -199,6 +197,23 @@ body {
   font-family: var(--sb-font-family);
 }
 
+/* On mobile, lock the document to the visual viewport so iOS/Android
+ * browsers don't show the default white "overscroll" gap when the user
+ * pulls the page up past the bottom toolbar. Scrolling happens inside
+ * the inner panes (which have their own overflow scrollers). */
+@media (max-width: 768px) {
+  html,
+  body {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+}
+
 button,
 input,
 textarea,
@@ -238,10 +253,46 @@ h6 {
   padding-bottom: 96px;
   margin: 0 auto;
   box-sizing: border-box;
+  position: relative;
 
   background: var(--sb-reader-background);
   color: var(--sb-reader-font-color);
   font-family: var(--sb-reader-font-family);
+}
+
+.sb-bible-reader-bookmark-button {
+  position: absolute;
+  top: 16px;
+  inset-inline-end: 16px;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+  z-index: 1;
+}
+
+.sb-bible-reader-bookmark-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+}
+
+.sb-bible-reader-bookmark-button-active,
+.sb-bible-reader-bookmark-button-active:hover {
+  color: var(--sb-primary-color);
+}
+
+.sb-bible-reader-bookmark-button:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 /* Force a tight 1% reader margin in mobile view, regardless of the
@@ -403,8 +454,8 @@ h6 {
 }
 
 .sb-pane-shell:not(.sb-pane-shell-detached) {
-  border-radius: 8px;
-  margin: 8px;
+  border-radius: 12px;
+  margin: 12px;
   /* box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.2); */
 }
 
@@ -769,16 +820,28 @@ h6 {
   font-style: var(--text-bookTitle-font-style);
   text-decoration: var(--text-bookTitle-text-decoration);
   text-align: var(--text-bookTitle-alignment);
-  margin-top: var(--text-bookTitle-margin-top);
-  margin-bottom: var(--text-bookTitle-margin-bottom);
-  margin-left: var(--text-bookTitle-margin-left);
-  margin-right: var(--text-bookTitle-margin-right);
+  margin: 0 0 28px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--sb-divider-color);
   font-size: 32px;
+  cursor: pointer;
+  letter-spacing: -0.01em;
+}
+
+.sb-bible-reader-title-sep {
+  display: inline-block;
+  margin: 0 0.18em;
+  font-weight: inherit;
+  color: inherit;
 }
 
 .sb-bible-reader-translation {
-  font-size: 0.8em;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  font-size: 0.62em;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+  margin-inline-start: 0.4em;
+  vertical-align: 0.15em;
 }
 
 .sb-bible-reader-meta {
@@ -855,6 +918,10 @@ h6 {
   color: var(--sb-book-title-font-color);
   white-space: nowrap;
   text-overflow: ellipsis;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
 }
 
 .sb-bible-reader-mobile-header-book {
@@ -866,6 +933,38 @@ h6 {
   font-weight: 400;
   cursor: pointer;
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  display: inline-flex;
+  padding: 5px 10px;
+  border-radius: 15px;
+}
+
+.sb-bible-reader-mobile-header-play {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  cursor: pointer;
+  padding: 0;
+  margin-inline-start: 8px;
+  transition: filter 0.15s ease;
+  display: none;
+}
+
+.sb-bible-reader-mobile-header-play:hover {
+  filter: brightness(0.95);
+}
+
+.sb-bible-reader-mobile-header-play .material-symbols-outlined {
+  font-size: 22px;
+  font-variation-settings: "FILL" 1;
+  margin-inline-start: 2px;
 }
 
 .sb-bible-reader-mobile-header-settings {
@@ -881,6 +980,7 @@ h6 {
   color: var(--sb-font-color);
   cursor: pointer;
   padding: 0;
+  margin-inline-start: auto;
 }
 
 .sb-bible-reader-mobile-header-settings:active {
@@ -903,12 +1003,20 @@ h6 {
   will-change: transform;
 }
 
-[dir="rtl"] .sb-reader-swipe-track {
+.sb-bible-reader[dir="rtl"] .sb-reader-swipe-track {
   transform: translateX(33.333%);
 }
 
 .sb-bible-reader-mobile .sb-reader-swipe-panel {
   padding-top: 60px;
+}
+
+.sb-language-english-name {
+  color: color-mix(
+    in srgb,
+    var(--sb-book-selector-font-color),
+    transparent 50%
+  );
 }
 
 .sb-reader-swipe-panel {
@@ -917,6 +1025,7 @@ h6 {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: none;
   scrollbar-width: none;
 }
 
@@ -1127,6 +1236,15 @@ h6 {
   font-weight: 500;
   font-family: inherit;
   padding: 4px 0;
+  width: 100%;
+}
+.sb-mobile-settings-icon svg path {
+  stroke: var(--sb-primary-color);
+}
+
+.sb-mobile-settings-sheet-all-settings-chevron {
+  margin-inline-start: auto;
+  opacity: 0.7;
 }
 
 .sb-chapter-content {
@@ -1206,8 +1324,10 @@ h6 {
   }
 }
 
-.sb-verse-selected {
-  text-decoration: underline;
+.sb-verse-selected .sb-verse-decorator {
+  border-bottom: var(--sb-selected-verse-border-bottom);
+  text-decoration: var(--sb-selected-verse-text-decoration);
+  text-decoration-color: var(--sb-selected-verse-text-decoration-color);
 }
 
 .sb-verse-number {
@@ -1219,6 +1339,7 @@ h6 {
   vertical-align: middle;
   margin-inline-start: 6px;
   margin-inline-end: 3px;
+  color: color-mix(in srgb, var(--sb-verse-font-color), transparent 30%);
 }
 
 .sb-poem-line-1 {
@@ -1528,98 +1649,196 @@ h6 {
     /* max-width: 420px; */
   }
 
+  .sb-action-btns {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout {
     position: static;
     transform: none;
     left: auto;
     bottom: auto;
-    height: var(--sb-reader-toolbar-mobile-layout-height);
+    height: auto;
     width: 100%;
     border-radius: 0;
-    padding: 10px 35px;
-    justify-content: space-between;
-    align-items: flex-end;
-    gap: var(--sb-reader-toolbar-mobile-layout-gap);
+    padding: 8px 8px 10px;
+    justify-content: space-around;
+    align-items: stretch;
+    gap: 0;
     background: var(--sb-reader-toolbar-background);
     border-top: 1px solid var(--sb-divider-color);
     box-shadow: none;
   }
 
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout .sb-reader-toolbar-item {
-    flex: 0 0 auto;
+    flex: 1 1 0;
     height: auto;
+    min-width: 0;
   }
 
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
-    .sb-reader-toolbar-mobile-tabs-item {
+    .sb-reader-toolbar-mobile-tab {
     display: flex;
-    align-items: flex-end;
+    align-items: stretch;
+    position: relative;
   }
 
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
-    .sb-reader-toolbar-mobile-tabs-button {
+    .sb-reader-toolbar-mobile-tab-button {
+    flex: 1;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: center;
     gap: 4px;
-    padding: 0;
-    width: auto;
+    padding: 6px 4px;
+    min-height: 52px;
+    width: 100%;
     height: auto;
+    background: transparent;
+    color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+    border-radius: 8px;
+    transition: color 0.15s ease;
+  }
+
+  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
+    .sb-reader-toolbar-mobile-tab-button:hover:not(:disabled) {
     background: transparent;
     color: var(--sb-font-color);
   }
 
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
-    .sb-reader-toolbar-mobile-tabs-button:hover:not(:disabled) {
-    background: transparent;
+    .sb-reader-toolbar-mobile-tab-button-active {
+    color: var(--sb-primary-color);
   }
 
-  .sb-reader-toolbar-mobile-tabs-icon {
+  .sb-reader-toolbar-mobile-tab-icon {
+    font-size: 24px;
+    line-height: 1;
+    flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: var(--sb-reader-toolbar-button-icon-size);
-    height: var(--sb-reader-toolbar-button-icon-size);
-    color: var(--sb-font-color);
+    height: 24px;
   }
 
-  .sb-reader-toolbar-mobile-tabs-icon > svg {
-    width: var(--sb-reader-toolbar-button-icon-size);
-    height: var(--sb-reader-toolbar-button-icon-size);
+  .sb-reader-toolbar-mobile-tab-icon-custom > img,
+  .sb-reader-toolbar-mobile-tab-icon-custom > svg {
+    display: block;
+    max-width: 24px;
+    max-height: 24px;
   }
 
-  .sb-reader-toolbar-mobile-tabs-label {
+  .sb-reader-toolbar-mobile-tab-label {
     font-size: var(--sb-reader-toolbar-mobile-tabs-label-font-size);
     font-weight: 500;
-    color: var(--sb-font-color);
     text-align: center;
     line-height: 1;
+    color: inherit;
   }
 
-  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
-    .sb-reader-toolbar-center-item {
-    flex: 1;
+  /* More popover anchored above the More tab */
+  .sb-mobile-more-menu {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 8px);
+    min-width: 200px;
+    padding: 10px;
+    background: var(--sb-reader-toolbar-background);
+    border: 1px solid var(--sb-divider-color);
+    border-radius: 14px;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
     display: flex;
-    justify-content: flex-end;
-    align-items: flex-end;
+    flex-direction: column-reverse;
+    gap: 6px;
+    z-index: 100;
   }
 
-  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
-    .sb-reader-toolbar-center-item
-    .sb-reader-toolbar-button {
-    width: var(--sb-reader-toolbar-mobile-layout-center-button-width);
-    height: var(--sb-reader-toolbar-mobile-layout-center-button-height);
-    border-radius: var(--sb-reader-toolbar-mobile-layout-button-border-radius);
+  .sb-mobile-more-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: none;
+    background: transparent;
+    color: var(--sb-font-color);
+    font: inherit;
+    font-size: 15px;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.15s ease;
+  }
+
+  .sb-mobile-more-menu-item:hover {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+  }
+
+  .sb-mobile-more-menu-icon {
+    width: 22px;
+    height: 22px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+    flex-shrink: 0;
+  }
+
+  .sb-mobile-more-menu-label {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .sb-mobile-more-menu-social {
+    cursor: default;
+  }
+
+  .sb-mobile-more-menu-social:hover {
+    background: transparent;
+  }
+
+  .sb-mobile-more-menu-social-avatar {
+    background: radial-gradient(
+      circle at 30% 30%,
+      var(--sb-primary-color),
+      color-mix(in srgb, var(--sb-primary-color), #000 40%)
+    );
+    border-radius: 999px;
+  }
+
+  .sb-mobile-more-menu-toggle {
+    flex-shrink: 0;
+    width: 38px;
+    height: 22px;
+    border-radius: 999px;
+    border: none;
+    background: color-mix(in srgb, var(--sb-font-color), transparent 80%);
+    position: relative;
+    cursor: pointer;
     padding: 0;
-    background: color-mix(in srgb, var(--sb-primary-color) 50%, transparent);
-    border: 1px solid var(--sb-primary-color);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.2s ease;
   }
 
-  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
-    .sb-reader-toolbar-center-item
-    .sb-reader-toolbar-button:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--sb-primary-color) 60%, transparent);
+  .sb-mobile-more-menu-toggle-on {
+    background: var(--sb-primary-color);
+  }
+
+  .sb-mobile-more-menu-toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    transition: left 0.2s ease;
+  }
+
+  .sb-mobile-more-menu-toggle-on .sb-mobile-more-menu-toggle-thumb {
+    left: 18px;
   }
 
   .sb-reader-toolbar-floating-button {
@@ -1636,6 +1855,8 @@ h6 {
     color: var(--sb-reader-toolbar-floating-button-font-color);
     box-shadow: var(--sb-reader-toolbar-floating-button-box-shadow);
     cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
   }
 
   .sb-reader-toolbar-floating-button-left {
@@ -1652,7 +1873,7 @@ h6 {
    * slides back into view. */
   body.sb-scroll-hide-bars .sb-reader-toolbar-wrap {
     transform: translateX(-50%) translateY(100%);
-    pointer-events: none;
+    /* pointer-events: none; */
   }
 }
 
@@ -1688,6 +1909,7 @@ h6 {
 .sb-verse-toolbar {
   flex-direction: column;
   align-items: stretch;
+  background-color: var(--sb-reader-background);
 }
 
 .sb-verse-toolbar-ref {
@@ -1726,7 +1948,7 @@ h6 {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1px solid rgba(0, 0, 0, 0.12);
+  border: 1px solid var(--sb-divider-color);
   transition: transform 0.15s ease;
 }
 
@@ -1773,8 +1995,17 @@ h6 {
 .sb-verse-toolbar-back .material-symbols-outlined,
 .sb-verse-toolbar-plus .material-symbols-outlined,
 .sb-verse-toolbar-clear .material-symbols-outlined,
-.sb-verse-toolbar-highlight-trigger .material-symbols-outlined {
+.sb-verse-toolbar-highlight-trigger .material-symbols-outlined,
+.sb-verse-toolbar-bookmark-trigger .material-symbols-outlined {
   font-size: 20px;
+}
+
+/* The bookmark trigger lights up in the theme primary color when the current
+ * selection already matches a saved bookmark, so the verse toolbar reads as
+ * a toggle. */
+.sb-verse-toolbar-bookmark-trigger-active,
+.sb-verse-toolbar-bookmark-trigger-active:hover {
+  color: var(--sb-primary-color);
 }
 
 .sb-verse-toolbar-color-input {
@@ -1860,6 +2091,10 @@ h6 {
   transform: translateX(-50%);
 }
 
+.sb-open-selector-icon {
+  flex: 1;
+}
+
 .sb-selector-overlay {
   pointer-events: none;
   position: fixed;
@@ -1879,19 +2114,47 @@ h6 {
   /* background: rgba(0, 0, 0, 0.3); */
 }
 
+/* Fix for iOS devices */
+/* For some reason, pointer-events doesn't get set properly on iOS sometimes */
+/* On mobile, we can just hide and show the selector anyways because we disable transitions for mobile devices */
+.is-webkit {
+  & .sb-selector-overlay,
+  &.sb-selector-overlay {
+    display: none;
+    pointer-events: all;
+  }
+
+  & .sb-selector-overlay.open,
+  &.sb-selector-overlay.open {
+    display: flex;
+  }
+}
+
+@media (max-width: 768px) {
+  .sb-selector-overlay {
+    display: none;
+    pointer-events: all;
+  }
+
+  .sb-selector-overlay.open {
+    display: flex;
+  }
+}
+
 .sb-selector-panel {
   position: absolute;
   overflow: auto;
-  padding: 12px;
+  padding: 18px 20px 20px;
   background: var(--sb-book-selector-background);
   color: var(--sb-book-selector-font-color);
-  border-radius: 10px;
+  border-radius: 16px;
+  border: 1px solid var(--sb-divider-color);
 
   width: 100%;
   height: 100dvh;
   bottom: 0;
 
-  box-shadow: 0 3px 8px var(--sb-shadow-color);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
   opacity: 0;
   transform: translateY(50%);
   transition: all 0.5s;
@@ -2167,11 +2430,11 @@ h6 {
 }
 
 .sb-tabs-sidebar {
-  width: 300px;
-  padding: 10px 12px 16px;
+  width: 320px;
+  padding: 14px 16px 16px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   background: var(--sb-sidebar-background);
   color: var(--sb-font-color);
   flex-shrink: 0;
@@ -2181,6 +2444,7 @@ h6 {
 .sb-tabs-sidebar-collapsed {
   width: 56px;
   padding: 10px 8px 16px;
+  padding-left: 15px;
 
   .sb-sidebar-top-row {
     justify-content: center;
@@ -2206,7 +2470,6 @@ h6 {
   justify-content: space-between;
   min-height: 28px;
   padding-bottom: 6px;
-  border-bottom: 1px solid var(--sb-secondary-color);
 }
 
 .sb-sidebar-top-actions {
@@ -2250,14 +2513,469 @@ h6 {
 
 .sb-sidebar-tabs-title {
   margin: 0;
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 18px;
   color: var(--sb-font-color);
+}
+
+.sb-sidebar-tabs-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sb-sidebar-tabs-header-icon-button {
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.sb-sidebar-tabs-header-icon-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+  color: var(--sb-font-color);
+}
+
+.sb-sidebar-tabs-header-icon-button .material-symbols-outlined {
+  font-size: 22px;
+}
+
+/* The X close button inside the Tabs header-actions is mobile-only.
+ * On desktop the drawer doesn't need it (it lives next to the sidebar). */
+.sb-sidebar-tabs-header-close-button {
+  display: none;
+}
+
+/* Bookmark filter button in the Tabs header — picks up the theme primary
+ * color when the bookmarks view is active and stays tinted on hover so the
+ * active state reads clearly. */
+.sb-sidebar-tabs-header-bookmarks-button-active,
+.sb-sidebar-tabs-header-bookmarks-button-active:hover {
+  color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 88%);
+}
+
+.sb-sidebar-tabs-header-bookmarks-button-active svg {
+  color: var(--sb-primary-color);
+}
+
+/* Per-tab bookmark toggle button — rendered between the tab body and the
+ * "more" menu, but only on the currently selected row. Filled + orange when
+ * the chapter is already in a bookmark folder, outlined when not. */
+.sb-tab-bookmark-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-inline-start: 2px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+  cursor: pointer;
+  align-self: center;
+  flex-shrink: 0;
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.sb-tab-bookmark-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+}
+
+.sb-tab-bookmark-button-active,
+.sb-tab-bookmark-button-active:hover {
+  color: var(--sb-primary-color);
+}
+
+/* ---- Bookmarks section (pinned above the tab list when the bookmark
+ *      toggle in the sidebar header is on) -------------------------------- */
+
+.sb-bookmarks-section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.sb-sidebar-tabs-divider {
+  height: 1px;
+  background: var(--sb-divider-color);
+  margin: 8px 0 10px;
+}
+
+.sb-bookmark-category {
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-bookmark-category-header {
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+  transition: background-color 0.15s ease;
+}
+
+.sb-bookmark-category-header:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-bookmark-category-toggle {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 6px 6px 4px;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+  text-align: start;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sb-bookmark-category-icon {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.sb-bookmark-category-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sb-bookmark-category-chevron {
+  display: inline-flex;
+  align-items: center;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  transition: transform 0.15s ease;
+}
+
+.sb-bookmark-category-chevron .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.sb-bookmark-category-chevron-open {
+  transform: rotate(180deg);
+}
+
+.sb-bookmark-category-rename-input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 6px;
+  padding: 2px 6px;
+  outline: none;
+}
+
+.sb-bookmark-category-rename-input:focus {
+  border-color: var(--sb-primary-color);
+}
+
+.sb-bookmark-category-menu-anchor {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.sb-bookmark-category-menu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  cursor: pointer;
+}
+
+.sb-bookmark-category-menu-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  color: var(--sb-font-color);
+}
+
+.sb-bookmark-category-items {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-inline-start: 22px;
+}
+
+.sb-bookmark-category-empty {
+  padding: 6px 8px;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+}
+
+.sb-bookmark-item {
+  display: flex;
+  align-items: center;
+  border-radius: 8px;
+}
+
+.sb-bookmark-item:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+/* Verse-scoped bookmark rows get a small themed marker on the start edge so
+ * the user can tell at a glance which entries are pinned to a verse vs. the
+ * whole chapter. */
+.sb-bookmark-item-verse {
+  position: relative;
+}
+
+.sb-bookmark-item-verse::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 2px;
+  top: 50%;
+  width: 3px;
+  height: 18px;
+  margin-top: -9px;
+  border-radius: 2px;
+  background: var(--sb-primary-color);
+}
+
+.sb-bookmark-item-verse .sb-bookmark-item-button {
+  padding-inline-start: 10px;
+}
+
+.sb-bookmark-item-button {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 6px 6px;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+  text-align: start;
+  font-size: 13px;
+}
+
+/* ------------------------------------------------------------------
+ * Bookmark category picker (modal)
+ * ------------------------------------------------------------------ */
+
+.sb-bookmark-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sb-bookmark-picker-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sb-bookmark-picker-category {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 88%);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-size: 14px;
+  cursor: pointer;
+  text-align: start;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.sb-bookmark-picker-category:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
+}
+
+.sb-bookmark-picker-category-selected {
+  border-color: var(--sb-primary-color);
+}
+
+.sb-bookmark-picker-category-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 500;
+}
+
+.sb-bookmark-picker-radio {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
+  flex-shrink: 0;
+  position: relative;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.sb-bookmark-picker-radio-checked {
+  border-color: var(--sb-primary-color);
+}
+
+.sb-bookmark-picker-radio-checked::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--sb-primary-color);
+}
+
+.sb-bookmark-picker-divider {
+  height: 1px;
+  background: var(--sb-divider-color);
+  margin: 0;
+}
+
+.sb-bookmark-picker-add-new {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  border: none;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.sb-bookmark-picker-add-new .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.sb-bookmark-picker-new-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-bookmark-picker-new-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.sb-bookmark-picker-new-input:focus {
+  outline: none;
+  border-color: var(--sb-primary-color);
+}
+
+.sb-bookmark-picker-new-error {
+  color: #b91c1c;
+  font-size: 12px;
+}
+
+.sb-bookmark-picker-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.sb-bookmark-picker-cancel,
+.sb-bookmark-picker-save {
+  min-width: 84px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.sb-bookmark-picker-cancel {
+  background: transparent;
+  color: var(--sb-font-color);
+  border-color: color-mix(in srgb, var(--sb-font-color), transparent 80%);
+}
+
+.sb-bookmark-picker-cancel:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-bookmark-picker-save {
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  border-color: var(--sb-primary-color);
+}
+
+.sb-bookmark-picker-save:hover {
+  background: color-mix(in srgb, var(--sb-primary-color), #000 8%);
+}
+
+.sb-bookmark-picker-save:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Mobile: dock the picker modal to the bottom of the screen as a sheet
+ * (matches the design spec). The modal frame itself is reused, but the
+ * outer overlay aligns it to the bottom and stretches it to full width. */
+@media (max-width: 768px) {
+  .sb-footnote-modal-overlay:has(.sb-bookmark-picker) {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .sb-footnote-modal:has(.sb-bookmark-picker) {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    border-bottom: none;
+    box-shadow: 0 -8px 28px #00000033;
+  }
 }
 
 .sb-sidebar-search-shell {
   position: relative;
   margin-top: 8px;
   margin-bottom: 10px;
+  display: none;
 }
 
 .sb-sidebar-search-bar {
@@ -2348,7 +3066,8 @@ h6 {
   gap: 6px;
 }
 
-.sb-verse-decoration-search-result {
+.sb-verse-decoration-search-result,
+.sb-verse-decoration-initial-verse-highlight {
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 28%);
 }
 
@@ -2396,7 +3115,7 @@ h6 {
 }
 
 .sb-collapsed-tab-tile {
-  width: 40px;
+  width: 53px;
   height: 40px;
   border-radius: 10px;
   border: var(--sb-tab-border);
@@ -2404,11 +3123,13 @@ h6 {
   color: var(--sb-tab-font-color);
   cursor: pointer;
   display: inline-flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
   padding: 0;
   line-height: 1;
+  gap: 5px;
+  border: 1px solid;
 }
 
 .sb-collapsed-tab-tile-selected {
@@ -2472,18 +3193,24 @@ h6 {
   align-items: stretch;
   position: relative;
 
-  padding: 4px;
-  padding-inline-start: 10px;
-  border-radius: 6px;
-  border: var(--sb-tab-border);
+  padding: 8px 6px 8px 12px;
+  border-radius: 8px;
+  border: 1px solid transparent;
   background: var(--sb-tab-background);
   color: var(--sb-tab-font-color);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.sb-tab-row:hover:not(.sb-tab-row-selected) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
 }
 
 .sb-tab-row-selected {
   background: var(--sb-selected-tab-background);
   color: var(--sb-selected-tab-font-color);
-  border: var(--sb-selected-tab-border);
+  border-color: transparent;
 }
 
 .sb-tab-button {
@@ -2502,8 +3229,36 @@ h6 {
   display: flex;
   align-items: center;
   justify-content: start;
-  gap: 10px;
-  min-height: 20px;
+  gap: 6px;
+  min-height: 22px;
+  font-size: 14px;
+}
+
+.sb-tab-main-title {
+  font-weight: 600;
+}
+
+.sb-tab-row-selected .sb-tab-main-title {
+  font-weight: 700;
+}
+
+.sb-tab-main-sep {
+  color: #545454;
+  font-size: 10px;
+  line-height: 1;
+}
+
+.sb-tab-main-translation {
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #545454;
+}
+
+.sb-tab-row-selected .sb-tab-main-translation {
+  color: currentColor;
+  opacity: 0.85;
 }
 
 .sb-tab-users-section {
@@ -2872,9 +3627,9 @@ h6 {
 
 .sb-tab-add-button {
   border: none;
-  border-radius: 7px;
-  width: 30px;
-  height: 30px;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
   cursor: pointer;
@@ -2882,11 +3637,21 @@ h6 {
   align-items: center;
   justify-content: center;
   padding: 0;
+  transition: filter 0.15s ease;
 
   &.sb-collapsed-tab-add-button {
-    width: 40px;
+    width: 53px;
     height: 40px;
   }
+}
+
+.sb-tab-add-button:hover {
+  filter: brightness(0.95);
+}
+
+.sb-tab-add-button .material-symbols-outlined {
+  font-size: 22px;
+  font-weight: 500;
 }
 
 .sb-pane-layout-anchor,
@@ -3303,12 +4068,16 @@ h6 {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 28px;
-  width: 28px;
+  height: 35px;
+  width: 35px;
+}
+
+.sb-sidebar-icon-button path {
+  stroke: currentColor;
 }
 
 .sb-sidebar-icon-button-selected {
-  box-shadow: inset 0 0 0 2px var(--sb-primary-color);
+  color: var(--sb-primary-color);
 }
 
 .sb-sidebar-close-button {
@@ -3339,7 +4108,7 @@ h6 {
     z-index: 100;
     overflow-y: auto;
     background: var(--sb-background);
-    animation: sb-sidebar-slide-in 0.25s ease-out;
+    padding-bottom: 68px;
   }
 
   @keyframes sb-sidebar-slide-in {
@@ -3403,15 +4172,29 @@ h6 {
    * Mobile tabs sidebar — tab card + floating "+" FAB
    * ------------------------------------------------------------------ */
 
-  /* Hide the small "+" in the header — on mobile the user reaches for the
-   * big floating action button at the bottom instead. */
-  .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header .sb-tab-add-button {
+  /* Hide the small "+" and the checklist/tasks icon from the header on
+   * mobile — the design shows only the bookmark + X icons up top. The "+"
+   * is surfaced as a full-width inline button at the bottom of the tab
+   * list. */
+  .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header .sb-tab-add-button,
+  .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header-tasks-button {
     display: none;
   }
 
-  /* The desktop bottom-actions row (settings cog + self avatar) would
-   * collide with the floating "+" FAB on mobile — hide it inside the
-   * mobile sidebar overlay so only the FAB shows, matching the design. */
+  /* Hide the desktop "top row" (collapse/dashboard/kebab/X) on mobile —
+   * the design has only one header row. The X close is rendered separately
+   * inside the Tabs header-actions for mobile. */
+  .sb-tabs-sidebar-mobile-open .sb-sidebar-top-row {
+    display: none;
+  }
+
+  /* Show the mobile X close inside the header-actions. */
+  .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header-close-button {
+    display: inline-flex;
+  }
+
+  /* The desktop bottom-actions row (settings cog + self avatar) is hidden
+   * on mobile — the bottom is now the Bible/Tabs switcher. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-bottom-actions {
     display: none;
   }
@@ -3419,12 +4202,18 @@ h6 {
   /* Header gets a little more breathing room and a bottom divider so it
    * reads as a real top-bar over the tab list. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header {
-    padding: 16px 16px 12px;
-    border-bottom: 1px solid var(--sb-divider-color);
+    padding: 7px 0px;
   }
 
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-title {
-    font-size: 18px;
+    font-size: 24px;
+    margin: 0;
+    font-size: 24px;
+    font-weight: 600;
+    font-family: var(--text-bookTitle-font);
+    color: var(--sb-book-title-font-color);
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   /* Tab list takes the body of the sidebar; leave room at the bottom for
@@ -3434,52 +4223,196 @@ h6 {
     gap: 12px;
   }
 
-  /* Tab card → orange-tinted pill matching the design screenshot. */
+  /* Tab card on mobile — plain by default, peach pill when selected. */
   .sb-tabs-sidebar-mobile-open .sb-tab-row {
     padding: 12px 14px;
     border-radius: 12px;
-    background: color-mix(in srgb, var(--sb-primary-color) 15%, transparent);
-    border: 1px solid
-      color-mix(in srgb, var(--sb-primary-color) 60%, transparent);
+    background: var(--sb-tertiary-color);
+    border: 1px solid transparent;
     min-height: 52px;
     align-items: center;
   }
 
   .sb-tabs-sidebar-mobile-open .sb-tab-row-selected {
-    background: color-mix(in srgb, var(--sb-primary-color) 20%, transparent);
-    border: 1px solid var(--sb-primary-color);
+    background: var(--sb-secondary-color);
+    border-color: transparent;
   }
 
-  /* Book + chapter in primary color; translation stays muted/dark. */
-  .sb-tabs-sidebar-mobile-open .sb-tab-main-title {
-    color: var(--sb-primary-color);
-    font-weight: 600;
+  .sb-tabs-sidebar-mobile-open .sb-tab-main-content {
     font-size: 16px;
   }
 
-  .sb-tabs-sidebar-mobile-open .sb-tab-main-translation {
-    color: var(--sb-font-color);
-    font-weight: 500;
-    font-size: 14px;
+  .sb-tabs-sidebar-mobile-open .sb-tab-main-title {
+    font-weight: 600;
   }
 
-  /* Floating "+" Action Button — large, orange, bottom-right. */
+  /* Floating "+" FAB is no longer used on mobile — replaced by the inline
+   * "Add new tab" row at the bottom of the tab list. */
   .sb-tab-mobile-add-fab {
-    position: fixed;
-    bottom: 24px;
-    inset-inline-end: 24px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
+    display: none;
+  }
+
+  /* Inline "Add new tab" button — orange icon tile + label, full-width,
+   * sits right below the tab list. Scoped under the mobile-open sidebar
+   * so it beats the default `display: none` further down in this file. */
+  .sb-tabs-sidebar-mobile-open .sb-tab-mobile-add-inline {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0px 16px 0;
+    padding: 8px 15px;
     border: none;
-    background: var(--sb-primary-color);
-    color: #ffffff;
+    background: var(--sb-tertiary-color);
+    color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+    font: inherit;
+    font-size: 15px;
     cursor: pointer;
+    text-align: start;
+    justify-content: space-between;
+  }
+
+  .sb-tabs-sidebar-mobile-open .sb-tab-mobile-add-inline-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
-    z-index: 101;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--sb-primary-color);
+    color: var(--sb-primary-font-color);
+    flex-shrink: 0;
+  }
+
+  .sb-tabs-sidebar-mobile-open
+    .sb-tab-mobile-add-inline-icon
+    .material-symbols-outlined {
+    font-size: 22px;
+    font-weight: 500;
+  }
+
+  /* Add a thin divider above the inline button so it visually separates
+   * from the tab list, matching the design. */
+  .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
+    margin-inline: 16px;
+    padding: 12px 0;
+  }
+
+  /* Reset the desktop tab list padding now that we apply our own. */
+  .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--sb-divider-color);
+  }
+
+  /* ------------------------------------------------------------------
+   * Mobile BibleSelector — single-column layout with two dropdowns at
+   * the top and the Bible/Tabs switcher pinned at the bottom.
+   * ------------------------------------------------------------------ */
+
+  .sb-selector-panel {
+    width: 100%;
+    height: 100dvh;
+    bottom: 0;
+    padding: 16px 0 10px;
+    border-radius: 0;
+    border: none;
+    transition: none;
+    transform: none;
+  }
+
+  /* Override the desktop translateY animation — on mobile the selector
+   * behaves like a tab swap (instant), not a sheet that slides up. */
+  .sb-selector-overlay.open .sb-selector-panel {
+    transform: none;
+  }
+
+  /* Tighten the header row to fit version-dropdown + testament-dropdown + X. */
+  .sb-selector-panel .sidebar-book-selector {
+    padding: 0 16px;
+    gap: 8px;
+  }
+
+  .sb-selector-panel .sidebar-translation-selector {
+    min-width: 0;
+    flex: 0 1 110px;
+  }
+
+  .sb-selector-panel .dropdown {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .sb-selector-panel .dropdown-select {
+    width: 100%;
+  }
+
+  .sb-selector-mobile-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+  }
+
+  /* Books area: leave room at the bottom for the switcher (~52px). */
+  .sb-selector-panel .sidebar-results {
+    height: auto;
+    flex: 1;
+    min-height: 0;
+    padding: 8px 10px 0px;
+  }
+
+  /* Single-column books — full-width rows with chevrons + dividers. */
+  .sb-selector-panel .books-container {
+    position: static;
+    height: auto;
+    padding: 0;
+    flex-direction: column;
+  }
+
+  .sb-selector-panel .books-item {
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .sb-selector-panel .sidebar-itm,
+  .sb-selector-panel .sidebar-ghost-itm {
+    width: 100%;
+  }
+
+  .sb-selector-panel .sidebar-itm {
+    background-color: transparent;
+    color: inherit;
+  }
+
+  .sb-selector-panel .sidebar-itm:hover {
+    background-color: transparent;
+  }
+
+  .sb-selector-panel .sidebar-ghost-itm {
+    display: none;
+  }
+
+  /* OT/NT title bigger on mobile to match the design. */
+  .sb-selector-panel .testament-title {
+    font-size: 18px;
+    padding-left: 8px;
+    padding-bottom: 5px;
+    padding-top: 8px;
+    color: inherit;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: color-mix(in srgb, var(--sb-font-color), transparent 60%);
+  }
+
+  .sb-selector-panel .separator {
+    display: none;
   }
 
   .sb-tab-mobile-add-fab:hover {
@@ -3492,9 +4425,10 @@ h6 {
   }
 }
 
-/* Desktop hides the mobile FAB — it only appears when the mobile sidebar
- * overlay is visible. */
-.sb-tab-mobile-add-fab {
+/* Desktop hides the mobile add-tab affordances — they only appear when
+ * the mobile sidebar overlay is visible. */
+.sb-tab-mobile-add-fab,
+.sb-tab-mobile-add-inline {
   display: none;
 }
 
@@ -3543,17 +4477,22 @@ h6 {
   gap: 8px;
 }
 
+.sb-extensions-list-disabled {
+  opacity: 0.5;
+}
+
 .sb-extension-row {
   display: flex;
   align-items: stretch;
+  gap: 8px;
   position: relative;
 }
 
-.sb-extension-row-button {
+.sb-extension-row-body {
   text-align: left;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
   border-radius: 8px;
-  padding: 10px 44px 10px 12px;
+  padding: 10px 12px;
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 75%);
   color: var(--sb-font-color);
   display: flex;
@@ -3562,9 +4501,33 @@ h6 {
   flex: 1;
 }
 
-.sb-extension-row-button:disabled {
-  opacity: 1;
-  cursor: default;
+.sb-extension-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.sb-extension-row-action-button {
+  width: 30px;
+  height: 30px;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 70%);
+  color: var(--sb-font-color);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.sb-extension-row-action-button:hover {
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 56%);
+}
+
+.sb-extension-row-action-button .material-symbols-outlined {
+  font-size: 18px;
 }
 
 .sb-extension-row-content {
@@ -3572,6 +4535,7 @@ h6 {
   flex-direction: column;
   min-width: 0;
   gap: 2px;
+  flex: 1;
 }
 
 .sb-extension-name {
@@ -3661,6 +4625,45 @@ h6 {
 
 .sb-context-menu-item:hover {
   background: var(--sb-secondary-color);
+}
+
+.sb-context-menu-toggle-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sb-pill-toggle {
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background-color: color-mix(in srgb, var(--sb-font-color), transparent 78%);
+  position: relative;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease;
+}
+
+.sb-pill-toggle::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: left 0.2s ease;
+}
+
+.sb-pill-toggle.is-on {
+  background-color: var(--sb-primary-color);
+}
+
+.sb-pill-toggle.is-on::before {
+  left: 22px;
 }
 
 .sb-extension-footer-actions {
@@ -4010,7 +5013,7 @@ h6 {
 
 .sb-settings-action-button {
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 12px 16px;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
@@ -4955,7 +5958,7 @@ h6 {
 
 .sb-account-picture-preview,
 .sb-account-picture-placeholder {
-  width: 62px !important;
+  width: 62px;
   height: 62px !important;
   border-radius: 999px;
   flex-shrink: 0;
@@ -5200,9 +6203,11 @@ h6 {
   font-family: "Satoshi", system-ui, sans-serif;
   font-weight: 700;
   font-size: 18px;
-  line-height: 100%;
-  letter-spacing: 0%;
-  padding-left: 10px;
+  line-height: 1.1;
+  padding-left: 12px;
+  padding-bottom: 8px;
+  display: block;
+  color: var(--sb-font-color);
 }
 
 .books-item {
@@ -5220,17 +6225,24 @@ h6 {
   opacity: 0.1;
 }
 
+.dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
 .dropdown-select {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
 
-  padding: 8px 26px 8px 12px;
+  padding: 8px 32px 8px 14px;
   font-size: 14px;
+  height: 40px;
 
-  border: none;
-  border-radius: 6px;
-  background: var(--sb-secondary-color)
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%)
     url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")
     no-repeat right 10px center;
   background-size: 16px;
@@ -5241,41 +6253,53 @@ h6 {
   transition:
     border-color 0.2s,
     box-shadow 0.2s;
-  margin-right: 5px;
-  font-family: "Satoshi";
+  margin-right: 0;
+  font-family: "Satoshi", system-ui, sans-serif;
   color: var(--sb-font-color);
 }
 
+.dropdown-select-icon {
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  font-size: 24px;
+}
+
 .dropdown-option {
-  background: var(--sb-secondary-color);
+  background: var(--sb-book-selector-background);
   color: var(--sb-font-color);
   padding: 8px 12px;
   cursor: pointer;
 }
 
 .searchbar {
-  border-radius: 6px;
-  background: var(--sb-secondary-color);
-  padding: 6px 10px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+  border: 1px solid var(--sb-divider-color);
+  padding: 6px 12px;
   width: 80%;
-  height: 34px;
+  height: 40px;
   overflow: hidden;
   color: var(--sb-font-color);
 }
 
 .search-icon {
   margin-right: 8px;
-  color: #555;
-  font-size: 18px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+  font-size: 20px;
 }
 
 .searchbar input {
   border: none;
   outline: none;
   font-size: 14px;
-  font-family: "DM Sans", sans-serif;
+  font-family: "Satoshi", system-ui, sans-serif;
   background: transparent;
   color: var(--sb-font-color);
+}
+
+.searchbar input::placeholder {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
 }
 
 .share-btn {
@@ -5347,16 +6371,26 @@ h6 {
 
 .sidebar-book-selector {
   width: 100%;
-  height: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .sidebar-translation-selector {
-  background: var(--sb-secondary-color);
-  padding: 0px 5px;
-  height: 32px;
-  width: 105px;
-  border-radius: 5px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+  border: 1px solid var(--sb-divider-color);
+  padding: 0 8px 0 14px;
+  height: 40px;
+  min-width: 130px;
+  width: auto;
+  border-radius: 10px;
   color: var(--sb-font-color);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .translation-option {
@@ -5376,15 +6410,13 @@ h6 {
 }
 
 .sidebar-selected-title {
-  height: 24px;
-  /* overflow: hidden; */
-  font-size: 18px;
+  font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: "Satoshi";
-  width: 75px;
+  font-family: "Satoshi", system-ui, sans-serif;
+  flex: 1;
   overflow: hidden;
-  font-weight: normal;
+  font-weight: 500;
 }
 
 .translation-description {
@@ -5478,10 +6510,12 @@ h6 {
 }
 
 .testament-selection {
-  margin-bottom: 10px;
-  /* background: var(--pageBackground); */
-  padding: 10px 0px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0px 0px 15px 0px;
   border-radius: 5px;
+  gap: 10px;
 }
 
 .sidebar-select {
@@ -5494,7 +6528,6 @@ h6 {
   animation: fadeInAnimation2 ease 1s;
   animation-iteration-count: 1;
   animation-fill-mode: forwards;
-  padding-left: 5px;
   cursor: pointer;
 }
 
@@ -5508,32 +6541,57 @@ h6 {
 }
 
 .sidebar-itm {
-  height: 40px;
+  height: 44px;
   width: 200px;
-  border-radius: 5px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.3s;
-  font-size: 14px;
-  padding: 10px;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+  font-size: 15px;
+  font-weight: 500;
+  padding: 10px 12px;
   font-family: "Satoshi", system-ui, sans-serif;
   color: var(--sb-font-color);
+  text-transform: capitalize;
+}
+
+.sidebar-itm > span:last-child,
+.sidebar-itm .material-symbols-outlined {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+  font-size: 22px;
+  transition: transform 0.2s ease;
 }
 
 .sidebar-ghost-itm {
-  height: 40px;
+  height: 44px;
   width: 200px;
   user-select: none;
   opacity: 0;
 }
 
 .sidebar-itm:hover {
-  background-color: var(--sb-background);
+  background-color: color-mix(in srgb, var(--sb-font-color), transparent 95%);
   color: var(--sb-font-color);
 }
 
+.sidebar-selected-itm:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--sb-primary-color),
+    transparent 80%
+  );
+  color: var(--sb-primary-color);
+}
+
 .sidebar-selected-itm {
-  background-color: var(--sb-background);
-  color: var(--sb-font-color);
+  color: var(--sb-primary-color);
+  border-radius: 8px;
+  border-bottom-color: transparent;
+}
+
+.sidebar-selected-itm .material-symbols-outlined {
+  color: var(--sb-primary-color);
 }
 
 .open-sideBar {
@@ -5566,12 +6624,12 @@ h6 {
   width: 375px;
   background: var(--sb-book-selector-background);
   border-radius: 8px;
-  box-shadow: 0 10px 30px var(--sb-detached-pane-toolbar-background);
+  box-shadow: 0 10px 20px var(--sb-detached-pane-toolbar-background);
   padding: 10px 10px 45px 10px;
   z-index: 2;
   position: absolute;
-  top: 55px;
-  left: 15px;
+  top: 70px;
+  left: 20px;
 }
 
 .translationSettingsModal {
@@ -5704,7 +6762,7 @@ h6 {
 @media only screen and (max-width: 768px) {
   .dropdown {
     /* display: none; */
-    width: 100px;
+    width: 62%;
   }
 
   .searchbar {
@@ -5712,15 +6770,16 @@ h6 {
   }
 
   .sidebar-translation-selector {
-    width: 75px;
+    width: 90px;
   }
 
   .testament-selection {
-    padding: 10px 0px;
+    padding: 5px 15px;
   }
 
   .sidebar-selected-title {
     font-size: 16px;
+    font-weight: bold;
   }
 
   .sidebar {
@@ -5742,14 +6801,16 @@ h6 {
 
   .testament-container {
     width: 100%;
+    color: var(--sb-font-color);
   }
 
   .dropdown-select {
-    width: 100px;
+    width: 100%;
+    font-weight: bold;
   }
 
   .dropdown-option {
-    width: 100px;
+    width: 100%;
   }
 
   .testament-title {
@@ -5788,7 +6849,6 @@ h6 {
 
   .sidebar-itm {
     width: 100%;
-    font-weight: lighter;
     font-size: 16px;
   }
 
@@ -5804,6 +6864,12 @@ h6 {
     row-gap: 13px;
     height: fit-content;
     justify-content: flex-start;
+    background: transparent;
+  }
+
+  .sb-selector-panel .sidebar-selected-itm:hover {
+    background: transparent;
+    color: var(--sb-primary-color);
   }
 
   .psalms-btn {
@@ -5812,6 +6878,7 @@ h6 {
 
   .sidebar-select {
     font-size: 18px;
+    padding-left: 0px;
   }
 
   .show-sidebar-chapter {
@@ -5824,6 +6891,8 @@ h6 {
   .sidebar-selected-itm {
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
+    color: var(--sb-primary-color);
+    font-weight: 600;
   }
 
   .separator {
@@ -5839,19 +6908,19 @@ h6 {
   .modal {
     width: 100%;
     left: 0;
-    top: 50px;
-    height: calc(100% - 60px);
+    top: 5px;
+    height: calc(100% - 50px);
     border-radius: 0;
     box-shadow: none;
   }
 
   .translationSettingsModal {
-    top: 100px;
+    top: 55px;
     padding: 0px 10px;
     height: fit-content;
     width: 200px;
     left: auto;
-    right: 10px;
+    right: 40px;
     box-shadow: 0 5px 10px
       color-mix(
         in srgb,
@@ -5874,15 +6943,378 @@ h6 {
   }
 
   .language-list {
-    height: calc(100% - 30px);
+    height: calc(100% - 20px);
   }
 
   .footer {
-    bottom: -5px;
+    bottom: -45px;
+  }
+
+  .sb-select-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(0, 0, 0, 0.4);
+  }
+
+  .sb-select-modal {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: fit-content;
+    background: var(--sb-book-selector-background);
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    box-shadow: 0 -5px 10px
+      color-mix(
+        in srgb,
+        var(--sb-detached-pane-toolbar-background) 15%,
+        transparent
+      );
+    padding: 20px 10px;
+  }
+
+  .sb-select-modal-content {
+    padding: 10px 24px 30px 24px;
+    /* height: 100%; */
+    overflow-y: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sb-select-modal-title-icon {
+    display: flex;
+    font-size: 22px;
+    color: var(--sb-primary-color);
+    /* padding: 10px; */
+    border-radius: 5px;
+    background: var(--sb-tertiary-color);
+    width: 45px;
+    height: 45px;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sb-select-modal-title {
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--sb-font-color);
+    margin-left: 10px;
+    text-align: center;
+  }
+
+  .sb-select-modal-actions {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .sb-select-modal-action-btn {
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    width: 40%;
+    justify-content: center;
+    gap: 10px;
+    font-weight: 500;
   }
 }
 .sb-translation-license-notice,
 .sb-translation-website {
   text-align: center;
   opacity: 0.75;
+}
+
+/* ------------------------------------------------------------------ */
+/* Floating reader panels (search + chat). Anchored above the reader  */
+/* toolbar; the toolbar sits at ~18px from the bottom and is ~68px    */
+/* tall, so we anchor the panels at ~100px to leave a small gap.      */
+/* ------------------------------------------------------------------ */
+
+.sb-floating-search-panel,
+.sb-floating-chat-panel {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 98;
+  background: var(--sb-reader-toolbar-background);
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 14px;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+  color: var(--sb-font-color);
+  font-family: var(--sb-font-family);
+  animation: sb-floating-panel-rise 0.18s ease-out;
+}
+
+@keyframes sb-floating-panel-rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.sb-floating-search-panel {
+  bottom: 100px;
+  width: min(620px, calc(100vw - 32px));
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: min(560px, calc(100vh - 200px));
+}
+
+.sb-floating-search-panel-expanded {
+  padding-bottom: 12px;
+}
+
+.sb-floating-search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--sb-reader-background);
+  flex-shrink: 0;
+}
+
+.sb-floating-search-icon {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+  font-size: 22px;
+}
+
+.sb-floating-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  outline: none;
+  font-size: 15px;
+  padding: 6px 0;
+}
+
+.sb-floating-search-input::placeholder {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+}
+
+.sb-floating-search-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.sb-floating-search-clear:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  color: var(--sb-font-color);
+}
+
+.sb-floating-search-clear .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.sb-floating-search-results {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.sb-floating-search-status {
+  padding: 14px 12px;
+  font-size: 14px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-floating-search-status-error {
+  color: #b42318;
+}
+
+.sb-floating-search-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sb-floating-search-result {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 12px;
+  background: var(--sb-reader-background);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.sb-floating-search-result:hover,
+.sb-floating-search-result-highlighted {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
+  border-color: color-mix(in srgb, var(--sb-font-color), transparent 80%);
+}
+
+.sb-floating-search-result-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.sb-floating-search-result-ref {
+  font-weight: 700;
+  color: var(--sb-font-color);
+}
+
+.sb-floating-search-result-sep {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+  font-size: 11px;
+  line-height: 1;
+}
+
+.sb-floating-search-result-translation {
+  font-weight: 500;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.sb-floating-search-result-action {
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.sb-floating-search-result:hover .sb-floating-search-result-action,
+.sb-floating-search-result-highlighted .sb-floating-search-result-action,
+.sb-floating-search-result-action:focus-visible {
+  opacity: 1;
+}
+
+.sb-floating-search-result-action:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+}
+
+.sb-floating-search-result-action svg {
+  display: block;
+}
+
+.sb-floating-search-result-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
+}
+
+/* --- Chat panel: empty placeholder for now --- */
+
+.sb-floating-chat-panel {
+  bottom: 100px;
+  width: min(420px, calc(100vw - 32px));
+  padding: 22px 24px;
+}
+
+.sb-floating-chat-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.sb-floating-chat-empty-icon {
+  font-size: 36px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+  margin-bottom: 4px;
+}
+
+.sb-floating-chat-empty-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--sb-font-color);
+}
+
+.sb-floating-chat-empty-body {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+@media (max-width: 768px) {
+  /* Search becomes a full-screen view on mobile with scrollable results above
+     and the input pinned at the bottom. Leaves room at the bottom for the
+     5-tab bar. */
+  .sb-floating-search-panel {
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 72px;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+    max-height: none;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    padding: 14px 16px;
+    /* background: transparent; */
+    gap: 14px;
+    animation: none;
+  }
+
+  .sb-floating-search-panel .sb-floating-search-input-wrap {
+    margin-top: auto;
+  }
+
+  /* No hover on touch — keep the action icon visible on each card. */
+  .sb-floating-search-result-action {
+    opacity: 1;
+  }
+
+  /* Chat keeps the floating-card look on mobile, anchored above the bar. */
+  .sb-floating-chat-panel {
+    bottom: 110px;
+    width: calc(100vw - 16px);
+  }
 }

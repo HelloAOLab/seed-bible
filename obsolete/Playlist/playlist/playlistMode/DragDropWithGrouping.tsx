@@ -315,6 +315,36 @@ const DragDrop = (props: any) => {
     });
   };
 
+  const toggleIsQuoteText = (id: string, pId?: string) => {
+    setList((prev: any) => {
+      const old = [...prev];
+      const pIndex = old.findIndex((ele) => ele.id === pId);
+      if (pIndex > -1) {
+        const attachmentIndex = old[pIndex]?.additionalInfo?.layers?.findIndex(
+          (ele: any) => ele.id === id
+        );
+        console.log(
+          "attachmentIndex",
+          old[pIndex].additionalInfo.layers[attachmentIndex]
+        );
+        if (attachmentIndex > -1) {
+          old[pIndex].additionalInfo.layers[
+            attachmentIndex
+          ].additionalInfo.isQuotedText =
+            !old[pIndex].additionalInfo.layers[attachmentIndex].additionalInfo
+              .isQuotedText;
+        }
+      } else if (id) {
+        const index = old.findIndex((ele: any) => ele.id === id);
+        if (index > -1) {
+          old[index].additionalInfo.isQuotedText =
+            !old[index].additionalInfo.isQuotedText;
+        }
+      }
+      return old;
+    });
+  };
+
   const { datesRepeat, datesInWrongOrder } = useMemo(() => {
     const datesRepeat: any = {}; // To track repeated dates with their IDs
     const datesInWrongOrder: any = {}; // To track dates that are out of order with their IDs
@@ -380,9 +410,11 @@ const DragDrop = (props: any) => {
           )}
         </div>
       )}
-      {transformedHistory.map((data: any, index: number) =>
-        data.type?.includes("range") ||
-        (data.additionalInfo?.layers?.length > 0 && layers) ? (
+      {transformedHistory.map((data: any, index: number) => {
+        const isTextType = data.type === "heading" || data.type === "text";
+        const isQuotedText = data.additionalInfo.isQuotedText;
+        return data.type?.includes("range") ||
+          (data.additionalInfo?.layers?.length > 0 && layers) ? (
           <PlaylistContentRenderer
             linkingMode={linkingMode}
             isAdditionalInfo={
@@ -434,6 +466,7 @@ const DragDrop = (props: any) => {
             toggle={toggle || activeItemID}
             oldItemsMap={oldItemsMap}
             autoPlayToggle={autoPlayToggle}
+            toggleIsQuoteText={toggleIsQuoteText}
             handleDragOver={handleDragOver}
             onClickItem={onClickItem}
             handleDragEnd={handleDragEnd}
@@ -498,6 +531,7 @@ const DragDrop = (props: any) => {
             currentFormat={currentFormat}
             readingPlanEnabled={readingPlanEnabled}
             autoPlayToggle={autoPlayToggle}
+            toggleIsQuoteText={toggleIsQuoteText}
             layers={layers}
             dragOverSet={dragOverSet}
             oldItemsMap={oldItemsMap}
@@ -654,9 +688,14 @@ const DragDrop = (props: any) => {
                     (data.type !== "heading" || allowHeadingCheck)
                   ) {
                     onClick({ dataItem: data, index });
-                    if (checklistEnabled) {
+                    if (checklistEnabled && !checkListData[data.id]) {
                       editDataFromPlaylist(data.id);
                     }
+                  } else if (
+                    data.type === "heading" &&
+                    data.additionalInfo?.isQuotedText
+                  ) {
+                    thisBot.ShowQuoteText({ quoteText: data.content });
                   }
                 }}
                 style={{
@@ -686,6 +725,27 @@ const DragDrop = (props: any) => {
                   e.stopPropagation();
                 }}
               >
+                {((isTextType && !!toggleIsQuoteText && !playingPlaylist) ||
+                  (isTextType && isQuotedText && playingPlaylist)) && (
+                  <p
+                    className={`end-icon without-right-margin ${isQuotedText ? "active" : ""} ${`${
+                      isMobile && "visible"
+                    }`}`}
+                    onClick={(e) => {
+                      if (!playingPlaylist) {
+                        e.stopPropagation();
+                        toggleIsQuoteText(data.id);
+                      }
+                    }}
+                  >
+                    <span
+                      style={{ fontSize: "1rem" }}
+                      class="material-symbols-outlined"
+                    >
+                      home_max
+                    </span>
+                  </p>
+                )}
                 {data.type === "heading" && !playingPlaylist ? (
                   <p
                     className={`end-icon without-right-margin ${`${isMobile && "visible"} end-icon without-right-margin`}`}
@@ -694,6 +754,7 @@ const DragDrop = (props: any) => {
                       G.SetEditRichText?.({
                         id: data.id,
                         text: data.content,
+                        isQuotedText: data.additionalInfo?.isQuotedText,
                       });
                     }}
                   >
@@ -759,8 +820,8 @@ const DragDrop = (props: any) => {
               </div>
             )}
           </>
-        )
-      )}
+        );
+      })}
     </>
   );
 };
@@ -811,6 +872,7 @@ const PlaylistContentRenderer = (props: any) => {
     additionalInfo,
     handleDragStart,
     autoPlayToggle,
+    toggleIsQuoteText,
     handleDragOver,
     handleDragEnd,
     index,
@@ -1010,7 +1072,7 @@ const PlaylistContentRenderer = (props: any) => {
             if (clickPass) {
               G.ADDING_TOPLAYLIST_TIMEOUT = null;
               onClick({ dataItem: itemToBeShared, bulkAdd: true, index });
-              if (checklistEnabled) {
+              if (checklistEnabled && !checkListData[data.id]) {
                 editDataFromPlaylist(allIds);
               }
             }
@@ -1084,6 +1146,8 @@ const PlaylistContentRenderer = (props: any) => {
       >
         {!isAdditionalInfo &&
           toBeMapArray.map((data: any, index: number) => {
+            const isTextType = data.type === "heading" || data.type === "text";
+            const isQuotedText = data.additionalInfo.isQuotedText;
             return data.type === "attachment-link" || data.type === "date" ? (
               <AttachmentLinkItem
                 linkingMode={linkingMode}
@@ -1095,6 +1159,7 @@ const PlaylistContentRenderer = (props: any) => {
                 isDeleteShow={isDeleteShow}
                 currentFormat={currentFormat}
                 autoPlayToggle={autoPlayToggle}
+                toggleIsQuoteText={toggleIsQuoteText}
                 readingPlanEnabled={readingPlanEnabled}
                 layers={layers}
                 dragOverSet={dragOverSet}
@@ -1279,6 +1344,10 @@ const PlaylistContentRenderer = (props: any) => {
                           index,
                           justPlay: !!layers && !playingPlaylist,
                         });
+                      } else {
+                        if (data.additionalInfo?.isQuotedText) {
+                          thisBot.ShowQuoteText({ quoteText: data.content });
+                        }
                       }
                     }
                   }}
@@ -1301,6 +1370,27 @@ const PlaylistContentRenderer = (props: any) => {
                   }}
                   className="actions"
                 >
+                  {((isTextType && !!toggleIsQuoteText && !playingPlaylist) ||
+                    (isTextType && isQuotedText && playingPlaylist)) && (
+                    <p
+                      className={`end-icon without-right-margin ${isQuotedText ? "active" : ""} ${`${
+                        isMobile && "visible"
+                      }`}`}
+                      onClick={(e) => {
+                        if (!playingPlaylist) {
+                          e.stopPropagation();
+                          toggleIsQuoteText(data.id, id);
+                        }
+                      }}
+                    >
+                      <span
+                        style={{ fontSize: "1rem" }}
+                        class="material-symbols-outlined"
+                      >
+                        home_max
+                      </span>
+                    </p>
+                  )}
                   {data.type === "heading" && !playingPlaylist ? (
                     <p
                       className={`end-icon without-right-margin ${`${isMobile && "visible"} end-icon without-right-margin`}`}
@@ -1310,6 +1400,7 @@ const PlaylistContentRenderer = (props: any) => {
                           id: data.id,
                           text: data.content,
                           parentID: id,
+                          isQuotedText: isQuotedText,
                         });
                       }}
                     >

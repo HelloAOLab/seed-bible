@@ -72,6 +72,42 @@ function createHighlightsManagerMock() {
   };
 }
 
+function createSettingsManagerMock() {
+  return {
+    settings: signal({
+      bookOrientation: "traditional",
+    }),
+  };
+}
+
+function createSidebarManagerMock() {
+  return {
+    isMobileOpen: signal(false),
+    openSidebar: jest.fn(),
+  };
+}
+
+function createBookmarksManagerMock() {
+  return {
+    bookmarks: signal([]),
+  };
+}
+
+function createSelectorState(
+  dataManager: ReturnType<typeof createDataManager>,
+  tabsManager: ReturnType<typeof createTabs>,
+  panesManager: ReturnType<typeof createPanes>
+): BibleSelectorState {
+  return createBibleSelectorState(
+    dataManager,
+    tabsManager,
+    panesManager,
+    createSettingsManagerMock() as any,
+    createSidebarManagerMock() as any,
+    createBookmarksManagerMock() as any
+  );
+}
+
 async function waitFor(
   condition: () => boolean,
   timeoutMs = 1000
@@ -173,7 +209,7 @@ describe("createBibleSelectorState", () => {
     const { dataManager, pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane();
 
-    const selector = createBibleSelectorState(
+    const selector = createSelectorState(
       dataManager,
       tabsManager,
       panesManager
@@ -192,7 +228,7 @@ describe("createBibleSelectorState", () => {
 
     await pane.tab!.readingState.selectChapter("EXO", 2);
 
-    const selector = createBibleSelectorState(
+    const selector = createSelectorState(
       dataManager,
       tabsManager,
       panesManager
@@ -212,7 +248,7 @@ describe("createBibleSelectorState", () => {
     const { dataManager, pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane();
 
-    const selector = createBibleSelectorState(
+    const selector = createSelectorState(
       dataManager,
       tabsManager,
       panesManager
@@ -233,7 +269,7 @@ describe("createBibleSelectorState", () => {
     const { dataManager, pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane();
 
-    const selector = createBibleSelectorState(
+    const selector = createSelectorState(
       dataManager,
       tabsManager,
       panesManager
@@ -247,12 +283,12 @@ describe("createBibleSelectorState", () => {
     expect(selector.expandedBookId.value).toBe("EXO");
   });
 
-  it("selectTranslation() changes selector state but not reading state", async () => {
+  it("selectTranslation() selects the translation and updates the selector state", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const { dataManager, readingState, pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane();
 
-    const selector = createBibleSelectorState(
+    const selector = createSelectorState(
       dataManager,
       tabsManager,
       panesManager
@@ -268,11 +304,11 @@ describe("createBibleSelectorState", () => {
     // Should expand the first book of the selected translation
     expect(selector.expandedBookId.value).toBe("MAT");
 
-    expect(selector.currentTranslationId.value).toBe("AAB");
-    expect(selector.currentBookId.value).toBe("GEN");
+    expect(selector.currentTranslationId.value).toBe("NIV");
+    expect(selector.currentBookId.value).toBe("MAT");
     expect(selector.currentChapterNumber.value).toBe(1);
-    expect(readingState.translationId.value).toBe("AAB");
-    expect(readingState.bookId.value).toBe("GEN");
+    expect(readingState.translationId.value).toBe("NIV");
+    expect(readingState.bookId.value).toBe("MAT");
     expect(readingState.chapterNumber.value).toBe(1);
   });
 
@@ -281,7 +317,7 @@ describe("createBibleSelectorState", () => {
     const { dataManager, readingState, pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane();
 
-    const selector = createBibleSelectorState(
+    const selector = createSelectorState(
       dataManager,
       tabsManager,
       panesManager
@@ -302,7 +338,7 @@ describe("createBibleSelectorState", () => {
     const { dataManager, pane, tabsManager, panesManager } =
       await createManagersWithSelectedPane();
 
-    const selector = createBibleSelectorState(
+    const selector = createSelectorState(
       dataManager,
       tabsManager,
       panesManager
@@ -340,7 +376,7 @@ describe("createBibleSelectorState", () => {
       panesManager.panes.value.find((p) => p.id !== pane.id) ?? null;
     expect(otherPane).not.toBeNull();
 
-    const selector = createBibleSelectorState(
+    const selector = createSelectorState(
       dataManager,
       tabsManager,
       panesManager
@@ -420,7 +456,7 @@ describe("createBibleSelectorState", () => {
     panesManager.openInPane(initialPane.id, { component: null });
     const tablessPane = panesManager.panes.value[0]!;
 
-    const selector = createBibleSelectorState(
+    const selector = createSelectorState(
       dataManager,
       tabsManager,
       panesManager
@@ -507,7 +543,7 @@ describe("createBibleSelectorState", () => {
     panesManager.openInPane(initialPane.id, { component: null });
     const tablessPane = panesManager.panes.value[0]!;
 
-    const selector = createBibleSelectorState(
+    const selector = createSelectorState(
       dataManager,
       tabsManager,
       panesManager
@@ -554,7 +590,7 @@ describe("createBibleSelectorState", () => {
       const { dataManager, tabsManager, panesManager, tablessPane } =
         createManagersWithTablessPane();
 
-      const selector = createBibleSelectorState(
+      const selector = createSelectorState(
         dataManager,
         tabsManager,
         panesManager
@@ -582,7 +618,7 @@ describe("createBibleSelectorState", () => {
         }
       }
 
-      const selector = createBibleSelectorState(
+      const selector = createSelectorState(
         dataManager,
         tabsManager,
         panesManager
@@ -609,7 +645,7 @@ describe("createBibleSelectorState", () => {
         }
       }
 
-      const selector = createBibleSelectorState(
+      const selector = createSelectorState(
         dataManager,
         tabsManager,
         panesManager

@@ -6,14 +6,177 @@ import { applyToolbarCustomization } from "../managers/SettingsManager";
 import { highlightContainsVerse } from "../managers/HighlightsManager";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import type { BibleReadingState } from "../managers/BibleReadingManager";
+import type { BibleReaderToolbarTool } from "seed-bible.managers.BibleToolsManager";
 import {
   handleHorizontalListKeyNav,
   handleVerticalListKeyNav,
 } from "../components/KeyboardNav";
-import { TabsIcon } from "../components/icons";
+import { SeedBibleIcon } from "../components/icons";
 import { useEffect, useRef } from "preact/hooks";
+import {
+  SelfAvatarVisual,
+  getSelfDisplayName,
+  openBookmarkCategoryModal,
+} from "seed-bible.components.Tabs";
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
+
+interface MobileBottomTabProps {
+  iconName?: string;
+  iconNode?: preact.ComponentChildren;
+  label: string;
+  active?: boolean;
+  onClick: () => void;
+  "aria-label"?: string;
+}
+
+function MobileBottomTab(props: MobileBottomTabProps) {
+  const { iconName, iconNode, label, active, onClick } = props;
+  const ariaLabel = props["aria-label"] ?? label;
+  return (
+    <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab">
+      <button
+        type="button"
+        onClick={onClick}
+        className={`sb-reader-toolbar-button sb-reader-toolbar-mobile-tab-button${
+          active ? " sb-reader-toolbar-mobile-tab-button-active" : ""
+        }`}
+        aria-label={ariaLabel}
+      >
+        {iconNode ? (
+          <span
+            className="sb-reader-toolbar-mobile-tab-icon sb-reader-toolbar-mobile-tab-icon-custom"
+            aria-hidden="true"
+          >
+            {iconNode}
+          </span>
+        ) : (
+          <span
+            className="material-symbols-outlined sb-reader-toolbar-mobile-tab-icon"
+            aria-hidden="true"
+          >
+            {iconName}
+          </span>
+        )}
+        <span className="sb-reader-toolbar-mobile-tab-label">{label}</span>
+      </button>
+    </div>
+  );
+}
+
+interface MobileMoreMenuProps {
+  onClose: () => void;
+  tools: BibleReaderToolbarTool[];
+}
+
+function MobileMoreMenu(props: MobileMoreMenuProps) {
+  const { onClose, tools } = props;
+  const { t } = useI18n();
+
+  const extraItems = tools
+    .sort((a, b) => a.priority - b.priority)
+    .map((tool) => {
+      const ToolIcon = tool.icon;
+      return {
+        id: tool.id,
+        label: translateTitle(t, tool.title),
+        iconNode: <ToolIcon />,
+        disabled: tool.disabled.value,
+        onClick: () => {
+          if (tool.disabled.value) return;
+          onClose();
+          tool.onSelect();
+        },
+      };
+    });
+
+  const items: Array<{
+    id: string;
+    label: string;
+    iconName?: string;
+    iconNode?: preact.ComponentChildren;
+    disabled?: boolean;
+    onClick: () => void;
+  }> = [
+    // {
+    //   id: "discovery",
+    //   label: t("discovery", { defaultValue: "Discovery" }),
+    //   iconName: "explore",
+    //   onClick: () => {
+    //     onClose();
+    //     os.toast(
+    //       t("discovery-coming-soon", {
+    //         defaultValue: "Discovery is coming soon",
+    //       })
+    //     );
+    //   },
+    // },
+    // {
+    //   id: "chat",
+    //   label: t("chat", { defaultValue: "Chat" }),
+    //   iconName: "chat_bubble_outline",
+    //   onClick: () => {
+    //     onClose();
+    //     os.toast(
+    //       t("chat-coming-soon", { defaultValue: "Chat is coming soon" })
+    //     );
+    //   },
+    // },
+    ...extraItems,
+  ];
+
+  return (
+    <div className="sb-mobile-more-menu" role="menu">
+      {items.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          className="sb-mobile-more-menu-item"
+          onClick={item.onClick}
+          disabled={item.disabled}
+          role="menuitem"
+        >
+          {item.iconNode ? (
+            <span className="sb-mobile-more-menu-icon" aria-hidden="true">
+              {item.iconNode}
+            </span>
+          ) : (
+            <span
+              className="material-symbols-outlined sb-mobile-more-menu-icon"
+              aria-hidden="true"
+            >
+              {item.iconName}
+            </span>
+          )}
+          <span className="sb-mobile-more-menu-label">{item.label}</span>
+        </button>
+      ))}
+      {/* <div className="sb-mobile-more-menu-item sb-mobile-more-menu-social">
+        <span
+          className="sb-mobile-more-menu-icon sb-mobile-more-menu-social-avatar"
+          aria-hidden="true"
+        />
+        <span className="sb-mobile-more-menu-label">
+          {t("social", { defaultValue: "Social" })}
+        </span>
+        <button
+          type="button"
+          className={`sb-mobile-more-menu-toggle${
+            isSocialOn.value ? " sb-mobile-more-menu-toggle-on" : ""
+          }`}
+          role="switch"
+          aria-checked={isSocialOn.value}
+          aria-label={t("social", { defaultValue: "Social" })}
+          onClick={() => {
+            isSocialOn.value = !isSocialOn.value;
+          }}
+        >
+          <span className="sb-mobile-more-menu-toggle-thumb" />
+        </button>
+      </div> */}
+    </div>
+  );
+}
 
 function getContrastTextColor(hex: string): string {
   const match = hex
@@ -41,7 +204,7 @@ function sharedHighlightDecorationId(
 }
 
 /**
- * Broadcasts a highlight to the rest of a shared session by creating one
+ * Broadcasts a decoration to the rest of a shared session by creating one
  * `VerseDecoration` per selected verse. The decoration is synced through
  * `SessionsManager`'s existing decorations CRDT, so other connected clients
  * see the exact same visual styling.
@@ -50,7 +213,7 @@ function sharedHighlightDecorationId(
  * we schedule a local removal after that many seconds — the removal also
  * propagates through the CRDT so every client clears it at once.
  */
-function broadcastHighlightToSession(
+function broadcastDecorationToSession(
   session: BibleReadingSession | null,
   rs: BibleReadingState,
   details: {
@@ -89,6 +252,7 @@ function broadcastHighlightToSession(
         className,
         ...(style ? { style } : {}),
         preserveOnChapterChange: false,
+        removeAfterMs: duration ? duration * 1000 : undefined,
       },
       id
     );
@@ -111,7 +275,7 @@ function broadcastHighlightToSession(
  * Routes through the session's CRDT map so the removal propagates.
  */
 function removeSharedHighlightsFromSelection(
-  session: BibleReadingSession | null,
+  session: BibleReadingSession,
   rs: BibleReadingState
 ): void {
   for (const verse of rs.selectedVerses.value) {
@@ -149,18 +313,22 @@ function applyHighlightWithSession(
     customFontColor?: string;
   }
 ): void {
-  const duration = session?.options.value.highlightDurationSeconds ?? null;
-  const isTransient = session !== null && duration !== null && duration > 0;
+  // const duration = session?.options.value.highlightDurationSeconds ?? null;
+  // const isTransient = session !== null && duration !== null && duration > 0;
 
-  if (isTransient) {
-    // Wipe any prior permanent highlight on these verses so the timer is
-    // the sole source of truth for how long the highlight shows.
-    void rs.unhighlightSelectedVerses();
-  } else {
+  if (!session || session.userCanDecorate(session.localSessionId.value)) {
     void rs.highlightSelectedVerses(details);
   }
 
-  broadcastHighlightToSession(session, rs, details);
+  // if (isTransient) {
+  //   // Wipe any prior permanent highlight on these verses so the timer is
+  //   // the sole source of truth for how long the highlight shows.
+  //   void rs.unhighlightSelectedVerses();
+  // } else {
+  //   void rs.highlightSelectedVerses(details);
+  // }
+
+  broadcastDecorationToSession(session, rs, details);
 }
 
 interface BibleReaderToolbarProps {
@@ -175,6 +343,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     sidebar,
     tools: toolsManager,
     settings,
+    bookmarks,
   } = props.state;
   const selectedTab = useComputed(
     () =>
@@ -225,9 +394,25 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       },
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
+      openChat: sidebar.openChatPanel,
     });
     return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
   });
+
+  const hiddenToolIds = new Set([
+    "previous-chapter",
+    "next-chapter",
+    "open-selector",
+    "open-sidebar",
+    "open-search",
+    "open-chat",
+  ]);
+
+  const moreTools = useComputed(() =>
+    tools.value.filter(
+      (tool) => tool.visible.value && !hiddenToolIds.has(tool.id)
+    )
+  );
 
   const verseToolbarTools = useComputed(() => {
     const resolved = toolsManager.getVerseToolbarTools({
@@ -242,6 +427,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       },
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
+      openChat: sidebar.openChatPanel,
     });
 
     const { selectionUI } = settings.settings.value;
@@ -267,7 +453,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const isMoreMenuOpen = useSignal(false);
   const selectedToolbarToolId = useSignal<string | null>(null);
   const selectedVerseToolId = useSignal<string | null>(null);
-  const selectedOverflowToolId = useSignal<string | null>(null);
 
   const previousChapterTool = useComputed(
     () => tools.value.find((tool) => tool.id === "previous-chapter") ?? null
@@ -278,20 +463,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const openSelectorTool = useComputed(
     () => tools.value.find((tool) => tool.id === "open-selector") ?? null
   );
-  const openSidebarTool = useComputed(
-    () => tools.value.find((tool) => tool.id === "open-sidebar") ?? null
-  );
-  const overflowTools = useComputed(() =>
-    tools.value.filter(
-      (tool) =>
-        tool.visible.value &&
-        tool.id !== "previous-chapter" &&
-        tool.id !== "next-chapter" &&
-        tool.id !== "open-selector" &&
-        tool.id !== "open-sidebar"
-    )
-  );
-  const hasOverflowTools = useComputed(() => overflowTools.value.length > 0);
 
   const floatingAnchor = useComputed(() =>
     readingState.value!.selectedVerses.value.reduce<{
@@ -412,12 +583,33 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const hasAnyHighlighted = useComputed(() => {
     const rs = readingState.value;
     if (!rs) return false;
-    return rs.selectedVerses.value.some((verse) => {
-      const existing = rs.highlights.value.highlights.find((h) =>
-        highlightContainsVerse(h, verse.verse.number)
+
+    if (
+      sessionState.value &&
+      sessionState.value.userCanDecorate(
+        sessionState.value.localSessionId.value
+      )
+    ) {
+      // Shared sessions use decorations, not highlights
+      const currentBookId = rs.bookId.value;
+      const currentChapterNumber = rs.chapterNumber.value;
+
+      return rs.selectedVerses.value.some((verse) =>
+        rs.decorations.value.some(
+          (d) =>
+            d.bookId === currentBookId &&
+            d.chapterNumber === currentChapterNumber &&
+            d.verses.includes(verse.verse.number)
+        )
       );
-      return !!existing;
-    });
+    } else {
+      return rs.selectedVerses.value.some((verse) => {
+        const existing = rs.highlights.value.highlights.find((h) =>
+          highlightContainsVerse(h, verse.verse.number)
+        );
+        return !!existing;
+      });
+    }
   });
 
   const selectedVersesReference = useComputed(() => {
@@ -483,6 +675,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           dir={readingState.value?.translation.value?.textDirection ?? "auto"}
         >
           {isSmallScreen.value &&
+            !sidebar.isSearchPanelOpen.value &&
             settings.settings.value.showNavArrows &&
             previousChapterTool.value && (
               <button
@@ -496,6 +689,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
             )}
 
           {isSmallScreen.value &&
+            !sidebar.isSearchPanelOpen.value &&
             settings.settings.value.showNavArrows &&
             nextChapterTool.value && (
               <button
@@ -513,168 +707,132 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           >
             {isSmallScreen.value ? (
               <>
-                <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tabs-item">
-                  <button
-                    disabled={
-                      !openSidebarTool.value ||
-                      openSidebarTool.value.disabled.value
-                    }
-                    onClick={() => {
-                      selectedToolbarToolId.value = null;
-                      openSidebarTool.value?.onSelect();
-                    }}
-                    className="sb-reader-toolbar-button sb-reader-toolbar-mobile-tabs-button"
-                    aria-label={translateTitle(
-                      t,
-                      openSidebarTool.value?.title ?? {
-                        key: "tabs",
-                        defaultValue: "Tabs",
-                      }
-                    )}
-                  >
-                    <span className="sb-reader-toolbar-mobile-tabs-icon">
-                      <TabsIcon />
-                    </span>
-                    <span className="sb-reader-toolbar-mobile-tabs-label">
-                      {t("tabs", { defaultValue: "Tabs" })}
-                    </span>
-                  </button>
-                </div>
+                <MobileBottomTab
+                  iconNode={
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M11.5 21H6C5.46957 21 4.96086 20.7893 4.58579 20.4142C4.21071 20.0391 4 19.5304 4 19V5C4 4.46957 4.21071 3.96086 4.58579 3.58579C4.96086 3.21071 5.46957 3 6 3H18C18.5304 3 19.0391 3.21071 19.4142 3.58579C19.7893 3.96086 20 4.46957 20 5V13"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                      <path
+                        d="M9 18H11"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                      <path
+                        d="M15 19L17 21L21 17"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  }
+                  label={t("today", { defaultValue: "Today" })}
+                  onClick={() => {
+                    isMoreMenuOpen.value = false;
+                    os.toast(
+                      t("today-coming-soon", {
+                        defaultValue: "Today screen is coming soon",
+                      })
+                    );
+                  }}
+                />
 
-                <div className="sb-reader-toolbar-item sb-reader-toolbar-center-item">
-                  <button
-                    disabled={
-                      !openSelectorTool.value ||
-                      openSelectorTool.value.disabled.value
-                    }
-                    onClick={() => {
-                      selectedToolbarToolId.value = null;
-                      openSelectorTool.value?.onSelect();
-                    }}
-                    className="sb-reader-toolbar-button"
-                    aria-label={translateTitle(
-                      t,
-                      openSelectorTool.value?.title ?? {
-                        key: "open_book_selector",
-                        defaultValue: "Open Book Selector",
-                      }
-                    )}
-                  >
-                    {openSelectorTool.value ? (
-                      <openSelectorTool.value.icon />
-                    ) : null}
-                  </button>
-                </div>
+                <MobileBottomTab
+                  iconNode={<SelfAvatarVisual state={props.state} />}
+                  label={t("you", { defaultValue: "You" })}
+                  aria-label={`Open account settings (${getSelfDisplayName(
+                    props.state
+                  )})`}
+                  onClick={() => {
+                    isMoreMenuOpen.value = false;
+                    sidebar.closeSearchPanel();
+                    sidebar.closeChatPanel();
+                    sidebar.openSidebar();
+                    sidebar.openSettingsToView("account");
+                  }}
+                />
 
-                {/*
-                  More button intentionally commented out — mobile layout
-                  now only shows Tabs (left) and the book selector (right)
-                  to match the design.
-                <div className="sb-reader-toolbar-item sb-reader-toolbar-more-anchor">
-                  {hasOverflowTools.value && (
-                    <>
-                      <button
-                        onClick={() => {
-                          isMoreMenuOpen.value = !isMoreMenuOpen.value;
-                        }}
-                        className="sb-reader-toolbar-button"
-                        aria-label={t("more-tools", {
-                          defaultValue: "More tools",
-                        })}
+                <MobileBottomTab
+                  iconNode={<SeedBibleIcon size={24} />}
+                  label={t("bible", { defaultValue: "Bible" })}
+                  active={
+                    !sidebar.isSearchPanelOpen.value && !isMoreMenuOpen.value
+                  }
+                  onClick={() => {
+                    isMoreMenuOpen.value = false;
+                    sidebar.closeSearchPanel();
+                    sidebar.closeChatPanel();
+                    sidebar.closeSettings();
+                    sidebar.closeSidebar();
+                    openSelectorTool.value?.onSelect();
+                    selectedToolbarToolId.value = null;
+                  }}
+                />
+
+                <MobileBottomTab
+                  iconName="search"
+                  label={t("search", { defaultValue: "Search" })}
+                  active={sidebar.isSearchPanelOpen.value}
+                  onClick={() => {
+                    isMoreMenuOpen.value = false;
+                    if (sidebar.isSearchPanelOpen.value) {
+                      sidebar.closeSearchPanel();
+                    } else {
+                      sidebar.openSearchPanel();
+                    }
+                  }}
+                />
+
+                {moreTools.value.length > 0 && (
+                  <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab sb-reader-toolbar-more-anchor">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        isMoreMenuOpen.value = !isMoreMenuOpen.value;
+                      }}
+                      className={`sb-reader-toolbar-button sb-reader-toolbar-mobile-tab-button${
+                        isMoreMenuOpen.value
+                          ? " sb-reader-toolbar-mobile-tab-button-active"
+                          : ""
+                      }`}
+                      aria-label={t("more", { defaultValue: "More" })}
+                      aria-expanded={isMoreMenuOpen.value}
+                    >
+                      <span
+                        className="material-symbols-outlined sb-reader-toolbar-mobile-tab-icon"
+                        aria-hidden="true"
                       >
-                        <span>{t("more", { defaultValue: "More" })}</span>
-                      </button>
-                      {isMoreMenuOpen.value && (
-                        <div
-                          className="sb-reader-toolbar-more-menu"
-                          role="menu"
-                          onKeyDown={(event) => {
-                            if (event.key === "Escape") {
-                              event.preventDefault();
-                              isMoreMenuOpen.value = false;
-                              return;
-                            }
-                            handleVerticalListKeyNav(
-                              event,
-                              event.currentTarget
-                            );
-                          }}
-                        >
-                          {overflowTools.value.map((tool) => {
-                            const ToolIcon = tool.icon;
-                            return tool.visible.value ? (
-                              <div key={tool.id}>
-                                <button
-                                  disabled={tool.disabled.value}
-                                  onClick={() => {
-                                    const menuItems = tool.getItems?.() ?? [];
-                                    if (menuItems.length > 0) {
-                                      selectedOverflowToolId.value =
-                                        selectedOverflowToolId.value === tool.id
-                                          ? null
-                                          : tool.id;
-                                      return;
-                                    }
+                        menu
+                      </span>
+                      <span className="sb-reader-toolbar-mobile-tab-label">
+                        {t("more", { defaultValue: "More" })}
+                      </span>
+                    </button>
 
-                                    selectedOverflowToolId.value = null;
-                                    tool.onSelect();
-                                    isMoreMenuOpen.value = false;
-                                  }}
-                                  className="sb-reader-toolbar-more-item"
-                                >
-                                  <ToolIcon />
-                                  <span>{translateTitle(t, tool.title)}</span>
-                                </button>
-                                {selectedOverflowToolId.value === tool.id &&
-                                  (() => {
-                                    const menuItems =
-                                      tool
-                                        .getItems?.()
-                                        .filter((item) => item.visible.value) ??
-                                      [];
-                                    if (menuItems.length === 0) {
-                                      return null;
-                                    }
-
-                                    return (
-                                      <div
-                                        className="sb-tool-context-menu sb-tool-context-menu-inline"
-                                        role="menu"
-                                      >
-                                        {menuItems.map((item) => {
-                                          const MenuItemIcon = item.icon;
-                                          return (
-                                            <button
-                                              key={item.id}
-                                              disabled={item.disabled.value}
-                                              onClick={() => {
-                                                item.onSelect();
-                                                selectedOverflowToolId.value =
-                                                  null;
-                                                isMoreMenuOpen.value = false;
-                                              }}
-                                              className="sb-tool-context-menu-item"
-                                              role="menuitem"
-                                            >
-                                              <MenuItemIcon />
-                                              <span>
-                                                {translateTitle(t, item.title)}
-                                              </span>
-                                            </button>
-                                          );
-                                        })}
-                                      </div>
-                                    );
-                                  })()}
-                              </div>
-                            ) : null;
-                          })}
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-                */}
+                    {isMoreMenuOpen.value && (
+                      <MobileMoreMenu
+                        tools={moreTools.value}
+                        onClose={() => {
+                          isMoreMenuOpen.value = false;
+                        }}
+                      />
+                    )}
+                  </div>
+                )}
               </>
             ) : (
               tools.value.flatMap((tool) => {
@@ -927,13 +1085,21 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 onClick={() => {
                   const rs = readingState.value;
                   if (!rs) return;
-                  // Clean up the shared decoration first so the removal
-                  // propagates to other clients even if the local
-                  // unhighlight is a no-op (e.g. user isn't logged in
-                  // with HighlightsManager but the session had a
-                  // decoration broadcast earlier).
-                  removeSharedHighlightsFromSelection(sessionState.value, rs);
-                  rs.unhighlightSelectedVerses();
+                  if (
+                    sessionState.value &&
+                    sessionState.value.userCanDecorate(
+                      sessionState.value.localSessionId.value
+                    )
+                  ) {
+                    // Clean up the shared decoration first so the removal
+                    // propagates to other clients even if the local
+                    // unhighlight is a no-op (e.g. user isn't logged in
+                    // with HighlightsManager but the session had a
+                    // decoration broadcast earlier).
+                    removeSharedHighlightsFromSelection(sessionState.value, rs);
+                  } else {
+                    rs.unhighlightSelectedVerses();
+                  }
                 }}
                 aria-label={t("clear-highlight", {
                   defaultValue: "Clear highlight",
@@ -1033,6 +1199,32 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 const highlightLabel = t("highlight", {
                   defaultValue: "Highlight",
                 });
+                const rs = readingState.value;
+                const selectedVerseNumbers =
+                  rs?.selectedVerses.value.map((v) => v.verse.number) ?? [];
+                const verseTarget =
+                  selectedVerseNumbers.length === 0
+                    ? undefined
+                    : selectedVerseNumbers.length === 1
+                      ? selectedVerseNumbers[0]
+                      : ([
+                          Math.min(...selectedVerseNumbers),
+                          Math.max(...selectedVerseNumbers),
+                        ] as [number, number]);
+                const isSelectionBookmarked =
+                  rs && verseTarget !== undefined
+                    ? bookmarks.isLocationBookmarked(
+                        rs.translationId.value,
+                        rs.bookId.value,
+                        rs.chapterNumber.value,
+                        verseTarget
+                      )
+                    : false;
+                const bookmarkLabel = isSelectionBookmarked
+                  ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
+                  : t("bookmark-verses", { defaultValue: "Bookmark" });
+
+                // const canHighlight = !sessionState.value || sessionState.value.userCanDecorate(sessionState.value.localSessionId.value);
                 return (
                   <>
                     {selectionUI.value.showHighlightColors && (
@@ -1059,6 +1251,64 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         </button>
                       </div>
                     )}
+                    <div className="sb-verse-toolbar-action-item">
+                      <button
+                        type="button"
+                        className={`sb-verse-toolbar-action sb-verse-toolbar-bookmark-trigger${
+                          isSelectionBookmarked
+                            ? " sb-verse-toolbar-bookmark-trigger-active"
+                            : ""
+                        }`}
+                        onClick={() => {
+                          if (!rs) return;
+                          const translationId = rs.translationId.value;
+                          const bookId = rs.bookId.value;
+                          const chapterNumber = rs.chapterNumber.value;
+                          if (
+                            !translationId ||
+                            !bookId ||
+                            !chapterNumber ||
+                            verseTarget === undefined
+                          ) {
+                            return;
+                          }
+                          if (isSelectionBookmarked) {
+                            void bookmarks.removeBookmarkForLocation(
+                              translationId,
+                              bookId,
+                              chapterNumber,
+                              verseTarget
+                            );
+                            return;
+                          }
+                          openBookmarkCategoryModal(props.state, {
+                            translationId,
+                            bookId,
+                            chapterNumber,
+                            verse: verseTarget,
+                          });
+                        }}
+                        aria-label={bookmarkLabel}
+                        aria-pressed={isSelectionBookmarked}
+                        title={bookmarkLabel}
+                      >
+                        <span className="sb-verse-toolbar-action-icon">
+                          <span
+                            className="material-symbols-outlined"
+                            style={{
+                              fontVariationSettings: isSelectionBookmarked
+                                ? '"FILL" 1'
+                                : '"FILL" 0',
+                            }}
+                          >
+                            bookmark
+                          </span>
+                        </span>
+                        <span className="sb-verse-toolbar-action-label">
+                          {bookmarkLabel}
+                        </span>
+                      </button>
+                    </div>
                     {nonCancel.map(renderTool)}
                     {cancelTools.map(renderTool)}
                   </>

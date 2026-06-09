@@ -7,7 +7,7 @@ import {
 import { z } from "zod";
 import type { CasualOSManager } from "./OsManager";
 
-export type BookOrientation = "traditional" | "tanak";
+export type BookOrientation = "traditional" | "tanakh";
 export type UITextSize = "S" | "M" | "L" | "XL";
 export type TextAlignment = "unset" | "left" | "center" | "right";
 export type TextSectionId = "bookTitle" | "heading" | "verse";
@@ -69,7 +69,7 @@ export interface AppSettings {
 }
 
 export const AppSettingsSchema = z.object({
-  bookOrientation: z.enum(["traditional", "tanak"]),
+  bookOrientation: z.enum(["traditional", "tanakh"]),
   uiTextSize: z.enum(["S", "M", "L", "XL"]),
   selectionUI: z.object({
     showSelectedItems: z.boolean(),
@@ -338,7 +338,7 @@ function parseBookOrientation(
   value: unknown,
   fallback: BookOrientation
 ): BookOrientation {
-  return value === "tanak" || value === "traditional" ? value : fallback;
+  return value === "tanakh" || value === "traditional" ? value : fallback;
 }
 
 function parseUITextSize(value: unknown, fallback: UITextSize): UITextSize {
@@ -796,12 +796,22 @@ export function createSettings(
     writeToolbarConfig(DEFAULT_TOOLBAR_CONFIG);
   };
 
-  const setKeepScreenAwake = (enabled: boolean) => {
+  const setKeepScreenAwake = async (enabled: boolean) => {
     if (settings.value.keepScreenAwake === enabled) return;
-    settings.value = { ...settings.value, keepScreenAwake: enabled };
+    let nextValue = enabled;
+    if (enabled) {
+      try {
+        await os.requestWakeLock();
+      } catch {
+        nextValue = false;
+      }
+    } else {
+      os.disableWakeLock();
+    }
+    settings.value = { ...settings.value, keepScreenAwake: nextValue };
     // TODO: Update URL
-    // configBot.tags[TAG_KEEP_AWAKE] = enabled;
-    saveProfileConfigValue(login, PROFILE_KEEP_AWAKE, enabled);
+    // configBot.tags[TAG_KEEP_AWAKE] = nextValue;
+    saveProfileConfigValue(login, PROFILE_KEEP_AWAKE, nextValue);
   };
 
   const setShowNavArrows = (enabled: boolean) => {

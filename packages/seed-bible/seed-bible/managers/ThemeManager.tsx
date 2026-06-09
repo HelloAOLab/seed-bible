@@ -121,24 +121,14 @@ export interface BibleThemeVariables {
   verseCursor?: string | null;
 
   /**
-   * The font family for selected verses. This can be used to differentiate selected verses from unselected verses, but can be customized as needed. If not set, it will default to the verseFontFamily.
-   */
-  selectedVerseFontFamily?: string | null;
-
-  /**
-   * The font color for selected verses. This can be used to differentiate selected verses from unselected verses, but should generally have good contrast against the readerBackground color for readability. If not set, it will default to the verseFontColor.
-   */
-  selectedVerseFontColor?: string | null;
-
-  /**
-   * The background color for selected verses. This can be used to highlight selected verses, but should generally be a light color with good contrast against the selectedVerseFontColor for readability. If not set, selected verses will not have a different background color than unselected verses.
-   */
-  selectedVerseBackgroundColor?: string | null;
-
-  /**
    * The text decoration for selected verses (e.g. "underline", "line-through", "none"). This can be used to further differentiate selected verses from unselected verses, but can be customized as needed. If not set, it will default to "none".
    */
   selectedVerseTextDecoration?: string | null;
+
+  /**
+   * The border-bottom property for selected verses.
+   */
+  selectedVerseBorderBottom?: string | null;
 
   /**
    * The decoration color for selected verses.
@@ -515,10 +505,8 @@ const LIGHT_THEME: BibleTheme = {
     verseFontColor: "#333",
     verseCursor: "pointer",
 
-    selectedVerseFontFamily: "inherit",
-    selectedVerseFontColor: "inherit",
-    selectedVerseBackgroundColor: "inherit",
-    selectedVerseTextDecoration: "underline",
+    selectedVerseBorderBottom: "2px dashed currentColor",
+    selectedVerseTextDecoration: "none",
     selectedVerseTextDecorationColor: "currentColor",
 
     hebrewSubtitleFontFamily: "Newsreader, serif",
@@ -528,7 +516,7 @@ const LIGHT_THEME: BibleTheme = {
     readerToolbarBottom: "18px",
     readerToolbarGap: "10px",
     readerToolbarPadding: "8px 20px",
-    readerToolbarBorderRadius: "10px",
+    readerToolbarBorderRadius: "22px",
     readerToolbarBackground: "#ffffff",
     readerToolbarBorder: "1px solid #00000024",
     readerToolbarBoxShadow: "0 26px 10px #0000001a",
@@ -657,10 +645,8 @@ const DARK_THEME: BibleTheme = {
     verseFontColor: "#d7deef",
     verseCursor: "pointer",
 
-    selectedVerseFontFamily: "inherit",
-    selectedVerseFontColor: "inherit",
-    selectedVerseBackgroundColor: "inherit",
-    selectedVerseTextDecoration: "underline",
+    selectedVerseBorderBottom: "2px dashed currentColor",
+    selectedVerseTextDecoration: "none",
     selectedVerseTextDecorationColor: "currentColor",
 
     hebrewSubtitleFontFamily: "Newsreader, serif",
@@ -670,7 +656,7 @@ const DARK_THEME: BibleTheme = {
     readerToolbarBottom: "18px",
     readerToolbarGap: "10px",
     readerToolbarPadding: "8px 20px",
-    readerToolbarBorderRadius: "10px",
+    readerToolbarBorderRadius: "22px",
     readerToolbarBackground: "#1a2230",
     readerToolbarBorder: "1px solid rgba(255, 255, 255, 0.08)",
     readerToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.4)",
@@ -780,8 +766,6 @@ export type ThemeColorKey =
   | "bookTitleFontColor"
   | "chapterHeadingFontColor"
   | "verseFontColor"
-  | "selectedVerseFontColor"
-  | "selectedVerseBackgroundColor"
   | "selectedVerseTextDecorationColor"
   | "hebrewSubtitleFontColor"
   | "readerToolbarBackground"
@@ -850,11 +834,6 @@ export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
     id: "selection",
     title: "Verse selection",
     fields: [
-      { key: "selectedVerseFontColor", label: "Selected verse text" },
-      {
-        key: "selectedVerseBackgroundColor",
-        label: "Selected verse background",
-      },
       {
         key: "selectedVerseTextDecorationColor",
         label: "Selected verse decoration",
@@ -1048,7 +1027,7 @@ export interface ThemeManager {
 //     readerToolbarBottom: "18px",
 //     readerToolbarGap: "10px",
 //     readerToolbarPadding: "8px 20px",
-//     readerToolbarBorderRadius: "10px",
+//     readerToolbarBorderRadius: "22px",
 //     readerToolbarBackground: "#faf3e0",
 //     readerToolbarBorder: "1px solid #00000020",
 //     readerToolbarBoxShadow: "0 26px 10px #0000001a",

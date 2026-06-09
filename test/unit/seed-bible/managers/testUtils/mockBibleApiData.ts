@@ -33,6 +33,22 @@ const AAB_TRANSLATION: Translation = {
   totalNumberOfVerses: 31102,
 };
 
+const BSB_TRANSLATION: Translation = {
+  id: "BSB",
+  name: "Bible Standard Bible",
+  englishName: "Bible Standard Bible",
+  website: "https://example.com",
+  licenseUrl: "https://example.com/license",
+  shortName: "BSB",
+  language: "eng",
+  textDirection: "ltr",
+  availableFormats: ["json"],
+  listOfBooksApiLink: "/api/BSB/books.json",
+  numberOfBooks: 66,
+  totalNumberOfChapters: 1189,
+  totalNumberOfVerses: 31102,
+};
+
 const NIV_TRANSLATION: Translation = {
   id: "NIV",
   name: "New International Version",
@@ -53,8 +69,53 @@ export const translations: AvailableTranslations = {
   translations: [AAB_TRANSLATION, NIV_TRANSLATION],
 };
 
+export const aabBooks: TranslationBooks = {
+  translation: AAB_TRANSLATION,
+  books: [
+    {
+      id: "GEN",
+      name: "Genesis",
+      commonName: "Genesis",
+      title: null,
+      order: 1,
+      numberOfChapters: 50,
+      firstChapterNumber: 1,
+      firstChapterApiLink: "/api/AAB/GEN/1.json",
+      lastChapterNumber: 50,
+      lastChapterApiLink: "/api/AAB/GEN/50.json",
+      totalNumberOfVerses: 1533,
+    },
+    {
+      id: "EXO",
+      name: "Exodus",
+      commonName: "Exodus",
+      title: null,
+      order: 2,
+      numberOfChapters: 40,
+      firstChapterNumber: 1,
+      firstChapterApiLink: "/api/AAB/EXO/1.json",
+      lastChapterNumber: 40,
+      lastChapterApiLink: "/api/AAB/EXO/40.json",
+      totalNumberOfVerses: 1213,
+    },
+    {
+      id: "MAT",
+      name: "Matthew",
+      commonName: "Matthew",
+      title: null,
+      order: 40,
+      numberOfChapters: 28,
+      firstChapterNumber: 1,
+      firstChapterApiLink: "/api/AAB/MAT/1.json",
+      lastChapterNumber: 28,
+      lastChapterApiLink: "/api/AAB/MAT/28.json",
+      totalNumberOfVerses: 1071,
+    },
+  ],
+};
+
 export const bsbBooks: TranslationBooks = {
-  translation: translations.translations[0]!,
+  translation: BSB_TRANSLATION,
   books: [
     {
       id: "GEN",
@@ -195,12 +256,38 @@ export function makeChapter(
 export function createDefaultManagerResponseMap(): WebResponseMap {
   return {
     [makeUrl("/api/available_translations.json")]: createResponse(translations),
-    [makeUrl("/api/AAB/books.json")]: createResponse(bsbBooks),
+    [makeUrl("/api/AAB/books.json")]: createResponse(aabBooks),
     [makeUrl("/api/NIV/books.json")]: createResponse(nivBooks),
     [makeUrl("/api/AAB/GEN/1.json")]: createResponse(
-      makeChapter(bsbBooks, "GEN", 1)
+      makeChapter(aabBooks, "GEN", 1)
     ),
     [makeUrl("/api/AAB/EXO/2.json")]: createResponse(
+      makeChapter(aabBooks, "EXO", 2)
+    ),
+    [makeUrl("/api/NIV/MAT/1.json")]: createResponse(
+      makeChapter(nivBooks, "MAT", 1)
+    ),
+  };
+}
+
+export function createDefaultSelectorManagerResponseMap(): WebResponseMap {
+  return {
+    [makeUrl("/api/available_translations.json")]: createResponse({
+      translations: [AAB_TRANSLATION, BSB_TRANSLATION, NIV_TRANSLATION],
+    }),
+    [makeUrl("/api/AAB/books.json")]: createResponse(aabBooks),
+    [makeUrl("/api/BSB/books.json")]: createResponse(bsbBooks),
+    [makeUrl("/api/NIV/books.json")]: createResponse(nivBooks),
+    [makeUrl("/api/AAB/GEN/1.json")]: createResponse(
+      makeChapter(aabBooks, "GEN", 1)
+    ),
+    [makeUrl("/api/AAB/EXO/2.json")]: createResponse(
+      makeChapter(aabBooks, "EXO", 2)
+    ),
+    [makeUrl("/api/BSB/GEN/1.json")]: createResponse(
+      makeChapter(bsbBooks, "GEN", 1)
+    ),
+    [makeUrl("/api/BSB/EXO/2.json")]: createResponse(
       makeChapter(bsbBooks, "EXO", 2)
     ),
     [makeUrl("/api/NIV/MAT/1.json")]: createResponse(
@@ -213,13 +300,13 @@ export function createExampleManagerResponseMap(): WebResponseMap {
   return {
     [makeExampleUrl("/api/available_translations.json")]:
       createResponse(translations),
-    [makeExampleUrl("/api/AAB/books.json")]: createResponse(bsbBooks),
+    [makeExampleUrl("/api/AAB/books.json")]: createResponse(aabBooks),
     [makeExampleUrl("/api/NIV/books.json")]: createResponse(nivBooks),
     [makeExampleUrl("/api/AAB/GEN/1.json")]: createResponse(
-      makeChapter(bsbBooks, "GEN", 1)
+      makeChapter(aabBooks, "GEN", 1)
     ),
     [makeExampleUrl("/api/AAB/EXO/2.json")]: createResponse(
-      makeChapter(bsbBooks, "EXO", 2)
+      makeChapter(aabBooks, "EXO", 2)
     ),
     [makeExampleUrl("/api/NIV/MAT/1.json")]: createResponse(
       makeChapter(nivBooks, "MAT", 1)
@@ -231,18 +318,18 @@ export function createReadingManagerResponseMap(): WebResponseMap {
   return {
     [makeExampleUrl("/api/available_translations.json")]:
       createResponse(translations),
-    [makeExampleUrl("/api/AAB/books.json")]: createResponse(bsbBooks),
+    [makeExampleUrl("/api/AAB/books.json")]: createResponse(aabBooks),
     [makeExampleUrl("/api/AAB/GEN/1.json")]: createResponse(
-      makeChapter(bsbBooks, "GEN", 1)
+      makeChapter(aabBooks, "GEN", 1)
     ),
     [makeExampleUrl("/api/AAB/GEN/2.json")]: createResponse(
-      makeChapter(bsbBooks, "GEN", 2)
+      makeChapter(aabBooks, "GEN", 2)
     ),
     [makeExampleUrl("/api/AAB/GEN/5.json")]: createResponse(
-      makeChapter(bsbBooks, "GEN", 5)
+      makeChapter(aabBooks, "GEN", 5)
     ),
     [makeExampleUrl("/api/AAB/EXO/1.json")]: createResponse(
-      makeChapter(bsbBooks, "EXO", 1)
+      makeChapter(aabBooks, "EXO", 1)
     ),
   };
 }

@@ -3,7 +3,7 @@ import {
   type ChapterVerse,
 } from "../managers/FreeUseBibleAPI";
 import type { JSX } from "preact";
-import { computed } from "@preact/signals";
+import { useComputed } from "@preact/signals";
 import type {
   BibleReadingState,
   BibleSelectedVerse,
@@ -17,6 +17,74 @@ import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import { useI18n } from "../i18n/I18nManager";
 import { MobileSettingsSheet } from "../components/MobileSettingsSheet";
 import { InfoSettingsIcon } from "../components/icons";
+
+interface ReaderBookmarkButtonProps {
+  state: SeedBibleState;
+  translationId: string | null;
+  bookId: string | null;
+  chapterNumber: number | null;
+}
+
+/**
+ * Toggle for the chapter currently shown in the reader. Sits in the top-right
+ * of the chapter content area: filled + orange when the chapter is saved,
+ * outlined when not. The per-tab-row bookmark button was removed in favor of
+ * this single control because only one chapter is ever in view at a time.
+ */
+function ReaderBookmarkButton(props: ReaderBookmarkButtonProps) {
+  const { state, translationId, bookId, chapterNumber } = props;
+  const { t } = useI18n();
+  const canBookmark = !!(translationId && bookId && chapterNumber);
+  const isBookmarked =
+    canBookmark &&
+    state.bookmarks.isLocationBookmarked(translationId, bookId, chapterNumber);
+
+  return (
+    <button
+      type="button"
+      className={`sb-bible-reader-bookmark-button${
+        isBookmarked ? " sb-bible-reader-bookmark-button-active" : ""
+      }`}
+      onClick={() => {
+        if (!canBookmark) return;
+        void state.bookmarks.toggleBookmarkAtLocation(
+          translationId,
+          bookId,
+          chapterNumber
+        );
+      }}
+      disabled={!canBookmark}
+      aria-pressed={isBookmarked}
+      aria-label={
+        isBookmarked
+          ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
+          : t("add-bookmark", { defaultValue: "Bookmark chapter" })
+      }
+      title={
+        isBookmarked
+          ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
+          : t("add-bookmark", { defaultValue: "Bookmark chapter" })
+      }
+    >
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill={isBookmarked ? "currentColor" : "none"}
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        <path
+          d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </svg>
+    </button>
+  );
+}
 
 interface VerseLine {
   indentLevel: number;
@@ -776,15 +844,15 @@ export function BibleReader(props: BibleReaderProps) {
     selectFootnote,
   } = readingState;
 
-  const currentBook = computed(
+  const currentBook = useComputed(
     () =>
       translationBooks.value?.books.find((book) => book.id === bookId.value) ??
       null
   );
-  const translationLicenseNotice = computed(
+  const translationLicenseNotice = useComputed(
     () => translation.value?.licenseNotice?.trim() ?? ""
   );
-  const translationWebsite = computed(
+  const translationWebsite = useComputed(
     () => translation.value?.website.trim() ?? ""
   );
 
@@ -804,9 +872,9 @@ export function BibleReader(props: BibleReaderProps) {
     selectorState.selectingTranslation.value = false;
     void selectorState.setOpen(true, currentPane);
   };
-  const openTranslationSelector = () => {
+  const openTranslationSelector = async () => {
+    await selectorState.setOpen(true, currentPane);
     selectorState.selectingTranslation.value = true;
-    void selectorState.setOpen(true, currentPane);
   };
 
   const renderMainContent = () => (
@@ -900,11 +968,20 @@ export function BibleReader(props: BibleReaderProps) {
                     openTranslationSelector();
                   }}
                 >
-                  {" "}
-                  • {translation.value?.shortName ?? translationId.value ?? ""}
+                  {translation.value?.shortName ?? translationId.value ?? ""}
                 </span>
               </h1>
             </div>
+            <button
+              type="button"
+              className="sb-bible-reader-mobile-header-play"
+              aria-label={t("play-audio", { defaultValue: "Play audio" })}
+              title={t("play", { defaultValue: "Play" })}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                play_arrow
+              </span>
+            </button>
             <button
               type="button"
               className="sb-bible-reader-mobile-header-settings"
@@ -983,6 +1060,14 @@ export function BibleReader(props: BibleReaderProps) {
         </>
       ) : (
         <>
+          {state && (
+            <ReaderBookmarkButton
+              state={state}
+              translationId={translationId.value}
+              bookId={bookId.value}
+              chapterNumber={chapterNumber.value}
+            />
+          )}
           <h2
             onClick={() => selectorState.setOpen(true, currentPane)}
             className="sb-bible-reader-title"
@@ -990,13 +1075,14 @@ export function BibleReader(props: BibleReaderProps) {
             <span className="sb-bible-reader-book">
               {currentBook.value?.name ?? bookId.value ?? "Select a book"}
             </span>
-            {String.fromCharCode(160)}
+            <span className="sb-bible-reader-title-sep" aria-hidden="true">
+              {" – "}
+            </span>
             <span className="sb-bible-reader-chapter">
               {chapterNumber.value}
             </span>
-            {String.fromCharCode(160)}
             <span className="sb-bible-reader-translation">
-              /{String.fromCharCode(160)}
+              {" / "}
               {translationId.value ?? ""}
             </span>
           </h2>

@@ -15,8 +15,9 @@ import {
   makeUrl,
   makeExampleUrl,
   EXAMPLE_API_ENDPOINT,
-  bsbBooks,
   makeChapter,
+  createDefaultSelectorManagerResponseMap,
+  aabBooks,
 } from "../managers/testUtils/mockBibleApiData";
 
 jest.mock("../i18n/I18nManager", () => ({
@@ -46,7 +47,7 @@ async function createSelectorFixture(
   options: { open?: boolean } = {}
 ): Promise<SelectorFixture> {
   const state = await createTestSeedBibleState({
-    responses: createDefaultManagerResponseMap(),
+    responses: createDefaultSelectorManagerResponseMap(),
   });
   const pane = state.panes.panes.value[0] as Pane;
   if (!pane) {
@@ -348,7 +349,7 @@ describe("BibleSelector", () => {
     const responses = {
       ...createDefaultManagerResponseMap(),
       [makeUrl("/api/AAB/GEN/10.json")]: createResponse(
-        makeChapter(bsbBooks, "GEN", 10)
+        makeChapter(aabBooks, "GEN", 10)
       ),
     };
 
@@ -415,10 +416,10 @@ describe("BibleSelector", () => {
     const responses = {
       ...createDefaultManagerResponseMap(),
       [makeUrl("/api/AAB/EXO/1.json")]: createResponse(
-        makeChapter(bsbBooks, "EXO", 1)
+        makeChapter(aabBooks, "EXO", 1)
       ),
       [makeUrl("/api/AAB/MAT/1.json")]: createResponse(
-        makeChapter(bsbBooks, "MAT", 1)
+        makeChapter(aabBooks, "MAT", 1)
       ),
     };
 
@@ -499,9 +500,9 @@ describe("BibleSelector", () => {
 
   it("breaks Psalms into 1 Psalms through 5 Psalms with expected chapter ranges", async () => {
     const psalmsBooks = {
-      ...bsbBooks,
+      ...aabBooks,
       books: [
-        ...bsbBooks.books.filter((book) => book.id !== "MAT"),
+        ...aabBooks.books.filter((book) => book.id !== "MAT"),
         {
           id: "PSA",
           name: "Psalms",
@@ -515,7 +516,7 @@ describe("BibleSelector", () => {
           lastChapterApiLink: "/api/AAB/PSA/150.json",
           totalNumberOfVerses: 2461,
         },
-        ...bsbBooks.books.filter((book) => book.id === "MAT"),
+        ...aabBooks.books.filter((book) => book.id === "MAT"),
       ],
     };
 
@@ -1029,12 +1030,19 @@ describe("BibleSelector translation selector", () => {
     expect(labels.some((l) => l?.includes("english"))).toBe(false);
   });
 
-  it("selecting a translation updates selector without changing tab until a chapter is selected", async () => {
+  it("selecting a translation selects the current book/chapter in that translation and closes the selector", async () => {
     const { selectorState, bibleDataManager, pane } =
       await createSelectorFixture();
 
-    const initialTranslationId = pane.tab?.readingState.translationId.value;
+    await pane.tab!.readingState.selectChapter("EXO", 2);
+
+    expect(pane.tab?.readingState.translationId.value).toBe("AAB");
+
+    const initialBookId = pane.tab?.readingState.bookId.value;
+    expect(initialBookId).toBe("EXO");
+
     const initialChapter = pane.tab?.readingState.chapterNumber.value;
+    expect(initialChapter).toBe(2);
 
     act(() => {
       render(
@@ -1051,59 +1059,141 @@ describe("BibleSelector translation selector", () => {
     act(() => {
       selectorState.selectingTranslation.value = true;
       selectorState.showAllLanguages.value = "all";
-      selectorState.languageQuery.value = "niv";
+      selectorState.languageQuery.value = "bsb";
     });
 
     await waitFor(() =>
       Boolean(container.querySelector(".translation-option"))
     );
 
-    const nivOption = Array.from(
+    const bsbOption = Array.from(
       container.querySelectorAll(".translation-option")
     ).find((option) =>
-      (option.textContent ?? "").toLowerCase().includes("(niv)")
+      (option.textContent ?? "").toLowerCase().includes("(bsb)")
     ) as HTMLDivElement | undefined;
 
-    expect(nivOption).toBeDefined();
+    expect(bsbOption).toBeDefined();
 
     act(() => {
-      nivOption?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      bsbOption?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    await waitFor(() => selectorState.selectedTranslationId.value === "NIV");
+    await waitFor(() => selectorState.selectedTranslationId.value === "BSB");
 
-    expect(selectorState.isOpen.value).toBe(true);
+    await waitFor(() => pane.tab?.readingState.translationId.value === "BSB");
+    await waitFor(() => selectorState.isOpen.value === false);
+
     expect(selectorState.selectingTranslation.value).toBe(false);
-    expect(pane.tab?.readingState.translationId.value).toBe(
-      initialTranslationId
-    );
+    expect(selectorState.isOpen.value).toBe(false);
+    expect(pane.tab?.readingState.translationId.value).toBe("BSB");
+    expect(pane.tab?.readingState.bookId.value).toBe(initialBookId);
     expect(pane.tab?.readingState.chapterNumber.value).toBe(initialChapter);
+  });
 
-    await waitFor(() => selectorState.bookData.value?.id === "MAT");
-    await waitFor(() =>
-      Array.from(container.querySelectorAll(".chapter-btn")).some(
-        (button) => button.textContent?.trim() === "1"
-      )
-    );
+  it("selecting a translation falls back to the first book and its first available chapter when the current book is unavailable", async () => {
+    const altTranslation: Translation = {
+      ...makeTranslation("ALT", "English", 1),
+      name: "Alternate Translation",
+      englishName: "Alternate Translation",
+      listOfBooksApiLink: "/api/ALT/books.json",
+    };
 
-    const chapterOneButton = Array.from(
-      container.querySelectorAll(".chapter-btn")
-    ).find((button) => button.textContent?.trim() === "1") as
-      | HTMLButtonElement
-      | undefined;
+    const altBooks = {
+      translation: altTranslation,
+      books: [
+        {
+          id: "MAT",
+          name: "Matthew",
+          commonName: "Matthew",
+          title: null,
+          order: 40,
+          numberOfChapters: 28,
+          firstChapterNumber: 3,
+          firstChapterApiLink: "/api/ALT/MAT/3.json",
+          lastChapterNumber: 30,
+          lastChapterApiLink: "/api/ALT/MAT/30.json",
+          totalNumberOfVerses: 1071,
+        },
+      ],
+    };
 
-    expect(chapterOneButton).toBeDefined();
+    const state = await createTestSeedBibleState({
+      responses: {
+        ...createDefaultSelectorManagerResponseMap(),
+        [makeUrl("/api/available_translations.json")]: createResponse({
+          translations: [
+            {
+              ...makeTranslation("AAB", "English", 66),
+              listOfBooksApiLink: "/api/AAB/books.json",
+            },
+            altTranslation,
+          ],
+        }),
+        [makeUrl("/api/ALT/books.json")]: createResponse(altBooks),
+        [makeUrl("/api/ALT/MAT/3.json")]: createResponse(
+          makeChapter(altBooks, "MAT", 3)
+        ),
+      },
+    });
+
+    const pane = state.panes.panes.value[0] as Pane;
+    if (!pane) {
+      throw new Error("Expected an initial pane.");
+    }
+
+    await pane.tab!.readingState.selectChapter("EXO", 2);
+    await state.selector.setOpen(true, pane);
+
+    const { selectorState, bibleDataManager } = {
+      selectorState: state.selector,
+      bibleDataManager: state.bibleData,
+    };
 
     act(() => {
-      chapterOneButton?.dispatchEvent(
-        new MouseEvent("click", { bubbles: true })
+      render(
+        <BibleSelector
+          isOpen={true}
+          onClose={jest.fn()}
+          selectorState={selectorState}
+          bibleDataManager={bibleDataManager}
+        />,
+        container
       );
     });
 
-    await waitFor(() => pane.tab?.readingState.translationId.value === "NIV");
-    expect(pane.tab?.readingState.translationId.value).toBe("NIV");
+    act(() => {
+      selectorState.selectingTranslation.value = true;
+      selectorState.showAllLanguages.value = "all";
+      selectorState.languageQuery.value = "alt";
+    });
+
+    await waitFor(() =>
+      Boolean(container.querySelector(".translation-option"))
+    );
+
+    const altOption = Array.from(
+      container.querySelectorAll(".translation-option")
+    ).find((option) =>
+      (option.textContent ?? "").toLowerCase().includes("(alt)")
+    ) as HTMLDivElement | undefined;
+
+    expect(altOption).toBeDefined();
+
+    act(() => {
+      altOption?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    await waitFor(() => selectorState.selectedTranslationId.value === "ALT");
+    await waitFor(() => pane.tab?.readingState.translationId.value === "ALT");
+    await waitFor(() => pane.tab?.readingState.bookId.value === "MAT");
+    await waitFor(() => pane.tab?.readingState.chapterNumber.value === 3);
+    await waitFor(() => selectorState.isOpen.value === false);
+
+    expect(selectorState.selectingTranslation.value).toBe(false);
+    expect(selectorState.isOpen.value).toBe(false);
+    expect(pane.tab?.readingState.translationId.value).toBe("ALT");
     expect(pane.tab?.readingState.bookId.value).toBe("MAT");
-    expect(pane.tab?.readingState.chapterNumber.value).toBe(1);
+    expect(pane.tab?.readingState.chapterNumber.value).toBe(3);
   });
 
   it("displays only complete translations when in complete mode", async () => {

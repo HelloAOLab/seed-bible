@@ -1136,7 +1136,7 @@ function SideBar({ panelsNumber }) {
     if (keepAwake) {
       // Release the wake lock
       try {
-        await os.disableWakeLock();
+        os.disableWakeLock();
         setKeepAwake(false);
         (globalThis as any).keepAwakeActive = false;
         (globalThis as any).setKeepScreenAwakeActive?.(false);
@@ -1146,8 +1146,8 @@ function SideBar({ panelsNumber }) {
     } else {
       // Request a wake lock
       try {
-        await os.requestWakeLock();
-        setKeepAwake(true);
+        const check = await os.requestWakeLock();
+        setKeepAwake(check);
         (globalThis as any).keepAwakeActive = true;
         (globalThis as any).setKeepScreenAwakeActive?.(true);
       } catch (err: any) {

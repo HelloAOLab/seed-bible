@@ -37,6 +37,10 @@ import {
   type HighlightsManager,
 } from "../managers/HighlightsManager";
 import {
+  createBookmarksManager,
+  type BookmarksManager,
+} from "seed-bible.managers.BookmarksManager";
+import {
   createSessionsManager,
   type BibleReadingSession,
   type SessionsManager,
@@ -147,6 +151,8 @@ export interface SeedBibleState {
   readingHistory: ReadingHistoryManager;
   /** Verse highlight manager. */
   highlights: HighlightsManager;
+  /** Per-tab/location bookmarks manager. */
+  bookmarks: BookmarksManager;
   /** Annotation manager for notes/metadata. */
   annotations: AnnotationsManager;
   /** Shared reading sessions manager. */
@@ -181,13 +187,21 @@ export function createSeedBibleState(): SeedBibleState {
   const os = CasualOSManager();
   const login = createLoginManager({ os });
   const highlights = createHighlightsManager(os, login);
+  const bookmarks = createBookmarksManager(login);
   const config = createConfig(login);
   const themeManager = createTheme(login);
   const sidebar = createSidebar(navigation);
   const tabs = createTabs(navigation, data, highlights);
   const panes = createPanes(tabs, tabs.selectedTabId);
   const settings = createSettings(os, login);
-  const selector = createBibleSelectorState(data, tabs, panes, settings);
+  const selector = createBibleSelectorState(
+    data,
+    tabs,
+    panes,
+    settings,
+    sidebar,
+    bookmarks
+  );
   const tools = createBibleToolsManager();
   const readingHistory = createReadingHistoryManager(os, login);
   const annotations = createAnnotationsManager(os, login);
@@ -429,9 +443,14 @@ export function createSeedBibleState(): SeedBibleState {
       const hostUserId = session.options.value.hostUserId;
       const localId = login.userId.value;
       const localConnectionId = os.connectionId;
+      // Trust `locallyHostedSessionIds` over the identity comparison —
+      // after a login/logout the current login.userId / configBot.id no
+      // longer match the original `hostUserId`, but we're still the host
+      // of sessions we created in this run.
       const isHost =
-        hostUserId !== null &&
-        (hostUserId === localId || hostUserId === localConnectionId);
+        locallyHostedSessionIds.has(session.id) ||
+        (hostUserId !== null &&
+          (hostUserId === localId || hostUserId === localConnectionId));
 
       if (isHost && session.options.value.endedAt === null) {
         try {
@@ -441,11 +460,21 @@ export function createSeedBibleState(): SeedBibleState {
         }
       }
 
+      locallyHostedSessionIds.delete(session.id);
       void invitations.unpublishSession(session.id);
       originalDispose();
     };
     return session;
   };
+
+  // Sessions THIS client created locally. The host-disconnect auto-close
+  // below skips these — when the local user logs in/out the OS may
+  // re-establish the underlying connection with a new connectionId/userId,
+  // which would make the original `hostUserId` look "disconnected" even
+  // though the host (us) is still right here. The host's own tab only
+  // closes through explicit teardown (close button / "End Session"),
+  // never through the disconnect heuristic.
+  const locallyHostedSessionIds = new Set<string>();
 
   // Auto-close participant tabs when the host goes away. Two signals:
   //  (a) `options.endedAt` was written by the host (clean "End Session"
@@ -456,8 +485,23 @@ export function createSeedBibleState(): SeedBibleState {
   //
   // We remember per-session that the host was at least once connected, so
   // joiners don't immediately close their own tab on connect before they
-  // even see the host.
+  // even see the host. We also debounce the disconnect-close path — a
+  // host who logs in mid-session will briefly look disconnected (their
+  // OS connection re-establishes with a new identity), and we want their
+  // updated `hostUserId` to land via the CRDT before we close the tab.
   const sessionsWhereHostWasSeen = new Set<string>();
+  const HOST_DISCONNECT_GRACE_MS = 8000;
+  const pendingHostDisconnectTimers = new Map<
+    string,
+    ReturnType<typeof setTimeout>
+  >();
+  const clearPendingHostDisconnect = (sessionId: string) => {
+    const timer = pendingHostDisconnectTimers.get(sessionId);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      pendingHostDisconnectTimers.delete(sessionId);
+    }
+  };
   effect(() => {
     for (const tab of tabs.tabs.value) {
       const session = tab.sharedSession;
@@ -465,9 +509,15 @@ export function createSeedBibleState(): SeedBibleState {
 
       if (session.options.value.endedAt !== null) {
         sessionsWhereHostWasSeen.delete(session.id);
+        clearPendingHostDisconnect(session.id);
         tabs.removeTab(tab.id);
         continue;
       }
+
+      // Never auto-close a session this client created — the host is the
+      // local user, and any apparent host disconnect is an identity flip
+      // (login/logout), not a real departure.
+      if (locallyHostedSessionIds.has(session.id)) continue;
 
       const hostId = session.options.value.hostUserId;
       if (!hostId) continue;
@@ -479,10 +529,52 @@ export function createSeedBibleState(): SeedBibleState {
 
       if (hostIsConnected) {
         sessionsWhereHostWasSeen.add(session.id);
-      } else if (sessionsWhereHostWasSeen.has(session.id)) {
-        // Host was here and has now dropped off — close the tab.
-        sessionsWhereHostWasSeen.delete(session.id);
-        tabs.removeTab(tab.id);
+        // Host came back (e.g. reconnected after their login flow) — cancel
+        // any pending close so the tab survives the round-trip.
+        clearPendingHostDisconnect(session.id);
+      } else if (
+        sessionsWhereHostWasSeen.has(session.id) &&
+        !pendingHostDisconnectTimers.has(session.id)
+      ) {
+        // Host appears to have left, but it may be a transient reconnect
+        // (host logging in/out) — wait briefly to give the CRDT time to
+        // deliver a new `hostUserId` or for the host's connection to
+        // re-appear before tearing down.
+        const tabId = tab.id;
+        const sessionId = session.id;
+        const timer = setTimeout(() => {
+          pendingHostDisconnectTimers.delete(sessionId);
+          sessionsWhereHostWasSeen.delete(sessionId);
+          tabs.removeTab(tabId);
+        }, HOST_DISCONNECT_GRACE_MS);
+        pendingHostDisconnectTimers.set(sessionId, timer);
+      }
+    }
+  });
+
+  // When the local user's identity changes (login/logout) and they host
+  // sessions, push the new identity into each session's `hostUserId` via
+  // the CRDT. Without this update, joiners' host-detection would still be
+  // looking for the host's previous (anonymous) connection id and would
+  // never re-acquire them as host on the new connection.
+  effect(() => {
+    const newLoginUserId = login.userId.value;
+    const localConnectionId =
+      typeof configBot !== "undefined" && configBot?.id
+        ? String(configBot.id)
+        : null;
+    const desiredHostId = newLoginUserId ?? localConnectionId;
+    if (!desiredHostId) return;
+    for (const tab of tabs.tabs.value) {
+      const session = tab.sharedSession;
+      if (!session) continue;
+      if (!locallyHostedSessionIds.has(session.id)) continue;
+      if (session.options.value.hostUserId === desiredHostId) continue;
+      try {
+        session.updateOptions({ hostUserId: desiredHostId });
+      } catch {
+        // Best-effort — joiners will fall back to their grace-period
+        // timeout if the update can't be delivered.
       }
     }
   });
@@ -490,6 +582,12 @@ export function createSeedBibleState(): SeedBibleState {
   const handleCreateSharedSession = async () => {
     closeSidebarAndSettings();
     const session = await sessions.createSession();
+    if (typeof posthog !== "undefined" && posthog) {
+      posthog.capture("create_session", {
+        sessionId: session.id,
+      });
+    }
+    locallyHostedSessionIds.add(session.id);
     wrapSessionLifecycle(session);
     // Auto-publish: the moment a shared tab is created, other logged-in
     // users see it in their sidebar and can click to join — no manual
@@ -503,6 +601,11 @@ export function createSeedBibleState(): SeedBibleState {
   const handleJoinSharedSession = async (id: string) => {
     closeSidebarAndSettings();
     const session = await sessions.joinSession(id);
+    if (typeof posthog !== "undefined" && posthog) {
+      posthog.capture("join_session", {
+        sessionId: session.id,
+      });
+    }
     wrapSessionLifecycle(session);
     const tab = tabs.addTab(session);
     panes.setSelectedPaneTab(tab.id);
@@ -512,6 +615,17 @@ export function createSeedBibleState(): SeedBibleState {
   const invitations = createInvitationsManager(os, login, async (sessionId) => {
     await handleJoinSharedSession(sessionId);
   });
+
+  const setupInitialSession = async () => {
+    const initialSessionId = configBot.tags.sessionId;
+    if (!initialSessionId) {
+      return;
+    }
+
+    await handleJoinSharedSession(initialSessionId);
+  };
+
+  void setupInitialSession();
 
   const state: SeedBibleState = {
     os,
@@ -530,6 +644,7 @@ export function createSeedBibleState(): SeedBibleState {
     login,
     readingHistory,
     highlights,
+    bookmarks,
     annotations,
     sessions,
     modals,

@@ -10,7 +10,7 @@ const languages = import.meta.glob("./*.json", { eager: true });
 
 const url = new URL(location.href);
 
-export const DEFAULT_LANGUAGE =
+export const DEFAULT_LANGUAGE: string =
   url.searchParams.get("lang") ?? getLanguage(navigator.languages[0]) ?? "en";
 
 export { i18n };
@@ -38,10 +38,6 @@ export function addTranslations(
   options?: { overwrite?: boolean }
 ) {
   for (const [lang, resources] of Object.entries(translations)) {
-    console.log(
-      `[I18n] Adding translations for language "${lang}" and namespace "${ns}":`,
-      resources
-    );
     i18n.addResourceBundle(lang, ns, resources, true, options?.overwrite);
   }
 }

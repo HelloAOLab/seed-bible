@@ -158,10 +158,24 @@ export function SidebarSearch(props: SidebarSearchProps) {
     }, 180);
   };
 
+  const resetSearch = () => {
+    if (searchDebounceTimeoutRef.current !== null) {
+      window.clearTimeout(searchDebounceTimeoutRef.current);
+      searchDebounceTimeoutRef.current = null;
+    }
+    latestSearchRequestRef.current++;
+    searchQuery.value = "";
+    searchResults.value = [];
+    searchLoading.value = false;
+    searchError.value = null;
+    isSearchPanelOpen.value = false;
+    highlightedResultIndex.value = -1;
+  };
+
   const openSearchResult = async (result: SidebarSearchResult) => {
     closeContextMenus();
     closeLayoutMenu();
-    isSearchPanelOpen.value = false;
+    resetSearch();
 
     const targetTab = getOrCreateSearchTargetTab(state);
     await targetTab.readingState.selectTranslationAndChapter(

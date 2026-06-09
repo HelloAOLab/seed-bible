@@ -1,4 +1,4 @@
-import sendMessage from "ext_twitchPub.host.sendMessage";
+import getUrl from "ext_twitchPub.host.getUrl";
 
 const currentData = { ...that };
 
@@ -10,9 +10,7 @@ if (masks?.currentBookData) {
 
 setTagMask(thisBot, "currentBookData", JSON.stringify(currentData), "local");
 
-if (masks?.uiLoaded) {
-  const uid = uuid().slice(0, 5);
-
+if (masks?.uiLoaded && globalThis?.sendMessageWithRateLimit) {
   if (prevData) {
     if (
       prevData.bookId !== currentData.bookId ||
@@ -22,15 +20,7 @@ if (masks?.uiLoaded) {
         bookId: currentData.bookId,
         chapter: currentData.chapter,
       });
-      sendMessage({
-        message: JSON.stringify({
-          type: "bookChanged",
-          parts: 0,
-          currentPart: 0,
-          payload,
-          uid,
-        }),
-      });
+      globalThis.sendMessageWithRateLimit("bookChanged", payload);
     } else if (
       prevData.translation !== currentData.translation &&
       masks?.translationEnabled
@@ -39,30 +29,14 @@ if (masks?.uiLoaded) {
         translation: currentData.translation,
         baseUrl: currentData?.baseUrl || "https://vmfnri.helloao.org",
       });
-      sendMessage({
-        message: JSON.stringify({
-          type: "translationChanged",
-          parts: 0,
-          currentPart: 0,
-          payload,
-          uid,
-        }),
-      });
+      globalThis.sendMessageWithRateLimit("translationChanged", payload);
     }
   } else {
     const payload = JSON.stringify({
       bookId: currentData.bookId,
       chapter: currentData.chapter,
     });
-    sendMessage({
-      message: JSON.stringify({
-        type: "bookChanged",
-        parts: 0,
-        currentPart: 0,
-        payload,
-        uid,
-      }),
-    });
+    globalThis.sendMessageWithRateLimit("bookChanged", payload);
   }
 
   if (globalThis?.currentBookDataRef) {
@@ -70,7 +44,14 @@ if (masks?.uiLoaded) {
   }
   if (globalThis?.SetQrValue) {
     globalThis.SetQrValue(
-      `https://ao.bot/?pattern=SeedBibleDev&book=${currentData.bookId}&chapter=${currentData.chapter}&translation=${currentData.translation}&ext_twitchSub=true&broadcasterId=${masks?.broadcasterId || ""}&clientId=${masks?.clientId || ""}&token=${masks?.userAccessToken || ""}`
+      getUrl({
+        clientId: masks.clientId || "",
+        broadcasterId: masks.broadcasterId || "",
+        channelId: masks.channelId || "",
+        book: currentData.bookId,
+        chapter: currentData.chapter,
+        translation: currentData.translation,
+      })
     );
   }
 }

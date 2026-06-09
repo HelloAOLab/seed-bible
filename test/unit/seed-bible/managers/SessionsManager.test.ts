@@ -9,6 +9,7 @@ import type {
   VerseDecoration,
   VerseDecorationInput,
 } from "../managers/BibleReadingManager";
+import type { UserProfile } from "seed-bible.managers.LoginManager";
 
 jest.mock("../managers/BibleReadingManager", () => ({
   createBibleReadingState: jest.fn(),
@@ -240,7 +241,9 @@ describe("SessionsManager", () => {
   let mockLoginManager: {
     getUserProfile: jest.Mock;
     userId: ReturnType<typeof signal<string | null>>;
+    profile: ReturnType<typeof signal<UserProfile | null>>;
   };
+  let mockUserProfilesMap: ReturnType<typeof createMockSharedMap>;
   let mockHighlightsManager: {
     getChapterHighlights: jest.Mock;
   };
@@ -249,6 +252,7 @@ describe("SessionsManager", () => {
     mockMap = createMockSharedMap();
     mockOptionsMap = createMockSharedMap();
     mockDecorationsMap = createMockSharedMap();
+    mockUserProfilesMap = createMockSharedMap();
     mockRemoteClients = createMockRemoteClientsObservable();
     mockDocument = {
       getMap: jest.fn((name: string) => {
@@ -258,6 +262,10 @@ describe("SessionsManager", () => {
 
         if (name === "decorations") {
           return mockDecorationsMap;
+        }
+
+        if (name === "user_profiles") {
+          return mockUserProfilesMap;
         }
 
         return mockMap;
@@ -276,6 +284,7 @@ describe("SessionsManager", () => {
         name: `Profile ${userId}`,
       })),
       userId: signal<string | null>(null),
+      profile: signal<UserProfile | null>(null),
     };
     mockHighlightsManager = {
       getChapterHighlights: jest

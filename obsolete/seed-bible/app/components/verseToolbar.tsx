@@ -139,7 +139,7 @@ export function VerseToolbar({
   const dividerStyle = {
     width: "1px",
     height: "24px",
-    backgroundColor: "#d1d1d1",
+    backgroundColor: "var(--border1, #d1d1d1)",
   };
 
   const colorButtonsStyle = {
@@ -171,7 +171,7 @@ export function VerseToolbar({
     cursor: "pointer",
     fontSize: "20px",
     fontWeight: "bold",
-    color: "#666",
+    color: "var(--text2, #666)",
     transition: "transform 0.2s",
     position: "relative",
     padding: "0",
@@ -204,7 +204,7 @@ export function VerseToolbar({
   const colorInputStyle = {
     width: "0",
     height: "0",
-    border: "1px solid #d1d1d1",
+    border: "1px solid var(--border1, #d1d1d1)",
     borderRadius: "4px",
     cursor: "pointer",
     "pointer-events": "none",
@@ -221,7 +221,7 @@ export function VerseToolbar({
     backgroundColor: "transparent",
     border: "none",
     cursor: "pointer",
-    color: "#999",
+    color: "var(--text2, #999)",
     fontSize: "20px",
     marginLeft: "8px",
   };
@@ -497,14 +497,14 @@ export function VerseToolbar({
                         key="cancel-color"
                         className="color-circle"
                         style={{
-                          ...circleButtonStyle("#fff"),
-                          border: "2px solid #999",
+                          ...circleButtonStyle("var(--pageBackground, #fff)"),
+                          border: "2px solid var(--text2, #999)",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           fontSize: "16px",
                           lineHeight: 1,
-                          color: "#666",
+                          color: "var(--text2, #666)",
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -519,7 +519,7 @@ export function VerseToolbar({
                         className="color-circle"
                         style={{
                           ...circleButtonStyle(tempColor),
-                          border: "3px solid #666",
+                          border: "3px solid var(--text2, #666)",
                           boxShadow: "0 0 8px rgba(0,0,0,0.3)",
                         }}
                       />
@@ -927,7 +927,7 @@ const SubOptions = ({ items }) => {
   flex-direction: column;
   background: var(--primaryColor) !important;
   align-items: center;
-  border: 1px solid #1A1A1A;
+  border: 1px solid var(--border1, #1A1A1A);
   gap: 2px;
   border-radius: 10px;
   scrollbar-width: none;
@@ -970,7 +970,7 @@ const SubOptions = ({ items }) => {
               style={{
                 width: "100%",
                 height: "1px",
-                backgroundColor: "#cdcccc3b",
+                backgroundColor: "var(--border1, #cdcccc3b)",
               }}
             ></div>
           );
@@ -983,7 +983,7 @@ const SubOptions = ({ items }) => {
               className={`itemSettings2`}
               style={{
                 cursor: item?.disabled ? "not-allowed" : "pointer",
-                color: item?.disabled ? "#929292" : "",
+                color: item?.disabled ? "var(--text2, #929292)" : "",
               }}
             >
               <div>{item.icon}</div>

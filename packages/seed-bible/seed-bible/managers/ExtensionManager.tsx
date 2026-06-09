@@ -1,4 +1,4 @@
-import { computed } from "@preact/signals";
+import { computed, signal } from "@preact/signals";
 import { orderBy, union } from "es-toolkit";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import { addTranslations } from "../i18n/I18nManager";
@@ -89,6 +89,15 @@ export interface ExtensionSet {
    * The extensions included in this set.
    */
   extensions: Extension[];
+}
+
+export interface ExtensionListEntry {
+  id: string;
+  extension: Extension | null;
+  extensionSet: ExtensionSet | null;
+  registration: ExtensionRegistration | null;
+  installed: boolean;
+  pendingInstallation: boolean;
 }
 
 export class ExtensionInitalizer {
@@ -308,10 +317,37 @@ export function createExtensionManager() {
   const installedExtensionIds = new Set<string>();
   const pendingInstallations = new Map<string, Promise<boolean>>();
 
+  const computeExtensions = (): ExtensionListEntry[] => {
+    const knownExtensionPackages = knownExtensionsById;
+    const registeredExtensions =
+      ExtensionInitalizer.getInstance().listRegisteredExtensions();
+    const allExtensionIds = union(
+      Array.from(knownExtensionPackages.keys()),
+      registeredExtensions.map((ext) => ext.id)
+    );
+
+    return allExtensionIds.map((id) => ({
+      id,
+      extension: knownExtensionPackages.get(id) ?? null,
+      extensionSet: knownExtensionsSetsByExtensionId.get(id) ?? null,
+      registration: registeredExtensions.find((ext) => ext.id === id) ?? null,
+      installed:
+        installedExtensionIds.has(id) ||
+        ExtensionInitalizer.getInstance().isExtensionRegistered(id),
+      pendingInstallation: pendingInstallations.has(id),
+    }));
+  };
+
+  const extensionsSignal = signal<ExtensionListEntry[]>([]);
+  const refreshExtensionsSignal = () => {
+    extensionsSignal.value = computeExtensions();
+  };
+
   const trackExtensionSet = (set: ExtensionSet) => {
     for (const extension of set.extensions) {
       knownExtensionsById.set(extension.meta.id, extension);
     }
+    refreshExtensionsSignal();
   };
 
   const isSatisfiedDependency = (id: string) => {
@@ -340,14 +376,17 @@ export function createExtensionManager() {
   //     const result = await os.installPackage(recordName, address);
   //     if (result.success) {
   //       installedExtensionIds.add(id);
+  //      refreshExtensionsSignal();
   //       shout("onExtensionInstalled", id);
   //       console.log(`Successfully installed extension: ${id}`);
   //       return true;
   //     } else {
+  //     refreshExtensionsSignal();
   //       console.error(`Failed to install extension ${id}:`, result);
   //       return false;
   //     }
   //   } catch (err) {
+  //   refreshExtensionsSignal();
   //     console.error("Failed to install extension:", id, err);
   //     return false;
   //   }
@@ -366,10 +405,12 @@ export function createExtensionManager() {
     try {
       await import(/** @vite-ignore */ url);
       installedExtensionIds.add(id);
+      refreshExtensionsSignal();
       // shout("onExtensionInstalled", id);
       console.log(`Successfully installed extension: ${id}`);
       return true;
     } catch (err) {
+      refreshExtensionsSignal();
       console.error("Failed to install extension:", id, err);
       return false;
     }
@@ -386,6 +427,7 @@ export function createExtensionManager() {
   ) => {
     const extensionId = uploaded.meta.id;
     knownExtensionsById.set(extensionId, uploaded);
+    refreshExtensionsSignal();
 
     if (pendingInstallations.has(extensionId)) {
       return pendingInstallations.get(extensionId)!;
@@ -450,10 +492,12 @@ export function createExtensionManager() {
     })();
 
     pendingInstallations.set(extensionId, installationPromise);
+    refreshExtensionsSignal();
     try {
       return await installationPromise;
     } finally {
       pendingInstallations.delete(extensionId);
+      refreshExtensionsSignal();
     }
   };
 
@@ -472,6 +516,8 @@ export function createExtensionManager() {
     for (const ext of set.extensions) {
       knownExtensionsById.set(ext.meta.id, ext);
       knownExtensionsSetsByExtensionId.set(ext.meta.id, set);
+      addTranslations(ext.meta.id, ext.meta.translations);
+      refreshExtensionsSignal();
       if (!filter(ext)) {
         continue;
       }
@@ -495,9 +541,13 @@ export function createExtensionManager() {
       return;
     }
     console.log("Loading default extension set:", defaultExtensions.value);
+    const url = new URL(configBot.tags.url);
     await loadExtensionSet(
       defaultExtensions.value,
-      (ext) => ext.meta.autoinstall ?? false
+      (ext) =>
+        (ext.meta.autoinstall ||
+          url.searchParams.get(`autoinstall-${ext.meta.id}`) === "true") ??
+        false
     );
   };
 
@@ -508,6 +558,7 @@ export function createExtensionManager() {
   const unloadExtension = (id: string) => {
     unregisterExtension(id);
     installedExtensionIds.delete(id);
+    refreshExtensionsSignal();
     // shout("onExtensionUninstalled", id);
   };
 
@@ -515,31 +566,14 @@ export function createExtensionManager() {
    * Gets the list of extensions that have been discovered from loaded extension sets.
    */
   const getExtensions = () => {
-    const knownExtensionPackages = knownExtensionsById;
-    const registeredExtensions =
-      ExtensionInitalizer.getInstance().listRegisteredExtensions();
-    const allExtensionIds = union(
-      Array.from(knownExtensionPackages.keys()),
-      registeredExtensions.map((ext) => ext.id)
-    );
-
-    return allExtensionIds.map((id) => ({
-      id,
-      extension: knownExtensionPackages.get(id) ?? null,
-      extensionSet: knownExtensionsSetsByExtensionId.get(id) ?? null,
-      registration: registeredExtensions.find((ext) => ext.id === id) ?? null,
-      installed:
-        installedExtensionIds.has(id) ||
-        ExtensionInitalizer.getInstance().isExtensionRegistered(id),
-      pendingInstallation: pendingInstallations.has(id),
-    }));
+    return extensionsSignal.value;
   };
 
   /**
    * Gets all extensions as a set.
    */
   const getAllExtensionsAsSet = () => {
-    const extensionsToDownload = getExtensions()
+    const extensionsToDownload = extensionsSignal.value
       .filter((ext) => ext.extension)
       .map((ext) => ext.extension) as UploadedExtension[];
     if (extensionsToDownload.length === 0) {
@@ -547,23 +581,25 @@ export function createExtensionManager() {
       return;
     }
 
-    const extensions = orderBy(
+    const orderedExtensions = orderBy(
       extensionsToDownload,
       [(ext) => ext?.meta.id],
       ["asc"]
     );
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const hash = (crypto as any).sha256(extensions);
+    const hash = (crypto as any).sha256(orderedExtensions);
 
     const setData: ExtensionSet = {
       id: `downloaded-extension-set-${hash.slice(0, 8)}`,
       recordName: "",
-      extensions: extensions,
+      extensions: orderedExtensions,
     };
 
     return setData;
   };
+
+  refreshExtensionsSignal();
 
   return {
     loadDefaultExtensions,
@@ -571,6 +607,7 @@ export function createExtensionManager() {
     loadExtension,
     unloadExtension,
 
+    extensions: extensionsSignal,
     getExtensions,
 
     getAllExtensionsAsSet,

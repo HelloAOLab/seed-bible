@@ -1,4 +1,4 @@
-import { effect, signal, type ReadonlySignal } from "@preact/signals";
+import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
 import {
   createBibleReadingState,
   type BibleReadingState,
@@ -77,6 +77,45 @@ export interface SessionOptions {
 
 type SessionOptionValue = SessionOptions[keyof SessionOptions];
 type SessionDecorationValue = VerseDecoration;
+
+/**
+ * The shape each client publishes into the session's `user_profiles` map
+ * to broadcast their current identity. The connection's `userId` is
+ * frozen on the wire at connect time and never re-emitted on login/logout,
+ * so this map is how peers learn each other's *current* userId + profile
+ * mid-session.
+ */
+interface SharedUserProfileEntry {
+  userId: string | null;
+  profile: UserProfile | null;
+}
+
+function parseSharedUserProfileEntry(
+  value: unknown
+): SharedUserProfileEntry | null {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const userId =
+    typeof record.userId === "string" || record.userId === null
+      ? (record.userId as string | null)
+      : null;
+  const rawProfile = record.profile;
+  const profile =
+    rawProfile && typeof rawProfile === "object"
+      ? (rawProfile as UserProfile)
+      : null;
+  return { userId, profile };
+}
+
+function sharedUserProfileEntriesMatch(
+  left: SharedUserProfileEntry,
+  right: SharedUserProfileEntry
+): boolean {
+  return (
+    left.userId === right.userId &&
+    JSON.stringify(left.profile) === JSON.stringify(right.profile)
+  );
+}
 
 const DEFAULT_SESSION_OPTIONS: SessionOptions = {
   allowedNavigators: null,
@@ -290,6 +329,22 @@ export interface BibleReadingSession {
    */
   removeSharedDecoration: (decorationId: string) => void;
   dispose: () => void;
+
+  localSessionId: ReadonlySignal<string>;
+
+  /**
+   * Returns true if the given session ID (userId or connectionId) is
+   * permitted to navigate in this session. When `allowedNavigators` is
+   * null or empty every participant may navigate.
+   */
+  userCanNavigate: (sessionId: string) => boolean;
+
+  /**
+   * Returns true if the given session ID (userId or connectionId) is
+   * permitted to add decorations in this session. When `allowedDecorators`
+   * is null or empty every participant may decorate.
+   */
+  userCanDecorate: (sessionId: string) => boolean;
 }
 
 function createSessionId(): string {
@@ -343,6 +398,14 @@ async function createBibleReadingSession(
     document.getMap<SessionData[keyof SessionData]>("reading_state");
   const optionsMap = document.getMap<SessionOptionValue>("options");
   const decorationsMap = document.getMap<SessionDecorationValue>("decorations");
+  // Per-connection identity broadcast. The OS doesn't re-emit
+  // remoteClients events when a peer logs in or out, so without this map
+  // joiners would forever see the userId/profile each peer had at connect
+  // time. Each client writes its own current {userId, profile} keyed by
+  // its connectionId; everyone else reads from here when building
+  // `connectedUsers`.
+  const userProfilesMap =
+    document.getMap<SharedUserProfileEntry>("user_profiles");
   const options = signal<SessionOptions>(DEFAULT_SESSION_OPTIONS);
   const connectedUsers = signal<ConnectedSessionUser[]>([]);
   const connectedClients = new Map<string, SessionConnectionInfo>();
@@ -351,6 +414,9 @@ async function createBibleReadingSession(
   // (typeof configBot !== "undefined" ? toStringOrNull(configBot?.id) : null) ??
   // "local";
   const decorationOwners = new Map<string, string>();
+  const localSessionId = computed(
+    () => loginManager.userId.value ?? localConnectionId
+  );
 
   if (defaultOptions) {
     document.transact(() => {
@@ -378,6 +444,22 @@ async function createBibleReadingSession(
   let pendingRemoteTarget: SessionData | null = null;
   let remoteClientsVersion = 0;
   let applyingRemoteDecorations = false;
+
+  const userCanNavigate = (sessionId: string): boolean => {
+    const { allowedNavigators } = options.value;
+    if (!allowedNavigators || allowedNavigators.length === 0) {
+      return true;
+    }
+    return allowedNavigators.includes(sessionId);
+  };
+
+  const userCanDecorate = (sessionId: string): boolean => {
+    const { allowedDecorators } = options.value;
+    if (!allowedDecorators || allowedDecorators.length === 0) {
+      return true;
+    }
+    return allowedDecorators.includes(sessionId);
+  };
 
   const getSharedDecorationEntries = () => {
     const entries = new Map<
@@ -438,7 +520,6 @@ async function createBibleReadingSession(
         if (currentDecorationIds.has(decorationId)) {
           readingState.removeDecoration(decorationId);
         }
-
         readingState.decorateVerses(
           entry.decoration.bookId,
           entry.decoration.chapterNumber,
@@ -456,16 +537,30 @@ async function createBibleReadingSession(
     const clients = Array.from(connectedClients.values());
     const nextUsers = await Promise.all(
       clients.map(async (client) => {
-        let profile: UserProfile | null = null;
+        // Prefer the broadcasted identity in `user_profiles` over the
+        // connection's frozen userId — that's how we learn that a peer
+        // logged in or out mid-session.
+        const sharedEntry = parseSharedUserProfileEntry(
+          userProfilesMap.get(client.connectionId)
+        );
+        const effectiveUserId = sharedEntry
+          ? sharedEntry.userId
+          : client.userId;
 
-        if (client.userId) {
-          const cachedProfile = profileCache.get(client.userId);
+        let profile: UserProfile | null = null;
+        if (sharedEntry) {
+          // Trust the broadcast as the live source of truth — even if
+          // `profile` is null (peer is anonymous now) we must use it
+          // rather than a stale cache for the old userId.
+          profile = sharedEntry.profile;
+        } else if (effectiveUserId) {
+          const cachedProfile = profileCache.get(effectiveUserId);
           if (cachedProfile) {
             profile = cachedProfile;
           } else {
             try {
-              profile = await loginManager.getUserProfile(client.userId);
-              profileCache.set(client.userId, profile);
+              profile = await loginManager.getUserProfile(effectiveUserId);
+              profileCache.set(effectiveUserId, profile);
             } catch {
               profile = null;
             }
@@ -478,7 +573,7 @@ async function createBibleReadingSession(
           isSelf: client.isSelf,
           connectionId: client.connectionId,
           // sessionId: client.sessionId,
-          userId: client.userId,
+          userId: effectiveUserId,
           profile,
           color: color,
         };
@@ -571,6 +666,39 @@ async function createBibleReadingSession(
     syncDecorationsFromSession();
   });
 
+  // When any peer publishes a new identity into `user_profiles`, rebuild
+  // the connectedUsers list so their avatar reflects the change.
+  const userProfilesSubscription = userProfilesMap.changes.subscribe(() => {
+    const nextVersion = ++remoteClientsVersion;
+    void syncConnectedUsers(nextVersion);
+  });
+
+  // Broadcast the local user's current identity into `user_profiles`
+  // whenever it changes, so other peers can re-render our avatar without
+  // depending on the OS to re-emit a remoteClients event.
+  const stopBroadcastLocalIdentity = effect(() => {
+    const userId = loginManager.userId.value;
+    const profile = loginManager.profile.value;
+    const nextEntry: SharedUserProfileEntry = { userId, profile };
+    const currentEntry = parseSharedUserProfileEntry(
+      userProfilesMap.get(localConnectionId)
+    );
+    if (
+      currentEntry &&
+      sharedUserProfileEntriesMatch(currentEntry, nextEntry)
+    ) {
+      return;
+    }
+    try {
+      document.transact(() => {
+        userProfilesMap.set(localConnectionId, nextEntry);
+      });
+    } catch {
+      // Best-effort — if the broadcast can't be written, peers will
+      // still see whatever was last published (possibly stale).
+    }
+  });
+
   const remoteClientsSubscription = document.remoteClients.subscribe(
     (event) => {
       if (event.type === "client_connected") {
@@ -592,18 +720,8 @@ async function createBibleReadingSession(
       return;
     }
 
-    if (
-      options.value.allowedNavigators &&
-      options.value.allowedNavigators.length > 0
-    ) {
-      if (
-        loginManager.userId.value &&
-        !options.value.allowedNavigators.includes(loginManager.userId.value)
-      ) {
-        return;
-      } else if (!options.value.allowedNavigators.includes(localConnectionId)) {
-        return;
-      }
+    if (!userCanNavigate(localSessionId.value)) {
+      return;
     }
 
     const nextSessionData = getSessionDataSnapshot(readingState);
@@ -645,26 +763,18 @@ async function createBibleReadingSession(
     void readingState.translationId.value;
     void readingState.bookId.value;
     void readingState.chapterNumber.value;
+    // We need to read the decorations signal before
+    // checking any early-exit conditions, so that this effect re-runs whenever decorations change
+    const currentDecorations = readingState.decorations.value;
 
     if (applyingRemoteDecorations) {
       return;
     }
 
-    if (
-      options.value.allowedDecorators &&
-      options.value.allowedDecorators.length > 0
-    ) {
-      if (
-        loginManager.userId.value &&
-        !options.value.allowedDecorators.includes(loginManager.userId.value)
-      ) {
-        return;
-      } else if (!options.value.allowedDecorators.includes(localConnectionId)) {
-        return;
-      }
+    if (!userCanDecorate(localSessionId.value)) {
+      return;
     }
 
-    const currentDecorations = readingState.decorations.value;
     const localDecorations = currentDecorations.filter((decoration) => {
       const owner = decorationOwners.get(decoration.id);
       if (!owner) {
@@ -686,6 +796,7 @@ async function createBibleReadingSession(
     const keysToDelete = localSharedDecorations
       .filter((entry) => !localDecorationIds.has(entry.decoration.id))
       .map((entry) => entry.key);
+
     const decorationsToUpsert = localDecorations.filter((decoration) => {
       const existingDecoration = sharedDecorationEntries.get(
         decoration.id
@@ -823,9 +934,20 @@ async function createBibleReadingSession(
     mapSubscription.unsubscribe();
     optionsSubscription.unsubscribe();
     decorationsSubscription.unsubscribe();
+    userProfilesSubscription.unsubscribe();
     remoteClientsSubscription.unsubscribe();
     stopSync();
     stopDecorationSync();
+    stopBroadcastLocalIdentity();
+    // Drop our identity entry so peers' lookup for this connection no
+    // longer resolves once we're gone.
+    try {
+      document.transact(() => {
+        userProfilesMap.delete(localConnectionId);
+      });
+    } catch {
+      // Best-effort — the entry will simply linger in the CRDT.
+    }
     document.unsubscribe();
   };
 
@@ -838,6 +960,9 @@ async function createBibleReadingSession(
     connectedUsers,
     removeSharedDecoration,
     dispose,
+    localSessionId,
+    userCanNavigate,
+    userCanDecorate,
   };
 }
 

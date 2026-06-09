@@ -320,9 +320,11 @@ export async function loadInst(
 
 export const DEFAULT_EXTENSIONS = [
   "seed-bible",
-  "seed-bible-refresh-example-extension",
+  // "seed-bible-refresh-example-extension",
   "geo-importer-extension",
   "locations-extension",
+  "twitchSub-extension",
+  "twitchPub-extension",
   // "BookSelector",
   // "Object Pooler",
   // "GeoImporter",
@@ -390,6 +392,9 @@ export async function loadSeedBible(
     `
         const managers = getBot('system', 'seed-bible.managers');
         setTag(managers, 'availableExtensions', ${JSON.stringify(availablePackages)});
+
+        const app = getBot('system', 'seed-bible.app');
+        setTag(app, 'disablePostHog', true);
     `
   );
 

@@ -151,6 +151,13 @@ function createFixture(): ReaderFixture {
   };
 }
 
+function createBookmarksStub() {
+  return {
+    isLocationBookmarked: jest.fn(() => false),
+    toggleBookmarkAtLocation: jest.fn(async () => undefined),
+  };
+}
+
 function createMobileState(): SeedBibleState {
   return {
     app: {
@@ -171,6 +178,7 @@ function createMobileState(): SeedBibleState {
     tools: {
       getReaderTools: jest.fn(() => []),
     },
+    bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
   } as any as SeedBibleState;
@@ -196,6 +204,7 @@ function createDesktopState(): SeedBibleState {
     tools: {
       getReaderTools: jest.fn(() => []),
     },
+    bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
   } as any as SeedBibleState;

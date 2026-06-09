@@ -14,6 +14,8 @@ import type {
   BookOrientation,
   SettingsManager,
 } from "../managers/SettingsManager";
+import { createSidebar } from "seed-bible.managers.SidebarManager";
+import { type BookmarksManager } from "seed-bible.managers.BookmarksManager";
 import {
   computed,
   effect,
@@ -21,6 +23,8 @@ import {
   Signal,
   type ReadonlySignal,
 } from "@preact/signals";
+
+type SidebarManager = ReturnType<typeof createSidebar>;
 
 /** Optional options used when opening the selector. */
 export interface BibleSelectorOptions {
@@ -113,7 +117,7 @@ export interface BibleSelectorState {
    * selections create a brand new tab and bind it to the target pane
    * instead of reusing the pane's existing tab.
    */
-  forceNewTab: ReadonlySignal<boolean>;
+  forceNewTab: Signal<boolean>;
 
   /** All panes available as targets for the selector. */
   availablePanes: ReadonlySignal<Pane[]>;
@@ -182,6 +186,9 @@ export interface BibleSelectorState {
   inputValue: Signal<string>;
   filteredApiTranslations: ReadonlySignal<TranslationLanguageGroup[]>;
   handleTranslationAddition: () => void;
+  openTabs: () => void;
+  bookmarks: BookmarksManager;
+  showApocryphaInfo: Signal<boolean>;
 }
 
 function groupBooks(translationBooks: TranslationBooks | null, search: string) {
@@ -226,11 +233,15 @@ export function createBibleSelectorState(
   dataManager: BibleDataManager,
   tabsManager: TabsManager,
   panesManager: PanesManager,
-  settings?: SettingsManager
+  settings: SettingsManager,
+  sidebar: SidebarManager,
+  bookmarks: BookmarksManager
 ): BibleSelectorState {
   const isOpen = signal(false);
   const pane = signal<Pane | null>(null);
+  const isDrawerOpen = sidebar.isMobileOpen.value;
   const forceNewTab = signal(false);
+  const showApocryphaInfo = signal(false);
   const availablePanes = computed(() => panesManager.panes.value);
   const availableTranslations = computed(
     () => dataManager.availableTranslations.value
@@ -287,6 +298,7 @@ export function createBibleSelectorState(
         )?.id ??
         dataManager.availableTranslations.value[0]?.id ??
         null;
+
       if (!nextTranslationId) {
         throw new Error("No available translations found.");
       }
@@ -315,7 +327,6 @@ export function createBibleSelectorState(
     options?: BibleSelectorSetOpenOptions
   ) => {
     if (open) {
-      console.log("Opening Bible selector with pane:", nextPane, options);
       if (nextPane) {
         pane.value = nextPane;
       }
@@ -355,6 +366,12 @@ export function createBibleSelectorState(
   const isSelectorOpenInHistory = () => {
     const state = getHistoryState();
     return state.bibleSelectorOpen === true;
+  };
+
+  const openTabs = () => {
+    if (isDrawerOpen) return;
+    void setOpen(false);
+    sidebar.openSidebar();
   };
 
   effect(() => {
@@ -454,16 +471,14 @@ export function createBibleSelectorState(
       return;
     }
 
-    const newTab = tabsManager.addTab();
+    const newTab = tabsManager.addTab(undefined, {
+      initialTranslationId: selectedTranslationId.value,
+      initialBookId: selectedBookId,
+      initialChapterNumber: chapter,
+    });
     panesManager.openInPane(pane.value.id, {
       tabId: newTab.id,
     });
-
-    await newTab.readingState.selectTranslationAndChapter(
-      selectedTranslationId.value,
-      selectedBookId,
-      chapter
-    );
     setOpen(false);
   };
 
@@ -492,10 +507,24 @@ export function createBibleSelectorState(
         expandedBookId.value = firstBook.id;
       }
 
+      const previousTranslation = selectedTranslation.value;
       selectedTranslationId.value = nextTranslationId;
       search.value = "";
       languageQuery.value = "";
       selectingTranslation.value = false;
+      if (previousTranslation && isOpen.value) {
+        const currentBook = books.books.find(
+          (b) => b.id === currentBookId.value
+        );
+        if (currentBook) {
+          await handleChapterSelect(
+            currentBook.id,
+            currentChapterNumber.value ?? 1
+          );
+        } else {
+          await handleChapterSelect(firstBook?.id ?? "GEN", 1);
+        }
+      }
     } catch (err) {
       error.value =
         err instanceof Error
@@ -990,5 +1019,8 @@ export function createBibleSelectorState(
     inputValue,
     filteredApiTranslations,
     handleTranslationAddition,
+    openTabs,
+    bookmarks,
+    showApocryphaInfo,
   };
 }
