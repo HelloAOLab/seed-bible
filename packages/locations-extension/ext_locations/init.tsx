@@ -1,7 +1,6 @@
 import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { computed } from "@preact/signals";
 import { registerExtension } from "seed-bible";
-import { loadMap } from "@seed-bible/geo-importer-extension";
 import { LocationIcon } from "seed-bible/components";
 import locations from "./locations.json";
 
@@ -47,19 +46,19 @@ registerExtension({
       return findLocationsInText(text);
     };
 
-    const getPlaceGeoJsonUrl = (place: PlaceData) => {
-      if (place.place === place.geojson) {
-        return [
-          `https://raw.githubusercontent.com/Bored-Wizard/isreal_geojson/main/${place.geojson}.geojson`,
-          true,
-        ] as const;
-      } else {
-        return [
-          `https://raw.githubusercontent.com/openbibleinfo/Bible-Geocoding-Data/main/geometry/${place.geojson}.geojson`,
-          false,
-        ] as const;
-      }
-    };
+    // const getPlaceGeoJsonUrl = (place: PlaceData) => {
+    //   if (place.place === place.geojson) {
+    //     return [
+    //       `https://raw.githubusercontent.com/Bored-Wizard/isreal_geojson/main/${place.geojson}.geojson`,
+    //       true,
+    //     ] as const;
+    //   } else {
+    //     return [
+    //       `https://raw.githubusercontent.com/openbibleinfo/Bible-Geocoding-Data/main/geometry/${place.geojson}.geojson`,
+    //       false,
+    //     ] as const;
+    //   }
+    // };
 
     const foundPlaces = computed(() => {
       const readingState = context.app.currentReadingState.value;
@@ -79,6 +78,7 @@ registerExtension({
         type: "detached",
         mapPortal: "map",
       });
+
       // TODO: Fix
       // mapPortalBot.tags.mapPortalKind = "plane";
       // mapPortalBot.tags.mapPortalGridKind = "plane";
