@@ -1,5 +1,5 @@
 import { signal } from "@preact/signals";
-import { initializeTwitchWS } from "ext_twitchSub.client.initializeTwitchWS";
+import { initializeTwitchWS } from "./initializeTwitchWS";
 
 function createTwitchSubManagerMock(accessToken: string | null = "token-1") {
   return {

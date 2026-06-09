@@ -1,4 +1,4 @@
-import App from "ext_twitchPub.host.App";
+import App from "./App";
 const { render } = os.appHooks;
 
 const { state } = that;

@@ -3,10 +3,10 @@ import {
   fetchUserIds,
   checkAuthorizationStatus,
   getDeviceAuthUrl,
-} from "ext_twitchPub.host.utils";
-import { type TwitchPubState } from "ext_twitchPub.host.interface";
-import { type SeedBibleState } from "seed-bible.app.api";
-import sendMessage from "ext_twitchPub.host.sendMessage";
+} from "./utils";
+import { type TwitchPubState } from "./interface";
+import { type SeedBibleState } from "seed-bible";
+import sendMessage from "./sendMessage";
 
 const sendAnnouncement = (
   accessToken: string,

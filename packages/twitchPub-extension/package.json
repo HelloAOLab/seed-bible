@@ -1,0 +1,21 @@
+{
+  "name": "@seed-bible/twitch-pub-extension",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./ext_twitchPub/host/init.tsx"
+    }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "dependencies": {
+    "seed-bible": "workspace:*"
+  },
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.17.1"
+}

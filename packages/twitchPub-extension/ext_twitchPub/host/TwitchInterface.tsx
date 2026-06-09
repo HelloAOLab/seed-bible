@@ -1,8 +1,8 @@
 import { effect } from "@preact/signals";
-import QRCodeComponent from "ext_twitchPub.host.QRCode";
-import { TwitchIcon, SettingsIcon } from "ext_twitchPub.host.icons";
-import { type TwitchPubState } from "ext_twitchPub.host.interface";
-import { useI18n } from "seed-bible.i18n.I18nManager";
+import QRCodeComponent from "./QRCode";
+import { TwitchIcon, SettingsIcon } from "./icons";
+import { type TwitchPubState } from "./interface";
+import { useI18n } from "seed-bible/i18n";
 
 const TwitchInterface = (props: { state: TwitchPubState }) => {
   const { uiHidden, qrValue, setCurrentPage, hideUI, showUI } = props.state;

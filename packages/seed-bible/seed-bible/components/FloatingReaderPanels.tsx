@@ -1,5 +1,5 @@
 import { useSignal } from "@preact/signals";
-import { useI18n } from "seed-bible.i18n.I18nManager";
+import { useI18n } from "../i18n/I18nManager";
 import { closeContextMenus } from "seed-bible.components.ContextMenu";
 import {
   DEFAULT_TRANSLATION_ID,

@@ -3,7 +3,7 @@ import {
   type WSTwitchMessage,
   type WSWelcomeMessage,
   type WSNotificationMessage,
-} from "ext_twitchSub.client.interface";
+} from "./interface";
 
 interface ChannelChatMessageEvent {
   broadcaster_user_id: string;

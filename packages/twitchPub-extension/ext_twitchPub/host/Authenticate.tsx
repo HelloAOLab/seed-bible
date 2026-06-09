@@ -1,5 +1,5 @@
-import { Loading, TwitchIcon } from "ext_twitchPub.host.icons";
-import { useI18n } from "seed-bible.i18n.I18nManager";
+import { Loading, TwitchIcon } from "./icons";
+import { useI18n } from "seed-bible/i18n";
 
 const Authorization = () => {
   const { t } = useI18n();

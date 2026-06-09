@@ -1,10 +1,10 @@
 import { type Signal } from "@preact/signals";
-import sendMessage from "ext_twitchPub.host.sendMessage";
+import sendMessage from "./sendMessage";
 import {
   type WSTwitchMessage,
   type WSWelcomeMessage,
   type WSNotificationMessage,
-} from "ext_twitchPub.host.interface";
+} from "./interface";
 
 const TWITCH_VALIDATE_URL = "https://id.twitch.tv/oauth2/validate";
 const TWITCH_EVENTSUB_WS_URL = "wss://eventsub.wss.twitch.tv/ws";

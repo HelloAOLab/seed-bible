@@ -1,4 +1,4 @@
-import { useI18n } from "seed-bible.i18n.I18nManager";
+import { useI18n } from "seed-bible/i18n";
 import QRCode from "https://esm.run/qrcode";
 
 const { useEffect, useRef, useState, useCallback } = os.appHooks;

@@ -297,6 +297,18 @@ importers:
         specifier: workspace:*
         version: link:../seed-bible
 
+  packages/twitchPub-extension:
+    dependencies:
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+
+  packages/twitchSub-extension:
+    dependencies:
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+
 packages:
 
   '@anthropic-ai/sdk@0.24.3':

@@ -1,5 +1,5 @@
-import { type TwitchPubState } from "ext_twitchPub.host.interface";
-import { type SeedBibleState } from "seed-bible.app.api";
+import { type TwitchPubState } from "./interface";
+import { type SeedBibleState } from "seed-bible";
 import { type Signal } from "@preact/signals";
 
 const senderScope =

@@ -1,6 +1,6 @@
-import DraggableContainer from "ext_twitchSub.client.DraggableContainer";
-import TwitchSettings from "ext_twitchSub.client.TwitchSettings";
-import { type TwitchSubInterface } from "ext_twitchSub.client.interface";
+import DraggableContainer from "./DraggableContainer";
+import TwitchSettings from "./TwitchSettings";
+import { type TwitchSubInterface } from "./interface";
 const style = thisBot.tags["App.css"];
 
 function App(props: {

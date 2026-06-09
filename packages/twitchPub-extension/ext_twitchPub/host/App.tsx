@@ -1,9 +1,9 @@
-import DraggableContainer from "ext_twitchPub.host.DraggableContainer";
-import Login from "ext_twitchPub.host.Login";
-import Authorization from "ext_twitchPub.host.Authenticate";
-import TwitchInterface from "ext_twitchPub.host.TwitchInterface";
-import TwitchSettings from "ext_twitchPub.host.TwitchSettings";
-import { type TwitchPubState } from "ext_twitchPub.host.interface";
+import DraggableContainer from "./DraggableContainer";
+import Login from "./Login";
+import Authorization from "./Authenticate";
+import TwitchInterface from "./TwitchInterface";
+import TwitchSettings from "./TwitchSettings";
+import { type TwitchPubState } from "./interface";
 const style = thisBot.tags["App.css"];
 
 function App(props: { state: TwitchPubState }) {

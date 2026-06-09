@@ -1,7 +1,7 @@
-import { TwitchIcon } from "ext_twitchPub.host.icons";
-import { type TwitchPubState } from "ext_twitchPub.host.interface";
+import { TwitchIcon } from "./icons";
+import { type TwitchPubState } from "./interface";
 const { useState, useEffect } = os.appHooks;
-import { useI18n } from "seed-bible.i18n.I18nManager";
+import { useI18n } from "seed-bible/i18n";
 
 const TwitchSettings = (props: { state: TwitchPubState }) => {
   const { setCurrentPage, settings } = props.state;

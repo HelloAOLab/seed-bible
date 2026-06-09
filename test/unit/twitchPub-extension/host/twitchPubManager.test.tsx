@@ -1,8 +1,8 @@
-import { CreateTwitchPubState } from "ext_twitchPub.host.twitchPubManager";
-import sendMessage from "ext_twitchPub.host.sendMessage";
+import { CreateTwitchPubState } from "./twitchPubManager";
+import sendMessage from "./sendMessage";
 import { TextEncoder } from "node:util";
 
-jest.mock("ext_twitchPub.host.sendMessage", () => ({
+jest.mock("./sendMessage", () => ({
   __esModule: true,
   default: jest.fn(),
 }));

@@ -1,6 +1,6 @@
-import { TwitchIcon } from "ext_twitchPub.host.icons";
-import { type TwitchPubState } from "ext_twitchPub.host.interface";
-import { useI18n } from "seed-bible.i18n.I18nManager";
+import { TwitchIcon } from "./icons";
+import { type TwitchPubState } from "./interface";
+import { useI18n } from "seed-bible/i18n";
 
 const Login = (props: { state: TwitchPubState }) => {
   const { twitchConfig, getDeviceAuthUrl, loading } = props.state;

@@ -4,7 +4,7 @@ jest.mock("../i18n/I18nManager", () => ({
   addTranslations: jest.fn(),
 }));
 
-import { addTranslations } from "seed-bible.i18n.I18nManager";
+import { addTranslations } from "../i18n/I18nManager";
 
 import {
   createExtensionManager,

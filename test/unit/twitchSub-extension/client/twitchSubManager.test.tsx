@@ -1,13 +1,13 @@
 import { signal } from "@preact/signals";
-import { CreateTwitchSubState } from "ext_twitchSub.client.twitchSubManager";
+import { CreateTwitchSubState } from "./twitchSubManager";
 import { TextDecoder } from "node:util";
 
-jest.mock("ext_twitchSub.client.App", () => ({
+jest.mock("./App", () => ({
   __esModule: true,
   default: () => null,
 }));
 
-jest.mock("ext_twitchSub.client.icons", () => ({
+jest.mock("./icons", () => ({
   __esModule: true,
   TwitchIcon: () => null,
 }));

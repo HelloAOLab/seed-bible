@@ -1,9 +1,9 @@
-import App from "ext_twitchSub.client.App";
-import { TwitchIcon } from "ext_twitchSub.client.icons";
-import { initializeTwitchWS } from "ext_twitchSub.client.initializeTwitchWS";
+import App from "./App";
+import { TwitchIcon } from "./icons";
+import { initializeTwitchWS } from "./initializeTwitchWS";
 import { signal, effect, type Signal } from "@preact/signals";
-import { type TwitchSubInterface } from "ext_twitchSub.client.interface";
-import { type SeedBibleState } from "seed-bible.app.api";
+import { type TwitchSubInterface } from "./interface";
+import { type SeedBibleState } from "seed-bible";
 const { render } = os.appHooks;
 
 function getBooleanMaskValue(value: unknown, defaultValue: boolean) {
