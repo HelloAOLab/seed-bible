@@ -2,7 +2,6 @@ import { useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import type { TextSize } from "../managers/ConfigManager";
 import {
-  AppSettingsSchema,
   TEXT_FONT_OPTIONS,
   TEXT_SECTION_THEME_COLOR_VAR,
   TEXT_WEIGHT_OPTIONS,
@@ -21,15 +20,8 @@ import {
   type ThemeColorKey,
 } from "../managers/ThemeManager";
 import { download, translateTitle } from "../components/Utils";
-import {
-  ExtensionInitalizer,
-  type ExtensionSet,
-} from "../managers/ExtensionManager";
+import { ExtensionInitalizer } from "../managers/ExtensionManager";
 import { useI18n } from "../i18n/I18nManager";
-import {
-  ContextMenuItem,
-  ContextMenuWithButton,
-} from "../components/ContextMenu";
 import {
   ExtensionsIcon,
   MarginIcon,
@@ -42,8 +34,7 @@ import {
   handleVerticalListKeyNav,
 } from "../components/KeyboardNav";
 import { useRef } from "preact/hooks";
-import { z } from "zod";
-import type { RequestedSettingsView } from "seed-bible.managers.SidebarManager";
+import type { RequestedSettingsView } from "../managers/SidebarManager";
 
 const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
 

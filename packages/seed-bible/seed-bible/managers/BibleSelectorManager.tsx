@@ -14,8 +14,8 @@ import type {
   BookOrientation,
   SettingsManager,
 } from "../managers/SettingsManager";
-import { createSidebar } from "seed-bible.managers.SidebarManager";
-import { type BookmarksManager } from "seed-bible.managers.BookmarksManager";
+import { createSidebar } from "../managers/SidebarManager";
+import { type BookmarksManager } from "../managers/BookmarksManager";
 import {
   computed,
   effect,

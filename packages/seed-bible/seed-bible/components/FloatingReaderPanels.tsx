@@ -1,12 +1,13 @@
 import { useSignal } from "@preact/signals";
 import { useI18n } from "../i18n/I18nManager";
-import { closeContextMenus } from "seed-bible.components.ContextMenu";
+import { closeContextMenus } from "./ContextMenu";
 import {
   DEFAULT_TRANSLATION_ID,
   DEFAULT_TRANSLATION_LANGUAGE,
-} from "seed-bible.managers.BibleReadingManager";
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import type { ReaderTab } from "seed-bible.managers.TabsManager";
+} from "../managers/BibleReadingManager";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import type { ReaderTab } from "../managers/TabsManager";
+import { useEffect, useRef } from "preact/hooks";
 
 interface SearchResult {
   id: string;
@@ -30,8 +31,6 @@ function getOrCreateSearchTargetTab(state: SeedBibleState): ReaderTab {
   state.panes.setSelectedPaneTab(tab.id);
   return tab;
 }
-
-const { useEffect, useRef } = os.appHooks;
 
 interface FloatingReaderPanelsProps {
   state: SeedBibleState;

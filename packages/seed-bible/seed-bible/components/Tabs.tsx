@@ -2,9 +2,9 @@ import { useSignal } from "@preact/signals";
 import {
   DEFAULT_BOOKMARK_CATEGORY,
   type BookmarkVerse,
-} from "seed-bible.managers.BookmarksManager";
+} from "../managers/BookmarksManager";
 import { DEFAULT_TRANSLATION_ID } from "../managers/BibleReadingManager";
-import type { ReaderTab } from "seed-bible.managers.TabsManager";
+import type { ReaderTab } from "../managers/TabsManager";
 import {
   PANE_LAYOUT_OPTIONS,
   type PaneLayoutId,
@@ -765,8 +765,8 @@ function TabRow(props: TabRowProps) {
                 if (tab.sharedSession) {
                   const url = getSessionUrl(tab.sharedSession);
 
-                  os.share({
-                    title: configBot.tags.title,
+                  navigator.share({
+                    title: document.title,
                     url: url.href,
                   });
                 }
@@ -877,7 +877,7 @@ export interface BookmarkLocation {
 }
 
 function getSessionUrl(session: BibleReadingSession) {
-  const url = new URL(configBot.tags.url);
+  const url = new URL(window.location.href);
   const pattern = url.searchParams.get("pattern");
   url.search = "";
   url.searchParams.set("sessionId", session.id);
@@ -1436,11 +1436,12 @@ export function Tabs(props: TabsProps) {
                 aria-label={t("tasks", { defaultValue: "Tasks" })}
                 title={t("tasks", { defaultValue: "Tasks" })}
                 onClick={() => {
-                  os.toast(
-                    t("today-coming-soon", {
-                      defaultValue: "Today screen is coming soon",
-                    })
-                  );
+                  // TODO: Support toasts
+                  // os.toast(
+                  //   t("today-coming-soon", {
+                  //     defaultValue: "Today screen is coming soon",
+                  //   })
+                  // );
                 }}
               >
                 <svg
@@ -1838,13 +1839,14 @@ export function Sidebar(props: SidebarProps) {
           createSharedSession={async () => {
             const session = await state.app.createSharedSession();
             const url = getSessionUrl(session);
-            os.setClipboard(url.href);
-            os.toast(
-              t("link-to-join-shared-session-copied", {
-                defaultValue:
-                  "A link to join the shared session was copied to your clipboard",
-              })
-            );
+
+            navigator.clipboard.writeText(url.href);
+            // os.toast(
+            //   t("link-to-join-shared-session-copied", {
+            //     defaultValue:
+            //       "A link to join the shared session was copied to your clipboard",
+            //   })
+            // );
           }}
         />
       )}

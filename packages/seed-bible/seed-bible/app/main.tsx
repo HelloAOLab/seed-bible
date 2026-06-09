@@ -3,7 +3,7 @@ import {} from "../i18n/I18nManager";
 import { PaneLayout } from "../components/PaneLayout";
 import { BibleSelector } from "../components/BibleSelector";
 import { BibleReaderToolbar } from "../components/BibleReaderToolbar";
-import { FloatingReaderPanels } from "seed-bible.components.FloatingReaderPanels";
+import { FloatingReaderPanels } from "../components/FloatingReaderPanels";
 import { Sidebar, SharedSessionsToasts } from "../components/Tabs";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 import { CasualOSApp } from "../components/CasualOSApp";

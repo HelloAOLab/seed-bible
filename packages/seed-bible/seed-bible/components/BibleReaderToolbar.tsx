@@ -6,7 +6,7 @@ import { applyToolbarCustomization } from "../managers/SettingsManager";
 import { highlightContainsVerse } from "../managers/HighlightsManager";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import type { BibleReadingState } from "../managers/BibleReadingManager";
-import type { BibleReaderToolbarTool } from "seed-bible.managers.BibleToolsManager";
+import type { BibleReaderToolbarTool } from "../managers/BibleToolsManager";
 import {
   handleHorizontalListKeyNav,
   handleVerticalListKeyNav,
@@ -17,7 +17,7 @@ import {
   SelfAvatarVisual,
   getSelfDisplayName,
   openBookmarkCategoryModal,
-} from "seed-bible.components.Tabs";
+} from "./Tabs";
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
 
@@ -743,11 +743,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   label={t("today", { defaultValue: "Today" })}
                   onClick={() => {
                     isMoreMenuOpen.value = false;
-                    os.toast(
-                      t("today-coming-soon", {
-                        defaultValue: "Today screen is coming soon",
-                      })
-                    );
+
+                    // TODO: Support toasts
+                    // os.toast(
+                    //   t("today-coming-soon", {
+                    //     defaultValue: "Today screen is coming soon",
+                    //   })
+                    // );
                   }}
                 />
 

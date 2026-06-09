@@ -9,7 +9,7 @@ import type {
   VerseDecoration,
   VerseDecorationInput,
 } from "../managers/BibleReadingManager";
-import type { UserProfile } from "seed-bible.managers.LoginManager";
+import type { UserProfile } from "../managers/LoginManager";
 
 jest.mock("../managers/BibleReadingManager", () => ({
   createBibleReadingState: jest.fn(),

@@ -6,8 +6,8 @@ import {
   type Signal,
 } from "@preact/signals";
 import { z } from "zod";
-import type { LoginManager } from "seed-bible.managers.LoginManager";
-import type { ReaderTab } from "seed-bible.managers.TabsManager";
+import type { LoginManager } from "../managers/LoginManager";
+import type { ReaderTab } from "../managers/TabsManager";
 
 /**
  * Verse target for a bookmark: a single verse number or an inclusive `[start, end]`
@@ -293,7 +293,7 @@ export interface BookmarksManager {
    * No-op when there is no selection.
    */
   toggleBookmarkForSelectedVerses: (
-    readingState: import("seed-bible.managers.BibleReadingManager").BibleReadingState
+    readingState: import("../managers/BibleReadingManager").BibleReadingState
   ) => Promise<void>;
 
   /** Creates a new (empty) category. No-op if one with that name exists. */

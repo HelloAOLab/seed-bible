@@ -39,7 +39,7 @@ import {
 import {
   createBookmarksManager,
   type BookmarksManager,
-} from "seed-bible.managers.BookmarksManager";
+} from "../managers/BookmarksManager";
 import {
   createSessionsManager,
   type BibleReadingSession,
@@ -559,10 +559,7 @@ export function createSeedBibleState(): SeedBibleState {
   // never re-acquire them as host on the new connection.
   effect(() => {
     const newLoginUserId = login.userId.value;
-    const localConnectionId =
-      typeof configBot !== "undefined" && configBot?.id
-        ? String(configBot.id)
-        : null;
+    const localConnectionId = os.connectionId;
     const desiredHostId = newLoginUserId ?? localConnectionId;
     if (!desiredHostId) return;
     for (const tab of tabs.tabs.value) {
@@ -617,7 +614,8 @@ export function createSeedBibleState(): SeedBibleState {
   });
 
   const setupInitialSession = async () => {
-    const initialSessionId = configBot.tags.sessionId;
+    const initialSessionId =
+      navigation.currentUrl.value.searchParams.get("sessionId");
     if (!initialSessionId) {
       return;
     }
