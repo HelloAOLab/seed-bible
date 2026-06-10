@@ -12,6 +12,7 @@ import stringify from "@casual-simulation/fast-json-stable-stringify";
 import axios from "axios";
 import { isArrayBuffer } from "es-toolkit";
 import { v4 as uuid } from "uuid";
+import type { RecordFileFailure } from "@casual-simulation/aux-records";
 
 export type CasualOSManager = ReturnType<typeof CasualOSManager>;
 
@@ -252,7 +253,7 @@ export async function uploadFile(
           recordFileResult.errorMessage
       );
     } else {
-      fileUrl = recordFileResult.existingFileUrl!;
+      fileUrl = (recordFileResult as RecordFileFailure).existingFileUrl!;
     }
   } else {
     const method = recordFileResult.uploadMethod;

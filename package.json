@@ -107,7 +107,8 @@
       "puppeteer"
     ],
     "patchedDependencies": {
-      "@casual-simulation/fast-json-stable-stringify": "patches/@casual-simulation__fast-json-stable-stringify.patch"
+      "@casual-simulation/fast-json-stable-stringify": "patches/@casual-simulation__fast-json-stable-stringify.patch",
+      "@casual-simulation/aux-records": "patches/@casual-simulation__aux-records.patch"
     }
   },
   "dependencies": {

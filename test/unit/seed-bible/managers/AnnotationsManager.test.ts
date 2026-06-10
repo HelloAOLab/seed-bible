@@ -32,11 +32,15 @@ describe("AnnotationsManager", () => {
 
   beforeEach(() => {
     os = CasualOSManager();
-    recordDataMock = vi.fn().mockResolvedValue({ success: true });
-    eraseDataMock = vi.fn().mockResolvedValue({ success: true });
+    recordDataMock = vi
+      .spyOn(os, "recordData")
+      .mockResolvedValue({ success: true } as any);
+    eraseDataMock = vi
+      .spyOn(os, "eraseData")
+      .mockResolvedValue({ success: true } as never);
     listDataByMarkerMock = vi
-      .fn()
-      .mockResolvedValue({ success: true, items: [] });
+      .spyOn(os, "listDataByMarker")
+      .mockResolvedValue({ success: true, items: [] } as never);
 
     login = {
       authBot: signal(null),
@@ -47,13 +51,6 @@ describe("AnnotationsManager", () => {
       updateProfile: vi.fn().mockResolvedValue(undefined),
       getUserProfile: vi.fn().mockResolvedValue({ name: "" }),
       uploadProfilePicture: vi.fn().mockResolvedValue(undefined),
-    };
-
-    (globalThis as any).os = {
-      ...(globalThis as any).os,
-      recordData: recordDataMock,
-      eraseData: eraseDataMock,
-      listDataByMarker: listDataByMarkerMock,
     };
   });
 

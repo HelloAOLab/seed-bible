@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
+  '@casual-simulation/aux-records':
+    hash: b5692a44748c9e7178367491286fa1eec21fb9786bd18d1369173e6ef587011e
+    path: patches/@casual-simulation__aux-records.patch
   '@casual-simulation/fast-json-stable-stringify':
     hash: a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef
     path: patches/@casual-simulation__fast-json-stable-stringify.patch
@@ -103,7 +106,7 @@ importers:
         version: 4.2.3
       '@casual-simulation/aux-records':
         specifier: ^4.2.3
-        version: 4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)
+        version: 4.2.4(patch_hash=b5692a44748c9e7178367491286fa1eec21fb9786bd18d1369173e6ef587011e)(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/aux-runtime':
         specifier: ^4.2.3
         version: 4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)
@@ -6491,7 +6494,7 @@ snapshots:
       yjs: 13.6.8
       zod: 4.1.12
 
-  '@casual-simulation/aux-records@4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)':
+  '@casual-simulation/aux-records@4.2.4(patch_hash=b5692a44748c9e7178367491286fa1eec21fb9786bd18d1369173e6ef587011e)(@babel/runtime@7.29.2)(ws@8.19.0)':
     dependencies:
       '@anthropic-ai/sdk': 0.92.0(zod@4.1.12)
       '@casual-simulation/aux-common': 4.2.3
@@ -6536,7 +6539,7 @@ snapshots:
   '@casual-simulation/aux-runtime@4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)':
     dependencies:
       '@casual-simulation/aux-common': 4.2.3
-      '@casual-simulation/aux-records': 4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/aux-records': 4.2.4(patch_hash=b5692a44748c9e7178367491286fa1eec21fb9786bd18d1369173e6ef587011e)(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/crypto': 4.0.5
       '@casual-simulation/engine262': 0.0.1-4de2170374e22761996e46eb1362f4496ee57f8f
       '@casual-simulation/error-stack-parser': 2.0.7
@@ -6582,7 +6585,7 @@ snapshots:
   '@casual-simulation/aux-vm@4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)':
     dependencies:
       '@casual-simulation/aux-common': 4.2.3
-      '@casual-simulation/aux-records': 4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/aux-records': 4.2.4(patch_hash=b5692a44748c9e7178367491286fa1eec21fb9786bd18d1369173e6ef587011e)(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/aux-runtime': 4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/crypto': 4.0.5
       '@casual-simulation/fast-json-stable-stringify': 4.0.5(patch_hash=a37823e251d7d3ba40f212da3583baff724ac2bdaa83c3412dff9e0e5ec113ef)
@@ -8708,7 +8711,7 @@ snapshots:
   casualos@4.2.4-alpha.25223847785(@babel/runtime@7.29.2)(ws@8.19.0):
     dependencies:
       '@casual-simulation/aux-common': 4.2.3
-      '@casual-simulation/aux-records': 4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)
+      '@casual-simulation/aux-records': 4.2.4(patch_hash=b5692a44748c9e7178367491286fa1eec21fb9786bd18d1369173e6ef587011e)(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/aux-runtime': 4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)
       '@casual-simulation/aux-vm': 4.2.4(@babel/runtime@7.29.2)(ws@8.19.0)
       '@octokit/app': 15.1.6

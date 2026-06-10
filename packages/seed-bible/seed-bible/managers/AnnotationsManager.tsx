@@ -114,9 +114,14 @@ export function createAnnotationsManager(
       query?.group
     );
 
-    await os.recordData(recordName, parsed.id, parsed, {
+    const result = await os.recordData(recordName, parsed.id, parsed, {
       marker,
     });
+
+    if (!result.success) {
+      console.error("Error saving annotation:", result);
+      throw new Error(`Error saving annotation: ${result.errorCode}`);
+    }
 
     return parsed;
   };
@@ -126,7 +131,12 @@ export function createAnnotationsManager(
     query?: AnnotationQuery
   ): Promise<void> => {
     const recordName = await resolveRecordName(query?.recordName);
-    await os.eraseData(recordName, annotationId);
+    const result = await os.eraseData(recordName, annotationId);
+
+    if (!result.success) {
+      console.error("Error deleting annotation:", result);
+      throw new Error(`Error deleting annotation: ${result.errorCode}`);
+    }
   };
 
   const listAnnotationsForChapter = async (
