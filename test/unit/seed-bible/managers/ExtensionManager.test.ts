@@ -1,7 +1,7 @@
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 
-jest.mock("@packages/seed-bible/seed-bible/managers/i18n/I18nManager", () => ({
-  addTranslations: jest.fn(),
+vi.mock("@packages/seed-bible/seed-bible/managers/i18n/I18nManager", () => ({
+  addTranslations: vi.fn(),
 }));
 
 import { addTranslations } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
@@ -12,16 +12,17 @@ import {
   registerExtension,
   type ExtensionSet,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
+import type { Mock } from "vitest";
 
 describe("ExtensionInitalizer", () => {
   let initializer: ExtensionInitalizer;
   let context: SeedBibleState;
-  let errorSpy: jest.SpyInstance;
+  let errorSpy: Mock;
 
   beforeEach(() => {
     initializer = new ExtensionInitalizer();
     context = {} as SeedBibleState;
-    errorSpy = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -29,7 +30,7 @@ describe("ExtensionInitalizer", () => {
   });
 
   it("initializes extensions only once", () => {
-    const init = jest.fn(() => ({}));
+    const init = vi.fn(() => ({}));
 
     initializer.registerExtension({
       id: "ext.single-init",
@@ -43,7 +44,7 @@ describe("ExtensionInitalizer", () => {
   });
 
   it("supports registering extensions before context setup", () => {
-    const init = jest.fn(() => ({}));
+    const init = vi.fn(() => ({}));
 
     initializer.registerExtension({
       id: "ext.before-context",
@@ -59,7 +60,7 @@ describe("ExtensionInitalizer", () => {
   });
 
   it("supports registering extensions after context setup", () => {
-    const init = jest.fn(() => ({}));
+    const init = vi.fn(() => ({}));
 
     initializer.setupExtensionContext(context);
 
@@ -73,8 +74,8 @@ describe("ExtensionInitalizer", () => {
   });
 
   it("supports declaring extension dependencies", () => {
-    const initA = jest.fn(() => ({ value: "A" }));
-    const initB = jest.fn(() => ({ value: "B" }));
+    const initA = vi.fn(() => ({ value: "A" }));
+    const initB = vi.fn(() => ({ value: "B" }));
 
     initializer.registerExtension({
       id: "ext.dependency-a",
@@ -126,7 +127,7 @@ describe("ExtensionInitalizer", () => {
       init: () => ({ sharedValue: 42 }),
     });
 
-    const initB = jest.fn(
+    const initB = vi.fn(
       (_ctx: SeedBibleState, dependencies: Record<string, object>) => {
         return {
           received: dependencies["ext.exports-a"],
@@ -152,8 +153,8 @@ describe("ExtensionInitalizer", () => {
   });
 
   it("uses a generator initializer's return value as exports and calls yielded cleanup functions", () => {
-    const cleanup1 = jest.fn();
-    const cleanup2 = jest.fn();
+    const cleanup1 = vi.fn();
+    const cleanup2 = vi.fn();
 
     function* generatorInit() {
       yield cleanup1;
@@ -201,8 +202,8 @@ describe("ExtensionInitalizer", () => {
   });
 
   it("logs circular dependencies between extensions", () => {
-    const initA = jest.fn(() => ({}));
-    const initB = jest.fn(() => ({}));
+    const initA = vi.fn(() => ({}));
+    const initB = vi.fn(() => ({}));
 
     initializer.registerExtension({
       id: "ext.circular-a",
@@ -229,7 +230,7 @@ describe("ExtensionInitalizer", () => {
   });
 
   it("unregisterExtension() removes a registered extension", () => {
-    const init = jest.fn(() => ({}));
+    const init = vi.fn(() => ({}));
 
     initializer.registerExtension({
       id: "ext.to-unregister",
@@ -250,8 +251,8 @@ describe("ExtensionInitalizer", () => {
   });
 
   it("unregisterExtension() calls cleanup functions in reverse order", () => {
-    const cleanup1 = jest.fn();
-    const cleanup2 = jest.fn();
+    const cleanup1 = vi.fn();
+    const cleanup2 = vi.fn();
     const cleanupOrder: number[] = [];
 
     cleanup1.mockImplementation(() => cleanupOrder.push(1));
@@ -304,7 +305,7 @@ describe("ExtensionInitalizer", () => {
   });
 
   it("unregisterExtension() allows re-registration of the same extension ID", () => {
-    const init1 = jest.fn(() => ({ version: 1 }));
+    const init1 = vi.fn(() => ({ version: 1 }));
 
     initializer.registerExtension({
       id: "ext.re-register",
@@ -317,7 +318,7 @@ describe("ExtensionInitalizer", () => {
 
     initializer.unregisterExtension("ext.re-register");
 
-    const init2 = jest.fn(() => ({ version: 2 }));
+    const init2 = vi.fn(() => ({ version: 2 }));
 
     initializer.registerExtension({
       id: "ext.re-register",
@@ -332,16 +333,16 @@ describe("ExtensionInitalizer", () => {
 });
 
 describe("createExtensionManager", () => {
-  let installPackage: jest.Mock;
-  let shoutSpy: jest.Mock;
-  let sha256Spy: jest.Mock;
-  let addTranslationsMock: jest.Mock;
+  let installPackage: Mock;
+  let shoutSpy: Mock;
+  let sha256Spy: Mock;
+  let addTranslationsMock: Mock;
 
   beforeEach(() => {
-    installPackage = jest.fn(async () => ({ success: true }));
-    shoutSpy = jest.fn();
-    sha256Spy = jest.fn(() => "deadbeefcafebabefeedface1234567890abcdef");
-    addTranslationsMock = addTranslations as jest.Mock;
+    installPackage = vi.fn(async () => ({ success: true }));
+    shoutSpy = vi.fn();
+    sha256Spy = vi.fn(() => "deadbeefcafebabefeedface1234567890abcdef");
+    addTranslationsMock = addTranslations as Mock;
     addTranslationsMock.mockReset();
 
     (globalThis as any).os = {
@@ -902,7 +903,7 @@ describe("createExtensionManager", () => {
 
   it("getAllExtensionsAsSet() returns undefined and warns when there are no extension packages", () => {
     const manager = createExtensionManager();
-    const warnSpy = jest
+    const warnSpy = vi
       .spyOn(console, "warn")
       .mockImplementation(() => undefined);
 

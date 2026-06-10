@@ -5,6 +5,7 @@ import {
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { signal } from "@preact/signals";
+import type { Mock, Mocked } from "vitest";
 
 function createCommentAnnotation(
   overrides: Partial<Annotation> = {}
@@ -23,17 +24,17 @@ function createCommentAnnotation(
 }
 
 describe("AnnotationsManager", () => {
-  let recordDataMock: jest.Mock;
-  let eraseDataMock: jest.Mock;
-  let listDataByMarkerMock: jest.Mock;
-  let login: jest.Mocked<LoginManager>;
+  let recordDataMock: Mock;
+  let eraseDataMock: Mock;
+  let listDataByMarkerMock: Mock;
+  let login: Mocked<LoginManager>;
   let os: CasualOSManager;
 
   beforeEach(() => {
     os = CasualOSManager();
-    recordDataMock = jest.fn().mockResolvedValue({ success: true });
-    eraseDataMock = jest.fn().mockResolvedValue({ success: true });
-    listDataByMarkerMock = jest
+    recordDataMock = vi.fn().mockResolvedValue({ success: true });
+    eraseDataMock = vi.fn().mockResolvedValue({ success: true });
+    listDataByMarkerMock = vi
       .fn()
       .mockResolvedValue({ success: true, items: [] });
 
@@ -41,11 +42,11 @@ describe("AnnotationsManager", () => {
       authBot: signal(null),
       userId: signal("user-1"),
       profile: signal(null),
-      login: jest.fn().mockResolvedValue(undefined),
-      logout: jest.fn().mockResolvedValue(undefined),
-      updateProfile: jest.fn().mockResolvedValue(undefined),
-      getUserProfile: jest.fn().mockResolvedValue({ name: "" }),
-      uploadProfilePicture: jest.fn().mockResolvedValue(undefined),
+      login: vi.fn().mockResolvedValue(undefined),
+      logout: vi.fn().mockResolvedValue(undefined),
+      updateProfile: vi.fn().mockResolvedValue(undefined),
+      getUserProfile: vi.fn().mockResolvedValue({ name: "" }),
+      uploadProfilePicture: vi.fn().mockResolvedValue(undefined),
     };
 
     (globalThis as any).os = {

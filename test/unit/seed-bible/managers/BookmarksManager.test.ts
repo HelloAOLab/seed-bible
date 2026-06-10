@@ -6,6 +6,7 @@ import {
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { signal } from "@preact/signals";
+import type { Mock, Mocked } from "vitest";
 
 function createBookmark(overrides: Partial<Bookmark> = {}): Bookmark {
   return {
@@ -20,10 +21,10 @@ function createBookmark(overrides: Partial<Bookmark> = {}): Bookmark {
 }
 
 describe("BookmarksManager", () => {
-  let getDataMock: jest.SpyInstance;
-  let recordDataMock: jest.SpyInstance;
-  let warnSpy: jest.SpyInstance;
-  let login: jest.Mocked<LoginManager>;
+  let getDataMock: Mock;
+  let recordDataMock: Mock;
+  let warnSpy: Mock;
+  let login: Mocked<LoginManager>;
   let os: CasualOSManager;
 
   const flushPromises = async () => {
@@ -33,21 +34,21 @@ describe("BookmarksManager", () => {
 
   beforeEach(() => {
     os = CasualOSManager();
-    getDataMock = jest.spyOn(os, "getData").mockResolvedValue(null);
-    recordDataMock = jest
+    getDataMock = vi.spyOn(os, "getData").mockResolvedValue(null);
+    recordDataMock = vi
       .spyOn(os, "recordData")
-      .mockResolvedValue(undefined as any);
-    warnSpy = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+      .mockResolvedValue(undefined as never);
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
     login = {
       authBot: signal(null),
       userId: signal("user-1"),
       profile: signal(null),
-      updateProfile: jest.fn().mockResolvedValue(undefined),
-      login: jest.fn().mockResolvedValue(undefined),
-      logout: jest.fn().mockResolvedValue(undefined),
-      getUserProfile: jest.fn().mockResolvedValue(null),
-      uploadProfilePicture: jest.fn().mockResolvedValue(undefined),
+      updateProfile: vi.fn().mockResolvedValue(undefined),
+      login: vi.fn().mockResolvedValue(undefined),
+      logout: vi.fn().mockResolvedValue(undefined),
+      getUserProfile: vi.fn().mockResolvedValue(null),
+      uploadProfilePicture: vi.fn().mockResolvedValue(undefined),
     };
   });
 

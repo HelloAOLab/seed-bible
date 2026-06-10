@@ -24,13 +24,14 @@ import {
   aabBooks,
 } from "./testUtils/mockBibleApiData";
 import { effect, signal } from "@preact/signals";
+import type { Mock } from "vitest";
 
 const nivTranslation = translations.translations[1]!;
 
-let webGetMock: jest.Mock;
+let webGetMock: Mock;
 
 beforeEach(() => {
-  webGetMock = jest.fn();
+  webGetMock = vi.fn();
   (globalThis as any).web = {
     get: webGetMock,
   };
@@ -60,16 +61,16 @@ function createDataManager() {
 
 function createHighlightsManagerMock() {
   return {
-    getChapterHighlights: jest
+    getChapterHighlights: vi
       .fn()
       .mockReturnValue(
         signal({ highlights: [{ colorId: "yellow", verse: 1 }] })
       ),
-    highlightVerses: jest.fn().mockResolvedValue(undefined),
-    unhighlightVerses: jest.fn().mockResolvedValue(undefined),
-    highlightVerse: jest.fn().mockResolvedValue(undefined),
-    unhighlightVerse: jest.fn().mockResolvedValue(undefined),
-    saveChapterHighlights: jest.fn().mockResolvedValue(undefined),
+    highlightVerses: vi.fn().mockResolvedValue(undefined),
+    unhighlightVerses: vi.fn().mockResolvedValue(undefined),
+    highlightVerse: vi.fn().mockResolvedValue(undefined),
+    unhighlightVerse: vi.fn().mockResolvedValue(undefined),
+    saveChapterHighlights: vi.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -113,10 +114,10 @@ async function waitForInitialLoad(state: BibleReadingState): Promise<void> {
 }
 
 describe("createBibleReadingState", () => {
-  let logSpy: jest.SpyInstance;
+  let logSpy: Mock;
 
   beforeEach(() => {
-    logSpy = jest.spyOn(console, "log").mockImplementation(() => undefined);
+    logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -412,12 +413,12 @@ describe("createBibleReadingState", () => {
   });
 
   it("decorateVerses() stores removeAfterMs on the decoration", async () => {
-    jest.useRealTimers();
+    vi.useRealTimers();
     setWebResponses(createReadingManagerResponseMap());
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     try {
       const decorationId = state.decorateVerses("GEN", 1, [1], {
         className: "sb-timeout-decoration",
@@ -436,18 +437,18 @@ describe("createBibleReadingState", () => {
         },
       ]);
     } finally {
-      jest.clearAllTimers();
-      jest.useRealTimers();
+      vi.clearAllTimers();
+      vi.useRealTimers();
     }
   });
 
   it("decorateVerses() auto-removes a decoration after removeAfterMs", async () => {
-    jest.useRealTimers();
+    vi.useRealTimers();
     setWebResponses(createReadingManagerResponseMap());
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     try {
       const decorationId = state.decorateVerses("GEN", 1, [1], {
         className: "sb-temporary-decoration",
@@ -463,18 +464,18 @@ describe("createBibleReadingState", () => {
         ])
       );
 
-      jest.advanceTimersByTime(99);
+      vi.advanceTimersByTime(99);
       expect(state.decorations.value.some((d) => d.id === decorationId)).toBe(
         true
       );
 
-      jest.advanceTimersByTime(1);
+      vi.advanceTimersByTime(1);
       expect(state.decorations.value.some((d) => d.id === decorationId)).toBe(
         false
       );
     } finally {
-      jest.clearAllTimers();
-      jest.useRealTimers();
+      vi.clearAllTimers();
+      vi.useRealTimers();
     }
   });
 

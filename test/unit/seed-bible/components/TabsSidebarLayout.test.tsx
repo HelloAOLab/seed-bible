@@ -6,15 +6,15 @@ import {
   type CreateTestSeedBibleStateOptions,
 } from "../testUtils/createTestSeedBibleState";
 
-jest.mock("../i18n/I18nManager", () => ({
+vi.mock("../i18n/I18nManager", () => ({
   useI18n: () => ({
     t: (key: string, options?: { defaultValue?: string }) =>
       options?.defaultValue ?? key,
   }),
 }));
 
-jest.mock("../components/ContextMenu", () => ({
-  closeContextMenus: jest.fn(),
+vi.mock("../components/ContextMenu", () => ({
+  closeContextMenus: vi.fn(),
   ContextMenuItem: ({
     children,
     onClick,
@@ -46,11 +46,11 @@ jest.mock("../components/ContextMenu", () => ({
   ),
 }));
 
-jest.mock("../components/SettingsPage", () => ({
+vi.mock("../components/SettingsPage", () => ({
   SettingsPage: () => <div>Settings Page</div>,
 }));
 
-jest.mock("../components/SidebarSearch", () => ({
+vi.mock("../components/SidebarSearch", () => ({
   SidebarSearch: () => <div>Sidebar Search</div>,
 }));
 
@@ -58,7 +58,7 @@ describe("Sidebar collapsed layout", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     container = document.createElement("div");
     document.body.appendChild(container);
   });
@@ -66,7 +66,7 @@ describe("Sidebar collapsed layout", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   async function createState(options?: CreateTestSeedBibleStateOptions) {

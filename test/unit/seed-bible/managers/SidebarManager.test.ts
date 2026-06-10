@@ -3,21 +3,22 @@ import {
   type NavigationManager,
 } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { createSidebar } from "@packages/seed-bible/seed-bible/managers/SidebarManager";
+import type { Mock } from "vitest";
 
 describe("createSidebar", () => {
-  let addBotListenerMock: jest.Mock;
+  let addBotListenerMock: Mock;
   let navigationManager: NavigationManager;
 
   beforeEach(() => {
     navigationManager = createNavigationManager();
 
-    addBotListenerMock = jest.fn();
+    addBotListenerMock = vi.fn();
     (
       globalThis as { configBot?: { tags: Record<string, unknown> } }
     ).configBot = {
       tags: {},
     };
-    (globalThis as { os?: { addBotListener: jest.Mock } }).os = {
+    (globalThis as { os?: { addBotListener: Mock } }).os = {
       addBotListener: addBotListenerMock,
     };
   });
@@ -25,7 +26,7 @@ describe("createSidebar", () => {
   afterEach(() => {
     delete (globalThis as { configBot?: { tags: Record<string, unknown> } })
       .configBot;
-    delete (globalThis as { os?: { addBotListener: jest.Mock } }).os;
+    delete (globalThis as { os?: { addBotListener: Mock } }).os;
   });
 
   it("initializes with settings closed, sidebar expanded, and mobile closed", () => {

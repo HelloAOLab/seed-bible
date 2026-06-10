@@ -11,6 +11,7 @@ import {
   flat,
   type ReadingEvent,
 } from "@packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
+import type { Mock } from "vitest";
 
 describe("ReadingHistoryManager", () => {
   describe("getTodayTimeSpan", () => {
@@ -231,13 +232,13 @@ describe("ReadingHistoryManager", () => {
   describe("createReadingHistoryManager", () => {
     let loginManager: any;
     let os: CasualOSManager;
-    let eventsType: { get: jest.Mock; length: number };
+    let eventsType: { get: Mock; length: number };
     let eventsArray: {
-      type: { get: jest.Mock; length: number };
-      push: jest.Mock;
+      type: { get: Mock; length: number };
+      push: Mock;
     };
-    let createMapSetMock: jest.Mock;
-    let getSharedDocumentMock: jest.Mock;
+    let createMapSetMock: Mock;
+    let getSharedDocumentMock: Mock;
 
     beforeEach(() => {
       os = CasualOSManager();
@@ -247,18 +248,18 @@ describe("ReadingHistoryManager", () => {
         },
       };
 
-      createMapSetMock = jest.fn();
+      createMapSetMock = vi.fn();
       eventsType = {
-        get: jest.fn(),
+        get: vi.fn(),
         length: 0,
       };
       eventsArray = {
         type: eventsType,
-        push: jest.fn(),
+        push: vi.fn(),
       };
-      getSharedDocumentMock = jest.fn().mockResolvedValue({
-        getArray: jest.fn().mockReturnValue(eventsArray),
-        createMap: jest.fn().mockReturnValue({
+      getSharedDocumentMock = vi.fn().mockResolvedValue({
+        getArray: vi.fn().mockReturnValue(eventsArray),
+        createMap: vi.fn().mockReturnValue({
           set: createMapSetMock,
         }),
       });
@@ -266,19 +267,19 @@ describe("ReadingHistoryManager", () => {
       // Mock the os and global functions
       (globalThis as any).os = {
         getSharedDocument: getSharedDocumentMock,
-        requestAuthBotInBackground: jest.fn(),
+        requestAuthBotInBackground: vi.fn(),
       };
 
       (globalThis as any).bot = {
         vars: {},
       };
 
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     afterEach(() => {
-      jest.clearAllMocks();
-      jest.useRealTimers();
+      vi.clearAllMocks();
+      vi.useRealTimers();
       delete (globalThis as any).bot;
     });
 
@@ -296,7 +297,7 @@ describe("ReadingHistoryManager", () => {
       const manager = createReadingHistoryManager(os, loginManager);
 
       manager.saveReadingHistory("genesis", 1);
-      await jest.advanceTimersByTimeAsync(300);
+      await vi.advanceTimersByTimeAsync(300);
 
       expect(os.getSharedDocument).not.toHaveBeenCalled();
     });
@@ -305,7 +306,7 @@ describe("ReadingHistoryManager", () => {
       const manager = createReadingHistoryManager(os, loginManager);
 
       manager.saveReadingHistory("genesis", 3);
-      await jest.advanceTimersByTimeAsync(300);
+      await vi.advanceTimersByTimeAsync(300);
 
       expect(getSharedDocumentMock).toHaveBeenCalledTimes(1);
       expect(eventsArray.push).toHaveBeenCalledTimes(1);
@@ -378,7 +379,7 @@ describe("ReadingHistoryManager", () => {
   });
 
   describe("Shared document retrieval and event extraction", () => {
-    let getSharedDocumentMock: jest.SpyInstance;
+    let getSharedDocumentMock: Mock;
     let mockSharedDocument: any;
     let mockEventsArray: any;
     let os: CasualOSManager;
@@ -387,23 +388,23 @@ describe("ReadingHistoryManager", () => {
       os = CasualOSManager();
       mockEventsArray = {
         type: {
-          get: jest.fn(),
+          get: vi.fn(),
           length: 0,
         },
       };
 
       mockSharedDocument = {
-        getArray: jest.fn().mockReturnValue(mockEventsArray),
-        createMap: jest.fn(),
+        getArray: vi.fn().mockReturnValue(mockEventsArray),
+        createMap: vi.fn(),
       };
 
-      getSharedDocumentMock = jest
+      getSharedDocumentMock = vi
         .spyOn(os, "getSharedDocument")
         .mockResolvedValue(mockSharedDocument);
     });
 
     afterEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
       delete (globalThis as any).bot;
     });
 
@@ -436,7 +437,7 @@ describe("ReadingHistoryManager", () => {
 
     it("extracts reading events from shared document", async () => {
       const event1 = {
-        get: jest.fn((key: string) => {
+        get: vi.fn((key: string) => {
           const map: any = {
             userId: "user-1",
             bookId: "genesis",
@@ -449,7 +450,7 @@ describe("ReadingHistoryManager", () => {
       };
 
       mockEventsArray.type.length = 1;
-      mockEventsArray.type.get = jest.fn().mockReturnValue(event1);
+      mockEventsArray.type.get = vi.fn().mockReturnValue(event1);
 
       const events = await getReadingHistoryEvents(os, "user-123", 1000, 2000);
       const eventsArray = Array.from(events);
@@ -466,7 +467,7 @@ describe("ReadingHistoryManager", () => {
 
     it("filters events by time range", async () => {
       const event1 = {
-        get: jest.fn((key: string) => {
+        get: vi.fn((key: string) => {
           const map: any = {
             userId: "user-1",
             bookId: "genesis",
@@ -479,7 +480,7 @@ describe("ReadingHistoryManager", () => {
       };
 
       const event2 = {
-        get: jest.fn((key: string) => {
+        get: vi.fn((key: string) => {
           const map: any = {
             userId: "user-1",
             bookId: "exodus",
@@ -492,7 +493,7 @@ describe("ReadingHistoryManager", () => {
       };
 
       mockEventsArray.type.length = 2;
-      mockEventsArray.type.get = jest
+      mockEventsArray.type.get = vi
         .fn()
         .mockReturnValueOnce(event1)
         .mockReturnValueOnce(event2);
@@ -506,7 +507,7 @@ describe("ReadingHistoryManager", () => {
 
     it("retrieves events from multiple years", async () => {
       const event = {
-        get: jest.fn((key: string) => {
+        get: vi.fn((key: string) => {
           const map: any = {
             userId: "user-1",
             bookId: "genesis",
@@ -519,7 +520,7 @@ describe("ReadingHistoryManager", () => {
       };
 
       mockEventsArray.type.length = 1;
-      mockEventsArray.type.get = jest.fn().mockReturnValue(event);
+      mockEventsArray.type.get = vi.fn().mockReturnValue(event);
 
       // Request events spanning two years
       const startTime = new Date("2024-12-01").getTime() / 1000;
@@ -599,26 +600,26 @@ describe("ReadingHistoryManager", () => {
       os = CasualOSManager();
       mockEventsArray = {
         type: {
-          get: jest.fn(),
+          get: vi.fn(),
           length: 0,
         },
       };
 
       mockSharedDocument = {
-        getArray: jest.fn().mockReturnValue(mockEventsArray),
+        getArray: vi.fn().mockReturnValue(mockEventsArray),
       };
 
-      jest.spyOn(os, "getSharedDocument").mockResolvedValue(mockSharedDocument);
+      vi.spyOn(os, "getSharedDocument").mockResolvedValue(mockSharedDocument);
     });
 
     afterEach(() => {
-      jest.clearAllMocks();
+      vi.clearAllMocks();
       delete (globalThis as any).bot;
     });
 
     it("retrieves and summarizes reading history from documents", async () => {
       const event = {
-        get: jest.fn((key: string) => {
+        get: vi.fn((key: string) => {
           const map: any = {
             userId: "user-1",
             bookId: "genesis",
@@ -631,7 +632,7 @@ describe("ReadingHistoryManager", () => {
       };
 
       mockEventsArray.type.length = 1;
-      mockEventsArray.type.get = jest.fn().mockReturnValue(event);
+      mockEventsArray.type.get = vi.fn().mockReturnValue(event);
 
       const summary = await getReadingHistorySummary(
         os,
@@ -647,7 +648,7 @@ describe("ReadingHistoryManager", () => {
 
     it("returns summary with correct time boundaries", async () => {
       const event = {
-        get: jest.fn((key: string) => {
+        get: vi.fn((key: string) => {
           const map: any = {
             userId: "user-1",
             bookId: "genesis",
@@ -660,7 +661,7 @@ describe("ReadingHistoryManager", () => {
       };
 
       mockEventsArray.type.length = 1;
-      mockEventsArray.type.get = jest.fn().mockReturnValue(event);
+      mockEventsArray.type.get = vi.fn().mockReturnValue(event);
 
       const summary = await getReadingHistorySummary(
         os,

@@ -1,16 +1,14 @@
 import { CreateTwitchPubState } from "@packages/twitchPub-extension/ext_twitchPub/host/twitchPubManager";
 import sendMessage from "@packages/twitchPub-extension/ext_twitchPub/host/sendMessage";
 import { TextEncoder } from "node:util";
+import type { Mock } from "vitest";
 
-jest.mock(
-  "@packages/twitchPub-extension/ext_twitchPub/host/sendMessage",
-  () => ({
-    __esModule: true,
-    default: jest.fn(),
-  })
-);
+vi.mock("@packages/twitchPub-extension/ext_twitchPub/host/sendMessage", () => ({
+  __esModule: true,
+  default: vi.fn(),
+}));
 
-const sendMessageMock = sendMessage as jest.Mock;
+const sendMessageMock = sendMessage as Mock;
 
 function waitFor(condition: () => boolean, timeoutMs = 4000): Promise<void> {
   const start = Date.now();
@@ -88,9 +86,9 @@ function hasBookChangedPayload(expected: {
 }
 
 describe("CreateTwitchPubState", () => {
-  let logSpy: jest.SpyInstance;
-  let bytesToBase64StringMock: jest.Mock;
-  let webPostMock: jest.Mock;
+  let logSpy: Mock;
+  let bytesToBase64StringMock: Mock;
+  let webPostMock: Mock;
 
   beforeEach(() => {
     window.localStorage.clear();
@@ -103,10 +101,10 @@ describe("CreateTwitchPubState", () => {
     delete (window.localStorage as any).settings;
     sendMessageMock.mockReset();
 
-    bytesToBase64StringMock = jest.fn((value: Uint8Array) =>
+    bytesToBase64StringMock = vi.fn((value: Uint8Array) =>
       Buffer.from(value).toString("base64")
     );
-    webPostMock = jest.fn().mockResolvedValue({ data: {} });
+    webPostMock = vi.fn().mockResolvedValue({ data: {} });
 
     (globalThis as any).configBot = {
       tags: {
@@ -117,17 +115,17 @@ describe("CreateTwitchPubState", () => {
       toBase64String: bytesToBase64StringMock,
     };
     (globalThis as any).web = {
-      get: jest.fn().mockResolvedValue({ data: { data: [] } }),
+      get: vi.fn().mockResolvedValue({ data: { data: [] } }),
       post: webPostMock,
     };
     (globalThis as any).TextEncoder = TextEncoder;
-    (globalThis as any).uuid = jest.fn().mockReturnValue("abcde-12345");
+    (globalThis as any).uuid = vi.fn().mockReturnValue("abcde-12345");
 
-    logSpy = jest.spyOn(console, "log").mockImplementation(() => undefined);
+    logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
     logSpy.mockRestore();
     delete (globalThis as any).configBot;
     delete (globalThis as any).bytes;
@@ -248,7 +246,7 @@ describe("CreateTwitchPubState", () => {
 
     await waitFor(() => webPostMock.mock.calls.length === 1);
 
-    const [url, body, options] = webPostMock.mock.calls[0];
+    const [url, body, options] = webPostMock.mock.calls[0]!;
     const parsedBody = JSON.parse(body as string);
 
     expect(url).toBe(
@@ -281,7 +279,7 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("sends announcements on a timer when announcementTimer is configured", () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     location.href = "https://example.com/twitch-pub?existing=1";
 
     const state = CreateTwitchPubState();
@@ -296,11 +294,11 @@ describe("CreateTwitchPubState", () => {
 
     expect(webPostMock).not.toHaveBeenCalled();
 
-    jest.advanceTimersByTime(5000);
+    vi.advanceTimersByTime(5000);
     expect(webPostMock).toHaveBeenCalledTimes(1);
 
     // eslint-disable-next-line prefer-const
-    let [url, body, options] = webPostMock.mock.calls[0];
+    let [url, body, options] = webPostMock.mock.calls[0]!;
     let parsedBody = JSON.parse(body as string);
     let announcedUrl = new URL(parsedBody.message.replace("Join me at ", ""));
     let redirectUri = new URL(
@@ -325,10 +323,10 @@ describe("CreateTwitchPubState", () => {
       },
     });
 
-    jest.advanceTimersByTime(5000);
+    vi.advanceTimersByTime(5000);
     expect(webPostMock).toHaveBeenCalledTimes(2);
 
-    [url, body] = webPostMock.mock.calls[1];
+    [url, body] = webPostMock.mock.calls[1]!;
     parsedBody = JSON.parse(body as string);
     announcedUrl = new URL(parsedBody.message.replace("Join me at ", ""));
     redirectUri = new URL(announcedUrl.searchParams.get("redirect_uri") ?? "");
@@ -377,26 +375,26 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("hides the UI after the delay and can cancel a pending hide", () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
 
     const state = CreateTwitchPubState();
 
     state.hideUI();
     expect(state.uiHidden.value).toBe(false);
 
-    jest.advanceTimersByTime(3999);
+    vi.advanceTimersByTime(3999);
     expect(state.uiHidden.value).toBe(false);
 
-    jest.advanceTimersByTime(1);
+    vi.advanceTimersByTime(1);
     expect(state.uiHidden.value).toBe(true);
 
     state.showUI();
     expect(state.uiHidden.value).toBe(false);
 
     state.hideUI();
-    jest.advanceTimersByTime(2000);
+    vi.advanceTimersByTime(2000);
     state.showUI();
-    jest.advanceTimersByTime(4000);
+    vi.advanceTimersByTime(4000);
 
     expect(state.uiHidden.value).toBe(false);
   });

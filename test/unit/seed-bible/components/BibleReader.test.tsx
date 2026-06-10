@@ -12,6 +12,7 @@ import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/manager
 import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import { vi, type Mock } from "vitest";
 
 type ReaderFixture = {
   pane: Pane;
@@ -22,9 +23,9 @@ type ReaderFixture = {
   decorations: Signal<VerseDecoration[]>;
   selectedVerses: BibleReadingState["selectedVerses"];
   selectedFootnote: Signal<SelectedFootnote | null>;
-  selectVerse: jest.Mock;
-  selectFootnote: jest.Mock;
-  setOpen: jest.Mock;
+  selectVerse: Mock;
+  selectFootnote: Mock;
+  setOpen: Mock;
 };
 
 function createFixture(): ReaderFixture {
@@ -106,9 +107,9 @@ function createFixture(): ReaderFixture {
   });
   const decorations = signal<VerseDecoration[]>([]);
   const selectedFootnote = signal<SelectedFootnote | null>(null);
-  const selectVerse = jest.fn();
-  const selectFootnote = jest.fn();
-  const setOpen = jest.fn(async () => undefined);
+  const selectVerse = vi.fn();
+  const selectFootnote = vi.fn();
+  const setOpen = vi.fn(async () => undefined);
 
   const currentTranslation = computed(
     () => chapterData.value?.translation ?? null
@@ -136,17 +137,17 @@ function createFixture(): ReaderFixture {
     error: signal<string | null>(null),
     selectVerse,
     selectFootnote,
-    highlightSelectedVerses: jest.fn(async () => undefined),
-    unhighlightSelectedVerses: jest.fn(async () => undefined),
-    decorateVerses: jest.fn(() => "decoration-1"),
-    removeDecoration: jest.fn(),
-    clearSelectedVerses: jest.fn(),
-    selectTranslation: jest.fn(async () => undefined),
-    selectBook: jest.fn(async () => undefined),
-    selectChapter: jest.fn(async () => undefined),
-    loadPreviousChapter: jest.fn(async () => undefined),
-    loadNextChapter: jest.fn(async () => undefined),
-    selectTranslationAndChapter: jest.fn(async () => undefined),
+    highlightSelectedVerses: vi.fn(async () => undefined),
+    unhighlightSelectedVerses: vi.fn(async () => undefined),
+    decorateVerses: vi.fn(() => "decoration-1"),
+    removeDecoration: vi.fn(),
+    clearSelectedVerses: vi.fn(),
+    selectTranslation: vi.fn(async () => undefined),
+    selectBook: vi.fn(async () => undefined),
+    selectChapter: vi.fn(async () => undefined),
+    loadPreviousChapter: vi.fn(async () => undefined),
+    loadNextChapter: vi.fn(async () => undefined),
+    selectTranslationAndChapter: vi.fn(async () => undefined),
     highlights,
   } as BibleReadingState;
 
@@ -179,12 +180,12 @@ function createMobileState(): SeedBibleState {
       isMobile: signal(true),
     },
     bibleData: {
-      getPreviousChapter: jest.fn(async () => null),
-      getNextChapter: jest.fn(async () => null),
+      getPreviousChapter: vi.fn(async () => null),
+      getNextChapter: vi.fn(async () => null),
     },
     sidebar: {
-      openSettings: jest.fn(),
-      openSidebar: jest.fn(),
+      openSettings: vi.fn(),
+      openSidebar: vi.fn(),
     },
   } as any as SeedBibleState;
 }
@@ -1295,14 +1296,14 @@ describe("BibleReader", () => {
     };
     readingState.scrollToVerse.value = 1;
 
-    const rafSpy = jest
+    const rafSpy = vi
       .spyOn(window, "requestAnimationFrame")
       .mockImplementation((callback: FrameRequestCallback) => {
         callback(0);
         return 0;
       });
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
-    const scrollIntoViewSpy = jest.fn();
+    const scrollIntoViewSpy = vi.fn();
     Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
       configurable: true,
       value: scrollIntoViewSpy,
@@ -1370,7 +1371,7 @@ describe("BibleReader", () => {
     };
 
     const originalAddEventListener = HTMLElement.prototype.addEventListener;
-    const addEventListenerSpy = jest.fn(function (
+    const addEventListenerSpy = vi.fn(function (
       this: HTMLElement,
       ...args: Parameters<HTMLElement["addEventListener"]>
     ) {
@@ -1459,7 +1460,7 @@ describe("BibleReader", () => {
       previousChapterApiLink: null,
     };
 
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     try {
       renderMobileReader(
         { pane, selectorState, readingState },
@@ -1479,7 +1480,7 @@ describe("BibleReader", () => {
         dispatchTouch(viewport, "touchstart", [{ clientX: 200, clientY: 30 }]);
         dispatchTouch(viewport, "touchmove", [{ clientX: 80, clientY: 30 }]);
         dispatchTouch(viewport, "touchend", []);
-        jest.advanceTimersByTime(251);
+        vi.advanceTimersByTime(251);
       });
 
       await Promise.resolve();
@@ -1488,7 +1489,7 @@ describe("BibleReader", () => {
       expect(readingState.loadNextChapter).toHaveBeenCalledTimes(1);
       expect(readingState.loadPreviousChapter).not.toHaveBeenCalled();
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 
@@ -1502,7 +1503,7 @@ describe("BibleReader", () => {
       previousChapterApiLink: "/api/BSB/GEN/0.json",
     };
 
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     try {
       renderMobileReader(
         { pane, selectorState, readingState },
@@ -1522,7 +1523,7 @@ describe("BibleReader", () => {
         dispatchTouch(viewport, "touchstart", [{ clientX: 80, clientY: 24 }]);
         dispatchTouch(viewport, "touchmove", [{ clientX: 220, clientY: 24 }]);
         dispatchTouch(viewport, "touchend", []);
-        jest.advanceTimersByTime(251);
+        vi.advanceTimersByTime(251);
       });
 
       await Promise.resolve();
@@ -1531,7 +1532,7 @@ describe("BibleReader", () => {
       expect(readingState.loadPreviousChapter).toHaveBeenCalledTimes(1);
       expect(readingState.loadNextChapter).not.toHaveBeenCalled();
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 });

@@ -30,7 +30,7 @@ describe("I18nManager DEFAULT_LANGUAGE", () => {
   });
 
   afterEach(() => {
-    jest.resetModules();
+    vi.resetModules();
   });
 
   afterAll(() => {

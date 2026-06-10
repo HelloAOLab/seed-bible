@@ -11,9 +11,10 @@ import type {
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
+import type { Mock } from "vitest";
 
-jest.mock("../managers/BibleReadingManager", () => ({
-  createBibleReadingState: jest.fn(),
+vi.mock("../managers/BibleReadingManager", () => ({
+  createBibleReadingState: vi.fn(),
 }));
 
 type MockChangesSubscriber = () => void;
@@ -32,7 +33,7 @@ function createMockRemoteClientsObservable() {
   const subscribers = new Set<MockRemoteClientSubscriber>();
 
   return {
-    subscribe: jest.fn((handler: MockRemoteClientSubscriber) => {
+    subscribe: vi.fn((handler: MockRemoteClientSubscriber) => {
       subscribers.add(handler);
       return {
         unsubscribe: () => subscribers.delete(handler),
@@ -52,8 +53,8 @@ function createMockSharedMap(initial: Record<string, unknown> = {}) {
   let emitOnSet = false;
 
   const map = {
-    get: jest.fn((key: string) => store.get(key)),
-    set: jest.fn((key: string, value: unknown) => {
+    get: vi.fn((key: string) => store.get(key)),
+    set: vi.fn((key: string, value: unknown) => {
       store.set(key, value);
       if (emitOnSet) {
         for (const subscriber of subscribers) {
@@ -61,7 +62,7 @@ function createMockSharedMap(initial: Record<string, unknown> = {}) {
         }
       }
     }),
-    delete: jest.fn((key: string) => {
+    delete: vi.fn((key: string) => {
       store.delete(key);
       if (emitOnSet) {
         for (const subscriber of subscribers) {
@@ -69,7 +70,7 @@ function createMockSharedMap(initial: Record<string, unknown> = {}) {
         }
       }
     }),
-    forEach: jest.fn(
+    forEach: vi.fn(
       (callback: (value: unknown, key: string, map: unknown) => void) => {
         for (const [key, value] of store.entries()) {
           callback(value, key, map);
@@ -77,7 +78,7 @@ function createMockSharedMap(initial: Record<string, unknown> = {}) {
       }
     ),
     changes: {
-      subscribe: jest.fn((handler: MockChangesSubscriber) => {
+      subscribe: vi.fn((handler: MockChangesSubscriber) => {
         subscribers.add(handler);
         return {
           unsubscribe: () => subscribers.delete(handler),
@@ -105,7 +106,7 @@ function createMockReadingState() {
   const chapterData = signal<any>(null);
   const decorations = signal<VerseDecoration[]>([]);
 
-  const decorateVerses = jest.fn(
+  const decorateVerses = vi.fn(
     (
       nextBookId: string,
       nextChapterNumber: number,
@@ -132,7 +133,7 @@ function createMockReadingState() {
     }
   );
 
-  const removeDecoration = jest.fn((decorationId: string) => {
+  const removeDecoration = vi.fn((decorationId: string) => {
     decorations.value = decorations.value.filter(
       (decoration) => decoration.id !== decorationId
     );
@@ -150,7 +151,7 @@ function createMockReadingState() {
     error: signal<string | null>(null),
     decorateVerses,
     removeDecoration,
-    selectTranslationAndChapter: jest.fn(
+    selectTranslationAndChapter: vi.fn(
       async (
         nextTranslationId: string,
         nextBookId: string,
@@ -225,28 +226,28 @@ function deferred<T>() {
 }
 
 describe("SessionsManager", () => {
-  let getSharedDocumentMock: jest.Mock;
+  let getSharedDocumentMock: Mock;
   let mockMap: ReturnType<typeof createMockSharedMap>;
   let mockOptionsMap: ReturnType<typeof createMockSharedMap>;
   let mockDecorationsMap: ReturnType<typeof createMockSharedMap>;
   let mockRemoteClients: ReturnType<typeof createMockRemoteClientsObservable>;
   let mockDocument: {
-    getMap: jest.Mock;
-    transact: jest.Mock;
-    unsubscribe: jest.Mock;
+    getMap: Mock;
+    transact: Mock;
+    unsubscribe: Mock;
     remoteClients: {
-      subscribe: jest.Mock;
+      subscribe: Mock;
     };
   };
   let mockDataManager: Record<string, never>;
   let mockLoginManager: {
-    getUserProfile: jest.Mock;
+    getUserProfile: Mock;
     userId: ReturnType<typeof signal<string | null>>;
     profile: ReturnType<typeof signal<UserProfile | null>>;
   };
   let mockUserProfilesMap: ReturnType<typeof createMockSharedMap>;
   let mockHighlightsManager: {
-    getChapterHighlights: jest.Mock;
+    getChapterHighlights: Mock;
   };
 
   let os: CasualOSManager;
@@ -259,7 +260,7 @@ describe("SessionsManager", () => {
     mockUserProfilesMap = createMockSharedMap();
     mockRemoteClients = createMockRemoteClientsObservable();
     mockDocument = {
-      getMap: jest.fn((name: string) => {
+      getMap: vi.fn((name: string) => {
         if (name === "options") {
           return mockOptionsMap;
         }
@@ -274,43 +275,41 @@ describe("SessionsManager", () => {
 
         return mockMap;
       }),
-      transact: jest.fn((callback: () => void) => callback()),
-      unsubscribe: jest.fn(),
+      transact: vi.fn((callback: () => void) => callback()),
+      unsubscribe: vi.fn(),
       remoteClients: {
         subscribe: mockRemoteClients.subscribe,
       },
     };
 
-    getSharedDocumentMock = jest.fn().mockResolvedValue(mockDocument);
+    getSharedDocumentMock = vi.fn().mockResolvedValue(mockDocument);
     mockDataManager = {};
     mockLoginManager = {
-      getUserProfile: jest.fn(async (userId: string) => ({
+      getUserProfile: vi.fn(async (userId: string) => ({
         name: `Profile ${userId}`,
       })),
       userId: signal<string | null>(null),
       profile: signal<UserProfile | null>(null),
     };
     mockHighlightsManager = {
-      getChapterHighlights: jest
-        .fn()
-        .mockReturnValue(signal({ highlights: [] })),
+      getChapterHighlights: vi.fn().mockReturnValue(signal({ highlights: [] })),
     };
 
     (globalThis as any).os = {
       getSharedDocument: getSharedDocumentMock,
     };
 
-    (createBibleReadingState as jest.Mock).mockImplementation(() =>
+    (createBibleReadingState as Mock).mockImplementation(() =>
       createMockReadingState()
     );
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("createSession() creates a session with a UUID and loads session_data in a public inst", async () => {
-    const spy = jest.spyOn(globalThis as any, "uuid").mockReturnValue("123");
+    const spy = vi.spyOn(globalThis as any, "uuid").mockReturnValue("123");
 
     const manager = createSessionsManager(
       os,
@@ -1035,9 +1034,9 @@ describe("SessionsManager", () => {
       mockHighlightsManager as any
     );
     const session = await manager.joinSession("group-abc");
-    (
-      session.readingState.selectTranslationAndChapter as jest.Mock
-    ).mockReturnValue(chapterDeferred.promise);
+    (session.readingState.selectTranslationAndChapter as Mock).mockReturnValue(
+      chapterDeferred.promise
+    );
 
     mockMap.get.mockImplementation((key: string) => {
       if (key === "translationId") return "ESV";
@@ -1077,7 +1076,7 @@ describe("SessionsManager", () => {
       mockHighlightsManager as any
     );
     const session = await manager.joinSession("group-abc");
-    (session.readingState.selectTranslationAndChapter as jest.Mock)
+    (session.readingState.selectTranslationAndChapter as Mock)
       .mockImplementationOnce(async () => {
         await chapterDeferred1.promise;
         session.readingState.translationId.value = "ESV";

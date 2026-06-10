@@ -1,13 +1,14 @@
 import { signal } from "@preact/signals";
 import { CreateTwitchSubState } from "@packages/twitchSub-extension/ext_twitchSub/client/twitchSubManager";
 import { TextDecoder } from "node:util";
+import type { Mock } from "vitest";
 
-jest.mock("@packages/twitchSub-extension/ext_twitchSub/client/App", () => ({
+vi.mock("@packages/twitchSub-extension/ext_twitchSub/client/App", () => ({
   __esModule: true,
   default: () => null,
 }));
 
-jest.mock("@packages/twitchSub-extension/ext_twitchSub/client/icons", () => ({
+vi.mock("@packages/twitchSub-extension/ext_twitchSub/client/icons", () => ({
   __esModule: true,
   TwitchIcon: () => null,
 }));
@@ -36,8 +37,8 @@ function waitFor(condition: () => boolean, timeoutMs = 3000): Promise<void> {
 }
 
 function createSeedBibleStateMock() {
-  const selectTranslationAndChapter = jest.fn().mockResolvedValue(undefined);
-  const decorateVerses = jest.fn();
+  const selectTranslationAndChapter = vi.fn().mockResolvedValue(undefined);
+  const decorateVerses = vi.fn();
   const readingState = {
     selectTranslationAndChapter,
   };
@@ -69,19 +70,19 @@ function createSeedBibleStateMock() {
     bibleData: {
       api: {
         endpoint: "https://initial.example.org",
-        getAvailableTranslations: jest.fn().mockResolvedValue(undefined),
+        getAvailableTranslations: vi.fn().mockResolvedValue(undefined),
       },
     },
     panes: {
       panes: signal([selectedPane]),
       selectedPaneId: signal("pane-1"),
-      selectPane: jest.fn(),
-      openInPane: jest.fn(),
+      selectPane: vi.fn(),
+      openInPane: vi.fn(),
     },
     tabs: {
       selectedTabId,
       tabs,
-      addTab: jest.fn().mockReturnValue({
+      addTab: vi.fn().mockReturnValue({
         id: "tab-2",
         readingState,
       }),
@@ -96,24 +97,24 @@ function createSeedBibleStateMock() {
 }
 
 describe("CreateTwitchSubState", () => {
-  let webGetMock: jest.Mock;
-  let goToURLMock: jest.Mock;
-  let websocketCtorMock: jest.Mock;
-  let errorSpy: jest.SpyInstance;
+  let webGetMock: Mock;
+  let goToURLMock: Mock;
+  let websocketCtorMock: Mock;
+  let errorSpy: Mock;
 
   beforeEach(() => {
     window.localStorage.clear();
 
-    webGetMock = jest.fn().mockResolvedValue({
+    webGetMock = vi.fn().mockResolvedValue({
       data: {
         user_id: "bot-user-1",
       },
     });
-    goToURLMock = jest.fn();
+    goToURLMock = vi.fn();
 
     (globalThis as any).web = {
       get: webGetMock,
-      post: jest.fn(),
+      post: vi.fn(),
     };
     (globalThis as any).configBot = {
       tags: {
@@ -121,7 +122,7 @@ describe("CreateTwitchSubState", () => {
       },
     };
     (globalThis as any).bytes = {
-      fromBase64String: jest.fn((value: string) => {
+      fromBase64String: vi.fn((value: string) => {
         return Uint8Array.from(Buffer.from(value, "base64"));
       }),
     };
@@ -131,13 +132,13 @@ describe("CreateTwitchSubState", () => {
       goToURL: goToURLMock,
     };
 
-    websocketCtorMock = jest.fn().mockImplementation(() => ({
+    websocketCtorMock = vi.fn().mockImplementation(() => ({
       onerror: null,
       onopen: null,
       onmessage: null,
     }));
     (globalThis as any).WebSocket = websocketCtorMock;
-    errorSpy = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -146,7 +147,7 @@ describe("CreateTwitchSubState", () => {
     delete (globalThis as any).bytes;
     delete (globalThis as any).TextDecoder;
     errorSpy.mockRestore();
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("loads config from URL state into localStorage", async () => {

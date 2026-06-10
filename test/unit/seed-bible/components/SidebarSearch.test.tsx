@@ -6,9 +6,10 @@ import {
   createTestSeedBibleState,
   waitFor,
 } from "../testUtils/createTestSeedBibleState";
+import type { Mock } from "vitest";
 
-jest.mock("../components/ContextMenu", () => ({
-  closeContextMenus: jest.fn(),
+vi.mock("../components/ContextMenu", () => ({
+  closeContextMenus: vi.fn(),
   ContextMenuItem: ({
     children,
     onClick,
@@ -42,10 +43,10 @@ jest.mock("../components/ContextMenu", () => ({
 
 type SidebarSearchFixture = {
   state: SeedBibleState;
-  search: jest.SpyInstance;
-  addTab: jest.SpyInstance;
+  search: Mock;
+  addTab: Mock;
   addTabOriginal: SeedBibleState["tabs"]["addTab"];
-  setSelectedPaneTab: jest.SpyInstance;
+  setSelectedPaneTab: Mock;
 };
 
 async function createFixture(options?: {
@@ -60,9 +61,9 @@ async function createFixture(options?: {
   }
 
   const addTabOriginal = state.tabs.addTab.bind(state.tabs);
-  const search = jest.spyOn(state.search, "searchVerses");
-  const addTab = jest.spyOn(state.tabs, "addTab");
-  const setSelectedPaneTab = jest.spyOn(state.panes, "setSelectedPaneTab");
+  const search = vi.spyOn(state.search, "searchVerses");
+  const addTab = vi.spyOn(state.tabs, "addTab");
+  const setSelectedPaneTab = vi.spyOn(state.panes, "setSelectedPaneTab");
 
   return {
     state,
@@ -75,14 +76,14 @@ async function createFixture(options?: {
 
 describe("SidebarSearch", () => {
   let container: HTMLDivElement;
-  let scrollIntoViewMock: jest.Mock;
+  let scrollIntoViewMock: Mock;
   let originalScrollIntoView: typeof HTMLElement.prototype.scrollIntoView;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     container = document.createElement("div");
     document.body.appendChild(container);
-    scrollIntoViewMock = jest.fn();
+    scrollIntoViewMock = vi.fn();
     originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
     HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
   });
@@ -90,7 +91,7 @@ describe("SidebarSearch", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
-    jest.useRealTimers();
+    vi.useRealTimers();
     HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
   });
 
@@ -105,7 +106,7 @@ describe("SidebarSearch", () => {
         input.value = query;
         input.dispatchEvent(new Event("input", { bubbles: true }));
       }
-      jest.advanceTimersByTime(200);
+      vi.advanceTimersByTime(200);
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -128,7 +129,7 @@ describe("SidebarSearch", () => {
   it("searches verses and opens the chapter in the current tab when a result is clicked", async () => {
     const fixture = await createFixture();
     const currentTab = fixture.state.app.selectedTab.value!;
-    const currentSelect = jest.spyOn(
+    const currentSelect = vi.spyOn(
       currentTab.readingState,
       "selectTranslationAndChapter"
     );
@@ -154,7 +155,7 @@ describe("SidebarSearch", () => {
 
     act(() => {
       render(
-        <SidebarSearch state={fixture.state} closeLayoutMenu={jest.fn()} />,
+        <SidebarSearch state={fixture.state} closeLayoutMenu={vi.fn()} />,
         container
       );
     });
@@ -202,14 +203,11 @@ describe("SidebarSearch", () => {
 
   it("opens a new tab when there is no current tab", async () => {
     const fixture = await createFixture({ hasSelectedTab: false });
-    let newTabSelect: jest.SpyInstance | null = null;
+    let newTabSelect: Mock | null = null;
 
     fixture.addTab.mockImplementation((...args: any[]) => {
       const tab = fixture.addTabOriginal(...args);
-      newTabSelect = jest.spyOn(
-        tab.readingState,
-        "selectTranslationAndChapter"
-      );
+      newTabSelect = vi.spyOn(tab.readingState, "selectTranslationAndChapter");
       return tab;
     });
 
@@ -233,7 +231,7 @@ describe("SidebarSearch", () => {
 
     act(() => {
       render(
-        <SidebarSearch state={fixture.state} closeLayoutMenu={jest.fn()} />,
+        <SidebarSearch state={fixture.state} closeLayoutMenu={vi.fn()} />,
         container
       );
     });
@@ -263,7 +261,7 @@ describe("SidebarSearch", () => {
   it("supports keyboard navigation for search results", async () => {
     const fixture = await createFixture();
     const currentTab = fixture.state.app.selectedTab.value!;
-    const currentSelect = jest.spyOn(
+    const currentSelect = vi.spyOn(
       currentTab.readingState,
       "selectTranslationAndChapter"
     );
@@ -300,7 +298,7 @@ describe("SidebarSearch", () => {
 
     act(() => {
       render(
-        <SidebarSearch state={fixture.state} closeLayoutMenu={jest.fn()} />,
+        <SidebarSearch state={fixture.state} closeLayoutMenu={vi.fn()} />,
         container
       );
     });

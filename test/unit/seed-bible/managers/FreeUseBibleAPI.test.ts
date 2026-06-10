@@ -2,6 +2,7 @@ import {
   FreeUseBibleAPI,
   type TranslationBookChapter,
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type { Mock } from "vitest";
 
 type WebResponse<T> = {
   status: number;
@@ -10,7 +11,7 @@ type WebResponse<T> = {
 };
 
 describe("FreeUseBibleAPI", () => {
-  let webGetMock: jest.Mock;
+  let webGetMock: Mock;
   let originalFetch: typeof globalThis.fetch;
 
   beforeAll(() => {
@@ -18,7 +19,7 @@ describe("FreeUseBibleAPI", () => {
   });
 
   beforeEach(() => {
-    webGetMock = jest.fn();
+    webGetMock = vi.fn();
     globalThis.fetch = webGetMock;
   });
 

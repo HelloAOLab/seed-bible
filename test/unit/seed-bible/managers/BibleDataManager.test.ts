@@ -13,14 +13,15 @@ import {
   translations,
   type WebResponseMap,
 } from "./testUtils/mockBibleApiData";
+import type { Mock } from "vitest";
 
 const ALT_ENDPOINT = "https://alt-two.example";
 
-let webGetMock: jest.Mock;
+let webGetMock: Mock;
 const originalFetch = globalThis.fetch;
 
 beforeEach(() => {
-  webGetMock = jest.fn();
+  webGetMock = vi.fn();
   globalThis.fetch = webGetMock;
 });
 

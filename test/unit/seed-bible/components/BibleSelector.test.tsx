@@ -19,8 +19,9 @@ import {
   createDefaultSelectorManagerResponseMap,
   aabBooks,
 } from "../managers/testUtils/mockBibleApiData";
+import type { Mock } from "vitest";
 
-jest.mock("../i18n/I18nManager", () => ({
+vi.mock("../i18n/I18nManager", () => ({
   useI18n: () => ({
     t: (key: string, options?: { defaultValue?: string }) =>
       options?.defaultValue ?? key,
@@ -32,8 +33,8 @@ type SelectorFixture = {
   selectorState: BibleSelectorState;
   bibleDataManager: SeedBibleState["bibleData"];
   pane: Pane;
-  selectChapter: jest.SpyInstance;
-  setSearch: jest.SpyInstance;
+  selectChapter: Mock;
+  setSearch: Mock;
 };
 
 function setAvailableTranslations(
@@ -63,8 +64,8 @@ async function createSelectorFixture(
     selectorState: state.selector,
     bibleDataManager: state.bibleData,
     pane,
-    selectChapter: jest.spyOn(state.selector, "selectChapter"),
-    setSearch: jest.spyOn(state.selector, "setSearch"),
+    selectChapter: vi.spyOn(state.selector, "selectChapter"),
+    setSearch: vi.spyOn(state.selector, "setSearch"),
   };
 }
 
@@ -90,7 +91,7 @@ describe("BibleSelector", () => {
       render(
         <BibleSelector
           isOpen={false}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -108,7 +109,7 @@ describe("BibleSelector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -138,7 +139,7 @@ describe("BibleSelector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -163,7 +164,7 @@ describe("BibleSelector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -189,7 +190,7 @@ describe("BibleSelector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -240,7 +241,7 @@ describe("BibleSelector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -275,7 +276,7 @@ describe("BibleSelector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -318,7 +319,7 @@ describe("BibleSelector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -369,7 +370,7 @@ describe("BibleSelector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -446,7 +447,7 @@ describe("BibleSelector", () => {
         render(
           <BibleSelector
             isOpen={true}
-            onClose={jest.fn()}
+            onClose={vi.fn()}
             selectorState={selectorState}
             bibleDataManager={bibleDataManager}
           />,
@@ -541,7 +542,7 @@ describe("BibleSelector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -683,7 +684,7 @@ describe("BibleSelector translation selector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -718,7 +719,7 @@ describe("BibleSelector translation selector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -757,7 +758,7 @@ describe("BibleSelector translation selector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -826,7 +827,7 @@ describe("BibleSelector translation selector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -895,7 +896,7 @@ describe("BibleSelector translation selector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -965,7 +966,7 @@ describe("BibleSelector translation selector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -1048,7 +1049,7 @@ describe("BibleSelector translation selector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -1153,7 +1154,7 @@ describe("BibleSelector translation selector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -1203,7 +1204,7 @@ describe("BibleSelector translation selector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -1242,7 +1243,7 @@ describe("BibleSelector translation selector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -1280,7 +1281,7 @@ describe("BibleSelector translation selector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -1318,7 +1319,7 @@ describe("BibleSelector translation selector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -1404,7 +1405,7 @@ describe("BibleSelector translation selector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -1486,15 +1487,15 @@ describe("BibleSelector sharing translations", () => {
     };
   }
 
-  let setClipboard: jest.Mock;
+  let setClipboard: Mock;
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
 
-    setClipboard = jest.fn();
+    setClipboard = vi.fn();
     const scope = globalThis as TestGlobalScope;
-    scope.os = { ...(scope.os ?? {}), setClipboard, toast: jest.fn() };
+    scope.os = { ...(scope.os ?? {}), setClipboard, toast: vi.fn() };
     scope.configBot = { tags: { pattern: "SeedBible" } };
   });
 
@@ -1515,20 +1516,18 @@ describe("BibleSelector sharing translations", () => {
     const { selectorState, bibleDataManager } = await createSelectorFixture();
 
     if (endpointInfoOverride) {
-      jest
-        .spyOn(bibleDataManager, "getTranslationEndpointInfo")
-        .mockReturnValue({
-          translationId,
-          endpoint: endpointInfoOverride.endpoint,
-          isDefault: endpointInfoOverride.isDefault,
-        });
+      vi.spyOn(bibleDataManager, "getTranslationEndpointInfo").mockReturnValue({
+        translationId,
+        endpoint: endpointInfoOverride.endpoint,
+        isDefault: endpointInfoOverride.isDefault,
+      });
     }
 
     act(() => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
         />,
@@ -1563,7 +1562,7 @@ describe("BibleSelector sharing translations", () => {
 
     await waitFor(() => setClipboard.mock.calls.length > 0);
 
-    const copiedUrl = new URL(setClipboard.mock.calls[0][0] as string);
+    const copiedUrl = new URL(setClipboard.mock.calls[0]![0] as string);
     expect(copiedUrl.hostname).toBe("ao.bot");
     expect(copiedUrl.searchParams.get("translation")).toBe("AAB");
   });
@@ -1586,7 +1585,7 @@ describe("BibleSelector sharing translations", () => {
 
     await waitFor(() => setClipboard.mock.calls.length > 0);
 
-    const copiedUrl = new URL(setClipboard.mock.calls[0][0] as string);
+    const copiedUrl = new URL(setClipboard.mock.calls[0]![0] as string);
     expect(copiedUrl.hostname).toBe("ao.bot");
     const translationParam = copiedUrl.searchParams.get("translation")!;
     expect(translationParam).toContain("example.test");

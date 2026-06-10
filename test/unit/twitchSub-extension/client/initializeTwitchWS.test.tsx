@@ -1,5 +1,6 @@
 import { signal } from "@preact/signals";
 import { initializeTwitchWS } from "@packages/twitchSub-extension/ext_twitchSub/client/initializeTwitchWS";
+import type { Mock } from "vitest";
 
 function createTwitchSubManagerMock(accessToken: string | null = "token-1") {
   return {
@@ -13,19 +14,19 @@ function createTwitchSubManagerMock(accessToken: string | null = "token-1") {
     }),
     websocketSessionID: signal<string | null>(null),
     webSocketClient: signal<any>(null),
-    handleWSEvents: jest.fn(),
+    handleWSEvents: vi.fn(),
   } as any;
 }
 
 describe("initializeTwitchWS", () => {
-  let websocketCtorMock: jest.Mock;
-  let warnSpy: jest.SpyInstance;
-  let errorSpy: jest.SpyInstance;
+  let websocketCtorMock: Mock;
+  let warnSpy: Mock;
+  let errorSpy: Mock;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
 
-    websocketCtorMock = jest.fn().mockImplementation(() => ({
+    websocketCtorMock = vi.fn().mockImplementation(() => ({
       onerror: null,
       onopen: null,
       onmessage: null,
@@ -33,12 +34,12 @@ describe("initializeTwitchWS", () => {
     }));
     (globalThis as any).WebSocket = websocketCtorMock;
 
-    warnSpy = jest.spyOn(console, "warn").mockImplementation(() => undefined);
-    errorSpy = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
-    jest.useRealTimers();
+    vi.useRealTimers();
     warnSpy.mockRestore();
     errorSpy.mockRestore();
   });
@@ -63,7 +64,7 @@ describe("initializeTwitchWS", () => {
     expect(manager.webSocketClient.value).toBeNull();
     expect(manager.websocketSessionID.value).toBeNull();
 
-    jest.advanceTimersByTime(1000);
+    vi.advanceTimersByTime(1000);
 
     expect(websocketCtorMock).toHaveBeenCalledTimes(2);
     expect(websocketCtorMock).toHaveBeenLastCalledWith(

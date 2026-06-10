@@ -6,46 +6,47 @@ import {
 } from "../testUtils/createTestSeedBibleState";
 import { signal } from "@preact/signals";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
+import type { Mock } from "vitest";
 
-const mockSaveReadingHistory = jest.fn();
+const mockSaveReadingHistory = vi.fn();
 const mockHighlightsManager = {
-  getChapterHighlights: jest.fn().mockReturnValue(signal({ highlights: [] })),
-  saveChapterHighlights: jest.fn(),
+  getChapterHighlights: vi.fn().mockReturnValue(signal({ highlights: [] })),
+  saveChapterHighlights: vi.fn(),
 };
 const mockSessionsManager = {
-  createSession: jest.fn(),
-  joinSession: jest.fn(),
+  createSession: vi.fn(),
+  joinSession: vi.fn(),
 };
 
-jest.mock("../managers/ReadingHistoryManager", () => ({
+vi.mock("../managers/ReadingHistoryManager", () => ({
   createReadingHistoryManager: () => ({
     saveReadingHistory: mockSaveReadingHistory,
-    getReadingEvents: jest.fn().mockResolvedValue([]),
+    getReadingEvents: vi.fn().mockResolvedValue([]),
   }),
 }));
 
-jest.mock("../managers/HighlightsManager", () => ({
+vi.mock("../managers/HighlightsManager", () => ({
   createHighlightsManager: () => mockHighlightsManager,
 }));
 
-jest.mock("../managers/SessionsManager", () => ({
+vi.mock("../managers/SessionsManager", () => ({
   createSessionsManager: () => mockSessionsManager,
 }));
 
-jest.mock("../i18n/I18nManager", () => ({
+vi.mock("../i18n/I18nManager", () => ({
   I18nProvider: ({ children }: { children: unknown }) => children,
 }));
 
-jest.mock("../managers/SearchManager", () => ({
-  createSearchManager: jest.fn().mockReturnValue({
-    searchVerses: jest.fn(),
+vi.mock("../managers/SearchManager", () => ({
+  createSearchManager: vi.fn().mockReturnValue({
+    searchVerses: vi.fn(),
   }),
 }));
 
-let logSpy: jest.SpyInstance;
+let logSpy: Mock;
 
 beforeEach(() => {
-  logSpy = jest.spyOn(console, "log").mockImplementation(() => undefined);
+  logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
   mockSaveReadingHistory.mockReset();
   mockHighlightsManager.getChapterHighlights.mockReset();
   mockHighlightsManager.getChapterHighlights.mockReturnValue(
@@ -61,8 +62,8 @@ beforeEach(() => {
 
   (globalThis as any).os = {
     ...(globalThis as any).os,
-    addBotListener: jest.fn(),
-    requestAuthBotInBackground: jest.fn().mockResolvedValue(null),
+    addBotListener: vi.fn(),
+    requestAuthBotInBackground: vi.fn().mockResolvedValue(null),
   };
 });
 
@@ -107,9 +108,9 @@ function createMockSharedSession(id: string) {
       endedAt: null,
     }),
     connectedUsers: signal([]),
-    updateOptions: jest.fn(),
-    removeSharedDecoration: jest.fn(),
-    dispose: jest.fn(),
+    updateOptions: vi.fn(),
+    removeSharedDecoration: vi.fn(),
+    dispose: vi.fn(),
   } as any;
 }
 
@@ -207,9 +208,9 @@ describe("createSeedBibleState", () => {
         endedAt: null,
       }),
       connectedUsers: signal([]),
-      updateOptions: jest.fn(),
-      removeSharedDecoration: jest.fn(),
-      dispose: jest.fn(),
+      updateOptions: vi.fn(),
+      removeSharedDecoration: vi.fn(),
+      dispose: vi.fn(),
     };
     mockSessionsManager.createSession.mockResolvedValue(session);
 
@@ -230,7 +231,7 @@ describe("createSeedBibleState", () => {
   });
 
   it("createSharedSession() captures a create_session posthog event", async () => {
-    const mockPosthogCapture = jest.fn();
+    const mockPosthogCapture = vi.fn();
     (globalThis as any).posthog = {
       capture: mockPosthogCapture,
     };
@@ -266,9 +267,9 @@ describe("createSeedBibleState", () => {
         endedAt: null,
       }),
       connectedUsers: signal([]),
-      updateOptions: jest.fn(),
-      removeSharedDecoration: jest.fn(),
-      dispose: jest.fn(),
+      updateOptions: vi.fn(),
+      removeSharedDecoration: vi.fn(),
+      dispose: vi.fn(),
     };
     mockSessionsManager.joinSession.mockResolvedValue(session);
 
@@ -289,7 +290,7 @@ describe("createSeedBibleState", () => {
   });
 
   it("joinSharedSession(id) captures a join_session posthog event", async () => {
-    const mockPosthogCapture = jest.fn();
+    const mockPosthogCapture = vi.fn();
     (globalThis as any).posthog = {
       capture: mockPosthogCapture,
     };
@@ -414,11 +415,11 @@ describe("createSeedBibleState", () => {
 
   describe("reading history autosave", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     function setSelectedTabChapter(
@@ -451,7 +452,7 @@ describe("createSeedBibleState", () => {
 
       state.tabs.selectedTabId.value = "missing-tab";
 
-      jest.advanceTimersByTime(6000);
+      vi.advanceTimersByTime(6000);
       expect(mockSaveReadingHistory).not.toHaveBeenCalled();
     });
 
@@ -467,7 +468,7 @@ describe("createSeedBibleState", () => {
       expect(selected).not.toBeNull();
       selected!.readingState.chapterData.value = null;
 
-      jest.advanceTimersByTime(6000);
+      vi.advanceTimersByTime(6000);
       expect(mockSaveReadingHistory).not.toHaveBeenCalled();
     });
 
@@ -476,10 +477,10 @@ describe("createSeedBibleState", () => {
       setSelectedTabChapter(state, "genesis", 1);
       mockSaveReadingHistory.mockClear();
 
-      jest.advanceTimersByTime(4999);
+      vi.advanceTimersByTime(4999);
       expect(mockSaveReadingHistory).not.toHaveBeenCalled();
 
-      jest.advanceTimersByTime(1);
+      vi.advanceTimersByTime(1);
       expect(mockSaveReadingHistory).toHaveBeenCalledTimes(1);
       expect(mockSaveReadingHistory).toHaveBeenLastCalledWith("genesis", 1);
     });
@@ -489,7 +490,7 @@ describe("createSeedBibleState", () => {
       setSelectedTabChapter(state, "genesis", 1);
       mockSaveReadingHistory.mockClear();
 
-      jest.advanceTimersByTime(15000);
+      vi.advanceTimersByTime(15000);
 
       expect(mockSaveReadingHistory).toHaveBeenCalledTimes(3);
       expect(mockSaveReadingHistory).toHaveBeenNthCalledWith(1, "genesis", 1);
@@ -507,14 +508,14 @@ describe("createSeedBibleState", () => {
       setSelectedTabChapter(state, "exodus", 2);
       mockSaveReadingHistory.mockClear();
 
-      jest.advanceTimersByTime(3000);
+      vi.advanceTimersByTime(3000);
       state.tabs.selectedTabId.value = "tab-1";
       setSelectedTabChapter(state, "genesis", 1);
 
-      jest.advanceTimersByTime(2000);
+      vi.advanceTimersByTime(2000);
       expect(mockSaveReadingHistory).not.toHaveBeenCalled();
 
-      jest.advanceTimersByTime(3000);
+      vi.advanceTimersByTime(3000);
       expect(mockSaveReadingHistory).toHaveBeenCalledTimes(1);
       expect(mockSaveReadingHistory).toHaveBeenLastCalledWith("genesis", 1);
     });
@@ -524,29 +525,29 @@ describe("createSeedBibleState", () => {
       setSelectedTabChapter(state, "genesis", 1);
       mockSaveReadingHistory.mockClear();
 
-      jest.advanceTimersByTime(3000);
+      vi.advanceTimersByTime(3000);
       setSelectedTabChapter(state, "genesis", 2);
 
-      jest.advanceTimersByTime(2000);
+      vi.advanceTimersByTime(2000);
       expect(mockSaveReadingHistory).not.toHaveBeenCalled();
 
-      jest.advanceTimersByTime(3000);
+      vi.advanceTimersByTime(3000);
       expect(mockSaveReadingHistory).toHaveBeenCalledTimes(1);
       expect(mockSaveReadingHistory).toHaveBeenLastCalledWith("genesis", 2);
     });
   });
 
   describe("posthog user_chapter_read", () => {
-    let mockPosthogCapture: jest.Mock;
+    let mockPosthogCapture: Mock;
 
     beforeEach(() => {
-      jest.useFakeTimers();
-      mockPosthogCapture = jest.fn();
+      vi.useFakeTimers();
+      mockPosthogCapture = vi.fn();
       (globalThis as any).posthog = { capture: mockPosthogCapture };
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
       delete (globalThis as any).posthog;
     });
 
@@ -579,7 +580,7 @@ describe("createSeedBibleState", () => {
       const state = await createState();
       setSelectedTabChapter(state, "genesis", 1);
 
-      jest.advanceTimersByTime(30_000);
+      vi.advanceTimersByTime(30_000);
 
       expect(mockPosthogCapture).not.toHaveBeenCalled();
     });
@@ -588,10 +589,10 @@ describe("createSeedBibleState", () => {
       const state = await createState();
       setSelectedTabChapter(state, "genesis", 1, "esv");
 
-      jest.advanceTimersByTime(29_999);
+      vi.advanceTimersByTime(29_999);
       expect(mockPosthogCapture).not.toHaveBeenCalled();
 
-      jest.advanceTimersByTime(1);
+      vi.advanceTimersByTime(1);
       expect(mockPosthogCapture).toHaveBeenCalledTimes(1);
       expect(mockPosthogCapture).toHaveBeenCalledWith("user_chapter_read", {
         translationId: "esv",
@@ -604,13 +605,13 @@ describe("createSeedBibleState", () => {
       const state = await createState();
       setSelectedTabChapter(state, "genesis", 1, "esv");
 
-      jest.advanceTimersByTime(20_000);
+      vi.advanceTimersByTime(20_000);
       setSelectedTabChapter(state, "genesis", 2, "esv");
 
-      jest.advanceTimersByTime(29_999);
+      vi.advanceTimersByTime(29_999);
       expect(mockPosthogCapture).not.toHaveBeenCalled();
 
-      jest.advanceTimersByTime(1);
+      vi.advanceTimersByTime(1);
       expect(mockPosthogCapture).toHaveBeenCalledTimes(1);
       expect(mockPosthogCapture).toHaveBeenCalledWith("user_chapter_read", {
         translationId: "esv",

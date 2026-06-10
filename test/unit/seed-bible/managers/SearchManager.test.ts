@@ -1,8 +1,10 @@
-jest.mock("typesense-fixed", () => {
-  const search = jest.fn();
-  const documents = jest.fn(() => ({ search }));
-  const collections = jest.fn(() => ({ documents }));
-  const client = jest.fn(() => ({ collections }));
+import type { Mock } from "vitest";
+
+vi.mock("typesense-fixed", () => {
+  const search = vi.fn();
+  const documents = vi.fn(() => ({ search }));
+  const collections = vi.fn(() => ({ documents }));
+  const client = vi.fn(() => ({ collections }));
 
   return {
     __esModule: true,
@@ -20,16 +22,16 @@ jest.mock("typesense-fixed", () => {
 
 let createSearchManager: typeof import("@packages/seed-bible/seed-bible/managers/SearchManager").createSearchManager;
 
-function getTypesenseMock() {
-  const mockedTypesense = jest.requireMock("typesense-fixed") as {
+async function getTypesenseMock() {
+  const mockedTypesense = (await vi.importMock("typesense-fixed")) as {
     default: {
-      Client: jest.Mock;
+      Client: Mock;
     };
     __mock: {
-      client: jest.Mock;
-      collections: jest.Mock;
-      documents: jest.Mock;
-      search: jest.Mock;
+      client: Mock;
+      collections: Mock;
+      documents: Mock;
+      search: Mock;
     };
   };
 
@@ -42,13 +44,13 @@ describe("createSearchManager", () => {
       await import("@packages/seed-bible/seed-bible/managers/SearchManager"));
   });
 
-  beforeEach(() => {
-    const mockedTypesense = jest.requireMock("typesense-fixed") as {
+  beforeEach(async () => {
+    const mockedTypesense = (await vi.importMock("typesense-fixed")) as {
       __mock: {
-        client: jest.Mock;
-        collections: jest.Mock;
-        documents: jest.Mock;
-        search: jest.Mock;
+        client: Mock;
+        collections: Mock;
+        documents: Mock;
+        search: Mock;
       };
     };
     mockedTypesense.__mock.client.mockClear();
@@ -66,7 +68,7 @@ describe("createSearchManager", () => {
     };
 
     const manager = createSearchManager();
-    const typesenseMock = getTypesenseMock();
+    const typesenseMock = await getTypesenseMock();
     typesenseMock.search.mockResolvedValue(response);
     const result = await manager.searchVerses("eng", "BSB", "beginning");
 
@@ -91,7 +93,7 @@ describe("createSearchManager", () => {
 
   it("maps object filters to filter_by clauses", async () => {
     const manager = createSearchManager();
-    const typesenseMock = getTypesenseMock();
+    const typesenseMock = await getTypesenseMock();
     typesenseMock.search.mockResolvedValue({
       found: 0,
       out_of: 0,
@@ -115,7 +117,7 @@ describe("createSearchManager", () => {
 
   it("passes through string filters unchanged", async () => {
     const manager = createSearchManager();
-    const typesenseMock = getTypesenseMock();
+    const typesenseMock = await getTypesenseMock();
     typesenseMock.search.mockResolvedValue({
       found: 0,
       out_of: 0,

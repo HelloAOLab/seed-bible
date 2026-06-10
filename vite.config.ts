@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { getTsconfig } from "get-tsconfig";
@@ -23,6 +24,9 @@ export default defineConfig({
       jsxImportSource: "preact/compat",
     }),
   ],
+  test: {
+    globals: true,
+  },
 
   resolve: {
     alias: {

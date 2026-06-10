@@ -20,16 +20,16 @@ import {
 import { signal } from "@preact/signals";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
-// import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
+import type { Mock } from "vitest";
 
-let webGetMock: jest.Mock;
+let webGetMock: Mock;
 let botChangedListener: ((that: unknown) => Promise<void> | void) | null;
-let logSpy: jest.SpyInstance;
+let logSpy: Mock;
 
 beforeEach(() => {
-  webGetMock = jest.fn();
+  webGetMock = vi.fn();
   botChangedListener = null;
-  logSpy = jest.spyOn(console, "log").mockImplementation(() => undefined);
+  logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
 
   (globalThis as any).web = {
     get: webGetMock,
@@ -40,7 +40,7 @@ beforeEach(() => {
   };
 
   (globalThis as any).os = {
-    addBotListener: jest.fn(
+    addBotListener: vi.fn(
       (_bot: unknown, event: string, listener: typeof botChangedListener) => {
         if (event === "onBotChanged") {
           botChangedListener = listener;
@@ -77,7 +77,7 @@ function createDataManager() {
 
 function createHighlightsManagerMock() {
   return {
-    getChapterHighlights: jest.fn().mockReturnValue(signal({ highlights: [] })),
+    getChapterHighlights: vi.fn().mockReturnValue(signal({ highlights: [] })),
   };
 }
 
@@ -202,13 +202,13 @@ describe("createTabs", () => {
         highlightDurationSeconds: 16,
         endedAt: null,
       }),
-      updateOptions: jest.fn(),
-      removeSharedDecoration: jest.fn(),
-      dispose: jest.fn(),
+      updateOptions: vi.fn(),
+      removeSharedDecoration: vi.fn(),
+      dispose: vi.fn(),
       connectedUsers: signal([]),
       localSessionId: signal("session-123"),
-      userCanDecorate: jest.fn().mockReturnValue(true),
-      userCanNavigate: jest.fn().mockReturnValue(true),
+      userCanDecorate: vi.fn().mockReturnValue(true),
+      userCanNavigate: vi.fn().mockReturnValue(true),
     } as BibleReadingSession;
 
     const nextTab = manager.addTab(sharedSession);
@@ -342,7 +342,7 @@ describe("createTabs", () => {
 
     const dataManager = createDataManager();
     const customTranslationUrl = "https://alt.example/api/NIV/books.json";
-    const buildTranslationIdSpy = jest
+    const buildTranslationIdSpy = vi
       .spyOn(dataManager, "buildTranslationId")
       .mockReturnValue(customTranslationUrl);
 
@@ -466,14 +466,14 @@ describe("createTabs", () => {
     (globalThis as any).configBot.tags.verse = "3,5-6";
     setWebResponses(createExampleManagerResponseMap());
 
-    let decorateVersesSpy: jest.SpyInstance | null = null;
+    let decorateVersesSpy: Mock | null = null;
     const originalCreateBibleReadingState =
       BibleReadingManagerModule.createBibleReadingState;
-    const createBibleReadingStateSpy = jest
+    const createBibleReadingStateSpy = vi
       .spyOn(BibleReadingManagerModule, "createBibleReadingState")
       .mockImplementation((...args) => {
         const state = originalCreateBibleReadingState(...args);
-        decorateVersesSpy = jest.spyOn(state, "decorateVerses");
+        decorateVersesSpy = vi.spyOn(state, "decorateVerses");
         return state;
       });
 
@@ -501,7 +501,7 @@ describe("createTabs", () => {
     (globalThis as any).configBot.tags.verse = "7,9-10";
     setWebResponses(createExampleManagerResponseMap());
 
-    const createBibleReadingStateSpy = jest.spyOn(
+    const createBibleReadingStateSpy = vi.spyOn(
       BibleReadingManagerModule,
       "createBibleReadingState"
     );

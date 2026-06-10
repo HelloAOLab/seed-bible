@@ -13,13 +13,14 @@ import {
 } from "./testUtils/mockBibleApiData";
 import { signal } from "@preact/signals";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import type { Mock } from "vitest";
 
-let webGetMock: jest.Mock;
-let logSpy: jest.SpyInstance;
+let webGetMock: Mock;
+let logSpy: Mock;
 
 beforeEach(() => {
-  webGetMock = jest.fn();
-  logSpy = jest.spyOn(console, "log").mockImplementation(() => undefined);
+  webGetMock = vi.fn();
+  logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
 
   (globalThis as any).web = {
     get: webGetMock,
@@ -30,7 +31,7 @@ beforeEach(() => {
   };
 
   (globalThis as any).os = {
-    addBotListener: jest.fn(),
+    addBotListener: vi.fn(),
   };
 });
 
@@ -61,7 +62,7 @@ function createDataManager() {
 
 function createHighlightsManagerMock() {
   return {
-    getChapterHighlights: jest.fn().mockReturnValue(signal({ highlights: [] })),
+    getChapterHighlights: vi.fn().mockReturnValue(signal({ highlights: [] })),
   };
 }
 

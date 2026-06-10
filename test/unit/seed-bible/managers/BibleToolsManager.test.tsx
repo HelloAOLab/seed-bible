@@ -1,13 +1,9 @@
 import { signal } from "@preact/signals";
 
-jest.mock(
-  "@packages/seed-bible/seed-bible/components/icons",
-  () => ({
-    MaterialIcon: () => null,
-    SeedBibleIcon: () => null,
-  }),
-  { virtual: true }
-);
+vi.mock("@packages/seed-bible/seed-bible/components/icons", () => ({
+  MaterialIcon: () => null,
+  SeedBibleIcon: () => null,
+}));
 
 import {
   createBibleToolsManager,
@@ -25,16 +21,16 @@ function createContext(): BibleToolContext {
       chapterData: signal(null),
       loading: signal(false),
       selectedVerses: signal([]),
-      clearSelectedVerses: jest.fn(),
-      loadPreviousChapter: jest.fn(),
-      loadNextChapter: jest.fn(),
+      clearSelectedVerses: vi.fn(),
+      loadPreviousChapter: vi.fn(),
+      loadNextChapter: vi.fn(),
     } as any,
     sharedSession: null,
     selectorState: {
-      setOpen: jest.fn(),
+      setOpen: vi.fn(),
     } as any,
-    openSidebar: jest.fn(),
-    openSearch: jest.fn(),
+    openSidebar: vi.fn(),
+    openSearch: vi.fn(),
     panesManager: {} as any,
     tabs: {} as any,
   };
@@ -176,7 +172,7 @@ describe("createBibleToolsManager", () => {
       icon: () => <span>icon</span>,
       isVisible: () => true,
       isDisabled: () => false,
-      onSelect: jest.fn(),
+      onSelect: vi.fn(),
     });
 
     const tools = manager.getToolbarTools(context);
@@ -194,7 +190,7 @@ describe("createBibleToolsManager", () => {
       title: "Custom Tool",
       icon: () => <span>icon</span>,
       isVisible: () => true,
-      onSelect: jest.fn(),
+      onSelect: vi.fn(),
     });
 
     manager.unregisterToolbarTool(CUSTOM_TOOL_ID);
@@ -215,7 +211,7 @@ describe("createBibleToolsManager", () => {
       icon: () => <span>icon</span>,
       isVisible: () => true,
       isDisabled: () => true,
-      onSelect: jest.fn(),
+      onSelect: vi.fn(),
     });
 
     manager.registerToolbarTool({
@@ -224,7 +220,7 @@ describe("createBibleToolsManager", () => {
       title: "Hidden Tool",
       icon: () => <span>icon</span>,
       isVisible: () => false,
-      onSelect: jest.fn(),
+      onSelect: vi.fn(),
     });
 
     const tools = manager.getToolbarTools(context);
@@ -255,7 +251,7 @@ describe("createBibleToolsManager", () => {
       icon: () => <span>icon</span>,
       isVisible: () => isVisible,
       isDisabled: () => isDisabled,
-      onSelect: jest.fn(),
+      onSelect: vi.fn(),
     });
 
     let tools = manager.getToolbarTools(context);
@@ -289,7 +285,7 @@ describe("createBibleToolsManager", () => {
       icon: () => <span>icon</span>,
       isVisible: () => true,
       isDisabled: () => false,
-      onSelect: jest.fn(),
+      onSelect: vi.fn(),
     });
 
     const tools = manager.getVerseToolbarTools(context);
@@ -307,7 +303,7 @@ describe("createBibleToolsManager", () => {
       title: "Custom Verse Tool",
       icon: () => <span>icon</span>,
       isVisible: () => true,
-      onSelect: jest.fn(),
+      onSelect: vi.fn(),
     });
 
     manager.unregisterVerseToolbarTool(CUSTOM_VERSE_TOOL_ID);
@@ -328,7 +324,7 @@ describe("createBibleToolsManager", () => {
       icon: () => <span>icon</span>,
       isVisible: () => true,
       isDisabled: () => true,
-      onSelect: jest.fn(),
+      onSelect: vi.fn(),
     });
 
     manager.registerVerseToolbarTool({
@@ -337,7 +333,7 @@ describe("createBibleToolsManager", () => {
       title: "Hidden Verse Tool",
       icon: () => <span>icon</span>,
       isVisible: () => false,
-      onSelect: jest.fn(),
+      onSelect: vi.fn(),
     });
 
     const tools = manager.getVerseToolbarTools(context);
@@ -358,8 +354,8 @@ describe("createBibleToolsManager", () => {
   it("getToolbarTools() resolves getItems() in declared order", () => {
     const manager = createBibleToolsManager();
     const context = createContext();
-    const firstItemOnSelect = jest.fn();
-    const secondItemOnSelect = jest.fn();
+    const firstItemOnSelect = vi.fn();
+    const secondItemOnSelect = vi.fn();
 
     manager.registerToolbarTool({
       id: CUSTOM_ITEMS_TOOL_ID,
@@ -410,7 +406,7 @@ describe("createBibleToolsManager", () => {
         priority: 50,
         title: "Custom Items Tool",
         icon: () => <span>icon</span>,
-        onSelect: jest.fn(),
+        onSelect: vi.fn(),
         getItems: () => [],
       });
     }).toThrow(
@@ -433,7 +429,7 @@ describe("createBibleToolsManager", () => {
             id: "nested-item",
             title: "Nested",
             icon: () => <span>nested</span>,
-            onSelect: jest.fn(),
+            onSelect: vi.fn(),
             getItems: () => [],
           },
         ] as any,

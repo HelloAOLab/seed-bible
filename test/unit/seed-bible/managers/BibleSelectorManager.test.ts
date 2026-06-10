@@ -24,12 +24,13 @@ import {
   nivBooks,
 } from "./testUtils/mockBibleApiData";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import type { Mock } from "vitest";
 
-let webGetMock: jest.Mock;
+let webGetMock: Mock;
 
 beforeEach(() => {
   window.localStorage.clear();
-  webGetMock = jest.fn();
+  webGetMock = vi.fn();
   (globalThis as any).web = {
     get: webGetMock,
   };
@@ -40,7 +41,7 @@ beforeEach(() => {
 
   (globalThis as any).os = {
     ...(globalThis as any).os,
-    addBotListener: jest.fn(),
+    addBotListener: vi.fn(),
   };
 });
 
@@ -69,7 +70,7 @@ function createDataManager() {
 
 function createHighlightsManagerMock() {
   return {
-    getChapterHighlights: jest.fn().mockReturnValue(signal({ highlights: [] })),
+    getChapterHighlights: vi.fn().mockReturnValue(signal({ highlights: [] })),
   };
 }
 
@@ -84,7 +85,7 @@ function createSettingsManagerMock() {
 function createSidebarManagerMock() {
   return {
     isMobileOpen: signal(false),
-    openSidebar: jest.fn(),
+    openSidebar: vi.fn(),
   };
 }
 
@@ -196,10 +197,10 @@ async function createManagersWithSelectedPane(): Promise<{
 }
 
 describe("createBibleSelectorState", () => {
-  let logSpy: jest.SpyInstance;
+  let logSpy: Mock;
 
   beforeEach(() => {
-    logSpy = jest.spyOn(console, "log").mockImplementation(() => undefined);
+    logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -562,10 +563,10 @@ describe("createBibleSelectorState", () => {
   });
 
   describe("default translation ID (BSB) fallback behavior", () => {
-    let nestedLogSpy: jest.SpyInstance;
+    let nestedLogSpy: Mock;
 
     beforeEach(() => {
-      nestedLogSpy = jest
+      nestedLogSpy = vi
         .spyOn(console, "log")
         .mockImplementation(() => undefined);
     });

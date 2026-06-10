@@ -3,8 +3,9 @@ import {
   userProfileSchema,
 } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
+import type { Mock } from "vitest";
 
-jest.setTimeout(3000);
+vi.setConfig({ testTimeout: 3000 });
 
 async function waitFor(
   condition: () => boolean,
@@ -20,32 +21,30 @@ async function waitFor(
 }
 
 describe("createLoginManager", () => {
-  let requestAuthBotInBackgroundMock: jest.SpyInstance;
-  let requestAuthBotMock: jest.SpyInstance;
-  let getDataMock: jest.SpyInstance;
-  let recordDataMock: jest.SpyInstance;
-  let signOutMock: jest.SpyInstance;
-  let warnSpy: jest.SpyInstance;
+  let requestAuthBotInBackgroundMock: Mock;
+  let requestAuthBotMock: Mock;
+  let getDataMock: Mock;
+  let recordDataMock: Mock;
+  let signOutMock: Mock;
+  let warnSpy: Mock;
   let os: CasualOSManager;
 
   beforeEach(() => {
     os = CasualOSManager();
-    requestAuthBotInBackgroundMock = jest
+    requestAuthBotInBackgroundMock = vi
       .spyOn(os, "requestAuthBotInBackground")
       .mockResolvedValue(null);
-    requestAuthBotMock = jest
-      .spyOn(os, "requestAuthBot")
-      .mockResolvedValue(null);
-    getDataMock = jest.spyOn(os, "getData").mockResolvedValue({
+    requestAuthBotMock = vi.spyOn(os, "requestAuthBot").mockResolvedValue(null);
+    getDataMock = vi.spyOn(os, "getData").mockResolvedValue({
       success: false,
       errorCode: "data_not_found",
       errorMessage: "No data found for the given key.",
     });
-    recordDataMock = jest
+    recordDataMock = vi
       .spyOn(os, "recordData")
-      .mockResolvedValue(undefined as any);
-    signOutMock = jest.spyOn(os, "signOut").mockResolvedValue(undefined);
-    warnSpy = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+      .mockResolvedValue(undefined as never);
+    signOutMock = vi.spyOn(os, "signOut").mockResolvedValue(undefined);
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -135,7 +134,7 @@ describe("createLoginManager", () => {
   });
 
   it("calls posthog.identify() with the user ID when the user logs in", async () => {
-    const mockIdentify = jest.fn();
+    const mockIdentify = vi.fn();
     (globalThis as any).posthog = { identify: mockIdentify };
 
     try {
@@ -166,12 +165,12 @@ describe("createLoginManager", () => {
   });
 
   describe("uploadProfilePicture()", () => {
-    let showUploadFilesMock: jest.Mock;
-    let recordFileMock: jest.Mock;
+    let showUploadFilesMock: Mock;
+    let recordFileMock: Mock;
 
     beforeEach(() => {
-      showUploadFilesMock = jest.fn();
-      recordFileMock = jest.fn();
+      showUploadFilesMock = vi.fn();
+      recordFileMock = vi.fn();
 
       (globalThis as any).os = {
         ...(globalThis as any).os,

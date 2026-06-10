@@ -42,8 +42,8 @@
     "resolvePackageJsonExports": true,
     "resolvePackageJsonImports": true,
     "preserveConstEnums": true,
-    "typeRoots": ["./node_modules/@types", "./typings"],
-    "types": ["jest"]
+    "typeRoots": ["./node_modules/@types", "./typings", "./node_modules"],
+    "types": ["vitest/globals"]
   },
   "include": ["packages", "typings", "script", "test", "standalone"],
   "exclude": ["obsolete"]

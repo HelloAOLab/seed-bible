@@ -37,7 +37,7 @@ export async function waitFor(
     }
 
     const p = new Promise((resolve) => setTimeout(resolve, 0));
-    jest.runAllTimers();
+    vi.runAllTimers();
     await p;
   }
 }
