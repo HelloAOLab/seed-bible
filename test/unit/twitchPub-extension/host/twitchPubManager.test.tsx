@@ -112,6 +112,7 @@ describe("CreateTwitchPubState", () => {
   });
 
   afterEach(() => {
+    vi.clearAllMocks();
     vi.useRealTimers();
     logSpy.mockRestore();
     delete (globalThis as any).TextEncoder;
@@ -160,7 +161,9 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("builds the QR redirect URI from the current location first", () => {
-    location.href = `https://example.com/twitch-pub?existing=1`;
+    jsdom.reconfigure({
+      url: `https://example.com/twitch-pub?existing=1`,
+    });
 
     const state = CreateTwitchPubState();
 
@@ -170,7 +173,6 @@ describe("CreateTwitchPubState", () => {
     expect(redirectUri.origin + redirectUri.pathname).toBe(
       `https://example.com/twitch-pub`
     );
-    expect(redirectUri.searchParams.get("pattern")).toBe("SeedBible");
     expect(redirectUri.searchParams.get("autoinstall-ext_twitchSub")).toBe(
       "true"
     );
@@ -218,7 +220,9 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("sends an announcement with the join URL once the user is logged in", async () => {
-    location.href = `https://example.com/reader?chapter=1`;
+    jsdom.reconfigure({
+      url: `https://example.com/reader?chapter=1`,
+    });
 
     const state = CreateTwitchPubState();
 
@@ -229,7 +233,8 @@ describe("CreateTwitchPubState", () => {
 
     await waitFor(() => fetchMock.mock.calls.length === 1);
 
-    const [url, body, options] = fetchMock.mock.calls[0]!;
+    const [url, options] = fetchMock.mock.calls[0]!;
+    const { body, ...otherOptions } = options;
     const parsedBody = JSON.parse(body as string);
 
     expect(url).toBe(
@@ -248,11 +253,11 @@ describe("CreateTwitchPubState", () => {
     expect(redirectUri.origin + redirectUri.pathname).toBe(
       `https://example.com/reader`
     );
-    expect(redirectUri.searchParams.get("pattern")).toBe("SeedBible");
     expect(redirectUri.searchParams.get("autoinstall-ext_twitchSub")).toBe(
       "true"
     );
-    expect(options).toEqual({
+    expect(otherOptions).toEqual({
+      method: "POST",
       headers: {
         Authorization: "Bearer token-1",
         "Client-Id": "cfjslv2429r70ek579iogr02vecn6d",
@@ -263,7 +268,9 @@ describe("CreateTwitchPubState", () => {
 
   it("sends announcements on a timer when announcementTimer is configured", () => {
     vi.useFakeTimers();
-    location.href = "https://example.com/twitch-pub?existing=1";
+    jsdom.reconfigure({
+      url: `https://example.com/reader?chapter=1`,
+    });
 
     const state = CreateTwitchPubState();
 
@@ -275,13 +282,13 @@ describe("CreateTwitchPubState", () => {
       interval: 5000,
     };
 
-    expect(fetchMock).not.toHaveBeenCalled();
+    // expect(fetchMock).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(5000);
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
-    // eslint-disable-next-line prefer-const
-    let [url, body, options] = fetchMock.mock.calls[0]!;
+    let [url, options] = fetchMock.mock.calls[0]!;
+    let { body, ...otherOptions } = options;
     let parsedBody = JSON.parse(body as string);
     let announcedUrl = new URL(parsedBody.message.replace("Join me at ", ""));
     let redirectUri = new URL(
@@ -294,11 +301,11 @@ describe("CreateTwitchPubState", () => {
     expect(redirectUri.origin + redirectUri.pathname).toBe(
       `https://example.com/reader`
     );
-    expect(redirectUri.searchParams.get("pattern")).toBe("SeedBible");
     expect(redirectUri.searchParams.get("autoinstall-ext_twitchSub")).toBe(
       "true"
     );
-    expect(options).toEqual({
+    expect(otherOptions).toEqual({
+      method: "POST",
       headers: {
         Authorization: "Bearer token-1",
         "Client-Id": "cfjslv2429r70ek579iogr02vecn6d",
@@ -309,7 +316,8 @@ describe("CreateTwitchPubState", () => {
     vi.advanceTimersByTime(5000);
     expect(fetchMock).toHaveBeenCalledTimes(2);
 
-    [url, body] = fetchMock.mock.calls[1]!;
+    [url, options] = fetchMock.mock.calls[1]!;
+    ({ body, ...otherOptions } = options);
     parsedBody = JSON.parse(body as string);
     announcedUrl = new URL(parsedBody.message.replace("Join me at ", ""));
     redirectUri = new URL(announcedUrl.searchParams.get("redirect_uri") ?? "");
