@@ -1,16 +1,18 @@
 import type { Mock } from "vitest";
 
-vi.mock("typesense-fixed", () => {
+vi.mock("typesense", () => {
   const search = vi.fn();
   const documents = vi.fn(() => ({ search }));
   const collections = vi.fn(() => ({ documents }));
-  const client = vi.fn(() => ({ collections }));
+  const client = vi.fn(
+    class {
+      collections = collections;
+    }
+  );
 
   return {
     __esModule: true,
-    default: {
-      Client: client,
-    },
+    Client: client,
     __mock: {
       client,
       collections,
@@ -23,10 +25,8 @@ vi.mock("typesense-fixed", () => {
 let createSearchManager: typeof import("@packages/seed-bible/seed-bible/managers/SearchManager").createSearchManager;
 
 async function getTypesenseMock() {
-  const mockedTypesense = (await vi.importMock("typesense-fixed")) as {
-    default: {
-      Client: Mock;
-    };
+  const mockedTypesense = (await vi.importMock("typesense")) as {
+    Client: Mock;
     __mock: {
       client: Mock;
       collections: Mock;
@@ -45,7 +45,7 @@ describe("createSearchManager", () => {
   });
 
   beforeEach(async () => {
-    const mockedTypesense = (await vi.importMock("typesense-fixed")) as {
+    const mockedTypesense = (await vi.importMock("typesense")) as {
       __mock: {
         client: Mock;
         collections: Mock;
