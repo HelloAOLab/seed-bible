@@ -1,4 +1,11 @@
 export const sw: Record<string, string> = {
+  "everything-begins-small": "Kila kitu huanza kidogo.",
+  "no-rush":
+    "Chukua muda wako. — hakuna mfululizo wa kudumisha, au mbio za kushinda.",
+  "read-first-chapter": "Soma sura ya kwanza",
+  "open-bible": "Fungua Biblia",
+  "anonymous-greeting": "Karibu!",
+  "personal-greeting": "Karibu, {{name}}!",
   All: "Zote",
   "VIEW-MORE": "TAZAMA ZAIDI",
   BOOKMARKS: "ALAMISHO:",

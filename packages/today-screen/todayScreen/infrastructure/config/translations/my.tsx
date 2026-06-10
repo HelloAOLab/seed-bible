@@ -1,4 +1,11 @@
 export const my: Record<string, string> = {
+  "everything-begins-small": "အရာအားလုံးသည် သေးငယ်စွာ စတင်သည်။",
+  "no-rush":
+    "အလျင်စလို မလုပ်ပါနဲ့။ — ထိန်းသိမ်းရန် ဆက်တိုက်စံချိန်မရှိ၊ အနိုင်ရရန် ပြိုင်ပွဲလည်း မရှိပါ။",
+  "read-first-chapter": "ပထမအခန်းကို ဖတ်ပါ",
+  "open-bible": "သမ္မာကျမ်းစာ ဖွင့်ရန်",
+  "anonymous-greeting": "ကြိုဆိုပါတယ်!",
+  "personal-greeting": "ကြိုဆိုပါတယ် {{name}}!",
   All: "အားလုံး",
   "VIEW-MORE": "ပိုမိုကြည့်ရန်",
   BOOKMARKS: "မှတ်သားချက်များ:",

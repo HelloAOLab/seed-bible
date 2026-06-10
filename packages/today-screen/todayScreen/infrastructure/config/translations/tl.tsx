@@ -1,4 +1,11 @@
 export const tl: Record<string, string> = {
+  "everything-begins-small": "Ang lahat ay nagsisimula nang maliit.",
+  "no-rush":
+    "Huwag magmadali. — walang streak na panatilihin, o karera na panalunan.",
+  "read-first-chapter": "Basahin ang unang kabanata",
+  "open-bible": "Buksan ang Bibliya",
+  "anonymous-greeting": "Maligayang pagdating!",
+  "personal-greeting": "Maligayang pagdating, {{name}}!",
   All: "Lahat",
   "VIEW-MORE": "TINGNAN PA",
   BOOKMARKS: "MGA BOOKMARK:",

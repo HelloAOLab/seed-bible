@@ -1,4 +1,10 @@
 export const mk: Record<string, string> = {
+  "everything-begins-small": "Сè започнува од мало.",
+  "no-rush": "Не брзај. — нема низа за одржување, ниту трка за победување.",
+  "read-first-chapter": "Прочитај го првото поглавје",
+  "open-bible": "Отвори ја Библијата",
+  "anonymous-greeting": "Добредојдовте!",
+  "personal-greeting": "Добредојде, {{name}}!",
   All: "Сите",
   "VIEW-MORE": "ПРИКАЖИ ПОВЕЌЕ",
   BOOKMARKS: "ОБЕЛЕЖУВАЧИ:",

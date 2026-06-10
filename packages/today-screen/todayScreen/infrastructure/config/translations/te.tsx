@@ -1,4 +1,11 @@
 export const te: Record<string, string> = {
+  "everything-begins-small": "ప్రతిదీ చిన్నగా ప్రారంభమవుతుంది.",
+  "no-rush":
+    "తొందరపడకండి. — నిలబెట్టుకోవడానికి ఏ స్ట్రీక్ లేదు, గెలవడానికి ఏ పందెం లేదు.",
+  "read-first-chapter": "మొదటి అధ్యాయాన్ని చదవండి",
+  "open-bible": "బైబిల్ తెరువు",
+  "anonymous-greeting": "స్వాగతం!",
+  "personal-greeting": "స్వాగతం, {{name}}!",
   All: "అన్నీ",
   "VIEW-MORE": "మరింత చూడండి",
   BOOKMARKS: "బుక్‌మార్క్‌లు:",

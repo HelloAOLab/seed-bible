@@ -1,4 +1,11 @@
 export const bn: Record<string, string> = {
+  "everything-begins-small": "সবকিছু ছোট থেকে শুরু হয়।",
+  "no-rush":
+    "সময় নিন। — ধরে রাখার মতো কোনো ধারা নেই, বা জেতার মতো কোনো প্রতিযোগিতা নেই।",
+  "read-first-chapter": "প্রথম অধ্যায় পড়ুন",
+  "open-bible": "বাইবেল খুলুন",
+  "anonymous-greeting": "স্বাগতম!",
+  "personal-greeting": "স্বাগতম, {{name}}!",
   All: "সব",
   "VIEW-MORE": "আরও দেখুন",
   BOOKMARKS: "বুকমার্ক:",

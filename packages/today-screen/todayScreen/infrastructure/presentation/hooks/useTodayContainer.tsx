@@ -5,18 +5,26 @@ const { useMemo } = os.appHooks;
 
 type UseTodayContainer = () => {
   Component: () => preact.JSX.Element;
+  style: React.CSSProperties;
 };
 
 export const useTodayContainer: UseTodayContainer = () => {
   const { userId, userLastReading } = useTodayContext();
-  const Component = useMemo(() => {
+  const { Component, style } = useMemo(() => {
     if (!userId || !userLastReading.value) {
-      return Welcome;
+      return {
+        Component: Welcome,
+        style: { alignItems: "center" },
+      };
     }
-    return TodayContent;
+    return {
+      Component: TodayContent,
+      style: { alignItems: "flex-start" },
+    };
   }, [userId, userLastReading.value]);
 
   return {
     Component,
+    style,
   };
 };

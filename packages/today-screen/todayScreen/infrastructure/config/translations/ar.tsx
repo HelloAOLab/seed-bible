@@ -1,4 +1,10 @@
 export const ar: Record<string, string> = {
+  "everything-begins-small": "كل شيء يبدأ صغيرًا.",
+  "no-rush": "خذ وقتك. — لا سلسلة لتحافظ عليها، ولا سباق لتفوز به.",
+  "read-first-chapter": "اقرأ الفصل الأول",
+  "open-bible": "افتح الكتاب المقدس",
+  "anonymous-greeting": "مرحبًا!",
+  "personal-greeting": "مرحبًا، {{name}}!",
   All: "الكل",
   "VIEW-MORE": "عرض المزيد",
   BOOKMARKS: "الإشارات المرجعية:",

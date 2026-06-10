@@ -49,8 +49,20 @@ export interface TodayConfig {
     verse?: number | undefined
   ) => void;
   getDefaultTranslation: () => string | undefined;
+  /** The last translation id that was in use (last valid, persists across deselection). */
+  lastTranslationId: Signal<string | undefined>;
   /** Full-text verse search using the active translation/language. */
   searchVerses: (query: string) => Promise<VerseSearchResult[]>;
+  /**
+   * Plain text of a single verse from any translation/book/chapter.
+   * Resolves to `undefined` when the chapter or verse is not found.
+   */
+  getVerseText: (
+    translationId: string,
+    bookId: string,
+    chapter: number,
+    verse: number
+  ) => Promise<string | undefined>;
   openBookSelector: () => void;
   translationBooks: Signal<{
     books: Array<{
@@ -116,6 +128,10 @@ export interface TodayConfig {
     buildTimespanOptionsMap: () => Record<TimespanOptionId, TimespanOption>;
     getTimespanOptionLabelMap(): Record<TimespanOptionId, string>;
   };
+  getHighlightedWelcomeVerse: (
+    translationId: string,
+    rawVerseText: string
+  ) => string;
 }
 
 type TodayProps = {

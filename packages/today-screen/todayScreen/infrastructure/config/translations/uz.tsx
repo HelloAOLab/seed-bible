@@ -1,4 +1,11 @@
 export const uz: Record<string, string> = {
+  "everything-begins-small": "Hamma narsa kichikdan boshlanadi.",
+  "no-rush":
+    "Shoshilmang. — saqlanadigan seriya ham, yutib olinadigan poyga ham yo'q.",
+  "read-first-chapter": "Birinchi bobni o'qish",
+  "open-bible": "Muqaddas Kitobni ochish",
+  "anonymous-greeting": "Xush kelibsiz!",
+  "personal-greeting": "Xush kelibsiz, {{name}}!",
   All: "Hammasi",
   "VIEW-MORE": "KO'PROQ KO'RISH",
   BOOKMARKS: "XATCHO'PLAR:",

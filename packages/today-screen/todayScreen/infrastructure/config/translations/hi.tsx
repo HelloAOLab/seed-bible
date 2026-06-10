@@ -1,4 +1,11 @@
 export const hi: Record<string, string> = {
+  "everything-begins-small": "सब कुछ छोटे से शुरू होता है।",
+  "no-rush":
+    "अपना समय लें। — बनाए रखने के लिए कोई सिलसिला नहीं है, और जीतने के लिए कोई दौड़ नहीं है।",
+  "read-first-chapter": "पहला अध्याय पढ़ें",
+  "open-bible": "बाइबल खोलें",
+  "anonymous-greeting": "स्वागत है!",
+  "personal-greeting": "स्वागत है, {{name}}!",
   All: "सभी",
   "VIEW-MORE": "और देखें",
   BOOKMARKS: "बुकमार्क:",

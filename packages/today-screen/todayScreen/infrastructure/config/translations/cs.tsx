@@ -1,4 +1,11 @@
 export const cs: Record<string, string> = {
+  "everything-begins-small": "Všechno začíná v malém.",
+  "no-rush":
+    "Nespěchej. — není žádná série, kterou bys musel udržet, ani závod, který bys musel vyhrát.",
+  "read-first-chapter": "Přečíst první kapitolu",
+  "open-bible": "Otevřít Bibli",
+  "anonymous-greeting": "Vítejte!",
+  "personal-greeting": "Vítej, {{name}}!",
   All: "Vše",
   "VIEW-MORE": "ZOBRAZIT VÍCE",
   BOOKMARKS: "ZÁLOŽKY:",

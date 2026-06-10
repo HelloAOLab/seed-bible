@@ -1,4 +1,11 @@
 export const fy: Record<string, string> = {
+  "everything-begins-small": "Alles begjint lyts.",
+  "no-rush":
+    "Nim de tiid. — der is gjin rige om te hâlden, of race om te winnen.",
+  "read-first-chapter": "Lês it earste haadstik",
+  "open-bible": "Bibel iepenje",
+  "anonymous-greeting": "Wolkom!",
+  "personal-greeting": "Wolkom, {{name}}!",
   All: "Alle",
   "VIEW-MORE": "MEAR SJEN",
   BOOKMARKS: "BLÊDWIZERS:",

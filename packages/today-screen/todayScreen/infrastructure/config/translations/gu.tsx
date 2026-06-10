@@ -1,4 +1,11 @@
 export const gu: Record<string, string> = {
+  "everything-begins-small": "બધું જ નાનું શરૂ થાય છે.",
+  "no-rush":
+    "તમારો સમય લો. — જાળવવા માટે કોઈ સ્ટ્રીક નથી, કે જીતવા માટે કોઈ દોડ નથી.",
+  "read-first-chapter": "પહેલો અધ્યાય વાંચો",
+  "open-bible": "બાઇબલ ખોલો",
+  "anonymous-greeting": "સ્વાગત છે!",
+  "personal-greeting": "સ્વાગત છે, {{name}}!",
   All: "બધા",
   "VIEW-MORE": "વધુ જુઓ",
   BOOKMARKS: "બુકમાર્ક્સ:",

@@ -1,4 +1,11 @@
 export const ps: Record<string, string> = {
+  "everything-begins-small": "هر څه له کوچني څخه پیلیږي.",
+  "no-rush":
+    "خپل وخت واخله. — د ساتلو لپاره هیڅ لړۍ نشته، او نه د ګټلو لپاره سیالي.",
+  "read-first-chapter": "لومړی فصل ولولئ",
+  "open-bible": "انجیل پرانیزئ",
+  "anonymous-greeting": "ښه راغلاست!",
+  "personal-greeting": "ښه راغلې، {{name}}!",
   All: "ټول",
   "VIEW-MORE": "نور وګورئ",
   BOOKMARKS: "بوک مارکونه:",

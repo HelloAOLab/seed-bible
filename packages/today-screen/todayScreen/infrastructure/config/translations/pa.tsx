@@ -1,4 +1,11 @@
 export const pa: Record<string, string> = {
+  "everything-begins-small": "ਹਰ ਚੀਜ਼ ਛੋਟੀ ਤੋਂ ਸ਼ੁਰੂ ਹੁੰਦੀ ਹੈ।",
+  "no-rush":
+    "ਆਪਣਾ ਸਮਾਂ ਲਓ। — ਬਣਾਈ ਰੱਖਣ ਲਈ ਕੋਈ ਸਿਲਸਿਲਾ ਨਹੀਂ, ਜਾਂ ਜਿੱਤਣ ਲਈ ਕੋਈ ਦੌੜ ਨਹੀਂ।",
+  "read-first-chapter": "ਪਹਿਲਾ ਅਧਿਆਇ ਪੜ੍ਹੋ",
+  "open-bible": "ਬਾਈਬਲ ਖੋਲ੍ਹੋ",
+  "anonymous-greeting": "ਜੀ ਆਇਆਂ ਨੂੰ!",
+  "personal-greeting": "ਜੀ ਆਇਆਂ ਨੂੰ, {{name}}!",
   All: "ਸਾਰੇ",
   "VIEW-MORE": "ਹੋਰ ਵੇਖੋ",
   BOOKMARKS: "ਬੁੱਕਮਾਰਕ:",

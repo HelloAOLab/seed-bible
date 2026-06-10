@@ -1,4 +1,11 @@
 export const ko: Record<string, string> = {
+  "everything-begins-small": "모든 것은 작게 시작됩니다.",
+  "no-rush":
+    "천천히 하세요. — 유지해야 할 연속 기록도, 이겨야 할 경주도 없습니다.",
+  "read-first-chapter": "첫 장 읽기",
+  "open-bible": "성경 열기",
+  "anonymous-greeting": "환영합니다!",
+  "personal-greeting": "환영합니다, {{name}}님!",
   All: "전체",
   "VIEW-MORE": "더 보기",
   BOOKMARKS: "북마크:",

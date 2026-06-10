@@ -1,4 +1,10 @@
 export const am: Record<string, string> = {
+  "everything-begins-small": "ሁሉም ነገር በትንሹ ይጀምራል።",
+  "no-rush": "ጊዜ ይውሰዱ። — መጠበቅ ያለበት ተከታታይ ቀን፣ ወይም ማሸነፍ ያለበት ውድድር የለም።",
+  "read-first-chapter": "የመጀመሪያውን ምዕራፍ ያንብቡ",
+  "open-bible": "መጽሐፍ ቅዱስ ክፈት",
+  "anonymous-greeting": "እንኳን ደህና መጡ!",
+  "personal-greeting": "እንኳን ደህና መጡ፣ {{name}}!",
   All: "ሁሉም",
   "VIEW-MORE": "ተጨማሪ ይመልከቱ",
   BOOKMARKS: "ዕልባቶች:",

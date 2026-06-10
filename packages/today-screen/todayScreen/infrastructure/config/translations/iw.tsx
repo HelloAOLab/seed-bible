@@ -1,4 +1,10 @@
 export const iw: Record<string, string> = {
+  "everything-begins-small": "הכול מתחיל בקטן.",
+  "no-rush": "קח את הזמן שלך. — אין רצף לשמור עליו, ואין מרוץ לנצח בו.",
+  "read-first-chapter": "קרא את הפרק הראשון",
+  "open-bible": 'פתח את התנ"ך',
+  "anonymous-greeting": "ברוך הבא!",
+  "personal-greeting": "ברוך הבא, {{name}}!",
   All: "הכול",
   "VIEW-MORE": "הצג עוד",
   BOOKMARKS: "סימניות:",

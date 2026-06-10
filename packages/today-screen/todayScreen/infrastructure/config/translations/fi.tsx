@@ -1,4 +1,11 @@
 export const fi: Record<string, string> = {
+  "everything-begins-small": "Kaikki alkaa pienestä.",
+  "no-rush":
+    "Ota aikasi. — ei ole putkea pidettävänä eikä kilpailua voitettavana.",
+  "read-first-chapter": "Lue ensimmäinen luku",
+  "open-bible": "Avaa Raamattu",
+  "anonymous-greeting": "Tervetuloa!",
+  "personal-greeting": "Tervetuloa, {{name}}!",
   All: "Kaikki",
   "VIEW-MORE": "NÄYTÄ LISÄÄ",
   BOOKMARKS: "KIRJANMERKIT:",

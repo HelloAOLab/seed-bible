@@ -1,4 +1,11 @@
 export const ml: Record<string, string> = {
+  "everything-begins-small": "എല്ലാം ചെറുതായി തുടങ്ങുന്നു.",
+  "no-rush":
+    "സമയമെടുക്കൂ. — നിലനിർത്താൻ ഒരു സ്ട്രീക്കും ഇല്ല, ജയിക്കാൻ ഒരു മത്സരവുമില്ല.",
+  "read-first-chapter": "ആദ്യ അധ്യായം വായിക്കുക",
+  "open-bible": "ബൈബിൾ തുറക്കുക",
+  "anonymous-greeting": "സ്വാഗതം!",
+  "personal-greeting": "സ്വാഗതം, {{name}}!",
   All: "എല്ലാം",
   "VIEW-MORE": "കൂടുതൽ കാണുക",
   BOOKMARKS: "ബുക്ക്മാർക്കുകൾ:",

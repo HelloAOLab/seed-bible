@@ -1,4 +1,11 @@
 export const lv: Record<string, string> = {
+  "everything-begins-small": "Viss sākas mazumā.",
+  "no-rush":
+    "Nesteidzies. — nav sērijas, kas jāuztur, ne sacensību, kas jāuzvar.",
+  "read-first-chapter": "Lasīt pirmo nodaļu",
+  "open-bible": "Atvērt Bībeli",
+  "anonymous-greeting": "Laipni lūdzam!",
+  "personal-greeting": "Laipni lūdzam, {{name}}!",
   All: "Visi",
   "VIEW-MORE": "SKATĪT VAIRĀK",
   BOOKMARKS: "GRĀMATZĪMES:",

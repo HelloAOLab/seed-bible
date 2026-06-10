@@ -1,4 +1,10 @@
 export const ti: Record<string, string> = {
+  "everything-begins-small": "ኩሉ ነገር ብንእሽቶ ይጅምር።",
+  "no-rush": "ግዜኻ ውሰድ። — ክትዕቅቦ ዘሎካ ተኸታታሊ የለን፣ ወይ ክትዕወተሉ ዘሎካ ቅድድም የለን።",
+  "read-first-chapter": "ናይ መጀመርታ ምዕራፍ ኣንብብ",
+  "open-bible": "መጽሓፍ ቅዱስ ክፈት",
+  "anonymous-greeting": "እንቋዕ ብደሓን መጻእኩም!",
+  "personal-greeting": "እንቋዕ ብደሓን መጻእካ {{name}}!",
   All: "ኩሉ",
   "VIEW-MORE": "ተወሳኺ ርአ",
   BOOKMARKS: "ምልክታት:",

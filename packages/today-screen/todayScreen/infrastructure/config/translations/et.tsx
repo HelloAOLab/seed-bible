@@ -1,4 +1,11 @@
 export const et: Record<string, string> = {
+  "everything-begins-small": "Kõik algab väikselt.",
+  "no-rush":
+    "Võta aega. — pole seeriat, mida hoida, ega võistlust, mida võita.",
+  "read-first-chapter": "Loe esimest peatükki",
+  "open-bible": "Ava Piibel",
+  "anonymous-greeting": "Tere tulemast!",
+  "personal-greeting": "Tere tulemast, {{name}}!",
   All: "Kõik",
   "VIEW-MORE": "VAATA ROHKEM",
   BOOKMARKS: "JÄRJEHOIDJAD:",

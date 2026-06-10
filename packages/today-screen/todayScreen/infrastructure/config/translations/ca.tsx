@@ -1,4 +1,11 @@
 export const ca: Record<string, string> = {
+  "everything-begins-small": "Tot comença petit.",
+  "no-rush":
+    "Pren-te el teu temps. — no hi ha cap ratxa per mantenir, ni cap cursa per guanyar.",
+  "read-first-chapter": "Llegeix el primer capítol",
+  "open-bible": "Obre la Bíblia",
+  "anonymous-greeting": "Benvingut!",
+  "personal-greeting": "Benvingut, {{name}}!",
   All: "Tot",
   "VIEW-MORE": "MOSTRA MÉS",
   BOOKMARKS: "MARCADORS:",

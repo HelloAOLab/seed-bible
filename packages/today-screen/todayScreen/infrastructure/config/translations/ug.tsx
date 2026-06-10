@@ -1,4 +1,11 @@
 export const ug: Record<string, string> = {
+  "everything-begins-small": "ھەممە نەرسە كىچىكتىن باشلىنىدۇ.",
+  "no-rush":
+    "ئالدىراپ كەتمەڭ. — داۋاملاشتۇرىدىغان رېكورتمۇ، ئۇتىدىغان مۇسابىقىمۇ يوق.",
+  "read-first-chapter": "بىرىنچى بابنى ئوقۇش",
+  "open-bible": "ئىنجىلنى ئېچىش",
+  "anonymous-greeting": "خۇش كەلدىڭىز!",
+  "personal-greeting": "خۇش كەلدىڭىز، {{name}}!",
   All: "ھەممىسى",
   "VIEW-MORE": "تېخىمۇ كۆپ كۆرۈش",
   BOOKMARKS: "خەتكۈشلەر:",

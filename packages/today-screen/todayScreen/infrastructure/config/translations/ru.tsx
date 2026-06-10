@@ -1,4 +1,11 @@
 export const ru: Record<string, string> = {
+  "everything-begins-small": "Всё начинается с малого.",
+  "no-rush":
+    "Не спеши. — нет серии, которую нужно поддерживать, ни гонки, которую нужно выиграть.",
+  "read-first-chapter": "Прочитайте первую главу",
+  "open-bible": "Открыть Библию",
+  "anonymous-greeting": "Добро пожаловать!",
+  "personal-greeting": "Добро пожаловать, {{name}}!",
   All: "Все",
   "VIEW-MORE": "ПОКАЗАТЬ ЕЩЁ",
   BOOKMARKS: "ЗАКЛАДКИ:",

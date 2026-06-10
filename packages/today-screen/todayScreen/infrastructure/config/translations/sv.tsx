@@ -1,4 +1,11 @@
 export const sv: Record<string, string> = {
+  "everything-begins-small": "Allt börjar i det lilla.",
+  "no-rush":
+    "Ta din tid. — det finns ingen svit att hålla eller ett lopp att vinna.",
+  "read-first-chapter": "Läs det första kapitlet",
+  "open-bible": "Öppna Bibeln",
+  "anonymous-greeting": "Välkommen!",
+  "personal-greeting": "Välkommen, {{name}}!",
   All: "Alla",
   "VIEW-MORE": "VISA MER",
   BOOKMARKS: "BOKMÄRKEN:",

@@ -1,4 +1,11 @@
 export const ur: Record<string, string> = {
+  "everything-begins-small": "ہر چیز چھوٹی سے شروع ہوتی ہے۔",
+  "no-rush":
+    "اپنا وقت لیں۔ — برقرار رکھنے کے لیے کوئی سلسلہ نہیں، اور جیتنے کے لیے کوئی دوڑ نہیں۔",
+  "read-first-chapter": "پہلا باب پڑھیں",
+  "open-bible": "بائبل کھولیں",
+  "anonymous-greeting": "خوش آمدید!",
+  "personal-greeting": "خوش آمدید، {{name}}!",
   All: "تمام",
   "VIEW-MORE": "مزید دیکھیں",
   BOOKMARKS: "بُک مارکس:",

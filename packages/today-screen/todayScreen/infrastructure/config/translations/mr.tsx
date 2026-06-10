@@ -1,4 +1,11 @@
 export const mr: Record<string, string> = {
+  "everything-begins-small": "सर्व काही लहानशा गोष्टीतून सुरू होते.",
+  "no-rush":
+    "वेळ घ्या. — टिकवण्यासाठी कोणतीही मालिका नाही, किंवा जिंकण्यासाठी कोणतीही शर्यत नाही.",
+  "read-first-chapter": "पहिला अध्याय वाचा",
+  "open-bible": "बायबल उघडा",
+  "anonymous-greeting": "स्वागत आहे!",
+  "personal-greeting": "स्वागत आहे, {{name}}!",
   All: "सर्व",
   "VIEW-MORE": "अधिक पहा",
   BOOKMARKS: "बुकमार्क:",

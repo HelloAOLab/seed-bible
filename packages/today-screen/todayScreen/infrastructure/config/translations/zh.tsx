@@ -1,4 +1,10 @@
 export const zh: Record<string, string> = {
+  "everything-begins-small": "一切都从小处开始。",
+  "no-rush": "慢慢来。 — 没有需要保持的连续记录，也没有需要赢得的比赛。",
+  "read-first-chapter": "阅读第一章",
+  "open-bible": "打开圣经",
+  "anonymous-greeting": "欢迎！",
+  "personal-greeting": "欢迎，{{name}}！",
   All: "全部",
   "VIEW-MORE": "查看更多",
   BOOKMARKS: "书签:",

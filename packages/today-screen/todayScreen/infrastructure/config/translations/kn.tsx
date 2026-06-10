@@ -1,4 +1,11 @@
 export const kn: Record<string, string> = {
+  "everything-begins-small": "ಎಲ್ಲವೂ ಚಿಕ್ಕದಾಗಿ ಆರಂಭವಾಗುತ್ತದೆ.",
+  "no-rush":
+    "ನಿಧಾನಿಸಿ. — ಉಳಿಸಿಕೊಳ್ಳಲು ಯಾವುದೇ ಸರಣಿ ಇಲ್ಲ, ಅಥವಾ ಗೆಲ್ಲಲು ಯಾವುದೇ ಓಟ ಇಲ್ಲ.",
+  "read-first-chapter": "ಮೊದಲ ಅಧ್ಯಾಯವನ್ನು ಓದಿ",
+  "open-bible": "ಬೈಬಲ್ ತೆರೆಯಿರಿ",
+  "anonymous-greeting": "ಸುಸ್ವಾಗತ!",
+  "personal-greeting": "ಸುಸ್ವಾಗತ, {{name}}!",
   All: "ಎಲ್ಲಾ",
   "VIEW-MORE": "ಇನ್ನಷ್ಟು ವೀಕ್ಷಿಸಿ",
   BOOKMARKS: "ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು:",

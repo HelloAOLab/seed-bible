@@ -1,4 +1,11 @@
 export const ln: Record<string, string> = {
+  "everything-begins-small": "Nyonso ebandaka moke.",
+  "no-rush":
+    "Zwa ntango na yo. — molongo ya kobatela ezali te, mpe momekano ya kolonga ezali te.",
+  "read-first-chapter": "Tánga mokapo ya liboso",
+  "open-bible": "Fungola Biblia",
+  "anonymous-greeting": "Boyei malamu!",
+  "personal-greeting": "Boyei malamu, {{name}}!",
   All: "Nyonso",
   "VIEW-MORE": "TALA MINGI",
   BOOKMARKS: "BOOKMARKS:",

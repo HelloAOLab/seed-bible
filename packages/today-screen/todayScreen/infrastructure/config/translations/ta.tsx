@@ -1,4 +1,11 @@
 export const ta: Record<string, string> = {
+  "everything-begins-small": "எல்லாமே சிறியதாகவே தொடங்குகிறது.",
+  "no-rush":
+    "அவசரப்படாதீர்கள். — பராமரிக்க வேண்டிய தொடரும் இல்லை, வெல்ல வேண்டிய பந்தயமும் இல்லை.",
+  "read-first-chapter": "முதல் அதிகாரத்தைப் படியுங்கள்",
+  "open-bible": "பைபிளைத் திற",
+  "anonymous-greeting": "வரவேற்கிறோம்!",
+  "personal-greeting": "வரவேற்கிறோம், {{name}}!",
   All: "அனைத்தும்",
   "VIEW-MORE": "மேலும் காண்க",
   BOOKMARKS: "புக்மார்க்குகள்:",

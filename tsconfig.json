@@ -1706,6 +1706,9 @@
       "todayScreen.infrastructure.config.translations.vi": [
         "./packages/today-screen/todayScreen/infrastructure/config/translations/vi.tsx"
       ],
+      "todayScreen.infrastructure.config.translations.welcomeVerseMap": [
+        "./packages/today-screen/todayScreen/infrastructure/config/translations/welcomeVerseMap.tsx"
+      ],
       "todayScreen.infrastructure.config.translations.zh": [
         "./packages/today-screen/todayScreen/infrastructure/config/translations/zh.tsx"
       ],
@@ -1775,6 +1778,9 @@
       "todayScreen.infrastructure.presentation.components.Today": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/Today.tsx"
       ],
+      "todayScreen.infrastructure.presentation.components.ui.SpinnerIcon": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/ui/SpinnerIcon.tsx"
+      ],
       "todayScreen.infrastructure.presentation.components.ui.TitledSection": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/ui/TitledSection.tsx"
       ],
@@ -1840,6 +1846,9 @@
       ],
       "todayScreen.infrastructure.presentation.hooks.useTodayContent": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useTodayContent.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.hooks.useWelcome": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useWelcome.tsx"
       ],
       "todayScreen.infrastructure.presentation.styles.adapter": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/styles/adapter.tsx"

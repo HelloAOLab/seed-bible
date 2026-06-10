@@ -1,4 +1,11 @@
 export const vi: Record<string, string> = {
+  "everything-begins-small": "Mọi thứ đều bắt đầu từ những điều nhỏ bé.",
+  "no-rush":
+    "Cứ từ từ. — không có chuỗi nào để duy trì, cũng không có cuộc đua nào để thắng.",
+  "read-first-chapter": "Đọc chương đầu tiên",
+  "open-bible": "Mở Kinh Thánh",
+  "anonymous-greeting": "Chào mừng!",
+  "personal-greeting": "Chào mừng, {{name}}!",
   All: "Tất cả",
   "VIEW-MORE": "XEM THÊM",
   BOOKMARKS: "DẤU TRANG:",

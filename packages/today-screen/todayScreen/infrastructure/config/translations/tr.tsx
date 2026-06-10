@@ -1,4 +1,11 @@
 export const tr: Record<string, string> = {
+  "everything-begins-small": "Her şey küçük başlar.",
+  "no-rush":
+    "Acele etme. — sürdürülecek bir seri ya da kazanılacak bir yarış yok.",
+  "read-first-chapter": "İlk bölümü oku",
+  "open-bible": "Kutsal Kitap'ı Aç",
+  "anonymous-greeting": "Hoş geldiniz!",
+  "personal-greeting": "Hoş geldin, {{name}}!",
   All: "Tümü",
   "VIEW-MORE": "DAHA FAZLA GÖSTER",
   BOOKMARKS: "YER İMLERİ:",

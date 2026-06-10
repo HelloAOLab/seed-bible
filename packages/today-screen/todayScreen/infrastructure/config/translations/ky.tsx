@@ -1,4 +1,10 @@
 export const ky: Record<string, string> = {
+  "everything-begins-small": "Баары кичинекейден башталат.",
+  "no-rush": "Шашпаңыз. — сактай турган удаалаштык да, утуп алчу жарыш да жок.",
+  "read-first-chapter": "Биринчи бөлүмдү окуу",
+  "open-bible": "Ыйык Китепти ачуу",
+  "anonymous-greeting": "Кош келиңиз!",
+  "personal-greeting": "Кош келиңиз, {{name}}!",
   All: "Баары",
   "VIEW-MORE": "КӨБҮРӨӨК КӨРҮҮ",
   BOOKMARKS: "КЫСТАРМАЛАР:",

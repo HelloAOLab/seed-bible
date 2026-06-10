@@ -1,4 +1,10 @@
 export const pt: Record<string, string> = {
+  "everything-begins-small": "Tudo começa pequeno.",
+  "no-rush": "Vá com calma. — não há sequência a manter, nem corrida a vencer.",
+  "read-first-chapter": "Leia o primeiro capítulo",
+  "open-bible": "Abrir Bíblia",
+  "anonymous-greeting": "Bem-vindo!",
+  "personal-greeting": "Bem-vindo, {{name}}!",
   All: "Todos",
   "VIEW-MORE": "VER MAIS",
   BOOKMARKS: "MARCADORES:",

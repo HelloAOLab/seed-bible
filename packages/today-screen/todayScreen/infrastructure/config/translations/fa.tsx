@@ -1,4 +1,11 @@
 export const fa: Record<string, string> = {
+  "everything-begins-small": "همه چیز کوچک آغاز می‌شود.",
+  "no-rush":
+    "عجله نکن. — نه زنجیره‌ای برای حفظ کردن هست، نه مسابقه‌ای برای بردن.",
+  "read-first-chapter": "فصل اول را بخوانید",
+  "open-bible": "باز کردن کتاب مقدس",
+  "anonymous-greeting": "خوش آمدید!",
+  "personal-greeting": "خوش آمدید، {{name}}!",
   All: "همه",
   "VIEW-MORE": "مشاهده بیشتر",
   BOOKMARKS: "نشانک‌ها:",

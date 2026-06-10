@@ -1,4 +1,10 @@
 export const ja: Record<string, string> = {
+  "everything-begins-small": "すべては小さく始まる。",
+  "no-rush": "焦らないで。 — 続けるべき連続記録も、勝つべき競争もありません。",
+  "read-first-chapter": "最初の章を読む",
+  "open-bible": "聖書を開く",
+  "anonymous-greeting": "ようこそ！",
+  "personal-greeting": "ようこそ、{{name}}さん！",
   All: "すべて",
   "VIEW-MORE": "もっと見る",
   BOOKMARKS: "ブックマーク:",

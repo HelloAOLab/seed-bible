@@ -1,4 +1,11 @@
 export const az: Record<string, string> = {
+  "everything-begins-small": "Hər şey kiçik başlayır.",
+  "no-rush":
+    "Tələsmə. — qorunacaq bir seriya və ya qazanılacaq bir yarış yoxdur.",
+  "read-first-chapter": "İlk fəsli oxu",
+  "open-bible": "Müqəddəs Kitabı aç",
+  "anonymous-greeting": "Xoş gəlmisiniz!",
+  "personal-greeting": "Xoş gəlmisiniz, {{name}}!",
   All: "Hamısı",
   "VIEW-MORE": "DAHA ÇOX BAX",
   BOOKMARKS: "ƏLFƏCİNLƏR:",

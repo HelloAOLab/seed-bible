@@ -1,4 +1,11 @@
 export const ro: Record<string, string> = {
+  "everything-begins-small": "Totul începe mic.",
+  "no-rush":
+    "Nu te grăbi. — nu există nicio serie de păstrat sau cursă de câștigat.",
+  "read-first-chapter": "Citește primul capitol",
+  "open-bible": "Deschide Biblia",
+  "anonymous-greeting": "Bun venit!",
+  "personal-greeting": "Bun venit, {{name}}!",
   All: "Toate",
   "VIEW-MORE": "VEZI MAI MULT",
   BOOKMARKS: "MARCAJE:",

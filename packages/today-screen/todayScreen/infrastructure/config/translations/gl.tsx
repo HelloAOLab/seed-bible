@@ -1,4 +1,11 @@
 export const gl: Record<string, string> = {
+  "everything-begins-small": "Todo comeza pequeno.",
+  "no-rush":
+    "Tómate o teu tempo. — non hai racha que manter, nin carreira que gañar.",
+  "read-first-chapter": "Le o primeiro capítulo",
+  "open-bible": "Abrir a Biblia",
+  "anonymous-greeting": "Benvido!",
+  "personal-greeting": "Benvido, {{name}}!",
   All: "Todo",
   "VIEW-MORE": "VER MÁIS",
   BOOKMARKS: "MARCADORES:",

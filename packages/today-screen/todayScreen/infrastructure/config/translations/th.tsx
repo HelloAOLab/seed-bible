@@ -1,4 +1,11 @@
 export const th: Record<string, string> = {
+  "everything-begins-small": "ทุกสิ่งเริ่มต้นจากสิ่งเล็กๆ",
+  "no-rush":
+    "ค่อยๆ เป็นค่อยๆ ไป — ไม่มีสถิติต่อเนื่องให้รักษา หรือการแข่งขันให้ชนะ",
+  "read-first-chapter": "อ่านบทแรก",
+  "open-bible": "เปิดพระคัมภีร์",
+  "anonymous-greeting": "ยินดีต้อนรับ!",
+  "personal-greeting": "ยินดีต้อนรับ, {{name}}!",
   All: "ทั้งหมด",
   "VIEW-MORE": "ดูเพิ่มเติม",
   BOOKMARKS: "บุ๊กมาร์ก:",

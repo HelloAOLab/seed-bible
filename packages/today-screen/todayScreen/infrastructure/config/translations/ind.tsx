@@ -1,4 +1,11 @@
 export const ind: Record<string, string> = {
+  "everything-begins-small": "Segalanya dimulai dari yang kecil.",
+  "no-rush":
+    "Santai saja. — tidak ada rentetan untuk dijaga, atau perlombaan untuk dimenangkan.",
+  "read-first-chapter": "Baca pasal pertama",
+  "open-bible": "Buka Alkitab",
+  "anonymous-greeting": "Selamat datang!",
+  "personal-greeting": "Selamat datang, {{name}}!",
   All: "Semua",
   "VIEW-MORE": "LIHAT LAINNYA",
   BOOKMARKS: "MARKAH:",

@@ -1,4 +1,10 @@
 export const km: Record<string, string> = {
+  "everything-begins-small": "អ្វីៗទាំងអស់ចាប់ផ្តើមពីតូច។",
+  "no-rush": "សូមបណ្ដោយពេល។ — គ្មានស្ទ្រីកត្រូវរក្សា ឬការប្រណាំងត្រូវឈ្នះទេ។",
+  "read-first-chapter": "អានជំពូកទីមួយ",
+  "open-bible": "បើកព្រះគម្ពីរ",
+  "anonymous-greeting": "សូមស្វាគមន៍!",
+  "personal-greeting": "សូមស្វាគមន៍ {{name}}!",
   All: "ទាំងអស់",
   "VIEW-MORE": "មើលច្រើនទៀត",
   BOOKMARKS: "ចំណាំ:",

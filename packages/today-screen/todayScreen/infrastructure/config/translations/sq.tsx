@@ -1,4 +1,11 @@
 export const sq: Record<string, string> = {
+  "everything-begins-small": "Gjithçka fillon e vogël.",
+  "no-rush":
+    "Mos u nxito. — nuk ka asnjë seri për të mbajtur, as garë për të fituar.",
+  "read-first-chapter": "Lexo kapitullin e parë",
+  "open-bible": "Hap Biblën",
+  "anonymous-greeting": "Mirë se vini!",
+  "personal-greeting": "Mirë se erdhe, {{name}}!",
   All: "Të gjitha",
   "VIEW-MORE": "SHIKO MË SHUMË",
   BOOKMARKS: "FAQERUAJTËSIT:",

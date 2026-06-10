@@ -1,4 +1,11 @@
 export const el: Record<string, string> = {
+  "everything-begins-small": "Όλα ξεκινούν μικρά.",
+  "no-rush":
+    "Με την ησυχία σου. — δεν υπάρχει σερί να κρατήσεις ούτε αγώνας να κερδίσεις.",
+  "read-first-chapter": "Διαβάστε το πρώτο κεφάλαιο",
+  "open-bible": "Άνοιγμα Αγίας Γραφής",
+  "anonymous-greeting": "Καλώς ορίσατε!",
+  "personal-greeting": "Καλώς όρισες, {{name}}!",
   All: "Όλα",
   "VIEW-MORE": "ΔΕΙΤΕ ΠΕΡΙΣΣΟΤΕΡΑ",
   BOOKMARKS: "ΣΕΛΙΔΟΔΕΙΚΤΕΣ:",

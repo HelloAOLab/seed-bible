@@ -1,4 +1,11 @@
 export const lo: Record<string, string> = {
+  "everything-begins-small": "ທຸກຢ່າງເລີ່ມຈາກສິ່ງນ້ອຍໆ.",
+  "no-rush":
+    "ໃຊ້ເວລາຂອງເຈົ້າ. — ບໍ່ມີສະຖິຕິຕໍ່ເນື່ອງທີ່ຕ້ອງຮັກສາ ຫຼື ການແຂ່ງຂັນທີ່ຕ້ອງຊະນະ.",
+  "read-first-chapter": "ອ່ານບົດທຳອິດ",
+  "open-bible": "ເປີດ​ພະ​ຄຳພີ",
+  "anonymous-greeting": "ຍິນດີຕ້ອນຮັບ!",
+  "personal-greeting": "ຍິນດີຕ້ອນຮັບ, {{name}}!",
   All: "ທັງໝົດ",
   "VIEW-MORE": "ເບິ່ງເພີ່ມເຕີມ",
   BOOKMARKS: "ບຸກມາກ:",

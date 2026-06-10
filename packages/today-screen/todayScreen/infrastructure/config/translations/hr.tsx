@@ -1,4 +1,11 @@
 export const hr: Record<string, string> = {
+  "everything-begins-small": "Sve počinje malo.",
+  "no-rush":
+    "Ne žuri. — nema niza koji treba održavati, ni utrke koju treba pobijediti.",
+  "read-first-chapter": "Pročitaj prvo poglavlje",
+  "open-bible": "Otvori Bibliju",
+  "anonymous-greeting": "Dobrodošli!",
+  "personal-greeting": "Dobrodošao, {{name}}!",
   All: "Sve",
   "VIEW-MORE": "PRIKAŽI VIŠE",
   BOOKMARKS: "OZNAKE:",

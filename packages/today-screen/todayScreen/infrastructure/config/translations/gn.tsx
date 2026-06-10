@@ -1,4 +1,11 @@
 export const gn: Record<string, string> = {
+  "everything-begins-small": "Opa mba'e oñepyrũ michĩ.",
+  "no-rush":
+    "Ejapo nde tiémpope. — ndaipóri peteĩ jeko remoĩva'erã, ni ñembosarái rehupytyva'erã.",
+  "read-first-chapter": "Emoñe’ẽ kapítulo peteĩha",
+  "open-bible": "Embojuruja Biblia",
+  "anonymous-greeting": "¡Eg̃uahẽporã!",
+  "personal-greeting": "¡Eg̃uahẽporã, {{name}}!",
   All: "Opaite",
   "VIEW-MORE": "VER MÁS",
   BOOKMARKS: "MARCADORES:",

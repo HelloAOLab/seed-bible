@@ -1,4 +1,11 @@
 export const zu: Record<string, string> = {
+  "everything-begins-small": "Konke kuqala kancane.",
+  "no-rush":
+    "Thatha isikhathi sakho. — alukho uchungechunge okumele ulugcine, noma umjaho okumele uwuwine.",
+  "read-first-chapter": "Funda isahluko sokuqala",
+  "open-bible": "Vula iBhayibheli",
+  "anonymous-greeting": "Wamukelekile!",
+  "personal-greeting": "Wamukelekile, {{name}}!",
   All: "Konke",
   "VIEW-MORE": "BUKA OKUNINGI",
   BOOKMARKS: "AMABHUKIMAKI:",

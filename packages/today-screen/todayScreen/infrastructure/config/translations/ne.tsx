@@ -1,4 +1,11 @@
 export const ne: Record<string, string> = {
+  "everything-begins-small": "सबै कुरा सानोबाट सुरु हुन्छ।",
+  "no-rush":
+    "आफ्नो समय लिनुहोस्। — कायम राख्नुपर्ने कुनै शृङ्खला छैन, वा जित्नुपर्ने कुनै दौड छैन।",
+  "read-first-chapter": "पहिलो अध्याय पढ्नुहोस्",
+  "open-bible": "बाइबल खोल्नुहोस्",
+  "anonymous-greeting": "स्वागत छ!",
+  "personal-greeting": "स्वागत छ, {{name}}!",
   All: "सबै",
   "VIEW-MORE": "थप हेर्नुहोस्",
   BOOKMARKS: "बुकमार्क:",

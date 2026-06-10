@@ -1,4 +1,10 @@
 export const cy: Record<string, string> = {
+  "everything-begins-small": "Mae popeth yn dechrau'n fach.",
+  "no-rush": "Cymer dy amser. — does dim rhediad i'w gadw, na ras i'w hennill.",
+  "read-first-chapter": "Darllen y bennod gyntaf",
+  "open-bible": "Agor y Beibl",
+  "anonymous-greeting": "Croeso!",
+  "personal-greeting": "Croeso, {{name}}!",
   All: "Popeth",
   "VIEW-MORE": "GWELD MWY",
   BOOKMARKS: "NODAU TUDALEN:",

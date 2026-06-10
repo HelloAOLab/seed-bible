@@ -1,4 +1,11 @@
 export const hu: Record<string, string> = {
+  "everything-begins-small": "Minden kicsiben kezdődik.",
+  "no-rush":
+    "Szánj rá időt. — nincs sorozat, amit tartani kell, sem verseny, amit meg kell nyerni.",
+  "read-first-chapter": "Olvasd el az első fejezetet",
+  "open-bible": "Biblia megnyitása",
+  "anonymous-greeting": "Üdvözöljük!",
+  "personal-greeting": "Üdvözöljük, {{name}}!",
   All: "Összes",
   "VIEW-MORE": "TÖBB MEGTEKINTÉSE",
   BOOKMARKS: "KÖNYVJELZŐK:",

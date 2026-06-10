@@ -1,4 +1,11 @@
 export const ka: Record<string, string> = {
+  "everything-begins-small": "ყველაფერი მცირედით იწყება.",
+  "no-rush":
+    "ნუ იჩქარებ. — არ არსებობს სერია შესანარჩუნებლად, ან რბოლა მოსაგებად.",
+  "read-first-chapter": "წაიკითხეთ პირველი თავი",
+  "open-bible": "ბიბლიის გახსნა",
+  "anonymous-greeting": "კეთილი იყოს თქვენი მობრძანება!",
+  "personal-greeting": "კეთილი იყოს თქვენი მობრძანება, {{name}}!",
   All: "ყველა",
   "VIEW-MORE": "მეტის ნახვა",
   BOOKMARKS: "სანიშნეები:",

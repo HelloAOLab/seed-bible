@@ -1,10 +1,10 @@
 import { useTodayContainer } from "../../hooks/useTodayContainer";
 
 export const TodayContainer = () => {
-  const { Component } = useTodayContainer();
+  const { Component, style } = useTodayContainer();
 
   return (
-    <div className="today-container">
+    <div className="today-container" style={style}>
       <Component />
     </div>
   );

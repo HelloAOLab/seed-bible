@@ -1,4 +1,11 @@
 export const ms: Record<string, string> = {
+  "everything-begins-small": "Segalanya bermula kecil.",
+  "no-rush":
+    "Ambil masa anda. — tiada rentetan untuk dikekalkan, atau perlumbaan untuk dimenangi.",
+  "read-first-chapter": "Baca bab pertama",
+  "open-bible": "Buka Alkitab",
+  "anonymous-greeting": "Selamat datang!",
+  "personal-greeting": "Selamat datang, {{name}}!",
   All: "Semua",
   "VIEW-MORE": "LIHAT LAGI",
   BOOKMARKS: "PENANDA BUKU:",

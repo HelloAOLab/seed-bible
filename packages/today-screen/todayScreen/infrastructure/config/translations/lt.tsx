@@ -1,4 +1,11 @@
 export const lt: Record<string, string> = {
+  "everything-begins-small": "Viskas prasideda nuo mažų dalykų.",
+  "no-rush":
+    "Neskubėk. — nėra serijos, kurią reikėtų išlaikyti, nei lenktynių, kurias reikėtų laimėti.",
+  "read-first-chapter": "Skaityti pirmąjį skyrių",
+  "open-bible": "Atverti Bibliją",
+  "anonymous-greeting": "Sveiki atvykę!",
+  "personal-greeting": "Sveiki, {{name}}!",
   All: "Visi",
   "VIEW-MORE": "RODYTI DAUGIAU",
   BOOKMARKS: "ŽYMĖS:",

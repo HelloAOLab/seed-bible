@@ -1,4 +1,10 @@
 export const mn: Record<string, string> = {
+  "everything-begins-small": "Бүх зүйл багаас эхэлдэг.",
+  "no-rush": "Бү яараарай. — хадгалах цуврал ч үгүй, ялах уралдаан ч үгүй.",
+  "read-first-chapter": "Эхний бүлгийг унших",
+  "open-bible": "Библи нээх",
+  "anonymous-greeting": "Тавтай морилно уу!",
+  "personal-greeting": "Тавтай морилно уу, {{name}}!",
   All: "Бүгд",
   "VIEW-MORE": "ИЛҮҮГ ХАРАХ",
   BOOKMARKS: "ХАВЧУУРГА:",

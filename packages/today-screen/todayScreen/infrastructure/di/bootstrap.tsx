@@ -19,6 +19,7 @@ import {
 } from "seed-bible.managers.BibleReadingManager";
 import type { VerseSearchResult } from "todayScreen.domain.models.search";
 import { ReadingHistoryConfigProvider } from "../config/readingHistory/readingHistoryConfigProvider";
+import { getHighlightedWelcomeVerse } from "../config/translations/welcomeVerseMap";
 
 const Icon = () => {
   return <MaterialIcon>home</MaterialIcon>;
@@ -132,6 +133,37 @@ export const bootstrapExtension = () => {
         }));
       };
 
+      /**
+       * Plain text of a single verse. Downloads the chapter via the Bible data
+       * manager and concatenates the verse's textual segments (ignoring inline
+       * headings, line breaks and footnote references).
+       */
+      const getVerseText = async (
+        translationId: string,
+        bookId: string,
+        chapter: number,
+        verse: number
+      ): Promise<string | undefined> => {
+        const chapterData = await context.bibleData.getTranslationBookChapter(
+          translationId,
+          bookId,
+          chapter
+        );
+
+        const verseContent = chapterData.chapter.content.find(
+          (item) => item.type === "verse" && item.number === verse
+        );
+        if (!verseContent || verseContent.type !== "verse") return undefined;
+
+        return verseContent.content
+          .map((part) =>
+            typeof part === "string" ? part : "text" in part ? part.text : ""
+          )
+          .join(" ")
+          .replace(/\s+/g, " ")
+          .trim();
+      };
+
       const cleanupUserLastReading = effect(() => {
         const userId = context.login.userId.value;
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -172,6 +204,16 @@ export const bootstrapExtension = () => {
       const translationBooksMap = computed(() => {
         const books = lastTranslationBooks.value?.books ?? [];
         return new Map(books.map((book) => [book.id, book]));
+      });
+
+      const lastTranslationId = signal<string | undefined>(undefined);
+      const cleanupTranslationId = effect(() => {
+        const translationId =
+          context.app.currentReadingState.value?.tab.readingState.translationId
+            .value ?? null;
+        if (translationId !== null) {
+          lastTranslationId.value = translationId;
+        }
       });
 
       const sharedSessions = computed(() => {
@@ -238,6 +280,8 @@ export const bootstrapExtension = () => {
                     return typeof id === "string" ? id : undefined;
                   },
                   searchVerses,
+                  getVerseText,
+                  lastTranslationId,
                   openBookSelector: () => {
                     const pane =
                       context.panes.panes.value.find(
@@ -274,6 +318,7 @@ export const bootstrapExtension = () => {
                     );
                   },
                   readingHistoryConfigProvider,
+                  getHighlightedWelcomeVerse,
                 }}
                 customCSS={customCSS}
               />
@@ -291,6 +336,7 @@ export const bootstrapExtension = () => {
       yield () => {
         cleanupUserLastReading();
         cleanupTranslationBooks();
+        cleanupTranslationId();
         destroy([]);
       };
     },

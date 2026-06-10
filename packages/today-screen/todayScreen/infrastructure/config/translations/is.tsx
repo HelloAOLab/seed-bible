@@ -1,4 +1,11 @@
 export const is: Record<string, string> = {
+  "everything-begins-small": "Allt byrjar smátt.",
+  "no-rush":
+    "Gefðu þér tíma. — það er engin runa til að halda, né kapphlaup til að vinna.",
+  "read-first-chapter": "Lestu fyrsta kaflann",
+  "open-bible": "Opna Biblíuna",
+  "anonymous-greeting": "Velkomin!",
+  "personal-greeting": "Velkomin, {{name}}!",
   All: "Allt",
   "VIEW-MORE": "SJÁ MEIRA",
   BOOKMARKS: "BÓKAMERKI:",

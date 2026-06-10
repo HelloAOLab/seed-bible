@@ -1,4 +1,10 @@
 export const en: Record<string, string> = {
+  "everything-begins-small": "Everything begins small.",
+  "no-rush": "Take your time. — there is no streak to keep, or race to win.",
+  "read-first-chapter": "Read the first chapter",
+  "open-bible": "Open Bible",
+  "anonymous-greeting": "Welcome!",
+  "personal-greeting": "Welcome, {{name}}!",
   All: "All",
   "VIEW-MORE": "VIEW MORE",
   BOOKMARKS: "BOOKMARKS:",
