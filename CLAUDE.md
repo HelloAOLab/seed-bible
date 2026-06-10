@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 pnpm dev           # Run in development mode (opens Chrome via Puppeteer + REPL)
-pnpm test          # Run Jest test suite
-pnpm test:watch    # Jest in watch mode
+pnpm test          # Run Vitest test suite
+pnpm test:watch    # Vitest in watch mode
 pnpm lint          # ESLint (includes i18n translation key validation)
 pnpm lint:fix      # Auto-fix linting issues
 pnpm check:ts      # TypeScript type check (non-emit)
@@ -18,7 +18,7 @@ pnpm format        # Prettier formatting
 **Run a single test file:**
 
 ```bash
-pnpm jest test/unit/seed-bible/managers/ChatsManager.test.ts
+pnpm vitest run FreeUseBibleAPI.test.ts
 ```
 
 **Dev REPL commands** (available when `pnpm dev` is running):
@@ -58,7 +58,6 @@ Extensions are separate packages that hook into the `ExtensionManager` lifecycle
 
 - Unit tests in `test/unit/` mirror the package structure
 - Integration tests in `test/integration/`
-- Custom Jest environment at `test/env/CasualOSEnvironment.js` simulates the CasualOS runtime — tests use the same `os`, `thisBot`, `tags` globals as production code
 
 ### Build System
 

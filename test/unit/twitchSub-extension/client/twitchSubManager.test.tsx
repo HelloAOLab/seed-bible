@@ -110,7 +110,7 @@ describe("CreateTwitchSubState", () => {
   beforeEach(() => {
     window.localStorage.clear();
     fetchMock = vi.spyOn(window, "fetch").mockImplementation(
-      () =>
+      async () =>
         ({
           json: async () => ({
             user_id: "bot-user-1",

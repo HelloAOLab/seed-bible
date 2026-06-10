@@ -87,8 +87,7 @@ function hasBookChangedPayload(expected: {
 
 describe("CreateTwitchPubState", () => {
   let logSpy: Mock;
-  let bytesToBase64StringMock: Mock;
-  let webPostMock: Mock;
+  let fetchMock: Mock;
 
   beforeEach(() => {
     window.localStorage.clear();
@@ -101,37 +100,21 @@ describe("CreateTwitchPubState", () => {
     delete (window.localStorage as any).settings;
     sendMessageMock.mockReset();
 
-    bytesToBase64StringMock = vi.fn((value: Uint8Array) =>
-      Buffer.from(value).toString("base64")
+    fetchMock = vi.spyOn(window, "fetch").mockImplementation(
+      async () =>
+        ({
+          json: async () => ({}),
+        }) as any
     );
-    webPostMock = vi.fn().mockResolvedValue({ data: {} });
 
-    (globalThis as any).configBot = {
-      tags: {
-        pattern: "SeedBible",
-      },
-    };
-    (globalThis as any).bytes = {
-      toBase64String: bytesToBase64StringMock,
-    };
-    (globalThis as any).web = {
-      get: vi.fn().mockResolvedValue({ data: { data: [] } }),
-      post: webPostMock,
-    };
     (globalThis as any).TextEncoder = TextEncoder;
-    (globalThis as any).uuid = vi.fn().mockReturnValue("abcde-12345");
-
     logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
     vi.useRealTimers();
     logSpy.mockRestore();
-    delete (globalThis as any).configBot;
-    delete (globalThis as any).bytes;
-    delete (globalThis as any).web;
     delete (globalThis as any).TextEncoder;
-    delete (globalThis as any).uuid;
   });
 
   it("creates the default state and keeps the current page in localStorage", async () => {
@@ -239,14 +222,14 @@ describe("CreateTwitchPubState", () => {
 
     const state = CreateTwitchPubState();
 
-    expect(webPostMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
 
     state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
     state.twitchConfig.value.userAccessToken.value = "token-1";
 
-    await waitFor(() => webPostMock.mock.calls.length === 1);
+    await waitFor(() => fetchMock.mock.calls.length === 1);
 
-    const [url, body, options] = webPostMock.mock.calls[0]!;
+    const [url, body, options] = fetchMock.mock.calls[0]!;
     const parsedBody = JSON.parse(body as string);
 
     expect(url).toBe(
@@ -292,13 +275,13 @@ describe("CreateTwitchPubState", () => {
       interval: 5000,
     };
 
-    expect(webPostMock).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(5000);
-    expect(webPostMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
 
     // eslint-disable-next-line prefer-const
-    let [url, body, options] = webPostMock.mock.calls[0]!;
+    let [url, body, options] = fetchMock.mock.calls[0]!;
     let parsedBody = JSON.parse(body as string);
     let announcedUrl = new URL(parsedBody.message.replace("Join me at ", ""));
     let redirectUri = new URL(
@@ -324,9 +307,9 @@ describe("CreateTwitchPubState", () => {
     });
 
     vi.advanceTimersByTime(5000);
-    expect(webPostMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
 
-    [url, body] = webPostMock.mock.calls[1]!;
+    [url, body] = fetchMock.mock.calls[1]!;
     parsedBody = JSON.parse(body as string);
     announcedUrl = new URL(parsedBody.message.replace("Join me at ", ""));
     redirectUri = new URL(announcedUrl.searchParams.get("redirect_uri") ?? "");
