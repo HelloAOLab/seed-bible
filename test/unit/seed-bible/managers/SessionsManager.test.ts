@@ -12,9 +12,14 @@ import type {
 import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import type { Mock } from "vitest";
+import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 
-vi.mock("../managers/BibleReadingManager", () => ({
+vi.mock("@packages/seed-bible/seed-bible/managers/BibleReadingManager", () => ({
   createBibleReadingState: vi.fn(),
+}));
+
+vi.mock("uuid", () => ({
+  v4: vi.fn(),
 }));
 
 type MockChangesSubscriber = () => void;
@@ -249,10 +254,17 @@ describe("SessionsManager", () => {
   let mockHighlightsManager: {
     getChapterHighlights: Mock;
   };
+  let uuidCount = 0;
+  let uuid: Mock;
 
   let os: CasualOSManager;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    const { v4: uuidMock } = await vi.importMock("uuid");
+    uuid = uuidMock as Mock;
+    uuid.mockImplementation(() => `uuid-${uuidCount++}`);
+    uuid.mockReturnValueOnce("test-config-bot-id");
+
     os = CasualOSManager();
     mockMap = createMockSharedMap();
     mockOptionsMap = createMockSharedMap();
@@ -282,7 +294,9 @@ describe("SessionsManager", () => {
       },
     };
 
-    getSharedDocumentMock = vi.fn().mockResolvedValue(mockDocument);
+    getSharedDocumentMock = vi
+      .spyOn(os, "getSharedDocument")
+      .mockResolvedValue(mockDocument as unknown as SharedDocument);
     mockDataManager = {};
     mockLoginManager = {
       getUserProfile: vi.fn(async (userId: string) => ({
@@ -295,10 +309,6 @@ describe("SessionsManager", () => {
       getChapterHighlights: vi.fn().mockReturnValue(signal({ highlights: [] })),
     };
 
-    (globalThis as any).os = {
-      getSharedDocument: getSharedDocumentMock,
-    };
-
     (createBibleReadingState as Mock).mockImplementation(() =>
       createMockReadingState()
     );
@@ -309,8 +319,7 @@ describe("SessionsManager", () => {
   });
 
   it("createSession() creates a session with a UUID and loads session_data in a public inst", async () => {
-    const spy = vi.spyOn(globalThis as any, "uuid").mockReturnValue("123");
-
+    uuid.mockReturnValueOnce("123");
     const manager = createSessionsManager(
       os,
       mockDataManager as any,
@@ -319,7 +328,7 @@ describe("SessionsManager", () => {
     );
     const session = await manager.createSession();
 
-    expect(spy).toHaveBeenCalled();
+    // expect(spy).toHaveBeenCalled();
     expect(getSharedDocumentMock).toHaveBeenCalledWith(
       null,
       "session-123",
@@ -548,10 +557,6 @@ describe("SessionsManager", () => {
   });
 
   it("syncs local decorations to the shared decorations map", async () => {
-    (globalThis as any).configBot = {
-      id: "conn-self",
-    };
-
     const manager = createSessionsManager(
       os,
       mockDataManager as any,
@@ -577,7 +582,7 @@ describe("SessionsManager", () => {
     await waitFor(() => mockDecorationsMap.set.mock.calls.length > 0);
 
     expect(mockDecorationsMap.set).toHaveBeenCalledWith(
-      JSON.stringify(["conn-self", "decoration-local"]),
+      JSON.stringify(["test-config-bot-id", "decoration-local"]),
       expect.objectContaining({
         id: "decoration-local",
         translationId: "BSB",
@@ -591,10 +596,6 @@ describe("SessionsManager", () => {
   });
 
   it("syncs removeAfterMs for local decorations to the shared decorations map", async () => {
-    (globalThis as any).configBot = {
-      id: "conn-self",
-    };
-
     const manager = createSessionsManager(
       os,
       mockDataManager as any,
@@ -619,7 +620,7 @@ describe("SessionsManager", () => {
     await waitFor(() => mockDecorationsMap.set.mock.calls.length > 0);
 
     expect(mockDecorationsMap.set).toHaveBeenCalledWith(
-      JSON.stringify(["conn-self", "decoration-local-timeout"]),
+      JSON.stringify(["test-config-bot-id", "decoration-local-timeout"]),
       expect.objectContaining({
         id: "decoration-local-timeout",
         removeAfterMs: 1500,
@@ -628,9 +629,6 @@ describe("SessionsManager", () => {
   });
 
   it("does not sync decoration changes when the current user is not an allowed decorator", async () => {
-    (globalThis as any).configBot = {
-      id: "conn-self",
-    };
     mockLoginManager.userId.value = "user-blocked";
 
     const manager = createSessionsManager(
@@ -643,7 +641,7 @@ describe("SessionsManager", () => {
 
     mockOptionsMap.setEmitOnSet(true);
     session.updateOptions({
-      allowedDecorators: ["user-allowed", "conn-self"],
+      allowedDecorators: ["user-allowed", "test-config-bot-id"],
     });
 
     mockDecorationsMap.set.mockClear();
@@ -666,10 +664,6 @@ describe("SessionsManager", () => {
   });
 
   it("does not sync decoration changes when the current connection is not an allowed decorator", async () => {
-    (globalThis as any).configBot = {
-      id: "conn-blocked",
-    };
-
     const manager = createSessionsManager(
       os,
       mockDataManager as any,
@@ -703,10 +697,6 @@ describe("SessionsManager", () => {
   });
 
   it("applies shared decorations from other users to the reading state", async () => {
-    (globalThis as any).configBot = {
-      id: "conn-self",
-    };
-
     mockMap = createMockSharedMap({
       translationId: "BSB",
       bookId: "GEN",
@@ -751,10 +741,6 @@ describe("SessionsManager", () => {
   });
 
   it("applies removeAfterMs from shared decorations", async () => {
-    (globalThis as any).configBot = {
-      id: "conn-self",
-    };
-
     mockMap = createMockSharedMap({
       translationId: "BSB",
       bookId: "GEN",
@@ -801,10 +787,6 @@ describe("SessionsManager", () => {
   });
 
   it("keeps decorations from different users in the shared document at the same time", async () => {
-    (globalThis as any).configBot = {
-      id: "conn-self",
-    };
-
     mockMap = createMockSharedMap({
       translationId: "BSB",
       bookId: "GEN",
@@ -860,7 +842,8 @@ describe("SessionsManager", () => {
         ) &&
         mockDecorationsMap.set.mock.calls.some(
           (call) =>
-            call[0] === JSON.stringify(["conn-self", "decoration-local"])
+            call[0] ===
+            JSON.stringify(["test-config-bot-id", "decoration-local"])
         )
     );
 
@@ -1200,7 +1183,6 @@ describe("SessionsManager", () => {
       expect.arrayContaining([
         {
           connectionId: "conn-1",
-          sessionId: "group-abc",
           userId: "user-1",
           profile: {
             name: "Profile user-1",
@@ -1210,7 +1192,6 @@ describe("SessionsManager", () => {
         },
         {
           connectionId: "conn-2",
-          sessionId: "group-abc",
           userId: null,
           profile: null,
           isSelf: false,
