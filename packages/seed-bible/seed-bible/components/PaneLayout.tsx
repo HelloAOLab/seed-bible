@@ -808,6 +808,7 @@ export function PaneReader(props: PaneReaderScrollerProps) {
           openSidebar={state.sidebar.openSidebar}
           openSearch={state.sidebar.openSearch}
           currentPane={pane}
+          chats={state.chats}
         />
       )}
     </div>
