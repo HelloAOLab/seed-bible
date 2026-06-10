@@ -23,6 +23,12 @@ export function createNavigationManager() {
       return;
     }
 
+    // Skip redundant writes so effects that depend on currentUrl don't
+    // re-run (or cycle) when the location hasn't actually changed.
+    if (currentUrl.peek().href === window.location.href) {
+      return;
+    }
+
     currentUrl.value = new URL(window.location.href);
   };
 
@@ -56,14 +62,20 @@ export function createNavigationManager() {
       syncCurrentUrl();
     }) as History["replaceState"];
 
-    window.navigation.addEventListener("navigate", (event: NavigateEvent) => {
-      if (event.downloadRequest || !event.destination?.sameDocument) {
-        return;
-      }
+    // The Navigation API is not available in all browsers (or in jsdom);
+    // the popstate/pushState/replaceState hooks above cover those cases.
+    if (typeof window.navigation !== "undefined") {
+      window.navigation.addEventListener("navigate", (event: NavigateEvent) => {
+        if (event.downloadRequest || !event.destination?.sameDocument) {
+          return;
+        }
 
-      currentUrl.value = new URL(event.destination.url ?? window.location.href);
-      event.intercept();
-    });
+        currentUrl.value = new URL(
+          event.destination.url ?? window.location.href
+        );
+        event.intercept();
+      });
+    }
   }
 
   const push = (url: string | URL) => {
@@ -96,19 +108,20 @@ export function createNavigationManager() {
   };
 
   const updateQueryParam = (key: string, value: string | null) => {
-    if (currentUrl.value.searchParams.get(key) === value) {
+    // peek() so effects that call updateQueryParam don't subscribe to
+    // currentUrl — they would re-run on the very write they cause.
+    const current = currentUrl.peek();
+    if (current.searchParams.get(key) === value) {
       return;
     }
 
+    const next = new URL(current);
     if (!value) {
-      const next = new URL(currentUrl.value);
       next.searchParams.delete(key);
-      push(next);
     } else {
-      const next = new URL(currentUrl.value);
       next.searchParams.set(key, value);
-      push(next);
     }
+    push(next);
   };
 
   const syncSignalsToUrl = (

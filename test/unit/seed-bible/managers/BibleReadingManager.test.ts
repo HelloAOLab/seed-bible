@@ -28,21 +28,20 @@ import type { Mock } from "vitest";
 
 const nivTranslation = translations.translations[1]!;
 
-let webGetMock: Mock;
+let fetchMock: Mock;
+const originalFetch = globalThis.fetch;
 
 beforeEach(() => {
-  webGetMock = vi.fn();
-  (globalThis as any).web = {
-    get: webGetMock,
-  };
+  fetchMock = vi.fn();
+  globalThis.fetch = fetchMock;
 });
 
 afterEach(() => {
-  delete (globalThis as any).web;
+  globalThis.fetch = originalFetch;
 });
 
 function setWebResponses(responses: WebResponseMap): void {
-  webGetMock.mockImplementation((url: string) => {
+  fetchMock.mockImplementation((url: string) => {
     const response = responses[url];
     if (!response) {
       throw new Error(`No mocked response for ${url}`);
@@ -554,7 +553,7 @@ describe("createBibleReadingState", () => {
     const state = createBibleReadingState(createDataManager());
     await waitForInitialLoad(state);
 
-    expect(webGetMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       makeExampleUrl("/api/AAB/books.json")
     );
     expect(state.translationBooks.value).toEqual(aabBooks);
@@ -567,7 +566,7 @@ describe("createBibleReadingState", () => {
 
     await state.selectBook("EXO");
 
-    expect(webGetMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       makeExampleUrl("/api/AAB/EXO/1.json")
     );
     expect(state.bookId.value).toBe("EXO");
@@ -582,7 +581,7 @@ describe("createBibleReadingState", () => {
 
     await state.selectChapter("GEN", 5);
 
-    expect(webGetMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       makeExampleUrl("/api/AAB/GEN/5.json")
     );
     expect(state.bookId.value).toBe("GEN");
@@ -599,7 +598,7 @@ describe("createBibleReadingState", () => {
       scrollToVerse: 3,
     });
 
-    expect(webGetMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       makeExampleUrl("/api/AAB/GEN/5.json")
     );
     expect(state.translationId.value).toBe("AAB");
@@ -711,7 +710,7 @@ describe("createBibleReadingState", () => {
 
     await state.loadNextChapter();
 
-    expect(webGetMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       makeExampleUrl("/api/AAB/GEN/2.json")
     );
     expect(state.chapterNumber.value).toBe(2);
@@ -726,7 +725,7 @@ describe("createBibleReadingState", () => {
 
     await state.loadPreviousChapter();
 
-    expect(webGetMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       makeExampleUrl("/api/AAB/GEN/1.json")
     );
     expect(state.chapterNumber.value).toBe(1);
@@ -949,10 +948,10 @@ describe("createBibleReadingState", () => {
 
     await state.selectTranslation("NIV");
 
-    expect(webGetMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       makeExampleUrl("/api/NIV/books.json")
     );
-    expect(webGetMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       makeExampleUrl("/api/NIV/MAT/1.json")
     );
     expect(state.translationId.value).toBe("NIV");
@@ -1046,11 +1045,11 @@ describe("createBibleReadingState", () => {
       `${ALT_API_ENDPOINT}/api/available_translations.json`
     );
 
-    expect(webGetMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       makeAltUrl("/api/available_translations.json")
     );
-    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/books.json"));
-    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/MAT/1.json"));
+    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/books.json"));
+    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/MAT/1.json"));
     expect(state.translationId.value).toBe("NIV");
     expect(state.bookId.value).toBe("MAT");
     expect(state.chapterNumber.value).toBe(1);
@@ -1080,11 +1079,11 @@ describe("createBibleReadingState", () => {
 
     await state.selectTranslation(`${ALT_API_ENDPOINT}/api/BSB/books.json`);
 
-    expect(webGetMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       makeAltUrl("/api/available_translations.json")
     );
-    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/BSB/books.json"));
-    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/BSB/GEN/1.json"));
+    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/BSB/books.json"));
+    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/BSB/GEN/1.json"));
     expect(state.translationId.value).toBe("BSB");
     expect(state.bookId.value).toBe("GEN");
     expect(state.chapterNumber.value).toBe(1);
@@ -1110,11 +1109,11 @@ describe("createBibleReadingState", () => {
 
     await state.selectTranslation(`${ALT_API_ENDPOINT}/api/ZZZ/books.json`);
 
-    expect(webGetMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       makeAltUrl("/api/available_translations.json")
     );
-    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/books.json"));
-    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/MAT/1.json"));
+    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/books.json"));
+    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/MAT/1.json"));
     expect(state.translationId.value).toBe("NIV");
     expect(state.bookId.value).toBe("MAT");
     expect(state.chapterNumber.value).toBe(1);
@@ -1138,10 +1137,10 @@ describe("createBibleReadingState", () => {
 
     await state.selectTranslationAndChapter("NIV", "MAT", 3);
 
-    expect(webGetMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       makeExampleUrl("/api/NIV/books.json")
     );
-    expect(webGetMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       makeExampleUrl("/api/NIV/MAT/3.json")
     );
     expect(state.translationId.value).toBe("NIV");
@@ -1176,11 +1175,11 @@ describe("createBibleReadingState", () => {
       2
     );
 
-    expect(webGetMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       makeAltUrl("/api/available_translations.json")
     );
-    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/books.json"));
-    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/MAT/2.json"));
+    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/books.json"));
+    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/MAT/2.json"));
     expect(state.translationId.value).toBe("NIV");
     expect(state.bookId.value).toBe("MAT");
     expect(state.chapterNumber.value).toBe(2);
@@ -1214,11 +1213,11 @@ describe("createBibleReadingState", () => {
       2
     );
 
-    expect(webGetMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       makeAltUrl("/api/available_translations.json")
     );
-    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/BSB/books.json"));
-    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/BSB/GEN/2.json"));
+    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/BSB/books.json"));
+    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/BSB/GEN/2.json"));
     expect(state.translationId.value).toBe("BSB");
     expect(state.bookId.value).toBe("GEN");
     expect(state.chapterNumber.value).toBe(2);
@@ -1244,11 +1243,11 @@ describe("createBibleReadingState", () => {
     });
     await waitForInitialLoad(state);
 
-    expect(webGetMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       makeAltUrl("/api/available_translations.json")
     );
-    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/books.json"));
-    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/MAT/1.json"));
+    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/books.json"));
+    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/MAT/1.json"));
     expect(state.translationId.value).toBe("NIV");
     expect(state.bookId.value).toBe("MAT");
     expect(state.chapterNumber.value).toBe(1);
@@ -1274,11 +1273,11 @@ describe("createBibleReadingState", () => {
     });
     await waitForInitialLoad(state);
 
-    expect(webGetMock).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       makeAltUrl("/api/available_translations.json")
     );
-    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/books.json"));
-    expect(webGetMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/MAT/1.json"));
+    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/books.json"));
+    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/MAT/1.json"));
     expect(state.translationId.value).toBe("NIV");
     expect(state.bookId.value).toBe("MAT");
     expect(state.chapterNumber.value).toBe(1);

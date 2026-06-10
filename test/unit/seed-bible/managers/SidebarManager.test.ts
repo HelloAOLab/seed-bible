@@ -24,6 +24,9 @@ describe("createSidebar", () => {
   });
 
   afterEach(() => {
+    // Clear URL params written by syncSignalsToUrl so they don't leak into
+    // the next test's sidebar instance.
+    window.history.replaceState(null, "", window.location.pathname);
     delete (globalThis as { configBot?: { tags: Record<string, unknown> } })
       .configBot;
     delete (globalThis as { os?: { addBotListener: Mock } }).os;
@@ -107,7 +110,7 @@ describe("createSidebar", () => {
     expect(sidebar.isMobileOpen.value).toBe(false);
   });
 
-  it("keeps state isolated across sidebar instances", () => {
+  it("shares URL-synced state across instances but keeps collapsed state isolated", () => {
     const first = createSidebar(navigationManager);
     const second = createSidebar(navigationManager);
 
@@ -119,9 +122,12 @@ describe("createSidebar", () => {
     expect(first.isSidebarCollapsed.value).toBe(true);
     expect(first.isMobileOpen.value).toBe(true);
 
-    expect(second.isSettingsOpen.value).toBe(false);
+    // settingsView and sidebar state are synced through the URL, so other
+    // instances sharing the navigation manager pick them up; only the
+    // collapsed state is per-instance.
+    expect(second.isSettingsOpen.value).toBe(true);
     expect(second.isSidebarCollapsed.value).toBe(false);
-    expect(second.isMobileOpen.value).toBe(false);
+    expect(second.isMobileOpen.value).toBe(true);
   });
 
   // it("syncs configBot.tags.settingsView when requestedSettingsView changes", () => {
@@ -136,23 +142,13 @@ describe("createSidebar", () => {
   //   expect(configBot.tags.settingsView).toBe(null);
   // });
 
-  it("syncs requestedSettingsView when configBot.settingsView changes", async () => {
+  it("syncs requestedSettingsView when the settingsView URL param changes", () => {
     const sidebar = createSidebar(navigationManager);
-    const listener = addBotListenerMock.mock.calls[0]?.[2] as
-      | ((that: unknown) => Promise<void>)
-      | undefined;
 
-    expect(listener).toBeDefined();
-    if (!listener) {
-      return;
-    }
-
-    // configBot.tags.settingsView = "extensions";
-    await listener({ tags: ["settingsView"] });
+    navigationManager.push("?settingsView=extensions");
     expect(sidebar.requestedSettingsView.value).toBe("extensions");
 
-    // configBot.tags.settingsView = null;
-    await listener({ tags: ["settingsView"] });
+    navigationManager.push(window.location.pathname);
     expect(sidebar.requestedSettingsView.value).toBe(null);
   });
 

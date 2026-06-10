@@ -2,16 +2,13 @@ import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/Se
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import i18n from "i18next";
 import {
-  createExampleManagerResponseMap,
+  createDefaultManagerResponseMap,
   type WebResponseMap,
 } from "../managers/testUtils/mockBibleApiData";
 
 type TestGlobalScope = typeof globalThis & {
   thisBot?: {
     tags: Record<string, unknown>;
-  };
-  web?: {
-    get?: (url: string) => Promise<unknown>;
   };
   configBot?: {
     tags: Record<string, unknown>;
@@ -37,7 +34,12 @@ export async function waitFor(
     }
 
     const p = new Promise((resolve) => setTimeout(resolve, 0));
-    vi.runAllTimers();
+    if (vi.isFakeTimers()) {
+      // Advance just enough to fire the zero-delay yield above (and keep the
+      // mocked Date.now() moving for the timeout check) without firing
+      // long-delay timers like autosave intervals or analytics timeouts.
+      vi.advanceTimersByTime(1);
+    }
     await p;
   }
 }
@@ -99,17 +101,14 @@ function installFreeUseBibleApiMock(
   scope: TestGlobalScope,
   responses: WebResponseMap
 ): void {
-  scope.web = {
-    ...(scope.web ?? {}),
-    get: async (url: string) => {
-      const response = responses[url];
-      if (!response) {
-        throw new Error(`No mocked response for ${url}`);
-      }
+  scope.fetch = (async (url: string) => {
+    const response = responses[url];
+    if (!response) {
+      throw new Error(`No mocked response for ${url}`);
+    }
 
-      return response;
-    },
-  };
+    return response;
+  }) as typeof globalThis.fetch;
 }
 
 async function ensureI18nInitialized(): Promise<void> {
@@ -137,7 +136,7 @@ export async function createTestSeedBibleState(
   options: CreateTestSeedBibleStateOptions = {}
 ): Promise<SeedBibleState> {
   const {
-    responses = createExampleManagerResponseMap(),
+    responses = createDefaultManagerResponseMap(),
     configTags,
     timeoutMs = 1000,
   } = options;

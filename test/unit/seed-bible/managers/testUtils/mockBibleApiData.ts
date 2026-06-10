@@ -6,13 +6,9 @@ import type {
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { DEFAULT_API_ENDPOINT } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
-export type WebResponse<T> = {
-  status: number;
-  statusText: string;
-  data: Promise<T>;
-};
+export type WebResponse = Pick<Response, "status" | "statusText" | "json">;
 
-export type WebResponseMap = Record<string, WebResponse<unknown>>;
+export type WebResponseMap = Record<string, WebResponse>;
 
 export const EXAMPLE_API_ENDPOINT = "https://example.test";
 export const ALT_API_ENDPOINT = "https://alt.example";
@@ -197,11 +193,11 @@ export function createResponse<T>(
   payload: T,
   status: number = 200,
   statusText: string = "OK"
-): WebResponse<T> {
+): WebResponse {
   return {
     status,
     statusText,
-    data: Promise.resolve(payload),
+    json: () => Promise.resolve(payload),
   };
 }
 

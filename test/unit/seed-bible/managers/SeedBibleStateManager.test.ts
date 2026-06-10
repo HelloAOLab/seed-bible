@@ -18,26 +18,33 @@ const mockSessionsManager = {
   joinSession: vi.fn(),
 };
 
-vi.mock("../managers/ReadingHistoryManager", () => ({
-  createReadingHistoryManager: () => ({
-    saveReadingHistory: mockSaveReadingHistory,
-    getReadingEvents: vi.fn().mockResolvedValue([]),
-  }),
-}));
+vi.mock(
+  "@packages/seed-bible/seed-bible/managers/ReadingHistoryManager",
+  () => ({
+    createReadingHistoryManager: () => ({
+      saveReadingHistory: mockSaveReadingHistory,
+      getReadingEvents: vi.fn().mockResolvedValue([]),
+    }),
+  })
+);
 
-vi.mock("../managers/HighlightsManager", () => ({
+vi.mock("@packages/seed-bible/seed-bible/managers/HighlightsManager", () => ({
   createHighlightsManager: () => mockHighlightsManager,
 }));
 
-vi.mock("../managers/SessionsManager", () => ({
+vi.mock("@packages/seed-bible/seed-bible/managers/SessionsManager", () => ({
   createSessionsManager: () => mockSessionsManager,
 }));
 
-vi.mock("../i18n/I18nManager", () => ({
-  I18nProvider: ({ children }: { children: unknown }) => children,
-}));
+vi.mock(
+  "@packages/seed-bible/seed-bible/i18n/I18nManager",
+  async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+    I18nProvider: ({ children }: { children: unknown }) => children,
+  })
+);
 
-vi.mock("../managers/SearchManager", () => ({
+vi.mock("@packages/seed-bible/seed-bible/managers/SearchManager", () => ({
   createSearchManager: vi.fn().mockReturnValue({
     searchVerses: vi.fn(),
   }),
@@ -98,6 +105,8 @@ function createMockSharedSession(id: string) {
       chapterNumber: signal<number | null>(null),
       chapterData: signal(null),
       selectedVerses: signal([]),
+      translationBooks: signal(null),
+      selectTranslationAndChapter: vi.fn().mockResolvedValue(undefined),
     },
     document: {} as SharedDocument,
     options: signal({
@@ -319,26 +328,27 @@ describe("createSeedBibleState", () => {
     expect(state.tabs.tabs.value).toHaveLength(1);
   });
 
-  it("auto-joins a shared session when sessionId is present in URL tags", async () => {
+  it("auto-joins a shared session when sessionId is present in the URL", async () => {
     const session = createMockSharedSession("url-session-123");
     mockSessionsManager.joinSession.mockResolvedValue(session);
 
-    const state = await createStateWithOptions({
-      configTags: {
-        sessionId: "url-session-123",
-      },
-    });
+    window.history.replaceState(null, "", "?sessionId=url-session-123");
+    try {
+      const state = await createStateWithOptions({});
 
-    await waitFor(
-      () => mockSessionsManager.joinSession.mock.calls.length === 1
-    );
+      await waitFor(
+        () => mockSessionsManager.joinSession.mock.calls.length === 1
+      );
 
-    expect(mockSessionsManager.joinSession).toHaveBeenCalledWith(
-      "url-session-123"
-    );
-    expect(state.tabs.tabs.value).toHaveLength(2);
-    expect(state.tabs.tabs.value[1]?.sharedSession).toBe(session);
-    expect(state.tabs.selectedTabId.value).toBe("tab-2");
+      expect(mockSessionsManager.joinSession).toHaveBeenCalledWith(
+        "url-session-123"
+      );
+      expect(state.tabs.tabs.value).toHaveLength(2);
+      expect(state.tabs.tabs.value[1]?.sharedSession).toBe(session);
+      expect(state.tabs.selectedTabId.value).toBe("tab-2");
+    } finally {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
   });
 
   it("tabs can be opened in new panes", async () => {
@@ -657,23 +667,17 @@ describe("createSeedBibleState", () => {
 
       setSelectedTabChapter(state, "genesis", "Genesis", 7, "ESV");
 
-      expect((globalThis as any).configBot.tags.pageTitle).toBe(
-        "Genesis 7 - ESV | Seed Bible"
-      );
+      expect(document.title).toBe("Genesis 7 - ESV | Seed Bible");
     });
 
     it("updates pageTitle when the chapter changes", async () => {
       const state = await createState();
 
       setSelectedTabChapter(state, "genesis", "Genesis", 1, "ESV");
-      expect((globalThis as any).configBot.tags.pageTitle).toBe(
-        "Genesis 1 - ESV | Seed Bible"
-      );
+      expect(document.title).toBe("Genesis 1 - ESV | Seed Bible");
 
       setSelectedTabChapter(state, "genesis", "Genesis", 2, "ESV");
-      expect((globalThis as any).configBot.tags.pageTitle).toBe(
-        "Genesis 2 - ESV | Seed Bible"
-      );
+      expect(document.title).toBe("Genesis 2 - ESV | Seed Bible");
     });
 
     it("prepends an RTL marker for right-to-left translations", async () => {
@@ -682,7 +686,7 @@ describe("createSeedBibleState", () => {
 
       setSelectedTabChapter(state, "genesis", "Genesis", 1, "Arabic", "rtl");
 
-      expect((globalThis as any).configBot.tags.pageTitle).toBe(
+      expect(document.title).toBe(
         `${RTLE_CHAR}Genesis 1 - Arabic | Seed Bible`
       );
     });

@@ -16,6 +16,9 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     exclude: ["**/node_modules/**", "**/.git/**", "**/obsolete/**"],
+    // Suites that bootstrap the full SeedBibleState pay a one-time ~6s
+    // dynamic import of the entire app graph in their first test.
+    testTimeout: 20000,
   },
 
   resolve: {

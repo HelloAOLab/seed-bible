@@ -27,27 +27,16 @@ import { createNavigationManager } from "@packages/seed-bible/seed-bible/manager
 import type { Mock } from "vitest";
 
 let webGetMock: Mock;
+const originalFetch = globalThis.fetch;
 
 beforeEach(() => {
   window.localStorage.clear();
   webGetMock = vi.fn();
-  (globalThis as any).web = {
-    get: webGetMock,
-  };
-
-  (globalThis as any).configBot = {
-    tags: {},
-  };
-
-  (globalThis as any).os = {
-    ...(globalThis as any).os,
-    addBotListener: vi.fn(),
-  };
+  globalThis.fetch = webGetMock;
 });
 
 afterEach(() => {
-  delete (globalThis as any).web;
-  delete (globalThis as any).configBot;
+  globalThis.fetch = originalFetch;
 });
 
 function setWebResponses(responses: WebResponseMap): void {

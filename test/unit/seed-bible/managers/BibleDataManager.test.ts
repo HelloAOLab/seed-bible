@@ -58,7 +58,7 @@ function createAltNivTranslation(): Translation {
 }
 
 describe("createBibleDataManager", () => {
-  it("defaults endpoints to the private helloao endpoint", () => {
+  it("defaults endpoints to the private endpoint", () => {
     const manager = createBibleDataManager();
 
     expect(manager.endpoints.value).toEqual(["https://vmfnri.helloao.org/"]);
