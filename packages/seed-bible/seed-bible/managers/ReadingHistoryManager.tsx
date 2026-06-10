@@ -37,7 +37,11 @@ export interface ReadingEvent {
   end: number;
 }
 
-const readingHistoryDocs: Record<string, Promise<SharedDocument>> = {};
+let readingHistoryDocs: Record<string, Promise<SharedDocument>> = {};
+
+export function clearReadingHistoryDocs() {
+  readingHistoryDocs = {};
+}
 
 /**
  * Gets the reading history document for the given record name and year.

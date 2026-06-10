@@ -1,3 +1,4 @@
+import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import {
   getTodayTimeSpan,
@@ -10,6 +11,7 @@ import {
   filter,
   flat,
   type ReadingEvent,
+  clearReadingHistoryDocs,
 } from "@packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
 import type { Mock } from "vitest";
 
@@ -257,22 +259,18 @@ describe("ReadingHistoryManager", () => {
         type: eventsType,
         push: vi.fn(),
       };
-      getSharedDocumentMock = vi.fn().mockResolvedValue({
-        getArray: vi.fn().mockReturnValue(eventsArray),
-        createMap: vi.fn().mockReturnValue({
-          set: createMapSetMock,
-        }),
-      });
+      getSharedDocumentMock = vi
+        .spyOn(os, "getSharedDocument")
+        .mockResolvedValue({
+          getArray: vi.fn().mockReturnValue(eventsArray),
+          createMap: vi.fn().mockReturnValue({
+            set: createMapSetMock,
+          }),
+        } as unknown as SharedDocument);
 
-      // Mock the os and global functions
-      (globalThis as any).os = {
-        getSharedDocument: getSharedDocumentMock,
-        requestAuthBotInBackground: vi.fn(),
-      };
-
-      (globalThis as any).bot = {
-        vars: {},
-      };
+      vi.spyOn(os, "requestAuthBotInBackground").mockImplementation(
+        async () => null
+      );
 
       vi.useFakeTimers();
     });
@@ -404,8 +402,8 @@ describe("ReadingHistoryManager", () => {
     });
 
     afterEach(() => {
+      clearReadingHistoryDocs();
       vi.clearAllMocks();
-      delete (globalThis as any).bot;
     });
 
     it("calls os.getSharedDocument with correct parameters", async () => {
@@ -613,6 +611,7 @@ describe("ReadingHistoryManager", () => {
     });
 
     afterEach(() => {
+      clearReadingHistoryDocs();
       vi.clearAllMocks();
       delete (globalThis as any).bot;
     });
