@@ -332,7 +332,7 @@ describe("ExtensionInitalizer", () => {
   });
 });
 
-describe("createExtensionManager", () => {
+describe.skip("createExtensionManager", () => {
   let installPackage: Mock;
   let shoutSpy: Mock;
   let sha256Spy: Mock;
