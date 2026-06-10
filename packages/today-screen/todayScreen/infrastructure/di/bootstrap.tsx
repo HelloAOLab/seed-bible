@@ -21,9 +21,9 @@ import type { VerseSearchResult } from "todayScreen.domain.models.search";
 import { ReadingHistoryConfigProvider } from "../config/readingHistory/readingHistoryConfigProvider";
 import { getHighlightedWelcomeVerse } from "../config/translations/welcomeVerseMap";
 
-const Icon = () => {
-  return <MaterialIcon>home</MaterialIcon>;
-};
+// const Icon = () => {
+//   return <MaterialIcon>home</MaterialIcon>;
+// };
 
 const customCSS = getCustomStyles();
 
@@ -223,115 +223,121 @@ export const bootstrapExtension = () => {
 
       const readingHistoryConfigProvider = new ReadingHistoryConfigProvider();
 
-      yield context.tools.registerToolbarTool({
-        id: "today",
-        priority: 0,
-        title: "Today",
-        icon: Icon,
-        onSelect: () => {
-          const component = () => {
-            const { t, language } = useI18n();
-            return (
-              <Today
-                config={{
-                  MaterialIcon,
-                  SeedBibleIcon,
-                  language,
-                  username: context.login.profile.value?.name,
-                  userId: context.login.userId.value ?? undefined,
-                  userLastReading,
-                  getCommunityReading,
-                  translate: (key, options) =>
-                    t(key, {
-                      ns: [extensionId, "seed-bible"],
-                      ...(options ?? {}),
-                    }),
-                  bookNames,
-                  addTab: (
-                    bookId: string,
-                    chapter: number,
-                    translationId: string | undefined,
-                    verse: number | undefined
-                  ) => {
-                    const tab = context.tabs.addTab(undefined, {
-                      initialBookId: bookId,
-                      initialChapterNumber: chapter,
-                      initialTranslationId: translationId,
-                      scrollToVerse: verse,
+      /**
+       * Opens the Today screen in the currently selected pane. Extracted so it
+       * can be reused both by the toolbar tool and exposed as the extension's
+       * public API (`getExtensionExports("today-screen").open`).
+       */
+      const openToday = () => {
+        const component = () => {
+          const { t, language } = useI18n();
+          return (
+            <Today
+              config={{
+                MaterialIcon,
+                SeedBibleIcon,
+                language,
+                username: context.login.profile.value?.name,
+                userId: context.login.userId.value ?? undefined,
+                userLastReading,
+                getCommunityReading,
+                translate: (key, options) =>
+                  t(key, {
+                    ns: [extensionId, "seed-bible"],
+                    ...(options ?? {}),
+                  }),
+                bookNames,
+                addTab: (
+                  bookId: string,
+                  chapter: number,
+                  translationId: string | undefined,
+                  verse: number | undefined
+                ) => {
+                  const tab = context.tabs.addTab(undefined, {
+                    initialBookId: bookId,
+                    initialChapterNumber: chapter,
+                    initialTranslationId: translationId,
+                    scrollToVerse: verse,
+                  });
+                  // `scrollToVerse` only scrolls; the highlight is a separate
+                  // decoration (same pattern as the reader's search panel).
+                  if (verse !== undefined) {
+                    tab.readingState.decorateVerses(bookId, chapter, verse, {
+                      className: "sb-verse-decoration-search-result",
+                      removeAfterMs: 3000,
                     });
-                    // `scrollToVerse` only scrolls; the highlight is a separate
-                    // decoration (same pattern as the reader's search panel).
-                    if (verse !== undefined) {
-                      tab.readingState.decorateVerses(bookId, chapter, verse, {
-                        className: "sb-verse-decoration-search-result",
-                        removeAfterMs: 3000,
-                      });
-                    }
-                    const paneId = context.panes.selectedPaneId.value;
-                    if (paneId) {
-                      context.panes.openInPane(paneId, { tabId: tab.id });
-                    }
-                    context.app.selectTab(tab.id);
-                  },
-                  getDefaultTranslation: () => {
-                    const id =
-                      configBot.tags.translationId ??
-                      configBot.tags.translation;
-                    return typeof id === "string" ? id : undefined;
-                  },
-                  searchVerses,
-                  getVerseText,
-                  lastTranslationId,
-                  openBookSelector: () => {
-                    const pane =
-                      context.panes.panes.value.find(
-                        (p) => p.id === context.panes.selectedPaneId.value
-                      ) ?? null;
-                    if (pane) {
-                      context.selector.setOpen(true, pane);
-                    }
-                  },
-                  translationBooks: lastTranslationBooks,
-                  translationBooksMap,
-                  subscribedUsersProfileProvider: fakeSubscribedUsersProvider,
-                  subscribedUsersIdsProvider: fakeSubscribedUsersProvider,
-                  ReadingHistoryTimeline,
-                  getDayRangeSeconds,
-                  getReadingHistoryEvents: fakeGetReadingHistoryEvents,
-                  GetPastDateInfo,
-                  CapitalizeFirstLetter,
-                  theme: context.theme.currentTheme.value,
-                  readingHistoryService,
-                  sharedSessions,
-                  userDeterministicIdentityProvider: {
-                    getColorById: (id: string) =>
-                      sessionProvider.getUserColorById(id),
-                    getIconById: (id: string) =>
-                      sessionProvider.getUserIconById(id),
-                  },
-                  joinSharedSession: (id: string) =>
-                    context.app.joinSharedSession(id),
-                  bookmarks: context.bookmarks.bookmarks,
-                  getTranslationBooks: (translation: string) => {
-                    return context.bibleData.translationBooks.value.get(
-                      translation
-                    );
-                  },
-                  readingHistoryConfigProvider,
-                  getHighlightedWelcomeVerse,
-                }}
-                customCSS={customCSS}
-              />
-            );
-          };
+                  }
+                  const paneId = context.panes.selectedPaneId.value;
+                  if (paneId) {
+                    context.panes.openInPane(paneId, { tabId: tab.id });
+                  }
+                  context.app.selectTab(tab.id);
+                },
+                getDefaultTranslation: () => {
+                  const id =
+                    configBot.tags.translationId ?? configBot.tags.translation;
+                  return typeof id === "string" ? id : undefined;
+                },
+                searchVerses,
+                getVerseText,
+                lastTranslationId,
+                openBookSelector: () => {
+                  const pane =
+                    context.panes.panes.value.find(
+                      (p) => p.id === context.panes.selectedPaneId.value
+                    ) ?? null;
+                  if (pane) {
+                    context.selector.setOpen(true, pane);
+                  }
+                },
+                translationBooks: lastTranslationBooks,
+                translationBooksMap,
+                subscribedUsersProfileProvider: fakeSubscribedUsersProvider,
+                subscribedUsersIdsProvider: fakeSubscribedUsersProvider,
+                ReadingHistoryTimeline,
+                getDayRangeSeconds,
+                getReadingHistoryEvents: fakeGetReadingHistoryEvents,
+                GetPastDateInfo,
+                CapitalizeFirstLetter,
+                theme: context.theme.currentTheme.value,
+                readingHistoryService,
+                sharedSessions,
+                userDeterministicIdentityProvider: {
+                  getColorById: (id: string) =>
+                    sessionProvider.getUserColorById(id),
+                  getIconById: (id: string) =>
+                    sessionProvider.getUserIconById(id),
+                },
+                joinSharedSession: (id: string) =>
+                  context.app.joinSharedSession(id),
+                bookmarks: context.bookmarks.bookmarks,
+                getTranslationBooks: (translation: string) => {
+                  return context.bibleData.translationBooks.value.get(
+                    translation
+                  );
+                },
+                readingHistoryConfigProvider,
+                getHighlightedWelcomeVerse,
+              }}
+              customCSS={customCSS}
+            />
+          );
+        };
 
-          const paneId = context.panes.selectedPaneId.value;
-          if (paneId) {
-            context.tabs.selectTab("");
-            context.panes.openInPane(paneId, { component });
-          }
-        },
-      });
+        const paneId = context.panes.selectedPaneId.value;
+        if (paneId) {
+          context.tabs.selectTab("");
+          context.panes.openInPane(paneId, { component });
+        }
+      };
+
+      // yield context.tools.registerToolbarTool({
+      //   id: "today",
+      //   priority: 0,
+      //   title: "Today",
+      //   icon: Icon,
+      //   onSelect: openToday,
+      // });
 
       yield () => {
         cleanupUserLastReading();
@@ -339,6 +345,10 @@ export const bootstrapExtension = () => {
         cleanupTranslationId();
         destroy([]);
       };
+
+      // Public API: lets the host app (or other extensions) open the Today
+      // screen without a toolbar button, via getExtensionExports("today-screen").
+      return { open: openToday };
     },
   });
 };

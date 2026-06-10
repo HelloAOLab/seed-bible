@@ -17,6 +17,11 @@ import {
   getSelfDisplayName,
   openBookmarkCategoryModal,
 } from "seed-bible.components.Tabs";
+import { getExtensionExports } from "seed-bible.managers.ExtensionManager";
+
+interface TodayScreenAPI {
+  open: () => void;
+}
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
 
@@ -718,11 +723,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   label={t("today", { defaultValue: "Today" })}
                   onClick={() => {
                     isMoreMenuOpen.value = false;
-                    os.toast(
-                      t("today-coming-soon", {
-                        defaultValue: "Today screen is coming soon",
-                      })
-                    );
+
+                    const today =
+                      getExtensionExports<TodayScreenAPI>("today-screen");
+                    if (today) {
+                      today.open();
+                    } else {
+                      os.toast(
+                        t("today-coming-soon", {
+                          defaultValue: "Today screen is coming soon",
+                        })
+                      );
+                    }
                   }}
                 />
 

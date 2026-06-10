@@ -28,6 +28,11 @@ import {
   handleGridKeyNav,
   handleHorizontalListKeyNav,
 } from "seed-bible.components.KeyboardNav";
+import { getExtensionExports } from "seed-bible.managers.ExtensionManager";
+
+interface TodayScreenAPI {
+  open: () => void;
+}
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -1435,11 +1440,17 @@ export function Tabs(props: TabsProps) {
                 aria-label={t("tasks", { defaultValue: "Tasks" })}
                 title={t("tasks", { defaultValue: "Tasks" })}
                 onClick={() => {
-                  os.toast(
-                    t("today-coming-soon", {
-                      defaultValue: "Today screen is coming soon",
-                    })
-                  );
+                  const today =
+                    getExtensionExports<TodayScreenAPI>("today-screen");
+                  if (today) {
+                    today.open();
+                  } else {
+                    os.toast(
+                      t("today-coming-soon", {
+                        defaultValue: "Today screen is coming soon",
+                      })
+                    );
+                  }
                 }}
               >
                 <svg

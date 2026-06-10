@@ -6,5 +6,6 @@
       "title": "Today screen",
       "description": ""
     }
-  }
+  },
+  "autoinstall": true
 }

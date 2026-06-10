@@ -55,7 +55,7 @@ export const useWelcome: UseWelcome = () => {
     return username
       ? translate("personal-greeting", { name: username })
       : translate("anonymous-greeting");
-  }, [username]);
+  }, [username, translate]);
 
   const book = useComputed(() => {
     return `${bookNames.value.get("JHN")?.toUpperCase()} 1:1`;
