@@ -1,5 +1,5 @@
 import { render } from "preact";
-import { act } from "preact/test-utils";
+import { act, setupRerender, teardown } from "preact/test-utils";
 import { computed, signal, type Signal } from "@preact/signals";
 import { BibleReader } from "@packages/seed-bible/seed-bible/components/BibleReader";
 import { PaneReader } from "@packages/seed-bible/seed-bible/components/PaneLayout";
@@ -226,6 +226,14 @@ function renderMobileReader(
   });
 }
 
+beforeEach(() => {
+  setupRerender();
+});
+
+afterEach(() => {
+  teardown();
+});
+
 describe("BibleReader", () => {
   let container: HTMLDivElement;
 
@@ -235,7 +243,7 @@ describe("BibleReader", () => {
   });
 
   afterEach(() => {
-    render(null, container);
+    // render(null, container);
     container.remove();
   });
 

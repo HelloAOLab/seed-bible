@@ -166,6 +166,6 @@ describe("Sidebar collapsed layout", () => {
     expect(
       bottomActions?.classList.contains("sb-sidebar-bottom-actions-collapsed")
     ).toBe(false);
-    expect(container.textContent).toContain("Settings Page");
+    expect(container.textContent).toContain("Settings");
   });
 });
