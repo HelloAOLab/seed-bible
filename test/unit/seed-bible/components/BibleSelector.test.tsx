@@ -21,7 +21,8 @@ import {
 } from "../managers/testUtils/mockBibleApiData";
 import type { Mock } from "vitest";
 
-vi.mock("../i18n/I18nManager", () => ({
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", () => ({
+  DEFAULT_LANGUAGE: "en",
   useI18n: () => ({
     t: (key: string, options?: { defaultValue?: string }) =>
       options?.defaultValue ?? key,
@@ -1459,11 +1460,6 @@ describe("BibleSelector translation selector", () => {
 describe("BibleSelector sharing translations", () => {
   let container: HTMLDivElement;
 
-  type TestGlobalScope = typeof globalThis & {
-    os?: Record<string, unknown>;
-    configBot?: { tags: Record<string, unknown> };
-  };
-
   function makeTranslation(
     id: string,
     languageEnglishName: string,
@@ -1490,13 +1486,16 @@ describe("BibleSelector sharing translations", () => {
   let setClipboard: Mock;
 
   beforeEach(() => {
+    jsdom.reconfigure({ url: "https://ao.bot/somepage" });
+
     container = document.createElement("div");
     document.body.appendChild(container);
 
-    setClipboard = vi.fn();
-    const scope = globalThis as TestGlobalScope;
-    scope.os = { ...(scope.os ?? {}), setClipboard, toast: vi.fn() };
-    scope.configBot = { tags: { pattern: "SeedBible" } };
+    (window.navigator as any).clipboard = {
+      writeText: vi.fn().mockResolvedValue(undefined),
+    };
+
+    setClipboard = window.navigator.clipboard.writeText as Mock;
   });
 
   afterEach(() => {

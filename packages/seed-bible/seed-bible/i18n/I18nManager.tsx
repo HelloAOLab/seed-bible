@@ -78,11 +78,11 @@ const availableLanguages = Object.keys(seedBibleTranslations).sort();
 const initialLanguage = DEFAULT_LANGUAGE;
 
 if (!i18n.isInitialized) {
-  console.log(
-    "[I18n] Initializing i18n with resources:",
-    seedBibleTranslations,
-    initialLanguage
-  );
+  // console.log(
+  //   "[I18n] Initializing i18n with resources:",
+  //   seedBibleTranslations,
+  //   initialLanguage
+  // );
   i18n.use(initReactI18next).init({
     lng: initialLanguage,
     fallbackLng: DEFAULT_LANGUAGE,

@@ -914,6 +914,7 @@ const LanguageComponent = (props: {
     url.searchParams.delete("book");
     url.searchParams.delete("chapter");
     navigator.clipboard.writeText(url.href);
+
     // os.setClipboard(url.href);
     // os.toast(
     //   t("copied-translation-share-link", {
