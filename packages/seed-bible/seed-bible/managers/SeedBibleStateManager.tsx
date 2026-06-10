@@ -89,8 +89,12 @@ export interface AppState {
   effectivePanes: ReadonlySignal<Pane[]>;
   /** Current window inner width in pixels. Updated on resize. */
   viewportWidth: ReadonlySignal<number>;
+  /** Current window inner height in pixels. Updated on resize. */
+  viewportHeight: ReadonlySignal<number>;
   /** True when viewport width is at or below the mobile breakpoint (768px). */
   isMobile: ReadonlySignal<boolean>;
+  /** True when on a phone-sized viewport held in landscape orientation. */
+  isMobileLandscape: ReadonlySignal<boolean>;
 
   /**
    * Snapshot of the current chapter selection for analytics and integrations.
@@ -239,7 +243,20 @@ export function createSeedBibleState(): SeedBibleState {
   const viewportWidth = signal(
     typeof window === "undefined" ? 0 : window.innerWidth
   );
+  const viewportHeight = signal(
+    typeof window === "undefined" ? 0 : window.innerHeight
+  );
   const isMobile = computed(() => viewportWidth.value <= 768);
+
+  // A phone held sideways: landscape orientation with the short viewport
+  // height typical of phones. Tablets/desktops in landscape have more
+  // vertical room and are excluded by the height cap.
+  const isMobileLandscape = computed(
+    () =>
+      viewportHeight.value > 0 &&
+      viewportHeight.value <= 600 &&
+      viewportWidth.value > viewportHeight.value
+  );
 
   effect(() => {
     if (typeof window === "undefined") {
@@ -247,11 +264,22 @@ export function createSeedBibleState(): SeedBibleState {
     }
     const handleResize = () => {
       viewportWidth.value = window.innerWidth;
+      viewportHeight.value = window.innerHeight;
     };
     window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("resize", handleResize);
     };
+  });
+
+  // Auto-collapse the docked sidebar when entering mobile-landscape so the
+  // reader gets the limited vertical space. Reacting only to the boolean
+  // means this fires once per transition into landscape and still lets the
+  // user manually re-expand afterwards.
+  effect(() => {
+    if (isMobileLandscape.value) {
+      sidebar.isSidebarCollapsed.value = true;
+    }
   });
 
   const buildSingleSelectedPane = (): Pane[] =>
@@ -278,18 +306,25 @@ export function createSeedBibleState(): SeedBibleState {
       return buildSingleSelectedPane();
     }
     if (isMobile.value) {
-      // On mobile we only show a single pane at a time. Prefer the pane that
-      // hosts the currently selected tab; fall back to the manager's selected
-      // pane, then the first pane.
+      // On mobile we only show a single attached pane at a time. Prefer the
+      // pane that hosts the currently selected tab; fall back to the manager's
+      // selected pane, then the first attached pane.
       const allPanes = panes.panes.value;
       const tab = selectedTab.value;
       const selectedPaneId = panes.selectedPaneId.value;
+      const attachedPanes = allPanes.filter((p) => !p.detached);
+      const detachedPanes = allPanes.filter((p) => p.detached);
       const matching =
-        (tab ? allPanes.find((p) => p.tab?.id === tab.id) : null) ??
-        allPanes.find((p) => p.id === selectedPaneId) ??
-        allPanes[0] ??
+        (tab ? attachedPanes.find((p) => p.tab?.id === tab.id) : null) ??
+        attachedPanes.find((p) => p.id === selectedPaneId) ??
+        attachedPanes[0] ??
         null;
-      return matching ? [matching] : buildSingleSelectedPane();
+      const base = matching ? [matching] : buildSingleSelectedPane();
+      // Detached panes (extension tools, playlist, etc.) are always kept so
+      // they render as overlays in front of the attached pane. PaneLayout
+      // gives detached panes a higher z-index than attached ones, so they sit
+      // above the reader and stay interactable instead of being hidden.
+      return [...base, ...detachedPanes];
     }
     return panes.panes.value;
   });
@@ -666,7 +701,9 @@ export function createSeedBibleState(): SeedBibleState {
       selectedTab,
       effectivePanes,
       viewportWidth,
+      viewportHeight,
       isMobile,
+      isMobileLandscape,
       currentReadingState,
       selectTab: handleSelectTab,
       addTab: handleAddTab,
