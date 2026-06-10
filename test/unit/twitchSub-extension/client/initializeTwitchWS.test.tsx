@@ -19,19 +19,21 @@ function createTwitchSubManagerMock(accessToken: string | null = "token-1") {
 }
 
 describe("initializeTwitchWS", () => {
-  let websocketCtorMock: Mock;
+  let websocketCtorMock: Mock<any>;
   let warnSpy: Mock;
   let errorSpy: Mock;
 
   beforeEach(() => {
     vi.useFakeTimers();
 
-    websocketCtorMock = vi.fn().mockImplementation(() => ({
-      onerror: null,
-      onopen: null,
-      onmessage: null,
-      onclose: null,
-    }));
+    websocketCtorMock = vi.fn(
+      class {
+        onerror = null;
+        onopen = null;
+        onmessage = null;
+        onclose = null;
+      }
+    );
     (globalThis as any).WebSocket = websocketCtorMock;
 
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
