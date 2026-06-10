@@ -110,17 +110,6 @@ function MobileMoreMenu(props: MobileMoreMenuProps) {
     //     );
     //   },
     // },
-    // {
-    //   id: "chat",
-    //   label: t("chat", { defaultValue: "Chat" }),
-    //   iconName: "chat_bubble_outline",
-    //   onClick: () => {
-    //     onClose();
-    //     os.toast(
-    //       t("chat-coming-soon", { defaultValue: "Chat is coming soon" })
-    //     );
-    //   },
-    // },
     ...extraItems,
   ];
 
@@ -389,6 +378,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         innerWidth: viewportWidth,
         innerHeight: viewportHeight,
       },
+      chats,
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
       openChat: sidebar.openChatPanel,
@@ -442,6 +432,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         innerWidth: viewportWidth,
         innerHeight: viewportHeight,
       },
+      chats,
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
       openChat: sidebar.openChatPanel,

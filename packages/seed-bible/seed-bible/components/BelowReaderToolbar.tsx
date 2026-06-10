@@ -7,6 +7,7 @@ import { useI18n } from "seed-bible.i18n.I18nManager";
 import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
 import { translateTitle } from "seed-bible.components.Utils";
 import { handleVerticalListKeyNav } from "seed-bible.components.KeyboardNav";
+import type { ChatsManager } from "seed-bible.managers.ChatsManager";
 
 const { useState } = os.appHooks;
 
@@ -18,6 +19,7 @@ interface BelowReaderToolbarProps {
   tabsManager: TabsManager;
   panesManager: PanesManager;
   currentPane: Pane;
+  chats: ChatsManager;
   openSidebar: () => void;
   openSearch: () => void;
 }
@@ -33,6 +35,7 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
     openSidebar,
     openSearch,
     currentPane,
+    chats,
   } = props;
   const tools = toolsManager.getBelowReaderTools({
     readingState,
@@ -43,6 +46,7 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
     openSidebar,
     currentPane,
     openSearch,
+    chats,
   });
 
   if (tools.length === 0) {
