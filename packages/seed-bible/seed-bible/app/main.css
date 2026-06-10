@@ -2774,7 +2774,7 @@ h6 {
 .sb-tabs-sidebar-collapsed {
   width: 56px;
   padding: 10px 8px 16px;
-  padding-left: 12.5px; /* center the collapse button in the collapsed sidebar */
+  padding-left: 19px; /* center the collapse button in the collapsed sidebar */
 
   .sb-sidebar-top-row {
     justify-content: center;
@@ -2937,7 +2937,7 @@ h6 {
 .sb-bookmarks-section {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   margin-bottom: 4px;
 }
 
@@ -2969,7 +2969,7 @@ h6 {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 6px 6px 4px;
+  padding: 8px 6px 8px 6px;
   border: none;
   background: transparent;
   color: var(--sb-font-color);
@@ -3051,8 +3051,8 @@ h6 {
 .sb-bookmark-category-items {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding-inline-start: 22px;
+  gap: 4px;
+  padding-inline-start: 24px;
 }
 
 .sb-bookmark-category-empty {
@@ -3100,7 +3100,7 @@ h6 {
   display: flex;
   align-items: baseline;
   gap: 4px;
-  padding: 6px 6px;
+  padding: 8px 8px;
   border: none;
   background: transparent;
   color: var(--sb-font-color);
@@ -4448,6 +4448,7 @@ h6 {
     overflow-y: auto;
     background: var(--sb-background);
     padding-bottom: 68px;
+    padding: 0;
   }
 
   @keyframes sb-sidebar-slide-in {
@@ -4646,6 +4647,37 @@ h6 {
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
     padding-bottom: 12px;
     border-bottom: 1px solid var(--sb-divider-color);
+  }
+
+  /* ------------------------------------------------------------------
+   * Mobile bookmarks section — the compact desktop rows feel cramped
+   * next to the roomy tab cards, so give the category headers and
+   * bookmark rows larger touch targets and a touch more breathing room.
+   * ------------------------------------------------------------------ */
+  .sb-tabs-sidebar-mobile-open .sb-bookmarks-section {
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .sb-tabs-sidebar-mobile-open .sb-bookmark-category-toggle {
+    padding: 12px 8px;
+    font-size: 16px;
+  }
+
+  .sb-tabs-sidebar-mobile-open .sb-bookmark-category-items {
+    gap: 6px;
+    padding-inline-start: 26px;
+  }
+
+  .sb-tabs-sidebar-mobile-open .sb-bookmark-item-button {
+    padding: 12px 10px;
+    font-size: 15px;
+  }
+
+  .sb-tabs-sidebar-mobile-open
+    .sb-bookmark-item-verse
+    .sb-bookmark-item-button {
+    padding-inline-start: 14px;
   }
 
   /* ------------------------------------------------------------------
