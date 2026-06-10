@@ -2,5 +2,5 @@ interface ImportMeta {
   glob: (
     pattern: string,
     options?: { eager?: boolean }
-  ) => Record<string, () => Promise<any>>;
+  ) => Record<string, () => Promise<unknown> | unknown>;
 }

@@ -97,7 +97,8 @@ if (!i18n.isInitialized) {
 
   (async () => {
     for (const [lang, resources] of Object.entries(seedBibleTranslations)) {
-      const json = await resources();
+      const json =
+        typeof resources === "function" ? await resources() : resources;
       i18n.addResourceBundle(lang, "seed-bible", json, true);
     }
   })();
