@@ -47,11 +47,12 @@ function createShareUrlReadingState(overrides?: Partial<any>) {
 
 describe("getShareUrl", () => {
   beforeEach(() => {
-    window.location.href = "https://example.test/reader?existing=1";
-    // (globalThis as any).configBot.tags.pattern = "pattern-123";
+    jsdom.reconfigure({
+      url: "https://example.test/reader?existing=1",
+    });
   });
 
-  it("builds a share URL with the current translation, book, pattern, and selected verses", () => {
+  it("builds a share URL with the current translation, book, and selected verses", () => {
     const readingState = createShareUrlReadingState({
       selectedVerses: signal([
         {
@@ -84,7 +85,7 @@ describe("getShareUrl", () => {
     const url = getShareUrl(readingState as any);
 
     expect(url.toString()).toBe(
-      "https://example.test/reader?pattern=pattern-123&translation=NIV&book=GEN&verse=1,3"
+      "https://example.test/reader?translation=NIV&book=GEN&verse=1,3"
     );
   });
 
@@ -127,7 +128,7 @@ describe("getShareUrl", () => {
     const url = getShareUrl(readingState as any);
 
     expect(url.toString()).toBe(
-      "https://example.test/reader?pattern=pattern-123&translation=NIV&book=GEN&verse=1-3"
+      "https://example.test/reader?translation=NIV&book=GEN&verse=1-3"
     );
   });
 
@@ -148,7 +149,7 @@ describe("getShareUrl", () => {
     const url = getShareUrl(readingState as any);
 
     expect(url.toString()).toBe(
-      "https://example.test/reader?pattern=pattern-123&translation=AAB&book=GEN"
+      "https://example.test/reader?translation=AAB&book=GEN"
     );
   });
 });
