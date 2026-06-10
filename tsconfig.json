@@ -485,6 +485,9 @@
       "bibleVizUtils.infrastructure.presentation.components.ui.ReadingHistoryTimeline": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/presentation/components/ui/ReadingHistoryTimeline.tsx"
       ],
+      "bibleVizUtils.infrastructure.presentation.hooks.useHorizontalScroll": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/presentation/hooks/useHorizontalScroll.tsx"
+      ],
       "bibleVizUtils.infrastructure.presentation.styles.adapter": [
         "./packages/Bible Visualization Utils/bibleVizUtils/infrastructure/presentation/styles/adapter.tsx"
       ],

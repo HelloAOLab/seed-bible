@@ -1,11 +1,16 @@
-import { useComputed, useSignal, type ReadonlySignal } from "@preact/signals";
+import {
+  useComputed,
+  useSignal,
+  useSignalEffect,
+  type ReadonlySignal,
+} from "@preact/signals";
 import { useTodayContext } from "../contexts/today/TodayContext";
-import {} from "@preact/signals";
 import type {
   BookmarkData,
   MoreButtonData,
 } from "../components/containers/BookmarksSection";
 import type { MutableRef } from "preact/hooks";
+import type { TranslationBooks } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
 const { useEffect, useLayoutEffect, useRef } = os.appHooks;
 
@@ -28,10 +33,35 @@ export const useBookmarksSection: UseBookmarksSection = () => {
   });
   const containerRef = useRef<HTMLDivElement | null>(null);
 
+  // Reactive cache of translation → books. `getTranslationBooks` is async
+  // (it fetches + caches on miss), so we resolve book names here and recompute
+  // `bookmarksData` as each translation's books arrive.
+  const booksByTranslation = useSignal<Map<string, TranslationBooks>>(
+    new Map()
+  );
+
+  useSignalEffect(() => {
+    const pendingIds = new Set(
+      bookmarks.value.map((bookmark) => bookmark.translationId)
+    );
+
+    for (const translationId of pendingIds) {
+      if (booksByTranslation.value.has(translationId)) continue;
+
+      void getTranslationBooks(translationId).then((books) => {
+        if (booksByTranslation.value.has(translationId)) return;
+        const next = new Map(booksByTranslation.value);
+        next.set(translationId, books);
+        booksByTranslation.value = next;
+      });
+    }
+  });
+
   const bookmarksData = useComputed<Array<BookmarkData>>(() => {
     return bookmarks.value.map((bookmark) => {
       const { bookId, chapterNumber, translationId } = bookmark;
-      const translationBooks = getTranslationBooks(translationId);
+      const translationBooks = booksByTranslation.value.get(translationId);
+      // Falls back to the raw bookId until the books for this translation load.
       const name =
         translationBooks?.books.find((book) => {
           return book.id === bookId;

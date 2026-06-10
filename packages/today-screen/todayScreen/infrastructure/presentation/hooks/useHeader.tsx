@@ -1,5 +1,8 @@
 import { useTodayContext } from "../contexts/today/TodayContext";
 
+const NOTIFICATION_ICON = "notifications";
+const SETTINGS_ICON = "settings";
+
 type UseHeader = () => {
   date: string;
   greeting: string;
@@ -8,9 +11,13 @@ type UseHeader = () => {
     children: string;
     className?: string | undefined;
   }) => preact.JSX.Element;
+  notificationIcon: string;
+  settingsIcon: string;
+  handleNotificationClick: () => void;
+  handleSettingsClick: () => void;
 };
 
-const { useMemo } = os.appHooks;
+const { useMemo, useCallback } = os.appHooks;
 
 export const useHeader: UseHeader = () => {
   const { language, username, MaterialIcon, translate } = useTodayContext();
@@ -37,10 +44,22 @@ export const useHeader: UseHeader = () => {
     };
   }, [language, translate]);
 
+  const handleNotificationClick = useCallback(() => {
+    console.log(`useHeader: handleNotificationClick`);
+  }, []);
+
+  const handleSettingsClick = useCallback(() => {
+    console.log(`useHeader: handleSettingsClick`);
+  }, []);
+
   return {
     date: `${day} ${month}`,
     greeting,
     name: username && username.length > 0 ? username : "Guest",
     MaterialIcon,
+    notificationIcon: NOTIFICATION_ICON,
+    settingsIcon: SETTINGS_ICON,
+    handleNotificationClick,
+    handleSettingsClick,
   };
 };

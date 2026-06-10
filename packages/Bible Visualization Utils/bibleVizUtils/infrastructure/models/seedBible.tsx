@@ -43,6 +43,7 @@ import type { ScriptureMap3DConfigProvider } from "bibleVizUtils.infrastructure.
 import type { ReadingHistoryConfigProvider } from "bibleVizUtils.infrastructure.config.readingHistory.ReadingHistoryConfigProvider";
 import type { SectionInfoMapper } from "../../infrastructure/mappers/SectionInfoMapper";
 import type { SessionProvider } from "../adapters/session/SessionProvider";
+import type { UseHorizontalScroll } from "../presentation/hooks/useHorizontalScroll";
 import type { Signal } from "@preact/signals";
 import type { ConnectedSessionUser } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import type {
@@ -124,4 +125,5 @@ export interface BibleVizAPI {
   sessionProvider: SessionProvider;
   bookNames: Signal<Map<string, string>>;
   connectedUsers: Signal<ConnectedSessionUser[]>;
+  useHorizontalScroll: UseHorizontalScroll;
 }

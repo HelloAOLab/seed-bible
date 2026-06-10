@@ -18,6 +18,7 @@ import type { BibleReadingSession } from "@packages/seed-bible/seed-bible/manage
 import type { VerseSearchResult } from "todayScreen.domain.models.search";
 import type { Bookmark } from "@packages/seed-bible/seed-bible/managers/BookmarksManager";
 import type { TranslationBooks } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type { UseHorizontalScroll } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/presentation/hooks/useHorizontalScroll";
 // import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 
 const { memo } = os.appCompat;
@@ -123,7 +124,7 @@ export interface TodayConfig {
   };
   joinSharedSession: (id: string) => Promise<BibleReadingSession>;
   bookmarks: ReadonlySignal<Array<Bookmark>>;
-  getTranslationBooks: (translation: string) => TranslationBooks | undefined;
+  getTranslationBooks: (translation: string) => Promise<TranslationBooks>;
   readingHistoryConfigProvider: {
     buildTimespanOptionsMap: () => Record<TimespanOptionId, TimespanOption>;
     getTimespanOptionLabelMap(): Record<TimespanOptionId, string>;
@@ -132,6 +133,7 @@ export interface TodayConfig {
     translationId: string,
     rawVerseText: string
   ) => string;
+  useHorizontalScroll: UseHorizontalScroll;
 }
 
 type TodayProps = {

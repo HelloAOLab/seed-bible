@@ -82,10 +82,10 @@ export class FakeSubscribedUsersProvider implements ReadingEventsProviderPort, U
     now: number
   ): ReadingEvent[] {
     const events: ReadingEvent[] = [];
-    const eventCount = 3 + Math.floor(Math.random() * 8); // 3–10 events
+    const eventCount = 20 + Math.floor(Math.random() * 20); // 3–10 events
 
     for (let i = 0; i < eventCount; i++) {
-      const daysAgo = Math.floor(Math.random() * 30);
+      const daysAgo = Math.floor(Math.random() * 60);
       const offsetSeconds = Math.floor(Math.random() * 24 * 60 * 60);
       const start = now - daysAgo * 24 * 60 * 60 - offsetSeconds;
       const durationSeconds = 5 * 60 + Math.floor(Math.random() * 55 * 60); // 5–60 min

@@ -1,7 +1,16 @@
 import { useHeader } from "../../hooks/useHeader";
 
 export const Header = () => {
-  const { date, greeting, name, MaterialIcon } = useHeader();
+  const {
+    date,
+    greeting,
+    name,
+    MaterialIcon,
+    notificationIcon,
+    settingsIcon,
+    handleNotificationClick,
+    handleSettingsClick,
+  } = useHeader();
 
   return (
     <div className="today-header">
@@ -9,8 +18,11 @@ export const Header = () => {
       <h1>
         {greeting}, <span>{name}!</span>
       </h1>
-      <button>
-        <MaterialIcon>notifications</MaterialIcon>
+      <button onClick={handleNotificationClick}>
+        <MaterialIcon>{notificationIcon}</MaterialIcon>
+      </button>
+      <button onClick={handleSettingsClick}>
+        <MaterialIcon>{settingsIcon}</MaterialIcon>
       </button>
     </div>
   );

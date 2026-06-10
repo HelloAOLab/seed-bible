@@ -14,7 +14,7 @@ export const useTodayContainer: UseTodayContainer = () => {
     if (!userId || !userLastReading.value) {
       return {
         Component: Welcome,
-        style: { alignItems: "center" },
+        style: { alignItems: "safe center" },
       };
     }
     return {

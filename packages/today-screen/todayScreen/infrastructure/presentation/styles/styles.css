@@ -85,6 +85,7 @@
   justify-content: center;
   align-items: center;
   gap: 20px;
+  width: 100%;
 }
 
 .welcome-screen .welcome-screen-navigation > button {
@@ -147,10 +148,11 @@
 
 .today-header {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
   grid-template-rows: auto auto;
   width: 100%;
-  gap: 4px;
+  row-gap: 4px;
+  column-gap: 8px;
 }
 
 .today-header > span {
@@ -173,7 +175,6 @@
 }
 
 .today-header > button {
-  grid-column: 2 / 3;
   grid-row: 1 / 3;
   border: none;
   display: flex;
@@ -185,6 +186,14 @@
   justify-self: end;
   align-self: self-start;
   background-color: #f1ece4;
+}
+
+.today-header > button:nth-of-type(1) {
+  grid-column: 2 / 3;
+}
+
+.today-header > button:nth-of-type(2) {
+  grid-column: 3 / 4;
 }
 
 .today-header > button > span {
@@ -478,10 +487,13 @@
   width: 100%;
   height: auto;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  flex-wrap: nowrap;
+  justify-content: safe flex-end;
   align-items: center;
   gap: 8px;
+  overflow-x: scroll;
+  scrollbar-width: none;
+  padding: 0 8px;
 }
 
 .today-container
@@ -496,6 +508,7 @@
   min-width: 52px;
   font-weight: 500;
   color: var(--sb-reader-font-color);
+  flex-shrink: 0;
 }
 
 .today-container
@@ -555,7 +568,7 @@
 }
 
 .today-container .filtered-reading-book > span {
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .today-container .filtered-reading-book-icon {
@@ -579,6 +592,8 @@
 }
 
 .today-container .filtered-reading-book-extra {
+  margin-left: 4px;
+  font-weight: 600;
 }
 
 .today-container .filtered-reading-chapter {
@@ -755,4 +770,33 @@
   font-size: 14px;
   text-decoration: underline;
   text-underline-offset: 4px;
+}
+
+@media (width <= 480px) {
+  .welcome-screen .welcome-screen-navigation {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 16px;
+  }
+  .welcome-screen .welcome-screen-greeting {
+    font-size: 32px;
+  }
+  .welcome-screen .welcome-screen-book {
+    font-size: 16px;
+  }
+  .welcome-screen .welcome-screen-navigation > button {
+    height: 48px;
+  }
+  .today-container .history-card .timespan-filter-container {
+    overflow-x: scroll;
+    scrollbar-width: none;
+    padding: 0 8px;
+    mask-image: linear-gradient(
+      to right,
+      transparent 0px,
+      black 8px,
+      black calc(100% - 8px),
+      transparent 100%
+    );
+  }
 }

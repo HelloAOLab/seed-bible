@@ -31,11 +31,17 @@ type UseHistoryCard = () => {
   timespanFilterOptionsData: ReadonlySignal<TimespanFilterOptionData[]>;
   selectedTimespanOptionId: ReadonlySignal<TimespanOptionId>;
   dateLabel: string | undefined;
+  timespanFilterRef: MutableRef<HTMLDivElement | null>;
 };
 
 export const useHistoryCard: UseHistoryCard = () => {
-  const { translate, MaterialIcon, language, readingHistoryConfigProvider } =
-    useTodayContext();
+  const {
+    translate,
+    MaterialIcon,
+    language,
+    readingHistoryConfigProvider,
+    useHorizontalScroll,
+  } = useTodayContext();
   const {
     userFilters,
     userProfileMap,
@@ -48,6 +54,10 @@ export const useHistoryCard: UseHistoryCard = () => {
   const userFilterOpen = useSignal<boolean>(false);
   const optionsRef = useRef<HTMLDivElement | null>(null);
   const optionsContainerRef = useRef<HTMLDivElement | null>(null);
+
+  // The timespan filter row scrolls horizontally with the vertical wheel.
+  const timespanFilterRef = useRef<HTMLDivElement | null>(null);
+  useHorizontalScroll(timespanFilterRef);
 
   useClickOutside([optionsRef, optionsContainerRef], () => {
     userFilterOpen.value = false;
@@ -146,5 +156,6 @@ export const useHistoryCard: UseHistoryCard = () => {
     timespanFilterOptionsData,
     selectedTimespanOptionId,
     dateLabel,
+    timespanFilterRef,
   };
 };

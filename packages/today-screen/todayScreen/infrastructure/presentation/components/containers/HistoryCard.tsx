@@ -32,6 +32,7 @@ export const HistoryCard = () => {
     timespanFilterOptionsData,
     selectedTimespanOptionId,
     dateLabel,
+    timespanFilterRef,
   } = useHistoryCard();
 
   return (
@@ -66,7 +67,7 @@ export const HistoryCard = () => {
           </div>
         )}
       </div>
-      <div className="timespan-filter-container">
+      <div className="timespan-filter-container" ref={timespanFilterRef}>
         {timespanFilterOptionsData.value.map((data) => {
           return (
             <button

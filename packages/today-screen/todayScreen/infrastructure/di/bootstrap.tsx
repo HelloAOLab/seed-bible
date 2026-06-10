@@ -51,6 +51,7 @@ export const bootstrapExtension = () => {
         GetPastDateInfo,
         CapitalizeFirstLetter,
         readingHistoryService,
+        useHorizontalScroll,
       } = dependenciesMap[
         bibleVizUtilsId
       ] as DependenciesMap[typeof bibleVizUtilsId];
@@ -311,13 +312,11 @@ export const bootstrapExtension = () => {
                 joinSharedSession: (id: string) =>
                   context.app.joinSharedSession(id),
                 bookmarks: context.bookmarks.bookmarks,
-                getTranslationBooks: (translation: string) => {
-                  return context.bibleData.translationBooks.value.get(
-                    translation
-                  );
-                },
+                getTranslationBooks: (translation: string) =>
+                  context.bibleData.getTranslationBooks(translation),
                 readingHistoryConfigProvider,
                 getHighlightedWelcomeVerse,
+                useHorizontalScroll,
               }}
               customCSS={customCSS}
             />

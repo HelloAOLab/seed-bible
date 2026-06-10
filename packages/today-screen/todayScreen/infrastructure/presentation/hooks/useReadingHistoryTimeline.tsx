@@ -46,6 +46,7 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
     CapitalizeFirstLetter,
     theme,
     readingHistoryService,
+    useHorizontalScroll,
   } = useTodayContext();
   const { selectYear, selectDay, year, timespan, userFilters } =
     useSocialSectionContext();
@@ -477,6 +478,9 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
     };
   }, [yearTimespanMap, year, selectYear, translate]);
 
+  // Wheel → horizontal scroll is shared via the injected hook.
+  useHorizontalScroll(timelineRef);
+
   useEffect(() => {
     const lastKey = Array.from(dayRangesMap.keys()).pop();
     if (lastKey) {
@@ -489,26 +493,6 @@ export const useReadingHistoryTimeline: UseReadingHistoryTimeline = () => {
         });
       }
     }
-    const el = timelineRef.current;
-
-    if (!el) return;
-
-    const handleWheel: (event: WheelEvent) => void = (e) => {
-      if (e.deltaY === 0) return;
-
-      const isScrollable = el.scrollWidth > el.clientWidth;
-
-      if (isScrollable) {
-        e.preventDefault();
-        el.scrollLeft += e.deltaY;
-      }
-    };
-
-    el.addEventListener("wheel", handleWheel, { passive: false });
-
-    return () => {
-      el.removeEventListener("wheel", handleWheel);
-    };
   }, []);
 
   return { itemsData, timelineRef, footer };

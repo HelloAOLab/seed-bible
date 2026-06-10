@@ -95,6 +95,7 @@ import { effect, signal } from "@preact/signals";
 import { RadingInstanceProvider } from "bibleVizUtils.infrastructure.adapters.userPresence.ReadingInstanceProvider";
 import { ReadingHistoryTimeline } from "bibleVizUtils.infrastructure.presentation.components.ui.ReadingHistoryTimeline";
 import { getReadingHistoryTimelineStyles } from "bibleVizUtils.infrastructure.presentation.styles.adapter";
+import { useHorizontalScroll } from "bibleVizUtils.infrastructure.presentation.hooks.useHorizontalScroll";
 
 export let userColorController: UserColorController | undefined = undefined;
 export let sessionController: SessionController | undefined = undefined;
@@ -564,6 +565,7 @@ export const bootstrapExtension = () => {
         sessionProvider,
         bookNames,
         connectedUsers,
+        useHorizontalScroll,
       };
 
       return api;
