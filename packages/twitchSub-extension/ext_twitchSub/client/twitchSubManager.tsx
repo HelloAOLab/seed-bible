@@ -352,7 +352,7 @@ async function getConfig({
   };
   window.localStorage.setItem("twitchSubConfig", JSON.stringify(config));
 
-  if (posthog) {
+  if (typeof posthog !== "undefined") {
     posthog.capture("twitch_sub_client_joined", {});
   }
 

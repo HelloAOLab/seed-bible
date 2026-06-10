@@ -43,7 +43,7 @@
     "resolvePackageJsonImports": true,
     "preserveConstEnums": true,
     "typeRoots": ["./node_modules/@types", "./typings", "./node_modules"],
-    "types": ["vitest/globals"]
+    "types": ["vitest/globals", "vitest/jsdom"]
   },
   "include": ["packages", "typings", "script", "test", "standalone"],
   "exclude": ["obsolete"]
