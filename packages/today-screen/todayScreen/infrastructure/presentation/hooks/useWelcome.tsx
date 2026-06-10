@@ -12,15 +12,6 @@ type UseWelcome = () => {
   greeting: string;
   book: ReadonlySignal<string>;
   welcomeVerse: Signal<string>;
-  SeedBibleIcon: (
-    params?:
-      | {
-          //eslint-disable-next-line
-          [key: string]: any;
-          size?: number | undefined;
-        }
-      | undefined
-  ) => preact.JSX.Element;
   openBookSelector: () => void;
   selectorText: string;
   MaterialIcon: (props: {
@@ -32,6 +23,7 @@ type UseWelcome = () => {
   handleStartButtonClick: () => void;
   footerTitle: string;
   footerContent: string;
+  seedBibleIconStyle: React.CSSProperties;
 };
 
 const STRAT_BUTTON_ICON = "arrow_right_alt";
@@ -45,10 +37,10 @@ export const useWelcome: UseWelcome = () => {
     lastTranslationId,
     getDefaultTranslation,
     getHighlightedWelcomeVerse,
-    SeedBibleIcon,
     openBookSelector,
     MaterialIcon,
     addTab,
+    theme,
   } = useTodayContext();
 
   const greeting = useMemo(() => {
@@ -103,11 +95,18 @@ export const useWelcome: UseWelcome = () => {
     addTab("GEN", 1, translationId);
   }, [addTab, getDefaultTranslation, lastTranslationId.value]);
 
+  const seedBibleIconStyle = useMemo<React.CSSProperties>(() => {
+    return {
+      width: "20px",
+      height: "20px",
+      backgroundColor: theme.variables.readerFontColor,
+    };
+  }, [theme]);
+
   return {
     greeting,
     book,
     welcomeVerse,
-    SeedBibleIcon,
     openBookSelector,
     selectorText,
     MaterialIcon,
@@ -116,5 +115,6 @@ export const useWelcome: UseWelcome = () => {
     handleStartButtonClick,
     footerTitle,
     footerContent,
+    seedBibleIconStyle,
   };
 };

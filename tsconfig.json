@@ -1781,6 +1781,9 @@
       "todayScreen.infrastructure.presentation.components.Today": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/Today.tsx"
       ],
+      "todayScreen.infrastructure.presentation.components.ui.SeedBibleIcon": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/ui/SeedBibleIcon.tsx"
+      ],
       "todayScreen.infrastructure.presentation.components.ui.SpinnerIcon": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/ui/SpinnerIcon.tsx"
       ],

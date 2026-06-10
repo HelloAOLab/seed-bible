@@ -4,20 +4,16 @@ const { useMemo } = os.appHooks;
 type UseSearchSection = () => {
   title: string;
   openBookSelector: () => void;
-  SeedBibleIcon(params?: {
-    // eslint-disable-next-line
-    [key: string]: any;
-    size?: number | undefined;
-  }): preact.JSX.Element;
   selectorText: string;
   MaterialIcon: (props: {
     children: string;
     className?: string | undefined;
   }) => preact.JSX.Element;
+  seedBibleIconStyle: React.CSSProperties;
 };
 
 export const useSearchSection: UseSearchSection = () => {
-  const { translate, openBookSelector, SeedBibleIcon, MaterialIcon } =
+  const { translate, openBookSelector, MaterialIcon, theme } =
     useTodayContext();
 
   const { title, selectorText } = useMemo(() => {
@@ -27,11 +23,19 @@ export const useSearchSection: UseSearchSection = () => {
     };
   }, [translate]);
 
+  const seedBibleIconStyle = useMemo<React.CSSProperties>(() => {
+    return {
+      width: "24px",
+      height: "24px",
+      backgroundColor: theme.variables.secondaryFontColor,
+    };
+  }, [theme]);
+
   return {
     title,
     openBookSelector,
-    SeedBibleIcon,
     selectorText,
     MaterialIcon,
+    seedBibleIconStyle,
   };
 };

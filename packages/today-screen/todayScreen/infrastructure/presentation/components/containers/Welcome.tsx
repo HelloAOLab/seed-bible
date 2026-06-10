@@ -1,12 +1,12 @@
 import { useWelcome } from "../../hooks/useWelcome";
 import { SpinnerIcon } from "../ui/SpinnerIcon";
+import { SeedBibleIcon } from "../ui/SeedBibleIcon";
 
 export const Welcome = () => {
   const {
     greeting,
     book,
     welcomeVerse,
-    SeedBibleIcon,
     openBookSelector,
     selectorText,
     MaterialIcon,
@@ -15,6 +15,7 @@ export const Welcome = () => {
     handleStartButtonClick,
     footerTitle,
     footerContent,
+    seedBibleIconStyle,
   } = useWelcome();
 
   return (
@@ -31,7 +32,7 @@ export const Welcome = () => {
           type="button"
           onClick={openBookSelector}
         >
-          <SeedBibleIcon size={20} />
+          <SeedBibleIcon style={seedBibleIconStyle} />
           {selectorText}
         </button>
         <button
@@ -43,7 +44,7 @@ export const Welcome = () => {
         </button>
       </div>
       <div className={"welcome-screen-footer"}>
-        {<SpinnerIcon />}
+        {<SpinnerIcon style={{ width: "36px", height: "36px" }} />}
         <h3 className={"welcome-screen-footer-title"}>{footerTitle}</h3>
         <span className={"welcome-screen-footer-content"}>{footerContent}</span>
       </div>

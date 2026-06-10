@@ -1,9 +1,10 @@
 import { useSearchSection } from "../../hooks/useSearchSection";
 import { TitledSection } from "../ui/TitledSection";
 import { SearchBar } from "./SearchBar";
+import { SeedBibleIcon } from "../ui/SeedBibleIcon";
 
 export const SearchSection = () => {
-  const { title, selectorText, openBookSelector, SeedBibleIcon } =
+  const { title, selectorText, openBookSelector, seedBibleIconStyle } =
     useSearchSection();
 
   return (
@@ -14,7 +15,7 @@ export const SearchSection = () => {
           type="button"
           onClick={openBookSelector}
         >
-          <SeedBibleIcon size={24} />
+          <SeedBibleIcon style={seedBibleIconStyle} />
           {selectorText}
         </button>
         <SearchBar />

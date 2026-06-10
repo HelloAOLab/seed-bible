@@ -1,6 +1,6 @@
 import { computed, effect, signal } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
-import { MaterialIcon, SeedBibleIcon } from "seed-bible.components.icons";
+import { MaterialIcon } from "seed-bible.components.icons";
 import { getCustomStyles } from "todayScreen.infrastructure.presentation.styles.adapter";
 import { Today } from "../presentation/components/Today";
 import { addTranslations, useI18n } from "seed-bible.i18n.I18nManager";
@@ -236,7 +236,6 @@ export const bootstrapExtension = () => {
             <Today
               config={{
                 MaterialIcon,
-                SeedBibleIcon,
                 language,
                 username: context.login.profile.value?.name,
                 userId: context.login.userId.value ?? undefined,

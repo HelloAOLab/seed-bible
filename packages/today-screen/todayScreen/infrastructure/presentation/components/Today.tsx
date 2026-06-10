@@ -28,11 +28,6 @@ export interface TodayConfig {
     children: string;
     className?: string;
   }) => preact.JSX.Element;
-  SeedBibleIcon: (params?: {
-    // eslint-disable-next-line
-    [key: string]: any;
-    size?: number | undefined;
-  }) => preact.JSX.Element;
   language: string;
   username: string | undefined;
   userId: string | undefined;
