@@ -2772,7 +2772,7 @@ h6 {
 .sb-tabs-sidebar-collapsed {
   width: 56px;
   padding: 10px 8px 16px;
-  padding-left: 15px;
+  padding-left: 23px; /* center the collapse button in the collapsed sidebar */
 
   .sb-sidebar-top-row {
     justify-content: center;

@@ -455,12 +455,21 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // "bible" have no panel of their own, so we remember the last one the user
   // tapped and use it as the fallback. Exactly one tab is ever active.
   const localBottomTab = useSignal<"today" | "bible">("bible");
+  // True when the sidebar drawer is open showing the tabs/bookmarks view
+  // (not the settings view) with the bookmark filter active.
+  const isBookmarksViewOpen = useComputed(
+    () =>
+      sidebar.isMobileOpen.value &&
+      !sidebar.isSettingsOpen.value &&
+      bookmarks.isFilterActive.value
+  );
   const activeMobileTab = useComputed<
-    "today" | "you" | "bible" | "search" | "more"
+    "today" | "you" | "bible" | "search" | "bookmarks" | "more"
   >(() => {
     if (isMoreMenuOpen.value) return "more";
     if (sidebar.isSearchPanelOpen.value) return "search";
     if (sidebar.isSettingsOpen.value) return "you";
+    if (isBookmarksViewOpen.value) return "bookmarks";
     return localBottomTab.value;
   });
 
@@ -789,10 +798,56 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   active={activeMobileTab.value === "search"}
                   onClick={() => {
                     isMoreMenuOpen.value = false;
+                    // Dismiss the tabs/bookmarks drawer if it's open.
+                    sidebar.closeSidebar();
                     if (sidebar.isSearchPanelOpen.value) {
                       sidebar.closeSearchPanel();
                     } else {
                       sidebar.openSearchPanel();
+                    }
+                  }}
+                />
+
+                <MobileBottomTab
+                  iconNode={
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill={
+                        activeMobileTab.value === "bookmarks"
+                          ? "currentColor"
+                          : "none"
+                      }
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  }
+                  label={t("bookmarks", { defaultValue: "Bookmarks" })}
+                  active={activeMobileTab.value === "bookmarks"}
+                  onClick={() => {
+                    isMoreMenuOpen.value = false;
+                    if (isBookmarksViewOpen.value) {
+                      sidebar.closeSidebar();
+                      return;
+                    }
+                    sidebar.closeSearchPanel();
+                    sidebar.closeChatPanel();
+                    // Clear any settings view so the drawer shows the tabs
+                    // list, then (re-)open the drawer and switch on the
+                    // bookmark filter so the bookmarks section is visible.
+                    sidebar.closeSettings();
+                    sidebar.openSidebar();
+                    if (!bookmarks.isFilterActive.value) {
+                      bookmarks.toggleFilter();
                     }
                   }}
                 />
@@ -802,6 +857,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     <button
                       type="button"
                       onClick={() => {
+                        // Opening the More menu should dismiss the
+                        // tabs/bookmarks drawer if it's open.
+                        if (!isMoreMenuOpen.value) {
+                          sidebar.closeSidebar();
+                        }
                         isMoreMenuOpen.value = !isMoreMenuOpen.value;
                       }}
                       className={`sb-reader-toolbar-button sb-reader-toolbar-mobile-tab-button${
