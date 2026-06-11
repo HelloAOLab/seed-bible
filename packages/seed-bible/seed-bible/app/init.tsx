@@ -1,14 +1,22 @@
 import "./initPostHog";
 import { Main } from "../app/main";
-import { render } from "preact";
+import { hydrate, render } from "preact";
+import { readInjectedConfig } from "../app/appConfig";
 
-// os.syncConfigBotTagsToURL([
-//   "translation",
-//   "book",
-//   "chapter",
-//   "settingsView",
-//   "sidebar",
-// ]);
+// Config (base path + asset host) injected by the host server. Reading it on
+// the client ensures we mount with the same config the server rendered with,
+// avoiding hydration mismatches.
+const config = readInjectedConfig();
+
+const container = document.getElementById("app") ?? document.body;
 
 console.log("Starting APP");
-render(<Main />, document.body);
+
+// When the host server pre-rendered the app into #app, hydrate to reuse the
+// server markup. In dev (or any non-SSR serve) the container is empty, so do
+// a fresh client render instead.
+if (container.firstChild) {
+  hydrate(<Main config={config} />, container);
+} else {
+  render(<Main config={config} />, container);
+}

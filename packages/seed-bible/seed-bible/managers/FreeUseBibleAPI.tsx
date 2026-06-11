@@ -1,3 +1,5 @@
+import { currentSearchParams } from "../app/ssrEnv";
+
 export interface AvailableTranslations {
   /**
    * The list of translations.
@@ -1004,8 +1006,7 @@ interface DatasetReference {
   score?: number;
 }
 
-const url = new URL(location.href);
-export const DEFAULT_API_ENDPOINT = url.searchParams.has("useFreeBibleAPI")
+export const DEFAULT_API_ENDPOINT = currentSearchParams().has("useFreeBibleAPI")
   ? "https://bible.helloao.org/"
   : "https://vmfnri.helloao.org/";
 

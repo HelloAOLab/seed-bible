@@ -1,4 +1,5 @@
 import { computed, effect, signal, type Signal } from "@preact/signals";
+import { currentHref, currentSearchParams } from "../app/ssrEnv";
 import type { BibleDataManager } from "./BibleDataManager";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import {
@@ -68,12 +69,12 @@ export interface ReaderTab {
 }
 
 function getInitialFirstTabBookId(): string {
-  const url = new URL(window.location.href);
+  const url = new URL(currentHref());
   return url.searchParams.get("book") ?? DEFAULT_BOOK_ID;
 }
 
 function getInitialTranslationId(): string {
-  const url = new URL(window.location.href);
+  const url = new URL(currentHref());
   return (
     url.searchParams.get("translationId") ??
     url.searchParams.get("translation") ??
@@ -82,7 +83,7 @@ function getInitialTranslationId(): string {
 }
 
 function getInitialFirstTabChapter(): number {
-  const url = new URL(window.location.href);
+  const url = new URL(currentHref());
   const value = Number(url.searchParams.get("chapter"));
   return Number.isFinite(value) && value > 0
     ? Math.floor(value)
@@ -90,7 +91,7 @@ function getInitialFirstTabChapter(): number {
 }
 
 function getInitialHighlightedVerses(): number[] {
-  const query = new URLSearchParams(window.location.search);
+  const query = currentSearchParams();
   const value = query.get("verse");
   return typeof value === "string"
     ? parseVerseSelection(value)

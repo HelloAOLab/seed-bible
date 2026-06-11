@@ -1,4 +1,5 @@
 import { signal, effect, type Signal } from "@preact/signals";
+import { safeLocalStorage } from "../app/ssrEnv";
 import {
   FreeUseBibleAPI,
   type Translation,
@@ -172,7 +173,7 @@ export function createBibleDataManager(
 
   effect(() => {
     if (availableTranslations.value.length > 0) {
-      window.localStorage.setItem(
+      safeLocalStorage.setItem(
         "availableTranslations",
         JSON.stringify(availableTranslations.value)
       );
@@ -180,7 +181,7 @@ export function createBibleDataManager(
   });
 
   effect(() => {
-    const stored = window.localStorage.getItem("availableTranslations");
+    const stored = safeLocalStorage.getItem("availableTranslations");
     if (stored) {
       const parsed: Translation[] = JSON.parse(stored);
       availableTranslations.value = parsed;
@@ -189,7 +190,7 @@ export function createBibleDataManager(
 
   effect(() => {
     if (translationEndpoints.value.size > 0) {
-      window.localStorage.setItem(
+      safeLocalStorage.setItem(
         "endpoints",
         JSON.stringify(Array.from(translationEndpoints.value.entries()))
       );
@@ -197,7 +198,7 @@ export function createBibleDataManager(
   });
 
   effect(() => {
-    const stored = window.localStorage.getItem("endpoints");
+    const stored = safeLocalStorage.getItem("endpoints");
     if (stored) {
       const parsed: [string, string][] = JSON.parse(stored);
       translationEndpoints.value = new Map(parsed);

@@ -6,13 +6,17 @@ import {
 } from "react-i18next";
 import { useMemo } from "preact/hooks";
 import en from "./en.json";
+import { currentSearchParams, navigatorLanguages } from "../app/ssrEnv";
 
 const languages = import.meta.glob("./*.json", { eager: true });
 
-const url = new URL(location.href);
-
+// Computed at module load. During SSR `location`/`navigator` are absent, so
+// this falls back to "en"; the client re-derives the real language from the
+// URL/navigator at hydration.
 export const DEFAULT_LANGUAGE: string =
-  url.searchParams.get("lang") ?? getLanguage(navigator.languages[0]) ?? "en";
+  currentSearchParams().get("lang") ??
+  getLanguage(navigatorLanguages()[0]) ??
+  "en";
 
 export { i18n };
 

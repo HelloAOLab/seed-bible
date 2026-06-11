@@ -1,4 +1,5 @@
 import { effect, signal, type Signal } from "@preact/signals";
+import { currentSearchParams } from "../app/ssrEnv";
 import type { LoginManager } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
@@ -582,9 +583,10 @@ export function createSettings(
   login: LoginManager
 ): SettingsManager {
   const configBot = {
-    tags: Object.fromEntries(
-      new URL(window.location.href).searchParams
-    ) as Record<string, string | boolean | number>,
+    tags: Object.fromEntries(currentSearchParams()) as Record<
+      string,
+      string | boolean | number
+    >,
   };
 
   // Read each setting with the precedence: user profile > local configBot tag

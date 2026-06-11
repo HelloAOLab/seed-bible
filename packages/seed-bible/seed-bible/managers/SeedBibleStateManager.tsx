@@ -67,6 +67,7 @@ import {
   type NavigationManager,
 } from "../managers/NavigationManager";
 import { CasualOSManager } from "./OsManager";
+import type { AppConfig } from "../app/appConfig";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
@@ -180,9 +181,21 @@ export interface SeedBibleState {
  * signals/actions that power the UI. The resulting state is also passed to
  * extension context setup.
  */
-export function createSeedBibleState(): SeedBibleState {
+export interface CreateSeedBibleStateOptions {
+  /** Deployment config (base path + asset host). */
+  config?: AppConfig;
+  /** Full initial URL — supplied during SSR where `window` is unavailable. */
+  initialHref?: string;
+}
+
+export function createSeedBibleState(
+  options: CreateSeedBibleStateOptions = {}
+): SeedBibleState {
   const api = new FreeUseBibleAPI();
-  const navigation = createNavigationManager();
+  const navigation = createNavigationManager({
+    initialHref: options.initialHref,
+    basePath: options.config?.basePath,
+  });
   const data = createBibleDataManager(api);
   const os = CasualOSManager();
   const login = createLoginManager({ os });
@@ -614,6 +627,10 @@ export function createSeedBibleState(): SeedBibleState {
   });
 
   const setupInitialSession = async () => {
+    // Joining a session opens a live WebSocket — never do this during SSR.
+    if (typeof window === "undefined") {
+      return;
+    }
     const initialSessionId =
       navigation.currentUrl.value.searchParams.get("sessionId");
     if (!initialSessionId) {

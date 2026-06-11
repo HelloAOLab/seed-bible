@@ -1,68 +1,131 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
-name: Continous Deployment
+# Continuous Deployment
+#
+# Builds the client + SSR bundles for the pushed branch and publishes them to
+# S3, then atomically flips the branch's live pointer. The long-running host
+# server (deployed separately from `main`) picks up the new build on its next
+# pointer read. Assets are content-hashed and synced to one shared prefix, so
+# unchanged chunks are never re-uploaded and identical chunks are reused across
+# every branch.
+name: Continuous Deployment
 
 on:
   push:
 
-jobs:
-  if: false
-  build:
-    runs-on: ubuntu-latest
+# Cancel an in-flight deploy for the same branch when a newer commit lands.
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: true
 
+permissions:
+  contents: read
+  id-token: write # for AWS OIDC
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         node-version: [24.x]
-
+    env:
+      ASSET_BASE_URL: ${{ vars.ASSET_BASE_URL }} # e.g. https://assets.seedbible.com/
+      S3_BUCKET: ${{ vars.DEPLOY_BUCKET }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
     steps:
       - uses: actions/checkout@v4
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+
       - name: Install
         run: |
           corepack enable
           pnpm install
+
+      # ─── Quality gates (same as CI) ─────────────────────────────────────────
+      - name: Lint
+        run: pnpm lint
       - name: Check TypeScript
-        run: |
-          pnpm check:ts
+        run: pnpm check:ts
       - name: Test
+        run: pnpm test
+
+      # ─── Build client + SSR bundles ─────────────────────────────────────────
+      # ASSET_BASE_URL makes the client reference its hashed chunks at the CDN
+      # host, decoupled from the branch path.
+      - name: Build
+        run: pnpm build
+
+      # ─── Resolve identifiers ────────────────────────────────────────────────
+      - name: Compute branch + build id
+        id: ids
         run: |
-          pnpm test
-      - name: Package
-        run: |
-          pnpm package
-      - name: Check AUXes
-        run: |
-          pnpm check:aux
-      - name: Upload AUXes
-        uses: actions/upload-artifact@v4
+          RAW="${{ github.head_ref || github.ref_name }}"
+          BRANCH=$(echo "$RAW" | sed 's/\//_/g')
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "build_id=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          path: "dist/*.aux"
-          if-no-files-found: error
-      - name: Publish SeedBible Pattern
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ─── Sync shared, content-hashed assets ─────────────────────────────────
+      # --size-only + content-hash filenames → unchanged/identical chunks are
+      # skipped (idempotent, cross-branch dedup). Long immutable cache.
+      - name: Sync hashed assets
         run: |
-          if [[ "$BRANCH_NAME" == "develop" ]]; then
-            PATTERN_NAME="SeedBibleDev";
-            pnpm pattern publish-seed-bible -p "$PATTERN_PREFIX$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --ext-record-key "$EXTENSION_RECORD_KEY" --no-save-meta --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID";
-          elif [[ "$BRANCH_NAME" =~ ^"releases/ao.bot" ]]; then
-            PATTERN_NAME=${BRANCH_NAME:9};
-            pnpm pattern publish "ao.bot" -p "$PATTERN_PREFIX$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID";
-          elif [[ "$BRANCH_NAME" =~ ^"releases/" ]]; then
-            PATTERN_NAME=${BRANCH_NAME:9};
-            pnpm pattern publish-seed-bible -p "$PATTERN_PREFIX$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --ext-record-key "$EXTENSION_RECORD_KEY" --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID";
-          else
-            PATTERN_NAME="SeedBibleDev-branch-${BRANCH_NAME}"
-            PATTERN_NAME=$(echo "$PATTERN_NAME" | sed "s/\//_/g")
-            pnpm pattern publish-seed-bible -p "$PATTERN_PREFIX$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --ext-record-key "$EXTENSION_RECORD_KEY" --no-save-meta --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID";
-          fi
+          aws s3 sync dist/client/assets "s3://$S3_BUCKET/assets" \
+            --size-only \
+            --cache-control "public, max-age=31536000, immutable"
+
+      # Non-hashed public files (favicon, etc.) — short cache, not immutable.
+      - name: Sync public files
+        run: |
+          aws s3 sync dist/client "s3://$S3_BUCKET" \
+            --exclude "assets/*" --exclude "index.html" --exclude ".vite/*" \
+            --cache-control "public, max-age=300"
+
+      # ─── Upload this build's server bundle + manifest ───────────────────────
+      - name: Upload build artifacts
         env:
-          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-          SESSION_KEY: ${{ secrets.SESSION_KEY }}
-          PATTERN_RECORD_KEY: ${{ secrets.RECORD_KEY }}
-          EXTENSION_RECORD_KEY: ${{ secrets.EXTENSION_RECORD_KEY }}
-          PATTERN_PREFIX: ${{ vars.PATTERN_PREFIX }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BRANCH: ${{ steps.ids.outputs.branch }}
+          BUILD_ID: ${{ steps.ids.outputs.build_id }}
+        run: |
+          DEST="s3://$S3_BUCKET/branches/$BRANCH/$BUILD_ID"
+          aws s3 cp dist/server/entry-ssr.js "$DEST/server.mjs" \
+            --cache-control "private, no-cache"
+          aws s3 cp dist/client/.vite/manifest.json "$DEST/client-manifest.json" \
+            --cache-control "private, no-cache"
+
+      # ─── Atomically flip the live pointer (LAST write) ──────────────────────
+      - name: Flip pointer
+        env:
+          BRANCH: ${{ steps.ids.outputs.branch }}
+          BUILD_ID: ${{ steps.ids.outputs.build_id }}
+        run: |
+          printf '{"buildId":"%s","commit":"%s","deployedAt":"%s"}' \
+            "$BUILD_ID" "${{ github.sha }}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            > current.json
+          aws s3 cp current.json "s3://$S3_BUCKET/branches/$BRANCH/current.json" \
+            --cache-control "no-cache"
+
+      # ─── Tell the host to drop its cached pointer immediately ───────────────
+      - name: Invalidate host pointer cache
+        if: ${{ vars.HOST_INVALIDATE_URL != '' }}
+        run: |
+          curl -fsS -X POST \
+            "${{ vars.HOST_INVALIDATE_URL }}?branch=${{ steps.ids.outputs.branch }}" \
+            || echo "invalidate ping failed (non-fatal)"
+
+      - name: Summary
+        env:
+          BRANCH: ${{ steps.ids.outputs.branch }}
+        run: |
+          if [ "$BRANCH" = "main" ]; then
+            echo "Deployed **main** to the site root." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Deployed branch **$BRANCH** → \`/d/branch-$BRANCH\`" >> "$GITHUB_STEP_SUMMARY"
+          fi

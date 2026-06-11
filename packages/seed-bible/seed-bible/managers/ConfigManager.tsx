@@ -1,5 +1,6 @@
 import { effect, signal } from "@preact/signals";
 import i18n from "i18next";
+import { currentHref } from "../app/ssrEnv";
 import type { LoginManager, UserProfile } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
@@ -86,7 +87,7 @@ export type ConfigManager = ReturnType<typeof createConfig>;
 
 export function createConfig(login: LoginManager) {
   const readConfig = (): AppConfig => {
-    const url = new URL(window.location.href);
+    const url = new URL(currentHref());
     const settingsPreset = parseSettingsPreset(
       url.searchParams.get("settingsPreset")
     );
@@ -115,7 +116,7 @@ export function createConfig(login: LoginManager) {
   const syncConfigFromBot = (
     profile: UserProfile | null = login.profile.value
   ) => {
-    const url = new URL(window.location.href);
+    const url = new URL(currentHref());
     config.value = readConfig();
 
     const profileLanguage = getProfileConfigValue(profile, "lang");

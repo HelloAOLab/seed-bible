@@ -3,6 +3,7 @@ import type {
   TranslationBook,
   TranslationBooks,
 } from "../managers/FreeUseBibleAPI";
+import { safeLocalStorage } from "../app/ssrEnv";
 import type { BibleDataManager } from "../managers/BibleDataManager";
 import {
   type BibleReadingState,
@@ -381,6 +382,7 @@ export function createBibleSelectorState(
   });
 
   effect(() => {
+    if (typeof window === "undefined") return;
     const onResize = () => {
       viewportWidth.value = window.innerWidth;
     };
@@ -392,6 +394,7 @@ export function createBibleSelectorState(
   });
 
   effect(() => {
+    if (typeof window === "undefined") return;
     const onPopState = () => {
       const shouldBeOpen = isSelectorOpenInHistory();
       isHandlingPopState = true;
@@ -628,7 +631,11 @@ export function createBibleSelectorState(
   // ─── TranslationModal State ───────────────────────────────────────────────────
 
   const showAllLanguages = signal<"complete" | "all" | "popular">(
-    window.localStorage.showAllLanguages || "complete"
+    (safeLocalStorage.getItem("showAllLanguages") as
+      | "complete"
+      | "all"
+      | "popular"
+      | null) || "complete"
   );
 
   const showTranslationSettings = signal<boolean>(false);
@@ -965,7 +972,7 @@ export function createBibleSelectorState(
   );
 
   effect(() => {
-    window.localStorage.setItem("showAllLanguages", showAllLanguages.value);
+    safeLocalStorage.setItem("showAllLanguages", showAllLanguages.value);
   });
 
   return {

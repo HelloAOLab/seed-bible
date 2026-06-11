@@ -15,8 +15,47 @@ export interface SimpleSignal<T> {
   set value(newValue: T);
 }
 
-export function createNavigationManager() {
-  const currentUrl = signal<URL>(new URL(window.location.href));
+export interface NavigationManagerOptions {
+  /**
+   * Full initial URL. Supplied during SSR (where `window` is unavailable) so
+   * the manager can seed `currentUrl` from the request; on the client it
+   * defaults to `window.location.href`.
+   */
+  initialHref?: string;
+  /** Deployment path prefix (e.g. "/d/branch-develop"); empty for root. */
+  basePath?: string;
+}
+
+export function createNavigationManager(
+  options: NavigationManagerOptions = {}
+) {
+  // On the server there is no `window` — fall back to the supplied initial
+  // href (or a neutral placeholder) so the manager can be constructed during
+  // SSR. The placeholder origin is irrelevant: initial state is derived from
+  // the URL's path/query, which we control.
+  const initialHref =
+    options.initialHref ??
+    (typeof window !== "undefined"
+      ? window.location.href
+      : "http://localhost/");
+  const currentUrl = signal<URL>(new URL(initialHref));
+
+  const basePath = options.basePath ?? "";
+
+  // Keep root-absolute navigations inside the deployment's path prefix.
+  // Relative navigations already resolve against the current location (which
+  // includes the prefix), so they are left untouched.
+  const applyBasePath = (url: string | URL): string | URL => {
+    if (!basePath || typeof url !== "string") return url;
+    if (
+      !url.startsWith("/") ||
+      url.startsWith(basePath + "/") ||
+      url === basePath
+    ) {
+      return url;
+    }
+    return `${basePath}${url}`;
+  };
 
   const syncCurrentUrl = () => {
     if (typeof window === "undefined") {
@@ -83,7 +122,11 @@ export function createNavigationManager() {
       return;
     }
 
-    window.history.pushState(window.history.state, "", toAbsoluteUrl(url));
+    window.history.pushState(
+      window.history.state,
+      "",
+      toAbsoluteUrl(applyBasePath(url))
+    );
   };
 
   const replace = (url: string | URL) => {
@@ -91,7 +134,11 @@ export function createNavigationManager() {
       return;
     }
 
-    window.history.replaceState(window.history.state, "", toAbsoluteUrl(url));
+    window.history.replaceState(
+      window.history.state,
+      "",
+      toAbsoluteUrl(applyBasePath(url))
+    );
   };
 
   const go = (destination: NavigationDestination) => {

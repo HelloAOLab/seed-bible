@@ -12,6 +12,11 @@ import type { ReadonlySignal } from "@preact/signals";
 import { closeContextMenus } from "../components/ContextMenu";
 import { ModalHost } from "../components/ModalHost";
 import { useMemo } from "preact/hooks";
+import {
+  AppConfigProvider,
+  DEFAULT_APP_CONFIG,
+  type AppConfig,
+} from "./appConfig";
 import "./main.css";
 
 /**
@@ -51,8 +56,19 @@ export function ExternalResourceDependencies({
   );
 }
 
-export function Main() {
-  const state = useMemo(() => createSeedBibleState(), []);
+export function Main({
+  config: appConfig = DEFAULT_APP_CONFIG,
+  initialHref,
+}: {
+  /** Deployment config (base path + asset host) injected by the host server. */
+  config?: AppConfig;
+  /** Full initial URL — passed during SSR where `window` is absent. */
+  initialHref?: string;
+} = {}) {
+  const state = useMemo(
+    () => createSeedBibleState({ config: appConfig, initialHref }),
+    []
+  );
 
   useEffect(() => {
     state.extensions.loadDefaultExtensions();
@@ -62,9 +78,11 @@ export function Main() {
   const fontSizeClass = `sb-font-size-${config.config.value.fontSize.toLowerCase()}`;
 
   return (
-    <I18nProvider>
-      <MainContent state={state} fontSizeClass={fontSizeClass} />
-    </I18nProvider>
+    <AppConfigProvider value={appConfig}>
+      <I18nProvider>
+        <MainContent state={state} fontSizeClass={fontSizeClass} />
+      </I18nProvider>
+    </AppConfigProvider>
   );
 }
 

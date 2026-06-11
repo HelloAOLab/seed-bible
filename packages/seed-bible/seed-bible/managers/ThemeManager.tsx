@@ -5,6 +5,7 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
+import { currentHref } from "../app/ssrEnv";
 import type { LoginManager } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
@@ -1101,7 +1102,7 @@ export interface ThemeManager {
 export function createTheme(login: LoginManager): ThemeManager {
   const themes = signal<BibleTheme[]>([LIGHT_THEME, DARK_THEME]);
 
-  const url = new URL(window.location.href);
+  const url = new URL(currentHref());
 
   const readThemeId = () =>
     parseThemeId(
