@@ -497,7 +497,6 @@ export function TabsHeader(props: TabsHeaderProps) {
                 event.preventDefault();
                 settings.setKeepScreenAwake(!isAwake);
               }}
-              style={{ width: "230px" }}
             >
               <span>
                 {t("keep-screen-awake", { defaultValue: "Keep screen awake" })}

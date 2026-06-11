@@ -1251,9 +1251,9 @@ h6 {
 }
 
 .sb-mobile-settings-sheet-size-button-selected {
-  border-color: var(--sb-secondary-color);
+  border-color: var(--sb-primary-color);
   background: var(--sb-primary-color);
-  color: #fff;
+  color: var(--sb-primary-font-color);
 }
 
 .sb-mobile-settings-sheet-scripture-row {
@@ -4857,7 +4857,7 @@ h6 {
 
   .sb-tab-mobile-add-fab .material-symbols-outlined {
     font-size: 28px;
-    color: #ffffff;
+    color: var(--sb-primary-font-color);
   }
 }
 
@@ -5038,7 +5038,9 @@ h6 {
 
 .sb-context-menu {
   position: absolute;
-  min-width: 160px;
+  width: max-content;
+  min-width: 200px;
+  max-width: 280px;
   padding: 6px;
   border: 1px solid var(--sb-secondary-color);
   border-radius: 8px;
@@ -5046,7 +5048,6 @@ h6 {
   color: var(--sb-menu-font-color);
   box-shadow: 0 10px 30px #00000014;
   z-index: 40;
-  width: 200px;
 }
 
 .sb-context-menu-item {
