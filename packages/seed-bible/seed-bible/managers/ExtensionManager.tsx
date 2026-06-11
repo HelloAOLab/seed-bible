@@ -1,7 +1,9 @@
-import { computed, signal } from "@preact/signals";
+import { computed, signal, type ReadonlySignal } from "@preact/signals";
 import { orderBy, union } from "es-toolkit";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import { addTranslations } from "../i18n/I18nManager";
+import { sha256 } from "hash.js";
+import stringify from "@casual-simulation/fast-json-stable-stringify";
 
 export type CleanupFunction = () => void;
 export type ExtensionDependencies = Record<string, object>;
@@ -310,8 +312,17 @@ export function setupExtensionContext(context: SeedBibleState) {
 
 export type ExtensionManager = ReturnType<typeof createExtensionManager>;
 
-export function createExtensionManager() {
-  const defaultExtensions = computed<ExtensionSet | null>(() => null);
+export interface ExtensionManagerOptions {
+  /**
+   * The source of the default extension set that loadDefaultExtensions() loads.
+   * Defaults to no extensions.
+   */
+  defaultExtensions?: ReadonlySignal<ExtensionSet | null>;
+}
+
+export function createExtensionManager(options: ExtensionManagerOptions = {}) {
+  const defaultExtensions =
+    options.defaultExtensions ?? computed<ExtensionSet | null>(() => null);
   const knownExtensionsById = new Map<string, Extension>();
   const knownExtensionsSetsByExtensionId = new Map<string, ExtensionSet>();
   const installedExtensionIds = new Set<string>();
@@ -559,7 +570,6 @@ export function createExtensionManager() {
     unregisterExtension(id);
     installedExtensionIds.delete(id);
     refreshExtensionsSignal();
-    // shout("onExtensionUninstalled", id);
   };
 
   /**
@@ -587,8 +597,8 @@ export function createExtensionManager() {
       ["asc"]
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const hash = (crypto as any).sha256(orderedExtensions);
+    const stableJson = stringify(orderedExtensions);
+    const hash = sha256().update(stableJson).digest("hex");
 
     const setData: ExtensionSet = {
       id: `downloaded-extension-set-${hash.slice(0, 8)}`,

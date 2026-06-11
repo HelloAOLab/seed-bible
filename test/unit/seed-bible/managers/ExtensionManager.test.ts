@@ -1,10 +1,8 @@
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 
-vi.mock("@packages/seed-bible/seed-bible/managers/i18n/I18nManager", () => ({
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", () => ({
   addTranslations: vi.fn(),
 }));
-
-import { addTranslations } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 
 import {
   createExtensionManager,
@@ -12,6 +10,7 @@ import {
   registerExtension,
   type ExtensionSet,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
+import { signal } from "@preact/signals";
 import type { Mock } from "vitest";
 
 describe("ExtensionInitalizer", () => {
@@ -332,43 +331,38 @@ describe("ExtensionInitalizer", () => {
   });
 });
 
-describe.skip("createExtensionManager", () => {
-  let installPackage: Mock;
-  let shoutSpy: Mock;
-  let sha256Spy: Mock;
+describe("createExtensionManager", () => {
   let addTranslationsMock: Mock;
+  let loadedModules: string[];
 
-  beforeEach(() => {
-    installPackage = vi.fn(async () => ({ success: true }));
-    shoutSpy = vi.fn();
-    sha256Spy = vi.fn(() => "deadbeefcafebabefeedface1234567890abcdef");
+  /**
+   * Mocks the ES module that the given extension URL resolves to. The URL is
+   * recorded in `loadedModules` when the module is evaluated, which happens
+   * when the ExtensionManager dynamically imports the extension.
+   */
+  function mockExtensionModule(
+    url: string,
+    moduleFactory?: () => Promise<object> | object
+  ) {
+    vi.doMock(url, async () => {
+      loadedModules.push(url);
+      return moduleFactory ? await moduleFactory() : {};
+    });
+  }
+
+  beforeEach(async () => {
+    loadedModules = [];
+    const { addTranslations } = await vi.importMock<
+      typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
+    >("@packages/seed-bible/seed-bible/i18n/I18nManager");
     addTranslationsMock = addTranslations as Mock;
     addTranslationsMock.mockReset();
-
-    (globalThis as any).os = {
-      ...(globalThis as any).os,
-      installPackage,
-    };
-    (globalThis as any).shout = shoutSpy;
-    (globalThis as any).thisBot = {
-      tags: {
-        availableExtensions: null,
-      },
-    };
-    if ((globalThis as any).crypto) {
-      Object.defineProperty((globalThis as any).crypto, "sha256", {
-        value: sha256Spy,
-        configurable: true,
-      });
-    } else {
-      (globalThis as any).crypto = {
-        sha256: sha256Spy,
-      };
-    }
   });
 
   it("loadExtensionSet() installs dependencies before dependents", async () => {
     const manager = createExtensionManager();
+    mockExtensionModule("pkg://dependency");
+    mockExtensionModule("pkg://dependent");
     const set: ExtensionSet = {
       id: "set.dependencies",
       recordName: "record",
@@ -403,12 +397,13 @@ describe.skip("createExtensionManager", () => {
 
     await manager.loadExtensionSet(set);
 
-    const installedIds = installPackage.mock.calls.map((call) => call[1]);
-    expect(installedIds).toEqual(["pkg://dependency", "pkg://dependent"]);
+    expect(loadedModules).toEqual(["pkg://dependency", "pkg://dependent"]);
   });
 
   it("loadExtension() installs an unregistered dependency from loaded extension sets", async () => {
     const manager = createExtensionManager();
+    mockExtensionModule("pkg://catalog-dependency");
+    mockExtensionModule("pkg://catalog-dependent");
 
     await manager.loadExtensionSet({
       id: "set.catalog",
@@ -429,7 +424,7 @@ describe.skip("createExtensionManager", () => {
       ],
     });
 
-    installPackage.mockClear();
+    loadedModules.length = 0;
 
     const loaded = await manager.loadExtension({
       url: "pkg://catalog-dependent",
@@ -446,12 +441,13 @@ describe.skip("createExtensionManager", () => {
     });
 
     expect(loaded).toBe(true);
-    const installedIds = installPackage.mock.calls.map((call) => call[1]);
-    expect(installedIds).toEqual(["pkg://catalog-dependent"]);
+
+    expect(loadedModules).toEqual(["pkg://catalog-dependent"]);
   });
 
   it("loadExtension() returns false when dependency is missing from registry and loaded sets", async () => {
     const manager = createExtensionManager();
+    mockExtensionModule("pkg://missing-dependent");
 
     const loaded = await manager.loadExtension({
       url: "pkg://missing-dependent",
@@ -468,11 +464,13 @@ describe.skip("createExtensionManager", () => {
     });
 
     expect(loaded).toBe(false);
-    expect(installPackage).not.toHaveBeenCalled();
+
+    expect(loadedModules).toEqual([]);
   });
 
   it("loadExtension() does not install an already registered dependency", async () => {
     const manager = createExtensionManager();
+    mockExtensionModule("pkg://registered-dependent");
     const unregisterDependency = registerExtension({
       id: "ext.registered-dependency",
       init: () => ({}),
@@ -494,8 +492,7 @@ describe.skip("createExtensionManager", () => {
       });
 
       expect(loaded).toBe(true);
-      const installedIds = installPackage.mock.calls.map((call) => call[1]);
-      expect(installedIds).toEqual(["pkg://registered-dependent"]);
+      expect(loadedModules).toEqual(["pkg://registered-dependent"]);
     } finally {
       unregisterDependency();
     }
@@ -503,6 +500,7 @@ describe.skip("createExtensionManager", () => {
 
   it("loadExtensionSet() avoids reinstalling extensions that are already installed", async () => {
     const manager = createExtensionManager();
+    mockExtensionModule("pkg://single");
     const set: ExtensionSet = {
       id: "set.reinstall",
       recordName: "record",
@@ -525,7 +523,7 @@ describe.skip("createExtensionManager", () => {
     await manager.loadExtensionSet(set);
     await manager.loadExtensionSet(set);
 
-    expect(installPackage).toHaveBeenCalledTimes(1);
+    expect(loadedModules).toEqual(["pkg://single"]);
   });
 
   it("loadExtensionSet() adds translations for extensions in the set", async () => {
@@ -576,11 +574,7 @@ describe.skip("createExtensionManager", () => {
   });
 
   it("loadDefaultExtensions() auto-installs extensions when the matching query param is true", async () => {
-    window.location.href =
-      "https://example.com/?autoinstall-ext.autoinstall=true";
-
-    const manager = createExtensionManager();
-    (globalThis as any).thisBot.tags.availableExtensions = {
+    const defaultExtensions = signal<ExtensionSet | null>({
       id: "set.autoinstall",
       recordName: "record",
       extensions: [
@@ -597,16 +591,24 @@ describe.skip("createExtensionManager", () => {
           },
         },
       ],
-    };
+    });
 
-    await manager.loadDefaultExtensions();
+    const manager = createExtensionManager({ defaultExtensions });
+    mockExtensionModule("pkg://autoinstall");
 
-    expect(installPackage).toHaveBeenCalledTimes(1);
-    expect(installPackage).toHaveBeenCalledWith("record", "pkg://autoinstall");
+    window.history.replaceState(null, "", "/?autoinstall-ext.autoinstall=true");
+    try {
+      await manager.loadDefaultExtensions();
+    } finally {
+      window.history.replaceState(null, "", "/");
+    }
+
+    expect(loadedModules).toEqual(["pkg://autoinstall"]);
   });
 
   it("getExtensions() lists known extensions from loaded sets even when not installed", async () => {
     const manager = createExtensionManager();
+    mockExtensionModule("pkg://known-only");
     const set: ExtensionSet = {
       id: "set.known-only",
       recordName: "record",
@@ -639,11 +641,13 @@ describe.skip("createExtensionManager", () => {
         pendingInstallation: false,
       },
     ]);
-    expect(installPackage).not.toHaveBeenCalled();
+
+    expect(loadedModules).toEqual([]);
   });
 
   it("getExtensions() marks direct extensions as known without an owning set", async () => {
     const manager = createExtensionManager();
+    mockExtensionModule("pkg://direct");
     const extension = {
       // recordName: "record",
       url: "pkg://direct",
@@ -675,14 +679,16 @@ describe.skip("createExtensionManager", () => {
 
   it("getExtensions() reports pending installation state", async () => {
     const manager = createExtensionManager();
-    let resolveInstall: ((result: { success: boolean }) => void) | null = null;
 
-    installPackage.mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          resolveInstall = resolve as (result: { success: boolean }) => void;
-        })
-    );
+    let resolveInstall: () => void = () => undefined;
+    const installGate = new Promise<void>((resolve) => {
+      resolveInstall = resolve;
+    });
+
+    mockExtensionModule("pkg://slow", async () => {
+      await installGate;
+      return {};
+    });
 
     const extension = {
       // recordName: "record",
@@ -712,8 +718,7 @@ describe.skip("createExtensionManager", () => {
       },
     ]);
 
-    expect(resolveInstall).not.toBeNull();
-    resolveInstall!({ success: true });
+    resolveInstall();
 
     await installationPromise;
 
@@ -799,6 +804,7 @@ describe.skip("createExtensionManager", () => {
 
   it("unloadExtension() marks the extension as not installed", async () => {
     const manager = createExtensionManager();
+    mockExtensionModule("pkg://unload-me");
     const extension = {
       url: "pkg://unload-me",
       meta: {
@@ -823,6 +829,7 @@ describe.skip("createExtensionManager", () => {
 
   it("unloadExtension() unregisters the extension", async () => {
     const manager = createExtensionManager();
+    mockExtensionModule("pkg://unload-reg");
     const extension = {
       url: "pkg://unload-reg",
       meta: {
@@ -850,33 +857,9 @@ describe.skip("createExtensionManager", () => {
     ).toBe(false);
   });
 
-  it("unloadExtension() shouts onExtensionUninstalled", async () => {
-    const manager = createExtensionManager();
-    const extension = {
-      url: "pkg://unload-shout",
-      meta: {
-        id: "ext.unload-shout",
-        translations: {
-          en: {
-            title: "Unload Shout",
-            description: "Unload Shout extension",
-          },
-        },
-      },
-    };
-
-    await manager.loadExtension(extension);
-
-    manager.unloadExtension("ext.unload-shout");
-
-    expect(shoutSpy).toHaveBeenCalledWith(
-      "onExtensionUninstalled",
-      "ext.unload-shout"
-    );
-  });
-
   it("unloadExtension() keeps the extension in the known list", async () => {
     const manager = createExtensionManager();
+    mockExtensionModule("pkg://unload-known");
     const extension = {
       // recordName: "record",
       url: "pkg://unload-known",
@@ -914,7 +897,6 @@ describe.skip("createExtensionManager", () => {
       expect(warnSpy).toHaveBeenCalledWith(
         "No extensions available to download."
       );
-      expect(sha256Spy).not.toHaveBeenCalled();
     } finally {
       warnSpy.mockRestore();
     }
@@ -965,11 +947,14 @@ describe.skip("createExtensionManager", () => {
       const result = manager.getAllExtensionsAsSet();
 
       expect(result).toEqual({
-        id: "downloaded-extension-set-deadbeef",
+        id: expect.stringMatching(/^downloaded-extension-set-[0-9a-f]{8}$/),
         recordName: "",
         extensions: [extensionA, extensionB],
       });
-      expect(sha256Spy).toHaveBeenCalledWith([extensionA, extensionB]);
+
+      // The id is derived from a hash of the contents, so it is stable
+      // across calls.
+      expect(manager.getAllExtensionsAsSet()?.id).toBe(result?.id);
     } finally {
       unregisterRegisteredOnly();
     }
