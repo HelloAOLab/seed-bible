@@ -47,11 +47,39 @@ async function exists(p: string): Promise<boolean> {
   }
 }
 
+// ─── Dev backend ────────────────────────────────────────────────
+
+class DevStore implements ArtifactStore {
+  readonly dir: string;
+
+  constructor(dir: string = path.resolve("dist")) {
+    this.dir = dir;
+  }
+
+  async readPointer(): Promise<BranchPointer | null> {
+    return {
+      buildId: "dev",
+    };
+  }
+
+  async fetchArtifacts(): Promise<BranchArtifacts> {
+    const clientBase = path.join(this.dir, "client");
+    const serverBase = path.join(this.dir, "server");
+
+    const html = await readFile(path.join(clientBase, "index.html"), "utf8");
+    // Local bundles are already on disk; import them in place.
+    return {
+      serverModulePath: path.join(serverBase, "entry-ssr.js"),
+      html,
+    };
+  }
+}
+
 // ─── Local filesystem backend ────────────────────────────────────────────────
 
 class LocalStore implements ArtifactStore {
   readonly dir: string;
-  constructor(dir: string) {
+  constructor(dir: string = path.resolve("dist/.deploy-store")) {
     this.dir = dir;
   }
 
@@ -144,12 +172,18 @@ class S3Store implements ArtifactStore {
 }
 
 export function createStore(): ArtifactStore {
-  const backend = process.env.STORE_BACKEND ?? "local";
+  const backend =
+    process.env.STORE_BACKEND ??
+    (process.env.NODE_ENV === "production" ? "local" : "dev");
   if (backend === "s3") {
     const bucket = process.env.S3_BUCKET;
     if (!bucket) throw new Error("S3_BUCKET is required when STORE_BACKEND=s3");
     return new S3Store(bucket);
+  } else if (backend === "local") {
+    const dir = process.env.STORE_DIR;
+    return new LocalStore(dir);
+  } else {
+    const dir = process.env.STORE_DIR;
+    return new DevStore(dir);
   }
-  const dir = process.env.STORE_DIR ?? path.resolve("dist/.deploy-store");
-  return new LocalStore(dir);
 }
