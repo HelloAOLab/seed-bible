@@ -7723,6 +7723,12 @@ h6 {
     animation: none;
   }
 
+  /* Only cover the screen once results (or status) are showing — while the
+     panel is just the input, keep it transparent over the reader. */
+  .sb-floating-search-panel-expanded {
+    background: var(--sb-background);
+  }
+
   .sb-floating-search-panel .sb-floating-search-input-wrap {
     margin-top: auto;
   }
