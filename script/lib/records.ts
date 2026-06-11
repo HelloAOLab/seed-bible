@@ -4,6 +4,7 @@ import axios from "axios";
 import stringify from "@casual-simulation/fast-json-stable-stringify";
 import { isArrayBuffer, isArrayBufferView } from "node:util/types";
 import Conf from "conf";
+import type { RecordFileFailure } from "@casual-simulation/aux-records";
 
 const headers = {
   Origin: "https://auth.ao.bot",
@@ -90,7 +91,7 @@ export async function uploadFile(
           recordFileResult.errorMessage
       );
     } else {
-      fileUrl = recordFileResult.existingFileUrl!;
+      fileUrl = (recordFileResult as RecordFileFailure).existingFileUrl!;
     }
   } else {
     const method = recordFileResult.uploadMethod;

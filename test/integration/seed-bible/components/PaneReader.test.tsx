@@ -11,6 +11,7 @@ import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/manager
 import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import type { Mock } from "vitest";
 
 type ReaderFixture = {
   pane: Pane;

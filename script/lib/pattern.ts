@@ -6,6 +6,7 @@ import hash from "hash.js";
 import axios from "axios";
 import stringify from "@casual-simulation/fast-json-stable-stringify";
 import type { StoredAux } from "@casual-simulation/aux-common";
+import type { RecordFileFailure } from "@casual-simulation/aux-records";
 
 const recordName = "aoBot";
 const headers = {
@@ -164,7 +165,7 @@ export async function uploadPattern(
           recordFileResult.errorMessage
       );
     } else {
-      fileUrl = recordFileResult.existingFileUrl!;
+      fileUrl = (recordFileResult as RecordFileFailure).existingFileUrl!;
     }
   } else {
     const method = recordFileResult.uploadMethod;
