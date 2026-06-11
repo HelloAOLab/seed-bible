@@ -18,6 +18,7 @@ import {
   makeChapter,
   createDefaultSelectorManagerResponseMap,
   aabBooks,
+  type WebResponseMap,
 } from "../managers/testUtils/mockBibleApiData";
 import type { Mock } from "vitest";
 
@@ -46,10 +47,13 @@ function setAvailableTranslations(
 }
 
 async function createSelectorFixture(
-  options: { open?: boolean } = {}
+  options: { open?: boolean; responses?: WebResponseMap } = {}
 ): Promise<SelectorFixture> {
   const state = await createTestSeedBibleState({
-    responses: createDefaultSelectorManagerResponseMap(),
+    responses: {
+      ...createDefaultSelectorManagerResponseMap(),
+      ...options.responses,
+    },
   });
   const pane = state.panes.panes.value[0] as Pane;
   if (!pane) {
@@ -1506,20 +1510,26 @@ describe("BibleSelector sharing translations", () => {
   async function openTranslationModalWithGroup(
     translationId: string,
     languageEnglishName: string,
-    endpointInfoOverride?: {
-      endpoint: string;
-      isDefault: boolean;
-    }
+    customEndpoint?: string
   ) {
     const translation = makeTranslation(translationId, languageEnglishName);
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
 
-    if (endpointInfoOverride) {
-      vi.spyOn(bibleDataManager, "getTranslationEndpointInfo").mockReturnValue({
-        translationId,
-        endpoint: endpointInfoOverride.endpoint,
-        isDefault: endpointInfoOverride.isDefault,
-      });
+    // When a custom endpoint is supplied, serve the translation from that
+    // endpoint so the manager records it against the endpoint and the real
+    // getTranslationEndpointInfo() reports it as non-default.
+    const responses = customEndpoint
+      ? {
+          [new URL("api/available_translations.json", customEndpoint).href]:
+            createResponse({ translations: [translation] }),
+        }
+      : undefined;
+
+    const { selectorState, bibleDataManager } = await createSelectorFixture({
+      responses,
+    });
+
+    if (customEndpoint) {
+      await bibleDataManager.getTranslations(customEndpoint);
     }
 
     act(() => {
@@ -1568,10 +1578,7 @@ describe("BibleSelector sharing translations", () => {
 
   it("clicking share on a non-default-endpoint translation copies a URL with the full books.json URL", async () => {
     const customEndpoint = `${EXAMPLE_API_ENDPOINT}/`;
-    await openTranslationModalWithGroup("CST", "Klingon", {
-      endpoint: customEndpoint,
-      isDefault: false,
-    });
+    await openTranslationModalWithGroup("CST", "Klingon", customEndpoint);
 
     const shareButton = container.querySelector(
       ".share-btn"
