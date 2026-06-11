@@ -22,6 +22,7 @@ permissions:
 
 jobs:
   deploy:
+    if: false
     runs-on: ubuntu-latest
     strategy:
       matrix:
