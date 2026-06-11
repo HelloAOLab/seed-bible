@@ -526,13 +526,13 @@
   .timespan-filter-container
   .timespan-filter-option {
   border: none;
-  background-color: rgb(243 243 243);
+  background-color: var(--sb-tertiary-color);
   border-radius: 30px;
   padding: 8px 12px;
   font-size: 12px;
   min-width: 52px;
   font-weight: 500;
-  color: var(--sb-tertiary-color);
+  color: var(--sb-reader-font-color);
   flex-shrink: 0;
 }
 
