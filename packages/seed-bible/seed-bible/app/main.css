@@ -1,4 +1,9 @@
 /* eslint-disable css/use-baseline */
+html {
+  visibility: visible;
+  opacity: 1;
+}
+
 :root {
   --sb-ui-zoom: 1;
   --sb-scripture-margin: 35%;

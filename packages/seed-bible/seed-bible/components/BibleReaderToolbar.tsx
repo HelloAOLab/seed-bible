@@ -361,10 +361,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   }
 
   const viewportWidth = useSignal(
-    typeof window === "undefined" ? 0 : window.innerWidth
+    import.meta.env.SSR ? 1000 : window.innerWidth
   );
   const viewportHeight = useSignal(
-    typeof window === "undefined" ? 0 : window.innerHeight
+    import.meta.env.SSR ? 1000 : window.innerHeight
   );
 
   useEffect(() => {
