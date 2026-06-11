@@ -18,9 +18,6 @@ export interface RenderOptions {
   url: string;
   /** Deployment config injected into the page and passed to the app. */
   config: AppConfig;
-  /** The build's Vite client manifest (loaded by the host from S3). */
-  manifest: ViteManifest;
-
   /**
    * The HTML that the app should be injected into.
    *
