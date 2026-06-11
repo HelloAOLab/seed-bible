@@ -2,10 +2,11 @@
  * Multi-branch SSR host server.
  *
  * A single long-running process serves every branch deployment:
- *   - GET /                       → the root branch (production `main`)
- *   - GET /d/branch-<name>/...    → that branch's deployment
- *   - GET /healthz                → liveness probe
- *   - POST /__invalidate?branch=  → drop the cached pointer for a branch
+ *   - GET /                            → the root branch (production `main`)
+ *   - GET /?pattern=<name>             → that branch's deployment
+ *   - GET /?pattern=<name>&patternVersion=<buildId>  → pinned build
+ *   - GET /healthz                     → liveness probe
+ *   - POST /__invalidate?branch=       → drop the cached pointer for a branch
  *
  * Per request it resolves the branch's live build (via the artifact store),
  * lazily loads and caches that build's SSR bundle, and calls its render()
@@ -98,26 +99,29 @@ interface Route {
   branch: string;
   /** Path prefix this deployment is mounted under (no trailing slash). */
   basePath: string;
-  /** Path + query passed to the app, relative to the prefix (starts with "/"). */
+  /** Path + query passed to the app (starts with "/", excludes pattern params). */
   appUrl: string;
+  /** If present, skip pointer lookup and load this build directly. */
+  patternVersion?: string;
 }
 
-const BRANCH_PREFIX = /^\/d\/branch-([^/]+)(\/.*)?$/;
-
 function resolveRoute(rawUrl: string): Route {
-  const [pathname, search = ""] = rawUrl.split("?");
-  const qs = search ? `?${search}` : "";
-  const match = BRANCH_PREFIX.exec(pathname);
-  if (match) {
-    const branch = decodeURIComponent(match[1]);
-    const rest = match[2] ?? "/";
-    return {
-      branch,
-      basePath: `/d/branch-${match[1]}`,
-      appUrl: `${rest}${qs}`,
-    };
-  }
-  return { branch: ROOT_BRANCH, basePath: "", appUrl: `${pathname}${qs}` };
+  const parsed = new URL(rawUrl, "http://localhost");
+  const pattern = parsed.searchParams.get("pattern");
+  const patternVersion = parsed.searchParams.get("patternVersion") ?? undefined;
+
+  const appParams = new URLSearchParams(parsed.searchParams);
+  appParams.delete("pattern");
+  appParams.delete("patternVersion");
+  const qs = appParams.size > 0 ? `?${appParams}` : "";
+  const appUrl = `${parsed.pathname}${qs}`;
+
+  return {
+    branch: pattern ?? ROOT_BRANCH,
+    basePath: "",
+    appUrl,
+    patternVersion,
+  };
 }
 
 async function handle(
@@ -150,7 +154,9 @@ async function handle(
   const route = resolveRoute(url);
 
   try {
-    const pointer = await resolvePointer(route.branch);
+    const pointer = route.patternVersion
+      ? { buildId: route.patternVersion }
+      : await resolvePointer(route.branch);
     if (!pointer) {
       res.writeHead(404, { "content-type": "text/html" });
       res.end(
