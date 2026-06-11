@@ -17,6 +17,7 @@ import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
 import { MobileSettingsSheet } from "seed-bible.components.MobileSettingsSheet";
 import { InfoSettingsIcon } from "seed-bible.components.icons";
+import { QuickToolbar } from "seed-bible.components.QuickToolbar";
 
 const { useRef } = os.appHooks;
 
@@ -1084,16 +1085,11 @@ export function BibleReader(props: BibleReaderProps) {
                 </span>
               </h1>
             </div>
-            <button
-              type="button"
-              className="sb-bible-reader-mobile-header-play"
-              aria-label={t("play-audio", { defaultValue: "Play audio" })}
-              title={t("play", { defaultValue: "Play" })}
-            >
-              <span className="material-symbols-outlined" aria-hidden="true">
-                play_arrow
-              </span>
-            </button>
+            <QuickToolbar
+              toolsManager={state.tools}
+              readingState={readingState}
+              className="sb-quick-toolbar-mobile-header"
+            />
             <button
               type="button"
               className="sb-bible-reader-mobile-header-settings"
@@ -1179,6 +1175,13 @@ export function BibleReader(props: BibleReaderProps) {
               translationId={translationId.value}
               bookId={bookId.value}
               chapterNumber={chapterNumber.value}
+            />
+          )}
+          {state && (
+            <QuickToolbar
+              toolsManager={state.tools}
+              readingState={readingState}
+              className="sb-quick-toolbar-reader"
             />
           )}
           <h2

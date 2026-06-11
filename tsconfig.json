@@ -26,6 +26,21 @@
       "https://esm.helloao.org/painter-vendor-IGDNTFOW.js": [
         "./lib/painter-vendor.ts"
       ],
+      "ext_audioReader.host.init": [
+        "./packages/audio-reader-extension/ext_audioReader/host/init.tsx"
+      ],
+      "ext_audioReader.host.onEggHatch": [
+        "./packages/audio-reader-extension/ext_audioReader/host/onEggHatch.tsx"
+      ],
+      "ext_audioReader.host.onExtensionInstalled": [
+        "./packages/audio-reader-extension/ext_audioReader/host/onExtensionInstalled.tsx"
+      ],
+      "ext_audioReader.host.onExtensionUninstalled": [
+        "./packages/audio-reader-extension/ext_audioReader/host/onExtensionUninstalled.tsx"
+      ],
+      "ext_audioReader.host.onInstJoined": [
+        "./packages/audio-reader-extension/ext_audioReader/host/onInstJoined.tsx"
+      ],
       "ext_geoImporter.importer.geometryHandlers": [
         "./packages/geo-importer-extension/ext_geoImporter/importer/geometryHandlers.tsx"
       ],
@@ -100,6 +115,9 @@
       ],
       "seed-bible.components.PaneLayout": [
         "./packages/seed-bible/seed-bible/components/PaneLayout.tsx"
+      ],
+      "seed-bible.components.QuickToolbar": [
+        "./packages/seed-bible/seed-bible/components/QuickToolbar.tsx"
       ],
       "seed-bible.components.SettingsPage": [
         "./packages/seed-bible/seed-bible/components/SettingsPage.tsx"

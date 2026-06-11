@@ -298,6 +298,64 @@ h6 {
   cursor: default;
 }
 
+/* Quick toolbar: compact row of extension-registered chapter actions
+   shown at the top of the reader, beside the bookmark button. */
+.sb-quick-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Desktop: dock to the top-right of the chapter content, just left of the
+   bookmark button (which sits at inset-inline-end: 16px with width 36px). */
+.sb-quick-toolbar-reader {
+  position: absolute;
+  top: 16px;
+  inset-inline-end: 60px;
+  z-index: 1;
+}
+
+.sb-quick-toolbar-mobile-header {
+  flex-shrink: 0;
+}
+
+.sb-quick-toolbar-item {
+  position: relative;
+  display: inline-flex;
+}
+
+.sb-quick-toolbar-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.sb-quick-toolbar-button:hover:not(:disabled) {
+  transform: scale(1.08);
+  color: var(--sb-font-color);
+}
+
+.sb-quick-toolbar-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.sb-quick-toolbar-button svg {
+  display: block;
+}
+
 /* Force a tight 1% reader margin in mobile view, regardless of the
    user's saved scriptureMargin setting. Breakpoint mirrors `isMobile`
    in SeedBibleStateManager (viewportWidth <= 768). */
@@ -4484,6 +4542,8 @@ h6 {
   .sb-panes-layout {
     grid-template-columns: minmax(0, 1fr) !important;
     grid-template-rows: none !important;
+    padding: 0 !important;
+    margin-left: 0 !important;
   }
 
   .sb-panes-layout .sb-pane-shell {
