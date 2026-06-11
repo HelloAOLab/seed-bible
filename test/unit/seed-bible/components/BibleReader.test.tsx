@@ -12,6 +12,7 @@ import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/manager
 import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 
 type ReaderFixture = {
   pane: Pane;
@@ -186,6 +187,7 @@ function createMobileState(): SeedBibleState {
       openSettings: jest.fn(),
       openSidebar: jest.fn(),
     },
+    tools: createBibleToolsManager(),
   } as any as SeedBibleState;
 }
 
