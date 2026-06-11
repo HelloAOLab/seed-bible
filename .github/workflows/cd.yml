@@ -99,6 +99,8 @@ jobs:
             --cache-control "private, no-cache"
           aws s3 cp dist/client/.vite/manifest.json "$DEST/client-manifest.json" \
             --cache-control "private, no-cache"
+          aws s3 cp dist/client/index.html "$DEST/index.html" \
+            --cache-control "private, no-cache"
 
       # ─── Atomically flip the live pointer (LAST write) ──────────────────────
       - name: Flip pointer

@@ -24,8 +24,9 @@ export interface BranchPointer {
 export interface BranchArtifacts {
   /** Absolute path to a local copy of the branch's SSR bundle. */
   serverModulePath: string;
-  /** Parsed Vite client manifest for the build. */
-  manifest: Record<string, unknown>;
+
+  /** The pre-rendered HTML for the build. */
+  html: string;
 }
 
 export interface ArtifactStore {
@@ -65,13 +66,11 @@ class LocalStore implements ArtifactStore {
     buildId: string
   ): Promise<BranchArtifacts> {
     const base = path.join(this.dir, "branches", branch, buildId);
-    const manifest = JSON.parse(
-      await readFile(path.join(base, "client-manifest.json"), "utf8")
-    );
+    const html = await readFile(path.join(base, "index.html"), "utf8");
     // Local bundles are already on disk; import them in place.
     return {
       serverModulePath: path.join(base, "server.mjs"),
-      manifest,
+      html,
     };
   }
 }
@@ -122,11 +121,11 @@ class S3Store implements ArtifactStore {
     buildId: string
   ): Promise<BranchArtifacts> {
     const prefix = `branches/${branch}/${buildId}`;
-    const [serverBuf, manifestBuf] = await Promise.all([
+    const [serverBuf, htmlBuf] = await Promise.all([
       this.getObject(`${prefix}/server.mjs`),
-      this.getObject(`${prefix}/client-manifest.json`),
+      this.getObject(`${prefix}/index.html`),
     ]);
-    if (!serverBuf || !manifestBuf) {
+    if (!serverBuf || !htmlBuf) {
       throw new Error(`Missing artifacts for ${branch}@${buildId}`);
     }
     // Node cannot import an ESM module from a buffer; stage it on disk
@@ -139,7 +138,7 @@ class S3Store implements ArtifactStore {
     }
     return {
       serverModulePath: localPath,
-      manifest: JSON.parse(manifestBuf.toString("utf8")),
+      html: htmlBuf.toString("utf8"),
     };
   }
 }

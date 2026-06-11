@@ -34,7 +34,7 @@ const MODULE_CACHE_MAX = Number(process.env.MODULE_CACHE_MAX ?? 20);
 type RenderFn = (opts: {
   url: string;
   config: { basePath: string; assetHost: string };
-  manifest: Record<string, unknown>;
+  html: string;
 }) => Promise<string>;
 
 const store: ArtifactStore = createStore();
@@ -58,7 +58,7 @@ async function resolvePointer(branch: string): Promise<BranchPointer | null> {
 // ─── Module cache (buildId → loaded render fn + manifest), LRU ───────────────
 interface ModuleEntry {
   render: RenderFn;
-  manifest: Record<string, unknown>;
+  html: string;
 }
 const moduleCache = new Map<string, ModuleEntry>(); // insertion-ordered → LRU
 
@@ -75,7 +75,7 @@ async function loadBuild(
     return existing;
   }
 
-  const { serverModulePath, manifest } = await store.fetchArtifacts(
+  const { serverModulePath, html } = await store.fetchArtifacts(
     branch,
     buildId
   );
@@ -85,7 +85,7 @@ async function loadBuild(
     throw new Error(`Build ${key} does not export render()`);
   }
 
-  const entry: ModuleEntry = { render, manifest };
+  const entry: ModuleEntry = { render, html };
   moduleCache.set(key, entry);
   while (moduleCache.size > MODULE_CACHE_MAX) {
     const oldest = moduleCache.keys().next().value as string;
@@ -165,11 +165,14 @@ async function handle(
       return;
     }
 
-    const { render, manifest } = await loadBuild(route.branch, pointer.buildId);
+    const { render, html: preRenderedHtml } = await loadBuild(
+      route.branch,
+      pointer.buildId
+    );
     const html = await render({
       url: route.appUrl,
       config: { basePath: route.basePath, assetHost: ASSET_HOST },
-      manifest,
+      html: preRenderedHtml,
     });
 
     res.writeHead(200, {
