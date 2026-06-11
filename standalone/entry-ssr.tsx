@@ -1,4 +1,4 @@
-import { renderToString } from "preact-render-to-string";
+import { renderToStringAsync } from "preact-render-to-string";
 import { Main } from "../packages/seed-bible/seed-bible/app/main";
 import type { AppConfig } from "../packages/seed-bible/seed-bible/app/appConfig";
 
@@ -79,26 +79,16 @@ export async function render(options: RenderOptions): Promise<string> {
   console.log("Rendering!");
   const { url, config } = options;
 
-  const appHtml = renderToString(
-    <Main config={config} initialHref={`http://ssr.local${url}`} />
-  );
-
-  const metaHtml = renderToString(
-    <>
-      <title>Seed Bible</title>
-    </>
-  );
-
-  // const { js, css } = collectAssets(manifest);
-  // const cssLinks = css
-  //   .map(
-  //     (file) =>
-  //       `<link rel="stylesheet" crossorigin href="${assetUrl(config.assetHost, file)}">`
-  //   )
-  //   .join("\n    ");
-  // const entryScript = js
-  //   ? `<script type="module" crossorigin src="${assetUrl(config.assetHost, js)}"></script>`
-  //   : "";
+  const [appHtml, metaHtml] = await Promise.all([
+    renderToStringAsync(
+      <Main config={config} initialHref={`http://ssr.local${url}`} />
+    ),
+    renderToStringAsync(
+      <>
+        <title>Seed Bible</title>
+      </>
+    ),
+  ]);
 
   const configJson = escapeForScript(JSON.stringify(config));
 
