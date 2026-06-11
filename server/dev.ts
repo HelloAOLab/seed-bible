@@ -55,6 +55,7 @@ async function createServer() {
       // 5. Send the rendered HTML back.
       res.status(200).set({ "Content-Type": "text/html" }).end(html);
     } catch (e) {
+      console.error(e);
       if (e instanceof Error) {
         // If an error is caught, let Vite fix the stack trace so it maps back
         // to your actual source code.
@@ -65,6 +66,8 @@ async function createServer() {
   });
 
   app.listen(5173);
+
+  console.log("Server is running at http://localhost:5173");
 }
 
 createServer();

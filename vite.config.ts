@@ -1,6 +1,6 @@
 /// <reference types="vitest/config" />
 import { defineConfig } from "vite";
-// import react from "@vitejs/plugin-react";
+import commonjs from "vite-plugin-commonjs";
 import preact from "@preact/preset-vite";
 import path from "path";
 
@@ -15,11 +15,22 @@ const assetBaseUrl = process.env.ASSET_BASE_URL ?? "/";
 export default defineConfig(({ isSsrBuild }) => ({
   // SSR builds must not treat index.html as an input; only the client build
   // is an HTML/SPA build.
-  appType: isSsrBuild ? "custom" : "spa",
-  publicDir: isSsrBuild ? false : "standalone/public",
+  appType: "custom",
+  publicDir: false,
   base: assetBaseUrl,
 
-  plugins: [preact()],
+  plugins: [
+    // commonjs({
+    //   filter(id) {
+    //     // `node_modules` is exclude by default, so we need to include it explicitly
+    //     // https://github.com/vite-plugin/vite-plugin-commonjs/blob/v0.7.0/src/index.ts#L125-L127
+    //     if (id.includes('node_modules/void-elements')) {
+    //       return true
+    //     }
+    //   }
+    // }),
+    preact(),
+  ],
 
   // Bundle all dependencies into the SSR output instead of leaving them as
   // external Node imports. Several deps in the graph are CJS with named-export
@@ -28,7 +39,13 @@ export default defineConfig(({ isSsrBuild }) => ({
   // when external. Bundling lets Vite handle interop/resolution; any module
   // that touches browser globals at import time is then fixed via SSR guards.
   ssr: {
-    noExternal: true,
+    // noExternal: [
+    //   // /^hash\.js$/,
+    //   /^@casual-simulation\/aux-common(\/.*)?$/,
+    //   /^@casual-simulation\/aux-records(\/.*)?$/,
+    //   /^@casual-simulation\/websocket(\/.*)?$/,
+    //   /^@casual-simulation\/aux-websocket(\/.*)?$/,
+    // ],
   },
 
   build: isSsrBuild
@@ -78,5 +95,9 @@ export default defineConfig(({ isSsrBuild }) => ({
     // Suites that bootstrap the full SeedBibleState pay a one-time ~6s
     // dynamic import of the entire app graph in their first test.
     testTimeout: 20000,
+  },
+
+  server: {
+    middlewareMode: true,
   },
 }));

@@ -2,8 +2,10 @@ import { computed, signal, type ReadonlySignal } from "@preact/signals";
 import { orderBy, union } from "es-toolkit";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import { addTranslations } from "../i18n/I18nManager";
-import { sha256 } from "hash.js";
+import hash from "hash.js";
 import stringify from "@casual-simulation/fast-json-stable-stringify";
+
+const { sha256 } = hash;
 
 export type CleanupFunction = () => void;
 export type ExtensionDependencies = Record<string, object>;

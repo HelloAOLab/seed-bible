@@ -101,6 +101,19 @@ function buildVerseFilterBy(
 }
 
 export function createSearchManager(): SearchManager {
+  if (import.meta.env.SSR) {
+    return {
+      searchVerses: async () => ({
+        found: 0,
+        out_of: 0,
+        page: 0,
+        hits: [],
+        request_params: {},
+        search_time_ms: 0,
+      }),
+    };
+  }
+
   const client = new Typesense.Client({
     apiKey: TYPESENSE_API_KEY,
     nodes: [

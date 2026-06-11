@@ -1,12 +1,8 @@
 import i18n from "i18next";
-import {
-  I18nextProvider,
-  initReactI18next,
-  useTranslation,
-} from "react-i18next";
-import { useMemo } from "preact/hooks";
+import { useContext, useMemo } from "preact/hooks";
 import en from "./en.json";
 import { currentSearchParams, navigatorLanguages } from "../app/ssrEnv";
+import { createContext, type ComponentChildren } from "preact";
 
 const languages = import.meta.glob("./*.json", { eager: true });
 
@@ -81,13 +77,15 @@ const availableLanguages = Object.keys(seedBibleTranslations).sort();
 
 const initialLanguage = DEFAULT_LANGUAGE;
 
+const I18nContext = createContext(i18n);
+
 if (!i18n.isInitialized) {
   // console.log(
   //   "[I18n] Initializing i18n with resources:",
   //   seedBibleTranslations,
   //   initialLanguage
   // );
-  i18n.use(initReactI18next).init({
+  i18n.init({
     lng: initialLanguage,
     fallbackLng: DEFAULT_LANGUAGE,
     interpolation: {
@@ -110,8 +108,10 @@ if (!i18n.isInitialized) {
   // addTranslations("seed-bible", seedBibleTranslations);
 }
 
-export function I18nProvider(props: { children: unknown }) {
-  return <I18nextProvider i18n={i18n}>{props.children}</I18nextProvider>;
+export function I18nProvider(props: { children: ComponentChildren }) {
+  return (
+    <I18nContext.Provider value={i18n}>{props.children}</I18nContext.Provider>
+  );
 }
 
 export type I18nManager = ReturnType<typeof useI18n>;
@@ -154,12 +154,13 @@ function isRightToLeftLanguage(languageCode: string): boolean {
  * @returns
  */
 export function useI18n(ns?: string) {
-  const { t, i18n: i18nInstance } = useTranslation();
+  const i18n = useContext(I18nContext);
+  const { t } = i18n;
 
-  const isRtl = isRightToLeftLanguage(i18nInstance.language);
+  const isRtl = isRightToLeftLanguage(i18n.language);
 
   const setLanguage = async (language: string) => {
-    await i18nInstance.changeLanguage(language);
+    await i18n.changeLanguage(language);
   };
 
   const translate = ns
@@ -171,12 +172,12 @@ export function useI18n(ns?: string) {
     () => ({
       t: translate,
       ns,
-      language: i18nInstance.language || DEFAULT_LANGUAGE,
+      language: i18n.language || DEFAULT_LANGUAGE,
       isRtl,
       availableLanguages,
       setLanguage,
-      i18n: i18nInstance,
+      i18n: i18n,
     }),
-    [t, i18nInstance.language]
+    [t, i18n.language]
   );
 }

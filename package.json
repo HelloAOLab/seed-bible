@@ -6,7 +6,7 @@
   "scripts": {
     "test": "vitest",
     "test:watch": "vitest watch",
-    "dev": "vite dev",
+    "dev": "bun server/dev.ts",
     "build": "pnpm build:client && pnpm build:server",
     "build:client": "vite build",
     "build:server": "vite build --ssr standalone/entry-ssr.tsx",
@@ -99,6 +99,7 @@
     "typescript-eslint": "^8.38.0",
     "uuid": "^13.0.0",
     "vite": "^8.0.13",
+    "vite-plugin-commonjs": "^0.10.4",
     "vitest": "^4.1.8"
   },
   "pnpm": {
@@ -107,7 +108,8 @@
     ],
     "patchedDependencies": {
       "@casual-simulation/fast-json-stable-stringify": "patches/@casual-simulation__fast-json-stable-stringify.patch",
-      "@casual-simulation/aux-records": "patches/@casual-simulation__aux-records.patch"
+      "@casual-simulation/aux-records": "patches/@casual-simulation__aux-records.patch",
+      "follow-redirects": "patches/follow-redirects.patch"
     }
   },
   "dependencies": {

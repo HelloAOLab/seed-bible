@@ -76,6 +76,7 @@ const escapeForScript = (json: string): string => json.replace(/</g, "\\u003c");
  * data-driven SPA that does not block first paint on network fetches.
  */
 export async function render(options: RenderOptions): Promise<string> {
+  console.log("Rendering!");
   const { url, config } = options;
 
   const appHtml = renderToString(
@@ -102,7 +103,7 @@ export async function render(options: RenderOptions): Promise<string> {
   const configJson = escapeForScript(JSON.stringify(config));
 
   return options.html
-    .replace("<!--META-->", metaHtml) // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
-    .replace("<!--CONFIG_JSON-->", configJson)
-    .replace("<!--APP_HTML-->", appHtml);
+    .replace("<!-- META -->", metaHtml) // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
+    .replace("<!-- CONFIG_JSON -->", configJson)
+    .replace("<!-- APP_HTML -->", appHtml);
 }

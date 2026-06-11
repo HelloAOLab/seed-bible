@@ -340,8 +340,10 @@ export function createSeedBibleState(
       return;
     }
 
-    const RTLE_CHAR = "\u202B";
-    document.title = `${chapter.translation.textDirection === "rtl" ? RTLE_CHAR : ""}${chapter.book.name} ${chapter.chapter.number} - ${chapter.translation.name} | Seed Bible`;
+    if (typeof document !== "undefined") {
+      const RTLE_CHAR = "\u202B";
+      document.title = `${chapter.translation.textDirection === "rtl" ? RTLE_CHAR : ""}${chapter.book.name} ${chapter.chapter.number} - ${chapter.translation.name} | Seed Bible`;
+    }
 
     const readingHistoryTimeoutId = setInterval(() => {
       readingHistory.saveReadingHistory(

@@ -1,8 +1,3 @@
-import {
-  AuthenticatedConnectionClient,
-  InstRecordsClient,
-  PartitionAuthSource,
-} from "@casual-simulation/aux-common";
 import { RemoteYjsSharedDocument } from "@casual-simulation/aux-common/documents/RemoteYjsSharedDocument";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import { createRecordsClient } from "@casual-simulation/aux-records/RecordsClient";
@@ -13,6 +8,9 @@ import axios from "axios";
 import { isArrayBuffer } from "es-toolkit";
 import { v4 as uuid } from "uuid";
 import type { RecordFileFailure } from "@casual-simulation/aux-records";
+import { InstRecordsClient } from "@casual-simulation/aux-common/websockets/InstRecordsClient";
+import { PartitionAuthSource } from "@casual-simulation/aux-common/partitions/PartitionAuthSource";
+import { AuthenticatedConnectionClient } from "@casual-simulation/aux-common/websockets/AuthenticatedConnectionClient";
 
 export type CasualOSManager = ReturnType<typeof CasualOSManager>;
 

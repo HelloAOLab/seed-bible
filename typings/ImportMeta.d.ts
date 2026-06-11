@@ -3,4 +3,6 @@ interface ImportMeta {
     pattern: string,
     options?: { eager?: boolean }
   ) => Record<string, () => Promise<unknown> | unknown>;
+
+  env: Record<string, string | boolean | undefined>;
 }
