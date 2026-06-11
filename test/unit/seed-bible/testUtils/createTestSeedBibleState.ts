@@ -6,19 +6,10 @@ import {
   type WebResponseMap,
 } from "../managers/testUtils/mockBibleApiData";
 
-type TestGlobalScope = typeof globalThis & {
-  thisBot?: {
-    tags: Record<string, unknown>;
-  };
-  configBot?: {
-    tags: Record<string, unknown>;
-  };
-  os?: Record<string, unknown>;
-};
+type TestGlobalScope = typeof globalThis;
 
 export interface CreateTestSeedBibleStateOptions {
   responses?: WebResponseMap;
-  configTags?: Record<string, unknown>;
   timeoutMs?: number;
 }
 
@@ -62,41 +53,6 @@ export async function waitForTabsToLoad(
   );
 }
 
-function ensureGlobalRuntime(
-  configTags: Record<string, unknown> | undefined
-): TestGlobalScope {
-  const scope = globalThis as TestGlobalScope;
-
-  // Reset any existing bot-related properties to ensure a clean test environment
-  scope.thisBot = {
-    tags: {},
-  };
-  scope.configBot = {
-    tags: {
-      ...(configTags ?? {}),
-    },
-  };
-
-  const existingOs = (scope.os ?? {}) as Record<string, unknown>;
-  scope.os = {
-    ...existingOs,
-    addBotListener:
-      typeof existingOs.addBotListener === "function"
-        ? existingOs.addBotListener
-        : () => undefined,
-    syncConfigBotTagsToURL:
-      typeof existingOs.syncConfigBotTagsToURL === "function"
-        ? existingOs.syncConfigBotTagsToURL
-        : () => undefined,
-    requestAuthBotInBackground:
-      typeof existingOs.requestAuthBotInBackground === "function"
-        ? existingOs.requestAuthBotInBackground
-        : async () => null,
-  };
-
-  return scope;
-}
-
 function installFreeUseBibleApiMock(
   scope: TestGlobalScope,
   responses: WebResponseMap
@@ -135,14 +91,10 @@ async function ensureI18nInitialized(): Promise<void> {
 export async function createTestSeedBibleState(
   options: CreateTestSeedBibleStateOptions = {}
 ): Promise<SeedBibleState> {
-  const {
-    responses = createDefaultManagerResponseMap(),
-    configTags,
-    timeoutMs = 1000,
-  } = options;
+  const { responses = createDefaultManagerResponseMap(), timeoutMs = 1000 } =
+    options;
 
-  const scope = ensureGlobalRuntime(configTags);
-  installFreeUseBibleApiMock(scope, responses);
+  installFreeUseBibleApiMock(globalThis as TestGlobalScope, responses);
   await ensureI18nInitialized();
 
   const { createSeedBibleState } =

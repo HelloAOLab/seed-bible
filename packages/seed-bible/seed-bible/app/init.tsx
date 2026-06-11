@@ -10,10 +10,5 @@ import { render } from "preact";
 //   "sidebar",
 // ]);
 
-// configBot.tags.gridPortal = null;
-// configBot.tags.mapPortal = null;
-
 console.log("Starting APP");
 render(<Main />, document.body);
-
-// os.hideLoadingScreen();

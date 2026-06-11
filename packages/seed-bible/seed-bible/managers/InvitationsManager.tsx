@@ -5,10 +5,6 @@ import {
 } from "@preact/signals";
 import type { LoginManager, UserProfile } from "../managers/LoginManager";
 import type { BibleReadingSession } from "../managers/SessionsManager";
-import type {
-  SharedDocument,
-  SharedMap,
-} from "@casual-simulation/aux-common/documents/SharedDocument";
 import type { CasualOSManager } from "./OsManager";
 
 /**
@@ -120,6 +116,7 @@ export type OnJoinSharedSession = (
  * from the list so hosts don't see their own published sessions.
  */
 export function createInvitationsManager(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   os: CasualOSManager,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   login: LoginManager,

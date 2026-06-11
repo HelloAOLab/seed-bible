@@ -4,12 +4,6 @@ import {
   type Translation,
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
-type WebResponse<T> = {
-  status: number;
-  statusText: string;
-  data: Promise<T>;
-};
-
 type SortMode = "completeness" | "name";
 
 function parseArgValue(flag: string): string | null {
@@ -167,25 +161,6 @@ async function main(): Promise<void> {
     parseArgValue("--language")?.trim().toLowerCase() ?? null;
   const endpoint = parseArgValue("--endpoint")?.trim() || DEFAULT_API_ENDPOINT;
   const sortMode = parseSortMode(parseArgValue("--sort"));
-
-  // FreeUseBibleAPI expects a CasualOS-style `web.get()` API. In scripts,
-  // provide a compatible shim backed by standard fetch.
-  const globalWithWeb = globalThis as unknown as {
-    web?: {
-      get: (url: string) => Promise<WebResponse<unknown>>;
-    };
-  };
-
-  globalWithWeb.web = {
-    get: async (url: string): Promise<WebResponse<unknown>> => {
-      const response = await fetch(url);
-      return {
-        status: response.status,
-        statusText: response.statusText,
-        data: response.json(),
-      };
-    },
-  };
 
   const api = new FreeUseBibleAPI(endpoint);
   const { translations } = await api.getAvailableTranslations();

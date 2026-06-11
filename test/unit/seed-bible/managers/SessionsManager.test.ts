@@ -496,9 +496,6 @@ describe("SessionsManager", () => {
   });
 
   it("does not sync reading state changes when the current user is not an allowed navigator", async () => {
-    (globalThis as any).configBot = {
-      id: "conn-self",
-    };
     mockLoginManager.userId.value = "user-blocked";
 
     const manager = createSessionsManager(
@@ -527,10 +524,6 @@ describe("SessionsManager", () => {
   });
 
   it("does not sync reading state changes when the current connection is not an allowed navigator", async () => {
-    (globalThis as any).configBot = {
-      id: "conn-blocked",
-    };
-
     const manager = createSessionsManager(
       os,
       mockDataManager as any,

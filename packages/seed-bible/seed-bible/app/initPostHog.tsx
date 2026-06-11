@@ -74,6 +74,4 @@ posthog.init(seedBibleApiKey, {
   defaults: "2025-05-24",
 });
 
-posthog.register({
-  // pattern: configBot.tags.pattern,
-});
+posthog.register({});

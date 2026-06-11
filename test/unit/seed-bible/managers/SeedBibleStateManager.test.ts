@@ -62,21 +62,10 @@ beforeEach(() => {
   mockHighlightsManager.saveChapterHighlights.mockReset();
   mockSessionsManager.createSession.mockReset();
   mockSessionsManager.joinSession.mockReset();
-
-  (globalThis as any).configBot = {
-    tags: {},
-  };
-
-  (globalThis as any).os = {
-    ...(globalThis as any).os,
-    addBotListener: vi.fn(),
-    requestAuthBotInBackground: vi.fn().mockResolvedValue(null),
-  };
 });
 
 afterEach(() => {
   logSpy.mockRestore();
-  delete (globalThis as any).configBot;
 });
 
 async function waitFor(

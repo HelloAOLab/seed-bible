@@ -3,33 +3,18 @@ import {
   type NavigationManager,
 } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { createSidebar } from "@packages/seed-bible/seed-bible/managers/SidebarManager";
-import type { Mock } from "vitest";
 
 describe("createSidebar", () => {
-  let addBotListenerMock: Mock;
   let navigationManager: NavigationManager;
 
   beforeEach(() => {
     navigationManager = createNavigationManager();
-
-    addBotListenerMock = vi.fn();
-    (
-      globalThis as { configBot?: { tags: Record<string, unknown> } }
-    ).configBot = {
-      tags: {},
-    };
-    (globalThis as { os?: { addBotListener: Mock } }).os = {
-      addBotListener: addBotListenerMock,
-    };
   });
 
   afterEach(() => {
     // Clear URL params written by syncSignalsToUrl so they don't leak into
     // the next test's sidebar instance.
     window.history.replaceState(null, "", window.location.pathname);
-    delete (globalThis as { configBot?: { tags: Record<string, unknown> } })
-      .configBot;
-    delete (globalThis as { os?: { addBotListener: Mock } }).os;
   });
 
   it("initializes with settings closed, sidebar expanded, and mobile closed", () => {

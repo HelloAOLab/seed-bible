@@ -31,14 +31,6 @@ beforeEach(() => {
   logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
 
   globalThis.fetch = webGetMock;
-
-  (globalThis as any).configBot = {
-    tags: {},
-  };
-
-  (globalThis as any).os = {
-    addBotListener: vi.fn(),
-  };
 });
 
 afterEach(() => {
@@ -47,8 +39,6 @@ afterEach(() => {
   // leak into the next test's initial tab state.
   window.history.replaceState(null, "", window.location.pathname);
   globalThis.fetch = originalFetch;
-  delete (globalThis as any).configBot;
-  delete (globalThis as any).os;
 });
 
 function setWebResponses(responses: WebResponseMap): void {

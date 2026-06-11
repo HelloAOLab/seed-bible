@@ -104,8 +104,7 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
     client,
     connectionId,
     getData: async (recordName: string, address: string) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const result: any = await client.getData({
+      const result = await client.getData({
         recordName,
         address,
       });
@@ -114,7 +113,7 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
         return result.data;
       } else {
         throw new Error(
-          `Failed to get data for record ${recordName} at address ${address}: ${result.error}`
+          `Failed to get data for record ${recordName} at address ${address}: ${result.errorCode} ${result.errorMessage}`
         );
       }
     },
@@ -125,7 +124,6 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
       data: unknown,
       options: { marker?: string }
     ) => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return await client.recordData({
         recordKey,
         address,

@@ -278,7 +278,6 @@ describe("ReadingHistoryManager", () => {
     afterEach(() => {
       vi.clearAllMocks();
       vi.useRealTimers();
-      delete (globalThis as any).bot;
     });
 
     it("creates a manager with saveReadingHistory and getReadingEvents", () => {
@@ -613,7 +612,6 @@ describe("ReadingHistoryManager", () => {
     afterEach(() => {
       clearReadingHistoryDocs();
       vi.clearAllMocks();
-      delete (globalThis as any).bot;
     });
 
     it("retrieves and summarizes reading history from documents", async () => {
