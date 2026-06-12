@@ -584,6 +584,11 @@ interface TabRowProps {
  */
 function TabRow(props: TabRowProps) {
   const { state, tab, isSelected, closeLayoutMenu, panelsEnabled } = props;
+
+  if (import.meta.env.SSR && tab.readingState.loading.value) {
+    throw tab.readingState.chapterDataPromise;
+  }
+
   const { app, bookmarks } = state;
   const { t } = useI18n();
 

@@ -902,15 +902,7 @@ export function BibleReader(props: BibleReaderProps) {
   } = readingState;
 
   if (!chapterData.value && import.meta.env.SSR) {
-    // Wait for chapter data to load before attempting to render
-    throw new Promise<void>((resolve) => {
-      const cleanup = effect(() => {
-        if (chapterData.value) {
-          cleanup();
-          resolve();
-        }
-      });
-    });
+    throw readingState.chapterDataPromise;
   }
 
   const currentBook = useComputed(
