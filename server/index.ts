@@ -33,7 +33,7 @@ const MODULE_CACHE_MAX = Number(process.env.MODULE_CACHE_MAX ?? 20);
 
 type RenderFn = (opts: {
   url: string;
-  config: { basePath: string; assetHost: string };
+  config: { basePath: string; assetHost: string; isMobile: boolean };
   html: string;
 }) => Promise<string>;
 

@@ -1,4 +1,4 @@
-import { batch, useComputed, useSignal } from "@preact/signals";
+import { useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import { useI18n } from "../i18n/I18nManager";
 import { translateTitle } from "../components/Utils";
@@ -360,26 +360,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return null;
   }
 
-  const viewportWidth = useSignal(
-    import.meta.env.SSR ? 1000 : window.innerWidth
-  );
-  const viewportHeight = useSignal(
-    import.meta.env.SSR ? 1000 : window.innerHeight
-  );
-
-  useEffect(() => {
-    const onResize = () => {
-      batch(() => {
-        viewportWidth.value = window.innerWidth;
-        viewportHeight.value = window.innerHeight;
-      });
-    };
-
-    window.addEventListener("resize", onResize);
-    return () => {
-      window.removeEventListener("resize", onResize);
-    };
-  }, []);
+  const viewportWidth = props.state.app.viewportWidth;
 
   const tools = useComputed(() => {
     const resolved = toolsManager.getToolbarTools({
@@ -389,8 +370,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       tabs: tabs,
       panesManager: panes,
       window: {
-        innerWidth: viewportWidth,
-        innerHeight: viewportHeight,
+        isMobile: props.state.app.isMobile.value,
       },
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
@@ -422,8 +402,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       tabs: tabs,
       panesManager: panes,
       window: {
-        innerWidth: viewportWidth,
-        innerHeight: viewportHeight,
+        isMobile: props.state.app.isMobile.value,
       },
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
@@ -446,7 +425,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // Align with the app-wide mobile breakpoint (`state.app.isMobile`, 768px).
   // Kept as a local computed signal so its own viewport listener continues to
   // drive re-renders even if `app.isMobile` is not consumed elsewhere.
-  const isSmallScreen = useComputed(() => viewportWidth.value <= 768);
+  const isSmallScreen = props.state.app.isMobile;
   const shouldReplaceDefaultToolbar = useComputed(
     () => isSmallScreen.value && hasVerseSelection.value
   );

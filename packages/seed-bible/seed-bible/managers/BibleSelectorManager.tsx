@@ -111,8 +111,6 @@ export interface BibleSelectorState {
 
   search: Signal<string>;
 
-  viewportWidth: Signal<number>;
-
   /**
    * True while the selector is in "create a new tab" mode — chapter
    * selections create a brand new tab and bind it to the target pane
@@ -272,9 +270,6 @@ export function createBibleSelectorState(
     () => selectedTranslationBooks.value?.translation ?? null
   );
   const expandedBookId = signal<string | null>(null);
-  const viewportWidth = signal(
-    typeof window === "undefined" ? 0 : window.innerWidth
-  );
   let wasOpen = isOpen.value;
   let isHandlingPopState = false;
 
@@ -379,18 +374,6 @@ export function createBibleSelectorState(
     if (isOpen.value) {
       expandedBookId.value = currentBookId.value;
     }
-  });
-
-  effect(() => {
-    if (typeof window === "undefined") return;
-    const onResize = () => {
-      viewportWidth.value = window.innerWidth;
-    };
-
-    window.addEventListener("resize", onResize);
-    return () => {
-      window.removeEventListener("resize", onResize);
-    };
   });
 
   effect(() => {
@@ -992,7 +975,6 @@ export function createBibleSelectorState(
     selectedTranslation,
     selectedTranslationBooks,
     expandedBookId,
-    viewportWidth,
     forceNewTab,
     availablePanes,
     setOpen,

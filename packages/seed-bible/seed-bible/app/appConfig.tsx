@@ -21,11 +21,15 @@ export interface AppConfig {
    * "https://assets.seedbible.com". Empty string means same-origin.
    */
   assetHost: string;
+
+  /** Whether the app was rendered as a mobile version on the server */
+  renderedAsMobile: boolean;
 }
 
 export const DEFAULT_APP_CONFIG: AppConfig = {
   basePath: "",
   assetHost: "",
+  renderedAsMobile: false,
 };
 
 declare global {

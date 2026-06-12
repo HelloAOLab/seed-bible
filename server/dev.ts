@@ -2,6 +2,7 @@ import express from "express";
 import { createServer as createViteServer } from "vite";
 import fs from "node:fs";
 import path from "node:path";
+import Bowser from "bowser";
 
 async function createServer() {
   const app = express();
@@ -43,12 +44,16 @@ async function createServer() {
       //    required, and provides efficient invalidation similar to HMR.
       const { render } = await vite.ssrLoadModule("/standalone/entry-ssr.tsx");
 
+      const browser = Bowser.getParser(req.headers["user-agent"]!);
+
+      const isMobile = browser.getPlatformType(true) === "mobile";
+
       // 4. render the app HTML. This assumes entry-server.js's exported
       //     `render` function calls appropriate framework SSR APIs,
       //    e.g. ReactDOMServer.renderToString()
       const html = await render({
         url,
-        config: { basePath: "", assetHost: "" },
+        config: { basePath: "", assetHost: "", isMobile },
         html: template,
       });
 

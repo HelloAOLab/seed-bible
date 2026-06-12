@@ -145,6 +145,7 @@ function MainContent(props: {
               className={`${fontSizeClass} ${webkitClass}`}
               isOpen={selector.isOpen.value}
               onClose={() => selector.setOpen(false)}
+              app={state.app}
               selectorState={selector}
               bibleDataManager={state.bibleData}
             />

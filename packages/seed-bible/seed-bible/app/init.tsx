@@ -16,7 +16,8 @@ console.log("Starting APP");
 // server markup. In dev (or any non-SSR serve) the container is empty, so do
 // a fresh client render instead.
 if (container.firstChild) {
-  hydrate(<Main config={config} />, container);
+  // TODO: Support hydration
+  //   render(<Main config={config} />, container);
 } else {
   render(<Main config={config} />, container);
 }

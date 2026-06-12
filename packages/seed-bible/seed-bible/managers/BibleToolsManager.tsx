@@ -102,10 +102,10 @@ export interface ResolvedBibleToolItem extends Omit<
 
 /** Window metrics provided to tools when available. */
 export interface WindowContext {
-  /** Current viewport width signal. */
-  innerWidth: ReadonlySignal<number>;
-  /** Current viewport height signal. */
-  innerHeight: ReadonlySignal<number>;
+  /**
+   * Whether the app is currently being rendered in a mobile layout.
+   */
+  isMobile: boolean;
 }
 
 /** Runtime context passed to reader and verse toolbar tools. */
@@ -426,9 +426,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       title: { key: "side-menu", defaultValue: "Side menu" },
       icon: MenuIcon,
       isVisible: (context) =>
-        !!context.openSidebar &&
-        typeof context.window?.innerWidth.value === "number" &&
-        context.window?.innerWidth.value <= 768,
+        !!context.openSidebar && (context.window?.isMobile ?? false),
       onSelect: (context) => {
         context.openSidebar?.();
       },

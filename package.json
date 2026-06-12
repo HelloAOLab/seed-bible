@@ -127,6 +127,7 @@
     "@tiptap/extension-text-style": "^3.6.2",
     "@tiptap/extension-underline": "^3.6.2",
     "@tiptap/starter-kit": "^3.6.2",
+    "bowser": "^2.14.1",
     "debounce": "^2.2.0",
     "get-tsconfig": "^4.13.0",
     "html2canvas": "^1.4.1",

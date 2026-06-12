@@ -22,7 +22,13 @@ import {
   generateThemeCssClasses,
 } from "../managers/ThemeManager";
 import type { ThemeManager } from "../managers/ThemeManager";
-import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
+import {
+  batch,
+  computed,
+  effect,
+  signal,
+  type ReadonlySignal,
+} from "@preact/signals";
 import {
   createReadingHistoryManager,
   type ReadingHistoryManager,
@@ -85,8 +91,13 @@ export interface AppState {
   selectedTab: ReadonlySignal<ReaderTab | null>;
   /** Effective pane list shown by the UI (single pane fallback when panels are disabled). */
   effectivePanes: ReadonlySignal<Pane[]>;
+
   /** Current window inner width in pixels. Updated on resize. */
   viewportWidth: ReadonlySignal<number>;
+
+  /** Current window inner height in pixels. Updated on resize. */
+  viewportHeight: ReadonlySignal<number>;
+
   /** True when viewport width is at or below the mobile breakpoint (768px). */
   isMobile: ReadonlySignal<boolean>;
 
@@ -246,8 +257,22 @@ export function createSeedBibleState(
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
   );
 
+  const renderedAsMobile = options.config?.renderedAsMobile ?? false;
+  const isSSR = import.meta.env.SSR as boolean;
+
   const viewportWidth = signal(
-    typeof window === "undefined" ? 0 : window.innerWidth
+    typeof window === "undefined"
+      ? isSSR && renderedAsMobile
+        ? 768
+        : 1000
+      : window.innerWidth
+  );
+  const viewportHeight = signal(
+    typeof window === "undefined"
+      ? isSSR && renderedAsMobile
+        ? 800
+        : 1000
+      : window.innerHeight
   );
   const isMobile = computed(() => viewportWidth.value <= 768);
 
@@ -256,7 +281,10 @@ export function createSeedBibleState(
       return;
     }
     const handleResize = () => {
-      viewportWidth.value = window.innerWidth;
+      batch(() => {
+        viewportWidth.value = window.innerWidth;
+        viewportHeight.value = window.innerHeight;
+      });
     };
     window.addEventListener("resize", handleResize);
     return () => {
@@ -677,6 +705,7 @@ export function createSeedBibleState(
       selectedTab,
       effectivePanes,
       viewportWidth,
+      viewportHeight,
       isMobile,
       currentReadingState,
       selectTab: handleSelectTab,
