@@ -379,20 +379,39 @@ export function createSeedBibleState(
 
   const title = computed(() => {
     const RTLE_CHAR = "\u202B";
-    if (!selectedTab.value) {
-      return "";
-    }
+    void i18n.language.value;
+    const isRtl = i18n.isRtl.value;
 
-    const chapter = selectedTab.value.readingState.chapterData.value;
-    if (!chapter) {
-      return "";
-    }
+    const { t } = i18n;
 
-    const seedBibleTitle = i18n.t("seed-bible", {
+    const seedBibleTitle = t("seed-bible", {
       defaultValue: "Seed Bible",
     });
 
-    return `${chapter.translation.textDirection === "rtl" ? RTLE_CHAR : ""}${chapter.book.name} ${chapter.chapter.number} - ${chapter.translation.name} | ${seedBibleTitle}`;
+    const getTitle = () => {
+      if (!selectedTab.value) {
+        return seedBibleTitle;
+      }
+
+      const chapter = selectedTab.value.readingState.chapterData.value;
+      if (!chapter) {
+        return seedBibleTitle;
+      }
+
+      return `${chapter.book.name} ${chapter.chapter.number} - ${chapter.translation.name} | ${seedBibleTitle}`;
+    };
+
+    console.log(
+      "Computed page title:",
+      getTitle(),
+      "(RTL:",
+      isRtl,
+      "language:",
+      i18n.language.value,
+      ")"
+    );
+
+    return `${isRtl ? RTLE_CHAR : ""}${getTitle()}`;
   });
 
   effect(() => {
