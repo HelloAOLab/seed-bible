@@ -6,7 +6,7 @@ html {
 
 :root {
   --sb-ui-zoom: 1;
-  --sb-scripture-margin: 35%;
+  --sb-scripture-margin: 27%;
 
   /* Text config variables — overridden at runtime by SettingsManager. */
   --text-bookTitle-font: "Newsreader", serif;
