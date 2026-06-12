@@ -2,8 +2,8 @@
   "id": "ext_twitchSub",
   "translations": {
     "en": {
-      "title": "Twitch Sub Extension",
-      "description": "An extension for the Seed Bible to integrate with Twitch Sub.",
+      "title": "Twitch User Extension",
+      "description": "An extension for the Seed Bible to integrate with Twitch User.",
       "settingsTitle": "Twitch Settings",
       "infoTooltip": "Choose which updates you receive when a streamer you follow takes action.",
       "followTranslationEvent": "Follow translation event",
@@ -13,8 +13,8 @@
       "leaveSession": "Leave session"
     },
     "es": {
-      "title": "Extensión de Twitch Sub",
-      "description": "Una extensión para el Seed Bible para integrarse con Twitch Sub.",
+      "title": "Extensión de Twitch User",
+      "description": "Una extensión para el Seed Bible para integrarse con Twitch User.",
       "settingsTitle": "Configuración de Twitch",
       "infoTooltip": "Elige qué actualizaciones recibes cuando un streamer que sigues toma acción.",
       "followTranslationEvent": "Seguir evento de traducción",
@@ -24,8 +24,8 @@
       "leaveSession": "Abandonar sesión"
     },
     "am": {
-      "title": "የTwitch Sub ኤክስቴንሽን",
-      "description": "ለ Seed Bible ከTwitch Sub ጋር ለመያዝ ኤክስቴንሽን ነው።",
+      "title": "የTwitch User ኤክስቴንሽን",
+      "description": "ለ Seed Bible ከTwitch User ጋር ለመያዝ ኤክስቴንሽን ነው።",
       "settingsTitle": "የTwitch ቅንብሮች",
       "infoTooltip": "የሚከተሉት ስትሪመር እርምጃ ሲወስዱ የሚደርሱዎትን ዝማኔዎች ይምረጡ።",
       "followTranslationEvent": "የትርጉም ክስተት ይከተሉ",
@@ -35,8 +35,8 @@
       "leaveSession": "ክፍለ ጊዜ ይልቀቁ"
     },
     "ar": {
-      "title": "امتداد Twitch Sub",
-      "description": "امتداد لمشروع Seed Bible للتكامل مع Twitch Sub.",
+      "title": "امتداد Twitch User",
+      "description": "امتداد لمشروع Seed Bible للتكامل مع Twitch User.",
       "settingsTitle": "إعدادات Twitch",
       "infoTooltip": "اختر التحديثات التي تتلقاها عندما يتخذ المُبث الذي تتابعه إجراءً.",
       "followTranslationEvent": "متابعة حدث الترجمة",
@@ -46,8 +46,8 @@
       "leaveSession": "مغادرة الجلسة"
     },
     "bn": {
-      "title": "Twitch Sub এক্সটেনশন",
-      "description": "Seed Bible প্রকল্পের সাথে Twitch Sub একত্রিত করার জন্য একটি এক্সটেনশন।",
+      "title": "Twitch User এক্সটেনশন",
+      "description": "Seed Bible প্রকল্পের সাথে Twitch User একত্রিত করার জন্য একটি এক্সটেনশন।",
       "settingsTitle": "Twitch সেটিংস",
       "infoTooltip": "আপনি যে স্ট্রিমারকে অনুসরণ করেন সে পদক্ষেপ নিলে কোন আপডেটগুলি পাবেন তা চয়ন করুন।",
       "followTranslationEvent": "অনুবাদ ইভেন্ট অনুসরণ করুন",
@@ -57,8 +57,8 @@
       "leaveSession": "সেশন ছেড়ে দিন"
     },
     "fa": {
-      "title": "افزونه Twitch Sub",
-      "description": "یک افزونه برای پروژه Seed Bible برای ادغام با Twitch Sub.",
+      "title": "افزونه Twitch User",
+      "description": "یک افزونه برای پروژه Seed Bible برای ادغام با Twitch User.",
       "settingsTitle": "تنظیمات Twitch",
       "infoTooltip": "انتخاب کنید چه به‌روزرسانی‌هایی دریافت می‌کنید وقتی پخش‌کننده‌ای که دنبال می‌کنید اقدامی انجام می‌دهد.",
       "followTranslationEvent": "دنبال کردن رویداد ترجمه",
@@ -68,8 +68,8 @@
       "leaveSession": "ترک جلسه"
     },
     "fr": {
-      "title": "Extension Twitch Sub",
-      "description": "Une extension pour le projet Seed Bible pour s'intégrer avec Twitch Sub.",
+      "title": "Extension Twitch User",
+      "description": "Une extension pour le projet Seed Bible pour s'intégrer avec Twitch User.",
       "settingsTitle": "Paramètres Twitch",
       "infoTooltip": "Choisissez les mises à jour que vous recevez lorsqu'un streamer que vous suivez prend une action.",
       "followTranslationEvent": "Suivre l'événement de traduction",
@@ -79,8 +79,8 @@
       "leaveSession": "Quitter la session"
     },
     "hi": {
-      "title": "Twitch Sub एक्सटेंशन",
-      "description": "Seed Bible परियोजना के साथ Twitch Sub को एकीकृत करने के लिए एक एक्सटेंशन।",
+      "title": "Twitch User एक्सटेंशन",
+      "description": "Seed Bible परियोजना के साथ Twitch User को एकीकृत करने के लिए एक एक्सटेंशन।",
       "settingsTitle": "Twitch सेटिंग्स",
       "infoTooltip": "चुनें कि जब आप जिस स्ट्रीमर को फॉलो करते हैं वह कोई कदम उठाता है तो आपको कौन से अपडेट मिलते हैं।",
       "followTranslationEvent": "अनुवाद इवेंट फॉलो करें",
@@ -90,8 +90,8 @@
       "leaveSession": "सत्र छोड़ें"
     },
     "id": {
-      "title": "Ekstensi Twitch Sub",
-      "description": "Sebuah ekstensi untuk proyek Seed Bible untuk terintegrasi dengan Twitch Sub.",
+      "title": "Ekstensi Twitch User",
+      "description": "Sebuah ekstensi untuk proyek Seed Bible untuk terintegrasi dengan Twitch User.",
       "settingsTitle": "Pengaturan Twitch",
       "infoTooltip": "Pilih pembaruan yang Anda terima ketika streamer yang Anda ikuti mengambil tindakan.",
       "followTranslationEvent": "Ikuti acara terjemahan",
@@ -101,8 +101,8 @@
       "leaveSession": "Tinggalkan sesi"
     },
     "ja": {
-      "title": "Twitch Sub 拡張機能",
-      "description": "Seed Bible プロジェクトと Twitch Sub を統合するための拡張機能。",
+      "title": "Twitch User 拡張機能",
+      "description": "Seed Bible プロジェクトと Twitch User を統合するための拡張機能。",
       "settingsTitle": "Twitch 設定",
       "infoTooltip": "フォローしているストリーマーがアクションを取ったときに受け取る更新を選択します。",
       "followTranslationEvent": "翻訳イベントを追う",
@@ -112,8 +112,8 @@
       "leaveSession": "セッションを離れる"
     },
     "ko": {
-      "title": "Twitch Sub 확장 기능",
-      "description": "Seed Bible 프로젝트와 Twitch Sub를 통합하기 위한 확장 기능입니다.",
+      "title": "Twitch User 확장 기능",
+      "description": "Seed Bible 프로젝트와 Twitch User를 통합하기 위한 확장 기능입니다.",
       "settingsTitle": "Twitch 설정",
       "infoTooltip": "팔로우하는 스트리머가 행동할 때 받을 업데이트를 선택하세요.",
       "followTranslationEvent": "번역 이벤트 팔로우",
@@ -123,8 +123,8 @@
       "leaveSession": "세션 나가기"
     },
     "mn": {
-      "title": "Twitch Sub өргөтгөл",
-      "description": "Seed Bible төслийг Twitch Sub-той нэгтгэхийн тулд өргөтгөл.",
+      "title": "Twitch User өргөтгөл",
+      "description": "Seed Bible төслийг Twitch User-той нэгтгэхийн тулд өргөтгөл.",
       "settingsTitle": "Twitch тохиргоо",
       "infoTooltip": "Та дагаж буй стримерийн үйлдлийн талаар ямар шинэчлэлт авахаа сонгоно уу.",
       "followTranslationEvent": "Орчуулгын үйл явдлыг дагах",
@@ -134,8 +134,8 @@
       "leaveSession": "Сессийг орхих"
     },
     "ne": {
-      "title": "Twitch Sub विस्तार",
-      "description": "Seed Bible परियोजनालाई Twitch Sub सँग एकीकृत गर्नको लागि विस्तार।",
+      "title": "Twitch User विस्तार",
+      "description": "Seed Bible परियोजनालाई Twitch User सँग एकीकृत गर्नको लागि विस्तार।",
       "settingsTitle": "Twitch सेटिङहरू",
       "infoTooltip": "तपाईंले फलो गर्नु भएको स्ट्रिमरले कदम चाल्दा कुन अपडेटहरू प्राप्त गर्ने भनेर छान्नुहोस्।",
       "followTranslationEvent": "अनुवाद घटना पछ्याउनुहोस्",
@@ -145,8 +145,8 @@
       "leaveSession": "सत्र छोड्नुहोस्"
     },
     "ps": {
-      "title": "د Twitch Sub توسیع",
-      "description": "د Seed Bible پروژې لپاره د Twitch Sub سره د یوځای کولو توسیع.",
+      "title": "د Twitch User توسیع",
+      "description": "د Seed Bible پروژې لپاره د Twitch User سره د یوځای کولو توسیع.",
       "settingsTitle": "د Twitch ترتیبات",
       "infoTooltip": "غوره کړئ چې کله هغه سټریمر چې تاسو یې تعقیبوئ کار وکړي، کومې تازه معلومات ترلاسه کوئ.",
       "followTranslationEvent": "د ژباړې پیښه تعقیب کړئ",
@@ -156,8 +156,8 @@
       "leaveSession": "ناسته پریږدئ"
     },
     "pt": {
-      "title": "Extensão Twitch Sub",
-      "description": "Uma extensão para o projeto Seed Bible para se integrar com o Twitch Sub.",
+      "title": "Extensão Twitch User",
+      "description": "Uma extensão para o projeto Seed Bible para se integrar com o Twitch User.",
       "settingsTitle": "Configurações do Twitch",
       "infoTooltip": "Escolha quais atualizações você recebe quando um streamer que você segue toma uma ação.",
       "followTranslationEvent": "Seguir evento de tradução",
@@ -167,8 +167,8 @@
       "leaveSession": "Sair da sessão"
     },
     "ru": {
-      "title": "Расширение Twitch Sub",
-      "description": "Расширение для проекта Seed Bible для интеграции с Twitch Sub.",
+      "title": "Расширение Twitch User",
+      "description": "Расширение для проекта Seed Bible для интеграции с Twitch User.",
       "settingsTitle": "Настройки Twitch",
       "infoTooltip": "Выберите, какие обновления вы получаете, когда стример, на которого вы подписаны, совершает действие.",
       "followTranslationEvent": "Следить за событием перевода",
@@ -178,8 +178,8 @@
       "leaveSession": "Покинуть сессию"
     },
     "sw": {
-      "title": "Upanuzi wa Twitch Sub",
-      "description": "Upanuzi kwa mradi wa Seed Bible ili kuunganishwa na Twitch Sub.",
+      "title": "Upanuzi wa Twitch User",
+      "description": "Upanuzi kwa mradi wa Seed Bible ili kuunganishwa na Twitch User.",
       "settingsTitle": "Mipangilio ya Twitch",
       "infoTooltip": "Chagua masasisho unayopata wakati mstrimaji unayemfuata anachukua hatua.",
       "followTranslationEvent": "Fuata tukio la tafsiri",
@@ -189,8 +189,8 @@
       "leaveSession": "Acha kikao"
     },
     "ti": {
-      "title": "Twitch Sub ኤክስቴንሽን",
-      "description": "Seed Bible ፕሮጀክትን ከTwitch Sub ጋር ለመያዝ ኤክስቴንሽን ነው።",
+      "title": "Twitch User ኤክስቴንሽን",
+      "description": "Seed Bible ፕሮጀክትን ከTwitch User ጋር ለመያዝ ኤክስቴንሽን ነው።",
       "settingsTitle": "ናይ Twitch ቅርጻታት",
       "infoTooltip": "ዝሰዓብካዮ ስትሪመር ስርሒት ክወስድ ከሎ ክትቅበሎም ትደሊ ዝተሓደሱ ሓበሬታ ምረጽ።",
       "followTranslationEvent": "ናይ ትርጉም ፍጻሜ ሰዓቦ",
@@ -200,8 +200,8 @@
       "leaveSession": "ካብ ኣኼባ ውጻእ"
     },
     "tr": {
-      "title": "Twitch Sub Uzantısı",
-      "description": "Seed Bible projesi ile Twitch Sub'u entegre etmek için bir uzantı.",
+      "title": "Twitch User Uzantısı",
+      "description": "Seed Bible projesi ile Twitch User'u entegre etmek için bir uzantı.",
       "settingsTitle": "Twitch Ayarları",
       "infoTooltip": "Takip ettiğiniz bir yayıncı işlem yaptığında hangi güncellemeleri alacağınızı seçin.",
       "followTranslationEvent": "Çeviri etkinliğini takip et",
@@ -211,8 +211,8 @@
       "leaveSession": "Oturumdan çık"
     },
     "ug": {
-      "title": "Twitch Sub كېڭەيتىلمىسى",
-      "description": "Seed Bible پروژىسىنى Twitch Sub بىلەن بىرلەشتۈرۈش ئۈچۈن كېڭەيتىلمە.",
+      "title": "Twitch User كېڭەيتىلمىسى",
+      "description": "Seed Bible پروژىسىنى Twitch User بىلەن بىرلەشتۈرۈش ئۈچۈن كېڭەيتىلمە.",
       "settingsTitle": "Twitch تەڭشەكلىرى",
       "infoTooltip": "ئىز قوغلىغان ئوينىغۇچى مەشغۇلات قىلغاندا قانداق يېڭىلانمىلار ئالىدىغانلىقىڭىزنى تاللاڭ.",
       "followTranslationEvent": "تەرجىمە ۋەقەسىنى ئىز قوغلاڭ",
@@ -222,8 +222,8 @@
       "leaveSession": "يىغىندىن چىقىڭ"
     },
     "uk": {
-      "title": "Розширення Twitch Sub",
-      "description": "Розширення для проєкту Seed Bible для інтеграції з Twitch Sub.",
+      "title": "Розширення Twitch User",
+      "description": "Розширення для проєкту Seed Bible для інтеграції з Twitch User.",
       "settingsTitle": "Налаштування Twitch",
       "infoTooltip": "Виберіть, які оновлення ви отримуєте, коли стример, на якого ви підписані, виконує дію.",
       "followTranslationEvent": "Стежити за подією перекладу",
@@ -233,8 +233,8 @@
       "leaveSession": "Покинути сесію"
     },
     "ur": {
-      "title": "Twitch Sub ایکسٹینشن",
-      "description": "Seed Bible پروجیکٹ کے لیے Twitch Sub کے ساتھ انضمام کے لیے ایک ایکسٹینشن۔",
+      "title": "Twitch User ایکسٹینشن",
+      "description": "Seed Bible پروجیکٹ کے لیے Twitch User کے ساتھ انضمام کے لیے ایک ایکسٹینشن۔",
       "settingsTitle": "Twitch ترتیبات",
       "infoTooltip": "منتخب کریں کہ جب آپ کا فالو کردہ سٹریمر کوئی عمل کرے تو آپ کو کون سی اپ ڈیٹس ملتی ہیں۔",
       "followTranslationEvent": "ترجمہ ایونٹ فالو کریں",
@@ -244,8 +244,8 @@
       "leaveSession": "سیشن چھوڑیں"
     },
     "vi": {
-      "title": "Tiện ích mở rộng Twitch Sub",
-      "description": "Một tiện ích mở rộng cho dự án Seed Bible để tích hợp với Twitch Sub.",
+      "title": "Tiện ích mở rộng Twitch User",
+      "description": "Một tiện ích mở rộng cho dự án Seed Bible để tích hợp với Twitch User.",
       "settingsTitle": "Cài đặt Twitch",
       "infoTooltip": "Chọn những cập nhật bạn nhận được khi một streamer bạn theo dõi thực hiện hành động.",
       "followTranslationEvent": "Theo dõi sự kiện dịch thuật",
@@ -255,8 +255,8 @@
       "leaveSession": "Rời phiên"
     },
     "zh": {
-      "title": "Twitch Sub 扩展",
-      "description": "Seed Bible 项目与 Twitch Sub 集成的扩展。",
+      "title": "Twitch User 扩展",
+      "description": "Seed Bible 项目与 Twitch User 集成的扩展。",
       "settingsTitle": "Twitch 设置",
       "infoTooltip": "选择当您关注的主播采取行动时您收到的更新。",
       "followTranslationEvent": "关注翻译事件",
@@ -266,8 +266,8 @@
       "leaveSession": "离开会话"
     },
     "ind": {
-      "title": "Ekstensi Twitch Sub",
-      "description": "Ekstensi untuk proyek Seed Bible untuk terintegrasi dengan Twitch Sub.",
+      "title": "Ekstensi Twitch User",
+      "description": "Ekstensi untuk proyek Seed Bible untuk terintegrasi dengan Twitch User.",
       "settingsTitle": "Pengaturan Twitch",
       "infoTooltip": "Pilih pembaruan yang Anda terima ketika streamer yang Anda ikuti mengambil tindakan.",
       "followTranslationEvent": "Ikuti acara terjemahan",
@@ -277,8 +277,8 @@
       "leaveSession": "Tinggalkan sesi"
     },
     "af": {
-      "title": "Twitch Sub-uitbreiding",
-      "description": "'n Uitbreiding vir die Seed Bible om met Twitch Sub te integreer.",
+      "title": "Twitch User-uitbreiding",
+      "description": "'n Uitbreiding vir die Seed Bible om met Twitch User te integreer.",
       "settingsTitle": "Twitch-instellings",
       "infoTooltip": "Kies watter opdaterings jy ontvang wanneer 'n stromer wat jy volg aksie neem.",
       "followTranslationEvent": "Volg vertaalgebeurtenis",
@@ -289,7 +289,7 @@
     },
     "az": {
       "title": "Twitch Alt Genişləndirməsi",
-      "description": "Toxum Müqəddəs Kitabının Twitch Sub ilə inteqrasiyası üçün genişləndirmə.",
+      "description": "Toxum Müqəddəs Kitabının Twitch User ilə inteqrasiyası üçün genişləndirmə.",
       "settingsTitle": "Twitch Parametrləri",
       "infoTooltip": "İzlədiyiniz yayımçı hərəkətə keçdikdə hansı yeniləmələri alacağınızı seçin.",
       "followTranslationEvent": "Tərcümə tədbirini izləyin",
@@ -300,7 +300,7 @@
     },
     "be": {
       "title": "Пашырэнне падпіскі Twitch",
-      "description": "Пашырэнне для інтэграцыі Seed Bible з Twitch Sub.",
+      "description": "Пашырэнне для інтэграцыі Seed Bible з Twitch User.",
       "settingsTitle": "Налады Twitch",
       "infoTooltip": "Выберыце, якія абнаўленні вы будзеце атрымліваць, калі стрымер, на якога вы падпісаны, прадпрыме дзеянне.",
       "followTranslationEvent": "Сачыць за падзеяй перакладу",
@@ -311,7 +311,7 @@
     },
     "bg": {
       "title": "Разширение за подизпълнители Twitch",
-      "description": "Разширение за интеграция на Seed Bible с Twitch Sub.",
+      "description": "Разширение за интеграция на Seed Bible с Twitch User.",
       "settingsTitle": "Настройки на Twitch",
       "infoTooltip": "Изберете какви актуализации да получавате, когато стриймър, когото следите, предприеме действие.",
       "followTranslationEvent": "Следвайте събитието за превод",
@@ -321,8 +321,8 @@
       "leaveSession": "Напускане на сесията"
     },
     "bs": {
-      "title": "Twitch Sub ekstenzija",
-      "description": "Proširenje za Seed Bible radi integracije sa Twitch Subom.",
+      "title": "Twitch User ekstenzija",
+      "description": "Proširenje za Seed Bible radi integracije sa Twitch Userom.",
       "settingsTitle": "Postavke Twitcha",
       "infoTooltip": "Odaberite koja ažuriranja ćete primati kada streamer kojeg pratite preduzme akciju.",
       "followTranslationEvent": "Pratite događaj prevođenja",
@@ -333,7 +333,7 @@
     },
     "ca": {
       "title": "Extensió de subreddit de Twitch",
-      "description": "Una extensió per a la Seed Bible per integrar-se amb Twitch Sub.",
+      "description": "Una extensió per a la Seed Bible per integrar-se amb Twitch User.",
       "settingsTitle": "Configuració de Twitch",
       "infoTooltip": "Tria quines actualitzacions vols rebre quan un streamer que segueixes fa alguna cosa.",
       "followTranslationEvent": "Segueix l'esdeveniment de traducció",
@@ -343,8 +343,8 @@
       "leaveSession": "Surt de la sessió"
     },
     "cs": {
-      "title": "Rozšíření Twitch Sub",
-      "description": "Rozšíření pro integraci Seed Bible s Twitch Sub.",
+      "title": "Rozšíření Twitch User",
+      "description": "Rozšíření pro integraci Seed Bible s Twitch User.",
       "settingsTitle": "Nastavení Twitche",
       "infoTooltip": "Vyberte si, jaké aktualizace budete dostávat, když streamer, kterého sledujete, provede akci.",
       "followTranslationEvent": "Sledujte překladatelskou událost",
@@ -355,7 +355,7 @@
     },
     "cy": {
       "title": "Estyniad Is-gysylltiedig Twitch",
-      "description": "Estyniad ar gyfer y Beibl Seed i integreiddio â Twitch Sub.",
+      "description": "Estyniad ar gyfer y Beibl Seed i integreiddio â Twitch User.",
       "settingsTitle": "Gosodiadau Twitch",
       "infoTooltip": "Dewiswch pa ddiweddariadau rydych chi'n eu derbyn pan fydd ffrydiwr rydych chi'n ei ddilyn yn cymryd camau gweithredu.",
       "followTranslationEvent": "Dilynwch y digwyddiad cyfieithu",
@@ -365,8 +365,8 @@
       "leaveSession": "Gadael y sesiwn"
     },
     "da": {
-      "title": "Twitch Sub-udvidelse",
-      "description": "En udvidelse til Seed Bible til integration med Twitch Sub.",
+      "title": "Twitch User-udvidelse",
+      "description": "En udvidelse til Seed Bible til integration med Twitch User.",
       "settingsTitle": "Twitch-indstillinger",
       "infoTooltip": "Vælg, hvilke opdateringer du modtager, når en streamer, du følger, foretager en handling.",
       "followTranslationEvent": "Følg oversættelsesbegivenheden",
@@ -377,7 +377,7 @@
     },
     "de": {
       "title": "Twitch-Abo-Erweiterung",
-      "description": "Eine Erweiterung für die Seed Bible zur Integration mit Twitch Sub.",
+      "description": "Eine Erweiterung für die Seed Bible zur Integration mit Twitch User.",
       "settingsTitle": "Twitch-Einstellungen",
       "infoTooltip": "Wähle aus, welche Benachrichtigungen du erhalten möchtest, wenn ein Streamer, dem du folgst, eine Aktion durchführt.",
       "followTranslationEvent": "Folgen Sie dem Übersetzungsereignis",
@@ -387,8 +387,8 @@
       "leaveSession": "Sitzung verlassen"
     },
     "el": {
-      "title": "Επέκταση Twitch Sub",
-      "description": "Μια επέκταση για το Seed Bible για ενσωμάτωση με το Twitch Sub.",
+      "title": "Επέκταση Twitch User",
+      "description": "Μια επέκταση για το Seed Bible για ενσωμάτωση με το Twitch User.",
       "settingsTitle": "Ρυθμίσεις Twitch",
       "infoTooltip": "Επιλέξτε ποιες ενημερώσεις θα λαμβάνετε όταν ένας streamer που ακολουθείτε αναλαμβάνει δράση.",
       "followTranslationEvent": "Παρακολούθηση συμβάντος μετάφρασης",
@@ -399,7 +399,7 @@
     },
     "et": {
       "title": "Twitchi alamlaiendus",
-      "description": "Seed Bible'i laiendus Twitch Subiga integreerumiseks.",
+      "description": "Seed Bible'i laiendus Twitch Useriga integreerumiseks.",
       "settingsTitle": "Twitchi seaded",
       "infoTooltip": "Vali, milliseid värskendusi saad, kui sinu jälgitav striimer tegutseb.",
       "followTranslationEvent": "Jälgi tõlkeüritust",
@@ -410,7 +410,7 @@
     },
     "fi": {
       "title": "Twitch-tilauslaajennus",
-      "description": "Seed Biblen laajennus Twitch Subin integroimiseksi.",
+      "description": "Seed Biblen laajennus Twitch Userin integroimiseksi.",
       "settingsTitle": "Twitch-asetukset",
       "infoTooltip": "Valitse, mitä päivityksiä saat, kun seuraamasi striimaaja tekee toiminnon.",
       "followTranslationEvent": "Seuraa käännöstapahtumaa",
@@ -421,7 +421,7 @@
     },
     "fil": {
       "title": "Ekstensyon ng Sub ng Twitch",
-      "description": "Isang extension para sa Seed Bible para maisama sa Twitch Sub.",
+      "description": "Isang extension para sa Seed Bible para maisama sa Twitch User.",
       "settingsTitle": "Mga Setting ng Twitch",
       "infoTooltip": "Piliin kung aling mga update ang matatanggap mo kapag kumilos ang isang streamer na sinusundan mo.",
       "followTranslationEvent": "Sundan ang kaganapan sa pagsasalin",
@@ -431,8 +431,8 @@
       "leaveSession": "Umalis sa sesyon"
     },
     "fy": {
-      "title": "Twitch Sub-útwreiding",
-      "description": "In útwreiding foar de Seed Bible om te yntegrearjen mei Twitch Sub.",
+      "title": "Twitch User-útwreiding",
+      "description": "In útwreiding foar de Seed Bible om te yntegrearjen mei Twitch User.",
       "settingsTitle": "Twitch-ynstellingen",
       "infoTooltip": "Kies hokker updates jo ûntfange as in streamer dy't jo folgje aksje ûndernimt.",
       "followTranslationEvent": "Folgje oersettingsevenemint",
@@ -443,7 +443,7 @@
     },
     "gl": {
       "title": "Extensión de subreddit de Twitch",
-      "description": "Unha extensión para a Biblia das Sementes para integrarse con Twitch Sub.",
+      "description": "Unha extensión para a Biblia das Sementes para integrarse con Twitch User.",
       "settingsTitle": "Configuración de Twitch",
       "infoTooltip": "Escolle que actualizacións recibirás cando un streamer ao que segues realice unha acción.",
       "followTranslationEvent": "Seguir evento de tradución",
@@ -453,8 +453,8 @@
       "leaveSession": "Abandonar a sesión"
     },
     "gn": {
-      "title": "Twitch Sub Extensión rehegua",
-      "description": "Peteĩ extensión Seed Bible-pe g̃uarã oñeintegra hag̃ua Twitch Sub ndive.",
+      "title": "Twitch User Extensión rehegua",
+      "description": "Peteĩ extensión Seed Bible-pe g̃uarã oñeintegra hag̃ua Twitch User ndive.",
       "settingsTitle": "Ñemboheko Ñemboheko",
       "infoTooltip": "Eiporavo mba’e ñembopyahupa rehupytýta peteĩ streamer resegíva ojapo jave tembiapo.",
       "followTranslationEvent": "Segui evento de traducción",
@@ -476,7 +476,7 @@
     },
     "he": {
       "title": "סיומת טוויץ' סאב",
-      "description": "הרחבה עבור Seed Bible לשילוב עם Twitch Sub.",
+      "description": "הרחבה עבור Seed Bible לשילוב עם Twitch User.",
       "settingsTitle": "הגדרות טוויץ'",
       "infoTooltip": "בחרו אילו עדכונים תקבלו כאשר סטרימר שאתם עוקבים אחריו מבצע פעולה.",
       "followTranslationEvent": "עקוב אחר אירוע התרגום",
@@ -486,8 +486,8 @@
       "leaveSession": "עזוב את הסשן"
     },
     "hr": {
-      "title": "Twitch Sub proširenje",
-      "description": "Proširenje za integraciju Seed Bible s Twitch Subom.",
+      "title": "Twitch User proširenje",
+      "description": "Proširenje za integraciju Seed Bible s Twitch Userom.",
       "settingsTitle": "Postavke Twitcha",
       "infoTooltip": "Odaberite koje ćete obavijesti primati kada streamer kojeg pratite poduzme nešto.",
       "followTranslationEvent": "Pratite događaj prevođenja",
@@ -498,7 +498,7 @@
     },
     "hu": {
       "title": "Twitch feliratkozó kiterjesztés",
-      "description": "Egy kiterjesztés a Seed Bible-hez, amivel integrálható a Twitch Sub.",
+      "description": "Egy kiterjesztés a Seed Bible-hez, amivel integrálható a Twitch User.",
       "settingsTitle": "Twitch beállítások",
       "infoTooltip": "Válaszd ki, milyen értesítéseket szeretnél kapni, amikor egy általad követett streamer műveletet hajt végre.",
       "followTranslationEvent": "Fordítási esemény követése",
@@ -508,8 +508,8 @@
       "leaveSession": "Kilépés a munkamenetből"
     },
     "is": {
-      "title": "Twitch Sub viðbót",
-      "description": "Viðbót fyrir Seed Bible til að samþætta við Twitch Sub.",
+      "title": "Twitch User viðbót",
+      "description": "Viðbót fyrir Seed Bible til að samþætta við Twitch User.",
       "settingsTitle": "Twitch stillingar",
       "infoTooltip": "Veldu hvaða uppfærslur þú færð þegar streymir sem þú fylgist með grípur til aðgerða.",
       "followTranslationEvent": "Fylgja þýðingarviðburði",
@@ -520,7 +520,7 @@
     },
     "it": {
       "title": "Estensione per gli abbonamenti a Twitch",
-      "description": "Un'estensione per la Seed Bible per l'integrazione con Twitch Sub.",
+      "description": "Un'estensione per la Seed Bible per l'integrazione con Twitch User.",
       "settingsTitle": "Impostazioni di Twitch",
       "infoTooltip": "Scegli quali aggiornamenti ricevere quando uno streamer che segui compie un'azione.",
       "followTranslationEvent": "Segui l'evento di traduzione",
@@ -531,7 +531,7 @@
     },
     "iw": {
       "title": "סיומת טוויץ' סאב",
-      "description": "הרחבה עבור Seed Bible לשילוב עם Twitch Sub.",
+      "description": "הרחבה עבור Seed Bible לשילוב עם Twitch User.",
       "settingsTitle": "הגדרות טוויץ'",
       "infoTooltip": "בחרו אילו עדכונים תקבלו כאשר סטרימר שאתם עוקבים אחריו מבצע פעולה.",
       "followTranslationEvent": "עקוב אחר אירוע התרגום",
@@ -541,8 +541,8 @@
       "leaveSession": "עזוב את הסשן"
     },
     "ka": {
-      "title": "Twitch Sub-ის გაფართოება",
-      "description": "Seed Bible-ის გაფართოება Twitch Sub-თან ინტეგრაციისთვის.",
+      "title": "Twitch User-ის გაფართოება",
+      "description": "Seed Bible-ის გაფართოება Twitch User-თან ინტეგრაციისთვის.",
       "settingsTitle": "Twitch-ის პარამეტრები",
       "infoTooltip": "აირჩიეთ, რომელი განახლებები მიიღოთ, როდესაც თქვენს მიერ თვალყურის დევნებული სტრიმერი მოქმედებას განახორციელებს.",
       "followTranslationEvent": "თვალყური ადევნეთ თარგმანის მოვლენას",
@@ -553,7 +553,7 @@
     },
     "km": {
       "title": "ផ្នែកបន្ថែមរង Twitch",
-      "description": "ផ្នែកបន្ថែមសម្រាប់ Seed Bible ដើម្បីរួមបញ្ចូលជាមួយ Twitch Sub។",
+      "description": "ផ្នែកបន្ថែមសម្រាប់ Seed Bible ដើម្បីរួមបញ្ចូលជាមួយ Twitch User។",
       "settingsTitle": "ការកំណត់ Twitch",
       "infoTooltip": "ជ្រើសរើស​ព័ត៌មាន​ថ្មីៗ​ដែល​អ្នក​នឹង​ទទួល​បាន​នៅ​ពេល​ដែល​អ្នក​ផ្សាយ​ផ្ទាល់​ដែល​អ្នក​តាមដាន​ចាត់​វិធានការ។",
       "followTranslationEvent": "តាមដានព្រឹត្តិការណ៍បកប្រែ",
@@ -574,8 +574,8 @@
       "leaveSession": "ಸೆಶನ್ ತೊರೆಯಿರಿ"
     },
     "ky": {
-      "title": "Twitch Sub кеңейтүүсү",
-      "description": "Twitch Sub менен интеграциялоо үчүн Seed Bible кеңейтүүсү.",
+      "title": "Twitch User кеңейтүүсү",
+      "description": "Twitch User менен интеграциялоо үчүн Seed Bible кеңейтүүсү.",
       "settingsTitle": "Twitch жөндөөлөрү",
       "infoTooltip": "Сиз ээрчиген стример кандайдыр бир аракет жасаганда кандай жаңыртууларды алууну тандаңыз.",
       "followTranslationEvent": "Котормо иш-чарасына жазылыңыз",
@@ -585,8 +585,8 @@
       "leaveSession": "Сеанстан чыгуу"
     },
     "ln": {
-      "title": "Twitch Sub Extension ya",
-      "description": "Extension moko pona Bible ya Seed po e intégrer na Twitch Sub.",
+      "title": "Twitch User Extension ya",
+      "description": "Extension moko pona Bible ya Seed po e intégrer na Twitch User.",
       "settingsTitle": "Ba Paramètres ya Twitch",
       "infoTooltip": "Pona ba mises à jour nini okozwa tango streamer oyo olandi esali action.",
       "followTranslationEvent": "Bolanda molulu ya kobongola",
@@ -597,7 +597,7 @@
     },
     "lo": {
       "title": "ສ່ວນຂະຫຍາຍຍ່ອຍ Twitch",
-      "description": "ສ່ວນຂະຫຍາຍສຳລັບ Seed Bible ເພື່ອເຊື່ອມໂຍງກັບ Twitch Sub.",
+      "description": "ສ່ວນຂະຫຍາຍສຳລັບ Seed Bible ເພື່ອເຊື່ອມໂຍງກັບ Twitch User.",
       "settingsTitle": "ການຕັ້ງຄ່າ Twitch",
       "infoTooltip": "ເລືອກວ່າທ່ານຈະໄດ້ຮັບການອັບເດດໃດເມື່ອຜູ້ຖ່າຍທອດສົດທີ່ທ່ານຕິດຕາມດຳເນີນການຕ່າງໆ.",
       "followTranslationEvent": "ຕິດຕາມເຫດການການແປພາສາ",
@@ -608,7 +608,7 @@
     },
     "lt": {
       "title": "„Twitch“ prenumeratos pratęsimas",
-      "description": "„Seed Bible“ plėtinys, skirtas integracijai su „Twitch Sub“.",
+      "description": "„Seed Bible“ plėtinys, skirtas integracijai su „Twitch User“.",
       "settingsTitle": "„Twitch“ nustatymai",
       "infoTooltip": "Pasirinkite, kokius atnaujinimus gausite, kai jūsų stebimas transliuotojas atliks veiksmą.",
       "followTranslationEvent": "Sekti vertimo įvykį",
@@ -619,7 +619,7 @@
     },
     "lv": {
       "title": "Twitch apakšpagarinājums",
-      "description": "Seed Bible paplašinājums integrācijai ar Twitch Sub.",
+      "description": "Seed Bible paplašinājums integrācijai ar Twitch User.",
       "settingsTitle": "Twitch iestatījumi",
       "infoTooltip": "Izvēlieties, kādus atjauninājumus saņemt, kad straumētājs, kuram sekojat, veic darbību.",
       "followTranslationEvent": "Sekot tulkošanas notikumam",
@@ -629,8 +629,8 @@
       "leaveSession": "Iziet no sesijas"
     },
     "mk": {
-      "title": "Продолжување на Twitch Sub",
-      "description": "Додаток за Seed Bible за интегрирање со Twitch Sub.",
+      "title": "Продолжување на Twitch User",
+      "description": "Додаток за Seed Bible за интегрирање со Twitch User.",
       "settingsTitle": "Поставки на Twitch",
       "infoTooltip": "Изберете кои ажурирања ќе ги добивате кога стримерот што го следите ќе преземе акција.",
       "followTranslationEvent": "Следете го настанот за превод",
@@ -663,7 +663,7 @@
     },
     "ms": {
       "title": "Sambungan Sub Twitch",
-      "description": "Sambungan untuk Seed Bible untuk disepadukan dengan Twitch Sub.",
+      "description": "Sambungan untuk Seed Bible untuk disepadukan dengan Twitch User.",
       "settingsTitle": "Tetapan Twitch",
       "infoTooltip": "Pilih kemas kini yang anda terima apabila penstrim yang anda ikuti mengambil tindakan.",
       "followTranslationEvent": "Ikuti acara terjemahan",
@@ -673,8 +673,8 @@
       "leaveSession": "Tinggalkan sesi"
     },
     "my": {
-      "title": "Twitch Sub Extension",
-      "description": "Twitch Sub နှင့် ပေါင်းစပ်ရန် Seed Bible အတွက် extension တစ်ခု။",
+      "title": "Twitch User Extension",
+      "description": "Twitch User နှင့် ပေါင်းစပ်ရန် Seed Bible အတွက် extension တစ်ခု။",
       "settingsTitle": "Twitch ဆက်တင်များ",
       "infoTooltip": "သင်လိုက်ကြည့်နေတဲ့ streamer တစ်ယောက်ယောက်က လုပ်ဆောင်တဲ့အခါ ဘယ်လို အပ်ဒိတ်တွေ ရရှိမလဲဆိုတာ ရွေးချယ်ပါ။",
       "followTranslationEvent": "ဘာသာပြန်အစီအစဉ်ကို လိုက်ကြည့်ပါ",
@@ -684,8 +684,8 @@
       "leaveSession": "အစည်းအဝေးမှ ထွက်ခွာရန်"
     },
     "nb": {
-      "title": "Twitch Sub-utvidelse",
-      "description": "En utvidelse for Seed Bible for integrering med Twitch Sub.",
+      "title": "Twitch User-utvidelse",
+      "description": "En utvidelse for Seed Bible for integrering med Twitch User.",
       "settingsTitle": "Twitch-innstillinger",
       "infoTooltip": "Velg hvilke oppdateringer du mottar når en streamer du følger foretar seg noe.",
       "followTranslationEvent": "Følg oversettelseshendelsen",
@@ -696,7 +696,7 @@
     },
     "nl": {
       "title": "Twitch-abonnementsextensie",
-      "description": "Een uitbreiding voor de Seed Bible om te integreren met Twitch Sub.",
+      "description": "Een uitbreiding voor de Seed Bible om te integreren met Twitch User.",
       "settingsTitle": "Twitch-instellingen",
       "infoTooltip": "Kies welke updates je wilt ontvangen wanneer een streamer die je volgt een actie uitvoert.",
       "followTranslationEvent": "Volg het vertaalevenement",
@@ -706,8 +706,8 @@
       "leaveSession": "Verlaat de sessie"
     },
     "no": {
-      "title": "Twitch Sub-utvidelse",
-      "description": "En utvidelse for Seed Bible for integrering med Twitch Sub.",
+      "title": "Twitch User-utvidelse",
+      "description": "En utvidelse for Seed Bible for integrering med Twitch User.",
       "settingsTitle": "Twitch-innstillinger",
       "infoTooltip": "Velg hvilke oppdateringer du mottar når en streamer du følger foretar seg noe.",
       "followTranslationEvent": "Følg oversettelseshendelsen",
@@ -728,8 +728,8 @@
       "leaveSession": "ਸੈਸ਼ਨ ਛੱਡੋ"
     },
     "pl": {
-      "title": "Rozszerzenie Twitch Sub",
-      "description": "Rozszerzenie Seed Bible umożliwiające integrację z Twitch Sub.",
+      "title": "Rozszerzenie Twitch User",
+      "description": "Rozszerzenie Seed Bible umożliwiające integrację z Twitch User.",
       "settingsTitle": "Ustawienia Twitcha",
       "infoTooltip": "Wybierz, jakie aktualizacje chcesz otrzymywać, gdy obserwowany przez Ciebie streamer podejmie działanie.",
       "followTranslationEvent": "Śledź wydarzenie związane z tłumaczeniem",
@@ -739,8 +739,8 @@
       "leaveSession": "Opuść sesję"
     },
     "ro": {
-      "title": "Extensie Twitch Sub",
-      "description": "O extensie pentru Biblia Semințelor pentru a se integra cu Twitch Sub.",
+      "title": "Extensie Twitch User",
+      "description": "O extensie pentru Biblia Semințelor pentru a se integra cu Twitch User.",
       "settingsTitle": "Setări Twitch",
       "infoTooltip": "Alege ce actualizări primești atunci când un streamer pe care îl urmărești ia măsuri.",
       "followTranslationEvent": "Urmărește evenimentul de traducere",
@@ -750,8 +750,8 @@
       "leaveSession": "Părăsiți sesiunea"
     },
     "sk": {
-      "title": "Rozšírenie Twitch Sub",
-      "description": "Rozšírenie pre Seed Bible na integráciu s Twitch Sub.",
+      "title": "Rozšírenie Twitch User",
+      "description": "Rozšírenie pre Seed Bible na integráciu s Twitch User.",
       "settingsTitle": "Nastavenia Twitchu",
       "infoTooltip": "Vyberte si, ktoré aktualizácie budete dostávať, keď streamer, ktorého sledujete, vykoná akciu.",
       "followTranslationEvent": "Sledujte udalosť prekladu",
@@ -762,7 +762,7 @@
     },
     "sl": {
       "title": "Podaljšek za Twitch",
-      "description": "Razširitev za Seed Bible za integracijo s Twitch Sub.",
+      "description": "Razširitev za Seed Bible za integracijo s Twitch User.",
       "settingsTitle": "Nastavitve Twitcha",
       "infoTooltip": "Izberite, katera obvestila boste prejeli, ko sledilec, ki mu sledite, ukrepa.",
       "followTranslationEvent": "Spremljaj prevajalski dogodek",
@@ -772,8 +772,8 @@
       "leaveSession": "Zapusti sejo"
     },
     "sq": {
-      "title": "Zgjerimi Twitch Sub",
-      "description": "Një zgjerim për Seed Bible për t'u integruar me Twitch Sub.",
+      "title": "Zgjerimi Twitch User",
+      "description": "Një zgjerim për Seed Bible për t'u integruar me Twitch User.",
       "settingsTitle": "Cilësimet e Twitch",
       "infoTooltip": "Zgjidh cilat përditësime merr kur një transmetues që ndjek ndërmerr veprime.",
       "followTranslationEvent": "Ndiqni ngjarjen e përkthimit",
@@ -783,8 +783,8 @@
       "leaveSession": "Largohu nga seanca"
     },
     "sv": {
-      "title": "Twitch Sub-förlängning",
-      "description": "En tillägg för Seed Bible för integration med Twitch Sub.",
+      "title": "Twitch User-förlängning",
+      "description": "En tillägg för Seed Bible för integration med Twitch User.",
       "settingsTitle": "Twitch-inställningar",
       "infoTooltip": "Välj vilka uppdateringar du får när en streamer du följer vidtar åtgärder.",
       "followTranslationEvent": "Följ översättningshändelsen",
@@ -817,7 +817,7 @@
     },
     "th": {
       "title": "ส่วนขยายการสมัครสมาชิก Twitch",
-      "description": "ส่วนเสริมสำหรับ Seed Bible เพื่อเชื่อมต่อกับ Twitch Sub",
+      "description": "ส่วนเสริมสำหรับ Seed Bible เพื่อเชื่อมต่อกับ Twitch User",
       "settingsTitle": "การตั้งค่า Twitch",
       "infoTooltip": "เลือกการแจ้งเตือนที่คุณต้องการรับเมื่อสตรีมเมอร์ที่คุณติดตามดำเนินการใดๆ",
       "followTranslationEvent": "ติดตามกิจกรรมการแปล",
@@ -828,7 +828,7 @@
     },
     "tl": {
       "title": "Ekstensyon ng Sub ng Twitch",
-      "description": "Isang extension para sa Seed Bible para maisama sa Twitch Sub.",
+      "description": "Isang extension para sa Seed Bible para maisama sa Twitch User.",
       "settingsTitle": "Mga Setting ng Twitch",
       "infoTooltip": "Piliin kung aling mga update ang matatanggap mo kapag kumilos ang isang streamer na sinusundan mo.",
       "followTranslationEvent": "Sundan ang kaganapan sa pagsasalin",
@@ -838,8 +838,8 @@
       "leaveSession": "Umalis sa sesyon"
     },
     "uz": {
-      "title": "Twitch Sub kengaytmasi",
-      "description": "Seed Bible uchun Twitch Sub bilan integratsiya qilish uchun kengaytma.",
+      "title": "Twitch User kengaytmasi",
+      "description": "Seed Bible uchun Twitch User bilan integratsiya qilish uchun kengaytma.",
       "settingsTitle": "Twitch sozlamalari",
       "infoTooltip": "Kuzatuvchi strimeringiz harakatga kelganda qanday yangilanishlarni olishni tanlang.",
       "followTranslationEvent": "Tarjima tadbirini kuzatib boring",
@@ -849,8 +849,8 @@
       "leaveSession": "Sessiyadan chiqish"
     },
     "zu": {
-      "title": "Isandiso se-Twitch Sub",
-      "description": "Isandiso seSeed Bible ukuze sihlanganiswe neTwitch Sub.",
+      "title": "Isandiso se-Twitch User",
+      "description": "Isandiso seSeed Bible ukuze sihlanganiswe neTwitch User.",
       "settingsTitle": "Izilungiselelo ze-Twitch",
       "infoTooltip": "Khetha ukuthi yiziphi izibuyekezo ozitholayo lapho umsakazo owulandelayo ethatha isinyathelo.",
       "followTranslationEvent": "Landela umcimbi wokuhumusha",
