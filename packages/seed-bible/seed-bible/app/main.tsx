@@ -17,7 +17,6 @@ import {
   type AppConfig,
 } from "./appConfig";
 import "./main.css";
-import { useHelmet } from "../hooks/Helmet";
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -78,6 +77,12 @@ export function Main({
 
   const { config } = state;
   const fontSizeClass = `sb-font-size-${config.config.value.fontSize.toLowerCase()}`;
+
+  if (typeof document !== "undefined") {
+    useSignalEffect(() => {
+      document.title = state.app.title.value;
+    });
+  }
 
   return (
     <AppConfigProvider value={appConfig}>

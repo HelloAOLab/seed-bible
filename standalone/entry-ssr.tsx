@@ -1,11 +1,6 @@
 import { renderToStringAsync } from "preact-render-to-string";
 import { Main } from "../packages/seed-bible/seed-bible/app/main";
 import type { AppConfig } from "../packages/seed-bible/seed-bible/app/appConfig";
-import {
-  createHelmetData,
-  HelmetContext,
-} from "@packages/seed-bible/seed-bible/hooks/Helmet";
-import { signal } from "@preact/signals";
 import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 
 /** A single chunk record from a Vite client manifest. */
