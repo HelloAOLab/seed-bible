@@ -5,10 +5,7 @@ import type {
 } from "../managers/FreeUseBibleAPI";
 import { safeLocalStorage } from "../app/ssrEnv";
 import type { BibleDataManager } from "../managers/BibleDataManager";
-import {
-  getDefaultTranslationForLanguage,
-  type BibleReadingState,
-} from "../managers/BibleReadingManager";
+import { type BibleReadingState } from "../managers/BibleReadingManager";
 import type { Pane, PanesManager } from "../managers/PanesManager";
 import type { TabsManager } from "../managers/TabsManager";
 import type {

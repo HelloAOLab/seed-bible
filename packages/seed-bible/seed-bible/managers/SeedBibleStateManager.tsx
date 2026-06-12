@@ -210,6 +210,8 @@ export interface CreateSeedBibleStateOptions {
 export function createSeedBibleState(
   options: CreateSeedBibleStateOptions = {}
 ): SeedBibleState {
+  console.log("Creating SeedBibleState with options:", options);
+
   const navigation = createNavigationManager({
     initialHref: options.initialHref,
     basePath: options.config?.basePath,

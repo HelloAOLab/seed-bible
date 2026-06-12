@@ -220,6 +220,12 @@ export function createTabs(
   const initialBookId = getInitialFirstTabBookId(navigation.currentUrl.value);
   const initialChapter = getInitialFirstTabChapter(navigation.currentUrl.value);
 
+  console.log("Creating TabsManager with initial URL parameters:", {
+    initialTranslationId,
+    initialBookId,
+    initialChapter,
+  });
+
   const tabs = signal<ReaderTab[]>(
     createInitialTabs(dataManager, highlightsManager, i18nManager, {
       translationId: initialTranslationId,
