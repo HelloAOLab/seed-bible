@@ -1739,9 +1739,6 @@
       "todayScreen.infrastructure.presentation.components.containers.Chapter": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/Chapter.tsx"
       ],
-      "todayScreen.infrastructure.presentation.components.containers.Divider": [
-        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/Divider.tsx"
-      ],
       "todayScreen.infrastructure.presentation.components.containers.FilteredReading": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/FilteredReading.tsx"
       ],
@@ -1775,11 +1772,17 @@
       "todayScreen.infrastructure.presentation.components.containers.TodayContent": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/TodayContent.tsx"
       ],
+      "todayScreen.infrastructure.presentation.components.containers.Tooltip": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/Tooltip.tsx"
+      ],
       "todayScreen.infrastructure.presentation.components.containers.Welcome": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/containers/Welcome.tsx"
       ],
       "todayScreen.infrastructure.presentation.components.Today": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/Today.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.components.ui.Divider": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/components/ui/Divider.tsx"
       ],
       "todayScreen.infrastructure.presentation.components.ui.SeedBibleIcon": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/components/ui/SeedBibleIcon.tsx"
@@ -1852,6 +1855,9 @@
       ],
       "todayScreen.infrastructure.presentation.hooks.useTodayContent": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useTodayContent.tsx"
+      ],
+      "todayScreen.infrastructure.presentation.hooks.useTooltip": [
+        "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useTooltip.tsx"
       ],
       "todayScreen.infrastructure.presentation.hooks.useWelcome": [
         "./packages/today-screen/todayScreen/infrastructure/presentation/hooks/useWelcome.tsx"

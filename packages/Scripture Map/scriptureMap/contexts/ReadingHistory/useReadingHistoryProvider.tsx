@@ -338,6 +338,11 @@ export const useReadingHistoryProvider: UseReadingHistoryProvider = () => {
   }, [timelineRange]);
 
   const tryUpdateReadingHistoryUsersFilters = useCallback(() => {
+    // Wait until we know who the local user is. Reconciling with a stale (null)
+    // `myAuthBotId` would treat the local user — added by `handleUserLoggedIn`
+    // via `authBot.id` — as a foreign key and delete it from the filters.
+    if (!myAuthBotId) return;
+
     setReadingHistoryUserFilters((prev) => {
       const next = new Map(prev);
 

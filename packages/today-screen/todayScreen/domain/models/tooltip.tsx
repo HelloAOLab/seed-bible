@@ -33,8 +33,4 @@ export interface TextTooltipContentData {
   content: string;
 }
 
-export type TooltipContentData =
-  | ReadingHistoryTooltipContentData
-  | ReadingHistoryTooltipHeaderData
-  | UserPresenceTooltipContentData
-  | TextTooltipContentData;
+export type TooltipContentData = TextTooltipContentData;

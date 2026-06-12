@@ -2,6 +2,38 @@
   cursor: pointer;
 }
 
+.tooltip {
+  width: auto;
+  background-color: var(--sb-reader-font-color);
+  color: var(--sb-reader-background);
+  text-align: center;
+  z-index: 100;
+  border-radius: 12px;
+  position: fixed;
+  padding: 12px;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  font-size: 14px;
+  transition:
+    color 0.3s ease,
+    background-color 0.3s ease;
+  box-sizing: border-box;
+  scrollbar-width: none;
+}
+
+.tooltip.tooltip-up {
+  transform: translate(-50%, calc((100% + 8px) * (-1)));
+}
+
+.tooltip.tooltip-down {
+  transform: translate(-50%, 8px);
+}
+
 .book-selector-button {
   border-style: solid;
   border-width: 1px;

@@ -1,7 +1,7 @@
 import { useTodayContent } from "../../hooks/useTodayContent";
 import { Header } from "./Header";
 import { ResumeReadingSection } from "./ResumeReadingSection";
-import { Divider } from "./Divider";
+import { Divider } from "../ui/Divider";
 import { Fragment } from "preact/jsx-runtime";
 import { RecommendationsSection } from "todayScreen.infrastructure.presentation.components.containers.RecommendationsSection";
 import { SearchSection } from "todayScreen.infrastructure.presentation.components.containers.SearchSection";

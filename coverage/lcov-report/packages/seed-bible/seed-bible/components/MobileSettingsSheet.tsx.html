@@ -259,7 +259,14 @@
 <a name='L190'></a><a href='#L190'>190</a>
 <a name='L191'></a><a href='#L191'>191</a>
 <a name='L192'></a><a href='#L192'>192</a>
-<a name='L193'></a><a href='#L193'>193</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L193'></a><a href='#L193'>193</a>
+<a name='L194'></a><a href='#L194'>194</a>
+<a name='L195'></a><a href='#L195'>195</a>
+<a name='L196'></a><a href='#L196'>196</a>
+<a name='L197'></a><a href='#L197'>197</a>
+<a name='L198'></a><a href='#L198'>198</a>
+<a name='L199'></a><a href='#L199'>199</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -451,6 +458,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
 import {
   UI_TEXT_SIZE_OPTIONS,
@@ -459,6 +471,7 @@ import {
   type UITextSize,
 } from "seed-bible.managers.SettingsManager";
 import { useI18n } from "seed-bible.i18n.I18nManager";
+import { SettingsIcon } from "./icons";
 &nbsp;
 const FONT_SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 &nbsp;
@@ -634,9 +647,14 @@ export function <span class="fstat-no" title="function not covered" >MobileSetti
           className="sb-mobile-settings-sheet-all-settings"
           onClick={onOpenAllSettings}
         &gt;
-          &lt;span className="material-symbols-outlined"&gt;settings&lt;/span&gt;
+          &lt;span className="material-symbols-outlined sb-mobile-settings-icon"&gt;
+            &lt;SettingsIcon /&gt;
+          &lt;/span&gt;
           &lt;span&gt;
             {t("go-to-all-settings", { defaultValue: "Go to all settings" })}
+          &lt;/span&gt;
+          &lt;span className="material-symbols-outlined sb-mobile-settings-sheet-all-settings-chevron"&gt;
+            chevron_right
           &lt;/span&gt;
         &lt;/button&gt;
       &lt;/div&gt;
@@ -657,7 +675,7 @@ export function <span class="fstat-no" title="function not covered" >MobileSetti
         rel="noopener noreferrer"
         >istanbul</a
       >
-      at 2026-05-22T23:47:38.848Z
+      at 2026-06-12T03:29:14.862Z
     </div>
     <script src="../../../../prettify.js"></script>
     <script>

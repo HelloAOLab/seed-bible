@@ -556,7 +556,16 @@
 <a name='L484'></a><a href='#L484'>484</a>
 <a name='L485'></a><a href='#L485'>485</a>
 <a name='L486'></a><a href='#L486'>486</a>
-<a name='L487'></a><a href='#L487'>487</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L487'></a><a href='#L487'>487</a>
+<a name='L488'></a><a href='#L488'>488</a>
+<a name='L489'></a><a href='#L489'>489</a>
+<a name='L490'></a><a href='#L490'>490</a>
+<a name='L491'></a><a href='#L491'>491</a>
+<a name='L492'></a><a href='#L492'>492</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -985,6 +994,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">17x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-yes">1x</span>
@@ -1090,11 +1100,15 @@ interface LabelFeedbackConfigProviderPort {
 type DimensionProvider = () =&gt; string;
 &nbsp;
 interface InfoLabelTextMapperPort {
-  toInfrastructure: (piece: Piece&lt;"InfoLabelText"&gt;) =&gt; InfoLabelTextBot | undefined;
+  toInfrastructure: (
+    piece: Piece&lt;"InfoLabelText"&gt;
+  ) =&gt; InfoLabelTextBot | undefined;
 }
 &nbsp;
 interface ActivityIndicatorMapperPort {
-  toInfrastructure: (indicator: ActivityIndicator) =&gt; ActivityIndicatorBot | undefined;
+  toInfrastructure: (
+    indicator: ActivityIndicator
+  ) =&gt; ActivityIndicatorBot | undefined;
 }
 &nbsp;
 interface AdapterProps {
@@ -1471,7 +1485,8 @@ export class LabelFeedbackAdapter {
       );
     }
     const activityIndicators = data.activityIndicators.map((indicator) =&gt; {
-      const indicatorBot = this.#activityIndicatorMapperPort.toInfrastructure(indicator);
+      const indicatorBot =
+        this.#activityIndicatorMapperPort.toInfrastructure(indicator);
       if (!indicatorBot) {
         throw new Error(
           `LabelFeedbackAdapter: indicatorBot not found at displayShowFeedback`
@@ -1542,7 +1557,7 @@ export class LabelFeedbackAdapter {
         rel="noopener noreferrer"
         >istanbul</a
       >
-      at 2026-05-22T23:47:38.848Z
+      at 2026-06-12T03:29:14.862Z
     </div>
     <script src="../../../../../../prettify.js"></script>
     <script>

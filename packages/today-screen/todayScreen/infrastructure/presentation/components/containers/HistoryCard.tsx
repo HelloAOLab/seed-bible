@@ -3,6 +3,7 @@ import { useHistoryCard } from "../../hooks/useHistoryCard";
 import { useReadingHistoryTimeline } from "../../hooks/useReadingHistoryTimeline";
 import { useTodayContext } from "../../contexts/today/TodayContext";
 import { FilteredReading } from "./FilteredReading";
+import { Tooltip } from "./Tooltip";
 
 const ReadingHistoryTimelineSection = () => {
   const { ReadingHistoryTimeline } = useTodayContext();
@@ -13,6 +14,7 @@ const ReadingHistoryTimelineSection = () => {
       itemsData={itemsData}
       timelineRef={timelineRef}
       footer={footer}
+      Tooltip={Tooltip}
     />
   );
 };

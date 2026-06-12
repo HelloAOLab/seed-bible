@@ -54,7 +54,7 @@
           <div class="fl pad1y space-right2">
             <span class="strong">100% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">124/124</span>
+            <span class="fraction">126/126</span>
           </div>
         </div>
         <p class="quiet">
@@ -551,7 +551,22 @@
 <a name='L479'></a><a href='#L479'>479</a>
 <a name='L480'></a><a href='#L480'>480</a>
 <a name='L481'></a><a href='#L481'>481</a>
-<a name='L482'></a><a href='#L482'>482</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L482'></a><a href='#L482'>482</a>
+<a name='L483'></a><a href='#L483'>483</a>
+<a name='L484'></a><a href='#L484'>484</a>
+<a name='L485'></a><a href='#L485'>485</a>
+<a name='L486'></a><a href='#L486'>486</a>
+<a name='L487'></a><a href='#L487'>487</a>
+<a name='L488'></a><a href='#L488'>488</a>
+<a name='L489'></a><a href='#L489'>489</a>
+<a name='L490'></a><a href='#L490'>490</a>
+<a name='L491'></a><a href='#L491'>491</a>
+<a name='L492'></a><a href='#L492'>492</a>
+<a name='L493'></a><a href='#L493'>493</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -860,6 +875,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">29x</span>
 <span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">26x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -962,6 +978,7 @@
 <span class="cline-any cline-yes">61x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">3x</span>
@@ -972,6 +989,7 @@
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1021,6 +1039,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">4x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1029,6 +1049,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1061,12 +1083,16 @@ import type { ObjectPooler } from "bibleVizUtils.infrastructure.adapters.casualo
 import type { ActivityIndicatorVisualConfigsType } from "bibleVizUtils.infrastructure.config.activityIndicators.visuals";
 &nbsp;
 interface ActivityIndicatorMapperPort {
-  toInfrastructure: (indicator: ActivityIndicator) =&gt; ActivityIndicatorBot | undefined;
+  toInfrastructure: (
+    indicator: ActivityIndicator
+  ) =&gt; ActivityIndicatorBot | undefined;
   toDomain: (bot: ActivityIndicatorBot) =&gt; ActivityIndicator;
 }
 &nbsp;
 interface InfoLabelTextMapperPort {
-  toInfrastructure: (piece: Piece&lt;"InfoLabelText"&gt;) =&gt; InfoLabelTextBot | undefined;
+  toInfrastructure: (
+    piece: Piece&lt;"InfoLabelText"&gt;
+  ) =&gt; InfoLabelTextBot | undefined;
 }
 &nbsp;
 interface DimensionProviderPort {
@@ -1340,7 +1366,8 @@ export class ActivityIndicatorsAdapter
         | undefined;
 &nbsp;
       if (indicator) {
-        indicatorBot = this.#activityIndicatorMapperPort.toInfrastructure(indicator);
+        indicatorBot =
+          this.#activityIndicatorMapperPort.toInfrastructure(indicator);
       } else {
         indicatorBot = this.#objectPooler.getObject(
           BiblePiece.ActivityIndicator
@@ -1443,7 +1470,8 @@ export class ActivityIndicatorsAdapter
   hideIndicator: ActivityIndicatorsAdapterPort["hideIndicator"] = (
     indicator
   ) =&gt; {
-    const indicatorBot = this.#activityIndicatorMapperPort.toInfrastructure(indicator);
+    const indicatorBot =
+      this.#activityIndicatorMapperPort.toInfrastructure(indicator);
     if (indicatorBot) {
       this.#objectPooler.releaseObject(indicatorBot, "ActivityIndicator");
     }
@@ -1459,7 +1487,8 @@ export class ActivityIndicatorsAdapter
     indicator: ActivityIndicator,
     container: ActivityContainer
   ): void {
-    const indicatorBot = this.#activityIndicatorMapperPort.toInfrastructure(indicator);
+    const indicatorBot =
+      this.#activityIndicatorMapperPort.toInfrastructure(indicator);
     if (indicatorBot) {
       if (indicatorBot.tags.ownerBotId === undefined) {
         throw new Error(
@@ -1501,7 +1530,9 @@ export class ActivityIndicatorsAdapter
     pieceId: ActivityIndicatorBot["tags"]["ownerBotId"]
   ): ActivityIndicator[] {
     const bots = this.#botsRepositoryPort.getIndicatorBotsByPieceId(pieceId);
-    const indicators = bots.map((bot) =&gt; this.#activityIndicatorMapperPort.toDomain(bot));
+    const indicators = bots.map((bot) =&gt;
+      this.#activityIndicatorMapperPort.toDomain(bot)
+    );
     return indicators;
   }
   getIndicatorsByPieceDataId(
@@ -1509,7 +1540,9 @@ export class ActivityIndicatorsAdapter
   ): ActivityIndicator[] {
     const bots =
       this.#botsRepositoryPort.getIndicatorBotsByPieceDataId(pieceDataId);
-    const indicators = bots.map((bot) =&gt; this.#activityIndicatorMapperPort.toDomain(bot));
+    const indicators = bots.map((bot) =&gt;
+      this.#activityIndicatorMapperPort.toDomain(bot)
+    );
     return indicators;
   }
 }
@@ -1527,7 +1560,7 @@ export class ActivityIndicatorsAdapter
         rel="noopener noreferrer"
         >istanbul</a
       >
-      at 2026-05-22T23:47:38.848Z
+      at 2026-06-12T03:29:14.862Z
     </div>
     <script src="../../../../../../prettify.js"></script>
     <script>

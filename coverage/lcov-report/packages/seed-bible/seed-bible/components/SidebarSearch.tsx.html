@@ -31,27 +31,27 @@
         </h1>
         <div class="clearfix">
           <div class="fl pad1y space-right2">
-            <span class="strong">72.65% </span>
+            <span class="strong">74.1% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">93/128</span>
+            <span class="fraction">103/139</span>
           </div>
 
           <div class="fl pad1y space-right2">
-            <span class="strong">63.41% </span>
+            <span class="strong">63.09% </span>
             <span class="quiet">Branches</span>
-            <span class="fraction">52/82</span>
+            <span class="fraction">53/84</span>
           </div>
 
           <div class="fl pad1y space-right2">
-            <span class="strong">80% </span>
+            <span class="strong">80.76% </span>
             <span class="quiet">Functions</span>
-            <span class="fraction">20/25</span>
+            <span class="fraction">21/26</span>
           </div>
 
           <div class="fl pad1y space-right2">
-            <span class="strong">72.44% </span>
+            <span class="strong">73.91% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">92/127</span>
+            <span class="fraction">102/138</span>
           </div>
         </div>
         <p class="quiet">
@@ -429,7 +429,21 @@
 <a name='L360'></a><a href='#L360'>360</a>
 <a name='L361'></a><a href='#L361'>361</a>
 <a name='L362'></a><a href='#L362'>362</a>
-<a name='L363'></a><a href='#L363'>363</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L363'></a><a href='#L363'>363</a>
+<a name='L364'></a><a href='#L364'>364</a>
+<a name='L365'></a><a href='#L365'>365</a>
+<a name='L366'></a><a href='#L366'>366</a>
+<a name='L367'></a><a href='#L367'>367</a>
+<a name='L368'></a><a href='#L368'>368</a>
+<a name='L369'></a><a href='#L369'>369</a>
+<a name='L370'></a><a href='#L370'>370</a>
+<a name='L371'></a><a href='#L371'>371</a>
+<a name='L372'></a><a href='#L372'>372</a>
+<a name='L373'></a><a href='#L373'>373</a>
+<a name='L374'></a><a href='#L374'>374</a>
+<a name='L375'></a><a href='#L375'>375</a>
+<a name='L376'></a><a href='#L376'>376</a>
+<a name='L377'></a><a href='#L377'>377</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -507,7 +521,7 @@
 <span class="cline-any cline-yes">11x</span>
 <span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-yes">3x</span>
-<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -587,6 +601,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">11x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">11x</span>
@@ -868,8 +896,8 @@ export function SidebarSearch(props: SidebarSearchProps) {
 &nbsp;
   useEffect(() =&gt; {
     return () =&gt; {
-      <span class="missing-if-branch" title="else path not taken" >E</span>if (searchDebounceTimeoutRef.current !== null) {
-        window.clearTimeout(searchDebounceTimeoutRef.current);
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (searchDebounceTimeoutRef.current !== null) {
+<span class="cstat-no" title="statement not covered" >        window.clearTimeout(searchDebounceTimeoutRef.current);</span>
       }
     };
   }, []);
@@ -951,10 +979,24 @@ export function SidebarSearch(props: SidebarSearchProps) {
     }, 180);
   };
 &nbsp;
+  const resetSearch = () =&gt; {
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (searchDebounceTimeoutRef.current !== null) {
+      window.clearTimeout(searchDebounceTimeoutRef.current);
+      searchDebounceTimeoutRef.current = null;
+    }
+    latestSearchRequestRef.current++;
+    searchQuery.value = "";
+    searchResults.value = [];
+    searchLoading.value = false;
+    searchError.value = null;
+    isSearchPanelOpen.value = false;
+    highlightedResultIndex.value = -1;
+  };
+&nbsp;
   const openSearchResult = async (result: SidebarSearchResult) =&gt; {
     closeContextMenus();
     closeLayoutMenu();
-    isSearchPanelOpen.value = false;
+    resetSearch();
 &nbsp;
     const targetTab = getOrCreateSearchTargetTab(state);
     await targetTab.readingState.selectTranslationAndChapter(
@@ -1167,7 +1209,7 @@ export function SidebarSearch(props: SidebarSearchProps) {
         rel="noopener noreferrer"
         >istanbul</a
       >
-      at 2026-05-22T23:47:38.848Z
+      at 2026-06-12T03:29:14.862Z
     </div>
     <script src="../../../../prettify.js"></script>
     <script>

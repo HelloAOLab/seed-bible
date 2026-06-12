@@ -387,7 +387,21 @@
 <a name='L315'></a><a href='#L315'>315</a>
 <a name='L316'></a><a href='#L316'>316</a>
 <a name='L317'></a><a href='#L317'>317</a>
-<a name='L318'></a><a href='#L318'>318</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L318'></a><a href='#L318'>318</a>
+<a name='L319'></a><a href='#L319'>319</a>
+<a name='L320'></a><a href='#L320'>320</a>
+<a name='L321'></a><a href='#L321'>321</a>
+<a name='L322'></a><a href='#L322'>322</a>
+<a name='L323'></a><a href='#L323'>323</a>
+<a name='L324'></a><a href='#L324'>324</a>
+<a name='L325'></a><a href='#L325'>325</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -756,7 +770,9 @@ interface DimensionProviderPort {
 }
 &nbsp;
 interface InfoLabelTextMapperPort {
-  toInfrastructure: (piece: Piece&lt;"InfoLabelText"&gt;) =&gt; InfoLabelTextBot | undefined;
+  toInfrastructure: (
+    piece: Piece&lt;"InfoLabelText"&gt;
+  ) =&gt; InfoLabelTextBot | undefined;
 }
 &nbsp;
 interface ServiceParams {
@@ -771,7 +787,12 @@ export class LabelAdapter implements LabelAdapterPort {
   #labelConfigProviderPort: ServiceParams["labelConfigProviderPort"];
   #dimensionProviderPort: DimensionProviderPort;
   #infoLabelTextMapperPort: InfoLabelTextMapperPort;
-  constructor({ objectPooler, labelConfigProviderPort, dimensionProviderPort, infoLabelTextMapperPort }: ServiceParams) {
+  constructor({
+    objectPooler,
+    labelConfigProviderPort,
+    dimensionProviderPort,
+    infoLabelTextMapperPort,
+  }: ServiceParams) {
     this.#objectPooler = objectPooler;
     this.#labelConfigProviderPort = labelConfigProviderPort;
     this.#dimensionProviderPort = dimensionProviderPort;
@@ -793,7 +814,7 @@ export class LabelAdapter implements LabelAdapterPort {
     isInteractable = true,
     dateFormat,
     translucencyMode,
-    makesAttentionFeedback
+    makesAttentionFeedback,
   }) =&gt; {
     const dimension = this.#dimensionProviderPort.getDimension();
     const pieceBot = PieceMapper.toInfrastructure(piece);
@@ -1035,7 +1056,7 @@ export class LabelAdapter implements LabelAdapterPort {
         rel="noopener noreferrer"
         >istanbul</a
       >
-      at 2026-05-22T23:47:38.848Z
+      at 2026-06-12T03:29:14.862Z
     </div>
     <script src="../../../../../../prettify.js"></script>
     <script>

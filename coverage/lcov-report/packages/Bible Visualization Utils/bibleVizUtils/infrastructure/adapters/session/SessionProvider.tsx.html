@@ -34,27 +34,27 @@
         </h1>
         <div class="clearfix">
           <div class="fl pad1y space-right2">
-            <span class="strong">96.29% </span>
+            <span class="strong">81.81% </span>
             <span class="quiet">Statements</span>
-            <span class="fraction">26/27</span>
+            <span class="fraction">27/33</span>
           </div>
 
           <div class="fl pad1y space-right2">
-            <span class="strong">100% </span>
+            <span class="strong">81.81% </span>
             <span class="quiet">Branches</span>
-            <span class="fraction">18/18</span>
+            <span class="fraction">18/22</span>
           </div>
 
           <div class="fl pad1y space-right2">
-            <span class="strong">87.5% </span>
+            <span class="strong">77.77% </span>
             <span class="quiet">Functions</span>
-            <span class="fraction">7/8</span>
+            <span class="fraction">7/9</span>
           </div>
 
           <div class="fl pad1y space-right2">
-            <span class="strong">96% </span>
+            <span class="strong">80.64% </span>
             <span class="quiet">Lines</span>
-            <span class="fraction">24/25</span>
+            <span class="fraction">25/31</span>
           </div>
         </div>
         <p class="quiet">
@@ -168,7 +168,21 @@
 <a name='L96'></a><a href='#L96'>96</a>
 <a name='L97'></a><a href='#L97'>97</a>
 <a name='L98'></a><a href='#L98'>98</a>
-<a name='L99'></a><a href='#L99'>99</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -187,6 +201,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">30x</span>
 <span class="cline-any cline-yes">30x</span>
 <span class="cline-any cline-yes">30x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -243,6 +260,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">5x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-yes">7x</span>
@@ -266,6 +287,13 @@
 <span class="cline-any cline-yes">17x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import type { UserIds } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/userPresence";
 import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
@@ -278,15 +306,18 @@ interface ConnectedUserData extends UserIds {
 interface ProviderParams {
   state: SeedBibleState;
   colors: string[];
+  icons: string[];
 }
 &nbsp;
 export class SessionProvider implements SessionProviderPort {
   #state: ProviderParams["state"];
   #colors: ProviderParams["colors"];
+  #icons: ProviderParams["icons"];
 &nbsp;
-  constructor({ state, colors }: ProviderParams) {
+  constructor({ state, colors, icons }: ProviderParams) {
     this.#state = state;
     this.#colors = colors;
+    this.#icons = icons;
   }
 &nbsp;
   getConnectedUsers(): ConnectedUserData[] {
@@ -340,6 +371,10 @@ export class SessionProvider implements SessionProviderPort {
     return this.#getDeterministicColor(id);
   }
 &nbsp;
+<span class="fstat-no" title="function not covered" >  ge</span>tUserIconById(id: string): string {
+<span class="cstat-no" title="statement not covered" >    return this.#getDeterministicIcon(id);</span>
+  }
+&nbsp;
   getAuthIdByConnectionId(id: string): string | undefined {
     return (
       this.getConnectedUsers().find((user) =&gt; {
@@ -363,6 +398,13 @@ export class SessionProvider implements SessionProviderPort {
     const color = this.#colors[colorIndex];
     return color ?? "#E5E7EB";
   }
+&nbsp;
+  #getDeterministicIcon(id: string): string {
+    const normalized = <span class="cstat-no" title="statement not covered" >id &amp;&amp; id.length &gt; 0 ? id : "anonymous";</span>
+    const hash = <span class="cstat-no" title="statement not covered" >this.#getHashString(normalized);</span>
+    const iconIndex = <span class="cstat-no" title="statement not covered" >hash % this.#icons.length;</span>
+<span class="cstat-no" title="statement not covered" >    return this.#icons[iconIndex]!;</span>
+  }
 }
 &nbsp;</pre></td></tr></table></pre>
 
@@ -378,7 +420,7 @@ export class SessionProvider implements SessionProviderPort {
         rel="noopener noreferrer"
         >istanbul</a
       >
-      at 2026-05-22T23:47:38.848Z
+      at 2026-06-12T03:29:14.862Z
     </div>
     <script src="../../../../../../prettify.js"></script>
     <script>
