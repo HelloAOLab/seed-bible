@@ -116,12 +116,12 @@ jobs:
             --cache-control "no-cache"
 
       # ─── Tell the host to drop its cached pointer immediately ───────────────
-      - name: Invalidate host pointer cache
-        if: ${{ vars.HOST_INVALIDATE_URL != '' }}
-        run: |
-          curl -fsS -X POST \
-            "${{ vars.HOST_INVALIDATE_URL }}?branch=${{ steps.ids.outputs.branch }}" \
-            || echo "invalidate ping failed (non-fatal)"
+      # - name: Invalidate host pointer cache
+      #   if: ${{ vars.HOST_INVALIDATE_URL != '' }}
+      #   run: |
+      #     curl -fsS -X POST \
+      #       "${{ vars.HOST_INVALIDATE_URL }}?branch=${{ steps.ids.outputs.branch }}" \
+      #       || echo "invalidate ping failed (non-fatal)"
 
       - name: Summary
         env:
