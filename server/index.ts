@@ -19,11 +19,7 @@ import {
   type ServerResponse,
 } from "node:http";
 import { pathToFileURL } from "node:url";
-import {
-  createStore,
-  type ArtifactStore,
-  type BranchPointer,
-} from "./store.ts";
+import { createStore, type ArtifactStore, type BranchPointer } from "./store";
 import Bowser from "bowser";
 import { parseAcceptLanguages } from "./lang.js";
 

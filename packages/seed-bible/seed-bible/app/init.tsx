@@ -17,7 +17,7 @@ console.log("Starting APP");
 // a fresh client render instead.
 if (container.firstChild) {
   // TODO: Support hydration
-  //   render(<Main config={config} />, container);
+  render(<Main config={config} />, container);
 } else {
   render(<Main config={config} />, container);
 }
