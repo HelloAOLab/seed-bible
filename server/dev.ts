@@ -3,6 +3,7 @@ import { createServer as createViteServer } from "vite";
 import fs from "node:fs";
 import path from "node:path";
 import Bowser from "bowser";
+import { parseAcceptLanguages } from "./lang";
 
 async function createServer() {
   const app = express();
@@ -56,15 +57,24 @@ async function createServer() {
       const { render } = await vite.ssrLoadModule("/standalone/entry-ssr.tsx");
 
       const browser = Bowser.getParser(req.headers["user-agent"]!);
-
       const isMobile = browser.getPlatformType(true) === "mobile";
+
+      const acceptedLanguages = req.headers["accept-language"]
+        ? parseAcceptLanguages(req.headers["accept-language"])
+        : [];
+      console.log("Accepted languages:", acceptedLanguages);
 
       // 4. render the app HTML. This assumes entry-server.js's exported
       //     `render` function calls appropriate framework SSR APIs,
       //    e.g. ReactDOMServer.renderToString()
       const html = await render({
         path: req.originalUrl,
-        config: { basePath: "", assetHost: "", renderedAsMobile: isMobile },
+        config: {
+          basePath: "",
+          assetHost: "",
+          renderedAsMobile: isMobile,
+          acceptedLanguages,
+        },
         html: template,
       });
 

@@ -74,19 +74,34 @@ export function addTranslations(
 // }
 
 const availableLanguages = Object.keys(languages).sort();
-
 const I18nContext = createContext(i18n);
 
-export function createI18nManager(navigation: NavigationManager) {
+function getDefaultLanguage(url: URL, acceptedLanguages: string[]): string {
+  const urlLang = url.searchParams.get("lang");
+  if (urlLang) {
+    return urlLang;
+  }
+
+  if (import.meta.env.SSR) {
+    const ssrLang = getLanguage(acceptedLanguages[0]);
+    if (ssrLang) {
+      return ssrLang;
+    }
+  }
+
+  return getLanguage(navigatorLanguages()[0]) ?? "en";
+}
+
+export function createI18nManager(
+  navigation: NavigationManager,
+  acceptedLanguages: string[]
+) {
   const url = navigation.currentUrl.value;
 
   // Computed at module load. During SSR `location`/`navigator` are absent, so
   // this falls back to "en"; the client re-derives the real language from the
   // URL/navigator at hydration.
-  const defaultLanguage: string =
-    url.searchParams.get("lang") ??
-    getLanguage(navigatorLanguages()[0]) ??
-    "en";
+  const defaultLanguage: string = getDefaultLanguage(url, acceptedLanguages);
 
   console.log("[I18nManager] Detected default language:", defaultLanguage);
 
@@ -114,6 +129,8 @@ export function createI18nManager(navigation: NavigationManager) {
         i18n.addResourceBundle(lang, "seed-bible", resources, true);
       }
     }
+  } else {
+    i18n.changeLanguage(defaultLanguage);
   }
 
   return {

@@ -25,6 +25,7 @@ import {
   type BranchPointer,
 } from "./store.ts";
 import Bowser from "bowser";
+import { parseAcceptLanguages } from "./lang.js";
 
 const PORT = Number(process.env.PORT ?? 8080);
 const ROOT_BRANCH = process.env.ROOT_BRANCH ?? "main";
@@ -34,7 +35,12 @@ const MODULE_CACHE_MAX = Number(process.env.MODULE_CACHE_MAX ?? 20);
 
 type RenderFn = (opts: {
   path: string;
-  config: { basePath: string; assetHost: string; renderedAsMobile: boolean };
+  config: {
+    basePath: string;
+    assetHost: string;
+    renderedAsMobile: boolean;
+    acceptedLanguages: string[];
+  };
   html: string;
 }) => Promise<string>;
 
@@ -172,8 +178,10 @@ async function handle(
     );
 
     const browser = Bowser.getParser(req.headers["user-agent"]!);
-
     const isMobile = browser.getPlatformType(true) === "mobile";
+    const acceptedLanguages = req.headers["accept-language"]
+      ? parseAcceptLanguages(req.headers["accept-language"])
+      : [];
 
     const html = await render({
       path: route.appUrl,
@@ -181,6 +189,7 @@ async function handle(
         basePath: route.basePath,
         assetHost: ASSET_HOST,
         renderedAsMobile: isMobile,
+        acceptedLanguages,
       },
       html: preRenderedHtml,
     });

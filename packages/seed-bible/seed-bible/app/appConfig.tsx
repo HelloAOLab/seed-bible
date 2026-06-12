@@ -24,12 +24,16 @@ export interface AppConfig {
 
   /** Whether the app was rendered as a mobile version on the server */
   renderedAsMobile: boolean;
+
+  /** The list of languages included in the `Accept-Language` header */
+  acceptedLanguages: string[];
 }
 
 export const DEFAULT_APP_CONFIG: AppConfig = {
   basePath: "",
   assetHost: "",
   renderedAsMobile: false,
+  acceptedLanguages: [],
 };
 
 declare global {

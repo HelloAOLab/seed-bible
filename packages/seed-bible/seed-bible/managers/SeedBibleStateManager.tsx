@@ -219,7 +219,10 @@ export function createSeedBibleState(
   const api = new FreeUseBibleAPI(
     getDefaultAPIEndpoint(navigation.currentUrl.value)
   );
-  const i18n = createI18nManager(navigation);
+  const i18n = createI18nManager(
+    navigation,
+    options.config?.acceptedLanguages ?? []
+  );
   const data = createBibleDataManager(api);
   const os = CasualOSManager();
   const login = createLoginManager({ os });
