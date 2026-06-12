@@ -25,8 +25,19 @@ async function createServer() {
 
   app.use("*all", async (req, res, next) => {
     // serve index.html - we will tackle this next
+    const url = new URL(
+      req.originalUrl,
+      `${req.protocol}://${req.headers.host}`
+    );
+    if (/\.(js|css|map|json|xml|ico)$/.test(url.pathname)) {
+      console.log("Ignore path", url.pathname);
+      res.writeHead(404);
+      res.end();
+      return;
+    }
 
-    const url = req.originalUrl;
+    console.error("Server path", req.originalUrl);
+
     try {
       // 1. Read index.html
       let template = fs.readFileSync(
@@ -37,7 +48,7 @@ async function createServer() {
       // 2. Apply Vite HTML transforms. This injects the Vite HMR client,
       //    and also applies HTML transforms from Vite plugins, e.g. global
       //    preambles from @vitejs/plugin-react
-      template = await vite.transformIndexHtml(url, template);
+      template = await vite.transformIndexHtml(req.originalUrl, template);
 
       // 3. Load the server entry. ssrLoadModule automatically transforms
       //    ESM source code to be usable in Node.js! There is no bundling
