@@ -135,22 +135,14 @@ function MainContent(props: {
           <PaneLayout state={state} />
         </main>
 
-        <CasualOSApp id="bible-selector">
-          <>
-            <ExternalResourceDependencies
-              themeCssVariables={theme.themeCssVariables}
-              themeCssClasses={theme.themeCssClasses}
-            />
-            <BibleSelector
-              className={`${fontSizeClass} ${webkitClass}`}
-              isOpen={selector.isOpen.value}
-              onClose={() => selector.setOpen(false)}
-              app={state.app}
-              selectorState={selector}
-              bibleDataManager={state.bibleData}
-            />
-          </>
-        </CasualOSApp>
+        <BibleSelector
+          className={`${fontSizeClass} ${webkitClass}`}
+          isOpen={selector.isOpen.value}
+          onClose={() => selector.setOpen(false)}
+          app={state.app}
+          selectorState={selector}
+          bibleDataManager={state.bibleData}
+        />
 
         <FloatingReaderPanels state={state} />
 

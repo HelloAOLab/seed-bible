@@ -53,7 +53,7 @@ async function createServer() {
       //    e.g. ReactDOMServer.renderToString()
       const html = await render({
         url,
-        config: { basePath: "", assetHost: "", isMobile },
+        config: { basePath: "", assetHost: "", renderedAsMobile: isMobile },
         html: template,
       });
 

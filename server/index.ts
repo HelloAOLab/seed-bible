@@ -24,6 +24,7 @@ import {
   type ArtifactStore,
   type BranchPointer,
 } from "./store.ts";
+import Bowser from "bowser";
 
 const PORT = Number(process.env.PORT ?? 8080);
 const ROOT_BRANCH = process.env.ROOT_BRANCH ?? "main";
@@ -33,7 +34,7 @@ const MODULE_CACHE_MAX = Number(process.env.MODULE_CACHE_MAX ?? 20);
 
 type RenderFn = (opts: {
   url: string;
-  config: { basePath: string; assetHost: string; isMobile: boolean };
+  config: { basePath: string; assetHost: string; renderedAsMobile: boolean };
   html: string;
 }) => Promise<string>;
 
@@ -169,9 +170,18 @@ async function handle(
       route.branch,
       pointer.buildId
     );
+
+    const browser = Bowser.getParser(req.headers["user-agent"]!);
+
+    const isMobile = browser.getPlatformType(true) === "mobile";
+
     const html = await render({
       url: route.appUrl,
-      config: { basePath: route.basePath, assetHost: ASSET_HOST },
+      config: {
+        basePath: route.basePath,
+        assetHost: ASSET_HOST,
+        renderedAsMobile: isMobile,
+      },
       html: preRenderedHtml,
     });
 
