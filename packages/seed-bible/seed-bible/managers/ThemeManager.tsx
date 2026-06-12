@@ -5,12 +5,12 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
-import { currentHref } from "../app/ssrEnv";
 import type { LoginManager } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
 } from "../managers/ProfileConfigSync";
+import type { NavigationManager } from "./NavigationManager";
 
 export interface BibleThemeVariables {
   primaryColor: string;
@@ -1099,10 +1099,13 @@ export interface ThemeManager {
 //   },
 // };
 
-export function createTheme(login: LoginManager): ThemeManager {
+export function createTheme(
+  login: LoginManager,
+  navigation: NavigationManager
+): ThemeManager {
   const themes = signal<BibleTheme[]>([LIGHT_THEME, DARK_THEME]);
 
-  const url = new URL(currentHref());
+  const url = navigation.currentUrl.value;
 
   const readThemeId = () =>
     parseThemeId(

@@ -15,7 +15,8 @@ export type ViteManifest = Record<string, ManifestChunk>;
 
 export interface RenderOptions {
   /** Full request path including the deployment prefix, e.g. "/d/branch-x/?book=GEN". */
-  url: string;
+  path: string;
+
   /** Deployment config injected into the page and passed to the app. */
   config: AppConfig;
   /**
@@ -43,11 +44,11 @@ const escapeForScript = (json: string): string => json.replace(/</g, "\\u003c");
  */
 export async function render(options: RenderOptions): Promise<string> {
   console.log("Rendering!");
-  const { url, config } = options;
+  const { path, config } = options;
 
   const [appHtml, metaHtml] = await Promise.all([
     renderToStringAsync(
-      <Main config={config} initialHref={`http://ssr.local${url}`} />
+      <Main config={config} initialHref={`http://ssr.local${path}`} />
     ),
     renderToStringAsync(
       <>

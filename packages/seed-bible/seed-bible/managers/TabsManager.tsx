@@ -1,14 +1,14 @@
 import { computed, effect, signal, type Signal } from "@preact/signals";
-import { currentHref, currentSearchParams } from "../app/ssrEnv";
 import type { BibleDataManager } from "./BibleDataManager";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import {
   DEFAULT_BOOK_ID,
   DEFAULT_CHAPTER_NUMBER,
-  DEFAULT_TRANSLATION_ID,
   createBibleReadingState,
+  getDefaultTranslationForLanguage,
   type BibleReadingState,
   type InitialBibleReadingOptions,
+  type TranslationWithLanguage,
 } from "../managers/BibleReadingManager";
 import type { HighlightsManager } from "../managers/HighlightsManager";
 
@@ -56,6 +56,7 @@ export function parseVerseSelection(verse: string): number[] {
   return verseNumbers;
 }
 import type { NavigationManager } from "./NavigationManager";
+import type { I18nManager } from "../i18n";
 
 export interface ReaderTab {
   /** Unique tab identifier (for example: tab-1, tab-2). */
@@ -68,31 +69,27 @@ export interface ReaderTab {
   sharedSession: BibleReadingSession | null;
 }
 
-function getInitialFirstTabBookId(): string {
-  const url = new URL(currentHref());
+function getInitialFirstTabBookId(url: URL): string {
   return url.searchParams.get("book") ?? DEFAULT_BOOK_ID;
 }
 
-function getInitialTranslationId(): string {
-  const url = new URL(currentHref());
+function getInitialTranslationId(url: URL, language: string): string {
   return (
     url.searchParams.get("translationId") ??
     url.searchParams.get("translation") ??
-    DEFAULT_TRANSLATION_ID
+    getDefaultTranslationForLanguage(language).id
   );
 }
 
-function getInitialFirstTabChapter(): number {
-  const url = new URL(currentHref());
+function getInitialFirstTabChapter(url: URL): number {
   const value = Number(url.searchParams.get("chapter"));
   return Number.isFinite(value) && value > 0
     ? Math.floor(value)
     : DEFAULT_CHAPTER_NUMBER;
 }
 
-function getInitialHighlightedVerses(): number[] {
-  const query = currentSearchParams();
-  const value = query.get("verse");
+function getInitialHighlightedVerses(url: URL): number[] {
+  const value = url.searchParams.get("verse");
   return typeof value === "string"
     ? parseVerseSelection(value)
     : typeof value === "number"
@@ -100,23 +97,35 @@ function getInitialHighlightedVerses(): number[] {
       : [];
 }
 
-function createInitialTabs(
+export interface InitialTabsOptions {
+  translationId: string;
+  bookId: string;
+  chapter: number;
+  highlightedVerses?: number[];
+}
+
+export function createInitialTabs(
   dataManager: BibleDataManager,
-  highlightsManager: HighlightsManager
+  highlightsManager: HighlightsManager,
+  i18nManager: I18nManager,
+  options: InitialTabsOptions
 ): ReaderTab[] {
-  const bookId = getInitialFirstTabBookId();
-  const chapter = getInitialFirstTabChapter();
-  const highlightedVerses = getInitialHighlightedVerses();
+  const { translationId, bookId, chapter, highlightedVerses = [] } = options;
 
   const tab: ReaderTab = {
     id: "tab-1",
     title: "Tab 1",
-    readingState: createBibleReadingState(dataManager, highlightsManager, {
-      initialTranslationId: getInitialTranslationId(),
-      initialBookId: bookId,
-      initialChapterNumber: chapter,
-      scrollToVerse: highlightedVerses[0] ?? undefined,
-    }),
+    readingState: createBibleReadingState(
+      dataManager,
+      highlightsManager,
+      i18nManager,
+      {
+        initialTranslationId: translationId,
+        initialBookId: bookId,
+        initialChapterNumber: chapter,
+        scrollToVerse: highlightedVerses[0] ?? undefined,
+      }
+    ),
     sharedSession: null,
   };
 
@@ -146,6 +155,8 @@ function isBibleReadingSession(
  * automatically when the tab is removed.
  */
 export interface TabsManager {
+  defaultTranslation: TranslationWithLanguage;
+
   /** Ordered tab list used by the tabs UI. */
   tabs: Signal<ReaderTab[]>;
 
@@ -196,10 +207,28 @@ export interface TabsManager {
 export function createTabs(
   navigation: NavigationManager,
   dataManager: BibleDataManager,
-  highlightsManager: HighlightsManager
+  highlightsManager: HighlightsManager,
+  i18nManager: I18nManager
 ): TabsManager {
+  const defaultTranslation = getDefaultTranslationForLanguage(
+    i18nManager.defaultLanguage
+  );
+  const initialTranslationId = getInitialTranslationId(
+    navigation.currentUrl.value,
+    i18nManager.defaultLanguage
+  );
+  const initialBookId = getInitialFirstTabBookId(navigation.currentUrl.value);
+  const initialChapter = getInitialFirstTabChapter(navigation.currentUrl.value);
+
   const tabs = signal<ReaderTab[]>(
-    createInitialTabs(dataManager, highlightsManager)
+    createInitialTabs(dataManager, highlightsManager, i18nManager, {
+      translationId: initialTranslationId,
+      bookId: initialBookId,
+      chapter: initialChapter,
+      highlightedVerses: getInitialHighlightedVerses(
+        navigation.currentUrl.value
+      ),
+    })
   );
   const selectedTabId = signal<string>(tabs.value[0]?.id ?? "");
   const selectedTab = computed(
@@ -213,9 +242,16 @@ export function createTabs(
       return;
     }
 
-    const requestedTranslation = getInitialTranslationId();
-    const requestedBookId = getInitialFirstTabBookId();
-    const requestedChapter = getInitialFirstTabChapter();
+    const requestedTranslation = getInitialTranslationId(
+      navigation.currentUrl.value,
+      i18nManager.defaultLanguage
+    );
+    const requestedBookId = getInitialFirstTabBookId(
+      navigation.currentUrl.value
+    );
+    const requestedChapter = getInitialFirstTabChapter(
+      navigation.currentUrl.value
+    );
     const readingState = selectedTab.readingState;
 
     const books = readingState.translationBooks.value?.books ?? [];
@@ -282,7 +318,7 @@ export function createTabs(
         // configBot.tags.translationId = translationId;
       } else if (
         url.searchParams.has("translation") ||
-        translationId !== DEFAULT_TRANSLATION_ID
+        translationId !== defaultTranslation.id
       ) {
         navigation.updateQueryParam("translation", translationId);
       }
@@ -311,6 +347,7 @@ export function createTabs(
         createBibleReadingState(
           dataManager,
           highlightsManager,
+          i18nManager,
           initialReadingOptions
         ),
       sharedSession,
@@ -339,6 +376,7 @@ export function createTabs(
   };
 
   return {
+    defaultTranslation,
     tabs,
     selectedTabId,
     addTab,

@@ -3,7 +3,6 @@ import {
   DEFAULT_BOOKMARK_CATEGORY,
   type BookmarkVerse,
 } from "../managers/BookmarksManager";
-import { DEFAULT_TRANSLATION_ID } from "../managers/BibleReadingManager";
 import type { ReaderTab } from "../managers/TabsManager";
 import {
   PANE_LAYOUT_OPTIONS,
@@ -597,7 +596,8 @@ function TabRow(props: TabRowProps) {
     "-";
   const currentChapter = tab.readingState.chapterNumber.value;
   const currentTranslation =
-    tab.readingState.translationId.value ?? DEFAULT_TRANSLATION_ID;
+    tab.readingState.translationId.value ??
+    tab.readingState.defaultTranslation.id;
   const title = currentBookName;
   const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
   const isTabBookmarked = bookmarks.isLocationBookmarked(

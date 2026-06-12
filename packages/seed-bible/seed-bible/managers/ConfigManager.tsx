@@ -1,11 +1,11 @@
 import { effect, signal } from "@preact/signals";
 import i18n from "i18next";
-import { currentHref } from "../app/ssrEnv";
 import type { LoginManager, UserProfile } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
 } from "../managers/ProfileConfigSync";
+import type { NavigationManager } from "./NavigationManager";
 
 export interface AppConfig {
   disablePanels: boolean;
@@ -85,9 +85,12 @@ function parseFontSize(value: unknown, fallback: TextSize): TextSize {
 
 export type ConfigManager = ReturnType<typeof createConfig>;
 
-export function createConfig(login: LoginManager) {
+export function createConfig(
+  login: LoginManager,
+  navigation: NavigationManager
+) {
   const readConfig = (): AppConfig => {
-    const url = new URL(currentHref());
+    const url = navigation.currentUrl.value;
     const settingsPreset = parseSettingsPreset(
       url.searchParams.get("settingsPreset")
     );
@@ -116,7 +119,7 @@ export function createConfig(login: LoginManager) {
   const syncConfigFromBot = (
     profile: UserProfile | null = login.profile.value
   ) => {
-    const url = new URL(currentHref());
+    const url = navigation.currentUrl.value;
     config.value = readConfig();
 
     const profileLanguage = getProfileConfigValue(profile, "lang");

@@ -1,10 +1,7 @@
 import { useSignal } from "@preact/signals";
 import { useI18n } from "../i18n/I18nManager";
 import { closeContextMenus } from "./ContextMenu";
-import {
-  DEFAULT_TRANSLATION_ID,
-  DEFAULT_TRANSLATION_LANGUAGE,
-} from "../managers/BibleReadingManager";
+import { getDefaultTranslationForLanguage } from "../managers/BibleReadingManager";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import type { ReaderTab } from "../managers/TabsManager";
 import { useEffect, useRef } from "preact/hooks";
@@ -132,10 +129,11 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
     const query = nextQuery.trim();
     const activeTranslationId =
       state.app.currentReadingState.value?.translationId ??
-      DEFAULT_TRANSLATION_ID;
+      getDefaultTranslationForLanguage(state.i18n.defaultLanguage).id;
     const activeLanguage =
       state.app.currentReadingState.value?.tab.readingState.translation.value
-        ?.language ?? DEFAULT_TRANSLATION_LANGUAGE;
+        ?.language ??
+      getDefaultTranslationForLanguage(state.i18n.defaultLanguage).language;
     const requestId = ++latestRequestRef.current;
 
     if (!query) {

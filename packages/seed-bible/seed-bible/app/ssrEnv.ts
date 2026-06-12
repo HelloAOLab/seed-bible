@@ -7,16 +7,6 @@
  * the globals directly.
  */
 
-/** Current page href, or a neutral placeholder on the server. */
-export function currentHref(): string {
-  return typeof location !== "undefined" ? location.href : "http://localhost/";
-}
-
-/** Search params of the current URL (empty on the server). */
-export function currentSearchParams(): URLSearchParams {
-  return new URL(currentHref()).searchParams;
-}
-
 /** Preferred browser languages, or an empty list on the server. */
 export function navigatorLanguages(): readonly string[] {
   return typeof navigator !== "undefined" ? (navigator.languages ?? []) : [];

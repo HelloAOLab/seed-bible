@@ -56,9 +56,7 @@ function normalizeEndpoint(endpoint: string): string {
   }
 }
 
-export function createBibleDataManager(
-  api: FreeUseBibleAPI = new FreeUseBibleAPI()
-): BibleDataManager {
+export function createBibleDataManager(api: FreeUseBibleAPI): BibleDataManager {
   const defaultEndpoint = normalizeEndpoint(api.endpoint);
   const endpoints = signal<string[]>([defaultEndpoint]);
   const availableTranslations = signal<Translation[]>([]);

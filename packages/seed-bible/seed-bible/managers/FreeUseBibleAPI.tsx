@@ -1,5 +1,3 @@
-import { currentSearchParams } from "../app/ssrEnv";
-
 export interface AvailableTranslations {
   /**
    * The list of translations.
@@ -1006,15 +1004,20 @@ interface DatasetReference {
   score?: number;
 }
 
-export const DEFAULT_API_ENDPOINT = currentSearchParams().has("useFreeBibleAPI")
-  ? "https://bible.helloao.org/"
-  : "https://vmfnri.helloao.org/";
+export const FREE_USE_BIBLE_API_ENDPOINT = "https://bible.helloao.org/";
+const PRIVATE_API_ENDPOINT = "https://vmfnri.helloao.org/";
+
+export function getDefaultAPIEndpoint(url: URL): string {
+  return url.searchParams.has("useFreeBibleAPI")
+    ? FREE_USE_BIBLE_API_ENDPOINT
+    : PRIVATE_API_ENDPOINT;
+}
 
 export class FreeUseBibleAPI {
   endpoint: string;
   private _responseCache = new Map<string, Promise<unknown>>();
 
-  constructor(endpoint: string = DEFAULT_API_ENDPOINT) {
+  constructor(endpoint: string) {
     this.endpoint = endpoint;
   }
 

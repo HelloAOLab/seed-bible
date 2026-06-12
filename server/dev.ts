@@ -52,7 +52,7 @@ async function createServer() {
       //     `render` function calls appropriate framework SSR APIs,
       //    e.g. ReactDOMServer.renderToString()
       const html = await render({
-        url,
+        path: req.path,
         config: { basePath: "", assetHost: "", renderedAsMobile: isMobile },
         html: template,
       });

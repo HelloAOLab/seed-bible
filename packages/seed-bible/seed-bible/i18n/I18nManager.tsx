@@ -1,18 +1,11 @@
 import i18n from "i18next";
 import { useContext, useMemo } from "preact/hooks";
 import en from "./en.json";
-import { currentSearchParams, navigatorLanguages } from "../app/ssrEnv";
+import { navigatorLanguages } from "../app/ssrEnv";
 import { createContext, type ComponentChildren } from "preact";
+import type { NavigationManager } from "../managers/NavigationManager";
 
 const languages = import.meta.glob("./*.json", { eager: true });
-
-// Computed at module load. During SSR `location`/`navigator` are absent, so
-// this falls back to "en"; the client re-derives the real language from the
-// URL/navigator at hydration.
-export const DEFAULT_LANGUAGE: string =
-  currentSearchParams().get("lang") ??
-  getLanguage(navigatorLanguages()[0]) ??
-  "en";
 
 export { i18n };
 
@@ -68,45 +61,53 @@ export function addTranslations(
 //   return loadedResources;
 // }
 
-const seedBibleTranslations = languages;
-// if (!seedBibleTranslations[DEFAULT_LANGUAGE]) {
-//   seedBibleTranslations[DEFAULT_LANGUAGE] = {};
-// }
-
-const availableLanguages = Object.keys(seedBibleTranslations).sort();
-
-const initialLanguage = DEFAULT_LANGUAGE;
+const availableLanguages = Object.keys(languages).sort();
 
 const I18nContext = createContext(i18n);
 
-if (!i18n.isInitialized) {
-  // console.log(
-  //   "[I18n] Initializing i18n with resources:",
-  //   seedBibleTranslations,
-  //   initialLanguage
-  // );
-  i18n.init({
-    lng: initialLanguage,
-    fallbackLng: DEFAULT_LANGUAGE,
-    interpolation: {
-      escapeValue: false,
-    },
-    initAsync: false,
-    ns: ["seed-bible"],
-  });
+export function createI18nManager(navigation: NavigationManager) {
+  const url = navigation.currentUrl.value;
 
-  i18n.addResourceBundle("en", "seed-bible", en, true);
+  // Computed at module load. During SSR `location`/`navigator` are absent, so
+  // this falls back to "en"; the client re-derives the real language from the
+  // URL/navigator at hydration.
+  const defaultLanguage: string =
+    url.searchParams.get("lang") ??
+    getLanguage(navigatorLanguages()[0]) ??
+    "en";
 
-  (async () => {
-    for (const [lang, resources] of Object.entries(seedBibleTranslations)) {
-      const json =
-        typeof resources === "function" ? await resources() : resources;
-      i18n.addResourceBundle(lang, "seed-bible", json, true);
-    }
-  })();
+  if (!i18n.isInitialized) {
+    i18n.init({
+      lng: defaultLanguage,
+      fallbackLng: defaultLanguage,
+      interpolation: {
+        escapeValue: false,
+      },
+      initAsync: false,
+      ns: ["seed-bible"],
+    });
 
-  // addTranslations("seed-bible", seedBibleTranslations);
+    i18n.addResourceBundle("en", "seed-bible", en, true);
+
+    (async () => {
+      for (const [lang, resources] of Object.entries(languages)) {
+        const json =
+          typeof resources === "function" ? await resources() : resources;
+        i18n.addResourceBundle(lang, "seed-bible", json, true);
+      }
+    })();
+  }
+
+  return {
+    i18n,
+    t: i18n.t.bind(i18n),
+    changeLanguage: i18n.changeLanguage.bind(i18n),
+    defaultLanguage,
+    availableLanguages,
+  };
 }
+
+export type I18nManager = ReturnType<typeof createI18nManager>;
 
 export function I18nProvider(props: { children: ComponentChildren }) {
   return (
@@ -114,7 +115,7 @@ export function I18nProvider(props: { children: ComponentChildren }) {
   );
 }
 
-export type I18nManager = ReturnType<typeof useI18n>;
+export type I18nHook = ReturnType<typeof useI18n>;
 
 const RTL_LANGUAGE_CODES = new Set(["ar", "fa", "he", "ur", "ps", "dv", "yi"]);
 
@@ -172,7 +173,7 @@ export function useI18n(ns?: string) {
     () => ({
       t: translate,
       ns,
-      language: i18n.language || DEFAULT_LANGUAGE,
+      language: i18n.language,
       isRtl,
       availableLanguages,
       setLanguage,

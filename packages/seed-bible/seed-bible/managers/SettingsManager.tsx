@@ -1,5 +1,4 @@
 import { effect, signal, type Signal } from "@preact/signals";
-import { currentSearchParams } from "../app/ssrEnv";
 import type { LoginManager } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
@@ -7,6 +6,7 @@ import {
 } from "../managers/ProfileConfigSync";
 import { z } from "zod";
 import type { CasualOSManager } from "./OsManager";
+import type { NavigationManager } from "./NavigationManager";
 
 export type BookOrientation = "traditional" | "tanakh";
 export type UITextSize = "S" | "M" | "L" | "XL";
@@ -580,13 +580,13 @@ export interface SettingsManager {
 
 export function createSettings(
   os: CasualOSManager,
-  login: LoginManager
+  login: LoginManager,
+  navigation: NavigationManager
 ): SettingsManager {
   const configBot = {
-    tags: Object.fromEntries(currentSearchParams()) as Record<
-      string,
-      string | boolean | number
-    >,
+    tags: Object.fromEntries(
+      navigation.currentUrl.value.searchParams
+    ) as Record<string, string | boolean | number>,
   };
 
   // Read each setting with the precedence: user profile > local configBot tag

@@ -4,7 +4,6 @@ import { computed, signal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
 import {
   DEFAULT_BOOK_ID,
-  DEFAULT_TRANSLATION_ID,
   type BibleReadingState,
 } from "../managers/BibleReadingManager";
 import type { Pane, PanesManager } from "../managers/PanesManager";
@@ -623,7 +622,7 @@ export function getShareUrl(readingState: BibleReadingState) {
   //   url.searchParams.set("pattern", configBot.tags.pattern);
   // }
   const translation =
-    readingState.translation.value?.id ?? DEFAULT_TRANSLATION_ID;
+    readingState.translation.value?.id ?? readingState.defaultTranslation.id;
   const bookId = readingState.bookId.value ?? DEFAULT_BOOK_ID;
   url.searchParams.set("translation", translation);
   url.searchParams.set("book", bookId);

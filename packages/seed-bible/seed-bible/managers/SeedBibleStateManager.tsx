@@ -8,7 +8,10 @@ import { createBibleToolsManager } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
 import { createConfig } from "../managers/ConfigManager";
 import type { ConfigManager } from "../managers/ConfigManager";
-import { FreeUseBibleAPI } from "../managers/FreeUseBibleAPI";
+import {
+  FreeUseBibleAPI,
+  getDefaultAPIEndpoint,
+} from "../managers/FreeUseBibleAPI";
 import { createPanes } from "../managers/PanesManager";
 import type { Pane, PanesManager } from "../managers/PanesManager";
 import { createLoginManager } from "../managers/LoginManager";
@@ -74,6 +77,7 @@ import {
 } from "../managers/NavigationManager";
 import { CasualOSManager } from "./OsManager";
 import type { AppConfig } from "../app/appConfig";
+import { createI18nManager, type I18nManager } from "../i18n";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
@@ -179,6 +183,10 @@ export interface SeedBibleState {
   search: SearchManager;
   /** In-app URL/state navigation manager for same-document routing. */
   navigation: NavigationManager;
+  /**
+   * Internationalization manager: current language, translation function, etc.
+   */
+  i18n: I18nManager;
   /** Aggregated computed app state and top-level UI actions. */
   app: AppState;
   /** Extension loading and runtime manager. */
@@ -202,22 +210,25 @@ export interface CreateSeedBibleStateOptions {
 export function createSeedBibleState(
   options: CreateSeedBibleStateOptions = {}
 ): SeedBibleState {
-  const api = new FreeUseBibleAPI();
   const navigation = createNavigationManager({
     initialHref: options.initialHref,
     basePath: options.config?.basePath,
   });
+  const api = new FreeUseBibleAPI(
+    getDefaultAPIEndpoint(navigation.currentUrl.value)
+  );
+  const i18n = createI18nManager(navigation);
   const data = createBibleDataManager(api);
   const os = CasualOSManager();
   const login = createLoginManager({ os });
   const highlights = createHighlightsManager(os, login);
   const bookmarks = createBookmarksManager(os, login);
-  const config = createConfig(login);
-  const themeManager = createTheme(login);
+  const config = createConfig(login, navigation);
+  const themeManager = createTheme(login, navigation);
   const sidebar = createSidebar(navigation);
-  const tabs = createTabs(navigation, data, highlights);
+  const tabs = createTabs(navigation, data, highlights, i18n);
   const panes = createPanes(tabs, tabs.selectedTabId);
-  const settings = createSettings(os, login);
+  const settings = createSettings(os, login, navigation);
   const selector = createBibleSelectorState(
     data,
     tabs,
@@ -697,6 +708,7 @@ export function createSeedBibleState(
     invitations,
     search,
     navigation,
+    i18n,
     extensions,
     app: {
       createSharedSession: handleCreateSharedSession,

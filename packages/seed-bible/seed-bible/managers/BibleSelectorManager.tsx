@@ -6,8 +6,8 @@ import type {
 import { safeLocalStorage } from "../app/ssrEnv";
 import type { BibleDataManager } from "../managers/BibleDataManager";
 import {
+  getDefaultTranslationForLanguage,
   type BibleReadingState,
-  DEFAULT_TRANSLATION_ID,
 } from "../managers/BibleReadingManager";
 import type { Pane, PanesManager } from "../managers/PanesManager";
 import type { TabsManager } from "../managers/TabsManager";
@@ -290,7 +290,7 @@ export function createBibleSelectorState(
         )?.tab?.readingState.translationId.value ??
         // Fall back to default translation or first available translation
         dataManager.availableTranslations.value.find(
-          (t) => t.id === DEFAULT_TRANSLATION_ID
+          (t) => t.id === tabsManager.defaultTranslation.id
         )?.id ??
         dataManager.availableTranslations.value[0]?.id ??
         null;

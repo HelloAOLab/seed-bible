@@ -33,7 +33,7 @@ const POINTER_TTL_MS = Number(process.env.POINTER_TTL_MS ?? 10_000);
 const MODULE_CACHE_MAX = Number(process.env.MODULE_CACHE_MAX ?? 20);
 
 type RenderFn = (opts: {
-  url: string;
+  path: string;
   config: { basePath: string; assetHost: string; renderedAsMobile: boolean };
   html: string;
 }) => Promise<string>;
@@ -176,7 +176,7 @@ async function handle(
     const isMobile = browser.getPlatformType(true) === "mobile";
 
     const html = await render({
-      url: route.appUrl,
+      path: route.appUrl,
       config: {
         basePath: route.basePath,
         assetHost: ASSET_HOST,

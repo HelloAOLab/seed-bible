@@ -22,8 +22,8 @@ import type {
   ChapterHighlights,
   HighlightsManager,
 } from "../managers/HighlightsManager";
-import { DEFAULT_LANGUAGE } from "../i18n/I18nManager";
 import { v4 as uuid } from "uuid";
+import type { I18nManager } from "../i18n";
 
 export interface BibleSelectedVerse {
   /** Book identifier (for example: GEN, MAT). */
@@ -120,6 +120,8 @@ export interface VerseDecorationInput {
  * signals to know when content is ready.
  */
 export interface BibleReadingState {
+  /** The default translation for the current language. */
+  defaultTranslation: TranslationWithLanguage;
   /** Selected translation ID. Null while unresolved or endpoint-derived during startup. */
   translationId: Signal<string | null>;
   /** Selected translation metadata derived from `translationBooks`. */
@@ -238,7 +240,15 @@ export interface BibleReadingState {
   loadNextChapter: () => Promise<void>;
 }
 
-export const DEFAULT_TRANSLATIONS_BY_LANGUAGE = new Map([
+export interface TranslationWithLanguage {
+  id: string;
+  language: string;
+}
+
+export const DEFAULT_TRANSLATIONS_BY_LANGUAGE = new Map<
+  string,
+  TranslationWithLanguage
+>([
   ["am", { id: "amh_amh", language: "amh" }], // Amharic NT | መጽሐፍ ቅዱስ
   ["ar", { id: "ARBNAV", language: "arb" }], // New Arabic Version (Book of Life) | كتاب الحياة
   ["bn", { id: "ben_ocv", language: "ben" }], // Open Bengali Contemporary Version Bible | Biblica® মুক্তভাবে বাংলা সমকালীন সংস্করণের
@@ -265,15 +275,17 @@ export const DEFAULT_TRANSLATIONS_BY_LANGUAGE = new Map([
   ["zh", { id: "cmn_cbt", language: "cmn" }], // Chinese, Mandarin: Biblica® 聖經,當代譯本開放資源 (Bible) | Biblica® 聖經，當代譯本開放資源
 ]);
 
-const DEFAULT_TRANSLATION = DEFAULT_TRANSLATIONS_BY_LANGUAGE.get(
-  DEFAULT_LANGUAGE
-) ?? {
+const FALLBACK_TRANSLATION: TranslationWithLanguage = {
   id: "AAB",
   language: "eng",
 };
 
-export const DEFAULT_TRANSLATION_ID = DEFAULT_TRANSLATION.id;
-export const DEFAULT_TRANSLATION_LANGUAGE = DEFAULT_TRANSLATION.language;
+// const DEFAULT_TRANSLATION =;
+
+export function getDefaultTranslationForLanguage(language: string) {
+  return DEFAULT_TRANSLATIONS_BY_LANGUAGE.get(language) ?? FALLBACK_TRANSLATION;
+}
+
 export const DEFAULT_BOOK_ID = "GEN";
 export const DEFAULT_CHAPTER_NUMBER = 1;
 
@@ -391,6 +403,7 @@ function parseTranslationInput(value?: string | null): ParsedTranslationInput {
 export function createBibleReadingState(
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager,
+  i18nManager: I18nManager,
   options: InitialBibleReadingOptions = {}
 ): BibleReadingState {
   const isSameSelectedVerse = (
@@ -420,10 +433,14 @@ export function createBibleReadingState(
       ? Math.floor(options.initialChapterNumber)
       : 1;
 
+  const defaultTranslation =
+    getDefaultTranslationForLanguage(i18nManager.defaultLanguage) ??
+    FALLBACK_TRANSLATION;
+
   const translationId = signal<string | null>(
     shouldUseFirstAvailableTranslation
       ? null
-      : (initialTranslationInput.translationId ?? DEFAULT_TRANSLATION_ID)
+      : (initialTranslationInput.translationId ?? defaultTranslation.id)
   );
   const endpointOverride = signal<string | null>(initialEndpointOverride);
   const bookId = signal<string | null>(options.initialBookId ?? null);
@@ -1061,6 +1078,7 @@ export function createBibleReadingState(
   loadInitialData();
 
   return {
+    defaultTranslation,
     translationId,
     translation,
     bookId,
