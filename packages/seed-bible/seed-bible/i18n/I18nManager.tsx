@@ -5,6 +5,7 @@ import { navigatorLanguages } from "../app/ssrEnv";
 import { createContext, type ComponentChildren } from "preact";
 import { mapKeys } from "es-toolkit";
 import type { NavigationManager } from "../managers/NavigationManager";
+import { computed, signal } from "@preact/signals";
 
 function getLanguageName(importPath: string): string {
   const match = importPath.match(/\.\/([a-z-]+)\.json$/i);
@@ -126,12 +127,24 @@ export function createI18nManager(
           i18n.addResourceBundle(lang, "seed-bible", json, true);
         })();
       } else {
-        i18n.addResourceBundle(lang, "seed-bible", resources, true);
+        i18n.addResourceBundle(
+          lang,
+          "seed-bible",
+          (resources as any).default,
+          true
+        );
       }
     }
   } else {
     i18n.changeLanguage(defaultLanguage);
   }
+
+  const language = signal(i18n.language);
+  i18n.on("languageChanged", (lng) => {
+    language.value = lng;
+  });
+
+  const isRtl = computed(() => isRightToLeftLanguage(language.value));
 
   return {
     i18n,
@@ -139,6 +152,8 @@ export function createI18nManager(
     changeLanguage: i18n.changeLanguage.bind(i18n),
     defaultLanguage,
     availableLanguages,
+    language,
+    isRtl,
   };
 }
 
