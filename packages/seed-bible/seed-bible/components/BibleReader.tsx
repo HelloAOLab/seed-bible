@@ -4,12 +4,7 @@ import {
 } from "../managers/FreeUseBibleAPI";
 import type { JSX } from "preact";
 import { Suspense } from "preact/compat";
-import {
-  effect,
-  useComputed,
-  type ReadonlySignal,
-  type Signal,
-} from "@preact/signals";
+import { useComputed, type ReadonlySignal, type Signal } from "@preact/signals";
 import type {
   BibleReadingState,
   BibleSelectedVerse,

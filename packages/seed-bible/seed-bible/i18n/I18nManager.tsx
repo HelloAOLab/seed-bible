@@ -3,9 +3,21 @@ import { useContext, useMemo } from "preact/hooks";
 import en from "./en.json";
 import { navigatorLanguages } from "../app/ssrEnv";
 import { createContext, type ComponentChildren } from "preact";
+import { mapKeys } from "es-toolkit";
 import type { NavigationManager } from "../managers/NavigationManager";
 
-const languages = import.meta.glob("./*.json", { eager: true });
+function getLanguageName(importPath: string): string {
+  const match = importPath.match(/\.\/([a-z-]+)\.json$/i);
+  if (match) {
+    return match[1]!;
+  }
+  throw new Error(`Could not extract language code from path: ${importPath}`);
+}
+
+const importedLanguages = import.meta.glob("./*.json", { eager: true });
+const languages = mapKeys(importedLanguages, (value, key) =>
+  getLanguageName(key)
+);
 
 export { i18n };
 
@@ -76,10 +88,12 @@ export function createI18nManager(navigation: NavigationManager) {
     getLanguage(navigatorLanguages()[0]) ??
     "en";
 
+  console.log("[I18nManager] Detected default language:", defaultLanguage);
+
   if (!i18n.isInitialized) {
     i18n.init({
       lng: defaultLanguage,
-      fallbackLng: defaultLanguage,
+      fallbackLng: "en",
       interpolation: {
         escapeValue: false,
       },
@@ -89,13 +103,17 @@ export function createI18nManager(navigation: NavigationManager) {
 
     i18n.addResourceBundle("en", "seed-bible", en, true);
 
-    (async () => {
-      for (const [lang, resources] of Object.entries(languages)) {
-        const json =
-          typeof resources === "function" ? await resources() : resources;
-        i18n.addResourceBundle(lang, "seed-bible", json, true);
+    for (const [lang, resources] of Object.entries(languages)) {
+      console.log("[I18nManager] Loading translations for language:", lang);
+      if (typeof resources === "function") {
+        (async () => {
+          const json = await resources();
+          i18n.addResourceBundle(lang, "seed-bible", json, true);
+        })();
+      } else {
+        i18n.addResourceBundle(lang, "seed-bible", resources, true);
       }
-    })();
+    }
   }
 
   return {
@@ -157,6 +175,8 @@ function isRightToLeftLanguage(languageCode: string): boolean {
 export function useI18n(ns?: string) {
   const i18n = useContext(I18nContext);
   const { t } = i18n;
+
+  console.log("[useI18n] Current language:", i18n.language);
 
   const isRtl = isRightToLeftLanguage(i18n.language);
 
