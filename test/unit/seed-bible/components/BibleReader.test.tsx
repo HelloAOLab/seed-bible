@@ -149,6 +149,7 @@ function createFixture(): ReaderFixture {
     loadNextChapter: vi.fn(async () => undefined),
     selectTranslationAndChapter: vi.fn(async () => undefined),
     highlights,
+    chapterDataPromise: Promise.resolve(),
   } as BibleReadingState;
 
   const selectorState = {

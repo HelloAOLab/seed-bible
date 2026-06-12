@@ -10,6 +10,7 @@ import { type BibleDataManager } from "../managers/BibleDataManager";
 import {
   batch,
   computed,
+  effect,
   signal,
   type ReadonlySignal,
   type Signal,
@@ -145,6 +146,11 @@ export interface BibleReadingState {
   loading: Signal<boolean>;
   /** Error message from the most recent failed operation, if any. */
   error: Signal<string | null>;
+  /**
+   * Resolves once chapterData becomes non-null for the first time.
+   * Throw this in a component to suspend rendering until initial chapter data is available.
+   */
+  chapterDataPromise: Promise<void>;
   /** Scroll position snapshot for chapter restoration/UI syncing. */
   scrollPosition: Signal<number>;
   /** Pending verse number to scroll to after chapter content renders. */
@@ -425,6 +431,14 @@ export function createBibleReadingState(
   const availableTranslations = signal<AvailableTranslations | null>(null);
   const translationBooks = signal<TranslationBooks | null>(null);
   const chapterData = signal<TranslationBookChapter | null>(null);
+  const chapterDataPromise = new Promise<void>((resolve) => {
+    const cleanup = effect(() => {
+      if (chapterData.value !== null) {
+        cleanup();
+        resolve();
+      }
+    });
+  });
   const selectedVerses = signal<BibleSelectedVerse[]>([]);
   const selectedFootnoteId = signal<number | null>(null);
   const activeChapterHighlights = signal<Signal<ChapterHighlights>>(
@@ -1054,6 +1068,7 @@ export function createBibleReadingState(
     availableTranslations,
     translationBooks,
     chapterData,
+    chapterDataPromise,
     highlights,
     decorations,
     selectedVerses,

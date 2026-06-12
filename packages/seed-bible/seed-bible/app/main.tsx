@@ -6,7 +6,6 @@ import { BibleReaderToolbar } from "../components/BibleReaderToolbar";
 import { FloatingReaderPanels } from "../components/FloatingReaderPanels";
 import { Sidebar, SharedSessionsToasts } from "../components/Tabs";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
-import { CasualOSApp } from "../components/CasualOSApp";
 import { useEffect } from "preact/hooks";
 import type { ReadonlySignal } from "@preact/signals";
 import { closeContextMenus } from "../components/ContextMenu";

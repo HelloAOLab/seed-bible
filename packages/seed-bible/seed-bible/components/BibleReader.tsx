@@ -3,13 +3,17 @@ import {
   type ChapterVerse,
 } from "../managers/FreeUseBibleAPI";
 import type { JSX } from "preact";
-import { useComputed } from "@preact/signals";
+import { Suspense } from "preact/compat";
+import { useComputed, type ReadonlySignal, type Signal } from "@preact/signals";
 import type {
   BibleReadingState,
   BibleSelectedVerse,
   VerseDecoration,
 } from "../managers/BibleReadingManager";
-import type { ChapterHighlight } from "../managers/HighlightsManager";
+import type {
+  ChapterHighlight,
+  ChapterHighlights,
+} from "../managers/HighlightsManager";
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import type { Pane } from "../managers/PanesManager";
 import type { ScriptureElementsBehavior } from "../managers/SettingsManager";
@@ -823,6 +827,54 @@ function renderStaticChapterContent(
   );
 }
 
+interface ChapterContentProps {
+  chapterData: Signal<TranslationBookChapter | null>;
+  chapterDataPromise: Promise<void>;
+  selectedVerses: Signal<BibleSelectedVerse[]>;
+  highlights: ReadonlySignal<ChapterHighlights>;
+  decorations: ReadonlySignal<VerseDecoration[]>;
+  selectVerse: (
+    verse: BibleSelectedVerse,
+    selectionX: number,
+    selectionY: number
+  ) => void;
+  selectFootnote: (noteId: number | null) => void;
+  scriptureElements: ScriptureElementsBehavior;
+}
+
+function ChapterContent(props: ChapterContentProps) {
+  const {
+    chapterData,
+    chapterDataPromise,
+    selectedVerses,
+    highlights,
+    decorations,
+    selectVerse,
+    selectFootnote,
+    scriptureElements,
+  } = props;
+
+  if (chapterData.value === null) {
+    throw chapterDataPromise;
+  }
+
+  return (
+    <div className="sb-chapter-content">
+      {renderChapterContent(
+        chapterData.value,
+        (verse, event) => {
+          selectVerse(verse, event.clientX, event.clientY);
+        },
+        selectedVerses.value,
+        (noteId) => selectFootnote(noteId),
+        highlights.value.highlights,
+        decorations.value,
+        scriptureElements
+      )}
+    </div>
+  );
+}
+
 export function BibleReader(props: BibleReaderProps) {
   const { currentPane, readingState, selectorState, state, mobileChrome } =
     props;
@@ -883,30 +935,27 @@ export function BibleReader(props: BibleReaderProps) {
         <p className="sb-reader-error">{error.value}</p>
       )}
 
-      {!error.value && chapterData.value && (
-        <div className="sb-chapter-content">
-          {renderChapterContent(
-            chapterData.value,
-            (verse, event) => {
-              selectVerse(verse, event.clientX, event.clientY);
-            },
-            selectedVerses.value,
-            (noteId) => {
-              selectFootnote(noteId);
-            },
-            highlights.value.highlights,
-            decorations.value,
-            scriptureElements
-          )}
-        </div>
-      )}
-
-      {!error.value && !chapterData.value && (
-        <p>
-          {t("no-chapter-content-found", {
-            defaultValue: "No chapter content found.",
-          })}
-        </p>
+      {!error.value && (
+        <Suspense
+          fallback={
+            <p>
+              {t("no-chapter-content-found", {
+                defaultValue: "No chapter content found.",
+              })}
+            </p>
+          }
+        >
+          <ChapterContent
+            chapterData={chapterData}
+            chapterDataPromise={readingState.chapterDataPromise}
+            selectedVerses={selectedVerses}
+            highlights={highlights}
+            decorations={decorations}
+            selectVerse={selectVerse}
+            selectFootnote={selectFootnote}
+            scriptureElements={scriptureElements}
+          />
+        </Suspense>
       )}
 
       {!availableTranslations.value && !error.value && (
