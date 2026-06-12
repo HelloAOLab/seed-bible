@@ -14,7 +14,7 @@ html {
   --text-bookTitle-color: #333;
   --text-bookTitle-font-style: normal;
   --text-bookTitle-text-decoration: none;
-  --text-bookTitle-alignment: left;
+  --text-bookTitle-alignment: unset;
   --text-bookTitle-margin-top: 0;
   --text-bookTitle-margin-bottom: 0;
   --text-bookTitle-margin-left: 0;
@@ -25,7 +25,7 @@ html {
   --text-heading-color: #333;
   --text-heading-font-style: italic;
   --text-heading-text-decoration: none;
-  --text-heading-alignment: left;
+  --text-heading-alignment: unset;
   --text-heading-margin-top: 18px;
   --text-heading-margin-bottom: 18px;
   --text-heading-margin-left: 0;
@@ -36,7 +36,7 @@ html {
   --text-verse-color: #333;
   --text-verse-font-style: normal;
   --text-verse-text-decoration: none;
-  --text-verse-alignment: left;
+  --text-verse-alignment: unset;
   --text-verse-margin-top: 0;
   --text-verse-margin-bottom: 0;
   --text-verse-margin-left: 0;
