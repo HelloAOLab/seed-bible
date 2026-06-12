@@ -131,6 +131,9 @@ export interface AppState {
   createSharedSession: () => Promise<BibleReadingSession>;
   /** Joins an existing shared session and opens it in a new tab. */
   joinSharedSession: (id: string) => Promise<BibleReadingSession>;
+
+  /** The title of the page. */
+  title: ReadonlySignal<string>;
 }
 
 /**
@@ -374,6 +377,24 @@ export function createSeedBibleState(
     }
   });
 
+  const title = computed(() => {
+    const RTLE_CHAR = "\u202B";
+    if (!selectedTab.value) {
+      return "";
+    }
+
+    const chapter = selectedTab.value.readingState.chapterData.value;
+    if (!chapter) {
+      return "";
+    }
+
+    const seedBibleTitle = i18n.t("seed-bible", {
+      defaultValue: "Seed Bible",
+    });
+
+    return `${chapter.translation.textDirection === "rtl" ? RTLE_CHAR : ""}${chapter.book.name} ${chapter.chapter.number} - ${chapter.translation.name} | ${seedBibleTitle}`;
+  });
+
   effect(() => {
     if (!selectedTab.value) {
       return;
@@ -382,11 +403,6 @@ export function createSeedBibleState(
     const chapter = selectedTab.value.readingState.chapterData.value;
     if (!chapter) {
       return;
-    }
-
-    if (typeof document !== "undefined") {
-      const RTLE_CHAR = "\u202B";
-      document.title = `${chapter.translation.textDirection === "rtl" ? RTLE_CHAR : ""}${chapter.book.name} ${chapter.chapter.number} - ${chapter.translation.name} | Seed Bible`;
     }
 
     const readingHistoryTimeoutId = setInterval(() => {
@@ -730,6 +746,7 @@ export function createSeedBibleState(
       openInNewPane: handleOpenInNewPane,
       openInDetachedPane: handleOpenInDetachedPane,
       selectPane: handleSelectPane,
+      title,
     },
   };
 

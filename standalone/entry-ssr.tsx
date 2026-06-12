@@ -1,6 +1,12 @@
 import { renderToStringAsync } from "preact-render-to-string";
 import { Main } from "../packages/seed-bible/seed-bible/app/main";
 import type { AppConfig } from "../packages/seed-bible/seed-bible/app/appConfig";
+import {
+  createHelmetData,
+  HelmetContext,
+} from "@packages/seed-bible/seed-bible/hooks/Helmet";
+import { signal } from "@preact/signals";
+import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 
 /** A single chunk record from a Vite client manifest. */
 interface ManifestChunk {
@@ -46,16 +52,36 @@ export async function render(options: RenderOptions): Promise<string> {
   console.log("Rendering!");
   const { path, config } = options;
 
-  const [appHtml, metaHtml] = await Promise.all([
+  const state = createSeedBibleState({
+    config,
+    initialHref: `http://ssr.local${path}`,
+  });
+
+  const [appHtml] = await Promise.all([
     renderToStringAsync(
-      <Main config={config} initialHref={`http://ssr.local${path}`} />
-    ),
-    renderToStringAsync(
-      <>
-        <title>Seed Bible</title>
-      </>
+      <Main
+        initialState={state}
+        config={config}
+        initialHref={`http://ssr.local${path}`}
+      />
     ),
   ]);
+
+  const metaHtml = await renderToStringAsync(
+    <>
+      <meta
+        name="theme-color"
+        content="#FFFFFF"
+        media="(prefers-color-scheme: light)"
+      />
+      <meta
+        name="theme-color"
+        content="#000000"
+        media="(prefers-color-scheme: dark)"
+      />
+      <title>{state.app.title.value}</title>
+    </>
+  );
 
   const configJson = escapeForScript(JSON.stringify(config));
 

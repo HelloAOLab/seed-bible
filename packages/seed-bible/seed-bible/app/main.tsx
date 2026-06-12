@@ -7,7 +7,7 @@ import { FloatingReaderPanels } from "../components/FloatingReaderPanels";
 import { Sidebar, SharedSessionsToasts } from "../components/Tabs";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 import { useEffect } from "preact/hooks";
-import type { ReadonlySignal } from "@preact/signals";
+import { useSignalEffect, type ReadonlySignal } from "@preact/signals";
 import { closeContextMenus } from "../components/ContextMenu";
 import { ModalHost } from "../components/ModalHost";
 import { useMemo } from "preact/hooks";
@@ -17,6 +17,7 @@ import {
   type AppConfig,
 } from "./appConfig";
 import "./main.css";
+import { useHelmet } from "../hooks/Helmet";
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -58,20 +59,22 @@ export function ExternalResourceDependencies({
 export function Main({
   config: appConfig = DEFAULT_APP_CONFIG,
   initialHref,
+  initialState,
 }: {
   /** Deployment config (base path + asset host) injected by the host server. */
   config?: AppConfig;
   /** Full initial URL — passed during SSR where `window` is absent. */
   initialHref?: string;
+
+  initialState?: ReturnType<typeof createSeedBibleState>;
 } = {}) {
-  const state = useMemo(
-    () => createSeedBibleState({ config: appConfig, initialHref }),
-    []
-  );
+  const state =
+    initialState ??
+    useMemo(() => createSeedBibleState({ config: appConfig, initialHref }), []);
 
   useEffect(() => {
     state.extensions.loadDefaultExtensions();
-  });
+  }, []);
 
   const { config } = state;
   const fontSizeClass = `sb-font-size-${config.config.value.fontSize.toLowerCase()}`;

@@ -302,11 +302,6 @@ export function createTabs(
     const selectedChapter = selectedTab.value?.readingState.chapterNumber.value;
     const selectedTranslation =
       selectedTab.value?.readingState.translationId.value;
-    console.log("selected tab changed:", {
-      selectedTranslation,
-      selectedBookId,
-      selectedChapter,
-    });
 
     // TODO: Update the URL here
     const url = new URL(navigation.currentUrl.peek());
