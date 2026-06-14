@@ -1090,6 +1090,12 @@ export function BibleReader(props: BibleReaderProps) {
               readingState={readingState}
               className="sb-quick-toolbar-mobile-header"
             />
+            <ReaderBookmarkButton
+              state={state}
+              translationId={translationId.value}
+              bookId={bookId.value}
+              chapterNumber={chapterNumber.value}
+            />
             <button
               type="button"
               className="sb-bible-reader-mobile-header-settings"

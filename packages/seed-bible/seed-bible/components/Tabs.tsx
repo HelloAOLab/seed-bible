@@ -1490,6 +1490,56 @@ export function Tabs(props: TabsProps) {
     );
   }
 
+  // On mobile, the Bookmarks bottom-tab opens this drawer with the bookmark
+  // filter active. Rather than show the tabs list + search, present a focused
+  // full-screen Bookmarks view: a dedicated header (close / title / new
+  // folder) over the existing collapsible BookmarksSection.
+  if (app.isMobile.value && isBookmarkFilterActive) {
+    const createNewCategory = () => {
+      const base = t("new-bookmark-folder", { defaultValue: "New folder" });
+      const existing = new Set(bookmarks.categories.value.map((c) => c.name));
+      let name = base;
+      let n = 2;
+      while (existing.has(name)) {
+        name = `${base} ${n++}`;
+      }
+      void bookmarks.createCategory(name);
+    };
+
+    return (
+      <div className="sb-bookmarks-mobile-screen">
+        <div className="sb-bookmarks-mobile-header">
+          <button
+            type="button"
+            className="sb-bookmarks-mobile-header-button sb-bookmarks-mobile-header-close"
+            onClick={() => state.sidebar.closeSidebar()}
+            aria-label={t("close", { defaultValue: "Close" })}
+            title={t("close", { defaultValue: "Close" })}
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+          <h2 className="sb-bookmarks-mobile-title">
+            {t("bookmarks", { defaultValue: "Bookmarks" })}
+          </h2>
+          <button
+            type="button"
+            className="sb-bookmarks-mobile-header-button sb-bookmarks-mobile-header-add"
+            onClick={createNewCategory}
+            aria-label={t("new-bookmark-folder", {
+              defaultValue: "New folder",
+            })}
+            title={t("new-bookmark-folder", { defaultValue: "New folder" })}
+          >
+            <span className="material-symbols-outlined">create_new_folder</span>
+          </button>
+        </div>
+        <div className="sb-bookmarks-mobile-body">
+          <BookmarksSection state={state} closeLayoutMenu={closeLayoutMenu} />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="sb-sidebar-tabs-header">

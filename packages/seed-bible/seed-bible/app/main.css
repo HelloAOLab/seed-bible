@@ -140,6 +140,25 @@
 
   --sb-reader-toolbar-floating-button-side-offset: 16px;
 
+  /* Full-width floating chapter-nav bar. Composed from theme-injected vars so
+   * the bar, arrow circles, and peach play button adapt across themes. */
+  --sb-reader-floating-nav-background: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    var(--sb-reader-background) 90%
+  );
+  --sb-reader-floating-nav-arrow-background: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    var(--sb-reader-background) 80%
+  );
+  --sb-reader-floating-nav-play-background: color-mix(
+    in srgb,
+    var(--sb-primary-color),
+    #ffffff 58%
+  );
+  --sb-reader-floating-nav-play-glyph: #1f1f1f;
+
   --sb-empty-pane-toolbar-button-border: 1px solid var(--sb-secondary-color);
   --sb-empty-pane-toolbar-button-background: var(--sb-secondary-color);
   --sb-empty-pane-toolbar-button-color: var(--sb-font-color);
@@ -989,6 +1008,7 @@ h6 {
 
 .sb-bible-reader-mobile-header-book {
   cursor: pointer;
+  display: none;
 }
 
 .sb-bible-reader-mobile-header-translation {
@@ -1030,6 +1050,19 @@ h6 {
   margin-inline-start: 2px;
 }
 
+/* The chapter-bookmark toggle joins the header's right-hand icon cluster on
+ * mobile. Reset the desktop absolute positioning and let it (as the first
+ * item of the cluster) consume the free space so it and the settings button
+ * sit together on the right. */
+.sb-bible-reader-mobile-header .sb-bible-reader-bookmark-button {
+  position: static;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-inline-start: auto;
+}
+
 .sb-bible-reader-mobile-header-settings {
   flex-shrink: 0;
   display: inline-flex;
@@ -1043,7 +1076,7 @@ h6 {
   color: var(--sb-font-color);
   cursor: pointer;
   padding: 0;
-  margin-inline-start: auto;
+  margin-inline-start: 0;
 }
 
 .sb-bible-reader-mobile-header-settings:active {
@@ -2015,6 +2048,114 @@ h6 {
     /* max-width: 420px; */
   }
 
+  /* Full-width floating bar above the bottom nav: play (audio reader) on the
+   * far left, with previous / chapter label / next centered. Replaces the two
+   * scattered side arrows. */
+  .sb-reader-floating-nav {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px;
+    background: var(--sb-reader-toolbar-background);
+    color: var(--sb-font-color);
+    height: 50px;
+    transition: transform 0.3s ease;
+  }
+
+  /* Play button — peach circle with a dark glyph. The audio extension draws
+   * its own filled circle + glyph via presentation `fill` attributes, which
+   * CSS `fill` overrides, so we recolor it here to match the design without
+   * losing the play/pause state swap the extension owns. */
+  .sb-reader-floating-nav-play {
+    position: absolute;
+    inset-inline-start: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 999px;
+  }
+
+  .sb-reader-floating-nav-play:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .sb-reader-floating-nav-play > svg {
+    width: 44px;
+    height: 44px;
+  }
+
+  .sb-reader-floating-nav-play > svg circle {
+    fill: var(--sb-reader-floating-nav-play-background);
+  }
+
+  .sb-reader-floating-nav-play > svg path,
+  .sb-reader-floating-nav-play > svg rect {
+    fill: var(--sb-reader-floating-nav-play-glyph);
+  }
+
+  .sb-reader-floating-nav-group {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .sb-reader-floating-nav-arrow {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border: none;
+    background: var(--sb-reader-floating-nav-arrow-background);
+    color: var(--sb-font-color);
+    cursor: pointer;
+    border-radius: 999px;
+  }
+
+  .sb-reader-floating-nav-arrow:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  .sb-reader-floating-nav-arrow > svg,
+  .sb-reader-floating-nav-arrow > .material-symbols-outlined {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+  }
+
+  .sb-reader-floating-nav-label {
+    flex: 0 1 auto;
+    min-width: 0;
+    padding: 0 4px;
+    border: none;
+    background: transparent;
+    color: var(--sb-book-title-font-color);
+    font-family: var(--text-bookTitle-font);
+    font-size: 20px;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+  }
+
   .sb-action-btns {
     display: flex;
     align-items: center;
@@ -2034,7 +2175,7 @@ h6 {
     align-items: stretch;
     gap: 0;
     background: var(--sb-reader-toolbar-background);
-    border-top: 1px solid var(--sb-divider-color);
+    border: none;
     box-shadow: none;
   }
 
@@ -2261,6 +2402,16 @@ h6 {
         calc(100% - var(--sb-reader-toolbar-floating-button-top) + 8px)
       );
     /* pointer-events: none; */
+  }
+
+  /* The floating chapter-nav bar should NOT hide with the bottom nav. The wrap
+   * slides down by `100% (= nav height) + 76px`; counter the constant 76px on
+   * the bar so it settles flush at the viewport bottom (taking the nav's
+   * place) instead of sliding off-screen with it. */
+  body.sb-scroll-hide-bars .sb-reader-floating-nav {
+    transform: translateY(
+      calc(var(--sb-reader-toolbar-floating-button-top) - 8px)
+    );
   }
 }
 
@@ -4738,6 +4889,66 @@ h6 {
     .sb-bookmark-item-verse
     .sb-bookmark-item-button {
     padding-inline-start: 14px;
+  }
+
+  /* ------------------------------------------------------------------
+   * Full-screen mobile Bookmarks view — a focused take-over (close /
+   * title / new-folder header over the collapsible categories) shown
+   * when the Bookmarks bottom tab is active.
+   * ------------------------------------------------------------------ */
+  .sb-bookmarks-mobile-screen {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .sb-bookmarks-mobile-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--sb-divider-color);
+  }
+
+  .sb-bookmarks-mobile-title {
+    flex: 1 1 auto;
+    margin: 0;
+    text-align: center;
+    font-size: 24px;
+    font-weight: 600;
+    font-family: var(--text-bookTitle-font);
+    color: var(--sb-book-title-font-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sb-bookmarks-mobile-header-button {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--sb-font-color);
+    cursor: pointer;
+    border-radius: 999px;
+  }
+
+  .sb-bookmarks-mobile-header-button:hover {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  }
+
+  .sb-bookmarks-mobile-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 12px 16px 96px;
   }
 
   /* ------------------------------------------------------------------

@@ -482,6 +482,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const openSelectorTool = useComputed(
     () => tools.value.find((tool) => tool.id === "open-selector") ?? null
   );
+  // The audio-reader extension's play/pause control, surfaced inside the
+  // mobile floating nav pill. Null when the extension isn't installed; its
+  // `visible` is only true on chapters that actually have audio.
+  const audioPlayTool = useComputed(
+    () =>
+      toolsManager
+        .getQuickTools({ readingState: readingState.value! })
+        .find((tool) => tool.id === "ext_audioReader-play") ?? null
+  );
 
   const floatingAnchor = useComputed(() =>
     readingState.value!.selectedVerses.value.reduce<{
@@ -674,31 +683,84 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         >
           {isSmallScreen.value &&
             activeMobileTab.value === "bible" &&
-            settings.settings.value.showNavArrows &&
-            previousChapterTool.value && (
-              <button
-                disabled={previousChapterTool.value.disabled.value}
-                onClick={previousChapterTool.value.onSelect}
-                className="sb-reader-toolbar-floating-button sb-reader-toolbar-floating-button-left"
-                aria-label={translateTitle(t, previousChapterTool.value.title)}
-              >
-                <previousChapterTool.value.icon />
-              </button>
-            )}
+            (() => {
+              const showNav = settings.settings.value.showNavArrows;
+              const audio =
+                audioPlayTool.value && audioPlayTool.value.visible.value
+                  ? audioPlayTool.value
+                  : null;
+              const prev = showNav ? previousChapterTool.value : null;
+              const next = showNav ? nextChapterTool.value : null;
+              const selector = showNav ? openSelectorTool.value : null;
+              if (!audio && !prev && !next && !selector) return null;
 
-          {isSmallScreen.value &&
-            activeMobileTab.value === "bible" &&
-            settings.settings.value.showNavArrows &&
-            nextChapterTool.value && (
-              <button
-                disabled={nextChapterTool.value.disabled.value}
-                onClick={nextChapterTool.value.onSelect}
-                className="sb-reader-toolbar-floating-button sb-reader-toolbar-floating-button-right"
-                aria-label={translateTitle(t, nextChapterTool.value.title)}
-              >
-                <nextChapterTool.value.icon />
-              </button>
-            )}
+              const AudioIcon = audio?.icon;
+              const PrevIcon = prev?.icon;
+              const NextIcon = next?.icon;
+
+              return (
+                <div
+                  className="sb-reader-floating-nav"
+                  role="group"
+                  aria-label={t("chapter-navigation", {
+                    defaultValue: "Chapter navigation",
+                  })}
+                >
+                  {audio && AudioIcon && (
+                    <button
+                      type="button"
+                      disabled={audio.disabled.value}
+                      onClick={() => audio.onSelect()}
+                      className="sb-reader-floating-nav-play"
+                      aria-label={translateTitle(t, audio.title)}
+                    >
+                      <AudioIcon />
+                    </button>
+                  )}
+
+                  {(prev || next || selector) && (
+                    <div className="sb-reader-floating-nav-group">
+                      {prev && PrevIcon && (
+                        <button
+                          type="button"
+                          disabled={prev.disabled.value}
+                          onClick={prev.onSelect}
+                          className="sb-reader-floating-nav-arrow"
+                          aria-label={translateTitle(t, prev.title)}
+                        >
+                          <PrevIcon />
+                        </button>
+                      )}
+
+                      {selector && (
+                        <button
+                          type="button"
+                          onClick={selector.onSelect}
+                          className="sb-reader-floating-nav-label"
+                        >
+                          {readingState.value?.chapterData.value?.book.name ??
+                            readingState.value?.bookId.value ??
+                            ""}
+                          -{readingState.value?.chapterNumber.value}
+                        </button>
+                      )}
+
+                      {next && NextIcon && (
+                        <button
+                          type="button"
+                          disabled={next.disabled.value}
+                          onClick={next.onSelect}
+                          className="sb-reader-floating-nav-arrow"
+                          aria-label={translateTitle(t, next.title)}
+                        >
+                          <NextIcon />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
           <div
             className={`sb-reader-toolbar${isSmallScreen.value ? " sb-reader-toolbar-mobile-layout" : " sb-reader-toolbar-labeled"}`}
