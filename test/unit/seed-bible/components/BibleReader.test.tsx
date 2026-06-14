@@ -187,6 +187,10 @@ function createMobileState(): SeedBibleState {
       openSettings: jest.fn(),
       openSidebar: jest.fn(),
     },
+    bookmarks: {
+      isLocationBookmarked: jest.fn(() => false),
+      toggleBookmarkAtLocation: jest.fn(async () => {}),
+    },
     tools: createBibleToolsManager(),
   } as any as SeedBibleState;
 }
