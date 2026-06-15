@@ -145,19 +145,41 @@ function utcMidnight(ms: number): number {
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 }
 
+/** One day of an expanded cadence cycle. The cycle repeats to cover the plan. */
+interface CycleDay {
+  /** Number of reading sessions that day (0 = skip day). */
+  sessions: number;
+  /** Per-session labels from the originating `read` segment, if any. */
+  labels: string[] | null;
+}
+
+/**
+ * Expands a cadence into a per-day array for one full pattern cycle, retaining
+ * the originating segment's labels. The array repeats.
+ */
+function cyclePattern(cadence: Cadence): CycleDay[] {
+  const days: CycleDay[] = [];
+  for (const seg of cadence.segments) {
+    const day: CycleDay =
+      seg.type === "read"
+        ? {
+            sessions: seg.sessionsPerDay ?? 1,
+            labels: seg.segmentLabels ?? null,
+          }
+        : { sessions: 0, labels: null };
+    for (let i = 0; i < seg.days; i++) {
+      days.push(day);
+    }
+  }
+  return days;
+}
+
 /**
  * Expands a cadence into a per-day array describing how many sessions occur on
  * each day of one full pattern cycle (0 = skip day). The array repeats.
  */
 function patternDays(cadence: Cadence): number[] {
-  const days: number[] = [];
-  for (const seg of cadence.segments) {
-    const sessions = seg.type === "read" ? (seg.sessionsPerDay ?? 1) : 0;
-    for (let i = 0; i < seg.days; i++) {
-      days.push(sessions);
-    }
-  }
-  return days;
+  return cyclePattern(cadence).map((d) => d.sessions);
 }
 
 /** Number of sessions in one full pattern cycle. */
@@ -347,4 +369,169 @@ export function planCompletion(
     doneReadings,
     totalReadings,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Calendar
+//
+// `getReadingCalendar` derives the day-by-day calendar a user should follow
+// from their effective cadence and progress: an ordered list of reading days
+// (the sessions due that day, with labels from the cadence) interleaved with
+// collapsed ranges of skipped days.
+// ---------------------------------------------------------------------------
+
+/** A plan session placed on a calendar day, with its cadence label and status. */
+export interface CalendarSession {
+  /** Global 0-based session ordinal across the whole plan. */
+  index: number;
+  session: ReadingPlanSession;
+  /** Label from the cadence segment for this session's slot, if any. */
+  label: string | null;
+  /** True when every reading in the session is complete. */
+  isComplete: boolean;
+  /** Completion time of the session, or null if not complete / not recorded. */
+  completedAtMs: number | null;
+}
+
+/** A single day on which one or more sessions are due. */
+export interface CalendarReadingDay {
+  type: "reading";
+  /** Local midnight of the day, in the plan progress's time zone. */
+  date: ReturnType<typeof DateTime.fromMillis>;
+  /** Whole-day offset from the start date. */
+  dayOffset: number;
+  sessions: CalendarSession[];
+  /** Global index of the first session on this day. */
+  startSessionIndex: number;
+  /** Global index of the last session on this day. */
+  endSessionIndex: number;
+  /** Latest session completion time when ALL sessions are complete, else null. */
+  completedAtMs: number | null;
+  /** True when `nowMs` falls on this day (in the plan's time zone). */
+  containsNow: boolean;
+}
+
+/** A contiguous run of skipped (non-reading) days. */
+export interface CalendarSkipRange {
+  type: "skip";
+  /** Local midnight of the first skipped day. */
+  startDate: ReturnType<typeof DateTime.fromMillis>;
+  /** Local midnight of the last (inclusive) skipped day. */
+  endDate: ReturnType<typeof DateTime.fromMillis>;
+  startDayOffset: number;
+  days: number;
+  /** True when `nowMs` falls within this range (in the plan's time zone). */
+  containsNow: boolean;
+}
+
+export type ReadingCalendarEntry = CalendarReadingDay | CalendarSkipRange;
+
+/**
+ * Builds the calendar a user should follow to read the plan: an ordered list of
+ * reading days and collapsed skip ranges, derived from the user's effective
+ * cadence and start date. Leading and in-between skip ranges are included;
+ * trailing skip days after the last reading day are omitted.
+ *
+ * Returns an empty array when the plan has no sessions, there is no resolvable
+ * cadence, or the cadence never reads.
+ */
+export function getReadingCalendar(
+  plan: ReadingPlan,
+  progress: ReadingPlanProgress,
+  nowMs: number
+): ReadingCalendarEntry[] {
+  const entries: ReadingCalendarEntry[] = [];
+  const cadence = effectiveCadence(plan, progress);
+  if (!cadence || plan.sessions.length === 0) {
+    return entries;
+  }
+
+  const cycle = cyclePattern(cadence);
+  if (cycle.reduce((a, d) => a + d.sessions, 0) === 0) {
+    return entries; // never reads — cannot schedule (avoids an infinite loop)
+  }
+
+  const zone = progress.timeZone ?? undefined;
+  const start = DateTime.fromMillis(progress.startedAtMs, { zone }).startOf(
+    "day"
+  );
+  const today = DateTime.fromMillis(nowMs, { zone }).startOf("day");
+  const todayOffset = Math.round(today.diff(start, "days").days);
+
+  const progressBySession = new Map(
+    progress.sessions.map((s) => [s.sessionId, s])
+  );
+
+  let dayOffset = 0;
+  let sessionIndex = 0;
+  let pendingSkipStart: number | null = null;
+
+  const flushSkip = (endExclusive: number) => {
+    if (pendingSkipStart === null) {
+      return;
+    }
+    entries.push({
+      type: "skip",
+      startDate: start.plus({ days: pendingSkipStart }),
+      endDate: start.plus({ days: endExclusive - 1 }),
+      startDayOffset: pendingSkipStart,
+      days: endExclusive - pendingSkipStart,
+      containsNow:
+        todayOffset >= pendingSkipStart && todayOffset < endExclusive,
+    });
+    pendingSkipStart = null;
+  };
+
+  while (sessionIndex < plan.sessions.length) {
+    const cd = cycle[dayOffset % cycle.length]!;
+    if (cd.sessions === 0) {
+      if (pendingSkipStart === null) {
+        pendingSkipStart = dayOffset;
+      }
+    } else {
+      flushSkip(dayOffset);
+      const startSessionIndex = sessionIndex;
+      const sessions: CalendarSession[] = [];
+      for (
+        let s = 0;
+        s < cd.sessions && sessionIndex < plan.sessions.length;
+        s++
+      ) {
+        const session = plan.sessions[sessionIndex]!;
+        const sp = progressBySession.get(session.id);
+        const isComplete = isSessionComplete(session, sp);
+        sessions.push({
+          index: sessionIndex,
+          session,
+          label: cd.labels?.[s] ?? null,
+          isComplete,
+          completedAtMs: isComplete ? (sp?.completedAtMs ?? null) : null,
+        });
+        sessionIndex++;
+      }
+      const allComplete = sessions.every((cs) => cs.isComplete);
+      const completedAtMs = allComplete
+        ? sessions.reduce<number | null>(
+            (latest, cs) =>
+              cs.completedAtMs !== null
+                ? Math.max(latest ?? 0, cs.completedAtMs)
+                : latest,
+            null
+          )
+        : null;
+      entries.push({
+        type: "reading",
+        date: start.plus({ days: dayOffset }),
+        dayOffset,
+        sessions,
+        startSessionIndex,
+        endSessionIndex: sessionIndex - 1,
+        completedAtMs,
+        containsNow: todayOffset === dayOffset,
+      });
+    }
+    dayOffset++;
+  }
+  // A pending trailing skip run is intentionally left unflushed.
+  return entries;
 }

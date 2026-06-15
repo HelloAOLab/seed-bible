@@ -8,9 +8,13 @@ import {
   sessionsForDate,
   isSessionComplete,
   planCompletion,
+  getReadingCalendar,
   type Cadence,
   type ReadingPlan,
   type ReadingPlanProgress,
+  type ReadingCalendarEntry,
+  type CalendarReadingDay,
+  type CalendarSkipRange,
 } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
 
 // An arbitrary mid-week start instant to exercise "start any time".
@@ -280,5 +284,205 @@ describe("completion tracking", () => {
       doneReadings: 2,
       totalReadings: 3,
     });
+  });
+});
+
+describe("getReadingCalendar", () => {
+  const session = (id: string) => ({ id, readings: [reading(id)] });
+
+  // Progress driven by an explicit custom cadence (wins in effectiveCadence)
+  // and a fixed zone so day boundaries are deterministic.
+  const calProgress = (
+    cadence: Cadence,
+    overrides: Partial<ReadingPlanProgress> = {}
+  ) => makeProgress({ customCadence: cadence, timeZone: ZONE, ...overrides });
+
+  const nowAtOffset = (days: number, hours = 5) =>
+    START_DAY.plus({ days, hours }).toMillis();
+
+  const asReading = (e: ReadingCalendarEntry): CalendarReadingDay => {
+    expect(e.type).toBe("reading");
+    return e as CalendarReadingDay;
+  };
+  const asSkip = (e: ReadingCalendarEntry): CalendarSkipRange => {
+    expect(e.type).toBe("skip");
+    return e as CalendarSkipRange;
+  };
+
+  it("returns one reading day per session for a daily cadence", () => {
+    const plan = makePlan({
+      sessions: [session("s0"), session("s1"), session("s2")],
+    });
+    const cadence: Cadence = {
+      segments: [{ type: "read", days: 1, sessionsPerDay: 1 }],
+    };
+    const cal = getReadingCalendar(plan, calProgress(cadence), START_MS);
+
+    expect(cal.map((e) => e.type)).toEqual(["reading", "reading", "reading"]);
+    cal.forEach((e, i) => {
+      const day = asReading(e);
+      expect(day.dayOffset).toBe(i);
+      expect(dayOffsetOf(day.date)).toBe(i);
+      expect(day.startSessionIndex).toBe(i);
+      expect(day.endSessionIndex).toBe(i);
+      expect(day.sessions).toHaveLength(1);
+      expect(day.sessions[0]!.index).toBe(i);
+    });
+    expect(asReading(cal[0]!).containsNow).toBe(true);
+    expect(asReading(cal[1]!).containsNow).toBe(false);
+  });
+
+  it("interleaves skip ranges and omits the trailing skip", () => {
+    const plan = makePlan({
+      sessions: [session("s0"), session("s1"), session("s2")],
+    });
+    const cadence: Cadence = {
+      segments: [
+        { type: "read", days: 1 },
+        { type: "skip", days: 1 },
+      ],
+    };
+    const cal = getReadingCalendar(plan, calProgress(cadence), START_MS);
+
+    expect(cal.map((e) => e.type)).toEqual([
+      "reading",
+      "skip",
+      "reading",
+      "skip",
+      "reading",
+    ]);
+    expect(cal.map((e) => e.type).at(-1)).toBe("reading"); // no trailing skip
+    expect(asReading(cal[0]!).dayOffset).toBe(0);
+    expect(asReading(cal[2]!).dayOffset).toBe(2);
+    expect(asReading(cal[4]!).dayOffset).toBe(4);
+
+    const skip1 = asSkip(cal[1]!);
+    expect(skip1.startDayOffset).toBe(1);
+    expect(skip1.days).toBe(1);
+    expect(dayOffsetOf(skip1.startDate)).toBe(1);
+    expect(dayOffsetOf(skip1.endDate)).toBe(1);
+    expect(asSkip(cal[3]!).startDayOffset).toBe(3);
+  });
+
+  it("includes a leading skip range", () => {
+    const plan = makePlan({ sessions: [session("s0")] });
+    const cadence: Cadence = {
+      segments: [
+        { type: "skip", days: 2 },
+        { type: "read", days: 1 },
+      ],
+    };
+    const cal = getReadingCalendar(plan, calProgress(cadence), START_MS);
+
+    expect(cal.map((e) => e.type)).toEqual(["skip", "reading"]);
+    const skip = asSkip(cal[0]!);
+    expect(skip.startDayOffset).toBe(0);
+    expect(skip.days).toBe(2);
+    expect(asReading(cal[1]!).dayOffset).toBe(2);
+  });
+
+  it("attaches per-session labels from the cadence", () => {
+    const plan = makePlan({ sessions: [session("s0"), session("s1")] });
+    const cadence: Cadence = {
+      segments: [
+        {
+          type: "read",
+          days: 1,
+          sessionsPerDay: 2,
+          segmentLabels: ["Morning", "Evening"],
+        },
+      ],
+    };
+    const cal = getReadingCalendar(plan, calProgress(cadence), START_MS);
+
+    expect(cal).toHaveLength(1);
+    const day = asReading(cal[0]!);
+    expect(day.startSessionIndex).toBe(0);
+    expect(day.endSessionIndex).toBe(1);
+    expect(day.sessions.map((s) => s.label)).toEqual(["Morning", "Evening"]);
+  });
+
+  it("reports day completion as the latest session time when all complete", () => {
+    const plan = makePlan({ sessions: [session("s0"), session("s1")] });
+    const cadence: Cadence = {
+      segments: [{ type: "read", days: 1, sessionsPerDay: 2 }],
+    };
+
+    const complete = getReadingCalendar(
+      plan,
+      calProgress(cadence, {
+        sessions: [
+          { sessionId: "s0", completedReadingIds: ["s0"], completedAtMs: 100 },
+          { sessionId: "s1", completedReadingIds: ["s1"], completedAtMs: 200 },
+        ],
+      }),
+      START_MS
+    );
+    const completeDay = asReading(complete[0]!);
+    expect(completeDay.sessions.every((s) => s.isComplete)).toBe(true);
+    expect(completeDay.completedAtMs).toBe(200);
+
+    const partial = getReadingCalendar(
+      plan,
+      calProgress(cadence, {
+        sessions: [
+          { sessionId: "s0", completedReadingIds: ["s0"], completedAtMs: 100 },
+        ],
+      }),
+      START_MS
+    );
+    const partialDay = asReading(partial[0]!);
+    expect(partialDay.completedAtMs).toBeNull();
+    expect(partialDay.sessions[0]!.isComplete).toBe(true);
+    expect(partialDay.sessions[1]!.isComplete).toBe(false);
+    expect(partialDay.sessions[1]!.completedAtMs).toBeNull();
+  });
+
+  it("flags containsNow on a reading day, a skip range, or nothing", () => {
+    const plan = makePlan({
+      sessions: [session("s0"), session("s1"), session("s2")],
+    });
+    const cadence: Cadence = {
+      segments: [
+        { type: "read", days: 1 },
+        { type: "skip", days: 1 },
+      ],
+    };
+    const progress = calProgress(cadence);
+
+    // now on the reading day at offset 2
+    const onReading = getReadingCalendar(plan, progress, nowAtOffset(2));
+    expect(onReading.filter((e) => e.containsNow).map((e) => e.type)).toEqual([
+      "reading",
+    ]);
+    expect(asReading(onReading[2]!).containsNow).toBe(true);
+
+    // now on the skip day at offset 1
+    const onSkip = getReadingCalendar(plan, progress, nowAtOffset(1));
+    expect(onSkip.filter((e) => e.containsNow).map((e) => e.type)).toEqual([
+      "skip",
+    ]);
+
+    // now after the last reading day (offset 4) → nothing flagged
+    const after = getReadingCalendar(plan, progress, nowAtOffset(10));
+    expect(after.some((e) => e.containsNow)).toBe(false);
+  });
+
+  it("returns [] for no sessions or a never-reading cadence", () => {
+    const plan = makePlan({ sessions: [session("s0")] });
+    expect(
+      getReadingCalendar(
+        makePlan({ sessions: [] }),
+        calProgress({ segments: [{ type: "read", days: 1 }] }),
+        START_MS
+      )
+    ).toEqual([]);
+    expect(
+      getReadingCalendar(
+        plan,
+        calProgress({ segments: [{ type: "skip", days: 3 }] }),
+        START_MS
+      )
+    ).toEqual([]);
   });
 });
