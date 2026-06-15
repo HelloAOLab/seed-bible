@@ -13,6 +13,7 @@ import {
   markSessionCompleteInProgress,
   markDayCompleteInProgress,
   createReadingPlanProgress,
+  createReadingPlan,
   createReadingPlansManager,
   type Cadence,
   type ReadingPlan,
@@ -1092,5 +1093,55 @@ describe("createReadingPlanProgress", () => {
       START_MS
     );
     expect(progress.selectedCadenceId).toBe("daily"); // first option's id
+  });
+});
+
+describe("createReadingPlan", () => {
+  it("creates an empty plan with sensible defaults", () => {
+    const plan = createReadingPlan("record-9", "author-9", "plan-9", START_MS);
+
+    // round-trips through the schema
+    expect(() => ReadingPlanSchema.parse(plan)).not.toThrow();
+    expect(plan.address).toBe("plan-9");
+    expect(plan.recordName).toBe("record-9");
+    expect(plan.authorUserId).toBe("author-9");
+    expect(plan.sessions).toEqual([]);
+    expect(plan.locale).toBe("en");
+    expect(plan.title).toBeNull();
+    expect(plan.description).toBeNull();
+    expect(plan.schemaVersion).toBe(1);
+    expect(plan.createdAtMs).toBe(START_MS);
+    expect(plan.updatedAtMs).toBe(START_MS);
+    // a plan must offer at least one cadence; defaults to daily
+    expect(plan.cadenceOptions).toHaveLength(1);
+    expect(plan.cadenceOptions[0]!.id).toBe("daily");
+    expect(plan.defaultCadenceId).toBe("daily");
+  });
+
+  it("honors provided title, locale, and cadence options", () => {
+    const cadenceOptions = [
+      {
+        id: "weekly",
+        label: "Weekly",
+        cadence: {
+          segments: [
+            { type: "read" as const, days: 1 },
+            { type: "skip" as const, days: 6 },
+          ],
+        },
+      },
+    ];
+    const plan = createReadingPlan("record-9", "author-9", "plan-9", START_MS, {
+      locale: "es-MX",
+      title: "My Plan",
+      description: "A custom plan",
+      cadenceOptions,
+    });
+
+    expect(plan.locale).toBe("es-MX");
+    expect(plan.title).toBe("My Plan");
+    expect(plan.description).toBe("A custom plan");
+    expect(plan.cadenceOptions).toEqual(cadenceOptions);
+    expect(plan.defaultCadenceId).toBe("weekly"); // first provided option
   });
 });

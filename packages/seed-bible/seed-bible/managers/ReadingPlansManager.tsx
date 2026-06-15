@@ -165,6 +165,52 @@ export function createReadingPlanProgress(
   });
 }
 
+/** Default cadence offered by a brand-new plan: read once every day. */
+const DEFAULT_CADENCE_OPTIONS: CadenceOption[] = [
+  {
+    id: "daily",
+    label: "Daily",
+    cadence: { segments: [{ type: "read", days: 1 }] },
+  },
+];
+
+/**
+ * Creates a new, empty reading plan (no sessions). `address` and `nowMs` are
+ * passed in so this stays deterministic. Defaults to a single daily cadence
+ * option (a plan must offer at least one) and an "en" locale; all of these can
+ * be overridden via `options`.
+ */
+export function createReadingPlan(
+  recordName: string,
+  authorUserId: string,
+  address: string,
+  nowMs: number,
+  options: {
+    locale?: string;
+    title?: string | null;
+    description?: string | null;
+    cadenceOptions?: CadenceOption[];
+    defaultCadenceId?: string | null;
+  } = {}
+): ReadingPlan {
+  const cadenceOptions = options.cadenceOptions?.length
+    ? options.cadenceOptions
+    : DEFAULT_CADENCE_OPTIONS;
+  return ReadingPlanSchema.parse({
+    address,
+    recordName,
+    authorUserId,
+    locale: options.locale ?? "en",
+    title: options.title ?? null,
+    description: options.description ?? null,
+    cadenceOptions,
+    defaultCadenceId: options.defaultCadenceId ?? cadenceOptions[0]?.id ?? null,
+    sessions: [],
+    createdAtMs: nowMs,
+    updatedAtMs: nowMs,
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Scheduling / progress helpers (pure)
 //
@@ -939,6 +985,20 @@ export function createReadingPlansManager(login: LoginManager) {
     return progress;
   };
 
+  const createNewReadingPlan = async () => {
+    if (!login.userId.value) {
+      throw new Error("Not signed in");
+    }
+    const plan = createReadingPlan(
+      login.userId.value,
+      login.userId.value,
+      `plan_${uuid()}`,
+      Date.now()
+    );
+    await saveReadingPlan(plan);
+    userReadingPlans.value = [...userReadingPlans.value, plan];
+  };
+
   effect(() => {
     void syncReadingPlanProgresses();
     void syncReadingPlans();
@@ -957,5 +1017,6 @@ export function createReadingPlansManager(login: LoginManager) {
     markReadingComplete,
     markSessionComplete,
     markDayComplete,
+    createNewReadingPlan,
   };
 }
