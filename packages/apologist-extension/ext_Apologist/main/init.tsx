@@ -15,6 +15,20 @@ const completionsSchema = z.object({
   ),
 });
 
+const shareSchema = z.object({
+  messages: z.array(
+    z.object({
+      role: z.enum(["user", "assistant"]),
+      parts: z.array(
+        z.object({
+          type: z.enum(["text"]),
+          text: z.string(),
+        })
+      ),
+    })
+  ),
+});
+
 const PROVIDER_ID = "apologist-chat-provider";
 
 registerExtension({
@@ -27,6 +41,7 @@ registerExtension({
     const customApologistDomain = configBot.tags.apologistDomain ?? null;
     const apologistDomain = customApologistDomain ?? "apologist.ao.bot";
     const apologistApiKey = configBot.tags.apologistApiKey ?? null;
+    const apologistShareToken = configBot.tags.apologistShareToken ?? null;
     const apologistModel = configBot.tags.apologistModel ?? "openai/gpt/5-mini";
     const apologistConversationId: string | null =
       configBot.tags.apologistConversation ?? null;
@@ -99,7 +114,87 @@ registerExtension({
       },
     });
 
-    if (apologistConversationId) {
+    if (apologistShareToken) {
+      // init conversation
+      const initConversation = async () => {
+        try {
+          console.log(
+            "[Apologist] Getting conversation history for share token:",
+            apologistShareToken
+          );
+          const response = await web.get(
+            `https://${apologistDomain}/api/v1/shares/${encodeURIComponent(apologistShareToken)}`
+          );
+
+          console.log("Share response:", response.data);
+          const shareData = shareSchema.parse(response.data);
+
+          // TODO: Support detecting langauge from share data.
+          // const lastLanguage =
+          //   shareData.messages[shareData.messages.length - 1]?.language;
+          // if (lastLanguage) {
+          //   console.log(
+          //     `[Apologist] Setting language to ${lastLanguage} based on conversation history.`
+          //   );
+          //   i18n.changeLanguage(lastLanguage);
+          // }
+
+          // build conversation
+          const messages = [];
+          for (const message of shareData.messages) {
+            const content = message.parts
+              .map((part) => {
+                if (part.type === "text") {
+                  return part.text;
+                }
+                return "";
+              })
+              .join("");
+
+            messages.push({
+              role: message.role,
+              content,
+              // TODO: Load actual timestamp from messages when available
+              timeMs: Date.now(),
+              // DateTime.fromSQL(completion.response_completed_at, {
+              //   zone: "utc",
+              // }).toMillis(),
+            });
+          }
+
+          const session = context.chats.createLocalSession({
+            messages: messages.map((m) => ({
+              type: "text",
+              id: uuid(),
+              text: m.content,
+              authors: [
+                m.role === "user"
+                  ? (context.login.userId.value ?? "local-user")
+                  : PROVIDER_ID,
+              ],
+              targets: [],
+              timeMs: m.timeMs,
+            })),
+            providerIds: [PROVIDER_ID],
+          });
+
+          session.markAsRead();
+          context.sidebar.openChatPanel();
+          context.chats.selectChat(session.id);
+
+          console.log("[Apologist] Conversation history:", messages);
+        } catch (err) {
+          console.error("[Apologist] Failed to initialize conversation:", err);
+
+          // TODO: Consider whether to initialize chat if conversation history fails to load
+          // const session = context.chats.createLocalSession();
+          // context.sidebar.openChatPanel();
+          // context.chats.selectChat(session.id);
+        }
+      };
+
+      initConversation();
+    } else if (apologistConversationId) {
       // init conversation
       const initConversation = async () => {
         try {
@@ -172,9 +267,10 @@ registerExtension({
         } catch (err) {
           console.error("[Apologist] Failed to initialize conversation:", err);
 
-          const session = context.chats.createLocalSession();
-          context.sidebar.openChatPanel();
-          context.chats.selectChat(session.id);
+          // TODO: Consider whether to initialize chat if conversation history fails to load
+          // const session = context.chats.createLocalSession();
+          // context.sidebar.openChatPanel();
+          // context.chats.selectChat(session.id);
         }
       };
 

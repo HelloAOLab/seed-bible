@@ -30,6 +30,7 @@ If you want to prompt users to continue the conversation in the Seed Bible, you 
       2. Select the text you just typed
       3. Click the "Link" button in the text editor toolbar
       4. Enter the following for the URL:
+
       ```
       https://seedbible.org/?autoinstall-ext_Apologist=true&apologistConversation={conversation}
       ```
@@ -44,6 +45,14 @@ You can configure the Apologist Chat Provider by setting the following variables
 
 - `autoinstall-ext_Apologist` - Set to `true` to automatically install the Apologist AI Chat provider.
 - `apologistConversation` - The conversation ID that should be loaded at start. If specified, then the conversation history will be fetched and automatically loaded into the chat window and focused.
+  - If you specify `apologistConversation`, then you should also include `apologistDomain` and `apologistApiKey`.
+  - In a Call to Action, you can use the `{conversation}` merge tag in the content to include the current conversation ID in the URL.
+    - e.g. The link could point to `https://seedbible.org?autoinstall-ext_Apologist=true&apologistConversation={conversation}&apologistDomain=my.agent.domain.bot&apologistApiKey=my_apologist_api_key`
+- `apologistShareToken` - The share token that should be used to load the conversation. If specified, then the conversation history will be fetched and automatically loaded into the chat window and focused.
+  - If specified, then this parameter overrides `apologistConversation`.
+  - If you specify `apologistShareToken`, then you should also include `apologistDomain` and `apologistApiKey`.
+  - In a Call to Action, you can use the `{share_token}` merge tag in the content to include the current conversation ID in the URL.
+    - e.g. The link could point to `https://seedbible.org?autoinstall-ext_Apologist=true&apologistShareToken={share_token}&apologistDomain=my.agent.domain.bot&apologistApiKey=my_apologist_api_key`
 - `apologistDomain` - The domain of the agent that should be used. If not specified, then a Seed Bible provided agent will be used.
 - `apologistApiKey` - The API key that should be used to access your agent. Required
 - `apologistName` - The name that should be used for the chat provider. If not specified, then "Apologist" will be used.
