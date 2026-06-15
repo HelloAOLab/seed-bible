@@ -116,6 +116,10 @@ export const ReadingPlanProgressSchema = z.object({
   timeZone: z.string().nullable().optional(),
   // Sparse — only sessions that have some progress recorded.
   sessions: z.array(SessionProgressSchema),
+  // Derived stats, kept in sync as completion changes (see `withProgressStats`).
+  percentComplete: z.number().min(0).max(1).default(0), // fraction of readings done
+  totalSessions: z.number().int().nonnegative().default(0),
+  totalReadings: z.number().int().nonnegative().default(0),
   createdAtMs: z.number().positive(),
   updatedAtMs: z.number().positive(),
 });
@@ -458,6 +462,27 @@ export function planCompletion(
     totalSessions: plan.sessions.length,
     doneReadings,
     totalReadings,
+  };
+}
+
+/**
+ * Recomputes the derived stats (`percentComplete` by readings, plus the plan's
+ * `totalSessions`/`totalReadings`) onto the progress so consumers can show
+ * progress without loading the plan. Purely derived — leaves `updatedAtMs`.
+ */
+export function withProgressStats(
+  plan: ReadingPlan,
+  progress: ReadingPlanProgress
+): ReadingPlanProgress {
+  const { doneReadings, totalReadings, totalSessions } = planCompletion(
+    plan,
+    progress
+  );
+  return {
+    ...progress,
+    totalSessions,
+    totalReadings,
+    percentComplete: totalReadings > 0 ? doneReadings / totalReadings : 0,
   };
 }
 
@@ -902,8 +927,15 @@ export function createReadingPlansManager(login: LoginManager) {
     selectedReadingPlanProgress.value = progress;
   };
 
-  // Applies an updated progress to the selected-plan signals and persists it.
-  const updateSelectedProgress = async (next: ReadingPlanProgress) => {
+  // Applies an updated progress to the selected-plan signals and persists it,
+  // recomputing the derived stats against the selected plan when it matches.
+  const updateSelectedProgress = async (updated: ReadingPlanProgress) => {
+    const plan = selectedReadingPlan.value;
+    const next =
+      plan &&
+      formatReadingPlanId(plan.recordName, plan.address) === updated.planId
+        ? withProgressStats(plan, updated)
+        : updated;
     selectedReadingPlanProgress.value = next;
     userReadingPlanProgresses.value = userReadingPlanProgresses.value.map(
       (p) => (p.id === next.id ? next : p)

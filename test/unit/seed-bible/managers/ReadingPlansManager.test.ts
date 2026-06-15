@@ -8,6 +8,7 @@ import {
   sessionsForDate,
   isSessionComplete,
   planCompletion,
+  withProgressStats,
   getReadingCalendar,
   markReadingCompleteInProgress,
   markSessionCompleteInProgress,
@@ -998,6 +999,27 @@ describe("createReadingPlansManager", () => {
     expect(entry.updatedAtMs).toBe(NOW);
     expect(entry).not.toHaveProperty("sessions");
   });
+
+  it("recomputes progress stats after marking, against the selected plan", async () => {
+    const plan = makePlan(); // 3 sessions / 3 readings; planId matches makeProgress
+    getDataMock.mockResolvedValue({ success: true, data: plan });
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.selectReadingPlan(metadataOf(plan));
+    await manager.selectReadingPlanProgress(makeProgress());
+    recordDataMock.mockClear();
+
+    await manager.markSessionComplete({ id: "s1", readings: [reading("r1")] });
+
+    const progress = manager.selectedReadingPlanProgress.value!;
+    expect(progress.totalSessions).toBe(3);
+    expect(progress.totalReadings).toBe(3);
+    expect(progress.percentComplete).toBeCloseTo(1 / 3, 10);
+
+    const saved = recordDataMock.mock.calls.at(-1)![2] as ReadingPlanProgress;
+    expect(saved.percentComplete).toBeCloseTo(1 / 3, 10);
+    expect(saved.totalReadings).toBe(3);
+  });
 });
 
 describe("progress updates", () => {
@@ -1230,6 +1252,80 @@ describe("createReadingPlanProgress", () => {
       START_MS
     );
     expect(progress.selectedCadenceId).toBe("daily"); // first option's id
+  });
+
+  it("starts with zeroed progress stats", () => {
+    const progress = createReadingPlanProgress(
+      makePlan(),
+      "user-9",
+      "prog-4",
+      START_MS
+    );
+    expect(progress.percentComplete).toBe(0);
+    expect(progress.totalSessions).toBe(0);
+    expect(progress.totalReadings).toBe(0);
+  });
+});
+
+describe("withProgressStats", () => {
+  it("defaults the derived stats to 0 and rejects out-of-range percentages", () => {
+    const progress = makeProgress();
+    expect(progress.percentComplete).toBe(0);
+    expect(progress.totalSessions).toBe(0);
+    expect(progress.totalReadings).toBe(0);
+
+    expect(() =>
+      ReadingPlanProgressSchema.parse({ ...progress, percentComplete: 1.5 })
+    ).toThrow();
+    expect(() =>
+      ReadingPlanProgressSchema.parse({ ...progress, percentComplete: -0.1 })
+    ).toThrow();
+  });
+
+  it("sets plan totals and percent (by readings)", () => {
+    const plan = makePlan(); // 3 sessions, 3 readings
+
+    const none = withProgressStats(plan, makeProgress());
+    expect(none.totalSessions).toBe(3);
+    expect(none.totalReadings).toBe(3);
+    expect(none.percentComplete).toBe(0);
+
+    const all = withProgressStats(
+      plan,
+      makeProgress({
+        sessions: [
+          { sessionId: "s1", completedReadingIds: ["r1"] },
+          { sessionId: "s2", completedReadingIds: ["r2"] },
+          { sessionId: "s3", completedReadingIds: ["r3"] },
+        ],
+      })
+    );
+    expect(all.percentComplete).toBe(1);
+  });
+
+  it("computes a partial fraction across readings", () => {
+    const plan = makePlan({
+      sessions: [
+        { id: "s1", readings: [reading("r1a"), reading("r1b")] },
+        { id: "s2", readings: [reading("r2a"), reading("r2b")] },
+      ],
+    });
+    const next = withProgressStats(
+      plan,
+      makeProgress({
+        sessions: [{ sessionId: "s1", completedReadingIds: ["r1a"] }],
+      })
+    );
+    expect(next.totalSessions).toBe(2);
+    expect(next.totalReadings).toBe(4);
+    expect(next.percentComplete).toBe(0.25);
+  });
+
+  it("is 0 for an empty plan", () => {
+    const next = withProgressStats(makePlan({ sessions: [] }), makeProgress());
+    expect(next.totalSessions).toBe(0);
+    expect(next.totalReadings).toBe(0);
+    expect(next.percentComplete).toBe(0);
   });
 });
 
