@@ -917,6 +917,87 @@ describe("createReadingPlansManager", () => {
     await manager.selectReadingPlan(metadataOf(other));
     expect(manager.canEditSelectedPlan.value).toBe(false);
   });
+
+  it("addSessionToReadingPlan appends the session, bumps updatedAtMs, and saves", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    const plan = makePlan({
+      sessions: [{ id: "s1", readings: [reading("r1")] }],
+      updatedAtMs: START_MS,
+    });
+    const newSession = { id: "s2", readings: [reading("r2")] };
+    recordDataMock.mockClear();
+    const NOW = START_MS + 60_000;
+    const nowSpy = jest.spyOn(Date, "now").mockReturnValue(NOW);
+
+    const updated = await manager.addSessionToReadingPlan(plan, newSession);
+    nowSpy.mockRestore();
+
+    expect(updated.sessions.map((s) => s.id)).toEqual(["s1", "s2"]);
+    expect(updated.sessions[1]).toEqual(newSession);
+    expect(updated.updatedAtMs).toBe(NOW);
+    expect(plan.sessions).toHaveLength(1); // input not mutated
+
+    // persisted via saveReadingPlan (full plan + metadata)
+    const markers = recordDataMock.mock.calls.map((c) => c[3]?.markers?.[0]);
+    expect(markers).toEqual(
+      expect.arrayContaining([
+        "publicRead:readingPlan",
+        "publicRead:readingPlanMetadata",
+      ])
+    );
+    recordDataMock.mock.calls.forEach((c) => {
+      expect(c[0]).toBe(plan.recordName);
+      expect(c[1]).toBe(plan.address);
+    });
+    const fullPlanCall = recordDataMock.mock.calls.find(
+      (c) => c[3]?.markers?.[0] === "publicRead:readingPlan"
+    )!;
+    expect((fullPlanCall[2] as ReadingPlan).sessions).toHaveLength(2);
+  });
+
+  it("addSessionToReadingPlan syncs the selected plan when it matches", async () => {
+    const plan = makePlan({ authorUserId: "user-1", sessions: [] });
+    getDataMock.mockResolvedValue({ success: true, data: plan });
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.selectReadingPlan(metadataOf(plan));
+
+    await manager.addSessionToReadingPlan(plan, {
+      id: "s1",
+      readings: [reading("r1")],
+    });
+
+    expect(
+      manager.selectedReadingPlan.value!.sessions.map((s) => s.id)
+    ).toEqual(["s1"]);
+  });
+
+  it("addSessionToReadingPlan refreshes the matching userReadingPlans entry", async () => {
+    const plan = makePlan({ updatedAtMs: START_MS });
+    setListData({
+      "publicRead:readingPlanMetadata": [
+        [{ address: plan.address, data: metadataOf(plan) }],
+      ],
+    });
+    const manager = makeManager("user-1");
+    await flush();
+    expect(manager.userReadingPlans.value).toHaveLength(1);
+    const NOW = START_MS + 60_000;
+    const nowSpy = jest.spyOn(Date, "now").mockReturnValue(NOW);
+
+    await manager.addSessionToReadingPlan(plan, {
+      id: "s9",
+      readings: [reading("r9")],
+    });
+    nowSpy.mockRestore();
+
+    const entry = manager.userReadingPlans.value.find(
+      (p) => p.address === plan.address
+    )!;
+    expect(entry.updatedAtMs).toBe(NOW);
+    expect(entry).not.toHaveProperty("sessions");
+  });
 });
 
 describe("progress updates", () => {

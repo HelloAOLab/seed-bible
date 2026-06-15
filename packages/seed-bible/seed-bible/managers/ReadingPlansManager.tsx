@@ -1002,6 +1002,33 @@ export function createReadingPlansManager(login: LoginManager) {
     userReadingPlans.value = [...userReadingPlans.value, plan];
   };
 
+  /** Appends a session to a plan, saves it, and keeps in-memory state in sync. */
+  const addSessionToReadingPlan = async (
+    plan: ReadingPlan,
+    session: ReadingPlanSession
+  ): Promise<ReadingPlan> => {
+    const updated: ReadingPlan = {
+      ...plan,
+      sessions: [...plan.sessions, session],
+      updatedAtMs: Date.now(),
+    };
+    await saveReadingPlan(updated);
+
+    if (
+      selectedReadingPlan.value?.recordName === updated.recordName &&
+      selectedReadingPlan.value?.address === updated.address
+    ) {
+      selectedReadingPlan.value = updated;
+    }
+    const { sessions: _sessions, ...metadata } = updated;
+    userReadingPlans.value = userReadingPlans.value.map((p) =>
+      p.recordName === updated.recordName && p.address === updated.address
+        ? metadata
+        : p
+    );
+    return updated;
+  };
+
   effect(() => {
     void syncReadingPlanProgresses();
     void syncReadingPlans();
@@ -1021,6 +1048,7 @@ export function createReadingPlansManager(login: LoginManager) {
     markSessionComplete,
     markDayComplete,
     createNewReadingPlan,
+    addSessionToReadingPlan,
     canEditSelectedPlan,
   };
 }
