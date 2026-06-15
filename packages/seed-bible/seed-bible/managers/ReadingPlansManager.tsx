@@ -23,6 +23,7 @@ export const CadenceSegmentSchema = z.discriminatedUnion("type", [
     days: z.number().int().positive(),
     // Omitted means 1 session per day (see `patternDays`).
     sessionsPerDay: z.number().int().positive().optional(),
+    segmentLabels: z.array(z.string()).nullable().optional(), // e.g. "Morning", "Evening" for multiple sessions per day
   }),
   z.object({
     type: z.literal("skip"),
@@ -64,8 +65,6 @@ export type PlanReading = z.infer<typeof PlanReadingSchema>;
 export const ReadingPlanSessionSchema = z.object({
   id: z.string(),
   title: z.string().nullable().optional(),
-  // e.g. "Morning" / "Evening" — distinguishes multiple sessions on one date.
-  label: z.string().nullable().optional(),
   readings: z.array(PlanReadingSchema).min(1),
 });
 export type ReadingPlanSession = z.infer<typeof ReadingPlanSessionSchema>;
