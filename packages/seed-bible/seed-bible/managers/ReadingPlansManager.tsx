@@ -1020,7 +1020,13 @@ export function createReadingPlansManager(login: LoginManager) {
     return progress;
   };
 
-  const createNewReadingPlan = async () => {
+  const createNewReadingPlan = async (options?: {
+    title?: string | null;
+    description?: string | null;
+    locale?: string;
+    cadenceOptions?: CadenceOption[];
+    defaultCadenceId?: string | null;
+  }): Promise<ReadingPlan> => {
     if (!login.userId.value) {
       throw new Error("Not signed in");
     }
@@ -1028,10 +1034,12 @@ export function createReadingPlansManager(login: LoginManager) {
       login.userId.value,
       login.userId.value,
       `plan_${uuid()}`,
-      Date.now()
+      Date.now(),
+      options
     );
     await saveReadingPlan(plan);
     userReadingPlans.value = [...userReadingPlans.value, plan];
+    return plan;
   };
 
   /** Appends a session to a plan, saves it, and keeps in-memory state in sync. */
@@ -1084,3 +1092,5 @@ export function createReadingPlansManager(login: LoginManager) {
     canEditSelectedPlan,
   };
 }
+
+export type ReadingPlansManager = ReturnType<typeof createReadingPlansManager>;

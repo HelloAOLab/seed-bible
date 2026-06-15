@@ -7331,3 +7331,114 @@ h6 {
     width: calc(100vw - 16px);
   }
 }
+
+/* Reading plans pane */
+.sb-reading-plans-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  padding: 12px;
+  color: var(--sb-font-color);
+}
+
+.sb-reading-plans-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sb-reading-plans-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.sb-reading-plans-create {
+  padding: 6px 12px;
+  border: 1px solid var(--sb-primary-color);
+  border-radius: 8px;
+  background: var(--sb-primary-color);
+  color: var(--sb-background);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.sb-reading-plans-create:hover {
+  opacity: 0.9;
+}
+
+.sb-reading-plans-empty {
+  padding: 16px 8px;
+  font-size: 13px;
+  text-align: center;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-reading-plans-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sb-reading-plan-item {
+  border-radius: 8px;
+}
+
+.sb-reading-plan-item-button {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-reading-plan-item-button:hover {
+  border-color: var(--sb-primary-color);
+  background: var(--sb-secondary-color);
+}
+
+.sb-reading-plan-item-title {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sb-reading-plan-item-description {
+  font-size: 12px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-reading-plans-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.sb-reading-plans-back:hover {
+  background: var(--sb-secondary-color);
+}
+
+.sb-reading-plans-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

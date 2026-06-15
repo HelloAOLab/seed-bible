@@ -62,6 +62,10 @@ import {
   type InvitationsManager,
 } from "seed-bible.managers.InvitationsManager";
 import { createSearchManager } from "seed-bible.managers.SearchManager";
+import {
+  createReadingPlansManager,
+  type ReadingPlansManager,
+} from "seed-bible.managers.ReadingPlansManager";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
@@ -158,6 +162,8 @@ export interface SeedBibleState {
   invitations: InvitationsManager;
   /** Search manager for Typesense-backed queries. */
   search: SearchManager;
+  /** Reading plans: authoring, progress, and calendar. */
+  readingPlans: ReadingPlansManager;
   /** Aggregated computed app state and top-level UI actions. */
   app: AppState;
   /** Extension loading and runtime manager. */
@@ -198,6 +204,7 @@ export function createSeedBibleState(): SeedBibleState {
   const extensions = createExtensionManager();
   const modals = createModalManager();
   const search = createSearchManager();
+  const readingPlans = createReadingPlansManager(login);
 
   const { currentTheme } = themeManager;
   const theme = computed(() => currentTheme.value);
@@ -643,6 +650,7 @@ export function createSeedBibleState(): SeedBibleState {
     invitations,
     search,
     extensions,
+    readingPlans,
     app: {
       createSharedSession: handleCreateSharedSession,
       joinSharedSession: handleJoinSharedSession,

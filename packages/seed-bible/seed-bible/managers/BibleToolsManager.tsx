@@ -15,6 +15,8 @@ import {
 import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
 import { sortBy } from "es-toolkit";
 import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
+import type { ReadingPlansManager } from "seed-bible.managers.ReadingPlansManager";
+import { ReadingPlansPane } from "seed-bible.components.ReadingPlansPane";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -130,6 +132,8 @@ export interface BibleToolContext {
   openSearch: () => void;
   /** Opens the chat / cross-references floating panel. */
   openChat?: () => void;
+  /** Reading plans manager, for opening the plans pane. */
+  readingPlans?: ReadingPlansManager;
 }
 
 /** Fully resolved reader toolbar tool ready for rendering. */
@@ -458,6 +462,24 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       icon: () => <MaterialIcon>search</MaterialIcon>,
       onSelect: (context) => {
         context.openSearch();
+      },
+    },
+    {
+      id: "open-plans",
+      priority: 115,
+      title: { key: "plans", defaultValue: "Plans" },
+      icon: () => <MaterialIcon>menu_book</MaterialIcon>,
+      isVisible: (context) => !!context.readingPlans,
+      onSelect: (context) => {
+        const readingPlans = context.readingPlans;
+        if (!readingPlans) {
+          return;
+        }
+        context.panesManager.openPane({
+          type: "attached",
+          id: "reading-plans-pane",
+          component: () => <ReadingPlansPane readingPlans={readingPlans} />,
+        });
       },
     },
     {

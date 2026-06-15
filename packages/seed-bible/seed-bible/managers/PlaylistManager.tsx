@@ -1,4 +1,4 @@
-import z from "zod";
+import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
 import { computed, effect, signal } from "@preact/signals";
 

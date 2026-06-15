@@ -892,6 +892,23 @@ describe("createReadingPlansManager", () => {
     });
   });
 
+  it("createNewReadingPlan applies provided metadata and returns the plan", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+
+    const plan = await manager.createNewReadingPlan({
+      title: "Bible in a Year",
+      description: "One year daily plan",
+      locale: "es-MX",
+    });
+
+    expect(plan.title).toBe("Bible in a Year");
+    expect(plan.description).toBe("One year daily plan");
+    expect(plan.locale).toBe("es-MX");
+    expect(plan.sessions).toEqual([]);
+    expect(manager.userReadingPlans.value).toContainEqual(plan);
+  });
+
   it("createNewReadingPlan throws when signed out", async () => {
     const manager = makeManager(null);
     await flush();

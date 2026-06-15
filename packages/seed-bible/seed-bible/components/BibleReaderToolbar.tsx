@@ -345,6 +345,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     tools: toolsManager,
     settings,
     bookmarks,
+    readingPlans,
   } = props.state;
   const selectedTab = useComputed(
     () =>
@@ -396,6 +397,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
       openChat: sidebar.openChatPanel,
+      readingPlans,
     });
     return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
   });
