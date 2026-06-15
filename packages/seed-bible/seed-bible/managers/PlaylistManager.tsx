@@ -29,7 +29,7 @@ export const PlaylistItem = z.discriminatedUnion("type", [
 export const PlaylistSchema = z.object({
   id: z.string(),
   recordName: z.string(),
-  userId: z.string(),
+  authorUserId: z.string(),
   title: z.string().nullable(),
   description: z.string().nullable(),
   items: z.array(PlaylistItem),
