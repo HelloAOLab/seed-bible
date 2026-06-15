@@ -200,6 +200,9 @@ importers:
       jiti:
         specifier: ^2.6.1
         version: 2.6.1
+      luxon:
+        specifier: 3.4.4
+        version: 3.4.4
       preact:
         specifier: ^10.29.0
         version: 10.29.0

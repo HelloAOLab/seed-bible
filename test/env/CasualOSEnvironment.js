@@ -4,6 +4,7 @@ import { TestEnvironment } from "jest-environment-jsdom";
 //   JestEnvironmentConfig,
 // } from "@jest/environment";
 import { v4 as uuid } from "uuid";
+import { DateTime } from "luxon";
 
 /**
  * @import { EnvironmentContext, JestEnvironmentConfig } from "@jest/environment"
@@ -21,6 +22,8 @@ export default class CasualOSEnvironment extends TestEnvironment {
   async setup() {
     await super.setup();
     this.global.uuid = uuid;
+    // CasualOS exposes luxon's DateTime as a global at runtime.
+    this.global.DateTime = DateTime;
     this.global.os = {
       syncConfigBotTagsToURL: () => {},
       addBotListener: () => {},
@@ -45,6 +48,7 @@ export default class CasualOSEnvironment extends TestEnvironment {
   async teardown() {
     delete this.global.os;
     delete this.global.uuid;
+    delete this.global.DateTime;
     delete this.global.posthog;
     await super.teardown();
   }

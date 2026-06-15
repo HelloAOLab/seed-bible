@@ -224,13 +224,15 @@ export function slotsForCadence(
 
 /**
  * The calendar date the Nth (0-based) session is due, given the cadence and start.
+ * Day boundaries are resolved in `timeZone` (defaults to the local zone).
  * Returns null if the cadence never reads.
  */
 export function dateForSession(
   cadence: Cadence,
   startedAtMs: number,
-  sessionIndex: number
-): Date | null {
+  sessionIndex: number,
+  timeZone?: string | null
+): ReturnType<typeof DateTime.fromMillis> | null {
   if (sessionIndex < 0) {
     return null;
   }
@@ -239,14 +241,16 @@ export function dateForSession(
   if (period === 0) {
     return null;
   }
-  const startMidnight = utcMidnight(startedAtMs);
+  const start = DateTime.fromMillis(startedAtMs, {
+    zone: timeZone ?? undefined,
+  }).startOf("day");
   const fullCycles = Math.floor(sessionIndex / period);
   let remaining = sessionIndex % period;
   let dayOffset = fullCycles * pattern.length;
   for (let i = 0; i < pattern.length; i++) {
     const sessions = pattern[i]!;
     if (remaining < sessions) {
-      return new Date(startMidnight + dayOffset * MS_PER_DAY);
+      return start.plus({ days: dayOffset });
     }
     remaining -= sessions;
     dayOffset++;
@@ -256,21 +260,27 @@ export function dateForSession(
 
 /**
  * The global session indices due on a given calendar date. Empty for skip days
- * or dates before the start. Inverse of `dateForSession`.
+ * or dates before the start. Day boundaries are resolved in `timeZone`
+ * (defaults to the local zone). Inverse of `dateForSession`.
  */
 export function sessionsForDate(
   cadence: Cadence,
   startedAtMs: number,
-  dateMs: number
+  dateMs: number,
+  timeZone?: string | null
 ): number[] {
   const pattern = patternDays(cadence);
   const period = sessionsPerCycle(pattern);
   if (period === 0) {
     return [];
   }
-  const startMidnight = utcMidnight(startedAtMs);
-  const target = utcMidnight(dateMs);
-  const dayOffset = Math.round((target - startMidnight) / MS_PER_DAY);
+  const start = DateTime.fromMillis(startedAtMs, {
+    zone: timeZone ?? undefined,
+  }).startOf("day");
+  const target = DateTime.fromMillis(dateMs, {
+    zone: timeZone ?? undefined,
+  }).startOf("day");
+  const dayOffset = Math.round(target.diff(start, "days").days);
   if (dayOffset < 0) {
     return [];
   }

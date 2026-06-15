@@ -79,12 +79,12 @@ function makeProgress(
   });
 }
 
-const dayOffsetOf = (date: Date) =>
-  Math.round(
-    (Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) -
-      Date.UTC(2026, 5, 17)) /
-      86_400_000
-  );
+// Resolve day boundaries in a fixed zone so the schedule math is deterministic
+// regardless of the machine's local time zone.
+const ZONE = "utc";
+const START_DAY = DateTime.fromMillis(START_MS, { zone: ZONE }).startOf("day");
+const dayOffsetOf = (date: ReturnType<typeof DateTime.fromMillis>) =>
+  Math.round(date.diff(START_DAY, "days").days);
 
 describe("ReadingPlansManager schemas", () => {
   it("parses a large plan with multiple cadence options", () => {
@@ -218,12 +218,12 @@ describe("schedule math", () => {
     it(`${c.name}: dateForSession and sessionsForDate are inverses`, () => {
       const slots = slotsForCadence(c.cadence, START_MS, 6);
       slots.forEach((slot, sessionIndex) => {
-        const date = dateForSession(c.cadence, START_MS, sessionIndex);
+        const date = dateForSession(c.cadence, START_MS, sessionIndex, ZONE);
         expect(date).not.toBeNull();
         expect(dayOffsetOf(date!)).toBe(slot.dayOffset);
-        expect(sessionsForDate(c.cadence, START_MS, date!.getTime())).toContain(
-          sessionIndex
-        );
+        expect(
+          sessionsForDate(c.cadence, START_MS, date!.toMillis(), ZONE)
+        ).toContain(sessionIndex);
       });
     });
   }
