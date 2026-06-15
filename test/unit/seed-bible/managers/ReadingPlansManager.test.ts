@@ -861,6 +861,62 @@ describe("createReadingPlansManager", () => {
       manager.startReadingPlan(metadataOf(makePlan()))
     ).rejects.toThrow("Not signed in");
   });
+
+  it("createNewReadingPlan saves an empty plan owned by the user and appends it", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    recordDataMock.mockClear();
+
+    await manager.createNewReadingPlan();
+
+    const plans = manager.userReadingPlans.value;
+    expect(plans).toHaveLength(1);
+    const plan = plans[0]! as ReadingPlan;
+    expect(plan.authorUserId).toBe("user-1");
+    expect(plan.recordName).toBe("user-1");
+    expect(plan.address).toMatch(/^plan_/);
+    expect(plan.sessions).toEqual([]);
+
+    // saveReadingPlan persists the full plan and the metadata separately
+    const markers = recordDataMock.mock.calls.map((c) => c[3]?.markers?.[0]);
+    expect(markers).toEqual(
+      expect.arrayContaining([
+        "publicRead:readingPlan",
+        "publicRead:readingPlanMetadata",
+      ])
+    );
+    recordDataMock.mock.calls.forEach((c) => {
+      expect(c[0]).toBe("user-1"); // recordName
+      expect(c[1]).toBe(plan.address);
+    });
+  });
+
+  it("createNewReadingPlan throws when signed out", async () => {
+    const manager = makeManager(null);
+    await flush();
+    await expect(manager.createNewReadingPlan()).rejects.toThrow(
+      "Not signed in"
+    );
+  });
+
+  it("canEditSelectedPlan is true only when the user authored the selected plan", async () => {
+    // no plan selected → cannot edit
+    const manager = makeManager("user-1");
+    await flush();
+    expect(manager.canEditSelectedPlan.value).toBe(false);
+
+    // selected plan authored by the user → can edit
+    const own = makePlan({ authorUserId: "user-1" });
+    getDataMock.mockResolvedValue({ success: true, data: own });
+    await manager.selectReadingPlan(metadataOf(own));
+    expect(manager.canEditSelectedPlan.value).toBe(true);
+
+    // selected plan authored by someone else → cannot edit
+    const other = makePlan({ authorUserId: "author-x" });
+    getDataMock.mockResolvedValue({ success: true, data: other });
+    await manager.selectReadingPlan(metadataOf(other));
+    expect(manager.canEditSelectedPlan.value).toBe(false);
+  });
 });
 
 describe("progress updates", () => {
