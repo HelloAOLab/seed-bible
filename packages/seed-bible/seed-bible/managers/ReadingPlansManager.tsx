@@ -73,6 +73,7 @@ export const ReadingPlanSchema = z.object({
   address: z.string(),
   recordName: z.string(),
   authorUserId: z.string(),
+  locale: z.string(),
   title: z.string().nullable(),
   description: z.string().nullable(),
   cadenceOptions: z.array(CadenceOptionSchema).min(1),

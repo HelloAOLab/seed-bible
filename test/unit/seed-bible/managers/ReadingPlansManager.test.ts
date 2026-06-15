@@ -33,6 +33,7 @@ function makePlan(overrides: Partial<ReadingPlan> = {}): ReadingPlan {
     recordName: "record-1",
     authorUserId: "author-1",
     title: "Test Plan",
+    locale: "en-US",
     description: null,
     cadenceOptions: [
       {
