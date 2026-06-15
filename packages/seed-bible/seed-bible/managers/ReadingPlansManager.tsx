@@ -1,5 +1,7 @@
+import { effect, signal } from "@preact/signals";
 import { PlaylistItem } from "./PlaylistManager";
 import { z } from "zod";
+import type { LoginManager } from "./LoginManager";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -69,7 +71,7 @@ export const ReadingPlanSessionSchema = z.object({
 });
 export type ReadingPlanSession = z.infer<typeof ReadingPlanSessionSchema>;
 
-export const ReadingPlanSchema = z.object({
+export const ReadingPlanMetadataSchema = z.object({
   address: z.string(),
   recordName: z.string(),
   authorUserId: z.string(),
@@ -78,10 +80,14 @@ export const ReadingPlanSchema = z.object({
   description: z.string().nullable(),
   cadenceOptions: z.array(CadenceOptionSchema).min(1),
   defaultCadenceId: z.string().nullable().optional(),
-  sessions: z.array(ReadingPlanSessionSchema),
   schemaVersion: z.number().int().default(1),
   createdAtMs: z.number().positive(),
   updatedAtMs: z.number().positive(),
+});
+export type ReadingPlanMetadata = z.infer<typeof ReadingPlanMetadataSchema>;
+
+export const ReadingPlanSchema = ReadingPlanMetadataSchema.extend({
+  sessions: z.array(ReadingPlanSessionSchema),
 });
 export type ReadingPlan = z.infer<typeof ReadingPlanSchema>;
 
@@ -534,4 +540,157 @@ export function getReadingCalendar(
   }
   // A pending trailing skip run is intentionally left unflushed.
   return entries;
+}
+
+async function listAllDataByMarker(
+  recordName: string,
+  marker: string
+): Promise<{ success: boolean; items: { address: string; data: unknown }[] }> {
+  const allItems: { address: string; data: unknown }[] = [];
+  let lastAddress: string | undefined;
+
+  while (true) {
+    const page = await os.listDataByMarker(recordName, marker, lastAddress);
+
+    if (!page.success) {
+      console.error("Error listing data:", page);
+      throw new Error(`Error listing data: ${page.errorCode}`);
+    }
+
+    if (page.items.length === 0) {
+      break;
+    }
+
+    for (const item of page.items) {
+      allItems.push({ address: item.address, data: item.data });
+    }
+
+    lastAddress = page.items[page.items.length - 1]?.address;
+  }
+
+  return { success: true, items: allItems };
+}
+
+export function createReadingPlansManager(login: LoginManager) {
+  const userReadingPlanProgresses = signal<ReadingPlanProgress[]>([]);
+  const userReadingPlans = signal<ReadingPlanMetadata[]>([]);
+  const selectedReadingPlan = signal<ReadingPlan | null>(null);
+
+  const listReadingPlans = async (recordName: string) => {
+    const result = await listAllDataByMarker(
+      recordName,
+      "publicRead:readingPlanMetadata"
+    );
+    const plans = [];
+    for (const item of result.items) {
+      const parsed = ReadingPlanMetadataSchema.safeParse(item.data);
+      if (!parsed.success) {
+        console.warn("Skipping invalid reading plan record:", parsed.error);
+        continue;
+      }
+      plans.push(parsed.data);
+    }
+
+    return plans;
+  };
+
+  const getReadingPlan = async (recordName: string, address: string) => {
+    const plan = await os.getData(recordName, address);
+
+    if (!plan.success) {
+      console.error("Error loading reading plan:", plan);
+      throw new Error(`Error loading reading plan: ${plan.errorCode}`);
+    }
+
+    const parsed = ReadingPlanSchema.safeParse(plan.data);
+    if (!parsed.success) {
+      console.error("Error parsing reading plan:", parsed.error);
+      throw new Error(`Error parsing reading plan: ${parsed.error}`);
+    }
+
+    return parsed.data;
+  };
+
+  const saveReadingPlan = async (plan: ReadingPlan) => {
+    const { sessions, ...metadata } = plan;
+    await Promise.all([
+      os.recordData(plan.recordName, plan.address, plan, {
+        markers: ["publicRead:readingPlan"],
+      }),
+      os.recordData(plan.recordName, plan.address, metadata, {
+        markers: ["publicRead:readingPlanMetadata"],
+      }),
+    ]);
+  };
+
+  // const availableReadingPlans = computed(() => {
+  //     return userReadingPlans;
+  // });
+
+  const loadReadingProgress = async (recordName: string) => {
+    const result = await listAllDataByMarker(
+      recordName,
+      "publicRead:readingPlanProgress"
+    );
+    const readings = result.items
+      .map((record) => ReadingPlanProgressSchema.safeParse(record.data))
+      .filter((r) => r.success)
+      .map((r) => r.data);
+    return readings;
+  };
+
+  const syncReadingPlanProgresses = async () => {
+    if (!login.userId.value) {
+      userReadingPlanProgresses.value = [];
+      return;
+    }
+
+    try {
+      const progresses = await loadReadingProgress(login.userId.value);
+      userReadingPlanProgresses.value = progresses;
+    } catch (error) {
+      console.error("Failed to sync reading plans:", error);
+    }
+  };
+
+  const syncReadingPlans = async () => {
+    if (!login.userId.value) {
+      userReadingPlans.value = [];
+      return;
+    }
+
+    try {
+      const plans = await listReadingPlans(login.userId.value);
+      userReadingPlans.value = plans;
+    } catch (error) {
+      console.error("Failed to sync reading plans:", error);
+    }
+  };
+
+  const selectReadingPlan = async (plan: ReadingPlanMetadata | null) => {
+    if (!plan) {
+      selectedReadingPlan.value = null;
+      return;
+    }
+
+    try {
+      const fullPlan = await getReadingPlan(plan.recordName, plan.address);
+      selectedReadingPlan.value = fullPlan;
+    } catch (error) {
+      console.error("Failed to load selected reading plan:", error);
+    }
+  };
+
+  effect(() => {
+    void syncReadingPlanProgresses();
+    void syncReadingPlans();
+  });
+
+  return {
+    userReadingPlanProgresses,
+    userReadingPlans,
+    selectedReadingPlan,
+    selectReadingPlan,
+    saveReadingPlan,
+  };
 }
