@@ -1,4 +1,4 @@
-import { effect, signal } from "@preact/signals";
+import { computed, effect, signal } from "@preact/signals";
 import { PlaylistItem } from "./PlaylistManager";
 import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
@@ -575,6 +575,18 @@ export function createReadingPlansManager(login: LoginManager) {
   const userReadingPlanProgresses = signal<ReadingPlanProgress[]>([]);
   const userReadingPlans = signal<ReadingPlanMetadata[]>([]);
   const selectedReadingPlan = signal<ReadingPlan | null>(null);
+  const selectedReadingPlanProgress = signal<ReadingPlanProgress | null>(null);
+
+  const selectedReadingPlanProgressCalendar = computed(() => {
+    if (!selectedReadingPlan.value || !selectedReadingPlanProgress.value) {
+      return [];
+    }
+    return getReadingCalendar(
+      selectedReadingPlan.value,
+      selectedReadingPlanProgress.value,
+      Date.now()
+    );
+  });
 
   const listReadingPlans = async (recordName: string) => {
     const result = await listAllDataByMarker(
@@ -622,10 +634,6 @@ export function createReadingPlansManager(login: LoginManager) {
       }),
     ]);
   };
-
-  // const availableReadingPlans = computed(() => {
-  //     return userReadingPlans;
-  // });
 
   const loadReadingProgress = async (recordName: string) => {
     const result = await listAllDataByMarker(
@@ -681,6 +689,17 @@ export function createReadingPlansManager(login: LoginManager) {
     }
   };
 
+  const selectReadingPlanProgress = async (
+    progress: ReadingPlanProgress | null
+  ) => {
+    if (!progress) {
+      selectedReadingPlanProgress.value = null;
+      return;
+    }
+
+    selectedReadingPlanProgress.value = progress;
+  };
+
   effect(() => {
     void syncReadingPlanProgresses();
     void syncReadingPlans();
@@ -692,5 +711,8 @@ export function createReadingPlansManager(login: LoginManager) {
     selectedReadingPlan,
     selectReadingPlan,
     saveReadingPlan,
+    selectedReadingPlanProgress,
+    selectReadingPlanProgress,
+    selectedReadingPlanProgressCalendar,
   };
 }

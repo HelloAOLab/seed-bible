@@ -9,6 +9,7 @@ import {
   isSessionComplete,
   planCompletion,
   getReadingCalendar,
+  createReadingPlansManager,
   type Cadence,
   type ReadingPlan,
   type ReadingPlanProgress,
@@ -16,6 +17,7 @@ import {
   type CalendarReadingDay,
   type CalendarSkipRange,
 } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
+import { signal } from "@preact/signals";
 
 // An arbitrary mid-week start instant to exercise "start any time".
 // 2026-06-17 is a Wednesday.
@@ -484,5 +486,210 @@ describe("getReadingCalendar", () => {
         START_MS
       )
     ).toEqual([]);
+  });
+});
+
+describe("createReadingPlansManager", () => {
+  type LoginArg = Parameters<typeof createReadingPlansManager>[0];
+
+  let recordDataMock: jest.Mock;
+  let getDataMock: jest.Mock;
+  let listDataByMarkerMock: jest.Mock;
+  let warnSpy: jest.SpyInstance;
+  let errorSpy: jest.SpyInstance;
+  let userId: ReturnType<typeof signal<string | null>>;
+
+  const flush = async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  };
+
+  // A marker-aware, paginated mock of os.listDataByMarker. `byMarker` maps a
+  // marker to its ordered pages of `{ address, data }` records.
+  const setListData = (
+    byMarker: Record<string, { address: string; data: unknown }[][]>
+  ) => {
+    listDataByMarkerMock.mockImplementation(
+      async (_recordName: string, marker: string, lastAddress?: string) => {
+        const pages = byMarker[marker] ?? [[]];
+        if (!lastAddress) {
+          return { success: true, items: pages[0] ?? [] };
+        }
+        const idx = pages.findIndex(
+          (p) => p.length > 0 && p[p.length - 1]!.address === lastAddress
+        );
+        return { success: true, items: pages[idx + 1] ?? [] };
+      }
+    );
+  };
+
+  const metadataOf = (plan: ReadingPlan) => {
+    const { sessions: _sessions, ...metadata } = plan;
+    return metadata;
+  };
+
+  const makeManager = (id: string | null = "user-1") => {
+    userId = signal<string | null>(id);
+    const login = { userId } as unknown as LoginArg;
+    return createReadingPlansManager(login);
+  };
+
+  beforeEach(() => {
+    recordDataMock = jest.fn().mockResolvedValue(undefined);
+    getDataMock = jest.fn().mockResolvedValue({ success: false });
+    listDataByMarkerMock = jest
+      .fn()
+      .mockResolvedValue({ success: true, items: [] });
+    warnSpy = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+    errorSpy = jest.spyOn(console, "error").mockImplementation(() => undefined);
+
+    (globalThis as { os?: unknown }).os = {
+      ...(globalThis as { os?: object }).os,
+      recordData: recordDataMock,
+      getData: getDataMock,
+      listDataByMarker: listDataByMarkerMock,
+    };
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+    errorSpy.mockRestore();
+  });
+
+  it("syncs the user's plans and progresses on creation", async () => {
+    const metadata = metadataOf(makePlan());
+    const progress = makeProgress();
+    setListData({
+      "publicRead:readingPlanMetadata": [
+        [{ address: "plan-1", data: metadata }],
+      ],
+      "publicRead:readingPlanProgress": [
+        [{ address: "rp_record-1_plan-1", data: progress }],
+      ],
+    });
+
+    const manager = makeManager("user-1");
+    await flush();
+
+    expect(listDataByMarkerMock).toHaveBeenCalledWith(
+      "user-1",
+      "publicRead:readingPlanMetadata",
+      undefined
+    );
+    expect(listDataByMarkerMock).toHaveBeenCalledWith(
+      "user-1",
+      "publicRead:readingPlanProgress",
+      undefined
+    );
+    expect(manager.userReadingPlans.value).toEqual([metadata]);
+    expect(manager.userReadingPlanProgresses.value).toEqual([progress]);
+  });
+
+  it("skips records that fail validation", async () => {
+    const metadata = metadataOf(makePlan());
+    setListData({
+      "publicRead:readingPlanMetadata": [
+        [
+          { address: "plan-1", data: metadata },
+          { address: "bad", data: { not: "a plan" } },
+        ],
+      ],
+    });
+
+    const manager = makeManager("user-1");
+    await flush();
+
+    expect(manager.userReadingPlans.value).toEqual([metadata]);
+    expect(warnSpy).toHaveBeenCalled();
+  });
+
+  it("walks every page of results", async () => {
+    const metaA = metadataOf(makePlan({ address: "plan-1" }));
+    const metaB = metadataOf(makePlan({ address: "plan-2" }));
+    setListData({
+      "publicRead:readingPlanMetadata": [
+        [{ address: "plan-1", data: metaA }],
+        [{ address: "plan-2", data: metaB }],
+      ],
+    });
+
+    const manager = makeManager("user-1");
+    await flush();
+
+    expect(manager.userReadingPlans.value).toEqual([metaA, metaB]);
+    // page 1 (no cursor), page 2 (cursor plan-1), page 3 (cursor plan-2, empty)
+    const metaCalls = listDataByMarkerMock.mock.calls.filter(
+      (c) => c[1] === "publicRead:readingPlanMetadata"
+    );
+    expect(metaCalls).toHaveLength(3);
+  });
+
+  it("clears the signals when the user logs out", async () => {
+    setListData({
+      "publicRead:readingPlanMetadata": [
+        [{ address: "plan-1", data: metadataOf(makePlan()) }],
+      ],
+    });
+    const manager = makeManager("user-1");
+    await flush();
+    expect(manager.userReadingPlans.value).toHaveLength(1);
+
+    userId.value = null;
+    await flush();
+
+    expect(manager.userReadingPlans.value).toEqual([]);
+    expect(manager.userReadingPlanProgresses.value).toEqual([]);
+  });
+
+  it("saveReadingPlan records the full plan and metadata under separate markers", async () => {
+    const manager = makeManager("user-1");
+    const plan = makePlan();
+    await manager.saveReadingPlan(plan);
+
+    expect(recordDataMock).toHaveBeenCalledWith("record-1", "plan-1", plan, {
+      markers: ["publicRead:readingPlan"],
+    });
+    const metaCall = recordDataMock.mock.calls.find(
+      (c) => c[3]?.markers?.[0] === "publicRead:readingPlanMetadata"
+    );
+    expect(metaCall).toBeDefined();
+    expect(metaCall![2]).not.toHaveProperty("sessions");
+    expect(metaCall![2]).toMatchObject({
+      address: "plan-1",
+      title: "Test Plan",
+    });
+  });
+
+  it("selectReadingPlan loads the full plan via getData", async () => {
+    const plan = makePlan();
+    getDataMock.mockResolvedValue({ success: true, data: plan });
+    const manager = makeManager("user-1");
+    await flush();
+
+    await manager.selectReadingPlan(metadataOf(plan));
+
+    expect(getDataMock).toHaveBeenCalledWith("record-1", "plan-1");
+    expect(manager.selectedReadingPlan.value).toEqual(plan);
+  });
+
+  it("selectReadingPlan(null) clears the selection", async () => {
+    const plan = makePlan();
+    getDataMock.mockResolvedValue({ success: true, data: plan });
+    const manager = makeManager("user-1");
+    await manager.selectReadingPlan(metadataOf(plan));
+    expect(manager.selectedReadingPlan.value).not.toBeNull();
+
+    await manager.selectReadingPlan(null);
+
+    expect(manager.selectedReadingPlan.value).toBeNull();
+  });
+
+  it("selectReadingPlan leaves the selection unchanged when loading fails", async () => {
+    getDataMock.mockResolvedValue({ success: false, errorCode: "not_found" });
+    const manager = makeManager("user-1");
+
+    await manager.selectReadingPlan(metadataOf(makePlan()));
+
+    expect(manager.selectedReadingPlan.value).toBeNull();
+    expect(errorSpy).toHaveBeenCalled();
   });
 });
