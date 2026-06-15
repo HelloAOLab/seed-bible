@@ -2024,6 +2024,19 @@ h6 {
   align-items: stretch;
 }
 
+@media (max-width: 330px) {
+  .sb-verse-toolbar-tools {
+    gap: 0;
+  }
+}
+
+@media (max-width: 300px) {
+  .sb-verse-toolbar {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
 /* Vertical icon-above-label button used inside the floating verse toolbar.
    Mirrors `.mobile-action-btn` from the develop branch's verseToolbar. */
 .sb-verse-toolbar-action-item {
