@@ -227,5 +227,13 @@
   "more-coming-soon": "More options coming soon",
   "discovery-coming-soon": "Discovery is coming soon",
   "login-to-use-feature": "You have to log in to use this feature.",
-  "link-to-join-shared-session-copied": "A link to join the shared session was copied to your clipboard"
+  "link-to-join-shared-session-copied": "A link to join the shared session was copied to your clipboard",
+  "plans": "Plans",
+  "reading-plans": "Reading plans",
+  "create-reading-plan": "Create reading plan",
+  "reading-plans-empty": "You don't have any reading plans yet. Create one to get started.",
+  "untitled-reading-plan": "Untitled plan",
+  "title": "Title",
+  "reading-plan-title_placeholder": "e.g. Bible in a Year",
+  "reading-plan-description_placeholder": "What is this plan about?"
 }

@@ -2,6 +2,7 @@ import { computed, effect, signal } from "@preact/signals";
 import { PlaylistItem } from "./PlaylistManager";
 import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
+import { omit } from "es-toolkit";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -844,7 +845,7 @@ export function createReadingPlansManager(login: LoginManager) {
   };
 
   const saveReadingPlan = async (plan: ReadingPlan) => {
-    const { sessions, ...metadata } = plan;
+    const metadata = omit(plan, ["sessions"]);
     await Promise.all([
       os.recordData(plan.recordName, plan.address, plan, {
         markers: ["publicRead:readingPlan"],
@@ -1060,7 +1061,7 @@ export function createReadingPlansManager(login: LoginManager) {
     ) {
       selectedReadingPlan.value = updated;
     }
-    const { sessions: _sessions, ...metadata } = updated;
+    const metadata = omit(updated, ["sessions"]);
     userReadingPlans.value = userReadingPlans.value.map((p) =>
       p.recordName === updated.recordName && p.address === updated.address
         ? metadata

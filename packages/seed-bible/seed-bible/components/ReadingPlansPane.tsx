@@ -145,7 +145,7 @@ function CreateReadingPlanForm(props: CreateReadingPlanFormProps) {
           {t("back", { defaultValue: "Back" })}
         </button>
         <h2 className="sb-reading-plans-title">
-          {t("new-reading-plan", { defaultValue: "New reading plan" })}
+          {t("create-reading-plan", { defaultValue: "Create reading plan" })}
         </h2>
       </div>
 
@@ -162,7 +162,7 @@ function CreateReadingPlanForm(props: CreateReadingPlanFormProps) {
             onInput={(event: Event) =>
               setTitle((event.currentTarget as HTMLInputElement).value)
             }
-            placeholder={t("reading-plan-title-placeholder", {
+            placeholder={t("reading-plan-title_placeholder", {
               defaultValue: "e.g. Bible in a Year",
             })}
           />
@@ -183,7 +183,7 @@ function CreateReadingPlanForm(props: CreateReadingPlanFormProps) {
             onInput={(event: Event) =>
               setDescription((event.currentTarget as HTMLTextAreaElement).value)
             }
-            placeholder={t("reading-plan-description-placeholder", {
+            placeholder={t("reading-plan-description_placeholder", {
               defaultValue: "What is this plan about?",
             })}
           />
@@ -191,7 +191,7 @@ function CreateReadingPlanForm(props: CreateReadingPlanFormProps) {
 
         <div className="sb-settings-field-row">
           <label className="sb-settings-field-label" htmlFor="sb-plan-locale">
-            {t("locale", { defaultValue: "Locale" })}
+            {t("language", { defaultValue: "Language" })}
           </label>
           <input
             id="sb-plan-locale"
@@ -201,7 +201,6 @@ function CreateReadingPlanForm(props: CreateReadingPlanFormProps) {
             onInput={(event: Event) =>
               setLocale((event.currentTarget as HTMLInputElement).value)
             }
-            placeholder="en-US"
           />
         </div>
 
@@ -212,7 +211,7 @@ function CreateReadingPlanForm(props: CreateReadingPlanFormProps) {
             onClick={() => void handleCreate()}
             disabled={saving}
           >
-            {t("create-reading-plan-submit", { defaultValue: "Create plan" })}
+            {t("save", { defaultValue: "Save" })}
           </button>
         </div>
       </div>
