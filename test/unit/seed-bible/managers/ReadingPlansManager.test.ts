@@ -12,6 +12,7 @@ import {
   markReadingCompleteInProgress,
   markSessionCompleteInProgress,
   markDayCompleteInProgress,
+  createReadingPlanProgress,
   createReadingPlansManager,
   type Cadence,
   type ReadingPlan,
@@ -77,6 +78,7 @@ function makeProgress(
   overrides: Partial<ReadingPlanProgress> = {}
 ): ReadingPlanProgress {
   return ReadingPlanProgressSchema.parse({
+    id: "progress-1",
     planId: "rp_record-1_plan-1",
     recordName: "record-1",
     userId: "user-1",
@@ -721,10 +723,10 @@ describe("createReadingPlansManager", () => {
     expect(manager.userReadingPlanProgresses.value[0]!.sessions).toHaveLength(
       1
     );
-    // persisted at the planId address with markers plural
+    // persisted at the unique progress id address with markers plural
     const call = recordDataMock.mock.calls.at(-1)!;
     expect(call[0]).toBe("record-1");
-    expect(call[1]).toBe("rp_record-1_plan-1");
+    expect(call[1]).toBe("progress-1");
     expect(call[3]).toEqual({
       markers: ["publicRead:readingPlanProgress"],
     });
@@ -808,6 +810,55 @@ describe("createReadingPlansManager", () => {
     await expect(
       manager.markSessionComplete({ id: "s1", readings: [reading("r1")] })
     ).rejects.toThrow("No reading plan progress selected");
+  });
+
+  it("startReadingPlan creates, saves, and appends a new progress without selecting it", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    recordDataMock.mockClear();
+
+    const progress = await manager.startReadingPlan(metadataOf(makePlan()), {
+      cadenceId: "every-other-day",
+      timeZone: "utc",
+    });
+
+    expect(progress.planId).toBe("rp_record-1_plan-1");
+    expect(progress.recordName).toBe("user-1");
+    expect(progress.userId).toBe("user-1");
+    expect(progress.selectedCadenceId).toBe("every-other-day");
+    expect(progress.timeZone).toBe("utc");
+    expect(progress.sessions).toEqual([]);
+
+    const call = recordDataMock.mock.calls.at(-1)!;
+    expect(call[0]).toBe("user-1");
+    expect(call[1]).toBe(progress.id);
+    expect(call[3]).toEqual({ markers: ["publicRead:readingPlanProgress"] });
+
+    expect(manager.userReadingPlanProgresses.value).toContain(progress);
+    expect(manager.selectedReadingPlanProgress.value).toBeNull();
+  });
+
+  it("startReadingPlan can create multiple progresses for the same plan", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    const plan = metadataOf(makePlan());
+
+    const a = await manager.startReadingPlan(plan);
+    const b = await manager.startReadingPlan(plan);
+
+    expect(a.id).not.toBe(b.id);
+    expect(a.planId).toBe(b.planId);
+    expect(manager.userReadingPlanProgresses.value).toEqual(
+      expect.arrayContaining([a, b])
+    );
+  });
+
+  it("startReadingPlan throws when signed out", async () => {
+    const manager = makeManager(null);
+    await flush();
+    await expect(
+      manager.startReadingPlan(metadataOf(makePlan()))
+    ).rejects.toThrow("Not signed in");
   });
 });
 
@@ -986,5 +1037,60 @@ describe("progress updates", () => {
       expect(sp.completedReadingIds).toEqual([]);
       expect(sp.completedAtMs).toBeNull();
     });
+  });
+});
+
+describe("createReadingPlanProgress", () => {
+  it("builds a fresh progress anchored to the user", () => {
+    const progress = createReadingPlanProgress(
+      makePlan(),
+      "user-9",
+      "prog-1",
+      START_MS
+    );
+
+    expect(progress.id).toBe("prog-1");
+    expect(progress.planId).toBe("rp_record-1_plan-1");
+    expect(progress.recordName).toBe("user-9");
+    expect(progress.userId).toBe("user-9");
+    expect(progress.sessions).toEqual([]);
+    expect(progress.startedAtMs).toBe(START_MS);
+    expect(progress.createdAtMs).toBe(START_MS);
+    expect(progress.updatedAtMs).toBe(START_MS);
+    // defaults: plan default cadence, no override, no zone
+    expect(progress.selectedCadenceId).toBe("daily");
+    expect(progress.customCadence ?? null).toBeNull();
+    expect(progress.timeZone ?? null).toBeNull();
+  });
+
+  it("honors explicit cadence and timezone options", () => {
+    const custom: Cadence = {
+      segments: [{ type: "read", days: 1, sessionsPerDay: 2 }],
+    };
+    const progress = createReadingPlanProgress(
+      makePlan(),
+      "user-9",
+      "prog-2",
+      START_MS,
+      {
+        cadenceId: "every-other-day",
+        customCadence: custom,
+        timeZone: "America/New_York",
+      }
+    );
+
+    expect(progress.selectedCadenceId).toBe("every-other-day");
+    expect(progress.customCadence).toEqual(custom);
+    expect(progress.timeZone).toBe("America/New_York");
+  });
+
+  it("falls back to the first cadence option when there's no default", () => {
+    const progress = createReadingPlanProgress(
+      makePlan({ defaultCadenceId: null }),
+      "user-9",
+      "prog-3",
+      START_MS
+    );
+    expect(progress.selectedCadenceId).toBe("daily"); // first option's id
   });
 });

@@ -106,6 +106,7 @@ export const SessionProgressSchema = z.object({
 export type SessionProgress = z.infer<typeof SessionProgressSchema>;
 
 export const ReadingPlanProgressSchema = z.object({
+  id: z.string(), // unique per progress; used as the record address
   planId: z.string(),
   recordName: z.string(),
   userId: z.string(),
@@ -125,6 +126,43 @@ export function formatReadingPlanId(
   address: string
 ): string {
   return `rp_${recordName}_${address}`;
+}
+
+/**
+ * Creates a fresh progress record for a user starting a plan. `id` (unique) and
+ * `nowMs` are passed in so this stays deterministic; the manager supplies them.
+ * Stored in the user's record (`recordName = userId`) so it round-trips with
+ * `loadReadingProgress`. The selected cadence falls back: explicit option →
+ * plan default → first option → none.
+ */
+export function createReadingPlanProgress(
+  plan: ReadingPlanMetadata,
+  userId: string,
+  id: string,
+  nowMs: number,
+  options: {
+    cadenceId?: string | null;
+    customCadence?: Cadence | null;
+    timeZone?: string | null;
+  } = {}
+): ReadingPlanProgress {
+  return ReadingPlanProgressSchema.parse({
+    id,
+    planId: formatReadingPlanId(plan.recordName, plan.address),
+    recordName: userId,
+    userId,
+    selectedCadenceId:
+      options.cadenceId ??
+      plan.defaultCadenceId ??
+      plan.cadenceOptions[0]?.id ??
+      null,
+    customCadence: options.customCadence ?? null,
+    startedAtMs: nowMs,
+    timeZone: options.timeZone ?? null,
+    sessions: [],
+    createdAtMs: nowMs,
+    updatedAtMs: nowMs,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -745,7 +783,7 @@ export function createReadingPlansManager(login: LoginManager) {
 
   const saveReadingPlanProgress = async (progress: ReadingPlanProgress) => {
     const parsed = ReadingPlanProgressSchema.parse(progress);
-    await os.recordData(parsed.recordName, parsed.planId, parsed, {
+    await os.recordData(parsed.recordName, parsed.id, parsed, {
       markers: ["publicRead:readingPlanProgress"],
     });
   };
@@ -819,7 +857,7 @@ export function createReadingPlansManager(login: LoginManager) {
   const updateSelectedProgress = async (next: ReadingPlanProgress) => {
     selectedReadingPlanProgress.value = next;
     userReadingPlanProgresses.value = userReadingPlanProgresses.value.map(
-      (p) => (p.planId === next.planId ? next : p)
+      (p) => (p.id === next.id ? next : p)
     );
     await saveReadingPlanProgress(next);
   };
@@ -869,6 +907,38 @@ export function createReadingPlansManager(login: LoginManager) {
     );
   };
 
+  /**
+   * Starts a plan for the signed-in user: creates a fresh progress, persists it,
+   * and adds it to the list. Always creates a new record (a user may have more
+   * than one progress for the same plan). Does not select/activate the plan.
+   */
+  const startReadingPlan = async (
+    plan: ReadingPlanMetadata,
+    options?: {
+      cadenceId?: string | null;
+      customCadence?: Cadence | null;
+      timeZone?: string | null;
+    }
+  ): Promise<ReadingPlanProgress> => {
+    const userId = login.userId.value;
+    if (!userId) {
+      throw new Error("Not signed in");
+    }
+    const progress = createReadingPlanProgress(
+      plan,
+      userId,
+      uuid(),
+      Date.now(),
+      options
+    );
+    await saveReadingPlanProgress(progress);
+    userReadingPlanProgresses.value = [
+      ...userReadingPlanProgresses.value,
+      progress,
+    ];
+    return progress;
+  };
+
   effect(() => {
     void syncReadingPlanProgresses();
     void syncReadingPlans();
@@ -883,6 +953,7 @@ export function createReadingPlansManager(login: LoginManager) {
     selectedReadingPlanProgress,
     selectReadingPlanProgress,
     selectedReadingPlanProgressCalendar,
+    startReadingPlan,
     markReadingComplete,
     markSessionComplete,
     markDayComplete,
