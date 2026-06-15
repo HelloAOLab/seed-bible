@@ -849,7 +849,7 @@ export function createReadingPlansManager(login: LoginManager) {
       os.recordData(plan.recordName, plan.address, plan, {
         markers: ["publicRead:readingPlan"],
       }),
-      os.recordData(plan.recordName, plan.address, metadata, {
+      os.recordData(plan.recordName, `${plan.address}_metadata`, metadata, {
         markers: ["publicRead:readingPlanMetadata"],
       }),
     ]);
