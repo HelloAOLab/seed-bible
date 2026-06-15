@@ -768,6 +768,9 @@ export function createReadingPlansManager(login: LoginManager) {
   const userReadingPlans = signal<ReadingPlanMetadata[]>([]);
   const selectedReadingPlan = signal<ReadingPlan | null>(null);
   const selectedReadingPlanProgress = signal<ReadingPlanProgress | null>(null);
+  const canEditSelectedPlan = computed(() => {
+    return selectedReadingPlan.value?.authorUserId === login.userId.value;
+  });
 
   const selectedReadingPlanProgressCalendar = computed(() => {
     if (!selectedReadingPlan.value || !selectedReadingPlanProgress.value) {
@@ -1018,5 +1021,6 @@ export function createReadingPlansManager(login: LoginManager) {
     markSessionComplete,
     markDayComplete,
     createNewReadingPlan,
+    canEditSelectedPlan,
   };
 }
