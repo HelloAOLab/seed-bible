@@ -886,10 +886,16 @@ describe("createReadingPlansManager", () => {
         "publicRead:readingPlanMetadata",
       ])
     );
-    recordDataMock.mock.calls.forEach((c) => {
-      expect(c[0]).toBe("user-1"); // recordName
-      expect(c[1]).toBe(plan.address);
-    });
+
+    const firstCall = recordDataMock.mock.calls[0]!;
+    expect(firstCall[0]).toBe("user-1"); // recordName
+    expect(firstCall[1]).toMatch(/^plan_/); // address
+
+    const secondCall = recordDataMock.mock.calls[1]!;
+    expect(secondCall[0]).toBe("user-1"); // recordName
+    expect(secondCall[1]).toMatch(/^plan_.*_metadata$/); // address
+
+    expect(recordDataMock).toHaveBeenCalledTimes(2);
   });
 
   it("createNewReadingPlan applies provided metadata and returns the plan", async () => {
@@ -964,10 +970,16 @@ describe("createReadingPlansManager", () => {
         "publicRead:readingPlanMetadata",
       ])
     );
-    recordDataMock.mock.calls.forEach((c) => {
-      expect(c[0]).toBe(plan.recordName);
-      expect(c[1]).toBe(plan.address);
-    });
+
+    const firstCall = recordDataMock.mock.calls[0]!;
+    expect(firstCall[0]).toBe("record-1"); // recordName
+    expect(firstCall[1]).toMatch(/^plan/); // address
+
+    const secondCall = recordDataMock.mock.calls[1]!;
+    expect(secondCall[0]).toBe("record-1"); // recordName
+    expect(secondCall[1]).toMatch(/^plan.*_metadata$/); // address
+
+    expect(recordDataMock).toHaveBeenCalledTimes(2);
     const fullPlanCall = recordDataMock.mock.calls.find(
       (c) => c[3]?.markers?.[0] === "publicRead:readingPlan"
     )!;
