@@ -779,6 +779,29 @@ describe("createReadingPlansManager", () => {
     expect(updated.sessions.every((s) => s.completedAtMs !== null)).toBe(true);
   });
 
+  it("markSessionComplete(false) clears the session and persists", async () => {
+    const session = { id: "s1", readings: [reading("r1")] };
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.selectReadingPlanProgress(makeProgress());
+    await manager.markSessionComplete(session);
+    expect(
+      manager.selectedReadingPlanProgress.value!.sessions.find(
+        (s) => s.sessionId === "s1"
+      )!.completedReadingIds
+    ).toEqual(["r1"]);
+    recordDataMock.mockClear();
+
+    await manager.markSessionComplete(session, false);
+
+    const sp = manager.selectedReadingPlanProgress.value!.sessions.find(
+      (s) => s.sessionId === "s1"
+    )!;
+    expect(sp.completedReadingIds).toEqual([]);
+    expect(sp.completedAtMs).toBeNull();
+    expect(recordDataMock).toHaveBeenCalled();
+  });
+
   it("mark* throws when no progress is selected", async () => {
     const manager = makeManager("user-1");
     await flush();
@@ -884,5 +907,84 @@ describe("progress updates", () => {
       )
     ).toBe(true);
     expect(next.updatedAtMs).toBe(NOW);
+  });
+
+  it("marks a reading incomplete, clearing the session completion time", () => {
+    let progress = markSessionCompleteInProgress(makeProgress(), multi, NOW);
+    expect(
+      progress.sessions.find((s) => s.sessionId === "s2")!.completedAtMs
+    ).toBe(NOW);
+
+    progress = markReadingCompleteInProgress(
+      progress,
+      multi,
+      "r2a",
+      NOW + 10,
+      false
+    );
+    const sp = progress.sessions.find((s) => s.sessionId === "s2")!;
+    expect(sp.completedReadingIds).toEqual(["r2b"]);
+    expect(sp.completedAtMs).toBeNull();
+    expect(isSessionComplete(multi, sp)).toBe(false);
+    expect(progress.updatedAtMs).toBe(NOW + 10);
+  });
+
+  it("marking incomplete is a no-op when there's nothing to undo", () => {
+    const progress = makeProgress();
+    expect(
+      markReadingCompleteInProgress(progress, multi, "r2a", NOW, false)
+    ).toBe(progress);
+    expect(markSessionCompleteInProgress(progress, multi, NOW, false)).toBe(
+      progress
+    );
+  });
+
+  it("markSessionCompleteInProgress(false) clears all readings and the time", () => {
+    const completed = markSessionCompleteInProgress(makeProgress(), multi, NOW);
+    const next = markSessionCompleteInProgress(
+      completed,
+      multi,
+      NOW + 5,
+      false
+    );
+    const sp = next.sessions.find((s) => s.sessionId === "s2")!;
+    expect(sp.completedReadingIds).toEqual([]);
+    expect(sp.completedAtMs).toBeNull();
+    expect(next.updatedAtMs).toBe(NOW + 5);
+  });
+
+  it("markDayCompleteInProgress(false) clears every session on the day", () => {
+    const plan = makePlan({ sessions: [single, multi] });
+    const progress = makeProgress({
+      customCadence: {
+        segments: [{ type: "read", days: 1, sessionsPerDay: 2 }],
+      },
+      timeZone: ZONE,
+    });
+    const day = getReadingCalendar(
+      plan,
+      progress,
+      START_MS
+    )[0] as CalendarReadingDay;
+
+    const completed = markDayCompleteInProgress(progress, day, NOW);
+    const cleared = markDayCompleteInProgress(completed, day, NOW + 5, false);
+
+    expect(
+      isSessionComplete(
+        single,
+        cleared.sessions.find((s) => s.sessionId === "s1")
+      )
+    ).toBe(false);
+    expect(
+      isSessionComplete(
+        multi,
+        cleared.sessions.find((s) => s.sessionId === "s2")
+      )
+    ).toBe(false);
+    cleared.sessions.forEach((sp) => {
+      expect(sp.completedReadingIds).toEqual([]);
+      expect(sp.completedAtMs).toBeNull();
+    });
   });
 });

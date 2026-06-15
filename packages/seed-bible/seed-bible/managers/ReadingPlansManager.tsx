@@ -400,26 +400,38 @@ function withSessionProgress(
 }
 
 /**
- * Marks a single reading (item) within a session complete. If this completes
- * every reading in the session, its `completedAtMs` is set (an existing one is
- * preserved). A `readingId` that doesn't belong to the session is a no-op.
+ * Marks a single reading (item) within a session complete (`complete`, default)
+ * or incomplete. Completing the last reading sets the session's `completedAtMs`
+ * (an existing one is preserved); marking any reading incomplete clears it. A
+ * `readingId` that doesn't belong to the session — or undoing one that was never
+ * complete — is a no-op (returns the same progress).
  */
 export function markReadingCompleteInProgress(
   progress: ReadingPlanProgress,
   session: ReadingPlanSession,
   readingId: string,
-  nowMs: number
+  nowMs: number,
+  complete = true
 ): ReadingPlanProgress {
   if (!session.readings.some((r) => r.id === readingId)) {
     return progress;
+  }
+  const existing = progress.sessions.find((s) => s.sessionId === session.id);
+  if (
+    !complete &&
+    (!existing || !existing.completedReadingIds.includes(readingId))
+  ) {
+    return progress; // nothing to undo
   }
   return withSessionProgress(
     progress,
     session.id,
     (sp) => {
-      const completedReadingIds = sp.completedReadingIds.includes(readingId)
-        ? sp.completedReadingIds
-        : [...sp.completedReadingIds, readingId];
+      const completedReadingIds = complete
+        ? sp.completedReadingIds.includes(readingId)
+          ? sp.completedReadingIds
+          : [...sp.completedReadingIds, readingId]
+        : sp.completedReadingIds.filter((id) => id !== readingId);
       const next: SessionProgress = { ...sp, completedReadingIds };
       next.completedAtMs = isSessionComplete(session, next)
         ? (sp.completedAtMs ?? nowMs)
@@ -430,32 +442,45 @@ export function markReadingCompleteInProgress(
   );
 }
 
-/** Marks an entire session complete: every reading plus a completion time. */
+/**
+ * Marks an entire session complete (`complete`, default — every reading plus a
+ * completion time) or incomplete (clears every reading and the completion time).
+ * Undoing a session that has no recorded progress is a no-op.
+ */
 export function markSessionCompleteInProgress(
   progress: ReadingPlanProgress,
   session: ReadingPlanSession,
-  nowMs: number
+  nowMs: number,
+  complete = true
 ): ReadingPlanProgress {
+  if (!complete && !progress.sessions.some((s) => s.sessionId === session.id)) {
+    return progress; // nothing to undo
+  }
   return withSessionProgress(
     progress,
     session.id,
     (sp) => ({
       ...sp,
-      completedReadingIds: session.readings.map((r) => r.id),
-      completedAtMs: nowMs,
+      completedReadingIds: complete ? session.readings.map((r) => r.id) : [],
+      completedAtMs: complete ? nowMs : null,
     }),
     nowMs
   );
 }
 
-/** Marks every session on a calendar day complete (all sessions and readings). */
+/**
+ * Marks every session on a calendar day complete (`complete`, default) or
+ * incomplete (clears all sessions and their readings).
+ */
 export function markDayCompleteInProgress(
   progress: ReadingPlanProgress,
   day: CalendarReadingDay,
-  nowMs: number
+  nowMs: number,
+  complete = true
 ): ReadingPlanProgress {
   return day.sessions.reduce(
-    (acc, cs) => markSessionCompleteInProgress(acc, cs.session, nowMs),
+    (acc, cs) =>
+      markSessionCompleteInProgress(acc, cs.session, nowMs, complete),
     progress
   );
 }
@@ -807,30 +832,40 @@ export function createReadingPlansManager(login: LoginManager) {
     return current;
   };
 
-  /** Marks a single reading (item) within a session complete and saves. */
+  /** Marks a single reading (item) within a session complete/incomplete and saves. */
   const markReadingComplete = async (
     session: ReadingPlanSession,
-    readingId: string
+    readingId: string,
+    complete = true
   ) => {
     const current = requireSelectedProgress();
     await updateSelectedProgress(
-      markReadingCompleteInProgress(current, session, readingId, Date.now())
+      markReadingCompleteInProgress(
+        current,
+        session,
+        readingId,
+        Date.now(),
+        complete
+      )
     );
   };
 
-  /** Marks an entire session (all readings) complete and saves. */
-  const markSessionComplete = async (session: ReadingPlanSession) => {
+  /** Marks an entire session (all readings) complete/incomplete and saves. */
+  const markSessionComplete = async (
+    session: ReadingPlanSession,
+    complete = true
+  ) => {
     const current = requireSelectedProgress();
     await updateSelectedProgress(
-      markSessionCompleteInProgress(current, session, Date.now())
+      markSessionCompleteInProgress(current, session, Date.now(), complete)
     );
   };
 
-  /** Marks an entire calendar day (all sessions and readings) complete and saves. */
-  const markDayComplete = async (day: CalendarReadingDay) => {
+  /** Marks an entire calendar day (all sessions and readings) complete/incomplete and saves. */
+  const markDayComplete = async (day: CalendarReadingDay, complete = true) => {
     const current = requireSelectedProgress();
     await updateSelectedProgress(
-      markDayCompleteInProgress(current, day, Date.now())
+      markDayCompleteInProgress(current, day, Date.now(), complete)
     );
   };
 
