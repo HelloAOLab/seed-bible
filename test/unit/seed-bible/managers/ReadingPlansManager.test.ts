@@ -9,6 +9,9 @@ import {
   isSessionComplete,
   planCompletion,
   getReadingCalendar,
+  markReadingCompleteInProgress,
+  markSessionCompleteInProgress,
+  markDayCompleteInProgress,
   createReadingPlansManager,
   type Cadence,
   type ReadingPlan,
@@ -691,5 +694,195 @@ describe("createReadingPlansManager", () => {
 
     expect(manager.selectedReadingPlan.value).toBeNull();
     expect(errorSpy).toHaveBeenCalled();
+  });
+
+  it("markSessionComplete updates the selected progress and persists it", async () => {
+    const progress = makeProgress();
+    setListData({
+      "publicRead:readingPlanProgress": [
+        [{ address: "rp_record-1_plan-1", data: progress }],
+      ],
+    });
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.selectReadingPlanProgress(progress);
+    recordDataMock.mockClear();
+
+    await manager.markSessionComplete({
+      id: "s1",
+      readings: [reading("r1")],
+    });
+
+    const updated = manager.selectedReadingPlanProgress.value!;
+    const sp = updated.sessions.find((s) => s.sessionId === "s1")!;
+    expect(sp.completedReadingIds).toEqual(["r1"]);
+    expect(typeof sp.completedAtMs).toBe("number");
+    // reflected in the synced list
+    expect(manager.userReadingPlanProgresses.value[0]!.sessions).toHaveLength(
+      1
+    );
+    // persisted at the planId address with markers plural
+    const call = recordDataMock.mock.calls.at(-1)!;
+    expect(call[0]).toBe("record-1");
+    expect(call[1]).toBe("rp_record-1_plan-1");
+    expect(call[3]).toEqual({
+      markers: ["publicRead:readingPlanProgress"],
+    });
+  });
+
+  it("markReadingComplete marks a single item", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.selectReadingPlanProgress(makeProgress());
+
+    await manager.markReadingComplete(
+      { id: "s2", readings: [reading("r2a"), reading("r2b")] },
+      "r2a"
+    );
+
+    const sp = manager.selectedReadingPlanProgress.value!.sessions.find(
+      (s) => s.sessionId === "s2"
+    )!;
+    expect(sp.completedReadingIds).toEqual(["r2a"]);
+    expect(sp.completedAtMs).toBeNull();
+    expect(recordDataMock).toHaveBeenCalled();
+  });
+
+  it("markDayComplete completes every session on the day", async () => {
+    const plan = makePlan({
+      sessions: [
+        { id: "s1", readings: [reading("r1")] },
+        { id: "s2", readings: [reading("r2")] },
+      ],
+    });
+    const progress = makeProgress({
+      customCadence: {
+        segments: [{ type: "read", days: 1, sessionsPerDay: 2 }],
+      },
+      timeZone: ZONE,
+    });
+    const manager = makeManager("user-1");
+    await manager.selectReadingPlanProgress(progress);
+    const day = getReadingCalendar(
+      plan,
+      progress,
+      START_MS
+    )[0] as CalendarReadingDay;
+
+    await manager.markDayComplete(day);
+
+    const updated = manager.selectedReadingPlanProgress.value!;
+    expect(updated.sessions.map((s) => s.sessionId).sort()).toEqual([
+      "s1",
+      "s2",
+    ]);
+    expect(updated.sessions.every((s) => s.completedAtMs !== null)).toBe(true);
+  });
+
+  it("mark* throws when no progress is selected", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    await expect(
+      manager.markSessionComplete({ id: "s1", readings: [reading("r1")] })
+    ).rejects.toThrow("No reading plan progress selected");
+  });
+});
+
+describe("progress updates", () => {
+  const NOW = START_MS + 5 * 86_400_000;
+  const single = { id: "s1", readings: [reading("r1")] };
+  const multi = { id: "s2", readings: [reading("r2a"), reading("r2b")] };
+
+  it("marks a single-reading session complete (and doesn't mutate the input)", () => {
+    const progress = makeProgress();
+    const next = markReadingCompleteInProgress(progress, single, "r1", NOW);
+
+    expect(next).not.toBe(progress);
+    expect(progress.sessions).toEqual([]); // input untouched
+    const sp = next.sessions.find((s) => s.sessionId === "s1")!;
+    expect(sp.completedReadingIds).toEqual(["r1"]);
+    expect(sp.completedAtMs).toBe(NOW);
+    expect(isSessionComplete(single, sp)).toBe(true);
+    expect(next.updatedAtMs).toBe(NOW);
+  });
+
+  it("keeps a multi-reading session incomplete until all readings are marked", () => {
+    let progress = markReadingCompleteInProgress(
+      makeProgress(),
+      multi,
+      "r2a",
+      NOW
+    );
+    let sp = progress.sessions.find((s) => s.sessionId === "s2")!;
+    expect(sp.completedReadingIds).toEqual(["r2a"]);
+    expect(sp.completedAtMs).toBeNull();
+    expect(isSessionComplete(multi, sp)).toBe(false);
+
+    progress = markReadingCompleteInProgress(progress, multi, "r2b", NOW + 10);
+    sp = progress.sessions.find((s) => s.sessionId === "s2")!;
+    expect(sp.completedReadingIds).toEqual(["r2a", "r2b"]);
+    expect(sp.completedAtMs).toBe(NOW + 10);
+    expect(isSessionComplete(multi, sp)).toBe(true);
+  });
+
+  it("does not duplicate ids and ignores unknown readings", () => {
+    let progress = markReadingCompleteInProgress(
+      makeProgress(),
+      multi,
+      "r2a",
+      NOW
+    );
+    progress = markReadingCompleteInProgress(progress, multi, "r2a", NOW);
+    expect(
+      progress.sessions.find((s) => s.sessionId === "s2")!.completedReadingIds
+    ).toEqual(["r2a"]);
+
+    const unchanged = markReadingCompleteInProgress(
+      progress,
+      multi,
+      "nope",
+      NOW
+    );
+    expect(unchanged).toBe(progress);
+  });
+
+  it("markSessionCompleteInProgress fills all readings and a timestamp", () => {
+    const next = markSessionCompleteInProgress(makeProgress(), multi, NOW);
+    const sp = next.sessions.find((s) => s.sessionId === "s2")!;
+    expect(sp.completedReadingIds).toEqual(["r2a", "r2b"]);
+    expect(sp.completedAtMs).toBe(NOW);
+    expect(isSessionComplete(multi, sp)).toBe(true);
+  });
+
+  it("markDayCompleteInProgress completes every session on the day", () => {
+    const plan = makePlan({ sessions: [single, multi] });
+    const progress = makeProgress({
+      customCadence: {
+        segments: [{ type: "read", days: 1, sessionsPerDay: 2 }],
+      },
+      timeZone: ZONE,
+    });
+    const day = getReadingCalendar(
+      plan,
+      progress,
+      START_MS
+    )[0] as CalendarReadingDay;
+    expect(day.sessions).toHaveLength(2);
+
+    const next = markDayCompleteInProgress(progress, day, NOW);
+
+    expect(
+      isSessionComplete(
+        single,
+        next.sessions.find((s) => s.sessionId === "s1")
+      )
+    ).toBe(true);
+    expect(
+      isSessionComplete(
+        multi,
+        next.sessions.find((s) => s.sessionId === "s2")
+      )
+    ).toBe(true);
+    expect(next.updatedAtMs).toBe(NOW);
   });
 });

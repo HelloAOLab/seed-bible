@@ -378,6 +378,89 @@ export function planCompletion(
 }
 
 // ---------------------------------------------------------------------------
+// Progress updates (pure)
+//
+// Each returns a NEW ReadingPlanProgress (inputs are never mutated) and stamps
+// `updatedAtMs = nowMs`, so the result can be assigned to a signal and persisted.
+// ---------------------------------------------------------------------------
+
+/** Find-or-create a session's progress, apply `update`, return new progress. */
+function withSessionProgress(
+  progress: ReadingPlanProgress,
+  sessionId: string,
+  update: (sp: SessionProgress) => SessionProgress,
+  nowMs: number
+): ReadingPlanProgress {
+  const existing = progress.sessions.find((s) => s.sessionId === sessionId);
+  const next = update(existing ?? { sessionId, completedReadingIds: [] });
+  const sessions = existing
+    ? progress.sessions.map((s) => (s.sessionId === sessionId ? next : s))
+    : [...progress.sessions, next];
+  return { ...progress, sessions, updatedAtMs: nowMs };
+}
+
+/**
+ * Marks a single reading (item) within a session complete. If this completes
+ * every reading in the session, its `completedAtMs` is set (an existing one is
+ * preserved). A `readingId` that doesn't belong to the session is a no-op.
+ */
+export function markReadingCompleteInProgress(
+  progress: ReadingPlanProgress,
+  session: ReadingPlanSession,
+  readingId: string,
+  nowMs: number
+): ReadingPlanProgress {
+  if (!session.readings.some((r) => r.id === readingId)) {
+    return progress;
+  }
+  return withSessionProgress(
+    progress,
+    session.id,
+    (sp) => {
+      const completedReadingIds = sp.completedReadingIds.includes(readingId)
+        ? sp.completedReadingIds
+        : [...sp.completedReadingIds, readingId];
+      const next: SessionProgress = { ...sp, completedReadingIds };
+      next.completedAtMs = isSessionComplete(session, next)
+        ? (sp.completedAtMs ?? nowMs)
+        : null;
+      return next;
+    },
+    nowMs
+  );
+}
+
+/** Marks an entire session complete: every reading plus a completion time. */
+export function markSessionCompleteInProgress(
+  progress: ReadingPlanProgress,
+  session: ReadingPlanSession,
+  nowMs: number
+): ReadingPlanProgress {
+  return withSessionProgress(
+    progress,
+    session.id,
+    (sp) => ({
+      ...sp,
+      completedReadingIds: session.readings.map((r) => r.id),
+      completedAtMs: nowMs,
+    }),
+    nowMs
+  );
+}
+
+/** Marks every session on a calendar day complete (all sessions and readings). */
+export function markDayCompleteInProgress(
+  progress: ReadingPlanProgress,
+  day: CalendarReadingDay,
+  nowMs: number
+): ReadingPlanProgress {
+  return day.sessions.reduce(
+    (acc, cs) => markSessionCompleteInProgress(acc, cs.session, nowMs),
+    progress
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Calendar
 //
 // `getReadingCalendar` derives the day-by-day calendar a user should follow
@@ -635,6 +718,13 @@ export function createReadingPlansManager(login: LoginManager) {
     ]);
   };
 
+  const saveReadingPlanProgress = async (progress: ReadingPlanProgress) => {
+    const parsed = ReadingPlanProgressSchema.parse(progress);
+    await os.recordData(parsed.recordName, parsed.planId, parsed, {
+      markers: ["publicRead:readingPlanProgress"],
+    });
+  };
+
   const loadReadingProgress = async (recordName: string) => {
     const result = await listAllDataByMarker(
       recordName,
@@ -700,6 +790,50 @@ export function createReadingPlansManager(login: LoginManager) {
     selectedReadingPlanProgress.value = progress;
   };
 
+  // Applies an updated progress to the selected-plan signals and persists it.
+  const updateSelectedProgress = async (next: ReadingPlanProgress) => {
+    selectedReadingPlanProgress.value = next;
+    userReadingPlanProgresses.value = userReadingPlanProgresses.value.map(
+      (p) => (p.planId === next.planId ? next : p)
+    );
+    await saveReadingPlanProgress(next);
+  };
+
+  const requireSelectedProgress = () => {
+    const current = selectedReadingPlanProgress.value;
+    if (!current) {
+      throw new Error("No reading plan progress selected");
+    }
+    return current;
+  };
+
+  /** Marks a single reading (item) within a session complete and saves. */
+  const markReadingComplete = async (
+    session: ReadingPlanSession,
+    readingId: string
+  ) => {
+    const current = requireSelectedProgress();
+    await updateSelectedProgress(
+      markReadingCompleteInProgress(current, session, readingId, Date.now())
+    );
+  };
+
+  /** Marks an entire session (all readings) complete and saves. */
+  const markSessionComplete = async (session: ReadingPlanSession) => {
+    const current = requireSelectedProgress();
+    await updateSelectedProgress(
+      markSessionCompleteInProgress(current, session, Date.now())
+    );
+  };
+
+  /** Marks an entire calendar day (all sessions and readings) complete and saves. */
+  const markDayComplete = async (day: CalendarReadingDay) => {
+    const current = requireSelectedProgress();
+    await updateSelectedProgress(
+      markDayCompleteInProgress(current, day, Date.now())
+    );
+  };
+
   effect(() => {
     void syncReadingPlanProgresses();
     void syncReadingPlans();
@@ -714,5 +848,8 @@ export function createReadingPlansManager(login: LoginManager) {
     selectedReadingPlanProgress,
     selectReadingPlanProgress,
     selectedReadingPlanProgressCalendar,
+    markReadingComplete,
+    markSessionComplete,
+    markDayComplete,
   };
 }
