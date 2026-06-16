@@ -16,7 +16,13 @@ import type {
 import { InstRecordsClient } from "@casual-simulation/aux-common/websockets/InstRecordsClient";
 import { PartitionAuthSource } from "@casual-simulation/aux-common/partitions/PartitionAuthSource";
 import { AuthenticatedConnectionClient } from "@casual-simulation/aux-common/websockets/AuthenticatedConnectionClient";
-import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
+import {
+  batch,
+  computed,
+  effect,
+  signal,
+  type ReadonlySignal,
+} from "@preact/signals";
 import { parseSessionKey } from "@casual-simulation/aux-common";
 
 export type CasualOSManager = ReturnType<typeof CasualOSManager>;
@@ -366,9 +372,10 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
     },
 
     signOut: async () => {
-      console.warn(
-        "signOut is not implemented in this version of CasualOSManager"
-      );
+      batch(() => {
+        sessionKey.value = null;
+        connectionKey.value = null;
+      });
     },
 
     requestWakeLock: async () => {
