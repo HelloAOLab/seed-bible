@@ -1,6 +1,6 @@
 import "./initPostHog";
 import { Main } from "../app/main";
-import { hydrate, render } from "preact";
+import { render } from "preact";
 import { readInjectedConfig } from "../app/appConfig";
 
 // Config (base path + asset host) injected by the host server. Reading it on

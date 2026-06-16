@@ -130,6 +130,7 @@ export function createI18nManager(
         i18n.addResourceBundle(
           lang,
           "seed-bible",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (resources as any).default,
           true
         );
