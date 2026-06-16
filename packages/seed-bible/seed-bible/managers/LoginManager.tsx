@@ -1,4 +1,4 @@
-import { computed, effect, signal, type Signal } from "@preact/signals";
+import { effect, signal, type Signal } from "@preact/signals";
 import { z } from "zod";
 import type { CasualOSManager, UserInfo } from "./OsManager";
 
@@ -63,8 +63,8 @@ export function createLoginManager({
 }: {
   os: CasualOSManager;
 }): LoginManager {
-  const authBot: Signal<UserInfo | null> = signal<UserInfo | null>(null);
-  const userId = computed(() => authBot.value?.id ?? null);
+  const userId = os.userId;
+  const authBot = os.userInfo;
   const profile = signal<UserProfile | null>(null);
 
   const getUserProfile = async (userId: string): Promise<UserProfile> => {
@@ -101,8 +101,7 @@ export function createLoginManager({
 
   const login = async (): Promise<void> => {
     try {
-      const bot = await os.requestAuthBot();
-      authBot.value = bot;
+      await os.requestAuthBot();
     } catch (err) {
       console.error("Authentication failed:", err);
     }
@@ -110,7 +109,6 @@ export function createLoginManager({
 
   const logout = async (): Promise<void> => {
     await os.signOut();
-    authBot.value = null;
   };
 
   effect(() => {
@@ -169,18 +167,18 @@ export function createLoginManager({
     // updateProfile({ pictureUrl: result.url });
   };
 
-  void os
-    .requestAuthBotInBackground()
-    .then((bot) => {
-      if (!bot) {
-        return;
-      }
+  // void os
+  //   .requestAuthBotInBackground()
+  //   .then((bot) => {
+  //     if (!bot) {
+  //       return;
+  //     }
 
-      authBot.value = bot;
-    })
-    .catch(() => {
-      // Intentionally ignore background auth failures and keep anonymous state.
-    });
+  //     authBot.value = bot;
+  //   })
+  //   .catch(() => {
+  //     // Intentionally ignore background auth failures and keep anonymous state.
+  //   });
 
   return {
     userId,

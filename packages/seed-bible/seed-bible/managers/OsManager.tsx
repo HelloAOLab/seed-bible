@@ -16,7 +16,7 @@ import type {
 import { InstRecordsClient } from "@casual-simulation/aux-common/websockets/InstRecordsClient";
 import { PartitionAuthSource } from "@casual-simulation/aux-common/partitions/PartitionAuthSource";
 import { AuthenticatedConnectionClient } from "@casual-simulation/aux-common/websockets/AuthenticatedConnectionClient";
-import { computed, signal } from "@preact/signals";
+import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
 import { parseSessionKey } from "@casual-simulation/aux-common";
 
 export type CasualOSManager = ReturnType<typeof CasualOSManager>;
@@ -41,8 +41,6 @@ const UNSAFE_HEADERS = new Set([
   "connection",
   "host",
 ]);
-
-// function r
 
 export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
   const client = createRecordsClient(endpoint);
@@ -78,7 +76,7 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
     if (storedSessionKey) {
       sessionKey.value = storedSessionKey;
     }
-    
+
     if (storedConnectionKey) {
       connectionKey.value = storedConnectionKey;
     }
@@ -155,13 +153,13 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
     }
   }
 
-  // async function
   async function requestLoginByEmail(
     email: string
   ): Promise<LoginRequestResult> {
     const result = await client.requestLogin({
       address: email,
       addressType: "email",
+      comId: "seed-bible",
     });
 
     if (result.success) {
@@ -286,6 +284,8 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
     client,
     connectionId,
 
+    userId: userId as ReadonlySignal<string | null>,
+    userInfo: userInfo as ReadonlySignal<UserInfo | null>,
     isLoginOpen,
     requestLoginByEmail,
     submitEmailCode,
@@ -297,13 +297,7 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
         address,
       });
 
-      if (result.success === true) {
-        return result.data;
-      } else {
-        throw new Error(
-          `Failed to get data for record ${recordName} at address ${address}: ${result.errorCode} ${result.errorMessage}`
-        );
-      }
+      return result;
     },
 
     recordData: async (
@@ -312,6 +306,10 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
       data: unknown,
       options: { marker?: string }
     ) => {
+      console.log(
+        `Recording data for record ${recordKey} at address ${address} with marker ${options.marker}:`,
+        data
+      );
       return await client.recordData({
         recordKey,
         address,
