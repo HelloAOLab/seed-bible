@@ -1,2 +1,11 @@
 packages:
   - "packages/*"
+allowBuilds:
+  esbuild: false
+  protobufjs: false
+  "puppeteer": true
+  unrs-resolver: false
+patchedDependencies:
+  "@casual-simulation/fast-json-stable-stringify": "patches/@casual-simulation__fast-json-stable-stringify.patch"
+  "@casual-simulation/aux-records": "patches/@casual-simulation__aux-records.patch"
+  "follow-redirects": "patches/follow-redirects.patch"
