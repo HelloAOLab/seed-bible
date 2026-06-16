@@ -10,8 +10,9 @@
     },
     "ghcr.io/devcontainers-extra/features/pnpm:2": {
       "version": "v11.7.0"
-    }
-  }
+    },
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+  },
 
   // Features to add to the dev container. More info: https://containers.dev/features.
   // "features": {},
