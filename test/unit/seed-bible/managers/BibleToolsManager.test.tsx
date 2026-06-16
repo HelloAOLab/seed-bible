@@ -10,6 +10,7 @@ import {
   getShareUrl,
   type BibleToolContext,
 } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
+import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 
 const CUSTOM_TOOL_ID = "test-toolbar-tool";
 const CUSTOM_VERSE_TOOL_ID = "test-verse-toolbar-tool";
@@ -36,7 +37,7 @@ function createContext(): BibleToolContext {
   };
 }
 
-function createShareUrlReadingState(overrides?: Partial<any>) {
+function createShareUrlReadingState(overrides?: Partial<BibleReadingState>) {
   return {
     translation: signal({ id: "NIV" }),
     bookId: signal("GEN"),
@@ -79,7 +80,7 @@ describe("getShareUrl", () => {
           translationId: "AAB",
           verse: { number: 8 },
         },
-      ]),
+      ] as any),
     });
 
     const url = getShareUrl(readingState as any);
@@ -122,7 +123,7 @@ describe("getShareUrl", () => {
           translationId: "AAB",
           verse: { number: 8 },
         },
-      ]),
+      ] as any),
     });
 
     const url = getShareUrl(readingState as any);
@@ -143,7 +144,8 @@ describe("getShareUrl", () => {
           translationId: "NIV",
           verse: { number: 4 },
         },
-      ]),
+      ] as any),
+      defaultTranslation: { id: "AAB", language: "en" },
     });
 
     const url = getShareUrl(readingState as any);

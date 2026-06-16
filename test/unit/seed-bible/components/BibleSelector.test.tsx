@@ -28,7 +28,6 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   >("@packages/seed-bible/seed-bible/i18n/I18nManager");
   return {
     ...actual,
-    DEFAULT_LANGUAGE: "en",
     useI18n: () => ({
       t: (key: string, options?: { defaultValue?: string }) =>
         options?.defaultValue ?? key,

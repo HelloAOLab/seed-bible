@@ -27,6 +27,19 @@ type ReaderFixture = {
   setOpen: Mock;
 };
 
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const actual = await vi.importActual<
+    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
+  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
+  return {
+    ...actual,
+    useI18n: () => ({
+      t: (key: string, options?: { defaultValue?: string }) =>
+        options?.defaultValue ?? key,
+    }),
+  };
+});
+
 function createFixture(): ReaderFixture {
   const chapterData = signal<TranslationBookChapter | null>({
     translation: {

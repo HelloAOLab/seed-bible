@@ -148,6 +148,36 @@ describe("createSeedBibleState", () => {
     expect(state.highlights).toBe(mockHighlightsManager as any);
     expect(state.sessions).toBe(mockSessionsManager);
     expect(typeof state.search.searchVerses).toBe("function");
+
+    expect(state.bibleData.api.endpoint).toBe("https://vmfnri.helloao.org/");
+  });
+
+  it("should use the free use bible API if specified in the URL", async () => {
+    jsdom.reconfigure({
+      url: "https://example.com?useFreeBibleAPI=true",
+    });
+
+    const state = await createState();
+
+    expect(state.config.config.value.disablePanels).toBe(false);
+    expect(state.app.panelsEnabled.value).toBe(true);
+
+    expect(state.tabs.tabs.value).toHaveLength(1);
+    expect(state.tabs.selectedTabId.value).toBe("tab-1");
+    expect(state.app.selectedTab.value?.id).toBe("tab-1");
+
+    expect(state.panes.panes.value).toHaveLength(1);
+    expect(state.panes.panes.value[0]?.tab?.id).toBe("tab-1");
+    expect(state.panes.selectedPaneId.value).toBe(
+      state.panes.panes.value[0]?.id ?? null
+    );
+
+    expect(state.selector.isOpen.value).toBe(false);
+    expect(state.highlights).toBe(mockHighlightsManager as any);
+    expect(state.sessions).toBe(mockSessionsManager);
+    expect(typeof state.search.searchVerses).toBe("function");
+
+    expect(state.bibleData.api.endpoint).toBe("https://bible.helloao.org/");
   });
 
   it("selecting a tab selects the tab and switches the pane to display the selected tab", async () => {
@@ -656,27 +686,35 @@ describe("createSeedBibleState", () => {
 
       setSelectedTabChapter(state, "genesis", "Genesis", 7, "ESV");
 
-      expect(document.title).toBe("Genesis 7 - ESV | Seed Bible");
+      expect(state.app.title.value).toBe("Genesis 7 - ESV | Seed Bible");
     });
 
     it("updates pageTitle when the chapter changes", async () => {
       const state = await createState();
 
       setSelectedTabChapter(state, "genesis", "Genesis", 1, "ESV");
-      expect(document.title).toBe("Genesis 1 - ESV | Seed Bible");
+      expect(state.app.title.value).toBe("Genesis 1 - ESV | Seed Bible");
 
       setSelectedTabChapter(state, "genesis", "Genesis", 2, "ESV");
-      expect(document.title).toBe("Genesis 2 - ESV | Seed Bible");
+      expect(state.app.title.value).toBe("Genesis 2 - ESV | Seed Bible");
     });
 
-    it("prepends an RTL marker for right-to-left translations", async () => {
+    it("does not prepend an RTL marker for right-to-left translations when the UI language is left-to-right", async () => {
+      const state = await createState();
+      setSelectedTabChapter(state, "genesis", "Genesis", 1, "Arabic", "rtl");
+
+      expect(state.app.title.value).toBe(`Genesis 1 - Arabic | Seed Bible`);
+    });
+
+    it("prepends an RTL marker when the UI language is right-to-left", async () => {
       const state = await createState();
       const RTLE_CHAR = "\u202B";
 
-      setSelectedTabChapter(state, "genesis", "Genesis", 1, "Arabic", "rtl");
+      state.i18n.changeLanguage("ar");
+      setSelectedTabChapter(state, "genesis", "Genesis", 1, "AAB");
 
-      expect(document.title).toBe(
-        `${RTLE_CHAR}Genesis 1 - Arabic | Seed Bible`
+      expect(state.app.title.value).toBe(
+        `${RTLE_CHAR}Genesis 1 - AAB | Seed Bible`
       );
     });
   });

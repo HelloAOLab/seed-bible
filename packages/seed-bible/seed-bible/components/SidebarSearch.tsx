@@ -99,12 +99,18 @@ export function SidebarSearch(props: SidebarSearchProps) {
     }
 
     const query = nextQuery.trim();
+
+    const currentReadingState =
+      state.app.currentReadingState.value?.tab.readingState;
+
     const activeTranslationId =
-      state.app.currentReadingState.value?.translationId ??
+      currentReadingState?.translationId.value ??
+      currentReadingState?.defaultTranslation.id ??
       getDefaultTranslationForLanguage(i18n.defaultLanguage).id;
     const activeLanguage =
-      state.app.currentReadingState.value?.tab.readingState.translation.value
-        ?.language ?? i18n.defaultLanguage;
+      currentReadingState?.translation.value?.language ??
+      currentReadingState?.defaultTranslation.language ??
+      getDefaultTranslationForLanguage(i18n.defaultLanguage).language;
     const requestId = ++latestSearchRequestRef.current;
 
     if (!query) {
