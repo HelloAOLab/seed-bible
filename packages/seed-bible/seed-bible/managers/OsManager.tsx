@@ -260,6 +260,7 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
     client,
     connectionId,
 
+    isLoginOpen,
     requestLoginByEmail,
     submitEmailCode,
     cancelLogin,
