@@ -14,6 +14,7 @@ import type {
   SharedMap,
 } from "@casual-simulation/aux-common/documents/SharedDocument";
 import { v4 as uuid } from "uuid";
+import type { I18nManager } from "../i18n/I18nManager";
 
 export interface ConnectedSessionUser extends SessionConnectionInfo {
   /**
@@ -389,10 +390,15 @@ async function createBibleReadingSession(
   dataManager: BibleDataManager,
   loginManager: LoginManager,
   highlightsManager: HighlightsManager,
+  i18nManager: I18nManager,
   id: string,
   defaultOptions?: SessionOptions
 ): Promise<BibleReadingSession> {
-  const readingState = createBibleReadingState(dataManager, highlightsManager);
+  const readingState = createBibleReadingState(
+    dataManager,
+    highlightsManager,
+    i18nManager
+  );
   const document = await os.getSharedDocument(null, id, "session_data");
   const stateMap =
     document.getMap<SessionData[keyof SessionData]>("reading_state");
@@ -975,7 +981,8 @@ export function createSessionsManager(
   os: CasualOSManager,
   dataManager: BibleDataManager,
   loginManager: LoginManager,
-  highlightsManager: HighlightsManager
+  highlightsManager: HighlightsManager,
+  i18nManager: I18nManager
 ): SessionsManager {
   const createSession = async () => {
     const id = createSessionId();
@@ -987,6 +994,7 @@ export function createSessionsManager(
       dataManager,
       loginManager,
       highlightsManager,
+      i18nManager,
       id,
       { ...DEFAULT_SESSION_OPTIONS, hostUserId }
     );
@@ -998,6 +1006,7 @@ export function createSessionsManager(
       dataManager,
       loginManager,
       highlightsManager,
+      i18nManager,
       id
     );
   };

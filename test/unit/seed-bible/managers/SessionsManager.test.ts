@@ -13,6 +13,11 @@ import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/Login
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import type { Mock } from "vitest";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
+import {
+  createI18nManager,
+  type I18nManager,
+} from "@packages/seed-bible/seed-bible/i18n";
+import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 
 vi.mock("@packages/seed-bible/seed-bible/managers/BibleReadingManager", () => ({
   createBibleReadingState: vi.fn(),
@@ -256,6 +261,7 @@ describe("SessionsManager", () => {
   };
   let uuidCount = 0;
   let uuid: Mock;
+  let i18n: I18nManager;
 
   let os: CasualOSManager;
 
@@ -308,6 +314,7 @@ describe("SessionsManager", () => {
     mockHighlightsManager = {
       getChapterHighlights: vi.fn().mockReturnValue(signal({ highlights: [] })),
     };
+    i18n = createI18nManager(createNavigationManager(), ["en"]);
 
     (createBibleReadingState as Mock).mockImplementation(() =>
       createMockReadingState()
@@ -324,7 +331,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.createSession();
 
@@ -342,7 +350,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
 
     const session = await manager.createSession();
@@ -364,7 +373,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -381,7 +391,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
 
     const session = await manager.joinSession("group-abc");
@@ -420,7 +431,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
 
     const session = await manager.joinSession("group-abc");
@@ -440,7 +452,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -472,7 +485,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -502,7 +516,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -528,7 +543,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -554,7 +570,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -593,7 +610,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -628,7 +646,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -661,7 +680,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -724,7 +744,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -770,7 +791,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -814,7 +836,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -860,7 +883,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -886,7 +910,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -902,7 +927,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -925,7 +951,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -945,7 +972,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -968,7 +996,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = (await manager.joinSession(
       "group-abc"
@@ -1007,7 +1036,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
     (session.readingState.selectTranslationAndChapter as Mock).mockReturnValue(
@@ -1049,7 +1079,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
     (session.readingState.selectTranslationAndChapter as Mock)
@@ -1131,7 +1162,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1145,7 +1177,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1199,7 +1232,8 @@ describe("SessionsManager", () => {
       os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 

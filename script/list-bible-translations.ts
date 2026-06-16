@@ -1,6 +1,6 @@
 import {
   FreeUseBibleAPI,
-  DEFAULT_API_ENDPOINT,
+  FREE_USE_BIBLE_API_ENDPOINT,
   type Translation,
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
@@ -159,7 +159,8 @@ async function main(): Promise<void> {
 
   const languageFilter =
     parseArgValue("--language")?.trim().toLowerCase() ?? null;
-  const endpoint = parseArgValue("--endpoint")?.trim() || DEFAULT_API_ENDPOINT;
+  const endpoint =
+    parseArgValue("--endpoint")?.trim() || FREE_USE_BIBLE_API_ENDPOINT;
   const sortMode = parseSortMode(parseArgValue("--sort"));
 
   const api = new FreeUseBibleAPI(endpoint);

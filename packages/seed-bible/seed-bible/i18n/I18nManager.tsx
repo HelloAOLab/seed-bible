@@ -77,7 +77,10 @@ export function addTranslations(
 const availableLanguages = Object.keys(languages).sort();
 const I18nContext = createContext(i18n);
 
-function getDefaultLanguage(url: URL, acceptedLanguages: string[]): string {
+export function getDefaultLanguage(
+  url: URL,
+  acceptedLanguages: string[]
+): string {
   const urlLang = url.searchParams.get("lang");
   if (urlLang) {
     return urlLang;

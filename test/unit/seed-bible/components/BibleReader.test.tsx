@@ -150,6 +150,7 @@ function createFixture(): ReaderFixture {
     selectTranslationAndChapter: vi.fn(async () => undefined),
     highlights,
     chapterDataPromise: Promise.resolve(),
+    defaultTranslation: { id: "BSB", language: "en" },
   } as BibleReadingState;
 
   const selectorState = {

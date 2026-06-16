@@ -248,7 +248,7 @@ export function createSeedBibleState(
   const tools = createBibleToolsManager();
   const readingHistory = createReadingHistoryManager(os, login);
   const annotations = createAnnotationsManager(os, login);
-  const sessions = createSessionsManager(os, data, login, highlights);
+  const sessions = createSessionsManager(os, data, login, highlights, i18n);
   const extensions = createExtensionManager();
   const modals = createModalManager();
   const search = createSearchManager();

@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { getDefaultLanguage } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 
 const i18nFolder = path.resolve(
   __dirname,
@@ -19,7 +20,7 @@ const defaultLanguageCases: Array<[string, string]> = [
   ),
 ];
 
-describe("I18nManager DEFAULT_LANGUAGE", () => {
+describe("I18nManager getDefaultLanguage()", () => {
   let originalLanguages: PropertyDescriptor | undefined;
 
   beforeAll(() => {
@@ -29,33 +30,81 @@ describe("I18nManager DEFAULT_LANGUAGE", () => {
     );
   });
 
-  afterEach(() => {
-    vi.resetModules();
-  });
-
   afterAll(() => {
     if (originalLanguages) {
       Object.defineProperty(window.navigator, "languages", originalLanguages);
     }
   });
 
-  async function loadDefaultLanguageFor(languages: string[]) {
+  function getDefaultLanguageFor(languages: string[]) {
     Object.defineProperty(window.navigator, "languages", {
       configurable: true,
       value: languages,
     });
 
-    const module =
-      await import("@packages/seed-bible/seed-bible/i18n/I18nManager");
-    return module.DEFAULT_LANGUAGE;
+    return getDefaultLanguage(new URL("https://example.com/"), languages);
   }
 
   it.each(defaultLanguageCases)(
     "interprets %s as %s",
-    async (locale, expectedLanguage) => {
-      const language = await loadDefaultLanguageFor([locale]);
+    (locale, expectedLanguage) => {
+      const language = getDefaultLanguageFor([locale]);
 
       expect(language).toBe(expectedLanguage);
     }
   );
+
+  it("uses the first accepted language when running in SSR", () => {
+    try {
+      import.meta.env.SSR = true;
+
+      const language = getDefaultLanguage(new URL("https://example.com/"), [
+        "fr-FR",
+      ]);
+
+      expect(language).toBe("fr");
+    } finally {
+      delete import.meta.env.SSR;
+    }
+  });
+
+  it("prefers the `lang` URL query parameter when present", () => {
+    Object.defineProperty(window.navigator, "languages", {
+      configurable: true,
+      value: ["fr-FR"],
+    });
+
+    const language = getDefaultLanguage(
+      new URL("https://example.com/?lang=es"),
+      []
+    );
+
+    expect(language).toBe("es");
+  });
+
+  it("uses the `lang` URL query parameter over the first accepted language when running in SSR", () => {
+    try {
+      import.meta.env.SSR = true;
+
+      const language = getDefaultLanguage(
+        new URL("https://example.com/?lang=es"),
+        ["fr-FR"]
+      );
+
+      expect(language).toBe("es");
+    } finally {
+      delete import.meta.env.SSR;
+    }
+  });
+
+  it("falls back to `en` when no language can be determined", () => {
+    Object.defineProperty(window.navigator, "languages", {
+      configurable: true,
+      value: [],
+    });
+
+    const language = getDefaultLanguage(new URL("https://example.com/"), []);
+
+    expect(language).toBe("en");
+  });
 });
