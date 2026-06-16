@@ -117,9 +117,7 @@ class S3Store implements ArtifactStore {
   private async ensureClient() {
     if (this.client) return;
     // Lazy import so local runs don't require the AWS SDK to be installed.
-    const { S3Client, GetObjectCommand } = await import(
-      "@aws-sdk/client-s3" as string
-    );
+    const { S3Client, GetObjectCommand } = await import("@aws-sdk/client-s3");
     this.client = new S3Client({});
     this.GetObjectCommand = GetObjectCommand as never;
   }

@@ -3,14 +3,15 @@
   "version": "1.0.0",
   "description": "The source code behind the Seed Bible.",
   "type": "module",
+  "main": "server/dist/index.js",
   "scripts": {
     "test": "vitest",
     "test:watch": "vitest watch",
     "dev": "bun server/dev.ts",
-    "build": "pnpm build:client && pnpm build:server",
+    "build": "pnpm build:client && pnpm build:ssr && pnpm build:server",
     "build:client": "vite build",
-    "build:server": "vite build --ssr standalone/entry-ssr.tsx",
-    "serve": "node --experimental-strip-types server/index.ts",
+    "build:ssr": "vite build --ssr standalone/entry-ssr.tsx",
+    "build:server": "bun build --target=bun --outfile=server/dist/index.js ./server/index.ts",
     "lint": "eslint packages",
     "lint:fix": "eslint packages --fix",
     "check:ts": "tsc-silent --project ./tsconfig.json --suppressConfig ./tsc-silent.config.cjs",
@@ -104,6 +105,7 @@
     "vitest": "^4.1.8"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1069.0",
     "@tiptap/core": "^3.6.2",
     "@tiptap/extension-bullet-list": "^3.6.2",
     "@tiptap/extension-color": "^3.6.2",

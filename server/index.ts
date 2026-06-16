@@ -23,7 +23,7 @@ import { createStore, type ArtifactStore, type BranchPointer } from "./store";
 import Bowser from "bowser";
 import { parseAcceptLanguages } from "./lang.js";
 
-const PORT = Number(process.env.PORT ?? 8080);
+const PORT = Number(process.env.PORT ?? 5173);
 const ROOT_BRANCH = process.env.ROOT_BRANCH ?? "main";
 const ASSET_HOST = process.env.ASSET_HOST ?? "";
 const POINTER_TTL_MS = Number(process.env.POINTER_TTL_MS ?? 10_000);

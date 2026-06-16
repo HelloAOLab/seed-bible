@@ -41,14 +41,14 @@ export default defineConfig(({ isSsrBuild }) => ({
         // SSR bundle: a single Node ESM module exporting render(). The host
         // server loads this from S3 per branch and calls it to produce HTML.
         ssr: "standalone/entry-server.tsx",
-        outDir: "dist/server",
+        outDir: "standalone/dist/server",
         emptyOutDir: true,
       }
     : {
         // Client build: hashed assets + a manifest mapping the entry to its
         // emitted files. The SSR entry reads the manifest to emit the correct
         // <script>/<link> tags (prefixed with the CDN host).
-        outDir: "dist/client",
+        outDir: "standalone/dist/client",
         emptyOutDir: true,
         manifest: true,
       },
