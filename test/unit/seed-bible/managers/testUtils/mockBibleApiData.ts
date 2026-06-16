@@ -4,7 +4,7 @@ import type {
   TranslationBookChapter,
   TranslationBooks,
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
-import { DEFAULT_API_ENDPOINT } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import { FREE_USE_BIBLE_API_ENDPOINT } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
 export type WebResponse = Pick<Response, "status" | "statusText" | "json">;
 
@@ -203,7 +203,7 @@ export function createResponse<T>(
 
 export function makeUrl(
   path: string,
-  endpoint: string = DEFAULT_API_ENDPOINT.slice(0, -1)
+  endpoint: string = FREE_USE_BIBLE_API_ENDPOINT.slice(0, -1)
 ): string {
   return `${endpoint}${path}`;
 }

@@ -25,6 +25,7 @@ import {
 } from "./testUtils/mockBibleApiData";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import type { Mock } from "vitest";
+import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
 
 let webGetMock: Mock;
 const originalFetch = globalThis.fetch;
@@ -159,10 +160,12 @@ async function createManagersWithSelectedPane(): Promise<{
   dataManager: ReturnType<typeof createDataManager>;
 }> {
   const dataManager = createDataManager();
+  const navigation = createNavigationManager();
   const tabsManager = createTabs(
-    createNavigationManager(),
+    navigation,
     dataManager,
-    createHighlightsManagerMock() as any
+    createHighlightsManagerMock() as any,
+    createI18nManager(navigation, ["en"])
   );
   const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
 
@@ -438,10 +441,12 @@ describe("createBibleSelectorState", () => {
     });
 
     const dataManager = createDataManager();
+    const navigation = createNavigationManager();
     const tabsManager = createTabs(
-      createNavigationManager(),
+      navigation,
       dataManager,
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      createI18nManager(navigation, ["en"])
     );
     const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
 
@@ -526,10 +531,12 @@ describe("createBibleSelectorState", () => {
     });
 
     const dataManager = createDataManager();
+    const navigation = createNavigationManager();
     const tabsManager = createTabs(
-      createNavigationManager(),
+      navigation,
       dataManager,
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      createI18nManager(navigation, ["en"])
     );
     const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
 
@@ -566,10 +573,12 @@ describe("createBibleSelectorState", () => {
 
     function createManagersWithTablessPane() {
       const dataManager = createDataManager();
+      const navigation = createNavigationManager();
       const tabsManager = createTabs(
-        createNavigationManager(),
+        navigation,
         dataManager,
-        createHighlightsManagerMock() as any
+        createHighlightsManagerMock() as any,
+        createI18nManager(navigation, ["en"])
       );
       const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
 

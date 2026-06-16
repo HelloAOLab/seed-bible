@@ -25,6 +25,8 @@ import {
 } from "./testUtils/mockBibleApiData";
 import { effect, signal } from "@preact/signals";
 import type { Mock } from "vitest";
+import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
 
 const nivTranslation = translations.translations[1]!;
 
@@ -80,9 +82,11 @@ function createBibleReadingState(
     initialChapterNumber?: number | null;
   } = {}
 ) {
+  const i18nManager = createI18nManager(createNavigationManager(), ["en"]);
   return createRawBibleReadingState(
     dataManager,
     createHighlightsManagerMock() as any,
+    i18nManager,
     options
   );
 }
@@ -136,7 +140,8 @@ describe("createBibleReadingState", () => {
     const highlightsManager = createHighlightsManagerMock();
     const state = createRawBibleReadingState(
       createDataManager(),
-      highlightsManager as any
+      highlightsManager as any,
+      createI18nManager(createNavigationManager(), ["en"])
     );
 
     await waitForInitialLoad(state);
@@ -167,7 +172,8 @@ describe("createBibleReadingState", () => {
 
     const state = createRawBibleReadingState(
       createDataManager(),
-      highlightsManager as any
+      highlightsManager as any,
+      createI18nManager(createNavigationManager(), ["en"])
     );
     await waitForInitialLoad(state);
 
@@ -228,7 +234,8 @@ describe("createBibleReadingState", () => {
 
     const state = createRawBibleReadingState(
       createDataManager(),
-      highlightsManager as any
+      highlightsManager as any,
+      createI18nManager(createNavigationManager(), ["en"])
     );
     await waitForInitialLoad(state);
 
@@ -272,7 +279,8 @@ describe("createBibleReadingState", () => {
     const highlightsManager = createHighlightsManagerMock();
     const state = createRawBibleReadingState(
       createDataManager(),
-      highlightsManager as any
+      highlightsManager as any,
+      createI18nManager(createNavigationManager(), ["en"])
     );
     await waitForInitialLoad(state);
 
@@ -689,7 +697,8 @@ describe("createBibleReadingState", () => {
     const highlightsManager = createHighlightsManagerMock();
     const state = createRawBibleReadingState(
       createDataManager(),
-      highlightsManager as any
+      highlightsManager as any,
+      createI18nManager(createNavigationManager(), ["en"])
     );
     await waitForInitialLoad(state);
 

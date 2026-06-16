@@ -22,13 +22,19 @@ import {
 } from "../managers/testUtils/mockBibleApiData";
 import type { Mock } from "vitest";
 
-vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", () => ({
-  DEFAULT_LANGUAGE: "en",
-  useI18n: () => ({
-    t: (key: string, options?: { defaultValue?: string }) =>
-      options?.defaultValue ?? key,
-  }),
-}));
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const actual = await vi.importActual<
+    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
+  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
+  return {
+    ...actual,
+    DEFAULT_LANGUAGE: "en",
+    useI18n: () => ({
+      t: (key: string, options?: { defaultValue?: string }) =>
+        options?.defaultValue ?? key,
+    }),
+  };
+});
 
 type SelectorFixture = {
   state: SeedBibleState;
@@ -78,6 +84,14 @@ describe("BibleSelector", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
+    // The mocked Bible API responses are keyed to the free-use endpoint, so
+    // opt into it via the URL (the app otherwise defaults to the private one).
+    jsdom.reconfigure({ url: "https://ao.bot/?useFreeBibleAPI" });
+
+    // The data manager persists per-translation endpoints to localStorage;
+    // clear it so state does not leak between tests.
+    localStorage.clear();
+
     container = document.createElement("div");
     document.body.appendChild(container);
   });
@@ -88,9 +102,10 @@ describe("BibleSelector", () => {
   });
 
   it("is not displayed when closed", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture({
-      open: false,
-    });
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture({
+        open: false,
+      });
 
     act(() => {
       render(
@@ -99,6 +114,7 @@ describe("BibleSelector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -108,7 +124,8 @@ describe("BibleSelector", () => {
   });
 
   it("is displayed when open", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
@@ -117,6 +134,7 @@ describe("BibleSelector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -126,7 +144,8 @@ describe("BibleSelector", () => {
   });
 
   it("sets dir to match selected translation text direction", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       if (selectorState.selectedTranslationBooks.value) {
@@ -147,6 +166,7 @@ describe("BibleSelector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -163,7 +183,8 @@ describe("BibleSelector", () => {
   });
 
   it("displays all old and new testament books", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
@@ -172,6 +193,7 @@ describe("BibleSelector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -188,7 +210,7 @@ describe("BibleSelector", () => {
   });
 
   it("clicking a chapter selects it", async () => {
-    const { selectorState, selectChapter, bibleDataManager } =
+    const { selectorState, selectChapter, bibleDataManager, state } =
       await createSelectorFixture();
 
     act(() => {
@@ -198,6 +220,7 @@ describe("BibleSelector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -240,7 +263,8 @@ describe("BibleSelector", () => {
   });
 
   it("clicking on a book updates the expanded book state", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
@@ -249,6 +273,7 @@ describe("BibleSelector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -275,7 +300,8 @@ describe("BibleSelector", () => {
   });
 
   it("renders all chapters for the selected book", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
@@ -284,6 +310,7 @@ describe("BibleSelector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -317,7 +344,7 @@ describe("BibleSelector", () => {
   });
 
   it("changing the search input sets the search", async () => {
-    const { selectorState, setSearch, bibleDataManager } =
+    const { selectorState, setSearch, bibleDataManager, state } =
       await createSelectorFixture();
 
     act(() => {
@@ -327,6 +354,7 @@ describe("BibleSelector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -378,6 +406,7 @@ describe("BibleSelector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -455,6 +484,7 @@ describe("BibleSelector", () => {
             onClose={vi.fn()}
             selectorState={selectorState}
             bibleDataManager={bibleDataManager}
+            app={state.app}
           />,
           container
         );
@@ -550,6 +580,7 @@ describe("BibleSelector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -650,6 +681,14 @@ describe("BibleSelector translation selector", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
+    // The mocked Bible API responses are keyed to the free-use endpoint, so
+    // opt into it via the URL (the app otherwise defaults to the private one).
+    jsdom.reconfigure({ url: "https://ao.bot/?useFreeBibleAPI" });
+
+    // The data manager persists per-translation endpoints to localStorage;
+    // clear it so state does not leak between tests.
+    localStorage.clear();
+
     container = document.createElement("div");
     document.body.appendChild(container);
   });
@@ -683,7 +722,8 @@ describe("BibleSelector translation selector", () => {
   }
 
   it("displays translations grouped by language", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
@@ -692,6 +732,7 @@ describe("BibleSelector translation selector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -718,7 +759,8 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("defaults to opening the language group that matches the language of the currently selected translation", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
@@ -727,6 +769,7 @@ describe("BibleSelector translation selector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -757,7 +800,8 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("allows opening translation selector and searching translations by name", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
@@ -766,6 +810,7 @@ describe("BibleSelector translation selector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -826,7 +871,8 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("allows opening translation selector and searching translations by abbreviation", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
@@ -835,6 +881,7 @@ describe("BibleSelector translation selector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -895,7 +942,8 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("allows opening translation selector and searching translations by language", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
@@ -904,6 +952,7 @@ describe("BibleSelector translation selector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -965,7 +1014,8 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("allows opening translation selector and searching translations by native language name", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
@@ -974,6 +1024,7 @@ describe("BibleSelector translation selector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -1037,7 +1088,7 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("selecting a translation selects the current book/chapter in that translation and closes the selector", async () => {
-    const { selectorState, bibleDataManager, pane } =
+    const { selectorState, bibleDataManager, pane, state } =
       await createSelectorFixture();
 
     await pane.tab!.readingState.selectChapter("EXO", 2);
@@ -1057,6 +1108,7 @@ describe("BibleSelector translation selector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -1162,6 +1214,7 @@ describe("BibleSelector translation selector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -1203,7 +1256,8 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("displays only complete translations when in complete mode", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
@@ -1212,6 +1266,7 @@ describe("BibleSelector translation selector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -1242,7 +1297,8 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("displays all translations across all languages when in all mode", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
@@ -1251,6 +1307,7 @@ describe("BibleSelector translation selector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -1280,7 +1337,8 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("displays only popular languages when in popular mode", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
@@ -1289,6 +1347,7 @@ describe("BibleSelector translation selector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -1318,7 +1377,8 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("displays percentage complete indicator circles with conic-gradient in all and popular modes but not in complete mode", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
@@ -1327,6 +1387,7 @@ describe("BibleSelector translation selector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -1413,6 +1474,7 @@ describe("BibleSelector translation selector", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -1492,6 +1554,11 @@ describe("BibleSelector sharing translations", () => {
   beforeEach(() => {
     jsdom.reconfigure({ url: "https://ao.bot/somepage" });
 
+    // Clear persisted per-translation endpoints so state does not leak in
+    // from earlier tests (which would mark default-endpoint translations as
+    // non-default).
+    localStorage.clear();
+
     container = document.createElement("div");
     document.body.appendChild(container);
 
@@ -1524,9 +1591,10 @@ describe("BibleSelector sharing translations", () => {
         }
       : undefined;
 
-    const { selectorState, bibleDataManager } = await createSelectorFixture({
-      responses,
-    });
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture({
+        responses,
+      });
 
     if (customEndpoint) {
       await bibleDataManager.getTranslations(customEndpoint);
@@ -1539,6 +1607,7 @@ describe("BibleSelector sharing translations", () => {
           onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );

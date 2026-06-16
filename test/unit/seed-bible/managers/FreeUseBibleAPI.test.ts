@@ -1,4 +1,5 @@
 import {
+  FREE_USE_BIBLE_API_ENDPOINT,
   FreeUseBibleAPI,
   type TranslationBookChapter,
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
@@ -37,7 +38,7 @@ describe("FreeUseBibleAPI", () => {
     const payload = { translations: [{ id: "eng_kjv" }] };
     fetchMock.mockResolvedValue(createResponse(payload));
 
-    const api = new FreeUseBibleAPI();
+    const api = new FreeUseBibleAPI(FREE_USE_BIBLE_API_ENDPOINT);
     const result = await api.getAvailableTranslations();
 
     expect(result).toEqual(payload);
@@ -135,7 +136,7 @@ describe("FreeUseBibleAPI", () => {
   });
 
   it("returns null for next chapter when no link is present", async () => {
-    const api = new FreeUseBibleAPI();
+    const api = new FreeUseBibleAPI(FREE_USE_BIBLE_API_ENDPOINT);
     const chapter = { nextChapterApiLink: null } as TranslationBookChapter;
 
     const result = await api.getNextChapter(chapter);
@@ -169,7 +170,7 @@ describe("FreeUseBibleAPI", () => {
   });
 
   it("returns null for previous chapter when no link is present", async () => {
-    const api = new FreeUseBibleAPI();
+    const api = new FreeUseBibleAPI(FREE_USE_BIBLE_API_ENDPOINT);
     const chapter = { previousChapterApiLink: null } as TranslationBookChapter;
 
     const result = await api.getPreviousChapter(chapter);

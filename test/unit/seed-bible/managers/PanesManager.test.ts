@@ -14,6 +14,7 @@ import {
 import { signal } from "@preact/signals";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import type { Mock } from "vitest";
+import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
 
 let fetchMock: Mock;
 let logSpy: Mock;
@@ -78,10 +79,12 @@ async function waitForTabsToLoad(tabs: ReaderTab[]): Promise<void> {
 
 async function createManagers(options: { extraTabs?: number } = {}) {
   setWebResponses(createExampleManagerResponseMap());
+  const navigation = createNavigationManager();
   const tabsManager = createTabs(
-    createNavigationManager(),
+    navigation,
     createDataManager(),
-    createHighlightsManagerMock() as any
+    createHighlightsManagerMock() as any,
+    createI18nManager(navigation, ["en"])
   );
   await waitForTabsToLoad(tabsManager.tabs.value);
   const initialSelectedTabId = tabsManager.selectedTabId.value;

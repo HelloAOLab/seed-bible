@@ -21,6 +21,7 @@ import { signal } from "@preact/signals";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import type { Mock } from "vitest";
+import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 
 let webGetMock: Mock;
 let logSpy: Mock;
@@ -140,14 +141,31 @@ describe("parseVerseSelection", () => {
   });
 });
 
+function createTabsManager({
+  dataManager: data,
+  i18nManager: i18n,
+}: {
+  dataManager?: ReturnType<typeof createDataManager>;
+  i18nManager?: ReturnType<typeof createI18nManager>;
+} = {}) {
+  const navigation = createNavigationManager();
+  const dataManager = data || createDataManager();
+  const highlightsManager = createHighlightsManagerMock() as any;
+  const i18nManager = i18n || createI18nManager(navigation, ["en"]);
+  const tabs = createTabs(
+    navigation,
+    dataManager,
+    highlightsManager,
+    i18nManager
+  );
+
+  return { navigation, dataManager, highlightsManager, i18nManager, tabs };
+}
+
 describe("createTabs", () => {
   it("addTab() creates a new tab with new reading state", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const manager = createTabs(
-      createNavigationManager(),
-      createDataManager(),
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
     const existingReadingStates = manager.tabs.value.map(
@@ -171,11 +189,7 @@ describe("createTabs", () => {
 
   it("addTab() accepts a shared reading session for the new tab", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const manager = createTabs(
-      createNavigationManager(),
-      createDataManager(),
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
     const sharedSession = {
@@ -207,17 +221,13 @@ describe("createTabs", () => {
 
   it("addTab() accepts a reading state for the new tab", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const dataManager = createDataManager();
-    const manager = createTabs(
-      createNavigationManager(),
-      dataManager,
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager, dataManager, i18nManager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
     const readingState = createBibleReadingState(
       dataManager,
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      i18nManager
     );
 
     const nextTab = manager.addTab(readingState);
@@ -229,11 +239,7 @@ describe("createTabs", () => {
 
   it("removeTab() removes the given tab", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const manager = createTabs(
-      createNavigationManager(),
-      createDataManager(),
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
     manager.removeTab("tab-2");
@@ -244,11 +250,7 @@ describe("createTabs", () => {
 
   it("selectTab() sets the selected tab", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const manager = createTabs(
-      createNavigationManager(),
-      createDataManager(),
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
     manager.selectTab("tab-2");
@@ -258,12 +260,7 @@ describe("createTabs", () => {
 
   it("syncs the selected tab to match the URL", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const navigation = createNavigationManager();
-    const manager = createTabs(
-      navigation,
-      createDataManager(),
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager, navigation } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
     const secondTab = manager.addTab();
     await waitForInitialLoad(secondTab.readingState);
@@ -289,11 +286,7 @@ describe("createTabs", () => {
     window.history.replaceState(null, "", "?translationId=NIV&book=MAT");
     setWebResponses(createExampleManagerResponseMap());
 
-    const manager = createTabs(
-      createNavigationManager(),
-      createDataManager(),
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
     const url = new URL(window.location.href);
@@ -308,12 +301,7 @@ describe("createTabs", () => {
       "?translationId=NIV&translation=AAB&book=MAT&chapter=1"
     );
     setWebResponses(createExampleManagerResponseMap());
-
-    const manager = createTabs(
-      createNavigationManager(),
-      createDataManager(),
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
     const firstTab = manager.tabs.value[0]!;
@@ -334,11 +322,7 @@ describe("createTabs", () => {
       .spyOn(dataManager, "buildTranslationId")
       .mockReturnValue(customTranslationUrl);
 
-    const manager = createTabs(
-      createNavigationManager(),
-      dataManager,
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager } = createTabsManager({ dataManager });
     await waitForTabsToLoad(manager.tabs.value);
 
     await waitFor(
@@ -358,11 +342,7 @@ describe("createTabs", () => {
   // the sync is added.
   it.skip("updates the verse URL param from selected verses in the current chapter", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const manager = createTabs(
-      createNavigationManager(),
-      createDataManager(),
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
     const readingState = manager.tabs.value[0]!.readingState;
@@ -393,11 +373,7 @@ describe("createTabs", () => {
 
   it.skip("clears the verse URL param when selected verses become empty", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const manager = createTabs(
-      createNavigationManager(),
-      createDataManager(),
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
     const readingState = manager.tabs.value[0]!.readingState;
@@ -421,11 +397,7 @@ describe("createTabs", () => {
 
   it.skip("uses selected tab verses when syncing the verse URL param", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const manager = createTabs(
-      createNavigationManager(),
-      createDataManager(),
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
     const firstReadingState = manager.tabs.value[0]!.readingState;
@@ -472,11 +444,7 @@ describe("createTabs", () => {
       });
 
     try {
-      const manager = createTabs(
-        createNavigationManager(),
-        createDataManager(),
-        createHighlightsManagerMock() as any
-      );
+      const { tabs: manager } = createTabsManager();
       await waitForTabsToLoad(manager.tabs.value);
 
       expect(decorateVersesSpy).not.toBeNull();
@@ -499,14 +467,10 @@ describe("createTabs", () => {
     );
 
     try {
-      const manager = createTabs(
-        createNavigationManager(),
-        createDataManager(),
-        createHighlightsManagerMock() as any
-      );
+      const { tabs: manager } = createTabsManager();
       await waitForTabsToLoad(manager.tabs.value);
 
-      const initialOptions = createBibleReadingStateSpy.mock.calls[0]?.[2];
+      const initialOptions = createBibleReadingStateSpy.mock.calls[0]?.[3];
       expect(initialOptions?.scrollToVerse).toBe(7);
     } finally {
       createBibleReadingStateSpy.mockRestore();
