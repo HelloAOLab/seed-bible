@@ -188,7 +188,6 @@ export interface BibleSelectorState {
   handleTranslationAddition: () => void;
   openTabs: () => void;
   bookmarks: BookmarksManager;
-  selectPopUp: Signal<{ bookId: string; chapterNumber: number } | null>;
   showApocryphaInfo: Signal<boolean>;
 }
 
@@ -242,7 +241,6 @@ export function createBibleSelectorState(
   const pane = signal<Pane | null>(null);
   const isDrawerOpen = sidebar.isMobileOpen.value;
   const forceNewTab = signal(false);
-  const selectPopUp = signal(null);
   const showApocryphaInfo = signal(false);
   const availablePanes = computed(() => panesManager.panes.value);
   const availableTranslations = computed(
@@ -1023,7 +1021,6 @@ export function createBibleSelectorState(
     handleTranslationAddition,
     openTabs,
     bookmarks,
-    selectPopUp,
     showApocryphaInfo,
   };
 }

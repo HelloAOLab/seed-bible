@@ -12,8 +12,6 @@ import {
   AddIcon,
   MinusIcon,
   ShareIcon,
-  BookOutlineIcon,
-  AddTab,
   SbTabsIcon,
 } from "seed-bible.components.icons";
 import type { Translation } from "seed-bible.managers.FreeUseBibleAPI";
@@ -68,7 +66,6 @@ const SearchBar = (props: {
     selectedTranslationBooks,
     selectedTranslation,
     openTabs,
-    selectPopUp,
     showApocryphaInfo,
   } = bibleSelectorState;
 
@@ -199,9 +196,6 @@ const SearchBar = (props: {
           />
         )}
       </div>
-      {selectPopUp.value && bibleSelectorState.viewportWidth.value <= 768 && (
-        <SelectPopUp bibleSelectorState={bibleSelectorState} />
-      )}
       {showApocryphaInfo.value && (
         <ApocryphaInfo bibleSelectorState={bibleSelectorState} />
       )}
@@ -371,10 +365,7 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
           </div>
           {ws <= 768 && apocryphaAvailable.value && (
             <>
-              <div
-                className="separator"
-                style={{ display: "flex", opacity: 1 }}
-              />
+              <div className="separator" style={{ display: "flex" }} />
               <div
                 class="testament-container flex-col-gap-sm"
                 style={{
@@ -384,7 +375,9 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
                 }}
               >
                 <span class="testament-title">
-                  {t("apocrypha", { defaultValue: "Apocrypha" })}
+                  {t("extrabiblical-writings", {
+                    defaultValue: "Extrabiblical writings",
+                  })}
                   <span
                     class="material-symbols-outlined"
                     onClick={() => {
@@ -531,11 +524,11 @@ const SideBarChapters = (props: { bibleSelectorState: BibleSelectorState }) => {
       const { chapterNumber, isVisible, isLast } = props;
       const chapterPressHandler = useLongPress(() => {
         if (bibleSelectorState.viewportWidth.value > 768) return;
-        bibleSelectorState.selectPopUp.value = {
-          bookId: bd.id,
-          chapterNumber: chapterNumber,
-        };
-      }, 1500);
+        bibleSelectorState.forceNewTab.value = true;
+        selectChapter(bd.id, chapterNumber);
+        bibleSelectorState.forceNewTab.value = false;
+        bibleSelectorState.isOpen.value = false;
+      }, 1000);
       return (
         <button
           style={
@@ -774,8 +767,21 @@ const TranslationModal = (props: {
         >
           <div
             class="sidebar-book-selector flex-between-center-gap-md"
-            style={{ marginBottom: "5px", height: "30px", padding: "0 0px" }}
+            style={{ padding: "15px 5px" }}
           >
+            {viewportWidth.value <= 768 && (
+              <span
+                class="material-symbols-outlined"
+                onClick={() => {
+                  selectingTranslation.value = false;
+                  showTranslationSettings.value = false;
+                  showTranslationInfo.value = null;
+                  setOpen(false);
+                }}
+              >
+                close
+              </span>
+            )}
             <div
               className="searchbar flex-align-center"
               style={{ width: "100%", height: "30px" }}
@@ -806,17 +812,19 @@ const TranslationModal = (props: {
             >
               <FiltersIcon />
             </span>
-            <span
-              class="material-symbols-outlined"
-              onClick={() => {
-                selectingTranslation.value = false;
-                showTranslationSettings.value = false;
-                showTranslationInfo.value = null;
-                setOpen(false);
-              }}
-            >
-              close
-            </span>
+            {viewportWidth.value > 768 && (
+              <span
+                class="material-symbols-outlined"
+                onClick={() => {
+                  selectingTranslation.value = false;
+                  showTranslationSettings.value = false;
+                  showTranslationInfo.value = null;
+                  setOpen(false);
+                }}
+              >
+                close
+              </span>
+            )}
           </div>
           {LanguageList}
           <div className="footer">
@@ -1252,83 +1260,6 @@ const TranslationInfo = (props: {
   );
 };
 
-const SelectPopUp = (props: { bibleSelectorState: BibleSelectorState }) => {
-  const { selectChapter, selectPopUp, isOpen, forceNewTab } =
-    props.bibleSelectorState;
-  const { t } = useI18n();
-
-  const openInCurrentTab = () => {
-    console.log("Opening in current tab", selectPopUp.value);
-    selectChapter(
-      selectPopUp.value?.bookId ?? "",
-      selectPopUp.value?.chapterNumber ?? 0
-    );
-    selectPopUp.value = null;
-    isOpen.value = false;
-  };
-
-  const openInNewTab = () => {
-    console.log("Opening in new tab", selectPopUp.value);
-    forceNewTab.value = true;
-    selectChapter(
-      selectPopUp.value?.bookId ?? "",
-      selectPopUp.value?.chapterNumber ?? 0
-    );
-    selectPopUp.value = null;
-    forceNewTab.value = false;
-    isOpen.value = false;
-  };
-
-  return (
-    <div
-      id="select-popup"
-      class="sb-select-modal-overlay"
-      onClick={(e) => {
-        if ((e.target as HTMLElement).id === "select-popup") {
-          selectPopUp.value = null;
-        }
-      }}
-    >
-      <div className="sb-select-modal flex-center">
-        <div class="sb-select-modal-content flex-col-gap-md">
-          <span class="sb-select-modal-title-icon">
-            <BookOutlineIcon />
-          </span>
-          <span class="sb-select-modal-title">
-            {t("open-new-chapter-in-new-or-current-tab", {
-              defaultValue: "Open the new chapter in new or current tab",
-            })}
-          </span>
-        </div>
-        <div class="sb-select-modal-actions flex-gap-md">
-          <button
-            style={{
-              background: "var(--sb-secondary-color)",
-              color: "var(--sb-secondary-font-color)",
-            }}
-            onClick={openInCurrentTab}
-            class="sb-select-modal-action-btn flex-start-center-gap-sm"
-          >
-            <SbTabsIcon />
-            {t("current-tab", { defaultValue: "Current Tab" })}
-          </button>
-          <button
-            style={{
-              background: "var(--sb-primary-color)",
-              color: "var(--sb-primary-font-color)",
-            }}
-            onClick={openInNewTab}
-            class="sb-select-modal-action-btn flex-start-center-gap-sm"
-          >
-            <AddTab />
-            {t("new-tab", { defaultValue: "New Tab" })}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const ApocryphaInfo = (props: { bibleSelectorState: BibleSelectorState }) => {
   const { showApocryphaInfo } = props.bibleSelectorState;
   const { t } = useI18n();
@@ -1404,6 +1335,7 @@ export function useLongPress(onLongPress: () => void, duration = 1500) {
     onMouseUp: cancel,
     onMouseLeave: cancel,
     onTouchStart: start,
+    onTouchMove: cancel,
     onTouchEnd: cancel,
     onTouchCancel: cancel,
   };

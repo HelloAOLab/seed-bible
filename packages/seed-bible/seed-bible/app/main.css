@@ -75,9 +75,6 @@
   --sb-verse-words-of-jesus-font-family: inherit;
   --sb-verse-words-of-jesus-font-style: inherit;
 
-  --sb-selected-verse-font-family: inherit;
-  --sb-selected-verse-font-color: inherit;
-  --sb-selected-verse-background-color: inherit;
   --sb-selected-verse-border-bottom: 2px dashed currentColor;
   --sb-selected-verse-text-decoration: none;
   --sb-selected-verse-text-decoration-color: currentColor;
@@ -924,6 +921,7 @@ h6 {
   display: flex;
   justify-content: flex-start;
   align-items: center;
+  gap: 8px;
 }
 
 .sb-bible-reader-mobile-header-book {
@@ -939,7 +937,6 @@ h6 {
   display: inline-flex;
   padding: 5px 10px;
   border-radius: 15px;
-  margin-left: 5px;
 }
 
 .sb-bible-reader-mobile-header-play {
@@ -1327,10 +1324,7 @@ h6 {
   }
 }
 
-.sb-verse-selected {
-  font-family: var(--sb-selected-verse-font-family);
-  color: var(--sb-selected-verse-font-color);
-  background-color: var(--sb-selected-verse-background-color);
+.sb-verse-selected .sb-verse-decorator {
   border-bottom: var(--sb-selected-verse-border-bottom);
   text-decoration: var(--sb-selected-verse-text-decoration);
   text-decoration-color: var(--sb-selected-verse-text-decoration-color);
@@ -2028,6 +2022,19 @@ h6 {
   display: flex;
   gap: var(--sb-verse-toolbar-tools-gap);
   align-items: stretch;
+}
+
+@media (max-width: 330px) {
+  .sb-verse-toolbar-tools {
+    gap: 0;
+  }
+}
+
+@media (max-width: 300px) {
+  .sb-verse-toolbar {
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
 
 /* Vertical icon-above-label button used inside the floating verse toolbar.
@@ -4414,6 +4421,7 @@ h6 {
     display: flex;
     align-items: center;
     gap: 5px;
+    color: color-mix(in srgb, var(--sb-font-color), transparent 60%);
   }
 
   .sb-selector-panel .separator {
@@ -6854,7 +6862,6 @@ h6 {
 
   .sidebar-itm {
     width: 100%;
-    font-weight: lighter;
     font-size: 16px;
   }
 
@@ -6949,7 +6956,7 @@ h6 {
   }
 
   .language-list {
-    height: 100%;
+    height: calc(100% - 20px);
   }
 
   .footer {

@@ -205,7 +205,7 @@ function sharedHighlightDecorationId(
 }
 
 /**
- * Broadcasts a highlight to the rest of a shared session by creating one
+ * Broadcasts a decoration to the rest of a shared session by creating one
  * `VerseDecoration` per selected verse. The decoration is synced through
  * `SessionsManager`'s existing decorations CRDT, so other connected clients
  * see the exact same visual styling.
@@ -214,7 +214,7 @@ function sharedHighlightDecorationId(
  * we schedule a local removal after that many seconds — the removal also
  * propagates through the CRDT so every client clears it at once.
  */
-function broadcastHighlightToSession(
+function broadcastDecorationToSession(
   session: BibleReadingSession | null,
   rs: BibleReadingState,
   details: {
@@ -253,6 +253,7 @@ function broadcastHighlightToSession(
         className,
         ...(style ? { style } : {}),
         preserveOnChapterChange: false,
+        removeAfterMs: duration ? duration * 1000 : undefined,
       },
       id
     );
@@ -275,7 +276,7 @@ function broadcastHighlightToSession(
  * Routes through the session's CRDT map so the removal propagates.
  */
 function removeSharedHighlightsFromSelection(
-  session: BibleReadingSession | null,
+  session: BibleReadingSession,
   rs: BibleReadingState
 ): void {
   for (const verse of rs.selectedVerses.value) {
@@ -313,18 +314,22 @@ function applyHighlightWithSession(
     customFontColor?: string;
   }
 ): void {
-  const duration = session?.options.value.highlightDurationSeconds ?? null;
-  const isTransient = session !== null && duration !== null && duration > 0;
+  // const duration = session?.options.value.highlightDurationSeconds ?? null;
+  // const isTransient = session !== null && duration !== null && duration > 0;
 
-  if (isTransient) {
-    // Wipe any prior permanent highlight on these verses so the timer is
-    // the sole source of truth for how long the highlight shows.
-    void rs.unhighlightSelectedVerses();
-  } else {
+  if (!session || session.userCanDecorate(session.localSessionId.value)) {
     void rs.highlightSelectedVerses(details);
   }
 
-  broadcastHighlightToSession(session, rs, details);
+  // if (isTransient) {
+  //   // Wipe any prior permanent highlight on these verses so the timer is
+  //   // the sole source of truth for how long the highlight shows.
+  //   void rs.unhighlightSelectedVerses();
+  // } else {
+  //   void rs.highlightSelectedVerses(details);
+  // }
+
+  broadcastDecorationToSession(session, rs, details);
 }
 
 interface BibleReaderToolbarProps {
@@ -579,12 +584,33 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const hasAnyHighlighted = useComputed(() => {
     const rs = readingState.value;
     if (!rs) return false;
-    return rs.selectedVerses.value.some((verse) => {
-      const existing = rs.highlights.value.highlights.find((h) =>
-        highlightContainsVerse(h, verse.verse.number)
+
+    if (
+      sessionState.value &&
+      sessionState.value.userCanDecorate(
+        sessionState.value.localSessionId.value
+      )
+    ) {
+      // Shared sessions use decorations, not highlights
+      const currentBookId = rs.bookId.value;
+      const currentChapterNumber = rs.chapterNumber.value;
+
+      return rs.selectedVerses.value.some((verse) =>
+        rs.decorations.value.some(
+          (d) =>
+            d.bookId === currentBookId &&
+            d.chapterNumber === currentChapterNumber &&
+            d.verses.includes(verse.verse.number)
+        )
       );
-      return !!existing;
-    });
+    } else {
+      return rs.selectedVerses.value.some((verse) => {
+        const existing = rs.highlights.value.highlights.find((h) =>
+          highlightContainsVerse(h, verse.verse.number)
+        );
+        return !!existing;
+      });
+    }
   });
 
   const selectedVersesReference = useComputed(() => {
@@ -1060,13 +1086,21 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 onClick={() => {
                   const rs = readingState.value;
                   if (!rs) return;
-                  // Clean up the shared decoration first so the removal
-                  // propagates to other clients even if the local
-                  // unhighlight is a no-op (e.g. user isn't logged in
-                  // with HighlightsManager but the session had a
-                  // decoration broadcast earlier).
-                  removeSharedHighlightsFromSelection(sessionState.value, rs);
-                  rs.unhighlightSelectedVerses();
+                  if (
+                    sessionState.value &&
+                    sessionState.value.userCanDecorate(
+                      sessionState.value.localSessionId.value
+                    )
+                  ) {
+                    // Clean up the shared decoration first so the removal
+                    // propagates to other clients even if the local
+                    // unhighlight is a no-op (e.g. user isn't logged in
+                    // with HighlightsManager but the session had a
+                    // decoration broadcast earlier).
+                    removeSharedHighlightsFromSelection(sessionState.value, rs);
+                  } else {
+                    rs.unhighlightSelectedVerses();
+                  }
                 }}
                 aria-label={t("clear-highlight", {
                   defaultValue: "Clear highlight",
@@ -1190,6 +1224,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 const bookmarkLabel = isSelectionBookmarked
                   ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
                   : t("bookmark-verses", { defaultValue: "Bookmark" });
+
+                // const canHighlight = !sessionState.value || sessionState.value.userCanDecorate(sessionState.value.localSessionId.value);
                 return (
                   <>
                     {selectionUI.value.showHighlightColors && (

@@ -29,7 +29,9 @@ os.syncConfigBotTagsToURL([
   "translation",
   "book",
   "chapter",
-  "verse",
+  // Don't sync verses to the URL to avoid
+  // creating additional history entries when selecting verses
+  // "verse",
   "settingsView",
   "sidebar",
 ]);
