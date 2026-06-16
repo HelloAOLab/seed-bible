@@ -1,21 +1,29 @@
 /**
- * Multi-branch SSR host server.
+ * SSR host server.
  *
- * A single long-running process serves every branch deployment:
- *   - GET /                            → the root branch (production `main`)
- *   - GET /?pattern=<name>             → that branch's deployment
- *   - GET /?pattern=<name>&patternVersion=<buildId>  → pinned build
- *   - GET /healthz                     → liveness probe
- *   - POST /__invalidate?branch=       → drop the cached pointer for a branch
+ * Behaviour depends on `NODE_ENV`:
  *
- * Per request it resolves the branch's live build (via the artifact store),
- * lazily loads and caches that build's SSR bundle, and calls its render()
- * to produce HTML. Hashed assets are never served here — the rendered HTML
- * references them at the absolute asset host (CDN/S3).
+ *  - production: a single long-running multi-branch host process. It serves
+ *    every branch deployment from pre-built SSR bundles resolved via the
+ *    artifact store:
+ *      - GET /                            → the root branch (production `main`)
+ *      - GET /?pattern=<name>             → that branch's deployment
+ *      - GET /?pattern=<name>&patternVersion=<buildId>  → pinned build
+ *      - GET /healthz                     → liveness probe
+ *      - POST /__invalidate?branch=       → drop the cached pointer for a branch
+ *    Per request it resolves the branch's live build, lazily loads and caches
+ *    that build's SSR bundle, and calls its render() to produce HTML. Hashed
+ *    assets are never served here — the rendered HTML references them at the
+ *    absolute asset host (CDN/S3).
+ *
+ *  - non-production: an Express + Vite dev server with HMR. The SSR entry is
+ *    loaded fresh from source on every request via `vite.ssrLoadModule`, so no
+ *    build step is required. None of the production host code runs in this mode.
  */
 import {
   createServer,
   type IncomingMessage,
+  type IncomingHttpHeaders,
   type ServerResponse,
 } from "node:http";
 import { pathToFileURL } from "node:url";
@@ -23,11 +31,17 @@ import { createStore, type ArtifactStore, type BranchPointer } from "./store";
 import Bowser from "bowser";
 import { parseAcceptLanguages } from "./lang.js";
 
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
 const PORT = Number(process.env.PORT ?? 5173);
 const ROOT_BRANCH = process.env.ROOT_BRANCH ?? "main";
 const ASSET_HOST = process.env.ASSET_HOST ?? "";
 const POINTER_TTL_MS = Number(process.env.POINTER_TTL_MS ?? 10_000);
 const MODULE_CACHE_MAX = Number(process.env.MODULE_CACHE_MAX ?? 20);
+
+interface ClientConfig {
+  renderedAsMobile: boolean;
+  acceptedLanguages: string[];
+}
 
 type RenderFn = (opts: {
   path: string;
@@ -40,7 +54,20 @@ type RenderFn = (opts: {
   html: string;
 }) => Promise<string>;
 
-const store: ArtifactStore = createStore();
+/** Derives per-client render config (mobile, languages) from request headers. */
+function clientConfigFromHeaders(headers: IncomingHttpHeaders): ClientConfig {
+  const browser = Bowser.getParser(headers["user-agent"]!);
+  const renderedAsMobile = browser.getPlatformType(true) === "mobile";
+  const acceptedLanguages = headers["accept-language"]
+    ? parseAcceptLanguages(headers["accept-language"])
+    : [];
+  return { renderedAsMobile, acceptedLanguages };
+}
+
+// ─── Production: multi-branch host ───────────────────────────────────────────
+
+// Instantiated by startProdServer(); never created in dev mode.
+let store!: ArtifactStore;
 
 // ─── Pointer cache (branch → live buildId), short TTL ────────────────────────
 interface PointerEntry {
@@ -173,18 +200,16 @@ async function handle(
       pointer.buildId
     );
 
-    const browser = Bowser.getParser(req.headers["user-agent"]!);
-    const isMobile = browser.getPlatformType(true) === "mobile";
-    const acceptedLanguages = req.headers["accept-language"]
-      ? parseAcceptLanguages(req.headers["accept-language"])
-      : [];
+    const { renderedAsMobile, acceptedLanguages } = clientConfigFromHeaders(
+      req.headers
+    );
 
     const html = await render({
       path: route.appUrl,
       config: {
         basePath: route.basePath,
         assetHost: ASSET_HOST,
-        renderedAsMobile: isMobile,
+        renderedAsMobile,
         acceptedLanguages,
       },
       html: preRenderedHtml,
@@ -206,10 +231,110 @@ async function handle(
   }
 }
 
-createServer((req, res) => {
-  void handle(req, res);
-}).listen(PORT, () => {
-  console.log(
-    `Seed Bible host server listening on :${PORT} (root branch: ${ROOT_BRANCH}, store: ${process.env.STORE_BACKEND ?? "local"})`
-  );
-});
+function startProdServer(): void {
+  store = createStore();
+  createServer((req, res) => {
+    void handle(req, res);
+  }).listen(PORT, () => {
+    console.log(
+      `Seed Bible host server listening on :${PORT} (root branch: ${ROOT_BRANCH}, store: ${process.env.STORE_BACKEND ?? "local"})`
+    );
+  });
+}
+
+// ─── Development: Express + Vite dev server ──────────────────────────────────
+
+/**
+ * Express + Vite middleware-mode dev server. The SSR entry is transformed and
+ * loaded from source on each request (HMR-friendly), so there is no build step.
+ *
+ * `express` and `vite` are imported dynamically so they are only loaded — and
+ * only need to be installed — when running outside production.
+ */
+async function startDevServer(): Promise<void> {
+  const { default: express } = await import("express");
+  const { createServer: createViteServer } = await import("vite");
+  const fs = await import("node:fs");
+  const path = await import("node:path");
+
+  const app = express();
+
+  // Create Vite server in middleware mode and configure the app type as
+  // 'custom', disabling Vite's own HTML serving logic so the parent server
+  // can take control.
+  const vite = await createViteServer({
+    server: { middlewareMode: true },
+    appType: "custom",
+  });
+
+  // Use vite's connect instance as middleware. When the server restarts (for
+  // example after the user modifies vite.config.js), `vite.middlewares` is
+  // still the same reference, so this remains valid even after restarts.
+  app.use(vite.middlewares);
+
+  app.use("*all", async (req, res, next) => {
+    const url = new URL(
+      req.originalUrl,
+      `${req.protocol}://${req.headers.host}`
+    );
+    if (/\.(js|css|map|json|xml|ico)$/.test(url.pathname)) {
+      res.writeHead(404);
+      res.end();
+      return;
+    }
+
+    try {
+      // 1. Read index.html.
+      let template = fs.readFileSync(
+        path.resolve(import.meta.dirname, "..", "index.html"),
+        "utf-8"
+      );
+
+      // 2. Apply Vite HTML transforms (injects the HMR client + plugin
+      //    preambles).
+      template = await vite.transformIndexHtml(req.originalUrl, template);
+
+      // 3. Load the server entry. ssrLoadModule transforms ESM source to be
+      //    usable in Node.js with efficient HMR-style invalidation.
+      const { render } = (await vite.ssrLoadModule(
+        "/standalone/entry-ssr.tsx"
+      )) as { render: RenderFn };
+
+      const { renderedAsMobile, acceptedLanguages } = clientConfigFromHeaders(
+        req.headers
+      );
+
+      // 4. Render the app HTML.
+      const html = await render({
+        path: req.originalUrl,
+        config: {
+          basePath: "",
+          assetHost: "",
+          renderedAsMobile,
+          acceptedLanguages,
+        },
+        html: template,
+      });
+
+      // 5. Send the rendered HTML back.
+      res.status(200).set({ "Content-Type": "text/html" }).end(html);
+    } catch (e) {
+      console.error(e);
+      if (e instanceof Error) {
+        // Let Vite fix the stack trace so it maps back to the actual source.
+        vite.ssrFixStacktrace(e);
+      }
+      next(e);
+    }
+  });
+
+  app.listen(PORT, () => {
+    console.log(`Seed Bible dev server running at http://localhost:${PORT}`);
+  });
+}
+
+if (IS_PRODUCTION) {
+  startProdServer();
+} else {
+  void startDevServer();
+}

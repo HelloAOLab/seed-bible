@@ -7,11 +7,11 @@
   "scripts": {
     "test": "vitest",
     "test:watch": "vitest watch",
-    "dev": "bun server/dev.ts",
+    "dev": "bun server/index.ts",
     "build": "pnpm build:client && pnpm build:ssr && pnpm build:server",
     "build:client": "vite build",
     "build:ssr": "vite build --ssr standalone/entry-ssr.tsx",
-    "build:server": "bun build --target=bun --outfile=server/dist/index.js ./server/index.ts",
+    "build:server": "bun build --target=bun --external express --external vite --outfile=server/dist/index.js ./server/index.ts",
     "lint": "eslint packages",
     "lint:fix": "eslint packages --fix",
     "check:ts": "tsc-silent --project ./tsconfig.json --suppressConfig ./tsc-silent.config.cjs",
