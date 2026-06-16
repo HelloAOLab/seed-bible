@@ -10,6 +10,7 @@ import { useEffect } from "preact/hooks";
 import { useSignalEffect, type ReadonlySignal } from "@preact/signals";
 import { closeContextMenus } from "../components/ContextMenu";
 import { ModalHost } from "../components/ModalHost";
+import { LoginModal } from "../components/LoginModal";
 import { useMemo } from "preact/hooks";
 import {
   AppConfigProvider,
@@ -158,6 +159,8 @@ function MainContent(props: {
         <SharedSessionsToasts state={state} />
 
         <ModalHost manager={state.modals} />
+
+        <LoginModal os={state.os} />
       </div>
     </>
   );

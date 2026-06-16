@@ -7336,3 +7336,105 @@ h6 {
     width: calc(100vw - 16px);
   }
 }
+
+/* Login modal -------------------------------------------------------------- */
+
+.sb-login-modal {
+  width: min(420px, 100%);
+  max-height: min(560px, calc(100dvh - 32px));
+}
+
+.sb-login-modal-body {
+  padding-top: 4px;
+}
+
+.sb-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sb-login-description {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+}
+
+.sb-login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-login-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+}
+
+.sb-login-input {
+  width: 100%;
+}
+
+.sb-login-error {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #dc2626;
+}
+
+.sb-login-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.sb-login-submit {
+  border: none;
+  border-radius: 8px;
+  padding: 12px 16px;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+  transition:
+    filter 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.sb-login-submit:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.sb-login-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.sb-login-secondary {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.2s ease;
+}
+
+.sb-login-secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-login-secondary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
