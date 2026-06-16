@@ -21,7 +21,13 @@ describe("HighlightsManager", () => {
 
   beforeEach(() => {
     os = CasualOSManager();
-    getDataMock = vi.spyOn(os, "getData").mockResolvedValue(null);
+    getDataMock = vi
+      .spyOn(os, "getData")
+      .mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "Data not found",
+      });
     recordDataMock = vi
       .spyOn(os, "recordData")
       .mockResolvedValue(undefined as never);

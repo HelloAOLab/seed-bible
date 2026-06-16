@@ -58,6 +58,8 @@ describe("CasualOSManager login", () => {
   let os: CasualOSManager;
 
   beforeEach(() => {
+    localStorage.clear();
+
     requestLoginMock.mockReset();
     completeLoginMock.mockReset();
     getUserInfoMock.mockReset();
@@ -84,6 +86,10 @@ describe("CasualOSManager login", () => {
     });
 
     os = CasualOSManager();
+  });
+
+  afterEach(() => {
+    localStorage.clear();
   });
 
   it("requestAuthBot() opens the login UI and waits for user info before resolving", async () => {
@@ -165,6 +171,7 @@ describe("CasualOSManager login", () => {
     expect(requestLoginMock).toHaveBeenCalledWith({
       address: EMAIL,
       addressType: "email",
+      comId: "seed-bible",
     });
     if (!request.success) throw new Error("expected login request to succeed");
 
