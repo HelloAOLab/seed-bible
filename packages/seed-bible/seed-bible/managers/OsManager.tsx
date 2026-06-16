@@ -71,6 +71,19 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
   const userInfo = signal<UserInfo | null>(null);
   const currentLoginRequest = signal<LoginRequestSuccess | null>(null);
 
+  if (typeof localStorage !== "undefined") {
+    const storedSessionKey = localStorage.getItem("sessionKey");
+    const storedConnectionKey = localStorage.getItem("connectionKey");
+
+    if (storedSessionKey) {
+      sessionKey.value = storedSessionKey;
+    }
+    
+    if (storedConnectionKey) {
+      connectionKey.value = storedConnectionKey;
+    }
+  }
+
   let loginPromise: Promise<UserInfo | null> | null = null;
   let resolveLoginPromise: ((value: UserInfo | null) => void) | null = null;
   let rejectLoginPromise: ((err: Error) => void) | null = null;
@@ -254,6 +267,19 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
     }
 
     return await login();
+  }
+
+  effect(() => {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("sessionKey", sessionKey.value ?? "");
+      localStorage.setItem("connectionKey", connectionKey.value ?? "");
+    }
+
+    client.sessionKey = sessionKey.value as string;
+  });
+
+  if (sessionKey.value) {
+    loadUserInfo();
   }
 
   return {
