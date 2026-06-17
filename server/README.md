@@ -35,8 +35,13 @@ NODE_ENV=production bun run server/dist/index.js
 | `POST /__invalidate?branch=<branch>`              | Drops the cached pointer + modules for one branch. |
 | `POST /__invalidate`                              | Drops every cached pointer.                        |
 
-Hashed assets are **not** served here — rendered HTML references them at the
-absolute `ASSET_HOST` (CDN/S3).
+Hashed assets are **not** served here. Each deployment's chunks are namespaced
+per branch/build (`branches/<name>/<buildId>/assets/...`) and referenced at the
+absolute asset host, so the client loads them straight from the CDN. The asset
+proxy only backstops same-origin requests for root-scoped files such as the PWA
+shell (`sw.js`, `registerSW.js`, `manifest.webmanifest`), which are produced by
+the `main` build and live at the bucket root; for that, point `ASSET_HOST` at
+the bucket/CDN root.
 
 ## Configuration
 
@@ -108,6 +113,8 @@ production and `dev` otherwise.
 branches/<name>/current.json            → { "buildId": "<id>", "commit": "...", "deployedAt": "..." }
 branches/<name>/<buildId>/server.mjs    → SSR bundle (exports render())
 branches/<name>/<buildId>/index.html    → pre-rendered HTML
+branches/<name>/<buildId>/assets/...    → this build's content-hashed chunks
+sw.js, registerSW.js, manifest.webmanifest → root-scoped PWA shell (main build only)
 ```
 
 ## Example configurations

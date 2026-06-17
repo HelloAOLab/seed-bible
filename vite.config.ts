@@ -5,13 +5,36 @@ import path from "path";
 import { analyzer } from "vite-bundle-analyzer";
 import { VitePWA } from "vite-plugin-pwa";
 
-// Asset URLs are decoupled from the deployment path: every branch references
-// its hashed chunks at one stable, absolute CDN host, so the branch path
-// (e.g. /d/branch-develop) never appears in an asset URL. That is what makes
-// cross-branch asset reuse free — identical bytes hash to the same filename
-// and therefore the same URL regardless of which branch deployed them.
-// Falls back to "/" for local dev / same-origin serving.
-const assetBaseUrl = process.env.ASSET_BASE_URL ?? "/";
+// Each branch+version deployment gets its OWN copy of its hashed assets, so the
+// asset URL is namespaced by branch and build id: assets for a build live at
+// `<assetRoot>branches/<branch>/<buildId>/assets/...`, mirroring where that
+// build's server.mjs / index.html already live in the artifact store. Baking
+// the branch + build id into `base` at build time is what makes each
+// deployment's HTML resolve to its own asset copy (no cross-branch sharing).
+//
+// `ASSET_BASE_URL` is the CDN root (e.g. https://assets.seedbible.com/);
+// `DEPLOY_BRANCH` / `DEPLOY_BUILD_ID` are supplied by CI before the build runs.
+// When the deploy vars are absent (local dev / plain build) `base` falls back
+// to the bare asset root (default "/"), so `pnpm dev` is unaffected.
+const assetRoot = withTrailingSlash(process.env.ASSET_BASE_URL ?? "/");
+const deployBranch = process.env.DEPLOY_BRANCH?.trim();
+const deployBuildId = process.env.DEPLOY_BUILD_ID?.trim();
+const assetBaseUrl =
+  deployBranch && deployBuildId
+    ? `${assetRoot}branches/${deployBranch}/${deployBuildId}/`
+    : assetRoot;
+
+// The service worker is versioned-base-hostile: VitePWA bakes `base` into the
+// SW scope and registration URLs, so a per-build base would change the SW's
+// scope every deploy and break `autoUpdate`. We therefore only emit a service
+// worker for the root deployment (the `main` build, or local dev where no
+// deploy branch is set), and pin its files/scope to the site root regardless of
+// where the versioned chunks live.
+const isRootBuild = !deployBranch || deployBranch === "main";
+
+function withTrailingSlash(url: string): string {
+  return url.endsWith("/") ? url : `${url}/`;
+}
 
 export default defineConfig(({ isSsrBuild }) => ({
   // SSR builds must not treat index.html as an input; only the client build
@@ -22,86 +45,106 @@ export default defineConfig(({ isSsrBuild }) => ({
 
   plugins: [
     preact(),
-    VitePWA({
-      registerType: "autoUpdate",
-      manifest: {
-        id: "seed-bible",
-        name: "Seed Bible",
-        short_name: "Seed Bible",
-        start_url: "/",
-        display: "standalone",
-        background_color: "#FFFFFF",
-        theme_color: "#FFFFFF",
-        icons: [
-          {
-            src: "https://favicon.ao.bot/pwa/pwa-192x192.png",
-            type: "image/png",
-            sizes: "192x192",
-            purpose: "any",
-          },
-          {
-            src: "https://favicon.ao.bot/pwa/pwa-512x512.png",
-            type: "image/png",
-            sizes: "512x512",
-            purpose: "any",
-          },
-          {
-            src: "https://favicon.ao.bot/pwa/pwa-maskable-192x192.png",
-            type: "image/png",
-            sizes: "192x192",
-            purpose: "maskable",
-          },
-          {
-            src: "https://favicon.ao.bot/pwa/pwa-maskable-512x512.png",
-            type: "image/png",
-            sizes: "512x512",
-            purpose: "maskable",
-          },
-        ],
-        screenshots: [
-          {
-            src: "https://favicon.ao.bot/pwa/screenshots/laptop/laptop-home.png",
-            sizes: "1020x775",
-            form_factor: "wide",
-            label: "Home screen of the Seed Bible showing Genesis 1",
-          },
-          {
-            src: "https://favicon.ao.bot/pwa/screenshots/mobile/mobile-home.png",
-            sizes: "369x766",
-            form_factor: "narrow",
-            label: "Home screen of the Seed Bible showing Proverbs 3",
-          },
-          {
-            src: "https://favicon.ao.bot/pwa/screenshots/laptop/laptop-translations.png",
-            sizes: "1020x775",
-            form_factor: "wide",
-            label:
-              "Translation selection screen showing several English Bible translations",
-          },
-          {
-            src: "https://favicon.ao.bot/pwa/screenshots/mobile/mobile-translations.png",
-            sizes: "372x776",
-            form_factor: "narrow",
-            label:
-              "Translation selection screen showing several English Bible translations",
-          },
-          {
-            src: "https://favicon.ao.bot/pwa/screenshots/laptop/laptop-verse-search.png",
-            sizes: "1021x773",
-            form_factor: "wide",
-            label:
-              "Search results for 'for God so loved' showing a result for John 3:16",
-          },
-          {
-            src: "https://favicon.ao.bot/pwa/screenshots/mobile/mobile-search.png",
-            sizes: "373x776",
-            form_factor: "narrow",
-            label:
-              "Search results for 'for God so loved' showing a result for John 3:16",
-          },
-        ],
-      },
-    }),
+    // Only the root build ships a service worker (see `isRootBuild` above).
+    ...(isRootBuild
+      ? [
+          VitePWA({
+            registerType: "autoUpdate",
+            // Pin the SW, its registration script, and the manifest to the site
+            // root so they stay at stable, same-origin URLs even though the
+            // hashed chunks are served from the versioned absolute CDN `base`.
+            base: "/",
+            scope: "/",
+            workbox: {
+              // Precache only the root-served web manifest. The hashed chunks
+              // (and favicon/apple-touch-icon, which Vite hashes into assets/)
+              // live on the versioned absolute CDN, not at the SW's root scope —
+              // precaching them by their root-relative path would 404 at install
+              // and abort SW registration. The SSR index.html is a placeholder
+              // template, not the served page, so it must not be a nav fallback.
+              globPatterns: ["manifest.webmanifest"],
+              navigateFallback: null,
+            },
+            manifest: {
+              id: "seed-bible",
+              name: "Seed Bible",
+              short_name: "Seed Bible",
+              start_url: "/",
+              display: "standalone",
+              background_color: "#FFFFFF",
+              theme_color: "#FFFFFF",
+              icons: [
+                {
+                  src: "https://favicon.ao.bot/pwa/pwa-192x192.png",
+                  type: "image/png",
+                  sizes: "192x192",
+                  purpose: "any",
+                },
+                {
+                  src: "https://favicon.ao.bot/pwa/pwa-512x512.png",
+                  type: "image/png",
+                  sizes: "512x512",
+                  purpose: "any",
+                },
+                {
+                  src: "https://favicon.ao.bot/pwa/pwa-maskable-192x192.png",
+                  type: "image/png",
+                  sizes: "192x192",
+                  purpose: "maskable",
+                },
+                {
+                  src: "https://favicon.ao.bot/pwa/pwa-maskable-512x512.png",
+                  type: "image/png",
+                  sizes: "512x512",
+                  purpose: "maskable",
+                },
+              ],
+              screenshots: [
+                {
+                  src: "https://favicon.ao.bot/pwa/screenshots/laptop/laptop-home.png",
+                  sizes: "1020x775",
+                  form_factor: "wide",
+                  label: "Home screen of the Seed Bible showing Genesis 1",
+                },
+                {
+                  src: "https://favicon.ao.bot/pwa/screenshots/mobile/mobile-home.png",
+                  sizes: "369x766",
+                  form_factor: "narrow",
+                  label: "Home screen of the Seed Bible showing Proverbs 3",
+                },
+                {
+                  src: "https://favicon.ao.bot/pwa/screenshots/laptop/laptop-translations.png",
+                  sizes: "1020x775",
+                  form_factor: "wide",
+                  label:
+                    "Translation selection screen showing several English Bible translations",
+                },
+                {
+                  src: "https://favicon.ao.bot/pwa/screenshots/mobile/mobile-translations.png",
+                  sizes: "372x776",
+                  form_factor: "narrow",
+                  label:
+                    "Translation selection screen showing several English Bible translations",
+                },
+                {
+                  src: "https://favicon.ao.bot/pwa/screenshots/laptop/laptop-verse-search.png",
+                  sizes: "1021x773",
+                  form_factor: "wide",
+                  label:
+                    "Search results for 'for God so loved' showing a result for John 3:16",
+                },
+                {
+                  src: "https://favicon.ao.bot/pwa/screenshots/mobile/mobile-search.png",
+                  sizes: "373x776",
+                  form_factor: "narrow",
+                  label:
+                    "Search results for 'for God so loved' showing a result for John 3:16",
+                },
+              ],
+            },
+          }),
+        ]
+      : []),
     analyzer({
       analyzerMode: "static",
       openAnalyzer: false,

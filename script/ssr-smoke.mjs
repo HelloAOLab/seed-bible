@@ -27,7 +27,12 @@ const html = await render({
 const checks = {
   "has <!doctype": html.startsWith("<!doctype html>"),
   "injects __APP_CONFIG__": html.includes("window.__APP_CONFIG__"),
-  "asset on CDN host": html.includes("https://assets.seedbible.com/assets/"),
+  // Assets are now namespaced per branch/build under a versioned prefix, e.g.
+  // https://assets.seedbible.com/branches/<branch>/<buildId>/assets/...
+  "asset on versioned CDN prefix":
+    /https:\/\/assets\.seedbible\.com\/branches\/[^/]+\/[^/]+\/assets\//.test(
+      html
+    ),
   "rendered app markup (non-empty #app)": /<div id="app">\s*<\S/.test(html),
 };
 console.log("HTML length:", html.length);

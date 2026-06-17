@@ -3,9 +3,11 @@
 # Builds the client + SSR bundles for the pushed branch and publishes them to
 # S3, then atomically flips the branch's live pointer. The long-running host
 # server (deployed separately from `main`) picks up the new build on its next
-# pointer read. Assets are content-hashed and synced to one shared prefix, so
-# unchanged chunks are never re-uploaded and identical chunks are reused across
-# every branch.
+# pointer read. Each branch+version deployment gets its OWN copy of its
+# content-hashed assets under `branches/<branch>/<buildId>/assets/`, alongside
+# that build's server.mjs / index.html — so assets are never shared across
+# branches. The asset URL (Vite `base`) is namespaced with the branch + build id
+# at build time so each deployment's HTML resolves to its own asset copy.
 name: Continuous Deployment
 
 on:
@@ -52,13 +54,9 @@ jobs:
       - name: Test
         run: pnpm test
 
-      # ─── Build client + SSR bundles ─────────────────────────────────────────
-      # ASSET_BASE_URL makes the client reference its hashed chunks at the CDN
-      # host, decoupled from the branch path.
-      - name: Build
-        run: pnpm build
-
-      # ─── Resolve identifiers ────────────────────────────────────────────────
+      # ─── Resolve identifiers (before the build) ─────────────────────────────
+      # The branch + build id are needed at build time so Vite can namespace the
+      # asset URLs (`base`) per deployment.
       - name: Compute branch + build id
         id: ids
         run: |
@@ -67,26 +65,51 @@ jobs:
           echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
           echo "build_id=${{ github.sha }}" >> "$GITHUB_OUTPUT"
 
+      # ─── Build client + SSR bundles ─────────────────────────────────────────
+      # ASSET_BASE_URL is the CDN root; DEPLOY_BRANCH/DEPLOY_BUILD_ID namespace
+      # the hashed chunks under branches/<branch>/<buildId>/assets/, so each
+      # deployment references its own copy.
+      - name: Build
+        env:
+          DEPLOY_BRANCH: ${{ steps.ids.outputs.branch }}
+          DEPLOY_BUILD_ID: ${{ steps.ids.outputs.build_id }}
+        run: pnpm build
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # ─── Sync shared, content-hashed assets ─────────────────────────────────
-      # --size-only + content-hash filenames → unchanged/identical chunks are
-      # skipped (idempotent, cross-branch dedup). Long immutable cache.
+      # ─── Sync this deployment's content-hashed assets ───────────────────────
+      # Each branch+version gets its own copy under branches/<branch>/<buildId>/
+      # assets/. Filenames are content-hashed and the prefix is unique per build,
+      # so a long immutable cache is safe. No --size-only: there is no
+      # cross-branch dedup anymore; the prefix is written once per build.
       - name: Sync hashed assets
+        env:
+          BRANCH: ${{ steps.ids.outputs.branch }}
+          BUILD_ID: ${{ steps.ids.outputs.build_id }}
         run: |
-          aws s3 sync standalone/dist/client/assets "s3://$S3_BUCKET/assets" \
-            --size-only \
+          aws s3 sync standalone/dist/client/assets \
+            "s3://$S3_BUCKET/branches/$BRANCH/$BUILD_ID/assets" \
             --cache-control "public, max-age=31536000, immutable"
 
-      # Non-hashed public files (favicon, etc.) — short cache, not immutable.
-      - name: Sync public files
+      # PWA shell files (sw.js, registerSW.js, manifest.webmanifest, workbox-*)
+      # are emitted only by the root (main) build and live at the bucket root so
+      # the service worker keeps a stable, root-scoped URL across deploys. The SW
+      # + its registration script must revalidate so update checks work; the
+      # remaining public files get a short cache.
+      - name: Sync PWA shell + public files (main only)
+        if: ${{ steps.ids.outputs.branch == 'main' }}
         run: |
+          aws s3 cp standalone/dist/client/sw.js "s3://$S3_BUCKET/sw.js" \
+            --cache-control "no-cache" || true
+          aws s3 cp standalone/dist/client/registerSW.js "s3://$S3_BUCKET/registerSW.js" \
+            --cache-control "no-cache" || true
           aws s3 sync standalone/dist/client "s3://$S3_BUCKET" \
             --exclude "assets/*" --exclude "index.html" --exclude ".vite/*" \
+            --exclude "sw.js" --exclude "registerSW.js" \
             --cache-control "public, max-age=300"
 
       # ─── Upload this build's server bundle + manifest ───────────────────────

@@ -19,9 +19,13 @@
  *    (untrusted) SSR bundle is never downloaded or imported. Such a branch is
  *    either rendered through the trusted `DEFAULT_SSR_BRANCH`'s bundle (when
  *    set) over its own pre-rendered HTML, or served that HTML as-is. Hashed
- *    assets are never served from disk here: a request for an asset path (e.g.
- *    `*.js`, `*.css`) is reverse-proxied to the absolute asset host (CDN/S3),
- *    streaming the upstream response straight back to the client.
+ *    assets are never served from disk here. Each deployment's hashed chunks are
+ *    namespaced per branch/build and referenced at the absolute asset host, so
+ *    the client loads them straight from the CDN — they do not transit this
+ *    server. The proxy below still backstops same-origin asset requests (e.g.
+ *    the root-scoped PWA shell — `sw.js`, `registerSW.js`, the web manifest):
+ *    such a request is reverse-proxied to the asset host (CDN/S3), streaming the
+ *    upstream response straight back to the client.
  *
  *  - non-production: an Express + Vite dev server with HMR. The SSR entry is
  *    loaded fresh from source on every request via `vite.ssrLoadModule`, so no
@@ -366,9 +370,11 @@ async function handle(
     return;
   }
 
-  // Reverse-proxy hashed-asset requests to the asset host. Assets are never
-  // served from disk here; without an asset host configured there is nowhere to
-  // forward them, so let them fall through to the app router (and 404).
+  // Reverse-proxy same-origin asset requests to the asset host. Versioned
+  // hashed chunks load directly from the CDN and never reach here; this path
+  // backstops root-scoped same-origin files like the PWA shell (sw.js,
+  // registerSW.js, the web manifest). Without an asset host configured there is
+  // nowhere to forward them, so let them fall through to the app router (and 404).
   if (ASSET_HOST && ASSET_PATH_RE.test(parsedUrl.pathname)) {
     await proxyAsset(req, res, `${parsedUrl.pathname}${parsedUrl.search}`);
     return;
