@@ -12,12 +12,14 @@
  *      - GET /healthz                     → liveness probe
  *      - POST /__invalidate?branch=       → drop the cached pointer for a branch
  *    Per request it resolves the branch's live build. Only branches in the
- *    `ALLOWED_SSR_BRANCHES` whitelist are server-side rendered: for those, the
- *    SSR bundle is lazily loaded and cached, and its render() is called to
- *    produce HTML. Any other branch still works, but its (untrusted) SSR bundle
- *    is never downloaded or imported and no build code runs — the pre-rendered
- *    HTML is fetched and returned as-is. Hashed assets are never served here —
- *    the rendered HTML references them at the absolute asset host (CDN/S3).
+ *    `ALLOWED_SSR_BRANCHES` whitelist are server-side rendered by their own
+ *    bundle: for those, the SSR bundle is lazily loaded and cached, and its
+ *    render() is called to produce HTML. Any other branch still works, but its
+ *    (untrusted) SSR bundle is never downloaded or imported. Such a branch is
+ *    either rendered through the trusted `DEFAULT_SSR_BRANCH`'s bundle (when
+ *    set) over its own pre-rendered HTML, or served that HTML as-is. Hashed
+ *    assets are never served here — the rendered HTML references them at the
+ *    absolute asset host (CDN/S3).
  *
  *  - non-production: an Express + Vite dev server with HMR. The SSR entry is
  *    loaded fresh from source on every request via `vite.ssrLoadModule`, so no
@@ -42,9 +44,10 @@ const POINTER_TTL_MS = Number(process.env.POINTER_TTL_MS ?? 10_000);
 const MODULE_CACHE_MAX = Number(process.env.MODULE_CACHE_MAX ?? 20);
 
 /**
- * Comma-separated whitelist of branches that are server-side rendered. Branches
- * outside this set are served their pre-rendered HTML as-is, without importing
- * or executing their SSR bundle.
+ * Comma-separated whitelist of branches that are server-side rendered by their
+ * own SSR bundle. A branch outside this set never has its (untrusted) bundle
+ * downloaded or imported; it is instead either rendered via `DEFAULT_SSR_BRANCH`
+ * (if set) or served its pre-rendered HTML as-is.
  */
 const ALLOWED_SSR_BRANCHES = new Set(
   (process.env.ALLOWED_SSR_BRANCHES ?? ROOT_BRANCH)
@@ -52,6 +55,14 @@ const ALLOWED_SSR_BRANCHES = new Set(
     .map((b) => b.trim())
     .filter(Boolean)
 );
+
+/**
+ * Optional trusted branch whose SSR bundle renders any non-whitelisted branch.
+ * When set, a non-whitelisted branch's pre-rendered HTML is rendered through
+ * this branch's render() — the requested branch's own bundle is still never
+ * imported. When empty, non-whitelisted branches are served their HTML as-is.
+ */
+const DEFAULT_SSR_BRANCH = (process.env.DEFAULT_SSR_BRANCH ?? "").trim();
 
 interface ClientConfig {
   renderedAsMobile: boolean;
@@ -193,6 +204,38 @@ function resolveRoute(rawUrl: string): Route {
   };
 }
 
+/** Runs an SSR render() over the given pre-rendered HTML and writes the result. */
+async function renderAndRespond(
+  req: IncomingMessage,
+  res: ServerResponse,
+  render: RenderFn,
+  route: Route,
+  preRenderedHtml: string
+): Promise<void> {
+  const { renderedAsMobile, acceptedLanguages } = clientConfigFromHeaders(
+    req.headers
+  );
+
+  const html = await render({
+    path: route.appUrl,
+    config: {
+      basePath: route.basePath,
+      assetHost: ASSET_HOST,
+      renderedAsMobile,
+      acceptedLanguages,
+    },
+    html: preRenderedHtml,
+  });
+
+  res.writeHead(200, {
+    "content-type": "text/html; charset=utf-8",
+    // The HTML is per-build and cheap to regenerate; let the CDN cache it
+    // briefly but always revalidate so a pointer flip is picked up fast.
+    "cache-control": "public, max-age=0, must-revalidate",
+  });
+  res.end(html);
+}
+
 async function handle(
   req: IncomingMessage,
   res: ServerResponse
@@ -237,46 +280,44 @@ async function handle(
       return;
     }
 
-    // Branches outside the SSR whitelist are served their pre-rendered HTML
-    // verbatim. Their SSR bundle is never downloaded or imported, so no build
-    // code from those branches ever executes in this process.
-    if (!ALLOWED_SSR_BRANCHES.has(route.branch)) {
-      const html = await loadHtml(route.branch, pointer.buildId);
-      res.writeHead(200, {
-        "content-type": "text/html; charset=utf-8",
-        "cache-control": "public, max-age=0, must-revalidate",
-      });
-      res.end(html);
+    // Whitelisted branches are rendered by their own SSR bundle.
+    if (ALLOWED_SSR_BRANCHES.has(route.branch)) {
+      const { render, html: preRenderedHtml } = await loadBuild(
+        route.branch,
+        pointer.buildId
+      );
+      await renderAndRespond(req, res, render, route, preRenderedHtml);
       return;
     }
 
-    const { render, html: preRenderedHtml } = await loadBuild(
-      route.branch,
-      pointer.buildId
-    );
+    // Non-whitelisted branch: its own SSR bundle is never downloaded or
+    // imported. Fetch only its pre-rendered HTML.
+    const preRenderedHtml = await loadHtml(route.branch, pointer.buildId);
 
-    const { renderedAsMobile, acceptedLanguages } = clientConfigFromHeaders(
-      req.headers
-    );
+    // If a trusted default branch is configured, render this branch's HTML
+    // through that branch's SSR bundle. Only the default branch's build code
+    // runs — never the requested branch's.
+    if (DEFAULT_SSR_BRANCH) {
+      const defaultPointer = await resolvePointer(DEFAULT_SSR_BRANCH);
+      if (defaultPointer) {
+        const { render } = await loadBuild(
+          DEFAULT_SSR_BRANCH,
+          defaultPointer.buildId
+        );
+        await renderAndRespond(req, res, render, route, preRenderedHtml);
+        return;
+      }
+      console.warn(
+        `DEFAULT_SSR_BRANCH "${DEFAULT_SSR_BRANCH}" has no deployment; serving ${route.branch} HTML as-is.`
+      );
+    }
 
-    const html = await render({
-      path: route.appUrl,
-      config: {
-        basePath: route.basePath,
-        assetHost: ASSET_HOST,
-        renderedAsMobile,
-        acceptedLanguages,
-      },
-      html: preRenderedHtml,
-    });
-
+    // No SSR for this branch — serve the pre-rendered HTML verbatim.
     res.writeHead(200, {
       "content-type": "text/html; charset=utf-8",
-      // The HTML is per-build and cheap to regenerate; let the CDN cache it
-      // briefly but always revalidate so a pointer flip is picked up fast.
       "cache-control": "public, max-age=0, must-revalidate",
     });
-    res.end(html);
+    res.end(preRenderedHtml);
   } catch (err) {
     console.error(`Render failed for ${route.branch} (${url}):`, err);
     res.writeHead(500, { "content-type": "text/html" });
@@ -292,7 +333,7 @@ function startProdServer(): void {
     void handle(req, res);
   }).listen(PORT, () => {
     console.log(
-      `Seed Bible host server listening on :${PORT} (root branch: ${ROOT_BRANCH}, store: ${process.env.STORE_BACKEND ?? "local"}, SSR branches: ${[...ALLOWED_SSR_BRANCHES].join(", ") || "(none)"})`
+      `Seed Bible host server listening on :${PORT} (root branch: ${ROOT_BRANCH}, store: ${process.env.STORE_BACKEND ?? "local"}, SSR branches: ${[...ALLOWED_SSR_BRANCHES].join(", ") || "(none)"}, default SSR branch: ${DEFAULT_SSR_BRANCH || "(none)"})`
     );
   });
 }
