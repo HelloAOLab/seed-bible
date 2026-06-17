@@ -24,6 +24,83 @@ export default defineConfig(({ isSsrBuild }) => ({
     preact(),
     VitePWA({
       registerType: "autoUpdate",
+      manifest: {
+        id: "seed-bible",
+        name: "Seed Bible",
+        short_name: "Seed Bible",
+        start_url: "/",
+        display: "standalone",
+        background_color: "#FFFFFF",
+        theme_color: "#FFFFFF",
+        icons: [
+          {
+            src: "https://favicon.ao.bot/pwa/pwa-192x192.png",
+            type: "image/png",
+            sizes: "192x192",
+            purpose: "any",
+          },
+          {
+            src: "https://favicon.ao.bot/pwa/pwa-512x512.png",
+            type: "image/png",
+            sizes: "512x512",
+            purpose: "any",
+          },
+          {
+            src: "https://favicon.ao.bot/pwa/pwa-maskable-192x192.png",
+            type: "image/png",
+            sizes: "192x192",
+            purpose: "maskable",
+          },
+          {
+            src: "https://favicon.ao.bot/pwa/pwa-maskable-512x512.png",
+            type: "image/png",
+            sizes: "512x512",
+            purpose: "maskable",
+          },
+        ],
+        screenshots: [
+          {
+            src: "https://favicon.ao.bot/pwa/screenshots/laptop/laptop-home.png",
+            sizes: "1020x775",
+            form_factor: "wide",
+            label: "Home screen of the Seed Bible showing Genesis 1",
+          },
+          {
+            src: "https://favicon.ao.bot/pwa/screenshots/mobile/mobile-home.png",
+            sizes: "369x766",
+            form_factor: "narrow",
+            label: "Home screen of the Seed Bible showing Proverbs 3",
+          },
+          {
+            src: "https://favicon.ao.bot/pwa/screenshots/laptop/laptop-translations.png",
+            sizes: "1020x775",
+            form_factor: "wide",
+            label:
+              "Translation selection screen showing several English Bible translations",
+          },
+          {
+            src: "https://favicon.ao.bot/pwa/screenshots/mobile/mobile-translations.png",
+            sizes: "372x776",
+            form_factor: "narrow",
+            label:
+              "Translation selection screen showing several English Bible translations",
+          },
+          {
+            src: "https://favicon.ao.bot/pwa/screenshots/laptop/laptop-verse-search.png",
+            sizes: "1021x773",
+            form_factor: "wide",
+            label:
+              "Search results for 'for God so loved' showing a result for John 3:16",
+          },
+          {
+            src: "https://favicon.ao.bot/pwa/screenshots/mobile/mobile-search.png",
+            sizes: "373x776",
+            form_factor: "narrow",
+            label:
+              "Search results for 'for God so loved' showing a result for John 3:16",
+          },
+        ],
+      },
     }),
     analyzer({
       analyzerMode: "static",
