@@ -7,8 +7,8 @@
  *    every branch deployment from pre-built SSR bundles resolved via the
  *    artifact store:
  *      - GET /                            → the root branch (production `main`)
- *      - GET /?pattern=<name>             → that branch's deployment
- *      - GET /?pattern=<name>&patternVersion=<buildId>  → pinned build
+ *      - GET /b/<name>                    → that branch's deployment
+ *      - GET /b/<name>/<buildId>          → pinned build
  *      - GET /healthz                     → liveness probe
  *      - POST /__invalidate?branch=       → drop the cached pointer for a branch
  *    Per request it resolves the branch's live build. Only branches in the
@@ -179,28 +179,45 @@ interface Route {
   branch: string;
   /** Path prefix this deployment is mounted under (no trailing slash). */
   basePath: string;
-  /** Path + query passed to the app (starts with "/", excludes pattern params). */
+  /** Full request path + query passed to the app (includes the deployment prefix). */
   appUrl: string;
   /** If present, skip pointer lookup and load this build directly. */
   patternVersion?: string;
 }
 
+/**
+ * Maps a request URL to a branch deployment. Branch deployments are mounted
+ * under a `/b/<branch>` path prefix, optionally pinned to a build via
+ * `/b/<branch>/<buildId>`; everything else resolves to the root branch.
+ */
 function resolveRoute(rawUrl: string): Route {
   const parsed = new URL(rawUrl, "http://localhost");
-  const pattern = parsed.searchParams.get("pattern");
-  const patternVersion = parsed.searchParams.get("patternVersion") ?? undefined;
+  const appUrl = `${parsed.pathname}${parsed.search}`;
+  const segments = parsed.pathname.split("/").filter(Boolean);
 
-  const appParams = new URLSearchParams(parsed.searchParams);
-  appParams.delete("pattern");
-  appParams.delete("patternVersion");
-  const qs = appParams.size > 0 ? `?${appParams}` : "";
-  const appUrl = `${parsed.pathname}${qs}`;
+  if (segments[0] === "b" && segments.length >= 2) {
+    const branchSeg = segments[1]!;
+    const versionSeg = segments[2];
+    const patternVersion = versionSeg
+      ? decodeURIComponent(versionSeg)
+      : undefined;
+    const basePath = versionSeg
+      ? `/b/${branchSeg}/${versionSeg}`
+      : `/b/${branchSeg}`;
+
+    return {
+      branch: decodeURIComponent(branchSeg),
+      basePath,
+      appUrl,
+      patternVersion,
+    };
+  }
 
   return {
-    branch: pattern ?? ROOT_BRANCH,
+    branch: ROOT_BRANCH,
     basePath: "",
     appUrl,
-    patternVersion,
+    patternVersion: undefined,
   };
 }
 
