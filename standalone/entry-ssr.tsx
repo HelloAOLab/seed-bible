@@ -74,6 +74,7 @@ export async function render(options: RenderOptions): Promise<string> {
         content="#000000"
         media="(prefers-color-scheme: dark)"
       />
+      <meta name="description" content={state.app.description.value} />
       <title>{state.app.title.value}</title>
     </>
   );

@@ -134,6 +134,9 @@ export interface AppState {
 
   /** The title of the page. */
   title: ReadonlySignal<string>;
+
+  /** The description of the page. */
+  description: ReadonlySignal<string>;
 }
 
 /**
@@ -401,17 +404,35 @@ export function createSeedBibleState(
       return `${chapter.book.name} ${chapter.chapter.number} - ${chapter.translation.name} | ${seedBibleTitle}`;
     };
 
-    console.log(
-      "Computed page title:",
-      getTitle(),
-      "(RTL:",
-      isRtl,
-      "language:",
-      i18n.language.value,
-      ")"
-    );
-
     return `${isRtl ? RTLE_CHAR : ""}${getTitle()}`;
+  });
+
+  const description = computed(() => {
+    void i18n.language.value;
+    const { t } = i18n;
+
+    const getDescription = () => {
+      if (!selectedTab.value) {
+        return t("seed-bible", {
+          defaultValue: "Seed Bible",
+        });
+      }
+
+      const chapter = selectedTab.value.readingState.chapterData.value;
+      if (!chapter) {
+        return t("seed-bible", {
+          defaultValue: "Seed Bible",
+        });
+      }
+
+      return t("seed-bible-description", {
+        bookName: chapter.book.name,
+        chapterNumber: chapter.chapter.number,
+        defaultValue: "Read {{bookName}} {{chapterNumber}} in the Seed Bible",
+      });
+    };
+
+    return getDescription();
   });
 
   effect(() => {
@@ -766,6 +787,7 @@ export function createSeedBibleState(
       openInDetachedPane: handleOpenInDetachedPane,
       selectPane: handleSelectPane,
       title,
+      description,
     },
   };
 
