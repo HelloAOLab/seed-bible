@@ -22,7 +22,6 @@ permissions:
 
 jobs:
   deploy:
-    if: false
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -78,14 +77,14 @@ jobs:
       # skipped (idempotent, cross-branch dedup). Long immutable cache.
       - name: Sync hashed assets
         run: |
-          aws s3 sync dist/client/assets "s3://$S3_BUCKET/assets" \
+          aws s3 sync standalone/dist/client/assets "s3://$S3_BUCKET/assets" \
             --size-only \
             --cache-control "public, max-age=31536000, immutable"
 
       # Non-hashed public files (favicon, etc.) — short cache, not immutable.
       - name: Sync public files
         run: |
-          aws s3 sync dist/client "s3://$S3_BUCKET" \
+          aws s3 sync standalone/dist/client "s3://$S3_BUCKET" \
             --exclude "assets/*" --exclude "index.html" --exclude ".vite/*" \
             --cache-control "public, max-age=300"
 
@@ -96,11 +95,11 @@ jobs:
           BUILD_ID: ${{ steps.ids.outputs.build_id }}
         run: |
           DEST="s3://$S3_BUCKET/branches/$BRANCH/$BUILD_ID"
-          aws s3 cp dist/server/entry-ssr.js "$DEST/server.mjs" \
+          aws s3 cp standalone/dist/server/entry-ssr.js "$DEST/server.mjs" \
             --cache-control "private, no-cache"
-          aws s3 cp dist/client/.vite/manifest.json "$DEST/client-manifest.json" \
+          aws s3 cp standalone/dist/client/.vite/manifest.json "$DEST/client-manifest.json" \
             --cache-control "private, no-cache"
-          aws s3 cp dist/client/index.html "$DEST/index.html" \
+          aws s3 cp standalone/dist/client/index.html "$DEST/index.html" \
             --cache-control "private, no-cache"
 
       # ─── Atomically flip the live pointer (LAST write) ──────────────────────
@@ -116,19 +115,20 @@ jobs:
             --cache-control "no-cache"
 
       # ─── Tell the host to drop its cached pointer immediately ───────────────
-      # - name: Invalidate host pointer cache
-      #   if: ${{ vars.HOST_INVALIDATE_URL != '' }}
-      #   run: |
-      #     curl -fsS -X POST \
-      #       "${{ vars.HOST_INVALIDATE_URL }}?branch=${{ steps.ids.outputs.branch }}" \
-      #       || echo "invalidate ping failed (non-fatal)"
+      - name: Invalidate host pointer cache
+        if: ${{ vars.HOST_INVALIDATE_URL != '' }}
+        run: |
+          curl -fsS -X POST \
+            "${{ vars.HOST_INVALIDATE_URL }}?branch=${{ steps.ids.outputs.branch }}" \
+            || echo "invalidate ping failed (non-fatal)"
 
       - name: Summary
         env:
           BRANCH: ${{ steps.ids.outputs.branch }}
+          BUILD_ID: ${{ steps.ids.outputs.build_id }}
         run: |
           if [ "$BRANCH" = "main" ]; then
             echo "Deployed **main** to the site root." >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "Deployed branch **$BRANCH** → \`/d/branch-$BRANCH\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "Deployed branch **$BRANCH** → \`/branches/$BRANCH/$BUILD_ID\`" >> "$GITHUB_STEP_SUMMARY"
           fi
