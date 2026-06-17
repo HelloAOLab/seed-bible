@@ -9,6 +9,7 @@
  *      - GET /                            → the root branch (production `main`)
  *      - GET /b/<name>                    → that branch's deployment
  *      - GET /b/<name>/<buildId>          → pinned build
+ *      - GET /?pattern=<name>...          → 302 to ao.bot (legacy deep links)
  *      - GET /healthz                     → liveness probe
  *      - POST /__invalidate?branch=       → drop the cached pointer for a branch
  *    Per request it resolves the branch's live build. Only branches in the
@@ -262,6 +263,15 @@ async function handle(
   if (url === "/healthz") {
     res.writeHead(200, { "content-type": "text/plain" });
     res.end("ok");
+    return;
+  }
+
+  // Legacy CasualOS deep links used a `?pattern=` query param. Redirect those
+  // to the ao.bot host, preserving the full query string.
+  const parsedUrl = new URL(url, "http://localhost");
+  if (parsedUrl.searchParams.has("pattern")) {
+    res.writeHead(302, { location: `https://ao.bot/${parsedUrl.search}` });
+    res.end();
     return;
   }
 
