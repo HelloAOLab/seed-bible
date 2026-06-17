@@ -122,7 +122,10 @@ jobs:
           curl -fsS -X POST \
             "${{ vars.HOST_INVALIDATE_URL }}?branch=${{ steps.ids.outputs.branch }}" \
             || echo "invalidate ping failed (non-fatal)"
-
+      - uses: actions/upload-artifact@v7
+        with:
+          name: "client-stats.html"
+          path: "./standalone/dist/client/stats.html"
       - name: Summary
         env:
           BRANCH: ${{ steps.ids.outputs.branch }}
@@ -131,5 +134,5 @@ jobs:
           if [ "$BRANCH" = "main" ]; then
             echo "Deployed **main** to the site root." >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "Deployed branch **$BRANCH** → \`/branches/$BRANCH/$BUILD_ID\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "Deployed branch **$BRANCH** → \`https://ssr.seedbible.org?pattern=$BRANCH&patternVersino=$BUILD_ID\`" >> "$GITHUB_STEP_SUMMARY"
           fi

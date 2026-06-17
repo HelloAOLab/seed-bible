@@ -39,3 +39,7 @@ jobs:
       - name: Build
         run: |
           pnpm build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: "client-stats.html"
+          path: "./standalone/dist/client/stats.html"
