@@ -7,8 +7,8 @@
  *    every branch deployment from pre-built SSR bundles resolved via the
  *    artifact store:
  *      - GET /                            → the root branch (production `main`)
- *      - GET /b/<name>                    → that branch's deployment
- *      - GET /b/<name>/<buildId>          → pinned build
+ *      - GET /b/<name>                    → 302 to /b/<name>/<latest buildId>
+ *      - GET /b/<name>/<buildId>          → that branch's pinned build
  *      - GET /?pattern=<name>...          → 302 to ao.bot (legacy deep links)
  *      - GET /healthz                     → liveness probe
  *      - POST /__invalidate?branch=       → drop the cached pointer for a branch
@@ -385,6 +385,17 @@ async function handle(
       res.end(
         `<!doctype html><meta charset=utf-8><h1>404</h1><p>No deployment for branch <code>${route.branch}</code>.</p>`
       );
+      return;
+    }
+
+    // A `/b/<branch>` request (no pinned version) redirects to the resolved
+    // latest build so the client lands on a stable, version-pinned URL. The
+    // root branch keeps its bare path and is never redirected.
+    if (!route.patternVersion && route.basePath) {
+      res.writeHead(302, {
+        location: `${route.basePath}/${pointer.buildId}${parsedUrl.search}`,
+      });
+      res.end();
       return;
     }
 
