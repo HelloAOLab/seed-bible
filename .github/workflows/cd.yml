@@ -28,7 +28,7 @@ jobs:
         node-version: [24.x]
     env:
       ASSET_BASE_URL: ${{ vars.ASSET_BASE_URL }} # e.g. https://assets.seedbible.com/
-      S3_BUCKET: ${{ vars.DEPLOY_BUCKET }}
+      S3_BUCKET: ${{ secrets.DEPLOY_BUCKET }}
       AWS_REGION: ${{ vars.AWS_REGION }}
     steps:
       - uses: actions/checkout@v4
