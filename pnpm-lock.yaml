@@ -183,8 +183,8 @@ importers:
         specifier: ^6.0.2
         version: 6.0.2(vite@8.0.13(@types/node@24.10.9)(esbuild@0.25.12)(jiti@2.6.1)(tsx@4.21.0))
       axios:
-        specifier: ^1.12.2
-        version: 1.13.2
+        specifier: 1.13.5
+        version: 1.13.5
       babel-jest:
         specifier: ^30.1.2
         version: 30.2.0(@babel/core@7.28.6)
@@ -278,6 +278,9 @@ importers:
       vite:
         specifier: ^8.0.13
         version: 8.0.13(@types/node@24.10.9)(esbuild@0.25.12)(jiti@2.6.1)(tsx@4.21.0)
+      vite-bundle-analyzer:
+        specifier: ^1.3.8
+        version: 1.3.8
       vite-plugin-commonjs:
         specifier: ^0.10.4
         version: 0.10.4
@@ -311,6 +314,9 @@ importers:
       '@casual-simulation/websocket':
         specifier: 4.0.0
         version: 4.0.0
+      axios:
+        specifier: 1.13.5
+        version: 1.13.5
       i18next:
         specifier: 26.2.0
         version: 26.2.0(typescript@6.0.3)
@@ -326,15 +332,12 @@ importers:
       react-dom:
         specifier: npm:@preact/compat@^18.3.2
         version: '@preact/compat@18.3.2(preact@10.28.4)'
-      react-i18next:
-        specifier: 17.0.6
-        version: 17.0.6(@preact/compat@18.3.2(preact@10.28.4))(@preact/compat@18.3.2(preact@10.28.4))(i18next@26.2.0(typescript@6.0.3))(typescript@6.0.3)
       typesense:
         specifier: ^3.0.5
         version: 3.0.5(@babel/runtime@7.29.2)
       zod:
-        specifier: ^4.1.13
-        version: 4.3.6
+        specifier: 4.1.12
+        version: 4.1.12
 
   packages/seed-bible-refresh-example-extension:
     dependencies:
@@ -3231,9 +3234,6 @@ packages:
     resolution: {integrity: sha512-wvUjBtSGN7+7SjNpq/9M2Tg350UZD3q62IFZLbRAR1bSMlCo1ZaeW+BJ+D090e4hIIZLBcTDWe4Mh4jvUDajzQ==}
     engines: {node: '>= 0.4'}
 
-  axios@1.13.2:
-    resolution: {integrity: sha512-VPk9ebNqPcy5lRGuSlKx752IlDatOjT9paPlm8A7yOuW2Fbvp4X3JznJtT4f0GzGLLiWE9W8onz51SqLYwzGaA==}
-
   axios@1.13.5:
     resolution: {integrity: sha512-cz4ur7Vb0xS4/KUN0tPWe44eqxrIu31me+fbang3ijiNscE129POzipJJA6zniq2C/Z6sJCjMimjS8Lc/GAs8Q==}
 
@@ -6110,6 +6110,10 @@ packages:
   vary@1.1.2:
     resolution: {integrity: sha512-BNGbWLfd0eUPabhkXUVm0j8uuvREyTh5ovRa/dyow/BqAbZJyC+5fU+IzQOzmAKzYqYRAISoRhdQr3eIZ/PXqg==}
     engines: {node: '>= 0.8'}
+
+  vite-bundle-analyzer@1.3.8:
+    resolution: {integrity: sha512-IIk7WPhoYs7pyo75jwI+dFt7yykgjK7NY+dqnJtiZnyqP2k6NgPb3TY80FLFjtgnfk/o+OjI18+anKyeviCbRA==}
+    hasBin: true
 
   vite-plugin-commonjs@0.10.4:
     resolution: {integrity: sha512-eWQuvQKCcx0QYB5e5xfxBNjQKyrjEWZIR9UOkOV6JAgxVhtbZvCOF+FNC2ZijBJ3U3Px04ZMMyyMyFBVWIJ5+g==}
@@ -9665,14 +9669,6 @@ snapshots:
     dependencies:
       possible-typed-array-names: 1.1.0
 
-  axios@1.13.2:
-    dependencies:
-      follow-redirects: 1.15.11(patch_hash=6c86d1ca9b95ef9c8aca9f39dd13a02652b3d033c6067e152f056e89a3f67a66)
-      form-data: 4.0.5
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
-
   axios@1.13.5:
     dependencies:
       follow-redirects: 1.15.11(patch_hash=6c86d1ca9b95ef9c8aca9f39dd13a02652b3d033c6067e152f056e89a3f67a66)
@@ -12359,17 +12355,6 @@ snapshots:
       react-dom: '@preact/compat@18.3.2(preact@10.28.4)'
       typescript: 6.0.3
 
-  react-i18next@17.0.6(@preact/compat@18.3.2(preact@10.28.4))(@preact/compat@18.3.2(preact@10.28.4))(i18next@26.2.0(typescript@6.0.3))(typescript@6.0.3):
-    dependencies:
-      '@babel/runtime': 7.29.2
-      html-parse-stringify: 3.0.1
-      i18next: 26.2.0(typescript@6.0.3)
-      react: '@preact/compat@18.3.2(preact@10.28.4)'
-      use-sync-external-store: 1.6.0(@preact/compat@18.3.2(preact@10.28.4))
-    optionalDependencies:
-      react-dom: '@preact/compat@18.3.2(preact@10.28.4)'
-      typescript: 6.0.3
-
   react-is@17.0.2: {}
 
   react-is@18.3.1: {}
@@ -13033,6 +13018,8 @@ snapshots:
       convert-source-map: 2.0.0
 
   vary@1.1.2: {}
+
+  vite-bundle-analyzer@1.3.8: {}
 
   vite-plugin-commonjs@0.10.4:
     dependencies:

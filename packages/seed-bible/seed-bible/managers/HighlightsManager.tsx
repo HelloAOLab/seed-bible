@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod/v4";
 import type { LoginManager } from "../managers/LoginManager";
 import { signal, type Signal } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";

@@ -2,6 +2,7 @@
 import { defineConfig } from "vite";
 import preact from "@preact/preset-vite";
 import path from "path";
+import { analyzer } from "vite-bundle-analyzer";
 
 // Asset URLs are decoupled from the deployment path: every branch references
 // its hashed chunks at one stable, absolute CDN host, so the branch path
@@ -18,7 +19,13 @@ export default defineConfig(({ isSsrBuild }) => ({
   publicDir: false,
   base: assetBaseUrl,
 
-  plugins: [preact()],
+  plugins: [
+    preact(),
+    analyzer({
+      analyzerMode: "static",
+      openAnalyzer: false,
+    }),
+  ],
 
   // Bundle all dependencies into the SSR output instead of leaving them as
   // external Node imports. Several deps in the graph are CJS with named-export

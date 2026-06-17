@@ -5,7 +5,7 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
-import { z } from "zod";
+import * as z from "zod/v4";
 import type { LoginManager } from "../managers/LoginManager";
 import type { ReaderTab } from "../managers/TabsManager";
 import type { CasualOSManager } from "./OsManager";

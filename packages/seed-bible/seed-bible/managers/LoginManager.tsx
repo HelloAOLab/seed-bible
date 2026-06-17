@@ -1,5 +1,5 @@
 import { effect, signal, type Signal } from "@preact/signals";
-import { z } from "zod";
+import * as z from "zod/v4";
 import type { CasualOSManager, UserInfo } from "./OsManager";
 
 export interface LoginManager {

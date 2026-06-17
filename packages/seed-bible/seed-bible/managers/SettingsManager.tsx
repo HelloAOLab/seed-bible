@@ -4,7 +4,7 @@ import {
   getProfileConfigValue,
   saveProfileConfigValue,
 } from "../managers/ProfileConfigSync";
-import { z } from "zod";
+import * as z from "zod/v4";
 import type { CasualOSManager } from "./OsManager";
 import type { NavigationManager } from "./NavigationManager";
 

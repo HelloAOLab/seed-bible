@@ -1,5 +1,5 @@
 import * as Typesense from "typesense";
-import { z } from "zod";
+import * as z from "zod/v4";
 
 const TYPESENSE_NODE_URL = new URL("https://search.ao.bot");
 const TYPESENSE_API_KEY = "5A496vKeCWhVxntITkcrZ6i7Fehh9lCB";
