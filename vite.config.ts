@@ -3,6 +3,7 @@ import { defineConfig } from "vite";
 import preact from "@preact/preset-vite";
 import path from "path";
 import { analyzer } from "vite-bundle-analyzer";
+import { VitePWA } from "vite-plugin-pwa";
 
 // Asset URLs are decoupled from the deployment path: every branch references
 // its hashed chunks at one stable, absolute CDN host, so the branch path
@@ -21,6 +22,9 @@ export default defineConfig(({ isSsrBuild }) => ({
 
   plugins: [
     preact(),
+    VitePWA({
+      registerType: "autoUpdate",
+    }),
     analyzer({
       analyzerMode: "static",
       openAnalyzer: false,
