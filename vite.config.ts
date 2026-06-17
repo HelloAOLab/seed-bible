@@ -27,6 +27,7 @@ export default defineConfig(({ isSsrBuild }) => ({
   // when external. Bundling lets Vite handle interop/resolution; any module
   // that touches browser globals at import time is then fixed via SSR guards.
   ssr: {
+    noExternal: isSsrBuild ? true : [],
     // noExternal: [
     //   // /^hash\.js$/,
     //   /^@casual-simulation\/aux-common(\/.*)?$/,
