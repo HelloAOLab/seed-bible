@@ -11,10 +11,13 @@
  *      - GET /?pattern=<name>&patternVersion=<buildId>  → pinned build
  *      - GET /healthz                     → liveness probe
  *      - POST /__invalidate?branch=       → drop the cached pointer for a branch
- *    Per request it resolves the branch's live build, lazily loads and caches
- *    that build's SSR bundle, and calls its render() to produce HTML. Hashed
- *    assets are never served here — the rendered HTML references them at the
- *    absolute asset host (CDN/S3).
+ *    Per request it resolves the branch's live build. Only branches in the
+ *    `ALLOWED_SSR_BRANCHES` whitelist are server-side rendered: for those, the
+ *    SSR bundle is lazily loaded and cached, and its render() is called to
+ *    produce HTML. Any other branch still works, but its (untrusted) SSR bundle
+ *    is never downloaded or imported and no build code runs — the pre-rendered
+ *    HTML is fetched and returned as-is. Hashed assets are never served here —
+ *    the rendered HTML references them at the absolute asset host (CDN/S3).
  *
  *  - non-production: an Express + Vite dev server with HMR. The SSR entry is
  *    loaded fresh from source on every request via `vite.ssrLoadModule`, so no
@@ -37,6 +40,18 @@ const ROOT_BRANCH = process.env.ROOT_BRANCH ?? "main";
 const ASSET_HOST = process.env.ASSET_HOST ?? "";
 const POINTER_TTL_MS = Number(process.env.POINTER_TTL_MS ?? 10_000);
 const MODULE_CACHE_MAX = Number(process.env.MODULE_CACHE_MAX ?? 20);
+
+/**
+ * Comma-separated whitelist of branches that are server-side rendered. Branches
+ * outside this set are served their pre-rendered HTML as-is, without importing
+ * or executing their SSR bundle.
+ */
+const ALLOWED_SSR_BRANCHES = new Set(
+  (process.env.ALLOWED_SSR_BRANCHES ?? ROOT_BRANCH)
+    .split(",")
+    .map((b) => b.trim())
+    .filter(Boolean)
+);
 
 interface ClientConfig {
   renderedAsMobile: boolean;
@@ -124,6 +139,30 @@ async function loadBuild(
   return entry;
 }
 
+// ─── HTML cache (buildId → pre-rendered html), LRU ───────────────────────────
+// Used for non-SSR branches: their pre-rendered HTML is served as-is, so the
+// SSR bundle is never fetched or imported.
+const htmlCache = new Map<string, string>(); // insertion-ordered → LRU
+
+async function loadHtml(branch: string, buildId: string): Promise<string> {
+  const key = `${branch}@${buildId}`;
+  const existing = htmlCache.get(key);
+  if (existing !== undefined) {
+    // Refresh LRU recency.
+    htmlCache.delete(key);
+    htmlCache.set(key, existing);
+    return existing;
+  }
+
+  const html = await store.fetchHtml(branch, buildId);
+  htmlCache.set(key, html);
+  while (htmlCache.size > MODULE_CACHE_MAX) {
+    const oldest = htmlCache.keys().next().value as string;
+    htmlCache.delete(oldest);
+  }
+  return html;
+}
+
 // ─── Routing ─────────────────────────────────────────────────────────────────
 interface Route {
   branch: string;
@@ -173,6 +212,9 @@ async function handle(
       for (const key of [...moduleCache.keys()]) {
         if (key.startsWith(`${branch}@`)) moduleCache.delete(key);
       }
+      for (const key of [...htmlCache.keys()]) {
+        if (key.startsWith(`${branch}@`)) htmlCache.delete(key);
+      }
     } else {
       pointerCache.clear();
     }
@@ -192,6 +234,19 @@ async function handle(
       res.end(
         `<!doctype html><meta charset=utf-8><h1>404</h1><p>No deployment for branch <code>${route.branch}</code>.</p>`
       );
+      return;
+    }
+
+    // Branches outside the SSR whitelist are served their pre-rendered HTML
+    // verbatim. Their SSR bundle is never downloaded or imported, so no build
+    // code from those branches ever executes in this process.
+    if (!ALLOWED_SSR_BRANCHES.has(route.branch)) {
+      const html = await loadHtml(route.branch, pointer.buildId);
+      res.writeHead(200, {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "public, max-age=0, must-revalidate",
+      });
+      res.end(html);
       return;
     }
 
@@ -237,7 +292,7 @@ function startProdServer(): void {
     void handle(req, res);
   }).listen(PORT, () => {
     console.log(
-      `Seed Bible host server listening on :${PORT} (root branch: ${ROOT_BRANCH}, store: ${process.env.STORE_BACKEND ?? "local"})`
+      `Seed Bible host server listening on :${PORT} (root branch: ${ROOT_BRANCH}, store: ${process.env.STORE_BACKEND ?? "local"}, SSR branches: ${[...ALLOWED_SSR_BRANCHES].join(", ") || "(none)"})`
     );
   });
 }

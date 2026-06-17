@@ -34,6 +34,12 @@ export interface ArtifactStore {
   readPointer(branch: string): Promise<BranchPointer | null>;
   /** Materializes a build's SSR bundle (to a local file) + manifest. */
   fetchArtifacts(branch: string, buildId: string): Promise<BranchArtifacts>;
+  /**
+   * Fetches only the pre-rendered HTML for a build, without touching the SSR
+   * bundle. Used for branches that are not SSR-enabled, so their (untrusted)
+   * server bundle is never downloaded, staged, or imported.
+   */
+  fetchHtml(branch: string, buildId: string): Promise<string>;
 }
 
 const tmpRoot = path.join(os.tmpdir(), "seedbible-bundles");
@@ -62,11 +68,14 @@ class DevStore implements ArtifactStore {
     };
   }
 
-  async fetchArtifacts(): Promise<BranchArtifacts> {
+  async fetchHtml(): Promise<string> {
     const clientBase = path.join(this.dir, "client");
-    const serverBase = path.join(this.dir, "server");
+    return readFile(path.join(clientBase, "index.html"), "utf8");
+  }
 
-    const html = await readFile(path.join(clientBase, "index.html"), "utf8");
+  async fetchArtifacts(): Promise<BranchArtifacts> {
+    const serverBase = path.join(this.dir, "server");
+    const html = await this.fetchHtml();
     // Local bundles are already on disk; import them in place.
     return {
       serverModulePath: path.join(serverBase, "entry-ssr.js"),
@@ -89,12 +98,17 @@ class LocalStore implements ArtifactStore {
     return JSON.parse(await readFile(p, "utf8")) as BranchPointer;
   }
 
+  async fetchHtml(branch: string, buildId: string): Promise<string> {
+    const base = path.join(this.dir, "branches", branch, buildId);
+    return readFile(path.join(base, "index.html"), "utf8");
+  }
+
   async fetchArtifacts(
     branch: string,
     buildId: string
   ): Promise<BranchArtifacts> {
     const base = path.join(this.dir, "branches", branch, buildId);
-    const html = await readFile(path.join(base, "index.html"), "utf8");
+    const html = await this.fetchHtml(branch, buildId);
     // Local bundles are already on disk; import them in place.
     return {
       serverModulePath: path.join(base, "server.mjs"),
@@ -140,6 +154,16 @@ class S3Store implements ArtifactStore {
   async readPointer(branch: string): Promise<BranchPointer | null> {
     const buf = await this.getObject(`branches/${branch}/current.json`);
     return buf ? (JSON.parse(buf.toString("utf8")) as BranchPointer) : null;
+  }
+
+  async fetchHtml(branch: string, buildId: string): Promise<string> {
+    const buf = await this.getObject(
+      `branches/${branch}/${buildId}/index.html`
+    );
+    if (!buf) {
+      throw new Error(`Missing HTML for ${branch}@${buildId}`);
+    }
+    return buf.toString("utf8");
   }
 
   async fetchArtifacts(
