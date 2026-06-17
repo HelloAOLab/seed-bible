@@ -19,8 +19,9 @@
  *    (untrusted) SSR bundle is never downloaded or imported. Such a branch is
  *    either rendered through the trusted `DEFAULT_SSR_BRANCH`'s bundle (when
  *    set) over its own pre-rendered HTML, or served that HTML as-is. Hashed
- *    assets are never served here — the rendered HTML references them at the
- *    absolute asset host (CDN/S3).
+ *    assets are never served from disk here: a request for an asset path (e.g.
+ *    `*.js`, `*.css`) is reverse-proxied to the absolute asset host (CDN/S3),
+ *    streaming the upstream response straight back to the client.
  *
  *  - non-production: an Express + Vite dev server with HMR. The SSR entry is
  *    loaded fresh from source on every request via `vite.ssrLoadModule`, so no
@@ -33,6 +34,8 @@ import {
   type ServerResponse,
 } from "node:http";
 import { pathToFileURL } from "node:url";
+import { Readable } from "node:stream";
+import type { ReadableStream as NodeReadableStream } from "node:stream/web";
 import { createStore, type ArtifactStore, type BranchPointer } from "./store";
 import Bowser from "bowser";
 import { parseAcceptLanguages } from "./lang.js";
@@ -254,6 +257,76 @@ async function renderAndRespond(
   res.end(html);
 }
 
+/**
+ * Hashed-asset path extensions. A request whose path ends in one of these is
+ * reverse-proxied to the asset host rather than treated as an app route.
+ */
+const ASSET_PATH_RE =
+  /\.(js|mjs|cjs|css|map|json|wasm|woff2?|ttf|otf|eot|ico|png|jpe?g|gif|svg|webp|avif|txt|xml|webmanifest)$/i;
+
+/** Request headers worth forwarding upstream (conditional + content negotiation). */
+const FORWARDED_ASSET_HEADERS = [
+  "accept",
+  "accept-encoding",
+  "if-none-match",
+  "if-modified-since",
+  "range",
+  "user-agent",
+];
+
+/**
+ * Reverse-proxies an asset request to `ASSET_HOST`, streaming the upstream
+ * response back. Conditional/range headers are passed through so the origin can
+ * answer 304/206. Body-framing headers from upstream are dropped because the
+ * fetch client may have transparently decompressed the body — Node sets the
+ * correct framing for what we actually write.
+ */
+async function proxyAsset(
+  req: IncomingMessage,
+  res: ServerResponse,
+  pathAndQuery: string
+): Promise<void> {
+  const forwardHeaders: Record<string, string> = {};
+  for (const name of FORWARDED_ASSET_HEADERS) {
+    const value = req.headers[name];
+    if (typeof value === "string") forwardHeaders[name] = value;
+  }
+
+  let upstream: Response;
+  try {
+    upstream = await fetch(`${ASSET_HOST}${pathAndQuery}`, {
+      method: "GET",
+      headers: forwardHeaders,
+      redirect: "manual",
+    });
+  } catch (err) {
+    console.error(`Asset proxy failed for ${pathAndQuery}:`, err);
+    res.writeHead(502, { "content-type": "text/plain" });
+    res.end("Bad gateway");
+    return;
+  }
+
+  const headers: Record<string, string> = {};
+  upstream.headers.forEach((value, key) => {
+    switch (key.toLowerCase()) {
+      case "content-encoding":
+      case "content-length":
+      case "transfer-encoding":
+      case "connection":
+        return;
+      default:
+        headers[key] = value;
+    }
+  });
+
+  res.writeHead(upstream.status, headers);
+  if (upstream.body) {
+    Readable.fromWeb(upstream.body as NodeReadableStream<Uint8Array>).pipe(res);
+  } else {
+    res.end();
+  }
+}
+
 async function handle(
   req: IncomingMessage,
   res: ServerResponse
@@ -290,6 +363,14 @@ async function handle(
     }
     res.writeHead(204);
     res.end();
+    return;
+  }
+
+  // Reverse-proxy hashed-asset requests to the asset host. Assets are never
+  // served from disk here; without an asset host configured there is nowhere to
+  // forward them, so let them fall through to the app router (and 404).
+  if (ASSET_HOST && ASSET_PATH_RE.test(parsedUrl.pathname)) {
+    await proxyAsset(req, res, `${parsedUrl.pathname}${parsedUrl.search}`);
     return;
   }
 
