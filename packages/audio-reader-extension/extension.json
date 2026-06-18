@@ -1,0 +1,13 @@
+{
+  "id": "ext_audioReader",
+  "translations": {
+    "en": {
+      "title": "Audio Reader",
+      "description": "Adds a play button to the reader toolbar that streams the narrated audio for the current chapter.",
+      "toolbarTitle": "Listen",
+      "play": "Play chapter audio",
+      "pause": "Pause chapter audio",
+      "no-audio": "No audio is available for this chapter."
+    }
+  }
+}

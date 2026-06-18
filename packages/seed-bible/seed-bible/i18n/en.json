@@ -216,6 +216,8 @@
   "bookmarks": "Bookmarks",
   "hide-bookmarks": "Hide bookmarks",
   "show-bookmarks": "Show bookmarks",
+  "new-bookmark-folder": "New folder",
+  "chapter-navigation": "Chapter navigation",
   "add-new-tab": "Add new tab",
   "add-to-bookmark-category": "Add to bookmark category",
   "folder-name-taken": "A folder with that name already exists.",

@@ -609,40 +609,40 @@ const DARK_THEME: BibleTheme = {
   id: "dark",
   name: "Dark",
   variables: {
-    primaryColor: "#f0a67c",
-    primaryFontColor: "#333",
+    primaryColor: "#e6e6e6",
+    primaryFontColor: "#111111",
 
-    secondaryColor: "#5c463b",
-    secondaryFontColor: "#fff",
+    secondaryColor: "#262626",
+    secondaryFontColor: "#f5f5f5",
 
-    tertiaryColor: "#252a36",
+    tertiaryColor: "#1c1c1c",
 
-    background: "#121621",
+    background: "#0a0a0a",
 
-    sidebarBackground: "#161b27",
+    sidebarBackground: "#0f0f0f",
     sidebarFontFamily: "inherit",
-    sidebarFontColor: "#d7deef",
+    sidebarFontColor: "#e6e6e6",
 
-    readerBackground: "#1a2230",
+    readerBackground: "#121212",
     readerFontFamily: "inherit",
-    readerFontColor: "#d7deef",
+    readerFontColor: "#e6e6e6",
 
-    bookSelectorBackground: "#1d2534",
+    bookSelectorBackground: "#181818",
     bookSelectorFontFamily: "inherit",
-    bookSelectorFontColor: "#d7deef",
+    bookSelectorFontColor: "#e6e6e6",
 
     fontFamily: "Satoshi, system-ui, sans-serif",
-    fontColor: "#d7deef",
+    fontColor: "#e6e6e6",
 
     bookTitleFontFamily: "Newsreader, serif",
-    bookTitleFontColor: "#e7edf9",
+    bookTitleFontColor: "#fafafa",
 
     chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
-    chapterHeadingFontColor: "#d7deef",
+    chapterHeadingFontColor: "#e6e6e6",
     chapterHeadingFontStyle: "italic",
 
     verseFontFamily: "Newsreader, serif",
-    verseFontColor: "#d7deef",
+    verseFontColor: "#e6e6e6",
     verseCursor: "pointer",
 
     selectedVerseBorderBottom: "2px dashed currentColor",
@@ -650,32 +650,32 @@ const DARK_THEME: BibleTheme = {
     selectedVerseTextDecorationColor: "currentColor",
 
     hebrewSubtitleFontFamily: "Newsreader, serif",
-    hebrewSubtitleFontColor: "#d7deef",
+    hebrewSubtitleFontColor: "#e6e6e6",
     hebrewSubtitleFontStyle: "italic",
 
     readerToolbarBottom: "18px",
     readerToolbarGap: "10px",
     readerToolbarPadding: "8px 20px",
     readerToolbarBorderRadius: "22px",
-    readerToolbarBackground: "#1a2230",
-    readerToolbarBorder: "1px solid rgba(255, 255, 255, 0.08)",
-    readerToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.4)",
+    readerToolbarBackground: "#181818",
+    readerToolbarBorder: "1px solid rgba(255, 255, 255, 0.1)",
+    readerToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.5)",
     readerToolbarZIndex: "99",
     readerToolbarHeight: "50px",
     readerToolbarFloatingButtonTop: "-68px",
     readerToolbarFloatingButtonWidth: "48px",
     readerToolbarFloatingButtonHeight: "48px",
-    readerToolbarFloatingButtonBorder: "1px solid rgba(255, 255, 255, 0.08)",
+    readerToolbarFloatingButtonBorder: "1px solid rgba(255, 255, 255, 0.1)",
     readerToolbarFloatingButtonBorderRadius: "999px",
-    readerToolbarFloatingButtonBackground: "#1a2230",
-    readerToolbarFloatingButtonFontColor: "#d7deef",
-    readerToolbarFloatingButtonBoxShadow: "0 10px 24px rgba(0, 0, 0, 0.4)",
+    readerToolbarFloatingButtonBackground: "#181818",
+    readerToolbarFloatingButtonFontColor: "#e6e6e6",
+    readerToolbarFloatingButtonBoxShadow: "0 10px 24px rgba(0, 0, 0, 0.5)",
 
     verseToolbarGap: "10px",
     verseToolbarPadding: "8px 16px",
     verseToolbarBorderRadius: "10px",
-    verseToolbarBorder: "1px solid rgba(255, 255, 255, 0.08)",
-    verseToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.4)",
+    verseToolbarBorder: "1px solid rgba(255, 255, 255, 0.1)",
+    verseToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.5)",
     verseToolbarZIndex: "100",
     verseToolbarMinHeight: "50px",
 
@@ -691,16 +691,16 @@ const DARK_THEME: BibleTheme = {
     verseToolbarToolsGap: "10px",
     verseToolbarMobileBottom: "18px",
 
-    menuBackground: "#1d2534",
-    menuFontColor: "#d7deef",
+    menuBackground: "#181818",
+    menuFontColor: "#e6e6e6",
 
     toolbarIconInvert: "1",
 
-    readerToolbarFontColor: "#d7deef",
+    readerToolbarFontColor: "#e6e6e6",
     readerToolbarFontFamily: "Satoshi, system-ui, sans-serif",
 
     dividerColor: "rgba(255, 255, 255, 0.1)",
-    shadowColor: "rgba(0, 0, 0, 0.45)",
+    shadowColor: "rgba(0, 0, 0, 0.6)",
 
     tabBorder: "1px solid transparent",
     tabBackground: "inherit",
@@ -714,32 +714,32 @@ const DARK_THEME: BibleTheme = {
     yellow: {
       color: "#fff59d",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#f0a67c",
+      wordsOfJesusFontColor: "#5c5c5c",
     },
     green: {
       color: "#a5d6a7",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#f0a67c",
+      wordsOfJesusFontColor: "#5c5c5c",
     },
     blue: {
       color: "#90caf9",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#f0a67c",
+      wordsOfJesusFontColor: "#5c5c5c",
     },
     pink: {
       color: "#f48fb1",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#f0a67c",
+      wordsOfJesusFontColor: "#5c5c5c",
     },
     purple: {
       color: "#ce93d8",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#f0a67c",
+      wordsOfJesusFontColor: "#5c5c5c",
     },
     orange: {
       color: "#ffcc80",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#f0a67c",
+      wordsOfJesusFontColor: "#5c5c5c",
     },
   },
 };
