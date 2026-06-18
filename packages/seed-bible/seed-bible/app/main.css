@@ -251,6 +251,12 @@ h6 {
   font-size: 0.8em;
 }
 
+*,
+:after,
+:before {
+  box-sizing: border-box;
+}
+
 .sb-bible-reader {
   width: calc(100% - (var(--sb-scripture-margin) * 2));
   min-width: 275px;
