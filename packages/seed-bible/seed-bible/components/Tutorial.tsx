@@ -188,10 +188,14 @@ export function Tutorial({
         )}
 
         <h3 className="sb-tour-popover-title">
-          {t(step.titleKey, { defaultValue: step.titleDefault })}
+          {step.titleKey
+            ? t(step.titleKey, { defaultValue: step.titleDefault })
+            : step.titleDefault}
         </h3>
         <p className="sb-tour-popover-body">
-          {t(step.bodyKey, { defaultValue: step.bodyDefault })}
+          {step.bodyKey
+            ? t(step.bodyKey, { defaultValue: step.bodyDefault })
+            : step.bodyDefault}
         </p>
 
         <div className="sb-tour-popover-actions">

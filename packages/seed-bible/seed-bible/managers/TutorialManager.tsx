@@ -1,3 +1,5 @@
+// Adding a tour for your own feature? See ./TUTORIALS.md for the dev guide
+// (registerTour / startContextual / startTour + the tourStep() helper).
 import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
 import type { LoginManager } from "seed-bible.managers.LoginManager";
 import type { OnboardingManager } from "seed-bible.managers.OnboardingManager";
@@ -24,11 +26,11 @@ export interface TutorialStep {
   id: string;
   /** CSS selector for the element to spotlight. */
   target: string;
-  /** i18n key + fallback for the step title. */
-  titleKey: string;
+  /** i18n key for the title; omit to use `titleDefault` verbatim (no translation). */
+  titleKey?: string;
   titleDefault: string;
-  /** i18n key + fallback for the step body. */
-  bodyKey: string;
+  /** i18n key for the body; omit to use `bodyDefault` verbatim (no translation). */
+  bodyKey?: string;
   bodyDefault: string;
   /** Preferred popover placement; the component flips it if there's no room. */
   placement?: TutorialPlacement;
@@ -48,6 +50,44 @@ export interface TutorialStep {
    * instead of behind it. Used by contextual tips that fire while a panel is up.
    */
   elevated?: boolean;
+}
+
+/**
+ * Concise authoring helper for custom tours: pass plain `title`/`body` strings
+ * and it fills in the i18n keys (namespaced as `tour.<id>.title|body`, so
+ * translations can be added later without touching call sites).
+ *
+ * ```ts
+ * tutorial.registerTour("highlights", [
+ *   tourStep({ id: "hl-1", target: ".hl-button", title: "Highlights", body: "Tap to mark a verse." }),
+ *   tourStep({ id: "hl-2", target: ".hl-list", title: "Your highlights", body: "They collect here." }),
+ * ]);
+ * ```
+ */
+export function tourStep(config: {
+  id: string;
+  target: string;
+  title: string;
+  body: string;
+  placement?: TutorialPlacement;
+  group?: "selector";
+  elevated?: boolean;
+  onEnter?: () => void;
+  onLeave?: () => void;
+}): TutorialStep {
+  return {
+    id: config.id,
+    target: config.target,
+    titleKey: `tour.${config.id}.title`,
+    titleDefault: config.title,
+    bodyKey: `tour.${config.id}.body`,
+    bodyDefault: config.body,
+    placement: config.placement,
+    group: config.group,
+    elevated: config.elevated,
+    onEnter: config.onEnter,
+    onLeave: config.onLeave,
+  };
 }
 
 /**
@@ -289,11 +329,7 @@ export interface TutorialManager {
   index: ReadonlySignal<number>;
   /** The active step, or null when not running. */
   currentStep: ReadonlySignal<TutorialStep | null>;
-  /**
-   * Whether the active step is the last in the linear queue (so its primary
-   * button reads "Done"). Click-only interjections always report `true` — their
-   * primary button just dismisses the tip back to the tour.
-   */
+  /** Whether the active step is the last one (so its primary button reads "Done"). */
   isLast: ReadonlySignal<boolean>;
   /** Whether the tour can step backwards from the active step. */
   canGoBack: ReadonlySignal<boolean>;
@@ -308,8 +344,38 @@ export interface TutorialManager {
   /**
    * Starts a contextual single-feature tour, if not already seen and the user
    * hasn't opted out. Safe to call from event handlers without pre-checking.
+   * Works for built-in features and any tour added via {@link registerTour}.
    */
   startContextual: (featureId: string) => void;
+  /**
+   * Registers a custom tour so other features/extensions can add their own
+   * guided tips without editing this file. After registering, trigger it the
+   * same way built-in tips work:
+   *
+   * ```ts
+   * tutorial.registerTour("my-feature", [
+   *   tourStep({ id: "my-feature", target: ".my-button", title: "...", body: "..." }),
+   * ]);
+   * // ...later, from the feature's own click handler:
+   * tutorial.startContextual("my-feature"); // auto-shows once
+   * // ...or, for a manual "show me" button (ignores the once flag):
+   * tutorial.startTour("my-feature");
+   * ```
+   *
+   * `once` (default true) means it auto-shows at most once per user via
+   * {@link startContextual}. Re-registering the same id replaces it.
+   */
+  registerTour: (
+    id: string,
+    steps: TutorialStep[],
+    options?: { once?: boolean }
+  ) => void;
+  /**
+   * Immediately starts a registered (or built-in contextual) tour by id,
+   * ignoring the "already seen" flag — for replay/"show me again" buttons.
+   * No-op if a tour is already running or the id is unknown.
+   */
+  startTour: (id: string) => void;
   /** Advances to the next step, finishing after the last one. */
   next: () => void;
   /** Goes back one step (no-op on the first). */
@@ -351,6 +417,16 @@ export function createTutorialManager(
     "selector-testament",
     "selector-search",
   ]);
+
+  // Custom tours registered at runtime by other features/extensions, keyed by
+  // id. Looked up alongside the built-in CONTEXTUAL_TUTORIALS.
+  const customTours = new Map<
+    string,
+    { steps: TutorialStep[]; once: boolean }
+  >();
+  // Whether the active contextual tour should be marked "seen" on finish (custom
+  // tours can opt out of once-only behavior so they can replay).
+  let activeOnce = true;
 
   const seenLocally = signal<boolean>(readFlag(TUTORIAL_SEEN_KEY));
   const optedOutLocally = signal<boolean>(readFlag(TUTORIAL_OPTED_OUT_KEY));
@@ -513,32 +589,64 @@ export function createTutorialManager(
     running.value = true;
   };
 
-  const startContextual = (featureId: string) => {
+  // Resolve a tour id to its steps + once flag, preferring runtime-registered
+  // tours over the built-in contextual ones.
+  const resolveTour = (
+    id: string
+  ): { steps: TutorialStep[]; once: boolean } | null => {
+    const custom = customTours.get(id);
+    if (custom) {
+      return custom;
+    }
+    const steps = CONTEXTUAL_TUTORIALS[id];
+    return steps && steps.length > 0 ? { steps, once: true } : null;
+  };
+
+  // Begin a contextual tour (shared by startContextual/startTour). `force`
+  // ignores the already-seen flag (used by manual replay).
+  const runContextual = (id: string, force: boolean) => {
     if (running.value) {
       return;
     }
-    if (optedOut.value) {
+    const tour = resolveTour(id);
+    if (!tour) {
       return;
     }
-    if (featuresSeen.value[featureId]) {
-      return;
-    }
-    const steps = CONTEXTUAL_TUTORIALS[featureId];
-    if (!steps || steps.length === 0) {
+    if (!force && tour.once && featuresSeen.value[id]) {
       return;
     }
     mode.value = "contextual";
-    activeFeatureId.value = featureId;
-    activeSteps.value = steps;
+    activeFeatureId.value = id;
+    activeOnce = tour.once;
+    activeSteps.value = tour.steps;
     index.value = 0;
     running.value = true;
+  };
+
+  const startContextual = (featureId: string) => {
+    // Opt-out suppresses auto-shown tips; an explicit startTour() bypasses this.
+    if (optedOut.value) {
+      return;
+    }
+    runContextual(featureId, false);
+  };
+
+  const startTour = (id: string) => runContextual(id, true);
+
+  const registerTour = (
+    id: string,
+    steps: TutorialStep[],
+    options?: { once?: boolean }
+  ) => {
+    customTours.set(id, { steps, once: options?.once ?? true });
   };
 
   const finish = () => {
     running.value = false;
     if (mode.value === "contextual") {
       const featureId = activeFeatureId.value;
-      if (featureId) {
+      // Only record once-only tours as seen, so replayable tours can run again.
+      if (featureId && activeOnce) {
         markFeatureSeen(featureId);
       }
       activeFeatureId.value = null;
@@ -612,6 +720,8 @@ export function createTutorialManager(
     featuresSeen,
     start,
     startContextual,
+    registerTour,
+    startTour,
     next,
     prev,
     finish,

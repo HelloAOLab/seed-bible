@@ -111,10 +111,14 @@ export function BibleSelector(props: BibleSelectorProps) {
           onClick={(event: MouseEvent) => event.stopPropagation()}
         >
           <h3 className="sb-tour-popover-title">
-            {t(tourStep.titleKey, { defaultValue: tourStep.titleDefault })}
+            {tourStep.titleKey
+              ? t(tourStep.titleKey, { defaultValue: tourStep.titleDefault })
+              : tourStep.titleDefault}
           </h3>
           <p className="sb-tour-popover-body">
-            {t(tourStep.bodyKey, { defaultValue: tourStep.bodyDefault })}
+            {tourStep.bodyKey
+              ? t(tourStep.bodyKey, { defaultValue: tourStep.bodyDefault })
+              : tourStep.bodyDefault}
           </p>
           <div className="sb-tour-popover-actions">
             <button

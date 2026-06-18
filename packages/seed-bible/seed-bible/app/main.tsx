@@ -13,6 +13,7 @@ import { closeContextMenus } from "seed-bible.components.ContextMenu";
 import { ModalHost } from "seed-bible.components.ModalHost";
 import { OnboardingModals } from "seed-bible.components.Onboarding";
 import { Tutorial } from "seed-bible.components.Tutorial";
+import { tourStep } from "seed-bible.managers.TutorialManager";
 
 const { useMemo } = os.appHooks;
 
@@ -96,6 +97,30 @@ function isWebKit() {
 const isWebKitBrowser = isWebKit();
 const webkitClass = isWebKitBrowser ? "is-webkit" : "";
 
+// ── DEV EXAMPLE: custom tour ────────────────────────────────────────────────
+// A working, end-to-end demonstration of the tour API (see managers/TUTORIALS.md).
+// It's registered the same way a feature/extension would register one, and is
+// inert until triggered. The launcher button only renders when dev tours are
+// enabled, so real users never see it. To enable, run in the devtools console:
+//   localStorage.setItem("sb-dev-tours", "1")   // then reload
+// or append `?devTour` to the URL.
+const DEMO_TOUR_ID = "dev-demo-tour";
+
+function devToursEnabled(): boolean {
+  try {
+    if (window.localStorage.getItem("sb-dev-tours") === "1") {
+      return true;
+    }
+  } catch {
+    // ignore
+  }
+  try {
+    return new URLSearchParams(window.location.search).has("devTour");
+  } catch {
+    return false;
+  }
+}
+
 function MainContent(props: {
   state: ReturnType<typeof createSeedBibleState>;
   fontSizeClass: string;
@@ -104,6 +129,41 @@ function MainContent(props: {
   const { isRtl } = useI18n();
   const appDirection = isRtl ? "rtl" : "ltr";
   const { theme, selector } = state;
+
+  // Register the dev demo tour once. Harmless in production — nothing shows it
+  // unless the (dev-gated) launcher below is clicked. `once: false` so it can be
+  // replayed freely while testing.
+  useEffect(() => {
+    state.tutorial.registerTour(
+      DEMO_TOUR_ID,
+      [
+        tourStep({
+          id: "demo-toolbar",
+          target: ".sb-reader-toolbar",
+          title: "Custom tour demo",
+          body: "This tour was added with registerTour(). Use Next / Back to move through it, or Skip to leave.",
+          placement: "top",
+        }),
+        tourStep({
+          id: "demo-settings",
+          // A selector list works — matches desktop or mobile, whichever exists.
+          target:
+            '[data-tutorial="settings"], .sb-bible-reader-mobile-header-settings',
+          title: "Steps point at real elements",
+          body: "Each step spotlights an element by CSS selector. If a target isn't on screen, the popover just centers.",
+          placement: "bottom",
+        }),
+        tourStep({
+          id: "demo-done",
+          target: ".sb-reader-toolbar",
+          title: "Trigger it from code",
+          body: 'Run state.tutorial.startTour("dev-demo-tour"), or wire startContextual() into your feature\'s own click handler.',
+          placement: "top",
+        }),
+      ],
+      { once: false }
+    );
+  }, []);
 
   return (
     <>
@@ -186,6 +246,35 @@ function MainContent(props: {
             />
           </>
         </CasualOSApp>
+
+        {/* Dev-only launcher for the demo tour above. Hidden for real users, so
+            its label is intentionally not translated. */}
+        {/* eslint-disable seed-bible-i18n/i18n-untranslated-content */}
+        {
+          <button
+            type="button"
+            onClick={() => state.tutorial.startTour(DEMO_TOUR_ID)}
+            title="Start the demo tour (dev only)"
+            style={{
+              position: "fixed",
+              insetInlineStart: "12px",
+              bottom: "12px",
+              zIndex: 1300,
+              padding: "8px 14px",
+              borderRadius: "999px",
+              border: "none",
+              background: "var(--sb-primary-color)",
+              color: "#fff",
+              fontFamily: "var(--sb-font-family)",
+              fontSize: "13px",
+              cursor: "pointer",
+              boxShadow: "0 4px 12px #0003",
+            }}
+          >
+            ▶ Demo tour
+          </button>
+        }
+        {/* eslint-enable seed-bible-i18n/i18n-untranslated-content */}
       </div>
     </>
   );
