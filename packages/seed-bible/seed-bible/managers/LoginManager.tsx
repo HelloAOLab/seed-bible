@@ -113,6 +113,20 @@ export function createLoginManager({
     if (storedSessionKey) {
       sessionKey.value = storedSessionKey;
       client.sessionKey = storedSessionKey;
+
+      const expireTime = parsedSessionKey.value!.expireTimeMs;
+      const timeUntilExpire = expireTime - Date.now();
+      // Refresh the session 1 week before it expires
+      const refreshTime = timeUntilExpire - 7 * 24 * 60 * 60 * 1000;
+
+      if (refreshTime > 0) {
+        setTimeout(() => {
+          refreshSession();
+        }, refreshTime);
+      } else {
+        console.log("[LoginManager] Session is expiring soon, refreshing now");
+        refreshSession();
+      }
     }
 
     if (storedConnectionKey) {
@@ -159,6 +173,28 @@ export function createLoginManager({
       marker: "publicRead",
     });
   };
+
+  async function refreshSession() {
+    if (!sessionKey.value) {
+      return;
+    }
+
+    console.log("[LoginManager] Refreshing session with existing session key");
+    const result = await client.replaceSession();
+
+    if (result.success) {
+      console.log("[LoginManager] Session refreshed successfully");
+      sessionKey.value = result.sessionKey;
+      connectionKey.value = result.connectionKey;
+      client.sessionKey = result.sessionKey;
+      await loadUserInfo();
+    } else {
+      console.warn(
+        "[LoginManager] Failed to refresh session, clearing session key:",
+        result.errorMessage
+      );
+    }
+  }
 
   async function cancelLogin() {
     if (loginPromise && rejectLoginPromise) {
