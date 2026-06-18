@@ -12,6 +12,7 @@ import { closeContextMenus } from "../components/ContextMenu";
 import { ModalHost } from "../components/ModalHost";
 import { LoginModal } from "../components/LoginModal";
 import { TermsOfServiceModal } from "../components/TermsOfServiceModal";
+import { PrivacyPolicyModal } from "../components/PrivacyPolicyModal";
 import { useMemo } from "preact/hooks";
 import {
   AppConfigProvider,
@@ -166,6 +167,11 @@ function MainContent(props: {
         <TermsOfServiceModal
           isOpen={state.isTermsOpen.value}
           onClose={() => state.closeTerms()}
+        />
+
+        <PrivacyPolicyModal
+          isOpen={state.isPrivacyOpen.value}
+          onClose={() => state.closePrivacy()}
         />
       </div>
     </>

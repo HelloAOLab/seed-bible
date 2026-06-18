@@ -204,6 +204,13 @@ export interface SeedBibleState {
   openTerms: () => void;
   /** Closes the Terms of Service modal (clears `terms` from the URL). */
   closeTerms: () => void;
+
+  /** True when the Privacy Policy modal is open. */
+  isPrivacyOpen: ReadonlySignal<boolean>;
+  /** Opens the Privacy Policy modal (reflected in the URL as `?privacy=open`). */
+  openPrivacy: () => void;
+  /** Closes the Privacy Policy modal (clears `privacy` from the URL). */
+  closePrivacy: () => void;
 }
 
 /**
@@ -277,6 +284,19 @@ export function createSeedBibleState(
   const closeTerms = () => {
     termsOpen.value = false;
   };
+  // Privacy Policy modal. Two-way bound to the `?privacy=open` query param so
+  // it can be deep-linked, mirroring the Terms of Service modal above.
+  const privacyOpen = signal(
+    navigation.currentUrl.value.searchParams.get("privacy") === "open"
+  );
+  const isPrivacyOpen = computed(() => privacyOpen.value);
+  const openPrivacy = () => {
+    privacyOpen.value = true;
+  };
+  const closePrivacy = () => {
+    privacyOpen.value = false;
+  };
+
   navigation.syncSignalsToUrl({
     terms: {
       get value() {
@@ -284,6 +304,14 @@ export function createSeedBibleState(
       },
       set value(newValue) {
         termsOpen.value = newValue === "open";
+      },
+    },
+    privacy: {
+      get value() {
+        return privacyOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        privacyOpen.value = newValue === "open";
       },
     },
   });
@@ -806,6 +834,9 @@ export function createSeedBibleState(
     isTermsOpen,
     openTerms,
     closeTerms,
+    isPrivacyOpen,
+    openPrivacy,
+    closePrivacy,
     app: {
       createSharedSession: handleCreateSharedSession,
       joinSharedSession: handleJoinSharedSession,
