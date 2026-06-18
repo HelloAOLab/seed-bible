@@ -158,6 +158,12 @@
     #ffffff 58%
   );
   --sb-reader-floating-nav-play-glyph: #1f1f1f;
+  --sb-reader-floating-nav-group-background: transparent;
+  --sb-reader-floating-nav-group-border: color-mix(
+    in srgb,
+    var(--sb-font-color) 30%,
+    transparent
+  );
 
   --sb-empty-pane-toolbar-button-border: 1px solid var(--sb-secondary-color);
   --sb-empty-pane-toolbar-button-background: var(--sb-secondary-color);
@@ -2065,7 +2071,7 @@ h6 {
     right: 0;
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 12px;
     padding: 12px 16px;
     background: var(--sb-reader-toolbar-background);
     color: var(--sb-font-color);
@@ -2078,10 +2084,7 @@ h6 {
    * CSS `fill` overrides, so we recolor it here to match the design without
    * losing the play/pause state swap the extension owns. */
   .sb-reader-floating-nav-play {
-    position: absolute;
-    inset-inline-start: 16px;
-    top: 50%;
-    transform: translateY(-50%);
+    flex: 0 0 auto;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2113,18 +2116,19 @@ h6 {
     fill: var(--sb-reader-floating-nav-play-glyph);
   }
 
+  /* Capsule that wraps the arrows + book label: a pill with a subtle border,
+   * the chevrons pushed to its edges and the label centered between them. */
   .sb-reader-floating-nav-group {
+    flex: 1 1 auto;
     display: flex;
     align-items: center;
-    gap: 16px;
-    min-width: 0;
-  }
-
-  /* When no play button is present, let the nav group span the full width,
-   * pushing the arrows to the edges with the label centered between them. */
-  .sb-reader-floating-nav-group-full {
-    width: 100%;
     justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+    padding: 6px 12px;
+    border: 1px solid var(--sb-reader-floating-nav-group-border);
+    border-radius: 999px;
+    background: var(--sb-reader-floating-nav-group-background);
   }
 
   .sb-reader-floating-nav-arrow {
@@ -2136,7 +2140,7 @@ h6 {
     height: 34px;
     padding: 0;
     border: none;
-    background: var(--sb-reader-floating-nav-arrow-background);
+    background: transparent;
     color: var(--sb-font-color);
     cursor: pointer;
     border-radius: 999px;
