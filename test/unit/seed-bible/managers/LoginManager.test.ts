@@ -11,13 +11,17 @@ vi.setConfig({ testTimeout: 5000 });
 
 // The RecordsClient is a Proxy that synthesizes a network call for every
 // accessed method, so we replace the whole module with controllable mocks.
-const { requestLoginMock, completeLoginMock, getUserInfoMock } = vi.hoisted(
-  () => ({
-    requestLoginMock: vi.fn(),
-    completeLoginMock: vi.fn(),
-    getUserInfoMock: vi.fn(),
-  })
-);
+const {
+  requestLoginMock,
+  completeLoginMock,
+  getUserInfoMock,
+  replaceSessionMock,
+} = vi.hoisted(() => ({
+  requestLoginMock: vi.fn(),
+  completeLoginMock: vi.fn(),
+  getUserInfoMock: vi.fn(),
+  replaceSessionMock: vi.fn(),
+}));
 
 vi.mock("@casual-simulation/aux-records/RecordsClient", () => ({
   createRecordsClient: vi.fn(() => ({
@@ -25,6 +29,7 @@ vi.mock("@casual-simulation/aux-records/RecordsClient", () => ({
     requestLogin: requestLoginMock,
     completeLogin: completeLoginMock,
     getUserInfo: getUserInfoMock,
+    replaceSession: replaceSessionMock,
   })),
 }));
 
@@ -39,6 +44,19 @@ const SESSION_KEY = formatV1SessionKey(
   "secret-1",
   Date.now() + 1000 * 60 * 60
 );
+
+// The new key returned by a successful session refresh (replaceSession).
+const REFRESHED_SESSION_KEY = formatV1SessionKey(
+  USER_ID,
+  "session-2",
+  "secret-2",
+  Date.now() + 1000 * 60 * 60
+);
+
+/** Builds a parseable session key that expires `ms` from now. */
+function sessionKeyExpiringIn(ms: number, sessionId = "session-1"): string {
+  return formatV1SessionKey(USER_ID, sessionId, "secret-1", Date.now() + ms);
+}
 
 /** Wait for a condition to become true, polling the microtask/macrotask queue. */
 async function waitFor(
@@ -71,6 +89,7 @@ describe("createLoginManager", () => {
     requestLoginMock.mockReset();
     completeLoginMock.mockReset();
     getUserInfoMock.mockReset();
+    replaceSessionMock.mockReset();
 
     requestLoginMock.mockResolvedValue({
       success: true,
@@ -91,6 +110,13 @@ describe("createLoginManager", () => {
     getUserInfoMock.mockResolvedValue({
       success: true,
       email: EMAIL,
+    });
+    replaceSessionMock.mockResolvedValue({
+      success: true,
+      sessionKey: REFRESHED_SESSION_KEY,
+      connectionKey: "connection-key-2",
+      expireTimeMs: Date.now() + 1000 * 60 * 60,
+      metadata: {},
     });
 
     os = CasualOSManager();
@@ -221,9 +247,10 @@ describe("createLoginManager", () => {
       const manager = createLoginManager({ os });
 
       // The user info is loaded in the background without opening the login UI.
+      // (SESSION_KEY expires soon, so it is also reloaded after the init refresh.)
       await waitFor(() => manager.userInfo.value !== null);
       expect(manager.isLoginOpen.value).toBe(false);
-      expect(getUserInfoMock).toHaveBeenCalledTimes(1);
+      expect(getUserInfoMock).toHaveBeenCalled();
       expect(manager.userInfo.value).toEqual({ id: USER_ID, email: EMAIL });
     });
 
@@ -236,6 +263,90 @@ describe("createLoginManager", () => {
       await waitFor(() => manager.profile.value?.name === "Alice");
 
       expect(getDataMock).toHaveBeenCalledWith(USER_ID, "profile");
+    });
+  });
+
+  describe("session refresh on init", () => {
+    it("refreshes the session immediately when it expires within a week", async () => {
+      // SESSION_KEY expires in ~1h, which is well within the 1-week window.
+      localStorage.setItem("sessionKey", SESSION_KEY);
+
+      createLoginManager({ os });
+
+      await waitFor(() => replaceSessionMock.mock.calls.length > 0);
+      expect(replaceSessionMock).toHaveBeenCalledTimes(1);
+    });
+
+    it("propagates the new keys and reloads user info on a successful refresh", async () => {
+      localStorage.setItem("sessionKey", SESSION_KEY);
+
+      const manager = createLoginManager({ os });
+
+      await waitFor(() => os.sessionKey.value === REFRESHED_SESSION_KEY);
+
+      expect(os.client.sessionKey).toBe(REFRESHED_SESSION_KEY);
+      expect(os.sessionKey.value).toBe(REFRESHED_SESSION_KEY);
+      expect(os.connectionKey.value).toBe("connection-key-2");
+
+      // User info is reloaded after the refresh.
+      await waitFor(() => manager.userInfo.value !== null);
+      expect(getUserInfoMock).toHaveBeenCalled();
+      expect(manager.userInfo.value).toEqual({ id: USER_ID, email: EMAIL });
+    });
+
+    it("logs a warning and keeps the old keys when the refresh fails", async () => {
+      replaceSessionMock.mockResolvedValue({
+        success: false,
+        errorCode: "unacceptable_session_key",
+        errorMessage: "nope",
+      });
+      localStorage.setItem("sessionKey", SESSION_KEY);
+
+      createLoginManager({ os });
+
+      await waitFor(() => replaceSessionMock.mock.calls.length > 0);
+      await flush();
+
+      // The existing keys are left untouched when the refresh fails.
+      expect(os.sessionKey.value).toBe(SESSION_KEY);
+      expect(os.client.sessionKey).toBe(SESSION_KEY);
+      expect(warnSpy).toHaveBeenCalledWith(
+        "[LoginManager] Failed to refresh session, clearing session key:",
+        "nope"
+      );
+    });
+
+    it("does not refresh when no session key is persisted", async () => {
+      createLoginManager({ os });
+
+      await flush();
+
+      expect(replaceSessionMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("session refresh scheduling", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("schedules the refresh for a week before expiry instead of firing immediately", async () => {
+      const ONE_WEEK = 7 * 24 * 60 * 60 * 1000;
+      // Expires in 14 days, so the refresh should be scheduled ~7 days out.
+      localStorage.setItem("sessionKey", sessionKeyExpiringIn(2 * ONE_WEEK));
+
+      createLoginManager({ os });
+
+      // Nothing should fire on init since the key is more than a week from expiry.
+      expect(replaceSessionMock).not.toHaveBeenCalled();
+
+      // Advancing to the scheduled time triggers the refresh.
+      await vi.advanceTimersByTimeAsync(ONE_WEEK);
+      expect(replaceSessionMock).toHaveBeenCalledTimes(1);
     });
   });
 
