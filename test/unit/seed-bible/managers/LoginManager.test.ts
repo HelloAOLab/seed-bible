@@ -350,6 +350,48 @@ describe("createLoginManager", () => {
     });
   });
 
+  describe("localStorage persistence", () => {
+    it("persists the session and connection keys after a successful login", async () => {
+      const manager = createLoginManager({ os });
+      const loginPromise = manager.login();
+
+      const request = await manager.requestLoginByEmail(EMAIL);
+      if (!request.success)
+        throw new Error("expected login request to succeed");
+      await manager.submitLoginCode("123456", request);
+      await loginPromise;
+
+      await waitFor(() => localStorage.getItem("sessionKey") === SESSION_KEY);
+      expect(localStorage.getItem("sessionKey")).toBe(SESSION_KEY);
+      expect(localStorage.getItem("connectionKey")).toBe("connection-key-1");
+    });
+
+    it("persists new keys to localStorage when the signals change", async () => {
+      createLoginManager({ os });
+
+      os.sessionKey.value = REFRESHED_SESSION_KEY;
+      os.connectionKey.value = "connection-key-2";
+
+      await waitFor(
+        () => localStorage.getItem("sessionKey") === REFRESHED_SESSION_KEY
+      );
+      expect(localStorage.getItem("sessionKey")).toBe(REFRESHED_SESSION_KEY);
+      expect(localStorage.getItem("connectionKey")).toBe("connection-key-2");
+    });
+
+    it("clears the persisted keys on logout", async () => {
+      const manager = createAuthenticatedManager();
+
+      await waitFor(() => manager.userId.value === USER_ID);
+
+      await manager.logout();
+
+      // await waitFor(() => localStorage.getItem("sessionKey") === "");
+      expect(localStorage.getItem("sessionKey")).toBe(null);
+      expect(localStorage.getItem("connectionKey")).toBe(null);
+    });
+  });
+
   describe("profile", () => {
     it("login() authenticates and loads the profile", async () => {
       getDataMock.mockResolvedValue({ success: true, data: { name: "Bob" } });

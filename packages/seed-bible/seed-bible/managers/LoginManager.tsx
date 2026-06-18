@@ -309,8 +309,17 @@ export function createLoginManager({
 
   effect(() => {
     if (typeof localStorage !== "undefined") {
-      localStorage.setItem("sessionKey", sessionKey.value ?? "");
-      localStorage.setItem("connectionKey", connectionKey.value ?? "");
+      if (!sessionKey.value) {
+        localStorage.removeItem("sessionKey");
+      } else {
+        localStorage.setItem("sessionKey", sessionKey.value);
+      }
+
+      if (!connectionKey.value) {
+        localStorage.removeItem("connectionKey");
+      } else {
+        localStorage.setItem("connectionKey", connectionKey.value);
+      }
     }
   });
 
