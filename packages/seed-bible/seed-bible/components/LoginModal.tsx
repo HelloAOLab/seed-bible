@@ -3,6 +3,7 @@ import { useRef } from "preact/hooks";
 import type { LoginRequestSuccess } from "@casual-simulation/aux-records";
 import { useI18n } from "../i18n/I18nManager";
 import SeedBibleTitleIcon from "../img/SeedBibleLogoWithTitleBlack.png";
+import { MaterialIcon } from "./icons";
 import type { NavigationManager } from "../managers/NavigationManager";
 import type { LoginManager } from "../managers/LoginManager";
 
@@ -200,14 +201,50 @@ export function LoginModal({
     requestRef.current = null;
   };
 
+  const resendCode = async () => {
+    if (isSubmitting.value) {
+      return;
+    }
+
+    const address = email.value.trim();
+    if (!address) {
+      step.value = "email";
+      return;
+    }
+
+    error.value = null;
+    isSubmitting.value = true;
+    try {
+      const result = await login.requestLoginByEmail(address);
+      if (result.success) {
+        requestRef.current = result;
+        code.value = "";
+        codeInputRef.current?.focus();
+      } else {
+        error.value =
+          result.errorMessage ||
+          t("login-error-generic", {
+            defaultValue: "Something went wrong. Please try again.",
+          });
+      }
+    } catch (err) {
+      console.error("Failed to resend login code.", err);
+      error.value = t("login-error-generic", {
+        defaultValue: "Something went wrong. Please try again.",
+      });
+    } finally {
+      isSubmitting.value = false;
+    }
+  };
+
   const onCode = step.value === "code";
-  const title = t("login-account-title", {
-    defaultValue: "Login to your account",
-  });
+  const title = onCode
+    ? t("login-code-title", { defaultValue: "Enter the login code" })
+    : t("login-account-title", { defaultValue: "Login to your account" });
   const subtitle = onCode
     ? t("login-code-description", {
         email: email.value.trim(),
-        defaultValue: `We sent a code to ${email.value.trim()}.`,
+        defaultValue: `We sent a login code to "${email.value.trim()}".`,
       })
     : t("login-account-subtitle", {
         defaultValue: "Enter the email address you want to login with",
@@ -242,32 +279,54 @@ export function LoginModal({
             />
             <h3 className="sb-login-title">{title}</h3>
             <p className="sb-login-subtitle">{subtitle}</p>
+            {onCode && (
+              <button
+                type="button"
+                className="sb-login-link sb-login-change-email"
+                onClick={backToEmail}
+                disabled={isSubmitting.value}
+              >
+                {t("login-change-email", {
+                  defaultValue: "Change email address",
+                })}
+              </button>
+            )}
           </div>
 
           {onCode ? (
             <form className="sb-login-form" onSubmit={submitCode}>
               <div className="sb-login-field">
-                <label className="sb-login-label" htmlFor="sb-login-code">
-                  {t("login-code-label", { defaultValue: "Login code" })}
-                </label>
-                <input
-                  ref={codeInputRef}
-                  id="sb-login-code"
-                  className="sb-settings-text-input sb-login-input"
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  value={code.value}
-                  disabled={isSubmitting.value}
-                  placeholder={t("login-code-placeholder", {
-                    defaultValue: "Enter code",
-                  })}
-                  onInput={(event: Event) => {
-                    code.value = (
-                      event.currentTarget as HTMLInputElement
-                    ).value;
-                  }}
-                />
+                <div className="sb-login-code-row">
+                  <input
+                    ref={codeInputRef}
+                    id="sb-login-code"
+                    className="sb-settings-text-input sb-login-input sb-login-code-input"
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    value={code.value}
+                    disabled={isSubmitting.value}
+                    placeholder={t("login-code-placeholder", {
+                      defaultValue: "Enter login code here",
+                    })}
+                    onInput={(event: Event) => {
+                      code.value = (
+                        event.currentTarget as HTMLInputElement
+                      ).value;
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="sb-login-resend"
+                    onClick={resendCode}
+                    disabled={isSubmitting.value}
+                  >
+                    <MaterialIcon className="sb-login-resend-icon">
+                      refresh
+                    </MaterialIcon>
+                    {t("login-resend-code", { defaultValue: "Resend code" })}
+                  </button>
+                </div>
               </div>
 
               {error.value && (
@@ -276,7 +335,15 @@ export function LoginModal({
                 </p>
               )}
 
-              <div className="sb-login-actions">
+              <div className="sb-login-actions sb-login-actions-row">
+                <button
+                  type="button"
+                  className="sb-login-secondary"
+                  onClick={cancel}
+                  disabled={isSubmitting.value}
+                >
+                  {t("cancel", { defaultValue: "Cancel" })}
+                </button>
                 <button
                   type="submit"
                   className="sb-login-submit"
@@ -284,17 +351,7 @@ export function LoginModal({
                 >
                   {isSubmitting.value
                     ? t("login-verifying", { defaultValue: "Verifying…" })
-                    : t("login-verify", { defaultValue: "Verify" })}
-                </button>
-                <button
-                  type="button"
-                  className="sb-login-secondary"
-                  onClick={backToEmail}
-                  disabled={isSubmitting.value}
-                >
-                  {t("login-use-different-email", {
-                    defaultValue: "Use a different email",
-                  })}
+                    : t("login-confirm-code", { defaultValue: "Confirm code" })}
                 </button>
               </div>
             </form>
@@ -367,25 +424,27 @@ export function LoginModal({
             </form>
           )}
 
-          <div className="sb-login-legal">
-            <a className="sb-login-link" href={privacyPolicyLink}>
-              {t("privacy-policy", { defaultValue: "Privacy policy" })}
-            </a>
-            <a
-              className="sb-login-link"
-              href={codeOfConductLink}
-              onClick={(event: MouseEvent) => event.stopPropagation()}
-            >
-              {t("code-of-conduct", { defaultValue: "Code of conduct" })}
-            </a>
-            <a
-              className="sb-login-link"
-              href={termsOfServiceLink}
-              onClick={(event: MouseEvent) => event.stopPropagation()}
-            >
-              {t("terms-of-service", { defaultValue: "Terms of service" })}
-            </a>
-          </div>
+          {!onCode && (
+            <div className="sb-login-legal">
+              <a className="sb-login-link" href={privacyPolicyLink}>
+                {t("privacy-policy", { defaultValue: "Privacy policy" })}
+              </a>
+              <a
+                className="sb-login-link"
+                href={codeOfConductLink}
+                onClick={(event: MouseEvent) => event.stopPropagation()}
+              >
+                {t("code-of-conduct", { defaultValue: "Code of conduct" })}
+              </a>
+              <a
+                className="sb-login-link"
+                href={termsOfServiceLink}
+                onClick={(event: MouseEvent) => event.stopPropagation()}
+              >
+                {t("terms-of-service", { defaultValue: "Terms of service" })}
+              </a>
+            </div>
+          )}
         </div>
       </div>
     </div>

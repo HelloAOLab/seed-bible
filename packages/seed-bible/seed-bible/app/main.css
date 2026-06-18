@@ -7545,3 +7545,80 @@ h6 {
   opacity: 0.6;
   cursor: default;
 }
+
+/* "Change email address" link rendered as a button in the code-step header. */
+.sb-login-change-email {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin-top: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.sb-login-change-email:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Code input with an inline "Resend code" button on the right. */
+.sb-login-code-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.sb-login-code-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-login-resend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  padding: 0 8px;
+  color: var(--sb-primary-color);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+
+.sb-login-resend:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.sb-login-resend:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.sb-login-resend-icon {
+  font-size: 18px;
+}
+
+/* Side-by-side Cancel / Confirm buttons on the code step. */
+.sb-login-actions-row {
+  flex-direction: row;
+}
+
+.sb-login-actions-row .sb-login-submit,
+.sb-login-actions-row .sb-login-secondary {
+  width: auto;
+  flex: 1;
+}
+
+.sb-login-actions-row .sb-login-secondary {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-login-actions-row .sb-login-secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
+}
