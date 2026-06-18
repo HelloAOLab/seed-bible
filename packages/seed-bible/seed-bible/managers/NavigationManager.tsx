@@ -68,6 +68,7 @@ export function createNavigationManager(
       return;
     }
 
+    console.log("Sync URL:", window.location.href);
     currentUrl.value = new URL(window.location.href);
   };
 
@@ -85,6 +86,7 @@ export function createNavigationManager(
       unused: string,
       url?: string | URL | null
     ) => {
+      console.trace("PushState URL:", data, url);
       originalPushState(data, unused, url);
       syncCurrentUrl();
     }) as History["pushState"];
@@ -97,6 +99,7 @@ export function createNavigationManager(
       unused: string,
       url?: string | URL | null
     ) => {
+      console.trace("ReplaceState URL:", data, url);
       originalReplaceState(data, unused, url);
       syncCurrentUrl();
     }) as History["replaceState"];
@@ -109,6 +112,11 @@ export function createNavigationManager(
           return;
         }
 
+        console.log(
+          "Navigate to:",
+          event.destination?.url ?? window.location.href,
+          event
+        );
         currentUrl.value = new URL(
           event.destination.url ?? window.location.href
         );
@@ -122,6 +130,7 @@ export function createNavigationManager(
       return;
     }
 
+    console.log("Push URL:", url);
     window.history.pushState(
       window.history.state,
       "",
@@ -134,6 +143,7 @@ export function createNavigationManager(
       return;
     }
 
+    console.log("Replace URL:", url);
     window.history.replaceState(
       window.history.state,
       "",
@@ -147,10 +157,12 @@ export function createNavigationManager(
     }
 
     if (typeof destination === "number") {
+      console.log("Go history by:", destination);
       window.history.go(destination);
       return;
     }
 
+    console.log("Go to destination:", destination);
     push(destination);
   };
 
@@ -168,6 +180,7 @@ export function createNavigationManager(
     } else {
       next.searchParams.set(key, value);
     }
+    console.log(`Updating URL query param: ${key} =`, value);
     push(next);
   };
 
@@ -182,6 +195,7 @@ export function createNavigationManager(
     });
 
     const cleanup2 = effect(() => {
+      console.log("[syncSignalsToUrl] URL changed:", currentUrl.value.href);
       const url = currentUrl.value;
 
       for (const [key, signal] of Object.entries(signals)) {

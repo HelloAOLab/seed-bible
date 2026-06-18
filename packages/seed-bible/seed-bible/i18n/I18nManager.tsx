@@ -212,8 +212,6 @@ export function useI18n(ns?: string) {
   const i18n = useContext(I18nContext);
   const { t } = i18n;
 
-  console.log("[useI18n] Current language:", i18n.language);
-
   const isRtl = isRightToLeftLanguage(i18n.language);
 
   const setLanguage = async (language: string) => {

@@ -246,7 +246,8 @@ export function createSeedBibleState(
     panes,
     settings,
     sidebar,
-    bookmarks
+    bookmarks,
+    navigation
   );
   const tools = createBibleToolsManager();
   const readingHistory = createReadingHistoryManager(os, login);

@@ -104,10 +104,12 @@ export function createSidebar(navigation: NavigationManager) {
   };
 
   const openSidebar = () => {
+    console.log("Opening sidebar");
     isMobileOpen.value = true;
   };
 
   const closeSidebar = () => {
+    console.log("Closing sidebar");
     isMobileOpen.value = false;
   };
 
@@ -115,9 +117,11 @@ export function createSidebar(navigation: NavigationManager) {
     settingsView: requestedSettingsView,
     sidebar: {
       get value() {
+        console.trace("isMobileOpen", isMobileOpen.value);
         return isMobileOpen.value ? "open" : null;
       },
       set value(newValue) {
+        console.trace("set isMobileOpen =", newValue);
         isMobileOpen.value = newValue === "open";
       },
     },

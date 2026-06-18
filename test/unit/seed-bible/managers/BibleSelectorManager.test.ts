@@ -38,6 +38,9 @@ beforeEach(() => {
 
 afterEach(() => {
   globalThis.fetch = originalFetch;
+  // Clear URL params written by syncSignalsToUrl (e.g. `?selector=open`) so they
+  // don't leak into the next test's selector instance.
+  window.history.replaceState(null, "", window.location.pathname);
 });
 
 function setWebResponses(responses: WebResponseMap): void {
@@ -96,7 +99,8 @@ function createSelectorState(
     panesManager,
     createSettingsManagerMock() as any,
     createSidebarManagerMock() as any,
-    createBookmarksManagerMock() as any
+    createBookmarksManagerMock() as any,
+    createNavigationManager()
   );
 }
 
@@ -214,6 +218,28 @@ describe("createBibleSelectorState", () => {
     expect(selector.isOpen.value).toBe(true);
     expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
     expect(selector.expandedBookId.value).toBe("GEN");
+  });
+
+  it("syncs the open state to the `selector` URL query param", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { dataManager, pane, tabsManager, panesManager } =
+      await createManagersWithSelectedPane();
+
+    const selector = createSelectorState(
+      dataManager,
+      tabsManager,
+      panesManager
+    );
+
+    await selector.setOpen(true, pane);
+    expect(new URLSearchParams(window.location.search).get("selector")).toBe(
+      "open"
+    );
+
+    await selector.setOpen(false);
+    expect(new URLSearchParams(window.location.search).get("selector")).toBe(
+      null
+    );
   });
 
   it("setOpen() opens the selector and expands the current book", async () => {

@@ -13,6 +13,7 @@ import type {
   SettingsManager,
 } from "../managers/SettingsManager";
 import { createSidebar } from "../managers/SidebarManager";
+import type { NavigationManager } from "../managers/NavigationManager";
 import { type BookmarksManager } from "../managers/BookmarksManager";
 import {
   computed,
@@ -221,7 +222,8 @@ function groupBooks(translationBooks: TranslationBooks | null, search: string) {
  * Behavior summary:
  * - Maintains selector open/close state and pane binding.
  * - Synchronizes selector translation/book context from active pane reading state.
- * - Supports browser history integration (`bibleSelectorOpen`) for back-button UX.
+ * - Mirrors open/close state to the `?selector=open` URL param via the
+ *   NavigationManager, giving back-button / shareable-URL support.
  * - Computes responsive Old/New Testament rows based on viewport width.
  * - Routes chapter selection into the bound pane/tab reading state.
  */
@@ -231,11 +233,11 @@ export function createBibleSelectorState(
   panesManager: PanesManager,
   settings: SettingsManager,
   sidebar: SidebarManager,
-  bookmarks: BookmarksManager
+  bookmarks: BookmarksManager,
+  navigation: NavigationManager
 ): BibleSelectorState {
   const isOpen = signal(false);
   const pane = signal<Pane | null>(null);
-  const isDrawerOpen = sidebar.isMobileOpen.value;
   const forceNewTab = signal(false);
   const showApocryphaInfo = signal(false);
   const availablePanes = computed(() => panesManager.panes.value);
@@ -267,8 +269,6 @@ export function createBibleSelectorState(
     () => selectedTranslationBooks.value?.translation ?? null
   );
   const expandedBookId = signal<string | null>(null);
-  let wasOpen = isOpen.value;
-  let isHandlingPopState = false;
 
   const syncStateFromPane = async () => {
     loading.value = true;
@@ -350,68 +350,43 @@ export function createBibleSelectorState(
     pane.value = nextPane;
   };
 
-  const getHistoryState = () => {
-    return history.state && typeof history.state === "object"
-      ? (history.state as Record<string, unknown>)
-      : {};
-  };
-
-  const isSelectorOpenInHistory = () => {
-    const state = getHistoryState();
-    return state.bibleSelectorOpen === true;
-  };
-
   const openTabs = () => {
-    if (isDrawerOpen) return;
+    if (sidebar.isMobileOpen.value) {
+      console.log("No open tabs");
+      return;
+    }
+    console.log("Open tabs");
+    // Both of these are mirrored to the URL by the NavigationManager bindings
+    // (`?selector=open` here, `?sidebar=open` in SidebarManager), so closing
+    // the selector and opening the drawer is just two query-param updates — no
+    // direct history manipulation, and no back-navigation racing the push.
     void setOpen(false);
     sidebar.openSidebar();
   };
+
+  // Mirror the selector's open state to the `?selector=open` query param so the
+  // browser back/forward buttons (and shared/bookmarked URLs) drive it, the
+  // same way SidebarManager binds `sidebar`. The setter routes through
+  // `setOpen` rather than writing `isOpen` directly so opening still binds the
+  // pane and loads translation data via `syncStateFromPane()`.
+  navigation.syncSignalsToUrl({
+    selector: {
+      get value() {
+        return isOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        const shouldOpen = newValue === "open";
+        if (shouldOpen !== isOpen.value) {
+          void setOpen(shouldOpen);
+        }
+      },
+    },
+  });
 
   effect(() => {
     if (isOpen.value) {
       expandedBookId.value = currentBookId.value;
     }
-  });
-
-  effect(() => {
-    if (typeof window === "undefined") return;
-    const onPopState = () => {
-      const shouldBeOpen = isSelectorOpenInHistory();
-      isHandlingPopState = true;
-
-      if (shouldBeOpen && !isOpen.value) {
-        setOpen(true);
-      } else if (!shouldBeOpen && isOpen.value) {
-        setOpen(false);
-      }
-
-      setTimeout(() => {
-        isHandlingPopState = false;
-      }, 0);
-    };
-
-    window.addEventListener("popstate", onPopState);
-    return () => {
-      window.removeEventListener("popstate", onPopState);
-    };
-  });
-
-  effect(() => {
-    const nextIsOpen = isOpen.value;
-
-    if (!wasOpen && nextIsOpen && !isSelectorOpenInHistory()) {
-      history.pushState({ ...getHistoryState(), bibleSelectorOpen: true }, "");
-    }
-
-    if (wasOpen && !nextIsOpen) {
-      const shouldNavigateBack =
-        !isHandlingPopState && isSelectorOpenInHistory();
-      if (shouldNavigateBack) {
-        history.back();
-      }
-    }
-
-    wasOpen = nextIsOpen;
   });
 
   const groupedBooks = computed(() =>
