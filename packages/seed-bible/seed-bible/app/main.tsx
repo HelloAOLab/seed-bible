@@ -13,6 +13,7 @@ import { ModalHost } from "../components/ModalHost";
 import { LoginModal } from "../components/LoginModal";
 import { TermsOfServiceModal } from "../components/TermsOfServiceModal";
 import { PrivacyPolicyModal } from "../components/PrivacyPolicyModal";
+import { CodeOfConductModal } from "../components/CodeOfConductModal";
 import { useMemo } from "preact/hooks";
 import {
   AppConfigProvider,
@@ -172,6 +173,11 @@ function MainContent(props: {
         <PrivacyPolicyModal
           isOpen={state.isPrivacyOpen.value}
           onClose={() => state.closePrivacy()}
+        />
+
+        <CodeOfConductModal
+          isOpen={state.isCodeOfConductOpen.value}
+          onClose={() => state.closeCodeOfConduct()}
         />
       </div>
     </>

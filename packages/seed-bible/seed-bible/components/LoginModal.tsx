@@ -11,8 +11,8 @@ type LoginStep = "email" | "code";
 // point the legal links at their real destinations when available.
 const LOGO_SRC = SeedBibleTitleIcon;
 const TERMS_OF_SERVICE_URL = "./?terms=open";
-const PRIVACY_POLICY_URL = "/?privacy=open";
-const CODE_OF_CONDUCT_URL = "#";
+const PRIVACY_POLICY_URL = "./?privacy=open";
+const CODE_OF_CONDUCT_URL = "./?conduct=open";
 
 /**
  * Guided login flow shown when {@link CasualOSManager.isLoginOpen} is set.

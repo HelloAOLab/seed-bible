@@ -211,6 +211,13 @@ export interface SeedBibleState {
   openPrivacy: () => void;
   /** Closes the Privacy Policy modal (clears `privacy` from the URL). */
   closePrivacy: () => void;
+
+  /** True when the Code of Conduct modal is open. */
+  isCodeOfConductOpen: ReadonlySignal<boolean>;
+  /** Opens the Code of Conduct modal (reflected in the URL as `?conduct=open`). */
+  openCodeOfConduct: () => void;
+  /** Closes the Code of Conduct modal (clears `conduct` from the URL). */
+  closeCodeOfConduct: () => void;
 }
 
 /**
@@ -297,6 +304,19 @@ export function createSeedBibleState(
     privacyOpen.value = false;
   };
 
+  // Code of Conduct modal. Two-way bound to the `?conduct=open` query param so
+  // it can be deep-linked, mirroring the modals above.
+  const codeOfConductOpen = signal(
+    navigation.currentUrl.value.searchParams.get("conduct") === "open"
+  );
+  const isCodeOfConductOpen = computed(() => codeOfConductOpen.value);
+  const openCodeOfConduct = () => {
+    codeOfConductOpen.value = true;
+  };
+  const closeCodeOfConduct = () => {
+    codeOfConductOpen.value = false;
+  };
+
   navigation.syncSignalsToUrl({
     terms: {
       get value() {
@@ -312,6 +332,14 @@ export function createSeedBibleState(
       },
       set value(newValue) {
         privacyOpen.value = newValue === "open";
+      },
+    },
+    conduct: {
+      get value() {
+        return codeOfConductOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        codeOfConductOpen.value = newValue === "open";
       },
     },
   });
@@ -837,6 +865,9 @@ export function createSeedBibleState(
     isPrivacyOpen,
     openPrivacy,
     closePrivacy,
+    isCodeOfConductOpen,
+    openCodeOfConduct,
+    closeCodeOfConduct,
     app: {
       createSharedSession: handleCreateSharedSession,
       joinSharedSession: handleJoinSharedSession,
