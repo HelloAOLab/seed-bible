@@ -545,7 +545,7 @@ const SideBarChapters = (props: {
       isLast?: boolean;
     }) => {
       const { chapterNumber, isVisible, isLast } = props;
-      const chapterPressHandler = useLongPress(() => {
+      const { cancel, ...chapterPressHandler } = useLongPress(() => {
         if (!isMobile.value) return;
         bibleSelectorState.forceNewTab.value = true;
         selectChapter(bd.id, chapterNumber);
@@ -561,6 +561,7 @@ const SideBarChapters = (props: {
           }
           class={`chapter-btn flex-center ${isLast ? "lastOne" : ""}`}
           onClick={() => {
+            cancel();
             selectChapter(bd.id, chapterNumber);
             isOpen.value = false;
           }}
@@ -1345,8 +1346,10 @@ export function useLongPress(onLongPress: () => void, duration = 1500) {
 
   const start = useCallback(
     (e: MouseEvent | TouchEvent) => {
-      e.preventDefault();
-      timerRef.current = setTimeout(onLongPress, duration);
+      timerRef.current = setTimeout(() => {
+        e.preventDefault();
+        onLongPress();
+      }, duration);
     },
     [onLongPress, duration]
   );
@@ -1366,6 +1369,7 @@ export function useLongPress(onLongPress: () => void, duration = 1500) {
     onTouchMove: cancel,
     onTouchEnd: cancel,
     onTouchCancel: cancel,
+    cancel,
   };
 }
 
