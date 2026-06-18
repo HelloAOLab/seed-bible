@@ -112,7 +112,8 @@ export function TermsOfServiceModal({
         <div
           className="sb-footnote-modal-content sb-tos-content"
           dangerouslySetInnerHTML={{
-            __html: t("terms-of-service_policy", {
+            // @eslint-disable-next-line i18n-untranslated-content -- The policy text is translated, just not in the main namespace.
+            __html: t("terms-of-service-policy", {
               ns: "terms-of-service",
               defaultValue: "",
             }),

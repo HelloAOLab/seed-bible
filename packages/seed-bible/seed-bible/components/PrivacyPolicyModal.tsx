@@ -112,7 +112,8 @@ export function PrivacyPolicyModal({
         <div
           className="sb-footnote-modal-content sb-tos-content"
           dangerouslySetInnerHTML={{
-            __html: t("privacy-policy_policy", {
+            // @eslint-disable-next-line i18n-untranslated-content -- The policy text is translated, just not in the main namespace.
+            __html: t("privacy-policy-policy", {
               ns: "privacy-policy",
               defaultValue: "",
             }),

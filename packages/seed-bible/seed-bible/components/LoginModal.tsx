@@ -1,10 +1,10 @@
 import { batch, useSignal, useSignalEffect } from "@preact/signals";
 import { useRef } from "preact/hooks";
 import type { LoginRequestSuccess } from "@casual-simulation/aux-records";
-import type { CasualOSManager } from "../managers/OsManager";
 import { useI18n } from "../i18n/I18nManager";
 import SeedBibleTitleIcon from "../img/SeedBibleLogoWithTitleBlack.png";
 import type { NavigationManager } from "../managers/NavigationManager";
+import type { LoginManager } from "../managers/LoginManager";
 
 type LoginStep = "email" | "code";
 
@@ -25,10 +25,10 @@ const LOGO_SRC = SeedBibleTitleIcon;
  * unmounts itself.
  */
 export function LoginModal({
-  os,
+  login,
   navigation,
 }: {
-  os: CasualOSManager;
+  login: LoginManager;
   navigation: NavigationManager;
 }) {
   const { t } = useI18n();
@@ -63,12 +63,12 @@ export function LoginModal({
     terms: null,
   });
 
-  const isOpen = os.isLoginOpen.value;
+  const isOpen = login.isLoginOpen.value;
 
   // Reset to a clean state every time the modal is (re)opened so a previous,
   // abandoned attempt doesn't leak into the next one.
   useSignalEffect(() => {
-    const open = os.isLoginOpen.value;
+    const open = login.isLoginOpen.value;
     if (open && !wasOpenRef.current) {
       batch(() => {
         step.value = "email";
@@ -84,7 +84,7 @@ export function LoginModal({
 
   // Move focus to the relevant input as each screen appears.
   useSignalEffect(() => {
-    if (!os.isLoginOpen.value) {
+    if (!login.isLoginOpen.value) {
       return;
     }
     const target =
@@ -97,7 +97,7 @@ export function LoginModal({
   }
 
   const cancel = () => {
-    void os.cancelLogin();
+    void login.cancelLogin();
   };
 
   const submitEmail = async (event: Event) => {
@@ -124,7 +124,7 @@ export function LoginModal({
     error.value = null;
     isSubmitting.value = true;
     try {
-      const result = await os.requestLoginByEmail(address);
+      const result = await login.requestLoginByEmail(address);
       if (result.success) {
         requestRef.current = result;
         batch(() => {
@@ -171,7 +171,7 @@ export function LoginModal({
     error.value = null;
     isSubmitting.value = true;
     try {
-      const result = await os.submitEmailCode(value, request);
+      const result = await login.submitLoginCode(value, request);
       // On success the OS manager loads the user info and closes the login UI,
       // which unmounts this component — nothing more to do here.
       if (!result.success) {

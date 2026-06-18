@@ -163,7 +163,7 @@ function MainContent(props: {
 
         <ModalHost manager={state.modals} />
 
-        <LoginModal os={state.os} navigation={state.navigation} />
+        <LoginModal login={state.login} navigation={state.navigation} />
 
         <TermsOfServiceModal
           isOpen={state.isTermsOpen.value}

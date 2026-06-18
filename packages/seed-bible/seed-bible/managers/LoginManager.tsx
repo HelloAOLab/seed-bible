@@ -1,12 +1,22 @@
-import { effect, signal, type Signal } from "@preact/signals";
+import { batch, computed, effect, signal, type Signal } from "@preact/signals";
 import * as z from "zod/v4";
 import type { CasualOSManager, UserInfo } from "./OsManager";
+import type {
+  CompleteLoginResult,
+  LoginRequestResult,
+  LoginRequestSuccess,
+} from "@casual-simulation/aux-records/AuthController";
 
 export interface LoginManager {
   /**
    * The ID of the user. Null if the user is not authenticated.
    */
   userId: Signal<string | null>;
+
+  /**
+   * The user's information, including email. Null if the user is not authenticated or if background auth has not completed yet.
+   */
+  userInfo: Signal<UserInfo | null>;
 
   /**
    * The current auth bot. Null if not authenticated or if background auth has not completed yet.
@@ -19,9 +29,14 @@ export interface LoginManager {
   profile: Signal<UserProfile | null>;
 
   /**
+   * Whether the user is currently in the process of logging in, which can be used to show or hide the login modal. This will be true from the moment a login attempt is initiated until it either succeeds or fails, and will be false at all other times (including while logged in). The login modal should subscribe to this signal to know when to show or hide itself, and should call `cancelLogin` if it is closed while a login attempt is in progress to abort the login flow.
+   */
+  isLoginOpen: Signal<boolean>;
+
+  /**
    * Attempts to login the user.
    */
-  login: () => Promise<void>;
+  login: () => Promise<UserInfo | null>;
 
   /**
    * Attempts to log out the user.
@@ -46,6 +61,27 @@ export interface LoginManager {
    * Resolves without changes if no file is selected or the user is not authenticated.
    */
   uploadProfilePicture: () => Promise<void>;
+
+  /**
+   * Cancels an in-progress login attempt, if one exists. This is useful to abort a login flow if the user navigates away or closes the login modal before completing authentication.
+   */
+  cancelLogin: () => Promise<void>;
+
+  /**
+   * Requests a login code to be sent to the given email address.
+   * @param email The email address to which the login code should be sent.
+   */
+  requestLoginByEmail: (email: string) => Promise<LoginRequestResult>;
+
+  /**
+   * Submits a login code received by email to complete the login process. Resolves with the result of the login attempt, including success status and session information if successful.
+   * @param code The code received by the user via email to complete login.
+   * @param request The original login request information returned by `requestLoginByEmail`, which includes the request ID and user ID needed to complete the login.
+   */
+  submitLoginCode: (
+    code: string,
+    request: LoginRequestSuccess
+  ) => Promise<CompleteLoginResult>;
 }
 
 export const userProfileSchema = z.object({
@@ -63,8 +99,33 @@ export function createLoginManager({
 }: {
   os: CasualOSManager;
 }): LoginManager {
-  const userId = os.userId;
-  const authBot = os.userInfo;
+  const { client, parsedSessionKey, sessionKey, connectionKey } = os;
+
+  const isLoginOpen = signal(false);
+  const userId = computed(() => parsedSessionKey.value?.userId ?? null);
+  const userInfo = signal<UserInfo | null>(null);
+  const currentLoginRequest = signal<LoginRequestSuccess | null>(null);
+
+  if (typeof localStorage !== "undefined") {
+    const storedSessionKey = localStorage.getItem("sessionKey");
+    const storedConnectionKey = localStorage.getItem("connectionKey");
+
+    if (storedSessionKey) {
+      sessionKey.value = storedSessionKey;
+      client.sessionKey = storedSessionKey;
+    }
+
+    if (storedConnectionKey) {
+      connectionKey.value = storedConnectionKey;
+    }
+  }
+
+  let loginPromise: Promise<UserInfo | null> | null = null;
+  let resolveLoginPromise: ((value: UserInfo | null) => void) | null = null;
+  let rejectLoginPromise: ((err: Error) => void) | null = null;
+  let currentLoginPromise: Promise<UserInfo | null> | null = null;
+
+  // const userId = os.userId;
   const profile = signal<UserProfile | null>(null);
 
   const getUserProfile = async (userId: string): Promise<UserProfile> => {
@@ -99,16 +160,133 @@ export function createLoginManager({
     });
   };
 
-  const login = async (): Promise<void> => {
-    try {
-      await os.requestAuthBot();
-    } catch (err) {
-      console.error("Authentication failed:", err);
+  async function cancelLogin() {
+    if (loginPromise && rejectLoginPromise) {
+      rejectLoginPromise(new Error("Login cancelled"));
+      loginPromise = null;
+      resolveLoginPromise = null;
+      rejectLoginPromise = null;
     }
-  };
+  }
+
+  async function requestLoginByEmail(
+    email: string
+  ): Promise<LoginRequestResult> {
+    const result = await client.requestLogin({
+      address: email,
+      addressType: "email",
+      comId: "seed-bible",
+    });
+
+    if (result.success) {
+      currentLoginRequest.value = result;
+    } else {
+      currentLoginRequest.value = null;
+    }
+
+    return result;
+  }
+
+  async function submitLoginCode(
+    code: string,
+    request: LoginRequestSuccess
+  ): Promise<CompleteLoginResult> {
+    const result = await client.completeLogin({
+      code,
+      requestId: request.requestId,
+      userId: request.userId,
+    });
+
+    currentLoginRequest.value = null;
+    if (result.success) {
+      sessionKey.value = result.sessionKey;
+      connectionKey.value = result.connectionKey;
+      client.sessionKey = result.sessionKey;
+
+      await loadUserInfo();
+    }
+
+    return result;
+  }
+
+  async function loadUserInfo(): Promise<UserInfo | null> {
+    if (!sessionKey.value || !userId.value) {
+      return null;
+    }
+    const result = await client.getUserInfo({ userId: userId.value });
+    if (result.success) {
+      userInfo.value = {
+        id: userId.value,
+        email: result.email,
+      };
+      if (resolveLoginPromise) {
+        resolveLoginPromise(userInfo.value);
+        resolveLoginPromise = null;
+        rejectLoginPromise = null;
+        loginPromise = null;
+      }
+
+      return userInfo.value;
+    } else {
+      return null;
+    }
+  }
+
+  async function loginCore(): Promise<UserInfo | null> {
+    if (!sessionKey.value) {
+      if (!loginPromise) {
+        loginPromise = new Promise((resolve, reject) => {
+          resolveLoginPromise = resolve;
+          rejectLoginPromise = reject;
+        });
+      }
+
+      // prompt for login
+      try {
+        isLoginOpen.value = true;
+        return await loginPromise;
+      } finally {
+        isLoginOpen.value = false;
+      }
+    }
+
+    return await loadUserInfo();
+  }
+
+  function login(): Promise<UserInfo | null> {
+    if (userInfo.value) {
+      return Promise.resolve(userInfo.value);
+    }
+
+    if (import.meta.env.SSR) {
+      return Promise.resolve(null);
+    }
+
+    if (!currentLoginPromise) {
+      currentLoginPromise = loginCore().finally(
+        () => (currentLoginPromise = null)
+      );
+    }
+
+    return currentLoginPromise;
+  }
+
+  effect(() => {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("sessionKey", sessionKey.value ?? "");
+      localStorage.setItem("connectionKey", connectionKey.value ?? "");
+    }
+  });
+
+  if (sessionKey.value) {
+    loadUserInfo();
+  }
 
   const logout = async (): Promise<void> => {
-    await os.signOut();
+    batch(() => {
+      sessionKey.value = null;
+      connectionKey.value = null;
+    });
   };
 
   effect(() => {
@@ -120,7 +298,7 @@ export function createLoginManager({
     if (typeof posthog !== "undefined" && posthog) {
       console.log(
         "[LoginManager] Identifying PostHog with auth bot ID:",
-        authBot
+        userInfo.value
       );
       posthog.identify(userId.value);
     }
@@ -167,27 +345,22 @@ export function createLoginManager({
     // updateProfile({ pictureUrl: result.url });
   };
 
-  // void os
-  //   .requestAuthBotInBackground()
-  //   .then((bot) => {
-  //     if (!bot) {
-  //       return;
-  //     }
-
-  //     authBot.value = bot;
-  //   })
-  //   .catch(() => {
-  //     // Intentionally ignore background auth failures and keep anonymous state.
-  //   });
-
   return {
     userId,
-    authBot,
+    userInfo,
+    authBot: userInfo,
     profile,
+
+    isLoginOpen,
+
     login,
     logout,
     updateProfile,
     getUserProfile,
     uploadProfilePicture,
+
+    cancelLogin,
+    requestLoginByEmail,
+    submitLoginCode,
   };
 }

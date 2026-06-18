@@ -7,22 +7,11 @@ import stringify from "@casual-simulation/fast-json-stable-stringify";
 import axios from "axios";
 import { isArrayBuffer } from "es-toolkit";
 import { v4 as uuid } from "uuid";
-import type {
-  CompleteLoginResult,
-  LoginRequestResult,
-  LoginRequestSuccess,
-  RecordFileFailure,
-} from "@casual-simulation/aux-records";
+import type { RecordFileFailure } from "@casual-simulation/aux-records";
 import { InstRecordsClient } from "@casual-simulation/aux-common/websockets/InstRecordsClient";
 import { PartitionAuthSource } from "@casual-simulation/aux-common/partitions/PartitionAuthSource";
 import { AuthenticatedConnectionClient } from "@casual-simulation/aux-common/websockets/AuthenticatedConnectionClient";
-import {
-  batch,
-  computed,
-  effect,
-  signal,
-  type ReadonlySignal,
-} from "@preact/signals";
+import { computed, effect, signal } from "@preact/signals";
 import { parseSessionKey } from "@casual-simulation/aux-common";
 
 export type CasualOSManager = ReturnType<typeof CasualOSManager>;
@@ -55,8 +44,9 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
   let instRecordsClient: InstRecordsClient | null = null;
   let authSource: PartitionAuthSource | null = null;
 
-  const isLoginOpen = signal(false);
   const sessionKey = signal<string | null>(null);
+  const connectionKey = signal<string | null>(null);
+
   const parsedSessionKey = computed(() => {
     const parsed = parseSessionKey(sessionKey.value);
     if (parsed) {
@@ -70,28 +60,6 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
       return null;
     }
   });
-  const connectionKey = signal<string | null>(null);
-  const userId = computed(() => parsedSessionKey.value?.userId ?? null);
-  const userInfo = signal<UserInfo | null>(null);
-  const currentLoginRequest = signal<LoginRequestSuccess | null>(null);
-
-  if (typeof localStorage !== "undefined") {
-    const storedSessionKey = localStorage.getItem("sessionKey");
-    const storedConnectionKey = localStorage.getItem("connectionKey");
-
-    if (storedSessionKey) {
-      sessionKey.value = storedSessionKey;
-    }
-
-    if (storedConnectionKey) {
-      connectionKey.value = storedConnectionKey;
-    }
-  }
-
-  let loginPromise: Promise<UserInfo | null> | null = null;
-  let resolveLoginPromise: ((value: UserInfo | null) => void) | null = null;
-  let rejectLoginPromise: ((err: Error) => void) | null = null;
-  let currentLoginPromise: Promise<UserInfo | null> | null = null;
 
   function getInstClient(): InstRecordsClient {
     if (!instRecordsClient) {
@@ -112,8 +80,10 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
     if (!authSource) {
       const source = (authSource = new PartitionAuthSource());
       source.onAuthMessage.subscribe((message) => {
+        // TODO: handle other message types and error cases
         if (message.type === "request") {
           if (message.kind === "need_indicator") {
+            // TODO: Support returning connection tokens
             source.sendAuthResponse({
               type: "response",
               success: true,
@@ -150,152 +120,16 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
     return doc;
   }
 
-  async function cancelLogin() {
-    if (loginPromise && rejectLoginPromise) {
-      rejectLoginPromise(new Error("Login cancelled"));
-      loginPromise = null;
-      resolveLoginPromise = null;
-      rejectLoginPromise = null;
-    }
-  }
-
-  async function requestLoginByEmail(
-    email: string
-  ): Promise<LoginRequestResult> {
-    const result = await client.requestLogin({
-      address: email,
-      addressType: "email",
-      comId: "seed-bible",
-    });
-
-    if (result.success) {
-      currentLoginRequest.value = result;
-    } else {
-      currentLoginRequest.value = null;
-    }
-
-    return result;
-  }
-
-  async function submitEmailCode(
-    code: string,
-    request: LoginRequestSuccess
-  ): Promise<CompleteLoginResult> {
-    const result = await client.completeLogin({
-      code,
-      requestId: request.requestId,
-      userId: request.userId,
-    });
-
-    currentLoginRequest.value = null;
-    if (result.success) {
-      sessionKey.value = result.sessionKey;
-      connectionKey.value = result.connectionKey;
-      client.sessionKey = result.sessionKey;
-
-      await loadUserInfo();
-    }
-
-    return result;
-  }
-
-  async function loadUserInfo(): Promise<UserInfo | null> {
-    if (!sessionKey.value || !userId.value) {
-      return null;
-    }
-    const result = await client.getUserInfo({ userId: userId.value });
-    if (result.success) {
-      userInfo.value = {
-        id: userId.value,
-        email: result.email,
-      };
-      if (resolveLoginPromise) {
-        resolveLoginPromise(userInfo.value);
-        resolveLoginPromise = null;
-        rejectLoginPromise = null;
-        loginPromise = null;
-      }
-
-      return userInfo.value;
-    } else {
-      return null;
-    }
-  }
-
-  async function loginCore(): Promise<UserInfo | null> {
-    if (!sessionKey.value) {
-      if (!loginPromise) {
-        loginPromise = new Promise((resolve, reject) => {
-          resolveLoginPromise = resolve;
-          rejectLoginPromise = reject;
-        });
-      }
-
-      // prompt for login
-      try {
-        isLoginOpen.value = true;
-        return await loginPromise;
-      } finally {
-        isLoginOpen.value = false;
-      }
-    }
-
-    return await loadUserInfo();
-  }
-
-  function login(): Promise<UserInfo | null> {
-    if (userInfo.value) {
-      return Promise.resolve(userInfo.value);
-    }
-
-    if (import.meta.env.SSR) {
-      return Promise.resolve(null);
-    }
-
-    if (!currentLoginPromise) {
-      currentLoginPromise = loginCore().finally(
-        () => (currentLoginPromise = null)
-      );
-    }
-
-    return currentLoginPromise;
-  }
-
-  async function loginInBackground(): Promise<UserInfo | null> {
-    if (!sessionKey.value) {
-      return null;
-    }
-
-    if (userInfo.value) {
-      return userInfo.value;
-    }
-
-    return await login();
-  }
-
   effect(() => {
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem("sessionKey", sessionKey.value ?? "");
-      localStorage.setItem("connectionKey", connectionKey.value ?? "");
-    }
-
     client.sessionKey = sessionKey.value as string;
   });
-
-  if (sessionKey.value) {
-    loadUserInfo();
-  }
 
   return {
     client,
     connectionId,
-
-    userId: userId as ReadonlySignal<string | null>,
-    userInfo: userInfo as ReadonlySignal<UserInfo | null>,
-    isLoginOpen,
-    requestLoginByEmail,
-    submitEmailCode,
-    cancelLogin,
+    sessionKey,
+    parsedSessionKey,
+    connectionKey,
 
     getData: async (recordName: string, address: string) => {
       const result = await client.getData({
@@ -361,21 +195,6 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
         success: true,
         url: result.fileUrl,
       };
-    },
-
-    requestAuthBot: (): Promise<UserInfo | null> => {
-      return login();
-    },
-
-    requestAuthBotInBackground: (): Promise<UserInfo | null> => {
-      return loginInBackground();
-    },
-
-    signOut: async () => {
-      batch(() => {
-        sessionKey.value = null;
-        connectionKey.value = null;
-      });
     },
 
     requestWakeLock: async () => {
