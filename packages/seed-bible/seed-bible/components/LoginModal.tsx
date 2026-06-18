@@ -3,8 +3,16 @@ import { useRef } from "preact/hooks";
 import type { LoginRequestSuccess } from "@casual-simulation/aux-records";
 import type { CasualOSManager } from "../managers/OsManager";
 import { useI18n } from "../i18n/I18nManager";
+import SeedBibleTitleIcon from "../img/SeedBibleLogoWithTitleBlack.png";
 
 type LoginStep = "email" | "code";
+
+// Placeholder asset/links. Replace `LOGO_SRC` with the real Seed Bible logo and
+// point the legal links at their real destinations when available.
+const LOGO_SRC = SeedBibleTitleIcon;
+const PRIVACY_POLICY_URL = "#";
+const CODE_OF_CONDUCT_URL = "#";
+const TERMS_OF_SERVICE_URL = "#";
 
 /**
  * Guided login flow shown when {@link CasualOSManager.isLoginOpen} is set.
@@ -24,6 +32,7 @@ export function LoginModal({ os }: { os: CasualOSManager }) {
   const step = useSignal<LoginStep>("email");
   const email = useSignal("");
   const code = useSignal("");
+  const agreed = useSignal(false);
   const error = useSignal<string | null>(null);
   const isSubmitting = useSignal(false);
 
@@ -44,6 +53,7 @@ export function LoginModal({ os }: { os: CasualOSManager }) {
       batch(() => {
         step.value = "email";
         code.value = "";
+        agreed.value = false;
         error.value = null;
         isSubmitting.value = false;
       });
@@ -80,6 +90,13 @@ export function LoginModal({ os }: { os: CasualOSManager }) {
     if (!address) {
       error.value = t("login-error-email-required", {
         defaultValue: "Please enter your email address.",
+      });
+      return;
+    }
+
+    if (!agreed.value) {
+      error.value = t("login-error-terms-required", {
+        defaultValue: "Please agree to the terms of service to continue.",
       });
       return;
     }
@@ -164,11 +181,17 @@ export function LoginModal({ os }: { os: CasualOSManager }) {
   };
 
   const onCode = step.value === "code";
-  const title = onCode
-    ? t("login-code-title", {
-        defaultValue: "Enter the code sent to your email",
+  const title = t("login-account-title", {
+    defaultValue: "Login to your account",
+  });
+  const subtitle = onCode
+    ? t("login-code-description", {
+        email: email.value.trim(),
+        defaultValue: `We sent a code to ${email.value.trim()}.`,
       })
-    : t("login-email-title", { defaultValue: "Enter your email address" });
+    : t("login-account-subtitle", {
+        defaultValue: "Enter the email address you want to login with",
+      });
 
   return (
     <div
@@ -188,28 +211,21 @@ export function LoginModal({ os }: { os: CasualOSManager }) {
         aria-label={title}
         onClick={(event: MouseEvent) => event.stopPropagation()}
       >
-        <div className="sb-footnote-modal-header">
-          <h3 className="sb-footnote-modal-title">{title}</h3>
-          <button
-            type="button"
-            className="sb-footnote-modal-close"
-            aria-label={t("close", { defaultValue: "Close" })}
-            onClick={cancel}
-          >
-            <span className="material-symbols-outlined">close</span>
-          </button>
-        </div>
+        <div className="sb-login-modal-body">
+          <div className="sb-login-header">
+            <img
+              className="sb-login-logo"
+              src={LOGO_SRC}
+              alt={t("login-account-title", {
+                defaultValue: "Login to your account",
+              })}
+            />
+            <h3 className="sb-login-title">{title}</h3>
+            <p className="sb-login-subtitle">{subtitle}</p>
+          </div>
 
-        <div className="sb-footnote-modal-content sb-login-modal-body">
           {onCode ? (
             <form className="sb-login-form" onSubmit={submitCode}>
-              <p className="sb-login-description">
-                {t("login-code-description", {
-                  email: email.value.trim(),
-                  defaultValue: `We sent a code to ${email.value.trim()}.`,
-                })}
-              </p>
-
               <div className="sb-login-field">
                 <label className="sb-login-label" htmlFor="sb-login-code">
                   {t("login-code-label", { defaultValue: "Login code" })}
@@ -264,16 +280,7 @@ export function LoginModal({ os }: { os: CasualOSManager }) {
             </form>
           ) : (
             <form className="sb-login-form" onSubmit={submitEmail}>
-              <p className="sb-login-description">
-                {t("login-email-description", {
-                  defaultValue: "We'll send a login code to this address.",
-                })}
-              </p>
-
               <div className="sb-login-field">
-                <label className="sb-login-label" htmlFor="sb-login-email">
-                  {t("login-email-label", { defaultValue: "Email address" })}
-                </label>
                 <input
                   ref={emailInputRef}
                   id="sb-login-email"
@@ -282,8 +289,8 @@ export function LoginModal({ os }: { os: CasualOSManager }) {
                   autoComplete="email"
                   value={email.value}
                   disabled={isSubmitting.value}
-                  placeholder={t("login-email-placeholder", {
-                    defaultValue: "you@example.com",
+                  placeholder={t("login-email-title", {
+                    defaultValue: "Enter your email address",
                   })}
                   onInput={(event: Event) => {
                     email.value = (
@@ -292,6 +299,35 @@ export function LoginModal({ os }: { os: CasualOSManager }) {
                   }}
                 />
               </div>
+
+              <label className="sb-login-terms" htmlFor="sb-login-terms">
+                <input
+                  id="sb-login-terms"
+                  className="sb-login-terms-checkbox"
+                  type="checkbox"
+                  checked={agreed.value}
+                  disabled={isSubmitting.value}
+                  onChange={(event: Event) => {
+                    agreed.value = (
+                      event.currentTarget as HTMLInputElement
+                    ).checked;
+                  }}
+                />
+                <span className="sb-login-terms-text">
+                  {t("login-agree-prefix", { defaultValue: "I agree to the" })}{" "}
+                  <a
+                    className="sb-login-link"
+                    href={TERMS_OF_SERVICE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(event: MouseEvent) => event.stopPropagation()}
+                  >
+                    {t("terms-of-service", {
+                      defaultValue: "Terms of service",
+                    })}
+                  </a>
+                </span>
+              </label>
 
               {error.value && (
                 <p className="sb-login-error" role="alert">
@@ -307,19 +343,41 @@ export function LoginModal({ os }: { os: CasualOSManager }) {
                 >
                   {isSubmitting.value
                     ? t("login-sending", { defaultValue: "Sending…" })
-                    : t("login-continue", { defaultValue: "Continue" })}
-                </button>
-                <button
-                  type="button"
-                  className="sb-login-secondary"
-                  onClick={cancel}
-                  disabled={isSubmitting.value}
-                >
-                  {t("cancel", { defaultValue: "Cancel" })}
+                    : t("log-in", { defaultValue: "Log in" })}
                 </button>
               </div>
             </form>
           )}
+
+          <div className="sb-login-legal">
+            <a
+              className="sb-login-link"
+              href={PRIVACY_POLICY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(event: MouseEvent) => event.stopPropagation()}
+            >
+              {t("privacy-policy", { defaultValue: "Privacy policy" })}
+            </a>
+            <a
+              className="sb-login-link"
+              href={CODE_OF_CONDUCT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(event: MouseEvent) => event.stopPropagation()}
+            >
+              {t("code-of-conduct", { defaultValue: "Code of conduct" })}
+            </a>
+            <a
+              className="sb-login-link"
+              href={TERMS_OF_SERVICE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(event: MouseEvent) => event.stopPropagation()}
+            >
+              {t("terms-of-service", { defaultValue: "Terms of service" })}
+            </a>
+          </div>
         </div>
       </div>
     </div>
