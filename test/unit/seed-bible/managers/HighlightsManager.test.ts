@@ -21,13 +21,11 @@ describe("HighlightsManager", () => {
 
   beforeEach(() => {
     os = CasualOSManager();
-    getDataMock = vi
-      .spyOn(os, "getData")
-      .mockResolvedValue({
-        success: false,
-        errorCode: "data_not_found",
-        errorMessage: "Data not found",
-      });
+    getDataMock = vi.spyOn(os, "getData").mockResolvedValue({
+      success: false,
+      errorCode: "data_not_found",
+      errorMessage: "Data not found",
+    });
     recordDataMock = vi
       .spyOn(os, "recordData")
       .mockResolvedValue(undefined as never);
@@ -41,6 +39,18 @@ describe("HighlightsManager", () => {
       logout: vi.fn().mockResolvedValue(undefined),
       getUserProfile: vi.fn().mockResolvedValue(null),
       uploadProfilePicture: vi.fn().mockResolvedValue(undefined),
+      userInfo: signal({ id: "user-1", email: "test@example.com" }),
+      cancelLogin: vi.fn().mockResolvedValue(undefined),
+      isLoginOpen: signal(false),
+      requestLoginByEmail: vi
+        .fn()
+        .mockResolvedValue({ success: true, requestId: "req-1" }),
+      submitLoginCode: vi
+        .fn()
+        .mockResolvedValue({
+          success: true,
+          userInfo: { id: "user-1", email: "test@example.com" },
+        }),
     };
   });
 
@@ -171,6 +181,7 @@ describe("HighlightsManager", () => {
     login.userId.value = null;
     login.login.mockImplementation(async () => {
       login.userId.value = "user-2";
+      return { id: "user-2", email: "test@example.com" };
     });
     const manager = createHighlightsManager(os, login);
 

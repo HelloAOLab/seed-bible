@@ -51,6 +51,18 @@ describe("AnnotationsManager", () => {
       updateProfile: vi.fn().mockResolvedValue(undefined),
       getUserProfile: vi.fn().mockResolvedValue({ name: "" }),
       uploadProfilePicture: vi.fn().mockResolvedValue(undefined),
+      userInfo: signal({ id: "user-1", email: "test@example.com" }),
+      cancelLogin: vi.fn().mockResolvedValue(undefined),
+      isLoginOpen: signal(false),
+      requestLoginByEmail: vi
+        .fn()
+        .mockResolvedValue({ success: true, requestId: "req-1" }),
+      submitLoginCode: vi
+        .fn()
+        .mockResolvedValue({
+          success: true,
+          userInfo: { id: "user-1", email: "test@example.com" },
+        }),
     };
   });
 
@@ -89,6 +101,7 @@ describe("AnnotationsManager", () => {
     login.userId.value = null;
     login.login.mockImplementation(async () => {
       login.userId.value = "user-after-login";
+      return { id: "user-after-login", email: "test@example.com" };
     });
     const manager = createAnnotationsManager(os, login);
 
@@ -210,7 +223,10 @@ describe("AnnotationsManager", () => {
 
   it("operations throw when login cannot resolve a user record", async () => {
     login.userId.value = null;
-    login.login.mockResolvedValue(undefined);
+    login.login.mockResolvedValue({
+      id: "user-after-login",
+      email: "test@example.com",
+    });
     const manager = createAnnotationsManager(os, login);
 
     await expect(

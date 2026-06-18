@@ -268,10 +268,6 @@ describe("ReadingHistoryManager", () => {
           }),
         } as unknown as SharedDocument);
 
-      vi.spyOn(os, "requestAuthBotInBackground").mockImplementation(
-        async () => null
-      );
-
       vi.useFakeTimers();
     });
 

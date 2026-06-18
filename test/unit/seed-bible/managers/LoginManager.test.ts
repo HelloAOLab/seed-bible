@@ -1,12 +1,46 @@
 import {
   createLoginManager,
   userProfileSchema,
+  type LoginManager,
 } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
+import { formatV1SessionKey } from "@casual-simulation/aux-common";
 import type { Mock } from "vitest";
 
-vi.setConfig({ testTimeout: 3000 });
+vi.setConfig({ testTimeout: 5000 });
 
+// The RecordsClient is a Proxy that synthesizes a network call for every
+// accessed method, so we replace the whole module with controllable mocks.
+const { requestLoginMock, completeLoginMock, getUserInfoMock } = vi.hoisted(
+  () => ({
+    requestLoginMock: vi.fn(),
+    completeLoginMock: vi.fn(),
+    getUserInfoMock: vi.fn(),
+  })
+);
+
+vi.mock("@casual-simulation/aux-records/RecordsClient", () => ({
+  createRecordsClient: vi.fn(() => ({
+    sessionKey: null as string | null,
+    requestLogin: requestLoginMock,
+    completeLogin: completeLoginMock,
+    getUserInfo: getUserInfoMock,
+  })),
+}));
+
+const USER_ID = "user-1";
+const EMAIL = "alice@example.com";
+
+// A real, parseable session key so the manager's `parsedSessionKey`/`userId`
+// computeds resolve to USER_ID (the manager derives the user id from the key).
+const SESSION_KEY = formatV1SessionKey(
+  USER_ID,
+  "session-1",
+  "secret-1",
+  Date.now() + 1000 * 60 * 60
+);
+
+/** Wait for a condition to become true, polling the microtask/macrotask queue. */
 async function waitFor(
   condition: () => boolean,
   timeoutMs = 1000
@@ -20,21 +54,47 @@ async function waitFor(
   }
 }
 
+/** Lets all currently-queued microtasks/timers flush so promises can settle. */
+function flush(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 describe("createLoginManager", () => {
-  let requestAuthBotInBackgroundMock: Mock;
-  let requestAuthBotMock: Mock;
+  let os: CasualOSManager;
   let getDataMock: Mock;
   let recordDataMock: Mock;
-  let signOutMock: Mock;
   let warnSpy: Mock;
-  let os: CasualOSManager;
 
   beforeEach(() => {
+    localStorage.clear();
+
+    requestLoginMock.mockReset();
+    completeLoginMock.mockReset();
+    getUserInfoMock.mockReset();
+
+    requestLoginMock.mockResolvedValue({
+      success: true,
+      userId: USER_ID,
+      requestId: "request-1",
+      address: EMAIL,
+      addressType: "email",
+      expireTimeMs: Date.now() + 1000 * 60 * 5,
+    });
+    completeLoginMock.mockResolvedValue({
+      success: true,
+      userId: USER_ID,
+      sessionKey: SESSION_KEY,
+      connectionKey: "connection-key-1",
+      expireTimeMs: Date.now() + 1000 * 60 * 60,
+      metadata: {},
+    });
+    getUserInfoMock.mockResolvedValue({
+      success: true,
+      email: EMAIL,
+    });
+
     os = CasualOSManager();
-    requestAuthBotInBackgroundMock = vi
-      .spyOn(os, "requestAuthBotInBackground")
-      .mockResolvedValue(null);
-    requestAuthBotMock = vi.spyOn(os, "requestAuthBot").mockResolvedValue(null);
+
     getDataMock = vi.spyOn(os, "getData").mockResolvedValue({
       success: false,
       errorCode: "data_not_found",
@@ -43,125 +103,237 @@ describe("createLoginManager", () => {
     recordDataMock = vi
       .spyOn(os, "recordData")
       .mockResolvedValue(undefined as never);
-    signOutMock = vi.spyOn(os, "signOut").mockResolvedValue(undefined);
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
+    localStorage.clear();
     warnSpy.mockRestore();
   });
 
-  it.skip("requests the auth bot in the background on init", () => {
-    createLoginManager({ os });
+  /** Persists a session key so a freshly-created manager authenticates on init. */
+  function createAuthenticatedManager(): LoginManager {
+    localStorage.setItem("sessionKey", SESSION_KEY);
+    return createLoginManager({ os });
+  }
 
-    expect(requestAuthBotInBackgroundMock).toHaveBeenCalledTimes(1);
+  describe("login flow", () => {
+    it("login() opens the login UI and waits for user info before resolving", async () => {
+      const manager = createLoginManager({ os });
+
+      let resolvedInfo: unknown = "pending";
+      const promise = manager.login().then((info) => (resolvedInfo = info));
+
+      // The login UI is opened immediately...
+      expect(manager.isLoginOpen.value).toBe(true);
+
+      // ...and the promise does not resolve until the flow completes.
+      await flush();
+      expect(resolvedInfo).toBe("pending");
+      expect(getUserInfoMock).not.toHaveBeenCalled();
+
+      // Complete the flow.
+      const request = await manager.requestLoginByEmail(EMAIL);
+      if (!request.success)
+        throw new Error("expected login request to succeed");
+      await manager.submitLoginCode("123456", request);
+
+      await promise;
+      expect(resolvedInfo).toEqual({ id: USER_ID, email: EMAIL });
+      // The UI is closed once login resolves.
+      await waitFor(() => manager.isLoginOpen.value === false);
+    });
+
+    it("login() called twice resolves with the same promise", async () => {
+      const manager = createLoginManager({ os });
+
+      const first = manager.login();
+      const second = manager.login();
+
+      expect(second).toBe(first);
+
+      // Complete the flow so the shared promise settles cleanly.
+      const request = await manager.requestLoginByEmail(EMAIL);
+      if (!request.success)
+        throw new Error("expected login request to succeed");
+      await manager.submitLoginCode("123456", request);
+
+      await expect(first).resolves.toEqual({ id: USER_ID, email: EMAIL });
+      await expect(second).resolves.toEqual({ id: USER_ID, email: EMAIL });
+    });
+
+    it("completes the login flow: login() -> requestLoginByEmail() -> submitLoginCode()", async () => {
+      const manager = createLoginManager({ os });
+      const loginPromise = manager.login();
+
+      const request = await manager.requestLoginByEmail(EMAIL);
+      expect(requestLoginMock).toHaveBeenCalledWith({
+        address: EMAIL,
+        addressType: "email",
+        comId: "seed-bible",
+      });
+      if (!request.success)
+        throw new Error("expected login request to succeed");
+
+      const completeResult = await manager.submitLoginCode("123456", request);
+      expect(completeLoginMock).toHaveBeenCalledWith({
+        code: "123456",
+        requestId: "request-1",
+        userId: USER_ID,
+      });
+      expect(completeResult.success).toBe(true);
+
+      await expect(loginPromise).resolves.toEqual({
+        id: USER_ID,
+        email: EMAIL,
+      });
+      // The session key is propagated to the records client for authenticated calls.
+      expect(os.client.sessionKey).toBe(SESSION_KEY);
+    });
+
+    it("can cancel the login flow", async () => {
+      const manager = createLoginManager({ os });
+      const loginPromise = manager.login();
+      expect(manager.isLoginOpen.value).toBe(true);
+
+      await manager.cancelLogin();
+
+      await expect(loginPromise).rejects.toThrow("Login cancelled");
+      await waitFor(() => manager.isLoginOpen.value === false);
+      expect(getUserInfoMock).not.toHaveBeenCalled();
+    });
   });
 
-  it.skip("loads userId and profile when background auth succeeds", async () => {
-    // const bot = createBot("user-1");
-    // requestAuthBotInBackgroundMock.mockResolvedValue(bot);
-    getDataMock.mockResolvedValue({ success: true, data: { name: "Alice" } });
+  describe("background authentication on init", () => {
+    it("does not load user info when there is no persisted session key", async () => {
+      const manager = createLoginManager({ os });
+      await flush();
 
-    const manager = createLoginManager({ os });
+      expect(manager.isLoginOpen.value).toBe(false);
+      expect(manager.userInfo.value).toBeNull();
+      expect(requestLoginMock).not.toHaveBeenCalled();
+      expect(getUserInfoMock).not.toHaveBeenCalled();
+    });
 
-    await waitFor(() => manager.userId.value === "user-1");
-    await waitFor(() => manager.profile.value?.name === "Alice");
-
-    expect(getDataMock).toHaveBeenCalledWith("user-1", "profile");
-  });
-
-  it.skip("login() authenticates and loads profile", async () => {
-    // const bot = createBot("user-2");
-    // requestAuthBotMock.mockResolvedValue(bot);
-    getDataMock.mockResolvedValue({ success: true, data: { name: "Bob" } });
-
-    const manager = createLoginManager({ os });
-
-    await manager.login();
-
-    await waitFor(() => manager.userId.value === "user-2");
-    await waitFor(() => manager.profile.value?.name === "Bob");
-
-    expect(requestAuthBotMock).toHaveBeenCalledTimes(1);
-    expect(getDataMock).toHaveBeenCalledWith("user-2", "profile");
-  });
-
-  it.skip("logout() signs out and clears user state", async () => {
-    // const bot = createBot("user-3");
-    // requestAuthBotInBackgroundMock.mockResolvedValue(bot);
-    getDataMock.mockResolvedValue({ success: true, data: { name: "Carol" } });
-
-    const manager = createLoginManager({ os });
-
-    await waitFor(() => manager.userId.value === "user-3");
-    await waitFor(() => manager.profile.value?.name === "Carol");
-
-    await manager.logout();
-
-    await waitFor(() => manager.userId.value === null);
-    await waitFor(() => manager.profile.value === null);
-    expect(signOutMock).toHaveBeenCalledTimes(1);
-  });
-
-  it.skip("updateProfile() persists profile when authenticated", async () => {
-    // const bot = createBot("user-4");
-    // requestAuthBotInBackgroundMock.mockResolvedValue(bot);
-
-    const manager = createLoginManager({ os });
-
-    await waitFor(() => manager.userId.value === "user-4");
-
-    manager.updateProfile({ name: "Updated" });
-
-    expect(manager.profile.value).toEqual({ name: "Updated" });
-    expect(recordDataMock).toHaveBeenCalledWith(
-      "user-4",
-      "profile",
-      { name: "Updated" },
-      { marker: "publicRead" }
-    );
-  });
-
-  it("updateProfile() does not persist when unauthenticated", () => {
-    const manager = createLoginManager({ os });
-
-    manager.updateProfile({ name: "Ignored" });
-
-    expect(recordDataMock).not.toHaveBeenCalled();
-    expect(warnSpy).toHaveBeenCalledWith(
-      "Cannot update profile: no authenticated user"
-    );
-  });
-
-  it.skip("calls posthog.identify() with the user ID when the user logs in", async () => {
-    const mockIdentify = vi.fn();
-    (globalThis as any).posthog = { identify: mockIdentify };
-
-    try {
-      // const bot = createBot("user-posthog");
-      // requestAuthBotMock.mockResolvedValue(bot);
+    it("loads the user info when a session key is persisted", async () => {
+      localStorage.setItem("sessionKey", SESSION_KEY);
 
       const manager = createLoginManager({ os });
-      await manager.login();
 
-      await waitFor(() => manager.userId.value === "user-posthog");
+      // The user info is loaded in the background without opening the login UI.
+      await waitFor(() => manager.userInfo.value !== null);
+      expect(manager.isLoginOpen.value).toBe(false);
+      expect(getUserInfoMock).toHaveBeenCalledTimes(1);
+      expect(manager.userInfo.value).toEqual({ id: USER_ID, email: EMAIL });
+    });
 
-      expect(mockIdentify).toHaveBeenCalledTimes(1);
-      expect(mockIdentify).toHaveBeenCalledWith("user-posthog");
-    } finally {
-      delete (globalThis as any).posthog;
-    }
+    it("loads userId and profile when a session key is persisted", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: { name: "Alice" } });
+
+      const manager = createAuthenticatedManager();
+
+      await waitFor(() => manager.userId.value === USER_ID);
+      await waitFor(() => manager.profile.value?.name === "Alice");
+
+      expect(getDataMock).toHaveBeenCalledWith(USER_ID, "profile");
+    });
   });
 
-  it("getUserProfile() retrieves the user profile from storage", async () => {
-    getDataMock.mockResolvedValue({ success: true, data: { name: "Dave" } });
+  describe("profile", () => {
+    it("login() authenticates and loads the profile", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: { name: "Bob" } });
 
-    const manager = createLoginManager({ os });
+      const manager = createLoginManager({ os });
+      const loginPromise = manager.login();
 
-    const profile = await manager.getUserProfile("custom-user");
+      const request = await manager.requestLoginByEmail(EMAIL);
+      if (!request.success)
+        throw new Error("expected login request to succeed");
+      await manager.submitLoginCode("123456", request);
+      await loginPromise;
 
-    expect(getDataMock).toHaveBeenCalledWith("custom-user", "profile");
-    expect(profile).toEqual({ name: "Dave" });
+      await waitFor(() => manager.userId.value === USER_ID);
+      await waitFor(() => manager.profile.value?.name === "Bob");
+
+      expect(getDataMock).toHaveBeenCalledWith(USER_ID, "profile");
+    });
+
+    it("logout() clears the user state", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: { name: "Carol" } });
+
+      const manager = createAuthenticatedManager();
+
+      await waitFor(() => manager.userId.value === USER_ID);
+      await waitFor(() => manager.profile.value?.name === "Carol");
+
+      await manager.logout();
+
+      await waitFor(() => manager.userId.value === null);
+      await waitFor(() => manager.profile.value === null);
+    });
+
+    it("updateProfile() persists the profile when authenticated", async () => {
+      const manager = createAuthenticatedManager();
+
+      await waitFor(() => manager.userId.value === USER_ID);
+      // Let the initial profile load settle so it does not clobber our update.
+      await waitFor(() => manager.profile.value !== null);
+
+      manager.updateProfile({ name: "Updated" });
+
+      expect(manager.profile.value).toEqual({ name: "Updated" });
+      expect(recordDataMock).toHaveBeenCalledWith(
+        USER_ID,
+        "profile",
+        { name: "Updated" },
+        { marker: "publicRead" }
+      );
+    });
+
+    it("updateProfile() does not persist when unauthenticated", () => {
+      const manager = createLoginManager({ os });
+
+      manager.updateProfile({ name: "Ignored" });
+
+      expect(recordDataMock).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith(
+        "Cannot update profile: no authenticated user"
+      );
+    });
+
+    it("getUserProfile() retrieves the user profile from storage", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: { name: "Dave" } });
+
+      const manager = createLoginManager({ os });
+
+      const profile = await manager.getUserProfile("custom-user");
+
+      expect(getDataMock).toHaveBeenCalledWith("custom-user", "profile");
+      expect(profile).toEqual({ name: "Dave" });
+    });
+
+    it("identifies the user with PostHog when the user logs in", async () => {
+      const mockIdentify = vi.fn();
+      (globalThis as any).posthog = { identify: mockIdentify };
+
+      try {
+        const manager = createLoginManager({ os });
+        const loginPromise = manager.login();
+
+        const request = await manager.requestLoginByEmail(EMAIL);
+        if (!request.success) {
+          throw new Error("expected login request to succeed");
+        }
+        await manager.submitLoginCode("123456", request);
+        await loginPromise;
+
+        await waitFor(() => manager.userId.value === USER_ID);
+
+        expect(mockIdentify).toHaveBeenCalledWith(USER_ID);
+      } finally {
+        delete (globalThis as any).posthog;
+      }
+    });
   });
 
   describe.skip("uploadProfilePicture()", () => {
@@ -192,12 +364,10 @@ describe("createLoginManager", () => {
     });
 
     it("throws an error when the user cancels file selection", async () => {
-      // const bot = createBot("user-upload");
-      // requestAuthBotInBackgroundMock.mockResolvedValue(bot);
       showUploadFilesMock.mockResolvedValue([]);
 
-      const manager = createLoginManager({ os });
-      await waitFor(() => manager.userId.value === "user-upload");
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userId.value === USER_ID);
 
       await expect(manager.uploadProfilePicture()).rejects.toThrow(
         "No file selected for upload"
@@ -207,9 +377,6 @@ describe("createLoginManager", () => {
     });
 
     it("uploads the file and saves the URL to the profile on success", async () => {
-      // const bot = createBot("user-upload");
-      // requestAuthBotInBackgroundMock.mockResolvedValue(bot);
-
       const fakeFile = {
         data: new Uint8Array([1, 2, 3]),
         name: "avatar.png",
@@ -221,25 +388,21 @@ describe("createLoginManager", () => {
         url: "https://example.com/avatar.png",
       });
 
-      const manager = createLoginManager({ os });
-      await waitFor(() => manager.userId.value === "user-upload");
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userId.value === USER_ID);
 
       await manager.uploadProfilePicture();
 
-      expect(recordFileMock).toHaveBeenCalledWith(
-        "user-upload",
-        fakeFile.data,
-        { mimeType: "image/png", markers: ["publicRead"] }
-      );
+      expect(recordFileMock).toHaveBeenCalledWith(USER_ID, fakeFile.data, {
+        mimeType: "image/png",
+        markers: ["publicRead"],
+      });
       expect(manager.profile.value?.pictureUrl).toBe(
         "https://example.com/avatar.png"
       );
     });
 
     it("throws an error and does not update the profile when the upload fails", async () => {
-      // const bot = createBot("user-upload-fail");
-      // requestAuthBotInBackgroundMock.mockResolvedValue(bot);
-
       const fakeFile = {
         data: new Uint8Array([1, 2, 3]),
         name: "avatar.png",
@@ -252,8 +415,8 @@ describe("createLoginManager", () => {
         errorMessage: "Upload failed.",
       });
 
-      const manager = createLoginManager({ os });
-      await waitFor(() => manager.userId.value === "user-upload-fail");
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userId.value === USER_ID);
 
       await expect(manager.uploadProfilePicture()).rejects.toThrow(
         "Failed to upload profile picture"

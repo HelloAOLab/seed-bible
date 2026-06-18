@@ -139,21 +139,22 @@ export async function saveReadingHistory(
  */
 export async function saveUserReadingHistory(
   os: CasualOSManager,
+  login: LoginManager,
   bookId: string,
   chapter: number,
   recencyThresholdSeconds: number = 30 * 60
 ): Promise<void> {
-  const authBot = await os.requestAuthBotInBackground();
+  const userId = login.userId.value;
 
-  if (!authBot) {
+  if (!userId) {
     // User is not logged in, so we can't save reading history
     return;
   }
 
   await saveReadingHistory(
     os,
-    authBot.id,
-    authBot.id,
+    userId,
+    userId,
     bookId,
     chapter,
     recencyThresholdSeconds
@@ -315,17 +316,18 @@ export function getCurrentYearTimeSpan() {
  */
 export async function getUserReadingHistorySummary(
   os: CasualOSManager,
+  login: LoginManager,
   startTime: number,
   endTime: number
 ): Promise<ReadingHistorySummary | null> {
-  const authBot = await os.requestAuthBotInBackground();
+  const userId = login.userId.value;
 
-  if (!authBot) {
+  if (!userId) {
     // User is not logged in, so we can't get reading history
     return null;
   }
 
-  return getReadingHistorySummary(os, authBot.id, startTime, endTime);
+  return getReadingHistorySummary(os, userId, startTime, endTime);
 }
 
 /**
