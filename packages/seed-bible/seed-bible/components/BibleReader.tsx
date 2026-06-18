@@ -862,7 +862,7 @@ export function BibleReader(props: BibleReaderProps) {
 
   // Compact verse part of the current selection (e.g. "1-3" or "1,5-7"),
   // shown inline after the book/chapter reference in the mobile header.
-  const selectedVerseRange = computed(() => {
+  const selectedVerseRange = useComputed(() => {
     const numbers = selectedVerses.value
       .map((v) => v.verse.number)
       .sort((a, b) => a - b);
