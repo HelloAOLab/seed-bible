@@ -719,7 +719,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   )}
 
                   {(prev || next || selector) && (
-                    <div className="sb-reader-floating-nav-group">
+                    <div
+                      className={`sb-reader-floating-nav-group${audio ? "" : " sb-reader-floating-nav-group-full"}`}
+                    >
                       {prev && PrevIcon && (
                         <button
                           type="button"

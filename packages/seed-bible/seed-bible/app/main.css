@@ -2120,6 +2120,13 @@ h6 {
     min-width: 0;
   }
 
+  /* When no play button is present, let the nav group span the full width,
+   * pushing the arrows to the edges with the label centered between them. */
+  .sb-reader-floating-nav-group-full {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .sb-reader-floating-nav-arrow {
     flex: 0 0 auto;
     display: flex;
