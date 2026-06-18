@@ -4,15 +4,13 @@ import type { LoginRequestSuccess } from "@casual-simulation/aux-records";
 import type { CasualOSManager } from "../managers/OsManager";
 import { useI18n } from "../i18n/I18nManager";
 import SeedBibleTitleIcon from "../img/SeedBibleLogoWithTitleBlack.png";
+import type { NavigationManager } from "../managers/NavigationManager";
 
 type LoginStep = "email" | "code";
 
 // Placeholder asset/links. Replace `LOGO_SRC` with the real Seed Bible logo and
 // point the legal links at their real destinations when available.
 const LOGO_SRC = SeedBibleTitleIcon;
-const TERMS_OF_SERVICE_URL = "./?terms=open";
-const PRIVACY_POLICY_URL = "./?privacy=open";
-const CODE_OF_CONDUCT_URL = "./?conduct=open";
 
 /**
  * Guided login flow shown when {@link CasualOSManager.isLoginOpen} is set.
@@ -26,7 +24,13 @@ const CODE_OF_CONDUCT_URL = "./?conduct=open";
  * resolves, the manager flips `isLoginOpen` back to `false` and this component
  * unmounts itself.
  */
-export function LoginModal({ os }: { os: CasualOSManager }) {
+export function LoginModal({
+  os,
+  navigation,
+}: {
+  os: CasualOSManager;
+  navigation: NavigationManager;
+}) {
   const { t } = useI18n();
 
   const step = useSignal<LoginStep>("email");
@@ -42,6 +46,22 @@ export function LoginModal({ os }: { os: CasualOSManager }) {
   const wasOpenRef = useRef(false);
   const emailInputRef = useRef<HTMLInputElement>(null);
   const codeInputRef = useRef<HTMLInputElement>(null);
+
+  const termsOfServiceLink = navigation.linkToQuery({
+    terms: "open",
+    privacy: null,
+    conduct: null,
+  });
+  const privacyPolicyLink = navigation.linkToQuery({
+    privacy: "open",
+    terms: null,
+    conduct: null,
+  });
+  const codeOfConductLink = navigation.linkToQuery({
+    conduct: "open",
+    privacy: null,
+    terms: null,
+  });
 
   const isOpen = os.isLoginOpen.value;
 
@@ -317,9 +337,7 @@ export function LoginModal({ os }: { os: CasualOSManager }) {
                   {t("login-agree-prefix", { defaultValue: "I agree to the" })}{" "}
                   <a
                     className="sb-login-link"
-                    href={TERMS_OF_SERVICE_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href={termsOfServiceLink}
                     onClick={(event: MouseEvent) => event.stopPropagation()}
                   >
                     {t("terms-of-service", {
@@ -350,29 +368,19 @@ export function LoginModal({ os }: { os: CasualOSManager }) {
           )}
 
           <div className="sb-login-legal">
-            <a
-              className="sb-login-link"
-              href={PRIVACY_POLICY_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(event: MouseEvent) => event.stopPropagation()}
-            >
+            <a className="sb-login-link" href={privacyPolicyLink}>
               {t("privacy-policy", { defaultValue: "Privacy policy" })}
             </a>
             <a
               className="sb-login-link"
-              href={CODE_OF_CONDUCT_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={codeOfConductLink}
               onClick={(event: MouseEvent) => event.stopPropagation()}
             >
               {t("code-of-conduct", { defaultValue: "Code of conduct" })}
             </a>
             <a
               className="sb-login-link"
-              href={TERMS_OF_SERVICE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
+              href={termsOfServiceLink}
               onClick={(event: MouseEvent) => event.stopPropagation()}
             >
               {t("terms-of-service", { defaultValue: "Terms of service" })}

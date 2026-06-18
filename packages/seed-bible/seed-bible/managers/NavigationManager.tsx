@@ -104,21 +104,26 @@ export function createNavigationManager(
       syncCurrentUrl();
     }) as History["replaceState"];
 
+    const isNavigationToSameOrigin = (url: string | null | undefined) => {
+      if (!url) return true;
+      return (
+        new URL(url, window.location.href).origin === window.location.origin
+      );
+    };
+
     // The Navigation API is not available in all browsers (or in jsdom);
     // the popstate/pushState/replaceState hooks above cover those cases.
     if (typeof window.navigation !== "undefined") {
       window.navigation.addEventListener("navigate", (event: NavigateEvent) => {
-        if (event.downloadRequest || !event.destination?.sameDocument) {
+        if (
+          event.downloadRequest ||
+          !isNavigationToSameOrigin(event.destination?.url)
+        ) {
           return;
         }
 
-        console.log(
-          "Navigate to:",
-          event.destination?.url ?? window.location.href,
-          event
-        );
         currentUrl.value = new URL(
-          event.destination.url ?? window.location.href
+          event.destination?.url ?? window.location.href
         );
         event.intercept();
       });
@@ -212,6 +217,18 @@ export function createNavigationManager(
     };
   };
 
+  const linkToQuery = (query: Record<string, string | null>) => {
+    const url = new URL(currentUrl.value);
+    for (const [key, value] of Object.entries(query)) {
+      if (value === null) {
+        url.searchParams.delete(key);
+      } else {
+        url.searchParams.set(key, value);
+      }
+    }
+    return url.toString();
+  };
+
   return {
     currentUrl: computed(() => currentUrl.value),
     go,
@@ -219,6 +236,7 @@ export function createNavigationManager(
     push,
     updateQueryParam,
     syncSignalsToUrl,
+    linkToQuery,
   };
 }
 
