@@ -1656,6 +1656,13 @@ h6 {
   font-family: var(--sb-font-family);
 }
 
+/* Contextual tips can fire while a high z-index panel/sheet (e.g. mobile
+ * settings) is open, which would otherwise hide the tip. `elevated` steps lift
+ * the overlay above those panels so the spotlight + popover land on top. */
+.sb-tour-overlay-raised {
+  z-index: 10001;
+}
+
 .sb-tour-spotlight {
   position: absolute;
   border-radius: 10px;

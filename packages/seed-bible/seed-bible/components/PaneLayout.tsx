@@ -844,7 +844,14 @@ export function PaneReader(props: PaneReaderScrollerProps) {
         prevChapterPreview,
         nextChapterPreview,
         showMobileSettings,
-        onOpenMobileSettings: () => setShowMobileSettings(true),
+        onOpenMobileSettings: () => {
+          setShowMobileSettings(true);
+          // Teach the settings sheet the first time the user opens it (mirrors
+          // the pane-layout contextual tip). Triggered from the button's own
+          // handler so the tip fires reliably — the modal tour overlay can't be
+          // tapped "through" to the real button.
+          state?.tutorial.startContextual("mobile-settings");
+        },
         onCloseMobileSettings: () => setShowMobileSettings(false),
         onOpenAllSettings: openAllSettings,
         swipeViewportRefCallback,

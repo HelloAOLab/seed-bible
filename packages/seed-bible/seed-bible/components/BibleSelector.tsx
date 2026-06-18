@@ -67,10 +67,8 @@ export function BibleSelector(props: BibleSelectorProps) {
   const tourStep =
     runningStep && runningStep.group === "selector" ? runningStep : null;
   const tourStepId = tourStep?.id ?? null;
-  const isLastStep = tutorial
-    ? tutorial.index.value >= tutorial.steps.length - 1
-    : false;
-  const canGoBack = tutorial ? tutorial.index.value > 0 : false;
+  const isLastStep = tutorial ? tutorial.isLast.value : false;
+  const canGoBack = tutorial ? tutorial.canGoBack.value : false;
 
   return (
     <>

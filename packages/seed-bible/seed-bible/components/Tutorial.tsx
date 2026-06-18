@@ -40,9 +40,7 @@ export function Tutorial({
   const { t } = useI18n();
   const running = tutorial.running.value;
   const step = tutorial.currentStep.value;
-  const index = tutorial.index.value;
-  const total = tutorial.steps.length;
-  const canGoBack = index > 0;
+  const canGoBack = tutorial.canGoBack.value;
 
   const matchesFilter =
     !groupFilter ||
@@ -58,6 +56,11 @@ export function Tutorial({
   // The overlay's own size, used as the bounds for popover fit/clamping.
   const frame = useSignal<{ w: number; h: number } | null>(null);
   const overlayRef = useRef<HTMLDivElement | null>(null);
+  // The popover's measured size. Positioning needs the real height (text wraps
+  // and buttons reflow, especially on narrow mobile), so an estimate isn't
+  // enough to guarantee the box never overlaps the highlighted element.
+  const popSize = useSignal<{ w: number; h: number } | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!running || !step || !matchesFilter) {
@@ -105,12 +108,32 @@ export function Tutorial({
     };
   }, [running, step?.id]);
 
+  // Measure the popover after each render and feed its real height back into
+  // positioning. Guarded so it settles (only updates on an actual size change)
+  // and doesn't loop.
+  useEffect(() => {
+    const el = popoverRef.current;
+    if (!el) {
+      return;
+    }
+    const r = el.getBoundingClientRect();
+    const w = Math.round(r.width);
+    const h = Math.round(r.height);
+    if (!w && !h) {
+      return;
+    }
+    const prev = popSize.value;
+    if (!prev || Math.abs(prev.w - w) > 1 || Math.abs(prev.h - h) > 1) {
+      popSize.value = { w, h };
+    }
+  });
+
   if (!running || !step || !matchesFilter) {
     return null;
   }
 
   const r = rect.value;
-  const isLast = index >= total - 1;
+  const isLast = tutorial.isLast.value;
   const pad = 6;
 
   const spotlight: Rect | null = r
@@ -122,12 +145,19 @@ export function Tutorial({
       }
     : null;
 
-  const popover = computePopover(spotlight, step.placement, frame.value);
+  const popover = computePopover(
+    spotlight,
+    step.placement,
+    frame.value,
+    popSize.value
+  );
 
   return (
     <div
       ref={overlayRef}
-      className={`sb-tour-overlay ${className}`}
+      className={`sb-tour-overlay${
+        step.elevated ? " sb-tour-overlay-raised" : ""
+      } ${className}`}
       role="dialog"
       aria-modal="true"
     >
@@ -144,6 +174,7 @@ export function Tutorial({
       )}
 
       <div
+        ref={popoverRef}
         className={`sb-tour-popover${spotlight ? "" : " sb-tour-popover-centered"}`}
         style={popover.style}
         onClick={(event: MouseEvent) => event.stopPropagation()}
@@ -217,16 +248,33 @@ interface PopoverLayout {
 const clampValue = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(value, max));
 
+/** Whether two rects overlap (touching edges don't count). */
+function intersects(a: Rect, b: Rect): boolean {
+  return (
+    a.left < b.left + b.width &&
+    a.left + a.width > b.left &&
+    a.top < b.top + b.height &&
+    a.top + a.height > b.top
+  );
+}
+
 /**
- * Positions the popover next to the spotlight on the preferred side, flipping
- * to the opposite side when there isn't room, and computes where the pointer
- * arrow sits so it aims at the target's center. Centers (no arrow) when there's
- * no target on screen.
+ * Positions the popover next to the spotlight on the preferred side, flipping to
+ * whichever side has room, and computes where the pointer arrow sits so it aims
+ * at the target's center. Centers (no arrow) when there's no target on screen.
+ *
+ * Guarantees the popover box never overlaps the highlighted element: it places
+ * the box in the gap on the chosen side and, as a last resort on cramped
+ * screens (small mobile, large target), pushes it flush off the spotlight even
+ * if that means clipping a viewport edge — covering the element is worse than
+ * running off the edge. Uses the popover's measured size when available so a
+ * tall, wrapped popover doesn't creep back over the target.
  */
 function computePopover(
   spotlight: Rect | null,
   placement: TutorialPlacement = "bottom",
-  frame: { w: number; h: number } | null = null
+  frame: { w: number; h: number } | null = null,
+  measured: { w: number; h: number } | null = null
 ): PopoverLayout {
   if (typeof window === "undefined" || !spotlight) {
     return { style: {}, side: null, arrowStyle: {} };
@@ -236,13 +284,24 @@ function computePopover(
   // overlay's size (falling back to the viewport).
   const vw = frame?.w || window.innerWidth;
   const vh = frame?.h || window.innerHeight;
-  const estHeight = 180;
 
+  // Effective popover size. Width is capped to the viewport so it can't overflow
+  // a narrow screen; height comes from the real measurement once we have it.
+  const pw = Math.min(POPOVER_WIDTH, Math.max(0, vw - GAP * 2));
+  const ph = measured?.h || 180;
+
+  // Free space in the gap on each side of the spotlight.
+  const space: Record<TutorialPlacement, number> = {
+    bottom: vh - (spotlight.top + spotlight.height) - GAP,
+    top: spotlight.top - GAP,
+    right: vw - (spotlight.left + spotlight.width) - GAP,
+    left: spotlight.left - GAP,
+  };
   const fits: Record<TutorialPlacement, boolean> = {
-    bottom: spotlight.top + spotlight.height + GAP + estHeight < vh,
-    top: spotlight.top - GAP - estHeight > 0,
-    right: spotlight.left + spotlight.width + GAP + POPOVER_WIDTH < vw,
-    left: spotlight.left - GAP - POPOVER_WIDTH > 0,
+    bottom: space.bottom >= ph,
+    top: space.top >= ph,
+    right: space.right >= pw,
+    left: space.left >= pw,
   };
   const order: TutorialPlacement[] = [
     placement,
@@ -251,48 +310,61 @@ function computePopover(
     "right",
     "left",
   ];
-  const side = order.find((p) => fits[p]) ?? placement;
+  // Prefer a side the popover actually fits in; otherwise fall back to the side
+  // with the most room so it overlaps the target as little as possible.
+  const side =
+    order.find((p) => fits[p]) ??
+    (Object.keys(space) as TutorialPlacement[]).reduce((a, b) =>
+      space[b] > space[a] ? b : a
+    );
 
   const targetCenterX = spotlight.left + spotlight.width / 2;
   const targetCenterY = spotlight.top + spotlight.height / 2;
 
+  const vertical = side === "bottom" || side === "top";
   let top: number;
   let left: number;
 
-  if (side === "bottom" || side === "top") {
+  if (vertical) {
     left = clampValue(
-      targetCenterX - POPOVER_WIDTH / 2,
+      targetCenterX - pw / 2,
       GAP,
-      vw - POPOVER_WIDTH - GAP
+      Math.max(GAP, vw - pw - GAP)
     );
+    // Flush against the gap on the chosen side — never clamped back toward the
+    // spotlight, so the box can't ride over the target (it clips the viewport
+    // edge instead, which only happens on cramped screens).
     top =
       side === "bottom"
         ? spotlight.top + spotlight.height + GAP
-        : spotlight.top - GAP - estHeight;
+        : spotlight.top - GAP - ph;
   } else {
-    top = clampValue(targetCenterY - estHeight / 2, GAP, vh - estHeight - GAP);
+    top = clampValue(targetCenterY - ph / 2, GAP, Math.max(GAP, vh - ph - GAP));
     left =
       side === "right"
         ? spotlight.left + spotlight.width + GAP
-        : spotlight.left - GAP - POPOVER_WIDTH;
+        : spotlight.left - GAP - pw;
   }
 
-  top = Math.max(GAP, top);
-  left = clampValue(left, GAP, vw - POPOVER_WIDTH - GAP);
+  // Final guard: if the box still intersects the spotlight (clamping pulled it
+  // back over the target on a cramped screen), push it flush off the chosen side.
+  if (intersects({ top, left, width: pw, height: ph }, spotlight)) {
+    if (side === "bottom") top = spotlight.top + spotlight.height + GAP;
+    else if (side === "top") top = spotlight.top - GAP - ph;
+    else if (side === "right") left = spotlight.left + spotlight.width + GAP;
+    else left = spotlight.left - GAP - pw;
+  }
 
   // Point the arrow at the target's center along the facing edge.
-  const arrowStyle: Record<string, string> =
-    side === "bottom" || side === "top"
-      ? {
-          left: `${clampValue(targetCenterX - left, 18, POPOVER_WIDTH - 18)}px`,
-        }
-      : { top: `${clampValue(targetCenterY - top, 18, estHeight - 18)}px` };
+  const arrowStyle: Record<string, string> = vertical
+    ? { left: `${clampValue(targetCenterX - left, 18, pw - 18)}px` }
+    : { top: `${clampValue(targetCenterY - top, 18, ph - 18)}px` };
 
   return {
     style: {
       top: `${top}px`,
       left: `${left}px`,
-      width: `${POPOVER_WIDTH}px`,
+      width: `${pw}px`,
     },
     side,
     arrowStyle,

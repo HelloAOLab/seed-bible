@@ -42,6 +42,12 @@ export interface TutorialStep {
    * would be hidden behind the selector, which is its own stacking context).
    */
   group?: "selector";
+  /**
+   * Lifts the tour overlay above high z-index app panels (e.g. the mobile
+   * settings sheet) so the spotlight + popover render on top of what's open,
+   * instead of behind it. Used by contextual tips that fire while a panel is up.
+   */
+  elevated?: boolean;
 }
 
 /**
@@ -130,10 +136,19 @@ export const MOBILE_TUTORIAL_STEPS: TutorialStep[] = [
     id: "m-passage",
     target: ".sb-bible-reader-mobile-header-title",
     titleKey: "tutorial.mobilePassageTitle",
-    titleDefault: "Your current passage",
+    titleDefault: "Your current translation",
     bodyKey: "tutorial.mobilePassageBody",
-    bodyDefault: "Tap the book name to jump to a different book or chapter.",
+    bodyDefault: "Tap the translation name to jump to a different translation.",
     placement: "bottom",
+  },
+  {
+    id: "m-books",
+    target: ".sb-reader-floating-nav-label",
+    titleKey: "tutorial.mobileBooksTitle",
+    titleDefault: "Your book/chapter selection",
+    bodyKey: "tutorial.mobileBooksBody",
+    bodyDefault: "Tap the book name to jump to a different book or chapter.",
+    placement: "top",
   },
   {
     id: "selector-books",
@@ -155,15 +170,10 @@ export const MOBILE_TUTORIAL_STEPS: TutorialStep[] = [
       "Switch between the Bible, search, and more from the bottom bar.",
     placement: "top",
   },
-  {
-    id: "m-settings",
-    target: ".sb-bible-reader-mobile-header-settings",
-    titleKey: "tutorial.mobileSettingsTitle",
-    titleDefault: "Settings",
-    bodyKey: "tutorial.mobileSettingsBody",
-    bodyDefault: "Customize text, themes, and reading options here.",
-    placement: "bottom",
-  },
+  // Settings is taught contextually (CONTEXTUAL_TUTORIALS["mobile-settings"]) —
+  // triggered when the user opens the settings sheet, not as a forced tour step.
+  // (A modal tour overlay can't be tapped "through" to the real button, so the
+  // tip is fired from the button's own handler instead.)
 ];
 
 /**
@@ -173,6 +183,22 @@ export const MOBILE_TUTORIAL_STEPS: TutorialStep[] = [
  * own seen-flag so a completed/skipped contextual tour never reappears.
  */
 export const CONTEXTUAL_TUTORIALS: Record<string, TutorialStep[]> = {
+  "mobile-settings": [
+    {
+      id: "mobile-settings",
+      // Fired from the settings button's own handler once the sheet is open, so
+      // it spotlights what's now on screen. `elevated` lifts the tour layer above
+      // the sheet (which sits at a very high z-index), otherwise the tip hides
+      // behind it.
+      target: ".sb-mobile-settings-sheet",
+      titleKey: "tutorial.mobileSettingsTitle",
+      titleDefault: "Settings",
+      bodyKey: "tutorial.mobileSettingsBody",
+      bodyDefault: "Customize text, themes, and reading options here.",
+      placement: "top",
+      elevated: true,
+    },
+  ],
   "pane-layout": [
     {
       id: "pane-layout",
@@ -263,6 +289,14 @@ export interface TutorialManager {
   index: ReadonlySignal<number>;
   /** The active step, or null when not running. */
   currentStep: ReadonlySignal<TutorialStep | null>;
+  /**
+   * Whether the active step is the last in the linear queue (so its primary
+   * button reads "Done"). Click-only interjections always report `true` — their
+   * primary button just dismisses the tip back to the tour.
+   */
+  isLast: ReadonlySignal<boolean>;
+  /** Whether the tour can step backwards from the active step. */
+  canGoBack: ReadonlySignal<boolean>;
   /** Whether the user has already completed/skipped the onboarding tour. */
   completed: ReadonlySignal<boolean>;
   /** Whether the user has opted out of all future tutorial prompts. */
@@ -364,6 +398,12 @@ export function createTutorialManager(
   const currentStep = computed<TutorialStep | null>(() =>
     running.value ? (activeSteps.value[index.value] ?? null) : null
   );
+
+  const isLast = computed<boolean>(
+    () => running.value && index.value >= activeSteps.value.length - 1
+  );
+
+  const canGoBack = computed<boolean>(() => running.value && index.value > 0);
 
   // Run each step's onEnter when it becomes active and the previous step's
   // onLeave when moving away (including when the tour ends).
@@ -565,6 +605,8 @@ export function createTutorialManager(
     running,
     index,
     currentStep,
+    isLast,
+    canGoBack,
     completed,
     optedOut,
     featuresSeen,
