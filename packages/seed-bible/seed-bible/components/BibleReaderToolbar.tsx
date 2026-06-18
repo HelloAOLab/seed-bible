@@ -740,7 +740,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         >
                           {readingState.value?.chapterData.value?.book.name ??
                             readingState.value?.bookId.value ??
-                            " "}
+                            " "}{" "}
                           {readingState.value?.chapterNumber.value}
                         </button>
                       )}
