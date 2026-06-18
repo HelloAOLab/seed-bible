@@ -2422,15 +2422,12 @@ h6 {
     /* pointer-events: none; */
   }
 
-  /* The floating chapter-nav bar should NOT hide with the bottom nav. The wrap
-   * slides down by `100% (= nav height) + 76px`; counter the constant 76px on
-   * the bar so it settles flush at the viewport bottom (taking the nav's
-   * place) instead of sliding off-screen with it. */
-  body.sb-scroll-hide-bars .sb-reader-floating-nav {
-    transform: translateY(
-      calc(var(--sb-reader-toolbar-floating-button-top) - 8px)
-    );
-  }
+  /* The floating chapter-nav bar rides with the bottom toolbar when the bars
+   * hide on scroll. It sits inside `.sb-reader-toolbar-wrap`, so it already
+   * inherits the wrap's slide transform — applying its own counter-transform
+   * here made it travel a shorter distance over the same 0.3s, so it lagged
+   * behind the wrap and a gap opened between them. Leaving it transform-free
+   * keeps both moving at the same speed, flush, with no gap. */
 }
 
 .sb-verse-toolbar {
