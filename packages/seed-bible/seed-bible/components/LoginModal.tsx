@@ -10,9 +10,9 @@ type LoginStep = "email" | "code";
 // Placeholder asset/links. Replace `LOGO_SRC` with the real Seed Bible logo and
 // point the legal links at their real destinations when available.
 const LOGO_SRC = SeedBibleTitleIcon;
+const TERMS_OF_SERVICE_URL = "./?terms=open";
 const PRIVACY_POLICY_URL = "#";
 const CODE_OF_CONDUCT_URL = "#";
-const TERMS_OF_SERVICE_URL = "#";
 
 /**
  * Guided login flow shown when {@link CasualOSManager.isLoginOpen} is set.

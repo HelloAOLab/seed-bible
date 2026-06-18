@@ -197,6 +197,13 @@ export interface SeedBibleState {
   app: AppState;
   /** Extension loading and runtime manager. */
   extensions: ExtensionManager;
+
+  /** True when the Terms of Service modal is open. */
+  isTermsOpen: ReadonlySignal<boolean>;
+  /** Opens the Terms of Service modal (reflected in the URL as `?terms=open`). */
+  openTerms: () => void;
+  /** Closes the Terms of Service modal (clears `terms` from the URL). */
+  closeTerms: () => void;
 }
 
 /**
@@ -256,6 +263,30 @@ export function createSeedBibleState(
   const extensions = createExtensionManager();
   const modals = createModalManager();
   const search = createSearchManager();
+
+  // Terms of Service modal. Two-way bound to the `?terms=open` query param so
+  // it can be deep-linked: setting the param opens the modal, and closing the
+  // modal clears the param. Anything other than `open` (or no param) is closed.
+  const termsOpen = signal(
+    navigation.currentUrl.value.searchParams.get("terms") === "open"
+  );
+  const isTermsOpen = computed(() => termsOpen.value);
+  const openTerms = () => {
+    termsOpen.value = true;
+  };
+  const closeTerms = () => {
+    termsOpen.value = false;
+  };
+  navigation.syncSignalsToUrl({
+    terms: {
+      get value() {
+        return termsOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        termsOpen.value = newValue === "open";
+      },
+    },
+  });
 
   const { currentTheme } = themeManager;
   const theme = computed(() => currentTheme.value);
@@ -772,6 +803,9 @@ export function createSeedBibleState(
     navigation,
     i18n,
     extensions,
+    isTermsOpen,
+    openTerms,
+    closeTerms,
     app: {
       createSharedSession: handleCreateSharedSession,
       joinSharedSession: handleJoinSharedSession,

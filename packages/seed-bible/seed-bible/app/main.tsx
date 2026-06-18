@@ -11,6 +11,7 @@ import { useSignalEffect, type ReadonlySignal } from "@preact/signals";
 import { closeContextMenus } from "../components/ContextMenu";
 import { ModalHost } from "../components/ModalHost";
 import { LoginModal } from "../components/LoginModal";
+import { TermsOfServiceModal } from "../components/TermsOfServiceModal";
 import { useMemo } from "preact/hooks";
 import {
   AppConfigProvider,
@@ -161,6 +162,11 @@ function MainContent(props: {
         <ModalHost manager={state.modals} />
 
         <LoginModal os={state.os} />
+
+        <TermsOfServiceModal
+          isOpen={state.isTermsOpen.value}
+          onClose={() => state.closeTerms()}
+        />
       </div>
     </>
   );
