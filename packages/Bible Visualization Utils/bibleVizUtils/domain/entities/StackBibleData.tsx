@@ -10,6 +10,7 @@ import {
   type BibleStateType,
   type ExplodeStackCommand,
   ExplodeStackActions,
+  type BiblePieceType,
 } from "bibleVizUtils.domain.models.canvas";
 import type {
   StackCover,
@@ -173,27 +174,23 @@ export class StackBibleData extends StackData<StackTestamentData> {
   }
 
   getActiveHierarchy(): ActiveBibleHierarchy {
-    const testamentsData: StackTestamentData[] = [];
-    const sectionsData: (StackSectionData | StackSectionBookData)[] = [];
-    const booksData: StackBookData[] = [];
+    const hierarchy: ActiveBibleHierarchy = {
+      testamentsData: [],
+      sectionsData: [],
+      booksData: [],
+    };
 
     for (const testamentData of this.childrenData) {
-      if (testamentData.isSplitIntoSections) {
-        for (const child of testamentData.childrenData) {
-          if (!child.isActive) continue;
-          sectionsData.push(child);
-          if (child instanceof StackSectionData && child.isSplitIntoBooks) {
-            for (const bookData of child.childrenData.flat()) {
-              if (bookData.isActive) booksData.push(bookData);
-            }
-          }
-        }
-      } else if (testamentData.isActive) {
-        testamentsData.push(testamentData);
-      }
+      testamentData.collectActiveHierarchy(hierarchy);
     }
 
-    return { testamentsData, sectionsData, booksData };
+    return hierarchy;
+  }
+
+  getActiveTestaments(stopAtLayer?: BiblePieceType): StackTestamentData[] {
+    return this.childrenData.filter((testament) =>
+      testament.hasActiveContent(stopAtLayer)
+    );
   }
 }
 

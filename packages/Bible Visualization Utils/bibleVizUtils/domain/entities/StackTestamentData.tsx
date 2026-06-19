@@ -9,12 +9,13 @@ import {
   type StackTestamentCreationParams,
 } from "bibleVizUtils.domain.models.canvas";
 import type { TestamentInfo } from "bibleVizUtils.domain.models.arrangement";
-import type { Piece } from "bibleVizUtils.domain.models.canvas";
+import type { BiblePieceType, Piece } from "bibleVizUtils.domain.models.canvas";
 import {
   SelectionStates,
   SelectionEvents,
   simpleSelectionFSM,
 } from "bibleVizUtils.domain.models.selection";
+import type { ActiveBibleHierarchy } from "./StackBibleData";
 
 interface DataParams {
   childrenData?: (StackSectionData | StackSectionBookData)[];
@@ -134,15 +135,35 @@ export class StackTestamentData extends StackPieceData<
       if (section instanceof StackSectionData) section.implode();
     });
   }
-  isEmpty(): boolean {
-    if (this.selectionState !== SelectionStates.Idle) {
-      return !this.childrenData.some((sectionData) => {
-        return sectionData instanceof StackSectionData &&
-          sectionData.selectionState !== SelectionStates.Idle
-          ? true
-          : sectionData.isActive;
-      });
+
+  collectActiveHierarchy(hierarchy: ActiveBibleHierarchy) {
+    if (this.isSplitIntoSections) {
+      for (const child of this.childrenData) {
+        child.collectActiveHierarchy(hierarchy);
+      }
+    } else if (this.isActive) {
+      hierarchy.testamentsData.push(this);
     }
-    return !this.isActive;
+  }
+  hasActiveContent(stopAtLayer?: BiblePieceType): boolean {
+    if (this.type === stopAtLayer) {
+      return this.isActive || this.selectionState !== SelectionStates.Idle;
+    }
+
+    if (this.selectionState !== SelectionStates.Idle) {
+      return this.childrenData.some((child) =>
+        child.hasActiveContent(stopAtLayer)
+      );
+    }
+
+    return this.isActive;
+  }
+
+  isEmpty(stopAtLayer?: BiblePieceType): boolean {
+    return !this.hasActiveContent(stopAtLayer);
+  }
+
+  getActiveSections(): (StackSectionData | StackSectionBookData)[] {
+    return this.childrenData.filter((data) => data.isActive);
   }
 }

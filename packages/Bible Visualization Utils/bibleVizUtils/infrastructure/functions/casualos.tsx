@@ -1,4 +1,5 @@
 import type {
+  AnimateTagFunctionOptions,
   Bot,
   Vector3 as Vector3Type,
 } from "../../../../../typings/AuxLibraryDefinitions";
@@ -128,7 +129,7 @@ export const SetStrictTag = <
   B extends TypedBot<any>,
   K extends keyof B["tags"],
 >(
-  bot: B,
+  bot: B | B[],
   tag: K,
   value: B["tags"][K]
 ) => {
@@ -141,4 +142,55 @@ export function ApplyStrictMod<B extends TypedBot<any>>(
   mod: Partial<B["tags"]>
 ) {
   if (bot) applyMod(bot, mod);
+}
+
+// Overload 1: animate a single tag — animateTag(bot, tag, options).
+export function AnimateStrictTag<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  B extends TypedBot<any>,
+  K extends keyof B["tags"],
+>(
+  bot: B | B[],
+  tag: K,
+  options: Omit<AnimateTagFunctionOptions, "fromValue" | "toValue"> & {
+    fromValue?: B["tags"][K];
+    toValue: B["tags"][K];
+  }
+): Promise<void>;
+// Overload 2: animate several tags at once — animateTag(bot, options), where
+// fromValue/toValue are objects of tag values.
+export function AnimateStrictTag<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  B extends TypedBot<any>,
+>(
+  bot: B | B[],
+  options: Omit<AnimateTagFunctionOptions, "fromValue" | "toValue"> & {
+    fromValue?: Partial<B["tags"]>;
+    toValue: Partial<B["tags"]>;
+  }
+): Promise<void>;
+export function AnimateStrictTag<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  B extends TypedBot<any>,
+  K extends keyof B["tags"],
+>(
+  bot: B | B[],
+  tagOrOptions:
+    | K
+    | (Omit<AnimateTagFunctionOptions, "fromValue" | "toValue"> & {
+        fromValue?: Partial<B["tags"]>;
+        toValue: Partial<B["tags"]>;
+      }),
+  options?: Omit<AnimateTagFunctionOptions, "fromValue" | "toValue"> & {
+    fromValue?: B["tags"][K];
+    toValue: B["tags"][K];
+  }
+): Promise<void> {
+  // The native animateTag is poorly typed; the strict overloads above are the
+  // contract callers see, so the implementation passes through.
+  return animateTag(
+    bot,
+    tagOrOptions as string | AnimateTagFunctionOptions,
+    options
+  );
 }

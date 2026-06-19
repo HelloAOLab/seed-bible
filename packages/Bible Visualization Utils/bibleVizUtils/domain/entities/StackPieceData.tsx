@@ -163,6 +163,13 @@ export class StackPieceData<
     // this.#isHighlighted = isHighlighted;
   }
 
+  changeChildrenSelectionState(event: SelectionEvent) {
+    for (const child of this.childrenData) {
+      if (child instanceof StackPieceData) {
+        child.changeSelectionState(event);
+      }
+    }
+  }
   changeSelectionState(event: SelectionEvent): boolean {
     const prevState = this.#selectionState;
     const newState = this.#selectionFSM[prevState][event];

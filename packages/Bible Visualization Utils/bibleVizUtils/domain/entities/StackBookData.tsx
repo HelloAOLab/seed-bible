@@ -11,6 +11,7 @@ import type {
   ChapterInfo,
 } from "bibleVizUtils.domain.models.arrangement";
 import type { Piece } from "bibleVizUtils.domain.models.canvas";
+import type { ActiveBibleHierarchy } from "./StackBibleData";
 
 interface DataParams {
   childrenData?: StackChapterData[];
@@ -116,5 +117,13 @@ export class StackBookData extends StackBookBaseData<
     return this.childrenData.find((chapter) => {
       return chapter.getPieceInfoProperty(property) === value;
     });
+  }
+
+  collectActiveHierarchy(hierarchy: ActiveBibleHierarchy) {
+    if (this.isActive) hierarchy.booksData.push(this);
+  }
+
+  hasActiveContent() {
+    return this.isActive;
   }
 }

@@ -1,6 +1,7 @@
 import { StackPieceData } from "bibleVizUtils.domain.entities.StackPieceData";
 import { StackBookData } from "bibleVizUtils.domain.entities.StackBookData";
 import type {
+  BiblePieceType,
   ParentDataIds,
   StackSectionCreationParams,
 } from "bibleVizUtils.domain.models.canvas";
@@ -14,6 +15,7 @@ import {
   SelectionEvents,
   simpleSelectionFSM,
 } from "bibleVizUtils.domain.models.selection";
+import type { ActiveBibleHierarchy } from "./StackBibleData";
 
 interface DataParams {
   childrenData?: StackBookData[][];
@@ -189,5 +191,29 @@ export class StackSectionData extends StackPieceData<
         return bookData.isActive && bookData.piece;
       })
       .map((bookData) => bookData.piece as Piece);
+  }
+
+  collectActiveHierarchy(hierarchy: ActiveBibleHierarchy) {
+    if (!this.isActive) return;
+
+    hierarchy.sectionsData.push(this);
+
+    if (this.isSplitIntoBooks) {
+      for (const bookData of this.childrenData.flat()) {
+        bookData.collectActiveHierarchy(hierarchy);
+      }
+    }
+  }
+
+  hasActiveContent(stopAtLayer?: BiblePieceType): boolean {
+    if (this.type === stopAtLayer) {
+      return this.isActive || this.selectionState !== SelectionStates.Idle;
+    }
+
+    if (this.isSplitIntoBooks) {
+      return this.childrenData.flat().some((book) => book.hasActiveContent());
+    }
+
+    return this.isActive;
   }
 }

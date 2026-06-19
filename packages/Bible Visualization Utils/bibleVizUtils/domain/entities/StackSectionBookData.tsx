@@ -11,6 +11,7 @@ import type {
   SectionInfo,
 } from "bibleVizUtils.domain.models.arrangement";
 import type { Piece } from "bibleVizUtils.domain.models.canvas";
+import type { ActiveBibleHierarchy } from "./StackBibleData";
 
 interface DataParams {
   childrenData?: StackChapterData[];
@@ -88,5 +89,13 @@ export class StackSectionBookData extends StackBookBaseData<
   override resetHierarchy(clearPiece: boolean = true): Piece[] {
     this.changeShape(BookShape.Regular);
     return super.resetHierarchy(clearPiece);
+  }
+
+  collectActiveHierarchy(hierarchy: ActiveBibleHierarchy) {
+    if (this.isActive) hierarchy.sectionsData.push(this);
+  }
+
+  hasActiveContent() {
+    return this.isActive;
   }
 }

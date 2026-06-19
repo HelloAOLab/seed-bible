@@ -7,6 +7,10 @@ import {
   type StackSpacingsType,
 } from "bibleVizUtils.infrastructure.config.stacks.spacings";
 import { StackAnimationsDuration } from "bibleVizUtils.infrastructure.config.stacks.animations";
+import {
+  StackOpacities,
+  type StackOpacitiesType,
+} from "bibleVizUtils.infrastructure.config.stacks.opacities";
 
 export class StackConfigProvider {
   getStackPieceMeasurements(): StackPieceMeasurementsType {
@@ -37,5 +41,15 @@ export class StackConfigProvider {
     key: K
   ) => (typeof StackAnimationsDuration)[K] = (key) => {
     return this.getStackAnimationsDuration()[key];
+  };
+
+  getStackOpacities(): StackOpacitiesType {
+    return StackOpacities;
+  }
+
+  getStackOpacity: <K extends keyof StackOpacitiesType>(
+    opacity: K
+  ) => StackOpacitiesType[K] = (opacity) => {
+    return this.getStackOpacities()[opacity];
   };
 }
