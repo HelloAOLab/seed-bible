@@ -132,11 +132,23 @@ export interface AppState {
   /** Joins an existing shared session and opens it in a new tab. */
   joinSharedSession: (id: string) => Promise<BibleReadingSession>;
 
+  /**
+   * The Canonical URL for the current page.
+   * Used for SEO and social sharing metadata.
+   */
+  canonicalUrl: ReadonlySignal<string>;
+
   /** The title of the page. */
   title: ReadonlySignal<string>;
 
   /** The description of the page. */
   description: ReadonlySignal<string>;
+
+  /** The social title of the page (used for Open Graph and other social media metadata). */
+  socialTitle: ReadonlySignal<string>;
+
+  /** The name of the site (used for Open Graph and other social media metadata). */
+  siteName: ReadonlySignal<string>;
 }
 
 /**
@@ -523,6 +535,51 @@ export function createSeedBibleState(
     return getDescription();
   });
 
+  const siteName = computed(() => {
+    void i18n.language.value;
+    const { t } = i18n;
+
+    return t("seed-bible", {
+      defaultValue: "Seed Bible",
+    });
+  });
+
+  const socialTitle = computed(() => {
+    void i18n.language.value;
+    const { t } = i18n;
+
+    const chapter = selectedTab.value?.readingState.chapterData.value;
+    if (!chapter) {
+      return t("read-the-bible", {
+        defaultValue: "Read the Bible",
+      });
+    }
+
+    return t("social-title", {
+      defaultValue: "Read {{bookName}} {{chapterNumber}}",
+      bookName: chapter.book.name,
+      chapterNumber: chapter.chapter.number,
+    });
+  });
+
+  const canonicalUrl = computed(() => {
+    const currentUrl = navigation.currentUrl.value;
+
+    const canonicalUrl = new URL("/", currentUrl);
+    const chapter = selectedTab.value?.readingState.chapterData.value;
+
+    if (chapter) {
+      canonicalUrl.searchParams.set(
+        "translation",
+        data.buildTranslationId(chapter.translation.id)
+      );
+      canonicalUrl.searchParams.set("book", chapter.book.id);
+      canonicalUrl.searchParams.set("chapter", String(chapter.chapter.number));
+    }
+
+    return canonicalUrl.href;
+  });
+
   effect(() => {
     if (!selectedTab.value) {
       return;
@@ -885,6 +942,9 @@ export function createSeedBibleState(
       selectPane: handleSelectPane,
       title,
       description,
+      siteName,
+      canonicalUrl,
+      socialTitle,
     },
   };
 

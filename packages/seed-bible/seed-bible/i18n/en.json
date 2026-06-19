@@ -228,6 +228,7 @@
   "today": "Today",
   "you": "You",
   "bible": "Bible",
+  "read-the-bible": "Read the Bible",
 
   "add-verse": "Add verse",
   "add": "Add",
@@ -255,5 +256,6 @@
   "discovery-coming-soon": "Discovery is coming soon",
   "login-to-use-feature": "You have to log in to use this feature.",
   "link-to-join-shared-session-copied": "A link to join the shared session was copied to your clipboard",
-  "seed-bible-description": "Read {{bookName}} {{chapterNumber}} in the Seed Bible"
+  "seed-bible-description": "Read {{bookName}} {{chapterNumber}} in the Seed Bible",
+  "social-title": "Read {{bookName}} {{chapterNumber}}"
 }

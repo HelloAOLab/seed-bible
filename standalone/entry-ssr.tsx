@@ -18,6 +18,9 @@ export interface RenderOptions {
   /** Full request path including the deployment prefix, e.g. "/d/branch-x/?book=GEN". */
   path: string;
 
+  /** Full request URL including the origin. */
+  url: string;
+
   /** Deployment config injected into the page and passed to the app. */
   config: AppConfig;
   /**
@@ -45,20 +48,16 @@ const escapeForScript = (json: string): string => json.replace(/</g, "\\u003c");
  */
 export async function render(options: RenderOptions): Promise<string> {
   console.log("Rendering!");
-  const { path, config } = options;
+  const { config } = options;
 
   const state = createSeedBibleState({
     config,
-    initialHref: `http://ssr.local${path}`,
+    initialHref: options.url,
   });
 
   const [appHtml] = await Promise.all([
     renderToStringAsync(
-      <Main
-        initialState={state}
-        config={config}
-        initialHref={`http://ssr.local${path}`}
-      />
+      <Main initialState={state} config={config} initialHref={options.url} />
     ),
   ]);
 
@@ -75,6 +74,13 @@ export async function render(options: RenderOptions): Promise<string> {
         media="(prefers-color-scheme: dark)"
       />
       <meta name="description" content={state.app.description.value} />
+      <meta name="og:locale" content={state.i18n.language.value} />
+      <meta name="og:locale:alternate" content={state.i18n.defaultLanguage} />
+      <meta property="og:title" content={state.app.socialTitle.value} />
+      <meta property="og:description" content={state.app.description.value} />
+      <meta property="og:url" content={state.app.canonicalUrl.value} />
+      <meta name="og:site_name" content={state.app.siteName.value} />
+      <link rel="canonical" href={state.app.canonicalUrl.value} />
       <title>{state.app.title.value}</title>
     </>
   );
