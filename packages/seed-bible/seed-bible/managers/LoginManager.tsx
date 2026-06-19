@@ -60,7 +60,7 @@ export interface LoginManager {
    * record, and saves the resulting URL to the user's profile.
    * Resolves without changes if no file is selected or the user is not authenticated.
    */
-  uploadProfilePicture: () => Promise<void>;
+  uploadProfilePicture: (file: File) => Promise<void>;
 
   /**
    * Cancels an in-progress login attempt, if one exists. This is useful to abort a login flow if the user navigates away or closes the login modal before completing authentication.
@@ -373,26 +373,23 @@ export function createLoginManager({
     updateUserProfile(userId.value, nextProfile);
   };
 
-  const uploadProfilePicture = async (): Promise<void> => {
-    // TODO: Implement this
-    // if (!userId.value) {
-    //   console.warn("Cannot upload profile picture: no authenticated user");
-    //   return;
-    // }
-    // const files = await os.showUploadFiles();
-    // const file = files?.[0];
-    // if (!file) {
-    //   throw new Error("No file selected for upload");
-    // }
-    // const result = await os.recordFile(userId.value, file.data, {
-    //   mimeType: file.mimeType,
-    //   markers: ["publicRead"],
-    // });
-    // if (result.success === false) {
-    //   console.error("Profile picture upload failed:", result);
-    //   throw new Error("Failed to upload profile picture");
-    // }
-    // updateProfile({ pictureUrl: result.url });
+  const uploadProfilePicture = async (file: File): Promise<void> => {
+    if (!userId.value) {
+      console.warn("Cannot upload profile picture: no authenticated user");
+      return;
+    }
+
+    const result = await os.recordFile(userId.value, file, {
+      mimeType: file.type,
+      marker: "publicRead",
+    });
+
+    if (result.success === false) {
+      console.error("Profile picture upload failed:", result);
+      throw new Error("Failed to upload profile picture");
+    }
+
+    updateProfile({ pictureUrl: result.url });
   };
 
   return {

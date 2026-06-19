@@ -35,6 +35,7 @@
     "react-dom": "npm:@preact/compat@^18.3.2",
     "typesense": "^3.0.5",
     "zod": "4.1.12",
-    "axios": "1.13.5"
+    "axios": "1.13.5",
+    "react-avatar-editor": "15.1.0"
   }
 }

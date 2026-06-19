@@ -20,6 +20,7 @@ import {
   type ThemeColorKey,
 } from "../managers/ThemeManager";
 import { download, translateTitle } from "../components/Utils";
+import { ProfilePictureModalContent } from "../components/ProfilePictureModal";
 import { ExtensionInitalizer } from "../managers/ExtensionManager";
 import { useI18n } from "../i18n/I18nManager";
 import {
@@ -265,18 +266,26 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
     newDescription.value = "";
   };
 
-  const handleUploadPicture = async () => {
-    if (isUploadingPicture.value) {
-      return;
-    }
-    isUploadingPicture.value = true;
-    try {
-      await login.uploadProfilePicture();
-    } catch (error) {
-      console.error("Failed to upload profile picture.", error);
-    } finally {
-      isUploadingPicture.value = false;
-    }
+  const handleUploadPicture = () => {
+    const modalId = state.modals.openModal({
+      title: { key: "update-picture", defaultValue: "Update picture" },
+      content: () => (
+        <ProfilePictureModalContent
+          onClose={() => state.modals.closeModal(modalId)}
+          onUpload={async (file) => {
+            isUploadingPicture.value = true;
+            try {
+              await login.uploadProfilePicture(file);
+            } catch (error) {
+              console.error("Failed to upload profile picture.", error);
+              throw error;
+            } finally {
+              isUploadingPicture.value = false;
+            }
+          }}
+        />
+      ),
+    });
   };
 
   const handleCopyUserId = async () => {

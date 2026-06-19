@@ -332,6 +332,9 @@ importers:
       react:
         specifier: npm:@preact/compat@^18.3.2
         version: '@preact/compat@18.3.2(preact@10.28.4)'
+      react-avatar-editor:
+        specifier: 15.1.0
+        version: 15.1.0(@preact/compat@18.3.2(preact@10.28.4))(@preact/compat@18.3.2(preact@10.28.4))
       react-dom:
         specifier: npm:@preact/compat@^18.3.2
         version: '@preact/compat@18.3.2(preact@10.28.4)'
@@ -5853,6 +5856,12 @@ packages:
   raw-body@3.0.2:
     resolution: {integrity: sha512-K5zQjDllxWkf7Z5xJdV0/B0WTNqx6vxG70zJE4N0kBs4LovmEYWJzQGxC9bS9RAKu3bgM40lrd5zoLJ12MQ5BA==}
     engines: {node: '>= 0.10'}
+
+  react-avatar-editor@15.1.0:
+    resolution: {integrity: sha512-Zto7u9l6Wd5LPPtjeFJ+7uwoT4bs01OSgkN2kxD18lWl8IiZ0GY3nWCbKPx4qIU7Au1vENsMJm19rfVWHHayaQ==}
+    peerDependencies:
+      react: ^0.14.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+      react-dom: ^0.14.0 || ^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   react-i18next@17.0.6:
     resolution: {integrity: sha512-WzJ6SMKF+GTD7JZZqxSR1AKKmXjaSu39sClUrNlwxS4Tl7a99O+ltFy6yhPMO+wgZuxpQjJ2PZkfrQKmAqrLhw==}
@@ -13325,6 +13334,11 @@ snapshots:
       http-errors: 2.0.1
       iconv-lite: 0.7.2
       unpipe: 1.0.0
+
+  react-avatar-editor@15.1.0(@preact/compat@18.3.2(preact@10.28.4))(@preact/compat@18.3.2(preact@10.28.4)):
+    dependencies:
+      react: '@preact/compat@18.3.2(preact@10.28.4)'
+      react-dom: '@preact/compat@18.3.2(preact@10.28.4)'
 
   react-i18next@17.0.6(@preact/compat@18.3.2(preact@10.28.4))(@preact/compat@18.3.2(preact@10.28.4))(i18next@26.0.3(typescript@6.0.3))(typescript@6.0.3):
     dependencies:
