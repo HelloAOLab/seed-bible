@@ -328,6 +328,11 @@ export function createLoginManager({
   }
 
   const logout = async (): Promise<void> => {
+    if (sessionKey.value) {
+      await client.revokeSession({
+        sessionKey: sessionKey.value!,
+      });
+    }
     batch(() => {
       sessionKey.value = null;
       connectionKey.value = null;

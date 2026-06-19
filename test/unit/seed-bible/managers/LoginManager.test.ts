@@ -16,11 +16,13 @@ const {
   completeLoginMock,
   getUserInfoMock,
   replaceSessionMock,
+  revokeSessionMock,
 } = vi.hoisted(() => ({
   requestLoginMock: vi.fn(),
   completeLoginMock: vi.fn(),
   getUserInfoMock: vi.fn(),
   replaceSessionMock: vi.fn(),
+  revokeSessionMock: vi.fn(),
 }));
 
 vi.mock("@casual-simulation/aux-records/RecordsClient", () => ({
@@ -30,6 +32,7 @@ vi.mock("@casual-simulation/aux-records/RecordsClient", () => ({
     completeLogin: completeLoginMock,
     getUserInfo: getUserInfoMock,
     replaceSession: replaceSessionMock,
+    revokeSession: revokeSessionMock,
   })),
 }));
 
@@ -42,7 +45,7 @@ const SESSION_KEY = formatV1SessionKey(
   USER_ID,
   "session-1",
   "secret-1",
-  Date.now() + 1000 * 60 * 60
+  Date.now() + 1000 * 60 * 60 * 24 * 14 // 2 weeks
 );
 
 // The new key returned by a successful session refresh (replaceSession).
@@ -50,7 +53,7 @@ const REFRESHED_SESSION_KEY = formatV1SessionKey(
   USER_ID,
   "session-2",
   "secret-2",
-  Date.now() + 1000 * 60 * 60
+  Date.now() + 1000 * 60 * 60 * 24 * 14 // 2 weeks
 );
 
 /** Builds a parseable session key that expires `ms` from now. */
@@ -269,7 +272,7 @@ describe("createLoginManager", () => {
   describe("session refresh on init", () => {
     it("refreshes the session immediately when it expires within a week", async () => {
       // SESSION_KEY expires in ~1h, which is well within the 1-week window.
-      localStorage.setItem("sessionKey", SESSION_KEY);
+      localStorage.setItem("sessionKey", sessionKeyExpiringIn(1000 * 60 * 60));
 
       createLoginManager({ os });
 
@@ -278,7 +281,7 @@ describe("createLoginManager", () => {
     });
 
     it("propagates the new keys and reloads user info on a successful refresh", async () => {
-      localStorage.setItem("sessionKey", SESSION_KEY);
+      localStorage.setItem("sessionKey", sessionKeyExpiringIn(1000 * 60 * 60));
 
       const manager = createLoginManager({ os });
 
@@ -300,7 +303,8 @@ describe("createLoginManager", () => {
         errorCode: "unacceptable_session_key",
         errorMessage: "nope",
       });
-      localStorage.setItem("sessionKey", SESSION_KEY);
+      const sessionKey = sessionKeyExpiringIn(1000 * 60 * 60);
+      localStorage.setItem("sessionKey", sessionKey);
 
       createLoginManager({ os });
 
@@ -308,8 +312,8 @@ describe("createLoginManager", () => {
       await flush();
 
       // The existing keys are left untouched when the refresh fails.
-      expect(os.sessionKey.value).toBe(SESSION_KEY);
-      expect(os.client.sessionKey).toBe(SESSION_KEY);
+      expect(os.sessionKey.value).toBe(sessionKey);
+      expect(os.client.sessionKey).toBe(sessionKey);
       expect(warnSpy).toHaveBeenCalledWith(
         "[LoginManager] Failed to refresh session, clearing session key:",
         "nope"
@@ -317,6 +321,18 @@ describe("createLoginManager", () => {
     });
 
     it("does not refresh when no session key is persisted", async () => {
+      localStorage.setItem(
+        "sessionKey",
+        sessionKeyExpiringIn(1000 * 60 * 60 * 24 * 8)
+      ); // 8 days
+      createLoginManager({ os });
+
+      await flush();
+
+      expect(replaceSessionMock).not.toHaveBeenCalled();
+    });
+
+    it("does not refresh when the session key is not expiring soon", async () => {
       createLoginManager({ os });
 
       await flush();
@@ -348,6 +364,19 @@ describe("createLoginManager", () => {
       await vi.advanceTimersByTimeAsync(ONE_WEEK);
       expect(replaceSessionMock).toHaveBeenCalledTimes(1);
     });
+  });
+
+  it("calls revokeSession on logout", async () => {
+    revokeSessionMock.mockResolvedValue({ success: true });
+    const manager = createAuthenticatedManager();
+    const sessionKey = os.sessionKey.value;
+
+    await waitFor(() => manager.userId.value === USER_ID);
+
+    await manager.logout();
+
+    expect(replaceSessionMock).not.toHaveBeenCalled();
+    expect(revokeSessionMock).toHaveBeenCalledWith({ sessionKey: sessionKey });
   });
 
   describe("localStorage persistence", () => {
@@ -386,7 +415,6 @@ describe("createLoginManager", () => {
 
       await manager.logout();
 
-      // await waitFor(() => localStorage.getItem("sessionKey") === "");
       expect(localStorage.getItem("sessionKey")).toBe(null);
       expect(localStorage.getItem("connectionKey")).toBe(null);
     });
