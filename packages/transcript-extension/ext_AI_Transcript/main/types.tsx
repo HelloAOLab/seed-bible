@@ -1,37 +1,5 @@
 // Shared interfaces and the per-file output schema.
 
-/** Lifecycle of the in-browser Bible corpus. Inference is gated on "ready". */
-export type CorpusStatus =
-  | "idle"
-  | "downloading"
-  | "indexing"
-  | "ready"
-  | "error";
-
-/** A single verse, slimmed for matching + display. This is what we cache. */
-export interface VerseIndexEntry {
-  /** e.g. "GEN:1:3" (uppercase USFM book code, colon separated). */
-  ref: string;
-  /** Uppercase USFM book code, e.g. "GEN". */
-  bookId: string;
-  chapter: number;
-  verse: number;
-  /** Human-readable verse text. */
-  text: string;
-  /** Lowercased, punctuation-stripped, whitespace-collapsed text used for matching. */
-  normalizedText: string;
-}
-
-/** Small metadata record kept alongside the cached index for invalidation. */
-export interface CorpusMeta {
-  translation: string;
-  /** From the translation listing; changes when the corpus content changes. */
-  sha256: string;
-  /** Bumped when our index *shape* changes, forcing a rebuild. */
-  version: number;
-  builtAt: number;
-}
-
 export type RefType = "book" | "chapter" | "verse";
 
 /** Per-file processing lifecycle. */

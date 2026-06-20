@@ -2,6 +2,11 @@
   max-width: 960px;
   margin: 0 auto;
   padding: 24px 20px 80px;
+  box-sizing: border-box;
+  height: 100%;
+  max-height: 100vh;
+  overflow-y: auto;
+  scrollbar-width: none;
 }
 
 .ts_app__header {
@@ -473,10 +478,14 @@ input[type="range"] {
   display: block;
   border-radius: 8px;
 }
+
+.ts_media--audio {
+  height: 40px;
+}
 .ts_media:not(.ts_media--audio) {
   max-height: 60vh;
   background: #000;
-  height: 40px;
+  height: fit-content;
 }
 .ts_transcript {
   max-height: 340px;
