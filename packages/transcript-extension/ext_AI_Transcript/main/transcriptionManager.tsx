@@ -4,25 +4,15 @@
 // Preact components only read these signals and call these methods. The single
 // instance is created in main.tsx and shared via Preact Context.
 
-import { signal, computed, type ReadonlySignal } from "@preact/signals";
+import { signal } from "@preact/signals";
 import type {
-  CorpusStatus,
   FileStatus,
   OutputReference,
   OutputSegment,
   QueuedFile,
   RefType,
   TranscriptionResult,
-  VerseIndexEntry,
 } from "ext_AI_Transcript.main.types";
-import {
-  buildVerseIndex as buildVerseIndexCorpus,
-  CORPUS_VERSION,
-  fetchComplete,
-  fetchTranslationInfo,
-  type CompleteJson,
-} from "ext_AI_Transcript.main.corpus";
-import type { CorpusStorage } from "ext_AI_Transcript.main.storage";
 import {
   decodeToPcm as decodeFileToPcm,
   getEphemeralKey as fetchEphemeralKey,
@@ -42,11 +32,8 @@ let idCounter = 0;
 const nextId = () =>
   `f${Date.now().toString(36)}_${(idCounter++).toString(36)}`;
 
-function createTranscriptionManager(storage: CorpusStorage) {
+function createTranscriptionManager() {
   // --- State signals --------------------------------------------------------
-  const corpusStatus = signal<CorpusStatus>("idle");
-  const corpusProgress = signal(0); // 0..1
-  const verseIndex = signal<VerseIndexEntry[]>([]);
   const translation = signal("BSB");
   const transcriptionModel = signal("gpt-4o-transcribe");
   const language = signal("en");
@@ -57,89 +44,6 @@ function createTranscriptionManager(storage: CorpusStorage) {
   const minConfidence = signal(0.85);
   const inferEnabled = signal(true);
   const error = signal<string | null>(null);
-
-  const corpusReady: ReadonlySignal<boolean> = computed(
-    () => corpusStatus.value === "ready"
-  );
-
-  // --- Corpus ---------------------------------------------------------------
-
-  /** Build a slimmed verse index from a parsed complete.json. */
-  function buildVerseIndex(completeJson: CompleteJson): VerseIndexEntry[] {
-    return buildVerseIndexCorpus(completeJson);
-  }
-
-  /** Load the corpus for `translation` from cache, or fetch/build/cache it. */
-  async function initCorpus(t = translation.value): Promise<void> {
-    translation.value = t;
-    error.value = null;
-    try {
-      corpusStatus.value = "downloading";
-      corpusProgress.value = 0;
-
-      // sha256 from the translation listing is our cache-invalidation key.
-      let sha = "";
-      try {
-        const info = await fetchTranslationInfo(t);
-        sha = info?.sha256 ?? "";
-      } catch {
-        /* listing is best-effort; fall back to cache-by-translation. */
-      }
-
-      const cached = await storage.load();
-      const cacheValid =
-        cached &&
-        cached.meta.translation === t &&
-        cached.meta.version === CORPUS_VERSION &&
-        (!sha || cached.meta.sha256 === sha) &&
-        cached.index.length > 0;
-
-      if (cacheValid) {
-        verseIndex.value = cached!.index;
-        corpusStatus.value = "ready";
-        return;
-      }
-
-      const complete = await fetchComplete(t, (f) => {
-        corpusProgress.value = f;
-      });
-
-      corpusStatus.value = "indexing";
-      corpusProgress.value = 0;
-      const index = buildVerseIndex(complete);
-
-      await storage.save(
-        {
-          translation: t,
-          sha256: sha,
-          version: CORPUS_VERSION,
-          builtAt: Date.now(),
-        },
-        index
-      );
-
-      verseIndex.value = index;
-      corpusStatus.value = "ready";
-    } catch (e) {
-      error.value = `Corpus error: ${errMsg(e)}`;
-      corpusStatus.value = "error";
-    }
-  }
-
-  /** Drop the cached corpus from storage and memory. */
-  async function clearCorpus(): Promise<void> {
-    await storage.clear();
-    verseIndex.value = [];
-    corpusStatus.value = "idle";
-    corpusProgress.value = 0;
-  }
-
-  /** Re-fetch and rebuild the corpus for the current/selected translation. */
-  async function rebuildCorpus(t = translation.value): Promise<void> {
-    await storage.clear();
-    verseIndex.value = [];
-    await initCorpus(t);
-  }
 
   // --- File queue -----------------------------------------------------------
 
@@ -217,7 +121,7 @@ function createTranscriptionManager(storage: CorpusStorage) {
   }
 
   function inferRefs(segments: InferSegment[]) {
-    return inferRefsLib(segments, verseIndex.value, minConfidence.value);
+    return inferRefsLib(segments, minConfidence.value);
   }
 
   // --- Transcription pipeline ----------------------------------------------
@@ -261,19 +165,9 @@ function createTranscriptionManager(storage: CorpusStorage) {
     // 2 + 3. Connect and stream (fresh key per attempt, with backoff).
     const raw = await streamWithRetry(id, pcm);
 
-    // 4. Assemble + extract references.
+    // 4. Assemble + extract references (inferred refs come from the AI; no
+    //    local corpus needed).
     updateFile(id, { status: "inferring", progress: 0.9 });
-    // Ensure the corpus is loaded so inferred references can run; without this
-    // corpusReady stays false and only explicit (spoken) citations populate.
-    // initCorpus handles its own errors, so on failure we fall back to
-    // explicit-only references rather than failing the whole transcription.
-    if (
-      inferEnabled.value &&
-      !corpusReady.value &&
-      corpusStatus.value !== "error"
-    ) {
-      await initCorpus();
-    }
     const result = await assembleResult(qf.name, durationSec, raw);
 
     // 5. Publish.
@@ -387,9 +281,9 @@ function createTranscriptionManager(storage: CorpusStorage) {
       }
     }
 
-    // (b) Inferred references (only when the corpus is ready).
+    // (b) Inferred references (AI-detected quotes/paraphrases/allusions).
     const inferredByRef = new Map<string, OutputReference>();
-    if (inferEnabled.value && corpusReady.value) {
+    if (inferEnabled.value) {
       const inferInput: InferSegment[] = segments.map((s) => ({
         id: s.id,
         start: s.start,
@@ -455,9 +349,6 @@ function createTranscriptionManager(storage: CorpusStorage) {
 
   return {
     // signals
-    corpusStatus,
-    corpusProgress,
-    verseIndex,
     translation,
     transcriptionModel,
     language,
@@ -468,12 +359,7 @@ function createTranscriptionManager(storage: CorpusStorage) {
     minConfidence,
     inferEnabled,
     error,
-    corpusReady,
     // methods
-    initCorpus,
-    buildVerseIndex,
-    clearCorpus,
-    rebuildCorpus,
     addFiles,
     removeFile,
     clearFiles,
