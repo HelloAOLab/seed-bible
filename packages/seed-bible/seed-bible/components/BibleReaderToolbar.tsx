@@ -1113,7 +1113,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
             isSmallScreen.value ? undefined : handleVerseToolbarPointerUp
           }
         >
-          {isHighlightPickerOpen.value && (
+          {isSmallScreen.value && (
+            <div className="sb-verse-toolbar-handle" aria-hidden="true" />
+          )}
+          {(isHighlightPickerOpen.value || isSmallScreen.value) && (
             <div
               className="sb-verse-toolbar-ref"
               aria-live="polite"
@@ -1375,30 +1378,80 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 // const canHighlight = !sessionState.value || sessionState.value.userCanDecorate(sessionState.value.localSessionId.value);
                 return (
                   <>
-                    {selectionUI.value.showHighlightColors && (
-                      <div className="sb-verse-toolbar-action-item">
-                        <button
-                          type="button"
-                          className="sb-verse-toolbar-action sb-verse-toolbar-highlight-trigger"
-                          onClick={() => {
-                            isHighlightPickerOpen.value = true;
-                          }}
-                          aria-label={t("highlight-selection", {
-                            defaultValue: "Highlight selection",
-                          })}
-                          title={highlightLabel}
-                        >
-                          <span className="sb-verse-toolbar-action-icon">
-                            <span className="material-symbols-outlined">
-                              format_ink_highlighter
+                    {selectionUI.value.showHighlightColors &&
+                      (isSmallScreen.value ? (
+                        // Mobile: surface the highlight colors inline (matching
+                        // the design) instead of behind a tap, with a trailing
+                        // "more colors" swatch that opens the full picker
+                        // (custom colors, add, clear).
+                        <div className="sb-verse-toolbar-colors-inline">
+                          {DEFAULT_HIGHLIGHT_COLOR_IDS.map((colorId) => (
+                            <button
+                              key={colorId}
+                              type="button"
+                              className="sb-verse-toolbar-color-button"
+                              onClick={() => {
+                                const rs = readingState.value;
+                                if (!rs) return;
+                                applyHighlightWithSession(
+                                  rs,
+                                  sessionState.value,
+                                  {
+                                    colorId,
+                                  }
+                                );
+                              }}
+                              aria-label={`${highlightLabel} ${colorId}`}
+                              title={colorId}
+                            >
+                              <span
+                                className="sb-verse-toolbar-color"
+                                style={{
+                                  background: `var(--sb-highlight-${colorId}-color)`,
+                                }}
+                              />
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            className="sb-verse-toolbar-color-button sb-verse-toolbar-more-colors"
+                            onClick={() => {
+                              isHighlightPickerOpen.value = true;
+                            }}
+                            aria-label={t("more-colors", {
+                              defaultValue: "More colors",
+                            })}
+                            title={t("more-colors", {
+                              defaultValue: "More colors",
+                            })}
+                          >
+                            <span className="sb-verse-toolbar-color sb-verse-toolbar-more-colors-swatch" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="sb-verse-toolbar-action-item">
+                          <button
+                            type="button"
+                            className="sb-verse-toolbar-action sb-verse-toolbar-highlight-trigger"
+                            onClick={() => {
+                              isHighlightPickerOpen.value = true;
+                            }}
+                            aria-label={t("highlight-selection", {
+                              defaultValue: "Highlight selection",
+                            })}
+                            title={highlightLabel}
+                          >
+                            <span className="sb-verse-toolbar-action-icon">
+                              <span className="material-symbols-outlined">
+                                format_ink_highlighter
+                              </span>
                             </span>
-                          </span>
-                          <span className="sb-verse-toolbar-action-label">
-                            {highlightLabel}
-                          </span>
-                        </button>
-                      </div>
-                    )}
+                            <span className="sb-verse-toolbar-action-label">
+                              {highlightLabel}
+                            </span>
+                          </button>
+                        </div>
+                      ))}
                     <div className="sb-verse-toolbar-action-item">
                       <button
                         type="button"

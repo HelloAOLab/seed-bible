@@ -2647,9 +2647,64 @@ h6 {
 
 .sb-verse-toolbar-mobile {
   left: 50%;
-  top: auto;
-  bottom: var(--sb-verse-toolbar-mobile-bottom);
+  bottom: 0px;
   transform: translateX(-50%);
+  max-width: 100%;
+  align-items: center;
+}
+
+/* Grab-handle pill at the top of the mobile verse sheet (visual affordance). */
+.sb-verse-toolbar-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 70%);
+  margin: 2px auto 8px;
+  flex: none;
+}
+
+/* On mobile the reference label is always shown and centered above the row. */
+.sb-verse-toolbar-mobile .sb-verse-toolbar-ref {
+  text-align: center;
+  align-self: stretch;
+  max-width: none;
+}
+
+/* The action row scrolls horizontally on narrow phones rather than overflowing
+   the screen or wrapping awkwardly. */
+.sb-verse-toolbar-mobile .sb-verse-toolbar-tools {
+  max-width: 100%;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  scrollbar-width: none;
+}
+
+.sb-verse-toolbar-mobile .sb-verse-toolbar-tools::-webkit-scrollbar {
+  display: none;
+}
+
+/* Inline highlight swatches grouped as their own rounded pill, set off from the
+   action buttons (Save / Copy / Share). */
+.sb-verse-toolbar-colors-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  padding: 2px 6px;
+  margin-right: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+}
+
+/* "More colors" swatch — a multi-hue circle that opens the full picker. */
+.sb-verse-toolbar-more-colors-swatch {
+  background: conic-gradient(
+    var(--sb-highlight-yellow-color),
+    var(--sb-highlight-green-color),
+    var(--sb-highlight-blue-color),
+    var(--sb-highlight-yellow-color)
+  );
 }
 
 .sb-open-selector-icon {
