@@ -41,6 +41,7 @@ const UNSAFE_HEADERS = new Set([
 export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
   const client = createRecordsClient(endpoint);
   const connectionId = uuid();
+  let currentWakeLock: WakeLockSentinel | null = null;
 
   let instRecordsClient: InstRecordsClient | null = null;
   let authSource: PartitionAuthSource | null = null;
@@ -199,15 +200,28 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
     },
 
     requestWakeLock: async () => {
-      console.warn(
-        "requestWakeLock is not implemented in this version of CasualOSManager"
-      );
+      if ("wakeLock" in navigator) {
+        try {
+          currentWakeLock = await navigator.wakeLock.request("screen");
+          currentWakeLock.addEventListener("release", () => {
+            console.log("Wake Lock was released");
+            currentWakeLock = null;
+          });
+          console.log("Wake Lock is active");
+          return currentWakeLock;
+        } catch (err) {
+          console.error(`Unable to acquire Wake Lock:`, err);
+        }
+      }
+      return null;
     },
 
     disableWakeLock: async () => {
-      console.warn(
-        "disableWakeLock is not implemented in this version of CasualOSManager"
-      );
+      if (currentWakeLock) {
+        await currentWakeLock.release();
+        currentWakeLock = null;
+        console.log("Wake Lock released");
+      }
     },
 
     getSharedDocument,
