@@ -157,5 +157,5 @@ jobs:
           if [ "$BRANCH" = "main" ]; then
             echo "Deployed **main** to the site root." >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "Deployed branch **$BRANCH** → \`https://ssr.seedbible.org?pattern=$BRANCH&patternVersino=$BUILD_ID\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "Deployed branch **$BRANCH** → \`https://ssr.seedbible.org/b/$BRANCH/$BUILD_ID\`" >> "$GITHUB_STEP_SUMMARY"
           fi
