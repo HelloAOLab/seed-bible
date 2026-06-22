@@ -1,6 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
-import { getDefaultLanguage } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import {
+  createI18nManager,
+  type I18nManager,
+} from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import {
+  type NavigationManager,
+  createNavigationManager,
+} from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import { signal, type Signal } from "@preact/signals";
 
 const i18nFolder = path.resolve(
   __dirname,
@@ -20,8 +28,12 @@ const defaultLanguageCases: Array<[string, string]> = [
   ),
 ];
 
-describe("I18nManager getDefaultLanguage()", () => {
+describe("I18nManager getInitialLanguage()", () => {
+  let ssrLanguages: string[] = [];
   let originalLanguages: PropertyDescriptor | undefined;
+  let nav: NavigationManager;
+  let manager: I18nManager;
+  let currentUrl: Signal<URL>;
 
   beforeAll(() => {
     originalLanguages = Object.getOwnPropertyDescriptor(
@@ -30,26 +42,45 @@ describe("I18nManager getDefaultLanguage()", () => {
     );
   });
 
+  beforeEach(() => {
+    ssrLanguages = [];
+    currentUrl = signal(new URL("https://example.com/"));
+    nav = {
+      currentUrl,
+      syncSignalsToUrl: vi.fn(),
+      go: vi.fn(),
+      replace: vi.fn(),
+      push: vi.fn(),
+      updateQueryParam: vi.fn(),
+      linkToQuery: vi.fn(),
+    } as NavigationManager;
+    manager = createI18nManager(nav, ssrLanguages);
+  });
+
   afterAll(() => {
     if (originalLanguages) {
       Object.defineProperty(window.navigator, "languages", originalLanguages);
     }
   });
 
-  function getDefaultLanguageFor(languages: string[]) {
+  function getDefaultLanguage() {
+    manager = createI18nManager(nav, ssrLanguages);
+    return manager.defaultLanguage;
+  }
+
+  function getDefaultLanguageFromNavigator(languages: string[]) {
     Object.defineProperty(window.navigator, "languages", {
       configurable: true,
       value: languages,
     });
-
-    return getDefaultLanguage(new URL("https://example.com/"), languages);
+    manager = createI18nManager(nav, ssrLanguages);
+    return manager.defaultLanguage;
   }
 
   it.each(defaultLanguageCases)(
     "interprets %s as %s",
     (locale, expectedLanguage) => {
-      const language = getDefaultLanguageFor([locale]);
-
+      const language = getDefaultLanguageFromNavigator([locale]);
       expect(language).toBe(expectedLanguage);
     }
   );
@@ -58,9 +89,8 @@ describe("I18nManager getDefaultLanguage()", () => {
     try {
       import.meta.env.SSR = true;
 
-      const language = getDefaultLanguage(new URL("https://example.com/"), [
-        "fr-FR",
-      ]);
+      ssrLanguages = ["fr-FR", "es-ES"];
+      const language = getDefaultLanguage();
 
       expect(language).toBe("fr");
     } finally {
@@ -73,11 +103,9 @@ describe("I18nManager getDefaultLanguage()", () => {
       configurable: true,
       value: ["fr-FR"],
     });
+    currentUrl.value = new URL("https://example.com/?lang=es");
 
-    const language = getDefaultLanguage(
-      new URL("https://example.com/?lang=es"),
-      []
-    );
+    const language = getDefaultLanguage();
 
     expect(language).toBe("es");
   });
@@ -86,10 +114,9 @@ describe("I18nManager getDefaultLanguage()", () => {
     try {
       import.meta.env.SSR = true;
 
-      const language = getDefaultLanguage(
-        new URL("https://example.com/?lang=es"),
-        ["fr-FR"]
-      );
+      ssrLanguages = ["fr-FR", "es-ES"];
+      currentUrl.value = new URL("https://example.com/?lang=es");
+      const language = getDefaultLanguage();
 
       expect(language).toBe("es");
     } finally {
@@ -103,7 +130,7 @@ describe("I18nManager getDefaultLanguage()", () => {
       value: [],
     });
 
-    const language = getDefaultLanguage(new URL("https://example.com/"), []);
+    const language = getDefaultLanguage();
 
     expect(language).toBe("en");
   });

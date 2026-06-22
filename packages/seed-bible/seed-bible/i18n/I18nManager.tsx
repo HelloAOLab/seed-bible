@@ -95,7 +95,7 @@ export function getInitialLanguage(acceptedLanguages: string[]): string {
   return getLanguage(navigatorLanguages()[0]) ?? "en";
 }
 
-export function getDefaultLanguage(url: URL): string | null {
+export function getUrlLanguage(url: URL): string | null {
   const urlLang = url.searchParams.get("lang");
   if (urlLang) {
     return urlLang;
@@ -114,7 +114,7 @@ export function createI18nManager(
   // Computed at module load. During SSR `location`/`navigator` are absent, so
   // this falls back to "en"; the client re-derives the real language from the
   // URL/navigator at hydration.
-  const defaultLanguage: string = getDefaultLanguage(url) ?? initialLanguage;
+  const defaultLanguage: string = getUrlLanguage(url) ?? initialLanguage;
 
   // Resolves once the detected language's translations are loaded. SSR and the
   // client entry await this before rendering so the first paint is in the right
