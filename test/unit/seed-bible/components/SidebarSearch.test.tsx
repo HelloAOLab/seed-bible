@@ -7,6 +7,7 @@ import {
   waitFor,
 } from "../testUtils/createTestSeedBibleState";
 import type { Mock } from "vitest";
+import { TestHost } from "./TestHost";
 
 vi.mock("../components/ContextMenu", () => ({
   closeContextMenus: vi.fn(),
@@ -155,7 +156,9 @@ describe("SidebarSearch", () => {
 
     act(() => {
       render(
-        <SidebarSearch state={fixture.state} closeLayoutMenu={vi.fn()} />,
+        <TestHost state={fixture.state}>
+          <SidebarSearch state={fixture.state} closeLayoutMenu={vi.fn()} />
+        </TestHost>,
         container
       );
     });
@@ -231,7 +234,9 @@ describe("SidebarSearch", () => {
 
     act(() => {
       render(
-        <SidebarSearch state={fixture.state} closeLayoutMenu={vi.fn()} />,
+        <TestHost state={fixture.state}>
+          <SidebarSearch state={fixture.state} closeLayoutMenu={vi.fn()} />
+        </TestHost>,
         container
       );
     });
@@ -298,7 +303,9 @@ describe("SidebarSearch", () => {
 
     act(() => {
       render(
-        <SidebarSearch state={fixture.state} closeLayoutMenu={vi.fn()} />,
+        <TestHost state={fixture.state}>
+          <SidebarSearch state={fixture.state} closeLayoutMenu={vi.fn()} />
+        </TestHost>,
         container
       );
     });

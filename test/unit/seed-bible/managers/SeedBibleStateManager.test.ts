@@ -710,7 +710,7 @@ describe("createSeedBibleState", () => {
       const state = await createState();
       const RTLE_CHAR = "\u202B";
 
-      state.i18n.changeLanguage("ar");
+      await state.i18n.changeLanguage("ar");
       setSelectedTabChapter(state, "genesis", "Genesis", 1, "AAB");
 
       expect(state.app.title.value).toBe(

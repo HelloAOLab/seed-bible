@@ -5,6 +5,7 @@ import {
   createTestSeedBibleState,
   type CreateTestSeedBibleStateOptions,
 } from "../testUtils/createTestSeedBibleState";
+import { TestHost } from "./TestHost";
 
 vi.mock("../i18n/I18nManager", () => ({
   useI18n: () => ({
@@ -81,7 +82,12 @@ describe("Sidebar collapsed layout", () => {
     state.sidebar.isMobileOpen.value = false;
 
     act(() => {
-      render(<Sidebar state={state} />, container);
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
     });
 
     expect(container.querySelector(".sb-pane-layout-anchor")).toBeNull();
@@ -93,7 +99,12 @@ describe("Sidebar collapsed layout", () => {
     state.sidebar.isMobileOpen.value = false;
 
     act(() => {
-      render(<Sidebar state={state} />, container);
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
     });
 
     const collapsedTile = container.querySelector(
@@ -112,7 +123,12 @@ describe("Sidebar collapsed layout", () => {
     state.sidebar.isMobileOpen.value = false;
 
     act(() => {
-      render(<Sidebar state={state} />, container);
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
     });
 
     expect(container.textContent).not.toContain("New shared session");
@@ -124,7 +140,12 @@ describe("Sidebar collapsed layout", () => {
     state.sidebar.isSidebarCollapsed.value = false;
 
     act(() => {
-      render(<Sidebar state={state} />, container);
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
     });
 
     expect(container.querySelector(".sb-pane-layout-anchor")).not.toBeNull();
@@ -136,7 +157,12 @@ describe("Sidebar collapsed layout", () => {
     state.sidebar.isMobileOpen.value = false;
 
     act(() => {
-      render(<Sidebar state={state} />, container);
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
     });
 
     const bottomActions = container.querySelector(".sb-sidebar-bottom-actions");
@@ -153,7 +179,12 @@ describe("Sidebar collapsed layout", () => {
     state.sidebar.isMobileOpen.value = false;
 
     act(() => {
-      render(<Sidebar state={state} />, container);
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
     });
 
     const sidebar = container.querySelector(".sb-tabs-sidebar");
