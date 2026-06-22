@@ -20,6 +20,30 @@ import {
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
 
+/**
+ * Spawns a Material-style ripple inside the pressed button: a circle centered on
+ * the button (not the touch point) that scales up and fades out, then removes
+ * itself. Used for tap feedback on the mobile floating-nav buttons, where the
+ * CSS `:active` state is too brief to reliably paint on touch devices.
+ */
+function spawnRipple(event: PointerEvent) {
+  const button = event.currentTarget as HTMLElement | null;
+  if (!button) return;
+  const rect = button.getBoundingClientRect();
+  // Oversize the circle so the ripple reads big and bold (clipped to the
+  // button's rounded shape by overflow: hidden).
+  const size = Math.max(rect.width, rect.height) * 1.6;
+  const ripple = document.createElement("span");
+  ripple.className = "sb-ripple";
+  ripple.style.width = `${size}px`;
+  ripple.style.height = `${size}px`;
+  // Always center the ripple on the button, regardless of where it was tapped.
+  ripple.style.left = `${(rect.width - size) / 2}px`;
+  ripple.style.top = `${(rect.height - size) / 2}px`;
+  ripple.addEventListener("animationend", () => ripple.remove());
+  button.appendChild(ripple);
+}
+
 interface MobileBottomTabProps {
   iconName?: string;
   iconNode?: preact.ComponentChildren;
@@ -751,6 +775,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           type="button"
                           disabled={prev.disabled.value}
                           onClick={prev.onSelect}
+                          onPointerDown={spawnRipple}
                           className="sb-reader-floating-nav-arrow"
                           aria-label={translateTitle(t, prev.title)}
                         >
@@ -762,6 +787,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         <button
                           type="button"
                           onClick={selector.onSelect}
+                          onPointerDown={spawnRipple}
                           className="sb-reader-floating-nav-label"
                         >
                           {readingState.value?.chapterData.value?.book.name ??
@@ -776,6 +802,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           type="button"
                           disabled={next.disabled.value}
                           onClick={next.onSelect}
+                          onPointerDown={spawnRipple}
                           className="sb-reader-floating-nav-arrow"
                           aria-label={translateTitle(t, next.title)}
                         >

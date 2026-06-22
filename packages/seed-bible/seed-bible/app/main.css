@@ -2127,6 +2127,8 @@ h6 {
   }
 
   .sb-reader-floating-nav-arrow {
+    position: relative;
+    overflow: hidden;
     flex: 0 0 auto;
     display: flex;
     align-items: center;
@@ -2139,6 +2141,19 @@ h6 {
     color: var(--sb-font-color);
     cursor: pointer;
     border-radius: 999px;
+  }
+
+  /* Press feedback: the arrow fills and shrinks briefly on tap so the button
+     feels responsive (it previously gave no visual response). */
+  .sb-reader-floating-nav-arrow {
+    transition:
+      background-color 0.12s ease,
+      transform 0.12s ease;
+  }
+
+  .sb-reader-floating-nav-arrow:active:not(:disabled) {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 82%);
+    transform: scale(0.9);
   }
 
   .sb-reader-floating-nav-arrow:disabled {
@@ -2154,6 +2169,7 @@ h6 {
   }
 
   .sb-reader-floating-nav-label {
+    position: relative;
     flex: 0 1 auto;
     min-width: 0;
     padding: 0 4px;
@@ -2167,6 +2183,35 @@ h6 {
     overflow: hidden;
     text-overflow: ellipsis;
     cursor: pointer;
+    border-radius: 999px;
+    transition:
+      background-color 0.12s ease,
+      transform 0.12s ease;
+  }
+
+  /* Press feedback for the book/chapter label, matching the arrows. */
+  .sb-reader-floating-nav-label:active {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
+    transform: scale(0.97);
+  }
+
+  /* Tap ripple: a circle that expands from the touch point and fades out.
+     Spawned by spawnRipple() and removed on animationend. */
+  .sb-ripple {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    background: var(--sb-primary-color);
+    transform: scale(0);
+    opacity: 0.9;
+    animation: sb-ripple-fade 0.5s ease-out forwards;
+  }
+
+  @keyframes sb-ripple-fade {
+    to {
+      transform: scale(1);
+      opacity: 0;
+    }
   }
 
   .sb-action-btns {
