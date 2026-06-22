@@ -85,18 +85,18 @@ export function ResultView({
 
     const currentReadingState = seedBibleState.app.currentReadingState.value;
 
-    if (selectedTab && book && chapter) {
+    if (selectedTab && book) {
       await selectedTab.readingState.selectTranslationAndChapter(
         currentReadingState.translationId,
         book,
-        Number(chapter),
+        Number(chapter) || 1,
         verse
           ? {
               scrollToVerse: Number(verse),
             }
           : {}
       );
-      if (verse) {
+      if (verse && chapter) {
         selectedTab.readingState.decorateVerses(
           book,
           Number(chapter),
