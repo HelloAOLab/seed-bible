@@ -90,7 +90,7 @@ export function Main({
 
   return (
     <AppConfigProvider value={appConfig}>
-      <I18nProvider>
+      <I18nProvider i18n={state.i18n}>
         <MainContent state={state} fontSizeClass={fontSizeClass} />
       </I18nProvider>
     </AppConfigProvider>

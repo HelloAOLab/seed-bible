@@ -52,6 +52,11 @@ export async function render(options: RenderOptions): Promise<string> {
     initialHref: href,
   });
 
+  // Block until the detected language's translations are loaded so the
+  // server-rendered HTML (and og:locale meta below) is in the right language
+  // rather than the bundled "en" fallback.
+  await state.i18n.ready;
+
   const [appHtml] = await Promise.all([
     renderToStringAsync(
       <Main initialState={state} config={config} initialHref={href} />
