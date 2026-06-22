@@ -86,7 +86,6 @@ export function createNavigationManager(
       unused: string,
       url?: string | URL | null
     ) => {
-      console.trace("PushState URL:", data, url);
       originalPushState(data, unused, url);
       syncCurrentUrl();
     }) as History["pushState"];
@@ -99,7 +98,6 @@ export function createNavigationManager(
       unused: string,
       url?: string | URL | null
     ) => {
-      console.trace("ReplaceState URL:", data, url);
       originalReplaceState(data, unused, url);
       syncCurrentUrl();
     }) as History["replaceState"];

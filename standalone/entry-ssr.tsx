@@ -44,7 +44,6 @@ const escapeForScript = (json: string): string => json.replace(/</g, "\\u003c");
  * data-driven SPA that does not block first paint on network fetches.
  */
 export async function render(options: RenderOptions): Promise<string> {
-  console.log("Rendering!");
   const { config } = options;
 
   const href = `http://ssr.local${options.path}`;
