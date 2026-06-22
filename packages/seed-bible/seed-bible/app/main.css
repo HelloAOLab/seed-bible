@@ -194,12 +194,18 @@ html {
   --sb-highlight-orange-color: #ffcc80;
   --sb-highlight-orange-font-color: #333;
   --sb-highlight-orange-words-of-jesus-font-color: #e07b4c;
+
+  --sb-dynamic-range-limit: standard;
 }
 
 body {
   background: var(--sb-background);
   color: var(--sb-font-color);
   font-family: var(--sb-font-family);
+
+  /* dynamic-range-limit prevents user-provided images from changing the dynamic range */
+  /* eslint-disable-next-line css/no-invalid-properties */
+  dynamic-range-limit: var(--sb-dynamic-range-limit);
 }
 
 /* On mobile, lock the document to the visual viewport so iOS/Android
