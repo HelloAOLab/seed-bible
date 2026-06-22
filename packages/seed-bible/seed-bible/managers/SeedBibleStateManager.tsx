@@ -134,7 +134,7 @@ export interface AppState {
 
   /**
    * The Canonical URL for the current page.
-   * Used for SEO and social sharing metadata.
+   * Doesn't include the origin, but does include the query params for the current chapter (e.g. `/?translation=abc&book=GEN&chapter=1`).
    */
   canonicalUrl: ReadonlySignal<string>;
 
@@ -577,7 +577,7 @@ export function createSeedBibleState(
       canonicalUrl.searchParams.set("chapter", String(chapter.chapter.number));
     }
 
-    return canonicalUrl.href;
+    return `${canonicalUrl.pathname}${canonicalUrl.search}`;
   });
 
   effect(() => {

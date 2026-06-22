@@ -18,9 +18,6 @@ export interface RenderOptions {
   /** Full request path including the deployment prefix, e.g. "/d/branch-x/?book=GEN". */
   path: string;
 
-  /** Full request URL including the origin. */
-  url: string;
-
   /** Deployment config injected into the page and passed to the app. */
   config: AppConfig;
   /**
@@ -50,14 +47,15 @@ export async function render(options: RenderOptions): Promise<string> {
   console.log("Rendering!");
   const { config } = options;
 
+  const href = `http://ssr.local${options.path}`;
   const state = createSeedBibleState({
     config,
-    initialHref: options.url,
+    initialHref: href,
   });
 
   const [appHtml] = await Promise.all([
     renderToStringAsync(
-      <Main initialState={state} config={config} initialHref={options.url} />
+      <Main initialState={state} config={config} initialHref={href} />
     ),
   ]);
 
