@@ -11,7 +11,7 @@
 //   return;
 // }
 
-if (import.meta.env.DEV) {
+if (import.meta.env.DEV && !import.meta.env.VITE_ENABLE_POSTHOG) {
   console.log(
     "[app] PostHog initialization is disabled in development mode. Skipping setup."
   );
