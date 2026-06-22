@@ -358,6 +358,24 @@ export function createLoginManager({
     });
   });
 
+  effect(() => {
+    const info = userInfo.value;
+    if (info) {
+      posthog?.setPersonProperties({
+        email: info.email,
+      });
+    }
+  });
+
+  effect(() => {
+    const profileData = profile.value;
+    if (profileData) {
+      posthog?.setPersonProperties({
+        name: profileData.name,
+      });
+    }
+  });
+
   const updateProfile = (newData: Partial<UserProfile>) => {
     if (!userId.value) {
       console.warn("Cannot update profile: no authenticated user");
