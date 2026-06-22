@@ -360,8 +360,8 @@ export function createLoginManager({
 
   effect(() => {
     const info = userInfo.value;
-    if (info) {
-      posthog?.setPersonProperties({
+    if (info && typeof posthog !== "undefined" && posthog) {
+      posthog.setPersonProperties({
         email: info.email,
       });
     }
@@ -369,8 +369,8 @@ export function createLoginManager({
 
   effect(() => {
     const profileData = profile.value;
-    if (profileData) {
-      posthog?.setPersonProperties({
+    if (profileData && typeof posthog !== "undefined" && posthog) {
+      posthog.setPersonProperties({
         name: profileData.name,
       });
     }

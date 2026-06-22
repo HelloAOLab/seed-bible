@@ -495,7 +495,11 @@ describe("createLoginManager", () => {
 
     it("identifies the user with PostHog when the user logs in", async () => {
       const mockIdentify = vi.fn();
-      (globalThis as any).posthog = { identify: mockIdentify };
+      const mockSetPersonProperties = vi.fn();
+      (globalThis as any).posthog = {
+        identify: mockIdentify,
+        setPersonProperties: mockSetPersonProperties,
+      };
 
       try {
         const manager = createLoginManager({ os });
@@ -511,59 +515,40 @@ describe("createLoginManager", () => {
         await waitFor(() => manager.userId.value === USER_ID);
 
         expect(mockIdentify).toHaveBeenCalledWith(USER_ID);
+        expect(mockSetPersonProperties).toHaveBeenCalledWith({ email: EMAIL });
       } finally {
         delete (globalThis as any).posthog;
       }
     });
   });
 
-  describe.skip("uploadProfilePicture()", () => {
-    let showUploadFilesMock: Mock;
+  describe("uploadProfilePicture()", () => {
     let recordFileMock: Mock;
 
     beforeEach(() => {
-      showUploadFilesMock = vi.fn();
-      recordFileMock = vi.fn();
-
-      (globalThis as any).os = {
-        ...(globalThis as any).os,
-        showUploadFiles: showUploadFilesMock,
-        recordFile: recordFileMock,
-      };
+      recordFileMock = vi.spyOn(os, "recordFile") as unknown as Mock;
     });
+
+    /** A real File, matching what the profile picture modal hands the manager. */
+    function makeFile(): File {
+      return new File([new Uint8Array([1, 2, 3])], "avatar.png", {
+        type: "image/png",
+      });
+    }
 
     it("does nothing when no user is authenticated", async () => {
       const manager = createLoginManager({ os });
 
-      await manager.uploadProfilePicture();
+      await manager.uploadProfilePicture(makeFile());
 
-      expect(showUploadFilesMock).not.toHaveBeenCalled();
       expect(recordFileMock).not.toHaveBeenCalled();
       expect(warnSpy).toHaveBeenCalledWith(
         "Cannot upload profile picture: no authenticated user"
       );
     });
 
-    it("throws an error when the user cancels file selection", async () => {
-      showUploadFilesMock.mockResolvedValue([]);
-
-      const manager = createAuthenticatedManager();
-      await waitFor(() => manager.userId.value === USER_ID);
-
-      await expect(manager.uploadProfilePicture()).rejects.toThrow(
-        "No file selected for upload"
-      );
-
-      expect(recordFileMock).not.toHaveBeenCalled();
-    });
-
     it("uploads the file and saves the URL to the profile on success", async () => {
-      const fakeFile = {
-        data: new Uint8Array([1, 2, 3]),
-        name: "avatar.png",
-        mimeType: "image/png",
-      };
-      showUploadFilesMock.mockResolvedValue([fakeFile]);
+      const file = makeFile();
       recordFileMock.mockResolvedValue({
         success: true,
         url: "https://example.com/avatar.png",
@@ -572,11 +557,11 @@ describe("createLoginManager", () => {
       const manager = createAuthenticatedManager();
       await waitFor(() => manager.userId.value === USER_ID);
 
-      await manager.uploadProfilePicture();
+      await manager.uploadProfilePicture(file);
 
-      expect(recordFileMock).toHaveBeenCalledWith(USER_ID, fakeFile.data, {
+      expect(recordFileMock).toHaveBeenCalledWith(USER_ID, file, {
         mimeType: "image/png",
-        markers: ["publicRead"],
+        marker: "publicRead",
       });
       expect(manager.profile.value?.pictureUrl).toBe(
         "https://example.com/avatar.png"
@@ -584,12 +569,6 @@ describe("createLoginManager", () => {
     });
 
     it("throws an error and does not update the profile when the upload fails", async () => {
-      const fakeFile = {
-        data: new Uint8Array([1, 2, 3]),
-        name: "avatar.png",
-        mimeType: "image/png",
-      };
-      showUploadFilesMock.mockResolvedValue([fakeFile]);
       recordFileMock.mockResolvedValue({
         success: false,
         errorCode: "upload_failed",
@@ -599,7 +578,7 @@ describe("createLoginManager", () => {
       const manager = createAuthenticatedManager();
       await waitFor(() => manager.userId.value === USER_ID);
 
-      await expect(manager.uploadProfilePicture()).rejects.toThrow(
+      await expect(manager.uploadProfilePicture(makeFile())).rejects.toThrow(
         "Failed to upload profile picture"
       );
 
