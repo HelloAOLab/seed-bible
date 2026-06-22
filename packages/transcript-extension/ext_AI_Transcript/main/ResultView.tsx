@@ -85,24 +85,28 @@ export function ResultView({
 
     const currentReadingState = seedBibleState.app.currentReadingState.value;
 
-    if (selectedTab) {
+    if (selectedTab && book && chapter) {
       await selectedTab.readingState.selectTranslationAndChapter(
         currentReadingState.translationId,
         book,
         Number(chapter),
-        {
-          scrollToVerse: Number(verse),
-        }
+        verse
+          ? {
+              scrollToVerse: Number(verse),
+            }
+          : {}
       );
-      selectedTab.readingState.decorateVerses(
-        book,
-        Number(chapter),
-        Number(verse),
-        {
-          className: "sb-verse-decoration-initial-verse-highlight",
-          removeAfterMs: 5000,
-        }
-      );
+      if (verse) {
+        selectedTab.readingState.decorateVerses(
+          book,
+          Number(chapter),
+          Number(verse),
+          {
+            className: "sb-verse-decoration-initial-verse-highlight",
+            removeAfterMs: 5000,
+          }
+        );
+      }
     }
   };
 
