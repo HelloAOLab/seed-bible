@@ -96,12 +96,12 @@ jobs:
             --cache-control "public, max-age=31536000, immutable"
 
       # PWA shell files (sw.js, registerSW.js, manifest.webmanifest, workbox-*)
-      # are emitted only by the root (main) build and live at the bucket root so
+      # are emitted only by the root (standalone) build and live at the bucket root so
       # the service worker keeps a stable, root-scoped URL across deploys. The SW
       # + its registration script must revalidate so update checks work; the
       # remaining public files get a short cache.
-      - name: Sync PWA shell + public files (main only)
-        if: ${{ steps.ids.outputs.branch == 'main' }}
+      - name: Sync PWA shell + public files (standalone only)
+        if: ${{ steps.ids.outputs.branch == 'standalone' }}
         run: |
           aws s3 cp standalone/dist/client/sw.js "s3://$S3_BUCKET/sw.js" \
             --cache-control "no-cache" || true
@@ -154,7 +154,7 @@ jobs:
           BRANCH: ${{ steps.ids.outputs.branch }}
           BUILD_ID: ${{ steps.ids.outputs.build_id }}
         run: |
-          if [ "$BRANCH" = "main" ]; then
+          if [ "$BRANCH" = "standalone" ]; then
             echo "Deployed **main** to the site root." >> "$GITHUB_STEP_SUMMARY"
           else
             echo "Deployed branch **$BRANCH** → \`https://ssr.seedbible.org/b/$BRANCH/$BUILD_ID\`" >> "$GITHUB_STEP_SUMMARY"
