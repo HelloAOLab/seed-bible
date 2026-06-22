@@ -13,6 +13,7 @@ import { PartitionAuthSource } from "@casual-simulation/aux-common/partitions/Pa
 import { AuthenticatedConnectionClient } from "@casual-simulation/aux-common/websockets/AuthenticatedConnectionClient";
 import { computed, effect, signal } from "@preact/signals";
 import { parseSessionKey } from "@casual-simulation/aux-common";
+import { sha256 } from "hash.js";
 
 export type CasualOSManager = ReturnType<typeof CasualOSManager>;
 
@@ -226,18 +227,21 @@ export async function uploadFile(
   markers: string[] = ["publicRead"],
   providedMimeType?: string
 ) {
-  let encodedData;
-  let mimeType: string = providedMimeType ?? "application/json";
+  let encodedData: Uint8Array;
+  let mimeType: string;
   if (isArrayBuffer(data)) {
-    encodedData = data;
-    mimeType = "application/octet-stream";
+    encodedData = new Uint8Array(data);
+    mimeType = providedMimeType || "application/octet-stream";
+  } else if (data instanceof Blob) {
+    encodedData = await data.bytes();
+    mimeType = providedMimeType || data.type || "application/octet-stream";
   } else {
     const json = stringify(data);
     encodedData = new TextEncoder().encode(json);
-    mimeType = "application/json";
+    mimeType = providedMimeType || "application/json";
   }
   const byteLength = encodedData.byteLength;
-  const hash = getHash(encodedData as Uint8Array);
+  const hash = getHash(encodedData);
 
   const recordFileResult = await client.recordFile({
     recordKey: recordNameOrKey,
@@ -289,5 +293,5 @@ export async function uploadFile(
 }
 
 function getHash(buffer: Uint8Array): string {
-  return hash.sha256().update(buffer).digest("hex");
+  return sha256().update(buffer).digest("hex");
 }
