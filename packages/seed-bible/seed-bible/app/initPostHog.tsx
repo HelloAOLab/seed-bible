@@ -3,15 +3,11 @@
 /* eslint-disable prefer-rest-params */
 /* eslint-disable @typescript-eslint/no-unused-expressions */
 /* eslint-disable no-var */
-// if (import.meta.env.VITE_DISABLE_POSTHOG === "true") {
-//   console.log(
-//     "[app] PostHog initialization is disabled via config. Skipping setup."
-//   );
-//   // @ts-ignore
-//   return;
-// }
 
-if (import.meta.env.DEV && !import.meta.env.VITE_ENABLE_POSTHOG) {
+if (
+  import.meta.env.SSR ||
+  (import.meta.env.DEV && !import.meta.env.VITE_ENABLE_POSTHOG)
+) {
   console.log(
     "[app] PostHog initialization is disabled in development mode. Skipping setup."
   );
