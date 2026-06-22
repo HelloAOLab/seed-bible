@@ -15,6 +15,7 @@ if (
     init: () => {},
     capture: () => {},
     identify: () => {},
+    setPersonProperties: () => {},
   };
 } else {
   console.log("[app] Initializing PostHog for error reporting...");
