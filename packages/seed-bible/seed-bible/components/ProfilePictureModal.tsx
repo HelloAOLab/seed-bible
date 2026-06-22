@@ -159,7 +159,7 @@ export function ProfilePictureModalContent(props: {
             <span className="material-symbols-outlined">zoom_out</span>
             <input
               type="range"
-              min={1}
+              min={0.25}
               max={3}
               step={0.01}
               value={zoom.value}
