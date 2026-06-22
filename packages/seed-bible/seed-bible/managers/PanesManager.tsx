@@ -170,11 +170,22 @@ function getDefaultLayoutForSlotCount(slotCount: number): PaneLayoutId {
 
 function getPaneContentsInDisplayOrder(
   nextPanes: Pane[],
-  selectedId: string | null
+  selectedId: string | null,
+  slotCount: number
 ) {
   const attachedPanes = getAttachedPanes(nextPanes);
-  const selectedPane =
-    attachedPanes.find((pane) => pane.id === selectedId) ?? null;
+
+  // Pulling the selected pane's content to the front reshuffles which tab is
+  // shown in which physical slot, so only do it when the layout actually has
+  // fewer slots than panes (shrinking) — there we want to keep the focused
+  // pane's content rather than drop it. When the slot count is preserved or
+  // grows, keep the existing left-to-right order so panes stay put. Reordering
+  // on every re-layout is what made an "open in new panel" clone jump into the
+  // first slot and swap with the original tab.
+  const isShrinking = attachedPanes.length > slotCount;
+  const selectedPane = isShrinking
+    ? (attachedPanes.find((pane) => pane.id === selectedId) ?? null)
+    : null;
   const orderedPanes = selectedPane
     ? [
         selectedPane,
@@ -245,7 +256,8 @@ function applyLayoutToPanes(
   const detachedPanes = getDetachedPanes(existingPanes);
   const orderedContents = getPaneContentsInDisplayOrder(
     attachedPanes,
-    selectedId
+    selectedId,
+    slotCount
   );
 
   const nextAttachedPanes = Array.from({ length: slotCount }, (_, index) => {
@@ -751,6 +763,22 @@ export function createPanes(
     );
   };
 
+  // Disposes pane-only tabs (those backing an "open in new/detached panel")
+  // once no pane references them, so closing/collapsing a panel doesn't leak
+  // hidden tabs and their reading states.
+  const disposeUnreferencedPaneOnlyTabs = () => {
+    const referencedTabIds = new Set(
+      panes.value
+        .map((pane) => pane.tab?.id)
+        .filter((id): id is string => typeof id === "string")
+    );
+    for (const tab of tabsManager.tabs.value) {
+      if (tab.paneOnly && !referencedTabIds.has(tab.id)) {
+        tabsManager.removeTab(tab.id);
+      }
+    }
+  };
+
   const setLayout = (layoutId: PaneLayoutId) => {
     layout.value = layoutId;
     const nextPanes = applyLayoutToPanes(
@@ -766,6 +794,7 @@ export function createPanes(
       nextPanes[0] ??
       null;
     syncPaneState(nextPanes, nextSelectedPane?.id ?? null);
+    disposeUnreferencedPaneOnlyTabs();
   };
 
   const closePane = (paneId: string) => {
@@ -777,6 +806,7 @@ export function createPanes(
     if (paneToClose.detached) {
       const nextPanes = panes.value.filter((pane) => pane.id !== paneId);
       syncPaneState(nextPanes);
+      disposeUnreferencedPaneOnlyTabs();
       return true;
     }
 
@@ -801,6 +831,7 @@ export function createPanes(
       ),
       nextSelectedPaneId
     );
+    disposeUnreferencedPaneOnlyTabs();
     return true;
   };
 

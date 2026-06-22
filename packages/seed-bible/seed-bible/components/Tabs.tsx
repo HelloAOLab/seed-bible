@@ -1441,7 +1441,9 @@ function BookmarksSection(props: BookmarksSectionProps) {
 export function Tabs(props: TabsProps) {
   const { state, closeLayoutMenu, effectivelyCollapsed } = props;
   const { app, tabs: tabsManager, bookmarks } = state;
-  const tabs = tabsManager.tabs.value;
+  // Pane-only tabs back an "open in new/detached panel" and are intentionally
+  // hidden from the tab strip.
+  const tabs = tabsManager.tabs.value.filter((tab) => !tab.paneOnly);
   const selectedTabId = tabsManager.selectedTabId.value;
   const panelsEnabled = app.panelsEnabled.value;
   const isBookmarkFilterActive = bookmarks.isFilterActive.value;

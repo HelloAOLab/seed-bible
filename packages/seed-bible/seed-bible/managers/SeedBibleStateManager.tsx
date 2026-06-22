@@ -423,22 +423,57 @@ export function createSeedBibleState(): SeedBibleState {
     void selector.setOpen(true, targetPane, { forNewTab: true });
   };
 
+  // Resolves which tab should be opened in a brand-new pane. A pane is bound to
+  // a tab by id, and panes sharing a tab also share its reading state and get
+  // de-duplicated into a single slot. So when the requested tab is already
+  // displayed in a pane (the common case — it's the tab currently being read),
+  // opening it again would either leave an empty pane or move both panes when
+  // navigating chapters. To give the user an independent, navigable panel we
+  // clone the tab into a fresh one seeded at the same reading location.
+  const resolveTabForNewPane = (tabId: string): string => {
+    const sourceTab = tabs.tabs.value.find((tab) => tab.id === tabId) ?? null;
+    if (!sourceTab) {
+      return tabId;
+    }
+
+    const alreadyShown = panes.panes.value.some(
+      (pane) => pane.tab?.id === tabId
+    );
+    if (!alreadyShown) {
+      return tabId;
+    }
+
+    const readingState = sourceTab.readingState;
+    const clone = tabs.addTab(
+      undefined,
+      {
+        initialTranslationId: readingState.translationId.value,
+        initialBookId: readingState.bookId.value,
+        initialChapterNumber: readingState.chapterNumber.value,
+      },
+      { paneOnly: true }
+    );
+    return clone.id;
+  };
+
   const handleOpenInNewPane = (tabId: string) => {
     closeSidebarAndSettings();
+    const paneTabId = resolveTabForNewPane(tabId);
     panes.openPane({
       type: "attached",
-      tabId,
+      tabId: paneTabId,
     });
-    tabs.selectTab(tabId);
+    tabs.selectTab(paneTabId);
   };
 
   const handleOpenInDetachedPane = (tabId: string) => {
     closeSidebarAndSettings();
+    const paneTabId = resolveTabForNewPane(tabId);
     panes.openPane({
       type: "detached",
-      tabId,
+      tabId: paneTabId,
     });
-    tabs.selectTab(tabId);
+    tabs.selectTab(paneTabId);
   };
 
   const handleSelectPane = (paneId: string) => {

@@ -284,6 +284,46 @@ describe("createPanes", () => {
     ).toHaveLength(4);
   });
 
+  it("keeps panes in place when re-applying a layout with a non-first pane selected", async () => {
+    const { panesManager } = await createManagers({ extraTabs: 1 });
+
+    panesManager.openPane({ type: "attached", tabId: "tab-2" });
+    const attachedBefore = panesManager.panes.value.filter(
+      (pane) => !pane.detached
+    );
+    const firstPaneId = attachedBefore[0]!.id;
+    const firstPaneTabId = attachedBefore[0]!.tab?.id;
+
+    // Select the second (right) pane, then re-apply the same layout. The
+    // content must not jump to the first slot, otherwise clicking the first
+    // pane would select the wrong tab.
+    panesManager.selectPane(attachedBefore[1]!.id);
+    panesManager.setLayout("split-2v");
+
+    const attachedAfter = panesManager.panes.value.filter(
+      (pane) => !pane.detached
+    );
+    expect(attachedAfter[0]!.id).toBe(firstPaneId);
+    expect(attachedAfter[0]!.tab?.id).toBe(firstPaneTabId);
+  });
+
+  it("keeps the selected pane's content when shrinking the layout", async () => {
+    const { panesManager } = await createManagers({ extraTabs: 1 });
+
+    panesManager.openPane({ type: "attached", tabId: "tab-2" });
+    const secondPane = panesManager.panes.value.find(
+      (pane) => pane.tab?.id === "tab-2"
+    )!;
+    panesManager.selectPane(secondPane.id);
+
+    // Collapsing to a single slot should retain the focused pane's tab.
+    panesManager.setLayout("single");
+
+    const attached = panesManager.panes.value.filter((pane) => !pane.detached);
+    expect(attached).toHaveLength(1);
+    expect(attached[0]!.tab?.id).toBe("tab-2");
+  });
+
   it("supports detaching and reattaching a pane", async () => {
     const { panesManager } = await createManagers({ extraTabs: 1 });
 
