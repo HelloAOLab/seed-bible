@@ -1,5 +1,4 @@
 import { opentypeJs } from "https://esm.helloao.org/painter-vendor-IGDNTFOW.js";
-import type { GeoJSON, Feature } from "geojson";
 import { z } from "zod";
 import { GEOJSON_GEOMETRY_HANDLERS } from "./geometryHandlers";
 

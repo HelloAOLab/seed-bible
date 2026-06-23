@@ -21,7 +21,10 @@
     "noEmit": true,
     "lib": ["es2024", "dom", "dom.iterable"],
     "paths": {
-      "@packages/*": ["./packages/*"]
+      "https://esm.helloao.org/vendor-3PZUL55I.js": ["./lib/vendor.ts"],
+      "https://esm.helloao.org/painter-vendor-IGDNTFOW.js": [
+        "./lib/painter-vendor.ts"
+      ]
     },
     "noImplicitAny": true,
     "noImplicitThis": true,
@@ -38,9 +41,8 @@
     "resolvePackageJsonExports": true,
     "resolvePackageJsonImports": true,
     "preserveConstEnums": true,
-    "typeRoots": ["./node_modules/@types", "./typings", "./node_modules"],
-    "types": ["vitest/globals", "vitest/jsdom", "node"]
+    "typeRoots": ["../node_modules/@types", "./typings", "../node_modules"],
+    "types": []
   },
-  "include": ["packages", "typings", "script", "test", "standalone", "server"],
-  "exclude": ["obsolete", "patterns"]
+  "include": ["./**/*.ts", "./**/*.tsx"]
 }
