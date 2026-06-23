@@ -70,7 +70,7 @@ export function Main() {
 
   useEffect(() => {
     state.extensions.loadDefaultExtensions();
-  });
+  }, []);
 
   const { config } = state;
   const fontSizeClass = `sb-font-size-${config.config.value.fontSize.toLowerCase()}`;
