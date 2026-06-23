@@ -1,5 +1,5 @@
 import { program } from "commander";
-import { readFile, rmdir, cp } from "node:fs/promises";
+import { readFile, rmdir, cp, readdir } from "node:fs/promises";
 import { downloadAndSave, uploadPattern } from "./lib/pattern";
 import { uploadFile, getCurrentSessionKey } from "./lib/records";
 import path from "node:path";
@@ -17,85 +17,44 @@ program
   .version("0.1.0");
 
 program
-  .command("download")
-  .description("Downloads the AUX for the given pattern to the dist folder.")
-  .argument("<name>", "The name of the pattern to download.")
-  .option(
-    "-v, --version <version>",
-    "The version of the pattern to download. If not specified, the latest version will be downloaded.",
-    parseInt
+  .command("pack")
+  .description(
+    "Packs the given pattern into an AUX file in the pattern-dist folder. The AUX file will be named <pattern>.aux."
   )
-  .action(async (name, options) => {
-    await downloadAndSave(name, options.version);
+  .argument("<name>", "The name of the pattern to pack.")
+  .action(async (name) => {
+    const patternPath = path.resolve("patterns", name);
+    const distPath = path.resolve("pattern-dist");
+    const filePath = path.resolve(distPath, `${name}.aux`);
+    execSync(`casualos pack-aux --overwrite "${patternPath}" "${filePath}"`, {
+      stdio: "inherit",
+    });
+    console.log(`Packed pattern ${name} to ${filePath}.`);
   });
 
 program
-  .command("unpack-aux")
+  .command("pack-all")
   .description(
-    "Unpacks the given AUX file as the given pattern into the packages folder."
+    "Packs all patterns into AUX files in the pattern-dist folder. Each AUX file will be named <pattern>.aux."
   )
-  .argument("<file>", "The path to the AUX file to unpack.")
-  .argument("<pattern>", "The name of the pattern to unpack as.")
-  .action(async (file, pattern) => {
-    const filePath = path.resolve(file);
-    const copyPath = path.resolve(os.tmpdir(), `${pattern}.aux`);
-    await cp(filePath, copyPath, { force: true });
-    const packagePath = path.resolve("packages", pattern);
-    if (existsSync(packagePath)) {
-      await rmdir(packagePath, { recursive: true });
+  .action(async () => {
+    const list = await readdir("patterns");
+    const patterns: string[] = [];
+    for (const name of list) {
+      if (existsSync(path.resolve("patterns", name, "extension.json"))) {
+        patterns.push(name);
+      }
     }
-    execSync(`casualos unpack-aux --overwrite "${copyPath}" ./packages`, {
-      stdio: "ignore",
-    });
-    console.log(`Unpacked AUX from ${filePath} to packages/${pattern} folder.`);
-  });
+    const distPath = path.resolve("pattern-dist");
 
-program
-  .command("unpack-seed-bible-aux")
-  .description(
-    "Unpacks the given AUX file as the Seed Bible pattern into the packages folder."
-  )
-  .argument("<file>", "The path to the AUX file to unpack.")
-  .action(async (file) => {
-    const filePath = path.resolve(file);
-    const copyPath = path.resolve(os.tmpdir(), "seed-bible.aux");
-    await cp(filePath, copyPath, { force: true });
-    const packagePath = path.resolve("packages", "seed-bible");
-    if (existsSync(packagePath)) {
-      await rmdir(packagePath, { recursive: true });
+    for (const name of patterns) {
+      const patternPath = path.resolve("patterns", name);
+      const filePath = path.resolve(distPath, `${name}.aux`);
+      execSync(`casualos pack-aux --overwrite "${patternPath}" "${filePath}"`, {
+        stdio: "ignore",
+      });
+      console.log(`Packed pattern ${name} to ${filePath}.`);
     }
-    execSync(`casualos unpack-aux --overwrite "${copyPath}" ./packages`, {
-      stdio: "ignore",
-    });
-    console.log(`Unpacked Seed Bible AUX from ${filePath} to packages folder.`);
-  });
-
-program
-  .command("unpack")
-  .description(
-    "Downloads and unpacks the AUX for the given pattern into the packages folder."
-  )
-  .argument("<name>", "The name of the pattern to download.")
-  .option(
-    "-v, --version <version>",
-    "The version of the pattern to download. If not specified, the latest version will be downloaded.",
-    parseInt
-  )
-  .action(async (name, options) => {
-    const filePath = await downloadAndSave(
-      name,
-      options.version,
-      packageNameMap.get(name) || `${name}.aux`
-    );
-    const packagePath = path.resolve(
-      "packages",
-      packageNameMap.get(name) || name
-    );
-    await rmdir(packagePath, { recursive: true });
-    execSync(`casualos unpack-aux --overwrite "${filePath}" ./packages`, {
-      stdio: "ignore",
-    });
-    console.log(`Unpacked pattern ${name} to packages folder.`);
   });
 
 program
