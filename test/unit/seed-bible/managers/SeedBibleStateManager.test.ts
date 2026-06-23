@@ -714,7 +714,7 @@ describe("createSeedBibleState", () => {
       setSelectedTabChapter(state, "genesis", "Genesis", 1, "AAB");
 
       expect(state.app.title.value).toBe(
-        `${RTLE_CHAR}Genesis 1 - AAB | Seed Bible`
+        `${RTLE_CHAR}Genesis 1 - AAB | الكتاب المقدس للبذور`
       );
     });
   });
