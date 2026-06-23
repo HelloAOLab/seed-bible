@@ -1,10 +1,14 @@
 import { VerseData } from "bibleVizUtils.domain.entities.VerseData";
-import type { Piece } from "bibleVizUtils.domain.models.canvas";
+import type {
+  Piece,
+  VersesBundleCreationParams,
+} from "bibleVizUtils.domain.models.canvas";
 
 interface DataParams {
   id: string;
   verses?: VerseData[];
   piece?: Piece<"VersesBundle">;
+  creationParams: VersesBundleCreationParams;
 }
 
 export class VersesBundleData {
@@ -13,11 +17,13 @@ export class VersesBundleData {
   #piece: DataParams["piece"];
   #isSelected: boolean = false;
   #isBeingDragged: boolean = false;
+  #creationParams: DataParams["creationParams"];
 
-  constructor({ verses = [], piece, id }: DataParams) {
+  constructor({ verses = [], piece, id, creationParams }: DataParams) {
     this.#verses = new Map(verses.map((verse) => [verse.id, verse]));
     this.#piece = piece;
     this.#id = id;
+    this.#creationParams = creationParams;
   }
 
   get id() {
@@ -25,6 +31,9 @@ export class VersesBundleData {
   }
   get verses() {
     return Array.from(this.#verses).map(([, data]) => data);
+  }
+  getReversedVerses(): VerseData[] {
+    return this.verses.toReversed();
   }
   get piece() {
     return this.#piece;
@@ -71,5 +80,10 @@ export class VersesBundleData {
   }
   endDrag() {
     this.#isBeingDragged = false;
+  }
+  getCreationParam<K extends keyof VersesBundleCreationParams>(
+    key: K
+  ): VersesBundleCreationParams[K] {
+    return this.#creationParams[key];
   }
 }

@@ -133,6 +133,18 @@ export interface ParentDataIds {
 }
 export type ParentDataId = keyof ParentDataIds;
 
+export type StackAncestorType =
+  | "StackBible"
+  | "StackTestament"
+  | "StackSection"
+  | "StackSectionBook"
+  | "StackBook";
+
+export interface StackAncestor {
+  id: string;
+  type: StackAncestorType;
+}
+
 export interface LayoutBookStructure {
   layoutBookData: LayoutBookData;
   nameLabel: Piece;
@@ -208,6 +220,16 @@ export interface StackBookCreationParams extends StackSectionBaseCreationParams 
 
 export interface ChapterCreationParams {
   bookId: string;
+}
+
+export interface VersesBundleCreationParams extends ChapterCreationParams {
+  start: number;
+  count: number;
+  chapter: number;
+}
+
+export interface VerseCreationParams extends VersesBundleCreationParams {
+  verseIndex: number;
 }
 
 export const PieceSelectionSources = {

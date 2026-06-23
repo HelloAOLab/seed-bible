@@ -26,6 +26,10 @@ import type {
 import { InfoLabelData } from "bibleVizUtils.domain.entities.InfoLabelData";
 import type { PieceActivityServicePort } from "bibleVizUtils.domain.ports.label";
 import type { LoggerPort } from "bibleVizUtils.domain.ports.logger";
+import type {
+  IndicatorsDeleterPort,
+  NotificationDeleterPort,
+} from "../ports/PieceActivity";
 
 interface ServiceParams {
   dataRegistryPort: DataRegistryPort;
@@ -175,7 +179,12 @@ const indicatorsStrategiesMap: {
   [BiblePiece.LayoutChapter]: pieceIndicatorsStrategy,
 };
 
-export class PieceActivityService implements PieceActivityServicePort {
+export class PieceActivityService
+  implements
+    PieceActivityServicePort,
+    IndicatorsDeleterPort,
+    NotificationDeleterPort
+{
   #dataRegistryPort: DataRegistryPort;
   #arrangementServicePort: ArrangementServicePort;
   #labelDataStorePort: LabelDataStorePort;
@@ -426,6 +435,15 @@ export class PieceActivityService implements PieceActivityServicePort {
     return indicators.find((indicator) => indicator.index === activityIndex);
   }
 
+  tryHideIndicators(container: ActivityContainer): boolean {
+    const indicatorsToDelete = container.clearActivityIndicators();
+    if (indicatorsToDelete) {
+      this.#activityIndicatorsAdapterPort.hideIndicators(indicatorsToDelete);
+      return true;
+    }
+    return false;
+  }
+
   updateIndicators: (container: ActivityContainer) => ActivityIndicator[] = (
     container
   ) => {
@@ -450,10 +468,7 @@ export class PieceActivityService implements PieceActivityServicePort {
     });
 
     if (pieceActivity.length === 0) {
-      const indicatorsToDelete = container.clearActivityIndicators();
-      if (indicatorsToDelete) {
-        this.#activityIndicatorsAdapterPort.hideIndicators(indicatorsToDelete);
-      }
+      this.tryHideIndicators(container);
       return [];
     }
 
@@ -584,6 +599,16 @@ export class PieceActivityService implements PieceActivityServicePort {
     }
   }
 
+  tryHideNotification(container: NotifiableContainer): boolean {
+    const currNotification = container.detachActivityNotification();
+
+    if (currNotification) {
+      this.#activityNotificationAdapterPort.hideNotification(currNotification);
+      return true;
+    }
+    return false;
+  }
+
   updateNotification(container: NotifiableContainer) {
     if (!container.piece || !container.isActive) return;
 
@@ -603,7 +628,6 @@ export class PieceActivityService implements PieceActivityServicePort {
     });
     const isPieceSelected = container.getIsSelectedForNotification();
     const direction = container.getNotificationDirection();
-    const currNotification = container.detachActivityNotification();
 
     const shouldHide =
       pieceActivity.length === 0 ||
@@ -613,9 +637,9 @@ export class PieceActivityService implements PieceActivityServicePort {
       (container.highlightState === HighlightStates.Highlighted &&
         !container.isSelected);
 
-    if (shouldHide && currNotification) {
-      this.#activityNotificationAdapterPort.hideNotification(currNotification);
-      return;
+    if (shouldHide) {
+      const hid = this.tryHideNotification(container);
+      if (hid) return;
     }
 
     const isOwnUserInPiece =
@@ -642,7 +666,6 @@ export class PieceActivityService implements PieceActivityServicePort {
         activityCount,
         color: color ?? "#ffffff",
         direction,
-        notification: currNotification,
         container,
       });
 

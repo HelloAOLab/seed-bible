@@ -8,7 +8,6 @@ import {
   HighlightStates,
 } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/highlight";
 import type {
-  PieceHighlightServicePort as PiecesHighlightServicePort,
   PieceHighlightPieceDataRepositoryPort,
   PieceHighlightSequenceStateServicePort,
   PieceHighlightEventPort,
@@ -22,8 +21,8 @@ import type {
   HighlightConfigProviderPort,
   AnyStackData,
 } from "bibleStack.application.ports.pieces";
+import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import { HighlightDelays } from "bibleStack.application.ports.pieces";
-import type { PieceHighlightServicePort as ExperienceHighlightServicePort } from "../ports/experience";
 import {
   type HighlightRequestSource,
   type HighlightPacing,
@@ -46,9 +45,7 @@ interface PieceHighlightServiceParams {
   sequenceStateServicePort: PieceHighlightSequenceStateServicePort;
 }
 
-export class PieceHighlightService
-  implements PiecesHighlightServicePort, ExperienceHighlightServicePort
-{
+export class PieceHighlightService implements PieceHighlighterPort {
   #scheduledUnhighlightsMap: Map<Piece["id"], string> = new Map();
   #highlightedPiecesIds: Map<
     Piece["id"],

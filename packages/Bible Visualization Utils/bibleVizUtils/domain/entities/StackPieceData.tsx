@@ -1,5 +1,10 @@
 import { StackData } from "bibleVizUtils.domain.entities.StackData";
-import type { BiblePieceType, Piece } from "bibleVizUtils.domain.models.canvas";
+import type {
+  BiblePieceType,
+  Piece,
+  StackAncestor,
+  StackAncestorType,
+} from "bibleVizUtils.domain.models.canvas";
 import type {
   ParentDataId,
   ParentDataIds,
@@ -294,6 +299,32 @@ export class StackPieceData<
       ],
       propagate
     );
+  }
+
+  /**
+   * Resolves the oldest (top-most) stack ancestor referenced by a piece's
+   * parentDataIds — e.g. a book deep inside a bible resolves to that bible.
+   * Returns `undefined` when the piece has no stack ancestor (it is itself a
+   * stack root). Layout ancestors are intentionally ignored.
+   */
+  getOldestAncestor(): StackAncestor | undefined {
+    const precedence: { key: keyof ParentDataIds; type: StackAncestorType }[] =
+      [
+        { key: "stackBibleId", type: "StackBible" },
+        { key: "stackTestamentId", type: "StackTestament" },
+        { key: "stackSectionId", type: "StackSection" },
+        { key: "stackSectionBookId", type: "StackSectionBook" },
+        { key: "stackBookId", type: "StackBook" },
+      ];
+
+    for (const { key, type } of precedence) {
+      const id = this.#parentDataIds?.[key];
+      if (id) {
+        return { id, type };
+      }
+    }
+
+    return undefined;
   }
   get creationParams() {
     return this.#creationParams;

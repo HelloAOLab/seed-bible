@@ -160,6 +160,8 @@ export interface BibleStackEvents {
   OnBibleCrackOpenSequenceStart: void;
   OnBibleCrackOpenSequenceEnd: void;
   OnScripturePieceHighlighted: { pieceData: AnyStackData };
+  OnBookBeginSelect: { data: StackBookData | StackSectionBookData };
+  OnBookEndSelect: { data: StackBookData | StackSectionBookData };
   OnBookBeginDeselect: { data: StackBookData | StackSectionBookData };
   OnBookEndDeselect: { data: StackBookData | StackSectionBookData };
 }

@@ -27,10 +27,11 @@ import type {
   BookInfo,
   ChapterInfo,
 } from "bibleVizUtils.domain.models.arrangement";
-import type { VersesBundleData } from "bibleVizUtils.domain.entities.VersesBunbleData";
-import type { VerseData } from "bibleVizUtils.domain.entities.VerseData";
+import { VersesBundleData } from "bibleVizUtils.domain.entities.VersesBunbleData";
+import { VerseData } from "bibleVizUtils.domain.entities.VerseData";
 import { ShowSequencePacings } from "bibleVizUtils.domain.models.label";
 import type { PieceLifecycleServicePort as StackStructurePieceLifecycleServicePort } from "bibleStack.application.ports.stackStructure";
+import type { PieceLifecycleConfigProviderPort } from "../ports/out/PieceLifecycle";
 
 interface PieceLifecycleServiceProps {
   pieceDataRepositoryPort: PieceDataRepositoryPort;
@@ -42,6 +43,7 @@ interface PieceLifecycleServiceProps {
   scriptureServicePort: ScriptureServicePort;
   stackStructureServicePort: StackStructureServicePort;
   versesBundleDataRepositoryPort: VersesBundleDataRepositoryPort;
+  configProviderPort: PieceLifecycleConfigProviderPort;
 }
 
 export class PieceLifecycleService implements StackStructurePieceLifecycleServicePort {
@@ -54,6 +56,7 @@ export class PieceLifecycleService implements StackStructurePieceLifecycleServic
   #scriptureServicePort: PieceLifecycleServiceProps["scriptureServicePort"];
   #stackStructureServicePort: PieceLifecycleServiceProps["stackStructureServicePort"];
   #versesBundleDataRepositoryPort: PieceLifecycleServiceProps["versesBundleDataRepositoryPort"];
+  #configProviderPort: PieceLifecycleServiceProps["configProviderPort"];
 
   constructor({
     pieceDataRepositoryPort,
@@ -65,6 +68,7 @@ export class PieceLifecycleService implements StackStructurePieceLifecycleServic
     scriptureServicePort,
     stackStructureServicePort,
     versesBundleDataRepositoryPort,
+    configProviderPort,
   }: PieceLifecycleServiceProps) {
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
     this.#pieceLabelServicePort = pieceLabelServicePort;
@@ -75,6 +79,7 @@ export class PieceLifecycleService implements StackStructurePieceLifecycleServic
     this.#scriptureServicePort = scriptureServicePort;
     this.#stackStructureServicePort = stackStructureServicePort;
     this.#versesBundleDataRepositoryPort = versesBundleDataRepositoryPort;
+    this.#configProviderPort = configProviderPort;
   }
 
   createTestament({
@@ -237,17 +242,18 @@ export class PieceLifecycleService implements StackStructurePieceLifecycleServic
     } else {
       const pieceBookInfo = sectionInfo.books[0];
       if (pieceBookInfo) {
-        const chaptersData = pieceBookInfo.chaptersInfo.map((chapterInfo) =>
-          this.createChapter({
-            chapterInfo,
-            isInsideBible: true,
-            isInsideBook: true,
-            bibleDataId,
-            testamentDataId,
-            sectionBookDataId: sectionDataId,
-            isHidden,
-            bookName: pieceBookInfo.commonName,
-          })
+        const chaptersData = pieceBookInfo.chaptersVerseCount.map(
+          (verseCount, index) =>
+            this.createChapter({
+              chapterInfo: { amountOfVerses: verseCount, number: index + 1 },
+              isInsideBible: true,
+              isInsideBook: true,
+              bibleDataId,
+              testamentDataId,
+              sectionBookDataId: sectionDataId,
+              isHidden,
+              bookId: pieceBookInfo.bookId,
+            })
         );
         data = new StackSectionBookData({
           pieceInfo: sectionInfo,
@@ -332,18 +338,19 @@ export class PieceLifecycleService implements StackStructurePieceLifecycleServic
     };
     const bookDataId = this.#idGenerator.getId();
 
-    const chaptersData = bookInfo.chaptersInfo.map((chapterInfo) =>
-      this.createChapter({
-        chapterInfo,
-        isInsideBible: true,
-        isInsideBook: true,
-        bibleDataId,
-        testamentDataId,
-        sectionDataId,
-        bookDataId,
-        isHidden,
-        bookName: bookInfo.commonName,
-      })
+    const chaptersData = bookInfo.chaptersVerseCount.map(
+      (amountOfVerses, index) =>
+        this.createChapter({
+          chapterInfo: { amountOfVerses, number: index + 1 },
+          isInsideBible: true,
+          isInsideBook: true,
+          bibleDataId,
+          testamentDataId,
+          sectionDataId,
+          bookDataId,
+          isHidden,
+          bookId: bookInfo.bookId,
+        })
     );
 
     const bookData = new StackBookData({
@@ -370,7 +377,7 @@ export class PieceLifecycleService implements StackStructurePieceLifecycleServic
     sectionDataId,
     sectionBookDataId,
     bookDataId,
-    bookName,
+    bookId,
   }: {
     bibleDataId?: StackBibleData["id"];
     testamentDataId?: StackTestamentData["id"];
@@ -381,7 +388,7 @@ export class PieceLifecycleService implements StackStructurePieceLifecycleServic
     isInsideBible: boolean;
     isInsideBook: boolean;
     chapterInfo: ChapterInfo;
-    bookName: BookInfo["commonName"];
+    bookId: BookInfo["bookId"];
   }) {
     const parentDataIds: StackParentDataIds = {
       stackBibleId: bibleDataId,
@@ -390,7 +397,29 @@ export class PieceLifecycleService implements StackStructurePieceLifecycleServic
       stackSectionId: sectionDataId,
       stackBookId: bookDataId,
     };
-    const creationParams: ChapterCreationParams = { bookName };
+    const creationParams: ChapterCreationParams = { bookId };
+
+    const versesPerBundle = this.#configProviderPort.getVersesPerBundle();
+    const bundlesCount = Math.ceil(
+      chapterInfo.amountOfVerses / versesPerBundle
+    );
+    const childrenData: Array<VersesBundleData> = Array.from({
+      length: bundlesCount,
+    }).map((_, index) => {
+      const start = versesPerBundle * index + 1;
+      const versesCount = Math.min(
+        chapterInfo.amountOfVerses - (start - 1),
+        versesPerBundle
+      );
+      const bundle = this.createVerseBundle({
+        start,
+        count: versesCount,
+        bookId,
+        chapter: chapterInfo.number,
+      });
+      return bundle;
+    });
+
     const chapterData = new StackChapterData({
       id: this.#idGenerator.getId(),
       pieceInfo: chapterInfo,
@@ -400,9 +429,80 @@ export class PieceLifecycleService implements StackStructurePieceLifecycleServic
       isHidden,
       creationParams,
       isSelected: false,
+      childrenData,
     });
     this.#pieceDataRepositoryPort.addChapterData(chapterData);
     return chapterData;
+  }
+
+  createVerseBundle({
+    start,
+    count,
+    bookId,
+    chapter,
+  }: {
+    start: number;
+    count: number;
+    bookId: string;
+    chapter: number;
+  }): VersesBundleData {
+    const bundleCreationParams = {
+      start,
+      count,
+      bookId,
+      chapter,
+    };
+
+    const verses: VerseData[] = Array.from({ length: count }).map(
+      (_, index) => {
+        return this.createVerse({
+          ...bundleCreationParams,
+          verseIndex: index,
+        });
+      }
+    );
+
+    const data = new VersesBundleData({
+      creationParams: {
+        start,
+        count,
+        bookId,
+        chapter,
+      },
+      id: this.#idGenerator.getId(),
+      verses,
+    });
+
+    this.#versesBundleDataRepositoryPort.addBundleData(data);
+
+    return data;
+  }
+
+  createVerse({
+    start,
+    count,
+    bookId,
+    chapter,
+    verseIndex,
+  }: {
+    start: number;
+    count: number;
+    bookId: string;
+    chapter: number;
+    verseIndex: number;
+  }): VerseData {
+    const data = new VerseData({
+      id: this.#idGenerator.getId(),
+      creationParams: {
+        start,
+        count,
+        bookId,
+        chapter,
+        verseIndex,
+      },
+    });
+
+    return data;
   }
 
   deleteTestament(testament: StackTestamentData) {
@@ -546,8 +646,6 @@ export class PieceLifecycleService implements StackStructurePieceLifecycleServic
       this.deleteChapter(chapter);
     }
   }
-
-  // TODO: Add a method to create verses bunbles.
 
   deleteVersesBundle(bundle: VersesBundleData) {
     this.#versesBundleDataRepositoryPort.removeBundleData(bundle);

@@ -125,7 +125,7 @@ export class StackChapterData extends StackPieceData<
   }
   override resetHierarchy(): Piece[] {
     this.show();
-    return [];
+    return super.resetHierarchy();
   }
 
   get activityIndicators() {

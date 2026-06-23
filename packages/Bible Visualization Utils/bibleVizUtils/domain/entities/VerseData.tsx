@@ -1,17 +1,23 @@
-import type { Piece } from "bibleVizUtils.domain.models.canvas";
+import type {
+  Piece,
+  VerseCreationParams,
+} from "bibleVizUtils.domain.models.canvas";
 
 interface DataParams {
   id: string;
   piece?: Piece<"Verse">;
+  creationParams: VerseCreationParams;
 }
 
 export class VerseData {
   #id: DataParams["id"];
   #piece: DataParams["piece"];
+  #creationParams: DataParams["creationParams"];
 
-  constructor({ id, piece }: DataParams) {
+  constructor({ id, piece, creationParams }: DataParams) {
     this.#id = id;
     this.#piece = piece;
+    this.#creationParams = creationParams;
   }
 
   get id() {
@@ -27,5 +33,10 @@ export class VerseData {
   }
   setPiece(piece: Piece<"Verse">) {
     this.#piece = piece;
+  }
+  getCreationParam<K extends keyof VerseCreationParams>(
+    key: K
+  ): VerseCreationParams[K] {
+    return this.#creationParams[key];
   }
 }

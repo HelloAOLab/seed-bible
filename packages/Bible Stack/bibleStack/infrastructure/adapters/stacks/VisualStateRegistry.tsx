@@ -13,6 +13,7 @@ export class VisualStateRegistry {
     [BiblePiece.StackSectionBook]: new Map(),
     [BiblePiece.StackBook]: new Map(),
     [BiblePiece.StackChapter]: new Map(),
+    [BiblePiece.VersesBundle]: new Map(),
   };
 
   registerState<K extends keyof VisualStateMap>({

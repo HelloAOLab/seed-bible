@@ -6,7 +6,6 @@ import type {
   DraggingEvent as DomainDraggingEvent,
   DropEvent as DomainDropEvent,
   Piece,
-  PieceSelectionSource,
   SelectionModality,
 } from "bibleVizUtils.domain.models.canvas";
 import type { ChapterBot } from "bibleStack.models.stack";

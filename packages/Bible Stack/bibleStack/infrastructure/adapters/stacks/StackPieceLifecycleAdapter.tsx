@@ -145,6 +145,10 @@ export class StackPieceLifecycleAdapter
     return this.#objectPoolerPort.getObject("VersesBundle");
   }
 
+  spawnVersesBundleDomain(): Piece<"VersesBundle"> {
+    return this.#versesBundleMapperPort.toDomain(this.spawnVersesBundle());
+  }
+
   despawnVersesBundle(piece: Piece<"VersesBundle">): void {
     const bot = this.#versesBundleMapperPort.toInfrastructure(piece);
     if (bot) this.#objectPoolerPort.releaseObject(bot, "VersesBundle");
@@ -152,6 +156,10 @@ export class StackPieceLifecycleAdapter
 
   spawnVerse(): VerseBot {
     return this.#objectPoolerPort.getObject("Verse");
+  }
+
+  spawnVerseDomain(): Piece<"Verse"> {
+    return this.#verseMapperPort.toDomain(this.spawnVerse());
   }
 
   despawnVerse(piece: Piece<"Verse">): void {

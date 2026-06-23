@@ -3,12 +3,12 @@ import type {
   ChapterInteractionServicePort,
   ChapterDataRepositoryPort,
   ChapterNavigationServicePort,
-  ChapterSelectionServicePort,
+  // ChapterSelectionServicePort,
   UserPresenceServicePort,
 } from "bibleStack.application.ports.chapters";
 import type {
   PieceHierarchyServicePort,
-  PieceHighlightServicePort,
+  // PieceHighlightServicePort,
   StackParentDataIds,
 } from "bibleStack.application.ports.pieces";
 import {
@@ -16,12 +16,14 @@ import {
   HighlightPacings,
   UnhighlightRequestSources,
 } from "../../domain/models/pieces";
+import type { ChapterSelectionPort } from "../ports/in/ChapterSelection";
+import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 
 interface ServiceParams {
   chapterDataRepositoryPort: ChapterDataRepositoryPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
-  chapterSelectionServicePort: ChapterSelectionServicePort;
-  pieceHighlightServicePort: PieceHighlightServicePort;
+  chapterSelectionServicePort: ChapterSelectionPort;
+  pieceHighlighterPort: PieceHighlighterPort;
   chapterNavigationServicePort: ChapterNavigationServicePort;
   userPresenceServicePort: UserPresenceServicePort;
 }
@@ -30,7 +32,7 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
   #chapterDataRepositoryPort: ServiceParams["chapterDataRepositoryPort"];
   #pieceHierarchyServicePort: ServiceParams["pieceHierarchyServicePort"];
   #chapterSelectionServicePort: ServiceParams["chapterSelectionServicePort"];
-  #pieceHighlightServicePort: ServiceParams["pieceHighlightServicePort"];
+  #pieceHighlighterPort: ServiceParams["pieceHighlighterPort"];
   #chapterNavigationServicePort: ServiceParams["chapterNavigationServicePort"];
   #userPresenceServicePort: ServiceParams["userPresenceServicePort"];
 
@@ -38,14 +40,14 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
     chapterDataRepositoryPort,
     pieceHierarchyServicePort,
     chapterSelectionServicePort,
-    pieceHighlightServicePort,
+    pieceHighlighterPort,
     chapterNavigationServicePort,
     userPresenceServicePort,
   }: ServiceParams) {
     this.#chapterDataRepositoryPort = chapterDataRepositoryPort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
     this.#chapterSelectionServicePort = chapterSelectionServicePort;
-    this.#pieceHighlightServicePort = pieceHighlightServicePort;
+    this.#pieceHighlighterPort = pieceHighlighterPort;
     this.#chapterNavigationServicePort = chapterNavigationServicePort;
     this.#userPresenceServicePort = userPresenceServicePort;
   }
@@ -74,16 +76,21 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
       return;
     }
 
-    if (chapterData.isSelected) {
-      if (!actualData && !chapterData.isDeselecting) {
-        this.#chapterSelectionServicePort.deselectChapter(chapterData, true);
+    if (chapterData.selectionState === "Selected") {
+      if (!actualData) {
+        this.#chapterSelectionServicePort.deselectChapter({
+          data: chapterData,
+          pacing: "Regular",
+        });
       }
-    } else {
-      if (chapterData.isSelecting) return;
-
+    } else if (chapterData.selectionState === "Idle") {
       if (chapterData.isOnTheGround) {
         this.#chapterSelectionServicePort
-          .trySelectChapter({ data: chapterData, bookData: actualData })
+          .trySelectChapter({
+            data: chapterData,
+            bookData: actualData,
+            pacing: "Regular",
+          })
           .then(() => this.#userPresenceServicePort.updateUserPresence());
       } else {
         this.#chapterNavigationServicePort.openChapter(chapter);
@@ -102,7 +109,7 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
 
     chapterData.beginFocus();
 
-    this.#pieceHighlightServicePort.tryHighlightPiece({
+    this.#pieceHighlighterPort.tryHighlightPiece({
       piece: chapter,
       source: HighlightRequestSources.UserFocus,
     });
@@ -121,7 +128,7 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
 
     if (chapterData.isBeingDragged) return;
 
-    this.#pieceHighlightServicePort.tryUnhighlightPiece({
+    this.#pieceHighlighterPort.tryUnhighlightPiece({
       piece: chapter,
       source: UnhighlightRequestSources.UserUnfocus,
       pacing: HighlightPacings.Regular,

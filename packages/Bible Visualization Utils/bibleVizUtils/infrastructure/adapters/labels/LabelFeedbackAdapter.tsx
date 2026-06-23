@@ -245,7 +245,7 @@ export class LabelFeedbackAdapter {
   }) {
     const duration =
       this.#labelFeedbackConfigProviderPort.getShowAnimationDuration(pacing);
-    this.#stopOpacityTransition(data);
+    this.stopOpacityTransition(data);
 
     const { transformer, text, tail, activityIndicators, date } =
       this.#unpackLabelData(data);
@@ -308,7 +308,7 @@ export class LabelFeedbackAdapter {
   }) {
     const duration =
       this.#labelFeedbackConfigProviderPort.getShowAnimationDuration(pacing);
-    this.#stopOpacityTransition(data);
+    this.stopOpacityTransition(data);
     const { text, tail, activityIndicators, date } =
       this.#unpackLabelData(data);
 
@@ -363,7 +363,7 @@ export class LabelFeedbackAdapter {
       this.#labelFeedbackConfigProviderPort.getIntensityOpacity(
         translucencyMode
       );
-    this.#stopOpacityTransition(data);
+    this.stopOpacityTransition(data);
     const { text, tail, activityIndicators, date } =
       this.#unpackLabelData(data);
 
@@ -454,7 +454,7 @@ export class LabelFeedbackAdapter {
     };
   }
 
-  #stopOpacityTransition(data: InfoLabelData) {
+  stopOpacityTransition(data: InfoLabelData) {
     const bots: PieceBot[] = [];
     const text = this.#infoLabelTextMapperPort.toInfrastructure(data.label);
     if (text) {

@@ -1,8 +1,5 @@
 import type { StackChapterData } from "bibleVizUtils.domain.entities.StackChapterData";
-import type {
-  BookInfo,
-  ChapterInfo,
-} from "bibleVizUtils.domain.models.arrangement";
+import type { ChapterInfo } from "bibleVizUtils.domain.models.arrangement";
 import type { StackBookData } from "bibleVizUtils.domain.entities.StackBookData";
 import type { StackSectionBookData } from "bibleVizUtils.domain.entities.StackSectionBookData";
 import type { StackSectionData } from "bibleVizUtils.domain.entities.StackSectionData";
@@ -57,7 +54,7 @@ export interface PieceLifecycleServicePort {
     isInsideBible: boolean;
     isInsideBook: boolean;
     chapterInfo: ChapterInfo;
-    bookName: BookInfo["commonName"];
+    bookId: string;
   }): StackChapterData;
 }
 

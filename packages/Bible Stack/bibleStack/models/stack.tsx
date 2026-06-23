@@ -73,7 +73,13 @@ export interface BookTags extends StackDraggablePieceBotTags<
 
 export type BookBot = TypedBot<BookTags>;
 
-export type ChapterTags = StackDraggablePieceBotTags<"StackChapter">;
+export interface ChapterTags extends StackDraggablePieceBotTags<"StackChapter"> {
+  label?: string;
+  labelPosition: "top" | "front";
+  scaleX: number;
+  scaleY: number;
+  scaleZ: number;
+}
 
 export interface ChapterMasks {
   color?: string;
@@ -81,10 +87,20 @@ export interface ChapterMasks {
 
 export type ChapterBot = TypedBot<ChapterTags, ChapterMasks>;
 
-export type VersesBundleTags = StackDraggablePieceBotTags<"VersesBundle">;
+export interface VersesBundleTags extends StackDraggablePieceBotTags<"VersesBundle"> {
+  label: string;
+  scaleX: number;
+  scaleY: number;
+  scaleZ: number;
+}
 
 export type VersesBundleBot = TypedBot<VersesBundleTags>;
-export type VerseBot = TypedBot<PieceBotTags<"Verse">>;
+
+export interface VerseBotTags extends PieceBotTags<"Verse"> {
+  scaleZ: number;
+}
+
+export type VerseBot = TypedBot<VerseBotTags>;
 
 export type StackStaticPiece = keyof Pick<
   TBiblePiece,

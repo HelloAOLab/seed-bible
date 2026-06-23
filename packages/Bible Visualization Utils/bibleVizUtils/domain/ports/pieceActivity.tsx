@@ -141,7 +141,7 @@ export interface ShowNotificationCommand {
   activityCount: number;
   color: HexString;
   direction: Point2D;
-  notification: ActivityNotification | undefined;
+  notification?: ActivityNotification | undefined;
   container: NotifiableContainer;
   offset?: number;
   scales?: Pick<Scales, "x" | "y">;

@@ -8,11 +8,7 @@ import type { StackTestamentData } from "bibleVizUtils.domain.entities.StackTest
 import type { ParentDataIds } from "bibleVizUtils.domain.models.canvas";
 import type { StackBibleData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBibleData";
 import type { BibleDataRepositoryPort } from "./stacks";
-import type {
-  HighlightRequestSource,
-  HighlightPacing,
-  UnhighlightRequestSource,
-} from "bibleStack.domain.models.pieces";
+import type { HighlightPacing } from "bibleStack.domain.models.pieces";
 import type {
   LabelTranslucencyMode,
   ShowSequencePacing,
@@ -185,50 +181,6 @@ export type HighlightDelay =
 
 export interface HighlightConfigProviderPort {
   getDelay: (delay: HighlightDelay) => number;
-}
-
-export interface PieceHighlightServicePort {
-  tryHighlightPiece: (params: {
-    piece: Piece<
-      | "StackTestament"
-      | "StackSection"
-      | "StackSectionBook"
-      | "StackBook"
-      | "StackChapter"
-    >;
-    source: HighlightRequestSource;
-    scheduledUnhighlightData?: {
-      delay: number;
-      pacing?: HighlightPacing;
-    };
-    pacing?: HighlightPacing;
-  }) => Promise<void>;
-  tryUnhighlightPiece: (params: {
-    piece: Piece<
-      | "StackTestament"
-      | "StackSection"
-      | "StackSectionBook"
-      | "StackBook"
-      | "StackChapter"
-    >;
-    source: UnhighlightRequestSource;
-    pacing: HighlightPacing;
-    delay?: number;
-  }) => Promise<void>;
-  isUnhighlightScheduled: (piece: Piece) => boolean;
-  changeHighlightIntensity: ({
-    piece,
-    intensity,
-  }: {
-    piece: Piece<
-      | "StackTestament"
-      | "StackSection"
-      | "StackSectionBook"
-      | "StackBook"
-      | "StackChapter"
-    >;
-    intensity: LabelTranslucencyMode;
-  }) => void; // TODO: Change this to use a particular interface for the intensity. Leave LabelTranslucencyMode to the label only.
 }
 
 export interface PieceLabelServicePort {

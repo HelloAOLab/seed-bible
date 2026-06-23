@@ -167,4 +167,15 @@ export abstract class StackBookBaseData<
     const chapterData = this.childrenData[chapterNumber - 1];
     return !!chapterData && !chapterData.isHidden;
   }
+
+  getActiveChildrenByNumber(number: number): StackChapterData | undefined {
+    return this.childrenData.find((child) => {
+      return (
+        child.getPieceInfoProperty("number") === number &&
+        child.isActive &&
+        !child.isHidden &&
+        !!child.piece
+      );
+    });
+  }
 }

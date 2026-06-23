@@ -48,11 +48,19 @@ export interface BookVisualState extends BaseBookVisualState {
   increasedIntensityStrokeColor: HexString;
 }
 
-export interface ChapterVisualState {
+export interface ChapterVisualState extends Pick<
+  BaseScripturePieceVisualState,
+  "initialColor" | "initialScaleX" | "initialScaleZ" | "initialScaleY"
+> {
   highlightedColor: HexString;
-  initialColor: HexString;
   expandedScaleZ: number;
   highlightedScaleZ: number;
+  selectedColor: HexString;
+  selectedScaleY: number;
+}
+
+export interface VersesBundleVisualState {
+  desiredScaleZ: number;
 }
 
 export interface VisualStateMap {
@@ -63,4 +71,5 @@ export interface VisualStateMap {
   [BiblePiece.StackSectionBook]: SectionBookVisualState;
   [BiblePiece.StackBook]: BookVisualState;
   [BiblePiece.StackChapter]: ChapterVisualState;
+  [BiblePiece.VersesBundle]: VersesBundleVisualState;
 }

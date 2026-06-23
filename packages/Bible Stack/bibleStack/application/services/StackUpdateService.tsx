@@ -12,6 +12,7 @@ import type { TestamentStackUpdaterPort } from "../ports/in/TestamentStackUpdate
 import type { SectionStackUpdaterPort } from "../ports/in/SectionStackUpdates";
 import type { BookStackUpdaterPort } from "../ports/in/BookStackUpdates";
 import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
+import type { StackAncestorType } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/canvas";
 
 interface ServiceParams {
   pieceInteractabilityPort: InteractabilityBlockerPort &
@@ -97,6 +98,54 @@ export class StackUpdateService implements StackUpdateServicePort {
     if (this.#isUpdateQueued) {
       this.#isUpdateQueued = false;
       this.updateAllStacks(pacing);
+    }
+  }
+
+  /**
+   * Updates a single stack root by id + type, touching only the affected
+   * repository/updater instead of re-running every stack.
+   */
+  async updateStack(
+    id: string,
+    type: StackAncestorType,
+    pacing: StackUpdatePacing
+  ): Promise<void> {
+    switch (type) {
+      case "StackBible": {
+        const data = this.#bibleDataRepositoryPort.getBibleDataById(id);
+        if (data) await this.#bibleStackUpdaterPort.update({ data, pacing });
+        return;
+      }
+      case "StackTestament": {
+        const data = this.#pieceDataRepositoryPort.getDataById(
+          "StackTestament",
+          id
+        );
+        if (data)
+          await this.#testamentStackUpdaterPort.update({ data, pacing });
+        return;
+      }
+      case "StackSection": {
+        const data = this.#pieceDataRepositoryPort.getDataById(
+          "StackSection",
+          id
+        );
+        if (data) await this.#sectiontackUpdaterPort.update({ data, pacing });
+        return;
+      }
+      case "StackSectionBook": {
+        const data = this.#pieceDataRepositoryPort.getDataById(
+          "StackSectionBook",
+          id
+        );
+        if (data) await this.#bookStackUpdaterPort.update({ data, pacing });
+        return;
+      }
+      case "StackBook": {
+        const data = this.#pieceDataRepositoryPort.getDataById("StackBook", id);
+        if (data) await this.#bookStackUpdaterPort.update({ data, pacing });
+        return;
+      }
     }
   }
 }

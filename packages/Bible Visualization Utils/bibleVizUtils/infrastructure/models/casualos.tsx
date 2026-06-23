@@ -101,6 +101,9 @@ export interface PieceBotTags<T extends BiblePieceType = BiblePieceType> {
   draggable?: boolean;
   pointable?: boolean;
   toErase?: boolean;
+  color?: string;
+  labelColor?: string;
+  labelOpacity?: number;
   // [dimension: string]: unknown;
 }
 
