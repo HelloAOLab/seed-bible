@@ -365,7 +365,6 @@ describe("createExtensionManager", () => {
     mockExtensionModule("pkg://dependent");
     const set: ExtensionSet = {
       id: "set.dependencies",
-      recordName: "record",
       extensions: [
         {
           url: "pkg://dependent",
@@ -407,7 +406,6 @@ describe("createExtensionManager", () => {
 
     await manager.loadExtensionSet({
       id: "set.catalog",
-      recordName: "record",
       extensions: [
         {
           url: "pkg://catalog-dependency",
@@ -503,7 +501,6 @@ describe("createExtensionManager", () => {
     mockExtensionModule("pkg://single");
     const set: ExtensionSet = {
       id: "set.reinstall",
-      recordName: "record",
       extensions: [
         {
           url: "pkg://single",
@@ -542,7 +539,6 @@ describe("createExtensionManager", () => {
     };
     const set: ExtensionSet = {
       id: "set.translations",
-      recordName: "record",
       extensions: [
         {
           url: "pkg://translation-a",
@@ -574,9 +570,8 @@ describe("createExtensionManager", () => {
   });
 
   it("loadDefaultExtensions() auto-installs extensions when the matching query param is true", async () => {
-    const defaultExtensions = signal<ExtensionSet | null>({
+    const defaultExtensions = {
       id: "set.autoinstall",
-      recordName: "record",
       extensions: [
         {
           url: "pkg://autoinstall",
@@ -591,7 +586,7 @@ describe("createExtensionManager", () => {
           },
         },
       ],
-    });
+    };
 
     const manager = createExtensionManager({ defaultExtensions });
     mockExtensionModule("pkg://autoinstall");
@@ -611,7 +606,6 @@ describe("createExtensionManager", () => {
     mockExtensionModule("pkg://known-only");
     const set: ExtensionSet = {
       id: "set.known-only",
-      recordName: "record",
       extensions: [
         {
           // recordName: "record",
@@ -759,7 +753,6 @@ describe("createExtensionManager", () => {
       await manager.loadExtensionSet(
         {
           id: "set.union",
-          recordName: "record",
           extensions: [packageOnlyExtension],
         },
         () => false
@@ -780,7 +773,6 @@ describe("createExtensionManager", () => {
         extension: packageOnlyExtension,
         extensionSet: {
           id: "set.union",
-          recordName: "record",
           extensions: [packageOnlyExtension],
         },
         registration: null,
@@ -938,7 +930,6 @@ describe("createExtensionManager", () => {
       await manager.loadExtensionSet(
         {
           id: "set.hash-test",
-          recordName: "record",
           extensions: [extensionB, extensionA],
         },
         () => false
@@ -948,7 +939,6 @@ describe("createExtensionManager", () => {
 
       expect(result).toEqual({
         id: expect.stringMatching(/^downloaded-extension-set-[0-9a-f]{8}$/),
-        recordName: "",
         extensions: [extensionA, extensionB],
       });
 

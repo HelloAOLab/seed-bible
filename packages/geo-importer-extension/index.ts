@@ -1,1 +1,3 @@
-export * from "./ext_geoImporter/importer/loadMap";
+// import extensionMeta from "./extension.json";
+
+// export default extensionMeta;

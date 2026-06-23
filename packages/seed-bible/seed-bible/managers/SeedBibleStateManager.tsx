@@ -40,6 +40,7 @@ import {
   createExtensionManager,
   setupExtensionContext,
   type ExtensionManager,
+  type ExtensionSet,
 } from "../managers/ExtensionManager";
 import {
   createHighlightsManager,
@@ -232,6 +233,29 @@ export interface SeedBibleState {
   closeCodeOfConduct: () => void;
 }
 
+import exampleExtension from "@packages/seed-bible-refresh-example-extension/extension.json";
+import twitchPubExtension from "@packages/twitchPub-extension/extension.json";
+import twitchSubExtension from "@packages/twitchSub-extension/extension.json";
+
+const SEED_BIBLE_EXTENSIONS: ExtensionSet = {
+  id: "seed-bible",
+  extensions: [
+    {
+      meta: exampleExtension,
+      import: () =>
+        import("@packages/seed-bible-refresh-example-extension/index"),
+    },
+    {
+      meta: twitchPubExtension,
+      import: () => import("@packages/twitchPub-extension/index"),
+    },
+    {
+      meta: twitchSubExtension,
+      import: () => import("@packages/twitchSub-extension/index"),
+    },
+  ],
+};
+
 /**
  * Creates and wires the full Seed Bible application state graph.
  *
@@ -286,7 +310,9 @@ export function createSeedBibleState(
   const readingHistory = createReadingHistoryManager(os, login);
   const annotations = createAnnotationsManager(os, login);
   const sessions = createSessionsManager(os, data, login, highlights, i18n);
-  const extensions = createExtensionManager();
+  const extensions = createExtensionManager({
+    defaultExtensions: SEED_BIBLE_EXTENSIONS,
+  });
   const modals = createModalManager();
   const search = createSearchManager();
 

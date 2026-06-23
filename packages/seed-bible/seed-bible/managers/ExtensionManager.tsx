@@ -59,7 +59,7 @@ export interface ExtensionMeta {
   autoinstall?: boolean;
 }
 
-export type Extension = UploadedExtension;
+export type Extension = UploadedExtension | ImportExtension;
 
 export interface UploadedExtension {
   /**
@@ -73,21 +73,19 @@ export interface UploadedExtension {
   meta: ExtensionMeta;
 }
 
-// export interface InlineExtension {
-//   aux: StoredAux;
-//   meta: ExtensionMeta;
-// }
+export interface ImportExtension {
+  /** The function to dynamically import the extension module. */
+  import: () => Promise<unknown>;
+
+  /** The metadata for this extension. */
+  meta: ExtensionMeta;
+}
 
 export interface ExtensionSet {
   /**
    * The ID of this extension set.
    */
   id: string;
-
-  /**
-   * The name of the record that this extension set is stored in.
-   */
-  recordName: string;
 
   /**
    * The extensions included in this set.
@@ -319,12 +317,11 @@ export interface ExtensionManagerOptions {
    * The source of the default extension set that loadDefaultExtensions() loads.
    * Defaults to no extensions.
    */
-  defaultExtensions?: ReadonlySignal<ExtensionSet | null>;
+  defaultExtensions?: ExtensionSet | null;
 }
 
 export function createExtensionManager(options: ExtensionManagerOptions = {}) {
-  const defaultExtensions =
-    options.defaultExtensions ?? computed<ExtensionSet | null>(() => null);
+  const defaultExtensions = options.defaultExtensions ?? null;
   const knownExtensionsById = new Map<string, Extension>();
   const knownExtensionsSetsByExtensionId = new Map<string, ExtensionSet>();
   const installedExtensionIds = new Set<string>();
@@ -494,6 +491,10 @@ export function createExtensionManager(options: ExtensionManagerOptions = {}) {
         const installed = await loadExtensionFromUrl(extensionId, uploaded.url);
         installStack.delete(extensionId);
         return installed;
+      } else if ("import" in uploaded && uploaded.import) {
+        await uploaded.import();
+        installStack.delete(extensionId);
+        return true;
       } else {
         console.warn(
           "Extension package is missing installation information (url for package installation). Marking as installed without actually installing:",
@@ -549,14 +550,14 @@ export function createExtensionManager(options: ExtensionManagerOptions = {}) {
    * Loads the default set of extensions specified in bot tags.
    */
   const loadDefaultExtensions = async () => {
-    if (!defaultExtensions.value) {
+    if (!defaultExtensions) {
       console.warn("No available extensions found in bot tags.");
       return;
     }
-    console.log("Loading default extension set:", defaultExtensions.value);
+    console.log("Loading default extension set:", defaultExtensions);
     const url = new URL(window.location.href);
     await loadExtensionSet(
-      defaultExtensions.value,
+      defaultExtensions,
       (ext) =>
         (ext.meta.autoinstall ||
           url.searchParams.get(`autoinstall-${ext.meta.id}`) === "true") ??
@@ -604,7 +605,6 @@ export function createExtensionManager(options: ExtensionManagerOptions = {}) {
 
     const setData: ExtensionSet = {
       id: `downloaded-extension-set-${hash.slice(0, 8)}`,
-      recordName: "",
       extensions: orderedExtensions,
     };
 
