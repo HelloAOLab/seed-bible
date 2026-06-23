@@ -5,17 +5,38 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 
 // Virtual module convention: `virtual:@pattern/<folder>` resolves to a module
-// whose default export is `{ aux: "<stringified JSON of pattern-dist/<folder>.aux>" }`.
+// whose default export is `{ aux: "<url>" }`.
+//
+// In dev the `<url>` points at this plugin's HTTP endpoint (served over
+// localhost with CORS, see SERVE_PREFIX below) so the cross-origin `ao.bot`
+// iframe can fetch the AUX rather than receiving it inline. In build there is
+// no localhost server to hit, so the AUX JSON is inlined as the `aux` value
+// instead.
+//
 // The `\0` prefix on the resolved id is the Rollup convention that tells other
 // plugins to leave the id alone.
 const PREFIX = "virtual:@pattern/";
 const RESOLVED_PREFIX = "\0" + PREFIX;
+
+// HTTP path under which packaged AUXes are served in dev, e.g.
+// `/@pattern-aux/geo-importer.aux`.
+const SERVE_PREFIX = "/@pattern-aux/";
 
 const patternsDir = path.resolve("patterns");
 const distDir = path.resolve("pattern-dist");
 
 function auxPath(folder: string): string {
   return path.resolve(distDir, `${folder}.aux`);
+}
+
+// Absolute URL (matching the dev server's host/port — see server/index.ts) at
+// which the given pattern's AUX is served. It must be absolute because the
+// `ao.bot` iframe that consumes it lives on a different origin.
+function auxUrl(folder: string): string {
+  const port = Number(process.env.PORT ?? 3002);
+  return `http://localhost:${port}${SERVE_PREFIX}${encodeURIComponent(
+    folder
+  )}.aux`;
 }
 
 /**
@@ -95,29 +116,90 @@ export function patternPlugin(): Plugin {
       const folder = id.slice(RESOLVED_PREFIX.length);
       const file = auxPath(folder);
 
-      // In build, always (re)package once so the bundle reflects current source.
-      // In dev, the watcher keeps the output fresh; only package on demand if
-      // it's missing.
       if (isBuild) {
+        // Build: there is no localhost server to serve the AUX from, so inline
+        // the JSON. Always (re)package once so the bundle reflects current
+        // source.
         if (!packagedThisRun.has(folder)) {
           await packagePattern(folder);
           packagedThisRun.add(folder);
         }
-      } else if (!existsSync(file)) {
+
+        const auxText = await readFile(file, "utf-8");
+        // Fail fast on corrupt output rather than shipping invalid JSON.
+        JSON.parse(auxText);
+
+        // Track the output so build mode rebuilds when it changes.
+        this.addWatchFile(file);
+
+        return `export default { aux: ${JSON.stringify(auxText)} };`;
+      }
+
+      // Dev: serve the AUX over HTTP (see configureServer) and export its URL.
+      // The watcher keeps the output fresh; only package on demand if it's
+      // missing so the endpoint has something to serve on first request.
+      if (!existsSync(file)) {
         await packagePattern(folder);
       }
 
-      const auxText = await readFile(file, "utf-8");
-      // Fail fast on corrupt output rather than shipping invalid JSON.
-      JSON.parse(auxText);
-
-      // Track the output so build mode rebuilds when it changes.
+      // Track the output so the module reloads if the file is removed/changed.
       this.addWatchFile(file);
 
-      return `export default { aux: ${JSON.stringify(auxText)} };`;
+      return `export default { aux: ${JSON.stringify(auxUrl(folder))} };`;
     },
 
     configureServer(server: ViteDevServer) {
+      // Serve packaged AUXes over HTTP so the cross-origin `ao.bot` iframe can
+      // fetch them. CORS is wide open and the file is read fresh on every
+      // request (the data is not sensitive and this only runs in dev).
+      server.middlewares.use(SERVE_PREFIX, async (req, res) => {
+        // Connect strips SERVE_PREFIX from req.url for mounted middleware, so
+        // what remains is `/<folder>.aux` (plus any query string).
+        const rest = (req.url ?? "").replace(/^\//, "").split("?")[0] ?? "";
+
+        res.setHeader("Access-Control-Allow-Origin", "*");
+        res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+        res.setHeader("Access-Control-Allow-Headers", "*");
+
+        if (req.method === "OPTIONS") {
+          res.statusCode = 204;
+          res.end();
+          return;
+        }
+
+        const folder = decodeURIComponent(rest.replace(/\.aux$/, ""));
+        const file = auxPath(folder);
+
+        // Guard against path traversal: the resolved file must stay inside
+        // pattern-dist/.
+        const relToDist = path.relative(distDir, file);
+        if (
+          !folder ||
+          relToDist.startsWith("..") ||
+          path.isAbsolute(relToDist)
+        ) {
+          res.statusCode = 400;
+          res.end("Invalid pattern");
+          return;
+        }
+
+        try {
+          if (!existsSync(file)) {
+            await packagePattern(folder);
+          }
+          const auxText = await readFile(file, "utf-8");
+          res.setHeader("Content-Type", "application/json; charset=utf-8");
+          res.setHeader("Cache-Control", "no-cache");
+          res.end(auxText);
+        } catch (err) {
+          server.config.logger.error(
+            `[patterns] failed to serve ${folder}: ${err}`
+          );
+          res.statusCode = 500;
+          res.end("Failed to package pattern");
+        }
+      });
+
       // patterns/ is under the project root so it's likely already watched;
       // add it explicitly to be safe.
       server.watcher.add(patternsDir);
