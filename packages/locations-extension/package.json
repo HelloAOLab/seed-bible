@@ -13,8 +13,7 @@
   },
   "keywords": [],
   "dependencies": {
-    "seed-bible": "workspace:*",
-    "@seed-bible/geo-importer-extension": "workspace:*"
+    "seed-bible": "workspace:*"
   },
   "author": "",
   "license": "ISC",
