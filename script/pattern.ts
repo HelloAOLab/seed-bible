@@ -29,6 +29,7 @@ program
     execSync(`casualos pack-aux --overwrite "${patternPath}" "${filePath}"`, {
       stdio: "inherit",
     });
+    execSync(`casualos minify-aux "${filePath}"`, { stdio: "inherit" });
     console.log(`Packed pattern ${name} to ${filePath}.`);
   });
 
@@ -53,6 +54,7 @@ program
       execSync(`casualos pack-aux --overwrite "${patternPath}" "${filePath}"`, {
         stdio: "ignore",
       });
+      execSync(`casualos minify-aux "${filePath}"`, { stdio: "inherit" });
       console.log(`Packed pattern ${name} to ${filePath}.`);
     }
   });
