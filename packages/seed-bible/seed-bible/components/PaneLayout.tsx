@@ -339,6 +339,12 @@ function GridPortalPane(props: GridPortalPaneProps) {
     }
   }
 
+  let allow = "";
+
+  if (import.meta.env.DEV) {
+    allow += "local-network-access";
+  }
+
   return (
     <>
       <style>{GRID_PORTAL_PANE_CSS}</style>
@@ -349,6 +355,7 @@ function GridPortalPane(props: GridPortalPaneProps) {
       <iframe
         src={iframeUrl.toString()}
         referrerPolicy={"origin-when-cross-origin"}
+        allow={allow}
       ></iframe>
     </>
   );

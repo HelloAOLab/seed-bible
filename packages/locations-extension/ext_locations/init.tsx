@@ -49,19 +49,19 @@ registerExtension({
       return findLocationsInText(text);
     };
 
-    // const getPlaceGeoJsonUrl = (place: PlaceData) => {
-    //   if (place.place === place.geojson) {
-    //     return [
-    //       `https://raw.githubusercontent.com/Bored-Wizard/isreal_geojson/main/${place.geojson}.geojson`,
-    //       true,
-    //     ] as const;
-    //   } else {
-    //     return [
-    //       `https://raw.githubusercontent.com/openbibleinfo/Bible-Geocoding-Data/main/geometry/${place.geojson}.geojson`,
-    //       false,
-    //     ] as const;
-    //   }
-    // };
+    const getPlaceGeoJsonUrl = (place: PlaceData) => {
+      if (place.place === place.geojson) {
+        return [
+          `https://raw.githubusercontent.com/Bored-Wizard/isreal_geojson/main/${place.geojson}.geojson`,
+          true,
+        ] as const;
+      } else {
+        return [
+          `https://raw.githubusercontent.com/openbibleinfo/Bible-Geocoding-Data/main/geometry/${place.geojson}.geojson`,
+          false,
+        ] as const;
+      }
+    };
 
     const foundPlaces = computed(() => {
       const readingState = context.app.currentReadingState.value;
@@ -76,28 +76,30 @@ registerExtension({
 
     const showPlaceOnMap = async (place: PlaceData) => {
       console.log("Show place!", place);
+
+      const [url] = getPlaceGeoJsonUrl(place);
+      const response = await fetch(url);
+
+      if (response.status !== 200) {
+        console.error(
+          "Failed to fetch geojson data for place:",
+          place,
+          response
+        );
+        return;
+      }
+
+      const data = await response.json();
+
       context.panes.openPane({
-        id: "location-map",
         type: "detached",
         mapPortal: "map",
         pattern: geoImporterPattern,
         inst: uuid(),
+        query: {
+          mapData: data.data,
+        },
       });
-
-      // TODO: Fix
-      // mapPortalBot.tags.mapPortalKind = "plane";
-      // mapPortalBot.tags.mapPortalGridKind = "plane";
-
-      // const [url] = getPlaceGeoJsonUrl(place);
-      // const data = await web.get(url);
-
-      // if (data.status !== 200) {
-      //   // TODO: Fix this
-      //   // os.toast("Something went wrong while retrieving the data");
-      //   return;
-      // }
-
-      // loadMap(data.data);
     };
 
     yield context.tools.registerVerseToolbarTool({
