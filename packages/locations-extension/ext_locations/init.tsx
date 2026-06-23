@@ -89,7 +89,7 @@ registerExtension({
         return;
       }
 
-      const data = await response.json();
+      const data = await response.text();
 
       context.panes.openPane({
         type: "detached",
@@ -97,7 +97,7 @@ registerExtension({
         pattern: geoImporterPattern,
         inst: uuid(),
         query: {
-          mapData: data.data,
+          mapData: data,
         },
       });
     };

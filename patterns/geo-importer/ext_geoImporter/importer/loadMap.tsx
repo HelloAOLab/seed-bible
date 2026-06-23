@@ -41,32 +41,33 @@ type GeoJsonFeatureCollection = z.infer<
 type GeoJsonFeature = z.infer<typeof GEO_JSON_FEATURE_SCHEMA>;
 
 export const focusOnWithCatch = async (props: {
-  // bot: Bot;
-  // position?: { x: number; y: number; z?: number };
-  // options?: FocusOnOptions;
+  bot: Bot;
+  position?: { x: number; y: number; z?: number };
+  options?: FocusOnOptions;
 }) => {
-  // const { bot, position, options } = props;
-  // if (bot) {
-  //   try {
-  //     await os.focusOn(bot, {
-  //       ...options,
-  //     });
-  //   } catch {
-  //     os.log("Focus inturrupted by user");
-  //   }
-  // } else {
-  //   try {
-  //     await os.focusOn(position || { x: 0, y: 0, z: 0 }, {
-  //       ...options,
-  //     });
-  //   } catch {
-  //     os.log("Focus inturrupted by user");
-  //   }
-  // }
+  const { bot, position, options } = props;
+  if (bot) {
+    try {
+      await os.focusOn(bot, {
+        ...options,
+      });
+    } catch {
+      os.log("Focus inturrupted by user");
+    }
+  } else {
+    try {
+      await os.focusOn(position || { x: 0, y: 0, z: 0 }, {
+        ...options,
+      });
+    } catch {
+      os.log("Focus inturrupted by user");
+    }
+  }
 };
 
 export async function loadMap(geojson: unknown) {
-  const geoObj = GEO_JSON_SCHEMA.parse(geojson);
+  console.log("geoJSONImporter - loadMap called with geojson: ", geojson);
+  const geoObj = GEO_JSON_SCHEMA.parse(JSON.parse(geojson as string));
 
   // TODO: Fix this
   miniMapPortalBot.tags.mapPortalBasemap = thisBot.tags.GlobalBaseMap;

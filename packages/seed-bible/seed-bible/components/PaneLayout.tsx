@@ -281,38 +281,6 @@ const FULLSCREEN_EXIT_BUTTON_CSS = `
   }
 `;
 
-const GRID_PORTAL_PANE_CSS = `
-  .sb-grid-portal-pane {
-    height: 100%;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    background:
-      radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--sb-primary-color), transparent 80%) 0%, transparent 60%),
-      radial-gradient(circle at 80% 80%, color-mix(in srgb, var(--sb-secondary-color), transparent 60%) 0%, transparent 60%),
-      var(--sb-reader-background);
-  }
-
-  .sb-grid-portal-pane-badge {
-    padding: 4px 10px;
-    border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 45%);
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    font-weight: 700;
-  }
-
-  .sb-grid-portal-pane-name {
-    font-size: 16px;
-    font-weight: 700;
-    color: color-mix(in srgb, var(--sb-font-color), transparent 10%);
-  }
-`;
-
 function GridPortalPane(props: GridPortalPaneProps) {
   const { portal, portalType, pattern, inst } = props;
   const portalTitle = portalType === "map" ? "Map Portal" : "Grid Portal";
@@ -347,12 +315,12 @@ function GridPortalPane(props: GridPortalPaneProps) {
 
   return (
     <>
-      <style>{GRID_PORTAL_PANE_CSS}</style>
       <div className="sb-grid-portal-pane">
         <div className="sb-grid-portal-pane-badge">{portalTitle}</div>
         <div className="sb-grid-portal-pane-name">{portal}</div>
       </div>
       <iframe
+        className="sb-grid-portal-pane-iframe"
         src={iframeUrl.toString()}
         referrerPolicy={"origin-when-cross-origin"}
         allow={allow}
