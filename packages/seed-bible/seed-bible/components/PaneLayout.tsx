@@ -243,6 +243,7 @@ interface GridPortalPaneProps {
   portalType: "grid" | "map";
   inst: string;
   pattern: CasualOSPattern;
+  query: Record<string, string> | null;
 }
 
 const FULLSCREEN_EXIT_BUTTON_CSS = `
@@ -330,6 +331,12 @@ function GridPortalPane(props: GridPortalPaneProps) {
     iframeUrl.searchParams.set("patternAux", pattern.aux);
   } else {
     iframeUrl.searchParams.set("pattern", pattern.name);
+  }
+
+  if (props.query) {
+    for (const [key, value] of Object.entries(props.query)) {
+      iframeUrl.searchParams.set(key, value);
+    }
   }
 
   return (
@@ -1233,6 +1240,7 @@ export function PaneLayout(props: PaneLayoutProps) {
               portalType={pane.mapPortal !== null ? "map" : "grid"}
               inst={pane.inst!}
               pattern={pane.pattern!}
+              query={pane.query}
             />
           ) : pane.component !== null ? (
             <div className="sb-pane-component">
@@ -1380,6 +1388,7 @@ export function PaneLayout(props: PaneLayoutProps) {
                 portalType={pane.mapPortal !== null ? "map" : "grid"}
                 inst={pane.inst!}
                 pattern={pane.pattern!}
+                query={pane.query}
               />
             ) : pane.component !== null ? (
               <div className="sb-pane-component">
