@@ -1,7 +1,7 @@
 declare module "virtual:@pattern/*" {
   const pattern:
     | {
-        url: string;
+        name: string;
       }
     | {
         aux: string;

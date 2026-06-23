@@ -4,6 +4,7 @@ import { registerExtension } from "seed-bible";
 import { LocationIcon } from "seed-bible/components";
 import locations from "./locations.json";
 import geoImporterPattern from "virtual:@pattern/geo-importer";
+import { v4 as uuid } from "uuid";
 
 console.log("Loaded locations extension", geoImporterPattern);
 
@@ -20,7 +21,6 @@ registerExtension({
       const foundPlaces = [];
       // const locations: Record<string, PlaceData> = tags.locations;
       const words = text.split(/[^\w]+/);
-      console.log("words", words);
       for (const word of words) {
         const place = (locations as Record<string, PlaceData>)[
           word.toLowerCase()
@@ -81,6 +81,7 @@ registerExtension({
         type: "detached",
         mapPortal: "map",
         pattern: geoImporterPattern,
+        inst: uuid(),
       });
 
       // TODO: Fix

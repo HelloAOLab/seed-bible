@@ -454,6 +454,8 @@ export function createSeedBibleState(
             component: null,
             gridPortal: null,
             mapPortal: null,
+            inst: null,
+            pattern: null,
             detached: false,
             detachedAnchor: "floating" as const,
             x: 0,
