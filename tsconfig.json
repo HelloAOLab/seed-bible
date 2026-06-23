@@ -325,6 +325,51 @@
       ],
       "ext_twitchSub.client.twitchSubManager": [
         "./packages/twitchSub-extension/ext_twitchSub/client/twitchSubManager.tsx"
+      ],
+      "ext_AI_Transcript.main.App": [
+        "./packages/transcript-extension/ext_AI_Transcript/main/App.tsx"
+      ],
+      "ext_AI_Transcript.main.context": [
+        "./packages/transcript-extension/ext_AI_Transcript/main/context.tsx"
+      ],
+      "ext_AI_Transcript.main.explicit": [
+        "./packages/transcript-extension/ext_AI_Transcript/main/explicit.tsx"
+      ],
+      "ext_AI_Transcript.main.FilePicker": [
+        "./packages/transcript-extension/ext_AI_Transcript/main/FilePicker.tsx"
+      ],
+      "ext_AI_Transcript.main.infer": [
+        "./packages/transcript-extension/ext_AI_Transcript/main/infer.tsx"
+      ],
+      "ext_AI_Transcript.main.init": [
+        "./packages/transcript-extension/ext_AI_Transcript/main/init.tsx"
+      ],
+      "ext_AI_Transcript.main.onEggHatch": [
+        "./packages/transcript-extension/ext_AI_Transcript/main/onEggHatch.tsx"
+      ],
+      "ext_AI_Transcript.main.onExtensionInstalled": [
+        "./packages/transcript-extension/ext_AI_Transcript/main/onExtensionInstalled.tsx"
+      ],
+      "ext_AI_Transcript.main.onExtensionUninstalled": [
+        "./packages/transcript-extension/ext_AI_Transcript/main/onExtensionUninstalled.tsx"
+      ],
+      "ext_AI_Transcript.main.onInstJoined": [
+        "./packages/transcript-extension/ext_AI_Transcript/main/onInstJoined.tsx"
+      ],
+      "ext_AI_Transcript.main.osis": [
+        "./packages/transcript-extension/ext_AI_Transcript/main/osis.tsx"
+      ],
+      "ext_AI_Transcript.main.ResultView": [
+        "./packages/transcript-extension/ext_AI_Transcript/main/ResultView.tsx"
+      ],
+      "ext_AI_Transcript.main.transcribe": [
+        "./packages/transcript-extension/ext_AI_Transcript/main/transcribe.tsx"
+      ],
+      "ext_AI_Transcript.main.transcriptionManager": [
+        "./packages/transcript-extension/ext_AI_Transcript/main/transcriptionManager.tsx"
+      ],
+      "ext_AI_Transcript.main.types": [
+        "./packages/transcript-extension/ext_AI_Transcript/main/types.tsx"
       ]
     },
     "noImplicitAny": true,

@@ -31,10 +31,15 @@ interface AiSegment {
 
 const SYSTEM_PROMPT = [
   "You are given a JSON array of transcript segments. Each segment has an `id`, a `text`, and an empty `references` array.",
-  "For each segment, fill its `references` array with every Bible reference that the segment's text quotes, paraphrases, or clearly alludes to — even when no reference is spoken aloud.",
+  "For each segment, detect Bible references and fill its `references` array. Fire ONLY in these two cases:",
+  '1. CITATION — the text states an explicit reference to a verse, e.g. "1 John 2", "Romans 3:1-4", or "John 3:16". Use the reference as stated.',
+  '2. QUOTE — the text closely matches the wording of a specific verse. It does NOT need to be word-for-word: the speaker may be reading from a different Bible translation than you know, or the speech-to-text may have small errors, so the wording can differ while still being a clear, recognizable quotation of that verse. Example: "and the earth was without form and void" resolves to "Genesis 1:2". Resolve the quote to the single verse (or verse range) it comes from.',
+  "A single citation or quote may be split across consecutive segments — the speaker often pauses mid-sentence, so one verse's words can land in two or more adjacent segments. Use the neighbouring segments' text to judge this: when a quote (or its citation) continues into the next/previous segment, add the SAME reference to EVERY segment that contains part of it, not just one.",
+  'Do NOT fire on anything else. In particular, do NOT create a reference for a general or descriptive mention of a book — e.g. "the first book of Moses, called Genesis" names a book but does not cite or quote a specific passage, so it must be ignored. Also ignore vague thematic allusions that do not clearly correspond to one specific verse.',
   'Each reference is an object: {"reference": string, "confidence": number}',
-  '- "reference": a human-readable reference using a common English book name, e.g. "John 3:16" or "Genesis 1:1-3".',
-  '- "confidence": your confidence from 0 to 1 that this is a genuine Scripture reference.',
+  '- "reference": a human-readable reference using a common English book name, e.g. "John 3:16", "Romans 3:1-4", or "1 John 2".',
+  '- "confidence": your confidence from 0 to 1 that this is a genuine citation or quotation of a specific verse.',
+  'Single-chapter books: Obadiah, Philemon, 2 John, 3 John, and Jude each have only ONE chapter. For these, a lone number after the book name is the VERSE within chapter 1 (not a chapter). For example "Philemon 12" means Philemon 1:12 — output it as "Philemon 1:12".',
   "Keep every segment `id` exactly as given.",
   "Respond with ONLY a JSON array containing the segments that have at least one reference (omit segments with none) — no prose and no markdown code fences.",
   "If no segment has any reference, respond with exactly [].",
@@ -115,6 +120,9 @@ export async function inferRefs(
       // Canonicalize the model's free-text reference into our OSIS ref id(s).
       const matches = extractExplicitRefs(referenceStr);
       for (const m of matches) {
+        // Allow chapter and verse citations; drop bare book-only matches
+        // (descriptive book mentions, not a cited/quoted passage).
+        if (m.type === "book") continue;
         const existing = byRef.get(m.ref);
         if (existing) {
           if (!existing.segmentIds.includes(seg.id)) {

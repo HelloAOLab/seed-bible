@@ -1,6 +1,11 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useManager } from "ext_AI_Transcript.main.context";
-import type { TranscriptionResult } from "ext_AI_Transcript.main.types";
+import { type SeedBibleState } from "seed-bible.app.api";
+import type {
+  OutputSegment,
+  TranscriptionResult,
+  QueuedFile,
+} from "ext_AI_Transcript.main.types";
 
 function fmtTime(sec: number | null): string {
   if (sec == null || !Number.isFinite(sec)) return "—";
@@ -31,13 +36,14 @@ export function ResultView({
 }) {
   const context = useManager();
   const tm = context.transcriptionManager;
-  const seedBibleState = context.seedBibleState;
-  const file = tm.files.value.find((f) => f.id === fileId)?.file;
+  const seedBibleState: SeedBibleState = context.seedBibleState;
+  const file = tm.files.value.find((f: QueuedFile) => f.id === fileId)?.file;
   const isVideo = !!file && file.type.startsWith("video");
 
   const mediaRef = useRef<HTMLMediaElement | null>(null);
   const [src, setSrc] = useState<string | undefined>(undefined);
   const [activeId, setActiveId] = useState<number | null>(null);
+  const [followRefs, setFollowRefs] = useState(true);
 
   // Object URL for the chosen file, revoked when the file changes / unmounts.
   useEffect(() => {
@@ -74,7 +80,7 @@ export function ResultView({
     mediaRef.current = el;
   };
 
-  const highlightVerse = async (ref: string) => {
+  const highlightVerse = async (ref: string, interval: number = 2000) => {
     const [book, chapter, verse] = ref.split(":");
 
     const selectedTabId = seedBibleState.tabs.selectedTabId;
@@ -87,7 +93,7 @@ export function ResultView({
 
     if (selectedTab && book) {
       await selectedTab.readingState.selectTranslationAndChapter(
-        currentReadingState.translationId,
+        currentReadingState?.translationId || "ABB",
         book,
         Number(chapter) || 1,
         verse
@@ -103,12 +109,25 @@ export function ResultView({
           Number(verse),
           {
             className: "sb-verse-decoration-initial-verse-highlight",
-            removeAfterMs: 5000,
+            removeAfterMs: interval,
           }
         );
       }
     }
   };
+
+  // When "follow refs" is on, highlight the active segment's first reference
+  // as playback moves from one segment to the next.
+  useEffect(() => {
+    if (!followRefs || activeId == null) return;
+    const seg: OutputSegment | undefined = result.segments.find(
+      (s: OutputSegment) => s.id === activeId
+    );
+    if (!seg || seg.references.length === 0) return;
+    const ref = seg?.references[0];
+    const interval = (seg.end - seg.start) * 1000;
+    if (ref) void highlightVerse(ref, interval);
+  }, [activeId, followRefs]);
 
   return (
     <article class="ts_result">
@@ -118,12 +137,16 @@ export function ResultView({
           {result.segments.length} segments · {result.references.length} refs
         </span>
         <span class="ts_result__spacer" />
-        <button
-          class="ts_btn ts_btn--sm"
-          onClick={() => tm.downloadResult(fileId)}
-        >
-          Download JSON
-        </button>
+        <label class="ts_check">
+          <input
+            type="checkbox"
+            checked={followRefs}
+            onChange={(e) =>
+              setFollowRefs((e.target as HTMLInputElement).checked)
+            }
+          />
+          Follow refs
+        </label>
       </header>
 
       <div class="ts_result__body">
@@ -148,7 +171,7 @@ export function ResultView({
           ))}
 
         <ul class="ts_transcript ts_seglist">
-          {result.segments.map((seg) => (
+          {result.segments.map((seg: OutputSegment) => (
             <li
               key={seg.id}
               id={`seg-${fileId}-${seg.id}`}
@@ -160,19 +183,43 @@ export function ResultView({
               <span class="ts_seg__text">{seg.text}</span>
               {seg.references.length > 0 && (
                 <span class="ts_seg__refs">
-                  {seg.references.map((r) => (
-                    <span
-                      key={r}
-                      class="ts_badge ts_badge--ref"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        highlightVerse(r);
-                      }}
-                    >
-                      {fmtRef(r)}
-                    </span>
-                  ))}
+                  {seg.references.map(
+                    (r: string) =>
+                      (r.match(/:/g) || []).length === 2 && (
+                        <span
+                          key={r}
+                          class="ts_badge ts_badge--ref"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            highlightVerse(r);
+                          }}
+                        >
+                          {fmtRef(r)}
+                        </span>
+                      )
+                  )}
                 </span>
+              )}
+              {seg.references.length === 0 && (
+                <button
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    seedBibleState.sidebar.openSearch();
+                  }}
+                >
+                  <span
+                    class="material-symbols-outlined"
+                    style={{ opacity: 0.2 }}
+                  >
+                    search
+                  </span>
+                </button>
               )}
             </li>
           ))}

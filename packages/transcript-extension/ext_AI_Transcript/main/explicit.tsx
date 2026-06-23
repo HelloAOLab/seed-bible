@@ -101,8 +101,8 @@ export function extractExplicitRefs(text: string): ExplicitMatch[] {
           bookId: parsed.bookId,
           chapter: parsed.chapter,
           verse: parsed.verse,
-          start,
-          end,
+          start: start || 0,
+          end: end || 0,
         });
       }
     }

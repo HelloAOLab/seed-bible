@@ -90,7 +90,7 @@ export interface ParsedOsis {
  */
 export function parseOsisId(osisId: string): ParsedOsis | null {
   const parts = osisId.split(".");
-  const bookId = osisBookToUsfm(parts[0]);
+  const bookId = osisBookToUsfm(parts[0] || "");
   if (!bookId) return null;
   const out: ParsedOsis = { bookId };
   if (parts.length >= 2) out.chapter = Number(parts[1]);
