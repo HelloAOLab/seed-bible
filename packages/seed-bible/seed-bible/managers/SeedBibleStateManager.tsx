@@ -236,15 +236,11 @@ export interface SeedBibleState {
 import exampleExtension from "@packages/seed-bible-refresh-example-extension/extension.json";
 import twitchPubExtension from "@packages/twitchPub-extension/extension.json";
 import twitchSubExtension from "@packages/twitchSub-extension/extension.json";
+import locationsExtension from "@packages/locations-extension/extension.json";
 
 const SEED_BIBLE_EXTENSIONS: ExtensionSet = {
   id: "seed-bible",
   extensions: [
-    {
-      meta: exampleExtension,
-      import: () =>
-        import("@packages/seed-bible-refresh-example-extension/index"),
-    },
     {
       meta: twitchPubExtension,
       import: () => import("@packages/twitchPub-extension/index"),
@@ -252,6 +248,15 @@ const SEED_BIBLE_EXTENSIONS: ExtensionSet = {
     {
       meta: twitchSubExtension,
       import: () => import("@packages/twitchSub-extension/index"),
+    },
+    {
+      meta: locationsExtension,
+      import: () => import("@packages/locations-extension/index"),
+    },
+    {
+      meta: exampleExtension,
+      import: () =>
+        import("@packages/seed-bible-refresh-example-extension/index"),
     },
   ],
 };

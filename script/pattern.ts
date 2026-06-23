@@ -17,7 +17,8 @@ program
   .version("0.1.0");
 
 program
-  .command("pack")
+  .command("package")
+  .alias("pack")
   .description(
     "Packs the given pattern into an AUX file in the pattern-dist folder. The AUX file will be named <pattern>.aux."
   )

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createRecordsClient } from "@casual-simulation/aux-records/RecordsClient";
+import { createRequire } from "node:module";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import hash from "hash.js";
@@ -7,6 +7,14 @@ import axios from "axios";
 import stringify from "@casual-simulation/fast-json-stable-stringify";
 import type { StoredAux } from "@casual-simulation/aux-common";
 import type { RecordFileFailure } from "@casual-simulation/aux-records";
+
+// Loaded via createRequire rather than a static `import { createRecordsClient }`
+// because the package ships as CJS with no exports map, and tsx's ESM named-export
+// interop fails to bind the named export at link time (Node's CJS lexer and
+// require() both expose it fine).
+const { createRecordsClient } = createRequire(import.meta.url)(
+  "@casual-simulation/aux-records/RecordsClient.js"
+) as typeof import("@casual-simulation/aux-records/RecordsClient.js");
 
 const recordName = "aoBot";
 const headers = {

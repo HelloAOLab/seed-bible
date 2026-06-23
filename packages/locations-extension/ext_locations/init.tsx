@@ -3,6 +3,9 @@ import { computed } from "@preact/signals";
 import { registerExtension } from "seed-bible";
 import { LocationIcon } from "seed-bible/components";
 import locations from "./locations.json";
+import geoImporterPattern from "virtual:@pattern/geo-importer";
+
+console.log("Loaded locations extension", geoImporterPattern);
 
 interface PlaceData {
   place: string;
@@ -77,6 +80,7 @@ registerExtension({
         id: "location-map",
         type: "detached",
         mapPortal: "map",
+        pattern: geoImporterPattern,
       });
 
       // TODO: Fix

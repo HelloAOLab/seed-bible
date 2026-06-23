@@ -1,10 +1,17 @@
-import { createRecordsClient } from "@casual-simulation/aux-records/RecordsClient";
+import { createRequire } from "node:module";
 import hash from "hash.js";
 import axios from "axios";
 import stringify from "@casual-simulation/fast-json-stable-stringify";
 import { isArrayBuffer, isArrayBufferView } from "node:util/types";
 import Conf from "conf";
 import type { RecordFileFailure } from "@casual-simulation/aux-records";
+
+// Loaded via createRequire rather than a static `import { createRecordsClient }`
+// because the package ships as CJS with no exports map, and tsx's ESM named-export
+// interop fails to bind the named export at link time (require() exposes it fine).
+const { createRecordsClient } = createRequire(import.meta.url)(
+  "@casual-simulation/aux-records/RecordsClient.js"
+) as typeof import("@casual-simulation/aux-records/RecordsClient.js");
 
 const headers = {
   Origin: "https://auth.ao.bot",
