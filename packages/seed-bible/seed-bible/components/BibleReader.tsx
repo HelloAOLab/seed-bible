@@ -3,7 +3,7 @@ import {
   type ChapterVerse,
 } from "seed-bible.managers.FreeUseBibleAPI";
 import type { JSX } from "preact";
-import { useComputed } from "@preact/signals";
+import { computed, useComputed } from "@preact/signals";
 import type {
   BibleReadingState,
   BibleSelectedVerse,
@@ -848,15 +848,15 @@ export function BibleReader(props: BibleReaderProps) {
     selectFootnote,
   } = readingState;
 
-  const currentBook = useComputed(
+  const currentBook = computed(
     () =>
       translationBooks.value?.books.find((book) => book.id === bookId.value) ??
       null
   );
-  const translationLicenseNotice = useComputed(
+  const translationLicenseNotice = computed(
     () => translation.value?.licenseNotice?.trim() ?? ""
   );
-  const translationWebsite = useComputed(
+  const translationWebsite = computed(
     () => translation.value?.website.trim() ?? ""
   );
 
