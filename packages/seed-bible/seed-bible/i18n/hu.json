@@ -18,15 +18,14 @@
   "session-settings": "Munkamenet-beállítások",
   "shared-session-click-to-join": "megosztja – kattintson a csatlakozáshoz",
   "dismiss": "Elvetés",
-  "shared-tab_title": "Megosztott {{book}}",
+
   "tabs": "Fülek",
   "new-tab": "Új lap",
   "create-new-tab": "Új lap létrehozása",
   "tab-options": "Tab opciók",
   "open-tab-menu": "Lapmenü megnyitása",
   "session-id_x": "Munkamenet-azonosító: {{sessionId}}",
-  "session-id": "Munkamenet-azonosító",
-  "join-session": "Csatlakozás munkamenethez",
+
   "search-verses": "Versek keresése",
   "clear-search": "Keresés törlése",
   "searching": "Keresés...",
@@ -128,11 +127,11 @@
   "end-session": "Munkamenet vége",
   "panels": "Panelek",
   "new-shared-session": "Új megosztott munkamenet",
-  "join-shared-session": "Csatlakozás a megosztott munkamenethez",
+
   "open-in-new-panel": "Megnyitás új panelen",
   "open-in-detached-panel": "Nyissa meg a leválasztott panelen",
   "close-sidebar": "Oldalsáv bezárása",
-  "session-options": "Munkamenet-beállítások",
+
   "select-pane-layout": "Válassza ki az ablaktábla elrendezését",
   "pane-layout": "Ablaktábla elrendezése",
   "back": "Vissza",
@@ -185,12 +184,10 @@
   "3-psalms": "3 Zsoltár",
   "4-psalms": "4 Zsoltár",
   "5-psalms": "5 Zsoltár",
-  "enter-shared-session-id": "Adja meg a megosztott munkamenet azonosítóját",
+
   "remove-bookmark": "Könyvjelző eltávolítása",
   "add-bookmark": "Könyvjelző",
-  "play-audio": "Hang lejátszása",
-  "play": "Játék",
-  "discovery": "Felfedezés",
+
   "chat": "Csevegés",
   "today": "Ma",
   "you": "Te",
@@ -198,7 +195,7 @@
   "add-verse": "Vers hozzáadása",
   "add": "Hozzáadás",
   "chat-empty-title": "Hamarosan csevegés",
-  "chat-empty-body": "Itt tehetsz fel kérdéseket és kereshetsz kereszthivatkozásokat.",
+
   "category-options": "Mappabeállítások",
   "rename": "Átnevezés",
   "delete": "Töröl",
@@ -215,15 +212,11 @@
   "add-to-new": "Hozzáadás az újhoz",
   "save": "Megtakarítás",
   "bookmark-verses": "Könyvjelző versek",
-  "open-new-chapter-in-new-or-current-tab": "Új fejezet megnyitása új vagy aktuális lapon",
-  "current-tab": "Aktuális lap",
+
   "about-extrabiblical-writings": "A biblián kívüli írásokról",
   "apocrypha-info-text": "A korai zsidó vagy keresztény közösségek soha nem tekintették Szentírásnak ebben a részben található írásokat. A Biblia egy meghatározott könyvgyűjtemény. A zsidók és a keresztények mindig is egyetértettek az Ószövetségben, amely a zsidó nép által Tanakhnak, a keresztények pedig Ószövetségnek nevezett szent írások rögzített gyűjteményéből származik. A Tanakh és az Ószövetség tartalma pontosan ugyanaz, de általában eltérően vannak elrendezve. A keresztények elismerik az Újszövetséget is, amely Jézus történetét, tanításait és követőinek írásait meséli el. Az alábbi írások ismertek és széles körben olvasottak voltak a Biblia írásakor, de soha nem tekintették őket Szentírásnak. Bár az ókori szerzők néha sokféle szöveget idéztek, beleértve költőket, filozófusokat és más írásokat, valaminek az idézése nem ugyanaz, mint Szentírásként kezelni. Ezeket az írásokat csak történelmi és irodalmi hivatkozásként szerepeltetjük itt.",
   "today-coming-soon": "Hamarosan érkezik a mai képernyő",
-  "chat-coming-soon": "Hamarosan csevegés",
-  "more-coming-soon": "Hamarosan további lehetőségek érkeznek",
-  "discovery-coming-soon": "A felfedezés hamarosan érkezik",
-  "login-to-use-feature": "Be kell jelentkezned a funkció használatához.",
+
   "link-to-join-shared-session-copied": "A megosztott munkamenethez való csatlakozás linkjét átmásoltuk a vágólapra.",
   "new-bookmark-folder": "Új mappa",
   "chapter-navigation": "Fejezet navigáció",

@@ -13,16 +13,14 @@
   "close": "Закрити",
   "open-settings": "Відкрити налаштування",
   "close-settings": "Закрити налаштування",
-  "shared-tab_title": "Спільна {{book}}",
+
   "tabs": "Вкладки",
   "new-tab": "Нова вкладка",
   "create-new-tab": "Створити нову вкладку",
   "tab-options": "Параметри вкладок",
   "open-tab-menu": "Відкрити меню вкладок",
   "session-id_x": "Ідентифікатор сеансу: {{sessionId}}",
-  "session-id": "Ідентифікатор сеансу",
-  "join-session": "Приєднатися до сеансу",
-  "join-shared-session": "Приєднатися до спільного сеансу",
+
   "search-verses": "Пошук віршів",
   "clear-search": "Очистити пошук",
   "searching": "Пошук...",
@@ -115,7 +113,7 @@
   "open-in-new-panel": "Відкрити в новій панелі",
   "open-in-detached-panel": "Відкрити на окремій панелі",
   "close-sidebar": "Закрити бічну панель",
-  "session-options": "Варіанти сеансу",
+
   "select-pane-layout": "Вибрати макет панелі",
   "pane-layout": "Макет панелі",
   "back": "Назад",
@@ -163,8 +161,7 @@
   "all-translations": "Усі переклади",
   "popular-translations": "Популярні переклади",
   "copied-translation-share-link": "Скопійоване посилання для обміну перекладом",
-  "open-new-chapter-in-new-or-current-tab": "Open the new chapter in new or current tab",
-  "current-tab": "Current Tab",
+
   "about-extrabiblical-writings": "About Extrabiblical writings",
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 Псалом",
@@ -172,7 +169,7 @@
   "3-psalms": "3 Псалми",
   "4-psalms": "4 Псалми",
   "5-psalms": "5 Псалмів",
-  "enter-shared-session-id": "Введіть спільний ідентифікатор сеансу",
+
   "scripture-elements": "Елементи Святого Письма",
   "show-headings": "Показати заголовки",
   "show-verse-numbers": "Показати номери віршів",
@@ -191,9 +188,7 @@
   "more": "Більше",
   "remove-bookmark": "Видалити закладку",
   "add-bookmark": "Закладка",
-  "play-audio": "Відтворити аудіо",
-  "play": "Грати",
-  "discovery": "Відкриття",
+
   "chat": "Чат",
   "today": "Сьогодні",
   "you": "Ви",
@@ -201,7 +196,7 @@
   "add-verse": "Додати вірш",
   "add": "Додати",
   "chat-empty-title": "Чат буде доступний незабаром",
-  "chat-empty-body": "Тут ви зможете ставити запитання та досліджувати перехресні посилання.",
+
   "category-options": "Параметри папки",
   "rename": "Перейменувати",
   "delete": "Видалити",
@@ -220,10 +215,7 @@
   "save": "Зберегти",
   "bookmark-verses": "Закладка віршів",
   "today-coming-soon": "Сьогоднішній екран з'явиться незабаром",
-  "chat-coming-soon": "Чат буде доступний незабаром",
-  "more-coming-soon": "Більше опцій з'явиться незабаром",
-  "discovery-coming-soon": "Відкриття скоро відбудеться",
-  "login-to-use-feature": "Щоб скористатися цією функцією, вам потрібно увійти.",
+
   "link-to-join-shared-session-copied": "Посилання для приєднання до спільного сеансу скопійовано до буфера обміну",
   "new-bookmark-folder": "Нова папка",
   "chapter-navigation": "Навігація по розділах",

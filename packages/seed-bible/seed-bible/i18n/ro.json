@@ -18,15 +18,14 @@
   "session-settings": "Setări sesiune",
   "shared-session-click-to-join": "distribuie — dă clic pentru a te alătura",
   "dismiss": "Închide",
-  "shared-tab_title": "{{book}} partajat",
+
   "tabs": "Taburi",
   "new-tab": "Filă nouă",
   "create-new-tab": "Creați o filă nouă",
   "tab-options": "Opțiuni pentru file",
   "open-tab-menu": "Deschideți meniul filelor",
   "session-id_x": "ID sesiune: {{sessionId}}",
-  "session-id": "ID-ul sesiunii",
-  "join-session": "Alătură-te sesiunii",
+
   "search-verses": "Căutați versete",
   "clear-search": "Șterge căutarea",
   "searching": "Se caută...",
@@ -128,11 +127,11 @@
   "end-session": "Încheiați sesiunea",
   "panels": "Panouri",
   "new-shared-session": "Sesiune partajată nouă",
-  "join-shared-session": "Alătură-te sesiunii partajate",
+
   "open-in-new-panel": "Deschideți într-un panou nou",
   "open-in-detached-panel": "Deschideți în panoul detașat",
   "close-sidebar": "Închide bara laterală",
-  "session-options": "Opțiuni de sesiune",
+
   "select-pane-layout": "Selectați aspectul panoului",
   "pane-layout": "Aspectul panoului",
   "back": "Spate",
@@ -185,12 +184,10 @@
   "3-psalms": "3 Psalmi",
   "4-psalms": "4 Psalmi",
   "5-psalms": "5 Psalmi",
-  "enter-shared-session-id": "Introduceți ID-ul sesiunii partajate",
+
   "remove-bookmark": "Eliminați marcajul",
   "add-bookmark": "Marcaj",
-  "play-audio": "Redare audio",
-  "play": "Juca",
-  "discovery": "Descoperire",
+
   "chat": "Chat",
   "today": "Astăzi",
   "you": "Tu",
@@ -198,7 +195,7 @@
   "add-verse": "Adăugați verset",
   "add": "Adăuga",
   "chat-empty-title": "Chatul va fi disponibil în curând",
-  "chat-empty-body": "Aici veți putea pune întrebări și explora referințe încrucișate.",
+
   "category-options": "Opțiuni folder",
   "rename": "Redenumire",
   "delete": "Şterge",
@@ -215,15 +212,11 @@
   "add-to-new": "Adăugați la nou",
   "save": "Salva",
   "bookmark-verses": "Versuri în semnături",
-  "open-new-chapter-in-new-or-current-tab": "Deschideți noul capitol în fila nouă sau curentă",
-  "current-tab": "Fila curentă",
+
   "about-extrabiblical-writings": "Despre scrierile extrabiblice",
   "apocrypha-info-text": "Niciuna dintre scrierile din această secțiune nu a fost considerată vreodată Scriptură de către comunitățile evreiești sau creștine timpurii. Biblia este o colecție specifică de cărți. Evreii și creștinii au fost întotdeauna de acord asupra Vechiului Testament, care provine dintr-un set fix de scrieri sacre pe care evreii le numeau Tanakh, iar creștinii le numesc Vechiul Testament. Conținutul Tanakh-ului și al Vechiului Testament este exact același, dar sunt de obicei aranjate diferit. Creștinii recunosc, de asemenea, Noul Testament, care spune povestea lui Isus, învățăturile sale și scrierile urmașilor săi. Scrierile de mai jos erau cunoscute și citite pe scară largă în perioada în care a fost scrisă Biblia, dar nu au fost niciodată tratate ca Scriptură. Deși autorii antici citau uneori o gamă largă de texte, inclusiv poeți, filozofi și alte scrieri, a cita ceva nu este același lucru cu a-l trata ca Scriptură. Aceste scrieri sunt incluse aici doar pentru referințe istorice și literare.",
   "today-coming-soon": "Ecranul de astăzi va apărea în curând",
-  "chat-coming-soon": "Chatul va fi disponibil în curând",
-  "more-coming-soon": "Mai multe opțiuni în curând",
-  "discovery-coming-soon": "Discovery va fi disponibil în curând",
-  "login-to-use-feature": "Trebuie să vă conectați pentru a utiliza această funcție.",
+
   "link-to-join-shared-session-copied": "Un link pentru a vă alătura sesiunii partajate a fost copiat în clipboard.",
   "new-bookmark-folder": "Dosar nou",
   "chapter-navigation": "Navigare prin capitole",

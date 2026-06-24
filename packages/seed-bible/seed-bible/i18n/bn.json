@@ -13,16 +13,14 @@
   "close": "বন্ধ করুন",
   "open-settings": "সেটিংস খুলুন",
   "close-settings": "সেটিংস বন্ধ করুন",
-  "shared-tab_title": "শেয়ার করা {{book}}",
+
   "tabs": "ট্যাব",
   "new-tab": "নতুন ট্যাব",
   "create-new-tab": "নতুন ট্যাব তৈরি করুন",
   "tab-options": "ট্যাব বিকল্পগুলি",
   "open-tab-menu": "ট্যাব মেনু খুলুন",
   "session-id_x": "সেশন আইডি: {{sessionId}}",
-  "session-id": "সেশন আইডি",
-  "join-session": "সেশনে যোগ দিন",
-  "join-shared-session": "যৌথ সেশনে যোগ দিন",
+
   "search-verses": "শ্লোক অনুসন্ধান করুন",
   "clear-search": "পরিষ্কার অনুসন্ধান",
   "searching": "অনুসন্ধান করা হচ্ছে...",
@@ -115,7 +113,7 @@
   "open-in-new-panel": "নতুন প্যানেলে খুলুন",
   "open-in-detached-panel": "বিচ্ছিন্ন প্যানেলে খুলুন",
   "close-sidebar": "সাইডবার বন্ধ করুন",
-  "session-options": "সেশন বিকল্পগুলি",
+
   "select-pane-layout": "প্যান লেআউট নির্বাচন করুন",
   "pane-layout": "প্যান লেআউট",
   "back": "ফিরে যান",
@@ -163,8 +161,7 @@
   "all-translations": "সমস্ত অনুবাদ",
   "popular-translations": "জনপ্রিয় অনুবাদ",
   "copied-translation-share-link": "অনুলিপি করা অনুবাদ শেয়ার লিঙ্ক",
-  "open-new-chapter-in-new-or-current-tab": "Open the new chapter in new or current tab",
-  "current-tab": "Current Tab",
+
   "about-extrabiblical-writings": "About Extrabiblical writings",
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "১ গীতসংহিতা",
@@ -172,7 +169,7 @@
   "3-psalms": "৩ গীতসংহিতা",
   "4-psalms": "৪ গীতসংহিতা",
   "5-psalms": "৫ গীতসংহিতা",
-  "enter-shared-session-id": "শেয়ার করা সেশন আইডি লিখুন",
+
   "scripture-elements": "ধর্মগ্রন্থের উপাদান",
   "show-headings": "শিরোনাম দেখান",
   "show-verse-numbers": "শ্লোক নম্বর দেখান",
@@ -191,9 +188,7 @@
   "more": "আরও",
   "remove-bookmark": "বুকমার্ক সরান",
   "add-bookmark": "বুকমার্ক",
-  "play-audio": "অডিও চালান",
-  "play": "খেলা",
-  "discovery": "আবিষ্কার",
+
   "chat": "চ্যাট",
   "today": "আজ",
   "you": "তুমি",
@@ -201,7 +196,7 @@
   "add-verse": "শ্লোক যোগ করুন",
   "add": "যোগ করুন",
   "chat-empty-title": "চ্যাট শীঘ্রই আসছে",
-  "chat-empty-body": "এখানে আপনি প্রশ্ন করতে এবং প্রাসঙ্গিক তথ্য খুঁজে দেখতে পারবেন।",
+
   "category-options": "ফোল্ডার বিকল্পগুলি",
   "rename": "পুনঃনামকরণ",
   "delete": "মুছে ফেলুন",
@@ -220,10 +215,7 @@
   "save": "সংরক্ষণ করুন",
   "bookmark-verses": "শ্লোকগুলি বুকমার্ক করুন",
   "today-coming-soon": "আজকের স্ক্রিন শীঘ্রই আসছে",
-  "chat-coming-soon": "চ্যাট শীঘ্রই আসছে",
-  "more-coming-soon": "শীঘ্রই আরও বিকল্প আসছে",
-  "discovery-coming-soon": "আবিষ্কার শীঘ্রই আসছে",
-  "login-to-use-feature": "এই বৈশিষ্ট্যটি ব্যবহার করতে আপনাকে লগ ইন করতে হবে।",
+
   "link-to-join-shared-session-copied": "শেয়ার করা সেশনে যোগদানের একটি লিঙ্ক আপনার ক্লিপবোর্ডে কপি করা হয়েছে।",
   "new-bookmark-folder": "নতুন ফোল্ডার",
   "chapter-navigation": "অধ্যায় নেভিগেশন",

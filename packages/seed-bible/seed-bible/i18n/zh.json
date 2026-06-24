@@ -13,16 +13,14 @@
   "close": "关闭",
   "open-settings": "打开设置",
   "close-settings": "关闭设置",
-  "shared-tab_title": "共享的{{book}}",
+
   "tabs": "标签页",
   "new-tab": "新标签页",
   "create-new-tab": "创建新标签页",
   "tab-options": "标签页选项",
   "open-tab-menu": "打开标签菜单",
   "session-id_x": "会话 ID： {{sessionId}}",
-  "session-id": "会话 ID",
-  "join-session": "加入会话",
-  "join-shared-session": "加入共享会话",
+
   "search-verses": "搜索诗句",
   "clear-search": "清除搜索",
   "searching": "正在搜索……",
@@ -115,7 +113,7 @@
   "open-in-new-panel": "在新面板中打开",
   "open-in-detached-panel": "在分离面板中打开",
   "close-sidebar": "关闭侧边栏",
-  "session-options": "会话选项",
+
   "select-pane-layout": "选择窗格布局",
   "pane-layout": "窗格布局",
   "back": "后退",
@@ -163,8 +161,7 @@
   "all-translations": "所有译文",
   "popular-translations": "热门译文",
   "copied-translation-share-link": "复制的翻译分享链接",
-  "open-new-chapter-in-new-or-current-tab": "Open the new chapter in new or current tab",
-  "current-tab": "Current Tab",
+
   "about-extrabiblical-writings": "About Extrabiblical writings",
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "诗篇1篇",
@@ -172,7 +169,7 @@
   "3-psalms": "诗篇3篇",
   "4-psalms": "诗篇4篇",
   "5-psalms": "诗篇5篇",
-  "enter-shared-session-id": "输入共享会话 ID",
+
   "scripture-elements": "圣经要素",
   "show-headings": "显示标题",
   "show-verse-numbers": "显示诗节编号",
@@ -191,9 +188,7 @@
   "more": "更多的",
   "remove-bookmark": "移除书签",
   "add-bookmark": "收藏",
-  "play-audio": "播放音频",
-  "play": "玩",
-  "discovery": "发现",
+
   "chat": "聊天",
   "today": "今天",
   "you": "你",
@@ -201,7 +196,7 @@
   "add-verse": "添加诗句",
   "add": "添加",
   "chat-empty-title": "聊天功能即将上线",
-  "chat-empty-body": "在这里您可以提出问题并查阅交叉引用。",
+
   "category-options": "文件夹选项",
   "rename": "重命名",
   "delete": "删除",
@@ -220,10 +215,7 @@
   "save": "节省",
   "bookmark-verses": "收藏诗句",
   "today-coming-soon": "今天屏幕即将上线",
-  "chat-coming-soon": "聊天功能即将上线",
-  "more-coming-soon": "更多选项即将推出",
-  "discovery-coming-soon": "探索即将到来",
-  "login-to-use-feature": "您必须登录才能使用此功能。",
+
   "link-to-join-shared-session-copied": "加入共享会话的链接已复制到您的剪贴板。",
   "new-bookmark-folder": "新建文件夹",
   "chapter-navigation": "章节导航",

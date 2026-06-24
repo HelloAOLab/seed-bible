@@ -18,15 +18,14 @@
   "session-settings": "Impostazioni della sessione",
   "shared-session-click-to-join": "sta condividendo — clicca per unirti",
   "dismiss": "Congedare",
-  "shared-tab_title": "Libro condiviso {{book}}",
+
   "tabs": "Schede",
   "new-tab": "Nuova scheda",
   "create-new-tab": "Crea una nuova scheda",
   "tab-options": "Opzioni della scheda",
   "open-tab-menu": "Apri il menu a schede",
   "session-id_x": "ID sessione: {{sessionId}}",
-  "session-id": "ID sessione",
-  "join-session": "Partecipa alla sessione",
+
   "search-verses": "Cerca i versetti",
   "clear-search": "Cancella ricerca",
   "searching": "Ricerca in corso...",
@@ -128,11 +127,11 @@
   "end-session": "Fine della sessione",
   "panels": "Pannelli",
   "new-shared-session": "Nuova sessione condivisa",
-  "join-shared-session": "Partecipa alla sessione condivisa",
+
   "open-in-new-panel": "Apri in una nuova finestra",
   "open-in-detached-panel": "Aprire nel pannello separato",
   "close-sidebar": "Chiudi la barra laterale",
-  "session-options": "Opzioni di sessione",
+
   "select-pane-layout": "Seleziona il layout del riquadro",
   "pane-layout": "Layout del pannello",
   "back": "Indietro",
@@ -185,12 +184,10 @@
   "3-psalms": "3 Salmi",
   "4-psalms": "4 Salmi",
   "5-psalms": "5 Salmi",
-  "enter-shared-session-id": "Inserisci l'ID della sessione condivisa",
+
   "remove-bookmark": "Rimuovi segnalibro",
   "add-bookmark": "Segnalibro",
-  "play-audio": "Riproduci audio",
-  "play": "Giocare",
-  "discovery": "Scoperta",
+
   "chat": "Chiacchierata",
   "today": "Oggi",
   "you": "Voi",
@@ -198,7 +195,7 @@
   "add-verse": "Aggiungi un verso",
   "add": "Aggiungere",
   "chat-empty-title": "La chat arriverà presto",
-  "chat-empty-body": "Qui potrai porre domande ed esplorare i riferimenti incrociati.",
+
   "category-options": "Opzioni cartella",
   "rename": "Rinominare",
   "delete": "Eliminare",
@@ -215,15 +212,11 @@
   "add-to-new": "Aggiungi a nuovo",
   "save": "Salva",
   "bookmark-verses": "Segnalibro versi",
-  "open-new-chapter-in-new-or-current-tab": "Apri il nuovo capitolo in una nuova scheda o in quella corrente.",
-  "current-tab": "Scheda corrente",
+
   "about-extrabiblical-writings": "A proposito degli scritti extrabiblici",
   "apocrypha-info-text": "Nessuno degli scritti presenti in questa sezione è mai stato considerato Scrittura dalle prime comunità ebraiche o cristiane. La Bibbia è una specifica raccolta di libri. Ebrei e cristiani hanno sempre concordato sull'Antico Testamento, che deriva da un insieme fisso di testi sacri che gli ebrei chiamano Tanakh e i cristiani Antico Testamento. Il contenuto del Tanakh e dell'Antico Testamento è esattamente lo stesso, ma sono comunemente disposti in modo diverso. I cristiani riconoscono inoltre il Nuovo Testamento, che narra la storia di Gesù, i suoi insegnamenti e gli scritti dei suoi seguaci. Gli scritti qui riportati erano noti e ampiamente letti all'epoca in cui fu scritta la Bibbia, ma non furono mai considerati Scrittura. Sebbene gli autori antichi citassero talvolta una vasta gamma di testi, inclusi poeti, filosofi e altri scritti, citare qualcosa non equivale a considerarla Scrittura. Questi scritti sono inclusi qui solo a scopo di riferimento storico e letterario.",
   "today-coming-soon": "Oggi lo schermo arriverà presto",
-  "chat-coming-soon": "La chat arriverà presto",
-  "more-coming-soon": "Presto saranno disponibili altre opzioni.",
-  "discovery-coming-soon": "La scoperta arriverà presto",
-  "login-to-use-feature": "Per utilizzare questa funzione è necessario effettuare l'accesso.",
+
   "link-to-join-shared-session-copied": "Il link per partecipare alla sessione condivisa è stato copiato negli appunti.",
   "new-bookmark-folder": "Nuova cartella",
   "chapter-navigation": "Navigazione tra i capitoli",

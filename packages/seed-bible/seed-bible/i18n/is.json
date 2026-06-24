@@ -18,15 +18,14 @@
   "session-settings": "Stillingar lotu",
   "shared-session-click-to-join": "er að deila — smelltu til að taka þátt",
   "dismiss": "Hafna",
-  "shared-tab_title": "Deilt {{book}}",
+
   "tabs": "Flipar",
   "new-tab": "Nýr flipi",
   "create-new-tab": "Búa til nýjan flipa",
   "tab-options": "Valkostir flipa",
   "open-tab-menu": "Opna flipavalmynd",
   "session-id_x": "Lotuauðkenni: {{sessionId}}",
-  "session-id": "Lotuauðkenni",
-  "join-session": "Taka þátt í lotu",
+
   "search-verses": "Leita að versum",
   "clear-search": "Hreinsa leit",
   "searching": "Leitar...",
@@ -128,11 +127,11 @@
   "end-session": "Loka lotu",
   "panels": "Spjöld",
   "new-shared-session": "Ný sameiginleg lota",
-  "join-shared-session": "Taka þátt í sameiginlegri lotu",
+
   "open-in-new-panel": "Opna í nýjum glugga",
   "open-in-detached-panel": "Opna í lausu spjaldi",
   "close-sidebar": "Loka hliðarstiku",
-  "session-options": "Valkostir lotu",
+
   "select-pane-layout": "Veldu rúðuuppsetningu",
   "pane-layout": "Útlit rúðu",
   "back": "Til baka",
@@ -185,12 +184,10 @@
   "3-psalms": "3. sálmur",
   "4-psalms": "4 Sálmar",
   "5-psalms": "5 Sálmar",
-  "enter-shared-session-id": "Sláðu inn sameiginlegt lotuauðkenni",
+
   "remove-bookmark": "Fjarlægja bókamerki",
   "add-bookmark": "Bókamerki",
-  "play-audio": "Spila hljóð",
-  "play": "Spila",
-  "discovery": "Uppgötvun",
+
   "chat": "Spjall",
   "today": "Í dag",
   "you": "Þú",
@@ -198,7 +195,7 @@
   "add-verse": "Bæta við versi",
   "add": "Bæta við",
   "chat-empty-title": "Spjall kemur bráðlega",
-  "chat-empty-body": "Hér geturðu spurt spurninga og skoðað víxlvísanir.",
+
   "category-options": "Möppuvalkostir",
   "rename": "Endurnefna",
   "delete": "Eyða",
@@ -215,15 +212,11 @@
   "add-to-new": "Bæta við nýtt",
   "save": "Vista",
   "bookmark-verses": "Bókamerkjaðu vers",
-  "open-new-chapter-in-new-or-current-tab": "Opna nýjan kafla í nýjum eða núverandi flipa",
-  "current-tab": "Núverandi flipi",
+
   "about-extrabiblical-writings": "Um utanbiblíulegar rit",
   "apocrypha-info-text": "Engin ritin í þessum hluta voru nokkurn tíma talin vera Ritning af fyrstu gyðinga- eða kristnum samfélögum. Biblían er sérstakt safn bóka. Gyðingar og kristnir menn hafa alltaf verið sammála um Gamla testamentið, sem kemur úr föstu safni helgra rita sem gyðingar kölluðu Tanakh og kristnir menn kalla Gamla testamentið. Efni Tanakh og Gamla testamentisins er nákvæmlega það sama en er almennt raðað öðruvísi. Kristnir menn viðurkenna einnig Nýja testamentið, sem segir sögu Jesú, kenninga hans og rita fylgjenda hans. Ritin hér að neðan voru þekkt og víða lesin þegar Biblían var skrifuð, en þau voru aldrei meðhöndluð sem Ritning. Þó að fornir höfundar hafi stundum vitnað í fjölbreytt úrval texta, þar á meðal skáld, heimspekinga og annarra rita, er það ekki það sama að vitna í eitthvað og meðhöndla það sem Ritning. Þessi rit eru hér eingöngu tekin með til sögulegrar og bókmenntalegrar tilvísunar.",
   "today-coming-soon": "Skjárinn í dag kemur bráðum",
-  "chat-coming-soon": "Spjall kemur bráðlega",
-  "more-coming-soon": "Fleiri valkostir koma bráðlega",
-  "discovery-coming-soon": "Uppgötvun er væntanleg",
-  "login-to-use-feature": "Þú verður að skrá þig inn til að nota þennan eiginleika.",
+
   "link-to-join-shared-session-copied": "Tengill til að taka þátt í sameiginlegu lotunni var afritaður á klippiborðið þitt",
   "new-bookmark-folder": "Ný mappa",
   "chapter-navigation": "Kaflaflakk",

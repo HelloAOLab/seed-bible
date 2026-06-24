@@ -18,15 +18,14 @@
   "session-settings": "Nastavitve seje",
   "shared-session-click-to-join": "deli – kliknite za pridružitev",
   "dismiss": "Zavrzi",
-  "shared-tab_title": "Deljena {{book}}",
+
   "tabs": "Zavihki",
   "new-tab": "Nov zavihek",
   "create-new-tab": "Ustvari nov zavihek",
   "tab-options": "Možnosti zavihkov",
   "open-tab-menu": "Odpri meni zavihkov",
   "session-id_x": "ID seje: {{sessionId}}",
-  "session-id": "ID seje",
-  "join-session": "Pridruži se seji",
+
   "search-verses": "Iskanje verzov",
   "clear-search": "Počisti iskanje",
   "searching": "Iskanje ...",
@@ -128,11 +127,11 @@
   "end-session": "Konec seje",
   "panels": "Plošče",
   "new-shared-session": "Nova deljena seja",
-  "join-shared-session": "Pridruži se skupni seji",
+
   "open-in-new-panel": "Odpri v novi plošči",
   "open-in-detached-panel": "Odpri v ločeni plošči",
   "close-sidebar": "Zapri stransko vrstico",
-  "session-options": "Možnosti seje",
+
   "select-pane-layout": "Izberite postavitev podokna",
   "pane-layout": "Postavitev podokna",
   "back": "Nazaj",
@@ -185,12 +184,10 @@
   "3-psalms": "3 Psalmi",
   "4-psalms": "4 Psalmi",
   "5-psalms": "5 psalmov",
-  "enter-shared-session-id": "Vnesite ID skupne seje",
+
   "remove-bookmark": "Odstrani zaznamek",
   "add-bookmark": "Zaznamek",
-  "play-audio": "Predvajaj zvok",
-  "play": "Predvajaj",
-  "discovery": "Odkritje",
+
   "chat": "Klepet",
   "today": "Danes",
   "you": "Ti",
@@ -198,7 +195,7 @@
   "add-verse": "Dodaj verz",
   "add": "Dodaj",
   "chat-empty-title": "Klepet kmalu na voljo",
-  "chat-empty-body": "Tukaj boste lahko postavljali vprašanja in raziskovali navzkrižne reference.",
+
   "category-options": "Možnosti mape",
   "rename": "Preimenuj",
   "delete": "Izbriši",
@@ -215,15 +212,11 @@
   "add-to-new": "Dodaj k novemu",
   "save": "Shrani",
   "bookmark-verses": "Zaznamek verzov",
-  "open-new-chapter-in-new-or-current-tab": "Odpri novo poglavje v novem ali trenutnem zavihku",
-  "current-tab": "Trenutni zavihek",
+
   "about-extrabiblical-writings": "O zunajbiblijskih spisih",
   "apocrypha-info-text": "Nobenega od spisov v tem razdelku zgodnje judovske ali krščanske skupnosti niso nikoli štele za Sveto pismo. Biblija je specifična zbirka knjig. Judje in kristjani so se vedno strinjali glede Stare zaveze, ki izhaja iz fiksnega sklopa svetih spisov, ki jih Judje imenujejo Tanah, kristjani pa Stara zaveza. Vsebina Tanaha in Stare zaveze je popolnoma enaka, vendar sta običajno različno razporejeni. Kristjani priznavajo tudi Novo zavezo, ki pripoveduje zgodbo o Jezusu, njegovih naukih in spisih njegovih sledilcev. Spodaj navedeni spisi so bili znani in široko brani v času pisanja Biblije, vendar nikoli niso bili obravnavani kot Sveto pismo. Čeprav so starodavni avtorji včasih citirali široko paleto besedil, vključno s pesniki, filozofi in drugimi spisi, citiranje nečesa ni enako kot obravnavanje tega kot Svetega pisma. Ti spisi so tukaj vključeni le za zgodovinsko in literarno referenco.",
   "today-coming-soon": "Današnji zaslon bo kmalu na voljo",
-  "chat-coming-soon": "Klepet kmalu na voljo",
-  "more-coming-soon": "Kmalu več možnosti",
-  "discovery-coming-soon": "Odkritje kmalu prihaja",
-  "login-to-use-feature": "Za uporabo te funkcije se morate prijaviti.",
+
   "link-to-join-shared-session-copied": "Povezava za pridružitev skupni seji je bila kopirana v odložišče.",
   "new-bookmark-folder": "Nova mapa",
   "chapter-navigation": "Navigacija po poglavjih",

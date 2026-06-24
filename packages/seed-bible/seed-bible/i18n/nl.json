@@ -18,15 +18,14 @@
   "session-settings": "Sessie-instellingen",
   "shared-session-click-to-join": "deelt informatie — klik om mee te doen",
   "dismiss": "Afwijzen",
-  "shared-tab_title": "Gedeeld {{book}}",
+
   "tabs": "Tabs",
   "new-tab": "Nieuw tabblad",
   "create-new-tab": "Een nieuw tabblad aanmaken",
   "tab-options": "Tabopties",
   "open-tab-menu": "Tabmenu openen",
   "session-id_x": "Sessie-ID: {{sessionId}}",
-  "session-id": "Sessie-ID",
-  "join-session": "Deelnemen aan de sessie",
+
   "search-verses": "Zoek verzen",
   "clear-search": "Zoekopdracht wissen",
   "searching": "Zoeken...",
@@ -128,11 +127,11 @@
   "end-session": "Sessie beëindigen",
   "panels": "Panelen",
   "new-shared-session": "Nieuwe gedeelde sessie",
-  "join-shared-session": "Neem deel aan een gedeelde sessie",
+
   "open-in-new-panel": "Openen in een nieuw paneel",
   "open-in-detached-panel": "Openen in losstaand paneel",
   "close-sidebar": "Zijbalk sluiten",
-  "session-options": "Sessieopties",
+
   "select-pane-layout": "Selecteer paneelindeling",
   "pane-layout": "Paneelindeling",
   "back": "Rug",
@@ -185,12 +184,10 @@
   "3-psalms": "3 Psalmen",
   "4-psalms": "4 Psalmen",
   "5-psalms": "5 Psalmen",
-  "enter-shared-session-id": "Voer de gedeelde sessie-ID in.",
+
   "remove-bookmark": "Verwijder bladwijzer",
   "add-bookmark": "Bladwijzer",
-  "play-audio": "Audio afspelen",
-  "play": "Toneelstuk",
-  "discovery": "Ontdekking",
+
   "chat": "Chat",
   "today": "Vandaag",
   "you": "Jij",
@@ -198,7 +195,7 @@
   "add-verse": "Voeg een vers toe",
   "add": "Toevoegen",
   "chat-empty-title": "De chatfunctie is binnenkort beschikbaar.",
-  "chat-empty-body": "Hier kunt u vragen stellen en kruisverwijzingen bekijken.",
+
   "category-options": "Mapopties",
   "rename": "Naam wijzigen",
   "delete": "Verwijderen",
@@ -215,15 +212,11 @@
   "add-to-new": "Toevoegen aan nieuw",
   "save": "Redden",
   "bookmark-verses": "Verzen markeren",
-  "open-new-chapter-in-new-or-current-tab": "Open het nieuwe hoofdstuk in een nieuw of huidig ​​tabblad.",
-  "current-tab": "Huidig ​​tabblad",
+
   "about-extrabiblical-writings": "Over buitenbijbelse geschriften",
   "apocrypha-info-text": "Geen van de geschriften in dit gedeelte werd ooit als Heilige Schrift beschouwd door vroege Joodse of christelijke gemeenschappen. De Bijbel is een specifieke verzameling boeken. Joden en christenen zijn het altijd eens geweest over het Oude Testament, dat afkomstig is van een vaste verzameling heilige geschriften die de Joden de Tanakh noemen en christenen het Oude Testament. De inhoud van de Tanakh en het Oude Testament is exact hetzelfde, maar ze zijn doorgaans anders geordend. Christenen erkennen daarnaast het Nieuwe Testament, dat het verhaal van Jezus, zijn leer en de geschriften van zijn volgelingen vertelt. De onderstaande geschriften waren bekend en werden veel gelezen in de tijd dat de Bijbel werd geschreven, maar ze werden nooit als Heilige Schrift beschouwd. Hoewel oude auteurs soms een breed scala aan teksten citeerden, waaronder dichters, filosofen en andere geschriften, is citeren niet hetzelfde als het als Heilige Schrift beschouwen. Deze geschriften zijn hier alleen opgenomen ter historische en literaire referentie.",
   "today-coming-soon": "Vandaag verschijnt het scherm binnenkort.",
-  "chat-coming-soon": "De chatfunctie is binnenkort beschikbaar.",
-  "more-coming-soon": "Binnenkort meer opties beschikbaar",
-  "discovery-coming-soon": "Discovery komt er binnenkort aan.",
-  "login-to-use-feature": "Je moet inloggen om deze functie te kunnen gebruiken.",
+
   "link-to-join-shared-session-copied": "Een link om deel te nemen aan de gedeelde sessie is naar uw klembord gekopieerd.",
   "new-bookmark-folder": "Nieuwe map",
   "chapter-navigation": "Hoofdstuknavigatie",

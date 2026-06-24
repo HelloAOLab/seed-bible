@@ -13,16 +13,14 @@
   "close": "Funga",
   "open-settings": "Fungua Mipangilio",
   "close-settings": "Funga Mipangilio",
-  "shared-tab_title": "Imeshirikiwa {{book}}",
+
   "tabs": "Vichupo",
   "new-tab": "Kichupo kipya",
   "create-new-tab": "Unda kichupo kipya",
   "tab-options": "Chaguo za vichupo",
   "open-tab-menu": "Fungua menyu ya kichupo",
   "session-id_x": "Kitambulisho cha Kipindi: {{sessionId}}",
-  "session-id": "Kitambulisho cha Kipindi",
-  "join-session": "Jiunge na Kipindi",
-  "join-shared-session": "Jiunge na Kipindi Kilichoshirikiwa",
+
   "search-verses": "Tafuta mistari",
   "clear-search": "Futa utafutaji",
   "searching": "Inatafuta...",
@@ -115,7 +113,7 @@
   "open-in-new-panel": "Fungua kwenye paneli mpya",
   "open-in-detached-panel": "Fungua katika paneli iliyotenganishwa",
   "close-sidebar": "Funga upau wa pembeni",
-  "session-options": "Chaguo za kipindi",
+
   "select-pane-layout": "Chagua mpangilio wa kidirisha",
   "pane-layout": "Mpangilio wa kidirisha",
   "back": "Rudi",
@@ -163,8 +161,7 @@
   "all-translations": "Tafsiri zote",
   "popular-translations": "Tafsiri maarufu",
   "copied-translation-share-link": "Kiungo cha kushiriki tafsiri kimenakiliwa",
-  "open-new-chapter-in-new-or-current-tab": "Open the new chapter in new or current tab",
-  "current-tab": "Current Tab",
+
   "about-extrabiblical-writings": "About Extrabiblical writings",
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "Zaburi 1",
@@ -172,7 +169,7 @@
   "3-psalms": "Zaburi 3",
   "4-psalms": "Zaburi 4",
   "5-psalms": "Zaburi 5",
-  "enter-shared-session-id": "Ingiza Kitambulisho cha Kipindi Kilichoshirikiwa",
+
   "scripture-elements": "Vipengele vya Maandiko",
   "show-headings": "Onyesha vichwa vya habari",
   "show-verse-numbers": "Onyesha nambari za mistari",
@@ -191,9 +188,7 @@
   "more": "Zaidi",
   "remove-bookmark": "Ondoa alamisho",
   "add-bookmark": "Alamisho",
-  "play-audio": "Cheza sauti",
-  "play": "Cheza",
-  "discovery": "Ugunduzi",
+
   "chat": "Gumzo",
   "today": "Leo",
   "you": "Wewe",
@@ -201,7 +196,7 @@
   "add-verse": "Ongeza mstari",
   "add": "Ongeza",
   "chat-empty-title": "Gumzo linakuja hivi karibuni",
-  "chat-empty-body": "Hapa ndipo utakapoweza kuuliza maswali na kuchunguza marejeleo mtambuka.",
+
   "category-options": "Chaguo za folda",
   "rename": "Badilisha jina",
   "delete": "Futa",
@@ -220,10 +215,7 @@
   "save": "Hifadhi",
   "bookmark-verses": "Weka alama kwenye mistari",
   "today-coming-soon": "Skrini ya leo inakuja hivi karibuni",
-  "chat-coming-soon": "Gumzo linakuja hivi karibuni",
-  "more-coming-soon": "Chaguzi zaidi zinakuja hivi karibuni",
-  "discovery-coming-soon": "Ugunduzi unakuja hivi karibuni",
-  "login-to-use-feature": "Lazima uingie ili kutumia kipengele hiki.",
+
   "link-to-join-shared-session-copied": "Kiungo cha kujiunga na kipindi kilichoshirikiwa kimenakiliwa kwenye ubao wako wa kunakili",
   "new-bookmark-folder": "Folda mpya",
   "chapter-navigation": "Urambazaji wa sura",

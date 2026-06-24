@@ -18,15 +18,14 @@
   "session-settings": "Mga setting ng sesyon",
   "shared-session-click-to-join": "ay nagbabahagi — i-click para sumali",
   "dismiss": "I-dismiss",
-  "shared-tab_title": "Ibinahagi {{book}}",
+
   "tabs": "Mga Tab",
   "new-tab": "Bagong tab",
   "create-new-tab": "Gumawa ng bagong tab",
   "tab-options": "Mga opsyon sa tab",
   "open-tab-menu": "Buksan ang menu ng tab",
   "session-id_x": "ID ng Sesyon: {{sessionId}}",
-  "session-id": "ID ng Sesyon",
-  "join-session": "Sumali sa Sesyon",
+
   "search-verses": "Maghanap ng mga bersikulo",
   "clear-search": "I-clear ang paghahanap",
   "searching": "Naghahanap...",
@@ -128,11 +127,11 @@
   "end-session": "Tapusin ang Sesyon",
   "panels": "Mga Panel",
   "new-shared-session": "Bagong nakabahaging sesyon",
-  "join-shared-session": "Sumali sa nakabahaging sesyon",
+
   "open-in-new-panel": "Buksan sa bagong panel",
   "open-in-detached-panel": "Buksan sa hiwalay na panel",
   "close-sidebar": "Isara ang sidebar",
-  "session-options": "Mga opsyon sa sesyon",
+
   "select-pane-layout": "Piliin ang layout ng pane",
   "pane-layout": "Layout ng pane",
   "back": "Balik",
@@ -185,12 +184,10 @@
   "3-psalms": "3 Mga Awit",
   "4-psalms": "4 na Awit",
   "5-psalms": "5 Mga Awit",
-  "enter-shared-session-id": "Ilagay ang nakabahaging session ID",
+
   "remove-bookmark": "Alisin ang bookmark",
   "add-bookmark": "I-bookmark",
-  "play-audio": "Magpatugtog ng audio",
-  "play": "Maglaro",
-  "discovery": "Pagtuklas",
+
   "chat": "Makipag-chat",
   "today": "Ngayon",
   "you": "Ikaw",
@@ -198,7 +195,7 @@
   "add-verse": "Magdagdag ng talata",
   "add": "Idagdag",
   "chat-empty-title": "Malapit na ang chat",
-  "chat-empty-body": "Dito ka makakapagtanong at makakapagsaliksik ng mga cross-reference.",
+
   "category-options": "Mga opsyon sa folder",
   "rename": "Palitan ang pangalan",
   "delete": "Burahin",
@@ -215,15 +212,11 @@
   "add-to-new": "Idagdag sa bago",
   "save": "I-save",
   "bookmark-verses": "I-bookmark ang mga bersikulo",
-  "open-new-chapter-in-new-or-current-tab": "Buksan ang bagong kabanata sa bago o kasalukuyang tab",
-  "current-tab": "Kasalukuyang Tab",
+
   "about-extrabiblical-writings": "Tungkol sa mga sulating hindi sakop ng Bibliya",
   "apocrypha-info-text": "Wala sa mga sulatin sa seksyong ito ang kailanman itinuring na Kasulatan ng mga sinaunang komunidad ng mga Hudyo o Kristiyano. Ang Bibliya ay isang partikular na koleksyon ng mga aklat. Ang mga Hudyo at Kristiyano ay palaging nagkakasundo sa Lumang Tipan, na nagmula sa isang takdang hanay ng mga sagradong sulatin na tinatawag ng mga Hudyo na Tanakh at tinatawag ng mga Kristiyano na Lumang Tipan. Ang nilalaman ng Tanakh at Lumang Tipan ay eksaktong pareho, ngunit karaniwang magkaiba ang pagkakaayos. Kinikilala rin ng mga Kristiyano ang Bagong Tipan, na nagsasalaysay ng kuwento ni Hesus, ng kanyang mga turo, at ng mga sulatin ng kanyang mga tagasunod. Ang mga sulatin sa ibaba ay kilala at malawakang binabasa noong panahong isinulat ang Bibliya, ngunit hindi kailanman itinuring ang mga ito bilang Kasulatan. Bagama't minsan ay sumisipi ang mga sinaunang may-akda ng iba't ibang teksto kabilang ang mga makata, pilosopo, at iba pang mga sulatin, ang pagsipi sa isang bagay ay hindi katulad ng pagtrato dito bilang Kasulatan. Ang mga sulating ito ay kasama rito para sa sanggunian sa kasaysayan at panitikan lamang.",
   "today-coming-soon": "Malapit nang lumabas ang screen ngayon",
-  "chat-coming-soon": "Malapit na ang chat",
-  "more-coming-soon": "Mas maraming opsyon ang paparating",
-  "discovery-coming-soon": "Malapit nang matuklasan",
-  "login-to-use-feature": "Kailangan mong mag-log in para magamit ang feature na ito.",
+
   "link-to-join-shared-session-copied": "Nakopya na sa iyong clipboard ang isang link para sumali sa nakabahaging sesyon",
   "new-bookmark-folder": "Bagong folder",
   "chapter-navigation": "Pag-navigate sa kabanata",

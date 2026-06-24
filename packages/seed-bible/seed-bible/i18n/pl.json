@@ -18,15 +18,14 @@
   "session-settings": "Ustawienia sesji",
   "shared-session-click-to-join": "udostępnia — kliknij, aby dołączyć",
   "dismiss": "Odrzucać",
-  "shared-tab_title": "Wspólna {{book}}",
+
   "tabs": "Karty",
   "new-tab": "Nowa karta",
   "create-new-tab": "Utwórz nową kartę",
   "tab-options": "Opcje karty",
   "open-tab-menu": "Otwórz menu kart",
   "session-id_x": "Identyfikator sesji: {{sessionId}}",
-  "session-id": "Identyfikator sesji",
-  "join-session": "Dołącz do sesji",
+
   "search-verses": "Wyszukaj wersety",
   "clear-search": "Wyczyść wyszukiwanie",
   "searching": "Badawczy...",
@@ -128,11 +127,11 @@
   "end-session": "Zakończ sesję",
   "panels": "Panele",
   "new-shared-session": "Nowa wspólna sesja",
-  "join-shared-session": "Dołącz do sesji współdzielonej",
+
   "open-in-new-panel": "Otwórz w nowym panelu",
   "open-in-detached-panel": "Otwórz w oddzielnym panelu",
   "close-sidebar": "Zamknij pasek boczny",
-  "session-options": "Opcje sesji",
+
   "select-pane-layout": "Wybierz układ panelu",
   "pane-layout": "Układ panelu",
   "back": "Z powrotem",
@@ -185,12 +184,10 @@
   "3-psalms": "3 Psalmy",
   "4-psalms": "4 Psalmy",
   "5-psalms": "5 Psalmów",
-  "enter-shared-session-id": "Wprowadź identyfikator sesji współdzielonej",
+
   "remove-bookmark": "Usuń zakładkę",
   "add-bookmark": "Zakładka w książce",
-  "play-audio": "Odtwórz dźwięk",
-  "play": "Grać",
-  "discovery": "Odkrycie",
+
   "chat": "Pogawędzić",
   "today": "Dzisiaj",
   "you": "Ty",
@@ -198,7 +195,7 @@
   "add-verse": "Dodaj werset",
   "add": "Dodać",
   "chat-empty-title": "Czat wkrótce",
-  "chat-empty-body": "Tutaj będziesz mieć możliwość zadawania pytań i przeglądania odnośników.",
+
   "category-options": "Opcje folderów",
   "rename": "Przemianować",
   "delete": "Usuwać",
@@ -215,15 +212,11 @@
   "add-to-new": "Dodaj do nowego",
   "save": "Ratować",
   "bookmark-verses": "Dodaj wersety do zakładek",
-  "open-new-chapter-in-new-or-current-tab": "Otwórz nowy rozdział w nowej lub bieżącej karcie",
-  "current-tab": "Bieżąca karta",
+
   "about-extrabiblical-writings": "O pismach pozabiblijnych",
   "apocrypha-info-text": "Żadne z pism w tej sekcji nigdy nie zostało uznane za Pismo Święte przez wczesne społeczności żydowskie lub chrześcijańskie. Biblia jest specyficznym zbiorem ksiąg. Żydzi i chrześcijanie zawsze zgadzali się co do Starego Testamentu, który pochodzi z ustalonego zbioru pism świętych, które Żydzi nazywali Tanachem, a chrześcijanie Starym Testamentem. Treść Tanachu i Starego Testamentu jest dokładnie taka sama, ale zazwyczaj jest inaczej ułożona. Chrześcijanie dodatkowo uznają Nowy Testament, który opowiada historię Jezusa, jego nauki i pisma jego naśladowców. Poniższe pisma były znane i powszechnie czytane w czasach, gdy pisano Biblię, ale nigdy nie były traktowane jako Pismo Święte. Chociaż starożytni autorzy czasami cytowali szeroki zakres tekstów, w tym poetów, filozofów i inne pisma, cytowanie czegoś nie jest równoznaczne z traktowaniem tego jako Pisma Świętego. Pisma te zostały tutaj zamieszczone wyłącznie w celach historycznych i literackich.",
   "today-coming-soon": "Już wkrótce pojawi się ekran dzisiejszy",
-  "chat-coming-soon": "Czat wkrótce",
-  "more-coming-soon": "Więcej opcji wkrótce",
-  "discovery-coming-soon": "Discovery już wkrótce",
-  "login-to-use-feature": "Aby skorzystać z tej funkcji, musisz się zalogować.",
+
   "link-to-join-shared-session-copied": "Link umożliwiający dołączenie do sesji współdzielonej został skopiowany do schowka",
   "new-bookmark-folder": "Nowy folder",
   "chapter-navigation": "Nawigacja po rozdziałach",

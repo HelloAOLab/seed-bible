@@ -18,15 +18,14 @@
   "session-settings": "Configuració de la sessió",
   "shared-session-click-to-join": "està compartint — fes clic per unir-te",
   "dismiss": "Ignora",
-  "shared-tab_title": "{{book}} compartit",
+
   "tabs": "Pestanyes",
   "new-tab": "Nova pestanya",
   "create-new-tab": "Crea una pestanya nova",
   "tab-options": "Opcions de pestanyes",
   "open-tab-menu": "Obre el menú de pestanyes",
   "session-id_x": "ID de sessió: {{sessionId}}",
-  "session-id": "ID de sessió",
-  "join-session": "Uneix-te a la sessió",
+
   "search-verses": "Cerca versos",
   "clear-search": "Esborra la cerca",
   "searching": "Cercant...",
@@ -128,11 +127,11 @@
   "end-session": "Finalitzar sessió",
   "panels": "Panells",
   "new-shared-session": "Nova sessió compartida",
-  "join-shared-session": "Uneix-te a la sessió compartida",
+
   "open-in-new-panel": "Obre en un panell nou",
   "open-in-detached-panel": "Obre en un panell separat",
   "close-sidebar": "Tanca la barra lateral",
-  "session-options": "Opcions de sessió",
+
   "select-pane-layout": "Selecciona el disseny del panell",
   "pane-layout": "Disseny del panell",
   "back": "Enrere",
@@ -185,12 +184,10 @@
   "3-psalms": "3 Salms",
   "4-psalms": "4 Salms",
   "5-psalms": "5 Salms",
-  "enter-shared-session-id": "Introduïu l'ID de sessió compartida",
+
   "remove-bookmark": "Elimina el marcador",
   "add-bookmark": "Marcador",
-  "play-audio": "Reprodueix àudio",
-  "play": "Reprodueix",
-  "discovery": "Descobriment",
+
   "chat": "Xat",
   "today": "Avui",
   "you": "Tu",
@@ -198,7 +195,7 @@
   "add-verse": "Afegeix un vers",
   "add": "Afegeix",
   "chat-empty-title": "El xat estarà disponible aviat",
-  "chat-empty-body": "Aquí és on podràs fer preguntes i explorar referències creuades.",
+
   "category-options": "Opcions de carpeta",
   "rename": "Canvia el nom",
   "delete": "Suprimeix",
@@ -215,15 +212,11 @@
   "add-to-new": "Afegeix a nou",
   "save": "Desa",
   "bookmark-verses": "Versos de marcador",
-  "open-new-chapter-in-new-or-current-tab": "Obre el nou capítol en una pestanya nova o actual",
-  "current-tab": "Pestanya actual",
+
   "about-extrabiblical-writings": "Sobre els escrits extrabíblics",
   "apocrypha-info-text": "Cap dels escrits d'aquesta secció va ser considerat mai Escriptura per les primeres comunitats jueves o cristianes. La Bíblia és una col·lecció específica de llibres. Jueus i cristians sempre han coincidit en l'Antic Testament, que prové d'un conjunt fix d'escriptures sagrades que el poble jueu anomenava Tanakh i els cristians anomenaven Antic Testament. El contingut del Tanakh i l'Antic Testament és exactament el mateix, però normalment estan ordenats de manera diferent. Els cristians també reconeixen el Nou Testament, que explica la història de Jesús, els seus ensenyaments i els escrits dels seus seguidors. Els escrits següents eren coneguts i àmpliament llegits en l'època en què es va escriure la Bíblia, però mai van ser tractats com a Escriptura. Si bé els autors antics de vegades citaven una àmplia gamma de textos, inclosos poetes, filòsofs i altres escrits, citar alguna cosa no és el mateix que tractar-la com a Escriptura. Aquests escrits s'inclouen aquí només com a referència històrica i literària.",
   "today-coming-soon": "La pantalla d'avui arribarà aviat",
-  "chat-coming-soon": "El xat estarà disponible aviat",
-  "more-coming-soon": "Més opcions aviat",
-  "discovery-coming-soon": "El descobriment arribarà aviat",
-  "login-to-use-feature": "Heu d'iniciar sessió per utilitzar aquesta funció.",
+
   "link-to-join-shared-session-copied": "S'ha copiat al porta-retalls un enllaç per unir-se a la sessió compartida.",
   "new-bookmark-folder": "Nova carpeta",
   "chapter-navigation": "Navegació per capítols",

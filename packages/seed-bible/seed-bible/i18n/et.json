@@ -18,15 +18,14 @@
   "session-settings": "Seansi seaded",
   "shared-session-click-to-join": "jagab – klõpsa liitumiseks",
   "dismiss": "Jäta vahele",
-  "shared-tab_title": "Jagatud {{book}}",
+
   "tabs": "Vahelehed",
   "new-tab": "Uus vahekaart",
   "create-new-tab": "Loo uus vahekaart",
   "tab-options": "Vahekaardi valikud",
   "open-tab-menu": "Ava vahekaardi menüü",
   "session-id_x": "Seansi ID: {{sessionId}}",
-  "session-id": "Seansi ID",
-  "join-session": "Liitu seansiga",
+
   "search-verses": "Otsi salme",
   "clear-search": "Tühjenda otsing",
   "searching": "Otsin...",
@@ -128,11 +127,11 @@
   "end-session": "Lõpeta seanss",
   "panels": "Paneelid",
   "new-shared-session": "Uus jagatud seanss",
-  "join-shared-session": "Liitu jagatud seansiga",
+
   "open-in-new-panel": "Ava uuel paneelil",
   "open-in-detached-panel": "Ava eraldiseisval paneelil",
   "close-sidebar": "Sule külgriba",
-  "session-options": "Seansi valikud",
+
   "select-pane-layout": "Valige paani paigutus",
   "pane-layout": "Paani paigutus",
   "back": "Tagasi",
@@ -185,12 +184,10 @@
   "3-psalms": "3 Psalmi",
   "4-psalms": "4 Psalmi",
   "5-psalms": "5 Psalmi",
-  "enter-shared-session-id": "Sisestage jagatud seansi ID",
+
   "remove-bookmark": "Eemalda järjehoidja",
   "add-bookmark": "Järjehoidja",
-  "play-audio": "Esita heli",
-  "play": "Mängi",
-  "discovery": "Avastus",
+
   "chat": "Vestlus",
   "today": "Täna",
   "you": "Sina",
@@ -198,7 +195,7 @@
   "add-verse": "Lisa salm",
   "add": "Lisa",
   "chat-empty-title": "Vestlus on peagi tulemas",
-  "chat-empty-body": "Siin saate esitada küsimusi ja uurida ristviiteid.",
+
   "category-options": "Kausta valikud",
   "rename": "Nimeta ümber",
   "delete": "Kustuta",
@@ -215,15 +212,11 @@
   "add-to-new": "Lisa uude",
   "save": "Salvesta",
   "bookmark-verses": "Lisa salmid järjehoidjatesse",
-  "open-new-chapter-in-new-or-current-tab": "Ava uus peatükk uuel või praegusel vahelehel",
-  "current-tab": "Praegune vahekaart",
+
   "about-extrabiblical-writings": "Piibliväliste kirjutiste kohta",
   "apocrypha-info-text": "Ühtegi selles osas olevat kirjutist ei pidanud varased juudi ega kristlikud kogukonnad kunagi pühakirjaks. Piibel on kindel raamatute kogu. Juudid ja kristlased on alati olnud ühel meelel Vanas Testamendis, mis pärineb kindlast pühakirjade kogumist, mida juudi rahvas nimetas Tanahhiks ja kristlased Vanaks Testamendiks. Tanahhi ja Vana Testamendi sisu on täpselt sama, kuid need on tavaliselt erinevalt paigutatud. Kristlased tunnustavad lisaks Uut Testamenti, mis jutustab Jeesuse loo, tema õpetustest ja tema järgijate kirjutistest. Allpool loetletud kirjutised olid Piibli kirjutamise ajal tuntud ja laialdaselt loetud, kuid neid ei käsitletud kunagi pühakirjana. Kuigi iidsed autorid tsiteerisid mõnikord laia valikut tekste, sealhulgas luuletajaid, filosoofe ja teisi kirjutisi, ei ole millegi tsiteerimine sama, mis selle käsitlemine pühakirjana. Need kirjutised on siia lisatud ainult ajaloolise ja kirjandusliku viitena.",
   "today-coming-soon": "Tänane ekraan tuleb varsti",
-  "chat-coming-soon": "Vestlus on peagi saadaval",
-  "more-coming-soon": "Rohkem valikuid on peagi saadaval",
-  "discovery-coming-soon": "Avastus on peagi tulemas",
-  "login-to-use-feature": "Selle funktsiooni kasutamiseks peate sisse logima.",
+
   "link-to-join-shared-session-copied": "Jagatud seansiga liitumise link kopeeriti teie lõikelauale.",
   "new-bookmark-folder": "Uus kaust",
   "chapter-navigation": "Peatükkide navigeerimine",

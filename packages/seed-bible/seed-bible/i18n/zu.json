@@ -18,15 +18,14 @@
   "session-settings": "Izilungiselelo zeseshini",
   "shared-session-click-to-join": "uyabelana — chofoza ukuze ujoyine",
   "dismiss": "Lahla",
-  "shared-tab_title": "Kwabelwane nge {{book}}",
+
   "tabs": "Amathebhu",
   "new-tab": "Ithebhu entsha",
   "create-new-tab": "Dala ithebhu entsha",
   "tab-options": "Izinketho zethebhu",
   "open-tab-menu": "Vula imenyu yethebhu",
   "session-id_x": "I-ID Yeseshini: {{sessionId}}",
-  "session-id": "I-ID Yeseshini",
-  "join-session": "Joyina Iseshini",
+
   "search-verses": "Sesha amavesi",
   "clear-search": "Sula usesho",
   "searching": "Iyasesha...",
@@ -128,11 +127,11 @@
   "end-session": "Ukuphela Kweseshini",
   "panels": "Amaphaneli",
   "new-shared-session": "Iseshini entsha eyabiwe",
-  "join-shared-session": "Joyina iseshini eyabiwe",
+
   "open-in-new-panel": "Vula kuphaneli entsha",
   "open-in-detached-panel": "Vula kuphaneli ehlukanisiwe",
   "close-sidebar": "Vala ibha eseceleni",
-  "session-options": "Izinketho zeseshini",
+
   "select-pane-layout": "Khetha isakhiwo sephaneli",
   "pane-layout": "Ukuhlelwa kwephaneli",
   "back": "Emuva",
@@ -185,12 +184,10 @@
   "3-psalms": "AmaHubo 3",
   "4-psalms": "AmaHubo 4",
   "5-psalms": "AmaHubo 5",
-  "enter-shared-session-id": "Faka i-ID yeseshini eyabiwe",
+
   "remove-bookmark": "Susa ibhukhimakhi",
   "add-bookmark": "Ibhukhimakhi",
-  "play-audio": "Dlala umsindo",
-  "play": "Dlala",
-  "discovery": "Ukutholwa",
+
   "chat": "Ingxoxo",
   "today": "Namuhla",
   "you": "Wena",
@@ -198,7 +195,7 @@
   "add-verse": "Engeza ivesi",
   "add": "Engeza",
   "chat-empty-title": "Ingxoxo iyeza maduze",
-  "chat-empty-body": "Yilapho uzokwazi khona ukubuza imibuzo nokuhlola izinkomba ezihambisanayo.",
+
   "category-options": "Izinketho zefolda",
   "rename": "Qamba kabusha",
   "delete": "Susa",
@@ -215,15 +212,11 @@
   "add-to-new": "Engeza kokusha",
   "save": "Londoloza",
   "bookmark-verses": "Beka uphawu lokumaka amavesi",
-  "open-new-chapter-in-new-or-current-tab": "Vula isahluko esisha kuthebhu entsha noma yamanje",
-  "current-tab": "Ithebhu Yamanje",
+
   "about-extrabiblical-writings": "Mayelana nemibhalo engekho eBhayibhelini",
   "apocrypha-info-text": "Akukho mibhalo ekulesi sigaba eyake yabhekwa njengemiBhalo yimiphakathi yamaJuda noma yamaKristu. IBhayibheli liyiqoqo elithile lezincwadi. AmaJuda namaKristu bebelokhu bevumelana ngeTestamente Elidala, elivela eqoqweni eliqinile lemibhalo engcwele abantu bamaJuda abayibiza ngokuthi iTanakh namaKristu ayibiza ngokuthi iTestamente Elidala. Okuqukethwe yiTanakh neTestamente Elidala kufana ncamashi, kodwa kuvame ukuhlelwa ngendlela ehlukile. AmaKristu futhi ayaqaphela iTestamente Elisha, elilandisa indaba kaJesu, izimfundiso zakhe, kanye nemibhalo yabalandeli bakhe. Imibhalo engezansi yayaziwa futhi ifundwa kabanzi ngesikhathi iBhayibheli libhalwa, kodwa ayizange iphathwe njengemiBhalo. Ngenkathi abalobi basendulo ngezinye izikhathi becaphuna imibhalo ehlukahlukene ehlanganisa izimbongi, izazi zefilosofi, kanye neminye imibhalo, ukucaphuna okuthile akufani nokukuphatha njengemiBhalo. Le mibhalo ifakiwe lapha ukuze kubhekiselwe kuyo emlandweni nasezincwadini kuphela.",
   "today-coming-soon": "Isikrini sanamuhla siyeza maduze",
-  "chat-coming-soon": "Ingxoxo iyeza maduze",
-  "more-coming-soon": "Izinketho ezengeziwe ziyeza maduze",
-  "discovery-coming-soon": "Ukutholwa kuyeza maduze",
-  "login-to-use-feature": "Kufanele ungene ngemvume ukuze usebenzise lesi sici.",
+
   "link-to-join-shared-session-copied": "Isixhumanisi sokujoyina iseshini eyabiwe sikopishwe ebhodini lakho lokunamathisela",
   "new-bookmark-folder": "Ifolda entsha",
   "chapter-navigation": "Ukuzulazula kwesahluko",

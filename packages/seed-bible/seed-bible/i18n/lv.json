@@ -18,15 +18,14 @@
   "session-settings": "Sesijas iestatījumi",
   "shared-session-click-to-join": "kopīgo — noklikšķiniet, lai pievienotos",
   "dismiss": "Noraidīt",
-  "shared-tab_title": "Kopīgota {{book}}",
+
   "tabs": "Cilnes",
   "new-tab": "Jauna cilne",
   "create-new-tab": "Izveidot jaunu cilni",
   "tab-options": "Cilnes opcijas",
   "open-tab-menu": "Atvērt cilnes izvēlni",
   "session-id_x": "Sesijas ID: {{sessionId}}",
-  "session-id": "Sesijas ID",
-  "join-session": "Pievienoties sesijai",
+
   "search-verses": "Meklēšanas panti",
   "clear-search": "Notīrīt meklēšanu",
   "searching": "Meklēšana...",
@@ -128,11 +127,11 @@
   "end-session": "Beigt sesiju",
   "panels": "Paneļi",
   "new-shared-session": "Jauna koplietota sesija",
-  "join-shared-session": "Pievienoties koplietotajai sesijai",
+
   "open-in-new-panel": "Atvērt jaunā panelī",
   "open-in-detached-panel": "Atvērt atdalītā panelī",
   "close-sidebar": "Aizvērt sānu joslu",
-  "session-options": "Sesijas opcijas",
+
   "select-pane-layout": "Atlasīt rūts izkārtojumu",
   "pane-layout": "Rūts izkārtojums",
   "back": "Atpakaļ",
@@ -185,12 +184,10 @@
   "3-psalms": "3 psalmi",
   "4-psalms": "4. psalmi",
   "5-psalms": "5 Psalmi",
-  "enter-shared-session-id": "Ievadiet koplietotās sesijas ID",
+
   "remove-bookmark": "Noņemt grāmatzīmi",
   "add-bookmark": "Grāmatzīme",
-  "play-audio": "Atskaņot audio",
-  "play": "Spēlēt",
-  "discovery": "Atklājums",
+
   "chat": "Tērzēšana",
   "today": "Šodien",
   "you": "Tu",
@@ -198,7 +195,7 @@
   "add-verse": "Pievienot pantu",
   "add": "Pievienot",
   "chat-empty-title": "Tērzēšana drīzumā būs pieejama",
-  "chat-empty-body": "Šeit jūs varēsiet uzdot jautājumus un izpētīt savstarpējās atsauces.",
+
   "category-options": "Mapes opcijas",
   "rename": "Pārdēvēt",
   "delete": "Dzēst",
@@ -215,15 +212,11 @@
   "add-to-new": "Pievienot jaunam",
   "save": "Saglabāt",
   "bookmark-verses": "Grāmatzīmju panti",
-  "open-new-chapter-in-new-or-current-tab": "Atvērt jaunu nodaļu jaunā vai pašreizējā cilnē",
-  "current-tab": "Pašreizējā cilne",
+
   "about-extrabiblical-writings": "Par ekstrabībeliskajiem rakstiem",
   "apocrypha-info-text": "Neviens no šajā sadaļā iekļautajiem rakstiem agrīnajās ebreju vai kristiešu kopienās nekad nav uzskatīts par Svētajiem Rakstiem. Bībele ir īpaša grāmatu kolekcija. Ebreji un kristieši vienmēr ir bijuši vienisprātis par Veco Derību, kas ir veidota no fiksēta svēto rakstu kopuma, ko ebreju tauta sauca par Tanah, bet kristieši - par Veco Derību. Tanah un Vecās Derības saturs ir pilnīgi vienāds, taču tie parasti ir sakārtoti atšķirīgi. Kristieši atzīst arī Jauno Derību, kas stāsta par Jēzu, viņa mācībām un viņa sekotāju rakstiem. Zemāk minētie raksti bija zināmi un plaši lasīti Bībeles rakstīšanas laikā, taču tie nekad netika uzskatīti par Svētajiem Rakstiem. Lai gan senie autori dažreiz citēja plašu tekstu klāstu, tostarp dzejnieku, filozofu un citu rakstu darbus, kaut kā citēšana nav tas pats, kas tā uzskatīšana par Svētajiem Rakstiem. Šie raksti šeit ir iekļauti tikai vēsturiskai un literārai uzziņai.",
   "today-coming-soon": "Šodienas ekrāns drīz būs pieejams",
-  "chat-coming-soon": "Tērzēšana drīzumā būs pieejama",
-  "more-coming-soon": "Vairāk iespēju drīzumā",
-  "discovery-coming-soon": "Atklājums drīzumā",
-  "login-to-use-feature": "Lai izmantotu šo funkciju, jums ir jāpiesakās.",
+
   "link-to-join-shared-session-copied": "Saite, lai pievienotos koplietotajai sesijai, tika kopēta jūsu starpliktuvē.",
   "new-bookmark-folder": "Jauna mape",
   "chapter-navigation": "Nodaļu navigācija",

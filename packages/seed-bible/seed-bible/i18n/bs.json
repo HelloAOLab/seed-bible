@@ -18,15 +18,14 @@
   "session-settings": "Postavke sesije",
   "shared-session-click-to-join": "dijeli — kliknite da se pridružite",
   "dismiss": "Odbaci",
-  "shared-tab_title": "Podijeljena {{book}}",
+
   "tabs": "Kartice",
   "new-tab": "Nova kartica",
   "create-new-tab": "Kreiraj novu karticu",
   "tab-options": "Opcije kartice",
   "open-tab-menu": "Otvori meni kartice",
   "session-id_x": "ID sesije: {{sessionId}}",
-  "session-id": "ID sesije",
-  "join-session": "Pridruži se sesiji",
+
   "search-verses": "Pretraži stihove",
   "clear-search": "Obriši pretragu",
   "searching": "Pretraga...",
@@ -128,11 +127,11 @@
   "end-session": "Završi sesiju",
   "panels": "Paneli",
   "new-shared-session": "Nova dijeljena sesija",
-  "join-shared-session": "Pridruži se dijeljenoj sesiji",
+
   "open-in-new-panel": "Otvori u novom panelu",
   "open-in-detached-panel": "Otvori u odvojenoj ploči",
   "close-sidebar": "Zatvori bočnu traku",
-  "session-options": "Opcije sesije",
+
   "select-pane-layout": "Odaberite raspored okna",
   "pane-layout": "Raspored okna",
   "back": "Nazad",
@@ -185,12 +184,10 @@
   "3-psalms": "3 Psalma",
   "4-psalms": "4 Psalma",
   "5-psalms": "5 Psalama",
-  "enter-shared-session-id": "Unesite ID dijeljene sesije",
+
   "remove-bookmark": "Ukloni oznaku",
   "add-bookmark": "Označi",
-  "play-audio": "Reprodukuj audio",
-  "play": "Igraj",
-  "discovery": "Otkriće",
+
   "chat": "Čet",
   "today": "Danas",
   "you": "Ti",
@@ -198,7 +195,7 @@
   "add-verse": "Dodaj stih",
   "add": "Dodaj",
   "chat-empty-title": "Chat uskoro stiže",
-  "chat-empty-body": "Ovdje ćete moći postavljati pitanja i istraživati ​​unakrsne reference.",
+
   "category-options": "Opcije mape",
   "rename": "Preimenuj",
   "delete": "Izbriši",
@@ -215,15 +212,11 @@
   "add-to-new": "Dodaj u novo",
   "save": "Sačuvaj",
   "bookmark-verses": "Označi stihove",
-  "open-new-chapter-in-new-or-current-tab": "Otvori novo poglavlje u novoj ili trenutnoj kartici",
-  "current-tab": "Trenutna kartica",
+
   "about-extrabiblical-writings": "O vanbiblijskim spisima",
   "apocrypha-info-text": "Nijedan od spisa u ovom odjeljku nikada nije smatran Svetim pismom od strane ranih jevrejskih ili kršćanskih zajednica. Biblija je specifična zbirka knjiga. Jevreji i kršćani su se oduvijek slagali oko Starog zavjeta, koji potiče iz fiksnog skupa svetih spisa koje jevrejski narod naziva Tanah, a kršćani Stari zavjet. Sadržaj Tanaha i Starog zavjeta je potpuno isti, ali je obično drugačije raspoređen. Kršćani dodatno priznaju Novi zavjet, koji govori priču o Isusu, njegovim učenjima i spisima njegovih sljedbenika. Spisi u nastavku bili su poznati i široko čitani u vrijeme kada je Biblija napisana, ali nikada nisu tretirani kao Sveto pismo. Dok su drevni autori ponekad citirali širok raspon tekstova, uključujući pjesnike, filozofe i druge spise, citiranje nečega nije isto što i tretiranje toga kao Svetog pisma. Ovi spisi su ovdje uključeni samo radi historijske i književne reference.",
   "today-coming-soon": "Današnji ekran uskoro stiže",
-  "chat-coming-soon": "Chat uskoro stiže",
-  "more-coming-soon": "Uskoro više opcija",
-  "discovery-coming-soon": "Otkriće uskoro stiže",
-  "login-to-use-feature": "Morate se prijaviti da biste koristili ovu funkciju.",
+
   "link-to-join-shared-session-copied": "Link za pridruživanje dijeljenoj sesiji je kopiran u vaš međuspremnik",
   "new-bookmark-folder": "Nova mapa",
   "chapter-navigation": "Navigacija po poglavljima",

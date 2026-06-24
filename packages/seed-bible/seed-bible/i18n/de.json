@@ -18,15 +18,14 @@
   "session-settings": "Sitzungseinstellungen",
   "shared-session-click-to-join": "wird geteilt – klicke hier, um beizutreten.",
   "dismiss": "Zurückweisen",
-  "shared-tab_title": "Gemeinsames {{book}}",
+
   "tabs": "Registerkarten",
   "new-tab": "Neuer Tab",
   "create-new-tab": "Neuen Tab erstellen",
   "tab-options": "Registerkartenoptionen",
   "open-tab-menu": "Tab-Menü öffnen",
   "session-id_x": "Sitzungs-ID: {{sessionId}}",
-  "session-id": "Sitzungs-ID",
-  "join-session": "Sitzung beitreten",
+
   "search-verses": "Verse suchen",
   "clear-search": "Suche löschen",
   "searching": "Suche...",
@@ -128,11 +127,11 @@
   "end-session": "Sitzung beenden",
   "panels": "Paneele",
   "new-shared-session": "Neue gemeinsame Sitzung",
-  "join-shared-session": "Gemeinsame Sitzung beitreten",
+
   "open-in-new-panel": "In neuem Fenster öffnen",
   "open-in-detached-panel": "In separater Abdeckung öffnen",
   "close-sidebar": "Seitenleiste schließen",
-  "session-options": "Sitzungsoptionen",
+
   "select-pane-layout": "Layout des Auswahlbereichs",
   "pane-layout": "Fensterlayout",
   "back": "Zurück",
@@ -185,12 +184,10 @@
   "3-psalms": "3 Psalmen",
   "4-psalms": "4 Psalmen",
   "5-psalms": "5 Psalmen",
-  "enter-shared-session-id": "Geben Sie die gemeinsame Sitzungs-ID ein.",
+
   "remove-bookmark": "Lesezeichen entfernen",
   "add-bookmark": "Lesezeichen",
-  "play-audio": "Audio abspielen",
-  "play": "Spielen",
-  "discovery": "Entdeckung",
+
   "chat": "Chat",
   "today": "Heute",
   "you": "Du",
@@ -198,7 +195,7 @@
   "add-verse": "Vers hinzufügen",
   "add": "Hinzufügen",
   "chat-empty-title": "Der Chat ist bald verfügbar.",
-  "chat-empty-body": "Hier können Sie Fragen stellen und Querverweise erkunden.",
+
   "category-options": "Ordneroptionen",
   "rename": "Umbenennen",
   "delete": "Löschen",
@@ -215,15 +212,11 @@
   "add-to-new": "Zu neu hinzufügen",
   "save": "Speichern",
   "bookmark-verses": "Verse als Lesezeichen speichern",
-  "open-new-chapter-in-new-or-current-tab": "Öffnen Sie das neue Kapitel in einem neuen oder aktuellen Tab",
-  "current-tab": "Aktueller Tab",
+
   "about-extrabiblical-writings": "Über außerbiblische Schriften",
   "apocrypha-info-text": "Keine der Schriften in diesem Abschnitt wurde von frühen jüdischen oder christlichen Gemeinden jemals als Heilige Schrift anerkannt. Die Bibel ist eine spezifische Sammlung von Büchern. Juden und Christen waren sich stets über das Alte Testament einig, das auf einer festen Sammlung heiliger Schriften basiert, die das jüdische Volk Tanach und die Christen Altes Testament nennen. Der Inhalt des Tanach und des Alten Testaments ist identisch, jedoch üblicherweise unterschiedlich angeordnet. Christen anerkennen darüber hinaus das Neue Testament, das die Geschichte Jesu, seine Lehren und die Schriften seiner Anhänger erzählt. Die folgenden Schriften waren zur Entstehungszeit der Bibel bekannt und weit verbreitet, wurden aber nie als Heilige Schrift behandelt. Zwar zitierten antike Autoren mitunter eine Vielzahl von Texten, darunter Werke von Dichtern, Philosophen und anderen Autoren, doch ist ein Zitat nicht gleichbedeutend mit der Anerkennung eines Textes als Heilige Schrift. Diese Schriften sind hier lediglich als historische und literarische Referenz aufgeführt.",
   "today-coming-soon": "Der heutige Bildschirm kommt bald.",
-  "chat-coming-soon": "Der Chat ist bald verfügbar.",
-  "more-coming-soon": "Weitere Optionen folgen in Kürze.",
-  "discovery-coming-soon": "Discovery kommt bald",
-  "login-to-use-feature": "Sie müssen sich anmelden, um diese Funktion nutzen zu können.",
+
   "link-to-join-shared-session-copied": "Ein Link zum Beitreten der gemeinsamen Sitzung wurde in Ihre Zwischenablage kopiert.",
   "new-bookmark-folder": "Neuer Ordner",
   "chapter-navigation": "Kapitelnavigation",

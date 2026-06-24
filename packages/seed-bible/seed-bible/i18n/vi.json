@@ -13,16 +13,14 @@
   "close": "Đóng",
   "open-settings": "Mở Cài đặt",
   "close-settings": "Đóng cài đặt",
-  "shared-tab_title": "Chia sẻ {{book}}",
+
   "tabs": "Các tab",
   "new-tab": "Tab mới",
   "create-new-tab": "Tạo tab mới",
   "tab-options": "Tùy chọn tab",
   "open-tab-menu": "Mở menu tab",
   "session-id_x": "Mã phiên: {{sessionId}}",
-  "session-id": "ID phiên",
-  "join-session": "Tham gia phiên họp",
-  "join-shared-session": "Tham gia phiên họp chung",
+
   "search-verses": "Tìm kiếm các câu thơ",
   "clear-search": "Xóa tìm kiếm",
   "searching": "Đang tìm kiếm...",
@@ -115,7 +113,7 @@
   "open-in-new-panel": "Mở trong cửa sổ mới",
   "open-in-detached-panel": "Mở trong bảng điều khiển riêng biệt",
   "close-sidebar": "Đóng thanh bên",
-  "session-options": "Tùy chọn phiên",
+
   "select-pane-layout": "Chọn bố cục khung",
   "pane-layout": "Bố cục khung",
   "back": "Mặt sau",
@@ -163,8 +161,7 @@
   "all-translations": "Tất cả các bản dịch",
   "popular-translations": "Các bản dịch phổ biến",
   "copied-translation-share-link": "Đã sao chép liên kết chia sẻ bản dịch",
-  "open-new-chapter-in-new-or-current-tab": "Open the new chapter in new or current tab",
-  "current-tab": "Current Tab",
+
   "about-extrabiblical-writings": "About Extrabiblical writings",
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 Thi Thiên",
@@ -172,7 +169,7 @@
   "3-psalms": "3 Thánh vịnh",
   "4-psalms": "4 Thi Thiên",
   "5-psalms": "5 Thánh vịnh",
-  "enter-shared-session-id": "Nhập ID phiên dùng chung",
+
   "scripture-elements": "Các yếu tố Kinh thánh",
   "show-headings": "Hiển thị tiêu đề",
   "show-verse-numbers": "Hiển thị số câu thơ",
@@ -191,9 +188,7 @@
   "more": "Hơn",
   "remove-bookmark": "Xóa dấu trang",
   "add-bookmark": "Đánh dấu trang",
-  "play-audio": "Phát âm thanh",
-  "play": "Chơi",
-  "discovery": "Khám phá",
+
   "chat": "Trò chuyện",
   "today": "Hôm nay",
   "you": "Bạn",
@@ -201,7 +196,7 @@
   "add-verse": "Thêm câu thơ",
   "add": "Thêm vào",
   "chat-empty-title": "Tính năng trò chuyện sẽ sớm ra mắt.",
-  "chat-empty-body": "Đây là nơi bạn có thể đặt câu hỏi và tìm hiểu các tài liệu tham khảo chéo.",
+
   "category-options": "Tùy chọn thư mục",
   "rename": "Đổi tên",
   "delete": "Xóa bỏ",
@@ -220,10 +215,7 @@
   "save": "Cứu",
   "bookmark-verses": "Đánh dấu các câu thơ",
   "today-coming-soon": "Màn hình hôm nay sẽ sớm ra mắt.",
-  "chat-coming-soon": "Tính năng trò chuyện sẽ sớm ra mắt.",
-  "more-coming-soon": "Sẽ có thêm nhiều lựa chọn trong thời gian tới.",
-  "discovery-coming-soon": "Khám phá sắp ra mắt",
-  "login-to-use-feature": "Bạn cần đăng nhập để sử dụng tính năng này.",
+
   "link-to-join-shared-session-copied": "Một liên kết để tham gia phiên họp chung đã được sao chép vào khay nhớ tạm của bạn.",
   "new-bookmark-folder": "Thư mục mới",
   "chapter-navigation": "Điều hướng chương",
