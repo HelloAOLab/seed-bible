@@ -698,6 +698,74 @@ export function PaneReader(props: PaneReaderScrollerProps) {
     };
   }, [isMobile, readingState]);
 
+  // Keyboard chapter navigation for the selected pane. Left/Right move between
+  // chapters (respecting text direction, like the swipe gesture and toolbar
+  // chevrons), and Up surfaces the search panel. Down is intentionally unbound.
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey
+      ) {
+        return;
+      }
+
+      // Only the selected pane responds, and never while typing in a field.
+      if (state.panes.selectedPaneId.value !== pane.id) {
+        return;
+      }
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.isContentEditable ||
+          ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
+      ) {
+        return;
+      }
+
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        state.sidebar.openSearch();
+        return;
+      }
+
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
+        return;
+      }
+
+      const chapterData = readingState.chapterData.value;
+      if (!chapterData || readingState.loading.value) {
+        return;
+      }
+
+      // Visual direction: the next chapter sits to the right in LTR and to the
+      // left in RTL, matching the toolbar chevrons and swipe gesture.
+      const isRtl = chapterData.translation.textDirection === "rtl";
+      const loadNext = event.key === (isRtl ? "ArrowLeft" : "ArrowRight");
+      const canNavigate = loadNext
+        ? !!chapterData.nextChapterApiLink
+        : !!chapterData.previousChapterApiLink;
+      if (!canNavigate) {
+        return;
+      }
+
+      event.preventDefault();
+      readingState.clearSelectedVerses();
+      if (loadNext) {
+        void readingState.loadNextChapter();
+      } else {
+        void readingState.loadPreviousChapter();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [readingState, state, pane.id]);
+
   effect(() => {
     void readingState.translationId.value;
     const track = swipeTrackRef.current;
@@ -726,7 +794,14 @@ export function PaneReader(props: PaneReaderScrollerProps) {
         prevChapterPreview,
         nextChapterPreview,
         showMobileSettings,
-        onOpenMobileSettings: () => setShowMobileSettings(true),
+        onOpenMobileSettings: () => {
+          setShowMobileSettings(true);
+          // Teach the settings sheet the first time the user opens it (mirrors
+          // the pane-layout contextual tip). Triggered from the button's own
+          // handler so the tip fires reliably — the modal tour overlay can't be
+          // tapped "through" to the real button.
+          state?.tutorial.startContextual("mobile-settings");
+        },
         onCloseMobileSettings: () => setShowMobileSettings(false),
         onOpenAllSettings: openAllSettings,
         swipeViewportRefCallback,

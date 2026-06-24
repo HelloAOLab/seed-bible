@@ -17,6 +17,7 @@ import {
 import type { Translation } from "../managers/FreeUseBibleAPI";
 import { computed, signal } from "@preact/signals";
 import type { BibleDataManager } from "../managers/BibleDataManager";
+import type { TutorialManager } from "../managers/TutorialManager";
 import {
   useEffect,
   useMemo,
@@ -26,6 +27,23 @@ import {
 } from "preact/hooks";
 import type { AppState } from "../managers/SeedBibleStateManager";
 
+/**
+ * CSS-only spotlight: the huge translucent box-shadow dims everything around
+ * the element. Clipped by the selector panel's own overflow, so it fades the
+ * rest of the panel while this element stays bright. Combined with the dimmed
+ * overlay behind the panel, the whole UI fades except this element. No DOM
+ * measurement is involved — the selector's nodes live in a CasualOS shadow
+ * root that `getBoundingClientRect`/`querySelector` can't reliably reach, so
+ * the tour is driven purely by class/style toggled off the (portal-reactive)
+ * tutorial signals.
+ */
+const SPOTLIGHT_STYLE = {
+  position: "relative",
+  zIndex: 2,
+  borderRadius: "8px",
+  boxShadow: "0 0 0 9999px rgba(0,0,0,0.6)",
+} as const;
+
 interface BibleSelectorProps {
   isOpen: boolean;
   onClose: () => void;
@@ -33,34 +51,120 @@ interface BibleSelectorProps {
   bibleDataManager: BibleDataManager;
   app: AppState;
   className?: string;
+  tutorial?: TutorialManager;
 }
 
 export function BibleSelector(props: BibleSelectorProps) {
-  const { isOpen, onClose, selectorState, bibleDataManager, app, className } =
-    props;
-  const { isRtl } = useI18n();
+  const {
+    isOpen,
+    onClose,
+    selectorState,
+    bibleDataManager,
+    app,
+    className,
+    tutorial,
+  } = props;
+  const { t, isRtl } = useI18n();
+
+  // The active tour step, but only when it's a selector-group step — otherwise
+  // this overlay must stay out of the way (the main tour handles the rest, and
+  // rendering here too would double the popover).
+  const runningStep =
+    tutorial && tutorial.running.value ? tutorial.currentStep.value : null;
+  const tourStep =
+    runningStep && runningStep.group === "selector" ? runningStep : null;
+  const tourStepId = tourStep?.id ?? null;
+  const isLastStep = tutorial ? tutorial.isLast.value : false;
+  const canGoBack = tutorial ? tutorial.canGoBack.value : false;
 
   return (
-    <div
-      onClick={onClose}
-      className={`sb-selector-overlay ${isOpen ? "open" : ""}${
-        className ? ` ${className}` : ""
-      }`}
-      dir={isRtl ? "rtl" : "ltr"}
-    >
+    <>
       <div
-        onClick={(event: Event) => {
-          event.stopPropagation();
-        }}
-        className="sb-selector-panel"
+        onClick={onClose}
+        className={`sb-selector-overlay ${isOpen ? "open" : ""}${
+          className ? ` ${className}` : ""
+        }`}
+        dir={isRtl ? "rtl" : "ltr"}
+        // Dim the app behind the panel only while a selector tour step is up.
+        style={tourStepId ? { background: "rgba(0,0,0,0.6)" } : undefined}
       >
-        <SearchBar
-          app={app}
-          bibleSelectorState={selectorState}
-          bibleDataManager={bibleDataManager}
-        />
+        <div
+          onClick={(event: Event) => {
+            event.stopPropagation();
+          }}
+          className="sb-selector-panel"
+        >
+          <SearchBar
+            app={app}
+            bibleSelectorState={selectorState}
+            bibleDataManager={bibleDataManager}
+            tourStepId={tourStepId}
+          />
+        </div>
       </div>
-    </div>
+
+      {tourStep && (
+        <div
+          className={`sb-tour-popover${className ? ` ${className}` : ""}`}
+          style={{
+            position: "fixed",
+            bottom: "28px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "100%",
+            maxWidth: "458px",
+            boxSizing: "border-box",
+            zIndex: 10000,
+          }}
+          onClick={(event: MouseEvent) => event.stopPropagation()}
+        >
+          <h3 className="sb-tour-popover-title">
+            {t(tourStep.titleKey, { defaultValue: tourStep.titleDefault })}
+          </h3>
+          <p className="sb-tour-popover-body">
+            {t(tourStep.bodyKey, { defaultValue: tourStep.bodyDefault })}
+          </p>
+          <div className="sb-tour-popover-actions">
+            <button
+              type="button"
+              className="sb-tour-btn sb-tour-btn-text"
+              onClick={() => tutorial?.finish()}
+            >
+              {t("tutorial.skip", { defaultValue: "Skip" })}
+            </button>
+            <button
+              type="button"
+              className="sb-tour-btn sb-tour-btn-text"
+              onClick={() => tutorial?.optOut()}
+            >
+              {t("tutorial.optOut", { defaultValue: "Don't show tutorials" })}
+            </button>
+            <div className="sb-tour-popover-actions-spacer" />
+            {canGoBack && (
+              <button
+                type="button"
+                className="sb-tour-btn sb-tour-btn-back"
+                onClick={() => tutorial?.prev()}
+              >
+                {t("tutorial.back", { defaultValue: "Back" })}
+              </button>
+            )}
+            <button
+              type="button"
+              className="sb-tour-btn sb-tour-btn-next"
+              onClick={() => tutorial?.next()}
+            >
+              {isLastStep
+                ? t("tutorial.done", { defaultValue: "Done" })
+                : t("tutorial.next", { defaultValue: "Next" })}
+              <span className="sb-tour-next-arrow" aria-hidden="true">
+                →
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -68,8 +172,10 @@ const SearchBar = (props: {
   app: AppState;
   bibleSelectorState: BibleSelectorState;
   bibleDataManager: BibleDataManager;
+  /** Active selector-group tour step id, or null when no step is active. */
+  tourStepId?: string | null;
 }) => {
-  const { app, bibleSelectorState, bibleDataManager } = props;
+  const { app, bibleSelectorState, bibleDataManager, tourStepId } = props;
   const { t } = useI18n();
   const {
     search,
@@ -96,6 +202,11 @@ const SearchBar = (props: {
             <>
               <div
                 class="sidebar-translation-selector flex-between-center"
+                style={
+                  tourStepId === "selector-translation"
+                    ? SPOTLIGHT_STYLE
+                    : undefined
+                }
                 onClick={() => {
                   selectingTranslation.value = !selectingTranslation.value;
                   setSearch("");
@@ -115,7 +226,12 @@ const SearchBar = (props: {
                 </span>
               </div>
 
-              <div className="searchbar flex-align-center">
+              <div
+                className="searchbar flex-align-center"
+                style={
+                  tourStepId === "selector-search" ? SPOTLIGHT_STYLE : undefined
+                }
+              >
                 <span className="search-icon material-symbols-outlined">
                   Search
                 </span>
@@ -136,7 +252,14 @@ const SearchBar = (props: {
                   }}
                 />
               </div>
-              <div class="dropdown">
+              <div
+                class="dropdown"
+                style={
+                  tourStepId === "selector-testament"
+                    ? SPOTLIGHT_STYLE
+                    : undefined
+                }
+              >
                 <select
                   value={selectedTestament.value}
                   onChange={(e) => {
@@ -193,7 +316,10 @@ const SearchBar = (props: {
           )}
         </div>
       )}
-      <div class="sidebar-results starterAnimation flex-wrap-start">
+      <div
+        class="sidebar-results starterAnimation flex-wrap-start"
+        style={tourStepId === "selector-books" ? SPOTLIGHT_STYLE : undefined}
+      >
         {(!selectingTranslation.value || !isMobile.value) &&
           selectedTranslationBooks.value?.books &&
           selectedTestamentData.value &&

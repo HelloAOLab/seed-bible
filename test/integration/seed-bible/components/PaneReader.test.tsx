@@ -11,6 +11,7 @@ import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/manager
 import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { Mock } from "vitest";
 
 type ReaderFixture = {
@@ -191,9 +192,7 @@ function createMobileState(): SeedBibleState {
       openSettings: vi.fn(),
       openSidebar: vi.fn(),
     },
-    tools: {
-      getReaderTools: vi.fn(() => []),
-    },
+    tools: createBibleToolsManager(),
     bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
@@ -217,9 +216,7 @@ function createDesktopState(): SeedBibleState {
       openSettings: vi.fn(),
       openSidebar: vi.fn(),
     },
-    tools: {
-      getReaderTools: vi.fn(() => []),
-    },
+    tools: createBibleToolsManager(),
     bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,

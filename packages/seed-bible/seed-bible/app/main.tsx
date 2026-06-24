@@ -21,6 +21,11 @@ import {
   type AppConfig,
 } from "./appConfig";
 import "./main.css";
+import type { ReadonlySignal } from "@preact/signals";
+import { closeContextMenus } from "../components/ContextMenu";
+import { ModalHost } from "../components/ModalHost";
+import { OnboardingModals } from "../components/Onboarding";
+import { Tutorial } from "../components/Tutorial";
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -146,6 +151,10 @@ function MainContent(props: {
           <PaneLayout state={state} />
         </main>
 
+        {/* The selector draws its own tour spotlight/popover internally
+              (CSS dim toggled off the tutorial signals), since its elements
+              live in this portal's shadow root and can't be measured from
+              the main tour overlay. */}
         <BibleSelector
           className={`${fontSizeClass} ${webkitClass}`}
           isOpen={selector.isOpen.value}
@@ -153,6 +162,7 @@ function MainContent(props: {
           app={state.app}
           selectorState={selector}
           bibleDataManager={state.bibleData}
+          tutorial={state.tutorial}
         />
 
         <FloatingReaderPanels state={state} />
@@ -178,6 +188,17 @@ function MainContent(props: {
         <CodeOfConductModal
           isOpen={state.isCodeOfConductOpen.value}
           onClose={() => state.closeCodeOfConduct()}
+        />
+
+        <OnboardingModals
+          onboarding={state.onboarding}
+          className={`${fontSizeClass} ${webkitClass}`}
+        />
+
+        <Tutorial
+          tutorial={state.tutorial}
+          className={`${fontSizeClass} ${webkitClass}`}
+          groupFilter="non-selector"
         />
       </div>
     </>

@@ -28,6 +28,8 @@ import {
   handleHorizontalListKeyNav,
 } from "../components/KeyboardNav";
 
+const { useEffect, useRef } = os.appHooks;
+
 interface SidebarProps {
   state: SeedBibleState;
 }
@@ -45,6 +47,7 @@ interface TabsHeaderProps {
   paneLayout: PaneLayoutId | "single";
   isLayoutMenuOpen: boolean;
   toggleLayoutMenu: () => void;
+  closeLayoutMenu: () => void;
   setLayout: (layout: PaneLayoutId) => void;
   createSharedSession: () => void;
 }
@@ -374,12 +377,29 @@ export function TabsHeader(props: TabsHeaderProps) {
     paneLayout,
     isLayoutMenuOpen,
     toggleLayoutMenu,
+    closeLayoutMenu,
     setLayout,
     createSharedSession,
   } = props;
   const { sidebar, settings } = state;
   const isAwake = settings.settings.value.keepScreenAwake;
   const { t } = useI18n();
+  const layoutAnchorRef = useRef<HTMLDivElement | null>(null);
+
+  // Close the pane-layout menu when clicking anywhere outside its anchor.
+  useEffect(() => {
+    if (!isLayoutMenuOpen) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      const anchor = layoutAnchorRef.current;
+      if (anchor && !anchor.contains(event.target as Node)) {
+        closeLayoutMenu();
+      }
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown);
+    };
+  }, [isLayoutMenuOpen, closeLayoutMenu]);
 
   return (
     <div className="sb-sidebar-top-row">
@@ -398,7 +418,7 @@ export function TabsHeader(props: TabsHeaderProps) {
 
       <div className="sb-sidebar-top-actions">
         {panelsEnabled && !effectivelyCollapsed && (
-          <div className="sb-pane-layout-anchor">
+          <div className="sb-pane-layout-anchor" ref={layoutAnchorRef}>
             <button
               onClick={toggleLayoutMenu}
               className="sb-sidebar-top-icon-button"
@@ -477,7 +497,6 @@ export function TabsHeader(props: TabsHeaderProps) {
                 event.preventDefault();
                 settings.setKeepScreenAwake(!isAwake);
               }}
-              style={{ width: "230px" }}
             >
               <span>
                 {t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
@@ -516,6 +535,7 @@ export function Settings(props: SettingsProps) {
   const { state } = props;
   const { sidebar } = state;
   const { t } = useI18n();
+  const isAccountView = sidebar.requestedSettingsView.value === "account";
 
   return (
     <div className="sb-sidebar-settings-view">
@@ -523,7 +543,9 @@ export function Settings(props: SettingsProps) {
         <h3 className="sb-sidebar-tabs-title">{t("settings")}</h3>
         <button
           onClick={sidebar.closeSettings}
-          className="sb-sidebar-settings-close-button"
+          className={`sb-sidebar-settings-close-button${
+            isAccountView ? " sb-sidebar-settings-close-button-account" : ""
+          }`}
           aria-label={t("close-settings", { defaultValue: "Close Settings" })}
           title={t("close-settings", { defaultValue: "Close Settings" })}
         >
@@ -777,9 +799,17 @@ function TabRow(props: TabRowProps) {
                 }
               }}
             >
-              {t("share-session", {
-                defaultValue: `Share session`,
-              })}
+              <span
+                className="material-symbols-outlined sb-tab-menu-item-icon"
+                aria-hidden="true"
+              >
+                ios_share
+              </span>
+              <span>
+                {t("share-session", {
+                  defaultValue: `Share session`,
+                })}
+              </span>
             </ContextMenuItem>
             {(() => {
               const hostId = tab.sharedSession.options.value.hostUserId;
@@ -817,7 +847,17 @@ function TabRow(props: TabRowProps) {
                     });
                   }}
                 >
-                  {t("session-settings", { defaultValue: "Session settings" })}
+                  <span
+                    className="material-symbols-outlined sb-tab-menu-item-icon"
+                    aria-hidden="true"
+                  >
+                    settings
+                  </span>
+                  <span>
+                    {t("session-settings", {
+                      defaultValue: "Session settings",
+                    })}
+                  </span>
                 </ContextMenuItem>
               );
             })()}
@@ -830,9 +870,17 @@ function TabRow(props: TabRowProps) {
               handleBookmarkAction();
             }}
           >
-            {isTabBookmarked
-              ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
-              : t("add-bookmark", { defaultValue: "Bookmark tab" })}
+            <span
+              className="material-symbols-outlined sb-tab-menu-item-icon"
+              aria-hidden="true"
+            >
+              {isTabBookmarked ? "bookmark_remove" : "bookmark_add"}
+            </span>
+            <span>
+              {isTabBookmarked
+                ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
+                : t("add-bookmark", { defaultValue: "Bookmark tab" })}
+            </span>
           </ContextMenuItem>
         )}
         <ContextMenuItem
@@ -841,7 +889,13 @@ function TabRow(props: TabRowProps) {
             state.tabs.removeTab(tab.id);
           }}
         >
-          {t("close", { defaultValue: "Close" })}
+          <span
+            className="material-symbols-outlined sb-tab-menu-item-icon"
+            aria-hidden="true"
+          >
+            close
+          </span>
+          <span>{t("close", { defaultValue: "Close" })}</span>
         </ContextMenuItem>
         {panelsEnabled && (
           <>
@@ -851,7 +905,15 @@ function TabRow(props: TabRowProps) {
               }}
               className="sb-tab-menu-item"
             >
-              {t("open-in-new-panel", { defaultValue: "Open in new panel" })}
+              <span
+                className="material-symbols-outlined sb-tab-menu-item-icon"
+                aria-hidden="true"
+              >
+                splitscreen_right
+              </span>
+              <span>
+                {t("open-in-new-panel", { defaultValue: "Open in new panel" })}
+              </span>
             </ContextMenuItem>
             <ContextMenuItem
               onClick={() => {
@@ -859,9 +921,17 @@ function TabRow(props: TabRowProps) {
               }}
               className="sb-tab-menu-item"
             >
-              {t("open-in-detached-panel", {
-                defaultValue: "Open in detached panel",
-              })}
+              <span
+                className="material-symbols-outlined sb-tab-menu-item-icon"
+                aria-hidden="true"
+              >
+                open_in_new
+              </span>
+              <span>
+                {t("open-in-detached-panel", {
+                  defaultValue: "Open in detached panel",
+                })}
+              </span>
             </ContextMenuItem>
           </>
         )}
@@ -1377,7 +1447,9 @@ function BookmarksSection(props: BookmarksSectionProps) {
 export function Tabs(props: TabsProps) {
   const { state, closeLayoutMenu, effectivelyCollapsed } = props;
   const { app, tabs: tabsManager, bookmarks } = state;
-  const tabs = tabsManager.tabs.value;
+  // Pane-only tabs back an "open in new/detached panel" and are intentionally
+  // hidden from the tab strip.
+  const tabs = tabsManager.tabs.value.filter((tab) => !tab.paneOnly);
   const selectedTabId = tabsManager.selectedTabId.value;
   const panelsEnabled = app.panelsEnabled.value;
   const isBookmarkFilterActive = bookmarks.isFilterActive.value;
@@ -1422,6 +1494,56 @@ export function Tabs(props: TabsProps) {
         >
           <span className="material-symbols-outlined">add</span>
         </button>
+      </div>
+    );
+  }
+
+  // On mobile, the Bookmarks bottom-tab opens this drawer with the bookmark
+  // filter active. Rather than show the tabs list + search, present a focused
+  // full-screen Bookmarks view: a dedicated header (close / title / new
+  // folder) over the existing collapsible BookmarksSection.
+  if (app.isMobile.value && isBookmarkFilterActive) {
+    const createNewCategory = () => {
+      const base = t("new-bookmark-folder", { defaultValue: "New folder" });
+      const existing = new Set(bookmarks.categories.value.map((c) => c.name));
+      let name = base;
+      let n = 2;
+      while (existing.has(name)) {
+        name = `${base} ${n++}`;
+      }
+      void bookmarks.createCategory(name);
+    };
+
+    return (
+      <div className="sb-bookmarks-mobile-screen">
+        <div className="sb-bookmarks-mobile-header">
+          <button
+            type="button"
+            className="sb-bookmarks-mobile-header-button sb-bookmarks-mobile-header-close"
+            onClick={() => state.sidebar.closeSidebar()}
+            aria-label={t("close", { defaultValue: "Close" })}
+            title={t("close", { defaultValue: "Close" })}
+          >
+            <span className="material-symbols-outlined">close</span>
+          </button>
+          <h2 className="sb-bookmarks-mobile-title">
+            {t("bookmarks", { defaultValue: "Bookmarks" })}
+          </h2>
+          <button
+            type="button"
+            className="sb-bookmarks-mobile-header-button sb-bookmarks-mobile-header-add"
+            onClick={createNewCategory}
+            aria-label={t("new-bookmark-folder", {
+              defaultValue: "New folder",
+            })}
+            title={t("new-bookmark-folder", { defaultValue: "New folder" })}
+          >
+            <span className="material-symbols-outlined">create_new_folder</span>
+          </button>
+        </div>
+        <div className="sb-bookmarks-mobile-body">
+          <BookmarksSection state={state} closeLayoutMenu={closeLayoutMenu} />
+        </div>
       </div>
     );
   }
@@ -1816,6 +1938,12 @@ export function Sidebar(props: SidebarProps) {
   const effectivelyCollapsed = isCollapsed && !isMobileOpen && !isSettingsOpen;
   const isLayoutMenuOpen = useSignal(false);
 
+  // The guided tour opens the pane-layout menu while its step is active so the
+  // layout options are visible behind the coachmark.
+  const tourWantsLayoutMenu =
+    state.tutorial.running.value &&
+    state.tutorial.currentStep.value?.id === "pane-layout";
+
   const closeLayoutMenu = () => {
     isLayoutMenuOpen.value = false;
   };
@@ -1832,11 +1960,17 @@ export function Sidebar(props: SidebarProps) {
           effectivelyCollapsed={effectivelyCollapsed}
           panelsEnabled={panelsEnabled}
           paneLayout={paneLayout}
-          isLayoutMenuOpen={isLayoutMenuOpen.value}
+          isLayoutMenuOpen={isLayoutMenuOpen.value || tourWantsLayoutMenu}
           toggleLayoutMenu={() => {
             closeContextMenus();
-            isLayoutMenuOpen.value = !isLayoutMenuOpen.value;
+            const willOpen = !isLayoutMenuOpen.value;
+            isLayoutMenuOpen.value = willOpen;
+            // Teach the panel layout the first time the user opens it.
+            if (willOpen) {
+              state.tutorial.startContextual("pane-layout");
+            }
           }}
+          closeLayoutMenu={closeLayoutMenu}
           setLayout={(layout) => {
             panes.setLayout(layout);
             closeLayoutMenu();
@@ -1873,6 +2007,7 @@ export function Sidebar(props: SidebarProps) {
       >
         <button
           onClick={sidebar.toggleSettings}
+          data-tutorial="settings"
           className={`sb-sidebar-icon-button${
             isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
           }`}

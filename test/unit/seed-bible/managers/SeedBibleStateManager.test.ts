@@ -382,6 +382,56 @@ describe("createSeedBibleState", () => {
     expect(state.tabs.selectedTabId.value).toBe("tab-2");
   });
 
+  it("opens an independent, hidden tab in a new pane when the tab is already shown in the current pane", async () => {
+    const state = await createState();
+    // The single pane shows the selected tab (tab-1).
+    expect(state.panes.panes.value).toHaveLength(1);
+    expect(state.panes.panes.value[0]?.tab?.id).toBe("tab-1");
+
+    state.app.openInNewPane("tab-1");
+
+    // A second pane appears, bound to a *different* tab so it is not
+    // de-duplicated away (would leave an empty pane) and so chapter navigation
+    // moves only one pane (independent reading states).
+    expect(state.panes.panes.value).toHaveLength(2);
+    const tabIds = state.panes.panes.value.map((pane) => pane.tab?.id ?? null);
+    expect(tabIds.every((id) => id !== null)).toBe(true);
+    expect(new Set(tabIds).size).toBe(2);
+
+    // The cloned tab is pane-only (hidden from the tab strip): the user still
+    // sees a single visible tab.
+    const visibleTabs = state.tabs.tabs.value.filter((tab) => !tab.paneOnly);
+    expect(visibleTabs).toHaveLength(1);
+    expect(visibleTabs[0]?.id).toBe("tab-1");
+  });
+
+  it("opens an independent, hidden tab in a detached pane when the tab is already shown in the current pane", async () => {
+    const state = await createState();
+    expect(state.panes.panes.value).toHaveLength(1);
+    const originalTabId = state.panes.panes.value[0]?.tab?.id ?? null;
+
+    state.app.openInDetachedPane("tab-1");
+
+    const detachedPanes = state.panes.panes.value.filter(
+      (pane) => pane.detached
+    );
+    expect(detachedPanes).toHaveLength(1);
+    // The detached pane gets its own tab so navigating it does not move the
+    // attached pane.
+    const detachedTabId = detachedPanes[0]?.tab?.id ?? null;
+    expect(detachedTabId).not.toBe(null);
+    expect(detachedTabId).not.toBe(originalTabId);
+    expect(state.tabs.tabs.value.filter((tab) => !tab.paneOnly)).toHaveLength(
+      1
+    );
+
+    // Closing the detached pane disposes the hidden tab so it does not leak.
+    state.panes.closePane(detachedPanes[0]!.id);
+    expect(state.tabs.tabs.value.some((tab) => tab.id === detachedTabId)).toBe(
+      false
+    );
+  });
+
   it("selecting a pane that has a tab also selects the tab for the pane", async () => {
     const state = await createStateWithTwoTabs();
 

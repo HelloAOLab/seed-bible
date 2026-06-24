@@ -141,6 +141,52 @@ describe("createPanes", () => {
     expect(tabsManager.tabs.value.some((tab) => tab.id === "tab-2")).toBe(true);
   });
 
+  it("redirects setSelectedPaneTab to a tab-backed pane when the selected pane is component-backed", async () => {
+    const { panesManager } = await createManagers({ extraTabs: 1 });
+
+    panesManager.setLayout("split-2v");
+    const [firstPane, secondPane] = panesManager.panes.value;
+
+    // Make the selected pane component-backed.
+    panesManager.openInPane(secondPane!.id, {
+      component: () => "Test Component",
+    });
+    panesManager.selectPane(secondPane!.id);
+
+    panesManager.setSelectedPaneTab("tab-2");
+
+    // The component pane must be left untouched...
+    const componentPane = panesManager.panes.value.find(
+      (pane) => pane.id === secondPane!.id
+    );
+    expect(componentPane?.component?.()).toBe("Test Component");
+    expect(componentPane?.tab).toBeNull();
+
+    // ...and the tab must land on the other, tab-backed pane instead.
+    const tabPane = panesManager.panes.value.find(
+      (pane) => pane.id === firstPane!.id
+    );
+    expect(tabPane?.tab?.id).toBe("tab-2");
+  });
+
+  it("does nothing when the selected pane is component-backed and no tab-backed pane exists", async () => {
+    const { panesManager } = await createManagers({ extraTabs: 1 });
+
+    const onlyPane = panesManager.panes.value[0]!;
+    panesManager.openInPane(onlyPane.id, {
+      component: () => "Test Component",
+    });
+
+    panesManager.setSelectedPaneTab("tab-2");
+
+    const pane = panesManager.panes.value.find((p) => p.id === onlyPane.id);
+    expect(pane?.component?.()).toBe("Test Component");
+    expect(pane?.tab).toBeNull();
+    expect(panesManager.panes.value.some((p) => p.tab?.id === "tab-2")).toBe(
+      false
+    );
+  });
+
   it("supports opening content in an existing pane", async () => {
     const { tabsManager, panesManager } = await createManagers();
 
@@ -277,6 +323,46 @@ describe("createPanes", () => {
     expect(
       panesManager.panes.value.filter((pane) => !pane.detached)
     ).toHaveLength(4);
+  });
+
+  it("keeps panes in place when re-applying a layout with a non-first pane selected", async () => {
+    const { panesManager } = await createManagers({ extraTabs: 1 });
+
+    panesManager.openPane({ type: "attached", tabId: "tab-2" });
+    const attachedBefore = panesManager.panes.value.filter(
+      (pane) => !pane.detached
+    );
+    const firstPaneId = attachedBefore[0]!.id;
+    const firstPaneTabId = attachedBefore[0]!.tab?.id;
+
+    // Select the second (right) pane, then re-apply the same layout. The
+    // content must not jump to the first slot, otherwise clicking the first
+    // pane would select the wrong tab.
+    panesManager.selectPane(attachedBefore[1]!.id);
+    panesManager.setLayout("split-2v");
+
+    const attachedAfter = panesManager.panes.value.filter(
+      (pane) => !pane.detached
+    );
+    expect(attachedAfter[0]!.id).toBe(firstPaneId);
+    expect(attachedAfter[0]!.tab?.id).toBe(firstPaneTabId);
+  });
+
+  it("keeps the selected pane's content when shrinking the layout", async () => {
+    const { panesManager } = await createManagers({ extraTabs: 1 });
+
+    panesManager.openPane({ type: "attached", tabId: "tab-2" });
+    const secondPane = panesManager.panes.value.find(
+      (pane) => pane.tab?.id === "tab-2"
+    )!;
+    panesManager.selectPane(secondPane.id);
+
+    // Collapsing to a single slot should retain the focused pane's tab.
+    panesManager.setLayout("single");
+
+    const attached = panesManager.panes.value.filter((pane) => !pane.detached);
+    expect(attached).toHaveLength(1);
+    expect(attached[0]!.tab?.id).toBe("tab-2");
   });
 
   it("supports detaching and reattaching a pane", async () => {

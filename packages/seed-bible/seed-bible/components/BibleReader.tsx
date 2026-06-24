@@ -4,7 +4,12 @@ import {
 } from "../managers/FreeUseBibleAPI";
 import type { JSX } from "preact";
 import { Suspense } from "preact/compat";
-import { useComputed, type ReadonlySignal, type Signal } from "@preact/signals";
+import {
+  computed,
+  useComputed,
+  type ReadonlySignal,
+  type Signal,
+} from "@preact/signals";
 import type {
   BibleReadingState,
   BibleSelectedVerse,
@@ -21,6 +26,7 @@ import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import { useI18n } from "../i18n/I18nManager";
 import { MobileSettingsSheet } from "../components/MobileSettingsSheet";
 import { InfoSettingsIcon } from "../components/icons";
+import { QuickToolbar } from "../components/QuickToolbar";
 
 interface ReaderBookmarkButtonProps {
   state: SeedBibleState;
@@ -838,6 +844,8 @@ interface ChapterContentProps {
     selectionX: number,
     selectionY: number
   ) => void;
+  selectVersesFromTextSelection: () => void;
+  justConvertedSelectionRef: { current: boolean };
   selectFootnote: (noteId: number | null) => void;
   scriptureElements: ScriptureElementsBehavior;
 }
@@ -851,6 +859,8 @@ function ChapterContent(props: ChapterContentProps) {
     decorations,
     selectVerse,
     selectFootnote,
+    selectVersesFromTextSelection,
+    justConvertedSelectionRef,
     scriptureElements,
   } = props;
 
@@ -859,10 +869,22 @@ function ChapterContent(props: ChapterContentProps) {
   }
 
   return (
-    <div className="sb-chapter-content">
+    <div
+      className="sb-chapter-content"
+      onPointerDown={() => {
+        justConvertedSelectionRef.current = false;
+      }}
+      onPointerUp={selectVersesFromTextSelection}
+    >
       {renderChapterContent(
         chapterData.value,
         (verse, event) => {
+          // Swallow the click that trails a drag-to-select gesture so it
+          // doesn't toggle the just-selected verse back off.
+          if (justConvertedSelectionRef.current) {
+            justConvertedSelectionRef.current = false;
+            return;
+          }
           selectVerse(verse, event.clientX, event.clientY);
         },
         selectedVerses.value,
@@ -892,6 +914,7 @@ export function BibleReader(props: BibleReaderProps) {
     loading,
     error,
     selectVerse,
+    clearSelectedVerses,
     selectedFootnote,
     selectFootnote,
   } = readingState;
@@ -900,17 +923,42 @@ export function BibleReader(props: BibleReaderProps) {
     throw readingState.chapterDataPromise;
   }
 
-  const currentBook = useComputed(
+  const currentBook = computed(
     () =>
       translationBooks.value?.books.find((book) => book.id === bookId.value) ??
       null
   );
-  const translationLicenseNotice = useComputed(
+  const translationLicenseNotice = computed(
     () => translation.value?.licenseNotice?.trim() ?? ""
   );
-  const translationWebsite = useComputed(
+  const translationWebsite = computed(
     () => translation.value?.website.trim() ?? ""
   );
+
+  // Compact verse part of the current selection (e.g. "1-3" or "1,5-7"),
+  // shown inline after the book/chapter reference in the mobile header.
+  const selectedVerseRange = useComputed(() => {
+    const numbers = selectedVerses.value
+      .map((v) => v.verse.number)
+      .sort((a, b) => a - b);
+    if (numbers.length === 0) return "";
+
+    const ranges: string[] = [];
+    let start = numbers[0]!;
+    let end = start;
+    for (let i = 1; i < numbers.length; i++) {
+      const next = numbers[i]!;
+      if (next === end + 1) {
+        end = next;
+      } else {
+        ranges.push(start === end ? `${start}` : `${start}-${end}`);
+        start = next;
+        end = next;
+      }
+    }
+    ranges.push(start === end ? `${start}` : `${start}-${end}`);
+    return ranges.join(",");
+  });
 
   const isMobile = state?.app.isMobile.value ?? false;
 
@@ -933,6 +981,78 @@ export function BibleReader(props: BibleReaderProps) {
     selectorState.selectingTranslation.value = true;
   };
 
+  // True for the click that trails a drag-to-select gesture, so the verse's
+  // own onClick doesn't toggle the verse back off after we've just selected
+  // it from the text selection. Reset at the start of every new gesture.
+  const justConvertedSelectionRef = useRef(false);
+
+  // Turn a native text selection (mouse drag on desktop, touch text-selection
+  // on mobile) into an app verse selection: select every verse the selection
+  // touches — exactly as if the user had clicked each of them — which opens
+  // the verse toolbar. No-op for a collapsed/empty selection, so plain taps
+  // keep their single-verse toggle behaviour.
+  const selectVersesFromTextSelection = () => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+      return;
+    }
+    const data = chapterData.value;
+    if (!data) return;
+
+    const range = selection.getRangeAt(0);
+    const ancestor =
+      range.commonAncestorContainer instanceof Element
+        ? range.commonAncestorContainer
+        : range.commonAncestorContainer.parentElement;
+    const root = ancestor?.closest(".sb-chapter-content");
+    if (!root) return;
+
+    const verseEls = Array.from(
+      root.querySelectorAll<HTMLElement>(".sb-verse[data-verse-number]")
+    ).filter((el) => range.intersectsNode(el));
+    if (verseEls.length === 0) return;
+
+    // verse number -> full ChapterVerse, so we can rebuild selection entries.
+    const verseByNumber = new Map<number, ChapterVerse>();
+    for (const entry of data.chapter.content) {
+      if (
+        entry &&
+        typeof entry === "object" &&
+        entry.type === "verse" &&
+        typeof entry.number === "number"
+      ) {
+        verseByNumber.set(entry.number, entry as ChapterVerse);
+      }
+    }
+
+    // Anchor the floating verse toolbar near the selected text.
+    const rect = range.getBoundingClientRect();
+    const anchorX = rect.left + rect.width / 2;
+    const anchorY = rect.top;
+
+    // Drop the native selection so only the app's verse highlight shows and
+    // the trailing click can't toggle a verse back off.
+    selection.removeAllRanges();
+    justConvertedSelectionRef.current = true;
+
+    // Mirror clicking each covered verse: deselect everything, then reselect.
+    clearSelectedVerses();
+    for (const el of verseEls) {
+      const verseValue = verseByNumber.get(Number(el.dataset.verseNumber));
+      if (!verseValue) continue;
+      selectVerse(
+        {
+          bookId: data.book.id,
+          chapterNumber: data.chapter.number,
+          verse: verseValue,
+          translationId: data.translation.id,
+        },
+        anchorX,
+        anchorY
+      );
+    }
+  };
+
   const renderMainContent = () => (
     <>
       {error.value && !loading.value && (
@@ -953,6 +1073,8 @@ export function BibleReader(props: BibleReaderProps) {
             chapterData={chapterData}
             chapterDataPromise={readingState.chapterDataPromise}
             selectedVerses={selectedVerses}
+            selectVersesFromTextSelection={selectVersesFromTextSelection}
+            justConvertedSelectionRef={justConvertedSelectionRef}
             highlights={highlights}
             decorations={decorations}
             selectVerse={selectVerse}
@@ -1025,16 +1147,17 @@ export function BibleReader(props: BibleReaderProps) {
                 </span>
               </h1>
             </div>
-            <button
-              type="button"
-              className="sb-bible-reader-mobile-header-play"
-              aria-label={t("play-audio", { defaultValue: "Play audio" })}
-              title={t("play", { defaultValue: "Play" })}
-            >
-              <span className="material-symbols-outlined" aria-hidden="true">
-                play_arrow
-              </span>
-            </button>
+            <QuickToolbar
+              toolsManager={state.tools}
+              readingState={readingState}
+              className="sb-quick-toolbar-mobile-header"
+            />
+            <ReaderBookmarkButton
+              state={state}
+              translationId={translationId.value}
+              bookId={bookId.value}
+              chapterNumber={chapterNumber.value}
+            />
             <button
               type="button"
               className="sb-bible-reader-mobile-header-settings"
@@ -1057,6 +1180,7 @@ export function BibleReader(props: BibleReaderProps) {
             <span className="sb-bible-reader-mobile-compact-book">
               {currentBook.value?.name ?? bookId.value ?? ""}{" "}
               {chapterNumber.value}
+              {selectedVerseRange.value ? `:${selectedVerseRange.value}` : ""}
             </span>
             <span className="sb-bible-reader-mobile-compact-divider">|</span>
             <span className="sb-bible-reader-mobile-compact-translation">
@@ -1119,6 +1243,13 @@ export function BibleReader(props: BibleReaderProps) {
               translationId={translationId.value}
               bookId={bookId.value}
               chapterNumber={chapterNumber.value}
+            />
+          )}
+          {state && (
+            <QuickToolbar
+              toolsManager={state.tools}
+              readingState={readingState}
+              className="sb-quick-toolbar-reader"
             />
           )}
           <h2
