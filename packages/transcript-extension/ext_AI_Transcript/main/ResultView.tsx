@@ -7,6 +7,7 @@ import type {
   TranscriptionResult,
   QueuedFile,
 } from "ext_AI_Transcript.main.types";
+import { useI18n } from "seed-bible.i18n.I18nManager";
 
 function fmtTime(sec: number | null): string {
   if (sec == null || !Number.isFinite(sec)) return "—";
@@ -23,6 +24,7 @@ export function ResultView({
   result: TranscriptionResult;
 }) {
   const context = useManager();
+  const { t } = useI18n();
   const tm = context.transcriptionManager;
   const seedBibleState: SeedBibleState = context.seedBibleState;
   const file = tm.files.value.find((f: QueuedFile) => f.id === fileId)?.file;
@@ -86,7 +88,12 @@ export function ResultView({
       <header class="ts_result__head">
         <strong class="ts_result__file">{result.file}</strong>
         <span class="ts_result__stats">
-          {result.segments.length} segments · {result.references.length} refs
+          {t("Stats_segments_refs", {
+            ns: "ext_AI_Transcript",
+            defaultValue: "{{segments}} segments · {{refs}} refs",
+            segments: result.segments.length,
+            refs: result.references.length,
+          })}
         </span>
         <span class="ts_result__spacer" />
         <label class="ts_check">
@@ -97,7 +104,10 @@ export function ResultView({
               setFollowRefs((e.target as HTMLInputElement).checked)
             }
           />
-          Follow refs
+          {t("Follow_refs", {
+            ns: "ext_AI_Transcript",
+            defaultValue: "Follow refs",
+          })}
         </label>
       </header>
 
@@ -129,7 +139,10 @@ export function ResultView({
               id={`seg-${fileId}-${seg.id}`}
               class={`ts_seg ${seg.id === activeId ? "ts_seg--active" : ""}`}
               onClick={() => seek(seg.start)}
-              title="Jump to this point"
+              title={t("Jump_to_this_point", {
+                ns: "ext_AI_Transcript",
+                defaultValue: "Jump to this point",
+              })}
             >
               <span class="ts_seg__time">{fmtTime(seg.start)}</span>
               <span class="ts_seg__text">{seg.text}</span>

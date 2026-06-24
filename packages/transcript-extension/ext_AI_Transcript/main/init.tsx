@@ -19,7 +19,7 @@ registerExtension({
         defaultValue: "AI Transcript",
         ns: "ext_AI_Transcript",
       },
-      icon: () => <span class="material-symbols-outlined">home</span>,
+      icon: () => <span class="material-symbols-outlined">speaker_notes</span>,
       onSelect: () => {
         if (!currentPane) {
           currentPane = context.panes.openPane({

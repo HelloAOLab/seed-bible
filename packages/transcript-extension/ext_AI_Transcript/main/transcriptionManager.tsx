@@ -4,7 +4,7 @@
 // Preact components only read these signals and call these methods. The single
 // instance is created in main.tsx and shared via Preact Context.
 
-import { signal, effect } from "@preact/signals";
+import { signal, type Signal } from "@preact/signals";
 import type {
   FileStatus,
   OutputReference,
@@ -34,7 +34,45 @@ let idCounter = 0;
 const nextId = () =>
   `f${Date.now().toString(36)}_${(idCounter++).toString(36)}`;
 
-function createTranscriptionManager() {
+type TranscriptionManagerType = {
+  translation: Signal<string>;
+  transcriptionModel: Signal<string>;
+  language: Signal<string>;
+  files: Signal<QueuedFile[]>;
+  results: Signal<Record<string, TranscriptionResult>>;
+  overallProgress: Signal<number>;
+  isProcessing: Signal<boolean>;
+  minConfidence: Signal<number>;
+  inferEnabled: Signal<boolean>;
+  error: Signal<string | null>;
+  mode: Signal<"file" | "live">;
+  liveStatus: Signal<
+    "idle" | "connecting" | "recording" | "transcribing" | "error"
+  >;
+  liveSegments: Signal<OutputSegment[]>;
+
+  addFiles: (input: FileList | File[]) => void;
+  removeFile: (id: string) => void;
+  clearFiles: () => void;
+  getEphemeralKey: (model?: string, lang?: string) => Promise<EphemeralKey>;
+  decodeToPcm: (
+    file: File
+  ) => Promise<{ pcm: Int16Array; durationSec: number }>;
+  extractExplicitRefs: (
+    text: string
+  ) => ReturnType<typeof extractExplicitRefsLib>;
+  inferRefs: (segments: InferSegment[]) => ReturnType<typeof inferRefsLib>;
+  transcribeAll: () => Promise<void>;
+  transcribeFile: (idOrFile: string | File) => Promise<TranscriptionResult>;
+  toggleMode: () => void;
+  startLive: () => Promise<void>;
+  stopLive: () => Promise<void>;
+  downloadResult: (fileId: string) => void;
+  downloadAll: () => void;
+  checkLogin: () => Promise<void>;
+};
+
+function createTranscriptionManager(): TranscriptionManagerType {
   // --- State signals --------------------------------------------------------
   const isLoggedIn = signal(false);
   const translation = signal("BSB");
@@ -345,7 +383,7 @@ function createTranscriptionManager() {
     const existing = files.value.find((f) => f.file === idOrFile);
     if (existing) return existing;
     addFiles([idOrFile]);
-    return files.value[files.value.length - 1];
+    return files.value[files.value.length - 1]!;
   }
 
   async function streamWithRetry(
@@ -520,10 +558,6 @@ function createTranscriptionManager() {
     }
   }
 
-  effect(() => {
-    checkLogin();
-  });
-
   return {
     // signals
     translation,
@@ -554,6 +588,7 @@ function createTranscriptionManager() {
     stopLive,
     downloadResult,
     downloadAll,
+    checkLogin,
   };
 }
 
@@ -619,6 +654,4 @@ function downloadJson(name: string, data: unknown): void {
 export { createTranscriptionManager };
 
 /** The transcription manager instance type (created in the app's entry point). */
-export type TranscriptionManager = ReturnType<
-  typeof createTranscriptionManager
->;
+export type TranscriptionManager = TranscriptionManagerType;

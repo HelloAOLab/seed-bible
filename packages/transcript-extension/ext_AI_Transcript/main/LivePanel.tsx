@@ -2,9 +2,10 @@ import { useManager } from "ext_AI_Transcript.main.context";
 import { fmtRef, highlightVerse } from "ext_AI_Transcript.main.highlight";
 import { type SeedBibleState } from "seed-bible.app.api";
 import type { OutputSegment } from "ext_AI_Transcript.main.types";
-
+import { useI18n } from "seed-bible.i18n.I18nManager";
 export function LivePanel() {
   const context = useManager();
+  const { t } = useI18n();
   const tm = context.transcriptionManager;
   const seedBibleState: SeedBibleState = context.seedBibleState;
   const status = tm.liveStatus.value;
@@ -18,32 +19,60 @@ export function LivePanel() {
   return (
     <section class="ts_picker">
       <div class="ts_live__bar">
-        {idle && (
-          <button class="ts_btn ts_btn--primary" onClick={() => tm.startLive()}>
+        {(idle || connecting) && (
+          <button
+            class="ts_btn ts_btn--primary"
+            disabled={connecting}
+            onClick={() => tm.startLive()}
+          >
             <span class="material-symbols-outlined">mic</span>
-            {segments.length ? "Record again" : "Start recording"}
+            {connecting
+              ? t("Connecting", {
+                  ns: "ext_AI_Transcript",
+                  defaultValue: "Connecting…",
+                })
+              : segments.length
+                ? t("Record_again", {
+                    ns: "ext_AI_Transcript",
+                    defaultValue: "Record again",
+                  })
+                : t("Start_recording", {
+                    ns: "ext_AI_Transcript",
+                    defaultValue: "Start recording",
+                  })}
           </button>
         )}
-
-        {connecting && <span class="ts_live__label">Connecting…</span>}
 
         {recording && (
           <>
             <span class="ts_live__dot" />
-            <span class="ts_live__label">Recording…</span>
+            <span class="ts_live__label">
+              {t("Recording", {
+                ns: "ext_AI_Transcript",
+                defaultValue: "Recording…",
+              })}
+            </span>
             <span class="ts_picker__spacer" />
             <button
               class="ts_btn ts_btn--primary"
               onClick={() => tm.stopLive()}
             >
               <span class="material-symbols-outlined">stop</span>
-              Stop
+              {t("Stop", { ns: "ext_AI_Transcript", defaultValue: "Stop" })}
             </button>
           </>
         )}
 
         {transcribing && (
-          <span class="ts_live__label">Finalizing transcript…</span>
+          <>
+            <span class="ts_live__label">
+              {t("Finalizing_transcript", {
+                ns: "ext_AI_Transcript",
+                defaultValue: "Finalizing transcript…",
+              })}
+            </span>
+            <span class="ts_picker__spacer" />
+          </>
         )}
       </div>
 
@@ -71,7 +100,12 @@ export function LivePanel() {
       )}
 
       {recording && segments.length === 0 && (
-        <p class="ts_dropzone__hint">Listening — start speaking…</p>
+        <p class="ts_dropzone__hint">
+          {t("Listening_start_speaking", {
+            ns: "ext_AI_Transcript",
+            defaultValue: "Listening — start speaking…",
+          })}
+        </p>
       )}
     </section>
   );

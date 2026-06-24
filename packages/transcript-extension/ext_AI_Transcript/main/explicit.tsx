@@ -1,5 +1,5 @@
-import { bcv_parser } from "https://cdn.jsdelivr.net/npm/bible-passage-reference-parser@3.2.0/esm/bcv_parser.js/+esm";
-import * as enLang from "https://cdn.jsdelivr.net/npm/bible-passage-reference-parser@3.2.0/esm/lang/en.js/+esm";
+import { bcv_parser } from "https://esm.helloao.org/transcript-vendor-MT4VE3JF.js";
+import { en as enLang } from "https://esm.helloao.org/transcript-vendor-MT4VE3JF.js";
 import type { RefType } from "ext_AI_Transcript.main.types";
 import {
   parseOsisId,
@@ -32,7 +32,7 @@ export interface ExplicitMatch {
 /** Expand a single OSIS id or range (e.g. "Gen.1.1-Gen.1.3") into ParsedOsis[]. */
 function expandOsis(osisPiece: string): ParsedOsis[] {
   const [aRaw, bRaw] = osisPiece.split("-");
-  const a = parseOsisId(aRaw);
+  const a = parseOsisId(aRaw || "");
   if (!a) return [];
   if (!bRaw) return [a];
 

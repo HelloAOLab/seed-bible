@@ -1,8 +1,8 @@
-import { FFmpeg } from "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.15/+esm";
+import { FFmpeg } from "https://esm.helloao.org/transcript-vendor-MT4VE3JF.js";
 import {
   fetchFile,
   toBlobURL,
-} from "https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.2/+esm";
+} from "https://esm.helloao.org/transcript-vendor-MT4VE3JF.js";
 
 // --- Config constants -------------------------------------------------------
 
@@ -25,6 +25,58 @@ const CHUNK_MS = 200; // audio per append message
 const TRAILING_SILENCE_MS = 700; // nudge server VAD to commit the last utterance
 const QUIET_FLUSH_MS = 2500; // resolve after this much post-flush silence
 const MAX_STREAM_MS = 1000 * 60 * 30; // hard cap to avoid hanging forever
+
+// Map the configured ISO-639-1 code to an English language name for the prompt.
+const LANGUAGE_NAMES: Record<string, string> = {
+  en: "English",
+  es: "Spanish",
+  fr: "French",
+  de: "German",
+  pt: "Portuguese",
+  it: "Italian",
+  nl: "Dutch",
+  ru: "Russian",
+  uk: "Ukrainian",
+  pl: "Polish",
+  ar: "Arabic",
+  he: "Hebrew",
+  hi: "Hindi",
+  bn: "Bengali",
+  ur: "Urdu",
+  fa: "Persian",
+  id: "Indonesian",
+  ms: "Malay",
+  ja: "Japanese",
+  ko: "Korean",
+  zh: "Chinese",
+  vi: "Vietnamese",
+  th: "Thai",
+  tr: "Turkish",
+  sw: "Swahili",
+  ta: "Tamil",
+  te: "Telugu",
+  ml: "Malayalam",
+  gu: "Gujarati",
+  kn: "Kannada",
+  mr: "Marathi",
+  pa: "Punjabi",
+  am: "Amharic",
+};
+
+/**
+ * Realtime transcription config that locks the output language. We pass both the
+ * `language` code (the model's primary hint) and a `prompt` reinforcing it,
+ * because gpt-4o-transcribe can otherwise drift to another language on silence
+ * or background noise.
+ */
+function transcriptionConfig(model: string, language: string) {
+  const name = LANGUAGE_NAMES[language] ?? language;
+  return {
+    model,
+    language,
+    prompt: `The audio is spoken in ${name}. Always transcribe it in ${name} and never translate to another language.`,
+  };
+}
 
 // --- Ephemeral key ----------------------------------------------------------
 
@@ -331,7 +383,7 @@ export function streamTranscription(
             audio: {
               input: {
                 format: { type: "audio/pcm", rate: SAMPLE_RATE },
-                transcription: { model, language },
+                transcription: transcriptionConfig(model, language),
                 turn_detection: { type: "server_vad" },
               },
             },
@@ -571,7 +623,7 @@ export async function startMicTranscription(
             audio: {
               input: {
                 format: { type: "audio/pcm", rate: SAMPLE_RATE },
-                transcription: { model, language },
+                transcription: transcriptionConfig(model, language),
                 turn_detection: { type: "server_vad" },
               },
             },

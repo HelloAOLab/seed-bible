@@ -26,6 +26,9 @@
       "https://esm.helloao.org/painter-vendor-IGDNTFOW.js": [
         "./lib/painter-vendor.ts"
       ],
+      "https://esm.helloao.org/transcript-vendor-MT4VE3JF.js": [
+        "./lib/transcript-vendor.ts"
+      ],
       "ext_audioReader.host.init": [
         "./packages/audio-reader-extension/ext_audioReader/host/init.tsx"
       ],
