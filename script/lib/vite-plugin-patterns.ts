@@ -2,16 +2,24 @@ import type { Plugin, ViteDevServer } from "vite";
 import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
+import { createHash } from "node:crypto";
 import path from "node:path";
+import { uploadPattern } from "./pattern";
 
 // Virtual module convention: `virtual:@pattern/<folder>` resolves to a module
-// whose default export is `{ aux: "<url>" }`.
+// whose default export is either `{ aux: "<url>" }` (dev) or
+// `{ name: "<id>" }` (build).
 //
-// In dev the `<url>` points at this plugin's HTTP endpoint (served over
-// localhost with CORS, see SERVE_PREFIX below) so the cross-origin `ao.bot`
-// iframe can fetch the AUX rather than receiving it inline. In build there is
-// no localhost server to hit, so the AUX JSON is inlined as the `aux` value
-// instead.
+// In dev the `aux` value is a `<url>` pointing at this plugin's HTTP endpoint
+// (served over localhost with CORS, see SERVE_PREFIX below) so the cross-origin
+// `ao.bot` iframe can fetch the AUX rather than receiving it inline.
+//
+// In build there is no localhost server to hit. Instead each pattern is
+// packaged, minified, validated (`check-aux`), and — when upload credentials
+// are present (PATTERN_SESSION_KEY + PATTERN_RECORD_KEY) — uploaded to the
+// records server. The module exports the pattern's ID (`<folder>-<hash>`) so
+// the runtime loads it by name from the records server instead of inlining the
+// whole AUX.
 //
 // The `\0` prefix on the resolved id is the Rollup convention that tells other
 // plugins to leave the id alone.
@@ -52,6 +60,9 @@ export function patternPlugin(): Plugin {
   // In build mode, only package each folder once per run.
   const packagedThisRun = new Set<string>();
   let isBuild = false;
+  // The production build runs twice (client then SSR). Only upload during the
+  // client pass so the SSR pass doesn't append a duplicate pattern version.
+  let isSsrBuild = false;
 
   function packagePattern(folder: string): Promise<void> {
     const existing = inFlight.get(folder);
@@ -84,6 +95,33 @@ export function patternPlugin(): Plugin {
     return run;
   }
 
+  // Run a `casualos` CLI subcommand, rejecting on a non-zero exit so a failed
+  // `check-aux` (or `minify-aux`) fails the build.
+  function runCasualos(args: string[]): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      // `shell: true` so the `casualos` PATH lookup works on Windows.
+      const child = spawn("casualos", args, {
+        cwd: process.cwd(),
+        stdio: "inherit",
+        shell: true,
+      });
+      child.on("error", reject);
+      child.on("close", (code) => {
+        if (code === 0) {
+          resolve();
+        } else {
+          reject(new Error(`casualos ${args[0]} exited with code ${code}`));
+        }
+      });
+    });
+  }
+
+  // Short, stable id suffix derived from the AUX contents so the exported
+  // pattern name changes whenever the packaged output changes.
+  function shortHash(text: string): string {
+    return createHash("sha256").update(text).digest("hex").slice(0, 8);
+  }
+
   // Derive the top-level pattern folder from a changed file path, or null if
   // the file is not inside `patterns/`.
   function folderForFile(file: string): string | null {
@@ -100,6 +138,7 @@ export function patternPlugin(): Plugin {
 
     configResolved(config) {
       isBuild = config.command === "build";
+      isSsrBuild = !!config.build.ssr;
     },
 
     resolveId(id) {
@@ -117,18 +156,46 @@ export function patternPlugin(): Plugin {
       const file = auxPath(folder);
 
       if (isBuild) {
-        // Build: there is no localhost server to serve the AUX from, so inline
-        // the JSON. Always (re)package once so the bundle reflects current
-        // source.
+        // Build: package, minify, and validate the AUX, then (when credentials
+        // are present) upload it to the records server and export its id. The
+        // runtime loads the pattern by name rather than inlining the AUX.
+        // Package once per run so the output reflects current source.
         if (!packagedThisRun.has(folder)) {
           await packagePattern(folder);
           packagedThisRun.add(folder);
         }
 
+        // Minify in place (idempotent if `pnpm pattern package` already did),
+        // then validate — a non-zero `check-aux` exit fails the build.
+        await runCasualos(["minify-aux", file]);
+        await runCasualos(["check-aux", file]);
+
+        const auxText = await readFile(file, "utf-8");
+        // Parse both to fail fast on corrupt output and to upload the AUX.
+        const auxJson = JSON.parse(auxText);
+
+        // Derive the pattern id from the final (minified) bytes so the exported
+        // name matches whatever was uploaded.
+        const name = `${folder}-${shortHash(auxText)}`;
+
+        const sessionKey = process.env.PATTERN_SESSION_KEY;
+        const recordKey = process.env.PATTERN_RECORD_KEY;
+        if (sessionKey && recordKey && !isSsrBuild) {
+          await uploadPattern(name, auxJson, sessionKey, recordKey);
+        } else {
+          this.info(
+            `[patterns] skipping upload of ${name} (${
+              isSsrBuild
+                ? "SSR build pass"
+                : "PATTERN_SESSION_KEY/PATTERN_RECORD_KEY not set"
+            })`
+          );
+        }
+
         // Track the output so build mode rebuilds when it changes.
         this.addWatchFile(file);
 
-        return `export default { name: ${JSON.stringify(folder)} };`;
+        return `export default { name: ${JSON.stringify(name)} };`;
       }
 
       // Dev: serve the AUX over HTTP (see configureServer) and export its URL.
