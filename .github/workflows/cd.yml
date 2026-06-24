@@ -153,6 +153,24 @@ jobs:
         with:
           name: "client-stats.html"
           path: "./standalone/dist/client/stats.html"
+      # ─── Notify Telegram that the deployment succeeded ──────────────────────
+      # No-ops when the TELEGRAM_* secrets are unset (see lib/telegram.ts).
+      - name: Notify Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BRANCH: ${{ steps.ids.outputs.branch }}
+          BUILD_ID: ${{ steps.ids.outputs.build_id }}
+        run: |
+          if [ "$BRANCH" = "standalone" ]; then
+            URL="https://ssr.seedbible.org"
+          else
+            URL="https://ssr.seedbible.org/b/$BRANCH/$BUILD_ID"
+          fi
+          pnpm notify deployment \
+            --branch "$BRANCH" \
+            --url "$URL" \
+            --version "$BUILD_ID"
       - name: Summary
         env:
           BRANCH: ${{ steps.ids.outputs.branch }}

@@ -18,6 +18,7 @@
     "check:ts:client": "tsc-silent --project ./tsconfig.json --suppressConfig ./tsc-silent.config.cjs",
     "check:patterns": "tsc --project ./patterns/tsconfig.json",
     "pattern": "tsx script/pattern.ts",
+    "notify": "tsx script/notify.ts",
     "i18n": "tsx script/i18n.ts",
     "list-bible-translations": "tsx script/list-bible-translations.ts",
     "format": "prettier --write \"packages/**/*.{js,jsx,ts,tsx,css}\"",
