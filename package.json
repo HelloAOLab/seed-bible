@@ -20,7 +20,7 @@
     "list-bible-translations": "tsx script/list-bible-translations.ts",
     "format": "prettier --write \"packages/**/*.{js,jsx,ts,tsx,css}\"",
     "format:changed": "pretty-quick",
-    "prepare": "husky"
+    "prepare": "husky && tsx script/setupMergeDriver.ts"
   },
   "repository": {
     "type": "git",
