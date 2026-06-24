@@ -146,6 +146,52 @@ describe("createPanes", () => {
     expect(tabsManager.tabs.value.some((tab) => tab.id === "tab-2")).toBe(true);
   });
 
+  it("redirects setSelectedPaneTab to a tab-backed pane when the selected pane is component-backed", async () => {
+    const { panesManager } = await createManagers({ extraTabs: 1 });
+
+    panesManager.setLayout("split-2v");
+    const [firstPane, secondPane] = panesManager.panes.value;
+
+    // Make the selected pane component-backed.
+    panesManager.openInPane(secondPane!.id, {
+      component: () => "Test Component",
+    });
+    panesManager.selectPane(secondPane!.id);
+
+    panesManager.setSelectedPaneTab("tab-2");
+
+    // The component pane must be left untouched...
+    const componentPane = panesManager.panes.value.find(
+      (pane) => pane.id === secondPane!.id
+    );
+    expect(componentPane?.component?.()).toBe("Test Component");
+    expect(componentPane?.tab).toBeNull();
+
+    // ...and the tab must land on the other, tab-backed pane instead.
+    const tabPane = panesManager.panes.value.find(
+      (pane) => pane.id === firstPane!.id
+    );
+    expect(tabPane?.tab?.id).toBe("tab-2");
+  });
+
+  it("does nothing when the selected pane is component-backed and no tab-backed pane exists", async () => {
+    const { panesManager } = await createManagers({ extraTabs: 1 });
+
+    const onlyPane = panesManager.panes.value[0]!;
+    panesManager.openInPane(onlyPane.id, {
+      component: () => "Test Component",
+    });
+
+    panesManager.setSelectedPaneTab("tab-2");
+
+    const pane = panesManager.panes.value.find((p) => p.id === onlyPane.id);
+    expect(pane?.component?.()).toBe("Test Component");
+    expect(pane?.tab).toBeNull();
+    expect(panesManager.panes.value.some((p) => p.tab?.id === "tab-2")).toBe(
+      false
+    );
+  });
+
   it("supports opening content in an existing pane", async () => {
     const { tabsManager, panesManager } = await createManagers();
 
