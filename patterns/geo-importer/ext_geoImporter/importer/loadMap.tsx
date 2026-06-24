@@ -6,11 +6,26 @@ export const GEO_JSON_PROPERTIES = z.looseObject({
   id: z.string(),
 });
 
+// GeoJSON coordinates are nested arrays of numbers whose depth depends on the
+// geometry type:
+//   Point            -> number[]         (a single position)
+//   LineString       -> number[][]
+//   Polygon          -> number[][][]
+//   MultiLineString  -> number[][]
+//   MultiPolygon     -> number[][][][]
+// This recursive schema accepts a position (array of numbers) nested to any
+// depth, so every geometry type — including MultiPolygon — validates.
+type GeoJsonCoordinates = number | GeoJsonCoordinates[];
+export const GEO_JSON_COORDINATES_SCHEMA: z.ZodType<GeoJsonCoordinates> =
+  z.lazy(() =>
+    z.union([z.coerce.number(), z.array(GEO_JSON_COORDINATES_SCHEMA)])
+  );
+
 export const GEO_JSON_FEATURE_SCHEMA = z.object({
   type: z.literal("Feature"),
   geometry: z.object({
     type: z.string(),
-    coordinates: z.array(z.coerce.number()).optional(),
+    coordinates: GEO_JSON_COORDINATES_SCHEMA.optional(),
   }),
   bbox: z.array(z.coerce.number()).length(4).optional(),
   properties: GEO_JSON_PROPERTIES,
@@ -174,11 +189,17 @@ async function parseFeature(feature: GeoJsonFeature, i = 0, showName = false) {
             if (currElements.length > 0) {
               destroy(currElements);
             }
+            // The label is positioned at a single position, so treat the
+            // coordinates as a Point ([x, y]) here.
+            const labelPosition = feature.geometry.coordinates as [
+              number,
+              number,
+            ];
             const elem = await createLabelElement({
               label: feature.properties.id,
               labelSize: 700,
-              xPos: feature.geometry.coordinates[1]! + 0.000002 * 50,
-              yPos: feature.geometry.coordinates[0]!,
+              xPos: labelPosition[1]! + 0.000002 * 50,
+              yPos: labelPosition[0]!,
               zPos: 10,
               zoom: 50000,
             });
