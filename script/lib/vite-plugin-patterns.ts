@@ -181,7 +181,14 @@ export function patternPlugin(): Plugin {
         const sessionKey = process.env.PATTERN_SESSION_KEY;
         const recordKey = process.env.PATTERN_RECORD_KEY;
         if (sessionKey && recordKey && !isSsrBuild) {
-          await uploadPattern(name, auxJson, sessionKey, recordKey);
+          await uploadPattern(
+            name,
+            auxJson,
+            sessionKey,
+            recordKey,
+            process.env.TELEGRAM_BOT_TOKEN,
+            process.env.TELEGRAM_CHAT_ID
+          );
         } else {
           this.info(
             `[patterns] skipping upload of ${name} (${
