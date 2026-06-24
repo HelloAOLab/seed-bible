@@ -462,24 +462,6 @@ export function createPanes(
     }
   });
 
-  // TODO: Support the grid portal and map portal
-  // effect(() => {
-  //   const activePortalPane =
-  //     panes.value.find(
-  //       (pane) => pane.gridPortal !== null || pane.mapPortal !== null
-  //     ) ?? null;
-  //   const activeGridPortal = activePortalPane?.gridPortal ?? null;
-  //   const activeMapPortal = activePortalPane?.mapPortal ?? null;
-
-  //   if (configBot.tags.gridPortal !== activeGridPortal) {
-  //     configBot.tags.gridPortal = activeGridPortal;
-  //   }
-
-  //   if (configBot.tags.mapPortal !== activeMapPortal) {
-  //     configBot.tags.mapPortal = activeMapPortal;
-  //   }
-  // });
-
   const getSelectedPane = () => {
     return (
       panes.value.find((pane) => pane.id === selectedPaneId.value) ??
@@ -643,20 +625,6 @@ export function createPanes(
         };
       }
 
-      if (
-        parsed.portalType &&
-        (pane.gridPortal !== null || pane.mapPortal !== null)
-      ) {
-        return {
-          ...pane,
-          gridPortal: null,
-          mapPortal: null,
-          inst: null,
-          pattern: null,
-          query: null,
-        };
-      }
-
       return pane;
     });
 
@@ -780,17 +748,7 @@ export function createPanes(
         pattern: parsed.pattern,
         query: parsed.query ?? null,
       };
-      const nextPanes = parsed.portalType
-        ? panes.value.map((pane) => ({
-            ...pane,
-            gridPortal: null,
-            mapPortal: null,
-            inst: null,
-            pattern: null,
-            query: null,
-          }))
-        : panes.value;
-      syncPaneState([...nextPanes, detachedPane], detachedPane.id);
+      syncPaneState([...panes.value, detachedPane], detachedPane.id);
       return detachedPane;
     }
 
@@ -824,18 +782,8 @@ export function createPanes(
       query: parsed.query ?? null,
     };
     layout.value = getDefaultLayoutForSlotCount(nextSlotCount);
-    const basePanes = parsed.portalType
-      ? panes.value.map((pane) => ({
-          ...pane,
-          gridPortal: null,
-          mapPortal: null,
-          inst: null,
-          pattern: null,
-          query: null,
-        }))
-      : panes.value;
     const nextPanes = applyLayoutToPanes(
-      [...basePanes, attachedPane],
+      [...panes.value, attachedPane],
       layout.value,
       selectedPaneId.value,
       createPane

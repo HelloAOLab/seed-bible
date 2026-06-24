@@ -314,6 +314,32 @@ describe("createPanes", () => {
     ).toBe(true);
   });
 
+  it("supports multiple attached panes each with their own grid/map portal", async () => {
+    const { panesManager } = await createManagers();
+
+    panesManager.openPane({
+      type: "attached",
+      gridPortal: "home",
+    });
+    panesManager.openPane({
+      type: "attached",
+      mapPortal: "map_portal",
+    });
+
+    const portalPanes = panesManager.panes.value.filter(
+      (pane) => pane.gridPortal !== null || pane.mapPortal !== null
+    );
+
+    // Opening a second portal pane no longer clears the first one.
+    expect(
+      panesManager.panes.value.some((pane) => pane.gridPortal === "home")
+    ).toBe(true);
+    expect(
+      panesManager.panes.value.some((pane) => pane.mapPortal === "map_portal")
+    ).toBe(true);
+    expect(portalPanes).toHaveLength(2);
+  });
+
   it("supports changing the layout", async () => {
     const { panesManager } = await createManagers();
 
