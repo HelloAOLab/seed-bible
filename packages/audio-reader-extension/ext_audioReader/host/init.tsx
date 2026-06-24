@@ -1,6 +1,6 @@
 import { computed, effect, signal } from "@preact/signals";
-import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
-import type { BibleReadingState } from "../managers/BibleReadingManager";
+import { registerExtension, type SeedBibleState } from "seed-bible";
+import type { BibleReadingState } from "seed-bible/managers";
 
 /** Drives the icon swap between play and pause. Shared across the tool. */
 const isPlaying = signal(false);
@@ -89,7 +89,7 @@ registerExtension({
       onSelect: (ctx) => {
         const url = chapterAudioUrl(ctx.readingState);
         if (!url) {
-          os.toast("No audio is available for this chapter.");
+          context.os.toast("No audio is available for this chapter.");
           return;
         }
         const el = ensureAudio();
