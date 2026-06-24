@@ -40,7 +40,6 @@ import {
   createExtensionManager,
   setupExtensionContext,
   type ExtensionManager,
-  type ExtensionSet,
 } from "../managers/ExtensionManager";
 import {
   createHighlightsManager,
@@ -246,38 +245,10 @@ export interface SeedBibleState {
   closeCodeOfConduct: () => void;
 }
 
-import exampleExtension from "@packages/seed-bible-refresh-example-extension/extension.json";
-import twitchPubExtension from "@packages/twitchPub-extension/extension.json";
-import twitchSubExtension from "@packages/twitchSub-extension/extension.json";
-import locationsExtension from "@packages/locations-extension/extension.json";
-import audioReaderExtension from "@packages/audio-reader-extension/extension.json";
-
-const SEED_BIBLE_EXTENSIONS: ExtensionSet = {
-  id: "seed-bible",
-  extensions: [
-    {
-      meta: twitchPubExtension,
-      import: () => import("@packages/twitchPub-extension/index"),
-    },
-    {
-      meta: twitchSubExtension,
-      import: () => import("@packages/twitchSub-extension/index"),
-    },
-    {
-      meta: locationsExtension,
-      import: () => import("@packages/locations-extension/index"),
-    },
-    {
-      meta: exampleExtension,
-      import: () =>
-        import("@packages/seed-bible-refresh-example-extension/index"),
-    },
-    {
-      meta: audioReaderExtension,
-      import: () => import("@packages/audio-reader-extension/index"),
-    },
-  ],
-};
+// The extension set is auto-discovered from every extension package under
+// `packages/` by the `vite-plugin-extensions` plugin. See
+// script/lib/vite-plugin-extensions.ts.
+import SEED_BIBLE_EXTENSIONS from "virtual:@extensions";
 
 /**
  * Creates and wires the full Seed Bible application state graph.

@@ -5,6 +5,7 @@ import path from "path";
 import { analyzer } from "vite-bundle-analyzer";
 import { VitePWA } from "vite-plugin-pwa";
 import { patternPlugin } from "./script/lib/vite-plugin-patterns";
+import { extensionsPlugin } from "./script/lib/vite-plugin-extensions";
 
 // Each branch+version deployment gets its OWN copy of its hashed assets, so the
 // asset URL is namespaced by branch and build id: assets for a build live at
@@ -47,6 +48,7 @@ export default defineConfig(({ isSsrBuild }) => ({
   plugins: [
     preact(),
     patternPlugin(),
+    extensionsPlugin(),
     // Only the root build ships a service worker (see `isRootBuild` above).
     ...(isRootBuild
       ? [
