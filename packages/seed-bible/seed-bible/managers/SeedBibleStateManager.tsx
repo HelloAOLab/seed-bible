@@ -110,9 +110,6 @@ export interface AppState {
   /** Current window inner height in pixels. Updated on resize. */
   viewportHeight: ReadonlySignal<number>;
 
-  /** Current window inner height in pixels. Updated on resize. */
-  viewportHeight: ReadonlySignal<number>;
-
   /** True when viewport width is at or below the mobile breakpoint (768px). */
   isMobile: ReadonlySignal<boolean>;
   /** True when on a phone-sized viewport held in landscape orientation. */
@@ -494,6 +491,7 @@ export function createSeedBibleState(
             mapPortal: null,
             inst: null,
             pattern: null,
+            query: null,
             detached: false,
             detachedAnchor: "floating" as const,
             x: 0,
@@ -1029,6 +1027,8 @@ export function createSeedBibleState(
     navigation,
     i18n,
     extensions,
+    tutorial,
+    onboarding,
     isTermsOpen,
     openTerms,
     closeTerms,
