@@ -1,7 +1,7 @@
 import DraggableContainer from "./DraggableContainer";
 import TwitchSettings from "./TwitchSettings";
 import { type TwitchSubInterface } from "./interface";
-import style from "./App.css";
+import "./App.css";
 
 function App(props: {
   settings: TwitchSubInterface["settings"];
@@ -10,7 +10,6 @@ function App(props: {
 }) {
   return (
     <>
-      <style>{style}</style>
       <DraggableContainer>
         {
           (

@@ -4,7 +4,7 @@ import Authorization from "./Authenticate";
 import TwitchInterface from "./TwitchInterface";
 import TwitchSettings from "./TwitchSettings";
 import { type TwitchPubState } from "./interface";
-import style from "./App.css";
+import "./App.css";
 
 function App(props: { state: TwitchPubState }) {
   const { state } = props;
@@ -20,7 +20,6 @@ function App(props: { state: TwitchPubState }) {
 
   return (
     <>
-      <style>{style}</style>
       <DraggableContainer children={appContent} />
     </>
   );
