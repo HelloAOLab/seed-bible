@@ -27,6 +27,50 @@
   flex-shrink: 0;
   white-space: nowrap;
 }
+.ts_app__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.ts_app__mode {
+  padding: 6px 8px;
+}
+.ts_app__mode .material-symbols-outlined {
+  display: block;
+  font-size: 20px;
+}
+
+/* Live (microphone) panel */
+.ts_live__bar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+.ts_live__label {
+  font-size: 0.95rem;
+}
+.ts_live__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef6a6a;
+  animation: ts_live__pulse 1.2s ease-in-out infinite;
+}
+@keyframes ts_live__pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+.ts_live__transcript {
+  margin-top: 14px;
+}
 
 /* Panels */
 .ts_corpus,
@@ -488,7 +532,7 @@ input[type="range"] {
   height: fit-content;
 }
 .ts_transcript {
-  max-height: 340px;
+  max-height: calc(100dvh - 320px);
   overflow-y: auto;
   border: 1px solid var(--sb-divider-color);
   border-radius: 8px;

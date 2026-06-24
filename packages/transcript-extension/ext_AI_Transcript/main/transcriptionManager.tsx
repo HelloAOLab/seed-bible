@@ -4,7 +4,7 @@
 // Preact components only read these signals and call these methods. The single
 // instance is created in main.tsx and shared via Preact Context.
 
-import { signal } from "@preact/signals";
+import { signal, effect } from "@preact/signals";
 import type {
   FileStatus,
   OutputReference,
@@ -16,8 +16,10 @@ import type {
 import {
   decodeToPcm as decodeFileToPcm,
   getEphemeralKey as fetchEphemeralKey,
+  startMicTranscription,
   streamTranscription,
   type EphemeralKey,
+  type LiveSession,
   type RawSegment,
 } from "ext_AI_Transcript.main.transcribe";
 import { extractExplicitRefs as extractExplicitRefsLib } from "ext_AI_Transcript.main.explicit";
@@ -34,6 +36,7 @@ const nextId = () =>
 
 function createTranscriptionManager() {
   // --- State signals --------------------------------------------------------
+  const isLoggedIn = signal(false);
   const translation = signal("BSB");
   const transcriptionModel = signal("gpt-4o-transcribe");
   const language = signal("en");
@@ -44,6 +47,23 @@ function createTranscriptionManager() {
   const minConfidence = signal(0.85);
   const inferEnabled = signal(true);
   const error = signal<string | null>(null);
+
+  // --- Live (microphone) mode ----------------------------------------------
+  // Which input UI is active, and the lifecycle of a live recording session.
+  const mode = signal<"file" | "live">("file");
+  const liveStatus = signal<
+    "idle" | "connecting" | "recording" | "transcribing" | "error"
+  >("idle");
+  // Live transcript shown as it arrives, with references filled in per segment.
+  const liveSegments = signal<OutputSegment[]>([]);
+  let liveSession: LiveSession | null = null;
+
+  // Incremental-inference bookkeeping for a live session (reset on startLive).
+  let liveSeq = 0;
+  const liveIdByItem = new Map<string, number>();
+  const liveItemById = new Map<number, string>();
+  const liveRefsByItem = new Map<string, string[]>();
+  const liveInferred = new Set<string>();
 
   // --- File queue -----------------------------------------------------------
 
@@ -76,6 +96,10 @@ function createTranscriptionManager() {
     files.value = [];
     results.value = {};
     overallProgress.value = 0;
+    liveSegments.value = [];
+    if (liveStatus.value !== "recording" && liveStatus.value !== "connecting") {
+      liveStatus.value = "idle";
+    }
   }
 
   function updateFile(id: string, patch: Partial<QueuedFile>): void {
@@ -174,6 +198,141 @@ function createTranscriptionManager() {
     results.value = { ...results.value, [id]: result };
     updateFile(id, { status: "done", progress: 1 });
     return result;
+  }
+
+  // --- Live (microphone) pipeline ------------------------------------------
+
+  /** Switch between file-upload and live-mic input (blocked while busy). */
+  function toggleMode(): void {
+    if (
+      isProcessing.value ||
+      liveStatus.value === "connecting" ||
+      liveStatus.value === "recording" ||
+      liveStatus.value === "transcribing"
+    ) {
+      return;
+    }
+    mode.value = mode.value === "file" ? "live" : "file";
+  }
+
+  /** Stable numeric id for a live segment's itemId. */
+  function liveNumId(itemId: string): number {
+    let n = liveIdByItem.get(itemId);
+    if (n == null) {
+      n = liveSeq++;
+      liveIdByItem.set(itemId, n);
+      liveItemById.set(n, itemId);
+    }
+    return n;
+  }
+
+  /** Build the live display list, attaching any references inferred so far. */
+  function renderLive(raw: RawSegment[]): OutputSegment[] {
+    return raw.map((s) => ({
+      id: liveNumId(s.itemId),
+      start: round2(s.start),
+      end: round2(s.end || s.start),
+      text: s.text.trim(),
+      references: liveRefsByItem.get(s.itemId) ?? [],
+    }));
+  }
+
+  /**
+   * Handle a live transcript update: refresh the display, then run inference on
+   * any newly-finalized segments (with one preceding segment for context, so a
+   * quote split by a pause still resolves) and merge their references in.
+   */
+  async function onLiveSegments(raw: RawSegment[]): Promise<void> {
+    liveSegments.value = renderLive(raw);
+
+    const pending = raw.filter(
+      (s) => s.done && s.text.trim() && !liveInferred.has(s.itemId)
+    );
+    if (!pending.length) return;
+    pending.forEach((s) => liveInferred.add(s.itemId)); // guard re-entry
+
+    // Window = the segment before the first pending one (context) + pending.
+    const firstIdx = raw.findIndex((s) => s.itemId === pending[0]!.itemId);
+    const window = (firstIdx > 0 ? [raw[firstIdx - 1]!] : []).concat(pending);
+    const input: InferSegment[] = window.map((s) => ({
+      id: liveNumId(s.itemId),
+      start: s.start,
+      end: s.end || s.start,
+      text: s.text,
+    }));
+
+    try {
+      const refs = await inferRefsLib(input, minConfidence.value);
+      for (const r of refs) {
+        for (const numId of r.segmentIds) {
+          const itemId = liveItemById.get(numId);
+          if (!itemId) continue;
+          const arr = liveRefsByItem.get(itemId) ?? [];
+          if (!arr.includes(r.ref)) arr.push(r.ref);
+          liveRefsByItem.set(itemId, arr);
+        }
+      }
+      // Re-emit with the freshly merged references.
+      liveSegments.value = liveSegments.value.map((seg) => ({
+        ...seg,
+        references: liveRefsByItem.get(liveItemById.get(seg.id) ?? "") ?? [],
+      }));
+    } catch (e) {
+      console.warn("live infer failed:", errMsg(e));
+    }
+  }
+
+  /** Begin a live microphone transcription session. */
+  async function startLive(): Promise<void> {
+    if (
+      liveStatus.value === "connecting" ||
+      liveStatus.value === "recording" ||
+      liveStatus.value === "transcribing"
+    ) {
+      return;
+    }
+    error.value = null;
+    // Reset live state (no audio is saved — the transcript is the output).
+    liveSegments.value = [];
+    liveSeq = 0;
+    liveIdByItem.clear();
+    liveItemById.clear();
+    liveRefsByItem.clear();
+    liveInferred.clear();
+    files.value = [];
+    results.value = {};
+    try {
+      liveStatus.value = "connecting";
+      const { key } = await getEphemeralKey();
+      liveSession = await startMicTranscription(
+        key,
+        transcriptionModel.value,
+        language.value,
+        { onSegments: (segs) => void onLiveSegments(segs) }
+      );
+      // startMicTranscription resolves once the mic + socket are live.
+      liveStatus.value = "recording";
+    } catch (e) {
+      liveStatus.value = "error";
+      error.value = `Live error: ${errMsg(e)}`;
+      liveSession = null;
+    }
+  }
+
+  /** Stop the live session and finalize references for any last segments. */
+  async function stopLive(): Promise<void> {
+    const session = liveSession;
+    if (!session) return;
+    liveSession = null;
+    try {
+      liveStatus.value = "transcribing";
+      const { segments: raw } = await session.stop();
+      await onLiveSegments(raw); // infer any still-pending finalized segments
+      liveStatus.value = "idle";
+    } catch (e) {
+      liveStatus.value = "error";
+      error.value = `Live error: ${errMsg(e)}`;
+    }
   }
 
   function resolveQueued(idOrFile: string | File): QueuedFile {
@@ -347,6 +506,24 @@ function createTranscriptionManager() {
     downloadJson("transcriptions.json", { results: all });
   }
 
+  async function checkLogin(): Promise<void> {
+    const checkLogin = await os.requestAuthBotInBackground();
+    if (checkLogin) {
+      isLoggedIn.value = true;
+    } else {
+      const login = await os.requestAuthBot();
+      if (login) {
+        isLoggedIn.value = true;
+      } else {
+        isLoggedIn.value = false;
+      }
+    }
+  }
+
+  effect(() => {
+    checkLogin();
+  });
+
   return {
     // signals
     translation,
@@ -359,6 +536,9 @@ function createTranscriptionManager() {
     minConfidence,
     inferEnabled,
     error,
+    mode,
+    liveStatus,
+    liveSegments,
     // methods
     addFiles,
     removeFile,
@@ -369,6 +549,9 @@ function createTranscriptionManager() {
     inferRefs,
     transcribeAll,
     transcribeFile,
+    toggleMode,
+    startLive,
+    stopLive,
     downloadResult,
     downloadAll,
   };

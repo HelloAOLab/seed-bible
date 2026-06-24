@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useManager } from "ext_AI_Transcript.main.context";
 import { type SeedBibleState } from "seed-bible.app.api";
+import { fmtRef, highlightVerse } from "ext_AI_Transcript.main.highlight";
 import type {
   OutputSegment,
   TranscriptionResult,
@@ -12,19 +13,6 @@ function fmtTime(sec: number | null): string {
   const m = Math.floor(sec / 60);
   const s = sec % 60;
   return `${m}:${s.toFixed(0)}`;
-}
-
-/**
- * Format an OSIS ref id for display: "GEN:1:3" -> "Gen 1:3".
- * Lowercases the book code, then capitalizes its first letter (so numbered
- * books read correctly too, e.g. "1CO:1:1" -> "1Co 1:1").
- */
-function fmtRef(ref: string): string {
-  const [book, chapter, verse] = ref.split(":");
-  const b = (book ?? "").toLowerCase().replace(/[a-z]/, (c) => c.toUpperCase());
-  if (verse != null) return `${b} ${chapter}:${verse}`;
-  if (chapter != null) return `${b} ${chapter}`;
-  return b;
 }
 
 export function ResultView({
@@ -80,42 +68,6 @@ export function ResultView({
     mediaRef.current = el;
   };
 
-  const highlightVerse = async (ref: string, interval: number = 2000) => {
-    const [book, chapter, verse] = ref.split(":");
-
-    const selectedTabId = seedBibleState.tabs.selectedTabId;
-
-    const selectedTab = seedBibleState.tabs.tabs.value.find(
-      (tab) => tab.id === selectedTabId.value
-    );
-
-    const currentReadingState = seedBibleState.app.currentReadingState.value;
-
-    if (selectedTab && book) {
-      await selectedTab.readingState.selectTranslationAndChapter(
-        currentReadingState?.translationId || "ABB",
-        book,
-        Number(chapter) || 1,
-        verse
-          ? {
-              scrollToVerse: Number(verse),
-            }
-          : {}
-      );
-      if (verse && chapter) {
-        selectedTab.readingState.decorateVerses(
-          book,
-          Number(chapter),
-          Number(verse),
-          {
-            className: "sb-verse-decoration-initial-verse-highlight",
-            removeAfterMs: interval,
-          }
-        );
-      }
-    }
-  };
-
   // When "follow refs" is on, highlight the active segment's first reference
   // as playback moves from one segment to the next.
   useEffect(() => {
@@ -126,7 +78,7 @@ export function ResultView({
     if (!seg || seg.references.length === 0) return;
     const ref = seg?.references[0];
     const interval = (seg.end - seg.start) * 1000;
-    if (ref) void highlightVerse(ref, interval);
+    if (ref) void highlightVerse(seedBibleState, ref, interval);
   }, [activeId, followRefs]);
 
   return (
@@ -191,7 +143,7 @@ export function ResultView({
                           class="ts_badge ts_badge--ref"
                           onClick={(e) => {
                             e.stopPropagation();
-                            highlightVerse(r);
+                            highlightVerse(seedBibleState, r);
                           }}
                         >
                           {fmtRef(r)}

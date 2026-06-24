@@ -338,8 +338,14 @@
       "ext_AI_Transcript.main.FilePicker": [
         "./packages/transcript-extension/ext_AI_Transcript/main/FilePicker.tsx"
       ],
+      "ext_AI_Transcript.main.highlight": [
+        "./packages/transcript-extension/ext_AI_Transcript/main/highlight.tsx"
+      ],
       "ext_AI_Transcript.main.infer": [
         "./packages/transcript-extension/ext_AI_Transcript/main/infer.tsx"
+      ],
+      "ext_AI_Transcript.main.LivePanel": [
+        "./packages/transcript-extension/ext_AI_Transcript/main/LivePanel.tsx"
       ],
       "ext_AI_Transcript.main.init": [
         "./packages/transcript-extension/ext_AI_Transcript/main/init.tsx"

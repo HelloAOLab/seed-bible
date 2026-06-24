@@ -168,6 +168,8 @@ export interface RawSegment {
   start: number; // seconds
   end: number; // seconds
   text: string;
+  /** True once the server has emitted the final transcript for this segment. */
+  done?: boolean;
 }
 
 export interface StreamCallbacks {
@@ -409,4 +411,218 @@ async function pumpSilence(ws: WebSocket): Promise<void> {
     })
   );
   await waitForDrain(ws);
+}
+
+// --- Live (microphone) transcription ----------------------------------------
+
+export interface LiveCallbacks {
+  /** Called once the socket is open and configured. */
+  onConnected?: () => void;
+  /** Called whenever the assembled segments change (live partial results). */
+  onSegments?: (segments: RawSegment[]) => void;
+}
+
+export interface LiveSession {
+  /**
+   * Stop capture, flush the final transcripts, and resolve with the assembled
+   * segments and the recording duration.
+   */
+  stop(): Promise<{ segments: RawSegment[]; durationSec: number }>;
+}
+
+/** Float32 audio [-1,1] -> 16-bit PCM, downsampling (nearest) if rates differ. */
+function floatToPcm16(
+  input: Float32Array,
+  inRate: number,
+  outRate: number
+): Int16Array {
+  let data = input;
+  if (inRate !== outRate && outRate > 0) {
+    const ratio = inRate / outRate;
+    const outLen = Math.max(1, Math.floor(input.length / ratio));
+    const out = new Float32Array(outLen);
+    for (let i = 0; i < outLen; i++) out[i] = input[Math.floor(i * ratio)] ?? 0;
+    data = out;
+  }
+  // Int16Array.from runs natively (no AUX energy checks, unlike a for-loop).
+  return Int16Array.from(data, (v) => {
+    const c = v < -1 ? -1 : v > 1 ? 1 : v;
+    return (c * 0x7fff) | 0;
+  });
+}
+
+/**
+ * Open a realtime transcription session fed from the microphone. Resolves once
+ * the mic + socket are live; partial segments arrive via callbacks.onSegments.
+ * Call the returned handle's stop() to finish and get the final segments.
+ */
+export async function startMicTranscription(
+  key: string,
+  model: string,
+  language: string,
+  callbacks: LiveCallbacks = {}
+): Promise<LiveSession> {
+  // 1. Microphone.
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+  // 2. Audio graph: mic -> (resampled to 24 kHz) -> PCM chunks.
+  const ctx = new AudioContext({ sampleRate: SAMPLE_RATE });
+  const ctxRate = ctx.sampleRate;
+  const source = ctx.createMediaStreamSource(stream);
+  const processor = ctx.createScriptProcessor(4096, 1, 1);
+
+  // 4. Realtime socket + segment assembly (same protocol as streamTranscription).
+  const ws = new WebSocket(REALTIME_URL, [
+    "realtime",
+    `openai-insecure-api-key.${key}`,
+  ]);
+  let socketOpen = false;
+  const segments = new Map<string, RawSegment>();
+  const getSeg = (itemId: string): RawSegment => {
+    let s = segments.get(itemId);
+    if (!s) {
+      s = { itemId, start: 0, end: 0, text: "" };
+      segments.set(itemId, s);
+    }
+    return s;
+  };
+  const emit = () => {
+    callbacks.onSegments?.(
+      [...segments.values()]
+        .filter((s) => s.text.trim().length > 0)
+        .sort((a, b) => a.start - b.start)
+    );
+  };
+
+  ws.onmessage = (ev) => {
+    let msg: Record<string, unknown>;
+    try {
+      msg = JSON.parse(typeof ev.data === "string" ? ev.data : "");
+    } catch {
+      return;
+    }
+    const type = msg.type as string | undefined;
+    switch (type) {
+      case "input_audio_buffer.speech_started": {
+        const id = msg.item_id as string;
+        if (id) getSeg(id).start = ((msg.audio_start_ms as number) ?? 0) / 1000;
+        break;
+      }
+      case "input_audio_buffer.speech_stopped": {
+        const id = msg.item_id as string;
+        if (id) getSeg(id).end = ((msg.audio_end_ms as number) ?? 0) / 1000;
+        break;
+      }
+      case "conversation.item.input_audio_transcription.delta": {
+        const id = msg.item_id as string;
+        if (id) getSeg(id).text += (msg.delta as string) ?? "";
+        emit();
+        break;
+      }
+      case "conversation.item.input_audio_transcription.completed": {
+        const id = msg.item_id as string;
+        if (id) {
+          const s = getSeg(id);
+          const transcript = (msg.transcript as string) ?? "";
+          if (transcript) s.text = transcript;
+          if (s.end === 0 && s.start > 0) s.end = s.start;
+          s.done = true;
+        }
+        emit();
+        break;
+      }
+      case "error": {
+        const e = msg.error as { message?: string } | undefined;
+        console.warn("realtime error:", e?.message ?? msg);
+        break;
+      }
+    }
+  };
+
+  processor.onaudioprocess = (e) => {
+    if (!socketOpen || ws.readyState !== WebSocket.OPEN) return;
+    const input = e.inputBuffer.getChannelData(0);
+    const pcm = floatToPcm16(input, ctxRate, SAMPLE_RATE);
+    const bytes = new Uint8Array(pcm.buffer, pcm.byteOffset, pcm.byteLength);
+    ws.send(
+      JSON.stringify({
+        type: "input_audio_buffer.append",
+        audio: bytesToBase64(bytes),
+      })
+    );
+  };
+
+  // Wait for the socket to open and be configured before returning.
+  await new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(
+      () => reject(new Error("realtime connect timed out")),
+      15000
+    );
+    ws.onerror = () => {
+      clearTimeout(timeout);
+      reject(new Error("realtime socket error"));
+    };
+    ws.onopen = () => {
+      ws.send(
+        JSON.stringify({
+          type: "session.update",
+          session: {
+            type: "transcription",
+            audio: {
+              input: {
+                format: { type: "audio/pcm", rate: SAMPLE_RATE },
+                transcription: { model, language },
+                turn_detection: { type: "server_vad" },
+              },
+            },
+            include: ["item.input_audio_transcription.logprobs"],
+          },
+        })
+      );
+      socketOpen = true;
+      clearTimeout(timeout);
+      callbacks.onConnected?.();
+      resolve();
+    };
+  });
+
+  // Start feeding audio only once connected.
+  source.connect(processor);
+  processor.connect(ctx.destination);
+
+  return {
+    async stop() {
+      // Stop capturing.
+      try {
+        processor.disconnect();
+        source.disconnect();
+      } catch {
+        /* ignore */
+      }
+      const durationSec = ctx.currentTime;
+      try {
+        await ctx.close();
+      } catch {
+        /* ignore */
+      }
+      stream.getTracks().forEach((t) => t.stop());
+
+      // Trailing silence nudges the final VAD commit; wait briefly for the last
+      // transcripts to arrive, then close.
+      if (ws.readyState === WebSocket.OPEN) {
+        await pumpSilence(ws);
+        await delay(QUIET_FLUSH_MS);
+      }
+      try {
+        ws.close();
+      } catch {
+        /* ignore */
+      }
+
+      const list = [...segments.values()]
+        .filter((s) => s.text.trim().length > 0)
+        .sort((a, b) => a.start - b.start);
+      return { segments: list, durationSec };
+    },
+  };
 }
