@@ -250,6 +250,7 @@ import exampleExtension from "@packages/seed-bible-refresh-example-extension/ext
 import twitchPubExtension from "@packages/twitchPub-extension/extension.json";
 import twitchSubExtension from "@packages/twitchSub-extension/extension.json";
 import locationsExtension from "@packages/locations-extension/extension.json";
+import audioReaderExtension from "@packages/audio-reader-extension/extension.json";
 
 const SEED_BIBLE_EXTENSIONS: ExtensionSet = {
   id: "seed-bible",
@@ -270,6 +271,10 @@ const SEED_BIBLE_EXTENSIONS: ExtensionSet = {
       meta: exampleExtension,
       import: () =>
         import("@packages/seed-bible-refresh-example-extension/index"),
+    },
+    {
+      meta: audioReaderExtension,
+      import: () => import("@packages/audio-reader-extension/index"),
     },
   ],
 };
