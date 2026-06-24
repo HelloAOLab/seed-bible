@@ -302,7 +302,7 @@ export interface PanesManager {
 
   /**
    * Sets tab content on the currently selected pane.
-   * No-op when selected pane contains component content.
+   * If the currently selected pane is a component-backed pane, then the first tab-backed pane is changed instead.
    */
   setSelectedPaneTab: (tabId: string) => void;
 
@@ -458,7 +458,7 @@ export function createPanes(
       return;
     }
 
-    const selectedPane = getSelectedPane();
+    let selectedPane = getSelectedPane();
     if (!selectedPane) {
       const nextPane = createPane(nextTab);
       syncPaneState([nextPane]);
@@ -468,7 +468,11 @@ export function createPanes(
 
     // Do not auto-replace a component-backed pane with a tab.
     if (selectedPane.component !== null) {
-      return;
+      selectedPane = panes.value.find((p) => p.tab !== null) ?? null;
+
+      if (!selectedPane) {
+        return;
+      }
     }
 
     if (selectedPane.tab?.id === nextTab.id) {
