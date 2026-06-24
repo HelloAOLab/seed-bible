@@ -1,11 +1,12 @@
 import type { ComponentChildren } from "preact";
-import { useI18n } from "seed-bible.i18n.I18nManager";
+import { useI18n } from "../i18n/I18nManager";
 import {
   SeedBibleWordmark,
   InstallAppsIcon,
   SafariIcon,
-} from "seed-bible.components.icons";
-import type { OnboardingManager } from "seed-bible.managers.OnboardingManager";
+} from "../components/icons";
+import type { OnboardingManager } from "../managers/OnboardingManager";
+import type { CasualOSManager } from "../managers/OsManager";
 
 /**
  * First-run onboarding modals: a welcome notice, then a device-aware prompt to
@@ -20,9 +21,11 @@ import type { OnboardingManager } from "seed-bible.managers.OnboardingManager";
  */
 export function OnboardingModals({
   onboarding,
+  os,
   className = "",
 }: {
   onboarding: OnboardingManager;
+  os: CasualOSManager;
   className?: string;
 }) {
   const { t } = useI18n();
@@ -84,10 +87,16 @@ export function OnboardingModals({
     return null;
   }
 
-  return card(<InstallContent onboarding={onboarding} />);
+  return card(<InstallContent onboarding={onboarding} os={os} />);
 }
 
-function InstallContent({ onboarding }: { onboarding: OnboardingManager }) {
+function InstallContent({
+  onboarding,
+  os,
+}: {
+  onboarding: OnboardingManager;
+  os: CasualOSManager;
+}) {
   const { t } = useI18n();
   const { platform } = onboarding;
   const isIos = platform === "ios";
@@ -104,6 +113,7 @@ function InstallContent({ onboarding }: { onboarding: OnboardingManager }) {
         // Record the install on the user's profile (backend) + local cache so
         // the prompt and the Settings entry disappear from now on.
         onboarding.markInstalled();
+
         os.toast(
           t("onboarding.installThanks", {
             defaultValue: "Thanks for installing!",

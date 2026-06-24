@@ -225,6 +225,17 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
     },
 
     getSharedDocument,
+
+    promptToInstallPWA: async (): Promise<{
+      outcome: "accepted" | "dismissed";
+      platform: string;
+    }> => {
+      throw new Error("Not implemented yet");
+    },
+
+    toast: (message: string) => {
+      console.log("Toast:", message);
+    },
   };
 }
 

@@ -1,6 +1,6 @@
 import { computed, effect, signal } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
-import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
+import type { BibleReadingState } from "../managers/BibleReadingManager";
 
 /** Drives the icon swap between play and pause. Shared across the tool. */
 const isPlaying = signal(false);

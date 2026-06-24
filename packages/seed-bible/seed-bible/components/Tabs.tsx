@@ -27,8 +27,7 @@ import {
   handleGridKeyNav,
   handleHorizontalListKeyNav,
 } from "../components/KeyboardNav";
-
-const { useEffect, useRef } = os.appHooks;
+import { useEffect, useRef } from "preact/hooks";
 
 interface SidebarProps {
   state: SeedBibleState;

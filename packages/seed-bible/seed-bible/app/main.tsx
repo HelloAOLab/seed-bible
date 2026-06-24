@@ -21,9 +21,6 @@ import {
   type AppConfig,
 } from "./appConfig";
 import "./main.css";
-import type { ReadonlySignal } from "@preact/signals";
-import { closeContextMenus } from "../components/ContextMenu";
-import { ModalHost } from "../components/ModalHost";
 import { OnboardingModals } from "../components/Onboarding";
 import { Tutorial } from "../components/Tutorial";
 
@@ -192,6 +189,7 @@ function MainContent(props: {
 
         <OnboardingModals
           onboarding={state.onboarding}
+          os={state.os}
           className={`${fontSizeClass} ${webkitClass}`}
         />
 

@@ -3,7 +3,7 @@ import {
   type ChapterVerse,
 } from "../managers/FreeUseBibleAPI";
 import type { JSX } from "preact";
-import { Suspense } from "preact/compat";
+import { Suspense, useRef } from "preact/compat";
 import {
   computed,
   useComputed,

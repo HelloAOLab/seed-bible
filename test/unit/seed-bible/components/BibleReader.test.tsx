@@ -204,8 +204,8 @@ function createMobileState(): SeedBibleState {
       openSidebar: vi.fn(),
     },
     bookmarks: {
-      isLocationBookmarked: jest.fn(() => false),
-      toggleBookmarkAtLocation: jest.fn(async () => {}),
+      isLocationBookmarked: vi.fn(() => false),
+      toggleBookmarkAtLocation: vi.fn(async () => {}),
     },
     tools: createBibleToolsManager(),
   } as any as SeedBibleState;

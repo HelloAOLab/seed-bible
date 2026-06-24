@@ -72,7 +72,11 @@ function isPlainObject(value: Maybe): value is JsonObject {
 
 function getMaybe(obj: JsonObject | undefined, key: string): Maybe {
   if (obj && Object.prototype.hasOwnProperty.call(obj, key)) {
-    return obj[key];
+    const val = obj[key];
+    if (typeof val === "undefined") {
+      return ABSENT;
+    }
+    return val;
   }
   return ABSENT;
 }

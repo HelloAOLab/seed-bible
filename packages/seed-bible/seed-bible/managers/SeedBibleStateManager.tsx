@@ -334,7 +334,6 @@ export function createSeedBibleState(
   const modals = createModalManager();
   const search = createSearchManager();
   const onboarding = createOnboardingManager(login);
-  const tutorial = createTutorialManager(login, onboarding, selector);
 
   // Terms of Service modal. Two-way bound to the `?terms=open` query param so
   // it can be deep-linked: setting the param opens the modal, and closing the
@@ -443,6 +442,8 @@ export function createSeedBibleState(
       : window.innerHeight
   );
   const isMobile = computed(() => viewportWidth.value <= 768);
+
+  const tutorial = createTutorialManager(login, onboarding, selector, isMobile);
 
   // A phone held sideways: landscape orientation with the short viewport
   // height typical of phones. Tablets/desktops in landscape have more
