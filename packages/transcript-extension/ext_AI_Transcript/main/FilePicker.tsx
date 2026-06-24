@@ -1,5 +1,6 @@
 import { useRef, useState } from "preact/hooks";
 import { useManager } from "ext_AI_Transcript.main.context";
+import { useI18n } from "seed-bible.i18n.I18nManager";
 import type { FileStatus } from "ext_AI_Transcript.main.types";
 
 const STATUS_TEXT: Record<FileStatus, string> = {
@@ -21,6 +22,7 @@ function fmtDur(sec?: number): string {
 
 export function FilePicker() {
   const context = useManager();
+  const { t } = useI18n();
   const tm = context.transcriptionManager;
   const file = tm.files.value[0]; // single file at a time
   const processing = tm.isProcessing.value;
@@ -74,10 +76,16 @@ export function FilePicker() {
               {file.name}
             </p>
             <p class="ts_dropzone__hint">
-              {STATUS_TEXT[file.status]}
+              {t(`Status_${file.status}`, {
+                ns: "ext_AI_Transcript",
+                defaultValue: STATUS_TEXT[file.status],
+              })}
               {file.durationSec ? ` · ${fmtDur(file.durationSec)}` : ""}
               {file.status === "done" || file.status === "error"
-                ? " · click to choose another"
+                ? ` · ${t("Click_to_choose_another", {
+                    ns: "ext_AI_Transcript",
+                    defaultValue: "click to choose another",
+                  })}`
                 : ""}
             </p>
             {file.status !== "queued" &&
@@ -94,9 +102,18 @@ export function FilePicker() {
           </>
         ) : (
           <>
-            <p class="ts_dropzone__title">Drop an audio or video file here</p>
+            <p class="ts_dropzone__title">
+              {t("Drop_file_here", {
+                ns: "ext_AI_Transcript",
+                defaultValue: "Drop an audio or video file here",
+              })}
+            </p>
             <p class="ts_dropzone__hint">
-              or click to choose — mp3, m4a, wav, mp4, mov, mkv, webm…
+              {t("Or_click_to_choose", {
+                ns: "ext_AI_Transcript",
+                defaultValue:
+                  "or click to choose — mp3, m4a, wav, mp4, mov, mkv, webm…",
+              })}
             </p>
           </>
         )}
@@ -110,7 +127,15 @@ export function FilePicker() {
           disabled={processing || !file || file.status === "done"}
           onClick={() => tm.transcribeAll()}
         >
-          {processing ? "Working…" : "Transcribe"}
+          {processing
+            ? t("Working", {
+                ns: "ext_AI_Transcript",
+                defaultValue: "Working…",
+              })
+            : t("Transcribe", {
+                ns: "ext_AI_Transcript",
+                defaultValue: "Transcribe",
+              })}
         </button>
       </div>
     </section>
