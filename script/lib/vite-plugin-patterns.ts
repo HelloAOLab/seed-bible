@@ -125,14 +125,10 @@ export function patternPlugin(): Plugin {
           packagedThisRun.add(folder);
         }
 
-        const auxText = await readFile(file, "utf-8");
-        // Fail fast on corrupt output rather than shipping invalid JSON.
-        JSON.parse(auxText);
-
         // Track the output so build mode rebuilds when it changes.
         this.addWatchFile(file);
 
-        return `export default { aux: ${JSON.stringify(auxText)} };`;
+        return `export default { name: ${JSON.stringify(folder)} };`;
       }
 
       // Dev: serve the AUX over HTTP (see configureServer) and export its URL.
