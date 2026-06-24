@@ -15,7 +15,7 @@ import { execFileSync } from "node:child_process";
 const DRIVER_NAME = "i18n-json";
 const DRIVER_DESCRIPTION = "Three-way merge for i18n translation JSON files";
 // %O = base, %A = ours/output, %B = theirs, %L = marker size, %P = real path.
-const DRIVER_COMMAND = "npx tsx script/mergeI18nJson.ts %O %A %B %L %P";
+const DRIVER_COMMAND = "bun script/mergeI18nJson.ts %O %A %B %L %P";
 
 function git(args: string[]): string {
   return execFileSync("git", args, { encoding: "utf-8" }).trim();
