@@ -262,12 +262,53 @@ export interface ManagedBibleBelowReaderToolbarTool extends BibleTool<BibleBelow
 export type ManagedBibleBelowReaderToolbarToolItem =
   ManagedBibleToolItem<BibleBelowReaderToolContext>;
 
+/**
+ * Runtime context for the quick toolbar surface — the compact row of
+ * actions shown at the top of the reader, beside the chapter bookmark
+ * button. Intentionally lean: quick tools are header-level chapter actions
+ * and only need the active reading state.
+ */
+export interface QuickToolContext {
+  /** Active reading state for the current reader surface. */
+  readingState: BibleReadingState;
+  /** Optional window metrics for responsive tool behavior. */
+  window?: WindowContext | null;
+}
+
+/** Fully resolved quick toolbar tool ready for rendering. */
+export interface BibleQuickToolbarTool extends ResolvedBibleTool {
+  /** Disabled signal resolved for current context. */
+  disabled: ReadonlySignal<boolean>;
+  /** Visibility signal resolved for current context. */
+  visible: ReadonlySignal<boolean>;
+  /** Invoked when the user activates the tool. */
+  onSelect: () => void;
+  /** Optional context-menu items for this tool. */
+  getItems?: () => ResolvedBibleToolItem[];
+}
+
+export type ManagedBibleQuickToolbarToolItem =
+  ManagedBibleToolItem<QuickToolContext>;
+
+/** Registerable quick toolbar tool definition. */
+export interface ManagedBibleQuickToolbarTool extends BibleTool<QuickToolContext> {
+  /** Optional disabled predicate (boolean or signal). */
+  isDisabled?: ToolPredicate<QuickToolContext>;
+  /** Optional visibility predicate (boolean or signal). */
+  isVisible?: ToolPredicate<QuickToolContext>;
+  /** Optional action callback for tool activation. Mutually exclusive with getItems(). */
+  onSelect?: (context: QuickToolContext) => void;
+  /** Optional context-menu items resolver. Mutually exclusive with onSelect(). */
+  getItems?: (context: QuickToolContext) => ManagedBibleQuickToolbarToolItem[];
+}
+
 function validateToolActions(
   tool:
     | ManagedBibleToolbarTool
     | ManagedBibleVerseToolbarTool
     | ManagedBibleEmptyPaneTool
     | ManagedBibleBelowReaderToolbarTool
+    | ManagedBibleQuickToolbarTool
 ) {
   if (tool.onSelect && tool.getItems) {
     throw new Error(
@@ -610,6 +651,18 @@ export interface ToolsManager {
   getBelowReaderTools: (
     context: BibleBelowReaderToolContext
   ) => BibleBelowReaderToolbarTool[];
+
+  /** Registers a quick toolbar tool and returns an unregister callback. */
+  registerQuickTool: (tool: ManagedBibleQuickToolbarTool) => () => void;
+
+  /** Unregisters a quick toolbar tool by ID. */
+  unregisterQuickTool: (toolId: string) => void;
+
+  /** Resolves/sorts quick toolbar tools for the given context. */
+  getQuickTools: (context: QuickToolContext) => BibleQuickToolbarTool[];
+
+  /** Lists quick toolbar tool metadata without resolving any context. */
+  listQuickTools: () => ToolMetadata[];
 }
 
 /**
@@ -685,6 +738,7 @@ export function createBibleToolsManager(): ToolsManager {
   const belowReaderTools = signal<ManagedBibleBelowReaderToolbarTool[]>(
     getDefaultBelowReaderToolbarTools()
   );
+  const quickTools = signal<ManagedBibleQuickToolbarTool[]>([]);
 
   const registerToolbarTool = (tool: ManagedBibleToolbarTool) => {
     validateToolActions(tool);
@@ -826,6 +880,38 @@ export function createBibleToolsManager(): ToolsManager {
     return sortBy(tools, [(tool) => tool.priority]);
   };
 
+  const registerQuickTool = (tool: ManagedBibleQuickToolbarTool) => {
+    validateToolActions(tool);
+    const nextTools = quickTools.value.filter((entry) => entry.id !== tool.id);
+    quickTools.value = [...nextTools, tool];
+
+    return () => {
+      unregisterQuickTool(tool.id);
+    };
+  };
+
+  const unregisterQuickTool = (toolId: string) => {
+    quickTools.value = quickTools.value.filter((tool) => tool.id !== toolId);
+  };
+
+  const getQuickTools = (context: QuickToolContext) => {
+    const tools = quickTools.value.map((tool) => ({
+      id: tool.id,
+      priority: resolveToolPriority(tool.priority, context),
+      title: tool.title,
+      icon: () => tool.icon(context),
+      disabled: resolveToolPredicate(tool.isDisabled, context, false),
+      visible: resolveToolPredicate(tool.isVisible, context, true),
+      onSelect: () => tool.onSelect?.(context),
+      getItems: resolveToolItems(tool.getItems, context, tool.id),
+    }));
+
+    return sortBy(tools, [(tool) => tool.priority]);
+  };
+
+  const listQuickTools = (): ToolMetadata[] =>
+    quickTools.value.map((tool) => ({ id: tool.id, title: tool.title }));
+
   return {
     registerToolbarTool,
     unregisterToolbarTool,
@@ -841,5 +927,9 @@ export function createBibleToolsManager(): ToolsManager {
     registerBelowReaderTool,
     unregisterBelowReaderTool,
     getBelowReaderTools,
+    registerQuickTool,
+    unregisterQuickTool,
+    getQuickTools,
+    listQuickTools,
   };
 }

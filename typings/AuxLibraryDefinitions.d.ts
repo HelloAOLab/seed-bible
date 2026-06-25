@@ -14660,6 +14660,28 @@ interface Os {
   ): ShowToastAction;
 
   /**
+   * Prompts the user to install the app as a PWA (Progressive Web App).
+   *
+   * On platforms that support the `beforeinstallprompt` flow (Android and most
+   * desktop browsers) this shows the native install prompt and resolves with
+   * the user's choice. On platforms without programmatic install support (e.g.
+   * iOS Safari) the returned promise rejects.
+   *
+   * @example
+   * try {
+   *     const result = await os.promptToInstallPWA();
+   *     if (result.outcome === 'accepted') {
+   *         os.toast("Thanks for installing!");
+   *     } else {
+   *         os.toast("Maybe next time!");
+   *     }
+   * } catch (error) {
+   *     os.toast("PWA installation is not available: " + error.message);
+   * }
+   */
+  promptToInstallPWA(): Promise<{ outcome: "accepted" | "dismissed" }>;
+
+  /**
    * Configures TypeScript type checking in the Monaco editor.
    *
    * This function allows you to enable or disable TypeScript semantic and syntax validation

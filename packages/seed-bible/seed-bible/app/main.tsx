@@ -11,6 +11,8 @@ import { useEffect } from "preact/hooks";
 import type { ReadonlySignal } from "@preact/signals";
 import { closeContextMenus } from "seed-bible.components.ContextMenu";
 import { ModalHost } from "seed-bible.components.ModalHost";
+import { OnboardingModals } from "seed-bible.components.Onboarding";
+import { Tutorial } from "seed-bible.components.Tutorial";
 
 const { useMemo } = os.appHooks;
 
@@ -68,7 +70,7 @@ export function Main() {
 
   useEffect(() => {
     state.extensions.loadDefaultExtensions();
-  });
+  }, []);
 
   const { config } = state;
   const fontSizeClass = `sb-font-size-${config.config.value.fontSize.toLowerCase()}`;
@@ -135,12 +137,17 @@ function MainContent(props: {
               themeCssVariables={theme.themeCssVariables}
               themeCssClasses={theme.themeCssClasses}
             />
+            {/* The selector draws its own tour spotlight/popover internally
+                (CSS dim toggled off the tutorial signals), since its elements
+                live in this portal's shadow root and can't be measured from
+                the main tour overlay. */}
             <BibleSelector
               className={`${fontSizeClass} ${webkitClass}`}
               isOpen={selector.isOpen.value}
               onClose={() => selector.setOpen(false)}
               selectorState={selector}
               bibleDataManager={state.bibleData}
+              tutorial={state.tutorial}
             />
           </>
         </CasualOSApp>
@@ -152,6 +159,33 @@ function MainContent(props: {
         <SharedSessionsToasts state={state} />
 
         <ModalHost manager={state.modals} />
+
+        <CasualOSApp id="onboarding">
+          <>
+            <ExternalResourceDependencies
+              themeCssVariables={theme.themeCssVariables}
+              themeCssClasses={theme.themeCssClasses}
+            />
+            <OnboardingModals
+              onboarding={state.onboarding}
+              className={`${fontSizeClass} ${webkitClass}`}
+            />
+          </>
+        </CasualOSApp>
+
+        <CasualOSApp id="tutorial">
+          <>
+            <ExternalResourceDependencies
+              themeCssVariables={theme.themeCssVariables}
+              themeCssClasses={theme.themeCssClasses}
+            />
+            <Tutorial
+              tutorial={state.tutorial}
+              className={`${fontSizeClass} ${webkitClass}`}
+              groupFilter="non-selector"
+            />
+          </>
+        </CasualOSApp>
       </div>
     </>
   );

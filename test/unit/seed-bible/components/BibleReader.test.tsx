@@ -12,6 +12,7 @@ import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/manager
 import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 
 type ReaderFixture = {
   pane: Pane;
@@ -186,6 +187,11 @@ function createMobileState(): SeedBibleState {
       openSettings: jest.fn(),
       openSidebar: jest.fn(),
     },
+    bookmarks: {
+      isLocationBookmarked: jest.fn(() => false),
+      toggleBookmarkAtLocation: jest.fn(async () => {}),
+    },
+    tools: createBibleToolsManager(),
   } as any as SeedBibleState;
 }
 
@@ -260,6 +266,104 @@ describe("BibleReader", () => {
     });
 
     expect(setOpen).toHaveBeenCalledWith(true, pane);
+  });
+
+  it("updates the displayed book name when the current book changes", () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-bible-reader-book")?.textContent).toBe(
+      "Genesis"
+    );
+
+    const exodus = {
+      ...readingState.translationBooks.value!.books[0]!,
+      id: "EXO",
+      name: "Exodus",
+      commonName: "Exodus",
+      order: 2,
+    };
+
+    act(() => {
+      (
+        readingState.translationBooks as Signal<
+          BibleReadingState["translationBooks"]["value"]
+        >
+      ).value = {
+        translation: readingState.translationBooks.value!.translation,
+        books: [exodus],
+      };
+      readingState.bookId.value = "EXO";
+    });
+
+    expect(container.querySelector(".sb-bible-reader-book")?.textContent).toBe(
+      "Exodus"
+    );
+  });
+
+  it("shows the new book when the reading state is replaced with one for a different book", () => {
+    const first = createFixture();
+    const second = createFixture();
+
+    // Point the second reading state at a different book entirely, so that
+    // re-rendering with it must recompute the current book rather than keep
+    // the first reading state's value.
+    const exodus = {
+      ...second.readingState.translationBooks.value!.books[0]!,
+      id: "EXO",
+      name: "Exodus",
+      commonName: "Exodus",
+      order: 2,
+    };
+    (
+      second.readingState.translationBooks as Signal<
+        BibleReadingState["translationBooks"]["value"]
+      >
+    ).value = {
+      translation: second.readingState.translationBooks.value!.translation,
+      books: [exodus],
+    };
+    second.readingState.bookId.value = "EXO";
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={first.pane}
+          selectorState={first.selectorState}
+          readingState={first.readingState}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-bible-reader-book")?.textContent).toBe(
+      "Genesis"
+    );
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={second.pane}
+          selectorState={second.selectorState}
+          readingState={second.readingState}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-bible-reader-book")?.textContent).toBe(
+      "Exodus"
+    );
   });
 
   it("clicking a verse selects it with event coordinates", () => {
