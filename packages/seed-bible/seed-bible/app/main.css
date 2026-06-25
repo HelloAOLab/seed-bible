@@ -1159,46 +1159,6 @@ h6 {
   pointer-events: none;
 }
 
-.sb-bible-reader-mobile-compact {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: var(--sb-reader-background);
-  color: var(--sb-font-color);
-  font-size: 11px;
-  font-weight: 600;
-  z-index: 9;
-  opacity: 0;
-  transform: translateY(-100%);
-  pointer-events: none;
-  transition:
-    opacity 0.25s ease,
-    transform 0.25s ease;
-  text-align: center;
-}
-
-.sb-bible-reader-mobile-compact-visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.sb-bible-reader-mobile-compact-divider {
-  font-weight: 400;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 60%);
-}
-
-.sb-bible-reader-mobile-compact-translation {
-  font-weight: 400;
-  font-size: 12px;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
-}
-
 /* ── Mobile settings bottom sheet ───────────────────────────────────────── */
 .sb-mobile-settings-sheet-overlay {
   position: fixed;
@@ -2056,8 +2016,10 @@ h6 {
   }
 
   /* Full-width floating bar above the bottom nav: play (audio reader) on the
-   * far left, with previous / chapter label / next centered. Replaces the two
-   * scattered side arrows. */
+   * far left, with previous / chapter label / next centered. Sits directly
+   * above the main bottom toolbar and is always visible. When the user
+   * scrolls down, the toolbar slides off the bottom and this bar drops into
+   * its place (see the scroll-hide rule below). */
   .sb-reader-floating-nav {
     position: absolute;
     bottom: 100%;
@@ -2448,26 +2410,15 @@ h6 {
     inset-inline-end: var(--sb-reader-toolbar-floating-button-side-offset);
   }
 
-  /* When the user is scrolling down on a mobile reader, slide the bottom
-   * toolbar (and its floating prev/next arrows) off the bottom of the
-   * viewport. Scrolling back up removes the body class and the toolbar
-   * slides back into view. The extra offset past 100% accounts for the
-   * floating arrow buttons, which sit `top: -68px` above the wrap and
-   * would otherwise remain visible after the wrap itself slides off. */
+  /* When the user scrolls down on a mobile reader, slide the wrap down by
+   * exactly the toolbar's own height (100%). That drops the main bottom
+   * toolbar off the bottom of the viewport while the floating chapter-nav
+   * bar — which sits directly above the toolbar at `bottom: 100%` — lands
+   * flush at the bottom and stays visible, taking the toolbar's place.
+   * Scrolling back up removes the body class and both slide back. */
   body.sb-scroll-hide-bars .sb-reader-toolbar-wrap {
-    transform: translateX(-50%)
-      translateY(
-        calc(100% - var(--sb-reader-toolbar-floating-button-top) + 8px)
-      );
-    /* pointer-events: none; */
+    transform: translateX(-50%) translateY(100%);
   }
-
-  /* The floating chapter-nav bar rides with the bottom toolbar when the bars
-   * hide on scroll. It sits inside `.sb-reader-toolbar-wrap`, so it already
-   * inherits the wrap's slide transform — applying its own counter-transform
-   * here made it travel a shorter distance over the same 0.3s, so it lagged
-   * behind the wrap and a gap opened between them. Leaving it transform-free
-   * keeps both moving at the same speed, flush, with no gap. */
 }
 
 .sb-verse-toolbar {
@@ -2691,11 +2642,22 @@ h6 {
 }
 
 .sb-verse-toolbar-mobile {
-  left: 50%;
-  bottom: 0px;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: none;
+  width: 100%;
   max-width: 100%;
-  align-items: center;
+  align-items: stretch;
+  padding: 8px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  box-shadow: 0 -8px 24px var(--sb-shadow-color);
 }
 
 /* Grab-handle pill at the top of the mobile verse sheet (visual affordance). */
@@ -2708,11 +2670,60 @@ h6 {
   flex: none;
 }
 
-/* On mobile the reference label is always shown and centered above the row. */
+/* Small dismiss button pinned to the top-right corner of the mobile sheet. */
+.sb-verse-toolbar-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+  color: var(--sb-font-color);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+  z-index: 1;
+}
+
+.sb-verse-toolbar-close:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
+}
+
+.sb-verse-toolbar-close .material-symbols-outlined {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* Static "swipe up to view more" affordance shown at the foot of the sheet. */
+.sb-verse-toolbar-swipe-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-verse-toolbar-swipe-hint .material-symbols-outlined {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* On mobile the reference label is always shown and centered above the row.
+   The inline padding keeps a long reference clear of the corner close button. */
 .sb-verse-toolbar-mobile .sb-verse-toolbar-ref {
   text-align: center;
   align-self: stretch;
   max-width: none;
+  padding-left: 40px;
+  padding-right: 40px;
 }
 
 /* The action row scrolls horizontally on narrow phones rather than overflowing
@@ -2727,6 +2738,53 @@ h6 {
 
 .sb-verse-toolbar-mobile .sb-verse-toolbar-tools::-webkit-scrollbar {
   display: none;
+}
+
+/* Card-grid variant of the mobile action row. Each action becomes a rounded
+   tappable card; cards flex-wrap roughly four per row, and a short final row
+   (e.g. Bookmark / Copy / Share) stretches to fill the width. */
+.sb-verse-toolbar-mobile .sb-verse-toolbar-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  overflow: visible;
+  width: 100%;
+}
+
+.sb-verse-toolbar-cards .sb-verse-toolbar-action-item {
+  flex: 1 1 20%;
+  min-width: 72px;
+}
+
+.sb-verse-toolbar-cards .sb-verse-toolbar-action {
+  width: 100%;
+  gap: 6px;
+  padding: 12px 6px;
+  min-height: 64px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+  font-size: 12px;
+}
+
+.sb-verse-toolbar-cards .sb-verse-toolbar-action:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
+}
+
+.sb-verse-toolbar-cards .sb-verse-toolbar-action-label {
+  font-size: 12px;
+}
+
+/* The More/Less toggle reads as the same card, with a visible outline when the
+   sheet is expanded (matching the "Less" state in the design). */
+.sb-verse-toolbar-cards .sb-verse-toolbar-more-toggle-active {
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
+}
+
+/* The card grid hosts its own dismiss control (the corner X), and the ref label
+   sits centered above it, so don't reserve extra side padding. */
+.sb-verse-toolbar-mobile .sb-verse-toolbar-cards .sb-tool-context-menu {
+  bottom: calc(100% + 6px);
 }
 
 /* Inline highlight swatches grouped as their own rounded pill, set off from the
