@@ -336,11 +336,7 @@ describe("createTabs", () => {
     expect(buildTranslationIdSpy).toHaveBeenCalledWith("NIV");
   });
 
-  // TODO: Selected-verse -> URL syncing has not been reimplemented in the
-  // standalone TabsManager (only the initial `?verse` read exists; see the
-  // "TODO: Update the URL here" effect in TabsManager). Re-enable these once
-  // the sync is added.
-  it.skip("updates the verse URL param from selected verses in the current chapter", async () => {
+  it("updates the verse URL param from selected verses in the current chapter", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
@@ -367,11 +363,11 @@ describe("createTabs", () => {
       } as any,
     ];
 
-    await waitFor(() => (globalThis as any).configBot.tags.verse === "1,3");
-    expect((globalThis as any).configBot.tags.verse).toBe("1,3");
+    const url = new URL(window.location.href);
+    expect(url.searchParams.get("verse")).toBe("1,3");
   });
 
-  it.skip("clears the verse URL param when selected verses become empty", async () => {
+  it("clears the verse URL param when selected verses become empty", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
@@ -387,15 +383,17 @@ describe("createTabs", () => {
         verse: { number: 4 },
       } as any,
     ];
-    await waitFor(() => (globalThis as any).configBot.tags.verse === "4");
+
+    let url = new URL(window.location.href);
+    expect(url.searchParams.get("verse")).toBe("4");
 
     readingState.selectedVerses.value = [];
 
-    await waitFor(() => (globalThis as any).configBot.tags.verse === null);
-    expect((globalThis as any).configBot.tags.verse).toBeNull();
+    url = new URL(window.location.href);
+    expect(url.searchParams.has("verse")).toBe(false);
   });
 
-  it.skip("uses selected tab verses when syncing the verse URL param", async () => {
+  it("uses selected tab verses when syncing the verse URL param", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
@@ -410,7 +408,8 @@ describe("createTabs", () => {
         verse: { number: 2 },
       } as any,
     ];
-    await waitFor(() => (globalThis as any).configBot.tags.verse === "2");
+    let url = new URL(window.location.href);
+    expect(url.searchParams.get("verse")).toBe("2");
 
     const secondTab = manager.addTab();
     await waitForInitialLoad(secondTab.readingState);
@@ -424,8 +423,8 @@ describe("createTabs", () => {
       } as any,
     ];
 
-    await waitFor(() => (globalThis as any).configBot.tags.verse === "6");
-    expect((globalThis as any).configBot.tags.verse).toBe("6");
+    url = new URL(window.location.href);
+    expect(url.searchParams.get("verse")).toBe("6");
   });
 
   it("decorates initial verses from the verse URL param on the initial tab", async () => {

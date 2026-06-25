@@ -308,12 +308,11 @@ export function createTabs(
   };
 
   effect(() => {
-    const selectedBookId = selectedTab.value?.readingState.bookId.value;
-    const selectedChapter = selectedTab.value?.readingState.chapterNumber.value;
-    const selectedTranslation =
-      selectedTab.value?.readingState.translationId.value;
+    const readingState = selectedTab.value?.readingState;
+    const selectedBookId = readingState?.bookId.value;
+    const selectedChapter = readingState?.chapterNumber.value;
+    const selectedTranslation = readingState?.translationId.value;
 
-    // TODO: Update the URL here
     const url = new URL(navigation.currentUrl.peek());
     navigation.updateQueryParam("book", selectedBookId ?? null);
     navigation.updateQueryParam(
@@ -326,7 +325,6 @@ export function createTabs(
 
       if (url.searchParams.has("translationId")) {
         navigation.updateQueryParam("translationId", translationId);
-        // configBot.tags.translationId = translationId;
       } else if (
         url.searchParams.has("translation") ||
         translationId !== defaultTranslation.id
@@ -334,6 +332,17 @@ export function createTabs(
         navigation.updateQueryParam("translation", translationId);
       }
     }
+
+    const verseNumbers = readingState?.selectedVerses.value
+      .filter(
+        (verse) =>
+          verse.bookId === selectedBookId &&
+          verse.chapterNumber === selectedChapter
+      )
+      .map((verse) => verse.verse.number);
+
+    const formatted = verseNumbers ? formatVerseSelection(verseNumbers) : null;
+    navigation.updateQueryParam("verse", formatted);
   });
 
   effect(() => {
