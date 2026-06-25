@@ -3,7 +3,7 @@ import {
   type ChapterVerse,
 } from "seed-bible.managers.FreeUseBibleAPI";
 import type { JSX } from "preact";
-import { computed, useComputed } from "@preact/signals";
+import { computed } from "@preact/signals";
 import type {
   BibleReadingState,
   BibleSelectedVerse,
