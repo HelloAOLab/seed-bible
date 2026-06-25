@@ -155,7 +155,11 @@ function createRateLimiter(
   };
 }
 
-export function CreateTwitchPubState(): TwitchPubState {
+export function CreateTwitchPubState({
+  toast,
+}: {
+  toast: (message: string) => void;
+}): TwitchPubState {
   /** manages twitch interface state */
   const interfaceEnabled = signal<boolean>(
     !!window.localStorage?.interfaceEnabled || false
@@ -412,5 +416,6 @@ export function CreateTwitchPubState(): TwitchPubState {
     showUI,
     handleSeedBibleUpdate,
     handleHighlightUpdate,
+    toast,
   };
 }

@@ -662,32 +662,6 @@ export function createSettings(
     syncFromBot();
   });
 
-  // TODO: Update when URL changes
-  // os.addBotListener(configBot, "onBotChanged", (that: unknown) => {
-  //   const changedTagsSource =
-  //     that && typeof that === "object" && "tags" in that
-  //       ? (that as { tags?: unknown }).tags
-  //       : null;
-  //   const changedTags = Array.isArray(changedTagsSource)
-  //     ? changedTagsSource
-  //     : [];
-
-  //   if (
-  //     changedTags.includes(TAG_BOOK_ORIENTATION) ||
-  //     changedTags.includes(TAG_UI_TEXT_SIZE) ||
-  //     changedTags.includes(TAG_SELECTION_UI) ||
-  //     changedTags.includes(TAG_SCRIPTURE_ELEMENTS) ||
-  //     changedTags.includes(TAG_TEXT_CONFIG) ||
-  //     changedTags.includes(TAG_TOOLBAR) ||
-  //     changedTags.includes(TAG_KEEP_AWAKE) ||
-  //     changedTags.includes(TAG_CUSTOM_HIGHLIGHT_COLORS) ||
-  //     changedTags.includes(TAG_SCRIPTURE_MARGIN) ||
-  //     changedTags.includes(TAG_SHOW_NAV_ARROWS)
-  //   ) {
-  //     syncFromBot();
-  //   }
-  // });
-
   const setBookOrientation = (orientation: BookOrientation) => {
     settings.value = { ...settings.value, bookOrientation: orientation };
     configBot.tags[TAG_BOOK_ORIENTATION] = orientation;
@@ -736,9 +710,6 @@ export function createSettings(
     if (!Number.isFinite(margin)) return;
     const clamped = Math.max(0, Math.min(45, margin));
     settings.value = { ...settings.value, scriptureMargin: clamped };
-
-    // TODO: Update URL
-    // configBot.tags[TAG_SCRIPTURE_MARGIN] = clamped;
     saveProfileConfigValue(login, PROFILE_SCRIPTURE_MARGIN, clamped);
   };
 
@@ -811,16 +782,12 @@ export function createSettings(
       os.disableWakeLock();
     }
     settings.value = { ...settings.value, keepScreenAwake: nextValue };
-    // TODO: Update URL
-    // configBot.tags[TAG_KEEP_AWAKE] = nextValue;
     saveProfileConfigValue(login, PROFILE_KEEP_AWAKE, nextValue);
   };
 
   const setShowNavArrows = (enabled: boolean) => {
     if (settings.value.showNavArrows === enabled) return;
     settings.value = { ...settings.value, showNavArrows: enabled };
-    // TODO: Update URL
-    // configBot.tags[TAG_SHOW_NAV_ARROWS] = enabled;
     saveProfileConfigValue(login, PROFILE_SHOW_NAV_ARROWS, enabled);
   };
 

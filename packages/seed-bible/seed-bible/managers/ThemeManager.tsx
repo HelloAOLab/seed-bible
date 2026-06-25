@@ -1155,53 +1155,15 @@ export function createTheme(
     )
   );
 
-  // TODO: Listen for changes to the URL
-  // os.addBotListener(configBot, "onBotChanged", (that: unknown) => {
-  //   const changedTagsSource =
-  //     that && typeof that === "object" && "tags" in that
-  //       ? (that as { tags?: unknown }).tags
-  //       : null;
-  //   const changedTags = Array.isArray(changedTagsSource)
-  //     ? changedTagsSource
-  //     : [];
-
-  //   if (changedTags.includes(TAG_THEME_ID)) {
-  //     selectedThemeId.value = parseThemeId(
-  //       configBot.tags[TAG_THEME_ID],
-  //       DEFAULT_THEME_ID
-  //     );
-  //   }
-  //   if (changedTags.includes(TAG_CUSTOM_THEME)) {
-  //     customOverrides.value = parseCustomTheme(
-  //       configBot.tags[TAG_CUSTOM_THEME]
-  //     );
-  //   }
-  //   if (changedTags.includes(TAG_CUSTOM_HIGHLIGHTS)) {
-  //     customHighlightOverrides.value = parseHighlightOverrides(
-  //       configBot.tags[TAG_CUSTOM_HIGHLIGHTS]
-  //     );
-  //   }
-  // });
-
   const setTheme = (themeId: string) => {
     if (themes.value.some((theme) => theme.id === themeId)) {
       selectedThemeId.value = themeId;
-
-      // TODO: Update the URL here
-      // configBot.tags[TAG_THEME_ID] = themeId;
       saveProfileConfigValue(login, PROFILE_THEME_ID, themeId);
     }
   };
 
   const writeOverrides = (next: ThemeOverrides) => {
     customOverrides.value = next;
-
-    // TODO: Update the URL here
-    // if (Object.keys(next).length === 0) {
-    //   configBot.tags[TAG_CUSTOM_THEME] = "";
-    // } else {
-    //   configBot.tags[TAG_CUSTOM_THEME] = JSON.stringify(next);
-    // }
     saveProfileConfigValue(login, PROFILE_CUSTOM_THEME, next);
   };
 
@@ -1221,12 +1183,6 @@ export function createTheme(
 
   const writeHighlightOverrides = (next: HighlightOverrides) => {
     customHighlightOverrides.value = next;
-    // TODO: Update the URL here
-    // if (Object.keys(next).length === 0) {
-    //   configBot.tags[TAG_CUSTOM_HIGHLIGHTS] = "";
-    // } else {
-    //   configBot.tags[TAG_CUSTOM_HIGHLIGHTS] = JSON.stringify(next);
-    // }
     saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHTS, next);
   };
 

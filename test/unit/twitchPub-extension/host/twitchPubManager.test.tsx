@@ -88,6 +88,8 @@ function hasBookChangedPayload(expected: {
 describe("CreateTwitchPubState", () => {
   let logSpy: Mock;
   let fetchMock: Mock;
+  let toastMock: Mock;
+  let props: { toast: Mock };
 
   beforeEach(() => {
     window.localStorage.clear();
@@ -109,6 +111,8 @@ describe("CreateTwitchPubState", () => {
 
     (globalThis as any).TextEncoder = TextEncoder;
     logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    toastMock = vi.fn();
+    props = { toast: toastMock };
   });
 
   afterEach(() => {
@@ -119,7 +123,7 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("creates the default state and keeps the current page in localStorage", async () => {
-    const state = CreateTwitchPubState();
+    const state = CreateTwitchPubState(props);
 
     expect(state.interfaceEnabled.value).toBe(false);
     expect(state.currentPage.value).toBe("login");
@@ -165,7 +169,7 @@ describe("CreateTwitchPubState", () => {
       url: `https://example.com/twitch-pub?existing=1`,
     });
 
-    const state = CreateTwitchPubState();
+    const state = CreateTwitchPubState(props);
 
     const url = new URL(state.qrValue.value);
     const redirectUri = new URL(url.searchParams.get("redirect_uri") ?? "");
@@ -182,7 +186,7 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("includes broadcaster, channel, book, chapter, and translation in QR state", () => {
-    const state = CreateTwitchPubState();
+    const state = CreateTwitchPubState(props);
 
     state.twitchConfig.value.broadcasterId.value = "broadcaster-123";
     state.twitchConfig.value.userAccessToken.value = "token-123";
@@ -224,7 +228,7 @@ describe("CreateTwitchPubState", () => {
       url: `https://example.com/reader?chapter=1`,
     });
 
-    const state = CreateTwitchPubState();
+    const state = CreateTwitchPubState(props);
 
     expect(fetchMock).not.toHaveBeenCalled();
 
@@ -272,7 +276,7 @@ describe("CreateTwitchPubState", () => {
       url: `https://example.com/reader?chapter=1`,
     });
 
-    const state = CreateTwitchPubState();
+    const state = CreateTwitchPubState(props);
 
     state.settings.value.highlight.value = { enabled: false };
     state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
@@ -349,7 +353,7 @@ describe("CreateTwitchPubState", () => {
       })
     );
 
-    const state = CreateTwitchPubState();
+    const state = CreateTwitchPubState(props);
 
     expect(state.interfaceEnabled.value).toBe(true);
     expect(state.currentPage.value).toBe("interface");
@@ -368,7 +372,7 @@ describe("CreateTwitchPubState", () => {
   it("hides the UI after the delay and can cancel a pending hide", () => {
     vi.useFakeTimers();
 
-    const state = CreateTwitchPubState();
+    const state = CreateTwitchPubState(props);
 
     state.hideUI();
     expect(state.uiHidden.value).toBe(false);
@@ -391,7 +395,7 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("queues book and highlight updates when the payload changes", async () => {
-    const state = CreateTwitchPubState();
+    const state = CreateTwitchPubState(props);
 
     state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
     state.twitchConfig.value.senderId.value = "sender-1";
@@ -487,7 +491,7 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("sends a book changed event when the chapter changes", async () => {
-    const state = CreateTwitchPubState();
+    const state = CreateTwitchPubState(props);
 
     state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
     state.twitchConfig.value.senderId.value = "sender-1";
@@ -536,7 +540,7 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("sends a book changed event when the book changes", async () => {
-    const state = CreateTwitchPubState();
+    const state = CreateTwitchPubState(props);
 
     state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
     state.twitchConfig.value.senderId.value = "sender-1";
@@ -585,7 +589,7 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("sends a book changed event when the translation changes", async () => {
-    const state = CreateTwitchPubState();
+    const state = CreateTwitchPubState(props);
 
     state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
     state.twitchConfig.value.senderId.value = "sender-1";
@@ -634,7 +638,7 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("tells users whether to follow translation changes", async () => {
-    const state = CreateTwitchPubState();
+    const state = CreateTwitchPubState(props);
 
     state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
     state.twitchConfig.value.senderId.value = "sender-1";

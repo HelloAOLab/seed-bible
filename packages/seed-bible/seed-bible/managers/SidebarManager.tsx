@@ -16,8 +16,9 @@ export type RequestedSettingsView =
   | "extensions";
 
 export function createSidebar(navigation: NavigationManager) {
-  // TODO: Set the intitial view based on the URL
-  const initialView = null;
+  const initialView = navigation.currentUrl.value.searchParams.get(
+    "settingsView"
+  ) as RequestedSettingsView | null;
   const isSidebarCollapsed = signal(false);
   const isMobileOpen = signal(false);
   const requestedSettingsView = signal<RequestedSettingsView>(initialView);

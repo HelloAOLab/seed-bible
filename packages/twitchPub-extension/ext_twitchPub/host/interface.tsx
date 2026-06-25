@@ -30,6 +30,7 @@ interface TwitchPubState {
   setCurrentPage: (page: TwitchPubState["currentPage"]["value"]) => void;
   hideUI: () => void;
   showUI: () => void;
+  toast: (message: string) => void;
   handleSeedBibleUpdate: (seedBibleState: SeedBibleState) => void;
   handleHighlightUpdate: (
     highlights: {

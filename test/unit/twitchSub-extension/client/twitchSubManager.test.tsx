@@ -91,6 +91,9 @@ function createSeedBibleStateMock() {
         readingState,
       }),
     },
+    navigation: {
+      replace: vi.fn(),
+    },
   };
 
   return {

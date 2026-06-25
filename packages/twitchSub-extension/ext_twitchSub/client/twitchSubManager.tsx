@@ -6,6 +6,7 @@ import { type TwitchSubInterface } from "./interface";
 import { type SeedBibleState } from "seed-bible";
 import { toByteArray } from "base64-js";
 import { render } from "preact";
+import type { NavigationManager } from "seed-bible/managers";
 
 function getBooleanMaskValue(value: unknown, defaultValue: boolean) {
   if (typeof value === "boolean") {
@@ -64,7 +65,11 @@ export function CreateTwitchSubState(
   const settingsOpened = signal(false);
 
   effect(() => {
-    getConfig({ clientId, eventSubWebsocketUrl }).then((configData) => {
+    getConfig({
+      clientId,
+      eventSubWebsocketUrl,
+      navigation: seedBibleState.navigation,
+    }).then((configData) => {
       if (configData) {
         config.value.botUserId.value = configData.botUserId;
         config.value.accessToken.value = configData.accessToken;
@@ -290,9 +295,11 @@ export function CreateTwitchSubState(
 async function getConfig({
   clientId,
   eventSubWebsocketUrl,
+  navigation,
 }: {
   clientId: string;
   eventSubWebsocketUrl: string;
+  navigation: NavigationManager;
 }) {
   const stored = window.localStorage.getItem("twitchSubConfig");
   if (stored) {
@@ -356,8 +363,10 @@ async function getConfig({
     posthog.capture("twitch_sub_client_joined", {});
   }
 
-  // TODO: Update URL
-  // os.goToURL(baseUrl.split("#")[0]);
+  const urlWithoutHash = baseUrl.split("#")[0];
+  if (urlWithoutHash) {
+    navigation.replace(urlWithoutHash);
+  }
   return null;
 }
 

@@ -6,7 +6,8 @@ import { useI18n } from "seed-bible/i18n";
 import { closeInterface } from "./closeInterface";
 
 const TwitchInterface = (props: { state: TwitchPubState }) => {
-  const { uiHidden, qrValue, setCurrentPage, hideUI, showUI } = props.state;
+  const { uiHidden, qrValue, setCurrentPage, hideUI, showUI, toast } =
+    props.state;
 
   effect(() => {
     const draggableElement = document.getElementById("draggable-container");
@@ -95,6 +96,10 @@ const TwitchInterface = (props: { state: TwitchPubState }) => {
               value={qrValue.value}
               size={150}
               uiHidden={uiHidden.value}
+              onClick={() => {
+                navigator.clipboard.writeText(qrValue.value);
+                toast("Link copied to clipboard!");
+              }}
             />
           </div>
 

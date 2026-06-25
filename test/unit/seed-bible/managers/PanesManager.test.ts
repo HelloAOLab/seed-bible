@@ -282,9 +282,6 @@ describe("createPanes", () => {
       gridPortal: "home",
     });
 
-    // configBot portal tag syncing is currently disabled in PanesManager
-    // (see the "TODO: Support the grid portal and map portal" effect), so
-    // only the pane state itself is asserted here.
     expect(result).not.toBeNull();
     expect(result?.gridPortal).toBe("home");
     expect(result?.mapPortal).toBeNull();

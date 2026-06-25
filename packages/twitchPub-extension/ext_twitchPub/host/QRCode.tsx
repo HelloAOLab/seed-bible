@@ -11,6 +11,7 @@ function QRCodeComponent(props: {
   dark?: string;
   light?: string;
   uiHidden: boolean;
+  onClick?: () => void;
 }) {
   const {
     value,
@@ -18,6 +19,7 @@ function QRCodeComponent(props: {
     dark = "#000000",
     light = "#ffffff",
     uiHidden,
+    onClick,
   } = props;
   const { t } = useI18n();
   const canvasRef = useRef(null);
@@ -117,10 +119,7 @@ function QRCodeComponent(props: {
           ref={canvasRef}
           style={{ display: "block" }}
           onClick={() => {
-            navigator.clipboard.writeText(value);
-
-            // TODO: Support toasts
-            // os.toast("Link copied to clipboard!");
+            onClick?.();
           }}
         />
 

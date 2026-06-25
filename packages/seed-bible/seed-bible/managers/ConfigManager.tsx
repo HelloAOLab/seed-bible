@@ -133,26 +133,6 @@ export function createConfig(
     }
   };
 
-  // TODO: Listen to URL changes
-  // os.addBotListener(configBot, "onBotChanged", (that: unknown) => {
-  //   const changedTagsSource =
-  //     that && typeof that === "object" && "tags" in that
-  //       ? (that as { tags?: unknown }).tags
-  //       : null;
-  //   const changedTags = Array.isArray(changedTagsSource)
-  //     ? changedTagsSource
-  //     : [];
-
-  //   if (
-  //     changedTags.includes("app.disablePanels") ||
-  //     changedTags.includes("app.fontSize") ||
-  //     changedTags.includes("settingsPreset") ||
-  //     changedTags.includes("lang")
-  //   ) {
-  //     syncConfigFromBot();
-  //   }
-  // });
-
   effect(() => {
     syncConfigFromBot(login.profile.value);
   });
@@ -163,8 +143,6 @@ export function createConfig(
       disablePanels,
     };
     config.value = nextConfig;
-    // TODO: Update the URL here
-    // configBot.tags["app.disablePanels"] = disablePanels;
     saveProfileConfigValue(login, "disablePanels", disablePanels);
   };
 
@@ -175,19 +153,11 @@ export function createConfig(
       fontSize: nextFontSize,
     };
     config.value = nextConfig;
-    // TODO: Update the URL here
-    // configBot.tags["app.fontSize"] = nextFontSize;
     saveProfileConfigValue(login, "fontSize", nextFontSize);
   };
 
-  // os.syncConfigBotTagsToURL(["lang"]);
   i18n.on("languageChanged", (language: string) => {
     console.log("languageChanged event received from i18n:", language);
-
-    // TODO: Update the URL here
-    // if (configBot.tags.lang || language !== DEFAULT_LANGUAGE) {
-    //   configBot.tags.lang = language;
-    // }
     saveProfileConfigValue(login, "lang", language);
   });
 

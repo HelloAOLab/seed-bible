@@ -103,10 +103,9 @@ const getDeviceAuthUrl = (state: TwitchPubState) => {
     })
     .catch((error) => {
       console.error("Error requesting device authorization URL:", error);
-      // TODO: Support toasting
-      // os.toast(
-      //   "Failed to get device authorization URL. Please check your Client ID and try again."
-      // );
+      state.toast(
+        "Failed to get device authorization URL. Please check your Client ID and try again."
+      );
       state.loading.value = false;
     });
 };

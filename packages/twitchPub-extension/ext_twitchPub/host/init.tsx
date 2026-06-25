@@ -8,7 +8,9 @@ import { openInterface } from "./openInterface";
 registerExtension({
   id: "ext_twitchPub",
   init: function* (context: SeedBibleState) {
-    const twitchPubState = CreateTwitchPubState();
+    const twitchPubState = CreateTwitchPubState({
+      toast: context.app.toast,
+    });
 
     // register a new tool
     yield context.tools.registerToolbarTool({
