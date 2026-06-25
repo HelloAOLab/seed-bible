@@ -10,7 +10,6 @@ import {
   registerExtension,
   type ExtensionSet,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
-import { signal } from "@preact/signals";
 import type { Mock } from "vitest";
 
 describe("ExtensionInitalizer", () => {
@@ -352,6 +351,7 @@ describe("createExtensionManager", () => {
 
   beforeEach(async () => {
     loadedModules = [];
+    localStorage.clear();
     const { addTranslations } = await vi.importMock<
       typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
     >("@packages/seed-bible/seed-bible/i18n/I18nManager");
@@ -947,6 +947,108 @@ describe("createExtensionManager", () => {
       expect(manager.getAllExtensionsAsSet()?.id).toBe(result?.id);
     } finally {
       unregisterRegisteredOnly();
+    }
+  });
+
+  it("loadExtension() persists the installed extension ID to local storage", async () => {
+    const manager = createExtensionManager();
+    mockExtensionModule("pkg://persisted");
+
+    await manager.loadExtension({
+      url: "pkg://persisted",
+      meta: {
+        id: "ext.persisted",
+        translations: {
+          en: { title: "Persisted", description: "Persisted extension" },
+        },
+      },
+    });
+
+    expect(
+      JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
+    ).toEqual(["ext.persisted"]);
+  });
+
+  it("unloadExtension() removes the extension ID from local storage", async () => {
+    const manager = createExtensionManager();
+    mockExtensionModule("pkg://forget");
+
+    await manager.loadExtension({
+      url: "pkg://forget",
+      meta: {
+        id: "ext.forget",
+        translations: {
+          en: { title: "Forget", description: "Forget extension" },
+        },
+      },
+    });
+
+    manager.unloadExtension("ext.forget");
+
+    expect(
+      JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
+    ).toEqual([]);
+  });
+
+  it("loadSavedExtensions() re-loads extensions saved in local storage", async () => {
+    localStorage.setItem(
+      "sb-installed-extensions",
+      JSON.stringify(["ext.saved"])
+    );
+
+    const defaultExtensions: ExtensionSet = {
+      id: "set.saved",
+      extensions: [
+        {
+          url: "pkg://saved",
+          meta: {
+            id: "ext.saved",
+            // Not flagged for autoinstall — only restored because it was saved.
+            translations: {
+              en: { title: "Saved", description: "Saved extension" },
+            },
+          },
+        },
+      ],
+    };
+
+    const manager = createExtensionManager({ defaultExtensions });
+    mockExtensionModule("pkg://saved");
+
+    await manager.loadDefaultExtensions();
+
+    expect(loadedModules).toEqual(["pkg://saved"]);
+    expect(manager.getExtensions()[0]?.installed).toBe(true);
+  });
+
+  it("loadSavedExtensions() skips saved IDs that are not in any known set", async () => {
+    localStorage.setItem(
+      "sb-installed-extensions",
+      JSON.stringify(["ext.unknown"])
+    );
+    const warnSpy = vi
+      .spyOn(console, "warn")
+      .mockImplementation(() => undefined);
+
+    const manager = createExtensionManager({
+      defaultExtensions: { id: "set.empty", extensions: [] },
+    });
+
+    try {
+      await manager.loadDefaultExtensions();
+
+      expect(loadedModules).toEqual([]);
+      expect(
+        warnSpy.mock.calls.some((call) =>
+          String(call[0] ?? "").includes("ext.unknown")
+        )
+      ).toBe(true);
+      // The unknown ID is left in storage in case a later build reintroduces it.
+      expect(
+        JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
+      ).toEqual(["ext.unknown"]);
+    } finally {
+      warnSpy.mockRestore();
     }
   });
 });

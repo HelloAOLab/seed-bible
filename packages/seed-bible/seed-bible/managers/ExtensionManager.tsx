@@ -2,6 +2,7 @@ import { signal } from "@preact/signals";
 import { orderBy, union } from "es-toolkit";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import { addTranslations } from "../i18n/I18nManager";
+import { safeLocalStorage } from "../app/ssrEnv";
 import hash from "hash.js";
 import stringify from "@casual-simulation/fast-json-stable-stringify";
 
@@ -327,6 +328,61 @@ export function createExtensionManager(options: ExtensionManagerOptions = {}) {
   const installedExtensionIds = new Set<string>();
   const pendingInstallations = new Map<string, Promise<boolean>>();
 
+  /**
+   * The localStorage key under which the IDs of the extensions that the user has
+   * installed are persisted, so they can be re-loaded automatically on startup.
+   */
+  const INSTALLED_EXTENSIONS_STORAGE_KEY = "sb-installed-extensions";
+
+  /**
+   * Reads the set of persisted installed extension IDs from local storage.
+   * Returns an empty set if nothing is stored or the stored value is invalid.
+   */
+  const readPersistedExtensionIds = (): Set<string> => {
+    try {
+      const raw = safeLocalStorage.getItem(INSTALLED_EXTENSIONS_STORAGE_KEY);
+      if (!raw) {
+        return new Set();
+      }
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return new Set(parsed.filter((id) => typeof id === "string"));
+      }
+    } catch (err) {
+      console.error("Failed to read persisted installed extensions:", err);
+    }
+    return new Set();
+  };
+
+  /** Writes the given set of installed extension IDs to local storage. */
+  const writePersistedExtensionIds = (ids: Set<string>) => {
+    try {
+      safeLocalStorage.setItem(
+        INSTALLED_EXTENSIONS_STORAGE_KEY,
+        JSON.stringify([...ids])
+      );
+    } catch (err) {
+      console.error("Failed to persist installed extensions:", err);
+    }
+  };
+
+  /** Records that the extension with the given ID has been installed. */
+  const persistInstalledExtensionId = (id: string) => {
+    const ids = readPersistedExtensionIds();
+    if (!ids.has(id)) {
+      ids.add(id);
+      writePersistedExtensionIds(ids);
+    }
+  };
+
+  /** Removes the extension with the given ID from the persisted set. */
+  const forgetInstalledExtensionId = (id: string) => {
+    const ids = readPersistedExtensionIds();
+    if (ids.delete(id)) {
+      writePersistedExtensionIds(ids);
+    }
+  };
+
   const computeExtensions = (): ExtensionListEntry[] => {
     const knownExtensionPackages = knownExtensionsById;
     const registeredExtensions =
@@ -508,7 +564,11 @@ export function createExtensionManager(options: ExtensionManagerOptions = {}) {
     pendingInstallations.set(extensionId, installationPromise);
     refreshExtensionsSignal();
     try {
-      return await installationPromise;
+      const result = await installationPromise;
+      if (result) {
+        persistInstalledExtensionId(extensionId);
+      }
+      return result;
     } finally {
       pendingInstallations.delete(extensionId);
       refreshExtensionsSignal();
@@ -547,7 +607,37 @@ export function createExtensionManager(options: ExtensionManagerOptions = {}) {
   };
 
   /**
-   * Loads the default set of extensions specified in bot tags.
+   * Loads the extensions that the user previously installed, as recorded in
+   * local storage. Extensions that are already installed are skipped, and IDs
+   * that are not part of any known extension set are left in storage (a later
+   * build may reintroduce them) but skipped for now.
+   */
+  const loadSavedExtensions = async () => {
+    const savedIds = readPersistedExtensionIds();
+
+    const promises: Promise<boolean>[] = [];
+    for (const id of savedIds) {
+      if (isSatisfiedDependency(id)) {
+        continue;
+      }
+
+      const extension = knownExtensionsById.get(id);
+      if (!extension) {
+        console.warn(
+          `Saved extension '${id}' is not available in the known extensions; skipping.`
+        );
+        continue;
+      }
+
+      promises.push(loadExtension(extension));
+    }
+
+    await Promise.all(promises);
+  };
+
+  /**
+   * Loads the default set of extensions specified in bot tags, then re-loads any
+   * extensions the user previously installed (persisted in local storage).
    */
   const loadDefaultExtensions = async () => {
     if (!defaultExtensions) {
@@ -563,6 +653,8 @@ export function createExtensionManager(options: ExtensionManagerOptions = {}) {
           url.searchParams.get(`autoinstall-${ext.meta.id}`) === "true") ??
         false
     );
+
+    await loadSavedExtensions();
   };
 
   /**
@@ -572,6 +664,7 @@ export function createExtensionManager(options: ExtensionManagerOptions = {}) {
   const unloadExtension = (id: string) => {
     unregisterExtension(id);
     installedExtensionIds.delete(id);
+    forgetInstalledExtensionId(id);
     refreshExtensionsSignal();
   };
 
@@ -615,6 +708,7 @@ export function createExtensionManager(options: ExtensionManagerOptions = {}) {
 
   return {
     loadDefaultExtensions,
+    loadSavedExtensions,
     loadExtensionSet,
     loadExtension,
     unloadExtension,
