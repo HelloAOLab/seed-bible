@@ -18,14 +18,12 @@
   "session-settings": "הגדרות סשן",
   "shared-session-click-to-join": "משתף - לחץ כדי להצטרף",
   "dismiss": "לְפַטֵר",
-
   "tabs": "טאבים",
   "new-tab": "כרטיסייה חדשה",
   "create-new-tab": "צור כרטיסייה חדשה",
   "tab-options": "אפשרויות טאב",
   "open-tab-menu": "פתיחת תפריט כרטיסיות",
   "session-id_x": "מזהה סשן: {{sessionId}}",
-
   "search-verses": "חיפוש פסוקים",
   "clear-search": "נקה חיפוש",
   "searching": "מחפש...",
@@ -127,11 +125,9 @@
   "end-session": "סיום המושב",
   "panels": "פאנלים",
   "new-shared-session": "סשן משותף חדש",
-
   "open-in-new-panel": "פתח בפאנל חדש",
   "open-in-detached-panel": "פתוח בפאנל מנותק",
   "close-sidebar": "סגור את הצד",
-
   "select-pane-layout": "בחירת פריסת חלונית",
   "pane-layout": "פריסת החלונית",
   "back": "בְּחֲזָרָה",
@@ -178,16 +174,13 @@
   "complete-translations": "תרגומים מלאים",
   "all-translations": "כל התרגומים",
   "popular-translations": "תרגומים פופולריים",
-
   "1-psalms": "תהילים א'",
   "2-psalms": "תהילים ב'",
   "3-psalms": "תהילים ג'",
   "4-psalms": "4 תהילים",
   "5-psalms": "5 תהילים",
-
   "remove-bookmark": "הסר סימניה",
   "add-bookmark": "סימניה",
-
   "chat": "לְשׂוֹחֵחַ",
   "today": "הַיוֹם",
   "you": "אַתָה",
@@ -195,7 +188,6 @@
   "add-verse": "הוסף פסוק",
   "add": "לְהוֹסִיף",
   "chat-empty-title": "צ'אט בקרוב",
-
   "category-options": "אפשרויות תיקייה",
   "rename": "שינוי שם",
   "delete": "לִמְחוֹק",
@@ -212,10 +204,8 @@
   "add-to-new": "הוסף לחדש",
   "save": "לְהַצִיל",
   "bookmark-verses": "פסוקים בסימניות",
-
   "about-extrabiblical-writings": "אודות כתבים חוץ-מקראיים",
   "apocrypha-info-text": "אף אחד מהכתבים בסעיף זה לא נחשב מעולם לכתבי קודש על ידי קהילות יהודיות או נוצריות מוקדמות. התנ\"ך הוא אוסף ספציפי של ספרים. יהודים ונוצרים תמיד הסכימו על הברית הישנה, ​​שמקורה במערכת קבועה של כתבי קודש שהעם היהודי מכנה תנ\"ך והנוצרים מכנים הברית הישנה. תוכן התנ\"ך והברית הישנה זהה לחלוטין, אך בדרך כלל מסודרים בצורה שונה. נוצרים מכירים בנוסף בברית החדשה, המספרת את סיפורו של ישוע, תורתו וכתבי חסידיו. הכתבים שלהלן היו ידועים ונקראו באופן נרחב בזמן כתיבת התנ\"ך, אך הם מעולם לא טופלו ככתבי קודש. בעוד שסופרים קדומים ציטטו לעיתים מגוון רחב של טקסטים, כולל משוררים, פילוסופים וכתבים אחרים, ציטוט של משהו אינו זהה להתייחסות אליו ככתבי קודש. כתבים אלה כלולים כאן לצורך עיון היסטורי וספרותי בלבד.",
-
   "seed-bible": "תנ\"ך הזרעים",
   "take-photo": "צלם תמונה",
   "choose-from-gallery": "בחר מהגלריה",
@@ -224,18 +214,14 @@
   "zoom": "זום",
   "set-picture": "הגדר תמונה",
   "login-email-title": "הזן את כתובת הדוא\"ל שלך",
-
   "login-sending": "שְׁלִיחָה…",
   "login-code-title": "הזן את קוד ההתחברות",
   "login-code-description": "שלחנו קוד התחברות לכתובת \" {{email}} \".",
-
   "login-code-placeholder": "הזן כאן את קוד ההתחברות",
   "login-change-email": "שינוי כתובת דוא\"ל",
   "login-resend-code": "שלח שוב את הקוד",
   "login-confirm-code": "אישור קוד",
-
   "login-verifying": "מאמת...",
-
   "login-error-email-required": "אנא הזן את כתובת הדוא\"ל שלך.",
   "login-error-code-required": "אנא הזן את הקוד מהאימייל שלך.",
   "login-error-generic": "משהו השתבש. אנא נסה שוב.",
@@ -274,5 +260,8 @@
   "install-app": "התקנת אפליקציה",
   "launch-tutorial": "הפעלת מדריך",
   "search-languages": "חיפוש שפות...",
-  "no-languages-found": "לא נמצאו שפות"
+  "no-languages-found": "לא נמצאו שפות",
+  "today-coming-soon": "מסך היום יגיע בקרוב",
+  "link-to-join-shared-session-copied": "קישור להצטרפות לסשן המשותף הועתק ללוח שלך",
+  "copied-translation-share-link": "קישור שיתוף התרגום הועתק"
 }

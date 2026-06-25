@@ -18,14 +18,12 @@
   "session-settings": "Cilësimet e sesionit",
   "shared-session-click-to-join": "po ndan — kliko për t'u bashkuar",
   "dismiss": "Hiq",
-
   "tabs": "Tabs",
   "new-tab": "Skedë e re",
   "create-new-tab": "Krijo skedë të re",
   "tab-options": "Opsionet e skedës",
   "open-tab-menu": "Hap menynë e skedave",
   "session-id_x": "ID e sesionit: {{sessionId}}",
-
   "search-verses": "Kërko vargje",
   "clear-search": "Pastro kërkimin",
   "searching": "Duke kërkuar...",
@@ -127,11 +125,9 @@
   "end-session": "Përfundo sesionin",
   "panels": "Panelet",
   "new-shared-session": "Sesion i ri i përbashkët",
-
   "open-in-new-panel": "Hap në panel të ri",
   "open-in-detached-panel": "Hapet në panelin e shkëputur",
   "close-sidebar": "Mbyll shiritin anësor",
-
   "select-pane-layout": "Zgjidh paraqitjen e panelit",
   "pane-layout": "Paraqitja e panelit",
   "back": "Mbrapa",
@@ -178,16 +174,13 @@
   "complete-translations": "Përkthime të plota",
   "all-translations": "Të gjitha përkthimet",
   "popular-translations": "Përkthime të njohura",
-
   "1-psalms": "1 Psalmeve",
   "2-psalms": "2 Psalme",
   "3-psalms": "3 Psalme",
   "4-psalms": "4 Psalme",
   "5-psalms": "5 Psalme",
-
   "remove-bookmark": "Hiq faqeshënuesin",
   "add-bookmark": "Shënues",
-
   "chat": "Bisedë",
   "today": "Sot",
   "you": "Ti",
@@ -195,7 +188,6 @@
   "add-verse": "Shto varg",
   "add": "Shto",
   "chat-empty-title": "Chat do të vijë së shpejti",
-
   "category-options": "Opsionet e dosjeve",
   "rename": "Riemërto",
   "delete": "Fshij",
@@ -212,10 +204,8 @@
   "add-to-new": "Shto te e reja",
   "save": "Ruaj",
   "bookmark-verses": "Vendos vargjet në faqeshënues",
-
   "about-extrabiblical-writings": "Rreth shkrimeve jashtëbiblike",
   "apocrypha-info-text": "Asnjë nga shkrimet në këtë seksion nuk është konsideruar ndonjëherë si Shkrim i Shenjtë nga komunitetet e hershme hebraike ose të krishtera. Bibla është një koleksion specifik librash. Hebrenjtë dhe të krishterët gjithmonë kanë rënë dakord për Dhiatën e Vjetër, e cila vjen nga një grup i caktuar shkrimesh të shenjta që populli hebre e quan Tanakh dhe të krishterët e quajnë Dhiata e Vjetër. Përmbajtja e Tanakh dhe Dhiata e Vjetër janë saktësisht të njëjta, por zakonisht janë të rregulluara ndryshe. Të krishterët gjithashtu njohin Dhiatën e Re, e cila tregon historinë e Jezusit, mësimet e tij dhe shkrimet e ithtarëve të tij. Shkrimet më poshtë ishin të njohura dhe të lexuara gjerësisht në kohën kur u shkrua Bibla, por ato nuk u trajtuan kurrë si Shkrim i Shenjtë. Ndërsa autorët e lashtë ndonjëherë cituan një gamë të gjerë tekstesh, duke përfshirë poetë, filozofë dhe shkrime të tjera, citimi i diçkaje nuk është i njëjtë me trajtimin e saj si Shkrim i Shenjtë. Këto shkrime përfshihen këtu vetëm për referencë historike dhe letrare.",
-
   "seed-bible": "Bibla e Farave",
   "take-photo": "Bëni një foto",
   "choose-from-gallery": "Zgjidh nga galeria",
@@ -224,18 +214,14 @@
   "zoom": "Zmadho",
   "set-picture": "Vendos foton",
   "login-email-title": "Fut adresën tënde të email-it",
-
   "login-sending": "Duke dërguar…",
   "login-code-title": "Fut kodin e hyrjes",
   "login-code-description": "Ne dërguam një kod hyrjeje te \" {{email}} \".",
-
   "login-code-placeholder": "Fut kodin e hyrjes këtu",
   "login-change-email": "Ndrysho adresën e email-it",
   "login-resend-code": "Ridërgo kodin",
   "login-confirm-code": "Konfirmo kodin",
-
   "login-verifying": "Duke verifikuar…",
-
   "login-error-email-required": "Ju lutem shkruani adresën tuaj të email-it.",
   "login-error-code-required": "Ju lutemi futni kodin nga emaili juaj.",
   "login-error-generic": "Diçka shkoi keq. Ju lutemi provoni përsëri.",
@@ -274,5 +260,8 @@
   "install-app": "Instalo aplikacionin",
   "launch-tutorial": "Hap tutorialin",
   "search-languages": "Kërko gjuhë...",
-  "no-languages-found": "Nuk u gjet asnjë gjuhë"
+  "no-languages-found": "Nuk u gjet asnjë gjuhë",
+  "today-coming-soon": "Ekrani i sotëm vjen së shpejti",
+  "link-to-join-shared-session-copied": "Një lidhje për t'u bashkuar me sesionin e përbashkët u kopjua në kujtesën tënde të përkohshme",
+  "copied-translation-share-link": "Lidhja e ndarjes së përkthimit u kopjua"
 }

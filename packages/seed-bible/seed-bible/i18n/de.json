@@ -18,14 +18,12 @@
   "session-settings": "Sitzungseinstellungen",
   "shared-session-click-to-join": "wird geteilt – klicke hier, um beizutreten.",
   "dismiss": "Zurückweisen",
-
   "tabs": "Registerkarten",
   "new-tab": "Neuer Tab",
   "create-new-tab": "Neuen Tab erstellen",
   "tab-options": "Registerkartenoptionen",
   "open-tab-menu": "Tab-Menü öffnen",
   "session-id_x": "Sitzungs-ID: {{sessionId}}",
-
   "search-verses": "Verse suchen",
   "clear-search": "Suche löschen",
   "searching": "Suche...",
@@ -127,11 +125,9 @@
   "end-session": "Sitzung beenden",
   "panels": "Paneele",
   "new-shared-session": "Neue gemeinsame Sitzung",
-
   "open-in-new-panel": "In neuem Fenster öffnen",
   "open-in-detached-panel": "In separater Abdeckung öffnen",
   "close-sidebar": "Seitenleiste schließen",
-
   "select-pane-layout": "Layout des Auswahlbereichs",
   "pane-layout": "Fensterlayout",
   "back": "Zurück",
@@ -178,16 +174,13 @@
   "complete-translations": "Vollständige Übersetzungen",
   "all-translations": "Alle Übersetzungen",
   "popular-translations": "Beliebte Übersetzungen",
-
   "1-psalms": "1 Psalmen",
   "2-psalms": "2 Psalmen",
   "3-psalms": "3 Psalmen",
   "4-psalms": "4 Psalmen",
   "5-psalms": "5 Psalmen",
-
   "remove-bookmark": "Lesezeichen entfernen",
   "add-bookmark": "Lesezeichen",
-
   "chat": "Chat",
   "today": "Heute",
   "you": "Du",
@@ -195,7 +188,6 @@
   "add-verse": "Vers hinzufügen",
   "add": "Hinzufügen",
   "chat-empty-title": "Der Chat ist bald verfügbar.",
-
   "category-options": "Ordneroptionen",
   "rename": "Umbenennen",
   "delete": "Löschen",
@@ -212,10 +204,8 @@
   "add-to-new": "Zu neu hinzufügen",
   "save": "Speichern",
   "bookmark-verses": "Verse als Lesezeichen speichern",
-
   "about-extrabiblical-writings": "Über außerbiblische Schriften",
   "apocrypha-info-text": "Keine der Schriften in diesem Abschnitt wurde von frühen jüdischen oder christlichen Gemeinden jemals als Heilige Schrift anerkannt. Die Bibel ist eine spezifische Sammlung von Büchern. Juden und Christen waren sich stets über das Alte Testament einig, das auf einer festen Sammlung heiliger Schriften basiert, die das jüdische Volk Tanach und die Christen Altes Testament nennen. Der Inhalt des Tanach und des Alten Testaments ist identisch, jedoch üblicherweise unterschiedlich angeordnet. Christen anerkennen darüber hinaus das Neue Testament, das die Geschichte Jesu, seine Lehren und die Schriften seiner Anhänger erzählt. Die folgenden Schriften waren zur Entstehungszeit der Bibel bekannt und weit verbreitet, wurden aber nie als Heilige Schrift behandelt. Zwar zitierten antike Autoren mitunter eine Vielzahl von Texten, darunter Werke von Dichtern, Philosophen und anderen Autoren, doch ist ein Zitat nicht gleichbedeutend mit der Anerkennung eines Textes als Heilige Schrift. Diese Schriften sind hier lediglich als historische und literarische Referenz aufgeführt.",
-
   "seed-bible": "Saat-Bibel",
   "take-photo": "Mach ein Foto",
   "choose-from-gallery": "Aus der Galerie auswählen",
@@ -224,18 +214,14 @@
   "zoom": "Zoom",
   "set-picture": "Setfoto",
   "login-email-title": "Geben Sie Ihre E-Mail-Adresse ein.",
-
   "login-sending": "Senden…",
   "login-code-title": "Geben Sie den Anmeldecode ein.",
   "login-code-description": "Wir haben einen Anmeldecode an \" {{email}} \" gesendet.",
-
   "login-code-placeholder": "Hier Anmeldecode eingeben",
   "login-change-email": "E-Mail-Adresse ändern",
   "login-resend-code": "Code erneut senden",
   "login-confirm-code": "Code bestätigen",
-
   "login-verifying": "Überprüfung läuft…",
-
   "login-error-email-required": "Bitte geben Sie Ihre E-Mail-Adresse ein.",
   "login-error-code-required": "Bitte geben Sie den Code aus Ihrer E-Mail ein.",
   "login-error-generic": "Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.",
@@ -274,5 +260,8 @@
   "install-app": "App installieren",
   "launch-tutorial": "Tutorial starten",
   "search-languages": "Sprachen suchen...",
-  "no-languages-found": "Keine Sprachen gefunden"
+  "no-languages-found": "Keine Sprachen gefunden",
+  "today-coming-soon": "Der heutige Bildschirm kommt bald.",
+  "link-to-join-shared-session-copied": "Ein Link zum Beitreten der gemeinsamen Sitzung wurde in Ihre Zwischenablage kopiert.",
+  "copied-translation-share-link": "Link zum Teilen der kopierten Übersetzung"
 }

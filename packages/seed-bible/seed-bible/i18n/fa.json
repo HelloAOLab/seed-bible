@@ -13,14 +13,12 @@
   "close": "بستن",
   "open-settings": "تنظیمات را باز کنید",
   "close-settings": "بستن تنظیمات",
-
   "tabs": "تب‌ها",
   "new-tab": "برگه جدید",
   "create-new-tab": "ایجاد برگه جدید",
   "tab-options": "گزینه‌های تب",
   "open-tab-menu": "منوی برگه را باز کنید",
   "session-id_x": "شناسه جلسه: {{sessionId}}",
-
   "search-verses": "جستجوی آیات",
   "clear-search": "پاک کردن جستجو",
   "searching": "در حال جستجو...",
@@ -113,7 +111,6 @@
   "open-in-new-panel": "باز کردن در پنل جدید",
   "open-in-detached-panel": "باز کردن در پنل جداگانه",
   "close-sidebar": "بستن نوار کناری",
-
   "select-pane-layout": "طرح‌بندی صفحه را انتخاب کنید",
   "pane-layout": "طرح‌بندی صفحه",
   "back": "برگشت",
@@ -160,7 +157,6 @@
   "complete-translations": "ترجمه‌های کامل",
   "all-translations": "همه ترجمه‌ها",
   "popular-translations": "ترجمه‌های محبوب",
-
   "about-extrabiblical-writings": "About Extrabiblical writings",
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "مزامیر اول",
@@ -168,7 +164,6 @@
   "3-psalms": "۳ مزامیر",
   "4-psalms": "۴ مزامیر",
   "5-psalms": "۵ مزامیر",
-
   "scripture-elements": "عناصر کتاب مقدس",
   "show-headings": "نمایش سرفصل‌ها",
   "show-verse-numbers": "نمایش شماره آیات",
@@ -187,7 +182,6 @@
   "more": "بیشتر",
   "remove-bookmark": "حذف نشانک",
   "add-bookmark": "نشانه‌گذاری",
-
   "chat": "چت",
   "today": "امروز",
   "you": "شما",
@@ -195,7 +189,6 @@
   "add-verse": "اضافه کردن آیه",
   "add": "اضافه کردن",
   "chat-empty-title": "چت به زودی فعال می‌شود",
-
   "category-options": "گزینه‌های پوشه",
   "rename": "تغییر نام",
   "delete": "حذف",
@@ -213,7 +206,6 @@
   "add-to-new": "اضافه کردن به جدید",
   "save": "ذخیره",
   "bookmark-verses": "آیات را نشانه‌گذاری کنید",
-
   "seed-bible": "کتاب مقدس بذر",
   "take-photo": "عکس بگیرید",
   "choose-from-gallery": "از گالری انتخاب کنید",
@@ -222,18 +214,14 @@
   "zoom": "بزرگنمایی",
   "set-picture": "تصویر را تنظیم کنید",
   "login-email-title": "آدرس ایمیل خود را وارد کنید",
-
   "login-sending": "در حال ارسال…",
   "login-code-title": "کد ورود را وارد کنید",
   "login-code-description": "ما یک کد ورود به سیستم به \" {{email}} \" ارسال کردیم.",
-
   "login-code-placeholder": "کد ورود را اینجا وارد کنید",
   "login-change-email": "تغییر آدرس ایمیل",
   "login-resend-code": "ارسال مجدد کد",
   "login-confirm-code": "کد را تأیید کنید",
-
   "login-verifying": "در حال تأیید…",
-
   "login-error-email-required": "لطفا آدرس ایمیل خود را وارد کنید.",
   "login-error-code-required": "لطفا کد را از ایمیل خود وارد کنید.",
   "login-error-generic": "مشکلی پیش آمده است. لطفا دوباره امتحان کنید.",
@@ -272,5 +260,8 @@
   "install-app": "نصب برنامه",
   "launch-tutorial": "آموزش راه اندازی",
   "search-languages": "جستجوی زبان‌ها...",
-  "no-languages-found": "هیچ زبانی یافت نشد"
+  "no-languages-found": "هیچ زبانی یافت نشد",
+  "today-coming-soon": "صفحه نمایش امروز به زودی منتشر می‌شود",
+  "link-to-join-shared-session-copied": "پیوندی برای پیوستن به جلسه مشترک در کلیپ‌بورد شما کپی شد",
+  "copied-translation-share-link": "لینک اشتراک‌گذاری ترجمه کپی شد"
 }

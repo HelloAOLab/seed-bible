@@ -18,14 +18,12 @@
   "session-settings": "Configuració de la sessió",
   "shared-session-click-to-join": "està compartint — fes clic per unir-te",
   "dismiss": "Ignora",
-
   "tabs": "Pestanyes",
   "new-tab": "Nova pestanya",
   "create-new-tab": "Crea una pestanya nova",
   "tab-options": "Opcions de pestanyes",
   "open-tab-menu": "Obre el menú de pestanyes",
   "session-id_x": "ID de sessió: {{sessionId}}",
-
   "search-verses": "Cerca versos",
   "clear-search": "Esborra la cerca",
   "searching": "Cercant...",
@@ -127,11 +125,9 @@
   "end-session": "Finalitzar sessió",
   "panels": "Panells",
   "new-shared-session": "Nova sessió compartida",
-
   "open-in-new-panel": "Obre en un panell nou",
   "open-in-detached-panel": "Obre en un panell separat",
   "close-sidebar": "Tanca la barra lateral",
-
   "select-pane-layout": "Selecciona el disseny del panell",
   "pane-layout": "Disseny del panell",
   "back": "Enrere",
@@ -178,16 +174,13 @@
   "complete-translations": "Traduccions completes",
   "all-translations": "Totes les traduccions",
   "popular-translations": "Traduccions populars",
-
   "1-psalms": "1 Salms",
   "2-psalms": "2 Salms",
   "3-psalms": "3 Salms",
   "4-psalms": "4 Salms",
   "5-psalms": "5 Salms",
-
   "remove-bookmark": "Elimina el marcador",
   "add-bookmark": "Marcador",
-
   "chat": "Xat",
   "today": "Avui",
   "you": "Tu",
@@ -195,7 +188,6 @@
   "add-verse": "Afegeix un vers",
   "add": "Afegeix",
   "chat-empty-title": "El xat estarà disponible aviat",
-
   "category-options": "Opcions de carpeta",
   "rename": "Canvia el nom",
   "delete": "Suprimeix",
@@ -212,10 +204,8 @@
   "add-to-new": "Afegeix a nou",
   "save": "Desa",
   "bookmark-verses": "Versos de marcador",
-
   "about-extrabiblical-writings": "Sobre els escrits extrabíblics",
   "apocrypha-info-text": "Cap dels escrits d'aquesta secció va ser considerat mai Escriptura per les primeres comunitats jueves o cristianes. La Bíblia és una col·lecció específica de llibres. Jueus i cristians sempre han coincidit en l'Antic Testament, que prové d'un conjunt fix d'escriptures sagrades que el poble jueu anomenava Tanakh i els cristians anomenaven Antic Testament. El contingut del Tanakh i l'Antic Testament és exactament el mateix, però normalment estan ordenats de manera diferent. Els cristians també reconeixen el Nou Testament, que explica la història de Jesús, els seus ensenyaments i els escrits dels seus seguidors. Els escrits següents eren coneguts i àmpliament llegits en l'època en què es va escriure la Bíblia, però mai van ser tractats com a Escriptura. Si bé els autors antics de vegades citaven una àmplia gamma de textos, inclosos poetes, filòsofs i altres escrits, citar alguna cosa no és el mateix que tractar-la com a Escriptura. Aquests escrits s'inclouen aquí només com a referència històrica i literària.",
-
   "seed-bible": "Bíblia de llavors",
   "take-photo": "Fes una foto",
   "choose-from-gallery": "Tria de la galeria",
@@ -224,18 +214,14 @@
   "zoom": "Zoom",
   "set-picture": "Defineix la imatge",
   "login-email-title": "Introdueix la teva adreça electrònica",
-
   "login-sending": "Enviant…",
   "login-code-title": "Introduïu el codi d'inici de sessió",
   "login-code-description": "Hem enviat un codi d'inici de sessió a \" {{email}} \".",
-
   "login-code-placeholder": "Introduïu el codi d'inici de sessió aquí",
   "login-change-email": "Canviar l'adreça electrònica",
   "login-resend-code": "Torna a enviar el codi",
   "login-confirm-code": "Confirma el codi",
-
   "login-verifying": "Verificant…",
-
   "login-error-email-required": "Si us plau, introdueix la teva adreça electrònica.",
   "login-error-code-required": "Si us plau, introdueix el codi del teu correu electrònic.",
   "login-error-generic": "S'ha produït un error. Torna-ho a intentar.",
@@ -274,5 +260,8 @@
   "install-app": "Instal·la l'aplicació",
   "launch-tutorial": "Tutorial d'inici",
   "search-languages": "Cerca idiomes...",
-  "no-languages-found": "No s'han trobat idiomes"
+  "no-languages-found": "No s'han trobat idiomes",
+  "today-coming-soon": "La pantalla d'avui arribarà aviat",
+  "link-to-join-shared-session-copied": "S'ha copiat al porta-retalls un enllaç per unir-se a la sessió compartida.",
+  "copied-translation-share-link": "Enllaç per compartir la traducció copiat"
 }

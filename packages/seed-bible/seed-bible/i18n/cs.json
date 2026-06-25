@@ -18,14 +18,12 @@
   "session-settings": "Nastavení relace",
   "shared-session-click-to-join": "sdílí – kliknutím se připojíte",
   "dismiss": "Propustit",
-
   "tabs": "Záložky",
   "new-tab": "Nová karta",
   "create-new-tab": "Vytvořit novou kartu",
   "tab-options": "Možnosti záložek",
   "open-tab-menu": "Otevřít nabídku karet",
   "session-id_x": "ID relace: {{sessionId}}",
-
   "search-verses": "Vyhledávání veršů",
   "clear-search": "Vymazat vyhledávání",
   "searching": "Hledání...",
@@ -127,11 +125,9 @@
   "end-session": "Ukončit relaci",
   "panels": "Panely",
   "new-shared-session": "Nová sdílená relace",
-
   "open-in-new-panel": "Otevřít v novém panelu",
   "open-in-detached-panel": "Otevřít v odděleném panelu",
   "close-sidebar": "Zavřít postranní panel",
-
   "select-pane-layout": "Vyberte rozvržení panelu",
   "pane-layout": "Rozložení panelu",
   "back": "Zadní",
@@ -178,16 +174,13 @@
   "complete-translations": "Kompletní překlady",
   "all-translations": "Všechny překlady",
   "popular-translations": "Oblíbené překlady",
-
   "1-psalms": "1. Žalm",
   "2-psalms": "2. žalm",
   "3-psalms": "3 Žalmy",
   "4-psalms": "4 Žalmy",
   "5-psalms": "5 Žalmů",
-
   "remove-bookmark": "Odebrat záložku",
   "add-bookmark": "Záložka",
-
   "chat": "Povídání",
   "today": "Dnes",
   "you": "Vy",
@@ -195,7 +188,6 @@
   "add-verse": "Přidat verš",
   "add": "Přidat",
   "chat-empty-title": "Chat bude brzy k dispozici",
-
   "category-options": "Možnosti složky",
   "rename": "Přejmenovat",
   "delete": "Vymazat",
@@ -212,10 +204,8 @@
   "add-to-new": "Přidat k novému",
   "save": "Uložit",
   "bookmark-verses": "Záložka veršů",
-
   "about-extrabiblical-writings": "O mimobiblických spisech",
   "apocrypha-info-text": "Žádný ze spisů v této části nebyl ranými židovskými ani křesťanskými komunitami nikdy považován za Písmo. Bible je specifická sbírka knih. Židé a křesťané se vždy shodovali na Starém zákoně, který pochází z pevně stanoveného souboru posvátných spisů, které Židé nazývají Tanach a křesťané Starý zákon. Obsah Tanachu a Starého zákona je naprosto stejný, ale obvykle se liší uspořádáním. Křesťané dále uznávají Nový zákon, který vypráví příběh Ježíše, jeho učení a spisy jeho následovníků. Níže uvedené spisy byly v době psaní Bible známé a široce čtené, ale nikdy nebyly považovány za Písmo. Zatímco starověcí autoři někdy citovali širokou škálu textů, včetně básníků, filozofů a dalších spisů, citovat něco není totéž jako to považovat za Písmo. Tyto spisy jsou zde uvedeny pouze pro historický a literární účel.",
-
   "seed-bible": "Bible semen",
   "take-photo": "Vyfoťte se",
   "choose-from-gallery": "Vyberte z galerie",
@@ -224,18 +214,14 @@
   "zoom": "Přiblížení",
   "set-picture": "Nastavit obrázek",
   "login-email-title": "Zadejte svou e-mailovou adresu",
-
   "login-sending": "Odesílání…",
   "login-code-title": "Zadejte přihlašovací kód",
   "login-code-description": "Přihlašovací kód jsme odeslali na adresu „ {{email}} “.",
-
   "login-code-placeholder": "Zde zadejte přihlašovací kód",
   "login-change-email": "Změnit e-mailovou adresu",
   "login-resend-code": "Znovu odeslat kód",
   "login-confirm-code": "Potvrďte kód",
-
   "login-verifying": "Ověřování…",
-
   "login-error-email-required": "Zadejte prosím svou e-mailovou adresu.",
   "login-error-code-required": "Zadejte prosím kód z vašeho e-mailu.",
   "login-error-generic": "Něco se pokazilo. Zkuste to prosím znovu.",
@@ -274,5 +260,8 @@
   "install-app": "Instalace aplikace",
   "launch-tutorial": "Spuštění tutoriálu",
   "search-languages": "Hledat jazyky...",
-  "no-languages-found": "Nenalezeny žádné jazyky"
+  "no-languages-found": "Nenalezeny žádné jazyky",
+  "today-coming-soon": "Dnešní obrazovka bude brzy k dispozici",
+  "link-to-join-shared-session-copied": "Odkaz pro připojení ke sdílené relaci byl zkopírován do schránky.",
+  "copied-translation-share-link": "Odkaz na sdílení překladu byl zkopírován"
 }

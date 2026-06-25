@@ -13,14 +13,12 @@
   "close": "近い",
   "open-settings": "設定を開く",
   "close-settings": "設定を閉じる",
-
   "tabs": "タブ",
   "new-tab": "新しいタブ",
   "create-new-tab": "新しいタブを作成する",
   "tab-options": "タブオプション",
   "open-tab-menu": "タブメニューを開く",
   "session-id_x": "セッションID: {{sessionId}}",
-
   "search-verses": "聖句を検索",
   "clear-search": "検索をクリアする",
   "searching": "検索中...",
@@ -113,7 +111,6 @@
   "open-in-new-panel": "新しいパネルで開く",
   "open-in-detached-panel": "別売りのパネルで開く",
   "close-sidebar": "サイドバーを閉じる",
-
   "select-pane-layout": "ペインのレイアウトを選択",
   "pane-layout": "ペインレイアウト",
   "back": "戻る",
@@ -160,7 +157,6 @@
   "complete-translations": "完全な翻訳",
   "all-translations": "すべての翻訳",
   "popular-translations": "人気の翻訳",
-
   "about-extrabiblical-writings": "About Extrabiblical writings",
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "詩篇1篇",
@@ -168,7 +164,6 @@
   "3-psalms": "詩篇３篇",
   "4-psalms": "詩篇4篇",
   "5-psalms": "詩篇5篇",
-
   "scripture-elements": "聖書の要素",
   "show-headings": "見出しを表示",
   "show-verse-numbers": "節番号を表示する",
@@ -187,7 +182,6 @@
   "more": "もっと",
   "remove-bookmark": "ブックマークを削除",
   "add-bookmark": "ブックマーク",
-
   "chat": "チャット",
   "today": "今日",
   "you": "あなた",
@@ -195,7 +189,6 @@
   "add-verse": "詩を追加する",
   "add": "追加",
   "chat-empty-title": "チャット機能は近日公開予定です",
-
   "category-options": "フォルダーオプション",
   "rename": "名前を変更する",
   "delete": "消去",
@@ -213,7 +206,6 @@
   "add-to-new": "新規に追加",
   "save": "保存",
   "bookmark-verses": "ブックマークした聖句",
-
   "seed-bible": "シードバイブル",
   "take-photo": "写真を撮る",
   "choose-from-gallery": "ギャラリーから選択",
@@ -222,18 +214,14 @@
   "zoom": "ズーム",
   "set-picture": "セット写真",
   "login-email-title": "メールアドレスを入力してください",
-
   "login-sending": "送信中…",
   "login-code-title": "ログインコードを入力してください",
   "login-code-description": "ログインコードを「 {{email}} 」宛に送信しました。",
-
   "login-code-placeholder": "ここにログインコードを入力してください",
   "login-change-email": "メールアドレスを変更する",
   "login-resend-code": "再送信コード",
   "login-confirm-code": "確認コード",
-
   "login-verifying": "確認中…",
-
   "login-error-email-required": "メールアドレスを入力してください。",
   "login-error-code-required": "メールに記載されているコードを入力してください。",
   "login-error-generic": "エラーが発生しました。もう一度お試しください。",
@@ -272,5 +260,8 @@
   "install-app": "アプリをインストール",
   "launch-tutorial": "チュートリアルを起動する",
   "search-languages": "言語を検索...",
-  "no-languages-found": "言語が見つかりません"
+  "no-languages-found": "言語が見つかりません",
+  "today-coming-soon": "本日のスクリーンはまもなく登場します",
+  "link-to-join-shared-session-copied": "共有セッションに参加するためのリンクがクリップボードにコピーされました。",
+  "copied-translation-share-link": "翻訳共有リンクをコピーしました"
 }

@@ -13,14 +13,12 @@
   "close": "Fermer",
   "open-settings": "Ouvrir les paramètres",
   "close-settings": "Fermer les paramètres",
-
   "tabs": "Onglets",
   "new-tab": "Nouvel onglet",
   "create-new-tab": "Créer un nouvel onglet",
   "tab-options": "Options d'onglet",
   "open-tab-menu": "Ouvrir le menu à onglets",
   "session-id_x": "ID de session : {{sessionId}}",
-
   "search-verses": "Rechercher des versets",
   "clear-search": "Recherche propre",
   "searching": "Recherche...",
@@ -113,7 +111,6 @@
   "open-in-new-panel": "Ouvrir dans un nouveau panneau",
   "open-in-detached-panel": "Panneau ouvert détaché",
   "close-sidebar": "Fermer la barre latérale",
-
   "select-pane-layout": "Sélectionner la disposition du volet",
   "pane-layout": "Disposition des volets",
   "back": "Dos",
@@ -160,7 +157,6 @@
   "complete-translations": "Traductions complètes",
   "all-translations": "Toutes les traductions",
   "popular-translations": "Traductions populaires",
-
   "about-extrabiblical-writings": "About Extrabiblical writings",
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 Psaume",
@@ -168,7 +164,6 @@
   "3-psalms": "3 Psaumes",
   "4-psalms": "4 Psaumes",
   "5-psalms": "5 Psaumes",
-
   "scripture-elements": "Éléments des Écritures",
   "show-headings": "Afficher les titres",
   "show-verse-numbers": "Afficher les numéros de versets",
@@ -187,7 +182,6 @@
   "more": "Plus",
   "remove-bookmark": "Supprimer le signet",
   "add-bookmark": "Signet",
-
   "chat": "Chat",
   "today": "Aujourd'hui",
   "you": "Toi",
@@ -195,7 +189,6 @@
   "add-verse": "Ajouter un verset",
   "add": "Ajouter",
   "chat-empty-title": "Le chat arrive bientôt",
-
   "category-options": "Options de dossier",
   "rename": "Rebaptiser",
   "delete": "Supprimer",
@@ -213,7 +206,6 @@
   "add-to-new": "Ajouter aux nouveaux",
   "save": "Sauvegarder",
   "bookmark-verses": "Versets à marquer",
-
   "seed-bible": "Bible des semences",
   "take-photo": "Prenez une photo",
   "choose-from-gallery": "Choisissez parmi les galeries",
@@ -222,18 +214,14 @@
   "zoom": "Zoom",
   "set-picture": "Ensemble d'images",
   "login-email-title": "Saisissez votre adresse e-mail",
-
   "login-sending": "Envoi…",
   "login-code-title": "Saisissez le code de connexion",
   "login-code-description": "Nous avons envoyé un code de connexion à \" {{email}} \".",
-
   "login-code-placeholder": "Saisissez votre code de connexion ici",
   "login-change-email": "Changer l'adresse e-mail",
   "login-resend-code": "Renvoyer le code",
   "login-confirm-code": "Code de confirmation",
-
   "login-verifying": "Vérification en cours…",
-
   "login-error-email-required": "Veuillez saisir votre adresse e-mail.",
   "login-error-code-required": "Veuillez saisir le code figurant dans votre courriel.",
   "login-error-generic": "Une erreur s'est produite. Veuillez réessayer.",
@@ -272,5 +260,8 @@
   "install-app": "Installer l'application",
   "launch-tutorial": "Tutoriel de lancement",
   "search-languages": "Langues de recherche...",
-  "no-languages-found": "Aucune langue trouvée"
+  "no-languages-found": "Aucune langue trouvée",
+  "today-coming-soon": "L'écran d'aujourd'hui arrive bientôt",
+  "link-to-join-shared-session-copied": "Un lien pour rejoindre la session partagée a été copié dans votre presse-papiers.",
+  "copied-translation-share-link": "Lien de partage de la traduction copiée"
 }

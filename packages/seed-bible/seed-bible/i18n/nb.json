@@ -18,14 +18,12 @@
   "session-settings": "Innstillinger for økt",
   "shared-session-click-to-join": "deler – klikk for å bli med",
   "dismiss": "Avskjedige",
-
   "tabs": "Faner",
   "new-tab": "Ny fane",
   "create-new-tab": "Opprett ny fane",
   "tab-options": "Fanealternativer",
   "open-tab-menu": "Åpne fanemenyen",
   "session-id_x": "Økt-ID: {{sessionId}}",
-
   "search-verses": "Søk i vers",
   "clear-search": "Tøm søk",
   "searching": "Søker...",
@@ -127,11 +125,9 @@
   "end-session": "Avslutt økt",
   "panels": "Paneler",
   "new-shared-session": "Ny delt økt",
-
   "open-in-new-panel": "Åpne i nytt panel",
   "open-in-detached-panel": "Åpne i frittstående panel",
   "close-sidebar": "Lukk sidefeltet",
-
   "select-pane-layout": "Velg ruteoppsett",
   "pane-layout": "Ruteoppsett",
   "back": "Tilbake",
@@ -178,16 +174,13 @@
   "complete-translations": "Fullstendige oversettelser",
   "all-translations": "Alle oversettelser",
   "popular-translations": "Populære oversettelser",
-
   "1-psalms": "1 Salmene",
   "2-psalms": "2 Salmer",
   "3-psalms": "3 Salmer",
   "4-psalms": "4 Salmer",
   "5-psalms": "5 Salmer",
-
   "remove-bookmark": "Fjern bokmerke",
   "add-bookmark": "Bokmerke",
-
   "chat": "Chat",
   "today": "I dag",
   "you": "Du",
@@ -195,7 +188,6 @@
   "add-verse": "Legg til vers",
   "add": "Legge til",
   "chat-empty-title": "Chatten kommer snart",
-
   "category-options": "Mappealternativer",
   "rename": "Gi nytt navn",
   "delete": "Slett",
@@ -212,10 +204,8 @@
   "add-to-new": "Legg til i ny",
   "save": "Spare",
   "bookmark-verses": "Bokmerk vers",
-
   "about-extrabiblical-writings": "Om utenombibelske skrifter",
   "apocrypha-info-text": "Ingen av skriftene i denne delen ble noen gang ansett som Skriften av tidlige jødiske eller kristne samfunn. Bibelen er en spesifikk samling av bøker. Jøder og kristne har alltid vært enige om Det gamle testamentet, som kommer fra et fast sett med hellige skrifter som det jødiske folket kalte Tanakh og kristne kaller Det gamle testamentet. Innholdet i Tanakh og Det gamle testamentet er nøyaktig det samme, men er ofte ordnet forskjellig. Kristne anerkjenner i tillegg Det nye testamentet, som forteller historien om Jesus, hans lære og skriftene til hans etterfølgere. Skriftene nedenfor var kjente og mye lest på den tiden Bibelen ble skrevet, men de ble aldri behandlet som Skriften. Selv om oldtidens forfattere noen ganger siterte et bredt spekter av tekster, inkludert poeter, filosofer og andre skrifter, er det å sitere noe ikke det samme som å behandle det som Skriften. Disse skriftene er inkludert her kun for historisk og litterær referanse.",
-
   "seed-bible": "Frøbibelen",
   "take-photo": "Ta et bilde",
   "choose-from-gallery": "Velg fra galleriet",
@@ -224,18 +214,14 @@
   "zoom": "Zoom",
   "set-picture": "Sett bilde",
   "login-email-title": "Skriv inn e-postadressen din",
-
   "login-sending": "Sender…",
   "login-code-title": "Skriv inn påloggingskoden",
   "login-code-description": "Vi sendte en påloggingskode til « {{email}} ».",
-
   "login-code-placeholder": "Skriv inn innloggingskoden her",
   "login-change-email": "Endre e-postadresse",
   "login-resend-code": "Send koden på nytt",
   "login-confirm-code": "Bekreft kode",
-
   "login-verifying": "Bekrefter…",
-
   "login-error-email-required": "Vennligst skriv inn e-postadressen din.",
   "login-error-code-required": "Vennligst skriv inn koden fra e-posten din.",
   "login-error-generic": "Noe gikk galt. Prøv igjen.",
@@ -274,5 +260,8 @@
   "install-app": "Installer appen",
   "launch-tutorial": "Start veiledningen",
   "search-languages": "Søk på språk...",
-  "no-languages-found": "Ingen språk funnet"
+  "no-languages-found": "Ingen språk funnet",
+  "today-coming-soon": "Dagens skjerm kommer snart",
+  "link-to-join-shared-session-copied": "En lenke for å bli med i den delte økten ble kopiert til utklippstavlen din",
+  "copied-translation-share-link": "Kopierte lenken til deling av oversettelse"
 }

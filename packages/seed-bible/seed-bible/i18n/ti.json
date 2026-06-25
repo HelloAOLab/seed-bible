@@ -13,14 +13,12 @@
   "close": "ዕፁው",
   "open-settings": "ቅጥዕታት ክፈት",
   "close-settings": "ቅጥዕታት ምዕጻው",
-
   "tabs": "ትቦታት",
   "new-tab": "ሓድሽ ትብ",
   "create-new-tab": "ሓድሽ ትብ ምፍጣር",
   "tab-options": "ናይ ትብ ኣማራጺታት",
   "open-tab-menu": "ትብ ምልክት ክፈት",
   "session-id_x": "መለለዪ ክፍለ ግዜ {{sessionId}}",
-
   "search-verses": "ጥቕስታት ድለዩ።",
   "clear-search": "ንጹር ምድላይ",
   "searching": "ምድላይ...",
@@ -113,7 +111,6 @@
   "open-in-new-panel": "ኣብ ሓድሽ ፓነል ክፈት",
   "open-in-detached-panel": "ኣብ ዝተነጸለ ፓነል ክፈት",
   "close-sidebar": "ጎናዊ መስመር ዕጸዎ።",
-
   "select-pane-layout": "ኣቀማምጣ መስኮት ምረጽ",
   "pane-layout": "ኣቀማምጣ ፓነል",
   "back": "ዝባን",
@@ -160,7 +157,6 @@
   "complete-translations": "ምሉእ ትርጉማት",
   "all-translations": "ኩሉ ትርጉማት",
   "popular-translations": "ህቡባት ትርጉማት",
-
   "about-extrabiblical-writings": "About Extrabiblical writings",
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 መዝሙር መዝሙር",
@@ -168,7 +164,6 @@
   "3-psalms": "3 መዝሙር መዝሙር",
   "4-psalms": "4 መዝሙር መዝሙር",
   "5-psalms": "5 መዝሙር መዝሙር",
-
   "scripture-elements": "ቅዱሳት መጻሕፍቲ ባእታታት",
   "show-headings": "ኣርእስታት ኣርእዩ",
   "show-verse-numbers": "ቁጽሪ ጥቕስታት ኣርእዩ",
@@ -187,7 +182,6 @@
   "more": "ቡዙሕ",
   "remove-bookmark": "ዕልባት ኣወግድ",
   "add-bookmark": "ዕልባት ምልክት ምግባር",
-
   "chat": "ፀወታ",
   "today": "ሎምዓንቲ",
   "you": "ንስኻ",
@@ -195,7 +189,6 @@
   "add-verse": "ጥቕሲ ወስኸሉ።",
   "add": "ምድማር",
   "chat-empty-title": "ቻት ኣብ ቀረባ እዋን ይመጽእ ኣሎ።",
-
   "category-options": "ናይ ኣቃፊራ ኣማራጺታት",
   "rename": "ዳግማይ ስም ምቕያር",
   "delete": "ምድምሳስ",
@@ -213,7 +206,6 @@
   "add-to-new": "ኣብ ሓድሽ ወስኽ",
   "save": "ምቑጣብ",
   "bookmark-verses": "ዕልባት ጥቕስታት",
-
   "seed-bible": "ዘርኢ መጽሓፍ ቅዱስ",
   "take-photo": "ስእሊ ውሰድ",
   "choose-from-gallery": "ካብ ጋለሪ ምረጽ",
@@ -222,18 +214,14 @@
   "zoom": "ዙም ምግባር",
   "set-picture": "ስእሊ ኣቐምጥ",
   "login-email-title": "ኢመይል ኣድራሻኻ ኣእቱ",
-
   "login-sending": "ምልኣኽ...",
   "login-code-title": "ናይ መእተዊ ኮድ ኣእቱ",
   "login-code-description": "ናብ \" {{email}} \" መእተዊ ኮድ ሰዲድና።",
-
   "login-code-placeholder": "ኣብዚ መእተዊ ኮድ ኣእትዉ",
   "login-change-email": "ናይ ኢመይል ኣድራሻ ምቕያር",
   "login-resend-code": "ኮድ ዳግማይ ምልኣኽ",
   "login-confirm-code": "ኮድ ኣረጋግጽ",
-
   "login-verifying": "ምርግጋጽ...",
-
   "login-error-email-required": "በጃኹም ኢመይልኩም ኣእትዉ።",
   "login-error-code-required": "በጃኹም ካብ ኢመይልኩም ኮድ ኣእትውዎ።",
   "login-error-generic": "ገለ ነገር ተጋግዩ። በጃኹም ደጊምኩም ፈትኑ።",
@@ -272,5 +260,8 @@
   "install-app": "App ምትካል",
   "launch-tutorial": "ትምህርቲ ምጅማር",
   "search-languages": "ቋንቋታት ድለዩ...",
-  "no-languages-found": "ቋንቋታት ኣይተረኽበን።"
+  "no-languages-found": "ቋንቋታት ኣይተረኽበን።",
+  "today-coming-soon": "ናይ ሎሚ ስክሪን ኣብ ቀረባ እዋን",
+  "link-to-join-shared-session-copied": "ናብቲ ዝተኻፈለ ክፍለ ግዜ ንምጽንባር ዝሕግዝ ሊንክ ናብ ቅንጥብጣብ ሰሌዳኻ ተቐዲሑ",
+  "copied-translation-share-link": "ዝተቐድሐ ትርጉም ሼር ሊንክ"
 }

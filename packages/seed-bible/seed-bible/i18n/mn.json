@@ -13,14 +13,12 @@
   "close": "Хаах",
   "open-settings": "Тохиргоог нээх",
   "close-settings": "Тохиргоог хаах",
-
   "tabs": "Табууд",
   "new-tab": "Шинэ таб",
   "create-new-tab": "Шинэ таб үүсгэх",
   "tab-options": "Таб сонголтууд",
   "open-tab-menu": "Таб цэсийг нээх",
   "session-id_x": "Сессийн ID: {{sessionId}}",
-
   "search-verses": "Шүлгүүдийг хайх",
   "clear-search": "Хайлтыг цэвэрлэх",
   "searching": "Хайж байна...",
@@ -113,7 +111,6 @@
   "open-in-new-panel": "Шинэ самбарт нээх",
   "open-in-detached-panel": "Тусдаа самбарт нээх",
   "close-sidebar": "Хажуугийн цэсийг хаах",
-
   "select-pane-layout": "Панелийн загварыг сонгох",
   "pane-layout": "Панелын зохион байгуулалт",
   "back": "Буцах",
@@ -160,7 +157,6 @@
   "complete-translations": "Бүрэн орчуулга",
   "all-translations": "Бүх орчуулга",
   "popular-translations": "Алдартай орчуулга",
-
   "about-extrabiblical-writings": "About Extrabiblical writings",
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 Дуулал",
@@ -168,7 +164,6 @@
   "3-psalms": "3 Дуулал",
   "4-psalms": "4 Дуулал",
   "5-psalms": "5 Дуулал",
-
   "scripture-elements": "Судрын элементүүд",
   "show-headings": "Гарчиг харуулах",
   "show-verse-numbers": "Шүлгийн дугааруудыг харуулах",
@@ -187,7 +182,6 @@
   "more": "Илүү их",
   "remove-bookmark": "Хавчуургыг устгах",
   "add-bookmark": "Хавчуурга",
-
   "chat": "Чат",
   "today": "Өнөөдөр",
   "you": "Чи",
@@ -195,7 +189,6 @@
   "add-verse": "Шүлэг нэмэх",
   "add": "Нэмэх",
   "chat-empty-title": "Чат удахгүй гарах болно",
-
   "category-options": "Фолдерын сонголтууд",
   "rename": "Нэрийг нь өөрчлөх",
   "delete": "Устгах",
@@ -213,7 +206,6 @@
   "add-to-new": "Шинэ зүйлд нэмэх",
   "save": "Хадгалах",
   "bookmark-verses": "Шүлгүүдийг хавчуурга болгон хадгалах",
-
   "seed-bible": "Үрийн Библи",
   "take-photo": "Зураг авах",
   "choose-from-gallery": "Галерейгаас сонгох",
@@ -222,18 +214,14 @@
   "zoom": "Томруулах",
   "set-picture": "Зургийн багц",
   "login-email-title": "Имэйл хаягаа оруулна уу",
-
   "login-sending": "Илгээж байна…",
   "login-code-title": "Нэвтрэх кодыг оруулна уу",
   "login-code-description": "Бид \" {{email}} \" хаяг руу нэвтрэх код илгээсэн.",
-
   "login-code-placeholder": "Нэвтрэх кодыг энд оруулна уу",
   "login-change-email": "Имэйл хаягийг өөрчлөх",
   "login-resend-code": "Кодыг дахин илгээх",
   "login-confirm-code": "Кодыг баталгаажуулах",
-
   "login-verifying": "Баталгаажуулж байна…",
-
   "login-error-email-required": "Имэйл хаягаа оруулна уу.",
   "login-error-code-required": "Имэйл хаягаасаа кодыг оруулна уу.",
   "login-error-generic": "Алдаа гарлаа. Дахин оролдоно уу.",
@@ -272,5 +260,8 @@
   "install-app": "Апп суулгах",
   "launch-tutorial": "Хичээлийг эхлүүлэх",
   "search-languages": "Хэл хайх...",
-  "no-languages-found": "Хэл олдсонгүй"
+  "no-languages-found": "Хэл олдсонгүй",
+  "today-coming-soon": "Өнөөдрийн дэлгэц удахгүй гарах болно",
+  "link-to-join-shared-session-copied": "Хуваалцсан хуралдаанд нэгдэх холбоосыг таны санах ой руу хуулсан",
+  "copied-translation-share-link": "Орчуулгын хуваалцах холбоосыг хуулсан"
 }

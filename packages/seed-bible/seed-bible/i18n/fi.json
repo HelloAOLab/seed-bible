@@ -18,14 +18,12 @@
   "session-settings": "Istuntoasetukset",
   "shared-session-click-to-join": "jakaa — klikkaa liittyäksesi",
   "dismiss": "Hylkää",
-
   "tabs": "Välilehdet",
   "new-tab": "Uusi välilehti",
   "create-new-tab": "Luo uusi välilehti",
   "tab-options": "Välilehden asetukset",
   "open-tab-menu": "Avaa välilehtivalikko",
   "session-id_x": "Istunnon tunnus: {{sessionId}}",
-
   "search-verses": "Hae jakeita",
   "clear-search": "Tyhjennä haku",
   "searching": "Haetaan...",
@@ -127,11 +125,9 @@
   "end-session": "Lopeta istunto",
   "panels": "Paneelit",
   "new-shared-session": "Uusi jaettu istunto",
-
   "open-in-new-panel": "Avaa uudessa paneelissa",
   "open-in-detached-panel": "Avaa irrotetussa paneelissa",
   "close-sidebar": "Sulje sivupalkki",
-
   "select-pane-layout": "Valitse ruudun asettelu",
   "pane-layout": "Ruudun asettelu",
   "back": "Takaisin",
@@ -178,16 +174,13 @@
   "complete-translations": "Täydelliset käännökset",
   "all-translations": "Kaikki käännökset",
   "popular-translations": "Suosittuja käännöksiä",
-
   "1-psalms": "1. Psalmi",
   "2-psalms": "2. Psalmi",
   "3-psalms": "3 Psalmia",
   "4-psalms": "4 Psalmia",
   "5-psalms": "5 Psalmia",
-
   "remove-bookmark": "Poista kirjanmerkki",
   "add-bookmark": "Kirjanmerkki",
-
   "chat": "Chat",
   "today": "Tänään",
   "you": "Sinä",
@@ -195,7 +188,6 @@
   "add-verse": "Lisää säkeistö",
   "add": "Lisätä",
   "chat-empty-title": "Chat on tulossa pian",
-
   "category-options": "Kansioasetukset",
   "rename": "Nimeä uudelleen",
   "delete": "Poistaa",
@@ -212,10 +204,8 @@
   "add-to-new": "Lisää uuteen",
   "save": "Tallentaa",
   "bookmark-verses": "Kirjanmerkkien säkeet",
-
   "about-extrabiblical-writings": "Tietoja Raamatun ulkopuolisista kirjoituksista",
   "apocrypha-info-text": "Varhaiset juutalaiset tai kristilliset yhteisöt eivät koskaan pitäneet mitään tässä osiossa olevista kirjoituksista pyhänä kirjoituksena. Raamattu on erityinen kokoelma kirjoja. Juutalaiset ja kristityt ovat aina olleet yhtä mieltä Vanhasta testamentista, joka on peräisin kiinteästä kokoelmasta pyhiä kirjoituksia, joita juutalaiset kutsuivat Tanakhiksi ja kristityt Vanhaksi testamentiksi. Tanakhin ja Vanhan testamentin sisältö on täsmälleen sama, mutta ne on yleensä järjestetty eri tavalla. Kristityt tunnustavat lisäksi Uuden testamentin, joka kertoo Jeesuksesta, hänen opetuksistaan ​​ja hänen seuraajiensa kirjoituksista. Alla olevat kirjoitukset olivat tunnettuja ja laajalti luettuja Raamatun kirjoitushetkellä, mutta niitä ei koskaan pidetty pyhänä kirjoituksena. Vaikka muinaiset kirjoittajat joskus lainasivat monenlaisia ​​tekstejä, kuten runoilijoita, filosofeja ja muita kirjoituksia, jonkin lainaaminen ei ole sama asia kuin sen pitäminen pyhänä kirjoituksena. Nämä kirjoitukset on sisällytetty tähän vain historialliseen ja kirjalliseen viitteeseen.",
-
   "seed-bible": "Siemenraamattu",
   "take-photo": "Ota kuva",
   "choose-from-gallery": "Valitse galleriasta",
@@ -224,18 +214,14 @@
   "zoom": "Zoomaus",
   "set-picture": "Aseta kuva",
   "login-email-title": "Anna sähköpostiosoitteesi",
-
   "login-sending": "Lähetetään…",
   "login-code-title": "Syötä kirjautumiskoodi",
   "login-code-description": "Lähetimme kirjautumiskoodin osoitteeseen \" {{email}} \".",
-
   "login-code-placeholder": "Syötä kirjautumiskoodi tähän",
   "login-change-email": "Vaihda sähköpostiosoite",
   "login-resend-code": "Lähetä koodi uudelleen",
   "login-confirm-code": "Vahvista koodi",
-
   "login-verifying": "Vahvistetaan…",
-
   "login-error-email-required": "Anna sähköpostiosoitteesi.",
   "login-error-code-required": "Syötä sähköpostistasi saamasi koodi.",
   "login-error-generic": "Jotain meni pieleen. Yritä uudelleen.",
@@ -274,5 +260,8 @@
   "install-app": "Asenna sovellus",
   "launch-tutorial": "Käynnistä opetusohjelma",
   "search-languages": "Hae kieliä...",
-  "no-languages-found": "Ei kieliä löytynyt"
+  "no-languages-found": "Ei kieliä löytynyt",
+  "today-coming-soon": "Tämän päivän näyttö tulee pian",
+  "link-to-join-shared-session-copied": "Linkki jaettuun istuntoon liittymiseen kopioitiin leikepöydälle.",
+  "copied-translation-share-link": "Kopioitu käännöksen jakamislinkki"
 }

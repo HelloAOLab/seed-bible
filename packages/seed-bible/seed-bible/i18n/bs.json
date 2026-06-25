@@ -18,14 +18,12 @@
   "session-settings": "Postavke sesije",
   "shared-session-click-to-join": "dijeli — kliknite da se pridružite",
   "dismiss": "Odbaci",
-
   "tabs": "Kartice",
   "new-tab": "Nova kartica",
   "create-new-tab": "Kreiraj novu karticu",
   "tab-options": "Opcije kartice",
   "open-tab-menu": "Otvori meni kartice",
   "session-id_x": "ID sesije: {{sessionId}}",
-
   "search-verses": "Pretraži stihove",
   "clear-search": "Obriši pretragu",
   "searching": "Pretraga...",
@@ -127,11 +125,9 @@
   "end-session": "Završi sesiju",
   "panels": "Paneli",
   "new-shared-session": "Nova dijeljena sesija",
-
   "open-in-new-panel": "Otvori u novom panelu",
   "open-in-detached-panel": "Otvori u odvojenoj ploči",
   "close-sidebar": "Zatvori bočnu traku",
-
   "select-pane-layout": "Odaberite raspored okna",
   "pane-layout": "Raspored okna",
   "back": "Nazad",
@@ -178,16 +174,13 @@
   "complete-translations": "Kompletni prijevodi",
   "all-translations": "Svi prijevodi",
   "popular-translations": "Popularni prijevodi",
-
   "1-psalms": "1 Psalmi",
   "2-psalms": "2 Psalma",
   "3-psalms": "3 Psalma",
   "4-psalms": "4 Psalma",
   "5-psalms": "5 Psalama",
-
   "remove-bookmark": "Ukloni oznaku",
   "add-bookmark": "Označi",
-
   "chat": "Čet",
   "today": "Danas",
   "you": "Ti",
@@ -195,7 +188,6 @@
   "add-verse": "Dodaj stih",
   "add": "Dodaj",
   "chat-empty-title": "Chat uskoro stiže",
-
   "category-options": "Opcije mape",
   "rename": "Preimenuj",
   "delete": "Izbriši",
@@ -212,10 +204,8 @@
   "add-to-new": "Dodaj u novo",
   "save": "Sačuvaj",
   "bookmark-verses": "Označi stihove",
-
   "about-extrabiblical-writings": "O vanbiblijskim spisima",
   "apocrypha-info-text": "Nijedan od spisa u ovom odjeljku nikada nije smatran Svetim pismom od strane ranih jevrejskih ili kršćanskih zajednica. Biblija je specifična zbirka knjiga. Jevreji i kršćani su se oduvijek slagali oko Starog zavjeta, koji potiče iz fiksnog skupa svetih spisa koje jevrejski narod naziva Tanah, a kršćani Stari zavjet. Sadržaj Tanaha i Starog zavjeta je potpuno isti, ali je obično drugačije raspoređen. Kršćani dodatno priznaju Novi zavjet, koji govori priču o Isusu, njegovim učenjima i spisima njegovih sljedbenika. Spisi u nastavku bili su poznati i široko čitani u vrijeme kada je Biblija napisana, ali nikada nisu tretirani kao Sveto pismo. Dok su drevni autori ponekad citirali širok raspon tekstova, uključujući pjesnike, filozofe i druge spise, citiranje nečega nije isto što i tretiranje toga kao Svetog pisma. Ovi spisi su ovdje uključeni samo radi historijske i književne reference.",
-
   "seed-bible": "Biblija sjemena",
   "take-photo": "Snimi fotografiju",
   "choose-from-gallery": "Izaberite iz galerije",
@@ -224,18 +214,14 @@
   "zoom": "Zumiraj",
   "set-picture": "Postavi sliku",
   "login-email-title": "Unesite svoju adresu e-pošte",
-
   "login-sending": "Slanje…",
   "login-code-title": "Unesite kod za prijavu",
   "login-code-description": "Poslali smo kod za prijavu na \" {{email}} \".",
-
   "login-code-placeholder": "Unesite ovdje kod za prijavu",
   "login-change-email": "Promijeni adresu e-pošte",
   "login-resend-code": "Ponovo pošalji kod",
   "login-confirm-code": "Potvrdite kod",
-
   "login-verifying": "Potvrđivanje…",
-
   "login-error-email-required": "Molimo unesite svoju adresu e-pošte.",
   "login-error-code-required": "Molimo unesite kod iz vaše e-mail adrese.",
   "login-error-generic": "Nešto nije u redu. Pokušajte ponovo.",
@@ -274,5 +260,8 @@
   "install-app": "Instaliraj aplikaciju",
   "launch-tutorial": "Pokreni tutorijal",
   "search-languages": "Pretraživanje jezika...",
-  "no-languages-found": "Nije pronađen nijedan jezik"
+  "no-languages-found": "Nije pronađen nijedan jezik",
+  "today-coming-soon": "Današnji ekran uskoro stiže",
+  "link-to-join-shared-session-copied": "Link za pridruživanje dijeljenoj sesiji je kopiran u vaš međuspremnik",
+  "copied-translation-share-link": "Link za dijeljenje prijevoda je kopiran"
 }

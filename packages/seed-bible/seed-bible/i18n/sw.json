@@ -13,14 +13,12 @@
   "close": "Funga",
   "open-settings": "Fungua Mipangilio",
   "close-settings": "Funga Mipangilio",
-
   "tabs": "Vichupo",
   "new-tab": "Kichupo kipya",
   "create-new-tab": "Unda kichupo kipya",
   "tab-options": "Chaguo za vichupo",
   "open-tab-menu": "Fungua menyu ya kichupo",
   "session-id_x": "Kitambulisho cha Kipindi: {{sessionId}}",
-
   "search-verses": "Tafuta mistari",
   "clear-search": "Futa utafutaji",
   "searching": "Inatafuta...",
@@ -113,7 +111,6 @@
   "open-in-new-panel": "Fungua kwenye paneli mpya",
   "open-in-detached-panel": "Fungua katika paneli iliyotenganishwa",
   "close-sidebar": "Funga upau wa pembeni",
-
   "select-pane-layout": "Chagua mpangilio wa kidirisha",
   "pane-layout": "Mpangilio wa kidirisha",
   "back": "Rudi",
@@ -160,7 +157,6 @@
   "complete-translations": "Tafsiri kamili",
   "all-translations": "Tafsiri zote",
   "popular-translations": "Tafsiri maarufu",
-
   "about-extrabiblical-writings": "About Extrabiblical writings",
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "Zaburi 1",
@@ -168,7 +164,6 @@
   "3-psalms": "Zaburi 3",
   "4-psalms": "Zaburi 4",
   "5-psalms": "Zaburi 5",
-
   "scripture-elements": "Vipengele vya Maandiko",
   "show-headings": "Onyesha vichwa vya habari",
   "show-verse-numbers": "Onyesha nambari za mistari",
@@ -187,7 +182,6 @@
   "more": "Zaidi",
   "remove-bookmark": "Ondoa alamisho",
   "add-bookmark": "Alamisho",
-
   "chat": "Gumzo",
   "today": "Leo",
   "you": "Wewe",
@@ -195,7 +189,6 @@
   "add-verse": "Ongeza mstari",
   "add": "Ongeza",
   "chat-empty-title": "Gumzo linakuja hivi karibuni",
-
   "category-options": "Chaguo za folda",
   "rename": "Badilisha jina",
   "delete": "Futa",
@@ -213,7 +206,6 @@
   "add-to-new": "Ongeza kwenye mpya",
   "save": "Hifadhi",
   "bookmark-verses": "Weka alama kwenye mistari",
-
   "seed-bible": "Biblia ya Mbegu",
   "take-photo": "Piga picha",
   "choose-from-gallery": "Chagua kutoka kwenye ghala",
@@ -222,18 +214,14 @@
   "zoom": "Kuza",
   "set-picture": "Weka picha",
   "login-email-title": "Ingiza anwani yako ya barua pepe",
-
   "login-sending": "Inatuma…",
   "login-code-title": "Ingiza msimbo wa kuingia",
   "login-code-description": "Tulituma msimbo wa kuingia kwa \" {{email}} \".",
-
   "login-code-placeholder": "Ingiza msimbo wa kuingia hapa",
   "login-change-email": "Badilisha anwani ya barua pepe",
   "login-resend-code": "Tuma tena msimbo",
   "login-confirm-code": "Thibitisha msimbo",
-
   "login-verifying": "Inathibitisha…",
-
   "login-error-email-required": "Tafadhali ingiza anwani yako ya barua pepe.",
   "login-error-code-required": "Tafadhali ingiza msimbo kutoka kwa barua pepe yako.",
   "login-error-generic": "Kuna kitu kimeenda vibaya. Tafadhali jaribu tena.",
@@ -272,5 +260,8 @@
   "install-app": "Sakinisha Programu",
   "launch-tutorial": "Anzisha mafunzo",
   "search-languages": "Tafuta lugha...",
-  "no-languages-found": "Hakuna lugha zilizopatikana"
+  "no-languages-found": "Hakuna lugha zilizopatikana",
+  "today-coming-soon": "Skrini ya leo inakuja hivi karibuni",
+  "link-to-join-shared-session-copied": "Kiungo cha kujiunga na kipindi kilichoshirikiwa kimenakiliwa kwenye ubao wako wa kunakili",
+  "copied-translation-share-link": "Kiungo cha kushiriki tafsiri kimenakiliwa"
 }

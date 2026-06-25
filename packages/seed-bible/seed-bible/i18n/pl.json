@@ -18,14 +18,12 @@
   "session-settings": "Ustawienia sesji",
   "shared-session-click-to-join": "udostępnia — kliknij, aby dołączyć",
   "dismiss": "Odrzucać",
-
   "tabs": "Karty",
   "new-tab": "Nowa karta",
   "create-new-tab": "Utwórz nową kartę",
   "tab-options": "Opcje karty",
   "open-tab-menu": "Otwórz menu kart",
   "session-id_x": "Identyfikator sesji: {{sessionId}}",
-
   "search-verses": "Wyszukaj wersety",
   "clear-search": "Wyczyść wyszukiwanie",
   "searching": "Badawczy...",
@@ -127,11 +125,9 @@
   "end-session": "Zakończ sesję",
   "panels": "Panele",
   "new-shared-session": "Nowa wspólna sesja",
-
   "open-in-new-panel": "Otwórz w nowym panelu",
   "open-in-detached-panel": "Otwórz w oddzielnym panelu",
   "close-sidebar": "Zamknij pasek boczny",
-
   "select-pane-layout": "Wybierz układ panelu",
   "pane-layout": "Układ panelu",
   "back": "Z powrotem",
@@ -178,16 +174,13 @@
   "complete-translations": "Pełne tłumaczenia",
   "all-translations": "Wszystkie tłumaczenia",
   "popular-translations": "Popularne tłumaczenia",
-
   "1-psalms": "1 Psalmów",
   "2-psalms": "2 Psalmy",
   "3-psalms": "3 Psalmy",
   "4-psalms": "4 Psalmy",
   "5-psalms": "5 Psalmów",
-
   "remove-bookmark": "Usuń zakładkę",
   "add-bookmark": "Zakładka w książce",
-
   "chat": "Pogawędzić",
   "today": "Dzisiaj",
   "you": "Ty",
@@ -195,7 +188,6 @@
   "add-verse": "Dodaj werset",
   "add": "Dodać",
   "chat-empty-title": "Czat wkrótce",
-
   "category-options": "Opcje folderów",
   "rename": "Przemianować",
   "delete": "Usuwać",
@@ -212,10 +204,8 @@
   "add-to-new": "Dodaj do nowego",
   "save": "Ratować",
   "bookmark-verses": "Dodaj wersety do zakładek",
-
   "about-extrabiblical-writings": "O pismach pozabiblijnych",
   "apocrypha-info-text": "Żadne z pism w tej sekcji nigdy nie zostało uznane za Pismo Święte przez wczesne społeczności żydowskie lub chrześcijańskie. Biblia jest specyficznym zbiorem ksiąg. Żydzi i chrześcijanie zawsze zgadzali się co do Starego Testamentu, który pochodzi z ustalonego zbioru pism świętych, które Żydzi nazywali Tanachem, a chrześcijanie Starym Testamentem. Treść Tanachu i Starego Testamentu jest dokładnie taka sama, ale zazwyczaj jest inaczej ułożona. Chrześcijanie dodatkowo uznają Nowy Testament, który opowiada historię Jezusa, jego nauki i pisma jego naśladowców. Poniższe pisma były znane i powszechnie czytane w czasach, gdy pisano Biblię, ale nigdy nie były traktowane jako Pismo Święte. Chociaż starożytni autorzy czasami cytowali szeroki zakres tekstów, w tym poetów, filozofów i inne pisma, cytowanie czegoś nie jest równoznaczne z traktowaniem tego jako Pisma Świętego. Pisma te zostały tutaj zamieszczone wyłącznie w celach historycznych i literackich.",
-
   "seed-bible": "Biblia nasion",
   "take-photo": "Zrób zdjęcie",
   "choose-from-gallery": "Wybierz z galerii",
@@ -224,18 +214,14 @@
   "zoom": "Brzęczenie",
   "set-picture": "Ustaw obraz",
   "login-email-title": "Podaj swój adres e-mail",
-
   "login-sending": "Przesyłka…",
   "login-code-title": "Wprowadź kod logowania",
   "login-code-description": "Wysłaliśmy kod logowania na adres „ {{email}} ”.",
-
   "login-code-placeholder": "Wprowadź tutaj kod logowania",
   "login-change-email": "Zmień adres e-mail",
   "login-resend-code": "Wyślij ponownie kod",
   "login-confirm-code": "Potwierdź kod",
-
   "login-verifying": "Weryfikowanie…",
-
   "login-error-email-required": "Proszę podać adres e-mail.",
   "login-error-code-required": "Proszę wpisać kod z wiadomości e-mail.",
   "login-error-generic": "Coś poszło nie tak. Spróbuj ponownie.",
@@ -274,5 +260,8 @@
   "install-app": "Zainstaluj aplikację",
   "launch-tutorial": "Uruchom samouczek",
   "search-languages": "Wyszukaj języki...",
-  "no-languages-found": "Nie znaleziono języków"
+  "no-languages-found": "Nie znaleziono języków",
+  "today-coming-soon": "Już wkrótce pojawi się ekran dzisiejszy",
+  "link-to-join-shared-session-copied": "Link umożliwiający dołączenie do sesji współdzielonej został skopiowany do schowka",
+  "copied-translation-share-link": "Skopiowano tłumaczenie, udostępnij link"
 }

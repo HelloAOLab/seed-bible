@@ -13,14 +13,12 @@
   "close": "Закрити",
   "open-settings": "Відкрити налаштування",
   "close-settings": "Закрити налаштування",
-
   "tabs": "Вкладки",
   "new-tab": "Нова вкладка",
   "create-new-tab": "Створити нову вкладку",
   "tab-options": "Параметри вкладок",
   "open-tab-menu": "Відкрити меню вкладок",
   "session-id_x": "Ідентифікатор сеансу: {{sessionId}}",
-
   "search-verses": "Пошук віршів",
   "clear-search": "Очистити пошук",
   "searching": "Пошук...",
@@ -113,7 +111,6 @@
   "open-in-new-panel": "Відкрити в новій панелі",
   "open-in-detached-panel": "Відкрити на окремій панелі",
   "close-sidebar": "Закрити бічну панель",
-
   "select-pane-layout": "Вибрати макет панелі",
   "pane-layout": "Макет панелі",
   "back": "Назад",
@@ -160,7 +157,6 @@
   "complete-translations": "Повні переклади",
   "all-translations": "Усі переклади",
   "popular-translations": "Популярні переклади",
-
   "about-extrabiblical-writings": "About Extrabiblical writings",
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 Псалом",
@@ -168,7 +164,6 @@
   "3-psalms": "3 Псалми",
   "4-psalms": "4 Псалми",
   "5-psalms": "5 Псалмів",
-
   "scripture-elements": "Елементи Святого Письма",
   "show-headings": "Показати заголовки",
   "show-verse-numbers": "Показати номери віршів",
@@ -187,7 +182,6 @@
   "more": "Більше",
   "remove-bookmark": "Видалити закладку",
   "add-bookmark": "Закладка",
-
   "chat": "Чат",
   "today": "Сьогодні",
   "you": "Ви",
@@ -195,7 +189,6 @@
   "add-verse": "Додати вірш",
   "add": "Додати",
   "chat-empty-title": "Чат буде доступний незабаром",
-
   "category-options": "Параметри папки",
   "rename": "Перейменувати",
   "delete": "Видалити",
@@ -213,7 +206,6 @@
   "add-to-new": "Додати до нового",
   "save": "Зберегти",
   "bookmark-verses": "Закладка віршів",
-
   "seed-bible": "Біблія насіння",
   "take-photo": "Зробіть фотографію",
   "choose-from-gallery": "Виберіть з галереї",
@@ -222,18 +214,14 @@
   "zoom": "Збільшити",
   "set-picture": "Встановити зображення",
   "login-email-title": "Введіть свою адресу електронної пошти",
-
   "login-sending": "Надсилання…",
   "login-code-title": "Введіть код для входу",
   "login-code-description": "Ми надіслали код для входу на адресу \" {{email}} \".",
-
   "login-code-placeholder": "Введіть тут код для входу",
   "login-change-email": "Змінити адресу електронної пошти",
   "login-resend-code": "Надіслати код повторно",
   "login-confirm-code": "Підтвердьте код",
-
   "login-verifying": "Перевірка…",
-
   "login-error-email-required": "Будь ласка, введіть свою адресу електронної пошти.",
   "login-error-code-required": "Будь ласка, введіть код з вашої електронної пошти.",
   "login-error-generic": "Щось пішло не так. Спробуйте ще раз.",
@@ -272,5 +260,8 @@
   "install-app": "Встановити додаток",
   "launch-tutorial": "Запуск посібника",
   "search-languages": "Пошук мов...",
-  "no-languages-found": "Мови не знайдено"
+  "no-languages-found": "Мови не знайдено",
+  "today-coming-soon": "Сьогоднішній екран з'явиться незабаром",
+  "link-to-join-shared-session-copied": "Посилання для приєднання до спільного сеансу скопійовано до буфера обміну",
+  "copied-translation-share-link": "Скопійоване посилання для обміну перекладом"
 }

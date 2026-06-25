@@ -18,14 +18,12 @@
   "session-settings": "Sessiya sozlamalari",
   "shared-session-click-to-join": "ulashmoqda — qo'shilish uchun bosing",
   "dismiss": "Bekor qilish",
-
   "tabs": "Yorliqlar",
   "new-tab": "Yangi yorliq",
   "create-new-tab": "Yangi yorliq yaratish",
   "tab-options": "Yorliq parametrlari",
   "open-tab-menu": "Yorliq menyusini ochish",
   "session-id_x": "Sessiya identifikatori: {{sessionId}}",
-
   "search-verses": "Oyatlarni qidirish",
   "clear-search": "Qidiruvni tozalash",
   "searching": "Qidirilmoqda...",
@@ -127,11 +125,9 @@
   "end-session": "Sessiyani tugatish",
   "panels": "Panellar",
   "new-shared-session": "Yangi umumiy sessiya",
-
   "open-in-new-panel": "Yangi panelda ochish",
   "open-in-detached-panel": "Alohida panelda ochish",
   "close-sidebar": "Yon panelni yopish",
-
   "select-pane-layout": "Panelning joylashuvini tanlang",
   "pane-layout": "Panelning joylashuvi",
   "back": "Orqaga",
@@ -178,16 +174,13 @@
   "complete-translations": "To'liq tarjimalar",
   "all-translations": "Barcha tarjimalar",
   "popular-translations": "Ommabop tarjimalar",
-
   "1-psalms": "1 Zabur",
   "2-psalms": "2 Zabur",
   "3-psalms": "3 Zabur",
   "4-psalms": "4 Zabur",
   "5-psalms": "5 Zabur",
-
   "remove-bookmark": "Xatcho'pni olib tashlash",
   "add-bookmark": "Xatcho'p",
-
   "chat": "Chat",
   "today": "Bugun",
   "you": "Siz",
@@ -195,7 +188,6 @@
   "add-verse": "Oyat qo'shish",
   "add": "Qo'shish",
   "chat-empty-title": "Chat tez orada chiqadi",
-
   "category-options": "Papka parametrlari",
   "rename": "Qayta nomlash",
   "delete": "O'chirish",
@@ -212,10 +204,8 @@
   "add-to-new": "Yangisiga qo'shish",
   "save": "Saqlash",
   "bookmark-verses": "Oyatlarni xatcho'pga qo'ying",
-
   "about-extrabiblical-writings": "Muqaddas Kitobdan tashqari yozuvlar haqida",
   "apocrypha-info-text": "Ushbu bo'limdagi yozuvlarning hech biri ilk yahudiy yoki nasroniy jamoalari tomonidan hech qachon Muqaddas Kitob deb hisoblanmagan. Muqaddas Kitob o'ziga xos kitoblar to'plamidir. Yahudiylar va nasroniylar har doim Eski Ahd haqida kelishib olishgan, bu yahudiy xalqi Tanax va nasroniylar Eski Ahd deb ataydigan muqaddas yozuvlarning belgilangan to'plamidan kelib chiqadi. Tanax va Eski Ahdning mazmuni bir xil, ammo odatda turlicha joylashtirilgan. Xristianlar shuningdek, Iso, uning ta'limotlari va izdoshlarining yozuvlari haqidagi hikoyani hikoya qiluvchi Yangi Ahdni tan olishadi. Quyidagi yozuvlar Muqaddas Kitob yozilgan paytda ma'lum bo'lgan va keng o'qilgan, ammo ular hech qachon Muqaddas Kitob sifatida qabul qilinmagan. Qadimgi mualliflar ba'zan shoirlar, faylasuflar va boshqa yozuvlarni o'z ichiga olgan turli xil matnlarni iqtibos qilgan bo'lsalar-da, biror narsani iqtibos qilish uni Muqaddas Kitob sifatida qabul qilish bilan bir xil emas. Bu yozuvlar bu yerda faqat tarixiy va adabiy ma'lumotnoma uchun keltirilgan.",
-
   "seed-bible": "Urug'lik Muqaddas Kitobi",
   "take-photo": "Suratga oling",
   "choose-from-gallery": "Galereyadan tanlang",
@@ -224,18 +214,14 @@
   "zoom": "Kattalashtirish",
   "set-picture": "Rasmni o'rnating",
   "login-email-title": "Elektron pochta manzilingizni kiriting",
-
   "login-sending": "Yuborilmoqda…",
   "login-code-title": "Kirish kodini kiriting",
   "login-code-description": "Biz \" {{email}} \" manziliga kirish kodini yubordik.",
-
   "login-code-placeholder": "Kirish kodini bu yerga kiriting",
   "login-change-email": "Elektron pochta manzilini o'zgartirish",
   "login-resend-code": "Kodni qayta yuborish",
   "login-confirm-code": "Kodni tasdiqlash",
-
   "login-verifying": "Tekshirilmoqda…",
-
   "login-error-email-required": "Iltimos, elektron pochta manzilingizni kiriting.",
   "login-error-code-required": "Iltimos, elektron pochtangizdan kodni kiriting.",
   "login-error-generic": "Nimadir noto'g'ri ketdi. Qaytadan urinib ko'ring.",
@@ -274,5 +260,8 @@
   "install-app": "Ilovani o'rnatish",
   "launch-tutorial": "Qo'llanmani ishga tushirish",
   "search-languages": "Tillarni qidirish...",
-  "no-languages-found": "Hech qanday til topilmadi"
+  "no-languages-found": "Hech qanday til topilmadi",
+  "today-coming-soon": "Bugungi ekran tez orada chiqadi",
+  "link-to-join-shared-session-copied": "Umumiy sessiyaga qo'shilish havolasi clipboardga nusxalandi",
+  "copied-translation-share-link": "Tarjimani ulashish havolasi nusxalandi"
 }

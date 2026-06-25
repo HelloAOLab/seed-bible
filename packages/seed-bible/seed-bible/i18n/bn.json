@@ -13,14 +13,12 @@
   "close": "বন্ধ করুন",
   "open-settings": "সেটিংস খুলুন",
   "close-settings": "সেটিংস বন্ধ করুন",
-
   "tabs": "ট্যাব",
   "new-tab": "নতুন ট্যাব",
   "create-new-tab": "নতুন ট্যাব তৈরি করুন",
   "tab-options": "ট্যাব বিকল্পগুলি",
   "open-tab-menu": "ট্যাব মেনু খুলুন",
   "session-id_x": "সেশন আইডি: {{sessionId}}",
-
   "search-verses": "শ্লোক অনুসন্ধান করুন",
   "clear-search": "পরিষ্কার অনুসন্ধান",
   "searching": "অনুসন্ধান করা হচ্ছে...",
@@ -113,7 +111,6 @@
   "open-in-new-panel": "নতুন প্যানেলে খুলুন",
   "open-in-detached-panel": "বিচ্ছিন্ন প্যানেলে খুলুন",
   "close-sidebar": "সাইডবার বন্ধ করুন",
-
   "select-pane-layout": "প্যান লেআউট নির্বাচন করুন",
   "pane-layout": "প্যান লেআউট",
   "back": "ফিরে যান",
@@ -160,7 +157,6 @@
   "complete-translations": "সম্পূর্ণ অনুবাদ",
   "all-translations": "সমস্ত অনুবাদ",
   "popular-translations": "জনপ্রিয় অনুবাদ",
-
   "about-extrabiblical-writings": "About Extrabiblical writings",
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "১ গীতসংহিতা",
@@ -168,7 +164,6 @@
   "3-psalms": "৩ গীতসংহিতা",
   "4-psalms": "৪ গীতসংহিতা",
   "5-psalms": "৫ গীতসংহিতা",
-
   "scripture-elements": "ধর্মগ্রন্থের উপাদান",
   "show-headings": "শিরোনাম দেখান",
   "show-verse-numbers": "শ্লোক নম্বর দেখান",
@@ -187,7 +182,6 @@
   "more": "আরও",
   "remove-bookmark": "বুকমার্ক সরান",
   "add-bookmark": "বুকমার্ক",
-
   "chat": "চ্যাট",
   "today": "আজ",
   "you": "তুমি",
@@ -195,7 +189,6 @@
   "add-verse": "শ্লোক যোগ করুন",
   "add": "যোগ করুন",
   "chat-empty-title": "চ্যাট শীঘ্রই আসছে",
-
   "category-options": "ফোল্ডার বিকল্পগুলি",
   "rename": "পুনঃনামকরণ",
   "delete": "মুছে ফেলুন",
@@ -213,7 +206,6 @@
   "add-to-new": "নতুনতে যোগ করুন",
   "save": "সংরক্ষণ করুন",
   "bookmark-verses": "শ্লোকগুলি বুকমার্ক করুন",
-
   "seed-bible": "বীজ বাইবেল",
   "take-photo": "একটি ছবি তুলুন",
   "choose-from-gallery": "গ্যালারি থেকে বেছে নিন",
@@ -222,18 +214,14 @@
   "zoom": "জুম",
   "set-picture": "ছবি সেট করুন",
   "login-email-title": "আপনার ইমেল ঠিকানা লিখুন",
-
   "login-sending": "প্রেরণ করা হচ্ছে…",
   "login-code-title": "লগইন কোডটি প্রবেশ করান",
   "login-code-description": "আমরা \" {{email}} \"-এ একটি লগইন কোড পাঠিয়েছি।",
-
   "login-code-placeholder": "এখানে লগইন কোড লিখুন",
   "login-change-email": "ইমেল ঠিকানা পরিবর্তন করুন",
   "login-resend-code": "কোড পুনরায় পাঠান",
   "login-confirm-code": "কোড নিশ্চিত করুন",
-
   "login-verifying": "যাচাই করা হচ্ছে…",
-
   "login-error-email-required": "অনুগ্রহ করে আপনার ইমেল ঠিকানা লিখুন।",
   "login-error-code-required": "অনুগ্রহ করে আপনার ইমেইল থেকে কোডটি প্রবেশ করান।",
   "login-error-generic": "কিছু একটা ভুল হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন।",
@@ -272,5 +260,8 @@
   "install-app": "অ্যাপ ইনস্টল করুন",
   "launch-tutorial": "টিউটোরিয়াল চালু করুন",
   "search-languages": "ভাষা অনুসন্ধান করুন...",
-  "no-languages-found": "কোন ভাষা খুঁজে পাওয়া যায়নি"
+  "no-languages-found": "কোন ভাষা খুঁজে পাওয়া যায়নি",
+  "today-coming-soon": "আজকের স্ক্রিন শীঘ্রই আসছে",
+  "link-to-join-shared-session-copied": "শেয়ার করা সেশনে যোগদানের একটি লিঙ্ক আপনার ক্লিপবোর্ডে কপি করা হয়েছে।",
+  "copied-translation-share-link": "অনুলিপি করা অনুবাদ শেয়ার লিঙ্ক"
 }

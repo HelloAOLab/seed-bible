@@ -18,14 +18,12 @@
   "session-settings": "Impostazioni della sessione",
   "shared-session-click-to-join": "sta condividendo — clicca per unirti",
   "dismiss": "Congedare",
-
   "tabs": "Schede",
   "new-tab": "Nuova scheda",
   "create-new-tab": "Crea una nuova scheda",
   "tab-options": "Opzioni della scheda",
   "open-tab-menu": "Apri il menu a schede",
   "session-id_x": "ID sessione: {{sessionId}}",
-
   "search-verses": "Cerca i versetti",
   "clear-search": "Cancella ricerca",
   "searching": "Ricerca in corso...",
@@ -127,11 +125,9 @@
   "end-session": "Fine della sessione",
   "panels": "Pannelli",
   "new-shared-session": "Nuova sessione condivisa",
-
   "open-in-new-panel": "Apri in una nuova finestra",
   "open-in-detached-panel": "Aprire nel pannello separato",
   "close-sidebar": "Chiudi la barra laterale",
-
   "select-pane-layout": "Seleziona il layout del riquadro",
   "pane-layout": "Layout del pannello",
   "back": "Indietro",
@@ -178,16 +174,13 @@
   "complete-translations": "Traduzioni complete",
   "all-translations": "Tutte le traduzioni",
   "popular-translations": "Traduzioni popolari",
-
   "1-psalms": "1 Salmi",
   "2-psalms": "2 Salmi",
   "3-psalms": "3 Salmi",
   "4-psalms": "4 Salmi",
   "5-psalms": "5 Salmi",
-
   "remove-bookmark": "Rimuovi segnalibro",
   "add-bookmark": "Segnalibro",
-
   "chat": "Chiacchierata",
   "today": "Oggi",
   "you": "Voi",
@@ -195,7 +188,6 @@
   "add-verse": "Aggiungi un verso",
   "add": "Aggiungere",
   "chat-empty-title": "La chat arriverà presto",
-
   "category-options": "Opzioni cartella",
   "rename": "Rinominare",
   "delete": "Eliminare",
@@ -212,10 +204,8 @@
   "add-to-new": "Aggiungi a nuovo",
   "save": "Salva",
   "bookmark-verses": "Segnalibro versi",
-
   "about-extrabiblical-writings": "A proposito degli scritti extrabiblici",
   "apocrypha-info-text": "Nessuno degli scritti presenti in questa sezione è mai stato considerato Scrittura dalle prime comunità ebraiche o cristiane. La Bibbia è una specifica raccolta di libri. Ebrei e cristiani hanno sempre concordato sull'Antico Testamento, che deriva da un insieme fisso di testi sacri che gli ebrei chiamano Tanakh e i cristiani Antico Testamento. Il contenuto del Tanakh e dell'Antico Testamento è esattamente lo stesso, ma sono comunemente disposti in modo diverso. I cristiani riconoscono inoltre il Nuovo Testamento, che narra la storia di Gesù, i suoi insegnamenti e gli scritti dei suoi seguaci. Gli scritti qui riportati erano noti e ampiamente letti all'epoca in cui fu scritta la Bibbia, ma non furono mai considerati Scrittura. Sebbene gli autori antichi citassero talvolta una vasta gamma di testi, inclusi poeti, filosofi e altri scritti, citare qualcosa non equivale a considerarla Scrittura. Questi scritti sono inclusi qui solo a scopo di riferimento storico e letterario.",
-
   "seed-bible": "Bibbia dei semi",
   "take-photo": "Scatta una foto",
   "choose-from-gallery": "Scegli dalla galleria",
@@ -224,18 +214,14 @@
   "zoom": "Zoom",
   "set-picture": "Set di immagini",
   "login-email-title": "Inserisci il tuo indirizzo email",
-
   "login-sending": "Invio…",
   "login-code-title": "Inserisci il codice di accesso",
   "login-code-description": "Abbiamo inviato un codice di accesso a \" {{email}} \".",
-
   "login-code-placeholder": "Inserisci qui il codice di accesso",
   "login-change-email": "Modifica l'indirizzo email",
   "login-resend-code": "Reinvia il codice",
   "login-confirm-code": "Conferma il codice",
-
   "login-verifying": "Verifica in corso…",
-
   "login-error-email-required": "Inserisci il tuo indirizzo email.",
   "login-error-code-required": "Inserisci il codice ricevuto via email.",
   "login-error-generic": "Si è verificato un errore. Riprova.",
@@ -274,5 +260,8 @@
   "install-app": "Installa l'app",
   "launch-tutorial": "Avviare la procedura",
   "search-languages": "Cerca lingue...",
-  "no-languages-found": "Nessuna lingua trovata"
+  "no-languages-found": "Nessuna lingua trovata",
+  "today-coming-soon": "Oggi lo schermo arriverà presto",
+  "link-to-join-shared-session-copied": "Il link per partecipare alla sessione condivisa è stato copiato negli appunti.",
+  "copied-translation-share-link": "Copia il link di condivisione della traduzione"
 }

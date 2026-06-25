@@ -13,14 +13,12 @@
   "close": "बन्द गर्नुहोस्",
   "open-settings": "सेटिङहरू खोल्नुहोस्",
   "close-settings": "सेटिङहरू बन्द गर्नुहोस्",
-
   "tabs": "ट्याबहरू",
   "new-tab": "नयाँ ट्याब",
   "create-new-tab": "नयाँ ट्याब सिर्जना गर्नुहोस्",
   "tab-options": "ट्याब विकल्पहरू",
   "open-tab-menu": "ट्याब मेनु खोल्नुहोस्",
   "session-id_x": "सत्र आईडी: {{sessionId}}",
-
   "search-verses": "पदहरू खोज्नुहोस्",
   "clear-search": "खोज खाली गर्नुहोस्",
   "searching": "खोज्दै...",
@@ -113,7 +111,6 @@
   "open-in-new-panel": "नयाँ प्यानलमा खोल्नुहोस्",
   "open-in-detached-panel": "छुट्याइएको प्यानलमा खोल्नुहोस्",
   "close-sidebar": "साइडबार बन्द गर्नुहोस्",
-
   "select-pane-layout": "फलक लेआउट चयन गर्नुहोस्",
   "pane-layout": "पेन लेआउट",
   "back": "पछाडि",
@@ -160,7 +157,6 @@
   "complete-translations": "पूरा अनुवादहरू",
   "all-translations": "सबै अनुवादहरू",
   "popular-translations": "लोकप्रिय अनुवादहरू",
-
   "about-extrabiblical-writings": "About Extrabiblical writings",
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "१ भजनसंग्रह",
@@ -168,7 +164,6 @@
   "3-psalms": "३ भजनसंग्रह",
   "4-psalms": "४ भजनसंग्रह",
   "5-psalms": "५ भजनसंग्रह",
-
   "scripture-elements": "धर्मशास्त्रका तत्वहरू",
   "show-headings": "शीर्षकहरू देखाउनुहोस्",
   "show-verse-numbers": "पद संख्याहरू देखाउनुहोस्",
@@ -187,7 +182,6 @@
   "more": "थप",
   "remove-bookmark": "बुकमार्क हटाउनुहोस्",
   "add-bookmark": "बुकमार्क गर्नुहोस्",
-
   "chat": "कुराकानी",
   "today": "आज",
   "you": "तपाईं",
@@ -195,7 +189,6 @@
   "add-verse": "पद थप्नुहोस्",
   "add": "थप्नुहोस्",
   "chat-empty-title": "च्याट चाँडै आउँदैछ",
-
   "category-options": "फोल्डर विकल्पहरू",
   "rename": "पुन: नामाकरण गर्नुहोस्",
   "delete": "मेटाउनुहोस्",
@@ -213,7 +206,6 @@
   "add-to-new": "नयाँमा थप्नुहोस्",
   "save": "बचत गर्नुहोस्",
   "bookmark-verses": "पदहरू बुकमार्क गर्नुहोस्",
-
   "seed-bible": "बीउ बाइबल",
   "take-photo": "फोटो खिच्नुहोस्",
   "choose-from-gallery": "ग्यालरीबाट छान्नुहोस्",
@@ -222,18 +214,14 @@
   "zoom": "जुम गर्नुहोस्",
   "set-picture": "तस्वीर सेट गर्नुहोस्",
   "login-email-title": "आफ्नो इमेल ठेगाना प्रविष्ट गर्नुहोस्।",
-
   "login-sending": "पठाउँदै...",
   "login-code-title": "लगइन कोड प्रविष्ट गर्नुहोस्",
   "login-code-description": "हामीले \" {{email}} \" मा लगइन कोड पठायौं।",
-
   "login-code-placeholder": "लगइन कोड यहाँ प्रविष्ट गर्नुहोस्",
   "login-change-email": "इमेल ठेगाना परिवर्तन गर्नुहोस्",
   "login-resend-code": "कोड पुन: पठाउनुहोस्",
   "login-confirm-code": "कोड पुष्टि गर्नुहोस्",
-
   "login-verifying": "प्रमाणित गर्दै...",
-
   "login-error-email-required": "कृपया आफ्नो इमेल ठेगाना प्रविष्ट गर्नुहोस्।",
   "login-error-code-required": "कृपया आफ्नो इमेलबाट कोड प्रविष्ट गर्नुहोस्।",
   "login-error-generic": "केही गडबड भयो। कृपया फेरि प्रयास गर्नुहोस्।",
@@ -272,5 +260,8 @@
   "install-app": "एप स्थापना गर्नुहोस्",
   "launch-tutorial": "ट्युटोरियल सुरु गर्नुहोस्",
   "search-languages": "भाषाहरू खोज्नुहोस्...",
-  "no-languages-found": "कुनै भाषा भेटिएन।"
+  "no-languages-found": "कुनै भाषा भेटिएन।",
+  "today-coming-soon": "आजको स्क्रिन चाँडै आउँदैछ",
+  "link-to-join-shared-session-copied": "साझा सत्रमा सामेल हुने लिङ्क तपाईंको क्लिपबोर्डमा प्रतिलिपि गरिएको छ।",
+  "copied-translation-share-link": "अनुवाद साझेदारी लिङ्क प्रतिलिपि गरियो"
 }

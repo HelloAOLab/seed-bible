@@ -18,14 +18,12 @@
   "session-settings": "Izilungiselelo zeseshini",
   "shared-session-click-to-join": "uyabelana — chofoza ukuze ujoyine",
   "dismiss": "Lahla",
-
   "tabs": "Amathebhu",
   "new-tab": "Ithebhu entsha",
   "create-new-tab": "Dala ithebhu entsha",
   "tab-options": "Izinketho zethebhu",
   "open-tab-menu": "Vula imenyu yethebhu",
   "session-id_x": "I-ID Yeseshini: {{sessionId}}",
-
   "search-verses": "Sesha amavesi",
   "clear-search": "Sula usesho",
   "searching": "Iyasesha...",
@@ -127,11 +125,9 @@
   "end-session": "Ukuphela Kweseshini",
   "panels": "Amaphaneli",
   "new-shared-session": "Iseshini entsha eyabiwe",
-
   "open-in-new-panel": "Vula kuphaneli entsha",
   "open-in-detached-panel": "Vula kuphaneli ehlukanisiwe",
   "close-sidebar": "Vala ibha eseceleni",
-
   "select-pane-layout": "Khetha isakhiwo sephaneli",
   "pane-layout": "Ukuhlelwa kwephaneli",
   "back": "Emuva",
@@ -178,16 +174,13 @@
   "complete-translations": "Ukuhumusha okuphelele",
   "all-translations": "Zonke izinguqulo",
   "popular-translations": "Izinguqulo ezidumile",
-
   "1-psalms": "1 AmaHubo",
   "2-psalms": "AmaHubo 2",
   "3-psalms": "AmaHubo 3",
   "4-psalms": "AmaHubo 4",
   "5-psalms": "AmaHubo 5",
-
   "remove-bookmark": "Susa ibhukhimakhi",
   "add-bookmark": "Ibhukhimakhi",
-
   "chat": "Ingxoxo",
   "today": "Namuhla",
   "you": "Wena",
@@ -195,7 +188,6 @@
   "add-verse": "Engeza ivesi",
   "add": "Engeza",
   "chat-empty-title": "Ingxoxo iyeza maduze",
-
   "category-options": "Izinketho zefolda",
   "rename": "Qamba kabusha",
   "delete": "Susa",
@@ -212,10 +204,8 @@
   "add-to-new": "Engeza kokusha",
   "save": "Londoloza",
   "bookmark-verses": "Beka uphawu lokumaka amavesi",
-
   "about-extrabiblical-writings": "Mayelana nemibhalo engekho eBhayibhelini",
   "apocrypha-info-text": "Akukho mibhalo ekulesi sigaba eyake yabhekwa njengemiBhalo yimiphakathi yamaJuda noma yamaKristu. IBhayibheli liyiqoqo elithile lezincwadi. AmaJuda namaKristu bebelokhu bevumelana ngeTestamente Elidala, elivela eqoqweni eliqinile lemibhalo engcwele abantu bamaJuda abayibiza ngokuthi iTanakh namaKristu ayibiza ngokuthi iTestamente Elidala. Okuqukethwe yiTanakh neTestamente Elidala kufana ncamashi, kodwa kuvame ukuhlelwa ngendlela ehlukile. AmaKristu futhi ayaqaphela iTestamente Elisha, elilandisa indaba kaJesu, izimfundiso zakhe, kanye nemibhalo yabalandeli bakhe. Imibhalo engezansi yayaziwa futhi ifundwa kabanzi ngesikhathi iBhayibheli libhalwa, kodwa ayizange iphathwe njengemiBhalo. Ngenkathi abalobi basendulo ngezinye izikhathi becaphuna imibhalo ehlukahlukene ehlanganisa izimbongi, izazi zefilosofi, kanye neminye imibhalo, ukucaphuna okuthile akufani nokukuphatha njengemiBhalo. Le mibhalo ifakiwe lapha ukuze kubhekiselwe kuyo emlandweni nasezincwadini kuphela.",
-
   "seed-bible": "Imbewu yeBhayibheli",
   "take-photo": "Thatha isithombe",
   "choose-from-gallery": "Khetha kugalari",
@@ -224,18 +214,14 @@
   "zoom": "Sondeza",
   "set-picture": "Setha isithombe",
   "login-email-title": "Faka ikheli lakho le-imeyili",
-
   "login-sending": "Iyathumela…",
   "login-code-title": "Faka ikhodi yokungena",
   "login-code-description": "Sithumele ikhodi yokungena ku-\" {{email}} \".",
-
   "login-code-placeholder": "Faka ikhodi yokungena lapha",
   "login-change-email": "Shintsha ikheli le-imeyili",
   "login-resend-code": "Thumela ikhodi kabusha",
   "login-confirm-code": "Qinisekisa ikhodi",
-
   "login-verifying": "Iyaqinisekisa…",
-
   "login-error-email-required": "Sicela ufake ikheli lakho le-imeyili.",
   "login-error-code-required": "Sicela ufake ikhodi evela ku-imeyili yakho.",
   "login-error-generic": "Kukhona okungahambanga kahle. Sicela uzame futhi.",
@@ -274,5 +260,8 @@
   "install-app": "Faka uhlelo lokusebenza",
   "launch-tutorial": "Qalisa isifundo",
   "search-languages": "Sesha izilimi...",
-  "no-languages-found": "Azikho izilimi ezitholiwe"
+  "no-languages-found": "Azikho izilimi ezitholiwe",
+  "today-coming-soon": "Isikrini sanamuhla siyeza maduze",
+  "link-to-join-shared-session-copied": "Isixhumanisi sokujoyina iseshini eyabiwe sikopishwe ebhodini lakho lokunamathisela",
+  "copied-translation-share-link": "Isixhumanisi sokwabelana ngokuhumusha esikopishiwe"
 }

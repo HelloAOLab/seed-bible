@@ -18,14 +18,12 @@
   "session-settings": "Sesje-ynstellings",
   "shared-session-click-to-join": "dielt - klik om mei te dwaan",
   "dismiss": "Ofwize",
-
   "tabs": "Tabs",
   "new-tab": "Nij ljepper",
   "create-new-tab": "Nije ljepper oanmeitsje",
   "tab-options": "Tab-opsjes",
   "open-tab-menu": "Tabmenu iepenje",
   "session-id_x": "Sesje-ID: {{sessionId}}",
-
   "search-verses": "Sykje fersen",
   "clear-search": "Sykje wiskje",
   "searching": "Sykje...",
@@ -127,11 +125,9 @@
   "end-session": "Sesje einigje",
   "panels": "Panielen",
   "new-shared-session": "Nije dielde sesje",
-
   "open-in-new-panel": "Iepenje yn in nij paniel",
   "open-in-detached-panel": "Iepenje yn losse paniel",
   "close-sidebar": "Slút sydbalke",
-
   "select-pane-layout": "Selektearje panielyndieling",
   "pane-layout": "Paneelyndieling",
   "back": "Rêch",
@@ -178,16 +174,13 @@
   "complete-translations": "Folsleine oersettings",
   "all-translations": "Alle oersettings",
   "popular-translations": "Populêre oersettings",
-
   "1-psalms": "1 Psalmen",
   "2-psalms": "2 Psalmen",
   "3-psalms": "3 Psalmen",
   "4-psalms": "4 Psalmen",
   "5-psalms": "5 Psalmen",
-
   "remove-bookmark": "Blêdwizer fuortsmite",
   "add-bookmark": "Blêdwizer",
-
   "chat": "Chat",
   "today": "Hjoed",
   "you": "Jo",
@@ -195,7 +188,6 @@
   "add-verse": "Fers tafoegje",
   "add": "Tafoegje",
   "chat-empty-title": "De petearen komme gau",
-
   "category-options": "Mapopsjes",
   "rename": "Omneame",
   "delete": "Wiskje",
@@ -212,10 +204,8 @@
   "add-to-new": "Tafoegje oan nij",
   "save": "Rêde",
   "bookmark-verses": "Blêdwizerferzen",
-
   "about-extrabiblical-writings": "Oer bûtenbibelske geskriften",
   "apocrypha-info-text": "Gjin fan 'e geskriften yn dizze seksje waarden ea as Skrift beskôge troch iere Joadske of kristlike mienskippen. De Bibel is in spesifike samling boeken. Joaden en kristenen hawwe it altyd iens west oer it Alde Testamint, dat komt fan in fêste set hillige geskriften dy't it Joadske folk de Tenach neamt en kristenen it Alde Testamint. De ynhâld fan 'e Tenach en it Alde Testamint is presys itselde, mar binne meastentiids oars ynrjochte. Kristenen erkenne ek it Nije Testamint, dat it ferhaal fan Jezus, syn lear en de geskriften fan syn folgelingen fertelt. De geskriften hjirûnder wiene bekend en breed lêzen yn 'e tiid dat de Bibel skreaun waard, mar se waarden nea as Skrift behannele. Wylst âlde auteurs soms in breed skala oan teksten sitearren, ynklusyf dichters, filosofen en oare geskriften, is it sitearjen fan wat net itselde as it as Skrift behannelje. Dizze geskriften binne hjir allinich opnommen foar histoaryske en literêre referinsje.",
-
   "seed-bible": "Siedbibel",
   "take-photo": "Nim in foto",
   "choose-from-gallery": "Kies út galery",
@@ -224,18 +214,14 @@
   "zoom": "Ynzoomje",
   "set-picture": "Ofbylding ynstelle",
   "login-email-title": "Fier jo e-mailadres yn",
-
   "login-sending": "Ferstjoere…",
   "login-code-title": "Fier de oanmeldkoade yn",
   "login-code-description": "Wy hawwe in oanmeldkoade nei \" {{email}} \" stjoerd.",
-
   "login-code-placeholder": "Fier hjir de oanmeldkoade yn",
   "login-change-email": "E-mailadres feroarje",
   "login-resend-code": "Koade opnij ferstjoere",
   "login-confirm-code": "Befêstigje koade",
-
   "login-verifying": "Ferifiearje…",
-
   "login-error-email-required": "Fier jo e-mailadres yn.",
   "login-error-code-required": "Fier asjebleaft de koade fan jo e-post yn.",
   "login-error-generic": "Der gie wat mis. Besykje it nochris.",
@@ -274,5 +260,8 @@
   "install-app": "App ynstallearje",
   "launch-tutorial": "Tutorial starte",
   "search-languages": "Sykje yn talen...",
-  "no-languages-found": "Gjin talen fûn"
+  "no-languages-found": "Gjin talen fûn",
+  "today-coming-soon": "It skerm fan hjoed komt gau",
+  "link-to-join-shared-session-copied": "In keppeling om mei te dwaan oan de dielde sesje is nei jo klamboerd kopiearre",
+  "copied-translation-share-link": "Kopiearre oersettingsdielingslink"
 }

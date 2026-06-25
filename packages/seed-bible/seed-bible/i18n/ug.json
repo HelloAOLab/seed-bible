@@ -13,14 +13,12 @@
   "close": "تاقاش",
   "open-settings": "تەڭشەكلەرنى ئېچىش",
   "close-settings": "تەڭشەكلەرنى تاقاش",
-
   "tabs": "بەتكۈچلەر",
   "new-tab": "يېڭى بەتكۈچ",
   "create-new-tab": "يېڭى بەتكۈچ قۇرۇش",
   "tab-options": "بەتكۈچ تاللانمىلىرى",
   "open-tab-menu": "بەتكۈچ تىزىملىكىنى ئېچىش",
   "session-id_x": "يىغىن نومۇرى: {{sessionId}}",
-
   "search-verses": "ئايەتلەرنى ئىزدەڭ",
   "clear-search": "ئىزدەشنى تازىلاش",
   "searching": "ئىزدەۋاتىدۇ...",
@@ -113,7 +111,6 @@
   "open-in-new-panel": "يېڭى تاختىدا ئېچىش",
   "open-in-detached-panel": "ئايرىم تاختىدا ئېچىش",
   "close-sidebar": "يان تاختىنى تاقاش",
-
   "select-pane-layout": "كۆزنەك لايىھەسىنى تاللاڭ",
   "pane-layout": "كۆزنەك لايىھەسى",
   "back": "ئارقىغا",
@@ -160,7 +157,6 @@
   "complete-translations": "تولۇق تەرجىمە",
   "all-translations": "بارلىق تەرجىمىلەر",
   "popular-translations": "ئالقىشقا ئېرىشكەن تەرجىمىلەر",
-
   "about-extrabiblical-writings": "About Extrabiblical writings",
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "1 زەبۇر",
@@ -168,7 +164,6 @@
   "3-psalms": "3 زەبۇر",
   "4-psalms": "4 زەبۇر",
   "5-psalms": "5 زەبۇر",
-
   "scripture-elements": "مۇقەددەس كىتاب ئېلېمېنتلىرى",
   "show-headings": "ماۋزۇلارنى كۆرسىتىش",
   "show-verse-numbers": "ئايەت نومۇرلىرىنى كۆرسىتىش",
@@ -187,7 +182,6 @@
   "more": "تېخىمۇ كۆپ",
   "remove-bookmark": "خەتكۈچنى ئۆچۈرۈڭ",
   "add-bookmark": "خەتكۈچ",
-
   "chat": "پاراڭلىشىش",
   "today": "بۈگۈن",
   "you": "سىز",
@@ -195,7 +189,6 @@
   "add-verse": "ئايەت قوشۇش",
   "add": "قوشۇش",
   "chat-empty-title": "پاراڭلىشىش تېزلا باشلىنىدۇ",
-
   "category-options": "قىسقۇچ تاللانمىلىرى",
   "rename": "قايتا ئىسىم قويۇش",
   "delete": "ئۆچۈرۈش",
@@ -213,7 +206,6 @@
   "add-to-new": "يېڭىسىغا قوشۇش",
   "save": "ساقلاش",
   "bookmark-verses": "ئايەتلەرنى خاتىرىلەڭ",
-
   "seed-bible": "ئۇرۇق ئىنجىل",
   "take-photo": "رەسىمگە تارتىڭ",
   "choose-from-gallery": "رەسىملەر توپلىمىدىن تاللاڭ",
@@ -222,18 +214,14 @@
   "zoom": "چوڭايتىش",
   "set-picture": "رەسىم قويۇش",
   "login-email-title": "ئېلخەت ئادرېسىڭىزنى كىرگۈزۈڭ",
-
   "login-sending": "ئەۋەتىلىۋاتىدۇ…",
   "login-code-title": "كىرىش كودىنى كىرگۈزۈڭ",
   "login-code-description": "بىز كىرىش كودىنى « {{email}} » غا ئەۋەتتۇق.",
-
   "login-code-placeholder": "كىرىش كودىنى بۇ يەرگە كىرگۈزۈڭ",
   "login-change-email": "ئېلخەت ئادرېسىنى ئۆزگەرتىش",
   "login-resend-code": "كودنى قايتا ئەۋەتىڭ",
   "login-confirm-code": "كودنى جەزملەشتۈرۈڭ",
-
   "login-verifying": "دەلىللەۋاتىدۇ…",
-
   "login-error-email-required": "ئېلخەت ئادرېسىڭىزنى كىرگۈزۈڭ.",
   "login-error-code-required": "ئېلخەت ئادرېسىڭىزدىكى كودنى كىرگۈزۈڭ.",
   "login-error-generic": "بىرەر ئىش خاتا بولدى. قايتا سىناپ بېقىڭ.",
@@ -272,5 +260,8 @@
   "install-app": "ئەپنى ئورنىتىش",
   "launch-tutorial": "قوللانمىنى قوزغىتىش",
   "search-languages": "تىللارنى ئىزدەش...",
-  "no-languages-found": "تىل تېپىلمىدى"
+  "no-languages-found": "تىل تېپىلمىدى",
+  "today-coming-soon": "بۈگۈنكى ئېكران تېزلا كېلىدۇ",
+  "link-to-join-shared-session-copied": "ئورتاقلىشىش يىغىنىغا قاتنىشىش ئۇلىنىشى سىزنىڭ چاپلاش تاختىسىڭىزغا كۆچۈرۈلدى",
+  "copied-translation-share-link": "تەرجىمە ھەمبەھىرلەش ئۇلىنىشى كۆچۈرۈلدى"
 }

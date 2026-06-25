@@ -18,14 +18,12 @@
   "session-settings": "Stillingar lotu",
   "shared-session-click-to-join": "er að deila — smelltu til að taka þátt",
   "dismiss": "Hafna",
-
   "tabs": "Flipar",
   "new-tab": "Nýr flipi",
   "create-new-tab": "Búa til nýjan flipa",
   "tab-options": "Valkostir flipa",
   "open-tab-menu": "Opna flipavalmynd",
   "session-id_x": "Lotuauðkenni: {{sessionId}}",
-
   "search-verses": "Leita að versum",
   "clear-search": "Hreinsa leit",
   "searching": "Leitar...",
@@ -127,11 +125,9 @@
   "end-session": "Loka lotu",
   "panels": "Spjöld",
   "new-shared-session": "Ný sameiginleg lota",
-
   "open-in-new-panel": "Opna í nýjum glugga",
   "open-in-detached-panel": "Opna í lausu spjaldi",
   "close-sidebar": "Loka hliðarstiku",
-
   "select-pane-layout": "Veldu rúðuuppsetningu",
   "pane-layout": "Útlit rúðu",
   "back": "Til baka",
@@ -178,16 +174,13 @@
   "complete-translations": "Heildarþýðingar",
   "all-translations": "Allar þýðingar",
   "popular-translations": "Vinsælar þýðingar",
-
   "1-psalms": "1. Sálmarnir",
   "2-psalms": "2. sálmar",
   "3-psalms": "3. sálmur",
   "4-psalms": "4 Sálmar",
   "5-psalms": "5 Sálmar",
-
   "remove-bookmark": "Fjarlægja bókamerki",
   "add-bookmark": "Bókamerki",
-
   "chat": "Spjall",
   "today": "Í dag",
   "you": "Þú",
@@ -195,7 +188,6 @@
   "add-verse": "Bæta við versi",
   "add": "Bæta við",
   "chat-empty-title": "Spjall kemur bráðlega",
-
   "category-options": "Möppuvalkostir",
   "rename": "Endurnefna",
   "delete": "Eyða",
@@ -212,10 +204,8 @@
   "add-to-new": "Bæta við nýtt",
   "save": "Vista",
   "bookmark-verses": "Bókamerkjaðu vers",
-
   "about-extrabiblical-writings": "Um utanbiblíulegar rit",
   "apocrypha-info-text": "Engin ritin í þessum hluta voru nokkurn tíma talin vera Ritning af fyrstu gyðinga- eða kristnum samfélögum. Biblían er sérstakt safn bóka. Gyðingar og kristnir menn hafa alltaf verið sammála um Gamla testamentið, sem kemur úr föstu safni helgra rita sem gyðingar kölluðu Tanakh og kristnir menn kalla Gamla testamentið. Efni Tanakh og Gamla testamentisins er nákvæmlega það sama en er almennt raðað öðruvísi. Kristnir menn viðurkenna einnig Nýja testamentið, sem segir sögu Jesú, kenninga hans og rita fylgjenda hans. Ritin hér að neðan voru þekkt og víða lesin þegar Biblían var skrifuð, en þau voru aldrei meðhöndluð sem Ritning. Þó að fornir höfundar hafi stundum vitnað í fjölbreytt úrval texta, þar á meðal skáld, heimspekinga og annarra rita, er það ekki það sama að vitna í eitthvað og meðhöndla það sem Ritning. Þessi rit eru hér eingöngu tekin með til sögulegrar og bókmenntalegrar tilvísunar.",
-
   "seed-bible": "Fræbiblían",
   "take-photo": "Taka mynd",
   "choose-from-gallery": "Veldu úr myndasafni",
@@ -224,18 +214,14 @@
   "zoom": "Aðdráttur",
   "set-picture": "Setja mynd",
   "login-email-title": "Sláðu inn netfangið þitt",
-
   "login-sending": "Sendi…",
   "login-code-title": "Sláðu inn innskráningarkóðann",
   "login-code-description": "Við sendum innskráningarkóða á „ {{email}} “.",
-
   "login-code-placeholder": "Sláðu inn innskráningarkóða hér",
   "login-change-email": "Breyta netfangi",
   "login-resend-code": "Endursenda kóða",
   "login-confirm-code": "Staðfesta kóða",
-
   "login-verifying": "Staðfestir…",
-
   "login-error-email-required": "Vinsamlegast sláðu inn netfangið þitt.",
   "login-error-code-required": "Vinsamlegast sláðu inn kóðann úr tölvupóstinum þínum.",
   "login-error-generic": "Eitthvað fór úrskeiðis. Vinsamlegast reyndu aftur.",
@@ -274,5 +260,8 @@
   "install-app": "Setja upp forrit",
   "launch-tutorial": "Ræsa kennsluefni",
   "search-languages": "Leita að tungumálum...",
-  "no-languages-found": "Engin tungumál fundust"
+  "no-languages-found": "Engin tungumál fundust",
+  "today-coming-soon": "Skjárinn í dag kemur bráðum",
+  "link-to-join-shared-session-copied": "Tengill til að taka þátt í sameiginlegu lotunni var afritaður á klippiborðið þitt",
+  "copied-translation-share-link": "Afritaði tengil til að deila þýðingu"
 }

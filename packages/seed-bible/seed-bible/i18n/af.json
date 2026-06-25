@@ -18,14 +18,12 @@
   "session-settings": "Sessie-instellings",
   "shared-session-click-to-join": "deel — klik om aan te sluit",
   "dismiss": "Maak toe",
-
   "tabs": "Oortjies",
   "new-tab": "Nuwe oortjie",
   "create-new-tab": "Skep nuwe oortjie",
   "tab-options": "Oortjie-opsies",
   "open-tab-menu": "Maak oortjie-kieslys oop",
   "session-id_x": "Sessie-ID: {{sessionId}}",
-
   "search-verses": "Soek verse",
   "clear-search": "Vee soektog uit",
   "searching": "Soek tans...",
@@ -127,11 +125,9 @@
   "end-session": "Eindig Sessie",
   "panels": "Panele",
   "new-shared-session": "Nuwe gedeelde sessie",
-
   "open-in-new-panel": "Maak oop in nuwe paneel",
   "open-in-detached-panel": "Maak oop in losstaande paneel",
   "close-sidebar": "Maak sybalk toe",
-
   "select-pane-layout": "Kies paneeluitleg",
   "pane-layout": "Paneeluitleg",
   "back": "Terug",
@@ -178,16 +174,13 @@
   "complete-translations": "Volledige vertalings",
   "all-translations": "Alle vertalings",
   "popular-translations": "Gewilde vertalings",
-
   "1-psalms": "1 Psalms",
   "2-psalms": "2 Psalms",
   "3-psalms": "3 Psalms",
   "4-psalms": "4 Psalms",
   "5-psalms": "5 Psalms",
-
   "remove-bookmark": "Verwyder boekmerk",
   "add-bookmark": "Boekmerk",
-
   "chat": "Klets",
   "today": "Vandag",
   "you": "Jy",
@@ -195,7 +188,6 @@
   "add-verse": "Voeg vers by",
   "add": "Voeg by",
   "chat-empty-title": "Klets kom binnekort",
-
   "category-options": "Voueropsies",
   "rename": "Hernoem",
   "delete": "Vee uit",
@@ -212,7 +204,6 @@
   "add-to-new": "Voeg by nuut",
   "save": "Stoor",
   "bookmark-verses": "Boekmerk verse",
-
   "about-extrabiblical-writings": "Oor buite-Bybelse geskrifte",
   "apocrypha-info-text": "Geen van die geskrifte in hierdie afdeling is ooit deur vroeë Joodse of Christelike gemeenskappe as die Skrif beskou nie. Die Bybel is 'n spesifieke versameling boeke. Jode en Christene het nog altyd saamgestem oor die Ou Testament, wat afkomstig is van 'n vaste stel heilige geskrifte wat die Joodse volk die Tanakh genoem het en Christene die Ou Testament. Die inhoud van die Tanakh en die Ou Testament is presies dieselfde, maar word gewoonlik anders gerangskik. Christene erken ook die Nuwe Testament, wat die verhaal van Jesus, sy leringe en die geskrifte van sy volgelinge vertel. Die geskrifte hieronder was bekend en wyd gelees ten tye van die Bybel se skryf, maar hulle is nooit as die Skrif behandel nie. Terwyl antieke outeurs soms 'n wye reeks tekste aangehaal het, insluitend digters, filosowe en ander geskrifte, is die aanhaling van iets nie dieselfde as om dit as die Skrif te behandel nie. Hierdie geskrifte word hier slegs vir historiese en literêre verwysing ingesluit.",
   "seed-bible": "Saad Bybel",
@@ -223,18 +214,14 @@
   "zoom": "Zoem",
   "set-picture": "Stel prent",
   "login-email-title": "Voer jou e-posadres in",
-
   "login-sending": "Stuur tans…",
   "login-code-title": "Voer die aanmeldkode in",
   "login-code-description": "Ons het 'n aanmeldkode gestuur na \" {{email}} \".",
-
   "login-code-placeholder": "Voer aanmeldkode hier in",
   "login-change-email": "Verander e-posadres",
   "login-resend-code": "Stuur kode weer",
   "login-confirm-code": "Bevestig kode",
-
   "login-verifying": "Verifieer tans…",
-
   "login-error-email-required": "Voer asseblief u e-posadres in.",
   "login-error-code-required": "Voer asseblief die kode van jou e-pos in.",
   "login-error-generic": "Iets het verkeerd geloop. Probeer asseblief weer.",
@@ -273,5 +260,8 @@
   "install-app": "Installeer die toepassing",
   "launch-tutorial": "Begin tutoriaal",
   "search-languages": "Soek tale...",
-  "no-languages-found": "Geen tale gevind nie"
+  "no-languages-found": "Geen tale gevind nie",
+  "today-coming-soon": "Vandag se skerm kom binnekort",
+  "link-to-join-shared-session-copied": "'n Skakel om by die gedeelde sessie aan te sluit, is na jou knipbord gekopieer",
+  "copied-translation-share-link": "Gekopieerde vertalingdeelskakel"
 }

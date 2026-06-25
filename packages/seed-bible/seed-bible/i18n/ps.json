@@ -13,14 +13,12 @@
   "close": "تړل",
   "open-settings": "ترتیبات خلاص کړئ",
   "close-settings": "ترتیبات بند کړئ",
-
   "tabs": "ټبونه",
   "new-tab": "نوی ټب",
   "create-new-tab": "نوی ټب جوړ کړئ",
   "tab-options": "د ټب انتخابونه",
   "open-tab-menu": "د ټب مینو پرانیزئ",
   "session-id_x": "د غونډې پېژندپاڼه: {{sessionId}}",
-
   "search-verses": "د آیتونو لټون",
   "clear-search": "لټون پاک کړئ",
   "searching": "لټون...",
@@ -113,7 +111,6 @@
   "open-in-new-panel": "په نوي پینل کې پرانیزئ",
   "open-in-detached-panel": "په جلا شوي پینل کې خلاص کړئ",
   "close-sidebar": "د اړخ پټه بنده کړئ",
-
   "select-pane-layout": "د پینل ترتیب غوره کړئ",
   "pane-layout": "د پین ترتیب",
   "back": "شاته",
@@ -160,7 +157,6 @@
   "complete-translations": "بشپړې ژباړې",
   "all-translations": "ټولې ژباړې",
   "popular-translations": "مشهورې ژباړې",
-
   "about-extrabiblical-writings": "About Extrabiblical writings",
   "apocrypha-info-text": "None of the writings in this section were ever considered Scripture by early Jewish or Christian communities. The Bible is a specific collection of books. Jews and Christians have always agreed on the Old Testament, which comes from a fixed set of sacred writings the Jewish people called the Tanakh and Christians call the Old Testament. The content of the Tanakh and the Old Testament are exactly the same, but are commonly arranged differently. Christians additionally recognize the New Testament, which tells the story of Jesus, his teachings, and the writings of his followers. The writings below were known and widely read at the time the Bible was written, but they were never treated as Scripture. While ancient authors sometimes quoted a wide range of texts including poets, philosophers, and other writings, quoting something is not the same as treating it as Scripture. These writings are included here for historical and literary reference only.",
   "1-psalms": "۱ زبور",
@@ -168,7 +164,6 @@
   "3-psalms": "۳ زبورونه",
   "4-psalms": "۴ زبورونه",
   "5-psalms": "۵ زبورونه",
-
   "scripture-elements": "د کلام عناصر",
   "show-headings": "سرلیکونه وښایاست",
   "show-verse-numbers": "د آیتونو شمېرې وښایاست",
@@ -187,7 +182,6 @@
   "more": "نور",
   "remove-bookmark": "بک مارک لرې کړئ",
   "add-bookmark": "نښه کول",
-
   "chat": "چیٹ",
   "today": "نن",
   "you": "ته",
@@ -195,7 +189,6 @@
   "add-verse": "شعر اضافه کړئ",
   "add": "اضافه کول",
   "chat-empty-title": "چیټ ډېر ژر راځي",
-
   "category-options": "د فولډر انتخابونه",
   "rename": "نوم بدل کړئ",
   "delete": "ړنګول",
@@ -213,7 +206,6 @@
   "add-to-new": "نوي ته اضافه کړئ",
   "save": "خوندي کړئ",
   "bookmark-verses": "آیتونه په نښه کړئ",
-
   "seed-bible": "د تخم بائبل",
   "take-photo": "عکس واخله",
   "choose-from-gallery": "له ګالري څخه غوره کړئ",
@@ -222,18 +214,14 @@
   "zoom": "لوډ کړئ",
   "set-picture": "انځور تنظیم کړئ",
   "login-email-title": "خپل برېښنالیک پته دننه کړئ",
-
   "login-sending": "لیږل…",
   "login-code-title": "د ننوتلو کوډ دننه کړئ",
   "login-code-description": "موږ د ننوتلو کوډ \" {{email}} \" ته واستاوه.",
-
   "login-code-placeholder": "دلته د ننوتلو کوډ دننه کړئ",
   "login-change-email": "د برېښنالیک پته بدل کړئ",
   "login-resend-code": "کوډ بیا واستوئ",
   "login-confirm-code": "کوډ تایید کړئ",
-
   "login-verifying": "تاییدول…",
-
   "login-error-email-required": "مهرباني وکړئ خپل برېښنالیک پته دننه کړئ.",
   "login-error-code-required": "مهرباني وکړئ د خپل برېښنالیک څخه کوډ دننه کړئ.",
   "login-error-generic": "یو څه غلط شول. مهرباني وکړئ بیا هڅه وکړئ.",
@@ -272,5 +260,8 @@
   "install-app": "اپلیکیشن نصب کړئ",
   "launch-tutorial": "ټیوټوریل پیل کړئ",
   "search-languages": "ژبې ولټوئ...",
-  "no-languages-found": "هیڅ ژبه ونه موندل شوه"
+  "no-languages-found": "هیڅ ژبه ونه موندل شوه",
+  "today-coming-soon": "نن سکرین ډېر ژر راځي",
+  "link-to-join-shared-session-copied": "ستاسو کلپ بورډ ته د شریکې ناستې سره د یوځای کیدو لینک کاپي شو.",
+  "copied-translation-share-link": "کاپي شوی ژباړه شریکول لینک"
 }

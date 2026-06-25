@@ -18,14 +18,12 @@
   "session-settings": "Seansi seaded",
   "shared-session-click-to-join": "jagab – klõpsa liitumiseks",
   "dismiss": "Jäta vahele",
-
   "tabs": "Vahelehed",
   "new-tab": "Uus vahekaart",
   "create-new-tab": "Loo uus vahekaart",
   "tab-options": "Vahekaardi valikud",
   "open-tab-menu": "Ava vahekaardi menüü",
   "session-id_x": "Seansi ID: {{sessionId}}",
-
   "search-verses": "Otsi salme",
   "clear-search": "Tühjenda otsing",
   "searching": "Otsin...",
@@ -127,11 +125,9 @@
   "end-session": "Lõpeta seanss",
   "panels": "Paneelid",
   "new-shared-session": "Uus jagatud seanss",
-
   "open-in-new-panel": "Ava uuel paneelil",
   "open-in-detached-panel": "Ava eraldiseisval paneelil",
   "close-sidebar": "Sule külgriba",
-
   "select-pane-layout": "Valige paani paigutus",
   "pane-layout": "Paani paigutus",
   "back": "Tagasi",
@@ -178,16 +174,13 @@
   "complete-translations": "Täielikud tõlked",
   "all-translations": "Kõik tõlked",
   "popular-translations": "Populaarsed tõlked",
-
   "1-psalms": "1. Psalm",
   "2-psalms": "2. Psalm",
   "3-psalms": "3 Psalmi",
   "4-psalms": "4 Psalmi",
   "5-psalms": "5 Psalmi",
-
   "remove-bookmark": "Eemalda järjehoidja",
   "add-bookmark": "Järjehoidja",
-
   "chat": "Vestlus",
   "today": "Täna",
   "you": "Sina",
@@ -195,7 +188,6 @@
   "add-verse": "Lisa salm",
   "add": "Lisa",
   "chat-empty-title": "Vestlus on peagi tulemas",
-
   "category-options": "Kausta valikud",
   "rename": "Nimeta ümber",
   "delete": "Kustuta",
@@ -212,10 +204,8 @@
   "add-to-new": "Lisa uude",
   "save": "Salvesta",
   "bookmark-verses": "Lisa salmid järjehoidjatesse",
-
   "about-extrabiblical-writings": "Piibliväliste kirjutiste kohta",
   "apocrypha-info-text": "Ühtegi selles osas olevat kirjutist ei pidanud varased juudi ega kristlikud kogukonnad kunagi pühakirjaks. Piibel on kindel raamatute kogu. Juudid ja kristlased on alati olnud ühel meelel Vanas Testamendis, mis pärineb kindlast pühakirjade kogumist, mida juudi rahvas nimetas Tanahhiks ja kristlased Vanaks Testamendiks. Tanahhi ja Vana Testamendi sisu on täpselt sama, kuid need on tavaliselt erinevalt paigutatud. Kristlased tunnustavad lisaks Uut Testamenti, mis jutustab Jeesuse loo, tema õpetustest ja tema järgijate kirjutistest. Allpool loetletud kirjutised olid Piibli kirjutamise ajal tuntud ja laialdaselt loetud, kuid neid ei käsitletud kunagi pühakirjana. Kuigi iidsed autorid tsiteerisid mõnikord laia valikut tekste, sealhulgas luuletajaid, filosoofe ja teisi kirjutisi, ei ole millegi tsiteerimine sama, mis selle käsitlemine pühakirjana. Need kirjutised on siia lisatud ainult ajaloolise ja kirjandusliku viitena.",
-
   "seed-bible": "Seemne Piibel",
   "take-photo": "Tehke foto",
   "choose-from-gallery": "Vali galeriist",
@@ -224,18 +214,14 @@
   "zoom": "Suum",
   "set-picture": "Määra pilt",
   "login-email-title": "Sisesta oma e-posti aadress",
-
   "login-sending": "Saadetakse…",
   "login-code-title": "Sisesta sisselogimiskood",
   "login-code-description": "Saatsime sisselogimiskoodi aadressile \" {{email}} \".",
-
   "login-code-placeholder": "Sisesta siia sisselogimiskood",
   "login-change-email": "Muuda e-posti aadressi",
   "login-resend-code": "Saada kood uuesti",
   "login-confirm-code": "Kinnita kood",
-
   "login-verifying": "Kinnitamine…",
-
   "login-error-email-required": "Palun sisesta oma e-posti aadress.",
   "login-error-code-required": "Palun sisesta oma e-postist saadud kood.",
   "login-error-generic": "Midagi läks valesti. Palun proovi uuesti.",
@@ -274,5 +260,8 @@
   "install-app": "Rakenduse installimine",
   "launch-tutorial": "Käivita õpetus",
   "search-languages": "Otsi keeli...",
-  "no-languages-found": "Keeli ei leitud"
+  "no-languages-found": "Keeli ei leitud",
+  "today-coming-soon": "Tänane ekraan tuleb varsti",
+  "link-to-join-shared-session-copied": "Jagatud seansiga liitumise link kopeeriti teie lõikelauale.",
+  "copied-translation-share-link": "Kopeeritud tõlke jagamise link"
 }

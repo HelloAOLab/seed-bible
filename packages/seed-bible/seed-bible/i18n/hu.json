@@ -18,14 +18,12 @@
   "session-settings": "Munkamenet-beállítások",
   "shared-session-click-to-join": "megosztja – kattintson a csatlakozáshoz",
   "dismiss": "Elvetés",
-
   "tabs": "Fülek",
   "new-tab": "Új lap",
   "create-new-tab": "Új lap létrehozása",
   "tab-options": "Tab opciók",
   "open-tab-menu": "Lapmenü megnyitása",
   "session-id_x": "Munkamenet-azonosító: {{sessionId}}",
-
   "search-verses": "Versek keresése",
   "clear-search": "Keresés törlése",
   "searching": "Keresés...",
@@ -127,11 +125,9 @@
   "end-session": "Munkamenet vége",
   "panels": "Panelek",
   "new-shared-session": "Új megosztott munkamenet",
-
   "open-in-new-panel": "Megnyitás új panelen",
   "open-in-detached-panel": "Nyissa meg a leválasztott panelen",
   "close-sidebar": "Oldalsáv bezárása",
-
   "select-pane-layout": "Válassza ki az ablaktábla elrendezését",
   "pane-layout": "Ablaktábla elrendezése",
   "back": "Vissza",
@@ -178,16 +174,13 @@
   "complete-translations": "Teljes fordítások",
   "all-translations": "Minden fordítás",
   "popular-translations": "Népszerű fordítások",
-
   "1-psalms": "1 Zsoltárok",
   "2-psalms": "2 Zsoltárok",
   "3-psalms": "3 Zsoltár",
   "4-psalms": "4 Zsoltár",
   "5-psalms": "5 Zsoltár",
-
   "remove-bookmark": "Könyvjelző eltávolítása",
   "add-bookmark": "Könyvjelző",
-
   "chat": "Csevegés",
   "today": "Ma",
   "you": "Te",
@@ -195,7 +188,6 @@
   "add-verse": "Vers hozzáadása",
   "add": "Hozzáadás",
   "chat-empty-title": "Hamarosan csevegés",
-
   "category-options": "Mappabeállítások",
   "rename": "Átnevezés",
   "delete": "Töröl",
@@ -212,10 +204,8 @@
   "add-to-new": "Hozzáadás az újhoz",
   "save": "Megtakarítás",
   "bookmark-verses": "Könyvjelző versek",
-
   "about-extrabiblical-writings": "A biblián kívüli írásokról",
   "apocrypha-info-text": "A korai zsidó vagy keresztény közösségek soha nem tekintették Szentírásnak ebben a részben található írásokat. A Biblia egy meghatározott könyvgyűjtemény. A zsidók és a keresztények mindig is egyetértettek az Ószövetségben, amely a zsidó nép által Tanakhnak, a keresztények pedig Ószövetségnek nevezett szent írások rögzített gyűjteményéből származik. A Tanakh és az Ószövetség tartalma pontosan ugyanaz, de általában eltérően vannak elrendezve. A keresztények elismerik az Újszövetséget is, amely Jézus történetét, tanításait és követőinek írásait meséli el. Az alábbi írások ismertek és széles körben olvasottak voltak a Biblia írásakor, de soha nem tekintették őket Szentírásnak. Bár az ókori szerzők néha sokféle szöveget idéztek, beleértve költőket, filozófusokat és más írásokat, valaminek az idézése nem ugyanaz, mint Szentírásként kezelni. Ezeket az írásokat csak történelmi és irodalmi hivatkozásként szerepeltetjük itt.",
-
   "seed-bible": "Vetőmag Biblia",
   "take-photo": "Készítsen egy fotót",
   "choose-from-gallery": "Válasszon a galériából",
@@ -224,18 +214,14 @@
   "zoom": "Zoomolás",
   "set-picture": "Kép beállítása",
   "login-email-title": "Add meg az e-mail címed",
-
   "login-sending": "Küldés…",
   "login-code-title": "Írja be a bejelentkezési kódot",
   "login-code-description": "Elküldtünk egy bejelentkezési kódot a(z) „ {{email}} ” címre.",
-
   "login-code-placeholder": "Írja be a bejelentkezési kódot ide",
   "login-change-email": "E-mail cím módosítása",
   "login-resend-code": "Kód újraküldése",
   "login-confirm-code": "Kód megerősítése",
-
   "login-verifying": "Ellenőrzés…",
-
   "login-error-email-required": "Kérjük, adja meg az e-mail címét.",
   "login-error-code-required": "Kérlek, add meg az e-mailben kapott kódot.",
   "login-error-generic": "Valami hiba történt. Próbáld újra.",
@@ -274,5 +260,8 @@
   "install-app": "Alkalmazás telepítése",
   "launch-tutorial": "Oktatóanyag indítása",
   "search-languages": "Nyelvek keresése...",
-  "no-languages-found": "Nem található nyelv"
+  "no-languages-found": "Nem található nyelv",
+  "today-coming-soon": "Hamarosan érkezik a mai képernyő",
+  "link-to-join-shared-session-copied": "A megosztott munkamenethez való csatlakozás linkjét átmásoltuk a vágólapra.",
+  "copied-translation-share-link": "Fordítás megosztási linkje másolva"
 }
