@@ -33,7 +33,7 @@ registerExtension({
       onSelect: () => {
         if (!twitchPubState.interfaceEnabled.value) {
           twitchPubState.interfaceEnabled.value = true;
-          openInterface({ state: twitchPubState });
+          openInterface({ state: twitchPubState, context });
         } else {
           twitchPubState.interfaceEnabled.value = false;
           closeInterface();

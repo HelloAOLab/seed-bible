@@ -254,6 +254,7 @@ export function CreateTwitchSubState(
           wsPaused={wsPaused}
           settingsOpened={settingsOpened}
           settings={settings}
+          i18n={seedBibleState.i18n}
         />,
         container
       );

@@ -5,9 +5,11 @@ import TwitchInterface from "./TwitchInterface";
 import TwitchSettings from "./TwitchSettings";
 import { type TwitchPubState } from "./interface";
 import "./App.css";
+import { I18nProvider } from "@packages/seed-bible/seed-bible/i18n";
+import type { SeedBibleState } from "seed-bible";
 
-function App(props: { state: TwitchPubState }) {
-  const { state } = props;
+function App(props: { state: TwitchPubState; i18n: SeedBibleState["i18n"] }) {
+  const { state, i18n } = props;
   const page = state.currentPage.value;
   const appContent = (
     <div className="twitchPub-container">
@@ -20,7 +22,9 @@ function App(props: { state: TwitchPubState }) {
 
   return (
     <>
-      <DraggableContainer children={appContent} />
+      <I18nProvider i18n={i18n}>
+        <DraggableContainer children={appContent} />
+      </I18nProvider>
     </>
   );
 }

@@ -1,5 +1,7 @@
 import { type Signal } from "@preact/signals";
 import { type SeedBibleState } from "seed-bible";
+import { type I18nManager } from "seed-bible/i18n";
+
 interface IconProps {
   width?: number | string;
   height?: number | string;
