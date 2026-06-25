@@ -158,6 +158,15 @@ export interface AppState {
 
   /** The name of the site (used for Open Graph and other social media metadata). */
   siteName: ReadonlySignal<string>;
+
+  /** The toast currently shown at the bottom of the screen, or null when none. */
+  currentToast: ReadonlySignal<{ id: number; message: string } | null>;
+  /**
+   * Shows a toast message at the bottom of the screen for 3.5s.
+   * Calling again replaces the current toast and restarts the timer
+   * (only one toast is ever visible at a time, always the most recent).
+   */
+  toast: (message: string) => void;
 }
 
 /**
@@ -977,6 +986,24 @@ export function createSeedBibleState(
 
   void setupInitialSession();
 
+  // App-level toast: a single popup shown at the bottom of the screen for 3.5s.
+  // A new call overwrites the current toast and restarts the timer, so only the
+  // most recent message is ever visible. The incrementing id keys the render so
+  // the slide-in animation replays even for a repeated message.
+  const currentToast = signal<{ id: number; message: string } | null>(null);
+  let toastSeq = 0;
+  let toastTimer: ReturnType<typeof setTimeout> | null = null;
+  const toast = (message: string) => {
+    if (toastTimer !== null) {
+      clearTimeout(toastTimer);
+    }
+    currentToast.value = { id: ++toastSeq, message };
+    toastTimer = setTimeout(() => {
+      currentToast.value = null;
+      toastTimer = null;
+    }, 3500);
+  };
+
   const state: SeedBibleState = {
     os,
     bibleData: data,
@@ -1036,6 +1063,8 @@ export function createSeedBibleState(
       siteName,
       canonicalUrl,
       socialTitle,
+      currentToast,
+      toast,
     },
   };
 

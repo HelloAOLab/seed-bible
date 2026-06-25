@@ -399,6 +399,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
       openChat: sidebar.openChatPanel,
+      toast: props.state.app.toast,
     });
     return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
   });
@@ -431,6 +432,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
       openChat: sidebar.openChatPanel,
+      toast: props.state.app.toast,
     });
 
     const { selectionUI } = settings.settings.value;
@@ -841,12 +843,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     sidebar.closeSidebar();
                     localBottomTab.value = "today";
 
-                    // TODO: Support toasts
-                    // os.toast(
-                    //   t("today-coming-soon", {
-                    //     defaultValue: "Today screen is coming soon",
-                    //   })
-                    // );
+                    props.state.app.toast(
+                      t("today-coming-soon", {
+                        defaultValue: "Today screen is coming soon",
+                      })
+                    );
                   }}
                 />
 

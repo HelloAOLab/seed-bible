@@ -10,6 +10,7 @@ import { useEffect } from "preact/hooks";
 import { useSignalEffect, type ReadonlySignal } from "@preact/signals";
 import { closeContextMenus } from "../components/ContextMenu";
 import { ModalHost } from "../components/ModalHost";
+import { ToastHost } from "../components/ToastHost";
 import { LoginModal } from "../components/LoginModal";
 import { TermsOfServiceModal } from "../components/TermsOfServiceModal";
 import { PrivacyPolicyModal } from "../components/PrivacyPolicyModal";
@@ -168,6 +169,8 @@ function MainContent(props: {
 
         <SharedSessionsToasts state={state} />
 
+        <ToastHost app={state.app} />
+
         <ModalHost manager={state.modals} />
 
         <LoginModal login={state.login} navigation={state.navigation} />
@@ -190,6 +193,7 @@ function MainContent(props: {
         <OnboardingModals
           onboarding={state.onboarding}
           os={state.os}
+          toast={state.app.toast}
           className={`${fontSizeClass} ${webkitClass}`}
         />
 

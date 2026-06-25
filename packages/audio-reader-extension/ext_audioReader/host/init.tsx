@@ -89,7 +89,7 @@ registerExtension({
       onSelect: (ctx) => {
         const url = chapterAudioUrl(ctx.readingState);
         if (!url) {
-          context.os.toast("No audio is available for this chapter.");
+          context.app.toast("No audio is available for this chapter.");
           return;
         }
         const el = ensureAudio();

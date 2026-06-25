@@ -129,6 +129,8 @@ export interface BibleToolContext {
   openSearch: () => void;
   /** Opens the chat / cross-references floating panel. */
   openChat?: () => void;
+  /** Shows a transient toast message at the bottom of the screen. */
+  toast: (message: string) => void;
 }
 
 /** Fully resolved reader toolbar tool ready for rendering. */
@@ -543,9 +545,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
 
         try {
           navigator.clipboard.writeText(verseTexts);
-          // TODO: Fix this
-          // os.toast("Copied!");
-          console.log("Verse(s) copied to clipboard");
+          context.toast("Copied!");
         } catch (err) {
           console.error("Failed to copy verse:", err);
         }

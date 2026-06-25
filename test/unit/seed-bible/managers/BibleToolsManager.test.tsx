@@ -34,6 +34,7 @@ function createContext(): BibleToolContext {
     openSearch: vi.fn(),
     panesManager: {} as any,
     tabs: {} as any,
+    toast: vi.fn(),
   };
 }
 

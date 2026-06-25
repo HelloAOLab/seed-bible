@@ -19,6 +19,8 @@ interface BelowReaderToolbarProps {
   currentPane: Pane;
   openSidebar: () => void;
   openSearch: () => void;
+  toast: (message: string) => void;
+  openChat: () => void;
 }
 
 export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
@@ -32,6 +34,8 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
     openSidebar,
     openSearch,
     currentPane,
+    toast,
+    openChat,
   } = props;
   const tools = toolsManager.getBelowReaderTools({
     readingState,
@@ -42,6 +46,8 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
     openSidebar,
     currentPane,
     openSearch,
+    toast,
+    openChat,
   });
 
   if (tools.length === 0) {

@@ -232,10 +232,6 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
     }> => {
       throw new Error("Not implemented yet");
     },
-
-    toast: (message: string) => {
-      console.log("Toast:", message);
-    },
   };
 }
 

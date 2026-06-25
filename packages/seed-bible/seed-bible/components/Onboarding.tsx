@@ -22,10 +22,12 @@ import type { CasualOSManager } from "../managers/OsManager";
 export function OnboardingModals({
   onboarding,
   os,
+  toast,
   className = "",
 }: {
   onboarding: OnboardingManager;
   os: CasualOSManager;
+  toast: (message: string) => void;
   className?: string;
 }) {
   const { t } = useI18n();
@@ -87,15 +89,17 @@ export function OnboardingModals({
     return null;
   }
 
-  return card(<InstallContent onboarding={onboarding} os={os} />);
+  return card(<InstallContent onboarding={onboarding} os={os} toast={toast} />);
 }
 
 function InstallContent({
   onboarding,
   os,
+  toast,
 }: {
   onboarding: OnboardingManager;
   os: CasualOSManager;
+  toast: (message: string) => void;
 }) {
   const { t } = useI18n();
   const { platform } = onboarding;
@@ -114,18 +118,18 @@ function InstallContent({
         // the prompt and the Settings entry disappear from now on.
         onboarding.markInstalled();
 
-        os.toast(
+        toast(
           t("onboarding.installThanks", {
             defaultValue: "Thanks for installing!",
           })
         );
       } else {
-        os.toast(
+        toast(
           t("onboarding.installMaybe", { defaultValue: "Maybe next time!" })
         );
       }
     } catch (error) {
-      os.toast(
+      toast(
         t("onboarding.installUnavailable", {
           defaultValue: "PWA installation is not available",
         }) +

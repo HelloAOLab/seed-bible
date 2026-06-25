@@ -1562,12 +1562,11 @@ export function Tabs(props: TabsProps) {
                 aria-label={t("tasks", { defaultValue: "Tasks" })}
                 title={t("tasks", { defaultValue: "Tasks" })}
                 onClick={() => {
-                  // TODO: Support toasts
-                  // os.toast(
-                  //   t("today-coming-soon", {
-                  //     defaultValue: "Today screen is coming soon",
-                  //   })
-                  // );
+                  app.toast(
+                    t("today-coming-soon", {
+                      defaultValue: "Today screen is coming soon",
+                    })
+                  );
                 }}
               >
                 <svg
@@ -1979,12 +1978,12 @@ export function Sidebar(props: SidebarProps) {
             const url = getSessionUrl(session);
 
             navigator.clipboard.writeText(url.href);
-            // os.toast(
-            //   t("link-to-join-shared-session-copied", {
-            //     defaultValue:
-            //       "A link to join the shared session was copied to your clipboard",
-            //   })
-            // );
+            state.app.toast(
+              t("link-to-join-shared-session-copied", {
+                defaultValue:
+                  "A link to join the shared session was copied to your clipboard",
+              })
+            );
           }}
         />
       )}

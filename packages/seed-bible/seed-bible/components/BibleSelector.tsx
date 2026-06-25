@@ -878,6 +878,7 @@ const TranslationModal = (props: {
       >
         {filteredTranslations.map((languageGroup) => (
           <LanguageComponent
+            app={app}
             languageGroup={languageGroup}
             bibleSelectorState={bibleSelectorState}
             bibleDataManager={bibleDataManager}
@@ -1024,11 +1025,12 @@ const TranslationModal = (props: {
 };
 
 const LanguageComponent = (props: {
+  app: AppState;
   languageGroup: TranslationLanguageGroup;
   bibleSelectorState: BibleSelectorState;
   bibleDataManager: BibleDataManager;
 }) => {
-  const { languageGroup, bibleSelectorState, bibleDataManager } = props;
+  const { app, languageGroup, bibleSelectorState, bibleDataManager } = props;
   const {
     language,
     languageName: nativeLanguageName,
@@ -1060,12 +1062,11 @@ const LanguageComponent = (props: {
     url.searchParams.delete("chapter");
     navigator.clipboard.writeText(url.href);
 
-    // os.setClipboard(url.href);
-    // os.toast(
-    //   t("copied-translation-share-link", {
-    //     defaultValue: "Copied translation share link",
-    //   })
-    // );
+    app.toast(
+      t("copied-translation-share-link", {
+        defaultValue: "Copied translation share link",
+      })
+    );
   };
 
   const sortedTranslations = useMemo(() => {
