@@ -180,18 +180,6 @@ export default defineConfig(({ isSsrBuild }) => ({
         outDir: "standalone/dist/server",
         emptyOutDir: true,
         sourcemap: true,
-        rolldownOptions: {
-          output: {
-            codeSplitting: {
-              groups: [
-                {
-                  test: /(node_modules|\.pnpm)/,
-                  name: "vendor",
-                },
-              ],
-            },
-          },
-        },
       }
     : {
         // Client build: hashed assets + a manifest mapping the entry to its
