@@ -179,6 +179,19 @@ export default defineConfig(({ isSsrBuild }) => ({
         ssr: "standalone/entry-server.tsx",
         outDir: "standalone/dist/server",
         emptyOutDir: true,
+        sourcemap: true,
+        rolldownOptions: {
+          output: {
+            codeSplitting: {
+              groups: [
+                {
+                  test: /(node_modules|\.pnpm)/,
+                  name: "vendor",
+                },
+              ],
+            },
+          },
+        },
       }
     : {
         // Client build: hashed assets + a manifest mapping the entry to its
@@ -187,6 +200,19 @@ export default defineConfig(({ isSsrBuild }) => ({
         outDir: "standalone/dist/client",
         emptyOutDir: true,
         manifest: true,
+        sourcemap: true,
+        rolldownOptions: {
+          output: {
+            codeSplitting: {
+              groups: [
+                {
+                  test: /(node_modules|\.pnpm)/,
+                  name: "vendor",
+                },
+              ],
+            },
+          },
+        },
       },
 
   resolve: {
