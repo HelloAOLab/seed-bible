@@ -15,7 +15,7 @@ import {
   ContextMenuWithButton,
 } from "seed-bible.components.ContextMenu";
 import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import { SettingsIcon } from "seed-bible.components.icons";
+import { MaterialIcon, SettingsIcon } from "seed-bible.components.icons";
 import { SettingsPage } from "seed-bible.components.SettingsPage";
 import type { UserProfile } from "seed-bible.managers.LoginManager";
 import type {
@@ -473,13 +473,25 @@ export function TabsHeader(props: TabsHeaderProps) {
             title={t("more", { defaultValue: "More" })}
           >
             <ContextMenuItem
+              className="sb-tab-menu-item"
               onClick={() => {
                 createSharedSession();
               }}
             >
-              {t("new-shared-session", { defaultValue: "New shared session" })}
+              <MaterialIcon
+                className="sb-tab-menu-item-icon"
+                aria-hidden="true"
+              >
+                fiber_smart_record
+              </MaterialIcon>
+              <span>
+                {t("new-shared-session", {
+                  defaultValue: "New shared session",
+                })}
+              </span>
             </ContextMenuItem>
             <ContextMenuItem
+              className="sb-tab-menu-item"
               onClick={() => {
                 window.open(
                   "https://docs.google.com/forms/d/e/1FAIpQLSejiuVM8xguEHKZ2Kv5DX-jE98zYwxFiPwpYrFSmvVgMejZzQ/viewform",
@@ -487,7 +499,13 @@ export function TabsHeader(props: TabsHeaderProps) {
                 );
               }}
             >
-              {t("report-a-bug", { defaultValue: "Report a bug" })}
+              <MaterialIcon
+                className="sb-tab-menu-item-icon"
+                aria-hidden="true"
+              >
+                bug_report
+              </MaterialIcon>
+              <span>{t("report-a-bug", { defaultValue: "Report a bug" })}</span>
             </ContextMenuItem>
             <ContextMenuItem
               className="sb-context-menu-toggle-item"
@@ -498,8 +516,18 @@ export function TabsHeader(props: TabsHeaderProps) {
                 settings.setKeepScreenAwake(!isAwake);
               }}
             >
-              <span>
-                {t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
+              <span className="sb-context-menu-toggle-label">
+                <MaterialIcon
+                  className="sb-tab-menu-item-icon"
+                  aria-hidden="true"
+                >
+                  light_mode
+                </MaterialIcon>
+                <span>
+                  {t("keep-screen-awake", {
+                    defaultValue: "Keep screen awake",
+                  })}
+                </span>
               </span>
               <span
                 className={`sb-pill-toggle${isAwake ? " is-on" : ""}`}
@@ -793,12 +821,12 @@ function TabRow(props: TabRowProps) {
                 }
               }}
             >
-              <span
-                className="material-symbols-outlined sb-tab-menu-item-icon"
+              <MaterialIcon
+                className="sb-tab-menu-item-icon"
                 aria-hidden="true"
               >
                 ios_share
-              </span>
+              </MaterialIcon>
               <span>
                 {t("share-session", {
                   defaultValue: `Share session`,
@@ -841,12 +869,12 @@ function TabRow(props: TabRowProps) {
                     });
                   }}
                 >
-                  <span
-                    className="material-symbols-outlined sb-tab-menu-item-icon"
+                  <MaterialIcon
+                    className="sb-tab-menu-item-icon"
                     aria-hidden="true"
                   >
                     settings
-                  </span>
+                  </MaterialIcon>
                   <span>
                     {t("session-settings", {
                       defaultValue: "Session settings",
@@ -864,12 +892,9 @@ function TabRow(props: TabRowProps) {
               handleBookmarkAction();
             }}
           >
-            <span
-              className="material-symbols-outlined sb-tab-menu-item-icon"
-              aria-hidden="true"
-            >
+            <MaterialIcon className="sb-tab-menu-item-icon" aria-hidden="true">
               {isTabBookmarked ? "bookmark_remove" : "bookmark_add"}
-            </span>
+            </MaterialIcon>
             <span>
               {isTabBookmarked
                 ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
@@ -883,12 +908,9 @@ function TabRow(props: TabRowProps) {
             state.tabs.removeTab(tab.id);
           }}
         >
-          <span
-            className="material-symbols-outlined sb-tab-menu-item-icon"
-            aria-hidden="true"
-          >
+          <MaterialIcon className="sb-tab-menu-item-icon" aria-hidden="true">
             close
-          </span>
+          </MaterialIcon>
           <span>{t("close", { defaultValue: "Close" })}</span>
         </ContextMenuItem>
         {panelsEnabled && (
@@ -899,12 +921,12 @@ function TabRow(props: TabRowProps) {
               }}
               className="sb-tab-menu-item"
             >
-              <span
-                className="material-symbols-outlined sb-tab-menu-item-icon"
+              <MaterialIcon
+                className="sb-tab-menu-item-icon"
                 aria-hidden="true"
               >
                 splitscreen_right
-              </span>
+              </MaterialIcon>
               <span>
                 {t("open-in-new-panel", { defaultValue: "Open in new panel" })}
               </span>
@@ -915,12 +937,12 @@ function TabRow(props: TabRowProps) {
               }}
               className="sb-tab-menu-item"
             >
-              <span
-                className="material-symbols-outlined sb-tab-menu-item-icon"
+              <MaterialIcon
+                className="sb-tab-menu-item-icon"
                 aria-hidden="true"
               >
                 open_in_new
-              </span>
+              </MaterialIcon>
               <span>
                 {t("open-in-detached-panel", {
                   defaultValue: "Open in detached panel",

@@ -5465,6 +5465,12 @@ h6 {
   gap: 12px;
 }
 
+.sb-context-menu-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .sb-pill-toggle {
   display: inline-block;
   width: 44px;

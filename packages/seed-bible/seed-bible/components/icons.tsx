@@ -1340,7 +1340,7 @@ const BibleIcon = (props: any) => (
 );
 
 export const MaterialIcon = ({ children, className, ...props }: any) => (
-  <span className={`material-symbols-outlined ${className}`} {...props}>
+  <span className={`material-symbols-outlined ${className ?? ""}`} {...props}>
     {children}
   </span>
 );
