@@ -1,10 +1,29 @@
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import i18n from "i18next";
+import resourcesToBackend from "i18next-resources-to-backend";
+import en from "@packages/seed-bible/seed-bible/i18n/en.json";
 import {
   createDefaultManagerResponseMap,
   type WebResponseMap,
 } from "../managers/testUtils/mockBibleApiData";
+
+// Lazy per-language loaders for the real "seed-bible" locale files, mirroring
+// the glob backend in I18nManager. Without this, `changeLanguage("ar")` (etc.)
+// has no backend to load from and every key falls back to its defaultValue.
+const localeLoaders = import.meta.glob(
+  "../../../../packages/seed-bible/seed-bible/i18n/*.json"
+) as Record<string, () => Promise<{ default: Record<string, string> }>>;
+
+const localeLoaderByLanguage: Record<
+  string,
+  () => Promise<{ default: Record<string, string> }>
+> = Object.fromEntries(
+  Object.entries(localeLoaders).map(([path, loader]) => {
+    const language = path.match(/\/([a-z-]+)\.json$/i)?.[1];
+    return [language, loader];
+  })
+);
 
 type TestGlobalScope = typeof globalThis;
 
@@ -72,12 +91,30 @@ async function ensureI18nInitialized(): Promise<void> {
     return;
   }
 
+  i18n.use(
+    resourcesToBackend((language: string, namespace: string) => {
+      if (namespace !== "seed-bible") {
+        return Promise.reject(new Error(`Unknown namespace: ${namespace}`));
+      }
+      const loader = localeLoaderByLanguage[language];
+      if (!loader) {
+        return Promise.reject(
+          new Error(`No locale file for language: ${language}`)
+        );
+      }
+      return loader().then((mod) => mod.default);
+    })
+  );
+
   await i18n.init({
     lng: "en",
     fallbackLng: "en",
+    // Consult the backend for languages beyond the bundled English fallback,
+    // matching I18nManager's production configuration.
+    partialBundledLanguages: true,
     resources: {
       en: {
-        "seed-bible": {},
+        "seed-bible": en,
       },
     },
     interpolation: {
