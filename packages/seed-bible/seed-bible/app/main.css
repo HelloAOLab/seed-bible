@@ -4117,7 +4117,7 @@ h6 {
   left: 50%;
   bottom: 24px;
   transform: translateX(-50%);
-  z-index: 70;
+  z-index: 1000;
   display: flex;
   justify-content: center;
   max-width: min(90vw, 420px);
@@ -4146,7 +4146,7 @@ h6 {
   font-size: 14px;
   line-height: 1.4;
   text-align: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   animation: sb-toast-slide-up 0.25s ease-out;
 }
 

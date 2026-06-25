@@ -149,6 +149,8 @@ function MainContent(props: {
           <PaneLayout state={state} />
         </main>
 
+        <ToastHost app={state.app} />
+
         {/* The selector draws its own tour spotlight/popover internally
               (CSS dim toggled off the tutorial signals), since its elements
               live in this portal's shadow root and can't be measured from
@@ -168,8 +170,6 @@ function MainContent(props: {
         <BibleReaderToolbar state={state} />
 
         <SharedSessionsToasts state={state} />
-
-        <ToastHost app={state.app} />
 
         <ModalHost manager={state.modals} />
 
