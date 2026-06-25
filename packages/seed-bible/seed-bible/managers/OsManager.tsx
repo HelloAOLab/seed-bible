@@ -67,6 +67,7 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
     if (!instRecordsClient) {
       const url = new URL("wss://auth.ao.bot");
       const manager = new WebsocketManager(url);
+      manager.init();
       const client = new WebsocketConnectionClient(manager.socket);
       const authSource = getAuthSource();
       const connection = new AuthenticatedConnectionClient(client, authSource);
