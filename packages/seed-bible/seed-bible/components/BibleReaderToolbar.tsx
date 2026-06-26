@@ -738,14 +738,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           {isSmallScreen.value &&
             activeMobileTab.value === "bible" &&
             (() => {
-              const showNav = settings.settings.value.showNavArrows;
               const audio =
                 audioPlayTool.value && audioPlayTool.value.visible.value
                   ? audioPlayTool.value
                   : null;
-              const prev = showNav ? previousChapterTool.value : null;
-              const next = showNav ? nextChapterTool.value : null;
-              const selector = showNav ? openSelectorTool.value : null;
+              const prev = previousChapterTool.value;
+              const next = nextChapterTool.value;
+              const selector = openSelectorTool.value;
               if (!audio && !prev && !next && !selector) return null;
 
               const AudioIcon = audio?.icon;
