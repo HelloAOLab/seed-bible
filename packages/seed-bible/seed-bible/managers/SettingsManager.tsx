@@ -125,7 +125,6 @@ export const AppSettingsSchema = z.object({
   keepScreenAwake: z.boolean(),
   customHighlightColors: z.array(z.string()).max(3),
   scriptureMargin: z.number().min(0).max(45),
-  showNavArrows: z.boolean(),
 });
 
 export const DEFAULT_SCRIPTURE_MARGIN = 27;
@@ -142,7 +141,6 @@ const TAG_TOOLBAR = "app.toolbarConfig";
 const TAG_KEEP_AWAKE = "app.keepScreenAwake";
 const TAG_CUSTOM_HIGHLIGHT_COLORS = "app.customHighlightColors";
 const TAG_SCRIPTURE_MARGIN = "app.scriptureMargin";
-const TAG_SHOW_NAV_ARROWS = "app.showNavArrows";
 
 // Profile.config keys are stored unprefixed (matching the pattern set by
 // ConfigManager for `fontSize`, `lang`, `disablePanels`).
@@ -155,7 +153,6 @@ const PROFILE_TOOLBAR = "toolbarConfig";
 const PROFILE_KEEP_AWAKE = "keepScreenAwake";
 const PROFILE_CUSTOM_HIGHLIGHT_COLORS = "customHighlightColors";
 const PROFILE_SCRIPTURE_MARGIN = "scriptureMargin";
-const PROFILE_SHOW_NAV_ARROWS = "showNavArrows";
 
 export const TEXT_FONT_OPTIONS: { value: string; label: string }[] = [
   { value: "'Newsreader', serif", label: "Newsreader" },
@@ -263,7 +260,6 @@ const DEFAULT_SETTINGS: AppSettings = {
   keepScreenAwake: false,
   customHighlightColors: [],
   scriptureMargin: DEFAULT_SCRIPTURE_MARGIN,
-  showNavArrows: true,
 };
 
 function parseCustomHighlightColors(value: unknown): string[] {
@@ -567,7 +563,6 @@ export interface SettingsManager {
   setToolbarOrder: (order: string[]) => void;
   resetToolbarConfig: () => void;
   setKeepScreenAwake: (enabled: boolean) => void;
-  setShowNavArrows: (enabled: boolean) => void;
   addCustomHighlightColor: (color: string) => void;
   removeCustomHighlightColor: (color: string) => void;
   setAllSettings: (next: AppSettings) => void;
@@ -626,11 +621,6 @@ export function createSettings(login: LoginManager): SettingsManager {
           configBot.tags[TAG_SCRIPTURE_MARGIN],
         DEFAULT_SETTINGS.scriptureMargin
       ),
-      showNavArrows: parseBoolean(
-        getProfileConfigValue(profile, PROFILE_SHOW_NAV_ARROWS) ??
-          configBot.tags[TAG_SHOW_NAV_ARROWS],
-        DEFAULT_SETTINGS.showNavArrows
-      ),
     };
   };
 
@@ -666,8 +656,7 @@ export function createSettings(login: LoginManager): SettingsManager {
       changedTags.includes(TAG_TOOLBAR) ||
       changedTags.includes(TAG_KEEP_AWAKE) ||
       changedTags.includes(TAG_CUSTOM_HIGHLIGHT_COLORS) ||
-      changedTags.includes(TAG_SCRIPTURE_MARGIN) ||
-      changedTags.includes(TAG_SHOW_NAV_ARROWS)
+      changedTags.includes(TAG_SCRIPTURE_MARGIN)
     ) {
       syncFromBot();
     }
@@ -798,13 +787,6 @@ export function createSettings(login: LoginManager): SettingsManager {
     saveProfileConfigValue(login, PROFILE_KEEP_AWAKE, nextValue);
   };
 
-  const setShowNavArrows = (enabled: boolean) => {
-    if (settings.value.showNavArrows === enabled) return;
-    settings.value = { ...settings.value, showNavArrows: enabled };
-    configBot.tags[TAG_SHOW_NAV_ARROWS] = enabled;
-    saveProfileConfigValue(login, PROFILE_SHOW_NAV_ARROWS, enabled);
-  };
-
   const writeCustomHighlightColors = (colors: string[]) => {
     settings.value = { ...settings.value, customHighlightColors: colors };
     configBot.tags[TAG_CUSTOM_HIGHLIGHT_COLORS] =
@@ -863,7 +845,6 @@ export function createSettings(login: LoginManager): SettingsManager {
     configBot.tags[TAG_KEEP_AWAKE] = false;
     configBot.tags[TAG_CUSTOM_HIGHLIGHT_COLORS] = "";
     configBot.tags[TAG_SCRIPTURE_MARGIN] = DEFAULT_SETTINGS.scriptureMargin;
-    configBot.tags[TAG_SHOW_NAV_ARROWS] = DEFAULT_SETTINGS.showNavArrows;
     saveProfileConfigValue(
       login,
       PROFILE_BOOK_ORIENTATION,
@@ -900,11 +881,6 @@ export function createSettings(login: LoginManager): SettingsManager {
       login,
       PROFILE_SCRIPTURE_MARGIN,
       DEFAULT_SETTINGS.scriptureMargin
-    );
-    saveProfileConfigValue(
-      login,
-      PROFILE_SHOW_NAV_ARROWS,
-      DEFAULT_SETTINGS.showNavArrows
     );
   };
 
@@ -963,7 +939,6 @@ export function createSettings(login: LoginManager): SettingsManager {
     setToolbarOrder,
     resetToolbarConfig,
     setKeepScreenAwake,
-    setShowNavArrows,
     addCustomHighlightColor,
     removeCustomHighlightColor,
     setAllSettings,
