@@ -63,8 +63,6 @@ export interface AppSettings {
   customHighlightColors: string[];
   /** Horizontal padding (px) applied to the bible reader container. */
   scriptureMargin: number;
-  /** Whether to show floating prev/next chapter arrows on mobile. */
-  showNavArrows: boolean;
 }
 
 export const AppSettingsSchema = z.object({
