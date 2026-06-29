@@ -2090,7 +2090,6 @@ h6 {
 
   .sb-reader-floating-nav-arrow {
     position: relative;
-    overflow: hidden;
     flex: 0 0 auto;
     display: flex;
     align-items: center;
@@ -2103,6 +2102,18 @@ h6 {
     color: var(--sb-font-color);
     cursor: pointer;
     border-radius: 999px;
+  }
+
+  /* Invisible hit-area extension: keeps the 34px pill visual identical while
+     widening the tappable region to a comfortable ~48px touch target. */
+  .sb-reader-floating-nav-arrow::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 48px;
+    height: 48px;
+    transform: translate(-50%, -50%);
   }
 
   /* Press feedback: the arrow fills and shrinks briefly on tap so the button
@@ -2709,6 +2720,7 @@ h6 {
   font-size: 12px;
   font-weight: 500;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  display: none;
 }
 
 .sb-verse-toolbar-swipe-hint .material-symbols-outlined {
