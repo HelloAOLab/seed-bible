@@ -96,6 +96,24 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
           </div>
           <div className="twitchPub-settings-item">
             <span>
+              {t("twitchSettings.broadcastAiFollowEvents", {
+                ns: "ext_twitchPub",
+                defaultValue: "Broadcast AI Ref. events",
+              })}
+            </span>
+            <ToggleBtn
+              toggle={settings.value.aiFollow.value.enabled}
+              setToggle={(value) =>
+                (settings.value.aiFollow.value = {
+                  ...settings.value.aiFollow.value,
+                  enabled: value,
+                })
+              }
+              id={"aiFollowToggle"}
+            />
+          </div>
+          <div className="twitchPub-settings-item">
+            <span>
               {t("twitchSettings.announcementTimer", {
                 ns: "ext_twitchPub",
                 defaultValue: "Announcement Timer",

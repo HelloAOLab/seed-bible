@@ -91,6 +91,21 @@ const TwitchSettings = (props: {
           </div>
           <div className="twitchSub-settings-item">
             <span>
+              {t("followRefEvent", {
+                ns: "ext_twitchSub",
+                defaultValue: "Follow reference event",
+              })}
+            </span>
+            <ToggleBtn
+              toggle={props.settings.value.refFollowEnabled.value}
+              setToggle={(value) =>
+                (props.settings.value.refFollowEnabled.value = value)
+              }
+              id={"refFollowToggle"}
+            />
+          </div>
+          <div className="twitchSub-settings-item">
+            <span>
               {t("followChapterEvent", {
                 ns: "ext_twitchSub",
                 defaultValue: "Follow chapter event",

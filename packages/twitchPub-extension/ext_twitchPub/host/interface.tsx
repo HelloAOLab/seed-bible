@@ -22,6 +22,7 @@ interface TwitchPubState {
   settings: Signal<{
     translation: Signal<{ enabled: boolean }>;
     highlight: Signal<{ enabled: boolean }>;
+    aiFollow: Signal<{ enabled: boolean }>;
     announcementTimer: Signal<{ enabled: boolean; interval: number | null }>;
   }>;
   uiHidden: Signal<boolean>;
