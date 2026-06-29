@@ -1257,6 +1257,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 title={t("add-color", { defaultValue: "Add color" })}
               >
                 <span className="material-symbols-outlined">add</span>
+                <span className="sb-verse-toolbar-action-text">
+                  {t("add", { defaultValue: "Add" })}
+                </span>
               </button>
               <input
                 ref={colorInputRef}
@@ -1301,6 +1304,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 title={t("clear", { defaultValue: "Clear" })}
               >
                 <span className="material-symbols-outlined">ink_eraser</span>
+                <span className="sb-verse-toolbar-action-text">
+                  {t("clear", { defaultValue: "Clear" })}
+                </span>
               </button>
             </div>
           ) : (

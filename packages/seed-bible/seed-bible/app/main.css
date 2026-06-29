@@ -981,7 +981,7 @@ h6 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: 4px 12px;
   gap: 8px;
   background: var(--sb-reader-background);
   border-bottom: 1px solid
@@ -997,7 +997,7 @@ h6 {
 
 .sb-bible-reader-mobile-header-title {
   margin: 0;
-  font-size: 24px;
+  font-size: 19px;
   font-weight: 600;
   font-family: var(--text-bookTitle-font);
   color: var(--sb-book-title-font-color);
@@ -1030,8 +1030,8 @@ h6 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: none;
   background: var(--sb-primary-color);
@@ -1060,8 +1060,8 @@ h6 {
 .sb-bible-reader-mobile-header .sb-bible-reader-bookmark-button {
   position: static;
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   margin-inline-start: auto;
 }
@@ -1071,8 +1071,8 @@ h6 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: none;
   background: transparent;
@@ -1107,7 +1107,7 @@ h6 {
 }
 
 .sb-bible-reader-mobile .sb-reader-swipe-panel {
-  padding-top: 60px;
+  padding-top: 40px;
 }
 
 .sb-language-english-name {
@@ -1142,7 +1142,7 @@ h6 {
    collapse the header's layout space in sync with the slide so the chapter
    content rises to fill the gap (no leftover white strip). */
 .sb-bible-reader-mobile-header {
-  max-height: 60px;
+  max-height: 40px;
   overflow: hidden;
   transition:
     transform 0.25s ease,
@@ -2479,7 +2479,9 @@ h6 {
   max-width: 320px;
 }
 
-/* Verse toolbar — color picker mode (ported from develop) */
+/* Verse toolbar — color picker mode (ported from develop)
+   Layout: back + color swatches grouped on the left, Add/Clear pills pushed
+   to the far right. */
 .sb-verse-toolbar-picker {
   align-items: center;
   gap: 8px;
@@ -2515,9 +2517,7 @@ h6 {
   transform: scale(0.95);
 }
 
-.sb-verse-toolbar-back,
-.sb-verse-toolbar-plus,
-.sb-verse-toolbar-clear {
+.sb-verse-toolbar-back {
   width: 32px;
   height: 32px;
   padding: 0;
@@ -2532,19 +2532,65 @@ h6 {
   transition: background-color 0.15s ease;
 }
 
-.sb-verse-toolbar-back:hover,
-.sb-verse-toolbar-plus:hover,
-.sb-verse-toolbar-clear:hover:not(:disabled) {
+.sb-verse-toolbar-back:hover {
   background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
+}
+
+/* Add / Clear: labelled pill buttons pushed to the right of the picker. The
+   first of the pair carries `margin-inline-start: auto` so everything before
+   it (back + colours) stays grouped on the left. */
+.sb-verse-toolbar-plus,
+.sb-verse-toolbar-clear {
+  height: 32px;
+  padding: 0 12px;
+  border: none;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+  cursor: pointer;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    filter 0.15s ease;
+}
+
+.sb-verse-toolbar-plus {
+  margin-inline-start: auto;
+  background: transparent;
+  border: 1px dashed color-mix(in srgb, var(--sb-font-color), transparent 55%);
+}
+
+.sb-verse-toolbar-clear {
+  background: color-mix(
+    in srgb,
+    var(--sb-error-color, #d64545),
+    transparent 85%
+  );
+  color: var(--sb-error-color, #d64545);
+}
+
+.sb-verse-toolbar-plus:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
+}
+
+.sb-verse-toolbar-clear:hover:not(:disabled) {
+  filter: brightness(0.95);
+  background: color-mix(
+    in srgb,
+    var(--sb-error-color, #d64545),
+    transparent 78%
+  );
 }
 
 .sb-verse-toolbar-clear:disabled {
   opacity: 0.35;
   cursor: default;
-}
-
-.sb-verse-toolbar-plus {
-  border: 1px dashed color-mix(in srgb, var(--sb-font-color), transparent 60%);
 }
 
 .sb-verse-toolbar-back .material-symbols-outlined,
@@ -2553,6 +2599,11 @@ h6 {
 .sb-verse-toolbar-highlight-trigger .material-symbols-outlined,
 .sb-verse-toolbar-bookmark-trigger .material-symbols-outlined {
   font-size: 20px;
+}
+
+.sb-verse-toolbar-plus .material-symbols-outlined,
+.sb-verse-toolbar-clear .material-symbols-outlined {
+  font-size: 18px;
 }
 
 /* The bookmark trigger lights up in the theme primary color when the current
