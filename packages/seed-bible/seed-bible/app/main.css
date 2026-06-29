@@ -7435,6 +7435,29 @@ h6 {
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
 }
 
+/* Desktop only (mobile search is left untouched): give the book/translation
+   search field a clearly defined boundary and breathing room so it's obvious
+   where the input begins and ends. */
+@media only screen and (min-width: 769px) {
+  .searchbar {
+    height: 44px;
+    padding: 8px 14px;
+    margin: 6px 0;
+    border: 1.5px solid
+      color-mix(in srgb, var(--sb-font-color), transparent 80%);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .searchbar:focus-within {
+    border-color: var(--sb-primary-color);
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--sb-primary-color), transparent 82%);
+  }
+}
+
 .share-btn {
   border: none;
   font-size: 18px;
@@ -8420,31 +8443,54 @@ h6 {
 }
 
 @media (max-width: 768px) {
-  /* Search becomes a full-screen view on mobile with scrollable results above
-     and the input pinned at the bottom. Leaves room at the bottom for the
-     5-tab bar. */
+  /* Search is a bottom-anchored sheet on mobile: the input sits just above the
+     5-tab bar and results grow upward. It is capped to the *small* viewport
+     height (`svh`, which excludes the Android address bar) and anchored to the
+     bottom rather than `top: 0`, so the top results can never be pushed behind
+     the browser chrome (the old full-screen `top: 0` overlay anchored to the
+     taller layout viewport, hiding the first results until the bar collapsed).
+     Keeping it off the top of the screen also leaves the reader above the sheet
+     visible and tappable, so the app never feels frozen — tapping a reader
+     control closes search (via the outside-tap handler) and activates it. */
   .sb-floating-search-panel {
     left: 0;
     right: 0;
-    top: 0;
+    top: auto;
     bottom: 72px;
     transform: none;
     width: 100%;
     max-width: 100%;
-    max-height: none;
+    max-height: calc(
+      100svh - 72px - env(safe-area-inset-top, 0px) -
+        env(safe-area-inset-bottom, 0px) - 12px
+    );
     border-radius: 0;
     border: none;
     box-shadow: none;
-    padding: 14px 16px;
+    padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 14px;
     background: transparent;
     gap: 14px;
     animation: none;
+    /* Empty areas of the sheet let taps fall through to the reader; the input
+       row and results below re-enable pointer events. */
+    pointer-events: none;
   }
 
-  /* Only cover the screen once results (or status) are showing — while the
+  /* Only paint a backdrop once results (or status) are showing — while the
      panel is just the input, keep it transparent over the reader. */
   .sb-floating-search-panel-expanded {
     background: var(--sb-background);
+  }
+
+  .sb-floating-search-panel .sb-floating-search-input-wrap,
+  .sb-floating-search-panel .sb-floating-search-results {
+    pointer-events: auto;
+  }
+
+  /* Fill the sheet so its empty space belongs to the (interactive) results
+     container rather than the pass-through backdrop. */
+  .sb-floating-search-panel .sb-floating-search-results {
+    flex: 1 1 auto;
   }
 
   .sb-floating-search-panel .sb-floating-search-input-wrap {
