@@ -705,7 +705,7 @@ describe("createSeedBibleState", () => {
     it("navigates the selected tab to the given book and chapter", async () => {
       const state = await createState();
       const tab = state.tabs.tabs.value[0]!;
-      const selectSpy = jest
+      const selectSpy = vi
         .spyOn(tab.readingState, "selectTranslationAndChapter")
         .mockResolvedValue(undefined);
 
@@ -720,7 +720,7 @@ describe("createSeedBibleState", () => {
       const state = await createState();
       const tab = state.tabs.tabs.value[0]!;
       tab.readingState.translationId.value = "niv";
-      const selectSpy = jest
+      const selectSpy = vi
         .spyOn(tab.readingState, "selectTranslationAndChapter")
         .mockResolvedValue(undefined);
 
@@ -735,7 +735,7 @@ describe("createSeedBibleState", () => {
       const state = await createState();
       const tab = state.tabs.tabs.value[0]!;
       tab.readingState.translationId.value = null;
-      const selectSpy = jest
+      const selectSpy = vi
         .spyOn(tab.readingState, "selectTranslationAndChapter")
         .mockResolvedValue(undefined);
 
@@ -751,10 +751,10 @@ describe("createSeedBibleState", () => {
       const firstTab = state.tabs.tabs.value[0]!;
       const secondTab = state.tabs.tabs.value[1]!;
       state.tabs.selectedTabId.value = "nonexistent";
-      const firstTabSpy = jest
+      const firstTabSpy = vi
         .spyOn(firstTab.readingState, "selectTranslationAndChapter")
         .mockResolvedValue(undefined);
-      const secondTabSpy = jest
+      const secondTabSpy = vi
         .spyOn(secondTab.readingState, "selectTranslationAndChapter")
         .mockResolvedValue(undefined);
 
@@ -767,7 +767,7 @@ describe("createSeedBibleState", () => {
     it("passes the verse number as scrollToVerse when navigating", async () => {
       const state = await createState();
       const tab = state.tabs.tabs.value[0]!;
-      const selectSpy = jest
+      const selectSpy = vi
         .spyOn(tab.readingState, "selectTranslationAndChapter")
         .mockResolvedValue(undefined);
 
@@ -785,10 +785,11 @@ describe("createSeedBibleState", () => {
     it("decorates the verse after navigating when a single verse is specified", async () => {
       const state = await createState();
       const tab = state.tabs.tabs.value[0]!;
-      jest
-        .spyOn(tab.readingState, "selectTranslationAndChapter")
-        .mockResolvedValue(undefined);
-      const decorateSpy = jest.spyOn(tab.readingState, "decorateVerses");
+      vi.spyOn(
+        tab.readingState,
+        "selectTranslationAndChapter"
+      ).mockResolvedValue(undefined);
+      const decorateSpy = vi.spyOn(tab.readingState, "decorateVerses");
 
       await state.app.openVerseReference({
         book: "JHN",
@@ -805,10 +806,11 @@ describe("createSeedBibleState", () => {
     it("decorates a range of verses when endVerse is specified", async () => {
       const state = await createState();
       const tab = state.tabs.tabs.value[0]!;
-      jest
-        .spyOn(tab.readingState, "selectTranslationAndChapter")
-        .mockResolvedValue(undefined);
-      const decorateSpy = jest.spyOn(tab.readingState, "decorateVerses");
+      vi.spyOn(
+        tab.readingState,
+        "selectTranslationAndChapter"
+      ).mockResolvedValue(undefined);
+      const decorateSpy = vi.spyOn(tab.readingState, "decorateVerses");
 
       await state.app.openVerseReference({
         book: "PSA",
@@ -826,10 +828,11 @@ describe("createSeedBibleState", () => {
     it("does not decorate when no verse is specified", async () => {
       const state = await createState();
       const tab = state.tabs.tabs.value[0]!;
-      jest
-        .spyOn(tab.readingState, "selectTranslationAndChapter")
-        .mockResolvedValue(undefined);
-      const decorateSpy = jest.spyOn(tab.readingState, "decorateVerses");
+      vi.spyOn(
+        tab.readingState,
+        "selectTranslationAndChapter"
+      ).mockResolvedValue(undefined);
+      const decorateSpy = vi.spyOn(tab.readingState, "decorateVerses");
 
       await state.app.openVerseReference({ book: "GEN", chapter: 1 });
 
@@ -840,7 +843,7 @@ describe("createSeedBibleState", () => {
       const state = await createState();
       const initialTabId = state.tabs.tabs.value[0]!.id;
       state.tabs.removeTab(initialTabId);
-      const addTabSpy = jest.spyOn(state.tabs, "addTab");
+      const addTabSpy = vi.spyOn(state.tabs, "addTab");
 
       await state.app.openVerseReference({
         book: "GEN",

@@ -183,8 +183,8 @@ function createSharedSessionMock(options?: {
   const session = {
     id: "session-1",
     document: {
-      getArray: jest.fn().mockReturnValue(sharedChats),
-      getMap: jest.fn().mockImplementation((name: string) => {
+      getArray: vi.fn().mockReturnValue(sharedChats),
+      getMap: vi.fn().mockImplementation((name: string) => {
         if (name === "chat_providers") {
           return sharedChatProviders;
         }
@@ -219,12 +219,12 @@ describe("createChatsManager", () => {
   let uuidCount = 0;
   beforeEach(() => {
     uuidCount = 0;
-    (globalThis as any).uuid = jest.fn(() => `msg-${++uuidCount}`);
-    jest.spyOn(Date, "now").mockReturnValue(1_717_000_000_000);
+    (globalThis as any).uuid = vi.fn(() => `msg-${++uuidCount}`);
+    vi.spyOn(Date, "now").mockReturnValue(1_717_000_000_000);
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
     delete (globalThis as any).uuid;
   });
 
@@ -1301,7 +1301,7 @@ describe("createChatsManager", () => {
       id: "provider-1",
       name: "Helper AI",
       supportsSharedChats: true,
-      generateResponse: jest.fn().mockResolvedValue({
+      generateResponse: vi.fn().mockResolvedValue({
         type: "text",
         text: "response",
       }),
@@ -1348,14 +1348,14 @@ describe("createChatsManager", () => {
       id: "provider-1",
       name: "Old Name",
       supportsSharedChats: true,
-      generateResponse: jest.fn(),
+      generateResponse: vi.fn(),
     });
 
     chats.registerProvider({
       id: "provider-1",
       name: "New Name",
       supportsSharedChats: true,
-      generateResponse: jest.fn(),
+      generateResponse: vi.fn(),
     });
 
     const providerParticipants = session.availableParticipants.value.filter(
@@ -1377,14 +1377,14 @@ describe("createChatsManager", () => {
       id: "provider-1",
       name: "Old Name",
       supportsSharedChats: true,
-      generateResponse: jest.fn(),
+      generateResponse: vi.fn(),
     });
 
     chats.registerProvider({
       id: "provider-1",
       name: "New Name",
       supportsSharedChats: true,
-      generateResponse: jest.fn(),
+      generateResponse: vi.fn(),
     });
 
     unregisterOld();
@@ -1409,13 +1409,13 @@ describe("createChatsManager", () => {
     const chats = createChatsManager(loginManager);
     const session = chats.createLocalSession();
 
-    const onJoinChat = jest.fn();
-    const onLeaveChat = jest.fn();
+    const onJoinChat = vi.fn();
+    const onLeaveChat = vi.fn();
     chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
       supportsSharedChats: true,
-      generateResponse: jest.fn(),
+      generateResponse: vi.fn(),
       onJoinChat,
       onLeaveChat,
     });
@@ -1453,13 +1453,13 @@ describe("createChatsManager", () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);
 
-    const onJoinChat = jest.fn();
-    const onLeaveChat = jest.fn();
+    const onJoinChat = vi.fn();
+    const onLeaveChat = vi.fn();
     chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
       supportsSharedChats: true,
-      generateResponse: jest.fn(),
+      generateResponse: vi.fn(),
       onJoinChat,
       onLeaveChat,
     });
@@ -1521,13 +1521,13 @@ describe("createChatsManager", () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);
 
-    const onJoinChat = jest.fn();
-    const onLeaveChat = jest.fn();
+    const onJoinChat = vi.fn();
+    const onLeaveChat = vi.fn();
     chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
       supportsSharedChats: false,
-      generateResponse: jest.fn(),
+      generateResponse: vi.fn(),
       onJoinChat,
       onLeaveChat,
     });
@@ -1584,12 +1584,12 @@ describe("createChatsManager", () => {
     const chats = createChatsManager(loginManager);
     const session = chats.createLocalSession();
 
-    const onLeaveChat = jest.fn();
+    const onLeaveChat = vi.fn();
     const unregister = chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
       supportsSharedChats: true,
-      generateResponse: jest.fn(),
+      generateResponse: vi.fn(),
       onLeaveChat,
     });
 
@@ -1614,7 +1614,7 @@ describe("createChatsManager", () => {
       id: "provider-1",
       name: "Helper AI",
       supportsSharedChats: true,
-      generateResponse: jest.fn(),
+      generateResponse: vi.fn(),
     });
 
     const { session, sharedChatProviders } = createSharedSessionMock({
@@ -1666,7 +1666,7 @@ describe("createChatsManager", () => {
       id: "provider-1",
       name: "Old Name",
       supportsSharedChats: true,
-      generateResponse: jest.fn(),
+      generateResponse: vi.fn(),
     });
 
     const { session, sharedChatProviders } = createSharedSessionMock({
@@ -1691,7 +1691,7 @@ describe("createChatsManager", () => {
       id: "provider-1",
       name: "New Name",
       supportsSharedChats: true,
-      generateResponse: jest.fn(),
+      generateResponse: vi.fn(),
     });
 
     await Promise.resolve();
@@ -1760,7 +1760,7 @@ describe("createChatsManager", () => {
 
     const chats = createChatsManager(loginManager);
     const session = chats.createLocalSession();
-    const providerResponse = jest.fn().mockResolvedValue({
+    const providerResponse = vi.fn().mockResolvedValue({
       type: "text",
       text: "Provider reply",
     });
@@ -1790,11 +1790,11 @@ describe("createChatsManager", () => {
 
     const chats = createChatsManager(loginManager);
     const session = chats.createLocalSession();
-    const firstProviderResponse = jest.fn().mockResolvedValue({
+    const firstProviderResponse = vi.fn().mockResolvedValue({
       type: "text",
       text: "First provider reply",
     });
-    const secondProviderResponse = jest.fn().mockResolvedValue({
+    const secondProviderResponse = vi.fn().mockResolvedValue({
       type: "text",
       text: "Second provider reply",
     });
@@ -1833,11 +1833,11 @@ describe("createChatsManager", () => {
 
     const chats = createChatsManager(loginManager);
     const session = chats.createLocalSession();
-    const firstProviderResponse = jest.fn().mockResolvedValue({
+    const firstProviderResponse = vi.fn().mockResolvedValue({
       type: "text",
       text: "First provider reply",
     });
-    const secondProviderResponse = jest.fn().mockResolvedValue({
+    const secondProviderResponse = vi.fn().mockResolvedValue({
       type: "text",
       text: "Second provider reply",
     });
@@ -1885,11 +1885,11 @@ describe("createChatsManager", () => {
 
     const chats = createChatsManager(loginManager);
     const session = chats.createLocalSession();
-    const firstProviderResponse = jest.fn().mockResolvedValue({
+    const firstProviderResponse = vi.fn().mockResolvedValue({
       type: "text",
       text: "First provider reply",
     });
-    const secondProviderResponse = jest.fn().mockResolvedValue({
+    const secondProviderResponse = vi.fn().mockResolvedValue({
       type: "text",
       text: "Second provider reply",
     });
@@ -1943,7 +1943,7 @@ describe("createChatsManager", () => {
       id: "provider-1",
       name: "Helper AI",
       supportsSharedChats: true,
-      generateResponse: jest.fn().mockImplementation(() => deferred.promise),
+      generateResponse: vi.fn().mockImplementation(() => deferred.promise),
     });
     session.addParticipant("provider-1");
 
@@ -1981,7 +1981,7 @@ describe("createChatsManager", () => {
       id: "provider-1",
       name: "Helper AI",
       supportsSharedChats: true,
-      generateResponse: jest.fn().mockImplementation(() => deferred.promise),
+      generateResponse: vi.fn().mockImplementation(() => deferred.promise),
     });
 
     const { session } = createSharedSessionMock({
@@ -2040,8 +2040,8 @@ describe("createChatsManager", () => {
     const secondChunk = createDeferred<IteratorResult<string>>();
 
     const stream = {
-      next: jest
-        .fn<Promise<IteratorResult<string>>, []>()
+      next: vi
+        .fn<() => Promise<IteratorResult<string>>>()
         .mockImplementationOnce(() => firstChunk.promise)
         .mockImplementationOnce(() => secondChunk.promise)
         .mockResolvedValue({ done: true, value: undefined as any }),
@@ -2054,7 +2054,7 @@ describe("createChatsManager", () => {
       id: "provider-1",
       name: "Helper AI",
       supportsSharedChats: true,
-      generateResponse: jest.fn().mockResolvedValue({
+      generateResponse: vi.fn().mockResolvedValue({
         type: "text",
         text: stream,
       }),
@@ -2099,8 +2099,8 @@ describe("createChatsManager", () => {
     const secondChunk = createDeferred<IteratorResult<string>>();
 
     const stream = {
-      next: jest
-        .fn<Promise<IteratorResult<string>>, []>()
+      next: vi
+        .fn<() => Promise<IteratorResult<string>>>()
         .mockImplementationOnce(() => firstChunk.promise)
         .mockImplementationOnce(() => secondChunk.promise)
         .mockResolvedValue({ done: true, value: undefined as any }),
@@ -2110,7 +2110,7 @@ describe("createChatsManager", () => {
       id: "provider-1",
       name: "Helper AI",
       supportsSharedChats: true,
-      generateResponse: jest.fn().mockResolvedValue({
+      generateResponse: vi.fn().mockResolvedValue({
         type: "text",
         text: stream,
       }),
@@ -2170,7 +2170,7 @@ describe("createChatsManager", () => {
   it("createSharedSession() stores targets matched by remote participant name and local AI name", async () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);
-    const providerResponse = jest.fn().mockResolvedValue({
+    const providerResponse = vi.fn().mockResolvedValue({
       type: "text",
       text: "I can help",
     });
@@ -2441,7 +2441,7 @@ describe("createChatsManager", () => {
 
     const chats = createChatsManager(loginManager);
     const session = chats.createLocalSession();
-    const generateResponse = jest.fn().mockResolvedValue({
+    const generateResponse = vi.fn().mockResolvedValue({
       type: "text",
       text: "reply",
     });
@@ -2479,7 +2479,7 @@ describe("createChatsManager", () => {
 
     const chats = createChatsManager(loginManager);
     const session = chats.createLocalSession();
-    const generateResponse = jest.fn().mockResolvedValue({
+    const generateResponse = vi.fn().mockResolvedValue({
       type: "text",
       text: "reply",
     });
@@ -2507,12 +2507,12 @@ describe("createChatsManager", () => {
 
     const chats = createChatsManager(loginManager);
     const session = chats.createLocalSession();
-    const onJoinChat = jest.fn();
+    const onJoinChat = vi.fn();
     chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
       supportsSharedChats: true,
-      generateResponse: jest
+      generateResponse: vi
         .fn()
         .mockResolvedValue({ type: "text", text: "reply" }),
       onJoinChat,
@@ -2532,12 +2532,12 @@ describe("createChatsManager", () => {
 
     const chats = createChatsManager(loginManager);
     const session = chats.createLocalSession();
-    const onJoinChat = jest.fn();
+    const onJoinChat = vi.fn();
     chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
       supportsSharedChats: true,
-      generateResponse: jest
+      generateResponse: vi
         .fn()
         .mockResolvedValue({ type: "text", text: "reply" }),
       onJoinChat,
@@ -2557,7 +2557,7 @@ describe("createChatsManager", () => {
   it("sendMessage() auto-adds available participant when mentioned by id (shared session)", async () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);
-    const generateResponse = jest.fn().mockResolvedValue({
+    const generateResponse = vi.fn().mockResolvedValue({
       type: "text",
       text: "reply",
     });
@@ -2608,7 +2608,7 @@ describe("createChatsManager", () => {
   it("sendMessage() auto-adds available participant when mentioned by name (shared session)", async () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);
-    const generateResponse = jest.fn().mockResolvedValue({
+    const generateResponse = vi.fn().mockResolvedValue({
       type: "text",
       text: "reply",
     });
@@ -2652,12 +2652,12 @@ describe("createChatsManager", () => {
   it("sendMessage() calls onJoinChat when auto-adding mentioned available participant (shared session)", async () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);
-    const onJoinChat = jest.fn();
+    const onJoinChat = vi.fn();
     chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
       supportsSharedChats: true,
-      generateResponse: jest
+      generateResponse: vi
         .fn()
         .mockResolvedValue({ type: "text", text: "reply" }),
       onJoinChat,
@@ -2695,12 +2695,12 @@ describe("createChatsManager", () => {
   it("sendMessage() does not re-add an already-participating provider when mentioned (shared session)", async () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);
-    const onJoinChat = jest.fn();
+    const onJoinChat = vi.fn();
     chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
       supportsSharedChats: true,
-      generateResponse: jest
+      generateResponse: vi
         .fn()
         .mockResolvedValue({ type: "text", text: "reply" }),
       onJoinChat,
@@ -2780,7 +2780,7 @@ describe("createChatsManager", () => {
       id: "provider-1",
       name: "Helper AI",
       supportsSharedChats: true,
-      generateResponse: jest
+      generateResponse: vi
         .fn()
         .mockResolvedValue({ type: "text", text: "reply" }),
     });
@@ -2797,10 +2797,10 @@ describe("createChatsManager", () => {
 
     const chats = createChatsManager(loginManager);
     const session = chats.createLocalSession();
-    const firstResponse = jest
+    const firstResponse = vi
       .fn()
       .mockResolvedValue({ type: "text", text: "reply 1" });
-    const secondResponse = jest
+    const secondResponse = vi
       .fn()
       .mockResolvedValue({ type: "text", text: "reply 2" });
     chats.registerProvider({
@@ -2831,10 +2831,10 @@ describe("createChatsManager", () => {
 
     const chats = createChatsManager(loginManager);
     const session = chats.createLocalSession();
-    const firstResponse = jest
+    const firstResponse = vi
       .fn()
       .mockResolvedValue({ type: "text", text: "reply 1" });
-    const secondResponse = jest
+    const secondResponse = vi
       .fn()
       .mockResolvedValue({ type: "text", text: "reply 2" });
     chats.registerProvider({
@@ -2872,7 +2872,7 @@ describe("createChatsManager", () => {
       id: "provider-1",
       name: "Helper AI",
       supportsSharedChats: true,
-      generateResponse: jest
+      generateResponse: vi
         .fn()
         .mockResolvedValue({ type: "text", text: "reply" }),
     });
@@ -2905,10 +2905,10 @@ describe("createChatsManager", () => {
   it("sendMessage() calls all local AI providers when @everyone is mentioned (shared session)", async () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager);
-    const firstResponse = jest
+    const firstResponse = vi
       .fn()
       .mockResolvedValue({ type: "text", text: "reply 1" });
-    const secondResponse = jest
+    const secondResponse = vi
       .fn()
       .mockResolvedValue({ type: "text", text: "reply 2" });
     chats.registerProvider({
@@ -2975,7 +2975,7 @@ describe("createChatsManager", () => {
         id: "provider-1",
         name: "Helper AI",
         supportsSharedChats: true,
-        generateResponse: jest.fn().mockResolvedValue(null),
+        generateResponse: vi.fn().mockResolvedValue(null),
       });
       session.addParticipant("provider-1");
 
@@ -3007,7 +3007,7 @@ describe("createChatsManager", () => {
         id: "provider-1",
         name: "Helper AI",
         supportsSharedChats: true,
-        generateResponse: jest.fn().mockResolvedValue(null),
+        generateResponse: vi.fn().mockResolvedValue(null),
       });
       session.addParticipant("provider-1");
 
@@ -3073,13 +3073,13 @@ describe("createChatsManager", () => {
         id: "provider-1",
         name: "Helper AI",
         supportsSharedChats: true,
-        generateResponse: jest.fn().mockResolvedValue(null),
+        generateResponse: vi.fn().mockResolvedValue(null),
       });
       chats.registerProvider({
         id: "provider-2",
         name: "Helper AI 2",
         supportsSharedChats: true,
-        generateResponse: jest.fn().mockResolvedValue(null),
+        generateResponse: vi.fn().mockResolvedValue(null),
       });
       session.addParticipant("provider-1");
       session.addParticipant("provider-2");
@@ -3111,7 +3111,7 @@ describe("createChatsManager", () => {
         id: "d7d90348-fc03-4272-b7c1-b565d968bb5c",
         name: "Helper AI",
         supportsSharedChats: true,
-        generateResponse: jest.fn().mockResolvedValue(null),
+        generateResponse: vi.fn().mockResolvedValue(null),
       });
       session.addParticipant("d7d90348-fc03-4272-b7c1-b565d968bb5c");
 
@@ -3137,7 +3137,7 @@ describe("createChatsManager", () => {
         id: "provider-1",
         name: "HelperAI",
         supportsSharedChats: true,
-        generateResponse: jest.fn().mockResolvedValue(null),
+        generateResponse: vi.fn().mockResolvedValue(null),
       });
       session.addParticipant("provider-1");
 
@@ -3392,7 +3392,7 @@ describe("createChatsManager", () => {
         id: "provider-1",
         name: "Helper AI",
         supportsSharedChats: true,
-        generateResponse: jest.fn().mockResolvedValue(null),
+        generateResponse: vi.fn().mockResolvedValue(null),
       });
       session.addParticipant("provider-1");
 

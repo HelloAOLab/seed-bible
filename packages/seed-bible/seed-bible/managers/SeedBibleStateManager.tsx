@@ -92,7 +92,6 @@ import {
   createTutorialManager,
   type TutorialManager,
 } from "../managers/TutorialManager";
-import { DEFAULT_TRANSLATION_ID } from "./BibleReadingManager";
 import { range } from "es-toolkit";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
@@ -313,8 +312,8 @@ export function createSeedBibleState(
   const config = createConfig(login, navigation);
   const themeManager = createTheme(login, navigation);
   const chats = createChatsManager(login);
-  const sidebar = createSidebar(navigation);
-  const tabs = createTabs(navigation, data, highlights, i18n);
+  const sidebar = createSidebar({ navigation, chatsManager: chats });
+  const tabs = createTabs(navigation, data, highlights, chats, i18n);
   const panes = createPanes(tabs, tabs.selectedTabId);
   const settings = createSettings(os, login, navigation);
   const selector = createBibleSelectorState(
@@ -992,49 +991,8 @@ export function createSeedBibleState(
 
     if (tab) {
       const translationid =
-        tab.readingState.translationId.value ?? DEFAULT_TRANSLATION_ID;
-      await tab.readingState.selectTranslationAndChapter(
-        translationid,
-        ref.book,
-        ref.chapter,
-        {
-          scrollToVerse: ref.verse,
-        }
-      );
-    } else {
-      tab = tabs.addTab(undefined, {
-        initialBookId: ref.book,
-        initialChapterNumber: ref.chapter,
-        scrollToVerse: ref.verse,
-      });
-    }
-
-    if (ref.verse) {
-      const verses = ref.endVerse
-        ? range(ref.verse, ref.endVerse + 1)
-        : ref.verse;
-      tab.readingState.decorateVerses(ref.book, ref.chapter, verses, {
-        className: "sb-verse-decoration-open-reference-highlight",
-        removeAfterMs: 3000,
-      });
-    }
-  };
-
-  const handleOpenChat = (sharedChat: ChatSession) => {
-    sidebar.openChatPanel();
-    chats.selectChat(sharedChat.id);
-  };
-
-  const handleOpenVerseReference = async (ref: VerseRef) => {
-    let tab = selectedTab.value;
-
-    if (!tab) {
-      tab = tabs.tabs.value[0] ?? null;
-    }
-
-    if (tab) {
-      const translationid =
-        tab.readingState.translationId.value ?? DEFAULT_TRANSLATION_ID;
+        tab.readingState.translationId.value ??
+        tab.readingState.defaultTranslation.id;
       await tab.readingState.selectTranslationAndChapter(
         translationid,
         ref.book,

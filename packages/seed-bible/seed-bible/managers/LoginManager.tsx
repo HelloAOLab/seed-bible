@@ -14,6 +14,11 @@ export interface LoginManager {
   userId: Signal<string | null>;
 
   /**
+   * The connection ID for the current session.
+   */
+  connectionId: string;
+
+  /**
    * The user's information, including email. Null if the user is not authenticated or if background auth has not completed yet.
    */
   userInfo: Signal<UserInfo | null>;

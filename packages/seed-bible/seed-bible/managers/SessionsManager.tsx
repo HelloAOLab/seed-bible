@@ -405,26 +405,6 @@ export function getUserAnimalVisual(key: string): ConnectionSessionUserVisual {
 }
 
 /**
- * Returns the current client's identity key. For a user visible inside a
- * session, use whatever the `ConnectedSessionUser` entry exposes (userId
- * if logged in, otherwise connectionId). For the sidebar self-avatar we
- * derive the SAME thing from `login.userId` with a fallback to
- * `configBot.id` — so the two call sites always agree on the key and
- * therefore on the visual.
- */
-export function getSelfVisualKey(userId: string | null): string {
-  if (userId) return userId;
-  try {
-    if (typeof configBot !== "undefined" && configBot?.id) {
-      return String(configBot.id);
-    }
-  } catch {
-    /* ignore */
-  }
-  return "me";
-}
-
-/**
  * Given a `ConnectedSessionUser`, returns the SAME key that the sidebar
  * self-avatar would use for this same person on their own client. This
  * guarantees visual consistency between "how I see myself in the sidebar"

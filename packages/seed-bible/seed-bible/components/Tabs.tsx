@@ -17,7 +17,7 @@ import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import { SettingsIcon } from "../components/icons";
 import { SettingsPage } from "../components/SettingsPage";
 import {
-  getSelfVisualKey,
+  getConnectedUserVisualKey,
   getUserAnimalVisual,
   type BibleReadingSession,
 } from "../managers/SessionsManager";
@@ -104,7 +104,10 @@ function SessionSettingsModalContent(props: {
   const { state, session, onEndSession, onClose } = props;
   const options = session.options.value;
   const hostId = options.hostUserId;
-  const currentIdentity = getSelfVisualKey(state.login.userId.value);
+  const currentIdentity = getConnectedUserVisualKey({
+    userId: state.login.userId.value,
+    connectionId: state.os.connectionId,
+  });
   const isHost =
     hostId !== null &&
     (state.login.userId.value === hostId || currentIdentity === hostId);
@@ -1752,7 +1755,10 @@ export function SelfAvatarVisual(props: { state: SeedBibleState }) {
   const profile = login.profile.value;
   // Share identity with connected-user rendering so the avatar shows the
   // same icon/color as the user's row inside a shared session.
-  const visualKey = getSelfVisualKey(state.login.userId.value);
+  const visualKey = getConnectedUserVisualKey({
+    userId: state.login.userId.value,
+    connectionId: state.os.connectionId,
+  });
   const visual = getUserAnimalVisual(visualKey);
   const imageUrl = profile?.pictureUrl ?? null;
 

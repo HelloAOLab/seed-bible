@@ -6,22 +6,21 @@ import {
   type ReadonlySignal,
 } from "@preact/signals";
 import { z } from "zod";
-import type {
-  LoginManager,
-  UserProfile,
-} from "seed-bible.managers.LoginManager";
+import type { LoginManager, UserProfile } from "./LoginManager";
 import {
-  getSelfVisualKey,
   getUserAnimalVisual,
   type BibleReadingSession,
   type ConnectedSessionUser,
   type ConnectionSessionUserVisual,
-} from "seed-bible.managers.SessionsManager";
+} from "./SessionsManager";
 import type { TranslatableTitle } from "./BibleToolsManager";
-import i18n from "https://esm.sh/i18next@23.16.8";
 import { translateTitle } from "../components/Utils";
 import type { VerseRef } from "./BibleDataManager";
 import { parseVerseReferences } from "./BibleDataManager";
+import { getConnectedUserVisualKey } from "./SessionsManager";
+import { v4 as uuid } from "uuid";
+import type { I18nManager } from "../i18n/I18nManager";
+import { type i18n } from "i18next";
 
 export const chatMessageBaseSchema = z.object({
   /**
@@ -546,7 +545,8 @@ function textMentionsEveryone(text: string): boolean {
 function resolveParticipantFromToken(
   token: string,
   participants: ChatParticipant[],
-  participantIdAliases: Readonly<Record<string, string>>
+  participantIdAliases: Readonly<Record<string, string>>,
+  t: (key: string) => string
 ): ChatParticipant | null {
   const byId = participants.find(
     (p) => p.id === token || p.id.slice(0, 6) === token
@@ -559,7 +559,6 @@ function resolveParticipantFromToken(
     if (aliased) return aliased;
   }
 
-  const { t } = i18n;
   for (const participant of participants) {
     if (!participant.name) continue;
     const displayName =
@@ -575,8 +574,10 @@ function resolveParticipantFromToken(
 function parseTextMessage(
   message: TextChatMessage,
   participants: ChatParticipant[],
-  participantIdAliases: Readonly<Record<string, string>>
+  participantIdAliases: Readonly<Record<string, string>>,
+  i18n: i18n
 ): ParsedChatTextMessage {
+  const { t } = i18n;
   const { text } = message;
   const mentionRegex = /(?<!\w)@(?:\{([^}]+)\}|([^\s@.,!?;:)}\]]+))/g;
 
@@ -625,7 +626,8 @@ function parseTextMessage(
         participant: resolveParticipantFromToken(
           (m.raw[1] ?? m.raw[2] ?? "").trim(),
           participants,
-          participantIdAliases
+          participantIdAliases,
+          t
         ),
       });
     } else {
@@ -656,7 +658,8 @@ function parseTextMessage(
 
 export function resolveMessageTargets(
   participants: ChatParticipant[],
-  text: string
+  text: string,
+  i18n: i18n
 ): ChatParticipant[] {
   if (extractMentionTokens(text).length === 0) {
     return [];
@@ -688,8 +691,7 @@ export function resolveMessageTargets(
     if (typeof name === "string" && !textIncludesMention(text, name)) {
       continue;
     } else if (typeof name === "object") {
-      const { t } = i18n;
-      const translatedName = translateTitle(t, name);
+      const translatedName = translateTitle(i18n.t, name);
       if (!textIncludesMention(text, translatedName)) {
         continue;
       }
@@ -743,10 +745,11 @@ function resolveMessageAuthors(
 function resolveMessageTargetsWithAliases(
   participants: ChatParticipant[],
   text: string,
-  participantIdAliases: Readonly<Record<string, string>>
+  participantIdAliases: Readonly<Record<string, string>>,
+  i18n: i18n
 ): ChatParticipant[] {
   const matches = new Map<string, ChatParticipant>(
-    resolveMessageTargets(participants, text).map((participant) => [
+    resolveMessageTargets(participants, text, i18n).map((participant) => [
       participant.id,
       participant,
     ])
@@ -831,8 +834,10 @@ function getMostRecentProviderParticipant(
 
 function createSharedChatSession(
   session: BibleReadingSession,
-  chatProviders: Signal<ChatProvider[]>
+  chatProviders: Signal<ChatProvider[]>,
+  i18nManager: I18nManager
 ): SharedChatSession {
+  const i18n = i18nManager.i18n;
   const chats = session.document.getArray<unknown>("chats");
   const chatProvidersMap = session.document.getMap<unknown>("chat_providers");
   const participantAliasesMap = session.document.getMap<unknown>(
@@ -1250,7 +1255,8 @@ function createSharedChatSession(
         ? resolveMessageTargetsWithAliases(
             availableParticipants.value,
             message.text,
-            participantIdAliases.value
+            participantIdAliases.value,
+            i18n
           )
         : [];
     for (const newParticipant of mentionedAvailable) {
@@ -1263,7 +1269,8 @@ function createSharedChatSession(
         ? resolveMessageTargetsWithAliases(
             [...participants.value, ...mentionedAvailable],
             message.text,
-            participantIdAliases.value
+            participantIdAliases.value,
+            i18n
           )
         : [];
     const messageTargets: string[] | true = isEveryoneMentioned
@@ -1315,7 +1322,8 @@ function createSharedChatSession(
             const upsertStreamingResponse = (text: string) => {
               const responseTargets = resolveMessageTargets(
                 participants.value,
-                text
+                text,
+                i18n
               );
               const nextResponseMessage = createChatMessage(
                 {
@@ -1346,7 +1354,8 @@ function createSharedChatSession(
 
           const responseTargets = resolveMessageTargets(
             participants.value,
-            response.text
+            response.text,
+            i18n
           );
           chats.push(
             createChatMessage(
@@ -1369,7 +1378,12 @@ function createSharedChatSession(
     messages.value
       .filter((m): m is TextChatMessage => m.type === "text")
       .map((m) =>
-        parseTextMessage(m, totalParticipants.value, participantIdAliases.value)
+        parseTextMessage(
+          m,
+          totalParticipants.value,
+          participantIdAliases.value,
+          i18n
+        )
       )
   );
 
@@ -1479,15 +1493,22 @@ function getWasMentionedSignal(
 function createLocalChatSession(
   loginManager: LoginManager,
   chatProviders: Signal<ChatProvider[]>,
+  i18nManager: I18nManager,
   history?: ChatSessionHistory
 ): ChatSession {
+  const i18n = i18nManager.i18n;
   const localParticipant = computed<UserChatParticipant>(() => ({
     id: loginManager.userId.value ?? DEFAULT_LOCAL_PARTICIPANT_ID,
     userId: loginManager.userId.value ?? null,
     connectionId: null,
     profile: loginManager.profile.value,
     name: getParticipantName(loginManager.profile.value),
-    visual: getUserAnimalVisual(getSelfVisualKey(loginManager.userId.value)),
+    visual: getUserAnimalVisual(
+      getConnectedUserVisualKey({
+        userId: loginManager.userId.value,
+        connectionId: loginManager.connectionId,
+      })
+    ),
     isSelf: true,
     isAI: false,
     isRemote: false,
@@ -1646,7 +1667,11 @@ function createLocalChatSession(
     if (message.type === "text") {
       const toAdd = isEveryoneMentioned
         ? availableParticipants.value
-        : resolveMessageTargets(availableParticipants.value, message.text);
+        : resolveMessageTargets(
+            availableParticipants.value,
+            message.text,
+            i18n
+          );
       for (const newParticipant of toAdd) {
         addLocalProviderParticipant(newParticipant.id);
       }
@@ -1662,7 +1687,7 @@ function createLocalChatSession(
     } else {
       const resolvedTargetParticipants =
         message.type === "text"
-          ? resolveMessageTargets(participants.value, message.text)
+          ? resolveMessageTargets(participants.value, message.text, i18n)
           : [];
       const defaultProviderParticipant = getMostRecentProviderParticipant(
         participants.value,
@@ -1723,7 +1748,8 @@ function createLocalChatSession(
             const upsertStreamingResponse = (text: string) => {
               const responseTargets = resolveMessageTargets(
                 participants.value,
-                text
+                text,
+                i18n
               );
               const nextResponseMessage = createChatMessage(
                 {
@@ -1757,7 +1783,8 @@ function createLocalChatSession(
 
           const responseTargets = resolveMessageTargets(
             participants.value,
-            response.text
+            response.text,
+            i18n
           );
           messages.value = [
             ...messages.value,
@@ -1809,7 +1836,12 @@ function createLocalChatSession(
     messages.value
       .filter((m): m is TextChatMessage => m.type === "text")
       .map((m) =>
-        parseTextMessage(m, totalParticipants.value, participantIdAliases.value)
+        parseTextMessage(
+          m,
+          totalParticipants.value,
+          participantIdAliases.value,
+          i18n
+        )
       )
   );
 
@@ -1867,7 +1899,10 @@ function createLocalChatSession(
   };
 }
 
-export function createChatsManager(loginManager: LoginManager): ChatsManager {
+export function createChatsManager(
+  loginManager: LoginManager,
+  i18nManager: I18nManager
+): ChatsManager {
   const chats = signal<ChatSession[]>([]);
   const isOpen = signal<boolean>(false);
   const chatProviders = signal<ChatProvider[]>([]);
@@ -1916,13 +1951,18 @@ export function createChatsManager(loginManager: LoginManager): ChatsManager {
   };
 
   const createLocalSession = (history?: ChatSessionHistory) => {
-    const chat = createLocalChatSession(loginManager, chatProviders, history);
+    const chat = createLocalChatSession(
+      loginManager,
+      chatProviders,
+      i18nManager,
+      history
+    );
     chats.value = [...chats.value, chat];
     return chat;
   };
 
   const createSharedSession = (session: BibleReadingSession) => {
-    const chat = createSharedChatSession(session, chatProviders);
+    const chat = createSharedChatSession(session, chatProviders, i18nManager);
     chats.value = [...chats.value, chat];
     return chat;
   };
