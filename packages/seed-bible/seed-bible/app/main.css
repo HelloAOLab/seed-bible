@@ -1202,6 +1202,12 @@ h6 {
   border-top-right-radius: 16px;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
   padding: 16px;
+  /* Cap to the viewport and scroll internally so a tall sheet (or one opened
+     with the keyboard up) can always reach its bottom content. */
+  max-height: 85dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   font-family: var(--sb-reader-font-family);
   animation: sb-mobile-settings-slide-up 0.25s ease-out;
 }
@@ -4964,13 +4970,22 @@ h6 {
   .sb-tabs-sidebar-mobile-open {
     display: flex;
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
     width: 100%;
+    /* Size to the *visible* viewport (not the taller layout viewport that
+       `inset: 0` would use on Android) so the scroll container's bottom lands
+       on screen and content like the Language/localization section at the
+       bottom can actually be scrolled into view. */
+    height: 100dvh;
     z-index: 100;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     background: var(--sb-background);
-    padding-bottom: 68px;
-    padding: 0;
+    /* Bottom buffer (+ safe area) so the last setting clears the screen edge.
+       NOTE: a stray `padding: 0` here previously clobbered the bottom padding. */
+    padding: 0 0 calc(32px + env(safe-area-inset-bottom, 0px));
   }
 
   @keyframes sb-sidebar-slide-in {
@@ -5074,7 +5089,7 @@ h6 {
   /* Header gets a little more breathing room and a bottom divider so it
    * reads as a real top-bar over the tab list. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header {
-    padding: 7px 0px;
+    padding: 7px 16px;
   }
 
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-title {
@@ -5811,6 +5826,28 @@ h6 {
 .sb-language-picker-item-selected {
   background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
   font-weight: 600;
+}
+
+/* On mobile the Language trigger sits near the bottom of the settings page, so
+   the default downward-opening absolute menu spills off-screen behind the tab
+   bar. Render it as a bottom-anchored sheet that stays above the nav bar and
+   scrolls internally, with the overlay dimming the whole screen. */
+@media (max-width: 768px) {
+  .sb-language-picker-overlay {
+    z-index: 9998;
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  .sb-language-picker-menu {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    top: auto;
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    z-index: 9999;
+    min-width: 0;
+    max-height: min(50dvh, 360px);
+  }
 }
 
 .sb-settings-toggle-row {
