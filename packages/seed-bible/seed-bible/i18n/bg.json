@@ -111,8 +111,7 @@
   "toolbar": "Лента с инструменти",
   "extensions": "Разширения",
   "display": "Дисплей",
-  "mobile": "Мобилен",
-  "show-nav-arrows": "Показване на стрелки за навигация",
+
   "theme-and-text": "Тема и текст",
   "go-to-all-settings": "Отидете на всички настройки",
   "keep-screen-awake": "Поддържане на екрана активен",
@@ -187,8 +186,7 @@
   "bible": "Библия",
   "add-verse": "Добави стих",
   "add": "Добавяне",
-  "chat-coming-soon": "Чатът идва скоро",
-  "chat-coming-soon-body": "Тук ще можете да задавате въпроси и да проучвате кръстосани препратки.",
+
   "category-options": "Опции за папки",
   "rename": "Преименуване",
   "delete": "Изтриване",
@@ -238,7 +236,7 @@
   "social-title": "Прочетете {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Нова папка",
   "chapter-navigation": "Навигация по главите",
-  "more-colors": "Още цветове",
+
   "tutorial.skip": "Пропускане",
   "tutorial.optOut": "Не показвай уроци",
   "tutorial.back": "Обратно",
@@ -265,9 +263,7 @@
   "today-coming-soon": "Днешният екран ще се появи скоро",
   "link-to-join-shared-session-copied": "Връзка за присъединяване към споделената сесия беше копирана в клипборда ви",
   "copied-translation-share-link": "Линкът за споделяне на превода е копиран",
-  "more-coming-soon": "Очаквайте още опции скоро",
-  "discovery-coming-soon": "Откритието идва скоро",
-  "login-to-use-feature": "Трябва да влезете, за да използвате тази функция.",
+
   "link-to-join-shared-session-copied": "Връзка за присъединяване към споделената сесия беше копирана в клипборда ви",
   "anonymous": "Анонимен",
   "no-chat-messages": "Все още няма съобщения",

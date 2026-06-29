@@ -175,8 +175,7 @@
   "upload-settings": "अपलोड सेटिङहरू",
   "uploading-settings": "सेटिङहरू अपलोड गर्दै...",
   "search": "खोज्नुहोस्",
-  "mobile": "मोबाइल",
-  "show-nav-arrows": "नेभिगेसन तीरहरू देखाउनुहोस्",
+
   "theme-and-text": "विषयवस्तु र पाठ",
   "go-to-all-settings": "सबै सेटिङहरूमा जानुहोस्",
   "more": "थप",
@@ -188,8 +187,7 @@
   "bible": "बाइबल",
   "add-verse": "पद थप्नुहोस्",
   "add": "थप्नुहोस्",
-  "chat-coming-soon": "च्याट चाँडै आउँदैछ",
-  "chat-coming-soon-body": "यहाँ तपाईंले प्रश्नहरू सोध्न र अन्तरसन्दर्भहरू अन्वेषण गर्न सक्षम हुनुहुनेछ।",
+
   "category-options": "फोल्डर विकल्पहरू",
   "rename": "पुन: नामाकरण गर्नुहोस्",
   "delete": "मेटाउनुहोस्",
@@ -238,7 +236,7 @@
   "social-title": "{{bookName}} {{chapterNumber}} पढ्नुहोस्",
   "new-bookmark-folder": "नयाँ फोल्डर",
   "chapter-navigation": "अध्याय नेभिगेसन",
-  "more-colors": "थप रङहरू",
+
   "tutorial.skip": "छोड्नुहोस्",
   "tutorial.optOut": "ट्यूटोरियलहरू नदेखाउनुहोस्",
   "tutorial.back": "पछाडि",
@@ -263,9 +261,7 @@
   "search-languages": "भाषाहरू खोज्नुहोस्...",
   "no-languages-found": "कुनै भाषा भेटिएन।",
   "today-coming-soon": "आजको स्क्रिन चाँडै आउँदैछ",
-  "more-coming-soon": "थप विकल्पहरू चाँडै आउँदैछन्",
-  "discovery-coming-soon": "डिस्कभरी चाँडै आउँदैछ",
-  "login-to-use-feature": "यो सुविधा प्रयोग गर्न तपाईंले लग इन गर्नुपर्नेछ।",
+
   "link-to-join-shared-session-copied": "साझा सत्रमा सामेल हुने लिङ्क तपाईंको क्लिपबोर्डमा प्रतिलिपि गरिएको छ।",
   "anonymous": "बेनामी",
   "no-chat-messages": "अहिलेसम्म कुनै सन्देश छैन",

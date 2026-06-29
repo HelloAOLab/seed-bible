@@ -175,8 +175,7 @@
   "upload-settings": "업로드 설정",
   "uploading-settings": "설정 업로드 중...",
   "search": "찾다",
-  "mobile": "이동하는",
-  "show-nav-arrows": "탐색 화살표 표시",
+
   "theme-and-text": "테마 및 텍스트",
   "go-to-all-settings": "모든 설정으로 이동",
   "more": "더",
@@ -188,8 +187,7 @@
   "bible": "성경",
   "add-verse": "구절을 추가하세요",
   "add": "추가하다",
-  "chat-coming-soon": "채팅 기능이 곧 출시될 예정입니다.",
-  "chat-coming-soon-body": "이곳에서 질문을 하고 상호 참조 자료를 살펴볼 수 있습니다.",
+
   "category-options": "폴더 옵션",
   "rename": "이름 변경",
   "delete": "삭제",
@@ -238,7 +236,7 @@
   "social-title": "{{bookName}} {{chapterNumber}} 를 읽으세요.",
   "new-bookmark-folder": "새 폴더",
   "chapter-navigation": "챕터 탐색",
-  "more-colors": "더 많은 색상",
+
   "tutorial.skip": "건너뛰다",
   "tutorial.optOut": "튜토리얼을 보여주지 마세요",
   "tutorial.back": "뒤쪽에",
@@ -263,9 +261,7 @@
   "search-languages": "검색 언어...",
   "no-languages-found": "언어를 찾을 수 없습니다.",
   "today-coming-soon": "오늘 화면이 곧 나옵니다.",
-  "more-coming-soon": "더 많은 옵션이 곧 제공될 예정입니다.",
-  "discovery-coming-soon": "곧 디스커버리가 출시됩니다.",
-  "login-to-use-feature": "이 기능을 사용하려면 로그인해야 합니다.",
+
   "link-to-join-shared-session-copied": "공유 세션에 참여할 수 있는 링크가 클립보드에 복사되었습니다.",
   "anonymous": "익명의",
   "no-chat-messages": "아직 메시지가 없습니다.",

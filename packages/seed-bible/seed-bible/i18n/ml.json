@@ -111,8 +111,7 @@
   "toolbar": "ടൂൾബാർ",
   "extensions": "വിപുലീകരണങ്ങൾ",
   "display": "ഡിസ്പ്ലേ",
-  "mobile": "മൊബൈൽ",
-  "show-nav-arrows": "നാവിഗേഷൻ അമ്പടയാളങ്ങൾ കാണിക്കുക",
+
   "theme-and-text": "തീമും വാചകവും",
   "go-to-all-settings": "എല്ലാ ക്രമീകരണങ്ങളിലേക്കും പോകുക",
   "keep-screen-awake": "സ്ക്രീൻ സജീവമായി നിലനിർത്തുക",
@@ -187,8 +186,7 @@
   "bible": "ബൈബിൾ",
   "add-verse": "വാക്യം ചേർക്കുക",
   "add": "ചേർക്കുക",
-  "chat-coming-soon": "ചാറ്റ് ഉടൻ വരുന്നു",
-  "chat-coming-soon-body": "ഇവിടെയാണ് നിങ്ങൾക്ക് ചോദ്യങ്ങൾ ചോദിക്കാനും പരസ്പരവിരുദ്ധമായ പരാമർശങ്ങൾ നടത്താനും കഴിയുക.",
+
   "category-options": "ഫോൾഡർ ഓപ്ഷനുകൾ",
   "rename": "പേരുമാറ്റുക",
   "delete": "ഇല്ലാതാക്കുക",
@@ -238,7 +236,7 @@
   "social-title": "{{bookName}} {{chapterNumber}} വായിക്കുക",
   "new-bookmark-folder": "പുതിയ ഫോൾഡർ",
   "chapter-navigation": "ചാപ്റ്റർ നാവിഗേഷൻ",
-  "more-colors": "കൂടുതൽ നിറങ്ങൾ",
+
   "tutorial.skip": "ഒഴിവാക്കുക",
   "tutorial.optOut": "ട്യൂട്ടോറിയലുകൾ കാണിക്കരുത്",
   "tutorial.back": "തിരികെ",
@@ -263,9 +261,7 @@
   "search-languages": "ഭാഷകൾ തിരയുക...",
   "no-languages-found": "ഭാഷകളൊന്നും കണ്ടെത്തിയില്ല.",
   "today-coming-soon": "ഇന്നത്തെ സ്ക്രീൻ ഉടൻ വരുന്നു",
-  "more-coming-soon": "കൂടുതൽ ഓപ്ഷനുകൾ ഉടൻ വരുന്നു",
-  "discovery-coming-soon": "കണ്ടെത്തൽ ഉടൻ വരുന്നു",
-  "login-to-use-feature": "ഈ സവിശേഷത ഉപയോഗിക്കുന്നതിന് നിങ്ങൾ ലോഗിൻ ചെയ്യണം.",
+
   "link-to-join-shared-session-copied": "പങ്കിട്ട സെഷനിൽ ചേരുന്നതിനുള്ള ഒരു ലിങ്ക് നിങ്ങളുടെ ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി.",
   "anonymous": "അജ്ഞാതൻ",
   "no-chat-messages": "ഇതുവരെ സന്ദേശങ്ങളൊന്നുമില്ല.",

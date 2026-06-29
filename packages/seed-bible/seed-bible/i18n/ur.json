@@ -175,8 +175,7 @@
   "upload-settings": "اپ لوڈ کی ترتیبات",
   "uploading-settings": "اپ لوڈ کی ترتیبات...",
   "search": "تلاش کریں۔",
-  "mobile": "موبائل",
-  "show-nav-arrows": "نیویگیشن تیر دکھائیں۔",
+
   "theme-and-text": "تھیم اور متن",
   "go-to-all-settings": "تمام ترتیبات پر جائیں۔",
   "more": "مزید",
@@ -188,8 +187,7 @@
   "bible": "بائبل",
   "add-verse": "آیت شامل کریں۔",
   "add": "شامل کریں۔",
-  "chat-coming-soon": "چیٹ جلد آرہی ہے۔",
-  "chat-coming-soon-body": "یہ وہ جگہ ہے جہاں آپ سوالات پوچھ سکیں گے اور کراس حوالہ جات کو دریافت کر سکیں گے۔",
+
   "category-options": "فولڈر کے اختیارات",
   "rename": "نام تبدیل کریں۔",
   "delete": "حذف کریں۔",
@@ -238,7 +236,7 @@
   "social-title": "پڑھیں {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "نیا فولڈر",
   "chapter-navigation": "باب نیویگیشن",
-  "more-colors": "مزید رنگ",
+
   "tutorial.skip": "چھوڑیں۔",
   "tutorial.optOut": "سبق نہ دکھائیں۔",
   "tutorial.back": "پیچھے",
@@ -263,9 +261,7 @@
   "search-languages": "زبانیں تلاش کریں...",
   "no-languages-found": "کوئی زبانیں نہیں ملی",
   "today-coming-soon": "آج اسکرین جلد آرہی ہے۔",
-  "more-coming-soon": "مزید اختیارات جلد آرہے ہیں۔",
-  "discovery-coming-soon": "دریافت جلد آرہی ہے۔",
-  "login-to-use-feature": "اس فیچر کو استعمال کرنے کے لیے آپ کو لاگ ان کرنا ہوگا۔",
+
   "link-to-join-shared-session-copied": "مشترکہ سیشن میں شامل ہونے کا ایک لنک آپ کے کلپ بورڈ پر کاپی کیا گیا تھا۔",
   "anonymous": "گمنام",
   "no-chat-messages": "ابھی تک کوئی پیغامات نہیں ہیں۔",

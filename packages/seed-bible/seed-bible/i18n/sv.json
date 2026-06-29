@@ -111,8 +111,7 @@
   "toolbar": "Verktygsfält",
   "extensions": "Tillägg",
   "display": "Visa",
-  "mobile": "Mobil",
-  "show-nav-arrows": "Visa navigeringspilar",
+
   "theme-and-text": "Tema och text",
   "go-to-all-settings": "Gå till alla inställningar",
   "keep-screen-awake": "Håll skärmen vaken",
@@ -187,8 +186,7 @@
   "bible": "Bibeln",
   "add-verse": "Lägg till vers",
   "add": "Tillägga",
-  "chat-coming-soon": "Chatten kommer snart",
-  "chat-coming-soon-body": "Här kan du ställa frågor och utforska korsreferenser.",
+
   "category-options": "Mappalternativ",
   "rename": "Döpa om",
   "delete": "Radera",
@@ -238,7 +236,7 @@
   "social-title": "Läs {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Ny mapp",
   "chapter-navigation": "Kapitelnavigering",
-  "more-colors": "Fler färger",
+
   "tutorial.skip": "Hoppa",
   "tutorial.optOut": "Visa inte handledningar",
   "tutorial.back": "Tillbaka",
@@ -263,9 +261,7 @@
   "search-languages": "Sök språk...",
   "no-languages-found": "Inga språk hittades",
   "today-coming-soon": "Dagens skärm kommer snart",
-  "more-coming-soon": "Fler alternativ kommer snart",
-  "discovery-coming-soon": "Upptäckten kommer snart",
-  "login-to-use-feature": "Du måste logga in för att använda den här funktionen.",
+
   "link-to-join-shared-session-copied": "En länk för att ansluta till den delade sessionen kopierades till ditt urklipp",
   "anonymous": "Anonym",
   "no-chat-messages": "Inga meddelanden ännu",

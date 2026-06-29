@@ -111,8 +111,7 @@
   "toolbar": "ხელსაწყოთა პანელი",
   "extensions": "გაფართოებები",
   "display": "ჩვენება",
-  "mobile": "მობილური",
-  "show-nav-arrows": "ნავიგაციის ისრების ჩვენება",
+
   "theme-and-text": "თემა და ტექსტი",
   "go-to-all-settings": "გადადით ყველა პარამეტრზე",
   "keep-screen-awake": "ეკრანის გამოღვიძება",
@@ -187,8 +186,7 @@
   "bible": "ბიბლია",
   "add-verse": "ლექსის დამატება",
   "add": "დამატება",
-  "chat-coming-soon": "ჩატი მალე იქნება ხელმისაწვდომი",
-  "chat-coming-soon-body": "აქ თქვენ შეძლებთ კითხვების დასმას და ჯვარედინი მითითებების შესწავლას.",
+
   "category-options": "საქაღალდის პარამეტრები",
   "rename": "გადარქმევა",
   "delete": "წაშლა",
@@ -238,7 +236,7 @@
   "social-title": "წაიკითხეთ {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "ახალი საქაღალდე",
   "chapter-navigation": "თავის ნავიგაცია",
-  "more-colors": "მეტი ფერი",
+
   "tutorial.skip": "გამოტოვება",
   "tutorial.optOut": "არ აჩვენო სახელმძღვანელოები",
   "tutorial.back": "უკან",
@@ -263,9 +261,7 @@
   "search-languages": "ენების ძიება...",
   "no-languages-found": "ენები ვერ მოიძებნა",
   "today-coming-soon": "დღევანდელი ეკრანი მალე გამოვა",
-  "more-coming-soon": "მეტი ვარიანტი მალე გამოვა",
-  "discovery-coming-soon": "აღმოჩენა მალე მოხდება",
-  "login-to-use-feature": "ამ ფუნქციის გამოსაყენებლად, თქვენ უნდა შეხვიდეთ სისტემაში.",
+
   "link-to-join-shared-session-copied": "გაზიარებულ სესიასთან შეერთების ბმული თქვენს ბუფერში დაკოპირდა",
   "anonymous": "ანონიმური",
   "no-chat-messages": "შეტყობინებები ჯერ არ არის",

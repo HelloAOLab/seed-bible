@@ -111,8 +111,7 @@
   "toolbar": "Työkalurivi",
   "extensions": "Laajennukset",
   "display": "Näyttö",
-  "mobile": "Mobiili",
-  "show-nav-arrows": "Näytä navigointinuolet",
+
   "theme-and-text": "Teema ja teksti",
   "go-to-all-settings": "Siirry kaikkiin asetuksiin",
   "keep-screen-awake": "Pidä näyttö hereillä",
@@ -187,8 +186,7 @@
   "bible": "raamattu",
   "add-verse": "Lisää säkeistö",
   "add": "Lisätä",
-  "chat-coming-soon": "Chat on tulossa pian",
-  "chat-coming-soon-body": "Täällä voit esittää kysymyksiä ja tutustua ristiviittauksiin.",
+
   "category-options": "Kansioasetukset",
   "rename": "Nimeä uudelleen",
   "delete": "Poistaa",
@@ -238,7 +236,7 @@
   "social-title": "Lue {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Uusi kansio",
   "chapter-navigation": "Lukujen navigointi",
-  "more-colors": "Lisää värejä",
+
   "tutorial.skip": "Ohita",
   "tutorial.optOut": "Älä näytä tutoriaaleja",
   "tutorial.back": "Takaisin",
@@ -263,9 +261,7 @@
   "search-languages": "Hae kieliä...",
   "no-languages-found": "Ei kieliä löytynyt",
   "today-coming-soon": "Tämän päivän näyttö tulee pian",
-  "more-coming-soon": "Lisää vaihtoehtoja tulossa pian",
-  "discovery-coming-soon": "Löytö on tulossa pian",
-  "login-to-use-feature": "Sinun on kirjauduttava sisään käyttääksesi tätä ominaisuutta.",
+
   "link-to-join-shared-session-copied": "Linkki jaettuun istuntoon liittymiseen kopioitiin leikepöydälle.",
   "anonymous": "Anonyymi",
   "no-chat-messages": "Ei vielä viestejä",

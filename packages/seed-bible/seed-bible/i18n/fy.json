@@ -111,8 +111,7 @@
   "toolbar": "Arkbalke",
   "extensions": "Útwreidings",
   "display": "Skerm",
-  "mobile": "Mobyl",
-  "show-nav-arrows": "Navigaasjepylen sjen litte",
+
   "theme-and-text": "Tema & tekst",
   "go-to-all-settings": "Gean nei alle ynstellings",
   "keep-screen-awake": "Hâld it skerm wekker",
@@ -187,8 +186,7 @@
   "bible": "bibel",
   "add-verse": "Fers tafoegje",
   "add": "Tafoegje",
-  "chat-coming-soon": "De petearen komme gau",
-  "chat-coming-soon-body": "Hjir kinne jo fragen stelle en krúsreferinsjes ferkenne.",
+
   "category-options": "Mapopsjes",
   "rename": "Omneame",
   "delete": "Wiskje",
@@ -238,7 +236,7 @@
   "social-title": "Lês {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nije map",
   "chapter-navigation": "Haadstiknavigaasje",
-  "more-colors": "Mear kleuren",
+
   "tutorial.skip": "Oerslaan",
   "tutorial.optOut": "Lit gjin tutorials sjen",
   "tutorial.back": "Rêch",
@@ -263,9 +261,7 @@
   "search-languages": "Sykje yn talen...",
   "no-languages-found": "Gjin talen fûn",
   "today-coming-soon": "It skerm fan hjoed komt gau",
-  "more-coming-soon": "Mear opsjes komme gau",
-  "discovery-coming-soon": "De ûntdekking komt gau",
-  "login-to-use-feature": "Jo moatte ynlogge om dizze funksje te brûken.",
+
   "link-to-join-shared-session-copied": "In keppeling om mei te dwaan oan de dielde sesje is nei jo klamboerd kopiearre",
   "anonymous": "Anonym",
   "no-chat-messages": "Noch gjin berjochten",

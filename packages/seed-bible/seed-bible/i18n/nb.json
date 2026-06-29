@@ -111,8 +111,7 @@
   "toolbar": "Verktøylinjen",
   "extensions": "Utvidelser",
   "display": "Utstilling",
-  "mobile": "Mobil",
-  "show-nav-arrows": "Vis navigasjonspiler",
+
   "theme-and-text": "Tema og tekst",
   "go-to-all-settings": "Gå til alle innstillinger",
   "keep-screen-awake": "Hold skjermen våken",
@@ -187,8 +186,7 @@
   "bible": "bibel",
   "add-verse": "Legg til vers",
   "add": "Legge til",
-  "chat-coming-soon": "Chatten kommer snart",
-  "chat-coming-soon-body": "Her kan du stille spørsmål og utforske kryssreferanser.",
+
   "category-options": "Mappealternativer",
   "rename": "Gi nytt navn",
   "delete": "Slett",
@@ -238,7 +236,7 @@
   "social-title": "Les {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Ny mappe",
   "chapter-navigation": "Kapittelnavigasjon",
-  "more-colors": "Flere farger",
+
   "tutorial.skip": "Hopp over",
   "tutorial.optOut": "Ikke vis veiledninger",
   "tutorial.back": "Tilbake",
@@ -263,9 +261,7 @@
   "search-languages": "Søk på språk...",
   "no-languages-found": "Ingen språk funnet",
   "today-coming-soon": "Dagens skjerm kommer snart",
-  "more-coming-soon": "Flere alternativer kommer snart",
-  "discovery-coming-soon": "Oppdagelsen kommer snart",
-  "login-to-use-feature": "Du må logge inn for å bruke denne funksjonen.",
+
   "link-to-join-shared-session-copied": "En lenke for å bli med i den delte økten ble kopiert til utklippstavlen din",
   "anonymous": "Anonym",
   "no-chat-messages": "Ingen meldinger ennå",

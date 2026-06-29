@@ -111,8 +111,7 @@
   "toolbar": "टूलबार",
   "extensions": "विस्तार",
   "display": "प्रदर्शन",
-  "mobile": "मोबाईल",
-  "show-nav-arrows": "नेव्हिगेशन बाण दाखवा",
+
   "theme-and-text": "थीम आणि मजकूर",
   "go-to-all-settings": "सर्व सेटिंग्जवर जा",
   "keep-screen-awake": "स्क्रीन चालू ठेवा",
@@ -187,8 +186,7 @@
   "bible": "बायबल",
   "add-verse": "श्लोक जोडा",
   "add": "जोडा",
-  "chat-coming-soon": "चॅट लवकरच येत आहे",
-  "chat-coming-soon-body": "येथे तुम्ही प्रश्न विचारू शकाल आणि परस्पर संदर्भ तपासू शकाल.",
+
   "category-options": "फोल्डर पर्याय",
   "rename": "नाव बदला",
   "delete": "हटवा",
@@ -238,7 +236,7 @@
   "social-title": "{{bookName}} {{chapterNumber}} वाचा.",
   "new-bookmark-folder": "नवीन फोल्डर",
   "chapter-navigation": "प्रकरण नेव्हिगेशन",
-  "more-colors": "अधिक रंग",
+
   "tutorial.skip": "वगळा",
   "tutorial.optOut": "ट्यूटोरियल दाखवू नका",
   "tutorial.back": "मागे",
@@ -263,9 +261,7 @@
   "search-languages": "भाषा शोधा...",
   "no-languages-found": "कोणतीही भाषा आढळली नाही",
   "today-coming-soon": "आज स्क्रीन लवकरच येत आहे",
-  "more-coming-soon": "अधिक पर्याय लवकरच उपलब्ध होतील.",
-  "discovery-coming-soon": "डिस्कव्हरी लवकरच येत आहे",
-  "login-to-use-feature": "या सुविधेचा वापर करण्यासाठी तुम्हाला लॉग इन करावे लागेल.",
+
   "link-to-join-shared-session-copied": "सामायिक सत्रात सामील होण्याची लिंक तुमच्या क्लिपबोर्डवर कॉपी केली आहे.",
   "anonymous": "अनामिक",
   "no-chat-messages": "अद्याप कोणताही संदेश नाही",

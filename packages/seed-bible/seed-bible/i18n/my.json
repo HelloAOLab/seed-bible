@@ -111,8 +111,7 @@
   "toolbar": "ကိရိယာဘား",
   "extensions": "တိုးချဲ့မှုများ",
   "display": "ပြသမှု",
-  "mobile": "မိုဘိုင်း",
-  "show-nav-arrows": "လမ်းညွှန်မြှားများပြပါ",
+
   "theme-and-text": "အပြင်အဆင်နှင့် စာသား",
   "go-to-all-settings": "ဆက်တင်အားလုံးသို့ သွားပါ",
   "keep-screen-awake": "မျက်နှာပြင်ကို ဖွင့်ထားပါ",
@@ -187,8 +186,7 @@
   "bible": "သမ္မာကျမ်းစာ",
   "add-verse": "ကဗျာတစ်ပုဒ်ထည့်ပါ",
   "add": "ထည့်ပါ",
-  "chat-coming-soon": "ချတ်မကြာမီလာမည်",
-  "chat-coming-soon-body": "ဒီနေရာမှာ မေးခွန်းများမေးမြန်းနိုင်ပြီး ကိုးကားချက်များကို လေ့လာနိုင်မှာဖြစ်ပါတယ်။",
+
   "category-options": "ဖိုင်တွဲရွေးချယ်စရာများ",
   "rename": "အမည်ပြောင်းပါ",
   "delete": "ဖျက်ရန်",
@@ -238,7 +236,7 @@
   "social-title": "{{bookName}} {{chapterNumber}} ကိုဖတ်ပါ",
   "new-bookmark-folder": "ဖိုင်တွဲအသစ်",
   "chapter-navigation": "အခန်းလမ်းညွှန်",
-  "more-colors": "အရောင်များ ပိုမို",
+
   "tutorial.skip": "ကျော်သွားပါ",
   "tutorial.optOut": "သင်ခန်းစာများ မပြပါနှင့်",
   "tutorial.back": "နောက်သို့",
@@ -263,9 +261,7 @@
   "search-languages": "ဘာသာစကားများကို ရှာဖွေပါ...",
   "no-languages-found": "ဘာသာစကားများ မတွေ့ပါ",
   "today-coming-soon": "ဒီနေ့ မျက်နှာပြင် မကြာခင် လာတော့မယ်",
-  "more-coming-soon": "နောက်ထပ်ရွေးချယ်စရာများ မကြာမီလာမည်",
-  "discovery-coming-soon": "ရှာဖွေတွေ့ရှိမှု မကြာမီ ရောက်ရှိလာတော့မှာပါ",
-  "login-to-use-feature": "ဒီ feature ကိုသုံးဖို့ login ဝင်ရပါမယ်။",
+
   "link-to-join-shared-session-copied": "မျှဝေထားသော အစည်းအဝေးသို့ ဝင်ရောက်ရန် လင့်ခ်ကို သင့်ကလစ်ဘုတ်သို့ ကူးယူပြီးပါပြီ",
   "anonymous": "အမည်မဖော်လိုသူ",
   "no-chat-messages": "မက်ဆေ့ချ်များ မရှိသေးပါ",

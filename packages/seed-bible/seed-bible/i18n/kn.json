@@ -111,8 +111,7 @@
   "toolbar": "ಪರಿಕರಪಟ್ಟಿ",
   "extensions": "ವಿಸ್ತರಣೆಗಳು",
   "display": "ಪ್ರದರ್ಶನ",
-  "mobile": "ಮೊಬೈಲ್",
-  "show-nav-arrows": "ನ್ಯಾವಿಗೇಷನ್ ಬಾಣಗಳನ್ನು ತೋರಿಸಿ",
+
   "theme-and-text": "ಥೀಮ್ ಮತ್ತು ಪಠ್ಯ",
   "go-to-all-settings": "ಎಲ್ಲಾ ಸೆಟ್ಟಿಂಗ್‌ಗಳಿಗೆ ಹೋಗಿ",
   "keep-screen-awake": "ಪರದೆಯನ್ನು ಎಚ್ಚರವಾಗಿಡಿ",
@@ -187,8 +186,7 @@
   "bible": "ಬೈಬಲ್",
   "add-verse": "ಪದ್ಯ ಸೇರಿಸಿ",
   "add": "ಸೇರಿಸಿ",
-  "chat-coming-soon": "ಚಾಟ್ ಶೀಘ್ರದಲ್ಲೇ ಬರಲಿದೆ.",
-  "chat-coming-soon-body": "ಇಲ್ಲಿ ನೀವು ಪ್ರಶ್ನೆಗಳನ್ನು ಕೇಳಬಹುದು ಮತ್ತು ಅಡ್ಡ-ಉಲ್ಲೇಖಗಳನ್ನು ಅನ್ವೇಷಿಸಬಹುದು.",
+
   "category-options": "ಫೋಲ್ಡರ್ ಆಯ್ಕೆಗಳು",
   "rename": "ಮರುಹೆಸರಿಸಿ",
   "delete": "ಅಳಿಸಿ",
@@ -238,7 +236,7 @@
   "social-title": "{{bookName}} {{chapterNumber}} ಓದಿ",
   "new-bookmark-folder": "ಹೊಸ ಫೋಲ್ಡರ್",
   "chapter-navigation": "ಅಧ್ಯಾಯ ಸಂಚರಣೆ",
-  "more-colors": "ಇನ್ನಷ್ಟು ಬಣ್ಣಗಳು",
+
   "tutorial.skip": "ಬಿಟ್ಟುಬಿಡಿ",
   "tutorial.optOut": "ಟ್ಯುಟೋರಿಯಲ್‌ಗಳನ್ನು ತೋರಿಸಬೇಡಿ",
   "tutorial.back": "ಹಿಂದೆ",
@@ -263,9 +261,7 @@
   "search-languages": "ಭಾಷೆಗಳನ್ನು ಹುಡುಕಿ...",
   "no-languages-found": "ಯಾವುದೇ ಭಾಷೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ.",
   "today-coming-soon": "ಇಂದಿನ ಪರದೆ ಶೀಘ್ರದಲ್ಲೇ ಬರಲಿದೆ",
-  "more-coming-soon": "ಶೀಘ್ರದಲ್ಲೇ ಹೆಚ್ಚಿನ ಆಯ್ಕೆಗಳು ಬರಲಿವೆ",
-  "discovery-coming-soon": "ಅನ್ವೇಷಣೆ ಶೀಘ್ರದಲ್ಲೇ ಬರಲಿದೆ",
-  "login-to-use-feature": "ಈ ವೈಶಿಷ್ಟ್ಯವನ್ನು ಬಳಸಲು ನೀವು ಲಾಗಿನ್ ಆಗಬೇಕು.",
+
   "link-to-join-shared-session-copied": "ಹಂಚಿಕೊಂಡ ಸೆಷನ್‌ಗೆ ಸೇರಲು ಲಿಂಕ್ ಅನ್ನು ನಿಮ್ಮ ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ.",
   "anonymous": "ಅನಾಮಧೇಯ",
   "no-chat-messages": "ಇನ್ನೂ ಯಾವುದೇ ಸಂದೇಶಗಳಿಲ್ಲ.",

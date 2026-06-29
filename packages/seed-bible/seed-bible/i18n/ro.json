@@ -111,8 +111,7 @@
   "toolbar": "Bara de instrumente",
   "extensions": "Extensii",
   "display": "Afişa",
-  "mobile": "Mobil",
-  "show-nav-arrows": "Afișați săgețile de navigare",
+
   "theme-and-text": "Temă și text",
   "go-to-all-settings": "Accesați toate setările",
   "keep-screen-awake": "Menține ecranul activ",
@@ -187,8 +186,7 @@
   "bible": "Biblie",
   "add-verse": "Adăugați verset",
   "add": "Adăuga",
-  "chat-coming-soon": "Chatul va fi disponibil în curând",
-  "chat-coming-soon-body": "Aici veți putea pune întrebări și explora referințe încrucișate.",
+
   "category-options": "Opțiuni folder",
   "rename": "Redenumire",
   "delete": "Şterge",
@@ -238,7 +236,7 @@
   "social-title": "Citește {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Dosar nou",
   "chapter-navigation": "Navigare prin capitole",
-  "more-colors": "Mai multe culori",
+
   "tutorial.skip": "Sari peste",
   "tutorial.optOut": "Nu afișa tutoriale",
   "tutorial.back": "Spate",
@@ -263,9 +261,7 @@
   "search-languages": "Căutați limbi...",
   "no-languages-found": "Nu s-au găsit limbi",
   "today-coming-soon": "Ecranul de astăzi va apărea în curând",
-  "more-coming-soon": "Mai multe opțiuni în curând",
-  "discovery-coming-soon": "Discovery va fi disponibil în curând",
-  "login-to-use-feature": "Trebuie să vă conectați pentru a utiliza această funcție.",
+
   "link-to-join-shared-session-copied": "Un link pentru a vă alătura sesiunii partajate a fost copiat în clipboard.",
   "anonymous": "Anonim",
   "no-chat-messages": "Niciun mesaj încă",

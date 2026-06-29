@@ -111,8 +111,7 @@
   "toolbar": "របារឧបករណ៍",
   "extensions": "ផ្នែកបន្ថែម",
   "display": "ការបង្ហាញ",
-  "mobile": "ទូរស័ព្ទចល័ត",
-  "show-nav-arrows": "បង្ហាញ​ព្រួញ​រុករក",
+
   "theme-and-text": "ស្បែក និងអត្ថបទ",
   "go-to-all-settings": "ចូលទៅកាន់ការកំណត់ទាំងអស់",
   "keep-screen-awake": "រក្សាអេក្រង់ឱ្យភ្ញាក់",
@@ -187,8 +186,7 @@
   "bible": "ព្រះគម្ពីរ",
   "add-verse": "បន្ថែមខគម្ពីរ",
   "add": "បន្ថែម",
-  "chat-coming-soon": "ការជជែកនឹងមកដល់ឆាប់ៗនេះ",
-  "chat-coming-soon-body": "នេះជាកន្លែងដែលអ្នកនឹងអាចសួរសំណួរ និងស្វែងយល់ពីឯកសារយោងឆ្លង។",
+
   "category-options": "ជម្រើសថតឯកសារ",
   "rename": "ប្តូរឈ្មោះ",
   "delete": "លុប",
@@ -238,7 +236,7 @@
   "social-title": "អាន {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "ថតឯកសារថ្មី",
   "chapter-navigation": "ការរុករកជំពូក",
-  "more-colors": "ពណ៌ច្រើនទៀត",
+
   "tutorial.skip": "រំលង",
   "tutorial.optOut": "កុំបង្ហាញឯកសារបង្រៀន",
   "tutorial.back": "ថយក្រោយ",
@@ -263,9 +261,7 @@
   "search-languages": "ស្វែងរកភាសា...",
   "no-languages-found": "រកមិនឃើញភាសាទេ",
   "today-coming-soon": "អេក្រង់ថ្ងៃនេះនឹងមកដល់ឆាប់ៗនេះ",
-  "more-coming-soon": "ជម្រើសច្រើនទៀតនឹងមកដល់ឆាប់ៗនេះ",
-  "discovery-coming-soon": "ការរកឃើញនឹងមកដល់ឆាប់ៗនេះ",
-  "login-to-use-feature": "អ្នកត្រូវតែចូលដើម្បីប្រើមុខងារនេះ។",
+
   "link-to-join-shared-session-copied": "តំណភ្ជាប់ដើម្បីចូលរួមវគ្គដែលបានចែករំលែកត្រូវបានចម្លងទៅក្ដារតម្បៀតខ្ទាស់របស់អ្នក",
   "anonymous": "អនាមិក",
   "no-chat-messages": "មិនទាន់មានសារនៅឡើយទេ",

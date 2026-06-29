@@ -175,8 +175,7 @@
   "upload-settings": "Pengaturan unggahan",
   "uploading-settings": "Mengunggah pengaturan...",
   "search": "Mencari",
-  "mobile": "Ponsel",
-  "show-nav-arrows": "Tampilkan panah navigasi",
+
   "theme-and-text": "Tema & teks",
   "go-to-all-settings": "Buka semua pengaturan",
   "more": "Lagi",
@@ -188,8 +187,7 @@
   "bible": "Alkitab",
   "add-verse": "Tambahkan ayat",
   "add": "Menambahkan",
-  "chat-coming-soon": "Fitur obrolan akan segera hadir.",
-  "chat-coming-soon-body": "Di sini Anda dapat mengajukan pertanyaan dan menjelajahi referensi silang.",
+
   "category-options": "Opsi folder",
   "rename": "Ganti nama",
   "delete": "Menghapus",
@@ -238,7 +236,7 @@
   "social-title": "Baca {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Folder baru",
   "chapter-navigation": "Navigasi bab",
-  "more-colors": "Lebih banyak warna",
+
   "tutorial.skip": "Melewati",
   "tutorial.optOut": "Jangan tampilkan tutorial",
   "tutorial.back": "Kembali",
@@ -263,9 +261,7 @@
   "search-languages": "Cari bahasa...",
   "no-languages-found": "Tidak ditemukan bahasa apa pun.",
   "today-coming-soon": "Layar hari ini akan segera hadir",
-  "more-coming-soon": "Opsi lainnya akan segera tersedia.",
-  "discovery-coming-soon": "Discovery akan segera hadir",
-  "login-to-use-feature": "Anda harus masuk untuk menggunakan fitur ini.",
+
   "link-to-join-shared-session-copied": "Tautan untuk bergabung dengan sesi bersama telah disalin ke papan klip Anda.",
   "anonymous": "Anonim",
   "no-chat-messages": "Belum ada pesan",

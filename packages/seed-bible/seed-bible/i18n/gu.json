@@ -111,8 +111,7 @@
   "toolbar": "ટૂલબાર",
   "extensions": "એક્સ્ટેન્શન્સ",
   "display": "ડિસ્પ્લે",
-  "mobile": "મોબાઇલ",
-  "show-nav-arrows": "નેવિગેશન તીર બતાવો",
+
   "theme-and-text": "થીમ અને ટેક્સ્ટ",
   "go-to-all-settings": "બધી સેટિંગ્સ પર જાઓ",
   "keep-screen-awake": "સ્ક્રીનને સક્રિય રાખો",
@@ -187,8 +186,7 @@
   "bible": "બાઇબલ",
   "add-verse": "શ્લોક ઉમેરો",
   "add": "ઉમેરો",
-  "chat-coming-soon": "ચેટ ટૂંક સમયમાં આવી રહી છે",
-  "chat-coming-soon-body": "આ તે જગ્યા છે જ્યાં તમે પ્રશ્નો પૂછી શકશો અને સંદર્ભોનો અભ્યાસ કરી શકશો.",
+
   "category-options": "ફોલ્ડર વિકલ્પો",
   "rename": "નામ બદલો",
   "delete": "કાઢી નાખો",
@@ -238,7 +236,7 @@
   "social-title": "{{bookName}} {{chapterNumber}} વાંચો",
   "new-bookmark-folder": "નવું ફોલ્ડર",
   "chapter-navigation": "પ્રકરણ નેવિગેશન",
-  "more-colors": "વધુ રંગો",
+
   "tutorial.skip": "છોડી દો",
   "tutorial.optOut": "ટ્યુટોરિયલ્સ બતાવશો નહીં",
   "tutorial.back": "પાછળ",
@@ -263,9 +261,7 @@
   "search-languages": "ભાષાઓ શોધો...",
   "no-languages-found": "કોઈ ભાષા મળી નથી.",
   "today-coming-soon": "આજે સ્ક્રીન ટૂંક સમયમાં આવી રહી છે",
-  "more-coming-soon": "વધુ વિકલ્પો ટૂંક સમયમાં આવી રહ્યા છે",
-  "discovery-coming-soon": "ડિસ્કવરી ટૂંક સમયમાં આવી રહી છે",
-  "login-to-use-feature": "આ સુવિધાનો ઉપયોગ કરવા માટે તમારે લોગ ઇન કરવું પડશે.",
+
   "link-to-join-shared-session-copied": "શેર કરેલા સત્રમાં જોડાવા માટેની લિંક તમારા ક્લિપબોર્ડ પર કૉપિ કરવામાં આવી છે.",
   "anonymous": "અનામી",
   "no-chat-messages": "હજુ સુધી કોઈ સંદેશા નથી.",

@@ -175,8 +175,7 @@
   "upload-settings": "إعدادات التحميل",
   "uploading-settings": "جارٍ تحميل الإعدادات...",
   "search": "يبحث",
-  "mobile": "متحرك",
-  "show-nav-arrows": "إظهار أسهم التنقل",
+
   "theme-and-text": "القالب والنص",
   "go-to-all-settings": "انتقل إلى جميع الإعدادات",
   "more": "أكثر",
@@ -188,8 +187,7 @@
   "bible": "الكتاب المقدس",
   "add-verse": "أضف الآية",
   "add": "يضيف",
-  "chat-coming-soon": "الدردشة متاحة قريباً",
-  "chat-coming-soon-body": "هنا ستتمكن من طرح الأسئلة واستكشاف المراجع المتقاطعة.",
+
   "category-options": "خيارات المجلد",
   "rename": "إعادة تسمية",
   "delete": "يمسح",
@@ -238,7 +236,7 @@
   "social-title": "اقرأ {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "مجلد جديد",
   "chapter-navigation": "التنقل بين الفصول",
-  "more-colors": "ألوان أكثر",
+
   "tutorial.skip": "يتخطى",
   "tutorial.optOut": "لا تعرض دروسًا تعليمية",
   "tutorial.back": "خلف",
@@ -265,9 +263,7 @@
   "today-coming-soon": "شاشة اليوم قادمة قريباً",
   "link-to-join-shared-session-copied": "تم نسخ رابط للانضمام إلى الجلسة المشتركة إلى حافظتك",
   "copied-translation-share-link": "تم نسخ رابط مشاركة الترجمة",
-  "more-coming-soon": "خيارات إضافية قادمة قريباً",
-  "discovery-coming-soon": "سيصدر برنامج ديسكفري قريباً",
-  "login-to-use-feature": "يجب عليك تسجيل الدخول لاستخدام هذه الميزة.",
+
   "link-to-join-shared-session-copied": "تم نسخ رابط للانضمام إلى الجلسة المشتركة إلى حافظتك",
   "anonymous": "مجهول",
   "no-chat-messages": "لم يتم إرسال أي رسالة بعد",

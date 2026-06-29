@@ -175,8 +175,7 @@
   "upload-settings": "Yükleme ayarları",
   "uploading-settings": "Ayarlar yükleniyor...",
   "search": "Aramak",
-  "mobile": "Mobil",
-  "show-nav-arrows": "Gezinti oklarını göster",
+
   "theme-and-text": "Tema ve metin",
   "go-to-all-settings": "Tüm ayarlara git",
   "more": "Daha",
@@ -188,8 +187,7 @@
   "bible": "İncil",
   "add-verse": "Ayeti ekle",
   "add": "Eklemek",
-  "chat-coming-soon": "Sohbet özelliği yakında geliyor.",
-  "chat-coming-soon-body": "Burada sorular sorabilir ve çapraz referansları inceleyebilirsiniz.",
+
   "category-options": "Klasör seçenekleri",
   "rename": "Yeniden isimlendirmek",
   "delete": "Silmek",
@@ -238,7 +236,7 @@
   "social-title": "{{bookName}} {{chapterNumber}} kitabını okuyun.",
   "new-bookmark-folder": "Yeni klasör",
   "chapter-navigation": "Bölüm navigasyonu",
-  "more-colors": "Daha fazla renk",
+
   "tutorial.skip": "Atlamak",
   "tutorial.optOut": "Eğitim videoları göstermeyin.",
   "tutorial.back": "Geri",
@@ -263,9 +261,7 @@
   "search-languages": "Dilleri ara...",
   "no-languages-found": "Hiçbir dil bulunamadı.",
   "today-coming-soon": "Bugünkü ekran yakında geliyor.",
-  "more-coming-soon": "Yakında daha fazla seçenek eklenecektir.",
-  "discovery-coming-soon": "Keşif yakında geliyor",
-  "login-to-use-feature": "Bu özelliği kullanmak için giriş yapmanız gerekiyor.",
+
   "link-to-join-shared-session-copied": "Paylaşılan oturuma katılmak için bir bağlantı panonuza kopyalandı.",
   "anonymous": "Anonim",
   "no-chat-messages": "Henüz mesaj yok.",

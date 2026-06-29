@@ -175,8 +175,7 @@
   "upload-settings": "Налаштування завантаження",
   "uploading-settings": "Завантаження налаштувань...",
   "search": "Пошук",
-  "mobile": "Мобільний",
-  "show-nav-arrows": "Показати стрілки навігації",
+
   "theme-and-text": "Тема та текст",
   "go-to-all-settings": "Перейти до всіх налаштувань",
   "more": "Більше",
@@ -188,8 +187,7 @@
   "bible": "Біблія",
   "add-verse": "Додати вірш",
   "add": "Додати",
-  "chat-coming-soon": "Чат буде доступний незабаром",
-  "chat-coming-soon-body": "Тут ви зможете ставити запитання та досліджувати перехресні посилання.",
+
   "category-options": "Параметри папки",
   "rename": "Перейменувати",
   "delete": "Видалити",
@@ -238,7 +236,7 @@
   "social-title": "Прочитайте {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Нова папка",
   "chapter-navigation": "Навігація по розділах",
-  "more-colors": "Більше кольорів",
+
   "tutorial.skip": "Пропустити",
   "tutorial.optOut": "Не показувати навчальні посібники",
   "tutorial.back": "Назад",
@@ -263,9 +261,7 @@
   "search-languages": "Пошук мов...",
   "no-languages-found": "Мови не знайдено",
   "today-coming-soon": "Сьогоднішній екран з'явиться незабаром",
-  "more-coming-soon": "Більше опцій з'явиться незабаром",
-  "discovery-coming-soon": "Відкриття скоро відбудеться",
-  "login-to-use-feature": "Щоб скористатися цією функцією, вам потрібно увійти.",
+
   "link-to-join-shared-session-copied": "Посилання для приєднання до спільного сеансу скопійовано до буфера обміну",
   "anonymous": "Анонім",
   "no-chat-messages": "Поки що немає повідомлень",

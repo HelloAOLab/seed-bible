@@ -111,8 +111,7 @@
   "toolbar": "Alatna traka",
   "extensions": "Proširenja",
   "display": "Prikaz",
-  "mobile": "Mobilni uređaj",
-  "show-nav-arrows": "Prikaži navigacijske strelice",
+
   "theme-and-text": "Tema i tekst",
   "go-to-all-settings": "Idi na sve postavke",
   "keep-screen-awake": "Održavanje zaslona aktivnim",
@@ -187,8 +186,7 @@
   "bible": "Biblija",
   "add-verse": "Dodaj stih",
   "add": "Dodati",
-  "chat-coming-soon": "Chat uskoro stiže",
-  "chat-coming-soon-body": "Ovdje ćete moći postavljati pitanja i istraživati ​​​​unakrsne reference.",
+
   "category-options": "Opcije mape",
   "rename": "Preimenovati",
   "delete": "Izbrisati",
@@ -238,7 +236,7 @@
   "social-title": "Pročitajte {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nova mapa",
   "chapter-navigation": "Navigacija po poglavljima",
-  "more-colors": "Više boja",
+
   "tutorial.skip": "Preskočiti",
   "tutorial.optOut": "Ne prikazuj tutorijale",
   "tutorial.back": "Nazad",
@@ -263,9 +261,7 @@
   "search-languages": "Pretraživanje jezika...",
   "no-languages-found": "Nije pronađen nijedan jezik",
   "today-coming-soon": "Današnji ekran uskoro stiže",
-  "more-coming-soon": "Uskoro više opcija",
-  "discovery-coming-soon": "Otkriće uskoro stiže",
-  "login-to-use-feature": "Morate se prijaviti da biste koristili ovu značajku.",
+
   "link-to-join-shared-session-copied": "Veza za pridruživanje dijeljenoj sesiji kopirana je u vaš međuspremnik",
   "anonymous": "Anonimno",
   "no-chat-messages": "Još nema poruka",

@@ -175,8 +175,7 @@
   "upload-settings": "Настройки загрузки",
   "uploading-settings": "Загрузка настроек...",
   "search": "Поиск",
-  "mobile": "Мобильный",
-  "show-nav-arrows": "Показать стрелки навигации",
+
   "theme-and-text": "Тема и текст",
   "go-to-all-settings": "Перейти ко всем настройкам",
   "more": "Более",
@@ -188,8 +187,7 @@
   "bible": "Библия",
   "add-verse": "Добавить стих",
   "add": "Добавлять",
-  "chat-coming-soon": "Чат скоро появится.",
-  "chat-coming-soon-body": "Здесь вы сможете задавать вопросы и изучать перекрестные ссылки.",
+
   "category-options": "Параметры папки",
   "rename": "Переименовать",
   "delete": "Удалить",
@@ -238,7 +236,7 @@
   "social-title": "Прочитайте {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Новая папка",
   "chapter-navigation": "Навигация по главам",
-  "more-colors": "Больше цветов",
+
   "tutorial.skip": "Пропускать",
   "tutorial.optOut": "Не показывайте обучающие материалы.",
   "tutorial.back": "Назад",
@@ -263,9 +261,7 @@
   "search-languages": "Языки поиска...",
   "no-languages-found": "Языки не найдены",
   "today-coming-soon": "Сегодняшний экран скоро появится",
-  "more-coming-soon": "Вскоре появятся новые варианты.",
-  "discovery-coming-soon": "Открытие скоро состоится",
-  "login-to-use-feature": "Для использования этой функции необходимо войти в систему.",
+
   "link-to-join-shared-session-copied": "Ссылка для присоединения к общей сессии была скопирована в буфер обмена.",
   "anonymous": "Аноним",
   "no-chat-messages": "Сообщений пока нет.",

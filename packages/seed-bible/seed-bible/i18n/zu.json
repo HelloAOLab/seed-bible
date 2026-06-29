@@ -111,8 +111,7 @@
   "toolbar": "Ibha yamathuluzi",
   "extensions": "Izandiso",
   "display": "Isibonisi",
-  "mobile": "Iselula",
-  "show-nav-arrows": "Bonisa imicibisholo yokuzulazula",
+
   "theme-and-text": "Itimu nombhalo",
   "go-to-all-settings": "Iya kuzo zonke izilungiselelo",
   "keep-screen-awake": "Gcina isikrini sivukile",
@@ -187,8 +186,7 @@
   "bible": "IBhayibheli",
   "add-verse": "Engeza ivesi",
   "add": "Engeza",
-  "chat-coming-soon": "Ingxoxo iyeza maduze",
-  "chat-coming-soon-body": "Yilapho uzokwazi khona ukubuza imibuzo nokuhlola izinkomba ezihambisanayo.",
+
   "category-options": "Izinketho zefolda",
   "rename": "Qamba kabusha",
   "delete": "Susa",
@@ -238,7 +236,7 @@
   "social-title": "Funda {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Ifolda entsha",
   "chapter-navigation": "Ukuzulazula kwesahluko",
-  "more-colors": "Imibala eminingi",
+
   "tutorial.skip": "Yeqa",
   "tutorial.optOut": "Ungabonisi izifundo",
   "tutorial.back": "Emuva",
@@ -263,9 +261,7 @@
   "search-languages": "Sesha izilimi...",
   "no-languages-found": "Azikho izilimi ezitholiwe",
   "today-coming-soon": "Isikrini sanamuhla siyeza maduze",
-  "more-coming-soon": "Izinketho ezengeziwe ziyeza maduze",
-  "discovery-coming-soon": "Ukutholwa kuyeza maduze",
-  "login-to-use-feature": "Kufanele ungene ngemvume ukuze usebenzise lesi sici.",
+
   "link-to-join-shared-session-copied": "Isixhumanisi sokujoyina iseshini eyabiwe sikopishwe ebhodini lakho lokunamathisela",
   "anonymous": "Ongaziwa",
   "no-chat-messages": "Azikho imilayezo okwamanje",

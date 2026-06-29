@@ -111,8 +111,7 @@
   "toolbar": "Eszköztár",
   "extensions": "Bővítmények",
   "display": "Kijelző",
-  "mobile": "Mozgó",
-  "show-nav-arrows": "Navigációs nyilak megjelenítése",
+
   "theme-and-text": "Téma és szöveg",
   "go-to-all-settings": "Ugrás az összes beállításhoz",
   "keep-screen-awake": "Tartsa ébren a képernyőt",
@@ -187,8 +186,7 @@
   "bible": "Biblia",
   "add-verse": "Vers hozzáadása",
   "add": "Hozzáadás",
-  "chat-coming-soon": "Hamarosan csevegés",
-  "chat-coming-soon-body": "Itt tehetsz fel kérdéseket és kereshetsz kereszthivatkozásokat.",
+
   "category-options": "Mappabeállítások",
   "rename": "Átnevezés",
   "delete": "Töröl",
@@ -238,7 +236,7 @@
   "social-title": "Olvasd el {{bookName}} {{chapterNumber}} könyvet",
   "new-bookmark-folder": "Új mappa",
   "chapter-navigation": "Fejezet navigáció",
-  "more-colors": "Több szín",
+
   "tutorial.skip": "Kihagyás",
   "tutorial.optOut": "Ne mutasson oktatóanyagokat",
   "tutorial.back": "Vissza",
@@ -263,9 +261,7 @@
   "search-languages": "Nyelvek keresése...",
   "no-languages-found": "Nem található nyelv",
   "today-coming-soon": "Hamarosan érkezik a mai képernyő",
-  "more-coming-soon": "Hamarosan további lehetőségek érkeznek",
-  "discovery-coming-soon": "A felfedezés hamarosan érkezik",
-  "login-to-use-feature": "Be kell jelentkezned a funkció használatához.",
+
   "link-to-join-shared-session-copied": "A megosztott munkamenethez való csatlakozás linkjét átmásoltuk a vágólapra.",
   "anonymous": "Névtelen",
   "no-chat-messages": "Még nincsenek üzenetek",

@@ -111,8 +111,7 @@
   "toolbar": "Toolbar",
   "extensions": "Mga Extension",
   "display": "Ipakita",
-  "mobile": "Mobile",
-  "show-nav-arrows": "Ipakita ang mga arrow sa nabigasyon",
+
   "theme-and-text": "Tema at teksto",
   "go-to-all-settings": "Pumunta sa lahat ng setting",
   "keep-screen-awake": "Panatilihing gising ang screen",
@@ -187,8 +186,7 @@
   "bible": "Bibliya",
   "add-verse": "Magdagdag ng talata",
   "add": "Idagdag",
-  "chat-coming-soon": "Malapit na ang chat",
-  "chat-coming-soon-body": "Dito ka makakapagtanong at makakapagsaliksik ng mga cross-reference.",
+
   "category-options": "Mga opsyon sa folder",
   "rename": "Palitan ang pangalan",
   "delete": "Burahin",
@@ -238,7 +236,7 @@
   "social-title": "Basahin ang {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Bagong folder",
   "chapter-navigation": "Pag-navigate sa kabanata",
-  "more-colors": "Mas maraming kulay",
+
   "tutorial.skip": "Laktawan",
   "tutorial.optOut": "Huwag ipakita ang mga tutorial",
   "tutorial.back": "Balik",
@@ -263,9 +261,7 @@
   "search-languages": "Maghanap ng mga wika...",
   "no-languages-found": "Walang natagpuang mga wika",
   "today-coming-soon": "Malapit nang lumabas ang screen ngayon",
-  "more-coming-soon": "Mas maraming opsyon ang paparating",
-  "discovery-coming-soon": "Malapit nang matuklasan",
-  "login-to-use-feature": "Kailangan mong mag-log in para magamit ang feature na ito.",
+
   "link-to-join-shared-session-copied": "Nakopya na sa iyong clipboard ang isang link para sumali sa nakabahaging sesyon",
   "anonymous": "Anonymous",
   "no-chat-messages": "Wala pang mga mensahe",

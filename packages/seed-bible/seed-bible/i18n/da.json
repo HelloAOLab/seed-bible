@@ -111,8 +111,7 @@
   "toolbar": "Værktøjslinje",
   "extensions": "Udvidelser",
   "display": "Vise",
-  "mobile": "Mobil",
-  "show-nav-arrows": "Vis navigationspile",
+
   "theme-and-text": "Tema og tekst",
   "go-to-all-settings": "Gå til alle indstillinger",
   "keep-screen-awake": "Hold skærmen vågen",
@@ -187,8 +186,7 @@
   "bible": "Bibel",
   "add-verse": "Tilføj vers",
   "add": "Tilføje",
-  "chat-coming-soon": "Chatten kommer snart",
-  "chat-coming-soon-body": "Det er her, du kan stille spørgsmål og udforske krydsreferencer.",
+
   "category-options": "Mappeindstillinger",
   "rename": "Omdøb",
   "delete": "Slet",
@@ -238,7 +236,7 @@
   "social-title": "Læs {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Ny mappe",
   "chapter-navigation": "Kapitelnavigation",
-  "more-colors": "Flere farver",
+
   "tutorial.skip": "Springe",
   "tutorial.optOut": "Vis ikke vejledninger",
   "tutorial.back": "Tilbage",
@@ -263,9 +261,7 @@
   "search-languages": "Søg på sprog...",
   "no-languages-found": "Ingen sprog fundet",
   "today-coming-soon": "Dagens skærm kommer snart",
-  "more-coming-soon": "Flere muligheder kommer snart",
-  "discovery-coming-soon": "Opdagelsen kommer snart",
-  "login-to-use-feature": "Du skal logge ind for at bruge denne funktion.",
+
   "link-to-join-shared-session-copied": "Et link til at deltage i den delte session blev kopieret til din udklipsholder",
   "anonymous": "Anonym",
   "no-chat-messages": "Ingen beskeder endnu",

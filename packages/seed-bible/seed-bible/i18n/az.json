@@ -111,8 +111,7 @@
   "toolbar": "Alətlər paneli",
   "extensions": "Genişləndirmələr",
   "display": "Ekran",
-  "mobile": "Mobil",
-  "show-nav-arrows": "Naviqasiya oxlarını göstər",
+
   "theme-and-text": "Mövzu və mətn",
   "go-to-all-settings": "Bütün parametrlərə keçin",
   "keep-screen-awake": "Ekranı oyaq saxlayın",
@@ -187,8 +186,7 @@
   "bible": "Müqəddəs Kitab",
   "add-verse": "Ayə əlavə edin",
   "add": "Əlavə et",
-  "chat-coming-soon": "Söhbət tezliklə gəlir",
-  "chat-coming-soon-body": "Burada suallar verə və çarpaz istinadları araşdıra bilərsiniz.",
+
   "category-options": "Qovluq seçimləri",
   "rename": "Adını dəyiş",
   "delete": "Sil",
@@ -238,7 +236,7 @@
   "social-title": "{{bookName}} {{chapterNumber}} oxuyun",
   "new-bookmark-folder": "Yeni qovluq",
   "chapter-navigation": "Fəsil naviqasiyası",
-  "more-colors": "Daha çox rəng",
+
   "tutorial.skip": "Keçin",
   "tutorial.optOut": "Dərslikləri göstərməyin",
   "tutorial.back": "Geri",
@@ -265,9 +263,7 @@
   "today-coming-soon": "Bugünkü ekran tezliklə gəlir",
   "link-to-join-shared-session-copied": "Paylaşılan sessiyaya qoşulmaq üçün link panoya kopyalandı",
   "copied-translation-share-link": "Tərcümə paylaşma linki kopyalandı",
-  "more-coming-soon": "Tezliklə daha çox seçim olacaq",
-  "discovery-coming-soon": "Kəşf tezliklə gəlir",
-  "login-to-use-feature": "Bu funksiyadan istifadə etmək üçün daxil olmalısınız.",
+
   "link-to-join-shared-session-copied": "Paylaşılan sessiyaya qoşulmaq üçün link panoya kopyalandı",
   "anonymous": "Anonim",
   "no-chat-messages": "Hələ mesaj yoxdur",

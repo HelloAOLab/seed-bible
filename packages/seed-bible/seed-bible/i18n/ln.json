@@ -111,8 +111,7 @@
   "toolbar": "Barre ya bisaleli",
   "extensions": "Ba extensions",
   "display": "Kolakisa",
-  "mobile": "Ya maboko",
-  "show-nav-arrows": "Lakisa ba flèches ya navigation",
+
   "theme-and-text": "Motó ya likambo & makomi",
   "go-to-all-settings": "Kende na ba paramètres nionso",
   "keep-screen-awake": "Bomba écran na pongi",
@@ -187,8 +186,7 @@
   "bible": "Biblia",
   "add-verse": "Bakisa vɛrsɛ",
   "add": "Kobakisa",
-  "chat-coming-soon": "Chat ekoya kala mingi te",
-  "chat-coming-soon-body": "Wana nde esika okozala na makoki ya kotuna mituna mpe kotala ba références croisées.",
+
   "category-options": "Ba options ya dossier",
   "rename": "Bobongola nkombo",
   "delete": "Boma",
@@ -238,7 +236,7 @@
   "social-title": "Tanga {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Dossier ya sika",
   "chapter-navigation": "Botamboli ya mokapo",
-  "more-colors": "Ba couleurs mingi",
+
   "tutorial.skip": "Kokipe te",
   "tutorial.optOut": "Kolakisa ba tutoriels te",
   "tutorial.back": "Mukongo",
@@ -263,9 +261,7 @@
   "search-languages": "Boluka minoko...",
   "no-languages-found": "Minɔkɔ moko te ezwami",
   "today-coming-soon": "Lelo écran ekoya kala mingi te",
-  "more-coming-soon": "Ba options mosusu ekoya kala mingi te",
-  "discovery-coming-soon": "Bokutani ezali koya kala mingi te",
-  "login-to-use-feature": "Esengeli okɔta mpo na kosalela fonctionnalité oyo.",
+
   "link-to-join-shared-session-copied": "Lien moko mpo na kosangana na session oyo bakabolaki esalemaki kopi na tableau de bord na yo",
   "anonymous": "Kozanga kotanga nkombo",
   "no-chat-messages": "Messages moko te nanu",

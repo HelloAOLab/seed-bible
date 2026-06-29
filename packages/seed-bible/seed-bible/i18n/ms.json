@@ -111,8 +111,7 @@
   "toolbar": "Bar Alat",
   "extensions": "Sambungan",
   "display": "Paparan",
-  "mobile": "Mudah alih",
-  "show-nav-arrows": "Tunjukkan anak panah navigasi",
+
   "theme-and-text": "Tema & teks",
   "go-to-all-settings": "Pergi ke semua tetapan",
   "keep-screen-awake": "Pastikan skrin terjaga",
@@ -187,8 +186,7 @@
   "bible": "Bible",
   "add-verse": "Tambah ayat",
   "add": "Tambah",
-  "chat-coming-soon": "Sembang akan datang tidak lama lagi",
-  "chat-coming-soon-body": "Di sinilah anda boleh bertanya soalan dan meneroka rujukan silang.",
+
   "category-options": "Pilihan folder",
   "rename": "Namakan semula",
   "delete": "Padam",
@@ -238,7 +236,7 @@
   "social-title": "Baca {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Folder baharu",
   "chapter-navigation": "Navigasi bab",
-  "more-colors": "Lebih banyak warna",
+
   "tutorial.skip": "Langkau",
   "tutorial.optOut": "Jangan tunjukkan tutorial",
   "tutorial.back": "Kembali",
@@ -263,9 +261,7 @@
   "search-languages": "Cari bahasa...",
   "no-languages-found": "Tiada bahasa ditemui",
   "today-coming-soon": "Skrin hari ini akan datang tidak lama lagi",
-  "more-coming-soon": "Lebih banyak pilihan akan datang tidak lama lagi",
-  "discovery-coming-soon": "Penemuan akan datang tidak lama lagi",
-  "login-to-use-feature": "Anda perlu log masuk untuk menggunakan ciri ini.",
+
   "link-to-join-shared-session-copied": "Pautan untuk menyertai sesi kongsi telah disalin ke papan keratan anda",
   "anonymous": "Tanpa Nama",
   "no-chat-messages": "Tiada mesej lagi",

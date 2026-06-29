@@ -111,8 +111,7 @@
   "toolbar": "barra degli strumenti",
   "extensions": "Estensioni",
   "display": "Display",
-  "mobile": "Mobile",
-  "show-nav-arrows": "Mostra le frecce di navigazione",
+
   "theme-and-text": "Tema e testo",
   "go-to-all-settings": "Vai a tutte le impostazioni",
   "keep-screen-awake": "Mantieni lo schermo attivo",
@@ -187,8 +186,7 @@
   "bible": "Bibbia",
   "add-verse": "Aggiungi un verso",
   "add": "Aggiungere",
-  "chat-coming-soon": "La chat arriverà presto",
-  "chat-coming-soon-body": "Qui potrai porre domande ed esplorare i riferimenti incrociati.",
+
   "category-options": "Opzioni cartella",
   "rename": "Rinominare",
   "delete": "Eliminare",
@@ -238,7 +236,7 @@
   "social-title": "Leggi {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nuova cartella",
   "chapter-navigation": "Navigazione tra i capitoli",
-  "more-colors": "Più colori",
+
   "tutorial.skip": "Saltare",
   "tutorial.optOut": "Non mostrare i tutorial",
   "tutorial.back": "Indietro",
@@ -263,9 +261,7 @@
   "search-languages": "Cerca lingue...",
   "no-languages-found": "Nessuna lingua trovata",
   "today-coming-soon": "Oggi lo schermo arriverà presto",
-  "more-coming-soon": "Presto saranno disponibili altre opzioni.",
-  "discovery-coming-soon": "La scoperta arriverà presto",
-  "login-to-use-feature": "Per utilizzare questa funzione è necessario effettuare l'accesso.",
+
   "link-to-join-shared-session-copied": "Il link per partecipare alla sessione condivisa è stato copiato negli appunti.",
   "anonymous": "Anonimo",
   "no-chat-messages": "Nessun messaggio ancora",

@@ -111,8 +111,7 @@
   "toolbar": "Verkfærastika",
   "extensions": "Viðbætur",
   "display": "Sýna",
-  "mobile": "Farsími",
-  "show-nav-arrows": "Sýna flakkörvar",
+
   "theme-and-text": "Þema og texti",
   "go-to-all-settings": "Fara í allar stillingar",
   "keep-screen-awake": "Halda skjánum vakandi",
@@ -187,8 +186,7 @@
   "bible": "Biblían",
   "add-verse": "Bæta við versi",
   "add": "Bæta við",
-  "chat-coming-soon": "Spjall kemur bráðlega",
-  "chat-coming-soon-body": "Hér geturðu spurt spurninga og skoðað víxlvísanir.",
+
   "category-options": "Möppuvalkostir",
   "rename": "Endurnefna",
   "delete": "Eyða",
@@ -238,7 +236,7 @@
   "social-title": "Lesið {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Ný mappa",
   "chapter-navigation": "Kaflaflakk",
-  "more-colors": "Fleiri litir",
+
   "tutorial.skip": "Sleppa",
   "tutorial.optOut": "Ekki sýna kennslumyndbönd",
   "tutorial.back": "Til baka",
@@ -263,9 +261,7 @@
   "search-languages": "Leita að tungumálum...",
   "no-languages-found": "Engin tungumál fundust",
   "today-coming-soon": "Skjárinn í dag kemur bráðum",
-  "more-coming-soon": "Fleiri valkostir koma bráðlega",
-  "discovery-coming-soon": "Uppgötvun er væntanleg",
-  "login-to-use-feature": "Þú verður að skrá þig inn til að nota þennan eiginleika.",
+
   "link-to-join-shared-session-copied": "Tengill til að taka þátt í sameiginlegu lotunni var afritaður á klippiborðið þitt",
   "anonymous": "Nafnlaust",
   "no-chat-messages": "Engin skilaboð ennþá",

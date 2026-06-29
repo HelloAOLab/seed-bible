@@ -175,8 +175,7 @@
   "upload-settings": "আপলোড সেটিংস",
   "uploading-settings": "সেটিংস আপলোড করা হচ্ছে...",
   "search": "অনুসন্ধান",
-  "mobile": "মোবাইল",
-  "show-nav-arrows": "নেভিগেশন তীরচিহ্ন দেখান",
+
   "theme-and-text": "থিম ও লেখা",
   "go-to-all-settings": "সমস্ত সেটিংসে যান",
   "more": "আরও",
@@ -188,8 +187,7 @@
   "bible": "বাইবেল",
   "add-verse": "শ্লোক যোগ করুন",
   "add": "যোগ করুন",
-  "chat-coming-soon": "চ্যাট শীঘ্রই আসছে",
-  "chat-coming-soon-body": "এখানে আপনি প্রশ্ন করতে এবং প্রাসঙ্গিক তথ্য খুঁজে দেখতে পারবেন।",
+
   "category-options": "ফোল্ডার বিকল্পগুলি",
   "rename": "পুনঃনামকরণ",
   "delete": "মুছে ফেলুন",
@@ -238,7 +236,7 @@
   "social-title": "{{bookName}} {{chapterNumber}} পড়ুন",
   "new-bookmark-folder": "নতুন ফোল্ডার",
   "chapter-navigation": "অধ্যায় নেভিগেশন",
-  "more-colors": "আরও রঙ",
+
   "tutorial.skip": "এড়িয়ে যান",
   "tutorial.optOut": "টিউটোরিয়াল দেখাবেন না",
   "tutorial.back": "ফিরে যান",
@@ -265,9 +263,7 @@
   "today-coming-soon": "আজকের স্ক্রিন শীঘ্রই আসছে",
   "link-to-join-shared-session-copied": "শেয়ার করা সেশনে যোগদানের একটি লিঙ্ক আপনার ক্লিপবোর্ডে কপি করা হয়েছে।",
   "copied-translation-share-link": "অনুলিপি করা অনুবাদ শেয়ার লিঙ্ক",
-  "more-coming-soon": "শীঘ্রই আরও বিকল্প আসছে",
-  "discovery-coming-soon": "আবিষ্কার শীঘ্রই আসছে",
-  "login-to-use-feature": "এই বৈশিষ্ট্যটি ব্যবহার করতে আপনাকে লগ ইন করতে হবে।",
+
   "link-to-join-shared-session-copied": "শেয়ার করা সেশনে যোগদানের একটি লিঙ্ক আপনার ক্লিপবোর্ডে কপি করা হয়েছে।",
   "anonymous": "বেনামী",
   "no-chat-messages": "এখনো কোনো বার্তা আসেনি",

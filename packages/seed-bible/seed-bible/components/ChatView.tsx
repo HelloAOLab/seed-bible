@@ -327,7 +327,6 @@ function PresencePrompt({ others }: { others: ChatParticipant[] }) {
           );
         })}
         {overflowCount > 0 && (
-          // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
           <span className="sb-chat-view-presence-overflow">
             +{overflowCount}
           </span>

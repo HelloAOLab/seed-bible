@@ -111,8 +111,7 @@
   "toolbar": "Shiriti i veglave",
   "extensions": "Zgjerime",
   "display": "Shfaq",
-  "mobile": "Celular",
-  "show-nav-arrows": "Shfaq shigjetat e navigimit",
+
   "theme-and-text": "Tema dhe teksti",
   "go-to-all-settings": "Shko te të gjitha cilësimet",
   "keep-screen-awake": "Mbaje ekranin zgjuar",
@@ -187,8 +186,7 @@
   "bible": "Bibla",
   "add-verse": "Shto varg",
   "add": "Shto",
-  "chat-coming-soon": "Chat do të vijë së shpejti",
-  "chat-coming-soon-body": "Këtu do të jeni në gjendje të bëni pyetje dhe të eksploroni referencat kryq.",
+
   "category-options": "Opsionet e dosjeve",
   "rename": "Riemërto",
   "delete": "Fshij",
@@ -238,7 +236,7 @@
   "social-title": "Lexo {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Dosje e re",
   "chapter-navigation": "Navigimi i kapitullit",
-  "more-colors": "Më shumë ngjyra",
+
   "tutorial.skip": "Kapërce",
   "tutorial.optOut": "Mos shfaq tutoriale",
   "tutorial.back": "Mbrapa",
@@ -263,9 +261,7 @@
   "search-languages": "Kërko gjuhë...",
   "no-languages-found": "Nuk u gjet asnjë gjuhë",
   "today-coming-soon": "Ekrani i sotëm vjen së shpejti",
-  "more-coming-soon": "Më shumë opsione së shpejti",
-  "discovery-coming-soon": "Zbulimi po vjen së shpejti",
-  "login-to-use-feature": "Duhet të identifikoheni për të përdorur këtë veçori.",
+
   "link-to-join-shared-session-copied": "Një lidhje për t'u bashkuar me sesionin e përbashkët u kopjua në kujtesën tënde të përkohshme",
   "anonymous": "Anonim",
   "no-chat-messages": "Nuk ka ende mesazhe",

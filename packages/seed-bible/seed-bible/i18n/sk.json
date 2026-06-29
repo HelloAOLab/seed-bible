@@ -111,8 +111,7 @@
   "toolbar": "Panel s nástrojmi",
   "extensions": "Rozšírenia",
   "display": "Displej",
-  "mobile": "Mobilné",
-  "show-nav-arrows": "Zobraziť navigačné šípky",
+
   "theme-and-text": "Téma a text",
   "go-to-all-settings": "Prejsť na všetky nastavenia",
   "keep-screen-awake": "Udržiavanie obrazovky v prebudení",
@@ -187,8 +186,7 @@
   "bible": "Biblia",
   "add-verse": "Pridať verš",
   "add": "Pridať",
-  "chat-coming-soon": "Chat bude čoskoro k dispozícii",
-  "chat-coming-soon-body": "Tu budete môcť klásť otázky a skúmať krížové odkazy.",
+
   "category-options": "Možnosti priečinka",
   "rename": "Premenovať",
   "delete": "Odstrániť",
@@ -238,7 +236,7 @@
   "social-title": "Prečítajte si {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nový priečinok",
   "chapter-navigation": "Navigácia v kapitolách",
-  "more-colors": "Viac farieb",
+
   "tutorial.skip": "Preskočiť",
   "tutorial.optOut": "Nezobrazovať návody",
   "tutorial.back": "Späť",
@@ -263,9 +261,7 @@
   "search-languages": "Hľadať jazyky...",
   "no-languages-found": "Nenašli sa žiadne jazyky",
   "today-coming-soon": "Dnešná obrazovka bude čoskoro k dispozícii",
-  "more-coming-soon": "Ďalšie možnosti čoskoro",
-  "discovery-coming-soon": "Objav čoskoro",
-  "login-to-use-feature": "Pre použitie tejto funkcie sa musíte prihlásiť.",
+
   "link-to-join-shared-session-copied": "Odkaz na pripojenie k zdieľanej relácii bol skopírovaný do schránky",
   "anonymous": "Anonymný",
   "no-chat-messages": "Zatiaľ žiadne správy",

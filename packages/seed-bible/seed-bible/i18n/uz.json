@@ -111,8 +111,7 @@
   "toolbar": "Asboblar paneli",
   "extensions": "Kengaytmalar",
   "display": "Displey",
-  "mobile": "Mobil",
-  "show-nav-arrows": "Navigatsiya strelkalarini ko'rsatish",
+
   "theme-and-text": "Mavzu va matn",
   "go-to-all-settings": "Barcha sozlamalarga o'ting",
   "keep-screen-awake": "Ekranni uyg'oq tuting",
@@ -187,8 +186,7 @@
   "bible": "Muqaddas Kitob",
   "add-verse": "Oyat qo'shish",
   "add": "Qo'shish",
-  "chat-coming-soon": "Chat tez orada chiqadi",
-  "chat-coming-soon-body": "Bu yerda siz savollar berishingiz va o'zaro bog'liq ma'lumotlarni o'rganishingiz mumkin.",
+
   "category-options": "Papka parametrlari",
   "rename": "Qayta nomlash",
   "delete": "O'chirish",
@@ -238,7 +236,7 @@
   "social-title": "{{bookName}} {{chapterNumber}} ni o'qing",
   "new-bookmark-folder": "Yangi papka",
   "chapter-navigation": "Bob navigatsiyasi",
-  "more-colors": "Ko'proq ranglar",
+
   "tutorial.skip": "O'tkazib yuborish",
   "tutorial.optOut": "Qo'llanmalar ko'rsatilmasin",
   "tutorial.back": "Orqaga",
@@ -263,9 +261,7 @@
   "search-languages": "Tillarni qidirish...",
   "no-languages-found": "Hech qanday til topilmadi",
   "today-coming-soon": "Bugungi ekran tez orada chiqadi",
-  "more-coming-soon": "Tez orada boshqa variantlar ham qo'shiladi",
-  "discovery-coming-soon": "Tez orada kashfiyot bo'ladi",
-  "login-to-use-feature": "Ushbu funksiyadan foydalanish uchun tizimga kirishingiz kerak.",
+
   "link-to-join-shared-session-copied": "Umumiy sessiyaga qo'shilish havolasi clipboardga nusxalandi",
   "anonymous": "Anonim",
   "no-chat-messages": "Hali xabar yo'q",

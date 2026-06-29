@@ -175,8 +175,7 @@
   "upload-settings": "上传设置",
   "uploading-settings": "正在上传设置……",
   "search": "搜索",
-  "mobile": "移动的",
-  "show-nav-arrows": "显示导航箭头",
+
   "theme-and-text": "主题和文本",
   "go-to-all-settings": "前往所有设置",
   "more": "更多的",
@@ -188,8 +187,7 @@
   "bible": "圣经",
   "add-verse": "添加诗句",
   "add": "添加",
-  "chat-coming-soon": "聊天功能即将上线",
-  "chat-coming-soon-body": "在这里您可以提出问题并查阅交叉引用。",
+
   "category-options": "文件夹选项",
   "rename": "重命名",
   "delete": "删除",
@@ -238,7 +236,7 @@
   "social-title": "阅读{{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "新建文件夹",
   "chapter-navigation": "章节导航",
-  "more-colors": "更多颜色",
+
   "tutorial.skip": "跳过",
   "tutorial.optOut": "不要展示教程",
   "tutorial.back": "后退",
@@ -263,9 +261,7 @@
   "search-languages": "搜索语言...",
   "no-languages-found": "未找到任何语言",
   "today-coming-soon": "今天屏幕即将上线",
-  "more-coming-soon": "更多选项即将推出",
-  "discovery-coming-soon": "探索即将到来",
-  "login-to-use-feature": "您必须登录才能使用此功能。",
+
   "link-to-join-shared-session-copied": "加入共享会话的链接已复制到您的剪贴板。",
   "anonymous": "匿名的",
   "no-chat-messages": "暂无消息",

@@ -111,8 +111,7 @@
   "toolbar": "Barra d'eines",
   "extensions": "Extensions",
   "display": "Pantalla",
-  "mobile": "Mòbil",
-  "show-nav-arrows": "Mostra les fletxes de navegació",
+
   "theme-and-text": "Tema i text",
   "go-to-all-settings": "Ves a tots els paràmetres",
   "keep-screen-awake": "Mantenir la pantalla activa",
@@ -187,8 +186,7 @@
   "bible": "Bíblia",
   "add-verse": "Afegeix un vers",
   "add": "Afegeix",
-  "chat-coming-soon": "El xat estarà disponible aviat",
-  "chat-coming-soon-body": "Aquí és on podràs fer preguntes i explorar referències creuades.",
+
   "category-options": "Opcions de carpeta",
   "rename": "Canvia el nom",
   "delete": "Suprimeix",
@@ -238,7 +236,7 @@
   "social-title": "Llegeix {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nova carpeta",
   "chapter-navigation": "Navegació per capítols",
-  "more-colors": "Més colors",
+
   "tutorial.skip": "Omet",
   "tutorial.optOut": "No mostrar tutorials",
   "tutorial.back": "Enrere",
@@ -263,9 +261,7 @@
   "search-languages": "Cerca idiomes...",
   "no-languages-found": "No s'han trobat idiomes",
   "today-coming-soon": "La pantalla d'avui arribarà aviat",
-  "more-coming-soon": "Més opcions aviat",
-  "discovery-coming-soon": "El descobriment arribarà aviat",
-  "login-to-use-feature": "Heu d'iniciar sessió per utilitzar aquesta funció.",
+
   "link-to-join-shared-session-copied": "S'ha copiat al porta-retalls un enllaç per unir-se a la sessió compartida.",
   "anonymous": "Anònim",
   "no-chat-messages": "Encara no hi ha missatges",

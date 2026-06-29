@@ -111,8 +111,7 @@
   "toolbar": "Orodna vrstica",
   "extensions": "Razširitve",
   "display": "Prikaz",
-  "mobile": "Mobilni telefon",
-  "show-nav-arrows": "Prikaži navigacijske puščice",
+
   "theme-and-text": "Tema in besedilo",
   "go-to-all-settings": "Pojdi na vse nastavitve",
   "keep-screen-awake": "Ohrani zaslon v stanju pripravljenosti",
@@ -187,8 +186,7 @@
   "bible": "Biblija",
   "add-verse": "Dodaj verz",
   "add": "Dodaj",
-  "chat-coming-soon": "Klepet kmalu na voljo",
-  "chat-coming-soon-body": "Tukaj boste lahko postavljali vprašanja in raziskovali navzkrižne reference.",
+
   "category-options": "Možnosti mape",
   "rename": "Preimenuj",
   "delete": "Izbriši",
@@ -238,7 +236,7 @@
   "social-title": "Preberi {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nova mapa",
   "chapter-navigation": "Navigacija po poglavjih",
-  "more-colors": "Več barv",
+
   "tutorial.skip": "Preskoči",
   "tutorial.optOut": "Ne prikazuj vadnic",
   "tutorial.back": "Nazaj",
@@ -263,9 +261,7 @@
   "search-languages": "Iskanje jezikov ...",
   "no-languages-found": "Ni najdenih jezikov",
   "today-coming-soon": "Današnji zaslon bo kmalu na voljo",
-  "more-coming-soon": "Kmalu več možnosti",
-  "discovery-coming-soon": "Odkritje kmalu prihaja",
-  "login-to-use-feature": "Za uporabo te funkcije se morate prijaviti.",
+
   "link-to-join-shared-session-copied": "Povezava za pridružitev skupni seji je bila kopirana v odložišče.",
   "anonymous": "Anonimno",
   "no-chat-messages": "Še ni sporočil",

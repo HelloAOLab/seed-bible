@@ -111,8 +111,7 @@
   "toolbar": "ແຖບເຄື່ອງມື",
   "extensions": "ສ່ວນຂະຫຍາຍ",
   "display": "ການສະແດງຜົນ",
-  "mobile": "ມືຖື",
-  "show-nav-arrows": "ສະແດງລູກສອນນຳທາງ",
+
   "theme-and-text": "ຮູບແບບ ແລະ ຂໍ້ຄວາມ",
   "go-to-all-settings": "ໄປທີ່ການຕັ້ງຄ່າທັງໝົດ",
   "keep-screen-awake": "ຮັກສາໜ້າຈໍໃຫ້ເປີດໄວ້",
@@ -187,8 +186,7 @@
   "bible": "ຄຳພີໄບເບິນ",
   "add-verse": "ເພີ່ມບົດກະວີ",
   "add": "ເພີ່ມ",
-  "chat-coming-soon": "ການສົນທະນາກຳລັງຈະມາຮອດໃນໄວໆນີ້",
-  "chat-coming-soon-body": "ນີ້ແມ່ນບ່ອນທີ່ທ່ານຈະສາມາດຖາມຄຳຖາມ ແລະ ສຳຫຼວດເອກະສານອ້າງອີງຕ່າງໆໄດ້.",
+
   "category-options": "ຕົວເລືອກໂຟນເດີ",
   "rename": "ປ່ຽນຊື່",
   "delete": "ລຶບ",
@@ -238,7 +236,7 @@
   "social-title": "ອ່ານ {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "ໂຟນເດີໃໝ່",
   "chapter-navigation": "ການນຳທາງບົດ",
-  "more-colors": "ສີເພີ່ມເຕີມ",
+
   "tutorial.skip": "ຂ້າມ",
   "tutorial.optOut": "ຢ່າສະແດງບົດແນະນຳ",
   "tutorial.back": "ກັບຄືນ",
@@ -263,9 +261,7 @@
   "search-languages": "ຄົ້ນຫາພາສາ...",
   "no-languages-found": "ບໍ່ພົບພາສາໃດ",
   "today-coming-soon": "ມື້ນີ້ໜ້າຈໍຈະມາໄວໆນີ້",
-  "more-coming-soon": "ຕົວເລືອກເພີ່ມເຕີມກຳລັງຈະມາໃນໄວໆນີ້",
-  "discovery-coming-soon": "ການຄົ້ນພົບກຳລັງຈະມາເຖິງໃນໄວໆນີ້",
-  "login-to-use-feature": "ທ່ານຕ້ອງເຂົ້າສູ່ລະບົບເພື່ອໃຊ້ຄຸນສົມບັດນີ້.",
+
   "link-to-join-shared-session-copied": "ລິ້ງເພື່ອເຂົ້າຮ່ວມເຊດຊັນທີ່ແບ່ງປັນໄດ້ຖືກຄັດລອກໄປໃສ່ຄລິບບອດຂອງທ່ານແລ້ວ",
   "anonymous": "ບໍ່ປະສົງອອກນາມ",
   "no-chat-messages": "ຍັງບໍ່ມີຂໍ້ຄວາມເທື່ອ",

@@ -111,8 +111,7 @@
   "toolbar": "Tembipuru’i ryru",
   "extensions": "Umi extensión rehegua",
   "display": "Techaukahára",
-  "mobile": "Omýiva",
-  "show-nav-arrows": "Ohechauka umi flecha navegación rehegua",
+
   "theme-and-text": "Tema & texto rehegua",
   "go-to-all-settings": "Eike opaite ñembohekorãme",
   "keep-screen-awake": "Eñongatu pantalla opáy",
@@ -187,8 +186,7 @@
   "bible": "Biblia",
   "add-verse": "Oñemoĩve versíkulo",
   "add": "Moinge",
-  "chat-coming-soon": "Chat oúta pya'e",
-  "chat-coming-soon-body": "Kóvape ikatuta reporandu ha rehesa’ỹijo umi referencia cruzada.",
+
   "category-options": "Umi opción carpeta rehegua",
   "rename": "Embohéra jey",
   "delete": "Mboje'oha",
@@ -238,7 +236,7 @@
   "social-title": "Emoñe’ẽ {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Carpeta pyahu",
   "chapter-navigation": "Capítulo jeguata",
-  "more-colors": "Hetave sa’y",
+
   "tutorial.skip": "Jepopo",
   "tutorial.optOut": "Ani rehechauka umi mbo’epy",
   "tutorial.back": "Kupe",
@@ -263,9 +261,7 @@
   "search-languages": "Eheka ñe'ẽnguéra...",
   "no-languages-found": "Ndaipóri ñe’ẽ ojejuhúva",
   "today-coming-soon": "Ko árape pantalla oúta pya'e",
-  "more-coming-soon": "Hetave opción oúta pya'e",
-  "discovery-coming-soon": "Pya’e oúta pe descubrimiento",
-  "login-to-use-feature": "Reikeva’erã reipuru hag̃ua ko mba’ekuaarã.",
+
   "link-to-join-shared-session-copied": "Peteĩ enlace ojeike hag̃ua sesión compartida-pe ojekopia nde portapapeles-pe",
   "anonymous": "Kuaa'ỹva",
   "no-chat-messages": "Ndaipóri gueteri marandu",

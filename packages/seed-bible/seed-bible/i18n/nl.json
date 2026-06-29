@@ -111,8 +111,7 @@
   "toolbar": "Werkbalk",
   "extensions": "Uitbreidingen",
   "display": "Weergave",
-  "mobile": "Mobiel",
-  "show-nav-arrows": "Toon navigatiepijlen",
+
   "theme-and-text": "Thema en tekst",
   "go-to-all-settings": "Ga naar alle instellingen",
   "keep-screen-awake": "Houd het scherm actief",
@@ -187,8 +186,7 @@
   "bible": "Bijbel",
   "add-verse": "Voeg een vers toe",
   "add": "Toevoegen",
-  "chat-coming-soon": "De chatfunctie is binnenkort beschikbaar.",
-  "chat-coming-soon-body": "Hier kunt u vragen stellen en kruisverwijzingen bekijken.",
+
   "category-options": "Mapopties",
   "rename": "Naam wijzigen",
   "delete": "Verwijderen",
@@ -238,7 +236,7 @@
   "social-title": "Lees {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nieuwe map",
   "chapter-navigation": "Hoofdstuknavigatie",
-  "more-colors": "Meer kleuren",
+
   "tutorial.skip": "Overslaan",
   "tutorial.optOut": "Toon geen tutorials",
   "tutorial.back": "Rug",
@@ -263,9 +261,7 @@
   "search-languages": "Zoektalen...",
   "no-languages-found": "Geen talen gevonden",
   "today-coming-soon": "Vandaag verschijnt het scherm binnenkort.",
-  "more-coming-soon": "Binnenkort meer opties beschikbaar",
-  "discovery-coming-soon": "Discovery komt er binnenkort aan.",
-  "login-to-use-feature": "Je moet inloggen om deze functie te kunnen gebruiken.",
+
   "link-to-join-shared-session-copied": "Een link om deel te nemen aan de gedeelde sessie is naar uw klembord gekopieerd.",
   "anonymous": "Anoniem",
   "no-chat-messages": "Nog geen berichten",

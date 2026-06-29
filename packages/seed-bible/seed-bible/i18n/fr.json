@@ -175,8 +175,7 @@
   "upload-settings": "Paramètres de téléchargement",
   "uploading-settings": "Paramètres de chargement...",
   "search": "Recherche",
-  "mobile": "Mobile",
-  "show-nav-arrows": "Afficher les flèches de navigation",
+
   "theme-and-text": "Thème et texte",
   "go-to-all-settings": "Accéder à tous les paramètres",
   "more": "Plus",
@@ -188,8 +187,7 @@
   "bible": "Bible",
   "add-verse": "Ajouter un verset",
   "add": "Ajouter",
-  "chat-coming-soon": "Le chat arrive bientôt",
-  "chat-coming-soon-body": "C'est ici que vous pourrez poser des questions et explorer les références croisées.",
+
   "category-options": "Options de dossier",
   "rename": "Rebaptiser",
   "delete": "Supprimer",
@@ -238,7 +236,7 @@
   "social-title": "Lire {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nouveau dossier",
   "chapter-navigation": "Navigation du chapitre",
-  "more-colors": "Plus de couleurs",
+
   "tutorial.skip": "Sauter",
   "tutorial.optOut": "Ne pas afficher les tutoriels",
   "tutorial.back": "Dos",
@@ -263,9 +261,7 @@
   "search-languages": "Langues de recherche...",
   "no-languages-found": "Aucune langue trouvée",
   "today-coming-soon": "L'écran d'aujourd'hui arrive bientôt",
-  "more-coming-soon": "D'autres options seront bientôt disponibles.",
-  "discovery-coming-soon": "La découverte arrive bientôt",
-  "login-to-use-feature": "Vous devez vous connecter pour utiliser cette fonctionnalité.",
+
   "link-to-join-shared-session-copied": "Un lien pour rejoindre la session partagée a été copié dans votre presse-papiers.",
   "anonymous": "Anonyme",
   "no-chat-messages": "Aucun message pour l'instant",

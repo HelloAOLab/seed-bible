@@ -111,8 +111,7 @@
   "toolbar": "Panel nástrojů",
   "extensions": "Rozšíření",
   "display": "Zobrazit",
-  "mobile": "Mobilní",
-  "show-nav-arrows": "Zobrazit navigační šipky",
+
   "theme-and-text": "Téma a text",
   "go-to-all-settings": "Přejít na všechna nastavení",
   "keep-screen-awake": "Udržovat obrazovku v aktivním stavu",
@@ -187,8 +186,7 @@
   "bible": "bible",
   "add-verse": "Přidat verš",
   "add": "Přidat",
-  "chat-coming-soon": "Chat bude brzy k dispozici",
-  "chat-coming-soon-body": "Zde budete moci klást otázky a prozkoumávat křížové odkazy.",
+
   "category-options": "Možnosti složky",
   "rename": "Přejmenovat",
   "delete": "Vymazat",
@@ -238,7 +236,7 @@
   "social-title": "Přečtěte si {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nová složka",
   "chapter-navigation": "Navigace kapitol",
-  "more-colors": "Více barev",
+
   "tutorial.skip": "Přeskočit",
   "tutorial.optOut": "Nezobrazovat tutoriály",
   "tutorial.back": "Zadní",
@@ -263,9 +261,7 @@
   "search-languages": "Hledat jazyky...",
   "no-languages-found": "Nenalezeny žádné jazyky",
   "today-coming-soon": "Dnešní obrazovka bude brzy k dispozici",
-  "more-coming-soon": "Další možnosti budou brzy k dispozici",
-  "discovery-coming-soon": "Objev se blíží",
-  "login-to-use-feature": "Pro použití této funkce se musíte přihlásit.",
+
   "link-to-join-shared-session-copied": "Odkaz pro připojení ke sdílené relaci byl zkopírován do schránky.",
   "anonymous": "Anonymní",
   "no-chat-messages": "Zatím žádné zprávy",

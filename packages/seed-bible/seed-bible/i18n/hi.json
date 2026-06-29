@@ -175,8 +175,7 @@
   "upload-settings": "अपलोड सेटिंग्स",
   "uploading-settings": "सेटिंग्स अपलोड हो रही हैं...",
   "search": "खोज",
-  "mobile": "गतिमान",
-  "show-nav-arrows": "नेविगेशन तीर दिखाएँ",
+
   "theme-and-text": "विषय और पाठ",
   "go-to-all-settings": "सभी सेटिंग्स पर जाएं",
   "more": "अधिक",
@@ -188,8 +187,7 @@
   "bible": "बाइबिल",
   "add-verse": "श्लोक जोड़ें",
   "add": "जोड़ना",
-  "chat-coming-soon": "चैट जल्द ही आ रही है",
-  "chat-coming-soon-body": "यहां आप प्रश्न पूछ सकेंगे और संदर्भों की तुलना कर सकेंगे।",
+
   "category-options": "फ़ोल्डर विकल्प",
   "rename": "नाम बदलें",
   "delete": "मिटाना",
@@ -238,7 +236,7 @@
   "social-title": "{{bookName}} {{chapterNumber}} पढ़ें",
   "new-bookmark-folder": "नया फ़ोल्डर",
   "chapter-navigation": "अध्याय नेविगेशन",
-  "more-colors": "और अधिक रंग",
+
   "tutorial.skip": "छोडना",
   "tutorial.optOut": "ट्यूटोरियल न दिखाएं",
   "tutorial.back": "पीछे",
@@ -263,9 +261,7 @@
   "search-languages": "भाषाओं में खोजें...",
   "no-languages-found": "कोई भाषा नहीं मिली",
   "today-coming-soon": "टुडे स्क्रीन जल्द आ रहा है",
-  "more-coming-soon": "जल्द ही और विकल्प उपलब्ध होंगे",
-  "discovery-coming-soon": "डिस्कवरी जल्द आ रही है",
-  "login-to-use-feature": "इस सुविधा का उपयोग करने के लिए आपको लॉग इन करना होगा।",
+
   "link-to-join-shared-session-copied": "साझा सत्र में शामिल होने का लिंक आपके क्लिपबोर्ड पर कॉपी कर दिया गया है।",
   "anonymous": "गुमनाम",
   "no-chat-messages": "अभी तक कोई संदेश नहीं",

@@ -175,8 +175,7 @@
   "upload-settings": "ቅንብሮችን ስቀል",
   "uploading-settings": "ቅንብሮችን በመስቀል ላይ...",
   "search": "ፈልግ",
-  "mobile": "ሞባይል",
-  "show-nav-arrows": "የአሰሳ ቀስቶችን አሳይ",
+
   "theme-and-text": "ገጽታ እና ጽሑፍ",
   "go-to-all-settings": "ወደ ሁሉም ቅንብሮች ይሂዱ",
   "more": "ተጨማሪ",
@@ -188,8 +187,7 @@
   "bible": "መጽሐፍ ቅዱስ",
   "add-verse": "ጥቅስ ጨምር",
   "add": "ያክሉ",
-  "chat-coming-soon": "ቻት በቅርቡ ይመጣል",
-  "chat-coming-soon-body": "እዚህ ላይ ጥያቄዎችን መጠየቅ እና ማጣቀሻዎችን ማሰስ ይችላሉ።",
+
   "category-options": "የአቃፊ አማራጮች",
   "rename": "እንደገና ሰይም",
   "delete": "ሰርዝ",
@@ -238,7 +236,7 @@
   "social-title": "{{bookName}} {{chapterNumber}} ን ያንብቡ",
   "new-bookmark-folder": "አዲስ አቃፊ",
   "chapter-navigation": "የምዕራፍ አሰሳ",
-  "more-colors": "ተጨማሪ ቀለሞች",
+
   "tutorial.skip": "ዝለል",
   "tutorial.optOut": "አጋዥ ስልጠናዎችን አታሳይ",
   "tutorial.back": "ተመለስ",
@@ -265,9 +263,7 @@
   "today-coming-soon": "የዛሬው ስክሪን በቅርቡ ይመጣል",
   "link-to-join-shared-session-copied": "የተጋራውን ክፍለ ጊዜ የሚቀላቀሉበት አገናኝ ወደ ቅንጥብ ሰሌዳዎ ተገልብጧል",
   "copied-translation-share-link": "የተቀዳ የትርጉም ማጋሪያ አገናኝ",
-  "more-coming-soon": "ተጨማሪ አማራጮች በቅርቡ ይመጣሉ",
-  "discovery-coming-soon": "ግኝት በቅርቡ ይመጣል",
-  "login-to-use-feature": "ይህንን ባህሪ ለመጠቀም መግባት አለብዎት።",
+
   "link-to-join-shared-session-copied": "የተጋራውን ክፍለ ጊዜ የሚቀላቀሉበት አገናኝ ወደ ቅንጥብ ሰሌዳዎ ተገልብጧል",
   "anonymous": "ስም-አልባ",
   "no-chat-messages": "እስካሁን ምንም መልዕክቶች የሉም",

@@ -111,8 +111,7 @@
   "toolbar": "Tööriistariba",
   "extensions": "Laiendused",
   "display": "Ekraan",
-  "mobile": "Mobiil",
-  "show-nav-arrows": "Näita navigeerimisnooli",
+
   "theme-and-text": "Teema ja tekst",
   "go-to-all-settings": "Mine kõikide seadete juurde",
   "keep-screen-awake": "Hoia ekraan ärkvel",
@@ -187,8 +186,7 @@
   "bible": "Piibel",
   "add-verse": "Lisa salm",
   "add": "Lisa",
-  "chat-coming-soon": "Vestlus on peagi saadaval",
-  "chat-coming-soon-body": "Siin saate esitada küsimusi ja uurida ristviiteid.",
+
   "category-options": "Kausta valikud",
   "rename": "Nimeta ümber",
   "delete": "Kustuta",
@@ -238,7 +236,7 @@
   "social-title": "Loe raamatut {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Uus kaust",
   "chapter-navigation": "Peatükkide navigeerimine",
-  "more-colors": "Rohkem värve",
+
   "tutorial.skip": "Jäta vahele",
   "tutorial.optOut": "Ära näita õpetusi",
   "tutorial.back": "Tagasi",
@@ -263,9 +261,7 @@
   "search-languages": "Otsi keeli...",
   "no-languages-found": "Keeli ei leitud",
   "today-coming-soon": "Tänane ekraan tuleb varsti",
-  "more-coming-soon": "Rohkem valikuid on peagi saadaval",
-  "discovery-coming-soon": "Avastus on peagi tulemas",
-  "login-to-use-feature": "Selle funktsiooni kasutamiseks peate sisse logima.",
+
   "link-to-join-shared-session-copied": "Jagatud seansiga liitumise link kopeeriti teie lõikelauale.",
   "anonymous": "Anonüümne",
   "no-chat-messages": "Sõnumeid pole veel",

@@ -111,8 +111,7 @@
   "toolbar": "Pasek narzędzi",
   "extensions": "Rozszerzenia",
   "display": "Wyświetlacz",
-  "mobile": "Przenośny",
-  "show-nav-arrows": "Pokaż strzałki nawigacyjne",
+
   "theme-and-text": "Motyw i tekst",
   "go-to-all-settings": "Przejdź do wszystkich ustawień",
   "keep-screen-awake": "Utrzymuj ekran w stanie czuwania",
@@ -187,8 +186,7 @@
   "bible": "Biblia",
   "add-verse": "Dodaj werset",
   "add": "Dodać",
-  "chat-coming-soon": "Czat wkrótce",
-  "chat-coming-soon-body": "Tutaj będziesz mieć możliwość zadawania pytań i przeglądania odnośników.",
+
   "category-options": "Opcje folderów",
   "rename": "Przemianować",
   "delete": "Usuwać",
@@ -238,7 +236,7 @@
   "social-title": "Przeczytaj {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nowy folder",
   "chapter-navigation": "Nawigacja po rozdziałach",
-  "more-colors": "Więcej kolorów",
+
   "tutorial.skip": "Pominąć",
   "tutorial.optOut": "Nie pokazuj samouczków",
   "tutorial.back": "Z powrotem",
@@ -263,9 +261,7 @@
   "search-languages": "Wyszukaj języki...",
   "no-languages-found": "Nie znaleziono języków",
   "today-coming-soon": "Już wkrótce pojawi się ekran dzisiejszy",
-  "more-coming-soon": "Więcej opcji wkrótce",
-  "discovery-coming-soon": "Discovery już wkrótce",
-  "login-to-use-feature": "Aby skorzystać z tej funkcji, musisz się zalogować.",
+
   "link-to-join-shared-session-copied": "Link umożliwiający dołączenie do sesji współdzielonej został skopiowany do schowka",
   "anonymous": "Anonimowy",
   "no-chat-messages": "Brak wiadomości",

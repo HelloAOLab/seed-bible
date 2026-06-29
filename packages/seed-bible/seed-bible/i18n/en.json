@@ -137,8 +137,7 @@
   "toolbar": "Toolbar",
   "extensions": "Extensions",
   "display": "Display",
-  "mobile": "Mobile",
-  "show-nav-arrows": "Show navigation arrows",
+
   "theme-and-text": "Theme & text",
   "go-to-all-settings": "Go to all settings",
   "keep-screen-awake": "Keep screen awake",
@@ -216,7 +215,7 @@
   "read-the-bible": "Read the Bible",
   "add-verse": "Add verse",
   "add": "Add",
-  "chat-coming-soon-body": "This is where you'll be able to ask questions and explore cross-references.",
+
   "category-options": "Folder options",
   "rename": "Rename",
   "delete": "Delete",
@@ -237,7 +236,7 @@
   "social-title": "Read {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "New folder",
   "chapter-navigation": "Chapter navigation",
-  "more-colors": "More colors",
+
   "tutorial.skip": "Skip",
   "tutorial.optOut": "Don't show tutorials",
   "tutorial.back": "Back",
@@ -262,10 +261,7 @@
   "search-languages": "Search languages...",
   "no-languages-found": "No languages found",
   "today-coming-soon": "Today screen is coming soon",
-  "chat-coming-soon": "Chat is coming soon",
-  "more-coming-soon": "More options coming soon",
-  "discovery-coming-soon": "Discovery is coming soon",
-  "login-to-use-feature": "You have to log in to use this feature.",
+
   "link-to-join-shared-session-copied": "A link to join the shared session was copied to your clipboard",
   "no-chat-messages": "No messages yet",
   "start-conversation": "Start a conversation",

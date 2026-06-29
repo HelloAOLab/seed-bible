@@ -755,7 +755,6 @@ function ChatListAvatarCluster({ chat }: { chat: ChatSession }) {
         );
       })}
       {overflowCount > 0 && (
-        // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
         <span className="sb-chat-list-avatar-overflow">+{overflowCount}</span>
       )}
     </div>

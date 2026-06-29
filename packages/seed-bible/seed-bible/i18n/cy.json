@@ -111,8 +111,7 @@
   "toolbar": "Bar offer",
   "extensions": "Estyniadau",
   "display": "Arddangosfa",
-  "mobile": "Symudol",
-  "show-nav-arrows": "Dangos saethau llywio",
+
   "theme-and-text": "Thema a thestun",
   "go-to-all-settings": "Ewch i bob gosodiad",
   "keep-screen-awake": "Cadwch y sgrin yn effro",
@@ -187,8 +186,7 @@
   "bible": "Beibl",
   "add-verse": "Ychwanegu pennill",
   "add": "Ychwanegu",
-  "chat-coming-soon": "Mae sgwrs yn dod yn fuan",
-  "chat-coming-soon-body": "Dyma lle byddwch chi'n gallu gofyn cwestiynau ac archwilio croesgyfeiriadau.",
+
   "category-options": "Dewisiadau ffolder",
   "rename": "Ailenwi",
   "delete": "Dileu",
@@ -238,7 +236,7 @@
   "social-title": "Darllenwch {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Ffolder newydd",
   "chapter-navigation": "Mordwyo penodau",
-  "more-colors": "Mwy o liwiau",
+
   "tutorial.skip": "Hepgor",
   "tutorial.optOut": "Peidiwch â dangos tiwtorialau",
   "tutorial.back": "Yn ôl",
@@ -263,9 +261,7 @@
   "search-languages": "Chwilio ieithoedd...",
   "no-languages-found": "Ni chanfuwyd unrhyw ieithoedd",
   "today-coming-soon": "Mae sgrin heddiw yn dod yn fuan",
-  "more-coming-soon": "Mwy o opsiynau yn dod yn fuan",
-  "discovery-coming-soon": "Mae darganfyddiad yn dod yn fuan",
-  "login-to-use-feature": "Rhaid i chi fewngofnodi i ddefnyddio'r nodwedd hon.",
+
   "link-to-join-shared-session-copied": "Copïwyd dolen i ymuno â'r sesiwn a rennir i'ch clipfwrdd",
   "anonymous": "Anhysbys",
   "no-chat-messages": "Dim negeseuon eto",

@@ -111,8 +111,7 @@
   "toolbar": "Куралдар панели",
   "extensions": "Кеңейтүүлөр",
   "display": "Дисплей",
-  "mobile": "Мобилдик",
-  "show-nav-arrows": "Навигация жебелерин көрсөтүү",
+
   "theme-and-text": "Тема жана текст",
   "go-to-all-settings": "Бардык жөндөөлөргө өтүү",
   "keep-screen-awake": "Экранды ойготкуч абалда калтырыңыз",
@@ -187,8 +186,7 @@
   "bible": "Ыйык Китеп",
   "add-verse": "Аят кошуу",
   "add": "Кошуу",
-  "chat-coming-soon": "Чат жакында чыгат",
-  "chat-coming-soon-body": "Бул жерде сиз суроолорду берип, шилтемелерди изилдей аласыз.",
+
   "category-options": "Папка параметрлери",
   "rename": "Атын өзгөртүү",
   "delete": "Өчүрүү",
@@ -238,7 +236,7 @@
   "social-title": "{{bookName}} {{chapterNumber}} окуу",
   "new-bookmark-folder": "Жаңы папка",
   "chapter-navigation": "Бөлүмдөр боюнча навигация",
-  "more-colors": "Көбүрөөк түстөр",
+
   "tutorial.skip": "Өткөрүп жиберүү",
   "tutorial.optOut": "Окуу куралдары көрсөтүлбөсүн",
   "tutorial.back": "Артка",
@@ -263,9 +261,7 @@
   "search-languages": "Тилдерди издөө...",
   "no-languages-found": "Эч кандай тил табылган жок",
   "today-coming-soon": "Бүгүнкү экран жакында чыгат",
-  "more-coming-soon": "Жакында дагы көптөгөн мүмкүнчүлүктөр кошулат",
-  "discovery-coming-soon": "Ачылыш жакында болот",
-  "login-to-use-feature": "Бул функцияны колдонуу үчүн сиз киришиңиз керек.",
+
   "link-to-join-shared-session-copied": "Бөлүшүлгөн сессияга кошулуу шилтемеси алмашуу буфериңизге көчүрүлдү",
   "anonymous": "Белгисиз",
   "no-chat-messages": "Азырынча билдирүүлөр жок",

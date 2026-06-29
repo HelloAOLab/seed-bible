@@ -175,8 +175,7 @@
   "upload-settings": "Mipangilio ya kupakia",
   "uploading-settings": "Inapakia mipangilio...",
   "search": "Tafuta",
-  "mobile": "Simu ya Mkononi",
-  "show-nav-arrows": "Onyesha mishale ya urambazaji",
+
   "theme-and-text": "Mandhari na maandishi",
   "go-to-all-settings": "Nenda kwenye mipangilio yote",
   "more": "Zaidi",
@@ -188,8 +187,7 @@
   "bible": "Biblia",
   "add-verse": "Ongeza mstari",
   "add": "Ongeza",
-  "chat-coming-soon": "Gumzo linakuja hivi karibuni",
-  "chat-coming-soon-body": "Hapa ndipo utakapoweza kuuliza maswali na kuchunguza marejeleo mtambuka.",
+
   "category-options": "Chaguo za folda",
   "rename": "Badilisha jina",
   "delete": "Futa",
@@ -238,7 +236,7 @@
   "social-title": "Soma {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Folda mpya",
   "chapter-navigation": "Urambazaji wa sura",
-  "more-colors": "Rangi zaidi",
+
   "tutorial.skip": "Ruka",
   "tutorial.optOut": "Usionyeshe mafunzo",
   "tutorial.back": "Rudi",
@@ -263,9 +261,7 @@
   "search-languages": "Tafuta lugha...",
   "no-languages-found": "Hakuna lugha zilizopatikana",
   "today-coming-soon": "Skrini ya leo inakuja hivi karibuni",
-  "more-coming-soon": "Chaguzi zaidi zinakuja hivi karibuni",
-  "discovery-coming-soon": "Ugunduzi unakuja hivi karibuni",
-  "login-to-use-feature": "Lazima uingie ili kutumia kipengele hiki.",
+
   "link-to-join-shared-session-copied": "Kiungo cha kujiunga na kipindi kilichoshirikiwa kimenakiliwa kwenye ubao wako wa kunakili",
   "anonymous": "Mtu Asiyejulikana",
   "no-chat-messages": "Hakuna ujumbe bado",

@@ -111,8 +111,7 @@
   "toolbar": "סרגל כלים",
   "extensions": "הרחבות",
   "display": "לְהַצִיג",
-  "mobile": "נייד",
-  "show-nav-arrows": "הצג חיצי ניווט",
+
   "theme-and-text": "נושא וטקסט",
   "go-to-all-settings": "עבור לכל ההגדרות",
   "keep-screen-awake": "שמור על המסך ער",
@@ -187,8 +186,7 @@
   "bible": "כִּתבֵי הַקוֹדֶשׁ",
   "add-verse": "הוסף פסוק",
   "add": "לְהוֹסִיף",
-  "chat-coming-soon": "צ'אט בקרוב",
-  "chat-coming-soon-body": "כאן תוכלו לשאול שאלות ולבחון הפניות צולבות.",
+
   "category-options": "אפשרויות תיקייה",
   "rename": "שינוי שם",
   "delete": "לִמְחוֹק",
@@ -238,7 +236,7 @@
   "social-title": "קרא {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "תיקייה חדשה",
   "chapter-navigation": "ניווט פרקים",
-  "more-colors": "עוד צבעים",
+
   "tutorial.skip": "לְדַלֵג",
   "tutorial.optOut": "אל תציגו מדריכים",
   "tutorial.back": "בְּחֲזָרָה",
@@ -263,9 +261,7 @@
   "search-languages": "חיפוש שפות...",
   "no-languages-found": "לא נמצאו שפות",
   "today-coming-soon": "מסך היום יגיע בקרוב",
-  "more-coming-soon": "אפשרויות נוספות בקרוב",
-  "discovery-coming-soon": "גילוי בקרוב",
-  "login-to-use-feature": "עליך להתחבר כדי להשתמש בתכונה זו.",
+
   "link-to-join-shared-session-copied": "קישור להצטרפות לסשן המשותף הועתק ללוח שלך",
   "anonymous": "אֲנוֹנִימִי",
   "no-chat-messages": "אין עדיין הודעות",

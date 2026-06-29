@@ -1,4 +1,3 @@
-/* eslint-disable seed-bible-i18n/i18n-untranslated-content */
 import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
 import { registerBonfireChatProvider } from "./bonfire";
 

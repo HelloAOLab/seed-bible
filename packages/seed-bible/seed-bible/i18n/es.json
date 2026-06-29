@@ -176,8 +176,7 @@
   "upload-settings": "Configuración de carga",
   "uploading-settings": "Cargando configuración...",
   "search": "Buscar",
-  "mobile": "Móvil",
-  "show-nav-arrows": "Mostrar flechas de navegación",
+
   "theme-and-text": "Tema y texto",
   "go-to-all-settings": "Ir a todas las configuraciones",
   "more": "Más",
@@ -189,8 +188,7 @@
   "bible": "Biblia",
   "add-verse": "Añadir verso",
   "add": "Agregar",
-  "chat-coming-soon": "El chat estará disponible próximamente.",
-  "chat-coming-soon-body": "Aquí podrás hacer preguntas y explorar referencias cruzadas.",
+
   "category-options": "Opciones de carpeta",
   "rename": "Rebautizar",
   "delete": "Borrar",
@@ -238,7 +236,7 @@
   "social-title": "Lee {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nueva carpeta",
   "chapter-navigation": "Navegación de capítulos",
-  "more-colors": "Más colores",
+
   "tutorial.skip": "Saltar",
   "tutorial.optOut": "No muestres tutoriales",
   "tutorial.back": "Atrás",
@@ -263,9 +261,7 @@
   "search-languages": "Idiomas de búsqueda...",
   "no-languages-found": "No se encontraron idiomas",
   "today-coming-soon": "La pantalla de hoy estará disponible pronto.",
-  "more-coming-soon": "Próximamente habrá más opciones.",
-  "discovery-coming-soon": "El descubrimiento llegará pronto",
-  "login-to-use-feature": "Debes iniciar sesión para usar esta función.",
+
   "link-to-join-shared-session-copied": "Se ha copiado en el portapapeles un enlace para unirse a la sesión compartida.",
   "anonymous": "Anónimo",
   "no-chat-messages": "Aún no hay mensajes.",

@@ -111,8 +111,7 @@
   "toolbar": "Панэль інструментаў",
   "extensions": "Пашырэнні",
   "display": "Дысплей",
-  "mobile": "Мабільны",
-  "show-nav-arrows": "Паказаць стрэлкі навігацыі",
+
   "theme-and-text": "Тэма і тэкст",
   "go-to-all-settings": "Перайсці да ўсіх налад",
   "keep-screen-awake": "Трымаць экран у актыўным рэжыме",
@@ -187,8 +186,7 @@
   "bible": "Біблія",
   "add-verse": "Дадаць верш",
   "add": "Дадаць",
-  "chat-coming-soon": "Чат хутка з'явіцца",
-  "chat-coming-soon-body": "Тут вы зможаце задаваць пытанні і праглядаць спасылкі.",
+
   "category-options": "Параметры тэчкі",
   "rename": "Перайменаваць",
   "delete": "Выдаліць",
@@ -238,7 +236,7 @@
   "social-title": "Прачытайце {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Новая папка",
   "chapter-navigation": "Навігацыя па раздзелах",
-  "more-colors": "Больш колераў",
+
   "tutorial.skip": "Прапусціць",
   "tutorial.optOut": "Не паказваць падручнікі",
   "tutorial.back": "Назад",
@@ -265,9 +263,7 @@
   "today-coming-soon": "Сённяшні экран хутка з'явіцца",
   "link-to-join-shared-session-copied": "Спасылка для далучэння да агульнага сеансу была скапіравана ў буфер абмену",
   "copied-translation-share-link": "Спасылка для абмену перакладам скапіравана",
-  "more-coming-soon": "Больш варыянтаў хутка з'явіцца",
-  "discovery-coming-soon": "Адкрыццё хутка адбудзецца",
-  "login-to-use-feature": "Каб скарыстацца гэтай функцыяй, вам трэба ўвайсці ў сістэму.",
+
   "link-to-join-shared-session-copied": "Спасылка для далучэння да агульнага сеансу была скапіравана ў буфер абмену",
   "anonymous": "Ананімны",
   "no-chat-messages": "Пакуль няма паведамленняў",

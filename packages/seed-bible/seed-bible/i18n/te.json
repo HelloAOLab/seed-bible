@@ -111,8 +111,7 @@
   "toolbar": "టూల్‌బార్",
   "extensions": "పొడిగింపులు",
   "display": "ప్రదర్శన",
-  "mobile": "మొబైల్",
-  "show-nav-arrows": "నావిగేషన్ బాణాలను చూపించు",
+
   "theme-and-text": "థీమ్ & టెక్స్ట్",
   "go-to-all-settings": "అన్ని సెట్టింగ్‌లకు వెళ్లండి",
   "keep-screen-awake": "స్క్రీన్‌ను ఆన్‌లో ఉంచండి",
@@ -187,8 +186,7 @@
   "bible": "బైబిల్",
   "add-verse": "పద్యం జోడించండి",
   "add": "జోడించండి",
-  "chat-coming-soon": "చాట్ త్వరలో వస్తుంది",
-  "chat-coming-soon-body": "ఇక్కడే మీరు ప్రశ్నలు అడగవచ్చు మరియు ఇతర సమాచారాన్ని పరిశీలించవచ్చు.",
+
   "category-options": "ఫోల్డర్ ఎంపికలు",
   "rename": "పేరు మార్చండి",
   "delete": "తొలగించు",
@@ -238,7 +236,7 @@
   "social-title": "{{bookName}} {{chapterNumber}} చదవండి",
   "new-bookmark-folder": "కొత్త ఫోల్డర్",
   "chapter-navigation": "అధ్యాయ నావిగేషన్",
-  "more-colors": "మరిన్ని రంగులు",
+
   "tutorial.skip": "దాటవేయి",
   "tutorial.optOut": "ట్యుటోరియల్స్ చూపించవద్దు",
   "tutorial.back": "వెనుక",
@@ -263,9 +261,7 @@
   "search-languages": "భాషలను శోధించండి...",
   "no-languages-found": "భాషలు ఏవీ కనుగొనబడలేదు",
   "today-coming-soon": "ఈరోజు స్క్రీన్ త్వరలో వస్తుంది",
-  "more-coming-soon": "మరిన్ని ఎంపికలు త్వరలో రానున్నాయి",
-  "discovery-coming-soon": "డిస్కవరీ త్వరలో రాబోతోంది",
-  "login-to-use-feature": "ఈ ఫీచర్‌ను ఉపయోగించడానికి మీరు లాగిన్ అవ్వాలి.",
+
   "link-to-join-shared-session-copied": "భాగస్వామ్య సెషన్‌లో చేరడానికి సంబంధించిన లింక్ మీ క్లిప్‌బోర్డ్‌లోకి కాపీ చేయబడింది.",
   "anonymous": "అనామక",
   "no-chat-messages": "ఇంకా సందేశాలు లేవు",

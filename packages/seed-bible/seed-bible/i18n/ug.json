@@ -175,8 +175,7 @@
   "upload-settings": "يۈكلەش تەڭشەكلىرى",
   "uploading-settings": "تەڭشەكلەر يۈكلەنمەكتە...",
   "search": "ئىزدەش",
-  "mobile": "يانفون",
-  "show-nav-arrows": "يول باشلاش كۆرسەتكۈچلىرىنى كۆرسىتىش",
+
   "theme-and-text": "تېما ۋە تېكىست",
   "go-to-all-settings": "بارلىق تەڭشەكلەرگە كىرىڭ",
   "more": "تېخىمۇ كۆپ",
@@ -188,8 +187,7 @@
   "bible": "ئىنجىل",
   "add-verse": "ئايەت قوشۇش",
   "add": "قوشۇش",
-  "chat-coming-soon": "پاراڭلىشىش تېزلا باشلىنىدۇ",
-  "chat-coming-soon-body": "بۇ يەردە سىز سوئال سورىسىڭىز ۋە ئۆزئارا پايدىلىنىش ماتېرىياللىرىنى تەكشۈرسىڭىز بولىدۇ.",
+
   "category-options": "قىسقۇچ تاللانمىلىرى",
   "rename": "قايتا ئىسىم قويۇش",
   "delete": "ئۆچۈرۈش",
@@ -238,7 +236,7 @@
   "social-title": "{{bookName}} {{chapterNumber}} نى ئوقۇڭ",
   "new-bookmark-folder": "يېڭى قىسقۇچ",
   "chapter-navigation": "باب يول باشلاش",
-  "more-colors": "تېخىمۇ كۆپ رەڭلەر",
+
   "tutorial.skip": "ئاتلاپ ئۆتۈش",
   "tutorial.optOut": "دەرسلىكلەرنى كۆرسەتمەڭ",
   "tutorial.back": "ئارقىغا",
@@ -263,9 +261,7 @@
   "search-languages": "تىللارنى ئىزدەش...",
   "no-languages-found": "تىل تېپىلمىدى",
   "today-coming-soon": "بۈگۈنكى ئېكران تېزلا كېلىدۇ",
-  "more-coming-soon": "تېخىمۇ كۆپ تاللاشلار تېز كېلىدۇ",
-  "discovery-coming-soon": "بايقاش تېزلا كېلىدۇ",
-  "login-to-use-feature": "بۇ ئىقتىدارنى ئىشلىتىش ئۈچۈن كىرىشىڭىز كېرەك.",
+
   "link-to-join-shared-session-copied": "ئورتاقلىشىش يىغىنىغا قاتنىشىش ئۇلىنىشى سىزنىڭ چاپلاش تاختىسىڭىزغا كۆچۈرۈلدى",
   "anonymous": "نامسىز",
   "no-chat-messages": "ھازىرغىچە ئۇچۇر يوق",

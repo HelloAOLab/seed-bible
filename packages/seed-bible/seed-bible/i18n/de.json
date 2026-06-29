@@ -111,8 +111,7 @@
   "toolbar": "Symbolleiste",
   "extensions": "Erweiterungen",
   "display": "Anzeige",
-  "mobile": "Mobile",
-  "show-nav-arrows": "Navigationspfeile anzeigen",
+
   "theme-and-text": "Thema & Text",
   "go-to-all-settings": "Alle Einstellungen aufrufen",
   "keep-screen-awake": "Bildschirm aktiv halten",
@@ -187,8 +186,7 @@
   "bible": "Bibel",
   "add-verse": "Vers hinzufügen",
   "add": "Hinzufügen",
-  "chat-coming-soon": "Der Chat ist bald verfügbar.",
-  "chat-coming-soon-body": "Hier können Sie Fragen stellen und Querverweise erkunden.",
+
   "category-options": "Ordneroptionen",
   "rename": "Umbenennen",
   "delete": "Löschen",
@@ -238,7 +236,7 @@
   "social-title": "Lesen Sie {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Neuer Ordner",
   "chapter-navigation": "Kapitelnavigation",
-  "more-colors": "Mehr Farben",
+
   "tutorial.skip": "Überspringen",
   "tutorial.optOut": "Zeige keine Tutorials",
   "tutorial.back": "Zurück",
@@ -263,9 +261,7 @@
   "search-languages": "Sprachen suchen...",
   "no-languages-found": "Keine Sprachen gefunden",
   "today-coming-soon": "Der heutige Bildschirm kommt bald.",
-  "more-coming-soon": "Weitere Optionen folgen in Kürze.",
-  "discovery-coming-soon": "Discovery kommt bald",
-  "login-to-use-feature": "Sie müssen sich anmelden, um diese Funktion nutzen zu können.",
+
   "link-to-join-shared-session-copied": "Ein Link zum Beitreten der gemeinsamen Sitzung wurde in Ihre Zwischenablage kopiert.",
   "anonymous": "Anonym",
   "no-chat-messages": "Noch keine Nachrichten",

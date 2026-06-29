@@ -111,8 +111,7 @@
   "toolbar": "Лента со алатки",
   "extensions": "Екстензии",
   "display": "Приказ",
-  "mobile": "Мобилен",
-  "show-nav-arrows": "Прикажи стрелки за навигација",
+
   "theme-and-text": "Тема и текст",
   "go-to-all-settings": "Одете на сите поставки",
   "keep-screen-awake": "Држете го екранот активен",
@@ -187,8 +186,7 @@
   "bible": "Библија",
   "add-verse": "Додај стих",
   "add": "Додај",
-  "chat-coming-soon": "Разговорот доаѓа наскоро",
-  "chat-coming-soon-body": "Ова е местото каде што ќе можете да поставувате прашања и да истражувате вкрстени референци.",
+
   "category-options": "Опции за папки",
   "rename": "Преименувај",
   "delete": "Избриши",
@@ -238,7 +236,7 @@
   "social-title": "Прочитај {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Нова папка",
   "chapter-navigation": "Навигација на поглавја",
-  "more-colors": "Повеќе бои",
+
   "tutorial.skip": "Прескокни",
   "tutorial.optOut": "Не прикажувај упатства",
   "tutorial.back": "Назад",
@@ -263,9 +261,7 @@
   "search-languages": "Пребарувај јазици...",
   "no-languages-found": "Не се пронајдени јазици",
   "today-coming-soon": "Денешниот екран доаѓа наскоро",
-  "more-coming-soon": "Повеќе опции наскоро",
-  "discovery-coming-soon": "Откритието доаѓа наскоро",
-  "login-to-use-feature": "Мора да се најавите за да ја користите оваа функција.",
+
   "link-to-join-shared-session-copied": "Линк за приклучување кон споделената сесија е копиран во вашата табла со исечоци",
   "anonymous": "Анонимен",
   "no-chat-messages": "Сè уште нема пораки",

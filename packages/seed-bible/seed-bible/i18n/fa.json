@@ -175,8 +175,7 @@
   "upload-settings": "تنظیمات آپلود",
   "uploading-settings": "تنظیمات در حال بارگذاری...",
   "search": "جستجو",
-  "mobile": "موبایل",
-  "show-nav-arrows": "نمایش فلش‌های ناوبری",
+
   "theme-and-text": "موضوع و متن",
   "go-to-all-settings": "به همه تنظیمات بروید",
   "more": "بیشتر",
@@ -188,8 +187,7 @@
   "bible": "کتاب مقدس",
   "add-verse": "اضافه کردن آیه",
   "add": "اضافه کردن",
-  "chat-coming-soon": "چت به زودی فعال می‌شود",
-  "chat-coming-soon-body": "اینجا جایی است که می‌توانید سوالات خود را بپرسید و به دنبال منابع متقابل باشید.",
+
   "category-options": "گزینه‌های پوشه",
   "rename": "تغییر نام",
   "delete": "حذف",
@@ -238,7 +236,7 @@
   "social-title": "{{bookName}} {{chapterNumber}} را بخوانید",
   "new-bookmark-folder": "پوشه جدید",
   "chapter-navigation": "پیمایش فصل",
-  "more-colors": "رنگ‌های بیشتر",
+
   "tutorial.skip": "پرش",
   "tutorial.optOut": "آموزش‌ها را نشان ندهید",
   "tutorial.back": "برگشت",
@@ -263,9 +261,7 @@
   "search-languages": "جستجوی زبان‌ها...",
   "no-languages-found": "هیچ زبانی یافت نشد",
   "today-coming-soon": "صفحه نمایش امروز به زودی منتشر می‌شود",
-  "more-coming-soon": "گزینه‌های بیشتر به زودی",
-  "discovery-coming-soon": "دیسکاوری به زودی از راه می‌رسد",
-  "login-to-use-feature": "برای استفاده از این قابلیت باید وارد سیستم شوید.",
+
   "link-to-join-shared-session-copied": "پیوندی برای پیوستن به جلسه مشترک در کلیپ‌بورد شما کپی شد",
   "anonymous": "ناشناس",
   "no-chat-messages": "هنوز پیامی ارسال نشده است",

@@ -111,8 +111,7 @@
   "toolbar": "Barra de ferramentas",
   "extensions": "Extensións",
   "display": "Pantalla",
-  "mobile": "Móbil",
-  "show-nav-arrows": "Mostrar frechas de navegación",
+
   "theme-and-text": "Tema e texto",
   "go-to-all-settings": "Ir a todos os axustes",
   "keep-screen-awake": "Manter a pantalla activa",
@@ -187,8 +186,7 @@
   "bible": "Biblia",
   "add-verse": "Engadir verso",
   "add": "Engadir",
-  "chat-coming-soon": "O chat estará dispoñible en breve",
-  "chat-coming-soon-body": "Aquí é onde poderás facer preguntas e explorar referencias cruzadas.",
+
   "category-options": "Opcións de cartafol",
   "rename": "Renomear",
   "delete": "Eliminar",
@@ -238,7 +236,7 @@
   "social-title": "Ler {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nova carpeta",
   "chapter-navigation": "Navegación por capítulos",
-  "more-colors": "Máis cores",
+
   "tutorial.skip": "Omitir",
   "tutorial.optOut": "Non mostrar tutoriais",
   "tutorial.back": "Volver",
@@ -263,9 +261,7 @@
   "search-languages": "Buscar idiomas...",
   "no-languages-found": "Non se atoparon idiomas",
   "today-coming-soon": "A pantalla de hoxe chegará en breve",
-  "more-coming-soon": "Máis opcións próximamente",
-  "discovery-coming-soon": "Discovery chegará en breve",
-  "login-to-use-feature": "Tes que iniciar sesión para usar esta función.",
+
   "link-to-join-shared-session-copied": "Copiouse no portapapeis unha ligazón para unirse á sesión compartida",
   "anonymous": "Anónimo",
   "no-chat-messages": "Aínda non hai mensaxes",

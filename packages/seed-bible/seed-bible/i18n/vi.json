@@ -175,8 +175,7 @@
   "upload-settings": "Cài đặt tải lên",
   "uploading-settings": "Đang tải cài đặt...",
   "search": "Tìm kiếm",
-  "mobile": "Di động",
-  "show-nav-arrows": "Hiển thị các mũi tên điều hướng",
+
   "theme-and-text": "Chủ đề & văn bản",
   "go-to-all-settings": "Vào tất cả cài đặt",
   "more": "Hơn",
@@ -188,8 +187,7 @@
   "bible": "Kinh Thánh",
   "add-verse": "Thêm câu thơ",
   "add": "Thêm vào",
-  "chat-coming-soon": "Tính năng trò chuyện sẽ sớm ra mắt.",
-  "chat-coming-soon-body": "Đây là nơi bạn có thể đặt câu hỏi và tìm hiểu các tài liệu tham khảo chéo.",
+
   "category-options": "Tùy chọn thư mục",
   "rename": "Đổi tên",
   "delete": "Xóa bỏ",
@@ -238,7 +236,7 @@
   "social-title": "Đọc {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Thư mục mới",
   "chapter-navigation": "Điều hướng chương",
-  "more-colors": "Nhiều màu sắc hơn",
+
   "tutorial.skip": "Nhảy",
   "tutorial.optOut": "Đừng chiếu hướng dẫn",
   "tutorial.back": "Mặt sau",
@@ -263,9 +261,7 @@
   "search-languages": "Ngôn ngữ tìm kiếm...",
   "no-languages-found": "Không tìm thấy ngôn ngữ nào",
   "today-coming-soon": "Màn hình hôm nay sẽ sớm ra mắt.",
-  "more-coming-soon": "Sẽ có thêm nhiều lựa chọn trong thời gian tới.",
-  "discovery-coming-soon": "Khám phá sắp ra mắt",
-  "login-to-use-feature": "Bạn cần đăng nhập để sử dụng tính năng này.",
+
   "link-to-join-shared-session-copied": "Một liên kết để tham gia phiên họp chung đã được sao chép vào khay nhớ tạm của bạn.",
   "anonymous": "Vô danh",
   "no-chat-messages": "Chưa có tin nhắn nào",

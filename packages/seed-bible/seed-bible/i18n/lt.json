@@ -111,8 +111,7 @@
   "toolbar": "Įrankių juosta",
   "extensions": "Plėtiniai",
   "display": "Ekranas",
-  "mobile": "Mobilusis",
-  "show-nav-arrows": "Rodyti naršymo rodykles",
+
   "theme-and-text": "Tema ir tekstas",
   "go-to-all-settings": "Eiti į visus nustatymus",
   "keep-screen-awake": "Palaikykite ekraną budrų",
@@ -187,8 +186,7 @@
   "bible": "Biblija",
   "add-verse": "Pridėti eilutę",
   "add": "Pridėti",
-  "chat-coming-soon": "Pokalbis bus netrukus",
-  "chat-coming-soon-body": "Čia galėsite užduoti klausimus ir peržiūrėti nuorodas.",
+
   "category-options": "Aplanko parinktys",
   "rename": "Pervardyti",
   "delete": "Ištrinti",
@@ -238,7 +236,7 @@
   "social-title": "Perskaitykite {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Naujas aplankas",
   "chapter-navigation": "Skyriaus navigacija",
-  "more-colors": "Daugiau spalvų",
+
   "tutorial.skip": "Praleisti",
   "tutorial.optOut": "Nerodyti mokymo programų",
   "tutorial.back": "Atgal",
@@ -263,9 +261,7 @@
   "search-languages": "Ieškoti kalbų...",
   "no-languages-found": "Nerasta jokių kalbų",
   "today-coming-soon": "Šiandienos ekranas netrukus pasirodys",
-  "more-coming-soon": "Daugiau variantų netrukus",
-  "discovery-coming-soon": "Atradimas netrukus",
-  "login-to-use-feature": "Norėdami naudotis šia funkcija, turite prisijungti.",
+
   "link-to-join-shared-session-copied": "Nuoroda prisijungti prie bendros sesijos buvo nukopijuota į jūsų iškarpinę",
   "anonymous": "Anonimas",
   "no-chat-messages": "Kol kas nėra pranešimų",
