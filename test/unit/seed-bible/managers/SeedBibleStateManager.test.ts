@@ -5,47 +5,56 @@ import {
   waitForInitialLoad,
 } from "../testUtils/createTestSeedBibleState";
 import { signal } from "@preact/signals";
+import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
+import type { Mock } from "vitest";
 import { DEFAULT_TRANSLATION_ID } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 
-const mockSaveReadingHistory = jest.fn();
+const mockSaveReadingHistory = vi.fn();
 const mockHighlightsManager = {
-  getChapterHighlights: jest.fn().mockReturnValue(signal({ highlights: [] })),
-  saveChapterHighlights: jest.fn(),
+  getChapterHighlights: vi.fn().mockReturnValue(signal({ highlights: [] })),
+  saveChapterHighlights: vi.fn(),
 };
 const mockSessionsManager = {
-  createSession: jest.fn(),
-  joinSession: jest.fn(),
+  createSession: vi.fn(),
+  joinSession: vi.fn(),
 };
 
-jest.mock("seed-bible.managers.ReadingHistoryManager", () => ({
-  createReadingHistoryManager: () => ({
-    saveReadingHistory: mockSaveReadingHistory,
-    getReadingEvents: jest.fn().mockResolvedValue([]),
-  }),
-}));
+vi.mock(
+  "@packages/seed-bible/seed-bible/managers/ReadingHistoryManager",
+  () => ({
+    createReadingHistoryManager: () => ({
+      saveReadingHistory: mockSaveReadingHistory,
+      getReadingEvents: vi.fn().mockResolvedValue([]),
+    }),
+  })
+);
 
-jest.mock("seed-bible.managers.HighlightsManager", () => ({
+vi.mock("@packages/seed-bible/seed-bible/managers/HighlightsManager", () => ({
   createHighlightsManager: () => mockHighlightsManager,
 }));
 
-jest.mock("seed-bible.managers.SessionsManager", () => ({
+vi.mock("@packages/seed-bible/seed-bible/managers/SessionsManager", () => ({
   createSessionsManager: () => mockSessionsManager,
 }));
 
-jest.mock("seed-bible.i18n.I18nManager", () => ({
-  I18nProvider: ({ children }: { children: unknown }) => children,
-}));
+vi.mock(
+  "@packages/seed-bible/seed-bible/i18n/I18nManager",
+  async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+    I18nProvider: ({ children }: { children: unknown }) => children,
+  })
+);
 
-jest.mock("seed-bible.managers.SearchManager", () => ({
-  createSearchManager: jest.fn().mockReturnValue({
-    searchVerses: jest.fn(),
+vi.mock("@packages/seed-bible/seed-bible/managers/SearchManager", () => ({
+  createSearchManager: vi.fn().mockReturnValue({
+    searchVerses: vi.fn(),
   }),
 }));
 
-let logSpy: jest.SpyInstance;
+let logSpy: Mock;
 
 beforeEach(() => {
-  logSpy = jest.spyOn(console, "log").mockImplementation(() => undefined);
+  logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
   mockSaveReadingHistory.mockReset();
   mockHighlightsManager.getChapterHighlights.mockReset();
   mockHighlightsManager.getChapterHighlights.mockReturnValue(
@@ -54,21 +63,10 @@ beforeEach(() => {
   mockHighlightsManager.saveChapterHighlights.mockReset();
   mockSessionsManager.createSession.mockReset();
   mockSessionsManager.joinSession.mockReset();
-
-  (globalThis as any).configBot = {
-    tags: {},
-  };
-
-  (globalThis as any).os = {
-    ...(globalThis as any).os,
-    addBotListener: jest.fn(),
-    requestAuthBotInBackground: jest.fn().mockResolvedValue(null),
-  };
 });
 
 afterEach(() => {
   logSpy.mockRestore();
-  delete (globalThis as any).configBot;
 });
 
 async function waitFor(
@@ -97,6 +95,8 @@ function createMockSharedSession(id: string) {
       chapterNumber: signal<number | null>(null),
       chapterData: signal(null),
       selectedVerses: signal([]),
+      translationBooks: signal(null),
+      selectTranslationAndChapter: vi.fn().mockResolvedValue(undefined),
     },
     document: {} as SharedDocument,
     options: signal({
@@ -107,9 +107,9 @@ function createMockSharedSession(id: string) {
       endedAt: null,
     }),
     connectedUsers: signal([]),
-    updateOptions: jest.fn(),
-    removeSharedDecoration: jest.fn(),
-    dispose: jest.fn(),
+    updateOptions: vi.fn(),
+    removeSharedDecoration: vi.fn(),
+    dispose: vi.fn(),
   } as any;
 }
 
@@ -149,6 +149,36 @@ describe("createSeedBibleState", () => {
     expect(state.highlights).toBe(mockHighlightsManager as any);
     expect(state.sessions).toBe(mockSessionsManager);
     expect(typeof state.search.searchVerses).toBe("function");
+
+    expect(state.bibleData.api.endpoint).toBe("https://vmfnri.helloao.org/");
+  });
+
+  it("should use the free use bible API if specified in the URL", async () => {
+    jsdom.reconfigure({
+      url: "https://example.com?useFreeBibleAPI=true",
+    });
+
+    const state = await createState();
+
+    expect(state.config.config.value.disablePanels).toBe(false);
+    expect(state.app.panelsEnabled.value).toBe(true);
+
+    expect(state.tabs.tabs.value).toHaveLength(1);
+    expect(state.tabs.selectedTabId.value).toBe("tab-1");
+    expect(state.app.selectedTab.value?.id).toBe("tab-1");
+
+    expect(state.panes.panes.value).toHaveLength(1);
+    expect(state.panes.panes.value[0]?.tab?.id).toBe("tab-1");
+    expect(state.panes.selectedPaneId.value).toBe(
+      state.panes.panes.value[0]?.id ?? null
+    );
+
+    expect(state.selector.isOpen.value).toBe(false);
+    expect(state.highlights).toBe(mockHighlightsManager as any);
+    expect(state.sessions).toBe(mockSessionsManager);
+    expect(typeof state.search.searchVerses).toBe("function");
+
+    expect(state.bibleData.api.endpoint).toBe("https://bible.helloao.org/");
   });
 
   it("selecting a tab selects the tab and switches the pane to display the selected tab", async () => {
@@ -207,9 +237,9 @@ describe("createSeedBibleState", () => {
         endedAt: null,
       }),
       connectedUsers: signal([]),
-      updateOptions: jest.fn(),
-      removeSharedDecoration: jest.fn(),
-      dispose: jest.fn(),
+      updateOptions: vi.fn(),
+      removeSharedDecoration: vi.fn(),
+      dispose: vi.fn(),
     };
     mockSessionsManager.createSession.mockResolvedValue(session);
 
@@ -230,7 +260,7 @@ describe("createSeedBibleState", () => {
   });
 
   it("createSharedSession() captures a create_session posthog event", async () => {
-    const mockPosthogCapture = jest.fn();
+    const mockPosthogCapture = vi.fn();
     (globalThis as any).posthog = {
       capture: mockPosthogCapture,
     };
@@ -266,9 +296,9 @@ describe("createSeedBibleState", () => {
         endedAt: null,
       }),
       connectedUsers: signal([]),
-      updateOptions: jest.fn(),
-      removeSharedDecoration: jest.fn(),
-      dispose: jest.fn(),
+      updateOptions: vi.fn(),
+      removeSharedDecoration: vi.fn(),
+      dispose: vi.fn(),
     };
     mockSessionsManager.joinSession.mockResolvedValue(session);
 
@@ -289,7 +319,7 @@ describe("createSeedBibleState", () => {
   });
 
   it("joinSharedSession(id) captures a join_session posthog event", async () => {
-    const mockPosthogCapture = jest.fn();
+    const mockPosthogCapture = vi.fn();
     (globalThis as any).posthog = {
       capture: mockPosthogCapture,
     };
@@ -318,26 +348,27 @@ describe("createSeedBibleState", () => {
     expect(state.tabs.tabs.value).toHaveLength(1);
   });
 
-  it("auto-joins a shared session when sessionId is present in URL tags", async () => {
+  it("auto-joins a shared session when sessionId is present in the URL", async () => {
     const session = createMockSharedSession("url-session-123");
     mockSessionsManager.joinSession.mockResolvedValue(session);
 
-    const state = await createStateWithOptions({
-      configTags: {
-        sessionId: "url-session-123",
-      },
-    });
+    window.history.replaceState(null, "", "?sessionId=url-session-123");
+    try {
+      const state = await createStateWithOptions({});
 
-    await waitFor(
-      () => mockSessionsManager.joinSession.mock.calls.length === 1
-    );
+      await waitFor(
+        () => mockSessionsManager.joinSession.mock.calls.length === 1
+      );
 
-    expect(mockSessionsManager.joinSession).toHaveBeenCalledWith(
-      "url-session-123"
-    );
-    expect(state.tabs.tabs.value).toHaveLength(2);
-    expect(state.tabs.tabs.value[1]?.sharedSession).toBe(session);
-    expect(state.tabs.selectedTabId.value).toBe("tab-2");
+      expect(mockSessionsManager.joinSession).toHaveBeenCalledWith(
+        "url-session-123"
+      );
+      expect(state.tabs.tabs.value).toHaveLength(2);
+      expect(state.tabs.tabs.value[1]?.sharedSession).toBe(session);
+      expect(state.tabs.selectedTabId.value).toBe("tab-2");
+    } finally {
+      window.history.replaceState(null, "", window.location.pathname);
+    }
   });
 
   it("tabs can be opened in new panes", async () => {
@@ -350,6 +381,56 @@ describe("createSeedBibleState", () => {
       state.panes.panes.value.some((pane) => pane.tab?.id === "tab-2")
     ).toBe(true);
     expect(state.tabs.selectedTabId.value).toBe("tab-2");
+  });
+
+  it("opens an independent, hidden tab in a new pane when the tab is already shown in the current pane", async () => {
+    const state = await createState();
+    // The single pane shows the selected tab (tab-1).
+    expect(state.panes.panes.value).toHaveLength(1);
+    expect(state.panes.panes.value[0]?.tab?.id).toBe("tab-1");
+
+    state.app.openInNewPane("tab-1");
+
+    // A second pane appears, bound to a *different* tab so it is not
+    // de-duplicated away (would leave an empty pane) and so chapter navigation
+    // moves only one pane (independent reading states).
+    expect(state.panes.panes.value).toHaveLength(2);
+    const tabIds = state.panes.panes.value.map((pane) => pane.tab?.id ?? null);
+    expect(tabIds.every((id) => id !== null)).toBe(true);
+    expect(new Set(tabIds).size).toBe(2);
+
+    // The cloned tab is pane-only (hidden from the tab strip): the user still
+    // sees a single visible tab.
+    const visibleTabs = state.tabs.tabs.value.filter((tab) => !tab.paneOnly);
+    expect(visibleTabs).toHaveLength(1);
+    expect(visibleTabs[0]?.id).toBe("tab-1");
+  });
+
+  it("opens an independent, hidden tab in a detached pane when the tab is already shown in the current pane", async () => {
+    const state = await createState();
+    expect(state.panes.panes.value).toHaveLength(1);
+    const originalTabId = state.panes.panes.value[0]?.tab?.id ?? null;
+
+    state.app.openInDetachedPane("tab-1");
+
+    const detachedPanes = state.panes.panes.value.filter(
+      (pane) => pane.detached
+    );
+    expect(detachedPanes).toHaveLength(1);
+    // The detached pane gets its own tab so navigating it does not move the
+    // attached pane.
+    const detachedTabId = detachedPanes[0]?.tab?.id ?? null;
+    expect(detachedTabId).not.toBe(null);
+    expect(detachedTabId).not.toBe(originalTabId);
+    expect(state.tabs.tabs.value.filter((tab) => !tab.paneOnly)).toHaveLength(
+      1
+    );
+
+    // Closing the detached pane disposes the hidden tab so it does not leak.
+    state.panes.closePane(detachedPanes[0]!.id);
+    expect(state.tabs.tabs.value.some((tab) => tab.id === detachedTabId)).toBe(
+      false
+    );
   });
 
   it("selecting a pane that has a tab also selects the tab for the pane", async () => {
@@ -414,11 +495,11 @@ describe("createSeedBibleState", () => {
 
   describe("reading history autosave", () => {
     beforeEach(() => {
-      jest.useFakeTimers();
+      vi.useFakeTimers();
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     function setSelectedTabChapter(
@@ -451,7 +532,7 @@ describe("createSeedBibleState", () => {
 
       state.tabs.selectedTabId.value = "missing-tab";
 
-      jest.advanceTimersByTime(6000);
+      vi.advanceTimersByTime(6000);
       expect(mockSaveReadingHistory).not.toHaveBeenCalled();
     });
 
@@ -467,7 +548,7 @@ describe("createSeedBibleState", () => {
       expect(selected).not.toBeNull();
       selected!.readingState.chapterData.value = null;
 
-      jest.advanceTimersByTime(6000);
+      vi.advanceTimersByTime(6000);
       expect(mockSaveReadingHistory).not.toHaveBeenCalled();
     });
 
@@ -476,10 +557,10 @@ describe("createSeedBibleState", () => {
       setSelectedTabChapter(state, "genesis", 1);
       mockSaveReadingHistory.mockClear();
 
-      jest.advanceTimersByTime(4999);
+      vi.advanceTimersByTime(4999);
       expect(mockSaveReadingHistory).not.toHaveBeenCalled();
 
-      jest.advanceTimersByTime(1);
+      vi.advanceTimersByTime(1);
       expect(mockSaveReadingHistory).toHaveBeenCalledTimes(1);
       expect(mockSaveReadingHistory).toHaveBeenLastCalledWith("genesis", 1);
     });
@@ -489,7 +570,7 @@ describe("createSeedBibleState", () => {
       setSelectedTabChapter(state, "genesis", 1);
       mockSaveReadingHistory.mockClear();
 
-      jest.advanceTimersByTime(15000);
+      vi.advanceTimersByTime(15000);
 
       expect(mockSaveReadingHistory).toHaveBeenCalledTimes(3);
       expect(mockSaveReadingHistory).toHaveBeenNthCalledWith(1, "genesis", 1);
@@ -507,14 +588,14 @@ describe("createSeedBibleState", () => {
       setSelectedTabChapter(state, "exodus", 2);
       mockSaveReadingHistory.mockClear();
 
-      jest.advanceTimersByTime(3000);
+      vi.advanceTimersByTime(3000);
       state.tabs.selectedTabId.value = "tab-1";
       setSelectedTabChapter(state, "genesis", 1);
 
-      jest.advanceTimersByTime(2000);
+      vi.advanceTimersByTime(2000);
       expect(mockSaveReadingHistory).not.toHaveBeenCalled();
 
-      jest.advanceTimersByTime(3000);
+      vi.advanceTimersByTime(3000);
       expect(mockSaveReadingHistory).toHaveBeenCalledTimes(1);
       expect(mockSaveReadingHistory).toHaveBeenLastCalledWith("genesis", 1);
     });
@@ -524,29 +605,29 @@ describe("createSeedBibleState", () => {
       setSelectedTabChapter(state, "genesis", 1);
       mockSaveReadingHistory.mockClear();
 
-      jest.advanceTimersByTime(3000);
+      vi.advanceTimersByTime(3000);
       setSelectedTabChapter(state, "genesis", 2);
 
-      jest.advanceTimersByTime(2000);
+      vi.advanceTimersByTime(2000);
       expect(mockSaveReadingHistory).not.toHaveBeenCalled();
 
-      jest.advanceTimersByTime(3000);
+      vi.advanceTimersByTime(3000);
       expect(mockSaveReadingHistory).toHaveBeenCalledTimes(1);
       expect(mockSaveReadingHistory).toHaveBeenLastCalledWith("genesis", 2);
     });
   });
 
   describe("posthog user_chapter_read", () => {
-    let mockPosthogCapture: jest.Mock;
+    let mockPosthogCapture: Mock;
 
     beforeEach(() => {
-      jest.useFakeTimers();
-      mockPosthogCapture = jest.fn();
+      vi.useFakeTimers();
+      mockPosthogCapture = vi.fn();
       (globalThis as any).posthog = { capture: mockPosthogCapture };
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
       delete (globalThis as any).posthog;
     });
 
@@ -579,7 +660,7 @@ describe("createSeedBibleState", () => {
       const state = await createState();
       setSelectedTabChapter(state, "genesis", 1);
 
-      jest.advanceTimersByTime(30_000);
+      vi.advanceTimersByTime(30_000);
 
       expect(mockPosthogCapture).not.toHaveBeenCalled();
     });
@@ -588,10 +669,10 @@ describe("createSeedBibleState", () => {
       const state = await createState();
       setSelectedTabChapter(state, "genesis", 1, "esv");
 
-      jest.advanceTimersByTime(29_999);
+      vi.advanceTimersByTime(29_999);
       expect(mockPosthogCapture).not.toHaveBeenCalled();
 
-      jest.advanceTimersByTime(1);
+      vi.advanceTimersByTime(1);
       expect(mockPosthogCapture).toHaveBeenCalledTimes(1);
       expect(mockPosthogCapture).toHaveBeenCalledWith("user_chapter_read", {
         translationId: "esv",
@@ -604,13 +685,13 @@ describe("createSeedBibleState", () => {
       const state = await createState();
       setSelectedTabChapter(state, "genesis", 1, "esv");
 
-      jest.advanceTimersByTime(20_000);
+      vi.advanceTimersByTime(20_000);
       setSelectedTabChapter(state, "genesis", 2, "esv");
 
-      jest.advanceTimersByTime(29_999);
+      vi.advanceTimersByTime(29_999);
       expect(mockPosthogCapture).not.toHaveBeenCalled();
 
-      jest.advanceTimersByTime(1);
+      vi.advanceTimersByTime(1);
       expect(mockPosthogCapture).toHaveBeenCalledTimes(1);
       expect(mockPosthogCapture).toHaveBeenCalledWith("user_chapter_read", {
         translationId: "esv",
@@ -811,33 +892,35 @@ describe("createSeedBibleState", () => {
 
       setSelectedTabChapter(state, "genesis", "Genesis", 7, "ESV");
 
-      expect((globalThis as any).configBot.tags.pageTitle).toBe(
-        "Genesis 7 - ESV | Seed Bible"
-      );
+      expect(state.app.title.value).toBe("Genesis 7 - ESV | Seed Bible");
     });
 
     it("updates pageTitle when the chapter changes", async () => {
       const state = await createState();
 
       setSelectedTabChapter(state, "genesis", "Genesis", 1, "ESV");
-      expect((globalThis as any).configBot.tags.pageTitle).toBe(
-        "Genesis 1 - ESV | Seed Bible"
-      );
+      expect(state.app.title.value).toBe("Genesis 1 - ESV | Seed Bible");
 
       setSelectedTabChapter(state, "genesis", "Genesis", 2, "ESV");
-      expect((globalThis as any).configBot.tags.pageTitle).toBe(
-        "Genesis 2 - ESV | Seed Bible"
-      );
+      expect(state.app.title.value).toBe("Genesis 2 - ESV | Seed Bible");
     });
 
-    it("prepends an RTL marker for right-to-left translations", async () => {
+    it("does not prepend an RTL marker for right-to-left translations when the UI language is left-to-right", async () => {
+      const state = await createState();
+      setSelectedTabChapter(state, "genesis", "Genesis", 1, "Arabic", "rtl");
+
+      expect(state.app.title.value).toBe(`Genesis 1 - Arabic | Seed Bible`);
+    });
+
+    it("prepends an RTL marker when the UI language is right-to-left", async () => {
       const state = await createState();
       const RTLE_CHAR = "\u202B";
 
-      setSelectedTabChapter(state, "genesis", "Genesis", 1, "Arabic", "rtl");
+      await state.i18n.changeLanguage("ar");
+      setSelectedTabChapter(state, "genesis", "Genesis", 1, "AAB");
 
-      expect((globalThis as any).configBot.tags.pageTitle).toBe(
-        `${RTLE_CHAR}Genesis 1 - Arabic | Seed Bible`
+      expect(state.app.title.value).toBe(
+        `${RTLE_CHAR}Genesis 1 - AAB | الكتاب المقدس للبذور`
       );
     });
   });

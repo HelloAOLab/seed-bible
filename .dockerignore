@@ -1,0 +1,12 @@
+.claude
+.cursor
+.devcontainer
+.github
+.husky
+.pnpm-store
+node_modules
+.git
+.gitignore
+.vscode
+.dockerignore
+Dockerfile*

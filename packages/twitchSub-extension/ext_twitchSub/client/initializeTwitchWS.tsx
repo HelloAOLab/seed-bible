@@ -3,7 +3,8 @@ import {
   type WSTwitchMessage,
   type WSWelcomeMessage,
   type WSNotificationMessage,
-} from "ext_twitchSub.client.interface";
+} from "./interface";
+import { toByteArray } from "base64-js";
 
 interface ChannelChatMessageEvent {
   broadcaster_user_id: string;
@@ -86,7 +87,7 @@ function handleWebSocketMessage(
               config.broadcasterId.value
           ) {
             try {
-              const stateUnit8Array = bytes.fromBase64String(
+              const stateUnit8Array = toByteArray(
                 notification.payload.event.message.text || ""
               );
               const configString = new TextDecoder().decode(stateUnit8Array);
@@ -113,21 +114,22 @@ async function registerEventSubListeners(twitchSubManager: TwitchSubInterface) {
     return;
   }
 
-  const response = await web.post(
+  const response = await fetch(
     "https://api.twitch.tv/helix/eventsub/subscriptions",
-    JSON.stringify({
-      type: "channel.chat.message",
-      version: "1",
-      condition: {
-        broadcaster_user_id: config.channelId.value!,
-        user_id: config.botUserId.value!,
-      },
-      transport: {
-        method: "websocket",
-        session_id: twitchSubManager.websocketSessionID.value,
-      },
-    }),
     {
+      method: "POST",
+      body: JSON.stringify({
+        type: "channel.chat.message",
+        version: "1",
+        condition: {
+          broadcaster_user_id: config.channelId.value!,
+          user_id: config.botUserId.value!,
+        },
+        transport: {
+          method: "websocket",
+          session_id: twitchSubManager.websocketSessionID.value,
+        },
+      }),
       headers: {
         Authorization: "Bearer " + config.accessToken.value!,
         "Client-Id": config.clientId.value!,
@@ -137,7 +139,7 @@ async function registerEventSubListeners(twitchSubManager: TwitchSubInterface) {
   );
 
   if (response.status != 202) {
-    const data = await response.data;
+    const data = await response.json();
     console.error(
       "wsss:- " +
         "Failed to subscribe to channel.chat.message. API call returned status code " +
@@ -145,7 +147,7 @@ async function registerEventSubListeners(twitchSubManager: TwitchSubInterface) {
     );
     console.error("wsss:- " + data);
   } else {
-    const data = await response.data;
+    const data = await response.json();
     console.log(
       "wsss:- " + `Subscribed to channel.chat.message [${data.data[0].id}]`
     );

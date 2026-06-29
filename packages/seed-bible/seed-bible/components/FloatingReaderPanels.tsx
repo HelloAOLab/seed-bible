@@ -1,5 +1,5 @@
 import { useSignal } from "@preact/signals";
-import { useI18n } from "seed-bible.i18n.I18nManager";
+import { useI18n } from "../i18n/I18nManager";
 import {
   ChatView,
   getParticipantAvatar,
@@ -9,18 +9,16 @@ import {
   closeContextMenus,
   ContextMenuItem,
   ContextMenuWithButton,
-} from "seed-bible.components.ContextMenu";
-import {
-  DEFAULT_TRANSLATION_ID,
-  DEFAULT_TRANSLATION_LANGUAGE,
-} from "seed-bible.managers.BibleReadingManager";
+} from "./ContextMenu";
+import { getDefaultTranslationForLanguage } from "../managers/BibleReadingManager";
 import type {
   ChatMessage,
   ChatProvider,
   ChatSession,
-} from "seed-bible.managers.ChatsManager";
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import type { ReaderTab } from "seed-bible.managers.TabsManager";
+} from "../managers/ChatsManager";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import type { ReaderTab } from "../managers/TabsManager";
+import { useEffect, useRef } from "preact/hooks";
 import { translateTitle } from "./Utils";
 import { Avatar } from "./Avatar";
 
@@ -133,8 +131,6 @@ function getOrCreateSearchTargetTab(state: SeedBibleState): ReaderTab {
   return tab;
 }
 
-const { useEffect, useRef } = os.appHooks;
-
 interface FloatingReaderPanelsProps {
   state: SeedBibleState;
 }
@@ -235,10 +231,11 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
     const query = nextQuery.trim();
     const activeTranslationId =
       state.app.currentReadingState.value?.translationId ??
-      DEFAULT_TRANSLATION_ID;
+      getDefaultTranslationForLanguage(state.i18n.defaultLanguage).id;
     const activeLanguage =
       state.app.currentReadingState.value?.tab.readingState.translation.value
-        ?.language ?? DEFAULT_TRANSLATION_LANGUAGE;
+        ?.language ??
+      getDefaultTranslationForLanguage(state.i18n.defaultLanguage).language;
     const requestId = ++latestRequestRef.current;
 
     if (!query) {

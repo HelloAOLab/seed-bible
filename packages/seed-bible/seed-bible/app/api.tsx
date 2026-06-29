@@ -1,14 +1,14 @@
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import {
   getExtensionExports as getManagerExtensionExports,
   registerExtension as registerManagerExtension,
-} from "seed-bible.managers.ExtensionManager";
+} from "../managers/ExtensionManager";
 import type {
   CleanupFunction,
   ExtensionDependencies,
   ExtensionInitializer,
   ExtensionRegistration,
-} from "seed-bible.managers.ExtensionManager";
+} from "../managers/ExtensionManager";
 
 export type { SeedBibleState };
 export type {

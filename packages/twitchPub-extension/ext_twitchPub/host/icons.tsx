@@ -1,4 +1,4 @@
-import type { IconProps } from "ext_twitchPub.host.interface";
+import type { IconProps } from "./interface";
 export const TwitchIcon = (props: IconProps) => {
   return (
     <svg

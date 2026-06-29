@@ -1,8 +1,12 @@
 import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { computed } from "@preact/signals";
-import { registerExtension } from "seed-bible.app.api";
-import { loadMap } from "ext_geoImporter.importer.loadMap";
-import { LocationIcon } from "seed-bible.components.icons";
+import { registerExtension } from "seed-bible";
+import { LocationIcon } from "seed-bible/components";
+import locations from "./locations.json";
+import geoImporterPattern from "virtual:@pattern/geo-importer";
+import { v4 as uuid } from "uuid";
+
+console.log("Loaded locations extension", geoImporterPattern);
 
 interface PlaceData {
   place: string;
@@ -15,11 +19,12 @@ registerExtension({
     const findLocationsInText = (text: string) => {
       text = text.toLowerCase();
       const foundPlaces = [];
-      const locations: Record<string, PlaceData> = tags.locations;
+      // const locations: Record<string, PlaceData> = tags.locations;
       const words = text.split(/[^\w]+/);
-      console.log("words", words);
       for (const word of words) {
-        const place = locations[word.toLowerCase()];
+        const place = (locations as Record<string, PlaceData>)[
+          word.toLowerCase()
+        ];
         if (place) {
           console.log("Found place:", place);
           foundPlaces.push(place);
@@ -71,23 +76,30 @@ registerExtension({
 
     const showPlaceOnMap = async (place: PlaceData) => {
       console.log("Show place!", place);
-      context.panes.openPane({
-        id: "location-map",
-        type: "detached",
-        mapPortal: "map",
-      });
-      mapPortalBot.tags.mapPortalKind = "plane";
-      mapPortalBot.tags.mapPortalGridKind = "plane";
 
       const [url] = getPlaceGeoJsonUrl(place);
-      const data = await web.get(url);
+      const response = await fetch(url);
 
-      if (data.status !== 200) {
-        os.toast("Something went wrong while retrieving the data");
+      if (response.status !== 200) {
+        console.error(
+          "Failed to fetch geojson data for place:",
+          place,
+          response
+        );
         return;
       }
 
-      loadMap(data.data);
+      const data = await response.text();
+
+      context.panes.openPane({
+        type: "detached",
+        mapPortal: "map",
+        pattern: geoImporterPattern,
+        inst: uuid(),
+        query: {
+          mapData: data,
+        },
+      });
     };
 
     yield context.tools.registerVerseToolbarTool({

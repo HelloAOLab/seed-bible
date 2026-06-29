@@ -1,16 +1,26 @@
-import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
+import {
+  computed,
+  computed,
+  effect,
+  signal,
+  type ReadonlySignal,
+} from "@preact/signals";
 import {
   createBibleReadingState,
   type BibleReadingState,
   type VerseDecoration,
   type VerseDecorationInput,
-} from "seed-bible.managers.BibleReadingManager";
-import type { HighlightsManager } from "seed-bible.managers.HighlightsManager";
-import type { BibleDataManager } from "seed-bible.managers.BibleDataManager";
+} from "../managers/BibleReadingManager";
+import type { HighlightsManager } from "../managers/HighlightsManager";
+import type { BibleDataManager } from "../managers/BibleDataManager";
+import type { LoginManager, UserProfile } from "../managers/LoginManager";
+import type { CasualOSManager } from "./OsManager";
 import type {
-  LoginManager,
-  UserProfile,
-} from "seed-bible.managers.LoginManager";
+  SharedDocument,
+  SharedMap,
+} from "@casual-simulation/aux-common/documents/SharedDocument";
+import { v4 as uuid } from "uuid";
+import type { I18nManager } from "../i18n/I18nManager";
 
 export interface ConnectionSessionUserVisual {
   defaultIcon: string;
@@ -33,7 +43,17 @@ export interface ConnectedSessionUser extends SessionConnectionInfo {
   isActive: boolean;
 }
 
-export interface SessionConnectionInfo extends ConnectionInfo {
+export interface SessionConnectionInfo {
+  /**
+   * The ID of the user in the session connection.
+   */
+  userId: string | null;
+
+  /**
+   * The ID of the connection.
+   */
+  connectionId: string;
+
   /**
    * Whether this event is for the current client.
    * This will be true when `client.connectionId` is the same as the `configBot.id` and false otherwise.
@@ -442,6 +462,22 @@ export interface BibleReadingSession {
    */
   removeSharedDecoration: (decorationId: string) => void;
   dispose: () => void;
+
+  localSessionId: ReadonlySignal<string>;
+
+  /**
+   * Returns true if the given session ID (userId or connectionId) is
+   * permitted to navigate in this session. When `allowedNavigators` is
+   * null or empty every participant may navigate.
+   */
+  userCanNavigate: (sessionId: string) => boolean;
+
+  /**
+   * Returns true if the given session ID (userId or connectionId) is
+   * permitted to add decorations in this session. When `allowedDecorators`
+   * is null or empty every participant may decorate.
+   */
+  userCanDecorate: (sessionId: string) => boolean;
 }
 
 function createSessionId(): string {
@@ -459,13 +495,19 @@ function toPositiveIntOrNull(value: unknown): number | null {
 }
 
 async function createBibleReadingSession(
+  os: CasualOSManager,
   dataManager: BibleDataManager,
   loginManager: LoginManager,
   highlightsManager: HighlightsManager,
+  i18nManager: I18nManager,
   id: string,
   defaultOptions?: SessionOptions
 ): Promise<BibleReadingSession> {
-  const readingState = createBibleReadingState(dataManager, highlightsManager);
+  const readingState = createBibleReadingState(
+    dataManager,
+    highlightsManager,
+    i18nManager
+  );
   const document = await os.getSharedDocument(null, id, "session_data");
   const stateMap =
     document.getMap<SessionData[keyof SessionData]>("reading_state");
@@ -484,13 +526,16 @@ async function createBibleReadingSession(
   const connectedUsers = signal<ConnectedSessionUser[]>([]);
   const connectedClients = new Map<string, SessionConnectionInfo>();
   const profileCache = new Map<string, UserProfile>();
-  const localConnectionId =
-    (typeof configBot !== "undefined" ? toStringOrNull(configBot?.id) : null) ??
-    "local";
+  const localConnectionId = os.connectionId;
+  // (typeof configBot !== "undefined" ? toStringOrNull(configBot?.id) : null) ??
+  // "local";
   const decorationOwners = new Map<string, string>();
 
   const currentUser = computed(
     () => connectedUsers.value.find((user) => user.isSelf) ?? null
+  );
+  const localSessionId = computed(
+    () => loginManager.userId.value ?? localConnectionId
   );
 
   if (defaultOptions) {
@@ -519,6 +564,22 @@ async function createBibleReadingSession(
   let pendingRemoteTarget: SessionData | null = null;
   let remoteClientsVersion = 0;
   let applyingRemoteDecorations = false;
+
+  const userCanNavigate = (sessionId: string): boolean => {
+    const { allowedNavigators } = options.value;
+    if (!allowedNavigators || allowedNavigators.length === 0) {
+      return true;
+    }
+    return allowedNavigators.includes(sessionId);
+  };
+
+  const userCanDecorate = (sessionId: string): boolean => {
+    const { allowedDecorators } = options.value;
+    if (!allowedDecorators || allowedDecorators.length === 0) {
+      return true;
+    }
+    return allowedDecorators.includes(sessionId);
+  };
 
   const getSharedDecorationEntries = () => {
     const entries = new Map<
@@ -579,7 +640,6 @@ async function createBibleReadingSession(
         if (currentDecorationIds.has(decorationId)) {
           readingState.removeDecoration(decorationId);
         }
-
         readingState.decorateVerses(
           entry.decoration.bookId,
           entry.decoration.chapterNumber,
@@ -632,7 +692,7 @@ async function createBibleReadingSession(
         return {
           isSelf: client.isSelf,
           connectionId: client.connectionId,
-          sessionId: client.sessionId,
+          // sessionId: client.sessionId,
           userId: effectiveUserId,
           profile,
           visual,
@@ -825,18 +885,8 @@ async function createBibleReadingSession(
       return;
     }
 
-    if (
-      options.value.allowedNavigators &&
-      options.value.allowedNavigators.length > 0
-    ) {
-      // A logged-in user is identified by their userId; an anonymous user
-      // by their connectionId. Combining both into a single key avoids
-      // the bug where a logged-in user in the allow-list was still
-      // blocked because their connectionId wasn't *also* in the list.
-      const myKey = loginManager.userId.value ?? localConnectionId;
-      if (!options.value.allowedNavigators.includes(myKey)) {
-        return;
-      }
+    if (!userCanNavigate(localSessionId.value)) {
+      return;
     }
 
     const nextSessionData = getSessionDataSnapshot(readingState);
@@ -878,22 +928,18 @@ async function createBibleReadingSession(
     void readingState.translationId.value;
     void readingState.bookId.value;
     void readingState.chapterNumber.value;
+    // We need to read the decorations signal before
+    // checking any early-exit conditions, so that this effect re-runs whenever decorations change
+    const currentDecorations = readingState.decorations.value;
 
     if (applyingRemoteDecorations) {
       return;
     }
 
-    if (
-      options.value.allowedDecorators &&
-      options.value.allowedDecorators.length > 0
-    ) {
-      const myKey = loginManager.userId.value ?? localConnectionId;
-      if (!options.value.allowedDecorators.includes(myKey)) {
-        return;
-      }
+    if (!userCanDecorate(localSessionId.value)) {
+      return;
     }
 
-    const currentDecorations = readingState.decorations.value;
     const localDecorations = currentDecorations.filter((decoration) => {
       const owner = decorationOwners.get(decoration.id);
       if (!owner) {
@@ -915,6 +961,7 @@ async function createBibleReadingSession(
     const keysToDelete = localSharedDecorations
       .filter((entry) => !localDecorationIds.has(entry.decoration.id))
       .map((entry) => entry.key);
+
     const decorationsToUpsert = localDecorations.filter((decoration) => {
       const existingDecoration = sharedDecorationEntries.get(
         decoration.id
@@ -1090,6 +1137,9 @@ async function createBibleReadingSession(
     removeSharedDecoration,
     dispose,
     isHost,
+    localSessionId,
+    userCanNavigate,
+    userCanDecorate,
   };
 }
 
@@ -1099,21 +1149,23 @@ export interface SessionsManager {
 }
 
 export function createSessionsManager(
+  os: CasualOSManager,
   dataManager: BibleDataManager,
   loginManager: LoginManager,
-  highlightsManager: HighlightsManager
+  highlightsManager: HighlightsManager,
+  i18nManager: I18nManager
 ): SessionsManager {
   const createSession = async () => {
     const id = createSessionId();
     // Claim host at create time so the settings UI knows which connected
     // user is allowed to change session-wide toggles.
-    const hostUserId =
-      loginManager.userId.value ??
-      (typeof configBot !== "undefined" ? toStringOrNull(configBot?.id) : null);
+    const hostUserId = loginManager.userId.value ?? os.connectionId;
     return await createBibleReadingSession(
+      os,
       dataManager,
       loginManager,
       highlightsManager,
+      i18nManager,
       id,
       { ...DEFAULT_SESSION_OPTIONS, hostUserId }
     );
@@ -1121,9 +1173,11 @@ export function createSessionsManager(
 
   const joinSession = async (id: string) => {
     return await createBibleReadingSession(
+      os,
       dataManager,
       loginManager,
       highlightsManager,
+      i18nManager,
       id
     );
   };

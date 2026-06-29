@@ -8,9 +8,9 @@ import type { MutableRef } from "preact/hooks";
 import {
   handleMenuTriggerKeyDown,
   handleVerticalListKeyNav,
-} from "seed-bible.components.KeyboardNav";
+} from "../components/KeyboardNav";
 
-const { useEffect, useRef } = os.appHooks;
+import { useEffect, useRef } from "preact/hooks";
 
 const activeContextMenuId = signal<string | null>(null);
 let nextContextMenuId = 0;

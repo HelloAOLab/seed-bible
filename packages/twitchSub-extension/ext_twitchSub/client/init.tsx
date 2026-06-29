@@ -1,6 +1,6 @@
 import { effect } from "@preact/signals";
-import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
-import { CreateTwitchSubState } from "ext_twitchSub.client.twitchSubManager";
+import { registerExtension, type SeedBibleState } from "seed-bible";
+import { CreateTwitchSubState } from "./twitchSubManager";
 
 registerExtension({
   id: "ext_twitchSub",

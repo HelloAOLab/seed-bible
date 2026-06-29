@@ -1,23 +1,23 @@
-import { BibleReader } from "seed-bible.components.BibleReader";
-import { BelowReaderToolbar } from "seed-bible.components.BelowReaderToolbar";
-import { CasualOSApp } from "seed-bible.components.CasualOSApp";
-import type { TranslationBookChapter } from "seed-bible.managers.FreeUseBibleAPI";
-import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
-import type { ReaderTab, TabsManager } from "seed-bible.managers.TabsManager";
+import { BibleReader } from "../components/BibleReader";
+import { BelowReaderToolbar } from "../components/BelowReaderToolbar";
+import { CasualOSApp } from "../components/CasualOSApp";
+import type { TranslationBookChapter } from "../managers/FreeUseBibleAPI";
+import type { BibleSelectorState } from "../managers/BibleSelectorManager";
+import type { ReaderTab, TabsManager } from "../managers/TabsManager";
 import type {
+  CasualOSPattern,
   DetachedPaneAnchor,
   Pane,
   PaneLayoutId,
   PanesManager,
-} from "seed-bible.managers.PanesManager";
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import { type ToolsManager } from "seed-bible.managers.BibleToolsManager";
+} from "../managers/PanesManager";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import { type ToolsManager } from "../managers/BibleToolsManager";
 import { batch, effect } from "@preact/signals";
-import { useI18n } from "seed-bible.i18n.I18nManager";
-import { translateTitle } from "seed-bible.components.Utils";
-import { MaterialIcon } from "seed-bible.components.icons";
-
-const { useEffect, useRef, useState } = os.appHooks;
+import { useI18n } from "../i18n/I18nManager";
+import { translateTitle } from "../components/Utils";
+import { MaterialIcon } from "../components/icons";
+import { useEffect, useRef, useState } from "preact/hooks";
 
 // const ATTACHED_PANE_MIN_SIZE_PX = 180;
 
@@ -241,7 +241,9 @@ interface AttachedPaneSizesState {
 interface GridPortalPaneProps {
   portal: string;
   portalType: "grid" | "map";
-  gameContainerCss: string;
+  inst: string;
+  pattern: CasualOSPattern;
+  query: Record<string, string> | null;
 }
 
 const FULLSCREEN_EXIT_BUTTON_CSS = `
@@ -279,104 +281,52 @@ const FULLSCREEN_EXIT_BUTTON_CSS = `
   }
 `;
 
-const GRID_PORTAL_PANE_CSS = `
-  .sb-grid-portal-pane {
-    height: 100%;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    background:
-      radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--sb-primary-color), transparent 80%) 0%, transparent 60%),
-      radial-gradient(circle at 80% 80%, color-mix(in srgb, var(--sb-secondary-color), transparent 60%) 0%, transparent 60%),
-      var(--sb-reader-background);
-  }
-
-  .sb-grid-portal-pane-badge {
-    padding: 4px 10px;
-    border-radius: 999px;
-    border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 45%);
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    font-weight: 700;
-  }
-
-  .sb-grid-portal-pane-name {
-    font-size: 16px;
-    font-weight: 700;
-    color: color-mix(in srgb, var(--sb-font-color), transparent 10%);
-  }
-`;
-
 function GridPortalPane(props: GridPortalPaneProps) {
-  const { portal, portalType, gameContainerCss } = props;
+  const { portal, portalType, pattern, inst } = props;
   const portalTitle = portalType === "map" ? "Map Portal" : "Grid Portal";
+
+  const iframeUrl = new URL("https://ao.bot/");
+
+  iframeUrl.searchParams.set("inst", inst);
+
+  if (portalType === "map") {
+    iframeUrl.searchParams.set("mapPortal", portal);
+  } else if (portalType === "grid") {
+    iframeUrl.searchParams.set("gridPortal", portal);
+  }
+
+  if ("aux" in pattern) {
+    iframeUrl.searchParams.set("patternAux", pattern.aux);
+  } else {
+    iframeUrl.searchParams.set("pattern", pattern.name);
+  }
+
+  if (props.query) {
+    for (const [key, value] of Object.entries(props.query)) {
+      iframeUrl.searchParams.set(key, value);
+    }
+  }
+
+  let allow = "";
+
+  if (import.meta.env.DEV) {
+    allow += "local-network-access";
+  }
 
   return (
     <>
-      <style>{GRID_PORTAL_PANE_CSS}</style>
       <div className="sb-grid-portal-pane">
         <div className="sb-grid-portal-pane-badge">{portalTitle}</div>
         <div className="sb-grid-portal-pane-name">{portal}</div>
       </div>
-      <CasualOSApp id="grid-portal-pane-positioner">
-        <style>{gameContainerCss}</style>
-      </CasualOSApp>
+      <iframe
+        className="sb-grid-portal-pane-iframe"
+        src={iframeUrl.toString()}
+        referrerPolicy={"origin-when-cross-origin"}
+        allow={allow}
+      ></iframe>
     </>
   );
-}
-
-function generateGridPortalContainerCss(
-  bounds: { left: number; top: number; width: number; height: number } | null,
-  borderRadius: string | null
-) {
-  if (!bounds) {
-    return `
-      #app-game-container, .main-content {
-        position: fixed !important;
-        left: 0px !important;
-        top: 0px !important;
-        width: 0px !important;
-        height: 0px !important;
-        border-radius: 0px !important;
-        overflow: hidden !important;
-        opacity: 0 !important;
-        pointer-events: none !important;
-        z-index: 5 !important;
-      }
-    `;
-  }
-
-  return `
-    #app-game-container, .main-content {
-      position: fixed !important;
-      left: ${Math.round(bounds.left)}px !important;
-      top: ${Math.round(bounds.top)}px !important;
-      width: ${Math.round(bounds.width)}px !important;
-      height: ${Math.round(bounds.height)}px !important;
-      border-radius: ${borderRadius || "0px"} !important;
-      overflow: hidden !important;
-      opacity: 1 !important;
-      pointer-events: auto !important;
-      z-index: 5 !important;
-      padding: 6px !important;
-    }
-
-    .vm-iframe-container {
-      position: fixed;
-      width: 100vw;
-      height: 100vh;
-      left: 0;
-      top: 0;
-    }
-
-    .vm-iframe-container.game-view-visible iframe:first-child {
-      pointer-events: auto !important;
-    }
-  `;
 }
 
 interface PaneReaderScrollerProps {
@@ -748,6 +698,74 @@ export function PaneReader(props: PaneReaderScrollerProps) {
     };
   }, [isMobile, readingState]);
 
+  // Keyboard chapter navigation for the selected pane. Left/Right move between
+  // chapters (respecting text direction, like the swipe gesture and toolbar
+  // chevrons), and Up surfaces the search panel. Down is intentionally unbound.
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey
+      ) {
+        return;
+      }
+
+      // Only the selected pane responds, and never while typing in a field.
+      if (state.panes.selectedPaneId.value !== pane.id) {
+        return;
+      }
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.isContentEditable ||
+          ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
+      ) {
+        return;
+      }
+
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        state.sidebar.openSearch();
+        return;
+      }
+
+      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") {
+        return;
+      }
+
+      const chapterData = readingState.chapterData.value;
+      if (!chapterData || readingState.loading.value) {
+        return;
+      }
+
+      // Visual direction: the next chapter sits to the right in LTR and to the
+      // left in RTL, matching the toolbar chevrons and swipe gesture.
+      const isRtl = chapterData.translation.textDirection === "rtl";
+      const loadNext = event.key === (isRtl ? "ArrowLeft" : "ArrowRight");
+      const canNavigate = loadNext
+        ? !!chapterData.nextChapterApiLink
+        : !!chapterData.previousChapterApiLink;
+      if (!canNavigate) {
+        return;
+      }
+
+      event.preventDefault();
+      readingState.clearSelectedVerses();
+      if (loadNext) {
+        void readingState.loadNextChapter();
+      } else {
+        void readingState.loadPreviousChapter();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [readingState, state, pane.id]);
+
   effect(() => {
     void readingState.translationId.value;
     const track = swipeTrackRef.current;
@@ -776,7 +794,14 @@ export function PaneReader(props: PaneReaderScrollerProps) {
         prevChapterPreview,
         nextChapterPreview,
         showMobileSettings,
-        onOpenMobileSettings: () => setShowMobileSettings(true),
+        onOpenMobileSettings: () => {
+          setShowMobileSettings(true);
+          // Teach the settings sheet the first time the user opens it (mirrors
+          // the pane-layout contextual tip). Triggered from the button's own
+          // handler so the tip fires reliably — the modal tour overlay can't be
+          // tapped "through" to the real button.
+          state?.tutorial.startContextual("mobile-settings");
+        },
         onCloseMobileSettings: () => setShowMobileSettings(false),
         onOpenAllSettings: openAllSettings,
         swipeViewportRefCallback,
@@ -808,6 +833,8 @@ export function PaneReader(props: PaneReaderScrollerProps) {
           openSidebar={state.sidebar.openSidebar}
           openSearch={state.sidebar.openSearch}
           currentPane={pane}
+          toast={state.app.toast}
+          openChat={state.sidebar.openChatPanel}
           chats={state.chats}
         />
       )}
@@ -956,9 +983,6 @@ export function PaneLayout(props: PaneLayoutProps) {
     | null
   >(null);
   const paneElementMapRef = useRef(new Map<string, HTMLElement>());
-  const [gridPortalContainerCss, setGridPortalContainerCss] = useState(
-    generateGridPortalContainerCss(null, null)
-  );
   const attachedPanes = panes.filter((pane) => !pane.detached);
   const detachedPanes = panes.filter((pane) => pane.detached);
 
@@ -1199,35 +1223,13 @@ export function PaneLayout(props: PaneLayoutProps) {
           (pane) => pane.gridPortal !== null || pane.mapPortal !== null
         ) ?? null;
       if (!portalPane) {
-        setGridPortalContainerCss(generateGridPortalContainerCss(null, null));
         return;
       }
 
       const paneElement = paneElementMapRef.current.get(portalPane.id);
       if (!paneElement) {
-        setGridPortalContainerCss(generateGridPortalContainerCss(null, null));
         return;
       }
-
-      const targetElement = portalPane.detached
-        ? ((paneElement.querySelector(
-            ".sb-pane-detached-body"
-          ) as HTMLElement | null) ?? paneElement)
-        : paneElement;
-
-      const bounds = targetElement.getBoundingClientRect();
-      const paneStyle = window.getComputedStyle(targetElement);
-      setGridPortalContainerCss(
-        generateGridPortalContainerCss(
-          {
-            left: bounds.left,
-            top: bounds.top,
-            width: bounds.width,
-            height: bounds.height,
-          },
-          paneStyle.borderRadius || "0px"
-        )
-      );
     };
 
     syncGridPortalBounds();
@@ -1289,7 +1291,9 @@ export function PaneLayout(props: PaneLayoutProps) {
             <GridPortalPane
               portal={pane.gridPortal ?? pane.mapPortal ?? ""}
               portalType={pane.mapPortal !== null ? "map" : "grid"}
-              gameContainerCss={gridPortalContainerCss}
+              inst={pane.inst!}
+              pattern={pane.pattern!}
+              query={pane.query}
             />
           ) : pane.component !== null ? (
             <div className="sb-pane-component">
@@ -1435,7 +1439,9 @@ export function PaneLayout(props: PaneLayoutProps) {
               <GridPortalPane
                 portal={pane.gridPortal ?? pane.mapPortal ?? ""}
                 portalType={pane.mapPortal !== null ? "map" : "grid"}
-                gameContainerCss={gridPortalContainerCss}
+                inst={pane.inst!}
+                pattern={pane.pattern!}
+                query={pane.query}
               />
             ) : pane.component !== null ? (
               <div className="sb-pane-component">

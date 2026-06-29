@@ -1,6 +1,6 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`ThemeManager CSS helpers generateThemeCssClasses generates a highlight class for each highlight color 1`] = `
+exports[`ThemeManager CSS helpers > generateThemeCssClasses > generates a highlight class for each highlight color 1`] = `
 ".sb-highlight-yellow {
 background-color: var(--sb-highlight-yellow-color);
 color: var(--sb-highlight-yellow-font-color);
@@ -17,7 +17,7 @@ color: var(--sb-highlight-mint-words-of-jesus-font-color);
  }"
 `;
 
-exports[`ThemeManager CSS helpers generateThemeCssVariables converts theme variables into CSS custom properties 1`] = `
+exports[`ThemeManager CSS helpers > generateThemeCssVariables > converts theme variables into CSS custom properties 1`] = `
 "--sb-primary-color: #111111;
 --sb-primary-font-color: #ffffff;
 --sb-secondary-color: #222222;

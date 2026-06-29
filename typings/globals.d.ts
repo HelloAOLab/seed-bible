@@ -4,22 +4,22 @@ declare global {
     [key: string]: any;
   }
 
-  type Bot = import("./AuxLibraryDefinitions").Bot;
-  type SharedDocument = import("./AuxLibraryDefinitions").SharedDocument;
-  type SharedArray<T> = import("./AuxLibraryDefinitions").SharedArray<T>;
-  type SharedMap<T> = import("./AuxLibraryDefinitions").SharedMap<T>;
-  type ConnectionInfo = import("./AuxLibraryDefinitions").ConnectionInfo;
-  type FocusOnOptions = import("./AuxLibraryDefinitions").FocusOnOptions;
-  type BotTags = import("./AuxLibraryDefinitions").BotTags;
-  type StoredAux = import("./AuxLibraryDefinitions").StoredAux;
+  // type Bot = import("./AuxLibraryDefinitions").Bot;
+  // type SharedDocument = import("./AuxLibraryDefinitions").SharedDocument;
+  // type SharedArray<T> = import("./AuxLibraryDefinitions").SharedArray<T>;
+  // type SharedMap<T> = import("./AuxLibraryDefinitions").SharedMap<T>;
+  // type ConnectionInfo = import("./AuxLibraryDefinitions").ConnectionInfo;
+  // type FocusOnOptions = import("./AuxLibraryDefinitions").FocusOnOptions;
+  // type BotTags = import("./AuxLibraryDefinitions").BotTags;
+  // type StoredAux = import("./AuxLibraryDefinitions").StoredAux;
 
   // Your other specific globals (optional, for better intellisense)
-  const that: any;
-  const authBot: Bot;
-  const configBot: Bot;
-  const gridPortalBot: Bot;
-  const mapPortalBot: Bot;
-  const miniMapPortalBot: Bot;
+  // const that: any;
+  // const authBot: Bot;
+  // const configBot: Bot;
+  // const gridPortalBot: Bot;
+  // const mapPortalBot: Bot;
+  // const miniMapPortalBot: Bot;
 
   const posthog: any;
 }

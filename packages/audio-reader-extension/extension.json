@@ -1,0 +1,621 @@
+{
+  "id": "ext_audioReader",
+  "translations": {
+    "en": {
+      "title": "Audio Reader",
+      "description": "Adds a play button to the reader toolbar that streams the narrated audio for the current chapter.",
+      "toolbarTitle": "Listen",
+      "play": "Play chapter audio",
+      "pause": "Pause chapter audio",
+      "no-audio": "No audio is available for this chapter."
+    },
+    "af": {
+      "title": "Oudio-leser",
+      "description": "Voeg 'n speelknoppie by die leser se nutsbalk wat die vertelde klank vir die huidige hoofstuk stroom.",
+      "toolbarTitle": "Luister",
+      "play": "Speel hoofstuk-klank",
+      "pause": "Onderbreek hoofstuk-klank",
+      "no-audio": "Geen oudio is vir hierdie hoofstuk beskikbaar nie."
+    },
+    "am": {
+      "title": "የድምጽ አንባቢ",
+      "description": "የአሁኑን ምዕራፍ የተተረከው ድምጽ የሚያሰራጭ የአንባቢ መሳሪያ ላይ የማጫወቻ ቁልፍ ያክላል።",
+      "toolbarTitle": "አዳምጥ",
+      "play": "የምዕራፍ ኦዲዮን አጫውት",
+      "pause": "የምዕራፍ ኦዲዮን ለአፍታ አቁም",
+      "no-audio": "ለዚህ ምዕራፍ ምንም አይነት ድምጽ የለም።"
+    },
+    "ar": {
+      "title": "قارئ صوتي",
+      "description": "يضيف زر تشغيل إلى شريط أدوات القارئ لتشغيل الصوت المروي للفصل الحالي.",
+      "toolbarTitle": "يستمع",
+      "play": "تشغيل الصوت الخاص بالفصل",
+      "pause": "إيقاف تشغيل الصوت الخاص بالفصل مؤقتًا",
+      "no-audio": "لا يتوفر ملف صوتي لهذا الفصل."
+    },
+    "az": {
+      "title": "Audio Oxuyucu",
+      "description": "Cari fəsil üçün səslənən səsi yayımlayan oxuyucu alətlər panelinə oxutma düyməsini əlavə edir.",
+      "toolbarTitle": "Dinlə",
+      "play": "Fəsil audiosunu oxudun",
+      "pause": "Fəsil audiosunu dayandırın",
+      "no-audio": "Bu fəsil üçün audio yoxdur."
+    },
+    "be": {
+      "title": "Аўдыёчытэр",
+      "description": "Дадае кнопку прайгравання на панэль інструментаў чытальніка, якая транслюе агучаны аўдыёзапіс бягучага раздзела.",
+      "toolbarTitle": "Слухайце",
+      "play": "Прайграць аўдыё раздзела",
+      "pause": "Прыпыніць аўдыё раздзела",
+      "no-audio": "Аўдыё для гэтага раздзела недаступнае."
+    },
+    "bg": {
+      "title": "Аудио четец",
+      "description": "Добавя бутон за възпроизвеждане към лентата с инструменти на четеца, който предава поточно разказания звук за текущата глава.",
+      "toolbarTitle": "Слушай",
+      "play": "Пусни аудиото на главата",
+      "pause": "Пауза на звука на главата",
+      "no-audio": "Няма наличен аудиозапис за тази глава."
+    },
+    "bn": {
+      "title": "অডিও রিডার",
+      "description": "রিডার টুলবারে একটি প্লে বাটন যোগ করে, যা বর্তমান অধ্যায়ের বর্ণিত অডিও স্ট্রিম করে।",
+      "toolbarTitle": "শুনুন",
+      "play": "অধ্যায়ের অডিও চালান",
+      "pause": "অধ্যায়ের অডিও থামান।",
+      "no-audio": "এই অধ্যায়ের জন্য কোনো অডিও উপলব্ধ নেই।"
+    },
+    "bs": {
+      "title": "Čitač audio zapisa",
+      "description": "Dodaje dugme za reprodukciju na alatnu traku čitača koje strimuje narativni audio za trenutno poglavlje.",
+      "toolbarTitle": "Slušajte",
+      "play": "Reprodukuj audiozapis poglavlja",
+      "pause": "Pauziraj zvuk poglavlja",
+      "no-audio": "Za ovo poglavlje nije dostupan audio zapis."
+    },
+    "ca": {
+      "title": "Lector d'àudio",
+      "description": "Afegeix un botó de reproducció a la barra d'eines del lector que reprodueix en temps real l'àudio narrat del capítol actual.",
+      "toolbarTitle": "Escolta",
+      "play": "Reprodueix l'àudio del capítol",
+      "pause": "Pausa l'àudio del capítol",
+      "no-audio": "No hi ha àudio disponible per a aquest capítol."
+    },
+    "cs": {
+      "title": "Audio čtečka",
+      "description": "Přidá na panel nástrojů čtečky tlačítko přehrávání, které streamuje namluvený zvuk pro aktuální kapitolu.",
+      "toolbarTitle": "Poslouchat",
+      "play": "Přehrát zvuk kapitoly",
+      "pause": "Pozastavit zvuk kapitoly",
+      "no-audio": "Pro tuto kapitolu není k dispozici žádný zvuk."
+    },
+    "cy": {
+      "title": "Darllenydd Sain",
+      "description": "Yn ychwanegu botwm chwarae at far offer y darllenydd sy'n ffrydio'r sain wedi'i hadrodd ar gyfer y bennod gyfredol.",
+      "toolbarTitle": "Gwrandewch",
+      "play": "Chwarae sain y bennod",
+      "pause": "Oedwch sain y bennod",
+      "no-audio": "Nid oes sain ar gael ar gyfer y bennod hon."
+    },
+    "da": {
+      "title": "Lydlæser",
+      "description": "Tilføjer en afspilningsknap til læserværktøjslinjen, der streamer den oplæste lyd for det aktuelle kapitel.",
+      "toolbarTitle": "Lytte",
+      "play": "Afspil lyd fra kapitlet",
+      "pause": "Sæt kapitellyd på pause",
+      "no-audio": "Der er ingen lyd tilgængelig til dette kapitel."
+    },
+    "de": {
+      "title": "Audioleser",
+      "description": "Fügt der Reader-Symbolleiste eine Wiedergabetaste hinzu, die die gesprochene Audioaufnahme des aktuellen Kapitels abspielt.",
+      "toolbarTitle": "Hören",
+      "play": "Kapitel-Audio abspielen",
+      "pause": "Kapitel-Audio pausieren",
+      "no-audio": "Für dieses Kapitel ist keine Audioaufnahme verfügbar."
+    },
+    "el": {
+      "title": "Αναγνώστης ήχου",
+      "description": "Προσθέτει ένα κουμπί αναπαραγωγής στη γραμμή εργαλείων του αναγνώστη που μεταδίδει τον αφηγημένο ήχο για το τρέχον κεφάλαιο.",
+      "toolbarTitle": "Ακούω",
+      "play": "Αναπαραγωγή ήχου κεφαλαίου",
+      "pause": "Παύση ήχου κεφαλαίου",
+      "no-audio": "Δεν υπάρχει διαθέσιμος ήχος για αυτό το κεφάλαιο."
+    },
+    "es": {
+      "title": "Lector de audio",
+      "description": "Agrega un botón de reproducción a la barra de herramientas del lector que reproduce el audio narrado del capítulo actual.",
+      "toolbarTitle": "Escuchar",
+      "play": "Reproducir audio del capítulo",
+      "pause": "Pausar el audio del capítulo",
+      "no-audio": "Este capítulo no dispone de audio."
+    },
+    "et": {
+      "title": "Helilugeja",
+      "description": "Lisab lugeja tööriistaribale esitusnupu, mis voogedastab praeguse peatüki ettelugemist.",
+      "toolbarTitle": "Kuula",
+      "play": "Esita peatüki heli",
+      "pause": "Peata peatüki heli",
+      "no-audio": "Selle peatüki jaoks pole heli saadaval."
+    },
+    "fa": {
+      "title": "خواننده صوتی",
+      "description": "یک دکمه پخش به نوار ابزار خواننده اضافه می‌کند که صدای روایت‌شده برای فصل فعلی را پخش می‌کند.",
+      "toolbarTitle": "گوش دهید",
+      "play": "پخش صدای فصل",
+      "pause": "مکث صدای فصل",
+      "no-audio": "فایل صوتی برای این فصل موجود نیست."
+    },
+    "fi": {
+      "title": "Äänilukija",
+      "description": "Lisää lukijan työkalupalkkiin toistopainikkeen, joka suoratoistaa nykyisen luvun selostetun äänen.",
+      "toolbarTitle": "Kuunnella",
+      "play": "Toista luvun ääni",
+      "pause": "Keskeytä luvun ääni",
+      "no-audio": "Tälle luvulle ei ole saatavilla ääntä."
+    },
+    "fil": {
+      "title": "Mambabasa ng Audio",
+      "description": "Nagdaragdag ng play button sa reader toolbar na nag-i-stream ng narrated audio para sa kasalukuyang kabanata.",
+      "toolbarTitle": "Makinig",
+      "play": "I-play ang audio ng kabanata",
+      "pause": "I-pause ang audio ng kabanata",
+      "no-audio": "Walang audio na magagamit para sa kabanatang ito."
+    },
+    "fr": {
+      "title": "Lecteur audio",
+      "description": "Ajoute un bouton de lecture à la barre d'outils du lecteur permettant d'écouter la narration audio du chapitre en cours.",
+      "toolbarTitle": "Écouter",
+      "play": "Écouter le chapitre audio",
+      "pause": "Mettre en pause l'audio du chapitre",
+      "no-audio": "Aucun enregistrement audio n'est disponible pour ce chapitre."
+    },
+    "fy": {
+      "title": "Audiolêzer",
+      "description": "Foeget in ôfspielknop ta oan de lêzerbalke dy't de fertelde audio foar it hjoeddeiske haadstik streamt.",
+      "toolbarTitle": "Harkje",
+      "play": "Spielje haadstik audio",
+      "pause": "Pauzearje haadstik audio",
+      "no-audio": "Der is gjin audio beskikber foar dit haadstik."
+    },
+    "gl": {
+      "title": "Lector de audio",
+      "description": "Engade un botón de reprodución á barra de ferramentas do lector que reproduce o audio narrado do capítulo actual.",
+      "toolbarTitle": "Escoitar",
+      "play": "Reproducir o audio do capítulo",
+      "pause": "Pausar o audio do capítulo",
+      "no-audio": "Non hai audio dispoñible para este capítulo."
+    },
+    "gn": {
+      "title": "Audio Moñe’ẽrã",
+      "description": "Omoĩ peteĩ botón ñembopu tembipuru’i moñe’ẽrã ryrúpe ombohasáva audio oñemombe’úva kapítulo ko’ag̃aguápe g̃uarã.",
+      "toolbarTitle": "Hendu",
+      "play": "Embopu audio kapítulo rehegua",
+      "pause": "Epytu’u audio kapítulo rehegua",
+      "no-audio": "Ndaipóri audio ko kapítulope g̃uarã."
+    },
+    "gu": {
+      "title": "ઓડિયો રીડર",
+      "description": "રીડર ટૂલબારમાં એક પ્લે બટન ઉમેરે છે જે વર્તમાન પ્રકરણ માટે વર્ણવેલ ઑડિઓને સ્ટ્રીમ કરે છે.",
+      "toolbarTitle": "સાંભળો",
+      "play": "ચેપ્ટર ઑડિઓ ચલાવો",
+      "pause": "પ્રકરણ ઑડિઓ થોભાવો",
+      "no-audio": "આ પ્રકરણ માટે કોઈ ઑડિઓ ઉપલબ્ધ નથી."
+    },
+    "he": {
+      "title": "קורא אודיו",
+      "description": "מוסיף כפתור הפעלה לסרגל הכלים של הקורא שמזרים את השמע המקריין עבור הפרק הנוכחי.",
+      "toolbarTitle": "לְהַקְשִׁיב",
+      "play": "הפעלת אודיו של הפרק",
+      "pause": "השהיית אודיו של הפרק",
+      "no-audio": "אין אודיו זמין לפרק זה."
+    },
+    "hi": {
+      "title": "ऑडियो रीडर",
+      "description": "यह रीडर टूलबार में एक प्ले बटन जोड़ता है जो वर्तमान अध्याय के लिए सुनाई गई ऑडियो को स्ट्रीम करता है।",
+      "toolbarTitle": "सुनना",
+      "play": "अध्याय का ऑडियो चलाएं",
+      "pause": "अध्याय ऑडियो रोकें",
+      "no-audio": "इस अध्याय के लिए कोई ऑडियो उपलब्ध नहीं है।"
+    },
+    "hr": {
+      "title": "Čitač audiozapisa",
+      "description": "Dodaje gumb za reprodukciju na alatnu traku čitača koji struji narativni zvuk za trenutno poglavlje.",
+      "toolbarTitle": "Slušati",
+      "play": "Reproduciraj zvuk poglavlja",
+      "pause": "Pauziraj zvuk poglavlja",
+      "no-audio": "Za ovo poglavlje nije dostupan audio zapis."
+    },
+    "hu": {
+      "title": "Hangolvasó",
+      "description": "Hozzáad egy lejátszás gombot az olvasó eszköztárához, amely az aktuális fejezet narrációját streameli.",
+      "toolbarTitle": "Hallgat",
+      "play": "Fejezet hangjának lejátszása",
+      "pause": "Fejezet hangjának szüneteltetése",
+      "no-audio": "Ehhez a fejezethez nem áll rendelkezésre hanganyag."
+    },
+    "ind": {
+      "title": "Pembaca Audio",
+      "description": "Menambahkan tombol putar ke bilah alat pembaca yang memutar audio narasi untuk bab saat ini.",
+      "toolbarTitle": "Mendengarkan",
+      "play": "Putar audio bab ini",
+      "pause": "Jeda audio bab",
+      "no-audio": "Tidak ada audio yang tersedia untuk bab ini."
+    },
+    "is": {
+      "title": "Hljóðlesari",
+      "description": "Bætir spilunarhnappi við verkfærastikuna fyrir lesandann sem streymir upplesnu hljóði fyrir núverandi kafla.",
+      "toolbarTitle": "Hlustaðu",
+      "play": "Spila hljóðkafla",
+      "pause": "Gera hlé á hljóði kafla",
+      "no-audio": "Ekkert hljóð er tiltækt fyrir þennan kafla."
+    },
+    "it": {
+      "title": "Lettore audio",
+      "description": "Aggiunge un pulsante di riproduzione alla barra degli strumenti del lettore che riproduce l'audio narrato del capitolo corrente.",
+      "toolbarTitle": "Ascoltare",
+      "play": "Ascolta l'audio del capitolo",
+      "pause": "Metti in pausa l'audio del capitolo",
+      "no-audio": "Per questo capitolo non è disponibile l'audio."
+    },
+    "iw": {
+      "title": "קורא אודיו",
+      "description": "מוסיף כפתור הפעלה לסרגל הכלים של הקורא שמזרים את השמע המקריין עבור הפרק הנוכחי.",
+      "toolbarTitle": "לְהַקְשִׁיב",
+      "play": "הפעלת אודיו של הפרק",
+      "pause": "השהיית אודיו של הפרק",
+      "no-audio": "אין אודיו זמין לפרק זה."
+    },
+    "ja": {
+      "title": "音声朗読者",
+      "description": "リーダーのツールバーに再生ボタンを追加し、現在の章のナレーション音声をストリーミング再生します。",
+      "toolbarTitle": "聞く",
+      "play": "章の音声を再生する",
+      "pause": "章の音声を一時停止",
+      "no-audio": "この章には音声がありません。"
+    },
+    "ka": {
+      "title": "აუდიო წამკითხველი",
+      "description": "წამკითხველის ხელსაწყოთა პანელზე ამატებს დაკვრის ღილაკს, რომელიც მიმდინარე თავის მოთხრობილ აუდიოს სტრიმინგს ახდენს.",
+      "toolbarTitle": "მოსმენა",
+      "play": "თავის აუდიოს დაკვრა",
+      "pause": "თავის აუდიოს პაუზა",
+      "no-audio": "ამ თავისთვის აუდიო არ არის ხელმისაწვდომი."
+    },
+    "km": {
+      "title": "កម្មវិធីអានអូឌីយ៉ូ",
+      "description": "បន្ថែមប៊ូតុងចាក់ទៅរបារឧបករណ៍អានដែលចាក់ផ្សាយសំឡេងដែលបាននិទានសម្រាប់ជំពូកបច្ចុប្បន្ន។",
+      "toolbarTitle": "ស្តាប់",
+      "play": "ចាក់​សំឡេង​ជំពូក",
+      "pause": "ផ្អាក​សំឡេង​ជំពូក",
+      "no-audio": "មិនមានសំឡេងសម្រាប់ជំពូកនេះទេ។"
+    },
+    "kn": {
+      "title": "ಆಡಿಯೋ ರೀಡರ್",
+      "description": "ಪ್ರಸ್ತುತ ಅಧ್ಯಾಯಕ್ಕಾಗಿ ನಿರೂಪಿಸಲಾದ ಆಡಿಯೊವನ್ನು ಸ್ಟ್ರೀಮ್ ಮಾಡುವ ರೀಡರ್ ಟೂಲ್‌ಬಾರ್‌ಗೆ ಪ್ಲೇ ಬಟನ್ ಅನ್ನು ಸೇರಿಸುತ್ತದೆ.",
+      "toolbarTitle": "ಆಲಿಸಿ",
+      "play": "ಅಧ್ಯಾಯದ ಆಡಿಯೋ ಪ್ಲೇ ಮಾಡಿ",
+      "pause": "ಅಧ್ಯಾಯದ ಆಡಿಯೋವನ್ನು ವಿರಾಮಗೊಳಿಸಿ",
+      "no-audio": "ಈ ಅಧ್ಯಾಯಕ್ಕೆ ಯಾವುದೇ ಆಡಿಯೋ ಲಭ್ಯವಿಲ್ಲ."
+    },
+    "ko": {
+      "title": "오디오 리더",
+      "description": "현재 챕터의 음성 해설을 재생하는 버튼을 독자 도구 모음에 추가합니다.",
+      "toolbarTitle": "듣다",
+      "play": "챕터 오디오 재생",
+      "pause": "챕터 오디오 일시 정지",
+      "no-audio": "이 장에는 오디오가 제공되지 않습니다."
+    },
+    "ky": {
+      "title": "Аудио окугуч",
+      "description": "Учурдагы бөлүм үчүн баяндалган аудиону агылткан окурмандын куралдар панелине ойнотуу баскычын кошот.",
+      "toolbarTitle": "Угуңуз",
+      "play": "Бөлүмдүн аудиосун ойнотуу",
+      "pause": "Бөлүмдүн аудиосун тындыруу",
+      "no-audio": "Бул бөлүм үчүн аудио жок."
+    },
+    "ln": {
+      "title": "Motangi ya Audio",
+      "description": "Ebakisi bouton ya kobɛta na barre ya bisaleli ya motángi oyo ezali kotinda audio oyo elobelami mpo na mokapo oyo ezali kosalema.",
+      "toolbarTitle": "Koyoka",
+      "play": "Beta audio ya mokapo",
+      "pause": "Pause audio ya mokapo",
+      "no-audio": "Audio moko te ezali mpo na mokapo oyo."
+    },
+    "lo": {
+      "title": "ໂປຣແກຣມອ່ານສຽງ",
+      "description": "ເພີ່ມປຸ່ມຫຼິ້ນໃສ່ແຖບເຄື່ອງມືຜູ້ອ່ານທີ່ຖ່າຍທອດສຽງບັນຍາຍສຳລັບບົດປັດຈຸບັນ.",
+      "toolbarTitle": "ຟັງ",
+      "play": "ຫຼິ້ນສຽງບົດ",
+      "pause": "ຢຸດສຽງບົດໄວ້ຊົ່ວຄາວ",
+      "no-audio": "ບໍ່ມີສຽງສຳລັບບົດນີ້."
+    },
+    "lt": {
+      "title": "Garso skaitytuvas",
+      "description": "Prideda skaitymo įrankių juostoje paleidimo mygtuką, kuris transliuoja dabartinio skyriaus įgarsinimą.",
+      "toolbarTitle": "Klausytis",
+      "play": "Leisti skyriaus garso įrašą",
+      "pause": "Pristabdyti skyriaus garsą",
+      "no-audio": "Šio skyriaus garso įrašas nepasiekiamas."
+    },
+    "lv": {
+      "title": "Audio lasītājs",
+      "description": "Lasītāja rīkjoslai pievieno atskaņošanas pogu, kas straumē pašreizējās nodaļas ierunāto audio.",
+      "toolbarTitle": "Klausīties",
+      "play": "Atskaņot nodaļas audio",
+      "pause": "Pauzēt nodaļas audio",
+      "no-audio": "Šai nodaļai audio nav pieejams."
+    },
+    "mk": {
+      "title": "Аудио читач",
+      "description": "Додава копче за репродукција на лентата со алатки на читачот кое го емитува нарираниот звук за тековното поглавје.",
+      "toolbarTitle": "Слушај",
+      "play": "Пушти аудио од поглавјето",
+      "pause": "Паузирај го аудиото на поглавјето",
+      "no-audio": "Нема достапно аудио за ова поглавје."
+    },
+    "ml": {
+      "title": "ഓഡിയോ റീഡർ",
+      "description": "നിലവിലെ അധ്യായത്തിനായി വിവരിച്ച ഓഡിയോ സ്ട്രീം ചെയ്യുന്ന ഒരു പ്ലേ ബട്ടൺ റീഡർ ടൂൾബാറിലേക്ക് ചേർക്കുന്നു.",
+      "toolbarTitle": "കേൾക്കൂ",
+      "play": "ചാപ്റ്റർ ഓഡിയോ പ്ലേ ചെയ്യുക",
+      "pause": "ചാപ്റ്റർ ഓഡിയോ താൽക്കാലികമായി നിർത്തുക",
+      "no-audio": "ഈ അധ്യായത്തിന് ഓഡിയോ ലഭ്യമല്ല."
+    },
+    "mn": {
+      "title": "Аудио уншигч",
+      "description": "Одоогийн бүлгийн өгүүлсэн аудиог дамжуулдаг уншигчийн хэрэгслийн самбарт тоглуулах товчийг нэмнэ.",
+      "toolbarTitle": "Сонсох",
+      "play": "Бүлгийн аудиог тоглуулах",
+      "pause": "Бүлгийн аудиог түр зогсоох",
+      "no-audio": "Энэ бүлэгт аудио байхгүй байна."
+    },
+    "mr": {
+      "title": "ऑडिओ रीडर",
+      "description": "रीडर टूलबारमध्ये एक प्ले बटण जोडते जे चालू अध्यायाचे कथन केलेले ऑडिओ प्रवाहित करते.",
+      "toolbarTitle": "ऐका",
+      "play": "अध्यायाचा ऑडिओ प्ले करा",
+      "pause": "प्रकरणाचा ऑडिओ थांबवा",
+      "no-audio": "या अध्यायासाठी ऑडिओ उपलब्ध नाही."
+    },
+    "ms": {
+      "title": "Pembaca Audio",
+      "description": "Menambah butang main pada bar alat pembaca yang menstrim audio yang diriwayatkan untuk bab semasa.",
+      "toolbarTitle": "Dengar",
+      "play": "Mainkan audio bab",
+      "pause": "Jeda audio bab",
+      "no-audio": "Tiada audio tersedia untuk bab ini."
+    },
+    "my": {
+      "title": "အသံဖတ်စက်",
+      "description": "လက်ရှိအခန်းအတွက် ဇာတ်ကြောင်းပြောပြထားသော အသံကို တိုက်ရိုက်ထုတ်လွှင့်ပေးသည့် စာဖတ်သူကိရိယာဘားတွင် ဖွင့်ရန်ခလုတ်တစ်ခု ထည့်ပေးသည်။",
+      "toolbarTitle": "နားထောင်ပါ",
+      "play": "အခန်းအသံဖွင့်ပါ",
+      "pause": "အခန်းအသံကို ခေတ္တရပ်ပါ",
+      "no-audio": "ဤအခန်းအတွက် အသံဖိုင် မရှိပါ။"
+    },
+    "nb": {
+      "title": "Lydleser",
+      "description": "Legger til en avspillingsknapp i leserverktøylinjen som strømmer den oppleste lyden for gjeldende kapittel.",
+      "toolbarTitle": "Lytte",
+      "play": "Spill av lyd fra kapittelet",
+      "pause": "Sett lyden av kapittelet på pause",
+      "no-audio": "Det finnes ingen lydfiler for dette kapittelet."
+    },
+    "ne": {
+      "title": "अडियो रिडर",
+      "description": "हालको अध्यायको लागि वर्णन गरिएको अडियो स्ट्रिम गर्ने रिडर टूलबारमा प्ले बटन थप्छ।",
+      "toolbarTitle": "सुन्नुहोस्",
+      "play": "अध्याय अडियो प्ले गर्नुहोस्",
+      "pause": "अध्याय अडियो पज गर्नुहोस्",
+      "no-audio": "यस अध्यायको लागि कुनै अडियो उपलब्ध छैन।"
+    },
+    "nl": {
+      "title": "Audio-voorlezer",
+      "description": "Voegt een afspeelknop toe aan de leeswerkbalk waarmee de gesproken audio van het huidige hoofdstuk kan worden afgespeeld.",
+      "toolbarTitle": "Luisteren",
+      "play": "Audio van hoofdstuk afspelen",
+      "pause": "Pauzeer de audio van dit hoofdstuk",
+      "no-audio": "Voor dit hoofdstuk is geen audio beschikbaar."
+    },
+    "no": {
+      "title": "Lydleser",
+      "description": "Legger til en avspillingsknapp i leserverktøylinjen som strømmer den oppleste lyden for gjeldende kapittel.",
+      "toolbarTitle": "Lytte",
+      "play": "Spill av lyd fra kapittelet",
+      "pause": "Sett lyden av kapittelet på pause",
+      "no-audio": "Det finnes ingen lydfiler for dette kapittelet."
+    },
+    "pa": {
+      "title": "ਆਡੀਓ ਰੀਡਰ",
+      "description": "ਰੀਡਰ ਟੂਲਬਾਰ ਵਿੱਚ ਇੱਕ ਪਲੇ ਬਟਨ ਜੋੜਦਾ ਹੈ ਜੋ ਮੌਜੂਦਾ ਅਧਿਆਇ ਲਈ ਸੁਣਾਏ ਗਏ ਆਡੀਓ ਨੂੰ ਸਟ੍ਰੀਮ ਕਰਦਾ ਹੈ।",
+      "toolbarTitle": "ਸੁਣੋ",
+      "play": "ਚੈਪਟਰ ਆਡੀਓ ਚਲਾਓ",
+      "pause": "ਚੈਪਟਰ ਆਡੀਓ ਰੋਕੋ",
+      "no-audio": "ਇਸ ਅਧਿਆਇ ਲਈ ਕੋਈ ਆਡੀਓ ਉਪਲਬਧ ਨਹੀਂ ਹੈ।"
+    },
+    "pl": {
+      "title": "Czytnik audio",
+      "description": "Dodaje przycisk odtwarzania do paska narzędzi czytnika, który odtwarza strumieniowo narrację audio dla bieżącego rozdziału.",
+      "toolbarTitle": "Słuchać",
+      "play": "Odtwórz rozdział audio",
+      "pause": "Wstrzymaj dźwięk rozdziału",
+      "no-audio": "W tym rozdziale nie ma dostępnej ścieżki dźwiękowej."
+    },
+    "ps": {
+      "title": "آډیو ریډر",
+      "description": "د لوستونکي وسیلې پټې ته د غږولو تڼۍ اضافه کوي چې د اوسني فصل لپاره بیان شوي آډیو جریان کوي.",
+      "toolbarTitle": "واورئ",
+      "play": "د فصل آډیو غږ کړئ",
+      "pause": "د فصل آډیو ودروئ",
+      "no-audio": "د دې فصل لپاره هیڅ غږ شتون نلري."
+    },
+    "pt": {
+      "title": "Leitor de áudio",
+      "description": "Adiciona um botão de reprodução à barra de ferramentas do leitor que transmite o áudio narrado do capítulo atual.",
+      "toolbarTitle": "Ouvir",
+      "play": "Reproduzir áudio do capítulo",
+      "pause": "Pausar o áudio do capítulo",
+      "no-audio": "Não há áudio disponível para este capítulo."
+    },
+    "ro": {
+      "title": "Cititor audio",
+      "description": "Adaugă un buton de redare la bara de instrumente a cititorului care redă în flux sunetul narat pentru capitolul curent.",
+      "toolbarTitle": "Asculta",
+      "play": "Redă audio capitol",
+      "pause": "Întrerupeți sunetul capitolului",
+      "no-audio": "Nu este disponibilă înregistrare audio pentru acest capitol."
+    },
+    "ru": {
+      "title": "Аудиокнига",
+      "description": "Добавляет кнопку воспроизведения на панель инструментов читателя, которая воспроизводит озвученный аудиоматериал для текущей главы.",
+      "toolbarTitle": "Слушать",
+      "play": "Воспроизвести аудиоглаву",
+      "pause": "Приостановить воспроизведение аудио главы",
+      "no-audio": "Аудиоверсия этой главы отсутствует."
+    },
+    "sk": {
+      "title": "Čítačka zvuku",
+      "description": "Pridá na panel s nástrojmi čítačky tlačidlo prehrávania, ktoré streamuje rozprávaný zvuk pre aktuálnu kapitolu.",
+      "toolbarTitle": "Počúvajte",
+      "play": "Prehrať zvuk kapitoly",
+      "pause": "Pozastaviť zvuk kapitoly",
+      "no-audio": "Pre túto kapitolu nie je k dispozícii žiadny zvuk."
+    },
+    "sl": {
+      "title": "Zvočni bralnik",
+      "description": "V orodno vrstico bralnika doda gumb za predvajanje, ki predvaja pripovedovani zvok za trenutno poglavje.",
+      "toolbarTitle": "Poslušaj",
+      "play": "Predvajaj zvok poglavja",
+      "pause": "Začasno ustavi zvok poglavja",
+      "no-audio": "Za to poglavje ni na voljo zvočnega posnetka."
+    },
+    "sq": {
+      "title": "Lexues Audio",
+      "description": "Shton një buton luajtjeje në shiritin e veglave të lexuesit që transmeton audion e rrëfyer për kapitullin aktual.",
+      "toolbarTitle": "Dëgjo",
+      "play": "Luaj audion e kapitullit",
+      "pause": "Ndërprit audion e kapitullit",
+      "no-audio": "Nuk ka audio të disponueshme për këtë kapitull."
+    },
+    "sv": {
+      "title": "Ljudläsare",
+      "description": "Lägger till en uppspelningsknapp i läsarens verktygsfält som streamar det upplästa ljudet för det aktuella kapitlet.",
+      "toolbarTitle": "Lyssna",
+      "play": "Spela upp ljud från kapitlet",
+      "pause": "Pausa kapitelljud",
+      "no-audio": "Inget ljud finns tillgängligt för det här kapitlet."
+    },
+    "sw": {
+      "title": "Kisomaji cha Sauti",
+      "description": "Huongeza kitufe cha kucheza kwenye upau wa vidhibiti wa wasomaji kinachotiririsha sauti iliyosimuliwa kwa sura ya sasa.",
+      "toolbarTitle": "Sikiliza",
+      "play": "Cheza sauti ya sura",
+      "pause": "Sitisha sauti ya sura",
+      "no-audio": "Hakuna sauti inayopatikana kwa sura hii."
+    },
+    "ta": {
+      "title": "ஆடியோ ரீடர்",
+      "description": "தற்போதைய அத்தியாயத்திற்கான விவரிப்பு ஆடியோவை ஒளிபரப்பும் ஒரு ப்ளே பட்டனை ரீடர் டூல்பாரில் சேர்க்கிறது.",
+      "toolbarTitle": "கேளுங்கள்",
+      "play": "அத்தியாயத்தின் ஆடியோவை இயக்கவும்",
+      "pause": "அத்தியாய ஆடியோவை இடைநிறுத்து",
+      "no-audio": "இந்த அத்தியாயத்திற்கு ஒலிவடிவம் இல்லை."
+    },
+    "te": {
+      "title": "ఆడియో రీడర్",
+      "description": "ప్రస్తుత అధ్యాయానికి సంబంధించిన వ్యాఖ్యాన ఆడియోను ప్రసారం చేసే ప్లే బటన్‌ను రీడర్ టూల్‌బార్‌కు జోడిస్తుంది.",
+      "toolbarTitle": "వినండి",
+      "play": "అధ్యాయం ఆడియోను ప్లే చేయండి",
+      "pause": "అధ్యాయం ఆడియోను పాజ్ చేయండి",
+      "no-audio": "ఈ అధ్యాయానికి ఆడియో అందుబాటులో లేదు."
+    },
+    "th": {
+      "title": "เครื่องอ่านเสียง",
+      "description": "เพิ่มปุ่มเล่นลงในแถบเครื่องมือสำหรับโปรแกรมอ่าน เพื่อเล่นเสียงบรรยายสำหรับบทปัจจุบัน",
+      "toolbarTitle": "ฟัง",
+      "play": "เล่นเสียงบท",
+      "pause": "หยุดเสียงบท",
+      "no-audio": "ไม่มีไฟล์เสียงสำหรับบทนี้"
+    },
+    "ti": {
+      "title": "ድምጺ ኣንባቢ",
+      "description": "ኣብቲ ናይ ኣንባቢ መሳርሒ ባር ናይ ምጽዋት መጠወቒ ይውስኽ እሞ ነቲ ዝተዘንተወ ድምጺ ናይቲ ሕጂ ዘሎ ምዕራፍ ይዝርግሕ።",
+      "toolbarTitle": "ስማዕ",
+      "play": "ምዕራፍ ድምጺ ምጽዋት",
+      "pause": "ምዕራፍ ድምጺ ደው ኣቢልካ",
+      "no-audio": "ነዚ ምዕራፍ ዝኸውን ድምጺ የለን።"
+    },
+    "tl": {
+      "title": "Mambabasa ng Audio",
+      "description": "Nagdaragdag ng play button sa reader toolbar na nag-i-stream ng isinalaysay na audio para sa kasalukuyang kabanata.",
+      "toolbarTitle": "Makinig",
+      "play": "I-play ang audio ng kabanata",
+      "pause": "I-pause ang audio ng kabanata",
+      "no-audio": "Walang audio na magagamit para sa kabanatang ito."
+    },
+    "tr": {
+      "title": "Sesli Okuyucu",
+      "description": "Okuyucu araç çubuğuna, geçerli bölümün sesli anlatımını oynatan bir oynatma düğmesi ekler.",
+      "toolbarTitle": "Dinlemek",
+      "play": "Bölüm sesini oynat",
+      "pause": "Bölüm sesini duraklat",
+      "no-audio": "Bu bölüm için ses kaydı mevcut değil."
+    },
+    "ug": {
+      "title": "ئاۋاز ئوقۇغۇچ",
+      "description": "ئوقۇرمەن قورال بالدىقىغا نۆۋەتتىكى بابنىڭ ئاۋازلىق مەزمۇنىنى ئېقىتىدىغان قويۇش كۇنۇپكىسىنى قوشىدۇ.",
+      "toolbarTitle": "ئاڭلاڭ",
+      "play": "بابنىڭ ئاۋازلىق قىسمىنى قويۇش",
+      "pause": "باب ئاۋازىنى توختىتىش",
+      "no-audio": "بۇ باب ئۈچۈن ئاۋاز يوق."
+    },
+    "uk": {
+      "title": "Аудіо-читач",
+      "description": "Додає кнопку відтворення на панель інструментів читача, яка відтворює озвучений аудіозапис поточного розділу.",
+      "toolbarTitle": "Слухати",
+      "play": "Відтворити аудіо розділу",
+      "pause": "Призупинити аудіо розділу",
+      "no-audio": "Для цього розділу немає аудіозапису."
+    },
+    "ur": {
+      "title": "آڈیو ریڈر",
+      "description": "ریڈر ٹول بار میں پلے بٹن شامل کرتا ہے جو موجودہ باب کے لیے بیان کردہ آڈیو کو اسٹریم کرتا ہے۔",
+      "toolbarTitle": "سنو",
+      "play": "باب آڈیو چلائیں۔",
+      "pause": "باب آڈیو کو روکیں۔",
+      "no-audio": "اس باب کے لیے کوئی آڈیو دستیاب نہیں ہے۔"
+    },
+    "uz": {
+      "title": "Audio o'quvchi",
+      "description": "Joriy bob uchun rivoyat qilingan audioni oqimlaydigan o'quvchi asboblar paneliga ijro etish tugmasini qo'shadi.",
+      "toolbarTitle": "Tinglang",
+      "play": "Bob audiosini ijro etish",
+      "pause": "Bob audiosini pauza qilish",
+      "no-audio": "Bu bob uchun audio mavjud emas."
+    },
+    "vi": {
+      "title": "Người đọc sách nói",
+      "description": "Thêm nút phát vào thanh công cụ của trình đọc để phát trực tuyến âm thanh tường thuật của chương hiện tại.",
+      "toolbarTitle": "Nghe",
+      "play": "Nghe đoạn âm thanh của chương",
+      "pause": "Tạm dừng âm thanh chương",
+      "no-audio": "Chương này không có âm thanh."
+    },
+    "zh": {
+      "title": "音频阅读器",
+      "description": "在阅读器工具栏中添加一个播放按钮，用于播放当前章节的旁白音频。",
+      "toolbarTitle": "听",
+      "play": "播放章节音频",
+      "pause": "暂停章节音频",
+      "no-audio": "本章节没有音频。"
+    },
+    "zu": {
+      "title": "Isifundi Somsindo",
+      "description": "Ingeza inkinobho yokudlala kubha yamathuluzi yokufunda esakaza umsindo olandiswayo wesahluko samanje.",
+      "toolbarTitle": "Lalela",
+      "play": "Dlala umsindo wesahluko",
+      "pause": "Misa umsindo wesahluko",
+      "no-audio": "Akukho msindo otholakalayo kulesi sahluko."
+    }
+  }
+}

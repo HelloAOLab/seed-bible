@@ -1,8 +1,8 @@
 export const Typesense = {
-  Client: jest.fn().mockImplementation(() => ({
-    collections: jest.fn().mockReturnThis(),
-    documents: jest.fn().mockReturnThis(),
-    search: jest.fn().mockResolvedValue({ hits: [] }),
+  Client: vi.fn().mockImplementation(() => ({
+    collections: vi.fn().mockReturnThis(),
+    documents: vi.fn().mockReturnThis(),
+    search: vi.fn().mockResolvedValue({ hits: [] }),
   })),
 };
 

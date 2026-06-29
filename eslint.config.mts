@@ -163,6 +163,10 @@ export default defineConfig([
             "animal-grass",
             "animal-potted_plant",
             "animal-nature",
+
+            "terms-of-service-policy",
+            "privacy-policy-policy",
+            "code-of-conduct-policy",
           ],
         },
       ],

@@ -5,11 +5,12 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
-import type { LoginManager } from "seed-bible.managers.LoginManager";
+import type { LoginManager } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
-} from "seed-bible.managers.ProfileConfigSync";
+} from "../managers/ProfileConfigSync";
+import type { NavigationManager } from "./NavigationManager";
 
 export interface BibleThemeVariables {
   primaryColor: string;
@@ -119,21 +120,6 @@ export interface BibleThemeVariables {
    * The cursor that should be displayed for verses.
    */
   verseCursor?: string | null;
-
-  /**
-   * The font family for selected verses. This can be used to differentiate selected verses from unselected verses, but can be customized as needed. If not set, it will default to the verseFontFamily.
-   */
-  selectedVerseFontFamily?: string | null;
-
-  /**
-   * The font color for selected verses. This can be used to differentiate selected verses from unselected verses, but should generally have good contrast against the readerBackground color for readability. If not set, it will default to the verseFontColor.
-   */
-  selectedVerseFontColor?: string | null;
-
-  /**
-   * The background color for selected verses. This can be used to highlight selected verses, but should generally be a light color with good contrast against the selectedVerseFontColor for readability. If not set, selected verses will not have a different background color than unselected verses.
-   */
-  selectedVerseBackgroundColor?: string | null;
 
   /**
    * The text decoration for selected verses (e.g. "underline", "line-through", "none"). This can be used to further differentiate selected verses from unselected verses, but can be customized as needed. If not set, it will default to "none".
@@ -514,15 +500,12 @@ const LIGHT_THEME: BibleTheme = {
 
     chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
     chapterHeadingFontColor: "#333",
-    chapterHeadingFontStyle: "italic",
+    chapterHeadingFontStyle: "normal",
 
-    verseFontFamily: "Newsreader, serif",
+    verseFontFamily: "Plus Jakarta Sans, sans-serif",
     verseFontColor: "#333",
     verseCursor: "pointer",
 
-    selectedVerseFontFamily: "inherit",
-    selectedVerseFontColor: "inherit",
-    selectedVerseBackgroundColor: "inherit",
     selectedVerseBorderBottom: "2px dashed currentColor",
     selectedVerseTextDecoration: "none",
     selectedVerseTextDecorationColor: "currentColor",
@@ -627,76 +610,73 @@ const DARK_THEME: BibleTheme = {
   id: "dark",
   name: "Dark",
   variables: {
-    primaryColor: "#f0a67c",
-    primaryFontColor: "#333",
+    primaryColor: "#e6e6e6",
+    primaryFontColor: "#111111",
 
-    secondaryColor: "#5c463b",
-    secondaryFontColor: "#fff",
+    secondaryColor: "#262626",
+    secondaryFontColor: "#f5f5f5",
 
-    tertiaryColor: "#252a36",
+    tertiaryColor: "#1c1c1c",
 
-    background: "#121621",
+    background: "#0a0a0a",
 
-    sidebarBackground: "#161b27",
+    sidebarBackground: "#0f0f0f",
     sidebarFontFamily: "inherit",
-    sidebarFontColor: "#d7deef",
+    sidebarFontColor: "#e6e6e6",
 
-    readerBackground: "#1a2230",
+    readerBackground: "#121212",
     readerFontFamily: "inherit",
-    readerFontColor: "#d7deef",
+    readerFontColor: "#e6e6e6",
 
-    bookSelectorBackground: "#1d2534",
+    bookSelectorBackground: "#181818",
     bookSelectorFontFamily: "inherit",
-    bookSelectorFontColor: "#d7deef",
+    bookSelectorFontColor: "#e6e6e6",
 
     fontFamily: "Satoshi, system-ui, sans-serif",
-    fontColor: "#d7deef",
+    fontColor: "#e6e6e6",
 
     bookTitleFontFamily: "Newsreader, serif",
-    bookTitleFontColor: "#e7edf9",
+    bookTitleFontColor: "#fafafa",
 
     chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
-    chapterHeadingFontColor: "#d7deef",
-    chapterHeadingFontStyle: "italic",
+    chapterHeadingFontColor: "#e6e6e6",
+    chapterHeadingFontStyle: "normal",
 
-    verseFontFamily: "Newsreader, serif",
-    verseFontColor: "#d7deef",
+    verseFontFamily: "Plus Jakarta Sans, sans-serif",
+    verseFontColor: "#e6e6e6",
     verseCursor: "pointer",
 
-    selectedVerseFontFamily: "inherit",
-    selectedVerseFontColor: "inherit",
-    selectedVerseBackgroundColor: "inherit",
     selectedVerseBorderBottom: "2px dashed currentColor",
     selectedVerseTextDecoration: "none",
     selectedVerseTextDecorationColor: "currentColor",
 
     hebrewSubtitleFontFamily: "Newsreader, serif",
-    hebrewSubtitleFontColor: "#d7deef",
+    hebrewSubtitleFontColor: "#e6e6e6",
     hebrewSubtitleFontStyle: "italic",
 
     readerToolbarBottom: "18px",
     readerToolbarGap: "10px",
     readerToolbarPadding: "8px 20px",
     readerToolbarBorderRadius: "22px",
-    readerToolbarBackground: "#1a2230",
-    readerToolbarBorder: "1px solid rgba(255, 255, 255, 0.08)",
-    readerToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.4)",
+    readerToolbarBackground: "#181818",
+    readerToolbarBorder: "1px solid rgba(255, 255, 255, 0.1)",
+    readerToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.5)",
     readerToolbarZIndex: "99",
     readerToolbarHeight: "50px",
     readerToolbarFloatingButtonTop: "-68px",
     readerToolbarFloatingButtonWidth: "48px",
     readerToolbarFloatingButtonHeight: "48px",
-    readerToolbarFloatingButtonBorder: "1px solid rgba(255, 255, 255, 0.08)",
+    readerToolbarFloatingButtonBorder: "1px solid rgba(255, 255, 255, 0.1)",
     readerToolbarFloatingButtonBorderRadius: "999px",
-    readerToolbarFloatingButtonBackground: "#1a2230",
-    readerToolbarFloatingButtonFontColor: "#d7deef",
-    readerToolbarFloatingButtonBoxShadow: "0 10px 24px rgba(0, 0, 0, 0.4)",
+    readerToolbarFloatingButtonBackground: "#181818",
+    readerToolbarFloatingButtonFontColor: "#e6e6e6",
+    readerToolbarFloatingButtonBoxShadow: "0 10px 24px rgba(0, 0, 0, 0.5)",
 
     verseToolbarGap: "10px",
     verseToolbarPadding: "8px 16px",
     verseToolbarBorderRadius: "10px",
-    verseToolbarBorder: "1px solid rgba(255, 255, 255, 0.08)",
-    verseToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.4)",
+    verseToolbarBorder: "1px solid rgba(255, 255, 255, 0.1)",
+    verseToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.5)",
     verseToolbarZIndex: "100",
     verseToolbarMinHeight: "50px",
 
@@ -712,16 +692,16 @@ const DARK_THEME: BibleTheme = {
     verseToolbarToolsGap: "10px",
     verseToolbarMobileBottom: "18px",
 
-    menuBackground: "#1d2534",
-    menuFontColor: "#d7deef",
+    menuBackground: "#181818",
+    menuFontColor: "#e6e6e6",
 
     toolbarIconInvert: "1",
 
-    readerToolbarFontColor: "#d7deef",
+    readerToolbarFontColor: "#e6e6e6",
     readerToolbarFontFamily: "Satoshi, system-ui, sans-serif",
 
     dividerColor: "rgba(255, 255, 255, 0.1)",
-    shadowColor: "rgba(0, 0, 0, 0.45)",
+    shadowColor: "rgba(0, 0, 0, 0.6)",
 
     tabBorder: "1px solid transparent",
     tabBackground: "inherit",
@@ -735,32 +715,32 @@ const DARK_THEME: BibleTheme = {
     yellow: {
       color: "#fff59d",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#f0a67c",
+      wordsOfJesusFontColor: "#5c5c5c",
     },
     green: {
       color: "#a5d6a7",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#f0a67c",
+      wordsOfJesusFontColor: "#5c5c5c",
     },
     blue: {
       color: "#90caf9",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#f0a67c",
+      wordsOfJesusFontColor: "#5c5c5c",
     },
     pink: {
       color: "#f48fb1",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#f0a67c",
+      wordsOfJesusFontColor: "#5c5c5c",
     },
     purple: {
       color: "#ce93d8",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#f0a67c",
+      wordsOfJesusFontColor: "#5c5c5c",
     },
     orange: {
       color: "#ffcc80",
       fontColor: "#333",
-      wordsOfJesusFontColor: "#f0a67c",
+      wordsOfJesusFontColor: "#5c5c5c",
     },
   },
 };
@@ -787,8 +767,6 @@ export type ThemeColorKey =
   | "bookTitleFontColor"
   | "chapterHeadingFontColor"
   | "verseFontColor"
-  | "selectedVerseFontColor"
-  | "selectedVerseBackgroundColor"
   | "selectedVerseTextDecorationColor"
   | "hebrewSubtitleFontColor"
   | "readerToolbarBackground"
@@ -857,11 +835,6 @@ export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
     id: "selection",
     title: "Verse selection",
     fields: [
-      { key: "selectedVerseFontColor", label: "Selected verse text" },
-      {
-        key: "selectedVerseBackgroundColor",
-        label: "Selected verse background",
-      },
       {
         key: "selectedVerseTextDecorationColor",
         label: "Selected verse decoration",
@@ -1126,26 +1099,31 @@ export interface ThemeManager {
 //   },
 // };
 
-export function createTheme(login: LoginManager): ThemeManager {
+export function createTheme(
+  login: LoginManager,
+  navigation: NavigationManager
+): ThemeManager {
   const themes = signal<BibleTheme[]>([LIGHT_THEME, DARK_THEME]);
+
+  const url = navigation.currentUrl.value;
 
   const readThemeId = () =>
     parseThemeId(
       getProfileConfigValue(login.profile.value, PROFILE_THEME_ID) ??
-        configBot.tags[TAG_THEME_ID],
+        url.searchParams.get(TAG_THEME_ID),
       DEFAULT_THEME_ID
     );
 
   const readCustomOverrides = () =>
     parseCustomTheme(
       getProfileConfigValue(login.profile.value, PROFILE_CUSTOM_THEME) ??
-        configBot.tags[TAG_CUSTOM_THEME]
+        url.searchParams.get(TAG_CUSTOM_THEME)
     );
 
   const readHighlightOverrides = () =>
     parseHighlightOverrides(
       getProfileConfigValue(login.profile.value, PROFILE_CUSTOM_HIGHLIGHTS) ??
-        configBot.tags[TAG_CUSTOM_HIGHLIGHTS]
+        url.searchParams.get(TAG_CUSTOM_HIGHLIGHTS)
     );
 
   const selectedThemeId = signal<string>(readThemeId());
@@ -1177,48 +1155,15 @@ export function createTheme(login: LoginManager): ThemeManager {
     )
   );
 
-  os.addBotListener(configBot, "onBotChanged", (that: unknown) => {
-    const changedTagsSource =
-      that && typeof that === "object" && "tags" in that
-        ? (that as { tags?: unknown }).tags
-        : null;
-    const changedTags = Array.isArray(changedTagsSource)
-      ? changedTagsSource
-      : [];
-
-    if (changedTags.includes(TAG_THEME_ID)) {
-      selectedThemeId.value = parseThemeId(
-        configBot.tags[TAG_THEME_ID],
-        DEFAULT_THEME_ID
-      );
-    }
-    if (changedTags.includes(TAG_CUSTOM_THEME)) {
-      customOverrides.value = parseCustomTheme(
-        configBot.tags[TAG_CUSTOM_THEME]
-      );
-    }
-    if (changedTags.includes(TAG_CUSTOM_HIGHLIGHTS)) {
-      customHighlightOverrides.value = parseHighlightOverrides(
-        configBot.tags[TAG_CUSTOM_HIGHLIGHTS]
-      );
-    }
-  });
-
   const setTheme = (themeId: string) => {
     if (themes.value.some((theme) => theme.id === themeId)) {
       selectedThemeId.value = themeId;
-      configBot.tags[TAG_THEME_ID] = themeId;
       saveProfileConfigValue(login, PROFILE_THEME_ID, themeId);
     }
   };
 
   const writeOverrides = (next: ThemeOverrides) => {
     customOverrides.value = next;
-    if (Object.keys(next).length === 0) {
-      configBot.tags[TAG_CUSTOM_THEME] = "";
-    } else {
-      configBot.tags[TAG_CUSTOM_THEME] = JSON.stringify(next);
-    }
     saveProfileConfigValue(login, PROFILE_CUSTOM_THEME, next);
   };
 
@@ -1238,11 +1183,6 @@ export function createTheme(login: LoginManager): ThemeManager {
 
   const writeHighlightOverrides = (next: HighlightOverrides) => {
     customHighlightOverrides.value = next;
-    if (Object.keys(next).length === 0) {
-      configBot.tags[TAG_CUSTOM_HIGHLIGHTS] = "";
-    } else {
-      configBot.tags[TAG_CUSTOM_HIGHLIGHTS] = JSON.stringify(next);
-    }
     saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHTS, next);
   };
 

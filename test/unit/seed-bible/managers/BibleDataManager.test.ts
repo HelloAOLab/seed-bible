@@ -16,20 +16,20 @@ import {
   translations,
   type WebResponseMap,
 } from "./testUtils/mockBibleApiData";
+import type { Mock } from "vitest";
 
 const ALT_ENDPOINT = "https://alt-two.example";
 
-let webGetMock: jest.Mock;
+let webGetMock: Mock;
+const originalFetch = globalThis.fetch;
 
 beforeEach(() => {
-  webGetMock = jest.fn();
-  (globalThis as any).web = {
-    get: webGetMock,
-  };
+  webGetMock = vi.fn();
+  globalThis.fetch = webGetMock;
 });
 
 afterEach(() => {
-  delete (globalThis as any).web;
+  globalThis.fetch = originalFetch;
 });
 
 function setWebResponses(responses: WebResponseMap): void {
@@ -61,14 +61,6 @@ function createAltNivTranslation(): Translation {
 }
 
 describe("createBibleDataManager", () => {
-  it("defaults endpoints to the private helloao endpoint", () => {
-    const manager = createBibleDataManager();
-
-    expect(manager.endpoints.value).toEqual(["https://vmfnri.helloao.org/"]);
-    expect(manager.availableTranslations.value).toEqual([]);
-    expect(manager.translationBooks.value.size).toBe(0);
-  });
-
   it("exposes the underlying api instance", () => {
     const api = new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT);
     const manager = createBibleDataManager(api);

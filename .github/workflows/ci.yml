@@ -13,8 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [20.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+        node-version: [24.x]
 
     steps:
       - uses: actions/checkout@v4
@@ -22,6 +21,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+      - uses: oven-sh/setup-bun@v2
       - name: Install
         run: |
           corepack enable
@@ -36,14 +36,10 @@ jobs:
       - name: Test
         run: |
           pnpm test
-      - name: Package
+      - name: Build
         run: |
-          pnpm package
-      - name: Check AUXes
-        run: |
-          pnpm check:aux
-      - name: Upload AUXes
-        uses: actions/upload-artifact@v4
+          pnpm build
+      - uses: actions/upload-artifact@v7
         with:
-          path: "dist/*.aux"
-          if-no-files-found: error
+          name: "client-stats.html"
+          path: "./standalone/dist/client/stats.html"

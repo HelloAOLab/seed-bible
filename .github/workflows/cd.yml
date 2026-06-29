@@ -1,68 +1,187 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
-name: Continous Deployment
+# Continuous Deployment
+#
+# Builds the client + SSR bundles for the pushed branch and publishes them to
+# S3, then atomically flips the branch's live pointer. The long-running host
+# server (deployed separately from `main`) picks up the new build on its next
+# pointer read. Each branch+version deployment gets its OWN copy of its
+# content-hashed assets under `branches/<branch>/<buildId>/assets/`, alongside
+# that build's server.mjs / index.html — so assets are never shared across
+# branches. The asset URL (Vite `base`) is namespaced with the branch + build id
+# at build time so each deployment's HTML resolves to its own asset copy.
+name: Continuous Deployment
 
 on:
   push:
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+# Cancel an in-flight deploy for the same branch when a newer commit lands.
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: true
 
+permissions:
+  contents: read
+  id-token: write # for AWS OIDC
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
+        node-version: [24.x]
+    env:
+      ASSET_BASE_URL: ${{ vars.ASSET_BASE_URL }} # e.g. https://assets.seedbible.com/
+      S3_BUCKET: ${{ secrets.DEPLOY_BUCKET }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
     steps:
       - uses: actions/checkout@v4
+
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+      - uses: oven-sh/setup-bun@v2
+
       - name: Install
         run: |
           corepack enable
           pnpm install
+
+      # ─── Quality gates (same as CI) ─────────────────────────────────────────
+      - name: Lint
+        run: pnpm lint
       - name: Check TypeScript
-        run: |
-          pnpm check:ts
+        run: pnpm check:ts
       - name: Test
+        run: pnpm test
+
+      # ─── Resolve identifiers (before the build) ─────────────────────────────
+      # The branch + build id are needed at build time so Vite can namespace the
+      # asset URLs (`base`) per deployment.
+      - name: Compute branch + build id
+        id: ids
         run: |
-          pnpm test
-      - name: Package
-        run: |
-          pnpm package
-      - name: Check AUXes
-        run: |
-          pnpm check:aux
-      - name: Upload AUXes
-        uses: actions/upload-artifact@v4
-        with:
-          path: "dist/*.aux"
-          if-no-files-found: error
-      - name: Publish SeedBible Pattern
-        run: |
-          if [[ "$BRANCH_NAME" == "develop" ]]; then
-            PATTERN_NAME="SeedBibleDev";
-            pnpm pattern publish-seed-bible -p "$PATTERN_PREFIX$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --ext-record-key "$EXTENSION_RECORD_KEY" --no-save-meta --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID";
-          elif [[ "$BRANCH_NAME" =~ ^"releases/ao.bot" ]]; then
-            PATTERN_NAME=${BRANCH_NAME:9};
-            pnpm pattern publish "ao.bot" -p "$PATTERN_PREFIX$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID";
-          elif [[ "$BRANCH_NAME" =~ ^"releases/" ]]; then
-            PATTERN_NAME=${BRANCH_NAME:9};
-            pnpm pattern publish-seed-bible -p "$PATTERN_PREFIX$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --ext-record-key "$EXTENSION_RECORD_KEY" --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID";
-          else
-            PATTERN_NAME="SeedBibleDev-branch-${BRANCH_NAME}"
-            PATTERN_NAME=$(echo "$PATTERN_NAME" | sed "s/\//_/g")
-            pnpm pattern publish-seed-bible -p "$PATTERN_PREFIX$PATTERN_NAME" --session-key "$SESSION_KEY" --record-key "$PATTERN_RECORD_KEY" --ext-record-key "$EXTENSION_RECORD_KEY" --no-save-meta --telegram-bot-token "$TELEGRAM_BOT_TOKEN" --telegram-chat-id "$TELEGRAM_CHAT_ID";
-          fi
+          RAW="${{ github.head_ref || github.ref_name }}"
+          BRANCH=$(echo "$RAW" | sed 's/\//_/g')
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "build_id=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+      # ─── Build client + SSR bundles ─────────────────────────────────────────
+      # ASSET_BASE_URL is the CDN root; DEPLOY_BRANCH/DEPLOY_BUILD_ID namespace
+      # the hashed chunks under branches/<branch>/<buildId>/assets/, so each
+      # deployment references its own copy.
+      - name: Build
         env:
-          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
-          SESSION_KEY: ${{ secrets.SESSION_KEY }}
+          DEPLOY_BRANCH: ${{ steps.ids.outputs.branch }}
+          DEPLOY_BUILD_ID: ${{ steps.ids.outputs.build_id }}
+          PATTERN_SESSION_KEY: ${{ secrets.SESSION_KEY }}
           PATTERN_RECORD_KEY: ${{ secrets.RECORD_KEY }}
-          EXTENSION_RECORD_KEY: ${{ secrets.EXTENSION_RECORD_KEY }}
-          PATTERN_PREFIX: ${{ vars.PATTERN_PREFIX }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: pnpm build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      # ─── Sync this deployment's content-hashed assets ───────────────────────
+      # Each branch+version gets its own copy under branches/<branch>/<buildId>/
+      # assets/. Filenames are content-hashed and the prefix is unique per build,
+      # so a long immutable cache is safe. No --size-only: there is no
+      # cross-branch dedup anymore; the prefix is written once per build.
+      - name: Sync hashed assets
+        env:
+          BRANCH: ${{ steps.ids.outputs.branch }}
+          BUILD_ID: ${{ steps.ids.outputs.build_id }}
+        run: |
+          aws s3 sync standalone/dist/client/assets \
+            "s3://$S3_BUCKET/branches/$BRANCH/$BUILD_ID/assets" \
+            --cache-control "public, max-age=31536000, immutable"
+
+      # PWA shell files (sw.js, registerSW.js, manifest.webmanifest, workbox-*)
+      # are emitted only by the root (main) build and live at the bucket root so
+      # the service worker keeps a stable, root-scoped URL across deploys. The SW
+      # + its registration script must revalidate so update checks work; the
+      # remaining public files get a short cache.
+      - name: Sync PWA shell + public files (main only)
+        if: ${{ steps.ids.outputs.branch == 'main' }}
+        run: |
+          aws s3 cp standalone/dist/client/sw.js "s3://$S3_BUCKET/sw.js" \
+            --cache-control "no-cache" || true
+          aws s3 cp standalone/dist/client/registerSW.js "s3://$S3_BUCKET/registerSW.js" \
+            --cache-control "no-cache" || true
+          aws s3 sync standalone/dist/client "s3://$S3_BUCKET" \
+            --exclude "assets/*" --exclude "index.html" --exclude ".vite/*" \
+            --exclude "sw.js" --exclude "registerSW.js" \
+            --cache-control "public, max-age=300"
+
+      # ─── Upload this build's server bundle + manifest ───────────────────────
+      - name: Upload build artifacts
+        env:
+          BRANCH: ${{ steps.ids.outputs.branch }}
+          BUILD_ID: ${{ steps.ids.outputs.build_id }}
+        run: |
+          DEST="s3://$S3_BUCKET/branches/$BRANCH/$BUILD_ID"
+          aws s3 cp standalone/dist/server/entry-ssr.js "$DEST/server.mjs" \
+            --cache-control "private, no-cache"
+          aws s3 cp standalone/dist/client/.vite/manifest.json "$DEST/client-manifest.json" \
+            --cache-control "private, no-cache"
+          aws s3 cp standalone/dist/client/index.html "$DEST/index.html" \
+            --cache-control "private, no-cache"
+
+      # ─── Atomically flip the live pointer (LAST write) ──────────────────────
+      - name: Flip pointer
+        env:
+          BRANCH: ${{ steps.ids.outputs.branch }}
+          BUILD_ID: ${{ steps.ids.outputs.build_id }}
+        run: |
+          printf '{"buildId":"%s","commit":"%s","deployedAt":"%s"}' \
+            "$BUILD_ID" "${{ github.sha }}" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            > current.json
+          aws s3 cp current.json "s3://$S3_BUCKET/branches/$BRANCH/current.json" \
+            --cache-control "no-cache"
+
+      # ─── Tell the host to drop its cached pointer immediately ───────────────
+      - name: Invalidate host pointer cache
+        run: |
+          if [ "$BRANCH" = "main" ]; then
+            HOST_INVALIDATE_URL="https://prod.seedbible.org"
+          else
+            HOST_INVALIDATE_URL="https://alpha.seedbible.org"
+          fi
+          curl -fsS -X POST \
+            "${{ HOST_INVALIDATE_URL }}?branch=${{ steps.ids.outputs.branch }}" \
+            || echo "invalidate ping failed (non-fatal)"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: "client-stats.html"
+          path: "./standalone/dist/client/stats.html"
+      # ─── Notify Telegram that the deployment succeeded ──────────────────────
+      # No-ops when the TELEGRAM_* secrets are unset (see lib/telegram.ts).
+      - name: Notify Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          BRANCH: ${{ steps.ids.outputs.branch }}
+          BUILD_ID: ${{ steps.ids.outputs.build_id }}
+        run: |
+          if [ "$BRANCH" = "main" ]; then
+            URL="https://prod.seedbible.org"
+          else
+            URL="https://alpha.seedbible.org/b/$BRANCH/$BUILD_ID"
+          fi
+          pnpm notify deployment \
+            --branch "$BRANCH" \
+            --url "$URL" \
+            --version "$BUILD_ID"
+      - name: Summary
+        env:
+          BRANCH: ${{ steps.ids.outputs.branch }}
+          BUILD_ID: ${{ steps.ids.outputs.build_id }}
+        run: |
+          if [ "$BRANCH" = "main" ]; then
+            echo "Deployed **main** to the site root." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Deployed branch **$BRANCH** → \`https://alpha.seedbible.org/b/$BRANCH/$BUILD_ID\`" >> "$GITHUB_STEP_SUMMARY"
+          fi

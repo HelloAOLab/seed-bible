@@ -4,16 +4,28 @@ import {
   getUserAnimalVisual,
   type BibleReadingSession,
 } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
-import { createBibleReadingState } from "seed-bible.managers.BibleReadingManager";
+import { createBibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type {
   VerseDecoration,
   VerseDecorationInput,
-} from "seed-bible.managers.BibleReadingManager";
-import type { UserProfile } from "seed-bible.managers.LoginManager";
+} from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
+import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
+import type { Mock } from "vitest";
+import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
+import {
+  createI18nManager,
+  type I18nManager,
+} from "@packages/seed-bible/seed-bible/i18n";
+import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 
-jest.mock("seed-bible.managers.BibleReadingManager", () => ({
-  createBibleReadingState: jest.fn(),
+vi.mock("@packages/seed-bible/seed-bible/managers/BibleReadingManager", () => ({
+  createBibleReadingState: vi.fn(),
+}));
+
+vi.mock("uuid", () => ({
+  v4: vi.fn(),
 }));
 
 type MockChangesSubscriber = () => void;
@@ -32,7 +44,7 @@ function createMockRemoteClientsObservable() {
   const subscribers = new Set<MockRemoteClientSubscriber>();
 
   return {
-    subscribe: jest.fn((handler: MockRemoteClientSubscriber) => {
+    subscribe: vi.fn((handler: MockRemoteClientSubscriber) => {
       subscribers.add(handler);
       return {
         unsubscribe: () => subscribers.delete(handler),
@@ -52,8 +64,8 @@ function createMockSharedMap(initial: Record<string, unknown> = {}) {
   let emitOnSet = false;
 
   const map = {
-    get: jest.fn((key: string) => store.get(key)),
-    set: jest.fn((key: string, value: unknown) => {
+    get: vi.fn((key: string) => store.get(key)),
+    set: vi.fn((key: string, value: unknown) => {
       store.set(key, value);
       if (emitOnSet) {
         for (const subscriber of subscribers) {
@@ -61,7 +73,7 @@ function createMockSharedMap(initial: Record<string, unknown> = {}) {
         }
       }
     }),
-    delete: jest.fn((key: string) => {
+    delete: vi.fn((key: string) => {
       store.delete(key);
       if (emitOnSet) {
         for (const subscriber of subscribers) {
@@ -69,7 +81,7 @@ function createMockSharedMap(initial: Record<string, unknown> = {}) {
         }
       }
     }),
-    forEach: jest.fn(
+    forEach: vi.fn(
       (callback: (value: unknown, key: string, map: unknown) => void) => {
         for (const [key, value] of store.entries()) {
           callback(value, key, map);
@@ -77,7 +89,7 @@ function createMockSharedMap(initial: Record<string, unknown> = {}) {
       }
     ),
     changes: {
-      subscribe: jest.fn((handler: MockChangesSubscriber) => {
+      subscribe: vi.fn((handler: MockChangesSubscriber) => {
         subscribers.add(handler);
         return {
           unsubscribe: () => subscribers.delete(handler),
@@ -105,7 +117,7 @@ function createMockReadingState() {
   const chapterData = signal<any>(null);
   const decorations = signal<VerseDecoration[]>([]);
 
-  const decorateVerses = jest.fn(
+  const decorateVerses = vi.fn(
     (
       nextBookId: string,
       nextChapterNumber: number,
@@ -132,7 +144,7 @@ function createMockReadingState() {
     }
   );
 
-  const removeDecoration = jest.fn((decorationId: string) => {
+  const removeDecoration = vi.fn((decorationId: string) => {
     decorations.value = decorations.value.filter(
       (decoration) => decoration.id !== decorationId
     );
@@ -150,7 +162,7 @@ function createMockReadingState() {
     error: signal<string | null>(null),
     decorateVerses,
     removeDecoration,
-    selectTranslationAndChapter: jest.fn(
+    selectTranslationAndChapter: vi.fn(
       async (
         nextTranslationId: string,
         nextBookId: string,
@@ -225,38 +237,49 @@ function deferred<T>() {
 }
 
 describe("SessionsManager", () => {
-  let getSharedDocumentMock: jest.Mock;
+  let getSharedDocumentMock: Mock;
   let mockMap: ReturnType<typeof createMockSharedMap>;
   let mockOptionsMap: ReturnType<typeof createMockSharedMap>;
   let mockDecorationsMap: ReturnType<typeof createMockSharedMap>;
   let mockRemoteClients: ReturnType<typeof createMockRemoteClientsObservable>;
   let mockDocument: {
-    getMap: jest.Mock;
-    transact: jest.Mock;
-    unsubscribe: jest.Mock;
+    getMap: Mock;
+    transact: Mock;
+    unsubscribe: Mock;
     remoteClients: {
-      subscribe: jest.Mock;
+      subscribe: Mock;
     };
   };
   let mockDataManager: Record<string, never>;
   let mockLoginManager: {
-    getUserProfile: jest.Mock;
+    getUserProfile: Mock;
     userId: ReturnType<typeof signal<string | null>>;
     profile: ReturnType<typeof signal<UserProfile | null>>;
   };
   let mockUserProfilesMap: ReturnType<typeof createMockSharedMap>;
   let mockHighlightsManager: {
-    getChapterHighlights: jest.Mock;
+    getChapterHighlights: Mock;
   };
+  let uuidCount = 0;
+  let uuid: Mock;
+  let i18n: I18nManager;
 
-  beforeEach(() => {
+  let os: CasualOSManager;
+
+  beforeEach(async () => {
+    const { v4: uuidMock } = await vi.importMock("uuid");
+    uuid = uuidMock as Mock;
+    uuid.mockImplementation(() => `uuid-${uuidCount++}`);
+    uuid.mockReturnValueOnce("test-config-bot-id");
+
+    os = CasualOSManager();
     mockMap = createMockSharedMap();
     mockOptionsMap = createMockSharedMap();
     mockDecorationsMap = createMockSharedMap();
     mockUserProfilesMap = createMockSharedMap();
     mockRemoteClients = createMockRemoteClientsObservable();
     mockDocument = {
-      getMap: jest.fn((name: string) => {
+      getMap: vi.fn((name: string) => {
         if (name === "options") {
           return mockOptionsMap;
         }
@@ -271,52 +294,50 @@ describe("SessionsManager", () => {
 
         return mockMap;
       }),
-      transact: jest.fn((callback: () => void) => callback()),
-      unsubscribe: jest.fn(),
+      transact: vi.fn((callback: () => void) => callback()),
+      unsubscribe: vi.fn(),
       remoteClients: {
         subscribe: mockRemoteClients.subscribe,
       },
     };
 
-    getSharedDocumentMock = jest.fn().mockResolvedValue(mockDocument);
+    getSharedDocumentMock = vi
+      .spyOn(os, "getSharedDocument")
+      .mockResolvedValue(mockDocument as unknown as SharedDocument);
     mockDataManager = {};
     mockLoginManager = {
-      getUserProfile: jest.fn(async (userId: string) => ({
+      getUserProfile: vi.fn(async (userId: string) => ({
         name: `Profile ${userId}`,
       })),
       userId: signal<string | null>(null),
       profile: signal<UserProfile | null>(null),
     };
     mockHighlightsManager = {
-      getChapterHighlights: jest
-        .fn()
-        .mockReturnValue(signal({ highlights: [] })),
+      getChapterHighlights: vi.fn().mockReturnValue(signal({ highlights: [] })),
     };
+    i18n = createI18nManager(createNavigationManager(), ["en"]);
 
-    (globalThis as any).os = {
-      getSharedDocument: getSharedDocumentMock,
-    };
-
-    (createBibleReadingState as jest.Mock).mockImplementation(() =>
+    (createBibleReadingState as Mock).mockImplementation(() =>
       createMockReadingState()
     );
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("createSession() creates a session with a UUID and loads session_data in a public inst", async () => {
-    const spy = jest.spyOn(globalThis, "uuid").mockReturnValue("123");
-
+    uuid.mockReturnValueOnce("123");
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.createSession();
 
-    expect(spy).toHaveBeenCalled();
+    // expect(spy).toHaveBeenCalled();
     expect(getSharedDocumentMock).toHaveBeenCalledWith(
       null,
       "session-123",
@@ -327,9 +348,11 @@ describe("SessionsManager", () => {
 
   it("createSession() stores the default session options in the options map", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
 
     const session = await manager.createSession();
@@ -348,9 +371,11 @@ describe("SessionsManager", () => {
 
   it("joinSession(id) loads and returns a session with the given ID", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -364,9 +389,11 @@ describe("SessionsManager", () => {
 
   it("joinSession(id) does not set default options in the options map", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
 
     const session = await manager.joinSession("group-abc");
@@ -402,9 +429,11 @@ describe("SessionsManager", () => {
     });
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
 
     const session = await manager.joinSession("group-abc");
@@ -421,9 +450,11 @@ describe("SessionsManager", () => {
 
   it("updates the options signal when the shared options map changes", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -452,9 +483,11 @@ describe("SessionsManager", () => {
 
   it("updateOptions(newOptions) writes options to the shared options map", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -478,15 +511,14 @@ describe("SessionsManager", () => {
   });
 
   it("does not sync reading state changes when the current user is not an allowed navigator", async () => {
-    (globalThis as any).configBot = {
-      id: "conn-self",
-    };
     mockLoginManager.userId.value = "user-blocked";
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -508,14 +540,12 @@ describe("SessionsManager", () => {
   });
 
   it("does not sync reading state changes when the current connection is not an allowed navigator", async () => {
-    (globalThis as any).configBot = {
-      id: "conn-blocked",
-    };
-
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -537,14 +567,12 @@ describe("SessionsManager", () => {
   });
 
   it("syncs local decorations to the shared decorations map", async () => {
-    (globalThis as any).configBot = {
-      id: "conn-self",
-    };
-
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -565,7 +593,7 @@ describe("SessionsManager", () => {
     await waitFor(() => mockDecorationsMap.set.mock.calls.length > 0);
 
     expect(mockDecorationsMap.set).toHaveBeenCalledWith(
-      JSON.stringify(["conn-self", "decoration-local"]),
+      JSON.stringify(["test-config-bot-id", "decoration-local"]),
       expect.objectContaining({
         id: "decoration-local",
         translationId: "BSB",
@@ -579,14 +607,12 @@ describe("SessionsManager", () => {
   });
 
   it("syncs removeAfterMs for local decorations to the shared decorations map", async () => {
-    (globalThis as any).configBot = {
-      id: "conn-self",
-    };
-
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -606,7 +632,7 @@ describe("SessionsManager", () => {
     await waitFor(() => mockDecorationsMap.set.mock.calls.length > 0);
 
     expect(mockDecorationsMap.set).toHaveBeenCalledWith(
-      JSON.stringify(["conn-self", "decoration-local-timeout"]),
+      JSON.stringify(["test-config-bot-id", "decoration-local-timeout"]),
       expect.objectContaining({
         id: "decoration-local-timeout",
         removeAfterMs: 1500,
@@ -615,21 +641,20 @@ describe("SessionsManager", () => {
   });
 
   it("does not sync decoration changes when the current user is not an allowed decorator", async () => {
-    (globalThis as any).configBot = {
-      id: "conn-self",
-    };
     mockLoginManager.userId.value = "user-blocked";
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
     mockOptionsMap.setEmitOnSet(true);
     session.updateOptions({
-      allowedDecorators: ["user-allowed", "conn-self"],
+      allowedDecorators: ["user-allowed", "test-config-bot-id"],
     });
 
     mockDecorationsMap.set.mockClear();
@@ -652,14 +677,12 @@ describe("SessionsManager", () => {
   });
 
   it("does not sync decoration changes when the current connection is not an allowed decorator", async () => {
-    (globalThis as any).configBot = {
-      id: "conn-blocked",
-    };
-
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -688,10 +711,6 @@ describe("SessionsManager", () => {
   });
 
   it("applies shared decorations from other users to the reading state", async () => {
-    (globalThis as any).configBot = {
-      id: "conn-self",
-    };
-
     mockMap = createMockSharedMap({
       translationId: "BSB",
       bookId: "GEN",
@@ -723,9 +742,11 @@ describe("SessionsManager", () => {
     });
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -735,10 +756,6 @@ describe("SessionsManager", () => {
   });
 
   it("applies removeAfterMs from shared decorations", async () => {
-    (globalThis as any).configBot = {
-      id: "conn-self",
-    };
-
     mockMap = createMockSharedMap({
       translationId: "BSB",
       bookId: "GEN",
@@ -772,9 +789,11 @@ describe("SessionsManager", () => {
     });
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -784,10 +803,6 @@ describe("SessionsManager", () => {
   });
 
   it("keeps decorations from different users in the shared document at the same time", async () => {
-    (globalThis as any).configBot = {
-      id: "conn-self",
-    };
-
     mockMap = createMockSharedMap({
       translationId: "BSB",
       bookId: "GEN",
@@ -819,9 +834,11 @@ describe("SessionsManager", () => {
     });
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -842,7 +859,8 @@ describe("SessionsManager", () => {
         ) &&
         mockDecorationsMap.set.mock.calls.some(
           (call) =>
-            call[0] === JSON.stringify(["conn-self", "decoration-local"])
+            call[0] ===
+            JSON.stringify(["test-config-bot-id", "decoration-local"])
         )
     );
 
@@ -863,9 +881,11 @@ describe("SessionsManager", () => {
     mockDocument.getMap.mockReturnValue(mockMap);
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -888,9 +908,11 @@ describe("SessionsManager", () => {
     mockDocument.getMap.mockReturnValue(mockMap);
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -903,9 +925,11 @@ describe("SessionsManager", () => {
 
   it("syncs reading state changes to the shared document", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -925,9 +949,11 @@ describe("SessionsManager", () => {
 
   it("does not update the shared document when only scrollToVerse changes", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -944,9 +970,11 @@ describe("SessionsManager", () => {
     mockMap.setEmitOnSet(true);
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -966,9 +994,11 @@ describe("SessionsManager", () => {
 
   it("applies shared document changes to the session reading state", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = (await manager.joinSession(
       "group-abc"
@@ -1004,14 +1034,16 @@ describe("SessionsManager", () => {
     const chapterDeferred = deferred<any>();
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
-    (
-      session.readingState.selectTranslationAndChapter as jest.Mock
-    ).mockReturnValue(chapterDeferred.promise);
+    (session.readingState.selectTranslationAndChapter as Mock).mockReturnValue(
+      chapterDeferred.promise
+    );
 
     mockMap.get.mockImplementation((key: string) => {
       if (key === "translationId") return "ESV";
@@ -1045,12 +1077,14 @@ describe("SessionsManager", () => {
     const chapterDeferred2 = deferred<any>();
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
-    (session.readingState.selectTranslationAndChapter as jest.Mock)
+    (session.readingState.selectTranslationAndChapter as Mock)
       .mockImplementationOnce(async () => {
         await chapterDeferred1.promise;
         session.readingState.translationId.value = "ESV";
@@ -1126,9 +1160,11 @@ describe("SessionsManager", () => {
 
   it("dispose() unsubscribes from the shared document", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1139,9 +1175,11 @@ describe("SessionsManager", () => {
 
   it("tracks connected users from remoteClients and loads profiles for authenticated users", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 
@@ -1172,7 +1210,6 @@ describe("SessionsManager", () => {
       expect.arrayContaining([
         {
           connectionId: "conn-1",
-          sessionId: "group-abc",
           userId: "user-1",
           profile: {
             name: "Profile user-1",
@@ -1183,7 +1220,6 @@ describe("SessionsManager", () => {
         },
         {
           connectionId: "conn-2",
-          sessionId: "group-abc",
           userId: null,
           profile: null,
           isSelf: false,
@@ -1221,9 +1257,11 @@ describe("SessionsManager", () => {
 
   it("removes disconnected users from the connected users list", async () => {
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 

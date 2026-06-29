@@ -27,18 +27,18 @@ describe("ContextMenu", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
 
-    jest
-      .spyOn(window, "requestAnimationFrame")
-      .mockImplementation((callback: FrameRequestCallback) => {
+    vi.spyOn(window, "requestAnimationFrame").mockImplementation(
+      (callback: FrameRequestCallback) => {
         callback(0);
         return 1;
-      });
+      }
+    );
   });
 
   afterEach(() => {
     render(null, container);
     container.remove();
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it("renders individual menu items", () => {
@@ -62,7 +62,7 @@ describe("ContextMenu", () => {
 
   it("supports clicking menu items", () => {
     const menuElementRef = { current: null as HTMLDivElement | null };
-    const onClick = jest.fn();
+    const onClick = vi.fn();
 
     act(() => {
       render(
@@ -173,7 +173,7 @@ describe("ContextMenu", () => {
 
     Object.defineProperty(anchors[0], "getBoundingClientRect", {
       configurable: true,
-      value: jest.fn(() =>
+      value: vi.fn(() =>
         createDomRect({
           left: 10,
           right: 110,
@@ -187,7 +187,7 @@ describe("ContextMenu", () => {
 
     Object.defineProperty(anchors[1], "getBoundingClientRect", {
       configurable: true,
-      value: jest.fn(() =>
+      value: vi.fn(() =>
         createDomRect({
           left: window.innerWidth - 110,
           right: window.innerWidth - 10,

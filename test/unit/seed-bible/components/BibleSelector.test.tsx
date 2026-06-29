@@ -18,22 +18,30 @@ import {
   makeChapter,
   createDefaultSelectorManagerResponseMap,
   aabBooks,
+  type WebResponseMap,
 } from "../managers/testUtils/mockBibleApiData";
+import type { Mock } from "vitest";
 
-jest.mock("seed-bible.i18n.I18nManager", () => ({
-  useI18n: () => ({
-    t: (key: string, options?: { defaultValue?: string }) =>
-      options?.defaultValue ?? key,
-  }),
-}));
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const actual = await vi.importActual<
+    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
+  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
+  return {
+    ...actual,
+    useI18n: () => ({
+      t: (key: string, options?: { defaultValue?: string }) =>
+        options?.defaultValue ?? key,
+    }),
+  };
+});
 
 type SelectorFixture = {
   state: SeedBibleState;
   selectorState: BibleSelectorState;
   bibleDataManager: SeedBibleState["bibleData"];
   pane: Pane;
-  selectChapter: jest.SpyInstance;
-  setSearch: jest.SpyInstance;
+  selectChapter: Mock;
+  setSearch: Mock;
 };
 
 function setAvailableTranslations(
@@ -44,10 +52,13 @@ function setAvailableTranslations(
 }
 
 async function createSelectorFixture(
-  options: { open?: boolean } = {}
+  options: { open?: boolean; responses?: WebResponseMap } = {}
 ): Promise<SelectorFixture> {
   const state = await createTestSeedBibleState({
-    responses: createDefaultSelectorManagerResponseMap(),
+    responses: {
+      ...createDefaultSelectorManagerResponseMap(),
+      ...options.responses,
+    },
   });
   const pane = state.panes.panes.value[0] as Pane;
   if (!pane) {
@@ -63,8 +74,8 @@ async function createSelectorFixture(
     selectorState: state.selector,
     bibleDataManager: state.bibleData,
     pane,
-    selectChapter: jest.spyOn(state.selector, "selectChapter"),
-    setSearch: jest.spyOn(state.selector, "setSearch"),
+    selectChapter: vi.spyOn(state.selector, "selectChapter"),
+    setSearch: vi.spyOn(state.selector, "setSearch"),
   };
 }
 
@@ -72,6 +83,14 @@ describe("BibleSelector", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
+    // The mocked Bible API responses are keyed to the free-use endpoint, so
+    // opt into it via the URL (the app otherwise defaults to the private one).
+    jsdom.reconfigure({ url: "https://ao.bot/?useFreeBibleAPI" });
+
+    // The data manager persists per-translation endpoints to localStorage;
+    // clear it so state does not leak between tests.
+    localStorage.clear();
+
     container = document.createElement("div");
     document.body.appendChild(container);
   });
@@ -82,17 +101,19 @@ describe("BibleSelector", () => {
   });
 
   it("is not displayed when closed", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture({
-      open: false,
-    });
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture({
+        open: false,
+      });
 
     act(() => {
       render(
         <BibleSelector
           isOpen={false}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -102,15 +123,17 @@ describe("BibleSelector", () => {
   });
 
   it("is displayed when open", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -120,7 +143,8 @@ describe("BibleSelector", () => {
   });
 
   it("sets dir to match selected translation text direction", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       if (selectorState.selectedTranslationBooks.value) {
@@ -138,9 +162,10 @@ describe("BibleSelector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -157,15 +182,17 @@ describe("BibleSelector", () => {
   });
 
   it("displays all old and new testament books", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -182,16 +209,17 @@ describe("BibleSelector", () => {
   });
 
   it("clicking a chapter selects it", async () => {
-    const { selectorState, selectChapter, bibleDataManager } =
+    const { selectorState, selectChapter, bibleDataManager, state } =
       await createSelectorFixture();
 
     act(() => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -234,15 +262,17 @@ describe("BibleSelector", () => {
   });
 
   it("clicking on a book updates the expanded book state", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -269,15 +299,17 @@ describe("BibleSelector", () => {
   });
 
   it("renders all chapters for the selected book", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -311,16 +343,17 @@ describe("BibleSelector", () => {
   });
 
   it("changing the search input sets the search", async () => {
-    const { selectorState, setSearch, bibleDataManager } =
+    const { selectorState, setSearch, bibleDataManager, state } =
       await createSelectorFixture();
 
     act(() => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -369,9 +402,10 @@ describe("BibleSelector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -446,9 +480,10 @@ describe("BibleSelector", () => {
         render(
           <BibleSelector
             isOpen={true}
-            onClose={jest.fn()}
+            onClose={vi.fn()}
             selectorState={selectorState}
             bibleDataManager={bibleDataManager}
+            app={state.app}
           />,
           container
         );
@@ -541,9 +576,10 @@ describe("BibleSelector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -644,6 +680,14 @@ describe("BibleSelector translation selector", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
+    // The mocked Bible API responses are keyed to the free-use endpoint, so
+    // opt into it via the URL (the app otherwise defaults to the private one).
+    jsdom.reconfigure({ url: "https://ao.bot/?useFreeBibleAPI" });
+
+    // The data manager persists per-translation endpoints to localStorage;
+    // clear it so state does not leak between tests.
+    localStorage.clear();
+
     container = document.createElement("div");
     document.body.appendChild(container);
   });
@@ -677,15 +721,17 @@ describe("BibleSelector translation selector", () => {
   }
 
   it("displays translations grouped by language", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -712,15 +758,17 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("defaults to opening the language group that matches the language of the currently selected translation", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -751,15 +799,17 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("allows opening translation selector and searching translations by name", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -820,15 +870,17 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("allows opening translation selector and searching translations by abbreviation", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -889,15 +941,17 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("allows opening translation selector and searching translations by language", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -959,15 +1013,17 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("allows opening translation selector and searching translations by native language name", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -1031,7 +1087,7 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("selecting a translation selects the current book/chapter in that translation and closes the selector", async () => {
-    const { selectorState, bibleDataManager, pane } =
+    const { selectorState, bibleDataManager, pane, state } =
       await createSelectorFixture();
 
     await pane.tab!.readingState.selectChapter("EXO", 2);
@@ -1048,9 +1104,10 @@ describe("BibleSelector translation selector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -1153,9 +1210,10 @@ describe("BibleSelector translation selector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -1197,15 +1255,17 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("displays only complete translations when in complete mode", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -1236,15 +1296,17 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("displays all translations across all languages when in all mode", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -1274,15 +1336,17 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("displays only popular languages when in popular mode", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -1312,15 +1376,17 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("displays percentage complete indicator circles with conic-gradient in all and popular modes but not in complete mode", async () => {
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture();
 
     act(() => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -1404,9 +1470,10 @@ describe("BibleSelector translation selector", () => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -1458,11 +1525,6 @@ describe("BibleSelector translation selector", () => {
 describe("BibleSelector sharing translations", () => {
   let container: HTMLDivElement;
 
-  type TestGlobalScope = typeof globalThis & {
-    os?: Record<string, unknown>;
-    configBot?: { tags: Record<string, unknown> };
-  };
-
   function makeTranslation(
     id: string,
     languageEnglishName: string,
@@ -1486,16 +1548,24 @@ describe("BibleSelector sharing translations", () => {
     };
   }
 
-  let setClipboard: jest.Mock;
+  let setClipboard: Mock;
 
   beforeEach(() => {
+    jsdom.reconfigure({ url: "https://ao.bot/somepage" });
+
+    // Clear persisted per-translation endpoints so state does not leak in
+    // from earlier tests (which would mark default-endpoint translations as
+    // non-default).
+    localStorage.clear();
+
     container = document.createElement("div");
     document.body.appendChild(container);
 
-    setClipboard = jest.fn();
-    const scope = globalThis as TestGlobalScope;
-    scope.os = { ...(scope.os ?? {}), setClipboard, toast: jest.fn() };
-    scope.configBot = { tags: { pattern: "SeedBible" } };
+    (window.navigator as any).clipboard = {
+      writeText: vi.fn().mockResolvedValue(undefined),
+    };
+
+    setClipboard = window.navigator.clipboard.writeText as Mock;
   });
 
   afterEach(() => {
@@ -1506,31 +1576,37 @@ describe("BibleSelector sharing translations", () => {
   async function openTranslationModalWithGroup(
     translationId: string,
     languageEnglishName: string,
-    endpointInfoOverride?: {
-      endpoint: string;
-      isDefault: boolean;
-    }
+    customEndpoint?: string
   ) {
     const translation = makeTranslation(translationId, languageEnglishName);
-    const { selectorState, bibleDataManager } = await createSelectorFixture();
 
-    if (endpointInfoOverride) {
-      jest
-        .spyOn(bibleDataManager, "getTranslationEndpointInfo")
-        .mockReturnValue({
-          translationId,
-          endpoint: endpointInfoOverride.endpoint,
-          isDefault: endpointInfoOverride.isDefault,
-        });
+    // When a custom endpoint is supplied, serve the translation from that
+    // endpoint so the manager records it against the endpoint and the real
+    // getTranslationEndpointInfo() reports it as non-default.
+    const responses = customEndpoint
+      ? {
+          [new URL("api/available_translations.json", customEndpoint).href]:
+            createResponse({ translations: [translation] }),
+        }
+      : undefined;
+
+    const { selectorState, bibleDataManager, state } =
+      await createSelectorFixture({
+        responses,
+      });
+
+    if (customEndpoint) {
+      await bibleDataManager.getTranslations(customEndpoint);
     }
 
     act(() => {
       render(
         <BibleSelector
           isOpen={true}
-          onClose={jest.fn()}
+          onClose={vi.fn()}
           selectorState={selectorState}
           bibleDataManager={bibleDataManager}
+          app={state.app}
         />,
         container
       );
@@ -1563,17 +1639,14 @@ describe("BibleSelector sharing translations", () => {
 
     await waitFor(() => setClipboard.mock.calls.length > 0);
 
-    const copiedUrl = new URL(setClipboard.mock.calls[0][0] as string);
+    const copiedUrl = new URL(setClipboard.mock.calls[0]![0] as string);
     expect(copiedUrl.hostname).toBe("ao.bot");
     expect(copiedUrl.searchParams.get("translation")).toBe("AAB");
   });
 
   it("clicking share on a non-default-endpoint translation copies a URL with the full books.json URL", async () => {
     const customEndpoint = `${EXAMPLE_API_ENDPOINT}/`;
-    await openTranslationModalWithGroup("CST", "Klingon", {
-      endpoint: customEndpoint,
-      isDefault: false,
-    });
+    await openTranslationModalWithGroup("CST", "Klingon", customEndpoint);
 
     const shareButton = container.querySelector(
       ".share-btn"
@@ -1586,7 +1659,7 @@ describe("BibleSelector sharing translations", () => {
 
     await waitFor(() => setClipboard.mock.calls.length > 0);
 
-    const copiedUrl = new URL(setClipboard.mock.calls[0][0] as string);
+    const copiedUrl = new URL(setClipboard.mock.calls[0]![0] as string);
     expect(copiedUrl.hostname).toBe("ao.bot");
     const translationParam = copiedUrl.searchParams.get("translation")!;
     expect(translationParam).toContain("example.test");

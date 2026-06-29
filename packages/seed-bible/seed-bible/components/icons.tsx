@@ -62,6 +62,82 @@ export function SeedBibleIcon({
   );
 }
 
+export function InstallAppsIcon({
+  size = 56,
+  ...props
+}: { size?: number; [key: string]: any } = {}) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 56 56"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <g opacity="0.7" clipPath="url(#clip0_7286_7067)">
+        <path
+          d="M9.3333 0H16.3333C21.4879 0 25.6666 4.17867 25.6666 9.3333V16.3333C25.6666 21.4879 21.4879 25.6666 16.3333 25.6666H9.3333C4.17867 25.6667 0 21.488 0 16.3333V9.3333C0 4.17867 4.17867 0 9.3333 0Z"
+          fill="currentColor"
+        />
+        <path
+          d="M9.3333 30.3333H16.3333C21.4879 30.3333 25.6666 34.5119 25.6666 39.6665V46.6665C25.6666 51.8212 21.4879 55.9998 16.3333 55.9998H9.3333C4.17867 56 0 51.8213 0 46.6667V39.6667C0 34.5119 4.17867 30.3333 9.3333 30.3333Z"
+          fill="currentColor"
+        />
+        <path
+          d="M39.6653 30.3333H46.6653C51.82 30.3333 55.9986 34.5119 55.9986 39.6665V46.6665C55.9986 51.8213 51.82 56 46.6653 56H39.6653C34.5107 56 30.332 51.8213 30.332 46.6667V39.6667C30.3319 34.5119 34.5106 30.3333 39.6653 30.3333Z"
+          fill="currentColor"
+        />
+        <path
+          d="M32.6653 16.3333H39.6653V23.3333C39.6653 24.6219 40.71 25.6666 41.9986 25.6666C43.2873 25.6666 44.3319 24.6219 44.3319 23.3333V16.3333H51.3319C52.6206 16.3333 53.6652 15.2886 53.6652 14C53.6652 12.7113 52.6206 11.6667 51.3319 11.6667H44.3319V4.66667C44.3319 3.37801 43.2873 2.33337 41.9986 2.33337C40.71 2.33337 39.6653 3.37801 39.6653 4.66667V11.6667H32.6653C31.3767 11.6667 30.332 12.7113 30.332 14C30.332 15.2886 31.3767 16.3333 32.6653 16.3333Z"
+          fill="currentColor"
+        />
+      </g>
+      <defs>
+        <clipPath id="clip0_7286_7067">
+          <rect width="56" height="56" fill="white" />
+        </clipPath>
+      </defs>
+    </svg>
+  );
+}
+
+export function SeedBibleWordmark({
+  height = 52,
+  ...props
+}: { height?: number; [key: string]: any } = {}) {
+  return (
+    <img
+      src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1767786038/Seed_Bible_-_All_Logos_2025-04_dd6je1.png"
+      style={{
+        height: `${height}px`,
+        width: "auto",
+        objectFit: "contain",
+      }}
+      alt="Seed Bible"
+      {...props}
+    />
+  );
+}
+
+export function SafariIcon({
+  size = 56,
+  ...props
+}: { size?: number; [key: string]: any } = {}) {
+  return (
+    <img
+      src="https://res.cloudinary.com/dfbtwwa8p/image/upload/v1780235036/image__1_-removebg-preview_favla5.png"
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        objectFit: "contain",
+      }}
+      alt="Safari"
+      {...props}
+    />
+  );
+}
+
 export const BurgerMenuIcon = () => (
   <span class="material-symbols-outlined">menu</span>
 );

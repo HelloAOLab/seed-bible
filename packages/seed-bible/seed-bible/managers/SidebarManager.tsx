@@ -1,5 +1,6 @@
-import { computed, effect, signal } from "@preact/signals";
-import type { ChatsManager } from "seed-bible.managers.ChatsManager";
+import { computed, signal } from "@preact/signals";
+import type { NavigationManager } from "./NavigationManager";
+import type { ChatsManager } from "./ChatsManager";
 
 /**
  * Which settings subpage the SettingsPage should jump to on its next mount.
@@ -17,11 +18,15 @@ export type RequestedSettingsView =
 
 export interface CreateSidebarOptions {
   chatsManager: ChatsManager;
+  navigation: NavigationManager;
   onOpenChatPanel?: () => void;
 }
 
 export function createSidebar(options: CreateSidebarOptions) {
-  const initialView = configBot.tags.settingsView ?? null;
+  const navigation = options.navigation;
+  const initialView = navigation.currentUrl.value.searchParams.get(
+    "settingsView"
+  ) as RequestedSettingsView | null;
   const isSidebarCollapsed = signal(false);
   const isMobileOpen = signal(false);
   const requestedSettingsView = signal<RequestedSettingsView>(initialView);
@@ -109,47 +114,25 @@ export function createSidebar(options: CreateSidebarOptions) {
   };
 
   const openSidebar = () => {
+    console.log("Opening sidebar");
     isMobileOpen.value = true;
   };
 
   const closeSidebar = () => {
+    console.log("Closing sidebar");
     isMobileOpen.value = false;
   };
 
-  effect(() => {
-    const requestedView = requestedSettingsView.value;
-
-    if (configBot.tags.settingsView !== requestedView) {
-      configBot.tags.settingsView = requestedView;
-    }
-
-    configBot.tags.sidebar = isMobileOpen.value ? "open" : null;
-  });
-
-  os.addBotListener(configBot, "onBotChanged", async (that: unknown) => {
-    const changedTagsSource =
-      that && typeof that === "object" && "tags" in that
-        ? (that as { tags?: unknown }).tags
-        : null;
-    const changedTags = Array.isArray(changedTagsSource)
-      ? changedTagsSource
-      : [];
-    const hasSettingsViewChange = changedTags.includes("settingsView");
-
-    if (hasSettingsViewChange) {
-      const newRequestedView = configBot.tags.settingsView ?? null;
-      if (newRequestedView !== requestedSettingsView.value) {
-        requestedSettingsView.value = newRequestedView;
-      }
-    }
-
-    const hasSidebarChange = changedTags.includes("sidebar");
-    if (hasSidebarChange) {
-      const newIsMobileOpen = configBot.tags.sidebar === "open";
-      if (newIsMobileOpen !== isMobileOpen.value) {
-        isMobileOpen.value = newIsMobileOpen;
-      }
-    }
+  navigation.syncSignalsToUrl({
+    settingsView: requestedSettingsView,
+    sidebar: {
+      get value() {
+        return isMobileOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        isMobileOpen.value = newValue === "open";
+      },
+    },
   });
 
   return {

@@ -1,13 +1,10 @@
 import { useSignal } from "@preact/signals";
 import { useEffect, useRef } from "preact/hooks";
-import { closeContextMenus } from "seed-bible.components.ContextMenu";
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import type { ReaderTab } from "seed-bible.managers.TabsManager";
-import {
-  DEFAULT_TRANSLATION_ID,
-  DEFAULT_TRANSLATION_LANGUAGE,
-} from "seed-bible.managers.BibleReadingManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
+import { closeContextMenus } from "../components/ContextMenu";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import type { ReaderTab } from "../managers/TabsManager";
+import { useI18n } from "../i18n/I18nManager";
+import { getDefaultTranslationForLanguage } from "../managers/BibleReadingManager";
 
 export interface SidebarSearchResult {
   id: string;
@@ -40,6 +37,8 @@ interface SidebarSearchProps {
 
 export function SidebarSearch(props: SidebarSearchProps) {
   const { state, closeLayoutMenu } = props;
+
+  const { i18n } = state;
 
   const searchQuery = useSignal("");
   const searchResults = useSignal<SidebarSearchResult[]>([]);
@@ -100,12 +99,18 @@ export function SidebarSearch(props: SidebarSearchProps) {
     }
 
     const query = nextQuery.trim();
+
+    const currentReadingState =
+      state.app.currentReadingState.value?.tab.readingState;
+
     const activeTranslationId =
-      state.app.currentReadingState.value?.translationId ??
-      DEFAULT_TRANSLATION_ID;
+      currentReadingState?.translationId.value ??
+      currentReadingState?.defaultTranslation.id ??
+      getDefaultTranslationForLanguage(i18n.defaultLanguage).id;
     const activeLanguage =
-      state.app.currentReadingState.value?.tab.readingState.translation.value
-        ?.language ?? DEFAULT_TRANSLATION_LANGUAGE;
+      currentReadingState?.translation.value?.language ??
+      currentReadingState?.defaultTranslation.language ??
+      getDefaultTranslationForLanguage(i18n.defaultLanguage).language;
     const requestId = ++latestSearchRequestRef.current;
 
     if (!query) {
