@@ -1,10 +1,12 @@
-import App from "ext_twitchSub.client.App";
-import { TwitchIcon } from "ext_twitchSub.client.icons";
-import { initializeTwitchWS } from "ext_twitchSub.client.initializeTwitchWS";
+import App from "./App";
+import { TwitchIcon } from "./icons";
+import { initializeTwitchWS } from "./initializeTwitchWS";
 import { signal, effect, type Signal } from "@preact/signals";
-import { type TwitchSubInterface } from "ext_twitchSub.client.interface";
-import { type SeedBibleState } from "seed-bible.app.api";
-const { render } = os.appHooks;
+import { type TwitchSubInterface } from "./interface";
+import { type SeedBibleState } from "seed-bible";
+import { toByteArray } from "base64-js";
+import { render } from "preact";
+import type { NavigationManager } from "seed-bible/managers";
 
 function getBooleanMaskValue(value: unknown, defaultValue: boolean) {
   if (typeof value === "boolean") {
@@ -63,7 +65,11 @@ export function CreateTwitchSubState(
   const settingsOpened = signal(false);
 
   effect(() => {
-    getConfig({ clientId, eventSubWebsocketUrl }).then((configData) => {
+    getConfig({
+      clientId,
+      eventSubWebsocketUrl,
+      navigation: seedBibleState.navigation,
+    }).then((configData) => {
       if (configData) {
         config.value.botUserId.value = configData.botUserId;
         config.value.accessToken.value = configData.accessToken;
@@ -248,6 +254,7 @@ export function CreateTwitchSubState(
           wsPaused={wsPaused}
           settingsOpened={settingsOpened}
           settings={settings}
+          i18n={seedBibleState.i18n}
         />,
         container
       );
@@ -289,9 +296,11 @@ export function CreateTwitchSubState(
 async function getConfig({
   clientId,
   eventSubWebsocketUrl,
+  navigation,
 }: {
   clientId: string;
   eventSubWebsocketUrl: string;
+  navigation: NavigationManager;
 }) {
   const stored = window.localStorage.getItem("twitchSubConfig");
   if (stored) {
@@ -303,7 +312,7 @@ async function getConfig({
     }
   }
 
-  const baseUrl = configBot.tags.url;
+  const baseUrl = location.href;
   const hash = new URLSearchParams(new URL(baseUrl).hash.slice(1));
 
   const accessToken = hash.get("access_token");
@@ -312,7 +321,7 @@ async function getConfig({
     return null;
   }
 
-  const stateBytes = bytes.fromBase64String(hash.get("state") || "");
+  const stateBytes = toByteArray(hash.get("state") || "");
   const stateString = new TextDecoder().decode(stateBytes);
   if (!stateString) {
     console.error("No state found in URL hash. Full hash:", hash.toString());
@@ -327,17 +336,19 @@ async function getConfig({
     translation,
   } = JSON.parse(stateString);
 
-  const res = await web.get("https://id.twitch.tv/oauth2/validate", {
+  const res = await fetch("https://id.twitch.tv/oauth2/validate", {
     headers: { Authorization: `OAuth ${accessToken}` },
   });
 
-  if (!res.data.user_id) {
-    console.error("Failed to validate access token. Response:", res);
+  const data = await res.json();
+
+  if (!data.user_id) {
+    console.error("Failed to validate access token. Response:", data);
     return null;
   }
 
   const config = {
-    botUserId: res.data.user_id,
+    botUserId: data.user_id,
     accessToken,
     clientId,
     broadcasterId,
@@ -349,11 +360,14 @@ async function getConfig({
   };
   window.localStorage.setItem("twitchSubConfig", JSON.stringify(config));
 
-  if (posthog) {
+  if (typeof posthog !== "undefined") {
     posthog.capture("twitch_sub_client_joined", {});
   }
 
-  os.goToURL(baseUrl.split("#")[0]);
+  const urlWithoutHash = baseUrl.split("#")[0];
+  if (urlWithoutHash) {
+    navigation.replace(urlWithoutHash);
+  }
   return null;
 }
 

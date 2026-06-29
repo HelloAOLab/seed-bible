@@ -1,13 +1,15 @@
-import DraggableContainer from "ext_twitchPub.host.DraggableContainer";
-import Login from "ext_twitchPub.host.Login";
-import Authorization from "ext_twitchPub.host.Authenticate";
-import TwitchInterface from "ext_twitchPub.host.TwitchInterface";
-import TwitchSettings from "ext_twitchPub.host.TwitchSettings";
-import { type TwitchPubState } from "ext_twitchPub.host.interface";
-const style = thisBot.tags["App.css"];
+import DraggableContainer from "./DraggableContainer";
+import Login from "./Login";
+import Authorization from "./Authenticate";
+import TwitchInterface from "./TwitchInterface";
+import TwitchSettings from "./TwitchSettings";
+import { type TwitchPubState } from "./interface";
+import "./App.css";
+import { I18nProvider } from "@packages/seed-bible/seed-bible/i18n";
+import type { SeedBibleState } from "seed-bible";
 
-function App(props: { state: TwitchPubState }) {
-  const { state } = props;
+function App(props: { state: TwitchPubState; i18n: SeedBibleState["i18n"] }) {
+  const { state, i18n } = props;
   const page = state.currentPage.value;
   const appContent = (
     <div className="twitchPub-container">
@@ -20,8 +22,9 @@ function App(props: { state: TwitchPubState }) {
 
   return (
     <>
-      <style>{style}</style>
-      <DraggableContainer children={appContent} />
+      <I18nProvider i18n={i18n}>
+        <DraggableContainer children={appContent} />
+      </I18nProvider>
     </>
   );
 }

@@ -1,11 +1,11 @@
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import {
   UI_TEXT_SIZE_OPTIONS,
   VERSE_LINE_HEIGHT_OPTIONS,
   DEFAULT_VERSE_LINE_HEIGHT,
   type UITextSize,
-} from "seed-bible.managers.SettingsManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
+} from "../managers/SettingsManager";
+import { useI18n } from "../i18n/I18nManager";
 import { SettingsIcon } from "./icons";
 
 const FONT_SIZE_OPTIONS = ["XS", "S", "M", "L", "XL", "XXL"] as const;

@@ -3,7 +3,7 @@ import path from "node:path";
 import { ESLintUtils, type TSESLint } from "@typescript-eslint/utils";
 import { getTranslationUsageStats } from "../getTranslationUsageStats";
 import { ExtensionMetaSchema } from "../lib/extension";
-import { treeifyError } from "zod";
+import * as z from "zod/v4";
 
 type TranslationObject = Record<string, unknown>;
 
@@ -98,7 +98,7 @@ function getExtensionEnglishKeys(
     const parseResult = ExtensionMetaSchema.safeParse(extensionConfig);
 
     if (!parseResult.success) {
-      console.warn(treeifyError(parseResult.error));
+      console.warn(z.treeifyError(parseResult.error));
       continue;
     }
 

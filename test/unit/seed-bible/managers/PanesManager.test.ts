@@ -12,36 +12,28 @@ import {
   createExampleManagerResponseMap,
 } from "./testUtils/mockBibleApiData";
 import { signal } from "@preact/signals";
+import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import type { Mock } from "vitest";
+import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
 
-let webGetMock: jest.Mock;
-let logSpy: jest.SpyInstance;
+let fetchMock: Mock;
+let logSpy: Mock;
+const originalFetch = globalThis.fetch;
 
 beforeEach(() => {
-  webGetMock = jest.fn();
-  logSpy = jest.spyOn(console, "log").mockImplementation(() => undefined);
+  fetchMock = vi.fn();
+  logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
 
-  (globalThis as any).web = {
-    get: webGetMock,
-  };
-
-  (globalThis as any).configBot = {
-    tags: {},
-  };
-
-  (globalThis as any).os = {
-    addBotListener: jest.fn(),
-  };
+  globalThis.fetch = fetchMock;
 });
 
 afterEach(() => {
   logSpy.mockRestore();
-  delete (globalThis as any).web;
-  delete (globalThis as any).configBot;
-  delete (globalThis as any).os;
+  globalThis.fetch = originalFetch;
 });
 
 function setWebResponses(responses: WebResponseMap): void {
-  webGetMock.mockImplementation((url: string) => {
+  fetchMock.mockImplementation((url: string) => {
     const response = responses[url];
     if (!response) {
       throw new Error(`No mocked response for ${url}`);
@@ -60,7 +52,7 @@ function createDataManager() {
 
 function createHighlightsManagerMock() {
   return {
-    getChapterHighlights: jest.fn().mockReturnValue(signal({ highlights: [] })),
+    getChapterHighlights: vi.fn().mockReturnValue(signal({ highlights: [] })),
   };
 }
 
@@ -87,9 +79,12 @@ async function waitForTabsToLoad(tabs: ReaderTab[]): Promise<void> {
 
 async function createManagers(options: { extraTabs?: number } = {}) {
   setWebResponses(createExampleManagerResponseMap());
+  const navigation = createNavigationManager();
   const tabsManager = createTabs(
+    navigation,
     createDataManager(),
-    createHighlightsManagerMock() as any
+    createHighlightsManagerMock() as any,
+    createI18nManager(navigation, ["en"])
   );
   await waitForTabsToLoad(tabsManager.tabs.value);
   const initialSelectedTabId = tabsManager.selectedTabId.value;
@@ -279,7 +274,7 @@ describe("createPanes", () => {
     expect(result?.detached).toBe(true);
   });
 
-  it("supports opening a grid portal pane and syncing config tags", async () => {
+  it("supports opening a grid portal pane", async () => {
     const { panesManager } = await createManagers();
 
     const result = panesManager.openPane({
@@ -289,8 +284,7 @@ describe("createPanes", () => {
 
     expect(result).not.toBeNull();
     expect(result?.gridPortal).toBe("home");
-    expect((globalThis as any).configBot.tags.gridPortal).toBe("home");
-    expect((globalThis as any).configBot.tags.mapPortal ?? null).toBeNull();
+    expect(result?.mapPortal).toBeNull();
   });
 
   it("supports replacing a grid portal pane with a map portal pane", async () => {
@@ -315,8 +309,32 @@ describe("createPanes", () => {
     expect(
       panesManager.panes.value.some((pane) => pane.mapPortal === "map_portal")
     ).toBe(true);
-    expect((globalThis as any).configBot.tags.gridPortal ?? null).toBeNull();
-    expect((globalThis as any).configBot.tags.mapPortal).toBe("map_portal");
+  });
+
+  it("supports multiple attached panes each with their own grid/map portal", async () => {
+    const { panesManager } = await createManagers();
+
+    panesManager.openPane({
+      type: "attached",
+      gridPortal: "home",
+    });
+    panesManager.openPane({
+      type: "attached",
+      mapPortal: "map_portal",
+    });
+
+    const portalPanes = panesManager.panes.value.filter(
+      (pane) => pane.gridPortal !== null || pane.mapPortal !== null
+    );
+
+    // Opening a second portal pane no longer clears the first one.
+    expect(
+      panesManager.panes.value.some((pane) => pane.gridPortal === "home")
+    ).toBe(true);
+    expect(
+      panesManager.panes.value.some((pane) => pane.mapPortal === "map_portal")
+    ).toBe(true);
+    expect(portalPanes).toHaveLength(2);
   });
 
   it("supports changing the layout", async () => {

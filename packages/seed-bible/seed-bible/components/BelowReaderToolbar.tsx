@@ -1,14 +1,13 @@
-import { type ToolsManager } from "seed-bible.managers.BibleToolsManager";
-import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
-import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
-import type { TabsManager } from "seed-bible.managers.TabsManager";
-import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
-import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
-import { translateTitle } from "seed-bible.components.Utils";
-import { handleVerticalListKeyNav } from "seed-bible.components.KeyboardNav";
-
-const { useState } = os.appHooks;
+import { type ToolsManager } from "../managers/BibleToolsManager";
+import type { BibleReadingState } from "../managers/BibleReadingManager";
+import type { BibleSelectorState } from "../managers/BibleSelectorManager";
+import type { TabsManager } from "../managers/TabsManager";
+import type { Pane, PanesManager } from "../managers/PanesManager";
+import { useI18n } from "../i18n/I18nManager";
+import type { BibleReadingSession } from "../managers/SessionsManager";
+import { translateTitle } from "../components/Utils";
+import { handleVerticalListKeyNav } from "../components/KeyboardNav";
+import { useState } from "preact/hooks";
 
 interface BelowReaderToolbarProps {
   toolsManager: ToolsManager;
@@ -20,6 +19,8 @@ interface BelowReaderToolbarProps {
   currentPane: Pane;
   openSidebar: () => void;
   openSearch: () => void;
+  toast: (message: string) => void;
+  openChat: () => void;
 }
 
 export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
@@ -33,6 +34,8 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
     openSidebar,
     openSearch,
     currentPane,
+    toast,
+    openChat,
   } = props;
   const tools = toolsManager.getBelowReaderTools({
     readingState,
@@ -43,6 +46,8 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
     openSidebar,
     currentPane,
     openSearch,
+    toast,
+    openChat,
   });
 
   if (tools.length === 0) {

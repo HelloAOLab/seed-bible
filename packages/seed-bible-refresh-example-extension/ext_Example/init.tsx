@@ -1,8 +1,8 @@
 /* eslint-disable seed-bible-i18n/i18n-untranslated-content */
 import { effect } from "@preact/signals";
-import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
-import { MaterialIcon } from "seed-bible.components.icons";
-import { useI18n } from "seed-bible.i18n.I18nManager";
+import { registerExtension, type SeedBibleState } from "seed-bible";
+import { MaterialIcon } from "seed-bible/components";
+import { useI18n } from "seed-bible/i18n";
 
 function OpenGridPortalIcon() {
   return <MaterialIcon>view_in_ar</MaterialIcon>;
@@ -61,7 +61,7 @@ registerExtension({
           },
           onSelect: () => {
             console.log("Item 1 clicked with context:", context);
-            os.toast("Item 1 clicked!");
+            context.toast("Item 1 clicked!");
           },
         },
         {
@@ -74,7 +74,7 @@ registerExtension({
           },
           onSelect: () => {
             console.log("Item 2 clicked with context:", context);
-            os.toast("Item 2 clicked!");
+            context.toast("Item 2 clicked!");
           },
         },
       ],
@@ -110,10 +110,6 @@ registerExtension({
             pane.id !== context.currentPane.id
         ),
       onSelect: (context) => {
-        create({
-          home: true,
-          color: "red",
-        });
         context.panesManager.openInPane(context.currentPane.id, {
           gridPortal: "home",
         });

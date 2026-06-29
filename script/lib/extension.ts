@@ -8,7 +8,7 @@ import type {
   ExtensionSet,
   UploadedExtension,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
-import z from "zod";
+import * as z from "zod/v4";
 
 // const downloadRecordName = "testingPublickKey";
 const uploadRecordName = "seedBibleExtensions";

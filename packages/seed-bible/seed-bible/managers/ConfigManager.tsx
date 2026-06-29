@@ -1,14 +1,11 @@
 import { effect, signal } from "@preact/signals";
-import i18n from "https://esm.sh/i18next@23.16.8";
-import { DEFAULT_LANGUAGE } from "seed-bible.i18n.I18nManager";
-import type {
-  LoginManager,
-  UserProfile,
-} from "seed-bible.managers.LoginManager";
+import i18n from "i18next";
+import type { LoginManager, UserProfile } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
-} from "seed-bible.managers.ProfileConfigSync";
+} from "../managers/ProfileConfigSync";
+import type { NavigationManager } from "./NavigationManager";
 
 export interface AppConfig {
   disablePanels: boolean;
@@ -88,19 +85,25 @@ function parseFontSize(value: unknown, fallback: TextSize): TextSize {
 
 export type ConfigManager = ReturnType<typeof createConfig>;
 
-export function createConfig(login: LoginManager) {
+export function createConfig(
+  login: LoginManager,
+  navigation: NavigationManager
+) {
   const readConfig = (): AppConfig => {
-    const settingsPreset = parseSettingsPreset(configBot.tags.settingsPreset);
+    const url = navigation.currentUrl.value;
+    const settingsPreset = parseSettingsPreset(
+      url.searchParams.get("settingsPreset")
+    );
     const presetConfig = getPresetConfig(settingsPreset);
     const profile = login.profile.value;
     const fontSizeFromProfile = parseFontSize(
       getProfileConfigValue(profile, "fontSize"),
-      parseFontSize(configBot.tags["app.fontSize"], presetConfig.fontSize)
+      parseFontSize(url.searchParams.get("app.fontSize"), presetConfig.fontSize)
     );
     const disablePanelsFromProfile = parseBoolean(
       getProfileConfigValue(profile, "disablePanels"),
       parseBoolean(
-        configBot.tags["app.disablePanels"],
+        url.searchParams.get("app.disablePanels"),
         presetConfig.disablePanels
       )
     );
@@ -116,37 +119,19 @@ export function createConfig(login: LoginManager) {
   const syncConfigFromBot = (
     profile: UserProfile | null = login.profile.value
   ) => {
+    const url = navigation.currentUrl.value;
     config.value = readConfig();
 
     const profileLanguage = getProfileConfigValue(profile, "lang");
     const nextLanguage =
       typeof profileLanguage === "string" && profileLanguage.trim().length > 0
         ? profileLanguage
-        : configBot.tags.lang;
+        : url.searchParams.get("lang");
 
     if (nextLanguage && nextLanguage !== i18n.language) {
       i18n.changeLanguage(nextLanguage);
     }
   };
-
-  os.addBotListener(configBot, "onBotChanged", (that: unknown) => {
-    const changedTagsSource =
-      that && typeof that === "object" && "tags" in that
-        ? (that as { tags?: unknown }).tags
-        : null;
-    const changedTags = Array.isArray(changedTagsSource)
-      ? changedTagsSource
-      : [];
-
-    if (
-      changedTags.includes("app.disablePanels") ||
-      changedTags.includes("app.fontSize") ||
-      changedTags.includes("settingsPreset") ||
-      changedTags.includes("lang")
-    ) {
-      syncConfigFromBot();
-    }
-  });
 
   effect(() => {
     syncConfigFromBot(login.profile.value);
@@ -158,7 +143,6 @@ export function createConfig(login: LoginManager) {
       disablePanels,
     };
     config.value = nextConfig;
-    configBot.tags["app.disablePanels"] = disablePanels;
     saveProfileConfigValue(login, "disablePanels", disablePanels);
   };
 
@@ -169,16 +153,11 @@ export function createConfig(login: LoginManager) {
       fontSize: nextFontSize,
     };
     config.value = nextConfig;
-    configBot.tags["app.fontSize"] = nextFontSize;
     saveProfileConfigValue(login, "fontSize", nextFontSize);
   };
 
-  os.syncConfigBotTagsToURL(["lang"]);
   i18n.on("languageChanged", (language: string) => {
     console.log("languageChanged event received from i18n:", language);
-    if (configBot.tags.lang || language !== DEFAULT_LANGUAGE) {
-      configBot.tags.lang = language;
-    }
     saveProfileConfigValue(login, "lang", language);
   });
 

@@ -1,15 +1,30 @@
-// import { useMemo } from "https://esm.sh/preact@10.28.4/hooks";
-import i18n from "https://esm.sh/i18next@23.16.8";
-import {
-  I18nextProvider,
-  initReactI18next,
-  useTranslation,
-} from "https://esm.sh/react-i18next@15.1.2?alias=react:preact/compat,react-dom:preact/compat&external=preact";
+import i18n from "i18next";
+import resourcesToBackend from "i18next-resources-to-backend";
+import { useContext, useMemo } from "preact/hooks";
+import en from "./en.json";
+import { navigatorLanguages } from "../app/ssrEnv";
+import { createContext, type ComponentChildren } from "preact";
+import type { NavigationManager } from "../managers/NavigationManager";
+import { computed, signal } from "@preact/signals";
 
-const { useMemo } = os.appHooks;
+function getLanguageName(importPath: string): string {
+  const match = importPath.match(/\.\/([a-z-]+)\.json$/i);
+  if (match) {
+    return match[1]!;
+  }
+  throw new Error(`Could not extract language code from path: ${importPath}`);
+}
 
-export const DEFAULT_LANGUAGE: string =
-  configBot.tags.lang ?? getLanguage(navigator.languages[0]) ?? "en";
+/**
+ * Lazy per-language loaders keyed by import path (e.g. "./es.json"). Using a
+ * non-eager glob means each locale becomes its own Vite chunk, fetched on
+ * demand rather than bundled up front. The keys are available synchronously, so
+ * we can still enumerate the supported languages without loading any file.
+ */
+const localeLoaders = import.meta.glob("./*.json") as Record<
+  string,
+  () => Promise<{ default: Record<string, string> }>
+>;
 
 export { i18n };
 
@@ -40,64 +55,157 @@ export function addTranslations(
   }
 }
 
-/**
- * Loads translations from the given bot's tags.
- * Each tag with a key of 3 characters or less is considered a language code, and its value is expected to be a JSON string or an object containing the translations for that language.
- * @param bot The bot from which to load translations. Typically this would be the config bot or a dedicated locales bot.
- * @returns A record of translations keyed by language code, where each value is an object containing a "translation" object mapping translation keys to translated strings.
- */
-function getTranslations(bot: Bot): BotTranslations {
-  // os.log("Loading translations from bot tags...", localesBot);
-  const loadedResources: BotTranslations = {};
-  for (const langCode of Object.keys(bot.tags ?? {})) {
-    if (langCode.length > 3) {
-      continue; // Skip non-language tags
-    }
-    const translations = bot.tags[langCode];
-    if (translations) {
-      loadedResources[langCode] =
-        typeof translations === "string"
-          ? JSON.parse(translations)
-          : translations;
+// /**
+//  * Loads translations from the given bot's tags.
+//  * Each tag with a key of 3 characters or less is considered a language code, and its value is expected to be a JSON string or an object containing the translations for that language.
+//  * @param bot The bot from which to load translations. Typically this would be the config bot or a dedicated locales bot.
+//  * @returns A record of translations keyed by language code, where each value is an object containing a "translation" object mapping translation keys to translated strings.
+//  */
+// function getTranslations(bot: Bot): BotTranslations {
+//   // os.log("Loading translations from bot tags...", localesBot);
+//   const loadedResources: BotTranslations = {};
+//   for (const langCode of Object.keys(bot.tags ?? {})) {
+//     if (langCode.length > 3) {
+//       continue; // Skip non-language tags
+//     }
+//     const translations = bot.tags[langCode];
+//     if (translations) {
+//       loadedResources[langCode] =
+//         typeof translations === "string"
+//           ? JSON.parse(translations)
+//           : translations;
+//     }
+//   }
+
+//   return loadedResources;
+// }
+
+const availableLanguages = Object.keys(localeLoaders)
+  .map((path) => getLanguageName(path))
+  .sort();
+
+export function getInitialLanguage(acceptedLanguages: string[]): string {
+  if (import.meta.env.SSR) {
+    const ssrLang = getLanguage(acceptedLanguages[0]);
+    if (ssrLang) {
+      return ssrLang;
     }
   }
 
-  return loadedResources;
+  return getLanguage(navigatorLanguages()[0]) ?? "en";
 }
 
-const seedBibleTranslations = getTranslations(thisBot);
-if (!seedBibleTranslations[DEFAULT_LANGUAGE]) {
-  seedBibleTranslations[DEFAULT_LANGUAGE] = {};
+export function getUrlLanguage(url: URL): string | null {
+  const urlLang = url.searchParams.get("lang");
+  if (urlLang) {
+    return urlLang;
+  }
+  return null;
 }
 
-const availableLanguages = Object.keys(seedBibleTranslations).sort();
+export function createI18nManager(
+  navigation: NavigationManager,
+  acceptedLanguages: string[]
+) {
+  const initialLanguage = getInitialLanguage(acceptedLanguages);
 
-const initialLanguage = DEFAULT_LANGUAGE;
+  const url = navigation.currentUrl.value;
 
-if (!i18n.isInitialized) {
-  console.log(
-    "[I18n] Initializing i18n with resources:",
-    seedBibleTranslations,
-    initialLanguage
-  );
-  i18n.use(initReactI18next).init({
-    lng: initialLanguage,
-    fallbackLng: DEFAULT_LANGUAGE,
-    interpolation: {
-      escapeValue: false,
-    },
-    initAsync: false,
-    ns: ["seed-bible"],
+  // Computed at module load. During SSR `location`/`navigator` are absent, so
+  // this falls back to "en"; the client re-derives the real language from the
+  // URL/navigator at hydration.
+  const defaultLanguage: string = getUrlLanguage(url) ?? initialLanguage;
+
+  // Resolves once the detected language's translations are loaded. SSR and the
+  // client entry await this before rendering so the first paint is in the right
+  // language rather than the bundled "en" fallback.
+  let ready: Promise<unknown>;
+
+  if (!i18n.isInitialized) {
+    // Fetch each (non-bundled) language's JSON chunk on demand. Only the
+    // "seed-bible" namespace is file-backed; extension namespaces are supplied
+    // directly via `addTranslations`/`addResourceBundle`.
+    i18n.use(
+      resourcesToBackend((language: string, namespace: string) => {
+        if (namespace !== "seed-bible") {
+          return Promise.reject(new Error(`Unknown namespace: ${namespace}`));
+        }
+        const loader = localeLoaders[`./${language}.json`];
+        if (!loader) {
+          return Promise.reject(
+            new Error(`No locale file for language: ${language}`)
+          );
+        }
+        return loader().then((mod) => mod.default);
+      })
+    );
+
+    ready = i18n.init({
+      lng: defaultLanguage,
+      fallbackLng: "en",
+      ns: ["seed-bible"],
+      // Required so the backend is still consulted for languages beyond the
+      // bundled resources below.
+      partialBundledLanguages: true,
+      interpolation: {
+        escapeValue: false,
+      },
+      // English is bundled so a synchronous fallback is always present (notably
+      // during SSR); every other language is fetched lazily by the backend.
+      resources: { en: { "seed-bible": en } },
+    });
+  } else {
+    ready = i18n.changeLanguage(defaultLanguage);
+  }
+
+  const language = signal(i18n.language);
+  i18n.on("languageChanged", (lng) => {
+    language.value = lng;
   });
 
-  addTranslations("seed-bible", seedBibleTranslations);
+  navigation.syncSignalsToUrl({
+    lang: {
+      get value() {
+        if (language.value !== initialLanguage) {
+          return language.value;
+        }
+        return null;
+      },
+      set value(newValue: string | null) {
+        language.value = newValue ?? defaultLanguage;
+      },
+    },
+  });
+
+  const isRtl = computed(() => isRightToLeftLanguage(language.value));
+
+  return {
+    i18n,
+    t: i18n.t.bind(i18n),
+    changeLanguage: i18n.changeLanguage.bind(i18n),
+    defaultLanguage,
+    availableLanguages,
+    language,
+    isRtl,
+    ready,
+  };
 }
 
-export function I18nProvider(props: { children: unknown }) {
-  return <I18nextProvider i18n={i18n}>{props.children}</I18nextProvider>;
+export type I18nManager = ReturnType<typeof createI18nManager>;
+const I18nContext = createContext(null as I18nManager | null);
+
+export function I18nProvider(props: {
+  i18n: I18nManager;
+  children: ComponentChildren;
+}) {
+  return (
+    <I18nContext.Provider value={props.i18n}>
+      {props.children}
+    </I18nContext.Provider>
+  );
 }
 
-export type I18nManager = ReturnType<typeof useI18n>;
+export type I18nHook = ReturnType<typeof useI18n>;
 
 const RTL_LANGUAGE_CODES = new Set(["ar", "fa", "he", "ur", "ps", "dv", "yi"]);
 
@@ -137,12 +245,17 @@ function isRightToLeftLanguage(languageCode: string): boolean {
  * @returns
  */
 export function useI18n(ns?: string) {
-  const { t, i18n: i18nInstance } = useTranslation();
+  const i18nManager = useContext(I18nContext);
+  if (!i18nManager) {
+    throw new Error("useI18n() must be used within an I18nProvider");
+  }
+  const i18n = i18nManager.i18n;
+  const { t } = i18n;
 
-  const isRtl = isRightToLeftLanguage(i18nInstance.language);
+  const isRtl = isRightToLeftLanguage(i18nManager.language.value);
 
   const setLanguage = async (language: string) => {
-    await i18nInstance.changeLanguage(language);
+    await i18n.changeLanguage(language);
   };
 
   const translate = ns
@@ -154,12 +267,12 @@ export function useI18n(ns?: string) {
     () => ({
       t: translate,
       ns,
-      language: i18nInstance.language || DEFAULT_LANGUAGE,
+      language: i18nManager.language.value,
       isRtl,
       availableLanguages,
       setLanguage,
-      i18n: i18nInstance,
+      i18n: i18n,
     }),
-    [t, i18nInstance.language]
+    [t, i18n.language]
   );
 }
