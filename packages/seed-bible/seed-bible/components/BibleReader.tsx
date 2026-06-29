@@ -935,31 +935,6 @@ export function BibleReader(props: BibleReaderProps) {
     () => translation.value?.website.trim() ?? ""
   );
 
-  // Compact verse part of the current selection (e.g. "1-3" or "1,5-7"),
-  // shown inline after the book/chapter reference in the mobile header.
-  const selectedVerseRange = useComputed(() => {
-    const numbers = selectedVerses.value
-      .map((v) => v.verse.number)
-      .sort((a, b) => a - b);
-    if (numbers.length === 0) return "";
-
-    const ranges: string[] = [];
-    let start = numbers[0]!;
-    let end = start;
-    for (let i = 1; i < numbers.length; i++) {
-      const next = numbers[i]!;
-      if (next === end + 1) {
-        end = next;
-      } else {
-        ranges.push(start === end ? `${start}` : `${start}-${end}`);
-        start = next;
-        end = next;
-      }
-    }
-    ranges.push(start === end ? `${start}` : `${start}-${end}`);
-    return ranges.join(",");
-  });
-
   const isMobile = state?.app.isMobile.value ?? false;
 
   const { t } = useI18n();
@@ -1167,25 +1142,6 @@ export function BibleReader(props: BibleReaderProps) {
             >
               <InfoSettingsIcon />
             </button>
-          </div>
-
-          <div
-            className={`sb-bible-reader-mobile-compact${
-              mobileChrome?.isScrolled
-                ? " sb-bible-reader-mobile-compact-visible"
-                : ""
-            }`}
-            aria-hidden={!mobileChrome?.isScrolled}
-          >
-            <span className="sb-bible-reader-mobile-compact-book">
-              {currentBook.value?.name ?? bookId.value ?? ""}{" "}
-              {chapterNumber.value}
-              {selectedVerseRange.value ? `:${selectedVerseRange.value}` : ""}
-            </span>
-            <span className="sb-bible-reader-mobile-compact-divider">|</span>
-            <span className="sb-bible-reader-mobile-compact-translation">
-              {translation.value?.shortName ?? translationId.value ?? ""}
-            </span>
           </div>
 
           <div

@@ -262,5 +262,7 @@
   "no-languages-found": "No languages found",
   "today-coming-soon": "Today screen is coming soon",
   "link-to-join-shared-session-copied": "A link to join the shared session was copied to your clipboard",
-  "copied-translation-share-link": "Copied translation share link"
+  "copied-translation-share-link": "Copied translation share link",
+  "less": "Less",
+  "swipe-up-more": "Swipe up to view more"
 }

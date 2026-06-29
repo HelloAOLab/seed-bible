@@ -458,6 +458,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const isMoreMenuOpen = useSignal(false);
   const selectedToolbarToolId = useSignal<string | null>(null);
   const selectedVerseToolId = useSignal<string | null>(null);
+  // Whether the mobile verse sheet shows its overflow actions (the "More" /
+  // "Less" toggle). Collapsed by default; reset whenever the selection clears.
+  const isVerseSheetExpanded = useSignal(false);
 
   // Single source of truth for which bottom-bar tab is highlighted orange.
   // "more"/"search"/"you" are derived from real panel state; "today" and
@@ -676,10 +679,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return `${bookName} ${chapter}:${ranges.join(",")}`;
   });
 
-  // Reset picker when selection is cleared
+  // Reset picker and the mobile sheet's expanded state when selection clears.
   useEffect(() => {
     if (!hasVerseSelection.value) {
       isHighlightPickerOpen.value = false;
+      isVerseSheetExpanded.value = false;
     }
   }, [hasVerseSelection.value]);
 
@@ -1122,7 +1126,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           }
         >
           {isSmallScreen.value && (
-            <div className="sb-verse-toolbar-handle" aria-hidden="true" />
+            <>
+              <div className="sb-verse-toolbar-handle" aria-hidden="true" />
+              <button
+                type="button"
+                className="sb-verse-toolbar-close"
+                onClick={() => {
+                  readingState.value?.clearSelectedVerses();
+                }}
+                aria-label={t("close", { defaultValue: "Close" })}
+                title={t("close", { defaultValue: "Close" })}
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </>
           )}
           {(isHighlightPickerOpen.value || isSmallScreen.value) && (
             <div
@@ -1269,7 +1286,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               </button>
             </div>
           ) : (
-            <div className="sb-verse-toolbar-tools">
+            <div
+              className={`sb-verse-toolbar-tools${
+                isSmallScreen.value ? " sb-verse-toolbar-cards" : ""
+              }`}
+            >
               {(() => {
                 const renderTool = (
                   tool: (typeof verseToolbarTools.value)[number]
@@ -1384,145 +1405,184 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   : t("bookmark-verses", { defaultValue: "Bookmark" });
 
                 // const canHighlight = !sessionState.value || sessionState.value.userCanDecorate(sessionState.value.localSessionId.value);
-                return (
-                  <>
-                    {selectionUI.value.showHighlightColors &&
-                      (isSmallScreen.value ? (
-                        // Mobile: surface the highlight colors inline (matching
-                        // the design) instead of behind a tap, with a trailing
-                        // "more colors" swatch that opens the full picker
-                        // (custom colors, add, clear).
-                        <div className="sb-verse-toolbar-colors-inline">
-                          {DEFAULT_HIGHLIGHT_COLOR_IDS.map((colorId) => (
-                            <button
-                              key={colorId}
-                              type="button"
-                              className="sb-verse-toolbar-color-button"
-                              onClick={() => {
-                                const rs = readingState.value;
-                                if (!rs) return;
-                                applyHighlightWithSession(
-                                  rs,
-                                  sessionState.value,
-                                  {
-                                    colorId,
-                                  }
-                                );
-                              }}
-                              aria-label={`${highlightLabel} ${colorId}`}
-                              title={colorId}
-                            >
-                              <span
-                                className="sb-verse-toolbar-color"
-                                style={{
-                                  background: `var(--sb-highlight-${colorId}-color)`,
-                                }}
-                              />
-                            </button>
-                          ))}
-                          <button
-                            type="button"
-                            className="sb-verse-toolbar-color-button sb-verse-toolbar-more-colors"
-                            onClick={() => {
-                              isHighlightPickerOpen.value = true;
-                            }}
-                            aria-label={t("more-colors", {
-                              defaultValue: "More colors",
-                            })}
-                            title={t("more-colors", {
-                              defaultValue: "More colors",
-                            })}
-                          >
-                            <span className="sb-verse-toolbar-color sb-verse-toolbar-more-colors-swatch" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="sb-verse-toolbar-action-item">
-                          <button
-                            type="button"
-                            className="sb-verse-toolbar-action sb-verse-toolbar-highlight-trigger"
-                            onClick={() => {
-                              isHighlightPickerOpen.value = true;
-                            }}
-                            aria-label={t("highlight-selection", {
-                              defaultValue: "Highlight selection",
-                            })}
-                            title={highlightLabel}
-                          >
-                            <span className="sb-verse-toolbar-action-icon">
-                              <span className="material-symbols-outlined">
-                                format_ink_highlighter
-                              </span>
-                            </span>
-                            <span className="sb-verse-toolbar-action-label">
-                              {highlightLabel}
-                            </span>
-                          </button>
-                        </div>
-                      ))}
-                    <div className="sb-verse-toolbar-action-item">
-                      <button
-                        type="button"
-                        className={`sb-verse-toolbar-action sb-verse-toolbar-bookmark-trigger${
-                          isSelectionBookmarked
-                            ? " sb-verse-toolbar-bookmark-trigger-active"
-                            : ""
-                        }`}
-                        onClick={() => {
-                          if (!rs) return;
-                          const translationId = rs.translationId.value;
-                          const bookId = rs.bookId.value;
-                          const chapterNumber = rs.chapterNumber.value;
-                          if (
-                            !translationId ||
-                            !bookId ||
-                            !chapterNumber ||
-                            verseTarget === undefined
-                          ) {
-                            return;
-                          }
-                          if (isSelectionBookmarked) {
-                            void bookmarks.removeBookmarkForLocation(
-                              translationId,
-                              bookId,
-                              chapterNumber,
-                              verseTarget
-                            );
-                            return;
-                          }
-                          openBookmarkCategoryModal(props.state, {
+                const highlightCard = selectionUI.value.showHighlightColors ? (
+                  <div key="highlight" className="sb-verse-toolbar-action-item">
+                    <button
+                      type="button"
+                      className="sb-verse-toolbar-action sb-verse-toolbar-highlight-trigger"
+                      onClick={() => {
+                        isHighlightPickerOpen.value = true;
+                      }}
+                      aria-label={t("highlight-selection", {
+                        defaultValue: "Highlight selection",
+                      })}
+                      title={highlightLabel}
+                    >
+                      <span className="sb-verse-toolbar-action-icon">
+                        <span className="material-symbols-outlined">
+                          format_ink_highlighter
+                        </span>
+                      </span>
+                      <span className="sb-verse-toolbar-action-label">
+                        {highlightLabel}
+                      </span>
+                    </button>
+                  </div>
+                ) : null;
+
+                const bookmarkCard = (
+                  <div key="bookmark" className="sb-verse-toolbar-action-item">
+                    <button
+                      type="button"
+                      className={`sb-verse-toolbar-action sb-verse-toolbar-bookmark-trigger${
+                        isSelectionBookmarked
+                          ? " sb-verse-toolbar-bookmark-trigger-active"
+                          : ""
+                      }`}
+                      onClick={() => {
+                        if (!rs) return;
+                        const translationId = rs.translationId.value;
+                        const bookId = rs.bookId.value;
+                        const chapterNumber = rs.chapterNumber.value;
+                        if (
+                          !translationId ||
+                          !bookId ||
+                          !chapterNumber ||
+                          verseTarget === undefined
+                        ) {
+                          return;
+                        }
+                        if (isSelectionBookmarked) {
+                          void bookmarks.removeBookmarkForLocation(
                             translationId,
                             bookId,
                             chapterNumber,
-                            verse: verseTarget,
-                          });
-                        }}
-                        aria-label={bookmarkLabel}
-                        aria-pressed={isSelectionBookmarked}
-                        title={bookmarkLabel}
+                            verseTarget
+                          );
+                          return;
+                        }
+                        openBookmarkCategoryModal(props.state, {
+                          translationId,
+                          bookId,
+                          chapterNumber,
+                          verse: verseTarget,
+                        });
+                      }}
+                      aria-label={bookmarkLabel}
+                      aria-pressed={isSelectionBookmarked}
+                      title={bookmarkLabel}
+                    >
+                      <span className="sb-verse-toolbar-action-icon">
+                        <span
+                          className="material-symbols-outlined"
+                          style={{
+                            fontVariationSettings: isSelectionBookmarked
+                              ? '"FILL" 1'
+                              : '"FILL" 0',
+                          }}
+                        >
+                          bookmark
+                        </span>
+                      </span>
+                      <span className="sb-verse-toolbar-action-label">
+                        {bookmarkLabel}
+                      </span>
+                    </button>
+                  </div>
+                );
+
+                // Desktop keeps the single horizontal row (highlight, bookmark,
+                // the registered tools, then cancel).
+                if (!isSmallScreen.value) {
+                  return (
+                    <>
+                      {highlightCard}
+                      {bookmarkCard}
+                      {nonCancel.map(renderTool)}
+                      {cancelTools.map(renderTool)}
+                    </>
+                  );
+                }
+
+                // Mobile sheet: a card grid. Show the first few actions plus a
+                // "More" toggle; the rest reveal under a "Less" toggle. The X
+                // in the corner handles dismissal, so the Cancel tool is
+                // dropped here.
+                const actionCards = [
+                  highlightCard,
+                  bookmarkCard,
+                  ...nonCancel.map(renderTool),
+                ].filter(Boolean);
+
+                const COLLAPSED_COUNT = 3;
+                const needsToggle = actionCards.length > COLLAPSED_COUNT;
+                const primaryCards = needsToggle
+                  ? actionCards.slice(0, COLLAPSED_COUNT)
+                  : actionCards;
+                const overflowCards = needsToggle
+                  ? actionCards.slice(COLLAPSED_COUNT)
+                  : [];
+
+                return (
+                  <>
+                    {primaryCards}
+                    {needsToggle && (
+                      <div
+                        key="more-less"
+                        className="sb-verse-toolbar-action-item"
                       >
-                        <span className="sb-verse-toolbar-action-icon">
-                          <span
-                            className="material-symbols-outlined"
-                            style={{
-                              fontVariationSettings: isSelectionBookmarked
-                                ? '"FILL" 1'
-                                : '"FILL" 0',
-                            }}
-                          >
-                            bookmark
+                        <button
+                          type="button"
+                          className={`sb-verse-toolbar-action sb-verse-toolbar-more-toggle${
+                            isVerseSheetExpanded.value
+                              ? " sb-verse-toolbar-more-toggle-active"
+                              : ""
+                          }`}
+                          onClick={() => {
+                            isVerseSheetExpanded.value =
+                              !isVerseSheetExpanded.value;
+                          }}
+                          aria-expanded={isVerseSheetExpanded.value}
+                          aria-label={
+                            isVerseSheetExpanded.value
+                              ? t("less", { defaultValue: "Less" })
+                              : t("more", { defaultValue: "More" })
+                          }
+                          title={
+                            isVerseSheetExpanded.value
+                              ? t("less", { defaultValue: "Less" })
+                              : t("more", { defaultValue: "More" })
+                          }
+                        >
+                          <span className="sb-verse-toolbar-action-icon">
+                            <span className="material-symbols-outlined">
+                              {isVerseSheetExpanded.value
+                                ? "keyboard_arrow_up"
+                                : "more_horiz"}
+                            </span>
                           </span>
-                        </span>
-                        <span className="sb-verse-toolbar-action-label">
-                          {bookmarkLabel}
-                        </span>
-                      </button>
-                    </div>
-                    {nonCancel.map(renderTool)}
-                    {cancelTools.map(renderTool)}
+                          <span className="sb-verse-toolbar-action-label">
+                            {isVerseSheetExpanded.value
+                              ? t("less", { defaultValue: "Less" })
+                              : t("more", { defaultValue: "More" })}
+                          </span>
+                        </button>
+                      </div>
+                    )}
+                    {isVerseSheetExpanded.value && overflowCards}
                   </>
                 );
               })()}
+            </div>
+          )}
+          {isSmallScreen.value && (
+            <div className="sb-verse-toolbar-swipe-hint" aria-hidden="true">
+              <span className="material-symbols-outlined">
+                keyboard_double_arrow_up
+              </span>
+              <span>
+                {t("swipe-up-more", { defaultValue: "Swipe up to view more" })}
+              </span>
             </div>
           )}
         </div>
