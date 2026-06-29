@@ -1,4 +1,4 @@
-import { type SeedBibleState } from "seed-bible.app.api";
+import { type SeedBibleState } from "seed-bible";
 
 export interface BonfireOptions {
   /** The organization ID for the Bonfire API. */
@@ -46,31 +46,34 @@ export function* registerBonfireChatProvider(
 
     onJoinChat: async (chatContext) => {
       console.log("[Bonfire] Creating session for chat", chatContext.chatId);
-      const response = await web.post(
+      const response = await fetch(
         "https://api.heybonfire.com/api/v1/sessions",
         {
-          org_id: orgId,
-          ai_id: aiId,
-        },
-        {
+          method: "POST",
+          body: JSON.stringify({
+            org_id: orgId,
+            ai_id: aiId,
+          }),
           headers,
         }
       );
-      console.log("[Bonfire] Session created", response.data);
-      chatSessionMap.set(chatContext.chatId, response.data.session.session_id);
+      const data = await response.json();
+      console.log("[Bonfire] Session created", data);
+      chatSessionMap.set(chatContext.chatId, data.session.session_id);
     },
     onLeaveChat: async (chatContext) => {
       console.log("[Bonfire] Deleting session for chat", chatContext.chatId);
       const sessionId = chatSessionMap.get(chatContext.chatId);
       if (sessionId) {
-        await web.post(
+        const response = await fetch(
           `https://api.heybonfire.com/api/v1/sessions/end`,
           {
-            org_id: orgId,
-            ai_id: aiId,
-            session_id: sessionId,
-          },
-          {
+            method: "POST",
+            body: JSON.stringify({
+              org_id: orgId,
+              ai_id: aiId,
+              session_id: sessionId,
+            }),
             headers,
           }
         );
@@ -101,21 +104,24 @@ export function* registerBonfireChatProvider(
       console.log("[Bonfire] Generating response for message:", lastMessage);
 
       const readingState = context.app.selectedTab.value?.readingState;
-      const response = await web.post(
+      const response = await fetch(
         "https://api.heybonfire.com/api/v1/chat/completions",
         {
-          stream: false,
-          input: {
-            content: lastMessage?.text,
-          },
-          custom_instructions: `You are chatting with a user who is reading the Bible. They are currently reading: ${readingState?.bookId} ${readingState?.chapterNumber}. Keep responses tweet-length. Your responses should be in the same language as the user's messages.`,
-        },
-        {
+          method: "POST",
+          body: JSON.stringify({
+            stream: false,
+            input: {
+              content: lastMessage?.text,
+            },
+            custom_instructions: `You are chatting with a user who is reading the Bible. They are currently reading: ${readingState?.bookId} ${readingState?.chapterNumber}. Keep responses tweet-length. Your responses should be in the same language as the user's messages.`,
+          }),
           headers,
         }
       );
 
-      const message = response.data.choices[0].message;
+      const data = await response.json();
+
+      const message = data.choices[0].message;
 
       if (message) {
         return {

@@ -21,6 +21,7 @@ import type { ReaderTab } from "../managers/TabsManager";
 import { useEffect, useRef } from "preact/hooks";
 import { translateTitle } from "./Utils";
 import { Avatar } from "./Avatar";
+import { DateTime } from "luxon";
 
 interface SearchResult {
   id: string;

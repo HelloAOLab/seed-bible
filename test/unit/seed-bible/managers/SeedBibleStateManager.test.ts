@@ -7,7 +7,6 @@ import {
 import { signal } from "@preact/signals";
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import type { Mock } from "vitest";
-import { DEFAULT_TRANSLATION_ID } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 
 const mockSaveReadingHistory = vi.fn();
 const mockHighlightsManager = {
@@ -741,7 +740,7 @@ describe("createSeedBibleState", () => {
 
       await state.app.openVerseReference({ book: "EXO", chapter: 3 });
 
-      expect(selectSpy).toHaveBeenCalledWith(DEFAULT_TRANSLATION_ID, "EXO", 3, {
+      expect(selectSpy).toHaveBeenCalledWith("AAB", "EXO", 3, {
         scrollToVerse: undefined,
       });
     });

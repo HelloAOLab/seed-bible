@@ -1,7 +1,7 @@
 import {
   type ConnectedSessionUser,
   type ConnectionSessionUserVisual,
-} from "seed-bible.managers.SessionsManager";
+} from "../managers/SessionsManager";
 
 export function getUserDisplayName(user: ConnectedSessionUser): string {
   return (

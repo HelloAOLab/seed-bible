@@ -311,7 +311,7 @@ export function createSeedBibleState(
   const bookmarks = createBookmarksManager(os, login);
   const config = createConfig(login, navigation);
   const themeManager = createTheme(login, navigation);
-  const chats = createChatsManager(login);
+  const chats = createChatsManager(login, i18n);
   const sidebar = createSidebar({ navigation, chatsManager: chats });
   const tabs = createTabs(navigation, data, highlights, chats, i18n);
   const panes = createPanes(tabs, tabs.selectedTabId);

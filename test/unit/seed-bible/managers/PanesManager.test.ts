@@ -84,8 +84,8 @@ async function createManagers(options: { extraTabs?: number } = {}) {
     navigation,
     createDataManager(),
     createHighlightsManagerMock() as any,
-    createI18nManager(navigation, ["en"]),
-    {} as any
+    {} as any,
+    createI18nManager(navigation, ["en"])
   );
   await waitForTabsToLoad(tabsManager.tabs.value);
   const initialSelectedTabId = tabsManager.selectedTabId.value;

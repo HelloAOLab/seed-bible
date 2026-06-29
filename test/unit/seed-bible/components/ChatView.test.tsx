@@ -9,8 +9,9 @@ import type {
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { BookId } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
+import type { Mock } from "vitest";
 
-jest.mock("seed-bible.i18n.I18nManager", () => ({
+vi.mock("seed-bible.i18n.I18nManager", () => ({
   useI18n: () => ({
     t: (
       key: string,
@@ -70,17 +71,17 @@ function createMockChatSession(
     unreadMessages: signal([]),
     lastMessageRead: signal(null),
     wasMentioned: signal(false),
-    markAsRead: jest.fn(),
-    sendMessage: jest.fn().mockResolvedValue(undefined),
-    setTypingStatus: jest.fn(),
+    markAsRead: vi.fn(),
+    sendMessage: vi.fn().mockResolvedValue(undefined),
+    setTypingStatus: vi.fn(),
     participants: signal([]),
     totalParticipants: signal([]),
     inactiveParticipants: signal([]),
     availableParticipants: signal([]),
     typingParticipants: signal([]),
-    addParticipant: jest.fn(),
-    removeParticipant: jest.fn(),
-    getMessageAuthors: jest.fn().mockReturnValue([]),
+    addParticipant: vi.fn(),
+    removeParticipant: vi.fn(),
+    getMessageAuthors: vi.fn().mockReturnValue([]),
     ...overrides,
   };
 }
@@ -88,7 +89,7 @@ function createMockChatSession(
 function createMockState(): SeedBibleState {
   return {
     app: {
-      openVerseReference: jest.fn().mockResolvedValue(undefined),
+      openVerseReference: vi.fn().mockResolvedValue(undefined),
     },
   } as unknown as SeedBibleState;
 }
@@ -117,24 +118,24 @@ function submitForm(container: HTMLDivElement) {
 describe("ChatView", () => {
   let container: HTMLDivElement;
   let originalScrollIntoView: typeof HTMLElement.prototype.scrollIntoView;
-  let scrollIntoViewMock: jest.Mock;
+  let scrollIntoViewMock: Mock;
   let latestIntersectionCallback: IntersectionObserverCallback | null;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     container = document.createElement("div");
     document.body.appendChild(container);
     originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
-    scrollIntoViewMock = jest.fn();
+    scrollIntoViewMock = vi.fn();
     HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
     latestIntersectionCallback = null;
     (globalThis as any).IntersectionObserver = class {
       constructor(callback: IntersectionObserverCallback) {
         latestIntersectionCallback = callback;
       }
-      observe = jest.fn();
-      disconnect = jest.fn();
-      unobserve = jest.fn();
+      observe = vi.fn();
+      disconnect = vi.fn();
+      unobserve = vi.fn();
     };
     // DateTime is a CasualOS global from Luxon
     (globalThis as any).DateTime = {
@@ -151,7 +152,7 @@ describe("ChatView", () => {
     container.remove();
     HTMLElement.prototype.scrollIntoView = originalScrollIntoView;
     delete (globalThis as any).IntersectionObserver;
-    jest.useRealTimers();
+    vi.useRealTimers();
     delete (globalThis as any).DateTime;
   });
 
@@ -169,7 +170,7 @@ describe("ChatView", () => {
     const chat = createMockChatSession({
       parsedMessages: signal([message]),
       participants: signal([participant]),
-      getMessageAuthors: jest.fn().mockReturnValue([participant]),
+      getMessageAuthors: vi.fn().mockReturnValue([participant]),
     });
     const state = createMockState();
 
@@ -249,7 +250,7 @@ describe("ChatView", () => {
     });
     const chat = createMockChatSession({
       parsedMessages: signal([message]),
-      getMessageAuthors: jest.fn().mockReturnValue([]),
+      getMessageAuthors: vi.fn().mockReturnValue([]),
     });
     const state = createMockState();
 
@@ -287,7 +288,7 @@ describe("ChatView", () => {
   it("marks messages as read as they come into view", () => {
     const msg1 = createMockMessage({ id: "msg-1" });
     const msg2 = createMockMessage({ id: "msg-2" });
-    const markAsRead = jest.fn();
+    const markAsRead = vi.fn();
     const chat = createMockChatSession({
       parsedMessages: signal([msg1, msg2]),
       markAsRead,
@@ -467,9 +468,9 @@ describe("ChatView", () => {
     });
     const chat = createMockChatSession({
       parsedMessages: signal([message]),
-      getMessageAuthors: jest.fn().mockReturnValue([]),
+      getMessageAuthors: vi.fn().mockReturnValue([]),
     });
-    const openVerseReference = jest.fn().mockResolvedValue(undefined);
+    const openVerseReference = vi.fn().mockResolvedValue(undefined);
     const state = {
       app: { openVerseReference },
     } as unknown as SeedBibleState;
@@ -495,7 +496,7 @@ describe("ChatView", () => {
   // ─── Message submission ──────────────────────────────────────────────────────
 
   it("sends the typed message and clears the draft", async () => {
-    const sendMessage = jest.fn().mockResolvedValue(undefined);
+    const sendMessage = vi.fn().mockResolvedValue(undefined);
     const chat = createMockChatSession({ sendMessage });
     const state = createMockState();
 
@@ -518,7 +519,7 @@ describe("ChatView", () => {
   });
 
   it("does not call sendMessage when the draft is empty", async () => {
-    const sendMessage = jest.fn().mockResolvedValue(undefined);
+    const sendMessage = vi.fn().mockResolvedValue(undefined);
     const chat = createMockChatSession({ sendMessage });
     const state = createMockState();
 
@@ -535,7 +536,7 @@ describe("ChatView", () => {
   });
 
   it("disables the send button while a message is being sent", async () => {
-    const sendMessage = jest.fn().mockReturnValue(new Promise<void>(() => {}));
+    const sendMessage = vi.fn().mockReturnValue(new Promise<void>(() => {}));
     const chat = createMockChatSession({ sendMessage });
     const state = createMockState();
 
@@ -561,7 +562,7 @@ describe("ChatView", () => {
   });
 
   it("shows an error message when sending fails", async () => {
-    const sendMessage = jest.fn().mockRejectedValue(new Error("Network error"));
+    const sendMessage = vi.fn().mockRejectedValue(new Error("Network error"));
     const chat = createMockChatSession({ sendMessage });
     const state = createMockState();
 
@@ -587,7 +588,7 @@ describe("ChatView", () => {
   });
 
   it("clears the error message after a subsequent successful send", async () => {
-    const sendMessage = jest
+    const sendMessage = vi
       .fn()
       .mockRejectedValueOnce(new Error("Network error"))
       .mockResolvedValueOnce(undefined);
@@ -792,7 +793,7 @@ describe("ChatView", () => {
   // ─── Component lifecycle ─────────────────────────────────────────────────────
 
   it("clears the typing status when the component unmounts", () => {
-    const setTypingStatus = jest.fn();
+    const setTypingStatus = vi.fn();
     const chat = createMockChatSession({ setTypingStatus });
     const state = createMockState();
 

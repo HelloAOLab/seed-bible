@@ -1,10 +1,4 @@
-import {
-  computed,
-  computed,
-  effect,
-  signal,
-  type ReadonlySignal,
-} from "@preact/signals";
+import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
 import {
   createBibleReadingState,
   type BibleReadingState,
@@ -719,7 +713,6 @@ async function createBibleReadingSession(
       nextUsersByConnectionId.set(connectionId, {
         isSelf: connectionId === localConnectionId,
         connectionId,
-        sessionId: null,
         userId: sharedEntry.userId,
         profile: sharedEntry.profile,
         visual: getUserAnimalVisual(connectionId),

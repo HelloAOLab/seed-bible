@@ -1,11 +1,11 @@
 import { useSignal } from "@preact/signals";
-import { useI18n } from "seed-bible.i18n.I18nManager";
+import { useI18n } from "../i18n/I18nManager";
 import type {
   ChatParticipant,
   ChatMessage,
   ChatSession,
   ParsedChatTextMessage,
-} from "seed-bible.managers.ChatsManager";
+} from "../managers/ChatsManager";
 import {
   getUserAnimalVisual,
   type ConnectionSessionUserVisual,
@@ -16,8 +16,8 @@ import { AskIcon } from "./icons";
 import { VerseReferenceLink } from "./VerseReferenceLink";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import type { VerseRef } from "../managers/BibleDataManager";
-
-const { useEffect, useRef } = os.appHooks;
+import { useEffect, useRef } from "preact/hooks";
+import { DateTime } from "luxon";
 
 interface ChatViewProps {
   chat: ChatSession;

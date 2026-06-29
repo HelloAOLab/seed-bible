@@ -28,14 +28,15 @@
     "@casual-simulation/aux-common": "catalog:",
     "@casual-simulation/aux-websocket": "catalog:",
     "@casual-simulation/websocket": "catalog:",
+    "axios": "catalog:",
     "i18next": "catalog:",
+    "luxon": "catalog:",
     "preact": "catalog:",
     "preact-iso": "catalog:",
     "react": "catalog:",
+    "react-avatar-editor": "15.1.0",
     "react-dom": "catalog:",
     "typesense": "catalog:",
-    "zod": "catalog:",
-    "axios": "catalog:",
-    "react-avatar-editor": "15.1.0"
+    "zod": "catalog:"
   }
 }

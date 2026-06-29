@@ -3,7 +3,7 @@ import type { VerseRef } from "../managers/BibleDataManager";
 import { type ComponentChildren, type ComponentProps } from "preact";
 
 export function getVerseReferenceLinkHref(ref: VerseRef) {
-  const url = new URL(configBot.tags.url ?? window.location.href);
+  const url = new URL(window.location.href);
   url.searchParams.set("book", ref.book);
   url.searchParams.set("chapter", String(ref.chapter));
   if (ref.verse) {

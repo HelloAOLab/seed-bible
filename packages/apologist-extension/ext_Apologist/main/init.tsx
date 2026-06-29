@@ -1,6 +1,8 @@
-import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
-import { i18n } from "seed-bible.i18n.I18nManager";
+import { registerExtension, type SeedBibleState } from "seed-bible";
+import { i18n } from "seed-bible/i18n";
 import { z } from "zod";
+import { v4 as uuid } from "uuid";
+import { DateTime } from "luxon";
 
 const completionsSchema = z.object({
   data: z.array(
@@ -35,15 +37,20 @@ registerExtension({
   init: function* (context: SeedBibleState) {
     console.log("Apologist extension initialized with context:", context);
 
-    const apologistName = configBot.tags.apologistName ?? null;
-    const apologistIconUrl = configBot.tags.apologistIconUrl ?? null;
-    const customApologistDomain = configBot.tags.apologistDomain ?? null;
+    const url = context.navigation.currentUrl.value;
+    const apologistName = url.searchParams.get("apologistName") ?? null;
+    const apologistIconUrl =
+      url.searchParams.get("apologistIconUrl") ?? undefined;
+    const customApologistDomain =
+      url.searchParams.get("apologistDomain") ?? null;
     const apologistDomain = customApologistDomain ?? "apologist.ao.bot";
-    const apologistApiKey = configBot.tags.apologistApiKey ?? null;
-    const apologistShareToken = configBot.tags.apologistShareToken ?? null;
-    const apologistModel = configBot.tags.apologistModel ?? "openai/gpt/5-mini";
+    const apologistApiKey = url.searchParams.get("apologistApiKey") ?? null;
+    const apologistShareToken =
+      url.searchParams.get("apologistShareToken") ?? null;
+    const apologistModel =
+      url.searchParams.get("apologistModel") ?? "openai/gpt/5-mini";
     const apologistConversationId: string | null =
-      configBot.tags.apologistConversation ?? null;
+      url.searchParams.get("apologistConversation") ?? null;
 
     if (customApologistDomain && !apologistApiKey) {
       console.error(
@@ -72,26 +79,27 @@ registerExtension({
           content: `Currently reading: ${context.app.selectedTab.value?.readingState.bookId} ${context.app.selectedTab.value?.readingState.chapterNumber}`,
         };
 
-        const response = await web.post(
+        const response = await fetch(
           `https://${apologistDomain}/api/v1/chat/completions`,
           {
-            model: apologistModel,
-            stream: false,
-            metadata: {
-              bible: "bsb",
-              language: i18n.language,
-            },
-            messages: [
-              contextMessage,
-              ...chatContext.messages.map((m) => ({
-                role: m.authors.some((a) => a === chatContext.participant.id)
-                  ? "user"
-                  : "assistant",
-                content: m.text,
-              })),
-            ],
-          },
-          {
+            method: "POST",
+            body: JSON.stringify({
+              model: apologistModel,
+              stream: false,
+              metadata: {
+                bible: "bsb",
+                language: i18n.language,
+              },
+              messages: [
+                contextMessage,
+                ...chatContext.messages.map((m) => ({
+                  role: m.authors.some((a) => a === chatContext.participant.id)
+                    ? "user"
+                    : "assistant",
+                  content: m.text,
+                })),
+              ],
+            }),
             headers: apologistApiKey
               ? {
                   Authorization: `Bearer ${apologistApiKey}`,
@@ -100,7 +108,8 @@ registerExtension({
           }
         );
 
-        const message = response.data.choices[0].message;
+        const responseData = await response.json();
+        const message = responseData.data.choices[0].message;
 
         if (message) {
           return {
@@ -121,12 +130,14 @@ registerExtension({
             "[Apologist] Getting conversation history for share token:",
             apologistShareToken
           );
-          const response = await web.get(
+          const response = await fetch(
             `https://${apologistDomain}/api/v1/shares/${encodeURIComponent(apologistShareToken)}`
           );
 
-          console.log("Share response:", response.data);
-          const shareData = shareSchema.parse(response.data);
+          const responseData = await response.json();
+
+          console.log("Share response:", responseData);
+          const shareData = shareSchema.parse(responseData);
 
           // TODO: Support detecting langauge from share data.
           // const lastLanguage =
@@ -201,7 +212,7 @@ registerExtension({
             "[Apologist] Getting conversation history for conversation ID:",
             apologistConversationId
           );
-          const response = await web.get(
+          const response = await fetch(
             `https://${apologistDomain}/api/v1/chat/completions?conversation_id=${encodeURIComponent(apologistConversationId)}`,
             {
               headers: apologistApiKey
@@ -212,7 +223,8 @@ registerExtension({
             }
           );
 
-          const completions = completionsSchema.parse(response.data);
+          const responseData = await response.json();
+          const completions = completionsSchema.parse(responseData);
 
           const lastLanguage =
             completions.data[completions.data.length - 1]?.language;

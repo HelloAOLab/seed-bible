@@ -417,6 +417,7 @@ export function createLoginManager({
 
   return {
     userId,
+    connectionId: os.connectionId,
     userInfo,
     authBot: userInfo,
     profile,

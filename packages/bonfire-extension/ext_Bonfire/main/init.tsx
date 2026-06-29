@@ -1,4 +1,4 @@
-import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
+import { registerExtension, type SeedBibleState } from "seed-bible";
 import { registerBonfireChatProvider } from "./bonfire";
 
 registerExtension({
@@ -6,9 +6,10 @@ registerExtension({
   init: function* (context: SeedBibleState) {
     console.log("Bonfire extension initialized with context:", context);
 
-    const orgId: string = configBot.tags.bonfireOrgId;
-    const aiId: string = configBot.tags.bonfireAiId;
-    const apiKey: string = configBot.tags.bonfireApiKey;
+    const url = context.navigation.currentUrl.value;
+    const orgId = url.searchParams.get("bonfireOrgId");
+    const aiId = url.searchParams.get("bonfireAiId");
+    const apiKey = url.searchParams.get("bonfireApiKey");
 
     if (!orgId || !aiId || !apiKey) {
       console.error(
@@ -17,12 +18,15 @@ registerExtension({
       return;
     }
 
+    const name = url.searchParams.get("bonfireName") ?? "Bonfire AI";
+    const iconUrl = url.searchParams.get("bonfireIconUrl") ?? undefined;
+
     yield* registerBonfireChatProvider(context, {
       orgId,
       aiId,
       apiKey,
-      name: configBot.tags.bonfireName,
-      iconUrl: configBot.tags.bonfireIconUrl,
+      name,
+      iconUrl,
     });
 
     return {};

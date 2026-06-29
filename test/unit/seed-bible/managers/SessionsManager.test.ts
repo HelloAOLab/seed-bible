@@ -1315,9 +1315,11 @@ describe("SessionsManager", () => {
     });
 
     const manager = createSessionsManager(
+      os,
       mockDataManager as any,
       mockLoginManager as any,
-      mockHighlightsManager as any
+      mockHighlightsManager as any,
+      i18n
     );
     const session = await manager.joinSession("group-abc");
 

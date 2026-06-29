@@ -8,10 +8,25 @@ import {
   type UserChatParticipant,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import type { I18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import type { i18n } from "i18next";
 import {
   getUserAnimalVisual,
   type BibleReadingSession,
 } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
+
+// ChatsManager only reads `i18nManager.i18n` and `i18n.t` (via translateTitle,
+// which returns plain string titles unchanged), so a passthrough mock keeps the
+// existing behavior of these tests intact.
+const mockI18n = { t: (key: string) => key } as unknown as i18n;
+const mockI18nManager = { i18n: mockI18n } as unknown as I18nManager;
+
+// ChatsManager generates ids via `v4` from the "uuid" package, so mock the
+// module to produce deterministic, sequential ids.
+const uuidState = vi.hoisted(() => ({ count: 0 }));
+vi.mock("uuid", () => ({
+  v4: () => `msg-${++uuidState.count}`,
+}));
 
 class MockSharedArray<T> {
   private values: T[];
@@ -216,16 +231,13 @@ function createSharedSessionMock(options?: {
 }
 
 describe("createChatsManager", () => {
-  let uuidCount = 0;
   beforeEach(() => {
-    uuidCount = 0;
-    (globalThis as any).uuid = vi.fn(() => `msg-${++uuidCount}`);
+    uuidState.count = 0;
     vi.spyOn(Date, "now").mockReturnValue(1_717_000_000_000);
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
-    delete (globalThis as any).uuid;
   });
 
   it("createLocalSession() derives local participant from login profile/user id", () => {
@@ -233,7 +245,7 @@ describe("createChatsManager", () => {
     userId.value = "user-1";
     profile.value = { name: "Alice" };
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
 
     expect(session.participants.value).toEqual([
@@ -254,7 +266,7 @@ describe("createChatsManager", () => {
 
   it("tracks created chats in creation order", () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const { session: sharedReadingSession } = createSharedSessionMock({
       currentUserId: "shared-user",
     });
@@ -269,7 +281,7 @@ describe("createChatsManager", () => {
 
   it("tracks multiple created local chats as distinct sessions", () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
 
     const firstChat = chats.createLocalSession();
     const secondChat = chats.createLocalSession();
@@ -285,7 +297,7 @@ describe("createChatsManager", () => {
     userId.value = "user-1";
     profile.value = { name: "Alice" };
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
 
     expect(session.lastMessageRead.value).toBeNull();
@@ -331,7 +343,7 @@ describe("createChatsManager", () => {
       text: "c",
     });
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const chatSession = chats.createSharedSession(session);
 
     chatSession.markAsRead("m1");
@@ -370,7 +382,7 @@ describe("createChatsManager", () => {
       text: "c",
     });
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const chatSession = chats.createSharedSession(session);
 
     chatSession.markAsRead("m3");
@@ -392,7 +404,7 @@ describe("createChatsManager", () => {
       text: "a",
     });
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const chatSession = chats.createSharedSession(session);
 
     chatSession.markAsRead("unknown-id");
@@ -402,7 +414,7 @@ describe("createChatsManager", () => {
 
   it("tracks unreadMessages and wasMentioned across chats", () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const { session, sharedChats } = createSharedSessionMock({
       currentUserId: "self-user",
       connectedUsers: [
@@ -468,7 +480,7 @@ describe("createChatsManager", () => {
 
   it("does not automatically mark selected chat as read when chat is closed", () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const { session, sharedChats } = createSharedSessionMock({
       currentUserId: "self-user",
       connectedUsers: [
@@ -542,9 +554,9 @@ describe("createChatsManager", () => {
       },
     ];
 
-    expect(resolveMessageTargets(participants, "Hi @provider-1")).toEqual([
-      participants[1]!,
-    ]);
+    expect(
+      resolveMessageTargets(participants, "Hi @provider-1", mockI18n)
+    ).toEqual([participants[1]!]);
   });
 
   it("resolveMessageTargets() matches by partial participant id", () => {
@@ -574,9 +586,9 @@ describe("createChatsManager", () => {
       },
     ];
 
-    expect(resolveMessageTargets(participants, "Hi @d7d903")).toEqual([
-      participants[1]!,
-    ]);
+    expect(resolveMessageTargets(participants, "Hi @d7d903", mockI18n)).toEqual(
+      [participants[1]!]
+    );
   });
 
   it("resolveMessageTargets() matches remote non-AI participants by name", () => {
@@ -606,7 +618,7 @@ describe("createChatsManager", () => {
       },
     ];
 
-    expect(resolveMessageTargets(participants, "Hi @Alpha")).toEqual([
+    expect(resolveMessageTargets(participants, "Hi @Alpha", mockI18n)).toEqual([
       participants[0]!,
     ]);
   });
@@ -638,9 +650,9 @@ describe("createChatsManager", () => {
       },
     ];
 
-    expect(resolveMessageTargets(participants, "Hi @Helper AI")).toEqual([
-      participants[0]!,
-    ]);
+    expect(
+      resolveMessageTargets(participants, "Hi @Helper AI", mockI18n)
+    ).toEqual([participants[0]!]);
   });
 
   it("resolveMessageTargets() does not match local non-AI or remote AI by name", () => {
@@ -670,7 +682,9 @@ describe("createChatsManager", () => {
       },
     ];
 
-    expect(resolveMessageTargets(participants, "Hi @Alpha")).toEqual([]);
+    expect(resolveMessageTargets(participants, "Hi @Alpha", mockI18n)).toEqual(
+      []
+    );
   });
 
   it("resolveMessageTargets() dedupes repeated and overlapping matches", () => {
@@ -689,13 +703,13 @@ describe("createChatsManager", () => {
     ];
 
     expect(
-      resolveMessageTargets(participants, "@user-1 @Alpha @user-1")
+      resolveMessageTargets(participants, "@user-1 @Alpha @user-1", mockI18n)
     ).toEqual([participants[0]!]);
   });
 
   it("createLocalSession() updates participant when login profile changes", () => {
     const { loginManager, userId, profile } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
 
     userId.value = "user-2";
@@ -720,7 +734,7 @@ describe("createChatsManager", () => {
     userId.value = "user-3";
     profile.value = { name: "Cara" };
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
 
     await session.sendMessage({
@@ -744,7 +758,7 @@ describe("createChatsManager", () => {
 
   it("createLocalSession() resolves old local author id to current participant after login", async () => {
     const { loginManager, userId, profile } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
 
     await session.sendMessage({
@@ -771,7 +785,7 @@ describe("createChatsManager", () => {
     userId.value = "user-typing";
     profile.value = { name: "Typer" };
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
 
     expect(session.typingParticipants.value).toEqual([]);
@@ -805,7 +819,7 @@ describe("createChatsManager", () => {
       ],
     });
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const chatSession = chats.createSharedSession(session);
 
     expect(chatSession.messages.value).toEqual([
@@ -824,7 +838,7 @@ describe("createChatsManager", () => {
     const { loginManager } = createLoginManagerMock();
     const { session, sharedChats } = createSharedSessionMock();
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const chatSession = chats.createSharedSession(session);
 
     sharedChats.push({
@@ -849,7 +863,7 @@ describe("createChatsManager", () => {
       currentUserId: "self-user",
     });
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const chatSession = chats.createSharedSession(session);
 
     await chatSession.sendMessage({
@@ -874,7 +888,7 @@ describe("createChatsManager", () => {
       currentUserId: "user-a",
     });
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     chats.createSharedSession(session);
 
     expect(sharedTyping.get("user-a")).toBe(false);
@@ -891,7 +905,7 @@ describe("createChatsManager", () => {
       currentUserId: "user-a",
     });
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     chats.createSharedSession(session);
 
     const chatSession = chats.chats.value[0]!;
@@ -914,7 +928,7 @@ describe("createChatsManager", () => {
         },
       ],
     });
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const chatSession = chats.createSharedSession(session);
 
     expect(chatSession.typingParticipants.value).toEqual([]);
@@ -942,7 +956,7 @@ describe("createChatsManager", () => {
         },
       ],
     });
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const chatSession = chats.createSharedSession(session);
 
     sharedTyping.set("u1", true);
@@ -1002,7 +1016,7 @@ describe("createChatsManager", () => {
       ],
     });
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const chatSession = chats.createSharedSession(session);
 
     expect(chatSession.participants.value).toEqual([
@@ -1077,7 +1091,7 @@ describe("createChatsManager", () => {
       ],
     });
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const chatSession = chats.createSharedSession(session);
 
     expect(chatSession.participants.value).toEqual([
@@ -1118,7 +1132,7 @@ describe("createChatsManager", () => {
       ],
     });
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const chatSession = chats.createSharedSession(session);
 
     expect(chatSession.participants.value).toEqual([
@@ -1168,7 +1182,7 @@ describe("createChatsManager", () => {
       ],
     });
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const chatSession = chats.createSharedSession(session);
 
     expect(chatSession.participants.value).toContainEqual({
@@ -1237,7 +1251,7 @@ describe("createChatsManager", () => {
       },
     ]);
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const chatSession = chats.createSharedSession(session);
 
     expect(chatSession.participants.value).toContainEqual({
@@ -1282,7 +1296,7 @@ describe("createChatsManager", () => {
 
   it("sendMessage() rejects invalid message payloads", async () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
 
     await expect(
@@ -1294,7 +1308,7 @@ describe("createChatsManager", () => {
 
   it("registerProvider() adds AI provider participants to availableParticipants", () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
 
     const unregister = chats.registerProvider({
@@ -1341,7 +1355,7 @@ describe("createChatsManager", () => {
 
   it("registerProvider() replaces providers that have the same id", () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
 
     chats.registerProvider({
@@ -1370,7 +1384,7 @@ describe("createChatsManager", () => {
 
   it("registerProvider() unregister callback does not remove replacement provider", () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
 
     const unregisterOld = chats.registerProvider({
@@ -1406,7 +1420,7 @@ describe("createChatsManager", () => {
 
   it("addParticipant()/removeParticipant() call onJoinChat() and onLeaveChat() for local chats", async () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
 
     const onJoinChat = vi.fn();
@@ -1451,7 +1465,7 @@ describe("createChatsManager", () => {
 
   it("addParticipant()/removeParticipant() call onJoinChat() and onLeaveChat() for shared chats", async () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
 
     const onJoinChat = vi.fn();
     const onLeaveChat = vi.fn();
@@ -1519,7 +1533,7 @@ describe("createChatsManager", () => {
 
   it("addParticipant() does nothing when trying to add a provider that doesnt support shared chats", async () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
 
     const onJoinChat = vi.fn();
     const onLeaveChat = vi.fn();
@@ -1581,7 +1595,7 @@ describe("createChatsManager", () => {
 
   it("registerProvider() unregister triggers onLeaveChat() for chats that selected the provider", async () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
 
     const onLeaveChat = vi.fn();
@@ -1609,7 +1623,7 @@ describe("createChatsManager", () => {
 
   it("createSharedSession() does not publish local providers into chat_providers map until they are added to the session", async () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
@@ -1661,7 +1675,7 @@ describe("createChatsManager", () => {
 
   it("createSharedSession() replaces provider participant entry in chat_providers by provider id", async () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     chats.registerProvider({
       id: "provider-1",
       name: "Old Name",
@@ -1712,7 +1726,7 @@ describe("createChatsManager", () => {
 
   it("createSharedSession() merges shared provider participants from chat_providers map", () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const { session, sharedChatProviders } = createSharedSessionMock({
       connectedUsers: [
         {
@@ -1758,7 +1772,7 @@ describe("createChatsManager", () => {
     userId.value = "user-1";
     profile.value = { name: "Alice" };
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
     const providerResponse = vi.fn().mockResolvedValue({
       type: "text",
@@ -1788,7 +1802,7 @@ describe("createChatsManager", () => {
     userId.value = "user-1";
     profile.value = { name: "Alice" };
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
     const firstProviderResponse = vi.fn().mockResolvedValue({
       type: "text",
@@ -1831,7 +1845,7 @@ describe("createChatsManager", () => {
     userId.value = "user-1";
     profile.value = { name: "Alice" };
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
     const firstProviderResponse = vi.fn().mockResolvedValue({
       type: "text",
@@ -1883,7 +1897,7 @@ describe("createChatsManager", () => {
     userId.value = "user-1";
     profile.value = { name: "Alice" };
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
     const firstProviderResponse = vi.fn().mockResolvedValue({
       type: "text",
@@ -1936,7 +1950,7 @@ describe("createChatsManager", () => {
     profile.value = { name: "Alice" };
 
     const deferred = createDeferred<ChatMessageOptions | null>();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
 
     chats.registerProvider({
@@ -1975,7 +1989,7 @@ describe("createChatsManager", () => {
   it("createSharedSession() marks local AI participant as typing while generating response", async () => {
     const { loginManager } = createLoginManagerMock();
     const deferred = createDeferred<ChatMessageOptions | null>();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
 
     chats.registerProvider({
       id: "provider-1",
@@ -2047,7 +2061,7 @@ describe("createChatsManager", () => {
         .mockResolvedValue({ done: true, value: undefined as any }),
     };
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
 
     chats.registerProvider({
@@ -2093,7 +2107,7 @@ describe("createChatsManager", () => {
 
   it("createSharedSession() incrementally updates provider responses when streaming", async () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
 
     const firstChunk = createDeferred<IteratorResult<string>>();
     const secondChunk = createDeferred<IteratorResult<string>>();
@@ -2169,7 +2183,7 @@ describe("createChatsManager", () => {
 
   it("createSharedSession() stores targets matched by remote participant name and local AI name", async () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const providerResponse = vi.fn().mockResolvedValue({
       type: "text",
       text: "I can help",
@@ -2229,7 +2243,7 @@ describe("createChatsManager", () => {
 
   it("createSharedSession() resolves mentions of old anonymous id to logged-in user participant", async () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const { session, sharedChats, connectedUsers, allUsers } =
       createSharedSessionMock({
         currentUserId: "self-user",
@@ -2311,7 +2325,10 @@ describe("createChatsManager", () => {
       ],
     });
 
-    const firstChatsManager = createChatsManager(firstLoginManager);
+    const firstChatsManager = createChatsManager(
+      firstLoginManager,
+      mockI18nManager
+    );
     firstChatsManager.createSharedSession(session);
 
     connectedUsers.value = [
@@ -2343,7 +2360,10 @@ describe("createChatsManager", () => {
     expect(sharedParticipantAliases.get("anon-1")).toBe("u1");
 
     const { loginManager: lateJoinerLoginManager } = createLoginManagerMock();
-    const lateJoinerChatsManager = createChatsManager(lateJoinerLoginManager);
+    const lateJoinerChatsManager = createChatsManager(
+      lateJoinerLoginManager,
+      mockI18nManager
+    );
     const lateJoinerChatSession =
       lateJoinerChatsManager.createSharedSession(session);
 
@@ -2390,7 +2410,10 @@ describe("createChatsManager", () => {
       ],
     });
 
-    const firstChatsManager = createChatsManager(firstLoginManager);
+    const firstChatsManager = createChatsManager(
+      firstLoginManager,
+      mockI18nManager
+    );
     firstChatsManager.createSharedSession(session);
 
     connectedUsers.value = [
@@ -2413,7 +2436,10 @@ describe("createChatsManager", () => {
     expect(sharedParticipantAliases.get("anon-1")).toBe("u1");
 
     const { loginManager: lateJoinerLoginManager } = createLoginManagerMock();
-    const lateJoinerChatsManager = createChatsManager(lateJoinerLoginManager);
+    const lateJoinerChatsManager = createChatsManager(
+      lateJoinerLoginManager,
+      mockI18nManager
+    );
     const lateJoinerChatSession =
       lateJoinerChatsManager.createSharedSession(session);
 
@@ -2439,7 +2465,7 @@ describe("createChatsManager", () => {
     const { loginManager, userId } = createLoginManagerMock();
     userId.value = "user-1";
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
     const generateResponse = vi.fn().mockResolvedValue({
       type: "text",
@@ -2477,7 +2503,7 @@ describe("createChatsManager", () => {
     const { loginManager, userId } = createLoginManagerMock();
     userId.value = "user-1";
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
     const generateResponse = vi.fn().mockResolvedValue({
       type: "text",
@@ -2505,7 +2531,7 @@ describe("createChatsManager", () => {
     const { loginManager, userId } = createLoginManagerMock();
     userId.value = "user-1";
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
     const onJoinChat = vi.fn();
     chats.registerProvider({
@@ -2530,7 +2556,7 @@ describe("createChatsManager", () => {
     const { loginManager, userId } = createLoginManagerMock();
     userId.value = "user-1";
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
     const onJoinChat = vi.fn();
     chats.registerProvider({
@@ -2556,7 +2582,7 @@ describe("createChatsManager", () => {
 
   it("sendMessage() auto-adds available participant when mentioned by id (shared session)", async () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const generateResponse = vi.fn().mockResolvedValue({
       type: "text",
       text: "reply",
@@ -2607,7 +2633,7 @@ describe("createChatsManager", () => {
 
   it("sendMessage() auto-adds available participant when mentioned by name (shared session)", async () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const generateResponse = vi.fn().mockResolvedValue({
       type: "text",
       text: "reply",
@@ -2651,7 +2677,7 @@ describe("createChatsManager", () => {
 
   it("sendMessage() calls onJoinChat when auto-adding mentioned available participant (shared session)", async () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const onJoinChat = vi.fn();
     chats.registerProvider({
       id: "provider-1",
@@ -2694,7 +2720,7 @@ describe("createChatsManager", () => {
 
   it("sendMessage() does not re-add an already-participating provider when mentioned (shared session)", async () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const onJoinChat = vi.fn();
     chats.registerProvider({
       id: "provider-1",
@@ -2767,14 +2793,16 @@ describe("createChatsManager", () => {
       },
     ];
 
-    expect(resolveMessageTargets(participants, "Hello @everyone")).toEqual([]);
+    expect(
+      resolveMessageTargets(participants, "Hello @everyone", mockI18n)
+    ).toEqual([]);
   });
 
   it("sendMessage() sets targets to true when @everyone is mentioned (local session)", async () => {
     const { loginManager, userId } = createLoginManagerMock();
     userId.value = "user-1";
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
     chats.registerProvider({
       id: "provider-1",
@@ -2795,7 +2823,7 @@ describe("createChatsManager", () => {
     const { loginManager, userId } = createLoginManagerMock();
     userId.value = "user-1";
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
     const firstResponse = vi
       .fn()
@@ -2829,7 +2857,7 @@ describe("createChatsManager", () => {
     const { loginManager, userId } = createLoginManagerMock();
     userId.value = "user-1";
 
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const session = chats.createLocalSession();
     const firstResponse = vi
       .fn()
@@ -2867,7 +2895,7 @@ describe("createChatsManager", () => {
 
   it("sendMessage() sets targets to true when @everyone is mentioned (shared session)", async () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     chats.registerProvider({
       id: "provider-1",
       name: "Helper AI",
@@ -2904,7 +2932,7 @@ describe("createChatsManager", () => {
 
   it("sendMessage() calls all local AI providers when @everyone is mentioned (shared session)", async () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const firstResponse = vi
       .fn()
       .mockResolvedValue({ type: "text", text: "reply 1" });
@@ -2956,7 +2984,7 @@ describe("createChatsManager", () => {
     it("returns a single string part for plain text without mentions (local session)", async () => {
       const { loginManager, userId } = createLoginManagerMock();
       userId.value = "user-1";
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const session = chats.createLocalSession();
 
       await session.sendMessage({ type: "text", text: "Hello world" });
@@ -2969,7 +2997,7 @@ describe("createChatsManager", () => {
     it("splits on @id mention resolving to a known participant (local session)", async () => {
       const { loginManager, userId } = createLoginManagerMock();
       userId.value = "user-1";
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const session = chats.createLocalSession();
       chats.registerProvider({
         id: "provider-1",
@@ -3001,7 +3029,7 @@ describe("createChatsManager", () => {
     it("splits on @{id} bracketed mention (local session)", async () => {
       const { loginManager, userId } = createLoginManagerMock();
       userId.value = "user-1";
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const session = chats.createLocalSession();
       chats.registerProvider({
         id: "provider-1",
@@ -3030,7 +3058,7 @@ describe("createChatsManager", () => {
     it("resolves unknown mention token to participant: null (local session)", async () => {
       const { loginManager, userId } = createLoginManagerMock();
       userId.value = "user-1";
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const session = chats.createLocalSession();
 
       await session.sendMessage({ type: "text", text: "Hi @ghost there" });
@@ -3049,7 +3077,7 @@ describe("createChatsManager", () => {
     it("treats @everyone as a mention with null participant (local session)", async () => {
       const { loginManager, userId } = createLoginManagerMock();
       userId.value = "user-1";
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const session = chats.createLocalSession();
 
       await session.sendMessage({ type: "text", text: "@everyone Hello!" });
@@ -3067,7 +3095,7 @@ describe("createChatsManager", () => {
     it("handles multiple mentions in a single message (local session)", async () => {
       const { loginManager, userId } = createLoginManagerMock();
       userId.value = "user-1";
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const session = chats.createLocalSession();
       chats.registerProvider({
         id: "provider-1",
@@ -3105,7 +3133,7 @@ describe("createChatsManager", () => {
     it("resolves mention by short id (first 6 chars) (local session)", async () => {
       const { loginManager, userId } = createLoginManagerMock();
       userId.value = "user-1";
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const session = chats.createLocalSession();
       chats.registerProvider({
         id: "d7d90348-fc03-4272-b7c1-b565d968bb5c",
@@ -3131,7 +3159,7 @@ describe("createChatsManager", () => {
     it("resolves mention by AI participant display name (local session)", async () => {
       const { loginManager, userId } = createLoginManagerMock();
       userId.value = "user-1";
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const session = chats.createLocalSession();
       chats.registerProvider({
         id: "provider-1",
@@ -3157,7 +3185,7 @@ describe("createChatsManager", () => {
 
     it("resolves mention via participant id alias (local session)", async () => {
       const { loginManager, userId } = createLoginManagerMock();
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const session = chats.createLocalSession();
 
       // Send while anonymous (id = DEFAULT_LOCAL_PARTICIPANT_ID = "local-user")
@@ -3177,7 +3205,7 @@ describe("createChatsManager", () => {
     it("updates reactively as messages are added (local session)", async () => {
       const { loginManager, userId } = createLoginManagerMock();
       userId.value = "user-1";
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const session = chats.createLocalSession();
 
       expect(session.parsedMessages.value).toEqual([]);
@@ -3192,7 +3220,7 @@ describe("createChatsManager", () => {
     it("returns a single string part for plain text without mentions (shared session)", () => {
       const { loginManager } = createLoginManagerMock();
       const { session, sharedChats } = createSharedSessionMock();
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const chatSession = chats.createSharedSession(session);
 
       sharedChats.push({
@@ -3221,7 +3249,7 @@ describe("createChatsManager", () => {
           },
         ],
       });
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const chatSession = chats.createSharedSession(session);
 
       sharedChats.push({
@@ -3246,7 +3274,7 @@ describe("createChatsManager", () => {
     it("resolves unknown mention token to participant: null (shared session)", () => {
       const { loginManager } = createLoginManagerMock();
       const { session, sharedChats } = createSharedSessionMock();
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const chatSession = chats.createSharedSession(session);
 
       sharedChats.push({
@@ -3272,7 +3300,7 @@ describe("createChatsManager", () => {
     it("updates reactively when the shared array receives a new message (shared session)", () => {
       const { loginManager } = createLoginManagerMock();
       const { session, sharedChats } = createSharedSessionMock();
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const chatSession = chats.createSharedSession(session);
 
       expect(chatSession.parsedMessages.value).toEqual([]);
@@ -3296,7 +3324,7 @@ describe("createChatsManager", () => {
     it("parses a single verse reference", async () => {
       const { loginManager, userId } = createLoginManagerMock();
       userId.value = "user-1";
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const session = chats.createLocalSession();
 
       await session.sendMessage({ type: "text", text: "See GEN 1:1" });
@@ -3316,7 +3344,7 @@ describe("createChatsManager", () => {
     it("parses a chapter-only verse reference", async () => {
       const { loginManager, userId } = createLoginManagerMock();
       userId.value = "user-1";
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const session = chats.createLocalSession();
 
       await session.sendMessage({ type: "text", text: "Read GEN 1 today" });
@@ -3337,7 +3365,7 @@ describe("createChatsManager", () => {
     it("parses a verse range reference", async () => {
       const { loginManager, userId } = createLoginManagerMock();
       userId.value = "user-1";
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const session = chats.createLocalSession();
 
       await session.sendMessage({ type: "text", text: "Check GEN 1:1-5" });
@@ -3357,7 +3385,7 @@ describe("createChatsManager", () => {
     it("parses multiple verse references in one message", async () => {
       const { loginManager, userId } = createLoginManagerMock();
       userId.value = "user-1";
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const session = chats.createLocalSession();
 
       await session.sendMessage({
@@ -3386,7 +3414,7 @@ describe("createChatsManager", () => {
     it("parses a verse reference alongside a mention", async () => {
       const { loginManager, userId } = createLoginManagerMock();
       userId.value = "user-1";
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const session = chats.createLocalSession();
       chats.registerProvider({
         id: "provider-1",
@@ -3420,7 +3448,7 @@ describe("createChatsManager", () => {
     it("does not produce verse_reference parts for plain text", async () => {
       const { loginManager, userId } = createLoginManagerMock();
       userId.value = "user-1";
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const session = chats.createLocalSession();
 
       await session.sendMessage({ type: "text", text: "Hello world" });
@@ -3446,7 +3474,7 @@ describe("createChatsManager", () => {
       sharedParticipantAliases.set("anon-1", "u1");
       await Promise.resolve();
 
-      const chats = createChatsManager(loginManager);
+      const chats = createChatsManager(loginManager, mockI18nManager);
       const chatSession = chats.createSharedSession(session);
 
       await Promise.resolve();
@@ -3471,7 +3499,7 @@ describe("createChatsManager", () => {
 
   it("wasMentioned is true for an unread message with targets: true", () => {
     const { loginManager } = createLoginManagerMock();
-    const chats = createChatsManager(loginManager);
+    const chats = createChatsManager(loginManager, mockI18nManager);
     const { session, sharedChats } = createSharedSessionMock({
       currentUserId: "self-user",
       connectedUsers: [

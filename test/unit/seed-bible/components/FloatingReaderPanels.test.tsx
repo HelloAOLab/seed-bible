@@ -13,8 +13,9 @@ import type {
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
+import type { Mock } from "vitest";
 
-jest.mock("seed-bible.i18n.I18nManager", () => ({
+vi.mock("seed-bible.i18n.I18nManager", () => ({
   useI18n: () => ({
     t: (key: string, options?: { defaultValue?: string }) =>
       options?.defaultValue ?? key,
@@ -22,8 +23,8 @@ jest.mock("seed-bible.i18n.I18nManager", () => ({
   }),
 }));
 
-jest.mock("@packages/seed-bible/seed-bible/components/ChatView", () => {
-  const actual = jest.requireActual(
+vi.mock("@packages/seed-bible/seed-bible/components/ChatView", async () => {
+  const actual = await vi.importActual(
     "@packages/seed-bible/seed-bible/components/ChatView"
   );
   return {
@@ -34,8 +35,8 @@ jest.mock("@packages/seed-bible/seed-bible/components/ChatView", () => {
   };
 });
 
-jest.mock("seed-bible.components.ContextMenu", () => ({
-  closeContextMenus: jest.fn(),
+vi.mock("seed-bible.components.ContextMenu", () => ({
+  closeContextMenus: vi.fn(),
   ContextMenuItem: ({
     children,
     onClick,
@@ -76,7 +77,7 @@ describe("FloatingReaderPanels", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     container = document.createElement("div");
     document.body.appendChild(container);
   });
@@ -84,7 +85,7 @@ describe("FloatingReaderPanels", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it("creates a local chat from a provider and selects it", async () => {
@@ -94,7 +95,7 @@ describe("FloatingReaderPanels", () => {
       id: "provider-1",
       name: "Helper AI",
       supportsSharedChats: true,
-      generateResponse: jest.fn(),
+      generateResponse: vi.fn(),
     });
     state.chats.isOpen.value = true;
 
@@ -139,7 +140,7 @@ describe("FloatingReaderPanels", () => {
       id: "provider-1",
       name: "Helper AI",
       supportsSharedChats: true,
-      generateResponse: jest.fn(),
+      generateResponse: vi.fn(),
     });
     state.chats.isOpen.value = true;
 
@@ -214,17 +215,17 @@ function createMockChatSession(
     unreadMessages: signal([]),
     lastMessageRead: signal(null),
     wasMentioned: signal(false),
-    markAsRead: jest.fn(),
-    sendMessage: jest.fn().mockResolvedValue(undefined),
-    setTypingStatus: jest.fn(),
+    markAsRead: vi.fn(),
+    sendMessage: vi.fn().mockResolvedValue(undefined),
+    setTypingStatus: vi.fn(),
     participants: signal([]),
     totalParticipants: signal([]),
     inactiveParticipants: signal([]),
     availableParticipants: signal([]),
     typingParticipants: signal([]),
-    addParticipant: jest.fn(),
-    removeParticipant: jest.fn(),
-    getMessageAuthors: jest.fn().mockReturnValue([]),
+    addParticipant: vi.fn(),
+    removeParticipant: vi.fn(),
+    getMessageAuthors: vi.fn().mockReturnValue([]),
     ...overrides,
   };
 }
@@ -232,13 +233,13 @@ function createMockChatSession(
 function createMockChatListState(
   overrides: {
     providers?: SeedBibleState["chats"]["providers"]["value"];
-    selectChat?: jest.Mock;
+    selectChat?: Mock;
   } = {}
 ): SeedBibleState {
   return {
     chats: {
       providers: signal(overrides.providers ?? []),
-      selectChat: overrides.selectChat ?? jest.fn(),
+      selectChat: overrides.selectChat ?? vi.fn(),
     },
   } as unknown as SeedBibleState;
 }
@@ -248,7 +249,7 @@ describe("ChatList", () => {
   let originalDateTime: unknown;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     originalDateTime = (globalThis as Record<string, unknown>).DateTime;
     (globalThis as Record<string, unknown>).DateTime = {
       fromMillis: () => ({
@@ -263,7 +264,7 @@ describe("ChatList", () => {
     render(null, container);
     container.remove();
     (globalThis as Record<string, unknown>).DateTime = originalDateTime;
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it("shows NoProvidersAvailable when there are no chats and no providers", () => {
@@ -285,7 +286,7 @@ describe("ChatList", () => {
           id: "provider-1",
           name: "Helper AI",
           supportsSharedChats: false,
-          generateResponse: jest.fn(),
+          generateResponse: vi.fn(),
         },
       ],
     });
@@ -336,7 +337,7 @@ describe("ChatList", () => {
     const chat = createMockChatSession({
       messages: signal([message]),
       participants: signal([participant]),
-      getMessageAuthors: jest.fn().mockReturnValue([participant]),
+      getMessageAuthors: vi.fn().mockReturnValue([participant]),
     });
     const state = createMockChatListState();
 
@@ -436,7 +437,7 @@ describe("ChatList", () => {
   });
 
   it("calls selectChat with the chat id when a chat item is clicked", () => {
-    const selectChat = jest.fn();
+    const selectChat = vi.fn();
     const chat = createMockChatSession({ id: "chat-abc" });
     const state = createMockChatListState({ selectChat });
 
@@ -482,8 +483,8 @@ describe("ChatList", () => {
 
 interface MockFloatingChatPanelResult {
   state: SeedBibleState;
-  closeChatPanel: jest.Mock;
-  selectChat: jest.Mock;
+  closeChatPanel: Mock;
+  selectChat: Mock;
 }
 
 function createMockFloatingChatPanelState(
@@ -493,8 +494,8 @@ function createMockFloatingChatPanelState(
     chats?: ChatSession[];
   } = {}
 ): MockFloatingChatPanelResult {
-  const closeChatPanel = jest.fn();
-  const selectChat = jest.fn();
+  const closeChatPanel = vi.fn();
+  const selectChat = vi.fn();
   const state = {
     sidebar: {
       isChatPanelOpen: signal(opts.isChatPanelOpen ?? true),
@@ -515,7 +516,7 @@ describe("FloatingChatPanel", () => {
   let originalDateTime: unknown;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     originalDateTime = (globalThis as Record<string, unknown>).DateTime;
     (globalThis as Record<string, unknown>).DateTime = {
       fromMillis: () => ({
@@ -530,7 +531,7 @@ describe("FloatingChatPanel", () => {
     render(null, container);
     container.remove();
     (globalThis as Record<string, unknown>).DateTime = originalDateTime;
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   it("renders nothing when the panel is closed", () => {
