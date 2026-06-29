@@ -32,7 +32,7 @@ const assetBaseUrl =
 // worker for the root deployment (the `main` build, or local dev where no
 // deploy branch is set), and pin its files/scope to the site root regardless of
 // where the versioned chunks live.
-const isRootBuild = !deployBranch || deployBranch === "standalone";
+const isRootBuild = !deployBranch || deployBranch === "main";
 
 function withTrailingSlash(url: string): string {
   return url.endsWith("/") ? url : `${url}/`;
