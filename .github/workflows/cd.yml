@@ -144,10 +144,14 @@ jobs:
 
       # ─── Tell the host to drop its cached pointer immediately ───────────────
       - name: Invalidate host pointer cache
-        if: ${{ vars.HOST_INVALIDATE_URL != '' }}
         run: |
+          if [ "$BRANCH" = "main" ]; then
+            HOST_INVALIDATE_URL="https://prod.seedbible.org"
+          else
+            HOST_INVALIDATE_URL="https://alpha.seedbible.org"
+          fi
           curl -fsS -X POST \
-            "${{ vars.HOST_INVALIDATE_URL }}?branch=${{ steps.ids.outputs.branch }}" \
+            "${{ HOST_INVALIDATE_URL }}?branch=${{ steps.ids.outputs.branch }}" \
             || echo "invalidate ping failed (non-fatal)"
       - uses: actions/upload-artifact@v7
         with:
@@ -163,9 +167,9 @@ jobs:
           BUILD_ID: ${{ steps.ids.outputs.build_id }}
         run: |
           if [ "$BRANCH" = "main" ]; then
-            URL="https://ssr.seedbible.org"
+            URL="https://prod.seedbible.org"
           else
-            URL="https://ssr.seedbible.org/b/$BRANCH/$BUILD_ID"
+            URL="https://alpha.seedbible.org/b/$BRANCH/$BUILD_ID"
           fi
           pnpm notify deployment \
             --branch "$BRANCH" \
@@ -179,5 +183,5 @@ jobs:
           if [ "$BRANCH" = "main" ]; then
             echo "Deployed **main** to the site root." >> "$GITHUB_STEP_SUMMARY"
           else
-            echo "Deployed branch **$BRANCH** → \`https://ssr.seedbible.org/b/$BRANCH/$BUILD_ID\`" >> "$GITHUB_STEP_SUMMARY"
+            echo "Deployed branch **$BRANCH** → \`https://alpha.seedbible.org/b/$BRANCH/$BUILD_ID\`" >> "$GITHUB_STEP_SUMMARY"
           fi
