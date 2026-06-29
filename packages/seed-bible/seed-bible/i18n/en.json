@@ -250,7 +250,7 @@
   "onboarding.installMaybe": "Maybe next time!",
   "onboarding.installUnavailable": "PWA installation is not available",
   "onboarding.installBodyPre": "Add Seed Bible to your ",
-  "onboarding.installBodyPost": "to return anytime. You can always find this option later in Settings.",
+  "onboarding.installBodyPost": " to return anytime. You can always find this option later in Settings.",
   "onboarding.iosStepsPre": "Tap ",
   "onboarding.iosStepsPost": " in the toolbar, then choose “Add to Home Screen”.",
   "onboarding.gotIt": "Got it",
