@@ -1,45 +1,25 @@
-configBot.tags.pageTitle = "Seed Bible";
+import "./initPostHog";
+import { Main } from "../app/main";
+import { render } from "preact";
+import { readInjectedConfig } from "../app/appConfig";
+import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 
-thisBot.initPostHog();
+// Config (base path + asset host) injected by the host server. Reading it on
+// the client ensures we mount with the same config the server rendered with,
+// avoiding hydration mismatches.
+const config = readInjectedConfig();
 
-const importMap = document.createElement("script");
-importMap.type = "importmap";
-importMap.textContent = JSON.stringify({
-  imports: {
-    "typesense-fixed": "/lib/Typesense.js",
-  },
-});
-document.head.prepend(importMap);
-
-import { Main } from "seed-bible.app.main";
-
-const { render } = os.appHooks;
-
-// const importMap = document.createElement('script');
-// importMap.type = 'importmap';
-// importMap.textContent = JSON.stringify({
-//   imports: {
-//     "preact": "https://esm.sh/preact@10.28.4",
-//     "@preact/signals": "https://esm.sh/@preact/signals?deps=preact@10.28.4?externals=preact",
-//   },
-// });
-// document.head.appendChild(importMap);
-
-os.syncConfigBotTagsToURL([
-  "translation",
-  "book",
-  "chapter",
-  // Don't sync verses to the URL to avoid
-  // creating additional history entries when selecting verses
-  // "verse",
-  "settingsView",
-  "sidebar",
-]);
-
-configBot.tags.gridPortal = null;
-configBot.tags.mapPortal = null;
+const container = document.getElementById("app") ?? document.body;
 
 console.log("Starting APP");
-render(<Main />, document.body);
 
-os.hideLoadingScreen();
+// Create the app state up front so we can wait for the detected language's
+// translations (now fetched lazily) to load before the first render. This keeps
+// the initial paint on the correct-language SSR markup instead of flashing the
+// bundled "en" fallback. We `render` rather than `hydrate` (TODO: support
+// hydration), so the server markup is replaced once this resolves.
+const state = createSeedBibleState({ config });
+
+void state.i18n.ready.then(() => {
+  render(<Main initialState={state} config={config} />, container);
+});

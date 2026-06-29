@@ -1,14 +1,13 @@
-const { useState, useRef, useEffect } = os.appHooks;
+import { closeInterface } from "./closeInterface";
+import { useState, useRef, useEffect } from "preact/hooks";
 
 const DraggableContainer = (props: { children: HTMLElement }) => {
   const { children } = props;
   const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState(
-    masks?.position || {
-      x: window.innerWidth / 2 - 175,
-      y: window.innerHeight / 2 + 100,
-    }
-  );
+  const [position, setPosition] = useState({
+    x: window.innerWidth / 2 - 175,
+    y: window.innerHeight / 2 + 100,
+  });
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const dragRef = useRef<HTMLDivElement>(null);
 
@@ -80,32 +79,32 @@ const DraggableContainer = (props: { children: HTMLElement }) => {
     }
   };
 
-  const handleMouseUp = (e: MouseEvent) => {
+  const handleMouseUp = () => {
     setIsDragging(false);
-    setTagMask(
-      thisBot,
-      "position",
-      {
-        x: e.clientX - offset.x,
-        y: e.clientY - offset.y,
-      },
-      "local"
-    );
+    // setTagMask(
+    //   thisBot,
+    //   "position",
+    //   {
+    //     x: e.clientX - offset.x,
+    //     y: e.clientY - offset.y,
+    //   },
+    //   "local"
+    // );
   };
 
-  const handleTouchEnd = (e: TouchEvent) => {
+  const handleTouchEnd = () => {
     setIsDragging(false);
-    if (e.changedTouches[0]) {
-      setTagMask(
-        thisBot,
-        "position",
-        {
-          x: e.changedTouches[0].clientX - offset.x,
-          y: e.changedTouches[0].clientY - offset.y,
-        },
-        "local"
-      );
-    }
+    // if (e.changedTouches[0]) {
+    //   setTagMask(
+    //     thisBot,
+    //     "position",
+    //     {
+    //       x: e.changedTouches[0].clientX - offset.x,
+    //       y: e.changedTouches[0].clientY - offset.y,
+    //     },
+    //     "local"
+    //   );
+    // }
   };
 
   const onESC = (evt: Event) => {
@@ -116,7 +115,7 @@ const DraggableContainer = (props: { children: HTMLElement }) => {
       isEscape = (evt as KeyboardEvent).code === "Escape";
     }
     if (isEscape) {
-      whisper(thisBot, "closeInterface");
+      closeInterface();
     }
   };
 

@@ -1,10 +1,12 @@
 import { effect, signal, type Signal } from "@preact/signals";
-import type { LoginManager } from "seed-bible.managers.LoginManager";
+import type { LoginManager } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
-} from "seed-bible.managers.ProfileConfigSync";
-import { z } from "zod";
+} from "../managers/ProfileConfigSync";
+import * as z from "zod/v4";
+import type { CasualOSManager } from "./OsManager";
+import type { NavigationManager } from "./NavigationManager";
 
 export type BookOrientation = "traditional" | "tanakh";
 export type UITextSize = "S" | "M" | "L" | "XL";
@@ -569,7 +571,17 @@ export interface SettingsManager {
   resetToDefaults: () => void;
 }
 
-export function createSettings(login: LoginManager): SettingsManager {
+export function createSettings(
+  os: CasualOSManager,
+  login: LoginManager,
+  navigation: NavigationManager
+): SettingsManager {
+  const configBot = {
+    tags: Object.fromEntries(
+      navigation.currentUrl.value.searchParams
+    ) as Record<string, string | boolean | number>,
+  };
+
   // Read each setting with the precedence: user profile > local configBot tag
   // > default. The profile is the source of truth when the user is logged
   // in; configBot.tags acts as a local cache for anonymous use and offline
@@ -638,30 +650,6 @@ export function createSettings(login: LoginManager): SettingsManager {
     syncFromBot();
   });
 
-  os.addBotListener(configBot, "onBotChanged", (that: unknown) => {
-    const changedTagsSource =
-      that && typeof that === "object" && "tags" in that
-        ? (that as { tags?: unknown }).tags
-        : null;
-    const changedTags = Array.isArray(changedTagsSource)
-      ? changedTagsSource
-      : [];
-
-    if (
-      changedTags.includes(TAG_BOOK_ORIENTATION) ||
-      changedTags.includes(TAG_UI_TEXT_SIZE) ||
-      changedTags.includes(TAG_SELECTION_UI) ||
-      changedTags.includes(TAG_SCRIPTURE_ELEMENTS) ||
-      changedTags.includes(TAG_TEXT_CONFIG) ||
-      changedTags.includes(TAG_TOOLBAR) ||
-      changedTags.includes(TAG_KEEP_AWAKE) ||
-      changedTags.includes(TAG_CUSTOM_HIGHLIGHT_COLORS) ||
-      changedTags.includes(TAG_SCRIPTURE_MARGIN)
-    ) {
-      syncFromBot();
-    }
-  });
-
   const setBookOrientation = (orientation: BookOrientation) => {
     settings.value = { ...settings.value, bookOrientation: orientation };
     configBot.tags[TAG_BOOK_ORIENTATION] = orientation;
@@ -710,7 +698,6 @@ export function createSettings(login: LoginManager): SettingsManager {
     if (!Number.isFinite(margin)) return;
     const clamped = Math.max(0, Math.min(45, margin));
     settings.value = { ...settings.value, scriptureMargin: clamped };
-    configBot.tags[TAG_SCRIPTURE_MARGIN] = clamped;
     saveProfileConfigValue(login, PROFILE_SCRIPTURE_MARGIN, clamped);
   };
 
@@ -783,7 +770,6 @@ export function createSettings(login: LoginManager): SettingsManager {
       os.disableWakeLock();
     }
     settings.value = { ...settings.value, keepScreenAwake: nextValue };
-    configBot.tags[TAG_KEEP_AWAKE] = nextValue;
     saveProfileConfigValue(login, PROFILE_KEEP_AWAKE, nextValue);
   };
 

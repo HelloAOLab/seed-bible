@@ -1,11 +1,21 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createRecordsClient } from "@casual-simulation/aux-records/RecordsClient";
+import { createRequire } from "node:module";
 import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import hash from "hash.js";
 import axios from "axios";
 import stringify from "@casual-simulation/fast-json-stable-stringify";
 import type { StoredAux } from "@casual-simulation/aux-common";
+import type { RecordFileFailure } from "@casual-simulation/aux-records";
+import { sendTelegramMessage, telegramTimestamp } from "./telegram";
+
+// Loaded via createRequire rather than a static `import { createRecordsClient }`
+// because the package ships as CJS with no exports map, and tsx's ESM named-export
+// interop fails to bind the named export at link time (Node's CJS lexer and
+// require() both expose it fine).
+const { createRecordsClient } = createRequire(import.meta.url)(
+  "@casual-simulation/aux-records/RecordsClient.js"
+) as typeof import("@casual-simulation/aux-records/RecordsClient.js");
 
 const recordName = "aoBot";
 const headers = {
@@ -164,7 +174,7 @@ export async function uploadPattern(
           recordFileResult.errorMessage
       );
     } else {
-      fileUrl = recordFileResult.existingFileUrl!;
+      fileUrl = (recordFileResult as RecordFileFailure).existingFileUrl!;
     }
   } else {
     const method = recordFileResult.uploadMethod;
@@ -253,35 +263,14 @@ export async function uploadPattern(
   url.searchParams.set("patternVersion", eggData.maxVersion.toString());
   const patternUrl = `${url.href}&noGridPortal`;
 
-  if (telegramBotToken && telegramChatId) {
-    const now = new Date();
-    const date = now.toISOString().split("T")[0]; // YYYY-MM-DD format
-    const time = now.toISOString().split("T")[1]!.split(".")[0] + " UTC";
-    const telegramUrl = `https://api.telegram.org/bot${telegramBotToken}/sendMessage`;
-    const telegramMessage = `**action:**  publishRecord.success\n**date:**     ${date}\n**time:     **${time}\n**pattern:** [${name}](${patternUrl})\n**version:** **${eggData.maxVersion}`;
-    const telegramParams = {
-      chat_id: telegramChatId,
-      text: telegramMessage,
-      parse_mode: "Markdown",
-    };
-    try {
-      const telegramResponse = await fetch(telegramUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(telegramParams),
-      });
-
-      if (!telegramResponse.ok) {
-        console.error(
-          `Failed to send Telegram message (${telegramResponse.status}): ${await telegramResponse.text()}`
-        );
-      }
-    } catch (error) {
-      console.error("TelegramError:", error);
-    }
-  }
+  const { date, time } = telegramTimestamp();
+  const telegramMessage = `**action:**  publishRecord.success\n**date:**     ${date}\n**time:     **${time}\n**pattern:** [${name}](${patternUrl})\n**version:** **${eggData.maxVersion}`;
+  await sendTelegramMessage(
+    telegramBotToken,
+    telegramChatId,
+    telegramMessage,
+    "Markdown"
+  );
 
   console.log("Successfully uploaded pattern:", name);
   console.log(`View it at: ${patternUrl}`);

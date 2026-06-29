@@ -1,7 +1,9 @@
-const { render } = os.appHooks;
+import { render } from "preact";
 
-const container = document.getElementById("twitchPub-container");
-if (container) {
-  render(null, container);
-  container.remove();
+export function closeInterface() {
+  const container = document.getElementById("twitchPub-container");
+  if (container) {
+    render(null, container);
+    container.remove();
+  }
 }

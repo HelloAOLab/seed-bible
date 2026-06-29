@@ -2,34 +2,32 @@ import { useSignal } from "@preact/signals";
 import {
   DEFAULT_BOOKMARK_CATEGORY,
   type BookmarkVerse,
-} from "seed-bible.managers.BookmarksManager";
-import { DEFAULT_TRANSLATION_ID } from "seed-bible.managers.BibleReadingManager";
-import type { ReaderTab } from "seed-bible.managers.TabsManager";
+} from "../managers/BookmarksManager";
+import type { ReaderTab } from "../managers/TabsManager";
 import {
   PANE_LAYOUT_OPTIONS,
   type PaneLayoutId,
-} from "seed-bible.managers.PanesManager";
+} from "../managers/PanesManager";
 import {
   closeContextMenus,
   ContextMenuItem,
   ContextMenuWithButton,
-} from "seed-bible.components.ContextMenu";
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import { SettingsIcon } from "seed-bible.components.icons";
-import { SettingsPage } from "seed-bible.components.SettingsPage";
-import type { UserProfile } from "seed-bible.managers.LoginManager";
+} from "../components/ContextMenu";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import { SettingsIcon } from "../components/icons";
+import { SettingsPage } from "../components/SettingsPage";
+import type { UserProfile } from "../managers/LoginManager";
 import type {
   BibleReadingSession,
   ConnectedSessionUser,
-} from "seed-bible.managers.SessionsManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
-import { SidebarSearch } from "seed-bible.components.SidebarSearch";
+} from "../managers/SessionsManager";
+import { useI18n } from "../i18n/I18nManager";
+import { SidebarSearch } from "../components/SidebarSearch";
 import {
   handleGridKeyNav,
   handleHorizontalListKeyNav,
-} from "seed-bible.components.KeyboardNav";
-
-const { useEffect, useRef } = os.appHooks;
+} from "../components/KeyboardNav";
+import { useEffect, useRef } from "preact/hooks";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -135,9 +133,10 @@ function getSelfVisualKey(state: SeedBibleState): string {
   const userId = state.login.userId.value;
   if (userId) return userId;
   try {
-    if (typeof configBot !== "undefined" && configBot?.id) {
-      return String(configBot.id);
-    }
+    return state.os.connectionId;
+    // if (typeof configBot !== "undefined" && configBot?.id) {
+    //   return String(configBot.id);
+    // }
   } catch {
     /* ignore */
   }
@@ -606,6 +605,11 @@ interface TabRowProps {
  */
 function TabRow(props: TabRowProps) {
   const { state, tab, isSelected, closeLayoutMenu, panelsEnabled } = props;
+
+  if (import.meta.env.SSR && tab.readingState.loading.value) {
+    throw tab.readingState.chapterDataPromise;
+  }
+
   const { app, bookmarks } = state;
   const { t } = useI18n();
 
@@ -618,7 +622,8 @@ function TabRow(props: TabRowProps) {
     "-";
   const currentChapter = tab.readingState.chapterNumber.value;
   const currentTranslation =
-    tab.readingState.translationId.value ?? DEFAULT_TRANSLATION_ID;
+    tab.readingState.translationId.value ??
+    tab.readingState.defaultTranslation.id;
   const title = currentBookName;
   const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
   const isTabBookmarked = bookmarks.isLocationBookmarked(
@@ -786,8 +791,8 @@ function TabRow(props: TabRowProps) {
                 if (tab.sharedSession) {
                   const url = getSessionUrl(tab.sharedSession);
 
-                  os.share({
-                    title: configBot.tags.title,
+                  navigator.share({
+                    title: document.title,
                     url: url.href,
                   });
                 }
@@ -946,7 +951,7 @@ export interface BookmarkLocation {
 }
 
 function getSessionUrl(session: BibleReadingSession) {
-  const url = new URL(configBot.tags.url);
+  const url = new URL(window.location.href);
   const pattern = url.searchParams.get("pattern");
   url.search = "";
   url.searchParams.set("sessionId", session.id);
@@ -1580,7 +1585,7 @@ export function Tabs(props: TabsProps) {
                 aria-label={t("tasks", { defaultValue: "Tasks" })}
                 title={t("tasks", { defaultValue: "Tasks" })}
                 onClick={() => {
-                  os.toast(
+                  app.toast(
                     t("today-coming-soon", {
                       defaultValue: "Today screen is coming soon",
                     })
@@ -1997,8 +2002,9 @@ export function Sidebar(props: SidebarProps) {
           createSharedSession={async () => {
             const session = await state.app.createSharedSession();
             const url = getSessionUrl(session);
-            os.setClipboard(url.href);
-            os.toast(
+
+            navigator.clipboard.writeText(url.href);
+            state.app.toast(
               t("link-to-join-shared-session-copied", {
                 defaultValue:
                   "A link to join the shared session was copied to your clipboard",

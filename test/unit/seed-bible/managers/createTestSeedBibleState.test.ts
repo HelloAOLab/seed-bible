@@ -1,11 +1,6 @@
 import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
 
 describe("createTestSeedBibleState", () => {
-  afterEach(() => {
-    delete (globalThis as any).web;
-    delete (globalThis as any).configBot;
-  });
-
   it("bootstraps a full SeedBibleStateManager", async () => {
     const state = await createTestSeedBibleState();
 

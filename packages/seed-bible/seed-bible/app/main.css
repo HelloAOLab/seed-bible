@@ -1,7 +1,12 @@
 /* eslint-disable css/use-baseline */
+html {
+  visibility: visible;
+  opacity: 1;
+}
+
 :root {
   --sb-ui-zoom: 1;
-  --sb-scripture-margin: 35%;
+  --sb-scripture-margin: 27%;
 
   /* Text config variables — overridden at runtime by SettingsManager. */
   --text-bookTitle-font: "Newsreader", serif;
@@ -9,7 +14,7 @@
   --text-bookTitle-color: #333;
   --text-bookTitle-font-style: normal;
   --text-bookTitle-text-decoration: none;
-  --text-bookTitle-alignment: left;
+  --text-bookTitle-alignment: unset;
   --text-bookTitle-margin-top: 0;
   --text-bookTitle-margin-bottom: 0;
   --text-bookTitle-margin-left: 0;
@@ -20,7 +25,7 @@
   --text-heading-color: #333;
   --text-heading-font-style: normal;
   --text-heading-text-decoration: none;
-  --text-heading-alignment: left;
+  --text-heading-alignment: unset;
   --text-heading-margin-top: 18px;
   --text-heading-margin-bottom: 18px;
   --text-heading-margin-left: 0;
@@ -31,7 +36,7 @@
   --text-verse-color: #333;
   --text-verse-font-style: normal;
   --text-verse-text-decoration: none;
-  --text-verse-alignment: left;
+  --text-verse-alignment: unset;
   --text-verse-margin-top: 0;
   --text-verse-margin-bottom: 0;
   --text-verse-margin-left: 0;
@@ -214,12 +219,18 @@
   --sb-highlight-orange-color: #ffcc80;
   --sb-highlight-orange-font-color: #333;
   --sb-highlight-orange-words-of-jesus-font-color: #e07b4c;
+
+  --sb-dynamic-range-limit: standard;
 }
 
 body {
   background: var(--sb-background);
   color: var(--sb-font-color);
   font-family: var(--sb-font-family);
+
+  /* dynamic-range-limit prevents user-provided images from changing the dynamic range */
+  /* eslint-disable-next-line css/no-invalid-properties */
+  dynamic-range-limit: var(--sb-dynamic-range-limit);
 }
 
 /* On mobile, lock the document to the visual viewport so iOS/Android
@@ -269,6 +280,12 @@ h5 {
 
 h6 {
   font-size: 0.8em;
+}
+
+*,
+:after,
+:before {
+  box-sizing: border-box;
 }
 
 .sb-bible-reader {
@@ -704,7 +721,8 @@ h6 {
   top: calc(50% - 30px);
   width: 24px;
   height: 60px;
-  cursor: ew-resize; /* east-west resize cursor */
+  cursor: ew-resize;
+  /* east-west resize cursor */
   background: var(--sb-divider-color);
   display: flex;
   justify-items: center;
@@ -727,7 +745,8 @@ h6 {
   left: calc(50% - 10px);
   height: 20px;
   width: 20px;
-  cursor: ns-resize; /* north-south resize cursor */
+  cursor: ns-resize;
+  /* north-south resize cursor */
   opacity: 0.5;
   background: rgba(0, 0, 0, 0.2);
 }
@@ -740,7 +759,8 @@ h6 {
 .sb-pane-detached-resize-handle:not(.sb-pane-detached-resize-handle-side):not(
     .sb-pane-detached-resize-handle-bottom
   ) {
-  cursor: nwse-resize; /* northwest-southeast resize cursor */
+  cursor: nwse-resize;
+  /* northwest-southeast resize cursor */
 }
 
 .sb-pane-component,
@@ -1190,6 +1210,7 @@ h6 {
   from {
     transform: translateY(100%);
   }
+
   to {
     transform: translateY(0);
   }
@@ -1300,6 +1321,7 @@ h6 {
   padding: 4px 0;
   width: 100%;
 }
+
 .sb-mobile-settings-icon svg path {
   stroke: var(--sb-primary-color);
 }
@@ -4117,6 +4139,7 @@ h6 {
     transform: translateX(20px);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -4214,6 +4237,45 @@ h6 {
 
 .sb-shared-toast .sb-tab-user-icon-animal .material-symbols-outlined {
   font-size: 20px;
+}
+
+/* App-level toast — single transient popup centered at the bottom of the screen. */
+.sb-toast-host {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  max-width: min(90vw, 420px);
+  pointer-events: none;
+}
+
+@keyframes sb-toast-slide-up {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.sb-toast {
+  pointer-events: auto;
+  padding: 10px 18px;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  border-radius: 12px;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  animation: sb-toast-slide-up 0.25s ease-out;
 }
 
 /* Shared-session settings modal — ported from develop's Scripture Navigation panel */
@@ -4915,6 +4977,7 @@ h6 {
     from {
       transform: translateX(-100%);
     }
+
     to {
       transform: translateX(0);
     }
@@ -4928,6 +4991,7 @@ h6 {
     from {
       transform: translateX(100%);
     }
+
     to {
       transform: translateX(0);
     }
@@ -6939,6 +7003,117 @@ h6 {
   cursor: default;
 }
 
+/* Profile picture upload modal (rendered inside the shared modal chrome) */
+.sb-photo-modal {
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-photo-choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sb-photo-choice-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 16px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sb-photo-choice-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
+}
+
+.sb-photo-choice-button .material-symbols-outlined {
+  color: var(--sb-primary-color);
+}
+
+.sb-photo-crop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.sb-photo-crop-title {
+  margin: 0;
+  align-self: flex-start;
+  font-family: var(--sb-font-family);
+  color: var(--sb-font-color);
+}
+
+.sb-photo-crop-canvas {
+  touch-action: none;
+  max-width: 100%;
+}
+
+.sb-photo-crop-zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.sb-photo-crop-zoom input[type="range"] {
+  flex: 1;
+}
+
+.sb-photo-crop-zoom .material-symbols-outlined {
+  color: var(--sb-font-color);
+}
+
+.sb-photo-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 100%;
+}
+
+.sb-photo-modal-button {
+  border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 10%);
+  border-radius: 8px;
+  padding: 10px 18px;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sb-photo-modal-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+}
+
+.sb-photo-modal-button-primary {
+  background: var(--sb-primary-color);
+  color: var(--sb-reader-background);
+  border-color: var(--sb-primary-color);
+}
+
+.sb-photo-modal-button-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-primary-color), #000 12%);
+}
+
+.sb-photo-modal-button:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
 .sb-account-text-input,
 .sb-account-textarea,
 .sb-account-uid-row {
@@ -7054,11 +7229,13 @@ h6 {
   display: flex;
   gap: 10px;
 }
+
 .flex-col-gap-sm {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
+
 .flex-row-wrap-around {
   display: flex;
   flex-direction: row;
@@ -7066,53 +7243,64 @@ h6 {
   gap: 10px;
   justify-content: space-around;
 }
+
 .flex-align-center {
   display: flex;
   align-items: center;
 }
+
 .flex-1 {
   flex: 1;
 }
+
 .flex-center {
   display: flex;
   justify-content: center;
   align-items: center;
 }
+
 .flex-between {
   display: flex;
   justify-content: space-between;
 }
+
 .flex-col-gap-md {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
+
 .flex-start-center-gap-sm {
   display: flex;
   justify-content: flex-start;
   align-items: center;
   gap: 5px;
 }
+
 .flex-between-center-gap-md {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 10px;
 }
+
 .flex-between-center {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
+
 .flex-start-start {
   display: flex;
   justify-content: start;
   align-items: start;
 }
+
 .flex-col {
   display: flex;
   flex-direction: column;
 }
+
 .flex-col-between-center-gap-sm {
   display: flex;
   flex-direction: column;
@@ -7120,6 +7308,7 @@ h6 {
   align-items: center;
   gap: 5px;
 }
+
 .flex-wrap-start {
   display: flex;
   flex-wrap: wrap;
@@ -7127,6 +7316,7 @@ h6 {
   justify-content: flex-start;
   align-items: flex-start;
 }
+
 .inline-flex-start-center-gap-sm {
   display: inline-flex;
   justify-content: flex-start;
@@ -7664,6 +7854,7 @@ h6 {
   gap: 10px;
   text-align: center;
 }
+
 .sb-lg-expandButton {
   display: flex;
   background: var(--sb-primary-color);
@@ -7674,9 +7865,11 @@ h6 {
   color: var(--sb-font-color);
   width: max-content;
 }
+
 .sb-lg-loadMoreButton {
   justify-content: center;
 }
+
 .sb-lg-expandIcon {
   transition: transform 0.3s;
 }
@@ -7967,6 +8160,7 @@ h6 {
     font-weight: 500;
   }
 }
+
 .sb-translation-license-notice,
 .sb-translation-website {
   text-align: center;
@@ -7999,6 +8193,7 @@ h6 {
     opacity: 0;
     transform: translate(-50%, 10px);
   }
+
   to {
     opacity: 1;
     transform: translate(-50%, 0);
@@ -8266,4 +8461,331 @@ h6 {
     bottom: 110px;
     width: calc(100vw - 16px);
   }
+}
+
+/* Login modal -------------------------------------------------------------- */
+
+.sb-login-modal {
+  width: min(420px, 100%);
+  max-height: min(640px, calc(100dvh - 32px));
+}
+
+.sb-login-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 8px 12px;
+  overflow: auto;
+}
+
+.sb-login-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.sb-login-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 8px;
+}
+
+.sb-login-title {
+  margin: 0;
+  font-family: var(--sb-chapter-heading-font-family), sans-serif;
+  font-size: 1.4em;
+  font-weight: 700;
+  color: var(--sb-chapter-heading-font-color);
+}
+
+.sb-login-subtitle {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+}
+
+.sb-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sb-login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-login-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+}
+
+.sb-login-terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
+  cursor: pointer;
+}
+
+.sb-login-terms-checkbox {
+  margin: 0;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--sb-primary-color);
+  cursor: pointer;
+}
+
+.sb-login-terms-text {
+  flex: 1;
+}
+
+.sb-login-link {
+  color: var(--sb-primary-color);
+  text-decoration: underline;
+}
+
+.sb-login-link:hover {
+  filter: brightness(1.1);
+}
+
+.sb-login-legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-size: 13px;
+}
+
+.sb-login-legal .sb-login-link {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+  text-decoration: none;
+}
+
+.sb-login-legal .sb-login-link:hover {
+  text-decoration: underline;
+}
+
+/* Terms of service modal --------------------------------------------------- */
+
+.sb-tos-content {
+  font-size: 14px;
+}
+
+.sb-tos-content h1,
+.sb-tos-content h2,
+.sb-tos-content h3 {
+  font-family: var(--sb-chapter-heading-font-family), sans-serif;
+  color: var(--sb-chapter-heading-font-color);
+  line-height: 1.3;
+}
+
+.sb-tos-content a {
+  color: var(--sb-primary-color);
+  text-decoration: underline;
+}
+
+.sb-tos-content ul,
+.sb-tos-content ol {
+  padding-left: 1.4em;
+}
+
+.sb-login-input {
+  width: 100%;
+}
+
+.sb-login-error {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #dc2626;
+}
+
+.sb-login-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.sb-login-submit {
+  border: none;
+  border-radius: 8px;
+  padding: 12px 16px;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+  transition:
+    filter 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.sb-login-submit:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.sb-login-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.sb-login-secondary {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.2s ease;
+}
+
+.sb-login-secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-login-secondary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* "Change email address" link rendered as a button in the code-step header. */
+.sb-login-change-email {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin-top: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.sb-login-change-email:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Code input with an inline "Resend code" button on the right. */
+.sb-login-code-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.sb-login-code-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-login-resend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  padding: 0 8px;
+  color: var(--sb-primary-color);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+
+.sb-login-resend:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.sb-login-resend:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.sb-login-resend-icon {
+  font-size: 18px;
+}
+
+/* Side-by-side Cancel / Confirm buttons on the code step. */
+.sb-login-actions-row {
+  flex-direction: row;
+}
+
+.sb-login-actions-row .sb-login-submit,
+.sb-login-actions-row .sb-login-secondary {
+  width: auto;
+  flex: 1;
+}
+
+.sb-login-actions-row .sb-login-secondary {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-login-actions-row .sb-login-secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
+}
+
+.sb-grid-portal-pane {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background:
+    radial-gradient(
+      circle at 30% 20%,
+      color-mix(in srgb, var(--sb-primary-color), transparent 80%) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      circle at 80% 80%,
+      color-mix(in srgb, var(--sb-secondary-color), transparent 60%) 0%,
+      transparent 60%
+    ),
+    var(--sb-reader-background);
+}
+
+.sb-grid-portal-pane-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 45%);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.sb-grid-portal-pane-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 10%);
+}
+
+.sb-grid-portal-pane-iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 10px;
 }
