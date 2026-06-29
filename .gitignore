@@ -7,5 +7,6 @@ package-lock.json
 bun.lock
 .vscode/*
 !.vscode/settings.json
+!.vscode/launch.json
 ./cursor/*
 .pnpm-store/*
