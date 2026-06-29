@@ -65,18 +65,15 @@ export function* registerBonfireChatProvider(
       console.log("[Bonfire] Deleting session for chat", chatContext.chatId);
       const sessionId = chatSessionMap.get(chatContext.chatId);
       if (sessionId) {
-        const response = await fetch(
-          `https://api.heybonfire.com/api/v1/sessions/end`,
-          {
-            method: "POST",
-            body: JSON.stringify({
-              org_id: orgId,
-              ai_id: aiId,
-              session_id: sessionId,
-            }),
-            headers,
-          }
-        );
+        await fetch(`https://api.heybonfire.com/api/v1/sessions/end`, {
+          method: "POST",
+          body: JSON.stringify({
+            org_id: orgId,
+            ai_id: aiId,
+            session_id: sessionId,
+          }),
+          headers,
+        });
         console.log("[Bonfire] Session deleted");
         chatSessionMap.delete(chatContext.chatId);
       }
