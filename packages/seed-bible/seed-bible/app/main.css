@@ -16,9 +16,9 @@
   --text-bookTitle-margin-right: 0;
 
   --text-heading-font: "Plus Jakarta Sans", sans-serif;
-  --text-heading-weight: 300;
+  --text-heading-weight: 700;
   --text-heading-color: #333;
-  --text-heading-font-style: italic;
+  --text-heading-font-style: normal;
   --text-heading-text-decoration: none;
   --text-heading-alignment: left;
   --text-heading-margin-top: 18px;
@@ -26,8 +26,8 @@
   --text-heading-margin-left: 0;
   --text-heading-margin-right: 0;
 
-  --text-verse-font: "Newsreader", serif;
-  --text-verse-weight: 400;
+  --text-verse-font: "Plus Jakarta Sans", sans-serif;
+  --text-verse-weight: 500;
   --text-verse-color: #333;
   --text-verse-font-style: normal;
   --text-verse-text-decoration: none;
@@ -36,7 +36,7 @@
   --text-verse-margin-bottom: 0;
   --text-verse-margin-left: 0;
   --text-verse-margin-right: 0;
-  --text-verse-line-height: 2;
+  --text-verse-line-height: 1.7;
 
   --sb-background: #f1f1f2;
   --sb-font-family: "Satoshi", system-ui, sans-serif;
@@ -65,9 +65,9 @@
 
   --sb-chapter-heading-font-family: "Plus Jakarta Sans", sans-serif;
   --sb-chapter-heading-font-color: #333;
-  --sb-chapter-heading-font-style: italic;
+  --sb-chapter-heading-font-style: normal;
 
-  --sb-verse-font-family: "Newsreader", serif;
+  --sb-verse-font-family: "Plus Jakarta Sans", sans-serif;
   --sb-verse-font-color: #333;
   --sb-verse-cursor: pointer;
 
@@ -100,7 +100,7 @@
   --sb-reader-toolbar-button-padding: 6px 10px;
   --sb-reader-toolbar-button-border-radius: 12px;
   --sb-reader-toolbar-button-icon-size: 24px;
-  --sb-reader-toolbar-button-label-font-family: "Lato", sans-serif;
+  --sb-reader-toolbar-button-label-font-family: "DM Sans";
   --sb-reader-toolbar-button-label-font-size: 11px;
   --sb-reader-toolbar-button-label-line-height: 1;
   --sb-reader-toolbar-button-label-height: 13px;
@@ -908,9 +908,10 @@ h6 {
   margin: 0 0 28px;
   padding-bottom: 18px;
   border-bottom: 1px solid var(--sb-divider-color);
-  font-size: 32px;
+  font-size: 36px;
+  line-height: 1;
   cursor: pointer;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 
 .sb-bible-reader-title-sep {
@@ -921,10 +922,12 @@ h6 {
 }
 
 .sb-bible-reader-translation {
-  font-size: 0.62em;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
   margin-inline-start: 0.4em;
   vertical-align: 0.15em;
 }
@@ -1307,9 +1310,9 @@ h6 {
 }
 
 .sb-chapter-content {
-  line-height: var(--text-verse-line-height, 2);
+  line-height: var(--text-verse-line-height, 1.7);
   font-family: var(--sb-verse-font-family);
-  font-size: 1.2em;
+  font-size: 1em;
 
   padding-bottom: 130px;
 
@@ -1331,6 +1334,7 @@ h6 {
   margin-left: var(--text-heading-margin-left);
   margin-right: var(--text-heading-margin-right);
   font-size: 18px;
+  line-height: 1;
 }
 
 .sb-line-break {
@@ -1677,16 +1681,18 @@ h6 {
 
 .sb-tour-popover-title {
   margin: 0 0 6px;
-  font-family: var(--sb-chapter-heading-font-family), sans-serif;
-  font-size: 1.15em;
+  font-family: "Satoshi", system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1;
   font-weight: 700;
 }
 
 .sb-tour-popover-body {
   margin: 0 0 16px;
+  font-family: "DM Sans", sans-serif;
   line-height: 1.55;
   font-size: 0.95em;
-  opacity: 0.85;
+  opacity: 0.7;
 }
 
 .sb-tour-popover-actions {
@@ -1745,7 +1751,8 @@ h6 {
 .sb-tour-btn-text {
   background: transparent;
   color: var(--sb-font-color);
-  opacity: 0.65;
+  font-family: "DM Sans", sans-serif;
+  opacity: 0.7;
   padding-left: 2px;
   padding-right: 2px;
 }

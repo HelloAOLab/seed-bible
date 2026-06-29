@@ -954,6 +954,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   onClick={() => {
                     isMoreMenuOpen.value = false;
                     if (isBookmarksViewOpen.value) {
+                      // Reset the bookmarks view so reopening the tabs drawer
+                      // lands on the Tabs list rather than a stale bookmarks
+                      // screen.
+                      bookmarks.closeView();
                       sidebar.closeSidebar();
                       return;
                     }
@@ -964,6 +968,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     // bookmark filter so the bookmarks section is visible.
                     sidebar.closeSettings();
                     sidebar.openSidebar();
+                    // Opened from the bottom toolbar: the mobile bookmarks
+                    // header should show a Close (X) that dismisses the
+                    // drawer, not a Back arrow to the Tabs list.
+                    bookmarks.openedFromToolbar.value = true;
                     if (!bookmarks.isFilterActive.value) {
                       bookmarks.toggleFilter();
                     }

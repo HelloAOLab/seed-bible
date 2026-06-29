@@ -499,9 +499,9 @@ const LIGHT_THEME: BibleTheme = {
 
     chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
     chapterHeadingFontColor: "#333",
-    chapterHeadingFontStyle: "italic",
+    chapterHeadingFontStyle: "normal",
 
-    verseFontFamily: "Newsreader, serif",
+    verseFontFamily: "Plus Jakarta Sans, sans-serif",
     verseFontColor: "#333",
     verseCursor: "pointer",
 
@@ -639,9 +639,9 @@ const DARK_THEME: BibleTheme = {
 
     chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
     chapterHeadingFontColor: "#e6e6e6",
-    chapterHeadingFontStyle: "italic",
+    chapterHeadingFontStyle: "normal",
 
-    verseFontFamily: "Newsreader, serif",
+    verseFontFamily: "Plus Jakarta Sans, sans-serif",
     verseFontColor: "#e6e6e6",
     verseCursor: "pointer",
 

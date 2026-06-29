@@ -39,8 +39,8 @@ export interface TextSectionConfig {
   lineHeight?: number;
 }
 
-export const VERSE_LINE_HEIGHT_OPTIONS: number[] = [1.5, 2, 2.5];
-export const DEFAULT_VERSE_LINE_HEIGHT = 2;
+export const VERSE_LINE_HEIGHT_OPTIONS: number[] = [1.5, 1.7, 2, 2.5];
+export const DEFAULT_VERSE_LINE_HEIGHT = 1.7;
 
 export type TextConfig = Record<TextSectionId, TextSectionConfig>;
 
@@ -211,18 +211,18 @@ const DEFAULT_TEXT_CONFIG: TextConfig = {
   },
   heading: {
     font: "'Plus Jakarta Sans', sans-serif",
-    weight: "300",
+    weight: "700",
     color: "",
     marginVertical: 18,
     marginHorizontal: 0,
-    bold: false,
-    italic: true,
+    bold: true,
+    italic: false,
     underline: false,
     alignment: "unset",
   },
   verse: {
-    font: "'Newsreader', serif",
-    weight: "400",
+    font: "'Plus Jakarta Sans', sans-serif",
+    weight: "500",
     color: "",
     marginVertical: 0,
     marginHorizontal: 0,

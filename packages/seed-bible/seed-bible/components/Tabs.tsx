@@ -1514,11 +1514,34 @@ export function Tabs(props: TabsProps) {
           <button
             type="button"
             className="sb-bookmarks-mobile-header-button sb-bookmarks-mobile-header-close"
-            onClick={() => state.sidebar.closeSidebar()}
-            aria-label={t("close", { defaultValue: "Close" })}
-            title={t("close", { defaultValue: "Close" })}
+            onClick={() => {
+              // Opened from the bottom toolbar → Close (X) dismisses the whole
+              // drawer. Opened from the Tabs header → Back arrow turns the
+              // filter off, returning to the Tabs list it came from.
+              if (bookmarks.openedFromToolbar.value) {
+                // Reset the view (filter + source flag) so the next time the
+                // tabs drawer opens it starts on the Tabs list, not a stale
+                // bookmarks screen.
+                bookmarks.closeView();
+                state.sidebar.closeSidebar();
+              } else if (bookmarks.isFilterActive.value) {
+                bookmarks.toggleFilter();
+              }
+            }}
+            aria-label={
+              bookmarks.openedFromToolbar.value
+                ? t("close", { defaultValue: "Close" })
+                : t("back", { defaultValue: "Back" })
+            }
+            title={
+              bookmarks.openedFromToolbar.value
+                ? t("close", { defaultValue: "Close" })
+                : t("back", { defaultValue: "Back" })
+            }
           >
-            <span className="material-symbols-outlined">close</span>
+            <span className="material-symbols-outlined">
+              {bookmarks.openedFromToolbar.value ? "close" : "arrow_back"}
+            </span>
           </button>
           <h2 className="sb-bookmarks-mobile-title">
             {t("bookmarks", { defaultValue: "Bookmarks" })}
@@ -1687,6 +1710,9 @@ export function Tabs(props: TabsProps) {
                   : t("show-bookmarks", { defaultValue: "Show bookmarks" })
               }
               onClick={() => {
+                // Opened from the Tabs header: backing out of the bookmarks
+                // view should return here, so it gets a Back arrow (not an X).
+                bookmarks.openedFromToolbar.value = false;
                 bookmarks.toggleFilter();
               }}
             >
