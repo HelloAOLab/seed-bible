@@ -9012,6 +9012,26 @@ a:visited {
   flex-direction: row-reverse;
 }
 
+.sb-chat-view-event {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  padding: 2px 8px;
+  font-size: 12px;
+  text-align: center;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-chat-view-event-text {
+  font-weight: 500;
+}
+
+.sb-chat-view-event .relative-date-time {
+  font-size: 11px;
+}
+
 .sb-chat-view-message-group.is-self > .sb-chat-view-message-group-row {
   flex-direction: row;
 

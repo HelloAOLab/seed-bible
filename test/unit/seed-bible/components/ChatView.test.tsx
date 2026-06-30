@@ -816,4 +816,129 @@ describe("ChatView", () => {
 
     expect(setTypingStatus).toHaveBeenCalledWith(false);
   });
+
+  // ─── Join events ─────────────────────────────────────────────────────────────
+
+  it("renders a join notification between two messages", () => {
+    const author = createMockParticipant({ id: "author", name: "Author" });
+    const joiner = createMockParticipant({
+      id: "joiner",
+      name: "Alice",
+      joinTimeMs: 2_000,
+    });
+    const msg1 = createMockMessage({
+      id: "msg-1",
+      authors: ["author"],
+      timeMs: 1_000,
+    });
+    const msg2 = createMockMessage({
+      id: "msg-2",
+      authors: ["author"],
+      timeMs: 3_000,
+    });
+    const chat = createMockChatSession({
+      parsedMessages: signal([msg1, msg2]),
+      totalParticipants: signal([author, joiner]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const event = container.querySelector(".sb-chat-view-event");
+    expect(event).not.toBeNull();
+    expect(event?.textContent).toContain("Alice joined");
+  });
+
+  it("collapses consecutive joins into a single notification", () => {
+    const alice = createMockParticipant({
+      id: "alice",
+      name: "Alice",
+      joinTimeMs: 2_000,
+    });
+    const bob = createMockParticipant({
+      id: "bob",
+      name: "Bob",
+      joinTimeMs: 2_500,
+    });
+    const msg1 = createMockMessage({ id: "msg-1", timeMs: 1_000 });
+    const msg2 = createMockMessage({ id: "msg-2", timeMs: 3_000 });
+    const chat = createMockChatSession({
+      parsedMessages: signal([msg1, msg2]),
+      totalParticipants: signal([alice, bob]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const events = container.querySelectorAll(".sb-chat-view-event");
+    expect(events).toHaveLength(1);
+    expect(events[0]?.textContent).toContain("Alice and Bob joined");
+  });
+
+  it("breaks an author message group when a join happens between messages", () => {
+    const author = createMockParticipant({ id: "author", name: "Author" });
+    const joiner = createMockParticipant({
+      id: "joiner",
+      name: "Alice",
+      joinTimeMs: 2_000,
+    });
+    const msg1 = createMockMessage({
+      id: "msg-1",
+      authors: ["author"],
+      timeMs: 1_000,
+    });
+    const msg2 = createMockMessage({
+      id: "msg-2",
+      authors: ["author"],
+      timeMs: 3_000,
+    });
+    const chat = createMockChatSession({
+      parsedMessages: signal([msg1, msg2]),
+      totalParticipants: signal([author, joiner]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    const groups = container.querySelectorAll(".sb-chat-view-message-group");
+    expect(groups).toHaveLength(2);
+  });
+
+  it("does not render join events for self, unknown join times, or pre-conversation joins", () => {
+    const self = createMockParticipant({
+      id: "self",
+      name: "Me",
+      isSelf: true,
+      joinTimeMs: 2_000,
+    });
+    const unknown = createMockParticipant({
+      id: "unknown",
+      name: "Unknown",
+      joinTimeMs: 0,
+    });
+    const early = createMockParticipant({
+      id: "early",
+      name: "Early",
+      joinTimeMs: 500,
+    });
+    const msg1 = createMockMessage({ id: "msg-1", timeMs: 1_000 });
+    const msg2 = createMockMessage({ id: "msg-2", timeMs: 3_000 });
+    const chat = createMockChatSession({
+      parsedMessages: signal([msg1, msg2]),
+      totalParticipants: signal([self, unknown, early]),
+    });
+    const state = createMockState();
+
+    act(() => {
+      render(<ChatView chat={chat} state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-chat-view-event")).toBeNull();
+  });
 });
