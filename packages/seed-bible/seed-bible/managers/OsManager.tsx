@@ -17,6 +17,7 @@ import {
   generateV1ConnectionToken,
 } from "@casual-simulation/aux-common";
 import { sha256 } from "hash.js";
+import { first, firstValueFrom } from "rxjs";
 
 export type CasualOSManager = ReturnType<typeof CasualOSManager>;
 
@@ -172,6 +173,10 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
     });
 
     doc.connect();
+
+    await firstValueFrom(
+      doc.onStatusUpdated.pipe(first((s) => s.type === "sync" && s.synced))
+    );
 
     return doc;
   }
