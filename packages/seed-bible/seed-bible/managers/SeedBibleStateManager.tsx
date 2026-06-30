@@ -91,6 +91,15 @@ type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
 
 /**
+ * App-wide mobile breakpoint, in pixels. Viewports at or below this width use
+ * the mobile layout (drawer sidebar, mobile header, full-screen selector);
+ * above it the docked desktop layout applies. This is the single source of
+ * truth for the JS side — the matching `@media (max-width: 480px)` /
+ * `(min-width: 481px)` rules in app/main.css must be kept in sync by hand.
+ */
+export const MOBILE_BREAKPOINT = 480;
+
+/**
  * Derived app-level state and high-level actions used by UI components.
  *
  * These values are mostly computed from lower-level managers and represent
@@ -109,7 +118,7 @@ export interface AppState {
   /** Current window inner height in pixels. Updated on resize. */
   viewportHeight: ReadonlySignal<number>;
 
-  /** True when viewport width is at or below the mobile breakpoint (768px). */
+  /** True when viewport width is at or below the mobile breakpoint (480px). */
   isMobile: ReadonlySignal<boolean>;
   /** True when on a phone-sized viewport held in landscape orientation. */
   isMobileLandscape: ReadonlySignal<boolean>;
@@ -415,7 +424,7 @@ export function createSeedBibleState(
   const viewportWidth = signal(
     typeof window === "undefined"
       ? isSSR && renderedAsMobile
-        ? 768
+        ? MOBILE_BREAKPOINT
         : 1000
       : window.innerWidth
   );
@@ -426,7 +435,7 @@ export function createSeedBibleState(
         : 1000
       : window.innerHeight
   );
-  const isMobile = computed(() => viewportWidth.value <= 768);
+  const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
 
   const tutorial = createTutorialManager(login, onboarding, selector, isMobile);
 
