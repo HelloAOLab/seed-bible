@@ -8507,7 +8507,7 @@ a:visited {
   inset-inline-end: 16px;
   transform: none;
   bottom: 8px;
-  width: min(420px, calc(100vw - 32px));
+  width: min(320px, calc(100vw - 32px));
   min-height: 400px;
   padding: 0;
   display: flex;
@@ -8888,7 +8888,6 @@ a:visited {
   flex-direction: column;
   gap: 12px;
   min-height: 220px;
-  padding: 12px 16px 16px;
   flex: 1 1 auto;
 }
 
@@ -8900,7 +8899,16 @@ a:visited {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding-right: 4px;
+  padding: 12px 14px;
+
+  .sb-chat-view-message-avatar-shell > .sb-tab-user-icon {
+    width: 30px;
+    height: 30px;
+
+    > .material-symbols-outlined {
+      font-size: 15px;
+    }
+  }
 }
 
 .sb-chat-view-empty {
@@ -9000,14 +9008,22 @@ a:visited {
 .sb-chat-view-message-group-row {
   display: flex;
   align-items: flex-end;
-  gap: 10px;
+  gap: 4px;
   flex-direction: row-reverse;
+}
+
+.sb-chat-view-message-group.is-self > .sb-chat-view-message-group-row {
+  flex-direction: row;
+
+  > .sb-chat-view-message-content {
+    align-items: flex-end;
+  }
 }
 
 .sb-chat-view-message-bubbles {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   min-width: 0;
 }
 
@@ -9016,7 +9032,6 @@ a:visited {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  /* border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 88%); */
   border-radius: 16px;
   padding: 8px 14px;
   background: color-mix(
@@ -9064,8 +9079,8 @@ img.sb-chat-view-message-avatar {
 }
 
 .sb-chat-view-message-author {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
 }
 
@@ -9095,6 +9110,7 @@ img.sb-chat-view-message-avatar {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  padding: 10px;
 }
 
 .sb-chat-view-typing-indicator {
@@ -9374,9 +9390,12 @@ img.sb-chat-view-message-avatar {
     left: 50%;
     right: auto;
     transform: translateX(-50%);
-    bottom: 72px;
+    bottom: 120px;
     width: 100%;
     animation: sb-floating-panel-rise 0.18s ease-out;
+    border-radius: 0;
+    border: none;
+    box-shadow: 0px -3px 8px 0px rgba(0, 0, 0, 0.18);
   }
 }
 
