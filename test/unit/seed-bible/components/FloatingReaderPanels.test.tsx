@@ -189,6 +189,7 @@ function createMockParticipant(
     isAI: false,
     isRemote: false,
     isActive: true,
+    joinTimeMs: 0,
     userId: null,
     connectionId: null,
     profile: null,

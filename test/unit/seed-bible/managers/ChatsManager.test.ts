@@ -135,7 +135,7 @@ function createDeferred<T>() {
 
 function createSharedSessionMock(options?: {
   initialChats?: unknown[];
-  connectedUsers?: UserChatParticipant[];
+  connectedUsers?: Array<Omit<UserChatParticipant, "joinTimeMs">>;
   connectedSessionUsers?: Array<{
     userId: string | null;
     connectionId: string | null;
@@ -260,6 +260,7 @@ describe("createChatsManager", () => {
         isRemote: false,
         isActive: true,
         visual: getUserAnimalVisual("user-1"),
+        joinTimeMs: 1_717_000_000_000,
       },
     ]);
   });
@@ -539,6 +540,7 @@ describe("createChatsManager", () => {
         isRemote: false,
         isActive: true,
         visual: getUserAnimalVisual("user-1"),
+        joinTimeMs: 0,
       },
       {
         id: "provider-1",
@@ -551,6 +553,7 @@ describe("createChatsManager", () => {
         isAI: true,
         isRemote: false,
         isActive: true,
+        joinTimeMs: 0,
       },
     ];
 
@@ -571,6 +574,7 @@ describe("createChatsManager", () => {
         isRemote: false,
         isActive: true,
         visual: getUserAnimalVisual("user-1"),
+        joinTimeMs: 0,
       },
       {
         id: "d7d90348-fc03-4272-b7c1-b565d968bb5c",
@@ -583,6 +587,7 @@ describe("createChatsManager", () => {
         isAI: true,
         isRemote: false,
         isActive: true,
+        joinTimeMs: 0,
       },
     ];
 
@@ -603,6 +608,7 @@ describe("createChatsManager", () => {
         isRemote: true,
         isActive: true,
         visual: getUserAnimalVisual("u1"),
+        joinTimeMs: 0,
       },
       {
         id: "u2",
@@ -615,6 +621,7 @@ describe("createChatsManager", () => {
         isAI: true,
         isRemote: true,
         isActive: true,
+        joinTimeMs: 0,
       },
     ];
 
@@ -636,6 +643,7 @@ describe("createChatsManager", () => {
         isAI: true,
         isRemote: false,
         isActive: true,
+        joinTimeMs: 0,
       },
       {
         id: "user-1",
@@ -647,6 +655,7 @@ describe("createChatsManager", () => {
         isRemote: false,
         isActive: true,
         visual: getUserAnimalVisual("user-1"),
+        joinTimeMs: 0,
       },
     ];
 
@@ -667,6 +676,7 @@ describe("createChatsManager", () => {
         isRemote: false,
         isActive: true,
         visual: getUserAnimalVisual("user-1"),
+        joinTimeMs: 0,
       },
       {
         id: "provider-1",
@@ -679,6 +689,7 @@ describe("createChatsManager", () => {
         isAI: true,
         isRemote: true,
         isActive: true,
+        joinTimeMs: 0,
       },
     ];
 
@@ -699,6 +710,7 @@ describe("createChatsManager", () => {
         isRemote: true,
         isActive: true,
         visual: getUserAnimalVisual("user-1"),
+        joinTimeMs: 0,
       },
     ];
 
@@ -726,6 +738,7 @@ describe("createChatsManager", () => {
       isRemote: false,
       isActive: true,
       visual: getUserAnimalVisual("user-2"),
+      joinTimeMs: 1_717_000_000_000,
     });
   });
 
@@ -1034,6 +1047,7 @@ describe("createChatsManager", () => {
           (u) => u.connectionId === "conn-u1"
         )!,
         visual: getUserAnimalVisual("u1"),
+        joinTimeMs: 1_717_000_000_000,
       },
       {
         id: "u2",
@@ -1049,6 +1063,7 @@ describe("createChatsManager", () => {
           (u) => u.connectionId === "conn-u2"
         )!,
         visual: getUserAnimalVisual("u2"),
+        joinTimeMs: 1_717_000_000_000,
       },
     ]);
 
@@ -1068,6 +1083,7 @@ describe("createChatsManager", () => {
           (u) => u.connectionId === "conn-u1"
         )!,
         visual: getUserAnimalVisual("u1"),
+        joinTimeMs: 1_717_000_000_000,
       },
     ]);
   });
@@ -1109,6 +1125,7 @@ describe("createChatsManager", () => {
           (u) => u.connectionId === "conn-u1-a"
         )!,
         visual: getUserAnimalVisual("u1"),
+        joinTimeMs: 1_717_000_000_000,
       },
     ]);
   });
@@ -1150,6 +1167,7 @@ describe("createChatsManager", () => {
           (u) => u.connectionId === "anon-1"
         )!,
         visual: getUserAnimalVisual("anon-1"),
+        joinTimeMs: 1_717_000_000_000,
       },
       {
         id: "anon-2",
@@ -1165,6 +1183,7 @@ describe("createChatsManager", () => {
           (u) => u.connectionId === "anon-2"
         )!,
         visual: getUserAnimalVisual("anon-2"),
+        joinTimeMs: 1_717_000_000_000,
       },
     ]);
   });
@@ -1199,6 +1218,7 @@ describe("createChatsManager", () => {
         (u) => u.connectionId === "conn-u1"
       )!,
       visual: getUserAnimalVisual("u1"),
+      joinTimeMs: 1_717_000_000_000,
     });
 
     connectedUsers.value = [];
@@ -1226,6 +1246,7 @@ describe("createChatsManager", () => {
       isActive: false,
       sessionUser: allUsers.value.find((u) => u.connectionId === "conn-u1")!,
       visual: getUserAnimalVisual("u1"),
+      joinTimeMs: 1_717_000_000_000,
     });
   });
 
@@ -1265,6 +1286,7 @@ describe("createChatsManager", () => {
       isAI: true,
       isRemote: true,
       isActive: true,
+      joinTimeMs: 1_717_000_000_000,
     });
 
     connectedUsers.value = [];
@@ -1291,6 +1313,7 @@ describe("createChatsManager", () => {
       isAI: true,
       isRemote: true,
       isActive: false,
+      joinTimeMs: 1_717_000_000_000,
     });
   });
 
@@ -1333,6 +1356,7 @@ describe("createChatsManager", () => {
       isAI: true,
       isRemote: false,
       isActive: true,
+      joinTimeMs: 0,
     });
 
     session.addParticipant("provider-1");
@@ -1351,6 +1375,84 @@ describe("createChatsManager", () => {
     expect(
       session.availableParticipants.value.find((p) => p.id === "provider-1")
     ).toBeUndefined();
+  });
+
+  it("records joinTimeMs when participants join or are added", () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    vi.mocked(Date.now).mockReturnValue(1_000);
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: vi.fn(),
+    });
+    const session = chats.createLocalSession();
+
+    // The local user is observed at session creation time.
+    expect(session.participants.value[0]!.joinTimeMs).toBe(1_000);
+    // An available-but-unadded provider has no join time yet.
+    expect(
+      session.availableParticipants.value.find((p) => p.id === "provider-1")
+        ?.joinTimeMs
+    ).toBe(0);
+
+    // Adding the provider later captures the add time, not a later recompute.
+    vi.mocked(Date.now).mockReturnValue(2_000);
+    session.addParticipant("provider-1");
+    expect(
+      session.participants.value.find((p) => p.id === "provider-1")?.joinTimeMs
+    ).toBe(2_000);
+
+    // The recorded time is stable across subsequent recomputes.
+    vi.mocked(Date.now).mockReturnValue(3_000);
+    profile.value = { name: "Alice II" };
+    expect(
+      session.participants.value.find((p) => p.id === "provider-1")?.joinTimeMs
+    ).toBe(2_000);
+  });
+
+  it("syncs AI participant joinTimeMs through the shared doc", async () => {
+    const { loginManager } = createLoginManagerMock();
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: vi.fn(),
+    });
+
+    const { session, sharedChatProviders } = createSharedSessionMock({
+      currentUserId: "user-a",
+      connectedUsers: [
+        {
+          id: "user-a",
+          userId: "user-a",
+          connectionId: null,
+          name: "Alice",
+          isSelf: true,
+          isAI: false,
+          isRemote: false,
+          isActive: true,
+          visual: getUserAnimalVisual("user-a"),
+        },
+      ],
+    });
+    const chat = chats.createSharedSession(session);
+
+    vi.mocked(Date.now).mockReturnValue(5_000);
+    chat.addParticipant("conn-user-a_provider-1");
+    await Promise.resolve();
+
+    expect(sharedChatProviders.get("user-a")).toEqual([
+      expect.objectContaining({
+        id: "conn-user-a_provider-1",
+        joinTimeMs: 5_000,
+      }),
+    ]);
   });
 
   it("registerProvider() replaces providers that have the same id", () => {
@@ -1415,6 +1517,7 @@ describe("createChatsManager", () => {
       isAI: true,
       isRemote: false,
       isActive: true,
+      joinTimeMs: 0,
     });
   });
 
@@ -1662,6 +1765,7 @@ describe("createChatsManager", () => {
       isAI: true,
       isRemote: false,
       isActive: true,
+      joinTimeMs: 0,
     });
 
     chat.addParticipant("conn-user-a_provider-1");
@@ -1720,6 +1824,7 @@ describe("createChatsManager", () => {
         providerId: "provider-1",
         name: "New Name",
         isAI: true,
+        joinTimeMs: 1_717_000_000_000,
       },
     ]);
   });
@@ -1764,6 +1869,7 @@ describe("createChatsManager", () => {
       isAI: true,
       isRemote: true,
       isActive: true,
+      joinTimeMs: 1_717_000_000_000,
     });
   });
 
@@ -2778,6 +2884,7 @@ describe("createChatsManager", () => {
         isRemote: false,
         isActive: true,
         visual: getUserAnimalVisual("user-1"),
+        joinTimeMs: 0,
       },
       {
         id: "provider-1",
@@ -2790,6 +2897,7 @@ describe("createChatsManager", () => {
         isAI: true,
         isRemote: false,
         isActive: true,
+        joinTimeMs: 0,
       },
     ];
 
