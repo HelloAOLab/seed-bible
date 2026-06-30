@@ -44,4 +44,5 @@ catalog:
   base64-js: "1.5.1"
   uuid: "^13.0.0"
   preact-render-to-string: "^6.7.0"
+  rxjs: "8.0.0-alpha.14"
   luxon: "^3.7.2"

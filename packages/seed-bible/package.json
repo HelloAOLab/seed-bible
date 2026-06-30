@@ -37,6 +37,7 @@
     "react-avatar-editor": "15.1.0",
     "react-dom": "catalog:",
     "typesense": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "rxjs": "catalog:"
   }
 }
