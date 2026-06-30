@@ -11,22 +11,28 @@ import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/Se
 import type { BookId } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import type { Mock } from "vitest";
 
-vi.mock("seed-bible.i18n.I18nManager", () => ({
-  useI18n: () => ({
-    t: (
-      key: string,
-      options?: { defaultValue?: string; [k: string]: unknown }
-    ) => {
-      const template = options?.defaultValue ?? key;
-      if (!options) return template;
-      return template.replace(/\{\{(\w+)\}\}/g, (_: string, k: string) => {
-        const val = options[k];
-        return val != null ? String(val) : `{{${k}}}`;
-      });
-    },
-    language: "en",
-  }),
-}));
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const actual = await vi.importActual<
+    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
+  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
+  return {
+    ...actual,
+    useI18n: () => ({
+      t: (
+        key: string,
+        options?: { defaultValue?: string; [k: string]: unknown }
+      ) => {
+        const template = options?.defaultValue ?? key;
+        if (!options) return template;
+        return template.replace(/\{\{(\w+)\}\}/g, (_: string, k: string) => {
+          const val = options[k];
+          return val != null ? String(val) : `{{${k}}}`;
+        });
+      },
+      language: "en",
+    }),
+  };
+});
 
 function createMockParticipant(
   overrides: Partial<UserChatParticipant> = {}

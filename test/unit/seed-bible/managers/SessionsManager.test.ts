@@ -34,7 +34,6 @@ type TestRemoteClientEvent = {
   isSelf: boolean;
   client: {
     connectionId: string;
-    sessionId: string | null;
     userId: string | null;
   };
 };
@@ -1188,7 +1187,6 @@ describe("SessionsManager", () => {
       isSelf: false,
       client: {
         connectionId: "conn-1",
-        sessionId: "group-abc",
         userId: "user-1",
       },
     });
@@ -1198,7 +1196,6 @@ describe("SessionsManager", () => {
       isSelf: false,
       client: {
         connectionId: "conn-2",
-        sessionId: "group-abc",
         userId: null,
       },
     });
@@ -1233,7 +1230,6 @@ describe("SessionsManager", () => {
       expect.arrayContaining([
         {
           connectionId: "conn-1",
-          sessionId: "group-abc",
           userId: "user-1",
           profile: {
             name: "Profile user-1",
@@ -1244,7 +1240,6 @@ describe("SessionsManager", () => {
         },
         {
           connectionId: "conn-2",
-          sessionId: "group-abc",
           userId: null,
           profile: null,
           isSelf: false,
@@ -1270,7 +1265,6 @@ describe("SessionsManager", () => {
       isSelf: false,
       client: {
         connectionId: "conn-1",
-        sessionId: "group-abc",
         userId: "user-1",
       },
     });
@@ -1282,7 +1276,6 @@ describe("SessionsManager", () => {
       isSelf: false,
       client: {
         connectionId: "conn-1",
-        sessionId: "group-abc",
         userId: "user-1",
       },
     });
@@ -1293,7 +1286,6 @@ describe("SessionsManager", () => {
       expect.arrayContaining([
         {
           connectionId: "conn-1",
-          sessionId: "group-abc",
           userId: "user-1",
           profile: {
             name: "Profile user-1",
@@ -1332,7 +1324,6 @@ describe("SessionsManager", () => {
       expect.arrayContaining([
         {
           connectionId: "conn-old",
-          sessionId: null,
           userId: "user-old",
           profile: {
             name: "Old User",

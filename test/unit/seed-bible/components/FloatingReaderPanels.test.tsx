@@ -15,13 +15,19 @@ import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/Se
 import { createTestSeedBibleState } from "../testUtils/createTestSeedBibleState";
 import type { Mock } from "vitest";
 
-vi.mock("seed-bible.i18n.I18nManager", () => ({
-  useI18n: () => ({
-    t: (key: string, options?: { defaultValue?: string }) =>
-      options?.defaultValue ?? key,
-    language: "en",
-  }),
-}));
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const actual = await vi.importActual<
+    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
+  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
+  return {
+    ...actual,
+    useI18n: () => ({
+      t: (key: string, options?: { defaultValue?: string }) =>
+        options?.defaultValue ?? key,
+      language: "en",
+    }),
+  };
+});
 
 vi.mock("@packages/seed-bible/seed-bible/components/ChatView", async () => {
   const actual = await vi.importActual(
@@ -35,7 +41,7 @@ vi.mock("@packages/seed-bible/seed-bible/components/ChatView", async () => {
   };
 });
 
-vi.mock("seed-bible.components.ContextMenu", () => ({
+vi.mock("@packages/seed-bible/seed-bible/components/ContextMenu", () => ({
   closeContextMenus: vi.fn(),
   ContextMenuItem: ({
     children,
