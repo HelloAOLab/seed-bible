@@ -50,7 +50,7 @@ function getChatTitle(
 
   if (onlySelf && "isShared" in chat && chat.isShared) {
     return t("session-chat-just-you", {
-      defaultValue: "Session Chat (Just You)",
+      defaultValue: "In-session chat (Just You)",
     });
   }
 
@@ -64,7 +64,7 @@ function getChatTitle(
   if (names.length === 0) {
     if ("isShared" in chat && chat.isShared) {
       return t("session-chat-just-you", {
-        defaultValue: "Session Chat (Just You)",
+        defaultValue: "In-session chat (Just You)",
       });
     }
 
