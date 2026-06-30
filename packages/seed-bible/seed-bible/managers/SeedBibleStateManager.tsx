@@ -97,7 +97,7 @@ type SearchManager = ReturnType<typeof createSearchManager>;
  * truth for the JS side — the matching `@media (max-width: 480px)` /
  * `(min-width: 481px)` rules in app/main.css must be kept in sync by hand.
  */
-export const MOBILE_BREAKPOINT = 768;
+export const MOBILE_BREAKPOINT = 480;
 
 /**
  * Derived app-level state and high-level actions used by UI components.

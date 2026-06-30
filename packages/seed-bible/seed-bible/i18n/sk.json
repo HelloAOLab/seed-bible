@@ -243,14 +243,6 @@
   "tutorial.back": "Späť",
   "tutorial.done": "Hotovo",
   "tutorial.next": "Ďalej",
-
-  "tutorial.promptTitle": "Vitajte v Seed Bible. Chcete si pozrieť návod?",
-
-  "tutorial.promptBody": "K dispozícii je sprievodca, ktorý vám pomôže spoznať Seed Bible do detailov.",
-
-  "tutorial.promptAccept": "Spustiť prehliadku",
-
-  "tutorial.promptDecline": "Nie, ďakujem",
   "onboarding.welcomeTitle": "Vitajte!",
   "onboarding.continue": "Pokračovať",
   "onboarding.installTargetDesktop": "pracovná plocha",

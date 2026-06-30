@@ -243,14 +243,6 @@
   "tutorial.back": "برگشت",
   "tutorial.done": "انجام شد",
   "tutorial.next": "بعدی",
-
-  "tutorial.promptTitle": "به Seed Bible خوش آمدید. آیا آموزش می‌خواهید؟",
-
-  "tutorial.promptBody": "یک تور راهنما در دسترس است تا به شما کمک کند ریزه‌کاری‌های Seed Bible را یاد بگیرید.",
-
-  "tutorial.promptAccept": "شروع تور",
-
-  "tutorial.promptDecline": "نه، ممنون",
   "onboarding.welcomeTitle": "خوش آمدید!",
   "onboarding.continue": "ادامه",
   "onboarding.installTargetDesktop": "دسکتاپ",

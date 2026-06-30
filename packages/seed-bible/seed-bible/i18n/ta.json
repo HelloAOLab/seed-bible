@@ -243,14 +243,6 @@
   "tutorial.back": "திரும்பி",
   "tutorial.done": "முடிந்தது",
   "tutorial.next": "அடுத்து",
-
-  "tutorial.promptTitle": "Seed Bible-க்கு வரவேற்கிறோம். உங்களுக்கு பயிற்சி வேண்டுமா?",
-
-  "tutorial.promptBody": "Seed Bible-இன் நுணுக்கங்களைக் கற்க உதவும் வழிகாட்டப்பட்ட சுற்றுப்பயணம் கிடைக்கிறது.",
-
-  "tutorial.promptAccept": "சுற்றுப்பயணத்தைத் தொடங்கு",
-
-  "tutorial.promptDecline": "வேண்டாம், நன்றி",
   "onboarding.welcomeTitle": "வரவேற்கிறோம்!",
   "onboarding.continue": "தொடரவும்",
   "onboarding.installTargetDesktop": "டெஸ்க்டாப்",

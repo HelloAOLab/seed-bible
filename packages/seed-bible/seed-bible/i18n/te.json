@@ -243,14 +243,6 @@
   "tutorial.back": "వెనుక",
   "tutorial.done": "పూర్తయింది",
   "tutorial.next": "తరువాత",
-
-  "tutorial.promptTitle": "Seed Bible కు స్వాగతం. మీకు ట్యుటోరియల్ కావాలా?",
-
-  "tutorial.promptBody": "Seed Bible లోని అన్ని విషయాలను నేర్చుకోవడంలో సహాయపడే గైడెడ్ టూర్ అందుబాటులో ఉంది.",
-
-  "tutorial.promptAccept": "టూర్ ప్రారంభించండి",
-
-  "tutorial.promptDecline": "వద్దు, ధన్యవాదాలు",
   "onboarding.welcomeTitle": "స్వాగతం!",
   "onboarding.continue": "కొనసాగించండి",
   "onboarding.installTargetDesktop": "డెస్క్‌టాప్",

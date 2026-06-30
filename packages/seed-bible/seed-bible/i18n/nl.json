@@ -243,14 +243,6 @@
   "tutorial.back": "Rug",
   "tutorial.done": "Klaar",
   "tutorial.next": "Volgende",
-
-  "tutorial.promptTitle": "Welkom bij Seed Bible. Wil je een rondleiding?",
-
-  "tutorial.promptBody": "Er is een rondleiding beschikbaar om je te helpen Seed Bible goed te leren kennen.",
-
-  "tutorial.promptAccept": "Start de rondleiding",
-
-  "tutorial.promptDecline": "Nee, bedankt",
   "onboarding.welcomeTitle": "Welkom!",
   "onboarding.continue": "Doorgaan",
   "onboarding.installTargetDesktop": "bureaublad",

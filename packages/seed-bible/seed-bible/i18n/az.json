@@ -243,14 +243,6 @@
   "tutorial.back": "Geri",
   "tutorial.done": "Hazırdır",
   "tutorial.next": "Növbəti",
-
-  "tutorial.promptTitle": "Seed Bible-ə xoş gəlmisiniz. Təlimat istəyirsiniz?",
-
-  "tutorial.promptBody": "Seed Bible-ın incəliklərini öyrənməyinizə kömək edəcək bələdçili tur mövcuddur.",
-
-  "tutorial.promptAccept": "Tura başla",
-
-  "tutorial.promptDecline": "Xeyr, təşəkkürlər",
   "onboarding.welcomeTitle": "Xoş gəlmisiniz!",
   "onboarding.continue": "Davam et",
   "onboarding.installTargetDesktop": "masaüstü",

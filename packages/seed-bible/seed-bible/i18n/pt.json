@@ -243,14 +243,6 @@
   "tutorial.back": "Voltar",
   "tutorial.done": "Feito",
   "tutorial.next": "Próximo",
-
-  "tutorial.promptTitle": "Boas-vindas ao Seed Bible. Gostaria de um tutorial?",
-
-  "tutorial.promptBody": "Há uma visita guiada disponível para ajudar você a conhecer o Seed Bible em detalhes.",
-
-  "tutorial.promptAccept": "Fazer o tour",
-
-  "tutorial.promptDecline": "Não, obrigado",
   "onboarding.welcomeTitle": "Bem-vindo!",
   "onboarding.continue": "Continuar",
   "onboarding.installTargetDesktop": "desktop",

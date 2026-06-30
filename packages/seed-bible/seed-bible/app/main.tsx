@@ -24,7 +24,6 @@ import {
 import "./main.css";
 import { OnboardingModals } from "../components/Onboarding";
 import { Tutorial } from "../components/Tutorial";
-import { TutorialPrompt } from "../components/TutorialPrompt";
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -202,11 +201,6 @@ function MainContent(props: {
           tutorial={state.tutorial}
           className={`${fontSizeClass} ${webkitClass}`}
           groupFilter="non-selector"
-        />
-
-        <TutorialPrompt
-          tutorial={state.tutorial}
-          className={`${fontSizeClass} ${webkitClass}`}
         />
       </div>
     </>

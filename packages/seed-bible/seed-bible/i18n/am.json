@@ -243,14 +243,6 @@
   "tutorial.back": "ተመለስ",
   "tutorial.done": "ተጠናቅቋል",
   "tutorial.next": "ቀጣይ",
-
-  "tutorial.promptTitle": "ወደ Seed Bible እንኳን ደህና መጡ። አጋዥ ስልጠና ይፈልጋሉ?",
-
-  "tutorial.promptBody": "Seed Bibleን ጠንቅቀው እንዲያውቁ የሚረዳ በመመሪያ የተደገፈ ጉብኝት ይገኛል።",
-
-  "tutorial.promptAccept": "ጉብኝቱን ጀምር",
-
-  "tutorial.promptDecline": "አይ፣ አመሰግናለሁ",
   "onboarding.welcomeTitle": "እንኳን ደህና መጣህ!",
   "onboarding.continue": "ቀጥል",
   "onboarding.installTargetDesktop": "ዴስክቶፕ",

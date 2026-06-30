@@ -243,14 +243,6 @@
   "tutorial.back": "后退",
   "tutorial.done": "完毕",
   "tutorial.next": "下一个",
-
-  "tutorial.promptTitle": "欢迎使用 Seed Bible。需要新手教程吗？",
-
-  "tutorial.promptBody": "我们提供引导式导览，帮助你全面了解 Seed Bible。",
-
-  "tutorial.promptAccept": "开始导览",
-
-  "tutorial.promptDecline": "不用了，谢谢",
   "onboarding.welcomeTitle": "欢迎！",
   "onboarding.continue": "继续",
   "onboarding.installTargetDesktop": "桌面",

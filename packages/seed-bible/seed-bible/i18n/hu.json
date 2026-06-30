@@ -243,14 +243,6 @@
   "tutorial.back": "Vissza",
   "tutorial.done": "Kész",
   "tutorial.next": "Következő",
-
-  "tutorial.promptTitle": "Üdvözöljük a Seed Bible-ben! Szeretne egy bemutatót?",
-
-  "tutorial.promptBody": "Elérhető egy vezetett bemutató, amely segít megismerni a Seed Bible minden részletét.",
-
-  "tutorial.promptAccept": "Bemutató indítása",
-
-  "tutorial.promptDecline": "Nem, köszönöm",
   "onboarding.welcomeTitle": "Üdvözöljük!",
   "onboarding.continue": "Folytatás",
   "onboarding.installTargetDesktop": "asztali",

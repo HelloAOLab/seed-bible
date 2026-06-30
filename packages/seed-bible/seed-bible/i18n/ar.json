@@ -243,14 +243,6 @@
   "tutorial.back": "خلف",
   "tutorial.done": "منتهي",
   "tutorial.next": "التالي",
-
-  "tutorial.promptTitle": "مرحبًا بك في Seed Bible. هل ترغب في جولة تعليمية؟",
-
-  "tutorial.promptBody": "تتوفر جولة إرشادية لمساعدتك على تعلّم كل تفاصيل Seed Bible.",
-
-  "tutorial.promptAccept": "ابدأ الجولة",
-
-  "tutorial.promptDecline": "لا، شكرًا",
   "onboarding.welcomeTitle": "مرحباً!",
   "onboarding.continue": "يكمل",
   "onboarding.installTargetDesktop": "سطح المكتب",

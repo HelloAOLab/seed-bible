@@ -243,14 +243,6 @@
   "tutorial.back": "בְּחֲזָרָה",
   "tutorial.done": "נַעֲשָׂה",
   "tutorial.next": "הַבָּא",
-
-  "tutorial.promptTitle": "ברוכים הבאים ל-Seed Bible. רוצים מדריך?",
-
-  "tutorial.promptBody": "סיור מודרך זמין כדי לעזור לכם ללמוד את כל הפרטים של Seed Bible.",
-
-  "tutorial.promptAccept": "התחל את הסיור",
-
-  "tutorial.promptDecline": "לא, תודה",
   "onboarding.welcomeTitle": "קַבָּלַת פָּנִים!",
   "onboarding.continue": "לְהַמשִׁיך",
   "onboarding.installTargetDesktop": "שולחן עבודה",

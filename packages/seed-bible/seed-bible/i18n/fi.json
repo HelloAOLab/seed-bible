@@ -243,14 +243,6 @@
   "tutorial.back": "Takaisin",
   "tutorial.done": "Tehty",
   "tutorial.next": "Seuraava",
-
-  "tutorial.promptTitle": "Tervetuloa Seed Bibleen. Haluatko opastuksen?",
-
-  "tutorial.promptBody": "Käytettävissä on opastettu kierros, joka auttaa sinua oppimaan Seed Biblen kaikki ominaisuudet.",
-
-  "tutorial.promptAccept": "Aloita kierros",
-
-  "tutorial.promptDecline": "Ei kiitos",
   "onboarding.welcomeTitle": "Tervetuloa!",
   "onboarding.continue": "Jatkaa",
   "onboarding.installTargetDesktop": "työpöytä",

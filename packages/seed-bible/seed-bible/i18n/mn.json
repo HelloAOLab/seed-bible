@@ -243,14 +243,6 @@
   "tutorial.back": "Буцах",
   "tutorial.done": "Дууссан",
   "tutorial.next": "Дараагийнх",
-
-  "tutorial.promptTitle": "Seed Bible-д тавтай морил. Танд заавар хэрэгтэй юу?",
-
-  "tutorial.promptBody": "Seed Bible-ийн нарийн ширийнийг сурахад туслах удирдсан аялал бэлэн байна.",
-
-  "tutorial.promptAccept": "Аялалыг эхлүүлэх",
-
-  "tutorial.promptDecline": "Үгүй, баярлалаа",
   "onboarding.welcomeTitle": "Тавтай морил!",
   "onboarding.continue": "Үргэлжлүүлэх",
   "onboarding.installTargetDesktop": "ширээний компьютер",

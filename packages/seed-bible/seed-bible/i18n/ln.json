@@ -243,14 +243,6 @@
   "tutorial.back": "Mukongo",
   "tutorial.done": "Esalemi",
   "tutorial.next": "Oyo elandi",
-
-  "tutorial.promptTitle": "Boyei malamu na Seed Bible. Olingi litámbwisi?",
-
-  "tutorial.promptBody": "Litámbwisi ya botamboli ezali mpo na kosálisa yo oyeba malamu Seed Bible.",
-
-  "tutorial.promptAccept": "Banda litámbwisi",
-
-  "tutorial.promptDecline": "Te, melesi",
   "onboarding.welcomeTitle": "Boyei malamu!",
   "onboarding.continue": "Kokoba",
   "onboarding.installTargetDesktop": "na ordinateur ya bureau",

@@ -243,14 +243,6 @@
   "tutorial.back": "Enrere",
   "tutorial.done": "Fet",
   "tutorial.next": "Següent",
-
-  "tutorial.promptTitle": "Us donem la benvinguda a Seed Bible. Voleu un tutorial?",
-
-  "tutorial.promptBody": "Hi ha disponible una visita guiada per ajudar-vos a conèixer a fons Seed Bible.",
-
-  "tutorial.promptAccept": "Fes la visita",
-
-  "tutorial.promptDecline": "No, gràcies",
   "onboarding.welcomeTitle": "Benvingut/da!",
   "onboarding.continue": "Continua",
   "onboarding.installTargetDesktop": "escriptori",

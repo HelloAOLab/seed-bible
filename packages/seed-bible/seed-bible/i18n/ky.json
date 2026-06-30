@@ -243,14 +243,6 @@
   "tutorial.back": "Артка",
   "tutorial.done": "Бүттү",
   "tutorial.next": "Кийинки",
-
-  "tutorial.promptTitle": "Seed Bible'ге кош келиңиз. Көрсөтмө каалайсызбы?",
-
-  "tutorial.promptBody": "Seed Bible'дин бардык мүмкүнчүлүктөрүн үйрөнүүгө жардам берген жетектелген тур бар.",
-
-  "tutorial.promptAccept": "Турду баштоо",
-
-  "tutorial.promptDecline": "Жок, рахмат",
   "onboarding.welcomeTitle": "Кош келдиңиз!",
   "onboarding.continue": "Улантуу",
   "onboarding.installTargetDesktop": "иш тактасы",

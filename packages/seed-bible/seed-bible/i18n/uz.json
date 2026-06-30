@@ -243,14 +243,6 @@
   "tutorial.back": "Orqaga",
   "tutorial.done": "Bajarildi",
   "tutorial.next": "Keyingisi",
-
-  "tutorial.promptTitle": "Seed Bible'ga xush kelibsiz. Qoʻllanma kerakmi?",
-
-  "tutorial.promptBody": "Seed Bible'ning barcha qirralarini oʻrganishingizga yordam beruvchi yoʻriqli sayohat mavjud.",
-
-  "tutorial.promptAccept": "Sayohatni boshlash",
-
-  "tutorial.promptDecline": "Yoʻq, rahmat",
   "onboarding.welcomeTitle": "Xush kelibsiz!",
   "onboarding.continue": "Davom etish",
   "onboarding.installTargetDesktop": "ish stoli",

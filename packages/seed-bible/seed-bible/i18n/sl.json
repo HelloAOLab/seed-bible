@@ -243,14 +243,6 @@
   "tutorial.back": "Nazaj",
   "tutorial.done": "Končano",
   "tutorial.next": "Naprej",
-
-  "tutorial.promptTitle": "Dobrodošli v Seed Bible. Želite vodič?",
-
-  "tutorial.promptBody": "Na voljo je voden ogled, ki vam bo pomagal spoznati vse podrobnosti Seed Bible.",
-
-  "tutorial.promptAccept": "Začni ogled",
-
-  "tutorial.promptDecline": "Ne, hvala",
   "onboarding.welcomeTitle": "Dobrodošli!",
   "onboarding.continue": "Nadaljuj",
   "onboarding.installTargetDesktop": "namizni računalnik",

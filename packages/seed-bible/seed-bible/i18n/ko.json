@@ -243,14 +243,6 @@
   "tutorial.back": "뒤쪽에",
   "tutorial.done": "완료",
   "tutorial.next": "다음",
-
-  "tutorial.promptTitle": "Seed Bible에 오신 것을 환영합니다. 튜토리얼을 보시겠어요?",
-
-  "tutorial.promptBody": "Seed Bible의 구석구석을 배울 수 있도록 안내 투어를 제공합니다.",
-
-  "tutorial.promptAccept": "둘러보기 시작",
-
-  "tutorial.promptDecline": "아니요, 괜찮아요",
   "onboarding.welcomeTitle": "환영!",
   "onboarding.continue": "계속하다",
   "onboarding.installTargetDesktop": "데스크톱",
