@@ -332,7 +332,7 @@ export function createSeedBibleState(
   const readingHistory = createReadingHistoryManager(os, login);
   const annotations = createAnnotationsManager(os, login);
   const sessions = createSessionsManager(os, data, login, highlights, i18n);
-  const extensions = createExtensionManager({
+  const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
   });
   const modals = createModalManager();
