@@ -130,7 +130,7 @@ export function ContextMenuWithButton({
   buttonClassName?: string;
   menuClassName?: string;
   iconClassName?: string;
-  icon?: string;
+  icon?: string | ComponentChildren;
 } & ComponentProps<"button">) {
   const menuId = useSignal("");
   const menuStyle = useSignal<ComponentProps<"div">["style"]>(undefined);
@@ -240,6 +240,21 @@ export function ContextMenuWithButton({
   const getMenuContainer = () =>
     anchorRef.current?.querySelector<HTMLDivElement>('[role="menu"]') ?? null;
 
+  const iconContent =
+    typeof icon === "string" ? (
+      <span
+        className={joinClassNames(
+          "material-symbols-outlined",
+          "sb-context-more-icon",
+          iconClassName
+        )}
+      >
+        {icon}
+      </span>
+    ) : (
+      icon
+    );
+
   return (
     <div
       ref={anchorRef}
@@ -273,15 +288,7 @@ export function ContextMenuWithButton({
         }}
         {...props}
       >
-        <span
-          className={joinClassNames(
-            "material-symbols-outlined",
-            "sb-context-more-icon",
-            iconClassName
-          )}
-        >
-          {icon}
-        </span>
+        {iconContent}
       </button>
       <ContextMenu
         isOpen={currentIsOpen}

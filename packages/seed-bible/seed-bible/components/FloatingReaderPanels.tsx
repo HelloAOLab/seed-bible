@@ -22,6 +22,7 @@ import { useEffect, useRef } from "preact/hooks";
 import { translateTitle } from "./Utils";
 import { Avatar } from "./Avatar";
 import { DateTime } from "luxon";
+import { ChatParticipantsIcon } from "./icons";
 
 interface SearchResult {
   id: string;
@@ -598,7 +599,7 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
             anchorClassName="sb-floating-chat-header-members-anchor"
             buttonClassName="sb-floating-chat-header-members-button"
             menuClassName="sb-floating-chat-members-menu"
-            icon="groups"
+            icon={<ChatParticipantsIcon />}
             aria-label={t("participants", {
               defaultValue: "Participants",
             })}

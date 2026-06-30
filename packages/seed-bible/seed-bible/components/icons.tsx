@@ -1628,6 +1628,55 @@ const AddTab = (props: any) => {
   );
 };
 
+const ChatParticipantsIcon = (props: any) => {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      {...props}
+    >
+      <path
+        d="M3.3335 4.66667C3.3335 5.37391 3.61445 6.05219 4.11454 6.55229C4.61464 7.05238 5.29292 7.33333 6.00016 7.33333C6.70741 7.33333 7.38568 7.05238 7.88578 6.55229C8.38588 6.05219 8.66683 5.37391 8.66683 4.66667C8.66683 3.95942 8.38588 3.28115 7.88578 2.78105C7.38568 2.28095 6.70741 2 6.00016 2C5.29292 2 4.61464 2.28095 4.11454 2.78105C3.61445 3.28115 3.3335 3.95942 3.3335 4.66667Z"
+        stroke="black"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      <path
+        d="M2 14V12.6667C2 11.9594 2.28095 11.2811 2.78105 10.781C3.28115 10.281 3.95942 10 4.66667 10H7.33333C7.97333 10 8.56 10.2253 9.02 10.6007"
+        stroke="black"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      <path
+        d="M10.6665 2.08594C11.2401 2.2328 11.7485 2.5664 12.1116 3.03414C12.4747 3.50188 12.6717 4.07716 12.6717 4.66927C12.6717 5.26138 12.4747 5.83666 12.1116 6.3044C11.7485 6.77214 11.2401 7.10574 10.6665 7.2526"
+        stroke="black"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      <path
+        d="M10.6665 12.6641H14.6665"
+        stroke="black"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      <path
+        d="M12.6665 10.6641V14.6641"
+        stroke="black"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  );
+};
+
 export {
   DualScreenIcon,
   ColorSelect,
@@ -1663,4 +1712,5 @@ export {
   SbTabsIcon,
   BookOutlineIcon,
   AddTab,
+  ChatParticipantsIcon,
 };
