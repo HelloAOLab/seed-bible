@@ -91,15 +91,6 @@ type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
 
 /**
- * App-wide mobile breakpoint, in pixels. Viewports at or below this width use
- * the mobile layout (drawer sidebar, mobile header, full-screen selector);
- * above it the docked desktop layout applies. This is the single source of
- * truth for the JS side — the matching `@media (max-width: 480px)` /
- * `(min-width: 481px)` rules in app/main.css must be kept in sync by hand.
- */
-export const MOBILE_BREAKPOINT = 480;
-
-/**
  * Derived app-level state and high-level actions used by UI components.
  *
  * These values are mostly computed from lower-level managers and represent
@@ -118,7 +109,7 @@ export interface AppState {
   /** Current window inner height in pixels. Updated on resize. */
   viewportHeight: ReadonlySignal<number>;
 
-  /** True when viewport width is at or below the mobile breakpoint (480px). */
+  /** True when viewport width is at or below the mobile breakpoint (768px). */
   isMobile: ReadonlySignal<boolean>;
   /** True when on a phone-sized viewport held in landscape orientation. */
   isMobileLandscape: ReadonlySignal<boolean>;
@@ -424,7 +415,7 @@ export function createSeedBibleState(
   const viewportWidth = signal(
     typeof window === "undefined"
       ? isSSR && renderedAsMobile
-        ? MOBILE_BREAKPOINT
+        ? 768
         : 1000
       : window.innerWidth
   );
@@ -435,7 +426,7 @@ export function createSeedBibleState(
         : 1000
       : window.innerHeight
   );
-  const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
+  const isMobile = computed(() => viewportWidth.value <= 768);
 
   const tutorial = createTutorialManager(login, onboarding, selector, isMobile);
 
@@ -447,15 +438,6 @@ export function createSeedBibleState(
       viewportHeight.value > 0 &&
       viewportHeight.value <= 600 &&
       viewportWidth.value > viewportHeight.value
-  );
-
-  // A docked-sidebar desktop layout that has become too narrow for the
-  // sidebar and reader to comfortably share the row. Excludes mobile
-  // (<= MOBILE_BREAKPOINT), where the sidebar is a drawer and
-  // `isSidebarCollapsed` does not apply. The 1200px ceiling mirrors the CSS
-  // breakpoint.
-  const isNarrowDesktop = computed(
-    () => viewportWidth.value > MOBILE_BREAKPOINT && viewportWidth.value <= 1200
   );
 
   effect(() => {
@@ -482,23 +464,6 @@ export function createSeedBibleState(
     if (isMobileLandscape.value) {
       sidebar.isSidebarCollapsed.value = true;
     }
-  });
-
-  // Drive the docked sidebar's collapsed state from the viewport width so the
-  // three layouts hand off cleanly:
-  //   - mobile (<= 480): the sidebar is a drawer (isMobileOpen); the docked
-  //     collapsed flag does not apply, so leave it untouched.
-  //   - narrow desktop (481–1200): collapse to sb-tabs-sidebar-collapsed so
-  //     the reader keeps usable horizontal space.
-  //   - wide desktop (> 1200): restore the regular expanded sidebar.
-  // The effect reads only the booleans (not raw width), so it re-runs solely
-  // when crossing the 480/1200 boundaries — manual toggling within a band is
-  // preserved.
-  effect(() => {
-    if (isMobile.value) {
-      return;
-    }
-    sidebar.isSidebarCollapsed.value = isNarrowDesktop.value;
   });
 
   const buildSingleSelectedPane = (): Pane[] =>

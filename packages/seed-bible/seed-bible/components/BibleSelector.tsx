@@ -26,7 +26,6 @@ import {
   useCallback,
 } from "preact/hooks";
 import type { AppState } from "../managers/SeedBibleStateManager";
-import { MOBILE_BREAKPOINT } from "../managers/SeedBibleStateManager";
 
 /**
  * CSS-only spotlight: the huge translucent box-shadow dims everything around
@@ -374,7 +373,7 @@ const SideBarBooks = (props: {
     const lst = localSelectedTestament.value;
 
     let allowedRows = 5;
-    if (ws <= MOBILE_BREAKPOINT) {
+    if (ws <= 768) {
       allowedRows = 1;
     } else if (ws < 1200) {
       allowedRows = 3;
@@ -443,8 +442,7 @@ const SideBarBooks = (props: {
                 class="sidebar-chapters show-sidebar-chapter"
                 style={{
                   justifyContent:
-                    ws <= MOBILE_BREAKPOINT ||
-                    bd.numberOfChapters < 4 * separator
+                    ws <= 768 || bd.numberOfChapters < 4 * separator
                       ? "flex-start"
                       : "space-between",
                 }}
@@ -510,7 +508,7 @@ const SideBarBooks = (props: {
               )}
             </div>
           </div>
-          {ws <= MOBILE_BREAKPOINT && apocryphaAvailable.value && (
+          {ws <= 768 && apocryphaAvailable.value && (
             <>
               <div className="separator" style={{ display: "flex" }} />
               <div
@@ -592,7 +590,7 @@ const SideBarBooks = (props: {
         }
       >
         <div class="testament-container flex-col-gap-sm">
-          {(config.alwaysShowTitle || ws > MOBILE_BREAKPOINT) && (
+          {(config.alwaysShowTitle || ws > 768) && (
             <span class="testament-title">{config.title}</span>
           )}
           <div class="books-item flex-row-wrap-around">
