@@ -458,6 +458,15 @@ export function createSeedBibleState(
     () => viewportWidth.value > MOBILE_BREAKPOINT && viewportWidth.value <= 1200
   );
 
+  // True when more than one reader pane is open side by side. Detached overlay
+  // panes (extension tools, playlist, etc.) don't count — only the tiled
+  // attached panes that actually compete with the sidebar for row space.
+  const hasMultiplePanes = computed(
+    () =>
+      panelsEnabled.value &&
+      panes.panes.value.filter((pane) => !pane.detached).length > 1
+  );
+
   effect(() => {
     if (typeof window === "undefined") {
       return;
@@ -499,6 +508,16 @@ export function createSeedBibleState(
       return;
     }
     sidebar.isSidebarCollapsed.value = isNarrowDesktop.value;
+  });
+
+  // Collapse the docked sidebar by default when more than one pane is open, so
+  // the panes get the horizontal space instead of competing with the sidebar.
+  // Reacting only to the boolean means this fires once per transition into
+  // multi-pane and still lets the user manually re-expand afterwards.
+  effect(() => {
+    if (hasMultiplePanes.value) {
+      sidebar.isSidebarCollapsed.value = true;
+    }
   });
 
   const buildSingleSelectedPane = (): Pane[] =>
