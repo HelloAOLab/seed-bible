@@ -243,6 +243,14 @@
   "tutorial.back": "Kembali",
   "tutorial.done": "Selesai",
   "tutorial.next": "Berikutnya",
+
+  "tutorial.promptTitle": "Selamat datang di Seed Bible. Ingin tutorial?",
+
+  "tutorial.promptBody": "Tersedia tur berpemandu untuk membantu Anda mempelajari seluk-beluk Seed Bible.",
+
+  "tutorial.promptAccept": "Mulai tur",
+
+  "tutorial.promptDecline": "Tidak, terima kasih",
   "onboarding.welcomeTitle": "Selamat datang!",
   "onboarding.continue": "Melanjutkan",
   "onboarding.installTargetDesktop": "desktop",

@@ -243,6 +243,14 @@
   "tutorial.back": "Назад",
   "tutorial.done": "Готово",
   "tutorial.next": "Далі",
+
+  "tutorial.promptTitle": "Ласкаво просимо до Seed Bible. Бажаєте пройти навчання?",
+
+  "tutorial.promptBody": "Доступна екскурсія з підказками, яка допоможе вам вивчити всі тонкощі Seed Bible.",
+
+  "tutorial.promptAccept": "Почати тур",
+
+  "tutorial.promptDecline": "Ні, дякую",
   "onboarding.welcomeTitle": "Ласкаво просимо!",
   "onboarding.continue": "Продовжити",
   "onboarding.installTargetDesktop": "робочий стіл",

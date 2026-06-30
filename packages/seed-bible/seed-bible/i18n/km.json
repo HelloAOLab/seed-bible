@@ -243,6 +243,14 @@
   "tutorial.back": "ថយក្រោយ",
   "tutorial.done": "រួចរាល់",
   "tutorial.next": "បន្ទាប់",
+
+  "tutorial.promptTitle": "សូមស្វាគមន៍មកកាន់ Seed Bible។ តើអ្នកចង់បានការណែនាំទេ?",
+
+  "tutorial.promptBody": "មានដំណើរទស្សនកិច្ចមានការណែនាំ ដើម្បីជួយអ្នកស្វែងយល់ពីរាល់មុខងាររបស់ Seed Bible។",
+
+  "tutorial.promptAccept": "ចាប់ផ្តើមដំណើរទស្សនកិច្ច",
+
+  "tutorial.promptDecline": "ទេ អរគុណ",
   "onboarding.welcomeTitle": "សូមស្វាគមន៍!",
   "onboarding.continue": "បន្ត",
   "onboarding.installTargetDesktop": "ផ្ទៃតុ",

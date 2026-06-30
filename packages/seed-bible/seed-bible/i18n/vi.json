@@ -243,6 +243,14 @@
   "tutorial.back": "Mặt sau",
   "tutorial.done": "Xong",
   "tutorial.next": "Kế tiếp",
+
+  "tutorial.promptTitle": "Chào mừng bạn đến với Seed Bible. Bạn có muốn xem hướng dẫn không?",
+
+  "tutorial.promptBody": "Có một chuyến tham quan có hướng dẫn giúp bạn tìm hiểu mọi điều về Seed Bible.",
+
+  "tutorial.promptAccept": "Bắt đầu tham quan",
+
+  "tutorial.promptDecline": "Không, cảm ơn",
   "onboarding.welcomeTitle": "Chào mừng!",
   "onboarding.continue": "Tiếp tục",
   "onboarding.installTargetDesktop": "máy tính để bàn",

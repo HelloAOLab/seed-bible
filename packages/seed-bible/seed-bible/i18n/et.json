@@ -243,6 +243,14 @@
   "tutorial.back": "Tagasi",
   "tutorial.done": "Valmis",
   "tutorial.next": "Järgmine",
+
+  "tutorial.promptTitle": "Tere tulemast Seed Bible'i. Kas soovite õpetust?",
+
+  "tutorial.promptBody": "Saadaval on juhendatud tutvustus, mis aitab teil Seed Bible'i põhjalikult tundma õppida.",
+
+  "tutorial.promptAccept": "Alusta tutvustust",
+
+  "tutorial.promptDecline": "Ei, aitäh",
   "onboarding.welcomeTitle": "Tere tulemast!",
   "onboarding.continue": "Jätka",
   "onboarding.installTargetDesktop": "lauaarvuti",

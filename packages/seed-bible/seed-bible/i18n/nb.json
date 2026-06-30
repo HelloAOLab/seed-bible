@@ -243,6 +243,14 @@
   "tutorial.back": "Tilbake",
   "tutorial.done": "Ferdig",
   "tutorial.next": "Neste",
+
+  "tutorial.promptTitle": "Velkommen til Seed Bible. Vil du ha en innføring?",
+
+  "tutorial.promptBody": "En guidet omvisning er tilgjengelig for å hjelpe deg å bli kjent med Seed Bible.",
+
+  "tutorial.promptAccept": "Start omvisningen",
+
+  "tutorial.promptDecline": "Nei takk",
   "onboarding.welcomeTitle": "Velkomst!",
   "onboarding.continue": "Fortsette",
   "onboarding.installTargetDesktop": "skrivebordet",

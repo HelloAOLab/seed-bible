@@ -243,6 +243,14 @@
   "tutorial.back": "နောက်သို့",
   "tutorial.done": "ပြီးပါပြီ",
   "tutorial.next": "နောက်တစ်ခု",
+
+  "tutorial.promptTitle": "Seed Bible မှ ကြိုဆိုပါသည်။ သင်ခန်းစာ လိုချင်ပါသလား။",
+
+  "tutorial.promptBody": "Seed Bible ၏ အသေးစိတ်များကို လေ့လာရန် ကူညီပေးမည့် လမ်းညွှန်ခရီးစဉ် ရရှိနိုင်ပါသည်။",
+
+  "tutorial.promptAccept": "ခရီးစဉ်စတင်ပါ",
+
+  "tutorial.promptDecline": "မလို၊ ကျေးဇူးတင်ပါတယ်",
   "onboarding.welcomeTitle": "ကြိုဆိုပါတယ်။",
   "onboarding.continue": "ဆက်လုပ်ပါ",
   "onboarding.installTargetDesktop": "ဒက်စ်တော့",

@@ -243,6 +243,14 @@
   "tutorial.back": "پیچھے",
   "tutorial.done": "ہو گیا",
   "tutorial.next": "اگلا",
+
+  "tutorial.promptTitle": "Seed Bible میں خوش آمدید۔ کیا آپ ٹیوٹوریل چاہتے ہیں؟",
+
+  "tutorial.promptBody": "Seed Bible کی تمام تفصیلات سیکھنے میں مدد کے لیے ایک رہنمائی شدہ ٹور دستیاب ہے۔",
+
+  "tutorial.promptAccept": "ٹور شروع کریں",
+
+  "tutorial.promptDecline": "نہیں، شکریہ",
   "onboarding.welcomeTitle": "خوش آمدید!",
   "onboarding.continue": "جاری رکھیں",
   "onboarding.installTargetDesktop": "ڈیسک ٹاپ",

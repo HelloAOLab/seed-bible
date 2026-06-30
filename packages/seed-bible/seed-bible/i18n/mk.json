@@ -243,6 +243,14 @@
   "tutorial.back": "Назад",
   "tutorial.done": "Готово",
   "tutorial.next": "Следно",
+
+  "tutorial.promptTitle": "Добре дојдовте во Seed Bible. Дали сакате упатство?",
+
+  "tutorial.promptBody": "Достапна е водена тура за да ви помогне да ги научите сите детали на Seed Bible.",
+
+  "tutorial.promptAccept": "Започни ја турата",
+
+  "tutorial.promptDecline": "Не, благодарам",
   "onboarding.welcomeTitle": "Добредојде!",
   "onboarding.continue": "Продолжи",
   "onboarding.installTargetDesktop": "десктоп",

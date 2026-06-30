@@ -243,6 +243,14 @@
   "tutorial.back": "Πίσω",
   "tutorial.done": "Γινώμενος",
   "tutorial.next": "Επόμενος",
+
+  "tutorial.promptTitle": "Καλώς ορίσατε στο Seed Bible. Θέλετε έναν οδηγό εκμάθησης;",
+
+  "tutorial.promptBody": "Διατίθεται μια καθοδηγούμενη ξενάγηση για να σας βοηθήσει να μάθετε τα πάντα για το Seed Bible.",
+
+  "tutorial.promptAccept": "Ξεκίνα την ξενάγηση",
+
+  "tutorial.promptDecline": "Όχι, ευχαριστώ",
   "onboarding.welcomeTitle": "Καλωσόρισμα!",
   "onboarding.continue": "Συνεχίζω",
   "onboarding.installTargetDesktop": "επιφάνεια εργασίας",

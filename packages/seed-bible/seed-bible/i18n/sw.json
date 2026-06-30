@@ -243,6 +243,14 @@
   "tutorial.back": "Rudi",
   "tutorial.done": "Imekamilika",
   "tutorial.next": "Inayofuata",
+
+  "tutorial.promptTitle": "Karibu kwenye Seed Bible. Ungependa mwongozo?",
+
+  "tutorial.promptBody": "Kuna ziara ya kuongozwa inayopatikana ili kukusaidia kujifunza mambo yote ya Seed Bible.",
+
+  "tutorial.promptAccept": "Anza ziara",
+
+  "tutorial.promptDecline": "Hapana, asante",
   "onboarding.welcomeTitle": "Karibu!",
   "onboarding.continue": "Endelea",
   "onboarding.installTargetDesktop": "eneo-kazi",

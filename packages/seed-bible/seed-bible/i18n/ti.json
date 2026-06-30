@@ -243,6 +243,14 @@
   "tutorial.back": "ዝባን",
   "tutorial.done": "ምውዳእ",
   "tutorial.next": "ቀፃሊ",
+
+  "tutorial.promptTitle": "ናብ Seed Bible እንቋዕ ብደሓን መጻእኩም። መምርሒ ትደልዩ ዶ?",
+
+  "tutorial.promptBody": "ንኹሉ ዝርዝራት Seed Bible ንኽትመሃሩ ዝሕግዝ ብመምርሒ ዝምራሕ ዙረት ኣሎ።",
+
+  "tutorial.promptAccept": "ዙረት ጀምር",
+
+  "tutorial.promptDecline": "ኣይፋል፣ የቐንየለይ",
   "onboarding.welcomeTitle": "እንኳዕ ደሓን መፁ!",
   "onboarding.continue": "ቀፃሊ",
   "onboarding.installTargetDesktop": "ናይ ዴስክቶፕ",

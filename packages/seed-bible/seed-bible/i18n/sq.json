@@ -243,6 +243,14 @@
   "tutorial.back": "Mbrapa",
   "tutorial.done": "U krye",
   "tutorial.next": "Tjetra",
+
+  "tutorial.promptTitle": "Mirë se vini në Seed Bible. Dëshironi një udhëzues?",
+
+  "tutorial.promptBody": "Një turne i udhëhequr është i disponueshëm për t'ju ndihmuar të mësoni gjithçka rreth Seed Bible.",
+
+  "tutorial.promptAccept": "Fillo turneun",
+
+  "tutorial.promptDecline": "Jo, faleminderit",
   "onboarding.welcomeTitle": "Mirë se vini!",
   "onboarding.continue": "Vazhdo",
   "onboarding.installTargetDesktop": "desktop",

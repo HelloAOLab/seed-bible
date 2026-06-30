@@ -243,6 +243,14 @@
   "tutorial.back": "戻る",
   "tutorial.done": "終わり",
   "tutorial.next": "次",
+
+  "tutorial.promptTitle": "Seed Bible へようこそ。チュートリアルをご覧になりますか？",
+
+  "tutorial.promptBody": "Seed Bible の使い方を一通り学べるガイドツアーをご利用いただけます。",
+
+  "tutorial.promptAccept": "ツアーを始める",
+
+  "tutorial.promptDecline": "いいえ、結構です",
   "onboarding.welcomeTitle": "いらっしゃいませ！",
   "onboarding.continue": "続く",
   "onboarding.installTargetDesktop": "デスクトップ",

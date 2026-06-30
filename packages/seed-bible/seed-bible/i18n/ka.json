@@ -243,6 +243,14 @@
   "tutorial.back": "უკან",
   "tutorial.done": "დასრულებულია",
   "tutorial.next": "შემდეგი",
+
+  "tutorial.promptTitle": "კეთილი იყოს თქვენი მობრძანება Seed Bible-ში. გსურთ სახელმძღვანელო?",
+
+  "tutorial.promptBody": "ხელმისაწვდომია მართვადი ტური, რომელიც დაგეხმარებათ Seed Bible-ის ყველა დეტალის შესწავლაში.",
+
+  "tutorial.promptAccept": "ტურის დაწყება",
+
+  "tutorial.promptDecline": "არა, გმადლობთ",
   "onboarding.welcomeTitle": "კეთილი იყოს თქვენი მობრძანება!",
   "onboarding.continue": "გაგრძელება",
   "onboarding.installTargetDesktop": "სამუშაო მაგიდა",

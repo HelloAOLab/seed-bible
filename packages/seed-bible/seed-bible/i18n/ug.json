@@ -243,6 +243,14 @@
   "tutorial.back": "ئارقىغا",
   "tutorial.done": "تاماملاندى",
   "tutorial.next": "كېيىنكىسى",
+
+  "tutorial.promptTitle": "Seed Bible غا خۇش كەپسىز. قوللانما خالامسىز؟",
+
+  "tutorial.promptBody": "Seed Bible نىڭ بارلىق ئىنچىكە تەرەپلىرىنى ئۆگىنىشىڭىزگە ياردەم بېرىدىغان يېتەكچىلىك ساياھەت بار.",
+
+  "tutorial.promptAccept": "ساياھەتنى باشلاش",
+
+  "tutorial.promptDecline": "ياق، رەھمەت",
   "onboarding.welcomeTitle": "خۇش كەپسىز!",
   "onboarding.continue": "داۋاملاشتۇرۇش",
   "onboarding.installTargetDesktop": "ئۈستەل يۈزى",

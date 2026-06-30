@@ -243,6 +243,14 @@
   "tutorial.back": "Z powrotem",
   "tutorial.done": "Zrobione",
   "tutorial.next": "Następny",
+
+  "tutorial.promptTitle": "Witamy w Seed Bible. Chcesz samouczek?",
+
+  "tutorial.promptBody": "Dostępny jest przewodnik, który pomoże Ci poznać wszystkie tajniki Seed Bible.",
+
+  "tutorial.promptAccept": "Rozpocznij przewodnik",
+
+  "tutorial.promptDecline": "Nie, dziękuję",
   "onboarding.welcomeTitle": "Powitanie!",
   "onboarding.continue": "Kontynuować",
   "onboarding.installTargetDesktop": "pulpit",

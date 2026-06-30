@@ -243,6 +243,14 @@
   "tutorial.back": "شاته",
   "tutorial.done": "وشو",
   "tutorial.next": "بل",
+
+  "tutorial.promptTitle": "Seed Bible ته ښه راغلاست. ایا تاسو لارښوونه غواړئ؟",
+
+  "tutorial.promptBody": "یوه لارښوونکې لیدنه شتون لري چې تاسو سره د Seed Bible د ټولو جزیاتو په زده کړه کې مرسته وکړي.",
+
+  "tutorial.promptAccept": "سفر پیل کړئ",
+
+  "tutorial.promptDecline": "نه، مننه",
   "onboarding.welcomeTitle": "ښه راغلاست!",
   "onboarding.continue": "دوام ورکړئ",
   "onboarding.installTargetDesktop": "ډیسکټاپ",

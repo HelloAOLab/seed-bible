@@ -243,6 +243,14 @@
   "tutorial.back": "ਪਿੱਛੇ",
   "tutorial.done": "ਹੋ ਗਿਆ",
   "tutorial.next": "ਅਗਲਾ",
+
+  "tutorial.promptTitle": "Seed Bible ਵਿੱਚ ਤੁਹਾਡਾ ਸੁਆਗਤ ਹੈ। ਕੀ ਤੁਸੀਂ ਟਿਊਟੋਰੀਅਲ ਚਾਹੁੰਦੇ ਹੋ?",
+
+  "tutorial.promptBody": "Seed Bible ਦੀਆਂ ਬਾਰੀਕੀਆਂ ਸਿੱਖਣ ਵਿੱਚ ਮਦਦ ਲਈ ਇੱਕ ਗਾਈਡਡ ਟੂਰ ਉਪਲਬਧ ਹੈ।",
+
+  "tutorial.promptAccept": "ਟੂਰ ਸ਼ੁਰੂ ਕਰੋ",
+
+  "tutorial.promptDecline": "ਨਹੀਂ, ਧੰਨਵਾਦ",
   "onboarding.welcomeTitle": "ਜੀ ਆਇਆਂ ਨੂੰ!",
   "onboarding.continue": "ਜਾਰੀ ਰੱਖੋ",
   "onboarding.installTargetDesktop": "ਡੈਸਕਟਾਪ",

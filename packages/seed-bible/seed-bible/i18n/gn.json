@@ -243,6 +243,14 @@
   "tutorial.back": "Kupe",
   "tutorial.done": "Apopyre",
   "tutorial.next": "Ag̃ui",
+
+  "tutorial.promptTitle": "Eg̃uahẽporã Seed Bible-pe. Reipotápa peteĩ tutorial?",
+
+  "tutorial.promptBody": "Oĩ peteĩ tape ojeguíava nepytyvõ hag̃ua reikuaa porãve Seed Bible.",
+
+  "tutorial.promptAccept": "Eñepyrũ tape",
+
+  "tutorial.promptDecline": "Nahániri, aguyje",
   "onboarding.welcomeTitle": "Tapeg̃uahẽporãite!",
   "onboarding.continue": "Mbojoapy",
   "onboarding.installTargetDesktop": "escritorio rehegua",

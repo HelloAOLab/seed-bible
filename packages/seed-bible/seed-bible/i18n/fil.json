@@ -243,6 +243,14 @@
   "tutorial.back": "Balik",
   "tutorial.done": "Tapos na",
   "tutorial.next": "Susunod",
+
+  "tutorial.promptTitle": "Maligayang pagdating sa Seed Bible. Gusto mo ba ng tutorial?",
+
+  "tutorial.promptBody": "May gabay na paglilibot na makakatulong sa iyong matutuhan ang lahat ng tungkol sa Seed Bible.",
+
+  "tutorial.promptAccept": "Simulan ang tour",
+
+  "tutorial.promptDecline": "Hindi, salamat",
   "onboarding.welcomeTitle": "Maligayang pagdating!",
   "onboarding.continue": "Magpatuloy",
   "onboarding.installTargetDesktop": "mesa",

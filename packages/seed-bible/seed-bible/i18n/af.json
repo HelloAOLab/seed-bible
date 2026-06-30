@@ -243,6 +243,14 @@
   "tutorial.back": "Terug",
   "tutorial.done": "Klaar",
   "tutorial.next": "Volgende",
+
+  "tutorial.promptTitle": "Welkom by Seed Bible. Wil jy 'n tutoriaal hê?",
+
+  "tutorial.promptBody": "'n Begeleide toer is beskikbaar om jou te help om Seed Bible deeglik te leer ken.",
+
+  "tutorial.promptAccept": "Begin die toer",
+
+  "tutorial.promptDecline": "Nee, dankie",
   "onboarding.welcomeTitle": "Welkom!",
   "onboarding.continue": "Gaan voort",
   "onboarding.installTargetDesktop": "lessenaar",

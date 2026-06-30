@@ -243,6 +243,14 @@
   "tutorial.back": "Spate",
   "tutorial.done": "Făcut",
   "tutorial.next": "Următorul",
+
+  "tutorial.promptTitle": "Bun venit la Seed Bible. Doriți un tutorial?",
+
+  "tutorial.promptBody": "Este disponibil un tur ghidat care vă ajută să cunoașteți Seed Bible în detaliu.",
+
+  "tutorial.promptAccept": "Începe turul",
+
+  "tutorial.promptDecline": "Nu, mulțumesc",
   "onboarding.welcomeTitle": "Bun venit!",
   "onboarding.continue": "Continua",
   "onboarding.installTargetDesktop": "desktop",

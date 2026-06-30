@@ -243,6 +243,14 @@
   "tutorial.back": "Atgal",
   "tutorial.done": "Atlikta",
   "tutorial.next": "Toliau",
+
+  "tutorial.promptTitle": "Sveiki atvykę į Seed Bible. Ar norite mokymų?",
+
+  "tutorial.promptBody": "Galima vadovaujama apžvalga, kuri padės jums susipažinti su visomis Seed Bible smulkmenomis.",
+
+  "tutorial.promptAccept": "Pradėti apžvalgą",
+
+  "tutorial.promptDecline": "Ne, ačiū",
   "onboarding.welcomeTitle": "Sveiki atvykę!",
   "onboarding.continue": "Tęsti",
   "onboarding.installTargetDesktop": "darbalaukis",

@@ -301,10 +301,24 @@ export interface TutorialManager {
   completed: ReadonlySignal<boolean>;
   /** Whether the user has opted out of all future tutorial prompts. */
   optedOut: ReadonlySignal<boolean>;
+  /**
+   * Whether the first-run "would you like a tutorial?" prompt is showing.
+   * Surfaced (instead of auto-launching the tour) once onboarding is done for
+   * a new user; resolved by `acceptPrompt` / `dismissPrompt`.
+   */
+  promptVisible: ReadonlySignal<boolean>;
   /** Per-feature contextual tutorial completion flags. */
   featuresSeen: ReadonlySignal<Record<string, boolean>>;
   /** Starts (or restarts) the onboarding tour from the first step. */
   start: () => void;
+  /** Accepts the first-run prompt: hides it and launches the onboarding tour. */
+  acceptPrompt: () => void;
+  /**
+   * Dismisses the first-run prompt without touring. Records the onboarding tour
+   * as seen so the prompt doesn't reappear (the user can replay it from
+   * Settings); contextual feature tips are unaffected.
+   */
+  dismissPrompt: () => void;
   /**
    * Starts a contextual single-feature tour, if not already seen and the user
    * hasn't opted out. Safe to call from event handlers without pre-checking.
@@ -336,6 +350,9 @@ export function createTutorialManager(
 ): TutorialManager {
   const running = signal<boolean>(false);
   const index = signal<number>(0);
+  // The first-run "would you like a tutorial?" prompt, shown once onboarding
+  // finishes for a new user instead of launching the tour unannounced.
+  const promptVisible = signal<boolean>(false);
 
   // The active step set is chosen at `start()` / `startContextual()` time
   // (snapshotted so a resize mid-tour doesn't swap the steps out from under us).
@@ -515,6 +532,18 @@ export function createTutorialManager(
     running.value = true;
   };
 
+  const acceptPrompt = () => {
+    promptVisible.value = false;
+    start();
+  };
+
+  const dismissPrompt = () => {
+    promptVisible.value = false;
+    // Treat "maybe later" as resolving the first-run tour so we don't re-prompt
+    // on the next load; it stays replayable from Settings.
+    markOnboardingSeen();
+  };
+
   const startContextual = (featureId: string) => {
     if (running.value) {
       return;
@@ -579,13 +608,15 @@ export function createTutorialManager(
     }
   };
 
-  // Auto-start onboarding once for new users, but only after the welcome/install
-  // onboarding is out of the way, and (when logged in) after the profile has
-  // loaded — otherwise a returning user could see the tour flash before their
-  // recorded completion arrives. One-shot via `autoStartChecked`.
+  // Offer the onboarding tour once to new users, but only after the
+  // welcome/install onboarding is out of the way, and (when logged in) after
+  // the profile has loaded — otherwise a returning user could see the prompt
+  // flash before their recorded completion arrives. One-shot via
+  // `autoStartChecked`. We surface the prompt rather than launching the tour
+  // directly so the user opts in first.
   let autoStartChecked = false;
   effect(() => {
-    if (autoStartChecked || running.value) {
+    if (autoStartChecked || running.value || promptVisible.value) {
       return;
     }
     if (onboarding.step.value !== "done") {
@@ -596,7 +627,7 @@ export function createTutorialManager(
     }
     autoStartChecked = true;
     if (!completed.value && !optedOut.value) {
-      start();
+      promptVisible.value = true;
     }
   });
 
@@ -611,8 +642,11 @@ export function createTutorialManager(
     canGoBack,
     completed,
     optedOut,
+    promptVisible,
     featuresSeen,
     start,
+    acceptPrompt,
+    dismissPrompt,
     startContextual,
     next,
     prev,

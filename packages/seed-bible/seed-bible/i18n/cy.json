@@ -243,6 +243,14 @@
   "tutorial.back": "Yn ôl",
   "tutorial.done": "Wedi'i wneud",
   "tutorial.next": "Nesaf",
+
+  "tutorial.promptTitle": "Croeso i Seed Bible. Hoffech chi diwtorial?",
+
+  "tutorial.promptBody": "Mae taith dywysedig ar gael i'ch helpu i ddysgu holl fanylion Seed Bible.",
+
+  "tutorial.promptAccept": "Cychwyn y daith",
+
+  "tutorial.promptDecline": "Na, dim diolch",
   "onboarding.welcomeTitle": "Croeso!",
   "onboarding.continue": "Parhau",
   "onboarding.installTargetDesktop": "bwrdd gwaith",
