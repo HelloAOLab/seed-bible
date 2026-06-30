@@ -82,9 +82,6 @@ export function Main({
     state.extensions.loadDefaultExtensions();
   }, []);
 
-  const { config } = state;
-  const fontSizeClass = `sb-font-size-${config.config.value.fontSize.toLowerCase()}`;
-
   if (typeof document !== "undefined") {
     useSignalEffect(() => {
       document.title = state.app.title.value;
@@ -94,7 +91,7 @@ export function Main({
   return (
     <AppConfigProvider value={appConfig}>
       <I18nProvider i18n={state.i18n}>
-        <MainContent state={state} fontSizeClass={fontSizeClass} />
+        <MainContent state={state} />
       </I18nProvider>
     </AppConfigProvider>
   );
@@ -116,9 +113,8 @@ const webkitClass = isWebKitBrowser ? "is-webkit" : "";
 
 function MainContent(props: {
   state: ReturnType<typeof createSeedBibleState>;
-  fontSizeClass: string;
 }) {
-  const { state, fontSizeClass } = props;
+  const { state } = props;
   const { isRtl } = useI18n();
   const appDirection = isRtl ? "rtl" : "ltr";
   const { theme, selector } = state;
@@ -126,7 +122,7 @@ function MainContent(props: {
   return (
     <>
       <div
-        className={`sb-app-root ${fontSizeClass} ${webkitClass}`}
+        className={`sb-app-root ${webkitClass}`}
         dir={appDirection}
         onClick={(e) => {
           if (!e.defaultPrevented) {
@@ -156,7 +152,7 @@ function MainContent(props: {
               live in this portal's shadow root and can't be measured from
               the main tour overlay. */}
         <BibleSelector
-          className={`${fontSizeClass} ${webkitClass}`}
+          className={`${webkitClass}`}
           isOpen={selector.isOpen.value}
           onClose={() => selector.setOpen(false)}
           app={state.app}
@@ -194,12 +190,12 @@ function MainContent(props: {
           onboarding={state.onboarding}
           os={state.os}
           toast={state.app.toast}
-          className={`${fontSizeClass} ${webkitClass}`}
+          className={`${webkitClass}`}
         />
 
         <Tutorial
           tutorial={state.tutorial}
-          className={`${fontSizeClass} ${webkitClass}`}
+          className={`${webkitClass}`}
           groupFilter="non-selector"
         />
       </div>

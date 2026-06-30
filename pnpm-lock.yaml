@@ -287,6 +287,9 @@ importers:
       jsdom:
         specifier: ^29.1.1
         version: 29.1.1
+      postcss-pxtorem:
+        specifier: ^6.1.0
+        version: 6.1.0(postcss@8.5.14)
       preact:
         specifier: 'catalog:'
         version: 10.29.2
@@ -5697,6 +5700,11 @@ packages:
   possible-typed-array-names@1.1.0:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
     engines: {node: '>= 0.4'}
+
+  postcss-pxtorem@6.1.0:
+    resolution: {integrity: sha512-ROODSNci9ADal3zUcPHOF/K83TiCgNSPXQFSbwyPHNV8ioHIE4SaC+FPOufd8jsr5jV2uIz29v1Uqy1c4ov42g==}
+    peerDependencies:
+      postcss: ^8.0.0
 
   postcss@8.5.14:
     resolution: {integrity: sha512-SoSL4+OSEtR99LHFZQiJLkT59C5B1amGO1NzTwj7TT1qCUgUO6hxOvzkOYxD+vMrXBM3XJIKzokoERdqQq/Zmg==}
@@ -13068,6 +13076,10 @@ snapshots:
       find-up: 4.1.0
 
   possible-typed-array-names@1.1.0: {}
+
+  postcss-pxtorem@6.1.0(postcss@8.5.14):
+    dependencies:
+      postcss: 8.5.14
 
   postcss@8.5.14:
     dependencies:
