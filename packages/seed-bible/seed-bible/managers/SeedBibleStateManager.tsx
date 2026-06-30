@@ -440,6 +440,18 @@ export function createSeedBibleState(
       viewportWidth.value > viewportHeight.value
   );
 
+  // True when a multi-pane layout is active — i.e. the user picked anything
+  // other than "single" from the Panels menu (split-2v, split-3v, grid-2x2,
+  // …), or more than one attached pane is otherwise open. Detached overlay
+  // panes (extension tools, playlist, etc.) don't count. Keyed primarily off
+  // the layout preset so selecting a layout from the menu reacts immediately.
+  const hasMultiplePanes = computed(
+    () =>
+      panelsEnabled.value &&
+      (panes.layout.value !== "single" ||
+        panes.panes.value.filter((pane) => !pane.detached).length > 1)
+  );
+
   effect(() => {
     if (typeof window === "undefined") {
       return;
@@ -462,6 +474,16 @@ export function createSeedBibleState(
   // user manually re-expand afterwards.
   effect(() => {
     if (isMobileLandscape.value) {
+      sidebar.isSidebarCollapsed.value = true;
+    }
+  });
+
+  // Collapse the docked sidebar by default when a multi-pane layout is active,
+  // so the panes get the horizontal space instead of competing with the
+  // sidebar. Reacting only to the boolean means this fires once per transition
+  // into multi-pane and still lets the user manually re-expand afterwards.
+  effect(() => {
+    if (hasMultiplePanes.value) {
       sidebar.isSidebarCollapsed.value = true;
     }
   });
