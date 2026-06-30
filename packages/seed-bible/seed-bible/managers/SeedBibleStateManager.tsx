@@ -91,6 +91,25 @@ type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
 
 /**
+ * App-wide mobile breakpoint, in pixels. Viewports at or below this width use
+ * the mobile layout (drawer sidebar, mobile header, full-screen selector);
+ * above it the docked desktop layout applies. This is the single source of
+ * truth for the JS side — the matching `@media (max-width: 480px)` /
+ * `(min-width: 481px)` rules in app/main.css must be kept in sync by hand.
+ */
+export const MOBILE_BREAKPOINT = 480;
+
+/**
+ * Upper bound of the "compact desktop" band. For viewports above
+ * {@link MOBILE_BREAKPOINT} but at or below this width the screen is too narrow
+ * to dock a 320px sidebar beside the reader, so an *expanded* sidebar floats
+ * over the reader instead of splitting the layout row. Kept in sync with the
+ * matching `@media (min-width: 481px) and (max-width: 768px)` rules in
+ * app/main.css by hand.
+ */
+export const SIDEBAR_OVERLAY_MAX_WIDTH = 768;
+
+/**
  * Derived app-level state and high-level actions used by UI components.
  *
  * These values are mostly computed from lower-level managers and represent
@@ -109,7 +128,7 @@ export interface AppState {
   /** Current window inner height in pixels. Updated on resize. */
   viewportHeight: ReadonlySignal<number>;
 
-  /** True when viewport width is at or below the mobile breakpoint (768px). */
+  /** True when viewport width is at or below the mobile breakpoint (480px). */
   isMobile: ReadonlySignal<boolean>;
   /** True when on a phone-sized viewport held in landscape orientation. */
   isMobileLandscape: ReadonlySignal<boolean>;
@@ -415,7 +434,7 @@ export function createSeedBibleState(
   const viewportWidth = signal(
     typeof window === "undefined"
       ? isSSR && renderedAsMobile
-        ? 768
+        ? MOBILE_BREAKPOINT
         : 1000
       : window.innerWidth
   );
@@ -426,7 +445,7 @@ export function createSeedBibleState(
         : 1000
       : window.innerHeight
   );
-  const isMobile = computed(() => viewportWidth.value <= 768);
+  const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
 
   const tutorial = createTutorialManager(login, onboarding, selector, isMobile);
 
@@ -462,6 +481,22 @@ export function createSeedBibleState(
   // user manually re-expand afterwards.
   effect(() => {
     if (isMobileLandscape.value) {
+      sidebar.isSidebarCollapsed.value = true;
+    }
+  });
+
+  // The "compact desktop" band (just above the mobile breakpoint): an
+  // expanded sidebar would overlay the reader rather than dock beside it
+  // (see app/main.css), so start collapsed to a rail when entering the band.
+  // Same once-per-transition pattern as the landscape collapse above, so the
+  // user can still expand the floating sidebar afterwards.
+  const isCompactDesktop = computed(
+    () =>
+      viewportWidth.value > MOBILE_BREAKPOINT &&
+      viewportWidth.value <= SIDEBAR_OVERLAY_MAX_WIDTH
+  );
+  effect(() => {
+    if (isCompactDesktop.value) {
       sidebar.isSidebarCollapsed.value = true;
     }
   });

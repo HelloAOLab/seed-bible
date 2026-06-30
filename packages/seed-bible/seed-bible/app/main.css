@@ -237,7 +237,7 @@ body {
  * browsers don't show the default white "overscroll" gap when the user
  * pulls the page up past the bottom toolbar. Scrolling happens inside
  * the inner panes (which have their own overflow scrollers). */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   html,
   body {
     position: fixed;
@@ -303,9 +303,7 @@ h6 {
 }
 
 .sb-bible-reader-bookmark-button {
-  position: absolute;
-  top: 16px;
-  inset-inline-end: 16px;
+  position: relative;
   width: 36px;
   height: 36px;
   display: inline-flex;
@@ -345,13 +343,11 @@ h6 {
   gap: 4px;
 }
 
-/* Desktop: dock to the top-right of the chapter content, just left of the
-   bookmark button (which sits at inset-inline-end: 16px with width 36px). */
+/* Desktop: sits in the header's action cluster, just left of the bookmark
+   button. Flow layout (not absolute) so it pushes the title instead of
+   overlapping it. */
 .sb-quick-toolbar-reader {
-  position: absolute;
-  top: 16px;
-  inset-inline-end: 60px;
-  z-index: 1;
+  flex-shrink: 0;
 }
 
 .sb-quick-toolbar-mobile-header {
@@ -397,8 +393,8 @@ h6 {
 
 /* Force a tight 1% reader margin in mobile view, regardless of the
    user's saved scriptureMargin setting. Breakpoint mirrors `isMobile`
-   in SeedBibleStateManager (viewportWidth <= 768). */
-@media (max-width: 768px) {
+   in SeedBibleStateManager (viewportWidth <= 480). */
+@media (max-width: 480px) {
   .sb-bible-reader {
     width: 100%;
     padding-right: 1%;
@@ -917,7 +913,21 @@ h6 {
   cursor: default;
 }
 
+/* Reader header: lays the chapter title and the right-hand action cluster
+   (quick toolbar + bookmark button) in a flex row so the buttons can never
+   overlap the title, regardless of how many quick tools are registered. */
+.sb-bible-reader-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 28px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--sb-divider-color);
+}
+
 .sb-bible-reader-title {
+  flex: 1 1 auto;
+  min-width: 0;
   font-family: var(--text-bookTitle-font);
   /* color: var(--text-bookTitle-color); */
   color: var(--sb-book-title-font-color);
@@ -925,17 +935,20 @@ h6 {
   font-style: var(--text-bookTitle-font-style);
   text-decoration: var(--text-bookTitle-text-decoration);
   text-align: var(--text-bookTitle-alignment);
-  margin: 0 0 28px;
-  /* Reserve space on the trailing edge for the absolutely-positioned bookmark
-     button (inset-inline-end: 16px + 36px wide) so a long title's translation
-     suffix (e.g. "/ AAB") wraps or stops before it instead of overlapping. */
-  padding-inline-end: 60px;
-  padding-bottom: 18px;
-  border-bottom: 1px solid var(--sb-divider-color);
+  margin: 0;
   font-size: 36px;
   line-height: 1;
   cursor: pointer;
   letter-spacing: 0;
+}
+
+/* Right-hand action cluster, aligned to the top of the title. Sized to its
+   contents so it pushes back on the title instead of overlapping it. */
+.sb-bible-reader-actions {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .sb-bible-reader-title-sep {
@@ -2040,7 +2053,7 @@ h6 {
   display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .sb-reader-toolbar-wrap {
     position: fixed;
     left: 50%;
@@ -2951,7 +2964,7 @@ h6 {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .sb-selector-overlay {
     display: none;
     pointer-events: all;
@@ -2990,7 +3003,7 @@ h6 {
   transform: translateY(0);
 }
 
-@media only screen and (min-width: 769px) {
+@media only screen and (min-width: 481px) {
   .sb-selector-panel {
     width: 650px;
     height: 80dvh;
@@ -3161,7 +3174,7 @@ h6 {
   text-transform: capitalize;
 }
 
-@media (min-width: 769px) {
+@media (min-width: 481px) {
   .sb-selector-book-button {
     width: 200px;
   }
@@ -3211,7 +3224,7 @@ h6 {
   color: var(--sb-primary-font-color);
 }
 
-@media (min-width: 769px) {
+@media (min-width: 481px) {
   .sb-selector-chapter-grid {
     grid-template-columns: repeat(auto-fit, minmax(38px, 1fr));
   }
@@ -3232,7 +3245,7 @@ h6 {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .sb-selector-grid {
     grid-template-columns: 1fr;
     gap: 12px;
@@ -3270,6 +3283,28 @@ h6 {
 
   .sb-sidebar-top-row {
     justify-content: center;
+  }
+}
+
+/* Compact desktop (just above the mobile breakpoint): the row is too narrow
+   to dock a 320px sidebar beside the reader without squashing it. So the
+   *expanded* sidebar floats over the reader (fixed, full-height, anchored to
+   the inline-start edge) instead of taking layout space. The collapsed rail
+   stays in flow so the expand button remains reachable. Mirrors the
+   SIDEBAR_OVERLAY_MAX_WIDTH band in SeedBibleStateManager. */
+@media (min-width: 481px) and (max-width: 768px) {
+  .sb-tabs-sidebar:not(.sb-tabs-sidebar-collapsed) {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: 100;
+    height: 100%;
+    box-shadow: 0 0 24px rgba(0, 0, 0, 0.18);
+    /* The docked sidebar's `--sb-sidebar-background` is transparent in the
+       light theme (it blends with the page behind it). Floating over the
+       reader there's text behind it, so paint the opaque page background —
+       same approach as the mobile drawer (`.sb-tabs-sidebar-mobile-open`). */
+    background: var(--sb-background);
   }
 }
 
@@ -3778,7 +3813,7 @@ h6 {
 /* Mobile: dock the picker modal to the bottom of the screen as a sheet
  * (matches the design spec). The modal frame itself is reused, but the
  * outer overlay aligns it to the bottom and stretches it to full width. */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .sb-footnote-modal-overlay:has(.sb-bookmark-picker) {
     align-items: flex-end;
     padding: 0;
@@ -4966,7 +5001,7 @@ h6 {
   border-radius: 6px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .sb-tabs-sidebar {
     display: none;
   }
@@ -5414,7 +5449,7 @@ h6 {
   display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .sb-tabs-sidebar-mobile-open .sb-tab-mobile-add-fab {
     display: inline-flex;
   }
@@ -5836,7 +5871,7 @@ h6 {
    the default downward-opening absolute menu spills off-screen behind the tab
    bar. Render it as a bottom-anchored sheet that stays above the nav bar and
    scrolls internally, with the overlay dimming the whole screen. */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .sb-language-picker-overlay {
     z-index: 9998;
     background: rgba(0, 0, 0, 0.3);
@@ -7479,7 +7514,7 @@ h6 {
 /* Desktop only (mobile search is left untouched): give the book/translation
    search field a clearly defined boundary and breathing room so it's obvious
    where the input begins and ends. */
-@media only screen and (min-width: 769px) {
+@media only screen and (min-width: 481px) {
   .searchbar {
     height: 44px;
     padding: 8px 14px;
@@ -7959,7 +7994,7 @@ h6 {
   }
 }
 
-@media only screen and (max-width: 768px) {
+@media only screen and (max-width: 480px) {
   .dropdown {
     /* display: none; */
     width: 62%;
@@ -8483,7 +8518,7 @@ h6 {
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   /* Search is a bottom-anchored sheet on mobile: the input sits just above the
      5-tab bar and results grow upward. It is capped to the *small* viewport
      height (`svh`, which excludes the Android address bar) and anchored to the
