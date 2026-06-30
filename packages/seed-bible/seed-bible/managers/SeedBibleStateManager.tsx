@@ -440,6 +440,14 @@ export function createSeedBibleState(
       viewportWidth.value > viewportHeight.value
   );
 
+  // A docked-sidebar desktop layout that has become too narrow for the
+  // sidebar and reader to comfortably share the row. Excludes mobile
+  // (<= 768), where the sidebar is a drawer and `isSidebarCollapsed` does not
+  // apply. The 1200px ceiling mirrors the CSS breakpoint.
+  const isNarrowDesktop = computed(
+    () => viewportWidth.value > 768 && viewportWidth.value <= 1200
+  );
+
   effect(() => {
     if (typeof window === "undefined") {
       return;
@@ -464,6 +472,23 @@ export function createSeedBibleState(
     if (isMobileLandscape.value) {
       sidebar.isSidebarCollapsed.value = true;
     }
+  });
+
+  // Drive the docked sidebar's collapsed state from the viewport width so the
+  // three layouts hand off cleanly:
+  //   - mobile (<= 768): the sidebar is a drawer (isMobileOpen); the docked
+  //     collapsed flag does not apply, so leave it untouched.
+  //   - narrow desktop (769–1200): collapse to sb-tabs-sidebar-collapsed so
+  //     the reader keeps usable horizontal space.
+  //   - wide desktop (> 1200): restore the regular expanded sidebar.
+  // The effect reads only the booleans (not raw width), so it re-runs solely
+  // when crossing the 768/1200 boundaries — manual toggling within a band is
+  // preserved.
+  effect(() => {
+    if (isMobile.value) {
+      return;
+    }
+    sidebar.isSidebarCollapsed.value = isNarrowDesktop.value;
   });
 
   const buildSingleSelectedPane = (): Pane[] =>
