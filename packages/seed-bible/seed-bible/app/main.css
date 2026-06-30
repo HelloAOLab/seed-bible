@@ -304,7 +304,10 @@ h6 {
 
 .sb-bible-reader-bookmark-button {
   position: absolute;
-  top: 16px;
+  /* Center the 36px button box on the title's first line (which starts at the
+     reader's 30px padding-top with a 36px line box) so it stays aligned with
+     the title even when a narrow reader pulls the title text out to meet it. */
+  top: 30px;
   inset-inline-end: 16px;
   width: 36px;
   height: 36px;
@@ -349,7 +352,8 @@ h6 {
    bookmark button (which sits at inset-inline-end: 16px with width 36px). */
 .sb-quick-toolbar-reader {
   position: absolute;
-  top: 16px;
+  /* Match the bookmark button's vertical alignment with the title row. */
+  top: 30px;
   inset-inline-end: 60px;
   z-index: 1;
 }
