@@ -5,14 +5,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Common Commands
 
 ```bash
-pnpm dev           # Run in development mode (opens Chrome via Puppeteer + REPL)
-pnpm test          # Run Vitest test suite
-pnpm test:watch    # Vitest in watch mode
-pnpm lint          # ESLint (includes i18n translation key validation)
-pnpm lint:fix      # Auto-fix linting issues
-pnpm check:ts      # TypeScript type check (non-emit)
-pnpm package       # Build all packages into .aux files in dist/
-pnpm format        # Prettier formatting
+pnpm dev               # Run the SSR dev server (Express + Vite, HMR)
+pnpm test              # Run Vitest test suite
+pnpm test:watch        # Vitest in watch mode
+pnpm lint              # ESLint (includes i18n translation key validation)
+pnpm lint:fix          # Auto-fix linting issues
+pnpm check:ts          # TypeScript type check — client + patterns (non-emit)
+pnpm build             # Production build (client + SSR + server bundles)
+pnpm pattern pack <name>  # Package a patterns/<name> portal into .aux
+pnpm format            # Prettier formatting
 ```
 
 **Run a single test file:**
@@ -21,38 +22,33 @@ pnpm format        # Prettier formatting
 pnpm vitest run FreeUseBibleAPI.test.ts
 ```
 
-**Dev REPL commands** (available when `pnpm dev` is running):
-
-- `.reload` — Reload Chrome to reflect local file changes
-- `.system` — Open the system portal
-- `.chat [message]` — Send a chat message via `@onChat` shout
-
 ## Architecture
 
-This is a **monorepo** (pnpm workspaces) containing a Preact-based Bible reader built on top of the **CasualOS** framework. The app runs as a CasualOS "Pattern" — a bundle of bots packaged as `.aux` files.
+This is a **monorepo** (pnpm workspaces) containing a Preact-based Bible reader. The reader is a **standalone SSR Preact PWA** that uses **CasualOS as a backend** (auth, records, file storage, Yjs real-time multiplayer) via its SDK (`@casual-simulation/*`) — it does not run as bot scripts. Only the embeddable portals in `patterns/` (e.g. `geo-importer`) ship as CasualOS `.aux` patterns, loaded in cross-origin `ao.bot` iframes.
 
 ### Core App: `packages/seed-bible/seed-bible/`
 
-**Managers** (`managers/`) contain all business logic. Each manager is a class or module that owns a specific domain:
+**Managers** (`managers/`) contain all business logic. Each owns one domain:
 
+- `OsManager` — CasualOS gateway; wraps the SDK records/auth/inst clients (data, files, shared docs). Every CasualOS-touching manager receives this `os`.
+- `LoginManager` — Email-code auth, sessions, and user profile
 - `BibleDataManager` — Bible content and translation loading
 - `BibleReadingManager` — Reading position and navigation
-- `ChatsManager` — AI chat (providers, participants, @mentions)
-- `HighlightsManager`, `BookmarksManager` — Annotations
-- `SessionsManager` — Shared/multiplayer sessions
+- `HighlightsManager`, `BookmarksManager`, `AnnotationsManager` — Annotations, persisted via CasualOS records
+- `SessionsManager` — Shared/multiplayer sessions (Yjs shared documents)
 - `ThemeManager` — Dark/light mode and color schemes
 - `ExtensionManager` — Extension lifecycle
 - `SearchManager` — Typesense-backed search
 
-**Components** (`components/`) are Preact functional components. State is managed with `@preact/signals` (reactive signals and computed values), not useState/useReducer.
+**Components** (`components/`) are Preact functional components. State is managed with `@preact/signals`, not useState/useReducer.
 
-**App entry** (`app/`) — initialization hooks, PostHog analytics bootstrap, and the main entry point that wires managers together.
+**App entry** (`app/`) — initialization hooks, PostHog bootstrap, and the entry point that wires managers together.
 
 **i18n** (`i18n/`) — i18next with 24 locale JSON files. Translation keys are validated at lint time by a custom ESLint rule in `script/eslint/`.
 
 ### Extensions (`packages/*-extension/`)
 
-Extensions are separate packages that hook into the `ExtensionManager` lifecycle (`init`, `onInstJoined`, `onExtensionInstalled`). The `seed-bible-refresh-example-extension` is the reference template.
+Separate packages that call `registerExtension({ id, init })`; the `init(context)` generator receives the `SeedBibleState` and yields cleanup functions. `seed-bible-refresh-example-extension` is the reference template.
 
 ### Tests (`test/`)
 
@@ -61,20 +57,20 @@ Extensions are separate packages that hook into the `ExtensionManager` lifecycle
 
 ### Build System
 
-`pnpm package` runs `casualos pack-aux` (the `casualos` CLI) to bundle each package into a `.aux` file. The `script/lib/package.ts` orchestrates this. CI/CD runs: lint → check:ts → test → package → check:aux.
+The app deploys as a **web app, not a pattern**: `pnpm build` makes client + SSR + server bundles, which CI (`.github/workflows/cd.yml`) syncs to S3 for the long-running host (`server/index.ts` / `Dockerfile`). Separately, the `.aux` patterns under `patterns/` are packaged by the Vite `patternPlugin` during `pnpm build` (via `casualos pack-aux` + `minify-aux`) and uploaded to the records server when `PATTERN_SESSION_KEY` + `PATTERN_RECORD_KEY` are set.
 
 ## Key Conventions
 
-**JSX**: Uses Preact, not React. `jsxImportSource` is `"preact"`. Import from `"preact"` not `"react"`.
+**JSX**: Uses Preact, not React. `jsxImportSource` is `"preact"`. Import from `"preact"`.
 
 **State**: Use `@preact/signals` (`signal()`, `computed()`, `effect()`) for reactive state in both components and managers.
 
-**Imports**: Extensive TypeScript path aliases are configured in `tsconfig.json` (e.g., `seed-bible.managers.*`). Use these rather than deep relative paths.
+**Imports**: One path alias in `tsconfig.json` — `@packages/*` → `./packages/*`. Otherwise use relative paths.
 
-**CasualOS globals**: Production code uses CasualOS globals (`os`, `thisBot`, `configBot`, `tags`, `shout()`, etc.) that are injected at runtime. These are mocked in the test environment.
+**CasualOS access**: All CasualOS access goes through the `CasualOSManager` factory (`managers/OsManager.tsx`) — the SDK clients, not injected runtime globals (`os`/`thisBot`/`configBot` exist only inside `ao.bot` portal iframes).
 
-**Translations**: When adding or updating any translation key, update **all 24 locale files** in `packages/seed-bible/seed-bible/i18n/`. Write each locale's value in its native language — do not copy English text into non-English files. A translation is only complete when all 24 locales are updated.
+**Translations**: When adding or updating any translation key, update **all 24 locale files** in `packages/seed-bible/seed-bible/i18n/`, each in its native language (don't copy English into non-English files). A translation is only complete when all 24 are updated.
 
-**TypeScript**: Strict mode is on (`strict: true`, `noImplicitAny`, `strictNullChecks`). No `any` unless unavoidable.
+**TypeScript**: Strict mode is on (`strict`, `noImplicitAny`, `strictNullChecks`). No `any` unless unavoidable.
 
-**Formatting**: Prettier with 2-space indent, double quotes, trailing commas (es5). Pre-commit hook enforces this via Husky + pretty-quick.
+**Formatting**: Prettier with 2-space indent, double quotes, trailing commas (es5). Enforced by a Husky + pretty-quick pre-commit hook.

@@ -290,7 +290,8 @@ function applySessionDataToReadingState(
   sessionData: SessionData
 ) {
   if (readingState.translationId.value !== sessionData.translationId) {
-    readingState.translationId.value = sessionData.translationId;
+    readingState.translationId.value =
+      sessionData.translationId ?? readingState.translationId.value;
   }
   if (readingState.bookId.value !== sessionData.bookId) {
     readingState.bookId.value = sessionData.bookId;
