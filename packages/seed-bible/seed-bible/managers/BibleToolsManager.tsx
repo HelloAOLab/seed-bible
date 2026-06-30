@@ -501,15 +501,6 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       },
     },
     {
-      id: "open-chat",
-      priority: 120,
-      title: { key: "chat", defaultValue: "Chat" },
-      icon: () => <MaterialIcon>chat_bubble_outline</MaterialIcon>,
-      onSelect: (context) => {
-        context.openChat?.();
-      },
-    },
-    {
       id: "next-chapter",
       priority: 1000,
       title: { key: "next-chapter", defaultValue: "Next Chapter" },
