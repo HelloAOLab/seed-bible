@@ -5,11 +5,12 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
-import type { LoginManager } from "seed-bible.managers.LoginManager";
+import type { LoginManager } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
-} from "seed-bible.managers.ProfileConfigSync";
+} from "../managers/ProfileConfigSync";
+import type { NavigationManager } from "./NavigationManager";
 
 export interface BibleThemeVariables {
   primaryColor: string;
@@ -119,21 +120,6 @@ export interface BibleThemeVariables {
    * The cursor that should be displayed for verses.
    */
   verseCursor?: string | null;
-
-  /**
-   * The font family for selected verses. This can be used to differentiate selected verses from unselected verses, but can be customized as needed. If not set, it will default to the verseFontFamily.
-   */
-  selectedVerseFontFamily?: string | null;
-
-  /**
-   * The font color for selected verses. This can be used to differentiate selected verses from unselected verses, but should generally have good contrast against the readerBackground color for readability. If not set, it will default to the verseFontColor.
-   */
-  selectedVerseFontColor?: string | null;
-
-  /**
-   * The background color for selected verses. This can be used to highlight selected verses, but should generally be a light color with good contrast against the selectedVerseFontColor for readability. If not set, selected verses will not have a different background color than unselected verses.
-   */
-  selectedVerseBackgroundColor?: string | null;
 
   /**
    * The text decoration for selected verses (e.g. "underline", "line-through", "none"). This can be used to further differentiate selected verses from unselected verses, but can be customized as needed. If not set, it will default to "none".
@@ -514,15 +500,12 @@ const LIGHT_THEME: BibleTheme = {
 
     chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
     chapterHeadingFontColor: "#333",
-    chapterHeadingFontStyle: "italic",
+    chapterHeadingFontStyle: "normal",
 
-    verseFontFamily: "Newsreader, serif",
+    verseFontFamily: "Plus Jakarta Sans, sans-serif",
     verseFontColor: "#333",
     verseCursor: "pointer",
 
-    selectedVerseFontFamily: "inherit",
-    selectedVerseFontColor: "inherit",
-    selectedVerseBackgroundColor: "inherit",
     selectedVerseBorderBottom: "2px dashed currentColor",
     selectedVerseTextDecoration: "none",
     selectedVerseTextDecorationColor: "currentColor",
@@ -657,15 +640,12 @@ const DARK_THEME: BibleTheme = {
 
     chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
     chapterHeadingFontColor: "#e6e6e6",
-    chapterHeadingFontStyle: "italic",
+    chapterHeadingFontStyle: "normal",
 
-    verseFontFamily: "Newsreader, serif",
+    verseFontFamily: "Plus Jakarta Sans, sans-serif",
     verseFontColor: "#e6e6e6",
     verseCursor: "pointer",
 
-    selectedVerseFontFamily: "inherit",
-    selectedVerseFontColor: "inherit",
-    selectedVerseBackgroundColor: "inherit",
     selectedVerseBorderBottom: "2px dashed currentColor",
     selectedVerseTextDecoration: "none",
     selectedVerseTextDecorationColor: "currentColor",
@@ -787,8 +767,6 @@ export type ThemeColorKey =
   | "bookTitleFontColor"
   | "chapterHeadingFontColor"
   | "verseFontColor"
-  | "selectedVerseFontColor"
-  | "selectedVerseBackgroundColor"
   | "selectedVerseTextDecorationColor"
   | "hebrewSubtitleFontColor"
   | "readerToolbarBackground"
@@ -857,11 +835,6 @@ export const THEME_COLOR_GROUPS: ThemeColorGroup[] = [
     id: "selection",
     title: "Verse selection",
     fields: [
-      { key: "selectedVerseFontColor", label: "Selected verse text" },
-      {
-        key: "selectedVerseBackgroundColor",
-        label: "Selected verse background",
-      },
       {
         key: "selectedVerseTextDecorationColor",
         label: "Selected verse decoration",
@@ -1126,26 +1099,31 @@ export interface ThemeManager {
 //   },
 // };
 
-export function createTheme(login: LoginManager): ThemeManager {
+export function createTheme(
+  login: LoginManager,
+  navigation: NavigationManager
+): ThemeManager {
   const themes = signal<BibleTheme[]>([LIGHT_THEME, DARK_THEME]);
+
+  const url = navigation.currentUrl.value;
 
   const readThemeId = () =>
     parseThemeId(
       getProfileConfigValue(login.profile.value, PROFILE_THEME_ID) ??
-        configBot.tags[TAG_THEME_ID],
+        url.searchParams.get(TAG_THEME_ID),
       DEFAULT_THEME_ID
     );
 
   const readCustomOverrides = () =>
     parseCustomTheme(
       getProfileConfigValue(login.profile.value, PROFILE_CUSTOM_THEME) ??
-        configBot.tags[TAG_CUSTOM_THEME]
+        url.searchParams.get(TAG_CUSTOM_THEME)
     );
 
   const readHighlightOverrides = () =>
     parseHighlightOverrides(
       getProfileConfigValue(login.profile.value, PROFILE_CUSTOM_HIGHLIGHTS) ??
-        configBot.tags[TAG_CUSTOM_HIGHLIGHTS]
+        url.searchParams.get(TAG_CUSTOM_HIGHLIGHTS)
     );
 
   const selectedThemeId = signal<string>(readThemeId());
@@ -1177,48 +1155,15 @@ export function createTheme(login: LoginManager): ThemeManager {
     )
   );
 
-  os.addBotListener(configBot, "onBotChanged", (that: unknown) => {
-    const changedTagsSource =
-      that && typeof that === "object" && "tags" in that
-        ? (that as { tags?: unknown }).tags
-        : null;
-    const changedTags = Array.isArray(changedTagsSource)
-      ? changedTagsSource
-      : [];
-
-    if (changedTags.includes(TAG_THEME_ID)) {
-      selectedThemeId.value = parseThemeId(
-        configBot.tags[TAG_THEME_ID],
-        DEFAULT_THEME_ID
-      );
-    }
-    if (changedTags.includes(TAG_CUSTOM_THEME)) {
-      customOverrides.value = parseCustomTheme(
-        configBot.tags[TAG_CUSTOM_THEME]
-      );
-    }
-    if (changedTags.includes(TAG_CUSTOM_HIGHLIGHTS)) {
-      customHighlightOverrides.value = parseHighlightOverrides(
-        configBot.tags[TAG_CUSTOM_HIGHLIGHTS]
-      );
-    }
-  });
-
   const setTheme = (themeId: string) => {
     if (themes.value.some((theme) => theme.id === themeId)) {
       selectedThemeId.value = themeId;
-      configBot.tags[TAG_THEME_ID] = themeId;
       saveProfileConfigValue(login, PROFILE_THEME_ID, themeId);
     }
   };
 
   const writeOverrides = (next: ThemeOverrides) => {
     customOverrides.value = next;
-    if (Object.keys(next).length === 0) {
-      configBot.tags[TAG_CUSTOM_THEME] = "";
-    } else {
-      configBot.tags[TAG_CUSTOM_THEME] = JSON.stringify(next);
-    }
     saveProfileConfigValue(login, PROFILE_CUSTOM_THEME, next);
   };
 
@@ -1238,11 +1183,6 @@ export function createTheme(login: LoginManager): ThemeManager {
 
   const writeHighlightOverrides = (next: HighlightOverrides) => {
     customHighlightOverrides.value = next;
-    if (Object.keys(next).length === 0) {
-      configBot.tags[TAG_CUSTOM_HIGHLIGHTS] = "";
-    } else {
-      configBot.tags[TAG_CUSTOM_HIGHLIGHTS] = JSON.stringify(next);
-    }
     saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHTS, next);
   };
 

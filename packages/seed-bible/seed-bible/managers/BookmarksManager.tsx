@@ -5,9 +5,10 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
-import { z } from "zod";
-import type { LoginManager } from "seed-bible.managers.LoginManager";
-import type { ReaderTab } from "seed-bible.managers.TabsManager";
+import * as z from "zod/v4";
+import type { LoginManager } from "../managers/LoginManager";
+import type { ReaderTab } from "../managers/TabsManager";
+import type { CasualOSManager } from "./OsManager";
 
 /**
  * Verse target for a bookmark: a single verse number or an inclusive `[start, end]`
@@ -206,6 +207,14 @@ export interface BookmarksManager {
    */
   isFilterActive: Signal<boolean>;
 
+  /**
+   * Whether the bookmarks view was opened from the bottom toolbar (as opposed
+   * to the Tabs header toggle). On mobile this decides the header's leading
+   * button: a Close (X) that dismisses the whole drawer when opened from the
+   * toolbar, versus a Back arrow that returns to the Tabs list otherwise.
+   */
+  openedFromToolbar: Signal<boolean>;
+
   /** Toggles the bookmarks view on/off. */
   toggleFilter: () => void;
 
@@ -293,7 +302,7 @@ export interface BookmarksManager {
    * No-op when there is no selection.
    */
   toggleBookmarkForSelectedVerses: (
-    readingState: import("seed-bible.managers.BibleReadingManager").BibleReadingState
+    readingState: import("../managers/BibleReadingManager").BibleReadingState
   ) => Promise<void>;
 
   /** Creates a new (empty) category. No-op if one with that name exists. */
@@ -312,7 +321,10 @@ export interface BookmarksManager {
   deleteCategory: (name: string) => Promise<void>;
 }
 
-export function createBookmarksManager(login: LoginManager): BookmarksManager {
+export function createBookmarksManager(
+  os: CasualOSManager,
+  login: LoginManager
+): BookmarksManager {
   const bookmarks = signal<Bookmark[]>([]);
   const categories = signal<BookmarkCategory[]>([
     { name: DEFAULT_BOOKMARK_CATEGORY },
@@ -321,6 +333,7 @@ export function createBookmarksManager(login: LoginManager): BookmarksManager {
     new Set([DEFAULT_BOOKMARK_CATEGORY])
   );
   const isFilterActive = signal(false);
+  const openedFromToolbar = signal(false);
   const loadedUserId = signal<string | null>(null);
 
   const readBookmarks: ReadonlySignal<Bookmark[]> = computed(
@@ -552,6 +565,7 @@ export function createBookmarksManager(login: LoginManager): BookmarksManager {
 
   const closeView = () => {
     isFilterActive.value = false;
+    openedFromToolbar.value = false;
   };
 
   const toggleCategoryExpanded: BookmarksManager["toggleCategoryExpanded"] = (
@@ -631,6 +645,7 @@ export function createBookmarksManager(login: LoginManager): BookmarksManager {
     categories: readCategories,
     expandedCategories: readExpanded,
     isFilterActive,
+    openedFromToolbar,
     toggleFilter,
     closeView,
     toggleCategoryExpanded,

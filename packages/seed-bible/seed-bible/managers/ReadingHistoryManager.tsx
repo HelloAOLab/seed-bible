@@ -1,5 +1,14 @@
 import { debounce } from "es-toolkit";
-import type { LoginManager } from "seed-bible.managers.LoginManager";
+import type { LoginManager } from "../managers/LoginManager";
+import type {
+  SharedDocument,
+  SharedMap,
+} from "@casual-simulation/aux-common/documents/SharedDocument";
+import type { CasualOSManager } from "./OsManager";
+import type {
+  YjsSharedArray,
+  YjsSharedMap,
+} from "@casual-simulation/aux-common/documents/YjsSharedDocument";
 
 export interface ReadingEvent {
   /**
@@ -28,6 +37,12 @@ export interface ReadingEvent {
   end: number;
 }
 
+let readingHistoryDocs: Record<string, Promise<SharedDocument>> = {};
+
+export function clearReadingHistoryDocs() {
+  readingHistoryDocs = {};
+}
+
 /**
  * Gets the reading history document for the given record name and year.
  * @param recordName The name of the record that the reading history is stored in.
@@ -37,21 +52,19 @@ export interface ReadingEvent {
  * @returns A promise that resolves to the reading history document.
  */
 function getReadingHistoryDocument(
+  os: CasualOSManager,
   recordName: string,
   year: number,
   marker: string = "publicRead",
   name: string = "reading_history"
 ): Promise<SharedDocument> {
-  if (!bot.vars.readingHistoryDocs) {
-    bot.vars.readingHistoryDocs = {};
-  }
   const key = `${recordName}-${name}-${year}`;
-  if (bot.vars.readingHistoryDocs[key]) {
-    return bot.vars.readingHistoryDocs[key];
+  if (readingHistoryDocs[key]) {
+    return readingHistoryDocs[key];
   }
 
   const markers = [`${marker}:${name}/${year}`];
-  const docPromise = (bot.vars.readingHistoryDocs[key] = os.getSharedDocument(
+  const docPromise = (readingHistoryDocs[key] = os.getSharedDocument(
     recordName,
     name,
     `${year}`,
@@ -73,6 +86,7 @@ function getReadingHistoryDocument(
  * @param name The name of the shared document. Defaults to `reading_history`.
  */
 export async function saveReadingHistory(
+  os: CasualOSManager,
   recordName: string,
   userId: string,
   bookId: string,
@@ -88,6 +102,7 @@ export async function saveReadingHistory(
   const currentYear = new Date().getUTCFullYear();
 
   const doc = await getReadingHistoryDocument(
+    os,
     recordName,
     currentYear,
     marker,
@@ -96,7 +111,8 @@ export async function saveReadingHistory(
   const recencyThreshold = currentTimeSeconds - recencyThresholdSeconds;
   const array = doc.getArray("events");
   const event = findMostRecentReadingEvent(
-    array,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    array as YjsSharedArray<SharedMap<any>>,
     userId,
     bookId,
     chapter,
@@ -122,20 +138,23 @@ export async function saveReadingHistory(
  * @param recencyThresholdSeconds The time in seconds to consider an event recent. Defaults to 30 minutes.
  */
 export async function saveUserReadingHistory(
+  os: CasualOSManager,
+  login: LoginManager,
   bookId: string,
   chapter: number,
   recencyThresholdSeconds: number = 30 * 60
 ): Promise<void> {
-  const authBot = await os.requestAuthBotInBackground();
+  const userId = login.userId.value;
 
-  if (!authBot) {
+  if (!userId) {
     // User is not logged in, so we can't save reading history
     return;
   }
 
   await saveReadingHistory(
-    authBot.id,
-    authBot.id,
+    os,
+    userId,
+    userId,
     bookId,
     chapter,
     recencyThresholdSeconds
@@ -296,17 +315,19 @@ export function getCurrentYearTimeSpan() {
  * @returns A promise that resolves to the reading history summary.
  */
 export async function getUserReadingHistorySummary(
+  os: CasualOSManager,
+  login: LoginManager,
   startTime: number,
   endTime: number
 ): Promise<ReadingHistorySummary | null> {
-  const authBot = await os.requestAuthBotInBackground();
+  const userId = login.userId.value;
 
-  if (!authBot) {
+  if (!userId) {
     // User is not logged in, so we can't get reading history
     return null;
   }
 
-  return getReadingHistorySummary(authBot.id, startTime, endTime);
+  return getReadingHistorySummary(os, userId, startTime, endTime);
 }
 
 /**
@@ -317,11 +338,17 @@ export async function getUserReadingHistorySummary(
  * @returns A promise that resolves to the reading history summary.
  */
 export async function getReadingHistorySummary(
+  os: CasualOSManager,
   recordName: string,
   startTime: number,
   endTime: number
 ): Promise<ReadingHistorySummary> {
-  const events = await getReadingHistoryEvents(recordName, startTime, endTime);
+  const events = await getReadingHistoryEvents(
+    os,
+    recordName,
+    startTime,
+    endTime
+  );
   return calculateReadingHistorySummary(events);
 }
 
@@ -333,6 +360,7 @@ export async function getReadingHistorySummary(
  * @returns A promise that resolves to an iterable of reading events.
  */
 export async function getReadingHistoryEvents(
+  os: CasualOSManager,
   recordName: string,
   startTime: number,
   endTime: number
@@ -342,6 +370,7 @@ export async function getReadingHistoryEvents(
   const allEventPromises: Promise<Iterable<ReadingEvent>>[] = [];
   for (let y = startYear; y <= endYear; y++) {
     const events = getYearlyReadingHistoryEvents(
+      os,
       recordName,
       y,
       startTime,
@@ -365,6 +394,7 @@ export async function getReadingHistoryEvents(
  * @returns
  */
 async function getYearlyReadingHistoryEvents(
+  os: CasualOSManager,
   recordName: string,
   year: number,
   startTime: number,
@@ -372,7 +402,13 @@ async function getYearlyReadingHistoryEvents(
   marker?: string,
   name?: string
 ): Promise<Iterable<ReadingEvent>> {
-  const doc = await getReadingHistoryDocument(recordName, year, marker, name);
+  const doc = await getReadingHistoryDocument(
+    os,
+    recordName,
+    year,
+    marker,
+    name
+  );
   const events = filter(
     getReadingEvents(doc),
     (e) => e.start >= startTime && e.start < endTime
@@ -409,7 +445,9 @@ export function* flat<T>(iterables: Iterable<Iterable<T>>): Generator<T> {
 }
 
 function* getReadingEvents(doc: SharedDocument): Generator<ReadingEvent> {
-  const eventsArray = doc.getArray("events").type;
+  const eventsArray =
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (doc.getArray("events") as YjsSharedArray<YjsSharedMap<any>>).type;
 
   for (let i = 0; i < eventsArray.length; i++) {
     const e = eventsArray.get(i);
@@ -506,7 +544,7 @@ function updateSummaryTotals(summary: ReadingHistorySummary) {
  */
 function findMostRecentReadingEvent(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  events: SharedArray<SharedMap<any>>,
+  events: YjsSharedArray<SharedMap<any>>,
   userId: string,
   bookId: string,
   chapter: number,
@@ -547,6 +585,7 @@ export interface ReadingHistoryManager {
 }
 
 export function createReadingHistoryManager(
+  os: CasualOSManager,
   login: LoginManager
 ): ReadingHistoryManager {
   const saveReadingHistoryForCurrentUser = debounce(
@@ -563,6 +602,7 @@ export function createReadingHistoryManager(
       }
 
       await saveReadingHistory(
+        os,
         login.userId.value,
         login.userId.value,
         bookId,
@@ -583,7 +623,7 @@ export function createReadingHistoryManager(
       return [];
     }
 
-    return getReadingHistoryEvents(login.userId.value, startTime, endTime);
+    return getReadingHistoryEvents(os, login.userId.value, startTime, endTime);
   };
 
   return {

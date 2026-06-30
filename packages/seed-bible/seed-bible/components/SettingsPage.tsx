@@ -1,8 +1,7 @@
 import { useComputed, useSignal } from "@preact/signals";
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import type { TextSize } from "seed-bible.managers.ConfigManager";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import type { TextSize } from "../managers/ConfigManager";
 import {
-  AppSettingsSchema,
   TEXT_FONT_OPTIONS,
   TEXT_SECTION_THEME_COLOR_VAR,
   TEXT_WEIGHT_OPTIONS,
@@ -14,33 +13,30 @@ import {
   type TextSectionConfig,
   type TextSectionId,
   type UITextSize,
-} from "seed-bible.managers.SettingsManager";
+} from "../managers/SettingsManager";
 import {
   DEFAULT_HIGHLIGHT_IDS,
   THEME_COLOR_GROUPS,
   type ThemeColorKey,
-} from "seed-bible.managers.ThemeManager";
-import { translateTitle } from "seed-bible.components.Utils";
-import {
-  ExtensionInitalizer,
-  type ExtensionSet,
-} from "seed-bible.managers.ExtensionManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
+} from "../managers/ThemeManager";
+import { download, translateTitle } from "../components/Utils";
+import { ProfilePictureModalContent } from "../components/ProfilePictureModal";
+import { ExtensionInitalizer } from "../managers/ExtensionManager";
+import { useI18n } from "../i18n/I18nManager";
 import {
   ExtensionsIcon,
   InstallAppsIcon,
   MarginIcon,
   MaterialIcon,
   ThemeIcon,
-} from "seed-bible.components.icons";
+} from "../components/icons";
 import {
   handleGridKeyNav,
   handleMenuTriggerKeyDown,
   handleVerticalListKeyNav,
-} from "seed-bible.components.KeyboardNav";
+} from "../components/KeyboardNav";
 import { useRef } from "preact/hooks";
-import { z } from "zod";
-import type { RequestedSettingsView } from "seed-bible.managers.SidebarManager";
+import type { RequestedSettingsView } from "../managers/SidebarManager";
 
 const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
 
@@ -271,18 +267,26 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
     newDescription.value = "";
   };
 
-  const handleUploadPicture = async () => {
-    if (isUploadingPicture.value) {
-      return;
-    }
-    isUploadingPicture.value = true;
-    try {
-      await login.uploadProfilePicture();
-    } catch (error) {
-      console.error("Failed to upload profile picture.", error);
-    } finally {
-      isUploadingPicture.value = false;
-    }
+  const handleUploadPicture = () => {
+    const modalId = state.modals.openModal({
+      title: { key: "update-picture", defaultValue: "Update picture" },
+      content: () => (
+        <ProfilePictureModalContent
+          onClose={() => state.modals.closeModal(modalId)}
+          onUpload={async (file) => {
+            isUploadingPicture.value = true;
+            try {
+              await login.uploadProfilePicture(file);
+            } catch (error) {
+              console.error("Failed to upload profile picture.", error);
+              throw error;
+            } finally {
+              isUploadingPicture.value = false;
+            }
+          }}
+        />
+      ),
+    });
   };
 
   const handleCopyUserId = async () => {
@@ -292,7 +296,7 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
     }
 
     try {
-      os.setClipboard(id);
+      navigator.clipboard.writeText(id);
       uidCopied.value = true;
       setTimeout(() => {
         uidCopied.value = false;
@@ -904,35 +908,6 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
           </select>
         </div>
 
-        {isMobile && (
-          <>
-            <h3 className="sb-settings-subheading">
-              {t("mobile", { defaultValue: "Mobile" })}
-            </h3>
-
-            <div className="sb-settings-toggle-row">
-              <label
-                className="sb-settings-toggle-label"
-                htmlFor="sb-show-nav-arrows"
-              >
-                {t("show-nav-arrows", {
-                  defaultValue: "Show navigation arrows",
-                })}
-              </label>
-              <input
-                id="sb-show-nav-arrows"
-                type="checkbox"
-                checked={current.showNavArrows}
-                onChange={(event: Event) => {
-                  settings.setShowNavArrows(
-                    (event.currentTarget as HTMLInputElement).checked
-                  );
-                }}
-              />
-            </div>
-          </>
-        )}
-
         <h3 className="sb-settings-subheading">
           {t("selection-ui", { defaultValue: "Selection UI" })}
         </h3>
@@ -1068,7 +1043,12 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
       if (!set) {
         return;
       }
-      os.download(set, `${set.id}.json`, "application/json");
+
+      const json = JSON.stringify(set, null, 2);
+      download(
+        new Blob([json], { type: "application/json" }),
+        `${set.id}.json`
+      );
     } finally {
       isDownloadingSet.value = false;
     }
@@ -1081,33 +1061,30 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
     isUploadingSet.value = true;
     try {
-      const files = await os.showUploadFiles();
-      const firstFile = files?.[0];
-      if (!firstFile) {
-        return;
-      }
-
-      const text =
-        typeof firstFile.data === "string"
-          ? firstFile.data
-          : new TextDecoder().decode(firstFile.data);
-
-      const parsed = JSON.parse(text) as Partial<{
-        id: unknown;
-        recordName: unknown;
-        extensions: unknown;
-      }>;
-
-      if (
-        typeof parsed.id !== "string" ||
-        typeof parsed.recordName !== "string" ||
-        !Array.isArray(parsed.extensions)
-      ) {
-        console.error("Uploaded file is not a valid extension set.");
-        return;
-      }
-
-      await extensions.loadExtensionSet(parsed as ExtensionSet, () => false);
+      // TODO: Fix this
+      // const files = await os.showUploadFiles();
+      // const firstFile = files?.[0];
+      // if (!firstFile) {
+      //   return;
+      // }
+      // const text =
+      //   typeof firstFile.data === "string"
+      //     ? firstFile.data
+      //     : new TextDecoder().decode(firstFile.data);
+      // const parsed = JSON.parse(text) as Partial<{
+      //   id: unknown;
+      //   recordName: unknown;
+      //   extensions: unknown;
+      // }>;
+      // if (
+      //   typeof parsed.id !== "string" ||
+      //   typeof parsed.recordName !== "string" ||
+      //   !Array.isArray(parsed.extensions)
+      // ) {
+      //   console.error("Uploaded file is not a valid extension set.");
+      //   return;
+      // }
+      // await extensions.loadExtensionSet(parsed as ExtensionSet, () => false);
     } catch (error) {
       console.error("Failed to upload extension set.", error);
     } finally {
@@ -1840,10 +1817,11 @@ function AllSettingsView(props: { state: SeedBibleState }) {
 
     isDownloadingSettings.value = true;
     try {
-      os.download(
-        state.settings.settings.value,
-        "seed-bible-app-settings.json",
-        "application/json"
+      download(
+        new Blob([JSON.stringify(state.settings.settings.value, null, 2)], {
+          type: "application/json",
+        }),
+        "seed-bible-app-settings.json"
       );
     } finally {
       isDownloadingSettings.value = false;
@@ -1858,34 +1836,30 @@ function AllSettingsView(props: { state: SeedBibleState }) {
     isUploadingSettings.value = true;
     uploadErrorMessage.value = "";
     try {
-      const files = await os.showUploadFiles();
-      const firstFile = files?.[0];
-      if (!firstFile) {
-        return;
-      }
-
-      const text =
-        typeof firstFile.data === "string"
-          ? firstFile.data
-          : new TextDecoder().decode(firstFile.data);
-
-      let jsonData: unknown;
-      try {
-        jsonData = JSON.parse(text);
-      } catch (parseError) {
-        uploadErrorMessage.value = `Invalid JSON: ${parseError instanceof Error ? parseError.message : "Unknown error"}`;
-        return;
-      }
-
-      const parsed = AppSettingsSchema.safeParse(jsonData);
-
-      if (!parsed.success) {
-        uploadErrorMessage.value = `Invalid app settings: ${z.prettifyError(parsed.error)}`;
-        console.error("Uploaded file is not valid app settings.", parsed.error);
-        return;
-      }
-
-      state.settings.setAllSettings(parsed.data);
+      // TODO: Fix this
+      // const files = await os.showUploadFiles();
+      // const firstFile = files?.[0];
+      // if (!firstFile) {
+      //   return;
+      // }
+      // const text =
+      //   typeof firstFile.data === "string"
+      //     ? firstFile.data
+      //     : new TextDecoder().decode(firstFile.data);
+      // let jsonData: unknown;
+      // try {
+      //   jsonData = JSON.parse(text);
+      // } catch (parseError) {
+      //   uploadErrorMessage.value = `Invalid JSON: ${parseError instanceof Error ? parseError.message : "Unknown error"}`;
+      //   return;
+      // }
+      // const parsed = AppSettingsSchema.safeParse(jsonData);
+      // if (!parsed.success) {
+      //   uploadErrorMessage.value = `Invalid app settings: ${z.prettifyError(parsed.error)}`;
+      //   console.error("Uploaded file is not valid app settings.", parsed.error);
+      //   return;
+      // }
+      // state.settings.setAllSettings(parsed.data);
     } catch (error) {
       uploadErrorMessage.value = `Failed to upload app settings: ${error instanceof Error ? error.message : "Unknown error"}`;
       console.error("Failed to upload app settings.", error);

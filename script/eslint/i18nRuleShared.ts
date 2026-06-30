@@ -3,7 +3,7 @@ import path from "node:path";
 import { ESLintUtils, type TSESLint } from "@typescript-eslint/utils";
 import { getTranslationUsageStats } from "../getTranslationUsageStats";
 import { ExtensionMetaSchema } from "../lib/extension";
-import { treeifyError } from "zod";
+import * as z from "zod/v4";
 
 type TranslationObject = Record<string, unknown>;
 
@@ -53,7 +53,12 @@ function flattenTranslationKeys(
 
 function parseJsonFile(filePath: string): unknown {
   const content = fs.readFileSync(filePath, "utf8");
-  return JSON.parse(content) as unknown;
+  try {
+    return JSON.parse(content) as unknown;
+  } catch (err) {
+    console.error(`Failed to parse JSON file: ${filePath}`, err);
+    throw err;
+  }
 }
 
 function collectExtensionManifestPaths(packagesDir: string): string[] {
@@ -93,7 +98,7 @@ function getExtensionEnglishKeys(
     const parseResult = ExtensionMetaSchema.safeParse(extensionConfig);
 
     if (!parseResult.success) {
-      console.warn(treeifyError(parseResult.error));
+      console.warn(z.treeifyError(parseResult.error));
       continue;
     }
 

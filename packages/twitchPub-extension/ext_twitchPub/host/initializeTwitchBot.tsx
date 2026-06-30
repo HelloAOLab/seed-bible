@@ -1,10 +1,10 @@
 import { type Signal } from "@preact/signals";
-import sendMessage from "ext_twitchPub.host.sendMessage";
+import sendMessage from "./sendMessage";
 import {
   type WSTwitchMessage,
   type WSWelcomeMessage,
   type WSNotificationMessage,
-} from "ext_twitchPub.host.interface";
+} from "./interface";
 
 const TWITCH_VALIDATE_URL = "https://id.twitch.tv/oauth2/validate";
 const TWITCH_EVENTSUB_WS_URL = "wss://eventsub.wss.twitch.tv/ws";
@@ -84,7 +84,7 @@ const handleCommands = (props: {
 };
 
 async function getAuth(oauthToken: string) {
-  const response = await web.get(TWITCH_VALIDATE_URL, {
+  const response = await fetch(TWITCH_VALIDATE_URL, {
     headers: getOauthHeaders(oauthToken),
   });
   return response.status === 200;
@@ -148,9 +148,10 @@ function handleWebSocketMessage({
 }
 
 async function registerEventSubListeners({ state }: { state: BotState }) {
-  const response = await web.post(
-    TWITCH_EVENTSUB_SUBSCRIPTIONS_URL,
-    JSON.stringify({
+  const response = await fetch(TWITCH_EVENTSUB_SUBSCRIPTIONS_URL, {
+    method: "POST",
+    headers: getBearerHeaders(state.userAccessToken, state.clientId),
+    body: JSON.stringify({
       type: "channel.chat.message",
       version: "1",
       condition: {
@@ -162,10 +163,7 @@ async function registerEventSubListeners({ state }: { state: BotState }) {
         session_id: websocketSessionID,
       },
     }),
-    {
-      headers: getBearerHeaders(state.userAccessToken, state.clientId),
-    }
-  );
+  });
 
   if (response.status !== 202) {
     return;

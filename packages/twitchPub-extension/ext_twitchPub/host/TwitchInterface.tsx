@@ -1,11 +1,13 @@
 import { effect } from "@preact/signals";
-import QRCodeComponent from "ext_twitchPub.host.QRCode";
-import { TwitchIcon, SettingsIcon } from "ext_twitchPub.host.icons";
-import { type TwitchPubState } from "ext_twitchPub.host.interface";
-import { useI18n } from "seed-bible.i18n.I18nManager";
+import QRCodeComponent from "./QRCode";
+import { TwitchIcon, SettingsIcon } from "./icons";
+import { type TwitchPubState } from "./interface";
+import { useI18n } from "seed-bible/i18n";
+import { closeInterface } from "./closeInterface";
 
 const TwitchInterface = (props: { state: TwitchPubState }) => {
-  const { uiHidden, qrValue, setCurrentPage, hideUI, showUI } = props.state;
+  const { uiHidden, qrValue, setCurrentPage, hideUI, showUI, toast } =
+    props.state;
 
   effect(() => {
     const draggableElement = document.getElementById("draggable-container");
@@ -83,10 +85,7 @@ const TwitchInterface = (props: { state: TwitchPubState }) => {
             >
               <SettingsIcon width={18} height={18} />
             </button>
-            <button
-              className="icon-btn"
-              onClick={() => whisper(thisBot, "closeInterface")}
-            >
+            <button className="icon-btn" onClick={() => closeInterface()}>
               <span className="material-symbols-outlined">close</span>
             </button>
           </div>
@@ -97,6 +96,10 @@ const TwitchInterface = (props: { state: TwitchPubState }) => {
               value={qrValue.value}
               size={150}
               uiHidden={uiHidden.value}
+              onClick={() => {
+                navigator.clipboard.writeText(qrValue.value);
+                toast("Link copied to clipboard!");
+              }}
             />
           </div>
 

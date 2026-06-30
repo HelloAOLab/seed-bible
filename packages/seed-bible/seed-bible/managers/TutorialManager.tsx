@@ -1,11 +1,11 @@
 import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
-import type { LoginManager } from "seed-bible.managers.LoginManager";
-import type { OnboardingManager } from "seed-bible.managers.OnboardingManager";
-import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
+import type { LoginManager } from "../managers/LoginManager";
+import type { OnboardingManager } from "../managers/OnboardingManager";
+import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
-} from "seed-bible.managers.ProfileConfigSync";
+} from "../managers/ProfileConfigSync";
 
 const TUTORIAL_SEEN_KEY = "sb-tutorial-seen";
 const TUTORIAL_OPTED_OUT_KEY = "sb-tutorial-opted-out";
@@ -125,7 +125,7 @@ export const ONBOARDING_STEPS: TutorialStep[] = [
 export const TUTORIAL_STEPS = ONBOARDING_STEPS;
 
 /**
- * The mobile tour. Below 768px the desktop selector sub-controls (translation,
+ * The mobile tour. Below 480px the desktop selector sub-controls (translation,
  * testament) and the pane-layout menu aren't rendered, so mobile gets its own
  * step list targeting the mobile header, the book selector grid, and the
  * bottom toolbar. The book step reuses the `selector-books` id so the
@@ -331,7 +331,8 @@ export interface TutorialManager {
 export function createTutorialManager(
   login: LoginManager,
   onboarding: OnboardingManager,
-  selector: BibleSelectorState
+  selector: BibleSelectorState,
+  isMobile: ReadonlySignal<boolean>
 ): TutorialManager {
   const running = signal<boolean>(false);
   const index = signal<number>(0);
@@ -502,9 +503,10 @@ export function createTutorialManager(
 
   const start = () => {
     // Pick the step set for the current viewport before showing the tour.
-    const isMobile = selector.viewportWidth.value <= 768;
-    mode.value = isMobile ? "onboarding-mobile" : "onboarding-desktop";
-    activeSteps.value = isMobile ? MOBILE_TUTORIAL_STEPS : ONBOARDING_STEPS;
+    mode.value = isMobile.value ? "onboarding-mobile" : "onboarding-desktop";
+    activeSteps.value = isMobile.value
+      ? MOBILE_TUTORIAL_STEPS
+      : ONBOARDING_STEPS;
     activeFeatureId.value = null;
     if (activeSteps.value.length === 0) {
       return;

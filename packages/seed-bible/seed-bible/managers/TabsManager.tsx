@@ -1,15 +1,16 @@
 import { computed, effect, signal, type Signal } from "@preact/signals";
 import type { BibleDataManager } from "./BibleDataManager";
-import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
+import type { BibleReadingSession } from "../managers/SessionsManager";
 import {
   DEFAULT_BOOK_ID,
   DEFAULT_CHAPTER_NUMBER,
-  DEFAULT_TRANSLATION_ID,
   createBibleReadingState,
+  getDefaultTranslationForLanguage,
   type BibleReadingState,
   type InitialBibleReadingOptions,
-} from "seed-bible.managers.BibleReadingManager";
-import type { HighlightsManager } from "seed-bible.managers.HighlightsManager";
+  type TranslationWithLanguage,
+} from "../managers/BibleReadingManager";
+import type { HighlightsManager } from "../managers/HighlightsManager";
 
 export function formatVerseSelection(verseNumbers: number[]): string | null {
   const sorted = Array.from(new Set(verseNumbers))
@@ -54,6 +55,8 @@ export function parseVerseSelection(verse: string): number[] {
 
   return verseNumbers;
 }
+import type { NavigationManager } from "./NavigationManager";
+import type { I18nManager } from "../i18n";
 
 export interface ReaderTab {
   /** Unique tab identifier (for example: tab-1, tab-2). */
@@ -64,31 +67,36 @@ export interface ReaderTab {
   readingState: BibleReadingState;
   /** Attached shared session, if this tab is backed by collaborative state. */
   sharedSession: BibleReadingSession | null;
+  /**
+   * When true, this tab only exists to back a pane (e.g. a chapter opened in a
+   * new/detached panel) and is hidden from the tab strip. It is disposed
+   * automatically once no pane references it. Panes are bound to tabs by id, so
+   * such a panel still needs a real tab to own its independent reading state.
+   */
+  paneOnly?: boolean;
 }
 
-function getInitialFirstTabBookId(): string {
-  return typeof configBot.tags.book === "string" && configBot.tags.book.trim()
-    ? configBot.tags.book
-    : DEFAULT_BOOK_ID;
+function getInitialFirstTabBookId(url: URL): string {
+  return url.searchParams.get("book") ?? DEFAULT_BOOK_ID;
 }
 
-function getInitialTranslationId(): string {
+function getInitialTranslationId(url: URL, language: string): string {
   return (
-    configBot.tags.translationId ??
-    configBot.tags.translation ??
-    DEFAULT_TRANSLATION_ID
+    url.searchParams.get("translationId") ??
+    url.searchParams.get("translation") ??
+    getDefaultTranslationForLanguage(language).id
   );
 }
 
-function getInitialFirstTabChapter(): number {
-  const value = Number(configBot.tags.chapter);
+function getInitialFirstTabChapter(url: URL): number {
+  const value = Number(url.searchParams.get("chapter"));
   return Number.isFinite(value) && value > 0
     ? Math.floor(value)
     : DEFAULT_CHAPTER_NUMBER;
 }
 
-function getInitialHighlightedVerses(): number[] {
-  const value = configBot.tags.verse;
+function getInitialHighlightedVerses(url: URL): number[] {
+  const value = url.searchParams.get("verse");
   return typeof value === "string"
     ? parseVerseSelection(value)
     : typeof value === "number"
@@ -96,23 +104,35 @@ function getInitialHighlightedVerses(): number[] {
       : [];
 }
 
-function createInitialTabs(
+export interface InitialTabsOptions {
+  translationId: string;
+  bookId: string;
+  chapter: number;
+  highlightedVerses?: number[];
+}
+
+export function createInitialTabs(
   dataManager: BibleDataManager,
-  highlightsManager: HighlightsManager
+  highlightsManager: HighlightsManager,
+  i18nManager: I18nManager,
+  options: InitialTabsOptions
 ): ReaderTab[] {
-  const bookId = getInitialFirstTabBookId();
-  const chapter = getInitialFirstTabChapter();
-  const highlightedVerses = getInitialHighlightedVerses();
+  const { translationId, bookId, chapter, highlightedVerses = [] } = options;
 
   const tab: ReaderTab = {
     id: "tab-1",
     title: "Tab 1",
-    readingState: createBibleReadingState(dataManager, highlightsManager, {
-      initialTranslationId: getInitialTranslationId(),
-      initialBookId: bookId,
-      initialChapterNumber: chapter,
-      scrollToVerse: highlightedVerses[0] ?? undefined,
-    }),
+    readingState: createBibleReadingState(
+      dataManager,
+      highlightsManager,
+      i18nManager,
+      {
+        initialTranslationId: translationId,
+        initialBookId: bookId,
+        initialChapterNumber: chapter,
+        scrollToVerse: highlightedVerses[0] ?? undefined,
+      }
+    ),
     sharedSession: null,
   };
 
@@ -142,6 +162,8 @@ function isBibleReadingSession(
  * automatically when the tab is removed.
  */
 export interface TabsManager {
+  defaultTranslation: TranslationWithLanguage;
+
   /** Ordered tab list used by the tabs UI. */
   tabs: Signal<ReaderTab[]>;
 
@@ -160,11 +182,14 @@ export interface TabsManager {
    * adopts an existing state. Passing this avoids a race where the new tab's
    * `loadInitialData()` defaults to GEN 1 while the caller's follow-up
    * `selectTranslationAndChapter()` is still in flight.
+   * @param tabOptions Extra tab metadata. `paneOnly` marks the tab as hidden
+   * from the tab strip; it only backs a pane and is disposed when unreferenced.
    * @returns The newly created tab.
    */
   addTab: (
     source?: NewTabSource,
-    initialReadingOptions?: InitialBibleReadingOptions
+    initialReadingOptions?: InitialBibleReadingOptions,
+    tabOptions?: { paneOnly?: boolean }
   ) => ReaderTab;
 
   /**
@@ -190,27 +215,59 @@ export interface TabsManager {
  *   reading state accordingly.
  */
 export function createTabs(
+  navigation: NavigationManager,
   dataManager: BibleDataManager,
-  highlightsManager: HighlightsManager
+  highlightsManager: HighlightsManager,
+  i18nManager: I18nManager
 ): TabsManager {
+  const defaultTranslation = getDefaultTranslationForLanguage(
+    i18nManager.defaultLanguage
+  );
+  const initialTranslationId = getInitialTranslationId(
+    navigation.currentUrl.value,
+    i18nManager.defaultLanguage
+  );
+  const initialBookId = getInitialFirstTabBookId(navigation.currentUrl.value);
+  const initialChapter = getInitialFirstTabChapter(navigation.currentUrl.value);
+
+  console.log("Creating TabsManager with initial URL parameters:", {
+    initialTranslationId,
+    initialBookId,
+    initialChapter,
+  });
+
   const tabs = signal<ReaderTab[]>(
-    createInitialTabs(dataManager, highlightsManager)
+    createInitialTabs(dataManager, highlightsManager, i18nManager, {
+      translationId: initialTranslationId,
+      bookId: initialBookId,
+      chapter: initialChapter,
+      highlightedVerses: getInitialHighlightedVerses(
+        navigation.currentUrl.value
+      ),
+    })
   );
   const selectedTabId = signal<string>(tabs.value[0]?.id ?? "");
   const selectedTab = computed(
     () => tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null
   );
 
-  const syncSelectedTabFromConfig = async () => {
+  const syncSelectedTabFromUrl = async () => {
     const selectedTab =
       tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null;
     if (!selectedTab) {
       return;
     }
 
-    const requestedTranslation = getInitialTranslationId();
-    const requestedBookId = getInitialFirstTabBookId();
-    const requestedChapter = getInitialFirstTabChapter();
+    const requestedTranslation = getInitialTranslationId(
+      navigation.currentUrl.value,
+      i18nManager.defaultLanguage
+    );
+    const requestedBookId = getInitialFirstTabBookId(
+      navigation.currentUrl.value
+    );
+    const requestedChapter = getInitialFirstTabChapter(
+      navigation.currentUrl.value
+    );
     const readingState = selectedTab.readingState;
 
     const books = readingState.translationBooks.value?.books ?? [];
@@ -238,6 +295,11 @@ export function createTabs(
       return;
     }
 
+    console.log("Syncing selected tab reading state to match URL parameters:", {
+      requestedTranslation,
+      requestedBookId,
+      requestedChapter,
+    });
     await readingState.selectTranslationAndChapter(
       requestedTranslation,
       requestedBookId,
@@ -246,75 +308,52 @@ export function createTabs(
   };
 
   effect(() => {
-    const selectedBookId = selectedTab.value?.readingState.bookId.value;
-    const selectedChapter = selectedTab.value?.readingState.chapterNumber.value;
-    const selectedTranslation =
-      selectedTab.value?.readingState.translationId.value;
-    configBot.tags.book = selectedBookId;
-    configBot.tags.chapter = selectedChapter;
+    const readingState = selectedTab.value?.readingState;
+    const selectedBookId = readingState?.bookId.value;
+    const selectedChapter = readingState?.chapterNumber.value;
+    const selectedTranslation = readingState?.translationId.value;
+
+    const url = new URL(navigation.currentUrl.peek());
+    navigation.updateQueryParam("book", selectedBookId ?? null);
+    navigation.updateQueryParam(
+      "chapter",
+      selectedChapter ? String(selectedChapter) : null
+    );
 
     if (selectedTranslation) {
       const translationId = dataManager.buildTranslationId(selectedTranslation);
 
-      if (configBot.tags.translationId) {
-        configBot.tags.translationId = translationId;
+      if (url.searchParams.has("translationId")) {
+        navigation.updateQueryParam("translationId", translationId);
       } else if (
-        configBot.tags.translation ||
-        translationId !== DEFAULT_TRANSLATION_ID
+        url.searchParams.has("translation") ||
+        translationId !== defaultTranslation.id
       ) {
-        configBot.tags.translation = translationId;
+        navigation.updateQueryParam("translation", translationId);
       }
     }
-  });
 
-  // selectedVerses → configBot.tags.verse (→ URL). Only emit verses that
-  // belong to the currently displayed book + chapter; stale selections from
-  // a previous chapter shouldn't bleed into the URL. One-way: we never
-  // re-derive `selectedVerses` from the URL — doing that would strip the
-  // click coordinates the verse toolbar needs to position itself.
-  effect(() => {
-    const tab = selectedTab.value;
-    if (!tab) return;
-    const rs = tab.readingState;
-    const currentBookId = rs.bookId.value;
-    const currentChapter = rs.chapterNumber.value;
-    const verseNumbers = rs.selectedVerses.value
+    const verseNumbers = readingState?.selectedVerses.value
       .filter(
         (verse) =>
-          verse.bookId === currentBookId &&
-          verse.chapterNumber === currentChapter
+          verse.bookId === selectedBookId &&
+          verse.chapterNumber === selectedChapter
       )
       .map((verse) => verse.verse.number);
-    const formatted = formatVerseSelection(verseNumbers);
-    const currentTag =
-      typeof configBot.tags.verse === "string" ? configBot.tags.verse : null;
-    if (currentTag === formatted) return;
-    configBot.tags.verse = formatted ?? null;
+
+    const formatted = verseNumbers ? formatVerseSelection(verseNumbers) : null;
+    navigation.updateQueryParam("verse", formatted);
   });
 
-  os.addBotListener(configBot, "onBotChanged", async (that: unknown) => {
-    const changedTagsSource =
-      that && typeof that === "object" && "tags" in that
-        ? (that as { tags?: unknown }).tags
-        : null;
-    const changedTags = Array.isArray(changedTagsSource)
-      ? changedTagsSource
-      : [];
-    const hasReadingStateTagChange =
-      changedTags.includes("translation") ||
-      changedTags.includes("book") ||
-      changedTags.includes("chapter");
-
-    if (!hasReadingStateTagChange) {
-      return;
-    }
-
-    await syncSelectedTabFromConfig();
+  effect(() => {
+    void navigation.currentUrl.value;
+    syncSelectedTabFromUrl();
   });
 
   const addTab = (
     source?: NewTabSource,
-    initialReadingOptions?: InitialBibleReadingOptions
+    initialReadingOptions?: InitialBibleReadingOptions,
+    tabOptions?: { paneOnly?: boolean }
   ) => {
     const currentTabs = tabs.value;
     const nextNumber = currentTabs.length + 1;
@@ -329,9 +368,11 @@ export function createTabs(
         createBibleReadingState(
           dataManager,
           highlightsManager,
+          i18nManager,
           initialReadingOptions
         ),
       sharedSession,
+      paneOnly: tabOptions?.paneOnly ?? false,
     };
     tabs.value = [...currentTabs, nextTab];
     selectedTabId.value = nextTab.id;
@@ -357,6 +398,7 @@ export function createTabs(
   };
 
   return {
+    defaultTranslation,
     tabs,
     selectedTabId,
     addTab,

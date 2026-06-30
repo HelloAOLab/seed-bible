@@ -3,10 +3,12 @@ import {
   fetchUserIds,
   checkAuthorizationStatus,
   getDeviceAuthUrl,
-} from "ext_twitchPub.host.utils";
-import { type TwitchPubState } from "ext_twitchPub.host.interface";
-import { type SeedBibleState } from "seed-bible.app.api";
-import sendMessage from "ext_twitchPub.host.sendMessage";
+} from "./utils";
+import { type TwitchPubState } from "./interface";
+import { type SeedBibleState } from "seed-bible";
+import sendMessage from "./sendMessage";
+import { fromByteArray } from "base64-js";
+import { v4 as uuid } from "uuid";
 
 const sendAnnouncement = (
   accessToken: string,
@@ -15,20 +17,20 @@ const sendAnnouncement = (
   message: string,
   clientId: string
 ) => {
-  web
-    .post(
-      `https://api.twitch.tv/helix/chat/announcements?broadcaster_id=${broadcasterId}&moderator_id=${moderatorId}`,
-      JSON.stringify({ message, color: "purple" }),
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Client-Id": clientId,
-          "Content-Type": "application/json",
-        },
-      }
-    )
-    .then((e) => {
-      console.log("Announcement sent successfully", e.data);
+  fetch(
+    `https://api.twitch.tv/helix/chat/announcements?broadcaster_id=${broadcasterId}&moderator_id=${moderatorId}`,
+    {
+      method: "POST",
+      body: JSON.stringify({ message, color: "purple" }),
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Client-Id": clientId,
+        "Content-Type": "application/json",
+      },
+    }
+  )
+    .then(async (e) => {
+      console.log("Announcement sent successfully", await e.json());
     })
     .catch((err) => {
       console.error("Failed to send announcement:", err);
@@ -47,15 +49,14 @@ const getUrl = (
     translation = "AAB",
   }: { book?: string; chapter?: number; translation?: string } = {}
 ) => {
-  const redirectUri = new URL(configBot.tags.url ?? "https://ao.bot/");
+  const redirectUri = new URL(location.href ?? "https://ao.bot/");
   redirectUri.search = "";
-  redirectUri.searchParams.set(
-    "pattern",
-    configBot.tags.pattern || "SeedBible"
-  );
+  // if (configBot.tags.pattern !== null) {
+  //   redirectUri.searchParams.set("pattern", configBot.tags.pattern);
+  // }
   redirectUri.searchParams.set("autoinstall-ext_twitchSub", "true");
 
-  const state = bytes.toBase64String(
+  const state = fromByteArray(
     new TextEncoder().encode(
       JSON.stringify({
         broadcaster_id: config.broadcasterId.value,
@@ -154,7 +155,11 @@ function createRateLimiter(
   };
 }
 
-export function CreateTwitchPubState(): TwitchPubState {
+export function CreateTwitchPubState({
+  toast,
+}: {
+  toast: (message: string) => void;
+}): TwitchPubState {
   /** manages twitch interface state */
   const interfaceEnabled = signal<boolean>(
     !!window.localStorage?.interfaceEnabled || false
@@ -411,5 +416,6 @@ export function CreateTwitchPubState(): TwitchPubState {
     showUI,
     handleSeedBibleUpdate,
     handleHighlightUpdate,
+    toast,
   };
 }

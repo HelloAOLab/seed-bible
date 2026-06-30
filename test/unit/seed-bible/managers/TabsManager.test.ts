@@ -18,40 +18,28 @@ import {
   createExampleManagerResponseMap,
 } from "./testUtils/mockBibleApiData";
 import { signal } from "@preact/signals";
+import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
+import type { Mock } from "vitest";
+import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 
-let webGetMock: jest.Mock;
-let botChangedListener: ((that: unknown) => Promise<void> | void) | null;
-let logSpy: jest.SpyInstance;
+let webGetMock: Mock;
+let logSpy: Mock;
+const originalFetch = globalThis.fetch;
 
 beforeEach(() => {
-  webGetMock = jest.fn();
-  botChangedListener = null;
-  logSpy = jest.spyOn(console, "log").mockImplementation(() => undefined);
+  webGetMock = vi.fn();
+  logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
 
-  (globalThis as any).web = {
-    get: webGetMock,
-  };
-
-  (globalThis as any).configBot = {
-    tags: {},
-  };
-
-  (globalThis as any).os = {
-    addBotListener: jest.fn(
-      (_bot: unknown, event: string, listener: typeof botChangedListener) => {
-        if (event === "onBotChanged") {
-          botChangedListener = listener;
-        }
-      }
-    ),
-  };
+  globalThis.fetch = webGetMock;
 });
 
 afterEach(() => {
   logSpy.mockRestore();
-  delete (globalThis as any).web;
-  delete (globalThis as any).configBot;
-  delete (globalThis as any).os;
+  // Clear any query params written by tab/URL sync effects so they don't
+  // leak into the next test's initial tab state.
+  window.history.replaceState(null, "", window.location.pathname);
+  globalThis.fetch = originalFetch;
 });
 
 function setWebResponses(responses: WebResponseMap): void {
@@ -74,7 +62,7 @@ function createDataManager() {
 
 function createHighlightsManagerMock() {
   return {
-    getChapterHighlights: jest.fn().mockReturnValue(signal({ highlights: [] })),
+    getChapterHighlights: vi.fn().mockReturnValue(signal({ highlights: [] })),
   };
 }
 
@@ -153,13 +141,31 @@ describe("parseVerseSelection", () => {
   });
 });
 
+function createTabsManager({
+  dataManager: data,
+  i18nManager: i18n,
+}: {
+  dataManager?: ReturnType<typeof createDataManager>;
+  i18nManager?: ReturnType<typeof createI18nManager>;
+} = {}) {
+  const navigation = createNavigationManager();
+  const dataManager = data || createDataManager();
+  const highlightsManager = createHighlightsManagerMock() as any;
+  const i18nManager = i18n || createI18nManager(navigation, ["en"]);
+  const tabs = createTabs(
+    navigation,
+    dataManager,
+    highlightsManager,
+    i18nManager
+  );
+
+  return { navigation, dataManager, highlightsManager, i18nManager, tabs };
+}
+
 describe("createTabs", () => {
   it("addTab() creates a new tab with new reading state", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const manager = createTabs(
-      createDataManager(),
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
     const existingReadingStates = manager.tabs.value.map(
@@ -171,7 +177,10 @@ describe("createTabs", () => {
 
     expect(manager.tabs.value).toHaveLength(2);
     expect(manager.tabs.value[1]).toBe(nextTab);
-    expect(existingReadingStates).not.toContain(nextTab.readingState);
+    // Checked via .includes() because chai's toContain eagerly inspect()s the
+    // needle for its message and crashes on the reading state's
+    // null-prototype module objects.
+    expect(existingReadingStates.includes(nextTab.readingState)).toBe(false);
     expect(nextTab.id).toBe("tab-2");
     expect(nextTab.title).toBe("Tab 2");
     expect(nextTab.sharedSession).toBeNull();
@@ -180,10 +189,7 @@ describe("createTabs", () => {
 
   it("addTab() accepts a shared reading session for the new tab", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const manager = createTabs(
-      createDataManager(),
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
     const sharedSession = {
@@ -197,10 +203,13 @@ describe("createTabs", () => {
         highlightDurationSeconds: 16,
         endedAt: null,
       }),
-      updateOptions: jest.fn(),
-      removeSharedDecoration: jest.fn(),
-      dispose: jest.fn(),
+      updateOptions: vi.fn(),
+      removeSharedDecoration: vi.fn(),
+      dispose: vi.fn(),
       connectedUsers: signal([]),
+      localSessionId: signal("session-123"),
+      userCanDecorate: vi.fn().mockReturnValue(true),
+      userCanNavigate: vi.fn().mockReturnValue(true),
     } as BibleReadingSession;
 
     const nextTab = manager.addTab(sharedSession);
@@ -212,16 +221,13 @@ describe("createTabs", () => {
 
   it("addTab() accepts a reading state for the new tab", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const dataManager = createDataManager();
-    const manager = createTabs(
-      dataManager,
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager, dataManager, i18nManager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
     const readingState = createBibleReadingState(
       dataManager,
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      i18nManager
     );
 
     const nextTab = manager.addTab(readingState);
@@ -233,10 +239,7 @@ describe("createTabs", () => {
 
   it("removeTab() removes the given tab", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const manager = createTabs(
-      createDataManager(),
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
     manager.removeTab("tab-2");
@@ -247,10 +250,7 @@ describe("createTabs", () => {
 
   it("selectTab() sets the selected tab", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const manager = createTabs(
-      createDataManager(),
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
     manager.selectTab("tab-2");
@@ -258,29 +258,23 @@ describe("createTabs", () => {
     expect(manager.selectedTabId.value).toBe("tab-2");
   });
 
-  it("syncs the selected tab to match configBot", async () => {
+  it("syncs the selected tab to match the URL", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const manager = createTabs(
-      createDataManager(),
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager, navigation } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
     const secondTab = manager.addTab();
     await waitForInitialLoad(secondTab.readingState);
     manager.selectTab(secondTab.id);
 
-    (globalThis as any).configBot.tags.translation = "NIV";
-    (globalThis as any).configBot.tags.book = "MAT";
-    (globalThis as any).configBot.tags.chapter = 1;
-
-    await botChangedListener?.({
-      tags: ["translation", "book", "chapter"],
-    });
+    navigation.push("?translation=NIV&book=MAT&chapter=1");
 
     const selectedTab = manager.tabs.value.find(
       (tab) => tab.id === manager.selectedTabId.value
     );
     expect(selectedTab).toBeDefined();
+    await waitFor(
+      () => selectedTab!.readingState.translationId.value === "NIV"
+    );
     await waitForInitialLoad(selectedTab!.readingState);
 
     expect(selectedTab!.readingState.translationId.value).toBe("NIV");
@@ -288,69 +282,63 @@ describe("createTabs", () => {
     expect(selectedTab!.readingState.chapterNumber.value).toBe(1);
   });
 
-  it("reuses configBot.tags.translationId instead of writing configBot.tags.translation", async () => {
-    (globalThis as any).configBot.tags.translationId = "NIV";
+  it("reuses the translationId URL param instead of writing the translation param", async () => {
+    window.history.replaceState(null, "", "?translationId=NIV&book=MAT");
     setWebResponses(createExampleManagerResponseMap());
 
-    const manager = createTabs(
-      createDataManager(),
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
-    expect((globalThis as any).configBot.tags.translationId).toBe("NIV");
-    expect((globalThis as any).configBot.tags.translation).toBeUndefined();
+    const url = new URL(window.location.href);
+    expect(url.searchParams.get("translationId")).toBe("NIV");
+    expect(url.searchParams.get("translation")).toBeNull();
   });
 
-  it("prioritizes configBot.tags.translationId over configBot.tags.translation for the initial tab", async () => {
-    (globalThis as any).configBot.tags.translationId = "NIV";
-    (globalThis as any).configBot.tags.translation = "AAB";
-    (globalThis as any).configBot.tags.book = "MAT";
-    (globalThis as any).configBot.tags.chapter = 1;
-    setWebResponses(createExampleManagerResponseMap());
-
-    const manager = createTabs(
-      createDataManager(),
-      createHighlightsManagerMock() as any
+  it("prioritizes the translationId URL param over the translation param for the initial tab", async () => {
+    window.history.replaceState(
+      null,
+      "",
+      "?translationId=NIV&translation=AAB&book=MAT&chapter=1"
     );
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
     const firstTab = manager.tabs.value[0]!;
     expect(firstTab.readingState.translationId.value).toBe("NIV");
   });
 
-  it("saves a full custom-endpoint URL to configBot.tags.translation", async () => {
-    (globalThis as any).configBot.tags.translation = "NIV";
-    (globalThis as any).configBot.tags.book = "MAT";
-    (globalThis as any).configBot.tags.chapter = 1;
-
+  it("saves a full custom-endpoint URL to the translation URL param", async () => {
+    window.history.replaceState(
+      null,
+      "",
+      "?translation=NIV&book=MAT&chapter=1"
+    );
     setWebResponses(createExampleManagerResponseMap());
 
     const dataManager = createDataManager();
     const customTranslationUrl = "https://alt.example/api/NIV/books.json";
-    const buildTranslationIdSpy = jest
+    const buildTranslationIdSpy = vi
       .spyOn(dataManager, "buildTranslationId")
       .mockReturnValue(customTranslationUrl);
 
-    const manager = createTabs(
-      dataManager,
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager } = createTabsManager({ dataManager });
     await waitForTabsToLoad(manager.tabs.value);
 
-    expect((globalThis as any).configBot.tags.translationId).toBeUndefined();
-    expect((globalThis as any).configBot.tags.translation).toBe(
-      customTranslationUrl
+    await waitFor(
+      () =>
+        new URL(window.location.href).searchParams.get("translation") ===
+        customTranslationUrl
     );
+    const url = new URL(window.location.href);
+    expect(url.searchParams.get("translationId")).toBeNull();
+    expect(url.searchParams.get("translation")).toBe(customTranslationUrl);
     expect(buildTranslationIdSpy).toHaveBeenCalledWith("NIV");
   });
 
-  it("updates configBot.tags.verse from selected verses in the current chapter", async () => {
+  it("updates the verse URL param from selected verses in the current chapter", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const manager = createTabs(
-      createDataManager(),
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
     const readingState = manager.tabs.value[0]!.readingState;
@@ -375,16 +363,13 @@ describe("createTabs", () => {
       } as any,
     ];
 
-    await waitFor(() => (globalThis as any).configBot.tags.verse === "1,3");
-    expect((globalThis as any).configBot.tags.verse).toBe("1,3");
+    const url = new URL(window.location.href);
+    expect(url.searchParams.get("verse")).toBe("1,3");
   });
 
-  it("clears configBot.tags.verse when selected verses become empty", async () => {
+  it("clears the verse URL param when selected verses become empty", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const manager = createTabs(
-      createDataManager(),
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
     const readingState = manager.tabs.value[0]!.readingState;
@@ -398,20 +383,19 @@ describe("createTabs", () => {
         verse: { number: 4 },
       } as any,
     ];
-    await waitFor(() => (globalThis as any).configBot.tags.verse === "4");
+
+    let url = new URL(window.location.href);
+    expect(url.searchParams.get("verse")).toBe("4");
 
     readingState.selectedVerses.value = [];
 
-    await waitFor(() => (globalThis as any).configBot.tags.verse === null);
-    expect((globalThis as any).configBot.tags.verse).toBeNull();
+    url = new URL(window.location.href);
+    expect(url.searchParams.has("verse")).toBe(false);
   });
 
-  it("uses selected tab verses when syncing configBot.tags.verse", async () => {
+  it("uses selected tab verses when syncing the verse URL param", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const manager = createTabs(
-      createDataManager(),
-      createHighlightsManagerMock() as any
-    );
+    const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
     const firstReadingState = manager.tabs.value[0]!.readingState;
@@ -424,7 +408,8 @@ describe("createTabs", () => {
         verse: { number: 2 },
       } as any,
     ];
-    await waitFor(() => (globalThis as any).configBot.tags.verse === "2");
+    let url = new URL(window.location.href);
+    expect(url.searchParams.get("verse")).toBe("2");
 
     const secondTab = manager.addTab();
     await waitForInitialLoad(secondTab.readingState);
@@ -438,32 +423,27 @@ describe("createTabs", () => {
       } as any,
     ];
 
-    await waitFor(() => (globalThis as any).configBot.tags.verse === "6");
-    expect((globalThis as any).configBot.tags.verse).toBe("6");
+    url = new URL(window.location.href);
+    expect(url.searchParams.get("verse")).toBe("6");
   });
 
-  it("decorates initial verses from configBot.tags.verse on the initial tab", async () => {
-    (globalThis as any).configBot.tags.book = "GEN";
-    (globalThis as any).configBot.tags.chapter = 1;
-    (globalThis as any).configBot.tags.verse = "3,5-6";
+  it("decorates initial verses from the verse URL param on the initial tab", async () => {
+    window.history.replaceState(null, "", "?book=GEN&chapter=1&verse=3,5-6");
     setWebResponses(createExampleManagerResponseMap());
 
-    let decorateVersesSpy: jest.SpyInstance | null = null;
+    let decorateVersesSpy: Mock | null = null;
     const originalCreateBibleReadingState =
       BibleReadingManagerModule.createBibleReadingState;
-    const createBibleReadingStateSpy = jest
+    const createBibleReadingStateSpy = vi
       .spyOn(BibleReadingManagerModule, "createBibleReadingState")
       .mockImplementation((...args) => {
         const state = originalCreateBibleReadingState(...args);
-        decorateVersesSpy = jest.spyOn(state, "decorateVerses");
+        decorateVersesSpy = vi.spyOn(state, "decorateVerses");
         return state;
       });
 
     try {
-      const manager = createTabs(
-        createDataManager(),
-        createHighlightsManagerMock() as any
-      );
+      const { tabs: manager } = createTabsManager();
       await waitForTabsToLoad(manager.tabs.value);
 
       expect(decorateVersesSpy).not.toBeNull();
@@ -477,24 +457,19 @@ describe("createTabs", () => {
   });
 
   it("passes the first initial verse to scrollToVerse for the initial tab", async () => {
-    (globalThis as any).configBot.tags.book = "GEN";
-    (globalThis as any).configBot.tags.chapter = 1;
-    (globalThis as any).configBot.tags.verse = "7,9-10";
+    window.history.replaceState(null, "", "?book=GEN&chapter=1&verse=7,9-10");
     setWebResponses(createExampleManagerResponseMap());
 
-    const createBibleReadingStateSpy = jest.spyOn(
+    const createBibleReadingStateSpy = vi.spyOn(
       BibleReadingManagerModule,
       "createBibleReadingState"
     );
 
     try {
-      const manager = createTabs(
-        createDataManager(),
-        createHighlightsManagerMock() as any
-      );
+      const { tabs: manager } = createTabsManager();
       await waitForTabsToLoad(manager.tabs.value);
 
-      const initialOptions = createBibleReadingStateSpy.mock.calls[0]?.[2];
+      const initialOptions = createBibleReadingStateSpy.mock.calls[0]?.[3];
       expect(initialOptions?.scrollToVerse).toBe(7);
     } finally {
       createBibleReadingStateSpy.mockRestore();

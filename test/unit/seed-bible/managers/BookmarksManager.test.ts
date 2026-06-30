@@ -4,7 +4,9 @@ import {
   type Bookmark,
 } from "@packages/seed-bible/seed-bible/managers/BookmarksManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { signal } from "@preact/signals";
+import type { Mock, Mocked } from "vitest";
 
 function createBookmark(overrides: Partial<Bookmark> = {}): Bookmark {
   return {
@@ -19,10 +21,11 @@ function createBookmark(overrides: Partial<Bookmark> = {}): Bookmark {
 }
 
 describe("BookmarksManager", () => {
-  let getDataMock: jest.Mock;
-  let recordDataMock: jest.Mock;
-  let warnSpy: jest.SpyInstance;
-  let login: jest.Mocked<LoginManager>;
+  let getDataMock: Mock;
+  let recordDataMock: Mock;
+  let warnSpy: Mock;
+  let login: Mocked<LoginManager>;
+  let os: CasualOSManager;
 
   const flushPromises = async () => {
     await Promise.resolve();
@@ -30,29 +33,38 @@ describe("BookmarksManager", () => {
   };
 
   beforeEach(() => {
-    getDataMock = jest.fn().mockResolvedValue(null);
-    recordDataMock = jest.fn().mockResolvedValue(undefined);
-    warnSpy = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+    os = CasualOSManager();
+    getDataMock = vi.spyOn(os, "getData").mockResolvedValue({
+      success: false,
+      errorCode: "data_not_found",
+      errorMessage: "Data not found",
+    });
+    recordDataMock = vi
+      .spyOn(os, "recordData")
+      .mockResolvedValue(undefined as never);
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
 
     login = {
       authBot: signal(null),
       userId: signal("user-1"),
       profile: signal(null),
-      updateProfile: jest.fn().mockResolvedValue(undefined),
-      login: jest.fn().mockResolvedValue(undefined),
-      logout: jest.fn().mockResolvedValue(undefined),
-      getUserProfile: jest.fn().mockResolvedValue(null),
-      uploadProfilePicture: jest.fn().mockResolvedValue(undefined),
-    };
-
-    (globalThis as any).os = {
-      ...(globalThis as any).os,
-      getData: getDataMock,
-      recordData: recordDataMock,
-    };
-
-    (globalThis as any).authBot = {
-      id: "user-1",
+      updateProfile: vi.fn().mockResolvedValue(undefined),
+      login: vi.fn().mockResolvedValue(undefined),
+      logout: vi.fn().mockResolvedValue(undefined),
+      getUserProfile: vi.fn().mockResolvedValue(null),
+      uploadProfilePicture: vi.fn().mockResolvedValue(undefined),
+      userInfo: signal({ id: "user-1", email: "test@example.com" }),
+      cancelLogin: vi.fn().mockResolvedValue(undefined),
+      isLoginOpen: signal(false),
+      requestLoginByEmail: vi
+        .fn()
+        .mockResolvedValue({ success: true, requestId: "req-1" }),
+      submitLoginCode: vi
+        .fn()
+        .mockResolvedValue({
+          success: true,
+          userInfo: { id: "user-1", email: "test@example.com" },
+        }),
     };
   });
 
@@ -64,7 +76,7 @@ describe("BookmarksManager", () => {
   it("starts empty when logged out", () => {
     login.userId.value = null;
 
-    const manager = createBookmarksManager(login);
+    const manager = createBookmarksManager(os, login);
 
     expect(manager.bookmarks.value).toEqual([]);
     expect(manager.categories.value).toEqual([
@@ -101,7 +113,7 @@ describe("BookmarksManager", () => {
       },
     });
 
-    const manager = createBookmarksManager(login);
+    const manager = createBookmarksManager(os, login);
     await flushPromises();
 
     expect(getDataMock).toHaveBeenCalledWith("user-1", "bookmarks");
@@ -122,7 +134,7 @@ describe("BookmarksManager", () => {
   });
 
   it("adds a bookmark and avoids duplicates", async () => {
-    const manager = createBookmarksManager(login);
+    const manager = createBookmarksManager(os, login);
     await flushPromises();
 
     await manager.addBookmark("BSB", "GEN", 1);
@@ -158,9 +170,10 @@ describe("BookmarksManager", () => {
     login.login.mockImplementation(async () => {
       login.userId.value = "user-2";
       (globalThis as any).authBot = { id: "user-2" };
+      return { id: "user-2", email: "test@example.com" };
     });
 
-    const manager = createBookmarksManager(login);
+    const manager = createBookmarksManager(os, login);
 
     await manager.addBookmark("BSB", "GEN", 1);
 
@@ -177,7 +190,7 @@ describe("BookmarksManager", () => {
   it("does not persist if login fails to authenticate", async () => {
     login.userId.value = null;
 
-    const manager = createBookmarksManager(login);
+    const manager = createBookmarksManager(os, login);
 
     await manager.addBookmark("BSB", "GEN", 1);
 
@@ -195,7 +208,7 @@ describe("BookmarksManager", () => {
       },
     });
 
-    const manager = createBookmarksManager(login);
+    const manager = createBookmarksManager(os, login);
     await flushPromises();
 
     await manager.removeBookmarkForLocation("BSB", "GEN", 1);
@@ -213,7 +226,7 @@ describe("BookmarksManager", () => {
   });
 
   it("toggles bookmark by location and ignores incomplete locations", async () => {
-    const manager = createBookmarksManager(login);
+    const manager = createBookmarksManager(os, login);
     await flushPromises();
 
     await manager.toggleBookmarkAtLocation(null, "GEN", 1);
@@ -231,7 +244,7 @@ describe("BookmarksManager", () => {
   });
 
   it("toggles bookmark for tab reading location", async () => {
-    const manager = createBookmarksManager(login);
+    const manager = createBookmarksManager(os, login);
     await flushPromises();
 
     const tab = {
@@ -259,7 +272,7 @@ describe("BookmarksManager", () => {
       },
     });
 
-    const manager = createBookmarksManager(login);
+    const manager = createBookmarksManager(os, login);
     await flushPromises();
 
     await manager.createCategory("  Favorites  ");
@@ -296,7 +309,7 @@ describe("BookmarksManager", () => {
   });
 
   it("toggles filter and category expansion", () => {
-    const manager = createBookmarksManager(login);
+    const manager = createBookmarksManager(os, login);
 
     expect(manager.isFilterActive.value).toBe(false);
     manager.toggleFilter();

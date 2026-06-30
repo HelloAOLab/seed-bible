@@ -1,6 +1,6 @@
 import { computed, effect, Signal, signal } from "@preact/signals";
 import type { ComponentChild } from "preact";
-import type { ReaderTab, TabsManager } from "seed-bible.managers.TabsManager";
+import type { ReaderTab, TabsManager } from "../managers/TabsManager";
 
 /** Supported attached pane layout presets. */
 export type PaneLayoutId =
@@ -44,6 +44,12 @@ export interface Pane {
   gridPortal: string | null;
   /** Map portal identifier rendered in this pane, if present. */
   mapPortal: string | null;
+  /** The instance identifier for the pane's content (only for grid/map portals). */
+  inst: string | null;
+  /** The pattern that should be loaded in the grid/map portal */
+  pattern: CasualOSPattern | null;
+  /** Query parameters for the pane's content. */
+  query: Record<string, string> | null;
   /** True when pane is detached from attached layout slots. */
   detached: boolean;
   /** Detached pane anchor mode. */
@@ -66,7 +72,16 @@ interface PaneContent {
   component: (() => ComponentChild) | null;
   gridPortal: string | null;
   mapPortal: string | null;
+  inst: string | null;
+  pattern: CasualOSPattern | null;
+  query: Record<string, string> | null;
 }
+
+export type CasualOSPattern =
+  | {
+      name: string;
+    }
+  | { aux: string };
 
 export interface PaneOpenContentOptions {
   /** Tab ID to render in the pane. */
@@ -77,6 +92,12 @@ export interface PaneOpenContentOptions {
   gridPortal?: string | null;
   /** Map portal ID to render in the pane. */
   mapPortal?: string | null;
+  /** The instance identifier for the pane's content (only for grid/map portals). */
+  inst?: string | null;
+  /** The pattern that should be loaded in the grid/map portal */
+  pattern?: CasualOSPattern | null;
+  /** Query parameters for the pane's content (translates to the config bot tags for the grid portal/map portal). */
+  query?: Record<string, string> | null;
 }
 
 export interface PaneOpenOptions extends PaneOpenContentOptions {
@@ -113,6 +134,9 @@ function createPaneFactory() {
       component,
       gridPortal: null,
       mapPortal: null,
+      inst: null,
+      pattern: null,
+      query: null,
       detached,
       detachedAnchor: detached ? detachedAnchor : "floating",
       x: 48 + offset,
@@ -129,6 +153,9 @@ function getEmptyPaneContent(): PaneContent {
     component: null,
     gridPortal: null,
     mapPortal: null,
+    inst: null,
+    pattern: null,
+    query: null,
   };
 }
 
@@ -170,11 +197,22 @@ function getDefaultLayoutForSlotCount(slotCount: number): PaneLayoutId {
 
 function getPaneContentsInDisplayOrder(
   nextPanes: Pane[],
-  selectedId: string | null
+  selectedId: string | null,
+  slotCount: number
 ) {
   const attachedPanes = getAttachedPanes(nextPanes);
-  const selectedPane =
-    attachedPanes.find((pane) => pane.id === selectedId) ?? null;
+
+  // Pulling the selected pane's content to the front reshuffles which tab is
+  // shown in which physical slot, so only do it when the layout actually has
+  // fewer slots than panes (shrinking) — there we want to keep the focused
+  // pane's content rather than drop it. When the slot count is preserved or
+  // grows, keep the existing left-to-right order so panes stay put. Reordering
+  // on every re-layout is what made an "open in new panel" clone jump into the
+  // first slot and swap with the original tab.
+  const isShrinking = attachedPanes.length > slotCount;
+  const selectedPane = isShrinking
+    ? (attachedPanes.find((pane) => pane.id === selectedId) ?? null)
+    : null;
   const orderedPanes = selectedPane
     ? [
         selectedPane,
@@ -190,6 +228,9 @@ function getPaneContentsInDisplayOrder(
         component: pane.component,
         gridPortal: null,
         mapPortal: null,
+        inst: null,
+        pattern: null,
+        query: null,
       });
       return result;
     }
@@ -200,6 +241,9 @@ function getPaneContentsInDisplayOrder(
         component: null,
         gridPortal: pane.gridPortal,
         mapPortal: null,
+        inst: pane.inst,
+        pattern: pane.pattern,
+        query: pane.query,
       });
       return result;
     }
@@ -210,6 +254,9 @@ function getPaneContentsInDisplayOrder(
         component: null,
         gridPortal: null,
         mapPortal: pane.mapPortal,
+        inst: pane.inst,
+        pattern: pane.pattern,
+        query: pane.query,
       });
       return result;
     }
@@ -224,6 +271,9 @@ function getPaneContentsInDisplayOrder(
       component: null,
       gridPortal: null,
       mapPortal: null,
+      inst: null,
+      pattern: null,
+      query: null,
     });
     return result;
   }, []);
@@ -245,7 +295,8 @@ function applyLayoutToPanes(
   const detachedPanes = getDetachedPanes(existingPanes);
   const orderedContents = getPaneContentsInDisplayOrder(
     attachedPanes,
-    selectedId
+    selectedId,
+    slotCount
   );
 
   const nextAttachedPanes = Array.from({ length: slotCount }, (_, index) => {
@@ -259,6 +310,9 @@ function applyLayoutToPanes(
           component: nextContent.component,
           gridPortal: nextContent.gridPortal,
           mapPortal: nextContent.mapPortal,
+          inst: nextContent.inst,
+          pattern: nextContent.pattern,
+          query: nextContent.query,
         }
       : createPane(nextContent.tab, nextContent.component);
   });
@@ -290,7 +344,7 @@ export interface PanesManager {
 
   /**
    * Sets tab content on the currently selected pane.
-   * No-op when selected pane contains component content.
+   * If the currently selected pane is a component-backed pane, then the first tab-backed pane is changed instead.
    */
   setSelectedPaneTab: (tabId: string) => void;
 
@@ -398,27 +452,13 @@ export function createPanes(
           panes.value[index]?.tab !== pane.tab ||
           panes.value[index]?.component !== pane.component ||
           panes.value[index]?.gridPortal !== pane.gridPortal ||
-          panes.value[index]?.mapPortal !== pane.mapPortal
+          panes.value[index]?.mapPortal !== pane.mapPortal ||
+          panes.value[index]?.inst !== pane.inst ||
+          panes.value[index]?.pattern !== pane.pattern ||
+          panes.value[index]?.query !== pane.query
       )
     ) {
       syncPaneState(nextPanes.value);
-    }
-  });
-
-  effect(() => {
-    const activePortalPane =
-      panes.value.find(
-        (pane) => pane.gridPortal !== null || pane.mapPortal !== null
-      ) ?? null;
-    const activeGridPortal = activePortalPane?.gridPortal ?? null;
-    const activeMapPortal = activePortalPane?.mapPortal ?? null;
-
-    if (configBot.tags.gridPortal !== activeGridPortal) {
-      configBot.tags.gridPortal = activeGridPortal;
-    }
-
-    if (configBot.tags.mapPortal !== activeMapPortal) {
-      configBot.tags.mapPortal = activeMapPortal;
     }
   });
 
@@ -446,7 +486,7 @@ export function createPanes(
       return;
     }
 
-    const selectedPane = getSelectedPane();
+    let selectedPane = getSelectedPane();
     if (!selectedPane) {
       const nextPane = createPane(nextTab);
       syncPaneState([nextPane]);
@@ -456,7 +496,11 @@ export function createPanes(
 
     // Do not auto-replace a component-backed pane with a tab.
     if (selectedPane.component !== null) {
-      return;
+      selectedPane = panes.value.find((p) => p.tab !== null) ?? null;
+
+      if (!selectedPane) {
+        return;
+      }
     }
 
     if (selectedPane.tab?.id === nextTab.id) {
@@ -471,6 +515,9 @@ export function createPanes(
             component: null,
             gridPortal: null,
             mapPortal: null,
+            inst: null,
+            pattern: null,
+            query: null,
           }
         : pane
     );
@@ -499,6 +546,9 @@ export function createPanes(
         gridPortal: null,
         mapPortal: null,
         portalType: null as "grid" | "map" | null,
+        inst: null,
+        pattern: null,
+        query: null,
       };
     }
 
@@ -509,6 +559,9 @@ export function createPanes(
         gridPortal: null,
         mapPortal: null,
         portalType: null as "grid" | "map" | null,
+        inst: null,
+        pattern: null,
+        query: null,
       };
     }
 
@@ -524,6 +577,9 @@ export function createPanes(
         gridPortal: normalizedPortal,
         mapPortal: null,
         portalType: "grid" as const,
+        inst: options.inst ?? null,
+        pattern: options.pattern ?? null,
+        query: options.query ?? null,
       };
     }
 
@@ -538,6 +594,9 @@ export function createPanes(
       gridPortal: null,
       mapPortal: normalizedPortal,
       portalType: "map" as const,
+      inst: options.inst ?? null,
+      pattern: options.pattern ?? null,
+      query: options.query ?? null,
     };
   };
 
@@ -560,17 +619,9 @@ export function createPanes(
           component: parsed.component,
           gridPortal: parsed.gridPortal,
           mapPortal: parsed.mapPortal,
-        };
-      }
-
-      if (
-        parsed.portalType &&
-        (pane.gridPortal !== null || pane.mapPortal !== null)
-      ) {
-        return {
-          ...pane,
-          gridPortal: null,
-          mapPortal: null,
+          inst: parsed.inst,
+          pattern: parsed.pattern ?? null,
+          query: parsed.query ?? null,
         };
       }
 
@@ -693,15 +744,11 @@ export function createPanes(
         ...nextPane,
         gridPortal: parsed.gridPortal,
         mapPortal: parsed.mapPortal,
+        inst: parsed.inst,
+        pattern: parsed.pattern,
+        query: parsed.query ?? null,
       };
-      const nextPanes = parsed.portalType
-        ? panes.value.map((pane) => ({
-            ...pane,
-            gridPortal: null,
-            mapPortal: null,
-          }))
-        : panes.value;
-      syncPaneState([...nextPanes, detachedPane], detachedPane.id);
+      syncPaneState([...panes.value, detachedPane], detachedPane.id);
       return detachedPane;
     }
 
@@ -730,17 +777,13 @@ export function createPanes(
       ...nextPane,
       gridPortal: parsed.gridPortal,
       mapPortal: parsed.mapPortal,
+      inst: parsed.inst,
+      pattern: parsed.pattern,
+      query: parsed.query ?? null,
     };
     layout.value = getDefaultLayoutForSlotCount(nextSlotCount);
-    const basePanes = parsed.portalType
-      ? panes.value.map((pane) => ({
-          ...pane,
-          gridPortal: null,
-          mapPortal: null,
-        }))
-      : panes.value;
     const nextPanes = applyLayoutToPanes(
-      [...basePanes, attachedPane],
+      [...panes.value, attachedPane],
       layout.value,
       selectedPaneId.value,
       createPane
@@ -749,6 +792,22 @@ export function createPanes(
     return (
       panes.value.find((pane) => pane.id === attachedPane.id) ?? attachedPane
     );
+  };
+
+  // Disposes pane-only tabs (those backing an "open in new/detached panel")
+  // once no pane references them, so closing/collapsing a panel doesn't leak
+  // hidden tabs and their reading states.
+  const disposeUnreferencedPaneOnlyTabs = () => {
+    const referencedTabIds = new Set(
+      panes.value
+        .map((pane) => pane.tab?.id)
+        .filter((id): id is string => typeof id === "string")
+    );
+    for (const tab of tabsManager.tabs.value) {
+      if (tab.paneOnly && !referencedTabIds.has(tab.id)) {
+        tabsManager.removeTab(tab.id);
+      }
+    }
   };
 
   const setLayout = (layoutId: PaneLayoutId) => {
@@ -766,6 +825,7 @@ export function createPanes(
       nextPanes[0] ??
       null;
     syncPaneState(nextPanes, nextSelectedPane?.id ?? null);
+    disposeUnreferencedPaneOnlyTabs();
   };
 
   const closePane = (paneId: string) => {
@@ -777,6 +837,7 @@ export function createPanes(
     if (paneToClose.detached) {
       const nextPanes = panes.value.filter((pane) => pane.id !== paneId);
       syncPaneState(nextPanes);
+      disposeUnreferencedPaneOnlyTabs();
       return true;
     }
 
@@ -801,6 +862,7 @@ export function createPanes(
       ),
       nextSelectedPaneId
     );
+    disposeUnreferencedPaneOnlyTabs();
     return true;
   };
 

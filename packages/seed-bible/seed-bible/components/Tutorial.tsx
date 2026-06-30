@@ -1,11 +1,10 @@
 import { useSignal } from "@preact/signals";
-import { useI18n } from "seed-bible.i18n.I18nManager";
+import { useI18n } from "../i18n/I18nManager";
 import type {
   TutorialManager,
   TutorialPlacement,
-} from "seed-bible.managers.TutorialManager";
-
-const { useEffect, useRef } = os.appHooks;
+} from "../managers/TutorialManager";
+import { useEffect, useRef } from "preact/hooks";
 
 interface Rect {
   top: number;
@@ -15,7 +14,11 @@ interface Rect {
 }
 
 const POPOVER_WIDTH = 300;
-const GAP = 14;
+// Distance between the popover and the element it spotlights. Kept generous so
+// the popover sits clearly off the target (with breathing room) rather than
+// hugging it — important when the target is pinned to a screen edge (e.g. the
+// bottom floating nav) and the popover would otherwise crowd it.
+const GAP = 42;
 
 /**
  * Guided coachmark tour overlay. Spotlights the current step's target element

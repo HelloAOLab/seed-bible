@@ -1,10 +1,9 @@
-import { type ToolsManager } from "seed-bible.managers.BibleToolsManager";
-import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
-import { translateTitle } from "seed-bible.components.Utils";
-import { handleHorizontalListKeyNav } from "seed-bible.components.KeyboardNav";
-
-const { useState } = os.appHooks;
+import { type ToolsManager } from "../managers/BibleToolsManager";
+import type { BibleReadingState } from "../managers/BibleReadingManager";
+import { useI18n } from "../i18n/I18nManager";
+import { translateTitle } from "../components/Utils";
+import { handleHorizontalListKeyNav } from "../components/KeyboardNav";
+import { useState } from "preact/hooks";
 
 interface QuickToolbarProps {
   toolsManager: ToolsManager;

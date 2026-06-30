@@ -3,7 +3,9 @@ import {
   type Annotation,
 } from "@packages/seed-bible/seed-bible/managers/AnnotationsManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { signal } from "@preact/signals";
+import type { Mock, Mocked } from "vitest";
 
 function createCommentAnnotation(
   overrides: Partial<Annotation> = {}
@@ -22,39 +24,50 @@ function createCommentAnnotation(
 }
 
 describe("AnnotationsManager", () => {
-  let recordDataMock: jest.Mock;
-  let eraseDataMock: jest.Mock;
-  let listDataByMarkerMock: jest.Mock;
-  let login: jest.Mocked<LoginManager>;
+  let recordDataMock: Mock;
+  let eraseDataMock: Mock;
+  let listDataByMarkerMock: Mock;
+  let login: Mocked<LoginManager>;
+  let os: CasualOSManager;
 
   beforeEach(() => {
-    recordDataMock = jest.fn().mockResolvedValue({ success: true });
-    eraseDataMock = jest.fn().mockResolvedValue({ success: true });
-    listDataByMarkerMock = jest
-      .fn()
-      .mockResolvedValue({ success: true, items: [] });
+    os = CasualOSManager();
+    recordDataMock = vi
+      .spyOn(os, "recordData")
+      .mockResolvedValue({ success: true } as any);
+    eraseDataMock = vi
+      .spyOn(os, "eraseData")
+      .mockResolvedValue({ success: true } as never);
+    listDataByMarkerMock = vi
+      .spyOn(os, "listDataByMarker")
+      .mockResolvedValue({ success: true, items: [] } as never);
 
     login = {
       authBot: signal(null),
       userId: signal("user-1"),
       profile: signal(null),
-      login: jest.fn().mockResolvedValue(undefined),
-      logout: jest.fn().mockResolvedValue(undefined),
-      updateProfile: jest.fn().mockResolvedValue(undefined),
-      getUserProfile: jest.fn().mockResolvedValue({ name: "" }),
-      uploadProfilePicture: jest.fn().mockResolvedValue(undefined),
-    };
-
-    (globalThis as any).os = {
-      ...(globalThis as any).os,
-      recordData: recordDataMock,
-      eraseData: eraseDataMock,
-      listDataByMarker: listDataByMarkerMock,
+      login: vi.fn().mockResolvedValue(undefined),
+      logout: vi.fn().mockResolvedValue(undefined),
+      updateProfile: vi.fn().mockResolvedValue(undefined),
+      getUserProfile: vi.fn().mockResolvedValue({ name: "" }),
+      uploadProfilePicture: vi.fn().mockResolvedValue(undefined),
+      userInfo: signal({ id: "user-1", email: "test@example.com" }),
+      cancelLogin: vi.fn().mockResolvedValue(undefined),
+      isLoginOpen: signal(false),
+      requestLoginByEmail: vi
+        .fn()
+        .mockResolvedValue({ success: true, requestId: "req-1" }),
+      submitLoginCode: vi
+        .fn()
+        .mockResolvedValue({
+          success: true,
+          userInfo: { id: "user-1", email: "test@example.com" },
+        }),
     };
   });
 
   it("saveAnnotation() stores annotation using default marker", async () => {
-    const manager = createAnnotationsManager(login);
+    const manager = createAnnotationsManager(os, login);
     const annotation = createCommentAnnotation();
 
     const saved = await manager.saveAnnotation(annotation);
@@ -66,7 +79,7 @@ describe("AnnotationsManager", () => {
   });
 
   it("saveAnnotation() supports custom record and marker group", async () => {
-    const manager = createAnnotationsManager(login);
+    const manager = createAnnotationsManager(os, login);
     const annotation = createCommentAnnotation({ id: "ann-2" });
 
     await manager.saveAnnotation(annotation, {
@@ -88,8 +101,9 @@ describe("AnnotationsManager", () => {
     login.userId.value = null;
     login.login.mockImplementation(async () => {
       login.userId.value = "user-after-login";
+      return { id: "user-after-login", email: "test@example.com" };
     });
-    const manager = createAnnotationsManager(login);
+    const manager = createAnnotationsManager(os, login);
 
     await manager.saveAnnotation(createCommentAnnotation());
 
@@ -105,7 +119,7 @@ describe("AnnotationsManager", () => {
   });
 
   it("deleteAnnotation() deletes the record by annotation id", async () => {
-    const manager = createAnnotationsManager(login);
+    const manager = createAnnotationsManager(os, login);
 
     await manager.deleteAnnotation("ann-5");
 
@@ -113,7 +127,7 @@ describe("AnnotationsManager", () => {
   });
 
   it("deleteAnnotation() supports record names", async () => {
-    const manager = createAnnotationsManager(login);
+    const manager = createAnnotationsManager(os, login);
 
     await manager.deleteAnnotation("ann-5", {
       recordName: "shared-record",
@@ -151,7 +165,7 @@ describe("AnnotationsManager", () => {
         items: [],
       });
 
-    const manager = createAnnotationsManager(login);
+    const manager = createAnnotationsManager(os, login);
     const annotations = await manager.listAnnotationsForChapter("GEN", 1);
 
     expect(listDataByMarkerMock).toHaveBeenNthCalledWith(
@@ -200,7 +214,7 @@ describe("AnnotationsManager", () => {
       })
       .mockResolvedValueOnce({ success: true, items: [] });
 
-    const manager = createAnnotationsManager(login);
+    const manager = createAnnotationsManager(os, login);
     const annotations = await manager.listAnnotationsForChapter("GEN", 1);
 
     expect(annotations).toHaveLength(1);
@@ -209,8 +223,11 @@ describe("AnnotationsManager", () => {
 
   it("operations throw when login cannot resolve a user record", async () => {
     login.userId.value = null;
-    login.login.mockResolvedValue(undefined);
-    const manager = createAnnotationsManager(login);
+    login.login.mockResolvedValue({
+      id: "user-after-login",
+      email: "test@example.com",
+    });
+    const manager = createAnnotationsManager(os, login);
 
     await expect(
       manager.saveAnnotation(createCommentAnnotation())
@@ -237,7 +254,7 @@ describe("AnnotationsManager", () => {
       errorCode: "server_error",
     });
 
-    const manager = createAnnotationsManager(login);
+    const manager = createAnnotationsManager(os, login);
 
     await expect(
       manager.saveAnnotation(createCommentAnnotation())

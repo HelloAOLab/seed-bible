@@ -1,20 +1,29 @@
-import { I18nProvider } from "seed-bible.i18n.I18nManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
-import { PaneLayout } from "seed-bible.components.PaneLayout";
-import { BibleSelector } from "seed-bible.components.BibleSelector";
-import { BibleReaderToolbar } from "seed-bible.components.BibleReaderToolbar";
-import { FloatingReaderPanels } from "seed-bible.components.FloatingReaderPanels";
-import { Sidebar, SharedSessionsToasts } from "seed-bible.components.Tabs";
-import { createSeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import { CasualOSApp } from "seed-bible.components.CasualOSApp";
+import { I18nProvider, useI18n } from "../i18n/I18nManager";
+import {} from "../i18n/I18nManager";
+import { PaneLayout } from "../components/PaneLayout";
+import { BibleSelector } from "../components/BibleSelector";
+import { BibleReaderToolbar } from "../components/BibleReaderToolbar";
+import { FloatingReaderPanels } from "../components/FloatingReaderPanels";
+import { Sidebar, SharedSessionsToasts } from "../components/Tabs";
+import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 import { useEffect } from "preact/hooks";
-import type { ReadonlySignal } from "@preact/signals";
-import { closeContextMenus } from "seed-bible.components.ContextMenu";
-import { ModalHost } from "seed-bible.components.ModalHost";
-import { OnboardingModals } from "seed-bible.components.Onboarding";
-import { Tutorial } from "seed-bible.components.Tutorial";
-
-const { useMemo } = os.appHooks;
+import { useSignalEffect, type ReadonlySignal } from "@preact/signals";
+import { closeContextMenus } from "../components/ContextMenu";
+import { ModalHost } from "../components/ModalHost";
+import { ToastHost } from "../components/ToastHost";
+import { LoginModal } from "../components/LoginModal";
+import { TermsOfServiceModal } from "../components/TermsOfServiceModal";
+import { PrivacyPolicyModal } from "../components/PrivacyPolicyModal";
+import { CodeOfConductModal } from "../components/CodeOfConductModal";
+import { useMemo } from "preact/hooks";
+import {
+  AppConfigProvider,
+  DEFAULT_APP_CONFIG,
+  type AppConfig,
+} from "./appConfig";
+import "./main.css";
+import { OnboardingModals } from "../components/Onboarding";
+import { Tutorial } from "../components/Tutorial";
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -43,42 +52,51 @@ export function ExternalResourceDependencies({
         href="https://api.fontshare.com/v2/css?f[]=satoshi@100,200,300,400,500,600,700,800,900&display=swap"
         rel="stylesheet"
       />
-      {/* <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/fullcalendar/timegrid@6.1.17/index.global.min.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/fullcalendar/interaction@6.1.17/index.global.min.js"></script>
-      <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.17/main.min.css"
-      />
-      <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.17/main.min.css"
-      /> */}
       <link
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
       />
       <style>{`body {\n${themeCssVariables}\n}`}</style>
       <style>{themeCssClasses}</style>
-      <style>{tags["main.css"]}</style>
     </>
   );
 }
 
-export function Main() {
-  const state = useMemo(() => createSeedBibleState(), []);
+export function Main({
+  config: appConfig = DEFAULT_APP_CONFIG,
+  initialHref,
+  initialState,
+}: {
+  /** Deployment config (base path + asset host) injected by the host server. */
+  config?: AppConfig;
+  /** Full initial URL — passed during SSR where `window` is absent. */
+  initialHref?: string;
+
+  initialState?: ReturnType<typeof createSeedBibleState>;
+} = {}) {
+  const state =
+    initialState ??
+    useMemo(() => createSeedBibleState({ config: appConfig, initialHref }), []);
 
   useEffect(() => {
     state.extensions.loadDefaultExtensions();
-  });
+  }, []);
 
   const { config } = state;
   const fontSizeClass = `sb-font-size-${config.config.value.fontSize.toLowerCase()}`;
 
+  if (typeof document !== "undefined") {
+    useSignalEffect(() => {
+      document.title = state.app.title.value;
+    });
+  }
+
   return (
-    <I18nProvider>
-      <MainContent state={state} fontSizeClass={fontSizeClass} />
-    </I18nProvider>
+    <AppConfigProvider value={appConfig}>
+      <I18nProvider i18n={state.i18n}>
+        <MainContent state={state} fontSizeClass={fontSizeClass} />
+      </I18nProvider>
+    </AppConfigProvider>
   );
 }
 
@@ -131,26 +149,21 @@ function MainContent(props: {
           <PaneLayout state={state} />
         </main>
 
-        <CasualOSApp id="bible-selector">
-          <>
-            <ExternalResourceDependencies
-              themeCssVariables={theme.themeCssVariables}
-              themeCssClasses={theme.themeCssClasses}
-            />
-            {/* The selector draws its own tour spotlight/popover internally
-                (CSS dim toggled off the tutorial signals), since its elements
-                live in this portal's shadow root and can't be measured from
-                the main tour overlay. */}
-            <BibleSelector
-              className={`${fontSizeClass} ${webkitClass}`}
-              isOpen={selector.isOpen.value}
-              onClose={() => selector.setOpen(false)}
-              selectorState={selector}
-              bibleDataManager={state.bibleData}
-              tutorial={state.tutorial}
-            />
-          </>
-        </CasualOSApp>
+        <ToastHost app={state.app} />
+
+        {/* The selector draws its own tour spotlight/popover internally
+              (CSS dim toggled off the tutorial signals), since its elements
+              live in this portal's shadow root and can't be measured from
+              the main tour overlay. */}
+        <BibleSelector
+          className={`${fontSizeClass} ${webkitClass}`}
+          isOpen={selector.isOpen.value}
+          onClose={() => selector.setOpen(false)}
+          app={state.app}
+          selectorState={selector}
+          bibleDataManager={state.bibleData}
+          tutorial={state.tutorial}
+        />
 
         <FloatingReaderPanels state={state} />
 
@@ -160,32 +173,35 @@ function MainContent(props: {
 
         <ModalHost manager={state.modals} />
 
-        <CasualOSApp id="onboarding">
-          <>
-            <ExternalResourceDependencies
-              themeCssVariables={theme.themeCssVariables}
-              themeCssClasses={theme.themeCssClasses}
-            />
-            <OnboardingModals
-              onboarding={state.onboarding}
-              className={`${fontSizeClass} ${webkitClass}`}
-            />
-          </>
-        </CasualOSApp>
+        <LoginModal login={state.login} navigation={state.navigation} />
 
-        <CasualOSApp id="tutorial">
-          <>
-            <ExternalResourceDependencies
-              themeCssVariables={theme.themeCssVariables}
-              themeCssClasses={theme.themeCssClasses}
-            />
-            <Tutorial
-              tutorial={state.tutorial}
-              className={`${fontSizeClass} ${webkitClass}`}
-              groupFilter="non-selector"
-            />
-          </>
-        </CasualOSApp>
+        <TermsOfServiceModal
+          isOpen={state.isTermsOpen.value}
+          onClose={() => state.closeTerms()}
+        />
+
+        <PrivacyPolicyModal
+          isOpen={state.isPrivacyOpen.value}
+          onClose={() => state.closePrivacy()}
+        />
+
+        <CodeOfConductModal
+          isOpen={state.isCodeOfConductOpen.value}
+          onClose={() => state.closeCodeOfConduct()}
+        />
+
+        <OnboardingModals
+          onboarding={state.onboarding}
+          os={state.os}
+          toast={state.app.toast}
+          className={`${fontSizeClass} ${webkitClass}`}
+        />
+
+        <Tutorial
+          tutorial={state.tutorial}
+          className={`${fontSizeClass} ${webkitClass}`}
+          groupFilter="non-selector"
+        />
       </div>
     </>
   );

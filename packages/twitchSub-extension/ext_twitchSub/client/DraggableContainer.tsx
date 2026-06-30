@@ -1,14 +1,12 @@
-const { useState, useRef, useEffect } = os.appHooks;
+import { useState, useRef, useEffect } from "preact/hooks";
 
 const DraggableContainer = (props: { children: HTMLElement }) => {
   const { children } = props;
   const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState(
-    masks?.position || {
-      x: window.innerWidth / 2 - 175,
-      y: window.innerHeight / 2 - 175,
-    }
-  );
+  const [position, setPosition] = useState({
+    x: window.innerWidth / 2 - 175,
+    y: window.innerHeight / 2 - 175,
+  });
   const [windowSize, setWindowSize] = useState(window.innerWidth);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const dragRef = useRef<HTMLDivElement>(null);
@@ -81,45 +79,45 @@ const DraggableContainer = (props: { children: HTMLElement }) => {
     }
   };
 
-  const handleMouseUp = (e: MouseEvent) => {
+  const handleMouseUp = () => {
     setIsDragging(false);
-    setTagMask(
-      thisBot,
-      "position",
-      {
-        x: e.clientX - offset.x,
-        y: e.clientY - offset.y,
-      },
-      "local"
-    );
+    // setTagMask(
+    //   thisBot,
+    //   "position",
+    //   {
+    //     x: e.clientX - offset.x,
+    //     y: e.clientY - offset.y,
+    //   },
+    //   "local"
+    // );
   };
 
-  const handleTouchEnd = (e: TouchEvent) => {
+  const handleTouchEnd = () => {
     setIsDragging(false);
-    if (e.changedTouches[0]) {
-      setTagMask(
-        thisBot,
-        "position",
-        {
-          x: e.changedTouches[0].clientX - offset.x,
-          y: e.changedTouches[0].clientY - offset.y,
-        },
-        "local"
-      );
-    }
+    // if (e.changedTouches[0]) {
+    //   setTagMask(
+    //     thisBot,
+    //     "position",
+    //     {
+    //       x: e.changedTouches[0].clientX - offset.x,
+    //       y: e.changedTouches[0].clientY - offset.y,
+    //     },
+    //     "local"
+    //   );
+    // }
   };
 
-  const onESC = (evt: Event) => {
-    let isEscape = false;
-    if ("key" in evt) {
-      isEscape = evt.key === "Escape" || evt.key === "Esc";
-    } else {
-      isEscape = (evt as KeyboardEvent).code === "Escape";
-    }
-    if (isEscape) {
-      whisper(thisBot, "closeInterface");
-    }
-  };
+  // const onESC = (evt: Event) => {
+  //   // let isEscape = false;
+  //   // if ("key" in evt) {
+  //   //   isEscape = evt.key === "Escape" || evt.key === "Esc";
+  //   // } else {
+  //   //   isEscape = (evt as KeyboardEvent).code === "Escape";
+  //   // }
+  //   // if (isEscape) {
+  //   //   whisper(thisBot, "closeInterface");
+  //   // }
+  // };
 
   useEffect(() => {
     if (!isDragging) {
@@ -139,12 +137,12 @@ const DraggableContainer = (props: { children: HTMLElement }) => {
     };
   }, [isDragging]);
 
-  useEffect(() => {
-    document.addEventListener("keydown", onESC);
-    return () => {
-      document.removeEventListener("keydown", onESC);
-    };
-  }, []);
+  // useEffect(() => {
+  //   document.addEventListener("keydown", onESC);
+  //   return () => {
+  //     document.removeEventListener("keydown", onESC);
+  //   };
+  // }, []);
 
   useEffect(() => {
     const handleResize = () => {

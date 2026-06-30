@@ -3,8 +3,8 @@ import {
   type BibleSelectorPsalmsGroups,
   type BibleSelectorState,
   type TranslationLanguageGroup,
-} from "seed-bible.managers.BibleSelectorManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
+} from "../managers/BibleSelectorManager";
+import { useI18n } from "../i18n/I18nManager";
 import {
   TickIcon,
   FiltersIcon,
@@ -12,15 +12,21 @@ import {
   AddIcon,
   MinusIcon,
   ShareIcon,
-  BookOutlineIcon,
-  AddTab,
   SbTabsIcon,
-} from "seed-bible.components.icons";
-import type { Translation } from "seed-bible.managers.FreeUseBibleAPI";
+} from "../components/icons";
+import type { Translation } from "../managers/FreeUseBibleAPI";
 import { computed, signal } from "@preact/signals";
-import type { BibleDataManager } from "seed-bible.managers.BibleDataManager";
-import type { TutorialManager } from "seed-bible.managers.TutorialManager";
-const { useEffect, useMemo, useRef, useState, useCallback } = os.appHooks;
+import type { BibleDataManager } from "../managers/BibleDataManager";
+import type { TutorialManager } from "../managers/TutorialManager";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+} from "preact/hooks";
+import type { AppState } from "../managers/SeedBibleStateManager";
+import { MOBILE_BREAKPOINT } from "../managers/SeedBibleStateManager";
 
 /**
  * CSS-only spotlight: the huge translucent box-shadow dims everything around
@@ -44,6 +50,7 @@ interface BibleSelectorProps {
   onClose: () => void;
   selectorState: BibleSelectorState;
   bibleDataManager: BibleDataManager;
+  app: AppState;
   className?: string;
   tutorial?: TutorialManager;
 }
@@ -54,6 +61,7 @@ export function BibleSelector(props: BibleSelectorProps) {
     onClose,
     selectorState,
     bibleDataManager,
+    app,
     className,
     tutorial,
   } = props;
@@ -88,6 +96,7 @@ export function BibleSelector(props: BibleSelectorProps) {
           className="sb-selector-panel"
         >
           <SearchBar
+            app={app}
             bibleSelectorState={selectorState}
             bibleDataManager={bibleDataManager}
             tourStepId={tourStepId}
@@ -161,12 +170,13 @@ export function BibleSelector(props: BibleSelectorProps) {
 }
 
 const SearchBar = (props: {
+  app: AppState;
   bibleSelectorState: BibleSelectorState;
   bibleDataManager: BibleDataManager;
   /** Active selector-group tour step id, or null when no step is active. */
   tourStepId?: string | null;
 }) => {
-  const { bibleSelectorState, bibleDataManager, tourStepId } = props;
+  const { app, bibleSelectorState, bibleDataManager, tourStepId } = props;
   const { t } = useI18n();
   const {
     search,
@@ -174,23 +184,22 @@ const SearchBar = (props: {
     selectedTranslationBooks,
     selectedTranslation,
     openTabs,
-    selectPopUp,
     showApocryphaInfo,
   } = bibleSelectorState;
 
   const selectedTestament = bibleSelectorState.selectedTestament;
   const apocryphaAvailable = bibleSelectorState.apocryphaAvailable;
   const selectingTranslation = bibleSelectorState.selectingTranslation;
-  const viewportWidth = bibleSelectorState.viewportWidth;
+  const isMobile = app.isMobile;
   const selectedTestamentData = bibleSelectorState.selectedTestamentData;
   const handleEnter = bibleSelectorState.handleEnter;
   const setOpen = bibleSelectorState.setOpen;
 
   return (
     <>
-      {(!selectingTranslation.value || viewportWidth.value > 768) && (
+      {(!selectingTranslation.value || !isMobile.value) && (
         <div class="testament-selection starterAnimation">
-          {viewportWidth.value > 768 && (
+          {!isMobile.value && (
             <>
               <div
                 class="sidebar-translation-selector flex-between-center"
@@ -265,12 +274,12 @@ const SearchBar = (props: {
                     {t("allBooks", { defaultValue: "All Books" })}
                   </option>
                   <option value={0} class="dropdown-option">
-                    {viewportWidth.value > 750
+                    {!isMobile.value
                       ? t("old-testament", { defaultValue: "Old Testament" })
                       : t("old-testament_short", { defaultValue: "OT" })}
                   </option>
                   <option value={1} class="dropdown-option">
-                    {viewportWidth.value > 750
+                    {!isMobile.value
                       ? t("new-testament", { defaultValue: "New Testament" })
                       : t("new-testament_short", { defaultValue: "NT" })}
                   </option>
@@ -283,7 +292,7 @@ const SearchBar = (props: {
               </div>
             </>
           )}
-          {viewportWidth.value <= 768 && (
+          {isMobile.value && (
             <>
               <button
                 class="sb-selector-mobile-close"
@@ -312,22 +321,20 @@ const SearchBar = (props: {
         class="sidebar-results starterAnimation flex-wrap-start"
         style={tourStepId === "selector-books" ? SPOTLIGHT_STYLE : undefined}
       >
-        {(!selectingTranslation.value || viewportWidth.value > 768) &&
+        {(!selectingTranslation.value || !isMobile.value) &&
           selectedTranslationBooks.value?.books &&
           selectedTestamentData.value &&
           selectedTranslation.value && (
-            <SideBarBooks bibleSelectorState={bibleSelectorState} />
+            <SideBarBooks app={app} bibleSelectorState={bibleSelectorState} />
           )}
         {selectingTranslation.value && (
           <TranslationModal
+            app={app}
             bibleSelectorState={bibleSelectorState}
             bibleDataManager={bibleDataManager}
           />
         )}
       </div>
-      {selectPopUp.value && bibleSelectorState.viewportWidth.value <= 768 && (
-        <SelectPopUp bibleSelectorState={bibleSelectorState} />
-      )}
       {showApocryphaInfo.value && (
         <ApocryphaInfo bibleSelectorState={bibleSelectorState} />
       )}
@@ -335,13 +342,17 @@ const SearchBar = (props: {
   );
 };
 
-const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
-  const { bibleSelectorState } = props;
+const SideBarBooks = (props: {
+  app: AppState;
+  bibleSelectorState: BibleSelectorState;
+}) => {
+  const { app, bibleSelectorState } = props;
 
   const { t } = useI18n();
 
+  const { viewportWidth } = app;
+
   const {
-    viewportWidth,
     lastBookClicked,
     bookData,
     chT,
@@ -363,7 +374,7 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
     const lst = localSelectedTestament.value;
 
     let allowedRows = 5;
-    if (ws <= 768) {
+    if (ws <= MOBILE_BREAKPOINT) {
       allowedRows = 1;
     } else if (ws < 1200) {
       allowedRows = 3;
@@ -432,7 +443,8 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
                 class="sidebar-chapters show-sidebar-chapter"
                 style={{
                   justifyContent:
-                    ws <= 768 || bd.numberOfChapters < 4 * separator
+                    ws <= MOBILE_BREAKPOINT ||
+                    bd.numberOfChapters < 4 * separator
                       ? "flex-start"
                       : "space-between",
                 }}
@@ -440,7 +452,10 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
                 {narrowChapterStyle && allowedRows === 3 && (
                   <style>{`.show-sidebar-chapter{width: calc(100% - 5px);}`}</style>
                 )}
-                <SideBarChapters bibleSelectorState={bibleSelectorState} />
+                <SideBarChapters
+                  app={app}
+                  bibleSelectorState={bibleSelectorState}
+                />
               </div>
             )}
         </>
@@ -495,12 +510,9 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
               )}
             </div>
           </div>
-          {ws <= 768 && apocryphaAvailable.value && (
+          {ws <= MOBILE_BREAKPOINT && apocryphaAvailable.value && (
             <>
-              <div
-                className="separator"
-                style={{ display: "flex", opacity: 1 }}
-              />
+              <div className="separator" style={{ display: "flex" }} />
               <div
                 class="testament-container flex-col-gap-sm"
                 style={{
@@ -510,7 +522,9 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
                 }}
               >
                 <span class="testament-title">
-                  {t("apocrypha", { defaultValue: "Apocrypha" })}
+                  {t("extrabiblical-writings", {
+                    defaultValue: "Extrabiblical writings",
+                  })}
                   <span
                     class="material-symbols-outlined"
                     onClick={() => {
@@ -578,7 +592,7 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
         }
       >
         <div class="testament-container flex-col-gap-sm">
-          {(config.alwaysShowTitle || ws > 768) && (
+          {(config.alwaysShowTitle || ws > MOBILE_BREAKPOINT) && (
             <span class="testament-title">{config.title}</span>
           )}
           <div class="books-item flex-row-wrap-around">
@@ -594,11 +608,15 @@ const SideBarBooks = (props: { bibleSelectorState: BibleSelectorState }) => {
   return <>{RenderBooksByTestament}</>;
 };
 
-const SideBarChapters = (props: { bibleSelectorState: BibleSelectorState }) => {
-  const { bibleSelectorState } = props;
+const SideBarChapters = (props: {
+  app: AppState;
+  bibleSelectorState: BibleSelectorState;
+}) => {
+  const { app, bibleSelectorState } = props;
 
   const { t } = useI18n();
 
+  const { isMobile } = app;
   const {
     bookData,
     highLightedButtonsID,
@@ -655,13 +673,13 @@ const SideBarChapters = (props: { bibleSelectorState: BibleSelectorState }) => {
       isLast?: boolean;
     }) => {
       const { chapterNumber, isVisible, isLast } = props;
-      const chapterPressHandler = useLongPress(() => {
-        if (bibleSelectorState.viewportWidth.value > 768) return;
-        bibleSelectorState.selectPopUp.value = {
-          bookId: bd.id,
-          chapterNumber: chapterNumber,
-        };
-      }, 1500);
+      const { cancel, ...chapterPressHandler } = useLongPress(() => {
+        if (!isMobile.value) return;
+        bibleSelectorState.forceNewTab.value = true;
+        selectChapter(bd.id, chapterNumber);
+        bibleSelectorState.forceNewTab.value = false;
+        bibleSelectorState.isOpen.value = false;
+      }, 1000);
       return (
         <button
           style={
@@ -671,6 +689,7 @@ const SideBarChapters = (props: { bibleSelectorState: BibleSelectorState }) => {
           }
           class={`chapter-btn flex-center ${isLast ? "lastOne" : ""}`}
           onClick={() => {
+            cancel();
             selectChapter(bd.id, chapterNumber);
             isOpen.value = false;
           }}
@@ -786,17 +805,18 @@ const LoadMoreButton = (props: { onLoadMore: () => void }) => {
 };
 
 const TranslationModal = (props: {
+  app: AppState;
   bibleSelectorState: BibleSelectorState;
   bibleDataManager: BibleDataManager;
 }) => {
-  const { bibleSelectorState, bibleDataManager } = props;
+  const { app, bibleSelectorState, bibleDataManager } = props;
+  const { isMobile } = app;
   const {
     languageQuery,
     selectingTranslation,
     showCustomTranslation,
     allowedTranslationLimit,
     apiTranslations,
-    viewportWidth,
     showAllLanguages,
     showTranslationSettings,
     showTranslationInfo,
@@ -860,6 +880,7 @@ const TranslationModal = (props: {
       >
         {filteredTranslations.map((languageGroup) => (
           <LanguageComponent
+            app={app}
             languageGroup={languageGroup}
             bibleSelectorState={bibleSelectorState}
             bibleDataManager={bibleDataManager}
@@ -900,8 +921,21 @@ const TranslationModal = (props: {
         >
           <div
             class="sidebar-book-selector flex-between-center-gap-md"
-            style={{ marginBottom: "5px", height: "30px", padding: "0 0px" }}
+            style={{ padding: "15px 5px" }}
           >
+            {isMobile.value && (
+              <span
+                class="material-symbols-outlined"
+                onClick={() => {
+                  selectingTranslation.value = false;
+                  showTranslationSettings.value = false;
+                  showTranslationInfo.value = null;
+                  setOpen(false);
+                }}
+              >
+                close
+              </span>
+            )}
             <div
               className="searchbar flex-align-center"
               style={{ width: "100%", height: "30px" }}
@@ -932,17 +966,19 @@ const TranslationModal = (props: {
             >
               <FiltersIcon />
             </span>
-            <span
-              class="material-symbols-outlined"
-              onClick={() => {
-                selectingTranslation.value = false;
-                showTranslationSettings.value = false;
-                showTranslationInfo.value = null;
-                setOpen(false);
-              }}
-            >
-              close
-            </span>
+            {!isMobile.value && (
+              <span
+                class="material-symbols-outlined"
+                onClick={() => {
+                  selectingTranslation.value = false;
+                  showTranslationSettings.value = false;
+                  showTranslationInfo.value = null;
+                  setOpen(false);
+                }}
+              >
+                close
+              </span>
+            )}
           </div>
           {LanguageList}
           <div className="footer">
@@ -983,7 +1019,7 @@ const TranslationModal = (props: {
         <TranslationInfo
           translation={showTranslationInfo.value.translation}
           position={showTranslationInfo.value.position}
-          viewportWidth={viewportWidth.value}
+          isMobile={isMobile.value}
         />
       )}
     </>
@@ -991,11 +1027,12 @@ const TranslationModal = (props: {
 };
 
 const LanguageComponent = (props: {
+  app: AppState;
   languageGroup: TranslationLanguageGroup;
   bibleSelectorState: BibleSelectorState;
   bibleDataManager: BibleDataManager;
 }) => {
-  const { languageGroup, bibleSelectorState, bibleDataManager } = props;
+  const { app, languageGroup, bibleSelectorState, bibleDataManager } = props;
   const {
     language,
     languageName: nativeLanguageName,
@@ -1017,14 +1054,17 @@ const LanguageComponent = (props: {
 
   const shareTranslatation = async (props: { translation: Translation }) => {
     const { translation } = props;
-    const url = new URL(`https://ao.bot/`);
-    url.searchParams.set("pattern", configBot.tags.pattern || "SeedBible");
+    const url = new URL(location.href);
+    // url.searchParams.set("pattern", configBot.tags.pattern || "SeedBible");
     url.searchParams.set(
       "translation",
       bibleDataManager.buildTranslationId(translation.id)
     );
-    os.setClipboard(url.href);
-    os.toast(
+    url.searchParams.delete("book");
+    url.searchParams.delete("chapter");
+    navigator.clipboard.writeText(url.href);
+
+    app.toast(
       t("copied-translation-share-link", {
         defaultValue: "Copied translation share link",
       })
@@ -1326,9 +1366,9 @@ const TranslationSettings = (props: {
 const TranslationInfo = (props: {
   translation: Translation;
   position: { x: number; y: number };
-  viewportWidth: number;
+  isMobile: boolean;
 }) => {
-  const { translation, position, viewportWidth } = props;
+  const { translation, position, isMobile } = props;
   const [textArray, setTextArray] = useState<string[]>([]);
 
   useEffect(() => {
@@ -1355,7 +1395,7 @@ const TranslationInfo = (props: {
   return (
     <div
       style={
-        viewportWidth > 768
+        !isMobile
           ? {
               top: `calc(${position.y}px - 35px - 10dvh)`,
               left: `calc(${position.x}px - (50dvw - 565px))`,
@@ -1374,83 +1414,6 @@ const TranslationInfo = (props: {
           dangerouslySetInnerHTML={{ __html: part }}
         ></span>
       ))}
-    </div>
-  );
-};
-
-const SelectPopUp = (props: { bibleSelectorState: BibleSelectorState }) => {
-  const { selectChapter, selectPopUp, isOpen, forceNewTab } =
-    props.bibleSelectorState;
-  const { t } = useI18n();
-
-  const openInCurrentTab = () => {
-    console.log("Opening in current tab", selectPopUp.value);
-    selectChapter(
-      selectPopUp.value?.bookId ?? "",
-      selectPopUp.value?.chapterNumber ?? 0
-    );
-    selectPopUp.value = null;
-    isOpen.value = false;
-  };
-
-  const openInNewTab = () => {
-    console.log("Opening in new tab", selectPopUp.value);
-    forceNewTab.value = true;
-    selectChapter(
-      selectPopUp.value?.bookId ?? "",
-      selectPopUp.value?.chapterNumber ?? 0
-    );
-    selectPopUp.value = null;
-    forceNewTab.value = false;
-    isOpen.value = false;
-  };
-
-  return (
-    <div
-      id="select-popup"
-      class="sb-select-modal-overlay"
-      onClick={(e) => {
-        if ((e.target as HTMLElement).id === "select-popup") {
-          selectPopUp.value = null;
-        }
-      }}
-    >
-      <div className="sb-select-modal flex-center">
-        <div class="sb-select-modal-content flex-col-gap-md">
-          <span class="sb-select-modal-title-icon">
-            <BookOutlineIcon />
-          </span>
-          <span class="sb-select-modal-title">
-            {t("open-new-chapter-in-new-or-current-tab", {
-              defaultValue: "Open the new chapter in new or current tab",
-            })}
-          </span>
-        </div>
-        <div class="sb-select-modal-actions flex-gap-md">
-          <button
-            style={{
-              background: "var(--sb-secondary-color)",
-              color: "var(--sb-secondary-font-color)",
-            }}
-            onClick={openInCurrentTab}
-            class="sb-select-modal-action-btn flex-start-center-gap-sm"
-          >
-            <SbTabsIcon />
-            {t("current-tab", { defaultValue: "Current Tab" })}
-          </button>
-          <button
-            style={{
-              background: "var(--sb-primary-color)",
-              color: "var(--sb-primary-font-color)",
-            }}
-            onClick={openInNewTab}
-            class="sb-select-modal-action-btn flex-start-center-gap-sm"
-          >
-            <AddTab />
-            {t("new-tab", { defaultValue: "New Tab" })}
-          </button>
-        </div>
-      </div>
     </div>
   );
 };
@@ -1512,8 +1475,10 @@ export function useLongPress(onLongPress: () => void, duration = 1500) {
 
   const start = useCallback(
     (e: MouseEvent | TouchEvent) => {
-      e.preventDefault();
-      timerRef.current = setTimeout(onLongPress, duration);
+      timerRef.current = setTimeout(() => {
+        e.preventDefault();
+        onLongPress();
+      }, duration);
     },
     [onLongPress, duration]
   );
@@ -1530,8 +1495,10 @@ export function useLongPress(onLongPress: () => void, duration = 1500) {
     onMouseUp: cancel,
     onMouseLeave: cancel,
     onTouchStart: start,
+    onTouchMove: cancel,
     onTouchEnd: cancel,
     onTouchCancel: cancel,
+    cancel,
   };
 }
 
