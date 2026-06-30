@@ -1,15 +1,21 @@
 import type { InfoLabelTransformerBot } from "bibleVizUtils.infrastructure.models.casualos";
 import type { Piece } from "bibleVizUtils.domain.models.canvas";
-import { PieceMapper } from "./PieceMapper";
+import type { PieceMapperPort } from "./PieceMapper";
 
 export class InfoLabelTransformerMapper {
-  static toDomain(bot: InfoLabelTransformerBot): Piece<"InfoLabelTransformer"> {
-    return PieceMapper.toDomain(bot);
+  #pieceMapperPort: PieceMapperPort;
+
+  constructor({ pieceMapperPort }: { pieceMapperPort: PieceMapperPort }) {
+    this.#pieceMapperPort = pieceMapperPort;
   }
-  static toInfrastructure(
+
+  toDomain(bot: InfoLabelTransformerBot): Piece<"InfoLabelTransformer"> {
+    return this.#pieceMapperPort.toDomain(bot);
+  }
+  toInfrastructure(
     piece: Piece<"InfoLabelTransformer">
   ): InfoLabelTransformerBot | undefined {
-    const bot = PieceMapper.toInfrastructure(piece);
+    const bot = this.#pieceMapperPort.toInfrastructure(piece);
     if (bot) {
       return bot as InfoLabelTransformerBot;
     }

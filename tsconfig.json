@@ -44,11 +44,20 @@
       "bibleStack.application.ports.in.BibleStackUpdater": [
         "./packages/Bible Stack/bibleStack/application/ports/in/BibleStackUpdater.tsx"
       ],
+      "bibleStack.application.ports.in.BookName": [
+        "./packages/Bible Stack/bibleStack/application/ports/in/BookName.tsx"
+      ],
+      "bibleStack.application.ports.in.BookSelection": [
+        "./packages/Bible Stack/bibleStack/application/ports/in/BookSelection.tsx"
+      ],
       "bibleStack.application.ports.in.BookStackUpdates": [
         "./packages/Bible Stack/bibleStack/application/ports/in/BookStackUpdates.tsx"
       ],
       "bibleStack.application.ports.in.ChapterSelection": [
         "./packages/Bible Stack/bibleStack/application/ports/in/ChapterSelection.tsx"
+      ],
+      "bibleStack.application.ports.in.ExplodedView": [
+        "./packages/Bible Stack/bibleStack/application/ports/in/ExplodedView.tsx"
       ],
       "bibleStack.application.ports.in.Logger": [
         "./packages/Bible Stack/bibleStack/application/ports/in/Logger.tsx"
@@ -59,14 +68,29 @@
       "bibleStack.application.ports.in.PieceInteractability": [
         "./packages/Bible Stack/bibleStack/application/ports/in/PieceInteractability.tsx"
       ],
+      "bibleStack.application.ports.in.PieceLifecycle": [
+        "./packages/Bible Stack/bibleStack/application/ports/in/PieceLifecycle.tsx"
+      ],
+      "bibleStack.application.ports.in.PieceSpawn": [
+        "./packages/Bible Stack/bibleStack/application/ports/in/PieceSpawn.tsx"
+      ],
       "bibleStack.application.ports.in.SectionStackUpdates": [
         "./packages/Bible Stack/bibleStack/application/ports/in/SectionStackUpdates.tsx"
+      ],
+      "bibleStack.application.ports.in.SequenceState": [
+        "./packages/Bible Stack/bibleStack/application/ports/in/SequenceState.tsx"
+      ],
+      "bibleStack.application.ports.in.SpatialNavigation": [
+        "./packages/Bible Stack/bibleStack/application/ports/in/SpatialNavigation.tsx"
       ],
       "bibleStack.application.ports.in.StackUpdate": [
         "./packages/Bible Stack/bibleStack/application/ports/in/StackUpdate.tsx"
       ],
       "bibleStack.application.ports.in.TestamentStackUpdater": [
         "./packages/Bible Stack/bibleStack/application/ports/in/TestamentStackUpdater.tsx"
+      ],
+      "bibleStack.application.ports.in.ViewportPort": [
+        "./packages/Bible Stack/bibleStack/application/ports/in/ViewportPort.tsx"
       ],
       "bibleStack.application.ports.out.BibleStackUpdater": [
         "./packages/Bible Stack/bibleStack/application/ports/out/BibleStackUpdater.tsx"
@@ -80,8 +104,14 @@
       "bibleStack.application.ports.out.PieceLifecycle": [
         "./packages/Bible Stack/bibleStack/application/ports/out/PieceLifecycle.tsx"
       ],
+      "bibleStack.application.ports.out.SectionSelection": [
+        "./packages/Bible Stack/bibleStack/application/ports/out/SectionSelection.tsx"
+      ],
       "bibleStack.application.ports.out.SelectedBookLayout": [
         "./packages/Bible Stack/bibleStack/application/ports/out/SelectedBookLayout.tsx"
+      ],
+      "bibleStack.application.ports.out.SpatialNavigation": [
+        "./packages/Bible Stack/bibleStack/application/ports/out/SpatialNavigation.tsx"
       ],
       "bibleStack.application.ports.out.StackBookUpdater": [
         "./packages/Bible Stack/bibleStack/application/ports/out/StackBookUpdater.tsx"
@@ -94,6 +124,9 @@
       ],
       "bibleStack.application.ports.out.StackUpdate": [
         "./packages/Bible Stack/bibleStack/application/ports/out/StackUpdate.tsx"
+      ],
+      "bibleStack.application.ports.out.ViewportService": [
+        "./packages/Bible Stack/bibleStack/application/ports/out/ViewportService.tsx"
       ],
       "bibleStack.application.ports.pieceLifecycle": [
         "./packages/Bible Stack/bibleStack/application/ports/pieceLifecycle.tsx"
@@ -218,6 +251,9 @@
       "bibleStack.application.services.SequenceStateService": [
         "./packages/Bible Stack/bibleStack/application/services/SequenceStateService.tsx"
       ],
+      "bibleStack.application.services.SpatialNavigationService": [
+        "./packages/Bible Stack/bibleStack/application/services/SpatialNavigationService.tsx"
+      ],
       "bibleStack.application.services.StackManagementService": [
         "./packages/Bible Stack/bibleStack/application/services/StackManagementService.tsx"
       ],
@@ -251,11 +287,17 @@
       "bibleStack.application.services.VersesInteractionService": [
         "./packages/Bible Stack/bibleStack/application/services/VersesInteractionService.tsx"
       ],
+      "bibleStack.application.services.ViewportService": [
+        "./packages/Bible Stack/bibleStack/application/services/ViewportService.tsx"
+      ],
       "bibleStack.controllers.interaction.crossLineInteractionController": [
         "./packages/Bible Stack/bibleStack/controllers/interaction/crossLineInteractionController.tsx"
       ],
       "bibleStack.controllers.lifecycle.appLifecycleController": [
         "./packages/Bible Stack/bibleStack/controllers/lifecycle/appLifecycleController.tsx"
+      ],
+      "bibleStack.domain.functions.Geometry": [
+        "./packages/Bible Stack/bibleStack/domain/functions/Geometry.tsx"
       ],
       "bibleStack.domain.models.events": [
         "./packages/Bible Stack/bibleStack/domain/models/events.tsx"
@@ -299,11 +341,17 @@
       "bibleStack.infrastructure.adapters.stacks.BibleDataRepository": [
         "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/BibleDataRepository.tsx"
       ],
+      "bibleStack.infrastructure.adapters.stacks.BibleRecenterAdapter": [
+        "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/BibleRecenterAdapter.tsx"
+      ],
       "bibleStack.infrastructure.adapters.stacks.BibleSetupAdapter": [
         "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/BibleSetupAdapter.tsx"
       ],
       "bibleStack.infrastructure.adapters.stacks.BibleStackUpdaterAdapter": [
         "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/BibleStackUpdaterAdapter.tsx"
+      ],
+      "bibleStack.infrastructure.adapters.stacks.BookSetupAdapter": [
+        "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/BookSetupAdapter.tsx"
       ],
       "bibleStack.infrastructure.adapters.stacks.BookShapeAdapter": [
         "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/BookShapeAdapter.tsx"
@@ -317,6 +365,9 @@
       "bibleStack.infrastructure.adapters.stacks.ChapterSelectionAdapter": [
         "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/ChapterSelectionAdapter.tsx"
       ],
+      "bibleStack.infrastructure.adapters.stacks.InteractionRegistry": [
+        "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/InteractionRegistry.tsx"
+      ],
       "bibleStack.infrastructure.adapters.stacks.PieceAdapter": [
         "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/PieceAdapter.tsx"
       ],
@@ -328,6 +379,9 @@
       ],
       "bibleStack.infrastructure.adapters.stacks.PieceUnhighlightSchedulerAdapter": [
         "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/PieceUnhighlightSchedulerAdapter.tsx"
+      ],
+      "bibleStack.infrastructure.adapters.stacks.SectionSelectionAdapter": [
+        "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/SectionSelectionAdapter.tsx"
       ],
       "bibleStack.infrastructure.adapters.stacks.SectionStackUpdaterAdapter": [
         "./packages/Bible Stack/bibleStack/infrastructure/adapters/stacks/SectionStackUpdaterAdapter.tsx"
@@ -371,6 +425,12 @@
       "bibleStack.infrastructure.config.bookInteraction.delays": [
         "./packages/Bible Stack/bibleStack/infrastructure/config/bookInteraction/delays.tsx"
       ],
+      "bibleStack.infrastructure.config.bookSetup.BookSetupConfigProvider": [
+        "./packages/Bible Stack/bibleStack/infrastructure/config/bookSetup/BookSetupConfigProvider.tsx"
+      ],
+      "bibleStack.infrastructure.config.bookSetup.layouts": [
+        "./packages/Bible Stack/bibleStack/infrastructure/config/bookSetup/layouts.tsx"
+      ],
       "bibleStack.infrastructure.config.chapterSelection.ChapterSelectionConfigProvider": [
         "./packages/Bible Stack/bibleStack/infrastructure/config/chapterSelection/ChapterSelectionConfigProvider.tsx"
       ],
@@ -385,6 +445,9 @@
       ],
       "bibleStack.infrastructure.config.sectionInteraction.SectionInteractionConfigProvider": [
         "./packages/Bible Stack/bibleStack/infrastructure/config/sectionInteraction/SectionInteractionConfigProvider.tsx"
+      ],
+      "bibleStack.infrastructure.config.sectionSelection.SectionSelectionConfigProvider": [
+        "./packages/Bible Stack/bibleStack/infrastructure/config/sectionSelection/SectionSelectionConfigProvider.tsx"
       ],
       "bibleStack.infrastructure.config.sequences.bibleSetupAnimation": [
         "./packages/Bible Stack/bibleStack/infrastructure/config/sequences/bibleSetupAnimation.tsx"
@@ -406,6 +469,12 @@
       ],
       "bibleStack.infrastructure.config.stackUpdate.StackUpdateConfigProvider": [
         "./packages/Bible Stack/bibleStack/infrastructure/config/stackUpdate/StackUpdateConfigProvider.tsx"
+      ],
+      "bibleStack.infrastructure.controllers.casualos.CameraController": [
+        "./packages/Bible Stack/bibleStack/infrastructure/controllers/casualos/CameraController.tsx"
+      ],
+      "bibleStack.infrastructure.controllers.casualos.CanvasInteractionController": [
+        "./packages/Bible Stack/bibleStack/infrastructure/controllers/casualos/CanvasInteractionController.tsx"
       ],
       "bibleStack.infrastructure.controllers.experience.ExperienceController": [
         "./packages/Bible Stack/bibleStack/infrastructure/controllers/experience/ExperienceController.tsx"
@@ -434,8 +503,14 @@
       "bibleStack.infrastructure.di.bootstrap": [
         "./packages/Bible Stack/bibleStack/infrastructure/di/bootstrap.tsx"
       ],
+      "bibleStack.infrastructure.entrypoints.onExtensionInstalled": [
+        "./packages/Bible Stack/bibleStack/infrastructure/entrypoints/onExtensionInstalled.tsx"
+      ],
       "bibleStack.infrastructure.entrypoints.onFloatingAppRemoved": [
         "./packages/Bible Stack/bibleStack/infrastructure/entrypoints/onFloatingAppRemoved.tsx"
+      ],
+      "bibleStack.infrastructure.entrypoints.onGridUp": [
+        "./packages/Bible Stack/bibleStack/infrastructure/entrypoints/onGridUp.tsx"
       ],
       "bibleStack.infrastructure.hooks.useApp": [
         "./packages/Bible Stack/bibleStack/infrastructure/hooks/useApp.tsx"
@@ -482,6 +557,9 @@
       "bibleStack.infrastructure.models.objectPooler": [
         "./packages/Bible Stack/bibleStack/infrastructure/models/objectPooler.tsx"
       ],
+      "bibleStack.infrastructure.models.stack": [
+        "./packages/Bible Stack/bibleStack/infrastructure/models/stack.tsx"
+      ],
       "bibleStack.infrastructure.models.visualState": [
         "./packages/Bible Stack/bibleStack/infrastructure/models/visualState.tsx"
       ],
@@ -527,317 +605,155 @@
       "bibleStack.infrastructure.ports.visualState": [
         "./packages/Bible Stack/bibleStack/infrastructure/ports/visualState.tsx"
       ],
-      "bibleStack.main.DeselectSection": [
-        "./packages/Bible Stack/bibleStack/main/DeselectSection.tsx"
+      "bibleStack.main.inspect_EjectChapter": [
+        "./packages/Bible Stack/bibleStack/main/inspect_EjectChapter.tsx"
       ],
-      "bibleStack.main.EjectChapter": [
-        "./packages/Bible Stack/bibleStack/main/EjectChapter.tsx"
+      "bibleStack.main.inspect_EnqueueChapter": [
+        "./packages/Bible Stack/bibleStack/main/inspect_EnqueueChapter.tsx"
       ],
-      "bibleStack.main.EnqueueChapter": [
-        "./packages/Bible Stack/bibleStack/main/EnqueueChapter.tsx"
+      "bibleStack.main.inspect_OnEnterHistoryMode": [
+        "./packages/Bible Stack/bibleStack/main/inspect_OnEnterHistoryMode.tsx"
       ],
-      "bibleStack.main.GetBibleDataById": [
-        "./packages/Bible Stack/bibleStack/main/GetBibleDataById.tsx"
+      "bibleStack.main.inspect_OnExitHistoryMode": [
+        "./packages/Bible Stack/bibleStack/main/inspect_OnExitHistoryMode.tsx"
       ],
-      "bibleStack.main.GetChapterDataById": [
-        "./packages/Bible Stack/bibleStack/main/GetChapterDataById.tsx"
+      "bibleStack.main.inspect_OnHistoryUpdated": [
+        "./packages/Bible Stack/bibleStack/main/inspect_OnHistoryUpdated.tsx"
       ],
-      "bibleStack.main.GetDataChainFromParentDataIds": [
-        "./packages/Bible Stack/bibleStack/main/GetDataChainFromParentDataIds.tsx"
+      "bibleStack.main.inspect_OnSectionShadowInteracted": [
+        "./packages/Bible Stack/bibleStack/main/inspect_OnSectionShadowInteracted.tsx"
       ],
-      "bibleStack.main.GetFixedPsalmData": [
-        "./packages/Bible Stack/bibleStack/main/GetFixedPsalmData.tsx"
+      "bibleStack.main.inspect_OnStackBibleClose": [
+        "./packages/Bible Stack/bibleStack/main/inspect_OnStackBibleClose.tsx"
       ],
-      "bibleStack.main.GetLastInteractedBookData": [
-        "./packages/Bible Stack/bibleStack/main/GetLastInteractedBookData.tsx"
+      "bibleStack.main.inspect_OnStackBibleResetComplete": [
+        "./packages/Bible Stack/bibleStack/main/inspect_OnStackBibleResetComplete.tsx"
       ],
-      "bibleStack.main.GetLayoutForBooksGroup": [
-        "./packages/Bible Stack/bibleStack/main/GetLayoutForBooksGroup.tsx"
+      "bibleStack.main.inspect_OnStackBookSelectionComplete": [
+        "./packages/Bible Stack/bibleStack/main/inspect_OnStackBookSelectionComplete.tsx"
       ],
-      "bibleStack.main.GetPieceData": [
-        "./packages/Bible Stack/bibleStack/main/GetPieceData.tsx"
+      "bibleStack.main.inspect_OnStackPiecePulledOut": [
+        "./packages/Bible Stack/bibleStack/main/inspect_OnStackPiecePulledOut.tsx"
       ],
-      "bibleStack.main.GetPreviousExplodedViewSectionData": [
-        "./packages/Bible Stack/bibleStack/main/GetPreviousExplodedViewSectionData.tsx"
+      "bibleStack.main.inspect_OnStackSectionSelectionAnimationComplete": [
+        "./packages/Bible Stack/bibleStack/main/inspect_OnStackSectionSelectionAnimationComplete.tsx"
       ],
-      "bibleStack.main.GetUnhighlightDelayInfo": [
-        "./packages/Bible Stack/bibleStack/main/GetUnhighlightDelayInfo.tsx"
+      "bibleStack.main.inspect_OnStackTestamentSelected": [
+        "./packages/Bible Stack/bibleStack/main/inspect_OnStackTestamentSelected.tsx"
       ],
-      "bibleStack.main.HandleCoverClick": [
-        "./packages/Bible Stack/bibleStack/main/HandleCoverClick.tsx"
+      "bibleStack.main.inspect_OnTabsContextChanged": [
+        "./packages/Bible Stack/bibleStack/main/inspect_OnTabsContextChanged.tsx"
       ],
-      "bibleStack.main.HandleSectionShadowInteraction": [
-        "./packages/Bible Stack/bibleStack/main/HandleSectionShadowInteraction.tsx"
+      "bibleStack.main.inspect_OnTestamentSelectionAnimationComplete": [
+        "./packages/Bible Stack/bibleStack/main/inspect_OnTestamentSelectionAnimationComplete.tsx"
       ],
-      "bibleStack.main.HasSectionEverBeenSelected": [
-        "./packages/Bible Stack/bibleStack/main/HasSectionEverBeenSelected.tsx"
+      "bibleStack.main.inspect_OnTourGuideBookHighlighted": [
+        "./packages/Bible Stack/bibleStack/main/inspect_OnTourGuideBookHighlighted.tsx"
       ],
-      "bibleStack.main.HideObject": [
-        "./packages/Bible Stack/bibleStack/main/HideObject.tsx"
+      "bibleStack.main.inspect_OnTourGuideCameraFocusComplete": [
+        "./packages/Bible Stack/bibleStack/main/inspect_OnTourGuideCameraFocusComplete.tsx"
       ],
-      "bibleStack.main.Initialize": [
-        "./packages/Bible Stack/bibleStack/main/Initialize.tsx"
+      "bibleStack.main.inspect_OnTourGuideComplete": [
+        "./packages/Bible Stack/bibleStack/main/inspect_OnTourGuideComplete.tsx"
       ],
-      "bibleStack.main.IsBiblePieceHighlighted": [
-        "./packages/Bible Stack/bibleStack/main/IsBiblePieceHighlighted.tsx"
+      "bibleStack.main.inspect_PickBook": [
+        "./packages/Bible Stack/bibleStack/main/inspect_PickBook.tsx"
       ],
-      "bibleStack.main.OnBibleVizUtilsInitialized": [
-        "./packages/Bible Stack/bibleStack/main/OnBibleVizUtilsInitialized.tsx"
+      "bibleStack.main.inspect_PickChapter": [
+        "./packages/Bible Stack/bibleStack/main/inspect_PickChapter.tsx"
       ],
-      "bibleStack.main.onBotChanged": [
-        "./packages/Bible Stack/bibleStack/main/onBotChanged.tsx"
+      "bibleStack.main.inspect_PickSection": [
+        "./packages/Bible Stack/bibleStack/main/inspect_PickSection.tsx"
       ],
-      "bibleStack.main.OnCameraRotationChanged": [
-        "./packages/Bible Stack/bibleStack/main/OnCameraRotationChanged.tsx"
+      "bibleStack.main.inspect_PickTestament": [
+        "./packages/Bible Stack/bibleStack/main/inspect_PickTestament.tsx"
       ],
-      "bibleStack.main.OnColorLerperInitialized": [
-        "./packages/Bible Stack/bibleStack/main/OnColorLerperInitialized.tsx"
+      "bibleStack.main.inspect_PlaySound": [
+        "./packages/Bible Stack/bibleStack/main/inspect_PlaySound.tsx"
       ],
-      "bibleStack.main.onDestroy": [
-        "./packages/Bible Stack/bibleStack/main/onDestroy.tsx"
+      "bibleStack.main.inspect_SelectAllSections": [
+        "./packages/Bible Stack/bibleStack/main/inspect_SelectAllSections.tsx"
       ],
-      "bibleStack.main.onEggHatch": [
-        "./packages/Bible Stack/bibleStack/main/onEggHatch.tsx"
+      "bibleStack.main.inspect_SetAllSectionsAsRegularView": [
+        "./packages/Bible Stack/bibleStack/main/inspect_SetAllSectionsAsRegularView.tsx"
       ],
-      "bibleStack.main.OnEnterHistoryMode": [
-        "./packages/Bible Stack/bibleStack/main/OnEnterHistoryMode.tsx"
+      "bibleStack.main.inspect_ShowChaptersInBook": [
+        "./packages/Bible Stack/bibleStack/main/inspect_ShowChaptersInBook.tsx"
       ],
-      "bibleStack.main.OnExitHistoryMode": [
-        "./packages/Bible Stack/bibleStack/main/OnExitHistoryMode.tsx"
+      "bibleStack.main.inspect_SpawnBibleAndPickTestament": [
+        "./packages/Bible Stack/bibleStack/main/inspect_SpawnBibleAndPickTestament.tsx"
       ],
-      "bibleStack.main.onFloatingAppRemoved": [
-        "./packages/Bible Stack/bibleStack/main/onFloatingAppRemoved.tsx"
+      "bibleStack.main.inspect_SpawnBookAndEjectChapter": [
+        "./packages/Bible Stack/bibleStack/main/inspect_SpawnBookAndEjectChapter.tsx"
       ],
-      "bibleStack.main.onGridUp": [
-        "./packages/Bible Stack/bibleStack/main/onGridUp.tsx"
+      "bibleStack.main.inspect_SpawnBookAndPickChapter": [
+        "./packages/Bible Stack/bibleStack/main/inspect_SpawnBookAndPickChapter.tsx"
       ],
-      "bibleStack.main.OnHistoryUpdated": [
-        "./packages/Bible Stack/bibleStack/main/OnHistoryUpdated.tsx"
+      "bibleStack.main.inspect_SpawnChapter": [
+        "./packages/Bible Stack/bibleStack/main/inspect_SpawnChapter.tsx"
       ],
-      "bibleStack.main.onInstJoined": [
-        "./packages/Bible Stack/bibleStack/main/onInstJoined.tsx"
+      "bibleStack.main.inspect_SpawnSection": [
+        "./packages/Bible Stack/bibleStack/main/inspect_SpawnSection.tsx"
       ],
-      "bibleStack.main.OnObjectPoolerInitialized": [
-        "./packages/Bible Stack/bibleStack/main/OnObjectPoolerInitialized.tsx"
+      "bibleStack.main.inspect_SpawnSectionAndPickBook": [
+        "./packages/Bible Stack/bibleStack/main/inspect_SpawnSectionAndPickBook.tsx"
       ],
-      "bibleStack.main.OnSectionShadowInteracted": [
-        "./packages/Bible Stack/bibleStack/main/OnSectionShadowInteracted.tsx"
+      "bibleStack.main.inspect_SpawnTestament": [
+        "./packages/Bible Stack/bibleStack/main/inspect_SpawnTestament.tsx"
       ],
-      "bibleStack.main.OnShowDonationStackComplete": [
-        "./packages/Bible Stack/bibleStack/main/OnShowDonationStackComplete.tsx"
+      "bibleStack.main.inspect_SpawnTestamentAndPickSection": [
+        "./packages/Bible Stack/bibleStack/main/inspect_SpawnTestamentAndPickSection.tsx"
       ],
-      "bibleStack.main.OnStackBibleClose": [
-        "./packages/Bible Stack/bibleStack/main/OnStackBibleClose.tsx"
+      "bibleStack.main.inspect_StopCurrentTourGuide": [
+        "./packages/Bible Stack/bibleStack/main/inspect_StopCurrentTourGuide.tsx"
       ],
-      "bibleStack.main.OnStackBibleCloseComplete": [
-        "./packages/Bible Stack/bibleStack/main/OnStackBibleCloseComplete.tsx"
+      "bibleStack.main.inspect_ToggleStackViz": [
+        "./packages/Bible Stack/bibleStack/main/inspect_ToggleStackViz.tsx"
       ],
-      "bibleStack.main.OnStackBibleCreationComplete": [
-        "./packages/Bible Stack/bibleStack/main/OnStackBibleCreationComplete.tsx"
+      "bibleStack.main.inspect_TryEjectChapter": [
+        "./packages/Bible Stack/bibleStack/main/inspect_TryEjectChapter.tsx"
       ],
-      "bibleStack.main.OnStackBibleResetComplete": [
-        "./packages/Bible Stack/bibleStack/main/OnStackBibleResetComplete.tsx"
+      "bibleStack.main.inspect_TryHighlightChapter": [
+        "./packages/Bible Stack/bibleStack/main/inspect_TryHighlightChapter.tsx"
       ],
-      "bibleStack.main.OnStackBookInteracted": [
-        "./packages/Bible Stack/bibleStack/main/OnStackBookInteracted.tsx"
+      "bibleStack.main.inspect_TryMakeTourGuideOnSection": [
+        "./packages/Bible Stack/bibleStack/main/inspect_TryMakeTourGuideOnSection.tsx"
       ],
-      "bibleStack.main.OnStackBookSelectionComplete": [
-        "./packages/Bible Stack/bibleStack/main/OnStackBookSelectionComplete.tsx"
+      "bibleStack.main.inspect_TryPickBook": [
+        "./packages/Bible Stack/bibleStack/main/inspect_TryPickBook.tsx"
       ],
-      "bibleStack.main.OnStackChapterInteracted": [
-        "./packages/Bible Stack/bibleStack/main/OnStackChapterInteracted.tsx"
+      "bibleStack.main.inspect_TryPickChapter": [
+        "./packages/Bible Stack/bibleStack/main/inspect_TryPickChapter.tsx"
       ],
-      "bibleStack.main.OnStackChunkOfVersesInteracted": [
-        "./packages/Bible Stack/bibleStack/main/OnStackChunkOfVersesInteracted.tsx"
+      "bibleStack.main.inspect_TryPickSection": [
+        "./packages/Bible Stack/bibleStack/main/inspect_TryPickSection.tsx"
       ],
-      "bibleStack.main.OnStackCoverClicked": [
-        "./packages/Bible Stack/bibleStack/main/OnStackCoverClicked.tsx"
+      "bibleStack.main.inspect_TryPickTestament": [
+        "./packages/Bible Stack/bibleStack/main/inspect_TryPickTestament.tsx"
       ],
-      "bibleStack.main.OnStackPieceDrag": [
-        "./packages/Bible Stack/bibleStack/main/OnStackPieceDrag.tsx"
+      "bibleStack.main.inspect_TrySetSectionAsExplodedView": [
+        "./packages/Bible Stack/bibleStack/main/inspect_TrySetSectionAsExplodedView.tsx"
       ],
-      "bibleStack.main.OnStackPiecePulledOut": [
-        "./packages/Bible Stack/bibleStack/main/OnStackPiecePulledOut.tsx"
+      "bibleStack.main.inspect_TryStopStackVizToggle": [
+        "./packages/Bible Stack/bibleStack/main/inspect_TryStopStackVizToggle.tsx"
       ],
-      "bibleStack.main.OnStackSectionInteracted": [
-        "./packages/Bible Stack/bibleStack/main/OnStackSectionInteracted.tsx"
+      "bibleStack.main.inspect_TryToggleStackViz": [
+        "./packages/Bible Stack/bibleStack/main/inspect_TryToggleStackViz.tsx"
       ],
-      "bibleStack.main.OnStackSectionSelectionAnimationComplete": [
-        "./packages/Bible Stack/bibleStack/main/OnStackSectionSelectionAnimationComplete.tsx"
+      "bibleStack.main.inspect_UnhighlightChapter": [
+        "./packages/Bible Stack/bibleStack/main/inspect_UnhighlightChapter.tsx"
       ],
-      "bibleStack.main.OnStackTestamentInteracted": [
-        "./packages/Bible Stack/bibleStack/main/OnStackTestamentInteracted.tsx"
+      "bibleStack.main.inspect_UpdateStackPiecesActivityNotification": [
+        "./packages/Bible Stack/bibleStack/main/inspect_UpdateStackPiecesActivityNotification.tsx"
       ],
-      "bibleStack.main.OnStackTestamentSelected": [
-        "./packages/Bible Stack/bibleStack/main/OnStackTestamentSelected.tsx"
+      "bibleStack.main.inspect_UpdateStackPiecesUsersColor": [
+        "./packages/Bible Stack/bibleStack/main/inspect_UpdateStackPiecesUsersColor.tsx"
       ],
-      "bibleStack.main.OnTabsContextChanged": [
-        "./packages/Bible Stack/bibleStack/main/OnTabsContextChanged.tsx"
+      "bibleStack.main.inspect_UserPresenceUpdate": [
+        "./packages/Bible Stack/bibleStack/main/inspect_UserPresenceUpdate.tsx"
       ],
-      "bibleStack.main.OnTestamentSelectionAnimationComplete": [
-        "./packages/Bible Stack/bibleStack/main/OnTestamentSelectionAnimationComplete.tsx"
-      ],
-      "bibleStack.main.OnTourGuideBookHighlighted": [
-        "./packages/Bible Stack/bibleStack/main/OnTourGuideBookHighlighted.tsx"
-      ],
-      "bibleStack.main.OnTourGuideCameraFocusComplete": [
-        "./packages/Bible Stack/bibleStack/main/OnTourGuideCameraFocusComplete.tsx"
-      ],
-      "bibleStack.main.OnTourGuideComplete": [
-        "./packages/Bible Stack/bibleStack/main/OnTourGuideComplete.tsx"
-      ],
-      "bibleStack.main.OnVerseInteracted": [
-        "./packages/Bible Stack/bibleStack/main/OnVerseInteracted.tsx"
-      ],
-      "bibleStack.main.PickBook": [
-        "./packages/Bible Stack/bibleStack/main/PickBook.tsx"
-      ],
-      "bibleStack.main.PickChapter": [
-        "./packages/Bible Stack/bibleStack/main/PickChapter.tsx"
-      ],
-      "bibleStack.main.PickSection": [
-        "./packages/Bible Stack/bibleStack/main/PickSection.tsx"
-      ],
-      "bibleStack.main.PickTestament": [
-        "./packages/Bible Stack/bibleStack/main/PickTestament.tsx"
-      ],
-      "bibleStack.main.PlaySound": [
-        "./packages/Bible Stack/bibleStack/main/PlaySound.tsx"
-      ],
-      "bibleStack.main.PushDataToSingleDataArray": [
-        "./packages/Bible Stack/bibleStack/main/PushDataToSingleDataArray.tsx"
-      ],
-      "bibleStack.main.RemovePieceFromHighlightedList": [
-        "./packages/Bible Stack/bibleStack/main/RemovePieceFromHighlightedList.tsx"
-      ],
-      "bibleStack.main.ResetStackData": [
-        "./packages/Bible Stack/bibleStack/main/ResetStackData.tsx"
-      ],
-      "bibleStack.main.ResetToDefault": [
-        "./packages/Bible Stack/bibleStack/main/ResetToDefault.tsx"
-      ],
-      "bibleStack.main.SelectAllSections": [
-        "./packages/Bible Stack/bibleStack/main/SelectAllSections.tsx"
-      ],
-      "bibleStack.main.SelectSection": [
-        "./packages/Bible Stack/bibleStack/main/SelectSection.tsx"
-      ],
-      "bibleStack.main.SelectTestament": [
-        "./packages/Bible Stack/bibleStack/main/SelectTestament.tsx"
-      ],
-      "bibleStack.main.selfGetter": [
-        "./packages/Bible Stack/bibleStack/main/selfGetter.tsx"
-      ],
-      "bibleStack.main.SetAllSectionsAsRegularView": [
-        "./packages/Bible Stack/bibleStack/main/SetAllSectionsAsRegularView.tsx"
-      ],
-      "bibleStack.main.SetStackCreationActive": [
-        "./packages/Bible Stack/bibleStack/main/SetStackCreationActive.tsx"
-      ],
-      "bibleStack.main.SetUpBible": [
-        "./packages/Bible Stack/bibleStack/main/SetUpBible.tsx"
-      ],
-      "bibleStack.main.ShowChaptersInBook": [
-        "./packages/Bible Stack/bibleStack/main/ShowChaptersInBook.tsx"
-      ],
-      "bibleStack.main.SpawnBibleAndPickTestament": [
-        "./packages/Bible Stack/bibleStack/main/SpawnBibleAndPickTestament.tsx"
-      ],
-      "bibleStack.main.SpawnBook": [
-        "./packages/Bible Stack/bibleStack/main/SpawnBook.tsx"
-      ],
-      "bibleStack.main.SpawnBookAndEjectChapter": [
-        "./packages/Bible Stack/bibleStack/main/SpawnBookAndEjectChapter.tsx"
-      ],
-      "bibleStack.main.SpawnBookAndPickChapter": [
-        "./packages/Bible Stack/bibleStack/main/SpawnBookAndPickChapter.tsx"
-      ],
-      "bibleStack.main.SpawnChapter": [
-        "./packages/Bible Stack/bibleStack/main/SpawnChapter.tsx"
-      ],
-      "bibleStack.main.SpawnPlatformerGameBible": [
-        "./packages/Bible Stack/bibleStack/main/SpawnPlatformerGameBible.tsx"
-      ],
-      "bibleStack.main.SpawnSection": [
-        "./packages/Bible Stack/bibleStack/main/SpawnSection.tsx"
-      ],
-      "bibleStack.main.SpawnSectionAndPickBook": [
-        "./packages/Bible Stack/bibleStack/main/SpawnSectionAndPickBook.tsx"
-      ],
-      "bibleStack.main.SpawnTestament": [
-        "./packages/Bible Stack/bibleStack/main/SpawnTestament.tsx"
-      ],
-      "bibleStack.main.SpawnTestamentAndPickSection": [
-        "./packages/Bible Stack/bibleStack/main/SpawnTestamentAndPickSection.tsx"
-      ],
-      "bibleStack.main.StopCurrentTourGuide": [
-        "./packages/Bible Stack/bibleStack/main/StopCurrentTourGuide.tsx"
-      ],
-      "bibleStack.main.ToggleStackViz": [
-        "./packages/Bible Stack/bibleStack/main/ToggleStackViz.tsx"
-      ],
-      "bibleStack.main.TryCreateNewBible": [
-        "./packages/Bible Stack/bibleStack/main/TryCreateNewBible.tsx"
-      ],
-      "bibleStack.main.TryEjectChapter": [
-        "./packages/Bible Stack/bibleStack/main/TryEjectChapter.tsx"
-      ],
-      "bibleStack.main.TryHighlightChapter": [
-        "./packages/Bible Stack/bibleStack/main/TryHighlightChapter.tsx"
-      ],
-      "bibleStack.main.TryMakeTourGuideOnSection": [
-        "./packages/Bible Stack/bibleStack/main/TryMakeTourGuideOnSection.tsx"
-      ],
-      "bibleStack.main.TryPickBook": [
-        "./packages/Bible Stack/bibleStack/main/TryPickBook.tsx"
-      ],
-      "bibleStack.main.TryPickChapter": [
-        "./packages/Bible Stack/bibleStack/main/TryPickChapter.tsx"
-      ],
-      "bibleStack.main.TryPickSection": [
-        "./packages/Bible Stack/bibleStack/main/TryPickSection.tsx"
-      ],
-      "bibleStack.main.TryPickTestament": [
-        "./packages/Bible Stack/bibleStack/main/TryPickTestament.tsx"
-      ],
-      "bibleStack.main.TryRecenterStack": [
-        "./packages/Bible Stack/bibleStack/main/TryRecenterStack.tsx"
-      ],
-      "bibleStack.main.TrySelectChapter": [
-        "./packages/Bible Stack/bibleStack/main/TrySelectChapter.tsx"
-      ],
-      "bibleStack.main.TrySetPiecesRenderOrder": [
-        "./packages/Bible Stack/bibleStack/main/TrySetPiecesRenderOrder.tsx"
-      ],
-      "bibleStack.main.TrySetSectionAsExplodedView": [
-        "./packages/Bible Stack/bibleStack/main/TrySetSectionAsExplodedView.tsx"
-      ],
-      "bibleStack.main.TryStopStackVizToggle": [
-        "./packages/Bible Stack/bibleStack/main/TryStopStackVizToggle.tsx"
-      ],
-      "bibleStack.main.TryToggleStackViz": [
-        "./packages/Bible Stack/bibleStack/main/TryToggleStackViz.tsx"
-      ],
-      "bibleStack.main.UnhighlightChapter": [
-        "./packages/Bible Stack/bibleStack/main/UnhighlightChapter.tsx"
-      ],
-      "bibleStack.main.UpdateHistoryModeElements": [
-        "./packages/Bible Stack/bibleStack/main/UpdateHistoryModeElements.tsx"
-      ],
-      "bibleStack.main.UpdateStackPiecesActivityNotification": [
-        "./packages/Bible Stack/bibleStack/main/UpdateStackPiecesActivityNotification.tsx"
-      ],
-      "bibleStack.main.UpdateStackPiecesUsersColor": [
-        "./packages/Bible Stack/bibleStack/main/UpdateStackPiecesUsersColor.tsx"
-      ],
-      "bibleStack.main.UserPresenceUpdate": [
-        "./packages/Bible Stack/bibleStack/main/UserPresenceUpdate.tsx"
-      ],
-      "bibleStack.models.portal": [
-        "./packages/Bible Stack/bibleStack/models/portal.tsx"
-      ],
-      "bibleStack.models.stack": [
-        "./packages/Bible Stack/bibleStack/models/stack.tsx"
+      "bibleStack.prefabs.bibleTransformer.botAdapter": [
+        "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/botAdapter.tsx"
       ],
       "bibleStack.prefabs.bibleTransformer.DisplayDonationFillAnimation": [
         "./packages/Bible Stack/bibleStack/prefabs/bibleTransformer/DisplayDonationFillAnimation.tsx"
@@ -1124,6 +1040,9 @@
       "bibleStack.prefabs.section.TryToUnlerp": [
         "./packages/Bible Stack/bibleStack/prefabs/section/TryToUnlerp.tsx"
       ],
+      "bibleStack.prefabs.sectionShadow.botAdapter": [
+        "./packages/Bible Stack/bibleStack/prefabs/sectionShadow/botAdapter.tsx"
+      ],
       "bibleStack.prefabs.sectionShadow.onBotChanged": [
         "./packages/Bible Stack/bibleStack/prefabs/sectionShadow/onBotChanged.tsx"
       ],
@@ -1135,6 +1054,9 @@
       ],
       "bibleStack.prefabs.sectionShadow.OnSpawned": [
         "./packages/Bible Stack/bibleStack/prefabs/sectionShadow/OnSpawned.tsx"
+      ],
+      "bibleStack.prefabs.shadow.botAdapter": [
+        "./packages/Bible Stack/bibleStack/prefabs/shadow/botAdapter.tsx"
       ],
       "bibleStack.prefabs.shadow.OnReleased": [
         "./packages/Bible Stack/bibleStack/prefabs/shadow/OnReleased.tsx"
@@ -1220,8 +1142,8 @@
       "bibleStack.prefabs.verse.OnReleased": [
         "./packages/Bible Stack/bibleStack/prefabs/verse/OnReleased.tsx"
       ],
-      "bibleStack.services.index": [
-        "./packages/Bible Stack/bibleStack/services/index.tsx"
+      "bibleVizUtils.application.ports.in.PieceLabel": [
+        "./packages/Bible Visualization Utils/bibleVizUtils/application/ports/in/PieceLabel.tsx"
       ],
       "bibleVizUtils.application.ports.PieceActivity": [
         "./packages/Bible Visualization Utils/bibleVizUtils/application/ports/PieceActivity.tsx"

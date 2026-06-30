@@ -1,4 +1,5 @@
 import type { BibleVizDataRepository } from "bibleVizUtils.infrastructure.data.BibleVizDataRepository";
+import type { PieceMapper } from "bibleVizUtils.infrastructure.mappers.PieceMapper";
 import type { ScriptureService } from "bibleVizUtils.application.services.ScriptureService";
 import { ReadingHistoryService } from "bibleVizUtils.application.services.ReadingHistoryService";
 import { PieceActivityService } from "bibleVizUtils.application.services.PieceActivityService";
@@ -61,6 +62,7 @@ import type {
   TooltipAnchor,
   Range as ReadingHistoryRange,
 } from "bibleVizUtils.infrastructure.presentation.components.ui.ReadingHistoryTimeline";
+import type { StackConfigProvider } from "../config/stacks/StackConfigProvider";
 
 export type {
   ReadingHistoryTimelineComponent,
@@ -121,7 +123,9 @@ export interface BibleVizAPI {
   GetPastDateInfo: GetPastDateInfoType;
   scriptureMap3DConfigProvider: ScriptureMap3DConfigProvider;
   readingHistoryConfigProvider: ReadingHistoryConfigProvider;
+  stackConfigProvider: StackConfigProvider;
   sectionInfoMapper: SectionInfoMapper;
+  pieceMapper: PieceMapper;
   sessionProvider: SessionProvider;
   bookNames: Signal<Map<string, string>>;
   connectedUsers: Signal<ConnectedSessionUser[]>;

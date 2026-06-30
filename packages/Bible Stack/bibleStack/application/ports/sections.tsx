@@ -60,10 +60,10 @@ export interface DropEventMapperPort {
 }
 
 export interface SectionSelectionServicePort {
-  selectSection: (params: {
+  select: (params: {
     data: StackSectionData;
     source: PieceSelectionSource;
     pacing?: StackPresenceNavigationPacing;
   }) => Promise<void>;
-  deselectSection: (data: StackSectionData) => void;
+  deselect: (data: StackSectionData) => void;
 }

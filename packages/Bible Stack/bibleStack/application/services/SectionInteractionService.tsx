@@ -24,6 +24,8 @@ import {
 } from "../../domain/models/pieces";
 import { SectionInteractionDelays } from "bibleStack.infrastructure.config.sectionInteraction.delays";
 
+import type { SequenceStateServicePort } from "../ports/in/SequenceState";
+
 type SectionDataRepositoryPort = Pick<PieceDataRepositoryPort, "getPieceData">;
 
 interface ServiceParams {
@@ -32,6 +34,7 @@ interface ServiceParams {
   tourGuideServicePort: TourGuideServicePort;
   pieceHighlightServicePort: PieceHighlightServicePort;
   sectionInteractionConfigProviderPort: SectionInteractionConfigProviderPort;
+  sequenceStateServicePort: SequenceStateServicePort;
   sectionSelectionServicePort: SectionSelectionServicePort;
 }
 
@@ -42,6 +45,7 @@ export class SectionInteractionService implements SectionInteractionServicePort 
   #pieceHighlightServicePort: ServiceParams["pieceHighlightServicePort"];
   #sectionInteractionConfigProviderPort: ServiceParams["sectionInteractionConfigProviderPort"];
   #sectionSelectionServicePort: ServiceParams["sectionSelectionServicePort"];
+  #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];
 
   constructor({
     sectionDataRepositoryPort,
@@ -50,6 +54,7 @@ export class SectionInteractionService implements SectionInteractionServicePort 
     pieceHighlightServicePort,
     sectionInteractionConfigProviderPort,
     sectionSelectionServicePort,
+    sequenceStateServicePort,
   }: ServiceParams) {
     this.#sectionDataRepositoryPort = sectionDataRepositoryPort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
@@ -58,6 +63,7 @@ export class SectionInteractionService implements SectionInteractionServicePort 
     this.#sectionInteractionConfigProviderPort =
       sectionInteractionConfigProviderPort;
     this.#sectionSelectionServicePort = sectionSelectionServicePort;
+    this.#sequenceStateServicePort = sequenceStateServicePort;
   }
 
   #meetsBaseInteractionConditions(section: Piece<"StackSection">) {
@@ -102,10 +108,12 @@ export class SectionInteractionService implements SectionInteractionServicePort 
         case SelectionModalities.Precise: {
           if (sectionData.highlightState === "Highlighted") {
             if (!sectionData.isSplitIntoBooks) {
-              this.#sectionSelectionServicePort.selectSection({
-                data: sectionData,
-                source: PieceSelectionSources.UserSelection,
-              });
+              this.#sequenceStateServicePort.executeAsSequence(() =>
+                this.#sectionSelectionServicePort.select({
+                  data: sectionData,
+                  source: PieceSelectionSources.UserSelection,
+                })
+              );
             }
           } else {
             this.#pieceHighlightServicePort.tryHighlightPiece({
@@ -116,10 +124,12 @@ export class SectionInteractionService implements SectionInteractionServicePort 
           break;
         }
         case SelectionModalities.Coarse: {
-          this.#sectionSelectionServicePort.selectSection({
-            data: sectionData,
-            source: PieceSelectionSources.UserSelection,
-          });
+          this.#sequenceStateServicePort.executeAsSequence(() =>
+            this.#sectionSelectionServicePort.select({
+              data: sectionData,
+              source: PieceSelectionSources.UserSelection,
+            })
+          );
           break;
         }
       }

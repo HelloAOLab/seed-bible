@@ -1,11 +1,25 @@
 import type { StackSectionData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionData";
 import type { ExplodedViewServicePort as DomainExplodedViewServicePort } from "bibleStack.application.ports.explodedView";
 import type { ExplodedViewServicePort } from "bibleStack.application.ports.userPresence";
+import type { ExplodedViewServicePort as ExplodedSectionRegistryPort } from "../ports/in/ExplodedView";
 import type { StackPresenceNavigationPacing } from "bibleStack.domain.models.userPresence";
 
 export class ExplodedViewService
-  implements DomainExplodedViewServicePort, ExplodedViewServicePort
+  implements
+    DomainExplodedViewServicePort,
+    ExplodedViewServicePort,
+    ExplodedSectionRegistryPort
 {
+  #currentExplodedSection: StackSectionData | undefined;
+
+  get currentExplodedSection(): StackSectionData | undefined {
+    return this.#currentExplodedSection;
+  }
+
+  registerExplodedSection(section: StackSectionData): void {
+    this.#currentExplodedSection = section;
+  }
+
   explodeSection(_params: {
     data: StackSectionData;
     pacing?: StackPresenceNavigationPacing;

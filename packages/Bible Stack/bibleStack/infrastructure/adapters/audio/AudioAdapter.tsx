@@ -1,24 +1,33 @@
-import type { AudioConfigProviderPort } from "bibleStack.infrastructure.ports.audio";
+import type { AudioConfigProvider } from "../../config/audio/AudioConfigProvider";
+import type { Sound } from "../../config/audio/sounds";
 
 interface AdapterParams {
-  audioConfigProviderPort: AudioConfigProviderPort;
+  audioConfigProvider: AudioConfigProvider;
 }
 
 export class AudioAdapter {
-  #audioConfigProviderPort: AdapterParams["audioConfigProviderPort"];
+  #audioConfigProvider: AdapterParams["audioConfigProvider"];
 
-  constructor({ audioConfigProviderPort }: AdapterParams) {
-    this.#audioConfigProviderPort = audioConfigProviderPort;
+  constructor({ audioConfigProvider }: AdapterParams) {
+    this.#audioConfigProvider = audioConfigProvider;
   }
 
   bufferSounds() {
-    const keys = this.#audioConfigProviderPort.getSoundsKeys();
+    const keys = this.#audioConfigProvider.getSoundsKeys();
     for (const key of keys) {
-      const soundUrl = this.#audioConfigProviderPort.getSound(key);
+      const soundUrl = this.#audioConfigProvider.getSound(key);
       const urls = Array.isArray(soundUrl) ? soundUrl : [soundUrl];
       for (const url of urls) {
         os.bufferSound(url);
       }
     }
+  }
+
+  playSound(sound: Sound) {
+    const result = this.#audioConfigProvider.getSound(sound);
+    const url = Array.isArray(result)
+      ? result[Math.floor(Math.random() * result.length)]!
+      : result;
+    os.playSound(url);
   }
 }

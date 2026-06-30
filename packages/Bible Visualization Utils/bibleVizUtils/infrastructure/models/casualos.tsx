@@ -244,12 +244,15 @@ export interface BibleVizUtilsObjectPoolerMap {
 }
 
 // eslint-disable-next-line
-export type CustomTag<P extends TypedBot<any, any>> = {
-  [K in keyof P["tags"]]: {
-    tag: K;
-    value: P["tags"][K];
-  };
-}[keyof P["tags"]];
+// export type CustomTag<P extends TypedBot<any, any>> = {
+//   [K in keyof P["tags"]]: {
+//     tag: K;
+//     value: P["tags"][K];
+//   };
+// }[keyof P["tags"]];
+
+// eslint-disable-next-line
+export type CustomTags<P extends TypedBot<any, any>> = Partial<P["tags"]>;
 
 export interface PoolData<
   K = string,
@@ -258,8 +261,8 @@ export interface PoolData<
 > {
   key: K;
   prefab: P;
-  customTags: CustomTag<P>[];
-  cleanupCustomTags?: CustomTag<P>[];
+  customTags: CustomTags<P>;
+  cleanupCustomTags?: CustomTags<P>;
   size: number;
 }
 

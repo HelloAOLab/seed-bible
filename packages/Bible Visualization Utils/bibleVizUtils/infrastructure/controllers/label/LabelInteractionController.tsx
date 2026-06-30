@@ -2,7 +2,7 @@ import type {
   InfoLabelTailBot,
   InfoLabelTextBot,
 } from "bibleVizUtils.infrastructure.models.casualos";
-import { InfoLabelTailMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTailMapper";
+import type { InfoLabelTailMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTailMapper";
 import type { Piece } from "bibleVizUtils.domain.models.canvas";
 import type { LabelInteractionServicePort } from "bibleVizUtils.domain.ports.label";
 
@@ -13,22 +13,26 @@ interface InfoLabelTextMapperPort {
 interface ControllerProps {
   labelInteractionServicePort: LabelInteractionServicePort;
   infoLabelTextMapperPort: InfoLabelTextMapperPort;
+  infoLabelTailMapperPort: InfoLabelTailMapper;
 }
 
 export class LabelInteractionController {
   #labelInteractionServicePort: ControllerProps["labelInteractionServicePort"];
   #infoLabelTextMapperPort: InfoLabelTextMapperPort;
+  #infoLabelTailMapperPort: ControllerProps["infoLabelTailMapperPort"];
 
   constructor({
     labelInteractionServicePort,
     infoLabelTextMapperPort,
+    infoLabelTailMapperPort,
   }: ControllerProps) {
     this.#labelInteractionServicePort = labelInteractionServicePort;
     this.#infoLabelTextMapperPort = infoLabelTextMapperPort;
+    this.#infoLabelTailMapperPort = infoLabelTailMapperPort;
   }
 
   handleLabelTailClick(labelTail: InfoLabelTailBot) {
-    const piece = InfoLabelTailMapper.toDomain(labelTail);
+    const piece = this.#infoLabelTailMapperPort.toDomain(labelTail);
     this.#labelInteractionServicePort.handleLabelTailClick(piece);
   }
 

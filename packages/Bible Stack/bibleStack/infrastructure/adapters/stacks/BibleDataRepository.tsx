@@ -2,12 +2,16 @@ import type { BibleDataRepositoryPort as StacksDataRepositoryPort } from "bibleS
 import type { BibleDataRepositoryPort as BibleLifecycleDataRepositoryPort } from "bibleStack.application.ports.bibleLifecycle";
 import type { StackBibleData } from "bibleVizUtils.domain.entities.StackBibleData";
 import type { BibleDataRepositoryPort as BibleStackUpdaterDataRepositoryPort } from "@packages/Bible Stack/bibleStack/application/ports/out/BibleStackUpdater";
+import type { BibleDataRepositoryPort as ViewportBibleDataRepositoryPort } from "@packages/Bible Stack/bibleStack/application/ports/out/ViewportService";
+import type { BibleDataRepositoryPort as SpatialNavigationBibleDataRepositoryPort } from "@packages/Bible Stack/bibleStack/application/ports/out/SpatialNavigation";
 
 export class BibleDataRepository
   implements
     StacksDataRepositoryPort,
     BibleLifecycleDataRepositoryPort,
-    BibleStackUpdaterDataRepositoryPort
+    BibleStackUpdaterDataRepositoryPort,
+    ViewportBibleDataRepositoryPort,
+    SpatialNavigationBibleDataRepositoryPort
 {
   #biblesData: Set<StackBibleData> = new Set();
 

@@ -347,8 +347,14 @@ export class BookStackUpdaterAdapter implements BookStackUpdaterPort {
         } else {
           const sectionScales =
             this.#stackConfigProvider.getStackPieceMeasurement("SectionScales");
-          desiredPositionX += explodedViewPosition.x * sectionScales.x;
-          desiredPositionY += explodedViewPosition.y * sectionScales.y;
+          const explodedPosition =
+            this.#bookStackLayoutAdapter.computeExplodedBookPosition(
+              { x: explodedViewPosition.x, y: explodedViewPosition.y },
+              { x: sectionScales.x, y: sectionScales.y },
+              { x: desiredPositionX, y: desiredPositionY }
+            );
+          desiredPositionX = explodedPosition.x;
+          desiredPositionY = explodedPosition.y;
         }
       } else if (this.#isGroupBook(data)) {
         const groupLayoutPosition = this.#computeGroupBookLayoutPosition({

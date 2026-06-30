@@ -31,6 +31,46 @@ export class BookStackLayoutAdapter {
     return { scale, position, layoutPosition };
   }
 
+  /**
+   * Places a book in the section's exploded view from its normalized
+   * `explodedViewPosition`. Shared by the stack update (`BookStackUpdaterAdapter`)
+   * and the section selection cascade (`SectionSelectionAdapter`) — same inputs,
+   * same output. The section scale source differs per caller, so it is passed in.
+   */
+  computeExplodedBookPosition(
+    explodedViewPosition: { x: number; y: number },
+    sectionScale: { x: number; y: number },
+    sectionPosition: { x: number; y: number }
+  ): { x: number; y: number } {
+    return {
+      x: explodedViewPosition.x * sectionScale.x + sectionPosition.x,
+      y: explodedViewPosition.y * sectionScale.y + sectionPosition.y,
+    };
+  }
+
+  /**
+   * The Z depth (`desiredScaleZ`) a level of books occupies inside a section,
+   * proportional to how many of the section's chapters live in that level.
+   */
+  computeBookDesiredScaleZ({
+    sectionDesiredScaleZ,
+    betweenBooks,
+    levelsCount,
+    chaptersInLevel,
+    sectionTotalChapters,
+  }: {
+    sectionDesiredScaleZ: number;
+    betweenBooks: number;
+    levelsCount: number;
+    chaptersInLevel: number;
+    sectionTotalChapters: number;
+  }): number {
+    const sectionAvailableSpace =
+      sectionDesiredScaleZ - betweenBooks * (levelsCount + 1);
+    const percentageOfLevelInSection = chaptersInLevel / sectionTotalChapters;
+    return percentageOfLevelInSection * sectionAvailableSpace;
+  }
+
   computeGroupBookProperties(
     bookLayout: BookLayout,
     sectionPosition: Vector3Type = new Vector3(0, 0, 0),

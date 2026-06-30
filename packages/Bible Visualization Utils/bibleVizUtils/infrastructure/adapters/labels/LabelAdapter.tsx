@@ -13,7 +13,7 @@ import {
   LabelDateFormat,
   LabelTranslucencyModes,
 } from "bibleVizUtils.domain.models.label";
-import { PieceMapper } from "bibleVizUtils.infrastructure.mappers.PieceMapper";
+import type { PieceMapperPort } from "bibleVizUtils.infrastructure.mappers.PieceMapper";
 import type {
   BibleVizUtilsObjectPoolerMap,
   InfoLabelDateBot,
@@ -26,10 +26,10 @@ import type {
 } from "bibleVizUtils.infrastructure.models.casualos";
 import type { LabelAdapterPort } from "bibleVizUtils.domain.ports.label";
 import type { ObjectPooler } from "bibleVizUtils.infrastructure.adapters.casualos.ObjectPooler";
-import { InfoLabelTransformerMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTransformerMapper";
-import { InfoLabelTailMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTailMapper";
+import type { InfoLabelTransformerMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTransformerMapper";
+import type { InfoLabelTailMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTailMapper";
 import type { Piece } from "bibleVizUtils.domain.models.canvas";
-import { InfoLabelDateMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelDateMapper";
+import type { InfoLabelDateMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelDateMapper";
 import type {
   FontData,
   FontName,
@@ -60,6 +60,10 @@ interface ServiceParams {
   labelConfigProviderPort: LabelConfigProviderPort;
   dimensionProviderPort: DimensionProviderPort;
   infoLabelTextMapperPort: InfoLabelTextMapperPort;
+  pieceMapperPort: PieceMapperPort;
+  infoLabelTransformerMapperPort: InfoLabelTransformerMapper;
+  infoLabelTailMapperPort: InfoLabelTailMapper;
+  infoLabelDateMapperPort: InfoLabelDateMapper;
 }
 
 export class LabelAdapter implements LabelAdapterPort {
@@ -67,16 +71,28 @@ export class LabelAdapter implements LabelAdapterPort {
   #labelConfigProviderPort: ServiceParams["labelConfigProviderPort"];
   #dimensionProviderPort: DimensionProviderPort;
   #infoLabelTextMapperPort: InfoLabelTextMapperPort;
+  #pieceMapperPort: ServiceParams["pieceMapperPort"];
+  #infoLabelTransformerMapperPort: ServiceParams["infoLabelTransformerMapperPort"];
+  #infoLabelTailMapperPort: ServiceParams["infoLabelTailMapperPort"];
+  #infoLabelDateMapperPort: ServiceParams["infoLabelDateMapperPort"];
   constructor({
     objectPooler,
     labelConfigProviderPort,
     dimensionProviderPort,
     infoLabelTextMapperPort,
+    pieceMapperPort,
+    infoLabelTransformerMapperPort,
+    infoLabelTailMapperPort,
+    infoLabelDateMapperPort,
   }: ServiceParams) {
     this.#objectPooler = objectPooler;
     this.#labelConfigProviderPort = labelConfigProviderPort;
     this.#dimensionProviderPort = dimensionProviderPort;
     this.#infoLabelTextMapperPort = infoLabelTextMapperPort;
+    this.#pieceMapperPort = pieceMapperPort;
+    this.#infoLabelTransformerMapperPort = infoLabelTransformerMapperPort;
+    this.#infoLabelTailMapperPort = infoLabelTailMapperPort;
+    this.#infoLabelDateMapperPort = infoLabelDateMapperPort;
   }
 
   #opacityMap = {
@@ -97,7 +113,7 @@ export class LabelAdapter implements LabelAdapterPort {
     makesAttentionFeedback,
   }) => {
     const dimension = this.#dimensionProviderPort.getDimension();
-    const pieceBot = PieceMapper.toInfrastructure(piece);
+    const pieceBot = this.#pieceMapperPort.toInfrastructure(piece);
     if (!pieceBot) {
       throw new Error(`LabelAdapter: pieceBot not found at spawnLabelForPiece`);
     }
@@ -287,18 +303,20 @@ export class LabelAdapter implements LabelAdapterPort {
     setTagMask(piecesToSetOpacity, "labelOpacity", 0);
 
     return {
-      transformer: PieceMapper.toDomain(infoLabelTransformer),
-      tail: PieceMapper.toDomain(infoLabelTail),
-      label: PieceMapper.toDomain(infoLabelText),
-      date: infoLabelDate ? PieceMapper.toDomain(infoLabelDate) : undefined,
+      transformer: this.#pieceMapperPort.toDomain(infoLabelTransformer),
+      tail: this.#pieceMapperPort.toDomain(infoLabelTail),
+      label: this.#pieceMapperPort.toDomain(infoLabelText),
+      date: infoLabelDate
+        ? this.#pieceMapperPort.toDomain(infoLabelDate)
+        : undefined,
     };
   };
 
   despawnLabel: LabelAdapterPort["despawnLabel"] = (data) => {
-    const transformer = InfoLabelTransformerMapper.toInfrastructure(
+    const transformer = this.#infoLabelTransformerMapperPort.toInfrastructure(
       data.transformer
     );
-    const tail = InfoLabelTailMapper.toInfrastructure(data.tail);
+    const tail = this.#infoLabelTailMapperPort.toInfrastructure(data.tail);
     const text = this.#infoLabelTextMapperPort.toInfrastructure(data.label);
     if (!transformer || !tail || !text) {
       throw new Error(
@@ -312,7 +330,7 @@ export class LabelAdapter implements LabelAdapterPort {
     this.#objectPooler.releaseObject(tail, BiblePiece.InfoLabelTail);
     this.#objectPooler.releaseObject(text, BiblePiece.InfoLabelText);
     if (data.date) {
-      const date = InfoLabelDateMapper.toInfrastructure(data.date);
+      const date = this.#infoLabelDateMapperPort.toInfrastructure(data.date);
       if (!date) {
         throw new Error(
           `LabelAdapter: date not found at despawnLabelForPiece.`

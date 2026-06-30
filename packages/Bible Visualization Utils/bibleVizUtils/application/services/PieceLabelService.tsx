@@ -1,11 +1,9 @@
-import type {
-  PieceLabelServiceParams,
-  PieceLabelServicePort,
-} from "bibleVizUtils.domain.ports.label";
+import type { PieceLabelServiceParams } from "bibleVizUtils.domain.ports.label";
 import { InfoLabelData } from "../../domain/entities/InfoLabelData";
 import type { LabelTranslucencyMode } from "bibleVizUtils.domain.models.label";
 import type { BiblePieceType, Piece } from "bibleVizUtils.domain.models.canvas";
 import type { ShowSequencePacing } from "bibleVizUtils.domain.models.label";
+import type { PieceLabelServicePort } from "../ports/in/PieceLabel";
 
 export class PieceLabelService<
   T extends BiblePieceType,

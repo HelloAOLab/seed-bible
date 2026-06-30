@@ -13,8 +13,8 @@ import type {
   Vector2 as TVector2,
   Vector3 as TVector3,
 } from "../../../../../../typings/AuxLibraryDefinitions";
-import { InfoLabelTailMapper } from "../../mappers/InfoLabelTailMapper";
-import { InfoLabelDateMapper } from "../../mappers/InfoLabelDateMapper";
+import type { InfoLabelTailMapper } from "../../mappers/InfoLabelTailMapper";
+import type { InfoLabelDateMapper } from "../../mappers/InfoLabelDateMapper";
 import type {
   ActivityIndicatorBot,
   InfoLabelDateBot,
@@ -23,7 +23,7 @@ import type {
   InfoLabelTransformerBot,
   PieceBot,
 } from "../../models/casualos";
-import { InfoLabelTransformerMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTransformerMapper";
+import type { InfoLabelTransformerMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTransformerMapper";
 import type {
   ShowAnimationDurationMapType,
   ShowAnimationConfigType,
@@ -62,6 +62,9 @@ interface AdapterProps {
   labelFeedbackConfigProviderPort: LabelFeedbackConfigProviderPort;
   infoLabelTextMapperPort: InfoLabelTextMapperPort;
   activityIndicatorMapperPort: ActivityIndicatorMapperPort;
+  infoLabelTransformerMapperPort: InfoLabelTransformerMapper;
+  infoLabelTailMapperPort: InfoLabelTailMapper;
+  infoLabelDateMapperPort: InfoLabelDateMapper;
 }
 
 const shakeForwardConstructor = ({
@@ -128,17 +131,26 @@ export class LabelFeedbackAdapter {
   #labelFeedbackConfigProviderPort: AdapterProps["labelFeedbackConfigProviderPort"];
   #infoLabelTextMapperPort: AdapterProps["infoLabelTextMapperPort"];
   #activityIndicatorMapperPort: AdapterProps["activityIndicatorMapperPort"];
+  #infoLabelTransformerMapperPort: AdapterProps["infoLabelTransformerMapperPort"];
+  #infoLabelTailMapperPort: AdapterProps["infoLabelTailMapperPort"];
+  #infoLabelDateMapperPort: AdapterProps["infoLabelDateMapperPort"];
 
   constructor({
     dimensionProvider,
     labelFeedbackConfigProviderPort,
     infoLabelTextMapperPort,
     activityIndicatorMapperPort,
+    infoLabelTransformerMapperPort,
+    infoLabelTailMapperPort,
+    infoLabelDateMapperPort,
   }: AdapterProps) {
     this.#dimensionProvider = dimensionProvider;
     this.#labelFeedbackConfigProviderPort = labelFeedbackConfigProviderPort;
     this.#infoLabelTextMapperPort = infoLabelTextMapperPort;
     this.#activityIndicatorMapperPort = activityIndicatorMapperPort;
+    this.#infoLabelTransformerMapperPort = infoLabelTransformerMapperPort;
+    this.#infoLabelTailMapperPort = infoLabelTailMapperPort;
+    this.#infoLabelDateMapperPort = infoLabelDateMapperPort;
   }
 
   displayAttentionFeedback(data: InfoLabelData) {
@@ -166,8 +178,10 @@ export class LabelFeedbackAdapter {
 
     const piecesBot = [
       this.#infoLabelTextMapperPort.toInfrastructure(data.label),
-      InfoLabelTailMapper.toInfrastructure(data.tail),
-      data.date ? InfoLabelDateMapper.toInfrastructure(data.date) : undefined,
+      this.#infoLabelTailMapperPort.toInfrastructure(data.tail),
+      data.date
+        ? this.#infoLabelDateMapperPort.toInfrastructure(data.date)
+        : undefined,
       ...data.activityIndicators.map((indicator) =>
         this.#activityIndicatorMapperPort.toInfrastructure(indicator)
       ),
@@ -410,7 +424,7 @@ export class LabelFeedbackAdapter {
     activityIndicators: ActivityIndicatorBot[];
     date: InfoLabelDateBot | undefined;
   } {
-    const transformer = InfoLabelTransformerMapper.toInfrastructure(
+    const transformer = this.#infoLabelTransformerMapperPort.toInfrastructure(
       data.transformer
     );
     if (!transformer) {
@@ -424,7 +438,7 @@ export class LabelFeedbackAdapter {
         `LabelFeedbackAdapter: text not found at displayShowFeedback`
       );
     }
-    const tail = InfoLabelTailMapper.toInfrastructure(data.tail);
+    const tail = this.#infoLabelTailMapperPort.toInfrastructure(data.tail);
     if (!tail) {
       throw new Error(
         `LabelFeedbackAdapter: tail not found at displayShowFeedback`
@@ -442,7 +456,7 @@ export class LabelFeedbackAdapter {
     });
     let date: InfoLabelDateBot | undefined = undefined;
     if (data.date) {
-      date = InfoLabelDateMapper.toInfrastructure(data.date);
+      date = this.#infoLabelDateMapperPort.toInfrastructure(data.date);
     }
 
     return {
@@ -460,7 +474,7 @@ export class LabelFeedbackAdapter {
     if (text) {
       bots.push(text);
     }
-    const tail = InfoLabelTailMapper.toInfrastructure(data.tail);
+    const tail = this.#infoLabelTailMapperPort.toInfrastructure(data.tail);
     if (tail) {
       bots.push(tail);
     }
@@ -473,7 +487,7 @@ export class LabelFeedbackAdapter {
       }
     }
     if (data.date) {
-      const date = InfoLabelDateMapper.toInfrastructure(data.date);
+      const date = this.#infoLabelDateMapperPort.toInfrastructure(data.date);
       if (date) {
         bots.push(date);
       }

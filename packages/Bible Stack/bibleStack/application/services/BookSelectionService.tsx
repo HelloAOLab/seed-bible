@@ -1,5 +1,6 @@
 import type { StackBookData } from "bibleVizUtils.domain.entities.StackBookData";
 import type { StackSectionBookData } from "bibleVizUtils.domain.entities.StackSectionBookData";
+import type { StackAncestor } from "bibleVizUtils.domain.models.canvas";
 // import type { PieceSelectionSource } from "bibleVizUtils.domain.models.canvas";
 import type { BookSelectionServicePort } from "bibleStack.application.ports.books";
 import type {
@@ -10,6 +11,8 @@ import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
 import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import type { LoggerPort } from "../ports/in/Logger";
 import type { StackUpdatePacing } from "../../domain/models/stacks";
+
+type BookEntity = StackBookData | StackSectionBookData;
 
 interface ServiceParams {
   bookSelectionEventPort: BookSelectionEventPort;
@@ -40,14 +43,36 @@ export class BookSelectionService implements BookSelectionServicePort {
     this.#loggerPort = loggerPort;
   }
 
-  async selectBook({
-    data,
-    pacing,
-  }: {
-    data: StackBookData | StackSectionBookData;
-    pacing?: StackUpdatePacing;
-  }): Promise<void> {
-    if (!data.piece) {
+  /**
+   * Resolves the stack root a book ultimately belongs to (its oldest ancestor),
+   * falling back to the book itself when it is a standalone root.
+   */
+  #resolveTarget(data: BookEntity): StackAncestor {
+    return (
+      (data.parentDataIds ? data.getOldestAncestor() : undefined) ?? {
+        id: data.id,
+        type: data.type,
+      }
+    );
+  }
+
+  /** Unique stack-root targets for a batch, deduped by id (one update per root). */
+  #resolveUniqueTargets(dataArray: BookEntity[]): StackAncestor[] {
+    const targets = dataArray.map((book) => this.#resolveTarget(book));
+    return targets.filter(
+      (target, index) =>
+        targets.findIndex((other) => other.id === target.id) === index
+    );
+  }
+
+  // --- Selection pre/post-flight ------------------------------------------
+
+  async #prepareBookSelection(
+    data: BookEntity,
+    pacing?: StackUpdatePacing
+  ): Promise<void> {
+    const piece = data.piece;
+    if (!piece) {
       this.#loggerPort.error(
         "BookSelectionService: data.piece is not defined at selectBook"
       );
@@ -56,7 +81,7 @@ export class BookSelectionService implements BookSelectionServicePort {
 
     this.#bookSelectionEventPort.emit("OnBookBeginSelect", { data }); // TODO: Make the interaction registry listen to this and make this book the last interacted.
     await this.#pieceHighlighterPort.tryUnhighlightPiece({
-      piece: data.piece,
+      piece,
       source: "Transition",
       pacing: pacing ?? "Regular",
     });
@@ -68,105 +93,107 @@ export class BookSelectionService implements BookSelectionServicePort {
     }
     data.changeLastInteractionSource("UserSelection");
 
-    // shout("OnBiblePieceSelected", { piece: book }); // Purpose?
-
-    this.#pieceAdapterPort.makeNonInteractable(data.piece);
+    this.#pieceAdapterPort.makeNonInteractable(piece);
     data.becomeNonHighlightable();
+  }
 
-    // TODO: Move this to a propper PieceFocusService or something like that. Wire it to the OnBookBeginSelect event at composition root.
-    // const focusOnRotation = { x: 1.01229, y: 0.5 };
-    // const cameraFocusDuration = 1 / speedMultiplier;
-    // const bookPosition = getBotPosition(book, dimension);
-    // const { selectedBookHeight }: { selectedBookHeight: number | undefined } =
-    //   await thisBot.ComputeSelectedBookLayout({
-    //     data: bookData,
-    //   });
-
-    // if (!selectedBookHeight) {
-    //   console.error(`selectedBookHeight not found at SelectBook`);
-    //   return;
-    // }
-    // let fixedPosition = new Vector3(
-    //   bookPosition.x,
-    //   bookPosition.y,
-    //   bookPosition.z + selectedBookHeight / 2
-    // );
-    // if (
-    //   bookData.getParentId("stackBibleId") &&
-    //   bookData.piece &&
-    //   bookData.piece.links.transformerLink &&
-    //   !Array.isArray(bookData.piece.links.transformerLink)
-    // ) {
-    //   const transformerPosition = getBotPosition(
-    //     bookData.piece.links.transformerLink,
-    //     dimension
-    //   );
-    //   fixedPosition = fixedPosition.add(transformerPosition);
-    // }
-    // const desiredFocusOnPosition = GetCamRotationFocusPoint({
-    //   theta: focusOnRotation.y,
-    //   phi: focusOnRotation.x,
-    //   botPosition: fixedPosition,
-    // });
-
-    // os.focusOn(
-    //   { x: desiredFocusOnPosition.x, y: desiredFocusOnPosition.y },
-    //   {
-    //     duration: cameraFocusDuration,
-    //     easing: { type: "sinusoidal", mode: "inout" },
-    //     rotation: focusOnRotation,
-    //     zoom: 8,
-    //   }
-    // );
-
-    const target = (data.parentDataIds
-      ? data.getOldestAncestor()
-      : undefined) ?? { id: data.id, type: data.type };
-    await this.#stackUpdateServicePort.updateStack(
-      target.id,
-      target.type,
-      pacing ?? "Regular"
-    );
+  #finalizeBookSelection(data: BookEntity): void {
     data.changeSelectionState("SequenceComplete");
     this.#bookSelectionEventPort.emit("OnBookEndSelect", { data });
 
-    // TODO: Move this to a propper adapter called by a PieceSelectionFeedbackService or something like that. Wire it to the OnBookEndSelect event atcomposition root.
+    // TODO: Move this to a propper adapter called by a PieceSelectionFeedbackService or something like that. Wire it to the OnBookEndSelect event at composition root.
     // thisBot.PlaySound({ soundName: "BookSelect" });
   }
 
-  async deselectBook(
-    data: StackBookData | StackSectionBookData,
-    pacing?: StackUpdatePacing
-  ): Promise<void> {
-    this.#bookSelectionEventPort.emit("OnBookBeginDeselect", { data }); // TODO: Make the interaction registry liste to this and make this book the last interacted.
-    const deselecting = data.changeSelectionState("RequestDeselect");
-    if (!deselecting) {
-      this.#loggerPort.error(
-        "BookSelectionService: book should be deselecting"
-      );
-      return;
-    }
+  // --- Deselection pre/post-flight ----------------------------------------
+
+  #prepareBookDeselection(data: BookEntity): void {
+    this.#bookSelectionEventPort.emit("OnBookBeginDeselect", { data }); // TODO: Make the interaction registry listen to this and make this book the last interacted.
+    data.changeSelectionState("RequestDeselect");
     data.changeChildrenSelectionState("RequestDeselect");
-    // Only the book's owning stack root needs to re-layout, not every stack.
-    // With no ancestor the book is itself a standalone stack root.
-    const target = (data.parentDataIds
-      ? data.getOldestAncestor()
-      : undefined) ?? { id: data.id, type: data.type };
+    if (data.piece) {
+      this.#pieceAdapterPort.makeInteractable(data.piece);
+    }
+    data.becomeHighlightable();
+  }
+
+  #finalizeBookDeselection(data: BookEntity): void {
+    data.changeSelectionState("SequenceComplete");
+    this.#bookSelectionEventPort.emit("OnBookEndDeselect", { data });
+  }
+
+  // --- Public API ----------------------------------------------------------
+
+  async selectBook({
+    data,
+    pacing,
+  }: {
+    data: BookEntity;
+    pacing?: StackUpdatePacing;
+  }): Promise<void> {
+    await this.#prepareBookSelection(data, pacing);
+    const target = this.#resolveTarget(data);
     await this.#stackUpdateServicePort.updateStack(
       target.id,
       target.type,
       pacing ?? "Regular"
     );
-    const piece = data.piece;
-    if (!piece) {
-      console.warn("Piece not found at DeselectBook");
-      return;
-    }
+    this.#finalizeBookSelection(data);
+  }
 
-    this.#pieceAdapterPort.makeInteractable(piece);
-    data.becomeHighlightable();
+  async deselectBook(
+    data: BookEntity,
+    pacing?: StackUpdatePacing
+  ): Promise<void> {
+    this.#prepareBookDeselection(data);
+    const target = this.#resolveTarget(data);
+    await this.#stackUpdateServicePort.updateStack(
+      target.id,
+      target.type,
+      pacing ?? "Regular"
+    );
+    this.#finalizeBookDeselection(data);
+  }
 
-    data.changeSelectionState("SequenceComplete");
-    this.#bookSelectionEventPort.emit("OnBookEndDeselect", { data });
+  async selectBooks(
+    dataArray: BookEntity[],
+    pacing?: StackUpdatePacing
+  ): Promise<void> {
+    await Promise.all(
+      dataArray.map((book) => this.#prepareBookSelection(book, pacing))
+    );
+
+    const uniqueTargets = this.#resolveUniqueTargets(dataArray);
+    await Promise.all(
+      uniqueTargets.map((target) =>
+        this.#stackUpdateServicePort.updateStack(
+          target.id,
+          target.type,
+          pacing ?? "Regular"
+        )
+      )
+    );
+
+    dataArray.forEach((book) => this.#finalizeBookSelection(book));
+  }
+
+  async deselectBooks(
+    dataArray: BookEntity[],
+    pacing?: StackUpdatePacing
+  ): Promise<void> {
+    dataArray.forEach((book) => this.#prepareBookDeselection(book));
+
+    const uniqueTargets = this.#resolveUniqueTargets(dataArray);
+    await Promise.all(
+      uniqueTargets.map((target) =>
+        this.#stackUpdateServicePort.updateStack(
+          target.id,
+          target.type,
+          pacing ?? "Regular"
+        )
+      )
+    );
+
+    dataArray.forEach((book) => this.#finalizeBookDeselection(book));
   }
 }

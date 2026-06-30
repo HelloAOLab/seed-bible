@@ -110,8 +110,10 @@ export class StackPieceLifecycleAdapter
     return this.#objectPoolerPort.getObject("StackBook");
   }
 
-  spawnBookDomain(): BookBot {
-    return this.#objectPoolerPort.getObject("StackBook");
+  spawnBookDomain(): Piece<"StackBook"> {
+    return this.#bookMapperPort.toDomain(
+      this.spawnBook()
+    ) as Piece<"StackBook">;
   }
 
   despawnBook(piece: Piece<"StackBook">): void {
@@ -165,6 +167,36 @@ export class StackPieceLifecycleAdapter
   despawnVerse(piece: Piece<"Verse">): void {
     const bot = this.#verseMapperPort.toInfrastructure(piece);
     if (bot) this.#objectPoolerPort.releaseObject(bot, "Verse");
+  }
+
+  /**
+   * Routes a piece to its type-specific despawn, returning it to the pool.
+   * Casts are safe: each branch is guarded by the runtime `type` discriminant
+   * (`Piece<T>` is not a discriminated union, so the generic cannot narrow).
+   */
+  despawn(piece: Piece): void {
+    switch (piece.type) {
+      case "StackTestament":
+        return this.despawnTestament(piece as Piece<"StackTestament">);
+      case "StackSection":
+        return this.despawnSection(piece as Piece<"StackSection">);
+      case "StackSectionBook":
+        return this.despawnSectionBook(piece as Piece<"StackSectionBook">);
+      case "StackBook":
+        return this.despawnBook(piece as Piece<"StackBook">);
+      case "StackChapter":
+        return this.despawnChapter(piece as Piece<"StackChapter">);
+      case "StackSectionShadow":
+        return this.despawnSectionShadow(piece as Piece<"StackSectionShadow">);
+      case "VersesBundle":
+        return this.despawnVersesBundle(piece as Piece<"VersesBundle">);
+      case "Verse":
+        return this.despawnVerse(piece as Piece<"Verse">);
+      default:
+        throw new Error(
+          `StackPieceLifecycleAdapter: cannot despawn piece of type "${piece.type}".`
+        );
+    }
   }
 
   spawnBibleTransformer(bibleId: StackBibleData["id"]): StackTransformer {

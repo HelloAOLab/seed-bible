@@ -392,6 +392,29 @@ export class StackPieceData<
 
     return piecesToRelease;
   }
+  /**
+   * Collects the visible pieces (`piece && isActive && !isHidden`) of this node
+   * and its whole descendant hierarchy. It does NOT prune: a non-visible node
+   * still contributes its visible descendants (e.g. an exploded section whose
+   * own piece is hidden but whose books are visible). Children that are not
+   * stack pieces (verse bundles / verses) fall outside this hierarchy and are
+   * skipped, so chapters are the deepest collected level.
+   */
+  getHierarchyVisiblePieces(): Piece[] {
+    const pieces: Piece[] = [];
+    this.collectVisiblePieces(pieces);
+    return pieces;
+  }
+  protected collectVisiblePieces(pieces: Piece[]): void {
+    if (this.piece && this.isActive && !this.isHidden) {
+      pieces.push(this.piece);
+    }
+    for (const child of this.childrenData.flat()) {
+      if (child instanceof StackPieceData) {
+        child.collectVisiblePieces(pieces);
+      }
+    }
+  }
   isPieceAvailable(): boolean {
     return !!this.#piece && this.#selectionState === SelectionStates.Idle;
   }

@@ -10,12 +10,14 @@ import type {
 } from "bibleStack.application.ports.pieces";
 import type { PieceDataRepositoryPort as StackManagementPieceDataRepositoryPort } from "bibleStack.application.ports.stackManagement";
 import type { PieceDataRepositoryPort as StackUpdatePieceDataRepositoryPort } from "@packages/Bible Stack/bibleStack/application/ports/out/StackUpdate";
+import type { PieceDataRepositoryPort as ViewportPieceDataRepositoryPort } from "@packages/Bible Stack/bibleStack/application/ports/out/ViewportService";
 
 export class PieceDataRepository
   implements
     PieceDataRepositoryPort,
     StackManagementPieceDataRepositoryPort,
-    StackUpdatePieceDataRepositoryPort
+    StackUpdatePieceDataRepositoryPort,
+    ViewportPieceDataRepositoryPort
 {
   #testamentsData: Set<StackTestamentData> = new Set();
   #sectionsData: Set<StackSectionData> = new Set();

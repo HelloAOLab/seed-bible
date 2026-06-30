@@ -49,7 +49,7 @@ export class ObjectPooler<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
     }) as P[K];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (object.tags as any).type = poolData.key;
-    for (const { tag, value } of poolData.customTags) {
+    for (const [tag, value] of Object.entries(poolData.customTags)) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (object.tags as any)[tag] = value;
     }
@@ -92,8 +92,7 @@ export class ObjectPooler<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
       clearAnimations(inUseObject);
       const cleanupTagsData = pool.poolData.cleanupCustomTags;
       if (cleanupTagsData) {
-        for (const tagCleanupData of cleanupTagsData) {
-          const { tag, value } = tagCleanupData;
+        for (const [tag, value] of Object.entries(cleanupTagsData)) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (inUseObject.tags as any)[tag] = value;
         }

@@ -184,6 +184,11 @@ export class StackSectionData extends StackPieceData<
   getActiveBooks(): StackBookData[] {
     return this.childrenData.flat().filter((book) => book.isActive);
   }
+  getReversedActiveBooks(): StackBookData[] {
+    return this.getReversedChildren()
+      .flat()
+      .filter((book) => book.isActive);
+  }
   getActiveBookPieces(): Piece[] {
     return this.childrenData
       .flat()
@@ -215,5 +220,31 @@ export class StackSectionData extends StackPieceData<
     }
 
     return this.isActive;
+  }
+
+  getHighlightedChildren(): StackBookData[] {
+    const highlighted: StackBookData[] = [];
+
+    for (const children of this.childrenData) {
+      if (children instanceof StackPieceData) {
+        for (const bookData of children) {
+          if (bookData.highlightState === "Highlighted") {
+            highlighted.push(bookData);
+          }
+        }
+      }
+    }
+
+    return highlighted;
+  }
+
+  getActivelyHighlightedChildren(): StackBookData[] {
+    const highlighted = this.getHighlightedChildren();
+
+    const activelyHighlighted: StackBookData[] = highlighted.filter(
+      (child) => child.isActive
+    );
+
+    return activelyHighlighted;
   }
 }

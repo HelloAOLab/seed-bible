@@ -60,6 +60,7 @@ export interface StackPieceLifecycleAdapterPort {
   despawnVersesBundle: (piece: Piece<"VersesBundle">) => void;
   spawnVerse: () => VerseBot;
   despawnVerse: (piece: Piece<"Verse">) => void;
+  despawn: (piece: Piece) => void;
 }
 
 export interface PieceLifecycleEventPort {

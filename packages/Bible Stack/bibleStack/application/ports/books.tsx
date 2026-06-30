@@ -83,6 +83,14 @@ export interface BookSelectionServicePort {
     data: StackBookData | StackSectionBookData,
     pacing?: StackUpdatePacing
   ) => Promise<void>;
+  selectBooks: (
+    dataArray: (StackBookData | StackSectionBookData)[],
+    pacing?: StackUpdatePacing
+  ) => Promise<void>;
+  deselectBooks: (
+    dataArray: (StackBookData | StackSectionBookData)[],
+    pacing?: StackUpdatePacing
+  ) => Promise<void>;
 }
 
 export interface PieceAdapterPort {

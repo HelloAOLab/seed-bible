@@ -1,11 +1,11 @@
-import type { SequenceStateServicePort as VersesBundleSequenceStateServicePort } from "bibleStack.application.ports.versesBundle";
+import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 import type { SequenceEventPort } from "bibleStack.application.ports.sequence";
 
 interface ServiceParams {
   sequenceEventPort: SequenceEventPort;
 }
 
-export class SequenceStateService implements VersesBundleSequenceStateServicePort {
+export class SequenceStateService implements SequenceStateServicePort {
   #isThereAnOngoingSequence: boolean = false;
   #sequenceEventPort: ServiceParams["sequenceEventPort"];
 

@@ -61,8 +61,12 @@ import { LabelFeedbackConfigProvider } from "bibleVizUtils.infrastructure.config
 import { ConsoleLoggerAdapter } from "bibleVizUtils.infrastructure.adapters.logger.ConsoleLoggerAdapter";
 import { BookInfoMapper } from "bibleVizUtils.infrastructure.mappers.BookInfoMapper";
 import { SectionInfoMapper } from "bibleVizUtils.infrastructure.mappers.SectionInfoMapper";
+import { PieceMapper } from "bibleVizUtils.infrastructure.mappers.PieceMapper";
 import { ActivityIndicatorMapper } from "bibleVizUtils.infrastructure.mappers.ActivityIndicatorMapper";
 import { InfoLabelTextMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTextMapper";
+import { InfoLabelTailMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTailMapper";
+import { InfoLabelDateMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelDateMapper";
+import { InfoLabelTransformerMapper } from "bibleVizUtils.infrastructure.mappers.InfoLabelTransformerMapper";
 import {
   GetTextColorBasedOnBackground,
   ComputeRawGradientColors,
@@ -78,10 +82,7 @@ import {
 } from "bibleVizUtils.domain.functions.colors";
 import { IsValueBetween } from "bibleVizUtils.domain.functions.math";
 import type { BibleVizAPI } from "bibleVizUtils.infrastructure.models.seedBible";
-import {
-  registerExtension /*, type SeedBibleState */,
-  type SeedBibleState,
-} from "seed-bible.app.api";
+import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
 import {
   GetDayRangeSeconds,
   GetPastDateInfo,
@@ -96,6 +97,7 @@ import { RadingInstanceProvider } from "bibleVizUtils.infrastructure.adapters.us
 import { ReadingHistoryTimeline } from "bibleVizUtils.infrastructure.presentation.components.ui.ReadingHistoryTimeline";
 import { getReadingHistoryTimelineStyles } from "bibleVizUtils.infrastructure.presentation.styles.adapter";
 import { useHorizontalScroll } from "bibleVizUtils.infrastructure.presentation.hooks.useHorizontalScroll";
+import { StackConfigProvider } from "../config/stacks/StackConfigProvider";
 
 export let userColorController: UserColorController | undefined = undefined;
 export let sessionController: SessionController | undefined = undefined;
@@ -111,6 +113,7 @@ export const bootstrapExtension = () => {
     init: function* (context: SeedBibleState) {
       // 1. Instantiating adapters
 
+      const stackConfigProvider = new StackConfigProvider();
       const readingHistoryConfigProvider = new ReadingHistoryConfigProvider();
       const scriptureMap3DConfigProvider = new ScriptureMap3DConfigProvider();
       const infoLabelTextPool: PoolData<
@@ -119,15 +122,15 @@ export const bootstrapExtension = () => {
       > = {
         key: BiblePiece.InfoLabelText,
         prefab: infoLabelTextPrefab,
-        customTags: [
-          { tag: "isInfoLabelTextPrefab", value: false },
-          { tag: "system", value: undefined },
-        ],
-        cleanupCustomTags: [
-          { tag: "transformer", value: undefined },
-          { tag: "ownerBotId", value: undefined },
-          { tag: "onBotChanged", value: undefined },
-        ],
+        customTags: {
+          isInfoLabelTextPrefab: false,
+          system: undefined,
+        },
+        cleanupCustomTags: {
+          transformer: undefined,
+          ownerBotId: undefined,
+          onBotChanged: undefined,
+        },
         size: 8,
       };
       const infoLabelTailPool: PoolData<
@@ -136,14 +139,14 @@ export const bootstrapExtension = () => {
       > = {
         key: BiblePiece.InfoLabelTail,
         prefab: infoLabelTailPrefab,
-        customTags: [
-          { tag: "isInfoLabelTailPrefab", value: false },
-          { tag: "system", value: undefined },
-        ],
-        cleanupCustomTags: [
-          { tag: "transformer", value: undefined },
-          { tag: "ownerBotId", value: undefined },
-        ],
+        customTags: {
+          isInfoLabelTailPrefab: false,
+          system: undefined,
+        },
+        cleanupCustomTags: {
+          transformer: undefined,
+          ownerBotId: undefined,
+        },
         size: 8,
       };
       const infoLabelDatePool: PoolData<
@@ -152,14 +155,14 @@ export const bootstrapExtension = () => {
       > = {
         key: BiblePiece.InfoLabelDate,
         prefab: infoLabelDatePrefab,
-        customTags: [
-          { tag: "isInfoLabelDatePrefab", value: true },
-          { tag: "system", value: undefined },
-        ],
-        cleanupCustomTags: [
-          { tag: "transformer", value: undefined },
-          { tag: "ownerBotId", value: undefined },
-        ],
+        customTags: {
+          isInfoLabelDatePrefab: true,
+          system: undefined,
+        },
+        cleanupCustomTags: {
+          transformer: undefined,
+          ownerBotId: undefined,
+        },
         size: 8,
       };
       const infoLabelTransformerPool: PoolData<
@@ -168,15 +171,15 @@ export const bootstrapExtension = () => {
       > = {
         key: BiblePiece.InfoLabelTransformer,
         prefab: infoLabelTransformerPrefab,
-        customTags: [
-          { tag: "isInfoLabelTransformerPrefab", value: false },
-          { tag: "system", value: undefined },
-        ],
-        cleanupCustomTags: [
-          { tag: "ownerBotId", value: undefined },
-          { tag: "ownerDataId", value: undefined },
-          { tag: "pointableDefault", value: undefined },
-        ],
+        customTags: {
+          isInfoLabelTransformerPrefab: false,
+          system: undefined,
+        },
+        cleanupCustomTags: {
+          ownerBotId: undefined,
+          ownerDataId: undefined,
+          pointableDefault: undefined,
+        },
         size: 8,
       };
       const activityIndicatorPool: PoolData<
@@ -185,23 +188,23 @@ export const bootstrapExtension = () => {
       > = {
         key: BiblePiece.ActivityIndicator,
         prefab: activityIndicatorPrefab,
-        customTags: [
-          { tag: "isActivityIndicatorPrefab", value: false },
-          { tag: "isActivityIndicator", value: true },
-          { tag: "system", value: undefined },
-        ],
-        cleanupCustomTags: [
-          { tag: "transformer", value: undefined },
-          { tag: "ownerBotId", value: undefined },
-          { tag: "ownerDataId", value: undefined },
-          { tag: "initialPosition", value: undefined },
-          { tag: "label", value: undefined },
-          { tag: "labelOpacity", value: 1 },
-          { tag: "formOpacity", value: 1 },
-          { tag: "formRenderOrder", value: undefined },
-          { tag: "index", value: undefined },
-          { tag: "targetOpacity", value: 1 },
-        ],
+        customTags: {
+          isActivityIndicatorPrefab: false,
+          isActivityIndicator: true,
+          system: undefined,
+        },
+        cleanupCustomTags: {
+          transformer: undefined,
+          ownerBotId: undefined,
+          ownerDataId: undefined,
+          initialPosition: undefined,
+          label: undefined,
+          labelOpacity: 1,
+          formOpacity: 1,
+          formRenderOrder: undefined,
+          index: undefined,
+          targetOpacity: 1,
+        },
         size: 8,
       };
       const activityNotificationPool: PoolData<
@@ -210,18 +213,18 @@ export const bootstrapExtension = () => {
       > = {
         key: BiblePiece.ActivityNotification,
         prefab: activityNotificationPrefab,
-        customTags: [
-          { tag: "isActivityNotificationPrefab", value: false },
-          { tag: "system", value: undefined },
-        ],
-        cleanupCustomTags: [
-          { tag: "ownerBotId", value: undefined },
-          { tag: "formOpacity", value: 1 },
-          { tag: "direction", value: undefined },
-          { tag: "offset", value: undefined },
-          { tag: "scaleX", value: 0.3 },
-          { tag: "scaleY", value: 0.3 },
-        ],
+        customTags: {
+          isActivityNotificationPrefab: false,
+          system: undefined,
+        },
+        cleanupCustomTags: {
+          ownerBotId: undefined,
+          formOpacity: 1,
+          direction: undefined,
+          offset: undefined,
+          scaleX: 0.3,
+          scaleY: 0.3,
+        },
         size: 5,
       };
 
@@ -248,7 +251,19 @@ export const bootstrapExtension = () => {
         state: context,
       });
       const activityIndicatorMapper = new ActivityIndicatorMapper();
-      const infoLabelTextMapper = new InfoLabelTextMapper();
+      const pieceMapper = new PieceMapper();
+      const infoLabelTextMapper = new InfoLabelTextMapper({
+        pieceMapperPort: pieceMapper,
+      });
+      const infoLabelTailMapper = new InfoLabelTailMapper({
+        pieceMapperPort: pieceMapper,
+      });
+      const infoLabelDateMapper = new InfoLabelDateMapper({
+        pieceMapperPort: pieceMapper,
+      });
+      const infoLabelTransformerMapper = new InfoLabelTransformerMapper({
+        pieceMapperPort: pieceMapper,
+      });
       const dimensionProviderPort = {
         getDimension: () => os.getCurrentDimension(),
       };
@@ -263,6 +278,7 @@ export const bootstrapExtension = () => {
       const activityNotificationAdapter = new ActivityNotificationAdapter({
         objectPooler: bibleVizUtilsObjectPooler,
         dimensionProviderPort,
+        pieceMapperPort: pieceMapper,
       });
       const labelDataStore = new LabelDataStore({});
       const userColorStore = new UserColorStore(bibleVizUtilsEventManager);
@@ -295,6 +311,10 @@ export const bootstrapExtension = () => {
         labelConfigProviderPort: labelsConfigProvider,
         dimensionProviderPort,
         infoLabelTextMapperPort: infoLabelTextMapper,
+        pieceMapperPort: pieceMapper,
+        infoLabelTransformerMapperPort: infoLabelTransformerMapper,
+        infoLabelTailMapperPort: infoLabelTailMapper,
+        infoLabelDateMapperPort: infoLabelDateMapper,
       });
       const bibleVizDataRepository = new BibleVizDataRepository();
       const arrangementAdapter = new ArrangementAdapter();
@@ -320,6 +340,9 @@ export const bootstrapExtension = () => {
         labelFeedbackConfigProviderPort: labelFeedbackConfigProvider,
         infoLabelTextMapperPort: infoLabelTextMapper,
         activityIndicatorMapperPort: activityIndicatorMapper,
+        infoLabelTransformerMapperPort: infoLabelTransformerMapper,
+        infoLabelTailMapperPort: infoLabelTailMapper,
+        infoLabelDateMapperPort: infoLabelDateMapper,
       });
       const readingInstanceProvider = new RadingInstanceProvider({
         state: context,
@@ -385,6 +408,7 @@ export const bootstrapExtension = () => {
       labelInteractionController = new LabelInteractionController({
         labelInteractionServicePort: labelInteractionService,
         infoLabelTextMapperPort: infoLabelTextMapper,
+        infoLabelTailMapperPort: infoLabelTailMapper,
       });
 
       // 4. Event wiring
@@ -560,12 +584,14 @@ export const bootstrapExtension = () => {
         HexShortToLong,
         ColorParser,
         sectionInfoMapper,
+        pieceMapper,
         scriptureMap3DConfigProvider,
         readingHistoryConfigProvider,
         sessionProvider,
         bookNames,
         connectedUsers,
         useHorizontalScroll,
+        stackConfigProvider,
       };
 
       return api;

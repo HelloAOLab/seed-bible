@@ -32,6 +32,7 @@ import { VerseData } from "bibleVizUtils.domain.entities.VerseData";
 import { ShowSequencePacings } from "bibleVizUtils.domain.models.label";
 import type { PieceLifecycleServicePort as StackStructurePieceLifecycleServicePort } from "bibleStack.application.ports.stackStructure";
 import type { PieceLifecycleConfigProviderPort } from "../ports/out/PieceLifecycle";
+import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 
 interface PieceLifecycleServiceProps {
   pieceDataRepositoryPort: PieceDataRepositoryPort;
@@ -46,7 +47,9 @@ interface PieceLifecycleServiceProps {
   configProviderPort: PieceLifecycleConfigProviderPort;
 }
 
-export class PieceLifecycleService implements StackStructurePieceLifecycleServicePort {
+export class PieceLifecycleService
+  implements StackStructurePieceLifecycleServicePort, PieceLifecycleServicePort
+{
   #pieceDataRepositoryPort: PieceLifecycleServiceProps["pieceDataRepositoryPort"];
   #pieceLabelServicePort: PieceLifecycleServiceProps["pieceLabelServicePort"];
   #stackPieceLifecycleAdapterPort: PieceLifecycleServiceProps["stackPieceLifecycleAdapterPort"];
@@ -513,10 +516,7 @@ export class PieceLifecycleService implements StackStructurePieceLifecycleServic
 
     if (piece) {
       this.#pieceLabelServicePort.hideLabel(piece, ShowSequencePacings.Instant);
-      this.clearPiece(
-        piece,
-        this.#stackPieceLifecycleAdapterPort.despawnTestament
-      );
+      this.clearPiece(piece);
       this.#pieceLifecycleEventPort.emit("OnTestamentDelete", { piece }); // TODO: Wire this event to a StackInteractionManager to check if the deleted testament is the last interacted
     }
 
@@ -546,10 +546,7 @@ export class PieceLifecycleService implements StackStructurePieceLifecycleServic
 
     if (piece) {
       this.#pieceLabelServicePort.hideLabel(piece, ShowSequencePacings.Instant);
-      this.clearPiece(
-        piece,
-        this.#stackPieceLifecycleAdapterPort.despawnSection
-      );
+      this.clearPiece(piece);
     }
 
     if (shadow) {
@@ -557,10 +554,7 @@ export class PieceLifecycleService implements StackStructurePieceLifecycleServic
         shadow,
         ShowSequencePacings.Instant
       );
-      this.clearPiece(
-        shadow,
-        this.#stackPieceLifecycleAdapterPort.despawnSectionShadow
-      );
+      this.clearPiece(shadow);
     }
 
     // TODO: Send OnSectionDelete event that will be listened by the StackInteractionManager to check if the deleted section is the last interacted
@@ -584,10 +578,7 @@ export class PieceLifecycleService implements StackStructurePieceLifecycleServic
 
     if (piece) {
       this.#pieceLabelServicePort.hideLabel(piece, ShowSequencePacings.Instant);
-      this.clearPiece(
-        piece,
-        this.#stackPieceLifecycleAdapterPort.despawnSectionBook
-      );
+      this.clearPiece(piece);
     }
 
     // TODO: Send OnSectionBookDelete event that will be listened by the StackInteractionManager to check if the deleted section book is the last interacted
@@ -611,7 +602,7 @@ export class PieceLifecycleService implements StackStructurePieceLifecycleServic
 
     if (piece) {
       this.#pieceLabelServicePort.hideLabel(piece, ShowSequencePacings.Instant);
-      this.clearPiece(piece, this.#stackPieceLifecycleAdapterPort.despawnBook);
+      this.clearPiece(piece);
     }
 
     // TODO: Send OnBookDelete event that will be listened by the StackInteractionManager to check if the deleted book is the last interacted
@@ -634,10 +625,7 @@ export class PieceLifecycleService implements StackStructurePieceLifecycleServic
     }
     if (piece) {
       this.#pieceLabelServicePort.hideLabel(piece, ShowSequencePacings.Instant);
-      this.clearPiece(
-        piece,
-        this.#stackPieceLifecycleAdapterPort.despawnChapter
-      );
+      this.clearPiece(piece);
     }
   }
 
@@ -655,31 +643,18 @@ export class PieceLifecycleService implements StackStructurePieceLifecycleServic
       this.deleteVerse(verse);
     }
     if (piece) {
-      this.clearPiece(
-        piece,
-        this.#stackPieceLifecycleAdapterPort.despawnVersesBundle
-      );
+      this.clearPiece(piece);
     }
   }
 
   deleteVerse(verse: VerseData) {
     const piece = verse.clearPiece();
     if (piece) {
-      this.clearPiece(piece, this.#stackPieceLifecycleAdapterPort.despawnVerse);
+      this.clearPiece(piece);
     }
   }
 
-  async clearPiece<
-    K extends
-      | "StackTestament"
-      | "StackSection"
-      | "StackSectionBook"
-      | "StackBook"
-      | "StackChapter"
-      | "StackSectionShadow"
-      | "VersesBundle"
-      | "Verse",
-  >(piece: Piece<K>, despawnMethod: (piece: Piece<K>) => void) {
+  async clearPiece(piece: Piece) {
     // TODO: Create a PieceHighlightService, add the logic for highlight and unhighlight delay store and management and replace the following references
 
     const { unhighlightDelayInfo } = await thisBot.GetUnhighlightDelayInfo({
@@ -696,6 +671,6 @@ export class PieceLifecycleService implements StackStructurePieceLifecycleServic
     if (isHighlighted) {
       await thisBot.RemovePieceFromHighlightedList({ piece });
     }
-    despawnMethod(piece);
+    this.#stackPieceLifecycleAdapterPort.despawn(piece);
   }
 }

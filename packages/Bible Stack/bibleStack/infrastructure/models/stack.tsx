@@ -1,8 +1,8 @@
+import type { BiblePiece } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/canvas";
 import type {
   PieceBotTags,
   TypedBot,
-} from "bibleVizUtils.infrastructure.models.casualos";
-import { BiblePiece } from "bibleVizUtils.domain.models.canvas";
+} from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/models/casualos";
 
 type TBiblePiece = typeof BiblePiece;
 
@@ -43,6 +43,7 @@ export interface SectionTags extends StackDraggablePieceBotTags<"StackSection"> 
   strokeColor: string;
   labelOpacity: number;
   formOpacity: number;
+  scale: number;
 }
 
 export type SectionBot = TypedBot<SectionTags>;

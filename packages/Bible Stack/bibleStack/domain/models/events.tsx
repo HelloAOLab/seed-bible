@@ -19,6 +19,7 @@ import type { StackTestamentData } from "@packages/Bible Visualization Utils/bib
 import type { AnyStackData } from "../../application/ports/pieces";
 import type { StackSectionBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionBookData";
 import type { StackBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBookData";
+import type { StackSectionData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionData";
 
 export interface BibleStackEvents {
   OnTestamentClick: {
@@ -164,6 +165,9 @@ export interface BibleStackEvents {
   OnBookEndSelect: { data: StackBookData | StackSectionBookData };
   OnBookBeginDeselect: { data: StackBookData | StackSectionBookData };
   OnBookEndDeselect: { data: StackBookData | StackSectionBookData };
+  OnSectionBeginSelect: { data: StackSectionData };
+  OnSectionEndSelect: { data: StackSectionData };
+  OnCameraRotationChanged: void;
 }
 
 export type BibleStackEvent = keyof BibleStackEvents;

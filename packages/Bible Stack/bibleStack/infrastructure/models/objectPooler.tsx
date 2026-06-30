@@ -10,7 +10,7 @@ import type {
   VersesBundleBot,
   BibleTransformerBot,
   BibleShadowBot,
-} from "bibleStack.models.stack";
+} from "./stack";
 
 export type BibleStackObjectPoolerMap = {
   StackTestament: TestamentBot;

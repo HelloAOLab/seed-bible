@@ -14,7 +14,7 @@ import type {
   BibleVizUtilsObjectPoolerMap,
 } from "bibleVizUtils.infrastructure.models.casualos";
 import { GetBotScales } from "bibleVizUtils.infrastructure.functions.casualos";
-import { PieceMapper } from "bibleVizUtils.infrastructure.mappers.PieceMapper";
+import type { PieceMapperPort } from "bibleVizUtils.infrastructure.mappers.PieceMapper";
 import type { ObjectPooler } from "bibleVizUtils.infrastructure.adapters.casualos.ObjectPooler";
 
 interface DimensionProviderPort {
@@ -24,14 +24,21 @@ interface DimensionProviderPort {
 interface AdapterParams {
   objectPooler: ObjectPooler<BibleVizUtilsObjectPoolerMap>;
   dimensionProviderPort: DimensionProviderPort;
+  pieceMapperPort: PieceMapperPort;
 }
 
 export class ActivityNotificationAdapter implements ActivityNotificationAdapterPort {
   #objectPooler: AdapterParams["objectPooler"];
   #dimensionProviderPort: DimensionProviderPort;
-  constructor({ objectPooler, dimensionProviderPort }: AdapterParams) {
+  #pieceMapperPort: AdapterParams["pieceMapperPort"];
+  constructor({
+    objectPooler,
+    dimensionProviderPort,
+    pieceMapperPort,
+  }: AdapterParams) {
     this.#objectPooler = objectPooler;
     this.#dimensionProviderPort = dimensionProviderPort;
+    this.#pieceMapperPort = pieceMapperPort;
   }
 
   hideNotification(notification: ActivityNotification) {
@@ -132,7 +139,7 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
       );
     }
     const dimension = this.#dimensionProviderPort.getDimension();
-    const ownerBot = PieceMapper.toInfrastructure(container.piece);
+    const ownerBot = this.#pieceMapperPort.toInfrastructure(container.piece);
 
     if (!ownerBot) {
       throw new Error(
@@ -183,7 +190,7 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
         `ActivityNotificatioNAdapter: container.piece not defined at updateNotificationDirection`
       );
     }
-    const pieceBot = PieceMapper.toInfrastructure(container.piece);
+    const pieceBot = this.#pieceMapperPort.toInfrastructure(container.piece);
     const isValid = pieceBot?.tags.isInUse && container.activityNotification;
 
     if (!isValid) return;
