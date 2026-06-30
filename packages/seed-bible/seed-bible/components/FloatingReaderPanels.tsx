@@ -594,12 +594,17 @@ export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
             : t("chat", { defaultValue: "Chat" })}
         </p>
 
-        {selectedChat ? (
+        {selectedChat && selectedChat.participants.value.length > 0 ? (
           <ContextMenuWithButton
             anchorClassName="sb-floating-chat-header-members-anchor"
             buttonClassName="sb-floating-chat-header-members-button"
             menuClassName="sb-floating-chat-members-menu"
-            icon={<ChatParticipantsIcon />}
+            icon={
+              <span className="sb-floating-chat-header-members-button-icon">
+                <ChatParticipantsIcon />
+                {selectedChat.participants.value.length}
+              </span>
+            }
             aria-label={t("participants", {
               defaultValue: "Participants",
             })}

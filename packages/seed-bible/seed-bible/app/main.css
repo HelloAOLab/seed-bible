@@ -8575,8 +8575,11 @@ a:visited {
   flex-shrink: 0;
 }
 
-.sb-floating-chat-header-members-button {
-  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+.sb-floating-chat-header-members-button-icon {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  font-size: 14px;
 }
 
 .sb-floating-chat-members-menu {
