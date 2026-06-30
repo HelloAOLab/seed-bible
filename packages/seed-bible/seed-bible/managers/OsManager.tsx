@@ -12,7 +12,10 @@ import { InstRecordsClient } from "@casual-simulation/aux-common/websockets/Inst
 import { PartitionAuthSource } from "@casual-simulation/aux-common/partitions/PartitionAuthSource";
 import { AuthenticatedConnectionClient } from "@casual-simulation/aux-common/websockets/AuthenticatedConnectionClient";
 import { computed, effect, signal } from "@preact/signals";
-import { parseSessionKey } from "@casual-simulation/aux-common";
+import {
+  parseSessionKey,
+  generateV1ConnectionToken,
+} from "@casual-simulation/aux-common";
 import { sha256 } from "hash.js";
 
 export type CasualOSManager = ReturnType<typeof CasualOSManager>;
@@ -83,18 +86,68 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
     if (!authSource) {
       const source = (authSource = new PartitionAuthSource());
       source.onAuthMessage.subscribe((message) => {
-        // TODO: handle other message types and error cases
-        if (message.type === "request") {
-          if (message.kind === "need_indicator") {
-            // TODO: Support returning connection tokens
+        const provideIndicator = (recordName: string | null, inst: string) => {
+          const key = connectionKey.value;
+          // Send response back asynchronously so that we can ensure the requester is listening for the response
+          setTimeout(() => {
+            let token: string | null = null;
+            if (key) {
+              token = generateV1ConnectionToken(
+                key,
+                connectionId,
+                recordName,
+                inst
+              );
+            }
+
             source.sendAuthResponse({
               type: "response",
               success: true,
               origin: message.origin,
-              indicator: {
-                connectionId: connectionId,
-              },
+              indicator: token
+                ? {
+                    connectionToken: token,
+                  }
+                : {
+                    connectionId: connectionId,
+                  },
             });
+          });
+        };
+
+        // TODO: handle other message types and error cases
+        if (message.type === "request") {
+          if (
+            message.kind === "need_indicator" ||
+            message.kind === "invalid_indicator"
+          ) {
+            provideIndicator(null, "seed-bible");
+          } else if (message.kind === "not_authorized") {
+            console.log("Handling not_authorized message:", message);
+            if (message.reason?.type === "invalid_token") {
+              const recordName = message.resource?.recordName;
+              const inst = message.resource?.inst;
+              const branch = message.resource?.branch;
+
+              if (!recordName || !inst || !branch) {
+                console.log(
+                  `[AuthCoordinator] Invalid token request missing recordName, inst, or branch`
+                );
+                return;
+              }
+
+              // Only allow automatically loading branches that start with 'doc/'
+              // This is a temporary solution to prevent loading actual existing inst data and instead only allow loading
+              // shared documents from other records
+              if (!branch.startsWith("doc/")) {
+                console.error(
+                  `[AuthCoordinator] Invalid token request branch does not start with 'doc/'`
+                );
+                return;
+              }
+
+              provideIndicator(recordName, inst);
+            }
           }
         }
       });
@@ -118,7 +171,7 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
       markers: options?.markers ? options.markers : undefined,
     });
 
-    await doc.init();
+    doc.connect();
 
     return doc;
   }
