@@ -8992,14 +8992,38 @@ a:visited {
   box-shadow: 0 0 0 2px var(--sb-reader-toolbar-background, #fff);
 }
 
-.sb-chat-view-message {
+.sb-chat-view-message-group {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+}
+
+.sb-chat-view-message-group-row {
+  display: flex;
+  align-items: flex-end;
   gap: 10px;
-  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 88%);
-  border-radius: 10px;
-  padding: 8px 10px;
-  background: color-mix(in srgb, var(--sb-background, #fff), transparent 8%);
+  flex-direction: row-reverse;
+}
+
+.sb-chat-view-message-bubbles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.sb-chat-view-message {
+  width: fit-content;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  /* border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 88%); */
+  border-radius: 16px;
+  padding: 8px 14px;
+  background: color-mix(
+    in srgb,
+    var(--sb-background, #fff),
+    var(--sb-font-color) 3%
+  );
 }
 
 .sb-chat-view-message-avatar-shell {
@@ -9028,6 +9052,8 @@ img.sb-chat-view-message-avatar {
 .sb-chat-view-message-content {
   min-width: 0;
   flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .sb-chat-view-message-header {
@@ -9045,6 +9071,8 @@ img.sb-chat-view-message-avatar {
 
 .sb-chat-view-message-timestamp {
   font-size: 11px;
+  align-self: flex-end;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
 .sb-chat-view-message-body {
