@@ -458,13 +458,16 @@ export function createSeedBibleState(
     () => viewportWidth.value > MOBILE_BREAKPOINT && viewportWidth.value <= 1200
   );
 
-  // True when more than one reader pane is open side by side. Detached overlay
-  // panes (extension tools, playlist, etc.) don't count — only the tiled
-  // attached panes that actually compete with the sidebar for row space.
+  // True when a multi-pane layout is active — i.e. the user picked anything
+  // other than "single" from the Panels menu (split-2v, split-3v, grid-2x2,
+  // …), or more than one attached pane is otherwise open. Detached overlay
+  // panes (extension tools, playlist, etc.) don't count. Keyed primarily off
+  // the layout preset so selecting a layout from the menu reacts immediately.
   const hasMultiplePanes = computed(
     () =>
       panelsEnabled.value &&
-      panes.panes.value.filter((pane) => !pane.detached).length > 1
+      (panes.layout.value !== "single" ||
+        panes.panes.value.filter((pane) => !pane.detached).length > 1)
   );
 
   effect(() => {
