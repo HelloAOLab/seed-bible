@@ -241,7 +241,6 @@ const sharedAIChatParticipantSchema = z.object({
   name: z.string().nullable(),
   isAI: z.literal(true),
   iconUrl: z.string().optional(),
-  joinTimeMs: z.number().int().nonnegative().optional(),
 });
 
 type SharedAIChatParticipant = z.infer<typeof sharedAIChatParticipantSchema>;
@@ -368,6 +367,11 @@ type GroupedConnectedUser = {
   name: string | null;
   isSelf: boolean;
   isActive: boolean;
+  /**
+   * The earliest time any of the user's connections joined the session, or
+   * null if none of them broadcast a join time.
+   */
+  joinedAtMs: number | null;
 };
 
 function groupConnectedUsers(
@@ -393,6 +397,9 @@ function groupConnectedUsers(
 
   return Array.from(groups.entries()).map(([id, group]) => {
     const representative = group.find((entry) => entry.isActive) ?? group[0]!;
+    const joinTimes = group
+      .map((entry) => entry.joinedAtMs)
+      .filter((value): value is number => typeof value === "number");
     return {
       id,
       userId: representative.userId ?? null,
@@ -406,6 +413,7 @@ function groupConnectedUsers(
           .find((name) => name) ?? null,
       isSelf: group.some((entry) => entry.isSelf),
       isActive: group.some((entry) => entry.isActive !== false),
+      joinedAtMs: joinTimes.length > 0 ? Math.min(...joinTimes) : null,
     };
   });
 }
@@ -856,10 +864,6 @@ function createSharedChatSession(
   const participantIdAliases = signal<Record<string, string>>({});
   const localIsTyping = signal(false);
   const selectedProviderParticipantIds = signal<string[]>([]);
-  // Locally-observed join times keyed by participant id. AI participants sync
-  // their join time through the shared doc; this serves as the source for the
-  // local user's own participants and a fallback for users and legacy data.
-  const observedJoinTimes = signal<Record<string, number>>({});
   chatProvidersMap.changes.subscribe(() => {
     // Avoid updating reactive graph synchronously during shared-doc
     // transactions to prevent dependency cycles.
@@ -1021,7 +1025,7 @@ function createSharedChatSession(
         isAI: false,
         isRemote: !group.isSelf,
         isActive: group.isActive,
-        joinTimeMs: observedJoinTimes.value[group.id] ?? 0,
+        joinTimeMs: group.joinedAtMs ?? 0,
       })
     )
   );
@@ -1079,7 +1083,8 @@ function createSharedChatSession(
           isSelf: false,
           isRemote,
           isActive: owner.isActive,
-          joinTimeMs: p.joinTimeMs ?? observedJoinTimes.value[p.id] ?? 0,
+          // AI participants share their owner's join time.
+          joinTimeMs: owner.joinTimeMs,
         });
       }
     });
@@ -1139,7 +1144,8 @@ function createSharedChatSession(
           isAI: true,
           isRemote: false,
           isActive: p.isActive,
-          joinTimeMs: observedJoinTimes.value[id] ?? 0,
+          // AI participants share their owner's join time.
+          joinTimeMs: p.joinTimeMs,
         };
       });
   });
@@ -1169,48 +1175,6 @@ function createSharedChatSession(
     }
     const isTyping = localIsTyping.value;
     chatTypingMap.set(localParticipantId.value, isTyping);
-  });
-
-  // The set of participant ids to track join times for, derived only from raw
-  // sources (connected users, locally-selected providers, and shared provider
-  // data) so the recording effect below never depends on the participant
-  // computeds it ultimately feeds.
-  const trackedParticipantIds = computed(() => {
-    void chatProvidersMapVersion.value;
-    const ids = new Set<string>();
-    for (const group of groupConnectedUsers(session.allUsers.value)) {
-      ids.add(group.id);
-    }
-    for (const id of selectedProviderParticipantIds.value) {
-      ids.add(id);
-    }
-    chatProvidersMap.forEach((value) => {
-      const parsed = sharedAIChatParticipantArraySchema.safeParse(value);
-      if (parsed.success) {
-        for (const participant of parsed.data) {
-          ids.add(participant.id);
-        }
-      }
-    });
-    return ids;
-  });
-
-  // Record the first time each participant id is observed. Registered before the
-  // serialization effect so join times exist when AI participants are written to
-  // the shared doc.
-  effect(() => {
-    const now = Date.now();
-    const current = observedJoinTimes.value;
-    let next: Record<string, number> | null = null;
-    for (const id of trackedParticipantIds.value) {
-      if (current[id] === undefined) {
-        next ??= { ...current };
-        next[id] = now;
-      }
-    }
-    if (next) {
-      observedJoinTimes.value = next;
-    }
   });
 
   let previousLocalParticipantId: string | null = null;
@@ -1249,7 +1213,6 @@ function createSharedChatSession(
             providerId: p.providerId,
             name: p.name ? translateTitle(i18n.t, p.name) : null,
             isAI: p.isAI,
-            joinTimeMs: p.joinTimeMs,
           })
         )
       );
@@ -1273,15 +1236,6 @@ function createSharedChatSession(
 
     if (selectedProviderParticipantIds.value.includes(participantId)) {
       return;
-    }
-
-    // Record the join time before mutating the selected ids so the
-    // serialization effect writes it into the shared doc.
-    if (observedJoinTimes.value[participantId] === undefined) {
-      observedJoinTimes.value = {
-        ...observedJoinTimes.value,
-        [participantId]: Date.now(),
-      };
     }
 
     selectedProviderParticipantIds.value = [

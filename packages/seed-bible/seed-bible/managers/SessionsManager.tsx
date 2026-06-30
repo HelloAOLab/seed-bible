@@ -35,6 +35,13 @@ export interface ConnectedSessionUser extends SessionConnectionInfo {
    * Whether this user is currently connected to the session.
    */
   isActive: boolean;
+
+  /**
+   * The `Date.now()` timestamp when this user first broadcast their profile
+   * into the session, i.e. when they joined. Null if the user has not
+   * broadcast a join time (e.g. legacy entries written before this existed).
+   */
+  joinedAtMs: number | null;
 }
 
 export interface SessionConnectionInfo {
@@ -98,6 +105,13 @@ type SessionDecorationValue = VerseDecoration;
 interface SharedUserProfileEntry {
   userId: string | null;
   profile: UserProfile | null;
+  /**
+   * The `Date.now()` timestamp captured by the user the first time they
+   * broadcast their profile into the session, i.e. when they joined.
+   * Preserved across subsequent re-broadcasts. `null` for entries written
+   * before this field existed.
+   */
+  joinedAtMs: number | null;
 }
 
 function parseSharedUserProfileEntry(
@@ -114,7 +128,11 @@ function parseSharedUserProfileEntry(
     rawProfile && typeof rawProfile === "object"
       ? (rawProfile as UserProfile)
       : null;
-  return { userId, profile };
+  const joinedAtMs =
+    typeof record.joinedAtMs === "number" && Number.isFinite(record.joinedAtMs)
+      ? record.joinedAtMs
+      : null;
+  return { userId, profile, joinedAtMs };
 }
 
 function sharedUserProfileEntriesMatch(
@@ -123,6 +141,7 @@ function sharedUserProfileEntriesMatch(
 ): boolean {
   return (
     left.userId === right.userId &&
+    left.joinedAtMs === right.joinedAtMs &&
     JSON.stringify(left.profile) === JSON.stringify(right.profile)
   );
 }
@@ -672,6 +691,7 @@ async function createBibleReadingSession(
           profile,
           visual,
           isActive: true,
+          joinedAtMs: sharedEntry?.joinedAtMs ?? null,
         };
       })
     );
@@ -718,6 +738,7 @@ async function createBibleReadingSession(
         profile: sharedEntry.profile,
         visual: getUserAnimalVisual(connectionId),
         isActive: false,
+        joinedAtMs: sharedEntry.joinedAtMs,
       });
     });
 
@@ -816,10 +837,13 @@ async function createBibleReadingSession(
   const stopBroadcastLocalIdentity = effect(() => {
     const userId = loginManager.userId.value;
     const profile = loginManager.profile.value;
-    const nextEntry: SharedUserProfileEntry = { userId, profile };
     const currentEntry = parseSharedUserProfileEntry(
       userProfilesMap.get(localConnectionId)
     );
+    // Stamp the join time on the first broadcast and preserve it across
+    // subsequent re-broadcasts (login/logout, profile edits).
+    const joinedAtMs = currentEntry?.joinedAtMs ?? Date.now();
+    const nextEntry: SharedUserProfileEntry = { userId, profile, joinedAtMs };
     if (
       currentEntry &&
       sharedUserProfileEntriesMatch(currentEntry, nextEntry)

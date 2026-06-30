@@ -157,6 +157,7 @@ function createSharedSessionMock(options?: {
         isActive: user.isActive,
         color: "#000000",
         sessionId: null,
+        joinedAtMs: Date.now(),
       }))
     : [];
   const explicitConnectedUsers = (options?.connectedSessionUsers ?? []).map(
@@ -168,6 +169,7 @@ function createSharedSessionMock(options?: {
       isActive: true,
       color: "#000000",
       sessionId: null,
+      joinedAtMs: Date.now(),
     })
   );
   const connectedUsers = signal(
@@ -984,6 +986,7 @@ describe("createChatsManager", () => {
         isActive: false,
         color: "#000000",
         sessionId: null,
+        joinedAtMs: Date.now(),
       },
     ];
 
@@ -1231,6 +1234,7 @@ describe("createChatsManager", () => {
         isActive: false,
         color: "#000000",
         sessionId: null,
+        joinedAtMs: Date.now(),
       },
     ];
 
@@ -1299,6 +1303,7 @@ describe("createChatsManager", () => {
         isActive: false,
         color: "#000000",
         sessionId: null,
+        joinedAtMs: Date.now(),
       },
     ];
 
@@ -1415,7 +1420,7 @@ describe("createChatsManager", () => {
     ).toBe(2_000);
   });
 
-  it("syncs AI participant joinTimeMs through the shared doc", async () => {
+  it("derives AI participant joinTimeMs from its owner's join time", async () => {
     const { loginManager } = createLoginManagerMock();
     const chats = createChatsManager(loginManager, mockI18nManager);
     chats.registerProvider({
@@ -1443,16 +1448,25 @@ describe("createChatsManager", () => {
     });
     const chat = chats.createSharedSession(session);
 
+    // The owner joined at the mocked session time; adding the provider later
+    // must not change the AI's join time — it follows the owner.
     vi.mocked(Date.now).mockReturnValue(5_000);
     chat.addParticipant("conn-user-a_provider-1");
     await Promise.resolve();
 
-    expect(sharedChatProviders.get("user-a")).toEqual([
-      expect.objectContaining({
-        id: "conn-user-a_provider-1",
-        joinTimeMs: 5_000,
-      }),
+    const aiParticipant = chat.participants.value.find(
+      (p) => p.id === "conn-user-a_provider-1"
+    );
+    expect(aiParticipant?.joinTimeMs).toBe(1_717_000_000_000);
+
+    // The join time is no longer stored in the shared doc; only identity is.
+    const shared = sharedChatProviders.get("user-a") as Array<
+      Record<string, unknown>
+    >;
+    expect(shared).toEqual([
+      expect.objectContaining({ id: "conn-user-a_provider-1" }),
     ]);
+    expect(shared[0]).not.toHaveProperty("joinTimeMs");
   });
 
   it("registerProvider() replaces providers that have the same id", () => {
@@ -1765,7 +1779,8 @@ describe("createChatsManager", () => {
       isAI: true,
       isRemote: false,
       isActive: true,
-      joinTimeMs: 0,
+      // AI participants inherit their owner's join time.
+      joinTimeMs: 1_717_000_000_000,
     });
 
     chat.addParticipant("conn-user-a_provider-1");
@@ -1824,7 +1839,6 @@ describe("createChatsManager", () => {
         providerId: "provider-1",
         name: "New Name",
         isAI: true,
-        joinTimeMs: 1_717_000_000_000,
       },
     ]);
   });
@@ -2379,6 +2393,7 @@ describe("createChatsManager", () => {
         isActive: true,
         color: "#000000",
         sessionId: null,
+        joinedAtMs: Date.now(),
       },
       {
         userId: "u1",
@@ -2388,6 +2403,7 @@ describe("createChatsManager", () => {
         isActive: true,
         color: "#000000",
         sessionId: null,
+        joinedAtMs: Date.now(),
       },
     ];
     allUsers.value = connectedUsers.value.map((user) => ({
@@ -2446,6 +2462,7 @@ describe("createChatsManager", () => {
         isActive: true,
         color: "#000000",
         sessionId: null,
+        joinedAtMs: Date.now(),
       },
       {
         userId: "u1",
@@ -2455,6 +2472,7 @@ describe("createChatsManager", () => {
         isActive: true,
         color: "#000000",
         sessionId: null,
+        joinedAtMs: Date.now(),
       },
     ];
     allUsers.value = connectedUsers.value.map((user) => ({
@@ -2531,6 +2549,7 @@ describe("createChatsManager", () => {
         isActive: true,
         color: "#000000",
         sessionId: null,
+        joinedAtMs: Date.now(),
       },
     ];
     allUsers.value = connectedUsers.value.map((user) => ({

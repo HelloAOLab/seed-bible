@@ -1214,6 +1214,7 @@ describe("SessionsManager", () => {
           isSelf: false,
           isActive: true,
           visual: getUserAnimalVisual("conn-1"),
+          joinedAtMs: null,
         },
         {
           connectionId: "conn-2",
@@ -1222,6 +1223,7 @@ describe("SessionsManager", () => {
           isSelf: false,
           isActive: true,
           visual: getUserAnimalVisual("conn-2"),
+          joinedAtMs: null,
         },
       ])
     );
@@ -1237,6 +1239,7 @@ describe("SessionsManager", () => {
           isSelf: false,
           isActive: true,
           visual: getUserAnimalVisual("conn-1"),
+          joinedAtMs: null,
         },
         {
           connectionId: "conn-2",
@@ -1245,6 +1248,7 @@ describe("SessionsManager", () => {
           isSelf: false,
           isActive: true,
           visual: getUserAnimalVisual("conn-2"),
+          joinedAtMs: null,
         },
       ])
     );
@@ -1293,6 +1297,7 @@ describe("SessionsManager", () => {
           isSelf: false,
           isActive: false,
           visual: getUserAnimalVisual("conn-1"),
+          joinedAtMs: null,
         },
       ])
     );
@@ -1331,6 +1336,7 @@ describe("SessionsManager", () => {
           isSelf: false,
           isActive: false,
           visual: getUserAnimalVisual("conn-old"),
+          joinedAtMs: null,
         },
       ])
     );
