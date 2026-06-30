@@ -237,7 +237,7 @@ body {
  * browsers don't show the default white "overscroll" gap when the user
  * pulls the page up past the bottom toolbar. Scrolling happens inside
  * the inner panes (which have their own overflow scrollers). */
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   html,
   body {
     position: fixed;
@@ -398,7 +398,7 @@ h6 {
 /* Force a tight 1% reader margin in mobile view, regardless of the
    user's saved scriptureMargin setting. Breakpoint mirrors `isMobile`
    in SeedBibleStateManager (viewportWidth <= 768). */
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .sb-bible-reader {
     width: 100%;
     padding-right: 1%;
@@ -2036,7 +2036,7 @@ h6 {
   display: none;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .sb-reader-toolbar-wrap {
     position: fixed;
     left: 50%;
@@ -2947,7 +2947,7 @@ h6 {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .sb-selector-overlay {
     display: none;
     pointer-events: all;
@@ -2986,7 +2986,7 @@ h6 {
   transform: translateY(0);
 }
 
-@media only screen and (min-width: 481px) {
+@media only screen and (min-width: 769px) {
   .sb-selector-panel {
     width: 650px;
     height: 80dvh;
@@ -3157,7 +3157,7 @@ h6 {
   text-transform: capitalize;
 }
 
-@media (min-width: 481px) {
+@media (min-width: 769px) {
   .sb-selector-book-button {
     width: 200px;
   }
@@ -3207,7 +3207,7 @@ h6 {
   color: var(--sb-primary-font-color);
 }
 
-@media (min-width: 481px) {
+@media (min-width: 769px) {
   .sb-selector-chapter-grid {
     grid-template-columns: repeat(auto-fit, minmax(38px, 1fr));
   }
@@ -3228,7 +3228,7 @@ h6 {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .sb-selector-grid {
     grid-template-columns: 1fr;
     gap: 12px;
@@ -3774,7 +3774,7 @@ h6 {
 /* Mobile: dock the picker modal to the bottom of the screen as a sheet
  * (matches the design spec). The modal frame itself is reused, but the
  * outer overlay aligns it to the bottom and stretches it to full width. */
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .sb-footnote-modal-overlay:has(.sb-bookmark-picker) {
     align-items: flex-end;
     padding: 0;
@@ -4962,7 +4962,7 @@ h6 {
   border-radius: 6px;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .sb-tabs-sidebar {
     display: none;
   }
@@ -5410,7 +5410,7 @@ h6 {
   display: none;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .sb-tabs-sidebar-mobile-open .sb-tab-mobile-add-fab {
     display: inline-flex;
   }
@@ -5832,7 +5832,7 @@ h6 {
    the default downward-opening absolute menu spills off-screen behind the tab
    bar. Render it as a bottom-anchored sheet that stays above the nav bar and
    scrolls internally, with the overlay dimming the whole screen. */
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .sb-language-picker-overlay {
     z-index: 9998;
     background: rgba(0, 0, 0, 0.3);
@@ -7475,7 +7475,7 @@ h6 {
 /* Desktop only (mobile search is left untouched): give the book/translation
    search field a clearly defined boundary and breathing room so it's obvious
    where the input begins and ends. */
-@media only screen and (min-width: 481px) {
+@media only screen and (min-width: 769px) {
   .searchbar {
     height: 44px;
     padding: 8px 14px;
@@ -7955,7 +7955,7 @@ h6 {
   }
 }
 
-@media only screen and (max-width: 480px) {
+@media only screen and (max-width: 768px) {
   .dropdown {
     /* display: none; */
     width: 62%;
@@ -8479,7 +8479,7 @@ h6 {
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   /* Search is a bottom-anchored sheet on mobile: the input sits just above the
      5-tab bar and results grow upward. It is capped to the *small* viewport
      height (`svh`, which excludes the Android address bar) and anchored to the

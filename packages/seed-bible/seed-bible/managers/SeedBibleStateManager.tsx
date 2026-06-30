@@ -94,10 +94,10 @@ type SearchManager = ReturnType<typeof createSearchManager>;
  * App-wide mobile breakpoint, in pixels. Viewports at or below this width use
  * the mobile layout (drawer sidebar, mobile header, full-screen selector);
  * above it the docked desktop layout applies. This is the single source of
- * truth for the JS side — the matching `@media (max-width: 480px)` /
- * `(min-width: 481px)` rules in app/main.css must be kept in sync by hand.
+ * truth for the JS side — the matching `@media (max-width: 768px)` /
+ * `(min-width: 769px)` rules in app/main.css must be kept in sync by hand.
  */
-export const MOBILE_BREAKPOINT = 480;
+export const MOBILE_BREAKPOINT = 768;
 
 /**
  * Derived app-level state and high-level actions used by UI components.
@@ -118,7 +118,7 @@ export interface AppState {
   /** Current window inner height in pixels. Updated on resize. */
   viewportHeight: ReadonlySignal<number>;
 
-  /** True when viewport width is at or below the mobile breakpoint (480px). */
+  /** True when viewport width is at or below the mobile breakpoint (768px). */
   isMobile: ReadonlySignal<boolean>;
   /** True when on a phone-sized viewport held in landscape orientation. */
   isMobileLandscape: ReadonlySignal<boolean>;
