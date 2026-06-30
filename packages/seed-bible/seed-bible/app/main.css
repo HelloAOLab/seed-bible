@@ -926,6 +926,10 @@ h6 {
   text-decoration: var(--text-bookTitle-text-decoration);
   text-align: var(--text-bookTitle-alignment);
   margin: 0 0 28px;
+  /* Reserve space on the trailing edge for the absolutely-positioned bookmark
+     button (inset-inline-end: 16px + 36px wide) so a long title's translation
+     suffix (e.g. "/ AAB") wraps or stops before it instead of overlapping. */
+  padding-inline-end: 60px;
   padding-bottom: 18px;
   border-bottom: 1px solid var(--sb-divider-color);
   font-size: 36px;
