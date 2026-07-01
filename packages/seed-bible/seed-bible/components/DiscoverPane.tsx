@@ -108,7 +108,6 @@ function CrossReferencesSection(props: { tab: ReaderTab | null }) {
           {results.map((result, index) => (
             <li key={index} className="sb-discover-item">
               <span className="sb-discover-item-title">
-                {formatRef(result.reference)} →{" "}
                 {formatRef(result.crossReference)}
               </span>
             </li>
