@@ -291,5 +291,6 @@
   "playlist-title_placeholder": "Playlist title",
   "items": "Items",
   "playlist-items-empty": "No items yet.",
-  "playlist-item-html": "HTML snippet"
+  "playlist-item-html": "HTML snippet",
+  "edit-playlist": "Edit playlist"
 }

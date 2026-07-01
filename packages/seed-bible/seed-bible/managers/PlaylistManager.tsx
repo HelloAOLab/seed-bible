@@ -108,6 +108,16 @@ export function createPlaylistManager(
   };
 
   /**
+   * Opens an existing playlist for editing: sets `editingPlaylist` to a copy of
+   * the given playlist and switches to the create/edit view. Persisting happens
+   * later via `saveEditingPlaylist`.
+   */
+  const editPlaylist = (playlist: Playlist): void => {
+    editingPlaylist.value = { ...playlist };
+    view.value = "create_playlist";
+  };
+
+  /**
    * Persists the currently-edited playlist, upserts it into `userPlaylists`,
    * then clears the editor and returns to the discover view. No-op when there
    * is no playlist being edited.
@@ -154,6 +164,7 @@ export function createPlaylistManager(
   return {
     savePlaylist,
     createNewPlaylist,
+    editPlaylist,
     saveEditingPlaylist,
     cancelEditingPlaylist,
     listPlaylists,

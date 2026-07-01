@@ -9100,6 +9100,43 @@ h6 {
   border-radius: 8px;
 }
 
+.sb-discover-item--row {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.sb-discover-item-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-discover-item-edit {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-discover-item-edit:hover {
+  background: var(--sb-divider-color);
+  color: var(--sb-font-color);
+}
+
+.sb-discover-item-edit .material-symbols-outlined {
+  font-size: 18px;
+}
+
 .sb-discover-item-title {
   font-size: 14px;
   font-weight: 500;

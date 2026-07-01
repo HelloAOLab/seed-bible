@@ -68,18 +68,34 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         ) : (
           <ul className="sb-discover-list">
             {userPlaylists.map((playlist) => (
-              <li key={playlist.id} className="sb-discover-item" dir="auto">
-                <span className="sb-discover-item-title">
-                  {playlist.title ??
-                    t("untitled-playlist", {
-                      defaultValue: "Untitled playlist",
-                    })}
-                </span>
-                {playlist.description ? (
-                  <span className="sb-discover-item-description">
-                    {playlist.description}
+              <li
+                key={playlist.id}
+                className="sb-discover-item sb-discover-item--row"
+                dir="auto"
+              >
+                <div className="sb-discover-item-main">
+                  <span className="sb-discover-item-title">
+                    {playlist.title ??
+                      t("untitled-playlist", {
+                        defaultValue: "Untitled playlist",
+                      })}
                   </span>
-                ) : null}
+                  {playlist.description ? (
+                    <span className="sb-discover-item-description">
+                      {playlist.description}
+                    </span>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  className="sb-discover-item-edit"
+                  aria-label={t("edit-playlist", {
+                    defaultValue: "Edit playlist",
+                  })}
+                  onClick={() => playlists.editPlaylist(playlist)}
+                >
+                  <MaterialIcon>edit</MaterialIcon>
+                </button>
               </li>
             ))}
           </ul>
