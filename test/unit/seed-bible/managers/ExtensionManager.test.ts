@@ -1,4 +1,9 @@
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import type {
+  LoginManager,
+  UserProfile,
+} from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import { signal } from "@preact/signals";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", () => ({
   addTranslations: vi.fn(),
@@ -11,6 +16,28 @@ import {
   type ExtensionSet,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import type { Mock } from "vitest";
+
+/**
+ * Builds a minimal LoginManager stub backed by signals, exposing just the
+ * surface the ExtensionManager touches: `userId`, `profile`, and
+ * `updateProfile` (which merges into the profile signal like the real one).
+ * Defaults to logged out (userId null) so persistence falls back to local
+ * storage only.
+ */
+function createTestLogin(initial?: {
+  userId?: string | null;
+  profile?: UserProfile | null;
+}): LoginManager {
+  const userId = signal<string | null>(initial?.userId ?? null);
+  const profile = signal<UserProfile | null>(initial?.profile ?? null);
+  const updateProfile = (newData: Partial<UserProfile>) => {
+    profile.value = {
+      ...(profile.value ?? { name: "" }),
+      ...newData,
+    } as UserProfile;
+  };
+  return { userId, profile, updateProfile } as unknown as LoginManager;
+}
 
 describe("ExtensionInitalizer", () => {
   let initializer: ExtensionInitalizer;
@@ -333,6 +360,7 @@ describe("ExtensionInitalizer", () => {
 describe("createExtensionManager", () => {
   let addTranslationsMock: Mock;
   let loadedModules: string[];
+  let login: LoginManager;
 
   /**
    * Mocks the ES module that the given extension URL resolves to. The URL is
@@ -352,6 +380,7 @@ describe("createExtensionManager", () => {
   beforeEach(async () => {
     loadedModules = [];
     localStorage.clear();
+    login = createTestLogin();
     const { addTranslations } = await vi.importMock<
       typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
     >("@packages/seed-bible/seed-bible/i18n/I18nManager");
@@ -360,7 +389,7 @@ describe("createExtensionManager", () => {
   });
 
   it("loadExtensionSet() installs dependencies before dependents", async () => {
-    const manager = createExtensionManager();
+    const manager = createExtensionManager(login);
     mockExtensionModule("pkg://dependency");
     mockExtensionModule("pkg://dependent");
     const set: ExtensionSet = {
@@ -400,7 +429,7 @@ describe("createExtensionManager", () => {
   });
 
   it("loadExtension() installs an unregistered dependency from loaded extension sets", async () => {
-    const manager = createExtensionManager();
+    const manager = createExtensionManager(login);
     mockExtensionModule("pkg://catalog-dependency");
     mockExtensionModule("pkg://catalog-dependent");
 
@@ -444,7 +473,7 @@ describe("createExtensionManager", () => {
   });
 
   it("loadExtension() returns false when dependency is missing from registry and loaded sets", async () => {
-    const manager = createExtensionManager();
+    const manager = createExtensionManager(login);
     mockExtensionModule("pkg://missing-dependent");
 
     const loaded = await manager.loadExtension({
@@ -467,7 +496,7 @@ describe("createExtensionManager", () => {
   });
 
   it("loadExtension() does not install an already registered dependency", async () => {
-    const manager = createExtensionManager();
+    const manager = createExtensionManager(login);
     mockExtensionModule("pkg://registered-dependent");
     const unregisterDependency = registerExtension({
       id: "ext.registered-dependency",
@@ -497,7 +526,7 @@ describe("createExtensionManager", () => {
   });
 
   it("loadExtensionSet() avoids reinstalling extensions that are already installed", async () => {
-    const manager = createExtensionManager();
+    const manager = createExtensionManager(login);
     mockExtensionModule("pkg://single");
     const set: ExtensionSet = {
       id: "set.reinstall",
@@ -524,7 +553,7 @@ describe("createExtensionManager", () => {
   });
 
   it("loadExtensionSet() adds translations for extensions in the set", async () => {
-    const manager = createExtensionManager();
+    const manager = createExtensionManager(login);
     const translationsA = {
       en: {
         title: "Translation A",
@@ -588,7 +617,7 @@ describe("createExtensionManager", () => {
       ],
     };
 
-    const manager = createExtensionManager({ defaultExtensions });
+    const manager = createExtensionManager(login, { defaultExtensions });
     mockExtensionModule("pkg://autoinstall");
 
     window.history.replaceState(null, "", "/?autoinstall-ext.autoinstall=true");
@@ -602,7 +631,7 @@ describe("createExtensionManager", () => {
   });
 
   it("getExtensions() lists known extensions from loaded sets even when not installed", async () => {
-    const manager = createExtensionManager();
+    const manager = createExtensionManager(login);
     mockExtensionModule("pkg://known-only");
     const set: ExtensionSet = {
       id: "set.known-only",
@@ -640,7 +669,7 @@ describe("createExtensionManager", () => {
   });
 
   it("getExtensions() marks direct extensions as known without an owning set", async () => {
-    const manager = createExtensionManager();
+    const manager = createExtensionManager(login);
     mockExtensionModule("pkg://direct");
     const extension = {
       // recordName: "record",
@@ -672,7 +701,7 @@ describe("createExtensionManager", () => {
   });
 
   it("getExtensions() reports pending installation state", async () => {
-    const manager = createExtensionManager();
+    const manager = createExtensionManager(login);
 
     let resolveInstall: () => void = () => undefined;
     const installGate = new Promise<void>((resolve) => {
@@ -729,7 +758,7 @@ describe("createExtensionManager", () => {
   });
 
   it("getExtensions() returns the union of registered extensions and extension packages", async () => {
-    const manager = createExtensionManager();
+    const manager = createExtensionManager(login);
     const packageOnlyExtension = {
       // recordName: "record",
       url: "pkg://package-only",
@@ -795,7 +824,7 @@ describe("createExtensionManager", () => {
   });
 
   it("unloadExtension() marks the extension as not installed", async () => {
-    const manager = createExtensionManager();
+    const manager = createExtensionManager(login);
     mockExtensionModule("pkg://unload-me");
     const extension = {
       url: "pkg://unload-me",
@@ -820,7 +849,7 @@ describe("createExtensionManager", () => {
   });
 
   it("unloadExtension() unregisters the extension", async () => {
-    const manager = createExtensionManager();
+    const manager = createExtensionManager(login);
     mockExtensionModule("pkg://unload-reg");
     const extension = {
       url: "pkg://unload-reg",
@@ -850,7 +879,7 @@ describe("createExtensionManager", () => {
   });
 
   it("unloadExtension() keeps the extension in the known list", async () => {
-    const manager = createExtensionManager();
+    const manager = createExtensionManager(login);
     mockExtensionModule("pkg://unload-known");
     const extension = {
       // recordName: "record",
@@ -877,7 +906,7 @@ describe("createExtensionManager", () => {
   });
 
   it("getAllExtensionsAsSet() returns undefined and warns when there are no extension packages", () => {
-    const manager = createExtensionManager();
+    const manager = createExtensionManager(login);
     const warnSpy = vi
       .spyOn(console, "warn")
       .mockImplementation(() => undefined);
@@ -895,7 +924,7 @@ describe("createExtensionManager", () => {
   });
 
   it("getAllExtensionsAsSet() returns a sorted extension set with a hash-based id", async () => {
-    const manager = createExtensionManager();
+    const manager = createExtensionManager(login);
     const extensionB = {
       url: "pkg://b",
       meta: {
@@ -951,7 +980,7 @@ describe("createExtensionManager", () => {
   });
 
   it("loadExtension() persists the installed extension ID to local storage", async () => {
-    const manager = createExtensionManager();
+    const manager = createExtensionManager(login);
     mockExtensionModule("pkg://persisted");
 
     await manager.loadExtension({
@@ -970,7 +999,7 @@ describe("createExtensionManager", () => {
   });
 
   it("unloadExtension() removes the extension ID from local storage", async () => {
-    const manager = createExtensionManager();
+    const manager = createExtensionManager(login);
     mockExtensionModule("pkg://forget");
 
     await manager.loadExtension({
@@ -1012,7 +1041,7 @@ describe("createExtensionManager", () => {
       ],
     };
 
-    const manager = createExtensionManager({ defaultExtensions });
+    const manager = createExtensionManager(login, { defaultExtensions });
     mockExtensionModule("pkg://saved");
 
     await manager.loadDefaultExtensions();
@@ -1030,7 +1059,7 @@ describe("createExtensionManager", () => {
       .spyOn(console, "warn")
       .mockImplementation(() => undefined);
 
-    const manager = createExtensionManager({
+    const manager = createExtensionManager(login, {
       defaultExtensions: { id: "set.empty", extensions: [] },
     });
 
@@ -1050,5 +1079,157 @@ describe("createExtensionManager", () => {
     } finally {
       warnSpy.mockRestore();
     }
+  });
+
+  /** Reads the installed-extension IDs persisted to a login's profile config. */
+  function getProfileInstalled(l: LoginManager): unknown {
+    const config = l.profile.value?.config as
+      | Record<string, unknown>
+      | undefined;
+    return config?.installedExtensions;
+  }
+
+  /** Polls until `check()` is true, or throws after `timeoutMs`. */
+  async function waitForCondition(
+    check: () => boolean,
+    timeoutMs = 1000
+  ): Promise<void> {
+    const start = Date.now();
+    while (!check()) {
+      if (Date.now() - start > timeoutMs) {
+        throw new Error("waitForCondition timed out");
+      }
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+  }
+
+  it("loadExtension() writes the installed ID to the profile config when logged in", async () => {
+    login = createTestLogin({
+      userId: "user-1",
+      profile: { name: "Test" } as UserProfile,
+    });
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://acct");
+
+    await manager.loadExtension({
+      url: "pkg://acct",
+      meta: {
+        id: "ext.acct",
+        translations: {
+          en: { title: "Acct", description: "Acct extension" },
+        },
+      },
+    });
+
+    expect(getProfileInstalled(login)).toEqual(["ext.acct"]);
+    // Local storage is still written too — both stores stay in sync.
+    expect(
+      JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
+    ).toEqual(["ext.acct"]);
+  });
+
+  it("unloadExtension() removes the ID from the profile config when logged in", async () => {
+    login = createTestLogin({
+      userId: "user-1",
+      profile: { name: "Test" } as UserProfile,
+    });
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://acct-forget");
+
+    await manager.loadExtension({
+      url: "pkg://acct-forget",
+      meta: {
+        id: "ext.acct-forget",
+        translations: {
+          en: { title: "Acct Forget", description: "Acct Forget extension" },
+        },
+      },
+    });
+
+    expect(getProfileInstalled(login)).toEqual(["ext.acct-forget"]);
+
+    manager.unloadExtension("ext.acct-forget");
+
+    expect(getProfileInstalled(login)).toEqual([]);
+  });
+
+  it("installs profile-saved extensions on login and caches them locally", async () => {
+    const defaultExtensions: ExtensionSet = {
+      id: "set.profile-saved",
+      extensions: [
+        {
+          url: "pkg://profile-saved",
+          meta: {
+            id: "ext.profile-saved",
+            translations: {
+              en: { title: "Profile Saved", description: "Profile Saved" },
+            },
+          },
+        },
+      ],
+    };
+
+    const manager = createExtensionManager(login, { defaultExtensions });
+    mockExtensionModule("pkg://profile-saved");
+
+    // Startup: logged out, nothing saved locally — the extension stays known
+    // but uninstalled.
+    await manager.loadDefaultExtensions();
+    expect(loadedModules).toEqual([]);
+
+    // The user logs in with a profile that already lists the extension.
+    login.userId.value = "user-1";
+    login.profile.value = {
+      name: "Test",
+      config: { installedExtensions: ["ext.profile-saved"] },
+    } as UserProfile;
+
+    await waitForCondition(() => loadedModules.includes("pkg://profile-saved"));
+
+    expect(manager.getExtensions()[0]?.installed).toBe(true);
+    // The profile ID is cached into local storage so it persists offline too.
+    expect(
+      JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
+    ).toEqual(["ext.profile-saved"]);
+  });
+
+  it("adopts locally-installed extensions into the profile on login", async () => {
+    localStorage.setItem(
+      "sb-installed-extensions",
+      JSON.stringify(["ext.local-only"])
+    );
+
+    const defaultExtensions: ExtensionSet = {
+      id: "set.local-only",
+      extensions: [
+        {
+          url: "pkg://local-only",
+          meta: {
+            id: "ext.local-only",
+            translations: {
+              en: { title: "Local Only", description: "Local Only" },
+            },
+          },
+        },
+      ],
+    };
+
+    const manager = createExtensionManager(login, { defaultExtensions });
+    mockExtensionModule("pkg://local-only");
+
+    // Startup restores the locally-saved extension while logged out.
+    await manager.loadDefaultExtensions();
+    expect(loadedModules).toEqual(["pkg://local-only"]);
+
+    // Logging in adopts the local extension into the (initially empty) profile.
+    login.userId.value = "user-1";
+    login.profile.value = { name: "Test" } as UserProfile;
+
+    await waitForCondition(() => {
+      const saved = getProfileInstalled(login);
+      return Array.isArray(saved) && saved.includes("ext.local-only");
+    });
+
+    expect(getProfileInstalled(login)).toEqual(["ext.local-only"]);
   });
 });

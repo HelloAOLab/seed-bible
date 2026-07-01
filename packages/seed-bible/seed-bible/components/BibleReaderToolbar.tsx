@@ -421,7 +421,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     "open-selector",
     "open-sidebar",
     "open-search",
-    // "open-chat",
   ]);
 
   const moreTools = useComputed(() =>

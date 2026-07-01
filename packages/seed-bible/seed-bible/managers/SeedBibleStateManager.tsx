@@ -98,6 +98,15 @@ type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
 
 /**
+ * App-wide mobile breakpoint, in pixels. Viewports at or below this width use
+ * the mobile layout (drawer sidebar, mobile header, full-screen selector);
+ * above it the docked desktop layout applies. This is the single source of
+ * truth for the JS side — the matching `@media (max-width: 768px)` /
+ * `(min-width: 769px)` rules in app/main.css must be kept in sync by hand.
+ */
+export const MOBILE_BREAKPOINT = 768;
+
+/**
  * Derived app-level state and high-level actions used by UI components.
  *
  * These values are mostly computed from lower-level managers and represent
@@ -329,7 +338,7 @@ export function createSeedBibleState(
   const readingHistory = createReadingHistoryManager(os, login);
   const annotations = createAnnotationsManager(os, login);
   const sessions = createSessionsManager(os, data, login, highlights, i18n);
-  const extensions = createExtensionManager({
+  const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
   });
   const modals = createModalManager();
@@ -431,7 +440,7 @@ export function createSeedBibleState(
   const viewportWidth = signal(
     typeof window === "undefined"
       ? isSSR && renderedAsMobile
-        ? 768
+        ? MOBILE_BREAKPOINT
         : 1000
       : window.innerWidth
   );
@@ -442,7 +451,7 @@ export function createSeedBibleState(
         : 1000
       : window.innerHeight
   );
-  const isMobile = computed(() => viewportWidth.value <= 768);
+  const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
 
   const tutorial = createTutorialManager(login, onboarding, selector, isMobile);
 
@@ -454,6 +463,26 @@ export function createSeedBibleState(
       viewportHeight.value > 0 &&
       viewportHeight.value <= 600 &&
       viewportWidth.value > viewportHeight.value
+  );
+
+  // True when a multi-pane layout is active — i.e. the user picked anything
+  // other than "single" from the Panels menu (split-2v, split-3v, grid-2x2,
+  // …), or more than one attached pane is otherwise open. Detached overlay
+  // panes (extension tools, playlist, etc.) don't count. Keyed primarily off
+  // the layout preset so selecting a layout from the menu reacts immediately.
+  const hasMultiplePanes = computed(
+    () =>
+      panelsEnabled.value &&
+      (panes.layout.value !== "single" ||
+        panes.panes.value.filter((pane) => !pane.detached).length > 1)
+  );
+
+  // A docked-sidebar desktop layout that has become too narrow for the
+  // sidebar and reader to comfortably share the row. Excludes mobile
+  // (<= 768), where the sidebar is a drawer and `isSidebarCollapsed` does not
+  // apply. The 1200px ceiling mirrors the CSS breakpoint.
+  const isNarrowDesktop = computed(
+    () => viewportWidth.value > 768 && viewportWidth.value <= 1200
   );
 
   effect(() => {
@@ -480,6 +509,33 @@ export function createSeedBibleState(
     if (isMobileLandscape.value) {
       sidebar.isSidebarCollapsed.value = true;
     }
+  });
+
+  // Collapse the docked sidebar by default when a multi-pane layout is active,
+  // so the panes get the horizontal space instead of competing with the
+  // sidebar. Reacting only to the boolean means this fires once per transition
+  // into multi-pane and still lets the user manually re-expand afterwards.
+  effect(() => {
+    if (hasMultiplePanes.value) {
+      sidebar.isSidebarCollapsed.value = true;
+    }
+  });
+
+  // Drive the docked sidebar's collapsed state from the viewport width so the
+  // three layouts hand off cleanly:
+  //   - mobile (<= 768): the sidebar is a drawer (isMobileOpen); the docked
+  //     collapsed flag does not apply, so leave it untouched.
+  //   - narrow desktop (769–1200): collapse to sb-tabs-sidebar-collapsed so
+  //     the reader keeps usable horizontal space.
+  //   - wide desktop (> 1200): restore the regular expanded sidebar.
+  // The effect reads only the booleans (not raw width), so it re-runs solely
+  // when crossing the 768/1200 boundaries — manual toggling within a band is
+  // preserved.
+  effect(() => {
+    if (isMobile.value) {
+      return;
+    }
+    sidebar.isSidebarCollapsed.value = isNarrowDesktop.value;
   });
 
   const buildSingleSelectedPane = (): Pane[] =>

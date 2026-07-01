@@ -312,7 +312,10 @@ a:visited {
 
 .sb-bible-reader-bookmark-button {
   position: absolute;
-  top: 16px;
+  /* Center the 36px button box on the title's first line (which starts at the
+     reader's 30px padding-top with a 36px line box) so it stays aligned with
+     the title even when a narrow reader pulls the title text out to meet it. */
+  top: 30px;
   inset-inline-end: 16px;
   width: 36px;
   height: 36px;
@@ -357,7 +360,8 @@ a:visited {
    bookmark button (which sits at inset-inline-end: 16px with width 36px). */
 .sb-quick-toolbar-reader {
   position: absolute;
-  top: 16px;
+  /* Match the bookmark button's vertical alignment with the title row. */
+  top: 30px;
   inset-inline-end: 60px;
   z-index: 1;
 }
@@ -2168,55 +2172,63 @@ a:visited {
   .sb-reader-floating-nav-group {
     flex: 1 1 auto;
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: space-between;
-    gap: 8px;
+    /* No gap or padding: the three buttons tile the whole pill so every pixel
+       is a hit target (prev / label / next) — no dead zones between them. The
+       former 6px/12px padding is preserved as min-height + the buttons' own
+       internal spacing instead of dead inset. */
+    gap: 0;
     min-width: 0;
-    padding: 6px 12px;
+    min-height: 46px;
     border: 1px solid var(--sb-reader-floating-nav-group-border);
     border-radius: 999px;
     background: var(--sb-reader-floating-nav-group-background);
     user-select: none;
+    overflow: hidden;
   }
 
   .sb-reader-floating-nav-arrow {
     position: relative;
     flex: 0 0 auto;
+    /* Full-height, wide hit region; the visual circle lives in ::before so the
+       whole button is tappable with no dead margin around the chevron. */
+    align-self: stretch;
+    min-width: 72px;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
     padding: 0;
     border: none;
     background: transparent;
     color: var(--sb-font-color);
     cursor: pointer;
-    border-radius: 999px;
+    transition: transform 0.12s ease;
   }
 
-  /* Invisible hit-area extension: keeps the 34px pill visual identical while
-     widening the tappable region to a comfortable ~48px touch target. */
+  /* The 34px visual circle, centered in the wider hit region. Carries the
+     press-feedback fill so the feedback stays circular even though the
+     clickable button now fills its whole third of the pill. */
   .sb-reader-floating-nav-arrow::before {
     content: "";
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 48px;
-    height: 48px;
+    width: 34px;
+    height: 34px;
     transform: translate(-50%, -50%);
+    border-radius: 999px;
+    transition: background-color 0.12s ease;
+    z-index: 0;
   }
 
-  /* Press feedback: the arrow fills and shrinks briefly on tap so the button
-     feels responsive (it previously gave no visual response). */
-  .sb-reader-floating-nav-arrow {
-    transition:
-      background-color 0.12s ease,
-      transform 0.12s ease;
+  /* Press feedback: the circle fills and the button shrinks briefly on tap so
+     the arrow feels responsive. */
+  .sb-reader-floating-nav-arrow:active:not(:disabled)::before {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 82%);
   }
 
   .sb-reader-floating-nav-arrow:active:not(:disabled) {
-    background: color-mix(in srgb, var(--sb-font-color), transparent 82%);
     transform: scale(0.9);
   }
 
@@ -2227,6 +2239,8 @@ a:visited {
 
   .sb-reader-floating-nav-arrow > svg,
   .sb-reader-floating-nav-arrow > .material-symbols-outlined {
+    position: relative;
+    z-index: 1;
     width: 20px;
     height: 20px;
     font-size: 20px;
@@ -2234,7 +2248,12 @@ a:visited {
 
   .sb-reader-floating-nav-label {
     position: relative;
-    flex: 0 1 auto;
+    /* Grows to fill the entire center, so the gap that space-between used to
+       leave around the label is now part of the selector's hit target. The
+       stretched height makes the full center band clickable; the button keeps
+       its default text centering, so ellipsis still works on long names. */
+    flex: 1 1 auto;
+    align-self: stretch;
     min-width: 0;
     padding: 0 4px;
     border: none;
@@ -2243,11 +2262,11 @@ a:visited {
     font-family: var(--text-bookTitle-font);
     font-size: 20px;
     font-weight: 700;
+    text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     cursor: pointer;
-    border-radius: 999px;
     transition:
       background-color 0.12s ease,
       transform 0.12s ease;
