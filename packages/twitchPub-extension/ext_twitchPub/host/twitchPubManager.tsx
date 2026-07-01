@@ -7,6 +7,7 @@ import {
 import { type TwitchPubState } from "ext_twitchPub.host.interface";
 import { type SeedBibleState } from "seed-bible.app.api";
 import sendMessage from "ext_twitchPub.host.sendMessage";
+import { type TranscriptionManager } from "ext_AI_Transcript.main.transcriptionManager";
 
 const sendAnnouncement = (
   accessToken: string,
@@ -51,6 +52,8 @@ const getUrl = (
   redirectUri.search = "";
   if (configBot.tags.pattern !== null) {
     redirectUri.searchParams.set("pattern", configBot.tags.pattern);
+  } else {
+    redirectUri.searchParams.set("pattern", "SeedBible");
   }
   redirectUri.searchParams.set("autoinstall-ext_twitchSub", "true");
 
@@ -153,7 +156,13 @@ function createRateLimiter(
   };
 }
 
-export function CreateTwitchPubState(): TwitchPubState {
+export function CreateTwitchPubState({
+  transcriptionManager,
+  seedBibleState,
+}: {
+  transcriptionManager: TranscriptionManager;
+  seedBibleState: SeedBibleState;
+}): TwitchPubState {
   /** manages twitch interface state */
   const interfaceEnabled = signal<boolean>(
     !!window.localStorage?.interfaceEnabled || false
@@ -177,6 +186,7 @@ export function CreateTwitchPubState(): TwitchPubState {
       enabled: savedSettings?.translation?.enabled ?? false,
     }),
     highlight: signal({ enabled: savedSettings?.highlight?.enabled ?? true }),
+    aiFollow: signal({ enabled: savedSettings?.aiFollow?.enabled ?? false }),
     announcementTimer: signal({
       enabled: savedSettings?.announcementTimer?.enabled ?? false,
       interval: savedSettings?.announcementTimer?.interval ?? 0,
@@ -386,6 +396,7 @@ export function CreateTwitchPubState(): TwitchPubState {
       JSON.stringify({
         translation: settings.value.translation.value,
         highlight: settings.value.highlight.value,
+        aiFollow: settings.value.aiFollow.value,
         announcementTimer: settings.value.announcementTimer.value,
       })
     );
@@ -393,6 +404,89 @@ export function CreateTwitchPubState(): TwitchPubState {
       "interfaceEnabled",
       interfaceEnabled.value.toString()
     );
+  });
+
+  const initializeAITranscription = async () => {
+    if (settings.value.aiFollow.value.enabled && transcriptionManager) {
+      await transcriptionManager.checkLogin();
+      if (!transcriptionManager.isLoggedIn.value) {
+        console.warn("User is not logged in to the transcription service.");
+        settings.value.aiFollow.value = {
+          ...settings.value.aiFollow.value,
+          enabled: false,
+        };
+        return;
+      }
+      transcriptionManager.mode.value = "live";
+      transcriptionManager.startLive();
+    } else if (!settings.value.aiFollow.value.enabled && transcriptionManager) {
+      transcriptionManager.stopLive();
+    }
+  };
+
+  effect(() => {
+    initializeAITranscription();
+  });
+
+  async function highlightRefVerse(
+    seedBibleState: SeedBibleState,
+    ref: string,
+    interval = 5000
+  ): Promise<void> {
+    const [book, chapter, verse] = ref.split(":");
+
+    const selectedTabId = seedBibleState.tabs.selectedTabId;
+    const selectedTab = seedBibleState.tabs.tabs.value.find(
+      (tab) => tab.id === selectedTabId.value
+    );
+    const currentReadingState = seedBibleState.app.currentReadingState.value;
+
+    if (selectedTab && book) {
+      await selectedTab.readingState.selectTranslationAndChapter(
+        currentReadingState?.translationId || "ABB",
+        book,
+        Number(chapter) || 1,
+        verse ? { scrollToVerse: Number(verse) } : {}
+      );
+      if (verse && chapter) {
+        selectedTab.readingState.decorateVerses(
+          book,
+          Number(chapter),
+          Number(verse),
+          {
+            className: "sb-verse-decoration-initial-verse-highlight",
+            removeAfterMs: interval,
+          }
+        );
+        rateLimiter(
+          "refHighlight",
+          JSON.stringify({
+            bookId: book,
+            chapter: Number(chapter),
+            verse: Number(verse),
+          })
+        );
+      }
+    }
+  }
+
+  effect(() => {
+    if (
+      settings.value.aiFollow.value.enabled &&
+      transcriptionManager &&
+      transcriptionManager.liveSegments.value.length > 0
+    ) {
+      const latestSegment =
+        transcriptionManager.liveSegments.value[
+          transcriptionManager.liveSegments.value.length - 1
+        ];
+      const latestRef = latestSegment?.references[0] || null;
+      if (latestRef) {
+        highlightRefVerse(seedBibleState, latestRef, 5000).catch((err) => {
+          console.error("Error highlighting verse:", err);
+        });
+      }
+    }
   });
 
   return {

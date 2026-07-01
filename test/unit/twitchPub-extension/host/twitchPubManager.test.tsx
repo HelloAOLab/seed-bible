@@ -1,4 +1,6 @@
 import { CreateTwitchPubState } from "ext_twitchPub.host.twitchPubManager";
+import { createTranscriptionManager } from "ext_AI_Transcript.main.transcriptionManager";
+import { createTestSeedBibleState } from "../../seed-bible/testUtils/createTestSeedBibleState";
 import sendMessage from "ext_twitchPub.host.sendMessage";
 import { TextEncoder } from "node:util";
 
@@ -7,7 +9,43 @@ jest.mock("ext_twitchPub.host.sendMessage", () => ({
   default: jest.fn(),
 }));
 
+jest.mock(
+  "https://esm.helloao.org/transcript-vendor-MT4VE3JF.js",
+  () => ({
+    __esModule: true,
+    bcv_parser: class {
+      parse() {
+        return this;
+      }
+      parsed_entities() {
+        return [];
+      }
+      osis() {
+        return "";
+      }
+    },
+    en: {},
+    FFmpeg: class {},
+    fetchFile: jest.fn(),
+    toBlobURL: jest.fn(),
+  }),
+  { virtual: true }
+);
+
 const sendMessageMock = sendMessage as jest.Mock;
+
+async function createSeedBibleStateForTest() {
+  const prevTags = { ...((globalThis as any).configBot?.tags ?? {}) };
+  const seedBibleState = await createTestSeedBibleState();
+  (globalThis as any).configBot.tags = {
+    ...(globalThis as any).configBot.tags,
+    ...prevTags,
+  };
+  (globalThis as any).web.get = jest
+    .fn()
+    .mockResolvedValue({ data: { data: [] } });
+  return seedBibleState;
+}
 
 function waitFor(condition: () => boolean, timeoutMs = 4000): Promise<void> {
   const start = Date.now();
@@ -134,7 +172,12 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("creates the default state and keeps the current page in localStorage", async () => {
-    const state = CreateTwitchPubState();
+    const tmState = createTranscriptionManager();
+    const seedBibleState = await createSeedBibleStateForTest();
+    const state = CreateTwitchPubState({
+      transcriptionManager: tmState,
+      seedBibleState: seedBibleState,
+    });
 
     expect(state.interfaceEnabled.value).toBe(false);
     expect(state.currentPage.value).toBe("login");
@@ -175,10 +218,15 @@ describe("CreateTwitchPubState", () => {
     expect(window.localStorage.getItem("currentPage")).toBe("settings");
   });
 
-  it("builds the QR redirect URI from the current location first", () => {
+  it("builds the QR redirect URI from the current location first", async () => {
     configBot.tags.url = `https://example.com/twitch-pub?existing=1`;
 
-    const state = CreateTwitchPubState();
+    const tmState = createTranscriptionManager();
+    const seedBibleState = await createSeedBibleStateForTest();
+    const state = CreateTwitchPubState({
+      transcriptionManager: tmState,
+      seedBibleState: seedBibleState,
+    });
 
     const url = new URL(state.qrValue.value);
     const redirectUri = new URL(url.searchParams.get("redirect_uri") ?? "");
@@ -195,8 +243,13 @@ describe("CreateTwitchPubState", () => {
     );
   });
 
-  it("includes broadcaster, channel, book, chapter, and translation in QR state", () => {
-    const state = CreateTwitchPubState();
+  it("includes broadcaster, channel, book, chapter, and translation in QR state", async () => {
+    const tmState = createTranscriptionManager();
+    const seedBibleState = await createSeedBibleStateForTest();
+    const state = CreateTwitchPubState({
+      transcriptionManager: tmState,
+      seedBibleState: seedBibleState,
+    });
 
     state.twitchConfig.value.broadcasterId.value = "broadcaster-123";
     state.twitchConfig.value.userAccessToken.value = "token-123";
@@ -236,7 +289,12 @@ describe("CreateTwitchPubState", () => {
   it("sends an announcement with the join URL once the user is logged in", async () => {
     configBot.tags.url = `https://example.com/reader?chapter=1`;
 
-    const state = CreateTwitchPubState();
+    const tmState = createTranscriptionManager();
+    const seedBibleState = await createSeedBibleStateForTest();
+    const state = CreateTwitchPubState({
+      transcriptionManager: tmState,
+      seedBibleState: seedBibleState,
+    });
 
     expect(webPostMock).not.toHaveBeenCalled();
 
@@ -277,11 +335,16 @@ describe("CreateTwitchPubState", () => {
     });
   });
 
-  it("sends announcements on a timer when announcementTimer is configured", () => {
+  it("sends announcements on a timer when announcementTimer is configured", async () => {
     jest.useFakeTimers();
     configBot.tags.url = `https://example.com/reader?chapter=1`;
 
-    const state = CreateTwitchPubState();
+    const tmState = createTranscriptionManager();
+    const seedBibleState = await createSeedBibleStateForTest();
+    const state = CreateTwitchPubState({
+      transcriptionManager: tmState,
+      seedBibleState: seedBibleState,
+    });
 
     state.settings.value.highlight.value = { enabled: false };
     state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
@@ -341,7 +404,7 @@ describe("CreateTwitchPubState", () => {
     );
   });
 
-  it("restores saved values from localStorage", () => {
+  it("restores saved values from localStorage", async () => {
     window.localStorage.setItem("currentPage", "interface");
     window.localStorage.setItem("deviceCode", "device-123");
     window.localStorage.setItem("broadcasterId", "broadcaster-1");
@@ -357,7 +420,12 @@ describe("CreateTwitchPubState", () => {
       })
     );
 
-    const state = CreateTwitchPubState();
+    const tmState = createTranscriptionManager();
+    const seedBibleState = await createSeedBibleStateForTest();
+    const state = CreateTwitchPubState({
+      transcriptionManager: tmState,
+      seedBibleState: seedBibleState,
+    });
 
     expect(state.interfaceEnabled.value).toBe(true);
     expect(state.currentPage.value).toBe("interface");
@@ -373,10 +441,15 @@ describe("CreateTwitchPubState", () => {
     });
   });
 
-  it("hides the UI after the delay and can cancel a pending hide", () => {
+  it("hides the UI after the delay and can cancel a pending hide", async () => {
     jest.useFakeTimers();
 
-    const state = CreateTwitchPubState();
+    const tmState = createTranscriptionManager();
+    const seedBibleState = await createSeedBibleStateForTest();
+    const state = CreateTwitchPubState({
+      transcriptionManager: tmState,
+      seedBibleState: seedBibleState,
+    });
 
     state.hideUI();
     expect(state.uiHidden.value).toBe(false);
@@ -399,7 +472,12 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("queues book and highlight updates when the payload changes", async () => {
-    const state = CreateTwitchPubState();
+    const tmState = createTranscriptionManager();
+    const seedBibleState = await createSeedBibleStateForTest();
+    const state = CreateTwitchPubState({
+      transcriptionManager: tmState,
+      seedBibleState: seedBibleState,
+    });
 
     state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
     state.twitchConfig.value.senderId.value = "sender-1";
@@ -495,7 +573,12 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("sends a book changed event when the chapter changes", async () => {
-    const state = CreateTwitchPubState();
+    const tmState = createTranscriptionManager();
+    const seedBibleState = await createSeedBibleStateForTest();
+    const state = CreateTwitchPubState({
+      transcriptionManager: tmState,
+      seedBibleState: seedBibleState,
+    });
 
     state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
     state.twitchConfig.value.senderId.value = "sender-1";
@@ -544,7 +627,12 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("sends a book changed event when the book changes", async () => {
-    const state = CreateTwitchPubState();
+    const tmState = createTranscriptionManager();
+    const seedBibleState = await createSeedBibleStateForTest();
+    const state = CreateTwitchPubState({
+      transcriptionManager: tmState,
+      seedBibleState: seedBibleState,
+    });
 
     state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
     state.twitchConfig.value.senderId.value = "sender-1";
@@ -593,7 +681,12 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("sends a book changed event when the translation changes", async () => {
-    const state = CreateTwitchPubState();
+    const tmState = createTranscriptionManager();
+    const seedBibleState = await createSeedBibleStateForTest();
+    const state = CreateTwitchPubState({
+      transcriptionManager: tmState,
+      seedBibleState: seedBibleState,
+    });
 
     state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
     state.twitchConfig.value.senderId.value = "sender-1";
@@ -642,7 +735,12 @@ describe("CreateTwitchPubState", () => {
   });
 
   it("tells users whether to follow translation changes", async () => {
-    const state = CreateTwitchPubState();
+    const tmState = createTranscriptionManager();
+    const seedBibleState = await createSeedBibleStateForTest();
+    const state = CreateTwitchPubState({
+      transcriptionManager: tmState,
+      seedBibleState: seedBibleState,
+    });
 
     state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
     state.twitchConfig.value.senderId.value = "sender-1";

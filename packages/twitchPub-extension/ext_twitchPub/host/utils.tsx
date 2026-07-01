@@ -46,7 +46,7 @@ const checkAuthorizationStatus = async (
       currentPage.value = "interface";
 
       // Successful login
-      if (posthog) {
+      if (typeof posthog !== "undefined" && posthog) {
         posthog.capture("twitch_host_login_success", {});
       }
     } else {

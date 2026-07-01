@@ -2,11 +2,20 @@ import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
 import { CreateTwitchPubState } from "ext_twitchPub.host.twitchPubManager";
 import initializeTwitchBot from "ext_twitchPub.host.initializeTwitchBot";
+import {
+  createTranscriptionManager,
+  type TranscriptionManager,
+} from "ext_AI_Transcript.main.transcriptionManager";
 
 registerExtension({
   id: "ext_twitchPub",
   init: function* (context: SeedBibleState) {
-    const twitchPubState = CreateTwitchPubState();
+    const transcriptionManager: TranscriptionManager =
+      createTranscriptionManager();
+    const twitchPubState = CreateTwitchPubState({
+      transcriptionManager: transcriptionManager,
+      seedBibleState: context,
+    });
 
     // register a new tool
     yield context.tools.registerToolbarTool({

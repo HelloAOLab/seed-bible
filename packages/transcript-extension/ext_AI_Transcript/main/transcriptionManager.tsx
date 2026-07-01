@@ -35,6 +35,7 @@ const nextId = () =>
   `f${Date.now().toString(36)}_${(idCounter++).toString(36)}`;
 
 type TranscriptionManagerType = {
+  isLoggedIn: Signal<boolean>;
   translation: Signal<string>;
   transcriptionModel: Signal<string>;
   language: Signal<string>;
@@ -560,6 +561,7 @@ function createTranscriptionManager(): TranscriptionManagerType {
 
   return {
     // signals
+    isLoggedIn,
     translation,
     transcriptionModel,
     language,
