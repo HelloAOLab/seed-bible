@@ -516,8 +516,9 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
           return;
         }
         context.panesManager.openPane({
-          type: "attached",
           id: "reading-plans-pane",
+          type: "detached",
+          detachedAnchor: "side",
           component: () => <ReadingPlansPane readingPlans={readingPlans} />,
         });
       },
