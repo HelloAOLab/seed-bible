@@ -1,19 +1,16 @@
 import { signal } from "@preact/signals";
 
-jest.mock(
-  "seed-bible.components.icons",
-  () => ({
-    MaterialIcon: () => null,
-    SeedBibleIcon: () => null,
-  }),
-  { virtual: true }
-);
+vi.mock("@packages/seed-bible/seed-bible/components/icons", () => ({
+  MaterialIcon: () => null,
+  SeedBibleIcon: () => null,
+}));
 
 import {
   createBibleToolsManager,
   getShareUrl,
   type BibleToolContext,
 } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
+import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 
 const CUSTOM_TOOL_ID = "test-toolbar-tool";
 const CUSTOM_VERSE_TOOL_ID = "test-verse-toolbar-tool";
@@ -25,22 +22,23 @@ function createContext(): BibleToolContext {
       chapterData: signal(null),
       loading: signal(false),
       selectedVerses: signal([]),
-      clearSelectedVerses: jest.fn(),
-      loadPreviousChapter: jest.fn(),
-      loadNextChapter: jest.fn(),
+      clearSelectedVerses: vi.fn(),
+      loadPreviousChapter: vi.fn(),
+      loadNextChapter: vi.fn(),
     } as any,
     sharedSession: null,
     selectorState: {
-      setOpen: jest.fn(),
+      setOpen: vi.fn(),
     } as any,
-    openSidebar: jest.fn(),
-    openSearch: jest.fn(),
+    openSidebar: vi.fn(),
+    openSearch: vi.fn(),
     panesManager: {} as any,
     tabs: {} as any,
+    toast: vi.fn(),
   };
 }
 
-function createShareUrlReadingState(overrides?: Partial<any>) {
+function createShareUrlReadingState(overrides?: Partial<BibleReadingState>) {
   return {
     translation: signal({ id: "NIV" }),
     bookId: signal("GEN"),
@@ -51,12 +49,12 @@ function createShareUrlReadingState(overrides?: Partial<any>) {
 
 describe("getShareUrl", () => {
   beforeEach(() => {
-    (globalThis as any).configBot.tags.url =
-      "https://example.test/reader?existing=1";
-    (globalThis as any).configBot.tags.pattern = "pattern-123";
+    jsdom.reconfigure({
+      url: "https://example.test/reader?existing=1",
+    });
   });
 
-  it("builds a share URL with the current translation, book, pattern, and selected verses", () => {
+  it("builds a share URL with the current translation, book, and selected verses", () => {
     const readingState = createShareUrlReadingState({
       selectedVerses: signal([
         {
@@ -83,13 +81,13 @@ describe("getShareUrl", () => {
           translationId: "AAB",
           verse: { number: 8 },
         },
-      ]),
+      ] as any),
     });
 
     const url = getShareUrl(readingState as any);
 
     expect(url.toString()).toBe(
-      "https://example.test/reader?pattern=pattern-123&translation=NIV&book=GEN&verse=1,3"
+      "https://example.test/reader?translation=NIV&book=GEN&verse=1,3"
     );
   });
 
@@ -126,13 +124,13 @@ describe("getShareUrl", () => {
           translationId: "AAB",
           verse: { number: 8 },
         },
-      ]),
+      ] as any),
     });
 
     const url = getShareUrl(readingState as any);
 
     expect(url.toString()).toBe(
-      "https://example.test/reader?pattern=pattern-123&translation=NIV&book=GEN&verse=1-3"
+      "https://example.test/reader?translation=NIV&book=GEN&verse=1-3"
     );
   });
 
@@ -147,13 +145,14 @@ describe("getShareUrl", () => {
           translationId: "NIV",
           verse: { number: 4 },
         },
-      ]),
+      ] as any),
+      defaultTranslation: { id: "AAB", language: "en" },
     });
 
     const url = getShareUrl(readingState as any);
 
     expect(url.toString()).toBe(
-      "https://example.test/reader?pattern=pattern-123&translation=AAB&book=GEN"
+      "https://example.test/reader?translation=AAB&book=GEN"
     );
   });
 });
@@ -177,7 +176,7 @@ describe("createBibleToolsManager", () => {
       icon: () => <span>icon</span>,
       isVisible: () => true,
       isDisabled: () => false,
-      onSelect: jest.fn(),
+      onSelect: vi.fn(),
     });
 
     const tools = manager.getToolbarTools(context);
@@ -195,7 +194,7 @@ describe("createBibleToolsManager", () => {
       title: "Custom Tool",
       icon: () => <span>icon</span>,
       isVisible: () => true,
-      onSelect: jest.fn(),
+      onSelect: vi.fn(),
     });
 
     manager.unregisterToolbarTool(CUSTOM_TOOL_ID);
@@ -216,7 +215,7 @@ describe("createBibleToolsManager", () => {
       icon: () => <span>icon</span>,
       isVisible: () => true,
       isDisabled: () => true,
-      onSelect: jest.fn(),
+      onSelect: vi.fn(),
     });
 
     manager.registerToolbarTool({
@@ -225,7 +224,7 @@ describe("createBibleToolsManager", () => {
       title: "Hidden Tool",
       icon: () => <span>icon</span>,
       isVisible: () => false,
-      onSelect: jest.fn(),
+      onSelect: vi.fn(),
     });
 
     const tools = manager.getToolbarTools(context);
@@ -256,7 +255,7 @@ describe("createBibleToolsManager", () => {
       icon: () => <span>icon</span>,
       isVisible: () => isVisible,
       isDisabled: () => isDisabled,
-      onSelect: jest.fn(),
+      onSelect: vi.fn(),
     });
 
     let tools = manager.getToolbarTools(context);
@@ -290,7 +289,7 @@ describe("createBibleToolsManager", () => {
       icon: () => <span>icon</span>,
       isVisible: () => true,
       isDisabled: () => false,
-      onSelect: jest.fn(),
+      onSelect: vi.fn(),
     });
 
     const tools = manager.getVerseToolbarTools(context);
@@ -308,7 +307,7 @@ describe("createBibleToolsManager", () => {
       title: "Custom Verse Tool",
       icon: () => <span>icon</span>,
       isVisible: () => true,
-      onSelect: jest.fn(),
+      onSelect: vi.fn(),
     });
 
     manager.unregisterVerseToolbarTool(CUSTOM_VERSE_TOOL_ID);
@@ -329,7 +328,7 @@ describe("createBibleToolsManager", () => {
       icon: () => <span>icon</span>,
       isVisible: () => true,
       isDisabled: () => true,
-      onSelect: jest.fn(),
+      onSelect: vi.fn(),
     });
 
     manager.registerVerseToolbarTool({
@@ -338,7 +337,7 @@ describe("createBibleToolsManager", () => {
       title: "Hidden Verse Tool",
       icon: () => <span>icon</span>,
       isVisible: () => false,
-      onSelect: jest.fn(),
+      onSelect: vi.fn(),
     });
 
     const tools = manager.getVerseToolbarTools(context);
@@ -359,8 +358,8 @@ describe("createBibleToolsManager", () => {
   it("getToolbarTools() resolves getItems() in declared order", () => {
     const manager = createBibleToolsManager();
     const context = createContext();
-    const firstItemOnSelect = jest.fn();
-    const secondItemOnSelect = jest.fn();
+    const firstItemOnSelect = vi.fn();
+    const secondItemOnSelect = vi.fn();
 
     manager.registerToolbarTool({
       id: CUSTOM_ITEMS_TOOL_ID,
@@ -411,7 +410,7 @@ describe("createBibleToolsManager", () => {
         priority: 50,
         title: "Custom Items Tool",
         icon: () => <span>icon</span>,
-        onSelect: jest.fn(),
+        onSelect: vi.fn(),
         getItems: () => [],
       });
     }).toThrow(
@@ -434,7 +433,7 @@ describe("createBibleToolsManager", () => {
             id: "nested-item",
             title: "Nested",
             icon: () => <span>nested</span>,
-            onSelect: jest.fn(),
+            onSelect: vi.fn(),
             getItems: () => [],
           },
         ] as any,

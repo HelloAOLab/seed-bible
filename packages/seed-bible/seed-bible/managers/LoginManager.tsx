@@ -1,5 +1,11 @@
-import { computed, effect, signal, type Signal } from "@preact/signals";
-import { z } from "zod";
+import { batch, computed, effect, signal, type Signal } from "@preact/signals";
+import * as z from "zod/v4";
+import type { CasualOSManager, UserInfo } from "./OsManager";
+import type {
+  CompleteLoginResult,
+  LoginRequestResult,
+  LoginRequestSuccess,
+} from "@casual-simulation/aux-records/AuthController";
 
 export interface LoginManager {
   /**
@@ -8,9 +14,14 @@ export interface LoginManager {
   userId: Signal<string | null>;
 
   /**
+   * The user's information, including email. Null if the user is not authenticated or if background auth has not completed yet.
+   */
+  userInfo: Signal<UserInfo | null>;
+
+  /**
    * The current auth bot. Null if not authenticated or if background auth has not completed yet.
    */
-  authBot: Signal<Bot | null>;
+  authBot: Signal<UserInfo | null>;
 
   /**
    * The user's profile information. Null if the user is not logged in.
@@ -18,9 +29,14 @@ export interface LoginManager {
   profile: Signal<UserProfile | null>;
 
   /**
+   * Whether the user is currently in the process of logging in, which can be used to show or hide the login modal. This will be true from the moment a login attempt is initiated until it either succeeds or fails, and will be false at all other times (including while logged in). The login modal should subscribe to this signal to know when to show or hide itself, and should call `cancelLogin` if it is closed while a login attempt is in progress to abort the login flow.
+   */
+  isLoginOpen: Signal<boolean>;
+
+  /**
    * Attempts to login the user.
    */
-  login: () => Promise<void>;
+  login: () => Promise<UserInfo | null>;
 
   /**
    * Attempts to log out the user.
@@ -44,7 +60,28 @@ export interface LoginManager {
    * record, and saves the resulting URL to the user's profile.
    * Resolves without changes if no file is selected or the user is not authenticated.
    */
-  uploadProfilePicture: () => Promise<void>;
+  uploadProfilePicture: (file: File) => Promise<void>;
+
+  /**
+   * Cancels an in-progress login attempt, if one exists. This is useful to abort a login flow if the user navigates away or closes the login modal before completing authentication.
+   */
+  cancelLogin: () => Promise<void>;
+
+  /**
+   * Requests a login code to be sent to the given email address.
+   * @param email The email address to which the login code should be sent.
+   */
+  requestLoginByEmail: (email: string) => Promise<LoginRequestResult>;
+
+  /**
+   * Submits a login code received by email to complete the login process. Resolves with the result of the login attempt, including success status and session information if successful.
+   * @param code The code received by the user via email to complete login.
+   * @param request The original login request information returned by `requestLoginByEmail`, which includes the request ID and user ID needed to complete the login.
+   */
+  submitLoginCode: (
+    code: string,
+    request: LoginRequestSuccess
+  ) => Promise<CompleteLoginResult>;
 }
 
 export const userProfileSchema = z.object({
@@ -57,9 +94,52 @@ export const userProfileSchema = z.object({
 
 export type UserProfile = z.infer<typeof userProfileSchema>;
 
-export function createLoginManager(): LoginManager {
-  const authBot: Signal<Bot | null> = signal<Bot | null>(null);
-  const userId = computed(() => authBot.value?.id ?? null);
+export function createLoginManager({
+  os,
+}: {
+  os: CasualOSManager;
+}): LoginManager {
+  const { client, parsedSessionKey, sessionKey, connectionKey } = os;
+
+  const isLoginOpen = signal(false);
+  const userId = computed(() => parsedSessionKey.value?.userId ?? null);
+  const userInfo = signal<UserInfo | null>(null);
+  const currentLoginRequest = signal<LoginRequestSuccess | null>(null);
+
+  if (typeof localStorage !== "undefined") {
+    const storedSessionKey = localStorage.getItem("sessionKey");
+    const storedConnectionKey = localStorage.getItem("connectionKey");
+
+    if (storedSessionKey) {
+      sessionKey.value = storedSessionKey;
+      client.sessionKey = storedSessionKey;
+
+      const expireTime = parsedSessionKey.value!.expireTimeMs;
+      const timeUntilExpire = expireTime - Date.now();
+      // Refresh the session 1 week before it expires
+      const refreshTime = timeUntilExpire - 7 * 24 * 60 * 60 * 1000;
+
+      if (refreshTime > 0) {
+        setTimeout(() => {
+          refreshSession();
+        }, refreshTime);
+      } else {
+        console.log("[LoginManager] Session is expiring soon, refreshing now");
+        refreshSession();
+      }
+    }
+
+    if (storedConnectionKey) {
+      connectionKey.value = storedConnectionKey;
+    }
+  }
+
+  let loginPromise: Promise<UserInfo | null> | null = null;
+  let resolveLoginPromise: ((value: UserInfo | null) => void) | null = null;
+  let rejectLoginPromise: ((err: Error) => void) | null = null;
+  let currentLoginPromise: Promise<UserInfo | null> | null = null;
+
+  // const userId = os.userId;
   const profile = signal<UserProfile | null>(null);
 
   const getUserProfile = async (userId: string): Promise<UserProfile> => {
@@ -94,18 +174,169 @@ export function createLoginManager(): LoginManager {
     });
   };
 
-  const login = async (): Promise<void> => {
-    try {
-      const bot = await os.requestAuthBot();
-      authBot.value = bot;
-    } catch (err) {
-      console.error("Authentication failed:", err);
+  async function refreshSession() {
+    if (!sessionKey.value) {
+      return;
     }
-  };
+
+    console.log("[LoginManager] Refreshing session with existing session key");
+    const result = await client.replaceSession();
+
+    if (result.success) {
+      console.log("[LoginManager] Session refreshed successfully");
+      sessionKey.value = result.sessionKey;
+      connectionKey.value = result.connectionKey;
+      client.sessionKey = result.sessionKey;
+      await loadUserInfo();
+    } else {
+      console.warn(
+        "[LoginManager] Failed to refresh session, clearing session key:",
+        result.errorMessage
+      );
+    }
+  }
+
+  async function cancelLogin() {
+    if (loginPromise && rejectLoginPromise) {
+      rejectLoginPromise(new Error("Login cancelled"));
+      loginPromise = null;
+      resolveLoginPromise = null;
+      rejectLoginPromise = null;
+    }
+  }
+
+  async function requestLoginByEmail(
+    email: string
+  ): Promise<LoginRequestResult> {
+    const result = await client.requestLogin({
+      address: email,
+      addressType: "email",
+      comId: "seed-bible",
+    });
+
+    if (result.success) {
+      currentLoginRequest.value = result;
+    } else {
+      currentLoginRequest.value = null;
+    }
+
+    return result;
+  }
+
+  async function submitLoginCode(
+    code: string,
+    request: LoginRequestSuccess
+  ): Promise<CompleteLoginResult> {
+    const result = await client.completeLogin({
+      code,
+      requestId: request.requestId,
+      userId: request.userId,
+    });
+
+    currentLoginRequest.value = null;
+    if (result.success) {
+      sessionKey.value = result.sessionKey;
+      connectionKey.value = result.connectionKey;
+      client.sessionKey = result.sessionKey;
+
+      await loadUserInfo();
+    }
+
+    return result;
+  }
+
+  async function loadUserInfo(): Promise<UserInfo | null> {
+    if (!sessionKey.value || !userId.value) {
+      return null;
+    }
+    const result = await client.getUserInfo({ userId: userId.value });
+    if (result.success) {
+      userInfo.value = {
+        id: userId.value,
+        email: result.email,
+      };
+      if (resolveLoginPromise) {
+        resolveLoginPromise(userInfo.value);
+        resolveLoginPromise = null;
+        rejectLoginPromise = null;
+        loginPromise = null;
+      }
+
+      return userInfo.value;
+    } else {
+      return null;
+    }
+  }
+
+  async function loginCore(): Promise<UserInfo | null> {
+    if (!sessionKey.value) {
+      if (!loginPromise) {
+        loginPromise = new Promise((resolve, reject) => {
+          resolveLoginPromise = resolve;
+          rejectLoginPromise = reject;
+        });
+      }
+
+      // prompt for login
+      try {
+        isLoginOpen.value = true;
+        return await loginPromise;
+      } finally {
+        isLoginOpen.value = false;
+      }
+    }
+
+    return await loadUserInfo();
+  }
+
+  function login(): Promise<UserInfo | null> {
+    if (userInfo.value) {
+      return Promise.resolve(userInfo.value);
+    }
+
+    if (import.meta.env.SSR) {
+      return Promise.resolve(null);
+    }
+
+    if (!currentLoginPromise) {
+      currentLoginPromise = loginCore().finally(
+        () => (currentLoginPromise = null)
+      );
+    }
+
+    return currentLoginPromise;
+  }
+
+  effect(() => {
+    if (typeof localStorage !== "undefined") {
+      if (!sessionKey.value) {
+        localStorage.removeItem("sessionKey");
+      } else {
+        localStorage.setItem("sessionKey", sessionKey.value);
+      }
+
+      if (!connectionKey.value) {
+        localStorage.removeItem("connectionKey");
+      } else {
+        localStorage.setItem("connectionKey", connectionKey.value);
+      }
+    }
+  });
+
+  if (sessionKey.value) {
+    loadUserInfo();
+  }
 
   const logout = async (): Promise<void> => {
-    await os.signOut();
-    authBot.value = null;
+    if (sessionKey.value) {
+      await client.revokeSession({
+        sessionKey: sessionKey.value!,
+      });
+    }
+    batch(() => {
+      sessionKey.value = null;
+      connectionKey.value = null;
+    });
   };
 
   effect(() => {
@@ -117,7 +348,7 @@ export function createLoginManager(): LoginManager {
     if (typeof posthog !== "undefined" && posthog) {
       console.log(
         "[LoginManager] Identifying PostHog with auth bot ID:",
-        authBot
+        userInfo.value
       );
       posthog.identify(userId.value);
     }
@@ -125,6 +356,24 @@ export function createLoginManager(): LoginManager {
     getUserProfile(userId.value).then((p) => {
       profile.value = p;
     });
+  });
+
+  effect(() => {
+    const info = userInfo.value;
+    if (info && typeof posthog !== "undefined" && posthog) {
+      posthog.setPersonProperties({
+        email: info.email,
+      });
+    }
+  });
+
+  effect(() => {
+    const profileData = profile.value;
+    if (profileData && typeof posthog !== "undefined" && posthog) {
+      posthog.setPersonProperties({
+        name: profileData.name,
+      });
+    }
   });
 
   const updateProfile = (newData: Partial<UserProfile>) => {
@@ -142,21 +391,15 @@ export function createLoginManager(): LoginManager {
     updateUserProfile(userId.value, nextProfile);
   };
 
-  const uploadProfilePicture = async (): Promise<void> => {
+  const uploadProfilePicture = async (file: File): Promise<void> => {
     if (!userId.value) {
       console.warn("Cannot upload profile picture: no authenticated user");
       return;
     }
 
-    const files = await os.showUploadFiles();
-    const file = files?.[0];
-    if (!file) {
-      throw new Error("No file selected for upload");
-    }
-
-    const result = await os.recordFile(userId.value, file.data, {
-      mimeType: file.mimeType,
-      markers: ["publicRead"],
+    const result = await os.recordFile(userId.value, file, {
+      mimeType: file.type,
+      marker: "publicRead",
     });
 
     if (result.success === false) {
@@ -167,27 +410,22 @@ export function createLoginManager(): LoginManager {
     updateProfile({ pictureUrl: result.url });
   };
 
-  void os
-    .requestAuthBotInBackground()
-    .then((bot) => {
-      if (!bot) {
-        return;
-      }
-
-      authBot.value = bot;
-    })
-    .catch(() => {
-      // Intentionally ignore background auth failures and keep anonymous state.
-    });
-
   return {
     userId,
-    authBot,
+    userInfo,
+    authBot: userInfo,
     profile,
+
+    isLoginOpen,
+
     login,
     logout,
     updateProfile,
     getUserProfile,
     uploadProfilePicture,
+
+    cancelLogin,
+    requestLoginByEmail,
+    submitLoginCode,
   };
 }

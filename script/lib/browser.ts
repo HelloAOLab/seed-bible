@@ -328,6 +328,7 @@ export const DEFAULT_EXTENSIONS = [
   "twitchSub-extension",
   "twitchPub-extension",
   "today-screen",
+  "audio-reader-extension",
   // "BookSelector",
   // "Object Pooler",
   // "GeoImporter",

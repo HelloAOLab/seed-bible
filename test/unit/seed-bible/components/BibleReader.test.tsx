@@ -1,5 +1,5 @@
 import { render } from "preact";
-import { act } from "preact/test-utils";
+import { act, setupRerender, teardown } from "preact/test-utils";
 import { computed, signal, type Signal } from "@preact/signals";
 import { BibleReader } from "@packages/seed-bible/seed-bible/components/BibleReader";
 import { PaneReader } from "@packages/seed-bible/seed-bible/components/PaneLayout";
@@ -12,6 +12,21 @@ import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/manager
 import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
+import { vi, type Mock } from "vitest";
+
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const actual = await vi.importActual<
+    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
+  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
+  return {
+    ...actual,
+    useI18n: () => ({
+      t: (key: string, options?: { defaultValue?: string }) =>
+        options?.defaultValue ?? key,
+    }),
+  };
+});
 
 type ReaderFixture = {
   pane: Pane;
@@ -22,9 +37,9 @@ type ReaderFixture = {
   decorations: Signal<VerseDecoration[]>;
   selectedVerses: BibleReadingState["selectedVerses"];
   selectedFootnote: Signal<SelectedFootnote | null>;
-  selectVerse: jest.Mock;
-  selectFootnote: jest.Mock;
-  setOpen: jest.Mock;
+  selectVerse: Mock;
+  selectFootnote: Mock;
+  setOpen: Mock;
 };
 
 function createFixture(): ReaderFixture {
@@ -106,9 +121,9 @@ function createFixture(): ReaderFixture {
   });
   const decorations = signal<VerseDecoration[]>([]);
   const selectedFootnote = signal<SelectedFootnote | null>(null);
-  const selectVerse = jest.fn();
-  const selectFootnote = jest.fn();
-  const setOpen = jest.fn(async () => undefined);
+  const selectVerse = vi.fn();
+  const selectFootnote = vi.fn();
+  const setOpen = vi.fn(async () => undefined);
 
   const currentTranslation = computed(
     () => chapterData.value?.translation ?? null
@@ -136,18 +151,20 @@ function createFixture(): ReaderFixture {
     error: signal<string | null>(null),
     selectVerse,
     selectFootnote,
-    highlightSelectedVerses: jest.fn(async () => undefined),
-    unhighlightSelectedVerses: jest.fn(async () => undefined),
-    decorateVerses: jest.fn(() => "decoration-1"),
-    removeDecoration: jest.fn(),
-    clearSelectedVerses: jest.fn(),
-    selectTranslation: jest.fn(async () => undefined),
-    selectBook: jest.fn(async () => undefined),
-    selectChapter: jest.fn(async () => undefined),
-    loadPreviousChapter: jest.fn(async () => undefined),
-    loadNextChapter: jest.fn(async () => undefined),
-    selectTranslationAndChapter: jest.fn(async () => undefined),
+    highlightSelectedVerses: vi.fn(async () => undefined),
+    unhighlightSelectedVerses: vi.fn(async () => undefined),
+    decorateVerses: vi.fn(() => "decoration-1"),
+    removeDecoration: vi.fn(),
+    clearSelectedVerses: vi.fn(),
+    selectTranslation: vi.fn(async () => undefined),
+    selectBook: vi.fn(async () => undefined),
+    selectChapter: vi.fn(async () => undefined),
+    loadPreviousChapter: vi.fn(async () => undefined),
+    loadNextChapter: vi.fn(async () => undefined),
+    selectTranslationAndChapter: vi.fn(async () => undefined),
     highlights,
+    chapterDataPromise: Promise.resolve(),
+    defaultTranslation: { id: "BSB", language: "en" },
   } as BibleReadingState;
 
   const selectorState = {
@@ -179,13 +196,18 @@ function createMobileState(): SeedBibleState {
       isMobile: signal(true),
     },
     bibleData: {
-      getPreviousChapter: jest.fn(async () => null),
-      getNextChapter: jest.fn(async () => null),
+      getPreviousChapter: vi.fn(async () => null),
+      getNextChapter: vi.fn(async () => null),
     },
     sidebar: {
-      openSettings: jest.fn(),
-      openSidebar: jest.fn(),
+      openSettings: vi.fn(),
+      openSidebar: vi.fn(),
     },
+    bookmarks: {
+      isLocationBookmarked: vi.fn(() => false),
+      toggleBookmarkAtLocation: vi.fn(async () => {}),
+    },
+    tools: createBibleToolsManager(),
   } as any as SeedBibleState;
 }
 
@@ -225,6 +247,14 @@ function renderMobileReader(
   });
 }
 
+beforeEach(() => {
+  setupRerender();
+});
+
+afterEach(() => {
+  teardown();
+});
+
 describe("BibleReader", () => {
   let container: HTMLDivElement;
 
@@ -234,7 +264,7 @@ describe("BibleReader", () => {
   });
 
   afterEach(() => {
-    render(null, container);
+    // render(null, container);
     container.remove();
   });
 
@@ -260,6 +290,104 @@ describe("BibleReader", () => {
     });
 
     expect(setOpen).toHaveBeenCalledWith(true, pane);
+  });
+
+  it("updates the displayed book name when the current book changes", () => {
+    const { pane, selectorState, readingState } = createFixture();
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={pane}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-bible-reader-book")?.textContent).toBe(
+      "Genesis"
+    );
+
+    const exodus = {
+      ...readingState.translationBooks.value!.books[0]!,
+      id: "EXO",
+      name: "Exodus",
+      commonName: "Exodus",
+      order: 2,
+    };
+
+    act(() => {
+      (
+        readingState.translationBooks as Signal<
+          BibleReadingState["translationBooks"]["value"]
+        >
+      ).value = {
+        translation: readingState.translationBooks.value!.translation,
+        books: [exodus],
+      };
+      readingState.bookId.value = "EXO";
+    });
+
+    expect(container.querySelector(".sb-bible-reader-book")?.textContent).toBe(
+      "Exodus"
+    );
+  });
+
+  it("shows the new book when the reading state is replaced with one for a different book", () => {
+    const first = createFixture();
+    const second = createFixture();
+
+    // Point the second reading state at a different book entirely, so that
+    // re-rendering with it must recompute the current book rather than keep
+    // the first reading state's value.
+    const exodus = {
+      ...second.readingState.translationBooks.value!.books[0]!,
+      id: "EXO",
+      name: "Exodus",
+      commonName: "Exodus",
+      order: 2,
+    };
+    (
+      second.readingState.translationBooks as Signal<
+        BibleReadingState["translationBooks"]["value"]
+      >
+    ).value = {
+      translation: second.readingState.translationBooks.value!.translation,
+      books: [exodus],
+    };
+    second.readingState.bookId.value = "EXO";
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={first.pane}
+          selectorState={first.selectorState}
+          readingState={first.readingState}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-bible-reader-book")?.textContent).toBe(
+      "Genesis"
+    );
+
+    act(() => {
+      render(
+        <BibleReader
+          currentPane={second.pane}
+          selectorState={second.selectorState}
+          readingState={second.readingState}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector(".sb-bible-reader-book")?.textContent).toBe(
+      "Exodus"
+    );
   });
 
   it("clicking a verse selects it with event coordinates", () => {
@@ -1295,14 +1423,14 @@ describe("BibleReader", () => {
     };
     readingState.scrollToVerse.value = 1;
 
-    const rafSpy = jest
+    const rafSpy = vi
       .spyOn(window, "requestAnimationFrame")
       .mockImplementation((callback: FrameRequestCallback) => {
         callback(0);
         return 0;
       });
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
-    const scrollIntoViewSpy = jest.fn();
+    const scrollIntoViewSpy = vi.fn();
     Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
       configurable: true,
       value: scrollIntoViewSpy,
@@ -1370,7 +1498,7 @@ describe("BibleReader", () => {
     };
 
     const originalAddEventListener = HTMLElement.prototype.addEventListener;
-    const addEventListenerSpy = jest.fn(function (
+    const addEventListenerSpy = vi.fn(function (
       this: HTMLElement,
       ...args: Parameters<HTMLElement["addEventListener"]>
     ) {
@@ -1459,7 +1587,7 @@ describe("BibleReader", () => {
       previousChapterApiLink: null,
     };
 
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     try {
       renderMobileReader(
         { pane, selectorState, readingState },
@@ -1479,7 +1607,7 @@ describe("BibleReader", () => {
         dispatchTouch(viewport, "touchstart", [{ clientX: 200, clientY: 30 }]);
         dispatchTouch(viewport, "touchmove", [{ clientX: 80, clientY: 30 }]);
         dispatchTouch(viewport, "touchend", []);
-        jest.advanceTimersByTime(251);
+        vi.advanceTimersByTime(251);
       });
 
       await Promise.resolve();
@@ -1488,7 +1616,7 @@ describe("BibleReader", () => {
       expect(readingState.loadNextChapter).toHaveBeenCalledTimes(1);
       expect(readingState.loadPreviousChapter).not.toHaveBeenCalled();
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 
@@ -1502,7 +1630,7 @@ describe("BibleReader", () => {
       previousChapterApiLink: "/api/BSB/GEN/0.json",
     };
 
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     try {
       renderMobileReader(
         { pane, selectorState, readingState },
@@ -1522,7 +1650,7 @@ describe("BibleReader", () => {
         dispatchTouch(viewport, "touchstart", [{ clientX: 80, clientY: 24 }]);
         dispatchTouch(viewport, "touchmove", [{ clientX: 220, clientY: 24 }]);
         dispatchTouch(viewport, "touchend", []);
-        jest.advanceTimersByTime(251);
+        vi.advanceTimersByTime(251);
       });
 
       await Promise.resolve();
@@ -1531,7 +1659,7 @@ describe("BibleReader", () => {
       expect(readingState.loadPreviousChapter).toHaveBeenCalledTimes(1);
       expect(readingState.loadNextChapter).not.toHaveBeenCalled();
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 });

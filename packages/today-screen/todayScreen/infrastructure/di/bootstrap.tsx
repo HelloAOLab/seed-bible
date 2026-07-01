@@ -21,6 +21,9 @@ import type { VerseSearchResult } from "todayScreen.domain.models.search";
 import { ReadingHistoryConfigProvider } from "../config/readingHistory/readingHistoryConfigProvider";
 import { getHighlightedWelcomeVerse } from "../config/translations/welcomeVerseMap";
 
+export interface TodayScreenAPI {
+  open: () => void;
+}
 // const Icon = () => {
 //   return <MaterialIcon>home</MaterialIcon>;
 // };

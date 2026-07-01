@@ -23,31 +23,9 @@ This applies to all prose responses — summaries, explanations, and trade-off d
 
 This project requires **pnpm v10+**. Do not use npm or yarn.
 
-## Common Commands
-
-```bash
-pnpm dev            # Start dev server (Puppeteer Chrome + interactive REPL)
-pnpm build          # Bundle with esbuild
-pnpm package        # Pack all packages into .aux files via casualos CLI
-pnpm test           # Run Jest tests
-pnpm test:watch     # Jest in watch mode
-pnpm lint           # ESLint check
-pnpm lint:fix       # Auto-fix ESLint issues
-pnpm check:ts       # TypeScript check (tsc-silent)
-pnpm check:aux      # Validate .aux files
-pnpm format         # Prettier format all files
-pnpm format:changed # Format only staged files (runs automatically pre-commit via Husky)
-```
-
-### Running a single test
-
-```bash
-pnpm test -- --testPathPattern="<filename>"
-```
-
 ### Dev REPL commands (after `pnpm dev`)
 
-```
+```bash
 .save [name]     Save simulation state to filesystem
 .reload          Hot reload from disk
 .system          Open system portal
@@ -56,79 +34,76 @@ run(script)      Execute an AUX script in the simulation
 shout(name, arg) Trigger a shout event
 ```
 
-## Architecture
-
-This is **not a traditional npm monorepo**. Packages under `packages/` do not have their own `package.json`. All dependencies and scripts are managed from the root `package.json`. Each package compiles to an `.aux` file (CasualOS format) via the `casualos pack-aux` CLI.
-
-### Layer Model (top → bottom)
-
-```
-User Interface (React / TSX components)
-    ↓
-Application Layer (React hooks — primary dev surface)
-    ↓
-Service Layer (Bible data, Canvas, managers)
-    ↓
-CasualOS Runtime (bot system, state, collaboration)
-    ↓
-Browser APIs (WebGL, IndexedDB, WebRTC)
-```
-
-Data flows unidirectionally: **User Action → Hook → Manager → Service → State → Re-render**. All state is accessed through React hooks. Avoid reaching into managers or services directly from components.
-
-### Key Packages
-
-| Package                              | Role                                                                       |
-| ------------------------------------ | -------------------------------------------------------------------------- |
-| `seed-bible`                         | Core app — hooks, components, managers, DB layer, AI features              |
-| `Tabernacle`                         | Tabernacle 3D visualization (uses `MeshState` enum for visibility control) |
-| `Scripture Map` / `Scripture Map 3D` | Geospatial Bible mapping                                                   |
-| `Bible Visualization Utils`          | Shared config providers and pooling utilities                              |
-| `Bible Stack`                        | Layered stacking view                                                      |
-| `Assistant`                          | AI voice assistant extension                                               |
-| `Playlist`                           | Media playlist tied to Scripture passages                                  |
-| `Object Pooler`                      | Reusable object pool utility                                               |
-
-Architecture docs live in `packages/seed-bible/app/`:
-
-- `ARCHITECTURE.md` — deep technical overview
-- `EXTENSION_DEVELOPMENT_GUIDE.md` — how to build new extensions
-- `API_REFERENCE.md` — hook and service API reference
-- `GETTING_STARTED.md` — first-time setup
-
-### Extension Format
-
-Each package under `packages/` has an `extension.json` describing its name, version, author, dependencies, and status. Extensions register themselves via CasualOS bot tags (e.g., `aiApps.voiceAssistant`). The `pnpm package` command packs all extensions using the `casualos pack-aux` CLI.
-
-### TypeScript Path Aliases
-
-`@packages/*` resolves to `/packages/*` (configured in both `tsconfig.json` and `jest.config.cjs`).
-
-Module paths for all packages are auto-generated in `tsconfig.json`. After adding new files or packages, run:
+## Common Commands
 
 ```bash
-pnpm update-ts-paths
+pnpm dev               # Run the SSR dev server (Express + Vite, HMR)
+pnpm test              # Run Vitest test suite
+pnpm test:watch        # Vitest in watch mode
+pnpm lint              # ESLint (includes i18n translation key validation)
+pnpm lint:fix          # Auto-fix linting issues
+pnpm check:ts          # TypeScript type check — client + patterns (non-emit)
+pnpm build             # Production build (client + SSR + server bundles)
+pnpm pattern pack <name>  # Package a patterns/<name> portal into .aux
+pnpm format            # Prettier formatting
 ```
 
-Never edit `tsconfig.json` paths manually.
+**Run a single test file:**
 
-## Testing
+```bash
+pnpm vitest run FreeUseBibleAPI.test.ts
+>>>>>>> develop
+```
 
-- Framework: **Jest** with Babel transpilation
-- Tests live in `test/e2e/` (Puppeteer-based, runs against the live CasualOS frame) and `test/unit/`
-- Test timeout is 60 seconds (E2E tests launch a real browser)
-- E2E tests access the simulation via `window.aux.getApp()`
+## Architecture
 
-## Build Pipeline
+This is a **monorepo** (pnpm workspaces) containing a Preact-based Bible reader. The reader is a **standalone SSR Preact PWA** that uses **CasualOS as a backend** (auth, records, file storage, Yjs real-time multiplayer) via its SDK (`@casual-simulation/*`) — it does not run as bot scripts. Only the embeddable portals in `patterns/` (e.g. `geo-importer`) ship as CasualOS `.aux` patterns, loaded in cross-origin `ao.bot` iframes.
 
-The `script/` directory contains all build/dev automation in TypeScript (run via `tsx`):
+### Core App: `packages/seed-bible/seed-bible/`
 
-- `script/build.ts` — esbuild orchestration (target: ES2022, ESM output)
-- `script/dev.ts` — Puppeteer dev server + REPL
-- `script/package.ts` — packs packages into `.aux` via casualos CLI
-- `script/lib/` — shared utilities (browser automation, package helpers, records API)
+**Managers** (`managers/`) contain all business logic. Each owns one domain:
 
-## CI/CD
+- `OsManager` — CasualOS gateway; wraps the SDK records/auth/inst clients (data, files, shared docs). Every CasualOS-touching manager receives this `os`.
+- `LoginManager` — Email-code auth, sessions, and user profile
+- `BibleDataManager` — Bible content and translation loading
+- `BibleReadingManager` — Reading position and navigation
+- `HighlightsManager`, `BookmarksManager`, `AnnotationsManager` — Annotations, persisted via CasualOS records
+- `SessionsManager` — Shared/multiplayer sessions (Yjs shared documents)
+- `ThemeManager` — Dark/light mode and color schemes
+- `ExtensionManager` — Extension lifecycle
+- `SearchManager` — Typesense-backed search
 
-- **CI** (`.github/workflows/ci.yml`): lint → tsc → test → package → validate `.aux` → upload artifacts; triggered on push/PR
-- **CD** (`.github/workflows/cd.yml`): same pipeline + publishes extensions/patterns to the AO record system; triggered on `releases/**` and `develop` branches
+**Components** (`components/`) are Preact functional components. State is managed with `@preact/signals`, not useState/useReducer.
+
+**App entry** (`app/`) — initialization hooks, PostHog bootstrap, and the entry point that wires managers together.
+
+**i18n** (`i18n/`) — i18next with 24 locale JSON files. Translation keys are validated at lint time by a custom ESLint rule in `script/eslint/`.
+
+### Extensions (`packages/*-extension/`)
+
+Separate packages that call `registerExtension({ id, init })`; the `init(context)` generator receives the `SeedBibleState` and yields cleanup functions. `seed-bible-refresh-example-extension` is the reference template.
+
+### Tests (`test/`)
+
+- Unit tests in `test/unit/` mirror the package structure
+- Integration tests in `test/integration/`
+
+### Build System
+
+The app deploys as a **web app, not a pattern**: `pnpm build` makes client + SSR + server bundles, which CI (`.github/workflows/cd.yml`) syncs to S3 for the long-running host (`server/index.ts` / `Dockerfile`). Separately, the `.aux` patterns under `patterns/` are packaged by the Vite `patternPlugin` during `pnpm build` (via `casualos pack-aux` + `minify-aux`) and uploaded to the records server when `PATTERN_SESSION_KEY` + `PATTERN_RECORD_KEY` are set.
+
+## Key Conventions
+
+**JSX**: Uses Preact, not React. `jsxImportSource` is `"preact"`. Import from `"preact"`.
+
+**State**: Use `@preact/signals` (`signal()`, `computed()`, `effect()`) for reactive state in both components and managers.
+
+**Imports**: One path alias in `tsconfig.json` — `@packages/*` → `./packages/*`. Otherwise use relative paths.
+
+**CasualOS access**: All CasualOS access goes through the `CasualOSManager` factory (`managers/OsManager.tsx`) — the SDK clients, not injected runtime globals (`os`/`thisBot`/`configBot` exist only inside `ao.bot` portal iframes).
+
+**Translations**: When adding or updating any translation key, update **all 24 locale files** in `packages/seed-bible/seed-bible/i18n/`, each in its native language (don't copy English into non-English files). A translation is only complete when all 24 are updated.
+
+**TypeScript**: Strict mode is on (`strict`, `noImplicitAny`, `strictNullChecks`). No `any` unless unavoidable.
+
+**Formatting**: Prettier with 2-space indent, double quotes, trailing commas (es5). Enforced by a Husky + pretty-quick pre-commit hook.

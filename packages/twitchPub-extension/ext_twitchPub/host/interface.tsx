@@ -1,5 +1,6 @@
 import { type Signal } from "@preact/signals";
-import { type SeedBibleState } from "seed-bible.app.api";
+import { type SeedBibleState } from "seed-bible";
+
 interface IconProps {
   width?: number | string;
   height?: number | string;
@@ -30,6 +31,7 @@ interface TwitchPubState {
   setCurrentPage: (page: TwitchPubState["currentPage"]["value"]) => void;
   hideUI: () => void;
   showUI: () => void;
+  toast: (message: string) => void;
   handleSeedBibleUpdate: (seedBibleState: SeedBibleState) => void;
   handleHighlightUpdate: (
     highlights: {
