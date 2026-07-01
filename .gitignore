@@ -1,9 +1,12 @@
 node_modules
 dist
+pattern-dist
 .DS_Store
 package-lock.json
 .claude
 bun.lock
 .vscode/*
 !.vscode/settings.json
+!.vscode/launch.json
 ./cursor/*
+.pnpm-store/*

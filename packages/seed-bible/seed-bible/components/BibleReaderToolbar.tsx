@@ -1,24 +1,49 @@
-import { batch, useComputed, useSignal } from "@preact/signals";
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
-import { translateTitle } from "seed-bible.components.Utils";
-import { applyToolbarCustomization } from "seed-bible.managers.SettingsManager";
-import { highlightContainsVerse } from "seed-bible.managers.HighlightsManager";
-import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
-import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
-import type { BibleReaderToolbarTool } from "seed-bible.managers.BibleToolsManager";
+import { useComputed, useSignal } from "@preact/signals";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import { useI18n } from "../i18n/I18nManager";
+import { translateTitle } from "../components/Utils";
+import { applyToolbarCustomization } from "../managers/SettingsManager";
+import { highlightContainsVerse } from "../managers/HighlightsManager";
+import type { BibleReadingSession } from "../managers/SessionsManager";
+import type { BibleReadingState } from "../managers/BibleReadingManager";
+import type { BibleReaderToolbarTool } from "../managers/BibleToolsManager";
 import {
   handleHorizontalListKeyNav,
   handleVerticalListKeyNav,
-} from "seed-bible.components.KeyboardNav";
-import { SeedBibleIcon } from "seed-bible.components.icons";
+} from "../components/KeyboardNav";
+import { SeedBibleIcon } from "../components/icons";
+import { useEffect, useRef } from "preact/hooks";
 import {
   SelfAvatarVisual,
   getSelfDisplayName,
   openBookmarkCategoryModal,
-} from "seed-bible.components.Tabs";
+} from "./Tabs";
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
+
+/**
+ * Spawns a Material-style ripple inside the pressed button: a circle centered on
+ * the button (not the touch point) that scales up and fades out, then removes
+ * itself. Used for tap feedback on the mobile floating-nav buttons, where the
+ * CSS `:active` state is too brief to reliably paint on touch devices.
+ */
+function spawnRipple(event: PointerEvent) {
+  const button = event.currentTarget as HTMLElement | null;
+  if (!button) return;
+  const rect = button.getBoundingClientRect();
+  // Oversize the circle so the ripple reads big and bold (clipped to the
+  // button's rounded shape by overflow: hidden).
+  const size = Math.max(rect.width, rect.height) * 1.6;
+  const ripple = document.createElement("span");
+  ripple.className = "sb-ripple";
+  ripple.style.width = `${size}px`;
+  ripple.style.height = `${size}px`;
+  // Always center the ripple on the button, regardless of where it was tapped.
+  ripple.style.left = `${(rect.width - size) / 2}px`;
+  ripple.style.top = `${(rect.height - size) / 2}px`;
+  ripple.addEventListener("animationend", () => ripple.remove());
+  button.appendChild(ripple);
+}
 
 interface MobileBottomTabProps {
   iconName?: string;
@@ -188,8 +213,6 @@ function getContrastTextColor(hex: string): string {
   const yiq = (r * 299 + g * 587 + b * 114) / 1000;
   return yiq >= 160 ? "#333333" : "#ffffff";
 }
-
-const { useEffect, useRef } = os.appHooks;
 
 /**
  * Deterministic decoration id for a per-verse shared highlight. Using a
@@ -362,26 +385,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return null;
   }
 
-  const viewportWidth = useSignal(
-    typeof window === "undefined" ? 0 : window.innerWidth
-  );
-  const viewportHeight = useSignal(
-    typeof window === "undefined" ? 0 : window.innerHeight
-  );
-
-  useEffect(() => {
-    const onResize = () => {
-      batch(() => {
-        viewportWidth.value = window.innerWidth;
-        viewportHeight.value = window.innerHeight;
-      });
-    };
-
-    window.addEventListener("resize", onResize);
-    return () => {
-      window.removeEventListener("resize", onResize);
-    };
-  }, []);
+  const viewportWidth = props.state.app.viewportWidth;
 
   const tools = useComputed(() => {
     const resolved = toolsManager.getToolbarTools({
@@ -391,12 +395,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       tabs: tabs,
       panesManager: panes,
       window: {
-        innerWidth: viewportWidth,
-        innerHeight: viewportHeight,
+        isMobile: props.state.app.isMobile.value,
       },
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
       openChat: sidebar.openChatPanel,
+      toast: props.state.app.toast,
       readingPlans,
     });
     return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
@@ -408,7 +412,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     "open-selector",
     "open-sidebar",
     "open-search",
-    "open-chat",
   ]);
 
   const moreTools = useComputed(() =>
@@ -425,12 +428,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       tabs: tabs,
       panesManager: panes,
       window: {
-        innerWidth: viewportWidth,
-        innerHeight: viewportHeight,
+        isMobile: props.state.app.isMobile.value,
       },
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
       openChat: sidebar.openChatPanel,
+      toast: props.state.app.toast,
     });
 
     const { selectionUI } = settings.settings.value;
@@ -449,13 +452,39 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // Align with the app-wide mobile breakpoint (`state.app.isMobile`, 768px).
   // Kept as a local computed signal so its own viewport listener continues to
   // drive re-renders even if `app.isMobile` is not consumed elsewhere.
-  const isSmallScreen = useComputed(() => viewportWidth.value <= 768);
+  const isSmallScreen = props.state.app.isMobile;
   const shouldReplaceDefaultToolbar = useComputed(
     () => isSmallScreen.value && hasVerseSelection.value
   );
   const isMoreMenuOpen = useSignal(false);
   const selectedToolbarToolId = useSignal<string | null>(null);
   const selectedVerseToolId = useSignal<string | null>(null);
+  // Whether the mobile verse sheet shows its overflow actions (the "More" /
+  // "Less" toggle). Collapsed by default; reset whenever the selection clears.
+  const isVerseSheetExpanded = useSignal(false);
+
+  // Single source of truth for which bottom-bar tab is highlighted orange.
+  // "more"/"search"/"you" are derived from real panel state; "today" and
+  // "bible" have no panel of their own, so we remember the last one the user
+  // tapped and use it as the fallback. Exactly one tab is ever active.
+  const localBottomTab = useSignal<"today" | "bible">("bible");
+  // True when the sidebar drawer is open showing the tabs/bookmarks view
+  // (not the settings view) with the bookmark filter active.
+  const isBookmarksViewOpen = useComputed(
+    () =>
+      sidebar.isMobileOpen.value &&
+      !sidebar.isSettingsOpen.value &&
+      bookmarks.isFilterActive.value
+  );
+  const activeMobileTab = useComputed<
+    "today" | "you" | "bible" | "search" | "bookmarks" | "more"
+  >(() => {
+    if (isMoreMenuOpen.value) return "more";
+    if (sidebar.isSearchPanelOpen.value) return "search";
+    if (sidebar.isSettingsOpen.value) return "you";
+    if (isBookmarksViewOpen.value) return "bookmarks";
+    return localBottomTab.value;
+  });
 
   const previousChapterTool = useComputed(
     () => tools.value.find((tool) => tool.id === "previous-chapter") ?? null
@@ -465,6 +494,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   );
   const openSelectorTool = useComputed(
     () => tools.value.find((tool) => tool.id === "open-selector") ?? null
+  );
+  // The audio-reader extension's play/pause control, surfaced inside the
+  // mobile floating nav pill. Null when the extension isn't installed; its
+  // `visible` is only true on chapters that actually have audio.
+  const audioPlayTool = useComputed(
+    () =>
+      toolsManager
+        .getQuickTools({ readingState: readingState.value! })
+        .find((tool) => tool.id === "ext_audioReader-play") ?? null
   );
 
   const floatingAnchor = useComputed(() =>
@@ -642,10 +680,11 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return `${bookName} ${chapter}:${ranges.join(",")}`;
   });
 
-  // Reset picker when selection is cleared
+  // Reset picker and the mobile sheet's expanded state when selection clears.
   useEffect(() => {
     if (!hasVerseSelection.value) {
       isHighlightPickerOpen.value = false;
+      isVerseSheetExpanded.value = false;
     }
   }, [hasVerseSelection.value]);
 
@@ -678,32 +717,87 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           dir={readingState.value?.translation.value?.textDirection ?? "auto"}
         >
           {isSmallScreen.value &&
-            !sidebar.isSearchPanelOpen.value &&
-            settings.settings.value.showNavArrows &&
-            previousChapterTool.value && (
-              <button
-                disabled={previousChapterTool.value.disabled.value}
-                onClick={previousChapterTool.value.onSelect}
-                className="sb-reader-toolbar-floating-button sb-reader-toolbar-floating-button-left"
-                aria-label={translateTitle(t, previousChapterTool.value.title)}
-              >
-                <previousChapterTool.value.icon />
-              </button>
-            )}
+            activeMobileTab.value === "bible" &&
+            (() => {
+              const audio =
+                audioPlayTool.value && audioPlayTool.value.visible.value
+                  ? audioPlayTool.value
+                  : null;
+              const prev = previousChapterTool.value;
+              const next = nextChapterTool.value;
+              const selector = openSelectorTool.value;
+              if (!audio && !prev && !next && !selector) return null;
 
-          {isSmallScreen.value &&
-            !sidebar.isSearchPanelOpen.value &&
-            settings.settings.value.showNavArrows &&
-            nextChapterTool.value && (
-              <button
-                disabled={nextChapterTool.value.disabled.value}
-                onClick={nextChapterTool.value.onSelect}
-                className="sb-reader-toolbar-floating-button sb-reader-toolbar-floating-button-right"
-                aria-label={translateTitle(t, nextChapterTool.value.title)}
-              >
-                <nextChapterTool.value.icon />
-              </button>
-            )}
+              const AudioIcon = audio?.icon;
+              const PrevIcon = prev?.icon;
+              const NextIcon = next?.icon;
+
+              return (
+                <div
+                  className="sb-reader-floating-nav"
+                  role="group"
+                  aria-label={t("chapter-navigation", {
+                    defaultValue: "Chapter navigation",
+                  })}
+                >
+                  {audio && AudioIcon && (
+                    <button
+                      type="button"
+                      disabled={audio.disabled.value}
+                      onClick={() => audio.onSelect()}
+                      className="sb-reader-floating-nav-play"
+                      aria-label={translateTitle(t, audio.title)}
+                    >
+                      <AudioIcon />
+                    </button>
+                  )}
+
+                  {(prev || next || selector) && (
+                    <div className="sb-reader-floating-nav-group">
+                      {prev && PrevIcon && (
+                        <button
+                          type="button"
+                          disabled={prev.disabled.value}
+                          onClick={prev.onSelect}
+                          onPointerDown={spawnRipple}
+                          className="sb-reader-floating-nav-arrow"
+                          aria-label={translateTitle(t, prev.title)}
+                        >
+                          <PrevIcon />
+                        </button>
+                      )}
+
+                      {selector && (
+                        <button
+                          type="button"
+                          onClick={selector.onSelect}
+                          onPointerDown={spawnRipple}
+                          className="sb-reader-floating-nav-label"
+                        >
+                          {readingState.value?.chapterData.value?.book.name ??
+                            readingState.value?.bookId.value ??
+                            " "}{" "}
+                          {readingState.value?.chapterNumber.value}
+                        </button>
+                      )}
+
+                      {next && NextIcon && (
+                        <button
+                          type="button"
+                          disabled={next.disabled.value}
+                          onClick={next.onSelect}
+                          onPointerDown={spawnRipple}
+                          className="sb-reader-floating-nav-arrow"
+                          aria-label={translateTitle(t, next.title)}
+                        >
+                          <NextIcon />
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
           <div
             className={`sb-reader-toolbar${isSmallScreen.value ? " sb-reader-toolbar-mobile-layout" : " sb-reader-toolbar-labeled"}`}
@@ -744,9 +838,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     </svg>
                   }
                   label={t("today", { defaultValue: "Today" })}
+                  active={activeMobileTab.value === "today"}
                   onClick={() => {
                     isMoreMenuOpen.value = false;
-                    os.toast(
+                    sidebar.closeSearchPanel();
+                    sidebar.closeChatPanel();
+                    sidebar.closeSettings();
+                    sidebar.closeSidebar();
+                    localBottomTab.value = "today";
+
+                    props.state.app.toast(
                       t("today-coming-soon", {
                         defaultValue: "Today screen is coming soon",
                       })
@@ -757,6 +858,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 <MobileBottomTab
                   iconNode={<SelfAvatarVisual state={props.state} />}
                   label={t("you", { defaultValue: "You" })}
+                  active={activeMobileTab.value === "you"}
                   aria-label={`Open account settings (${getSelfDisplayName(
                     props.state
                   )})`}
@@ -770,18 +872,22 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 />
 
                 <MobileBottomTab
-                  iconNode={<SeedBibleIcon size={24} />}
-                  label={t("bible", { defaultValue: "Bible" })}
-                  active={
-                    !sidebar.isSearchPanelOpen.value && !isMoreMenuOpen.value
+                  iconNode={
+                    <SeedBibleIcon
+                      size={24}
+                      className="sb-reader-toolbar-seed-icon"
+                    />
                   }
+                  label={t("bible", { defaultValue: "Bible" })}
+                  active={activeMobileTab.value === "bible"}
                   onClick={() => {
                     isMoreMenuOpen.value = false;
                     sidebar.closeSearchPanel();
                     sidebar.closeChatPanel();
                     sidebar.closeSettings();
                     sidebar.closeSidebar();
-                    openSelectorTool.value?.onSelect();
+                    localBottomTab.value = "bible";
+                    // openSelectorTool.value?.onSelect();
                     selectedToolbarToolId.value = null;
                   }}
                 />
@@ -789,13 +895,67 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 <MobileBottomTab
                   iconName="search"
                   label={t("search", { defaultValue: "Search" })}
-                  active={sidebar.isSearchPanelOpen.value}
+                  active={activeMobileTab.value === "search"}
                   onClick={() => {
                     isMoreMenuOpen.value = false;
+                    // Dismiss the tabs/bookmarks drawer if it's open.
+                    sidebar.closeSidebar();
                     if (sidebar.isSearchPanelOpen.value) {
                       sidebar.closeSearchPanel();
                     } else {
                       sidebar.openSearchPanel();
+                    }
+                  }}
+                />
+
+                <MobileBottomTab
+                  iconNode={
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill={
+                        activeMobileTab.value === "bookmarks"
+                          ? "currentColor"
+                          : "none"
+                      }
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  }
+                  label={t("bookmarks", { defaultValue: "Bookmarks" })}
+                  active={activeMobileTab.value === "bookmarks"}
+                  onClick={() => {
+                    isMoreMenuOpen.value = false;
+                    if (isBookmarksViewOpen.value) {
+                      // Reset the bookmarks view so reopening the tabs drawer
+                      // lands on the Tabs list rather than a stale bookmarks
+                      // screen.
+                      bookmarks.closeView();
+                      sidebar.closeSidebar();
+                      return;
+                    }
+                    sidebar.closeSearchPanel();
+                    sidebar.closeChatPanel();
+                    // Clear any settings view so the drawer shows the tabs
+                    // list, then (re-)open the drawer and switch on the
+                    // bookmark filter so the bookmarks section is visible.
+                    sidebar.closeSettings();
+                    sidebar.openSidebar();
+                    // Opened from the bottom toolbar: the mobile bookmarks
+                    // header should show a Close (X) that dismisses the
+                    // drawer, not a Back arrow to the Tabs list.
+                    bookmarks.openedFromToolbar.value = true;
+                    if (!bookmarks.isFilterActive.value) {
+                      bookmarks.toggleFilter();
                     }
                   }}
                 />
@@ -805,10 +965,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     <button
                       type="button"
                       onClick={() => {
+                        // Opening the More menu should dismiss the
+                        // tabs/bookmarks drawer if it's open.
+                        if (!isMoreMenuOpen.value) {
+                          sidebar.closeSidebar();
+                        }
                         isMoreMenuOpen.value = !isMoreMenuOpen.value;
                       }}
                       className={`sb-reader-toolbar-button sb-reader-toolbar-mobile-tab-button${
-                        isMoreMenuOpen.value
+                        activeMobileTab.value === "more"
                           ? " sb-reader-toolbar-mobile-tab-button-active"
                           : ""
                       }`}
@@ -968,7 +1133,23 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
             isSmallScreen.value ? undefined : handleVerseToolbarPointerUp
           }
         >
-          {isHighlightPickerOpen.value && (
+          {isSmallScreen.value && (
+            <>
+              <div className="sb-verse-toolbar-handle" aria-hidden="true" />
+              <button
+                type="button"
+                className="sb-verse-toolbar-close"
+                onClick={() => {
+                  readingState.value?.clearSelectedVerses();
+                }}
+                aria-label={t("close", { defaultValue: "Close" })}
+                title={t("close", { defaultValue: "Close" })}
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </>
+          )}
+          {(isHighlightPickerOpen.value || isSmallScreen.value) && (
             <div
               className="sb-verse-toolbar-ref"
               aria-live="polite"
@@ -1066,6 +1247,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 title={t("add-color", { defaultValue: "Add color" })}
               >
                 <span className="material-symbols-outlined">add</span>
+                <span className="sb-verse-toolbar-action-text">
+                  {t("add", { defaultValue: "Add" })}
+                </span>
               </button>
               <input
                 ref={colorInputRef}
@@ -1110,10 +1294,17 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 title={t("clear", { defaultValue: "Clear" })}
               >
                 <span className="material-symbols-outlined">ink_eraser</span>
+                <span className="sb-verse-toolbar-action-text">
+                  {t("clear", { defaultValue: "Clear" })}
+                </span>
               </button>
             </div>
           ) : (
-            <div className="sb-verse-toolbar-tools">
+            <div
+              className={`sb-verse-toolbar-tools${
+                isSmallScreen.value ? " sb-verse-toolbar-cards" : ""
+              }`}
+            >
               {(() => {
                 const renderTool = (
                   tool: (typeof verseToolbarTools.value)[number]
@@ -1228,95 +1419,184 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   : t("bookmark-verses", { defaultValue: "Bookmark" });
 
                 // const canHighlight = !sessionState.value || sessionState.value.userCanDecorate(sessionState.value.localSessionId.value);
+                const highlightCard = selectionUI.value.showHighlightColors ? (
+                  <div key="highlight" className="sb-verse-toolbar-action-item">
+                    <button
+                      type="button"
+                      className="sb-verse-toolbar-action sb-verse-toolbar-highlight-trigger"
+                      onClick={() => {
+                        isHighlightPickerOpen.value = true;
+                      }}
+                      aria-label={t("highlight-selection", {
+                        defaultValue: "Highlight selection",
+                      })}
+                      title={highlightLabel}
+                    >
+                      <span className="sb-verse-toolbar-action-icon">
+                        <span className="material-symbols-outlined">
+                          format_ink_highlighter
+                        </span>
+                      </span>
+                      <span className="sb-verse-toolbar-action-label">
+                        {highlightLabel}
+                      </span>
+                    </button>
+                  </div>
+                ) : null;
+
+                const bookmarkCard = (
+                  <div key="bookmark" className="sb-verse-toolbar-action-item">
+                    <button
+                      type="button"
+                      className={`sb-verse-toolbar-action sb-verse-toolbar-bookmark-trigger${
+                        isSelectionBookmarked
+                          ? " sb-verse-toolbar-bookmark-trigger-active"
+                          : ""
+                      }`}
+                      onClick={() => {
+                        if (!rs) return;
+                        const translationId = rs.translationId.value;
+                        const bookId = rs.bookId.value;
+                        const chapterNumber = rs.chapterNumber.value;
+                        if (
+                          !translationId ||
+                          !bookId ||
+                          !chapterNumber ||
+                          verseTarget === undefined
+                        ) {
+                          return;
+                        }
+                        if (isSelectionBookmarked) {
+                          void bookmarks.removeBookmarkForLocation(
+                            translationId,
+                            bookId,
+                            chapterNumber,
+                            verseTarget
+                          );
+                          return;
+                        }
+                        openBookmarkCategoryModal(props.state, {
+                          translationId,
+                          bookId,
+                          chapterNumber,
+                          verse: verseTarget,
+                        });
+                      }}
+                      aria-label={bookmarkLabel}
+                      aria-pressed={isSelectionBookmarked}
+                      title={bookmarkLabel}
+                    >
+                      <span className="sb-verse-toolbar-action-icon">
+                        <span
+                          className="material-symbols-outlined"
+                          style={{
+                            fontVariationSettings: isSelectionBookmarked
+                              ? '"FILL" 1'
+                              : '"FILL" 0',
+                          }}
+                        >
+                          bookmark
+                        </span>
+                      </span>
+                      <span className="sb-verse-toolbar-action-label">
+                        {bookmarkLabel}
+                      </span>
+                    </button>
+                  </div>
+                );
+
+                // Desktop keeps the single horizontal row (highlight, bookmark,
+                // the registered tools, then cancel).
+                if (!isSmallScreen.value) {
+                  return (
+                    <>
+                      {highlightCard}
+                      {bookmarkCard}
+                      {nonCancel.map(renderTool)}
+                      {cancelTools.map(renderTool)}
+                    </>
+                  );
+                }
+
+                // Mobile sheet: a card grid. Show the first few actions plus a
+                // "More" toggle; the rest reveal under a "Less" toggle. The X
+                // in the corner handles dismissal, so the Cancel tool is
+                // dropped here.
+                const actionCards = [
+                  highlightCard,
+                  bookmarkCard,
+                  ...nonCancel.map(renderTool),
+                ].filter(Boolean);
+
+                const COLLAPSED_COUNT = 3;
+                const needsToggle = actionCards.length > COLLAPSED_COUNT;
+                const primaryCards = needsToggle
+                  ? actionCards.slice(0, COLLAPSED_COUNT)
+                  : actionCards;
+                const overflowCards = needsToggle
+                  ? actionCards.slice(COLLAPSED_COUNT)
+                  : [];
+
                 return (
                   <>
-                    {selectionUI.value.showHighlightColors && (
-                      <div className="sb-verse-toolbar-action-item">
+                    {primaryCards}
+                    {needsToggle && (
+                      <div
+                        key="more-less"
+                        className="sb-verse-toolbar-action-item"
+                      >
                         <button
                           type="button"
-                          className="sb-verse-toolbar-action sb-verse-toolbar-highlight-trigger"
+                          className={`sb-verse-toolbar-action sb-verse-toolbar-more-toggle${
+                            isVerseSheetExpanded.value
+                              ? " sb-verse-toolbar-more-toggle-active"
+                              : ""
+                          }`}
                           onClick={() => {
-                            isHighlightPickerOpen.value = true;
+                            isVerseSheetExpanded.value =
+                              !isVerseSheetExpanded.value;
                           }}
-                          aria-label={t("highlight-selection", {
-                            defaultValue: "Highlight selection",
-                          })}
-                          title={highlightLabel}
+                          aria-expanded={isVerseSheetExpanded.value}
+                          aria-label={
+                            isVerseSheetExpanded.value
+                              ? t("less", { defaultValue: "Less" })
+                              : t("more", { defaultValue: "More" })
+                          }
+                          title={
+                            isVerseSheetExpanded.value
+                              ? t("less", { defaultValue: "Less" })
+                              : t("more", { defaultValue: "More" })
+                          }
                         >
                           <span className="sb-verse-toolbar-action-icon">
                             <span className="material-symbols-outlined">
-                              format_ink_highlighter
+                              {isVerseSheetExpanded.value
+                                ? "keyboard_arrow_up"
+                                : "more_horiz"}
                             </span>
                           </span>
                           <span className="sb-verse-toolbar-action-label">
-                            {highlightLabel}
+                            {isVerseSheetExpanded.value
+                              ? t("less", { defaultValue: "Less" })
+                              : t("more", { defaultValue: "More" })}
                           </span>
                         </button>
                       </div>
                     )}
-                    <div className="sb-verse-toolbar-action-item">
-                      <button
-                        type="button"
-                        className={`sb-verse-toolbar-action sb-verse-toolbar-bookmark-trigger${
-                          isSelectionBookmarked
-                            ? " sb-verse-toolbar-bookmark-trigger-active"
-                            : ""
-                        }`}
-                        onClick={() => {
-                          if (!rs) return;
-                          const translationId = rs.translationId.value;
-                          const bookId = rs.bookId.value;
-                          const chapterNumber = rs.chapterNumber.value;
-                          if (
-                            !translationId ||
-                            !bookId ||
-                            !chapterNumber ||
-                            verseTarget === undefined
-                          ) {
-                            return;
-                          }
-                          if (isSelectionBookmarked) {
-                            void bookmarks.removeBookmarkForLocation(
-                              translationId,
-                              bookId,
-                              chapterNumber,
-                              verseTarget
-                            );
-                            return;
-                          }
-                          openBookmarkCategoryModal(props.state, {
-                            translationId,
-                            bookId,
-                            chapterNumber,
-                            verse: verseTarget,
-                          });
-                        }}
-                        aria-label={bookmarkLabel}
-                        aria-pressed={isSelectionBookmarked}
-                        title={bookmarkLabel}
-                      >
-                        <span className="sb-verse-toolbar-action-icon">
-                          <span
-                            className="material-symbols-outlined"
-                            style={{
-                              fontVariationSettings: isSelectionBookmarked
-                                ? '"FILL" 1'
-                                : '"FILL" 0',
-                            }}
-                          >
-                            bookmark
-                          </span>
-                        </span>
-                        <span className="sb-verse-toolbar-action-label">
-                          {bookmarkLabel}
-                        </span>
-                      </button>
-                    </div>
-                    {nonCancel.map(renderTool)}
-                    {cancelTools.map(renderTool)}
+                    {isVerseSheetExpanded.value && overflowCards}
                   </>
                 );
               })()}
+            </div>
+          )}
+          {isSmallScreen.value && (
+            <div className="sb-verse-toolbar-swipe-hint" aria-hidden="true">
+              <span className="material-symbols-outlined">
+                keyboard_double_arrow_up
+              </span>
+              <span>
+                {t("swipe-up-more", { defaultValue: "Swipe up to view more" })}
+              </span>
             </div>
           )}
         </div>

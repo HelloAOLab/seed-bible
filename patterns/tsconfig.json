@@ -1,0 +1,52 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "target": "es2024",
+    "allowJs": true,
+    "resolveJsonModule": true,
+    "moduleDetection": "force",
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "jsxImportSource": "preact",
+    "jsx": "preserve",
+    "jsxFactory": "h",
+    "jsxFragmentFactory": "Fragment",
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "module": "preserve",
+    "noEmit": true,
+    "lib": ["es2024", "dom", "dom.iterable"],
+    "paths": {
+      "https://esm.helloao.org/vendor-3PZUL55I.js": ["../lib/vendor.ts"],
+      "https://esm.helloao.org/painter-vendor-IGDNTFOW.js": [
+        "../lib/painter-vendor.ts"
+      ]
+    },
+    "noImplicitAny": true,
+    "noImplicitThis": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "strictBuiltinIteratorReturn": true,
+    "alwaysStrict": true,
+    "useUnknownInCatchVariables": true,
+    "useDefineForClassFields": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "bundler",
+    "resolvePackageJsonExports": true,
+    "resolvePackageJsonImports": true,
+    "preserveConstEnums": true,
+    "typeRoots": [
+      "../node_modules/@types",
+      "./pattern-typings",
+      "../node_modules"
+    ],
+    "types": []
+  },
+  "include": ["./**/*.ts", "./**/*.tsx", "./**/*.d.ts"]
+}

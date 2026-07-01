@@ -1,5 +1,5 @@
-import { type TwitchPubState } from "ext_twitchPub.host.interface";
-import { type SeedBibleState } from "seed-bible.app.api";
+import { type TwitchPubState } from "./interface";
+import { type SeedBibleState } from "seed-bible";
 import { type Signal } from "@preact/signals";
 
 const senderScope =
@@ -11,13 +11,13 @@ const fetchUserIds = async (
   broadcasterId: Signal<string>,
   senderId: Signal<string>
 ) => {
-  const response = await web.get("https://api.twitch.tv/helix/users", {
+  const response = await fetch("https://api.twitch.tv/helix/users", {
     headers: {
       "Client-ID": clientId,
       Authorization: `Bearer ${token}`,
     },
   });
-  const data = await response.data;
+  const data = await response.json();
   if (data.data && data.data.length > 0) {
     const id = data.data[0].id;
     broadcasterId.value = id;
@@ -39,9 +39,9 @@ const checkAuthorizationStatus = async (
   });
   const url = `https://id.twitch.tv/oauth2/token?${params}`;
   try {
-    const response = await web.post(url);
+    const response = await fetch(url, { method: "POST" });
     if (response.status === 200) {
-      const data = await response.data;
+      const data = await response.json();
       userAccessToken.value = data.access_token;
       currentPage.value = "interface";
 
@@ -50,7 +50,7 @@ const checkAuthorizationStatus = async (
         posthog.capture("twitch_host_login_success", {});
       }
     } else {
-      const errorData = await response.data;
+      const errorData = await response.json();
       if (errorData.error === "authorization_pending") {
         setTimeout(() => {
           checkAuthorizationStatus(
@@ -91,7 +91,7 @@ const getDeviceAuthUrl = (state: TwitchPubState) => {
     scopes: senderScope,
   });
   const url = `https://id.twitch.tv/oauth2/device?${params}`;
-  const response = web.post(url).then((res) => res.data);
+  const response = fetch(url, { method: "POST" }).then((res) => res.json());
   response
     .then((data) => {
       const verificationUrl = data.verification_uri;
@@ -103,7 +103,7 @@ const getDeviceAuthUrl = (state: TwitchPubState) => {
     })
     .catch((error) => {
       console.error("Error requesting device authorization URL:", error);
-      os.toast(
+      state.toast(
         "Failed to get device authorization URL. Please check your Client ID and try again."
       );
       state.loading.value = false;

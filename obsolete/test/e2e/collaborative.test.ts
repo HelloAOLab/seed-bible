@@ -7,7 +7,7 @@ import { merge } from "@casual-simulation/aux-common";
 
 let browser: Browser;
 
-console.log = jest.fn();
+console.log = vi.fn();
 
 beforeAll(async () => {
   browser = await puppeteer.launch({

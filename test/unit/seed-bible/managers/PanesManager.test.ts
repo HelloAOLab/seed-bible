@@ -12,36 +12,28 @@ import {
   createExampleManagerResponseMap,
 } from "./testUtils/mockBibleApiData";
 import { signal } from "@preact/signals";
+import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import type { Mock } from "vitest";
+import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
 
-let webGetMock: jest.Mock;
-let logSpy: jest.SpyInstance;
+let fetchMock: Mock;
+let logSpy: Mock;
+const originalFetch = globalThis.fetch;
 
 beforeEach(() => {
-  webGetMock = jest.fn();
-  logSpy = jest.spyOn(console, "log").mockImplementation(() => undefined);
+  fetchMock = vi.fn();
+  logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
 
-  (globalThis as any).web = {
-    get: webGetMock,
-  };
-
-  (globalThis as any).configBot = {
-    tags: {},
-  };
-
-  (globalThis as any).os = {
-    addBotListener: jest.fn(),
-  };
+  globalThis.fetch = fetchMock;
 });
 
 afterEach(() => {
   logSpy.mockRestore();
-  delete (globalThis as any).web;
-  delete (globalThis as any).configBot;
-  delete (globalThis as any).os;
+  globalThis.fetch = originalFetch;
 });
 
 function setWebResponses(responses: WebResponseMap): void {
-  webGetMock.mockImplementation((url: string) => {
+  fetchMock.mockImplementation((url: string) => {
     const response = responses[url];
     if (!response) {
       throw new Error(`No mocked response for ${url}`);
@@ -60,7 +52,7 @@ function createDataManager() {
 
 function createHighlightsManagerMock() {
   return {
-    getChapterHighlights: jest.fn().mockReturnValue(signal({ highlights: [] })),
+    getChapterHighlights: vi.fn().mockReturnValue(signal({ highlights: [] })),
   };
 }
 
@@ -87,9 +79,12 @@ async function waitForTabsToLoad(tabs: ReaderTab[]): Promise<void> {
 
 async function createManagers(options: { extraTabs?: number } = {}) {
   setWebResponses(createExampleManagerResponseMap());
+  const navigation = createNavigationManager();
   const tabsManager = createTabs(
+    navigation,
     createDataManager(),
-    createHighlightsManagerMock() as any
+    createHighlightsManagerMock() as any,
+    createI18nManager(navigation, ["en"])
   );
   await waitForTabsToLoad(tabsManager.tabs.value);
   const initialSelectedTabId = tabsManager.selectedTabId.value;
@@ -144,6 +139,52 @@ describe("createPanes", () => {
         ?.id
     ).toBe("tab-2");
     expect(tabsManager.tabs.value.some((tab) => tab.id === "tab-2")).toBe(true);
+  });
+
+  it("redirects setSelectedPaneTab to a tab-backed pane when the selected pane is component-backed", async () => {
+    const { panesManager } = await createManagers({ extraTabs: 1 });
+
+    panesManager.setLayout("split-2v");
+    const [firstPane, secondPane] = panesManager.panes.value;
+
+    // Make the selected pane component-backed.
+    panesManager.openInPane(secondPane!.id, {
+      component: () => "Test Component",
+    });
+    panesManager.selectPane(secondPane!.id);
+
+    panesManager.setSelectedPaneTab("tab-2");
+
+    // The component pane must be left untouched...
+    const componentPane = panesManager.panes.value.find(
+      (pane) => pane.id === secondPane!.id
+    );
+    expect(componentPane?.component?.()).toBe("Test Component");
+    expect(componentPane?.tab).toBeNull();
+
+    // ...and the tab must land on the other, tab-backed pane instead.
+    const tabPane = panesManager.panes.value.find(
+      (pane) => pane.id === firstPane!.id
+    );
+    expect(tabPane?.tab?.id).toBe("tab-2");
+  });
+
+  it("does nothing when the selected pane is component-backed and no tab-backed pane exists", async () => {
+    const { panesManager } = await createManagers({ extraTabs: 1 });
+
+    const onlyPane = panesManager.panes.value[0]!;
+    panesManager.openInPane(onlyPane.id, {
+      component: () => "Test Component",
+    });
+
+    panesManager.setSelectedPaneTab("tab-2");
+
+    const pane = panesManager.panes.value.find((p) => p.id === onlyPane.id);
+    expect(pane?.component?.()).toBe("Test Component");
+    expect(pane?.tab).toBeNull();
+    expect(panesManager.panes.value.some((p) => p.tab?.id === "tab-2")).toBe(
+      false
+    );
   });
 
   it("supports opening content in an existing pane", async () => {
@@ -233,7 +274,7 @@ describe("createPanes", () => {
     expect(result?.detached).toBe(true);
   });
 
-  it("supports opening a grid portal pane and syncing config tags", async () => {
+  it("supports opening a grid portal pane", async () => {
     const { panesManager } = await createManagers();
 
     const result = panesManager.openPane({
@@ -243,8 +284,7 @@ describe("createPanes", () => {
 
     expect(result).not.toBeNull();
     expect(result?.gridPortal).toBe("home");
-    expect((globalThis as any).configBot.tags.gridPortal).toBe("home");
-    expect((globalThis as any).configBot.tags.mapPortal ?? null).toBeNull();
+    expect(result?.mapPortal).toBeNull();
   });
 
   it("supports replacing a grid portal pane with a map portal pane", async () => {
@@ -269,8 +309,32 @@ describe("createPanes", () => {
     expect(
       panesManager.panes.value.some((pane) => pane.mapPortal === "map_portal")
     ).toBe(true);
-    expect((globalThis as any).configBot.tags.gridPortal ?? null).toBeNull();
-    expect((globalThis as any).configBot.tags.mapPortal).toBe("map_portal");
+  });
+
+  it("supports multiple attached panes each with their own grid/map portal", async () => {
+    const { panesManager } = await createManagers();
+
+    panesManager.openPane({
+      type: "attached",
+      gridPortal: "home",
+    });
+    panesManager.openPane({
+      type: "attached",
+      mapPortal: "map_portal",
+    });
+
+    const portalPanes = panesManager.panes.value.filter(
+      (pane) => pane.gridPortal !== null || pane.mapPortal !== null
+    );
+
+    // Opening a second portal pane no longer clears the first one.
+    expect(
+      panesManager.panes.value.some((pane) => pane.gridPortal === "home")
+    ).toBe(true);
+    expect(
+      panesManager.panes.value.some((pane) => pane.mapPortal === "map_portal")
+    ).toBe(true);
+    expect(portalPanes).toHaveLength(2);
   });
 
   it("supports changing the layout", async () => {
@@ -282,6 +346,46 @@ describe("createPanes", () => {
     expect(
       panesManager.panes.value.filter((pane) => !pane.detached)
     ).toHaveLength(4);
+  });
+
+  it("keeps panes in place when re-applying a layout with a non-first pane selected", async () => {
+    const { panesManager } = await createManagers({ extraTabs: 1 });
+
+    panesManager.openPane({ type: "attached", tabId: "tab-2" });
+    const attachedBefore = panesManager.panes.value.filter(
+      (pane) => !pane.detached
+    );
+    const firstPaneId = attachedBefore[0]!.id;
+    const firstPaneTabId = attachedBefore[0]!.tab?.id;
+
+    // Select the second (right) pane, then re-apply the same layout. The
+    // content must not jump to the first slot, otherwise clicking the first
+    // pane would select the wrong tab.
+    panesManager.selectPane(attachedBefore[1]!.id);
+    panesManager.setLayout("split-2v");
+
+    const attachedAfter = panesManager.panes.value.filter(
+      (pane) => !pane.detached
+    );
+    expect(attachedAfter[0]!.id).toBe(firstPaneId);
+    expect(attachedAfter[0]!.tab?.id).toBe(firstPaneTabId);
+  });
+
+  it("keeps the selected pane's content when shrinking the layout", async () => {
+    const { panesManager } = await createManagers({ extraTabs: 1 });
+
+    panesManager.openPane({ type: "attached", tabId: "tab-2" });
+    const secondPane = panesManager.panes.value.find(
+      (pane) => pane.tab?.id === "tab-2"
+    )!;
+    panesManager.selectPane(secondPane.id);
+
+    // Collapsing to a single slot should retain the focused pane's tab.
+    panesManager.setLayout("single");
+
+    const attached = panesManager.panes.value.filter((pane) => !pane.detached);
+    expect(attached).toHaveLength(1);
+    expect(attached[0]!.tab?.id).toBe("tab-2");
   });
 
   it("supports detaching and reattaching a pane", async () => {

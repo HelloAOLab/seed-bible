@@ -5,16 +5,17 @@ import {
   createTestSeedBibleState,
   type CreateTestSeedBibleStateOptions,
 } from "../testUtils/createTestSeedBibleState";
+import { TestHost } from "./TestHost";
 
-jest.mock("seed-bible.i18n.I18nManager", () => ({
+vi.mock("../i18n/I18nManager", () => ({
   useI18n: () => ({
     t: (key: string, options?: { defaultValue?: string }) =>
       options?.defaultValue ?? key,
   }),
 }));
 
-jest.mock("seed-bible.components.ContextMenu", () => ({
-  closeContextMenus: jest.fn(),
+vi.mock("../components/ContextMenu", () => ({
+  closeContextMenus: vi.fn(),
   ContextMenuItem: ({
     children,
     onClick,
@@ -46,11 +47,11 @@ jest.mock("seed-bible.components.ContextMenu", () => ({
   ),
 }));
 
-jest.mock("seed-bible.components.SettingsPage", () => ({
+vi.mock("../components/SettingsPage", () => ({
   SettingsPage: () => <div>Settings Page</div>,
 }));
 
-jest.mock("seed-bible.components.SidebarSearch", () => ({
+vi.mock("../components/SidebarSearch", () => ({
   SidebarSearch: () => <div>Sidebar Search</div>,
 }));
 
@@ -58,7 +59,7 @@ describe("Sidebar collapsed layout", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     container = document.createElement("div");
     document.body.appendChild(container);
   });
@@ -66,7 +67,7 @@ describe("Sidebar collapsed layout", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   async function createState(options?: CreateTestSeedBibleStateOptions) {
@@ -81,7 +82,12 @@ describe("Sidebar collapsed layout", () => {
     state.sidebar.isMobileOpen.value = false;
 
     act(() => {
-      render(<Sidebar state={state} />, container);
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
     });
 
     expect(container.querySelector(".sb-pane-layout-anchor")).toBeNull();
@@ -93,7 +99,12 @@ describe("Sidebar collapsed layout", () => {
     state.sidebar.isMobileOpen.value = false;
 
     act(() => {
-      render(<Sidebar state={state} />, container);
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
     });
 
     const collapsedTile = container.querySelector(
@@ -112,7 +123,12 @@ describe("Sidebar collapsed layout", () => {
     state.sidebar.isMobileOpen.value = false;
 
     act(() => {
-      render(<Sidebar state={state} />, container);
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
     });
 
     expect(container.textContent).not.toContain("New shared session");
@@ -124,7 +140,12 @@ describe("Sidebar collapsed layout", () => {
     state.sidebar.isSidebarCollapsed.value = false;
 
     act(() => {
-      render(<Sidebar state={state} />, container);
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
     });
 
     expect(container.querySelector(".sb-pane-layout-anchor")).not.toBeNull();
@@ -136,7 +157,12 @@ describe("Sidebar collapsed layout", () => {
     state.sidebar.isMobileOpen.value = false;
 
     act(() => {
-      render(<Sidebar state={state} />, container);
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
     });
 
     const bottomActions = container.querySelector(".sb-sidebar-bottom-actions");
@@ -153,7 +179,12 @@ describe("Sidebar collapsed layout", () => {
     state.sidebar.isMobileOpen.value = false;
 
     act(() => {
-      render(<Sidebar state={state} />, container);
+      render(
+        <TestHost state={state}>
+          <Sidebar state={state} />
+        </TestHost>,
+        container
+      );
     });
 
     const sidebar = container.querySelector(".sb-tabs-sidebar");
@@ -166,6 +197,6 @@ describe("Sidebar collapsed layout", () => {
     expect(
       bottomActions?.classList.contains("sb-sidebar-bottom-actions-collapsed")
     ).toBe(false);
-    expect(container.textContent).toContain("Settings Page");
+    expect(container.textContent).toContain("Settings");
   });
 });

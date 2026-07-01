@@ -11,6 +11,8 @@ import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/manager
 import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
+import type { Mock } from "vitest";
 
 type ReaderFixture = {
   pane: Pane;
@@ -21,10 +23,23 @@ type ReaderFixture = {
   decorations: Signal<VerseDecoration[]>;
   selectedVerses: BibleReadingState["selectedVerses"];
   selectedFootnote: Signal<SelectedFootnote | null>;
-  selectVerse: jest.Mock;
-  selectFootnote: jest.Mock;
-  setOpen: jest.Mock;
+  selectVerse: Mock;
+  selectFootnote: Mock;
+  setOpen: Mock;
 };
+
+vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
+  const actual = await vi.importActual<
+    typeof import("@packages/seed-bible/seed-bible/i18n/I18nManager")
+  >("@packages/seed-bible/seed-bible/i18n/I18nManager");
+  return {
+    ...actual,
+    useI18n: () => ({
+      t: (key: string, options?: { defaultValue?: string }) =>
+        options?.defaultValue ?? key,
+    }),
+  };
+});
 
 function createFixture(): ReaderFixture {
   const chapterData = signal<TranslationBookChapter | null>({
@@ -84,9 +99,9 @@ function createFixture(): ReaderFixture {
   });
   const decorations = signal<VerseDecoration[]>([]);
   const selectedFootnote = signal<SelectedFootnote | null>(null);
-  const selectVerse = jest.fn();
-  const selectFootnote = jest.fn();
-  const setOpen = jest.fn(async () => undefined);
+  const selectVerse = vi.fn();
+  const selectFootnote = vi.fn();
+  const setOpen = vi.fn(async () => undefined);
 
   const currentTranslation = computed(
     () => chapterData.value?.translation ?? null
@@ -114,18 +129,20 @@ function createFixture(): ReaderFixture {
     error: signal<string | null>(null),
     selectVerse,
     selectFootnote,
-    highlightSelectedVerses: jest.fn(async () => undefined),
-    unhighlightSelectedVerses: jest.fn(async () => undefined),
-    decorateVerses: jest.fn(() => "decoration-1"),
-    removeDecoration: jest.fn(),
-    clearSelectedVerses: jest.fn(),
-    selectTranslation: jest.fn(async () => undefined),
-    selectBook: jest.fn(async () => undefined),
-    selectChapter: jest.fn(async () => undefined),
-    loadPreviousChapter: jest.fn(async () => undefined),
-    loadNextChapter: jest.fn(async () => undefined),
-    selectTranslationAndChapter: jest.fn(async () => undefined),
+    highlightSelectedVerses: vi.fn(async () => undefined),
+    unhighlightSelectedVerses: vi.fn(async () => undefined),
+    decorateVerses: vi.fn(() => "decoration-1"),
+    removeDecoration: vi.fn(),
+    clearSelectedVerses: vi.fn(),
+    selectTranslation: vi.fn(async () => undefined),
+    selectBook: vi.fn(async () => undefined),
+    selectChapter: vi.fn(async () => undefined),
+    loadPreviousChapter: vi.fn(async () => undefined),
+    loadNextChapter: vi.fn(async () => undefined),
+    selectTranslationAndChapter: vi.fn(async () => undefined),
     highlights,
+    defaultTranslation: { id: "BSB", language: "en" },
+    chapterDataPromise: Promise.resolve(),
   } as BibleReadingState;
 
   const selectorState = {
@@ -153,8 +170,8 @@ function createFixture(): ReaderFixture {
 
 function createBookmarksStub() {
   return {
-    isLocationBookmarked: jest.fn(() => false),
-    toggleBookmarkAtLocation: jest.fn(async () => undefined),
+    isLocationBookmarked: vi.fn(() => false),
+    toggleBookmarkAtLocation: vi.fn(async () => undefined),
   };
 }
 
@@ -165,19 +182,17 @@ function createMobileState(): SeedBibleState {
     },
     selector: {
       selectingTranslation: signal(false),
-      setOpen: jest.fn(async () => undefined),
+      setOpen: vi.fn(async () => undefined),
     },
     bibleData: {
-      getPreviousChapter: jest.fn(async () => null),
-      getNextChapter: jest.fn(async () => null),
+      getPreviousChapter: vi.fn(async () => null),
+      getNextChapter: vi.fn(async () => null),
     },
     sidebar: {
-      openSettings: jest.fn(),
-      openSidebar: jest.fn(),
+      openSettings: vi.fn(),
+      openSidebar: vi.fn(),
     },
-    tools: {
-      getReaderTools: jest.fn(() => []),
-    },
+    tools: createBibleToolsManager(),
     bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
@@ -191,19 +206,17 @@ function createDesktopState(): SeedBibleState {
     },
     selector: {
       selectingTranslation: signal(false),
-      setOpen: jest.fn(async () => undefined),
+      setOpen: vi.fn(async () => undefined),
     },
     bibleData: {
-      getPreviousChapter: jest.fn(async () => null),
-      getNextChapter: jest.fn(async () => null),
+      getPreviousChapter: vi.fn(async () => null),
+      getNextChapter: vi.fn(async () => null),
     },
     sidebar: {
-      openSettings: jest.fn(),
-      openSidebar: jest.fn(),
+      openSettings: vi.fn(),
+      openSidebar: vi.fn(),
     },
-    tools: {
-      getReaderTools: jest.fn(() => []),
-    },
+    tools: createBibleToolsManager(),
     bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
@@ -349,14 +362,14 @@ describe("PaneReader integration", () => {
     const state = createDesktopState();
     readingState.scrollToVerse.value = 1;
 
-    const rafSpy = jest
+    const rafSpy = vi
       .spyOn(window, "requestAnimationFrame")
       .mockImplementation((callback: FrameRequestCallback) => {
         callback(0);
         return 0;
       });
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
-    const scrollIntoViewSpy = jest.fn();
+    const scrollIntoViewSpy = vi.fn();
     Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
       configurable: true,
       value: scrollIntoViewSpy,
@@ -390,14 +403,14 @@ describe("PaneReader integration", () => {
       previousChapterApiLink: null,
     };
 
-    const rafSpy = jest
+    const rafSpy = vi
       .spyOn(window, "requestAnimationFrame")
       .mockImplementation((callback: FrameRequestCallback) => {
         callback(0);
         return 0;
       });
     const originalScrollIntoView = HTMLElement.prototype.scrollIntoView;
-    const scrollIntoViewSpy = jest.fn();
+    const scrollIntoViewSpy = vi.fn();
     Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
       configurable: true,
       value: scrollIntoViewSpy,
@@ -421,7 +434,7 @@ describe("PaneReader integration", () => {
   });
 
   it("the user can swipe to the right to go to the previous chapter in mobile layout for left-to-right text", () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     const { pane, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
@@ -450,17 +463,17 @@ describe("PaneReader integration", () => {
         dispatchTouch(viewport, "touchstart", [{ clientX: 100, clientY: 50 }]);
         dispatchTouch(viewport, "touchmove", [{ clientX: 220, clientY: 50 }]);
         dispatchTouch(viewport, "touchend", []);
-        jest.advanceTimersByTime(250);
+        vi.advanceTimersByTime(250);
       });
 
       expect(readingState.loadPreviousChapter).toHaveBeenCalledTimes(1);
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 
   it("the user can swipe to the left to go to the next chapter in mobile layout for left-to-right text", () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     const { pane, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
@@ -489,17 +502,17 @@ describe("PaneReader integration", () => {
         dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
         dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
         dispatchTouch(viewport, "touchend", []);
-        jest.advanceTimersByTime(250);
+        vi.advanceTimersByTime(250);
       });
 
       expect(readingState.loadNextChapter).toHaveBeenCalledTimes(1);
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 
   it("the user can swipe to the right to go to the next chapter in mobile layout for right-to-left text", () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     const { pane, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
@@ -528,17 +541,17 @@ describe("PaneReader integration", () => {
         dispatchTouch(viewport, "touchstart", [{ clientX: 100, clientY: 50 }]);
         dispatchTouch(viewport, "touchmove", [{ clientX: 220, clientY: 50 }]);
         dispatchTouch(viewport, "touchend", []);
-        jest.advanceTimersByTime(250);
+        vi.advanceTimersByTime(250);
       });
 
       expect(readingState.loadNextChapter).toHaveBeenCalledTimes(1);
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 
   it("the user can swipe to the left to go to the previous chapter in mobile layout for right-to-left text", () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     const { pane, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
@@ -567,17 +580,17 @@ describe("PaneReader integration", () => {
         dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
         dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
         dispatchTouch(viewport, "touchend", []);
-        jest.advanceTimersByTime(250);
+        vi.advanceTimersByTime(250);
       });
 
       expect(readingState.loadPreviousChapter).toHaveBeenCalledTimes(1);
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 
   it("does not load a previous chapter on right swipe in left-to-right text when no previous chapter exists", () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     const { pane, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
@@ -606,18 +619,18 @@ describe("PaneReader integration", () => {
         dispatchTouch(viewport, "touchstart", [{ clientX: 100, clientY: 50 }]);
         dispatchTouch(viewport, "touchmove", [{ clientX: 220, clientY: 50 }]);
         dispatchTouch(viewport, "touchend", []);
-        jest.advanceTimersByTime(250);
+        vi.advanceTimersByTime(250);
       });
 
       expect(readingState.loadPreviousChapter).not.toHaveBeenCalled();
       expect(readingState.clearSelectedVerses).not.toHaveBeenCalled();
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 
   it("does not load a next chapter on left swipe in left-to-right text when no next chapter exists", () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     const { pane, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
@@ -646,18 +659,18 @@ describe("PaneReader integration", () => {
         dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
         dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
         dispatchTouch(viewport, "touchend", []);
-        jest.advanceTimersByTime(250);
+        vi.advanceTimersByTime(250);
       });
 
       expect(readingState.loadNextChapter).not.toHaveBeenCalled();
       expect(readingState.clearSelectedVerses).not.toHaveBeenCalled();
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 
   it("does not load a next chapter on right swipe in right-to-left text when no next chapter exists", () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     const { pane, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
@@ -686,18 +699,18 @@ describe("PaneReader integration", () => {
         dispatchTouch(viewport, "touchstart", [{ clientX: 100, clientY: 50 }]);
         dispatchTouch(viewport, "touchmove", [{ clientX: 220, clientY: 50 }]);
         dispatchTouch(viewport, "touchend", []);
-        jest.advanceTimersByTime(250);
+        vi.advanceTimersByTime(250);
       });
 
       expect(readingState.loadNextChapter).not.toHaveBeenCalled();
       expect(readingState.clearSelectedVerses).not.toHaveBeenCalled();
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 
   it("does not load a previous chapter on left swipe in right-to-left text when no previous chapter exists", () => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     const { pane, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
@@ -726,13 +739,13 @@ describe("PaneReader integration", () => {
         dispatchTouch(viewport, "touchstart", [{ clientX: 220, clientY: 50 }]);
         dispatchTouch(viewport, "touchmove", [{ clientX: 100, clientY: 50 }]);
         dispatchTouch(viewport, "touchend", []);
-        jest.advanceTimersByTime(250);
+        vi.advanceTimersByTime(250);
       });
 
       expect(readingState.loadPreviousChapter).not.toHaveBeenCalled();
       expect(readingState.clearSelectedVerses).not.toHaveBeenCalled();
     } finally {
-      jest.useRealTimers();
+      vi.useRealTimers();
     }
   });
 });

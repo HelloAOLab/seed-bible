@@ -392,6 +392,5 @@
       "show-location-place": "Bonisa i- {{place}} kumephu"
     }
   },
-  "dependencies": ["ext_geoImporter"],
   "autoinstall": true
 }

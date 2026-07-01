@@ -23,29 +23,24 @@ import {
   makeChapter,
   nivBooks,
 } from "./testUtils/mockBibleApiData";
+import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import type { Mock } from "vitest";
+import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
 
-let webGetMock: jest.Mock;
+let webGetMock: Mock;
+const originalFetch = globalThis.fetch;
 
 beforeEach(() => {
   window.localStorage.clear();
-  webGetMock = jest.fn();
-  (globalThis as any).web = {
-    get: webGetMock,
-  };
-
-  (globalThis as any).configBot = {
-    tags: {},
-  };
-
-  (globalThis as any).os = {
-    ...(globalThis as any).os,
-    addBotListener: jest.fn(),
-  };
+  webGetMock = vi.fn();
+  globalThis.fetch = webGetMock;
 });
 
 afterEach(() => {
-  delete (globalThis as any).web;
-  delete (globalThis as any).configBot;
+  globalThis.fetch = originalFetch;
+  // Clear URL params written by syncSignalsToUrl (e.g. `?selector=open`) so they
+  // don't leak into the next test's selector instance.
+  window.history.replaceState(null, "", window.location.pathname);
 });
 
 function setWebResponses(responses: WebResponseMap): void {
@@ -68,7 +63,7 @@ function createDataManager() {
 
 function createHighlightsManagerMock() {
   return {
-    getChapterHighlights: jest.fn().mockReturnValue(signal({ highlights: [] })),
+    getChapterHighlights: vi.fn().mockReturnValue(signal({ highlights: [] })),
   };
 }
 
@@ -83,7 +78,7 @@ function createSettingsManagerMock() {
 function createSidebarManagerMock() {
   return {
     isMobileOpen: signal(false),
-    openSidebar: jest.fn(),
+    openSidebar: vi.fn(),
   };
 }
 
@@ -104,7 +99,8 @@ function createSelectorState(
     panesManager,
     createSettingsManagerMock() as any,
     createSidebarManagerMock() as any,
-    createBookmarksManagerMock() as any
+    createBookmarksManagerMock() as any,
+    createNavigationManager()
   );
 }
 
@@ -168,9 +164,12 @@ async function createManagersWithSelectedPane(): Promise<{
   dataManager: ReturnType<typeof createDataManager>;
 }> {
   const dataManager = createDataManager();
+  const navigation = createNavigationManager();
   const tabsManager = createTabs(
+    navigation,
     dataManager,
-    createHighlightsManagerMock() as any
+    createHighlightsManagerMock() as any,
+    createI18nManager(navigation, ["en"])
   );
   const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
 
@@ -194,10 +193,10 @@ async function createManagersWithSelectedPane(): Promise<{
 }
 
 describe("createBibleSelectorState", () => {
-  let logSpy: jest.SpyInstance;
+  let logSpy: Mock;
 
   beforeEach(() => {
-    logSpy = jest.spyOn(console, "log").mockImplementation(() => undefined);
+    logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
   });
 
   afterEach(() => {
@@ -219,6 +218,28 @@ describe("createBibleSelectorState", () => {
     expect(selector.isOpen.value).toBe(true);
     expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
     expect(selector.expandedBookId.value).toBe("GEN");
+  });
+
+  it("syncs the open state to the `selector` URL query param", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { dataManager, pane, tabsManager, panesManager } =
+      await createManagersWithSelectedPane();
+
+    const selector = createSelectorState(
+      dataManager,
+      tabsManager,
+      panesManager
+    );
+
+    await selector.setOpen(true, pane);
+    expect(new URLSearchParams(window.location.search).get("selector")).toBe(
+      "open"
+    );
+
+    await selector.setOpen(false);
+    expect(new URLSearchParams(window.location.search).get("selector")).toBe(
+      null
+    );
   });
 
   it("setOpen() opens the selector and expands the current book", async () => {
@@ -446,9 +467,12 @@ describe("createBibleSelectorState", () => {
     });
 
     const dataManager = createDataManager();
+    const navigation = createNavigationManager();
     const tabsManager = createTabs(
+      navigation,
       dataManager,
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      createI18nManager(navigation, ["en"])
     );
     const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
 
@@ -533,9 +557,12 @@ describe("createBibleSelectorState", () => {
     });
 
     const dataManager = createDataManager();
+    const navigation = createNavigationManager();
     const tabsManager = createTabs(
+      navigation,
       dataManager,
-      createHighlightsManagerMock() as any
+      createHighlightsManagerMock() as any,
+      createI18nManager(navigation, ["en"])
     );
     const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
 
@@ -558,10 +585,10 @@ describe("createBibleSelectorState", () => {
   });
 
   describe("default translation ID (BSB) fallback behavior", () => {
-    let nestedLogSpy: jest.SpyInstance;
+    let nestedLogSpy: Mock;
 
     beforeEach(() => {
-      nestedLogSpy = jest
+      nestedLogSpy = vi
         .spyOn(console, "log")
         .mockImplementation(() => undefined);
     });
@@ -572,9 +599,12 @@ describe("createBibleSelectorState", () => {
 
     function createManagersWithTablessPane() {
       const dataManager = createDataManager();
+      const navigation = createNavigationManager();
       const tabsManager = createTabs(
+        navigation,
         dataManager,
-        createHighlightsManagerMock() as any
+        createHighlightsManagerMock() as any,
+        createI18nManager(navigation, ["en"])
       );
       const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
 
@@ -601,7 +631,7 @@ describe("createBibleSelectorState", () => {
       expect(selector.selectedTranslationId.value).toBe("AAB");
     });
 
-    it("setOpen() uses first available translation when DEFAULT_TRANSLATION_ID (BSB) is not in available translations", async () => {
+    it("setOpen() uses first available translation when DEFAULT_TRANSLATION_ID (AAB) is not in available translations", async () => {
       setWebResponses({
         [makeExampleUrl("/api/available_translations.json")]: createResponse({
           translations: [translations.translations[1]!],
@@ -611,10 +641,9 @@ describe("createBibleSelectorState", () => {
       const { dataManager, tabsManager, panesManager, tablessPane } =
         createManagersWithTablessPane();
 
-      // Ensure there is no preselected translation in pane reading states.
       for (const pane of panesManager.panes.value) {
         if (pane.tab?.readingState.translationId) {
-          pane.tab.readingState.translationId.value = null;
+          expect(pane.tab.readingState.translationId.value).not.toBe("NIV");
         }
       }
 
@@ -638,10 +667,9 @@ describe("createBibleSelectorState", () => {
       const { dataManager, tabsManager, panesManager, tablessPane } =
         createManagersWithTablessPane();
 
-      // Ensure there is no preselected translation in pane reading states.
       for (const pane of panesManager.panes.value) {
         if (pane.tab?.readingState.translationId) {
-          pane.tab.readingState.translationId.value = null;
+          expect(pane.tab.readingState.translationId.value).not.toBe("NIV");
         }
       }
 

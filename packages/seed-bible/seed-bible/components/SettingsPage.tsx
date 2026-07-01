@@ -1,8 +1,7 @@
 import { useComputed, useSignal } from "@preact/signals";
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import type { TextSize } from "seed-bible.managers.ConfigManager";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import type { TextSize } from "../managers/ConfigManager";
 import {
-  AppSettingsSchema,
   TEXT_FONT_OPTIONS,
   TEXT_SECTION_THEME_COLOR_VAR,
   TEXT_WEIGHT_OPTIONS,
@@ -14,32 +13,30 @@ import {
   type TextSectionConfig,
   type TextSectionId,
   type UITextSize,
-} from "seed-bible.managers.SettingsManager";
+} from "../managers/SettingsManager";
 import {
   DEFAULT_HIGHLIGHT_IDS,
   THEME_COLOR_GROUPS,
   type ThemeColorKey,
-} from "seed-bible.managers.ThemeManager";
-import { translateTitle } from "seed-bible.components.Utils";
-import {
-  ExtensionInitalizer,
-  type ExtensionSet,
-} from "seed-bible.managers.ExtensionManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
+} from "../managers/ThemeManager";
+import { download, translateTitle } from "../components/Utils";
+import { ProfilePictureModalContent } from "../components/ProfilePictureModal";
+import { ExtensionInitalizer } from "../managers/ExtensionManager";
+import { useI18n } from "../i18n/I18nManager";
 import {
   ExtensionsIcon,
+  InstallAppsIcon,
   MarginIcon,
   MaterialIcon,
   ThemeIcon,
-} from "seed-bible.components.icons";
+} from "../components/icons";
 import {
   handleGridKeyNav,
   handleMenuTriggerKeyDown,
   handleVerticalListKeyNav,
-} from "seed-bible.components.KeyboardNav";
+} from "../components/KeyboardNav";
 import { useRef } from "preact/hooks";
-import { z } from "zod";
-import type { RequestedSettingsView } from "seed-bible.managers.SidebarManager";
+import type { RequestedSettingsView } from "../managers/SidebarManager";
 
 const TEXT_SECTION_ORDER: TextSectionId[] = ["bookTitle", "heading", "verse"];
 
@@ -270,18 +267,26 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
     newDescription.value = "";
   };
 
-  const handleUploadPicture = async () => {
-    if (isUploadingPicture.value) {
-      return;
-    }
-    isUploadingPicture.value = true;
-    try {
-      await login.uploadProfilePicture();
-    } catch (error) {
-      console.error("Failed to upload profile picture.", error);
-    } finally {
-      isUploadingPicture.value = false;
-    }
+  const handleUploadPicture = () => {
+    const modalId = state.modals.openModal({
+      title: { key: "update-picture", defaultValue: "Update picture" },
+      content: () => (
+        <ProfilePictureModalContent
+          onClose={() => state.modals.closeModal(modalId)}
+          onUpload={async (file) => {
+            isUploadingPicture.value = true;
+            try {
+              await login.uploadProfilePicture(file);
+            } catch (error) {
+              console.error("Failed to upload profile picture.", error);
+              throw error;
+            } finally {
+              isUploadingPicture.value = false;
+            }
+          }}
+        />
+      ),
+    });
   };
 
   const handleCopyUserId = async () => {
@@ -291,7 +296,7 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
     }
 
     try {
-      os.setClipboard(id);
+      navigator.clipboard.writeText(id);
       uidCopied.value = true;
       setTimeout(() => {
         uidCopied.value = false;
@@ -903,35 +908,6 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
           </select>
         </div>
 
-        {isMobile && (
-          <>
-            <h3 className="sb-settings-subheading">
-              {t("mobile", { defaultValue: "Mobile" })}
-            </h3>
-
-            <div className="sb-settings-toggle-row">
-              <label
-                className="sb-settings-toggle-label"
-                htmlFor="sb-show-nav-arrows"
-              >
-                {t("show-nav-arrows", {
-                  defaultValue: "Show navigation arrows",
-                })}
-              </label>
-              <input
-                id="sb-show-nav-arrows"
-                type="checkbox"
-                checked={current.showNavArrows}
-                onChange={(event: Event) => {
-                  settings.setShowNavArrows(
-                    (event.currentTarget as HTMLInputElement).checked
-                  );
-                }}
-              />
-            </div>
-          </>
-        )}
-
         <h3 className="sb-settings-subheading">
           {t("selection-ui", { defaultValue: "Selection UI" })}
         </h3>
@@ -1067,7 +1043,12 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
       if (!set) {
         return;
       }
-      os.download(set, `${set.id}.json`, "application/json");
+
+      const json = JSON.stringify(set, null, 2);
+      download(
+        new Blob([json], { type: "application/json" }),
+        `${set.id}.json`
+      );
     } finally {
       isDownloadingSet.value = false;
     }
@@ -1080,33 +1061,30 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
 
     isUploadingSet.value = true;
     try {
-      const files = await os.showUploadFiles();
-      const firstFile = files?.[0];
-      if (!firstFile) {
-        return;
-      }
-
-      const text =
-        typeof firstFile.data === "string"
-          ? firstFile.data
-          : new TextDecoder().decode(firstFile.data);
-
-      const parsed = JSON.parse(text) as Partial<{
-        id: unknown;
-        recordName: unknown;
-        extensions: unknown;
-      }>;
-
-      if (
-        typeof parsed.id !== "string" ||
-        typeof parsed.recordName !== "string" ||
-        !Array.isArray(parsed.extensions)
-      ) {
-        console.error("Uploaded file is not a valid extension set.");
-        return;
-      }
-
-      await extensions.loadExtensionSet(parsed as ExtensionSet, () => false);
+      // TODO: Fix this
+      // const files = await os.showUploadFiles();
+      // const firstFile = files?.[0];
+      // if (!firstFile) {
+      //   return;
+      // }
+      // const text =
+      //   typeof firstFile.data === "string"
+      //     ? firstFile.data
+      //     : new TextDecoder().decode(firstFile.data);
+      // const parsed = JSON.parse(text) as Partial<{
+      //   id: unknown;
+      //   recordName: unknown;
+      //   extensions: unknown;
+      // }>;
+      // if (
+      //   typeof parsed.id !== "string" ||
+      //   typeof parsed.recordName !== "string" ||
+      //   !Array.isArray(parsed.extensions)
+      // ) {
+      //   console.error("Uploaded file is not a valid extension set.");
+      //   return;
+      // }
+      // await extensions.loadExtensionSet(parsed as ExtensionSet, () => false);
     } catch (error) {
       console.error("Failed to upload extension set.", error);
     } finally {
@@ -1839,10 +1817,11 @@ function AllSettingsView(props: { state: SeedBibleState }) {
 
     isDownloadingSettings.value = true;
     try {
-      os.download(
-        state.settings.settings.value,
-        "seed-bible-app-settings.json",
-        "application/json"
+      download(
+        new Blob([JSON.stringify(state.settings.settings.value, null, 2)], {
+          type: "application/json",
+        }),
+        "seed-bible-app-settings.json"
       );
     } finally {
       isDownloadingSettings.value = false;
@@ -1857,34 +1836,30 @@ function AllSettingsView(props: { state: SeedBibleState }) {
     isUploadingSettings.value = true;
     uploadErrorMessage.value = "";
     try {
-      const files = await os.showUploadFiles();
-      const firstFile = files?.[0];
-      if (!firstFile) {
-        return;
-      }
-
-      const text =
-        typeof firstFile.data === "string"
-          ? firstFile.data
-          : new TextDecoder().decode(firstFile.data);
-
-      let jsonData: unknown;
-      try {
-        jsonData = JSON.parse(text);
-      } catch (parseError) {
-        uploadErrorMessage.value = `Invalid JSON: ${parseError instanceof Error ? parseError.message : "Unknown error"}`;
-        return;
-      }
-
-      const parsed = AppSettingsSchema.safeParse(jsonData);
-
-      if (!parsed.success) {
-        uploadErrorMessage.value = `Invalid app settings: ${z.prettifyError(parsed.error)}`;
-        console.error("Uploaded file is not valid app settings.", parsed.error);
-        return;
-      }
-
-      state.settings.setAllSettings(parsed.data);
+      // TODO: Fix this
+      // const files = await os.showUploadFiles();
+      // const firstFile = files?.[0];
+      // if (!firstFile) {
+      //   return;
+      // }
+      // const text =
+      //   typeof firstFile.data === "string"
+      //     ? firstFile.data
+      //     : new TextDecoder().decode(firstFile.data);
+      // let jsonData: unknown;
+      // try {
+      //   jsonData = JSON.parse(text);
+      // } catch (parseError) {
+      //   uploadErrorMessage.value = `Invalid JSON: ${parseError instanceof Error ? parseError.message : "Unknown error"}`;
+      //   return;
+      // }
+      // const parsed = AppSettingsSchema.safeParse(jsonData);
+      // if (!parsed.success) {
+      //   uploadErrorMessage.value = `Invalid app settings: ${z.prettifyError(parsed.error)}`;
+      //   console.error("Uploaded file is not valid app settings.", parsed.error);
+      //   return;
+      // }
+      // state.settings.setAllSettings(parsed.data);
     } catch (error) {
       uploadErrorMessage.value = `Failed to upload app settings: ${error instanceof Error ? error.message : "Unknown error"}`;
       console.error("Failed to upload app settings.", error);
@@ -1957,6 +1932,7 @@ function SettingsMainView(props: { state: SeedBibleState }) {
   const { t, language, availableLanguages, setLanguage } = useI18n();
   const isAwake = state.settings.settings.value.keepScreenAwake;
   const isLanguageMenuOpen = useSignal(false);
+  const languageSearchQuery = useSignal("");
   const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
   const languageMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -1972,6 +1948,19 @@ function SettingsMainView(props: { state: SeedBibleState }) {
     cc: "",
     display: language.toUpperCase(),
   };
+
+  const filteredLanguages = useComputed(() => {
+    const query = languageSearchQuery.value.trim().toLowerCase();
+    if (!query) return availableLanguages;
+    return availableLanguages.filter((code) => {
+      const meta = LANG_META[code];
+      const display = meta?.display ?? code;
+      return (
+        code.toLowerCase().includes(query) ||
+        display.toLowerCase().includes(query)
+      );
+    });
+  });
 
   return (
     <div className="sb-settings-page">
@@ -2032,6 +2021,41 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               </span>
               <span className="sb-settings-nav-label">
                 {t("extensions", { defaultValue: "Extensions" })}
+              </span>
+              <span className="material-symbols-outlined">chevron_right</span>
+            </button>
+          </li>
+          {/* Only offered while the app isn't installed yet. Once installed
+              (standalone session or recorded on the profile) this disappears. */}
+          {!state.onboarding.installed.value && (
+            <li>
+              <button
+                className="sb-settings-nav-item"
+                onClick={() => state.onboarding.openInstall()}
+              >
+                <span className="sb-settings-nav-icon">
+                  <InstallAppsIcon size={24} />
+                </span>
+                <span className="sb-settings-nav-label">
+                  {t("install-app", { defaultValue: "Install app" })}
+                </span>
+                <span className="material-symbols-outlined">chevron_right</span>
+              </button>
+            </li>
+          )}
+          <li>
+            <button
+              className="sb-settings-nav-item"
+              onClick={() => {
+                state.sidebar.closeSettings();
+                state.tutorial.start();
+              }}
+            >
+              <span className="sb-settings-nav-icon">
+                <MaterialIcon>school</MaterialIcon>
+              </span>
+              <span className="sb-settings-nav-label">
+                {t("launch-tutorial", { defaultValue: "Launch tutorial" })}
               </span>
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
@@ -2097,12 +2121,20 @@ function SettingsMainView(props: { state: SeedBibleState }) {
                       className="sb-language-picker-overlay"
                       onClick={() => {
                         isLanguageMenuOpen.value = false;
+                        languageSearchQuery.value = "";
                       }}
                     />
                     <div
                       ref={(el) => {
                         languageMenuRef.current = el;
                         if (el && !el.contains(document.activeElement)) {
+                          const search = el.querySelector<HTMLInputElement>(
+                            ".sb-language-picker-search-input"
+                          );
+                          if (search) {
+                            search.focus();
+                            return;
+                          }
                           const selected = el.querySelector<HTMLElement>(
                             '[role="option"][aria-selected="true"]:not([disabled])'
                           );
@@ -2118,38 +2150,90 @@ function SettingsMainView(props: { state: SeedBibleState }) {
                         if (event.key === "Escape") {
                           event.preventDefault();
                           isLanguageMenuOpen.value = false;
+                          languageSearchQuery.value = "";
                           languageTriggerRef.current?.focus();
+                          return;
+                        }
+                        const target = event.target as HTMLElement | null;
+                        const isSearchInput = target?.classList.contains(
+                          "sb-language-picker-search-input"
+                        );
+                        if (isSearchInput) {
+                          if (
+                            event.key === "ArrowDown" ||
+                            event.key === "Enter"
+                          ) {
+                            event.preventDefault();
+                            const firstOption =
+                              event.currentTarget.querySelector<HTMLElement>(
+                                '[role="option"]:not([disabled])'
+                              );
+                            firstOption?.focus();
+                          }
                           return;
                         }
                         handleVerticalListKeyNav(event, event.currentTarget);
                       }}
                     >
-                      {availableLanguages.map((languageCode) => {
-                        const meta = LANG_META[languageCode];
-                        const isSelected = languageCode === language;
-                        return (
-                          <button
-                            key={languageCode}
-                            type="button"
-                            role="option"
-                            aria-selected={isSelected}
-                            className={`sb-language-picker-item${
-                              isSelected
-                                ? " sb-language-picker-item-selected"
-                                : ""
-                            }`}
-                            onClick={() => {
-                              void setLanguage(languageCode);
-                              isLanguageMenuOpen.value = false;
-                            }}
-                          >
-                            {meta?.cc && <FlagImg cc={meta.cc} />}
-                            <span>
-                              {meta?.display ?? languageCode.toUpperCase()}
-                            </span>
-                          </button>
-                        );
-                      })}
+                      <div className="sb-language-picker-search">
+                        <span
+                          className="material-symbols-outlined sb-language-picker-search-icon"
+                          aria-hidden="true"
+                        >
+                          search
+                        </span>
+                        <input
+                          type="text"
+                          className="sb-language-picker-search-input"
+                          placeholder={t("search-languages", {
+                            defaultValue: "Search languages...",
+                          })}
+                          aria-label={t("search-languages", {
+                            defaultValue: "Search languages...",
+                          })}
+                          value={languageSearchQuery.value}
+                          onInput={(event: Event) => {
+                            languageSearchQuery.value = (
+                              event.currentTarget as HTMLInputElement
+                            ).value;
+                          }}
+                        />
+                      </div>
+                      {filteredLanguages.value.length === 0 ? (
+                        <div className="sb-language-picker-empty">
+                          {t("no-languages-found", {
+                            defaultValue: "No languages found",
+                          })}
+                        </div>
+                      ) : (
+                        filteredLanguages.value.map((languageCode) => {
+                          const meta = LANG_META[languageCode];
+                          const isSelected = languageCode === language;
+                          return (
+                            <button
+                              key={languageCode}
+                              type="button"
+                              role="option"
+                              aria-selected={isSelected}
+                              className={`sb-language-picker-item${
+                                isSelected
+                                  ? " sb-language-picker-item-selected"
+                                  : ""
+                              }`}
+                              onClick={() => {
+                                void setLanguage(languageCode);
+                                isLanguageMenuOpen.value = false;
+                                languageSearchQuery.value = "";
+                              }}
+                            >
+                              {meta?.cc && <FlagImg cc={meta.cc} />}
+                              <span>
+                                {meta?.display ?? languageCode.toUpperCase()}
+                              </span>
+                            </button>
+                          );
+                        })
+                      )}
                     </div>
                   </>
                 )}

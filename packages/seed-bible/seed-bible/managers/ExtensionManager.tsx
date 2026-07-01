@@ -1,7 +1,17 @@
-import { computed, signal } from "@preact/signals";
+import { effect, signal } from "@preact/signals";
 import { orderBy, union } from "es-toolkit";
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import { addTranslations } from "seed-bible.i18n.I18nManager";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import type { LoginManager } from "../managers/LoginManager";
+import { addTranslations } from "../i18n/I18nManager";
+import { safeLocalStorage } from "../app/ssrEnv";
+import {
+  getProfileConfigValue,
+  saveProfileConfigValue,
+} from "./ProfileConfigSync";
+import hash from "hash.js";
+import stringify from "@casual-simulation/fast-json-stable-stringify";
+
+const { sha256 } = hash;
 
 export type CleanupFunction = () => void;
 export type ExtensionDependencies = Record<string, object>;
@@ -55,18 +65,13 @@ export interface ExtensionMeta {
   autoinstall?: boolean;
 }
 
-export type Extension = UploadedExtension | InlineExtension;
+export type Extension = UploadedExtension | ImportExtension;
 
 export interface UploadedExtension {
   /**
-   * The name of the record that this extension is stored in.
+   * The URL of the extension to load.
    */
-  recordName: string;
-
-  /**
-   * The address of the uploaded extension package.
-   */
-  address: string;
+  url: string;
 
   /**
    * The metadata for this extension.
@@ -74,8 +79,11 @@ export interface UploadedExtension {
   meta: ExtensionMeta;
 }
 
-export interface InlineExtension {
-  aux: StoredAux;
+export interface ImportExtension {
+  /** The function to dynamically import the extension module. */
+  import: () => Promise<unknown>;
+
+  /** The metadata for this extension. */
   meta: ExtensionMeta;
 }
 
@@ -84,11 +92,6 @@ export interface ExtensionSet {
    * The ID of this extension set.
    */
   id: string;
-
-  /**
-   * The name of the record that this extension set is stored in.
-   */
-  recordName: string;
 
   /**
    * The extensions included in this set.
@@ -315,14 +318,122 @@ export function setupExtensionContext(context: SeedBibleState) {
 
 export type ExtensionManager = ReturnType<typeof createExtensionManager>;
 
-export function createExtensionManager() {
-  const defaultExtensions = computed<ExtensionSet | null>(
-    () => thisBot.tags.availableExtensions ?? null
-  );
+export interface ExtensionManagerOptions {
+  /**
+   * The source of the default extension set that loadDefaultExtensions() loads.
+   * Defaults to no extensions.
+   */
+  defaultExtensions?: ExtensionSet | null;
+}
+
+export function createExtensionManager(
+  login: LoginManager,
+  options: ExtensionManagerOptions = {}
+) {
+  const defaultExtensions = options.defaultExtensions ?? null;
   const knownExtensionsById = new Map<string, Extension>();
   const knownExtensionsSetsByExtensionId = new Map<string, ExtensionSet>();
   const installedExtensionIds = new Set<string>();
   const pendingInstallations = new Map<string, Promise<boolean>>();
+
+  /**
+   * The localStorage key under which the IDs of the extensions that the user has
+   * installed are persisted, so they can be re-loaded automatically on startup.
+   */
+  const INSTALLED_EXTENSIONS_STORAGE_KEY = "sb-installed-extensions";
+
+  /**
+   * Reads the set of persisted installed extension IDs from local storage.
+   * Returns an empty set if nothing is stored or the stored value is invalid.
+   */
+  const readPersistedExtensionIds = (): Set<string> => {
+    try {
+      const raw = safeLocalStorage.getItem(INSTALLED_EXTENSIONS_STORAGE_KEY);
+      if (!raw) {
+        return new Set();
+      }
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return new Set(parsed.filter((id) => typeof id === "string"));
+      }
+    } catch (err) {
+      console.error("Failed to read persisted installed extensions:", err);
+    }
+    return new Set();
+  };
+
+  /** Writes the given set of installed extension IDs to local storage. */
+  const writePersistedExtensionIds = (ids: Set<string>) => {
+    try {
+      safeLocalStorage.setItem(
+        INSTALLED_EXTENSIONS_STORAGE_KEY,
+        JSON.stringify([...ids])
+      );
+    } catch (err) {
+      console.error("Failed to persist installed extensions:", err);
+    }
+  };
+
+  /**
+   * The key under which the IDs of the user's installed extensions are stored in
+   * the user's profile config, so they sync to the account and are restored on
+   * any device the user logs into.
+   */
+  const INSTALLED_EXTENSIONS_CONFIG_KEY = "installedExtensions";
+
+  /**
+   * Reads the set of installed extension IDs from the logged-in user's profile
+   * config. Returns an empty set when logged out, the profile hasn't loaded yet,
+   * or the stored value isn't a string array.
+   */
+  const readProfileExtensionIds = (): Set<string> => {
+    const value = getProfileConfigValue(
+      login.profile.value,
+      INSTALLED_EXTENSIONS_CONFIG_KEY
+    );
+    if (Array.isArray(value)) {
+      return new Set(value.filter((id) => typeof id === "string"));
+    }
+    return new Set();
+  };
+
+  /**
+   * Writes the given set of installed extension IDs to the user's profile config.
+   * No-ops when logged out or when the value is unchanged (handled by
+   * saveProfileConfigValue).
+   */
+  const writeProfileExtensionIds = (ids: Set<string>) => {
+    saveProfileConfigValue(login, INSTALLED_EXTENSIONS_CONFIG_KEY, [...ids]);
+  };
+
+  /** Records that the extension with the given ID has been installed. */
+  const persistInstalledExtensionId = (id: string) => {
+    const ids = readPersistedExtensionIds();
+    if (!ids.has(id)) {
+      ids.add(id);
+      writePersistedExtensionIds(ids);
+    }
+    // Mirror the install into the user's profile config so it follows them
+    // across devices. Reads the profile set independently of local storage in
+    // case the two have diverged.
+    const profileIds = readProfileExtensionIds();
+    if (!profileIds.has(id)) {
+      profileIds.add(id);
+      writeProfileExtensionIds(profileIds);
+    }
+  };
+
+  /** Removes the extension with the given ID from the persisted set. */
+  const forgetInstalledExtensionId = (id: string) => {
+    const ids = readPersistedExtensionIds();
+    if (ids.delete(id)) {
+      writePersistedExtensionIds(ids);
+    }
+    const profileIds = readProfileExtensionIds();
+    if (profileIds.delete(id)) {
+      writeProfileExtensionIds(profileIds);
+    }
+  };
 
   const computeExtensions = (): ExtensionListEntry[] => {
     const knownExtensionPackages = knownExtensionsById;
@@ -364,57 +475,56 @@ export function createExtensionManager() {
     );
   };
 
+  // /**
+  //  * Loads the given extension package by installing it from the provided record name and address. If the installation is successful, the extension ID will be added to the set of installed extensions and an "onExtensionInstalled" event will be shouted with the extension ID as a parameter.
+  //  * @param id The ID of the extension to install.
+  //  * @param recordName The name of the record that the extension package is stored in.
+  //  * @param address The address of the extension package to install.
+  //  */
+  // const loadExtensionFromPackage = async (
+  //   id: string,
+  //   recordName: string,
+  //   address: string
+  // ) => {
+  //   if (isSatisfiedDependency(id)) {
+  //     return true;
+  //   }
+
+  //   try {
+  //     const result = await os.installPackage(recordName, address);
+  //     if (result.success) {
+  //       installedExtensionIds.add(id);
+  //      refreshExtensionsSignal();
+  //       shout("onExtensionInstalled", id);
+  //       console.log(`Successfully installed extension: ${id}`);
+  //       return true;
+  //     } else {
+  //     refreshExtensionsSignal();
+  //       console.error(`Failed to install extension ${id}:`, result);
+  //       return false;
+  //     }
+  //   } catch (err) {
+  //   refreshExtensionsSignal();
+  //     console.error("Failed to install extension:", id, err);
+  //     return false;
+  //   }
+  // };
+
   /**
    * Loads the given extension package by installing it from the provided record name and address. If the installation is successful, the extension ID will be added to the set of installed extensions and an "onExtensionInstalled" event will be shouted with the extension ID as a parameter.
    * @param id The ID of the extension to install.
-   * @param recordName The name of the record that the extension package is stored in.
-   * @param address The address of the extension package to install.
+   * @param url The URL of the extension package to install.
    */
-  const loadExtensionFromPackage = async (
-    id: string,
-    recordName: string,
-    address: string
-  ) => {
+  const loadExtensionFromUrl = async (id: string, url: string) => {
     if (isSatisfiedDependency(id)) {
       return true;
     }
 
     try {
-      const result = await os.installPackage(recordName, address);
-      if (result.success) {
-        installedExtensionIds.add(id);
-        refreshExtensionsSignal();
-        shout("onExtensionInstalled", id);
-        console.log(`Successfully installed extension: ${id}`);
-        return true;
-      } else {
-        refreshExtensionsSignal();
-        console.error(`Failed to install extension ${id}:`, result);
-        return false;
-      }
-    } catch (err) {
-      refreshExtensionsSignal();
-      console.error("Failed to install extension:", id, err);
-      return false;
-    }
-  };
-
-  /**
-   * Loads the given extension package by installing it from the provided record name and address. If the installation is successful, the extension ID will be added to the set of installed extensions and an "onExtensionInstalled" event will be shouted with the extension ID as a parameter.
-   * @param id The ID of the extension to install.
-   * @param recordName The name of the record that the extension package is stored in.
-   * @param address The address of the extension package to install.
-   */
-  const loadExtensionFromAux = async (id: string, aux: StoredAux) => {
-    if (isSatisfiedDependency(id)) {
-      return true;
-    }
-
-    try {
-      await os.installAuxFile(aux);
+      await import(/** @vite-ignore */ url);
       installedExtensionIds.add(id);
       refreshExtensionsSignal();
-      shout("onExtensionInstalled", id);
+      // shout("onExtensionInstalled", id);
       console.log(`Successfully installed extension: ${id}`);
       return true;
     } catch (err) {
@@ -485,26 +595,17 @@ export function createExtensionManager() {
 
       addTranslations(uploaded.meta.id, uploaded.meta.translations);
 
-      if (
-        "recordName" in uploaded &&
-        "address" in uploaded &&
-        uploaded.recordName &&
-        uploaded.address
-      ) {
-        const installed = await loadExtensionFromPackage(
-          extensionId,
-          uploaded.recordName,
-          uploaded.address
-        );
+      if ("url" in uploaded && uploaded.url) {
+        const installed = await loadExtensionFromUrl(extensionId, uploaded.url);
         installStack.delete(extensionId);
         return installed;
-      } else if ("aux" in uploaded && uploaded.aux) {
-        const installed = await loadExtensionFromAux(extensionId, uploaded.aux);
+      } else if ("import" in uploaded && uploaded.import) {
+        await uploaded.import();
         installStack.delete(extensionId);
-        return installed;
+        return true;
       } else {
         console.warn(
-          "Extension package is missing installation information (recordName and address for package installation, or aux for aux installation). Marking as installed without actually installing:",
+          "Extension package is missing installation information (url for package installation). Marking as installed without actually installing:",
           uploaded
         );
       }
@@ -515,7 +616,11 @@ export function createExtensionManager() {
     pendingInstallations.set(extensionId, installationPromise);
     refreshExtensionsSignal();
     try {
-      return await installationPromise;
+      const result = await installationPromise;
+      if (result) {
+        persistInstalledExtensionId(extensionId);
+      }
+      return result;
     } finally {
       pendingInstallations.delete(extensionId);
       refreshExtensionsSignal();
@@ -550,26 +655,72 @@ export function createExtensionManager() {
     console.log(
       `Finished loading extension set '${set.id}'. Successfully loaded ${successCount} out of ${set.extensions.length} extensions.`
     );
-    shout("onExtensionSetLoaded", set.id);
+    // shout("onExtensionSetLoaded", set.id);
   };
 
   /**
-   * Loads the default set of extensions specified in bot tags.
+   * Loads the extensions that the user previously installed. The saved set is
+   * the union of the IDs persisted in local storage and the IDs stored in the
+   * logged-in user's profile config — so extensions installed while logged out
+   * are adopted into the account, and extensions installed on another device are
+   * installed here. The merged set is written back to both stores. Extensions
+   * that are already installed are skipped, and IDs that are not part of any
+   * known extension set are left in storage (a later build may reintroduce them)
+   * but skipped for now.
+   */
+  const loadSavedExtensions = async () => {
+    const localIds = readPersistedExtensionIds();
+    const profileIds = readProfileExtensionIds();
+    const savedIds = new Set([...localIds, ...profileIds]);
+
+    // Write the merged set back to both stores so the two stay in sync.
+    if (savedIds.size !== localIds.size) {
+      writePersistedExtensionIds(savedIds);
+    }
+    if (savedIds.size !== profileIds.size) {
+      writeProfileExtensionIds(savedIds);
+    }
+
+    const promises: Promise<boolean>[] = [];
+    for (const id of savedIds) {
+      if (isSatisfiedDependency(id)) {
+        continue;
+      }
+
+      const extension = knownExtensionsById.get(id);
+      if (!extension) {
+        console.warn(
+          `Saved extension '${id}' is not available in the known extensions; skipping.`
+        );
+        continue;
+      }
+
+      promises.push(loadExtension(extension));
+    }
+
+    await Promise.all(promises);
+  };
+
+  /**
+   * Loads the default set of extensions specified in bot tags, then re-loads any
+   * extensions the user previously installed (persisted in local storage).
    */
   const loadDefaultExtensions = async () => {
-    if (!defaultExtensions.value) {
+    if (!defaultExtensions) {
       console.warn("No available extensions found in bot tags.");
       return;
     }
-    console.log("Loading default extension set:", defaultExtensions.value);
-    const url = new URL(configBot.tags.url);
+    console.log("Loading default extension set:", defaultExtensions);
+    const url = new URL(window.location.href);
     await loadExtensionSet(
-      defaultExtensions.value,
+      defaultExtensions,
       (ext) =>
         (ext.meta.autoinstall ||
           url.searchParams.get(`autoinstall-${ext.meta.id}`) === "true") ??
         false
     );
+
+    await loadSavedExtensions();
   };
 
   /**
@@ -579,8 +730,8 @@ export function createExtensionManager() {
   const unloadExtension = (id: string) => {
     unregisterExtension(id);
     installedExtensionIds.delete(id);
+    forgetInstalledExtensionId(id);
     refreshExtensionsSignal();
-    shout("onExtensionUninstalled", id);
   };
 
   /**
@@ -608,25 +759,44 @@ export function createExtensionManager() {
       ["asc"]
     );
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const hash = (crypto as any).sha256(orderedExtensions);
+    const stableJson = stringify(orderedExtensions);
+    const hash = sha256().update(stableJson).digest("hex");
 
     const setData: ExtensionSet = {
       id: `downloaded-extension-set-${hash.slice(0, 8)}`,
-      recordName: "",
       extensions: orderedExtensions,
     };
 
     return setData;
   };
 
+  // Re-sync the user's saved extensions when they log in. The installed-extension
+  // IDs live on the user's profile config, which loads asynchronously after
+  // login, so we react to `login.profile` (not just `login.userId`) and sync once
+  // per user. Logging out resets the guard so a later login re-syncs; it does not
+  // uninstall anything, since extensions remain locally installed and persisted.
+  const syncedUserId = signal<string | null>(null);
+  effect(() => {
+    const userId = login.userId.value;
+    const profile = login.profile.value;
+    if (!userId) {
+      syncedUserId.value = null;
+      return;
+    }
+    if (!profile || syncedUserId.value === userId) {
+      return;
+    }
+    syncedUserId.value = userId;
+    void loadSavedExtensions();
+  });
+
   refreshExtensionsSignal();
 
   return {
     loadDefaultExtensions,
+    loadSavedExtensions,
     loadExtensionSet,
     loadExtension,
-    loadExtensionFromPackage,
     unloadExtension,
 
     extensions: extensionsSignal,

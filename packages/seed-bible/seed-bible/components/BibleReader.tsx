@@ -1,22 +1,27 @@
 import {
   type TranslationBookChapter,
   type ChapterVerse,
-} from "seed-bible.managers.FreeUseBibleAPI";
+} from "../managers/FreeUseBibleAPI";
 import type { JSX } from "preact";
-import { useComputed } from "@preact/signals";
+import { Suspense, useRef } from "preact/compat";
+import { computed, type ReadonlySignal, type Signal } from "@preact/signals";
 import type {
   BibleReadingState,
   BibleSelectedVerse,
   VerseDecoration,
-} from "seed-bible.managers.BibleReadingManager";
-import type { ChapterHighlight } from "seed-bible.managers.HighlightsManager";
-import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
-import type { Pane } from "seed-bible.managers.PanesManager";
-import type { ScriptureElementsBehavior } from "seed-bible.managers.SettingsManager";
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
-import { MobileSettingsSheet } from "seed-bible.components.MobileSettingsSheet";
-import { InfoSettingsIcon } from "seed-bible.components.icons";
+} from "../managers/BibleReadingManager";
+import type {
+  ChapterHighlight,
+  ChapterHighlights,
+} from "../managers/HighlightsManager";
+import type { BibleSelectorState } from "../managers/BibleSelectorManager";
+import type { Pane } from "../managers/PanesManager";
+import type { ScriptureElementsBehavior } from "../managers/SettingsManager";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import { useI18n } from "../i18n/I18nManager";
+import { MobileSettingsSheet } from "../components/MobileSettingsSheet";
+import { InfoSettingsIcon } from "../components/icons";
+import { QuickToolbar } from "../components/QuickToolbar";
 
 interface ReaderBookmarkButtonProps {
   state: SeedBibleState;
@@ -823,6 +828,70 @@ function renderStaticChapterContent(
   );
 }
 
+interface ChapterContentProps {
+  chapterData: Signal<TranslationBookChapter | null>;
+  chapterDataPromise: Promise<void>;
+  selectedVerses: Signal<BibleSelectedVerse[]>;
+  highlights: ReadonlySignal<ChapterHighlights>;
+  decorations: ReadonlySignal<VerseDecoration[]>;
+  selectVerse: (
+    verse: BibleSelectedVerse,
+    selectionX: number,
+    selectionY: number
+  ) => void;
+  selectVersesFromTextSelection: () => void;
+  justConvertedSelectionRef: { current: boolean };
+  selectFootnote: (noteId: number | null) => void;
+  scriptureElements: ScriptureElementsBehavior;
+}
+
+function ChapterContent(props: ChapterContentProps) {
+  const {
+    chapterData,
+    chapterDataPromise,
+    selectedVerses,
+    highlights,
+    decorations,
+    selectVerse,
+    selectFootnote,
+    selectVersesFromTextSelection,
+    justConvertedSelectionRef,
+    scriptureElements,
+  } = props;
+
+  if (chapterData.value === null) {
+    throw chapterDataPromise;
+  }
+
+  return (
+    <div
+      className="sb-chapter-content"
+      onPointerDown={() => {
+        justConvertedSelectionRef.current = false;
+      }}
+      onPointerUp={selectVersesFromTextSelection}
+    >
+      {renderChapterContent(
+        chapterData.value,
+        (verse, event) => {
+          // Swallow the click that trails a drag-to-select gesture so it
+          // doesn't toggle the just-selected verse back off.
+          if (justConvertedSelectionRef.current) {
+            justConvertedSelectionRef.current = false;
+            return;
+          }
+          selectVerse(verse, event.clientX, event.clientY);
+        },
+        selectedVerses.value,
+        (noteId) => selectFootnote(noteId),
+        highlights.value.highlights,
+        decorations.value,
+        scriptureElements
+      )}
+    </div>
+  );
+}
+
 export function BibleReader(props: BibleReaderProps) {
   const { currentPane, readingState, selectorState, state, mobileChrome } =
     props;
@@ -840,19 +909,24 @@ export function BibleReader(props: BibleReaderProps) {
     loading,
     error,
     selectVerse,
+    clearSelectedVerses,
     selectedFootnote,
     selectFootnote,
   } = readingState;
 
-  const currentBook = useComputed(
+  if (!chapterData.value && import.meta.env.SSR) {
+    throw readingState.chapterDataPromise;
+  }
+
+  const currentBook = computed(
     () =>
       translationBooks.value?.books.find((book) => book.id === bookId.value) ??
       null
   );
-  const translationLicenseNotice = useComputed(
+  const translationLicenseNotice = computed(
     () => translation.value?.licenseNotice?.trim() ?? ""
   );
-  const translationWebsite = useComputed(
+  const translationWebsite = computed(
     () => translation.value?.website.trim() ?? ""
   );
 
@@ -877,36 +951,107 @@ export function BibleReader(props: BibleReaderProps) {
     selectorState.selectingTranslation.value = true;
   };
 
+  // True for the click that trails a drag-to-select gesture, so the verse's
+  // own onClick doesn't toggle the verse back off after we've just selected
+  // it from the text selection. Reset at the start of every new gesture.
+  const justConvertedSelectionRef = useRef(false);
+
+  // Turn a native text selection (mouse drag on desktop, touch text-selection
+  // on mobile) into an app verse selection: select every verse the selection
+  // touches — exactly as if the user had clicked each of them — which opens
+  // the verse toolbar. No-op for a collapsed/empty selection, so plain taps
+  // keep their single-verse toggle behaviour.
+  const selectVersesFromTextSelection = () => {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+      return;
+    }
+    const data = chapterData.value;
+    if (!data) return;
+
+    const range = selection.getRangeAt(0);
+    const ancestor =
+      range.commonAncestorContainer instanceof Element
+        ? range.commonAncestorContainer
+        : range.commonAncestorContainer.parentElement;
+    const root = ancestor?.closest(".sb-chapter-content");
+    if (!root) return;
+
+    const verseEls = Array.from(
+      root.querySelectorAll<HTMLElement>(".sb-verse[data-verse-number]")
+    ).filter((el) => range.intersectsNode(el));
+    if (verseEls.length === 0) return;
+
+    // verse number -> full ChapterVerse, so we can rebuild selection entries.
+    const verseByNumber = new Map<number, ChapterVerse>();
+    for (const entry of data.chapter.content) {
+      if (
+        entry &&
+        typeof entry === "object" &&
+        entry.type === "verse" &&
+        typeof entry.number === "number"
+      ) {
+        verseByNumber.set(entry.number, entry as ChapterVerse);
+      }
+    }
+
+    // Anchor the floating verse toolbar near the selected text.
+    const rect = range.getBoundingClientRect();
+    const anchorX = rect.left + rect.width / 2;
+    const anchorY = rect.top;
+
+    // Drop the native selection so only the app's verse highlight shows and
+    // the trailing click can't toggle a verse back off.
+    selection.removeAllRanges();
+    justConvertedSelectionRef.current = true;
+
+    // Mirror clicking each covered verse: deselect everything, then reselect.
+    clearSelectedVerses();
+    for (const el of verseEls) {
+      const verseValue = verseByNumber.get(Number(el.dataset.verseNumber));
+      if (!verseValue) continue;
+      selectVerse(
+        {
+          bookId: data.book.id,
+          chapterNumber: data.chapter.number,
+          verse: verseValue,
+          translationId: data.translation.id,
+        },
+        anchorX,
+        anchorY
+      );
+    }
+  };
+
   const renderMainContent = () => (
     <>
       {error.value && !loading.value && (
         <p className="sb-reader-error">{error.value}</p>
       )}
 
-      {!error.value && chapterData.value && (
-        <div className="sb-chapter-content">
-          {renderChapterContent(
-            chapterData.value,
-            (verse, event) => {
-              selectVerse(verse, event.clientX, event.clientY);
-            },
-            selectedVerses.value,
-            (noteId) => {
-              selectFootnote(noteId);
-            },
-            highlights.value.highlights,
-            decorations.value,
-            scriptureElements
-          )}
-        </div>
-      )}
-
-      {!error.value && !chapterData.value && (
-        <p>
-          {t("no-chapter-content-found", {
-            defaultValue: "No chapter content found.",
-          })}
-        </p>
+      {!error.value && (
+        <Suspense
+          fallback={
+            <p>
+              {t("no-chapter-content-found", {
+                defaultValue: "No chapter content found.",
+              })}
+            </p>
+          }
+        >
+          <ChapterContent
+            chapterData={chapterData}
+            chapterDataPromise={readingState.chapterDataPromise}
+            selectedVerses={selectedVerses}
+            selectVersesFromTextSelection={selectVersesFromTextSelection}
+            justConvertedSelectionRef={justConvertedSelectionRef}
+            highlights={highlights}
+            decorations={decorations}
+            selectVerse={selectVerse}
+            selectFootnote={selectFootnote}
+            scriptureElements={scriptureElements}
+          />
+        </Suspense>
       )}
 
       {!availableTranslations.value && !error.value && (
@@ -972,16 +1117,17 @@ export function BibleReader(props: BibleReaderProps) {
                 </span>
               </h1>
             </div>
-            <button
-              type="button"
-              className="sb-bible-reader-mobile-header-play"
-              aria-label={t("play-audio", { defaultValue: "Play audio" })}
-              title={t("play", { defaultValue: "Play" })}
-            >
-              <span className="material-symbols-outlined" aria-hidden="true">
-                play_arrow
-              </span>
-            </button>
+            <QuickToolbar
+              toolsManager={state.tools}
+              readingState={readingState}
+              className="sb-quick-toolbar-mobile-header"
+            />
+            <ReaderBookmarkButton
+              state={state}
+              translationId={translationId.value}
+              bookId={bookId.value}
+              chapterNumber={chapterNumber.value}
+            />
             <button
               type="button"
               className="sb-bible-reader-mobile-header-settings"
@@ -991,24 +1137,6 @@ export function BibleReader(props: BibleReaderProps) {
             >
               <InfoSettingsIcon />
             </button>
-          </div>
-
-          <div
-            className={`sb-bible-reader-mobile-compact${
-              mobileChrome?.isScrolled
-                ? " sb-bible-reader-mobile-compact-visible"
-                : ""
-            }`}
-            aria-hidden={!mobileChrome?.isScrolled}
-          >
-            <span className="sb-bible-reader-mobile-compact-book">
-              {currentBook.value?.name ?? bookId.value ?? ""}{" "}
-              {chapterNumber.value}
-            </span>
-            <span className="sb-bible-reader-mobile-compact-divider">|</span>
-            <span className="sb-bible-reader-mobile-compact-translation">
-              {translation.value?.shortName ?? translationId.value ?? ""}
-            </span>
           </div>
 
           <div
@@ -1066,6 +1194,13 @@ export function BibleReader(props: BibleReaderProps) {
               translationId={translationId.value}
               bookId={bookId.value}
               chapterNumber={chapterNumber.value}
+            />
+          )}
+          {state && (
+            <QuickToolbar
+              toolsManager={state.tools}
+              readingState={readingState}
+              className="sb-quick-toolbar-reader"
             />
           )}
           <h2
