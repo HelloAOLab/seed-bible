@@ -111,7 +111,6 @@
   "toolbar": "Työkalurivi",
   "extensions": "Laajennukset",
   "display": "Näyttö",
-
   "theme-and-text": "Teema ja teksti",
   "go-to-all-settings": "Siirry kaikkiin asetuksiin",
   "keep-screen-awake": "Pidä näyttö hereillä",
@@ -186,7 +185,6 @@
   "bible": "raamattu",
   "add-verse": "Lisää säkeistö",
   "add": "Lisätä",
-
   "category-options": "Kansioasetukset",
   "rename": "Nimeä uudelleen",
   "delete": "Poistaa",
@@ -236,7 +234,6 @@
   "social-title": "Lue {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Uusi kansio",
   "chapter-navigation": "Lukujen navigointi",
-
   "tutorial.skip": "Ohita",
   "tutorial.optOut": "Älä näytä tutoriaaleja",
   "tutorial.back": "Takaisin",
@@ -261,7 +258,6 @@
   "search-languages": "Hae kieliä...",
   "no-languages-found": "Ei kieliä löytynyt",
   "today-coming-soon": "Tämän päivän näyttö tulee pian",
-
   "link-to-join-shared-session-copied": "Linkki jaettuun istuntoon liittymiseen kopioitiin leikepöydälle.",
   "anonymous": "Anonyymi",
   "no-chat-messages": "Ei vielä viestejä",
@@ -309,6 +305,13 @@
   "inactive": "Passiivinen",
   "available": "Saatavilla",
   "everyone": "Kaikki",
-  "link-to-join-shared-session-copied": "Linkki jaettuun istuntoon liittymiseen kopioitiin leikepöydälle.",
-  "copied-translation-share-link": "Kopioitu käännöksen jakamislinkki"
+  "copied-translation-share-link": "Kopioitu käännöksen jakamislinkki",
+  "chat-x-joined": "{{name}} liittyi",
+  "chat-x-and-x-joined": "{{first}} ja {{second}} liittyivät",
+  "chat-x-and-count-joined": "{{name}} ja {{count}} muuta liittyivät",
+  "chat-x-and-count-joined_one": "{{name}} ja yksi muu liittyivät",
+  "chat-x-and-count-joined_other": "{{name}} ja {{count}} muuta liittyivät",
+  "open-chat": "Avaa chat",
+  "less": "Vähemmän",
+  "swipe-up-more": "Pyyhkäise ylöspäin nähdäksesi lisää"
 }

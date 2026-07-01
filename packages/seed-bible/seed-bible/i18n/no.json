@@ -111,7 +111,6 @@
   "toolbar": "Verktøylinjen",
   "extensions": "Utvidelser",
   "display": "Utstilling",
-
   "theme-and-text": "Tema og tekst",
   "go-to-all-settings": "Gå til alle innstillinger",
   "keep-screen-awake": "Hold skjermen våken",
@@ -186,7 +185,6 @@
   "bible": "bibel",
   "add-verse": "Legg til vers",
   "add": "Legge til",
-
   "category-options": "Mappealternativer",
   "rename": "Gi nytt navn",
   "delete": "Slett",
@@ -236,7 +234,6 @@
   "social-title": "Les {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Ny mappe",
   "chapter-navigation": "Kapittelnavigasjon",
-
   "tutorial.skip": "Hopp over",
   "tutorial.optOut": "Ikke vis veiledninger",
   "tutorial.back": "Tilbake",
@@ -261,8 +258,7 @@
   "search-languages": "Søk på språk...",
   "no-languages-found": "Ingen språk funnet",
   "today-coming-soon": "Dagens skjerm kommer snart",
-
-  "link-to-join-shared-session-copied": "En lenke for å bli med i den delte økten ble kopiert til utklippstavlen",
+  "link-to-join-shared-session-copied": "En lenke for å bli med i den delte økten ble kopiert til utklippstavlen din",
   "anonymous": "Anonym",
   "no-chat-messages": "Ingen meldinger ennå",
   "start-conversation": "Start en samtale",
@@ -309,6 +305,13 @@
   "inactive": "Inaktiv",
   "available": "Tilgjengelig",
   "everyone": "Alle",
-  "link-to-join-shared-session-copied": "En lenke for å bli med i den delte økten ble kopiert til utklippstavlen din",
-  "copied-translation-share-link": "Kopierte lenken til deling av oversettelse"
+  "copied-translation-share-link": "Kopierte lenken til deling av oversettelse",
+  "chat-x-joined": "{{name}} ble med",
+  "chat-x-and-x-joined": "{{first}} og {{second}} ble med",
+  "chat-x-and-count-joined": "{{name}} og {{count}} andre ble med",
+  "chat-x-and-count-joined_one": "{{name}} og én annen ble med",
+  "chat-x-and-count-joined_other": "{{name}} og {{count}} andre ble med",
+  "open-chat": "Åpne chatten",
+  "less": "Mindre",
+  "swipe-up-more": "Sveip opp for å se mer"
 }

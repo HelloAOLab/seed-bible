@@ -175,7 +175,6 @@
   "upload-settings": "Paramètres de téléchargement",
   "uploading-settings": "Paramètres de chargement...",
   "search": "Recherche",
-
   "theme-and-text": "Thème et texte",
   "go-to-all-settings": "Accéder à tous les paramètres",
   "more": "Plus",
@@ -187,7 +186,6 @@
   "bible": "Bible",
   "add-verse": "Ajouter un verset",
   "add": "Ajouter",
-
   "category-options": "Options de dossier",
   "rename": "Rebaptiser",
   "delete": "Supprimer",
@@ -236,7 +234,6 @@
   "social-title": "Lire {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nouveau dossier",
   "chapter-navigation": "Navigation du chapitre",
-
   "tutorial.skip": "Sauter",
   "tutorial.optOut": "Ne pas afficher les tutoriels",
   "tutorial.back": "Dos",
@@ -261,7 +258,6 @@
   "search-languages": "Langues de recherche...",
   "no-languages-found": "Aucune langue trouvée",
   "today-coming-soon": "L'écran d'aujourd'hui arrive bientôt",
-
   "link-to-join-shared-session-copied": "Un lien pour rejoindre la session partagée a été copié dans votre presse-papiers.",
   "anonymous": "Anonyme",
   "no-chat-messages": "Aucun message pour l'instant",
@@ -309,6 +305,13 @@
   "inactive": "Inactif",
   "available": "Disponible",
   "everyone": "Tout le monde",
-  "link-to-join-shared-session-copied": "Un lien pour rejoindre la session partagée a été copié dans votre presse-papiers.",
-  "copied-translation-share-link": "Lien de partage de la traduction copiée"
+  "copied-translation-share-link": "Lien de partage de la traduction copiée",
+  "chat-x-joined": "{{name}} a rejoint",
+  "chat-x-and-x-joined": "{{first}} et {{second}} se sont joints",
+  "chat-x-and-count-joined": "{{name}} et {{count}} autres personnes ont rejoint",
+  "chat-x-and-count-joined_one": "{{name}} et une autre personne ont rejoint",
+  "chat-x-and-count-joined_other": "{{name}} et {{count}} autres personnes ont rejoint",
+  "open-chat": "Ouvrir le chat",
+  "less": "Moins",
+  "swipe-up-more": "Faites glisser votre doigt vers le haut pour en voir plus."
 }

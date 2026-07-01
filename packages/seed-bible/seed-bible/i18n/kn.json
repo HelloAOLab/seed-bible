@@ -111,7 +111,6 @@
   "toolbar": "ಪರಿಕರಪಟ್ಟಿ",
   "extensions": "ವಿಸ್ತರಣೆಗಳು",
   "display": "ಪ್ರದರ್ಶನ",
-
   "theme-and-text": "ಥೀಮ್ ಮತ್ತು ಪಠ್ಯ",
   "go-to-all-settings": "ಎಲ್ಲಾ ಸೆಟ್ಟಿಂಗ್‌ಗಳಿಗೆ ಹೋಗಿ",
   "keep-screen-awake": "ಪರದೆಯನ್ನು ಎಚ್ಚರವಾಗಿಡಿ",
@@ -186,7 +185,6 @@
   "bible": "ಬೈಬಲ್",
   "add-verse": "ಪದ್ಯ ಸೇರಿಸಿ",
   "add": "ಸೇರಿಸಿ",
-
   "category-options": "ಫೋಲ್ಡರ್ ಆಯ್ಕೆಗಳು",
   "rename": "ಮರುಹೆಸರಿಸಿ",
   "delete": "ಅಳಿಸಿ",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}} ಓದಿ",
   "new-bookmark-folder": "ಹೊಸ ಫೋಲ್ಡರ್",
   "chapter-navigation": "ಅಧ್ಯಾಯ ಸಂಚರಣೆ",
-
   "tutorial.skip": "ಬಿಟ್ಟುಬಿಡಿ",
   "tutorial.optOut": "ಟ್ಯುಟೋರಿಯಲ್‌ಗಳನ್ನು ತೋರಿಸಬೇಡಿ",
   "tutorial.back": "ಹಿಂದೆ",
@@ -261,7 +258,6 @@
   "search-languages": "ಭಾಷೆಗಳನ್ನು ಹುಡುಕಿ...",
   "no-languages-found": "ಯಾವುದೇ ಭಾಷೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ.",
   "today-coming-soon": "ಇಂದಿನ ಪರದೆ ಶೀಘ್ರದಲ್ಲೇ ಬರಲಿದೆ",
-
   "link-to-join-shared-session-copied": "ಹಂಚಿಕೊಂಡ ಸೆಷನ್‌ಗೆ ಸೇರಲು ಲಿಂಕ್ ಅನ್ನು ನಿಮ್ಮ ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ.",
   "anonymous": "ಅನಾಮಧೇಯ",
   "no-chat-messages": "ಇನ್ನೂ ಯಾವುದೇ ಸಂದೇಶಗಳಿಲ್ಲ.",
@@ -309,6 +305,13 @@
   "inactive": "ನಿಷ್ಕ್ರಿಯ",
   "available": "ಲಭ್ಯವಿದೆ",
   "everyone": "ಎಲ್ಲರೂ",
-  "link-to-join-shared-session-copied": "ಹಂಚಿಕೊಂಡ ಸೆಷನ್‌ಗೆ ಸೇರಲು ಲಿಂಕ್ ಅನ್ನು ನಿಮ್ಮ ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ.",
-  "copied-translation-share-link": "ಅನುವಾದ ಹಂಚಿಕೆ ಲಿಂಕ್ ಅನ್ನು ನಕಲಿಸಲಾಗಿದೆ"
+  "copied-translation-share-link": "ಅನುವಾದ ಹಂಚಿಕೆ ಲಿಂಕ್ ಅನ್ನು ನಕಲಿಸಲಾಗಿದೆ",
+  "chat-x-joined": "{{name}} ಸೇರಿಕೊಂಡರು",
+  "chat-x-and-x-joined": "{{first}} ಮತ್ತು {{second}} ಸೇರಿದರು",
+  "chat-x-and-count-joined": "{{name}} ಮತ್ತು {{count}} ಇತರರು ಸೇರಿಕೊಂಡರು",
+  "chat-x-and-count-joined_one": "{{name}} ಮತ್ತು ಇನ್ನೊಬ್ಬರು ಸೇರಿಕೊಂಡರು",
+  "chat-x-and-count-joined_other": "{{name}} ಮತ್ತು {{count}} ಇತರರು ಸೇರಿಕೊಂಡರು",
+  "open-chat": "ಚಾಟ್ ತೆರೆಯಿರಿ",
+  "less": "ಕಡಿಮೆ",
+  "swipe-up-more": "ಇನ್ನಷ್ಟು ವೀಕ್ಷಿಸಲು ಮೇಲಕ್ಕೆ ಸ್ವೈಪ್ ಮಾಡಿ"
 }

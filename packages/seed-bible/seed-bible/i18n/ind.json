@@ -175,7 +175,6 @@
   "upload-settings": "Pengaturan unggahan",
   "uploading-settings": "Mengunggah pengaturan...",
   "search": "Mencari",
-
   "theme-and-text": "Tema & teks",
   "go-to-all-settings": "Buka semua pengaturan",
   "more": "Lagi",
@@ -187,7 +186,6 @@
   "bible": "Alkitab",
   "add-verse": "Tambahkan ayat",
   "add": "Menambahkan",
-
   "category-options": "Opsi folder",
   "rename": "Ganti nama",
   "delete": "Menghapus",
@@ -236,7 +234,6 @@
   "social-title": "Baca {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Folder baru",
   "chapter-navigation": "Navigasi bab",
-
   "tutorial.skip": "Melewati",
   "tutorial.optOut": "Jangan tampilkan tutorial",
   "tutorial.back": "Kembali",
@@ -261,7 +258,6 @@
   "search-languages": "Cari bahasa...",
   "no-languages-found": "Tidak ditemukan bahasa apa pun.",
   "today-coming-soon": "Layar hari ini akan segera hadir",
-
   "link-to-join-shared-session-copied": "Tautan untuk bergabung dengan sesi bersama telah disalin ke papan klip Anda.",
   "anonymous": "Anonim",
   "no-chat-messages": "Belum ada pesan",
@@ -309,6 +305,13 @@
   "inactive": "Tidak aktif",
   "available": "Tersedia",
   "everyone": "Setiap orang",
-  "link-to-join-shared-session-copied": "Tautan untuk bergabung dengan sesi bersama telah disalin ke papan klip Anda.",
-  "copied-translation-share-link": "Tautan berbagi terjemahan yang disalin"
+  "copied-translation-share-link": "Tautan berbagi terjemahan yang disalin",
+  "chat-x-joined": "{{name}} bergabung",
+  "chat-x-and-x-joined": "{{first}} dan {{second}} bergabung",
+  "chat-x-and-count-joined": "{{name}} dan {{count}} orang lainnya bergabung",
+  "chat-x-and-count-joined_one": "{{name}} dan satu orang lainnya bergabung",
+  "chat-x-and-count-joined_other": "{{name}} dan {{count}} orang lainnya bergabung",
+  "open-chat": "Buka obrolan",
+  "less": "Lebih sedikit",
+  "swipe-up-more": "Geser ke atas untuk melihat selengkapnya"
 }

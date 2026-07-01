@@ -111,7 +111,6 @@
   "toolbar": "Tööriistariba",
   "extensions": "Laiendused",
   "display": "Ekraan",
-
   "theme-and-text": "Teema ja tekst",
   "go-to-all-settings": "Mine kõikide seadete juurde",
   "keep-screen-awake": "Hoia ekraan ärkvel",
@@ -186,7 +185,6 @@
   "bible": "Piibel",
   "add-verse": "Lisa salm",
   "add": "Lisa",
-
   "category-options": "Kausta valikud",
   "rename": "Nimeta ümber",
   "delete": "Kustuta",
@@ -236,7 +234,6 @@
   "social-title": "Loe raamatut {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Uus kaust",
   "chapter-navigation": "Peatükkide navigeerimine",
-
   "tutorial.skip": "Jäta vahele",
   "tutorial.optOut": "Ära näita õpetusi",
   "tutorial.back": "Tagasi",
@@ -261,7 +258,6 @@
   "search-languages": "Otsi keeli...",
   "no-languages-found": "Keeli ei leitud",
   "today-coming-soon": "Tänane ekraan tuleb varsti",
-
   "link-to-join-shared-session-copied": "Jagatud seansiga liitumise link kopeeriti teie lõikelauale.",
   "anonymous": "Anonüümne",
   "no-chat-messages": "Sõnumeid pole veel",
@@ -309,6 +305,13 @@
   "inactive": "Mitteaktiivne",
   "available": "Saadaval",
   "everyone": "Kõik",
-  "link-to-join-shared-session-copied": "Jagatud seansiga liitumise link kopeeriti teie lõikelauale.",
-  "copied-translation-share-link": "Kopeeritud tõlke jagamise link"
+  "copied-translation-share-link": "Kopeeritud tõlke jagamise link",
+  "chat-x-joined": "{{name}} liitus",
+  "chat-x-and-x-joined": "{{first}} ja {{second}} liitusid",
+  "chat-x-and-count-joined": "{{name}} ja {{count}} teist liitusid",
+  "chat-x-and-count-joined_one": "{{name}} ja veel üks liitusid",
+  "chat-x-and-count-joined_other": "{{name}} ja {{count}} teist liitusid",
+  "open-chat": "Ava vestlus",
+  "less": "Vähem",
+  "swipe-up-more": "Rohkemate piltide nägemiseks libista üles"
 }

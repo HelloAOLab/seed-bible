@@ -111,7 +111,6 @@
   "toolbar": "סרגל כלים",
   "extensions": "הרחבות",
   "display": "לְהַצִיג",
-
   "theme-and-text": "נושא וטקסט",
   "go-to-all-settings": "עבור לכל ההגדרות",
   "keep-screen-awake": "שמור על המסך ער",
@@ -186,7 +185,6 @@
   "bible": "כִּתבֵי הַקוֹדֶשׁ",
   "add-verse": "הוסף פסוק",
   "add": "לְהוֹסִיף",
-
   "category-options": "אפשרויות תיקייה",
   "rename": "שינוי שם",
   "delete": "לִמְחוֹק",
@@ -236,7 +234,6 @@
   "social-title": "קרא {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "תיקייה חדשה",
   "chapter-navigation": "ניווט פרקים",
-
   "tutorial.skip": "לְדַלֵג",
   "tutorial.optOut": "אל תציגו מדריכים",
   "tutorial.back": "בְּחֲזָרָה",
@@ -261,7 +258,6 @@
   "search-languages": "חיפוש שפות...",
   "no-languages-found": "לא נמצאו שפות",
   "today-coming-soon": "מסך היום יגיע בקרוב",
-
   "link-to-join-shared-session-copied": "קישור להצטרפות לסשן המשותף הועתק ללוח שלך",
   "anonymous": "אֲנוֹנִימִי",
   "no-chat-messages": "אין עדיין הודעות",
@@ -309,6 +305,13 @@
   "inactive": "לֹא פָּעִיל",
   "available": "זָמִין",
   "everyone": "כֹּל אֶחָד",
-  "link-to-join-shared-session-copied": "קישור להצטרפות לסשן המשותף הועתק ללוח שלך",
-  "copied-translation-share-link": "קישור שיתוף התרגום הועתק"
+  "copied-translation-share-link": "קישור שיתוף התרגום הועתק",
+  "chat-x-joined": "הצטרף {{name}}",
+  "chat-x-and-x-joined": "{{first}} ו- {{second}} הצטרפו",
+  "chat-x-and-count-joined": "{{name}} ו- {{count}} נוספים הצטרפו",
+  "chat-x-and-count-joined_one": "{{name}} ועוד אחד הצטרף",
+  "chat-x-and-count-joined_other": "{{name}} ו- {{count}} נוספים הצטרפו",
+  "open-chat": "פתח צ'אט",
+  "less": "פָּחוֹת",
+  "swipe-up-more": "החליקו למעלה כדי לראות עוד"
 }

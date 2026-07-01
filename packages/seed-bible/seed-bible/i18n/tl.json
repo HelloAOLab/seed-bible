@@ -111,7 +111,6 @@
   "toolbar": "Toolbar",
   "extensions": "Mga Extension",
   "display": "Ipakita",
-
   "theme-and-text": "Tema at teksto",
   "go-to-all-settings": "Pumunta sa lahat ng setting",
   "keep-screen-awake": "Panatilihing gising ang screen",
@@ -186,7 +185,6 @@
   "bible": "Bibliya",
   "add-verse": "Magdagdag ng talata",
   "add": "Idagdag",
-
   "category-options": "Mga opsyon sa folder",
   "rename": "Palitan ang pangalan",
   "delete": "Burahin",
@@ -236,7 +234,6 @@
   "social-title": "Basahin ang {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Bagong folder",
   "chapter-navigation": "Pag-navigate sa kabanata",
-
   "tutorial.skip": "Laktawan",
   "tutorial.optOut": "Huwag ipakita ang mga tutorial",
   "tutorial.back": "Balik",
@@ -261,7 +258,6 @@
   "search-languages": "Maghanap ng mga wika...",
   "no-languages-found": "Walang natagpuang mga wika",
   "today-coming-soon": "Malapit nang lumabas ang screen ngayon",
-
   "link-to-join-shared-session-copied": "Nakopya na sa iyong clipboard ang isang link para sumali sa nakabahaging sesyon",
   "anonymous": "Anonymous",
   "no-chat-messages": "Wala pang mga mensahe",
@@ -309,6 +305,13 @@
   "inactive": "Hindi aktibo",
   "available": "Magagamit",
   "everyone": "Lahat",
-  "link-to-join-shared-session-copied": "Nakopya na sa iyong clipboard ang isang link para sumali sa nakabahaging sesyon",
-  "copied-translation-share-link": "Kinopya ang link ng pagbabahagi ng pagsasalin"
+  "copied-translation-share-link": "Kinopya ang link ng pagbabahagi ng pagsasalin",
+  "chat-x-joined": "Sumali si {{name}}",
+  "chat-x-and-x-joined": "Sumali sina {{first}} at {{second}}",
+  "chat-x-and-count-joined": "Sumali {{name}} at {{count}} pang iba",
+  "chat-x-and-count-joined_one": "Sumali si {{name}} at isa pa",
+  "chat-x-and-count-joined_other": "Sumali {{name}} at {{count}} pang iba",
+  "open-chat": "Buksan ang chat",
+  "less": "Mas kaunti",
+  "swipe-up-more": "Mag-swipe pataas para makakita pa"
 }

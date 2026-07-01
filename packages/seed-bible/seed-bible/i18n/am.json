@@ -175,7 +175,6 @@
   "upload-settings": "ቅንብሮችን ስቀል",
   "uploading-settings": "ቅንብሮችን በመስቀል ላይ...",
   "search": "ፈልግ",
-
   "theme-and-text": "ገጽታ እና ጽሑፍ",
   "go-to-all-settings": "ወደ ሁሉም ቅንብሮች ይሂዱ",
   "more": "ተጨማሪ",
@@ -187,7 +186,6 @@
   "bible": "መጽሐፍ ቅዱስ",
   "add-verse": "ጥቅስ ጨምር",
   "add": "ያክሉ",
-
   "category-options": "የአቃፊ አማራጮች",
   "rename": "እንደገና ሰይም",
   "delete": "ሰርዝ",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}} ን ያንብቡ",
   "new-bookmark-folder": "አዲስ አቃፊ",
   "chapter-navigation": "የምዕራፍ አሰሳ",
-
   "tutorial.skip": "ዝለል",
   "tutorial.optOut": "አጋዥ ስልጠናዎችን አታሳይ",
   "tutorial.back": "ተመለስ",
@@ -263,8 +260,6 @@
   "today-coming-soon": "የዛሬው ስክሪን በቅርቡ ይመጣል",
   "link-to-join-shared-session-copied": "የተጋራውን ክፍለ ጊዜ የሚቀላቀሉበት አገናኝ ወደ ቅንጥብ ሰሌዳዎ ተገልብጧል",
   "copied-translation-share-link": "የተቀዳ የትርጉም ማጋሪያ አገናኝ",
-
-  "link-to-join-shared-session-copied": "የተጋራውን ክፍለ ጊዜ የሚቀላቀሉበት አገናኝ ወደ ቅንጥብ ሰሌዳዎ ተገልብጧል",
   "anonymous": "ስም-አልባ",
   "no-chat-messages": "እስካሁን ምንም መልዕክቶች የሉም",
   "start-conversation": "ውይይት ጀምር",
@@ -310,5 +305,13 @@
   "active": "ንቁ",
   "inactive": "ንቁ ያልሆነ",
   "available": "ይገኛል",
-  "everyone": "ሁሉም ሰው"
+  "everyone": "ሁሉም ሰው",
+  "chat-x-joined": "{{name}} ተቀላቅለዋል",
+  "chat-x-and-x-joined": "{{first}} እና {{second}} ተቀላቅለዋል",
+  "chat-x-and-count-joined": "{{name}} እና {{count}} ሌሎች ተቀላቅለዋል",
+  "chat-x-and-count-joined_one": "{{name}} እና አንድ ሌላ ተቀላቅለዋል",
+  "chat-x-and-count-joined_other": "{{name}} እና {{count}} ሌሎች ተቀላቅለዋል",
+  "open-chat": "ውይይት ክፈት",
+  "less": "ያነሰ",
+  "swipe-up-more": "ተጨማሪ ለማየት ወደ ላይ ያንሸራትቱ"
 }

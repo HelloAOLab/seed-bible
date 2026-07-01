@@ -111,7 +111,6 @@
   "toolbar": "Rīkjosla",
   "extensions": "Paplašinājumi",
   "display": "Reklāmas displejs",
-
   "theme-and-text": "Tēma un teksts",
   "go-to-all-settings": "Dodieties uz visiem iestatījumiem",
   "keep-screen-awake": "Atstāt ekrānu miega režīmā",
@@ -186,7 +185,6 @@
   "bible": "Bībele",
   "add-verse": "Pievienot pantu",
   "add": "Pievienot",
-
   "category-options": "Mapes opcijas",
   "rename": "Pārdēvēt",
   "delete": "Dzēst",
@@ -236,7 +234,6 @@
   "social-title": "Izlasiet grāmatu {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Jauna mape",
   "chapter-navigation": "Nodaļu navigācija",
-
   "tutorial.skip": "Izlaist",
   "tutorial.optOut": "Nerādīt pamācības",
   "tutorial.back": "Atpakaļ",
@@ -261,7 +258,6 @@
   "search-languages": "Meklēt valodas...",
   "no-languages-found": "Nav atrasta neviena valoda",
   "today-coming-soon": "Šodienas ekrāns drīz būs pieejams",
-
   "link-to-join-shared-session-copied": "Saite, lai pievienotos koplietotajai sesijai, tika kopēta jūsu starpliktuvē.",
   "anonymous": "Anonīms",
   "no-chat-messages": "Vēl nav ziņojumu",
@@ -309,6 +305,13 @@
   "inactive": "Neaktīvs",
   "available": "Pieejams",
   "everyone": "Ikviens",
-  "link-to-join-shared-session-copied": "Saite, lai pievienotos koplietotajai sesijai, tika kopēta jūsu starpliktuvē.",
-  "copied-translation-share-link": "Kopēta tulkojuma kopīgošanas saite"
+  "copied-translation-share-link": "Kopēta tulkojuma kopīgošanas saite",
+  "chat-x-joined": "{{name}} pievienojās",
+  "chat-x-and-x-joined": "{{first}} un {{second}} pievienojās",
+  "chat-x-and-count-joined": "Pievienojās {{name}} un vēl {{count}} citi",
+  "chat-x-and-count-joined_one": "{{name}} un vēl viens pievienojās",
+  "chat-x-and-count-joined_other": "Pievienojās {{name}} un vēl {{count}} citi",
+  "open-chat": "Atvērt tērzēšanu",
+  "less": "Mazāk",
+  "swipe-up-more": "Pavelciet uz augšu, lai skatītu vairāk"
 }

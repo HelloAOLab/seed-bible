@@ -111,7 +111,6 @@
   "toolbar": "கருவிப்பட்டி",
   "extensions": "நீட்டிப்புகள்",
   "display": "காட்சி",
-
   "theme-and-text": "கருப்பொருள் மற்றும் உரை",
   "go-to-all-settings": "அனைத்து அமைப்புகளுக்கும் செல்லவும்",
   "keep-screen-awake": "திரையை விழித்திருக்கச் செய்யுங்கள்",
@@ -186,7 +185,6 @@
   "bible": "பைபிள்",
   "add-verse": "வசனத்தைச் சேர்க்கவும்",
   "add": "சேர்",
-
   "category-options": "கோப்புறை விருப்பங்கள்",
   "rename": "மறுபெயரிடு",
   "delete": "நீக்கு",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}} -ஐப் படிக்கவும்",
   "new-bookmark-folder": "புதிய கோப்புறை",
   "chapter-navigation": "அத்தியாய வழிசெலுத்தல்",
-
   "tutorial.skip": "தவிர்க்கவும்",
   "tutorial.optOut": "பயிற்சிகளைக் காட்ட வேண்டாம்",
   "tutorial.back": "திரும்பி",
@@ -261,7 +258,6 @@
   "search-languages": "மொழிகளைத் தேடுங்கள்...",
   "no-languages-found": "மொழிகள் எதுவும் காணப்படவில்லை",
   "today-coming-soon": "இன்றைய திரை விரைவில் வருகிறது",
-
   "link-to-join-shared-session-copied": "பகிரப்பட்ட அமர்வில் சேர்வதற்கான இணைப்பு உங்கள் கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது.",
   "anonymous": "அநாமதேய",
   "no-chat-messages": "இன்னும் செய்திகள் வரவில்லை",
@@ -309,6 +305,13 @@
   "inactive": "செயலற்ற",
   "available": "இணையம்",
   "everyone": "அனைவரும்",
-  "link-to-join-shared-session-copied": "பகிரப்பட்ட அமர்வில் சேர்வதற்கான இணைப்பு உங்கள் கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது.",
-  "copied-translation-share-link": "நகலெடுக்கப்பட்ட மொழிபெயர்ப்பு பகிர்வு இணைப்பு"
+  "copied-translation-share-link": "நகலெடுக்கப்பட்ட மொழிபெயர்ப்பு பகிர்வு இணைப்பு",
+  "chat-x-joined": "{{name}} சேர்ந்தார்",
+  "chat-x-and-x-joined": "{{first}} மற்றும் {{second}} இணைந்தன",
+  "chat-x-and-count-joined": "{{name}} மற்றும் {{count}} மற்றவர்கள் இணைந்தனர்.",
+  "chat-x-and-count-joined_one": "{{name}} மற்றும் மற்றொருவர் இணைந்தனர்.",
+  "chat-x-and-count-joined_other": "{{name}} மற்றும் {{count}} மற்றவர்கள் இணைந்தனர்.",
+  "open-chat": "உரையாடலைத் திறக்கவும்",
+  "less": "குறைவானவை",
+  "swipe-up-more": "மேலும் பார்க்க மேலே ஸ்வைப் செய்யவும்"
 }

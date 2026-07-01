@@ -111,7 +111,6 @@
   "toolbar": "แถบเครื่องมือ",
   "extensions": "ส่วนขยาย",
   "display": "แสดง",
-
   "theme-and-text": "ธีมและข้อความ",
   "go-to-all-settings": "ไปที่การตั้งค่าทั้งหมด",
   "keep-screen-awake": "เปิดหน้าจอไว้ตลอดเวลา",
@@ -186,7 +185,6 @@
   "bible": "พระคัมภีร์",
   "add-verse": "เพิ่มบทกวี",
   "add": "เพิ่ม",
-
   "category-options": "ตัวเลือกโฟลเดอร์",
   "rename": "เปลี่ยนชื่อ",
   "delete": "ลบ",
@@ -236,7 +234,6 @@
   "social-title": "อ่านหนังสือ {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "โฟลเดอร์ใหม่",
   "chapter-navigation": "การนำทางบท",
-
   "tutorial.skip": "ข้าม",
   "tutorial.optOut": "อย่าแสดงบทช่วยสอน",
   "tutorial.back": "กลับ",
@@ -261,7 +258,6 @@
   "search-languages": "ค้นหาภาษา...",
   "no-languages-found": "ไม่พบภาษาใดๆ",
   "today-coming-soon": "หน้าจอวันนี้จะมาเร็วๆ นี้",
-
   "link-to-join-shared-session-copied": "ลิงก์สำหรับเข้าร่วมเซสชันที่ใช้ร่วมกันถูกคัดลอกไปยังคลิปบอร์ดของคุณแล้ว",
   "anonymous": "นิรนาม",
   "no-chat-messages": "ยังไม่มีข้อความใดๆ",
@@ -309,6 +305,13 @@
   "inactive": "ไม่ใช้งาน",
   "available": "มีอยู่",
   "everyone": "ทุกคน",
-  "link-to-join-shared-session-copied": "ลิงก์สำหรับเข้าร่วมเซสชันที่ใช้ร่วมกันถูกคัดลอกไปยังคลิปบอร์ดของคุณแล้ว",
-  "copied-translation-share-link": "คัดลอกลิงก์แชร์คำแปล"
+  "copied-translation-share-link": "คัดลอกลิงก์แชร์คำแปล",
+  "chat-x-joined": "{{name}} เข้าร่วม",
+  "chat-x-and-x-joined": "{{first}} และ {{second}} เข้าร่วม",
+  "chat-x-and-count-joined": "{{name}} และ {{count}} คนอื่นๆ เข้าร่วม",
+  "chat-x-and-count-joined_one": "{{name}} และอีกคนหนึ่งเข้าร่วม",
+  "chat-x-and-count-joined_other": "{{name}} และ {{count}} คนอื่นๆ เข้าร่วม",
+  "open-chat": "เปิดแชท",
+  "less": "น้อย",
+  "swipe-up-more": "เลื่อนขึ้นเพื่อดูเพิ่มเติม"
 }

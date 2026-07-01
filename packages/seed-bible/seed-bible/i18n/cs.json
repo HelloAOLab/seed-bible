@@ -111,7 +111,6 @@
   "toolbar": "Panel nástrojů",
   "extensions": "Rozšíření",
   "display": "Zobrazit",
-
   "theme-and-text": "Téma a text",
   "go-to-all-settings": "Přejít na všechna nastavení",
   "keep-screen-awake": "Udržovat obrazovku v aktivním stavu",
@@ -186,7 +185,6 @@
   "bible": "bible",
   "add-verse": "Přidat verš",
   "add": "Přidat",
-
   "category-options": "Možnosti složky",
   "rename": "Přejmenovat",
   "delete": "Vymazat",
@@ -236,7 +234,6 @@
   "social-title": "Přečtěte si {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nová složka",
   "chapter-navigation": "Navigace kapitol",
-
   "tutorial.skip": "Přeskočit",
   "tutorial.optOut": "Nezobrazovat tutoriály",
   "tutorial.back": "Zadní",
@@ -261,7 +258,6 @@
   "search-languages": "Hledat jazyky...",
   "no-languages-found": "Nenalezeny žádné jazyky",
   "today-coming-soon": "Dnešní obrazovka bude brzy k dispozici",
-
   "link-to-join-shared-session-copied": "Odkaz pro připojení ke sdílené relaci byl zkopírován do schránky.",
   "anonymous": "Anonymní",
   "no-chat-messages": "Zatím žádné zprávy",
@@ -309,6 +305,13 @@
   "inactive": "Neaktivní",
   "available": "K dispozici",
   "everyone": "Každý",
-  "link-to-join-shared-session-copied": "Odkaz pro připojení ke sdílené relaci byl zkopírován do schránky.",
-  "copied-translation-share-link": "Odkaz na sdílení překladu byl zkopírován"
+  "copied-translation-share-link": "Odkaz na sdílení překladu byl zkopírován",
+  "chat-x-joined": "{{name}} se připojil(a)",
+  "chat-x-and-x-joined": "{{first}} a {{second}} se připojili",
+  "chat-x-and-count-joined": "{{name}} a {{count}} dalších se připojilo",
+  "chat-x-and-count-joined_one": "{{name}} a jeden další se připojil(a)",
+  "chat-x-and-count-joined_other": "{{name}} a {{count}} dalších se připojilo",
+  "open-chat": "Otevřít chat",
+  "less": "Méně",
+  "swipe-up-more": "Přejetím prstem nahoru zobrazíte více"
 }

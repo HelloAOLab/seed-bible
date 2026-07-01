@@ -111,7 +111,6 @@
   "toolbar": "Bar offer",
   "extensions": "Estyniadau",
   "display": "Arddangosfa",
-
   "theme-and-text": "Thema a thestun",
   "go-to-all-settings": "Ewch i bob gosodiad",
   "keep-screen-awake": "Cadwch y sgrin yn effro",
@@ -186,7 +185,6 @@
   "bible": "Beibl",
   "add-verse": "Ychwanegu pennill",
   "add": "Ychwanegu",
-
   "category-options": "Dewisiadau ffolder",
   "rename": "Ailenwi",
   "delete": "Dileu",
@@ -236,7 +234,6 @@
   "social-title": "Darllenwch {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Ffolder newydd",
   "chapter-navigation": "Mordwyo penodau",
-
   "tutorial.skip": "Hepgor",
   "tutorial.optOut": "Peidiwch â dangos tiwtorialau",
   "tutorial.back": "Yn ôl",
@@ -261,7 +258,6 @@
   "search-languages": "Chwilio ieithoedd...",
   "no-languages-found": "Ni chanfuwyd unrhyw ieithoedd",
   "today-coming-soon": "Mae sgrin heddiw yn dod yn fuan",
-
   "link-to-join-shared-session-copied": "Copïwyd dolen i ymuno â'r sesiwn a rennir i'ch clipfwrdd",
   "anonymous": "Anhysbys",
   "no-chat-messages": "Dim negeseuon eto",
@@ -309,6 +305,13 @@
   "inactive": "Anactif",
   "available": "Ar gael",
   "everyone": "Pawb",
-  "link-to-join-shared-session-copied": "Copïwyd dolen i ymuno â'r sesiwn a rennir i'ch clipfwrdd",
-  "copied-translation-share-link": "Copïwyd dolen rhannu cyfieithiad"
+  "copied-translation-share-link": "Copïwyd dolen rhannu cyfieithiad",
+  "chat-x-joined": "Ymunodd {{name}}",
+  "chat-x-and-x-joined": "{{first}} a {{second}}",
+  "chat-x-and-count-joined": "Ymunodd {{name}} a {{count}} eraill",
+  "chat-x-and-count-joined_one": "Ymunodd {{name}} ac un arall",
+  "chat-x-and-count-joined_other": "Ymunodd {{name}} a {{count}} eraill",
+  "open-chat": "Sgwrs agored",
+  "less": "Llai",
+  "swipe-up-more": "Sweipiwch i fyny i weld mwy"
 }

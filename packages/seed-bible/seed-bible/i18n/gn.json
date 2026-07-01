@@ -111,7 +111,6 @@
   "toolbar": "Tembipuru’i ryru",
   "extensions": "Umi extensión rehegua",
   "display": "Techaukahára",
-
   "theme-and-text": "Tema & texto rehegua",
   "go-to-all-settings": "Eike opaite ñembohekorãme",
   "keep-screen-awake": "Eñongatu pantalla opáy",
@@ -186,7 +185,6 @@
   "bible": "Biblia",
   "add-verse": "Oñemoĩve versíkulo",
   "add": "Moinge",
-
   "category-options": "Umi opción carpeta rehegua",
   "rename": "Embohéra jey",
   "delete": "Mboje'oha",
@@ -236,7 +234,6 @@
   "social-title": "Emoñe’ẽ {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Carpeta pyahu",
   "chapter-navigation": "Capítulo jeguata",
-
   "tutorial.skip": "Jepopo",
   "tutorial.optOut": "Ani rehechauka umi mbo’epy",
   "tutorial.back": "Kupe",
@@ -261,7 +258,6 @@
   "search-languages": "Eheka ñe'ẽnguéra...",
   "no-languages-found": "Ndaipóri ñe’ẽ ojejuhúva",
   "today-coming-soon": "Ko árape pantalla oúta pya'e",
-
   "link-to-join-shared-session-copied": "Peteĩ enlace ojeike hag̃ua sesión compartida-pe ojekopia nde portapapeles-pe",
   "anonymous": "Kuaa'ỹva",
   "no-chat-messages": "Ndaipóri gueteri marandu",
@@ -309,6 +305,13 @@
   "inactive": "Inactivo",
   "available": "Oĩ",
   "everyone": "Opaite arapygua",
-  "link-to-join-shared-session-copied": "Peteĩ enlace ojeike hag̃ua sesión compartida-pe ojekopia nde portapapeles-pe",
-  "copied-translation-share-link": "Ojekopia traducción compartir enlace"
+  "copied-translation-share-link": "Ojekopia traducción compartir enlace",
+  "chat-x-joined": "{{name}} oñembojoaju",
+  "chat-x-and-x-joined": "{{first}} ha {{second}} oñembojoaju",
+  "chat-x-and-count-joined": "{{name}} ha {{count}} ambuekuéra ojoaju",
+  "chat-x-and-count-joined_one": "{{name}} ha peteĩ ambue oñembojoaju",
+  "chat-x-and-count-joined_other": "{{name}} ha {{count}} ambuekuéra ojoaju",
+  "open-chat": "Ñemongeta abierta",
+  "less": "Mbovy",
+  "swipe-up-more": "Emoinge yvate gotyo rehecha hag̃ua hetave mba’e"
 }

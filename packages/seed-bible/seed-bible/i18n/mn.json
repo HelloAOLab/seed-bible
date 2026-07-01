@@ -175,7 +175,6 @@
   "upload-settings": "Байршуулах тохиргоо",
   "uploading-settings": "Тохиргоог байршуулж байна...",
   "search": "Хайлт",
-
   "theme-and-text": "Сэдэв ба текст",
   "go-to-all-settings": "Бүх тохиргоо руу очих",
   "more": "Илүү их",
@@ -187,7 +186,6 @@
   "bible": "Библи",
   "add-verse": "Шүлэг нэмэх",
   "add": "Нэмэх",
-
   "category-options": "Фолдерын сонголтууд",
   "rename": "Нэрийг нь өөрчлөх",
   "delete": "Устгах",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}} г унших",
   "new-bookmark-folder": "Шинэ хавтас",
   "chapter-navigation": "Бүлгийн навигаци",
-
   "tutorial.skip": "Алгасах",
   "tutorial.optOut": "Хичээлүүдийг харуулахгүй",
   "tutorial.back": "Буцах",
@@ -261,7 +258,6 @@
   "search-languages": "Хэл хайх...",
   "no-languages-found": "Хэл олдсонгүй",
   "today-coming-soon": "Өнөөдрийн дэлгэц удахгүй гарах болно",
-
   "link-to-join-shared-session-copied": "Хуваалцсан хуралдаанд нэгдэх холбоосыг таны санах ой руу хуулсан",
   "anonymous": "Нэргүй",
   "no-chat-messages": "Одоогоор мессеж алга",
@@ -309,6 +305,13 @@
   "inactive": "Идэвхгүй",
   "available": "Боломжтой",
   "everyone": "Хүн бүр",
-  "link-to-join-shared-session-copied": "Хуваалцсан хуралдаанд нэгдэх холбоосыг таны санах ой руу хуулсан",
-  "copied-translation-share-link": "Орчуулгын хуваалцах холбоосыг хуулсан"
+  "copied-translation-share-link": "Орчуулгын хуваалцах холбоосыг хуулсан",
+  "chat-x-joined": "{{name}} нэгдсэн",
+  "chat-x-and-x-joined": "{{first}} болон {{second}} нэгдсэн",
+  "chat-x-and-count-joined": "{{name}} болон {{count}} бусад хүмүүс нэгдсэн",
+  "chat-x-and-count-joined_one": "{{name}} болон өөр нэг хүн нэгдсэн",
+  "chat-x-and-count-joined_other": "{{name}} болон {{count}} бусад хүмүүс нэгдсэн",
+  "open-chat": "Нээлттэй чат",
+  "less": "Бага",
+  "swipe-up-more": "Дэлгэрэнгүй үзэхийн тулд дээш шударна уу"
 }

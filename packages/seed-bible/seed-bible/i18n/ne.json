@@ -175,7 +175,6 @@
   "upload-settings": "अपलोड सेटिङहरू",
   "uploading-settings": "सेटिङहरू अपलोड गर्दै...",
   "search": "खोज्नुहोस्",
-
   "theme-and-text": "विषयवस्तु र पाठ",
   "go-to-all-settings": "सबै सेटिङहरूमा जानुहोस्",
   "more": "थप",
@@ -187,7 +186,6 @@
   "bible": "बाइबल",
   "add-verse": "पद थप्नुहोस्",
   "add": "थप्नुहोस्",
-
   "category-options": "फोल्डर विकल्पहरू",
   "rename": "पुन: नामाकरण गर्नुहोस्",
   "delete": "मेटाउनुहोस्",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}} पढ्नुहोस्",
   "new-bookmark-folder": "नयाँ फोल्डर",
   "chapter-navigation": "अध्याय नेभिगेसन",
-
   "tutorial.skip": "छोड्नुहोस्",
   "tutorial.optOut": "ट्यूटोरियलहरू नदेखाउनुहोस्",
   "tutorial.back": "पछाडि",
@@ -261,7 +258,6 @@
   "search-languages": "भाषाहरू खोज्नुहोस्...",
   "no-languages-found": "कुनै भाषा भेटिएन।",
   "today-coming-soon": "आजको स्क्रिन चाँडै आउँदैछ",
-
   "link-to-join-shared-session-copied": "साझा सत्रमा सामेल हुने लिङ्क तपाईंको क्लिपबोर्डमा प्रतिलिपि गरिएको छ।",
   "anonymous": "बेनामी",
   "no-chat-messages": "अहिलेसम्म कुनै सन्देश छैन",
@@ -309,6 +305,13 @@
   "inactive": "निष्क्रिय",
   "available": "उपलब्ध छ",
   "everyone": "सबैजना",
-  "link-to-join-shared-session-copied": "साझा सत्रमा सामेल हुने लिङ्क तपाईंको क्लिपबोर्डमा प्रतिलिपि गरिएको छ।",
-  "copied-translation-share-link": "अनुवाद साझेदारी लिङ्क प्रतिलिपि गरियो"
+  "copied-translation-share-link": "अनुवाद साझेदारी लिङ्क प्रतिलिपि गरियो",
+  "chat-x-joined": "{{name}} सामेल हुनुभयो",
+  "chat-x-and-x-joined": "{{first}} र {{second}} सामेल भए",
+  "chat-x-and-count-joined": "{{name}} र {{count}} अन्य सामेल भए",
+  "chat-x-and-count-joined_one": "{{name}} र अर्को एक जना सामेल भए",
+  "chat-x-and-count-joined_other": "{{name}} र {{count}} अन्य सामेल भए",
+  "open-chat": "च्याट खोल्नुहोस्",
+  "less": "कम",
+  "swipe-up-more": "थप हेर्न माथि स्वाइप गर्नुहोस्"
 }

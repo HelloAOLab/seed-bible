@@ -175,7 +175,6 @@
   "upload-settings": "アップロード設定",
   "uploading-settings": "設定をアップロードしています...",
   "search": "検索",
-
   "theme-and-text": "テーマとテキスト",
   "go-to-all-settings": "すべての設定に移動",
   "more": "もっと",
@@ -187,7 +186,6 @@
   "bible": "聖書",
   "add-verse": "詩を追加する",
   "add": "追加",
-
   "category-options": "フォルダーオプション",
   "rename": "名前を変更する",
   "delete": "消去",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}}を読んでください。",
   "new-bookmark-folder": "新しいフォルダー",
   "chapter-navigation": "章ナビゲーション",
-
   "tutorial.skip": "スキップ",
   "tutorial.optOut": "チュートリアルを表示しない",
   "tutorial.back": "戻る",
@@ -261,7 +258,6 @@
   "search-languages": "言語を検索...",
   "no-languages-found": "言語が見つかりません",
   "today-coming-soon": "本日のスクリーンはまもなく登場します",
-
   "link-to-join-shared-session-copied": "共有セッションに参加するためのリンクがクリップボードにコピーされました。",
   "anonymous": "匿名",
   "no-chat-messages": "まだメッセージはありません",
@@ -309,6 +305,13 @@
   "inactive": "非アクティブ",
   "available": "利用可能",
   "everyone": "みんな",
-  "link-to-join-shared-session-copied": "共有セッションに参加するためのリンクがクリップボードにコピーされました。",
-  "copied-translation-share-link": "翻訳共有リンクをコピーしました"
+  "copied-translation-share-link": "翻訳共有リンクをコピーしました",
+  "chat-x-joined": "{{name}}が参加しました",
+  "chat-x-and-x-joined": "{{first}}と{{second}}が参加しました",
+  "chat-x-and-count-joined": "{{name}}と{{count}}人が参加しました",
+  "chat-x-and-count-joined_one": "{{name}}ともう1人が参加しました",
+  "chat-x-and-count-joined_other": "{{name}}と{{count}}人が参加しました",
+  "open-chat": "チャットを開く",
+  "less": "少ない",
+  "swipe-up-more": "上にスワイプしてさらに表示"
 }

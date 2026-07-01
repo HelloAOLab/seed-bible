@@ -175,7 +175,6 @@
   "upload-settings": "اپ لوڈ کی ترتیبات",
   "uploading-settings": "اپ لوڈ کی ترتیبات...",
   "search": "تلاش کریں۔",
-
   "theme-and-text": "تھیم اور متن",
   "go-to-all-settings": "تمام ترتیبات پر جائیں۔",
   "more": "مزید",
@@ -187,7 +186,6 @@
   "bible": "بائبل",
   "add-verse": "آیت شامل کریں۔",
   "add": "شامل کریں۔",
-
   "category-options": "فولڈر کے اختیارات",
   "rename": "نام تبدیل کریں۔",
   "delete": "حذف کریں۔",
@@ -236,7 +234,6 @@
   "social-title": "پڑھیں {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "نیا فولڈر",
   "chapter-navigation": "باب نیویگیشن",
-
   "tutorial.skip": "چھوڑیں۔",
   "tutorial.optOut": "سبق نہ دکھائیں۔",
   "tutorial.back": "پیچھے",
@@ -261,7 +258,6 @@
   "search-languages": "زبانیں تلاش کریں...",
   "no-languages-found": "کوئی زبانیں نہیں ملی",
   "today-coming-soon": "آج اسکرین جلد آرہی ہے۔",
-
   "link-to-join-shared-session-copied": "مشترکہ سیشن میں شامل ہونے کا ایک لنک آپ کے کلپ بورڈ پر کاپی کیا گیا تھا۔",
   "anonymous": "گمنام",
   "no-chat-messages": "ابھی تک کوئی پیغامات نہیں ہیں۔",
@@ -309,6 +305,13 @@
   "inactive": "غیر فعال",
   "available": "دستیاب ہے۔",
   "everyone": "ہر کوئی",
-  "link-to-join-shared-session-copied": "مشترکہ سیشن میں شامل ہونے کا ایک لنک آپ کے کلپ بورڈ پر کاپی کیا گیا تھا۔",
-  "copied-translation-share-link": "کاپی کیا گیا ترجمہ شیئر لنک"
+  "copied-translation-share-link": "کاپی کیا گیا ترجمہ شیئر لنک",
+  "chat-x-joined": "{{name}} شامل ہوئے۔",
+  "chat-x-and-x-joined": "{{first}} اور {{second}} شامل ہوئے۔",
+  "chat-x-and-count-joined": "{{name}} اور {{count}} دیگر شامل ہوئے۔",
+  "chat-x-and-count-joined_one": "{{name}} اور ایک اور شامل ہوئے۔",
+  "chat-x-and-count-joined_other": "{{name}} اور {{count}} دیگر شامل ہوئے۔",
+  "open-chat": "چیٹ کھولیں۔",
+  "less": "کم",
+  "swipe-up-more": "مزید دیکھنے کے لیے اوپر سوائپ کریں۔"
 }

@@ -111,7 +111,6 @@
   "toolbar": "Куралдар панели",
   "extensions": "Кеңейтүүлөр",
   "display": "Дисплей",
-
   "theme-and-text": "Тема жана текст",
   "go-to-all-settings": "Бардык жөндөөлөргө өтүү",
   "keep-screen-awake": "Экранды ойготкуч абалда калтырыңыз",
@@ -186,7 +185,6 @@
   "bible": "Ыйык Китеп",
   "add-verse": "Аят кошуу",
   "add": "Кошуу",
-
   "category-options": "Папка параметрлери",
   "rename": "Атын өзгөртүү",
   "delete": "Өчүрүү",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}} окуу",
   "new-bookmark-folder": "Жаңы папка",
   "chapter-navigation": "Бөлүмдөр боюнча навигация",
-
   "tutorial.skip": "Өткөрүп жиберүү",
   "tutorial.optOut": "Окуу куралдары көрсөтүлбөсүн",
   "tutorial.back": "Артка",
@@ -261,7 +258,6 @@
   "search-languages": "Тилдерди издөө...",
   "no-languages-found": "Эч кандай тил табылган жок",
   "today-coming-soon": "Бүгүнкү экран жакында чыгат",
-
   "link-to-join-shared-session-copied": "Бөлүшүлгөн сессияга кошулуу шилтемеси алмашуу буфериңизге көчүрүлдү",
   "anonymous": "Белгисиз",
   "no-chat-messages": "Азырынча билдирүүлөр жок",
@@ -309,6 +305,13 @@
   "inactive": "Активдүү эмес",
   "available": "Жеткиликтүү",
   "everyone": "Баары",
-  "link-to-join-shared-session-copied": "Бөлүшүлгөн сессияга кошулуу шилтемеси алмашуу буфериңизге көчүрүлдү",
-  "copied-translation-share-link": "Котормону бөлүшүү шилтемеси көчүрүлдү"
+  "copied-translation-share-link": "Котормону бөлүшүү шилтемеси көчүрүлдү",
+  "chat-x-joined": "{{name}} кошулду",
+  "chat-x-and-x-joined": "{{first}} жана {{second}} кошулду",
+  "chat-x-and-count-joined": "{{name}} жана дагы {{count}} адам кошулду",
+  "chat-x-and-count-joined_one": "{{name}} жана дагы бир адам кошулду",
+  "chat-x-and-count-joined_other": "{{name}} жана дагы {{count}} адам кошулду",
+  "open-chat": "Ачык чат",
+  "less": "Азыраак",
+  "swipe-up-more": "Көбүрөөк көрүү үчүн өйдө сүрүңүз"
 }

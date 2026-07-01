@@ -111,7 +111,6 @@
   "toolbar": "టూల్‌బార్",
   "extensions": "పొడిగింపులు",
   "display": "ప్రదర్శన",
-
   "theme-and-text": "థీమ్ & టెక్స్ట్",
   "go-to-all-settings": "అన్ని సెట్టింగ్‌లకు వెళ్లండి",
   "keep-screen-awake": "స్క్రీన్‌ను ఆన్‌లో ఉంచండి",
@@ -186,7 +185,6 @@
   "bible": "బైబిల్",
   "add-verse": "పద్యం జోడించండి",
   "add": "జోడించండి",
-
   "category-options": "ఫోల్డర్ ఎంపికలు",
   "rename": "పేరు మార్చండి",
   "delete": "తొలగించు",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}} చదవండి",
   "new-bookmark-folder": "కొత్త ఫోల్డర్",
   "chapter-navigation": "అధ్యాయ నావిగేషన్",
-
   "tutorial.skip": "దాటవేయి",
   "tutorial.optOut": "ట్యుటోరియల్స్ చూపించవద్దు",
   "tutorial.back": "వెనుక",
@@ -261,7 +258,6 @@
   "search-languages": "భాషలను శోధించండి...",
   "no-languages-found": "భాషలు ఏవీ కనుగొనబడలేదు",
   "today-coming-soon": "ఈరోజు స్క్రీన్ త్వరలో వస్తుంది",
-
   "link-to-join-shared-session-copied": "భాగస్వామ్య సెషన్‌లో చేరడానికి సంబంధించిన లింక్ మీ క్లిప్‌బోర్డ్‌లోకి కాపీ చేయబడింది.",
   "anonymous": "అనామక",
   "no-chat-messages": "ఇంకా సందేశాలు లేవు",
@@ -309,6 +305,13 @@
   "inactive": "నిష్క్రియం",
   "available": "అందుబాటులో ఉంది",
   "everyone": "ప్రతిఒక్కరూ",
-  "link-to-join-shared-session-copied": "భాగస్వామ్య సెషన్‌లో చేరడానికి సంబంధించిన లింక్ మీ క్లిప్‌బోర్డ్‌లోకి కాపీ చేయబడింది.",
-  "copied-translation-share-link": "కాపీ చేయబడిన అనువాద భాగస్వామ్య లింక్"
+  "copied-translation-share-link": "కాపీ చేయబడిన అనువాద భాగస్వామ్య లింక్",
+  "chat-x-joined": "{{name}} చేరారు",
+  "chat-x-and-x-joined": "{{first}} మరియు {{second}} కలిశారు",
+  "chat-x-and-count-joined": "{{name}} మరియు {{count}} ఇతరులు చేరారు",
+  "chat-x-and-count-joined_one": "{{name}} మరియు మరొకరు చేరారు",
+  "chat-x-and-count-joined_other": "{{name}} మరియు {{count}} ఇతరులు చేరారు",
+  "open-chat": "ఓపెన్ చాట్",
+  "less": "తక్కువ",
+  "swipe-up-more": "మరిన్ని చూడటానికి పైకి స్వైప్ చేయండి"
 }

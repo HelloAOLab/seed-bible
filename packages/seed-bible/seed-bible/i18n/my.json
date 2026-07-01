@@ -111,7 +111,6 @@
   "toolbar": "ကိရိယာဘား",
   "extensions": "တိုးချဲ့မှုများ",
   "display": "ပြသမှု",
-
   "theme-and-text": "အပြင်အဆင်နှင့် စာသား",
   "go-to-all-settings": "ဆက်တင်အားလုံးသို့ သွားပါ",
   "keep-screen-awake": "မျက်နှာပြင်ကို ဖွင့်ထားပါ",
@@ -186,7 +185,6 @@
   "bible": "သမ္မာကျမ်းစာ",
   "add-verse": "ကဗျာတစ်ပုဒ်ထည့်ပါ",
   "add": "ထည့်ပါ",
-
   "category-options": "ဖိုင်တွဲရွေးချယ်စရာများ",
   "rename": "အမည်ပြောင်းပါ",
   "delete": "ဖျက်ရန်",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}} ကိုဖတ်ပါ",
   "new-bookmark-folder": "ဖိုင်တွဲအသစ်",
   "chapter-navigation": "အခန်းလမ်းညွှန်",
-
   "tutorial.skip": "ကျော်သွားပါ",
   "tutorial.optOut": "သင်ခန်းစာများ မပြပါနှင့်",
   "tutorial.back": "နောက်သို့",
@@ -261,7 +258,6 @@
   "search-languages": "ဘာသာစကားများကို ရှာဖွေပါ...",
   "no-languages-found": "ဘာသာစကားများ မတွေ့ပါ",
   "today-coming-soon": "ဒီနေ့ မျက်နှာပြင် မကြာခင် လာတော့မယ်",
-
   "link-to-join-shared-session-copied": "မျှဝေထားသော အစည်းအဝေးသို့ ဝင်ရောက်ရန် လင့်ခ်ကို သင့်ကလစ်ဘုတ်သို့ ကူးယူပြီးပါပြီ",
   "anonymous": "အမည်မဖော်လိုသူ",
   "no-chat-messages": "မက်ဆေ့ချ်များ မရှိသေးပါ",
@@ -309,6 +305,13 @@
   "inactive": "အသုံးမပြုတော့ပါ",
   "available": "ရရှိနိုင်ပါသည်",
   "everyone": "လူတိုင်း",
-  "link-to-join-shared-session-copied": "မျှဝေထားသော အစည်းအဝေးသို့ ဝင်ရောက်ရန် လင့်ခ်ကို သင့်ကလစ်ဘုတ်သို့ ကူးယူပြီးပါပြီ",
-  "copied-translation-share-link": "ဘာသာပြန်ဆိုချက် ကူးယူပြီး လင့်ခ်မျှဝေပါ"
+  "copied-translation-share-link": "ဘာသာပြန်ဆိုချက် ကူးယူပြီး လင့်ခ်မျှဝေပါ",
+  "chat-x-joined": "{{name}} ဝင်ရောက်ခဲ့သည်",
+  "chat-x-and-x-joined": "{{first}} နှင့် {{second}} တို့သည် ပူးပေါင်းခဲ့ကြသည်",
+  "chat-x-and-count-joined": "{{name}} နှင့် အခြား {{count}} တို့သည် ဝင်ရောက်လာကြသည်။",
+  "chat-x-and-count-joined_one": "{{name}} နှင့် အခြားတစ်ဦး ဝင်ရောက်လာပါပြီ",
+  "chat-x-and-count-joined_other": "{{name}} နှင့် အခြား {{count}} တို့သည် ဝင်ရောက်လာကြသည်။",
+  "open-chat": "ချတ်ဖွင့်ပါ",
+  "less": "နည်းသော",
+  "swipe-up-more": "ပိုမိုကြည့်ရှုရန် အပေါ်သို့ ပွတ်ဆွဲပါ"
 }

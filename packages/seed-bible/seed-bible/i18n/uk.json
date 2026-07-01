@@ -175,7 +175,6 @@
   "upload-settings": "Налаштування завантаження",
   "uploading-settings": "Завантаження налаштувань...",
   "search": "Пошук",
-
   "theme-and-text": "Тема та текст",
   "go-to-all-settings": "Перейти до всіх налаштувань",
   "more": "Більше",
@@ -187,7 +186,6 @@
   "bible": "Біблія",
   "add-verse": "Додати вірш",
   "add": "Додати",
-
   "category-options": "Параметри папки",
   "rename": "Перейменувати",
   "delete": "Видалити",
@@ -236,7 +234,6 @@
   "social-title": "Прочитайте {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Нова папка",
   "chapter-navigation": "Навігація по розділах",
-
   "tutorial.skip": "Пропустити",
   "tutorial.optOut": "Не показувати навчальні посібники",
   "tutorial.back": "Назад",
@@ -261,7 +258,6 @@
   "search-languages": "Пошук мов...",
   "no-languages-found": "Мови не знайдено",
   "today-coming-soon": "Сьогоднішній екран з'явиться незабаром",
-
   "link-to-join-shared-session-copied": "Посилання для приєднання до спільного сеансу скопійовано до буфера обміну",
   "anonymous": "Анонім",
   "no-chat-messages": "Поки що немає повідомлень",
@@ -309,6 +305,13 @@
   "inactive": "Неактивний",
   "available": "Доступно",
   "everyone": "Усі",
-  "link-to-join-shared-session-copied": "Посилання для приєднання до спільного сеансу скопійовано до буфера обміну",
-  "copied-translation-share-link": "Скопійоване посилання для обміну перекладом"
+  "copied-translation-share-link": "Скопійоване посилання для обміну перекладом",
+  "chat-x-joined": "{{name}} приєднався(лася)",
+  "chat-x-and-x-joined": "{{first}} та {{second}} приєдналися",
+  "chat-x-and-count-joined": "{{name}} та ще {{count}} інших приєдналися",
+  "chat-x-and-count-joined_one": "{{name}} та ще один користувач приєдналися",
+  "chat-x-and-count-joined_other": "{{name}} та ще {{count}} інших приєдналися",
+  "open-chat": "Відкрити чат",
+  "less": "Менше",
+  "swipe-up-more": "Проведіть пальцем угору, щоб переглянути більше"
 }

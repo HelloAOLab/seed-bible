@@ -111,7 +111,6 @@
   "toolbar": "Verktygsfält",
   "extensions": "Tillägg",
   "display": "Visa",
-
   "theme-and-text": "Tema och text",
   "go-to-all-settings": "Gå till alla inställningar",
   "keep-screen-awake": "Håll skärmen vaken",
@@ -186,7 +185,6 @@
   "bible": "Bibeln",
   "add-verse": "Lägg till vers",
   "add": "Tillägga",
-
   "category-options": "Mappalternativ",
   "rename": "Döpa om",
   "delete": "Radera",
@@ -236,7 +234,6 @@
   "social-title": "Läs {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Ny mapp",
   "chapter-navigation": "Kapitelnavigering",
-
   "tutorial.skip": "Hoppa",
   "tutorial.optOut": "Visa inte handledningar",
   "tutorial.back": "Tillbaka",
@@ -261,7 +258,6 @@
   "search-languages": "Sök språk...",
   "no-languages-found": "Inga språk hittades",
   "today-coming-soon": "Dagens skärm kommer snart",
-
   "link-to-join-shared-session-copied": "En länk för att ansluta till den delade sessionen kopierades till ditt urklipp",
   "anonymous": "Anonym",
   "no-chat-messages": "Inga meddelanden ännu",
@@ -309,6 +305,13 @@
   "inactive": "Inaktiv",
   "available": "Tillgänglig",
   "everyone": "Alla",
-  "link-to-join-shared-session-copied": "En länk för att ansluta till den delade sessionen kopierades till ditt urklipp",
-  "copied-translation-share-link": "Kopierad länk för delning av översättning"
+  "copied-translation-share-link": "Kopierad länk för delning av översättning",
+  "chat-x-joined": "{{name}} gick med",
+  "chat-x-and-x-joined": "{{first}} och {{second}} gick med",
+  "chat-x-and-count-joined": "{{name}} och {{count}} andra har gått med",
+  "chat-x-and-count-joined_one": "{{name}} och en annan gick med",
+  "chat-x-and-count-joined_other": "{{name}} och {{count}} andra har gått med",
+  "open-chat": "Öppna chatten",
+  "less": "Mindre",
+  "swipe-up-more": "Svep uppåt för att se mer"
 }

@@ -175,7 +175,6 @@
   "upload-settings": "Mipangilio ya kupakia",
   "uploading-settings": "Inapakia mipangilio...",
   "search": "Tafuta",
-
   "theme-and-text": "Mandhari na maandishi",
   "go-to-all-settings": "Nenda kwenye mipangilio yote",
   "more": "Zaidi",
@@ -187,7 +186,6 @@
   "bible": "Biblia",
   "add-verse": "Ongeza mstari",
   "add": "Ongeza",
-
   "category-options": "Chaguo za folda",
   "rename": "Badilisha jina",
   "delete": "Futa",
@@ -236,7 +234,6 @@
   "social-title": "Soma {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Folda mpya",
   "chapter-navigation": "Urambazaji wa sura",
-
   "tutorial.skip": "Ruka",
   "tutorial.optOut": "Usionyeshe mafunzo",
   "tutorial.back": "Rudi",
@@ -261,7 +258,6 @@
   "search-languages": "Tafuta lugha...",
   "no-languages-found": "Hakuna lugha zilizopatikana",
   "today-coming-soon": "Skrini ya leo inakuja hivi karibuni",
-
   "link-to-join-shared-session-copied": "Kiungo cha kujiunga na kipindi kilichoshirikiwa kimenakiliwa kwenye ubao wako wa kunakili",
   "anonymous": "Mtu Asiyejulikana",
   "no-chat-messages": "Hakuna ujumbe bado",
@@ -309,6 +305,13 @@
   "inactive": "Haitumiki",
   "available": "Inapatikana",
   "everyone": "Kila mtu",
-  "link-to-join-shared-session-copied": "Kiungo cha kujiunga na kipindi kilichoshirikiwa kimenakiliwa kwenye ubao wako wa kunakili",
-  "copied-translation-share-link": "Kiungo cha kushiriki tafsiri kimenakiliwa"
+  "copied-translation-share-link": "Kiungo cha kushiriki tafsiri kimenakiliwa",
+  "chat-x-joined": "{{name}} amejiunga",
+  "chat-x-and-x-joined": "{{first}} na {{second}} walijiunga",
+  "chat-x-and-count-joined": "{{name}} na wengine {{count}} walijiunga",
+  "chat-x-and-count-joined_one": "{{name}} na mwingine mmoja walijiunga",
+  "chat-x-and-count-joined_other": "{{name}} na wengine {{count}} walijiunga",
+  "open-chat": "Fungua gumzo",
+  "less": "Kidogo",
+  "swipe-up-more": "Telezesha kidole juu ili kuona zaidi"
 }

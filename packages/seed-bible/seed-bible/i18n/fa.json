@@ -175,7 +175,6 @@
   "upload-settings": "تنظیمات آپلود",
   "uploading-settings": "تنظیمات در حال بارگذاری...",
   "search": "جستجو",
-
   "theme-and-text": "موضوع و متن",
   "go-to-all-settings": "به همه تنظیمات بروید",
   "more": "بیشتر",
@@ -187,7 +186,6 @@
   "bible": "کتاب مقدس",
   "add-verse": "اضافه کردن آیه",
   "add": "اضافه کردن",
-
   "category-options": "گزینه‌های پوشه",
   "rename": "تغییر نام",
   "delete": "حذف",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}} را بخوانید",
   "new-bookmark-folder": "پوشه جدید",
   "chapter-navigation": "پیمایش فصل",
-
   "tutorial.skip": "پرش",
   "tutorial.optOut": "آموزش‌ها را نشان ندهید",
   "tutorial.back": "برگشت",
@@ -261,7 +258,6 @@
   "search-languages": "جستجوی زبان‌ها...",
   "no-languages-found": "هیچ زبانی یافت نشد",
   "today-coming-soon": "صفحه نمایش امروز به زودی منتشر می‌شود",
-
   "link-to-join-shared-session-copied": "پیوندی برای پیوستن به جلسه مشترک در کلیپ‌بورد شما کپی شد",
   "anonymous": "ناشناس",
   "no-chat-messages": "هنوز پیامی ارسال نشده است",
@@ -309,6 +305,13 @@
   "inactive": "غیرفعال",
   "available": "موجود است",
   "everyone": "همه",
-  "link-to-join-shared-session-copied": "پیوندی برای پیوستن به جلسه مشترک در کلیپ‌بورد شما کپی شد",
-  "copied-translation-share-link": "لینک اشتراک‌گذاری ترجمه کپی شد"
+  "copied-translation-share-link": "لینک اشتراک‌گذاری ترجمه کپی شد",
+  "chat-x-joined": "{{name}} پیوست",
+  "chat-x-and-x-joined": "{{first}} و {{second}} به هم پیوستند",
+  "chat-x-and-count-joined": "{{name}} و {{count}} نفر دیگر به ما پیوستند",
+  "chat-x-and-count-joined_one": "{{name}} و یک نفر دیگر به ما ملحق شدند",
+  "chat-x-and-count-joined_other": "{{name}} و {{count}} نفر دیگر به ما پیوستند",
+  "open-chat": "چت را باز کنید",
+  "less": "کمتر",
+  "swipe-up-more": "برای مشاهده موارد بیشتر، صفحه را به بالا بکشید"
 }

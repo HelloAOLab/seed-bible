@@ -111,7 +111,6 @@
   "toolbar": "Shiriti i veglave",
   "extensions": "Zgjerime",
   "display": "Shfaq",
-
   "theme-and-text": "Tema dhe teksti",
   "go-to-all-settings": "Shko te të gjitha cilësimet",
   "keep-screen-awake": "Mbaje ekranin zgjuar",
@@ -186,7 +185,6 @@
   "bible": "Bibla",
   "add-verse": "Shto varg",
   "add": "Shto",
-
   "category-options": "Opsionet e dosjeve",
   "rename": "Riemërto",
   "delete": "Fshij",
@@ -236,7 +234,6 @@
   "social-title": "Lexo {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Dosje e re",
   "chapter-navigation": "Navigimi i kapitullit",
-
   "tutorial.skip": "Kapërce",
   "tutorial.optOut": "Mos shfaq tutoriale",
   "tutorial.back": "Mbrapa",
@@ -261,7 +258,6 @@
   "search-languages": "Kërko gjuhë...",
   "no-languages-found": "Nuk u gjet asnjë gjuhë",
   "today-coming-soon": "Ekrani i sotëm vjen së shpejti",
-
   "link-to-join-shared-session-copied": "Një lidhje për t'u bashkuar me sesionin e përbashkët u kopjua në kujtesën tënde të përkohshme",
   "anonymous": "Anonim",
   "no-chat-messages": "Nuk ka ende mesazhe",
@@ -309,6 +305,13 @@
   "inactive": "Joaktiv",
   "available": "Në dispozicion",
   "everyone": "Të gjithë",
-  "link-to-join-shared-session-copied": "Një lidhje për t'u bashkuar me sesionin e përbashkët u kopjua në kujtesën tënde të përkohshme",
-  "copied-translation-share-link": "Lidhja e ndarjes së përkthimit u kopjua"
+  "copied-translation-share-link": "Lidhja e ndarjes së përkthimit u kopjua",
+  "chat-x-joined": "{{name}} u bashkua",
+  "chat-x-and-x-joined": "{{first}} dhe {{second}} u bashkuan",
+  "chat-x-and-count-joined": "{{name}} dhe {{count}} të tjerë u bashkuan",
+  "chat-x-and-count-joined_one": "{{name}} dhe një tjetër u bashkuan",
+  "chat-x-and-count-joined_other": "{{name}} dhe {{count}} të tjerë u bashkuan",
+  "open-chat": "Hap bisedën",
+  "less": "Më pak",
+  "swipe-up-more": "Rrëshqit lart për të parë më shumë"
 }

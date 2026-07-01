@@ -175,7 +175,6 @@
   "upload-settings": "إعدادات التحميل",
   "uploading-settings": "جارٍ تحميل الإعدادات...",
   "search": "يبحث",
-
   "theme-and-text": "القالب والنص",
   "go-to-all-settings": "انتقل إلى جميع الإعدادات",
   "more": "أكثر",
@@ -187,7 +186,6 @@
   "bible": "الكتاب المقدس",
   "add-verse": "أضف الآية",
   "add": "يضيف",
-
   "category-options": "خيارات المجلد",
   "rename": "إعادة تسمية",
   "delete": "يمسح",
@@ -236,7 +234,6 @@
   "social-title": "اقرأ {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "مجلد جديد",
   "chapter-navigation": "التنقل بين الفصول",
-
   "tutorial.skip": "يتخطى",
   "tutorial.optOut": "لا تعرض دروسًا تعليمية",
   "tutorial.back": "خلف",
@@ -263,8 +260,6 @@
   "today-coming-soon": "شاشة اليوم قادمة قريباً",
   "link-to-join-shared-session-copied": "تم نسخ رابط للانضمام إلى الجلسة المشتركة إلى حافظتك",
   "copied-translation-share-link": "تم نسخ رابط مشاركة الترجمة",
-
-  "link-to-join-shared-session-copied": "تم نسخ رابط للانضمام إلى الجلسة المشتركة إلى حافظتك",
   "anonymous": "مجهول",
   "no-chat-messages": "لم يتم إرسال أي رسالة بعد",
   "start-conversation": "ابدأ محادثة",
@@ -310,5 +305,13 @@
   "active": "نشيط",
   "inactive": "غير نشط",
   "available": "متاح",
-  "everyone": "الجميع"
+  "everyone": "الجميع",
+  "chat-x-joined": "انضم {{name}}",
+  "chat-x-and-x-joined": "{{first}} و {{second}} انضما",
+  "chat-x-and-count-joined": "انضم {{name}} و {{count}} آخرون",
+  "chat-x-and-count-joined_one": "انضم {{name}} وشخص آخر",
+  "chat-x-and-count-joined_other": "انضم {{name}} و {{count}} آخرون",
+  "open-chat": "دردشة مفتوحة",
+  "less": "أقل",
+  "swipe-up-more": "اسحب لأعلى لعرض المزيد"
 }

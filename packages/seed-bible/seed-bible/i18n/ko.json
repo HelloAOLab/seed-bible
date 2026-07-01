@@ -175,7 +175,6 @@
   "upload-settings": "업로드 설정",
   "uploading-settings": "설정 업로드 중...",
   "search": "찾다",
-
   "theme-and-text": "테마 및 텍스트",
   "go-to-all-settings": "모든 설정으로 이동",
   "more": "더",
@@ -187,7 +186,6 @@
   "bible": "성경",
   "add-verse": "구절을 추가하세요",
   "add": "추가하다",
-
   "category-options": "폴더 옵션",
   "rename": "이름 변경",
   "delete": "삭제",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}} 를 읽으세요.",
   "new-bookmark-folder": "새 폴더",
   "chapter-navigation": "챕터 탐색",
-
   "tutorial.skip": "건너뛰다",
   "tutorial.optOut": "튜토리얼을 보여주지 마세요",
   "tutorial.back": "뒤쪽에",
@@ -261,7 +258,6 @@
   "search-languages": "검색 언어...",
   "no-languages-found": "언어를 찾을 수 없습니다.",
   "today-coming-soon": "오늘 화면이 곧 나옵니다.",
-
   "link-to-join-shared-session-copied": "공유 세션에 참여할 수 있는 링크가 클립보드에 복사되었습니다.",
   "anonymous": "익명의",
   "no-chat-messages": "아직 메시지가 없습니다.",
@@ -309,6 +305,13 @@
   "inactive": "비활성화됨",
   "available": "사용 가능",
   "everyone": "모든 사람",
-  "link-to-join-shared-session-copied": "공유 세션에 참여할 수 있는 링크가 클립보드에 복사되었습니다.",
-  "copied-translation-share-link": "복사된 번역 공유 링크"
+  "copied-translation-share-link": "복사된 번역 공유 링크",
+  "chat-x-joined": "{{name}} 님이 참여했습니다",
+  "chat-x-and-x-joined": "{{first}} 와 {{second}} 가 합류했습니다.",
+  "chat-x-and-count-joined": "{{name}} 과 {{count}} 명이 함께했습니다.",
+  "chat-x-and-count-joined_one": "{{name}} 과 다른 한 명이 합류했습니다.",
+  "chat-x-and-count-joined_other": "{{name}} 과 {{count}} 명이 함께했습니다.",
+  "open-chat": "채팅방 열기",
+  "less": "더 적은",
+  "swipe-up-more": "더 보려면 위로 스와이프하세요."
 }

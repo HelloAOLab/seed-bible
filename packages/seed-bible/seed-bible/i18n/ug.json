@@ -175,7 +175,6 @@
   "upload-settings": "يۈكلەش تەڭشەكلىرى",
   "uploading-settings": "تەڭشەكلەر يۈكلەنمەكتە...",
   "search": "ئىزدەش",
-
   "theme-and-text": "تېما ۋە تېكىست",
   "go-to-all-settings": "بارلىق تەڭشەكلەرگە كىرىڭ",
   "more": "تېخىمۇ كۆپ",
@@ -187,7 +186,6 @@
   "bible": "ئىنجىل",
   "add-verse": "ئايەت قوشۇش",
   "add": "قوشۇش",
-
   "category-options": "قىسقۇچ تاللانمىلىرى",
   "rename": "قايتا ئىسىم قويۇش",
   "delete": "ئۆچۈرۈش",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}} نى ئوقۇڭ",
   "new-bookmark-folder": "يېڭى قىسقۇچ",
   "chapter-navigation": "باب يول باشلاش",
-
   "tutorial.skip": "ئاتلاپ ئۆتۈش",
   "tutorial.optOut": "دەرسلىكلەرنى كۆرسەتمەڭ",
   "tutorial.back": "ئارقىغا",
@@ -261,7 +258,6 @@
   "search-languages": "تىللارنى ئىزدەش...",
   "no-languages-found": "تىل تېپىلمىدى",
   "today-coming-soon": "بۈگۈنكى ئېكران تېزلا كېلىدۇ",
-
   "link-to-join-shared-session-copied": "ئورتاقلىشىش يىغىنىغا قاتنىشىش ئۇلىنىشى سىزنىڭ چاپلاش تاختىسىڭىزغا كۆچۈرۈلدى",
   "anonymous": "نامسىز",
   "no-chat-messages": "ھازىرغىچە ئۇچۇر يوق",
@@ -309,6 +305,13 @@
   "inactive": "ھەرىكەتسىز",
   "available": "بار",
   "everyone": "ھەممەيلەن",
-  "link-to-join-shared-session-copied": "ئورتاقلىشىش يىغىنىغا قاتنىشىش ئۇلىنىشى سىزنىڭ چاپلاش تاختىسىڭىزغا كۆچۈرۈلدى",
-  "copied-translation-share-link": "تەرجىمە ھەمبەھىرلەش ئۇلىنىشى كۆچۈرۈلدى"
+  "copied-translation-share-link": "تەرجىمە ھەمبەھىرلەش ئۇلىنىشى كۆچۈرۈلدى",
+  "chat-x-joined": "{{name}} قوشۇلدى",
+  "chat-x-and-x-joined": "{{first}} ۋە {{second}} قوشۇلدى",
+  "chat-x-and-count-joined": "{{name}} ۋە يەنە {{count}} ئادەم قوشۇلدى",
+  "chat-x-and-count-joined_one": "{{name}} ۋە يەنە بىر ئادەم قوشۇلدى",
+  "chat-x-and-count-joined_other": "{{name}} ۋە يەنە {{count}} ئادەم قوشۇلدى",
+  "open-chat": "پاراڭنى ئېچىڭ",
+  "less": "ئازراق",
+  "swipe-up-more": "كۆپرەك كۆرۈش ئۈچۈن يۇقىرىغا سۈرۈڭ"
 }

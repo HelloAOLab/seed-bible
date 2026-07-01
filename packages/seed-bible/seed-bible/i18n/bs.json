@@ -111,7 +111,6 @@
   "toolbar": "Alatna traka (Toolbar)",
   "extensions": "Ekstenzije",
   "display": "Prikaz",
-
   "theme-and-text": "Tema i tekst",
   "go-to-all-settings": "Idi na sva podešavanja",
   "keep-screen-awake": "Održavanje ekrana aktivnim",
@@ -186,7 +185,6 @@
   "bible": "Biblija",
   "add-verse": "Dodaj stih",
   "add": "Dodaj",
-
   "category-options": "Opcije mape",
   "rename": "Preimenuj",
   "delete": "Izbriši",
@@ -236,7 +234,6 @@
   "social-title": "Pročitajte {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nova mapa",
   "chapter-navigation": "Navigacija po poglavljima",
-
   "tutorial.skip": "Preskoči",
   "tutorial.optOut": "Ne prikazuj tutorijale",
   "tutorial.back": "Nazad",
@@ -261,7 +258,6 @@
   "search-languages": "Pretraživanje jezika...",
   "no-languages-found": "Nije pronađen nijedan jezik",
   "today-coming-soon": "Današnji ekran uskoro stiže",
-
   "link-to-join-shared-session-copied": "Link za pridruživanje dijeljenoj sesiji je kopiran u vaš međuspremnik",
   "anonymous": "Anonimno",
   "no-chat-messages": "Još nema poruka",
@@ -309,6 +305,13 @@
   "inactive": "Neaktivno",
   "available": "Dostupno",
   "everyone": "Svi",
-  "link-to-join-shared-session-copied": "Link za pridruživanje dijeljenoj sesiji je kopiran u vaš međuspremnik",
-  "copied-translation-share-link": "Link za dijeljenje prijevoda je kopiran"
+  "copied-translation-share-link": "Link za dijeljenje prijevoda je kopiran",
+  "chat-x-joined": "{{name}} se pridružio/la",
+  "chat-x-and-x-joined": "{{first}} i {{second}} su se pridružili",
+  "chat-x-and-count-joined": "{{name}} i još {{count}} drugih su se pridružili",
+  "chat-x-and-count-joined_one": "{{name}} i još jedna osoba su se pridružili",
+  "chat-x-and-count-joined_other": "{{name}} i još {{count}} drugih su se pridružili",
+  "open-chat": "Otvori chat",
+  "less": "Manje",
+  "swipe-up-more": "Prevucite prstom prema gore da biste vidjeli više"
 }

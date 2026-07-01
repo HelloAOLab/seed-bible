@@ -111,7 +111,6 @@
   "toolbar": "Barra d'eines",
   "extensions": "Extensions",
   "display": "Pantalla",
-
   "theme-and-text": "Tema i text",
   "go-to-all-settings": "Ves a tots els paràmetres",
   "keep-screen-awake": "Mantenir la pantalla activa",
@@ -186,7 +185,6 @@
   "bible": "Bíblia",
   "add-verse": "Afegeix un vers",
   "add": "Afegeix",
-
   "category-options": "Opcions de carpeta",
   "rename": "Canvia el nom",
   "delete": "Suprimeix",
@@ -236,7 +234,6 @@
   "social-title": "Llegeix {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nova carpeta",
   "chapter-navigation": "Navegació per capítols",
-
   "tutorial.skip": "Omet",
   "tutorial.optOut": "No mostrar tutorials",
   "tutorial.back": "Enrere",
@@ -261,7 +258,6 @@
   "search-languages": "Cerca idiomes...",
   "no-languages-found": "No s'han trobat idiomes",
   "today-coming-soon": "La pantalla d'avui arribarà aviat",
-
   "link-to-join-shared-session-copied": "S'ha copiat al porta-retalls un enllaç per unir-se a la sessió compartida.",
   "anonymous": "Anònim",
   "no-chat-messages": "Encara no hi ha missatges",
@@ -309,6 +305,13 @@
   "inactive": "Inactiu",
   "available": "Disponible",
   "everyone": "Tothom",
-  "link-to-join-shared-session-copied": "S'ha copiat al porta-retalls un enllaç per unir-se a la sessió compartida.",
-  "copied-translation-share-link": "Enllaç per compartir la traducció copiat"
+  "copied-translation-share-link": "Enllaç per compartir la traducció copiat",
+  "chat-x-joined": "{{name}} s'ha unit a aquest grup",
+  "chat-x-and-x-joined": "{{first}} i {{second}} s'han unit",
+  "chat-x-and-count-joined": "{{name}} i {{count}} persones més s'hi han unit",
+  "chat-x-and-count-joined_one": "{{name}} i una altra persona s'hi han unit",
+  "chat-x-and-count-joined_other": "{{name}} i {{count}} persones més s'hi han unit",
+  "open-chat": "Obre el xat",
+  "less": "Menys",
+  "swipe-up-more": "Llisca cap amunt per veure'n més"
 }

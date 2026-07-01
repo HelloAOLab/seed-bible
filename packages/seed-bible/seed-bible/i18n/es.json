@@ -176,7 +176,6 @@
   "upload-settings": "Configuración de carga",
   "uploading-settings": "Cargando configuración...",
   "search": "Buscar",
-
   "theme-and-text": "Tema y texto",
   "go-to-all-settings": "Ir a todas las configuraciones",
   "more": "Más",
@@ -188,7 +187,6 @@
   "bible": "Biblia",
   "add-verse": "Añadir verso",
   "add": "Agregar",
-
   "category-options": "Opciones de carpeta",
   "rename": "Rebautizar",
   "delete": "Borrar",
@@ -236,7 +234,6 @@
   "social-title": "Lee {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nueva carpeta",
   "chapter-navigation": "Navegación de capítulos",
-
   "tutorial.skip": "Saltar",
   "tutorial.optOut": "No muestres tutoriales",
   "tutorial.back": "Atrás",
@@ -261,7 +258,6 @@
   "search-languages": "Idiomas de búsqueda...",
   "no-languages-found": "No se encontraron idiomas",
   "today-coming-soon": "La pantalla de hoy estará disponible pronto.",
-
   "link-to-join-shared-session-copied": "Se ha copiado en el portapapeles un enlace para unirse a la sesión compartida.",
   "anonymous": "Anónimo",
   "no-chat-messages": "Aún no hay mensajes.",
@@ -309,6 +305,13 @@
   "inactive": "Inactivo",
   "available": "Disponible",
   "everyone": "Todos",
-  "link-to-join-shared-session-copied": "Se ha copiado en el portapapeles un enlace para unirse a la sesión compartida.",
-  "copied-translation-share-link": "Enlace para compartir la traducción copiada"
+  "copied-translation-share-link": "Enlace para compartir la traducción copiada",
+  "chat-x-joined": "{{name}} se unió",
+  "chat-x-and-x-joined": "{{first}} y {{second}} se unieron",
+  "chat-x-and-count-joined": "{{name}} y {{count}} otros se unieron",
+  "chat-x-and-count-joined_one": "{{name}} y otro se unieron",
+  "chat-x-and-count-joined_other": "{{name}} y {{count}} otros se unieron",
+  "open-chat": "Abrir chat",
+  "less": "Menos",
+  "swipe-up-more": "Desliza hacia arriba para ver más."
 }

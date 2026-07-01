@@ -111,7 +111,6 @@
   "toolbar": "Панэль інструментаў",
   "extensions": "Пашырэнні",
   "display": "Дысплей",
-
   "theme-and-text": "Тэма і тэкст",
   "go-to-all-settings": "Перайсці да ўсіх налад",
   "keep-screen-awake": "Трымаць экран у актыўным рэжыме",
@@ -186,7 +185,6 @@
   "bible": "Біблія",
   "add-verse": "Дадаць верш",
   "add": "Дадаць",
-
   "category-options": "Параметры тэчкі",
   "rename": "Перайменаваць",
   "delete": "Выдаліць",
@@ -236,7 +234,6 @@
   "social-title": "Прачытайце {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Новая папка",
   "chapter-navigation": "Навігацыя па раздзелах",
-
   "tutorial.skip": "Прапусціць",
   "tutorial.optOut": "Не паказваць падручнікі",
   "tutorial.back": "Назад",
@@ -263,8 +260,6 @@
   "today-coming-soon": "Сённяшні экран хутка з'явіцца",
   "link-to-join-shared-session-copied": "Спасылка для далучэння да агульнага сеансу была скапіравана ў буфер абмену",
   "copied-translation-share-link": "Спасылка для абмену перакладам скапіравана",
-
-  "link-to-join-shared-session-copied": "Спасылка для далучэння да агульнага сеансу была скапіравана ў буфер абмену",
   "anonymous": "Ананімны",
   "no-chat-messages": "Пакуль няма паведамленняў",
   "start-conversation": "Пачаць размову",
@@ -310,5 +305,13 @@
   "active": "Актыўны",
   "inactive": "Неактыўны",
   "available": "Даступна",
-  "everyone": "Усе"
+  "everyone": "Усе",
+  "chat-x-joined": "{{name}} далучыўся(-лася)",
+  "chat-x-and-x-joined": "{{first}} і {{second}} далучыліся",
+  "chat-x-and-count-joined": "{{name}} і яшчэ {{count}} чалавек далучыліся",
+  "chat-x-and-count-joined_one": "{{name}} і яшчэ адзін чалавек далучыліся",
+  "chat-x-and-count-joined_other": "{{name}} і яшчэ {{count}} чалавек далучыліся",
+  "open-chat": "Адкрыць чат",
+  "less": "Менш",
+  "swipe-up-more": "Правядзіце пальцам уверх, каб убачыць больш"
 }

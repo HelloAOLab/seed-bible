@@ -111,7 +111,6 @@
   "toolbar": "Alətlər paneli",
   "extensions": "Genişləndirmələr",
   "display": "Ekran",
-
   "theme-and-text": "Mövzu və mətn",
   "go-to-all-settings": "Bütün parametrlərə keçin",
   "keep-screen-awake": "Ekranı oyaq saxlayın",
@@ -186,7 +185,6 @@
   "bible": "Müqəddəs Kitab",
   "add-verse": "Ayə əlavə edin",
   "add": "Əlavə et",
-
   "category-options": "Qovluq seçimləri",
   "rename": "Adını dəyiş",
   "delete": "Sil",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}} oxuyun",
   "new-bookmark-folder": "Yeni qovluq",
   "chapter-navigation": "Fəsil naviqasiyası",
-
   "tutorial.skip": "Keçin",
   "tutorial.optOut": "Dərslikləri göstərməyin",
   "tutorial.back": "Geri",
@@ -263,8 +260,6 @@
   "today-coming-soon": "Bugünkü ekran tezliklə gəlir",
   "link-to-join-shared-session-copied": "Paylaşılan sessiyaya qoşulmaq üçün link panoya kopyalandı",
   "copied-translation-share-link": "Tərcümə paylaşma linki kopyalandı",
-
-  "link-to-join-shared-session-copied": "Paylaşılan sessiyaya qoşulmaq üçün link panoya kopyalandı",
   "anonymous": "Anonim",
   "no-chat-messages": "Hələ mesaj yoxdur",
   "start-conversation": "Söhbətə başlayın",
@@ -310,5 +305,13 @@
   "active": "Aktiv",
   "inactive": "Qeyri-aktiv",
   "available": "Mövcuddur",
-  "everyone": "Hər kəs"
+  "everyone": "Hər kəs",
+  "chat-x-joined": "{{name}} qoşuldu",
+  "chat-x-and-x-joined": "{{first}} və {{second}} qoşuldu",
+  "chat-x-and-count-joined": "{{name}} və {{count}} nəfər qoşuldu",
+  "chat-x-and-count-joined_one": "{{name}} və daha bir nəfər qoşuldu",
+  "chat-x-and-count-joined_other": "{{name}} və {{count}} nəfər qoşuldu",
+  "open-chat": "Açıq söhbət",
+  "less": "Daha az",
+  "swipe-up-more": "Daha çoxunu görmək üçün yuxarı sürüşdürün"
 }

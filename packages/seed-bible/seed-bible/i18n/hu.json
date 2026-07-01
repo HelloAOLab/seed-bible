@@ -111,7 +111,6 @@
   "toolbar": "Eszköztár",
   "extensions": "Bővítmények",
   "display": "Kijelző",
-
   "theme-and-text": "Téma és szöveg",
   "go-to-all-settings": "Ugrás az összes beállításhoz",
   "keep-screen-awake": "Tartsa ébren a képernyőt",
@@ -186,7 +185,6 @@
   "bible": "Biblia",
   "add-verse": "Vers hozzáadása",
   "add": "Hozzáadás",
-
   "category-options": "Mappabeállítások",
   "rename": "Átnevezés",
   "delete": "Töröl",
@@ -236,7 +234,6 @@
   "social-title": "Olvasd el {{bookName}} {{chapterNumber}} könyvet",
   "new-bookmark-folder": "Új mappa",
   "chapter-navigation": "Fejezet navigáció",
-
   "tutorial.skip": "Kihagyás",
   "tutorial.optOut": "Ne mutasson oktatóanyagokat",
   "tutorial.back": "Vissza",
@@ -261,7 +258,6 @@
   "search-languages": "Nyelvek keresése...",
   "no-languages-found": "Nem található nyelv",
   "today-coming-soon": "Hamarosan érkezik a mai képernyő",
-
   "link-to-join-shared-session-copied": "A megosztott munkamenethez való csatlakozás linkjét átmásoltuk a vágólapra.",
   "anonymous": "Névtelen",
   "no-chat-messages": "Még nincsenek üzenetek",
@@ -309,6 +305,13 @@
   "inactive": "Inaktív",
   "available": "Elérhető",
   "everyone": "Mindenki",
-  "link-to-join-shared-session-copied": "A megosztott munkamenethez való csatlakozás linkjét átmásoltuk a vágólapra.",
-  "copied-translation-share-link": "Fordítás megosztási linkje másolva"
+  "copied-translation-share-link": "Fordítás megosztási linkje másolva",
+  "chat-x-joined": "{{name}} csatlakozott",
+  "chat-x-and-x-joined": "{{first}} és {{second}} csatlakoztak",
+  "chat-x-and-count-joined": "{{name}} és {{count}} másik csatlakozott",
+  "chat-x-and-count-joined_one": "{{name}} és egy másik személy csatlakozott",
+  "chat-x-and-count-joined_other": "{{name}} és {{count}} másik csatlakozott",
+  "open-chat": "Csevegés megnyitása",
+  "less": "Kevesebb",
+  "swipe-up-more": "Húzza felfelé a továbbiak megtekintéséhez"
 }

@@ -111,7 +111,6 @@
   "toolbar": "टूलबार",
   "extensions": "विस्तार",
   "display": "प्रदर्शन",
-
   "theme-and-text": "थीम आणि मजकूर",
   "go-to-all-settings": "सर्व सेटिंग्जवर जा",
   "keep-screen-awake": "स्क्रीन चालू ठेवा",
@@ -186,7 +185,6 @@
   "bible": "बायबल",
   "add-verse": "श्लोक जोडा",
   "add": "जोडा",
-
   "category-options": "फोल्डर पर्याय",
   "rename": "नाव बदला",
   "delete": "हटवा",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}} वाचा.",
   "new-bookmark-folder": "नवीन फोल्डर",
   "chapter-navigation": "प्रकरण नेव्हिगेशन",
-
   "tutorial.skip": "वगळा",
   "tutorial.optOut": "ट्यूटोरियल दाखवू नका",
   "tutorial.back": "मागे",
@@ -261,7 +258,6 @@
   "search-languages": "भाषा शोधा...",
   "no-languages-found": "कोणतीही भाषा आढळली नाही",
   "today-coming-soon": "आज स्क्रीन लवकरच येत आहे",
-
   "link-to-join-shared-session-copied": "सामायिक सत्रात सामील होण्याची लिंक तुमच्या क्लिपबोर्डवर कॉपी केली आहे.",
   "anonymous": "अनामिक",
   "no-chat-messages": "अद्याप कोणताही संदेश नाही",
@@ -309,6 +305,13 @@
   "inactive": "निष्क्रिय",
   "available": "उपलब्ध",
   "everyone": "प्रत्येकजण",
-  "link-to-join-shared-session-copied": "सामायिक सत्रात सामील होण्याची लिंक तुमच्या क्लिपबोर्डवर कॉपी केली आहे.",
-  "copied-translation-share-link": "कॉपी केलेल्या भाषांतराची शेअर लिंक"
+  "copied-translation-share-link": "कॉपी केलेल्या भाषांतराची शेअर लिंक",
+  "chat-x-joined": "{{name}} सामील झाले",
+  "chat-x-and-x-joined": "{{first}} आणि {{second}} सामील झाले",
+  "chat-x-and-count-joined": "{{name}} आणि {{count}} इतर जण सामील झाले.",
+  "chat-x-and-count-joined_one": "{{name}} आणि आणखी एक जण सामील झाले",
+  "chat-x-and-count-joined_other": "{{name}} आणि {{count}} इतर जण सामील झाले.",
+  "open-chat": "चॅट उघडा",
+  "less": "कमी",
+  "swipe-up-more": "अधिक पाहण्यासाठी वर स्वाइप करा"
 }

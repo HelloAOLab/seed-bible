@@ -175,7 +175,6 @@
   "upload-settings": "ናይ ምጽዓን ቅጥዕታት",
   "uploading-settings": "ቅጥዕታት ምጽዓን...",
   "search": "ምድላይ",
-
   "theme-and-text": "ቴማ & ጽሑፍ",
   "go-to-all-settings": "ናብ ኩሉ ቅጥዕታት ኪድ",
   "more": "ቡዙሕ",
@@ -187,7 +186,6 @@
   "bible": "መጽሓፍ ቅዱስ",
   "add-verse": "ጥቕሲ ወስኸሉ።",
   "add": "ምድማር",
-
   "category-options": "ናይ ኣቃፊራ ኣማራጺታት",
   "rename": "ዳግማይ ስም ምቕያር",
   "delete": "ምድምሳስ",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}} ኣንብብ",
   "new-bookmark-folder": "ሓድሽ ማህደር",
   "chapter-navigation": "ምዕራፍ ምድህሳስ",
-
   "tutorial.skip": "ዝለል",
   "tutorial.optOut": "ትምህርቲ ኣይተርኢ",
   "tutorial.back": "ዝባን",
@@ -261,7 +258,6 @@
   "search-languages": "ቋንቋታት ድለዩ...",
   "no-languages-found": "ቋንቋታት ኣይተረኽበን።",
   "today-coming-soon": "ናይ ሎሚ ስክሪን ኣብ ቀረባ እዋን",
-
   "link-to-join-shared-session-copied": "ናብቲ ዝተኻፈለ ክፍለ ግዜ ንምጽንባር ዝሕግዝ ሊንክ ናብ ቅንጥብጣብ ሰሌዳኻ ተቐዲሑ",
   "anonymous": "ሽሙ ዘይተፈልጠ",
   "no-chat-messages": "ገና መልእኽቲ የለን",
@@ -309,6 +305,13 @@
   "inactive": "ዘይንጡፍ",
   "available": "ቅሩብ",
   "everyone": "ኩሉሰብ",
-  "link-to-join-shared-session-copied": "ናብቲ ዝተኻፈለ ክፍለ ግዜ ንምጽንባር ዝሕግዝ ሊንክ ናብ ቅንጥብጣብ ሰሌዳኻ ተቐዲሑ",
-  "copied-translation-share-link": "ዝተቐድሐ ትርጉም ሼር ሊንክ"
+  "copied-translation-share-link": "ዝተቐድሐ ትርጉም ሼር ሊንክ",
+  "chat-x-joined": "{{name}} ተጸንቢሩ",
+  "chat-x-and-x-joined": "{{first}} ን {{second}} ን ተጸንቢሮም እዮም።",
+  "chat-x-and-count-joined": "{{name}} ከምኡውን {{count}} ካልኦት ተጸንቢሮም እዮም።",
+  "chat-x-and-count-joined_one": "{{name}} ን ሓደ ካልእን ተጸንቢሩ",
+  "chat-x-and-count-joined_other": "{{name}} ከምኡውን {{count}} ካልኦት ተጸንቢሮም እዮም።",
+  "open-chat": "ክፉት ዕላል",
+  "less": "ዝወሓደ",
+  "swipe-up-more": "ተወሳኺ ንምርኣይ ንላዕሊ ስዋይፕ ግበር"
 }

@@ -111,7 +111,6 @@
   "toolbar": "Įrankių juosta",
   "extensions": "Plėtiniai",
   "display": "Ekranas",
-
   "theme-and-text": "Tema ir tekstas",
   "go-to-all-settings": "Eiti į visus nustatymus",
   "keep-screen-awake": "Palaikykite ekraną budrų",
@@ -186,7 +185,6 @@
   "bible": "Biblija",
   "add-verse": "Pridėti eilutę",
   "add": "Pridėti",
-
   "category-options": "Aplanko parinktys",
   "rename": "Pervardyti",
   "delete": "Ištrinti",
@@ -236,7 +234,6 @@
   "social-title": "Perskaitykite {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Naujas aplankas",
   "chapter-navigation": "Skyriaus navigacija",
-
   "tutorial.skip": "Praleisti",
   "tutorial.optOut": "Nerodyti mokymo programų",
   "tutorial.back": "Atgal",
@@ -261,7 +258,6 @@
   "search-languages": "Ieškoti kalbų...",
   "no-languages-found": "Nerasta jokių kalbų",
   "today-coming-soon": "Šiandienos ekranas netrukus pasirodys",
-
   "link-to-join-shared-session-copied": "Nuoroda prisijungti prie bendros sesijos buvo nukopijuota į jūsų iškarpinę",
   "anonymous": "Anonimas",
   "no-chat-messages": "Kol kas nėra pranešimų",
@@ -309,6 +305,13 @@
   "inactive": "Neaktyvus",
   "available": "Prieinama",
   "everyone": "Visi",
-  "link-to-join-shared-session-copied": "Nuoroda prisijungti prie bendros sesijos buvo nukopijuota į jūsų iškarpinę",
-  "copied-translation-share-link": "Nukopijuota vertimo bendrinimo nuoroda"
+  "copied-translation-share-link": "Nukopijuota vertimo bendrinimo nuoroda",
+  "chat-x-joined": "{{name}} prisijungė",
+  "chat-x-and-x-joined": "{{first}} ir {{second}} prisijungė",
+  "chat-x-and-count-joined": "Prisijungė {{name}} ir dar {{count}}",
+  "chat-x-and-count-joined_one": "{{name}} ir dar vienas asmuo prisijungė",
+  "chat-x-and-count-joined_other": "Prisijungė {{name}} ir dar {{count}}",
+  "open-chat": "Atidaryti pokalbį",
+  "less": "Mažiau",
+  "swipe-up-more": "Braukite aukštyn, kad pamatytumėte daugiau"
 }

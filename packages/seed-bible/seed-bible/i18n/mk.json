@@ -111,7 +111,6 @@
   "toolbar": "Лента со алатки",
   "extensions": "Екстензии",
   "display": "Приказ",
-
   "theme-and-text": "Тема и текст",
   "go-to-all-settings": "Одете на сите поставки",
   "keep-screen-awake": "Држете го екранот активен",
@@ -186,7 +185,6 @@
   "bible": "Библија",
   "add-verse": "Додај стих",
   "add": "Додај",
-
   "category-options": "Опции за папки",
   "rename": "Преименувај",
   "delete": "Избриши",
@@ -236,7 +234,6 @@
   "social-title": "Прочитај {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Нова папка",
   "chapter-navigation": "Навигација на поглавја",
-
   "tutorial.skip": "Прескокни",
   "tutorial.optOut": "Не прикажувај упатства",
   "tutorial.back": "Назад",
@@ -261,7 +258,6 @@
   "search-languages": "Пребарувај јазици...",
   "no-languages-found": "Не се пронајдени јазици",
   "today-coming-soon": "Денешниот екран доаѓа наскоро",
-
   "link-to-join-shared-session-copied": "Линк за приклучување кон споделената сесија е копиран во вашата табла со исечоци",
   "anonymous": "Анонимен",
   "no-chat-messages": "Сè уште нема пораки",
@@ -309,6 +305,13 @@
   "inactive": "Неактивен",
   "available": "Достапно",
   "everyone": "Секој",
-  "link-to-join-shared-session-copied": "Линк за приклучување кон споделената сесија е копиран во вашата табла со исечоци",
-  "copied-translation-share-link": "Копиран линк за споделување на преводот"
+  "copied-translation-share-link": "Копиран линк за споделување на преводот",
+  "chat-x-joined": "{{name}} се придружи",
+  "chat-x-and-x-joined": "{{first}} и {{second}} се придружија",
+  "chat-x-and-count-joined": "{{name}} и {{count}} други се придружија",
+  "chat-x-and-count-joined_one": "{{name}} и уште еден се придружија",
+  "chat-x-and-count-joined_other": "{{name}} и {{count}} други се придружија",
+  "open-chat": "Отвори разговор",
+  "less": "Помалку",
+  "swipe-up-more": "Повлечете нагоре за да видите повеќе"
 }

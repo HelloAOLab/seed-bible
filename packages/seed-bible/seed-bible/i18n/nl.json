@@ -111,7 +111,6 @@
   "toolbar": "Werkbalk",
   "extensions": "Uitbreidingen",
   "display": "Weergave",
-
   "theme-and-text": "Thema en tekst",
   "go-to-all-settings": "Ga naar alle instellingen",
   "keep-screen-awake": "Houd het scherm actief",
@@ -186,7 +185,6 @@
   "bible": "Bijbel",
   "add-verse": "Voeg een vers toe",
   "add": "Toevoegen",
-
   "category-options": "Mapopties",
   "rename": "Naam wijzigen",
   "delete": "Verwijderen",
@@ -236,7 +234,6 @@
   "social-title": "Lees {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nieuwe map",
   "chapter-navigation": "Hoofdstuknavigatie",
-
   "tutorial.skip": "Overslaan",
   "tutorial.optOut": "Toon geen tutorials",
   "tutorial.back": "Rug",
@@ -261,7 +258,6 @@
   "search-languages": "Zoektalen...",
   "no-languages-found": "Geen talen gevonden",
   "today-coming-soon": "Vandaag verschijnt het scherm binnenkort.",
-
   "link-to-join-shared-session-copied": "Een link om deel te nemen aan de gedeelde sessie is naar uw klembord gekopieerd.",
   "anonymous": "Anoniem",
   "no-chat-messages": "Nog geen berichten",
@@ -309,6 +305,13 @@
   "inactive": "Inactief",
   "available": "Beschikbaar",
   "everyone": "Iedereen",
-  "link-to-join-shared-session-copied": "Een link om deel te nemen aan de gedeelde sessie is naar uw klembord gekopieerd.",
-  "copied-translation-share-link": "Gekopieerde vertaling deellink"
+  "copied-translation-share-link": "Gekopieerde vertaling deellink",
+  "chat-x-joined": "{{name}} is lid geworden",
+  "chat-x-and-x-joined": "{{first}} en {{second}} hebben zich aangesloten",
+  "chat-x-and-count-joined": "{{name}} en {{count}} anderen sloten zich aan",
+  "chat-x-and-count-joined_one": "{{name}} en een ander hebben zich aangesloten",
+  "chat-x-and-count-joined_other": "{{name}} en {{count}} anderen sloten zich aan",
+  "open-chat": "Open chat",
+  "less": "Minder",
+  "swipe-up-more": "Veeg omhoog om meer te bekijken."
 }

@@ -111,7 +111,6 @@
   "toolbar": "ટૂલબાર",
   "extensions": "એક્સ્ટેન્શન્સ",
   "display": "ડિસ્પ્લે",
-
   "theme-and-text": "થીમ અને ટેક્સ્ટ",
   "go-to-all-settings": "બધી સેટિંગ્સ પર જાઓ",
   "keep-screen-awake": "સ્ક્રીનને સક્રિય રાખો",
@@ -186,7 +185,6 @@
   "bible": "બાઇબલ",
   "add-verse": "શ્લોક ઉમેરો",
   "add": "ઉમેરો",
-
   "category-options": "ફોલ્ડર વિકલ્પો",
   "rename": "નામ બદલો",
   "delete": "કાઢી નાખો",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}} વાંચો",
   "new-bookmark-folder": "નવું ફોલ્ડર",
   "chapter-navigation": "પ્રકરણ નેવિગેશન",
-
   "tutorial.skip": "છોડી દો",
   "tutorial.optOut": "ટ્યુટોરિયલ્સ બતાવશો નહીં",
   "tutorial.back": "પાછળ",
@@ -261,7 +258,6 @@
   "search-languages": "ભાષાઓ શોધો...",
   "no-languages-found": "કોઈ ભાષા મળી નથી.",
   "today-coming-soon": "આજે સ્ક્રીન ટૂંક સમયમાં આવી રહી છે",
-
   "link-to-join-shared-session-copied": "શેર કરેલા સત્રમાં જોડાવા માટેની લિંક તમારા ક્લિપબોર્ડ પર કૉપિ કરવામાં આવી છે.",
   "anonymous": "અનામી",
   "no-chat-messages": "હજુ સુધી કોઈ સંદેશા નથી.",
@@ -309,6 +305,13 @@
   "inactive": "નિષ્ક્રિય",
   "available": "ઉપલબ્ધ",
   "everyone": "દરેક વ્યક્તિ",
-  "link-to-join-shared-session-copied": "શેર કરેલા સત્રમાં જોડાવા માટેની લિંક તમારા ક્લિપબોર્ડ પર કૉપિ કરવામાં આવી છે.",
-  "copied-translation-share-link": "અનુવાદ શેર લિંક કૉપિ કરી"
+  "copied-translation-share-link": "અનુવાદ શેર લિંક કૉપિ કરી",
+  "chat-x-joined": "{{name}} જોડાયા",
+  "chat-x-and-x-joined": "{{first}} અને {{second}} જોડાયા",
+  "chat-x-and-count-joined": "{{name}} અને {{count}} અન્ય લોકો જોડાયા",
+  "chat-x-and-count-joined_one": "{{name}} અને અન્ય એક વ્યક્તિ જોડાયા",
+  "chat-x-and-count-joined_other": "{{name}} અને {{count}} અન્ય લોકો જોડાયા",
+  "open-chat": "ચેટ ખોલો",
+  "less": "ઓછું",
+  "swipe-up-more": "વધુ જોવા માટે ઉપર સ્વાઇપ કરો"
 }

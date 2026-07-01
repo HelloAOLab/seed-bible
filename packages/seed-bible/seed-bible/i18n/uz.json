@@ -111,7 +111,6 @@
   "toolbar": "Asboblar paneli",
   "extensions": "Kengaytmalar",
   "display": "Displey",
-
   "theme-and-text": "Mavzu va matn",
   "go-to-all-settings": "Barcha sozlamalarga o'ting",
   "keep-screen-awake": "Ekranni uyg'oq tuting",
@@ -186,7 +185,6 @@
   "bible": "Muqaddas Kitob",
   "add-verse": "Oyat qo'shish",
   "add": "Qo'shish",
-
   "category-options": "Papka parametrlari",
   "rename": "Qayta nomlash",
   "delete": "O'chirish",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}} ni o'qing",
   "new-bookmark-folder": "Yangi papka",
   "chapter-navigation": "Bob navigatsiyasi",
-
   "tutorial.skip": "O'tkazib yuborish",
   "tutorial.optOut": "Qo'llanmalar ko'rsatilmasin",
   "tutorial.back": "Orqaga",
@@ -261,7 +258,6 @@
   "search-languages": "Tillarni qidirish...",
   "no-languages-found": "Hech qanday til topilmadi",
   "today-coming-soon": "Bugungi ekran tez orada chiqadi",
-
   "link-to-join-shared-session-copied": "Umumiy sessiyaga qo'shilish havolasi clipboardga nusxalandi",
   "anonymous": "Anonim",
   "no-chat-messages": "Hali xabar yo'q",
@@ -309,6 +305,13 @@
   "inactive": "Faol emas",
   "available": "Mavjud",
   "everyone": "Hamma",
-  "link-to-join-shared-session-copied": "Umumiy sessiyaga qo'shilish havolasi clipboardga nusxalandi",
-  "copied-translation-share-link": "Tarjimani ulashish havolasi nusxalandi"
+  "copied-translation-share-link": "Tarjimani ulashish havolasi nusxalandi",
+  "chat-x-joined": "{{name}} qo'shildi",
+  "chat-x-and-x-joined": "{{first}} va {{second}} qo'shildi",
+  "chat-x-and-count-joined": "{{name}} va yana {{count}} kishi qo'shildi",
+  "chat-x-and-count-joined_one": "{{name}} va yana bir kishi qo'shildi",
+  "chat-x-and-count-joined_other": "{{name}} va yana {{count}} kishi qo'shildi",
+  "open-chat": "Chatni ochish",
+  "less": "Ozroq",
+  "swipe-up-more": "Batafsil ma'lumot olish uchun yuqoriga suring"
 }

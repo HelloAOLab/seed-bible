@@ -111,7 +111,6 @@
   "toolbar": "Bar Alat",
   "extensions": "Sambungan",
   "display": "Paparan",
-
   "theme-and-text": "Tema & teks",
   "go-to-all-settings": "Pergi ke semua tetapan",
   "keep-screen-awake": "Pastikan skrin terjaga",
@@ -186,7 +185,6 @@
   "bible": "Bible",
   "add-verse": "Tambah ayat",
   "add": "Tambah",
-
   "category-options": "Pilihan folder",
   "rename": "Namakan semula",
   "delete": "Padam",
@@ -236,7 +234,6 @@
   "social-title": "Baca {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Folder baharu",
   "chapter-navigation": "Navigasi bab",
-
   "tutorial.skip": "Langkau",
   "tutorial.optOut": "Jangan tunjukkan tutorial",
   "tutorial.back": "Kembali",
@@ -261,7 +258,6 @@
   "search-languages": "Cari bahasa...",
   "no-languages-found": "Tiada bahasa ditemui",
   "today-coming-soon": "Skrin hari ini akan datang tidak lama lagi",
-
   "link-to-join-shared-session-copied": "Pautan untuk menyertai sesi kongsi telah disalin ke papan keratan anda",
   "anonymous": "Tanpa Nama",
   "no-chat-messages": "Tiada mesej lagi",
@@ -309,6 +305,13 @@
   "inactive": "Tidak aktif",
   "available": "Tersedia",
   "everyone": "Semua orang",
-  "link-to-join-shared-session-copied": "Pautan untuk menyertai sesi kongsi telah disalin ke papan keratan anda",
-  "copied-translation-share-link": "Pautan kongsi terjemahan yang disalin"
+  "copied-translation-share-link": "Pautan kongsi terjemahan yang disalin",
+  "chat-x-joined": "{{name}} menyertai",
+  "chat-x-and-x-joined": "{{first}} dan {{second}} menyertai",
+  "chat-x-and-count-joined": "{{name}} dan {{count}} yang lain menyertai",
+  "chat-x-and-count-joined_one": "{{name}} dan seorang lagi menyertai",
+  "chat-x-and-count-joined_other": "{{name}} dan {{count}} yang lain menyertai",
+  "open-chat": "Buka sembang",
+  "less": "Kurang",
+  "swipe-up-more": "Leret ke atas untuk melihat lebih banyak lagi"
 }

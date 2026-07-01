@@ -111,7 +111,6 @@
   "toolbar": "Bara de instrumente",
   "extensions": "Extensii",
   "display": "Afişa",
-
   "theme-and-text": "Temă și text",
   "go-to-all-settings": "Accesați toate setările",
   "keep-screen-awake": "Menține ecranul activ",
@@ -186,7 +185,6 @@
   "bible": "Biblie",
   "add-verse": "Adăugați verset",
   "add": "Adăuga",
-
   "category-options": "Opțiuni folder",
   "rename": "Redenumire",
   "delete": "Şterge",
@@ -236,7 +234,6 @@
   "social-title": "Citește {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Dosar nou",
   "chapter-navigation": "Navigare prin capitole",
-
   "tutorial.skip": "Sari peste",
   "tutorial.optOut": "Nu afișa tutoriale",
   "tutorial.back": "Spate",
@@ -261,7 +258,6 @@
   "search-languages": "Căutați limbi...",
   "no-languages-found": "Nu s-au găsit limbi",
   "today-coming-soon": "Ecranul de astăzi va apărea în curând",
-
   "link-to-join-shared-session-copied": "Un link pentru a vă alătura sesiunii partajate a fost copiat în clipboard.",
   "anonymous": "Anonim",
   "no-chat-messages": "Niciun mesaj încă",
@@ -309,6 +305,13 @@
   "inactive": "Inactiv",
   "available": "Disponibil",
   "everyone": "Toată lumea",
-  "link-to-join-shared-session-copied": "Un link pentru a vă alătura sesiunii partajate a fost copiat în clipboard.",
-  "copied-translation-share-link": "Link de partajare a traducerii copiat"
+  "copied-translation-share-link": "Link de partajare a traducerii copiat",
+  "chat-x-joined": "{{name}} s-a alăturat",
+  "chat-x-and-x-joined": "{{first}} și {{second}} s-au alăturat",
+  "chat-x-and-count-joined": "{{name}} și încă {{count}} persoane s-au alăturat",
+  "chat-x-and-count-joined_one": "{{name}} și încă o persoană s-au alăturat",
+  "chat-x-and-count-joined_other": "{{name}} și încă {{count}} persoane s-au alăturat",
+  "open-chat": "Deschide chatul",
+  "less": "Mai puțin",
+  "swipe-up-more": "Glisează în sus pentru a vedea mai multe"
 }

@@ -175,7 +175,6 @@
   "upload-settings": "আপলোড সেটিংস",
   "uploading-settings": "সেটিংস আপলোড করা হচ্ছে...",
   "search": "অনুসন্ধান",
-
   "theme-and-text": "থিম ও লেখা",
   "go-to-all-settings": "সমস্ত সেটিংসে যান",
   "more": "আরও",
@@ -187,7 +186,6 @@
   "bible": "বাইবেল",
   "add-verse": "শ্লোক যোগ করুন",
   "add": "যোগ করুন",
-
   "category-options": "ফোল্ডার বিকল্পগুলি",
   "rename": "পুনঃনামকরণ",
   "delete": "মুছে ফেলুন",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}} পড়ুন",
   "new-bookmark-folder": "নতুন ফোল্ডার",
   "chapter-navigation": "অধ্যায় নেভিগেশন",
-
   "tutorial.skip": "এড়িয়ে যান",
   "tutorial.optOut": "টিউটোরিয়াল দেখাবেন না",
   "tutorial.back": "ফিরে যান",
@@ -263,8 +260,6 @@
   "today-coming-soon": "আজকের স্ক্রিন শীঘ্রই আসছে",
   "link-to-join-shared-session-copied": "শেয়ার করা সেশনে যোগদানের একটি লিঙ্ক আপনার ক্লিপবোর্ডে কপি করা হয়েছে।",
   "copied-translation-share-link": "অনুলিপি করা অনুবাদ শেয়ার লিঙ্ক",
-
-  "link-to-join-shared-session-copied": "শেয়ার করা সেশনে যোগদানের একটি লিঙ্ক আপনার ক্লিপবোর্ডে কপি করা হয়েছে।",
   "anonymous": "বেনামী",
   "no-chat-messages": "এখনো কোনো বার্তা আসেনি",
   "start-conversation": "কথোপকথন শুরু করুন",
@@ -310,5 +305,13 @@
   "active": "সক্রিয়",
   "inactive": "নিষ্ক্রিয়",
   "available": "উপলব্ধ",
-  "everyone": "প্রত্যেকে"
+  "everyone": "প্রত্যেকে",
+  "chat-x-joined": "{{name}} যোগদান করেছেন",
+  "chat-x-and-x-joined": "{{first}} এবং {{second}} যোগদান করেছেন",
+  "chat-x-and-count-joined": "{{name}} এবং {{count}} জন অন্য ব্যক্তি যোগদান করেছেন",
+  "chat-x-and-count-joined_one": "{{name}} এবং আরও একজন যোগদান করেছেন",
+  "chat-x-and-count-joined_other": "{{name}} এবং {{count}} জন অন্য ব্যক্তি যোগদান করেছেন",
+  "open-chat": "খোলা চ্যাট",
+  "less": "কম",
+  "swipe-up-more": "আরও দেখতে উপরে সোয়াইপ করুন"
 }

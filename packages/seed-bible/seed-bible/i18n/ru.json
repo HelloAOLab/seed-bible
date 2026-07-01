@@ -175,7 +175,6 @@
   "upload-settings": "Настройки загрузки",
   "uploading-settings": "Загрузка настроек...",
   "search": "Поиск",
-
   "theme-and-text": "Тема и текст",
   "go-to-all-settings": "Перейти ко всем настройкам",
   "more": "Более",
@@ -187,7 +186,6 @@
   "bible": "Библия",
   "add-verse": "Добавить стих",
   "add": "Добавлять",
-
   "category-options": "Параметры папки",
   "rename": "Переименовать",
   "delete": "Удалить",
@@ -236,7 +234,6 @@
   "social-title": "Прочитайте {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Новая папка",
   "chapter-navigation": "Навигация по главам",
-
   "tutorial.skip": "Пропускать",
   "tutorial.optOut": "Не показывайте обучающие материалы.",
   "tutorial.back": "Назад",
@@ -261,7 +258,6 @@
   "search-languages": "Языки поиска...",
   "no-languages-found": "Языки не найдены",
   "today-coming-soon": "Сегодняшний экран скоро появится",
-
   "link-to-join-shared-session-copied": "Ссылка для присоединения к общей сессии была скопирована в буфер обмена.",
   "anonymous": "Аноним",
   "no-chat-messages": "Сообщений пока нет.",
@@ -309,6 +305,13 @@
   "inactive": "Неактивный",
   "available": "Доступный",
   "everyone": "Каждый",
-  "link-to-join-shared-session-copied": "Ссылка для присоединения к общей сессии была скопирована в буфер обмена.",
-  "copied-translation-share-link": "Скопированная ссылка для обмена переводом"
+  "copied-translation-share-link": "Скопированная ссылка для обмена переводом",
+  "chat-x-joined": "{{name}} присоединился",
+  "chat-x-and-x-joined": "{{first}} и {{second}} объединились",
+  "chat-x-and-count-joined": "Присоединились {{name}} и {{count}} других",
+  "chat-x-and-count-joined_one": "{{name}} и еще один присоединился",
+  "chat-x-and-count-joined_other": "Присоединились {{name}} и {{count}} других",
+  "open-chat": "Открытый чат",
+  "less": "Меньше",
+  "swipe-up-more": "Проведите пальцем вверх, чтобы посмотреть больше"
 }

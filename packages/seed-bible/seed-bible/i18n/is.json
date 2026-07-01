@@ -111,7 +111,6 @@
   "toolbar": "Verkfærastika",
   "extensions": "Viðbætur",
   "display": "Sýna",
-
   "theme-and-text": "Þema og texti",
   "go-to-all-settings": "Fara í allar stillingar",
   "keep-screen-awake": "Halda skjánum vakandi",
@@ -186,7 +185,6 @@
   "bible": "Biblían",
   "add-verse": "Bæta við versi",
   "add": "Bæta við",
-
   "category-options": "Möppuvalkostir",
   "rename": "Endurnefna",
   "delete": "Eyða",
@@ -236,7 +234,6 @@
   "social-title": "Lesið {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Ný mappa",
   "chapter-navigation": "Kaflaflakk",
-
   "tutorial.skip": "Sleppa",
   "tutorial.optOut": "Ekki sýna kennslumyndbönd",
   "tutorial.back": "Til baka",
@@ -261,7 +258,6 @@
   "search-languages": "Leita að tungumálum...",
   "no-languages-found": "Engin tungumál fundust",
   "today-coming-soon": "Skjárinn í dag kemur bráðum",
-
   "link-to-join-shared-session-copied": "Tengill til að taka þátt í sameiginlegu lotunni var afritaður á klippiborðið þitt",
   "anonymous": "Nafnlaust",
   "no-chat-messages": "Engin skilaboð ennþá",
@@ -309,6 +305,13 @@
   "inactive": "Óvirkt",
   "available": "Fáanlegt",
   "everyone": "Allir",
-  "link-to-join-shared-session-copied": "Tengill til að taka þátt í sameiginlegu lotunni var afritaður á klippiborðið þitt",
-  "copied-translation-share-link": "Afritaði tengil til að deila þýðingu"
+  "copied-translation-share-link": "Afritaði tengil til að deila þýðingu",
+  "chat-x-joined": "{{name}} gekk til liðs við",
+  "chat-x-and-x-joined": "{{first}} og {{second}} gengu til liðs við",
+  "chat-x-and-count-joined": "{{name}} og {{count}} aðrir gengu til liðs við sig",
+  "chat-x-and-count-joined_one": "{{name}} og einn annar bættust við",
+  "chat-x-and-count-joined_other": "{{name}} og {{count}} aðrir gengu til liðs við sig",
+  "open-chat": "Opna spjall",
+  "less": "Minna",
+  "swipe-up-more": "Strjúktu upp til að sjá meira"
 }

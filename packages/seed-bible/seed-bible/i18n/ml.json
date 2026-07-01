@@ -111,7 +111,6 @@
   "toolbar": "ടൂൾബാർ",
   "extensions": "വിപുലീകരണങ്ങൾ",
   "display": "ഡിസ്പ്ലേ",
-
   "theme-and-text": "തീമും വാചകവും",
   "go-to-all-settings": "എല്ലാ ക്രമീകരണങ്ങളിലേക്കും പോകുക",
   "keep-screen-awake": "സ്ക്രീൻ സജീവമായി നിലനിർത്തുക",
@@ -186,7 +185,6 @@
   "bible": "ബൈബിൾ",
   "add-verse": "വാക്യം ചേർക്കുക",
   "add": "ചേർക്കുക",
-
   "category-options": "ഫോൾഡർ ഓപ്ഷനുകൾ",
   "rename": "പേരുമാറ്റുക",
   "delete": "ഇല്ലാതാക്കുക",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}} വായിക്കുക",
   "new-bookmark-folder": "പുതിയ ഫോൾഡർ",
   "chapter-navigation": "ചാപ്റ്റർ നാവിഗേഷൻ",
-
   "tutorial.skip": "ഒഴിവാക്കുക",
   "tutorial.optOut": "ട്യൂട്ടോറിയലുകൾ കാണിക്കരുത്",
   "tutorial.back": "തിരികെ",
@@ -261,7 +258,6 @@
   "search-languages": "ഭാഷകൾ തിരയുക...",
   "no-languages-found": "ഭാഷകളൊന്നും കണ്ടെത്തിയില്ല.",
   "today-coming-soon": "ഇന്നത്തെ സ്ക്രീൻ ഉടൻ വരുന്നു",
-
   "link-to-join-shared-session-copied": "പങ്കിട്ട സെഷനിൽ ചേരുന്നതിനുള്ള ഒരു ലിങ്ക് നിങ്ങളുടെ ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി.",
   "anonymous": "അജ്ഞാതൻ",
   "no-chat-messages": "ഇതുവരെ സന്ദേശങ്ങളൊന്നുമില്ല.",
@@ -309,6 +305,13 @@
   "inactive": "നിഷ്‌ക്രിയം",
   "available": "ലഭ്യമാണ്",
   "everyone": "എല്ലാവരും",
-  "link-to-join-shared-session-copied": "പങ്കിട്ട സെഷനിൽ ചേരുന്നതിനുള്ള ഒരു ലിങ്ക് നിങ്ങളുടെ ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി.",
-  "copied-translation-share-link": "വിവർത്തന പങ്കിടൽ ലിങ്ക് പകർത്തി"
+  "copied-translation-share-link": "വിവർത്തന പങ്കിടൽ ലിങ്ക് പകർത്തി",
+  "chat-x-joined": "{{name}} ചേർന്നു",
+  "chat-x-and-x-joined": "{{first}} ഉം {{second}} ഉം ചേർന്നു",
+  "chat-x-and-count-joined": "{{name}} ഉം മറ്റ് {{count}} പേരും ചേർന്നു",
+  "chat-x-and-count-joined_one": "{{name}} എന്നയാളും മറ്റൊരാളും ചേർന്നു",
+  "chat-x-and-count-joined_other": "{{name}} ഉം മറ്റ് {{count}} പേരും ചേർന്നു",
+  "open-chat": "ചാറ്റ് തുറക്കുക",
+  "less": "കുറവ്",
+  "swipe-up-more": "കൂടുതൽ കാണാൻ മുകളിലേക്ക് സ്വൈപ്പ് ചെയ്യുക"
 }

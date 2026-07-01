@@ -111,7 +111,6 @@
   "toolbar": "ხელსაწყოთა პანელი",
   "extensions": "გაფართოებები",
   "display": "ჩვენება",
-
   "theme-and-text": "თემა და ტექსტი",
   "go-to-all-settings": "გადადით ყველა პარამეტრზე",
   "keep-screen-awake": "ეკრანის გამოღვიძება",
@@ -186,7 +185,6 @@
   "bible": "ბიბლია",
   "add-verse": "ლექსის დამატება",
   "add": "დამატება",
-
   "category-options": "საქაღალდის პარამეტრები",
   "rename": "გადარქმევა",
   "delete": "წაშლა",
@@ -236,7 +234,6 @@
   "social-title": "წაიკითხეთ {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "ახალი საქაღალდე",
   "chapter-navigation": "თავის ნავიგაცია",
-
   "tutorial.skip": "გამოტოვება",
   "tutorial.optOut": "არ აჩვენო სახელმძღვანელოები",
   "tutorial.back": "უკან",
@@ -261,7 +258,6 @@
   "search-languages": "ენების ძიება...",
   "no-languages-found": "ენები ვერ მოიძებნა",
   "today-coming-soon": "დღევანდელი ეკრანი მალე გამოვა",
-
   "link-to-join-shared-session-copied": "გაზიარებულ სესიასთან შეერთების ბმული თქვენს ბუფერში დაკოპირდა",
   "anonymous": "ანონიმური",
   "no-chat-messages": "შეტყობინებები ჯერ არ არის",
@@ -309,6 +305,13 @@
   "inactive": "არააქტიური",
   "available": "ხელმისაწვდომია",
   "everyone": "ყველა",
-  "link-to-join-shared-session-copied": "გაზიარებულ სესიასთან შეერთების ბმული თქვენს ბუფერში დაკოპირდა",
-  "copied-translation-share-link": "კოპირებული თარგმანის გაზიარების ბმული"
+  "copied-translation-share-link": "კოპირებული თარგმანის გაზიარების ბმული",
+  "chat-x-joined": "{{name}} შემოუერთდა",
+  "chat-x-and-x-joined": "{{first}} და {{second}} შეუერთდნენ",
+  "chat-x-and-count-joined": "{{name}} და {{count}} სხვა შემოუერთდა",
+  "chat-x-and-count-joined_one": "{{name}} და კიდევ ერთი შეუერთდა",
+  "chat-x-and-count-joined_other": "{{name}} და {{count}} სხვა შემოუერთდა",
+  "open-chat": "ჩატის გახსნა",
+  "less": "ნაკლები",
+  "swipe-up-more": "მეტის სანახავად გადაფურცლეთ ზემოთ"
 }

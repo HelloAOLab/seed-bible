@@ -111,7 +111,6 @@
   "toolbar": "Nutsbalk",
   "extensions": "Uitbreidings",
   "display": "Vertoon",
-
   "theme-and-text": "Tema en teks",
   "go-to-all-settings": "Gaan na alle instellings",
   "keep-screen-awake": "Hou skerm wakker",
@@ -186,7 +185,6 @@
   "bible": "Bybel",
   "add-verse": "Voeg vers by",
   "add": "Voeg by",
-
   "category-options": "Voueropsies",
   "rename": "Hernoem",
   "delete": "Vee uit",
@@ -236,7 +234,6 @@
   "social-title": "Lees {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nuwe vouer",
   "chapter-navigation": "Hoofstuk navigasie",
-
   "tutorial.skip": "Slaan oor",
   "tutorial.optOut": "Moenie tutoriale wys nie",
   "tutorial.back": "Terug",
@@ -263,9 +260,6 @@
   "today-coming-soon": "Vandag se skerm kom binnekort",
   "link-to-join-shared-session-copied": "'n Skakel om by die gedeelde sessie aan te sluit, is na jou knipbord gekopieer",
   "copied-translation-share-link": "Gekopieerde vertalingdeelskakel",
-
-  "about-extrabiblical-writings": "Oor buite-Bybelse geskrifte",
-  "apocrypha-info-text": "Geen van die geskrifte in hierdie afdeling is ooit deur vroeë Joodse of Christelike gemeenskappe as die Skrif beskou nie. Die Bybel is 'n spesifieke versameling boeke. Jode en Christene het nog altyd saamgestem oor die Ou Testament, wat afkomstig is van 'n vaste stel heilige geskrifte wat die Joodse volk die Tanakh genoem het en Christene die Ou Testament. Die inhoud van die Tanakh en die Ou Testament is presies dieselfde, maar word gewoonlik anders gerangskik. Christene erken ook die Nuwe Testament, wat die verhaal van Jesus, sy leringe en die geskrifte van sy volgelinge vertel. Die geskrifte hieronder was bekend en wyd gelees ten tye van die Bybel se skryf, maar hulle is nooit as die Skrif behandel nie. Terwyl antieke outeurs soms 'n wye reeks tekste aangehaal het, insluitend digters, filosowe en ander geskrifte, is die aanhaling van iets nie dieselfde as om dit as die Skrif te behandel nie. Hierdie geskrifte word hier slegs vir historiese en literêre verwysing ingesluit.",
   "anonymous": "Anoniem",
   "no-chat-messages": "Geen boodskappe nog nie",
   "start-conversation": "Begin 'n gesprek",
@@ -311,5 +305,13 @@
   "active": "Aktief",
   "inactive": "Onaktief",
   "available": "Beskikbaar",
-  "everyone": "Almal"
+  "everyone": "Almal",
+  "chat-x-joined": "{{name}} het aangesluit",
+  "chat-x-and-x-joined": "{{first}} en {{second}} het aangesluit",
+  "chat-x-and-count-joined": "{{name}} en {{count}} ander het aangesluit",
+  "chat-x-and-count-joined_one": "{{name}} en nog een het aangesluit",
+  "chat-x-and-count-joined_other": "{{name}} en {{count}} ander het aangesluit",
+  "open-chat": "Maak klets oop",
+  "less": "Minder",
+  "swipe-up-more": "Swiep op om meer te sien"
 }

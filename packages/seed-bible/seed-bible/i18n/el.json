@@ -111,7 +111,6 @@
   "toolbar": "Γραμμή εργαλείων",
   "extensions": "Επεκτάσεις",
   "display": "Επίδειξη",
-
   "theme-and-text": "Θέμα & κείμενο",
   "go-to-all-settings": "Μετάβαση σε όλες τις ρυθμίσεις",
   "keep-screen-awake": "Διατήρηση ενεργής οθόνης",
@@ -186,7 +185,6 @@
   "bible": "βίβλος",
   "add-verse": "Προσθήκη στίχου",
   "add": "Προσθέτω",
-
   "category-options": "Επιλογές φακέλου",
   "rename": "Μετονομάζω",
   "delete": "Διαγράφω",
@@ -236,7 +234,6 @@
   "social-title": "Διαβάστε το {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Νέος φάκελος",
   "chapter-navigation": "Πλοήγηση κεφαλαίου",
-
   "tutorial.skip": "Παραλείπω",
   "tutorial.optOut": "Να μην εμφανίζονται εκπαιδευτικά βίντεο",
   "tutorial.back": "Πίσω",
@@ -261,7 +258,6 @@
   "search-languages": "Αναζήτηση γλωσσών...",
   "no-languages-found": "Δεν βρέθηκαν γλώσσες",
   "today-coming-soon": "Η σημερινή οθόνη έρχεται σύντομα",
-
   "link-to-join-shared-session-copied": "Ένας σύνδεσμος για συμμετοχή στην κοινόχρηστη συνεδρία αντιγράφηκε στο πρόχειρό σας",
   "anonymous": "Ανώνυμος",
   "no-chat-messages": "Δεν υπάρχουν ακόμη μηνύματα",
@@ -309,6 +305,13 @@
   "inactive": "Αδρανής",
   "available": "Διαθέσιμος",
   "everyone": "Καθένας",
-  "link-to-join-shared-session-copied": "Ένας σύνδεσμος για συμμετοχή στην κοινόχρηστη συνεδρία αντιγράφηκε στο πρόχειρό σας",
-  "copied-translation-share-link": "Αντιγραμμένος σύνδεσμος κοινής χρήσης μετάφρασης"
+  "copied-translation-share-link": "Αντιγραμμένος σύνδεσμος κοινής χρήσης μετάφρασης",
+  "chat-x-joined": "{{name}} εντάχθηκε",
+  "chat-x-and-x-joined": "{{first}} και {{second}} εντάχθηκαν",
+  "chat-x-and-count-joined": "{{name}} και {{count}} άλλοι συμμετείχαν",
+  "chat-x-and-count-joined_one": "{{name}} και ένας άλλος χρήστης συμμετείχαν",
+  "chat-x-and-count-joined_other": "{{name}} και {{count}} άλλοι συμμετείχαν",
+  "open-chat": "Άνοιγμα συνομιλίας",
+  "less": "Μείον",
+  "swipe-up-more": "Σύρετε προς τα πάνω για να δείτε περισσότερα"
 }

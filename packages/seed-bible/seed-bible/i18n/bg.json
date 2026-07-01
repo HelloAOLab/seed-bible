@@ -111,7 +111,6 @@
   "toolbar": "Лента с инструменти",
   "extensions": "Разширения",
   "display": "Дисплей",
-
   "theme-and-text": "Тема и текст",
   "go-to-all-settings": "Отидете на всички настройки",
   "keep-screen-awake": "Поддържане на екрана активен",
@@ -186,7 +185,6 @@
   "bible": "Библия",
   "add-verse": "Добави стих",
   "add": "Добавяне",
-
   "category-options": "Опции за папки",
   "rename": "Преименуване",
   "delete": "Изтриване",
@@ -236,7 +234,6 @@
   "social-title": "Прочетете {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Нова папка",
   "chapter-navigation": "Навигация по главите",
-
   "tutorial.skip": "Пропускане",
   "tutorial.optOut": "Не показвай уроци",
   "tutorial.back": "Обратно",
@@ -263,8 +260,6 @@
   "today-coming-soon": "Днешният екран ще се появи скоро",
   "link-to-join-shared-session-copied": "Връзка за присъединяване към споделената сесия беше копирана в клипборда ви",
   "copied-translation-share-link": "Линкът за споделяне на превода е копиран",
-
-  "link-to-join-shared-session-copied": "Връзка за присъединяване към споделената сесия беше копирана в клипборда ви",
   "anonymous": "Анонимен",
   "no-chat-messages": "Все още няма съобщения",
   "start-conversation": "Започнете разговор",
@@ -310,5 +305,13 @@
   "active": "Активен",
   "inactive": "Неактивен",
   "available": "Налично",
-  "everyone": "Всеки"
+  "everyone": "Всеки",
+  "chat-x-joined": "{{name}} се присъедини",
+  "chat-x-and-x-joined": "{{first}} и {{second}} се присъединиха",
+  "chat-x-and-count-joined": "{{name}} и {{count}} други се присъединиха",
+  "chat-x-and-count-joined_one": "{{name}} и още един човек се присъединиха",
+  "chat-x-and-count-joined_other": "{{name}} и {{count}} други се присъединиха",
+  "open-chat": "Отвори чат",
+  "less": "По-малко",
+  "swipe-up-more": "Плъзнете нагоре, за да видите още"
 }

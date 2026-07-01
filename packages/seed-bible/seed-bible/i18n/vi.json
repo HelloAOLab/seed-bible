@@ -175,7 +175,6 @@
   "upload-settings": "Cài đặt tải lên",
   "uploading-settings": "Đang tải cài đặt...",
   "search": "Tìm kiếm",
-
   "theme-and-text": "Chủ đề & văn bản",
   "go-to-all-settings": "Vào tất cả cài đặt",
   "more": "Hơn",
@@ -187,7 +186,6 @@
   "bible": "Kinh Thánh",
   "add-verse": "Thêm câu thơ",
   "add": "Thêm vào",
-
   "category-options": "Tùy chọn thư mục",
   "rename": "Đổi tên",
   "delete": "Xóa bỏ",
@@ -236,7 +234,6 @@
   "social-title": "Đọc {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Thư mục mới",
   "chapter-navigation": "Điều hướng chương",
-
   "tutorial.skip": "Nhảy",
   "tutorial.optOut": "Đừng chiếu hướng dẫn",
   "tutorial.back": "Mặt sau",
@@ -261,7 +258,6 @@
   "search-languages": "Ngôn ngữ tìm kiếm...",
   "no-languages-found": "Không tìm thấy ngôn ngữ nào",
   "today-coming-soon": "Màn hình hôm nay sẽ sớm ra mắt.",
-
   "link-to-join-shared-session-copied": "Một liên kết để tham gia phiên họp chung đã được sao chép vào khay nhớ tạm của bạn.",
   "anonymous": "Vô danh",
   "no-chat-messages": "Chưa có tin nhắn nào",
@@ -309,6 +305,13 @@
   "inactive": "Không hoạt động",
   "available": "Có sẵn",
   "everyone": "Mọi người",
-  "link-to-join-shared-session-copied": "Một liên kết để tham gia phiên họp chung đã được sao chép vào khay nhớ tạm của bạn.",
-  "copied-translation-share-link": "Đã sao chép liên kết chia sẻ bản dịch"
+  "copied-translation-share-link": "Đã sao chép liên kết chia sẻ bản dịch",
+  "chat-x-joined": "{{name}} đã tham gia",
+  "chat-x-and-x-joined": "{{first}} và {{second}} đã tham gia",
+  "chat-x-and-count-joined": "{{name}} và {{count}} người khác đã tham gia",
+  "chat-x-and-count-joined_one": "{{name}} và một người khác đã tham gia",
+  "chat-x-and-count-joined_other": "{{name}} và {{count}} người khác đã tham gia",
+  "open-chat": "Mở trò chuyện",
+  "less": "Ít hơn",
+  "swipe-up-more": "Vuốt lên để xem thêm"
 }

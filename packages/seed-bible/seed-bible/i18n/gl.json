@@ -111,7 +111,6 @@
   "toolbar": "Barra de ferramentas",
   "extensions": "Extensións",
   "display": "Pantalla",
-
   "theme-and-text": "Tema e texto",
   "go-to-all-settings": "Ir a todos os axustes",
   "keep-screen-awake": "Manter a pantalla activa",
@@ -186,7 +185,6 @@
   "bible": "Biblia",
   "add-verse": "Engadir verso",
   "add": "Engadir",
-
   "category-options": "Opcións de cartafol",
   "rename": "Renomear",
   "delete": "Eliminar",
@@ -236,7 +234,6 @@
   "social-title": "Ler {{bookName}} {{chapterNumber}}",
   "new-bookmark-folder": "Nova carpeta",
   "chapter-navigation": "Navegación por capítulos",
-
   "tutorial.skip": "Omitir",
   "tutorial.optOut": "Non mostrar tutoriais",
   "tutorial.back": "Volver",
@@ -261,7 +258,6 @@
   "search-languages": "Buscar idiomas...",
   "no-languages-found": "Non se atoparon idiomas",
   "today-coming-soon": "A pantalla de hoxe chegará en breve",
-
   "link-to-join-shared-session-copied": "Copiouse no portapapeis unha ligazón para unirse á sesión compartida",
   "anonymous": "Anónimo",
   "no-chat-messages": "Aínda non hai mensaxes",
@@ -309,6 +305,13 @@
   "inactive": "Inactivo",
   "available": "Dispoñible",
   "everyone": "Todos",
-  "link-to-join-shared-session-copied": "Copiouse no portapapeis unha ligazón para unirse á sesión compartida",
-  "copied-translation-share-link": "Ligazón para compartir a tradución copiada"
+  "copied-translation-share-link": "Ligazón para compartir a tradución copiada",
+  "chat-x-joined": "{{name}} uniuse",
+  "chat-x-and-x-joined": "{{first}} e {{second}} uníronse",
+  "chat-x-and-count-joined": "{{name}} e {{count}} persoas máis uníronse",
+  "chat-x-and-count-joined_one": "{{name}} e outra persoa uníronse",
+  "chat-x-and-count-joined_other": "{{name}} e {{count}} persoas máis uníronse",
+  "open-chat": "Abrir chat",
+  "less": "Menos",
+  "swipe-up-more": "Desliza cara arriba para ver máis"
 }

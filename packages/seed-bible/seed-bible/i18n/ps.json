@@ -175,7 +175,6 @@
   "upload-settings": "د پورته کولو ترتیبات",
   "uploading-settings": "ترتیبات پورته کول...",
   "search": "د لټون",
-
   "theme-and-text": "موضوع او متن",
   "go-to-all-settings": "ټولو ترتیباتو ته لاړ شئ",
   "more": "نور",
@@ -187,7 +186,6 @@
   "bible": "بائبل",
   "add-verse": "شعر اضافه کړئ",
   "add": "اضافه کول",
-
   "category-options": "د فولډر انتخابونه",
   "rename": "نوم بدل کړئ",
   "delete": "ړنګول",
@@ -236,7 +234,6 @@
   "social-title": "{{bookName}} {{chapterNumber}} ولولئ",
   "new-bookmark-folder": "نوی فولډر",
   "chapter-navigation": "د فصل نیویګیشن",
-
   "tutorial.skip": "پریږدئ",
   "tutorial.optOut": "درسونه مه ښکاره کوئ",
   "tutorial.back": "شاته",
@@ -261,7 +258,6 @@
   "search-languages": "ژبې ولټوئ...",
   "no-languages-found": "هیڅ ژبه ونه موندل شوه",
   "today-coming-soon": "نن سکرین ډېر ژر راځي",
-
   "link-to-join-shared-session-copied": "ستاسو کلپ بورډ ته د شریکې ناستې سره د یوځای کیدو لینک کاپي شو.",
   "anonymous": "بې نومه",
   "no-chat-messages": "تراوسه کوم پیغام نشته",
@@ -309,6 +305,13 @@
   "inactive": "غیر فعال",
   "available": "شتون لري",
   "everyone": "هرڅوک",
-  "link-to-join-shared-session-copied": "ستاسو کلپ بورډ ته د شریکې ناستې سره د یوځای کیدو لینک کاپي شو.",
-  "copied-translation-share-link": "کاپي شوی ژباړه شریکول لینک"
+  "copied-translation-share-link": "کاپي شوی ژباړه شریکول لینک",
+  "chat-x-joined": "{{name}} یوځای شو",
+  "chat-x-and-x-joined": "{{first}} او {{second}} سره یوځای شول",
+  "chat-x-and-count-joined": "{{name}} او {{count}} نور سره یوځای شول",
+  "chat-x-and-count-joined_one": "{{name}} او یو بل سره یوځای شول",
+  "chat-x-and-count-joined_other": "{{name}} او {{count}} نور سره یوځای شول",
+  "open-chat": "پرانیستې خبرې اترې",
+  "less": "لږ",
+  "swipe-up-more": "د نورو لیدلو لپاره پورته سوائپ کړئ"
 }
