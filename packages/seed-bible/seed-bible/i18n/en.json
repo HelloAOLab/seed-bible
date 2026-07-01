@@ -292,5 +292,6 @@
   "items": "Items",
   "playlist-items-empty": "No items yet.",
   "playlist-item-html": "HTML snippet",
+  "add-to-playlist": "Add to playlist",
   "edit-playlist": "Edit playlist"
 }

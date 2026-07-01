@@ -587,6 +587,8 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
             })),
           ],
         };
+
+        context.readingState.clearSelectedVerses();
       },
     },
     {
