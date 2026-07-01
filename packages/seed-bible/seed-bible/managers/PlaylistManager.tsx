@@ -48,6 +48,9 @@ export function createPlaylistManager(
   login: LoginManager
 ) {
   const userPlaylists = signal<Playlist[]>([]);
+  const view = signal<"discover" | "create_playlist">("discover");
+  /** The playlist currently being edited/created in the pane, or null. */
+  const editingPlaylist = signal<Playlist | null>(null);
 
   const availablePlaylists = computed(() => {
     return userPlaylists;
@@ -75,29 +78,59 @@ export function createPlaylistManager(
     return records.items.map((record) => PlaylistSchema.parse(record.data));
   };
 
-  const createNewPlaylist = async (options?: {
-    title?: string | null;
-    description?: string | null;
-    items?: z.infer<typeof PlaylistItem>[];
-  }): Promise<Playlist> => {
-    const userId = login.userId.value;
+  /**
+   * Starts creating a new playlist: opens the create view and sets
+   * `editingPlaylist` to a fresh, empty (unsaved) playlist. Persisting happens
+   * later via `saveEditingPlaylist`. No-op when not signed in.
+   */
+  const createNewPlaylist = async (): Promise<void> => {
+    let userId = login.userId.value;
     if (!userId) {
-      throw new Error("Not signed in");
+      const userInfo = await login.login();
+      if (!userInfo) {
+        console.warn("Cannot create a playlist while signed out.");
+        return;
+      }
+      userId = userInfo.id;
     }
     const now = Date.now();
-    const playlist = PlaylistSchema.parse({
+    editingPlaylist.value = PlaylistSchema.parse({
       id: `playlist_${uuid()}`,
       recordName: userId,
       authorUserId: userId,
-      title: options?.title ?? null,
-      description: options?.description ?? null,
-      items: options?.items ?? [],
+      title: null,
+      description: null,
+      items: [],
       createdAtMs: now,
       updatedAtMs: now,
     });
+    view.value = "create_playlist";
+  };
+
+  /**
+   * Persists the currently-edited playlist, upserts it into `userPlaylists`,
+   * then clears the editor and returns to the discover view. No-op when there
+   * is no playlist being edited.
+   */
+  const saveEditingPlaylist = async (): Promise<void> => {
+    const current = editingPlaylist.value;
+    if (!current) {
+      return;
+    }
+    const playlist: Playlist = { ...current, updatedAtMs: Date.now() };
     await savePlaylist(playlist);
-    userPlaylists.value = [...userPlaylists.value, playlist];
-    return playlist;
+    const exists = userPlaylists.value.some((p) => p.id === playlist.id);
+    userPlaylists.value = exists
+      ? userPlaylists.value.map((p) => (p.id === playlist.id ? playlist : p))
+      : [...userPlaylists.value, playlist];
+    editingPlaylist.value = null;
+    view.value = "discover";
+  };
+
+  /** Discards the current edit and returns to the discover view. */
+  const cancelEditingPlaylist = (): void => {
+    editingPlaylist.value = null;
+    view.value = "discover";
   };
 
   const syncPlaylists = async () => {
@@ -121,8 +154,12 @@ export function createPlaylistManager(
   return {
     savePlaylist,
     createNewPlaylist,
+    saveEditingPlaylist,
+    cancelEditingPlaylist,
     listPlaylists,
     userPlaylists,
     availablePlaylists,
+    view,
+    editingPlaylist,
   };
 }

@@ -22,15 +22,10 @@ type ReferenceWithBookData = DiscoverReference & { bookData: TranslationBook };
 export function DiscoverPane(props: DiscoverPaneProps) {
   const { tabs, playlists } = props;
   const { t } = useI18n();
-  const [view, setView] = useState<"discover" | "create">("discover");
+  const { view } = playlists;
 
-  if (view === "create") {
-    return (
-      <CreatePlaylistForm
-        playlists={playlists}
-        onDone={() => setView("discover")}
-      />
-    );
+  if (view.value === "create_playlist") {
+    return <CreatePlaylistForm playlists={playlists} />;
   }
 
   // Reading `.value` during render subscribes the component to updates.
@@ -57,7 +52,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         <button
           type="button"
           className="sb-discover-create"
-          onClick={() => setView("create")}
+          onClick={() => playlists.createNewPlaylist()}
         >
           + {t("create-playlist", { defaultValue: "Create" })}
         </button>
@@ -110,15 +105,16 @@ export function DiscoverPane(props: DiscoverPaneProps) {
 
 interface CreatePlaylistFormProps {
   playlists: PlaylistManager;
-  onDone: () => void;
 }
 
 /** Create-playlist screen shown inside the discover pane. */
 function CreatePlaylistForm(props: CreatePlaylistFormProps) {
-  const { playlists, onDone } = props;
+  const { playlists } = props;
   const { t } = useI18n();
-  const [title, setTitle] = useState("");
   const [saving, setSaving] = useState(false);
+
+  // The playlist being edited is owned by the manager; edits update the signal.
+  const editing = playlists.editingPlaylist.value;
 
   const handleSave = async () => {
     if (saving) {
@@ -126,14 +122,9 @@ function CreatePlaylistForm(props: CreatePlaylistFormProps) {
     }
     setSaving(true);
     try {
-      await playlists.createNewPlaylist({
-        title: title.trim() || null,
-        description: null,
-        items: [],
-      });
-      onDone();
+      await playlists.saveEditingPlaylist();
     } catch (error) {
-      console.error("Failed to create playlist:", error);
+      console.error("Failed to save playlist:", error);
       setSaving(false);
     }
   };
@@ -145,11 +136,17 @@ function CreatePlaylistForm(props: CreatePlaylistFormProps) {
         <input
           className="sb-discover-title-input"
           type="text"
-          value={title}
+          value={editing?.title ?? ""}
           dir="auto"
-          onInput={(event: Event) =>
-            setTitle((event.currentTarget as HTMLInputElement).value)
-          }
+          onInput={(event: Event) => {
+            const value = (event.currentTarget as HTMLInputElement).value;
+            if (editing) {
+              playlists.editingPlaylist.value = {
+                ...editing,
+                title: value.trim() ? value : null,
+              };
+            }
+          }}
           placeholder={t("playlist-title_placeholder", {
             defaultValue: "Playlist title",
           })}
@@ -166,7 +163,7 @@ function CreatePlaylistForm(props: CreatePlaylistFormProps) {
         <button
           type="button"
           className="sb-reading-plans-back"
-          onClick={onDone}
+          onClick={() => playlists.cancelEditingPlaylist()}
         >
           {t("cancel", { defaultValue: "Cancel" })}
         </button>
