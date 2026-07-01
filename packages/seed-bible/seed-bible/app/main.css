@@ -1367,12 +1367,12 @@ h6 {
   margin-bottom: var(--text-heading-margin-bottom);
   margin-left: var(--text-heading-margin-left);
   margin-right: var(--text-heading-margin-right);
-  font-size: 18px;
+  font-size: 1.125em;
   line-height: 1;
 }
 
 .sb-line-break {
-  height: 10px;
+  height: 0.625em;
 }
 
 .sb-subtitle {
@@ -1434,8 +1434,8 @@ h6 {
   top: -0.4em;
   white-space: nowrap;
   vertical-align: middle;
-  margin-inline-start: 6px;
-  margin-inline-end: 3px;
+  margin-inline-start: 0.625em;
+  margin-inline-end: 0.3125em;
   color: color-mix(in srgb, var(--sb-verse-font-color), transparent 30%);
 }
 
