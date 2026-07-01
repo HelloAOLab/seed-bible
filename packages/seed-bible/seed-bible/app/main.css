@@ -9020,10 +9020,46 @@ h6 {
   margin-bottom: 12px;
 }
 
+.sb-discover-header .spacer {
+  flex: 1;
+}
+
 .sb-discover-title {
   margin: 0;
   font-size: 16px;
   font-weight: 600;
+}
+
+.sb-discover-create {
+  padding: 6px 12px;
+  border: 1px solid var(--sb-primary-color);
+  border-radius: 8px;
+  background: var(--sb-primary-color);
+  color: var(--sb-background);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.sb-discover-create:hover {
+  opacity: 0.9;
+}
+
+.sb-discover-title-input {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 4px 0;
+  border: none;
+  border-bottom: 1px solid var(--sb-divider-color);
+  background: transparent;
+  color: var(--sb-font-color);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.sb-discover-title-input:focus {
+  outline: none;
+  border-bottom-color: var(--sb-primary-color);
 }
 
 .sb-discover-section {

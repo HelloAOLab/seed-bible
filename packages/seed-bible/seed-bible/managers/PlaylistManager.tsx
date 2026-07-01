@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
 import { computed, effect, signal } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
+import { v4 as uuid } from "uuid";
 
 export const VerseRefSchema = z.object({
   bookId: z.string(),
@@ -74,6 +75,31 @@ export function createPlaylistManager(
     return records.items.map((record) => PlaylistSchema.parse(record.data));
   };
 
+  const createNewPlaylist = async (options?: {
+    title?: string | null;
+    description?: string | null;
+    items?: z.infer<typeof PlaylistItem>[];
+  }): Promise<Playlist> => {
+    const userId = login.userId.value;
+    if (!userId) {
+      throw new Error("Not signed in");
+    }
+    const now = Date.now();
+    const playlist = PlaylistSchema.parse({
+      id: `playlist_${uuid()}`,
+      recordName: userId,
+      authorUserId: userId,
+      title: options?.title ?? null,
+      description: options?.description ?? null,
+      items: options?.items ?? [],
+      createdAtMs: now,
+      updatedAtMs: now,
+    });
+    await savePlaylist(playlist);
+    userPlaylists.value = [...userPlaylists.value, playlist];
+    return playlist;
+  };
+
   const syncPlaylists = async () => {
     if (!login.userId.value) {
       userPlaylists.value = [];
@@ -94,6 +120,7 @@ export function createPlaylistManager(
 
   return {
     savePlaylist,
+    createNewPlaylist,
     listPlaylists,
     userPlaylists,
     availablePlaylists,

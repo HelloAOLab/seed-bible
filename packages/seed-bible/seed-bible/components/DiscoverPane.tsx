@@ -1,4 +1,5 @@
 import type { ComponentChildren } from "preact";
+import { useState } from "preact/hooks";
 import { useI18n } from "../i18n/I18nManager";
 import type { TabsManager, ReaderTab } from "../managers/TabsManager";
 import type { PlaylistManager } from "../managers/PlaylistManager";
@@ -21,6 +22,16 @@ type ReferenceWithBookData = DiscoverReference & { bookData: TranslationBook };
 export function DiscoverPane(props: DiscoverPaneProps) {
   const { tabs, playlists } = props;
   const { t } = useI18n();
+  const [view, setView] = useState<"discover" | "create">("discover");
+
+  if (view === "create") {
+    return (
+      <CreatePlaylistForm
+        playlists={playlists}
+        onDone={() => setView("discover")}
+      />
+    );
+  }
 
   // Reading `.value` during render subscribes the component to updates.
   const userPlaylists = playlists.userPlaylists.value;
@@ -42,6 +53,14 @@ export function DiscoverPane(props: DiscoverPaneProps) {
               })
             : t("discover", { defaultValue: "Discover" })}
         </h2>
+        <span className="spacer" />
+        <button
+          type="button"
+          className="sb-discover-create"
+          onClick={() => setView("create")}
+        >
+          + {t("create-playlist", { defaultValue: "Create" })}
+        </button>
       </div>
 
       <DiscoverSection title={t("playlists", { defaultValue: "Playlists" })}>
@@ -85,6 +104,81 @@ export function DiscoverPane(props: DiscoverPaneProps) {
       <CrossReferencesSection tab={selectedTab} />
       <StudyNotesSection tab={selectedTab} />
       <ContentSection tab={selectedTab} />
+    </div>
+  );
+}
+
+interface CreatePlaylistFormProps {
+  playlists: PlaylistManager;
+  onDone: () => void;
+}
+
+/** Create-playlist screen shown inside the discover pane. */
+function CreatePlaylistForm(props: CreatePlaylistFormProps) {
+  const { playlists, onDone } = props;
+  const { t } = useI18n();
+  const [title, setTitle] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (saving) {
+      return;
+    }
+    setSaving(true);
+    try {
+      await playlists.createNewPlaylist({
+        title: title.trim() || null,
+        description: null,
+        items: [],
+      });
+      onDone();
+    } catch (error) {
+      console.error("Failed to create playlist:", error);
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="sb-discover-pane">
+      <div className="sb-discover-header">
+        <MaterialIcon className="sb-discover-title-icon">explore</MaterialIcon>
+        <input
+          className="sb-discover-title-input"
+          type="text"
+          value={title}
+          dir="auto"
+          onInput={(event: Event) =>
+            setTitle((event.currentTarget as HTMLInputElement).value)
+          }
+          placeholder={t("playlist-title_placeholder", {
+            defaultValue: "Playlist title",
+          })}
+        />
+      </div>
+
+      <DiscoverSection title={t("items", { defaultValue: "Items" })}>
+        <DiscoverEmpty
+          text={t("playlist-items-empty", { defaultValue: "No items yet." })}
+        />
+      </DiscoverSection>
+
+      <div className="sb-settings-actions">
+        <button
+          type="button"
+          className="sb-reading-plans-back"
+          onClick={onDone}
+        >
+          {t("cancel", { defaultValue: "Cancel" })}
+        </button>
+        <button
+          type="button"
+          className="sb-settings-save-button"
+          onClick={() => void handleSave()}
+          disabled={saving}
+        >
+          {t("save", { defaultValue: "Save" })}
+        </button>
+      </div>
     </div>
   );
 }
