@@ -25,7 +25,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
   const { view } = playlists;
 
   if (view.value === "create_playlist") {
-    return <CreatePlaylistForm playlists={playlists} />;
+    return <CreatePlaylistForm playlists={playlists} tabs={tabs} />;
   }
 
   // Reading `.value` during render subscribes the component to updates.
@@ -110,12 +110,22 @@ interface CreatePlaylistFormProps {
 
 /** Create-playlist screen shown inside the discover pane. */
 function CreatePlaylistForm(props: CreatePlaylistFormProps) {
-  const { playlists } = props;
+  const { playlists, tabs } = props;
   const { t } = useI18n();
   const [saving, setSaving] = useState(false);
 
   // The playlist being edited is owned by the manager; edits update the signal.
   const editing = playlists.editingPlaylist.value;
+
+  // Resolve verse book IDs to full book names using the selected tab's loaded
+  // translation, when available. Falls back to the raw book ID otherwise.
+  const selectedTab =
+    tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null;
+  const books = selectedTab?.readingState.translationBooks.value?.books ?? [];
+  const resolveBookName = (bookId: string): string => {
+    const book = books.find((b) => b.id === bookId);
+    return book?.name ?? book?.commonName ?? bookId;
+  };
 
   const handleSave = async () => {
     if (saving) {
@@ -164,7 +174,7 @@ function CreatePlaylistForm(props: CreatePlaylistFormProps) {
             {editing.items.map((item, index) => (
               <li key={index} className="sb-discover-item">
                 <span className="sb-discover-item-title">
-                  {playlistItemLabel(item, t)}
+                  {playlistItemLabel(item, t, resolveBookName)}
                 </span>
               </li>
             ))}
@@ -357,14 +367,16 @@ function formatRef(ref: ReferenceWithBookData): string {
 /** Renders a single playlist item as a plain-text label for the editor list. */
 function playlistItemLabel(
   item: Playlist["items"][number],
-  t: ReturnType<typeof useI18n>["t"]
+  t: ReturnType<typeof useI18n>["t"],
+  resolveBookName: (bookId: string) => string
 ): string {
   switch (item.type) {
     case "bible-verse": {
       const { bookId, chapter, verse, endVerse } = item.ref;
+      const book = resolveBookName(bookId);
       return endVerse
-        ? `${bookId} ${chapter}:${verse}-${endVerse}`
-        : `${bookId} ${chapter}:${verse}`;
+        ? `${book} ${chapter}:${verse}-${endVerse}`
+        : `${book} ${chapter}:${verse}`;
     }
     case "link":
       return item.url;
