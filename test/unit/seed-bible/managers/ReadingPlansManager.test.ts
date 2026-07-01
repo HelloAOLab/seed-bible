@@ -541,6 +541,37 @@ describe("createReadingPlansManager", () => {
   const makeManager = (id: string | null = "user-1") => {
     userId = signal<string | null>(id);
     const os = CasualOSManager();
+
+    // Wire the manager's CasualOS gateway to the mocks. The manager lists via
+    // os.listAllDataByMarker, which we reimplement here to page through the
+    // marker-aware listDataByMarkerMock so the pagination assertions hold.
+    Object.assign(os, {
+      getData: getDataMock,
+      recordData: recordDataMock,
+      listDataByMarker: listDataByMarkerMock,
+      listAllDataByMarker: async (recordName: string, marker: string) => {
+        const items: { address: string; data: unknown }[] = [];
+        let lastAddress: string | undefined;
+        while (true) {
+          const page = await listDataByMarkerMock(
+            recordName,
+            marker,
+            lastAddress
+          );
+          if (!page.success) {
+            throw new Error(`Error listing data: ${page.errorCode}`);
+          }
+          if (page.items.length === 0) {
+            break;
+          }
+          for (const item of page.items) {
+            items.push({ address: item.address, data: item.data });
+          }
+          lastAddress = page.items[page.items.length - 1]?.address;
+        }
+        return { success: true, items };
+      },
+    });
     const login = { userId } as unknown as LoginArg;
     return createReadingPlansManager(os, login);
   };
@@ -553,13 +584,6 @@ describe("createReadingPlansManager", () => {
       .mockResolvedValue({ success: true, items: [] });
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
-
-    (globalThis as { os?: unknown }).os = {
-      ...(globalThis as { os?: object }).os,
-      recordData: recordDataMock,
-      getData: getDataMock,
-      listDataByMarker: listDataByMarkerMock,
-    };
   });
 
   afterEach(() => {
@@ -658,10 +682,10 @@ describe("createReadingPlansManager", () => {
     await manager.saveReadingPlan(plan);
 
     expect(recordDataMock).toHaveBeenCalledWith("record-1", "plan-1", plan, {
-      markers: ["publicRead:readingPlan"],
+      marker: "publicRead:readingPlan",
     });
     const metaCall = recordDataMock.mock.calls.find(
-      (c) => c[3]?.markers?.[0] === "publicRead:readingPlanMetadata"
+      (c) => c[3]?.marker === "publicRead:readingPlanMetadata"
     );
     expect(metaCall).toBeDefined();
     expect(metaCall![2]).not.toHaveProperty("sessions");
@@ -730,12 +754,12 @@ describe("createReadingPlansManager", () => {
     expect(manager.userReadingPlanProgresses.value[0]!.sessions).toHaveLength(
       1
     );
-    // persisted at the unique progress id address with markers plural
+    // persisted at the unique progress id address under the progress marker
     const call = recordDataMock.mock.calls.at(-1)!;
     expect(call[0]).toBe("record-1");
     expect(call[1]).toBe("progress-1");
     expect(call[3]).toEqual({
-      markers: ["publicRead:readingPlanProgress"],
+      marker: "publicRead:readingPlanProgress",
     });
   });
 
@@ -839,7 +863,7 @@ describe("createReadingPlansManager", () => {
     const call = recordDataMock.mock.calls.at(-1)!;
     expect(call[0]).toBe("user-1");
     expect(call[1]).toBe(progress.id);
-    expect(call[3]).toEqual({ markers: ["publicRead:readingPlanProgress"] });
+    expect(call[3]).toEqual({ marker: "publicRead:readingPlanProgress" });
 
     expect(manager.userReadingPlanProgresses.value).toContain(progress);
     expect(manager.selectedReadingPlanProgress.value).toBeNull();
@@ -884,7 +908,7 @@ describe("createReadingPlansManager", () => {
     expect(plan.sessions).toEqual([]);
 
     // saveReadingPlan persists the full plan and the metadata separately
-    const markers = recordDataMock.mock.calls.map((c) => c[3]?.markers?.[0]);
+    const markers = recordDataMock.mock.calls.map((c) => c[3]?.marker);
     expect(markers).toEqual(
       expect.arrayContaining([
         "publicRead:readingPlan",
@@ -968,7 +992,7 @@ describe("createReadingPlansManager", () => {
     expect(plan.sessions).toHaveLength(1); // input not mutated
 
     // persisted via saveReadingPlan (full plan + metadata)
-    const markers = recordDataMock.mock.calls.map((c) => c[3]?.markers?.[0]);
+    const markers = recordDataMock.mock.calls.map((c) => c[3]?.marker);
     expect(markers).toEqual(
       expect.arrayContaining([
         "publicRead:readingPlan",
@@ -986,7 +1010,7 @@ describe("createReadingPlansManager", () => {
 
     expect(recordDataMock).toHaveBeenCalledTimes(2);
     const fullPlanCall = recordDataMock.mock.calls.find(
-      (c) => c[3]?.markers?.[0] === "publicRead:readingPlan"
+      (c) => c[3]?.marker === "publicRead:readingPlan"
     )!;
     expect((fullPlanCall[2] as ReadingPlan).sessions).toHaveLength(2);
   });
