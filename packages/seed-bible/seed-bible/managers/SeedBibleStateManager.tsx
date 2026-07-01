@@ -90,6 +90,10 @@ import {
   createReadingPlansManager,
   type ReadingPlansManager,
 } from "../managers/ReadingPlansManager";
+import {
+  createDiscoverManager,
+  type DiscoverManager,
+} from "../managers/DiscoverManager";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
@@ -242,6 +246,8 @@ export interface SeedBibleState {
   i18n: I18nManager;
   /** Reading plans: authoring, progress, and calendar. */
   readingPlans: ReadingPlansManager;
+  /** Discover manager for contextual content providers. */
+  discover: DiscoverManager;
   /** Aggregated computed app state and top-level UI actions. */
   app: AppState;
   /** Extension loading and runtime manager. */
@@ -312,7 +318,8 @@ export function createSeedBibleState(
   const config = createConfig(login, navigation);
   const themeManager = createTheme(login, navigation);
   const sidebar = createSidebar(navigation);
-  const tabs = createTabs(navigation, data, highlights, i18n);
+  const discover = createDiscoverManager();
+  const tabs = createTabs(navigation, data, highlights, i18n, discover);
   const panes = createPanes(tabs, tabs.selectedTabId);
   const settings = createSettings(os, login, navigation);
   const selector = createBibleSelectorState(
@@ -1093,6 +1100,7 @@ export function createSeedBibleState(
     search,
     navigation,
     i18n,
+    discover,
     extensions,
     readingPlans,
     tutorial,

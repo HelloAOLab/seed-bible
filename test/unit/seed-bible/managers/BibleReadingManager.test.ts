@@ -27,6 +27,10 @@ import { effect, signal } from "@preact/signals";
 import type { Mock } from "vitest";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
+import type {
+  DiscoverManager,
+  DiscoverProviderResults,
+} from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
 
 const nivTranslation = translations.translations[1]!;
 
@@ -1310,5 +1314,346 @@ describe("createBibleReadingState", () => {
       "Failed request to https://example.test/api/AAB/GEN/3.json. Status: 500 Server Error"
     );
     expect(state.loading.value).toBe(false);
+  });
+
+  describe("discoveredCrossReferences, discoveredContent, discoveredStudyNotes", () => {
+    function createDiscoverManagerMock(
+      responses: DiscoverProviderResults[][] = []
+    ): DiscoverManager {
+      let callIndex = 0;
+      return {
+        registerDiscoverProvider: jest.fn(),
+        discover: jest.fn().mockImplementation(async function* () {
+          const results = responses[callIndex++] ?? [];
+          for (const result of results) {
+            yield result;
+          }
+        }),
+      };
+    }
+
+    const genBookData = bsbBooks.books[0]!;
+
+    it("all three signals are empty when no discoverManager is provided", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any
+      );
+      await waitForInitialLoad(state);
+
+      expect(state.discoveredCrossReferences.value).toEqual([]);
+      expect(state.discoveredContent.value).toEqual([]);
+      expect(state.discoveredStudyNotes.value).toEqual([]);
+    });
+
+    it("discoveredContent only contains 'content' results for the current chapter", async () => {
+      const discoverManager = createDiscoverManagerMock([
+        [
+          {
+            providerId: "p1",
+            results: [
+              {
+                type: "content",
+                title: "Note 1",
+                description: "desc",
+                reference: { book: "GEN", chapter: 1, verse: 1 },
+                content: null as any,
+              },
+              {
+                type: "content",
+                title: "Note 2",
+                description: "desc",
+                reference: { book: "EXO", chapter: 1, verse: 1 },
+                content: null as any,
+              },
+            ],
+          },
+        ],
+      ]);
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      await waitFor(() => state.discoveredContent.value.length > 0);
+
+      expect(state.discoveredContent.value).toEqual([
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "content",
+              title: "Note 1",
+              description: "desc",
+              reference: {
+                book: "GEN",
+                chapter: 1,
+                verse: 1,
+                bookData: genBookData,
+              },
+              content: null,
+            },
+          ],
+        },
+      ]);
+      expect(state.discoveredCrossReferences.value).toEqual([]);
+      expect(state.discoveredStudyNotes.value).toEqual([]);
+    });
+
+    it("discoveredCrossReferences only contains 'cross-reference' results for the current chapter", async () => {
+      const discoverManager = createDiscoverManagerMock([
+        [
+          {
+            providerId: "p1",
+            results: [
+              {
+                type: "cross-reference",
+                reference: { book: "GEN", chapter: 1, verse: 3 },
+                crossReference: { book: "GEN", chapter: 2, verse: 1 },
+              },
+              {
+                type: "cross-reference",
+                reference: { book: "EXO", chapter: 1, verse: 1 },
+                crossReference: { book: "GEN", chapter: 1, verse: 1 },
+              },
+            ],
+          },
+        ],
+      ]);
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      await waitFor(() => state.discoveredCrossReferences.value.length > 0);
+
+      expect(state.discoveredCrossReferences.value).toEqual([
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "cross-reference",
+              reference: {
+                book: "GEN",
+                chapter: 1,
+                verse: 3,
+                bookData: genBookData,
+              },
+              crossReference: {
+                book: "GEN",
+                chapter: 2,
+                verse: 1,
+                bookData: genBookData,
+              },
+            },
+          ],
+        },
+      ]);
+      expect(state.discoveredContent.value).toEqual([]);
+      expect(state.discoveredStudyNotes.value).toEqual([]);
+    });
+
+    it("discoveredStudyNotes only contains 'study-note' results for the current chapter", async () => {
+      const discoverManager = createDiscoverManagerMock([
+        [
+          {
+            providerId: "p1",
+            results: [
+              {
+                type: "study-note",
+                reference: { book: "GEN", chapter: 1, verse: 2 },
+                content: null as any,
+              },
+              {
+                type: "study-note",
+                reference: { book: "MAT", chapter: 1, verse: 1 },
+                content: null as any,
+              },
+            ],
+          },
+        ],
+      ]);
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      await waitFor(() => state.discoveredStudyNotes.value.length > 0);
+
+      expect(state.discoveredStudyNotes.value).toEqual([
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "study-note",
+              reference: {
+                book: "GEN",
+                chapter: 1,
+                verse: 2,
+                bookData: genBookData,
+              },
+              content: null,
+            },
+          ],
+        },
+      ]);
+      expect(state.discoveredCrossReferences.value).toEqual([]);
+      expect(state.discoveredContent.value).toEqual([]);
+    });
+
+    it("mixed results from a single provider are split into separate signals", async () => {
+      const discoverManager = createDiscoverManagerMock([
+        [
+          {
+            providerId: "p1",
+            results: [
+              {
+                type: "cross-reference",
+                reference: { book: "GEN", chapter: 1, verse: 1 },
+                crossReference: { book: "GEN", chapter: 2, verse: 1 },
+              },
+              {
+                type: "content",
+                title: "A Title",
+                description: "desc",
+                reference: { book: "GEN", chapter: 1, verse: 1 },
+                content: null as any,
+              },
+              {
+                type: "study-note",
+                reference: { book: "GEN", chapter: 1, verse: 1 },
+                content: null as any,
+              },
+            ],
+          },
+        ],
+      ]);
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      await waitFor(
+        () =>
+          state.discoveredCrossReferences.value.length > 0 &&
+          state.discoveredContent.value.length > 0 &&
+          state.discoveredStudyNotes.value.length > 0
+      );
+
+      expect(state.discoveredCrossReferences.value[0]!.results).toHaveLength(1);
+      expect(state.discoveredCrossReferences.value[0]!.results[0]!.type).toBe(
+        "cross-reference"
+      );
+      expect(state.discoveredContent.value[0]!.results).toHaveLength(1);
+      expect(state.discoveredContent.value[0]!.results[0]!.type).toBe(
+        "content"
+      );
+      expect(state.discoveredStudyNotes.value[0]!.results).toHaveLength(1);
+      expect(state.discoveredStudyNotes.value[0]!.results[0]!.type).toBe(
+        "study-note"
+      );
+    });
+
+    it("results from multiple providers are grouped by providerId", async () => {
+      const discoverManager = createDiscoverManagerMock([
+        [
+          {
+            providerId: "providerA",
+            results: [
+              {
+                type: "content",
+                title: "From A",
+                description: "desc",
+                reference: { book: "GEN", chapter: 1, verse: 1 },
+                content: null as any,
+              },
+            ],
+          },
+          {
+            providerId: "providerB",
+            results: [
+              {
+                type: "content",
+                title: "From B",
+                description: "desc",
+                reference: { book: "GEN", chapter: 1, verse: 2 },
+                content: null as any,
+              },
+            ],
+          },
+        ],
+      ]);
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      await waitFor(() => state.discoveredContent.value.length === 2);
+
+      const providerIds = state.discoveredContent.value.map(
+        (r) => r.providerId
+      );
+      expect(providerIds).toContain("providerA");
+      expect(providerIds).toContain("providerB");
+    });
+
+    it("signals reset when chapter changes", async () => {
+      const responses = createReadingManagerResponseMap();
+      const discoverManager = createDiscoverManagerMock([
+        [
+          {
+            providerId: "p1",
+            results: [
+              {
+                type: "study-note",
+                reference: { book: "GEN", chapter: 1, verse: 1 },
+                content: null as any,
+              },
+            ],
+          },
+        ],
+        [],
+      ]);
+
+      setWebResponses(responses);
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      await waitFor(() => state.discoveredStudyNotes.value.length > 0);
+
+      expect(state.discoveredStudyNotes.value).toHaveLength(1);
+
+      await state.selectChapter("GEN", 2);
+      await waitFor(() => state.chapterNumber.value === 2);
+
+      expect(state.discoveredStudyNotes.value).toEqual([]);
+      expect(state.discoveredCrossReferences.value).toEqual([]);
+      expect(state.discoveredContent.value).toEqual([]);
+    });
   });
 });

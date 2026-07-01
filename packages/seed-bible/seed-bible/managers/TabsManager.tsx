@@ -57,6 +57,7 @@ export function parseVerseSelection(verse: string): number[] {
 }
 import type { NavigationManager } from "./NavigationManager";
 import type { I18nManager } from "../i18n";
+import type { DiscoverManager } from "./DiscoverManager";
 
 export interface ReaderTab {
   /** Unique tab identifier (for example: tab-1, tab-2). */
@@ -115,7 +116,8 @@ export function createInitialTabs(
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager,
   i18nManager: I18nManager,
-  options: InitialTabsOptions
+  options: InitialTabsOptions,
+  discoverManager?: DiscoverManager
 ): ReaderTab[] {
   const { translationId, bookId, chapter, highlightedVerses = [] } = options;
 
@@ -131,7 +133,8 @@ export function createInitialTabs(
         initialBookId: bookId,
         initialChapterNumber: chapter,
         scrollToVerse: highlightedVerses[0] ?? undefined,
-      }
+      },
+      discoverManager
     ),
     sharedSession: null,
   };
@@ -218,7 +221,8 @@ export function createTabs(
   navigation: NavigationManager,
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager,
-  i18nManager: I18nManager
+  i18nManager: I18nManager,
+  discoverManager?: DiscoverManager
 ): TabsManager {
   const defaultTranslation = getDefaultTranslationForLanguage(
     i18nManager.defaultLanguage
@@ -237,14 +241,20 @@ export function createTabs(
   });
 
   const tabs = signal<ReaderTab[]>(
-    createInitialTabs(dataManager, highlightsManager, i18nManager, {
-      translationId: initialTranslationId,
-      bookId: initialBookId,
-      chapter: initialChapter,
-      highlightedVerses: getInitialHighlightedVerses(
-        navigation.currentUrl.value
-      ),
-    })
+    createInitialTabs(
+      dataManager,
+      highlightsManager,
+      i18nManager,
+      {
+        translationId: initialTranslationId,
+        bookId: initialBookId,
+        chapter: initialChapter,
+        highlightedVerses: getInitialHighlightedVerses(
+          navigation.currentUrl.value
+        ),
+      },
+      discoverManager
+    )
   );
   const selectedTabId = signal<string>(tabs.value[0]?.id ?? "");
   const selectedTab = computed(
@@ -369,7 +379,9 @@ export function createTabs(
           dataManager,
           highlightsManager,
           i18nManager,
-          initialReadingOptions
+          initialReadingOptions,
+          {},
+          discoverManager
         ),
       sharedSession,
       paneOnly: tabOptions?.paneOnly ?? false,
