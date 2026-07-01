@@ -2,11 +2,10 @@ import type { ComponentChildren } from "preact";
 import { useState } from "preact/hooks";
 import { useI18n } from "../i18n/I18nManager";
 import type { TabsManager, ReaderTab } from "../managers/TabsManager";
-import type { PlaylistManager } from "../managers/PlaylistManager";
+import type { Playlist, PlaylistManager } from "../managers/PlaylistManager";
 import type { DiscoverReference } from "../managers/DiscoverManager";
 import type { TranslationBook } from "../managers/FreeUseBibleAPI";
 import { MaterialIcon } from "./icons";
-import { computed, useSignalEffect } from "@preact/signals";
 
 interface DiscoverPaneProps {
   tabs: TabsManager;
@@ -111,7 +110,7 @@ interface CreatePlaylistFormProps {
 
 /** Create-playlist screen shown inside the discover pane. */
 function CreatePlaylistForm(props: CreatePlaylistFormProps) {
-  const { playlists, tabs } = props;
+  const { playlists } = props;
   const { t } = useI18n();
   const [saving, setSaving] = useState(false);
 
@@ -156,9 +155,21 @@ function CreatePlaylistForm(props: CreatePlaylistFormProps) {
       </div>
 
       <DiscoverSection title={t("items", { defaultValue: "Items" })}>
-        <DiscoverEmpty
-          text={t("playlist-items-empty", { defaultValue: "No items yet." })}
-        />
+        {!editing?.items.length ? (
+          <DiscoverEmpty
+            text={t("playlist-items-empty", { defaultValue: "No items yet." })}
+          />
+        ) : (
+          <ul className="sb-discover-list">
+            {editing.items.map((item, index) => (
+              <li key={index} className="sb-discover-item">
+                <span className="sb-discover-item-title">
+                  {playlistItemLabel(item, t)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </DiscoverSection>
 
       <div className="sb-settings-actions">
@@ -341,4 +352,23 @@ function formatRef(ref: ReferenceWithBookData): string {
     }
   }
   return label;
+}
+
+/** Renders a single playlist item as a plain-text label for the editor list. */
+function playlistItemLabel(
+  item: Playlist["items"][number],
+  t: ReturnType<typeof useI18n>["t"]
+): string {
+  switch (item.type) {
+    case "bible-verse": {
+      const { bookId, chapter, verse, endVerse } = item.ref;
+      return endVerse
+        ? `${bookId} ${chapter}:${verse}-${endVerse}`
+        : `${bookId} ${chapter}:${verse}`;
+    }
+    case "link":
+      return item.url;
+    case "html":
+      return t("playlist-item-html", { defaultValue: "HTML snippet" });
+  }
 }
