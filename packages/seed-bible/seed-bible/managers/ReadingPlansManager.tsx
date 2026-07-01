@@ -3,6 +3,9 @@ import { PlaylistItem } from "./PlaylistManager";
 import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
 import { omit } from "es-toolkit";
+import { DateTime } from "luxon";
+import { CasualOSManager } from "./OsManager";
+import { v4 as uuid } from "uuid";
 
 // ---------------------------------------------------------------------------
 // Cadence
@@ -760,36 +763,10 @@ export function getReadingCalendar(
   return entries;
 }
 
-async function listAllDataByMarker(
-  recordName: string,
-  marker: string
-): Promise<{ success: boolean; items: { address: string; data: unknown }[] }> {
-  const allItems: { address: string; data: unknown }[] = [];
-  let lastAddress: string | undefined;
-
-  while (true) {
-    const page = await os.listDataByMarker(recordName, marker, lastAddress);
-
-    if (!page.success) {
-      console.error("Error listing data:", page);
-      throw new Error(`Error listing data: ${page.errorCode}`);
-    }
-
-    if (page.items.length === 0) {
-      break;
-    }
-
-    for (const item of page.items) {
-      allItems.push({ address: item.address, data: item.data });
-    }
-
-    lastAddress = page.items[page.items.length - 1]?.address;
-  }
-
-  return { success: true, items: allItems };
-}
-
-export function createReadingPlansManager(login: LoginManager) {
+export function createReadingPlansManager(
+  os: CasualOSManager,
+  login: LoginManager
+) {
   const userReadingPlanProgresses = signal<ReadingPlanProgress[]>([]);
   const userReadingPlans = signal<ReadingPlanMetadata[]>([]);
   const selectedReadingPlan = signal<ReadingPlan | null>(null);
@@ -810,7 +787,7 @@ export function createReadingPlansManager(login: LoginManager) {
   });
 
   const listReadingPlans = async (recordName: string) => {
-    const result = await listAllDataByMarker(
+    const result = await os.listAllDataByMarker(
       recordName,
       "publicRead:readingPlanMetadata"
     );
@@ -848,10 +825,10 @@ export function createReadingPlansManager(login: LoginManager) {
     const metadata = omit(plan, ["sessions"]);
     await Promise.all([
       os.recordData(plan.recordName, plan.address, plan, {
-        markers: ["publicRead:readingPlan"],
+        marker: "publicRead:readingPlan",
       }),
       os.recordData(plan.recordName, `${plan.address}_metadata`, metadata, {
-        markers: ["publicRead:readingPlanMetadata"],
+        marker: "publicRead:readingPlanMetadata",
       }),
     ]);
   };
@@ -859,12 +836,12 @@ export function createReadingPlansManager(login: LoginManager) {
   const saveReadingPlanProgress = async (progress: ReadingPlanProgress) => {
     const parsed = ReadingPlanProgressSchema.parse(progress);
     await os.recordData(parsed.recordName, parsed.id, parsed, {
-      markers: ["publicRead:readingPlanProgress"],
+      marker: "publicRead:readingPlanProgress",
     });
   };
 
   const loadReadingProgress = async (recordName: string) => {
-    const result = await listAllDataByMarker(
+    const result = await os.listAllDataByMarker(
       recordName,
       "publicRead:readingPlanProgress"
     );

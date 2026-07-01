@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
 import { computed, effect, signal } from "@preact/signals";
+import type { CasualOSManager } from "./OsManager";
 
 export const VerseRefSchema = z.object({
   bookId: z.string(),
@@ -39,7 +40,10 @@ export const PlaylistSchema = z.object({
 
 export type Playlist = z.infer<typeof PlaylistSchema>;
 
-export function createPlaylistManager(login: LoginManager) {
+export function createPlaylistManager(
+  os: CasualOSManager,
+  login: LoginManager
+) {
   const userPlaylists = signal<Playlist[]>([]);
 
   const availablePlaylists = computed(() => {
@@ -48,7 +52,7 @@ export function createPlaylistManager(login: LoginManager) {
 
   const savePlaylist = async (playlist: Playlist) => {
     await os.recordData(playlist.recordName, playlist.id, playlist, {
-      markers: ["publicRead:playlists"],
+      marker: "publicRead:playlists",
     });
   };
 

@@ -185,6 +185,20 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
     client.sessionKey = sessionKey.value as string;
   });
 
+  const listDataByMarker = async (
+    recordName: string,
+    marker: string,
+    lastAddress?: string
+  ) => {
+    const result = await client.listData({
+      recordName,
+      marker,
+      address: lastAddress,
+    });
+
+    return result;
+  };
+
   return {
     client,
     connectionId,
@@ -226,18 +240,38 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
       });
     },
 
-    listDataByMarker: async (
-      recordName: string,
-      marker: string,
-      lastAddress?: string
-    ) => {
-      const result = await client.listData({
-        recordName,
-        marker,
-        address: lastAddress,
-      });
+    listDataByMarker,
 
-      return result;
+    listAllDataByMarker: async (
+      recordName: string,
+      marker: string
+    ): Promise<{
+      success: boolean;
+      items: { address: string; data: unknown }[];
+    }> => {
+      const allItems: { address: string; data: unknown }[] = [];
+      let lastAddress: string | undefined;
+
+      while (true) {
+        const page = await listDataByMarker(recordName, marker, lastAddress);
+
+        if (!page.success) {
+          console.error("Error listing data:", page);
+          throw new Error(`Error listing data: ${page.errorCode}`);
+        }
+
+        if (page.items.length === 0) {
+          break;
+        }
+
+        for (const item of page.items) {
+          allItems.push({ address: item.address, data: item.data });
+        }
+
+        lastAddress = page.items[page.items.length - 1]?.address;
+      }
+
+      return { success: true, items: allItems };
     },
 
     recordFile: async (

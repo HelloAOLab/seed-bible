@@ -400,7 +400,7 @@ export function createSeedBibleState(
       },
     },
   });
-  const readingPlans = createReadingPlansManager(login);
+  const readingPlans = createReadingPlansManager(os, login);
 
   const { currentTheme } = themeManager;
   const theme = computed(() => currentTheme.value);

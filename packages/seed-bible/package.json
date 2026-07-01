@@ -37,6 +37,7 @@
     "zod": "catalog:",
     "axios": "catalog:",
     "react-avatar-editor": "15.1.0",
-    "rxjs": "catalog:"
+    "rxjs": "catalog:",
+    "luxon": "catalog:"
   }
 }

@@ -1,7 +1,6 @@
-import { useI18n } from "seed-bible.i18n.I18nManager";
-import type { ReadingPlansManager } from "seed-bible.managers.ReadingPlansManager";
-
-const { useState } = os.appHooks;
+import { useState } from "preact/hooks";
+import { useI18n } from "../i18n/I18nManager";
+import type { ReadingPlansManager } from "../managers/ReadingPlansManager";
 
 interface ReadingPlansPaneProps {
   readingPlans: ReadingPlansManager;

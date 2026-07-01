@@ -1,3 +1,4 @@
+import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers";
 import {
   CadenceSchema,
   ReadingPlanSchema,
@@ -24,6 +25,8 @@ import {
   type CalendarSkipRange,
 } from "@packages/seed-bible/seed-bible/managers/ReadingPlansManager";
 import { signal } from "@preact/signals";
+import { DateTime } from "luxon";
+import type { Mock } from "vitest";
 
 // An arbitrary mid-week start instant to exercise "start any time".
 // 2026-06-17 is a Wednesday.
@@ -497,13 +500,13 @@ describe("getReadingCalendar", () => {
 });
 
 describe("createReadingPlansManager", () => {
-  type LoginArg = Parameters<typeof createReadingPlansManager>[0];
+  type LoginArg = Parameters<typeof createReadingPlansManager>[1];
 
-  let recordDataMock: jest.Mock;
-  let getDataMock: jest.Mock;
-  let listDataByMarkerMock: jest.Mock;
-  let warnSpy: jest.SpyInstance;
-  let errorSpy: jest.SpyInstance;
+  let recordDataMock: Mock;
+  let getDataMock: Mock;
+  let listDataByMarkerMock: Mock;
+  let warnSpy: Mock;
+  let errorSpy: Mock;
   let userId: ReturnType<typeof signal<string | null>>;
 
   const flush = async () => {
@@ -530,24 +533,26 @@ describe("createReadingPlansManager", () => {
   };
 
   const metadataOf = (plan: ReadingPlan) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { sessions: _sessions, ...metadata } = plan;
     return metadata;
   };
 
   const makeManager = (id: string | null = "user-1") => {
     userId = signal<string | null>(id);
+    const os = CasualOSManager();
     const login = { userId } as unknown as LoginArg;
-    return createReadingPlansManager(login);
+    return createReadingPlansManager(os, login);
   };
 
   beforeEach(() => {
-    recordDataMock = jest.fn().mockResolvedValue(undefined);
-    getDataMock = jest.fn().mockResolvedValue({ success: false });
-    listDataByMarkerMock = jest
+    recordDataMock = vi.fn().mockResolvedValue(undefined);
+    getDataMock = vi.fn().mockResolvedValue({ success: false });
+    listDataByMarkerMock = vi
       .fn()
       .mockResolvedValue({ success: true, items: [] });
-    warnSpy = jest.spyOn(console, "warn").mockImplementation(() => undefined);
-    errorSpy = jest.spyOn(console, "error").mockImplementation(() => undefined);
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
 
     (globalThis as { os?: unknown }).os = {
       ...(globalThis as { os?: object }).os,
@@ -952,7 +957,7 @@ describe("createReadingPlansManager", () => {
     const newSession = { id: "s2", readings: [reading("r2")] };
     recordDataMock.mockClear();
     const NOW = START_MS + 60_000;
-    const nowSpy = jest.spyOn(Date, "now").mockReturnValue(NOW);
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(NOW);
 
     const updated = await manager.addSessionToReadingPlan(plan, newSession);
     nowSpy.mockRestore();
@@ -1014,7 +1019,7 @@ describe("createReadingPlansManager", () => {
     await flush();
     expect(manager.userReadingPlans.value).toHaveLength(1);
     const NOW = START_MS + 60_000;
-    const nowSpy = jest.spyOn(Date, "now").mockReturnValue(NOW);
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(NOW);
 
     await manager.addSessionToReadingPlan(plan, {
       id: "s9",
