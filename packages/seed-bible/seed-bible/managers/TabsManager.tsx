@@ -380,7 +380,6 @@ export function createTabs(
           highlightsManager,
           i18nManager,
           initialReadingOptions,
-          {},
           discoverManager
         ),
       sharedSession,

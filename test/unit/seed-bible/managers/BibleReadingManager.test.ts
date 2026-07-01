@@ -1322,8 +1322,8 @@ describe("createBibleReadingState", () => {
     ): DiscoverManager {
       let callIndex = 0;
       return {
-        registerDiscoverProvider: jest.fn(),
-        discover: jest.fn().mockImplementation(async function* () {
+        registerDiscoverProvider: vi.fn(),
+        discover: vi.fn().mockImplementation(async function* () {
           const results = responses[callIndex++] ?? [];
           for (const result of results) {
             yield result;
@@ -1338,7 +1338,8 @@ describe("createBibleReadingState", () => {
       setWebResponses(createReadingManagerResponseMap());
       const state = createRawBibleReadingState(
         createDataManager(),
-        createHighlightsManagerMock() as any
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"])
       );
       await waitForInitialLoad(state);
 
@@ -1376,6 +1377,7 @@ describe("createBibleReadingState", () => {
       const state = createRawBibleReadingState(
         createDataManager(),
         createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
         {},
         discoverManager
       );
@@ -1430,6 +1432,7 @@ describe("createBibleReadingState", () => {
       const state = createRawBibleReadingState(
         createDataManager(),
         createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
         {},
         discoverManager
       );
@@ -1487,6 +1490,7 @@ describe("createBibleReadingState", () => {
       const state = createRawBibleReadingState(
         createDataManager(),
         createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
         {},
         discoverManager
       );
@@ -1546,6 +1550,7 @@ describe("createBibleReadingState", () => {
       const state = createRawBibleReadingState(
         createDataManager(),
         createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
         {},
         discoverManager
       );
@@ -1605,6 +1610,7 @@ describe("createBibleReadingState", () => {
       const state = createRawBibleReadingState(
         createDataManager(),
         createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
         {},
         discoverManager
       );
@@ -1640,6 +1646,7 @@ describe("createBibleReadingState", () => {
       const state = createRawBibleReadingState(
         createDataManager(),
         createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
         {},
         discoverManager
       );

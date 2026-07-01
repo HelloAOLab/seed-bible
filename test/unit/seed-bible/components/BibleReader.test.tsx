@@ -165,6 +165,9 @@ function createFixture(): ReaderFixture {
     highlights,
     chapterDataPromise: Promise.resolve(),
     defaultTranslation: { id: "BSB", language: "en" },
+    discoveredContent: signal([]),
+    discoveredCrossReferences: signal([]),
+    discoveredStudyNotes: signal([]),
   } as BibleReadingState;
 
   const selectorState = {
