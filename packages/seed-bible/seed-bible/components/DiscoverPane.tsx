@@ -188,10 +188,23 @@ function CreatePlaylistForm(props: CreatePlaylistFormProps) {
         ) : (
           <ul className="sb-discover-list">
             {editing.items.map((item, index) => (
-              <li key={index} className="sb-discover-item">
+              <li
+                key={index}
+                className="sb-discover-item sb-discover-item--row"
+              >
                 <span className="sb-discover-item-title">
                   {playlistItemLabel(item, t, resolveBookName)}
                 </span>
+                <button
+                  type="button"
+                  className="sb-discover-item-delete"
+                  aria-label={t("remove-playlist-item", {
+                    defaultValue: "Remove item",
+                  })}
+                  onClick={() => playlists.removeEditingPlaylistItem(index)}
+                >
+                  <MaterialIcon>delete</MaterialIcon>
+                </button>
               </li>
             ))}
           </ul>

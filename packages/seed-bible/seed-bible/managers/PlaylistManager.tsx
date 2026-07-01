@@ -137,6 +137,22 @@ export function createPlaylistManager(
     view.value = "discover";
   };
 
+  /**
+   * Removes the item at the given index from the currently-edited playlist.
+   * No-op when there is no playlist being edited. Persisting happens later via
+   * `saveEditingPlaylist`.
+   */
+  const removeEditingPlaylistItem = (index: number): void => {
+    const current = editingPlaylist.value;
+    if (!current) {
+      return;
+    }
+    editingPlaylist.value = {
+      ...current,
+      items: current.items.filter((_, i) => i !== index),
+    };
+  };
+
   /** Discards the current edit and returns to the discover view. */
   const cancelEditingPlaylist = (): void => {
     editingPlaylist.value = null;
@@ -166,6 +182,7 @@ export function createPlaylistManager(
     createNewPlaylist,
     editPlaylist,
     saveEditingPlaylist,
+    removeEditingPlaylistItem,
     cancelEditingPlaylist,
     listPlaylists,
     userPlaylists,

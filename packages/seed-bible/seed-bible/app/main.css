@@ -9115,7 +9115,8 @@ h6 {
   min-width: 0;
 }
 
-.sb-discover-item-edit {
+.sb-discover-item-edit,
+.sb-discover-item-delete {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
@@ -9133,8 +9134,19 @@ h6 {
   color: var(--sb-font-color);
 }
 
-.sb-discover-item-edit .material-symbols-outlined {
+.sb-discover-item-delete:hover {
+  background: var(--sb-divider-color);
+  color: var(--sb-error-color, #d64545);
+}
+
+.sb-discover-item-edit .material-symbols-outlined,
+.sb-discover-item-delete .material-symbols-outlined {
   font-size: 18px;
+}
+
+.sb-discover-item--row .sb-discover-item-title {
+  flex: 1;
+  min-width: 0;
 }
 
 .sb-discover-item-title {
