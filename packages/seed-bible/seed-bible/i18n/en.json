@@ -274,6 +274,7 @@
   "reading-plan-title_placeholder": "e.g. Bible in a Year",
   "reading-plan-description_placeholder": "What is this plan about?",
   "discover": "Discover",
+  "discover-book-chapter": "Discover {{book}} {{chapter}}",
   "playlists": "Playlists",
   "annotations": "Annotations",
   "cross-references": "Cross references",

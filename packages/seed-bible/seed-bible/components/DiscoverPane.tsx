@@ -4,6 +4,7 @@ import type { TabsManager, ReaderTab } from "../managers/TabsManager";
 import type { PlaylistManager } from "../managers/PlaylistManager";
 import type { DiscoverReference } from "../managers/DiscoverManager";
 import type { TranslationBook } from "../managers/FreeUseBibleAPI";
+import { MaterialIcon } from "./icons";
 
 interface DiscoverPaneProps {
   tabs: TabsManager;
@@ -25,12 +26,21 @@ export function DiscoverPane(props: DiscoverPaneProps) {
   const userPlaylists = playlists.userPlaylists.value;
   const selectedTab =
     tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null;
+  const currentChapterData =
+    selectedTab?.readingState.chapterData.value ?? null;
 
   return (
     <div className="sb-discover-pane">
       <div className="sb-discover-header">
+        <MaterialIcon className="sb-discover-title-icon">explore</MaterialIcon>
         <h2 className="sb-discover-title">
-          {t("discover", { defaultValue: "Discover" })}
+          {currentChapterData
+            ? t("discover-book-chapter", {
+                book: currentChapterData.book.name,
+                chapter: currentChapterData.chapter.number,
+                defaultValue: "Discover {{book}} {{chapter}}",
+              })
+            : t("discover", { defaultValue: "Discover" })}
         </h2>
       </div>
 
