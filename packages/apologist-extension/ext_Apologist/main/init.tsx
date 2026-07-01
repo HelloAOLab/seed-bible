@@ -109,7 +109,7 @@ registerExtension({
         );
 
         const responseData = await response.json();
-        const message = responseData.data.choices[0].message;
+        const message = responseData.choices[0].message;
 
         if (message) {
           return {
