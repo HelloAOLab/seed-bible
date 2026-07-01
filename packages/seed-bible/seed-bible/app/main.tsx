@@ -56,8 +56,12 @@ export function ExternalResourceDependencies({
         rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
       />
-      <style>{`body {\n${themeCssVariables}\n}`}</style>
-      <style>{themeCssClasses}</style>
+      {!import.meta.env.DEV && (
+        <>
+          <style>{`body {\n${themeCssVariables}\n}`}</style>
+          <style>{themeCssClasses}</style>
+        </>
+      )}
     </>
   );
 }
