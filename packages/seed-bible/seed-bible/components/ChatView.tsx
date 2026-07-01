@@ -757,6 +757,20 @@ export function ChatView(props: ChatViewProps) {
             if (group.type === "join") {
               return (
                 <div className="sb-chat-view-event" key={group.key}>
+                  <div className="sb-chat-view-event-avatar-shell">
+                    {group.participants.slice(0, 3).map((p) => {
+                      const avatar = getParticipantAvatar(p, t);
+                      return (
+                        <Avatar
+                          key={p.id}
+                          imageUrl={avatar.imageUrl}
+                          visual={avatar.visual}
+                          title={avatar.label}
+                          isSelf={avatar.isSelf}
+                        />
+                      );
+                    })}
+                  </div>
                   <span className="sb-chat-view-event-text">
                     {getJoinLabel(group.participants, t)}
                   </span>

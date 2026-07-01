@@ -9015,13 +9015,27 @@ a:visited {
 .sb-chat-view-event {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
+  align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 2px 8px;
-  font-size: 12px;
+  padding: 8px;
+  font-size: 10px;
   text-align: center;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+}
+
+.sb-chat-view-event-avatar-shell {
+  display: flex;
+
+  > .sb-tab-user-icon {
+    width: 14px;
+    height: 14px;
+    margin-inline-start: -6px;
+
+    > .material-symbols-outlined {
+      font-size: 10px;
+    }
+  }
 }
 
 .sb-chat-view-event-text {
