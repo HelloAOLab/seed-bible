@@ -40,6 +40,8 @@ export const PlaylistSchema = z.object({
 
 export type Playlist = z.infer<typeof PlaylistSchema>;
 
+export type PlaylistManager = ReturnType<typeof createPlaylistManager>;
+
 export function createPlaylistManager(
   os: CasualOSManager,
   login: LoginManager

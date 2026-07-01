@@ -16,6 +16,8 @@ import { sortBy } from "es-toolkit";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import type { ReadingPlansManager } from "../managers/ReadingPlansManager";
 import { ReadingPlansPane } from "../components/ReadingPlansPane";
+import type { DiscoverManager } from "./DiscoverManager";
+import type { PlaylistManager } from "./PlaylistManager";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -131,6 +133,8 @@ export interface BibleToolContext {
   openSearch: () => void;
   /** Opens the chat / cross-references floating panel. */
   openChat?: () => void;
+  /** Opens the discover panel */
+  openDiscover?: () => void;
   /** Shows a transient toast message at the bottom of the screen. */
   toast: (message: string) => void;
   /** Reading plans manager, for opening the plans pane. */
@@ -521,6 +525,19 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
           detachedAnchor: "side",
           component: () => <ReadingPlansPane readingPlans={readingPlans} />,
         });
+      },
+    },
+    {
+      id: "open-discover",
+      priority: 120,
+      title: { key: "discover", defaultValue: "Discover" },
+      icon: () => <MaterialIcon>explore</MaterialIcon>,
+      isVisible: (context) => !!context.openDiscover,
+      onSelect: (context) => {
+        if (!context.openDiscover) {
+          return;
+        }
+        context.openDiscover();
       },
     },
     {

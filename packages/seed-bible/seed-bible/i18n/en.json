@@ -272,5 +272,18 @@
   "untitled-reading-plan": "Untitled plan",
   "title": "Title",
   "reading-plan-title_placeholder": "e.g. Bible in a Year",
-  "reading-plan-description_placeholder": "What is this plan about?"
+  "reading-plan-description_placeholder": "What is this plan about?",
+  "discover": "Discover",
+  "playlists": "Playlists",
+  "annotations": "Annotations",
+  "cross-references": "Cross references",
+  "study-notes": "Study notes",
+  "content": "Content",
+  "untitled-playlist": "Untitled playlist",
+  "discover-playlists-empty": "You haven't created any playlists yet.",
+  "discover-annotations-empty": "You have no annotations",
+  "discover-cross-references-empty": "No cross references for this chapter.",
+  "discover-study-notes-empty": "No study notes for this chapter.",
+  "discover-content-empty": "No content for this chapter.",
+  "discover-select-tab": "Select a tab to discover related material."
 }

@@ -400,6 +400,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
       openChat: sidebar.openChatPanel,
+      openDiscover: props.state.app.openDiscover,
       toast: props.state.app.toast,
       readingPlans,
     });
@@ -433,6 +434,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
       openChat: sidebar.openChatPanel,
+      openDiscover: props.state.app.openDiscover,
       toast: props.state.app.toast,
     });
 

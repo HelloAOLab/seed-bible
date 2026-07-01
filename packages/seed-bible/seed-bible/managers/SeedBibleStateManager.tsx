@@ -184,6 +184,12 @@ export interface AppState {
    * (only one toast is ever visible at a time, always the most recent).
    */
   toast: (message: string) => void;
+
+  /**
+   * Opens the discover pane.
+   * @returns
+   */
+  openDiscover: () => void;
 }
 
 /**
@@ -279,6 +285,8 @@ export interface SeedBibleState {
 // `packages/` by the `vite-plugin-extensions` plugin. See
 // script/lib/vite-plugin-extensions.ts.
 import SEED_BIBLE_EXTENSIONS from "virtual:@extensions";
+import { createPlaylistManager } from "./PlaylistManager";
+import { DiscoverPane } from "../components/DiscoverPane";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -408,6 +416,7 @@ export function createSeedBibleState(
     },
   });
   const readingPlans = createReadingPlansManager(os, login);
+  const playlists = createPlaylistManager(os, login);
 
   const { currentTheme } = themeManager;
   const theme = computed(() => currentTheme.value);
@@ -1074,6 +1083,15 @@ export function createSeedBibleState(
     }, 3500);
   };
 
+  const handleOpenDiscover = () => {
+    panes.openPane({
+      id: "discover-pane",
+      type: "detached",
+      detachedAnchor: "side",
+      component: () => <DiscoverPane tabs={tabs} playlists={playlists} />,
+    });
+  };
+
   const state: SeedBibleState = {
     os,
     bibleData: data,
@@ -1137,6 +1155,7 @@ export function createSeedBibleState(
       socialTitle,
       currentToast,
       toast,
+      openDiscover: handleOpenDiscover,
     },
   };
 
