@@ -394,6 +394,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       selectorState: selector,
       tabs: tabs,
       panesManager: panes,
+      readingPlans: props.state.readingPlans,
+      playlists: props.state.playlists,
       window: {
         isMobile: props.state.app.isMobile.value,
       },
@@ -402,7 +404,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       openChat: sidebar.openChatPanel,
       openDiscover: props.state.app.openDiscover,
       toast: props.state.app.toast,
-      readingPlans,
     });
     return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
   });
@@ -428,6 +429,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       selectorState: selector,
       tabs: tabs,
       panesManager: panes,
+      readingPlans: props.state.readingPlans,
+      playlists: props.state.playlists,
       window: {
         isMobile: props.state.app.isMobile.value,
       },

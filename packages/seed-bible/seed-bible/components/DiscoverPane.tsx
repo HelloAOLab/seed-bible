@@ -6,6 +6,7 @@ import type { PlaylistManager } from "../managers/PlaylistManager";
 import type { DiscoverReference } from "../managers/DiscoverManager";
 import type { TranslationBook } from "../managers/FreeUseBibleAPI";
 import { MaterialIcon } from "./icons";
+import { computed, useSignalEffect } from "@preact/signals";
 
 interface DiscoverPaneProps {
   tabs: TabsManager;
@@ -105,11 +106,12 @@ export function DiscoverPane(props: DiscoverPaneProps) {
 
 interface CreatePlaylistFormProps {
   playlists: PlaylistManager;
+  tabs: TabsManager;
 }
 
 /** Create-playlist screen shown inside the discover pane. */
 function CreatePlaylistForm(props: CreatePlaylistFormProps) {
-  const { playlists } = props;
+  const { playlists, tabs } = props;
   const { t } = useI18n();
   const [saving, setSaving] = useState(false);
 

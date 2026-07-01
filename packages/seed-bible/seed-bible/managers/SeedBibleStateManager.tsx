@@ -254,6 +254,10 @@ export interface SeedBibleState {
   readingPlans: ReadingPlansManager;
   /** Discover manager for contextual content providers. */
   discover: DiscoverManager;
+  /**
+   * Playlist manager for creating, editing, and syncing user playlists.
+   */
+  playlists: PlaylistManager;
   /** Aggregated computed app state and top-level UI actions. */
   app: AppState;
   /** Extension loading and runtime manager. */
@@ -285,7 +289,7 @@ export interface SeedBibleState {
 // `packages/` by the `vite-plugin-extensions` plugin. See
 // script/lib/vite-plugin-extensions.ts.
 import SEED_BIBLE_EXTENSIONS from "virtual:@extensions";
-import { createPlaylistManager } from "./PlaylistManager";
+import { createPlaylistManager, type PlaylistManager } from "./PlaylistManager";
 import { DiscoverPane } from "../components/DiscoverPane";
 
 /**
@@ -1121,6 +1125,7 @@ export function createSeedBibleState(
     discover,
     extensions,
     readingPlans,
+    playlists,
     tutorial,
     onboarding,
     isTermsOpen,

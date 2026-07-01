@@ -16,6 +16,7 @@ import { sortBy } from "es-toolkit";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import type { ReadingPlansManager } from "../managers/ReadingPlansManager";
 import { ReadingPlansPane } from "../components/ReadingPlansPane";
+import type { PlaylistManager } from "./PlaylistManager";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -137,6 +138,8 @@ export interface BibleToolContext {
   toast: (message: string) => void;
   /** Reading plans manager, for opening the plans pane. */
   readingPlans?: ReadingPlansManager;
+  /** Playlist manager */
+  playlists?: PlaylistManager;
 }
 
 /** Fully resolved reader toolbar tool ready for rendering. */
@@ -560,6 +563,32 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
 
 function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
   return [
+    {
+      id: "add-to-playlist",
+      priority: 100,
+      title: { key: "add-to-playlist", defaultValue: "Add to Playlist" },
+      icon: () => <MaterialIcon>playlist_add</MaterialIcon>,
+      isVisible: (context) => !!context.playlists?.editingPlaylist.value,
+      onSelect: async (context) => {
+        const playlist = context.playlists?.editingPlaylist.value;
+        if (!playlist) return;
+
+        context.playlists!.editingPlaylist.value = {
+          ...playlist,
+          items: [
+            ...playlist.items,
+            ...context.readingState.selectedVerses.value.map((verse) => ({
+              type: "bible-verse" as const,
+              ref: {
+                bookId: verse.bookId,
+                chapter: verse.chapterNumber,
+                verse: verse.verse.number,
+              },
+            })),
+          ],
+        };
+      },
+    },
     {
       id: "copy-verse",
       priority: 200,
