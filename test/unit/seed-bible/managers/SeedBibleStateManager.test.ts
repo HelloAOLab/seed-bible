@@ -128,6 +128,17 @@ async function createStateWithTwoTabs() {
 }
 
 describe("createSeedBibleState", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    jsdom.reconfigure({
+      url: "https://example.com",
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("created with default values", async () => {
     const state = await createState();
 
@@ -733,7 +744,6 @@ describe("createSeedBibleState", () => {
     it("falls back to DEFAULT_TRANSLATION_ID when the tab has no translationId", async () => {
       const state = await createState();
       const tab = state.tabs.tabs.value[0]!;
-      tab.readingState.translationId.value = null;
       const selectSpy = vi
         .spyOn(tab.readingState, "selectTranslationAndChapter")
         .mockResolvedValue(undefined);
