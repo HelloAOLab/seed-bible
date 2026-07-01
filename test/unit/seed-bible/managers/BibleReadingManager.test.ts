@@ -1332,7 +1332,7 @@ describe("createBibleReadingState", () => {
       };
     }
 
-    const genBookData = bsbBooks.books[0]!;
+    const genBookData = aabBooks.books[0]!;
 
     it("all three signals are empty when no discoverManager is provided", async () => {
       setWebResponses(createReadingManagerResponseMap());
