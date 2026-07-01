@@ -1240,20 +1240,30 @@ export function createBibleReadingState(
 
           const enrichedResults: DiscoverResultWithBookData[] =
             result.results.map((entry) => {
+              const refBookData =
+                translationBooks.value?.books.find(
+                  (b) => b.id === entry.reference.book
+                ) ?? currentBookData;
+
               if (entry.type === "cross-reference") {
+                const crossRefBookData =
+                  translationBooks.value?.books.find(
+                    (b) => b.id === entry.crossReference.book
+                  ) ?? currentBookData;
+
                 return {
                   ...entry,
-                  reference: withBookData(entry.reference, currentBookData),
+                  reference: withBookData(entry.reference, refBookData),
                   crossReference: withBookData(
                     entry.crossReference,
-                    currentBookData
+                    crossRefBookData
                   ),
                 };
               }
 
               return {
                 ...entry,
-                reference: withBookData(entry.reference, currentBookData),
+                reference: withBookData(entry.reference, refBookData),
               };
             });
 
