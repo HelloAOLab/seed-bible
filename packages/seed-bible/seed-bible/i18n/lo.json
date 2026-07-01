@@ -263,5 +263,15 @@
   "no-languages-found": "ບໍ່ພົບພາສາໃດ",
   "today-coming-soon": "ມື້ນີ້ໜ້າຈໍຈະມາໄວໆນີ້",
   "link-to-join-shared-session-copied": "ລິ້ງເພື່ອເຂົ້າຮ່ວມເຊດຊັນທີ່ແບ່ງປັນໄດ້ຖືກຄັດລອກໄປໃສ່ຄລິບບອດຂອງທ່ານແລ້ວ",
-  "copied-translation-share-link": "ສຳເນົາຄຳແປແລ້ວ ແບ່ງປັນລິ້ງ"
+  "copied-translation-share-link": "ສຳເນົາຄຳແປແລ້ວ ແບ່ງປັນລິ້ງ",
+  "less": "ໜ້ອຍລົງ",
+  "swipe-up-more": "ປັດຂຶ້ນເພື່ອເບິ່ງເພີ່ມເຕີມ",
+  "plans": "ແຜນການ",
+  "reading-plans": "ແຜນການອ່ານ",
+  "create-reading-plan": "ສ້າງແຜນການອ່ານ",
+  "reading-plans-empty": "ທ່ານຍັງບໍ່ມີແຜນການອ່ານເທື່ອ. ສ້າງແຜນການໜຶ່ງເພື່ອເລີ່ມຕົ້ນ.",
+  "untitled-reading-plan": "ແຜນການບໍ່ມີຫົວຂໍ້",
+  "title": "ຫົວຂໍ້",
+  "reading-plan-title_placeholder": "ຕົວຢ່າງ: ຄຳພີໄບເບິນໃນໜຶ່ງປີ",
+  "reading-plan-description_placeholder": "ແຜນການນີ້ກ່ຽວກັບຫຍັງ?"
 }

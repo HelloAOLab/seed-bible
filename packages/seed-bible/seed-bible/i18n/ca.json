@@ -263,5 +263,15 @@
   "no-languages-found": "No s'han trobat idiomes",
   "today-coming-soon": "La pantalla d'avui arribarà aviat",
   "link-to-join-shared-session-copied": "S'ha copiat al porta-retalls un enllaç per unir-se a la sessió compartida.",
-  "copied-translation-share-link": "Enllaç per compartir la traducció copiat"
+  "copied-translation-share-link": "Enllaç per compartir la traducció copiat",
+  "less": "Menys",
+  "swipe-up-more": "Llisca cap amunt per veure'n més",
+  "plans": "Plans",
+  "reading-plans": "Plans de lectura",
+  "create-reading-plan": "Crear un pla de lectura",
+  "reading-plans-empty": "Encara no tens cap pla de lectura. Crea'n un per començar.",
+  "untitled-reading-plan": "Pla sense títol",
+  "title": "Títol",
+  "reading-plan-title_placeholder": "p. ex. Bíblia en un any",
+  "reading-plan-description_placeholder": "De què tracta aquest pla?"
 }

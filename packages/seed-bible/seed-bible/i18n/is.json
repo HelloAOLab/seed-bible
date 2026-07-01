@@ -263,5 +263,15 @@
   "no-languages-found": "Engin tungumál fundust",
   "today-coming-soon": "Skjárinn í dag kemur bráðum",
   "link-to-join-shared-session-copied": "Tengill til að taka þátt í sameiginlegu lotunni var afritaður á klippiborðið þitt",
-  "copied-translation-share-link": "Afritaði tengil til að deila þýðingu"
+  "copied-translation-share-link": "Afritaði tengil til að deila þýðingu",
+  "less": "Minna",
+  "swipe-up-more": "Strjúktu upp til að sjá meira",
+  "plans": "Áætlanir",
+  "reading-plans": "Lestraráætlanir",
+  "create-reading-plan": "Búa til lestraráætlun",
+  "reading-plans-empty": "Þú ert ekki með neinar lestraráætlanir ennþá. Búðu til eina til að byrja.",
+  "untitled-reading-plan": "Ónefnd áætlun",
+  "title": "Titill",
+  "reading-plan-title_placeholder": "t.d. Biblían á einu ári",
+  "reading-plan-description_placeholder": "Um hvað snýst þessi áætlun?"
 }

@@ -263,5 +263,15 @@
   "no-languages-found": "ഭാഷകളൊന്നും കണ്ടെത്തിയില്ല.",
   "today-coming-soon": "ഇന്നത്തെ സ്ക്രീൻ ഉടൻ വരുന്നു",
   "link-to-join-shared-session-copied": "പങ്കിട്ട സെഷനിൽ ചേരുന്നതിനുള്ള ഒരു ലിങ്ക് നിങ്ങളുടെ ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി.",
-  "copied-translation-share-link": "വിവർത്തന പങ്കിടൽ ലിങ്ക് പകർത്തി"
+  "copied-translation-share-link": "വിവർത്തന പങ്കിടൽ ലിങ്ക് പകർത്തി",
+  "less": "കുറവ്",
+  "swipe-up-more": "കൂടുതൽ കാണാൻ മുകളിലേക്ക് സ്വൈപ്പ് ചെയ്യുക",
+  "plans": "പദ്ധതികൾ",
+  "reading-plans": "വായനാ പദ്ധതികൾ",
+  "create-reading-plan": "വായനാ പദ്ധതി സൃഷ്ടിക്കുക",
+  "reading-plans-empty": "നിങ്ങൾക്ക് ഇതുവരെ വായനാ പദ്ധതികളൊന്നുമില്ല. ആരംഭിക്കാൻ ഒരെണ്ണം സൃഷ്ടിക്കുക.",
+  "untitled-reading-plan": "പേരില്ലാത്ത പ്ലാൻ",
+  "title": "തലക്കെട്ട്",
+  "reading-plan-title_placeholder": "ഉദാ: ഒരു വർഷത്തിനുള്ളിൽ ബൈബിൾ",
+  "reading-plan-description_placeholder": "ഈ പദ്ധതി എന്തിനെക്കുറിച്ചാണ്?"
 }

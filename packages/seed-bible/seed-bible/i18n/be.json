@@ -263,5 +263,15 @@
   "no-languages-found": "Мовы не знойдзены",
   "today-coming-soon": "Сённяшні экран хутка з'явіцца",
   "link-to-join-shared-session-copied": "Спасылка для далучэння да агульнага сеансу была скапіравана ў буфер абмену",
-  "copied-translation-share-link": "Спасылка для абмену перакладам скапіравана"
+  "copied-translation-share-link": "Спасылка для абмену перакладам скапіравана",
+  "less": "Менш",
+  "swipe-up-more": "Правядзіце пальцам уверх, каб убачыць больш",
+  "plans": "Планы",
+  "reading-plans": "Планы чытання",
+  "create-reading-plan": "Стварыць план чытання",
+  "reading-plans-empty": "У вас пакуль няма планаў чытання. Стварыце яго, каб пачаць.",
+  "untitled-reading-plan": "План без назвы",
+  "title": "Назва",
+  "reading-plan-title_placeholder": "напрыклад, Біблія за год",
+  "reading-plan-description_placeholder": "Што гэты план прадугледжвае?"
 }

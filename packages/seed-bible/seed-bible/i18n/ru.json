@@ -263,5 +263,15 @@
   "no-languages-found": "Языки не найдены",
   "today-coming-soon": "Сегодняшний экран скоро появится",
   "link-to-join-shared-session-copied": "Ссылка для присоединения к общей сессии была скопирована в буфер обмена.",
-  "copied-translation-share-link": "Скопированная ссылка для обмена переводом"
+  "copied-translation-share-link": "Скопированная ссылка для обмена переводом",
+  "less": "Меньше",
+  "swipe-up-more": "Проведите пальцем вверх, чтобы посмотреть больше",
+  "plans": "Планы",
+  "reading-plans": "Планы чтения",
+  "create-reading-plan": "Составьте план чтения",
+  "reading-plans-empty": "У вас пока нет планов на чтение. Создайте свой, чтобы начать.",
+  "untitled-reading-plan": "План без названия",
+  "title": "Заголовок",
+  "reading-plan-title_placeholder": "например, Библия за год",
+  "reading-plan-description_placeholder": "О чём этот план?"
 }

@@ -263,5 +263,15 @@
   "no-languages-found": "کوئی زبانیں نہیں ملی",
   "today-coming-soon": "آج اسکرین جلد آرہی ہے۔",
   "link-to-join-shared-session-copied": "مشترکہ سیشن میں شامل ہونے کا ایک لنک آپ کے کلپ بورڈ پر کاپی کیا گیا تھا۔",
-  "copied-translation-share-link": "کاپی کیا گیا ترجمہ شیئر لنک"
+  "copied-translation-share-link": "کاپی کیا گیا ترجمہ شیئر لنک",
+  "less": "کم",
+  "swipe-up-more": "مزید دیکھنے کے لیے اوپر سوائپ کریں۔",
+  "plans": "منصوبے",
+  "reading-plans": "پڑھنے کے منصوبے",
+  "create-reading-plan": "پڑھنے کا منصوبہ بنائیں",
+  "reading-plans-empty": "آپ کا ابھی تک پڑھنے کا کوئی منصوبہ نہیں ہے۔ شروع کرنے کے لیے ایک بنائیں۔",
+  "untitled-reading-plan": "بلا عنوان منصوبہ",
+  "title": "عنوان",
+  "reading-plan-title_placeholder": "مثال کے طور پر ایک سال میں بائبل",
+  "reading-plan-description_placeholder": "یہ منصوبہ کیا ہے؟"
 }

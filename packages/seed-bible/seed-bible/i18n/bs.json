@@ -263,5 +263,15 @@
   "no-languages-found": "Nije pronađen nijedan jezik",
   "today-coming-soon": "Današnji ekran uskoro stiže",
   "link-to-join-shared-session-copied": "Link za pridruživanje dijeljenoj sesiji je kopiran u vaš međuspremnik",
-  "copied-translation-share-link": "Link za dijeljenje prijevoda je kopiran"
+  "copied-translation-share-link": "Link za dijeljenje prijevoda je kopiran",
+  "less": "Manje",
+  "swipe-up-more": "Prevucite prstom prema gore da biste vidjeli više",
+  "plans": "Planovi",
+  "reading-plans": "Planovi čitanja",
+  "create-reading-plan": "Napravite plan čitanja",
+  "reading-plans-empty": "Još nemate planove čitanja. Napravite jedan da biste započeli.",
+  "untitled-reading-plan": "Neimenovani plan",
+  "title": "Naslov",
+  "reading-plan-title_placeholder": "npr. Biblija za godinu dana",
+  "reading-plan-description_placeholder": "O čemu se radi u ovom planu?"
 }

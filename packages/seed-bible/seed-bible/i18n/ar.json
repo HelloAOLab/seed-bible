@@ -263,5 +263,15 @@
   "no-languages-found": "لم يتم العثور على أي لغات",
   "today-coming-soon": "شاشة اليوم قادمة قريباً",
   "link-to-join-shared-session-copied": "تم نسخ رابط للانضمام إلى الجلسة المشتركة إلى حافظتك",
-  "copied-translation-share-link": "تم نسخ رابط مشاركة الترجمة"
+  "copied-translation-share-link": "تم نسخ رابط مشاركة الترجمة",
+  "less": "أقل",
+  "swipe-up-more": "اسحب لأعلى لعرض المزيد",
+  "plans": "الخطط",
+  "reading-plans": "خطط القراءة",
+  "create-reading-plan": "وضع خطة قراءة",
+  "reading-plans-empty": "ليس لديك أي خطط قراءة حتى الآن. أنشئ واحدة لتبدأ.",
+  "untitled-reading-plan": "خطة بدون عنوان",
+  "title": "عنوان",
+  "reading-plan-title_placeholder": "مثال: قراءة الكتاب المقدس في عام واحد",
+  "reading-plan-description_placeholder": "ما هي تفاصيل هذه الخطة؟"
 }

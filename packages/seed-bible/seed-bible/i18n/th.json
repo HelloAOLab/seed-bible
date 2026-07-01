@@ -263,5 +263,15 @@
   "no-languages-found": "ไม่พบภาษาใดๆ",
   "today-coming-soon": "หน้าจอวันนี้จะมาเร็วๆ นี้",
   "link-to-join-shared-session-copied": "ลิงก์สำหรับเข้าร่วมเซสชันที่ใช้ร่วมกันถูกคัดลอกไปยังคลิปบอร์ดของคุณแล้ว",
-  "copied-translation-share-link": "คัดลอกลิงก์แชร์คำแปล"
+  "copied-translation-share-link": "คัดลอกลิงก์แชร์คำแปล",
+  "less": "น้อย",
+  "swipe-up-more": "เลื่อนขึ้นเพื่อดูเพิ่มเติม",
+  "plans": "แผนการ",
+  "reading-plans": "แผนการอ่าน",
+  "create-reading-plan": "จัดทำแผนการอ่าน",
+  "reading-plans-empty": "คุณยังไม่มีแผนการอ่านใดๆ เลย เริ่มสร้างแผนการอ่านขึ้นมาก่อนก็ได้",
+  "untitled-reading-plan": "แผนงานที่ไม่มีชื่อ",
+  "title": "ชื่อ",
+  "reading-plan-title_placeholder": "เช่น อ่านพระคัมภีร์จบในหนึ่งปี",
+  "reading-plan-description_placeholder": "แผนนี้เกี่ยวกับอะไร?"
 }

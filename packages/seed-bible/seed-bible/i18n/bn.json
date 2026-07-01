@@ -263,5 +263,15 @@
   "no-languages-found": "কোন ভাষা খুঁজে পাওয়া যায়নি",
   "today-coming-soon": "আজকের স্ক্রিন শীঘ্রই আসছে",
   "link-to-join-shared-session-copied": "শেয়ার করা সেশনে যোগদানের একটি লিঙ্ক আপনার ক্লিপবোর্ডে কপি করা হয়েছে।",
-  "copied-translation-share-link": "অনুলিপি করা অনুবাদ শেয়ার লিঙ্ক"
+  "copied-translation-share-link": "অনুলিপি করা অনুবাদ শেয়ার লিঙ্ক",
+  "less": "কম",
+  "swipe-up-more": "আরও দেখতে উপরে সোয়াইপ করুন",
+  "plans": "পরিকল্পনা",
+  "reading-plans": "পড়ার পরিকল্পনা",
+  "create-reading-plan": "পড়ার পরিকল্পনা তৈরি করুন",
+  "reading-plans-empty": "আপনার এখনো কোনো পড়ার পরিকল্পনা নেই। শুরু করার জন্য একটি তৈরি করে নিন।",
+  "untitled-reading-plan": "শিরোনামহীন পরিকল্পনা",
+  "title": "শিরোনাম",
+  "reading-plan-title_placeholder": "যেমন এক বছরে বাইবেল",
+  "reading-plan-description_placeholder": "এই পরিকল্পনাটি কী বিষয়ে?"
 }

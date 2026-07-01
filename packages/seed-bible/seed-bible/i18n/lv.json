@@ -263,5 +263,15 @@
   "no-languages-found": "Nav atrasta neviena valoda",
   "today-coming-soon": "Šodienas ekrāns drīz būs pieejams",
   "link-to-join-shared-session-copied": "Saite, lai pievienotos koplietotajai sesijai, tika kopēta jūsu starpliktuvē.",
-  "copied-translation-share-link": "Kopēta tulkojuma kopīgošanas saite"
+  "copied-translation-share-link": "Kopēta tulkojuma kopīgošanas saite",
+  "less": "Mazāk",
+  "swipe-up-more": "Pavelciet uz augšu, lai skatītu vairāk",
+  "plans": "Plāni",
+  "reading-plans": "Lasīšanas plāni",
+  "create-reading-plan": "Izveidojiet lasīšanas plānu",
+  "reading-plans-empty": "Jums vēl nav lasīšanas plānu. Izveidojiet savu, lai sāktu.",
+  "untitled-reading-plan": "Bez nosaukuma plāns",
+  "title": "Nosaukums",
+  "reading-plan-title_placeholder": "piemēram, Bībele gada laikā",
+  "reading-plan-description_placeholder": "Par ko ir šis plāns?"
 }

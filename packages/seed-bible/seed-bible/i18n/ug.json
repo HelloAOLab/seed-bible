@@ -263,5 +263,15 @@
   "no-languages-found": "تىل تېپىلمىدى",
   "today-coming-soon": "بۈگۈنكى ئېكران تېزلا كېلىدۇ",
   "link-to-join-shared-session-copied": "ئورتاقلىشىش يىغىنىغا قاتنىشىش ئۇلىنىشى سىزنىڭ چاپلاش تاختىسىڭىزغا كۆچۈرۈلدى",
-  "copied-translation-share-link": "تەرجىمە ھەمبەھىرلەش ئۇلىنىشى كۆچۈرۈلدى"
+  "copied-translation-share-link": "تەرجىمە ھەمبەھىرلەش ئۇلىنىشى كۆچۈرۈلدى",
+  "less": "ئازراق",
+  "swipe-up-more": "كۆپرەك كۆرۈش ئۈچۈن يۇقىرىغا سۈرۈڭ",
+  "plans": "پىلانلار",
+  "reading-plans": "ئوقۇش پىلانلىرى",
+  "create-reading-plan": "ئوقۇش پىلانى تۈزۈڭ",
+  "reading-plans-empty": "سىزدە ھازىرغىچە ئوقۇش پىلانى يوق. باشلاش ئۈچۈن بىرنى تۈزۈڭ.",
+  "untitled-reading-plan": "ماۋزۇسىز پىلان",
+  "title": "ماۋزۇ",
+  "reading-plan-title_placeholder": "مەسىلەن، بىر يىلدا ئىنجىل",
+  "reading-plan-description_placeholder": "بۇ پىلان نېمە ھەققىدە؟"
 }

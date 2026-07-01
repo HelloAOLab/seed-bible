@@ -263,5 +263,15 @@
   "no-languages-found": "هیچ زبانی یافت نشد",
   "today-coming-soon": "صفحه نمایش امروز به زودی منتشر می‌شود",
   "link-to-join-shared-session-copied": "پیوندی برای پیوستن به جلسه مشترک در کلیپ‌بورد شما کپی شد",
-  "copied-translation-share-link": "لینک اشتراک‌گذاری ترجمه کپی شد"
+  "copied-translation-share-link": "لینک اشتراک‌گذاری ترجمه کپی شد",
+  "less": "کمتر",
+  "swipe-up-more": "برای مشاهده موارد بیشتر، صفحه را به بالا بکشید",
+  "plans": "طرح‌ها",
+  "reading-plans": "برنامه‌های مطالعه",
+  "create-reading-plan": "ایجاد برنامه مطالعه",
+  "reading-plans-empty": "شما هنوز هیچ برنامه مطالعه‌ای ندارید. برای شروع، یکی ایجاد کنید.",
+  "untitled-reading-plan": "طرح بدون عنوان",
+  "title": "عنوان",
+  "reading-plan-title_placeholder": "مثلاً کتاب مقدس در یک سال",
+  "reading-plan-description_placeholder": "این طرح در مورد چیست؟"
 }

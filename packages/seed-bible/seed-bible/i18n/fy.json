@@ -263,5 +263,15 @@
   "no-languages-found": "Gjin talen fûn",
   "today-coming-soon": "It skerm fan hjoed komt gau",
   "link-to-join-shared-session-copied": "In keppeling om mei te dwaan oan de dielde sesje is nei jo klamboerd kopiearre",
-  "copied-translation-share-link": "Kopiearre oersettingsdielingslink"
+  "copied-translation-share-link": "Kopiearre oersettingsdielingslink",
+  "less": "Minder",
+  "swipe-up-more": "Swipe omheech om mear te sjen",
+  "plans": "Plannen",
+  "reading-plans": "Lêsplannen",
+  "create-reading-plan": "Lêsplan meitsje",
+  "reading-plans-empty": "Jo hawwe noch gjin lêsplannen. Meitsje ien oan om te begjinnen.",
+  "untitled-reading-plan": "Plan sûnder titel",
+  "title": "Titel",
+  "reading-plan-title_placeholder": "bygelyks Bibel yn in jier",
+  "reading-plan-description_placeholder": "Wêr giet dit plan oer?"
 }

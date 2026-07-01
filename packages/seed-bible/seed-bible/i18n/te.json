@@ -263,5 +263,15 @@
   "no-languages-found": "భాషలు ఏవీ కనుగొనబడలేదు",
   "today-coming-soon": "ఈరోజు స్క్రీన్ త్వరలో వస్తుంది",
   "link-to-join-shared-session-copied": "భాగస్వామ్య సెషన్‌లో చేరడానికి సంబంధించిన లింక్ మీ క్లిప్‌బోర్డ్‌లోకి కాపీ చేయబడింది.",
-  "copied-translation-share-link": "కాపీ చేయబడిన అనువాద భాగస్వామ్య లింక్"
+  "copied-translation-share-link": "కాపీ చేయబడిన అనువాద భాగస్వామ్య లింక్",
+  "less": "తక్కువ",
+  "swipe-up-more": "మరిన్ని చూడటానికి పైకి స్వైప్ చేయండి",
+  "plans": "ప్రణాళికలు",
+  "reading-plans": "పఠన ప్రణాళికలు",
+  "create-reading-plan": "పఠన ప్రణాళికను రూపొందించండి",
+  "reading-plans-empty": "మీకు ఇంకా పఠన ప్రణాళికలు ఏవీ లేవు. ప్రారంభించడానికి ఒక ప్రణాళికను రూపొందించుకోండి.",
+  "untitled-reading-plan": "పేరులేని ప్రణాళిక",
+  "title": "శీర్షిక",
+  "reading-plan-title_placeholder": "ఉదాహరణకు ఒక సంవత్సరంలో బైబిల్",
+  "reading-plan-description_placeholder": "ఈ ప్రణాళిక దేని గురించి?"
 }

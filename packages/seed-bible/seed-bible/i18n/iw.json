@@ -263,5 +263,15 @@
   "no-languages-found": "לא נמצאו שפות",
   "today-coming-soon": "מסך היום יגיע בקרוב",
   "link-to-join-shared-session-copied": "קישור להצטרפות לסשן המשותף הועתק ללוח שלך",
-  "copied-translation-share-link": "קישור שיתוף התרגום הועתק"
+  "copied-translation-share-link": "קישור שיתוף התרגום הועתק",
+  "less": "פָּחוֹת",
+  "swipe-up-more": "החליקו למעלה כדי לראות עוד",
+  "plans": "תוכניות",
+  "reading-plans": "תוכניות קריאה",
+  "create-reading-plan": "צור תוכנית קריאה",
+  "reading-plans-empty": "אין לך עדיין תוכניות קריאה. צור אחת כדי להתחיל.",
+  "untitled-reading-plan": "תוכנית ללא שם",
+  "title": "כּוֹתֶרֶת",
+  "reading-plan-title_placeholder": "למשל תנ\"ך בשנה",
+  "reading-plan-description_placeholder": "על מה התוכנית הזאת?"
 }

@@ -263,5 +263,15 @@
   "no-languages-found": "Azikho izilimi ezitholiwe",
   "today-coming-soon": "Isikrini sanamuhla siyeza maduze",
   "link-to-join-shared-session-copied": "Isixhumanisi sokujoyina iseshini eyabiwe sikopishwe ebhodini lakho lokunamathisela",
-  "copied-translation-share-link": "Isixhumanisi sokwabelana ngokuhumusha esikopishiwe"
+  "copied-translation-share-link": "Isixhumanisi sokwabelana ngokuhumusha esikopishiwe",
+  "less": "Ngaphansi",
+  "swipe-up-more": "Swayiphela phezulu ukuze ubuke okwengeziwe",
+  "plans": "Amacebo",
+  "reading-plans": "Izinhlelo zokufunda",
+  "create-reading-plan": "Dala uhlelo lokufunda",
+  "reading-plans-empty": "Awunazo izinhlelo zokufunda okwamanje. Dala eyodwa ukuze uqalise.",
+  "untitled-reading-plan": "Uhlelo olungenasihloko",
+  "title": "Isihloko",
+  "reading-plan-title_placeholder": "isib. IBhayibheli Ngonyaka",
+  "reading-plan-description_placeholder": "Lolu hlelo lumayelana nani?"
 }

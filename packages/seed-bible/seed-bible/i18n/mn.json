@@ -263,5 +263,15 @@
   "no-languages-found": "Хэл олдсонгүй",
   "today-coming-soon": "Өнөөдрийн дэлгэц удахгүй гарах болно",
   "link-to-join-shared-session-copied": "Хуваалцсан хуралдаанд нэгдэх холбоосыг таны санах ой руу хуулсан",
-  "copied-translation-share-link": "Орчуулгын хуваалцах холбоосыг хуулсан"
+  "copied-translation-share-link": "Орчуулгын хуваалцах холбоосыг хуулсан",
+  "less": "Бага",
+  "swipe-up-more": "Дэлгэрэнгүй үзэхийн тулд дээш шударна уу",
+  "plans": "Төлөвлөгөө",
+  "reading-plans": "Унших төлөвлөгөө",
+  "create-reading-plan": "Унших төлөвлөгөө гаргах",
+  "reading-plans-empty": "Танд одоогоор унших төлөвлөгөө алга байна. Эхлэхийн тулд нэгийг үүсгэнэ үү.",
+  "untitled-reading-plan": "Гарчиггүй төлөвлөгөө",
+  "title": "Гарчиг",
+  "reading-plan-title_placeholder": "жишээ нь: Нэг жилийн Библи",
+  "reading-plan-description_placeholder": "Энэ төлөвлөгөө юуны тухай вэ?"
 }

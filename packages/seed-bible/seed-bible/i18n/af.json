@@ -263,5 +263,15 @@
   "no-languages-found": "Geen tale gevind nie",
   "today-coming-soon": "Vandag se skerm kom binnekort",
   "link-to-join-shared-session-copied": "'n Skakel om by die gedeelde sessie aan te sluit, is na jou knipbord gekopieer",
-  "copied-translation-share-link": "Gekopieerde vertalingdeelskakel"
+  "copied-translation-share-link": "Gekopieerde vertalingdeelskakel",
+  "less": "Minder",
+  "swipe-up-more": "Swiep op om meer te sien",
+  "plans": "Planne",
+  "reading-plans": "Leesplanne",
+  "create-reading-plan": "Skep leesplan",
+  "reading-plans-empty": "Jy het nog geen leesplanne nie. Skep een om te begin.",
+  "untitled-reading-plan": "Naamlose plan",
+  "title": "Titel",
+  "reading-plan-title_placeholder": "bv. Bybel in 'n Jaar",
+  "reading-plan-description_placeholder": "Waaroor gaan hierdie plan?"
 }

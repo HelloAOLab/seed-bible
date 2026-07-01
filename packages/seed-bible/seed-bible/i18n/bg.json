@@ -263,5 +263,15 @@
   "no-languages-found": "Няма намерени езици",
   "today-coming-soon": "Днешният екран ще се появи скоро",
   "link-to-join-shared-session-copied": "Връзка за присъединяване към споделената сесия беше копирана в клипборда ви",
-  "copied-translation-share-link": "Линкът за споделяне на превода е копиран"
+  "copied-translation-share-link": "Линкът за споделяне на превода е копиран",
+  "less": "По-малко",
+  "swipe-up-more": "Плъзнете нагоре, за да видите още",
+  "plans": "Планове",
+  "reading-plans": "Планове за четене",
+  "create-reading-plan": "Създайте план за четене",
+  "reading-plans-empty": "Все още нямате планове за четене. Създайте си, за да започнете.",
+  "untitled-reading-plan": "Неозаглавен план",
+  "title": "Заглавие",
+  "reading-plan-title_placeholder": "напр. Библия за една година",
+  "reading-plan-description_placeholder": "За какво е този план?"
 }

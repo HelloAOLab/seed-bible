@@ -263,5 +263,15 @@
   "no-languages-found": "Nuk u gjet asnjë gjuhë",
   "today-coming-soon": "Ekrani i sotëm vjen së shpejti",
   "link-to-join-shared-session-copied": "Një lidhje për t'u bashkuar me sesionin e përbashkët u kopjua në kujtesën tënde të përkohshme",
-  "copied-translation-share-link": "Lidhja e ndarjes së përkthimit u kopjua"
+  "copied-translation-share-link": "Lidhja e ndarjes së përkthimit u kopjua",
+  "less": "Më pak",
+  "swipe-up-more": "Rrëshqit lart për të parë më shumë",
+  "plans": "Planet",
+  "reading-plans": "Planet e leximit",
+  "create-reading-plan": "Krijo një plan leximi",
+  "reading-plans-empty": "Nuk ke ende plane leximi. Krijo një për të filluar.",
+  "untitled-reading-plan": "Plan pa titull",
+  "title": "Titulli",
+  "reading-plan-title_placeholder": "p.sh. Bibla në një vit",
+  "reading-plan-description_placeholder": "Për çfarë bëhet fjalë në këtë plan?"
 }

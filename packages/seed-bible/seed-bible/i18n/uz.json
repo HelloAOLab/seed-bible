@@ -263,5 +263,15 @@
   "no-languages-found": "Hech qanday til topilmadi",
   "today-coming-soon": "Bugungi ekran tez orada chiqadi",
   "link-to-join-shared-session-copied": "Umumiy sessiyaga qo'shilish havolasi clipboardga nusxalandi",
-  "copied-translation-share-link": "Tarjimani ulashish havolasi nusxalandi"
+  "copied-translation-share-link": "Tarjimani ulashish havolasi nusxalandi",
+  "less": "Ozroq",
+  "swipe-up-more": "Batafsil ma'lumot olish uchun yuqoriga suring",
+  "plans": "Rejalar",
+  "reading-plans": "O'qish rejalari",
+  "create-reading-plan": "O'qish rejasini tuzing",
+  "reading-plans-empty": "Sizda hali o'qish rejalari yo'q. Boshlash uchun bittasini yarating.",
+  "untitled-reading-plan": "Nomsiz reja",
+  "title": "Sarlavha",
+  "reading-plan-title_placeholder": "masalan, bir yilda Muqaddas Kitob",
+  "reading-plan-description_placeholder": "Bu reja nima haqida?"
 }

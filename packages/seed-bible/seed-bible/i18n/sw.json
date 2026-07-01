@@ -263,5 +263,15 @@
   "no-languages-found": "Hakuna lugha zilizopatikana",
   "today-coming-soon": "Skrini ya leo inakuja hivi karibuni",
   "link-to-join-shared-session-copied": "Kiungo cha kujiunga na kipindi kilichoshirikiwa kimenakiliwa kwenye ubao wako wa kunakili",
-  "copied-translation-share-link": "Kiungo cha kushiriki tafsiri kimenakiliwa"
+  "copied-translation-share-link": "Kiungo cha kushiriki tafsiri kimenakiliwa",
+  "less": "Kidogo",
+  "swipe-up-more": "Telezesha kidole juu ili kuona zaidi",
+  "plans": "Mipango",
+  "reading-plans": "Mipango ya kusoma",
+  "create-reading-plan": "Unda mpango wa kusoma",
+  "reading-plans-empty": "Huna mipango yoyote ya kusoma bado. Unda moja ili kuanza.",
+  "untitled-reading-plan": "Mpango usio na kichwa",
+  "title": "Kichwa",
+  "reading-plan-title_placeholder": "mfano Biblia katika Mwaka",
+  "reading-plan-description_placeholder": "Mpango huu unahusu nini?"
 }

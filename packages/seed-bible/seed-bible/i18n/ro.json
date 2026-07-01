@@ -263,5 +263,15 @@
   "no-languages-found": "Nu s-au găsit limbi",
   "today-coming-soon": "Ecranul de astăzi va apărea în curând",
   "link-to-join-shared-session-copied": "Un link pentru a vă alătura sesiunii partajate a fost copiat în clipboard.",
-  "copied-translation-share-link": "Link de partajare a traducerii copiat"
+  "copied-translation-share-link": "Link de partajare a traducerii copiat",
+  "less": "Mai puțin",
+  "swipe-up-more": "Glisează în sus pentru a vedea mai multe",
+  "plans": "Planuri",
+  "reading-plans": "Planuri de lectură",
+  "create-reading-plan": "Creați un plan de lectură",
+  "reading-plans-empty": "Nu ai încă niciun plan de lectură. Creează unul pentru a începe.",
+  "untitled-reading-plan": "Plan fără titlu",
+  "title": "Titlu",
+  "reading-plan-title_placeholder": "de exemplu, Biblia într-un an",
+  "reading-plan-description_placeholder": "Despre ce este vorba în acest plan?"
 }

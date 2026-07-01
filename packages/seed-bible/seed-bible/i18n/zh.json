@@ -263,5 +263,15 @@
   "no-languages-found": "未找到任何语言",
   "today-coming-soon": "今天屏幕即将上线",
   "link-to-join-shared-session-copied": "加入共享会话的链接已复制到您的剪贴板。",
-  "copied-translation-share-link": "复制的翻译分享链接"
+  "copied-translation-share-link": "复制的翻译分享链接",
+  "less": "较少的",
+  "swipe-up-more": "向上滑动查看更多",
+  "plans": "计划",
+  "reading-plans": "阅读计划",
+  "create-reading-plan": "制定阅读计划",
+  "reading-plans-empty": "你目前还没有任何阅读计划。制定一个计划，开始阅读吧。",
+  "untitled-reading-plan": "未命名计划",
+  "title": "标题",
+  "reading-plan-title_placeholder": "例如：一年读完圣经",
+  "reading-plan-description_placeholder": "这个计划是关于什么的？"
 }

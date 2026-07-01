@@ -263,5 +263,15 @@
   "no-languages-found": "Tiada bahasa ditemui",
   "today-coming-soon": "Skrin hari ini akan datang tidak lama lagi",
   "link-to-join-shared-session-copied": "Pautan untuk menyertai sesi kongsi telah disalin ke papan keratan anda",
-  "copied-translation-share-link": "Pautan kongsi terjemahan yang disalin"
+  "copied-translation-share-link": "Pautan kongsi terjemahan yang disalin",
+  "less": "Kurang",
+  "swipe-up-more": "Leret ke atas untuk melihat lebih banyak lagi",
+  "plans": "Pelan",
+  "reading-plans": "Rancangan membaca",
+  "create-reading-plan": "Cipta rancangan bacaan",
+  "reading-plans-empty": "Anda belum mempunyai sebarang rancangan membaca. Cipta satu untuk bermula.",
+  "untitled-reading-plan": "Pelan tanpa tajuk",
+  "title": "Tajuk",
+  "reading-plan-title_placeholder": "cth. Bible dalam Setahun",
+  "reading-plan-description_placeholder": "Rancangan ini tentang apa?"
 }

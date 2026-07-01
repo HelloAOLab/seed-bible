@@ -263,5 +263,15 @@
   "no-languages-found": "Keeli ei leitud",
   "today-coming-soon": "Tänane ekraan tuleb varsti",
   "link-to-join-shared-session-copied": "Jagatud seansiga liitumise link kopeeriti teie lõikelauale.",
-  "copied-translation-share-link": "Kopeeritud tõlke jagamise link"
+  "copied-translation-share-link": "Kopeeritud tõlke jagamise link",
+  "less": "Vähem",
+  "swipe-up-more": "Rohkemate piltide nägemiseks libista üles",
+  "plans": "Plaanid",
+  "reading-plans": "Lugemisplaanid",
+  "create-reading-plan": "Loo lugemisplaan",
+  "reading-plans-empty": "Sul pole veel lugemisplaane. Alustamiseks loo üks.",
+  "untitled-reading-plan": "Pealkirjata plaan",
+  "title": "Pealkiri",
+  "reading-plan-title_placeholder": "nt Piibel aastas",
+  "reading-plan-description_placeholder": "Mis see plaan endast kujutab?"
 }

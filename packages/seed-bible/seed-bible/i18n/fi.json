@@ -263,5 +263,15 @@
   "no-languages-found": "Ei kieliä löytynyt",
   "today-coming-soon": "Tämän päivän näyttö tulee pian",
   "link-to-join-shared-session-copied": "Linkki jaettuun istuntoon liittymiseen kopioitiin leikepöydälle.",
-  "copied-translation-share-link": "Kopioitu käännöksen jakamislinkki"
+  "copied-translation-share-link": "Kopioitu käännöksen jakamislinkki",
+  "less": "Vähemmän",
+  "swipe-up-more": "Pyyhkäise ylöspäin nähdäksesi lisää",
+  "plans": "Suunnitelmat",
+  "reading-plans": "Lukusuunnitelmat",
+  "create-reading-plan": "Luo lukusuunnitelma",
+  "reading-plans-empty": "Sinulla ei ole vielä lukusuunnitelmia. Luo sellainen aloittaaksesi.",
+  "untitled-reading-plan": "Nimetön suunnitelma",
+  "title": "Otsikko",
+  "reading-plan-title_placeholder": "esim. Raamattu vuodessa",
+  "reading-plan-description_placeholder": "Mistä tässä suunnitelmassa on kyse?"
 }

@@ -263,5 +263,15 @@
   "no-languages-found": "Мови не знайдено",
   "today-coming-soon": "Сьогоднішній екран з'явиться незабаром",
   "link-to-join-shared-session-copied": "Посилання для приєднання до спільного сеансу скопійовано до буфера обміну",
-  "copied-translation-share-link": "Скопійоване посилання для обміну перекладом"
+  "copied-translation-share-link": "Скопійоване посилання для обміну перекладом",
+  "less": "Менше",
+  "swipe-up-more": "Проведіть пальцем угору, щоб переглянути більше",
+  "plans": "Плани",
+  "reading-plans": "Плани читання",
+  "create-reading-plan": "Створіть план читання",
+  "reading-plans-empty": "У вас ще немає планів читання. Створіть його, щоб розпочати.",
+  "untitled-reading-plan": "Безіменний план",
+  "title": "Назва",
+  "reading-plan-title_placeholder": "наприклад, Біблія за рік",
+  "reading-plan-description_placeholder": "Про що цей план?"
 }

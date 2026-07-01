@@ -263,5 +263,15 @@
   "no-languages-found": "Keine Sprachen gefunden",
   "today-coming-soon": "Der heutige Bildschirm kommt bald.",
   "link-to-join-shared-session-copied": "Ein Link zum Beitreten der gemeinsamen Sitzung wurde in Ihre Zwischenablage kopiert.",
-  "copied-translation-share-link": "Link zum Teilen der kopierten Übersetzung"
+  "copied-translation-share-link": "Link zum Teilen der kopierten Übersetzung",
+  "less": "Weniger",
+  "swipe-up-more": "Wischen Sie nach oben, um mehr anzuzeigen",
+  "plans": "Pläne",
+  "reading-plans": "Lesepläne",
+  "create-reading-plan": "Leseplan erstellen",
+  "reading-plans-empty": "Sie haben noch keine Lesepläne. Erstellen Sie einen, um loszulegen.",
+  "untitled-reading-plan": "Unbenannter Plan",
+  "title": "Titel",
+  "reading-plan-title_placeholder": "z.B. Bibel in einem Jahr",
+  "reading-plan-description_placeholder": "Worum geht es in diesem Plan?"
 }

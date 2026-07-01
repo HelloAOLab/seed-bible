@@ -263,5 +263,15 @@
   "no-languages-found": "ဘာသာစကားများ မတွေ့ပါ",
   "today-coming-soon": "ဒီနေ့ မျက်နှာပြင် မကြာခင် လာတော့မယ်",
   "link-to-join-shared-session-copied": "မျှဝေထားသော အစည်းအဝေးသို့ ဝင်ရောက်ရန် လင့်ခ်ကို သင့်ကလစ်ဘုတ်သို့ ကူးယူပြီးပါပြီ",
-  "copied-translation-share-link": "ဘာသာပြန်ဆိုချက် ကူးယူပြီး လင့်ခ်မျှဝေပါ"
+  "copied-translation-share-link": "ဘာသာပြန်ဆိုချက် ကူးယူပြီး လင့်ခ်မျှဝေပါ",
+  "less": "နည်းသော",
+  "swipe-up-more": "ပိုမိုကြည့်ရှုရန် အပေါ်သို့ ပွတ်ဆွဲပါ",
+  "plans": "အစီအစဉ်များ",
+  "reading-plans": "စာဖတ်ခြင်းအစီအစဉ်များ",
+  "create-reading-plan": "စာဖတ်ခြင်းအစီအစဉ်ကို ဖန်တီးပါ",
+  "reading-plans-empty": "သင်မှာ စာဖတ်အစီအစဉ် မရှိသေးပါဘူး။ စတင်ဖို့အတွက် တစ်ခု ဖန်တီးပါ။",
+  "untitled-reading-plan": "ခေါင်းစဉ်မဲ့ အစီအစဉ်",
+  "title": "ခေါင်းစဉ်",
+  "reading-plan-title_placeholder": "ဥပမာ တစ်နှစ်တာအတွင်း သမ္မာကျမ်းစာ",
+  "reading-plan-description_placeholder": "ဒီအစီအစဉ်က ဘာအကြောင်းလဲ။"
 }

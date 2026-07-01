@@ -263,5 +263,15 @@
   "no-languages-found": "ಯಾವುದೇ ಭಾಷೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ.",
   "today-coming-soon": "ಇಂದಿನ ಪರದೆ ಶೀಘ್ರದಲ್ಲೇ ಬರಲಿದೆ",
   "link-to-join-shared-session-copied": "ಹಂಚಿಕೊಂಡ ಸೆಷನ್‌ಗೆ ಸೇರಲು ಲಿಂಕ್ ಅನ್ನು ನಿಮ್ಮ ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ.",
-  "copied-translation-share-link": "ಅನುವಾದ ಹಂಚಿಕೆ ಲಿಂಕ್ ಅನ್ನು ನಕಲಿಸಲಾಗಿದೆ"
+  "copied-translation-share-link": "ಅನುವಾದ ಹಂಚಿಕೆ ಲಿಂಕ್ ಅನ್ನು ನಕಲಿಸಲಾಗಿದೆ",
+  "less": "ಕಡಿಮೆ",
+  "swipe-up-more": "ಇನ್ನಷ್ಟು ವೀಕ್ಷಿಸಲು ಮೇಲಕ್ಕೆ ಸ್ವೈಪ್ ಮಾಡಿ",
+  "plans": "ಯೋಜನೆಗಳು",
+  "reading-plans": "ಓದುವ ಯೋಜನೆಗಳು",
+  "create-reading-plan": "ಓದುವ ಯೋಜನೆಯನ್ನು ರಚಿಸಿ",
+  "reading-plans-empty": "ನೀವು ಇನ್ನೂ ಯಾವುದೇ ಓದುವ ಯೋಜನೆಗಳನ್ನು ಹೊಂದಿಲ್ಲ. ಪ್ರಾರಂಭಿಸಲು ಒಂದನ್ನು ರಚಿಸಿ.",
+  "untitled-reading-plan": "ಶೀರ್ಷಿಕೆರಹಿತ ಯೋಜನೆ",
+  "title": "ಶೀರ್ಷಿಕೆ",
+  "reading-plan-title_placeholder": "ಉದಾ: ಒಂದು ವರ್ಷದಲ್ಲಿ ಬೈಬಲ್",
+  "reading-plan-description_placeholder": "ಈ ಯೋಜನೆ ಯಾವುದರ ಬಗ್ಗೆ?"
 }

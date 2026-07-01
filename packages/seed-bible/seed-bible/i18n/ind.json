@@ -263,5 +263,15 @@
   "no-languages-found": "Tidak ditemukan bahasa apa pun.",
   "today-coming-soon": "Layar hari ini akan segera hadir",
   "link-to-join-shared-session-copied": "Tautan untuk bergabung dengan sesi bersama telah disalin ke papan klip Anda.",
-  "copied-translation-share-link": "Tautan berbagi terjemahan yang disalin"
+  "copied-translation-share-link": "Tautan berbagi terjemahan yang disalin",
+  "less": "Lebih sedikit",
+  "swipe-up-more": "Geser ke atas untuk melihat selengkapnya",
+  "plans": "Rencana",
+  "reading-plans": "Rencana membaca",
+  "create-reading-plan": "Buat rencana membaca",
+  "reading-plans-empty": "Anda belum memiliki rencana membaca. Buatlah satu untuk memulai.",
+  "untitled-reading-plan": "Rencana tanpa judul",
+  "title": "Judul",
+  "reading-plan-title_placeholder": "misalnya Alkitab dalam Setahun",
+  "reading-plan-description_placeholder": "Rencana ini tentang apa?"
 }

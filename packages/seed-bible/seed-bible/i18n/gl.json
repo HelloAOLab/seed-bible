@@ -263,5 +263,15 @@
   "no-languages-found": "Non se atoparon idiomas",
   "today-coming-soon": "A pantalla de hoxe chegará en breve",
   "link-to-join-shared-session-copied": "Copiouse no portapapeis unha ligazón para unirse á sesión compartida",
-  "copied-translation-share-link": "Ligazón para compartir a tradución copiada"
+  "copied-translation-share-link": "Ligazón para compartir a tradución copiada",
+  "less": "Menos",
+  "swipe-up-more": "Desliza cara arriba para ver máis",
+  "plans": "Planos",
+  "reading-plans": "Plans de lectura",
+  "create-reading-plan": "Crear un plan de lectura",
+  "reading-plans-empty": "Aínda non tes ningún plan de lectura. Crea un para comezar.",
+  "untitled-reading-plan": "Plano sen título",
+  "title": "Título",
+  "reading-plan-title_placeholder": "por exemplo, a Biblia nun ano",
+  "reading-plan-description_placeholder": "De que trata este plan?"
 }

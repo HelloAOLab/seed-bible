@@ -263,5 +263,15 @@
   "no-languages-found": "Δεν βρέθηκαν γλώσσες",
   "today-coming-soon": "Η σημερινή οθόνη έρχεται σύντομα",
   "link-to-join-shared-session-copied": "Ένας σύνδεσμος για συμμετοχή στην κοινόχρηστη συνεδρία αντιγράφηκε στο πρόχειρό σας",
-  "copied-translation-share-link": "Αντιγραμμένος σύνδεσμος κοινής χρήσης μετάφρασης"
+  "copied-translation-share-link": "Αντιγραμμένος σύνδεσμος κοινής χρήσης μετάφρασης",
+  "less": "Μείον",
+  "swipe-up-more": "Σύρετε προς τα πάνω για να δείτε περισσότερα",
+  "plans": "Σχέδια",
+  "reading-plans": "Σχέδια ανάγνωσης",
+  "create-reading-plan": "Δημιουργία σχεδίου ανάγνωσης",
+  "reading-plans-empty": "Δεν έχετε ακόμη σχέδια ανάγνωσης. Δημιουργήστε ένα για να ξεκινήσετε.",
+  "untitled-reading-plan": "Σχέδιο χωρίς τίτλο",
+  "title": "Τίτλος",
+  "reading-plan-title_placeholder": "π.χ. Βίβλος σε ένα χρόνο",
+  "reading-plan-description_placeholder": "Τι αφορά αυτό το σχέδιο;"
 }

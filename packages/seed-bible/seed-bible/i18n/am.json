@@ -263,5 +263,15 @@
   "no-languages-found": "ምንም ቋንቋዎች አልተገኙም",
   "today-coming-soon": "የዛሬው ስክሪን በቅርቡ ይመጣል",
   "link-to-join-shared-session-copied": "የተጋራውን ክፍለ ጊዜ የሚቀላቀሉበት አገናኝ ወደ ቅንጥብ ሰሌዳዎ ተገልብጧል",
-  "copied-translation-share-link": "የተቀዳ የትርጉም ማጋሪያ አገናኝ"
+  "copied-translation-share-link": "የተቀዳ የትርጉም ማጋሪያ አገናኝ",
+  "less": "ያነሰ",
+  "swipe-up-more": "ተጨማሪ ለማየት ወደ ላይ ያንሸራትቱ",
+  "plans": "ዕቅዶች",
+  "reading-plans": "የንባብ ዕቅዶች",
+  "create-reading-plan": "የንባብ እቅድ ይፍጠሩ",
+  "reading-plans-empty": "እስካሁን ምንም የንባብ እቅድ የለዎትም። ለመጀመር አንድ ይፍጠሩ።",
+  "untitled-reading-plan": "ርዕስ የሌለው ዕቅድ",
+  "title": "ርዕስ",
+  "reading-plan-title_placeholder": "ለምሳሌ መጽሐፍ ቅዱስ በአንድ ዓመት ውስጥ",
+  "reading-plan-description_placeholder": "ይህ እቅድ ስለምንድን ነው?"
 }

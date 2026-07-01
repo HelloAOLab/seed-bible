@@ -263,5 +263,15 @@
   "no-languages-found": "Ndaipóri ñe’ẽ ojejuhúva",
   "today-coming-soon": "Ko árape pantalla oúta pya'e",
   "link-to-join-shared-session-copied": "Peteĩ enlace ojeike hag̃ua sesión compartida-pe ojekopia nde portapapeles-pe",
-  "copied-translation-share-link": "Ojekopia traducción compartir enlace"
+  "copied-translation-share-link": "Ojekopia traducción compartir enlace",
+  "less": "Mbovy",
+  "swipe-up-more": "Emoinge yvate gotyo rehecha hag̃ua hetave mba’e",
+  "plans": "Umi plan rehegua",
+  "reading-plans": "Umi plan de lectura rehegua",
+  "create-reading-plan": "Ojapo plan de lectura rehegua",
+  "reading-plans-empty": "Ndereguerekói gueteri mba'eveichagua plan de lectura. Ejapo peteĩ reñepyrũ hag̃ua.",
+  "untitled-reading-plan": "Plan ndorekóiva título",
+  "title": "Myakãha",
+  "reading-plan-title_placeholder": "p.e. Biblia peteĩ Año-pe",
+  "reading-plan-description_placeholder": "Mba’érehepa oñe’ẽ ko plan?"
 }

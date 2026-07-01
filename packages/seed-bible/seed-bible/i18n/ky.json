@@ -263,5 +263,15 @@
   "no-languages-found": "Эч кандай тил табылган жок",
   "today-coming-soon": "Бүгүнкү экран жакында чыгат",
   "link-to-join-shared-session-copied": "Бөлүшүлгөн сессияга кошулуу шилтемеси алмашуу буфериңизге көчүрүлдү",
-  "copied-translation-share-link": "Котормону бөлүшүү шилтемеси көчүрүлдү"
+  "copied-translation-share-link": "Котормону бөлүшүү шилтемеси көчүрүлдү",
+  "less": "Азыраак",
+  "swipe-up-more": "Көбүрөөк көрүү үчүн өйдө сүрүңүз",
+  "plans": "Пландар",
+  "reading-plans": "Окуу пландары",
+  "create-reading-plan": "Окуу планын түзүү",
+  "reading-plans-empty": "Сизде азырынча окуу пландары жок. Баштоо үчүн бирөөсүн түзүңүз.",
+  "untitled-reading-plan": "Аталышы жок план",
+  "title": "Аталышы",
+  "reading-plan-title_placeholder": "мисалы, бир жылдын ичиндеги Ыйык Китеп",
+  "reading-plan-description_placeholder": "Бул план эмне жөнүндө?"
 }

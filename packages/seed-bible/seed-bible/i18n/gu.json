@@ -263,5 +263,15 @@
   "no-languages-found": "કોઈ ભાષા મળી નથી.",
   "today-coming-soon": "આજે સ્ક્રીન ટૂંક સમયમાં આવી રહી છે",
   "link-to-join-shared-session-copied": "શેર કરેલા સત્રમાં જોડાવા માટેની લિંક તમારા ક્લિપબોર્ડ પર કૉપિ કરવામાં આવી છે.",
-  "copied-translation-share-link": "અનુવાદ શેર લિંક કૉપિ કરી"
+  "copied-translation-share-link": "અનુવાદ શેર લિંક કૉપિ કરી",
+  "less": "ઓછું",
+  "swipe-up-more": "વધુ જોવા માટે ઉપર સ્વાઇપ કરો",
+  "plans": "યોજનાઓ",
+  "reading-plans": "વાંચન યોજનાઓ",
+  "create-reading-plan": "વાંચન યોજના બનાવો",
+  "reading-plans-empty": "તમારી પાસે હજુ સુધી વાંચનનો કોઈ પ્લાન નથી. શરૂ કરવા માટે એક બનાવો.",
+  "untitled-reading-plan": "શીર્ષક વિનાનો પ્લાન",
+  "title": "શીર્ષક",
+  "reading-plan-title_placeholder": "દા.ત. એક વર્ષમાં બાઇબલ",
+  "reading-plan-description_placeholder": "આ યોજના શેના વિશે છે?"
 }

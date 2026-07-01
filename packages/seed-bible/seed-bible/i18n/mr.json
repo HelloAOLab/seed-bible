@@ -263,5 +263,15 @@
   "no-languages-found": "कोणतीही भाषा आढळली नाही",
   "today-coming-soon": "आज स्क्रीन लवकरच येत आहे",
   "link-to-join-shared-session-copied": "सामायिक सत्रात सामील होण्याची लिंक तुमच्या क्लिपबोर्डवर कॉपी केली आहे.",
-  "copied-translation-share-link": "कॉपी केलेल्या भाषांतराची शेअर लिंक"
+  "copied-translation-share-link": "कॉपी केलेल्या भाषांतराची शेअर लिंक",
+  "less": "कमी",
+  "swipe-up-more": "अधिक पाहण्यासाठी वर स्वाइप करा",
+  "plans": "योजना",
+  "reading-plans": "वाचन योजना",
+  "create-reading-plan": "वाचन योजना तयार करा",
+  "reading-plans-empty": "तुमच्याकडे अद्याप कोणतीही वाचन योजना नाही. सुरुवात करण्यासाठी एक तयार करा.",
+  "untitled-reading-plan": "शीर्षक नसलेली योजना",
+  "title": "शीर्षक",
+  "reading-plan-title_placeholder": "उदा. एका वर्षात बायबल",
+  "reading-plan-description_placeholder": "ही योजना कशाबद्दल आहे?"
 }

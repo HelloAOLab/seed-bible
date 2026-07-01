@@ -263,5 +263,15 @@
   "no-languages-found": "ენები ვერ მოიძებნა",
   "today-coming-soon": "დღევანდელი ეკრანი მალე გამოვა",
   "link-to-join-shared-session-copied": "გაზიარებულ სესიასთან შეერთების ბმული თქვენს ბუფერში დაკოპირდა",
-  "copied-translation-share-link": "კოპირებული თარგმანის გაზიარების ბმული"
+  "copied-translation-share-link": "კოპირებული თარგმანის გაზიარების ბმული",
+  "less": "ნაკლები",
+  "swipe-up-more": "მეტის სანახავად გადაფურცლეთ ზემოთ",
+  "plans": "გეგმები",
+  "reading-plans": "კითხვის გეგმები",
+  "create-reading-plan": "კითხვის გეგმის შექმნა",
+  "reading-plans-empty": "ჯერ არ გაქვთ კითხვის გეგმები. შექმენით ერთი დასაწყებად.",
+  "untitled-reading-plan": "უსათაურო გეგმა",
+  "title": "სათაური",
+  "reading-plan-title_placeholder": "მაგ. ბიბლია ერთ წელიწადში",
+  "reading-plan-description_placeholder": "რაზეა ეს გეგმა?"
 }

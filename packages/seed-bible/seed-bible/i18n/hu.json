@@ -263,5 +263,15 @@
   "no-languages-found": "Nem található nyelv",
   "today-coming-soon": "Hamarosan érkezik a mai képernyő",
   "link-to-join-shared-session-copied": "A megosztott munkamenethez való csatlakozás linkjét átmásoltuk a vágólapra.",
-  "copied-translation-share-link": "Fordítás megosztási linkje másolva"
+  "copied-translation-share-link": "Fordítás megosztási linkje másolva",
+  "less": "Kevesebb",
+  "swipe-up-more": "Húzza felfelé a továbbiak megtekintéséhez",
+  "plans": "Tervek",
+  "reading-plans": "Olvasási tervek",
+  "create-reading-plan": "Olvasási terv létrehozása",
+  "reading-plans-empty": "Még nincsenek olvasási terveid. Hozz létre egyet a kezdéshez.",
+  "untitled-reading-plan": "Névtelen terv",
+  "title": "Cím",
+  "reading-plan-title_placeholder": "pl. Biblia egy év alatt",
+  "reading-plan-description_placeholder": "Miről szól ez a terv?"
 }

@@ -263,5 +263,15 @@
   "no-languages-found": "ቋንቋታት ኣይተረኽበን።",
   "today-coming-soon": "ናይ ሎሚ ስክሪን ኣብ ቀረባ እዋን",
   "link-to-join-shared-session-copied": "ናብቲ ዝተኻፈለ ክፍለ ግዜ ንምጽንባር ዝሕግዝ ሊንክ ናብ ቅንጥብጣብ ሰሌዳኻ ተቐዲሑ",
-  "copied-translation-share-link": "ዝተቐድሐ ትርጉም ሼር ሊንክ"
+  "copied-translation-share-link": "ዝተቐድሐ ትርጉም ሼር ሊንክ",
+  "less": "ዝወሓደ",
+  "swipe-up-more": "ተወሳኺ ንምርኣይ ንላዕሊ ስዋይፕ ግበር",
+  "plans": "መደባት",
+  "reading-plans": "መደባት ንባብ",
+  "create-reading-plan": "መደብ ንባብ ምፍጣር",
+  "reading-plans-empty": "ክሳብ ሕጂ ዝኾነ ናይ ንባብ መደብ የብልካን። ንኽትጅምር ሓደ ፍጠር።",
+  "untitled-reading-plan": "ኣርእስቲ ዘይብሉ ውጥን",
+  "title": "ርእሲ",
+  "reading-plan-title_placeholder": "ንኣብነት መጽሓፍ ቅዱስ ኣብ ዓመት",
+  "reading-plan-description_placeholder": "እዚ መደብ እዚ ብዛዕባ እንታይ እዩ፧"
 }

@@ -263,5 +263,15 @@
   "no-languages-found": "Ingen sprog fundet",
   "today-coming-soon": "Dagens skærm kommer snart",
   "link-to-join-shared-session-copied": "Et link til at deltage i den delte session blev kopieret til din udklipsholder",
-  "copied-translation-share-link": "Kopieret link til deling af oversættelse"
+  "copied-translation-share-link": "Kopieret link til deling af oversættelse",
+  "less": "Mindre",
+  "swipe-up-more": "Stryg op for at se mere",
+  "plans": "Planer",
+  "reading-plans": "Læseplaner",
+  "create-reading-plan": "Opret læseplan",
+  "reading-plans-empty": "Du har endnu ingen læseplaner. Opret en for at komme i gang.",
+  "untitled-reading-plan": "Unavngivet plan",
+  "title": "Titel",
+  "reading-plan-title_placeholder": "f.eks. Bibelen på et år",
+  "reading-plan-description_placeholder": "Hvad handler denne plan om?"
 }

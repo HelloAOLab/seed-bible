@@ -263,5 +263,15 @@
   "no-languages-found": "Inga språk hittades",
   "today-coming-soon": "Dagens skärm kommer snart",
   "link-to-join-shared-session-copied": "En länk för att ansluta till den delade sessionen kopierades till ditt urklipp",
-  "copied-translation-share-link": "Kopierad länk för delning av översättning"
+  "copied-translation-share-link": "Kopierad länk för delning av översättning",
+  "less": "Mindre",
+  "swipe-up-more": "Svep uppåt för att se mer",
+  "plans": "Planer",
+  "reading-plans": "Läsplaner",
+  "create-reading-plan": "Skapa läsplan",
+  "reading-plans-empty": "Du har inga läsplaner än. Skapa en för att komma igång.",
+  "untitled-reading-plan": "Namnlös plan",
+  "title": "Titel",
+  "reading-plan-title_placeholder": "t.ex. Bibeln på ett år",
+  "reading-plan-description_placeholder": "Vad handlar den här planen om?"
 }

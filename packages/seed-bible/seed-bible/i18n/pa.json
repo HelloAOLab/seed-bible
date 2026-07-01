@@ -263,5 +263,15 @@
   "no-languages-found": "ਕੋਈ ਭਾਸ਼ਾਵਾਂ ਨਹੀਂ ਮਿਲੀਆਂ।",
   "today-coming-soon": "ਅੱਜ ਸਕ੍ਰੀਨ ਜਲਦੀ ਆ ਰਹੀ ਹੈ।",
   "link-to-join-shared-session-copied": "ਸਾਂਝੇ ਸੈਸ਼ਨ ਵਿੱਚ ਸ਼ਾਮਲ ਹੋਣ ਲਈ ਇੱਕ ਲਿੰਕ ਤੁਹਾਡੇ ਕਲਿੱਪਬੋਰਡ 'ਤੇ ਕਾਪੀ ਕੀਤਾ ਗਿਆ ਸੀ।",
-  "copied-translation-share-link": "ਅਨੁਵਾਦ ਸਾਂਝਾਕਰਨ ਲਿੰਕ ਕਾਪੀ ਕੀਤਾ ਗਿਆ"
+  "copied-translation-share-link": "ਅਨੁਵਾਦ ਸਾਂਝਾਕਰਨ ਲਿੰਕ ਕਾਪੀ ਕੀਤਾ ਗਿਆ",
+  "less": "ਘੱਟ",
+  "swipe-up-more": "ਹੋਰ ਦੇਖਣ ਲਈ ਉੱਪਰ ਵੱਲ ਸਵਾਈਪ ਕਰੋ",
+  "plans": "ਯੋਜਨਾਵਾਂ",
+  "reading-plans": "ਪੜ੍ਹਨ ਦੀਆਂ ਯੋਜਨਾਵਾਂ",
+  "create-reading-plan": "ਪੜ੍ਹਨ ਦੀ ਯੋਜਨਾ ਬਣਾਓ",
+  "reading-plans-empty": "ਤੁਹਾਡੇ ਕੋਲ ਅਜੇ ਪੜ੍ਹਨ ਦੀ ਕੋਈ ਯੋਜਨਾ ਨਹੀਂ ਹੈ। ਸ਼ੁਰੂਆਤ ਕਰਨ ਲਈ ਇੱਕ ਬਣਾਓ।",
+  "untitled-reading-plan": "ਬਿਨਾਂ ਸਿਰਲੇਖ ਵਾਲਾ ਪਲਾਨ",
+  "title": "ਟਾਈਟਲ",
+  "reading-plan-title_placeholder": "ਜਿਵੇਂ ਕਿ ਇੱਕ ਸਾਲ ਵਿੱਚ ਬਾਈਬਲ",
+  "reading-plan-description_placeholder": "ਇਹ ਯੋਜਨਾ ਕਿਸ ਬਾਰੇ ਹੈ?"
 }

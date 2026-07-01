@@ -263,5 +263,15 @@
   "no-languages-found": "Minɔkɔ moko te ezwami",
   "today-coming-soon": "Lelo écran ekoya kala mingi te",
   "link-to-join-shared-session-copied": "Lien moko mpo na kosangana na session oyo bakabolaki esalemaki kopi na tableau de bord na yo",
-  "copied-translation-share-link": "Lien ya kokabola libongoli oyo esalemi kopi"
+  "copied-translation-share-link": "Lien ya kokabola libongoli oyo esalemi kopi",
+  "less": "Moke",
+  "swipe-up-more": "Swipe likolo mpo na komona makambo mosusu",
+  "plans": "Miango",
+  "reading-plans": "Miango ya kotánga",
+  "create-reading-plan": "Salá mwango ya kotánga",
+  "reading-plans-empty": "Ozali naino na ba plans ya kotanga te. Salá moko mpo na kobanda.",
+  "untitled-reading-plan": "Plan oyo ezangi titre",
+  "title": "Titre",
+  "reading-plan-title_placeholder": "ndakisa Biblia na Mbula moko",
+  "reading-plan-description_placeholder": "Mwango oyo ezali kolobela nini?"
 }

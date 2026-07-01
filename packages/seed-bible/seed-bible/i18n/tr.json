@@ -263,5 +263,15 @@
   "no-languages-found": "Hiçbir dil bulunamadı.",
   "today-coming-soon": "Bugünkü ekran yakında geliyor.",
   "link-to-join-shared-session-copied": "Paylaşılan oturuma katılmak için bir bağlantı panonuza kopyalandı.",
-  "copied-translation-share-link": "Kopyalanan çeviri paylaşım bağlantısı"
+  "copied-translation-share-link": "Kopyalanan çeviri paylaşım bağlantısı",
+  "less": "Az",
+  "swipe-up-more": "Daha fazlasını görmek için yukarı kaydırın.",
+  "plans": "Planlar",
+  "reading-plans": "Okuma planları",
+  "create-reading-plan": "Okuma planı oluşturun",
+  "reading-plans-empty": "Henüz bir okuma planınız yok. Başlamak için bir tane oluşturun.",
+  "untitled-reading-plan": "Başlıksız plan",
+  "title": "Başlık",
+  "reading-plan-title_placeholder": "Örneğin, Bir Yılda İncil Okumak",
+  "reading-plan-description_placeholder": "Bu plan neyle ilgili?"
 }

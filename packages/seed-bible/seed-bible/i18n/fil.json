@@ -263,5 +263,15 @@
   "no-languages-found": "Walang natagpuang mga wika",
   "today-coming-soon": "Malapit nang lumabas ang screen ngayon",
   "link-to-join-shared-session-copied": "Nakopya na sa iyong clipboard ang isang link para sumali sa nakabahaging sesyon",
-  "copied-translation-share-link": "Kinopya ang link ng pagbabahagi ng pagsasalin"
+  "copied-translation-share-link": "Kinopya ang link ng pagbabahagi ng pagsasalin",
+  "less": "Mas kaunti",
+  "swipe-up-more": "Mag-swipe pataas para makakita pa",
+  "plans": "Mga Plano",
+  "reading-plans": "Mga plano sa pagbabasa",
+  "create-reading-plan": "Gumawa ng plano sa pagbabasa",
+  "reading-plans-empty": "Wala ka pang anumang plano sa pagbabasa. Gumawa ng isa para makapagsimula.",
+  "untitled-reading-plan": "Planong walang pamagat",
+  "title": "Pamagat",
+  "reading-plan-title_placeholder": "halimbawa Bibliya sa loob ng isang Taon",
+  "reading-plan-description_placeholder": "Tungkol saan ang planong ito?"
 }

@@ -263,5 +263,15 @@
   "no-languages-found": "Không tìm thấy ngôn ngữ nào",
   "today-coming-soon": "Màn hình hôm nay sẽ sớm ra mắt.",
   "link-to-join-shared-session-copied": "Một liên kết để tham gia phiên họp chung đã được sao chép vào khay nhớ tạm của bạn.",
-  "copied-translation-share-link": "Đã sao chép liên kết chia sẻ bản dịch"
+  "copied-translation-share-link": "Đã sao chép liên kết chia sẻ bản dịch",
+  "less": "Ít hơn",
+  "swipe-up-more": "Vuốt lên để xem thêm",
+  "plans": "Kế hoạch",
+  "reading-plans": "Kế hoạch đọc",
+  "create-reading-plan": "Lập kế hoạch đọc sách",
+  "reading-plans-empty": "Bạn chưa có kế hoạch đọc sách nào cả. Hãy lập một kế hoạch để bắt đầu.",
+  "untitled-reading-plan": "Kế hoạch chưa có tiêu đề",
+  "title": "Tiêu đề",
+  "reading-plan-title_placeholder": "Ví dụ: Đọc Kinh Thánh trong một năm",
+  "reading-plan-description_placeholder": "Kế hoạch này là về cái gì?"
 }
