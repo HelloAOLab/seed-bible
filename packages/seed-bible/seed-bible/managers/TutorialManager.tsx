@@ -301,6 +301,12 @@ export interface TutorialManager {
   completed: ReadonlySignal<boolean>;
   /** Whether the user has opted out of all future tutorial prompts. */
   optedOut: ReadonlySignal<boolean>;
+  /**
+   * Whether the first-run offer card ("Would you like a tutorial?") is showing.
+   * Set once for new users after onboarding finishes, instead of launching the
+   * tour unannounced. Resolved by {@link acceptPrompt} / {@link dismissPrompt}.
+   */
+  promptVisible: ReadonlySignal<boolean>;
   /** Per-feature contextual tutorial completion flags. */
   featuresSeen: ReadonlySignal<Record<string, boolean>>;
   /** Starts (or restarts) the onboarding tour from the first step. */
@@ -321,6 +327,13 @@ export interface TutorialManager {
    * tutorial prompts. Marks the onboarding tour completed too.
    */
   optOut: () => void;
+  /** Accepts the first-run offer card: hides it and starts the onboarding tour. */
+  acceptPrompt: () => void;
+  /**
+   * Declines the first-run offer card: hides it and records the onboarding tour
+   * as seen (still replayable from Settings).
+   */
+  dismissPrompt: () => void;
 }
 
 /**
@@ -336,6 +349,8 @@ export function createTutorialManager(
 ): TutorialManager {
   const running = signal<boolean>(false);
   const index = signal<number>(0);
+  // First-run offer card visibility (see `promptVisible` in the interface).
+  const promptVisible = signal<boolean>(false);
 
   // The active step set is chosen at `start()` / `startContextual()` time
   // (snapshotted so a resize mid-tour doesn't swap the steps out from under us).
@@ -565,6 +580,18 @@ export function createTutorialManager(
     activeFeatureId.value = null;
   };
 
+  const acceptPrompt = () => {
+    promptVisible.value = false;
+    start();
+  };
+
+  const dismissPrompt = () => {
+    promptVisible.value = false;
+    // Treat declining as having resolved the onboarding offer so it isn't
+    // re-shown on the next load; the tour stays replayable from Settings.
+    markOnboardingSeen();
+  };
+
   const next = () => {
     if (index.value >= activeSteps.value.length - 1) {
       finish();
@@ -579,10 +606,12 @@ export function createTutorialManager(
     }
   };
 
-  // Auto-start onboarding once for new users, but only after the welcome/install
+  // Offer the tour once for new users, but only after the welcome/install
   // onboarding is out of the way, and (when logged in) after the profile has
-  // loaded — otherwise a returning user could see the tour flash before their
-  // recorded completion arrives. One-shot via `autoStartChecked`.
+  // loaded — otherwise a returning user could see the offer flash before their
+  // recorded completion arrives. Rather than launching the tour unannounced we
+  // surface the offer card; accepting it starts the tour. One-shot via
+  // `autoStartChecked`.
   let autoStartChecked = false;
   effect(() => {
     if (autoStartChecked || running.value) {
@@ -596,7 +625,7 @@ export function createTutorialManager(
     }
     autoStartChecked = true;
     if (!completed.value && !optedOut.value) {
-      start();
+      promptVisible.value = true;
     }
   });
 
@@ -611,6 +640,7 @@ export function createTutorialManager(
     canGoBack,
     completed,
     optedOut,
+    promptVisible,
     featuresSeen,
     start,
     startContextual,
@@ -618,5 +648,7 @@ export function createTutorialManager(
     prev,
     finish,
     optOut,
+    acceptPrompt,
+    dismissPrompt,
   };
 }

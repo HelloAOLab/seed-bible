@@ -1831,6 +1831,81 @@ h6 {
   right: -7px;
 }
 
+/* First-run offer card — pinned top-right, invites the user into the tour
+   instead of launching it unannounced. Shares the tour's visual language. */
+.sb-tutorial-prompt {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 1200;
+  box-sizing: border-box;
+  width: min(340px, calc(100vw - 32px));
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 16px 40px #00000040;
+  font-family: var(--sb-font-family);
+}
+
+.sb-tutorial-prompt-title {
+  margin: 0 0 6px;
+  font-family: "Satoshi", system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 700;
+}
+
+.sb-tutorial-prompt-body {
+  margin: 0 0 16px;
+  font-family: "DM Sans", sans-serif;
+  line-height: 1.55;
+  font-size: 0.95em;
+  opacity: 0.7;
+}
+
+.sb-tutorial-prompt-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sb-tutorial-prompt-btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-family: var(--sb-font-family);
+  font-size: 0.9em;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-tutorial-prompt-btn:hover {
+  filter: brightness(0.96);
+}
+
+.sb-tutorial-prompt-btn-secondary {
+  background: transparent;
+  color: var(--sb-font-color);
+  opacity: 0.75;
+}
+
+.sb-tutorial-prompt-btn-primary {
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sb-tutorial-prompt-arrow {
+  font-size: 1.05em;
+  line-height: 1;
+}
+
 .sb-reader-toolbar {
   position: fixed;
   left: 50%;
