@@ -4,6 +4,7 @@ import type { TabsManager } from "../managers/TabsManager";
 import type { Playlist, PlaylistManager } from "../managers/PlaylistManager";
 import { MaterialIcon } from "./icons";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
+import { PlaylistItemInput } from "./PlaylistItemInput";
 
 interface CreatePlaylistFormProps {
   playlists: PlaylistManager;
@@ -96,6 +97,8 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
           </ul>
         )}
       </DiscoverSection>
+
+      <PlaylistItemInput playlists={playlists} books={books} />
 
       <div className="sb-settings-actions">
         <button

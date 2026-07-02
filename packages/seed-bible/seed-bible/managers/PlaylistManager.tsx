@@ -40,6 +40,8 @@ export const PlaylistSchema = z.object({
 });
 
 export type Playlist = z.infer<typeof PlaylistSchema>;
+export type PlaylistItemData = z.infer<typeof PlaylistItem>;
+export type VerseRef = z.infer<typeof VerseRefSchema>;
 
 export type PlaylistManager = ReturnType<typeof createPlaylistManager>;
 
@@ -138,6 +140,21 @@ export function createPlaylistManager(
   };
 
   /**
+   * Appends an item to the currently-edited playlist. No-op when there is no
+   * playlist being edited. Persisting happens later via `saveEditingPlaylist`.
+   */
+  const addEditingPlaylistItem = (item: PlaylistItemData): void => {
+    const current = editingPlaylist.value;
+    if (!current) {
+      return;
+    }
+    editingPlaylist.value = {
+      ...current,
+      items: [...current.items, item],
+    };
+  };
+
+  /**
    * Removes the item at the given index from the currently-edited playlist.
    * No-op when there is no playlist being edited. Persisting happens later via
    * `saveEditingPlaylist`.
@@ -182,6 +199,7 @@ export function createPlaylistManager(
     createNewPlaylist,
     editPlaylist,
     saveEditingPlaylist,
+    addEditingPlaylistItem,
     removeEditingPlaylistItem,
     cancelEditingPlaylist,
     listPlaylists,

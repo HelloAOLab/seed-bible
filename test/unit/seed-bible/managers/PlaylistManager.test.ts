@@ -287,6 +287,35 @@ describe("createPlaylistManager", () => {
     expect(manager.userPlaylists.value[0]!.title).toBe("New");
   });
 
+  it("addEditingPlaylistItem appends an item to the current draft", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.createNewPlaylist();
+
+    manager.addEditingPlaylistItem({
+      type: "bible-verse",
+      ref: { bookId: "JHN", chapter: 3, verse: 16 },
+    });
+    manager.addEditingPlaylistItem({
+      type: "link",
+      url: "https://example.com",
+    });
+
+    expect(manager.editingPlaylist.value!.items).toEqual([
+      { type: "bible-verse", ref: { bookId: "JHN", chapter: 3, verse: 16 } },
+      { type: "link", url: "https://example.com" },
+    ]);
+  });
+
+  it("addEditingPlaylistItem is a no-op when nothing is being edited", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+
+    manager.addEditingPlaylistItem({ type: "html", html: "hi" });
+
+    expect(manager.editingPlaylist.value).toBeNull();
+  });
+
   it("cancelEditingPlaylist discards the draft and returns to discover", async () => {
     const manager = makeManager("user-1");
     await flush();

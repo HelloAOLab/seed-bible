@@ -294,5 +294,15 @@
   "playlist-item-html": "HTML snippet",
   "add-to-playlist": "Add to playlist",
   "edit-playlist": "Edit playlist",
-  "remove-playlist-item": "Remove item"
+  "remove-playlist-item": "Remove item",
+  "playlist-add-item": "Add item",
+  "playlist-add-mode-scripture": "Scripture",
+  "playlist-add-mode-text": "Text",
+  "playlist-add-mode-link": "Link",
+  "playlist-add-scripture-placeholder": "e.g. John 3:16",
+  "playlist-add-text-placeholder": "Enter text",
+  "playlist-add-link-placeholder": "https://example.com",
+  "playlist-add-button": "Add item",
+  "playlist-add-scripture-error": "Couldn't find that reference",
+  "playlist-add-link-error": "Enter a valid URL"
 }

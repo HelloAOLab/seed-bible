@@ -9062,6 +9062,51 @@ h6 {
   border-bottom-color: var(--sb-primary-color);
 }
 
+.sb-playlist-add-modes {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.sb-playlist-add-mode {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.sb-playlist-add-mode:hover {
+  border-color: var(--sb-primary-color);
+}
+
+.sb-playlist-add-mode--active {
+  border-color: var(--sb-primary-color);
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+}
+
+.sb-playlist-add-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.sb-playlist-add-textarea {
+  font-size: 14px;
+  font-weight: 400;
+  resize: vertical;
+}
+
+.sb-playlist-add-error {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--sb-error-color, #d64545);
+}
+
 .sb-discover-section {
   margin-bottom: 16px;
 }
