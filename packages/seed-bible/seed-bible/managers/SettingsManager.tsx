@@ -322,7 +322,7 @@ export function applyToolbarCustomization<T extends { id: string }>(
 
 export const UI_TEXT_SIZE_OPTIONS: UITextSize[] = ["S", "M", "L", "XL"];
 
-export const UI_TEXT_SIZE_SCALE: Record<UITextSize, number> = {
+export const UI_TEXT_SIZE_SCALE_MAP: Record<UITextSize, number> = {
   S: 0.85,
   M: 1.0,
   L: 1.15,
@@ -878,7 +878,7 @@ export function createSettings(
     if (typeof document === "undefined") {
       return;
     }
-    const scale = UI_TEXT_SIZE_SCALE[settings.value.uiTextSize];
+    const scale = UI_TEXT_SIZE_SCALE_MAP[settings.value.uiTextSize];
     document.documentElement.style.setProperty("--sb-ui-scale", String(scale));
   });
 

@@ -387,7 +387,12 @@ export interface PanesManager {
    * Resizes a detached pane by delta values.
    * In side mode only width changes, in bottom mode only height changes.
    */
-  resizePane: (paneId: string, deltaWidth: number, deltaHeight: number) => void;
+  resizePane: (
+    paneId: string,
+    deltaWidth: number,
+    deltaHeight: number,
+    uiScale: number
+  ) => void;
 }
 
 /**
@@ -887,7 +892,8 @@ export function createPanes(
   const resizePane = (
     paneId: string,
     deltaWidth: number,
-    deltaHeight: number
+    deltaHeight: number,
+    uiScale: number
   ) => {
     panes.value = panes.value.map((pane) => {
       if (pane.id !== paneId) {
@@ -901,21 +907,21 @@ export function createPanes(
       if (pane.detachedAnchor === "side") {
         return {
           ...pane,
-          width: Math.max(320, pane.width + deltaWidth),
+          width: Math.max(320 * uiScale, pane.width + deltaWidth),
         };
       }
 
       if (pane.detachedAnchor === "bottom") {
         return {
           ...pane,
-          height: Math.max(180, pane.height + deltaHeight),
+          height: Math.max(180 * uiScale, pane.height + deltaHeight),
         };
       }
 
       return {
         ...pane,
-        width: Math.max(280, pane.width + deltaWidth),
-        height: Math.max(180, pane.height + deltaHeight),
+        width: Math.max(280 * uiScale, pane.width + deltaWidth),
+        height: Math.max(180 * uiScale, pane.height + deltaHeight),
       };
     });
   };

@@ -13,6 +13,7 @@ import type {
 } from "../managers/PanesManager";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import { type ToolsManager } from "../managers/BibleToolsManager";
+import { UI_TEXT_SIZE_SCALE_MAP } from "../managers/SettingsManager";
 import { batch, effect } from "@preact/signals";
 import { useI18n } from "../i18n/I18nManager";
 import { translateTitle } from "../components/Utils";
@@ -956,6 +957,9 @@ export function PaneLayout(props: PaneLayoutProps) {
     tabs: tabsManager,
     tools: toolsManager,
   } = state;
+  // Read at call time (not captured) so the long-lived pointermove listener never uses a stale UI scale.
+  const getUiScale = () =>
+    UI_TEXT_SIZE_SCALE_MAP[state.settings.settings.value.uiTextSize];
   const panes = app.effectivePanes.value;
   const layout = app.panelsEnabled.value ? panesManager.layout.value : "single";
   const selectedPaneId = app.panelsEnabled.value
@@ -1191,7 +1195,7 @@ export function PaneLayout(props: PaneLayoutProps) {
       if (dragState.mode === "move") {
         panesManager.movePane(dragState.paneId, deltaX, deltaY);
       } else {
-        panesManager.resizePane(dragState.paneId, deltaX, deltaY);
+        panesManager.resizePane(dragState.paneId, deltaX, deltaY, getUiScale());
       }
 
       dragStateRef.current = {
@@ -1540,7 +1544,8 @@ export function PaneLayout(props: PaneLayoutProps) {
                         panesManager.resizePane(
                           pane.id,
                           400 - pane.width,
-                          300 - pane.height
+                          300 - pane.height,
+                          getUiScale()
                         );
                       }}
                     >
@@ -1563,7 +1568,8 @@ export function PaneLayout(props: PaneLayoutProps) {
                         panesManager.resizePane(
                           pane.id,
                           600 - pane.width,
-                          400 - pane.height
+                          400 - pane.height,
+                          getUiScale()
                         );
                       }}
                     >
