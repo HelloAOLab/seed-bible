@@ -1,10 +1,12 @@
-import { useState } from "preact/hooks";
+import { useRef, useState } from "preact/hooks";
 import { useI18n } from "../i18n/I18nManager";
 import type { PlaylistManager } from "../managers/PlaylistManager";
 import type { TranslationBook } from "../managers/FreeUseBibleAPI";
 import { parseVerseReference } from "../managers/parseVerseReference";
-import { DiscoverSection } from "./DiscoverSection";
 import { sanitize } from "../managers/Sanitization";
+import { DiscoverSection } from "./DiscoverSection";
+import { RichTextEditor } from "./RichTextEditor";
+import type { RichTextEditorHandle } from "./RichTextEditor";
 
 interface PlaylistItemInputProps {
   playlists: PlaylistManager;
@@ -34,14 +36,35 @@ export function PlaylistItemInput(props: PlaylistItemInputProps) {
   const [mode, setMode] = useState<AddMode>("scripture");
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // Text mode is driven by the rich-text editor rather than `value`; track its
+  // empty state separately so we can enable/disable the add button.
+  const [editorEmpty, setEditorEmpty] = useState(true);
+  const editorRef = useRef<RichTextEditorHandle>(null);
 
   const switchMode = (next: AddMode) => {
     setMode(next);
     setValue("");
+    setEditorEmpty(true);
     setError(null);
   };
 
   const handleAdd = async () => {
+    if (mode === "text") {
+      // Serialize the editor contents only now, on submit, rather than on every
+      // keystroke.
+      const html = editorRef.current?.getHTML() ?? "";
+      if (!html.trim()) {
+        return;
+      }
+      playlists.addEditingPlaylistItem({
+        type: "html",
+        html: await sanitize(html),
+      });
+      editorRef.current?.clear();
+      setError(null);
+      return;
+    }
+
     const trimmed = value.trim();
     if (!trimmed) {
       return;
@@ -58,11 +81,6 @@ export function PlaylistItemInput(props: PlaylistItemInputProps) {
         return;
       }
       playlists.addEditingPlaylistItem({ type: "bible-verse", ref });
-    } else if (mode === "text") {
-      playlists.addEditingPlaylistItem({
-        type: "html",
-        html: await sanitize(trimmed),
-      });
     } else {
       let url: string;
       try {
@@ -115,14 +133,11 @@ export function PlaylistItemInput(props: PlaylistItemInputProps) {
 
       <div className="sb-playlist-add-row">
         {mode === "text" ? (
-          <textarea
-            className="sb-discover-title-input sb-playlist-add-textarea"
-            value={value}
-            dir="auto"
-            rows={3}
-            placeholder={placeholder}
-            onInput={(event: Event) => {
-              setValue((event.currentTarget as HTMLTextAreaElement).value);
+          <RichTextEditor
+            ref={editorRef}
+            className="sb-discover-title-input sb-playlist-add-editor"
+            onEmptyChange={(isEmpty) => {
+              setEditorEmpty(isEmpty);
               setError(null);
             }}
           />
@@ -149,7 +164,7 @@ export function PlaylistItemInput(props: PlaylistItemInputProps) {
           type="button"
           className="sb-settings-save-button"
           onClick={handleAdd}
-          disabled={!value.trim()}
+          disabled={mode === "text" ? editorEmpty : !value.trim()}
         >
           {t("playlist-add-button", { defaultValue: "Add item" })}
         </button>

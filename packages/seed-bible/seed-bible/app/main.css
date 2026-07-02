@@ -9101,6 +9101,25 @@ h6 {
   resize: vertical;
 }
 
+.sb-playlist-add-editor {
+  font-size: 14px;
+  font-weight: 400;
+  padding: 4px 6px;
+}
+
+.sb-playlist-add-editor .ProseMirror {
+  min-height: 60px;
+  outline: none;
+}
+
+.sb-playlist-add-editor .ProseMirror > *:first-child {
+  margin-top: 0;
+}
+
+.sb-playlist-add-editor .ProseMirror > *:last-child {
+  margin-bottom: 0;
+}
+
 .sb-playlist-add-error {
   margin-top: 6px;
   font-size: 13px;
