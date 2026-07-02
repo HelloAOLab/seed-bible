@@ -1,43 +1,57 @@
 import { useRef, useState } from "preact/hooks";
+import { lazy, Suspense } from "preact/compat";
 import { useI18n } from "../i18n/I18nManager";
 import type { PlaylistItemData } from "../managers/PlaylistManager";
 import { sanitize } from "../managers/Sanitization";
-import { RichTextEditor } from "./RichTextEditor";
-import type { RichTextEditorHandle } from "./RichTextEditor";
+import type { Editor } from "@tiptap/core";
+
+// Load TipTap lazily so its (sizeable) bundle is only fetched when the user
+// actually opens the text editor; Suspense shows a placeholder meanwhile.
+const TipTapEditor = lazy(() => import("./TipTapEditor"));
 
 interface TextItemInputProps {
   onAdd: (item: PlaylistItemData) => void;
 }
 
 /**
- * Adds free rich text (html item) to the playlist. Contents live in the
- * TipTap editor; we only track its empty state (to toggle the add button) and
- * serialize the HTML on submit.
+ * Adds free rich text (html item) to the playlist. Owns the TipTap editor
+ * instance and its empty state; the HTML is serialized only on submit.
  */
 export function TextItemInput(props: TextItemInputProps) {
   const { onAdd } = props;
   const { t } = useI18n();
+  const editorRef = useRef<Editor | null>(null);
   const [editorEmpty, setEditorEmpty] = useState(true);
-  const editorRef = useRef<RichTextEditorHandle>(null);
 
   const handleAdd = async () => {
-    // Serialize the editor contents only now, on submit, rather than on every
-    // keystroke.
-    const html = editorRef.current?.getHTML() ?? "";
-    if (!html.trim()) {
+    const editor = editorRef.current;
+    if (!editor || editor.isEmpty) {
       return;
     }
-    onAdd({ type: "html", html: await sanitize(html) });
-    editorRef.current?.clear();
+    // Serialize the contents only now, on submit, rather than on every keystroke.
+    onAdd({ type: "html", html: await sanitize(editor.getHTML()) });
+    editor.commands.clearContent();
+    setEditorEmpty(true);
   };
 
   return (
     <div className="sb-playlist-add-row">
-      <RichTextEditor
-        ref={editorRef}
-        className="sb-discover-title-input sb-playlist-add-editor"
-        onEmptyChange={setEditorEmpty}
-      />
+      <Suspense
+        fallback={
+          <div
+            className="sb-discover-title-input sb-playlist-add-editor sb-playlist-add-editor--loading"
+            aria-busy="true"
+          />
+        }
+      >
+        <TipTapEditor
+          className="sb-discover-title-input sb-playlist-add-editor"
+          onEditor={(editor) => {
+            editorRef.current = editor;
+          }}
+          onEmptyChange={setEditorEmpty}
+        />
+      </Suspense>
       <button
         type="button"
         className="sb-settings-save-button"

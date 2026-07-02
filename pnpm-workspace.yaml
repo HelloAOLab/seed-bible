@@ -47,7 +47,6 @@ catalog:
   rxjs: "8.0.0-alpha.14"
   luxon: "^3.7.2"
   dompurify: "^3.4.11"
-  "@tiptap/react": "3.27.1"
   "@tiptap/core": "3.27.1"
   "@tiptap/pm": "3.27.1"
   "@tiptap/extension-bullet-list": "3.27.1"
