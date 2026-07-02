@@ -152,8 +152,8 @@ function FlagImg({ cc }: { cc: string }) {
       src={`https://flagcdn.com/w40/${cc}.png`}
       alt=""
       style={{
-        width: "20px",
-        height: "20px",
+        width: "1.25rem",
+        height: "1.25rem",
         borderRadius: "50%",
         objectFit: "cover",
         flexShrink: 0,
@@ -1914,8 +1914,8 @@ function AllSettingsView(props: { state: SeedBibleState }) {
             className="sb-upload-settings-error"
             style={{
               color: "var(--sb-error-color, #dc2626)",
-              fontSize: "13px",
-              marginTop: "8px",
+              fontSize: "0.8125rem",
+              marginTop: "0.5rem",
               wordBreak: "break-word",
             }}
           >
@@ -2110,7 +2110,7 @@ function SettingsMainView(props: { state: SeedBibleState }) {
                   <span>{currentLangMeta.display}</span>
                   <span
                     className="material-symbols-outlined"
-                    style={{ fontSize: "16px" }}
+                    style={{ fontSize: "1rem" }}
                   >
                     expand_more
                   </span>

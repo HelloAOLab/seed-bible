@@ -1,6 +1,13 @@
 # UI Scaling Refactor — Work Log & Handoff
 
-**Branch:** `fix/1281-ui-scaling` · **Issue:** #1281 · **Status:** Phase 0 + Phase 1 **committed** (`5e752106`) and merged with latest `develop` (`0714c379`); Phase 7 implemented + adversarially verified. Awaiting the joint runtime/hands-on QA sign-off on Phase 7 before proceeding to Phases 2–6.
+**Branch:** `fix/1281-ui-scaling` · **Issue:** #1281 · **Status:** Rem-based UI scaling — **Phases 0, 1, 2, 3, 4, 5, 7 done.**
+
+- **Committed:** Phase 0+1 (`5e752106`), Phase 7 (`f0e2c921`), Phase 2 (`0190a5b7`), Phase 4 (`e469fbb`). Plus the ThemeManager var-collision fix (`5ec5f44f`).
+- **Phase 3** = verified clean, **no code changes** (see §4).
+- **Phase 5** (modals/overlays) is **in the working tree, uncommitted** — user hands-on QA in progress.
+- **Naming:** the scale-map constant was renamed `UI_TEXT_SIZE_SCALE` → **`UI_TEXT_SIZE_SCALE_MAP`** (in `e469fbb`). Older references below may still say the old name.
+- **Remaining:** Phase 6 (mobile, + hands-on QA gate); deferred **Phase 8** (book-selector responsiveness) / **Phase 9** (optional a11y browser-pref); and **Phase 10 — cleanup (runs last, after all other phases)** — see §8.
+- **Commit policy:** never commit on your own — only when the user invokes `/commit`.
 
 This doc is the single source of truth for resuming this work in a new thread / on
 another machine. (The original plan lived at a machine-local path
@@ -40,7 +47,7 @@ html {
 
 - **`rem`** — all chrome dimensions, spacing, radius, positioning offsets, chrome font-size. Scales with the knob.
 - **`px` (immune to UI scale)** — reader glyph size (`.sb-font-size-*`), 1px hairline borders, `@media` breakpoints, `box-shadow` offsets, the pane x/y/w/h "canvas" model.
-- **`em` (tracks the reader knob)** — reader-internal spacing. _(Mostly Phase 2; not done yet.)_
+- **`em` (tracks the reader knob)** — reader-internal spacing. _(Phase 2 ✅ — `.sb-line-break`, `.sb-verse-number` gutters, and `.sb-chapter-heading` font-size are now `em`.)_
 
 **Cascade-anchor:** the reader font class (`.sb-font-size-*`) was on `.sb-app-root` (chrome
 root), which leaked the reader size into chrome `em`/`inherit` text. It now lives on
@@ -76,12 +83,33 @@ Files changed (now **committed** as `5e752106`; the list below is historical):
   - hand-converted the `:root` size/spacing/radius tokens to rem (borders kept `1px`, box-shadows kept px, `@media` breakpoints kept px, textConfig `--text-heading-margin-*` kept px).
 - **`packages/seed-bible/seed-bible/components/BibleReader.tsx`** — computes `readerFontSizeClass` from `state?.config?.config.value.fontSize ?? "M"` and applies it to `.sb-bible-reader` (the cascade-anchor). Note the **fully optional-chained** `state?.config?.config` — required because test mocks pass a `state` without `config`.
 - **`packages/seed-bible/seed-bible/app/main.tsx`** — removed `fontSizeClass` (and the now-unused `config` destructure + `MainContent` prop) from `.sb-app-root`, BibleSelector, Onboarding, and Tutorial.
-- **`package.json` / `pnpm-lock.yaml`** — added `postcss-pxtorem` (dev). _(Removed again in Phase 8.)_
+- **`package.json` / `pnpm-lock.yaml`** — added `postcss-pxtorem` (dev). _(Removed in the final cleanup phase — Phase 10.)_
 
-### Phase 7 — verse-toolbar coordinate fix ✅ (implemented + verified; awaiting joint QA)
+### Phase 7 — verse-toolbar coordinate fix ✅ (committed `f0e2c921`)
 
-- **`packages/seed-bible/seed-bible/components/BibleReaderToolbar.tsx`** — added `UI_TEXT_SIZE_SCALE` to the `SettingsManager` import; introduced a `uiScale` computed (`UI_TEXT_SIZE_SCALE[settings.settings.value.uiTextSize]`) and multiplied the floating verse-toolbar clamp insets by it: `floatingX` inset `84 → 84 * uiScale`, `floatingY` inset `64 → 64 * uiScale`. Exact no-op at M (factor 1.0). Uncommitted on the branch pending QA sign-off.
-- **Verified:** `check:ts` 0 errors · `test` 580/580 · `build` ✓ · Prettier + ESLint clean on the file. A 3-voter adversarial review unanimously confirmed `refuted:false`, `noOpAtSizeM:true`, `directionCorrect:true` (no-op at M, monotonic insets S→XL, reactive to live UI-size change, safe at narrow viewports, no coordinate-space mismatch, drag offset correctly untouched).
+- **`BibleReaderToolbar.tsx`** — a `uiScale` computed (`UI_TEXT_SIZE_SCALE_MAP[settings.settings.value.uiTextSize]`) multiplies the floating verse-toolbar clamp insets (`floatingX` `84 → 84*uiScale`, `floatingY` `64 → 64*uiScale`). Exact no-op at M.
+- **Verified:** `check:ts` · `test` · `build` · Prettier/ESLint clean. A 3-voter adversarial review confirmed: no-op at M, monotonic insets S→XL, reactive to live UI-size change, safe at narrow viewports, no coordinate-space mismatch, drag offset untouched.
+
+### Phase 2 — reader `em` ✅ (committed `0190a5b7`)
+
+- **`main.css`** — `.sb-line-break height 10px → 0.625em`; `.sb-verse-number` gutters `6px/3px → 0.625em/0.3125em` (this element's font is `0.6em`, so `1em ≈ 0.6×` the reader glyph); `.sb-chapter-heading font-size 18px → 1.125em`. All no-ops at reader **M**.
+- **User decision (overrides the original "keep px" note):** headings now **scale with the reader** (`1.125em`) — a fixed `18px` heading fell to/below body size at reader L/XL/XXL.
+
+### Phase 3 — toolbar/chrome ✅ (verified clean — no code changes)
+
+- Ripple (`spawnRipple`) sizes/positions purely as ratios of `getBoundingClientRect()` → scale-invariant; no change. Reader-embedded chrome (reader nav toolbar, verse toolbar, bookmark button, quick toolbar) confirmed all `rem`; `BelowReaderToolbar`/`BibleReaderToolbar` JS carry no stray px (only the ripple + the Phase 7 verse-toolbar `left/top`).
+- The "desktop toolbar height doesn't scale" symptom seen during QA turned out to be a **ThemeManager hardcoded-var collision** with `main.css`, fixed separately in `5ec5f44f` — not a chrome-CSS problem.
+
+### Phase 4 — panes ✅ (committed `e469fbb`)
+
+- **`PanesManager.resizePane`** gained a `uiScale` param; the detached min-size floors (`320`/`180`/`280×180`) now scale by `UI_TEXT_SIZE_SCALE_MAP[uiTextSize]`, threaded from **`PaneLayout`** via a `getUiScale()` helper (read at call time so the once-registered `pointermove` listener isn't stale). Pane `x/y/w/h` stay unscaled px (OS-window canvas); resize **deltas** stay px. New unit test covers the scaled floor.
+- This commit also **renamed** `UI_TEXT_SIZE_SCALE` → `UI_TEXT_SIZE_SCALE_MAP`.
+
+### Phase 5 — modals/overlays ✅ (working tree, uncommitted — QA in progress)
+
+- **Popover fix:** mobile `TranslationInfo` `left: calc(clientX - 265px)` → `calc(clientX - 16.5625rem)` (rem auto-tracks the UI knob; no prop-threading; no-op at M).
+- **14 inline `px → rem` conversions** across `BibleSelector.tsx` (11) + `SettingsPage.tsx` (3): border-radii, padding/margin, gaps, width/height, font-sizes. **Kept px:** `1px` borders, the `9999px` overlay-mask box-shadow, `icons.tsx` borders.
+- **Decisions:** footnote-modal font **kept** tracking the reader knob (intentional — it's reading content); book-selector responsiveness **deferred → Phase 8**.
 
 ## 5. Verification done (Phase 1)
 
@@ -159,40 +187,31 @@ so the rest of `:root` was hand-converted (see §4).
 
 ## 7. QA findings / known issues
 
-- **[DEFER — pre-existing] Book selector not fully responsive ~1250px at UI Text Size > M** — edges get cut off at the screen edges. Confirmed this was _also_ a bug under the old `zoom` impl, so it's not a Phase-1 regression. Address in a later phase (likely Phase 5 modals/overlays, or its own fix).
+- **[DEFERRED → Phase 8] Book selector not fully responsive ~1250px at UI Text Size > M** — edges get cut off at the screen edges. Confirmed this was _also_ a bug under the old `zoom` impl, so it's not a rem-refactor regression. Decided (2026-07-02) to give it its **own focused fix** — see **Phase 8** in §8 (it's a responsive-layout bug, not a px→rem swap).
 - **[Phase 7 ✅ DONE] Verse-toolbar edge clamp at L/XL** — the floating verse-selection toolbar's `84`/`64` clamp insets now scale by `UI_TEXT_SIZE_SCALE[uiTextSize]`. Fixed + verified; awaiting joint QA.
-- **[Sibling raw-px-under-rem bugs found by the Phase 7 verification sweep — both minor, both pre-existing rem-refactor regressions, deferred to their phases]:**
-  - **[Phase 4 — panes] Floating detached-pane min-size floors are raw px** — `PanesManager.tsx:918` `resizePane` clamps the floating branch to `Math.max(280, …)` width / `Math.max(180, …)` height (and the side/bottom branches to `320`/`180`), but these floors reserve room for **rem-sized** pane chrome (`.sb-detached-pane-toolbar` = `2.625rem` + `0.5rem` margin). At XL a pane dragged to its minimum leaves too little reader body; the ~15.75rem-wide floating toolbar can also overflow the 280px min-width (`overflow: visible`, so it spills rather than clips). Fix: multiply the floating-branch (and side/bottom) floors by `UI_TEXT_SIZE_SCALE[uiTextSize]`; leave `pane.x/y` and the resize **deltas** (correct plain px) untouched.
-  - **[Phase 5/6 — modals/mobile] Mobile TranslationInfo popover offset is raw px** — `BibleSelector.tsx:1405` positions the mobile popover with `left: calc(${position.x}px - 265px)`, where `position.x` is a raw `clientX` and the popover is `width: 15.625rem` (`main.css:8152`). The `265` offset was tuned to the 250px M-scale width, so at XL on a narrow phone (right-aligned tap) the popover's right edge clips offscreen (~325px wide vs a frozen anchor). Fix: `265 * UI_TEXT_SIZE_SCALE[uiTextSize]` (or drive the anchor off the rem width).
+- **[Sibling raw-px-under-rem bugs found by the Phase 7 verification sweep — both minor, both pre-existing rem-refactor regressions — NOW FIXED]:**
+  - **[Phase 4 ✅ FIXED `e469fbb`] Floating detached-pane min-size floors** — `PanesManager.resizePane` now takes a `uiScale` param and scales the floors (`320`/`180`/`280×180`) by `UI_TEXT_SIZE_SCALE_MAP[uiTextSize]` (threaded from `PaneLayout` via `getUiScale()`). Pane `x/y/w/h` stay unscaled px (canvas). New unit test asserts the floating floor clamps to `280×1.3 / 180×1.3` at scale 1.3.
+  - **[Phase 5 ✅ FIXED (working tree)] Mobile TranslationInfo popover offset** — `BibleSelector.tsx` mobile branch `left: calc(${position.x}px - 265px)` → `calc(${position.x}px - 16.5625rem)`. Because `1rem = 16px × --sb-ui-scale`, the offset auto-tracks the `15.625rem` popover with no prop-threading; exact no-op at M, no longer clips at L/XL. Desktop branch left alone (sweep adjudicated it not a regression).
 - **Not yet QA'd:** multi-pane layouts (split-2v, grid-2x2) and mobile (≤768) — single-pane desktop only so far.
 - **Intended behavior change:** at non-M _reader_ sizes, chrome text no longer follows the reader knob (that leak was the bug); at reader = M it's a pure no-op.
 
 ## 8. NEXT STEPS
 
-**Phase 7 — verse-toolbar coordinate fix ✅ DONE (implemented + adversarially verified; awaiting joint QA).**
-`BibleReaderToolbar.tsx` (the floating `floatingX`/`floatingY` computeds) now multiplies the
-`84`/`64` clamp insets by `UI_TEXT_SIZE_SCALE[uiTextSize]` via a `uiScale` computed; CSS
-`.sb-verse-toolbar` stays `position:fixed; transform: translate(-50%,-100%)`. Exact no-op at M.
-Remaining: joint runtime QA at L/XL near the right/top edges (Claude screenshot/measure + user
-hands-on). The verification sweep also surfaced 2 sibling raw-px bugs — see §7 (Phases 4 and 5/6).
+**Phases 0–5 + 7 — DONE.** See §4 for what each did and its commit ref. Only Phase 6, the deferred Phases 8–9, and the final Phase 10 (cleanup) remain.
 
-**Phases 2–6 — per-area polish (each independently shippable; gate again after Phase 6).**
+**Phase 6 — mobile (NEXT):** inline → rem in `MobileSettingsSheet.tsx` (re-locate the spots — the old `97,124,137,167` line refs predate the develop merge); the computed reader-size preview `${12 + i * 2}px` → a `READER_PREVIEW_PX = [12,14,16,18,20]` const (**keep px** — it mirrors the reader glyph knob). Verify the 768px breakpoint + swipe at all UI sizes. **Then pause for the user's hands-on mobile QA gate.**
 
-- **2 — reader `em`:** `.sb-line-break height:10px` → `0.625em`; `.sb-verse-number` margins (6px/3px) → `em`. Keep `.sb-chapter-heading font-size:18px` px. (These selectors are blacklisted from the codemod, still px.)
-- **3 — toolbar/chrome:** verify reader-embedded chrome scales; ripple centering `BibleReaderToolbar.tsx:30-46`.
-- **4 — panes:** pane x/y/w/h stay **px** (OS-window canvas; `PanesManager.tsx:142-145`); inline `left/top/width/height` writes (`PaneLayout.tsx:~1415`) stay px. Verify drag/resize + a freshly-detached pane at XL fits 480×320.
-- **5 — modals/overlays:** inline styles → rem in `BibleSelector.tsx` (924,941,1140,1205,1446), `SettingsPage.tsx:2113`; keep px borders `BibleSelector.tsx` (1292,1323,1352), `icons.tsx` (597,603,616). **Likely home for the book-selector responsiveness fix (§7).** Decide footnote-modal font (it renders inside `.sb-bible-reader`, so currently follows the reader knob).
-- **6 — mobile:** inline → rem `MobileSettingsSheet.tsx` (97,124,137); computed reader preview `MobileSettingsSheet.tsx:167` `${12+i*2}px` → a `READER_PREVIEW_PX=[12,14,16,18,20]` const (**keep px**). Verify 768px breakpoint + swipe at all sizes. **Then pause for the user's hands-on mobile QA gate.**
+--- Deferred items (given their own phases so they aren't lost) ---
 
-**Phase 8 — cleanup:** remove the `postcss-pxtorem` dev-dep; add a `main.css` header comment documenting the rem/em/px invariant + the codemod blacklist as source of truth. Consider deleting this handoff doc once merged.
+**Phase 8 — book-selector responsiveness (deferred):** the book/translation selector clips at the screen edges around ~1250px when UI Text Size > M. Pre-existing (also broken under the old `zoom` impl), so **not** a rem-refactor regression. Needs a focused responsive-layout fix (grid / overflow / max-width), not a px→rem swap. See §7.
 
-**JS sanity (mostly verify-only, with 2 exceptions):** no JS reads `--sb-ui-zoom`/`element.style.zoom`.
-Pane drag/resize **deltas**, swipe, tutorial, context menu, keyboard-nav, ripple are all delta/ratio
-math in one CSS-px space and are correct-by-construction after removing zoom (verify-only). **However**,
-the Phase 7 verification sweep found that raw-px **min-size floors** (`PanesManager.tsx:918`) and a raw-px
-**popover offset** (`BibleSelector.tsx:1405`) were meant to track rem-sized elements and DO need the
-`* UI_TEXT_SIZE_SCALE` treatment — see §7. So "no JS change needed" holds for delta/ratio math but not for
-these two size-tracking constants.
+**Phase 9 — (optional, a11y) honor browser font-size:** make the root base `100%` (browser preference) instead of a fixed `16px`, as an accessibility option layered on top of the UI Text Size knob (see §3, "Root font base"). Low priority; not required for #1281.
+
+**Deferred candidate — unverified (panes):** the attached-pane splitter minimums (`minFrac = 80/rect.width`, `60/rect.height` in `PaneLayout`'s `handlePointerMove`) are raw px that reserve room for rem-sized attached-pane chrome. Not flagged by the sweep and left untouched in Phase 4. If attached panes feel cramped at XL, scale these `80`/`60` by the UI knob too (fold into Phase 8 or a Phase 4 follow-up).
+
+**Phase 10 — cleanup (FINAL — runs after every other phase):** remove the `postcss-pxtorem` dev-dep; add a `main.css` header comment documenting the rem/em/px invariant + the codemod blacklist as source of truth. Consider deleting this handoff doc once merged.
+
+**JS sanity (both size-tracking exceptions now fixed):** no JS reads `--sb-ui-zoom`/`element.style.zoom`. Pane drag/resize **deltas**, swipe, tutorial, context menu, keyboard-nav, and ripple are delta/ratio math in one CSS-px space — correct-by-construction after removing zoom. The two size-tracking constants the sweep found (`PanesManager` min-floors, `BibleSelector` popover offset) are now fixed (Phases 4 & 5). Only remaining unverified candidate: the attached-pane splitter mins above.
 
 ## 9. How to resume / verify on the new machine
 
@@ -210,8 +229,11 @@ dismiss the tutorial ("Don't show tutorials"), then for each scale set
 `document.documentElement.style.setProperty('--sb-ui-scale', s)` and `Page.captureScreenshot`.
 Setting `--sb-ui-scale` directly is faithful — it's exactly what `SettingsManager` does.
 
-## 10. Migration checklist
+## 10. Commit / push status
 
-- [ ] Commit Phase 0 + Phase 1 (5 source files + `package.json`/`pnpm-lock.yaml` + this doc).
-- [ ] Push `fix/1281-ui-scaling` to the remote.
-- [ ] On the new machine: `git pull`, `pnpm install`, then open a new thread and point it at this file.
+- [x] Phase 0 + 1 committed (`5e752106`), merged with latest `develop`.
+- [x] Phase 7 (`f0e2c921`), Phase 2 (`0190a5b7`), Phase 4 + rename (`e469fbb`) committed.
+- [x] Phase 3 — verified clean, no code changes.
+- [ ] Phase 5 (modals/overlays) — in the working tree, awaiting user QA + `/commit`.
+- [ ] Push `fix/1281-ui-scaling` to the remote — **only when the user explicitly asks.**
+- [ ] Phase 6 (mobile), deferred Phase 8/9, Phase 10 (cleanup — runs last) — not started.
