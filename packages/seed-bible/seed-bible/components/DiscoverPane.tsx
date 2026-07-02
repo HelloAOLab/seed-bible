@@ -1,6 +1,6 @@
 import { useI18n } from "../i18n/I18nManager";
 import type { TabsManager, ReaderTab } from "../managers/TabsManager";
-import type { PlaylistManager } from "../managers/PlaylistManager";
+import type { Playlist, PlaylistManager } from "../managers/PlaylistManager";
 import type { DiscoverReference } from "../managers/DiscoverManager";
 import type { TranslationBook } from "../managers/FreeUseBibleAPI";
 import { MaterialIcon } from "./icons";
@@ -58,49 +58,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         </button>
       </div>
 
-      <DiscoverSection title={t("playlists", { defaultValue: "Playlists" })}>
-        {userPlaylists.length === 0 ? (
-          <DiscoverEmpty
-            text={t("discover-playlists-empty", {
-              defaultValue: "You haven't created any playlists yet.",
-            })}
-          />
-        ) : (
-          <ul className="sb-discover-list">
-            {userPlaylists.map((playlist) => (
-              <li
-                key={playlist.id}
-                className="sb-discover-item sb-discover-item--row"
-                dir="auto"
-              >
-                <div className="sb-discover-item-main">
-                  <span className="sb-discover-item-title">
-                    {playlist.title ??
-                      t("untitled-playlist", {
-                        defaultValue: "Untitled playlist",
-                      })}
-                  </span>
-                  {playlist.description ? (
-                    <span className="sb-discover-item-description">
-                      {playlist.description}
-                    </span>
-                  ) : null}
-                </div>
-                <button
-                  type="button"
-                  className="sb-discover-item-edit"
-                  aria-label={t("edit-playlist", {
-                    defaultValue: "Edit playlist",
-                  })}
-                  onClick={() => playlists.editPlaylist(playlist)}
-                >
-                  <MaterialIcon>edit</MaterialIcon>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </DiscoverSection>
+      <PlaylistSection userPlaylists={userPlaylists} playlists={playlists} />
 
       <DiscoverSection
         title={t("annotations", { defaultValue: "Annotations" })}
@@ -116,6 +74,61 @@ export function DiscoverPane(props: DiscoverPaneProps) {
       <StudyNotesSection tab={selectedTab} />
       <ContentSection tab={selectedTab} />
     </div>
+  );
+}
+
+function PlaylistSection({
+  userPlaylists,
+  playlists,
+}: {
+  userPlaylists: Playlist[];
+  playlists: PlaylistManager;
+}) {
+  const { t } = useI18n();
+  return (
+    <DiscoverSection title={t("playlists", { defaultValue: "Playlists" })}>
+      {userPlaylists.length === 0 ? (
+        <DiscoverEmpty
+          text={t("discover-playlists-empty", {
+            defaultValue: "You haven't created any playlists yet.",
+          })}
+        />
+      ) : (
+        <ul className="sb-discover-list">
+          {userPlaylists.map((playlist) => (
+            <li
+              key={playlist.id}
+              className="sb-discover-item sb-discover-item--row"
+              dir="auto"
+            >
+              <div className="sb-discover-item-main">
+                <span className="sb-discover-item-title">
+                  {playlist.title ??
+                    t("untitled-playlist", {
+                      defaultValue: "Untitled playlist",
+                    })}
+                </span>
+                {playlist.description ? (
+                  <span className="sb-discover-item-description">
+                    {playlist.description}
+                  </span>
+                ) : null}
+              </div>
+              <button
+                type="button"
+                className="sb-discover-item-edit"
+                aria-label={t("edit-playlist", {
+                  defaultValue: "Edit playlist",
+                })}
+                onClick={() => playlists.editPlaylist(playlist)}
+              >
+                <MaterialIcon>edit</MaterialIcon>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </DiscoverSection>
   );
 }
 
