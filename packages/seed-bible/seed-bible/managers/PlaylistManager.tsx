@@ -343,10 +343,11 @@ export function createPlaylistManager(
   const startPlaying = (playlist: Playlist | Playlist[]): void => {
     playing.value?.dispose();
     const playlists = Array.isArray(playlist) ? playlist : [playlist];
+    const sharedTab = tabs.tabs.value.find((tab) => tab.sharedSession) ?? null;
     const targetTab =
-      tabs.tabs.value.find(
-        (tab) => tab.sharedSession || tab.id === tabs.selectedTabId.value
-      ) ?? null;
+      sharedTab ??
+      tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ??
+      null;
     playing.value = createPlayingState(playlists, targetTab);
     view.value = "play_playlist";
   };

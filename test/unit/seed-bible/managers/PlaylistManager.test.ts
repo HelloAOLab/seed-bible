@@ -103,7 +103,7 @@ describe("createPlaylistManager", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
   };
 
-  const makeManager = (id: string | null = "user-1") => {
+  const makeManager = (id: string | null = "user-1", tabsManager?: TabsArg) => {
     userId = signal<string | null>(id);
     const os = CasualOSManager();
     Object.assign(os, {
@@ -111,7 +111,9 @@ describe("createPlaylistManager", () => {
       listDataByMarker: listDataByMarkerMock,
     });
     const login = { userId, login: loginMock } as unknown as LoginArg;
-    const tabs = makeTabs(makeTab("tab-1", selectTranslationAndChapterMock));
+    const tabs =
+      tabsManager ??
+      makeTabs(makeTab("tab-1", selectTranslationAndChapterMock));
     return createPlaylistManager(os, login, tabs);
   };
 
@@ -362,6 +364,38 @@ describe("createPlaylistManager", () => {
     expect(recordDataMock).not.toHaveBeenCalled();
   });
 
+  it("startPlaying prefers shared tabs over selected tabs", async () => {
+    const tabs = makeTabs(makeTab("tab-1", selectTranslationAndChapterMock));
+    tabs.tabs.value = [
+      ...tabs.tabs.value,
+      {
+        ...makeTab("tab-2", selectTranslationAndChapterMock),
+        sharedSession: { id: "session-1" } as any,
+      },
+    ];
+    tabs.selectedTabId.value = "tab-1";
+    const manager = makeManager("user-1", tabs);
+
+    await flush();
+    const playlist = makePlaylist({
+      items: [{ type: "html", html: "<p>hi</p>" }],
+    });
+
+    expect(manager.playing.value).toBeNull();
+
+    manager.startPlaying(playlist);
+    expect(manager.playing.value).not.toBeNull();
+    expect(manager.playing.value?.queue.value).toEqual(playlist.items);
+    expect(manager.playing.value?.playlists.value).toEqual([playlist]);
+    expect(manager.view.value).toBe("play_playlist");
+    // The currently selected tab is saved into the playing state.
+    expect(manager.playing.value?.tab?.id).toBe("tab-2");
+
+    manager.stopPlaying();
+    expect(manager.playing.value).toBeNull();
+    expect(manager.view.value).toBe("discover");
+  });
+
   it("startPlaying builds a playing state and stopPlaying clears it", async () => {
     const manager = makeManager("user-1");
     await flush();
@@ -592,10 +626,7 @@ describe("createPlayingState", () => {
     it("falls back to the tab's current translation when the item has none", () => {
       const nav = vi.fn().mockResolvedValue(undefined);
       const tab = makeTab("tab-1", nav, "BSB");
-      createPlayingState(
-        [makePlaylist({ items: [verse("GEN", 1, 1)] })],
-        tab
-      );
+      createPlayingState([makePlaylist({ items: [verse("GEN", 1, 1)] })], tab);
 
       expect(nav).toHaveBeenCalledWith("BSB", "GEN", 1, { scrollToVerse: 1 });
     });
