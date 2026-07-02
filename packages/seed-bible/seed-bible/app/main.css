@@ -3308,6 +3308,17 @@ h6 {
   }
 }
 
+/* Scrim rendered behind the sidebar when it floats over the reader as an
+   overlay (compact-desktop band). Sits above the reader but below the sidebar
+   (z-index 100), so it blocks input to elements underneath and collapses the
+   sidebar when clicked. */
+.sb-sidebar-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 99;
+  background: rgba(0, 0, 0, 0.16);
+}
+
 .sb-sidebar-bottom-actions {
   margin-top: auto;
   display: flex;

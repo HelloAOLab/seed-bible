@@ -132,6 +132,12 @@ export interface AppState {
   isMobile: ReadonlySignal<boolean>;
   /** True when on a phone-sized viewport held in landscape orientation. */
   isMobileLandscape: ReadonlySignal<boolean>;
+  /**
+   * True in the "compact desktop" band (just above the mobile breakpoint) where
+   * an expanded sidebar floats over the reader as an overlay rather than
+   * docking beside it.
+   */
+  isCompactDesktop: ReadonlySignal<boolean>;
 
   /**
    * Snapshot of the current chapter selection for analytics and integrations.
@@ -1087,6 +1093,7 @@ export function createSeedBibleState(
       viewportHeight,
       isMobile,
       isMobileLandscape,
+      isCompactDesktop,
       currentReadingState,
       selectTab: handleSelectTab,
       addTab: handleAddTab,

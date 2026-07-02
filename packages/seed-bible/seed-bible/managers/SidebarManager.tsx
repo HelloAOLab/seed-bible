@@ -114,6 +114,19 @@ export function createSidebar(navigation: NavigationManager) {
     isMobileOpen.value = false;
   };
 
+  /**
+   * Dismisses the sidebar when it is shown as a floating overlay (the compact
+   * desktop band, where an expanded sidebar floats over the reader). Closes any
+   * open settings view and collapses the sidebar back to its rail. Wired to the
+   * scrim rendered behind the overlay so clicking anywhere on the page outside
+   * the sidebar collapses it again.
+   */
+  const collapseSidebarOverlay = () => {
+    requestedSettingsView.value = null;
+    isMobileOpen.value = false;
+    isSidebarCollapsed.value = true;
+  };
+
   navigation.syncSignalsToUrl({
     settingsView: requestedSettingsView,
     sidebar: {
@@ -138,6 +151,7 @@ export function createSidebar(navigation: NavigationManager) {
     toggleSidebarCollapsed,
     openSidebar,
     closeSidebar,
+    collapseSidebarOverlay,
     openSearch,
     shouldFocusSearch,
     isSearchPanelOpen,

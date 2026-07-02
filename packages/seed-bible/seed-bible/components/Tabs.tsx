@@ -1962,6 +1962,12 @@ export function Sidebar(props: SidebarProps) {
   const effectivelyCollapsed = isCollapsed && !isMobileOpen && !isSettingsOpen;
   const isLayoutMenuOpen = useSignal(false);
 
+  // In the compact-desktop band an expanded sidebar floats over the reader as
+  // an overlay (see app/main.css). When it does, we render a scrim behind it so
+  // that (a) input to the reader below is blocked while the overlay is up and
+  // (b) clicking anywhere outside the sidebar collapses it back to the rail.
+  const isOverlay = app.isCompactDesktop.value && !effectivelyCollapsed;
+
   // The guided tour opens the pane-layout menu while its step is active so the
   // layout options are visible behind the coachmark.
   const tourWantsLayoutMenu =
@@ -1975,73 +1981,82 @@ export function Sidebar(props: SidebarProps) {
   const { t } = useI18n();
 
   return (
-    <aside
-      className={`sb-tabs-sidebar${effectivelyCollapsed ? " sb-tabs-sidebar-collapsed" : ""}${isMobileOpen ? " sb-tabs-sidebar-mobile-open" : ""}`}
-    >
-      {!isSettingsOpen && (
-        <TabsHeader
-          state={state}
-          effectivelyCollapsed={effectivelyCollapsed}
-          panelsEnabled={panelsEnabled}
-          paneLayout={paneLayout}
-          isLayoutMenuOpen={isLayoutMenuOpen.value || tourWantsLayoutMenu}
-          toggleLayoutMenu={() => {
-            closeContextMenus();
-            const willOpen = !isLayoutMenuOpen.value;
-            isLayoutMenuOpen.value = willOpen;
-            // Teach the panel layout the first time the user opens it.
-            if (willOpen) {
-              state.tutorial.startContextual("pane-layout");
-            }
-          }}
-          closeLayoutMenu={closeLayoutMenu}
-          setLayout={(layout) => {
-            panes.setLayout(layout);
-            closeLayoutMenu();
-          }}
-          createSharedSession={async () => {
-            const session = await state.app.createSharedSession();
-            const url = getSessionUrl(session);
-
-            navigator.clipboard.writeText(url.href);
-            state.app.toast(
-              t("link-to-join-shared-session-copied", {
-                defaultValue:
-                  "A link to join the shared session was copied to your clipboard",
-              })
-            );
-          }}
+    <>
+      {isOverlay && (
+        <div
+          className="sb-sidebar-scrim"
+          onClick={sidebar.collapseSidebarOverlay}
+          aria-hidden="true"
         />
       )}
-
-      {isSettingsOpen ? (
-        <Settings state={state} />
-      ) : (
-        <Tabs
-          state={state}
-          closeLayoutMenu={closeLayoutMenu}
-          effectivelyCollapsed={effectivelyCollapsed}
-        />
-      )}
-
-      <div
-        className={`sb-sidebar-bottom-actions${
-          effectivelyCollapsed ? " sb-sidebar-bottom-actions-collapsed" : ""
-        }`}
+      <aside
+        className={`sb-tabs-sidebar${effectivelyCollapsed ? " sb-tabs-sidebar-collapsed" : ""}${isMobileOpen ? " sb-tabs-sidebar-mobile-open" : ""}`}
       >
-        <button
-          onClick={sidebar.toggleSettings}
-          data-tutorial="settings"
-          className={`sb-sidebar-icon-button${
-            isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
+        {!isSettingsOpen && (
+          <TabsHeader
+            state={state}
+            effectivelyCollapsed={effectivelyCollapsed}
+            panelsEnabled={panelsEnabled}
+            paneLayout={paneLayout}
+            isLayoutMenuOpen={isLayoutMenuOpen.value || tourWantsLayoutMenu}
+            toggleLayoutMenu={() => {
+              closeContextMenus();
+              const willOpen = !isLayoutMenuOpen.value;
+              isLayoutMenuOpen.value = willOpen;
+              // Teach the panel layout the first time the user opens it.
+              if (willOpen) {
+                state.tutorial.startContextual("pane-layout");
+              }
+            }}
+            closeLayoutMenu={closeLayoutMenu}
+            setLayout={(layout) => {
+              panes.setLayout(layout);
+              closeLayoutMenu();
+            }}
+            createSharedSession={async () => {
+              const session = await state.app.createSharedSession();
+              const url = getSessionUrl(session);
+
+              navigator.clipboard.writeText(url.href);
+              state.app.toast(
+                t("link-to-join-shared-session-copied", {
+                  defaultValue:
+                    "A link to join the shared session was copied to your clipboard",
+                })
+              );
+            }}
+          />
+        )}
+
+        {isSettingsOpen ? (
+          <Settings state={state} />
+        ) : (
+          <Tabs
+            state={state}
+            closeLayoutMenu={closeLayoutMenu}
+            effectivelyCollapsed={effectivelyCollapsed}
+          />
+        )}
+
+        <div
+          className={`sb-sidebar-bottom-actions${
+            effectivelyCollapsed ? " sb-sidebar-bottom-actions-collapsed" : ""
           }`}
-          aria-label={t("open-settings", { defaultValue: "Open settings" })}
-          title={t("settings", { defaultValue: "Settings" })}
         >
-          <SettingsIcon />
-        </button>
-        <SelfAvatarButton state={state} />
-      </div>
-    </aside>
+          <button
+            onClick={sidebar.toggleSettings}
+            data-tutorial="settings"
+            className={`sb-sidebar-icon-button${
+              isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
+            }`}
+            aria-label={t("open-settings", { defaultValue: "Open settings" })}
+            title={t("settings", { defaultValue: "Settings" })}
+          >
+            <SettingsIcon />
+          </button>
+          <SelfAvatarButton state={state} />
+        </div>
+      </aside>
+    </>
   );
 }
