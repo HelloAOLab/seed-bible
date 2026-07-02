@@ -1232,4 +1232,60 @@ describe("createExtensionManager", () => {
 
     expect(getProfileInstalled(login)).toEqual(["ext.local-only"]);
   });
+
+  it("does not wipe the profile when the boot-time extension sync races the profile load (regression for #1318)", async () => {
+    localStorage.setItem(
+      "sb-installed-extensions",
+      JSON.stringify(["ext.race"])
+    );
+
+    // Simulates a returning, already-authenticated user: the session is
+    // restored from local storage synchronously, so `userId` is set
+    // immediately, but the profile is fetched asynchronously and hasn't
+    // resolved yet when the app boots and loads default extensions.
+    login = createTestLogin({ userId: "user-1", profile: null });
+
+    const defaultExtensions: ExtensionSet = {
+      id: "set.race",
+      extensions: [
+        {
+          url: "pkg://race",
+          meta: {
+            id: "ext.race",
+            translations: {
+              en: { title: "Race", description: "Race extension" },
+            },
+          },
+        },
+      ],
+    };
+
+    const manager = createExtensionManager(login, { defaultExtensions });
+    mockExtensionModule("pkg://race");
+
+    await manager.loadDefaultExtensions();
+
+    // Before commit 4e15dad's fix, this would have called
+    // `login.updateProfile({ config: { installedExtensions: [...] } })`
+    // while `profile.value` was still null, saving a bare `{ name: "" }`
+    // profile and permanently wiping any real profile data once the write
+    // reached the server.
+    expect(login.profile.value).toBeNull();
+
+    // Once the real profile finishes loading, the sync effect re-runs and
+    // correctly adopts the locally-installed extension into it.
+    login.profile.value = {
+      name: "Real Name",
+      location: "Real Location",
+    } as UserProfile;
+
+    await waitForCondition(() => {
+      const saved = getProfileInstalled(login);
+      return Array.isArray(saved) && saved.includes("ext.race");
+    });
+
+    expect(login.profile.value?.name).toBe("Real Name");
+    expect(login.profile.value?.location).toBe("Real Location");
+    expect(getProfileInstalled(login)).toEqual(["ext.race"]);
+  });
 });
