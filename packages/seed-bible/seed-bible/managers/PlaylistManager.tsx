@@ -44,6 +44,128 @@ export type PlaylistItemData = z.infer<typeof PlaylistItem>;
 export type VerseRef = z.infer<typeof VerseRefSchema>;
 
 export type PlaylistManager = ReturnType<typeof createPlaylistManager>;
+export type PlayingState = ReturnType<typeof createPlayingState>;
+
+/**
+ * Creates an in-memory playing state for stepping through one or more
+ * playlists. The queue is a copy of the source playlists' items, so
+ * manipulating it never mutates the underlying playlists. Playback is purely
+ * local reactive state — no CasualOS/login dependencies.
+ */
+export function createPlayingState(sourcePlaylists: Playlist[]) {
+  const playlists = signal<Playlist[]>(sourcePlaylists);
+  const queue = signal<PlaylistItemData[]>(
+    sourcePlaylists.flatMap((playlist) => [...playlist.items])
+  );
+  const currentIndex = signal<number>(queue.value.length > 0 ? 0 : -1);
+
+  /** The item at `currentIndex`, or null when the queue is empty. */
+  const currentItem = computed<PlaylistItemData | null>(
+    () => queue.value[currentIndex.value] ?? null
+  );
+  const hasNext = computed(() => currentIndex.value < queue.value.length - 1);
+  const hasPrevious = computed(() => currentIndex.value > 0);
+
+  /** Advances to the next step. No-op at the end of the queue. */
+  const next = (): void => {
+    if (hasNext.value) {
+      currentIndex.value = currentIndex.value + 1;
+    }
+  };
+
+  /** Goes back to the previous step. No-op at the start of the queue. */
+  const previous = (): void => {
+    if (hasPrevious.value) {
+      currentIndex.value = currentIndex.value - 1;
+    }
+  };
+
+  /** Jumps to the given index. No-op when the index is out of range. */
+  const jumpTo = (index: number): void => {
+    if (index >= 0 && index < queue.value.length) {
+      currentIndex.value = index;
+    }
+  };
+
+  /** Appends an item to the end of the queue. */
+  const addToQueue = (item: PlaylistItemData): void => {
+    queue.value = [...queue.value, item];
+    if (currentIndex.value < 0) {
+      currentIndex.value = 0;
+    }
+  };
+
+  /**
+   * Removes the item at the given index from the queue, keeping
+   * `currentIndex` pointed at a sensible item. No-op when out of range.
+   */
+  const removeFromQueue = (index: number): void => {
+    if (index < 0 || index >= queue.value.length) {
+      return;
+    }
+    const nextQueue = queue.value.filter((_, i) => i !== index);
+    queue.value = nextQueue;
+    if (nextQueue.length === 0) {
+      currentIndex.value = -1;
+      return;
+    }
+    let nextIndex = currentIndex.value;
+    if (index < nextIndex) {
+      // A step before the current one was removed; shift to compensate.
+      nextIndex -= 1;
+    }
+    currentIndex.value = Math.max(0, Math.min(nextIndex, nextQueue.length - 1));
+  };
+
+  /**
+   * Moves an item within the queue, adjusting `currentIndex` so the
+   * currently-playing item stays selected. No-op when either index is out of
+   * range.
+   */
+  const reorderQueue = (from: number, to: number): void => {
+    const length = queue.value.length;
+    if (from < 0 || from >= length || to < 0 || to >= length || from === to) {
+      return;
+    }
+    const nextQueue = [...queue.value];
+    const [moved] = nextQueue.splice(from, 1);
+    if (!moved) {
+      return;
+    }
+    nextQueue.splice(to, 0, moved);
+    queue.value = nextQueue;
+
+    const current = currentIndex.value;
+    if (current === from) {
+      currentIndex.value = to;
+    } else if (from < current && to >= current) {
+      currentIndex.value = current - 1;
+    } else if (from > current && to <= current) {
+      currentIndex.value = current + 1;
+    }
+  };
+
+  /** Restarts playback from the first item. */
+  const reset = (): void => {
+    currentIndex.value = queue.value.length > 0 ? 0 : -1;
+  };
+
+  return {
+    playlists,
+    queue,
+    currentIndex,
+    currentItem,
+    hasNext,
+    hasPrevious,
+    next,
+    previous,
+    jumpTo,
+    addToQueue,
+    removeFromQueue,
+    reorderQueue,
+    reset,
+  };
+}
 
 export function createPlaylistManager(
   os: CasualOSManager,
@@ -53,6 +175,8 @@ export function createPlaylistManager(
   const view = signal<"discover" | "create_playlist">("discover");
   /** The playlist currently being edited/created in the pane, or null. */
   const editingPlaylist = signal<Playlist | null>(null);
+  /** The active playback state, or null when nothing is playing. */
+  const playing = signal<PlayingState | null>(null);
 
   const availablePlaylists = computed(() => {
     return userPlaylists;
@@ -176,6 +300,20 @@ export function createPlaylistManager(
     view.value = "discover";
   };
 
+  /**
+   * Starts playing the given playlist(s), replacing any current playback with a
+   * fresh queue built from a copy of their items.
+   */
+  const startPlaying = (playlist: Playlist | Playlist[]): void => {
+    const playlists = Array.isArray(playlist) ? playlist : [playlist];
+    playing.value = createPlayingState(playlists);
+  };
+
+  /** Stops playback and clears the playing state. */
+  const stopPlaying = (): void => {
+    playing.value = null;
+  };
+
   const syncPlaylists = async () => {
     if (!login.userId.value) {
       userPlaylists.value = [];
@@ -207,5 +345,8 @@ export function createPlaylistManager(
     availablePlaylists,
     view,
     editingPlaylist,
+    playing,
+    startPlaying,
+    stopPlaying,
   };
 }

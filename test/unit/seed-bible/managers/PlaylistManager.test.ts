@@ -3,7 +3,9 @@ import {
   PlaylistItem,
   PlaylistSchema,
   createPlaylistManager,
+  createPlayingState,
   type Playlist,
+  type PlaylistItemData,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 import { signal } from "@preact/signals";
 import type { Mock } from "vitest";
@@ -328,5 +330,194 @@ describe("createPlaylistManager", () => {
     expect(manager.editingPlaylist.value).toBeNull();
     expect(manager.view.value).toBe("discover");
     expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
+  it("startPlaying builds a playing state and stopPlaying clears it", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    const playlist = makePlaylist({
+      items: [{ type: "html", html: "<p>hi</p>" }],
+    });
+
+    expect(manager.playing.value).toBeNull();
+
+    manager.startPlaying(playlist);
+    expect(manager.playing.value).not.toBeNull();
+    expect(manager.playing.value?.queue.value).toEqual(playlist.items);
+    expect(manager.playing.value?.playlists.value).toEqual([playlist]);
+
+    manager.stopPlaying();
+    expect(manager.playing.value).toBeNull();
+  });
+
+  it("startPlaying accepts multiple playlists", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    const a = makePlaylist({ id: "a", items: [{ type: "html", html: "a" }] });
+    const b = makePlaylist({ id: "b", items: [{ type: "html", html: "b" }] });
+
+    manager.startPlaying([a, b]);
+
+    expect(manager.playing.value?.queue.value).toEqual([
+      ...a.items,
+      ...b.items,
+    ]);
+  });
+});
+
+describe("createPlayingState", () => {
+  const item = (n: number): PlaylistItemData => ({
+    type: "html",
+    html: `<p>${n}</p>`,
+  });
+
+  const makeItems = (count: number): PlaylistItemData[] =>
+    Array.from({ length: count }, (_, i) => item(i));
+
+  it("copies items into the queue without mutating the source playlist", () => {
+    const items = makeItems(3);
+    const playlist = makePlaylist({ items });
+    const state = createPlayingState([playlist]);
+
+    expect(state.queue.value).toEqual(items);
+
+    state.addToQueue(item(99));
+    state.removeFromQueue(0);
+
+    expect(playlist.items).toEqual(items);
+    expect(playlist.items).toHaveLength(3);
+  });
+
+  it("flattens items across multiple playlists in order", () => {
+    const a = makePlaylist({ id: "a", items: [item(0), item(1)] });
+    const b = makePlaylist({ id: "b", items: [item(2)] });
+    const state = createPlayingState([a, b]);
+
+    expect(state.queue.value).toEqual([item(0), item(1), item(2)]);
+    expect(state.playlists.value).toEqual([a, b]);
+  });
+
+  it("defaults currentIndex to 0 and exposes the current item", () => {
+    const state = createPlayingState([makePlaylist({ items: makeItems(3) })]);
+
+    expect(state.currentIndex.value).toBe(0);
+    expect(state.currentItem.value).toEqual(item(0));
+  });
+
+  it("uses currentIndex -1 and a null current item for an empty queue", () => {
+    const state = createPlayingState([makePlaylist({ items: [] })]);
+
+    expect(state.currentIndex.value).toBe(-1);
+    expect(state.currentItem.value).toBeNull();
+    expect(state.hasNext.value).toBe(false);
+    expect(state.hasPrevious.value).toBe(false);
+  });
+
+  it("clamps next()/previous() at the queue bounds", () => {
+    const state = createPlayingState([makePlaylist({ items: makeItems(3) })]);
+
+    expect(state.hasPrevious.value).toBe(false);
+    state.previous();
+    expect(state.currentIndex.value).toBe(0);
+
+    state.next();
+    expect(state.currentIndex.value).toBe(1);
+    state.next();
+    expect(state.currentIndex.value).toBe(2);
+    expect(state.hasNext.value).toBe(false);
+    state.next();
+    expect(state.currentIndex.value).toBe(2);
+  });
+
+  it("jumps to an in-range index and ignores out-of-range jumps", () => {
+    const state = createPlayingState([makePlaylist({ items: makeItems(3) })]);
+
+    state.jumpTo(2);
+    expect(state.currentIndex.value).toBe(2);
+    state.jumpTo(5);
+    expect(state.currentIndex.value).toBe(2);
+    state.jumpTo(-1);
+    expect(state.currentIndex.value).toBe(2);
+  });
+
+  it("appends to the queue and activates an empty queue", () => {
+    const state = createPlayingState([makePlaylist({ items: [] })]);
+
+    state.addToQueue(item(0));
+    expect(state.queue.value).toEqual([item(0)]);
+    expect(state.currentIndex.value).toBe(0);
+  });
+
+  it("shifts currentIndex when removing an earlier item", () => {
+    const state = createPlayingState([makePlaylist({ items: makeItems(4) })]);
+    state.jumpTo(2);
+
+    state.removeFromQueue(0);
+
+    expect(state.queue.value).toEqual([item(1), item(2), item(3)]);
+    expect(state.currentIndex.value).toBe(1);
+    expect(state.currentItem.value).toEqual(item(2));
+  });
+
+  it("clamps currentIndex when removing the last (current) item", () => {
+    const state = createPlayingState([makePlaylist({ items: makeItems(3) })]);
+    state.jumpTo(2);
+
+    state.removeFromQueue(2);
+
+    expect(state.currentIndex.value).toBe(1);
+    expect(state.currentItem.value).toEqual(item(1));
+  });
+
+  it("resets currentIndex to -1 when the queue becomes empty", () => {
+    const state = createPlayingState([makePlaylist({ items: [item(0)] })]);
+
+    state.removeFromQueue(0);
+
+    expect(state.queue.value).toEqual([]);
+    expect(state.currentIndex.value).toBe(-1);
+    expect(state.currentItem.value).toBeNull();
+  });
+
+  it("keeps the current item selected when reordering", () => {
+    const state = createPlayingState([makePlaylist({ items: makeItems(4) })]);
+    state.jumpTo(1); // currently on item(1)
+
+    // Move item(1) to the end; currentIndex should follow it.
+    state.reorderQueue(1, 3);
+    expect(state.queue.value).toEqual([item(0), item(2), item(3), item(1)]);
+    expect(state.currentIndex.value).toBe(3);
+    expect(state.currentItem.value).toEqual(item(1));
+  });
+
+  it("shifts currentIndex when a reorder moves items across it", () => {
+    const state = createPlayingState([makePlaylist({ items: makeItems(4) })]);
+    state.jumpTo(2); // currently on item(2)
+
+    // Move a leading item to after the current one; current shifts left.
+    state.reorderQueue(0, 3);
+    expect(state.queue.value).toEqual([item(1), item(2), item(3), item(0)]);
+    expect(state.currentIndex.value).toBe(1);
+    expect(state.currentItem.value).toEqual(item(2));
+  });
+
+  it("ignores out-of-range or no-op reorders", () => {
+    const state = createPlayingState([makePlaylist({ items: makeItems(3) })]);
+    const before = state.queue.value;
+
+    state.reorderQueue(0, 0);
+    state.reorderQueue(5, 0);
+    state.reorderQueue(0, 5);
+
+    expect(state.queue.value).toBe(before);
+  });
+
+  it("reset() returns to the first item", () => {
+    const state = createPlayingState([makePlaylist({ items: makeItems(3) })]);
+    state.jumpTo(2);
+
+    state.reset();
+
+    expect(state.currentIndex.value).toBe(0);
   });
 });
