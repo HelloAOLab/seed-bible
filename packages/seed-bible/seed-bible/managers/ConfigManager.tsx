@@ -89,6 +89,16 @@ export function createConfig(
   login: LoginManager,
   navigation: NavigationManager
 ) {
+  // Local cache for anonymous use, seeded from the URL. The profile is the
+  // source of truth once the user logs in; until then this holds edits so
+  // they survive re-reads triggered by unrelated URL changes (e.g. opening
+  // or closing the settings page). Mirrors the pattern in SettingsManager.
+  const localConfigCache = {
+    tags: Object.fromEntries(
+      navigation.currentUrl.value.searchParams
+    ) as Record<string, string | boolean | number>,
+  };
+
   const readConfig = (): AppConfig => {
     const url = navigation.currentUrl.value;
     const settingsPreset = parseSettingsPreset(
@@ -97,15 +107,14 @@ export function createConfig(
     const presetConfig = getPresetConfig(settingsPreset);
     const profile = login.profile.value;
     const fontSizeFromProfile = parseFontSize(
-      getProfileConfigValue(profile, "fontSize"),
-      parseFontSize(url.searchParams.get("app.fontSize"), presetConfig.fontSize)
+      getProfileConfigValue(profile, "fontSize") ??
+        localConfigCache.tags["app.fontSize"],
+      presetConfig.fontSize
     );
     const disablePanelsFromProfile = parseBoolean(
-      getProfileConfigValue(profile, "disablePanels"),
-      parseBoolean(
-        url.searchParams.get("app.disablePanels"),
-        presetConfig.disablePanels
-      )
+      getProfileConfigValue(profile, "disablePanels") ??
+        localConfigCache.tags["app.disablePanels"],
+      presetConfig.disablePanels
     );
 
     return {
@@ -143,6 +152,7 @@ export function createConfig(
       disablePanels,
     };
     config.value = nextConfig;
+    localConfigCache.tags["app.disablePanels"] = disablePanels;
     saveProfileConfigValue(login, "disablePanels", disablePanels);
   };
 
@@ -153,6 +163,7 @@ export function createConfig(
       fontSize: nextFontSize,
     };
     config.value = nextConfig;
+    localConfigCache.tags["app.fontSize"] = nextFontSize;
     saveProfileConfigValue(login, "fontSize", nextFontSize);
   };
 
