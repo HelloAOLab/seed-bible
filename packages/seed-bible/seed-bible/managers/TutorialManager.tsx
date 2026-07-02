@@ -332,7 +332,8 @@ export function createTutorialManager(
   login: LoginManager,
   onboarding: OnboardingManager,
   selector: BibleSelectorState,
-  isMobile: ReadonlySignal<boolean>
+  isMobile: ReadonlySignal<boolean>,
+  joinedViaSessionLink = false
 ): TutorialManager {
   const running = signal<boolean>(false);
   const index = signal<number>(0);
@@ -519,6 +520,11 @@ export function createTutorialManager(
     if (running.value) {
       return;
     }
+    // On a session-join tab, don't pop contextual coach marks. Not persisted,
+    // so these tips still appear on a normal (non-session-link) visit later.
+    if (joinedViaSessionLink) {
+      return;
+    }
     if (optedOut.value) {
       return;
     }
@@ -586,6 +592,12 @@ export function createTutorialManager(
   let autoStartChecked = false;
   effect(() => {
     if (autoStartChecked || running.value) {
+      return;
+    }
+    // Opened via a shared-session invite link: don't auto-launch the onboarding
+    // tour over the join. We don't record completion, so the tour still
+    // auto-starts on a later visit that isn't a session link.
+    if (joinedViaSessionLink) {
       return;
     }
     if (onboarding.step.value !== "done") {
