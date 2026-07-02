@@ -1,0 +1,14 @@
+{
+  "name": "@seed-bible/scripture-map",
+  "version": "1.0.0",
+  "description": "Interactive 2D grid of biblical books organized by testament and section, with clickable chapter selection, color-coded reading history heatmaps, multi-user presence indicators, zoom controls, and timeline-based filtering.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./index.ts"
+    }
+  },
+  "dependencies": {
+    "seed-bible": "workspace:*"
+  }
+}

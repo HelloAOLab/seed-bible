@@ -27,7 +27,7 @@ import {
   handleGridKeyNav,
   handleHorizontalListKeyNav,
 } from "../components/KeyboardNav";
-import type { TodayScreenAPI } from "@packages/today-screen/todayScreen/infrastructure/di/bootstrap";
+import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
 import { useEffect, useRef } from "preact/hooks";
 import { getExtensionExports } from "../managers";
 

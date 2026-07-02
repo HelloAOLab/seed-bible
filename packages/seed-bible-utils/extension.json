@@ -1,0 +1,10 @@
+{
+  "id": "seed-bible-utils",
+  "translations": {
+    "en": {
+      "title": "Seed bible utils",
+      "description": "Shared service layer for Bible visualization extensions, providing arrangement management, scripture reference mapping, and user presence tracking.",
+      "below-reader-tool": "Seed bible utils"
+    }
+  }
+}

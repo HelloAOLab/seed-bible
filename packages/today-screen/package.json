@@ -1,0 +1,14 @@
+{
+  "name": "@seed-bible/today-screen",
+  "version": "1.0.0",
+  "description": "TODO",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./index.ts"
+    }
+  },
+  "dependencies": {
+    "seed-bible": "workspace:*"
+  }
+}
