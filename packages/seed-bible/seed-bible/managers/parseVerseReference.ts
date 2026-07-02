@@ -7,6 +7,36 @@ function normalize(value: string): string {
 }
 
 /**
+ * Resolves a typed book name to a translation book. Tries, in order:
+ * 1. An exact (case-insensitive) match on the book's common name, name, or id.
+ * 2. A prefix match on the common name or name (e.g. "Phil" -> "Philippians"),
+ *    but only when exactly one book matches — ambiguous prefixes yield `null`.
+ */
+function findBook(
+  bookName: string,
+  books: TranslationBook[]
+): TranslationBook | null {
+  const target = normalize(bookName);
+
+  const exact = books.find(
+    (b) =>
+      normalize(b.commonName) === target ||
+      normalize(b.name) === target ||
+      normalize(b.id) === target
+  );
+  if (exact) {
+    return exact;
+  }
+
+  const prefixMatches = books.filter(
+    (b) =>
+      normalize(b.commonName).startsWith(target) ||
+      normalize(b.name).startsWith(target)
+  );
+  return prefixMatches.length === 1 ? prefixMatches[0]! : null;
+}
+
+/**
  * Parses a human-typed scripture reference (e.g. "John 3:16", "1 John 2:1-3",
  * "Genesis 1:1-2:3") into a {@link VerseRef}, matching the book name against the
  * provided translation books.
@@ -36,22 +66,18 @@ export function parseVerseReference(
 
   const [, bookName, chapterStr, verseStr, endChapterStr, endVerseStr] = match;
 
-  const normalizedName = normalize(bookName);
-  const book = books.find(
-    (b) =>
-      normalize(b.commonName) === normalizedName ||
-      normalize(b.name) === normalizedName ||
-      normalize(b.id) === normalizedName
-  );
+  // A book name, chapter, and verse are all required (matching `VerseRefSchema`).
+  // A bare "Genesis 1" has no verse and is treated as invalid.
+  if (!bookName || !chapterStr || !verseStr) {
+    return null;
+  }
+
+  const book = findBook(bookName, books);
   if (!book) {
     return null;
   }
 
   const chapter = Number(chapterStr);
-  // A verse is required. Without one (e.g. "Genesis 1") the reference is invalid.
-  if (!verseStr) {
-    return null;
-  }
   const verse = Number(verseStr);
 
   const ref: VerseRef = {

@@ -22,6 +22,9 @@ const BOOKS: TranslationBook[] = [
   book("JHN", "John"),
   book("1JN", "1 John"),
   book("SNG", "Song of Songs"),
+  book("PHP", "Philippians"),
+  book("PHM", "Philemon"),
+  book("JON", "Jonah"),
 ];
 
 describe("parseVerseReference", () => {
@@ -60,8 +63,43 @@ describe("parseVerseReference", () => {
     });
   });
 
-  it("matches by book id", () => {
+  it("matches by book id (case-insensitive)", () => {
     expect(parseVerseReference("JHN 1:1", BOOKS)).toEqual({
+      bookId: "JHN",
+      chapter: 1,
+      verse: 1,
+    });
+    expect(parseVerseReference("phm 1:1", BOOKS)).toEqual({
+      bookId: "PHM",
+      chapter: 1,
+      verse: 1,
+    });
+  });
+
+  it("prefix-matches a book name when the prefix is unambiguous", () => {
+    // "Philip" only starts Philippians (Philemon does not).
+    expect(parseVerseReference("Philip 1:1", BOOKS)).toEqual({
+      bookId: "PHP",
+      chapter: 1,
+      verse: 1,
+    });
+    expect(parseVerseReference("Gen 1:1", BOOKS)).toEqual({
+      bookId: "GEN",
+      chapter: 1,
+      verse: 1,
+    });
+  });
+
+  it("returns null for an ambiguous prefix", () => {
+    // "Phil" starts both Philippians and Philemon.
+    expect(parseVerseReference("Phil 1:1", BOOKS)).toBeNull();
+    // "Jo" starts both John and Jonah.
+    expect(parseVerseReference("Jo 1:1", BOOKS)).toBeNull();
+  });
+
+  it("prefers an exact match over a prefix match", () => {
+    // "John" exactly matches John even though it is a prefix of nothing else.
+    expect(parseVerseReference("John 1:1", BOOKS)).toEqual({
       bookId: "JHN",
       chapter: 1,
       verse: 1,
