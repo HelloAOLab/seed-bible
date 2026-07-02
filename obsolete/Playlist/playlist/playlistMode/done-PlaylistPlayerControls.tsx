@@ -1,0 +1,1489 @@
+import { CloseFloatingApp } from "ext_discover.helper.CloseFloatingApp";
+import { PlayingLayersConversion } from "ext_discover.helper.PlayingLayersConversion";
+import { getCurrentQueueInfo } from "ext_discover.helper.getCurrentQueueInfo";
+import { groupVerse } from "ext_discover.helper.groupVerse";
+import { resetPlaylistGlobalStateVars } from "ext_discover.helper.resetPlaylistGlobalStateVars";
+
+const { useState, useLayoutEffect, useRef, useMemo, createRef } = os.appHooks;
+const G = globalThis as any;
+const { Button } = G.Components;
+const VideoPlayer = await thisBot.VideoSmallScreen();
+const AudioPlayer = await thisBot.AudioPlayer();
+const AttachLink = await thisBot.AttachLink();
+const ConfirmLinkModal = await thisBot.ConfirmLinkModal();
+const RenderHTMLContent = await thisBot.RenderHTMLContent();
+const MobilePlaylistToggleButton = await thisBot.MobilePlaylistToggleButton();
+
+const isMobileSmall =
+  (window?.innerWidth || G.gridPortalBot.tags.pixelWidth) <
+  G.MOBILE_VIEWPORT_THRESHOLD;
+
+const EditPlaylist =
+  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/a48b4bb0182ac0b5f8c8437e3d985f9af99c8b64c61249496ef797b9b8ac88df.svg";
+const SharePlaylist =
+  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/d205ab2613e2feb14123b39522527dc72a7b649078fd434c81b0b44ede4cdecf.svg";
+
+const outerWebsiteItem: Record<string, boolean> = {
+  youtube: true,
+  iframe: true,
+  video: true,
+  Video: true,
+  externalLink: true,
+};
+
+const PrevIcon = ({ fill = "#939393", width = "32", height = "32" }) => (
+  <svg
+    width={width}
+    height={height}
+    viewBox="0 0 32 32"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M7.33325 24V8H9.99992V24H7.33325ZM24.6666 24L12.6666 16L24.6666 8V24Z"
+      fill={fill}
+    />
+  </svg>
+);
+
+const NextIcon = ({ fill = "#939393", width = "18", height = "16" }) => (
+  <svg
+    width={width}
+    height={height}
+    viewBox="0 0 18 16"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path
+      d="M14.9999 16V0H17.6666V16H14.9999ZM0.333252 16V0L12.3333 8L0.333252 16Z"
+      fill={fill}
+    />
+  </svg>
+);
+
+const getCurrentItem = (
+  key: number,
+  index: number,
+  playlists: any,
+  subIndex: number,
+  isHint = false
+) => {
+  const list = playlists[key]?.list;
+
+  let targetItem = null;
+  let nextTargetItem = null;
+  let nextTargetItemVideo = false;
+  let isNested = false;
+
+  // if (queue?.length) {
+  //     targetItem = queue[0]
+  // } else {
+  // }
+
+  if (!list) return;
+
+  targetItem = list[index];
+
+  const isCurrentItemTargetItem =
+    targetItem?.type === "chapter-range" ||
+    !!targetItem?.additionalInfo?.layers?.length;
+
+  if (isCurrentItemTargetItem) {
+    if (subIndex === 0) {
+      nextTargetItem = targetItem.additionalInfo.layers[subIndex + 1] || null;
+      if (nextTargetItem && !isHint) {
+        nextTargetItemVideo = G.IsVideoAttachment(nextTargetItem);
+        if (!nextTargetItemVideo || !nextTargetItem.autoPlay) {
+          nextTargetItem = null;
+        }
+      }
+    }
+    targetItem = targetItem.additionalInfo.layers[subIndex];
+    isNested = true;
+  }
+
+  let prefix = "";
+
+  if (targetItem?.type === "heading") prefix = " - 'Heading'";
+
+  return { ...targetItem, prefix, isNested, nextTargetItem };
+  // let targetItem = null;
+  // if (subIndex > -1) {
+  //     const th = groupVerse(list[index].list);
+  //     targetItem = th[subIndex];
+  // } else {
+  //     targetItem = list[index];
+  // }
+  // return targetItem;
+};
+
+const getItemCount = (item: any): number => {
+  if (!item) return 0;
+
+  if (Array.isArray(item?.list) && item.list.length) {
+    return item.list.reduce(
+      (acc: number, nestedItem: any) => acc + getItemCount(nestedItem),
+      0
+    );
+  }
+
+  const layers = item?.additionalInfo?.layers;
+  if (Array.isArray(layers) && layers.length) {
+    return layers.length;
+  }
+
+  return 1;
+};
+
+/** Counts checklist "units" marked done — mirrors getItemCount structure (ids / readAlready per unit). */
+const getCheckedUnitsInItem = (
+  item: any,
+  checkedItems: Record<string, boolean> | undefined
+): number => {
+  if (!item) return 0;
+
+  if (Array.isArray(item?.list) && item.list.length) {
+    return item.list.reduce(
+      (acc: number, nestedItem: any) =>
+        acc + getCheckedUnitsInItem(nestedItem, checkedItems),
+      0
+    );
+  }
+
+  const layers = item?.additionalInfo?.layers;
+  if (Array.isArray(layers) && layers.length) {
+    return layers.reduce((acc: number, layer: any) => {
+      const done = !!checkedItems?.[layer.id] || !!layer.readAlready;
+      return acc + (done ? 1 : 0);
+    }, 0);
+  }
+
+  const done = !!checkedItems?.[item.id] || !!item.readAlready;
+  return done ? 1 : 0;
+};
+
+const getPlaylistProgress = (
+  playlists: any,
+  currIndex: any,
+  checklistEnabled?: boolean,
+  checkedItems?: Record<string, boolean>
+) => {
+  const keys = Object.keys(playlists || {}).sort(
+    (a, b) => Number(a) - Number(b)
+  );
+  let totalItems = 0;
+  let currentPosition = 0;
+
+  keys.forEach((key) => {
+    const list = playlists[key]?.list || [];
+    totalItems += list.reduce(
+      (acc: number, item: any) => acc + getItemCount(item),
+      0
+    );
+  });
+
+  if (!checklistEnabled) {
+    for (const key of keys) {
+      const list = playlists[key]?.list || [];
+      if (String(key) !== String(currIndex?.key)) {
+        currentPosition += list.reduce(
+          (acc: number, item: any) => acc + getItemCount(item),
+          0
+        );
+        continue;
+      }
+
+      for (let i = 0; i < list.length; i++) {
+        const item = list[i];
+        if (i < currIndex?.index) {
+          currentPosition += getItemCount(item);
+          continue;
+        }
+
+        if (i === currIndex?.index) {
+          if (
+            Array.isArray(item?.additionalInfo?.layers) &&
+            item.additionalInfo.layers.length
+          ) {
+            currentPosition += Math.min(
+              Math.max((currIndex?.subIndex || 0) + 1, 1),
+              item.additionalInfo.layers.length
+            );
+          } else {
+            currentPosition += 1;
+          }
+        }
+        break;
+      }
+      break;
+    }
+  } else {
+    keys.forEach((key) => {
+      const list = playlists[key]?.list || [];
+      currentPosition += list.reduce(
+        (acc: number, item: any) =>
+          acc + getCheckedUnitsInItem(item, checkedItems),
+        0
+      );
+    });
+  }
+
+  const safeTotal = Math.max(totalItems, 0);
+  const safeCurrent =
+    safeTotal > 0 ? Math.min(Math.max(currentPosition, 0), safeTotal) : 0;
+  const percent = safeTotal > 0 ? (safeCurrent / safeTotal) * 100 : 0;
+
+  return { safeCurrent, safeTotal, percent };
+};
+
+const PlayerControls = ({ parentId = "default", inheritedBar = false }) => {
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [queue, setQueue] = useState([]);
+
+  const [openExternalLink, setOpenExternalLink] = useState<string | null>(null);
+
+  const [transformedHistory, setTransformedHistory] = useState(G.PPthh);
+  const [oldData, setOldData] = useState([]);
+  const [openAttachLink, setOpenAttachLink] = useState(false);
+
+  const [checkedItems, setCheckedItems] = useState(
+    G.PPreadingPlanEnabled
+      ? { ...G.PPpastDateEvents }
+      : { ...(G.PlayingPlaylistCheckedItems?.[G.PlayingPlaylistID] || {}) }
+  );
+
+  const [currIndex, setCurreIndex] = useState({
+    key: 0,
+    index: G.PPchecklistEnabled
+      ? -1
+      : G.PPreadingPlanEnabled
+        ? G.PPfirstActiveIndex
+        : G.PPfirstIndex,
+    fromButton: 0,
+    isPreviousQueue: false,
+    subIndex: G.PPsubIndex,
+  });
+
+  const [playlists, setPlaylists] = useState<any>({
+    0: {
+      name: G.PPplaylistName,
+      list: [...PlayingLayersConversion(G.PPplaylist?.list || [])],
+      id: G.createUUID(),
+      playlistID: G.PPplaylist?.id,
+      isLayers: G.PPplaylist?.isLayers,
+    },
+  });
+
+  // Audio
+  const [mediaURL, setMediaURL] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [videoSrc, setVideoSrc] = useState(false);
+  const [textInfo, setTextInfo] = useState("");
+
+  const setIncrementalCount = async (data: any) => {
+    if (!data) return;
+    setMediaURL(data);
+  };
+
+  // May Use Later
+  const [activeIndexs, setActiveIndexs] = useState({
+    ...G.PPclosestNearDateEvent,
+  });
+
+  const handlesetIndex = (index = 0, key: any) => {
+    const nextItem = transformedHistory[index];
+    const isPlaylist = !!nextItem?.list;
+    if (isPlaylist) {
+      setCurreIndex({
+        index,
+        key,
+        fromButton: currIndex.fromButton,
+        isPreviousQueue: false,
+        subIndex: 0,
+      });
+    } else {
+      setCurreIndex({
+        index,
+        key,
+        fromButton: currIndex.fromButton,
+        isPreviousQueue: false,
+        subIndex: 0,
+      });
+    }
+  };
+
+  const handleOnButtonPress: any = (
+    order = 0,
+    getIndexOnly = false,
+    directSet = false,
+    directSetKey = false,
+    newIndexs?: any
+  ) => {
+    const indexes = newIndexs ? newIndexs : { ...currIndex };
+
+    let newIndex = directSet ? directSet : indexes.index + order;
+    let newSubIndex = directSet ? 0 : indexes.subIndex;
+    let newKey = directSetKey ? directSetKey : indexes.key;
+
+    // const isLayer = playlists[indexes.key]?.isLayers;
+
+    const tranformedList = playlists[indexes.key]?.list;
+    const currentItem = tranformedList[indexes.index];
+
+    const toBeMapArray = currentItem?.additionalInfo?.layers || [];
+    // const isCurrentItemGroup = tranformedList[]
+
+    const isCurrentItemChapterRange =
+      currentItem?.type === "chapter-range" ||
+      !!currentItem?.additionalInfo?.layers?.length;
+
+    if (!isCurrentItemChapterRange) newSubIndex = 0;
+
+    if (isCurrentItemChapterRange && !directSet) {
+      const lengthOfChapterRange = toBeMapArray?.length;
+      newIndex -= order;
+      if (order > 0) {
+        if (lengthOfChapterRange <= newSubIndex + order) {
+          const nextItem = tranformedList[indexes.index + 1];
+          // This Might Break When Order is > 1
+          newSubIndex = (newSubIndex + order) % lengthOfChapterRange;
+          if (nextItem) newIndex += 1;
+        } else {
+          newSubIndex += order;
+        }
+      } else {
+        if (newSubIndex + order < 0) {
+          const prevItem = tranformedList[indexes.index - 1];
+
+          const wasPrevItemArray = prevItem?.type === "chapter-range";
+
+          const prevItemList = wasPrevItemArray
+            ? prevItem?.additionalInfo
+            : prevItem?.additionalInfo?.layers?.length
+              ? prevItem?.additionalInfo?.layers
+              : [];
+          // This Might Break When Order is > 1
+          newSubIndex = prevItemList.length + newSubIndex + order;
+          if (prevItem) newIndex -= 1;
+        } else {
+          newSubIndex += order;
+        }
+      }
+    }
+
+    if (!directSet) {
+      if (order > 0) {
+        const currentListLength = tranformedList.length;
+
+        if (
+          currentListLength <= indexes.index + order &&
+          (!isCurrentItemChapterRange ||
+            indexes.subIndex + order >= toBeMapArray?.length)
+        ) {
+          const allKeys = Object.keys(playlists);
+          const currentKeyIndex = allKeys.findIndex(
+            (ele) => ele == indexes.key
+          );
+          newKey = allKeys[currentKeyIndex + 1];
+          // newKey = parseInt(indexes.key) + 1;
+          newIndex = (indexes.index + order) % currentListLength;
+          newSubIndex = 0;
+        }
+      } else {
+        if (indexes.index + order < 0 && indexes.subIndex + order < 0) {
+          const allKeys = Object.keys(playlists);
+          const currentKeyIndex = allKeys.findIndex(
+            (ele) => ele == indexes.key
+          );
+          newKey = allKeys[currentKeyIndex - 1];
+          newIndex = playlists[newKey]?.list?.length - 1;
+          newSubIndex = 0;
+        }
+      }
+    }
+
+    const newValues = {
+      index: newIndex,
+      key: newKey,
+      fromButton: order,
+      isPreviousQueue: false,
+      subIndex: newSubIndex,
+    };
+
+    const targetItem = getCurrentItem(
+      newValues.key,
+      newValues.index,
+      playlists,
+      newValues.subIndex,
+      playlists[newValues.key]?.isLayers
+    );
+
+    const isLayersAndScripture =
+      playlists[newValues.key]?.isLayers &&
+      targetItem?.type !== "attachment-link" &&
+      newValues.subIndex !== 0;
+
+    if (
+      ["heading", "date"].findIndex((ele) => ele === targetItem?.type) > -1 ||
+      isLayersAndScripture
+    ) {
+      if (
+        targetItem?.type === "heading" &&
+        // targetItem?.additionalInfo?.subType === "text" &&
+        !getIndexOnly
+      ) {
+        const isMobile =
+          (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
+          G.MOBILE_VIEWPORT_THRESHOLD;
+        if (targetItem.additionalInfo.isQuotedText) {
+          if (!G.NotPlayThisTimeTheCurrentItem) {
+            thisBot.ShowQuoteText({ quoteText: targetItem.content });
+          } else {
+            G.NotPlayThisTimeTheCurrentItem = false;
+          }
+        } else if (isMobile) {
+          if (!G.NotPlayThisTimeTheCurrentItem) {
+            G.SetTextInfo(targetItem.content);
+          } else {
+            G.NotPlayThisTimeTheCurrentItem = false;
+          }
+        }
+      }
+
+      if (targetItem?.type === "date" && !getIndexOnly) {
+        G.PlaylingItemVisitiedMap?.((prev: any) => ({
+          ...prev,
+          [targetItem.id]: true,
+        }));
+      }
+
+      const newVals = handleOnButtonPress(
+        order,
+        getIndexOnly,
+        directSet,
+        directSetKey,
+        newValues
+      );
+      return newVals;
+    }
+
+    if (getIndexOnly) return newValues;
+    const id = targetItem.id;
+
+    // console.log("CHECK", id, refs);
+    // console.log("CHECK 2", refs[id]?.current);
+    // console.log("CHECK 2", refs[id]?.current?.focus);
+    // if (refs[id]?.current.focus) {
+    //     globalThis.ScrollTimerPlaylist && clearTimeout(globalThis.ScrollTimerPlaylist);
+    //     globalThis.ScrollTimerPlaylist = setTimeout(() => {
+    //         refs[id].current.focus();
+    //     }, 1000)
+    // }
+
+    if (targetItem.type === "verse") {
+      if (G.NotPlayThisTimeTheCurrentItem) {
+        G.NotPlayThisTimeTheCurrentItem = false;
+      } else {
+        if (G.FocusOnVerse) {
+          G.FocusOnVerse(targetItem.additionalInfo.verse);
+        }
+      }
+    }
+
+    if (
+      targetItem.additionalInfo.isValid &&
+      targetItem.additionalInfo.type === "externalLink"
+    ) {
+      G.SetOpenExternalLink &&
+        G.SetOpenExternalLink(targetItem.additionalInfo.link);
+    }
+
+    justAddedQueue.current = false;
+    G.LAST_QUEUE_IIEM = {};
+    setCurreIndex(newValues);
+  };
+
+  const justAddedQueue = useRef(false);
+
+  const addToQueue = (item: any, combineLast: boolean) => {
+    const isArr = Array.isArray(item);
+
+    let toAddItems = [];
+
+    if (isArr) {
+      toAddItems = [
+        ...item.map((ele: any) => ({ id: G.createUUID(), ...ele })),
+      ];
+      G.LAST_QUEUE_IIEM = item[item.length];
+    } else {
+      const isSame = G.objectComparator(item, G.LAST_QUEUE_IIEM || {}, [
+        "content",
+      ]);
+
+      if (isSame) return os.toast("Last Item Repeated!");
+      toAddItems = [{ ...item, id: G.createUUID() }];
+      G.LAST_QUEUE_IIEM = item;
+    }
+
+    setPlaylists((prevPlaylists: any) => {
+      let currentKey = currIndex.key;
+      const currentPlaylist = prevPlaylists[currentKey];
+      const playlistID = currentPlaylist.playlistID;
+
+      if (!currentPlaylist) {
+        console.error("Current playlist key does not exist!");
+        return prevPlaylists;
+      }
+
+      const { list: currentList, SQ, isLayers } = currentPlaylist;
+      let splitIndex = currIndex.index;
+
+      let extraPoints = 0;
+
+      const thh = currentList;
+
+      thh.forEach((ele: any, index: number) => {
+        if (index <= splitIndex) {
+          if (Array.isArray(ele.additionalInfo)) {
+            extraPoints += ele.additionalInfo.length - 1;
+          }
+        }
+      });
+
+      splitIndex += extraPoints;
+
+      let totalQueue = 0;
+      Object.keys(prevPlaylists).forEach((currentKeyItr) => {
+        if (prevPlaylists[currentKeyItr].SQ) totalQueue++;
+      });
+
+      const updatedPlaylists = { ...prevPlaylists };
+
+      let keyUsed: any = currentKey;
+
+      if (SQ || justAddedQueue.current) {
+        if (justAddedQueue.current) {
+          currentKey = Number(currIndex.key) + 1;
+        }
+        if (combineLast) {
+          updatedPlaylists[currentKey]?.list.pop();
+        }
+        // Case: Adding to an existing special queue
+        updatedPlaylists[currentKey].list = [
+          ...(updatedPlaylists[currentKey]?.list || []),
+          ...toAddItems,
+        ];
+
+        keyUsed = currentKey;
+      } else {
+        // Case: Splitting a playlist
+        const beforeCurrentIndex = currentList.slice(0, splitIndex + 1);
+        const afterCurrentIndex = currentList.slice(splitIndex + 1);
+
+        const newQueueKey = `${currIndex.key}.1`; // Next numeric key
+        const newQueue = {
+          name: `Queue ${totalQueue + 1}`,
+          list: [...toAddItems],
+          id: G.createUUID(),
+          SQ: true, // Mark this as a special queue,
+          playlistID: null,
+        };
+
+        const isNothingPlayingInChecklist = `${currIndex.index}` !== "-1";
+
+        if (!G.PPchecklistEnabled || isNothingPlayingInChecklist) {
+          // Update the current playlist with items before the split
+          updatedPlaylists[currentKey] = {
+            ...currentPlaylist,
+            list: beforeCurrentIndex,
+          };
+        }
+
+        // if (!readingPlanEnabled) {
+        // Add the new queue
+        updatedPlaylists[newQueueKey] = newQueue;
+        keyUsed = newQueueKey;
+        // } else if (findLastActiveIndex > -1) {
+        //     findLastActiveIndex++;
+        //     currentList.splice(findLastActiveIndex, 0, item);
+        //     updatedPlaylists[currentKey].list = currentList;
+        //     setActiveIndexs(prev => ({ ...prev, [item.id]: true }));
+        // }
+
+        if (!G.PPchecklistEnabled || isNothingPlayingInChecklist) {
+          updatedPlaylists[currentKey].broken = true;
+          if (afterCurrentIndex.length > 0) {
+            updatedPlaylists[`${currIndex.key}.2`] = {
+              name: `${currentPlaylist.name}`,
+              list: [...afterCurrentIndex],
+              id: G.createUUID(),
+              SQ: false, // Mark this as a special queue
+              playlistID,
+            };
+          }
+        }
+      }
+      justAddedQueue.current = true;
+
+      // Renumber keys to ensure sequential ordering
+      const reorderedPlaylists: any = {};
+      Object.keys(updatedPlaylists)
+        .sort((a, b) => Number(a) - Number(b)) // Sort numerically
+        .forEach((key, index) => {
+          if (key == keyUsed) {
+            G.LAST_SQ_KEY_USED = index;
+            G.BlinkAfterPlaylistAddRef = index;
+          }
+          reorderedPlaylists[index] = { ...updatedPlaylists[key] };
+          if (!reorderedPlaylists[index]?.list?.length) {
+            delete reorderedPlaylists[index];
+          }
+        });
+      G.NotPlayThisTimeTheCurrentItem = true;
+      return reorderedPlaylists;
+    });
+    setOpenAttachLink(false);
+  };
+
+  const setJustAddedQueue = (val: boolean) => {
+    justAddedQueue.current = val;
+  };
+
+  G.SET_JUST_ADDED_QUEUE = setJustAddedQueue;
+
+  useLayoutEffect(() => {
+    G.SetCurreIndexPlaylist = handlesetIndex;
+    G.SetCurreIndexDirect = setCurreIndex;
+    G.HandleOnButtonPress = handleOnButtonPress;
+    G.ModifyTransformedHistory = setTransformedHistory;
+    G.IsPlaylistPlaying = true;
+    G.SetQueue = addToQueue;
+    G.SetPlayingList = setPlaylists;
+    G.HandleOnButtonPress = handleOnButtonPress;
+
+    G.SetIncrementalCountPlayingPlaylist = setIncrementalCount;
+    G.SetVideoSrc = setVideoSrc;
+    G.SetMediaURL = (url: any) => {
+      if (url === null) {
+        setMediaURL(null);
+        setFileName(null);
+      } else {
+        setMediaURL(url);
+      }
+    };
+    G.SetFileName = setFileName;
+    G.SetTextInfo = setTextInfo;
+
+    G.PlayingPlaylists = playlists;
+    G.SetPlayingPlaylists = setPlaylists;
+    G.CurrentIndexItem = currIndex;
+    G.SetCheckedItemsPlayingPlaylist = (ids: any) => {
+      setCheckedItems(ids);
+      setTimeout(() => {
+        G.RenderPlaylistPlaying?.();
+      }, 100);
+    };
+
+    G.UpdateJustAddedToQueue = (val: boolean) => {
+      justAddedQueue.current = val;
+    };
+
+    if (G.PPreadingPlanEnabled) {
+      G.READING_PLAN_WORK = true;
+      // G.IS_PLAYLIST_ACTIVE = 0;
+    }
+    return () => {
+      if (!G.IsASwitchBetweenBar) {
+        G.SetCurreIndexPlaylist = null;
+        G.HandleOnButtonPress = null;
+        G.ModifyTransformedHistory = null;
+        G.SetQueue = false;
+        G.SetCurreIndexDirect = null;
+        G.SetPlayingList = () => {};
+        G.SetSelected && G.SetSelected({});
+        G.READING_PLAN_WORK = false;
+        G.HandleOnButtonPress = null;
+        G.SetIncrementalCountPlayingPlaylist = null;
+        G.SetVideoSrc = null;
+        G.SetFileName = null;
+        G.SetTextInfo = null;
+        G.SetMediaURL = null;
+        G.PlayingPlaylists = null;
+        G.SetPlayingPlaylists = null;
+        G.CurrentIndexItem = null;
+        G.SetCheckedItemsPlayingPlaylist = null;
+        G.UpdateJustAddedToQueue = null;
+        // globalThis.IS_PLAYLIST_ACTIVE = true;
+      }
+    };
+  }, [handleOnButtonPress, transformedHistory]);
+
+  useLayoutEffect(() => {
+    if (G.PPchecklistEnabled) {
+      setTimeout(() => {
+        thisBot.OpenSelf();
+      }, 200);
+    }
+
+    G.SetOpenExternalLinkControl = (link: string) => {
+      console.log("SetOpenExternalLinkControl", link);
+      if (isMobile) {
+        setOpenExternalLink(link);
+      } else {
+        os.openURL(link);
+      }
+    };
+
+    return () => {
+      if (!G.IsASwitchBetweenBar) {
+        G.IsPlaylistPlaying = false;
+        G.IsQueuePresent = false;
+        G.RemotePlaylistPlayed = false;
+        G.EmitData("playlistStopped", {});
+      }
+      G.IsASwitchBetweenBar = false;
+      G.SetOpenExternalLink = null;
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    G.UpdateCheckedItemsPlayingPlaylist &&
+      G.UpdateCheckedItemsPlayingPlaylist(checkedItems, G.PlayingPlaylistID);
+  }, [checkedItems]);
+
+  const [
+    currentPlaylistName,
+    currentItemID,
+    typeContent,
+    nextItemName,
+    prevItemName,
+    currentItem,
+  ] = useMemo(() => {
+    const res = getCurrentQueueInfo(
+      {
+        currIndex,
+        playlists,
+        oldData,
+        handleOnButtonPress,
+        getCurrentItem,
+      },
+      thisBot
+    );
+    return res;
+  }, [
+    currIndex,
+    playlists,
+    queue,
+    // refs
+  ]);
+
+  useLayoutEffect(() => {
+    const i = currIndex.index;
+    const list = G.PPplaylist?.list;
+
+    const gp = list;
+
+    let lastActiveDateID = -1;
+
+    for (let j = i; j > -1; j--) {
+      const item = gp[j];
+      if (item?.type === "date" && lastActiveDateID === -1) {
+        lastActiveDateID = item.id;
+      }
+    }
+
+    setShowCurrent(true);
+    if (G.TIMER_SHOW_NEXT) {
+      clearTimeout(G.TIMER_SHOW_NEXT);
+      G.TIMER_SHOW_NEXT = null;
+    }
+    G.TIMER_SHOW_NEXT = setTimeout(() => {
+      setShowCurrent(false);
+    }, 3000);
+
+    G.SetActiveDate?.(lastActiveDateID);
+  }, [currIndex]);
+
+  const attachLink = (title: string, link: string, linkState: any) => {
+    G.SetQueue({
+      content: title,
+      additionalInfo: {
+        link,
+        ...linkState,
+      },
+      type: linkState.type === "text" ? "heading" : "attachment-link",
+    });
+    setOpenAttachLink(false);
+  };
+
+  const massAdd = (items: any) => {
+    G.SetQueue(items);
+  };
+
+  useLayoutEffect(() => {
+    if (!G.UPDATE_VIA_SHOUT) {
+      if (G.REMOTE_UPDATE_TIMER) {
+        clearTimeout(G.REMOTE_UPDATE_TIMER);
+        G.REMOTE_UPDATE_TIMER = null;
+      }
+      G.REMOTE_UPDATE_TIMER = setTimeout(() => {
+        EmitData("playlistQueueUpdated", { playlists });
+        EmitData("playlistCurrentIndexUpdate", { currIndex });
+      }, 100);
+    } else {
+      G.UPDATE_VIA_SHOUT = false;
+    }
+
+    return () => {
+      clearTimeout(G.REMOTE_UPDATE_TIMER);
+      G.REMOTE_UPDATE_TIMER = null;
+    };
+  }, [currIndex, playlists]);
+
+  const isItemLink = outerWebsiteItem[currentItem?.additionalInfo?.type];
+  const { safeCurrent, safeTotal, percent } = useMemo(
+    () =>
+      getPlaylistProgress(
+        playlists,
+        currIndex,
+        G.PPchecklistEnabled,
+        checkedItems
+      ),
+    [playlists, currIndex, checkedItems]
+  );
+
+  const isMobile =
+    (window?.innerWidth || gridPortalBot.tags.pixelWidth) <
+    G.MOBILE_VIEWPORT_THRESHOLD;
+
+  const GetLabelT = useMemo(() => G.GetLabel, []);
+
+  return (
+    <>
+      <style>{thisBot.tags["Linking.css"]}</style>
+      <style>{thisBot.tags["PlaylistContainer.css"]}</style>
+      <style>{thisBot.tags["playlist.css"]}</style>
+
+      {openExternalLink && (
+        <ConfirmLinkModal
+          onClose={() => setOpenExternalLink(null)}
+          link={openExternalLink}
+          controlBalInternal
+        />
+      )}
+
+      {isMobile && !inheritedBar ? (
+        <div
+          className="mobile-playlist-player-controls"
+          style={{
+            marginBottom: !!mediaURL || !!videoSrc || !!textInfo ? "3rem" : "0",
+          }}
+        >
+          {!!textInfo && (
+            <div className="textinfo-playlist">
+              <RenderHTMLContent htmlContent={textInfo} />
+            </div>
+          )}
+          {!!videoSrc && (
+            <div className="textinfo-playlist">
+              <VideoPlayer videoSrc={videoSrc} playlistItem={currentItem} />
+            </div>
+          )}
+          {!!mediaURL && (
+            <AudioPlayer
+              shadow
+              secondaryClose
+              fileName={fileName}
+              close={true}
+              mediaURL={mediaURL}
+            />
+          )}
+          {/* <div className="mobile-playlist-player-controls-buttons"> */}
+          <Button
+            exClass={`mobile-playlist-player-controls-button prev-button ${!prevItemName?.content ? "disabled" : ""}`}
+            onClick={() => {
+              if (!prevItemName?.content) {
+                return ShowNotification({
+                  message: t("youAreAtTheBeginningOfThePlaylist"),
+                  severity: "info",
+                });
+              }
+              DataManager.cancelCurrentPlayingSound();
+              if (G.HandleOnButtonPress) G.HandleOnButtonPress(-1);
+            }}
+          >
+            <PrevIcon
+              width="26"
+              height="24px"
+              fill={
+                !prevItemName?.content
+                  ? "var(--settingsIcon)"
+                  : "var(--pageTextColor)"
+              }
+            />
+          </Button>
+          <Button
+            exClass={`mobile-playlist-player-controls-button next-button ${!nextItemName?.content ? "disabled" : ""}`}
+            onClick={() => {
+              if (!nextItemName?.content) {
+                return ShowNotification({
+                  message: t("playlistHasBeenEnded"),
+                  severity: "info",
+                });
+              }
+              DataManager.cancelCurrentPlayingSound();
+              if (!!nextItemName?.content && !!G.HandleOnButtonPress) {
+                G.HandleOnButtonPress(1);
+                return;
+              }
+              // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);
+              G[`${parentId}ToggleGreyCheckPLayingPlaylist`] &&
+                G[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
+              G.IsQueuePresent = false;
+              G.IS_PLAYLIST_ACTIVE = false;
+              CloseFloatingApp();
+              G.SetSplitAppPanel2 && G.SetSplitAppPanel2(null);
+              // os.unregisterApp("playing-playlist");
+              // thisBot.showInfo(`History Mode`);
+              os.unregisterApp("playing-playlist-flaot");
+              if (G.RemoveNowBarApp) {
+                G.RemoveNowBarApp("player-playlist-bar");
+              }
+            }}
+          >
+            <NextIcon
+              width="14"
+              height="16"
+              fill={
+                !nextItemName?.content
+                  ? "var(--settingsIcon)"
+                  : "var(--pageTextColor)"
+              }
+            />
+          </Button>
+          {/* </div> */}
+        </div>
+      ) : openAttachLink ? (
+        <div
+          style={{
+            position: "relative",
+            // bottom: (checklistEnabled) ? 'calc(62px)' : "calc(62px + 153px)",
+            // left: "0px",
+            // zIndex: "1001",
+            textTransform: "capitalize",
+            // padding: "12px",
+            borderRadius: "4px",
+            fontWeight: "600",
+            width: "calc(100%)",
+            // borderTop: "1px solid #DADADA",
+            backgroundColor: "var(--pageBackground)",
+            height: "auto",
+          }}
+          className="flaoting-attach-link"
+        >
+          <AttachLink
+            canClose
+            canRecord={false}
+            massAdd={massAdd}
+            sSelectedType="SCRIPTURE"
+            attachLink={attachLink}
+            onClose={() => setOpenAttachLink(false)}
+          />
+        </div>
+      ) : (
+        <div
+          style={{
+            background: "var(--pageBackground)",
+            display: "flex",
+            flexDirection: "column",
+            height: "100%",
+            boxShadow: "0px 0px 9px 0px #00000026",
+            padding: "0.75rem 1rem",
+            borderRadius: "8px",
+            justifyContent: "center",
+          }}
+        >
+          {!!textInfo && (
+            <div className="textinfo-playlist">
+              <RenderHTMLContent htmlContent={textInfo} />
+            </div>
+          )}
+          {!!videoSrc && (
+            <VideoPlayer videoSrc={videoSrc} playlistItem={currentItem} />
+          )}
+          {!!mediaURL && (
+            <AudioPlayer
+              fileName={fileName}
+              secondaryClose
+              close
+              mediaURL={mediaURL}
+            />
+          )}
+
+          {isItemLink && false && (
+            <div>
+              <p>Link showing refuse to connect Problems? </p>
+              <a
+                href={currentItem?.additionalInfo?.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Visit link"
+              >
+                Click here to open
+              </a>
+            </div>
+          )}
+          <div
+            style={{
+              display: "flex",
+              // flexDirection: isMobileSmall ? "column" : "row",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              gap: "0.5rem",
+              width: "calc(100%)",
+            }}
+          >
+            <div className="playlist-player-controls-info">
+              {(!isMobileSmall ||
+                (showCurrent
+                  ? !!currentItem?.content
+                  : !!nextItemName?.content)) && (
+                <p
+                  style={{
+                    fontSize: "12px",
+                    fontWeight: "500",
+                    display: "flex",
+                    alignItems: "center",
+                    margin: "0",
+                    // marginBottom: "0.5rem",
+                    fontFamily: "DM Sans",
+                    height: "12px",
+                    color: "var(--pageTextColor)",
+                    minWidth: "max-content",
+                  }}
+                >
+                  {G.PPchecklistEnabled && showCurrent && currIndex.index === -1
+                    ? null
+                    : showCurrent
+                      ? `${t("playingNow")}:`
+                      : nextItemName?.content
+                        ? `${t("playingNext")}:`
+                        : null}
+                </p>
+              )}
+              <div style={{ gap: "0.5rem" }} className="align-center">
+                <div
+                  style={{
+                    height: "1.5rem",
+                    width: "1.5rem",
+                    display: "grid",
+                    placeItems: "center",
+                    backgroundColor: "var(--activeTabFill)",
+                    borderRadius: "0.25rem",
+                    color: "var(--pageTextColor)",
+                  }}
+                >
+                  <span
+                    style={{ margin: "0", fontSize: "14px" }}
+                    class="material-symbols-outlined unfollow"
+                  >
+                    {nextItemName?.type === "attachment-link"
+                      ? "media_link"
+                      : "description"}
+                  </span>
+                </div>
+                <div style={{ position: "relative", flexGrow: "1" }}>
+                  <div
+                    className={`fade-in-animation  ${
+                      showCurrent ? "" : "show"
+                    }`}
+                  >
+                    {nextItemName?.content ? (
+                      nextItemName?.additionalInfo?.book && isMobile ? (
+                        <GetLabelT
+                          needToShowInMobile={true}
+                          value="discover"
+                          fontSize="0.75rem"
+                          currentOpenedBook={{ book: nextItemName.content }}
+                          widthCompare={isMobile ? 65 : 300}
+                        />
+                      ) : (
+                        <p
+                          style={{
+                            fontSize: "0.75rem",
+                            fontWeight: "600",
+                            display: "flex",
+                            alignItems: "center",
+                            fontFamily: "DM Sans",
+                            margin: "0",
+                            color: "var(--pageTextColor)",
+                          }}
+                        >
+                          {G.GetTruncatedPlaylistLabel(
+                            nextItemName,
+                            isMobile ? 9 : 16
+                          )}
+                        </p>
+                      )
+                    ) : (
+                      <p
+                        style={{
+                          color: "var(--secondaryColor)",
+                          fontSize: "12px",
+                          fontWeight: "900",
+                          fontFamily: "DM Sans",
+                          margin: "0",
+                          minWidth: "max-content",
+                        }}
+                      >
+                        {t("playlist")} {t("ended")}
+                      </p>
+                    )}
+                    {!G.ValidTypes[nextItemName?.type] &&
+                      !showCurrent &&
+                      !!nextItemName?.type && (
+                        <p
+                          style={{
+                            fontSize: "12px",
+                            fontWeight: "400",
+                            margin: "0",
+                            textTransform: "capitalize",
+                            color: "var(--pageTextColor)",
+                          }}
+                        >
+                          {isMobile
+                            ? nextItemName?.type?.substring(0, 10)
+                            : nextItemName?.type}
+                        </p>
+                      )}
+
+                    {!G.ValidTypes[currentItem?.type] && showCurrent && (
+                      <p
+                        style={{
+                          fontSize: "12px",
+                          fontWeight: "400",
+                          margin: "0",
+                          textTransform: "capitalize",
+                          color: "var(--pageTextColor)",
+                        }}
+                      >
+                        {isMobile
+                          ? currentItem?.type?.substring(0, 10)
+                          : currentItem?.type}
+                      </p>
+                    )}
+                  </div>
+                  <div
+                    style={{ width: "100%", minWidth: "max-content" }}
+                    className={`fade-in-animation overlay-top-left  ${
+                      showCurrent ? "show" : ""
+                    }`}
+                  >
+                    {currentItem?.content ? (
+                      currentItem.additionalInfo?.book && isMobile ? (
+                        <GetLabelT
+                          needToShowInMobile={true}
+                          fontSize="0.75rem"
+                          value="discover"
+                          currentOpenedBook={{ book: currentItem.content }}
+                          widthCompare={isMobile ? 65 : 300}
+                        />
+                      ) : (
+                        <p
+                          style={{
+                            fontSize: "0.65rem",
+                            fontWeight: "600",
+                            display: "flex",
+                            alignItems: "center",
+                            fontFamily: "DM Sans",
+                            margin: "0",
+                            color: "var(--pageTextColor)",
+                          }}
+                        >
+                          {currentItem?.content
+                            ? `${currentItem?.content}${currentItem?.prefix}`?.substring(
+                                0,
+                                isMobile ? 10 : 16
+                              )
+                            : ""}
+                          {`${currentItem?.content}${currentItem?.prefix}`
+                            .length > (isMobile ? 10 : 16)
+                            ? "..."
+                            : ""}
+                        </p>
+                      )
+                    ) : (
+                      <p
+                        style={{
+                          color: "var(--secondaryColor)",
+                          fontSize: "12px",
+                          fontWeight: "900",
+                          fontFamily: "DM Sans",
+                          margin: "0",
+                          minWidth: "max-content",
+                        }}
+                      >
+                        {G.PPchecklistEnabled && currIndex.index === -1
+                          ? t("checklistEnabled")
+                          : `${isMobile ? "" : t("playlist")} {t("ended")}`}
+                      </p>
+                    )}
+
+                    {!G.ValidTypes[currentItem?.type] && showCurrent && (
+                      <p
+                        style={{
+                          fontSize: "12px",
+                          fontWeight: "400",
+                          color: "var(--pageTextColor)",
+                          margin: "0",
+                          textTransform: "capitalize",
+                        }}
+                      >
+                        {isMobile
+                          ? currentItem?.type?.substring(0, 10)
+                          : currentItem?.type}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="flex align-center" style={{ gap: "0.5rem" }}>
+              <MobilePlaylistToggleButton parentId={parentId} />
+              <p
+                onClick={() => {
+                  if (G.RemotePlaylistPlayed) {
+                    return ShowNotification({
+                      message: t("onlyHostCanAddItemsToQueue"),
+                      severity: "error",
+                    });
+                  }
+                  setOpenAttachLink(true);
+                }}
+                style={{
+                  margin: "0",
+                  width: "26px",
+                  height: "26px",
+                  padding: "0",
+                  borderRadius: "6px",
+                  backgroundColor: "var(--activeTabFill)",
+                }}
+                className="playlist-action small"
+              >
+                <span
+                  style={{ margin: "0", fontSize: "20px" }}
+                  class="material-symbols-outlined unfollow"
+                >
+                  add
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div
+            style={{
+              width: "100%",
+              margin: "0.5rem 0",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+            }}
+          >
+            <div
+              style={{
+                height: "4px",
+                width: "100%",
+                backgroundColor: "var(--gray2-color)",
+                borderRadius: "999px",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  height: "100%",
+                  width: `${percent}%`,
+                  backgroundColor: "var(--secondaryColor)",
+                  transition: "width 0.2s ease",
+                }}
+              />
+            </div>
+            <p
+              style={{
+                margin: "0",
+                minWidth: "fit-content",
+                color: "var(--gray1-color)",
+                fontSize: "0.85rem",
+                fontWeight: "500",
+              }}
+            >
+              {safeCurrent}/{safeTotal}
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              width: "100%",
+              gap: "1rem",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            {false && (
+              <img
+                src={EditPlaylist}
+                class="material-symbols-outlined unfollow"
+                style={{
+                  margin: "0",
+                  width: "1rem",
+                  marginRight: "1rem",
+                  cursor: "pointer",
+                }}
+                onClick={G.PlaylistPlaytoggleHide}
+              />
+            )}
+            <Button
+              style={{
+                margin: "0",
+                minWidth: "auto",
+                backgroundColor: "transparent",
+                border: "0px solid var(--secondaryColor)",
+                boxShadow: "none",
+                padding: "8px",
+                cursor: !prevItemName?.content ? "not-allowed" : "",
+                fontSize: "12px",
+              }}
+              onClick={() => {
+                if (!prevItemName?.content) {
+                  return ShowNotification({
+                    message: t("youAreAtTheBeginningOfThePlaylist"),
+                    severity: "info",
+                  });
+                }
+                DataManager.cancelCurrentPlayingSound();
+                if (G.HandleOnButtonPress) G.HandleOnButtonPress(-1);
+              }}
+            >
+              <PrevIcon
+                fill={
+                  !prevItemName?.content
+                    ? "var(--unselectedSpaceColor)"
+                    : "var(--pageTextColor)"
+                }
+              />
+            </Button>
+            <p
+              onClick={() => {
+                G.IsPlaylistPlaying = false;
+                DataManager.cancelCurrentPlayingSound();
+                G.SetSelected && G.SetSelected({});
+                G.SetHolded && G.SetHolded({});
+                // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);
+                G[`${parentId}ToggleGreyCheckPLayingPlaylist`] &&
+                  G[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
+                G.IsQueuePresent = false;
+                // os.unregisterApp("playing-playlist");
+                G.IS_PLAYLIST_ACTIVE = false;
+                G.SetSplitAppPanel2 && G.SetSplitAppPanel2(null);
+                thisBot.OpenSelf();
+                // thisBot.showInfo(`History Mode`);
+                if (G.RemoveNowBarApp) {
+                  G.RemoveNowBarApp("player-playlist-bar");
+                }
+                os.unregisterApp("playing-playlist-flaot");
+                resetPlaylistGlobalStateVars();
+                CloseFloatingApp();
+              }}
+              style={{
+                margin: "0",
+                width: "2.55rem",
+                height: "2.55rem",
+                borderRadius: "50%",
+                border: "none",
+              }}
+              className="playlist-action small"
+            >
+              <span
+                style={{
+                  margin: "0",
+                  fontSize: "14px",
+                  backgroundColor: "var(--secondaryColor)",
+                }}
+                class="material-symbols-outlined unfollow"
+              >
+                stop
+              </span>
+            </p>
+            <Button
+              style={{
+                fontSize: "12px",
+                margin: "0",
+                minWidth: "auto",
+                backgroundColor: "transparent",
+                border: "0px solid var(--secondaryColor)",
+                boxShadow: "none",
+                color: "#000",
+                padding: "8px",
+                cursor: !nextItemName?.content ? "not-allowed" : "",
+              }}
+              onClick={() => {
+                if (!nextItemName?.content) {
+                  return ShowNotification({
+                    message: t("playlistHasBeenEnded"),
+                    severity: "info",
+                  });
+                }
+                DataManager.cancelCurrentPlayingSound();
+                if (!!nextItemName?.content && !!G.HandleOnButtonPress) {
+                  G.HandleOnButtonPress(1);
+                  return;
+                }
+                // globalThis.SetPlayingPlaylist && globalThis.SetPlayingPlaylist(false);
+                G[`${parentId}ToggleGreyCheckPLayingPlaylist`] &&
+                  G[`${parentId}ToggleGreyCheckPLayingPlaylist`](null);
+                G.IsQueuePresent = false;
+                G.IS_PLAYLIST_ACTIVE = false;
+                CloseFloatingApp();
+                G.SetSplitAppPanel2 && G.SetSplitAppPanel2(null);
+                // os.unregisterApp("playing-playlist");
+                // thisBot.showInfo(`History Mode`);
+                os.unregisterApp("playing-playlist-flaot");
+                if (G.RemoveNowBarApp) {
+                  G.RemoveNowBarApp("player-playlist-bar");
+                }
+              }}
+            >
+              <NextIcon
+                fill={
+                  !nextItemName?.content
+                    ? "var(--unselectedSpaceColor)"
+                    : "var(--pageTextColor)"
+                }
+              />
+            </Button>
+            {false && (
+              <img
+                src={SharePlaylist}
+                class="material-symbols-outlined unfollow"
+                style={{
+                  margin: "0",
+                  marginLeft: "1rem",
+                  width: "1rem",
+                  cursor: "not-allowed",
+                }}
+                onClick={() => {
+                  return ShowNotification({
+                    message: t("comingSoon"),
+                    severity: "error",
+                  });
+                }}
+              />
+            )}
+          </div>
+        </div>
+      )}
+    </>
+  );
+};
+
+return PlayerControls;

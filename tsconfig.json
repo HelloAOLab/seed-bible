@@ -101,6 +101,9 @@
       "seed-bible.components.SidebarSearch": [
         "./packages/seed-bible/seed-bible/components/SidebarSearch.tsx"
       ],
+      "seed-bible.components.smallEditor": [
+        "./packages/seed-bible/seed-bible/components/smallEditor.tsx"
+      ],
       "seed-bible.components.Tabs": [
         "./packages/seed-bible/seed-bible/components/Tabs.tsx"
       ],
@@ -193,6 +196,1150 @@
       ],
       "ext_Example.onInstJoined": [
         "./packages/seed-bible-refresh-example-extension/ext_Example/onInstJoined.tsx"
+      ],
+      // Playlists Paths
+      "ext_discover.app.bootstrap": [
+        "./packages/discover-extension/ext_discover/app/bootstrap.tsx"
+      ],
+      "ext_discover.app.PlaylistApp": [
+        "./packages/discover-extension/ext_discover/app/PlaylistApp.tsx"
+      ],
+      "ext_discover.css.LinkingCss": [
+        "./packages/discover-extension/ext_discover/css/LinkingCss.tsx"
+      ],
+      "ext_discover.css.PlaylistContainerCss": [
+        "./packages/discover-extension/ext_discover/css/PlaylistContainerCss.tsx"
+      ],
+      "ext_discover.css.playlistCss": [
+        "./packages/discover-extension/ext_discover/css/playlistCss.tsx"
+      ],
+      "ext_discover.css.recordingVoiceCss": [
+        "./packages/discover-extension/ext_discover/css/recordingVoiceCss.tsx"
+      ],
+      "ext_discover.css.videoPlayerSmallCss": [
+        "./packages/discover-extension/ext_discover/css/videoPlayerSmallCss.tsx"
+      ],
+      "ext_discover.css.annotationListFiltersCss": [
+        "./packages/discover-extension/ext_discover/css/annotationListFiltersCss.tsx"
+      ],
+      "ext_discover.css.addToPlaylistCss": [
+        "./packages/discover-extension/ext_discover/css/addToPlaylistCss.tsx"
+      ],
+      "ext_discover.css.selectionOptionsCss": [
+        "./packages/discover-extension/ext_discover/css/selectionOptionsCss.tsx"
+      ],
+      "ext_discover.css.screenRecordingCss": [
+        "./packages/discover-extension/ext_discover/css/screenRecordingCss.tsx"
+      ],
+      "ext_discover.css.showPersonVideoOverlayCss": [
+        "./packages/discover-extension/ext_discover/css/showPersonVideoOverlayCss.tsx"
+      ],
+      "ext_discover.css.customAnnotationTextEditorCss": [
+        "./packages/discover-extension/ext_discover/css/customAnnotationTextEditorCss.tsx"
+      ],
+      "ext_discover.css.featureButtonCss": [
+        "./packages/discover-extension/ext_discover/css/featureButtonCss.tsx"
+      ],
+      "ext_discover.css.featureSelectCss": [
+        "./packages/discover-extension/ext_discover/css/featureSelectCss.tsx"
+      ],
+      "ext_discover.css.featureModalCss": [
+        "./packages/discover-extension/ext_discover/css/featureModalCss.tsx"
+      ],
+      "ext_discover.css.featureButtonCoverCss": [
+        "./packages/discover-extension/ext_discover/css/featureButtonCoverCss.tsx"
+      ],
+      "ext_discover.css.featureCheckboxCss": [
+        "./packages/discover-extension/ext_discover/css/featureCheckboxCss.tsx"
+      ],
+      "ext_discover.css.featureInputCss": [
+        "./packages/discover-extension/ext_discover/css/featureInputCss.tsx"
+      ],
+      "ext_discover.css.featureLoaderCss": [
+        "./packages/discover-extension/ext_discover/css/featureLoaderCss.tsx"
+      ],
+      "ext_discover.css.featureLoaderSecondaryCss": [
+        "./packages/discover-extension/ext_discover/css/featureLoaderSecondaryCss.tsx"
+      ],
+      "ext_discover.css.featureTooltipCss": [
+        "./packages/discover-extension/ext_discover/css/featureTooltipCss.tsx"
+      ],
+      "ext_discover.css.featureChipsCss": [
+        "./packages/discover-extension/ext_discover/css/featureChipsCss.tsx"
+      ],
+      "ext_discover.css.featureFloatingBannerCss": [
+        "./packages/discover-extension/ext_discover/css/featureFloatingBannerCss.tsx"
+      ],
+      "ext_discover.features.components.ImageWrapper": [
+        "./packages/discover-extension/ext_discover/features/components/ImageWrapper.tsx"
+      ],
+      "ext_discover.features.components.Button": [
+        "./packages/discover-extension/ext_discover/features/components/Button.tsx"
+      ],
+      "ext_discover.features.components.Select": [
+        "./packages/discover-extension/ext_discover/features/components/Select.tsx"
+      ],
+      "ext_discover.features.components.Modal": [
+        "./packages/discover-extension/ext_discover/features/components/Modal.tsx"
+      ],
+      "ext_discover.features.components.ButtonsCover": [
+        "./packages/discover-extension/ext_discover/features/components/ButtonsCover.tsx"
+      ],
+      "ext_discover.features.components.Checkbox": [
+        "./packages/discover-extension/ext_discover/features/components/Checkbox.tsx"
+      ],
+      "ext_discover.features.components.Input": [
+        "./packages/discover-extension/ext_discover/features/components/Input.tsx"
+      ],
+      "ext_discover.features.components.Loader": [
+        "./packages/discover-extension/ext_discover/features/components/Loader.tsx"
+      ],
+      "ext_discover.features.components.LoaderSecondary": [
+        "./packages/discover-extension/ext_discover/features/components/LoaderSecondary.tsx"
+      ],
+      "ext_discover.features.components.Tooltip": [
+        "./packages/discover-extension/ext_discover/features/components/Tooltip.tsx"
+      ],
+      "ext_discover.features.components.Chips": [
+        "./packages/discover-extension/ext_discover/features/components/Chips.tsx"
+      ],
+      "ext_discover.features.components.FloatingBanner": [
+        "./packages/discover-extension/ext_discover/features/components/FloatingBanner.tsx"
+      ],
+      "ext_discover.storage.defineStorageGlobals": [
+        "./packages/discover-extension/ext_discover/storage/defineStorageGlobals.tsx"
+      ],
+      "ext_discover.storage.getStorageBot": [
+        "./packages/discover-extension/ext_discover/storage/getStorageBot.tsx"
+      ],
+      "ext_discover.storage.historySaver": [
+        "./packages/discover-extension/ext_discover/storage/historySaver.tsx"
+      ],
+      "ext_discover.storage.iconsSaver": [
+        "./packages/discover-extension/ext_discover/storage/iconsSaver.tsx"
+      ],
+      "ext_discover.storage.progressSaver": [
+        "./packages/discover-extension/ext_discover/storage/progressSaver.tsx"
+      ],
+      "ext_discover.storage.registerVisitedExperiences": [
+        "./packages/discover-extension/ext_discover/storage/registerVisitedExperiences.tsx"
+      ],
+      "ext_discover.helper.CloseFloatingApp": [
+        "./packages/discover-extension/ext_discover/helper/CloseFloatingApp.tsx"
+      ],
+      "ext_discover.helper.CloseSelf": [
+        "./packages/discover-extension/ext_discover/helper/CloseSelf.tsx"
+      ],
+      "ext_discover.helper.openSelf": [
+        "./packages/discover-extension/ext_discover/helper/openSelf.tsx"
+      ],
+      "ext_discover.helper.tryInitPlaylistMaker": [
+        "./packages/discover-extension/ext_discover/helper/tryInitPlaylistMaker.tsx"
+      ],
+      "ext_discover.helper.tryAddDataToHistory": [
+        "./packages/discover-extension/ext_discover/helper/tryAddDataToHistory.tsx"
+      ],
+      "ext_discover.helper.registerShowPersonVideoOverlay": [
+        "./packages/discover-extension/ext_discover/helper/registerShowPersonVideoOverlay.tsx"
+      ],
+      "ext_discover.helper.getPlaylists": [
+        "./packages/discover-extension/ext_discover/helper/getPlaylists.tsx"
+      ],
+      "ext_discover.helper.savePlaylists": [
+        "./packages/discover-extension/ext_discover/helper/savePlaylists.tsx"
+      ],
+      "ext_discover.helper.getBookmarks": [
+        "./packages/discover-extension/ext_discover/helper/getBookmarks.tsx"
+      ],
+      "ext_discover.helper.createControlButtons": [
+        "./packages/discover-extension/ext_discover/helper/createControlButtons.tsx"
+      ],
+      "ext_discover.helper.getPlaylistContextMenuOptions": [
+        "./packages/discover-extension/ext_discover/helper/getPlaylistContextMenuOptions.tsx"
+      ],
+      "ext_discover.helper.registerGetLabel": [
+        "./packages/discover-extension/ext_discover/helper/registerGetLabel.tsx"
+      ],
+      "ext_discover.helper.openOnAddDateModal": [
+        "./packages/discover-extension/ext_discover/helper/openOnAddDateModal.tsx"
+      ],
+      "ext_discover.helper.showPlaylistInfo": [
+        "./packages/discover-extension/ext_discover/helper/showPlaylistInfo.tsx"
+      ],
+      "ext_discover.helper.RemoveScreenRecordingControls": [
+        "./packages/discover-extension/ext_discover/helper/RemoveScreenRecordingControls.tsx"
+      ],
+      "ext_discover.helper.showScreenRecordingStopButton": [
+        "./packages/discover-extension/ext_discover/helper/showScreenRecordingStopButton.tsx"
+      ],
+      "ext_discover.helper.cursorFollow": [
+        "./packages/discover-extension/ext_discover/helper/cursorFollow.tsx"
+      ],
+      "ext_discover.helper.cursorReset": [
+        "./packages/discover-extension/ext_discover/helper/cursorReset.tsx"
+      ],
+      "ext_discover.helper.definePlaylistGlobals": [
+        "./packages/discover-extension/ext_discover/helper/definePlaylistGlobals.tsx"
+      ],
+      "ext_discover.helper.displayOverlay": [
+        "./packages/discover-extension/ext_discover/helper/displayOverlay.tsx"
+      ],
+      "ext_discover.helper.openMergeModal": [
+        "./packages/discover-extension/ext_discover/helper/openMergeModal.tsx"
+      ],
+      "ext_discover.helper.openPlaylistLinkModal": [
+        "./packages/discover-extension/ext_discover/helper/openPlaylistLinkModal.tsx"
+      ],
+      "ext_discover.helper.openVideoPlayer": [
+        "./packages/discover-extension/ext_discover/helper/openVideoPlayer.tsx"
+      ],
+      "ext_discover.helper.renderLinkContent": [
+        "./packages/discover-extension/ext_discover/helper/renderLinkContent.tsx"
+      ],
+      "ext_discover.helper.setupNowBarControlApp": [
+        "./packages/discover-extension/ext_discover/helper/setupNowBarControlApp.tsx"
+      ],
+      "ext_discover.helper.activeLinkItemFloat": [
+        "./packages/discover-extension/ext_discover/helper/activeLinkItemFloat.tsx"
+      ],
+      "ext_discover.helper.applyMobileHeaderBar": [
+        "./packages/discover-extension/ext_discover/helper/applyMobileHeaderBar.tsx"
+      ],
+      "ext_discover.helper.showQuoteText": [
+        "./packages/discover-extension/ext_discover/helper/showQuoteText.tsx"
+      ],
+      "ext_discover.helper.playlistPlaybackHelpers": [
+        "./packages/discover-extension/ext_discover/helper/playlistPlaybackHelpers.tsx"
+      ],
+      "ext_discover.helper.runPlaylistPlaying": [
+        "./packages/discover-extension/ext_discover/helper/runPlaylistPlaying.tsx"
+      ],
+      "ext_discover.hooks.getCurrentPlayingItem": [
+        "./packages/discover-extension/ext_discover/hooks/getCurrentPlayingItem.tsx"
+      ],
+      "ext_discover.hooks.getPlaylistProgress": [
+        "./packages/discover-extension/ext_discover/hooks/getPlaylistProgress.tsx"
+      ],
+      "ext_discover.hooks.getUtcTimestamp": [
+        "./packages/discover-extension/ext_discover/hooks/getUtcTimestamp.tsx"
+      ],
+      "ext_discover.components.PlayingPlaylist": [
+        "./packages/discover-extension/ext_discover/components/PlayingPlaylist.tsx"
+      ],
+      "ext_discover.components.PlaylistPlayerControls": [
+        "./packages/discover-extension/ext_discover/components/PlaylistPlayerControls.tsx"
+      ],
+      "ext_discover.components.PlaylistPlayerControlIcons": [
+        "./packages/discover-extension/ext_discover/components/PlaylistPlayerControlIcons.tsx"
+      ],
+      "ext_discover.components.PlaylistQueueContainer": [
+        "./packages/discover-extension/ext_discover/components/PlaylistQueueContainer.tsx"
+      ],
+      "ext_discover.components.MobilePlaylistToggleButton": [
+        "./packages/discover-extension/ext_discover/components/MobilePlaylistToggleButton.tsx"
+      ],
+      "ext_discover.components.MobilePlaylistHeaderBar": [
+        "./packages/discover-extension/ext_discover/components/MobilePlaylistHeaderBar.tsx"
+      ],
+      "ext_discover.helper.FetchAnnotationContentInBg": [
+        "./packages/discover-extension/ext_discover/helper/FetchAnnotationContentInBg.tsx"
+      ],
+      "ext_discover.helper.StopPlayingPlaylist": [
+        "./packages/discover-extension/ext_discover/helper/StopPlayingPlaylist.tsx"
+      ],
+      "ext_discover.helper.convertAnnotationsToReadableFormat": [
+        "./packages/discover-extension/ext_discover/helper/convertAnnotationsToReadableFormat.tsx"
+      ],
+      "ext_discover.helper.fetchAnnotationsData": [
+        "./packages/discover-extension/ext_discover/helper/fetchAnnotationsData.tsx"
+      ],
+      "ext_discover.helper.resetEditingState": [
+        "./packages/discover-extension/ext_discover/helper/resetEditingState.tsx"
+      ],
+      "ext_discover.helper.resetPlaylistGlobalStateVars": [
+        "./packages/discover-extension/ext_discover/helper/resetPlaylistGlobalStateVars.tsx"
+      ],
+      "ext_discover.helper.registerDragDrop": [
+        "./packages/discover-extension/ext_discover/helper/registerDragDrop.tsx"
+      ],
+      "ext_discover.helper.groupVerse": [
+        "./packages/discover-extension/ext_discover/helper/groupVerse.tsx"
+      ],
+      "ext_discover.helper.checkGreyOut": [
+        "./packages/discover-extension/ext_discover/helper/checkGreyOut.tsx"
+      ],
+      "ext_discover.helper.RegenratePlaylistWithNewCommand": [
+        "./packages/discover-extension/ext_discover/helper/RegenratePlaylistWithNewCommand.tsx"
+      ],
+      "ext_discover.helper.buildPlaylistFromAI": [
+        "./packages/discover-extension/ext_discover/helper/buildPlaylistFromAI.tsx"
+      ],
+      "ext_discover.helper.getSheetDataAndFetch": [
+        "./packages/discover-extension/ext_discover/helper/getSheetDataAndFetch.tsx"
+      ],
+      "ext_discover.helper.getAudioSeconds": [
+        "./packages/discover-extension/ext_discover/helper/getAudioSeconds.tsx"
+      ],
+      "ext_discover.helper.getSuggestedListItems": [
+        "./packages/discover-extension/ext_discover/helper/getSuggestedListItems.tsx"
+      ],
+      "ext_discover.helper.tryAddDataToPlaylist": [
+        "./packages/discover-extension/ext_discover/helper/tryAddDataToPlaylist.tsx"
+      ],
+      "ext_discover.components.PlaylistUI": [
+        "./packages/discover-extension/ext_discover/components/PlaylistUI.tsx"
+      ],
+      "ext_discover.components.Discover": [
+        "./packages/discover-extension/ext_discover/components/Discover.tsx"
+      ],
+      "ext_discover.components.PlaylistContainer": [
+        "./packages/discover-extension/ext_discover/components/PlaylistContainer.tsx"
+      ],
+      "ext_discover.components.Playlist": [
+        "./packages/discover-extension/ext_discover/components/Playlist.tsx"
+      ],
+      "ext_discover.components.PlaylistList": [
+        "./packages/discover-extension/ext_discover/components/PlaylistList.tsx"
+      ],
+      "ext_discover.components.PlaylistLinkModal": [
+        "./packages/discover-extension/ext_discover/components/PlaylistLinkModal.tsx"
+      ],
+      "ext_discover.components.PlaylistLinkedContainer": [
+        "./packages/discover-extension/ext_discover/components/PlaylistLinkedContainer.tsx"
+      ],
+      "ext_discover.components.PlaylistRowItem": [
+        "./packages/discover-extension/ext_discover/components/PlaylistRowItem.tsx"
+      ],
+      "ext_discover.components.RenderIcon": [
+        "./packages/discover-extension/ext_discover/components/RenderIcon.tsx"
+      ],
+      "ext_discover.components.SelectionOptions": [
+        "./packages/discover-extension/ext_discover/components/SelectionOptions.tsx"
+      ],
+      "ext_discover.components.PlaylistContentRenderer": [
+        "./packages/discover-extension/ext_discover/components/PlaylistContentRenderer.tsx"
+      ],
+      "ext_discover.components.AddAnotationUI": [
+        "./packages/discover-extension/ext_discover/components/AddAnotationUI.tsx"
+      ],
+      "ext_discover.components.AnnotationInnerDiv": [
+        "./packages/discover-extension/ext_discover/components/AnnotationInnerDiv.tsx"
+      ],
+      "ext_discover.components.AddNewPlaylist": [
+        "./packages/discover-extension/ext_discover/components/AddNewPlaylist.tsx"
+      ],
+      "ext_discover.components.CreatePlaylistUI": [
+        "./packages/discover-extension/ext_discover/components/CreatePlaylistUI.tsx"
+      ],
+      "ext_discover.components.DragDropLayerGroup": [
+        "./packages/discover-extension/ext_discover/components/DragDropLayerGroup.tsx"
+      ],
+      "ext_discover.components.DragDropWithGrouping": [
+        "./packages/discover-extension/ext_discover/components/DragDropWithGrouping.tsx"
+      ],
+      "ext_discover.components.ShowPlayingContentAnnotation": [
+        "./packages/discover-extension/ext_discover/components/ShowPlayingContentAnnotation.tsx"
+      ],
+      "ext_discover.components.EditRichText": [
+        "./packages/discover-extension/ext_discover/components/EditRichText.tsx"
+      ],
+      "ext_discover.components.EditAttachment": [
+        "./packages/discover-extension/ext_discover/components/EditAttachment.tsx"
+      ],
+      "ext_discover.components.AddToPlaylist": [
+        "./packages/discover-extension/ext_discover/components/AddToPlaylist.tsx"
+      ],
+      "ext_discover.components.ConfirmLinkModal": [
+        "./packages/discover-extension/ext_discover/components/ConfirmLinkModal.tsx"
+      ],
+      "ext_discover.components.Bookmarks": [
+        "./packages/discover-extension/ext_discover/components/Bookmarks.tsx"
+      ],
+      "ext_discover.components.History": [
+        "./packages/discover-extension/ext_discover/components/History.tsx"
+      ],
+      "ext_discover.components.ShowPersonVideoOverlay": [
+        "./packages/discover-extension/ext_discover/components/ShowPersonVideoOverlay.tsx"
+      ],
+      "ext_discover.components.GetLabel": [
+        "./packages/discover-extension/ext_discover/components/GetLabel.tsx"
+      ],
+      "ext_discover.components.OnAddDateModal": [
+        "./packages/discover-extension/ext_discover/components/OnAddDateModal.tsx"
+      ],
+      "ext_discover.components.Overlay": [
+        "./packages/discover-extension/ext_discover/components/Overlay.tsx"
+      ],
+      "ext_discover.components.AttachLink": [
+        "./packages/discover-extension/ext_discover/components/AttachLink.tsx"
+      ],
+      "ext_discover.components.AttachLinkSubComponent": [
+        "./packages/discover-extension/ext_discover/components/AttachLinkSubComponent.tsx"
+      ],
+      "ext_discover.components.TogglePlaylistHeight": [
+        "./packages/discover-extension/ext_discover/components/TogglePlaylistHeight.tsx"
+      ],
+      "ext_discover.components.Tabs": [
+        "./packages/discover-extension/ext_discover/components/Tabs.tsx"
+      ],
+      "ext_discover.components.RecordVoice": [
+        "./packages/discover-extension/ext_discover/components/RecordVoice.tsx"
+      ],
+      "ext_discover.components.VideoRecordUI": [
+        "./packages/discover-extension/ext_discover/components/VideoRecordUI.tsx"
+      ],
+      "ext_discover.components.AudioPlayer": [
+        "./packages/discover-extension/ext_discover/components/AudioPlayer.tsx"
+      ],
+      "ext_discover.components.VideoPlayer": [
+        "./packages/discover-extension/ext_discover/components/VideoPlayer.tsx"
+      ],
+      "ext_discover.components.VideoPlayerFloating": [
+        "./packages/discover-extension/ext_discover/components/VideoPlayerFloating.tsx"
+      ],
+      "ext_discover.components.DynamicCircle": [
+        "./packages/discover-extension/ext_discover/components/DynamicCircle.tsx"
+      ],
+      "ext_discover.components.LinkingItems": [
+        "./packages/discover-extension/ext_discover/components/LinkingItems.tsx"
+      ],
+      "ext_discover.components.MouseCursorFollow": [
+        "./packages/discover-extension/ext_discover/components/MouseCursorFollow.tsx"
+      ],
+      "ext_discover.components.OverlayRef": [
+        "./packages/discover-extension/ext_discover/components/OverlayRef.tsx"
+      ],
+      "ext_discover.components.ScreenRecordingStopButton": [
+        "./packages/discover-extension/ext_discover/components/ScreenRecordingStopButton.tsx"
+      ],
+      "ext_discover.components.AnnotationListFilters": [
+        "./packages/discover-extension/ext_discover/components/AnnotationListFilters.tsx"
+      ],
+      "ext_discover.components.RenderHTMLContent": [
+        "./packages/discover-extension/ext_discover/components/RenderHTMLContent.tsx"
+      ],
+      "ext_discover.components.Collections": [
+        "./packages/discover-extension/ext_discover/components/Collections.tsx"
+      ],
+      "ext_discover.components.MergeModal": [
+        "./packages/discover-extension/ext_discover/components/MergeModal.tsx"
+      ],
+      "ext_discover.components.ConfirmationModal": [
+        "./packages/discover-extension/ext_discover/components/ConfirmationModal.tsx"
+      ],
+      "ext_discover.components.AttachmentLinkItem": [
+        "./packages/discover-extension/ext_discover/components/AttachmentLinkItem.tsx"
+      ],
+      "ext_discover.components.AnnotationList": [
+        "./packages/discover-extension/ext_discover/components/AnnotationList.tsx"
+      ],
+      "ext_discover.components.AnnotationHeading": [
+        "./packages/discover-extension/ext_discover/components/AnnotationHeading.tsx"
+      ],
+      "ext_discover.components.AnnotationDataMapper": [
+        "./packages/discover-extension/ext_discover/components/AnnotationDataMapper.tsx"
+      ],
+      "ext_discover.components.CustomAnnotationTextEditor": [
+        "./packages/discover-extension/ext_discover/components/CustomAnnotationTextEditor.tsx"
+      ],
+      "ext_discover.components.buildCustomAnnotationToolbarMap": [
+        "./packages/discover-extension/ext_discover/components/buildCustomAnnotationToolbarMap.tsx"
+      ],
+      "ext_discover.components.ProjectMode": [
+        "./packages/discover-extension/ext_discover/components/ProjectMode.tsx"
+      ],
+      "ext_discover.contexts.AnnotationContext": [
+        "./packages/discover-extension/ext_discover/contexts/AnnotationContext.tsx"
+      ],
+      "ext_discover.contexts.PlaylistEditContext": [
+        "./packages/discover-extension/ext_discover/contexts/PlaylistEditContext.tsx"
+      ],
+      "ext_discover.contexts.PlaylistGroupsContext": [
+        "./packages/discover-extension/ext_discover/contexts/PlaylistGroupsContext.tsx"
+      ],
+      "ext_discover.contexts.PlaylistProviders": [
+        "./packages/discover-extension/ext_discover/contexts/PlaylistProviders.tsx"
+      ],
+      "ext_discover.contexts.PlaylistShellContext": [
+        "./packages/discover-extension/ext_discover/contexts/PlaylistShellContext.tsx"
+      ],
+      "ext_discover.contexts.ProjectContext": [
+        "./packages/discover-extension/ext_discover/contexts/ProjectContext.tsx"
+      ],
+      "ext_discover.hooks.extractHashtagsFromHTML": [
+        "./packages/discover-extension/ext_discover/hooks/extractHashtagsFromHTML.tsx"
+      ],
+      "ext_discover.hooks.splitBookAndVerse": [
+        "./packages/discover-extension/ext_discover/hooks/splitBookAndVerse.tsx"
+      ],
+      "ext_discover.hooks.colorizeParagraphs": [
+        "./packages/discover-extension/ext_discover/hooks/colorizeParagraphs.tsx"
+      ],
+      "ext_discover.hooks.uncolorizeHashtags": [
+        "./packages/discover-extension/ext_discover/hooks/uncolorizeHashtags.tsx"
+      ],
+      "ext_discover.hooks.customAnnotationTextEditorHtml": [
+        "./packages/discover-extension/ext_discover/hooks/customAnnotationTextEditorHtml.tsx"
+      ],
+      "ext_discover.hooks.customAnnotationTextEditorTiptapExtensions": [
+        "./packages/discover-extension/ext_discover/hooks/customAnnotationTextEditorTiptapExtensions.tsx"
+      ],
+      "ext_discover.hooks.getDiscoverChips": [
+        "./packages/discover-extension/ext_discover/hooks/getDiscoverChips.tsx"
+      ],
+      "ext_discover.hooks.getActivePlaylistIds": [
+        "./packages/discover-extension/ext_discover/hooks/getActivePlaylistIds.tsx"
+      ],
+      "ext_discover.hooks.isCustomIconUrl": [
+        "./packages/discover-extension/ext_discover/hooks/isCustomIconUrl.tsx"
+      ],
+      "ext_discover.hooks.isMobilePlaylistViewport": [
+        "./packages/discover-extension/ext_discover/hooks/isMobilePlaylistViewport.tsx"
+      ],
+      "ext_discover.hooks.getSortedDateFormats": [
+        "./packages/discover-extension/ext_discover/hooks/getSortedDateFormats.tsx"
+      ],
+      "ext_discover.hooks.startCreatingPlaylist": [
+        "./packages/discover-extension/ext_discover/hooks/startCreatingPlaylist.tsx"
+      ],
+      "ext_discover.hooks.backToCreatePlaylist": [
+        "./packages/discover-extension/ext_discover/hooks/backToCreatePlaylist.tsx"
+      ],
+      "ext_discover.hooks.startEditingPlaylist": [
+        "./packages/discover-extension/ext_discover/hooks/startEditingPlaylist.tsx"
+      ],
+      "ext_discover.hooks.getPlaylistRowPercentage": [
+        "./packages/discover-extension/ext_discover/hooks/getPlaylistRowPercentage.tsx"
+      ],
+      "ext_discover.hooks.handleSheetUrl": [
+        "./packages/discover-extension/ext_discover/hooks/handleSheetUrl.tsx"
+      ],
+      "ext_discover.hooks.getRenderIconFirstItemId": [
+        "./packages/discover-extension/ext_discover/hooks/getRenderIconFirstItemId.tsx"
+      ],
+      "ext_discover.hooks.convertSecondsToMinutesAndSeconds": [
+        "./packages/discover-extension/ext_discover/hooks/convertSecondsToMinutesAndSeconds.tsx"
+      ],
+      "ext_discover.hooks.getCircleProgressCss": [
+        "./packages/discover-extension/ext_discover/hooks/getCircleProgressCss.tsx"
+      ],
+      "ext_discover.hooks.getAnnotationTime": [
+        "./packages/discover-extension/ext_discover/hooks/getAnnotationTime.tsx"
+      ],
+      "ext_discover.hooks.filterAnnotationData": [
+        "./packages/discover-extension/ext_discover/hooks/filterAnnotationData.tsx"
+      ],
+      "ext_discover.hooks.breakHtmlContent": [
+        "./packages/discover-extension/ext_discover/hooks/breakHtmlContent.tsx"
+      ],
+      "ext_discover.hooks.getAddNewPlaylistList": [
+        "./packages/discover-extension/ext_discover/hooks/getAddNewPlaylistList.tsx"
+      ],
+      "ext_discover.hooks.isActiveTabManual": [
+        "./packages/discover-extension/ext_discover/hooks/isActiveTabManual.tsx"
+      ],
+      "ext_discover.hooks.getCurrentTime": [
+        "./packages/discover-extension/ext_discover/hooks/getCurrentTime.tsx"
+      ],
+      "ext_discover.hooks.readFileAsText": [
+        "./packages/discover-extension/ext_discover/hooks/readFileAsText.tsx"
+      ],
+      "ext_discover.hooks.toPlainFile": [
+        "./packages/discover-extension/ext_discover/hooks/toPlainFile.tsx"
+      ],
+      "ext_discover.hooks.areKeysEqual": [
+        "./packages/discover-extension/ext_discover/hooks/areKeysEqual.tsx"
+      ],
+      "ext_discover.hooks.computePlaylistDateIssues": [
+        "./packages/discover-extension/ext_discover/hooks/computePlaylistDateIssues.tsx"
+      ],
+      "ext_discover.hooks.getKeysInRange": [
+        "./packages/discover-extension/ext_discover/hooks/getKeysInRange.tsx"
+      ],
+      "ext_discover.hooks.getProjectFromSelection": [
+        "./packages/discover-extension/ext_discover/hooks/getProjectFromSelection.tsx"
+      ],
+      "ext_discover.hooks.getAttachLinkTags": [
+        "./packages/discover-extension/ext_discover/hooks/getAttachLinkTags.tsx"
+      ],
+      "ext_discover.hooks.getAttachLinkOptions": [
+        "./packages/discover-extension/ext_discover/hooks/getAttachLinkOptions.tsx"
+      ],
+      "ext_discover.hooks.getFilteredAttachTags": [
+        "./packages/discover-extension/ext_discover/hooks/getFilteredAttachTags.tsx"
+      ],
+      "ext_discover.interfaces.components.PlaylistUI": [
+        "./packages/discover-extension/ext_discover/interfaces/components/PlaylistUI.tsx"
+      ],
+      "ext_discover.interfaces.components.Discover": [
+        "./packages/discover-extension/ext_discover/interfaces/components/Discover.tsx"
+      ],
+      "ext_discover.interfaces.components.PlaylistContainer": [
+        "./packages/discover-extension/ext_discover/interfaces/components/PlaylistContainer.tsx"
+      ],
+      "ext_discover.interfaces.components.PlaylistList": [
+        "./packages/discover-extension/ext_discover/interfaces/components/PlaylistList.tsx"
+      ],
+      "ext_discover.interfaces.components.PlaylistLinkModal": [
+        "./packages/discover-extension/ext_discover/interfaces/components/PlaylistLinkModal.tsx"
+      ],
+      "ext_discover.interfaces.components.PlaylistLinkedContainer": [
+        "./packages/discover-extension/ext_discover/interfaces/components/PlaylistLinkedContainer.tsx"
+      ],
+      "ext_discover.interfaces.components.PlaylistRowItem": [
+        "./packages/discover-extension/ext_discover/interfaces/components/PlaylistRowItem.tsx"
+      ],
+      "ext_discover.interfaces.components.Playlist": [
+        "./packages/discover-extension/ext_discover/interfaces/components/Playlist.tsx"
+      ],
+      "ext_discover.interfaces.components.PlayingPlaylist": [
+        "./packages/discover-extension/ext_discover/interfaces/components/PlayingPlaylist.tsx"
+      ],
+      "ext_discover.interfaces.components.PlaylistPlayerControls": [
+        "./packages/discover-extension/ext_discover/interfaces/components/PlaylistPlayerControls.tsx"
+      ],
+      "ext_discover.interfaces.components.PlaylistQueueContainer": [
+        "./packages/discover-extension/ext_discover/interfaces/components/PlaylistQueueContainer.tsx"
+      ],
+      "ext_discover.interfaces.components.MobilePlaylistToggleButton": [
+        "./packages/discover-extension/ext_discover/interfaces/components/MobilePlaylistToggleButton.tsx"
+      ],
+      "ext_discover.interfaces.components.MobilePlaylistHeaderBar": [
+        "./packages/discover-extension/ext_discover/interfaces/components/MobilePlaylistHeaderBar.tsx"
+      ],
+      "ext_discover.interfaces.components.MouseCursorFollow": [
+        "./packages/discover-extension/ext_discover/interfaces/components/MouseCursorFollow.tsx"
+      ],
+      "ext_discover.interfaces.components.OverlayRef": [
+        "./packages/discover-extension/ext_discover/interfaces/components/OverlayRef.tsx"
+      ],
+      "ext_discover.interfaces.components.CreatePlaylistUI": [
+        "./packages/discover-extension/ext_discover/interfaces/components/CreatePlaylistUI.tsx"
+      ],
+      "ext_discover.interfaces.components.DragDropLayerGroup": [
+        "./packages/discover-extension/ext_discover/interfaces/components/DragDropLayerGroup.tsx"
+      ],
+      "ext_discover.interfaces.components.DragDropWithGrouping": [
+        "./packages/discover-extension/ext_discover/interfaces/components/DragDropWithGrouping.tsx"
+      ],
+      "ext_discover.interfaces.components.ProjectMode": [
+        "./packages/discover-extension/ext_discover/interfaces/components/ProjectMode.tsx"
+      ],
+      "ext_discover.interfaces.components.ShowPlayingContentAnnotation": [
+        "./packages/discover-extension/ext_discover/interfaces/components/ShowPlayingContentAnnotation.tsx"
+      ],
+      "ext_discover.interfaces.components.EditRichText": [
+        "./packages/discover-extension/ext_discover/interfaces/components/EditRichText.tsx"
+      ],
+      "ext_discover.interfaces.components.LinkingItems": [
+        "./packages/discover-extension/ext_discover/interfaces/components/LinkingItems.tsx"
+      ],
+      "ext_discover.interfaces.components.ScreenRecordingStopButton": [
+        "./packages/discover-extension/ext_discover/interfaces/components/ScreenRecordingStopButton.tsx"
+      ],
+      "ext_discover.interfaces.components.EditAttachment": [
+        "./packages/discover-extension/ext_discover/interfaces/components/EditAttachment.tsx"
+      ],
+      "ext_discover.interfaces.components.AddAnotationUI": [
+        "./packages/discover-extension/ext_discover/interfaces/components/AddAnotationUI.tsx"
+      ],
+      "ext_discover.interfaces.components.CustomAnnotationTextEditor": [
+        "./packages/discover-extension/ext_discover/interfaces/components/CustomAnnotationTextEditor.tsx"
+      ],
+      "ext_discover.interfaces.components.AnnotationInnerDiv": [
+        "./packages/discover-extension/ext_discover/interfaces/components/AnnotationInnerDiv.tsx"
+      ],
+      "ext_discover.interfaces.components.AddToPlaylist": [
+        "./packages/discover-extension/ext_discover/interfaces/components/AddToPlaylist.tsx"
+      ],
+      "ext_discover.interfaces.components.Collections": [
+        "./packages/discover-extension/ext_discover/interfaces/components/Collections.tsx"
+      ],
+      "ext_discover.interfaces.components.MergeModal": [
+        "./packages/discover-extension/ext_discover/interfaces/components/MergeModal.tsx"
+      ],
+      "ext_discover.interfaces.components.ConfirmLinkModal": [
+        "./packages/discover-extension/ext_discover/interfaces/components/ConfirmLinkModal.tsx"
+      ],
+      "ext_discover.interfaces.components.RenderIcon": [
+        "./packages/discover-extension/ext_discover/interfaces/components/RenderIcon.tsx"
+      ],
+      "ext_discover.interfaces.components.SelectionOptions": [
+        "./packages/discover-extension/ext_discover/interfaces/components/SelectionOptions.tsx"
+      ],
+      "ext_discover.interfaces.components.PlaylistContentRenderer": [
+        "./packages/discover-extension/ext_discover/interfaces/components/PlaylistContentRenderer.tsx"
+      ],
+      "ext_discover.interfaces.components.AddNewPlaylist": [
+        "./packages/discover-extension/ext_discover/interfaces/components/AddNewPlaylist.tsx"
+      ],
+      "ext_discover.interfaces.components.TogglePlaylistHeight": [
+        "./packages/discover-extension/ext_discover/interfaces/components/TogglePlaylistHeight.tsx"
+      ],
+      "ext_discover.interfaces.components.Tabs": [
+        "./packages/discover-extension/ext_discover/interfaces/components/Tabs.tsx"
+      ],
+      "ext_discover.interfaces.components.Bookmarks": [
+        "./packages/discover-extension/ext_discover/interfaces/components/Bookmarks.tsx"
+      ],
+      "ext_discover.interfaces.components.History": [
+        "./packages/discover-extension/ext_discover/interfaces/components/History.tsx"
+      ],
+      "ext_discover.interfaces.components.ShowPersonVideoOverlay": [
+        "./packages/discover-extension/ext_discover/interfaces/components/ShowPersonVideoOverlay.tsx"
+      ],
+      "ext_discover.interfaces.components.GetLabel": [
+        "./packages/discover-extension/ext_discover/interfaces/components/GetLabel.tsx"
+      ],
+      "ext_discover.interfaces.components.OnAddDateModal": [
+        "./packages/discover-extension/ext_discover/interfaces/components/OnAddDateModal.tsx"
+      ],
+      "ext_discover.interfaces.components.Overlay": [
+        "./packages/discover-extension/ext_discover/interfaces/components/Overlay.tsx"
+      ],
+      "ext_discover.interfaces.components.AttachLink": [
+        "./packages/discover-extension/ext_discover/interfaces/components/AttachLink.tsx"
+      ],
+      "ext_discover.interfaces.components.RecordVoice": [
+        "./packages/discover-extension/ext_discover/interfaces/components/RecordVoice.tsx"
+      ],
+      "ext_discover.interfaces.components.VideoRecordUI": [
+        "./packages/discover-extension/ext_discover/interfaces/components/VideoRecordUI.tsx"
+      ],
+      "ext_discover.interfaces.components.AudioPlayer": [
+        "./packages/discover-extension/ext_discover/interfaces/components/AudioPlayer.tsx"
+      ],
+      "ext_discover.interfaces.components.VideoPlayer": [
+        "./packages/discover-extension/ext_discover/interfaces/components/VideoPlayer.tsx"
+      ],
+      "ext_discover.interfaces.components.VideoPlayerFloating": [
+        "./packages/discover-extension/ext_discover/interfaces/components/VideoPlayerFloating.tsx"
+      ],
+      "ext_discover.interfaces.components.DynamicCircle": [
+        "./packages/discover-extension/ext_discover/interfaces/components/DynamicCircle.tsx"
+      ],
+      "ext_discover.interfaces.components.AnnotationListFilters": [
+        "./packages/discover-extension/ext_discover/interfaces/components/AnnotationListFilters.tsx"
+      ],
+      "ext_discover.interfaces.components.RenderHTMLContent": [
+        "./packages/discover-extension/ext_discover/interfaces/components/RenderHTMLContent.tsx"
+      ],
+      "ext_discover.interfaces.components.ConfirmationModal": [
+        "./packages/discover-extension/ext_discover/interfaces/components/ConfirmationModal.tsx"
+      ],
+      "ext_discover.interfaces.components.AttachmentLinkItem": [
+        "./packages/discover-extension/ext_discover/interfaces/components/AttachmentLinkItem.tsx"
+      ],
+      "ext_discover.interfaces.components.AnnotationList": [
+        "./packages/discover-extension/ext_discover/interfaces/components/AnnotationList.tsx"
+      ],
+      "ext_discover.interfaces.components.AnnotationHeading": [
+        "./packages/discover-extension/ext_discover/interfaces/components/AnnotationHeading.tsx"
+      ],
+      "ext_discover.interfaces.components.AnnotationDataMapper": [
+        "./packages/discover-extension/ext_discover/interfaces/components/AnnotationDataMapper.tsx"
+      ],
+      "ext_discover.interfaces.contexts.AnnotationContext": [
+        "./packages/discover-extension/ext_discover/interfaces/contexts/AnnotationContext.tsx"
+      ],
+      "ext_discover.interfaces.contexts.PlaylistEditContext": [
+        "./packages/discover-extension/ext_discover/interfaces/contexts/PlaylistEditContext.tsx"
+      ],
+      "ext_discover.interfaces.contexts.PlaylistGroupsContext": [
+        "./packages/discover-extension/ext_discover/interfaces/contexts/PlaylistGroupsContext.tsx"
+      ],
+      "ext_discover.interfaces.contexts.PlaylistShellContext": [
+        "./packages/discover-extension/ext_discover/interfaces/contexts/PlaylistShellContext.tsx"
+      ],
+      "ext_discover.interfaces.contexts.ProjectContext": [
+        "./packages/discover-extension/ext_discover/interfaces/contexts/ProjectContext.tsx"
+      ],
+      "ext_discover.interfaces.helper.cursorFollow": [
+        "./packages/discover-extension/ext_discover/interfaces/helper/cursorFollow.tsx"
+      ],
+      "ext_discover.interfaces.helper.displayOverlay": [
+        "./packages/discover-extension/ext_discover/interfaces/helper/displayOverlay.tsx"
+      ],
+      "ext_discover.interfaces.helper.openMergeModal": [
+        "./packages/discover-extension/ext_discover/interfaces/helper/openMergeModal.tsx"
+      ],
+      "ext_discover.interfaces.helper.openPlaylistLinkModal": [
+        "./packages/discover-extension/ext_discover/interfaces/helper/openPlaylistLinkModal.tsx"
+      ],
+      "ext_discover.interfaces.helper.openSharePlaylistModal": [
+        "./packages/discover-extension/ext_discover/interfaces/helper/openSharePlaylistModal.tsx"
+      ],
+      "ext_discover.interfaces.helper.renderLinkContent": [
+        "./packages/discover-extension/ext_discover/interfaces/helper/renderLinkContent.tsx"
+      ],
+      "ext_discover.interfaces.helper.setupNowBarControlApp": [
+        "./packages/discover-extension/ext_discover/interfaces/helper/setupNowBarControlApp.tsx"
+      ],
+      "ext_discover.interfaces.helper.activeLinkItemFloat": [
+        "./packages/discover-extension/ext_discover/interfaces/helper/activeLinkItemFloat.tsx"
+      ],
+      "ext_discover.interfaces.helper.applyMobileHeaderBar": [
+        "./packages/discover-extension/ext_discover/interfaces/helper/applyMobileHeaderBar.tsx"
+      ],
+      "ext_discover.interfaces.helper.showQuoteText": [
+        "./packages/discover-extension/ext_discover/interfaces/helper/showQuoteText.tsx"
+      ],
+      "ext_discover.interfaces.managers.BookmarksManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/BookmarksManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.HistoryManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/HistoryManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.ShowPersonVideoOverlayManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/ShowPersonVideoOverlayManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.SharePlaylistModalManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/SharePlaylistModalManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.GetLabelManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/GetLabelManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.OnAddDateModalManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/OnAddDateModalManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.AnnotationManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/AnnotationManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.CursorFollowManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/CursorFollowManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.DiscoverManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/DiscoverManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.DragDropLayerGroupManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/DragDropLayerGroupManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.DragDropWithGroupingManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/DragDropWithGroupingManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.OverlayRefManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/OverlayRefManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.PlaylistContainerManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/PlaylistContainerManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.PlaylistListManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/PlaylistListManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.PlaylistRowItemManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/PlaylistRowItemManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.PlaylistLinkModalManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/PlaylistLinkModalManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.PlaylistManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/PlaylistManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.AddAnotationUIManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/AddAnotationUIManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.CustomAnnotationTextEditorManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/CustomAnnotationTextEditorManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.AnnotationInnerDivManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/AnnotationInnerDivManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.CreatePlaylistUIManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/CreatePlaylistUIManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.ProjectModeManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/ProjectModeManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.ProjectContextManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/ProjectContextManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.ShowPlayingContentAnnotationManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/ShowPlayingContentAnnotationManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.EditRichTextManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/EditRichTextManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.AddToPlaylistManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/AddToPlaylistManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.PlaylistEditManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/PlaylistEditManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.PlaylistGroupsManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/PlaylistGroupsManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.PlaylistShellManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/PlaylistShellManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.PlaylistPlayingManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/PlaylistPlayingManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.PlaylistPlayerControlsManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/PlaylistPlayerControlsManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.MergeModalManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/MergeModalManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.MobilePlaylistHeaderBarManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/MobilePlaylistHeaderBarManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.ScreenRecordingStopButtonManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/ScreenRecordingStopButtonManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.PlayingPlaylistManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/PlayingPlaylistManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.RenderIconManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/RenderIconManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.AddNewPlaylistManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/AddNewPlaylistManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.AttachLinkManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/AttachLinkManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.AttachLinkSubComponentManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/AttachLinkSubComponentManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.TabsManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/TabsManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.RecordVoiceManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/RecordVoiceManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.VideoRecordUIManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/VideoRecordUIManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.AudioPlayerManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/AudioPlayerManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.VideoPlayerManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/VideoPlayerManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.VideoPlayerFloatingManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/VideoPlayerFloatingManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.SearchAndAddManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/SearchAndAddManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.AnnotationListFiltersManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/AnnotationListFiltersManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.RenderHTMLContentManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/RenderHTMLContentManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.AttachmentLinkItemManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/AttachmentLinkItemManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.AnnotationListManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/AnnotationListManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.AnnotationHeadingManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/AnnotationHeadingManager.tsx"
+      ],
+      "ext_discover.managers.BookmarksManager": [
+        "./packages/discover-extension/ext_discover/managers/BookmarksManager.tsx"
+      ],
+      "ext_discover.managers.HistoryManager": [
+        "./packages/discover-extension/ext_discover/managers/HistoryManager.tsx"
+      ],
+      "ext_discover.managers.ShowPersonVideoOverlayManager": [
+        "./packages/discover-extension/ext_discover/managers/ShowPersonVideoOverlayManager.tsx"
+      ],
+      "ext_discover.managers.SharePlaylistModalManager": [
+        "./packages/discover-extension/ext_discover/managers/SharePlaylistModalManager.tsx"
+      ],
+      "ext_discover.managers.GetLabelManager": [
+        "./packages/discover-extension/ext_discover/managers/GetLabelManager.tsx"
+      ],
+      "ext_discover.managers.OnAddDateModalManager": [
+        "./packages/discover-extension/ext_discover/managers/OnAddDateModalManager.tsx"
+      ],
+      "ext_discover.managers.AnnotationManager": [
+        "./packages/discover-extension/ext_discover/managers/AnnotationManager.tsx"
+      ],
+      "ext_discover.managers.DiscoverManager": [
+        "./packages/discover-extension/ext_discover/managers/DiscoverManager.tsx"
+      ],
+      "ext_discover.managers.DragDropLayerGroupManager": [
+        "./packages/discover-extension/ext_discover/managers/DragDropLayerGroupManager.tsx"
+      ],
+      "ext_discover.managers.DragDropWithGroupingManager": [
+        "./packages/discover-extension/ext_discover/managers/DragDropWithGroupingManager.tsx"
+      ],
+      "ext_discover.managers.PlaylistContainerManager": [
+        "./packages/discover-extension/ext_discover/managers/PlaylistContainerManager.tsx"
+      ],
+      "ext_discover.managers.PlaylistListManager": [
+        "./packages/discover-extension/ext_discover/managers/PlaylistListManager.tsx"
+      ],
+      "ext_discover.managers.PlaylistRowItemManager": [
+        "./packages/discover-extension/ext_discover/managers/PlaylistRowItemManager.tsx"
+      ],
+      "ext_discover.managers.PlaylistLinkModalManager": [
+        "./packages/discover-extension/ext_discover/managers/PlaylistLinkModalManager.tsx"
+      ],
+      "ext_discover.managers.PlaylistManager": [
+        "./packages/discover-extension/ext_discover/managers/PlaylistManager.tsx"
+      ],
+      "ext_discover.managers.AddAnotationUIManager": [
+        "./packages/discover-extension/ext_discover/managers/AddAnotationUIManager.tsx"
+      ],
+      "ext_discover.managers.CustomAnnotationTextEditorManager": [
+        "./packages/discover-extension/ext_discover/managers/CustomAnnotationTextEditorManager.tsx"
+      ],
+      "ext_discover.managers.AnnotationInnerDivManager": [
+        "./packages/discover-extension/ext_discover/managers/AnnotationInnerDivManager.tsx"
+      ],
+      "ext_discover.managers.CreatePlaylistUIManager": [
+        "./packages/discover-extension/ext_discover/managers/CreatePlaylistUIManager.tsx"
+      ],
+      "ext_discover.managers.ProjectModeManager": [
+        "./packages/discover-extension/ext_discover/managers/ProjectModeManager.tsx"
+      ],
+      "ext_discover.managers.ProjectContextManager": [
+        "./packages/discover-extension/ext_discover/managers/ProjectContextManager.tsx"
+      ],
+      "ext_discover.managers.ShowPlayingContentAnnotationManager": [
+        "./packages/discover-extension/ext_discover/managers/ShowPlayingContentAnnotationManager.tsx"
+      ],
+      "ext_discover.managers.EditRichTextManager": [
+        "./packages/discover-extension/ext_discover/managers/EditRichTextManager.tsx"
+      ],
+      "ext_discover.managers.AddToPlaylistManager": [
+        "./packages/discover-extension/ext_discover/managers/AddToPlaylistManager.tsx"
+      ],
+      "ext_discover.managers.PlaylistEditManager": [
+        "./packages/discover-extension/ext_discover/managers/PlaylistEditManager.tsx"
+      ],
+      "ext_discover.managers.PlaylistGroupsManager": [
+        "./packages/discover-extension/ext_discover/managers/PlaylistGroupsManager.tsx"
+      ],
+      "ext_discover.managers.PlaylistShellManager": [
+        "./packages/discover-extension/ext_discover/managers/PlaylistShellManager.tsx"
+      ],
+      "ext_discover.managers.PlaylistPlayerControlsManager": [
+        "./packages/discover-extension/ext_discover/managers/PlaylistPlayerControlsManager.tsx"
+      ],
+      "ext_discover.managers.MergeModalManager": [
+        "./packages/discover-extension/ext_discover/managers/MergeModalManager.tsx"
+      ],
+      "ext_discover.managers.MobilePlaylistHeaderBarManager": [
+        "./packages/discover-extension/ext_discover/managers/MobilePlaylistHeaderBarManager.tsx"
+      ],
+      "ext_discover.managers.CursorFollowManager": [
+        "./packages/discover-extension/ext_discover/managers/CursorFollowManager.tsx"
+      ],
+      "ext_discover.managers.OverlayRefManager": [
+        "./packages/discover-extension/ext_discover/managers/OverlayRefManager.tsx"
+      ],
+      "ext_discover.managers.ScreenRecordingStopButtonManager": [
+        "./packages/discover-extension/ext_discover/managers/ScreenRecordingStopButtonManager.tsx"
+      ],
+      "ext_discover.managers.PlayingPlaylistManager": [
+        "./packages/discover-extension/ext_discover/managers/PlayingPlaylistManager.tsx"
+      ],
+      "ext_discover.managers.PlaylistAppManager": [
+        "./packages/discover-extension/ext_discover/managers/PlaylistAppManager.tsx"
+      ],
+      "ext_discover.managers.createPlaylistManagers": [
+        "./packages/discover-extension/ext_discover/managers/createPlaylistManagers.tsx"
+      ],
+      "ext_discover.managers.RenderIconManager": [
+        "./packages/discover-extension/ext_discover/managers/RenderIconManager.tsx"
+      ],
+      "ext_discover.managers.AddNewPlaylistManager": [
+        "./packages/discover-extension/ext_discover/managers/AddNewPlaylistManager.tsx"
+      ],
+      "ext_discover.managers.AttachLinkManager": [
+        "./packages/discover-extension/ext_discover/managers/AttachLinkManager.tsx"
+      ],
+      "ext_discover.managers.AttachLinkSubComponentManager": [
+        "./packages/discover-extension/ext_discover/managers/AttachLinkSubComponentManager.tsx"
+      ],
+      "ext_discover.managers.TabsManager": [
+        "./packages/discover-extension/ext_discover/managers/TabsManager.tsx"
+      ],
+      "ext_discover.managers.RecordVoiceManager": [
+        "./packages/discover-extension/ext_discover/managers/RecordVoiceManager.tsx"
+      ],
+      "ext_discover.managers.VideoRecordUIManager": [
+        "./packages/discover-extension/ext_discover/managers/VideoRecordUIManager.tsx"
+      ],
+      "ext_discover.managers.AudioPlayerManager": [
+        "./packages/discover-extension/ext_discover/managers/AudioPlayerManager.tsx"
+      ],
+      "ext_discover.managers.VideoPlayerManager": [
+        "./packages/discover-extension/ext_discover/managers/VideoPlayerManager.tsx"
+      ],
+      "ext_discover.managers.VideoPlayerFloatingManager": [
+        "./packages/discover-extension/ext_discover/managers/VideoPlayerFloatingManager.tsx"
+      ],
+      "ext_discover.managers.SearchAndAddManager": [
+        "./packages/discover-extension/ext_discover/managers/SearchAndAddManager.tsx"
+      ],
+      "ext_discover.managers.AnnotationListFiltersManager": [
+        "./packages/discover-extension/ext_discover/managers/AnnotationListFiltersManager.tsx"
+      ],
+      "ext_discover.managers.RenderHTMLContentManager": [
+        "./packages/discover-extension/ext_discover/managers/RenderHTMLContentManager.tsx"
+      ],
+      "ext_discover.managers.AttachmentLinkItemManager": [
+        "./packages/discover-extension/ext_discover/managers/AttachmentLinkItemManager.tsx"
+      ],
+      "ext_discover.managers.AnnotationListManager": [
+        "./packages/discover-extension/ext_discover/managers/AnnotationListManager.tsx"
+      ],
+      "ext_discover.managers.AnnotationHeadingManager": [
+        "./packages/discover-extension/ext_discover/managers/AnnotationHeadingManager.tsx"
+      ],
+      "ext_discover.interfaces.managers.PlaylistAppManager": [
+        "./packages/discover-extension/ext_discover/interfaces/managers/PlaylistAppManager.tsx"
+      ],
+      "ext_discover.models.addAnotationUIPreviewIcons": [
+        "./packages/discover-extension/ext_discover/models/addAnotationUIPreviewIcons.tsx"
+      ],
+      "ext_discover.models.playlist": [
+        "./packages/discover-extension/ext_discover/models/playlist.tsx"
+      ],
+      "ext_discover.models.playlistConstants": [
+        "./packages/discover-extension/ext_discover/models/playlistConstants.tsx"
+      ],
+      "ext_discover.models.discover": [
+        "./packages/discover-extension/ext_discover/models/discover.tsx"
+      ],
+      "ext_discover.models.playlistList": [
+        "./packages/discover-extension/ext_discover/models/playlistList.tsx"
+      ],
+      "ext_discover.models.playlistRowItem": [
+        "./packages/discover-extension/ext_discover/models/playlistRowItem.tsx"
+      ],
+      "ext_discover.models.projectModeMenuItems": [
+        "./packages/discover-extension/ext_discover/models/projectModeMenuItems.tsx"
+      ],
+      "ext_discover.models.addNewPlaylist": [
+        "./packages/discover-extension/ext_discover/models/addNewPlaylist.tsx"
+      ],
+      "ext_discover.models.attachLink": [
+        "./packages/discover-extension/ext_discover/models/attachLink.tsx"
+      ],
+      "ext_discover.models.tabs": [
+        "./packages/discover-extension/ext_discover/models/tabs.tsx"
+      ],
+      "ext_discover.models.recordVoice": [
+        "./packages/discover-extension/ext_discover/models/recordVoice.tsx"
+      ],
+      "ext_discover.models.customAnnotationTextEditor": [
+        "./packages/discover-extension/ext_discover/models/customAnnotationTextEditor.tsx"
+      ],
+      "ext_discover.models.videoRecordUI": [
+        "./packages/discover-extension/ext_discover/models/videoRecordUI.tsx"
+      ],
+      "ext_discover.models.audioPlayer": [
+        "./packages/discover-extension/ext_discover/models/audioPlayer.tsx"
+      ],
+      "ext_discover.models.annotationList": [
+        "./packages/discover-extension/ext_discover/models/annotationList.tsx"
       ]
     },
     "noImplicitAny": true,

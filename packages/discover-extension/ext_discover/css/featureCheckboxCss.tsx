@@ -1,0 +1,21 @@
+export const featureCheckboxCss = `.checkbox .checked {
+  color: var(--spaceSelection);
+}
+
+.checkbox {
+  color: #5f5e5c;
+  cursor: pointer;
+}
+
+.checkbox span {
+  font-size: 24px !important;
+}
+
+.checkbox.small span {
+  font-size: 18px !important;
+}
+
+.checkbox.small {
+  height: 1.125rem;
+}
+`;

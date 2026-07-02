@@ -1,0 +1,75 @@
+import type { PlaylistContentRendererProps } from "ext_discover.interfaces.components.PlaylistContentRenderer";
+
+const G = globalThis as Record<string, any>;
+
+export function PlaylistContentRenderer({
+  type,
+  content,
+  link,
+  videoId,
+}: PlaylistContentRendererProps) {
+  switch (type) {
+    case "a":
+      return <a href={"#"}> {content} </a>;
+    case "img":
+      return <img src={link} alt="content" />;
+    case "para":
+      return (
+        <p>
+          <b>"" THIS IS DEMO TEXT "</b> {content}
+        </p>
+      );
+    case "iframe":
+      return (
+        <>
+          <iframe
+            className="item-need-full-height"
+            style={{ height: "100%" }}
+            src={link}
+            width="100%"
+            height="100%"
+            title={content}
+          ></iframe>
+          <a href={link} target="_blank">
+            {" "}
+            {content}{" "}
+          </a>
+        </>
+      );
+    case "video":
+    case "video-recording":
+      return (
+        <div style={{ display: "grid", placeItems: "center", height: "100%" }}>
+          <video
+            autoplay
+            className="item-need-full-height"
+            width="auto"
+            style={{ margin: "auto", height: "100%" }}
+            height="100%"
+            src={link}
+            controls
+          />
+        </div>
+      );
+    case "audio":
+      return (
+        <audio style={{ height: "60px" }} controls src={link}>
+          {" "}
+        </audio>
+      );
+    case "youtube":
+      return (
+        <iframe
+          className="item-need-full-height"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share;fu"
+          referrerpolicy="strict-origin-when-cross-origin"
+          src={`${G.CONSTANTS.YT_PREFIX}/${videoId}`}
+          style={{ borderRadius: "16px", width: "100%", height: "100%" }}
+          title={content}
+          allowFullScreen
+        />
+      );
+    default:
+      return <p>{content}</p>;
+  }
+}

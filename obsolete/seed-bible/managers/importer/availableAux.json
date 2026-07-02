@@ -1,6 +1,7 @@
 [
-    "ext_canvas",
-    "ext_calendar",
-    "ext_geoImporter",
-    "ext_interactiveBible"
+  "ext_canvas",
+  "ext_calendar",
+  "ext_geoImporter",
+  "ext_interactiveBible",
+  "ext_discover"
 ]

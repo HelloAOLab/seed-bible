@@ -1,0 +1,131 @@
+{
+  "id": "discover-extension",
+  "dependencies": [],
+  "translations": {
+    "en": {
+      "title": "Discover",
+      "description": "Create and manage playlists for Seed Bible.",
+      "below-reader-tool": "Discover"
+    },
+    "es": {
+      "title": "Descubrir",
+      "description": "Crea y administra listas de reproducción para Seed Bible.",
+      "below-reader-tool": "Descubrir"
+    },
+    "am": {
+      "title": "አግኝ",
+      "description": "ለ Seed Bible ዝርዝሮችን ፍጠር እና አስተዳድር።",
+      "below-reader-tool": "አግኝ"
+    },
+    "ar": {
+      "title": "اكتشف",
+      "description": "أنشئ قوائم تشغيل وأدرها لـ Seed Bible.",
+      "below-reader-tool": "اكتشف"
+    },
+    "bn": {
+      "title": "আবিষ্কার করুন",
+      "description": "সীড বাইবেলের জন্য প্লেলিস্ট তৈরি ও পরিচালনা করুন।",
+      "below-reader-tool": "আবিষ্কার করুন"
+    },
+    "fa": {
+      "title": "کشف",
+      "description": "فهرست‌های پخش را برای Seed Bible بسازید و مدیریت کنید.",
+      "below-reader-tool": "کشف"
+    },
+    "fr": {
+      "title": "Découvrir",
+      "description": "Créez et gérez des playlists pour Seed Bible.",
+      "below-reader-tool": "Découvrir"
+    },
+    "hi": {
+      "title": "खोजें",
+      "description": "सीड बाइबल के लिए प्लेलिस्ट बनाएं और प्रबंधित करें।",
+      "below-reader-tool": "खोजें"
+    },
+    "id": {
+      "title": "Temukan",
+      "description": "Buat dan kelola playlist untuk Seed Bible.",
+      "below-reader-tool": "Temukan"
+    },
+    "ja": {
+      "title": "発見",
+      "description": "Seed Bible のプレイリストを作成・管理します。",
+      "below-reader-tool": "発見"
+    },
+    "ko": {
+      "title": "발견",
+      "description": "Seed Bible용 재생 목록을 만들고 관리하세요.",
+      "below-reader-tool": "발견"
+    },
+    "mn": {
+      "title": "Нээ",
+      "description": "Seed Bible-д тоглуулах жагсаалт үүсгэж, удирдана.",
+      "below-reader-tool": "Нээ"
+    },
+    "ne": {
+      "title": "पत्ता लगाउनुहोस्",
+      "description": "सिड बाइबलका लागि प्लेलिस्ट सिर्जना र व्यवस्थापन गर्नुहोस्।",
+      "below-reader-tool": "पत्ता लगाउनुहोस्"
+    },
+    "ps": {
+      "title": "موندل",
+      "description": "د Seed Bible لپاره پلی لیستونه جوړ او اداره کړئ.",
+      "below-reader-tool": "موندل"
+    },
+    "pt": {
+      "title": "Descobrir",
+      "description": "Crie e gerencie playlists para o Seed Bible.",
+      "below-reader-tool": "Descobrir"
+    },
+    "ru": {
+      "title": "Открыть",
+      "description": "Создавайте и управляйте плейлистами для Seed Bible.",
+      "below-reader-tool": "Открыть"
+    },
+    "sw": {
+      "title": "Gundua",
+      "description": "Unda na simamia orodha za kucheza kwa Seed Bible.",
+      "below-reader-tool": "Gundua"
+    },
+    "ti": {
+      "title": "ርኸብ",
+      "description": "ን Seed Bible ዝርዝራት ፍጠርን ኣመሓድርን።",
+      "below-reader-tool": "ርኸብ"
+    },
+    "tr": {
+      "title": "Keşfet",
+      "description": "Seed Bible için çalma listeleri oluşturun ve yönetin.",
+      "below-reader-tool": "Keşfet"
+    },
+    "ug": {
+      "title": "بايقاش",
+      "description": "Seed Bible ئۈچün قويۇش تىزىملىكىنى قۇرۇڭ ۋە باشقۇرۇڭ.",
+      "below-reader-tool": "بايقاش"
+    },
+    "uk": {
+      "title": "Відкрити",
+      "description": "Створюйте та керуйте плейлистами для Seed Bible.",
+      "below-reader-tool": "Відкрити"
+    },
+    "ur": {
+      "title": "دریافت کریں",
+      "description": "سیڈ بائبل کے لیے پلے لسٹ بنائیں اور منظم کریں۔",
+      "below-reader-tool": "دریافت کریں"
+    },
+    "vi": {
+      "title": "Khám phá",
+      "description": "Tạo và quản lý danh sách phát cho Seed Bible.",
+      "below-reader-tool": "Khám phá"
+    },
+    "zh": {
+      "title": "发现",
+      "description": "为 Seed Bible 创建和管理播放列表。",
+      "below-reader-tool": "发现"
+    },
+    "ind": {
+      "title": "Temukan",
+      "description": "Buat dan kelola playlist untuk Seed Bible.",
+      "below-reader-tool": "Temukan"
+    }
+  }
+}

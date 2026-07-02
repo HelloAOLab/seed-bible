@@ -1,0 +1,37 @@
+---
+description: Extension refactor architecture — interfaces, signal managers, components, hooks, contexts
+globs: packages/**,obsolete/**
+alwaysApply: false
+---
+
+# Extension refactor architecture
+
+When refactoring extension code under `obsolete/` into `packages/`:
+
+- **interfaces/** — contracts only (`{Name}Manager`, `{Name}ContextType`, `{Name}Props`); split into `managers/`, `contexts/`, `components/` subfolders
+- **managers/** — `create{Name}Manager()` using `@preact/signals` (`signal`, `effect`); state fields are `Signal<T>`; no `useState`, no JSX
+- **hooks/** — pure functions (convert, format, parse); no React hooks or JSX
+- **contexts/** — thin Provider + `useXContext`; exposes manager to the tree
+- **components/** — TSX markup only; receives managers via props and reads signals via `.value` — **no `useState`, `useEffect`, or `useLayoutEffect`**
+- **css/** — stylesheet source `.css` files plus `*Css.tsx` modules that `export const …Css` strings for inline `<style>{…}</style>`
+- **models/** — domain data types and enums (no React)
+
+## Child components
+
+Import migrated children via dot-path aliases (e.g. `import { Discover } from "ext_discover.components.Discover"`), not `getBot` / `await thisBot.Discover()`.
+
+**Until a child component exists under `ext_discover/components/`, comment out its import and wiring** in the parent manager or app entry. Uncomment only after that component is migrated and registered in `tsconfig.json` paths. One child component per refactor iteration.
+
+Target package: `packages/discover-extension/ext_discover/` (import prefix: `ext_discover`).
+
+Do **not** scaffold under `packages/Playlist/` or use a `playlist.Playlist` import prefix — Playlist obsolete code migrates into `ext_discover`.
+
+Imports: `{extensionRoot}.{folder}.{subfolder}.{FileName}` (e.g. `ext_discover.managers.PlaylistShellManager`).
+
+Before moving any state, list it in a table and get user confirmation. One source file per refactor iteration.
+
+**Never edit `obsolete/` source files.** Implement only under `packages/discover-extension/ext_discover/`. When a file is fully verified, rename the obsolete copy to `done-{originalName}` in the same directory (do not delete) — that is the only permitted change in `obsolete/`.
+
+Every manager, context, and component must have a matching interface file before implementation.
+
+For the full workflow, use the `refactor-extension` skill.

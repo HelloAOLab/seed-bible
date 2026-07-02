@@ -1,0 +1,86 @@
+export const featureButtonCss = `.custom-button {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--pageTextColor, #333333);
+  font-weight: 700;
+  text-align: center;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease-in-out;
+  cursor: pointer;
+  background-color: transparent;
+  color: black;
+  font-size: 16px;
+}
+
+.custom-button.secondaryAlt.create-button {
+  border-radius: 2rem !important;
+  padding: 4px 8px !important;
+  font-size: 12px !important;
+  margin-right: 14px !important;
+}
+
+.custom-button .material-symbols-outlined {
+  font-size: 24px;
+}
+
+.custom-button.secondaryAlt {
+  color: var(--primaryColor, #ffffff);
+  border-radius: 4px !important;
+  /* max-width: fit-content !important; */
+  background-color: var(--addButtonIcon, #e07b4c);
+  font-family: "Satoshi", system-ui, sans-serif;
+  text-align: center;
+  font-size: 14px !important;
+  font-weight: 400 !important;
+  padding: 10px 24px !important;
+  line-height: 16.94px !important;
+  min-width: 0 !important;
+  display: flex;
+  justify-content: center;
+}
+
+.custom-button.secondaryAlt.outline {
+  background-color: transparent !important;
+  color: var(--primaryButtonFill, #e07b4c) !important;
+}
+
+.custom-button.secondaryAlt.secondaryAltAlt.outline {
+  border: 1px solid var(--tertiaryButtonColor, #333333) !important;
+  background-color: transparent !important;
+  color: var(--tertiaryButtonColor, #333333) !important;
+}
+
+.custom-button.secondaryAlt.secondaryAltAlt {
+  background-color: transparent;
+  color: var(--pageTextColor, #333333);
+  border: 1px solid var(--secondaryButtonBorder, #d2691e) !important;
+}
+
+.custom-button .loader {
+  margin-left: 0.5rem;
+}
+
+.custom-button.secondary {
+  background-color: var(--primaryButton, #e07b4c);
+  color: var(--primaryButtonColor, #ffffff);
+  width: max-content;
+  padding: 10px 24px;
+}
+
+.custom-button:disabled {
+  background-color: lightgray !important;
+}
+
+.custom-button.small {
+  padding: 6px !important;
+  font-size: 12px !important;
+}
+
+/* .custom-button:hover {
+    transform: translateY(-1.5px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+} */
+`;

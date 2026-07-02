@@ -1,0 +1,25 @@
+export const featureSelectCss = `.select-box {
+    display: flex;
+    justify-content: space-between;
+    margin: 9px 0;
+}
+
+.select-box.secondary {
+    margin: 0;
+}
+
+.select-box.secondary select {
+    border: 2px solid #ced4da;
+    border-radius: 6px;
+    background-color: var(--pageBackground);
+    padding: 12px 0;
+}
+
+.select-box p {
+    margin: 0;
+    font-weight: 700;
+}
+
+.select-box select {
+    padding: 2px 0;
+}`;

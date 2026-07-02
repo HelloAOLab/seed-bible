@@ -1,0 +1,1 @@
+export const RECORDING_LIMIT_OF_LINES = 45;
