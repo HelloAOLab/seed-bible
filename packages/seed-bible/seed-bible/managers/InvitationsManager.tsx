@@ -3,11 +3,9 @@ import {
   signal,
   type Signal,
 } from "@preact/signals";
-import type {
-  LoginManager,
-  UserProfile,
-} from "seed-bible.managers.LoginManager";
-import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
+import type { LoginManager, UserProfile } from "../managers/LoginManager";
+import type { BibleReadingSession } from "../managers/SessionsManager";
+import type { CasualOSManager } from "./OsManager";
 
 /**
  * A live shared session published by another user that the current user
@@ -119,6 +117,8 @@ export type OnJoinSharedSession = (
  */
 export function createInvitationsManager(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  os: CasualOSManager,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   login: LoginManager,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onJoin: OnJoinSharedSession
@@ -150,7 +150,7 @@ export function createInvitationsManager(
 
   // const applyEntriesWithProfiles = (entries: StoredRegistryEntry[]) => {
   //   const currentUserId = login.userId.value;
-  //   const currentConnectionId = getLocalIdentity();
+  //   const currentConnectionId = os.connectionId;
   //   const filtered = entries.filter(
   //     (entry) =>
   //       // Hide own sessions — hosts don't see themselves in the list.
@@ -216,7 +216,7 @@ export function createInvitationsManager(
   //     // Seed our own connection id so entries we publish during this run
   //     // immediately pass the "is host connected" filter on other clients
   //     // after both clients open the registry.
-  //     const localId = getLocalIdentity();
+  //     const localId = os.connectionId;
   //     if (localId) liveConnectionIds.add(localId);
   //     changesSubscription = registryMap.changes.subscribe(() => {
   //       syncFromRegistry();
@@ -257,7 +257,9 @@ export function createInvitationsManager(
 
   // Kick off the registry connection immediately — discoverability doesn't
   // require the current user to be logged in.
-  // void openRegistry();
+
+  // TODO: Support invitations
+  // // void openRegistry();
 
   const publishSession = async (
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -267,7 +269,7 @@ export function createInvitationsManager(
     // if (!registryDoc || !registryMap) return;
     // // Fall back to the connection id when the user isn't logged in so
     // // anonymous hosts still publish and other clients can discover them.
-    // const hostConnectionId = getLocalIdentity();
+    // const hostConnectionId = os.connectionId;
     // const hostUserId = login.userId.value ?? hostConnectionId;
     // if (!hostUserId) return;
     // const entry: StoredRegistryEntry = {

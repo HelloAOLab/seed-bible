@@ -11,7 +11,7 @@ through the [`Tutorial`](../components/Tutorial.tsx) overlay.
 ## TL;DR
 
 ```ts
-import { tourStep } from "seed-bible.managers.TutorialManager";
+import { tourStep } from "../managers/TutorialManager";
 
 // 1. Register your tour once (e.g. when your feature/extension initializes).
 state.tutorial.registerTour("highlights", [
@@ -91,7 +91,7 @@ function MyButton({ state }: { state: SeedBibleState }) {
 ```
 
 The instance type is `TutorialManager` (exported from
-`seed-bible.managers.TutorialManager`).
+`../managers/TutorialManager`).
 
 ---
 
@@ -234,8 +234,8 @@ This is an advanced case — most features don't need it.
 ## Full example: a feature with a 2-step tour
 
 ```ts
-import { tourStep } from "seed-bible.managers.TutorialManager";
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
+import { tourStep } from "../managers/TutorialManager";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 
 export function registerHighlightTour(state: SeedBibleState) {
   state.tutorial.registerTour("highlights", [
@@ -293,7 +293,7 @@ function HighlightButton({ state }: { state: SeedBibleState }) {
 | `index` / `isLast` / `canGoBack`          | signals | Position helpers for custom UI.                                |
 | `completed` / `optedOut` / `featuresSeen` | signals | Onboarding done / opted out / per-tour seen map.               |
 
-Helpers (exported from `seed-bible.managers.TutorialManager`):
+Helpers (exported from `../managers/TutorialManager`):
 
 - `tourStep(config)` → `TutorialStep`
 - types: `TutorialStep`, `TutorialPlacement`, `TutorialManager`

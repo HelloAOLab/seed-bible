@@ -1,22 +1,23 @@
-import { batch, useComputed, useSignal } from "@preact/signals";
-import type { SeedBibleState } from "seed-bible.managers.SeedBibleStateManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
-import { translateTitle } from "seed-bible.components.Utils";
-import { applyToolbarCustomization } from "seed-bible.managers.SettingsManager";
-import { highlightContainsVerse } from "seed-bible.managers.HighlightsManager";
-import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
-import type { BibleReadingState } from "seed-bible.managers.BibleReadingManager";
-import type { BibleReaderToolbarTool } from "seed-bible.managers.BibleToolsManager";
+import { useComputed, useSignal } from "@preact/signals";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import { useI18n } from "../i18n/I18nManager";
+import { translateTitle } from "../components/Utils";
+import { applyToolbarCustomization } from "../managers/SettingsManager";
+import { highlightContainsVerse } from "../managers/HighlightsManager";
+import type { BibleReadingSession } from "../managers/SessionsManager";
+import type { BibleReadingState } from "../managers/BibleReadingManager";
+import type { BibleReaderToolbarTool } from "../managers/BibleToolsManager";
 import {
   handleHorizontalListKeyNav,
   handleVerticalListKeyNav,
-} from "seed-bible.components.KeyboardNav";
-import { SeedBibleIcon } from "seed-bible.components.icons";
+} from "../components/KeyboardNav";
+import { SeedBibleIcon } from "../components/icons";
+import { useEffect, useRef } from "preact/hooks";
 import {
   SelfAvatarVisual,
   getSelfDisplayName,
   openBookmarkCategoryModal,
-} from "seed-bible.components.Tabs";
+} from "./Tabs";
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
 
@@ -213,8 +214,6 @@ function getContrastTextColor(hex: string): string {
   return yiq >= 160 ? "#333333" : "#ffffff";
 }
 
-const { useEffect, useRef } = os.appHooks;
-
 /**
  * Deterministic decoration id for a per-verse shared highlight. Using a
  * stable id means re-highlighting the same verse overwrites the previous
@@ -385,26 +384,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return null;
   }
 
-  const viewportWidth = useSignal(
-    typeof window === "undefined" ? 0 : window.innerWidth
-  );
-  const viewportHeight = useSignal(
-    typeof window === "undefined" ? 0 : window.innerHeight
-  );
-
-  useEffect(() => {
-    const onResize = () => {
-      batch(() => {
-        viewportWidth.value = window.innerWidth;
-        viewportHeight.value = window.innerHeight;
-      });
-    };
-
-    window.addEventListener("resize", onResize);
-    return () => {
-      window.removeEventListener("resize", onResize);
-    };
-  }, []);
+  const viewportWidth = props.state.app.viewportWidth;
 
   const tools = useComputed(() => {
     const resolved = toolsManager.getToolbarTools({
@@ -414,12 +394,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       tabs: tabs,
       panesManager: panes,
       window: {
-        innerWidth: viewportWidth,
-        innerHeight: viewportHeight,
+        isMobile: props.state.app.isMobile.value,
       },
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
       openChat: sidebar.openChatPanel,
+      toast: props.state.app.toast,
     });
     return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
   });
@@ -430,7 +410,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     "open-selector",
     "open-sidebar",
     "open-search",
-    "open-chat",
   ]);
 
   const moreTools = useComputed(() =>
@@ -447,12 +426,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       tabs: tabs,
       panesManager: panes,
       window: {
-        innerWidth: viewportWidth,
-        innerHeight: viewportHeight,
+        isMobile: props.state.app.isMobile.value,
       },
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
       openChat: sidebar.openChatPanel,
+      toast: props.state.app.toast,
     });
 
     const { selectionUI } = settings.settings.value;
@@ -471,7 +450,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // Align with the app-wide mobile breakpoint (`state.app.isMobile`, 768px).
   // Kept as a local computed signal so its own viewport listener continues to
   // drive re-renders even if `app.isMobile` is not consumed elsewhere.
-  const isSmallScreen = useComputed(() => viewportWidth.value <= 768);
+  const isSmallScreen = props.state.app.isMobile;
   const shouldReplaceDefaultToolbar = useComputed(
     () => isSmallScreen.value && hasVerseSelection.value
   );
@@ -738,14 +717,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           {isSmallScreen.value &&
             activeMobileTab.value === "bible" &&
             (() => {
-              const showNav = settings.settings.value.showNavArrows;
               const audio =
                 audioPlayTool.value && audioPlayTool.value.visible.value
                   ? audioPlayTool.value
                   : null;
-              const prev = showNav ? previousChapterTool.value : null;
-              const next = showNav ? nextChapterTool.value : null;
-              const selector = showNav ? openSelectorTool.value : null;
+              const prev = previousChapterTool.value;
+              const next = nextChapterTool.value;
+              const selector = openSelectorTool.value;
               if (!audio && !prev && !next && !selector) return null;
 
               const AudioIcon = audio?.icon;
@@ -866,7 +844,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     sidebar.closeSettings();
                     sidebar.closeSidebar();
                     localBottomTab.value = "today";
-                    os.toast(
+
+                    props.state.app.toast(
                       t("today-coming-soon", {
                         defaultValue: "Today screen is coming soon",
                       })
@@ -955,6 +934,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   onClick={() => {
                     isMoreMenuOpen.value = false;
                     if (isBookmarksViewOpen.value) {
+                      // Reset the bookmarks view so reopening the tabs drawer
+                      // lands on the Tabs list rather than a stale bookmarks
+                      // screen.
+                      bookmarks.closeView();
                       sidebar.closeSidebar();
                       return;
                     }
@@ -965,6 +948,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     // bookmark filter so the bookmarks section is visible.
                     sidebar.closeSettings();
                     sidebar.openSidebar();
+                    // Opened from the bottom toolbar: the mobile bookmarks
+                    // header should show a Close (X) that dismisses the
+                    // drawer, not a Back arrow to the Tabs list.
+                    bookmarks.openedFromToolbar.value = true;
                     if (!bookmarks.isFilterActive.value) {
                       bookmarks.toggleFilter();
                     }
@@ -1258,6 +1245,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 title={t("add-color", { defaultValue: "Add color" })}
               >
                 <span className="material-symbols-outlined">add</span>
+                <span className="sb-verse-toolbar-action-text">
+                  {t("add", { defaultValue: "Add" })}
+                </span>
               </button>
               <input
                 ref={colorInputRef}
@@ -1302,6 +1292,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 title={t("clear", { defaultValue: "Clear" })}
               >
                 <span className="material-symbols-outlined">ink_eraser</span>
+                <span className="sb-verse-toolbar-action-text">
+                  {t("clear", { defaultValue: "Clear" })}
+                </span>
               </button>
             </div>
           ) : (

@@ -1,24 +1,20 @@
-import { TwitchIcon } from "ext_twitchPub.host.icons";
-import { type TwitchPubState } from "ext_twitchPub.host.interface";
-const { useState, useEffect } = os.appHooks;
-import { useI18n } from "seed-bible.i18n.I18nManager";
+import { TwitchIcon } from "./icons";
+import { type TwitchPubState } from "./interface";
+import { useState } from "preact/hooks";
+import { useI18n } from "seed-bible/i18n";
 
 const TwitchSettings = (props: { state: TwitchPubState }) => {
   const { setCurrentPage, settings } = props.state;
 
   const { t } = useI18n();
 
-  const [customTimerFlag, setCustomTimerFlag] = useState<string>(
-    masks?.customTimerFlag || ""
-  );
-  const [customTimer, setCustomTimer] = useState<string | null>(
-    masks?.customTimer || null
-  );
+  const [customTimerFlag, setCustomTimerFlag] = useState<string>("");
+  const [customTimer, setCustomTimer] = useState<string | null>(null);
 
-  useEffect(() => {
-    setTagMask(thisBot, "customTimerFlag", customTimerFlag, "local");
-    setTagMask(thisBot, "customTimer", customTimer, "local");
-  }, [customTimerFlag, customTimer]);
+  // useEffect(() => {
+  //   setTagMask(thisBot, "customTimerFlag", customTimerFlag, "local");
+  //   setTagMask(thisBot, "customTimer", customTimer, "local");
+  // }, [customTimerFlag, customTimer]);
 
   return (
     <>

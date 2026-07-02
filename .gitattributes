@@ -1,0 +1,7 @@
+# Auto-resolve three-way merges of i18n translation JSON files by unioning the
+# keys from both sides. Real conflicts (same key changed to different values, or
+# update-vs-delete) are left with standard conflict markers for manual review.
+#
+# The driver itself is registered per-clone by script/setupMergeDriver.ts, which
+# runs from the `prepare` npm script. See script/mergeI18nJson.ts.
+packages/seed-bible/seed-bible/i18n/*.json merge=i18n-json

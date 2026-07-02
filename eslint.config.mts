@@ -137,6 +137,10 @@ export default defineConfig([
             "3-psalms",
             "4-psalms",
             "5-psalms",
+
+            "terms-of-service-policy",
+            "privacy-policy-policy",
+            "code-of-conduct-policy",
           ],
         },
       ],

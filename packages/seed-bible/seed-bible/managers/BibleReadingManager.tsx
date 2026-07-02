@@ -5,11 +5,12 @@ import {
   type Translation,
   type TranslationBookChapter,
   type TranslationBooks,
-} from "seed-bible.managers.FreeUseBibleAPI";
-import { type BibleDataManager } from "seed-bible.managers.BibleDataManager";
+} from "../managers/FreeUseBibleAPI";
+import { type BibleDataManager } from "../managers/BibleDataManager";
 import {
   batch,
   computed,
+  effect,
   signal,
   type ReadonlySignal,
   type Signal,
@@ -20,8 +21,9 @@ import type {
   ChapterHighlight,
   ChapterHighlights,
   HighlightsManager,
-} from "seed-bible.managers.HighlightsManager";
-import { DEFAULT_LANGUAGE } from "seed-bible.i18n.I18nManager";
+} from "../managers/HighlightsManager";
+import { v4 as uuid } from "uuid";
+import type { I18nManager } from "../i18n";
 
 export interface BibleSelectedVerse {
   /** Book identifier (for example: GEN, MAT). */
@@ -118,8 +120,10 @@ export interface VerseDecorationInput {
  * signals to know when content is ready.
  */
 export interface BibleReadingState {
+  /** The default translation for the current language. */
+  defaultTranslation: TranslationWithLanguage;
   /** Selected translation ID. Null while unresolved or endpoint-derived during startup. */
-  translationId: Signal<string | null>;
+  translationId: Signal<string>;
   /** Selected translation metadata derived from `translationBooks`. */
   translation: Signal<Translation | null>;
   /** Selected book ID (for example: GEN, JHN). */
@@ -144,6 +148,11 @@ export interface BibleReadingState {
   loading: Signal<boolean>;
   /** Error message from the most recent failed operation, if any. */
   error: Signal<string | null>;
+  /**
+   * Resolves once chapterData becomes non-null for the first time.
+   * Throw this in a component to suspend rendering until initial chapter data is available.
+   */
+  chapterDataPromise: Promise<void>;
   /** Scroll position snapshot for chapter restoration/UI syncing. */
   scrollPosition: Signal<number>;
   /** Pending verse number to scroll to after chapter content renders. */
@@ -231,7 +240,15 @@ export interface BibleReadingState {
   loadNextChapter: () => Promise<void>;
 }
 
-export const DEFAULT_TRANSLATIONS_BY_LANGUAGE = new Map([
+export interface TranslationWithLanguage {
+  id: string;
+  language: string;
+}
+
+export const DEFAULT_TRANSLATIONS_BY_LANGUAGE = new Map<
+  string,
+  TranslationWithLanguage
+>([
   ["am", { id: "amh_amh", language: "amh" }], // Amharic NT | መጽሐፍ ቅዱስ
   ["ar", { id: "ARBNAV", language: "arb" }], // New Arabic Version (Book of Life) | كتاب الحياة
   ["bn", { id: "ben_ocv", language: "ben" }], // Open Bengali Contemporary Version Bible | Biblica® মুক্তভাবে বাংলা সমকালীন সংস্করণের
@@ -258,15 +275,17 @@ export const DEFAULT_TRANSLATIONS_BY_LANGUAGE = new Map([
   ["zh", { id: "cmn_cbt", language: "cmn" }], // Chinese, Mandarin: Biblica® 聖經,當代譯本開放資源 (Bible) | Biblica® 聖經，當代譯本開放資源
 ]);
 
-const DEFAULT_TRANSLATION = DEFAULT_TRANSLATIONS_BY_LANGUAGE.get(
-  DEFAULT_LANGUAGE
-) ?? {
+const FALLBACK_TRANSLATION: TranslationWithLanguage = {
   id: "AAB",
   language: "eng",
 };
 
-export const DEFAULT_TRANSLATION_ID = DEFAULT_TRANSLATION.id;
-export const DEFAULT_TRANSLATION_LANGUAGE = DEFAULT_TRANSLATION.language;
+// const DEFAULT_TRANSLATION =;
+
+export function getDefaultTranslationForLanguage(language: string) {
+  return DEFAULT_TRANSLATIONS_BY_LANGUAGE.get(language) ?? FALLBACK_TRANSLATION;
+}
+
 export const DEFAULT_BOOK_ID = "GEN";
 export const DEFAULT_CHAPTER_NUMBER = 1;
 
@@ -384,6 +403,7 @@ function parseTranslationInput(value?: string | null): ParsedTranslationInput {
 export function createBibleReadingState(
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager,
+  i18nManager: I18nManager,
   options: InitialBibleReadingOptions = {}
 ): BibleReadingState {
   const isSameSelectedVerse = (
@@ -413,10 +433,15 @@ export function createBibleReadingState(
       ? Math.floor(options.initialChapterNumber)
       : 1;
 
-  const translationId = signal<string | null>(
+  const defaultTranslation =
+    getDefaultTranslationForLanguage(i18nManager.defaultLanguage) ??
+    FALLBACK_TRANSLATION;
+
+  const translationId = signal<string>(
+    initialTranslationInput.translationId ?? defaultTranslation.id
+  );
+  const useFirstAvailableTranslation = signal<boolean>(
     shouldUseFirstAvailableTranslation
-      ? null
-      : (initialTranslationInput.translationId ?? DEFAULT_TRANSLATION_ID)
   );
   const endpointOverride = signal<string | null>(initialEndpointOverride);
   const bookId = signal<string | null>(options.initialBookId ?? null);
@@ -424,6 +449,14 @@ export function createBibleReadingState(
   const availableTranslations = signal<AvailableTranslations | null>(null);
   const translationBooks = signal<TranslationBooks | null>(null);
   const chapterData = signal<TranslationBookChapter | null>(null);
+  const chapterDataPromise = new Promise<void>((resolve) => {
+    const cleanup = effect(() => {
+      if (chapterData.value !== null) {
+        cleanup();
+        resolve();
+      }
+    });
+  });
   const selectedVerses = signal<BibleSelectedVerse[]>([]);
   const selectedFootnoteId = signal<number | null>(null);
   const activeChapterHighlights = signal<Signal<ChapterHighlights>>(
@@ -830,7 +863,7 @@ export function createBibleReadingState(
   };
 
   const selectBook = async (book: string) => {
-    if (!translationId.value || !translationBooks.value) {
+    if (!translationBooks.value) {
       return;
     }
 
@@ -915,10 +948,6 @@ export function createBibleReadingState(
   };
 
   const selectChapter = async (book: string, chapter: number) => {
-    if (!translationId.value) {
-      return;
-    }
-
     loading.value = true;
     error.value = null;
 
@@ -972,28 +1001,25 @@ export function createBibleReadingState(
       );
 
       const firstAvailableTranslation = loadedTranslations[0];
-      const requestedTranslation = translationId.value
-        ? availableTranslations.value.translations.find(
+      const currentTranslation = useFirstAvailableTranslation.value
+        ? firstAvailableTranslation
+        : (availableTranslations.value.translations.find(
             (translation) => translation.id === translationId.value
-          )
-        : null;
-      const currentTranslation =
-        requestedTranslation ??
-        (shouldUseFirstAvailableTranslation ||
-        shouldFallbackToFirstAvailableTranslation
-          ? firstAvailableTranslation
-          : null);
+          ) ??
+          (shouldFallbackToFirstAvailableTranslation
+            ? firstAvailableTranslation
+            : undefined));
       if (!currentTranslation) {
-        if (shouldUseFirstAvailableTranslation) {
-          throw new Error("No available translations found for endpoint.");
-        }
         throw new Error(
-          `Translation with ID "${translationId.value}" not available.`
+          useFirstAvailableTranslation.value
+            ? "No available translations found for endpoint."
+            : `Translation with ID "${translationId.value}" not available.`
         );
       }
 
       const nextTranslationId = currentTranslation.id;
       translationId.value = nextTranslationId;
+      useFirstAvailableTranslation.value = false;
 
       const books = await dataManager.getTranslationBooks(nextTranslationId);
       translationBooks.value = books;
@@ -1046,6 +1072,7 @@ export function createBibleReadingState(
   loadInitialData();
 
   return {
+    defaultTranslation,
     translationId,
     translation,
     bookId,
@@ -1053,6 +1080,7 @@ export function createBibleReadingState(
     availableTranslations,
     translationBooks,
     chapterData,
+    chapterDataPromise,
     highlights,
     decorations,
     selectedVerses,

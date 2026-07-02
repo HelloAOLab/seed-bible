@@ -1,7 +1,4 @@
-import type {
-  LoginManager,
-  UserProfile,
-} from "seed-bible.managers.LoginManager";
+import type { LoginManager, UserProfile } from "../managers/LoginManager";
 
 /**
  * Reads a value from the user's profile config.

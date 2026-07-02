@@ -1,6 +1,6 @@
-import { TwitchIcon } from "ext_twitchSub.client.icons";
-import { useI18n } from "seed-bible.i18n.I18nManager";
-import { type TwitchSubInterface } from "ext_twitchSub.client.interface";
+import { TwitchIcon } from "./icons";
+import { useI18n } from "seed-bible/i18n";
+import { type TwitchSubInterface } from "./interface";
 
 const TwitchSettings = (props: {
   settings: TwitchSubInterface["settings"];

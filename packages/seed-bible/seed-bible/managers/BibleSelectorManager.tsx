@@ -2,20 +2,19 @@ import type {
   Translation,
   TranslationBook,
   TranslationBooks,
-} from "seed-bible.managers.FreeUseBibleAPI";
-import type { BibleDataManager } from "seed-bible.managers.BibleDataManager";
-import {
-  type BibleReadingState,
-  DEFAULT_TRANSLATION_ID,
-} from "seed-bible.managers.BibleReadingManager";
-import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
-import type { TabsManager } from "seed-bible.managers.TabsManager";
+} from "../managers/FreeUseBibleAPI";
+import { safeLocalStorage } from "../app/ssrEnv";
+import type { BibleDataManager } from "../managers/BibleDataManager";
+import { type BibleReadingState } from "../managers/BibleReadingManager";
+import type { Pane, PanesManager } from "../managers/PanesManager";
+import type { TabsManager } from "../managers/TabsManager";
 import type {
   BookOrientation,
   SettingsManager,
-} from "seed-bible.managers.SettingsManager";
-import { createSidebar } from "seed-bible.managers.SidebarManager";
-import { type BookmarksManager } from "seed-bible.managers.BookmarksManager";
+} from "../managers/SettingsManager";
+import { createSidebar } from "../managers/SidebarManager";
+import type { NavigationManager } from "../managers/NavigationManager";
+import { type BookmarksManager } from "../managers/BookmarksManager";
 import {
   computed,
   effect,
@@ -109,8 +108,6 @@ export interface BibleSelectorState {
   }>;
 
   search: Signal<string>;
-
-  viewportWidth: Signal<number>;
 
   /**
    * True while the selector is in "create a new tab" mode — chapter
@@ -225,7 +222,8 @@ function groupBooks(translationBooks: TranslationBooks | null, search: string) {
  * Behavior summary:
  * - Maintains selector open/close state and pane binding.
  * - Synchronizes selector translation/book context from active pane reading state.
- * - Supports browser history integration (`bibleSelectorOpen`) for back-button UX.
+ * - Mirrors open/close state to the `?selector=open` URL param via the
+ *   NavigationManager, giving back-button / shareable-URL support.
  * - Computes responsive Old/New Testament rows based on viewport width.
  * - Routes chapter selection into the bound pane/tab reading state.
  */
@@ -235,11 +233,11 @@ export function createBibleSelectorState(
   panesManager: PanesManager,
   settings: SettingsManager,
   sidebar: SidebarManager,
-  bookmarks: BookmarksManager
+  bookmarks: BookmarksManager,
+  navigation: NavigationManager
 ): BibleSelectorState {
   const isOpen = signal(false);
   const pane = signal<Pane | null>(null);
-  const isDrawerOpen = sidebar.isMobileOpen.value;
   const forceNewTab = signal(false);
   const showApocryphaInfo = signal(false);
   const availablePanes = computed(() => panesManager.panes.value);
@@ -271,11 +269,6 @@ export function createBibleSelectorState(
     () => selectedTranslationBooks.value?.translation ?? null
   );
   const expandedBookId = signal<string | null>(null);
-  const viewportWidth = signal(
-    typeof window === "undefined" ? 0 : window.innerWidth
-  );
-  let wasOpen = isOpen.value;
-  let isHandlingPopState = false;
 
   const syncStateFromPane = async () => {
     loading.value = true;
@@ -294,7 +287,7 @@ export function createBibleSelectorState(
         )?.tab?.readingState.translationId.value ??
         // Fall back to default translation or first available translation
         dataManager.availableTranslations.value.find(
-          (t) => t.id === DEFAULT_TRANSLATION_ID
+          (t) => t.id === tabsManager.defaultTranslation.id
         )?.id ??
         dataManager.availableTranslations.value[0]?.id ??
         null;
@@ -357,78 +350,43 @@ export function createBibleSelectorState(
     pane.value = nextPane;
   };
 
-  const getHistoryState = () => {
-    return history.state && typeof history.state === "object"
-      ? (history.state as Record<string, unknown>)
-      : {};
-  };
-
-  const isSelectorOpenInHistory = () => {
-    const state = getHistoryState();
-    return state.bibleSelectorOpen === true;
-  };
-
   const openTabs = () => {
-    if (isDrawerOpen) return;
+    if (sidebar.isMobileOpen.value) {
+      console.log("No open tabs");
+      return;
+    }
+    console.log("Open tabs");
+    // Both of these are mirrored to the URL by the NavigationManager bindings
+    // (`?selector=open` here, `?sidebar=open` in SidebarManager), so closing
+    // the selector and opening the drawer is just two query-param updates — no
+    // direct history manipulation, and no back-navigation racing the push.
     void setOpen(false);
     sidebar.openSidebar();
   };
+
+  // Mirror the selector's open state to the `?selector=open` query param so the
+  // browser back/forward buttons (and shared/bookmarked URLs) drive it, the
+  // same way SidebarManager binds `sidebar`. The setter routes through
+  // `setOpen` rather than writing `isOpen` directly so opening still binds the
+  // pane and loads translation data via `syncStateFromPane()`.
+  navigation.syncSignalsToUrl({
+    selector: {
+      get value() {
+        return isOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        const shouldOpen = newValue === "open";
+        if (shouldOpen !== isOpen.value) {
+          void setOpen(shouldOpen);
+        }
+      },
+    },
+  });
 
   effect(() => {
     if (isOpen.value) {
       expandedBookId.value = currentBookId.value;
     }
-  });
-
-  effect(() => {
-    const onResize = () => {
-      viewportWidth.value = window.innerWidth;
-    };
-
-    window.addEventListener("resize", onResize);
-    return () => {
-      window.removeEventListener("resize", onResize);
-    };
-  });
-
-  effect(() => {
-    const onPopState = () => {
-      const shouldBeOpen = isSelectorOpenInHistory();
-      isHandlingPopState = true;
-
-      if (shouldBeOpen && !isOpen.value) {
-        setOpen(true);
-      } else if (!shouldBeOpen && isOpen.value) {
-        setOpen(false);
-      }
-
-      setTimeout(() => {
-        isHandlingPopState = false;
-      }, 0);
-    };
-
-    window.addEventListener("popstate", onPopState);
-    return () => {
-      window.removeEventListener("popstate", onPopState);
-    };
-  });
-
-  effect(() => {
-    const nextIsOpen = isOpen.value;
-
-    if (!wasOpen && nextIsOpen && !isSelectorOpenInHistory()) {
-      history.pushState({ ...getHistoryState(), bibleSelectorOpen: true }, "");
-    }
-
-    if (wasOpen && !nextIsOpen) {
-      const shouldNavigateBack =
-        !isHandlingPopState && isSelectorOpenInHistory();
-      if (shouldNavigateBack) {
-        history.back();
-      }
-    }
-
-    wasOpen = nextIsOpen;
   });
 
   const groupedBooks = computed(() =>
@@ -628,7 +586,11 @@ export function createBibleSelectorState(
   // ─── TranslationModal State ───────────────────────────────────────────────────
 
   const showAllLanguages = signal<"complete" | "all" | "popular">(
-    window.localStorage.showAllLanguages || "complete"
+    (safeLocalStorage.getItem("showAllLanguages") as
+      | "complete"
+      | "all"
+      | "popular"
+      | null) || "complete"
   );
 
   const showTranslationSettings = signal<boolean>(false);
@@ -965,7 +927,7 @@ export function createBibleSelectorState(
   );
 
   effect(() => {
-    window.localStorage.setItem("showAllLanguages", showAllLanguages.value);
+    safeLocalStorage.setItem("showAllLanguages", showAllLanguages.value);
   });
 
   return {
@@ -985,7 +947,6 @@ export function createBibleSelectorState(
     selectedTranslation,
     selectedTranslationBooks,
     expandedBookId,
-    viewportWidth,
     forceNewTab,
     availablePanes,
     setOpen,

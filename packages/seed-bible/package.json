@@ -1,0 +1,42 @@
+{
+  "name": "seed-bible",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./seed-bible/app/api.tsx"
+    },
+    "./managers": {
+      "import": "./seed-bible/managers/index.tsx"
+    },
+    "./components": {
+      "import": "./seed-bible/components/index.tsx"
+    },
+    "./i18n": {
+      "import": "./seed-bible/i18n/index.tsx"
+    }
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.17.1",
+  "dependencies": {
+    "@casual-simulation/aux-common": "catalog:",
+    "@casual-simulation/aux-websocket": "catalog:",
+    "@casual-simulation/websocket": "catalog:",
+    "i18next": "catalog:",
+    "preact": "catalog:",
+    "preact-iso": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "typesense": "catalog:",
+    "zod": "catalog:",
+    "axios": "catalog:",
+    "react-avatar-editor": "15.1.0",
+    "rxjs": "catalog:"
+  }
+}

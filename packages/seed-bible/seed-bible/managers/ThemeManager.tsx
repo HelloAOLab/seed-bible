@@ -5,11 +5,12 @@ import {
   type ReadonlySignal,
   type Signal,
 } from "@preact/signals";
-import type { LoginManager } from "seed-bible.managers.LoginManager";
+import type { LoginManager } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
-} from "seed-bible.managers.ProfileConfigSync";
+} from "../managers/ProfileConfigSync";
+import type { NavigationManager } from "./NavigationManager";
 
 export interface BibleThemeVariables {
   primaryColor: string;
@@ -499,9 +500,9 @@ const LIGHT_THEME: BibleTheme = {
 
     chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
     chapterHeadingFontColor: "#333",
-    chapterHeadingFontStyle: "italic",
+    chapterHeadingFontStyle: "normal",
 
-    verseFontFamily: "Newsreader, serif",
+    verseFontFamily: "Plus Jakarta Sans, sans-serif",
     verseFontColor: "#333",
     verseCursor: "pointer",
 
@@ -639,9 +640,9 @@ const DARK_THEME: BibleTheme = {
 
     chapterHeadingFontFamily: "Plus Jakarta Sans, sans-serif",
     chapterHeadingFontColor: "#e6e6e6",
-    chapterHeadingFontStyle: "italic",
+    chapterHeadingFontStyle: "normal",
 
-    verseFontFamily: "Newsreader, serif",
+    verseFontFamily: "Plus Jakarta Sans, sans-serif",
     verseFontColor: "#e6e6e6",
     verseCursor: "pointer",
 
@@ -1098,26 +1099,31 @@ export interface ThemeManager {
 //   },
 // };
 
-export function createTheme(login: LoginManager): ThemeManager {
+export function createTheme(
+  login: LoginManager,
+  navigation: NavigationManager
+): ThemeManager {
   const themes = signal<BibleTheme[]>([LIGHT_THEME, DARK_THEME]);
+
+  const url = navigation.currentUrl.value;
 
   const readThemeId = () =>
     parseThemeId(
       getProfileConfigValue(login.profile.value, PROFILE_THEME_ID) ??
-        configBot.tags[TAG_THEME_ID],
+        url.searchParams.get(TAG_THEME_ID),
       DEFAULT_THEME_ID
     );
 
   const readCustomOverrides = () =>
     parseCustomTheme(
       getProfileConfigValue(login.profile.value, PROFILE_CUSTOM_THEME) ??
-        configBot.tags[TAG_CUSTOM_THEME]
+        url.searchParams.get(TAG_CUSTOM_THEME)
     );
 
   const readHighlightOverrides = () =>
     parseHighlightOverrides(
       getProfileConfigValue(login.profile.value, PROFILE_CUSTOM_HIGHLIGHTS) ??
-        configBot.tags[TAG_CUSTOM_HIGHLIGHTS]
+        url.searchParams.get(TAG_CUSTOM_HIGHLIGHTS)
     );
 
   const selectedThemeId = signal<string>(readThemeId());
@@ -1149,48 +1155,15 @@ export function createTheme(login: LoginManager): ThemeManager {
     )
   );
 
-  os.addBotListener(configBot, "onBotChanged", (that: unknown) => {
-    const changedTagsSource =
-      that && typeof that === "object" && "tags" in that
-        ? (that as { tags?: unknown }).tags
-        : null;
-    const changedTags = Array.isArray(changedTagsSource)
-      ? changedTagsSource
-      : [];
-
-    if (changedTags.includes(TAG_THEME_ID)) {
-      selectedThemeId.value = parseThemeId(
-        configBot.tags[TAG_THEME_ID],
-        DEFAULT_THEME_ID
-      );
-    }
-    if (changedTags.includes(TAG_CUSTOM_THEME)) {
-      customOverrides.value = parseCustomTheme(
-        configBot.tags[TAG_CUSTOM_THEME]
-      );
-    }
-    if (changedTags.includes(TAG_CUSTOM_HIGHLIGHTS)) {
-      customHighlightOverrides.value = parseHighlightOverrides(
-        configBot.tags[TAG_CUSTOM_HIGHLIGHTS]
-      );
-    }
-  });
-
   const setTheme = (themeId: string) => {
     if (themes.value.some((theme) => theme.id === themeId)) {
       selectedThemeId.value = themeId;
-      configBot.tags[TAG_THEME_ID] = themeId;
       saveProfileConfigValue(login, PROFILE_THEME_ID, themeId);
     }
   };
 
   const writeOverrides = (next: ThemeOverrides) => {
     customOverrides.value = next;
-    if (Object.keys(next).length === 0) {
-      configBot.tags[TAG_CUSTOM_THEME] = "";
-    } else {
-      configBot.tags[TAG_CUSTOM_THEME] = JSON.stringify(next);
-    }
     saveProfileConfigValue(login, PROFILE_CUSTOM_THEME, next);
   };
 
@@ -1210,11 +1183,6 @@ export function createTheme(login: LoginManager): ThemeManager {
 
   const writeHighlightOverrides = (next: HighlightOverrides) => {
     customHighlightOverrides.value = next;
-    if (Object.keys(next).length === 0) {
-      configBot.tags[TAG_CUSTOM_HIGHLIGHTS] = "";
-    } else {
-      configBot.tags[TAG_CUSTOM_HIGHLIGHTS] = JSON.stringify(next);
-    }
     saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHTS, next);
   };
 

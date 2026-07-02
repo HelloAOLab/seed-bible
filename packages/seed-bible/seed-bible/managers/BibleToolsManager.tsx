@@ -1,20 +1,19 @@
-import { MaterialIcon, SeedBibleIcon } from "seed-bible.components.icons";
+import { MaterialIcon, SeedBibleIcon } from "../components/icons";
 import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
 import {
   DEFAULT_BOOK_ID,
-  DEFAULT_TRANSLATION_ID,
   type BibleReadingState,
-} from "seed-bible.managers.BibleReadingManager";
-import type { Pane, PanesManager } from "seed-bible.managers.PanesManager";
+} from "../managers/BibleReadingManager";
+import type { Pane, PanesManager } from "../managers/PanesManager";
 import {
   formatVerseSelection,
   type TabsManager,
-} from "seed-bible.managers.TabsManager";
-import type { BibleSelectorState } from "seed-bible.managers.BibleSelectorManager";
+} from "../managers/TabsManager";
+import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import { sortBy } from "es-toolkit";
-import type { BibleReadingSession } from "seed-bible.managers.SessionsManager";
+import type { BibleReadingSession } from "../managers/SessionsManager";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -102,10 +101,10 @@ export interface ResolvedBibleToolItem extends Omit<
 
 /** Window metrics provided to tools when available. */
 export interface WindowContext {
-  /** Current viewport width signal. */
-  innerWidth: ReadonlySignal<number>;
-  /** Current viewport height signal. */
-  innerHeight: ReadonlySignal<number>;
+  /**
+   * Whether the app is currently being rendered in a mobile layout.
+   */
+  isMobile: boolean;
 }
 
 /** Runtime context passed to reader and verse toolbar tools. */
@@ -130,6 +129,8 @@ export interface BibleToolContext {
   openSearch: () => void;
   /** Opens the chat / cross-references floating panel. */
   openChat?: () => void;
+  /** Shows a transient toast message at the bottom of the screen. */
+  toast: (message: string) => void;
 }
 
 /** Fully resolved reader toolbar tool ready for rendering. */
@@ -467,9 +468,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       title: { key: "side-menu", defaultValue: "Side menu" },
       icon: MenuIcon,
       isVisible: (context) =>
-        !!context.openSidebar &&
-        typeof context.window?.innerWidth.value === "number" &&
-        context.window?.innerWidth.value <= 768,
+        !!context.openSidebar && (context.window?.isMobile ?? false),
       onSelect: (context) => {
         context.openSidebar?.();
       },
@@ -499,15 +498,6 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       icon: () => <MaterialIcon>search</MaterialIcon>,
       onSelect: (context) => {
         context.openSearch();
-      },
-    },
-    {
-      id: "open-chat",
-      priority: 120,
-      title: { key: "chat", defaultValue: "Chat" },
-      icon: () => <MaterialIcon>chat_bubble_outline</MaterialIcon>,
-      onSelect: (context) => {
-        context.openChat?.();
       },
     },
     {
@@ -545,9 +535,8 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
         const verseTexts = formatSelectedVerses(context.readingState);
 
         try {
-          os.setClipboard(verseTexts);
-          os.toast("Copied!");
-          console.log("Verse(s) copied to clipboard");
+          navigator.clipboard.writeText(verseTexts);
+          context.toast("Copied!");
         } catch (err) {
           console.error("Failed to copy verse:", err);
         }
@@ -569,7 +558,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
 
         verseTexts += `\n\n${url.toString()}`;
 
-        os.share({
+        navigator.share({
           title:
             "Bible Verse" +
             (context.readingState.selectedVerses.value.length > 1 ? "s" : ""),
@@ -671,13 +660,13 @@ export interface ToolsManager {
  * @returns A URL object representing the sharable link for the current reading state.
  */
 export function getShareUrl(readingState: BibleReadingState) {
-  const url = new URL(configBot.tags.url);
+  const url = new URL(window.location.href);
   url.search = "";
-  if (configBot.tags.pattern) {
-    url.searchParams.set("pattern", configBot.tags.pattern);
-  }
+  // if (configBot.tags.pattern) {
+  //   url.searchParams.set("pattern", configBot.tags.pattern);
+  // }
   const translation =
-    readingState.translation.value?.id ?? DEFAULT_TRANSLATION_ID;
+    readingState.translation.value?.id ?? readingState.defaultTranslation.id;
   const bookId = readingState.bookId.value ?? DEFAULT_BOOK_ID;
   url.searchParams.set("translation", translation);
   url.searchParams.set("book", bookId);

@@ -1,3 +1,5 @@
+import { fromByteArray } from "base64-js";
+
 const sendMessage = async ({
   message,
   to_user,
@@ -20,30 +22,29 @@ const sendMessage = async ({
 
   try {
     const encriptedMessage = encriptMessage
-      ? bytes.toBase64String(
-          new Uint8Array([...message].map((c) => c.charCodeAt(0)))
-        )
+      ? fromByteArray(new Uint8Array([...message].map((c) => c.charCodeAt(0))))
       : message;
-    const response = await web.post(
-      "https://api.twitch.tv/helix/chat/messages",
-      JSON.stringify({
+    const response = await fetch("https://api.twitch.tv/helix/chat/messages", {
+      method: "POST",
+      body: JSON.stringify({
         broadcaster_id: broadcasterId,
         sender_id: senderId,
         message: encriptedMessage,
         reply_parent_message_id: to_user,
       }),
-      {
-        headers: {
-          "Client-ID": clientId,
-          Authorization: `Bearer ${userAccessToken}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-    if (!response.data.data[0].is_sent) {
+      headers: {
+        "Client-ID": clientId,
+        Authorization: `Bearer ${userAccessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await response.json();
+
+    if (!data.data[0].is_sent) {
       console.error("Failed to send message");
     }
-    return response.data;
+    return data;
   } catch {
     console.error("Failed to send message");
   }

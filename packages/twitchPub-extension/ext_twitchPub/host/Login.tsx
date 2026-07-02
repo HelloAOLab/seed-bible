@@ -1,6 +1,7 @@
-import { TwitchIcon } from "ext_twitchPub.host.icons";
-import { type TwitchPubState } from "ext_twitchPub.host.interface";
-import { useI18n } from "seed-bible.i18n.I18nManager";
+import { closeInterface } from "./closeInterface";
+import { TwitchIcon } from "./icons";
+import { type TwitchPubState } from "./interface";
+import { useI18n } from "seed-bible/i18n";
 
 const Login = (props: { state: TwitchPubState }) => {
   const { twitchConfig, getDeviceAuthUrl, loading } = props.state;
@@ -33,10 +34,7 @@ const Login = (props: { state: TwitchPubState }) => {
             defaultValue: "Twitch Host",
           })}
         </span>
-        <button
-          className="icon-btn"
-          onClick={() => whisper(thisBot, "closeInterface")}
-        >
+        <button className="icon-btn" onClick={() => closeInterface()}>
           <span className="material-symbols-outlined">close</span>
         </button>
       </div>

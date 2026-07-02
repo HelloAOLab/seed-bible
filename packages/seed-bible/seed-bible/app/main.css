@@ -1,7 +1,12 @@
 /* eslint-disable css/use-baseline */
+html {
+  visibility: visible;
+  opacity: 1;
+}
+
 :root {
   --sb-ui-zoom: 1;
-  --sb-scripture-margin: 35%;
+  --sb-scripture-margin: 27%;
 
   /* Text config variables — overridden at runtime by SettingsManager. */
   --text-bookTitle-font: "Newsreader", serif;
@@ -9,34 +14,34 @@
   --text-bookTitle-color: #333;
   --text-bookTitle-font-style: normal;
   --text-bookTitle-text-decoration: none;
-  --text-bookTitle-alignment: left;
+  --text-bookTitle-alignment: unset;
   --text-bookTitle-margin-top: 0;
   --text-bookTitle-margin-bottom: 0;
   --text-bookTitle-margin-left: 0;
   --text-bookTitle-margin-right: 0;
 
   --text-heading-font: "Plus Jakarta Sans", sans-serif;
-  --text-heading-weight: 300;
+  --text-heading-weight: 700;
   --text-heading-color: #333;
-  --text-heading-font-style: italic;
+  --text-heading-font-style: normal;
   --text-heading-text-decoration: none;
-  --text-heading-alignment: left;
+  --text-heading-alignment: unset;
   --text-heading-margin-top: 18px;
   --text-heading-margin-bottom: 18px;
   --text-heading-margin-left: 0;
   --text-heading-margin-right: 0;
 
-  --text-verse-font: "Newsreader", serif;
-  --text-verse-weight: 400;
+  --text-verse-font: "Plus Jakarta Sans", sans-serif;
+  --text-verse-weight: 500;
   --text-verse-color: #333;
   --text-verse-font-style: normal;
   --text-verse-text-decoration: none;
-  --text-verse-alignment: left;
+  --text-verse-alignment: unset;
   --text-verse-margin-top: 0;
   --text-verse-margin-bottom: 0;
   --text-verse-margin-left: 0;
   --text-verse-margin-right: 0;
-  --text-verse-line-height: 2;
+  --text-verse-line-height: 1.7;
 
   --sb-background: #f1f1f2;
   --sb-font-family: "Satoshi", system-ui, sans-serif;
@@ -65,9 +70,9 @@
 
   --sb-chapter-heading-font-family: "Plus Jakarta Sans", sans-serif;
   --sb-chapter-heading-font-color: #333;
-  --sb-chapter-heading-font-style: italic;
+  --sb-chapter-heading-font-style: normal;
 
-  --sb-verse-font-family: "Newsreader", serif;
+  --sb-verse-font-family: "Plus Jakarta Sans", sans-serif;
   --sb-verse-font-color: #333;
   --sb-verse-cursor: pointer;
 
@@ -100,7 +105,7 @@
   --sb-reader-toolbar-button-padding: 6px 10px;
   --sb-reader-toolbar-button-border-radius: 12px;
   --sb-reader-toolbar-button-icon-size: 24px;
-  --sb-reader-toolbar-button-label-font-family: "Lato", sans-serif;
+  --sb-reader-toolbar-button-label-font-family: "DM Sans";
   --sb-reader-toolbar-button-label-font-size: 11px;
   --sb-reader-toolbar-button-label-line-height: 1;
   --sb-reader-toolbar-button-label-height: 13px;
@@ -214,12 +219,18 @@
   --sb-highlight-orange-color: #ffcc80;
   --sb-highlight-orange-font-color: #333;
   --sb-highlight-orange-words-of-jesus-font-color: #e07b4c;
+
+  --sb-dynamic-range-limit: standard;
 }
 
 body {
   background: var(--sb-background);
   color: var(--sb-font-color);
   font-family: var(--sb-font-family);
+
+  /* dynamic-range-limit prevents user-provided images from changing the dynamic range */
+  /* eslint-disable-next-line css/no-invalid-properties */
+  dynamic-range-limit: var(--sb-dynamic-range-limit);
 }
 
 /* On mobile, lock the document to the visual viewport so iOS/Android
@@ -271,6 +282,12 @@ h6 {
   font-size: 0.8em;
 }
 
+*,
+:after,
+:before {
+  box-sizing: border-box;
+}
+
 .sb-bible-reader {
   width: calc(100% - (var(--sb-scripture-margin) * 2));
   min-width: 275px;
@@ -287,7 +304,10 @@ h6 {
 
 .sb-bible-reader-bookmark-button {
   position: absolute;
-  top: 16px;
+  /* Center the 36px button box on the title's first line (which starts at the
+     reader's 30px padding-top with a 36px line box) so it stays aligned with
+     the title even when a narrow reader pulls the title text out to meet it. */
+  top: 30px;
   inset-inline-end: 16px;
   width: 36px;
   height: 36px;
@@ -332,7 +352,8 @@ h6 {
    bookmark button (which sits at inset-inline-end: 16px with width 36px). */
 .sb-quick-toolbar-reader {
   position: absolute;
-  top: 16px;
+  /* Match the bookmark button's vertical alignment with the title row. */
+  top: 30px;
   inset-inline-end: 60px;
   z-index: 1;
 }
@@ -704,7 +725,8 @@ h6 {
   top: calc(50% - 30px);
   width: 24px;
   height: 60px;
-  cursor: ew-resize; /* east-west resize cursor */
+  cursor: ew-resize;
+  /* east-west resize cursor */
   background: var(--sb-divider-color);
   display: flex;
   justify-items: center;
@@ -727,7 +749,8 @@ h6 {
   left: calc(50% - 10px);
   height: 20px;
   width: 20px;
-  cursor: ns-resize; /* north-south resize cursor */
+  cursor: ns-resize;
+  /* north-south resize cursor */
   opacity: 0.5;
   background: rgba(0, 0, 0, 0.2);
 }
@@ -740,7 +763,8 @@ h6 {
 .sb-pane-detached-resize-handle:not(.sb-pane-detached-resize-handle-side):not(
     .sb-pane-detached-resize-handle-bottom
   ) {
-  cursor: nwse-resize; /* northwest-southeast resize cursor */
+  cursor: nwse-resize;
+  /* northwest-southeast resize cursor */
 }
 
 .sb-pane-component,
@@ -908,9 +932,10 @@ h6 {
   margin: 0 0 28px;
   padding-bottom: 18px;
   border-bottom: 1px solid var(--sb-divider-color);
-  font-size: 32px;
+  font-size: 36px;
+  line-height: 1;
   cursor: pointer;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 
 .sb-bible-reader-title-sep {
@@ -921,10 +946,12 @@ h6 {
 }
 
 .sb-bible-reader-translation {
-  font-size: 0.62em;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+  font-family: "Plus Jakarta Sans", sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
   margin-inline-start: 0.4em;
   vertical-align: 0.15em;
 }
@@ -981,7 +1008,7 @@ h6 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 12px;
+  padding: 4px 12px;
   gap: 8px;
   background: var(--sb-reader-background);
   border-bottom: 1px solid
@@ -997,7 +1024,7 @@ h6 {
 
 .sb-bible-reader-mobile-header-title {
   margin: 0;
-  font-size: 24px;
+  font-size: 19px;
   font-weight: 600;
   font-family: var(--text-bookTitle-font);
   color: var(--sb-book-title-font-color);
@@ -1030,8 +1057,8 @@ h6 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: none;
   background: var(--sb-primary-color);
@@ -1060,8 +1087,8 @@ h6 {
 .sb-bible-reader-mobile-header .sb-bible-reader-bookmark-button {
   position: static;
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   margin-inline-start: auto;
 }
@@ -1071,8 +1098,8 @@ h6 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: none;
   background: transparent;
@@ -1107,7 +1134,7 @@ h6 {
 }
 
 .sb-bible-reader-mobile .sb-reader-swipe-panel {
-  padding-top: 60px;
+  padding-top: 40px;
 }
 
 .sb-language-english-name {
@@ -1142,7 +1169,7 @@ h6 {
    collapse the header's layout space in sync with the slide so the chapter
    content rises to fill the gap (no leftover white strip). */
 .sb-bible-reader-mobile-header {
-  max-height: 60px;
+  max-height: 40px;
   overflow: hidden;
   transition:
     transform 0.25s ease,
@@ -1179,6 +1206,12 @@ h6 {
   border-top-right-radius: 16px;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
   padding: 16px;
+  /* Cap to the viewport and scroll internally so a tall sheet (or one opened
+     with the keyboard up) can always reach its bottom content. */
+  max-height: 85dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   font-family: var(--sb-reader-font-family);
   animation: sb-mobile-settings-slide-up 0.25s ease-out;
 }
@@ -1187,6 +1220,7 @@ h6 {
   from {
     transform: translateY(100%);
   }
+
   to {
     transform: translateY(0);
   }
@@ -1297,6 +1331,7 @@ h6 {
   padding: 4px 0;
   width: 100%;
 }
+
 .sb-mobile-settings-icon svg path {
   stroke: var(--sb-primary-color);
 }
@@ -1307,9 +1342,9 @@ h6 {
 }
 
 .sb-chapter-content {
-  line-height: var(--text-verse-line-height, 2);
+  line-height: var(--text-verse-line-height, 1.7);
   font-family: var(--sb-verse-font-family);
-  font-size: 1.2em;
+  font-size: 1em;
 
   padding-bottom: 130px;
 
@@ -1331,6 +1366,7 @@ h6 {
   margin-left: var(--text-heading-margin-left);
   margin-right: var(--text-heading-margin-right);
   font-size: 18px;
+  line-height: 1;
 }
 
 .sb-line-break {
@@ -1677,16 +1713,18 @@ h6 {
 
 .sb-tour-popover-title {
   margin: 0 0 6px;
-  font-family: var(--sb-chapter-heading-font-family), sans-serif;
-  font-size: 1.15em;
+  font-family: "Satoshi", system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1;
   font-weight: 700;
 }
 
 .sb-tour-popover-body {
   margin: 0 0 16px;
+  font-family: "DM Sans", sans-serif;
   line-height: 1.55;
   font-size: 0.95em;
-  opacity: 0.85;
+  opacity: 0.7;
 }
 
 .sb-tour-popover-actions {
@@ -1745,7 +1783,8 @@ h6 {
 .sb-tour-btn-text {
   background: transparent;
   color: var(--sb-font-color);
-  opacity: 0.65;
+  font-family: "DM Sans", sans-serif;
+  opacity: 0.7;
   padding-left: 2px;
   padding-right: 2px;
 }
@@ -2077,44 +2116,63 @@ h6 {
   .sb-reader-floating-nav-group {
     flex: 1 1 auto;
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: space-between;
-    gap: 8px;
+    /* No gap or padding: the three buttons tile the whole pill so every pixel
+       is a hit target (prev / label / next) — no dead zones between them. The
+       former 6px/12px padding is preserved as min-height + the buttons' own
+       internal spacing instead of dead inset. */
+    gap: 0;
     min-width: 0;
-    padding: 6px 12px;
+    min-height: 46px;
     border: 1px solid var(--sb-reader-floating-nav-group-border);
     border-radius: 999px;
     background: var(--sb-reader-floating-nav-group-background);
     user-select: none;
+    overflow: hidden;
   }
 
   .sb-reader-floating-nav-arrow {
     position: relative;
-    overflow: hidden;
     flex: 0 0 auto;
+    /* Full-height, wide hit region; the visual circle lives in ::before so the
+       whole button is tappable with no dead margin around the chevron. */
+    align-self: stretch;
+    min-width: 72px;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
     padding: 0;
     border: none;
     background: transparent;
     color: var(--sb-font-color);
     cursor: pointer;
-    border-radius: 999px;
+    transition: transform 0.12s ease;
   }
 
-  /* Press feedback: the arrow fills and shrinks briefly on tap so the button
-     feels responsive (it previously gave no visual response). */
-  .sb-reader-floating-nav-arrow {
-    transition:
-      background-color 0.12s ease,
-      transform 0.12s ease;
+  /* The 34px visual circle, centered in the wider hit region. Carries the
+     press-feedback fill so the feedback stays circular even though the
+     clickable button now fills its whole third of the pill. */
+  .sb-reader-floating-nav-arrow::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 34px;
+    height: 34px;
+    transform: translate(-50%, -50%);
+    border-radius: 999px;
+    transition: background-color 0.12s ease;
+    z-index: 0;
+  }
+
+  /* Press feedback: the circle fills and the button shrinks briefly on tap so
+     the arrow feels responsive. */
+  .sb-reader-floating-nav-arrow:active:not(:disabled)::before {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 82%);
   }
 
   .sb-reader-floating-nav-arrow:active:not(:disabled) {
-    background: color-mix(in srgb, var(--sb-font-color), transparent 82%);
     transform: scale(0.9);
   }
 
@@ -2125,6 +2183,8 @@ h6 {
 
   .sb-reader-floating-nav-arrow > svg,
   .sb-reader-floating-nav-arrow > .material-symbols-outlined {
+    position: relative;
+    z-index: 1;
     width: 20px;
     height: 20px;
     font-size: 20px;
@@ -2132,7 +2192,12 @@ h6 {
 
   .sb-reader-floating-nav-label {
     position: relative;
-    flex: 0 1 auto;
+    /* Grows to fill the entire center, so the gap that space-between used to
+       leave around the label is now part of the selector's hit target. The
+       stretched height makes the full center band clickable; the button keeps
+       its default text centering, so ellipsis still works on long names. */
+    flex: 1 1 auto;
+    align-self: stretch;
     min-width: 0;
     padding: 0 4px;
     border: none;
@@ -2141,11 +2206,11 @@ h6 {
     font-family: var(--text-bookTitle-font);
     font-size: 20px;
     font-weight: 700;
+    text-align: center;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     cursor: pointer;
-    border-radius: 999px;
     transition:
       background-color 0.12s ease,
       transform 0.12s ease;
@@ -2468,7 +2533,9 @@ h6 {
   max-width: 320px;
 }
 
-/* Verse toolbar — color picker mode (ported from develop) */
+/* Verse toolbar — color picker mode (ported from develop)
+   Layout: back + color swatches grouped on the left, Add/Clear pills pushed
+   to the far right. */
 .sb-verse-toolbar-picker {
   align-items: center;
   gap: 8px;
@@ -2504,9 +2571,7 @@ h6 {
   transform: scale(0.95);
 }
 
-.sb-verse-toolbar-back,
-.sb-verse-toolbar-plus,
-.sb-verse-toolbar-clear {
+.sb-verse-toolbar-back {
   width: 32px;
   height: 32px;
   padding: 0;
@@ -2521,19 +2586,65 @@ h6 {
   transition: background-color 0.15s ease;
 }
 
-.sb-verse-toolbar-back:hover,
-.sb-verse-toolbar-plus:hover,
-.sb-verse-toolbar-clear:hover:not(:disabled) {
+.sb-verse-toolbar-back:hover {
   background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
+}
+
+/* Add / Clear: labelled pill buttons pushed to the right of the picker. The
+   first of the pair carries `margin-inline-start: auto` so everything before
+   it (back + colours) stays grouped on the left. */
+.sb-verse-toolbar-plus,
+.sb-verse-toolbar-clear {
+  height: 32px;
+  padding: 0 12px;
+  border: none;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+  cursor: pointer;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    filter 0.15s ease;
+}
+
+.sb-verse-toolbar-plus {
+  margin-inline-start: auto;
+  background: transparent;
+  border: 1px dashed color-mix(in srgb, var(--sb-font-color), transparent 55%);
+}
+
+.sb-verse-toolbar-clear {
+  background: color-mix(
+    in srgb,
+    var(--sb-error-color, #d64545),
+    transparent 85%
+  );
+  color: var(--sb-error-color, #d64545);
+}
+
+.sb-verse-toolbar-plus:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
+}
+
+.sb-verse-toolbar-clear:hover:not(:disabled) {
+  filter: brightness(0.95);
+  background: color-mix(
+    in srgb,
+    var(--sb-error-color, #d64545),
+    transparent 78%
+  );
 }
 
 .sb-verse-toolbar-clear:disabled {
   opacity: 0.35;
   cursor: default;
-}
-
-.sb-verse-toolbar-plus {
-  border: 1px dashed color-mix(in srgb, var(--sb-font-color), transparent 60%);
 }
 
 .sb-verse-toolbar-back .material-symbols-outlined,
@@ -2542,6 +2653,11 @@ h6 {
 .sb-verse-toolbar-highlight-trigger .material-symbols-outlined,
 .sb-verse-toolbar-bookmark-trigger .material-symbols-outlined {
   font-size: 20px;
+}
+
+.sb-verse-toolbar-plus .material-symbols-outlined,
+.sb-verse-toolbar-clear .material-symbols-outlined {
+  font-size: 18px;
 }
 
 /* The bookmark trigger lights up in the theme primary color when the current
@@ -2709,6 +2825,7 @@ h6 {
   font-size: 12px;
   font-weight: 500;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  display: none;
 }
 
 .sb-verse-toolbar-swipe-hint .material-symbols-outlined {
@@ -4047,6 +4164,7 @@ h6 {
     transform: translateX(20px);
     opacity: 0;
   }
+
   to {
     transform: translateX(0);
     opacity: 1;
@@ -4144,6 +4262,45 @@ h6 {
 
 .sb-shared-toast .sb-tab-user-icon-animal .material-symbols-outlined {
   font-size: 20px;
+}
+
+/* App-level toast — single transient popup centered at the bottom of the screen. */
+.sb-toast-host {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  max-width: min(90vw, 420px);
+  pointer-events: none;
+}
+
+@keyframes sb-toast-slide-up {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.sb-toast {
+  pointer-events: auto;
+  padding: 10px 18px;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  border-radius: 12px;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  font-size: 14px;
+  line-height: 1.4;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  animation: sb-toast-slide-up 0.25s ease-out;
 }
 
 /* Shared-session settings modal — ported from develop's Scripture Navigation panel */
@@ -4832,19 +4989,29 @@ h6 {
   .sb-tabs-sidebar-mobile-open {
     display: flex;
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
     width: 100%;
+    /* Size to the *visible* viewport (not the taller layout viewport that
+       `inset: 0` would use on Android) so the scroll container's bottom lands
+       on screen and content like the Language/localization section at the
+       bottom can actually be scrolled into view. */
+    height: 100dvh;
     z-index: 100;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     background: var(--sb-background);
-    padding-bottom: 68px;
-    padding: 0;
+    /* Bottom buffer (+ safe area) so the last setting clears the screen edge.
+       NOTE: a stray `padding: 0` here previously clobbered the bottom padding. */
+    padding: 0 0 calc(32px + env(safe-area-inset-bottom, 0px));
   }
 
   @keyframes sb-sidebar-slide-in {
     from {
       transform: translateX(-100%);
     }
+
     to {
       transform: translateX(0);
     }
@@ -4858,6 +5025,7 @@ h6 {
     from {
       transform: translateX(100%);
     }
+
     to {
       transform: translateX(0);
     }
@@ -4940,7 +5108,7 @@ h6 {
   /* Header gets a little more breathing room and a bottom divider so it
    * reads as a real top-bar over the tab list. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header {
-    padding: 7px 0px;
+    padding: 7px 16px;
   }
 
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-title {
@@ -5683,6 +5851,28 @@ h6 {
 .sb-language-picker-item-selected {
   background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
   font-weight: 600;
+}
+
+/* On mobile the Language trigger sits near the bottom of the settings page, so
+   the default downward-opening absolute menu spills off-screen behind the tab
+   bar. Render it as a bottom-anchored sheet that stays above the nav bar and
+   scrolls internally, with the overlay dimming the whole screen. */
+@media (max-width: 768px) {
+  .sb-language-picker-overlay {
+    z-index: 9998;
+    background: rgba(0, 0, 0, 0.3);
+  }
+
+  .sb-language-picker-menu {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    top: auto;
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    z-index: 9999;
+    min-width: 0;
+    max-height: min(50dvh, 360px);
+  }
 }
 
 .sb-settings-toggle-row {
@@ -6875,6 +7065,117 @@ h6 {
   cursor: default;
 }
 
+/* Profile picture upload modal (rendered inside the shared modal chrome) */
+.sb-photo-modal {
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-photo-choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sb-photo-choice-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 16px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sb-photo-choice-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
+}
+
+.sb-photo-choice-button .material-symbols-outlined {
+  color: var(--sb-primary-color);
+}
+
+.sb-photo-crop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.sb-photo-crop-title {
+  margin: 0;
+  align-self: flex-start;
+  font-family: var(--sb-font-family);
+  color: var(--sb-font-color);
+}
+
+.sb-photo-crop-canvas {
+  touch-action: none;
+  max-width: 100%;
+}
+
+.sb-photo-crop-zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.sb-photo-crop-zoom input[type="range"] {
+  flex: 1;
+}
+
+.sb-photo-crop-zoom .material-symbols-outlined {
+  color: var(--sb-font-color);
+}
+
+.sb-photo-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  width: 100%;
+}
+
+.sb-photo-modal-button {
+  border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 10%);
+  border-radius: 8px;
+  padding: 10px 18px;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sb-photo-modal-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+}
+
+.sb-photo-modal-button-primary {
+  background: var(--sb-primary-color);
+  color: var(--sb-reader-background);
+  border-color: var(--sb-primary-color);
+}
+
+.sb-photo-modal-button-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-primary-color), #000 12%);
+}
+
+.sb-photo-modal-button:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
 .sb-account-text-input,
 .sb-account-textarea,
 .sb-account-uid-row {
@@ -6990,11 +7291,13 @@ h6 {
   display: flex;
   gap: 10px;
 }
+
 .flex-col-gap-sm {
   display: flex;
   flex-direction: column;
   gap: 5px;
 }
+
 .flex-row-wrap-around {
   display: flex;
   flex-direction: row;
@@ -7002,53 +7305,64 @@ h6 {
   gap: 10px;
   justify-content: space-around;
 }
+
 .flex-align-center {
   display: flex;
   align-items: center;
 }
+
 .flex-1 {
   flex: 1;
 }
+
 .flex-center {
   display: flex;
   justify-content: center;
   align-items: center;
 }
+
 .flex-between {
   display: flex;
   justify-content: space-between;
 }
+
 .flex-col-gap-md {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
+
 .flex-start-center-gap-sm {
   display: flex;
   justify-content: flex-start;
   align-items: center;
   gap: 5px;
 }
+
 .flex-between-center-gap-md {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 10px;
 }
+
 .flex-between-center {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
+
 .flex-start-start {
   display: flex;
   justify-content: start;
   align-items: start;
 }
+
 .flex-col {
   display: flex;
   flex-direction: column;
 }
+
 .flex-col-between-center-gap-sm {
   display: flex;
   flex-direction: column;
@@ -7056,6 +7370,7 @@ h6 {
   align-items: center;
   gap: 5px;
 }
+
 .flex-wrap-start {
   display: flex;
   flex-wrap: wrap;
@@ -7063,6 +7378,7 @@ h6 {
   justify-content: flex-start;
   align-items: flex-start;
 }
+
 .inline-flex-start-center-gap-sm {
   display: inline-flex;
   justify-content: flex-start;
@@ -7179,6 +7495,29 @@ h6 {
 
 .searchbar input::placeholder {
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+}
+
+/* Desktop only (mobile search is left untouched): give the book/translation
+   search field a clearly defined boundary and breathing room so it's obvious
+   where the input begins and ends. */
+@media only screen and (min-width: 769px) {
+  .searchbar {
+    height: 44px;
+    padding: 8px 14px;
+    margin: 6px 0;
+    border: 1.5px solid
+      color-mix(in srgb, var(--sb-font-color), transparent 80%);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .searchbar:focus-within {
+    border-color: var(--sb-primary-color);
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--sb-primary-color), transparent 82%);
+  }
 }
 
 .share-btn {
@@ -7600,6 +7939,7 @@ h6 {
   gap: 10px;
   text-align: center;
 }
+
 .sb-lg-expandButton {
   display: flex;
   background: var(--sb-primary-color);
@@ -7610,9 +7950,11 @@ h6 {
   color: var(--sb-font-color);
   width: max-content;
 }
+
 .sb-lg-loadMoreButton {
   justify-content: center;
 }
+
 .sb-lg-expandIcon {
   transition: transform 0.3s;
 }
@@ -7903,6 +8245,7 @@ h6 {
     font-weight: 500;
   }
 }
+
 .sb-translation-license-notice,
 .sb-translation-website {
   text-align: center;
@@ -7935,6 +8278,7 @@ h6 {
     opacity: 0;
     transform: translate(-50%, 10px);
   }
+
   to {
     opacity: 1;
     transform: translate(-50%, 0);
@@ -8161,31 +8505,54 @@ h6 {
 }
 
 @media (max-width: 768px) {
-  /* Search becomes a full-screen view on mobile with scrollable results above
-     and the input pinned at the bottom. Leaves room at the bottom for the
-     5-tab bar. */
+  /* Search is a bottom-anchored sheet on mobile: the input sits just above the
+     5-tab bar and results grow upward. It is capped to the *small* viewport
+     height (`svh`, which excludes the Android address bar) and anchored to the
+     bottom rather than `top: 0`, so the top results can never be pushed behind
+     the browser chrome (the old full-screen `top: 0` overlay anchored to the
+     taller layout viewport, hiding the first results until the bar collapsed).
+     Keeping it off the top of the screen also leaves the reader above the sheet
+     visible and tappable, so the app never feels frozen — tapping a reader
+     control closes search (via the outside-tap handler) and activates it. */
   .sb-floating-search-panel {
     left: 0;
     right: 0;
-    top: 0;
+    top: auto;
     bottom: 72px;
     transform: none;
     width: 100%;
     max-width: 100%;
-    max-height: none;
+    max-height: calc(
+      100svh - 72px - env(safe-area-inset-top, 0px) -
+        env(safe-area-inset-bottom, 0px) - 12px
+    );
     border-radius: 0;
     border: none;
     box-shadow: none;
-    padding: 14px 16px;
+    padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 14px;
     background: transparent;
     gap: 14px;
     animation: none;
+    /* Empty areas of the sheet let taps fall through to the reader; the input
+       row and results below re-enable pointer events. */
+    pointer-events: none;
   }
 
-  /* Only cover the screen once results (or status) are showing — while the
+  /* Only paint a backdrop once results (or status) are showing — while the
      panel is just the input, keep it transparent over the reader. */
   .sb-floating-search-panel-expanded {
     background: var(--sb-background);
+  }
+
+  .sb-floating-search-panel .sb-floating-search-input-wrap,
+  .sb-floating-search-panel .sb-floating-search-results {
+    pointer-events: auto;
+  }
+
+  /* Fill the sheet so its empty space belongs to the (interactive) results
+     container rather than the pass-through backdrop. */
+  .sb-floating-search-panel .sb-floating-search-results {
+    flex: 1 1 auto;
   }
 
   .sb-floating-search-panel .sb-floating-search-input-wrap {
@@ -8202,4 +8569,331 @@ h6 {
     bottom: 110px;
     width: calc(100vw - 16px);
   }
+}
+
+/* Login modal -------------------------------------------------------------- */
+
+.sb-login-modal {
+  width: min(420px, 100%);
+  max-height: min(640px, calc(100dvh - 32px));
+}
+
+.sb-login-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 8px 12px;
+  overflow: auto;
+}
+
+.sb-login-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+}
+
+.sb-login-logo {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+  margin-bottom: 8px;
+}
+
+.sb-login-title {
+  margin: 0;
+  font-family: var(--sb-chapter-heading-font-family), sans-serif;
+  font-size: 1.4em;
+  font-weight: 700;
+  color: var(--sb-chapter-heading-font-color);
+}
+
+.sb-login-subtitle {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+}
+
+.sb-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sb-login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-login-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+}
+
+.sb-login-terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
+  cursor: pointer;
+}
+
+.sb-login-terms-checkbox {
+  margin: 0;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--sb-primary-color);
+  cursor: pointer;
+}
+
+.sb-login-terms-text {
+  flex: 1;
+}
+
+.sb-login-link {
+  color: var(--sb-primary-color);
+  text-decoration: underline;
+}
+
+.sb-login-link:hover {
+  filter: brightness(1.1);
+}
+
+.sb-login-legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-size: 13px;
+}
+
+.sb-login-legal .sb-login-link {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+  text-decoration: none;
+}
+
+.sb-login-legal .sb-login-link:hover {
+  text-decoration: underline;
+}
+
+/* Terms of service modal --------------------------------------------------- */
+
+.sb-tos-content {
+  font-size: 14px;
+}
+
+.sb-tos-content h1,
+.sb-tos-content h2,
+.sb-tos-content h3 {
+  font-family: var(--sb-chapter-heading-font-family), sans-serif;
+  color: var(--sb-chapter-heading-font-color);
+  line-height: 1.3;
+}
+
+.sb-tos-content a {
+  color: var(--sb-primary-color);
+  text-decoration: underline;
+}
+
+.sb-tos-content ul,
+.sb-tos-content ol {
+  padding-left: 1.4em;
+}
+
+.sb-login-input {
+  width: 100%;
+}
+
+.sb-login-error {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #dc2626;
+}
+
+.sb-login-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.sb-login-submit {
+  border: none;
+  border-radius: 8px;
+  padding: 12px 16px;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+  transition:
+    filter 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.sb-login-submit:hover:not(:disabled) {
+  filter: brightness(1.05);
+}
+
+.sb-login-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.sb-login-secondary {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.2s ease;
+}
+
+.sb-login-secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-login-secondary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* "Change email address" link rendered as a button in the code-step header. */
+.sb-login-change-email {
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin-top: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.sb-login-change-email:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* Code input with an inline "Resend code" button on the right. */
+.sb-login-code-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.sb-login-code-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-login-resend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  padding: 0 8px;
+  color: var(--sb-primary-color);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+
+.sb-login-resend:hover:not(:disabled) {
+  filter: brightness(1.1);
+}
+
+.sb-login-resend:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.sb-login-resend-icon {
+  font-size: 18px;
+}
+
+/* Side-by-side Cancel / Confirm buttons on the code step. */
+.sb-login-actions-row {
+  flex-direction: row;
+}
+
+.sb-login-actions-row .sb-login-submit,
+.sb-login-actions-row .sb-login-secondary {
+  width: auto;
+  flex: 1;
+}
+
+.sb-login-actions-row .sb-login-secondary {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-login-actions-row .sb-login-secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
+}
+
+.sb-grid-portal-pane {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background:
+    radial-gradient(
+      circle at 30% 20%,
+      color-mix(in srgb, var(--sb-primary-color), transparent 80%) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      circle at 80% 80%,
+      color-mix(in srgb, var(--sb-secondary-color), transparent 60%) 0%,
+      transparent 60%
+    ),
+    var(--sb-reader-background);
+}
+
+.sb-grid-portal-pane-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 45%);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.sb-grid-portal-pane-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 10%);
+}
+
+.sb-grid-portal-pane-iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 10px;
 }

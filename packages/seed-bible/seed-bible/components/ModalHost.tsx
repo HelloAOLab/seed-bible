@@ -1,7 +1,7 @@
-import { CasualOSApp } from "seed-bible.components.CasualOSApp";
-import type { ModalManager } from "seed-bible.managers.ModalManager";
-import { useI18n } from "seed-bible.i18n.I18nManager";
-import { translateTitle } from "seed-bible.components.Utils";
+import { CasualOSApp } from "../components/CasualOSApp";
+import type { ModalManager } from "../managers/ModalManager";
+import { useI18n } from "../i18n/I18nManager";
+import { translateTitle } from "../components/Utils";
 
 export function ModalHost(props: { manager: ModalManager }) {
   const { manager } = props;

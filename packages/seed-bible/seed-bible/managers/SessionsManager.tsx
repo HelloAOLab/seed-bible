@@ -4,13 +4,17 @@ import {
   type BibleReadingState,
   type VerseDecoration,
   type VerseDecorationInput,
-} from "seed-bible.managers.BibleReadingManager";
-import type { HighlightsManager } from "seed-bible.managers.HighlightsManager";
-import type { BibleDataManager } from "seed-bible.managers.BibleDataManager";
+} from "../managers/BibleReadingManager";
+import type { HighlightsManager } from "../managers/HighlightsManager";
+import type { BibleDataManager } from "../managers/BibleDataManager";
+import type { LoginManager, UserProfile } from "../managers/LoginManager";
+import type { CasualOSManager } from "./OsManager";
 import type {
-  LoginManager,
-  UserProfile,
-} from "seed-bible.managers.LoginManager";
+  SharedDocument,
+  SharedMap,
+} from "@casual-simulation/aux-common/documents/SharedDocument";
+import { v4 as uuid } from "uuid";
+import type { I18nManager } from "../i18n/I18nManager";
 
 export interface ConnectedSessionUser extends SessionConnectionInfo {
   /**
@@ -24,7 +28,17 @@ export interface ConnectedSessionUser extends SessionConnectionInfo {
   color: string;
 }
 
-export interface SessionConnectionInfo extends ConnectionInfo {
+export interface SessionConnectionInfo {
+  /**
+   * The ID of the user in the session connection.
+   */
+  userId: string | null;
+
+  /**
+   * The ID of the connection.
+   */
+  connectionId: string;
+
   /**
    * Whether this event is for the current client.
    * This will be true when `client.connectionId` is the same as the `configBot.id` and false otherwise.
@@ -267,7 +281,8 @@ function applySessionDataToReadingState(
   sessionData: SessionData
 ) {
   if (readingState.translationId.value !== sessionData.translationId) {
-    readingState.translationId.value = sessionData.translationId;
+    readingState.translationId.value =
+      sessionData.translationId ?? readingState.translationId.value;
   }
   if (readingState.bookId.value !== sessionData.bookId) {
     readingState.bookId.value = sessionData.bookId;
@@ -372,13 +387,19 @@ function getRandomColor(key: string): string {
 }
 
 async function createBibleReadingSession(
+  os: CasualOSManager,
   dataManager: BibleDataManager,
   loginManager: LoginManager,
   highlightsManager: HighlightsManager,
+  i18nManager: I18nManager,
   id: string,
   defaultOptions?: SessionOptions
 ): Promise<BibleReadingSession> {
-  const readingState = createBibleReadingState(dataManager, highlightsManager);
+  const readingState = createBibleReadingState(
+    dataManager,
+    highlightsManager,
+    i18nManager
+  );
   const document = await os.getSharedDocument(null, id, "session_data");
   const stateMap =
     document.getMap<SessionData[keyof SessionData]>("reading_state");
@@ -396,9 +417,9 @@ async function createBibleReadingSession(
   const connectedUsers = signal<ConnectedSessionUser[]>([]);
   const connectedClients = new Map<string, SessionConnectionInfo>();
   const profileCache = new Map<string, UserProfile>();
-  const localConnectionId =
-    (typeof configBot !== "undefined" ? toStringOrNull(configBot?.id) : null) ??
-    "local";
+  const localConnectionId = os.connectionId;
+  // (typeof configBot !== "undefined" ? toStringOrNull(configBot?.id) : null) ??
+  // "local";
   const decorationOwners = new Map<string, string>();
   const localSessionId = computed(
     () => loginManager.userId.value ?? localConnectionId
@@ -558,7 +579,7 @@ async function createBibleReadingSession(
         return {
           isSelf: client.isSelf,
           connectionId: client.connectionId,
-          sessionId: client.sessionId,
+          // sessionId: client.sessionId,
           userId: effectiveUserId,
           profile,
           color: color,
@@ -958,21 +979,23 @@ export interface SessionsManager {
 }
 
 export function createSessionsManager(
+  os: CasualOSManager,
   dataManager: BibleDataManager,
   loginManager: LoginManager,
-  highlightsManager: HighlightsManager
+  highlightsManager: HighlightsManager,
+  i18nManager: I18nManager
 ): SessionsManager {
   const createSession = async () => {
     const id = createSessionId();
     // Claim host at create time so the settings UI knows which connected
     // user is allowed to change session-wide toggles.
-    const hostUserId =
-      loginManager.userId.value ??
-      (typeof configBot !== "undefined" ? toStringOrNull(configBot?.id) : null);
+    const hostUserId = loginManager.userId.value ?? os.connectionId;
     return await createBibleReadingSession(
+      os,
       dataManager,
       loginManager,
       highlightsManager,
+      i18nManager,
       id,
       { ...DEFAULT_SESSION_OPTIONS, hostUserId }
     );
@@ -980,9 +1003,11 @@ export function createSessionsManager(
 
   const joinSession = async (id: string) => {
     return await createBibleReadingSession(
+      os,
       dataManager,
       loginManager,
       highlightsManager,
+      i18nManager,
       id
     );
   };

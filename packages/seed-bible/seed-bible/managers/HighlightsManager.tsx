@@ -1,6 +1,7 @@
-import { z } from "zod";
-import type { LoginManager } from "seed-bible.managers.LoginManager";
+import * as z from "zod/v4";
+import type { LoginManager } from "../managers/LoginManager";
 import { signal, type Signal } from "@preact/signals";
+import type { CasualOSManager } from "./OsManager";
 
 /**
  * Zod schema for a highlighted verse target.
@@ -348,6 +349,7 @@ const emptyChapterHighlights: ChapterHighlights = {
  * - Persists highlights under user-scoped storage keys.
  */
 export function createHighlightsManager(
+  os: CasualOSManager,
   login: LoginManager
 ): HighlightsManager {
   // Cache highlights by chapter address in reactive signals.

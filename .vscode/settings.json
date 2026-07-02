@@ -1,4 +1,8 @@
 {
   "typescript.validate.enable": true,
   "javascript.validate.enable": true,
+  "terminal.integrated.automationProfile.osx": {
+    "path": "/bin/zsh",
+    "args": ["-l", "-i"]
+  }
 }

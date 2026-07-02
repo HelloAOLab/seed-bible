@@ -1,6 +1,6 @@
 import { signal, type ReadonlySignal } from "@preact/signals";
 import type { ComponentChildren } from "preact";
-import type { TranslatableTitle } from "seed-bible.managers.BibleToolsManager";
+import type { TranslatableTitle } from "../managers/BibleToolsManager";
 
 export interface ManagedModal {
   id: string;

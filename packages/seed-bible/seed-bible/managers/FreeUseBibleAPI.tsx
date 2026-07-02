@@ -1004,15 +1004,20 @@ interface DatasetReference {
   score?: number;
 }
 
-export const DEFAULT_API_ENDPOINT = thisBot.tags.useFreeBibleAPI
-  ? "https://bible.helloao.org/"
-  : "https://vmfnri.helloao.org/";
+export const FREE_USE_BIBLE_API_ENDPOINT = "https://bible.helloao.org/";
+const PRIVATE_API_ENDPOINT = "https://vmfnri.helloao.org/";
+
+export function getDefaultAPIEndpoint(url: URL): string {
+  return url.searchParams.has("useFreeBibleAPI")
+    ? FREE_USE_BIBLE_API_ENDPOINT
+    : PRIVATE_API_ENDPOINT;
+}
 
 export class FreeUseBibleAPI {
   endpoint: string;
   private _responseCache = new Map<string, Promise<unknown>>();
 
-  constructor(endpoint: string = DEFAULT_API_ENDPOINT) {
+  constructor(endpoint: string) {
     this.endpoint = endpoint;
   }
 
@@ -1084,15 +1089,14 @@ export class FreeUseBibleAPI {
       return existing;
     }
 
-    const request: Promise<T> = web
-      .get(url)
+    const request: Promise<T> = fetch(url)
       .then(async (response) => {
         if (response.status < 200 || response.status >= 300) {
           throw new Error(
             `Failed request to ${url}. Status: ${response.status} ${response.statusText}`
           );
         }
-        return await response.data;
+        return await response.json();
       })
       .catch((error) => {
         this._responseCache.delete(url);

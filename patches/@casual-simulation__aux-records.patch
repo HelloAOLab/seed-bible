@@ -1,0 +1,43 @@
+diff --git a/AuthController.d.ts b/AuthController.d.ts
+index 28149eb03c64ee541aa3189319ae702064beddee..40fbc4b95e043c7771fa9a7282fe64f6b96001b7 100644
+--- a/AuthController.d.ts
++++ b/AuthController.d.ts
+@@ -11,6 +11,7 @@ import type { ZodIssue } from 'zod';
+ import type { PublicKeyCredentialCreationOptionsJSON, RegistrationResponseJSON, PublicKeyCredentialRequestOptionsJSON, AuthenticationResponseJSON } from '@simplewebauthn/types';
+ import type { StripeAccountStatus, StripeRequirementsStatus } from './StripeInterface';
+ import type { RecordsStore } from './RecordsStore';
++import { KnownErrorCodes } from '@casual-simulation/aux-common';
+ /**
+  * The number of miliseconds that a login request should be valid for before expiration.
+  */
+@@ -585,7 +586,7 @@ export interface ValidateSessionKeySuccess {
+ }
+ export interface ValidateSessionKeyFailure {
+     success: false;
+-    errorCode: 'unacceptable_session_key' | 'invalid_key' | 'session_expired' | 'user_is_banned' | ServerError;
++    errorCode: KnownErrorCodes;
+     errorMessage: string;
+     banReason?: AuthUser['banReason'];
+ }
+diff --git a/DataRecordsController.d.ts b/DataRecordsController.d.ts
+index 378ecc35a2536257a8adc5215ac8e79d0ec08f6b..592109b35441289784fd89fd82bcdc3b017dcdd6 100644
+--- a/DataRecordsController.d.ts
++++ b/DataRecordsController.d.ts
+@@ -246,7 +246,7 @@ export interface EraseDataFailure {
+     /**
+      * The error code for the failure.
+      */
+-    errorCode: ServerError | NotLoggedInError | NotAuthorizedError | EraseDataStoreResult['errorCode'] | ValidatePublicRecordKeyFailure['errorCode'] | AuthorizeSubjectFailure['errorCode'];
++    errorCode: KnownErrorCodes;
+     /**
+      * The error message for the failure.
+      */
+@@ -351,7 +351,7 @@ export interface ListedData {
+  */
+ export interface ListDataFailure {
+     success: false;
+-    errorCode: ServerError | ListDataStoreFailure['errorCode'] | AuthorizeSubjectFailure['errorCode'] | 'not_supported';
++    errorCode: KnownErrorCodes;
+     errorMessage: string;
+ }
+ //# sourceMappingURL=DataRecordsController.d.ts.map

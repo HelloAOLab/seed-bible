@@ -1,12 +1,16 @@
 import { effect } from "@preact/signals";
-import { registerExtension, type SeedBibleState } from "seed-bible.app.api";
-import { CreateTwitchPubState } from "ext_twitchPub.host.twitchPubManager";
-import initializeTwitchBot from "ext_twitchPub.host.initializeTwitchBot";
+import { registerExtension, type SeedBibleState } from "seed-bible";
+import { CreateTwitchPubState } from "./twitchPubManager";
+import initializeTwitchBot from "./initializeTwitchBot";
+import { closeInterface } from "./closeInterface";
+import { openInterface } from "./openInterface";
 
 registerExtension({
   id: "ext_twitchPub",
   init: function* (context: SeedBibleState) {
-    const twitchPubState = CreateTwitchPubState();
+    const twitchPubState = CreateTwitchPubState({
+      toast: context.app.toast,
+    });
 
     // register a new tool
     yield context.tools.registerToolbarTool({
@@ -29,10 +33,10 @@ registerExtension({
       onSelect: () => {
         if (!twitchPubState.interfaceEnabled.value) {
           twitchPubState.interfaceEnabled.value = true;
-          thisBot.openInterface({ state: twitchPubState });
+          openInterface({ state: twitchPubState, context });
         } else {
           twitchPubState.interfaceEnabled.value = false;
-          thisBot.closeInterface();
+          closeInterface();
         }
       },
       priority: 950,
