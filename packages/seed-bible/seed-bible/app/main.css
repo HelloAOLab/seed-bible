@@ -966,7 +966,7 @@ h6 {
   margin-inline-end: 4px;
   border: none;
   background: transparent;
-  color: var(--sb-verse-font-color);
+  color: inherit;
   cursor: pointer;
   width: 18px;
   height: 18px;
@@ -1434,7 +1434,7 @@ h6 {
   vertical-align: middle;
   margin-inline-start: 6px;
   margin-inline-end: 3px;
-  color: color-mix(in srgb, var(--sb-verse-font-color), transparent 30%);
+  color: color-mix(in srgb, currentColor, transparent 30%);
 }
 
 .sb-poem-line-1 {
