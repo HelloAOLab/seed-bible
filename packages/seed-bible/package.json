@@ -38,6 +38,7 @@
     "axios": "catalog:",
     "react-avatar-editor": "15.1.0",
     "rxjs": "catalog:",
-    "luxon": "catalog:"
+    "luxon": "catalog:",
+    "dompurify": "catalog:"
   }
 }

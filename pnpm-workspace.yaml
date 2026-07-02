@@ -46,3 +46,4 @@ catalog:
   preact-render-to-string: "^6.7.0"
   rxjs: "8.0.0-alpha.14"
   luxon: "^3.7.2"
+  dompurify: "^3.4.11"

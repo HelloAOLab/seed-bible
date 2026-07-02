@@ -4,6 +4,7 @@ import type { PlaylistManager } from "../managers/PlaylistManager";
 import type { TranslationBook } from "../managers/FreeUseBibleAPI";
 import { parseVerseReference } from "../managers/parseVerseReference";
 import { DiscoverSection } from "./DiscoverSection";
+import { sanitize } from "../managers/Sanitization";
 
 interface PlaylistItemInputProps {
   playlists: PlaylistManager;
@@ -21,16 +22,6 @@ const MODES: { mode: AddMode; labelKey: string; defaultLabel: string }[] = [
   { mode: "text", labelKey: "playlist-add-mode-text", defaultLabel: "Text" },
   { mode: "link", labelKey: "playlist-add-mode-link", defaultLabel: "Link" },
 ];
-
-/** Escapes HTML special characters so typed text renders literally. */
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
 
 /**
  * Input section for adding an item to the currently-edited playlist. Supports
@@ -50,7 +41,7 @@ export function PlaylistItemInput(props: PlaylistItemInputProps) {
     setError(null);
   };
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     const trimmed = value.trim();
     if (!trimmed) {
       return;
@@ -70,7 +61,7 @@ export function PlaylistItemInput(props: PlaylistItemInputProps) {
     } else if (mode === "text") {
       playlists.addEditingPlaylistItem({
         type: "html",
-        html: escapeHtml(trimmed),
+        html: await sanitize(trimmed),
       });
     } else {
       let url: string;
