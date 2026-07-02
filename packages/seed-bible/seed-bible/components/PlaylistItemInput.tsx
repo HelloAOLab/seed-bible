@@ -1,6 +1,6 @@
 import { useRef, useState } from "preact/hooks";
 import { useI18n } from "../i18n/I18nManager";
-import type { PlaylistManager } from "../managers/PlaylistManager";
+import type { PlaylistItemData } from "../managers/PlaylistManager";
 import type { TranslationBook } from "../managers/FreeUseBibleAPI";
 import { parseVerseReference } from "../managers/parseVerseReference";
 import { sanitize } from "../managers/Sanitization";
@@ -9,8 +9,9 @@ import { RichTextEditor } from "./RichTextEditor";
 import type { RichTextEditorHandle } from "./RichTextEditor";
 
 interface PlaylistItemInputProps {
-  playlists: PlaylistManager;
   books: TranslationBook[];
+  /** Called with the playlist item the user assembled and chose to add. */
+  onAdd: (item: PlaylistItemData) => void;
 }
 
 type AddMode = "scripture" | "text" | "link";
@@ -31,7 +32,7 @@ const MODES: { mode: AddMode; labelKey: string; defaultLabel: string }[] = [
  * and a URL (link item).
  */
 export function PlaylistItemInput(props: PlaylistItemInputProps) {
-  const { playlists, books } = props;
+  const { books, onAdd } = props;
   const { t } = useI18n();
   const [mode, setMode] = useState<AddMode>("scripture");
   const [value, setValue] = useState("");
@@ -56,7 +57,7 @@ export function PlaylistItemInput(props: PlaylistItemInputProps) {
       if (!html.trim()) {
         return;
       }
-      playlists.addEditingPlaylistItem({
+      onAdd({
         type: "html",
         html: await sanitize(html),
       });
@@ -80,7 +81,7 @@ export function PlaylistItemInput(props: PlaylistItemInputProps) {
         );
         return;
       }
-      playlists.addEditingPlaylistItem({ type: "bible-verse", ref });
+      onAdd({ type: "bible-verse", ref });
     } else {
       let url: string;
       try {
@@ -91,7 +92,7 @@ export function PlaylistItemInput(props: PlaylistItemInputProps) {
         );
         return;
       }
-      playlists.addEditingPlaylistItem({ type: "link", url });
+      onAdd({ type: "link", url });
     }
 
     setValue("");

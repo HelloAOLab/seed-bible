@@ -98,7 +98,10 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
         )}
       </DiscoverSection>
 
-      <PlaylistItemInput playlists={playlists} books={books} />
+      <PlaylistItemInput
+        books={books}
+        onAdd={(item) => playlists.addEditingPlaylistItem(item)}
+      />
 
       <div className="sb-settings-actions">
         <button
