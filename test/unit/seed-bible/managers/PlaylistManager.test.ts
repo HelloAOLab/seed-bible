@@ -61,12 +61,40 @@ describe("Playlist schemas", () => {
   });
 });
 
-describe("createPlaylistManager", () => {
-  type LoginArg = Parameters<typeof createPlaylistManager>[1];
+type LoginArg = Parameters<typeof createPlaylistManager>[1];
+type TabsArg = Parameters<typeof createPlaylistManager>[2];
+type TabArg = Parameters<typeof createPlayingState>[1];
 
+/** Builds a mock reader tab whose reading state records navigation calls. */
+function makeTab(
+  id: string,
+  selectTranslationAndChapter: Mock,
+  translationId = "BSB"
+): NonNullable<TabArg> {
+  return {
+    id,
+    title: id,
+    readingState: {
+      selectTranslationAndChapter,
+      translationId: signal(translationId),
+    },
+    sharedSession: null,
+  } as unknown as NonNullable<TabArg>;
+}
+
+/** Builds a mock TabsManager with a single, selected tab. */
+function makeTabs(tab: NonNullable<TabArg>): TabsArg {
+  return {
+    tabs: signal([tab]),
+    selectedTabId: signal(tab.id),
+  } as unknown as TabsArg;
+}
+
+describe("createPlaylistManager", () => {
   let recordDataMock: Mock;
   let listDataByMarkerMock: Mock;
   let loginMock: Mock;
+  let selectTranslationAndChapterMock: Mock;
   let warnSpy: Mock;
   let errorSpy: Mock;
   let userId: ReturnType<typeof signal<string | null>>;
@@ -83,7 +111,8 @@ describe("createPlaylistManager", () => {
       listDataByMarker: listDataByMarkerMock,
     });
     const login = { userId, login: loginMock } as unknown as LoginArg;
-    return createPlaylistManager(os, login);
+    const tabs = makeTabs(makeTab("tab-1", selectTranslationAndChapterMock));
+    return createPlaylistManager(os, login, tabs);
   };
 
   beforeEach(() => {
@@ -92,6 +121,7 @@ describe("createPlaylistManager", () => {
       .fn()
       .mockResolvedValue({ success: true, items: [] });
     loginMock = vi.fn().mockResolvedValue(null);
+    selectTranslationAndChapterMock = vi.fn().mockResolvedValue(undefined);
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
   });
@@ -346,6 +376,8 @@ describe("createPlaylistManager", () => {
     expect(manager.playing.value?.queue.value).toEqual(playlist.items);
     expect(manager.playing.value?.playlists.value).toEqual([playlist]);
     expect(manager.view.value).toBe("play_playlist");
+    // The currently selected tab is saved into the playing state.
+    expect(manager.playing.value?.tab?.id).toBe("tab-1");
 
     manager.stopPlaying();
     expect(manager.playing.value).toBeNull();
@@ -521,5 +553,108 @@ describe("createPlayingState", () => {
     state.reset();
 
     expect(state.currentIndex.value).toBe(0);
+  });
+
+  describe("tab navigation", () => {
+    const verse = (
+      bookId: string,
+      chapter: number,
+      v: number,
+      translationId?: string
+    ): PlaylistItemData => ({
+      type: "bible-verse",
+      ref: { bookId, chapter, verse: v },
+      translationId,
+    });
+
+    it("stores the provided tab", () => {
+      const nav = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", nav);
+      const state = createPlayingState(
+        [makePlaylist({ items: makeItems(2) })],
+        tab
+      );
+      expect(state.tab).toBe(tab);
+    });
+
+    it("navigates the tab to the first verse immediately", () => {
+      const nav = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", nav);
+      createPlayingState(
+        [makePlaylist({ items: [verse("JHN", 3, 16, "WEB")] })],
+        tab
+      );
+
+      expect(nav).toHaveBeenCalledTimes(1);
+      expect(nav).toHaveBeenCalledWith("WEB", "JHN", 3, { scrollToVerse: 16 });
+    });
+
+    it("falls back to the tab's current translation when the item has none", () => {
+      const nav = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", nav, "BSB");
+      createPlayingState(
+        [makePlaylist({ items: [verse("GEN", 1, 1)] })],
+        tab
+      );
+
+      expect(nav).toHaveBeenCalledWith("BSB", "GEN", 1, { scrollToVerse: 1 });
+    });
+
+    it("re-navigates when advancing to another verse", () => {
+      const nav = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", nav, "BSB");
+      const state = createPlayingState(
+        [makePlaylist({ items: [verse("GEN", 1, 1), verse("EXO", 2, 3)] })],
+        tab
+      );
+      nav.mockClear();
+
+      state.next();
+
+      expect(nav).toHaveBeenCalledTimes(1);
+      expect(nav).toHaveBeenCalledWith("BSB", "EXO", 2, { scrollToVerse: 3 });
+    });
+
+    it("does not navigate for non-verse items", () => {
+      const nav = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", nav, "BSB");
+      const state = createPlayingState(
+        [
+          makePlaylist({
+            items: [verse("GEN", 1, 1), { type: "html", html: "<p>x</p>" }],
+          }),
+        ],
+        tab
+      );
+      nav.mockClear();
+
+      state.next(); // now on the html item
+
+      expect(nav).not.toHaveBeenCalled();
+    });
+
+    it("does nothing when no tab is provided", () => {
+      const state = createPlayingState([
+        makePlaylist({ items: [verse("GEN", 1, 1)] }),
+      ]);
+      // No tab, no throw; navigation simply doesn't happen.
+      expect(() => state.next()).not.toThrow();
+      expect(state.tab).toBeNull();
+    });
+
+    it("dispose stops further navigation", () => {
+      const nav = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", nav, "BSB");
+      const state = createPlayingState(
+        [makePlaylist({ items: [verse("GEN", 1, 1), verse("EXO", 2, 3)] })],
+        tab
+      );
+      nav.mockClear();
+
+      state.dispose();
+      state.next();
+
+      expect(nav).not.toHaveBeenCalled();
+    });
   });
 });

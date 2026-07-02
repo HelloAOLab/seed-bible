@@ -420,7 +420,7 @@ export function createSeedBibleState(
     },
   });
   const readingPlans = createReadingPlansManager(os, login);
-  const playlists = createPlaylistManager(os, login);
+  const playlists = createPlaylistManager(os, login, tabs);
 
   const { currentTheme } = themeManager;
   const theme = computed(() => currentTheme.value);

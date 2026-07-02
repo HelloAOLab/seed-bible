@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
 import { computed, effect, signal } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
+import type { ReaderTab, TabsManager } from "./TabsManager";
 import { v4 as uuid } from "uuid";
 
 export const VerseRefSchema = z.object({
@@ -49,10 +50,16 @@ export type PlayingState = ReturnType<typeof createPlayingState>;
 /**
  * Creates an in-memory playing state for stepping through one or more
  * playlists. The queue is a copy of the source playlists' items, so
- * manipulating it never mutates the underlying playlists. Playback is purely
- * local reactive state — no CasualOS/login dependencies.
+ * manipulating it never mutates the underlying playlists.
+ *
+ * When a `tab` is provided, advancing to a `bible-verse` item navigates that
+ * tab's reader to the verse. The tab is the one saved when playback started, so
+ * navigation keeps targeting it even if the user later switches tabs.
  */
-export function createPlayingState(sourcePlaylists: Playlist[]) {
+export function createPlayingState(
+  sourcePlaylists: Playlist[],
+  tab: ReaderTab | null = null
+) {
   const playlists = signal<Playlist[]>(sourcePlaylists);
   const queue = signal<PlaylistItemData[]>(
     sourcePlaylists.flatMap((playlist) => [...playlist.items])
@@ -150,6 +157,29 @@ export function createPlayingState(sourcePlaylists: Playlist[]) {
     currentIndex.value = queue.value.length > 0 ? 0 : -1;
   };
 
+  // Navigate the saved tab to the current item when it is a bible verse. Runs
+  // immediately, so playback jumps to the first item's verse right away.
+  const disposeNavigation = effect(() => {
+    const item = currentItem.value;
+    if (!tab || item?.type !== "bible-verse") {
+      return;
+    }
+    const { ref, translationId } = item;
+    // `translationId` is optional on the item; fall back to the tab's current
+    // translation. `.peek()` avoids re-navigating when the tab changes it.
+    void tab.readingState.selectTranslationAndChapter(
+      translationId ?? tab.readingState.translationId.peek(),
+      ref.bookId,
+      ref.chapter,
+      { scrollToVerse: ref.verse }
+    );
+  });
+
+  /** Tears down the navigation effect. Call when playback ends or is replaced. */
+  const dispose = (): void => {
+    disposeNavigation();
+  };
+
   return {
     playlists,
     queue,
@@ -157,6 +187,7 @@ export function createPlayingState(sourcePlaylists: Playlist[]) {
     currentItem,
     hasNext,
     hasPrevious,
+    tab,
     next,
     previous,
     jumpTo,
@@ -164,12 +195,14 @@ export function createPlayingState(sourcePlaylists: Playlist[]) {
     removeFromQueue,
     reorderQueue,
     reset,
+    dispose,
   };
 }
 
 export function createPlaylistManager(
   os: CasualOSManager,
-  login: LoginManager
+  login: LoginManager,
+  tabs: TabsManager
 ) {
   const userPlaylists = signal<Playlist[]>([]);
   const view = signal<"discover" | "create_playlist" | "play_playlist">(
@@ -304,11 +337,17 @@ export function createPlaylistManager(
 
   /**
    * Starts playing the given playlist(s), replacing any current playback with a
-   * fresh queue built from a copy of their items.
+   * fresh queue built from a copy of their items. The currently selected reader
+   * tab is saved into the playing state so bible-verse items navigate it.
    */
   const startPlaying = (playlist: Playlist | Playlist[]): void => {
+    playing.value?.dispose();
     const playlists = Array.isArray(playlist) ? playlist : [playlist];
-    playing.value = createPlayingState(playlists);
+    const targetTab =
+      tabs.tabs.value.find(
+        (tab) => tab.sharedSession || tab.id === tabs.selectedTabId.value
+      ) ?? null;
+    playing.value = createPlayingState(playlists, targetTab);
     view.value = "play_playlist";
   };
 
@@ -316,6 +355,7 @@ export function createPlaylistManager(
    * Stops playback, clears the playing state, and returns to the discover view.
    */
   const stopPlaying = (): void => {
+    playing.value?.dispose();
     playing.value = null;
     view.value = "discover";
   };
