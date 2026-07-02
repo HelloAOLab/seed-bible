@@ -4945,7 +4945,7 @@ h6 {
 
 .sb-tab-more-icon {
   font-size: 1.125rem;
-  opacity: 0.9;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
 }
 
 .sb-sidebar-icon-button {

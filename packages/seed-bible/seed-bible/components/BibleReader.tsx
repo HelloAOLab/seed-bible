@@ -942,13 +942,14 @@ export function BibleReader(props: BibleReaderProps) {
 
   const { t } = useI18n();
   const scriptureElements: ScriptureElementsBehavior =
-    props.scriptureElements ?? {
-      showHeadings: true,
-      showVerseNumbers: true,
-      showFootnotes: true,
-      showHighlights: true,
-      showRedLettering: true,
-    };
+    props.scriptureElements ??
+      state?.settings?.settings.value.scriptureElements ?? {
+        showHeadings: true,
+        showVerseNumbers: true,
+        showFootnotes: true,
+        showHighlights: true,
+        showRedLettering: true,
+      };
 
   const openBookSelector = () => {
     selectorState.selectingTranslation.value = false;
