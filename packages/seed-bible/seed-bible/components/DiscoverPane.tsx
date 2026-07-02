@@ -5,6 +5,7 @@ import type { DiscoverReference } from "../managers/DiscoverManager";
 import type { TranslationBook } from "../managers/FreeUseBibleAPI";
 import { MaterialIcon } from "./icons";
 import { CreatePlaylistForm } from "./CreatePlaylistForm";
+import { PlayPlaylistView } from "./PlayPlaylistView";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
 
 interface DiscoverPaneProps {
@@ -26,6 +27,10 @@ export function DiscoverPane(props: DiscoverPaneProps) {
 
   if (view.value === "create_playlist") {
     return <CreatePlaylistForm playlists={playlists} tabs={tabs} />;
+  }
+
+  if (view.value === "play_playlist") {
+    return <PlayPlaylistView playlists={playlists} tabs={tabs} />;
   }
 
   // Reading `.value` during render subscribes the component to updates.
@@ -114,6 +119,16 @@ function PlaylistSection({
                   </span>
                 ) : null}
               </div>
+              <button
+                type="button"
+                className="sb-discover-item-play"
+                aria-label={t("play-playlist", {
+                  defaultValue: "Play playlist",
+                })}
+                onClick={() => playlists.startPlaying(playlist)}
+              >
+                <MaterialIcon>play_arrow</MaterialIcon>
+              </button>
               <button
                 type="button"
                 className="sb-discover-item-edit"

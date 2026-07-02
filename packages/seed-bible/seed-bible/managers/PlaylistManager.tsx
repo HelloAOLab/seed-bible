@@ -172,7 +172,9 @@ export function createPlaylistManager(
   login: LoginManager
 ) {
   const userPlaylists = signal<Playlist[]>([]);
-  const view = signal<"discover" | "create_playlist">("discover");
+  const view = signal<"discover" | "create_playlist" | "play_playlist">(
+    "discover"
+  );
   /** The playlist currently being edited/created in the pane, or null. */
   const editingPlaylist = signal<Playlist | null>(null);
   /** The active playback state, or null when nothing is playing. */
@@ -307,11 +309,15 @@ export function createPlaylistManager(
   const startPlaying = (playlist: Playlist | Playlist[]): void => {
     const playlists = Array.isArray(playlist) ? playlist : [playlist];
     playing.value = createPlayingState(playlists);
+    view.value = "play_playlist";
   };
 
-  /** Stops playback and clears the playing state. */
+  /**
+   * Stops playback, clears the playing state, and returns to the discover view.
+   */
   const stopPlaying = (): void => {
     playing.value = null;
+    view.value = "discover";
   };
 
   const syncPlaylists = async () => {

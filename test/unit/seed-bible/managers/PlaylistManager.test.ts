@@ -345,9 +345,11 @@ describe("createPlaylistManager", () => {
     expect(manager.playing.value).not.toBeNull();
     expect(manager.playing.value?.queue.value).toEqual(playlist.items);
     expect(manager.playing.value?.playlists.value).toEqual([playlist]);
+    expect(manager.view.value).toBe("play_playlist");
 
     manager.stopPlaying();
     expect(manager.playing.value).toBeNull();
+    expect(manager.view.value).toBe("discover");
   });
 
   it("startPlaying accepts multiple playlists", async () => {

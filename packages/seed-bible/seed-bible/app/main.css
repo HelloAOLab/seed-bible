@@ -9252,6 +9252,7 @@ h6 {
 }
 
 .sb-discover-item-edit,
+.sb-discover-item-play,
 .sb-discover-item-delete {
   flex: 0 0 auto;
   display: inline-flex;
@@ -9265,7 +9266,8 @@ h6 {
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 
-.sb-discover-item-edit:hover {
+.sb-discover-item-edit:hover,
+.sb-discover-item-play:hover {
   background: var(--sb-divider-color);
   color: var(--sb-font-color);
 }
@@ -9276,8 +9278,92 @@ h6 {
 }
 
 .sb-discover-item-edit .material-symbols-outlined,
+.sb-discover-item-play .material-symbols-outlined,
 .sb-discover-item-delete .material-symbols-outlined {
   font-size: 18px;
+}
+
+/* Play-playlist view: scrollable queue above a pinned controls bar. */
+.sb-play-playlist {
+  padding-bottom: 0;
+}
+
+.sb-play-playlist-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.sb-play-playlist-item-button {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-play-playlist-item--current {
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);
+}
+
+.sb-play-playlist-item--current .sb-discover-item-title {
+  color: var(--sb-primary-color);
+  font-weight: 600;
+}
+
+.sb-play-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 12px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--sb-divider-color);
+  background: var(--sb-background);
+}
+
+.sb-play-controls-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sb-play-controls-buttons {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 4px;
+}
+
+.sb-play-controls-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+}
+
+.sb-play-controls-button:hover:not(:disabled) {
+  background: var(--sb-divider-color);
+}
+
+.sb-play-controls-button:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .sb-discover-item--row .sb-discover-item-title {

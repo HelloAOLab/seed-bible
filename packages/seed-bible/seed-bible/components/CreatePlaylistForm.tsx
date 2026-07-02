@@ -1,10 +1,11 @@
 import { useState } from "preact/hooks";
 import { useI18n } from "../i18n/I18nManager";
 import type { TabsManager } from "../managers/TabsManager";
-import type { Playlist, PlaylistManager } from "../managers/PlaylistManager";
+import type { PlaylistManager } from "../managers/PlaylistManager";
 import { MaterialIcon } from "./icons";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
 import { PlaylistItemInput } from "./PlaylistItemInput";
+import { playlistItemLabel } from "./playlistItemLabel";
 
 interface CreatePlaylistFormProps {
   playlists: PlaylistManager;
@@ -122,25 +123,4 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
       </div>
     </div>
   );
-}
-
-/** Renders a single playlist item as a plain-text label for the editor list. */
-function playlistItemLabel(
-  item: Playlist["items"][number],
-  t: ReturnType<typeof useI18n>["t"],
-  resolveBookName: (bookId: string) => string
-): string {
-  switch (item.type) {
-    case "bible-verse": {
-      const { bookId, chapter, verse, endVerse } = item.ref;
-      const book = resolveBookName(bookId);
-      return endVerse
-        ? `${book} ${chapter}:${verse}-${endVerse}`
-        : `${book} ${chapter}:${verse}`;
-    }
-    case "link":
-      return item.url;
-    case "html":
-      return t("playlist-item-html", { defaultValue: "HTML snippet" });
-  }
 }
