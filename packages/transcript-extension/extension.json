@@ -1,0 +1,395 @@
+{
+  "id": "ext_AI_Transcript",
+  "translations": {
+    "en": {
+      "title": "AI Transcript",
+      "toolbarTitle": "AI Transcript",
+      "description": "An extension for the Seed Bible that generates AI-powered transcripts."
+    },
+    "es": {
+      "title": "Transcripción IA",
+      "toolbarTitle": "Transcripción IA",
+      "description": "Una extensión para el Seed Bible que genera transcripciones con IA."
+    },
+    "am": {
+      "title": "የAI ግልባጭ",
+      "toolbarTitle": "የAI ግልባጭ",
+      "description": "ለ Seed Bible በAI የተደገፉ ግልባጮችን የሚፈጥር ኤክስቴንሽን ነው።"
+    },
+    "ar": {
+      "title": "نسخ بالذكاء الاصطناعي",
+      "toolbarTitle": "نسخ بالذكاء الاصطناعي",
+      "description": "امتداد لمشروع Seed Bible لإنشاء نصوص مدعومة بالذكاء الاصطناعي."
+    },
+    "bn": {
+      "title": "AI ট্রান্সক্রিপ্ট",
+      "toolbarTitle": "AI ট্রান্সক্রিপ্ট",
+      "description": "Seed Bible প্রকল্পের জন্য AI-চালিত ট্রান্সক্রিপ্ট তৈরি করার একটি এক্সটেনশন।"
+    },
+    "fa": {
+      "title": "رونویسی هوش مصنوعی",
+      "toolbarTitle": "رونویسی هوش مصنوعی",
+      "description": "یک افزونه برای پروژه Seed Bible برای ایجاد رونویسی‌های مبتنی بر هوش مصنوعی."
+    },
+    "fr": {
+      "title": "Transcription IA",
+      "toolbarTitle": "Transcription IA",
+      "description": "Une extension pour le projet Seed Bible qui génère des transcriptions assistées par IA."
+    },
+    "hi": {
+      "title": "एआई ट्रांसक्रिप्ट",
+      "toolbarTitle": "एआई ट्रांसक्रिप्ट",
+      "description": "Seed Bible परियोजना के लिए एआई-संचालित ट्रांसक्रिप्ट बनाने वाला एक एक्सटेंशन।"
+    },
+    "id": {
+      "title": "Transkrip AI",
+      "toolbarTitle": "Transkrip AI",
+      "description": "Sebuah ekstensi untuk proyek Seed Bible yang menghasilkan transkrip bertenaga AI."
+    },
+    "ja": {
+      "title": "AI文字起こし",
+      "toolbarTitle": "AI文字起こし",
+      "description": "Seed Bible プロジェクト向けに AI による文字起こしを生成する拡張機能。"
+    },
+    "ko": {
+      "title": "AI 전사",
+      "toolbarTitle": "AI 전사",
+      "description": "Seed Bible 프로젝트를 위해 AI 기반 전사를 생성하는 확장 기능입니다."
+    },
+    "mn": {
+      "title": "AI хуулбар",
+      "toolbarTitle": "AI хуулбар",
+      "description": "Seed Bible төсөлд зориулсан AI-д суурилсан хуулбар үүсгэх өргөтгөл."
+    },
+    "ne": {
+      "title": "एआई ट्रान्सक्रिप्ट",
+      "toolbarTitle": "एआई ट्रान्सक्रिप्ट",
+      "description": "Seed Bible परियोजनाको लागि एआई-संचालित ट्रान्सक्रिप्ट सिर्जना गर्ने विस्तार।"
+    },
+    "ps": {
+      "title": "د AI لیکنه",
+      "toolbarTitle": "د AI لیکنه",
+      "description": "د Seed Bible پروژې لپاره د AI پر بنسټ لیکنې جوړولو توسیع."
+    },
+    "pt": {
+      "title": "Transcrição IA",
+      "toolbarTitle": "Transcrição IA",
+      "description": "Uma extensão para o projeto Seed Bible que gera transcrições com IA."
+    },
+    "ru": {
+      "title": "ИИ-транскрипция",
+      "toolbarTitle": "ИИ-транскрипция",
+      "description": "Расширение для проекта Seed Bible, создающее транскрипции на основе ИИ."
+    },
+    "sw": {
+      "title": "Nakala ya AI",
+      "toolbarTitle": "Nakala ya AI",
+      "description": "Upanuzi kwa mradi wa Seed Bible unaotengeneza nakala zinazoendeshwa na AI."
+    },
+    "ti": {
+      "title": "AI ቅዳሕ",
+      "toolbarTitle": "AI ቅዳሕ",
+      "description": "ለ Seed Bible ፕሮጀክት ብAI ዝሰርሑ ቅዳሓት ዝፈጥር ኤክስቴንሽን እዩ።"
+    },
+    "tr": {
+      "title": "AI Transkript",
+      "toolbarTitle": "AI Transkript",
+      "description": "Seed Bible projesi için AI destekli transkriptler oluşturan bir uzantı."
+    },
+    "ug": {
+      "title": "AI يېزىقلاشتۇرۇش",
+      "toolbarTitle": "AI يېزىقلاشتۇرۇش",
+      "description": "Seed Bible تۈرى ئۈچۈن AI ئاساسىدىكى يېزىقلاشتۇرۇش ھاسىل قىلىدىغان كېڭەيتىلمە."
+    },
+    "uk": {
+      "title": "ШІ-транскрипція",
+      "toolbarTitle": "ШІ-транскрипція",
+      "description": "Розширення для проєкту Seed Bible, що створює транскрипції на основі ШІ."
+    },
+    "ur": {
+      "title": "اے آئی ٹرانسکرپٹ",
+      "toolbarTitle": "اے آئی ٹرانسکرپٹ",
+      "description": "Seed Bible پروجیکٹ کے لیے اے آئی پر مبنی ٹرانسکرپٹ بنانے والی ایک ایکسٹینشن۔"
+    },
+    "vi": {
+      "title": "Bản ghi AI",
+      "toolbarTitle": "Bản ghi AI",
+      "description": "Một tiện ích mở rộng cho dự án Seed Bible tạo bản ghi bằng AI."
+    },
+    "zh": {
+      "title": "AI 转录",
+      "toolbarTitle": "AI 转录",
+      "description": "为 Seed Bible 项目生成 AI 转录的扩展。"
+    },
+    "ind": {
+      "title": "Transkrip AI",
+      "toolbarTitle": "Transkrip AI",
+      "description": "Ekstensi untuk proyek Seed Bible yang menghasilkan transkrip bertenaga AI."
+    },
+    "af": {
+      "title": "KI-transkripsie",
+      "toolbarTitle": "KI-transkripsie",
+      "description": "'n Uitbreiding vir die Seed Bible wat KI-aangedrewe transkripsies genereer."
+    },
+    "az": {
+      "title": "AI Transkripti",
+      "toolbarTitle": "AI Transkripti",
+      "description": "Seed Bible layihəsi üçün AI əsaslı transkriptlər yaradan genişləndirmə."
+    },
+    "be": {
+      "title": "ШІ-транскрыпцыя",
+      "toolbarTitle": "ШІ-транскрыпцыя",
+      "description": "Пашырэнне для праекта Seed Bible, якое стварае транскрыпцыі на аснове ШІ."
+    },
+    "bg": {
+      "title": "AI транскрипция",
+      "toolbarTitle": "AI транскрипция",
+      "description": "Разширение за проекта Seed Bible, което генерира транскрипции с AI."
+    },
+    "bs": {
+      "title": "AI transkript",
+      "toolbarTitle": "AI transkript",
+      "description": "Proširenje za Seed Bible koje generiše transkripte pomoću AI-a."
+    },
+    "ca": {
+      "title": "Transcripció IA",
+      "toolbarTitle": "Transcripció IA",
+      "description": "Una extensió per a la Seed Bible que genera transcripcions amb IA."
+    },
+    "cs": {
+      "title": "AI přepis",
+      "toolbarTitle": "AI přepis",
+      "description": "Rozšíření pro Seed Bible, které generuje přepisy pomocí AI."
+    },
+    "cy": {
+      "title": "Trawsgrifiad AI",
+      "toolbarTitle": "Trawsgrifiad AI",
+      "description": "Estyniad ar gyfer y Beibl Seed sy'n cynhyrchu trawsgrifiadau wedi'u pweru gan AI."
+    },
+    "da": {
+      "title": "AI-transskription",
+      "toolbarTitle": "AI-transskription",
+      "description": "En udvidelse til Seed Bible, der genererer AI-drevne transskriptioner."
+    },
+    "de": {
+      "title": "KI-Transkript",
+      "toolbarTitle": "KI-Transkript",
+      "description": "Eine Erweiterung für die Seed Bible, die KI-gestützte Transkripte erstellt."
+    },
+    "el": {
+      "title": "Μεταγραφή AI",
+      "toolbarTitle": "Μεταγραφή AI",
+      "description": "Μια επέκταση για το Seed Bible που δημιουργεί μεταγραφές με χρήση AI."
+    },
+    "et": {
+      "title": "AI transkriptsioon",
+      "toolbarTitle": "AI transkriptsioon",
+      "description": "Seed Bible'i laiendus, mis loob AI-põhiseid transkriptsioone."
+    },
+    "fi": {
+      "title": "AI-transkriptio",
+      "toolbarTitle": "AI-transkriptio",
+      "description": "Seed Biblen laajennus, joka luo tekoälypohjaisia transkriptioita."
+    },
+    "fil": {
+      "title": "AI Transcript",
+      "toolbarTitle": "AI Transcript",
+      "description": "Isang extension para sa Seed Bible na gumagawa ng mga transcript na pinapagana ng AI."
+    },
+    "fy": {
+      "title": "AI-transkripsje",
+      "toolbarTitle": "AI-transkripsje",
+      "description": "In útwreiding foar de Seed Bible dy't AI-oandreaune transkripsjes makket."
+    },
+    "gl": {
+      "title": "Transcrición IA",
+      "toolbarTitle": "Transcrición IA",
+      "description": "Unha extensión para a Biblia das Sementes que xera transcricións con IA."
+    },
+    "gn": {
+      "title": "AI Ñe'ẽhaipyre",
+      "toolbarTitle": "AI Ñe'ẽhaipyre",
+      "description": "Peteĩ extensión pe Biblia Semilla-pe g̃uarã ojapóva ñe'ẽhaipyre AI rupive."
+    },
+    "gu": {
+      "title": "AI ટ્રાન્સક્રિપ્ટ",
+      "toolbarTitle": "AI ટ્રાન્સક્રિપ્ટ",
+      "description": "સીડ બાઇબલ માટે AI-સંચાલિત ટ્રાન્સક્રિપ્ટ બનાવતું એક એક્સટેન્શન."
+    },
+    "he": {
+      "title": "תמלול AI",
+      "toolbarTitle": "תמלול AI",
+      "description": "הרחבה עבור Seed Bible שיוצרת תמלולים מבוססי בינה מלאכותית."
+    },
+    "hr": {
+      "title": "AI transkript",
+      "toolbarTitle": "AI transkript",
+      "description": "Proširenje za Seed Bible koje stvara transkripte pomoću AI-a."
+    },
+    "hu": {
+      "title": "AI átirat",
+      "toolbarTitle": "AI átirat",
+      "description": "Egy kiterjesztés a Seed Bible-hez, amely AI-alapú átiratokat készít."
+    },
+    "is": {
+      "title": "AI uppskrift",
+      "toolbarTitle": "AI uppskrift",
+      "description": "Viðbót fyrir Seed Bible sem býr til uppskriftir með aðstoð gervigreindar."
+    },
+    "it": {
+      "title": "Trascrizione IA",
+      "toolbarTitle": "Trascrizione IA",
+      "description": "Un'estensione per la Seed Bible che genera trascrizioni basate sull'IA."
+    },
+    "iw": {
+      "title": "תמלול AI",
+      "toolbarTitle": "תמלול AI",
+      "description": "הרחבה עבור Seed Bible שיוצרת תמלולים מבוססי בינה מלאכותית."
+    },
+    "ka": {
+      "title": "AI ტრანსკრიფცია",
+      "toolbarTitle": "AI ტრანსკრიფცია",
+      "description": "Seed Bible-ის გაფართოება, რომელიც ქმნის AI-ზე დაფუძნებულ ტრანსკრიფციებს."
+    },
+    "km": {
+      "title": "ប្រតិចារឹក AI",
+      "toolbarTitle": "ប្រតិចារឹក AI",
+      "description": "ផ្នែកបន្ថែមសម្រាប់ Seed Bible ដែលបង្កើតប្រតិចារឹកដោយប្រើ AI។"
+    },
+    "kn": {
+      "title": "AI ಪ್ರತಿಲೇಖನ",
+      "toolbarTitle": "AI ಪ್ರತಿಲೇಖನ",
+      "description": "ಸೀಡ್ ಬೈಬಲ್‌ಗಾಗಿ AI-ಆಧಾರಿತ ಪ್ರತಿಲೇಖನಗಳನ್ನು ರಚಿಸುವ ಒಂದು ವಿಸ್ತರಣೆ."
+    },
+    "ky": {
+      "title": "AI транскрипция",
+      "toolbarTitle": "AI транскрипция",
+      "description": "Seed Bible долбоору үчүн AI негизиндеги транскрипцияларды түзгөн кеңейтүү."
+    },
+    "ln": {
+      "title": "AI Bobakisi",
+      "toolbarTitle": "AI Bobakisi",
+      "description": "Bobakisi mpo na Biblia ya Momboto oyo esalaka makomi na nzela ya AI."
+    },
+    "lo": {
+      "title": "ການຖອດຄວາມ AI",
+      "toolbarTitle": "ການຖອດຄວາມ AI",
+      "description": "ສ່ວນຂະຫຍາຍສຳລັບ Seed Bible ທີ່ສ້າງການຖອດຄວາມໂດຍໃຊ້ AI."
+    },
+    "lt": {
+      "title": "AI transkripcija",
+      "toolbarTitle": "AI transkripcija",
+      "description": "„Seed Bible“ plėtinys, kuriantis dirbtinio intelekto pagrindu sukurtas transkripcijas."
+    },
+    "lv": {
+      "title": "AI transkripcija",
+      "toolbarTitle": "AI transkripcija",
+      "description": "Seed Bible paplašinājums, kas ģenerē AI veidotas transkripcijas."
+    },
+    "mk": {
+      "title": "AI транскрипција",
+      "toolbarTitle": "AI транскрипција",
+      "description": "Додаток за Seed Bible што генерира транскрипции со помош на AI."
+    },
+    "ml": {
+      "title": "AI ട്രാൻസ്ക്രിപ്റ്റ്",
+      "toolbarTitle": "AI ട്രാൻസ്ക്രിപ്റ്റ്",
+      "description": "Seed Bible-നായി AI അധിഷ്ഠിത ട്രാൻസ്ക്രിപ്റ്റുകൾ സൃഷ്ടിക്കുന്ന ഒരു വിപുലീകരണം."
+    },
+    "mr": {
+      "title": "एआय ट्रान्सक्रिप्ट",
+      "toolbarTitle": "एआय ट्रान्सक्रिप्ट",
+      "description": "सीड बायबलसाठी एआय-आधारित ट्रान्सक्रिप्ट तयार करणारे एक एक्सटेंशन."
+    },
+    "ms": {
+      "title": "Transkrip AI",
+      "toolbarTitle": "Transkrip AI",
+      "description": "Sambungan untuk Seed Bible yang menjana transkrip berkuasa AI."
+    },
+    "my": {
+      "title": "AI စာသား",
+      "toolbarTitle": "AI စာသား",
+      "description": "Seed Bible အတွက် AI ဖြင့် စာသားများ ဖန်တီးပေးသော extension တစ်ခု။"
+    },
+    "nb": {
+      "title": "AI-transkripsjon",
+      "toolbarTitle": "AI-transkripsjon",
+      "description": "En utvidelse for Seed Bible som genererer AI-drevne transkripsjoner."
+    },
+    "nl": {
+      "title": "AI-transcriptie",
+      "toolbarTitle": "AI-transcriptie",
+      "description": "Een uitbreiding voor de Seed Bible die AI-gestuurde transcripties genereert."
+    },
+    "no": {
+      "title": "AI-transkripsjon",
+      "toolbarTitle": "AI-transkripsjon",
+      "description": "En utvidelse for Seed Bible som genererer AI-drevne transkripsjoner."
+    },
+    "pa": {
+      "title": "AI ਟ੍ਰਾਂਸਕ੍ਰਿਪਟ",
+      "toolbarTitle": "AI ਟ੍ਰਾਂਸਕ੍ਰਿਪਟ",
+      "description": "ਸੀਡ ਬਾਈਬਲ ਲਈ AI-ਸੰਚਾਲਿਤ ਟ੍ਰਾਂਸਕ੍ਰਿਪਟ ਬਣਾਉਣ ਵਾਲਾ ਇੱਕ ਐਕਸਟੈਂਸ਼ਨ।"
+    },
+    "pl": {
+      "title": "Transkrypcja AI",
+      "toolbarTitle": "Transkrypcja AI",
+      "description": "Rozszerzenie Seed Bible generujące transkrypcje oparte na AI."
+    },
+    "ro": {
+      "title": "Transcriere AI",
+      "toolbarTitle": "Transcriere AI",
+      "description": "O extensie pentru Biblia Semințelor care generează transcrieri bazate pe IA."
+    },
+    "sk": {
+      "title": "AI prepis",
+      "toolbarTitle": "AI prepis",
+      "description": "Rozšírenie pre Seed Bible, ktoré generuje prepisy pomocou AI."
+    },
+    "sl": {
+      "title": "AI prepis",
+      "toolbarTitle": "AI prepis",
+      "description": "Razširitev za Seed Bible, ki ustvarja prepise s pomočjo umetne inteligence."
+    },
+    "sq": {
+      "title": "Transkriptim AI",
+      "toolbarTitle": "Transkriptim AI",
+      "description": "Një zgjerim për Seed Bible që gjeneron transkriptime me ndihmën e AI-së."
+    },
+    "sv": {
+      "title": "AI-transkription",
+      "toolbarTitle": "AI-transkription",
+      "description": "Ett tillägg för Seed Bible som genererar AI-drivna transkriptioner."
+    },
+    "ta": {
+      "title": "AI படியெடுப்பு",
+      "toolbarTitle": "AI படியெடுப்பு",
+      "description": "சீட் பைபிளுக்கு AI அடிப்படையிலான படியெடுப்புகளை உருவாக்கும் ஒரு நீட்டிப்பு."
+    },
+    "te": {
+      "title": "AI ట్రాన్స్క్రిప్ట్",
+      "toolbarTitle": "AI ట్రాన్స్క్రిప్ట్",
+      "description": "సీడ్ బైబిల్ కోసం AI ఆధారిత ట్రాన్స్క్రిప్ట్‌లను రూపొందించే ఒక పొడిగింపు."
+    },
+    "th": {
+      "title": "การถอดความ AI",
+      "toolbarTitle": "การถอดความ AI",
+      "description": "ส่วนเสริมสำหรับ Seed Bible ที่สร้างการถอดความด้วย AI"
+    },
+    "tl": {
+      "title": "AI Transcript",
+      "toolbarTitle": "AI Transcript",
+      "description": "Isang extension para sa Seed Bible na gumagawa ng mga transcript na pinapagana ng AI."
+    },
+    "uz": {
+      "title": "AI transkripti",
+      "toolbarTitle": "AI transkripti",
+      "description": "Seed Bible loyihasi uchun AI asosidagi transkriptlar yaratadigan kengaytma."
+    },
+    "zu": {
+      "title": "Umbhalo we-AI",
+      "toolbarTitle": "Umbhalo we-AI",
+      "description": "Isandiso seSeed Bible esikhiqiza imibhalo eqhutshwa yi-AI."
+    }
+  }
+}
