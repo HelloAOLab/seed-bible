@@ -79,7 +79,7 @@ describe("getColorByReadingTime — continuous (no step/stepColors)", () => {
       userColor: "#ffffff",
       readingTimeSeconds: 450,
     });
-    const [, , progress] = mockInterpolate.mock.calls[0];
+    const [, , progress] = mockInterpolate.mock.calls[0]!;
     expect(progress).toBeCloseTo(0.5);
   });
 
@@ -91,7 +91,7 @@ describe("getColorByReadingTime — continuous (no step/stepColors)", () => {
       readingTimeSeconds: 300,
       fullColorTimeSeconds: 600,
     });
-    const [, , progress] = mockInterpolate.mock.calls[0];
+    const [, , progress] = mockInterpolate.mock.calls[0]!;
     expect(progress).toBeCloseTo(0.5);
   });
 
@@ -102,7 +102,7 @@ describe("getColorByReadingTime — continuous (no step/stepColors)", () => {
       userColor: "#ffffff",
       readingTimeSeconds: 1800,
     });
-    const [, , progress] = mockInterpolate.mock.calls[0];
+    const [, , progress] = mockInterpolate.mock.calls[0]!;
     expect(progress).toBe(1);
   });
 
@@ -113,7 +113,7 @@ describe("getColorByReadingTime — continuous (no step/stepColors)", () => {
       userColor: "#ffffff",
       readingTimeSeconds: 0,
     });
-    const [, , progress] = mockInterpolate.mock.calls[0];
+    const [, , progress] = mockInterpolate.mock.calls[0]!;
     expect(progress).toBe(0);
   });
 
@@ -124,7 +124,7 @@ describe("getColorByReadingTime — continuous (no step/stepColors)", () => {
       userColor: "#ffffff",
       readingTimeSeconds: 900,
     });
-    const [, , progress] = mockInterpolate.mock.calls[0];
+    const [, , progress] = mockInterpolate.mock.calls[0]!;
     expect(progress).toBe(1);
   });
 
@@ -135,7 +135,7 @@ describe("getColorByReadingTime — continuous (no step/stepColors)", () => {
       userColor: "#ffffff",
       readingTimeSeconds: 450,
     });
-    const [, , , step] = mockInterpolate.mock.calls[0];
+    const [, , , step] = mockInterpolate.mock.calls[0]!;
     expect(step).toBeUndefined();
   });
 
@@ -307,7 +307,7 @@ describe("getColorByRecency", () => {
       step: 0.5,
       now,
     });
-    const [, , progress] = mockInterpolate.mock.calls[0];
+    const [, , progress] = mockInterpolate.mock.calls[0]!;
     expect(progress).toBe(0);
   });
 
@@ -321,7 +321,7 @@ describe("getColorByRecency", () => {
       step: 0.5,
       now,
     });
-    const [, , progress] = mockInterpolate.mock.calls[0];
+    const [, , progress] = mockInterpolate.mock.calls[0]!;
     expect(progress).toBe(0);
   });
 
@@ -334,7 +334,7 @@ describe("getColorByRecency", () => {
       step: 0.5,
       now,
     });
-    const [, , progress] = mockInterpolate.mock.calls[0];
+    const [, , progress] = mockInterpolate.mock.calls[0]!;
     expect(progress).toBe(0);
   });
 
@@ -347,7 +347,7 @@ describe("getColorByRecency", () => {
       step: 0.5,
       now,
     });
-    const [, , progress] = mockInterpolate.mock.calls[0];
+    const [, , progress] = mockInterpolate.mock.calls[0]!;
     expect(progress).toBe(1);
   });
 
@@ -361,7 +361,7 @@ describe("getColorByRecency", () => {
       step: 0.5,
       now,
     });
-    const [, , progress] = mockInterpolate.mock.calls[0];
+    const [, , progress] = mockInterpolate.mock.calls[0]!;
     // elapsedRecencySeconds = halfwaySeconds, timeFrameSeconds = nowSeconds
     // progress = halfwaySeconds / nowSeconds ≈ 0.5
     expect(progress).toBeCloseTo(0.5, 2);
@@ -376,7 +376,7 @@ describe("getColorByRecency", () => {
       step: 0.333,
       now,
     });
-    const [, , , step] = mockInterpolate.mock.calls[0];
+    const [, , , step] = mockInterpolate.mock.calls[0]!;
     expect(step).toBe(0.333);
   });
 
@@ -392,7 +392,7 @@ describe("getColorByRecency", () => {
     });
     const expectedDefaultStep =
       1 / Math.floor((nowMs - threshold * 1000) / (1000 * 60 * 60 * 24));
-    const [, , , step] = mockInterpolate.mock.calls[0];
+    const [, , , step] = mockInterpolate.mock.calls[0]!;
     expect(step).toBeCloseTo(expectedDefaultStep, 10);
   });
 
@@ -433,7 +433,7 @@ describe("getColorByRecency", () => {
       step: 0.5,
       now,
     });
-    const [, , progress] = mockInterpolate.mock.calls[0];
+    const [, , progress] = mockInterpolate.mock.calls[0]!;
     expect(progress).toBe(0);
   });
 });

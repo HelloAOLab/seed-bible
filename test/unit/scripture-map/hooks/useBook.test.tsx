@@ -413,7 +413,7 @@ describe("useBook", () => {
 
       act(() => result.current.handleBookHeaderPointerDown(fakeEvent as any));
 
-      act(() => vi.advanceTimersByTime(500));
+      act(() => void vi.advanceTimersByTime(500));
 
       expect(mockClickAndHold).toHaveBeenCalledTimes(1);
     });
@@ -429,7 +429,7 @@ describe("useBook", () => {
 
       act(() => result.current.handleBookHeaderPointerDown(fakeEvent as any));
 
-      act(() => vi.advanceTimersByTime(400));
+      act(() => void vi.advanceTimersByTime(400));
 
       expect(mockClickAndHold).not.toHaveBeenCalled();
     });
@@ -449,13 +449,13 @@ describe("useBook", () => {
 
       act(() => result.current.handleBookHeaderPointerDown(fakeEvent as any));
 
-      act(() => vi.advanceTimersByTime(400));
+      act(() => void vi.advanceTimersByTime(400));
 
       act(() => result.current.handleBookHeaderPointerUp(fakeEvent as any));
 
       expect(mockClickAndHold).not.toHaveBeenCalled();
 
-      act(() => vi.advanceTimersByTime(200));
+      act(() => void vi.advanceTimersByTime(200));
 
       expect(mockClickAndHold).not.toHaveBeenCalled();
     });
@@ -1083,7 +1083,7 @@ describe("useBook", () => {
 
       act(() => result.current.handleBookHeaderPointerDown(fakeEvent as any));
 
-      act(() => vi.advanceTimersByTime(500));
+      act(() => void vi.advanceTimersByTime(500));
 
       expect(mockClickAndHold).toHaveBeenCalledWith(
         false,
@@ -1124,7 +1124,7 @@ describe("useBook", () => {
 
       act(() => result.current.handleBookHeaderPointerDown(fakeEvent as any));
 
-      act(() => vi.advanceTimersByTime(500));
+      act(() => void vi.advanceTimersByTime(500));
 
       expect(mockClickAndHold).toHaveBeenCalledWith(
         false,
@@ -1165,7 +1165,7 @@ describe("useBook", () => {
 
       act(() => result.current.handleBookHeaderPointerDown(fakeEvent as any));
 
-      act(() => vi.advanceTimersByTime(500));
+      act(() => void vi.advanceTimersByTime(500));
 
       expect(mockClickAndHold).toHaveBeenCalledWith(
         false,
@@ -1217,7 +1217,7 @@ describe("useBook", () => {
 
       act(() => result.current.handleBookHeaderPointerDown(fakeEvent as any));
 
-      act(() => vi.advanceTimersByTime(500));
+      act(() => void vi.advanceTimersByTime(500));
 
       expect(mockClickAndHold).toHaveBeenCalledWith(
         false,

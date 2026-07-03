@@ -97,7 +97,7 @@ describe("useSearchBar", () => {
       expect(result.current.results.value).toEqual([]);
       expect(result.current.loading.value).toBe(false);
       expect(result.current.error.value).toBeNull();
-      act(() => vi.advanceTimersByTime(DEBOUNCE_MS));
+      act(() => void vi.advanceTimersByTime(DEBOUNCE_MS));
       expect(searchVerses).not.toHaveBeenCalled();
     });
 
@@ -120,7 +120,7 @@ describe("useSearchBar", () => {
       searchVerses.mockResolvedValue([]);
       const result = setup();
       act(() => result.current.runSearch("g"));
-      act(() => vi.advanceTimersByTime(50)); // before the debounce fires
+      act(() => void vi.advanceTimersByTime(50)); // before the debounce fires
       act(() => result.current.runSearch("ge")); // clears the pending timeout
 
       await act(async () => {
@@ -167,7 +167,7 @@ describe("useSearchBar", () => {
       const result = setup();
       act(() => result.current.runSearch("a"));
       // Fire the first debounce → searchVerses("a") is now pending.
-      act(() => vi.advanceTimersByTime(DEBOUNCE_MS));
+      act(() => void vi.advanceTimersByTime(DEBOUNCE_MS));
       // Supersede it before it resolves → bumps the request id.
       act(() => result.current.runSearch("b"));
 
@@ -188,7 +188,7 @@ describe("useSearchBar", () => {
       const result = setup();
       act(() => result.current.runSearch("a"));
       // Fire the first debounce → searchVerses("a") (which rejects) is pending.
-      act(() => vi.advanceTimersByTime(DEBOUNCE_MS));
+      act(() => void vi.advanceTimersByTime(DEBOUNCE_MS));
       // Supersede it before it rejects → bumps the request id.
       act(() => result.current.runSearch("b"));
 

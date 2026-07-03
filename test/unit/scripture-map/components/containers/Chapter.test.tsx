@@ -139,7 +139,7 @@ describe("Chapter", () => {
 
     it("does not forward chapter or tooltipContentsData to useChapter", () => {
       setup({ chapter: 7, tooltipContentsData: [{ type: "header" } as never] });
-      const call = (useChapter as Mock).mock.calls[0][0];
+      const call = (useChapter as Mock).mock.calls[0]![0];
       expect(call).not.toHaveProperty("chapter");
       expect(call).not.toHaveProperty("tooltipContentsData");
     });

@@ -432,7 +432,7 @@ describe("InterpolateHexColors", () => {
 // ─── GetRandomColor ───────────────────────────────────────────────────────────
 
 describe("GetRandomColor", () => {
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => void vi.restoreAllMocks());
 
   it("returns a string starting with '#'", () => {
     expect(GetRandomColor().startsWith("#")).toBe(true);

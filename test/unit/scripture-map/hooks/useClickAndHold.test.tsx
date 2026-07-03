@@ -44,7 +44,7 @@ describe("useClickAndHold", () => {
     act(() => handlers.current.onHoldStart(fakeEvent as any));
     expect(holdComplete).not.toHaveBeenCalled();
 
-    act(() => vi.advanceTimersByTime(500));
+    act(() => void vi.advanceTimersByTime(500));
 
     expect(holdComplete).toHaveBeenCalledWith(fakeEvent);
     expect(holdCancel).not.toHaveBeenCalled();
@@ -54,7 +54,7 @@ describe("useClickAndHold", () => {
     const { holdComplete, handlers } = setup(500);
 
     act(() => handlers.current.onHoldStart({} as any));
-    act(() => vi.advanceTimersByTime(499));
+    act(() => void vi.advanceTimersByTime(499));
 
     expect(holdComplete).not.toHaveBeenCalled();
   });
@@ -65,7 +65,7 @@ describe("useClickAndHold", () => {
 
     act(() => handlers.current.onHoldStart(fakeEvent as any));
     act(() => handlers.current.onHoldEnd(fakeEvent as any));
-    act(() => vi.advanceTimersByTime(1000));
+    act(() => void vi.advanceTimersByTime(1000));
 
     expect(holdCancel).toHaveBeenCalledWith(fakeEvent);
     expect(holdComplete).not.toHaveBeenCalled();
@@ -83,7 +83,7 @@ describe("useClickAndHold", () => {
     const { holdComplete, handlers } = setup();
 
     act(() => handlers.current.onHoldStart({} as any));
-    act(() => vi.advanceTimersByTime(1));
+    act(() => void vi.advanceTimersByTime(1));
 
     expect(holdComplete).toHaveBeenCalled();
   });
@@ -93,7 +93,7 @@ describe("useClickAndHold", () => {
     const fakeEvent = {} as PointerEvent;
 
     act(() => handlers.current.onHoldStart(fakeEvent as any));
-    act(() => vi.advanceTimersByTime(100));
+    act(() => void vi.advanceTimersByTime(100));
     expect(holdComplete).toHaveBeenCalledTimes(1);
 
     act(() => handlers.current.onHoldEnd(fakeEvent as any));

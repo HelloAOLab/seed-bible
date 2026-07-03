@@ -21,7 +21,7 @@ vi.mock(
 import { GetRandomColor } from "../../../../../packages/seed-bible-utils/domain/functions/colors";
 const mockGetRandomColor = GetRandomColor as Mock;
 
-afterEach(() => vi.clearAllMocks());
+afterEach(() => void vi.clearAllMocks());
 
 // ─── factories ────────────────────────────────────────────────────────────────
 

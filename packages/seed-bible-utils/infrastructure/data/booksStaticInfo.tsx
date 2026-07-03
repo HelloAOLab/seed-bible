@@ -1,4 +1,4 @@
-﻿import type { BookStaticInfoConfig } from "bibleVizUtils.infrastructure.models.arrangement";
+﻿import type { BookStaticInfoConfig } from "../models/arrangement";
 
 export const BooksStaticInfo: Record<string, BookStaticInfoConfig> = {
   REV: {

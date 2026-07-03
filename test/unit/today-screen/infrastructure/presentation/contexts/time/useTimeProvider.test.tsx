@@ -50,16 +50,16 @@ describe("useTimeProvider", () => {
   it("keeps ticking on each interval", () => {
     const result = setup();
 
-    act(() => vi.advanceTimersByTime(10000));
+    act(() => void vi.advanceTimersByTime(10000));
     expect(result.current.tick).toBe(T0 + 10000);
 
-    act(() => vi.advanceTimersByTime(10000));
+    act(() => void vi.advanceTimersByTime(10000));
     expect(result.current.tick).toBe(T0 + 20000);
   });
 
   it("does not update before the interval elapses", () => {
     const result = setup();
-    act(() => vi.advanceTimersByTime(9999));
+    act(() => void vi.advanceTimersByTime(9999));
     expect(result.current.tick).toBe(T0);
   });
 
@@ -76,7 +76,7 @@ describe("useTimeProvider", () => {
     const lastTick = result.current.tick;
 
     vi.setSystemTime(T0 + 30000);
-    act(() => vi.advanceTimersByTime(30000));
+    act(() => void vi.advanceTimersByTime(30000));
 
     expect(result.current.tick).toBe(lastTick);
   });

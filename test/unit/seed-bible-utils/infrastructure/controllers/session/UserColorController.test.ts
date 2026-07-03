@@ -12,8 +12,10 @@ import { DebouncerService } from "../../../../../../packages/seed-bible-utils/in
 const makeService = () => ({ syncUserColors: vi.fn() });
 
 const makeMockExecute = () => {
-  const instance = (DebouncerService as Mock).mock.instances.at(-1);
-  return instance.execute as Mock;
+  const instance = (DebouncerService as Mock).mock.instances.at(-1) as {
+    execute: Mock;
+  };
+  return instance.execute;
 };
 
 const makeController = (service = makeService()) => {

@@ -1,4 +1,5 @@
 import type { Mock } from "vitest";
+import type { MutableRef } from "preact/hooks";
 import { render, createRef } from "preact";
 import { act } from "preact/test-utils";
 import { useResizeObserver } from "../../../../packages/scripture-map/hooks/useResizeObserver";
@@ -36,7 +37,7 @@ describe("useResizeObserver", () => {
     const size = { current: { width: 0, height: 0 } as ResizeObserverSize };
 
     function TestComponent() {
-      size.current = useResizeObserver(ref);
+      size.current = useResizeObserver(ref as unknown as MutableRef<Element>);
       return <div ref={ref} />;
     }
 
@@ -95,7 +96,7 @@ describe("useResizeObserver", () => {
 
     function TestComponent() {
       const ref = createRef<HTMLElement>();
-      result.current = useResizeObserver(ref);
+      result.current = useResizeObserver(ref as unknown as MutableRef<Element>);
       return null;
     }
 

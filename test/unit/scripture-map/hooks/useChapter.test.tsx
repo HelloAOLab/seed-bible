@@ -357,7 +357,7 @@ describe("useChapter", () => {
       const result = setup();
       const fakeEvent = { stopPropagation: vi.fn() } as never;
       act(() => result.current.handleChapterPointerDown(fakeEvent));
-      act(() => vi.advanceTimersByTime(200));
+      act(() => void vi.advanceTimersByTime(200));
       act(() => result.current.handleChapterPointerUp(fakeEvent));
       expect(onChapterClick).toHaveBeenCalledTimes(1);
     });
@@ -370,7 +370,7 @@ describe("useChapter", () => {
       const result = setup();
       const fakeEvent = { stopPropagation: vi.fn() } as never;
       act(() => result.current.handleChapterPointerDown(fakeEvent));
-      act(() => vi.advanceTimersByTime(400));
+      act(() => void vi.advanceTimersByTime(400));
       expect(onChapterClickAndHold).toHaveBeenCalledTimes(1);
     });
   });

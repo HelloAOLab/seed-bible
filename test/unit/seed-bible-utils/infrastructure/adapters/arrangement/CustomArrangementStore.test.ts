@@ -1,6 +1,6 @@
 import { CustomArrangementStore } from "../../../../../../packages/seed-bible-utils/infrastructure/adapters/arrangement/CustomArrangementStore";
 import type { ArrangementInfoConfig } from "../../../../../../packages/seed-bible-utils/infrastructure/models/arrangement";
-import type { ArrangementAdapterPort } from "../../../../../../packages/seed-bible-utils/domain/ports/arrangement";
+import type { Mock } from "vitest";
 import type { ArrangementInfo } from "../../../../../../packages/seed-bible-utils/domain/models/arrangement";
 
 // ─── factories ────────────────────────────────────────────────────────────────
@@ -16,8 +16,8 @@ const makeDomainArrangement = (name = "Standard"): ArrangementInfo => ({
 });
 
 const makeAdapterPort = (
-  overrides: Partial<ArrangementAdapterPort> = {}
-): ArrangementAdapterPort => ({
+  overrides: Partial<{ toDomain: Mock }> = {}
+): { toDomain: Mock } => ({
   toDomain: vi
     .fn()
     .mockImplementation((config: ArrangementInfoConfig) =>

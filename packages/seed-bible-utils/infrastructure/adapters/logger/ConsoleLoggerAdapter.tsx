@@ -1,4 +1,4 @@
-import type { LoggerPort } from "bibleVizUtils.domain.ports.logger";
+import type { LoggerPort } from "@packages/seed-bible-utils/domain/ports/logger";
 
 export class ConsoleLoggerAdapter implements LoggerPort {
   error(message: string): void {

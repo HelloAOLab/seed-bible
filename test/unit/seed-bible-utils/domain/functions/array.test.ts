@@ -7,7 +7,7 @@ import {
 // ─── getRandomArrayElement ────────────────────────────────────────────────────
 
 describe("getRandomArrayElement", () => {
-  afterEach(() => vi.restoreAllMocks());
+  afterEach(() => void vi.restoreAllMocks());
 
   it("returns undefined for an empty array", () => {
     expect(getRandomArrayElement([])).toBeUndefined();
