@@ -239,10 +239,6 @@
   "tutorial.back": "ዝባን",
   "tutorial.done": "ምውዳእ",
   "tutorial.next": "ቀፃሊ",
-  "tutorial.promptTitle": "ናብ Seed Bible እንቋዕ ብደሓን መጻእኩም። መምርሒ ትደሊ ዲኻ?",
-  "tutorial.promptBody": "ኩሉ ዝርዝራት Seed Bible ንኽትመሃር ዝሕግዘካ ብመምርሒ ዝካየድ ጉዕዞ ኣሎ።",
-  "tutorial.promptDecline": "ኖ፣ የቐንየለይ",
-  "tutorial.promptAccept": "ጉዕዞ ጀምር",
   "onboarding.welcomeTitle": "እንኳዕ ደሓን መፁ!",
   "onboarding.continue": "ቀፃሊ",
   "onboarding.installTargetDesktop": "ናይ ዴስክቶፕ",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} ከምኡውን {{count}} ካልኦት ተጸንቢሮም እዮም።",
   "open-chat": "ክፉት ዕላል",
   "less": "ዝወሓደ",
-  "swipe-up-more": "ተወሳኺ ንምርኣይ ንላዕሊ ስዋይፕ ግበር"
+  "swipe-up-more": "ተወሳኺ ንምርኣይ ንላዕሊ ስዋይፕ ግበር",
+  "tutorial.promptTitle": "እንቋዕ ናብ ዘርኢ መጽሓፍ ቅዱስ ብደሓን መጻእኩም። ትምህርቲ ትደልዩ ዶ?",
+  "tutorial.promptBody": "ውሽጣውን ደጋውን ናይ ዘርኢ መጽሓፍ ቅዱስ ንኽትመሃር ዝሕግዘካ ብመሪሕ ዑደት ኣሎ።",
+  "tutorial.promptDecline": "ኣይፋልን የቐንየለይ",
+  "tutorial.promptAccept": "ዑደት ውሰድዎ።"
 }

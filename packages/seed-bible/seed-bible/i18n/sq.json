@@ -239,10 +239,6 @@
   "tutorial.back": "Mbrapa",
   "tutorial.done": "U krye",
   "tutorial.next": "Tjetra",
-  "tutorial.promptTitle": "Mirë se vini në Seed Bible. Dëshironi një udhëzues?",
-  "tutorial.promptBody": "Një turne i udhëhequr është i disponueshëm për t'ju ndihmuar të mësoni të gjitha hollësitë e Seed Bible.",
-  "tutorial.promptDecline": "Jo, faleminderit",
-  "tutorial.promptAccept": "Fillo turneun",
   "onboarding.welcomeTitle": "Mirë se vini!",
   "onboarding.continue": "Vazhdo",
   "onboarding.installTargetDesktop": "desktop",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} dhe {{count}} të tjerë u bashkuan",
   "open-chat": "Hap bisedën",
   "less": "Më pak",
-  "swipe-up-more": "Rrëshqit lart për të parë më shumë"
+  "swipe-up-more": "Rrëshqit lart për të parë më shumë",
+  "tutorial.promptTitle": "Mirë se vini në Seed Bible. Dëshironi një tutorial?",
+  "tutorial.promptBody": "Një tur me guidë është në dispozicion për t'ju ndihmuar të mësoni hollësitë e Biblës së Seed-it.",
+  "tutorial.promptDecline": "Jo, faleminderit",
+  "tutorial.promptAccept": "Bëni turin"
 }

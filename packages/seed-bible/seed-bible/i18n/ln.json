@@ -239,10 +239,6 @@
   "tutorial.back": "Mukongo",
   "tutorial.done": "Esalemi",
   "tutorial.next": "Oyo elandi",
-  "tutorial.promptTitle": "Boyei malamu na Seed Bible. Olingi mateya?",
-  "tutorial.promptBody": "Ezali na botamboli oyo bakambaka mpo na kosalisa yo oyeba makambo nyonso ya Seed Bible.",
-  "tutorial.promptDecline": "Te, matondi",
-  "tutorial.promptAccept": "Banda botamboli",
   "onboarding.welcomeTitle": "Boyei malamu!",
   "onboarding.continue": "Kokoba",
   "onboarding.installTargetDesktop": "na ordinateur ya bureau",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} mpe {{count}} basusu basangani",
   "open-chat": "Fungola lisolo",
   "less": "Moke",
-  "swipe-up-more": "Swipe likolo mpo na komona makambo mosusu"
+  "swipe-up-more": "Swipe likolo mpo na komona makambo mosusu",
+  "tutorial.promptTitle": "Boyei malamu na Seed Bible. Olingi kozwa mateya?",
+  "tutorial.promptBody": "Tour guidé ezali mpo na kosalisa yo oyeba makambo ya kati mpe ya libanda ya Biblia ya Momboto.",
+  "tutorial.promptDecline": "Te, merci",
+  "tutorial.promptAccept": "Salá mobembo yango"
 }

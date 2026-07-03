@@ -239,10 +239,6 @@
   "tutorial.back": "ਪਿੱਛੇ",
   "tutorial.done": "ਹੋ ਗਿਆ",
   "tutorial.next": "ਅਗਲਾ",
-  "tutorial.promptTitle": "Seed Bible ਵਿੱਚ ਤੁਹਾਡਾ ਸੁਆਗਤ ਹੈ। ਕੀ ਤੁਸੀਂ ਟਿਊਟੋਰੀਅਲ ਚਾਹੁੰਦੇ ਹੋ?",
-  "tutorial.promptBody": "Seed Bible ਦੀਆਂ ਸਾਰੀਆਂ ਬਾਰੀਕੀਆਂ ਸਿੱਖਣ ਵਿੱਚ ਤੁਹਾਡੀ ਮਦਦ ਲਈ ਇੱਕ ਸੇਧਿਤ ਟੂਰ ਉਪਲਬਧ ਹੈ।",
-  "tutorial.promptDecline": "ਨਹੀਂ, ਧੰਨਵਾਦ",
-  "tutorial.promptAccept": "ਟੂਰ ਸ਼ੁਰੂ ਕਰੋ",
   "onboarding.welcomeTitle": "ਜੀ ਆਇਆਂ ਨੂੰ!",
   "onboarding.continue": "ਜਾਰੀ ਰੱਖੋ",
   "onboarding.installTargetDesktop": "ਡੈਸਕਟਾਪ",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} ਅਤੇ {{count}} ਹੋਰ ਸ਼ਾਮਲ ਹੋਏ",
   "open-chat": "ਚੈਟ ਖੋਲ੍ਹੋ",
   "less": "ਘੱਟ",
-  "swipe-up-more": "ਹੋਰ ਦੇਖਣ ਲਈ ਉੱਪਰ ਵੱਲ ਸਵਾਈਪ ਕਰੋ"
+  "swipe-up-more": "ਹੋਰ ਦੇਖਣ ਲਈ ਉੱਪਰ ਵੱਲ ਸਵਾਈਪ ਕਰੋ",
+  "tutorial.promptTitle": "ਸੀਡ ਬਾਈਬਲ ਵਿੱਚ ਤੁਹਾਡਾ ਸਵਾਗਤ ਹੈ। ਕੀ ਤੁਸੀਂ ਇੱਕ ਟਿਊਟੋਰਿਅਲ ਚਾਹੁੰਦੇ ਹੋ?",
+  "tutorial.promptBody": "ਸੀਡ ਬਾਈਬਲ ਦੀਆਂ ਬਾਰੀਕੀਆਂ ਸਿੱਖਣ ਵਿੱਚ ਤੁਹਾਡੀ ਮਦਦ ਕਰਨ ਲਈ ਇੱਕ ਗਾਈਡਡ ਟੂਰ ਉਪਲਬਧ ਹੈ।",
+  "tutorial.promptDecline": "ਨਹੀਂ ਧੰਨਵਾਦ",
+  "tutorial.promptAccept": "ਟੂਰ ਲਓ"
 }

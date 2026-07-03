@@ -239,10 +239,6 @@
   "tutorial.back": "Kupe",
   "tutorial.done": "Apopyre",
   "tutorial.next": "Ag̃ui",
-  "tutorial.promptTitle": "Tereg̃uahẽ porã Seed Bible-pe. Reipotápa peteĩ ñembo'e?",
-  "tutorial.promptBody": "Oĩ peteĩ jeguata sãmbyhýva nepytyvõ hag̃ua reikuaa hag̃ua opa mba'e Seed Bible rehegua.",
-  "tutorial.promptDecline": "Nahániri, aguyje",
-  "tutorial.promptAccept": "Eñepyrũ pe jeguata",
   "onboarding.welcomeTitle": "Tapeg̃uahẽporãite!",
   "onboarding.continue": "Mbojoapy",
   "onboarding.installTargetDesktop": "escritorio rehegua",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} ha {{count}} ambuekuéra ojoaju",
   "open-chat": "Ñemongeta abierta",
   "less": "Mbovy",
-  "swipe-up-more": "Emoinge yvate gotyo rehecha hag̃ua hetave mba’e"
+  "swipe-up-more": "Emoinge yvate gotyo rehecha hag̃ua hetave mba’e",
+  "tutorial.promptTitle": "Peju porãite Seed Bible-pe. ¿Reipota piko peteĩ tutorial?",
+  "tutorial.promptBody": "Ojeguereko peteĩ visita guiada nepytyvõtava reikuaa hag̃ua umi mbaʼe iñimportantevéva Seed Bible-pe.",
+  "tutorial.promptDecline": "Nahániri, aguyje",
+  "tutorial.promptAccept": "Ejapo pe gira"
 }

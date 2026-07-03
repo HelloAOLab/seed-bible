@@ -239,10 +239,6 @@
   "tutorial.back": "Geri",
   "tutorial.done": "Tamamlamak",
   "tutorial.next": "Sonraki",
-  "tutorial.promptTitle": "Seed Bible'a hoş geldiniz. Bir eğitim ister misiniz?",
-  "tutorial.promptBody": "Seed Bible'ın tüm ayrıntılarını öğrenmenize yardımcı olacak rehberli bir tur mevcut.",
-  "tutorial.promptDecline": "Hayır, teşekkürler",
-  "tutorial.promptAccept": "Tura başla",
   "onboarding.welcomeTitle": "Hoş geldin!",
   "onboarding.continue": "Devam etmek",
   "onboarding.installTargetDesktop": "masaüstü",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} ve {{count}} kişi daha katıldı.",
   "open-chat": "Açık sohbet",
   "less": "Az",
-  "swipe-up-more": "Daha fazlasını görmek için yukarı kaydırın."
+  "swipe-up-more": "Daha fazlasını görmek için yukarı kaydırın.",
+  "tutorial.promptTitle": "Seed Bible'a hoş geldiniz. Bir eğitim videosu ister misiniz?",
+  "tutorial.promptBody": "Seed Bible'ın inceliklerini öğrenmenize yardımcı olacak rehberli bir tur mevcuttur.",
+  "tutorial.promptDecline": "Hayır, teşekkürler",
+  "tutorial.promptAccept": "Tura katılın"
 }

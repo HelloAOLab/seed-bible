@@ -239,10 +239,6 @@
   "tutorial.back": "شاته",
   "tutorial.done": "وشو",
   "tutorial.next": "بل",
-  "tutorial.promptTitle": "Seed Bible ته ښه راغلاست. ایا تاسو لارښود غواړئ؟",
-  "tutorial.promptBody": "یو لارښود سفر شتون لري چې تاسو سره د Seed Bible د ټولو جزئیاتو په زده کولو کې مرسته وکړي.",
-  "tutorial.promptDecline": "نه، مننه",
-  "tutorial.promptAccept": "سفر پیل کړئ",
   "onboarding.welcomeTitle": "ښه راغلاست!",
   "onboarding.continue": "دوام ورکړئ",
   "onboarding.installTargetDesktop": "ډیسکټاپ",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} او {{count}} نور سره یوځای شول",
   "open-chat": "پرانیستې خبرې اترې",
   "less": "لږ",
-  "swipe-up-more": "د نورو لیدلو لپاره پورته سوائپ کړئ"
+  "swipe-up-more": "د نورو لیدلو لپاره پورته سوائپ کړئ",
+  "tutorial.promptTitle": "سیډ بایبل ته ښه راغلاست. ایا تاسو یو درس غواړئ؟",
+  "tutorial.promptBody": "د سیډ بایبل د داخلي او خارجي برخو زده کولو کې ستاسو سره د مرستې لپاره یو لارښود سفر شتون لري.",
+  "tutorial.promptDecline": "نه، مننه",
+  "tutorial.promptAccept": "سفر وکړئ"
 }

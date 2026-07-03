@@ -239,10 +239,6 @@
   "tutorial.back": "Rêch",
   "tutorial.done": "Klear",
   "tutorial.next": "Folgjende",
-  "tutorial.promptTitle": "Wolkom by Seed Bible. Wolle jo in tutorial?",
-  "tutorial.promptBody": "In begeleide rûnlieding is beskikber om jo te helpen alle details fan Seed Bible te learen.",
-  "tutorial.promptDecline": "Nee, tank",
-  "tutorial.promptAccept": "Begjin de rûnlieding",
   "onboarding.welcomeTitle": "Wolkom!",
   "onboarding.continue": "Trochgean",
   "onboarding.installTargetDesktop": "buroblêd",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} en {{count}} oaren binne derby kaam",
   "open-chat": "Iepenje petear",
   "less": "Minder",
-  "swipe-up-more": "Swipe omheech om mear te sjen"
+  "swipe-up-more": "Swipe omheech om mear te sjen",
+  "tutorial.promptTitle": "Wolkom by Seed Bible. Wolle jo in tutorial?",
+  "tutorial.promptBody": "In rûnlieding is beskikber om jo te helpen de yns en outs fan Seed Bible te learen.",
+  "tutorial.promptDecline": "Nee, tank",
+  "tutorial.promptAccept": "Nim de toer"
 }

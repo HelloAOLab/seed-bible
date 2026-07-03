@@ -239,10 +239,6 @@
   "tutorial.back": "Kembali",
   "tutorial.done": "Selesai",
   "tutorial.next": "Seterusnya",
-  "tutorial.promptTitle": "Selamat datang ke Seed Bible. Adakah anda mahukan tutorial?",
-  "tutorial.promptBody": "Lawatan berpandu tersedia untuk membantu anda mempelajari selok-belok Seed Bible.",
-  "tutorial.promptDecline": "Tidak, terima kasih",
-  "tutorial.promptAccept": "Mulakan lawatan",
   "onboarding.welcomeTitle": "Selamat datang!",
   "onboarding.continue": "Teruskan",
   "onboarding.installTargetDesktop": "komputer meja",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} dan {{count}} yang lain menyertai",
   "open-chat": "Buka sembang",
   "less": "Kurang",
-  "swipe-up-more": "Leret ke atas untuk melihat lebih banyak lagi"
+  "swipe-up-more": "Leret ke atas untuk melihat lebih banyak lagi",
+  "tutorial.promptTitle": "Selamat datang ke Seed Bible. Anda ingin tutorial?",
+  "tutorial.promptBody": "Lawatan berpandu disediakan untuk membantu anda mempelajari selok-belok Seed Bible.",
+  "tutorial.promptDecline": "Tidak, terima kasih",
+  "tutorial.promptAccept": "Ikuti lawatan itu"
 }

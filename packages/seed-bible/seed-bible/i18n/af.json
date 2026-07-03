@@ -239,10 +239,6 @@
   "tutorial.back": "Terug",
   "tutorial.done": "Klaar",
   "tutorial.next": "Volgende",
-  "tutorial.promptTitle": "Welkom by Seed Bible. Wil jy 'n tutoriaal hê?",
-  "tutorial.promptBody": "'n Begeleide toer is beskikbaar om jou te help om die knters van Seed Bible te leer ken.",
-  "tutorial.promptDecline": "Nee, dankie",
-  "tutorial.promptAccept": "Neem die toer",
   "onboarding.welcomeTitle": "Welkom!",
   "onboarding.continue": "Gaan voort",
   "onboarding.installTargetDesktop": "lessenaar",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} en {{count}} ander het aangesluit",
   "open-chat": "Maak klets oop",
   "less": "Minder",
-  "swipe-up-more": "Swiep op om meer te sien"
+  "swipe-up-more": "Swiep op om meer te sien",
+  "tutorial.promptTitle": "Welkom by Seed Bible. Wil jy 'n tutoriaal hê?",
+  "tutorial.promptBody": "'n Begeleide toer is beskikbaar om jou te help om die fynere besonderhede van Seed Bible te leer.",
+  "tutorial.promptDecline": "Nee, dankie",
+  "tutorial.promptAccept": "Neem die toer"
 }

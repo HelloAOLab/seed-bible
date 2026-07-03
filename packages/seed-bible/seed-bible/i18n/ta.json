@@ -239,10 +239,6 @@
   "tutorial.back": "திரும்பி",
   "tutorial.done": "முடிந்தது",
   "tutorial.next": "அடுத்து",
-  "tutorial.promptTitle": "Seed Bible க்கு வரவேற்கிறோம். உங்களுக்கு பயிற்சி வேண்டுமா?",
-  "tutorial.promptBody": "Seed Bible இன் அனைத்து விவரங்களையும் கற்றுக்கொள்ள உதவும் வழிகாட்டப்பட்ட சுற்றுப்பயணம் கிடைக்கிறது.",
-  "tutorial.promptDecline": "வேண்டாம், நன்றி",
-  "tutorial.promptAccept": "சுற்றுப்பயணத்தைத் தொடங்கு",
   "onboarding.welcomeTitle": "வரவேற்கிறோம்!",
   "onboarding.continue": "தொடரவும்",
   "onboarding.installTargetDesktop": "டெஸ்க்டாப்",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} மற்றும் {{count}} மற்றவர்கள் இணைந்தனர்.",
   "open-chat": "உரையாடலைத் திறக்கவும்",
   "less": "குறைவானவை",
-  "swipe-up-more": "மேலும் பார்க்க மேலே ஸ்வைப் செய்யவும்"
+  "swipe-up-more": "மேலும் பார்க்க மேலே ஸ்வைப் செய்யவும்",
+  "tutorial.promptTitle": "சீட் பைபிளுக்கு வரவேற்கிறோம். உங்களுக்கு ஒரு பயிற்சி வேண்டுமா?",
+  "tutorial.promptBody": "சீட் பைபிளின் நுணுக்கங்களை நீங்கள் அறிந்துகொள்ள உதவும் வகையில், வழிகாட்டப்பட்ட சுற்றுப்பயணம் ஒன்று ஏற்பாடு செய்யப்பட்டுள்ளது.",
+  "tutorial.promptDecline": "வேண்டாம், நன்றி.",
+  "tutorial.promptAccept": "சுற்றுப்பயணம் மேற்கொள்ளுங்கள்"
 }

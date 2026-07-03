@@ -239,10 +239,6 @@
   "tutorial.back": "برگشت",
   "tutorial.done": "انجام شد",
   "tutorial.next": "بعدی",
-  "tutorial.promptTitle": "به Seed Bible خوش آمدید. آیا آموزش می‌خواهید؟",
-  "tutorial.promptBody": "یک تور راهنما در دسترس است تا به شما در یادگیری تمام جزئیات Seed Bible کمک کند.",
-  "tutorial.promptDecline": "نه، ممنون",
-  "tutorial.promptAccept": "شروع تور",
   "onboarding.welcomeTitle": "خوش آمدید!",
   "onboarding.continue": "ادامه",
   "onboarding.installTargetDesktop": "دسکتاپ",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} و {{count}} نفر دیگر به ما پیوستند",
   "open-chat": "چت را باز کنید",
   "less": "کمتر",
-  "swipe-up-more": "برای مشاهده موارد بیشتر، صفحه را به بالا بکشید"
+  "swipe-up-more": "برای مشاهده موارد بیشتر، صفحه را به بالا بکشید",
+  "tutorial.promptTitle": "به Seed Bible خوش آمدید. آیا مایل به دریافت آموزش هستید؟",
+  "tutorial.promptBody": "یک تور با راهنما برای کمک به شما در یادگیری جزئیات Seed Bible در دسترس است.",
+  "tutorial.promptDecline": "نه، ممنون",
+  "tutorial.promptAccept": "تور را طی کنید"
 }

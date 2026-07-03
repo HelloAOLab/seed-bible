@@ -239,10 +239,6 @@
   "tutorial.back": "戻る",
   "tutorial.done": "終わり",
   "tutorial.next": "次",
-  "tutorial.promptTitle": "Seed Bible へようこそ。チュートリアルをご覧になりますか？",
-  "tutorial.promptBody": "Seed Bible のすべての機能を学べるガイドツアーをご利用いただけます。",
-  "tutorial.promptDecline": "いいえ、結構です",
-  "tutorial.promptAccept": "ツアーを開始",
   "onboarding.welcomeTitle": "いらっしゃいませ！",
   "onboarding.continue": "続く",
   "onboarding.installTargetDesktop": "デスクトップ",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}}と{{count}}人が参加しました",
   "open-chat": "チャットを開く",
   "less": "少ない",
-  "swipe-up-more": "上にスワイプしてさらに表示"
+  "swipe-up-more": "上にスワイプしてさらに表示",
+  "tutorial.promptTitle": "シードバイブルへようこそ。チュートリアルをご希望ですか？",
+  "tutorial.promptBody": "シードバイブルのあらゆる側面を学ぶのに役立つガイド付きツアーをご利用いただけます。",
+  "tutorial.promptDecline": "結構です",
+  "tutorial.promptAccept": "ツアーに参加する"
 }

@@ -239,10 +239,6 @@
   "tutorial.back": "Назад",
   "tutorial.done": "Готово",
   "tutorial.next": "Далі",
-  "tutorial.promptTitle": "Ласкаво просимо до Seed Bible. Бажаєте пройти навчання?",
-  "tutorial.promptBody": "Доступна керована екскурсія, яка допоможе вам вивчити всі тонкощі Seed Bible.",
-  "tutorial.promptDecline": "Ні, дякую",
-  "tutorial.promptAccept": "Почати екскурсію",
   "onboarding.welcomeTitle": "Ласкаво просимо!",
   "onboarding.continue": "Продовжити",
   "onboarding.installTargetDesktop": "робочий стіл",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} та ще {{count}} інших приєдналися",
   "open-chat": "Відкрити чат",
   "less": "Менше",
-  "swipe-up-more": "Проведіть пальцем угору, щоб переглянути більше"
+  "swipe-up-more": "Проведіть пальцем угору, щоб переглянути більше",
+  "tutorial.promptTitle": "Ласкаво просимо до Біблії Насінин. Бажаєте отримати навчальний посібник?",
+  "tutorial.promptBody": "Доступна екскурсія з гідом, яка допоможе вам дізнатися про всі тонкощі Біблії насіння.",
+  "tutorial.promptDecline": "Ні, дякую.",
+  "tutorial.promptAccept": "Відвідайте екскурсію"
 }

@@ -239,10 +239,6 @@
   "tutorial.back": "Yn ôl",
   "tutorial.done": "Wedi'i wneud",
   "tutorial.next": "Nesaf",
-  "tutorial.promptTitle": "Croeso i Seed Bible. Hoffech chi diwtorial?",
-  "tutorial.promptBody": "Mae taith dywysedig ar gael i'ch helpu i ddysgu holl fanylion Seed Bible.",
-  "tutorial.promptDecline": "Na, dim diolch",
-  "tutorial.promptAccept": "Dechrau'r daith",
   "onboarding.welcomeTitle": "Croeso!",
   "onboarding.continue": "Parhau",
   "onboarding.installTargetDesktop": "bwrdd gwaith",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "Ymunodd {{name}} a {{count}} eraill",
   "open-chat": "Sgwrs agored",
   "less": "Llai",
-  "swipe-up-more": "Sweipiwch i fyny i weld mwy"
+  "swipe-up-more": "Sweipiwch i fyny i weld mwy",
+  "tutorial.promptTitle": "Croeso i'r Beibl Hadau. Hoffech chi gael tiwtorial?",
+  "tutorial.promptBody": "Mae taith dywys ar gael i'ch helpu i ddysgu manylion Beibl Hadau.",
+  "tutorial.promptDecline": "Na, diolch",
+  "tutorial.promptAccept": "Cymerwch y daith"
 }

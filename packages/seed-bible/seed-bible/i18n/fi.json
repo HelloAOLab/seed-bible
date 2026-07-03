@@ -239,10 +239,6 @@
   "tutorial.back": "Takaisin",
   "tutorial.done": "Tehty",
   "tutorial.next": "Seuraava",
-  "tutorial.promptTitle": "Tervetuloa Seed Bibleen. Haluatko opastuksen?",
-  "tutorial.promptBody": "Käytettävissä on opastettu kierros, joka auttaa sinua oppimaan Seed Biblen kaikki ominaisuudet.",
-  "tutorial.promptDecline": "Ei kiitos",
-  "tutorial.promptAccept": "Aloita kierros",
   "onboarding.welcomeTitle": "Tervetuloa!",
   "onboarding.continue": "Jatkaa",
   "onboarding.installTargetDesktop": "työpöytä",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} ja {{count}} muuta liittyivät",
   "open-chat": "Avaa chat",
   "less": "Vähemmän",
-  "swipe-up-more": "Pyyhkäise ylöspäin nähdäksesi lisää"
+  "swipe-up-more": "Pyyhkäise ylöspäin nähdäksesi lisää",
+  "tutorial.promptTitle": "Tervetuloa Seed Bibleen. Haluatko opetusohjelman?",
+  "tutorial.promptBody": "Opastettu kierros auttaa sinua oppimaan Seed Biblen salat.",
+  "tutorial.promptDecline": "Ei kiitos",
+  "tutorial.promptAccept": "Osallistu kierrokselle"
 }

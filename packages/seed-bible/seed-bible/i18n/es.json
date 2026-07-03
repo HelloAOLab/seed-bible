@@ -239,10 +239,6 @@
   "tutorial.back": "Atrás",
   "tutorial.done": "Hecho",
   "tutorial.next": "Próximo",
-  "tutorial.promptTitle": "Te damos la bienvenida a Seed Bible. ¿Quieres un tutorial?",
-  "tutorial.promptBody": "Hay disponible una visita guiada para ayudarte a conocer todos los detalles de Seed Bible.",
-  "tutorial.promptDecline": "No, gracias",
-  "tutorial.promptAccept": "Hacer la visita",
   "onboarding.welcomeTitle": "¡Bienvenido!",
   "onboarding.continue": "Continuar",
   "onboarding.installTargetDesktop": "de oficina",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} y {{count}} otros se unieron",
   "open-chat": "Abrir chat",
   "less": "Menos",
-  "swipe-up-more": "Desliza hacia arriba para ver más."
+  "swipe-up-more": "Desliza hacia arriba para ver más.",
+  "tutorial.promptTitle": "Bienvenido a Seed Bible. ¿Te gustaría un tutorial?",
+  "tutorial.promptBody": "Se ofrece una visita guiada para que puedas conocer a fondo Seed Bible.",
+  "tutorial.promptDecline": "No, gracias",
+  "tutorial.promptAccept": "Realice la visita guiada."
 }

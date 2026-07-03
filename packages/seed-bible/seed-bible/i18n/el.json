@@ -239,10 +239,6 @@
   "tutorial.back": "Πίσω",
   "tutorial.done": "Γινώμενος",
   "tutorial.next": "Επόμενος",
-  "tutorial.promptTitle": "Καλώς ήρθατε στο Seed Bible. Θέλετε έναν οδηγό;",
-  "tutorial.promptBody": "Είναι διαθέσιμη μια καθοδηγούμενη ξενάγηση για να σας βοηθήσει να μάθετε όλες τις λεπτομέρειες του Seed Bible.",
-  "tutorial.promptDecline": "Όχι, ευχαριστώ",
-  "tutorial.promptAccept": "Ξεκινήστε την ξενάγηση",
   "onboarding.welcomeTitle": "Καλωσόρισμα!",
   "onboarding.continue": "Συνεχίζω",
   "onboarding.installTargetDesktop": "επιφάνεια εργασίας",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} και {{count}} άλλοι συμμετείχαν",
   "open-chat": "Άνοιγμα συνομιλίας",
   "less": "Μείον",
-  "swipe-up-more": "Σύρετε προς τα πάνω για να δείτε περισσότερα"
+  "swipe-up-more": "Σύρετε προς τα πάνω για να δείτε περισσότερα",
+  "tutorial.promptTitle": "Καλώς ορίσατε στη Βίβλο των Σπόρων. Θα θέλατε ένα σεμινάριο;",
+  "tutorial.promptBody": "Διατίθεται ξενάγηση με ξεναγό για να σας βοηθήσει να μάθετε τα πάντα για τη Βίβλο των Σπόρων.",
+  "tutorial.promptDecline": "Όχι, ευχαριστώ",
+  "tutorial.promptAccept": "Κάντε την περιήγηση"
 }

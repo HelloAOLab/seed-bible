@@ -239,10 +239,6 @@
   "tutorial.back": "Til baka",
   "tutorial.done": "Lokið",
   "tutorial.next": "Næst",
-  "tutorial.promptTitle": "Velkomin í Seed Bible. Viltu kennsluleiðbeiningar?",
-  "tutorial.promptBody": "Leiðsögn er í boði til að hjálpa þér að læra allt um Seed Bible.",
-  "tutorial.promptDecline": "Nei, takk",
-  "tutorial.promptAccept": "Byrja leiðsögnina",
   "onboarding.welcomeTitle": "Velkomin(n)!",
   "onboarding.continue": "Halda áfram",
   "onboarding.installTargetDesktop": "skrifborð",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} og {{count}} aðrir gengu til liðs við sig",
   "open-chat": "Opna spjall",
   "less": "Minna",
-  "swipe-up-more": "Strjúktu upp til að sjá meira"
+  "swipe-up-more": "Strjúktu upp til að sjá meira",
+  "tutorial.promptTitle": "Velkomin(n) í Seed Bible. Viltu fá kennsluefni?",
+  "tutorial.promptBody": "Leiðsögn er í boði til að hjálpa þér að læra allt um Seed Bible.",
+  "tutorial.promptDecline": "Nei, takk",
+  "tutorial.promptAccept": "Taktu skoðunarferðina"
 }

@@ -239,10 +239,6 @@
   "tutorial.back": "ກັບຄືນ",
   "tutorial.done": "ສຳເລັດແລ້ວ",
   "tutorial.next": "ຕໍ່ໄປ",
-  "tutorial.promptTitle": "ຍິນດີຕ້ອນຮັບສູ່ Seed Bible. ທ່ານຕ້ອງການບົດແນະນຳບໍ?",
-  "tutorial.promptBody": "ມີການນຳທ່ຽວແບບມີຄູ່ມືເພື່ອຊ່ວຍໃຫ້ທ່ານຮຽນຮູ້ລາຍລະອຽດທັງໝົດຂອງ Seed Bible.",
-  "tutorial.promptDecline": "ບໍ່, ຂອບໃຈ",
-  "tutorial.promptAccept": "ເລີ່ມການນຳທ່ຽວ",
   "onboarding.welcomeTitle": "ຍິນດີຕ້ອນຮັບ!",
   "onboarding.continue": "ສືບຕໍ່",
   "onboarding.installTargetDesktop": "ເດັສທັອບ",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} ແລະ {{count}} ຄົນອື່ນໆ ໄດ້ເຂົ້າຮ່ວມ",
   "open-chat": "ເປີດການສົນທະນາ",
   "less": "ໜ້ອຍລົງ",
-  "swipe-up-more": "ປັດຂຶ້ນເພື່ອເບິ່ງເພີ່ມເຕີມ"
+  "swipe-up-more": "ປັດຂຶ້ນເພື່ອເບິ່ງເພີ່ມເຕີມ",
+  "tutorial.promptTitle": "ຍິນດີຕ້ອນຮັບສູ່ Seed Bible. ເຈົ້າຢາກໄດ້ບົດຮຽນບໍ?",
+  "tutorial.promptBody": "ມີການທ່ອງທ່ຽວແບບມີຄູ່ມືເພື່ອຊ່ວຍໃຫ້ທ່ານຮຽນຮູ້ລາຍລະອຽດຂອງ Seed Bible.",
+  "tutorial.promptDecline": "ບໍ່, ຂອບໃຈ",
+  "tutorial.promptAccept": "ໄປທ່ຽວຊົມ"
 }

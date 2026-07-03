@@ -239,10 +239,6 @@
   "tutorial.back": "Tagasi",
   "tutorial.done": "Valmis",
   "tutorial.next": "Järgmine",
-  "tutorial.promptTitle": "Tere tulemast Seed Bible'isse. Kas soovid õpetust?",
-  "tutorial.promptBody": "Saadaval on juhendatud tuur, mis aitab sul õppida tundma kõiki Seed Bible'i nüansse.",
-  "tutorial.promptDecline": "Ei, aitäh",
-  "tutorial.promptAccept": "Alusta tuuri",
   "onboarding.welcomeTitle": "Tere tulemast!",
   "onboarding.continue": "Jätka",
   "onboarding.installTargetDesktop": "lauaarvuti",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} ja {{count}} teist liitusid",
   "open-chat": "Ava vestlus",
   "less": "Vähem",
-  "swipe-up-more": "Rohkemate piltide nägemiseks libista üles"
+  "swipe-up-more": "Rohkemate piltide nägemiseks libista üles",
+  "tutorial.promptTitle": "Tere tulemast Seed Bible'i. Kas soovite õpetust?",
+  "tutorial.promptBody": "Saadaval on giidiga ekskursioon, mis aitab teil Seed Bible'i plusse ja miinuseid tundma õppida.",
+  "tutorial.promptDecline": "Ei, aitäh",
+  "tutorial.promptAccept": "Tehke ringkäik"
 }

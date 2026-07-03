@@ -239,10 +239,6 @@
   "tutorial.back": "Spate",
   "tutorial.done": "Făcut",
   "tutorial.next": "Următorul",
-  "tutorial.promptTitle": "Bine ați venit la Seed Bible. Doriți un tutorial?",
-  "tutorial.promptBody": "Este disponibil un tur ghidat pentru a vă ajuta să învățați toate detaliile Seed Bible.",
-  "tutorial.promptDecline": "Nu, mulțumesc",
-  "tutorial.promptAccept": "Începeți turul",
   "onboarding.welcomeTitle": "Bun venit!",
   "onboarding.continue": "Continua",
   "onboarding.installTargetDesktop": "desktop",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} și încă {{count}} persoane s-au alăturat",
   "open-chat": "Deschide chatul",
   "less": "Mai puțin",
-  "swipe-up-more": "Glisează în sus pentru a vedea mai multe"
+  "swipe-up-more": "Glisează în sus pentru a vedea mai multe",
+  "tutorial.promptTitle": "Bun venit la Biblia Semințelor. Doriți un tutorial?",
+  "tutorial.promptBody": "Un tur ghidat este disponibil pentru a vă ajuta să învățați toate detaliile Bibliei Semințelor.",
+  "tutorial.promptDecline": "Nu, mulțumesc",
+  "tutorial.promptAccept": "Faceți turul"
 }

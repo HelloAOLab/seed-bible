@@ -239,10 +239,6 @@
   "tutorial.back": "Atgal",
   "tutorial.done": "Atlikta",
   "tutorial.next": "Toliau",
-  "tutorial.promptTitle": "Sveiki atvykę į Seed Bible. Ar norėtumėte mokymo?",
-  "tutorial.promptBody": "Galima vadovaujama apžvalga, padėsianti jums susipažinti su visomis Seed Bible smulkmenomis.",
-  "tutorial.promptDecline": "Ne, ačiū",
-  "tutorial.promptAccept": "Pradėti apžvalgą",
   "onboarding.welcomeTitle": "Sveiki atvykę!",
   "onboarding.continue": "Tęsti",
   "onboarding.installTargetDesktop": "darbalaukis",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "Prisijungė {{name}} ir dar {{count}}",
   "open-chat": "Atidaryti pokalbį",
   "less": "Mažiau",
-  "swipe-up-more": "Braukite aukštyn, kad pamatytumėte daugiau"
+  "swipe-up-more": "Braukite aukštyn, kad pamatytumėte daugiau",
+  "tutorial.promptTitle": "Sveiki atvykę į „Seed Bible“. Ar norėtumėte pamokos?",
+  "tutorial.promptBody": "Siūloma ekskursija su gidu, kuri padės jums sužinoti apie „Seed Bible“ subtilybes.",
+  "tutorial.promptDecline": "Ne, ačiū",
+  "tutorial.promptAccept": "Apsilankykite ekskursijoje"
 }

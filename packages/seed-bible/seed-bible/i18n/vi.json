@@ -239,10 +239,6 @@
   "tutorial.back": "Mặt sau",
   "tutorial.done": "Xong",
   "tutorial.next": "Kế tiếp",
-  "tutorial.promptTitle": "Chào mừng bạn đến với Seed Bible. Bạn có muốn xem hướng dẫn không?",
-  "tutorial.promptBody": "Có sẵn một chuyến tham quan có hướng dẫn để giúp bạn tìm hiểu mọi chi tiết của Seed Bible.",
-  "tutorial.promptDecline": "Không, cảm ơn",
-  "tutorial.promptAccept": "Bắt đầu tham quan",
   "onboarding.welcomeTitle": "Chào mừng!",
   "onboarding.continue": "Tiếp tục",
   "onboarding.installTargetDesktop": "máy tính để bàn",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} và {{count}} người khác đã tham gia",
   "open-chat": "Mở trò chuyện",
   "less": "Ít hơn",
-  "swipe-up-more": "Vuốt lên để xem thêm"
+  "swipe-up-more": "Vuốt lên để xem thêm",
+  "tutorial.promptTitle": "Chào mừng đến với Seed Bible. Bạn có muốn xem hướng dẫn không?",
+  "tutorial.promptBody": "Có tour tham quan có hướng dẫn viên giúp bạn tìm hiểu mọi ngóc ngách của Seed Bible.",
+  "tutorial.promptDecline": "Không, cảm ơn",
+  "tutorial.promptAccept": "Hãy tham gia chuyến tham quan."
 }

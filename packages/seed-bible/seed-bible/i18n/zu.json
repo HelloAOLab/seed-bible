@@ -239,10 +239,6 @@
   "tutorial.back": "Emuva",
   "tutorial.done": "Kuqediwe",
   "tutorial.next": "Olandelayo",
-  "tutorial.promptTitle": "Wamukelekile ku-Seed Bible. Ingabe ufuna isifundo?",
-  "tutorial.promptBody": "Kukhona uhambo oluqondisiwe olutholakalayo ukukusiza ufunde yonke imininingwane ye-Seed Bible.",
-  "tutorial.promptDecline": "Cha, ngiyabonga",
-  "tutorial.promptAccept": "Qala uhambo",
   "onboarding.welcomeTitle": "Siyakwamukela!",
   "onboarding.continue": "Qhubeka",
   "onboarding.installTargetDesktop": "ideskithophu",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} nabanye abangu {{count}} bajoyine",
   "open-chat": "Vula ingxoxo",
   "less": "Ngaphansi",
-  "swipe-up-more": "Swayiphela phezulu ukuze ubuke okwengeziwe"
+  "swipe-up-more": "Swayiphela phezulu ukuze ubuke okwengeziwe",
+  "tutorial.promptTitle": "Siyakwamukela ku-Seed Bible. Ungathanda yini isifundo?",
+  "tutorial.promptBody": "Uhambo oluqondisiwe luyatholakala ukukusiza ufunde okujulile nokungaphandle kweSeed Bible.",
+  "tutorial.promptDecline": "Cha ngiyabonga",
+  "tutorial.promptAccept": "Thatha uhambo"
 }

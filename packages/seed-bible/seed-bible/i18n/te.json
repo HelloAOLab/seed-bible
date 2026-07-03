@@ -239,10 +239,6 @@
   "tutorial.back": "వెనుక",
   "tutorial.done": "పూర్తయింది",
   "tutorial.next": "తరువాత",
-  "tutorial.promptTitle": "Seed Bible కు స్వాగతం. మీకు ట్యుటోరియల్ కావాలా?",
-  "tutorial.promptBody": "Seed Bible యొక్క అన్ని వివరాలను నేర్చుకోవడంలో మీకు సహాయపడటానికి గైడెడ్ టూర్ అందుబాటులో ఉంది.",
-  "tutorial.promptDecline": "వద్దు, ధన్యవాదాలు",
-  "tutorial.promptAccept": "టూర్ ప్రారంభించండి",
   "onboarding.welcomeTitle": "స్వాగతం!",
   "onboarding.continue": "కొనసాగించండి",
   "onboarding.installTargetDesktop": "డెస్క్‌టాప్",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} మరియు {{count}} ఇతరులు చేరారు",
   "open-chat": "ఓపెన్ చాట్",
   "less": "తక్కువ",
-  "swipe-up-more": "మరిన్ని చూడటానికి పైకి స్వైప్ చేయండి"
+  "swipe-up-more": "మరిన్ని చూడటానికి పైకి స్వైప్ చేయండి",
+  "tutorial.promptTitle": "సీడ్ బైబిల్‌కు స్వాగతం. మీకు ట్యుటోరియల్ కావాలా?",
+  "tutorial.promptBody": "సీడ్ బైబిల్ యొక్క సమగ్ర విషయాలను తెలుసుకోవడంలో మీకు సహాయపడటానికి గైడెడ్ టూర్ అందుబాటులో ఉంది.",
+  "tutorial.promptDecline": "వద్దు, ధన్యవాదాలు",
+  "tutorial.promptAccept": "పర్యటన చేయండి"
 }

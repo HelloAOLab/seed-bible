@@ -239,10 +239,6 @@
   "tutorial.back": "Назад",
   "tutorial.done": "Готово",
   "tutorial.next": "Следно",
-  "tutorial.promptTitle": "Добредојдовте во Seed Bible. Дали сакате упатство?",
-  "tutorial.promptBody": "Достапна е водена тура за да ви помогне да ги научите сите детали на Seed Bible.",
-  "tutorial.promptDecline": "Не, благодарам",
-  "tutorial.promptAccept": "Започни ја турата",
   "onboarding.welcomeTitle": "Добредојде!",
   "onboarding.continue": "Продолжи",
   "onboarding.installTargetDesktop": "десктоп",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} и {{count}} други се придружија",
   "open-chat": "Отвори разговор",
   "less": "Помалку",
-  "swipe-up-more": "Повлечете нагоре за да видите повеќе"
+  "swipe-up-more": "Повлечете нагоре за да видите повеќе",
+  "tutorial.promptTitle": "Добредојдовте во Seed Bible. Дали сакате упатство?",
+  "tutorial.promptBody": "Достапна е водена тура за да ви помогне да ги научите сите детали за Seed Bible.",
+  "tutorial.promptDecline": "Не, благодарам",
+  "tutorial.promptAccept": "Одете на турата"
 }

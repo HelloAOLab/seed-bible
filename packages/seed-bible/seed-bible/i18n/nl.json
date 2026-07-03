@@ -239,10 +239,6 @@
   "tutorial.back": "Rug",
   "tutorial.done": "Klaar",
   "tutorial.next": "Volgende",
-  "tutorial.promptTitle": "Welkom bij Seed Bible. Wil je een rondleiding?",
-  "tutorial.promptBody": "Er is een begeleide rondleiding beschikbaar om je te helpen alle details van Seed Bible te leren kennen.",
-  "tutorial.promptDecline": "Nee, bedankt",
-  "tutorial.promptAccept": "Start de rondleiding",
   "onboarding.welcomeTitle": "Welkom!",
   "onboarding.continue": "Doorgaan",
   "onboarding.installTargetDesktop": "bureaublad",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} en {{count}} anderen sloten zich aan",
   "open-chat": "Open chat",
   "less": "Minder",
-  "swipe-up-more": "Veeg omhoog om meer te bekijken."
+  "swipe-up-more": "Veeg omhoog om meer te bekijken.",
+  "tutorial.promptTitle": "Welkom bij Seed Bible. Wilt u een handleiding?",
+  "tutorial.promptBody": "Een rondleiding is beschikbaar om u te helpen de ins en outs van Seed Bible te leren kennen.",
+  "tutorial.promptDecline": "Nee, bedankt",
+  "tutorial.promptAccept": "Doe mee aan de rondleiding"
 }

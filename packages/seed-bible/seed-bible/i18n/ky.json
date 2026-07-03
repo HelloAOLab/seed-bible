@@ -239,10 +239,6 @@
   "tutorial.back": "Артка",
   "tutorial.done": "Бүттү",
   "tutorial.next": "Кийинки",
-  "tutorial.promptTitle": "Seed Bible'ге кош келиңиз. Көрсөтмө каалайсызбы?",
-  "tutorial.promptBody": "Seed Bible'дин бардык өзгөчөлүктөрүн үйрөнүүгө жардам берүү үчүн жетектелген тур жеткиликтүү.",
-  "tutorial.promptDecline": "Жок, рахмат",
-  "tutorial.promptAccept": "Турду баштоо",
   "onboarding.welcomeTitle": "Кош келдиңиз!",
   "onboarding.continue": "Улантуу",
   "onboarding.installTargetDesktop": "иш тактасы",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} жана дагы {{count}} адам кошулду",
   "open-chat": "Ачык чат",
   "less": "Азыраак",
-  "swipe-up-more": "Көбүрөөк көрүү үчүн өйдө сүрүңүз"
+  "swipe-up-more": "Көбүрөөк көрүү үчүн өйдө сүрүңүз",
+  "tutorial.promptTitle": "Seed Bible сайтына кош келиңиз. Окуу куралын каалайсызбы?",
+  "tutorial.promptBody": "Seed Bible китебинин майда-чүйдөсүнө чейин үйрөнүүгө жардам берүү үчүн экскурсия уюштурулган.",
+  "tutorial.promptDecline": "Жок, рахмат",
+  "tutorial.promptAccept": "Экскурсияга чыгыңыз"
 }

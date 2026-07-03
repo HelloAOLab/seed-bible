@@ -239,10 +239,6 @@
   "tutorial.back": "Späť",
   "tutorial.done": "Hotovo",
   "tutorial.next": "Ďalej",
-  "tutorial.promptTitle": "Vitajte v Seed Bible. Chcete si prejsť návod?",
-  "tutorial.promptBody": "K dispozícii je sprievodca, ktorý vám pomôže spoznať všetky detaily Seed Bible.",
-  "tutorial.promptDecline": "Nie, ďakujem",
-  "tutorial.promptAccept": "Spustiť prehliadku",
   "onboarding.welcomeTitle": "Vitajte!",
   "onboarding.continue": "Pokračovať",
   "onboarding.installTargetDesktop": "pracovná plocha",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} a {{count}} ďalších sa pridali",
   "open-chat": "Otvoriť chat",
   "less": "Menej",
-  "swipe-up-more": "Pre zobrazenie ďalších potiahnutí prstom nahor"
+  "swipe-up-more": "Pre zobrazenie ďalších potiahnutí prstom nahor",
+  "tutorial.promptTitle": "Vitajte v Seed Bible. Chcete tutoriál?",
+  "tutorial.promptBody": "K dispozícii je prehliadka so sprievodcom, ktorá vám pomôže dozvedieť sa všetko o Seed Bible.",
+  "tutorial.promptDecline": "Nie, ďakujem",
+  "tutorial.promptAccept": "Absolvujte prehliadku"
 }

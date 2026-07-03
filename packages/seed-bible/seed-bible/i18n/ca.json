@@ -239,10 +239,6 @@
   "tutorial.back": "Enrere",
   "tutorial.done": "Fet",
   "tutorial.next": "Següent",
-  "tutorial.promptTitle": "Us donem la benvinguda a Seed Bible. Voleu un tutorial?",
-  "tutorial.promptBody": "Hi ha disponible una visita guiada per ajudar-vos a aprendre tots els detalls de Seed Bible.",
-  "tutorial.promptDecline": "No, gràcies",
-  "tutorial.promptAccept": "Fes la visita",
   "onboarding.welcomeTitle": "Benvingut/da!",
   "onboarding.continue": "Continua",
   "onboarding.installTargetDesktop": "escriptori",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} i {{count}} persones més s'hi han unit",
   "open-chat": "Obre el xat",
   "less": "Menys",
-  "swipe-up-more": "Llisca cap amunt per veure'n més"
+  "swipe-up-more": "Llisca cap amunt per veure'n més",
+  "tutorial.promptTitle": "Benvingut/da a Seed Bible. Voleu un tutorial?",
+  "tutorial.promptBody": "S'ofereix una visita guiada per ajudar-vos a aprendre els detalls de la Bíblia de les llavors.",
+  "tutorial.promptDecline": "No, gràcies",
+  "tutorial.promptAccept": "Fes el recorregut"
 }

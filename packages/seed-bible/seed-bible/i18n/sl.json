@@ -239,10 +239,6 @@
   "tutorial.back": "Nazaj",
   "tutorial.done": "Končano",
   "tutorial.next": "Naprej",
-  "tutorial.promptTitle": "Dobrodošli v Seed Bible. Želite vodič?",
-  "tutorial.promptBody": "Na voljo je vodeni ogled, ki vam bo pomagal spoznati vse podrobnosti Seed Bible.",
-  "tutorial.promptDecline": "Ne, hvala",
-  "tutorial.promptAccept": "Začni ogled",
   "onboarding.welcomeTitle": "Dobrodošli!",
   "onboarding.continue": "Nadaljuj",
   "onboarding.installTargetDesktop": "namizni računalnik",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} in {{count}} drugih se je pridružilo",
   "open-chat": "Odpri klepet",
   "less": "Manj",
-  "swipe-up-more": "Povlecite navzgor za ogled več"
+  "swipe-up-more": "Povlecite navzgor za ogled več",
+  "tutorial.promptTitle": "Dobrodošli v Seed Bible. Bi želeli vadnico?",
+  "tutorial.promptBody": "Na voljo je voden ogled, ki vam bo pomagal spoznati podrobnosti Seed Bible.",
+  "tutorial.promptDecline": "Ne, hvala",
+  "tutorial.promptAccept": "Udeležite se ogleda"
 }

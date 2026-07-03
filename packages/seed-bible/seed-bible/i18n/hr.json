@@ -239,10 +239,6 @@
   "tutorial.back": "Nazad",
   "tutorial.done": "Gotovo",
   "tutorial.next": "Sljedeći",
-  "tutorial.promptTitle": "Dobro došli u Seed Bible. Želite li vodič?",
-  "tutorial.promptBody": "Dostupan je vođeni obilazak koji će vam pomoći da naučite sve pojedinosti Seed Bible.",
-  "tutorial.promptDecline": "Ne, hvala",
-  "tutorial.promptAccept": "Započni obilazak",
   "onboarding.welcomeTitle": "Dobrodošli!",
   "onboarding.continue": "Nastaviti",
   "onboarding.installTargetDesktop": "radna površina",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} i još {{count}} drugih su se pridružili",
   "open-chat": "Otvori chat",
   "less": "Manje",
-  "swipe-up-more": "Prijeđite prstom prema gore za više informacija"
+  "swipe-up-more": "Prijeđite prstom prema gore za više informacija",
+  "tutorial.promptTitle": "Dobrodošli u Seed Bible. Želite li tutorial?",
+  "tutorial.promptBody": "Dostupan je vođeni obilazak koji će vam pomoći da naučite sve o Seed Bible.",
+  "tutorial.promptDecline": "Ne, hvala",
+  "tutorial.promptAccept": "Krenite na obilazak"
 }

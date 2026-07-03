@@ -239,10 +239,6 @@
   "tutorial.back": "בְּחֲזָרָה",
   "tutorial.done": "נַעֲשָׂה",
   "tutorial.next": "הַבָּא",
-  "tutorial.promptTitle": "ברוכים הבאים ל-Seed Bible. האם תרצו הדרכה?",
-  "tutorial.promptBody": "זמין סיור מודרך שיעזור לכם ללמוד את כל הפרטים של Seed Bible.",
-  "tutorial.promptDecline": "לא, תודה",
-  "tutorial.promptAccept": "התחל את הסיור",
   "onboarding.welcomeTitle": "קַבָּלַת פָּנִים!",
   "onboarding.continue": "לְהַמשִׁיך",
   "onboarding.installTargetDesktop": "שולחן עבודה",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} ו- {{count}} נוספים הצטרפו",
   "open-chat": "פתח צ'אט",
   "less": "פָּחוֹת",
-  "swipe-up-more": "החליקו למעלה כדי לראות עוד"
+  "swipe-up-more": "החליקו למעלה כדי לראות עוד",
+  "tutorial.promptTitle": "ברוכים הבאים לספר התנ\"ך של זרעים. האם תרצה מדריך?",
+  "tutorial.promptBody": "סיור מודרך זמין שיעזור לכם ללמוד את כל הפרטים על תנ\"ך הזרעים.",
+  "tutorial.promptDecline": "לא, תודה",
+  "tutorial.promptAccept": "צא לסיור"
 }

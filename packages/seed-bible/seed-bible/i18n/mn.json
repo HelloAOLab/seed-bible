@@ -239,10 +239,6 @@
   "tutorial.back": "Буцах",
   "tutorial.done": "Дууссан",
   "tutorial.next": "Дараагийнх",
-  "tutorial.promptTitle": "Seed Bible-д тавтай морил. Танд заавар хэрэгтэй юу?",
-  "tutorial.promptBody": "Seed Bible-ийн бүх нарийн ширийнийг сурахад тань туслах удирдамжтай аялал бий.",
-  "tutorial.promptDecline": "Үгүй, баярлалаа",
-  "tutorial.promptAccept": "Аялалыг эхлүүлэх",
   "onboarding.welcomeTitle": "Тавтай морил!",
   "onboarding.continue": "Үргэлжлүүлэх",
   "onboarding.installTargetDesktop": "ширээний компьютер",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} болон {{count}} бусад хүмүүс нэгдсэн",
   "open-chat": "Нээлттэй чат",
   "less": "Бага",
-  "swipe-up-more": "Дэлгэрэнгүй үзэхийн тулд дээш шударна уу"
+  "swipe-up-more": "Дэлгэрэнгүй үзэхийн тулд дээш шударна уу",
+  "tutorial.promptTitle": "Seed Bible-д тавтай морил. Та хичээл авахыг хүсэж байна уу?",
+  "tutorial.promptBody": "Seed Bible-ийн нарийн ширийн зүйлийг сурахад тань туслах хөтөчтэй аялал байдаг.",
+  "tutorial.promptDecline": "Үгүй ээ, баярлалаа",
+  "tutorial.promptAccept": "Аялалд оролцоорой"
 }

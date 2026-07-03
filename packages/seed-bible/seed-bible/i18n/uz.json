@@ -239,10 +239,6 @@
   "tutorial.back": "Orqaga",
   "tutorial.done": "Bajarildi",
   "tutorial.next": "Keyingisi",
-  "tutorial.promptTitle": "Seed Bible'ga xush kelibsiz. Qo'llanma xohlaysizmi?",
-  "tutorial.promptBody": "Seed Bible'ning barcha nozik jihatlarini o'rganishga yordam beruvchi yo'riqli sayohat mavjud.",
-  "tutorial.promptDecline": "Yo'q, rahmat",
-  "tutorial.promptAccept": "Sayohatni boshlash",
   "onboarding.welcomeTitle": "Xush kelibsiz!",
   "onboarding.continue": "Davom etish",
   "onboarding.installTargetDesktop": "ish stoli",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} va yana {{count}} kishi qo'shildi",
   "open-chat": "Chatni ochish",
   "less": "Ozroq",
-  "swipe-up-more": "Batafsil ma'lumot olish uchun yuqoriga suring"
+  "swipe-up-more": "Batafsil ma'lumot olish uchun yuqoriga suring",
+  "tutorial.promptTitle": "Seed Bible’ga xush kelibsiz. Qo‘llanma kerakmi?",
+  "tutorial.promptBody": "Seed Bible kitobining nozik va nozik tomonlarini o'rganishingizga yordam beradigan ekskursiya mavjud.",
+  "tutorial.promptDecline": "Yo'q rahmat",
+  "tutorial.promptAccept": "Ekskursiyaga chiqing"
 }

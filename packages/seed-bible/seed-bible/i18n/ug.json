@@ -239,10 +239,6 @@
   "tutorial.back": "ئارقىغا",
   "tutorial.done": "تاماملاندى",
   "tutorial.next": "كېيىنكىسى",
-  "tutorial.promptTitle": "Seed Bible غا خۇش كەپسىز. قوللانما خالامسىز؟",
-  "tutorial.promptBody": "Seed Bible نىڭ بارلىق تەپسىلاتلىرىنى ئۆگىنىشىڭىزگە ياردەم بېرىدىغان يېتەكچىلىك ساياھىتى بار.",
-  "tutorial.promptDecline": "ياق، رەھمەت",
-  "tutorial.promptAccept": "ساياھەتنى باشلاش",
   "onboarding.welcomeTitle": "خۇش كەپسىز!",
   "onboarding.continue": "داۋاملاشتۇرۇش",
   "onboarding.installTargetDesktop": "ئۈستەل يۈزى",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} ۋە يەنە {{count}} ئادەم قوشۇلدى",
   "open-chat": "پاراڭنى ئېچىڭ",
   "less": "ئازراق",
-  "swipe-up-more": "كۆپرەك كۆرۈش ئۈچۈن يۇقىرىغا سۈرۈڭ"
+  "swipe-up-more": "كۆپرەك كۆرۈش ئۈچۈن يۇقىرىغا سۈرۈڭ",
+  "tutorial.promptTitle": "ئۇرۇق ئىنجىلغا خۇش كەپسىز. سىزگە بىر دەرسلىك كېرەكمۇ؟",
+  "tutorial.promptBody": "«Seed Bible» نىڭ ئىچكى-تاشقى تەپسىلاتلىرىنى ئۆگىنىشىڭىزگە ياردەم بېرىدىغان يېتەكچىلىك ساياھىتى بار.",
+  "tutorial.promptDecline": "ياق، رەھمەت",
+  "tutorial.promptAccept": "ساياھەتكە چىقىڭ"
 }

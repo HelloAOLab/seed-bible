@@ -239,10 +239,6 @@
   "tutorial.back": "后退",
   "tutorial.done": "完毕",
   "tutorial.next": "下一个",
-  "tutorial.promptTitle": "欢迎使用 Seed Bible。您想要教程吗？",
-  "tutorial.promptBody": "我们提供引导式导览，帮助您了解 Seed Bible 的方方面面。",
-  "tutorial.promptDecline": "不用了，谢谢",
-  "tutorial.promptAccept": "开始导览",
   "onboarding.welcomeTitle": "欢迎！",
   "onboarding.continue": "继续",
   "onboarding.installTargetDesktop": "桌面",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}}和其他{{count}}人加入了",
   "open-chat": "开放聊天",
   "less": "较少的",
-  "swipe-up-more": "向上滑动查看更多"
+  "swipe-up-more": "向上滑动查看更多",
+  "tutorial.promptTitle": "欢迎来到种子圣经。您需要教程吗？",
+  "tutorial.promptBody": "我们提供导览服务，帮助您了解 Seed Bible 的方方面面。",
+  "tutorial.promptDecline": "不，谢谢",
+  "tutorial.promptAccept": "参加参观"
 }

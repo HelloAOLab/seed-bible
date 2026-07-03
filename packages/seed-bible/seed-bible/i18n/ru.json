@@ -239,10 +239,6 @@
   "tutorial.back": "Назад",
   "tutorial.done": "Сделанный",
   "tutorial.next": "Следующий",
-  "tutorial.promptTitle": "Добро пожаловать в Seed Bible. Хотите пройти обучение?",
-  "tutorial.promptBody": "Доступен ознакомительный тур, который поможет вам изучить все тонкости Seed Bible.",
-  "tutorial.promptDecline": "Нет, спасибо",
-  "tutorial.promptAccept": "Начать тур",
   "onboarding.welcomeTitle": "Добро пожаловать!",
   "onboarding.continue": "Продолжать",
   "onboarding.installTargetDesktop": "рабочий стол",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "Присоединились {{name}} и {{count}} других",
   "open-chat": "Открытый чат",
   "less": "Меньше",
-  "swipe-up-more": "Проведите пальцем вверх, чтобы посмотреть больше"
+  "swipe-up-more": "Проведите пальцем вверх, чтобы посмотреть больше",
+  "tutorial.promptTitle": "Добро пожаловать в Seed Bible. Хотите получить обучающий материал?",
+  "tutorial.promptBody": "Для того чтобы вы могли узнать все тонкости Seed Bible, предлагается экскурсия с гидом.",
+  "tutorial.promptDecline": "Нет, спасибо",
+  "tutorial.promptAccept": "Пройдите экскурсию"
 }

@@ -239,10 +239,6 @@
   "tutorial.back": "กลับ",
   "tutorial.done": "เสร็จแล้ว",
   "tutorial.next": "ต่อไป",
-  "tutorial.promptTitle": "ยินดีต้อนรับสู่ Seed Bible คุณต้องการบทแนะนำหรือไม่?",
-  "tutorial.promptBody": "มีทัวร์พร้อมคำแนะนำเพื่อช่วยให้คุณเรียนรู้รายละเอียดทั้งหมดของ Seed Bible",
-  "tutorial.promptDecline": "ไม่ ขอบคุณ",
-  "tutorial.promptAccept": "เริ่มทัวร์",
   "onboarding.welcomeTitle": "ยินดีต้อนรับ!",
   "onboarding.continue": "ดำเนินการต่อ",
   "onboarding.installTargetDesktop": "เดสก์ท็อป",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} และ {{count}} คนอื่นๆ เข้าร่วม",
   "open-chat": "เปิดแชท",
   "less": "น้อย",
-  "swipe-up-more": "เลื่อนขึ้นเพื่อดูเพิ่มเติม"
+  "swipe-up-more": "เลื่อนขึ้นเพื่อดูเพิ่มเติม",
+  "tutorial.promptTitle": "ยินดีต้อนรับสู่ Seed Bible คุณต้องการคำแนะนำเบื้องต้นหรือไม่?",
+  "tutorial.promptBody": "มีบริการนำชมเพื่อช่วยให้คุณเรียนรู้รายละเอียดต่างๆ ของ Seed Bible อย่างครบถ้วน",
+  "tutorial.promptDecline": "ไม่เป็นไร ขอบคุณ",
+  "tutorial.promptAccept": "ไปทัวร์กันเลย"
 }

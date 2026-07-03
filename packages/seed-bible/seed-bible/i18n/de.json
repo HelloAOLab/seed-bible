@@ -239,10 +239,6 @@
   "tutorial.back": "Zurück",
   "tutorial.done": "Erledigt",
   "tutorial.next": "Nächste",
-  "tutorial.promptTitle": "Willkommen bei Seed Bible. Möchtest du eine Einführung?",
-  "tutorial.promptBody": "Eine geführte Tour hilft dir, alle Funktionen von Seed Bible kennenzulernen.",
-  "tutorial.promptDecline": "Nein, danke",
-  "tutorial.promptAccept": "Tour starten",
   "onboarding.welcomeTitle": "Willkommen!",
   "onboarding.continue": "Weitermachen",
   "onboarding.installTargetDesktop": "Desktop",
@@ -317,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} und {{count}} weitere Personen haben sich angeschlossen",
   "open-chat": "Chat öffnen",
   "less": "Weniger",
-  "swipe-up-more": "Wischen Sie nach oben, um mehr anzuzeigen"
+  "swipe-up-more": "Wischen Sie nach oben, um mehr anzuzeigen",
+  "tutorial.promptTitle": "Willkommen bei Seed Bible. Möchten Sie ein Tutorial?",
+  "tutorial.promptBody": "Es wird eine geführte Tour angeboten, die Ihnen hilft, die Funktionsweise der Seed Bible kennenzulernen.",
+  "tutorial.promptDecline": "Nein danke",
+  "tutorial.promptAccept": "Nehmen Sie an der Tour teil"
 }
