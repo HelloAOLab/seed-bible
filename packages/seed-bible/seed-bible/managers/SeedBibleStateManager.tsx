@@ -343,7 +343,17 @@ export function createSeedBibleState(
   });
   const modals = createModalManager();
   const search = createSearchManager();
-  const onboarding = createOnboardingManager(login);
+
+  // When the app is opened via a shared-session invite link (`?sessionId=...`),
+  // the user came to join a session, not to onboard — so we skip the welcome
+  // screen and the auto-starting tutorial for this visit. This is derived from
+  // the current URL rather than persisted, so it only affects this tab/load:
+  // revisiting without a `sessionId` shows onboarding and tutorials as usual.
+  const joinedViaSessionLink =
+    typeof window !== "undefined" &&
+    !!navigation.currentUrl.value.searchParams.get("sessionId");
+
+  const onboarding = createOnboardingManager(login, joinedViaSessionLink);
 
   // Terms of Service modal. Two-way bound to the `?terms=open` query param so
   // it can be deep-linked: setting the param opens the modal, and closing the
@@ -453,7 +463,13 @@ export function createSeedBibleState(
   );
   const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
 
-  const tutorial = createTutorialManager(login, onboarding, selector, isMobile);
+  const tutorial = createTutorialManager(
+    login,
+    onboarding,
+    selector,
+    isMobile,
+    joinedViaSessionLink
+  );
 
   // A phone held sideways: landscape orientation with the short viewport
   // height typical of phones. Tablets/desktops in landscape have more
