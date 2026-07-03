@@ -360,7 +360,25 @@ importers:
         specifier: ^4.1.8
         version: 4.1.8(@opentelemetry/api@1.9.0)(@types/node@24.10.9)(jsdom@29.1.1)(vite@8.0.13(@types/node@24.10.9)(esbuild@0.25.12)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0))
 
+  packages/apologist-extension:
+    dependencies:
+      luxon:
+        specifier: 'catalog:'
+        version: 3.7.2
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+      uuid:
+        specifier: 'catalog:'
+        version: 13.0.0
+
   packages/audio-reader-extension:
+    dependencies:
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+
+  packages/bonfire-extension:
     dependencies:
       seed-bible:
         specifier: workspace:*
@@ -5873,8 +5891,8 @@ packages:
   prosemirror-view@1.41.5:
     resolution: {integrity: sha512-UDQbIPnDrjE8tqUBbPmCOZgtd75htE6W3r0JCmY9bL6W1iemDM37MZEKC49d+tdQ0v/CKx4gjxLoLsfkD2NiZA==}
 
-  prosemirror-view@1.41.9:
-    resolution: {integrity: sha512-clTunTX+eaLbr87L1V1QPheRlEQJyTlL3gXe9x3jQIk3rL0RVWxviDGz8tFaydwIVm+hKhYCyr+R/zBtWr9s6A==}
+  prosemirror-view@1.42.0:
+    resolution: {integrity: sha512-N54DF3OXNWDuP81G1kbfCys8ZzIjuL1VnvJ2mk5STSu/fNxWIcX/EutQLA3s9KR/2wVhgDi4hzBB/1fINVxk0A==}
 
   proto3-json-serializer@3.0.4:
     resolution: {integrity: sha512-E1sbAYg3aEbXrq0n1ojJkRHQJGE1kaE/O6GLA94y8rnJBfgvOPTOd1b9hOceQK1FFZI9qMh1vBERCyO2ifubcw==}
@@ -9856,7 +9874,7 @@ snapshots:
       prosemirror-state: 1.4.4
       prosemirror-tables: 1.8.5
       prosemirror-transform: 1.12.0
-      prosemirror-view: 1.41.9
+      prosemirror-view: 1.42.0
 
   '@tiptap/starter-kit@3.27.1':
     dependencies:
@@ -13232,7 +13250,7 @@ snapshots:
       prosemirror-state: 1.4.4
       prosemirror-transform: 1.11.0
 
-  prosemirror-view@1.41.9:
+  prosemirror-view@1.42.0:
     dependencies:
       prosemirror-model: 1.25.9
       prosemirror-state: 1.4.4

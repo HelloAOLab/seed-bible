@@ -14,6 +14,7 @@ import {
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import { sortBy } from "es-toolkit";
 import type { BibleReadingSession } from "../managers/SessionsManager";
+import type { ChatsManager } from "./ChatsManager";
 import type { ReadingPlansManager } from "../managers/ReadingPlansManager";
 import { ReadingPlansPane } from "../components/ReadingPlansPane";
 import type { PlaylistManager } from "./PlaylistManager";
@@ -124,6 +125,12 @@ export interface BibleToolContext {
   tabs: TabsManager;
   /** Panes manager for pane-level actions/selection context. */
   panesManager: PanesManager;
+
+  /**
+   * Chats manager for chat-related actions.
+   */
+  chats: ChatsManager;
+
   /** Optional window metrics for responsive tool behavior. */
   window?: WindowContext | null;
   /** Opens the app sidebar (typically for small-screen actions). */
@@ -507,6 +514,22 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       icon: () => <MaterialIcon>search</MaterialIcon>,
       onSelect: (context) => {
         context.openSearch();
+      },
+    },
+    {
+      id: "open-chat",
+      priority: 120,
+      title: { key: "chat", defaultValue: "Chat" },
+      icon: () => <MaterialIcon>chat_bubble_outline</MaterialIcon>,
+      isVisible: (context) => {
+        // Hide when there are no providers and no chats
+        return (
+          context.chats.providers.value.length > 0 ||
+          context.chats.chats.value.length > 0
+        );
+      },
+      onSelect: (context) => {
+        context.openChat?.();
       },
     },
     {

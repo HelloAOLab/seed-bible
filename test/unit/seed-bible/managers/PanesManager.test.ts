@@ -84,6 +84,7 @@ async function createManagers(options: { extraTabs?: number } = {}) {
     navigation,
     createDataManager(),
     createHighlightsManagerMock() as any,
+    {} as any,
     createI18nManager(navigation, ["en"])
   );
   await waitForTabsToLoad(tabsManager.tabs.value);

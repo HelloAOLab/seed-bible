@@ -1,6 +1,7 @@
 import { computed, effect, signal, type Signal } from "@preact/signals";
 import type { BibleDataManager } from "./BibleDataManager";
 import type { BibleReadingSession } from "../managers/SessionsManager";
+import { createChatsManager, type ChatSession } from "./ChatsManager";
 import {
   DEFAULT_BOOK_ID,
   DEFAULT_CHAPTER_NUMBER,
@@ -68,6 +69,8 @@ export interface ReaderTab {
   readingState: BibleReadingState;
   /** Attached shared session, if this tab is backed by collaborative state. */
   sharedSession: BibleReadingSession | null;
+  /** Attached shared chat for collaborative tabs. */
+  sharedChat: ChatSession | null;
   /**
    * When true, this tab only exists to back a pane (e.g. a chapter opened in a
    * new/detached panel) and is hidden from the tab strip. It is disposed
@@ -137,6 +140,7 @@ export function createInitialTabs(
       discoverManager
     ),
     sharedSession: null,
+    sharedChat: null,
   };
 
   if (highlightedVerses.length > 0) {
@@ -155,6 +159,21 @@ function isBibleReadingSession(
   value: NewTabSource | undefined
 ): value is BibleReadingSession {
   return !!value && "document" in value && "readingState" in value;
+}
+
+function createSharedChatOrNull(
+  chatsManager: ReturnType<typeof createChatsManager>,
+  session: BibleReadingSession | null
+): ChatSession | null {
+  if (!session || typeof session.document?.getArray !== "function") {
+    return null;
+  }
+
+  try {
+    return chatsManager.createSharedSession(session);
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -221,6 +240,7 @@ export function createTabs(
   navigation: NavigationManager,
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager,
+  chatsManager: ReturnType<typeof createChatsManager>,
   i18nManager: I18nManager,
   discoverManager?: DiscoverManager
 ): TabsManager {
@@ -368,6 +388,7 @@ export function createTabs(
     const currentTabs = tabs.value;
     const nextNumber = currentTabs.length + 1;
     const sharedSession = isBibleReadingSession(source) ? source : null;
+    const sharedChat = createSharedChatOrNull(chatsManager, sharedSession);
     const readingState = !isBibleReadingSession(source) ? source : null;
     const nextTab: ReaderTab = {
       id: `tab-${nextNumber}`,
@@ -383,6 +404,7 @@ export function createTabs(
           discoverManager
         ),
       sharedSession,
+      sharedChat,
       paneOnly: tabOptions?.paneOnly ?? false,
     };
     tabs.value = [...currentTabs, nextTab];

@@ -35,6 +35,10 @@ function createContext(): BibleToolContext {
     panesManager: {} as any,
     tabs: {} as any,
     toast: vi.fn(),
+    chats: {
+      chats: signal([]),
+      providers: signal([]),
+    } as any,
   };
 }
 
@@ -446,5 +450,55 @@ describe("createBibleToolsManager", () => {
     expect(() => tool?.getItems?.()).toThrow(
       `Tool item "nested-item" in "${CUSTOM_ITEMS_TOOL_ID}" cannot define getItems().`
     );
+  });
+
+  describe("open-chat tool visibility", () => {
+    it("is invisible when there are no providers and no chats", () => {
+      const manager = createBibleToolsManager();
+      const context = createContext();
+
+      const tool = manager
+        .getToolbarTools(context)
+        .find((t) => t.id === "open-chat");
+
+      expect(tool).toBeDefined();
+      expect(tool?.visible.value).toBe(false);
+    });
+
+    it("is visible when there are providers", () => {
+      const manager = createBibleToolsManager();
+      const context: ReturnType<typeof createContext> = {
+        ...createContext(),
+        chats: {
+          chats: signal([]),
+          providers: signal([{ id: "provider-1" }] as any),
+        } as any,
+      };
+
+      const tool = manager
+        .getToolbarTools(context)
+        .find((t) => t.id === "open-chat");
+
+      expect(tool).toBeDefined();
+      expect(tool?.visible.value).toBe(true);
+    });
+
+    it("is visible when there are chats", () => {
+      const manager = createBibleToolsManager();
+      const context: ReturnType<typeof createContext> = {
+        ...createContext(),
+        chats: {
+          chats: signal([{ id: "chat-1" }] as any),
+          providers: signal([]),
+        } as any,
+      };
+
+      const tool = manager
+        .getToolbarTools(context)
+        .find((t) => t.id === "open-chat");
+
+      expect(tool).toBeDefined();
+      expect(tool?.visible.value).toBe(true);
+    });
   });
 });

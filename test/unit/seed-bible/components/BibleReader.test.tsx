@@ -240,6 +240,7 @@ function renderMobileReader(
           title: "Tab 1",
           readingState: fixture.readingState,
           sharedSession: null,
+          sharedChat: null,
         }}
         state={state}
         pane={fixture.pane}
