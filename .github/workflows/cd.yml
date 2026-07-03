@@ -148,9 +148,9 @@ jobs:
       - name: Invalidate host pointer cache
         run: |
           if [ "$BRANCH" = "main" ]; then
-            HOST_INVALIDATE_URL="https://prod.seedbible.org"
+            HOST_INVALIDATE_URL="https://prod.seedbible.org/__invalidate"
           else
-            HOST_INVALIDATE_URL="https://alpha.seedbible.org"
+            HOST_INVALIDATE_URL="https://alpha.seedbible.org/__invalidate"
           fi
           curl -fsS -X POST \
             "${HOST_INVALIDATE_URL}?branch=${{ steps.ids.outputs.branch }}" \
