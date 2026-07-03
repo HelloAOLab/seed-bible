@@ -1,3 +1,5 @@
 import { bootstrapExtension } from "./infrastructure/di/bootstrap";
 
-bootstrapExtension();
+export default function init() {
+  bootstrapExtension();
+}

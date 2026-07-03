@@ -7,21 +7,30 @@ interface ConnectedUserData extends UserIds {
   profile: UserProfile | undefined;
 }
 
+interface UserVisual {
+  color: string;
+  defaultIcon: string;
+}
+
 interface ProviderParams {
   state: SeedBibleState;
-  colors: string[];
-  icons: string[];
+  /**
+   * Computes the deterministic visual (color + icon) for a user key.
+   * Injected from bootstrap so this adapter doesn't depend on SessionsManager
+   * directly; bootstrap passes SessionsManager's `getUserAnimalVisual`, the
+   * single source of truth shared with the session avatars. Keeping it injected
+   * guarantees the color/icon a user gets here matches what their avatar shows.
+   */
+  getUserVisual: (key: string) => UserVisual;
 }
 
 export class SessionProvider implements SessionProviderPort {
   #state: ProviderParams["state"];
-  #colors: ProviderParams["colors"];
-  #icons: ProviderParams["icons"];
+  #getUserVisual: ProviderParams["getUserVisual"];
 
-  constructor({ state, colors, icons }: ProviderParams) {
+  constructor({ state, getUserVisual }: ProviderParams) {
     this.#state = state;
-    this.#colors = colors;
-    this.#icons = icons;
+    this.#getUserVisual = getUserVisual;
   }
 
   getConnectedUsers(): ConnectedUserData[] {
@@ -72,11 +81,11 @@ export class SessionProvider implements SessionProviderPort {
   //   });
   // }
   getUserColorById(id: string): string {
-    return this.#getDeterministicColor(id);
+    return this.#getUserVisual(id).color;
   }
 
   getUserIconById(id: string): string {
-    return this.#getDeterministicIcon(id);
+    return this.#getUserVisual(id).defaultIcon;
   }
 
   getAuthIdByConnectionId(id: string): string | undefined {
@@ -85,28 +94,5 @@ export class SessionProvider implements SessionProviderPort {
         return user.configId === id;
       })?.authId ?? undefined
     );
-  }
-
-  #getHashString(str: string): number {
-    let h = 5381;
-    for (let i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
-    return h >>> 0;
-  }
-
-  #getDeterministicColor(key: string): string {
-    const hashString = this.#getHashString(key);
-    const iconsLenght = 10; // TODO: This hardcoded value is the amount of icons. This should be imported or inyected when possible.
-    const colorIndex =
-      Math.floor(hashString / iconsLenght) % this.#colors.length;
-
-    const color = this.#colors[colorIndex];
-    return color ?? "#E5E7EB";
-  }
-
-  #getDeterministicIcon(id: string): string {
-    const normalized = id && id.length > 0 ? id : "anonymous";
-    const hash = this.#getHashString(normalized);
-    const iconIndex = hash % this.#icons.length;
-    return this.#icons[iconIndex]!;
   }
 }

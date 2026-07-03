@@ -35,9 +35,10 @@ const makeState = (overrides: any = {}): any => ({
 
 const makeProvider = (
   state = makeState(),
-  colors: string[] = ["#ff0000", "#00ff00", "#0000ff"],
-  icons: string[] = ["home", "star", "face"]
-) => new SessionProvider({ state, colors, icons });
+  getUserVisual: (key: string) => { color: string; defaultIcon: string } = (
+    key
+  ) => ({ color: `color-${key}`, defaultIcon: `icon-${key}` })
+) => new SessionProvider({ state, getUserVisual });
 
 // ─── getConnectedUsers ────────────────────────────────────────────────────────
 
@@ -216,53 +217,54 @@ describe("getConnectedUsersConfigId", () => {
 // ─── getUserColorById ─────────────────────────────────────────────────────────
 
 describe("getUserColorById", () => {
-  it("returns a string for any id", () => {
-    expect(typeof makeProvider().getUserColorById("some-id")).toBe("string");
+  it("returns the color from the injected getUserVisual", () => {
+    const provider = makeProvider(makeState(), () => ({
+      color: "#123456",
+      defaultIcon: "star",
+    }));
+    expect(provider.getUserColorById("any-id")).toBe("#123456");
   });
 
-  it("returns the same color for the same id on successive calls (deterministic)", () => {
-    const provider = makeProvider();
+  it("passes the given id through to getUserVisual", () => {
+    const seen: string[] = [];
+    const provider = makeProvider(makeState(), (key) => {
+      seen.push(key);
+      return { color: "#000", defaultIcon: "home" };
+    });
+    provider.getUserColorById("user-42");
+    expect(seen).toContain("user-42");
+  });
+
+  it("returns the same color for the same id when the source is deterministic", () => {
+    const provider = makeProvider(makeState(), (key) => ({
+      color: `color-${key}`,
+      defaultIcon: "home",
+    }));
     expect(provider.getUserColorById("abc")).toBe(
       provider.getUserColorById("abc")
     );
   });
+});
 
-  it("returns '#E5E7EB' when the colors array is empty", () => {
-    const provider = makeProvider(makeState(), []);
-    expect(provider.getUserColorById("any-id")).toBe("#E5E7EB");
+// ─── getUserIconById ──────────────────────────────────────────────────────────
+
+describe("getUserIconById", () => {
+  it("returns the defaultIcon from the injected getUserVisual", () => {
+    const provider = makeProvider(makeState(), () => ({
+      color: "#123456",
+      defaultIcon: "forest",
+    }));
+    expect(provider.getUserIconById("any-id")).toBe("forest");
   });
 
-  it("always returns the single available color when colors has one entry", () => {
-    const provider = makeProvider(makeState(), ["#unique"]);
-    expect(provider.getUserColorById("id-1")).toBe("#unique");
-    expect(provider.getUserColorById("id-2")).toBe("#unique");
-    expect(provider.getUserColorById("id-3")).toBe("#unique");
-  });
-
-  it("returns a color from within the provided colors array", () => {
-    const colors = ["#aaa", "#bbb", "#ccc"];
-    const provider = makeProvider(makeState(), colors);
-    const result = provider.getUserColorById("test-id");
-    expect(colors).toContain(result);
-  });
-
-  it("may return different colors for different ids", () => {
-    const colors = ["#111", "#222", "#333", "#444", "#555"];
-    const provider = makeProvider(makeState(), colors);
-    const results = new Set(
-      [
-        "alpha",
-        "beta",
-        "gamma",
-        "delta",
-        "epsilon",
-        "zeta",
-        "eta",
-        "theta",
-        "iota",
-      ].map((id) => provider.getUserColorById(id))
-    );
-    expect(results.size).toBeGreaterThan(1);
+  it("passes the given id through to getUserVisual", () => {
+    const seen: string[] = [];
+    const provider = makeProvider(makeState(), (key) => {
+      seen.push(key);
+      return { color: "#000", defaultIcon: "home" };
+    });
+    provider.getUserIconById("user-7");
+    expect(seen).toContain("user-7");
   });
 });
 

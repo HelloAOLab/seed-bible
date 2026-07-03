@@ -46,7 +46,7 @@ import {
 } from "../../domain/functions/time";
 import { CapitalizeFirstLetter } from "../../domain/functions/string";
 import { ReadingHistoryConfigProvider } from "../config/readingHistory/ReadingHistoryConfigProvider";
-import { connectedUserColors } from "../../../seed-bible/seed-bible/managers/SessionsManager";
+import { getUserAnimalVisual } from "../../../seed-bible/seed-bible/managers/SessionsManager";
 import { effect, signal } from "@preact/signals";
 // import { RadingInstanceProvider } from "../adapters/userPresence/ReadingInstanceProvider";
 import { ReadingHistoryTimeline } from "../presentation/components/ui/ReadingHistoryTimeline";
@@ -63,7 +63,6 @@ export const bootstrapExtension = () => {
     id: "seed-bible-utils",
     init: function* (context: SeedBibleState) {
       // 1. Instantiating adapters
-
       const readingHistoryConfigProvider = new ReadingHistoryConfigProvider();
       const seedBibleUtilsEventManager =
         new BaseEventManager<SeedBibleUtilsEvents>();
@@ -73,25 +72,9 @@ export const bootstrapExtension = () => {
       const userColorStore = new UserColorStore(seedBibleUtilsEventManager);
       const sessionProvider = new SessionProvider({
         state: context,
-        colors: [
-          ...connectedUserColors, // TODO: Get the complete color array from one place and avoid hardcoding the values here.
-          "#06B6D4",
-          "#EC4899",
-          "#8B5CF6",
-          "#14B8A6",
-        ],
-        icons: [
-          "forest", // tree
-          "park", // log
-          "eco", // leaf
-          "pets", // cat/dog
-          "cruelty_free", // bunny-style
-          "local_cafe", // coffee
-          "local_florist", // flower
-          "grass", // grass
-          "potted_plant", // plant
-          "nature", // mountain/tree
-        ],
+        // Single source of truth for user color + icon, shared with the session
+        // avatars. Injected here so the adapter stays decoupled from SessionsManager.
+        getUserVisual: getUserAnimalVisual,
       });
       const userDatabase = new UserDatabase();
       const seedBibleUtilsDataRepository = new DataRepository();
