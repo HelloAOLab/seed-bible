@@ -30,20 +30,26 @@ export function getProfileConfigValue(
  * that window would save a bare `{ name: "" }` profile and permanently wipe
  * whatever was actually stored on the account once the write lands.
  */
-export function saveProfileConfigValue(
+export async function saveProfileConfigValue(
   login: LoginManager,
   key: string,
   value: unknown
-): void {
+): Promise<void> {
   if (!login.userId.value) {
     return;
   }
 
   if (!login.profile.value) {
-    console.warn(
-      "Cannot save profile config value: profile has not loaded yet"
-    );
-    return;
+    if (login.profilePromise) {
+      await login.profilePromise;
+    }
+
+    if (!login.profile.value) {
+      console.warn(
+        "Cannot save profile config value: profile has not loaded yet"
+      );
+      return;
+    }
   }
 
   const existingProfile = login.profile.value;

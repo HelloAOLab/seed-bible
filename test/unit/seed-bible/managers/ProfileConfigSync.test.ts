@@ -16,6 +16,7 @@ import {
 function createTestLogin(initial?: {
   userId?: string | null;
   profile?: UserProfile | null;
+  profilePromise?: Promise<UserProfile> | null;
 }): LoginManager {
   const userId = signal<string | null>(initial?.userId ?? null);
   const profile = signal<UserProfile | null>(initial?.profile ?? null);
@@ -25,7 +26,22 @@ function createTestLogin(initial?: {
       ...newData,
     } as UserProfile;
   };
-  return { userId, profile, updateProfile } as unknown as LoginManager;
+  return {
+    userId,
+    profile,
+    profilePromise: initial?.profilePromise ?? null,
+    updateProfile,
+  } as unknown as LoginManager;
+}
+
+function deferred<T>() {
+  let resolve: (value: T | PromiseLike<T>) => void = () => undefined;
+  let reject: (reason?: unknown) => void = () => undefined;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
 }
 
 describe("saveProfileConfigValue", () => {
@@ -46,6 +62,75 @@ describe("saveProfileConfigValue", () => {
     saveProfileConfigValue(login, "installedExtensions", ["ext.a"]);
 
     expect(login.profile.value).toBeNull();
+  });
+
+  it("waits for the profile to finish loading before writing", async () => {
+    // userId is set (session restored) but the async profile fetch hasn't
+    // resolved yet — this is the exact window in which commit 4e15dad's
+    // boot-time extension sync raced the profile load and wiped the account.
+    const { promise, resolve } = deferred<UserProfile>();
+    const login = createTestLogin({
+      userId: "user-1",
+      profile: null,
+      profilePromise: promise,
+    });
+
+    saveProfileConfigValue(login, "installedExtensions", ["ext.a"]);
+
+    expect(login.profile.value).toBeNull();
+
+    login.profile.value = {
+      name: "Kal",
+      location: "Earth",
+      config: { fontSize: "small" },
+    };
+    resolve(login.profile.value);
+
+    await Promise.resolve();
+
+    expect(login.profile.value).toEqual({
+      name: "Kal",
+      location: "Earth",
+      config: { fontSize: "small", installedExtensions: ["ext.a"] },
+    });
+  });
+
+  it("processes pending profile updates in sequence once the profile is loaded", async () => {
+    // userId is set (session restored) but the async profile fetch hasn't
+    // resolved yet — this is the exact window in which commit 4e15dad's
+    // boot-time extension sync raced the profile load and wiped the account.
+    const { promise, resolve } = deferred<UserProfile>();
+    const login = createTestLogin({
+      userId: "user-1",
+      profile: null,
+      profilePromise: promise,
+    });
+
+    saveProfileConfigValue(login, "installedExtensions", ["ext.a"]);
+    saveProfileConfigValue(login, "fun", "abc");
+    saveProfileConfigValue(login, "test", 123);
+
+    expect(login.profile.value).toBeNull();
+
+    login.profile.value = {
+      name: "Kal",
+      location: "Earth",
+      config: { fontSize: "small" },
+    };
+    resolve(login.profile.value);
+
+    await Promise.resolve();
+
+    expect(login.profile.value).toEqual({
+      name: "Kal",
+      location: "Earth",
+      config: {
+        fontSize: "small",
+        installedExtensions: ["ext.a"],
+        fun: "abc",
+        test: 123,
+      },
+    });
   });
 
   it("merges into the loaded profile once it's available", () => {
