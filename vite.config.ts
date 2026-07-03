@@ -217,6 +217,7 @@ export default defineConfig(({ isSsrBuild }) => ({
       "@packages": path.resolve(__dirname, "packages"),
       // ...moduleAliases,
     },
+    dedupe: ["zod"],
   },
 
   test: {
