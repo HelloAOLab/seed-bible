@@ -259,6 +259,7 @@
   "no-languages-found": "Nerasta jokių kalbų",
   "today-coming-soon": "Šiandienos ekranas netrukus pasirodys",
   "link-to-join-shared-session-copied": "Nuoroda prisijungti prie bendros sesijos buvo nukopijuota į jūsų iškarpinę",
+  "copied-translation-share-link": "Nukopijuota vertimo bendrinimo nuoroda",
   "anonymous": "Anonimas",
   "no-chat-messages": "Kol kas nėra pranešimų",
   "start-conversation": "Pradėti pokalbį",
@@ -305,7 +306,6 @@
   "inactive": "Neaktyvus",
   "available": "Prieinama",
   "everyone": "Visi",
-  "copied-translation-share-link": "Nukopijuota vertimo bendrinimo nuoroda",
   "chat-x-joined": "{{name}} prisijungė",
   "chat-x-and-x-joined": "{{first}} ir {{second}} prisijungė",
   "chat-x-and-count-joined": "Prisijungė {{name}} ir dar {{count}}",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "Prisijungė {{name}} ir dar {{count}}",
   "open-chat": "Atidaryti pokalbį",
   "less": "Mažiau",
-  "swipe-up-more": "Braukite aukštyn, kad pamatytumėte daugiau"
+  "swipe-up-more": "Braukite aukštyn, kad pamatytumėte daugiau",
+  "tutorial.promptTitle": "Sveiki atvykę į „Seed Bible“. Ar norėtumėte pamokos?",
+  "tutorial.promptBody": "Siūloma ekskursija su gidu, kuri padės jums sužinoti apie „Seed Bible“ subtilybes.",
+  "tutorial.promptDecline": "Ne, ačiū",
+  "tutorial.promptAccept": "Apsilankykite ekskursijoje"
 }

@@ -259,6 +259,7 @@
   "no-languages-found": "Nuk u gjet asnjë gjuhë",
   "today-coming-soon": "Ekrani i sotëm vjen së shpejti",
   "link-to-join-shared-session-copied": "Një lidhje për t'u bashkuar me sesionin e përbashkët u kopjua në kujtesën tënde të përkohshme",
+  "copied-translation-share-link": "Lidhja e ndarjes së përkthimit u kopjua",
   "anonymous": "Anonim",
   "no-chat-messages": "Nuk ka ende mesazhe",
   "start-conversation": "Fillo një bisedë",
@@ -305,7 +306,6 @@
   "inactive": "Joaktiv",
   "available": "Në dispozicion",
   "everyone": "Të gjithë",
-  "copied-translation-share-link": "Lidhja e ndarjes së përkthimit u kopjua",
   "chat-x-joined": "{{name}} u bashkua",
   "chat-x-and-x-joined": "{{first}} dhe {{second}} u bashkuan",
   "chat-x-and-count-joined": "{{name}} dhe {{count}} të tjerë u bashkuan",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} dhe {{count}} të tjerë u bashkuan",
   "open-chat": "Hap bisedën",
   "less": "Më pak",
-  "swipe-up-more": "Rrëshqit lart për të parë më shumë"
+  "swipe-up-more": "Rrëshqit lart për të parë më shumë",
+  "tutorial.promptTitle": "Mirë se vini në Seed Bible. Dëshironi një tutorial?",
+  "tutorial.promptBody": "Një tur me guidë është në dispozicion për t'ju ndihmuar të mësoni hollësitë e Biblës së Seed-it.",
+  "tutorial.promptDecline": "Jo, faleminderit",
+  "tutorial.promptAccept": "Bëni turin"
 }

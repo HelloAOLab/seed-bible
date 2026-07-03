@@ -259,6 +259,7 @@
   "no-languages-found": "Ndaipóri ñe’ẽ ojejuhúva",
   "today-coming-soon": "Ko árape pantalla oúta pya'e",
   "link-to-join-shared-session-copied": "Peteĩ enlace ojeike hag̃ua sesión compartida-pe ojekopia nde portapapeles-pe",
+  "copied-translation-share-link": "Ojekopia traducción compartir enlace",
   "anonymous": "Kuaa'ỹva",
   "no-chat-messages": "Ndaipóri gueteri marandu",
   "start-conversation": "Eñepyrũ peteĩ ñemongeta",
@@ -305,7 +306,6 @@
   "inactive": "Inactivo",
   "available": "Oĩ",
   "everyone": "Opaite arapygua",
-  "copied-translation-share-link": "Ojekopia traducción compartir enlace",
   "chat-x-joined": "{{name}} oñembojoaju",
   "chat-x-and-x-joined": "{{first}} ha {{second}} oñembojoaju",
   "chat-x-and-count-joined": "{{name}} ha {{count}} ambuekuéra ojoaju",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} ha {{count}} ambuekuéra ojoaju",
   "open-chat": "Ñemongeta abierta",
   "less": "Mbovy",
-  "swipe-up-more": "Emoinge yvate gotyo rehecha hag̃ua hetave mba’e"
+  "swipe-up-more": "Emoinge yvate gotyo rehecha hag̃ua hetave mba’e",
+  "tutorial.promptTitle": "Peju porãite Seed Bible-pe. ¿Reipota piko peteĩ tutorial?",
+  "tutorial.promptBody": "Ojeguereko peteĩ visita guiada nepytyvõtava reikuaa hag̃ua umi mbaʼe iñimportantevéva Seed Bible-pe.",
+  "tutorial.promptDecline": "Nahániri, aguyje",
+  "tutorial.promptAccept": "Ejapo pe gira"
 }

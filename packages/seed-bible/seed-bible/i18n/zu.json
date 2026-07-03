@@ -259,6 +259,7 @@
   "no-languages-found": "Azikho izilimi ezitholiwe",
   "today-coming-soon": "Isikrini sanamuhla siyeza maduze",
   "link-to-join-shared-session-copied": "Isixhumanisi sokujoyina iseshini eyabiwe sikopishwe ebhodini lakho lokunamathisela",
+  "copied-translation-share-link": "Isixhumanisi sokwabelana ngokuhumusha esikopishiwe",
   "anonymous": "Ongaziwa",
   "no-chat-messages": "Azikho imilayezo okwamanje",
   "start-conversation": "Qala ingxoxo",
@@ -305,7 +306,6 @@
   "inactive": "Akusebenzi",
   "available": "Kuyatholakala",
   "everyone": "Wonke umuntu",
-  "copied-translation-share-link": "Isixhumanisi sokwabelana ngokuhumusha esikopishiwe",
   "chat-x-joined": "{{name}} ujoyine",
   "chat-x-and-x-joined": "{{first}} no- {{second}} bajoyine",
   "chat-x-and-count-joined": "{{name}} nabanye abangu {{count}} bajoyine",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} nabanye abangu {{count}} bajoyine",
   "open-chat": "Vula ingxoxo",
   "less": "Ngaphansi",
-  "swipe-up-more": "Swayiphela phezulu ukuze ubuke okwengeziwe"
+  "swipe-up-more": "Swayiphela phezulu ukuze ubuke okwengeziwe",
+  "tutorial.promptTitle": "Siyakwamukela ku-Seed Bible. Ungathanda yini isifundo?",
+  "tutorial.promptBody": "Uhambo oluqondisiwe luyatholakala ukukusiza ufunde okujulile nokungaphandle kweSeed Bible.",
+  "tutorial.promptDecline": "Cha ngiyabonga",
+  "tutorial.promptAccept": "Thatha uhambo"
 }

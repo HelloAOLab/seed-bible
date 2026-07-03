@@ -259,6 +259,7 @@
   "no-languages-found": "تىل تېپىلمىدى",
   "today-coming-soon": "بۈگۈنكى ئېكران تېزلا كېلىدۇ",
   "link-to-join-shared-session-copied": "ئورتاقلىشىش يىغىنىغا قاتنىشىش ئۇلىنىشى سىزنىڭ چاپلاش تاختىسىڭىزغا كۆچۈرۈلدى",
+  "copied-translation-share-link": "تەرجىمە ھەمبەھىرلەش ئۇلىنىشى كۆچۈرۈلدى",
   "anonymous": "نامسىز",
   "no-chat-messages": "ھازىرغىچە ئۇچۇر يوق",
   "start-conversation": "سۆھبەت باشلاڭ",
@@ -305,7 +306,6 @@
   "inactive": "ھەرىكەتسىز",
   "available": "بار",
   "everyone": "ھەممەيلەن",
-  "copied-translation-share-link": "تەرجىمە ھەمبەھىرلەش ئۇلىنىشى كۆچۈرۈلدى",
   "chat-x-joined": "{{name}} قوشۇلدى",
   "chat-x-and-x-joined": "{{first}} ۋە {{second}} قوشۇلدى",
   "chat-x-and-count-joined": "{{name}} ۋە يەنە {{count}} ئادەم قوشۇلدى",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} ۋە يەنە {{count}} ئادەم قوشۇلدى",
   "open-chat": "پاراڭنى ئېچىڭ",
   "less": "ئازراق",
-  "swipe-up-more": "كۆپرەك كۆرۈش ئۈچۈن يۇقىرىغا سۈرۈڭ"
+  "swipe-up-more": "كۆپرەك كۆرۈش ئۈچۈن يۇقىرىغا سۈرۈڭ",
+  "tutorial.promptTitle": "ئۇرۇق ئىنجىلغا خۇش كەپسىز. سىزگە بىر دەرسلىك كېرەكمۇ؟",
+  "tutorial.promptBody": "«Seed Bible» نىڭ ئىچكى-تاشقى تەپسىلاتلىرىنى ئۆگىنىشىڭىزگە ياردەم بېرىدىغان يېتەكچىلىك ساياھىتى بار.",
+  "tutorial.promptDecline": "ياق، رەھمەت",
+  "tutorial.promptAccept": "ساياھەتكە چىقىڭ"
 }

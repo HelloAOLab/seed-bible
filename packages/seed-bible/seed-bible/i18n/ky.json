@@ -259,6 +259,7 @@
   "no-languages-found": "Эч кандай тил табылган жок",
   "today-coming-soon": "Бүгүнкү экран жакында чыгат",
   "link-to-join-shared-session-copied": "Бөлүшүлгөн сессияга кошулуу шилтемеси алмашуу буфериңизге көчүрүлдү",
+  "copied-translation-share-link": "Котормону бөлүшүү шилтемеси көчүрүлдү",
   "anonymous": "Белгисиз",
   "no-chat-messages": "Азырынча билдирүүлөр жок",
   "start-conversation": "Сүйлөшүүнү баштоо",
@@ -305,7 +306,6 @@
   "inactive": "Активдүү эмес",
   "available": "Жеткиликтүү",
   "everyone": "Баары",
-  "copied-translation-share-link": "Котормону бөлүшүү шилтемеси көчүрүлдү",
   "chat-x-joined": "{{name}} кошулду",
   "chat-x-and-x-joined": "{{first}} жана {{second}} кошулду",
   "chat-x-and-count-joined": "{{name}} жана дагы {{count}} адам кошулду",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} жана дагы {{count}} адам кошулду",
   "open-chat": "Ачык чат",
   "less": "Азыраак",
-  "swipe-up-more": "Көбүрөөк көрүү үчүн өйдө сүрүңүз"
+  "swipe-up-more": "Көбүрөөк көрүү үчүн өйдө сүрүңүз",
+  "tutorial.promptTitle": "Seed Bible сайтына кош келиңиз. Окуу куралын каалайсызбы?",
+  "tutorial.promptBody": "Seed Bible китебинин майда-чүйдөсүнө чейин үйрөнүүгө жардам берүү үчүн экскурсия уюштурулган.",
+  "tutorial.promptDecline": "Жок, рахмат",
+  "tutorial.promptAccept": "Экскурсияга чыгыңыз"
 }

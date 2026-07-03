@@ -259,6 +259,7 @@
   "no-languages-found": "Inga språk hittades",
   "today-coming-soon": "Dagens skärm kommer snart",
   "link-to-join-shared-session-copied": "En länk för att ansluta till den delade sessionen kopierades till ditt urklipp",
+  "copied-translation-share-link": "Kopierad länk för delning av översättning",
   "anonymous": "Anonym",
   "no-chat-messages": "Inga meddelanden ännu",
   "start-conversation": "Starta en konversation",
@@ -305,7 +306,6 @@
   "inactive": "Inaktiv",
   "available": "Tillgänglig",
   "everyone": "Alla",
-  "copied-translation-share-link": "Kopierad länk för delning av översättning",
   "chat-x-joined": "{{name}} gick med",
   "chat-x-and-x-joined": "{{first}} och {{second}} gick med",
   "chat-x-and-count-joined": "{{name}} och {{count}} andra har gått med",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} och {{count}} andra har gått med",
   "open-chat": "Öppna chatten",
   "less": "Mindre",
-  "swipe-up-more": "Svep uppåt för att se mer"
+  "swipe-up-more": "Svep uppåt för att se mer",
+  "tutorial.promptTitle": "Välkommen till Seed Bible. Vill du ha en handledning?",
+  "tutorial.promptBody": "En guidad tur finns tillgänglig för att hjälpa dig att lära dig allt om Seed Bible.",
+  "tutorial.promptDecline": "Nej tack",
+  "tutorial.promptAccept": "Ta rundturen"
 }

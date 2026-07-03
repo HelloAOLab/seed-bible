@@ -259,6 +259,7 @@
   "no-languages-found": "Ni chanfuwyd unrhyw ieithoedd",
   "today-coming-soon": "Mae sgrin heddiw yn dod yn fuan",
   "link-to-join-shared-session-copied": "Copïwyd dolen i ymuno â'r sesiwn a rennir i'ch clipfwrdd",
+  "copied-translation-share-link": "Copïwyd dolen rhannu cyfieithiad",
   "anonymous": "Anhysbys",
   "no-chat-messages": "Dim negeseuon eto",
   "start-conversation": "Dechrau sgwrs",
@@ -305,7 +306,6 @@
   "inactive": "Anactif",
   "available": "Ar gael",
   "everyone": "Pawb",
-  "copied-translation-share-link": "Copïwyd dolen rhannu cyfieithiad",
   "chat-x-joined": "Ymunodd {{name}}",
   "chat-x-and-x-joined": "{{first}} a {{second}}",
   "chat-x-and-count-joined": "Ymunodd {{name}} a {{count}} eraill",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "Ymunodd {{name}} a {{count}} eraill",
   "open-chat": "Sgwrs agored",
   "less": "Llai",
-  "swipe-up-more": "Sweipiwch i fyny i weld mwy"
+  "swipe-up-more": "Sweipiwch i fyny i weld mwy",
+  "tutorial.promptTitle": "Croeso i'r Beibl Hadau. Hoffech chi gael tiwtorial?",
+  "tutorial.promptBody": "Mae taith dywys ar gael i'ch helpu i ddysgu manylion Beibl Hadau.",
+  "tutorial.promptDecline": "Na, diolch",
+  "tutorial.promptAccept": "Cymerwch y daith"
 }

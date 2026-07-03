@@ -259,6 +259,7 @@
   "no-languages-found": "هیچ زبانی یافت نشد",
   "today-coming-soon": "صفحه نمایش امروز به زودی منتشر می‌شود",
   "link-to-join-shared-session-copied": "پیوندی برای پیوستن به جلسه مشترک در کلیپ‌بورد شما کپی شد",
+  "copied-translation-share-link": "لینک اشتراک‌گذاری ترجمه کپی شد",
   "anonymous": "ناشناس",
   "no-chat-messages": "هنوز پیامی ارسال نشده است",
   "start-conversation": "شروع مکالمه",
@@ -305,7 +306,6 @@
   "inactive": "غیرفعال",
   "available": "موجود است",
   "everyone": "همه",
-  "copied-translation-share-link": "لینک اشتراک‌گذاری ترجمه کپی شد",
   "chat-x-joined": "{{name}} پیوست",
   "chat-x-and-x-joined": "{{first}} و {{second}} به هم پیوستند",
   "chat-x-and-count-joined": "{{name}} و {{count}} نفر دیگر به ما پیوستند",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} و {{count}} نفر دیگر به ما پیوستند",
   "open-chat": "چت را باز کنید",
   "less": "کمتر",
-  "swipe-up-more": "برای مشاهده موارد بیشتر، صفحه را به بالا بکشید"
+  "swipe-up-more": "برای مشاهده موارد بیشتر، صفحه را به بالا بکشید",
+  "tutorial.promptTitle": "به Seed Bible خوش آمدید. آیا مایل به دریافت آموزش هستید؟",
+  "tutorial.promptBody": "یک تور با راهنما برای کمک به شما در یادگیری جزئیات Seed Bible در دسترس است.",
+  "tutorial.promptDecline": "نه، ممنون",
+  "tutorial.promptAccept": "تور را طی کنید"
 }

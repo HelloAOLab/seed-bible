@@ -259,6 +259,7 @@
   "no-languages-found": "Nav atrasta neviena valoda",
   "today-coming-soon": "Šodienas ekrāns drīz būs pieejams",
   "link-to-join-shared-session-copied": "Saite, lai pievienotos koplietotajai sesijai, tika kopēta jūsu starpliktuvē.",
+  "copied-translation-share-link": "Kopēta tulkojuma kopīgošanas saite",
   "anonymous": "Anonīms",
   "no-chat-messages": "Vēl nav ziņojumu",
   "start-conversation": "Sākt sarunu",
@@ -305,7 +306,6 @@
   "inactive": "Neaktīvs",
   "available": "Pieejams",
   "everyone": "Ikviens",
-  "copied-translation-share-link": "Kopēta tulkojuma kopīgošanas saite",
   "chat-x-joined": "{{name}} pievienojās",
   "chat-x-and-x-joined": "{{first}} un {{second}} pievienojās",
   "chat-x-and-count-joined": "Pievienojās {{name}} un vēl {{count}} citi",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "Pievienojās {{name}} un vēl {{count}} citi",
   "open-chat": "Atvērt tērzēšanu",
   "less": "Mazāk",
-  "swipe-up-more": "Pavelciet uz augšu, lai skatītu vairāk"
+  "swipe-up-more": "Pavelciet uz augšu, lai skatītu vairāk",
+  "tutorial.promptTitle": "Laipni lūdzam Seed Bible. Vai vēlaties pamācību?",
+  "tutorial.promptBody": "Ir pieejama ekskursija ar gidu, lai palīdzētu jums apgūt Seed Bible būtību.",
+  "tutorial.promptDecline": "Nē, paldies",
+  "tutorial.promptAccept": "Dodieties ekskursijā"
 }

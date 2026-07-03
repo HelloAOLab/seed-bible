@@ -259,6 +259,7 @@
   "no-languages-found": "કોઈ ભાષા મળી નથી.",
   "today-coming-soon": "આજે સ્ક્રીન ટૂંક સમયમાં આવી રહી છે",
   "link-to-join-shared-session-copied": "શેર કરેલા સત્રમાં જોડાવા માટેની લિંક તમારા ક્લિપબોર્ડ પર કૉપિ કરવામાં આવી છે.",
+  "copied-translation-share-link": "અનુવાદ શેર લિંક કૉપિ કરી",
   "anonymous": "અનામી",
   "no-chat-messages": "હજુ સુધી કોઈ સંદેશા નથી.",
   "start-conversation": "વાતચીત શરૂ કરો",
@@ -305,7 +306,6 @@
   "inactive": "નિષ્ક્રિય",
   "available": "ઉપલબ્ધ",
   "everyone": "દરેક વ્યક્તિ",
-  "copied-translation-share-link": "અનુવાદ શેર લિંક કૉપિ કરી",
   "chat-x-joined": "{{name}} જોડાયા",
   "chat-x-and-x-joined": "{{first}} અને {{second}} જોડાયા",
   "chat-x-and-count-joined": "{{name}} અને {{count}} અન્ય લોકો જોડાયા",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} અને {{count}} અન્ય લોકો જોડાયા",
   "open-chat": "ચેટ ખોલો",
   "less": "ઓછું",
-  "swipe-up-more": "વધુ જોવા માટે ઉપર સ્વાઇપ કરો"
+  "swipe-up-more": "વધુ જોવા માટે ઉપર સ્વાઇપ કરો",
+  "tutorial.promptTitle": "સીડ બાઇબલમાં આપનું સ્વાગત છે. શું તમને ટ્યુટોરીયલ જોઈએ છે?",
+  "tutorial.promptBody": "સીડ બાઇબલની ઝીણવટભરી બાબતો શીખવામાં તમારી મદદ માટે માર્ગદર્શિત પ્રવાસ ઉપલબ્ધ છે.",
+  "tutorial.promptDecline": "ના, આભાર",
+  "tutorial.promptAccept": "પ્રવાસ લો"
 }

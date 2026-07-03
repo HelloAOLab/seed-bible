@@ -259,6 +259,7 @@
   "no-languages-found": "ഭാഷകളൊന്നും കണ്ടെത്തിയില്ല.",
   "today-coming-soon": "ഇന്നത്തെ സ്ക്രീൻ ഉടൻ വരുന്നു",
   "link-to-join-shared-session-copied": "പങ്കിട്ട സെഷനിൽ ചേരുന്നതിനുള്ള ഒരു ലിങ്ക് നിങ്ങളുടെ ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി.",
+  "copied-translation-share-link": "വിവർത്തന പങ്കിടൽ ലിങ്ക് പകർത്തി",
   "anonymous": "അജ്ഞാതൻ",
   "no-chat-messages": "ഇതുവരെ സന്ദേശങ്ങളൊന്നുമില്ല.",
   "start-conversation": "ഒരു സംഭാഷണം ആരംഭിക്കുക",
@@ -305,7 +306,6 @@
   "inactive": "നിഷ്‌ക്രിയം",
   "available": "ലഭ്യമാണ്",
   "everyone": "എല്ലാവരും",
-  "copied-translation-share-link": "വിവർത്തന പങ്കിടൽ ലിങ്ക് പകർത്തി",
   "chat-x-joined": "{{name}} ചേർന്നു",
   "chat-x-and-x-joined": "{{first}} ഉം {{second}} ഉം ചേർന്നു",
   "chat-x-and-count-joined": "{{name}} ഉം മറ്റ് {{count}} പേരും ചേർന്നു",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} ഉം മറ്റ് {{count}} പേരും ചേർന്നു",
   "open-chat": "ചാറ്റ് തുറക്കുക",
   "less": "കുറവ്",
-  "swipe-up-more": "കൂടുതൽ കാണാൻ മുകളിലേക്ക് സ്വൈപ്പ് ചെയ്യുക"
+  "swipe-up-more": "കൂടുതൽ കാണാൻ മുകളിലേക്ക് സ്വൈപ്പ് ചെയ്യുക",
+  "tutorial.promptTitle": "സീഡ് ബൈബിളിലേക്ക് സ്വാഗതം. നിങ്ങൾക്ക് ഒരു ട്യൂട്ടോറിയൽ വേണോ?",
+  "tutorial.promptBody": "സീഡ് ബൈബിളിന്റെ ഉൾക്കാഴ്ചകൾ മനസ്സിലാക്കാൻ നിങ്ങളെ സഹായിക്കുന്നതിന് ഒരു ഗൈഡഡ് ടൂർ ലഭ്യമാണ്.",
+  "tutorial.promptDecline": "വേണ്ട, നന്ദി",
+  "tutorial.promptAccept": "ടൂർ നടത്തുക"
 }

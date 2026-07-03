@@ -259,6 +259,7 @@
   "no-languages-found": "言語が見つかりません",
   "today-coming-soon": "本日のスクリーンはまもなく登場します",
   "link-to-join-shared-session-copied": "共有セッションに参加するためのリンクがクリップボードにコピーされました。",
+  "copied-translation-share-link": "翻訳共有リンクをコピーしました",
   "anonymous": "匿名",
   "no-chat-messages": "まだメッセージはありません",
   "start-conversation": "会話を始める",
@@ -305,7 +306,6 @@
   "inactive": "非アクティブ",
   "available": "利用可能",
   "everyone": "みんな",
-  "copied-translation-share-link": "翻訳共有リンクをコピーしました",
   "chat-x-joined": "{{name}}が参加しました",
   "chat-x-and-x-joined": "{{first}}と{{second}}が参加しました",
   "chat-x-and-count-joined": "{{name}}と{{count}}人が参加しました",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}}と{{count}}人が参加しました",
   "open-chat": "チャットを開く",
   "less": "少ない",
-  "swipe-up-more": "上にスワイプしてさらに表示"
+  "swipe-up-more": "上にスワイプしてさらに表示",
+  "tutorial.promptTitle": "シードバイブルへようこそ。チュートリアルをご希望ですか？",
+  "tutorial.promptBody": "シードバイブルのあらゆる側面を学ぶのに役立つガイド付きツアーをご利用いただけます。",
+  "tutorial.promptDecline": "結構です",
+  "tutorial.promptAccept": "ツアーに参加する"
 }

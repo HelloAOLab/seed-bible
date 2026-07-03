@@ -259,6 +259,7 @@
   "no-languages-found": "No s'han trobat idiomes",
   "today-coming-soon": "La pantalla d'avui arribarà aviat",
   "link-to-join-shared-session-copied": "S'ha copiat al porta-retalls un enllaç per unir-se a la sessió compartida.",
+  "copied-translation-share-link": "Enllaç per compartir la traducció copiat",
   "anonymous": "Anònim",
   "no-chat-messages": "Encara no hi ha missatges",
   "start-conversation": "Inicia una conversa",
@@ -305,7 +306,6 @@
   "inactive": "Inactiu",
   "available": "Disponible",
   "everyone": "Tothom",
-  "copied-translation-share-link": "Enllaç per compartir la traducció copiat",
   "chat-x-joined": "{{name}} s'ha unit a aquest grup",
   "chat-x-and-x-joined": "{{first}} i {{second}} s'han unit",
   "chat-x-and-count-joined": "{{name}} i {{count}} persones més s'hi han unit",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} i {{count}} persones més s'hi han unit",
   "open-chat": "Obre el xat",
   "less": "Menys",
-  "swipe-up-more": "Llisca cap amunt per veure'n més"
+  "swipe-up-more": "Llisca cap amunt per veure'n més",
+  "tutorial.promptTitle": "Benvingut/da a Seed Bible. Voleu un tutorial?",
+  "tutorial.promptBody": "S'ofereix una visita guiada per ajudar-vos a aprendre els detalls de la Bíblia de les llavors.",
+  "tutorial.promptDecline": "No, gràcies",
+  "tutorial.promptAccept": "Fes el recorregut"
 }

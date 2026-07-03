@@ -259,6 +259,7 @@
   "no-languages-found": "Walang natagpuang mga wika",
   "today-coming-soon": "Malapit nang lumabas ang screen ngayon",
   "link-to-join-shared-session-copied": "Nakopya na sa iyong clipboard ang isang link para sumali sa nakabahaging sesyon",
+  "copied-translation-share-link": "Kinopya ang link ng pagbabahagi ng pagsasalin",
   "anonymous": "Anonymous",
   "no-chat-messages": "Wala pang mga mensahe",
   "start-conversation": "Magsimula ng isang pag-uusap",
@@ -305,7 +306,6 @@
   "inactive": "Hindi aktibo",
   "available": "Magagamit",
   "everyone": "Lahat",
-  "copied-translation-share-link": "Kinopya ang link ng pagbabahagi ng pagsasalin",
   "chat-x-joined": "Sumali si {{name}}",
   "chat-x-and-x-joined": "Sumali sina {{first}} at {{second}}",
   "chat-x-and-count-joined": "Sumali {{name}} at {{count}} pang iba",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "Sumali {{name}} at {{count}} pang iba",
   "open-chat": "Buksan ang chat",
   "less": "Mas kaunti",
-  "swipe-up-more": "Mag-swipe pataas para makakita pa"
+  "swipe-up-more": "Mag-swipe pataas para makakita pa",
+  "tutorial.promptTitle": "Maligayang pagdating sa Seed Bible. Gusto mo ba ng tutorial?",
+  "tutorial.promptBody": "May guided tour na makakatulong sa iyong matutunan ang mga detalye ng Seed Bible.",
+  "tutorial.promptDecline": "Hindi, salamat",
+  "tutorial.promptAccept": "Sumakay sa tour"
 }

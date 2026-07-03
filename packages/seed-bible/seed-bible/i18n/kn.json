@@ -259,6 +259,7 @@
   "no-languages-found": "ಯಾವುದೇ ಭಾಷೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ.",
   "today-coming-soon": "ಇಂದಿನ ಪರದೆ ಶೀಘ್ರದಲ್ಲೇ ಬರಲಿದೆ",
   "link-to-join-shared-session-copied": "ಹಂಚಿಕೊಂಡ ಸೆಷನ್‌ಗೆ ಸೇರಲು ಲಿಂಕ್ ಅನ್ನು ನಿಮ್ಮ ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ.",
+  "copied-translation-share-link": "ಅನುವಾದ ಹಂಚಿಕೆ ಲಿಂಕ್ ಅನ್ನು ನಕಲಿಸಲಾಗಿದೆ",
   "anonymous": "ಅನಾಮಧೇಯ",
   "no-chat-messages": "ಇನ್ನೂ ಯಾವುದೇ ಸಂದೇಶಗಳಿಲ್ಲ.",
   "start-conversation": "ಸಂಭಾಷಣೆಯನ್ನು ಪ್ರಾರಂಭಿಸಿ",
@@ -305,7 +306,6 @@
   "inactive": "ನಿಷ್ಕ್ರಿಯ",
   "available": "ಲಭ್ಯವಿದೆ",
   "everyone": "ಎಲ್ಲರೂ",
-  "copied-translation-share-link": "ಅನುವಾದ ಹಂಚಿಕೆ ಲಿಂಕ್ ಅನ್ನು ನಕಲಿಸಲಾಗಿದೆ",
   "chat-x-joined": "{{name}} ಸೇರಿಕೊಂಡರು",
   "chat-x-and-x-joined": "{{first}} ಮತ್ತು {{second}} ಸೇರಿದರು",
   "chat-x-and-count-joined": "{{name}} ಮತ್ತು {{count}} ಇತರರು ಸೇರಿಕೊಂಡರು",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} ಮತ್ತು {{count}} ಇತರರು ಸೇರಿಕೊಂಡರು",
   "open-chat": "ಚಾಟ್ ತೆರೆಯಿರಿ",
   "less": "ಕಡಿಮೆ",
-  "swipe-up-more": "ಇನ್ನಷ್ಟು ವೀಕ್ಷಿಸಲು ಮೇಲಕ್ಕೆ ಸ್ವೈಪ್ ಮಾಡಿ"
+  "swipe-up-more": "ಇನ್ನಷ್ಟು ವೀಕ್ಷಿಸಲು ಮೇಲಕ್ಕೆ ಸ್ವೈಪ್ ಮಾಡಿ",
+  "tutorial.promptTitle": "ಸೀಡ್ ಬೈಬಲ್‌ಗೆ ಸುಸ್ವಾಗತ. ನಿಮಗೆ ಟ್ಯುಟೋರಿಯಲ್ ಬೇಕೇ?",
+  "tutorial.promptBody": "ಸೀಡ್ ಬೈಬಲ್‌ನ ಒಳನೋಟಗಳನ್ನು ಕಲಿಯಲು ನಿಮಗೆ ಸಹಾಯ ಮಾಡಲು ಮಾರ್ಗದರ್ಶಿ ಪ್ರವಾಸ ಲಭ್ಯವಿದೆ.",
+  "tutorial.promptDecline": "ಬೇಡ, ಧನ್ಯವಾದಗಳು",
+  "tutorial.promptAccept": "ಪ್ರವಾಸ ಕೈಗೊಳ್ಳಿ"
 }

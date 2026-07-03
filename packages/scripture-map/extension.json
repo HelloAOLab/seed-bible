@@ -129,7 +129,10 @@
       "read-minutes-ago": "{{count}} minute gelede gelees",
       "read-minute-ago": "{{count}} minuut gelede gelees",
       "zoom-level": "zoomvlak",
-      "all": "alles"
+      "all": "alles",
+      "title": "Skrifkaart",
+      "description": "Interaktiewe 2D-rooster van Bybelse boeke georganiseer volgens testament en afdeling, met klikbare hoofstukkeuse, kleurgekodeerde leesgeskiedenis-hittekaarte, multigebruiker-teenwoordigheidsaanwysers, zoemkontroles en tydlyn-gebaseerde filterering.",
+      "below-reader-tool": "Skrifkaart"
     },
     "am": {
       "scripture-map": "የቅዱሳት ጽሑፎች ካርታ",
@@ -192,7 +195,10 @@
       "read-minutes-ago": "{{count}} ደቂቃዎች በፊት ተነብቧል",
       "read-minute-ago": "{{count}} ደቂቃ በፊት ተነብቧል",
       "zoom-level": "የማጉያ ደረጃ",
-      "all": "ሁሉም"
+      "all": "ሁሉም",
+      "title": "የቅዱሳት መጻሕፍት ካርታ",
+      "description": "በቃል ኪዳን እና በክፍል የተደራጁ በይነተገናኝ 2-ልኬት የመጽሐፍ ቅዱስ መጽሐፍት ፍርግርግ፣ ጠቅ ሊደረጉ የሚችሉ የምዕራፍ ምርጫዎች፣ በቀለም ኮድ የተጻፉ የንባብ ታሪክ የሙቀት ካርታዎች፣ ባለብዙ ተጠቃሚ ተገኝነት አመልካቾች፣ የማጉላት መቆጣጠሪያዎች እና በጊዜ መስመር ላይ የተመሠረተ ማጣሪያ።",
+      "below-reader-tool": "የቅዱሳት መጻሕፍት ካርታ"
     },
     "ar": {
       "scripture-map": "خريطة الكتاب المقدس ثنائية الأبعاد",
@@ -255,7 +261,10 @@
       "read-minutes-ago": "قرأ منذ {{count}} دقائق",
       "read-minute-ago": "قرأ منذ {{count}} دقيقة",
       "zoom-level": "مستوى التكبير",
-      "all": "الكل"
+      "all": "الكل",
+      "title": "خريطة الكتاب المقدس",
+      "description": "شبكة ثنائية الأبعاد تفاعلية للكتب الكتابية منظمة حسب العهد والأقسام، مع إمكانية تحديد الفصول بالنقر، وخرائط حرارية لتاريخ القراءة مرمزة بالألوان، ومؤشرات وجود المستخدمين المتعددين، وأدوات التحكم في التكبير والتصغير، والتصفية القائمة على الجدول الزمني.",
+      "below-reader-tool": "خريطة الكتاب المقدس"
     },
     "az": {
       "scripture-map": "Müqəddəs Yazılar Xəritəsi",
@@ -318,7 +327,10 @@
       "read-minutes-ago": "{{count}} dəqiqə əvvəl oxundu",
       "read-minute-ago": "{{count}} dəqiqə əvvəl oxundu",
       "zoom-level": "zoom səviyyəsi",
-      "all": "hamısı"
+      "all": "hamısı",
+      "title": "Müqəddəs Yazılar Xəritəsi",
+      "description": "Əhdi-Cədid və bölmə üzrə təşkil olunmuş, kliklənə bilən fəsil seçimi, rəng kodlu oxu tarixi istilik xəritələri, çox istifadəçili mövcudluq göstəriciləri, zum idarəetmələri və zaman xəttinə əsaslanan filtrləmə ilə Müqəddəs Kitab kitablarının interaktiv 2D şəbəkəsi.",
+      "below-reader-tool": "Müqəddəs Yazılar Xəritəsi"
     },
     "be": {
       "scripture-map": "Карта Пісання",
@@ -381,7 +393,10 @@
       "read-minutes-ago": "Прачытана {{count}} хвілін таму",
       "read-minute-ago": "Прачытана {{count}} хвіліну таму",
       "zoom-level": "узровень маштабу",
-      "all": "усё"
+      "all": "усё",
+      "title": "Мапа Святога Пісання",
+      "description": "Інтэрактыўная 2D-сетка біблейскіх кніг, арганізаваных па запаветах і раздзелах, з магчымасцю выбару раздзелаў з магчымасцю клікання, каляровымі цеплавымі картамі гісторыі чытання, індыкатарамі прысутнасці некалькіх карыстальнікаў, элементамі кіравання маштабаваннем і фільтрацыяй па часовай шкале.",
+      "below-reader-tool": "Мапа Святога Пісання"
     },
     "bg": {
       "scripture-map": "Карта на Писанието",
@@ -444,7 +459,10 @@
       "read-minutes-ago": "Прочетено преди {{count}} минути",
       "read-minute-ago": "Прочетено преди {{count}} минута",
       "zoom-level": "ниво на мащаб",
-      "all": "всичко"
+      "all": "всичко",
+      "title": "Карта на Писанията",
+      "description": "Интерактивна 2D мрежа от библейски книги, организирани по завет и раздел, с възможност за кликване при избор на глава, цветно кодирани топлинни карти на историята на четене, индикатори за присъствие на множество потребители, контроли за мащабиране и филтриране, базирано на времева линия.",
+      "below-reader-tool": "Карта на Писанията"
     },
     "bn": {
       "scripture-map": "শাস্ত্র মানচিত্র",
@@ -507,7 +525,10 @@
       "read-minutes-ago": "{{count}} মিনিট আগে পড়েছে",
       "read-minute-ago": "{{count}} মিনিট আগে পড়েছে",
       "zoom-level": "জুম স্তর",
-      "all": "সব"
+      "all": "সব",
+      "title": "ধর্মগ্রন্থের মানচিত্র",
+      "description": "টেস্টামেন্ট ও অধ্যায় অনুযায়ী সাজানো বাইবেলের বইগুলোর একটি ইন্টারেক্টিভ ২ডি গ্রিড, যেখানে রয়েছে ক্লিকযোগ্য অধ্যায় নির্বাচন, রঙ-কোডযুক্ত পঠন ইতিহাসের হিটম্যাপ, একাধিক ব্যবহারকারীর উপস্থিতি নির্দেশক, জুম নিয়ন্ত্রণ এবং টাইমলাইন-ভিত্তিক ফিল্টারিং-এর সুবিধা।",
+      "below-reader-tool": "ধর্মগ্রন্থের মানচিত্র"
     },
     "bs": {
       "scripture-map": "Karta Pisma",
@@ -570,7 +591,10 @@
       "read-minutes-ago": "Pročitano prije {{count}} minuta",
       "read-minute-ago": "Pročitano prije {{count}} minutu",
       "zoom-level": "nivo zuma",
-      "all": "sve"
+      "all": "sve",
+      "title": "Mapa Svetog pisma",
+      "description": "Interaktivna 2D mreža biblijskih knjiga organiziranih po zavjetima i odjeljcima, s mogućnošću klika na odabir poglavlja, mapama čitanja u boji, indikatorima prisutnosti više korisnika, kontrolama zumiranja i filtriranjem na osnovu vremenske linije.",
+      "below-reader-tool": "Mapa Svetog pisma"
     },
     "ca": {
       "scripture-map": "Mapa de les Escriptures",
@@ -633,7 +657,10 @@
       "read-minutes-ago": "Llegit fa {{count}} minuts",
       "read-minute-ago": "Llegit fa {{count}} minut",
       "zoom-level": "nivell de zoom",
-      "all": "tot"
+      "all": "tot",
+      "title": "Mapa de les Escriptures",
+      "description": "Graella 2D interactiva de llibres bíblics organitzats per testament i secció, amb selecció de capítols clicable, mapes de calor de l'historial de lectura codificats per colors, indicadors de presència multiusuari, controls de zoom i filtratge basat en la cronologia.",
+      "below-reader-tool": "Mapa de les Escriptures"
     },
     "cs": {
       "scripture-map": "Mapa Písma",
@@ -696,7 +723,10 @@
       "read-minutes-ago": "Přečteno před {{count}} minutami",
       "read-minute-ago": "Přečteno před {{count}} minutou",
       "zoom-level": "úroveň přiblížení",
-      "all": "vše"
+      "all": "vše",
+      "title": "Mapa Písma",
+      "description": "Interaktivní 2D mřížka biblických knih uspořádaných podle zákona a oddílu s možností kliknutí na výběr kapitol, barevně kódovanými tepelnými mapami historie čtení, indikátory přítomnosti více uživatelů, ovládáním přiblížení a filtrováním na základě časové osy.",
+      "below-reader-tool": "Mapa Písma"
     },
     "cy": {
       "scripture-map": "Map yr Ysgrythur",
@@ -759,7 +789,10 @@
       "read-minutes-ago": "Darllenwyd {{count}} munud yn ôl",
       "read-minute-ago": "Darllenwyd {{count}} munud yn ôl",
       "zoom-level": "lefel zoom",
-      "all": "i gyd"
+      "all": "i gyd",
+      "title": "Map yr Ysgrythur",
+      "description": "Grid 2D rhyngweithiol o lyfrau Beiblaidd wedi'u trefnu yn ôl testament ac adran, gyda dewis pennod y gellir clicio arno, mapiau gwres hanes darllen â chod lliw, dangosyddion presenoldeb aml-ddefnyddiwr, rheolyddion chwyddo, a hidlo yn seiliedig ar amserlen.",
+      "below-reader-tool": "Map yr Ysgrythur"
     },
     "da": {
       "scripture-map": "Skriftkort",
@@ -822,7 +855,10 @@
       "read-minutes-ago": "Læst for {{count}} minutter siden",
       "read-minute-ago": "Læst for {{count}} minut siden",
       "zoom-level": "zoomniveau",
-      "all": "alle"
+      "all": "alle",
+      "title": "Skriftstedskort",
+      "description": "Interaktivt 2D-gitter af bibelbøger organiseret efter testamente og afsnit, med klikbart kapitelvalg, farvekodede læsehistorik-heatmaps, indikatorer for tilstedeværelse for flere brugere, zoomkontroller og tidslinjebaseret filtrering.",
+      "below-reader-tool": "Skriftstedskort"
     },
     "de": {
       "scripture-map": "Bibelkarte",
@@ -885,7 +921,10 @@
       "read-minutes-ago": "Vor {{count}} Minuten gelesen",
       "read-minute-ago": "Vor {{count}} Minute gelesen",
       "zoom-level": "Zoomstufe",
-      "all": "alle"
+      "all": "alle",
+      "title": "Bibelstellenkarte",
+      "description": "Interaktives 2D-Gitter biblischer Bücher, geordnet nach Testament und Abschnitt, mit anklickbarer Kapitelauswahl, farbcodierten Leseverlaufs-Heatmaps, Anwesenheitsanzeigen für mehrere Benutzer, Zoom-Steuerung und zeitachsenbasierter Filterung.",
+      "below-reader-tool": "Bibelstellenkarte"
     },
     "el": {
       "scripture-map": "Χάρτης Γραφών",
@@ -948,7 +987,10 @@
       "read-minutes-ago": "Διαβάστηκε πριν {{count}} λεπτά",
       "read-minute-ago": "Διαβάστηκε πριν {{count}} λεπτό",
       "zoom-level": "επίπεδο ζουμ",
-      "all": "όλα"
+      "all": "όλα",
+      "title": "Χάρτης Γραφής",
+      "description": "Διαδραστικό δισδιάστατο πλέγμα βιβλίων που οργανώνονται ανά διαθήκη και ενότητα, με επιλογή κεφαλαίων με δυνατότητα κλικ, θερμικούς χάρτες ιστορικού ανάγνωσης με χρωματική κωδικοποίηση, δείκτες παρουσίας πολλαπλών χρηστών, χειριστήρια ζουμ και φιλτράρισμα βάσει χρονοδιαγράμματος.",
+      "below-reader-tool": "Χάρτης Γραφής"
     },
     "es": {
       "scripture-map": "Mapa de las Escrituras",
@@ -1011,7 +1053,10 @@
       "read-minutes-ago": "Leído hace {{count}} minutos",
       "read-minute-ago": "Leído hace {{count}} minuto",
       "zoom-level": "nivel de zoom",
-      "all": "todo"
+      "all": "todo",
+      "title": "Mapa bíblico",
+      "description": "Cuadrícula interactiva en 2D de libros bíblicos organizada por testamento y sección, con selección de capítulos mediante clic, mapas de calor del historial de lectura codificados por colores, indicadores de presencia de múltiples usuarios, controles de zoom y filtrado basado en la línea de tiempo.",
+      "below-reader-tool": "Mapa bíblico"
     },
     "et": {
       "scripture-map": "Piiblilkaart",
@@ -1074,7 +1119,10 @@
       "read-minutes-ago": "Loetud {{count}} minutit tagasi",
       "read-minute-ago": "Loetud {{count}} minut tagasi",
       "zoom-level": "suumitase",
-      "all": "kõik"
+      "all": "kõik",
+      "title": "Pühakirja kaart",
+      "description": "Piibli raamatute interaktiivne 2D-ruudustik, mis on korraldatud testamendi ja osa järgi, klõpsatava peatükkide valiku, värvikoodidega lugemisajaloo soojuskaartide, mitme kasutaja kohaloleku indikaatorite, suuminuppude ja ajajoonepõhise filtreerimisega.",
+      "below-reader-tool": "Pühakirja kaart"
     },
     "fa": {
       "scripture-map": "نقشه کتاب مقدس دوبعدی",
@@ -1137,7 +1185,10 @@
       "read-minutes-ago": "{{count}} دقیقه پیش خوانده شد",
       "read-minute-ago": "{{count}} دقیقه پیش خوانده شد",
       "zoom-level": "سطح بزرگ‌نمایی",
-      "all": "همه"
+      "all": "همه",
+      "title": "نقشه کتاب مقدس",
+      "description": "شبکه دوبعدی تعاملی از کتاب‌های کتاب مقدس که بر اساس عهد و بخش سازماندهی شده است، با انتخاب فصل قابل کلیک، نقشه‌های حرارتی تاریخچه مطالعه با کدگذاری رنگی، نشانگرهای حضور چند کاربر، کنترل‌های بزرگنمایی و فیلترینگ مبتنی بر جدول زمانی.",
+      "below-reader-tool": "نقشه کتاب مقدس"
     },
     "fi": {
       "scripture-map": "Raamattukartta",
@@ -1200,7 +1251,10 @@
       "read-minutes-ago": "Luettu {{count}} minuuttia sitten",
       "read-minute-ago": "Luettu {{count}} minuutti sitten",
       "zoom-level": "zoomaustaso",
-      "all": "kaikki"
+      "all": "kaikki",
+      "title": "Raamatun kartta",
+      "description": "Interaktiivinen 2D-ruudukko, jossa on raamatunkirjoja järjestettynä testamentin ja osan mukaan, klikattavalla luvunvalinnalla, värikoodatuilla lukuhistorian lämpökartoilla, usean käyttäjän läsnäolon ilmaisimilla, zoomaussäätimillä ja aikajanaan perustuvalla suodatuksella.",
+      "below-reader-tool": "Raamatun kartta"
     },
     "fil": {
       "scripture-map": "Mapa ng Kasulatan",
@@ -1263,7 +1317,10 @@
       "read-minutes-ago": "Nabasa {{count}} minuto na ang nakalipas",
       "read-minute-ago": "Nabasa {{count}} minuto na ang nakalipas",
       "zoom-level": "antas ng zoom",
-      "all": "lahat"
+      "all": "lahat",
+      "title": "Mapa ng Banal na Kasulatan",
+      "description": "Interaktibong 2D grid ng mga aklat ng Bibliya na nakaayos ayon sa testamento at seksyon, na may naki-click na seleksyon ng kabanata, mga heatmap ng kasaysayan ng pagbabasa na may kulay, mga indikasyon ng presensya ng maraming gumagamit, mga kontrol sa zoom, at pag-filter batay sa timeline.",
+      "below-reader-tool": "Mapa ng Banal na Kasulatan"
     },
     "fr": {
       "scripture-map": "Carte des Écritures",
@@ -1326,7 +1383,10 @@
       "read-minutes-ago": "Lu il y a {{count}} minutes",
       "read-minute-ago": "Lu il y a {{count}} minute",
       "zoom-level": "niveau de zoom",
-      "all": "tout"
+      "all": "tout",
+      "title": "Carte des Écritures",
+      "description": "Grille 2D interactive de livres bibliques organisés par testament et section, avec sélection de chapitres par clic, cartes thermiques de l'historique de lecture codées par couleur, indicateurs de présence multi-utilisateurs, commandes de zoom et filtrage basé sur la chronologie.",
+      "below-reader-tool": "Carte des Écritures"
     },
     "fy": {
       "scripture-map": "Skriftkaart",
@@ -1389,7 +1449,10 @@
       "read-minutes-ago": "{{count}} minuten lyn lêzen",
       "read-minute-ago": "{{count}} minút lyn lêzen",
       "zoom-level": "zoomnivo",
-      "all": "alles"
+      "all": "alles",
+      "title": "Skriftkaart",
+      "description": "Ynteraktyf 2D-raster fan bibelboeken organisearre op testamint en seksje, mei klikbere haadstikseleksje, kleurkodearre lêshistoarje-heatmaps, oanwêzigensindikatoaren foar meardere brûkers, zoomkontrôles en filterjen op basis fan tiidline.",
+      "below-reader-tool": "Skriftkaart"
     },
     "gl": {
       "scripture-map": "Mapa das Escrituras",
@@ -1452,7 +1515,10 @@
       "read-minutes-ago": "Lido hai {{count}} minutos",
       "read-minute-ago": "Lido hai {{count}} minuto",
       "zoom-level": "nivel de zoom",
-      "all": "todo"
+      "all": "todo",
+      "title": "Mapa das Escrituras",
+      "description": "Grella 2D interactiva de libros bíblicos organizados por testamento e sección, con selección de capítulos na que se pode premer, mapas de calor do historial de lectura codificados por cores, indicadores de presenza multiusuario, controis de zoom e filtrado baseado na liña de tempo.",
+      "below-reader-tool": "Mapa das Escrituras"
     },
     "gn": {
       "scripture-map": "Mapa Ñanduti",
@@ -1515,7 +1581,10 @@
       "read-minutes-ago": "Omoñe'ẽva'ekue {{count}} aravo aravo",
       "read-minute-ago": "Omoñe'ẽva'ekue {{count}} aravo aravo",
       "zoom-level": "zoom nivel",
-      "all": "opavave"
+      "all": "opavave",
+      "title": "Escritura Mapa",
+      "description": "Rejilla 2D interactiva aranduka bíblica rehegua oñembosako’íva testamento ha sección rupive, oguerekóva capítulo jeporavo ojejapóva clic, mapa de calor tembiasakue moñe’ẽrã codificado color reheve, indicador presencia multiusuario rehegua, control zoom ha filtrado línea de tiempo rehegua.",
+      "below-reader-tool": "Escritura Mapa"
     },
     "gu": {
       "scripture-map": "શાસ્ત્ર નકશો",
@@ -1578,7 +1647,10 @@
       "read-minutes-ago": "{{count}} મિનિટ પહેલા વાંચ્યું",
       "read-minute-ago": "{{count}} મિનિટ પહેલા વાંચ્યું",
       "zoom-level": "ઝૂમ સ્તર",
-      "all": "બધા"
+      "all": "બધા",
+      "title": "શાસ્ત્ર નકશો",
+      "description": "વસિયતનામું અને વિભાગ દ્વારા ગોઠવાયેલ બાઈબલના પુસ્તકોની ઇન્ટરેક્ટિવ 2D ગ્રીડ, ક્લિક કરી શકાય તેવા પ્રકરણ પસંદગી, રંગ-કોડેડ વાંચન ઇતિહાસ હીટમેપ્સ, બહુ-વપરાશકર્તા હાજરી સૂચકાંકો, ઝૂમ નિયંત્રણો અને સમયરેખા-આધારિત ફિલ્ટરિંગ સાથે.",
+      "below-reader-tool": "શાસ્ત્ર નકશો"
     },
     "he": {
       "scripture-map": "מפת הכתובים",
@@ -1641,7 +1713,10 @@
       "read-minutes-ago": "נקרא לפני {{count}} דקות",
       "read-minute-ago": "נקרא לפני {{count}} דקה",
       "zoom-level": "רמת זום",
-      "all": "הכל"
+      "all": "הכל",
+      "title": "מפת כתבי הקודש",
+      "description": "רשת דו-ממדית אינטראקטיבית של ספרי מקרא מאורגנים לפי צוואה ופרק, עם בחירת פרקים הניתנת ללחיצה, מפות חום של היסטוריית קריאה מקודדות בצבע, מחווני נוכחות מרובי משתמשים, פקדי זום וסינון מבוסס ציר זמן.",
+      "below-reader-tool": "מפת כתבי הקודש"
     },
     "hi": {
       "scripture-map": "शास्त्र मानचित्र",
@@ -1704,7 +1779,10 @@
       "read-minutes-ago": "{{count}} मिनट पहले पढ़ा",
       "read-minute-ago": "{{count}} मिनट पहले पढ़ा",
       "zoom-level": "ज़ूम स्तर",
-      "all": "सभी"
+      "all": "सभी",
+      "title": "धर्मग्रंथ मानचित्र",
+      "description": "बाइबिल की पुस्तकों का इंटरैक्टिव 2डी ग्रिड, जिसे नियम और अनुभाग के अनुसार व्यवस्थित किया गया है, जिसमें क्लिक करने योग्य अध्याय चयन, रंग-कोडित पठन इतिहास हीटमैप, बहु-उपयोगकर्ता उपस्थिति संकेतक, ज़ूम नियंत्रण और समयरेखा-आधारित फ़िल्टरिंग की सुविधा है।",
+      "below-reader-tool": "धर्मग्रंथ मानचित्र"
     },
     "hr": {
       "scripture-map": "Karta Pisma",
@@ -1767,7 +1845,10 @@
       "read-minutes-ago": "Pročitano prije {{count}} minuta",
       "read-minute-ago": "Pročitano prije {{count}} minutu",
       "zoom-level": "razina zuma",
-      "all": "sve"
+      "all": "sve",
+      "title": "Karta Svetog pisma",
+      "description": "Interaktivna 2D mreža biblijskih knjiga organiziranih po zavjetima i odjeljcima, s klikabilnim odabirom poglavlja, toplinskim kartama povijesti čitanja u bojama, indikatorima prisutnosti više korisnika, kontrolama zumiranja i filtriranjem temeljenim na vremenskoj crti.",
+      "below-reader-tool": "Karta Svetog pisma"
     },
     "hu": {
       "scripture-map": "Szentírás térkép",
@@ -1830,7 +1911,10 @@
       "read-minutes-ago": "{{count}} perccel ezelőtt olvasva",
       "read-minute-ago": "{{count}} perccel ezelőtt olvasva",
       "zoom-level": "nagyítási szint",
-      "all": "mind"
+      "all": "mind",
+      "title": "Szentírás térkép",
+      "description": "Interaktív 2D-s rács bibliai könyvekből, végrendeletek és szakaszok szerint rendezve, kattintható fejezetválasztással, színkódolt olvasási előzmények hőtérképeivel, többfelhasználós jelenlétjelzőkkel, nagyítási vezérlőkkel és idővonal-alapú szűréssel.",
+      "below-reader-tool": "Szentírás térkép"
     },
     "ind": {
       "scripture-map": "Peta Kitab Suci",
@@ -1893,7 +1977,10 @@
       "read-minutes-ago": "Dibaca {{count}} menit lalu",
       "read-minute-ago": "Dibaca {{count}} menit lalu",
       "zoom-level": "level zoom",
-      "all": "semua"
+      "all": "semua",
+      "title": "Peta Kitab Suci",
+      "description": "Tampilan grid 2D interaktif dari kitab-kitab Alkitab yang diorganisir berdasarkan perjanjian dan bagian, dengan pemilihan bab yang dapat diklik, peta panas riwayat bacaan berkode warna, indikator kehadiran multi-pengguna, kontrol zoom, dan penyaringan berbasis garis waktu.",
+      "below-reader-tool": "Peta Kitab Suci"
     },
     "is": {
       "scripture-map": "Ritningarkort",
@@ -1956,7 +2043,10 @@
       "read-minutes-ago": "Lesið fyrir {{count}} mínútum",
       "read-minute-ago": "Lesið fyrir {{count}} mínútu",
       "zoom-level": "þystigur",
-      "all": "allt"
+      "all": "allt",
+      "title": "Ritningakort",
+      "description": "Gagnvirkt tvívítt rist af biblíubókum raðað eftir testamenti og köflum, með smellanlegum kaflavali, litakóðuðum hitakortum af lestrarsögu, viðveruvísum fyrir marga notendur, aðdráttarstýringum og tímalínubundinni síun.",
+      "below-reader-tool": "Ritningakort"
     },
     "it": {
       "scripture-map": "Mappa delle Scritture",
@@ -2019,7 +2109,10 @@
       "read-minutes-ago": "Letto {{count}} minuti fa",
       "read-minute-ago": "Letto {{count}} minuto fa",
       "zoom-level": "livello di zoom",
-      "all": "tutto"
+      "all": "tutto",
+      "title": "Mappa delle Scritture",
+      "description": "Griglia interattiva bidimensionale di libri biblici organizzati per testamento e sezione, con selezione dei capitoli cliccabile, mappe di calore della cronologia di lettura con codifica a colori, indicatori di presenza multiutente, controlli di zoom e filtri basati sulla cronologia.",
+      "below-reader-tool": "Mappa delle Scritture"
     },
     "iw": {
       "scripture-map": "מפת הכתובים",
@@ -2082,7 +2175,10 @@
       "read-minutes-ago": "נקרא לפני {{count}} דקות",
       "read-minute-ago": "נקרא לפני {{count}} דקה",
       "zoom-level": "רמת זום",
-      "all": "הכל"
+      "all": "הכל",
+      "title": "מפת כתבי הקודש",
+      "description": "רשת דו-ממדית אינטראקטיבית של ספרי מקרא מאורגנים לפי צוואה ופרק, עם בחירת פרקים הניתנת ללחיצה, מפות חום של היסטוריית קריאה מקודדות בצבע, מחווני נוכחות מרובי משתמשים, פקדי זום וסינון מבוסס ציר זמן.",
+      "below-reader-tool": "מפת כתבי הקודש"
     },
     "ja": {
       "scripture-map": "聖書マップ",
@@ -2145,7 +2241,10 @@
       "read-minutes-ago": "{{count}} 分前に読みました",
       "read-minute-ago": "{{count}} 分前に読みました",
       "zoom-level": "ズームレベル",
-      "all": "すべて"
+      "all": "すべて",
+      "title": "聖書地図",
+      "description": "聖書の各書を旧約聖書と新約聖書の章ごとに整理した、インタラクティブな2Dグリッド。クリック可能な章選択機能、色分けされた読書履歴ヒートマップ、複数ユーザーの存在表示、ズームコントロール、タイムラインベースのフィルタリング機能を備えています。",
+      "below-reader-tool": "聖書地図"
     },
     "ka": {
       "scripture-map": "წმინდა წერილის რუკა",
@@ -2208,7 +2307,10 @@
       "read-minutes-ago": "{{count}} წუთის წინ წაკითხული",
       "read-minute-ago": "{{count}} წუთის წინ წაკითხული",
       "zoom-level": "გადიდების დონე",
-      "all": "ყველა"
+      "all": "ყველა",
+      "title": "წმინდა წერილის რუკა",
+      "description": "ბიბლიური წიგნების ინტერაქტიული 2D ბადე, რომელიც ორგანიზებულია აღთქმისა და სექციის მიხედვით, დაწკაპუნებადი თავების შერჩევით, ფერადი კოდირებით კითხვის ისტორიის სითბური რუკებით, მრავალმომხმარებლიანი ყოფნის ინდიკატორებით, მასშტაბირების კონტროლით და ქრონოლოგიაზე დაფუძნებული ფილტრაციით.",
+      "below-reader-tool": "წმინდა წერილის რუკა"
     },
     "km": {
       "scripture-map": "ផែនទីព្រះគម្ពីរ",
@@ -2271,7 +2373,10 @@
       "read-minutes-ago": "អានកន្លងទៅ {{count}} នាទី",
       "read-minute-ago": "អានកន្លងទៅ {{count}} នាទី",
       "zoom-level": "កម្រិតការពង្រីក",
-      "all": "ទាំងអស់"
+      "all": "ទាំងអស់",
+      "title": "ផែនទីព្រះគម្ពីរ",
+      "description": "ក្រឡាចត្រង្គ 2D អន្តរកម្មនៃសៀវភៅព្រះគម្ពីរដែលរៀបចំតាមគម្ពីរសញ្ញាថ្មី និងផ្នែក ជាមួយនឹងការជ្រើសរើសជំពូកដែលអាចចុចបាន ផែនទីកំដៅប្រវត្តិអានដែលមានកូដពណ៌ សូចនាករវត្តមានអ្នកប្រើប្រាស់ច្រើន ការគ្រប់គ្រងការពង្រីក និងការច្រោះផ្អែកលើពេលវេលា។",
+      "below-reader-tool": "ផែនទីព្រះគម្ពីរ"
     },
     "kn": {
       "scripture-map": "ಧರ್ಮಗ್ರಂಥ ನಕ್ಷೆ",
@@ -2334,7 +2439,10 @@
       "read-minutes-ago": "{{count}} ನಿಮಿಷಗಳ ಹಿಂದೆ ಓದಿದ್ದಾರೆ",
       "read-minute-ago": "{{count}} ನಿಮಿಷದ ಹಿಂದೆ ಓದಿದ್ದಾರೆ",
       "zoom-level": "ಝೂಮ್ ಮಟ್ಟ",
-      "all": "ಎಲ್ಲಾ"
+      "all": "ಎಲ್ಲಾ",
+      "title": "ಶಾಸ್ತ್ರದ ನಕ್ಷೆ",
+      "description": "ಕ್ಲಿಕ್ ಮಾಡಬಹುದಾದ ಅಧ್ಯಾಯ ಆಯ್ಕೆ, ಬಣ್ಣ-ಕೋಡೆಡ್ ಓದುವ ಇತಿಹಾಸದ ಹೀಟ್‌ಮ್ಯಾಪ್‌ಗಳು, ಬಹು-ಬಳಕೆದಾರ ಉಪಸ್ಥಿತಿ ಸೂಚಕಗಳು, ಜೂಮ್ ನಿಯಂತ್ರಣಗಳು ಮತ್ತು ಟೈಮ್‌ಲೈನ್-ಆಧಾರಿತ ಫಿಲ್ಟರಿಂಗ್‌ನೊಂದಿಗೆ ಒಡಂಬಡಿಕೆ ಮತ್ತು ವಿಭಾಗದ ಮೂಲಕ ಆಯೋಜಿಸಲಾದ ಬೈಬಲ್ ಪುಸ್ತಕಗಳ ಸಂವಾದಾತ್ಮಕ 2D ಗ್ರಿಡ್.",
+      "below-reader-tool": "ಶಾಸ್ತ್ರದ ನಕ್ಷೆ"
     },
     "ko": {
       "scripture-map": "성경 지도",
@@ -2397,7 +2505,10 @@
       "read-minutes-ago": "{{count}}분 전에 읽었습니다",
       "read-minute-ago": "{{count}}분 전에 읽었습니다",
       "zoom-level": "줌 레벨",
-      "all": "모두"
+      "all": "모두",
+      "title": "성경 지도",
+      "description": "성경 책들을 구약과 구약, 장별로 정리한 2D 대화형 그리드로, 클릭 가능한 장 선택, 색상으로 구분된 읽기 이력 히트맵, 다중 사용자 상태 표시기, 확대/축소 기능, 타임라인 기반 필터링 기능을 제공합니다.",
+      "below-reader-tool": "성경 지도"
     },
     "ky": {
       "scripture-map": "Ыйык Жазуу картасы",
@@ -2460,7 +2571,10 @@
       "read-minutes-ago": "{{count}} мүнөт мурун окулган",
       "read-minute-ago": "{{count}} мүнөт мурун окулган",
       "zoom-level": "масштаб деңгээли",
-      "all": "баары"
+      "all": "баары",
+      "title": "Ыйык Жазманын картасы",
+      "description": "Келишим жана бөлүм боюнча уюштурулган Ыйык Китептеги китептердин интерактивдүү 2D торчосу, чыкылдатууга мүмкүн болгон бөлүмдөрдү тандоо, түстүү коддолгон окуу тарыхынын жылуулук карталары, көп колдонуучунун катышуу индикаторлору, масштабдоону башкаруу элементтери жана убакыт тилкесине негизделген чыпкалоо.",
+      "below-reader-tool": "Ыйык Жазманын картасы"
     },
     "ln": {
       "scripture-map": "Carte ya Makombo Mosantu",
@@ -2523,7 +2637,10 @@
       "read-minutes-ago": "Tangaki miniti {{count}} eleki",
       "read-minute-ago": "Tangaki miniti {{count}} eleki",
       "zoom-level": "niveau ya kozwa mpembe",
-      "all": "nyonso"
+      "all": "nyonso",
+      "title": "Karte ya Makomi",
+      "description": "Grille 2D interactive ya mikanda ya biblia oyo ebongisami na testament mpe eteni, na boponi ya mokapo oyo ekoki ko cliquer, ba cartes chaleur ya histoire ya botangi oyo ezali na code ya couleur, ba indicateurs ya présence ya ba usagers ebele, ba contrôles ya zoom, mpe filtrage basé na chronologie.",
+      "below-reader-tool": "Karte ya Makomi"
     },
     "lo": {
       "scripture-map": "ແຜນທີ່ພຣະຄຳພີ",
@@ -2586,7 +2703,10 @@
       "read-minutes-ago": "ອ່ານ {{count}} ນາທີກ່ອນ",
       "read-minute-ago": "ອ່ານ {{count}} ນາທີກ່ອນ",
       "zoom-level": "ລະດັບຊູມ",
-      "all": "ທັງໝົດ"
+      "all": "ທັງໝົດ",
+      "title": "ແຜນທີ່ພຣະຄຳພີ",
+      "description": "ຕາຂ່າຍ 2D ແບບໂຕ້ຕອບຂອງປຶ້ມຄຳພີໄບເບິນທີ່ຈັດລຽງຕາມພຣະສັນຍາ ແລະ ພາກ, ພ້ອມດ້ວຍການເລືອກບົດທີ່ສາມາດຄລິກໄດ້, ແຜນທີ່ຄວາມຮ້ອນປະຫວັດການອ່ານທີ່ມີລະຫັດສີ, ຕົວຊີ້ບອກການມີຢູ່ຂອງຜູ້ໃຊ້ຫຼາຍຄົນ, ການຄວບຄຸມການຊູມ, ແລະ ການກັ່ນຕອງຕາມເສັ້ນເວລາ.",
+      "below-reader-tool": "ແຜນທີ່ພຣະຄຳພີ"
     },
     "lt": {
       "scripture-map": "Rašto žemėlapis",
@@ -2649,7 +2769,10 @@
       "read-minutes-ago": "Skaityta prieš {{count}} minučių",
       "read-minute-ago": "Skaityta prieš {{count}} minutę",
       "zoom-level": "priartinimo lygis",
-      "all": "visi"
+      "all": "visi",
+      "title": "Šventojo Rašto žemėlapis",
+      "description": "Interaktyvus 2D Biblijos knygų tinklelis, suskirstytas pagal testamentą ir skyrius, su spustelėjamu skyrių pasirinkimu, spalvomis koduotais skaitymo istorijos šilumos žemėlapiais, kelių vartotojų buvimo indikatoriais, priartinimo valdikliais ir laiko juosta pagrįstu filtravimu.",
+      "below-reader-tool": "Šventojo Rašto žemėlapis"
     },
     "lv": {
       "scripture-map": "Rakstu karte",
@@ -2712,7 +2835,10 @@
       "read-minutes-ago": "Lasīts pirms {{count}} minūtēm",
       "read-minute-ago": "Lasīts pirms {{count}} minūtes",
       "zoom-level": "tālummaiņas līmenis",
-      "all": "viss"
+      "all": "viss",
+      "title": "Svēto Rakstu karte",
+      "description": "Interaktīvs 2D Bībeles grāmatu režģis, kas sakārtots pēc testamenta un sadaļas, ar klikšķināmu nodaļu atlasi, krāsu kodētām lasīšanas vēstures siltuma kartēm, vairāku lietotāju klātbūtnes indikatoriem, tālummaiņas vadīklām un laika skalā balstītu filtrēšanu.",
+      "below-reader-tool": "Svēto Rakstu karte"
     },
     "mk": {
       "scripture-map": "Карта на Светото Писмо",
@@ -2775,7 +2901,10 @@
       "read-minutes-ago": "Прочитано пред {{count}} минути",
       "read-minute-ago": "Прочитано пред {{count}} минута",
       "zoom-level": "ниво на зум",
-      "all": "сè"
+      "all": "сè",
+      "title": "Мапа на Светото писмо",
+      "description": "Интерактивна 2D мрежа од библиски книги организирани по завет и дел, со кликачки избор на поглавја, топлински мапи за историја на читање кодирани во боја, индикатори за присуство за повеќе корисници, контроли за зумирање и филтрирање базирано на временска линија.",
+      "below-reader-tool": "Мапа на Светото писмо"
     },
     "ml": {
       "scripture-map": "തിരുവചന ഭൂപടം",
@@ -2838,7 +2967,10 @@
       "read-minutes-ago": "{{count}} മിനിറ്റ് മുൻപ് വായിച്ചു",
       "read-minute-ago": "{{count}} മിനിറ്റ് മുൻപ് വായിച്ചു",
       "zoom-level": "സൂം നില",
-      "all": "എല്ലാം"
+      "all": "എല്ലാം",
+      "title": "തിരുവെഴുത്ത് ഭൂപടം",
+      "description": "ക്ലിക്കുചെയ്യാവുന്ന അധ്യായ തിരഞ്ഞെടുപ്പ്, കളർ-കോഡഡ് വായനാ ചരിത്ര ഹീറ്റ്മാപ്പുകൾ, മൾട്ടി-യൂസർ സാന്നിധ്യ സൂചകങ്ങൾ, സൂം നിയന്ത്രണങ്ങൾ, ടൈംലൈൻ അടിസ്ഥാനമാക്കിയുള്ള ഫിൽട്ടറിംഗ് എന്നിവ ഉപയോഗിച്ച് ടെസ്റ്റമെന്റും സെക്ഷനും അനുസരിച്ച് ക്രമീകരിച്ച ബൈബിൾ പുസ്തകങ്ങളുടെ സംവേദനാത്മക 2D ഗ്രിഡ്.",
+      "below-reader-tool": "തിരുവെഴുത്ത് ഭൂപടം"
     },
     "mn": {
       "scripture-map": "Судар газрын зураг",
@@ -2901,7 +3033,10 @@
       "read-minutes-ago": "{{count}} минутын өмнө уншсан",
       "read-minute-ago": "{{count}} минутын өмнө уншсан",
       "zoom-level": "томруулах түвшин",
-      "all": "бүгд"
+      "all": "бүгд",
+      "title": "Судрын газрын зураг",
+      "description": "Гэрээ болон хэсгээр нь зохион байгуулсан Библийн номуудын интерактив 2 хэмжээст сүлжээ, дарж болох бүлгүүдийн сонголт, өнгөөр ​​кодлогдсон уншлагын түүхийн дулааны зураглал, олон хэрэглэгчийн оролцооны үзүүлэлт, томруулах удирдлага, цагийн хуваарьт суурилсан шүүлтүүртэй.",
+      "below-reader-tool": "Судрын газрын зураг"
     },
     "mr": {
       "scripture-map": "शास्त्र नकाशा",
@@ -2964,7 +3099,10 @@
       "read-minutes-ago": "{{count}} मिनिटांपूर्वी वाचले",
       "read-minute-ago": "{{count}} मिनिटापूर्वी वाचले",
       "zoom-level": "झूम पातळी",
-      "all": "सर्व"
+      "all": "सर्व",
+      "title": "धर्मग्रंथ नकाशा",
+      "description": "करार आणि विभागानुसार आयोजित बायबलमधील पुस्तकांचा इंटरॅक्टिव्ह 2D ग्रिड, ज्यामध्ये क्लिक करण्यायोग्य अध्याय निवड, रंग-संकेतित वाचन इतिहासाचे हीटमॅप्स, एकाधिक वापरकर्ता उपस्थिती निर्देशक, झूम नियंत्रणे आणि टाइमलाइन-आधारित फिल्टरिंग यांचा समावेश आहे.",
+      "below-reader-tool": "धर्मग्रंथ नकाशा"
     },
     "ms": {
       "scripture-map": "Peta Kitab Suci",
@@ -3027,7 +3165,10 @@
       "read-minutes-ago": "Dibaca {{count}} minit lalu",
       "read-minute-ago": "Dibaca {{count}} minit lalu",
       "zoom-level": "tahap zum",
-      "all": "semua"
+      "all": "semua",
+      "title": "Peta Kitab Suci",
+      "description": "Grid 2D interaktif buku-buku alkitabiah yang disusun mengikut perjanjian dan bahagian, dengan pilihan bab yang boleh diklik, peta haba sejarah bacaan berkod warna, penunjuk kehadiran berbilang pengguna, kawalan zum dan penapisan berasaskan garis masa.",
+      "below-reader-tool": "Peta Kitab Suci"
     },
     "my": {
       "scripture-map": "သမ္မာကျမ်းမြေပုံ",
@@ -3090,7 +3231,10 @@
       "read-minutes-ago": "{{count}} မိနစ် အကြာက ဖတ်ခဲ့သည်",
       "read-minute-ago": "{{count}} မိနစ် အကြာက ဖတ်ခဲ့သည်",
       "zoom-level": "ချုံ့/ချဲ့အဆင့်",
-      "all": "အားလုံး"
+      "all": "အားလုံး",
+      "title": "ကျမ်းစာမြေပုံ",
+      "description": "ဓမ္မကျမ်းစာနှင့် အပိုင်းအလိုက် စီစဉ်ထားသော အပြန်အလှန်အကျိုးပြုသည့် 2D ဇယားကွက်တွင် နှိပ်နိုင်သော အခန်းရွေးချယ်မှု၊ အရောင်ကုဒ်ပါ ဖတ်ရှုမှတ်တမ်း အပူချိန်မြေပုံများ၊ အသုံးပြုသူများစွာ ရှိနေခြင်း အညွှန်းများ၊ zoom ထိန်းချုပ်မှုများနှင့် အချိန်ဇယားအခြေပြု filter များ ပါဝင်သည်။",
+      "below-reader-tool": "ကျမ်းစာမြေပုံ"
     },
     "nb": {
       "scripture-map": "Skriftkart",
@@ -3153,7 +3297,10 @@
       "read-minutes-ago": "Lest for {{count}} minutter siden",
       "read-minute-ago": "Lest for {{count}} minutt siden",
       "zoom-level": "zoomnivå",
-      "all": "alle"
+      "all": "alle",
+      "title": "Skriftkart",
+      "description": "Interaktivt 2D-rutenett med bibelbøker organisert etter testamente og seksjon, med klikkbart kapittelvalg, fargekodede varmekart for lesehistorikk, indikatorer for tilstedeværelse for flere brukere, zoomkontroller og tidslinjebasert filtrering.",
+      "below-reader-tool": "Skriftkart"
     },
     "ne": {
       "scripture-map": "धर्मग्रन्थ नक्शा",
@@ -3216,7 +3363,10 @@
       "read-minutes-ago": "{{count}} मिनेट पहिले पढे",
       "read-minute-ago": "{{count}} मिनेट पहिले पढ्यो",
       "zoom-level": "जुम स्तर",
-      "all": "सबै"
+      "all": "सबै",
+      "title": "धर्मशास्त्र नक्सा",
+      "description": "क्लिक गर्न मिल्ने अध्याय चयन, रङ-कोड गरिएको पठन इतिहास तापनक्सा, बहु-प्रयोगकर्ता उपस्थिति सूचकहरू, जुम नियन्त्रणहरू, र समयरेखा-आधारित फिल्टरिङको साथ, वसीयतनामा र खण्डद्वारा व्यवस्थित बाइबलीय पुस्तकहरूको अन्तरक्रियात्मक 2D ग्रिड।",
+      "below-reader-tool": "धर्मशास्त्र नक्सा"
     },
     "nl": {
       "scripture-map": "Schriftuurkaart",
@@ -3279,7 +3429,10 @@
       "read-minutes-ago": "{{count}} minuten geleden gelezen",
       "read-minute-ago": "{{count}} minuut geleden gelezen",
       "zoom-level": "zoomniveau",
-      "all": "alles"
+      "all": "alles",
+      "title": "Bijbelkaart",
+      "description": "Interactief 2D-raster van bijbelse boeken, georganiseerd per testament en sectie, met aanklikbare hoofdstukselectie, kleurgecodeerde heatmaps van de leesgeschiedenis, indicatoren voor de aanwezigheid van meerdere gebruikers, zoomfuncties en filtermogelijkheden op basis van de tijdlijn.",
+      "below-reader-tool": "Bijbelkaart"
     },
     "no": {
       "scripture-map": "Skriftkart",
@@ -3342,7 +3495,10 @@
       "read-minutes-ago": "Lest for {{count}} minutter siden",
       "read-minute-ago": "Lest for {{count}} minutt siden",
       "zoom-level": "zoomnivå",
-      "all": "alle"
+      "all": "alle",
+      "title": "Skriftkart",
+      "description": "Interaktivt 2D-rutenett med bibelbøker organisert etter testamente og seksjon, med klikkbart kapittelvalg, fargekodede varmekart for lesehistorikk, indikatorer for tilstedeværelse for flere brukere, zoomkontroller og tidslinjebasert filtrering.",
+      "below-reader-tool": "Skriftkart"
     },
     "pa": {
       "scripture-map": "ਧਰਮ-ਗ੍ਰੰਥ ਨਕਸ਼ਾ",
@@ -3405,7 +3561,10 @@
       "read-minutes-ago": "{{count}} ਮਿੰਟ ਪਹਿਲਾਂ ਪੜ੍ਹਿਆ",
       "read-minute-ago": "{{count}} ਮਿੰਟ ਪਹਿਲਾਂ ਪੜ੍ਹਿਆ",
       "zoom-level": "ਜ਼ੂਮ ਪੱਧਰ",
-      "all": "ਸਾਰੇ"
+      "all": "ਸਾਰੇ",
+      "title": "ਧਰਮ ਗ੍ਰੰਥ ਦਾ ਨਕਸ਼ਾ",
+      "description": "ਬਾਈਬਲ ਦੀਆਂ ਕਿਤਾਬਾਂ ਦਾ ਇੰਟਰਐਕਟਿਵ 2D ਗਰਿੱਡ, ਟੈਸਟਾਮੈਂਟ ਅਤੇ ਸੈਕਸ਼ਨ ਦੁਆਰਾ ਸੰਗਠਿਤ, ਕਲਿੱਕ ਕਰਨ ਯੋਗ ਅਧਿਆਇ ਚੋਣ, ਰੰਗ-ਕੋਡਿਡ ਰੀਡਿੰਗ ਇਤਿਹਾਸ ਹੀਟਮੈਪ, ਮਲਟੀ-ਯੂਜ਼ਰ ਮੌਜੂਦਗੀ ਸੂਚਕ, ਜ਼ੂਮ ਨਿਯੰਤਰਣ, ਅਤੇ ਟਾਈਮਲਾਈਨ-ਅਧਾਰਿਤ ਫਿਲਟਰਿੰਗ ਦੇ ਨਾਲ।",
+      "below-reader-tool": "ਧਰਮ ਗ੍ਰੰਥ ਦਾ ਨਕਸ਼ਾ"
     },
     "pl": {
       "scripture-map": "Mapa Pisma Świętego",
@@ -3468,7 +3627,10 @@
       "read-minutes-ago": "Przeczytano {{count}} minut temu",
       "read-minute-ago": "Przeczytano {{count}} minutę temu",
       "zoom-level": "poziom powiększenia",
-      "all": "wszystko"
+      "all": "wszystko",
+      "title": "Mapa Pisma Świętego",
+      "description": "Interaktywna, dwuwymiarowa siatka ksiąg biblijnych uporządkowanych według Testamentu i sekcji, z klikalnym wyborem rozdziałów, kolorowymi mapami cieplnymi historii czytania, wskaźnikami obecności wielu użytkowników, kontrolą powiększenia i filtrowaniem opartym na osi czasu.",
+      "below-reader-tool": "Mapa Pisma Świętego"
     },
     "ps": {
       "scripture-map": "د مقدسو لیکونو نقشه",
@@ -3531,7 +3693,10 @@
       "read-minutes-ago": "{{count}} دقیقې مخکې ولوستل شو",
       "read-minute-ago": "{{count}} دقیقه مخکې ولوستل شو",
       "zoom-level": "د لوی کولو کچه",
-      "all": "ټول"
+      "all": "ټول",
+      "title": "د صحیفې نقشه",
+      "description": "د انجیل د کتابونو متقابل 2D گرډ چې د وصیت او برخې لخوا تنظیم شوی، د کلیک کولو وړ فصل انتخاب، د رنګ کوډ شوي لوستلو تاریخ تودوخې نقشې، د څو کاروونکو شتون شاخصونه، د زوم کنټرولونه، او د مهال ویش پر بنسټ فلټر کول سره.",
+      "below-reader-tool": "د صحیفې نقشه"
     },
     "pt": {
       "scripture-map": "Mapa das Escrituras",
@@ -3594,7 +3759,10 @@
       "read-minutes-ago": "Lido há {{count}} minutos",
       "read-minute-ago": "Lido há {{count}} minuto",
       "zoom-level": "nível de zoom",
-      "all": "tudo"
+      "all": "tudo",
+      "title": "Mapa das Escrituras",
+      "description": "Grade 2D interativa de livros bíblicos organizados por testamento e seção, com seleção de capítulos clicável, mapas de calor do histórico de leitura codificados por cores, indicadores de presença multiusuário, controles de zoom e filtragem baseada em linha do tempo.",
+      "below-reader-tool": "Mapa das Escrituras"
     },
     "ro": {
       "scripture-map": "Harta Scripturii",
@@ -3657,7 +3825,10 @@
       "read-minutes-ago": "Citit acum {{count}} minute",
       "read-minute-ago": "Citit acum {{count}} minut",
       "zoom-level": "nivel de zoom",
-      "all": "tot"
+      "all": "tot",
+      "title": "Harta Scripturii",
+      "description": "Grilă 2D interactivă de cărți biblice organizate după testament și secțiune, cu selectarea capitolelor pe care se poate face clic, hărți termice ale istoricului de lectură codificate prin culori, indicatori de prezență pentru mai mulți utilizatori, controale de zoom și filtrare bazată pe cronologie.",
+      "below-reader-tool": "Harta Scripturii"
     },
     "ru": {
       "scripture-map": "Карта Писания",
@@ -3720,7 +3891,10 @@
       "read-minutes-ago": "Прочитано {{count}} минут назад",
       "read-minute-ago": "Прочитано {{count}} минуту назад",
       "zoom-level": "уровень масштаба",
-      "all": "все"
+      "all": "все",
+      "title": "Карта Священного Писания",
+      "description": "Интерактивная двухмерная сетка библейских книг, организованная по заветам и разделам, с возможностью выбора глав по клику, цветовыми тепловыми картами истории чтения, индикаторами присутствия нескольких пользователей, элементами управления масштабированием и фильтрацией на основе временной шкалы.",
+      "below-reader-tool": "Карта Священного Писания"
     },
     "sk": {
       "scripture-map": "Mapa Písma",
@@ -3783,7 +3957,10 @@
       "read-minutes-ago": "Prečítané pred {{count}} minútami",
       "read-minute-ago": "Prečítané pred {{count}} minútou",
       "zoom-level": "úroveň priblíženia",
-      "all": "všetko"
+      "all": "všetko",
+      "title": "Mapa Písma",
+      "description": "Interaktívna 2D mriežka biblických kníh usporiadaných podľa zákona a sekcie s klikateľným výberom kapitol, farebne odlíšenými tepelnými mapami histórie čítania, indikátormi prítomnosti viacerých používateľov, ovládacími prvkami priblíženia a filtrovaním podľa časovej osi.",
+      "below-reader-tool": "Mapa Písma"
     },
     "sl": {
       "scripture-map": "Karta Pisma",
@@ -3846,7 +4023,10 @@
       "read-minutes-ago": "Prebrano pred {{count}} minutami",
       "read-minute-ago": "Prebrano pred {{count}} minuto",
       "zoom-level": "raven povečave",
-      "all": "vse"
+      "all": "vse",
+      "title": "Zemljevid svetih spisov",
+      "description": "Interaktivna 2D mreža biblijskih knjig, organiziranih po testamentih in razdelkih, s klikljivo izbiro poglavij, barvno kodiranimi toplotnimi zemljevidi zgodovine branja, indikatorji prisotnosti več uporabnikov, kontrolami povečave in filtriranjem na podlagi časovnice.",
+      "below-reader-tool": "Zemljevid svetih spisov"
     },
     "sq": {
       "scripture-map": "Harta e Shkrimeve",
@@ -3909,7 +4089,10 @@
       "read-minutes-ago": "Lexuar {{count}} minuta më parë",
       "read-minute-ago": "Lexuar {{count}} minutë më parë",
       "zoom-level": "niveli i zmadhimit",
-      "all": "të gjitha"
+      "all": "të gjitha",
+      "title": "Harta e Shkrimit të Shenjtë",
+      "description": "Rrjetë interaktive 2D e librave biblikë të organizuar sipas testamentit dhe seksionit, me përzgjedhje të klikueshme të kapitujve, harta të nxehtësisë së historikut të leximit me kode ngjyrash, tregues të pranisë për shumë përdorues, kontrolle zmadhimi dhe filtrim të bazuar në vijën kohore.",
+      "below-reader-tool": "Harta e Shkrimit të Shenjtë"
     },
     "sv": {
       "scripture-map": "Skriftkarta",
@@ -3972,7 +4155,10 @@
       "read-minutes-ago": "Läst för {{count}} minuter sedan",
       "read-minute-ago": "Läst för {{count}} minut sedan",
       "zoom-level": "zoomnivå",
-      "all": "alla"
+      "all": "alla",
+      "title": "Skriftkarta",
+      "description": "Interaktivt 2D-rutnät med bibliska böcker organiserade efter testamente och avsnitt, med klickbart kapitelval, färgkodade värmekartor över läshistorik, närvaroindikatorer för flera användare, zoomkontroller och tidslinjebaserad filtrering.",
+      "below-reader-tool": "Skriftkarta"
     },
     "sw": {
       "scripture-map": "Ramani ya Maandiko",
@@ -4035,7 +4221,10 @@
       "read-minutes-ago": "Alisoma dakika {{count}} zilizopita",
       "read-minute-ago": "Alisoma dakika {{count}} iliyopita",
       "zoom-level": "kiwango cha kuza",
-      "all": "yote"
+      "all": "yote",
+      "title": "Ramani ya Maandiko",
+      "description": "Gridi shirikishi ya 2D ya vitabu vya Biblia vilivyopangwa kwa wosia na sehemu, pamoja na uteuzi wa sura unaoweza kubofywa, ramani za joto za historia ya usomaji zenye msimbo wa rangi, viashiria vya uwepo wa watumiaji wengi, vidhibiti vya kukuza, na uchujaji kulingana na ratiba.",
+      "below-reader-tool": "Ramani ya Maandiko"
     },
     "ta": {
       "scripture-map": "வேதாகம வரைபடம்",
@@ -4098,7 +4287,10 @@
       "read-minutes-ago": "{{count}} நிமிடங்களுக்கு முன்பு படித்தது",
       "read-minute-ago": "{{count}} நிமிடத்திற்கு முன்பு படித்தது",
       "zoom-level": "ஜூம் நிலை",
-      "all": "அனைத்தும்"
+      "all": "அனைத்தும்",
+      "title": "வேத வரைபடம்",
+      "description": "ஏற்பாடு மற்றும் பிரிவு வாரியாக ஒழுங்கமைக்கப்பட்ட விவிலிய நூல்களின் ஊடாடும் இருபரிமாணக் கட்டம்; இதில் சொடுக்கக்கூடிய அத்தியாயத் தேர்வு, வண்ணக் குறியிடப்பட்ட வாசிப்பு வரலாற்று வெப்ப வரைபடங்கள், பல பயனர் இருப்பு குறிகாட்டிகள், பெரிதாக்குக் கட்டுப்பாடுகள் மற்றும் காலவரிசை அடிப்படையிலான வடிகட்டுதல் ஆகிய அம்சங்கள் உள்ளன.",
+      "below-reader-tool": "வேத வரைபடம்"
     },
     "te": {
       "scripture-map": "శాస్త్ర మ్యాప్",
@@ -4161,7 +4353,10 @@
       "read-minutes-ago": "{{count}} నిమిషాల క్రితం చదివారు",
       "read-minute-ago": "{{count}} నిమిషం క్రితం చదివారు",
       "zoom-level": "జూమ్ స్థాయి",
-      "all": "అన్నీ"
+      "all": "అన్నీ",
+      "title": "లేఖన పటం",
+      "description": "నిబంధన మరియు విభాగం వారీగా అమర్చబడిన బైబిల్ పుస్తకాల ఇంటరాక్టివ్ 2D గ్రిడ్, క్లిక్ చేయగల అధ్యాయ ఎంపిక, రంగుల కోడ్‌తో కూడిన పఠన చరిత్ర హీట్‌మ్యాప్‌లు, బహుళ-వినియోగదారు ఉనికి సూచికలు, జూమ్ నియంత్రణలు మరియు టైమ్‌లైన్ ఆధారిత ఫిల్టరింగ్‌తో వస్తుంది.",
+      "below-reader-tool": "లేఖన పటం"
     },
     "th": {
       "scripture-map": "แผนที่พระคัมภีร์",
@@ -4224,7 +4419,10 @@
       "read-minutes-ago": "อ่านเมื่อ {{count}} นาทีที่แล้ว",
       "read-minute-ago": "อ่านเมื่อ {{count}} นาทีที่แล้ว",
       "zoom-level": "ระดับการซูม",
-      "all": "ทั้งหมด"
+      "all": "ทั้งหมด",
+      "title": "แผนที่พระคัมภีร์",
+      "description": "ตาราง 2 มิติแบบโต้ตอบของหนังสือในพระคัมภีร์ จัดเรียงตามพันธสัญญาและส่วนต่างๆ พร้อมตัวเลือกการเลือกบทที่คลิกได้ แผนที่แสดงประวัติการอ่านแบบระบายสี ตัวบ่งชี้การใช้งานหลายผู้ใช้ การควบคุมการซูม และการกรองตามไทม์ไลน์",
+      "below-reader-tool": "แผนที่พระคัมภีร์"
     },
     "ti": {
       "scripture-map": "ካርታ ቅዱሳት ጽሑፋት",
@@ -4287,7 +4485,10 @@
       "read-minutes-ago": "{{count}} ደቒቓት ቅድሚ ሕጂ ተነቢቡ",
       "read-minute-ago": "{{count}} ደቒቕ ቅድሚ ሕጂ ተነቢቡ",
       "zoom-level": "ደረጃ ናይ ምቅርራብ",
-      "all": "ኩሉ"
+      "all": "ኩሉ",
+      "title": "ካርታ ቅዱሳት መጻሕፍቲ",
+      "description": "ብኪዳንን ክፍልን ዝተወደበ መስተጋብራዊ 2D ሽቦ መጽሓፍ ቅዱሳዊ መጻሕፍቲ፣ ምስ ጠውቂ ምዕራፍ ምምራጽ፣ ብሕብራዊ ኮድ ዘለዎም ናይ ንባብ ታሪኽ ሂትማፕ፣ ናይ ብዙሓት ተጠቀምቲ ህላወ መመልከቲታት፣ ዙም ቁጽጽርን ኣብ መስመር ግዜ ዝተመርኮሰ ምጽራይን።",
+      "below-reader-tool": "ካርታ ቅዱሳት መጻሕፍቲ"
     },
     "tl": {
       "scripture-map": "Mapa ng Kasulatan",
@@ -4350,7 +4551,10 @@
       "read-minutes-ago": "Nabasa {{count}} minuto na ang nakalipas",
       "read-minute-ago": "Nabasa {{count}} minuto na ang nakalipas",
       "zoom-level": "antas ng zoom",
-      "all": "lahat"
+      "all": "lahat",
+      "title": "Mapa ng Banal na Kasulatan",
+      "description": "Interaktibong 2D grid ng mga aklat ng Bibliya na nakaayos ayon sa testamento at seksyon, na may naki-click na seleksyon ng kabanata, mga heatmap ng kasaysayan ng pagbabasa na may kulay, mga indikasyon ng presensya ng maraming gumagamit, mga kontrol sa zoom, at pag-filter batay sa timeline.",
+      "below-reader-tool": "Mapa ng Banal na Kasulatan"
     },
     "tr": {
       "scripture-map": "Kutsal Yazılar Haritası",
@@ -4413,7 +4617,10 @@
       "read-minutes-ago": "{{count}} dakika önce okundu",
       "read-minute-ago": "{{count}} dakika önce okundu",
       "zoom-level": "yakınlaştırma düzeyi",
-      "all": "tümü"
+      "all": "tümü",
+      "title": "Kutsal Kitap Haritası",
+      "description": "İncil kitaplarının ahit ve bölümlere göre düzenlenmiş, etkileşimli 2 boyutlu bir tablosu; tıklanabilir bölüm seçimi, renk kodlu okuma geçmişi ısı haritaları, çoklu kullanıcı varlığı göstergeleri, yakınlaştırma kontrolleri ve zaman çizelgesi tabanlı filtreleme özelliklerine sahiptir.",
+      "below-reader-tool": "Kutsal Kitap Haritası"
     },
     "ug": {
       "scripture-map": "مۇقەددەس يازمىلار خەرىتىسى",
@@ -4476,7 +4683,10 @@
       "read-minutes-ago": "{{count}} مىنۇت بۇرۇن ئوقۇلدى",
       "read-minute-ago": "{{count}} مىنۇت بۇرۇن ئوقۇلدى",
       "zoom-level": "چوڭايتىش دەرىجىسى",
-      "all": "ھەممە"
+      "all": "ھەممە",
+      "title": "مۇقەددەس يازمىلار خەرىتىسى",
+      "description": "ئىنجىل كىتابلىرىنىڭ ئۆز-ئارا تەسىر كۆرسىتىدىغان 2D تورى، چېكىلىدىغان باب تاللاش، رەڭ كودلۇق ئوقۇش تارىخى ئىسسىقلىق خەرىتىسى، كۆپ ئىشلەتكۈچىنىڭ مەۋجۇتلۇق كۆرسەتكۈچى، چوڭايتىش كونتروللىرى ۋە ۋاقىت جەدۋىلىگە ئاساسلانغان سۈزگۈچ قاتارلىقلار بىلەن، ۋەسىيەتنامە ۋە بۆلەكلەر بويىچە تەشكىللەنگەن.",
+      "below-reader-tool": "مۇقەددەس يازمىلار خەرىتىسى"
     },
     "uk": {
       "scripture-map": "Карта Писань",
@@ -4539,7 +4749,10 @@
       "read-minutes-ago": "Прочитано {{count}} хвилин тому",
       "read-minute-ago": "Прочитано {{count}} хвилину тому",
       "zoom-level": "рівень масштабу",
-      "all": "все"
+      "all": "все",
+      "title": "Карта Писання",
+      "description": "Інтерактивна 2D-сітка біблійних книг, організована за заповітами та розділами, з можливістю вибору розділів, що можна натискати, кольоровими тепловими картами історії читання, індикаторами присутності кількох користувачів, елементами керування масштабуванням та фільтрацією на основі часової шкали.",
+      "below-reader-tool": "Карта Писання"
     },
     "ur": {
       "scripture-map": "صحائف کا نقشہ",
@@ -4602,7 +4815,10 @@
       "read-minutes-ago": "{{count}} منٹ پہلے پڑھا",
       "read-minute-ago": "{{count}} منٹ پہلے پڑھا",
       "zoom-level": "زوم کی سطح",
-      "all": "سب"
+      "all": "سب",
+      "title": "کتاب کا نقشہ",
+      "description": "بائبل کی کتابوں کا انٹرایکٹو 2D گرڈ عہد نامہ اور سیکشن کے ذریعہ ترتیب دیا گیا ہے، جس میں کلک کے قابل باب کے انتخاب، کلر کوڈڈ ریڈنگ ہسٹری ہیٹ میپس، کثیر صارف کی موجودگی کے اشارے، زوم کنٹرولز، اور ٹائم لائن پر مبنی فلٹرنگ ہے۔",
+      "below-reader-tool": "کتاب کا نقشہ"
     },
     "uz": {
       "scripture-map": "Muqaddas Kitob xaritasi",
@@ -4665,7 +4881,10 @@
       "read-minutes-ago": "{{count}} daqiqa oldin o'qildi",
       "read-minute-ago": "{{count}} daqiqa oldin o'qildi",
       "zoom-level": "kattalashtirish darajasi",
-      "all": "barchasi"
+      "all": "barchasi",
+      "title": "Muqaddas Yozuvlar xaritasi",
+      "description": "Bosish mumkin bo'lgan bob tanlash, rang kodli o'qish tarixi issiqlik xaritalari, ko'p foydalanuvchi mavjudligi ko'rsatkichlari, masshtablash boshqaruvlari va vaqt jadvaliga asoslangan filtrlash bilan vasiyatnoma va bo'limlar bo'yicha tartiblangan Bibliya kitoblarining interaktiv 2D panjarasi.",
+      "below-reader-tool": "Muqaddas Yozuvlar xaritasi"
     },
     "vi": {
       "scripture-map": "Bản đồ Kinh Thánh",
@@ -4728,7 +4947,10 @@
       "read-minutes-ago": "Đã đọc {{count}} phút trước",
       "read-minute-ago": "Đã đọc {{count}} phút trước",
       "zoom-level": "mức phóng to",
-      "all": "tất cả"
+      "all": "tất cả",
+      "title": "Bản đồ Kinh thánh",
+      "description": "Lưới 2D tương tác hiển thị các sách Kinh Thánh được sắp xếp theo phần và chương, với chức năng chọn chương bằng cách nhấp chuột, bản đồ nhiệt lịch sử đọc được mã hóa màu sắc, chỉ báo sự hiện diện của nhiều người dùng, điều khiển thu phóng và lọc theo dòng thời gian.",
+      "below-reader-tool": "Bản đồ Kinh thánh"
     },
     "zh": {
       "scripture-map": "圣经地图",
@@ -4791,7 +5013,10 @@
       "read-minutes-ago": "{{count}} 分钟前阅读",
       "read-minute-ago": "{{count}} 分钟前阅读",
       "zoom-level": "缩放级别",
-      "all": "全部"
+      "all": "全部",
+      "title": "圣经地图",
+      "description": "交互式 2D 圣经书卷网格，按约和章节组织，具有可点击的章节选择、颜色编码的阅读历史热图、多用户在线指示器、缩放控件和基于时间线的筛选功能。",
+      "below-reader-tool": "圣经地图"
     },
     "zu": {
       "scripture-map": "Ibalazwe leMibhalo",
@@ -4854,7 +5079,10 @@
       "read-minutes-ago": "Kufundiwe izikhashana ezingu-{{count}} ezikhona",
       "read-minute-ago": "Kufundiwe isikhashana esingu-{{count}} esikhona",
       "zoom-level": "izinga le-zoom",
-      "all": "konke"
+      "all": "konke",
+      "title": "Imephu YemiBhalo",
+      "description": "Igridi ye-2D esebenzisanayo yezincwadi zeBhayibheli ezihlelwe ngokwesivumelwano nesigaba, ngokukhethwa kwezahluko okuchofozekayo, amamephu okushisa omlando wokufunda anemibala, izinkomba zokuba khona kwabasebenzisi abaningi, izilawuli ze-zoom, kanye nokuhlunga okusekelwe kumugqa wesikhathi.",
+      "below-reader-tool": "Imephu YemiBhalo"
     }
   }
 }

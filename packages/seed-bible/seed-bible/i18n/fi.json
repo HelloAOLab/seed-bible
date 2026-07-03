@@ -259,6 +259,7 @@
   "no-languages-found": "Ei kieliä löytynyt",
   "today-coming-soon": "Tämän päivän näyttö tulee pian",
   "link-to-join-shared-session-copied": "Linkki jaettuun istuntoon liittymiseen kopioitiin leikepöydälle.",
+  "copied-translation-share-link": "Kopioitu käännöksen jakamislinkki",
   "anonymous": "Anonyymi",
   "no-chat-messages": "Ei vielä viestejä",
   "start-conversation": "Aloita keskustelu",
@@ -305,7 +306,6 @@
   "inactive": "Passiivinen",
   "available": "Saatavilla",
   "everyone": "Kaikki",
-  "copied-translation-share-link": "Kopioitu käännöksen jakamislinkki",
   "chat-x-joined": "{{name}} liittyi",
   "chat-x-and-x-joined": "{{first}} ja {{second}} liittyivät",
   "chat-x-and-count-joined": "{{name}} ja {{count}} muuta liittyivät",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} ja {{count}} muuta liittyivät",
   "open-chat": "Avaa chat",
   "less": "Vähemmän",
-  "swipe-up-more": "Pyyhkäise ylöspäin nähdäksesi lisää"
+  "swipe-up-more": "Pyyhkäise ylöspäin nähdäksesi lisää",
+  "tutorial.promptTitle": "Tervetuloa Seed Bibleen. Haluatko opetusohjelman?",
+  "tutorial.promptBody": "Opastettu kierros auttaa sinua oppimaan Seed Biblen salat.",
+  "tutorial.promptDecline": "Ei kiitos",
+  "tutorial.promptAccept": "Osallistu kierrokselle"
 }

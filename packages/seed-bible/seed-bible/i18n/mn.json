@@ -259,6 +259,7 @@
   "no-languages-found": "Хэл олдсонгүй",
   "today-coming-soon": "Өнөөдрийн дэлгэц удахгүй гарах болно",
   "link-to-join-shared-session-copied": "Хуваалцсан хуралдаанд нэгдэх холбоосыг таны санах ой руу хуулсан",
+  "copied-translation-share-link": "Орчуулгын хуваалцах холбоосыг хуулсан",
   "anonymous": "Нэргүй",
   "no-chat-messages": "Одоогоор мессеж алга",
   "start-conversation": "Яриа эхлүүлэх",
@@ -305,7 +306,6 @@
   "inactive": "Идэвхгүй",
   "available": "Боломжтой",
   "everyone": "Хүн бүр",
-  "copied-translation-share-link": "Орчуулгын хуваалцах холбоосыг хуулсан",
   "chat-x-joined": "{{name}} нэгдсэн",
   "chat-x-and-x-joined": "{{first}} болон {{second}} нэгдсэн",
   "chat-x-and-count-joined": "{{name}} болон {{count}} бусад хүмүүс нэгдсэн",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} болон {{count}} бусад хүмүүс нэгдсэн",
   "open-chat": "Нээлттэй чат",
   "less": "Бага",
-  "swipe-up-more": "Дэлгэрэнгүй үзэхийн тулд дээш шударна уу"
+  "swipe-up-more": "Дэлгэрэнгүй үзэхийн тулд дээш шударна уу",
+  "tutorial.promptTitle": "Seed Bible-д тавтай морил. Та хичээл авахыг хүсэж байна уу?",
+  "tutorial.promptBody": "Seed Bible-ийн нарийн ширийн зүйлийг сурахад тань туслах хөтөчтэй аялал байдаг.",
+  "tutorial.promptDecline": "Үгүй ээ, баярлалаа",
+  "tutorial.promptAccept": "Аялалд оролцоорой"
 }

@@ -259,6 +259,7 @@
   "no-languages-found": "Tiada bahasa ditemui",
   "today-coming-soon": "Skrin hari ini akan datang tidak lama lagi",
   "link-to-join-shared-session-copied": "Pautan untuk menyertai sesi kongsi telah disalin ke papan keratan anda",
+  "copied-translation-share-link": "Pautan kongsi terjemahan yang disalin",
   "anonymous": "Tanpa Nama",
   "no-chat-messages": "Tiada mesej lagi",
   "start-conversation": "Mulakan perbualan",
@@ -305,7 +306,6 @@
   "inactive": "Tidak aktif",
   "available": "Tersedia",
   "everyone": "Semua orang",
-  "copied-translation-share-link": "Pautan kongsi terjemahan yang disalin",
   "chat-x-joined": "{{name}} menyertai",
   "chat-x-and-x-joined": "{{first}} dan {{second}} menyertai",
   "chat-x-and-count-joined": "{{name}} dan {{count}} yang lain menyertai",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} dan {{count}} yang lain menyertai",
   "open-chat": "Buka sembang",
   "less": "Kurang",
-  "swipe-up-more": "Leret ke atas untuk melihat lebih banyak lagi"
+  "swipe-up-more": "Leret ke atas untuk melihat lebih banyak lagi",
+  "tutorial.promptTitle": "Selamat datang ke Seed Bible. Anda ingin tutorial?",
+  "tutorial.promptBody": "Lawatan berpandu disediakan untuk membantu anda mempelajari selok-belok Seed Bible.",
+  "tutorial.promptDecline": "Tidak, terima kasih",
+  "tutorial.promptAccept": "Ikuti lawatan itu"
 }

@@ -259,6 +259,7 @@
   "no-languages-found": "Не се пронајдени јазици",
   "today-coming-soon": "Денешниот екран доаѓа наскоро",
   "link-to-join-shared-session-copied": "Линк за приклучување кон споделената сесија е копиран во вашата табла со исечоци",
+  "copied-translation-share-link": "Копиран линк за споделување на преводот",
   "anonymous": "Анонимен",
   "no-chat-messages": "Сè уште нема пораки",
   "start-conversation": "Започнете разговор",
@@ -305,7 +306,6 @@
   "inactive": "Неактивен",
   "available": "Достапно",
   "everyone": "Секој",
-  "copied-translation-share-link": "Копиран линк за споделување на преводот",
   "chat-x-joined": "{{name}} се придружи",
   "chat-x-and-x-joined": "{{first}} и {{second}} се придружија",
   "chat-x-and-count-joined": "{{name}} и {{count}} други се придружија",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} и {{count}} други се придружија",
   "open-chat": "Отвори разговор",
   "less": "Помалку",
-  "swipe-up-more": "Повлечете нагоре за да видите повеќе"
+  "swipe-up-more": "Повлечете нагоре за да видите повеќе",
+  "tutorial.promptTitle": "Добредојдовте во Seed Bible. Дали сакате упатство?",
+  "tutorial.promptBody": "Достапна е водена тура за да ви помогне да ги научите сите детали за Seed Bible.",
+  "tutorial.promptDecline": "Не, благодарам",
+  "tutorial.promptAccept": "Одете на турата"
 }

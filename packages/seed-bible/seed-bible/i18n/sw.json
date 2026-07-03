@@ -259,6 +259,7 @@
   "no-languages-found": "Hakuna lugha zilizopatikana",
   "today-coming-soon": "Skrini ya leo inakuja hivi karibuni",
   "link-to-join-shared-session-copied": "Kiungo cha kujiunga na kipindi kilichoshirikiwa kimenakiliwa kwenye ubao wako wa kunakili",
+  "copied-translation-share-link": "Kiungo cha kushiriki tafsiri kimenakiliwa",
   "anonymous": "Mtu Asiyejulikana",
   "no-chat-messages": "Hakuna ujumbe bado",
   "start-conversation": "Anza mazungumzo",
@@ -305,7 +306,6 @@
   "inactive": "Haitumiki",
   "available": "Inapatikana",
   "everyone": "Kila mtu",
-  "copied-translation-share-link": "Kiungo cha kushiriki tafsiri kimenakiliwa",
   "chat-x-joined": "{{name}} amejiunga",
   "chat-x-and-x-joined": "{{first}} na {{second}} walijiunga",
   "chat-x-and-count-joined": "{{name}} na wengine {{count}} walijiunga",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} na wengine {{count}} walijiunga",
   "open-chat": "Fungua gumzo",
   "less": "Kidogo",
-  "swipe-up-more": "Telezesha kidole juu ili kuona zaidi"
+  "swipe-up-more": "Telezesha kidole juu ili kuona zaidi",
+  "tutorial.promptTitle": "Karibu kwenye Biblia ya Mbegu. Ungependa mafunzo?",
+  "tutorial.promptBody": "Ziara inayoongozwa inapatikana ili kukusaidia kujifunza mambo muhimu na ya kipekee kuhusu Biblia ya Mbegu.",
+  "tutorial.promptDecline": "Hapana, asante",
+  "tutorial.promptAccept": "Chukua ziara"
 }

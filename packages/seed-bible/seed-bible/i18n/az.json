@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} və {{count}} nəfər qoşuldu",
   "open-chat": "Açıq söhbət",
   "less": "Daha az",
-  "swipe-up-more": "Daha çoxunu görmək üçün yuxarı sürüşdürün"
+  "swipe-up-more": "Daha çoxunu görmək üçün yuxarı sürüşdürün",
+  "tutorial.promptTitle": "Seed Bible-a xoş gəlmisiniz. Dərslik istərdinizmi?",
+  "tutorial.promptBody": "Seed Bible-ın incəliklərini öyrənməyinizə kömək etmək üçün bələdçi turu mövcuddur.",
+  "tutorial.promptDecline": "Xeyr, təşəkkürlər",
+  "tutorial.promptAccept": "Tura çıxın"
 }

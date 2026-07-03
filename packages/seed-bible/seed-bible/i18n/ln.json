@@ -259,6 +259,7 @@
   "no-languages-found": "Minɔkɔ moko te ezwami",
   "today-coming-soon": "Lelo écran ekoya kala mingi te",
   "link-to-join-shared-session-copied": "Lien moko mpo na kosangana na session oyo bakabolaki esalemaki kopi na tableau de bord na yo",
+  "copied-translation-share-link": "Lien ya kokabola libongoli oyo esalemi kopi",
   "anonymous": "Kozanga kotanga nkombo",
   "no-chat-messages": "Messages moko te nanu",
   "start-conversation": "Bandá lisolo",
@@ -305,7 +306,6 @@
   "inactive": "Ezali kosala te",
   "available": "Ezali",
   "everyone": "Bato nyonso",
-  "copied-translation-share-link": "Lien ya kokabola libongoli oyo esalemi kopi",
   "chat-x-joined": "{{name}} esanganaki",
   "chat-x-and-x-joined": "{{first}} mpe {{second}} basangisaki",
   "chat-x-and-count-joined": "{{name}} mpe {{count}} basusu basangani",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} mpe {{count}} basusu basangani",
   "open-chat": "Fungola lisolo",
   "less": "Moke",
-  "swipe-up-more": "Swipe likolo mpo na komona makambo mosusu"
+  "swipe-up-more": "Swipe likolo mpo na komona makambo mosusu",
+  "tutorial.promptTitle": "Boyei malamu na Seed Bible. Olingi kozwa mateya?",
+  "tutorial.promptBody": "Tour guidé ezali mpo na kosalisa yo oyeba makambo ya kati mpe ya libanda ya Biblia ya Momboto.",
+  "tutorial.promptDecline": "Te, merci",
+  "tutorial.promptAccept": "Salá mobembo yango"
 }

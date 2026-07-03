@@ -259,6 +259,7 @@
   "no-languages-found": "Keeli ei leitud",
   "today-coming-soon": "Tänane ekraan tuleb varsti",
   "link-to-join-shared-session-copied": "Jagatud seansiga liitumise link kopeeriti teie lõikelauale.",
+  "copied-translation-share-link": "Kopeeritud tõlke jagamise link",
   "anonymous": "Anonüümne",
   "no-chat-messages": "Sõnumeid pole veel",
   "start-conversation": "Alusta vestlust",
@@ -305,7 +306,6 @@
   "inactive": "Mitteaktiivne",
   "available": "Saadaval",
   "everyone": "Kõik",
-  "copied-translation-share-link": "Kopeeritud tõlke jagamise link",
   "chat-x-joined": "{{name}} liitus",
   "chat-x-and-x-joined": "{{first}} ja {{second}} liitusid",
   "chat-x-and-count-joined": "{{name}} ja {{count}} teist liitusid",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} ja {{count}} teist liitusid",
   "open-chat": "Ava vestlus",
   "less": "Vähem",
-  "swipe-up-more": "Rohkemate piltide nägemiseks libista üles"
+  "swipe-up-more": "Rohkemate piltide nägemiseks libista üles",
+  "tutorial.promptTitle": "Tere tulemast Seed Bible'i. Kas soovite õpetust?",
+  "tutorial.promptBody": "Saadaval on giidiga ekskursioon, mis aitab teil Seed Bible'i plusse ja miinuseid tundma õppida.",
+  "tutorial.promptDecline": "Ei, aitäh",
+  "tutorial.promptAccept": "Tehke ringkäik"
 }

@@ -259,6 +259,7 @@
   "no-languages-found": "Gjin talen fûn",
   "today-coming-soon": "It skerm fan hjoed komt gau",
   "link-to-join-shared-session-copied": "In keppeling om mei te dwaan oan de dielde sesje is nei jo klamboerd kopiearre",
+  "copied-translation-share-link": "Kopiearre oersettingsdielingslink",
   "anonymous": "Anonym",
   "no-chat-messages": "Noch gjin berjochten",
   "start-conversation": "Begjin in petear",
@@ -305,7 +306,6 @@
   "inactive": "Ynaktyf",
   "available": "Beskikber",
   "everyone": "Elkenien",
-  "copied-translation-share-link": "Kopiearre oersettingsdielingslink",
   "chat-x-joined": "{{name}} is lid wurden",
   "chat-x-and-x-joined": "{{first}} en {{second}} kamen byinoar",
   "chat-x-and-count-joined": "{{name}} en {{count}} oaren binne derby kaam",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} en {{count}} oaren binne derby kaam",
   "open-chat": "Iepenje petear",
   "less": "Minder",
-  "swipe-up-more": "Swipe omheech om mear te sjen"
+  "swipe-up-more": "Swipe omheech om mear te sjen",
+  "tutorial.promptTitle": "Wolkom by Seed Bible. Wolle jo in tutorial?",
+  "tutorial.promptBody": "In rûnlieding is beskikber om jo te helpen de yns en outs fan Seed Bible te learen.",
+  "tutorial.promptDecline": "Nee, tank",
+  "tutorial.promptAccept": "Nim de toer"
 }

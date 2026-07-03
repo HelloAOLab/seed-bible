@@ -259,6 +259,7 @@
   "no-languages-found": "Δεν βρέθηκαν γλώσσες",
   "today-coming-soon": "Η σημερινή οθόνη έρχεται σύντομα",
   "link-to-join-shared-session-copied": "Ένας σύνδεσμος για συμμετοχή στην κοινόχρηστη συνεδρία αντιγράφηκε στο πρόχειρό σας",
+  "copied-translation-share-link": "Αντιγραμμένος σύνδεσμος κοινής χρήσης μετάφρασης",
   "anonymous": "Ανώνυμος",
   "no-chat-messages": "Δεν υπάρχουν ακόμη μηνύματα",
   "start-conversation": "Ξεκινήστε μια συζήτηση",
@@ -305,7 +306,6 @@
   "inactive": "Αδρανής",
   "available": "Διαθέσιμος",
   "everyone": "Καθένας",
-  "copied-translation-share-link": "Αντιγραμμένος σύνδεσμος κοινής χρήσης μετάφρασης",
   "chat-x-joined": "{{name}} εντάχθηκε",
   "chat-x-and-x-joined": "{{first}} και {{second}} εντάχθηκαν",
   "chat-x-and-count-joined": "{{name}} και {{count}} άλλοι συμμετείχαν",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} και {{count}} άλλοι συμμετείχαν",
   "open-chat": "Άνοιγμα συνομιλίας",
   "less": "Μείον",
-  "swipe-up-more": "Σύρετε προς τα πάνω για να δείτε περισσότερα"
+  "swipe-up-more": "Σύρετε προς τα πάνω για να δείτε περισσότερα",
+  "tutorial.promptTitle": "Καλώς ορίσατε στη Βίβλο των Σπόρων. Θα θέλατε ένα σεμινάριο;",
+  "tutorial.promptBody": "Διατίθεται ξενάγηση με ξεναγό για να σας βοηθήσει να μάθετε τα πάντα για τη Βίβλο των Σπόρων.",
+  "tutorial.promptDecline": "Όχι, ευχαριστώ",
+  "tutorial.promptAccept": "Κάντε την περιήγηση"
 }

@@ -259,6 +259,7 @@
   "no-languages-found": "ບໍ່ພົບພາສາໃດ",
   "today-coming-soon": "ມື້ນີ້ໜ້າຈໍຈະມາໄວໆນີ້",
   "link-to-join-shared-session-copied": "ລິ້ງເພື່ອເຂົ້າຮ່ວມເຊດຊັນທີ່ແບ່ງປັນໄດ້ຖືກຄັດລອກໄປໃສ່ຄລິບບອດຂອງທ່ານແລ້ວ",
+  "copied-translation-share-link": "ສຳເນົາຄຳແປແລ້ວ ແບ່ງປັນລິ້ງ",
   "anonymous": "ບໍ່ປະສົງອອກນາມ",
   "no-chat-messages": "ຍັງບໍ່ມີຂໍ້ຄວາມເທື່ອ",
   "start-conversation": "ເລີ່ມການສົນທະນາ",
@@ -305,7 +306,6 @@
   "inactive": "ບໍ່ເຄື່ອນໄຫວ",
   "available": "ມີ",
   "everyone": "ທຸກໆຄົນ",
-  "copied-translation-share-link": "ສຳເນົາຄຳແປແລ້ວ ແບ່ງປັນລິ້ງ",
   "chat-x-joined": "{{name}} ເຂົ້າຮ່ວມແລ້ວ",
   "chat-x-and-x-joined": "{{first}} ແລະ {{second}} ໄດ້ເຂົ້າຮ່ວມແລ້ວ",
   "chat-x-and-count-joined": "{{name}} ແລະ {{count}} ຄົນອື່ນໆ ໄດ້ເຂົ້າຮ່ວມ",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} ແລະ {{count}} ຄົນອື່ນໆ ໄດ້ເຂົ້າຮ່ວມ",
   "open-chat": "ເປີດການສົນທະນາ",
   "less": "ໜ້ອຍລົງ",
-  "swipe-up-more": "ປັດຂຶ້ນເພື່ອເບິ່ງເພີ່ມເຕີມ"
+  "swipe-up-more": "ປັດຂຶ້ນເພື່ອເບິ່ງເພີ່ມເຕີມ",
+  "tutorial.promptTitle": "ຍິນດີຕ້ອນຮັບສູ່ Seed Bible. ເຈົ້າຢາກໄດ້ບົດຮຽນບໍ?",
+  "tutorial.promptBody": "ມີການທ່ອງທ່ຽວແບບມີຄູ່ມືເພື່ອຊ່ວຍໃຫ້ທ່ານຮຽນຮູ້ລາຍລະອຽດຂອງ Seed Bible.",
+  "tutorial.promptDecline": "ບໍ່, ຂອບໃຈ",
+  "tutorial.promptAccept": "ໄປທ່ຽວຊົມ"
 }

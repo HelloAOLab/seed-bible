@@ -259,6 +259,7 @@
   "no-languages-found": "Hiçbir dil bulunamadı.",
   "today-coming-soon": "Bugünkü ekran yakında geliyor.",
   "link-to-join-shared-session-copied": "Paylaşılan oturuma katılmak için bir bağlantı panonuza kopyalandı.",
+  "copied-translation-share-link": "Kopyalanan çeviri paylaşım bağlantısı",
   "anonymous": "Anonim",
   "no-chat-messages": "Henüz mesaj yok.",
   "start-conversation": "Bir konuşma başlatın",
@@ -305,7 +306,6 @@
   "inactive": "Etkin değil",
   "available": "Mevcut",
   "everyone": "Herkes",
-  "copied-translation-share-link": "Kopyalanan çeviri paylaşım bağlantısı",
   "chat-x-joined": "{{name}} katıldı",
   "chat-x-and-x-joined": "{{first}} ve {{second}} birleşti",
   "chat-x-and-count-joined": "{{name}} ve {{count}} kişi daha katıldı.",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} ve {{count}} kişi daha katıldı.",
   "open-chat": "Açık sohbet",
   "less": "Az",
-  "swipe-up-more": "Daha fazlasını görmek için yukarı kaydırın."
+  "swipe-up-more": "Daha fazlasını görmek için yukarı kaydırın.",
+  "tutorial.promptTitle": "Seed Bible'a hoş geldiniz. Bir eğitim videosu ister misiniz?",
+  "tutorial.promptBody": "Seed Bible'ın inceliklerini öğrenmenize yardımcı olacak rehberli bir tur mevcuttur.",
+  "tutorial.promptDecline": "Hayır, teşekkürler",
+  "tutorial.promptAccept": "Tura katılın"
 }

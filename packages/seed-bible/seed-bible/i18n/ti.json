@@ -259,6 +259,7 @@
   "no-languages-found": "ቋንቋታት ኣይተረኽበን።",
   "today-coming-soon": "ናይ ሎሚ ስክሪን ኣብ ቀረባ እዋን",
   "link-to-join-shared-session-copied": "ናብቲ ዝተኻፈለ ክፍለ ግዜ ንምጽንባር ዝሕግዝ ሊንክ ናብ ቅንጥብጣብ ሰሌዳኻ ተቐዲሑ",
+  "copied-translation-share-link": "ዝተቐድሐ ትርጉም ሼር ሊንክ",
   "anonymous": "ሽሙ ዘይተፈልጠ",
   "no-chat-messages": "ገና መልእኽቲ የለን",
   "start-conversation": "ዕላል ጀምር",
@@ -305,7 +306,6 @@
   "inactive": "ዘይንጡፍ",
   "available": "ቅሩብ",
   "everyone": "ኩሉሰብ",
-  "copied-translation-share-link": "ዝተቐድሐ ትርጉም ሼር ሊንክ",
   "chat-x-joined": "{{name}} ተጸንቢሩ",
   "chat-x-and-x-joined": "{{first}} ን {{second}} ን ተጸንቢሮም እዮም።",
   "chat-x-and-count-joined": "{{name}} ከምኡውን {{count}} ካልኦት ተጸንቢሮም እዮም።",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} ከምኡውን {{count}} ካልኦት ተጸንቢሮም እዮም።",
   "open-chat": "ክፉት ዕላል",
   "less": "ዝወሓደ",
-  "swipe-up-more": "ተወሳኺ ንምርኣይ ንላዕሊ ስዋይፕ ግበር"
+  "swipe-up-more": "ተወሳኺ ንምርኣይ ንላዕሊ ስዋይፕ ግበር",
+  "tutorial.promptTitle": "እንቋዕ ናብ ዘርኢ መጽሓፍ ቅዱስ ብደሓን መጻእኩም። ትምህርቲ ትደልዩ ዶ?",
+  "tutorial.promptBody": "ውሽጣውን ደጋውን ናይ ዘርኢ መጽሓፍ ቅዱስ ንኽትመሃር ዝሕግዘካ ብመሪሕ ዑደት ኣሎ።",
+  "tutorial.promptDecline": "ኣይፋልን የቐንየለይ",
+  "tutorial.promptAccept": "ዑደት ውሰድዎ።"
 }

@@ -259,6 +259,7 @@
   "no-languages-found": "Không tìm thấy ngôn ngữ nào",
   "today-coming-soon": "Màn hình hôm nay sẽ sớm ra mắt.",
   "link-to-join-shared-session-copied": "Một liên kết để tham gia phiên họp chung đã được sao chép vào khay nhớ tạm của bạn.",
+  "copied-translation-share-link": "Đã sao chép liên kết chia sẻ bản dịch",
   "anonymous": "Vô danh",
   "no-chat-messages": "Chưa có tin nhắn nào",
   "start-conversation": "Bắt đầu một cuộc trò chuyện",
@@ -305,7 +306,6 @@
   "inactive": "Không hoạt động",
   "available": "Có sẵn",
   "everyone": "Mọi người",
-  "copied-translation-share-link": "Đã sao chép liên kết chia sẻ bản dịch",
   "chat-x-joined": "{{name}} đã tham gia",
   "chat-x-and-x-joined": "{{first}} và {{second}} đã tham gia",
   "chat-x-and-count-joined": "{{name}} và {{count}} người khác đã tham gia",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} và {{count}} người khác đã tham gia",
   "open-chat": "Mở trò chuyện",
   "less": "Ít hơn",
-  "swipe-up-more": "Vuốt lên để xem thêm"
+  "swipe-up-more": "Vuốt lên để xem thêm",
+  "tutorial.promptTitle": "Chào mừng đến với Seed Bible. Bạn có muốn xem hướng dẫn không?",
+  "tutorial.promptBody": "Có tour tham quan có hướng dẫn viên giúp bạn tìm hiểu mọi ngóc ngách của Seed Bible.",
+  "tutorial.promptDecline": "Không, cảm ơn",
+  "tutorial.promptAccept": "Hãy tham gia chuyến tham quan."
 }

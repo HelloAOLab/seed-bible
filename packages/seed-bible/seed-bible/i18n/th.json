@@ -259,6 +259,7 @@
   "no-languages-found": "ไม่พบภาษาใดๆ",
   "today-coming-soon": "หน้าจอวันนี้จะมาเร็วๆ นี้",
   "link-to-join-shared-session-copied": "ลิงก์สำหรับเข้าร่วมเซสชันที่ใช้ร่วมกันถูกคัดลอกไปยังคลิปบอร์ดของคุณแล้ว",
+  "copied-translation-share-link": "คัดลอกลิงก์แชร์คำแปล",
   "anonymous": "นิรนาม",
   "no-chat-messages": "ยังไม่มีข้อความใดๆ",
   "start-conversation": "เริ่มต้นการสนทนา",
@@ -305,7 +306,6 @@
   "inactive": "ไม่ใช้งาน",
   "available": "มีอยู่",
   "everyone": "ทุกคน",
-  "copied-translation-share-link": "คัดลอกลิงก์แชร์คำแปล",
   "chat-x-joined": "{{name}} เข้าร่วม",
   "chat-x-and-x-joined": "{{first}} และ {{second}} เข้าร่วม",
   "chat-x-and-count-joined": "{{name}} และ {{count}} คนอื่นๆ เข้าร่วม",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} และ {{count}} คนอื่นๆ เข้าร่วม",
   "open-chat": "เปิดแชท",
   "less": "น้อย",
-  "swipe-up-more": "เลื่อนขึ้นเพื่อดูเพิ่มเติม"
+  "swipe-up-more": "เลื่อนขึ้นเพื่อดูเพิ่มเติม",
+  "tutorial.promptTitle": "ยินดีต้อนรับสู่ Seed Bible คุณต้องการคำแนะนำเบื้องต้นหรือไม่?",
+  "tutorial.promptBody": "มีบริการนำชมเพื่อช่วยให้คุณเรียนรู้รายละเอียดต่างๆ ของ Seed Bible อย่างครบถ้วน",
+  "tutorial.promptDecline": "ไม่เป็นไร ขอบคุณ",
+  "tutorial.promptAccept": "ไปทัวร์กันเลย"
 }

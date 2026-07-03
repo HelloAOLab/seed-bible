@@ -259,6 +259,7 @@
   "no-languages-found": "No se encontraron idiomas",
   "today-coming-soon": "La pantalla de hoy estará disponible pronto.",
   "link-to-join-shared-session-copied": "Se ha copiado en el portapapeles un enlace para unirse a la sesión compartida.",
+  "copied-translation-share-link": "Enlace para compartir la traducción copiada",
   "anonymous": "Anónimo",
   "no-chat-messages": "Aún no hay mensajes.",
   "start-conversation": "Inicia una conversación",
@@ -305,7 +306,6 @@
   "inactive": "Inactivo",
   "available": "Disponible",
   "everyone": "Todos",
-  "copied-translation-share-link": "Enlace para compartir la traducción copiada",
   "chat-x-joined": "{{name}} se unió",
   "chat-x-and-x-joined": "{{first}} y {{second}} se unieron",
   "chat-x-and-count-joined": "{{name}} y {{count}} otros se unieron",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} y {{count}} otros se unieron",
   "open-chat": "Abrir chat",
   "less": "Menos",
-  "swipe-up-more": "Desliza hacia arriba para ver más."
+  "swipe-up-more": "Desliza hacia arriba para ver más.",
+  "tutorial.promptTitle": "Bienvenido a Seed Bible. ¿Te gustaría un tutorial?",
+  "tutorial.promptBody": "Se ofrece una visita guiada para que puedas conocer a fondo Seed Bible.",
+  "tutorial.promptDecline": "No, gracias",
+  "tutorial.promptAccept": "Realice la visita guiada."
 }

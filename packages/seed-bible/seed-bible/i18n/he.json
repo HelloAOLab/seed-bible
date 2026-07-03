@@ -259,6 +259,7 @@
   "no-languages-found": "לא נמצאו שפות",
   "today-coming-soon": "מסך היום יגיע בקרוב",
   "link-to-join-shared-session-copied": "קישור להצטרפות לסשן המשותף הועתק ללוח שלך",
+  "copied-translation-share-link": "קישור שיתוף התרגום הועתק",
   "anonymous": "אֲנוֹנִימִי",
   "no-chat-messages": "אין עדיין הודעות",
   "start-conversation": "התחל שיחה",
@@ -305,7 +306,6 @@
   "inactive": "לֹא פָּעִיל",
   "available": "זָמִין",
   "everyone": "כֹּל אֶחָד",
-  "copied-translation-share-link": "קישור שיתוף התרגום הועתק",
   "chat-x-joined": "הצטרף {{name}}",
   "chat-x-and-x-joined": "{{first}} ו- {{second}} הצטרפו",
   "chat-x-and-count-joined": "{{name}} ו- {{count}} נוספים הצטרפו",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} ו- {{count}} נוספים הצטרפו",
   "open-chat": "פתח צ'אט",
   "less": "פָּחוֹת",
-  "swipe-up-more": "החליקו למעלה כדי לראות עוד"
+  "swipe-up-more": "החליקו למעלה כדי לראות עוד",
+  "tutorial.promptTitle": "ברוכים הבאים לספר התנ\"ך של זרעים. האם תרצה מדריך?",
+  "tutorial.promptBody": "סיור מודרך זמין שיעזור לכם ללמוד את כל הפרטים על תנ\"ך הזרעים.",
+  "tutorial.promptDecline": "לא, תודה",
+  "tutorial.promptAccept": "צא לסיור"
 }

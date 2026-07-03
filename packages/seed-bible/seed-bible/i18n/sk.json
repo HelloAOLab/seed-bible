@@ -259,6 +259,7 @@
   "no-languages-found": "Nenašli sa žiadne jazyky",
   "today-coming-soon": "Dnešná obrazovka bude čoskoro k dispozícii",
   "link-to-join-shared-session-copied": "Odkaz na pripojenie k zdieľanej relácii bol skopírovaný do schránky",
+  "copied-translation-share-link": "Odkaz na zdieľanie prekladu bol skopírovaný",
   "anonymous": "Anonymný",
   "no-chat-messages": "Zatiaľ žiadne správy",
   "start-conversation": "Začať konverzáciu",
@@ -305,7 +306,6 @@
   "inactive": "Neaktívne",
   "available": "K dispozícii",
   "everyone": "Každý",
-  "copied-translation-share-link": "Odkaz na zdieľanie prekladu bol skopírovaný",
   "chat-x-joined": "{{name}} sa pridal/a",
   "chat-x-and-x-joined": "{{first}} a {{second}} sa pridali",
   "chat-x-and-count-joined": "{{name}} a {{count}} ďalších sa pridali",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} a {{count}} ďalších sa pridali",
   "open-chat": "Otvoriť chat",
   "less": "Menej",
-  "swipe-up-more": "Pre zobrazenie ďalších potiahnutí prstom nahor"
+  "swipe-up-more": "Pre zobrazenie ďalších potiahnutí prstom nahor",
+  "tutorial.promptTitle": "Vitajte v Seed Bible. Chcete tutoriál?",
+  "tutorial.promptBody": "K dispozícii je prehliadka so sprievodcom, ktorá vám pomôže dozvedieť sa všetko o Seed Bible.",
+  "tutorial.promptDecline": "Nie, ďakujem",
+  "tutorial.promptAccept": "Absolvujte prehliadku"
 }

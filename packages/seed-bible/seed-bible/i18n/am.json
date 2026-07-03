@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} እና {{count}} ሌሎች ተቀላቅለዋል",
   "open-chat": "ውይይት ክፈት",
   "less": "ያነሰ",
-  "swipe-up-more": "ተጨማሪ ለማየት ወደ ላይ ያንሸራትቱ"
+  "swipe-up-more": "ተጨማሪ ለማየት ወደ ላይ ያንሸራትቱ",
+  "tutorial.promptTitle": "ወደ Seed Bible እንኳን በደህና መጡ። አጋዥ ስልጠና ይፈልጋሉ?",
+  "tutorial.promptBody": "የ Seed Bible ውስጣዊና ውጫዊ ነገሮችን ለመማር የሚያግዝዎት የሚመራ ጉብኝት አለ።",
+  "tutorial.promptDecline": "አልፈልግም፣አመሰግናለሁ",
+  "tutorial.promptAccept": "ጉብኝቱን ይውሰዱ"
 }

@@ -259,6 +259,7 @@
   "no-languages-found": "Мови не знайдено",
   "today-coming-soon": "Сьогоднішній екран з'явиться незабаром",
   "link-to-join-shared-session-copied": "Посилання для приєднання до спільного сеансу скопійовано до буфера обміну",
+  "copied-translation-share-link": "Скопійоване посилання для обміну перекладом",
   "anonymous": "Анонім",
   "no-chat-messages": "Поки що немає повідомлень",
   "start-conversation": "Почати розмову",
@@ -305,7 +306,6 @@
   "inactive": "Неактивний",
   "available": "Доступно",
   "everyone": "Усі",
-  "copied-translation-share-link": "Скопійоване посилання для обміну перекладом",
   "chat-x-joined": "{{name}} приєднався(лася)",
   "chat-x-and-x-joined": "{{first}} та {{second}} приєдналися",
   "chat-x-and-count-joined": "{{name}} та ще {{count}} інших приєдналися",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} та ще {{count}} інших приєдналися",
   "open-chat": "Відкрити чат",
   "less": "Менше",
-  "swipe-up-more": "Проведіть пальцем угору, щоб переглянути більше"
+  "swipe-up-more": "Проведіть пальцем угору, щоб переглянути більше",
+  "tutorial.promptTitle": "Ласкаво просимо до Біблії Насінин. Бажаєте отримати навчальний посібник?",
+  "tutorial.promptBody": "Доступна екскурсія з гідом, яка допоможе вам дізнатися про всі тонкощі Біблії насіння.",
+  "tutorial.promptDecline": "Ні, дякую.",
+  "tutorial.promptAccept": "Відвідайте екскурсію"
 }

@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} এবং {{count}} জন অন্য ব্যক্তি যোগদান করেছেন",
   "open-chat": "খোলা চ্যাট",
   "less": "কম",
-  "swipe-up-more": "আরও দেখতে উপরে সোয়াইপ করুন"
+  "swipe-up-more": "আরও দেখতে উপরে সোয়াইপ করুন",
+  "tutorial.promptTitle": "সীড বাইবেলে আপনাকে স্বাগতম। আপনি কি একটি টিউটোরিয়াল চান?",
+  "tutorial.promptBody": "সীড বাইবেলের খুঁটিনাটি জানতে একটি গাইডেড ট্যুরের ব্যবস্থা রয়েছে।",
+  "tutorial.promptDecline": "না, ধন্যবাদ।",
+  "tutorial.promptAccept": "ভ্রমণ করুন"
 }

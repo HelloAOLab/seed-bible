@@ -259,6 +259,7 @@
   "no-languages-found": "Nije pronađen nijedan jezik",
   "today-coming-soon": "Današnji ekran uskoro stiže",
   "link-to-join-shared-session-copied": "Link za pridruživanje dijeljenoj sesiji je kopiran u vaš međuspremnik",
+  "copied-translation-share-link": "Link za dijeljenje prijevoda je kopiran",
   "anonymous": "Anonimno",
   "no-chat-messages": "Još nema poruka",
   "start-conversation": "Započnite razgovor",
@@ -305,7 +306,6 @@
   "inactive": "Neaktivno",
   "available": "Dostupno",
   "everyone": "Svi",
-  "copied-translation-share-link": "Link za dijeljenje prijevoda je kopiran",
   "chat-x-joined": "{{name}} se pridružio/la",
   "chat-x-and-x-joined": "{{first}} i {{second}} su se pridružili",
   "chat-x-and-count-joined": "{{name}} i još {{count}} drugih su se pridružili",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} i još {{count}} drugih su se pridružili",
   "open-chat": "Otvori chat",
   "less": "Manje",
-  "swipe-up-more": "Prevucite prstom prema gore da biste vidjeli više"
+  "swipe-up-more": "Prevucite prstom prema gore da biste vidjeli više",
+  "tutorial.promptTitle": "Dobrodošli u Seed Bible. Želite li tutorijal?",
+  "tutorial.promptBody": "Dostupna je vođena tura koja će vam pomoći da saznate sve o Seed Bible.",
+  "tutorial.promptDecline": "Ne, hvala",
+  "tutorial.promptAccept": "Krenite na obilazak"
 }

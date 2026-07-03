@@ -259,6 +259,7 @@
   "no-languages-found": "Engin tungumál fundust",
   "today-coming-soon": "Skjárinn í dag kemur bráðum",
   "link-to-join-shared-session-copied": "Tengill til að taka þátt í sameiginlegu lotunni var afritaður á klippiborðið þitt",
+  "copied-translation-share-link": "Afritaði tengil til að deila þýðingu",
   "anonymous": "Nafnlaust",
   "no-chat-messages": "Engin skilaboð ennþá",
   "start-conversation": "Hefja samtal",
@@ -305,7 +306,6 @@
   "inactive": "Óvirkt",
   "available": "Fáanlegt",
   "everyone": "Allir",
-  "copied-translation-share-link": "Afritaði tengil til að deila þýðingu",
   "chat-x-joined": "{{name}} gekk til liðs við",
   "chat-x-and-x-joined": "{{first}} og {{second}} gengu til liðs við",
   "chat-x-and-count-joined": "{{name}} og {{count}} aðrir gengu til liðs við sig",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} og {{count}} aðrir gengu til liðs við sig",
   "open-chat": "Opna spjall",
   "less": "Minna",
-  "swipe-up-more": "Strjúktu upp til að sjá meira"
+  "swipe-up-more": "Strjúktu upp til að sjá meira",
+  "tutorial.promptTitle": "Velkomin(n) í Seed Bible. Viltu fá kennsluefni?",
+  "tutorial.promptBody": "Leiðsögn er í boði til að hjálpa þér að læra allt um Seed Bible.",
+  "tutorial.promptDecline": "Nei, takk",
+  "tutorial.promptAccept": "Taktu skoðunarferðina"
 }

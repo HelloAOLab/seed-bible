@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} и {{count}} други се присъединиха",
   "open-chat": "Отвори чат",
   "less": "По-малко",
-  "swipe-up-more": "Плъзнете нагоре, за да видите още"
+  "swipe-up-more": "Плъзнете нагоре, за да видите още",
+  "tutorial.promptTitle": "Добре дошли в Seed Bible. Искате ли урок?",
+  "tutorial.promptBody": "Предлага се обиколка с екскурзовод, която ще ви помогне да научите тънкостите на Библията на семената.",
+  "tutorial.promptDecline": "Не, благодаря",
+  "tutorial.promptAccept": "Направете обиколката"
 }

@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "انضم {{name}} و {{count}} آخرون",
   "open-chat": "دردشة مفتوحة",
   "less": "أقل",
-  "swipe-up-more": "اسحب لأعلى لعرض المزيد"
+  "swipe-up-more": "اسحب لأعلى لعرض المزيد",
+  "tutorial.promptTitle": "أهلاً بكم في موقع \"سيد بايبل\". هل ترغبون في الحصول على شرح؟",
+  "tutorial.promptBody": "تتوفر جولة إرشادية لمساعدتك على التعرف على تفاصيل وخبايا \"سيد بايبل\".",
+  "tutorial.promptDecline": "ًلا شكرا",
+  "tutorial.promptAccept": "قم بجولة"
 }

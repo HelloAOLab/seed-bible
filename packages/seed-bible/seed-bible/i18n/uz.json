@@ -259,6 +259,7 @@
   "no-languages-found": "Hech qanday til topilmadi",
   "today-coming-soon": "Bugungi ekran tez orada chiqadi",
   "link-to-join-shared-session-copied": "Umumiy sessiyaga qo'shilish havolasi clipboardga nusxalandi",
+  "copied-translation-share-link": "Tarjimani ulashish havolasi nusxalandi",
   "anonymous": "Anonim",
   "no-chat-messages": "Hali xabar yo'q",
   "start-conversation": "Suhbatni boshlang",
@@ -305,7 +306,6 @@
   "inactive": "Faol emas",
   "available": "Mavjud",
   "everyone": "Hamma",
-  "copied-translation-share-link": "Tarjimani ulashish havolasi nusxalandi",
   "chat-x-joined": "{{name}} qo'shildi",
   "chat-x-and-x-joined": "{{first}} va {{second}} qo'shildi",
   "chat-x-and-count-joined": "{{name}} va yana {{count}} kishi qo'shildi",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} va yana {{count}} kishi qo'shildi",
   "open-chat": "Chatni ochish",
   "less": "Ozroq",
-  "swipe-up-more": "Batafsil ma'lumot olish uchun yuqoriga suring"
+  "swipe-up-more": "Batafsil ma'lumot olish uchun yuqoriga suring",
+  "tutorial.promptTitle": "Seed Bible’ga xush kelibsiz. Qo‘llanma kerakmi?",
+  "tutorial.promptBody": "Seed Bible kitobining nozik va nozik tomonlarini o'rganishingizga yordam beradigan ekskursiya mavjud.",
+  "tutorial.promptDecline": "Yo'q rahmat",
+  "tutorial.promptAccept": "Ekskursiyaga chiqing"
 }

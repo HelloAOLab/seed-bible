@@ -259,6 +259,7 @@
   "no-languages-found": "ဘာသာစကားများ မတွေ့ပါ",
   "today-coming-soon": "ဒီနေ့ မျက်နှာပြင် မကြာခင် လာတော့မယ်",
   "link-to-join-shared-session-copied": "မျှဝေထားသော အစည်းအဝေးသို့ ဝင်ရောက်ရန် လင့်ခ်ကို သင့်ကလစ်ဘုတ်သို့ ကူးယူပြီးပါပြီ",
+  "copied-translation-share-link": "ဘာသာပြန်ဆိုချက် ကူးယူပြီး လင့်ခ်မျှဝေပါ",
   "anonymous": "အမည်မဖော်လိုသူ",
   "no-chat-messages": "မက်ဆေ့ချ်များ မရှိသေးပါ",
   "start-conversation": "စကားဝိုင်းတစ်ခု စတင်ပါ",
@@ -305,7 +306,6 @@
   "inactive": "အသုံးမပြုတော့ပါ",
   "available": "ရရှိနိုင်ပါသည်",
   "everyone": "လူတိုင်း",
-  "copied-translation-share-link": "ဘာသာပြန်ဆိုချက် ကူးယူပြီး လင့်ခ်မျှဝေပါ",
   "chat-x-joined": "{{name}} ဝင်ရောက်ခဲ့သည်",
   "chat-x-and-x-joined": "{{first}} နှင့် {{second}} တို့သည် ပူးပေါင်းခဲ့ကြသည်",
   "chat-x-and-count-joined": "{{name}} နှင့် အခြား {{count}} တို့သည် ဝင်ရောက်လာကြသည်။",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} နှင့် အခြား {{count}} တို့သည် ဝင်ရောက်လာကြသည်။",
   "open-chat": "ချတ်ဖွင့်ပါ",
   "less": "နည်းသော",
-  "swipe-up-more": "ပိုမိုကြည့်ရှုရန် အပေါ်သို့ ပွတ်ဆွဲပါ"
+  "swipe-up-more": "ပိုမိုကြည့်ရှုရန် အပေါ်သို့ ပွတ်ဆွဲပါ",
+  "tutorial.promptTitle": "Seed Bible မှ ကြိုဆိုပါသည်။ သင်ခန်းစာတစ်ခု လိုချင်ပါသလား။",
+  "tutorial.promptBody": "Seed Bible ရဲ့ အသေးစိတ်အချက်အလက်တွေကို လေ့လာနိုင်ဖို့ လမ်းညွှန်ခရီးစဉ်တစ်ခု ရရှိနိုင်ပါတယ်။",
+  "tutorial.promptDecline": "ရပါတယ်ကျေးဇူးပါ",
+  "tutorial.promptAccept": "ခရီးစဉ်ကို လိုက်ပါပါ"
 }

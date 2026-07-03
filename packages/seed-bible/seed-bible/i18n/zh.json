@@ -259,6 +259,7 @@
   "no-languages-found": "未找到任何语言",
   "today-coming-soon": "今天屏幕即将上线",
   "link-to-join-shared-session-copied": "加入共享会话的链接已复制到您的剪贴板。",
+  "copied-translation-share-link": "复制的翻译分享链接",
   "anonymous": "匿名的",
   "no-chat-messages": "暂无消息",
   "start-conversation": "开始对话",
@@ -305,7 +306,6 @@
   "inactive": "非活跃状态",
   "available": "可用的",
   "everyone": "每个人",
-  "copied-translation-share-link": "复制的翻译分享链接",
   "chat-x-joined": "{{name}}加入了",
   "chat-x-and-x-joined": "{{first}}和{{second}}合并",
   "chat-x-and-count-joined": "{{name}}和其他{{count}}人加入了",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}}和其他{{count}}人加入了",
   "open-chat": "开放聊天",
   "less": "较少的",
-  "swipe-up-more": "向上滑动查看更多"
+  "swipe-up-more": "向上滑动查看更多",
+  "tutorial.promptTitle": "欢迎来到种子圣经。您需要教程吗？",
+  "tutorial.promptBody": "我们提供导览服务，帮助您了解 Seed Bible 的方方面面。",
+  "tutorial.promptDecline": "不，谢谢",
+  "tutorial.promptAccept": "参加参观"
 }

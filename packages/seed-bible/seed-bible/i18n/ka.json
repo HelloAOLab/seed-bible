@@ -259,6 +259,7 @@
   "no-languages-found": "ენები ვერ მოიძებნა",
   "today-coming-soon": "დღევანდელი ეკრანი მალე გამოვა",
   "link-to-join-shared-session-copied": "გაზიარებულ სესიასთან შეერთების ბმული თქვენს ბუფერში დაკოპირდა",
+  "copied-translation-share-link": "კოპირებული თარგმანის გაზიარების ბმული",
   "anonymous": "ანონიმური",
   "no-chat-messages": "შეტყობინებები ჯერ არ არის",
   "start-conversation": "საუბრის დაწყება",
@@ -305,7 +306,6 @@
   "inactive": "არააქტიური",
   "available": "ხელმისაწვდომია",
   "everyone": "ყველა",
-  "copied-translation-share-link": "კოპირებული თარგმანის გაზიარების ბმული",
   "chat-x-joined": "{{name}} შემოუერთდა",
   "chat-x-and-x-joined": "{{first}} და {{second}} შეუერთდნენ",
   "chat-x-and-count-joined": "{{name}} და {{count}} სხვა შემოუერთდა",
@@ -313,5 +313,9 @@
   "chat-x-and-count-joined_other": "{{name}} და {{count}} სხვა შემოუერთდა",
   "open-chat": "ჩატის გახსნა",
   "less": "ნაკლები",
-  "swipe-up-more": "მეტის სანახავად გადაფურცლეთ ზემოთ"
+  "swipe-up-more": "მეტის სანახავად გადაფურცლეთ ზემოთ",
+  "tutorial.promptTitle": "კეთილი იყოს თქვენი მობრძანება Seed Bible-ში. გსურთ სახელმძღვანელო?",
+  "tutorial.promptBody": "ხელმისაწვდომია გიდის თანხლებით ტური, რათა გაიგოთ „სეედ ბიბლიის“ ყველა დეტალი.",
+  "tutorial.promptDecline": "არა, გმადლობთ",
+  "tutorial.promptAccept": "გაიარეთ ტური"
 }
