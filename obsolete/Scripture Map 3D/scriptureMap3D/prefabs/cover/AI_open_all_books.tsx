@@ -1,1 +1,1 @@
-whisper(getBots("isSelectAllBooksButton", true), "Action")
+whisper(getBots("isSelectAllBooksButton", true), "Action");

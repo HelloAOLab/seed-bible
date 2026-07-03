@@ -1,1 +1,6 @@
-sendIcon({ type: 'eraser', trayColor: "#ffffff", dragerColor: "#000000", action: null });
+sendIcon({
+  type: "eraser",
+  trayColor: "#ffffff",
+  dragerColor: "#000000",
+  action: null,
+});

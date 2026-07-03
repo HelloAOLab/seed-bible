@@ -1,1 +1,1 @@
-thisBot.defineGlobals()
+thisBot.defineGlobals();

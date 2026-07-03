@@ -27,8 +27,10 @@ import {
   handleGridKeyNav,
   handleHorizontalListKeyNav,
 } from "../components/KeyboardNav";
+import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
 import { SessionUserAvatar } from "./Avatar";
 import { useEffect, useRef } from "preact/hooks";
+import { getExtensionExports } from "../managers";
 
 interface SidebarProps {
   state: SeedBibleState;
@@ -1443,18 +1445,23 @@ export function Tabs(props: TabsProps) {
               {t("tabs", { defaultValue: "Tabs" })}
             </h3>
             <div className="sb-sidebar-tabs-header-actions">
-              {/* Today/Tasks button temporarily disabled until the Today screen ships.
               <button
                 type="button"
                 className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-tasks-button"
                 aria-label={t("tasks", { defaultValue: "Tasks" })}
                 title={t("tasks", { defaultValue: "Tasks" })}
                 onClick={() => {
-                  app.toast(
-                    t("today-coming-soon", {
-                      defaultValue: "Today screen is coming soon",
-                    })
-                  );
+                  const today =
+                    getExtensionExports<TodayScreenAPI>("today-screen");
+                  if (today) {
+                    today.open();
+                  } else {
+                    app.toast(
+                      t("today-coming-soon", {
+                        defaultValue: "Today screen is coming soon",
+                      })
+                    );
+                  }
                 }}
               >
                 <svg
@@ -1488,7 +1495,6 @@ export function Tabs(props: TabsProps) {
                   />
                 </svg>
               </button>
-              */}
 
               <button
                 type="button"

@@ -1,1 +1,1 @@
-thisBot.changeSize()
+thisBot.changeSize();

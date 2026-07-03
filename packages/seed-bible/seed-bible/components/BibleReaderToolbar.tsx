@@ -18,6 +18,8 @@ import {
   getSelfDisplayName,
   openBookmarkCategoryModal,
 } from "./Tabs";
+import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
+import { getExtensionExports } from "../managers";
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
 
@@ -814,7 +816,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           >
             {isSmallScreen.value ? (
               <>
-                {/* Today tab temporarily disabled until the Today screen ships.
                 <MobileBottomTab
                   iconNode={
                     <svg
@@ -852,20 +853,26 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   active={activeMobileTab.value === "today"}
                   onClick={() => {
                     isMoreMenuOpen.value = false;
+
                     sidebar.closeSearchPanel();
                     sidebar.closeChatPanel();
                     sidebar.closeSettings();
                     sidebar.closeSidebar();
                     localBottomTab.value = "today";
 
-                    props.state.app.toast(
-                      t("today-coming-soon", {
-                        defaultValue: "Today screen is coming soon",
-                      })
-                    );
+                    const today =
+                      getExtensionExports<TodayScreenAPI>("today-screen");
+                    if (today) {
+                      today.open();
+                    } else {
+                      props.state.app.toast(
+                        t("today-coming-soon", {
+                          defaultValue: "Today screen is coming soon",
+                        })
+                      );
+                    }
                   }}
                 />
-                */}
 
                 <MobileBottomTab
                   iconNode={<SelfAvatarVisual state={props.state} />}
