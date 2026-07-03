@@ -217,6 +217,18 @@ export default defineConfig(({ isSsrBuild }) => ({
       "@packages": path.resolve(__dirname, "packages"),
       // ...moduleAliases,
     },
+    // Force a single preact instance across the host app and dynamically-loaded
+    // extensions. Two copies (the CasualOS SDK pulls in preact 10.28.4 while the
+    // app uses the catalog's 10.29.2) break hooks with
+    // "Cannot read properties of undefined (reading '__H')".
+    dedupe: [
+      "preact",
+      "preact/hooks",
+      "preact/compat",
+      "preact/jsx-runtime",
+      "@preact/signals",
+      "@preact/signals-core",
+    ],
   },
 
   test: {

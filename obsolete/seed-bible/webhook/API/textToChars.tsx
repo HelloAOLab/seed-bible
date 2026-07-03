@@ -1,2 +1,2 @@
 const text = that;
-return text.split("").map(c => c.charCodeAt(0));
+return text.split("").map((c) => c.charCodeAt(0));

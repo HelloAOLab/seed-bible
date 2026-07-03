@@ -1,12 +1,5 @@
-
-
 const { useState, useEffect, useCallback } = os.appHooks;
 
-function remoteDataManager({
+function remoteDataManager({}) {}
 
-}) {
-
-
-}
-
-export default remoteDataManager
+export default remoteDataManager;

@@ -1,10 +1,28 @@
 import { useSignal } from "@preact/signals";
 import { useI18n } from "../i18n/I18nManager";
-import { closeContextMenus } from "./ContextMenu";
+import {
+  ChatView,
+  getParticipantAvatar,
+  getParticipantDisplayLabel,
+} from "./ChatView";
+import {
+  closeContextMenus,
+  ContextMenuItem,
+  ContextMenuWithButton,
+} from "./ContextMenu";
 import { getDefaultTranslationForLanguage } from "../managers/BibleReadingManager";
+import type {
+  ChatMessage,
+  ChatProvider,
+  ChatSession,
+} from "../managers/ChatsManager";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import type { ReaderTab } from "../managers/TabsManager";
 import { useEffect, useRef } from "preact/hooks";
+import { translateTitle } from "./Utils";
+import { Avatar } from "./Avatar";
+import { DateTime } from "luxon";
+import { ChatParticipantsIcon } from "./icons";
 
 interface SearchResult {
   id: string;
@@ -16,6 +34,92 @@ interface SearchResult {
   verseNumber: number | null;
   reference: string;
   text: string;
+}
+
+function getLatestChatMessage(chat: ChatSession): ChatMessage | null {
+  return chat.messages.value.at(-1) ?? null;
+}
+
+function getChatTitle(
+  chat: ChatSession,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  const participants = chat.participants.value;
+
+  const onlySelf = participants.every((p) => p.isSelf);
+
+  if (onlySelf && "isShared" in chat && chat.isShared) {
+    return t("session-chat-just-you", {
+      defaultValue: "In-session chat (Just You)",
+    });
+  }
+
+  const preferred = participants.filter((participant) => !participant.isSelf);
+  const pool = preferred.length > 0 ? preferred : participants;
+
+  const names = pool
+    .map((participant) => getParticipantDisplayLabel(participant, t))
+    .filter((name) => name.length > 0);
+
+  if (names.length === 0) {
+    if ("isShared" in chat && chat.isShared) {
+      return t("session-chat-just-you", {
+        defaultValue: "In-session chat (Just You)",
+      });
+    }
+
+    return t("chat", { defaultValue: "Chat" });
+  }
+
+  return names.join(", ");
+}
+
+function getChatMessageText(message: ChatMessage): string {
+  switch (message.type) {
+    case "text":
+      return message.text;
+    default:
+      return "";
+  }
+}
+
+function getChatPreview(
+  chat: ChatSession,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
+  const latestMessage = getLatestChatMessage(chat);
+  if (!latestMessage) {
+    return t("no-chat-messages", { defaultValue: "No messages yet" });
+  }
+
+  const author = chat.getMessageAuthors(latestMessage)[0] ?? null;
+  const authorLabel = author
+    ? getParticipantDisplayLabel(author, t)
+    : t("anonymous", { defaultValue: "Anonymous" });
+  const text = getChatMessageText(latestMessage).trim();
+  if (!text) {
+    return authorLabel;
+  }
+  return `${authorLabel}: ${text}`;
+}
+
+function ChatListRelativeDateTime({ timeMs }: { timeMs: number }) {
+  const { language } = useI18n();
+  const refreshTick = useSignal(0);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      refreshTick.value += 1;
+    }, 30_000);
+
+    return () => {
+      window.clearInterval(id);
+    };
+  }, []);
+
+  void refreshTick.value;
+  const date = DateTime.fromMillis(timeMs).setLocale(language);
+  return <span>{date.toRelative()}</span>;
 }
 
 function getOrCreateSearchTargetTab(state: SeedBibleState): ReaderTab {
@@ -421,11 +525,13 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
   );
 }
 
-function FloatingChatPanel(props: FloatingReaderPanelsProps) {
+export function FloatingChatPanel(props: FloatingReaderPanelsProps) {
   const { state } = props;
   const { sidebar } = state;
   const { t } = useI18n();
   const isOpen = sidebar.isChatPanelOpen.value;
+  const selectedChat = state.chats.selectedChat.value;
+  const chats = state.chats.chats.value;
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -454,29 +560,302 @@ function FloatingChatPanel(props: FloatingReaderPanelsProps) {
 
   if (!isOpen) return null;
 
+  // Only display non-anonymous inactive participants
+  const inactiveParticipants =
+    selectedChat?.inactiveParticipants.value.filter((p) => p.name) ?? [];
+
   return (
     <div
       className="sb-floating-chat-panel"
       role="dialog"
       aria-label={t("chat", { defaultValue: "Chat" })}
     >
-      <div className="sb-floating-chat-empty">
-        <span
-          className="material-symbols-outlined sb-floating-chat-empty-icon"
-          aria-hidden="true"
-        >
-          chat_bubble_outline
-        </span>
-        <p className="sb-floating-chat-empty-title">
-          {t("chat-empty-title", { defaultValue: "Chat is coming soon" })}
+      <header className="sb-floating-chat-header">
+        {selectedChat ? (
+          <button
+            type="button"
+            className="sb-floating-chat-header-back"
+            onClick={() => {
+              state.chats.selectChat(null);
+            }}
+            aria-label={t("back", { defaultValue: "Back" })}
+            title={t("back", { defaultValue: "Back" })}
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">
+              arrow_back
+            </span>
+          </button>
+        ) : null}
+
+        {selectedChat && <ChatListAvatarCluster chat={selectedChat} />}
+        <p className="sb-floating-chat-header-title">
+          {selectedChat
+            ? getChatTitle(selectedChat, t)
+            : t("chat", { defaultValue: "Chat" })}
         </p>
-        {/* <p className="sb-floating-chat-empty-body">
-          {t("chat-empty-body", {
-            defaultValue:
-              "This is where you'll be able to ask questions and explore cross-references.",
+
+        {selectedChat && selectedChat.participants.value.length > 0 ? (
+          <ContextMenuWithButton
+            anchorClassName="sb-floating-chat-header-members-anchor"
+            buttonClassName="sb-floating-chat-header-members-button"
+            menuClassName="sb-floating-chat-members-menu"
+            icon={
+              <span className="sb-floating-chat-header-members-button-icon">
+                <ChatParticipantsIcon />
+                {selectedChat.participants.value.length}
+              </span>
+            }
+            aria-label={t("participants", {
+              defaultValue: "Participants",
+            })}
+            title={t("participants", {
+              defaultValue: "Participants",
+            })}
+            onClick={() => {
+              closeContextMenus();
+            }}
+          >
+            {selectedChat.participants.value.map((participant) => {
+              const label = getParticipantDisplayLabel(participant, t);
+              const avatar = getParticipantAvatar(participant, t);
+              return (
+                <ContextMenuItem
+                  key={participant.id}
+                  className="sb-floating-chat-members-item"
+                  onClick={(event) => {
+                    event.preventDefault();
+                  }}
+                >
+                  <Avatar
+                    imageUrl={avatar.imageUrl}
+                    visual={avatar.visual}
+                    title={avatar.label}
+                    isSelf={avatar.isSelf}
+                  />
+                  <span className="sb-floating-chat-members-name">{label}</span>
+                </ContextMenuItem>
+              );
+            })}
+            {inactiveParticipants.length > 0 && (
+              <>
+                <div
+                  className="sb-floating-chat-members-sep"
+                  role="separator"
+                />
+                <span className="sb-floating-chat-members-inactive-label">
+                  {t("inactive", {
+                    defaultValue: "Inactive",
+                  })}
+                </span>
+                {inactiveParticipants.map((participant) => {
+                  const label = getParticipantDisplayLabel(participant, t);
+                  const avatar = getParticipantAvatar(participant, t);
+                  return (
+                    <ContextMenuItem
+                      key={participant.id}
+                      className="sb-floating-chat-members-item"
+                      onClick={(event) => {
+                        event.preventDefault();
+                      }}
+                    >
+                      <Avatar
+                        imageUrl={avatar.imageUrl}
+                        visual={avatar.visual}
+                        title={avatar.label}
+                        isSelf={avatar.isSelf}
+                      />
+                      <span className="sb-floating-chat-members-name">
+                        {label}
+                      </span>
+                    </ContextMenuItem>
+                  );
+                })}
+              </>
+            )}
+          </ContextMenuWithButton>
+        ) : null}
+      </header>
+
+      {selectedChat ? (
+        <ChatView chat={selectedChat} state={state} />
+      ) : (
+        <ChatList chats={chats} state={state} />
+      )}
+    </div>
+  );
+}
+
+function NoChatsAvailable() {
+  const { t } = useI18n();
+  return (
+    <div className="sb-floating-chat-empty">
+      <span
+        className="material-symbols-outlined sb-floating-chat-empty-icon"
+        aria-hidden="true"
+      >
+        chat_bubble_outline
+      </span>
+      <p className="sb-floating-chat-empty-title">
+        {t("you-have-no-chats", {
+          defaultValue:
+            "You have no chats. Create one using the + button below.",
+        })}
+      </p>
+    </div>
+  );
+}
+
+function NoProvidersAvailable() {
+  const { t } = useI18n();
+  return (
+    <div className="sb-floating-chat-empty">
+      <span
+        className="material-symbols-outlined sb-floating-chat-empty-icon"
+        aria-hidden="true"
+      >
+        chat_bubble_outline
+      </span>
+      <p className="sb-floating-chat-empty-title">
+        {t("no-chat-providers", {
+          defaultValue:
+            "No chat providers are available. Connect an AI or messaging provider to start chatting.",
+        })}
+      </p>
+    </div>
+  );
+}
+
+function createLocalChatFromProvider(
+  state: SeedBibleState,
+  provider: ChatProvider
+) {
+  closeContextMenus();
+  const chat = state.chats.createLocalSession();
+  chat.addParticipant(provider.id);
+  state.chats.selectChat(chat.id);
+}
+
+function ChatListAvatarCluster({ chat }: { chat: ChatSession }) {
+  const { t } = useI18n();
+  const participants = chat.participants.value;
+  const nonSelf = participants.filter((p) => !p.isSelf);
+  const pool = nonSelf.length > 0 ? nonSelf : participants;
+  const toShow = pool.slice(0, 3);
+  const overflowCount = pool.length - toShow.length;
+  const count = overflowCount > 0 ? 4 : Math.max(toShow.length, 1);
+
+  return (
+    <div
+      className={`sb-chat-list-avatar-cluster sb-chat-list-avatar-cluster-${count}`}
+      aria-hidden="true"
+    >
+      {toShow.map((participant) => {
+        const av = getParticipantAvatar(participant, t);
+        return (
+          <Avatar
+            key={participant.id}
+            imageUrl={av.imageUrl}
+            visual={av.visual}
+            title={av.label}
+            isSelf={av.isSelf}
+          />
+        );
+      })}
+      {overflowCount > 0 && (
+        <span className="sb-chat-list-avatar-overflow">+{overflowCount}</span>
+      )}
+    </div>
+  );
+}
+
+export function ChatList({
+  chats,
+  state,
+}: {
+  chats: ChatSession[];
+  state: SeedBibleState;
+}) {
+  const { t } = useI18n();
+  const providers = state.chats.providers.value;
+
+  return (
+    <div className="sb-floating-chat-list-shell">
+      {chats.length === 0 && providers.length === 0 ? (
+        <NoProvidersAvailable />
+      ) : chats.length === 0 ? (
+        <NoChatsAvailable />
+      ) : (
+        <div className="sb-floating-chat-list" role="listbox">
+          {chats.map((chat) => {
+            const latestMessage = getLatestChatMessage(chat);
+            const unreadCount = chat.unreadMessages.value.length;
+            return (
+              <button
+                key={chat.id}
+                type="button"
+                className="sb-floating-chat-list-item"
+                onClick={() => {
+                  state.chats.selectChat(chat.id);
+                }}
+                role="option"
+                aria-selected="false"
+                title={getChatTitle(chat, t)}
+              >
+                <ChatListAvatarCluster chat={chat} />
+                <div className="sb-floating-chat-list-item-content">
+                  <div className="sb-floating-chat-list-item-header">
+                    <span className="sb-floating-chat-list-item-title">
+                      {getChatTitle(chat, t)}
+                    </span>
+                    <div className="sb-floating-chat-list-item-meta">
+                      {latestMessage ? (
+                        <span className="sb-floating-chat-list-item-time">
+                          <ChatListRelativeDateTime
+                            timeMs={latestMessage.timeMs}
+                          />
+                        </span>
+                      ) : null}
+
+                      {unreadCount > 0 ? (
+                        <span className="sb-floating-chat-list-item-unread">
+                          {unreadCount > 99 ? "99+" : `${unreadCount}`}
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <p className="sb-floating-chat-list-item-preview">
+                    {getChatPreview(chat, t)}
+                  </p>
+                </div>
+              </button>
+            );
           })}
-        </p> */}
-      </div>
+        </div>
+      )}
+
+      {providers.length > 0 ? (
+        <ContextMenuWithButton
+          anchorClassName="sb-floating-chat-list-create-anchor"
+          buttonClassName="sb-floating-chat-list-create-button"
+          menuClassName="sb-floating-chat-list-create-menu"
+          icon="add"
+          aria-label={t("add", { defaultValue: "Add" })}
+          title={t("add", { defaultValue: "Add" })}
+        >
+          {providers.map((provider) => (
+            <ContextMenuItem
+              key={provider.id}
+              className="sb-floating-chat-list-create-item"
+              onClick={() => {
+                createLocalChatFromProvider(state, provider);
+              }}
+            >
+              {translateTitle(t, provider.name)}
+            </ContextMenuItem>
+          ))}
+        </ContextMenuWithButton>
+      ) : null}
     </div>
   );
 }

@@ -1,0 +1,313 @@
+{
+  "id": "ext_Bonfire",
+  "translations": {
+    "en": {
+      "title": "Bonfire",
+      "description": "Bonfire AI Agent"
+    },
+    "es": {
+      "title": "Bonfire",
+      "description": "Agente de IA Bonfire"
+    },
+    "af": {
+      "title": "Vuurmaakplek",
+      "description": "Vuurvuur ​​KI-agent"
+    },
+    "am": {
+      "title": "የእሳት ቃጠሎ",
+      "description": "የቦንፋየር ኤጀንት"
+    },
+    "ar": {
+      "title": "نار المخيم",
+      "description": "عميل بونفاير للذكاء الاصطناعي"
+    },
+    "az": {
+      "title": "Tonqal",
+      "description": "Tonqal süni intellekt agenti"
+    },
+    "be": {
+      "title": "Вогнішча",
+      "description": "Агент штучнага інтэлекту Bonfire"
+    },
+    "bg": {
+      "title": "Огън",
+      "description": "Агент с изкуствен интелект на огъня"
+    },
+    "bn": {
+      "title": "বনফায়ার",
+      "description": "বনফায়ার এআই এজেন্ট"
+    },
+    "bs": {
+      "title": "Lomača",
+      "description": "Agent umjetne inteligencije u lomači"
+    },
+    "ca": {
+      "title": "Foguera",
+      "description": "Agent d'IA de Bonfire"
+    },
+    "cs": {
+      "title": "Táborák",
+      "description": "Agent s umělou inteligencí Bonfire"
+    },
+    "cy": {
+      "title": "Tân gwyllt",
+      "description": "Asiant Deallusrwydd Artiffisial Tân Gwyllt"
+    },
+    "da": {
+      "title": "Bål",
+      "description": "AI-agent i bålet"
+    },
+    "de": {
+      "title": "Feuer",
+      "description": "Bonfire KI-Agent"
+    },
+    "el": {
+      "title": "Φωτιά για γιορτή",
+      "description": "Πράκτορας Τεχνητής Νοημοσύνης Bonfire"
+    },
+    "et": {
+      "title": "Lõke",
+      "description": "Lõkke tehisintellekti agent"
+    },
+    "fa": {
+      "title": "آتش",
+      "description": "عامل هوش مصنوعی Bonfire"
+    },
+    "fi": {
+      "title": "Kokko",
+      "description": "Bonfiren tekoälyagentti"
+    },
+    "fil": {
+      "title": "Siga",
+      "description": "Ahente ng Bonfire AI"
+    },
+    "fr": {
+      "title": "Feu",
+      "description": "Agent IA Bonfire"
+    },
+    "fy": {
+      "title": "Fjoer",
+      "description": "Bonfire AI-agent"
+    },
+    "gl": {
+      "title": "Fogueira",
+      "description": "Axente de IA da fogueira"
+    },
+    "gn": {
+      "title": "Tatarendy rehegua",
+      "description": "Agente AI Fogata rehegua"
+    },
+    "gu": {
+      "title": "બોનફાયર",
+      "description": "બોનફાયર એઆઈ એજન્ટ"
+    },
+    "he": {
+      "title": "מְדוּרָה",
+      "description": "סוכן בינה מלאכותית של מדורה"
+    },
+    "hi": {
+      "title": "अलाव",
+      "description": "बोनफायर एआई एजेंट"
+    },
+    "hr": {
+      "title": "Lomača",
+      "description": "Agent umjetne inteligencije u lomači"
+    },
+    "hu": {
+      "title": "Máglya",
+      "description": "Bonfire AI ügynök"
+    },
+    "ind": {
+      "title": "Api unggun",
+      "description": "Agen AI Api Unggun"
+    },
+    "is": {
+      "title": "Bál",
+      "description": "Báls-gervigreindarumboðsmaður"
+    },
+    "it": {
+      "title": "Falò",
+      "description": "Agente IA del falò"
+    },
+    "iw": {
+      "title": "מְדוּרָה",
+      "description": "סוכן בינה מלאכותית של מדורה"
+    },
+    "ja": {
+      "title": "焚き火",
+      "description": "Bonfire AIエージェント"
+    },
+    "ka": {
+      "title": "კოცონი",
+      "description": "Bonfire AI აგენტი"
+    },
+    "km": {
+      "title": "ភ្លើងឆេះព្រៃ",
+      "description": "ភ្នាក់ងារ AI ភ្លើងឆេះ"
+    },
+    "kn": {
+      "title": "ದೀಪೋತ್ಸವ",
+      "description": "ಬಾನ್‌ಫೈರ್ AI ಏಜೆಂಟ್"
+    },
+    "ko": {
+      "title": "모닥불",
+      "description": "본파이어 AI 에이전트"
+    },
+    "ky": {
+      "title": "От",
+      "description": "Bonfire жасалма интеллект агенти"
+    },
+    "ln": {
+      "title": "Mɔtɔ ya mɔ́tɔ",
+      "description": "Agent ya AI ya mɔ́tɔ"
+    },
+    "lo": {
+      "title": "ກອງໄຟ",
+      "description": "ຕົວແທນ AI ບຸນໄຟ"
+    },
+    "lt": {
+      "title": "Laužas",
+      "description": "„Bonfire“ dirbtinio intelekto agentas"
+    },
+    "lv": {
+      "title": "Ugunskurs",
+      "description": "Ugunskura mākslīgā intelekta aģents"
+    },
+    "mk": {
+      "title": "Огниште",
+      "description": "Агент за вештачка интелигенција на Bonfire"
+    },
+    "ml": {
+      "title": "ബോൺഫയർ",
+      "description": "ബോൺഫയർ AI ഏജന്റ്"
+    },
+    "mn": {
+      "title": "Түүдэг гал",
+      "description": "Bonfire хиймэл оюун ухааны агент"
+    },
+    "mr": {
+      "title": "शेकोटी",
+      "description": "बोनफायर एआय एजंट"
+    },
+    "ms": {
+      "title": "Unggun api",
+      "description": "Ejen AI Bonfire"
+    },
+    "my": {
+      "title": "မီးပုံ",
+      "description": "မီးပုံ AI အေးဂျင့်"
+    },
+    "nb": {
+      "title": "Bål",
+      "description": "AI-agent for bål"
+    },
+    "ne": {
+      "title": "आगो बाल्नु",
+      "description": "बोनफायर एआई एजेन्ट"
+    },
+    "nl": {
+      "title": "Vreugdevuur",
+      "description": "Bonfire AI-agent"
+    },
+    "no": {
+      "title": "Bål",
+      "description": "AI-agent for bål"
+    },
+    "pa": {
+      "title": "ਅੱਗ",
+      "description": "ਬੋਨਫਾਇਰ ਏਆਈ ਏਜੰਟ"
+    },
+    "pl": {
+      "title": "Ognisko",
+      "description": "Agent AI Bonfire"
+    },
+    "ps": {
+      "title": "اور",
+      "description": "د بون فائر AI اجنټ"
+    },
+    "pt": {
+      "title": "Fogueira",
+      "description": "Agente de IA da Fogueira"
+    },
+    "ro": {
+      "title": "Foc",
+      "description": "Agent AI Bonfire"
+    },
+    "ru": {
+      "title": "Костер",
+      "description": "Агент искусственного интеллекта у костра"
+    },
+    "sk": {
+      "title": "Táborák",
+      "description": "Agent s umelou inteligenciou v ohni"
+    },
+    "sl": {
+      "title": "Kres",
+      "description": "Agent umetne inteligence Bonfire"
+    },
+    "sq": {
+      "title": "Zjarr i madh",
+      "description": "Agjent i Inteligjencës Artificiale Bonfire"
+    },
+    "sv": {
+      "title": "Bål",
+      "description": "AI-agent för Bonfire"
+    },
+    "sw": {
+      "title": "Moto wa Bonfire",
+      "description": "Wakala wa AI wa Bonfire"
+    },
+    "ta": {
+      "title": "தீ மூட்டுதல்",
+      "description": "தீப்பந்த ஏஐ முகவர்"
+    },
+    "te": {
+      "title": "మంట",
+      "description": "బోన్‌ఫైర్ AI ఏజెంట్"
+    },
+    "th": {
+      "title": "กองไฟ",
+      "description": "ตัวแทน AI กองไฟ"
+    },
+    "ti": {
+      "title": "ሓዊ",
+      "description": "ቦንፋየር ኤኣይ ወኪል"
+    },
+    "tl": {
+      "title": "Siga",
+      "description": "Ahente ng Bonfire AI"
+    },
+    "tr": {
+      "title": "Şenlik ateşi",
+      "description": "Şenlik Ateşi Yapay Zeka Ajanı"
+    },
+    "ug": {
+      "title": "ئوت",
+      "description": "Bonfire سۈنئىي ئەقىل ئاگېنتى"
+    },
+    "uk": {
+      "title": "Багаття",
+      "description": "Агент ШІ багаття"
+    },
+    "ur": {
+      "title": "الاؤ",
+      "description": "بون فائر اے آئی ایجنٹ"
+    },
+    "uz": {
+      "title": "Gulxan",
+      "description": "Bonfire AI agenti"
+    },
+    "vi": {
+      "title": "Lửa trại",
+      "description": "Đặc vụ AI Lửa trại"
+    },
+    "zh": {
+      "title": "篝火",
+      "description": "篝火人工智能代理"
+    },
+    "zu": {
+      "title": "Umlilo omkhulu",
+      "description": "I-ejenti ye-Bonfire AI"
+    }
+  }
+}

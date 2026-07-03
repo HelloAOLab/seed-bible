@@ -14,6 +14,11 @@ export interface LoginManager {
   userId: Signal<string | null>;
 
   /**
+   * The connection ID for the current session.
+   */
+  connectionId: string;
+
+  /**
    * The user's information, including email. Null if the user is not authenticated or if background auth has not completed yet.
    */
   userInfo: Signal<UserInfo | null>;
@@ -24,9 +29,15 @@ export interface LoginManager {
   authBot: Signal<UserInfo | null>;
 
   /**
-   * The user's profile information. Null if the user is not logged in.
+   * The user's profile information. Null if the user is not logged in or if the profile has not loaded yet.
    */
   profile: Signal<UserProfile | null>;
+
+  /**
+   * The promise that resolves with the user's profile information once it has loaded.
+   * Null if the user is not logged in.
+   */
+  profilePromise: Promise<UserProfile> | null;
 
   /**
    * Whether the user is currently in the process of logging in, which can be used to show or hide the login modal. This will be true from the moment a login attempt is initiated until it either succeeds or fails, and will be false at all other times (including while logged in). The login modal should subscribe to this signal to know when to show or hide itself, and should call `cancelLogin` if it is closed while a login attempt is in progress to abort the login flow.
@@ -141,6 +152,7 @@ export function createLoginManager({
 
   // const userId = os.userId;
   const profile = signal<UserProfile | null>(null);
+  let profilePromise: Promise<UserProfile> | null = null;
 
   const getUserProfile = async (userId: string): Promise<UserProfile> => {
     const data = await os.getData(userId, "profile");
@@ -249,6 +261,7 @@ export function createLoginManager({
     if (!sessionKey.value || !userId.value) {
       return null;
     }
+
     const result = await client.getUserInfo({ userId: userId.value });
     if (result.success) {
       userInfo.value = {
@@ -353,8 +366,9 @@ export function createLoginManager({
       posthog.identify(userId.value);
     }
 
-    getUserProfile(userId.value).then((p) => {
+    profilePromise = getUserProfile(userId.value).then((p) => {
       profile.value = p;
+      return p;
     });
   });
 
@@ -412,9 +426,11 @@ export function createLoginManager({
 
   return {
     userId,
+    connectionId: os.connectionId,
     userInfo,
     authBot: userInfo,
     profile,
+    profilePromise,
 
     isLoginOpen,
 
