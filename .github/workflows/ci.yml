@@ -68,6 +68,30 @@ jobs:
             done
 
             echo "| **Total** | **$(numfmt --to=iec --suffix=B "$total")** |"
+
+            echo ""
+            echo "#### Client Chunks"
+            echo ""
+            echo "| Chunk | Size |"
+            echo "| --- | --- |"
+
+            shopt -s nullglob
+            CHUNKS=(
+              "Vendor (\`vendor-*.js\`)|standalone/dist/client/assets/vendor-*.js"
+              "Index (\`index-*.js\`)|standalone/dist/client/assets/index-*.js"
+            )
+            for entry in "${CHUNKS[@]}"; do
+              label="${entry%%|*}"
+              pattern="${entry##*|}"
+              files=($pattern)
+              if [ "${#files[@]}" -gt 0 ]; then
+                bytes=$(du -cb "${files[@]}" | tail -1 | cut -f1)
+                echo "| $label | $(numfmt --to=iec --suffix=B "$bytes") |"
+              else
+                echo "| $label | _not found_ |"
+              fi
+            done
+            shopt -u nullglob
           } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v7
         with:
