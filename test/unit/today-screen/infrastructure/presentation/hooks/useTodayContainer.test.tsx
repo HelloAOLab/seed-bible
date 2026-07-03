@@ -1,27 +1,28 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import { useTodayContainer } from "todayScreen.infrastructure.presentation.hooks.useTodayContainer";
-import { useTodayContext } from "todayScreen.infrastructure.presentation.contexts.today.TodayContext";
-import { TodayContent } from "todayScreen.infrastructure.presentation.components.containers.TodayContent";
-import { Welcome } from "todayScreen.infrastructure.presentation.components.containers.Welcome";
+import { useTodayContainer } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useTodayContainer";
+import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
+import { TodayContent } from "../../../../../../packages/today-screen/infrastructure/presentation/components/containers/TodayContent";
+import { Welcome } from "../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Welcome";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.today.TodayContext",
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
   () => ({
-    useTodayContext: jest.fn(),
+    useTodayContext: vi.fn(),
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.containers.TodayContent",
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/components/containers/TodayContent",
   () => ({
     TodayContent: () => null,
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.containers.Welcome",
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Welcome",
   () => ({
     Welcome: () => null,
   })
@@ -40,14 +41,14 @@ describe("useTodayContainer", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(options: {
     userId?: string | undefined;
     lastReading?: { bookId: string; chapter: number } | undefined;
   }) {
-    (useTodayContext as jest.Mock).mockReturnValue({
+    (useTodayContext as Mock).mockReturnValue({
       userId: options.userId,
       userLastReading: signal(options.lastReading),
     });

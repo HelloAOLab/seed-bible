@@ -1,4 +1,4 @@
-import { ReadingHistoryConfigProvider } from "@packages/today-screen/todayScreen/infrastructure/config/readingHistory/readingHistoryConfigProvider";
+import { ReadingHistoryConfigProvider } from "../../../../../../packages/today-screen/infrastructure/config/readingHistory/readingHistoryConfigProvider";
 
 const DAY = 24 * 60 * 60;
 
@@ -7,12 +7,12 @@ describe("ReadingHistoryConfigProvider", () => {
     const FIXED = new Date("2026-06-15T12:34:56.000Z");
 
     beforeEach(() => {
-      jest.useFakeTimers();
-      jest.setSystemTime(FIXED);
+      vi.useFakeTimers();
+      vi.setSystemTime(FIXED);
     });
 
     afterEach(() => {
-      jest.useRealTimers();
+      vi.useRealTimers();
     });
 
     // Derive the expectations the same way the implementation does, so the
@@ -69,7 +69,7 @@ describe("ReadingHistoryConfigProvider", () => {
       const provider = new ReadingHistoryConfigProvider();
       const before = provider.buildTimespanOptionsMap().twoDays.timespan!.to;
 
-      jest.setSystemTime(new Date(FIXED.getTime() + 5000));
+      vi.setSystemTime(new Date(FIXED.getTime() + 5000));
       const after = provider.buildTimespanOptionsMap().twoDays.timespan!.to;
 
       expect(after).toBe(before + 5);

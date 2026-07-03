@@ -1,11 +1,11 @@
-import type { TestamentInfo } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/arrangement";
+import type { TestamentInfo } from "../../../../packages/seed-bible-utils/domain/models/arrangement";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import {
   TestamentProvider,
   useTestamentContext,
-} from "scriptureMap.contexts.Testament.TestamentContext";
-import type { TestamentContextType } from "scriptureMap.contexts.Testament.TestamentContext";
+} from "../../../../packages/scripture-map/contexts/Testament/TestamentContext";
+import type { TestamentContextType } from "../../../../packages/scripture-map/contexts/Testament/TestamentContext";
 
 describe("TestamentContext", () => {
   let container: HTMLDivElement;

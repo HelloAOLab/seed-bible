@@ -1,14 +1,18 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import {
   SelectionOptions,
   type SelectionOptionsProps,
-} from "scriptureMap.components.containers.SelectionOptions";
-import { useSelectionOptions } from "scriptureMap.hooks.useSelectionOptions";
+} from "../../../../../packages/scripture-map/components/containers/SelectionOptions";
+import { useSelectionOptions } from "../../../../../packages/scripture-map/hooks/useSelectionOptions";
 
-jest.mock("scriptureMap.hooks.useSelectionOptions", () => ({
-  useSelectionOptions: jest.fn(),
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/hooks/useSelectionOptions",
+  () => ({
+    useSelectionOptions: vi.fn(),
+  })
+);
 
 function makeHookResult(overrides: Record<string, unknown> = {}) {
   return {
@@ -22,8 +26,8 @@ function makeProps(
   overrides: Partial<SelectionOptionsProps> = {}
 ): SelectionOptionsProps {
   return {
-    handleClearSelectionClick: jest.fn(),
-    handleDoneClick: jest.fn(),
+    handleClearSelectionClick: vi.fn(),
+    handleDoneClick: vi.fn(),
     ...overrides,
   };
 }
@@ -34,13 +38,13 @@ describe("SelectionOptions", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useSelectionOptions as jest.Mock).mockReturnValue(makeHookResult());
+    (useSelectionOptions as Mock).mockReturnValue(makeHookResult());
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(propOverrides: Partial<SelectionOptionsProps> = {}) {
@@ -76,7 +80,7 @@ describe("SelectionOptions", () => {
 
   describe("clear button", () => {
     it("renders clearSelectionContent text", () => {
-      (useSelectionOptions as jest.Mock).mockReturnValue(
+      (useSelectionOptions as Mock).mockReturnValue(
         makeHookResult({ clearSelectionContent: "Limpiar selección" })
       );
       setup();
@@ -91,7 +95,7 @@ describe("SelectionOptions", () => {
     });
 
     it("calls handleClearSelectionClick when clicked", () => {
-      const handleClearSelectionClick = jest.fn();
+      const handleClearSelectionClick = vi.fn();
       setup({ handleClearSelectionClick });
       act(() => {
         buttons()[0]!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -100,7 +104,7 @@ describe("SelectionOptions", () => {
     });
 
     it("does not call handleDoneClick when clear button is clicked", () => {
-      const handleDoneClick = jest.fn();
+      const handleDoneClick = vi.fn();
       setup({ handleDoneClick });
       act(() => {
         buttons()[0]!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -111,7 +115,7 @@ describe("SelectionOptions", () => {
 
   describe("done button", () => {
     it("renders acceptSelectionContent text", () => {
-      (useSelectionOptions as jest.Mock).mockReturnValue(
+      (useSelectionOptions as Mock).mockReturnValue(
         makeHookResult({ acceptSelectionContent: "Aceptar" })
       );
       setup();
@@ -126,7 +130,7 @@ describe("SelectionOptions", () => {
     });
 
     it("calls handleDoneClick when clicked", () => {
-      const handleDoneClick = jest.fn();
+      const handleDoneClick = vi.fn();
       setup({ handleDoneClick });
       act(() => {
         buttons()[1]!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -135,7 +139,7 @@ describe("SelectionOptions", () => {
     });
 
     it("does not call handleClearSelectionClick when done button is clicked", () => {
-      const handleClearSelectionClick = jest.fn();
+      const handleClearSelectionClick = vi.fn();
       setup({ handleClearSelectionClick });
       act(() => {
         buttons()[1]!.dispatchEvent(new MouseEvent("click", { bubbles: true }));

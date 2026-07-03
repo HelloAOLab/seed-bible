@@ -1,20 +1,27 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useReadingHistoryTimeline } from "scriptureMap.hooks.useReadingHistoryTimeline";
-import { useScriptureMapContext } from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
-import { useReadingHistoryContext } from "scriptureMap.contexts.ReadingHistory.ReadingHistoryContext";
-import { useTimeContext } from "scriptureMap.contexts.Time.TimeContext";
+import { useReadingHistoryTimeline } from "../../../../packages/scripture-map/hooks/useReadingHistoryTimeline";
+import { useScriptureMapContext } from "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext";
+import { useReadingHistoryContext } from "../../../../packages/scripture-map/contexts/ReadingHistory/ReadingHistoryContext";
+import { useTimeContext } from "../../../../packages/scripture-map/contexts/Time/TimeContext";
 
-jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
-  useScriptureMapContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext",
+  () => ({
+    useScriptureMapContext: vi.fn(),
+  })
+);
 
-jest.mock("scriptureMap.contexts.ReadingHistory.ReadingHistoryContext", () => ({
-  useReadingHistoryContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ReadingHistory/ReadingHistoryContext",
+  () => ({
+    useReadingHistoryContext: vi.fn(),
+  })
+);
 
-jest.mock("scriptureMap.contexts.Time.TimeContext", () => ({
-  useTimeContext: jest.fn(),
+vi.mock("../../../../packages/scripture-map/contexts/Time/TimeContext", () => ({
+  useTimeContext: vi.fn(),
 }));
 
 const SEC_PER_HOUR = 3600;
@@ -28,9 +35,9 @@ const endDate = new Date("2026-05-23T00:00:00");
 
 function makeScriptureMapContext() {
   return {
-    readingHistoryService: { getColorByReadingTime: jest.fn(() => "#aabbcc") },
-    userColorStore: { getUserColor: jest.fn(() => "#000000") },
-    translate: jest.fn((key: string) => key),
+    readingHistoryService: { getColorByReadingTime: vi.fn(() => "#aabbcc") },
+    userColorStore: { getUserColor: vi.fn(() => "#000000") },
+    translate: vi.fn((key: string) => key),
     seedBibleState: {
       theme: {
         currentTheme: {
@@ -43,10 +50,10 @@ function makeScriptureMapContext() {
         },
       },
     },
-    CapitalizeFirstLetter: jest.fn(
+    CapitalizeFirstLetter: vi.fn(
       (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
     ),
-    GetPastDateInfo: jest.fn(() => ({
+    GetPastDateInfo: vi.fn(() => ({
       day: 18,
       month: 4,
       monthName: "may",
@@ -60,7 +67,7 @@ function makeReadingHistoryContext() {
   return {
     startDateStartOfWeek,
     readingHistoryRangeSeconds: null,
-    handleReadingHistoryRangeSelectorClick: jest.fn(),
+    handleReadingHistoryRangeSelectorClick: vi.fn(),
     weeksCount: 1,
     SEC_PER_HOUR,
     SEC_PER_MINUTE,
@@ -78,19 +85,17 @@ describe("useReadingHistoryTimeline", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useScriptureMapContext as jest.Mock).mockReturnValue(
-      makeScriptureMapContext()
-    );
-    (useReadingHistoryContext as jest.Mock).mockReturnValue(
+    (useScriptureMapContext as Mock).mockReturnValue(makeScriptureMapContext());
+    (useReadingHistoryContext as Mock).mockReturnValue(
       makeReadingHistoryContext()
     );
-    (useTimeContext as jest.Mock).mockReturnValue({ tick: 0 });
+    (useTimeContext as Mock).mockReturnValue({ tick: 0 });
   });
 
   afterEach(() => {
     render(null, container);
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup() {
@@ -180,9 +185,9 @@ describe("useReadingHistoryTimeline", () => {
 
   describe("handleItemClick", () => {
     it("calls handleReadingHistoryRangeSelectorClick with the given range", () => {
-      const handleFn = jest.fn();
+      const handleFn = vi.fn();
       const range = { start: 1000, end: 2000 };
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap: new Map([["0-0", range]]),
         handleReadingHistoryRangeSelectorClick: handleFn,
@@ -196,9 +201,9 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("calls handleReadingHistoryRangeSelectorClick with null to deselect", () => {
-      const handleFn = jest.fn();
+      const handleFn = vi.fn();
       const range = { start: 1000, end: 2000 };
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap: new Map([["0-0", range]]),
         handleReadingHistoryRangeSelectorClick: handleFn,
@@ -214,7 +219,7 @@ describe("useReadingHistoryTimeline", () => {
 
   describe("itemsColorMap", () => {
     it("item background is undefined when dailyReadingHistorySummaries is null", () => {
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap: new Map([["0-0", { start: 0, end: 100 }]]),
         dailyReadingHistorySummaries: null,
@@ -228,7 +233,7 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("item background is undefined when yearlyReadingHistorySummary is null", () => {
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap: new Map([["0-0", { start: 0, end: 100 }]]),
         dailyReadingHistorySummaries: new Map([
@@ -250,14 +255,14 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("calls getColorByReadingTime for single user with reading time > SEC_PER_MINUTE", () => {
-      const getColorByReadingTime = jest.fn(() => "#computed");
-      const getUserColor = jest.fn(() => "#usercolor");
-      (useScriptureMapContext as jest.Mock).mockReturnValue({
+      const getColorByReadingTime = vi.fn(() => "#computed");
+      const getUserColor = vi.fn(() => "#usercolor");
+      (useScriptureMapContext as Mock).mockReturnValue({
         ...makeScriptureMapContext(),
         readingHistoryService: { getColorByReadingTime },
         userColorStore: { getUserColor },
       });
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap: new Map([["0-0", { start: 0, end: 100 }]]),
         dailyReadingHistorySummaries: new Map([
@@ -281,13 +286,13 @@ describe("useReadingHistoryTimeline", () => {
 
     it("uses theme.variables.secondaryColor as userColor when multiple users", () => {
       // eslint-disable-next-line
-      const getColorByReadingTime = jest.fn((args: any) => "#computed");
-      (useScriptureMapContext as jest.Mock).mockReturnValue({
+      const getColorByReadingTime = vi.fn((args: any) => "#computed");
+      (useScriptureMapContext as Mock).mockReturnValue({
         ...makeScriptureMapContext(),
         readingHistoryService: { getColorByReadingTime },
-        userColorStore: { getUserColor: jest.fn(() => "#usercolor") },
+        userColorStore: { getUserColor: vi.fn(() => "#usercolor") },
       });
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap: new Map([["0-0", { start: 0, end: 100 }]]),
         dailyReadingHistorySummaries: new Map([
@@ -310,7 +315,7 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("skips color when reading time <= SEC_PER_MINUTE", () => {
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap: new Map([["0-0", { start: 0, end: 100 }]]),
         dailyReadingHistorySummaries: new Map([
@@ -333,8 +338,8 @@ describe("useReadingHistoryTimeline", () => {
 
     it("uses '#dfdede' as baseColor fallback when readerToolbarFloatingButtonBackground is undefined", () => {
       // eslint-disable-next-line
-      const getColorByReadingTime = jest.fn((args: any) => "#computed");
-      (useScriptureMapContext as jest.Mock).mockReturnValue({
+      const getColorByReadingTime = vi.fn((args: any) => "#computed");
+      (useScriptureMapContext as Mock).mockReturnValue({
         ...makeScriptureMapContext(),
         readingHistoryService: { getColorByReadingTime },
         seedBibleState: {
@@ -350,7 +355,7 @@ describe("useReadingHistoryTimeline", () => {
           },
         },
       });
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap: new Map([["0-0", { start: 0, end: 100 }]]),
         dailyReadingHistorySummaries: new Map([
@@ -372,7 +377,7 @@ describe("useReadingHistoryTimeline", () => {
     it("itemsColorMap loop breaks at day > endDate.getDay() when yearlyReadingHistorySummary is provided", () => {
       // endDate = Wednesday (getDay()=3) → loop breaks at day=4
       const endDateWed = new Date("2026-05-20T00:00:00");
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         yearlyReadingHistorySummary: { users: { me: {} } },
         dailyReadingHistorySummaries: new Map([
@@ -393,11 +398,11 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("skips color when getUserColor returns null (no userColor)", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue({
+      (useScriptureMapContext as Mock).mockReturnValue({
         ...makeScriptureMapContext(),
-        userColorStore: { getUserColor: jest.fn(() => null) },
+        userColorStore: { getUserColor: vi.fn(() => null) },
       });
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap: new Map([["0-0", { start: 0, end: 100 }]]),
         dailyReadingHistorySummaries: new Map([
@@ -421,7 +426,7 @@ describe("useReadingHistoryTimeline", () => {
 
   describe("item entries", () => {
     it("creates item entry when dayRangesMap has a range for the key", () => {
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap: new Map([["0-2", { start: 200, end: 300 }]]),
       });
@@ -431,7 +436,7 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("item has correct gridRow (day+2/day+3) and gridColumn (week+2/week+3)", () => {
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap: new Map([["0-3", { start: 300, end: 400 }]]),
       });
@@ -444,7 +449,7 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("item id matches the week-day key", () => {
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap: new Map([["0-4", { start: 400, end: 500 }]]),
       });
@@ -457,7 +462,7 @@ describe("useReadingHistoryTimeline", () => {
 
     it("item carries readingHistoryRangeSeconds from context", () => {
       const range = { start: 0, end: 604800 };
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap: new Map([["0-0", { start: 0, end: 100 }]]),
         readingHistoryRangeSeconds: range,
@@ -470,9 +475,9 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("isUpcoming is false for dates in the past", () => {
-      jest.useFakeTimers();
-      jest.setSystemTime(new Date("2026-05-20T12:00:00"));
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-05-20T12:00:00"));
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap: new Map([["0-0", { start: 0, end: 100 }]]),
       });
@@ -484,14 +489,14 @@ describe("useReadingHistoryTimeline", () => {
         // day 0 = May 18, 2026 — before May 20 12:00 → not upcoming
         expect(item.isUpcoming).toBe(false);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
     it("isUpcoming is true for dates in the future", () => {
-      jest.useFakeTimers();
-      jest.setSystemTime(new Date("2026-05-20T12:00:00"));
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-05-20T12:00:00"));
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap: new Map([["0-5", { start: 0, end: 100 }]]),
       });
@@ -503,7 +508,7 @@ describe("useReadingHistoryTimeline", () => {
         // day 5 = May 23, 2026 — after May 20 12:00 → upcoming
         expect(item.isUpcoming).toBe(true);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
   });
@@ -515,7 +520,7 @@ describe("useReadingHistoryTimeline", () => {
       totalTimeSpentReading: number | null,
       users: Record<string, { totalTimeSpentReading: number } | null> = {}
     ) {
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap: new Map([["0-0", range]]),
         dailyReadingHistorySummaries: new Map([
@@ -545,7 +550,7 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("minutesCount is 0 when no daySummary for the key", () => {
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap: new Map([["0-0", range]]),
         dailyReadingHistorySummaries: new Map(), // no entry for "0-0"
@@ -630,8 +635,8 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("user entry includes dotStyle with userColor from userColorStore", () => {
-      const getUserColor = jest.fn(() => "#ff0000");
-      (useScriptureMapContext as jest.Mock).mockReturnValue({
+      const getUserColor = vi.fn(() => "#ff0000");
+      (useScriptureMapContext as Mock).mockReturnValue({
         ...makeScriptureMapContext(),
         userColorStore: { getUserColor },
       });
@@ -700,8 +705,8 @@ describe("useReadingHistoryTimeline", () => {
 
       it("uses 'users-extra-minute-spent' when extra time totals <= 60s", () => {
         // u4 has 30s → Math.max(1, floor(30/60)) = 1 → singular minute
-        const translate = jest.fn((key: string) => key);
-        (useScriptureMapContext as jest.Mock).mockReturnValue({
+        const translate = vi.fn((key: string) => key);
+        (useScriptureMapContext as Mock).mockReturnValue({
           ...makeScriptureMapContext(),
           translate,
         });
@@ -719,8 +724,8 @@ describe("useReadingHistoryTimeline", () => {
 
       it("uses 'users-extra-minutes-spent' when extra time is > 60s and < 1h", () => {
         // u4 has 180s → minutesCount=3 > 1 → plural minutes
-        const translate = jest.fn((key: string) => key);
-        (useScriptureMapContext as jest.Mock).mockReturnValue({
+        const translate = vi.fn((key: string) => key);
+        (useScriptureMapContext as Mock).mockReturnValue({
           ...makeScriptureMapContext(),
           translate,
         });
@@ -738,8 +743,8 @@ describe("useReadingHistoryTimeline", () => {
 
       it("uses 'users-extra-hour-spent' when extra time is > 1h and hoursCount === 1", () => {
         // Top 3 have highest time; u4 (3801s) is 4th → extra user with ~1h
-        const translate = jest.fn((key: string) => key);
-        (useScriptureMapContext as jest.Mock).mockReturnValue({
+        const translate = vi.fn((key: string) => key);
+        (useScriptureMapContext as Mock).mockReturnValue({
           ...makeScriptureMapContext(),
           translate,
         });
@@ -757,8 +762,8 @@ describe("useReadingHistoryTimeline", () => {
 
       it("uses 'users-extra-hours-spent' when extra time is > 2h", () => {
         // Top 3 have highest time; u4 (7401s) is 4th → extra user with ~2h
-        const translate = jest.fn((key: string) => key);
-        (useScriptureMapContext as jest.Mock).mockReturnValue({
+        const translate = vi.fn((key: string) => key);
+        (useScriptureMapContext as Mock).mockReturnValue({
           ...makeScriptureMapContext(),
           translate,
         });
@@ -787,7 +792,7 @@ describe("useReadingHistoryTimeline", () => {
           { start: d * 100, end: d * 100 + 100 },
         ])
       );
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap,
         timelineRange: { startDate: startDateStartOfWeek, endDate: endDateWed },
@@ -801,7 +806,7 @@ describe("useReadingHistoryTimeline", () => {
     it("month label gridColumn advances with week index in multi-week layout", () => {
       const startDate2 = new Date("2026-05-11T00:00:00"); // 2 weeks before May 25
       const endDate2 = new Date("2026-05-23T00:00:00"); // Saturday
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         weeksCount: 2,
         startDateStartOfWeek: startDate2,
@@ -818,16 +823,16 @@ describe("useReadingHistoryTimeline", () => {
 
   describe("useEffect - scrollIntoView", () => {
     afterEach(() => {
-      jest.restoreAllMocks();
+      vi.restoreAllMocks();
     });
 
     it("calls scrollIntoView on the element matching the last dayRangesMap key", () => {
-      const mockScrollIntoView = jest.fn();
+      const mockScrollIntoView = vi.fn();
       const mockEl = document.createElement("div");
       mockEl.scrollIntoView = mockScrollIntoView;
-      jest.spyOn(document, "getElementById").mockReturnValue(mockEl);
+      vi.spyOn(document, "getElementById").mockReturnValue(mockEl);
 
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap: new Map([
           ["0-0", { start: 0, end: 100 }],
@@ -843,14 +848,14 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("does not call getElementById when dayRangesMap is empty", () => {
-      jest.spyOn(document, "getElementById");
+      vi.spyOn(document, "getElementById");
       setup();
       expect(document.getElementById).not.toHaveBeenCalled();
     });
 
     it("does not scroll when getElementById returns null", () => {
-      jest.spyOn(document, "getElementById").mockReturnValue(null);
-      (useReadingHistoryContext as jest.Mock).mockReturnValue({
+      vi.spyOn(document, "getElementById").mockReturnValue(null);
+      (useReadingHistoryContext as Mock).mockReturnValue({
         ...makeReadingHistoryContext(),
         dayRangesMap: new Map([["0-0", { start: 0, end: 100 }]]),
       });
@@ -882,7 +887,7 @@ describe("useReadingHistoryTimeline", () => {
       const el = result.current.timelineRef.current as HTMLDivElement;
       // scrollWidth = clientWidth = 0 by default in jsdom → not scrollable
       const event = new WheelEvent("wheel", { deltaY: 50, cancelable: true });
-      const preventDefaultSpy = jest.spyOn(event, "preventDefault");
+      const preventDefaultSpy = vi.spyOn(event, "preventDefault");
       el.dispatchEvent(event);
       expect(preventDefaultSpy).not.toHaveBeenCalled();
     });
@@ -900,7 +905,7 @@ describe("useReadingHistoryTimeline", () => {
       });
 
       const event = new WheelEvent("wheel", { deltaY: 50, cancelable: true });
-      const preventDefaultSpy = jest.spyOn(event, "preventDefault");
+      const preventDefaultSpy = vi.spyOn(event, "preventDefault");
       el.dispatchEvent(event);
 
       expect(preventDefaultSpy).toHaveBeenCalled();

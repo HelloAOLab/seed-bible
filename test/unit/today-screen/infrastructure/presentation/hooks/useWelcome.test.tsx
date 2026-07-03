@@ -1,13 +1,14 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal, type Signal } from "@preact/signals";
-import { useWelcome } from "todayScreen.infrastructure.presentation.hooks.useWelcome";
-import { useTodayContext } from "todayScreen.infrastructure.presentation.contexts.today.TodayContext";
+import { useWelcome } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useWelcome";
+import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.today.TodayContext",
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
   () => ({
-    useTodayContext: jest.fn(),
+    useTodayContext: vi.fn(),
   })
 );
 
@@ -27,21 +28,21 @@ type Result = ReturnType<typeof useWelcome>;
 
 describe("useWelcome", () => {
   let container: HTMLDivElement;
-  let openBookSelector: jest.Mock;
-  let addTab: jest.Mock;
-  let getVerseText: jest.Mock;
-  let getDefaultTranslation: jest.Mock;
-  let getHighlightedWelcomeVerse: jest.Mock;
+  let openBookSelector: Mock;
+  let addTab: Mock;
+  let getVerseText: Mock;
+  let getDefaultTranslation: Mock;
+  let getHighlightedWelcomeVerse: Mock;
   let lastTranslationId: Signal<string | null>;
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    openBookSelector = jest.fn();
-    addTab = jest.fn();
-    getVerseText = jest.fn(async () => "raw verse");
-    getDefaultTranslation = jest.fn(() => "DEF");
-    getHighlightedWelcomeVerse = jest.fn(
+    openBookSelector = vi.fn();
+    addTab = vi.fn();
+    getVerseText = vi.fn(async () => "raw verse");
+    getDefaultTranslation = vi.fn(() => "DEF");
+    getHighlightedWelcomeVerse = vi.fn(
       (_translationId: string, raw: string) => `HL:${raw}`
     );
     lastTranslationId = signal<string | null>("KJV");
@@ -50,7 +51,7 @@ describe("useWelcome", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(
@@ -59,8 +60,8 @@ describe("useWelcome", () => {
       bookNames?: Map<string, string>;
     } = {}
   ) {
-    (useTodayContext as jest.Mock).mockReturnValue({
-      translate: jest.fn((key: string, params?: Record<string, unknown>) =>
+    (useTodayContext as Mock).mockReturnValue({
+      translate: vi.fn((key: string, params?: Record<string, unknown>) =>
         params ? `${key}:${JSON.stringify(params)}` : key
       ),
       username: options.username,

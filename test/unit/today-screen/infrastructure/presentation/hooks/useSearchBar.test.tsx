@@ -1,13 +1,14 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useSearchBar } from "todayScreen.infrastructure.presentation.hooks.useSearchBar";
-import { useTodayContext } from "todayScreen.infrastructure.presentation.contexts.today.TodayContext";
-import type { VerseSearchResult } from "@packages/today-screen/todayScreen/domain/models/search";
+import { useSearchBar } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useSearchBar";
+import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
+import type { VerseSearchResult } from "../../../../../../packages/today-screen/domain/models/search";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.today.TodayContext",
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
   () => ({
-    useTodayContext: jest.fn(),
+    useTodayContext: vi.fn(),
   })
 );
 
@@ -15,7 +16,7 @@ const MaterialIcon = ({ children }: { children: string }) => (
   <span className="material-icon">{children}</span>
 );
 
-const addTab = jest.fn();
+const addTab = vi.fn();
 const DEBOUNCE_MS = 180;
 
 function makeResult(
@@ -37,27 +38,27 @@ type Hook = ReturnType<typeof useSearchBar>;
 
 describe("useSearchBar", () => {
   let container: HTMLDivElement;
-  let searchVerses: jest.Mock;
+  let searchVerses: Mock;
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    jest.useFakeTimers();
-    searchVerses = jest.fn(async () => [] as VerseSearchResult[]);
+    vi.useFakeTimers();
+    searchVerses = vi.fn(async () => [] as VerseSearchResult[]);
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.useRealTimers();
-    jest.clearAllMocks();
+    vi.useRealTimers();
+    vi.clearAllMocks();
   });
 
   function setup() {
-    (useTodayContext as jest.Mock).mockReturnValue({
+    (useTodayContext as Mock).mockReturnValue({
       searchVerses,
       addTab,
-      translate: jest.fn((key: string) => key),
+      translate: vi.fn((key: string) => key),
       MaterialIcon,
     });
     const result = { current: null as unknown as Hook };
@@ -96,7 +97,7 @@ describe("useSearchBar", () => {
       expect(result.current.results.value).toEqual([]);
       expect(result.current.loading.value).toBe(false);
       expect(result.current.error.value).toBeNull();
-      act(() => jest.advanceTimersByTime(DEBOUNCE_MS));
+      act(() => vi.advanceTimersByTime(DEBOUNCE_MS));
       expect(searchVerses).not.toHaveBeenCalled();
     });
 
@@ -107,7 +108,7 @@ describe("useSearchBar", () => {
       act(() => result.current.runSearch("gen"));
 
       await act(async () => {
-        await jest.advanceTimersByTimeAsync(DEBOUNCE_MS);
+        await vi.advanceTimersByTimeAsync(DEBOUNCE_MS);
       });
 
       expect(searchVerses).toHaveBeenCalledWith("gen");
@@ -119,11 +120,11 @@ describe("useSearchBar", () => {
       searchVerses.mockResolvedValue([]);
       const result = setup();
       act(() => result.current.runSearch("g"));
-      act(() => jest.advanceTimersByTime(50)); // before the debounce fires
+      act(() => vi.advanceTimersByTime(50)); // before the debounce fires
       act(() => result.current.runSearch("ge")); // clears the pending timeout
 
       await act(async () => {
-        await jest.advanceTimersByTimeAsync(DEBOUNCE_MS);
+        await vi.advanceTimersByTimeAsync(DEBOUNCE_MS);
       });
 
       expect(searchVerses).toHaveBeenCalledTimes(1);
@@ -136,7 +137,7 @@ describe("useSearchBar", () => {
       act(() => result.current.runSearch("gen"));
 
       await act(async () => {
-        await jest.advanceTimersByTimeAsync(DEBOUNCE_MS);
+        await vi.advanceTimersByTimeAsync(DEBOUNCE_MS);
       });
 
       expect(result.current.error.value).toBe("network down");
@@ -150,7 +151,7 @@ describe("useSearchBar", () => {
       act(() => result.current.runSearch("gen"));
 
       await act(async () => {
-        await jest.advanceTimersByTimeAsync(DEBOUNCE_MS);
+        await vi.advanceTimersByTimeAsync(DEBOUNCE_MS);
       });
 
       expect(result.current.error.value).toBe("Unable to search verses.");
@@ -166,12 +167,12 @@ describe("useSearchBar", () => {
       const result = setup();
       act(() => result.current.runSearch("a"));
       // Fire the first debounce → searchVerses("a") is now pending.
-      act(() => jest.advanceTimersByTime(DEBOUNCE_MS));
+      act(() => vi.advanceTimersByTime(DEBOUNCE_MS));
       // Supersede it before it resolves → bumps the request id.
       act(() => result.current.runSearch("b"));
 
       await act(async () => {
-        await jest.advanceTimersByTimeAsync(DEBOUNCE_MS);
+        await vi.advanceTimersByTimeAsync(DEBOUNCE_MS);
       });
 
       // The stale "a" result is discarded; only "b" wins.
@@ -187,12 +188,12 @@ describe("useSearchBar", () => {
       const result = setup();
       act(() => result.current.runSearch("a"));
       // Fire the first debounce → searchVerses("a") (which rejects) is pending.
-      act(() => jest.advanceTimersByTime(DEBOUNCE_MS));
+      act(() => vi.advanceTimersByTime(DEBOUNCE_MS));
       // Supersede it before it rejects → bumps the request id.
       act(() => result.current.runSearch("b"));
 
       await act(async () => {
-        await jest.advanceTimersByTimeAsync(DEBOUNCE_MS);
+        await vi.advanceTimersByTimeAsync(DEBOUNCE_MS);
       });
 
       // The stale rejection is swallowed; no error surfaces and "b" wins.
@@ -252,7 +253,7 @@ describe("useSearchBar", () => {
 
   describe("cleanup", () => {
     it("clears a pending debounce timeout on unmount", () => {
-      const clearTimeoutSpy = jest.spyOn(window, "clearTimeout");
+      const clearTimeoutSpy = vi.spyOn(window, "clearTimeout");
       const result = setup();
       act(() => result.current.runSearch("gen")); // schedules a timeout
       act(() => render(null, container)); // unmount → cleanup

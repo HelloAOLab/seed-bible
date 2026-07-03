@@ -1,5 +1,5 @@
-import { TodayReadingHistoryService } from "todayScreen.application.services.TodayReadingHistoryService";
-import type { ReadingEvent } from "@packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
+import { TodayReadingHistoryService } from "../../../../../packages/today-screen/application/services/TodayReadingHistoryService";
+import type { ReadingEvent } from "../../../../../packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
 
 // ─── factories ──────────────────────────────────────────────────────────────
 
@@ -22,7 +22,7 @@ function makeReadingEventsPort(
   eventsByUser: Record<string, ReadingEvent[]> = {}
 ) {
   return {
-    getReadingHistoryEvents: jest.fn(
+    getReadingHistoryEvents: vi.fn(
       async (recordName: string): Promise<ReadingEvent[]> =>
         eventsByUser[recordName] ?? []
     ),
@@ -30,7 +30,7 @@ function makeReadingEventsPort(
 }
 
 function makeUsersPort(ids: string[]) {
-  return { getUsersIds: jest.fn(() => ids) };
+  return { getUsersIds: vi.fn(() => ids) };
 }
 
 function makeService(

@@ -1,11 +1,15 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useContainer } from "scriptureMap.hooks.useContainer";
-import { useScriptureMapContext } from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
+import { useContainer } from "../../../../packages/scripture-map/hooks/useContainer";
+import { useScriptureMapContext } from "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext";
 
-jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
-  useScriptureMapContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext",
+  () => ({
+    useScriptureMapContext: vi.fn(),
+  })
+);
 
 describe("useContainer", () => {
   let container: HTMLDivElement;
@@ -33,7 +37,7 @@ describe("useContainer", () => {
   }
 
   it("returns an empty array when arrangement is null", () => {
-    (useScriptureMapContext as jest.Mock).mockReturnValue({
+    (useScriptureMapContext as Mock).mockReturnValue({
       arrangement: null,
     });
     const result = setup();
@@ -41,7 +45,7 @@ describe("useContainer", () => {
   });
 
   it("returns an empty array when arrangement is undefined", () => {
-    (useScriptureMapContext as jest.Mock).mockReturnValue({
+    (useScriptureMapContext as Mock).mockReturnValue({
       arrangement: undefined,
     });
     const result = setup();
@@ -53,7 +57,7 @@ describe("useContainer", () => {
       { name: "OT", sections: [] },
       { name: "NT", sections: [] },
     ];
-    (useScriptureMapContext as jest.Mock).mockReturnValue({
+    (useScriptureMapContext as Mock).mockReturnValue({
       arrangement: { testaments },
     });
     const result = setup();
@@ -64,7 +68,7 @@ describe("useContainer", () => {
 
   it("maps each testament to { key, testament, testamentIndex }", () => {
     const testaments = [{ name: "OT", sections: [] }];
-    (useScriptureMapContext as jest.Mock).mockReturnValue({
+    (useScriptureMapContext as Mock).mockReturnValue({
       arrangement: { testaments },
     });
     const result = setup();
@@ -81,7 +85,7 @@ describe("useContainer", () => {
       { name: "NT", sections: [] },
       { name: "AP", sections: [] },
     ];
-    (useScriptureMapContext as jest.Mock).mockReturnValue({
+    (useScriptureMapContext as Mock).mockReturnValue({
       arrangement: { testaments },
     });
     const result = setup();

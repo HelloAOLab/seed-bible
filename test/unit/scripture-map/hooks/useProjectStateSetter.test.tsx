@@ -1,11 +1,15 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useProjectStateSetter } from "scriptureMap.hooks.useProjectStateSetter";
-import { useScriptureMapContext } from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
+import { useProjectStateSetter } from "../../../../packages/scripture-map/hooks/useProjectStateSetter";
+import { useScriptureMapContext } from "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext";
 
-jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
-  useScriptureMapContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext",
+  () => ({
+    useScriptureMapContext: vi.fn(),
+  })
+);
 
 const defaultProjectStateStyle = {
   None: {},
@@ -19,10 +23,10 @@ function makeContext(overrides: Record<string, unknown> = {}) {
   return {
     isInSelectionMode: false,
     projectStateStyle: defaultProjectStateStyle,
-    onSelectionModeCheckboxClick: jest.fn(),
-    onSelectionModeDoneButtonClick: jest.fn(),
-    onStateSetterOptionClick: jest.fn(),
-    onSelectionModeClearSelectionButtonClick: jest.fn(),
+    onSelectionModeCheckboxClick: vi.fn(),
+    onSelectionModeDoneButtonClick: vi.fn(),
+    onStateSetterOptionClick: vi.fn(),
+    onSelectionModeClearSelectionButtonClick: vi.fn(),
     translate: (key: string) => key,
     ...overrides,
   };
@@ -34,7 +38,7 @@ describe("useProjectStateSetter", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useScriptureMapContext as jest.Mock).mockReturnValue(makeContext());
+    (useScriptureMapContext as Mock).mockReturnValue(makeContext());
   });
 
   afterEach(() => {
@@ -62,7 +66,7 @@ describe("useProjectStateSetter", () => {
   });
 
   it("checkboxIconClass appends ' checked' when in selection mode", () => {
-    (useScriptureMapContext as jest.Mock).mockReturnValue(
+    (useScriptureMapContext as Mock).mockReturnValue(
       makeContext({ isInSelectionMode: true })
     );
     const result = setup();
@@ -77,7 +81,7 @@ describe("useProjectStateSetter", () => {
   });
 
   it("checkboxIconContent is 'check' when in selection mode", () => {
-    (useScriptureMapContext as jest.Mock).mockReturnValue(
+    (useScriptureMapContext as Mock).mockReturnValue(
       makeContext({ isInSelectionMode: true })
     );
     const result = setup();
@@ -85,7 +89,7 @@ describe("useProjectStateSetter", () => {
   });
 
   it("isInSelectionMode reflects the context value", () => {
-    (useScriptureMapContext as jest.Mock).mockReturnValue(
+    (useScriptureMapContext as Mock).mockReturnValue(
       makeContext({ isInSelectionMode: true })
     );
     const result = setup();

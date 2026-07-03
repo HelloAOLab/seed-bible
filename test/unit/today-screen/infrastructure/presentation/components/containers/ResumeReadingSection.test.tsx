@@ -1,12 +1,13 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { ResumeReadingSection } from "todayScreen.infrastructure.presentation.components.containers.ResumeReadingSection";
-import { useResumeReadingSection } from "todayScreen.infrastructure.presentation.hooks.useResumeReadingSection";
+import { ResumeReadingSection } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/ResumeReadingSection";
+import { useResumeReadingSection } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useResumeReadingSection";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.hooks.useResumeReadingSection",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useResumeReadingSection",
   () => ({
-    useResumeReadingSection: jest.fn(),
+    useResumeReadingSection: vi.fn(),
   })
 );
 
@@ -18,7 +19,7 @@ const MaterialIcon = ({ children }: { children: string }) => (
 
 function makeResult(
   cardData: Partial<Result["cardData"]> = {},
-  handleButtonClick = jest.fn()
+  handleButtonClick = vi.fn()
 ): Result {
   return {
     MaterialIcon,
@@ -44,14 +45,14 @@ describe("ResumeReadingSection", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(
     cardData: Partial<Result["cardData"]> = {},
-    handleButtonClick = jest.fn()
+    handleButtonClick = vi.fn()
   ) {
-    (useResumeReadingSection as jest.Mock).mockReturnValue(
+    (useResumeReadingSection as Mock).mockReturnValue(
       makeResult(cardData, handleButtonClick)
     );
     act(() => render(<ResumeReadingSection />, container));
@@ -78,7 +79,7 @@ describe("ResumeReadingSection", () => {
   });
 
   it("calls handleButtonClick when the button is clicked", () => {
-    const handleButtonClick = jest.fn();
+    const handleButtonClick = vi.fn();
     setup({}, handleButtonClick);
     act(() =>
       container

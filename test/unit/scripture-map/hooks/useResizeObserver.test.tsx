@@ -1,22 +1,26 @@
+import type { Mock } from "vitest";
 import { render, createRef } from "preact";
 import { act } from "preact/test-utils";
-import { useResizeObserver } from "scriptureMap.hooks.useResizeObserver";
+import { useResizeObserver } from "../../../../packages/scripture-map/hooks/useResizeObserver";
 
 type ResizeObserverSize = { width: number; height: number };
 
 describe("useResizeObserver", () => {
   let container: HTMLDivElement;
   let lastObserverCallback: ResizeObserverCallback;
-  let observeSpy: jest.Mock;
-  let disconnectSpy: jest.Mock;
+  let observeSpy: Mock;
+  let disconnectSpy: Mock;
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    observeSpy = jest.fn();
-    disconnectSpy = jest.fn();
+    observeSpy = vi.fn();
+    disconnectSpy = vi.fn();
 
-    global.ResizeObserver = jest.fn((callback: ResizeObserverCallback) => {
+    global.ResizeObserver = vi.fn(function (
+      this: unknown,
+      callback: ResizeObserverCallback
+    ) {
       lastObserverCallback = callback;
       return { observe: observeSpy, disconnect: disconnectSpy };
     }) as unknown as typeof ResizeObserver;

@@ -1,6 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useClickAndHold } from "scriptureMap.hooks.useClickAndHold";
+import { useClickAndHold } from "../../../../packages/scripture-map/hooks/useClickAndHold";
 
 type Handlers = ReturnType<typeof useClickAndHold>;
 
@@ -8,7 +8,7 @@ describe("useClickAndHold", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     container = document.createElement("div");
     document.body.appendChild(container);
   });
@@ -16,12 +16,12 @@ describe("useClickAndHold", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
-    jest.useRealTimers();
+    vi.useRealTimers();
   });
 
   function setup(holdTime?: number) {
-    const holdComplete = jest.fn();
-    const holdCancel = jest.fn();
+    const holdComplete = vi.fn();
+    const holdCancel = vi.fn();
     const handlers = { current: null as unknown as Handlers };
 
     function TestComponent() {
@@ -44,7 +44,7 @@ describe("useClickAndHold", () => {
     act(() => handlers.current.onHoldStart(fakeEvent as any));
     expect(holdComplete).not.toHaveBeenCalled();
 
-    act(() => jest.advanceTimersByTime(500));
+    act(() => vi.advanceTimersByTime(500));
 
     expect(holdComplete).toHaveBeenCalledWith(fakeEvent);
     expect(holdCancel).not.toHaveBeenCalled();
@@ -54,7 +54,7 @@ describe("useClickAndHold", () => {
     const { holdComplete, handlers } = setup(500);
 
     act(() => handlers.current.onHoldStart({} as any));
-    act(() => jest.advanceTimersByTime(499));
+    act(() => vi.advanceTimersByTime(499));
 
     expect(holdComplete).not.toHaveBeenCalled();
   });
@@ -65,7 +65,7 @@ describe("useClickAndHold", () => {
 
     act(() => handlers.current.onHoldStart(fakeEvent as any));
     act(() => handlers.current.onHoldEnd(fakeEvent as any));
-    act(() => jest.advanceTimersByTime(1000));
+    act(() => vi.advanceTimersByTime(1000));
 
     expect(holdCancel).toHaveBeenCalledWith(fakeEvent);
     expect(holdComplete).not.toHaveBeenCalled();
@@ -83,7 +83,7 @@ describe("useClickAndHold", () => {
     const { holdComplete, handlers } = setup();
 
     act(() => handlers.current.onHoldStart({} as any));
-    act(() => jest.advanceTimersByTime(1));
+    act(() => vi.advanceTimersByTime(1));
 
     expect(holdComplete).toHaveBeenCalled();
   });
@@ -93,7 +93,7 @@ describe("useClickAndHold", () => {
     const fakeEvent = {} as PointerEvent;
 
     act(() => handlers.current.onHoldStart(fakeEvent as any));
-    act(() => jest.advanceTimersByTime(100));
+    act(() => vi.advanceTimersByTime(100));
     expect(holdComplete).toHaveBeenCalledTimes(1);
 
     act(() => handlers.current.onHoldEnd(fakeEvent as any));

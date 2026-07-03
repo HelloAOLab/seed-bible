@@ -1,35 +1,51 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useTestamentContent } from "scriptureMap.hooks.useTestamentContent";
-import { useScriptureMapContext } from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
-import { useTestamentContext } from "scriptureMap.contexts.Testament.TestamentContext";
-import { useReadingHistoryContext } from "scriptureMap.contexts.ReadingHistory.ReadingHistoryContext";
-import { applyTranslationRule } from "bibleVizUtils.domain.functions.string";
+import { useTestamentContent } from "../../../../packages/scripture-map/hooks/useTestamentContent";
+import { useScriptureMapContext } from "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext";
+import { useTestamentContext } from "../../../../packages/scripture-map/contexts/Testament/TestamentContext";
+import { useReadingHistoryContext } from "../../../../packages/scripture-map/contexts/ReadingHistory/ReadingHistoryContext";
+import { applyTranslationRule } from "../../../../packages/seed-bible-utils/domain/functions/string";
 
-jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
-  useScriptureMapContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext",
+  () => ({
+    useScriptureMapContext: vi.fn(),
+  })
+);
 
-jest.mock("scriptureMap.contexts.Testament.TestamentContext", () => ({
-  useTestamentContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/Testament/TestamentContext",
+  () => ({
+    useTestamentContext: vi.fn(),
+  })
+);
 
-jest.mock("scriptureMap.contexts.ReadingHistory.ReadingHistoryContext", () => ({
-  useReadingHistoryContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ReadingHistory/ReadingHistoryContext",
+  () => ({
+    useReadingHistoryContext: vi.fn(),
+  })
+);
 
-jest.mock("seed-bible.managers.ReadingHistoryManager", () => ({
-  calculateReadingHistorySummary: jest.fn(() => ({
-    totalTimeSpentReading: 0,
-    users: {},
-  })),
-}));
+vi.mock(
+  "../../../../packages/seed-bible/seed-bible/managers/ReadingHistoryManager",
+  () => ({
+    calculateReadingHistorySummary: vi.fn(() => ({
+      totalTimeSpentReading: 0,
+      users: {},
+    })),
+  })
+);
 
-jest.mock("bibleVizUtils.domain.functions.string", () => ({
-  applyTranslationRule: jest.fn(
-    (_rule: unknown, vars: { name: string }) => `translated:${vars.name}`
-  ),
-}));
+vi.mock(
+  "../../../../packages/seed-bible-utils/domain/functions/string",
+  () => ({
+    applyTranslationRule: vi.fn(
+      (_rule: unknown, vars: { name: string }) => `translated:${vars.name}`
+    ),
+  })
+);
 
 // ---- Data helpers ----
 
@@ -104,16 +120,16 @@ function makeCtx(overrides: Record<string, unknown> = {}) {
     activeTab: undefined,
     usersColors: [],
     userPresence: new Map(),
-    ComputeRawGradientColors: jest.fn(() => "linear-gradient(red)"),
-    userColorStore: { getUserColor: jest.fn(() => "#aabbcc") },
+    ComputeRawGradientColors: vi.fn(() => "linear-gradient(red)"),
+    userColorStore: { getUserColor: vi.fn(() => "#aabbcc") },
     sectionInfoMapper: {
-      toInfrastructure: jest.fn((section: any) => makeInfraSection(section)),
+      toInfrastructure: vi.fn((section: any) => makeInfraSection(section)),
     },
     arrangementService: {
-      getArrangementByIndex: jest.fn(() => ({ name: "default" })),
+      getArrangementByIndex: vi.fn(() => ({ name: "default" })),
     },
-    HexToRgb: jest.fn(() => ({ r: 170, g: 187, b: 204 })),
-    GetChildrenLevelColors: jest.fn(() => ["#cc0000", "#bb0000", "#aa0000"]),
+    HexToRgb: vi.fn(() => ({ r: 170, g: 187, b: 204 })),
+    GetChildrenLevelColors: vi.fn(() => ["#cc0000", "#bb0000", "#aa0000"]),
     bookNames: {
       value: new Map([
         ["GEN", "Genesis"],
@@ -148,11 +164,9 @@ describe("useTestamentContent", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useScriptureMapContext as jest.Mock).mockReturnValue(makeCtx());
-    (useReadingHistoryContext as jest.Mock).mockReturnValue(
-      makeReadingHistoryCtx()
-    );
-    (useTestamentContext as jest.Mock).mockReturnValue(
+    (useScriptureMapContext as Mock).mockReturnValue(makeCtx());
+    (useReadingHistoryContext as Mock).mockReturnValue(makeReadingHistoryCtx());
+    (useTestamentContext as Mock).mockReturnValue(
       makeTestamentCtx([makeSection("Law", [makeCompleteBook()])])
     );
   });
@@ -160,7 +174,7 @@ describe("useTestamentContent", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup() {
@@ -176,9 +190,9 @@ describe("useTestamentContent", () => {
   }
 
   it("throws when arrangement name is not found", () => {
-    (useScriptureMapContext as jest.Mock).mockReturnValue(
+    (useScriptureMapContext as Mock).mockReturnValue(
       makeCtx({
-        arrangementService: { getArrangementByIndex: jest.fn(() => null) },
+        arrangementService: { getArrangementByIndex: vi.fn(() => null) },
       })
     );
     expect(() => setup()).toThrow(
@@ -187,10 +201,10 @@ describe("useTestamentContent", () => {
   });
 
   it("throws when arrangement returns object with no name", () => {
-    (useScriptureMapContext as jest.Mock).mockReturnValue(
+    (useScriptureMapContext as Mock).mockReturnValue(
       makeCtx({
         arrangementService: {
-          getArrangementByIndex: jest.fn(() => ({ name: "" })),
+          getArrangementByIndex: vi.fn(() => ({ name: "" })),
         },
       })
     );
@@ -200,7 +214,7 @@ describe("useTestamentContent", () => {
   });
 
   it("returns empty itemsData when testament has no sections", () => {
-    (useTestamentContext as jest.Mock).mockReturnValue(makeTestamentCtx([]));
+    (useTestamentContext as Mock).mockReturnValue(makeTestamentCtx([]));
     const result = setup();
     expect(result.current.itemsData).toEqual([]);
   });
@@ -215,7 +229,7 @@ describe("useTestamentContent", () => {
 
   describe("showSectionLabels=true", () => {
     beforeEach(() => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({ showSectionLabels: true })
       );
     });
@@ -260,7 +274,7 @@ describe("useTestamentContent", () => {
 
   describe("toggleShowSection", () => {
     beforeEach(() => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({ showSectionLabels: true })
       );
     });
@@ -316,7 +330,7 @@ describe("useTestamentContent", () => {
     });
 
     it("falls back to bookId when bookName is not in map", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({ bookNames: { value: new Map() } })
       );
       expect(getFirstBook().book).toBe("GEN");
@@ -339,10 +353,10 @@ describe("useTestamentContent", () => {
     });
 
     it("isSubset is true for subset books", () => {
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx([makeSection("Poetry", [makeSubsetBook()])])
       );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           bookNames: {
             value: new Map([
@@ -360,12 +374,12 @@ describe("useTestamentContent", () => {
     });
 
     it("subsetStartIndex is set for subset books", () => {
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx([
           makeSection("Poetry", [makeSubsetBook({ startIndex: 10 })]),
         ])
       );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           bookNames: {
             value: new Map([
@@ -383,7 +397,7 @@ describe("useTestamentContent", () => {
     });
 
     it("uses customColor when defined", () => {
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx([
           makeSection("Law", [makeCompleteBook({ customColor: "#custom1" })]),
         ])
@@ -399,21 +413,21 @@ describe("useTestamentContent", () => {
     });
 
     it("falls back to '#000000' when GetChildrenLevelColors returns empty array", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
-        makeCtx({ GetChildrenLevelColors: jest.fn(() => []) })
+      (useScriptureMapContext as Mock).mockReturnValue(
+        makeCtx({ GetChildrenLevelColors: vi.fn(() => []) })
       );
       expect(getFirstBook().bookCoverBackgroundColor).toBe("#000000");
     });
 
     it("applies translationRule for subset books with rule defined", () => {
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx([
           makeSection("Poetry", [
             makeSubsetBook({ translationRule: { template: "{name} Part 1" } }),
           ]),
         ])
       );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           bookNames: {
             value: new Map([
@@ -432,10 +446,10 @@ describe("useTestamentContent", () => {
     });
 
     it("uses subset bookId as fallback when bookNames has no entry and no translationRule", () => {
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx([makeSection("Poetry", [makeSubsetBook()])])
       );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({ bookNames: { value: new Map() } })
       );
       const result = setup();
@@ -454,7 +468,7 @@ describe("useTestamentContent", () => {
   describe("readingEvents in booksContainer", () => {
     it("complete book gets events from rangedReadingEventsByBook by bookId", () => {
       const events = [{ start: 0, end: 120, chapter: 1 }];
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           rangedReadingEventsByBook: new Map([["GEN", events]]),
         })
@@ -480,19 +494,19 @@ describe("useTestamentContent", () => {
         { start: 120, end: 240, chapter: 51 }, // outside range
         { start: 240, end: 360, chapter: 50 }, // boundary, in range
       ];
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx([
           makeSection("Poetry", [
             makeSubsetBook({ startIndex: 0, numberOfChapters: 50 }),
           ]),
         ])
       );
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           rangedReadingEventsByBook: new Map([["PSA", events]]),
         })
       );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           bookNames: {
             value: new Map([
@@ -526,19 +540,19 @@ describe("useTestamentContent", () => {
         { start: 240, end: 360, chapter: 100 }, // in range (boundary)
         { start: 360, end: 480, chapter: 101 }, // out of range
       ];
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx([
           makeSection("Poetry", [
             makeSubsetBook({ startIndex: 50, numberOfChapters: 50 }),
           ]),
         ])
       );
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           rangedReadingEventsByBook: new Map([["PSA", events]]),
         })
       );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           bookNames: {
             value: new Map([
@@ -557,10 +571,10 @@ describe("useTestamentContent", () => {
     });
 
     it("subset book gets empty array when completeBookId not in rangedReadingEventsByBook", () => {
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx([makeSection("Poetry", [makeSubsetBook()])])
       );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({ bookNames: { value: new Map([["PSA1", "Psalms 1-50"]]) } })
       );
       const result = setup();
@@ -575,7 +589,7 @@ describe("useTestamentContent", () => {
     const range = { start: 0, end: 604800 };
 
     it("includes complete book when total reading time >= SEC_PER_MINUTE", () => {
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           rangedReadingEventsByBook: new Map([
             ["GEN", [{ start: 0, end: 120, chapter: 1 }]],
@@ -592,7 +606,7 @@ describe("useTestamentContent", () => {
     });
 
     it("excludes complete book when reading time < SEC_PER_MINUTE", () => {
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           rangedReadingEventsByBook: new Map([
             ["GEN", [{ start: 0, end: 30, chapter: 1 }]],
@@ -605,7 +619,7 @@ describe("useTestamentContent", () => {
     });
 
     it("excludes complete book when it has no events in rangedReadingEventsByBook", () => {
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           rangedReadingEventsByBook: new Map(),
           readingHistoryRangeSeconds: range,
@@ -616,7 +630,7 @@ describe("useTestamentContent", () => {
     });
 
     it("excludes section entirely when none of its books qualify", () => {
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           rangedReadingEventsByBook: new Map([
             ["GEN", [{ start: 0, end: 10, chapter: 1 }]],
@@ -629,14 +643,14 @@ describe("useTestamentContent", () => {
     });
 
     it("includes subset book when chapter-range events have sufficient time", () => {
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx([
           makeSection("Poetry", [
             makeSubsetBook({ startIndex: 0, numberOfChapters: 50 }),
           ]),
         ])
       );
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           rangedReadingEventsByBook: new Map([
             ["PSA", [{ start: 0, end: 120, chapter: 1 }]],
@@ -644,7 +658,7 @@ describe("useTestamentContent", () => {
           readingHistoryRangeSeconds: range,
         })
       );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           bookNames: {
             value: new Map([
@@ -661,14 +675,14 @@ describe("useTestamentContent", () => {
     });
 
     it("excludes subset book when chapter-range events have insufficient time", () => {
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx([
           makeSection("Poetry", [
             makeSubsetBook({ startIndex: 0, numberOfChapters: 50 }),
           ]),
         ])
       );
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           rangedReadingEventsByBook: new Map([
             ["PSA", [{ start: 0, end: 30, chapter: 1 }]],
@@ -676,7 +690,7 @@ describe("useTestamentContent", () => {
           readingHistoryRangeSeconds: range,
         })
       );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           bookNames: {
             value: new Map([
@@ -691,14 +705,14 @@ describe("useTestamentContent", () => {
     });
 
     it("excludes subset book when all events are outside its chapter range", () => {
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx([
           makeSection("Poetry", [
             makeSubsetBook({ startIndex: 0, numberOfChapters: 50 }),
           ]),
         ])
       );
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           rangedReadingEventsByBook: new Map([
             ["PSA", [{ start: 0, end: 200, chapter: 100 }]],
@@ -706,7 +720,7 @@ describe("useTestamentContent", () => {
           readingHistoryRangeSeconds: range,
         })
       );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           bookNames: {
             value: new Map([
@@ -721,16 +735,16 @@ describe("useTestamentContent", () => {
     });
 
     it("excludes subset book when completeBookId has no events", () => {
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx([makeSection("Poetry", [makeSubsetBook()])])
       );
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           rangedReadingEventsByBook: new Map(),
           readingHistoryRangeSeconds: range,
         })
       );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({ bookNames: { value: new Map([["PSA1", "Psalms 1-50"]]) } })
       );
       const result = setup();
@@ -742,10 +756,10 @@ describe("useTestamentContent", () => {
         makeCompleteBook({ bookId: "GEN" }),
         makeCompleteBook({ bookId: "EXO", numberOfChapters: 40 }),
       ]);
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx([section])
       );
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           rangedReadingEventsByBook: new Map([
             ["GEN", [{ start: 0, end: 120, chapter: 1 }]], // qualifies
@@ -754,7 +768,7 @@ describe("useTestamentContent", () => {
           readingHistoryRangeSeconds: range,
         })
       );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           bookNames: {
             value: new Map([
@@ -792,7 +806,7 @@ describe("useTestamentContent", () => {
     });
 
     it("adds matching user to bookUserPresence", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           isUserPresenceEnabled: true,
           userPresence: new Map([["user1", { chapter: 2, bookId: "GEN" }]]),
@@ -809,7 +823,7 @@ describe("useTestamentContent", () => {
     });
 
     it("does not add user whose bookId does not match", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           isUserPresenceEnabled: true,
           userPresence: new Map([["user1", { chapter: 2, bookId: "EXO" }]]),
@@ -823,7 +837,7 @@ describe("useTestamentContent", () => {
     });
 
     it("adds multiple users when multiple match", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           isUserPresenceEnabled: true,
           userPresence: new Map([
@@ -840,8 +854,8 @@ describe("useTestamentContent", () => {
     });
 
     it("sets bookBorderGradientColors when users match", () => {
-      const computeFn = jest.fn(() => "linear-gradient(#aabbcc)");
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      const computeFn = vi.fn(() => "linear-gradient(#aabbcc)");
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           isUserPresenceEnabled: true,
           userPresence: new Map([["user1", { chapter: 1, bookId: "GEN" }]]),
@@ -862,7 +876,7 @@ describe("useTestamentContent", () => {
     });
 
     it("bookBorderGradientColors is undefined when no users match", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({ isUserPresenceEnabled: true, userPresence: new Map() })
       );
       const result = setup();
@@ -873,14 +887,14 @@ describe("useTestamentContent", () => {
     });
 
     it("adds user to subset book bookUserPresence when chapter is in range", () => {
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx([
           makeSection("Poetry", [
             makeSubsetBook({ startIndex: 0, numberOfChapters: 50 }),
           ]),
         ])
       );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           isUserPresenceEnabled: true,
           userPresence: new Map([["user1", { chapter: 25, bookId: "PSA" }]]),
@@ -900,14 +914,14 @@ describe("useTestamentContent", () => {
     });
 
     it("does not add user to subset book when chapter is outside range", () => {
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx([
           makeSection("Poetry", [
             makeSubsetBook({ startIndex: 0, numberOfChapters: 50 }),
           ]),
         ])
       );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           isUserPresenceEnabled: true,
           userPresence: new Map([["user1", { chapter: 75, bookId: "PSA" }]]),
@@ -927,8 +941,8 @@ describe("useTestamentContent", () => {
     });
 
     it("user color comes from userColorStore.getUserColor", () => {
-      const getUserColor = jest.fn(() => "#ff1234");
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      const getUserColor = vi.fn(() => "#ff1234");
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           isUserPresenceEnabled: true,
           userPresence: new Map([["user1", { chapter: 1, bookId: "GEN" }]]),
@@ -944,11 +958,11 @@ describe("useTestamentContent", () => {
     });
 
     it("falls back to '#000000' borderColor when getUserColor returns null", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           isUserPresenceEnabled: true,
           userPresence: new Map([["user1", { chapter: 1, bookId: "GEN" }]]),
-          userColorStore: { getUserColor: jest.fn(() => null) },
+          userColorStore: { getUserColor: vi.fn(() => null) },
         })
       );
       const result = setup();
@@ -965,10 +979,8 @@ describe("useTestamentContent", () => {
         makeSection("Law", [makeCompleteBook({ bookId: "GEN" })]),
         makeSection("Prophets", [makeCompleteBook({ bookId: "ISA" })]),
       ];
-      (useTestamentContext as jest.Mock).mockReturnValue(
-        makeTestamentCtx(sections)
-      );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(makeTestamentCtx(sections));
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           showSectionLabels: true,
           bookNames: {
@@ -991,10 +1003,8 @@ describe("useTestamentContent", () => {
         makeSection("Law", [makeCompleteBook({ bookId: "GEN" })]),
         makeSection("Prophets", [makeCompleteBook({ bookId: "ISA" })]),
       ];
-      (useTestamentContext as jest.Mock).mockReturnValue(
-        makeTestamentCtx(sections)
-      );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(makeTestamentCtx(sections));
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           showSectionLabels: true,
           bookNames: {
@@ -1019,10 +1029,10 @@ describe("useTestamentContent", () => {
         makeCompleteBook({ bookId: "GEN" }),
         makeCompleteBook({ bookId: "EXO", numberOfChapters: 40 }),
       ]);
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx([section])
       );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           bookNames: {
             value: new Map([

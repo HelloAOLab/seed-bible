@@ -1,24 +1,28 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { Welcome } from "todayScreen.infrastructure.presentation.components.containers.Welcome";
-import { useWelcome } from "todayScreen.infrastructure.presentation.hooks.useWelcome";
-import { SeedBibleIcon } from "todayScreen.infrastructure.presentation.components.ui.SeedBibleIcon";
+import { Welcome } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Welcome";
+import { useWelcome } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useWelcome";
+import { SeedBibleIcon } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/SeedBibleIcon";
 
-jest.mock("todayScreen.infrastructure.presentation.hooks.useWelcome", () => ({
-  useWelcome: jest.fn(),
-}));
-
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.ui.SpinnerIcon",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useWelcome",
   () => ({
-    SpinnerIcon: jest.fn(() => <div data-testid="spinner" />),
+    useWelcome: vi.fn(),
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.ui.SeedBibleIcon",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/SpinnerIcon",
   () => ({
-    SeedBibleIcon: jest.fn(() => <div data-testid="seed-bible-icon" />),
+    SpinnerIcon: vi.fn(() => <div data-testid="spinner" />),
+  })
+);
+
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/SeedBibleIcon",
+  () => ({
+    SeedBibleIcon: vi.fn(() => <div data-testid="seed-bible-icon" />),
   })
 );
 
@@ -51,12 +55,12 @@ function makeResult(options: Options = {}): Result {
     welcomeVerse: {
       value: options.welcomeVerse ?? "<hl>In the beginning</hl> was the Word",
     },
-    openBookSelector: options.openBookSelector ?? jest.fn(),
+    openBookSelector: options.openBookSelector ?? vi.fn(),
     selectorText: options.selectorText ?? "Open Bible",
     MaterialIcon,
     startButtonText: options.startButtonText ?? "Read the first chapter",
     startButtonIcon: options.startButtonIcon ?? "arrow_forward",
-    handleStartButtonClick: options.handleStartButtonClick ?? jest.fn(),
+    handleStartButtonClick: options.handleStartButtonClick ?? vi.fn(),
     footerTitle: options.footerTitle ?? "Everything begins small.",
     footerContent: options.footerContent ?? "Take your time.",
     seedBibleIconStyle: options.seedBibleIconStyle ?? { width: "32px" },
@@ -74,12 +78,12 @@ describe("Welcome", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(options: Options = {}) {
     const result = makeResult(options);
-    (useWelcome as jest.Mock).mockReturnValue(result);
+    (useWelcome as Mock).mockReturnValue(result);
     act(() => render(<Welcome />, container));
     return result;
   }
@@ -113,7 +117,7 @@ describe("Welcome", () => {
       const button = btn(".book-selector-button")!;
       expect(button.textContent).toBe("Abrir Biblia");
       expect(q("[data-testid='seed-bible-icon']")).not.toBeNull();
-      expect((SeedBibleIcon as jest.Mock).mock.calls[0]![0].style).toBe(
+      expect((SeedBibleIcon as Mock).mock.calls[0]![0].style).toBe(
         seedBibleIconStyle
       );
     });

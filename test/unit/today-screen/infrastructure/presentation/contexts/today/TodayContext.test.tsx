@@ -1,18 +1,19 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import {
   TodayProvider,
   useTodayContext,
   type TodayContextType,
-} from "todayScreen.infrastructure.presentation.contexts.today.TodayContext";
-import { useTodayProvider } from "todayScreen.infrastructure.presentation.contexts.today.useTodayProvider";
-import type { TodayConfig } from "todayScreen.infrastructure.presentation.components.Today";
+} from "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
+import { useTodayProvider } from "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/useTodayProvider";
+import type { TodayConfig } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/Today";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.today.useTodayProvider",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/useTodayProvider",
   () => ({
     // Echoes the config so the provided context value is observable.
-    useTodayProvider: jest.fn((config) => config),
+    useTodayProvider: vi.fn((config) => config),
   })
 );
 
@@ -29,7 +30,7 @@ describe("TodayContext", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("derives the context value from useTodayProvider(config) and provides it", () => {
@@ -49,7 +50,7 @@ describe("TodayContext", () => {
       )
     );
 
-    expect(useTodayProvider as jest.Mock).toHaveBeenCalledWith(config);
+    expect(useTodayProvider as Mock).toHaveBeenCalledWith(config);
     expect(captured.current).toBe(config);
   });
 
@@ -67,7 +68,7 @@ describe("TodayContext", () => {
   });
 
   it("throws when used outside of a provider", () => {
-    const consoleError = jest
+    const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
 

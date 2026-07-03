@@ -1,11 +1,15 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useProjectFiltersSelector } from "scriptureMap.hooks.useProjectFiltersSelector";
-import { useScriptureMapContext } from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
+import { useProjectFiltersSelector } from "../../../../packages/scripture-map/hooks/useProjectFiltersSelector";
+import { useScriptureMapContext } from "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext";
 
-jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
-  useScriptureMapContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext",
+  () => ({
+    useScriptureMapContext: vi.fn(),
+  })
+);
 
 type FilterMap = Map<string, boolean>;
 
@@ -35,7 +39,7 @@ const defaultProjectStateStyle = {
 function makeContext(projectFilters: FilterMap) {
   return {
     projectFilters,
-    handleProjectFilterOptionClick: jest.fn(),
+    handleProjectFilterOptionClick: vi.fn(),
     projectStateStyle: defaultProjectStateStyle,
     translate: (key: string) => key,
   };
@@ -55,7 +59,7 @@ describe("useProjectFiltersSelector", () => {
   });
 
   function setup(projectFilters: FilterMap) {
-    (useScriptureMapContext as jest.Mock).mockReturnValue(
+    (useScriptureMapContext as Mock).mockReturnValue(
       makeContext(projectFilters)
     );
     const result = {
@@ -118,7 +122,7 @@ describe("useProjectFiltersSelector", () => {
 
   it("allSelectorOptionContent title is the translation of 'all'", () => {
     const filters = new Map() as FilterMap;
-    (useScriptureMapContext as jest.Mock).mockReturnValue({
+    (useScriptureMapContext as Mock).mockReturnValue({
       ...makeContext(filters),
       translate: (key: string) => (key === "all" ? "All" : key),
     });

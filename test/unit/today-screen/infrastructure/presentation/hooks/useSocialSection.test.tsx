@@ -1,14 +1,15 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useSocialSection } from "todayScreen.infrastructure.presentation.hooks.useSocialSection";
-import { useTodayContext } from "todayScreen.infrastructure.presentation.contexts.today.TodayContext";
-import type { Timespan } from "@packages/today-screen/todayScreen/domain/models/commonTypes";
-import type { FilteredReading } from "@packages/today-screen/todayScreen/domain/models/readingHistory";
+import { useSocialSection } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useSocialSection";
+import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
+import type { Timespan } from "../../../../../../packages/today-screen/domain/models/commonTypes";
+import type { FilteredReading } from "../../../../../../packages/today-screen/domain/models/readingHistory";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.today.TodayContext",
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
   () => ({
-    useTodayContext: jest.fn(),
+    useTodayContext: vi.fn(),
   })
 );
 
@@ -27,27 +28,27 @@ type Result = ReturnType<typeof useSocialSection>;
 
 describe("useSocialSection", () => {
   let container: HTMLDivElement;
-  let getCommunityReading: jest.Mock;
-  let getUsersIds: jest.Mock;
-  let getUserProfile: jest.Mock;
+  let getCommunityReading: Mock;
+  let getUsersIds: Mock;
+  let getUserProfile: Mock;
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    getCommunityReading = jest.fn(async () => ({}) as FilteredReading);
-    getUsersIds = jest.fn(() => ["u1", "u2"]);
-    getUserProfile = jest.fn((id: string) => ({ id, name: `Name ${id}` }));
+    getCommunityReading = vi.fn(async () => ({}) as FilteredReading);
+    getUsersIds = vi.fn(() => ["u1", "u2"]);
+    getUserProfile = vi.fn((id: string) => ({ id, name: `Name ${id}` }));
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup() {
-    (useTodayContext as jest.Mock).mockReturnValue({
-      translate: jest.fn((key: string) => key),
+    (useTodayContext as Mock).mockReturnValue({
+      translate: vi.fn((key: string) => key),
       subscribedUsersProfileProvider: { getUserProfile },
       subscribedUsersIdsProvider: { getUsersIds },
       getCommunityReading,

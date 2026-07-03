@@ -1,46 +1,58 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { Settings } from "scriptureMap.components.containers.Settings";
-import { useSettings } from "scriptureMap.hooks.useSettings";
-import { ScriptureMapModes } from "scriptureMap.models.scriptureMap";
+import { Settings } from "../../../../../packages/scripture-map/components/containers/Settings";
+import { useSettings } from "../../../../../packages/scripture-map/hooks/useSettings";
+import { ScriptureMapModes } from "../../../../../packages/scripture-map/models/scriptureMap";
 import type {
   SettingsOptionData,
   SettingsLegendSquareData,
   SettingsYearselectorOptionData,
-} from "scriptureMap.components.containers.Settings";
+} from "../../../../../packages/scripture-map/components/containers/Settings";
 
-jest.mock("scriptureMap.hooks.useSettings", () => ({
-  useSettings: jest.fn(),
+vi.mock("../../../../../packages/scripture-map/hooks/useSettings", () => ({
+  useSettings: vi.fn(),
 }));
 
-jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
-  useScriptureMapContext: jest.fn(() => ({
-    MaterialIcon: ({ children }: { children: string }) => (
-      <span>{children}</span>
+vi.mock(
+  "../../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext",
+  () => ({
+    useScriptureMapContext: vi.fn(() => ({
+      MaterialIcon: ({ children }: { children: string }) => (
+        <span>{children}</span>
+      ),
+      ReadingHistoryTimeline: ({ footer }: { footer?: unknown }) => (
+        <div
+          data-testid="reading-history-timeline"
+          data-has-footer={footer ? "true" : "false"}
+        />
+      ),
+    })),
+  })
+);
+
+vi.mock("../../../../../packages/scripture-map/hooks/useClickOutside", () => ({
+  useClickOutside: vi.fn(),
+}));
+
+vi.mock(
+  "../../../../../packages/scripture-map/components/containers/ProjectStateSetter",
+  () => ({
+    ProjectStateSetter: () => <div data-testid="project-state-setter" />,
+  })
+);
+
+vi.mock(
+  "../../../../../packages/scripture-map/components/containers/ProjectFiltersSelector",
+  () => ({
+    ProjectFiltersSelector: () => (
+      <div data-testid="project-filters-selector" />
     ),
-    ReadingHistoryTimeline: ({ footer }: { footer?: unknown }) => (
-      <div
-        data-testid="reading-history-timeline"
-        data-has-footer={footer ? "true" : "false"}
-      />
-    ),
-  })),
-}));
+  })
+);
 
-jest.mock("scriptureMap.hooks.useClickOutside", () => ({
-  useClickOutside: jest.fn(),
-}));
-
-jest.mock("scriptureMap.components.containers.ProjectStateSetter", () => ({
-  ProjectStateSetter: () => <div data-testid="project-state-setter" />,
-}));
-
-jest.mock("scriptureMap.components.containers.ProjectFiltersSelector", () => ({
-  ProjectFiltersSelector: () => <div data-testid="project-filters-selector" />,
-}));
-
-jest.mock(
-  "scriptureMap.components.containers.ReadingHistoryUserFiltersSelector",
+vi.mock(
+  "../../../../../packages/scripture-map/components/containers/ReadingHistoryUserFiltersSelector",
   () => ({
     ReadingHistoryUserFiltersSelector: () => (
       <div data-testid="reading-history-user-filters-selector" />
@@ -48,16 +60,22 @@ jest.mock(
   })
 );
 
-jest.mock("scriptureMap.hooks.useReadingHistoryTimeline", () => ({
-  useReadingHistoryTimeline: jest.fn(() => ({
-    itemsData: [],
-    timelineRef: { current: null },
-  })),
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/hooks/useReadingHistoryTimeline",
+  () => ({
+    useReadingHistoryTimeline: vi.fn(() => ({
+      itemsData: [],
+      timelineRef: { current: null },
+    })),
+  })
+);
 
-jest.mock("scriptureMap.components.containers.Tooltip", () => ({
-  Tooltip: () => null,
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/components/containers/Tooltip",
+  () => ({
+    Tooltip: () => null,
+  })
+);
 
 function makeStaticOption(
   overrides: Partial<SettingsOptionData> = {}
@@ -65,7 +83,7 @@ function makeStaticOption(
   return {
     key: "opt-static",
     type: "static",
-    callback: jest.fn(),
+    callback: vi.fn(),
     staticText: "Toggle books",
     ...overrides,
   } as SettingsOptionData;
@@ -77,7 +95,7 @@ function makeDynamicOption(
   return {
     key: "opt-dynamic",
     type: "dynamic",
-    callback: jest.fn(),
+    callback: vi.fn(),
     staticText: "timeline",
     enabledText: "Hide",
     disabledText: "Show",
@@ -90,9 +108,9 @@ function makeHookResult(overrides: Record<string, unknown> = {}) {
   return {
     settingsClass: "scripture-map-settings",
     settingsButtonRef: { current: null },
-    handleSettingsButtonClick: jest.fn(),
+    handleSettingsButtonClick: vi.fn(),
     showOptions: false,
-    setShowOptions: jest.fn(),
+    setShowOptions: vi.fn(),
     collapsed: false,
     mode: ScriptureMapModes.Viewer,
     project: undefined,
@@ -117,18 +135,18 @@ describe("Settings", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useSettings as jest.Mock).mockReturnValue(makeHookResult());
+    (useSettings as Mock).mockReturnValue(makeHookResult());
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(hookOverrides: Record<string, unknown> = {}) {
     if (Object.keys(hookOverrides).length > 0) {
-      (useSettings as jest.Mock).mockReturnValue(makeHookResult(hookOverrides));
+      (useSettings as Mock).mockReturnValue(makeHookResult(hookOverrides));
     }
     act(() => render(<Settings />, container));
     return container;
@@ -164,7 +182,7 @@ describe("Settings", () => {
 
   describe("settings button", () => {
     it("calls handleSettingsButtonClick when the settings button is clicked", () => {
-      const handleSettingsButtonClick = jest.fn();
+      const handleSettingsButtonClick = vi.fn();
       setup({ handleSettingsButtonClick });
       act(() => {
         container
@@ -247,7 +265,7 @@ describe("Settings", () => {
     });
 
     it("calls the option callback when an option button is clicked", () => {
-      const callback = jest.fn();
+      const callback = vi.fn();
       setup({
         showOptions: true,
         optionsData: [makeStaticOption({ key: "x", callback })],

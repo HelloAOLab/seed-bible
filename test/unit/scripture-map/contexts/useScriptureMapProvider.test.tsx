@@ -1,29 +1,29 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useScriptureMapProvider } from "scriptureMap.contexts.ScriptureMap.useScriptureMapProvider";
+import { useScriptureMapProvider } from "../../../../packages/scripture-map/contexts/ScriptureMap/useScriptureMapProvider";
 
-jest.mock("scriptureMap.hooks.useIsMobile", () => ({
-  useIsMobile: jest.fn(() => false),
+vi.mock("../../../../packages/scripture-map/hooks/useIsMobile", () => ({
+  useIsMobile: vi.fn(() => false),
 }));
 
 function makeConfig(overrides: Record<string, unknown> = {}) {
   return {
     arrangementService: {
-      getCurrentArrangementIndex: jest.fn(() => 0),
-      getArrangementByIndex: jest.fn(() => ({
+      getCurrentArrangementIndex: vi.fn(() => 0),
+      getArrangementByIndex: vi.fn(() => ({
         testaments: [],
         name: "default",
       })),
     },
-    bibleVizUtilsEventManager: {
-      subscribe: jest.fn(() => jest.fn()),
+    seedBibleUtilsEventManager: {
+      subscribe: vi.fn(() => vi.fn()),
     },
     userColorStore: {
-      listUsers: jest.fn(() => []),
-      getUserColor: jest.fn(() => "#000000"),
+      listUsers: vi.fn(() => []),
+      getUserColor: vi.fn(() => "#000000"),
     },
     userPresenceService: {
-      getUserPresence: jest.fn(() => new Map()),
+      getUserPresence: vi.fn(() => new Map()),
     },
     seedBibleState: {
       theme: {
@@ -36,7 +36,7 @@ function makeConfig(overrides: Record<string, unknown> = {}) {
         selectedTabId: { value: "" },
       },
     },
-    getDayRangeSeconds: jest.fn((time: number) => ({
+    getDayRangeSeconds: vi.fn((time: number) => ({
       start: time / 1000,
       end: time / 1000 + 86400,
     })),
@@ -56,7 +56,7 @@ describe("useScriptureMapProvider", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(config = makeConfig()) {

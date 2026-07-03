@@ -1,40 +1,47 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useReadingHistoryProvider } from "scriptureMap.contexts.ReadingHistory.useReadingHistoryProvider";
-import { useScriptureMapContext } from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
-import { useTimeContext } from "scriptureMap.contexts.Time.TimeContext";
-import { ScriptureMapModes } from "scriptureMap.models.scriptureMap";
+import { useReadingHistoryProvider } from "../../../../packages/scripture-map/contexts/ReadingHistory/useReadingHistoryProvider";
+import { useScriptureMapContext } from "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext";
+import { useTimeContext } from "../../../../packages/scripture-map/contexts/Time/TimeContext";
+import { ScriptureMapModes } from "../../../../packages/scripture-map/models/scriptureMap";
 import {
   getReadingHistoryEvents,
   calculateReadingHistorySummary,
-} from "seed-bible.managers.ReadingHistoryManager";
+} from "../../../../packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
 
-jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
-  useScriptureMapContext: jest.fn(),
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext",
+  () => ({
+    useScriptureMapContext: vi.fn(),
+  })
+);
+
+vi.mock("../../../../packages/scripture-map/contexts/Time/TimeContext", () => ({
+  useTimeContext: vi.fn(),
 }));
 
-jest.mock("scriptureMap.contexts.Time.TimeContext", () => ({
-  useTimeContext: jest.fn(),
-}));
-
-jest.mock("seed-bible.managers.ReadingHistoryManager", () => ({
-  getReadingHistoryEvents: jest.fn(async () => []),
-  // `flat` flattens the per-user event arrays; iterable result is fine.
-  flat: jest.fn((arrays: unknown[][]) => arrays.flat()),
-  calculateReadingHistorySummary: jest.fn(() => ({
-    totalTimeSpentReading: 0,
-    users: {},
-  })),
-}));
+vi.mock(
+  "../../../../packages/seed-bible/seed-bible/managers/ReadingHistoryManager",
+  () => ({
+    getReadingHistoryEvents: vi.fn(async () => []),
+    // `flat` flattens the per-user event arrays; iterable result is fine.
+    flat: vi.fn((arrays: unknown[][]) => arrays.flat()),
+    calculateReadingHistorySummary: vi.fn(() => ({
+      totalTimeSpentReading: 0,
+      users: {},
+    })),
+  })
+);
 
 const MY_AUTH_ID = "me";
 
 // Distinct unsubscribe spies keyed by event name so cleanup can be asserted.
-let unsubscribeUserLoggedIn: jest.Mock;
-let unsubscribeOnlineUsersChanged: jest.Mock;
-let subscribe: jest.Mock;
-let setShowingBooksColors: jest.Mock;
-let getConnectedUsers: jest.Mock;
+let unsubscribeUserLoggedIn: Mock;
+let unsubscribeOnlineUsersChanged: Mock;
+let subscribe: Mock;
+let setShowingBooksColors: Mock;
+let getConnectedUsers: Mock;
 // Captures the latest callback registered per event so tests can fire them.
 let eventCallbacks: Record<string, () => void>;
 
@@ -43,11 +50,15 @@ function makeContext(overrides: Record<string, unknown> = {}) {
     mode: ScriptureMapModes.Viewer,
     isReadingHistoryEnabled: true,
     setShowingBooksColors,
+    // myAuthBotId is now derived from the context userId (the old global
+    // authBot/handleUserLoggedIn path was removed).
+    userId: MY_AUTH_ID,
     seedBibleState: {
+      os: {},
       tabs: { selectedTabId: { value: "tab-1" } },
     },
-    bibleVizUtilsEventManager: { subscribe },
-    getDayRangeSeconds: jest.fn((ms: number) => {
+    seedBibleUtilsEventManager: { subscribe },
+    getDayRangeSeconds: vi.fn((ms: number) => {
       const start = Math.floor(ms / 1000);
       return { start, end: start + 86399 };
     }),
@@ -67,27 +78,27 @@ describe("useReadingHistoryProvider", () => {
       id: MY_AUTH_ID,
     };
 
-    unsubscribeUserLoggedIn = jest.fn();
-    unsubscribeOnlineUsersChanged = jest.fn();
+    unsubscribeUserLoggedIn = vi.fn();
+    unsubscribeOnlineUsersChanged = vi.fn();
     eventCallbacks = {};
-    subscribe = jest.fn((eventName: string, callback: () => void) => {
+    subscribe = vi.fn((eventName: string, callback: () => void) => {
       eventCallbacks[eventName] = callback;
       return eventName === "OnUserLoggedIn"
         ? unsubscribeUserLoggedIn
         : unsubscribeOnlineUsersChanged;
     });
-    setShowingBooksColors = jest.fn();
-    getConnectedUsers = jest.fn(() => []);
+    setShowingBooksColors = vi.fn();
+    getConnectedUsers = vi.fn(() => []);
 
-    (useScriptureMapContext as jest.Mock).mockReturnValue(makeContext());
-    (useTimeContext as jest.Mock).mockReturnValue({ tick: 0 });
+    (useScriptureMapContext as Mock).mockReturnValue(makeContext());
+    (useTimeContext as Mock).mockReturnValue({ tick: 0 });
   });
 
   afterEach(() => {
     render(null, container);
     container.remove();
     delete (globalThis as unknown as { authBot?: unknown }).authBot;
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   type ProviderResult = ReturnType<typeof useReadingHistoryProvider>;
@@ -133,7 +144,7 @@ describe("useReadingHistoryProvider", () => {
   // ─── initial setup ────────────────────────────────────────────────────────
 
   describe("initial setup", () => {
-    it("sets myAuthBotId from the global authBot on mount", () => {
+    it("sets myAuthBotId from the context userId on mount", () => {
       const result = setup();
       expect(result.current.myAuthBotId).toBe(MY_AUTH_ID);
     });
@@ -156,28 +167,23 @@ describe("useReadingHistoryProvider", () => {
   // ─── event subscriptions ────────────────────────────────────────────────────
 
   describe("event subscriptions", () => {
-    it("subscribes to OnUserLoggedIn and OnlineUsersChanged", () => {
+    it("subscribes to OnlineUsersChanged", () => {
       setup();
-      expect(subscribe).toHaveBeenCalledWith(
-        "OnUserLoggedIn",
-        expect.any(Function)
-      );
+      // OnUserLoggedIn was removed; only OnlineUsersChanged remains.
       expect(subscribe).toHaveBeenCalledWith(
         "OnlineUsersChanged",
         expect.any(Function)
       );
+      expect(subscribe).not.toHaveBeenCalledWith(
+        "OnUserLoggedIn",
+        expect.any(Function)
+      );
     });
 
-    it("unsubscribes from both events on unmount", () => {
+    it("unsubscribes from OnlineUsersChanged on unmount", () => {
       setup();
-      const beforeUserLoggedIn = unsubscribeUserLoggedIn.mock.calls.length;
       const beforeOnlineUsers = unsubscribeOnlineUsersChanged.mock.calls.length;
       act(() => render(null, container));
-      // The subscription effect re-subscribes when myAuthBotId resolves, so the
-      // meaningful assertion is that unmount triggers a further unsubscribe.
-      expect(unsubscribeUserLoggedIn.mock.calls.length).toBeGreaterThan(
-        beforeUserLoggedIn
-      );
       expect(unsubscribeOnlineUsersChanged.mock.calls.length).toBeGreaterThan(
         beforeOnlineUsers
       );
@@ -291,44 +297,44 @@ describe("useReadingHistoryProvider", () => {
 
   describe("timeline ranges", () => {
     it("builds a ranges map keyed by year down to (but excluding) 2023", () => {
-      jest.useFakeTimers();
-      jest.setSystemTime(new Date("2026-05-20T12:00:00"));
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-05-20T12:00:00"));
       try {
         const result = setup();
         const keys = [...result.current.timelineRangesMap.keys()].sort();
         expect(keys).toEqual([2024, 2025, 2026]);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
     it("defaults the selected timeline key to the current year", () => {
-      jest.useFakeTimers();
-      jest.setSystemTime(new Date("2026-05-20T12:00:00"));
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-05-20T12:00:00"));
       try {
         const result = setup();
         expect(result.current.selectedTimelineKey).toBe(2026);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
     it("Rolling range spans one year back from the selected year", () => {
-      jest.useFakeTimers();
-      jest.setSystemTime(new Date("2026-05-20T12:00:00"));
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-05-20T12:00:00"));
       try {
         const result = setup();
         const { startDate, endDate } = result.current.timelineRange;
         expect(endDate.getFullYear()).toBe(2026);
         expect(startDate.getFullYear()).toBe(2025);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
     it("Calendar method makes the range span Jan 1 → Dec 31", () => {
-      jest.useFakeTimers();
-      jest.setSystemTime(new Date("2026-05-20T12:00:00"));
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-05-20T12:00:00"));
       try {
         const result = setup();
         act(() => result.current.setTimelineRangeMethod("Calendar"));
@@ -338,20 +344,20 @@ describe("useReadingHistoryProvider", () => {
         expect(endDate.getMonth()).toBe(11); // December
         expect(endDate.getDate()).toBe(31);
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
 
     it("falls back to a now/now range when the selected key has no entry", () => {
-      jest.useFakeTimers();
-      jest.setSystemTime(new Date("2026-05-20T12:00:00"));
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-05-20T12:00:00"));
       try {
         const result = setup();
         act(() => result.current.setSelectedTimelineKey(1999));
         const { startDate, endDate } = result.current.timelineRange;
         expect(startDate.getTime()).toBe(endDate.getTime());
       } finally {
-        jest.useRealTimers();
+        vi.useRealTimers();
       }
     });
   });
@@ -377,11 +383,11 @@ describe("useReadingHistoryProvider", () => {
     });
 
     it("uses getDayRangeSeconds to build the day ranges", () => {
-      const getDayRangeSeconds = jest.fn((ms: number) => {
+      const getDayRangeSeconds = vi.fn((ms: number) => {
         const start = Math.floor(ms / 1000);
         return { start, end: start + 86399 };
       });
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeContext({ getDayRangeSeconds })
       );
       setup();
@@ -401,7 +407,7 @@ describe("useReadingHistoryProvider", () => {
       getConnectedUsers.mockReturnValue([
         { authId: MY_AUTH_ID, configId: "c-me" },
       ]);
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeContext({ mode: ScriptureMapModes.Checkbox })
       );
       const result = await setupAsync();
@@ -412,7 +418,7 @@ describe("useReadingHistoryProvider", () => {
       getConnectedUsers.mockReturnValue([
         { authId: MY_AUTH_ID, configId: "c-me" },
       ]);
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeContext({ isReadingHistoryEnabled: false })
       );
       const result = await setupAsync();
@@ -434,7 +440,9 @@ describe("useReadingHistoryProvider", () => {
   describe("reading-events pipeline", () => {
     it("fetches reading events for the selected user", async () => {
       await setupAsync();
+      // getReadingHistoryEvents now receives the OS handle as its first arg.
       expect(getReadingHistoryEvents).toHaveBeenCalledWith(
+        expect.anything(),
         MY_AUTH_ID,
         expect.any(Number),
         expect.any(Number)
@@ -448,7 +456,7 @@ describe("useReadingHistoryProvider", () => {
 
     it("summarizes an empty event set when no user is selected", async () => {
       const result = await setupAsync();
-      (calculateReadingHistorySummary as jest.Mock).mockClear();
+      (calculateReadingHistorySummary as Mock).mockClear();
       // Deselect the only selected user → empty-selection branch.
       act(() =>
         result.current.handleReadingHistoryUserSelectorClick(MY_AUTH_ID)
@@ -458,8 +466,8 @@ describe("useReadingHistoryProvider", () => {
     });
 
     it("buckets fetched events by book and day and summarizes them", async () => {
-      (getReadingHistoryEvents as jest.Mock).mockImplementation(
-        async (_recordName: string, startTime: number) => {
+      (getReadingHistoryEvents as Mock).mockImplementation(
+        async (_os: unknown, _recordName: string, startTime: number) => {
           const events: Array<{
             start: number;
             end: number;
@@ -516,12 +524,10 @@ describe("useReadingHistoryProvider", () => {
     });
 
     it("warns when fetching reading events rejects", async () => {
-      const consoleWarn = jest
+      const consoleWarn = vi
         .spyOn(console, "warn")
         .mockImplementation(() => {});
-      (getReadingHistoryEvents as jest.Mock).mockRejectedValue(
-        new Error("network")
-      );
+      (getReadingHistoryEvents as Mock).mockRejectedValue(new Error("network"));
       await setupAsync();
       expect(consoleWarn).toHaveBeenCalled();
       consoleWarn.mockRestore();
@@ -573,7 +579,10 @@ describe("useReadingHistoryProvider", () => {
 
   describe("without a local auth bot", () => {
     it("leaves myAuthBotId null and does not populate usersDataMap", async () => {
-      (globalThis as unknown as { authBot: unknown }).authBot = undefined;
+      // No logged-in user → no userId in context → myAuthBotId stays null.
+      (useScriptureMapContext as Mock).mockReturnValue(
+        makeContext({ userId: undefined })
+      );
       const result = await setupAsync();
       expect(result.current.myAuthBotId).toBeNull();
 
@@ -591,7 +600,7 @@ describe("useReadingHistoryProvider", () => {
 
   describe("fetchUsersDataMap error handling", () => {
     it("logs and recovers when getConnectedUsers throws", async () => {
-      const consoleError = jest
+      const consoleError = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
       getConnectedUsers.mockImplementation(() => {

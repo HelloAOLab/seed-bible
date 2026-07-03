@@ -1,24 +1,31 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useSettings } from "scriptureMap.hooks.useSettings";
-import { useScriptureMapContext } from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
-import { useReadingHistoryContext } from "scriptureMap.contexts.ReadingHistory.ReadingHistoryContext";
+import { useSettings } from "../../../../packages/scripture-map/hooks/useSettings";
+import { useScriptureMapContext } from "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext";
+import { useReadingHistoryContext } from "../../../../packages/scripture-map/contexts/ReadingHistory/ReadingHistoryContext";
 
-jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
-  useScriptureMapContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext",
+  () => ({
+    useScriptureMapContext: vi.fn(),
+  })
+);
 
-jest.mock("scriptureMap.contexts.ReadingHistory.ReadingHistoryContext", () => ({
-  useReadingHistoryContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ReadingHistory/ReadingHistoryContext",
+  () => ({
+    useReadingHistoryContext: vi.fn(),
+  })
+);
 
-const translate = jest.fn((key: string) => key);
-const CapitalizeFirstLetter = jest.fn(
+const translate = vi.fn((key: string) => key);
+const CapitalizeFirstLetter = vi.fn(
   (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 );
-const ColorParser = jest.fn(() => "#000000");
+const ColorParser = vi.fn(() => "#000000");
 const readingHistoryService = {
-  getColorByReadingTime: jest.fn(() => "#aabbcc"),
+  getColorByReadingTime: vi.fn(() => "#aabbcc"),
 };
 
 function makeScriptureMapContext(overrides: Record<string, unknown> = {}) {
@@ -26,17 +33,17 @@ function makeScriptureMapContext(overrides: Record<string, unknown> = {}) {
     mode: "Viewer",
     project: null,
     isInSelectionMode: false,
-    handleShowAllChaptersToggle: jest.fn(),
+    handleShowAllChaptersToggle: vi.fn(),
     showingAllChapters: false,
-    setShowingBooksColors: jest.fn(),
+    setShowingBooksColors: vi.fn(),
     showingBooksColors: false,
-    setIsReadingHistoryEnabled: jest.fn(),
+    setIsReadingHistoryEnabled: vi.fn(),
     isReadingHistoryEnabled: true,
-    setIsUserPresenceEnabled: jest.fn(),
+    setIsUserPresenceEnabled: vi.fn(),
     isUserPresenceEnabled: true,
-    handleSectionLabelsToggle: jest.fn(),
+    handleSectionLabelsToggle: vi.fn(),
     showSectionLabels: true,
-    handleTestamentLabelsToggle: jest.fn(),
+    handleTestamentLabelsToggle: vi.fn(),
     showTestamentLabels: true,
     readingHistoryService,
     seedBibleState: {
@@ -52,12 +59,12 @@ function makeScriptureMapContext(overrides: Record<string, unknown> = {}) {
 function makeReadingHistoryContext(overrides: Record<string, unknown> = {}) {
   return {
     shouldShowReadingHistory: true,
-    setTimelineRangeMethod: jest.fn(),
+    setTimelineRangeMethod: vi.fn(),
     timelineRangeMethod: "Rolling",
     usersDataMap: new Map(),
     selectedTimelineKey: 2025,
     timelineRangesMap: new Map([[2025, {}]]),
-    setSelectedTimelineKey: jest.fn(),
+    setSelectedTimelineKey: vi.fn(),
     ...overrides,
   };
 }
@@ -69,10 +76,8 @@ describe("useSettings", () => {
     container = document.createElement("div");
     document.body.appendChild(container);
     translate.mockImplementation((key: string) => key);
-    (useScriptureMapContext as jest.Mock).mockReturnValue(
-      makeScriptureMapContext()
-    );
-    (useReadingHistoryContext as jest.Mock).mockReturnValue(
+    (useScriptureMapContext as Mock).mockReturnValue(makeScriptureMapContext());
+    (useReadingHistoryContext as Mock).mockReturnValue(
       makeReadingHistoryContext()
     );
   });
@@ -80,7 +85,7 @@ describe("useSettings", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup() {
@@ -98,7 +103,7 @@ describe("useSettings", () => {
   }
 
   it("settingsClass has no 'collapsed' suffix when shouldShowReadingHistory is true and not collapsed", () => {
-    (useReadingHistoryContext as jest.Mock).mockReturnValue(
+    (useReadingHistoryContext as Mock).mockReturnValue(
       makeReadingHistoryContext({ shouldShowReadingHistory: true })
     );
     const result = setup();
@@ -106,7 +111,7 @@ describe("useSettings", () => {
   });
 
   it("settingsClass has 'collapsed' suffix when shouldShowReadingHistory is false", () => {
-    (useReadingHistoryContext as jest.Mock).mockReturnValue(
+    (useReadingHistoryContext as Mock).mockReturnValue(
       makeReadingHistoryContext({ shouldShowReadingHistory: false })
     );
     const result = setup();
@@ -139,7 +144,7 @@ describe("useSettings", () => {
   });
 
   it("shouldShowReadingHistory is passed through from context", () => {
-    (useReadingHistoryContext as jest.Mock).mockReturnValue(
+    (useReadingHistoryContext as Mock).mockReturnValue(
       makeReadingHistoryContext({ shouldShowReadingHistory: false })
     );
     const result = setup();

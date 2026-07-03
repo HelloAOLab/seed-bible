@@ -1,13 +1,14 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import { useResumeReadingSection } from "todayScreen.infrastructure.presentation.hooks.useResumeReadingSection";
-import { useTodayContext } from "todayScreen.infrastructure.presentation.contexts.today.TodayContext";
+import { useResumeReadingSection } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useResumeReadingSection";
+import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.today.TodayContext",
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
   () => ({
-    useTodayContext: jest.fn(),
+    useTodayContext: vi.fn(),
   })
 );
 
@@ -15,8 +16,8 @@ const MaterialIcon = ({ children }: { children: string }) => (
   <span className="material-icon">{children}</span>
 );
 
-const addTab = jest.fn();
-const getDefaultTranslation = jest.fn(() => "AAB");
+const addTab = vi.fn();
+const getDefaultTranslation = vi.fn(() => "AAB");
 
 type Result = ReturnType<typeof useResumeReadingSection>;
 
@@ -31,17 +32,17 @@ describe("useResumeReadingSection", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(options: {
     lastReading?: { bookId: string; chapter: number };
     bookNames?: Map<string, string>;
   }) {
-    (useTodayContext as jest.Mock).mockReturnValue({
+    (useTodayContext as Mock).mockReturnValue({
       MaterialIcon,
       userLastReading: signal(options.lastReading),
-      translate: jest.fn((key: string) => key),
+      translate: vi.fn((key: string) => key),
       bookNames: signal(options.bookNames ?? new Map([["GEN", "Genesis"]])),
       addTab,
       getDefaultTranslation,
@@ -56,7 +57,7 @@ describe("useResumeReadingSection", () => {
   }
 
   it("throws when there is no last reading", () => {
-    const consoleError = jest
+    const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
     expect(() => setup({ lastReading: undefined })).toThrow(

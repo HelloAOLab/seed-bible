@@ -1,20 +1,27 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useTestamentToggle } from "scriptureMap.hooks.useTestamentToggle";
-import { useScriptureMapContext } from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
-import { useTestamentContext } from "scriptureMap.contexts.Testament.TestamentContext";
+import { useTestamentToggle } from "../../../../packages/scripture-map/hooks/useTestamentToggle";
+import { useScriptureMapContext } from "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext";
+import { useTestamentContext } from "../../../../packages/scripture-map/contexts/Testament/TestamentContext";
 
-jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
-  useScriptureMapContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext",
+  () => ({
+    useScriptureMapContext: vi.fn(),
+  })
+);
 
-jest.mock("scriptureMap.contexts.Testament.TestamentContext", () => ({
-  useTestamentContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/Testament/TestamentContext",
+  () => ({
+    useTestamentContext: vi.fn(),
+  })
+);
 
 describe("useTestamentToggle", () => {
   let container: HTMLDivElement;
-  const translate = jest.fn((key: string, vars?: Record<string, unknown>) =>
+  const translate = vi.fn((key: string, vars?: Record<string, unknown>) =>
     vars ? `${key}(${JSON.stringify(vars)})` : key
   );
 
@@ -25,7 +32,7 @@ describe("useTestamentToggle", () => {
       (key: string, vars?: Record<string, unknown>) =>
         vars ? `${key}(${JSON.stringify(vars)})` : key
     );
-    (useScriptureMapContext as jest.Mock).mockReturnValue({ translate });
+    (useScriptureMapContext as Mock).mockReturnValue({ translate });
   });
 
   afterEach(() => {
@@ -34,7 +41,7 @@ describe("useTestamentToggle", () => {
   });
 
   function setup(testament: object, showingContent = false) {
-    (useTestamentContext as jest.Mock).mockReturnValue({ testament });
+    (useTestamentContext as Mock).mockReturnValue({ testament });
     const result = {
       current: null as unknown as ReturnType<typeof useTestamentToggle>,
     };

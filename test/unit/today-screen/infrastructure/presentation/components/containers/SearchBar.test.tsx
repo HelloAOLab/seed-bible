@@ -1,11 +1,15 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { SearchBar } from "todayScreen.infrastructure.presentation.components.containers.SearchBar";
-import { useSearchBar } from "todayScreen.infrastructure.presentation.hooks.useSearchBar";
+import { SearchBar } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/SearchBar";
+import { useSearchBar } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useSearchBar";
 
-jest.mock("todayScreen.infrastructure.presentation.hooks.useSearchBar", () => ({
-  useSearchBar: jest.fn(),
-}));
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useSearchBar",
+  () => ({
+    useSearchBar: vi.fn(),
+  })
+);
 
 type SearchResult = { id: string; reference: string; text: string };
 type Result = ReturnType<typeof useSearchBar>;
@@ -34,10 +38,10 @@ function makeResult(options: {
     isOpen: { value: options.isOpen ?? false },
     placeholder: options.placeholder ?? "Search books, chapter, verses....",
     containerRef: options.containerRef ?? { current: null },
-    runSearch: options.runSearch ?? jest.fn(),
-    handleFocus: options.handleFocus ?? jest.fn(),
-    handleSelect: options.handleSelect ?? jest.fn(),
-    translate: jest.fn(
+    runSearch: options.runSearch ?? vi.fn(),
+    handleFocus: options.handleFocus ?? vi.fn(),
+    handleSelect: options.handleSelect ?? vi.fn(),
+    translate: vi.fn(
       (key: string, opts?: { defaultValue?: string }) =>
         opts?.defaultValue ?? key
     ),
@@ -56,12 +60,12 @@ describe("SearchBar", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(options: Parameters<typeof makeResult>[0] = {}) {
     const result = makeResult(options);
-    (useSearchBar as jest.Mock).mockReturnValue(result);
+    (useSearchBar as Mock).mockReturnValue(result);
     act(() => render(<SearchBar />, container));
     return result;
   }
@@ -80,7 +84,7 @@ describe("SearchBar", () => {
     });
 
     it("calls runSearch with the typed value on input", () => {
-      const runSearch = jest.fn();
+      const runSearch = vi.fn();
       setup({ runSearch });
       input().value = "john";
       act(() => {
@@ -90,7 +94,7 @@ describe("SearchBar", () => {
     });
 
     it("calls handleFocus on focus", () => {
-      const handleFocus = jest.fn();
+      const handleFocus = vi.fn();
       setup({ handleFocus });
       act(() => {
         input().dispatchEvent(new FocusEvent("focus"));
@@ -172,7 +176,7 @@ describe("SearchBar", () => {
     });
 
     it("calls handleSelect with the clicked result", () => {
-      const handleSelect = jest.fn();
+      const handleSelect = vi.fn();
       const result = { id: "1", reference: "John 3:16", text: "..." };
       setup({ ...open, results: [result], handleSelect });
       act(() =>

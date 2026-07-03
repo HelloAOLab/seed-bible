@@ -1,19 +1,23 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useControls } from "scriptureMap.hooks.useControls";
-import { useScriptureMapContext } from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
+import { useControls } from "../../../../packages/scripture-map/hooks/useControls";
+import { useScriptureMapContext } from "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext";
 
-jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
-  useScriptureMapContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext",
+  () => ({
+    useScriptureMapContext: vi.fn(),
+  })
+);
 
 describe("useControls", () => {
   let container: HTMLDivElement;
-  const setScaleFactor = jest.fn();
-  const handleZoomIn = jest.fn();
-  const handleZoomOut = jest.fn();
-  const translate = jest.fn((key: string) => key);
-  const CapitalizeFirstLetter = jest.fn(
+  const setScaleFactor = vi.fn();
+  const handleZoomIn = vi.fn();
+  const handleZoomOut = vi.fn();
+  const translate = vi.fn((key: string) => key);
+  const CapitalizeFirstLetter = vi.fn(
     (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
   );
 
@@ -31,13 +35,13 @@ describe("useControls", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useScriptureMapContext as jest.Mock).mockReturnValue(makeContext());
+    (useScriptureMapContext as Mock).mockReturnValue(makeContext());
   });
 
   afterEach(() => {
     render(null, container);
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup() {
@@ -55,13 +59,13 @@ describe("useControls", () => {
   }
 
   it("currZoom is scaleFactor * 100 rounded", () => {
-    (useScriptureMapContext as jest.Mock).mockReturnValue(makeContext(0.75));
+    (useScriptureMapContext as Mock).mockReturnValue(makeContext(0.75));
     const result = setup();
     expect(result.current.currZoom).toBe(75);
   });
 
   it("currZoom rounds the scaled value", () => {
-    (useScriptureMapContext as jest.Mock).mockReturnValue(makeContext(0.556));
+    (useScriptureMapContext as Mock).mockReturnValue(makeContext(0.556));
     const result = setup();
     expect(result.current.currZoom).toBe(56);
   });

@@ -1,4 +1,4 @@
-import { getFirstNonSpaceChars } from "scriptureMap.functions.scripture";
+import { getFirstNonSpaceChars } from "../../../../packages/scripture-map/functions/scripture";
 
 describe("getFirstNonSpaceChars", () => {
   describe("default count (3)", () => {

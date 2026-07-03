@@ -1,14 +1,15 @@
+import type { Mock } from "vitest";
 import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import { useBookmarksSection } from "todayScreen.infrastructure.presentation.hooks.useBookmarksSection";
-import { useTodayContext } from "todayScreen.infrastructure.presentation.contexts.today.TodayContext";
-import type { TranslationBooks } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import { useBookmarksSection } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useBookmarksSection";
+import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
+import type { TranslationBooks } from "../../../../../../packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.today.TodayContext",
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
   () => ({
-    useTodayContext: jest.fn(),
+    useTodayContext: vi.fn(),
   })
 );
 
@@ -33,24 +34,24 @@ class MockResizeObserver {
 
 describe("useBookmarksSection", () => {
   let container: HTMLDivElement;
-  const addTab = jest.fn();
+  const addTab = vi.fn();
   let offsetTopDescriptor: PropertyDescriptor | undefined;
 
   function configure(
     options: {
       bookmarks?: ReturnType<typeof signal<FakeBookmark[]>>;
-      translate?: jest.Mock;
-      getTranslationBooks?: jest.Mock;
+      translate?: Mock;
+      getTranslationBooks?: Mock;
     } = {}
   ) {
     const ctx = {
       bookmarks: options.bookmarks ?? signal<FakeBookmark[]>([]),
       addTab,
-      translate: options.translate ?? jest.fn((key: string) => key),
+      translate: options.translate ?? vi.fn((key: string) => key),
       getTranslationBooks:
-        options.getTranslationBooks ?? jest.fn(async () => books([])),
+        options.getTranslationBooks ?? vi.fn(async () => books([])),
     };
-    (useTodayContext as jest.Mock).mockReturnValue(ctx);
+    (useTodayContext as Mock).mockReturnValue(ctx);
     return ctx;
   }
 
@@ -88,7 +89,7 @@ describe("useBookmarksSection", () => {
     }
     delete (globalThis as unknown as { ResizeObserver?: unknown })
       .ResizeObserver;
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(
@@ -115,7 +116,7 @@ describe("useBookmarksSection", () => {
 
   describe("label", () => {
     it("translates the BOOKMARKS key", () => {
-      const { result } = setup({ translate: jest.fn((key) => `[${key}]`) });
+      const { result } = setup({ translate: vi.fn((key) => `[${key}]`) });
       expect(result.current.label.value).toBe("[BOOKMARKS]");
     });
   });
@@ -139,7 +140,7 @@ describe("useBookmarksSection", () => {
     it("resolves the book name once the translation books load", async () => {
       const { result } = setup({
         bookmarks: signal<FakeBookmark[]>([bookmark]),
-        getTranslationBooks: jest.fn(async () =>
+        getTranslationBooks: vi.fn(async () =>
           books([{ id: "GEN", name: "Genesis" }])
         ),
       });
@@ -150,7 +151,7 @@ describe("useBookmarksSection", () => {
     it("keeps the bookId when the book is not in the loaded translation", async () => {
       const { result } = setup({
         bookmarks: signal<FakeBookmark[]>([{ ...bookmark, bookId: "XYZ" }]),
-        getTranslationBooks: jest.fn(async () =>
+        getTranslationBooks: vi.fn(async () =>
           books([{ id: "GEN", name: "Genesis" }])
         ),
       });
@@ -169,7 +170,7 @@ describe("useBookmarksSection", () => {
 
   describe("translation books cache", () => {
     it("fetches each distinct translation once", () => {
-      const getTranslationBooks = jest.fn(async () => books([]));
+      const getTranslationBooks = vi.fn(async () => books([]));
       setup({
         bookmarks: signal<FakeBookmark[]>([
           { id: "b1", bookId: "GEN", chapterNumber: 1, translationId: "T1" },
@@ -184,7 +185,7 @@ describe("useBookmarksSection", () => {
     });
 
     it("does not refetch a translation that is already cached", async () => {
-      const getTranslationBooks = jest.fn(async () =>
+      const getTranslationBooks = vi.fn(async () =>
         books([{ id: "GEN", name: "Genesis" }])
       );
       const bookmarks = signal<FakeBookmark[]>([
@@ -231,7 +232,7 @@ describe("useBookmarksSection", () => {
     });
 
     it("is defined (with a translated label) when the rows overflow", () => {
-      const { result } = setup({ translate: jest.fn((key) => `[${key}]`) }, [
+      const { result } = setup({ translate: vi.fn((key) => `[${key}]`) }, [
         <button data-top="0" key="a" />,
         <button data-top="20" key="b" />,
       ]);
@@ -241,9 +242,7 @@ describe("useBookmarksSection", () => {
     });
 
     it("logs when the more button is clicked", () => {
-      const consoleLog = jest
-        .spyOn(console, "log")
-        .mockImplementation(() => {});
+      const consoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
       const { result } = setup({}, [
         <button data-top="0" key="a" />,
         <button data-top="20" key="b" />,

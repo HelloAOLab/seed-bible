@@ -1,19 +1,23 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import {
   ScriptureMapProvider,
   useScriptureMapContext,
-} from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
-import { useScriptureMapProvider } from "scriptureMap.contexts.ScriptureMap.useScriptureMapProvider";
-import { ScriptureMapModes } from "scriptureMap.models.scriptureMap";
+} from "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext";
+import { useScriptureMapProvider } from "../../../../packages/scripture-map/contexts/ScriptureMap/useScriptureMapProvider";
+import { ScriptureMapModes } from "../../../../packages/scripture-map/models/scriptureMap";
 
-jest.mock("scriptureMap.contexts.ScriptureMap.useScriptureMapProvider", () => ({
-  useScriptureMapProvider: jest.fn(() => ({})),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ScriptureMap/useScriptureMapProvider",
+  () => ({
+    useScriptureMapProvider: vi.fn(() => ({})),
+  })
+);
 
 const minimalConfig = {
   mode: ScriptureMapModes.Viewer,
-  onChapterClick: jest.fn(),
+  onChapterClick: vi.fn(),
 } as never;
 
 describe("ScriptureMapContext", () => {
@@ -27,7 +31,7 @@ describe("ScriptureMapContext", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("useScriptureMapContext", () => {
@@ -46,7 +50,7 @@ describe("ScriptureMapContext", () => {
 
     it("returns the context value when called inside a provider", () => {
       const contextValue = { arrangement: { name: "default", testaments: [] } };
-      (useScriptureMapProvider as jest.Mock).mockReturnValue(contextValue);
+      (useScriptureMapProvider as Mock).mockReturnValue(contextValue);
 
       let receivedContext: unknown;
 
@@ -70,7 +74,7 @@ describe("ScriptureMapContext", () => {
 
   describe("ScriptureMapProvider", () => {
     it("renders nothing when value.arrangement is undefined", () => {
-      (useScriptureMapProvider as jest.Mock).mockReturnValue({
+      (useScriptureMapProvider as Mock).mockReturnValue({
         arrangement: undefined,
       });
 
@@ -87,7 +91,7 @@ describe("ScriptureMapContext", () => {
     });
 
     it("renders children when value.arrangement is defined", () => {
-      (useScriptureMapProvider as jest.Mock).mockReturnValue({
+      (useScriptureMapProvider as Mock).mockReturnValue({
         arrangement: { name: "default", testaments: [] },
       });
 
@@ -104,7 +108,7 @@ describe("ScriptureMapContext", () => {
     });
 
     it("calls useScriptureMapProvider with the config prop", () => {
-      (useScriptureMapProvider as jest.Mock).mockReturnValue({
+      (useScriptureMapProvider as Mock).mockReturnValue({
         arrangement: { name: "default", testaments: [] },
       });
 
@@ -125,7 +129,7 @@ describe("ScriptureMapContext", () => {
         arrangement: { name: "default", testaments: [] },
         scaleFactor: 1,
       };
-      (useScriptureMapProvider as jest.Mock).mockReturnValue(contextValue);
+      (useScriptureMapProvider as Mock).mockReturnValue(contextValue);
 
       let receivedContext: unknown;
 

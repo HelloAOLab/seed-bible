@@ -1,13 +1,14 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import { usePresenceCard } from "todayScreen.infrastructure.presentation.hooks.usePresenceCard";
-import { useTodayContext } from "todayScreen.infrastructure.presentation.contexts.today.TodayContext";
+import { usePresenceCard } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/usePresenceCard";
+import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.today.TodayContext",
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
   () => ({
-    useTodayContext: jest.fn(),
+    useTodayContext: vi.fn(),
   })
 );
 
@@ -38,8 +39,8 @@ function makeSession(options: {
   };
 }
 
-const joinSharedSession = jest.fn();
-const getIconById = jest.fn((id: string) => `icon-${id}`);
+const joinSharedSession = vi.fn();
+const getIconById = vi.fn((id: string) => `icon-${id}`);
 
 type Result = ReturnType<typeof usePresenceCard>;
 
@@ -54,12 +55,12 @@ describe("usePresenceCard", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(sessions: ReturnType<typeof makeSession>[]) {
-    (useTodayContext as jest.Mock).mockReturnValue({
-      translate: jest.fn((key: string) => key),
+    (useTodayContext as Mock).mockReturnValue({
+      translate: vi.fn((key: string) => key),
       sharedSessions: signal(sessions),
       bookNames: signal(new Map([["GEN", "Genesis"]])),
       userDeterministicIdentityProvider: { getIconById },

@@ -1,54 +1,58 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useReadingHistoryTimeline } from "todayScreen.infrastructure.presentation.hooks.useReadingHistoryTimeline";
-import { useTodayContext } from "todayScreen.infrastructure.presentation.contexts.today.TodayContext";
-import { useSocialSectionContext } from "todayScreen.infrastructure.presentation.contexts.socialSection.SocialSectionContext";
-import { useTimeContext } from "todayScreen.infrastructure.presentation.contexts.time.TimeContext";
-import { calculateReadingHistorySummary } from "seed-bible.managers.ReadingHistoryManager";
+import { useReadingHistoryTimeline } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useReadingHistoryTimeline";
+import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
+import { useSocialSectionContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext";
+import { useTimeContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/time/TimeContext";
+import { calculateReadingHistorySummary } from "../../../../../../packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.today.TodayContext",
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
   () => ({
-    useTodayContext: jest.fn(),
+    useTodayContext: vi.fn(),
   })
 );
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.socialSection.SocialSectionContext",
-  () => ({ useSocialSectionContext: jest.fn() })
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext",
+  () => ({ useSocialSectionContext: vi.fn() })
 );
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.time.TimeContext",
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/time/TimeContext",
   () => ({
-    useTimeContext: jest.fn(),
+    useTimeContext: vi.fn(),
   })
 );
-jest.mock("seed-bible.managers.ReadingHistoryManager", () => ({
-  flat: jest.fn((arrays: unknown[][]) => arrays.flat()),
-  calculateReadingHistorySummary: jest.fn(() => ({
-    totalTimeSpentReading: 0,
-    users: {},
-  })),
-}));
+vi.mock(
+  "../../../../../../packages/seed-bible/seed-bible/managers/ReadingHistoryManager",
+  () => ({
+    flat: vi.fn((arrays: unknown[][]) => arrays.flat()),
+    calculateReadingHistorySummary: vi.fn(() => ({
+      totalTimeSpentReading: 0,
+      users: {},
+    })),
+  })
+);
 
-const getColorByReadingTime = jest.fn(
+const getColorByReadingTime = vi.fn(
   (_data: { baseColor: string; [key: string]: unknown }) => "#abc"
 );
-const useHorizontalScroll = jest.fn();
-const selectYear = jest.fn();
-const selectDay = jest.fn();
+const useHorizontalScroll = vi.fn();
+const selectYear = vi.fn();
+const selectDay = vi.fn();
 
 // 2026-05-23 is a Saturday → getDay() === 6 (a full week of days).
 const NOW = new Date(2026, 4, 23, 12, 0, 0);
 
 function makeToday(overrides: Record<string, unknown> = {}) {
   return {
-    getDayRangeSeconds: jest.fn((ms: number) => {
+    getDayRangeSeconds: vi.fn((ms: number) => {
       const start = Math.floor(ms / 1000);
       return { start, end: start + 86399 };
     }),
-    getReadingHistoryEvents: jest.fn(async () => []),
-    translate: jest.fn((key: string) => key),
-    GetPastDateInfo: jest.fn(() => ({
+    getReadingHistoryEvents: vi.fn(async () => []),
+    translate: vi.fn((key: string) => key),
+    GetPastDateInfo: vi.fn(() => ({
       weekday: undefined,
       day: 18,
       month: 4,
@@ -56,7 +60,7 @@ function makeToday(overrides: Record<string, unknown> = {}) {
       year: 2026,
     })),
     language: "en",
-    CapitalizeFirstLetter: jest.fn(
+    CapitalizeFirstLetter: vi.fn(
       (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
     ),
     theme: {
@@ -91,10 +95,10 @@ describe("useReadingHistoryTimeline", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    jest.useFakeTimers();
-    jest.setSystemTime(NOW);
-    (useTimeContext as jest.Mock).mockReturnValue({ tick: 0 });
-    (calculateReadingHistorySummary as jest.Mock).mockReturnValue({
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    (useTimeContext as Mock).mockReturnValue({ tick: 0 });
+    (calculateReadingHistorySummary as Mock).mockReturnValue({
       totalTimeSpentReading: 0,
       users: {},
     });
@@ -103,16 +107,16 @@ describe("useReadingHistoryTimeline", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.useRealTimers();
-    jest.clearAllMocks();
+    vi.useRealTimers();
+    vi.clearAllMocks();
   });
 
   function setup(
     social: Record<string, unknown> = {},
     today: Record<string, unknown> = {}
   ) {
-    (useTodayContext as jest.Mock).mockReturnValue(makeToday(today));
-    (useSocialSectionContext as jest.Mock).mockReturnValue(makeSocial(social));
+    (useTodayContext as Mock).mockReturnValue(makeToday(today));
+    (useSocialSectionContext as Mock).mockReturnValue(makeSocial(social));
     const result = { current: null as unknown as Result };
     function TestComponent() {
       result.current = useReadingHistoryTimeline();
@@ -174,7 +178,7 @@ describe("useReadingHistoryTimeline", () => {
         "nov",
         "dec",
       ];
-      const GetPastDateInfo = jest.fn((time: number) => {
+      const GetPastDateInfo = vi.fn((time: number) => {
         const d = new Date(time);
         return {
           weekday: undefined,
@@ -243,7 +247,7 @@ describe("useReadingHistoryTimeline", () => {
 
     it("stops generating days after the last weekday of the final week", () => {
       // 2026-05-20 is a Wednesday → getDay() === 3, so days 4..6 are skipped.
-      jest.setSystemTime(new Date(2026, 4, 20, 12, 0, 0));
+      vi.setSystemTime(new Date(2026, 4, 20, 12, 0, 0));
       const result = setup();
       expect(items(result)).toHaveLength(4); // days 0..3
     });
@@ -290,7 +294,7 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("fetches events for each selected user", () => {
-      const getReadingHistoryEvents = jest.fn(async () => []);
+      const getReadingHistoryEvents = vi.fn(async () => []);
       setup(
         { userFilters: new Map([["u1", true]]) },
         { getReadingHistoryEvents }
@@ -303,7 +307,7 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("only fetches events for the selected users", () => {
-      const getReadingHistoryEvents = jest.fn(async () => []);
+      const getReadingHistoryEvents = vi.fn(async () => []);
       setup(
         {
           userFilters: new Map([
@@ -322,7 +326,7 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("ignores out-of-range and sub-minute events", async () => {
-      const getReadingHistoryEvents = jest.fn(
+      const getReadingHistoryEvents = vi.fn(
         async (_id: string, startTime: number) => [
           // Before the window → dayIndex < 0 → skipped.
           {
@@ -358,7 +362,7 @@ describe("useReadingHistoryTimeline", () => {
           },
         ]
       );
-      (calculateReadingHistorySummary as jest.Mock).mockReturnValue({
+      (calculateReadingHistorySummary as Mock).mockReturnValue({
         totalTimeSpentReading: 180,
         users: { u1: {} },
       });
@@ -368,7 +372,7 @@ describe("useReadingHistoryTimeline", () => {
       );
 
       await act(async () => {
-        await jest.advanceTimersByTimeAsync(50);
+        await vi.advanceTimersByTimeAsync(50);
       });
 
       const dayZero = items(result).find((i) => i.id === "0-0")!;
@@ -376,7 +380,7 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("ignores results that resolve after unmount", async () => {
-      const getReadingHistoryEvents = jest.fn(
+      const getReadingHistoryEvents = vi.fn(
         async (_id: string, startTime: number) => [
           {
             start: startTime + 100,
@@ -394,14 +398,14 @@ describe("useReadingHistoryTimeline", () => {
       act(() => render(null, container)); // unmount → isMounted = false
 
       await act(async () => {
-        await jest.advanceTimersByTimeAsync(50);
+        await vi.advanceTimersByTimeAsync(50);
       });
 
       expect(getReadingHistoryEvents).toHaveBeenCalled();
     });
 
     it("colors a day that has enough reading time", async () => {
-      const getReadingHistoryEvents = jest.fn(
+      const getReadingHistoryEvents = vi.fn(
         async (_id: string, startTime: number) => [
           {
             start: startTime + 100,
@@ -412,7 +416,7 @@ describe("useReadingHistoryTimeline", () => {
           },
         ]
       );
-      (calculateReadingHistorySummary as jest.Mock).mockReturnValue({
+      (calculateReadingHistorySummary as Mock).mockReturnValue({
         totalTimeSpentReading: 180,
         users: { u1: {} },
       });
@@ -422,7 +426,7 @@ describe("useReadingHistoryTimeline", () => {
       );
 
       await act(async () => {
-        await jest.advanceTimersByTimeAsync(50);
+        await vi.advanceTimersByTimeAsync(50);
       });
 
       expect(getColorByReadingTime).toHaveBeenCalled();
@@ -431,7 +435,7 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("yields to the main thread while summarizing many days", async () => {
-      const getReadingHistoryEvents = jest.fn(
+      const getReadingHistoryEvents = vi.fn(
         async (_id: string, startTime: number) =>
           Array.from({ length: 30 }, (_, i) => ({
             start: startTime + i * 86400 + 100,
@@ -441,7 +445,7 @@ describe("useReadingHistoryTimeline", () => {
             userId: "u1",
           }))
       );
-      (calculateReadingHistorySummary as jest.Mock).mockReturnValue({
+      (calculateReadingHistorySummary as Mock).mockReturnValue({
         totalTimeSpentReading: 180,
         users: { u1: {} },
       });
@@ -452,17 +456,17 @@ describe("useReadingHistoryTimeline", () => {
       );
 
       await act(async () => {
-        await jest.advanceTimersByTimeAsync(100);
+        await vi.advanceTimersByTimeAsync(100);
       });
 
       expect(items(result).length).toBeGreaterThan(0);
     });
 
     it("warns when fetching reading events fails", async () => {
-      const consoleWarn = jest
+      const consoleWarn = vi
         .spyOn(console, "warn")
         .mockImplementation(() => {});
-      const getReadingHistoryEvents = jest.fn(async () => {
+      const getReadingHistoryEvents = vi.fn(async () => {
         throw new Error("boom");
       });
       setup(
@@ -471,7 +475,7 @@ describe("useReadingHistoryTimeline", () => {
       );
 
       await act(async () => {
-        await jest.advanceTimersByTimeAsync(50);
+        await vi.advanceTimersByTimeAsync(50);
       });
 
       expect(consoleWarn).toHaveBeenCalled();
@@ -479,7 +483,7 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("falls back to #dfdede base color when the theme omits it", async () => {
-      const getReadingHistoryEvents = jest.fn(
+      const getReadingHistoryEvents = vi.fn(
         async (_id: string, startTime: number) => [
           {
             start: startTime + 100,
@@ -490,7 +494,7 @@ describe("useReadingHistoryTimeline", () => {
           },
         ]
       );
-      (calculateReadingHistorySummary as jest.Mock).mockReturnValue({
+      (calculateReadingHistorySummary as Mock).mockReturnValue({
         totalTimeSpentReading: 180,
         users: { u1: {} },
       });
@@ -503,7 +507,7 @@ describe("useReadingHistoryTimeline", () => {
       );
 
       await act(async () => {
-        await jest.advanceTimersByTimeAsync(50);
+        await vi.advanceTimersByTimeAsync(50);
       });
 
       expect(getColorByReadingTime.mock.calls[0]![0].baseColor).toBe("#dfdede");
@@ -519,12 +523,10 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("scrolls the last day into view on mount", () => {
-      const scrollIntoView = jest.fn();
+      const scrollIntoView = vi.fn();
       const el = document.createElement("div");
       el.scrollIntoView = scrollIntoView;
-      const getById = jest
-        .spyOn(document, "getElementById")
-        .mockReturnValue(el);
+      const getById = vi.spyOn(document, "getElementById").mockReturnValue(el);
 
       setup();
 
@@ -536,7 +538,7 @@ describe("useReadingHistoryTimeline", () => {
     });
 
     it("does not throw when the last day's element is missing", () => {
-      jest.spyOn(document, "getElementById").mockReturnValue(null);
+      vi.spyOn(document, "getElementById").mockReturnValue(null);
       expect(() => setup()).not.toThrow();
     });
   });

@@ -1,23 +1,27 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { Book } from "todayScreen.infrastructure.presentation.components.containers.Book";
-import { useBook } from "todayScreen.infrastructure.presentation.hooks.useBook";
+import { Book } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Book";
+import { useBook } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useBook";
 
-jest.mock("todayScreen.infrastructure.presentation.hooks.useBook", () => ({
-  useBook: jest.fn(),
-}));
-
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.containers.Chapter",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useBook",
   () => ({
-    Chapter: jest.fn(() => <div data-testid="chapter" />),
+    useBook: vi.fn(),
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.ui.UserIcon",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Chapter",
   () => ({
-    UserIcon: jest.fn(() => <div data-testid="user-icon" />),
+    Chapter: vi.fn(() => <div data-testid="chapter" />),
+  })
+);
+
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/UserIcon",
+  () => ({
+    UserIcon: vi.fn(() => <div data-testid="user-icon" />),
   })
 );
 
@@ -29,7 +33,7 @@ function makeBookResult(overrides: Partial<BookResult> = {}): BookResult {
     usersIconData: [],
     extraUsers: undefined,
     isExpanded: false,
-    handleBookClick: jest.fn(),
+    handleBookClick: vi.fn(),
     chaptersData: [],
     ...overrides,
   } as unknown as BookResult;
@@ -46,12 +50,12 @@ describe("Book", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(overrides: Partial<BookResult> = {}) {
     const result = makeBookResult(overrides);
-    (useBook as jest.Mock).mockReturnValue(result);
+    (useBook as Mock).mockReturnValue(result);
     act(() =>
       render(<Book bookId="GEN" chaptersReading={{}} usersId={[]} />, container)
     );

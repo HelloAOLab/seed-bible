@@ -1,11 +1,15 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useSelectionOptions } from "scriptureMap.hooks.useSelectionOptions";
-import { useScriptureMapContext } from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
+import { useSelectionOptions } from "../../../../packages/scripture-map/hooks/useSelectionOptions";
+import { useScriptureMapContext } from "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext";
 
-jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
-  useScriptureMapContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext",
+  () => ({
+    useScriptureMapContext: vi.fn(),
+  })
+);
 
 describe("useSelectionOptions", () => {
   let container: HTMLDivElement;
@@ -21,7 +25,7 @@ describe("useSelectionOptions", () => {
   });
 
   function setup(translate: (key: string) => string) {
-    (useScriptureMapContext as jest.Mock).mockReturnValue({ translate });
+    (useScriptureMapContext as Mock).mockReturnValue({ translate });
     const result = {
       current: null as unknown as ReturnType<typeof useSelectionOptions>,
     };

@@ -1,28 +1,32 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { Chapter } from "scriptureMap.components.containers.Chapter";
-import { useChapter } from "scriptureMap.hooks.useChapter";
+import { Chapter } from "../../../../../packages/scripture-map/components/containers/Chapter";
+import { useChapter } from "../../../../../packages/scripture-map/hooks/useChapter";
 
-jest.mock("scriptureMap.hooks.useChapter", () => ({
-  useChapter: jest.fn(),
+vi.mock("../../../../../packages/scripture-map/hooks/useChapter", () => ({
+  useChapter: vi.fn(),
 }));
 
-jest.mock("scriptureMap.components.containers.Tooltip", () => ({
-  Tooltip: ({
-    anchor,
-    offsetY,
-  }: {
-    anchor: unknown;
-    offsetY: number;
-    contentsData: unknown[];
-  }) => (
-    <div
-      data-testid="tooltip"
-      data-offset-y={offsetY}
-      data-anchor={JSON.stringify(anchor)}
-    />
-  ),
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/components/containers/Tooltip",
+  () => ({
+    Tooltip: ({
+      anchor,
+      offsetY,
+    }: {
+      anchor: unknown;
+      offsetY: number;
+      contentsData: unknown[];
+    }) => (
+      <div
+        data-testid="tooltip"
+        data-offset-y={offsetY}
+        data-anchor={JSON.stringify(anchor)}
+      />
+    ),
+  })
+);
 
 type ChapterProps = Parameters<typeof Chapter>[0];
 
@@ -48,10 +52,10 @@ function makeHookResult(overrides: Record<string, unknown> = {}) {
     isUserPresenceEnabled: false,
     tooltipAnchor: undefined,
     tooltipOffsetY: 0,
-    handleChapterPointerEnter: jest.fn(),
-    handleChapterPointerLeave: jest.fn(),
-    handleChapterPointerDown: jest.fn(),
-    handleChapterPointerUp: jest.fn(),
+    handleChapterPointerEnter: vi.fn(),
+    handleChapterPointerLeave: vi.fn(),
+    handleChapterPointerDown: vi.fn(),
+    handleChapterPointerUp: vi.fn(),
     ...overrides,
   };
 }
@@ -62,13 +66,13 @@ describe("Chapter", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useChapter as jest.Mock).mockReturnValue(makeHookResult());
+    (useChapter as Mock).mockReturnValue(makeHookResult());
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(props: Partial<ChapterProps> = {}) {
@@ -78,7 +82,7 @@ describe("Chapter", () => {
 
   describe("structure", () => {
     it("renders a div with chapterClass", () => {
-      (useChapter as jest.Mock).mockReturnValue(
+      (useChapter as Mock).mockReturnValue(
         makeHookResult({ chapterClass: "chapter show-user-presence" })
       );
       setup();
@@ -88,7 +92,7 @@ describe("Chapter", () => {
     });
 
     it("applies chapterStyle to the div", () => {
-      (useChapter as jest.Mock).mockReturnValue(
+      (useChapter as Mock).mockReturnValue(
         makeHookResult({
           chapterStyle: { background: "#aabbcc", borderStyle: "solid" },
         })
@@ -135,7 +139,7 @@ describe("Chapter", () => {
 
     it("does not forward chapter or tooltipContentsData to useChapter", () => {
       setup({ chapter: 7, tooltipContentsData: [{ type: "header" } as never] });
-      const call = (useChapter as jest.Mock).mock.calls[0][0];
+      const call = (useChapter as Mock).mock.calls[0][0];
       expect(call).not.toHaveProperty("chapter");
       expect(call).not.toHaveProperty("tooltipContentsData");
     });
@@ -143,7 +147,7 @@ describe("Chapter", () => {
 
   describe("tooltip rendering", () => {
     it("renders Tooltip when isReadingHistoryEnabled, anchor, and data are present", () => {
-      (useChapter as jest.Mock).mockReturnValue(
+      (useChapter as Mock).mockReturnValue(
         makeHookResult({
           isReadingHistoryEnabled: true,
           tooltipAnchor: { x: 50, y: 100, width: 32, height: 32 },
@@ -157,7 +161,7 @@ describe("Chapter", () => {
     });
 
     it("renders Tooltip when isUserPresenceEnabled, anchor, and data are present", () => {
-      (useChapter as jest.Mock).mockReturnValue(
+      (useChapter as Mock).mockReturnValue(
         makeHookResult({
           isUserPresenceEnabled: true,
           tooltipAnchor: { x: 50, y: 100, width: 32, height: 32 },
@@ -170,7 +174,7 @@ describe("Chapter", () => {
     });
 
     it("does not render Tooltip when tooltipAnchor is undefined", () => {
-      (useChapter as jest.Mock).mockReturnValue(
+      (useChapter as Mock).mockReturnValue(
         makeHookResult({
           isReadingHistoryEnabled: true,
           tooltipAnchor: undefined,
@@ -183,7 +187,7 @@ describe("Chapter", () => {
     });
 
     it("does not render Tooltip when tooltipContentsData is empty", () => {
-      (useChapter as jest.Mock).mockReturnValue(
+      (useChapter as Mock).mockReturnValue(
         makeHookResult({
           isReadingHistoryEnabled: true,
           tooltipAnchor: { x: 50, y: 100, width: 32, height: 32 },
@@ -194,7 +198,7 @@ describe("Chapter", () => {
     });
 
     it("does not render Tooltip when neither isReadingHistoryEnabled nor isUserPresenceEnabled", () => {
-      (useChapter as jest.Mock).mockReturnValue(
+      (useChapter as Mock).mockReturnValue(
         makeHookResult({
           isReadingHistoryEnabled: false,
           isUserPresenceEnabled: false,
@@ -208,7 +212,7 @@ describe("Chapter", () => {
     });
 
     it("passes tooltipOffsetY to Tooltip", () => {
-      (useChapter as jest.Mock).mockReturnValue(
+      (useChapter as Mock).mockReturnValue(
         makeHookResult({
           isReadingHistoryEnabled: true,
           tooltipAnchor: { x: 50, y: 100, width: 32, height: 32 },
@@ -224,7 +228,7 @@ describe("Chapter", () => {
 
     it("passes tooltipAnchor to Tooltip", () => {
       const anchor = { x: 10, y: 20, width: 32, height: 32 };
-      (useChapter as jest.Mock).mockReturnValue(
+      (useChapter as Mock).mockReturnValue(
         makeHookResult({
           isReadingHistoryEnabled: true,
           tooltipAnchor: anchor,
@@ -242,9 +246,9 @@ describe("Chapter", () => {
 
   describe("event handlers", () => {
     it("calls handleChapterPointerEnter with a fake event", () => {
-      const handleChapterPointerEnter = jest.fn();
+      const handleChapterPointerEnter = vi.fn();
       const hookResult = makeHookResult({ handleChapterPointerEnter });
-      (useChapter as jest.Mock).mockReturnValue(hookResult);
+      (useChapter as Mock).mockReturnValue(hookResult);
       setup();
       const fakeEvent = {
         currentTarget: document.createElement("div"),
@@ -254,9 +258,9 @@ describe("Chapter", () => {
     });
 
     it("calls handleChapterPointerLeave with a fake event", () => {
-      const handleChapterPointerLeave = jest.fn();
+      const handleChapterPointerLeave = vi.fn();
       const hookResult = makeHookResult({ handleChapterPointerLeave });
-      (useChapter as jest.Mock).mockReturnValue(hookResult);
+      (useChapter as Mock).mockReturnValue(hookResult);
       setup();
       const fakeEvent = {} as unknown as PointerEvent;
       act(() => hookResult.handleChapterPointerLeave(fakeEvent));
@@ -264,24 +268,24 @@ describe("Chapter", () => {
     });
 
     it("calls handleChapterPointerDown with a fake event", () => {
-      const handleChapterPointerDown = jest.fn();
+      const handleChapterPointerDown = vi.fn();
       const hookResult = makeHookResult({ handleChapterPointerDown });
-      (useChapter as jest.Mock).mockReturnValue(hookResult);
+      (useChapter as Mock).mockReturnValue(hookResult);
       setup();
       const fakeEvent = {
-        stopPropagation: jest.fn(),
+        stopPropagation: vi.fn(),
       } as unknown as PointerEvent;
       act(() => hookResult.handleChapterPointerDown(fakeEvent));
       expect(handleChapterPointerDown).toHaveBeenCalledWith(fakeEvent);
     });
 
     it("calls handleChapterPointerUp with a fake event", () => {
-      const handleChapterPointerUp = jest.fn();
+      const handleChapterPointerUp = vi.fn();
       const hookResult = makeHookResult({ handleChapterPointerUp });
-      (useChapter as jest.Mock).mockReturnValue(hookResult);
+      (useChapter as Mock).mockReturnValue(hookResult);
       setup();
       const fakeEvent = {
-        stopPropagation: jest.fn(),
+        stopPropagation: vi.fn(),
       } as unknown as PointerEvent;
       act(() => hookResult.handleChapterPointerUp(fakeEvent));
       expect(handleChapterPointerUp).toHaveBeenCalledWith(fakeEvent);

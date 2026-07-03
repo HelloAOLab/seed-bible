@@ -1,24 +1,31 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { Container } from "scriptureMap.components.containers.Container";
-import { useContainer } from "scriptureMap.hooks.useContainer";
+import { Container } from "../../../../../packages/scripture-map/components/containers/Container";
+import { useContainer } from "../../../../../packages/scripture-map/hooks/useContainer";
 
-jest.mock("scriptureMap.hooks.useContainer", () => ({
-  useContainer: jest.fn(),
+vi.mock("../../../../../packages/scripture-map/hooks/useContainer", () => ({
+  useContainer: vi.fn(),
 }));
 
-jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
-  useScriptureMapContext: jest.fn(() => ({
-    showTestamentLabels: true,
-    showSectionLabels: true,
-  })),
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext",
+  () => ({
+    useScriptureMapContext: vi.fn(() => ({
+      showTestamentLabels: true,
+      showSectionLabels: true,
+    })),
+  })
+);
 
-jest.mock("scriptureMap.components.containers.TestamentContainer", () => ({
-  TestamentContainer: ({ testamentIndex }: { testamentIndex: number }) => (
-    <div data-testid="testament-container" data-index={testamentIndex} />
-  ),
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/components/containers/TestamentContainer",
+  () => ({
+    TestamentContainer: ({ testamentIndex }: { testamentIndex: number }) => (
+      <div data-testid="testament-container" data-index={testamentIndex} />
+    ),
+  })
+);
 
 describe("Container", () => {
   let container: HTMLDivElement;
@@ -26,13 +33,13 @@ describe("Container", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useContainer as jest.Mock).mockReturnValue([]);
+    (useContainer as Mock).mockReturnValue([]);
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup() {
@@ -58,7 +65,7 @@ describe("Container", () => {
 
   describe("mapping over testamentContainersData", () => {
     it("renders one TestamentContainer when data has one item", () => {
-      (useContainer as jest.Mock).mockReturnValue([
+      (useContainer as Mock).mockReturnValue([
         { testamentIndex: 0, testament: { name: "OT", sections: [] } },
       ]);
       setup();
@@ -68,7 +75,7 @@ describe("Container", () => {
     });
 
     it("renders multiple TestamentContainers when data has multiple items", () => {
-      (useContainer as jest.Mock).mockReturnValue([
+      (useContainer as Mock).mockReturnValue([
         { testamentIndex: 0, testament: { name: "OT", sections: [] } },
         { testamentIndex: 1, testament: { name: "NT", sections: [] } },
       ]);
@@ -79,7 +86,7 @@ describe("Container", () => {
     });
 
     it("passes props from each data item to TestamentContainer", () => {
-      (useContainer as jest.Mock).mockReturnValue([
+      (useContainer as Mock).mockReturnValue([
         { testamentIndex: 0, testament: { name: "OT", sections: [] } },
         { testamentIndex: 1, testament: { name: "NT", sections: [] } },
       ]);

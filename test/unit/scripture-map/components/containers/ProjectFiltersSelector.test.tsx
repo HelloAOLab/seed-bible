@@ -1,16 +1,20 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { ProjectFiltersSelector } from "scriptureMap.components.containers.ProjectFiltersSelector";
-import { useProjectFiltersSelector } from "scriptureMap.hooks.useProjectFiltersSelector";
+import { ProjectFiltersSelector } from "../../../../../packages/scripture-map/components/containers/ProjectFiltersSelector";
+import { useProjectFiltersSelector } from "../../../../../packages/scripture-map/hooks/useProjectFiltersSelector";
 
-jest.mock("scriptureMap.hooks.useProjectFiltersSelector", () => ({
-  useProjectFiltersSelector: jest.fn(),
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/hooks/useProjectFiltersSelector",
+  () => ({
+    useProjectFiltersSelector: vi.fn(),
+  })
+);
 
 type SelectorOptionData = {
   key: string;
   content: { title: string; iconStyle?: React.CSSProperties };
-  onClick: jest.Mock;
+  onClick: Mock;
   selected?: boolean;
   className: string;
 };
@@ -18,7 +22,7 @@ type SelectorOptionData = {
 function makeHookResult(overrides: Record<string, unknown> = {}) {
   return {
     allSelectorOptionContent: { title: "All" },
-    allSelectorOptionClick: jest.fn(),
+    allSelectorOptionClick: vi.fn(),
     allSelected: false,
     selectorOptionsData: [] as SelectorOptionData[],
     ...overrides,
@@ -31,7 +35,7 @@ function makeOptionData(
   return {
     key: "option-1",
     content: { title: "Completed" },
-    onClick: jest.fn(),
+    onClick: vi.fn(),
     selected: false,
     className: "project-filters-selector-option",
     ...overrides,
@@ -44,18 +48,18 @@ describe("ProjectFiltersSelector", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useProjectFiltersSelector as jest.Mock).mockReturnValue(makeHookResult());
+    (useProjectFiltersSelector as Mock).mockReturnValue(makeHookResult());
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(hookOverrides: Record<string, unknown> = {}) {
     if (Object.keys(hookOverrides).length > 0) {
-      (useProjectFiltersSelector as jest.Mock).mockReturnValue(
+      (useProjectFiltersSelector as Mock).mockReturnValue(
         makeHookResult(hookOverrides)
       );
     }
@@ -108,7 +112,7 @@ describe("ProjectFiltersSelector", () => {
     });
 
     it("calls allSelectorOptionClick when clicked", () => {
-      const allSelectorOptionClick = jest.fn();
+      const allSelectorOptionClick = vi.fn();
       setup({ allSelectorOptionClick });
       act(() => {
         allOptions()[0]!.dispatchEvent(
@@ -164,7 +168,7 @@ describe("ProjectFiltersSelector", () => {
     });
 
     it("calls the option's onClick when a mapped option is clicked", () => {
-      const onClick = jest.fn();
+      const onClick = vi.fn();
       setup({
         selectorOptionsData: [makeOptionData({ key: "x", onClick })],
       });

@@ -1,3 +1,4 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import {
@@ -5,41 +6,53 @@ import {
   type SectionToggleData,
   type BooksContainerData,
   type BookData,
-} from "scriptureMap.components.containers.TestamentContent";
-import { useTestamentContent } from "scriptureMap.hooks.useTestamentContent";
-import type { SectionInfo } from "bibleVizUtils.domain.models.arrangement";
+} from "../../../../../packages/scripture-map/components/containers/TestamentContent";
+import { useTestamentContent } from "../../../../../packages/scripture-map/hooks/useTestamentContent";
+import type { SectionInfo } from "../../../../../packages/seed-bible-utils/domain/models/arrangement";
 
-jest.mock("scriptureMap.hooks.useTestamentContent", () => ({
-  useTestamentContent: jest.fn(),
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/hooks/useTestamentContent",
+  () => ({
+    useTestamentContent: vi.fn(),
+  })
+);
 
-jest.mock("scriptureMap.components.containers.SectionToggle", () => ({
-  SectionToggle: ({
-    sectionKey,
-    showingContent,
-  }: {
-    sectionKey: string;
-    showingContent: boolean | undefined;
-  }) => (
-    <div
-      data-testid="section-toggle"
-      data-section-key={sectionKey}
-      data-showing={String(showingContent)}
-    />
-  ),
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/components/containers/SectionToggle",
+  () => ({
+    SectionToggle: ({
+      sectionKey,
+      showingContent,
+    }: {
+      sectionKey: string;
+      showingContent: boolean | undefined;
+    }) => (
+      <div
+        data-testid="section-toggle"
+        data-section-key={sectionKey}
+        data-showing={String(showingContent)}
+      />
+    ),
+  })
+);
 
-jest.mock("scriptureMap.components.ui.BooksContainer", () => ({
-  BooksContainer: ({ children }: { children: preact.ComponentChildren }) => (
-    <div data-testid="books-container">{children}</div>
-  ),
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/components/ui/BooksContainer",
+  () => ({
+    BooksContainer: ({ children }: { children: preact.ComponentChildren }) => (
+      <div data-testid="books-container">{children}</div>
+    ),
+  })
+);
 
-jest.mock("scriptureMap.components.containers.Book", () => ({
-  Book: ({ bookId }: { bookId: string }) => (
-    <div data-testid="book" data-book-id={bookId} />
-  ),
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/components/containers/Book",
+  () => ({
+    Book: ({ bookId }: { bookId: string }) => (
+      <div data-testid="book" data-book-id={bookId} />
+    ),
+  })
+);
 
 function makeSectionToggleData(
   overrides: Partial<SectionToggleData> = {}
@@ -54,7 +67,7 @@ function makeSectionToggleData(
       path: { arrangementName: "default", testamentIndex: 0, sectionIndex: 0 },
     } as SectionInfo,
     sectionKey: "0-OT-0-Law",
-    toggleShowSection: jest.fn(),
+    toggleShowSection: vi.fn(),
     showingContent: true,
     style: {},
     ...overrides,
@@ -92,20 +105,20 @@ describe("TestamentContent", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useTestamentContent as jest.Mock).mockReturnValue({ itemsData: [] });
+    (useTestamentContent as Mock).mockReturnValue({ itemsData: [] });
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(
     hidden: boolean,
     itemsData: (SectionToggleData | BooksContainerData)[] = []
   ) {
-    (useTestamentContent as jest.Mock).mockReturnValue({ itemsData });
+    (useTestamentContent as Mock).mockReturnValue({ itemsData });
     act(() => render(<TestamentContent hidden={hidden} />, container));
     return container;
   }

@@ -1,20 +1,21 @@
+import type { Mock } from "vitest";
 import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
-import { SearchSection } from "todayScreen.infrastructure.presentation.components.containers.SearchSection";
-import { useSearchSection } from "todayScreen.infrastructure.presentation.hooks.useSearchSection";
-import { SeedBibleIcon } from "todayScreen.infrastructure.presentation.components.ui.SeedBibleIcon";
+import { SearchSection } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/SearchSection";
+import { useSearchSection } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useSearchSection";
+import { SeedBibleIcon } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/SeedBibleIcon";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.hooks.useSearchSection",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useSearchSection",
   () => ({
-    useSearchSection: jest.fn(),
+    useSearchSection: vi.fn(),
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.ui.TitledSection",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/TitledSection",
   () => ({
-    TitledSection: jest.fn(
+    TitledSection: vi.fn(
       ({ title, children }: { title: string; children: ComponentChildren }) => (
         <div data-testid="titled-section" data-title={title}>
           {children}
@@ -24,17 +25,17 @@ jest.mock(
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.containers.SearchBar",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/SearchBar",
   () => ({
-    SearchBar: jest.fn(() => <div data-testid="search-bar" />),
+    SearchBar: vi.fn(() => <div data-testid="search-bar" />),
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.ui.SeedBibleIcon",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/SeedBibleIcon",
   () => ({
-    SeedBibleIcon: jest.fn(() => <div data-testid="seed-bible-icon" />),
+    SeedBibleIcon: vi.fn(() => <div data-testid="seed-bible-icon" />),
   })
 );
 
@@ -44,7 +45,7 @@ function makeResult(overrides: Partial<Result> = {}): Result {
   return {
     title: "Go somewhere new",
     selectorText: "Book selector",
-    openBookSelector: jest.fn(),
+    openBookSelector: vi.fn(),
     seedBibleIconStyle: { width: "20px" },
     ...overrides,
   } as unknown as Result;
@@ -61,12 +62,12 @@ describe("SearchSection", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(overrides: Partial<Result> = {}) {
     const result = makeResult(overrides);
-    (useSearchSection as jest.Mock).mockReturnValue(result);
+    (useSearchSection as Mock).mockReturnValue(result);
     act(() => render(<SearchSection />, container));
     return result;
   }
@@ -90,7 +91,7 @@ describe("SearchSection", () => {
     const seedBibleIconStyle = { width: "32px", height: "32px" };
     setup({ seedBibleIconStyle });
     expect(q("[data-testid='seed-bible-icon']")).not.toBeNull();
-    expect((SeedBibleIcon as jest.Mock).mock.calls[0]![0].style).toBe(
+    expect((SeedBibleIcon as Mock).mock.calls[0]![0].style).toBe(
       seedBibleIconStyle
     );
   });
@@ -101,7 +102,7 @@ describe("SearchSection", () => {
   });
 
   it("calls openBookSelector when the selector button is clicked", () => {
-    const openBookSelector = jest.fn();
+    const openBookSelector = vi.fn();
     setup({ openBookSelector });
     act(() =>
       container

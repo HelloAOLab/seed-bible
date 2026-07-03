@@ -1,12 +1,13 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { TodayContainer } from "todayScreen.infrastructure.presentation.components.containers.TodayContainer";
-import { useTodayContainer } from "todayScreen.infrastructure.presentation.hooks.useTodayContainer";
+import { TodayContainer } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/TodayContainer";
+import { useTodayContainer } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useTodayContainer";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.hooks.useTodayContainer",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useTodayContainer",
   () => ({
-    useTodayContainer: jest.fn(),
+    useTodayContainer: vi.fn(),
   })
 );
 
@@ -31,11 +32,11 @@ describe("TodayContainer", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(overrides: Partial<Result> = {}) {
-    (useTodayContainer as jest.Mock).mockReturnValue(setupResult(overrides));
+    (useTodayContainer as Mock).mockReturnValue(setupResult(overrides));
     act(() => render(<TodayContainer />, container));
   }
 

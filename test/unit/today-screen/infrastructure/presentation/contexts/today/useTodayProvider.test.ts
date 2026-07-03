@@ -1,5 +1,5 @@
-import { useTodayProvider } from "todayScreen.infrastructure.presentation.contexts.today.useTodayProvider";
-import type { TodayConfig } from "todayScreen.infrastructure.presentation.components.Today";
+import { useTodayProvider } from "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/useTodayProvider";
+import type { TodayConfig } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/Today";
 
 const config = {
   language: "en",

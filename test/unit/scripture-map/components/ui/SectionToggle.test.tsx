@@ -3,8 +3,8 @@ import { act } from "preact/test-utils";
 import {
   SectionToggle,
   type SectionToggleProps,
-} from "scriptureMap.components.ui.SectionToggle";
-import type { SectionInfo } from "bibleVizUtils.domain.models.arrangement";
+} from "../../../../../packages/scripture-map/components/ui/SectionToggle";
+import type { SectionInfo } from "../../../../../packages/seed-bible-utils/domain/models/arrangement";
 
 function makeSection(overrides: Partial<SectionInfo> = {}): SectionInfo {
   return {
@@ -20,7 +20,7 @@ function makeProps(
   overrides: Partial<SectionToggleProps> = {}
 ): SectionToggleProps {
   return {
-    toggleShowSection: jest.fn(),
+    toggleShowSection: vi.fn(),
     showingContent: false,
     section: makeSection(),
     style: {},
@@ -40,7 +40,7 @@ describe("SectionToggle (ui)", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(overrides: Partial<SectionToggleProps> = {}) {
@@ -131,7 +131,7 @@ describe("SectionToggle (ui)", () => {
 
   describe("onClick", () => {
     it("calls toggleShowSection with sectionKey when clicked", () => {
-      const toggleShowSection = jest.fn();
+      const toggleShowSection = vi.fn();
       setup({ toggleShowSection, sectionKey: "my-key" });
       act(() => {
         toggleEl()!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -140,7 +140,7 @@ describe("SectionToggle (ui)", () => {
     });
 
     it("calls toggleShowSection exactly once per click", () => {
-      const toggleShowSection = jest.fn();
+      const toggleShowSection = vi.fn();
       setup({ toggleShowSection });
       act(() => {
         toggleEl()!.dispatchEvent(new MouseEvent("click", { bubbles: true }));

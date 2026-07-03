@@ -1,6 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { BooksContainer } from "scriptureMap.components.ui.BooksContainer";
+import { BooksContainer } from "../../../../../packages/scripture-map/components/ui/BooksContainer";
 
 describe("BooksContainer", () => {
   let container: HTMLDivElement;

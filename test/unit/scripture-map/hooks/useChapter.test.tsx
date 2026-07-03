@@ -1,16 +1,23 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useChapter } from "scriptureMap.hooks.useChapter";
-import { useScriptureMapContext } from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
-import { useTestamentContext } from "scriptureMap.contexts.Testament.TestamentContext";
+import { useChapter } from "../../../../packages/scripture-map/hooks/useChapter";
+import { useScriptureMapContext } from "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext";
+import { useTestamentContext } from "../../../../packages/scripture-map/contexts/Testament/TestamentContext";
 
-jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
-  useScriptureMapContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext",
+  () => ({
+    useScriptureMapContext: vi.fn(),
+  })
+);
 
-jest.mock("scriptureMap.contexts.Testament.TestamentContext", () => ({
-  useTestamentContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/Testament/TestamentContext",
+  () => ({
+    useTestamentContext: vi.fn(),
+  })
+);
 
 type ChapterProps = Parameters<typeof useChapter>[0];
 
@@ -37,7 +44,7 @@ function makeCtx(overrides: Record<string, unknown> = {}) {
     project: undefined,
     projectFilters: new Map(),
     projectStateStyle: {},
-    onChapterClick: jest.fn(),
+    onChapterClick: vi.fn(),
     onChapterClickDependencies: [],
     onChapterClickAndHold: undefined,
     isInSelectionMode: false,
@@ -53,18 +60,18 @@ describe("useChapter", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useScriptureMapContext as jest.Mock).mockReturnValue(makeCtx());
-    (useTestamentContext as jest.Mock).mockReturnValue(makeTestamentCtx());
+    (useScriptureMapContext as Mock).mockReturnValue(makeCtx());
+    (useTestamentContext as Mock).mockReturnValue(makeTestamentCtx());
   });
 
   afterEach(() => {
     render(null, container);
     container.remove();
-    jest.clearAllMocks();
-    jest.useRealTimers();
+    vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
   function setup(props: Partial<ChapterProps> = {}) {
@@ -86,7 +93,7 @@ describe("useChapter", () => {
     });
 
     it("is 'chapter show-user-presence' when borderGradientColors and isUserPresenceEnabled", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({ isUserPresenceEnabled: true })
       );
       const result = setup({ borderGradientColors: "linear-gradient(red)" });
@@ -106,7 +113,7 @@ describe("useChapter", () => {
     });
 
     it("is scaleFactor * 2 when isUserPresenceEnabled and borderGradientColors exist", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({ isUserPresenceEnabled: true, scaleFactor: 3 })
       );
       const result = setup({ borderGradientColors: "linear-gradient()" });
@@ -123,7 +130,7 @@ describe("useChapter", () => {
     it("is set when handleChapterPointerEnter is called", () => {
       const result = setup();
       const fakeEl = document.createElement("div");
-      jest.spyOn(fakeEl, "getBoundingClientRect").mockReturnValue({
+      vi.spyOn(fakeEl, "getBoundingClientRect").mockReturnValue({
         left: 50,
         top: 100,
         width: 32,
@@ -150,7 +157,7 @@ describe("useChapter", () => {
     it("is cleared when handleChapterPointerLeave is called", () => {
       const result = setup();
       const fakeEl = document.createElement("div");
-      jest.spyOn(fakeEl, "getBoundingClientRect").mockReturnValue({
+      vi.spyOn(fakeEl, "getBoundingClientRect").mockReturnValue({
         left: 50,
         top: 100,
         width: 32,
@@ -174,7 +181,7 @@ describe("useChapter", () => {
 
   describe("chapterStyle - Viewer mode", () => {
     it("sets background from historyBackground when Viewer mode and isReadingHistoryEnabled", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({ isReadingHistoryEnabled: true, mode: "Viewer" })
       );
       const result = setup({ historyBackground: "#aabbcc" });
@@ -207,7 +214,7 @@ describe("useChapter", () => {
     };
 
     it("applies projectStateStyle colors when hasProjectContent and projectChapterState defined", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           mode: "Project",
           isInSelectionMode: true,
@@ -224,7 +231,7 @@ describe("useChapter", () => {
     });
 
     it("uses solid border and green color when checked=true (overrides style)", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           mode: "Project",
           isInSelectionMode: true,
@@ -240,7 +247,7 @@ describe("useChapter", () => {
     });
 
     it("uses empty style when no projectChapterState for the chapter", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           mode: "Project",
           isInSelectionMode: true,
@@ -259,7 +266,7 @@ describe("useChapter", () => {
     });
 
     it("does not apply style when hasProjectContent is false and checked is false", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           mode: "Project",
           isInSelectionMode: false,
@@ -274,7 +281,7 @@ describe("useChapter", () => {
     });
 
     it("applies style when projectFilters allows the chapter state", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           mode: "Project",
           isInSelectionMode: false,
@@ -288,7 +295,7 @@ describe("useChapter", () => {
     });
 
     it("does not apply style when projectFilter blocks the chapter state", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           mode: "Project",
           isInSelectionMode: false,
@@ -304,7 +311,7 @@ describe("useChapter", () => {
 
   describe("chapterStyle - Checkbox mode", () => {
     it("sets borderColor to '#2AB80D' when checked is true", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({
           mode: "Checkbox",
           selection: { OT: { Law: { GEN: [true] } } },
@@ -315,7 +322,7 @@ describe("useChapter", () => {
     });
 
     it("borderColor is undefined when checked is false", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({ mode: "Checkbox" })
       );
       const result = setup();
@@ -325,7 +332,7 @@ describe("useChapter", () => {
 
   describe("isReadingHistoryEnabled / isUserPresenceEnabled passthrough", () => {
     it("returns isUserPresenceEnabled from context", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({ isUserPresenceEnabled: true })
       );
       const result = setup();
@@ -333,7 +340,7 @@ describe("useChapter", () => {
     });
 
     it("returns isReadingHistoryEnabled from context", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({ isReadingHistoryEnabled: true })
       );
       const result = setup();
@@ -343,27 +350,27 @@ describe("useChapter", () => {
 
   describe("handleChapterPointerDown / Up (click-and-hold)", () => {
     it("calls onChapterClick when released before holdTime (400ms)", () => {
-      const onChapterClick = jest.fn();
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      const onChapterClick = vi.fn();
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({ onChapterClick })
       );
       const result = setup();
-      const fakeEvent = { stopPropagation: jest.fn() } as never;
+      const fakeEvent = { stopPropagation: vi.fn() } as never;
       act(() => result.current.handleChapterPointerDown(fakeEvent));
-      act(() => jest.advanceTimersByTime(200));
+      act(() => vi.advanceTimersByTime(200));
       act(() => result.current.handleChapterPointerUp(fakeEvent));
       expect(onChapterClick).toHaveBeenCalledTimes(1);
     });
 
     it("calls onChapterClickAndHold when held for 400ms", () => {
-      const onChapterClickAndHold = jest.fn();
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      const onChapterClickAndHold = vi.fn();
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeCtx({ onChapterClickAndHold })
       );
       const result = setup();
-      const fakeEvent = { stopPropagation: jest.fn() } as never;
+      const fakeEvent = { stopPropagation: vi.fn() } as never;
       act(() => result.current.handleChapterPointerDown(fakeEvent));
-      act(() => jest.advanceTimersByTime(400));
+      act(() => vi.advanceTimersByTime(400));
       expect(onChapterClickAndHold).toHaveBeenCalledTimes(1);
     });
   });

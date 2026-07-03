@@ -1,14 +1,15 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import {
   Tooltip,
   type TooltipProps,
   type TooltipContentData,
-} from "scriptureMap.components.containers.Tooltip";
-import { useTooltip } from "scriptureMap.hooks.useTooltip";
+} from "../../../../../packages/scripture-map/components/containers/Tooltip";
+import { useTooltip } from "../../../../../packages/scripture-map/hooks/useTooltip";
 
-jest.mock("scriptureMap.hooks.useTooltip", () => ({
-  useTooltip: jest.fn(),
+vi.mock("../../../../../packages/scripture-map/hooks/useTooltip", () => ({
+  useTooltip: vi.fn(),
 }));
 
 function makeHookResult(overrides: Record<string, unknown> = {}) {
@@ -38,13 +39,13 @@ describe("Tooltip", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useTooltip as jest.Mock).mockReturnValue(makeHookResult());
+    (useTooltip as Mock).mockReturnValue(makeHookResult());
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(propOverrides: Partial<TooltipProps> = {}) {
@@ -53,18 +54,19 @@ describe("Tooltip", () => {
     return container;
   }
 
+  // Tooltip renders through createPortal into document.body, not the container.
   function tooltipEl() {
-    return container.querySelector<HTMLSpanElement>(".tooltip");
+    return document.body.querySelector<HTMLSpanElement>(".tooltip");
   }
 
   describe("structure", () => {
     it("renders the tooltip span with the class from the hook", () => {
       setup();
-      expect(container.querySelector(".tooltip.tooltip-up")).not.toBeNull();
+      expect(document.body.querySelector(".tooltip.tooltip-up")).not.toBeNull();
     });
 
     it("applies the style from the hook", () => {
-      (useTooltip as jest.Mock).mockReturnValue(
+      (useTooltip as Mock).mockReturnValue(
         makeHookResult({ style: { top: "42px" } })
       );
       setup();

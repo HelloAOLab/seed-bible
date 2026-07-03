@@ -1,11 +1,15 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useTestamentContainer } from "scriptureMap.hooks.useTestamentContainer";
-import { useScriptureMapContext } from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
+import { useTestamentContainer } from "../../../../packages/scripture-map/hooks/useTestamentContainer";
+import { useScriptureMapContext } from "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext";
 
-jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
-  useScriptureMapContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext",
+  () => ({
+    useScriptureMapContext: vi.fn(),
+  })
+);
 
 describe("useTestamentContainer", () => {
   let container: HTMLDivElement;
@@ -21,7 +25,7 @@ describe("useTestamentContainer", () => {
   });
 
   function setup(showTestamentLabels = false) {
-    (useScriptureMapContext as jest.Mock).mockReturnValue({
+    (useScriptureMapContext as Mock).mockReturnValue({
       showTestamentLabels,
     });
     const result = {

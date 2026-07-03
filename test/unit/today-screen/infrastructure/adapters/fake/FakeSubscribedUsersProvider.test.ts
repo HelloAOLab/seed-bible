@@ -1,8 +1,9 @@
+import type { Mock } from "vitest";
 import {
   FakeSubscribedUsersProvider,
   type UserVisualIdentityPort,
-} from "todayScreen.infrastructure.adapters.fake.FakeSubscribedUsersProvider";
-import type { ReadingEvent } from "@packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
+} from "../../../../../../packages/today-screen/infrastructure/adapters/fake/FakeSubscribedUsersProvider";
+import type { ReadingEvent } from "../../../../../../packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
 
 const NOW = 1_000_000_000; // seconds
 const NOW_MS = NOW * 1000;
@@ -18,21 +19,21 @@ const EVENT_DURATION = 300;
 const NAMES = ["Craig", "Sarah", "Michael", "Emma"];
 
 let visualIdentity: UserVisualIdentityPort & {
-  getUserColorById: jest.Mock;
-  getUserIconById: jest.Mock;
+  getUserColorById: Mock;
+  getUserIconById: Mock;
 };
 
 beforeEach(() => {
-  jest.spyOn(Math, "random").mockReturnValue(0);
-  jest.spyOn(Date, "now").mockReturnValue(NOW_MS);
+  vi.spyOn(Math, "random").mockReturnValue(0);
+  vi.spyOn(Date, "now").mockReturnValue(NOW_MS);
   visualIdentity = {
-    getUserColorById: jest.fn((id: string) => `color-${id}`),
-    getUserIconById: jest.fn((id: string) => `icon-${id}`),
+    getUserColorById: vi.fn((id: string) => `color-${id}`),
+    getUserIconById: vi.fn((id: string) => `icon-${id}`),
   };
 });
 
 afterEach(() => {
-  jest.restoreAllMocks();
+  vi.restoreAllMocks();
 });
 
 describe("FakeSubscribedUsersProvider", () => {
@@ -43,7 +44,7 @@ describe("FakeSubscribedUsersProvider", () => {
     });
 
     it("creates the maximum of 10 users when random is near 1", () => {
-      (Math.random as jest.Mock).mockReturnValue(0.999);
+      (Math.random as Mock).mockReturnValue(0.999);
       const provider = new FakeSubscribedUsersProvider(visualIdentity);
       expect(provider.getUsersIds()).toHaveLength(10);
     });

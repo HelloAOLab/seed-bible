@@ -1,14 +1,18 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import {
   TimeProvider,
   useTimeContext,
-} from "scriptureMap.contexts.Time.TimeContext";
-import { useTimeProvider } from "scriptureMap.contexts.Time.useTimeProvider";
+} from "../../../../packages/scripture-map/contexts/Time/TimeContext";
+import { useTimeProvider } from "../../../../packages/scripture-map/contexts/Time/useTimeProvider";
 
-jest.mock("scriptureMap.contexts.Time.useTimeProvider", () => ({
-  useTimeProvider: jest.fn(() => ({ tick: 0 })),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/Time/useTimeProvider",
+  () => ({
+    useTimeProvider: vi.fn(() => ({ tick: 0 })),
+  })
+);
 
 describe("TimeContext", () => {
   let container: HTMLDivElement;
@@ -21,7 +25,7 @@ describe("TimeContext", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("useTimeContext", () => {
@@ -38,7 +42,7 @@ describe("TimeContext", () => {
 
     it("returns the context value when called inside a provider", () => {
       const contextValue = { tick: 42 };
-      (useTimeProvider as jest.Mock).mockReturnValue(contextValue);
+      (useTimeProvider as Mock).mockReturnValue(contextValue);
 
       let receivedContext: unknown;
 
@@ -89,7 +93,7 @@ describe("TimeContext", () => {
 
     it("passes the value from useTimeProvider to consumers", () => {
       const contextValue = { tick: 7 };
-      (useTimeProvider as jest.Mock).mockReturnValue(contextValue);
+      (useTimeProvider as Mock).mockReturnValue(contextValue);
 
       let receivedContext: unknown;
 

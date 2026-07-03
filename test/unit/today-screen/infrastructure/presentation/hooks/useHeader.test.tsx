@@ -1,12 +1,13 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useHeader } from "todayScreen.infrastructure.presentation.hooks.useHeader";
-import { useTodayContext } from "todayScreen.infrastructure.presentation.contexts.today.TodayContext";
+import { useHeader } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useHeader";
+import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.today.TodayContext",
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
   () => ({
-    useTodayContext: jest.fn(),
+    useTodayContext: vi.fn(),
   })
 );
 
@@ -22,24 +23,24 @@ describe("useHeader", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    jest.useFakeTimers();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.useRealTimers();
-    jest.restoreAllMocks();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   function setup(
     options: { language?: string; username?: string | undefined } = {}
   ) {
-    (useTodayContext as jest.Mock).mockReturnValue({
+    (useTodayContext as Mock).mockReturnValue({
       language: options.language ?? "en",
       username: options.username,
       MaterialIcon,
-      translate: jest.fn((key: string) => key),
+      translate: vi.fn((key: string) => key),
     });
     const result = { current: null as unknown as Result };
     function TestComponent() {
@@ -51,13 +52,13 @@ describe("useHeader", () => {
   }
 
   function setupAtHour(hour: number) {
-    jest.setSystemTime(new Date(2026, 5, 15, hour, 0, 0));
+    vi.setSystemTime(new Date(2026, 5, 15, hour, 0, 0));
     return setup();
   }
 
   describe("date", () => {
     it("formats the date as 'day MONTH'", () => {
-      jest.setSystemTime(new Date(2026, 5, 15, 8, 0, 0));
+      vi.setSystemTime(new Date(2026, 5, 15, 8, 0, 0));
       const result = setup({ language: "en" });
       const expectedMonth = new Date(2026, 5, 15)
         .toLocaleString("en", { month: "short" })
@@ -110,18 +111,14 @@ describe("useHeader", () => {
 
   describe("handlers", () => {
     it("logs on notification click", () => {
-      const consoleLog = jest
-        .spyOn(console, "log")
-        .mockImplementation(() => {});
+      const consoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
       const result = setup();
       act(() => result.current.handleNotificationClick());
       expect(consoleLog).toHaveBeenCalled();
     });
 
     it("logs on settings click", () => {
-      const consoleLog = jest
-        .spyOn(console, "log")
-        .mockImplementation(() => {});
+      const consoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
       const result = setup();
       act(() => result.current.handleSettingsClick());
       expect(consoleLog).toHaveBeenCalled();

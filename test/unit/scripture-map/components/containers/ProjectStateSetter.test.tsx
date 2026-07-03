@@ -1,32 +1,39 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { ProjectStateSetter } from "scriptureMap.components.containers.ProjectStateSetter";
-import { useProjectStateSetter } from "scriptureMap.hooks.useProjectStateSetter";
+import { ProjectStateSetter } from "../../../../../packages/scripture-map/components/containers/ProjectStateSetter";
+import { useProjectStateSetter } from "../../../../../packages/scripture-map/hooks/useProjectStateSetter";
 
-jest.mock("scriptureMap.hooks.useProjectStateSetter", () => ({
-  useProjectStateSetter: jest.fn(),
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/hooks/useProjectStateSetter",
+  () => ({
+    useProjectStateSetter: vi.fn(),
+  })
+);
 
-jest.mock("scriptureMap.components.containers.SelectionOptions", () => ({
-  SelectionOptions: ({
-    handleClearSelectionClick,
-    handleDoneClick,
-  }: {
-    handleClearSelectionClick: () => void;
-    handleDoneClick: () => void;
-  }) => (
-    <div
-      data-testid="selection-options"
-      data-clear={String(typeof handleClearSelectionClick === "function")}
-      data-done={String(typeof handleDoneClick === "function")}
-    />
-  ),
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/components/containers/SelectionOptions",
+  () => ({
+    SelectionOptions: ({
+      handleClearSelectionClick,
+      handleDoneClick,
+    }: {
+      handleClearSelectionClick: () => void;
+      handleDoneClick: () => void;
+    }) => (
+      <div
+        data-testid="selection-options"
+        data-clear={String(typeof handleClearSelectionClick === "function")}
+        data-done={String(typeof handleDoneClick === "function")}
+      />
+    ),
+  })
+);
 
 type SelectorOptionData = {
   key: string;
   content: { title: string; iconStyle?: React.CSSProperties };
-  onClick: jest.Mock;
+  onClick: Mock;
   selected?: boolean;
   className: string;
 };
@@ -37,7 +44,7 @@ function makeOptionData(
   return {
     key: "opt-1",
     content: { title: "Completed" },
-    onClick: jest.fn(),
+    onClick: vi.fn(),
     selected: false,
     className: "project-state-setter-option",
     ...overrides,
@@ -47,7 +54,7 @@ function makeOptionData(
 function makeHookResult(overrides: Record<string, unknown> = {}) {
   return {
     checkboxIconClass: "checkbox-icon",
-    handleCheckboxIconClick: jest.fn(),
+    handleCheckboxIconClick: vi.fn(),
     checkboxIconContent: "check_box_outline_blank",
     checkboxTextContent: "Select chapters",
     isInSelectionMode: false,
@@ -65,18 +72,18 @@ describe("ProjectStateSetter", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useProjectStateSetter as jest.Mock).mockReturnValue(makeHookResult());
+    (useProjectStateSetter as Mock).mockReturnValue(makeHookResult());
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(hookOverrides: Record<string, unknown> = {}) {
     if (Object.keys(hookOverrides).length > 0) {
-      (useProjectStateSetter as jest.Mock).mockReturnValue(
+      (useProjectStateSetter as Mock).mockReturnValue(
         makeHookResult(hookOverrides)
       );
     }
@@ -115,7 +122,7 @@ describe("ProjectStateSetter", () => {
     });
 
     it("calls handleCheckboxIconClick when the icon span is clicked", () => {
-      const handleCheckboxIconClick = jest.fn();
+      const handleCheckboxIconClick = vi.fn();
       setup({ handleCheckboxIconClick });
       const iconSpan =
         container.querySelector<HTMLSpanElement>(".checkbox-icon");
@@ -146,7 +153,7 @@ describe("ProjectStateSetter", () => {
       setup({
         isInSelectionMode: true,
         handleClearSelectionClick: undefined,
-        handleDoneClick: jest.fn(),
+        handleDoneClick: vi.fn(),
       });
       expect(
         container.querySelector("[data-testid='selection-options']")
@@ -156,7 +163,7 @@ describe("ProjectStateSetter", () => {
     it("is not rendered when isInSelectionMode is true but handleDoneClick is undefined", () => {
       setup({
         isInSelectionMode: true,
-        handleClearSelectionClick: jest.fn(),
+        handleClearSelectionClick: vi.fn(),
         handleDoneClick: undefined,
       });
       expect(
@@ -167,8 +174,8 @@ describe("ProjectStateSetter", () => {
     it("is rendered when isInSelectionMode is true and both handlers are defined", () => {
       setup({
         isInSelectionMode: true,
-        handleClearSelectionClick: jest.fn(),
-        handleDoneClick: jest.fn(),
+        handleClearSelectionClick: vi.fn(),
+        handleDoneClick: vi.fn(),
       });
       expect(
         container.querySelector("[data-testid='selection-options']")
@@ -178,8 +185,8 @@ describe("ProjectStateSetter", () => {
     it("passes handleClearSelectionClick and handleDoneClick to SelectionOptions", () => {
       setup({
         isInSelectionMode: true,
-        handleClearSelectionClick: jest.fn(),
-        handleDoneClick: jest.fn(),
+        handleClearSelectionClick: vi.fn(),
+        handleDoneClick: vi.fn(),
       });
       const el = container.querySelector("[data-testid='selection-options']");
       expect(el?.getAttribute("data-clear")).toBe("true");
@@ -235,7 +242,7 @@ describe("ProjectStateSetter", () => {
     });
 
     it("calls the option's onClick when an option is clicked", () => {
-      const onClick = jest.fn();
+      const onClick = vi.fn();
       setup({
         isInSelectionMode: true,
         stateSetterOptionsData: [makeOptionData({ key: "x", onClick })],

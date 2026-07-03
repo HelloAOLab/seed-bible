@@ -1,22 +1,26 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useSectionToggle } from "scriptureMap.hooks.useSectionToggle";
-import { useScriptureMapContext } from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
-import type { SectionInfo } from "bibleVizUtils.domain.models.arrangement";
+import { useSectionToggle } from "../../../../packages/scripture-map/hooks/useSectionToggle";
+import { useScriptureMapContext } from "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext";
+import type { SectionInfo } from "../../../../packages/seed-bible-utils/domain/models/arrangement";
 
-jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
-  useScriptureMapContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext",
+  () => ({
+    useScriptureMapContext: vi.fn(),
+  })
+);
 
 describe("useSectionToggle", () => {
   let container: HTMLDivElement;
-  const translate = jest.fn((key: string) => key);
+  const translate = vi.fn((key: string) => key);
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
     translate.mockImplementation((key: string) => key);
-    (useScriptureMapContext as jest.Mock).mockReturnValue({ translate });
+    (useScriptureMapContext as Mock).mockReturnValue({ translate });
   });
 
   afterEach(() => {

@@ -1,20 +1,21 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { FilteredReading } from "todayScreen.infrastructure.presentation.components.containers.FilteredReading";
-import { Book } from "todayScreen.infrastructure.presentation.components.containers.Book";
-import { useFilteredReading } from "todayScreen.infrastructure.presentation.hooks.useFilteredReading";
+import { FilteredReading } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/FilteredReading";
+import { Book } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Book";
+import { useFilteredReading } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useFilteredReading";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.hooks.useFilteredReading",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useFilteredReading",
   () => ({
-    useFilteredReading: jest.fn(),
+    useFilteredReading: vi.fn(),
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.containers.Book",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Book",
   () => ({
-    Book: jest.fn(() => <div data-testid="book" />),
+    Book: vi.fn(() => <div data-testid="book" />),
   })
 );
 
@@ -41,11 +42,11 @@ describe("FilteredReading", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(booksData: unknown[]) {
-    (useFilteredReading as jest.Mock).mockReturnValue({
+    (useFilteredReading as Mock).mockReturnValue({
       booksData: booksData as unknown as BooksData,
     });
     act(() => render(<FilteredReading />, container));
@@ -84,7 +85,7 @@ describe("FilteredReading", () => {
     });
     setup([book]);
 
-    const passedProps = (Book as jest.Mock).mock.calls[0]![0];
+    const passedProps = (Book as Mock).mock.calls[0]![0];
     expect(passedProps).toEqual({
       bookId: "GEN",
       chaptersReading: { 1: ["u1", "u2"] },

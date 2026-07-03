@@ -1,30 +1,43 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useBook } from "scriptureMap.hooks.useBook";
-import { useScriptureMapContext } from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
-import { useTestamentContext } from "scriptureMap.contexts.Testament.TestamentContext";
-import { useReadingHistoryContext } from "scriptureMap.contexts.ReadingHistory.ReadingHistoryContext";
-import { calculateReadingHistorySummary } from "seed-bible.managers.ReadingHistoryManager";
+import { useBook } from "../../../../packages/scripture-map/hooks/useBook";
+import { useScriptureMapContext } from "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext";
+import { useTestamentContext } from "../../../../packages/scripture-map/contexts/Testament/TestamentContext";
+import { useReadingHistoryContext } from "../../../../packages/scripture-map/contexts/ReadingHistory/ReadingHistoryContext";
+import { calculateReadingHistorySummary } from "../../../../packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
 
-jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
-  useScriptureMapContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext",
+  () => ({
+    useScriptureMapContext: vi.fn(),
+  })
+);
 
-jest.mock("scriptureMap.contexts.Testament.TestamentContext", () => ({
-  useTestamentContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/Testament/TestamentContext",
+  () => ({
+    useTestamentContext: vi.fn(),
+  })
+);
 
-jest.mock("scriptureMap.contexts.ReadingHistory.ReadingHistoryContext", () => ({
-  useReadingHistoryContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ReadingHistory/ReadingHistoryContext",
+  () => ({
+    useReadingHistoryContext: vi.fn(),
+  })
+);
 
 // calculateReadingHistorySummary is called by useBook directly
-jest.mock("seed-bible.managers.ReadingHistoryManager", () => ({
-  calculateReadingHistorySummary: jest.fn(() => ({
-    totalTimeSpentReading: 0,
-    users: {},
-  })),
-}));
+vi.mock(
+  "../../../../packages/seed-bible/seed-bible/managers/ReadingHistoryManager",
+  () => ({
+    calculateReadingHistorySummary: vi.fn(() => ({
+      totalTimeSpentReading: 0,
+      users: {},
+    })),
+  })
+);
 
 type BookProps = Parameters<typeof useBook>[0];
 
@@ -65,20 +78,20 @@ function makeScriptureMapCtx(overrides: Record<string, unknown> = {}) {
     showingBooksColors: false,
     activeTab: undefined,
     translate: (key: string) => key,
-    userColorStore: { getUserColor: jest.fn(() => "#000000") },
+    userColorStore: { getUserColor: vi.fn(() => "#000000") },
     readingHistoryService: {
-      getColorByReadingTime: jest.fn(() => "#aabbcc"),
-      getColorByRecency: jest.fn(() => "#aabbcc"),
+      getColorByReadingTime: vi.fn(() => "#aabbcc"),
+      getColorByRecency: vi.fn(() => "#aabbcc"),
     },
-    GetTextColorBasedOnBackground: jest.fn(() => "#000000"),
-    IsValueBetween: jest.fn(() => false),
-    ComputeRawGradientColors: jest.fn(() => "linear-gradient()"),
-    ComputeLinearGradient: jest.fn(() => "linear-gradient()"),
-    scriptureMap3DConfigProvider: {
-      getBibleLayoutMeasurement: jest.fn(() => 4),
+    GetTextColorBasedOnBackground: vi.fn(() => "#000000"),
+    IsValueBetween: vi.fn(() => false),
+    ComputeRawGradientColors: vi.fn(() => "linear-gradient()"),
+    ComputeLinearGradient: vi.fn(() => "linear-gradient()"),
+    layoutConfigProvider: {
+      getLayoutMeasurement: vi.fn(() => 5),
     },
     readingHistoryConfigProvider: {
-      getRecencyThresholdTimeSeconds: jest.fn(() => 0),
+      getRecencyThresholdTimeSeconds: vi.fn(() => 0),
     },
     ...overrides,
   };
@@ -107,22 +120,18 @@ describe("useBook", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
-    jest.useFakeTimers();
+    vi.useFakeTimers();
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useScriptureMapContext as jest.Mock).mockReturnValue(
-      makeScriptureMapCtx()
-    );
-    (useTestamentContext as jest.Mock).mockReturnValue(makeTestamentCtx());
-    (useReadingHistoryContext as jest.Mock).mockReturnValue(
-      makeReadingHistoryCtx()
-    );
+    (useScriptureMapContext as Mock).mockReturnValue(makeScriptureMapCtx());
+    (useTestamentContext as Mock).mockReturnValue(makeTestamentCtx());
+    (useReadingHistoryContext as Mock).mockReturnValue(makeReadingHistoryCtx());
   });
 
   afterEach(() => {
     render(null, container);
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(props: Partial<BookProps> = {}) {
@@ -141,7 +150,7 @@ describe("useBook", () => {
 
   describe("bookTitle", () => {
     it("returns the full book name when scaleFactor > 0.5", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ scaleFactor: 1 })
       );
       const result = setup({ book: "Genesis" });
@@ -149,7 +158,7 @@ describe("useBook", () => {
     });
 
     it("returns abbreviated uppercase title when scaleFactor <= 0.5", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ scaleFactor: 0.5 })
       );
       const result = setup({ book: "Genesis" });
@@ -157,7 +166,7 @@ describe("useBook", () => {
     });
 
     it("uses getFirstNonSpaceChars for abbreviated title, skipping spaces", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ scaleFactor: 0.25 })
       );
       const result = setup({ book: "1 Kings" });
@@ -167,7 +176,7 @@ describe("useBook", () => {
 
   describe("bookClass", () => {
     it("is 'book-container pointable' when showChapters is false", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ showingAllChapters: false })
       );
       const result = setup();
@@ -175,7 +184,7 @@ describe("useBook", () => {
     });
 
     it("is 'book-container' when showChapters is true", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ showingAllChapters: true })
       );
       const result = setup();
@@ -190,7 +199,7 @@ describe("useBook", () => {
     });
 
     it("is 'book-cover invisible' when chapters are shown", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ showingAllChapters: true })
       );
       const result = setup();
@@ -198,7 +207,7 @@ describe("useBook", () => {
     });
 
     it("is 'book-cover show-user-presence' when user presence is enabled and border colors exist", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ isUserPresenceEnabled: true })
       );
       const result = setup({
@@ -210,7 +219,7 @@ describe("useBook", () => {
     });
 
     it("is 'book-cover' when user presence is enabled but border colors are absent", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ isUserPresenceEnabled: true })
       );
       const result = setup({ bookBorderGradientColors: undefined });
@@ -220,7 +229,7 @@ describe("useBook", () => {
 
   describe("showChapters", () => {
     it("starts as false when showingAllChapters is false", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ showingAllChapters: false })
       );
       const result = setup();
@@ -228,7 +237,7 @@ describe("useBook", () => {
     });
 
     it("starts as true when showingAllChapters is true", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ showingAllChapters: true })
       );
       const result = setup();
@@ -243,7 +252,7 @@ describe("useBook", () => {
     });
 
     it("handleBookClick does not toggle showChapters when it was already true", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ showingAllChapters: true })
       );
       const result = setup();
@@ -259,7 +268,7 @@ describe("useBook", () => {
     });
 
     it("is 0 when bookBorderGradientColors is undefined", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ isUserPresenceEnabled: true })
       );
       const result = setup({ bookBorderGradientColors: undefined });
@@ -267,7 +276,7 @@ describe("useBook", () => {
     });
 
     it("is scaleFactor * 6 when user presence is enabled and border colors exist", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ isUserPresenceEnabled: true, scaleFactor: 2 })
       );
       const result = setup({ bookBorderGradientColors: "linear-gradient()" });
@@ -284,7 +293,7 @@ describe("useBook", () => {
     it("is set when handleBookCoverPointerEnter is called", () => {
       const result = setup();
       const fakeEl = document.createElement("div");
-      jest.spyOn(fakeEl, "getBoundingClientRect").mockReturnValue({
+      vi.spyOn(fakeEl, "getBoundingClientRect").mockReturnValue({
         left: 100,
         top: 200,
         width: 150,
@@ -313,7 +322,7 @@ describe("useBook", () => {
     it("is cleared when handleBookCoverPointerLeave is called", () => {
       const result = setup();
       const fakeEl = document.createElement("div");
-      jest.spyOn(fakeEl, "getBoundingClientRect").mockReturnValue({
+      vi.spyOn(fakeEl, "getBoundingClientRect").mockReturnValue({
         left: 100,
         top: 200,
         width: 150,
@@ -344,7 +353,7 @@ describe("useBook", () => {
     });
 
     it("has numberOfChapters entries when showChapters is true", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ showingAllChapters: true })
       );
       const result = setup({ numberOfChapters: 3 });
@@ -352,7 +361,7 @@ describe("useBook", () => {
     });
 
     it("each entry key is bookId-chapter", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ showingAllChapters: true })
       );
       const result = setup({ bookId: "GEN", numberOfChapters: 2 });
@@ -363,7 +372,7 @@ describe("useBook", () => {
     });
 
     it("chapter numbers are 1-based", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ showingAllChapters: true })
       );
       const result = setup({ numberOfChapters: 3 });
@@ -376,7 +385,7 @@ describe("useBook", () => {
 
   describe("bookCoverStyle", () => {
     it("sets bookCoverBackgroundColor as background when showingBooksColors is true and reading history is disabled", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           showingBooksColors: true,
           isReadingHistoryEnabled: false,
@@ -394,59 +403,59 @@ describe("useBook", () => {
 
   describe("useClickAndHold", () => {
     it("fires holdCompleteCallback if user clicks and hold over 500ms", () => {
-      const mockClickAndHold = jest.fn();
+      const mockClickAndHold = vi.fn();
 
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ onBookNameClickAndHold: mockClickAndHold })
       );
       const result = setup({ bookId: "GEN", sectionName: "Law" });
-      const fakeEvent = { stopPropagation: jest.fn } as unknown as PointerEvent;
+      const fakeEvent = { stopPropagation: vi.fn } as unknown as PointerEvent;
 
       act(() => result.current.handleBookHeaderPointerDown(fakeEvent as any));
 
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       expect(mockClickAndHold).toHaveBeenCalledTimes(1);
     });
 
     it("doesn't fires holdCompleteCallback if user clicks and hold below 500ms", () => {
-      const mockClickAndHold = jest.fn();
+      const mockClickAndHold = vi.fn();
 
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ onBookNameClickAndHold: mockClickAndHold })
       );
       const result = setup({ bookId: "GEN", sectionName: "Law" });
-      const fakeEvent = { stopPropagation: jest.fn } as unknown as PointerEvent;
+      const fakeEvent = { stopPropagation: vi.fn } as unknown as PointerEvent;
 
       act(() => result.current.handleBookHeaderPointerDown(fakeEvent as any));
 
-      act(() => jest.advanceTimersByTime(400));
+      act(() => vi.advanceTimersByTime(400));
 
       expect(mockClickAndHold).not.toHaveBeenCalled();
     });
 
     it("doesn't fires holdCompleteCallback if user clicks and releases before 500ms", () => {
-      const mockClickAndHold = jest.fn();
+      const mockClickAndHold = vi.fn();
 
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           onBookNameClickAndHold: mockClickAndHold,
         })
       );
       const result = setup({ bookId: "GEN", sectionName: "Law" });
       const fakeEvent = {
-        stopPropagation: jest.fn(),
+        stopPropagation: vi.fn(),
       } as unknown as PointerEvent;
 
       act(() => result.current.handleBookHeaderPointerDown(fakeEvent as any));
 
-      act(() => jest.advanceTimersByTime(400));
+      act(() => vi.advanceTimersByTime(400));
 
       act(() => result.current.handleBookHeaderPointerUp(fakeEvent as any));
 
       expect(mockClickAndHold).not.toHaveBeenCalled();
 
-      act(() => jest.advanceTimersByTime(200));
+      act(() => vi.advanceTimersByTime(200));
 
       expect(mockClickAndHold).not.toHaveBeenCalled();
     });
@@ -455,7 +464,7 @@ describe("useBook", () => {
   describe("handleBookHeaderClick", () => {
     it("calls stopPropagation", () => {
       const result = setup();
-      const fakeEvent = { stopPropagation: jest.fn() };
+      const fakeEvent = { stopPropagation: vi.fn() };
       act(() => result.current.handleBookHeaderClick(fakeEvent as never));
       expect(fakeEvent.stopPropagation).toHaveBeenCalled();
     });
@@ -463,7 +472,7 @@ describe("useBook", () => {
 
   describe("tooltipContentsData - user presence", () => {
     it("includes userPresence entry when isUserPresenceEnabled and colors non-empty", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ isUserPresenceEnabled: true })
       );
       const result = setup({ bookUserPresenceColors: ["#ff0000", "#00ff00"] });
@@ -478,7 +487,7 @@ describe("useBook", () => {
     });
 
     it("no userPresence entry when bookUserPresenceColors is empty", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ isUserPresenceEnabled: true })
       );
       const result = setup({ bookUserPresenceColors: [] });
@@ -491,16 +500,16 @@ describe("useBook", () => {
 
   describe("tooltipContentsData - reading history (range-based)", () => {
     function makeRangeCtx(readingTimeSeconds: number) {
-      const translate = jest.fn((key: string) => key);
+      const translate = vi.fn((key: string) => key);
       const ctx = makeScriptureMapCtx({
         isReadingHistoryEnabled: true,
         translate,
-        userColorStore: { getUserColor: jest.fn(() => "#aabbcc") },
+        userColorStore: { getUserColor: vi.fn(() => "#aabbcc") },
         readingHistoryService: {
-          getColorByReadingTime: jest.fn(() => "#aabbcc"),
-          getColorByRecency: jest.fn(() => "#aabbcc"),
+          getColorByReadingTime: vi.fn(() => "#aabbcc"),
+          getColorByRecency: vi.fn(() => "#aabbcc"),
         },
-        ComputeLinearGradient: jest.fn(() => "linear-gradient(#aabbcc)"),
+        ComputeLinearGradient: vi.fn(() => "linear-gradient(#aabbcc)"),
       });
       const readingSummary = {
         totalTimeSpentReading: readingTimeSeconds,
@@ -513,8 +522,8 @@ describe("useBook", () => {
 
     it("uses minutes-spent translation when reading time < 1 hour", () => {
       const { ctx, translate, readingSummary } = makeRangeCtx(120);
-      (useScriptureMapContext as jest.Mock).mockReturnValue(ctx);
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(ctx);
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           readingHistoryRangeSeconds: { start: 0, end: 99999999 },
         })
@@ -525,8 +534,8 @@ describe("useBook", () => {
 
     it("uses minute-spent (singular) when minutesCount is 1", () => {
       const { ctx, translate, readingSummary } = makeRangeCtx(61);
-      (useScriptureMapContext as jest.Mock).mockReturnValue(ctx);
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(ctx);
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           readingHistoryRangeSeconds: { start: 0, end: 99999999 },
         })
@@ -537,8 +546,8 @@ describe("useBook", () => {
 
     it("uses hours-spent translation when reading time >= 1 hour", () => {
       const { ctx, translate, readingSummary } = makeRangeCtx(7200);
-      (useScriptureMapContext as jest.Mock).mockReturnValue(ctx);
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(ctx);
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           readingHistoryRangeSeconds: { start: 0, end: 99999999 },
         })
@@ -549,8 +558,8 @@ describe("useBook", () => {
 
     it("uses hour-spent (singular) when hoursCount is 1", () => {
       const { ctx, translate, readingSummary } = makeRangeCtx(3600);
-      (useScriptureMapContext as jest.Mock).mockReturnValue(ctx);
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(ctx);
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           readingHistoryRangeSeconds: { start: 0, end: 99999999 },
         })
@@ -560,23 +569,23 @@ describe("useBook", () => {
     });
 
     it("sets fixedBackground to ComputeLinearGradient result when colors exist", () => {
-      const mockGradient = jest.fn(() => "linear-gradient(red, blue)");
+      const mockGradient = vi.fn(() => "linear-gradient(red, blue)");
       const readingSummary = {
         totalTimeSpentReading: 120,
         users: { me: { totalTimeSpentReading: 120, books: {} } },
       };
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           isReadingHistoryEnabled: true,
-          userColorStore: { getUserColor: jest.fn(() => "#aabbcc") },
+          userColorStore: { getUserColor: vi.fn(() => "#aabbcc") },
           readingHistoryService: {
-            getColorByReadingTime: jest.fn(() => "#aabbcc"),
-            getColorByRecency: jest.fn(() => "#aabbcc"),
+            getColorByReadingTime: vi.fn(() => "#aabbcc"),
+            getColorByRecency: vi.fn(() => "#aabbcc"),
           },
           ComputeLinearGradient: mockGradient,
         })
       );
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           readingHistoryRangeSeconds: { start: 0, end: 99999999 },
         })
@@ -588,24 +597,24 @@ describe("useBook", () => {
     });
 
     it("uses guest translation for non-self users", () => {
-      const translate = jest.fn((key: string) => key);
+      const translate = vi.fn((key: string) => key);
       const readingSummary = {
         totalTimeSpentReading: 120,
         users: { other_user: { totalTimeSpentReading: 120, books: {} } },
       };
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           isReadingHistoryEnabled: true,
           translate,
-          userColorStore: { getUserColor: jest.fn(() => "#aabbcc") },
+          userColorStore: { getUserColor: vi.fn(() => "#aabbcc") },
           readingHistoryService: {
-            getColorByReadingTime: jest.fn(() => "#aabbcc"),
-            getColorByRecency: jest.fn(() => "#aabbcc"),
+            getColorByReadingTime: vi.fn(() => "#aabbcc"),
+            getColorByRecency: vi.fn(() => "#aabbcc"),
           },
-          ComputeLinearGradient: jest.fn(() => "linear-gradient()"),
+          ComputeLinearGradient: vi.fn(() => "linear-gradient()"),
         })
       );
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           readingHistoryRangeSeconds: { start: 0, end: 99999999 },
         })
@@ -620,16 +629,16 @@ describe("useBook", () => {
     const NOW_SECONDS = 1_000_000;
 
     function makeRecencyCtx(endSeconds: number) {
-      const translate = jest.fn((key: string) => key);
+      const translate = vi.fn((key: string) => key);
       const ctx = makeScriptureMapCtx({
         isReadingHistoryEnabled: true,
         translate,
-        userColorStore: { getUserColor: jest.fn(() => "#aabbcc") },
+        userColorStore: { getUserColor: vi.fn(() => "#aabbcc") },
         readingHistoryService: {
-          getColorByReadingTime: jest.fn(() => "#aabbcc"),
-          getColorByRecency: jest.fn(() => "#aabbcc"),
+          getColorByReadingTime: vi.fn(() => "#aabbcc"),
+          getColorByRecency: vi.fn(() => "#aabbcc"),
         },
-        ComputeLinearGradient: jest.fn(() => "linear-gradient()"),
+        ComputeLinearGradient: vi.fn(() => "linear-gradient()"),
       });
       // Event spans 9000s so end-start >= 60 (noticeable), end >= 0 (recentEnough)
       const readingSummary = {
@@ -653,13 +662,15 @@ describe("useBook", () => {
     }
 
     beforeEach(() => {
-      (globalThis as any).os.localTime = NOW_SECONDS * 1000;
+      // Source reads the current time via Date.now(); with fake timers active
+      // (set in the outer beforeEach) we pin "now" to NOW_SECONDS.
+      vi.setSystemTime(NOW_SECONDS * 1000);
     });
 
     it("uses read-minutes-ago when recency < 1 hour", () => {
       // recency = 1_000_000 - 999_000 = 1_000s (< 3600, > 60)
       const { ctx, translate, readingSummary } = makeRecencyCtx(999_000);
-      (useScriptureMapContext as jest.Mock).mockReturnValue(ctx);
+      (useScriptureMapContext as Mock).mockReturnValue(ctx);
       setup({ bookId: "GEN", readingSummary: readingSummary as never });
       expect(translate).toHaveBeenCalledWith(
         "read-minutes-ago",
@@ -670,7 +681,7 @@ describe("useBook", () => {
     it("uses read-minute-ago (singular) when recency is between 60 and 119 seconds", () => {
       // recency = 1_000_000 - 999_939 = 61s
       const { ctx, translate, readingSummary } = makeRecencyCtx(999_939);
-      (useScriptureMapContext as jest.Mock).mockReturnValue(ctx);
+      (useScriptureMapContext as Mock).mockReturnValue(ctx);
       setup({ bookId: "GEN", readingSummary: readingSummary as never });
       expect(translate).toHaveBeenCalledWith(
         "read-minute-ago",
@@ -681,7 +692,7 @@ describe("useBook", () => {
     it("uses read-hours-ago when recency is 1-24 hours", () => {
       // recency = 1_000_000 - 990_000 = 10_000s (> 3600, < 86400)
       const { ctx, translate, readingSummary } = makeRecencyCtx(990_000);
-      (useScriptureMapContext as jest.Mock).mockReturnValue(ctx);
+      (useScriptureMapContext as Mock).mockReturnValue(ctx);
       setup({ bookId: "GEN", readingSummary: readingSummary as never });
       expect(translate).toHaveBeenCalledWith(
         "read-hours-ago",
@@ -692,7 +703,7 @@ describe("useBook", () => {
     it("uses read-hour-ago (singular) when recency is 1 hour exactly", () => {
       // recency = 1_000_000 - 996_400 = 3_600s exactly
       const { ctx, translate, readingSummary } = makeRecencyCtx(996_400);
-      (useScriptureMapContext as jest.Mock).mockReturnValue(ctx);
+      (useScriptureMapContext as Mock).mockReturnValue(ctx);
       setup({ bookId: "GEN", readingSummary: readingSummary as never });
       expect(translate).toHaveBeenCalledWith(
         "read-hour-ago",
@@ -703,7 +714,7 @@ describe("useBook", () => {
     it("uses read-days-ago when recency >= 1 day", () => {
       // recency = 1_000_000 - 750_000 = 250_000s (> 86400, daysCount=2)
       const { ctx, translate, readingSummary } = makeRecencyCtx(750_000);
-      (useScriptureMapContext as jest.Mock).mockReturnValue(ctx);
+      (useScriptureMapContext as Mock).mockReturnValue(ctx);
       setup({ bookId: "GEN", readingSummary: readingSummary as never });
       expect(translate).toHaveBeenCalledWith(
         "read-days-ago",
@@ -714,7 +725,7 @@ describe("useBook", () => {
     it("uses read-day-ago (singular) when recency is exactly 1 day", () => {
       // recency = 1_000_000 - 913_600 = 86_400s exactly
       const { ctx, translate, readingSummary } = makeRecencyCtx(913_600);
-      (useScriptureMapContext as jest.Mock).mockReturnValue(ctx);
+      (useScriptureMapContext as Mock).mockReturnValue(ctx);
       setup({ bookId: "GEN", readingSummary: readingSummary as never });
       expect(translate).toHaveBeenCalledWith(
         "read-day-ago",
@@ -725,14 +736,14 @@ describe("useBook", () => {
 
   describe("chapterReadingHistorySummaryMap", () => {
     it("calls calculateReadingHistorySummary for events that pass IsValueBetween", () => {
-      (calculateReadingHistorySummary as jest.Mock).mockReturnValue({
+      (calculateReadingHistorySummary as Mock).mockReturnValue({
         totalTimeSpentReading: 0,
         users: {},
       });
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           showingAllChapters: true,
-          IsValueBetween: jest.fn(() => true),
+          IsValueBetween: vi.fn(() => true),
         })
       );
       const readingEvents = [{ chapter: 1, start: 100, end: 9999 }];
@@ -743,14 +754,14 @@ describe("useBook", () => {
     });
 
     it("does not call calculateReadingHistorySummary when IsValueBetween returns false", () => {
-      (calculateReadingHistorySummary as jest.Mock).mockReturnValue({
+      (calculateReadingHistorySummary as Mock).mockReturnValue({
         totalTimeSpentReading: 0,
         users: {},
       });
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           showingAllChapters: true,
-          IsValueBetween: jest.fn(() => false),
+          IsValueBetween: vi.fn(() => false),
         })
       );
       const readingEvents = [{ chapter: 1, start: 100, end: 9999 }];
@@ -761,26 +772,26 @@ describe("useBook", () => {
 
   describe("chaptersData - reading history per chapter", () => {
     it("sets historyBackground on chapter via ComputeLinearGradient when range is set", () => {
-      const mockGradient = jest.fn(() => "linear-gradient(chapter-color)");
-      (calculateReadingHistorySummary as jest.Mock).mockReturnValue({
+      const mockGradient = vi.fn(() => "linear-gradient(chapter-color)");
+      (calculateReadingHistorySummary as Mock).mockReturnValue({
         totalTimeSpentReading: 120,
         users: { me: { totalTimeSpentReading: 120, books: {} } },
       });
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           showingAllChapters: true,
           isReadingHistoryEnabled: true,
-          IsValueBetween: jest.fn(() => true),
-          userColorStore: { getUserColor: jest.fn(() => "#aabbcc") },
+          IsValueBetween: vi.fn(() => true),
+          userColorStore: { getUserColor: vi.fn(() => "#aabbcc") },
           readingHistoryService: {
-            getColorByReadingTime: jest.fn(() => "#aabbcc"),
-            getColorByRecency: jest.fn(() => "#aabbcc"),
+            getColorByReadingTime: vi.fn(() => "#aabbcc"),
+            getColorByRecency: vi.fn(() => "#aabbcc"),
           },
           ComputeLinearGradient: mockGradient,
-          GetTextColorBasedOnBackground: jest.fn(() => "#000000"),
+          GetTextColorBasedOnBackground: vi.fn(() => "#000000"),
         })
       );
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           readingHistoryRangeSeconds: { start: 0, end: 99999 },
         })
@@ -798,8 +809,8 @@ describe("useBook", () => {
 
     it("sets chapter historyBackground using recency color when no range (days)", () => {
       // nowSeconds = 1_000_000 (Date.now()=1e9), end=900_000 → recency=100_000 > SEC_PER_DAY
-      jest.setSystemTime(1_000_000_000);
-      (calculateReadingHistorySummary as jest.Mock).mockReturnValue({
+      vi.setSystemTime(1_000_000_000);
+      (calculateReadingHistorySummary as Mock).mockReturnValue({
         totalTimeSpentReading: 120,
         users: {
           me: {
@@ -812,18 +823,18 @@ describe("useBook", () => {
           },
         },
       });
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           showingAllChapters: true,
           isReadingHistoryEnabled: true,
-          IsValueBetween: jest.fn(() => true),
-          userColorStore: { getUserColor: jest.fn(() => "#aabbcc") },
+          IsValueBetween: vi.fn(() => true),
+          userColorStore: { getUserColor: vi.fn(() => "#aabbcc") },
           readingHistoryService: {
-            getColorByReadingTime: jest.fn(() => "#aabbcc"),
-            getColorByRecency: jest.fn(() => "#recency-color"),
+            getColorByReadingTime: vi.fn(() => "#aabbcc"),
+            getColorByRecency: vi.fn(() => "#recency-color"),
           },
-          ComputeLinearGradient: jest.fn(() => "linear-gradient(recency)"),
-          GetTextColorBasedOnBackground: jest.fn(() => "#000000"),
+          ComputeLinearGradient: vi.fn(() => "linear-gradient(recency)"),
+          GetTextColorBasedOnBackground: vi.fn(() => "#000000"),
         })
       );
       const readingEvents = [{ chapter: 1, start: 891_000, end: 900_000 }];
@@ -838,27 +849,27 @@ describe("useBook", () => {
     });
 
     it("uses hours-spent translation for chapter when range is set and time >= 1 hour", () => {
-      const translate = jest.fn((key: string) => key);
-      (calculateReadingHistorySummary as jest.Mock).mockReturnValue({
+      const translate = vi.fn((key: string) => key);
+      (calculateReadingHistorySummary as Mock).mockReturnValue({
         totalTimeSpentReading: 7200,
         users: { me: { totalTimeSpentReading: 7200, books: {} } },
       });
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           showingAllChapters: true,
           isReadingHistoryEnabled: true,
-          IsValueBetween: jest.fn(() => true),
+          IsValueBetween: vi.fn(() => true),
           translate,
-          userColorStore: { getUserColor: jest.fn(() => "#aabbcc") },
+          userColorStore: { getUserColor: vi.fn(() => "#aabbcc") },
           readingHistoryService: {
-            getColorByReadingTime: jest.fn(() => "#aabbcc"),
-            getColorByRecency: jest.fn(() => "#aabbcc"),
+            getColorByReadingTime: vi.fn(() => "#aabbcc"),
+            getColorByRecency: vi.fn(() => "#aabbcc"),
           },
-          ComputeLinearGradient: jest.fn(() => "linear-gradient()"),
-          GetTextColorBasedOnBackground: jest.fn(() => "#000000"),
+          ComputeLinearGradient: vi.fn(() => "linear-gradient()"),
+          GetTextColorBasedOnBackground: vi.fn(() => "#000000"),
         })
       );
-      (useReadingHistoryContext as jest.Mock).mockReturnValue(
+      (useReadingHistoryContext as Mock).mockReturnValue(
         makeReadingHistoryCtx({
           readingHistoryRangeSeconds: { start: 0, end: 99999 },
         })
@@ -874,9 +885,9 @@ describe("useBook", () => {
 
     it("uses read-hours-ago for chapter recency when recency is 1-24 hours", () => {
       // nowSeconds = 1_000_000, end = 990_000 → recencySeconds = 10_000
-      jest.setSystemTime(1_000_000_000);
-      const translate = jest.fn((key: string) => key);
-      (calculateReadingHistorySummary as jest.Mock).mockReturnValue({
+      vi.setSystemTime(1_000_000_000);
+      const translate = vi.fn((key: string) => key);
+      (calculateReadingHistorySummary as Mock).mockReturnValue({
         totalTimeSpentReading: 120,
         users: {
           me: {
@@ -889,19 +900,19 @@ describe("useBook", () => {
           },
         },
       });
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           showingAllChapters: true,
           isReadingHistoryEnabled: true,
-          IsValueBetween: jest.fn(() => true),
+          IsValueBetween: vi.fn(() => true),
           translate,
-          userColorStore: { getUserColor: jest.fn(() => "#aabbcc") },
+          userColorStore: { getUserColor: vi.fn(() => "#aabbcc") },
           readingHistoryService: {
-            getColorByReadingTime: jest.fn(() => "#aabbcc"),
-            getColorByRecency: jest.fn(() => "#aabbcc"),
+            getColorByReadingTime: vi.fn(() => "#aabbcc"),
+            getColorByRecency: vi.fn(() => "#aabbcc"),
           },
-          ComputeLinearGradient: jest.fn(() => "linear-gradient()"),
-          GetTextColorBasedOnBackground: jest.fn(() => "#000000"),
+          ComputeLinearGradient: vi.fn(() => "linear-gradient()"),
+          GetTextColorBasedOnBackground: vi.fn(() => "#000000"),
         })
       );
       const readingEvents = [{ chapter: 1, start: 981_000, end: 990_000 }];
@@ -918,9 +929,9 @@ describe("useBook", () => {
 
     it("uses read-minutes-ago for chapter recency when recency < 1 hour", () => {
       // nowSeconds = 1_000_000, end = 999_000 → recencySeconds = 1_000
-      jest.setSystemTime(1_000_000_000);
-      const translate = jest.fn((key: string) => key);
-      (calculateReadingHistorySummary as jest.Mock).mockReturnValue({
+      vi.setSystemTime(1_000_000_000);
+      const translate = vi.fn((key: string) => key);
+      (calculateReadingHistorySummary as Mock).mockReturnValue({
         totalTimeSpentReading: 120,
         users: {
           me: {
@@ -933,19 +944,19 @@ describe("useBook", () => {
           },
         },
       });
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           showingAllChapters: true,
           isReadingHistoryEnabled: true,
-          IsValueBetween: jest.fn(() => true),
+          IsValueBetween: vi.fn(() => true),
           translate,
-          userColorStore: { getUserColor: jest.fn(() => "#aabbcc") },
+          userColorStore: { getUserColor: vi.fn(() => "#aabbcc") },
           readingHistoryService: {
-            getColorByReadingTime: jest.fn(() => "#aabbcc"),
-            getColorByRecency: jest.fn(() => "#aabbcc"),
+            getColorByReadingTime: vi.fn(() => "#aabbcc"),
+            getColorByRecency: vi.fn(() => "#aabbcc"),
           },
-          ComputeLinearGradient: jest.fn(() => "linear-gradient()"),
-          GetTextColorBasedOnBackground: jest.fn(() => "#000000"),
+          ComputeLinearGradient: vi.fn(() => "linear-gradient()"),
+          GetTextColorBasedOnBackground: vi.fn(() => "#000000"),
         })
       );
       const readingEvents = [{ chapter: 1, start: 990_000, end: 999_000 }];
@@ -963,8 +974,8 @@ describe("useBook", () => {
 
   describe("chaptersData - isSubset and user presence per chapter", () => {
     it("matches bookUserPresence using offset chapter when isSubset=true", () => {
-      const mockRawGradient = jest.fn(() => "linear-gradient(presence)");
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      const mockRawGradient = vi.fn(() => "linear-gradient(presence)");
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           showingAllChapters: true,
           isUserPresenceEnabled: true,
@@ -989,8 +1000,8 @@ describe("useBook", () => {
     });
 
     it("sets borderGradientColors on matching chapter when isUserPresenceEnabled", () => {
-      const mockRawGradient = jest.fn(() => "linear-gradient(chapter-border)");
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      const mockRawGradient = vi.fn(() => "linear-gradient(chapter-border)");
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           showingAllChapters: true,
           isUserPresenceEnabled: true,
@@ -1015,12 +1026,12 @@ describe("useBook", () => {
     });
 
     it("adds userPresence entry to chapter tooltipContentsData for matching chapter", () => {
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           showingAllChapters: true,
           isUserPresenceEnabled: true,
           translate: (key: string) => key,
-          ComputeRawGradientColors: jest.fn(() => "linear-gradient()"),
+          ComputeRawGradientColors: vi.fn(() => "linear-gradient()"),
         })
       );
       const result = setup({
@@ -1045,15 +1056,15 @@ describe("useBook", () => {
 
   describe("checked", () => {
     it("should be true with matching selection and all chapters true", () => {
-      const mockClickAndHold = jest.fn();
+      const mockClickAndHold = vi.fn();
       const testamentName = "Old Testament";
       const bookId = "GEN";
       const sectionName = "Law";
 
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx(testamentName)
       );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           onBookNameClickAndHold: mockClickAndHold,
           selection: {
@@ -1067,12 +1078,12 @@ describe("useBook", () => {
       );
       const result = setup({ bookId, sectionName });
       const fakeEvent = {
-        stopPropagation: jest.fn(),
+        stopPropagation: vi.fn(),
       } as unknown as PointerEvent;
 
       act(() => result.current.handleBookHeaderPointerDown(fakeEvent as any));
 
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       expect(mockClickAndHold).toHaveBeenCalledWith(
         false,
@@ -1086,15 +1097,15 @@ describe("useBook", () => {
     });
 
     it("should be false with matching selection and all chapters false", () => {
-      const mockClickAndHold = jest.fn();
+      const mockClickAndHold = vi.fn();
       const testamentName = "Old Testament";
       const bookId = "GEN";
       const sectionName = "Law";
 
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx(testamentName)
       );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           onBookNameClickAndHold: mockClickAndHold,
           selection: {
@@ -1108,12 +1119,12 @@ describe("useBook", () => {
       );
       const result = setup({ bookId, sectionName });
       const fakeEvent = {
-        stopPropagation: jest.fn(),
+        stopPropagation: vi.fn(),
       } as unknown as PointerEvent;
 
       act(() => result.current.handleBookHeaderPointerDown(fakeEvent as any));
 
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       expect(mockClickAndHold).toHaveBeenCalledWith(
         false,
@@ -1127,15 +1138,15 @@ describe("useBook", () => {
     });
 
     it("should be false with matching selection and no chapters", () => {
-      const mockClickAndHold = jest.fn();
+      const mockClickAndHold = vi.fn();
       const testamentName = "Old Testament";
       const bookId = "GEN";
       const sectionName = "Law";
 
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx(testamentName)
       );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           onBookNameClickAndHold: mockClickAndHold,
           selection: {
@@ -1149,12 +1160,12 @@ describe("useBook", () => {
       );
       const result = setup({ bookId, sectionName });
       const fakeEvent = {
-        stopPropagation: jest.fn(),
+        stopPropagation: vi.fn(),
       } as unknown as PointerEvent;
 
       act(() => result.current.handleBookHeaderPointerDown(fakeEvent as any));
 
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       expect(mockClickAndHold).toHaveBeenCalledWith(
         false,
@@ -1168,7 +1179,7 @@ describe("useBook", () => {
     });
 
     it("should be false with no matching selection", () => {
-      const mockClickAndHold = jest.fn();
+      const mockClickAndHold = vi.fn();
 
       const testamentName = "Old Testament";
       const sectionName = "Law";
@@ -1190,10 +1201,10 @@ describe("useBook", () => {
         },
       };
 
-      (useTestamentContext as jest.Mock).mockReturnValue(
+      (useTestamentContext as Mock).mockReturnValue(
         makeTestamentCtx(testamentName)
       );
-      (useScriptureMapContext as jest.Mock).mockReturnValue(
+      (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           onBookNameClickAndHold: mockClickAndHold,
           selection,
@@ -1201,12 +1212,12 @@ describe("useBook", () => {
       );
       const result = setup({ bookId, sectionName });
       const fakeEvent = {
-        stopPropagation: jest.fn(),
+        stopPropagation: vi.fn(),
       } as unknown as PointerEvent;
 
       act(() => result.current.handleBookHeaderPointerDown(fakeEvent as any));
 
-      act(() => jest.advanceTimersByTime(500));
+      act(() => vi.advanceTimersByTime(500));
 
       expect(mockClickAndHold).toHaveBeenCalledWith(
         false,

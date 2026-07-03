@@ -1,63 +1,64 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { TodayContent } from "todayScreen.infrastructure.presentation.components.containers.TodayContent";
-import { useTodayContent } from "todayScreen.infrastructure.presentation.hooks.useTodayContent";
+import { TodayContent } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/TodayContent";
+import { useTodayContent } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useTodayContent";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.hooks.useTodayContent",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useTodayContent",
   () => ({
-    useTodayContent: jest.fn(),
+    useTodayContent: vi.fn(),
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.containers.Header",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Header",
   () => ({
-    Header: jest.fn(() => <div data-testid="header" />),
+    Header: vi.fn(() => <div data-testid="header" />),
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.containers.ResumeReadingSection",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/ResumeReadingSection",
   () => ({
-    ResumeReadingSection: jest.fn(() => <div data-testid="resume" />),
+    ResumeReadingSection: vi.fn(() => <div data-testid="resume" />),
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.ui.Divider",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/Divider",
   () => ({
-    Divider: jest.fn(() => <div data-testid="divider" />),
+    Divider: vi.fn(() => <div data-testid="divider" />),
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.containers.RecommendationsSection",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/RecommendationsSection",
   () => ({
-    RecommendationsSection: jest.fn(() => (
+    RecommendationsSection: vi.fn(() => (
       <div data-testid="section-recommendations" />
     )),
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.containers.SearchSection",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/SearchSection",
   () => ({
-    SearchSection: jest.fn(() => <div data-testid="section-search" />),
+    SearchSection: vi.fn(() => <div data-testid="section-search" />),
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.containers.SocialSection",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/SocialSection",
   () => ({
-    SocialSection: jest.fn(() => <div data-testid="section-social" />),
+    SocialSection: vi.fn(() => <div data-testid="section-social" />),
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.containers.BookmarksSection",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/BookmarksSection",
   () => ({
-    BookmarksSection: jest.fn(() => <div data-testid="section-bookmarks" />),
+    BookmarksSection: vi.fn(() => <div data-testid="section-bookmarks" />),
   })
 );
 
@@ -74,7 +75,7 @@ describe("TodayContent", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(
@@ -83,7 +84,7 @@ describe("TodayContent", () => {
       showResumeReading?: boolean;
     } = {}
   ) {
-    (useTodayContent as jest.Mock).mockReturnValue({
+    (useTodayContent as Mock).mockReturnValue({
       dividedSectionsIds: options.dividedSectionsIds ?? [],
       showResumeReading: options.showResumeReading ?? false,
     });

@@ -1,24 +1,25 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { Controls } from "scriptureMap.components.containers.Controls";
-import { useControls } from "scriptureMap.hooks.useControls";
+import { Controls } from "../../../../../packages/scripture-map/components/containers/Controls";
+import { useControls } from "../../../../../packages/scripture-map/hooks/useControls";
 
-jest.mock("scriptureMap.hooks.useControls", () => ({
-  useControls: jest.fn(),
+vi.mock("../../../../../packages/scripture-map/hooks/useControls", () => ({
+  useControls: vi.fn(),
 }));
 
 function makeHookResult(overrides: Record<string, unknown> = {}) {
   return {
-    handleZoomOutButtonClick: jest.fn(),
-    handleZoomInButtonClick: jest.fn(),
+    handleZoomOutButtonClick: vi.fn(),
+    handleZoomInButtonClick: vi.fn(),
     toggleButtonRef: { current: null },
-    toggleButtonClick: jest.fn(),
+    toggleButtonClick: vi.fn(),
     currZoom: 100,
     showOptions: false,
     zoomLevelSelectorTitle: "Zoom",
-    handleZoomLevelClick: jest.fn(),
+    handleZoomLevelClick: vi.fn(),
     zoomLevelSelectorRef: { current: null },
-    handleZoomLevelSelectorClick: jest.fn(),
+    handleZoomLevelSelectorClick: vi.fn(),
     scaleFactor: 1,
     ...overrides,
   };
@@ -30,18 +31,18 @@ describe("Controls", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useControls as jest.Mock).mockReturnValue(makeHookResult());
+    (useControls as Mock).mockReturnValue(makeHookResult());
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(hookOverrides: Record<string, unknown> = {}) {
     if (Object.keys(hookOverrides).length > 0) {
-      (useControls as jest.Mock).mockReturnValue(makeHookResult(hookOverrides));
+      (useControls as Mock).mockReturnValue(makeHookResult(hookOverrides));
     }
     act(() => render(<Controls />, container));
     return container;
@@ -139,7 +140,7 @@ describe("Controls", () => {
     });
 
     it("calls handleZoomLevelClick with the correct value when an option is clicked", () => {
-      const handleZoomLevelClick = jest.fn();
+      const handleZoomLevelClick = vi.fn();
       setup({ showOptions: true, handleZoomLevelClick });
       const buttons = container.querySelectorAll<HTMLButtonElement>(
         ".zoom-level-selector button"
@@ -151,7 +152,7 @@ describe("Controls", () => {
     });
 
     it("calls handleZoomLevelClick with 0.25 when the last option is clicked", () => {
-      const handleZoomLevelClick = jest.fn();
+      const handleZoomLevelClick = vi.fn();
       setup({ showOptions: true, handleZoomLevelClick });
       const buttons = container.querySelectorAll<HTMLButtonElement>(
         ".zoom-level-selector button"
@@ -183,7 +184,7 @@ describe("Controls", () => {
 
   describe("click handlers", () => {
     it("calls handleZoomOutButtonClick when the zoom-out button is clicked", () => {
-      const handleZoomOutButtonClick = jest.fn();
+      const handleZoomOutButtonClick = vi.fn();
       setup({ handleZoomOutButtonClick });
       const buttons = container.querySelectorAll<HTMLButtonElement>(
         ".zoom-container > button"
@@ -195,7 +196,7 @@ describe("Controls", () => {
     });
 
     it("calls toggleButtonClick when the toggle button is clicked", () => {
-      const toggleButtonClick = jest.fn();
+      const toggleButtonClick = vi.fn();
       setup({ toggleButtonClick });
       const buttons = container.querySelectorAll<HTMLButtonElement>(
         ".zoom-container > button"
@@ -207,7 +208,7 @@ describe("Controls", () => {
     });
 
     it("calls handleZoomInButtonClick when the zoom-in button is clicked", () => {
-      const handleZoomInButtonClick = jest.fn();
+      const handleZoomInButtonClick = vi.fn();
       setup({ handleZoomInButtonClick });
       const buttons = container.querySelectorAll<HTMLButtonElement>(
         ".zoom-container > button"

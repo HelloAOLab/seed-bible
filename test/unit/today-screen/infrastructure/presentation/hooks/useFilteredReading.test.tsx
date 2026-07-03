@@ -1,13 +1,14 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useFilteredReading } from "todayScreen.infrastructure.presentation.hooks.useFilteredReading";
-import { useSocialSectionContext } from "todayScreen.infrastructure.presentation.contexts.socialSection.SocialSectionContext";
-import type { FilteredReading } from "@packages/today-screen/todayScreen/domain/models/readingHistory";
+import { useFilteredReading } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useFilteredReading";
+import { useSocialSectionContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext";
+import type { FilteredReading } from "../../../../../../packages/today-screen/domain/models/readingHistory";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.socialSection.SocialSectionContext",
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext",
   () => ({
-    useSocialSectionContext: jest.fn(),
+    useSocialSectionContext: vi.fn(),
   })
 );
 
@@ -24,14 +25,14 @@ describe("useFilteredReading", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(
     communityReading: FilteredReading,
     userFilters: Map<string, boolean>
   ) {
-    (useSocialSectionContext as jest.Mock).mockReturnValue({
+    (useSocialSectionContext as Mock).mockReturnValue({
       communityReading,
       userFilters,
     });

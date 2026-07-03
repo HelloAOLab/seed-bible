@@ -1,15 +1,16 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import {
   ReadingHistoryProvider,
   useReadingHistoryContext,
-} from "scriptureMap.contexts.ReadingHistory.ReadingHistoryContext";
-import { useReadingHistoryProvider } from "scriptureMap.contexts.ReadingHistory.useReadingHistoryProvider";
+} from "../../../../packages/scripture-map/contexts/ReadingHistory/ReadingHistoryContext";
+import { useReadingHistoryProvider } from "../../../../packages/scripture-map/contexts/ReadingHistory/useReadingHistoryProvider";
 
-jest.mock(
-  "scriptureMap.contexts.ReadingHistory.useReadingHistoryProvider",
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ReadingHistory/useReadingHistoryProvider",
   () => ({
-    useReadingHistoryProvider: jest.fn(() => ({})),
+    useReadingHistoryProvider: vi.fn(() => ({})),
   })
 );
 
@@ -24,7 +25,7 @@ describe("ReadingHistoryContext", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   describe("useReadingHistoryContext", () => {
@@ -43,7 +44,7 @@ describe("ReadingHistoryContext", () => {
 
     it("returns the context value when called inside a provider", () => {
       const contextValue = { myAuthBotId: "user-1" };
-      (useReadingHistoryProvider as jest.Mock).mockReturnValue(contextValue);
+      (useReadingHistoryProvider as Mock).mockReturnValue(contextValue);
 
       let receivedContext: unknown;
 
@@ -97,7 +98,7 @@ describe("ReadingHistoryContext", () => {
         SEC_PER_MINUTE: 60,
         shouldShowReadingHistory: true,
       };
-      (useReadingHistoryProvider as jest.Mock).mockReturnValue(contextValue);
+      (useReadingHistoryProvider as Mock).mockReturnValue(contextValue);
 
       let receivedContext: unknown;
 

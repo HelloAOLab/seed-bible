@@ -1,19 +1,20 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { PresenceCard } from "todayScreen.infrastructure.presentation.components.containers.PresenceCard";
-import { usePresenceCard } from "todayScreen.infrastructure.presentation.hooks.usePresenceCard";
+import { PresenceCard } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/PresenceCard";
+import { usePresenceCard } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/usePresenceCard";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.hooks.usePresenceCard",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/usePresenceCard",
   () => ({
-    usePresenceCard: jest.fn(),
+    usePresenceCard: vi.fn(),
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.ui.UserIcon",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/UserIcon",
   () => ({
-    UserIcon: jest.fn(() => <div data-testid="user-icon" />),
+    UserIcon: vi.fn(() => <div data-testid="user-icon" />),
   })
 );
 
@@ -32,7 +33,7 @@ function makeResult(options: {
     reading: { value: options.reading ?? "John 3" },
     userIconsData: { value: options.userIcons ?? [] },
     joinText: options.joinText ?? "Join",
-    handleJoinClick: options.handleJoinClick ?? jest.fn(),
+    handleJoinClick: options.handleJoinClick ?? vi.fn(),
     showCard: { value: options.showCard ?? true },
   } as unknown as PresenceResult;
 }
@@ -48,12 +49,12 @@ describe("PresenceCard", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(options: Parameters<typeof makeResult>[0] = {}) {
     const result = makeResult(options);
-    (usePresenceCard as jest.Mock).mockReturnValue(result);
+    (usePresenceCard as Mock).mockReturnValue(result);
     act(() => render(<PresenceCard />, container));
     return result;
   }
@@ -104,7 +105,7 @@ describe("PresenceCard", () => {
 
   describe("interaction", () => {
     it("calls handleJoinClick when the join button is clicked", () => {
-      const handleJoinClick = jest.fn();
+      const handleJoinClick = vi.fn();
       setup({ handleJoinClick });
       act(() =>
         container

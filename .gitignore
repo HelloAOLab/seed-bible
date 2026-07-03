@@ -10,3 +10,6 @@ bun.lock
 !.vscode/launch.json
 ./cursor/*
 .pnpm-store/*
+
+# Test coverage reports
+coverage/

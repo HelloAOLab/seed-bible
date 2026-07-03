@@ -1,7 +1,7 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import type { MutableRef } from "preact/hooks";
-import { useClickOutside } from "todayScreen.infrastructure.presentation.hooks.useClickOutside";
+import { useClickOutside } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useClickOutside";
 
 type Ref = MutableRef<HTMLElement | null>;
 
@@ -16,7 +16,7 @@ describe("useClickOutside", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function makeEl(): HTMLElement {
@@ -44,7 +44,7 @@ describe("useClickOutside", () => {
   it("invokes the callback on a mousedown outside all refs", () => {
     const ref = { current: makeEl() };
     const outside = makeEl();
-    const callback = jest.fn();
+    const callback = vi.fn();
     setup([ref], callback);
 
     fireMouseDown(outside);
@@ -54,7 +54,7 @@ describe("useClickOutside", () => {
   it("invokes the callback on a focusin outside all refs", () => {
     const ref = { current: makeEl() };
     const outside = makeEl();
-    const callback = jest.fn();
+    const callback = vi.fn();
     setup([ref], callback);
 
     fireFocusIn(outside);
@@ -65,7 +65,7 @@ describe("useClickOutside", () => {
     const el = makeEl();
     const child = document.createElement("span");
     el.appendChild(child);
-    const callback = jest.fn();
+    const callback = vi.fn();
     setup([{ current: el }], callback);
 
     fireMouseDown(el);
@@ -77,7 +77,7 @@ describe("useClickOutside", () => {
   });
 
   it("treats a null ref as not-outside, so the callback never fires", () => {
-    const callback = jest.fn();
+    const callback = vi.fn();
     setup([{ current: null }], callback);
 
     fireMouseDown(makeEl());
@@ -89,7 +89,7 @@ describe("useClickOutside", () => {
       const refA = { current: makeEl() };
       const refB = { current: makeEl() };
       const outside = makeEl();
-      const callback = jest.fn();
+      const callback = vi.fn();
       setup([refA, refB], callback);
 
       // Inside one of the refs → not outside → no call.
@@ -105,7 +105,7 @@ describe("useClickOutside", () => {
   it("removes the listeners on unmount", () => {
     const ref = { current: makeEl() };
     const outside = makeEl();
-    const callback = jest.fn();
+    const callback = vi.fn();
     setup([ref], callback);
 
     act(() => render(null, container));

@@ -1,6 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useIsMobile } from "scriptureMap.hooks.useIsMobile";
+import { useIsMobile } from "../../../../packages/scripture-map/hooks/useIsMobile";
 
 type MediaQueryListener = (e: MediaQueryListEvent) => void;
 
@@ -8,14 +8,14 @@ function mockMatchMedia(initialMatches: boolean) {
   const listeners: MediaQueryListener[] = [];
   const mql = {
     matches: initialMatches,
-    addEventListener: jest.fn((_: string, listener: MediaQueryListener) => {
+    addEventListener: vi.fn((_: string, listener: MediaQueryListener) => {
       listeners.push(listener);
     }),
-    removeEventListener: jest.fn(),
+    removeEventListener: vi.fn(),
   };
   Object.defineProperty(window, "matchMedia", {
     writable: true,
-    value: jest.fn(() => mql),
+    value: vi.fn(() => mql),
   });
   return {
     mql,

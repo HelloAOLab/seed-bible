@@ -1,13 +1,14 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import { useTodayContent } from "todayScreen.infrastructure.presentation.hooks.useTodayContent";
-import { useTodayContext } from "todayScreen.infrastructure.presentation.contexts.today.TodayContext";
+import { useTodayContent } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useTodayContent";
+import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.today.TodayContext",
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
   () => ({
-    useTodayContext: jest.fn(),
+    useTodayContext: vi.fn(),
   })
 );
 
@@ -24,14 +25,14 @@ describe("useTodayContent", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(options: {
     lastReading?: { bookId: string; chapter: number } | undefined;
     bookmarks?: unknown[];
   }) {
-    (useTodayContext as jest.Mock).mockReturnValue({
+    (useTodayContext as Mock).mockReturnValue({
       userLastReading: signal(options.lastReading),
       bookmarks: signal(options.bookmarks ?? []),
     });

@@ -1,6 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useTimeProvider } from "todayScreen.infrastructure.presentation.contexts.time.useTimeProvider";
+import { useTimeProvider } from "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/time/useTimeProvider";
 
 const T0 = 1_700_000_000_000;
 
@@ -10,15 +10,15 @@ describe("useTimeProvider", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    jest.useFakeTimers();
-    jest.setSystemTime(T0);
+    vi.useFakeTimers();
+    vi.setSystemTime(T0);
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.useRealTimers();
-    jest.restoreAllMocks();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   type ProviderResult = ReturnType<typeof useTimeProvider>;
@@ -42,7 +42,7 @@ describe("useTimeProvider", () => {
     const result = setup();
     // Advancing the fake timers also advances Date.now().
     act(() => {
-      jest.advanceTimersByTime(10000);
+      vi.advanceTimersByTime(10000);
     });
     expect(result.current.tick).toBe(T0 + 10000);
   });
@@ -50,21 +50,21 @@ describe("useTimeProvider", () => {
   it("keeps ticking on each interval", () => {
     const result = setup();
 
-    act(() => jest.advanceTimersByTime(10000));
+    act(() => vi.advanceTimersByTime(10000));
     expect(result.current.tick).toBe(T0 + 10000);
 
-    act(() => jest.advanceTimersByTime(10000));
+    act(() => vi.advanceTimersByTime(10000));
     expect(result.current.tick).toBe(T0 + 20000);
   });
 
   it("does not update before the interval elapses", () => {
     const result = setup();
-    act(() => jest.advanceTimersByTime(9999));
+    act(() => vi.advanceTimersByTime(9999));
     expect(result.current.tick).toBe(T0);
   });
 
   it("clears the interval on unmount", () => {
-    const clearIntervalSpy = jest.spyOn(global, "clearInterval");
+    const clearIntervalSpy = vi.spyOn(global, "clearInterval");
     setup();
     act(() => render(null, container));
     expect(clearIntervalSpy).toHaveBeenCalled();
@@ -75,8 +75,8 @@ describe("useTimeProvider", () => {
     act(() => render(null, container));
     const lastTick = result.current.tick;
 
-    jest.setSystemTime(T0 + 30000);
-    act(() => jest.advanceTimersByTime(30000));
+    vi.setSystemTime(T0 + 30000);
+    act(() => vi.advanceTimersByTime(30000));
 
     expect(result.current.tick).toBe(lastTick);
   });

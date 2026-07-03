@@ -1,22 +1,23 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import { useBook } from "todayScreen.infrastructure.presentation.hooks.useBook";
-import { useTodayContext } from "todayScreen.infrastructure.presentation.contexts.today.TodayContext";
-import { useSocialSectionContext } from "todayScreen.infrastructure.presentation.contexts.socialSection.SocialSectionContext";
-import type { BookProps } from "todayScreen.infrastructure.presentation.components.containers.Book";
+import { useBook } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useBook";
+import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
+import { useSocialSectionContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext";
+import type { BookProps } from "../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Book";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.today.TodayContext",
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
   () => ({
-    useTodayContext: jest.fn(),
+    useTodayContext: vi.fn(),
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.socialSection.SocialSectionContext",
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext",
   () => ({
-    useSocialSectionContext: jest.fn(),
+    useSocialSectionContext: vi.fn(),
   })
 );
 
@@ -45,15 +46,15 @@ type UseBookResult = ReturnType<typeof useBook>;
 
 describe("useBook", () => {
   let container: HTMLDivElement;
-  const addTab = jest.fn();
-  const getDefaultTranslation = jest.fn(() => "AAB");
+  const addTab = vi.fn();
+  const getDefaultTranslation = vi.fn(() => "AAB");
 
   function configureContexts(options: {
     bookNames?: Map<string, string>;
     booksMap?: Map<string, { numberOfChapters: number }>;
     profiles?: Map<string, Profile>;
   }) {
-    (useTodayContext as jest.Mock).mockReturnValue({
+    (useTodayContext as Mock).mockReturnValue({
       bookNames: signal(options.bookNames ?? new Map([["GEN", "Genesis"]])),
       MaterialIcon,
       translationBooksMap: signal(
@@ -62,7 +63,7 @@ describe("useBook", () => {
       addTab,
       getDefaultTranslation,
     });
-    (useSocialSectionContext as jest.Mock).mockReturnValue({
+    (useSocialSectionContext as Mock).mockReturnValue({
       userProfileMap:
         options.profiles ??
         new Map([
@@ -80,7 +81,7 @@ describe("useBook", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(
@@ -178,7 +179,7 @@ describe("useBook", () => {
     });
 
     it("throws when a user's profile is missing", () => {
-      const consoleError = jest
+      const consoleError = vi
         .spyOn(console, "error")
         .mockImplementation(() => {});
       expect(() =>

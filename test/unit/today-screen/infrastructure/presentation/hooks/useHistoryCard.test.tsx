@@ -1,20 +1,21 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useHistoryCard } from "todayScreen.infrastructure.presentation.hooks.useHistoryCard";
-import { useTodayContext } from "todayScreen.infrastructure.presentation.contexts.today.TodayContext";
-import { useSocialSectionContext } from "todayScreen.infrastructure.presentation.contexts.socialSection.SocialSectionContext";
+import { useHistoryCard } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useHistoryCard";
+import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
+import { useSocialSectionContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.today.TodayContext",
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
   () => ({
-    useTodayContext: jest.fn(),
+    useTodayContext: vi.fn(),
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.socialSection.SocialSectionContext",
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext",
   () => ({
-    useSocialSectionContext: jest.fn(),
+    useSocialSectionContext: vi.fn(),
   })
 );
 
@@ -40,18 +41,18 @@ type Result = ReturnType<typeof useHistoryCard>;
 
 describe("useHistoryCard", () => {
   let container: HTMLDivElement;
-  const selectYear = jest.fn();
-  const selectDay = jest.fn();
-  const toggleUserFilter = jest.fn();
-  const useHorizontalScroll = jest.fn();
+  const selectYear = vi.fn();
+  const selectDay = vi.fn();
+  const toggleUserFilter = vi.fn();
+  const useHorizontalScroll = vi.fn();
 
   function configure(options: {
     userFilters?: Map<string, boolean>;
     timespan?: { from: number; to: number } | undefined;
     language?: string;
   }) {
-    (useTodayContext as jest.Mock).mockReturnValue({
-      translate: jest.fn((key: string) => key),
+    (useTodayContext as Mock).mockReturnValue({
+      translate: vi.fn((key: string) => key),
       MaterialIcon,
       language: options.language ?? "en",
       readingHistoryConfigProvider: {
@@ -60,7 +61,7 @@ describe("useHistoryCard", () => {
       },
       useHorizontalScroll,
     });
-    (useSocialSectionContext as jest.Mock).mockReturnValue({
+    (useSocialSectionContext as Mock).mockReturnValue({
       userFilters: options.userFilters ?? new Map([["u1", true]]),
       userProfileMap: new Map(),
       toggleUserFilter,
@@ -78,7 +79,7 @@ describe("useHistoryCard", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(options: Parameters<typeof configure>[0] = {}) {
@@ -108,7 +109,7 @@ describe("useHistoryCard", () => {
 
     it("toggles open (up chevron) and stops propagation on click", () => {
       const result = setup();
-      const stopPropagation = jest.fn();
+      const stopPropagation = vi.fn();
       act(() =>
         result.current.handleUserFilterClick({
           stopPropagation,
@@ -123,7 +124,7 @@ describe("useHistoryCard", () => {
       const result = setup();
       act(() =>
         result.current.handleUserFilterClick({
-          stopPropagation: jest.fn(),
+          stopPropagation: vi.fn(),
         } as unknown as MouseEvent)
       );
       expect(result.current.userFilterOpen.value).toBe(true);
@@ -193,7 +194,7 @@ describe("useHistoryCard", () => {
   describe("user filter option click", () => {
     it("toggles the user filter and stops propagation", () => {
       const result = setup();
-      const stopPropagation = jest.fn();
+      const stopPropagation = vi.fn();
       act(() =>
         result.current.handleFilterOptionClick(
           { stopPropagation } as unknown as MouseEvent,

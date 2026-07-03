@@ -1,12 +1,13 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useSearchSection } from "todayScreen.infrastructure.presentation.hooks.useSearchSection";
-import { useTodayContext } from "todayScreen.infrastructure.presentation.contexts.today.TodayContext";
+import { useSearchSection } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useSearchSection";
+import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.today.TodayContext",
+vi.mock(
+  "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
   () => ({
-    useTodayContext: jest.fn(),
+    useTodayContext: vi.fn(),
   })
 );
 
@@ -14,7 +15,7 @@ const MaterialIcon = ({ children }: { children: string }) => (
   <span className="material-icon">{children}</span>
 );
 
-const openBookSelector = jest.fn();
+const openBookSelector = vi.fn();
 
 type Result = ReturnType<typeof useSearchSection>;
 
@@ -29,12 +30,12 @@ describe("useSearchSection", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(secondaryFontColor = "#abcdef") {
-    (useTodayContext as jest.Mock).mockReturnValue({
-      translate: jest.fn((key: string) => key),
+    (useTodayContext as Mock).mockReturnValue({
+      translate: vi.fn((key: string) => key),
       openBookSelector,
       MaterialIcon,
       theme: { variables: { secondaryFontColor } },

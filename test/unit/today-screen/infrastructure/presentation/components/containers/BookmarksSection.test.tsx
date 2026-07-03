@@ -1,12 +1,13 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { BookmarksSection } from "todayScreen.infrastructure.presentation.components.containers.BookmarksSection";
-import { useBookmarksSection } from "todayScreen.infrastructure.presentation.hooks.useBookmarksSection";
+import { BookmarksSection } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/BookmarksSection";
+import { useBookmarksSection } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useBookmarksSection";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.hooks.useBookmarksSection",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useBookmarksSection",
   () => ({
-    useBookmarksSection: jest.fn(),
+    useBookmarksSection: vi.fn(),
   })
 );
 
@@ -48,12 +49,12 @@ describe("BookmarksSection", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(options: Parameters<typeof makeHookResult>[0] = {}) {
     const result = makeHookResult(options);
-    (useBookmarksSection as jest.Mock).mockReturnValue(result);
+    (useBookmarksSection as Mock).mockReturnValue(result);
     act(() => render(<BookmarksSection />, container));
     return result;
   }
@@ -83,8 +84,8 @@ describe("BookmarksSection", () => {
     it("renders a bookmark button per entry with its text", () => {
       setup({
         bookmarks: [
-          { key: "a", text: "Genesis 1", handleClick: jest.fn() },
-          { key: "b", text: "John 3", handleClick: jest.fn() },
+          { key: "a", text: "Genesis 1", handleClick: vi.fn() },
+          { key: "b", text: "John 3", handleClick: vi.fn() },
         ],
       });
       const items = bookmarks();
@@ -95,7 +96,7 @@ describe("BookmarksSection", () => {
 
     it("renders the bookmark icon svg inside each bookmark", () => {
       setup({
-        bookmarks: [{ key: "a", text: "Genesis 1", handleClick: jest.fn() }],
+        bookmarks: [{ key: "a", text: "Genesis 1", handleClick: vi.fn() }],
       });
       expect(bookmarks()[0]!.querySelector("svg")).not.toBeNull();
     });
@@ -106,8 +107,8 @@ describe("BookmarksSection", () => {
     });
 
     it("calls the matching handleClick when a bookmark is clicked", () => {
-      const handleA = jest.fn();
-      const handleB = jest.fn();
+      const handleA = vi.fn();
+      const handleB = vi.fn();
       setup({
         bookmarks: [
           { key: "a", text: "Genesis 1", handleClick: handleA },
@@ -122,7 +123,7 @@ describe("BookmarksSection", () => {
 
   describe("more button", () => {
     it("renders the more button with its text when moreButtonData is present", () => {
-      setup({ moreButton: { text: "VIEW MORE", handleClick: jest.fn() } });
+      setup({ moreButton: { text: "VIEW MORE", handleClick: vi.fn() } });
       expect(moreButton()).not.toBeNull();
       expect(moreButton()!.textContent).toBe("VIEW MORE");
     });
@@ -133,7 +134,7 @@ describe("BookmarksSection", () => {
     });
 
     it("calls handleClick when the more button is clicked", () => {
-      const handleClick = jest.fn();
+      const handleClick = vi.fn();
       setup({ moreButton: { text: "VIEW MORE", handleClick } });
       act(() => moreButton()!.click());
       expect(handleClick).toHaveBeenCalledTimes(1);

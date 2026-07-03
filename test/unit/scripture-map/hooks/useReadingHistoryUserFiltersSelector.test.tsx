@@ -1,23 +1,30 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useReadingHistoryUserFiltersSelector } from "scriptureMap.hooks.useReadingHistoryUserFiltersSelector";
-import { useScriptureMapContext } from "scriptureMap.contexts.ScriptureMap.ScriptureMapContext";
-import { useReadingHistoryContext } from "scriptureMap.contexts.ReadingHistory.ReadingHistoryContext";
+import { useReadingHistoryUserFiltersSelector } from "../../../../packages/scripture-map/hooks/useReadingHistoryUserFiltersSelector";
+import { useScriptureMapContext } from "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext";
+import { useReadingHistoryContext } from "../../../../packages/scripture-map/contexts/ReadingHistory/ReadingHistoryContext";
 
-jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
-  useScriptureMapContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext",
+  () => ({
+    useScriptureMapContext: vi.fn(),
+  })
+);
 
-jest.mock("scriptureMap.contexts.ReadingHistory.ReadingHistoryContext", () => ({
-  useReadingHistoryContext: jest.fn(),
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ReadingHistory/ReadingHistoryContext",
+  () => ({
+    useReadingHistoryContext: vi.fn(),
+  })
+);
 
 type UserData = { profile?: { name?: string } };
 
 describe("useReadingHistoryUserFiltersSelector", () => {
   let container: HTMLDivElement;
-  const handleReadingHistoryUserSelectorClick = jest.fn();
-  const getUserColor = jest.fn(() => "#000000");
+  const handleReadingHistoryUserSelectorClick = vi.fn();
+  const getUserColor = vi.fn(() => "#000000");
 
   function makeScriptureMapContext(
     translate: (key: string) => string,
@@ -47,7 +54,7 @@ describe("useReadingHistoryUserFiltersSelector", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useScriptureMapContext as jest.Mock).mockReturnValue(
+    (useScriptureMapContext as Mock).mockReturnValue(
       makeScriptureMapContext((key) => key)
     );
   });
@@ -55,7 +62,7 @@ describe("useReadingHistoryUserFiltersSelector", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(
@@ -63,7 +70,7 @@ describe("useReadingHistoryUserFiltersSelector", () => {
     myAuthBotId: string,
     usersDataMap: Map<string, UserData>
   ) {
-    (useReadingHistoryContext as jest.Mock).mockReturnValue(
+    (useReadingHistoryContext as Mock).mockReturnValue(
       makeReadingHistoryContext(
         readingHistoryUserFilters,
         myAuthBotId,
@@ -112,7 +119,7 @@ describe("useReadingHistoryUserFiltersSelector", () => {
   });
 
   it("labels the current user as 'You'", () => {
-    (useScriptureMapContext as jest.Mock).mockReturnValue(
+    (useScriptureMapContext as Mock).mockReturnValue(
       makeScriptureMapContext((key) => (key === "you" ? "you" : key))
     );
     const filters = new Map([["me", true]]);
@@ -135,7 +142,7 @@ describe("useReadingHistoryUserFiltersSelector", () => {
   });
 
   it("falls back to 'Guest' when profile name is empty", () => {
-    (useScriptureMapContext as jest.Mock).mockReturnValue(
+    (useScriptureMapContext as Mock).mockReturnValue(
       makeScriptureMapContext((key) => (key === "guest" ? "guest" : key))
     );
     const filters = new Map([["user1", true]]);
@@ -148,7 +155,7 @@ describe("useReadingHistoryUserFiltersSelector", () => {
   });
 
   it("falls back to 'Guest' when profile is undefined", () => {
-    (useScriptureMapContext as jest.Mock).mockReturnValue(
+    (useScriptureMapContext as Mock).mockReturnValue(
       makeScriptureMapContext((key) => (key === "guest" ? "guest" : key))
     );
     const filters = new Map([["user1", true]]);

@@ -1,34 +1,41 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { Book } from "scriptureMap.components.containers.Book";
-import { useBook } from "scriptureMap.hooks.useBook";
+import { Book } from "../../../../../packages/scripture-map/components/containers/Book";
+import { useBook } from "../../../../../packages/scripture-map/hooks/useBook";
 
-jest.mock("scriptureMap.hooks.useBook", () => ({
-  useBook: jest.fn(),
+vi.mock("../../../../../packages/scripture-map/hooks/useBook", () => ({
+  useBook: vi.fn(),
 }));
 
-jest.mock("scriptureMap.components.containers.Chapter", () => ({
-  Chapter: ({ bookId, index }: { bookId: string; index: number }) => (
-    <div data-testid="chapter" data-book={bookId} data-index={index} />
-  ),
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/components/containers/Chapter",
+  () => ({
+    Chapter: ({ bookId, index }: { bookId: string; index: number }) => (
+      <div data-testid="chapter" data-book={bookId} data-index={index} />
+    ),
+  })
+);
 
-jest.mock("scriptureMap.components.containers.Tooltip", () => ({
-  Tooltip: ({
-    anchor,
-    offsetY,
-  }: {
-    anchor: unknown;
-    offsetY: number;
-    contentsData: unknown[];
-  }) => (
-    <div
-      data-testid="tooltip"
-      data-offset-y={offsetY}
-      data-anchor={JSON.stringify(anchor)}
-    />
-  ),
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/components/containers/Tooltip",
+  () => ({
+    Tooltip: ({
+      anchor,
+      offsetY,
+    }: {
+      anchor: unknown;
+      offsetY: number;
+      contentsData: unknown[];
+    }) => (
+      <div
+        data-testid="tooltip"
+        data-offset-y={offsetY}
+        data-anchor={JSON.stringify(anchor)}
+      />
+    ),
+  })
+);
 
 type BookProps = Parameters<typeof Book>[0];
 
@@ -61,12 +68,12 @@ function makeHookResult(overrides: Record<string, unknown> = {}) {
     bookTitle: "GEN",
     bookClass: "book",
     bookCoverClass: "book-cover",
-    handleBookClick: jest.fn(),
-    handleBookHeaderPointerDown: jest.fn(),
-    handleBookHeaderPointerUp: jest.fn(),
-    handleBookHeaderClick: jest.fn(),
-    handleBookCoverPointerEnter: jest.fn(),
-    handleBookCoverPointerLeave: jest.fn(),
+    handleBookClick: vi.fn(),
+    handleBookHeaderPointerDown: vi.fn(),
+    handleBookHeaderPointerUp: vi.fn(),
+    handleBookHeaderClick: vi.fn(),
+    handleBookCoverPointerEnter: vi.fn(),
+    handleBookCoverPointerLeave: vi.fn(),
     bookCoverStyle: {},
     isReadingHistoryEnabled: false,
     isUserPresenceEnabled: false,
@@ -80,13 +87,13 @@ describe("Book", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useBook as jest.Mock).mockReturnValue(makeHookResult());
+    (useBook as Mock).mockReturnValue(makeHookResult());
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(props: Partial<BookProps> = {}) {
@@ -96,7 +103,7 @@ describe("Book", () => {
 
   describe("structure", () => {
     it("renders the outer div with bookClass", () => {
-      (useBook as jest.Mock).mockReturnValue(
+      (useBook as Mock).mockReturnValue(
         makeHookResult({ bookClass: "book selected" })
       );
       setup();
@@ -109,7 +116,7 @@ describe("Book", () => {
     });
 
     it("renders the book title in .book-id span", () => {
-      (useBook as jest.Mock).mockReturnValue(
+      (useBook as Mock).mockReturnValue(
         makeHookResult({ bookTitle: "Genesis" })
       );
       setup();
@@ -117,7 +124,7 @@ describe("Book", () => {
     });
 
     it("renders the book cover div with bookCoverClass", () => {
-      (useBook as jest.Mock).mockReturnValue(
+      (useBook as Mock).mockReturnValue(
         makeHookResult({ bookCoverClass: "book-cover open" })
       );
       setup();
@@ -125,7 +132,7 @@ describe("Book", () => {
     });
 
     it("applies bookCoverStyle to the cover div", () => {
-      (useBook as jest.Mock).mockReturnValue(
+      (useBook as Mock).mockReturnValue(
         makeHookResult({ bookCoverStyle: { background: "#abc123" } })
       );
       setup();
@@ -154,7 +161,7 @@ describe("Book", () => {
 
   describe("chapters rendering", () => {
     it("renders Chapter components when showChapters is true", () => {
-      (useBook as jest.Mock).mockReturnValue(
+      (useBook as Mock).mockReturnValue(
         makeHookResult({
           showChapters: true,
           chaptersData: [
@@ -178,7 +185,7 @@ describe("Book", () => {
     });
 
     it("does not render Tooltip when showChapters is true", () => {
-      (useBook as jest.Mock).mockReturnValue(
+      (useBook as Mock).mockReturnValue(
         makeHookResult({
           showChapters: true,
           isReadingHistoryEnabled: true,
@@ -193,7 +200,7 @@ describe("Book", () => {
 
   describe("tooltip rendering", () => {
     it("renders Tooltip when all conditions met (isReadingHistoryEnabled)", () => {
-      (useBook as jest.Mock).mockReturnValue(
+      (useBook as Mock).mockReturnValue(
         makeHookResult({
           showChapters: false,
           isReadingHistoryEnabled: true,
@@ -207,7 +214,7 @@ describe("Book", () => {
     });
 
     it("renders Tooltip when all conditions met (isUserPresenceEnabled)", () => {
-      (useBook as jest.Mock).mockReturnValue(
+      (useBook as Mock).mockReturnValue(
         makeHookResult({
           showChapters: false,
           isUserPresenceEnabled: true,
@@ -220,7 +227,7 @@ describe("Book", () => {
     });
 
     it("does not render Tooltip when tooltipAnchor is undefined", () => {
-      (useBook as jest.Mock).mockReturnValue(
+      (useBook as Mock).mockReturnValue(
         makeHookResult({
           showChapters: false,
           isReadingHistoryEnabled: true,
@@ -233,7 +240,7 @@ describe("Book", () => {
     });
 
     it("does not render Tooltip when tooltipContentsData is empty", () => {
-      (useBook as jest.Mock).mockReturnValue(
+      (useBook as Mock).mockReturnValue(
         makeHookResult({
           showChapters: false,
           isReadingHistoryEnabled: true,
@@ -246,7 +253,7 @@ describe("Book", () => {
     });
 
     it("does not render Tooltip when neither isReadingHistoryEnabled nor isUserPresenceEnabled", () => {
-      (useBook as jest.Mock).mockReturnValue(
+      (useBook as Mock).mockReturnValue(
         makeHookResult({
           showChapters: false,
           isReadingHistoryEnabled: false,
@@ -260,7 +267,7 @@ describe("Book", () => {
     });
 
     it("passes tooltipOffsetY to Tooltip", () => {
-      (useBook as jest.Mock).mockReturnValue(
+      (useBook as Mock).mockReturnValue(
         makeHookResult({
           showChapters: false,
           isReadingHistoryEnabled: true,
@@ -283,10 +290,8 @@ describe("Book", () => {
 
   describe("event handlers", () => {
     it("calls handleBookClick when outer div is clicked", () => {
-      const handleBookClick = jest.fn();
-      (useBook as jest.Mock).mockReturnValue(
-        makeHookResult({ handleBookClick })
-      );
+      const handleBookClick = vi.fn();
+      (useBook as Mock).mockReturnValue(makeHookResult({ handleBookClick }));
       setup();
       const outer = container.querySelector<HTMLElement>(".book");
       act(() => {
@@ -296,32 +301,32 @@ describe("Book", () => {
     });
 
     it("calls handleBookHeaderPointerDown with a fake event", () => {
-      const handleBookHeaderPointerDown = jest.fn();
+      const handleBookHeaderPointerDown = vi.fn();
       const hookResult = makeHookResult({ handleBookHeaderPointerDown });
-      (useBook as jest.Mock).mockReturnValue(hookResult);
+      (useBook as Mock).mockReturnValue(hookResult);
       setup();
       const fakeEvent = {
-        stopPropagation: jest.fn(),
+        stopPropagation: vi.fn(),
       } as unknown as PointerEvent;
       act(() => hookResult.handleBookHeaderPointerDown(fakeEvent));
       expect(handleBookHeaderPointerDown).toHaveBeenCalledWith(fakeEvent);
     });
 
     it("calls handleBookHeaderPointerUp with a fake event", () => {
-      const handleBookHeaderPointerUp = jest.fn();
+      const handleBookHeaderPointerUp = vi.fn();
       const hookResult = makeHookResult({ handleBookHeaderPointerUp });
-      (useBook as jest.Mock).mockReturnValue(hookResult);
+      (useBook as Mock).mockReturnValue(hookResult);
       setup();
       const fakeEvent = {
-        stopPropagation: jest.fn(),
+        stopPropagation: vi.fn(),
       } as unknown as PointerEvent;
       act(() => hookResult.handleBookHeaderPointerUp(fakeEvent));
       expect(handleBookHeaderPointerUp).toHaveBeenCalledWith(fakeEvent);
     });
 
     it("calls handleBookHeaderClick when header is clicked", () => {
-      const handleBookHeaderClick = jest.fn();
-      (useBook as jest.Mock).mockReturnValue(
+      const handleBookHeaderClick = vi.fn();
+      (useBook as Mock).mockReturnValue(
         makeHookResult({ handleBookHeaderClick })
       );
       setup();
@@ -333,9 +338,9 @@ describe("Book", () => {
     });
 
     it("calls handleBookCoverPointerEnter with a fake event", () => {
-      const handleBookCoverPointerEnter = jest.fn();
+      const handleBookCoverPointerEnter = vi.fn();
       const hookResult = makeHookResult({ handleBookCoverPointerEnter });
-      (useBook as jest.Mock).mockReturnValue(hookResult);
+      (useBook as Mock).mockReturnValue(hookResult);
       setup();
       const fakeEvent = {
         currentTarget: document.createElement("div"),
@@ -345,9 +350,9 @@ describe("Book", () => {
     });
 
     it("calls handleBookCoverPointerLeave with a fake event", () => {
-      const handleBookCoverPointerLeave = jest.fn();
+      const handleBookCoverPointerLeave = vi.fn();
       const hookResult = makeHookResult({ handleBookCoverPointerLeave });
-      (useBook as jest.Mock).mockReturnValue(hookResult);
+      (useBook as Mock).mockReturnValue(hookResult);
       setup();
       const fakeEvent = {} as unknown as PointerEvent;
       act(() => hookResult.handleBookCoverPointerLeave(fakeEvent));

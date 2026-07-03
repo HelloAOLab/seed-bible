@@ -1,6 +1,6 @@
 import { render, createRef } from "preact";
 import { act } from "preact/test-utils";
-import { useClickOutside } from "scriptureMap.hooks.useClickOutside";
+import { useClickOutside } from "../../../../packages/scripture-map/hooks/useClickOutside";
 
 describe("useClickOutside", () => {
   let container: HTMLDivElement;
@@ -16,7 +16,7 @@ describe("useClickOutside", () => {
   });
 
   function setup() {
-    const callback = jest.fn();
+    const callback = vi.fn();
     const innerRef = createRef<HTMLDivElement>();
 
     function TestComponent() {
@@ -96,7 +96,7 @@ describe("useClickOutside", () => {
 
   it("removes event listeners when the component unmounts", () => {
     setup();
-    const removeSpy = jest.spyOn(document, "removeEventListener");
+    const removeSpy = vi.spyOn(document, "removeEventListener");
 
     act(() => render(null, container));
 

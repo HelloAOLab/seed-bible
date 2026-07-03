@@ -1,6 +1,6 @@
 import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
-import { useMicroGrid } from "todayScreen.infrastructure.presentation.hooks.useMicroGrid";
+import { useMicroGrid } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useMicroGrid";
 
 class MockResizeObserver {
   callback: () => void;
@@ -79,7 +79,7 @@ describe("useMicroGrid", () => {
     }
     delete (globalThis as unknown as { ResizeObserver?: unknown })
       .ResizeObserver;
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(options: {

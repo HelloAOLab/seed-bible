@@ -1,32 +1,41 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { ScriptureMap } from "scriptureMap.components.ScriptureMap";
-import { ScriptureMapModes } from "scriptureMap.models.scriptureMap";
+import { ScriptureMap } from "../../../../packages/scripture-map/components/ScriptureMap";
+import { ScriptureMapModes } from "../../../../packages/scripture-map/models/scriptureMap";
 
-jest.mock("scriptureMap.contexts.Time.TimeContext", () => ({
+vi.mock("../../../../packages/scripture-map/contexts/Time/TimeContext", () => ({
   TimeProvider: ({ children }: { children: preact.ComponentChildren }) =>
     children,
 }));
 
-jest.mock("scriptureMap.contexts.ScriptureMap.ScriptureMapContext", () => ({
-  ScriptureMapProvider: ({
-    children,
-  }: {
-    children: preact.ComponentChildren;
-  }) => children,
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext",
+  () => ({
+    ScriptureMapProvider: ({
+      children,
+    }: {
+      children: preact.ComponentChildren;
+    }) => children,
+  })
+);
 
-jest.mock("scriptureMap.contexts.ReadingHistory.ReadingHistoryContext", () => ({
-  ReadingHistoryProvider: ({
-    children,
-  }: {
-    children: preact.ComponentChildren;
-  }) => children,
-}));
+vi.mock(
+  "../../../../packages/scripture-map/contexts/ReadingHistory/ReadingHistoryContext",
+  () => ({
+    ReadingHistoryProvider: ({
+      children,
+    }: {
+      children: preact.ComponentChildren;
+    }) => children,
+  })
+);
 
-jest.mock("scriptureMap.components.containers.ScriptureMapWrapper", () => ({
-  ScriptureMapWrapper: () => <div data-testid="wrapper" />,
-}));
+vi.mock(
+  "../../../../packages/scripture-map/components/containers/ScriptureMapWrapper",
+  () => ({
+    ScriptureMapWrapper: () => <div data-testid="wrapper" />,
+  })
+);
 
 function makeConfig(
   overrides: Partial<{ mode: string; project: unknown }> = {}
@@ -104,31 +113,11 @@ describe("ScriptureMap", () => {
     });
   });
 
+  // The `customCSS` prop / <style> injection was removed from ScriptureMap;
+  // the component now only accepts a `config` prop and never renders a <style> tag.
   describe("customCSS", () => {
-    it("injects a <style> tag when customCSS is provided", () => {
-      act(() =>
-        render(
-          <ScriptureMap
-            config={makeConfig()}
-            customCSS=".foo { color: red; }"
-          />,
-          container
-        )
-      );
-      const style = container.querySelector("style");
-      expect(style).not.toBeNull();
-      expect(style!.textContent).toBe(".foo { color: red; }");
-    });
-
-    it("does not inject a <style> tag when customCSS is undefined", () => {
+    it("does not inject a <style> tag", () => {
       act(() => render(<ScriptureMap config={makeConfig()} />, container));
-      expect(container.querySelector("style")).toBeNull();
-    });
-
-    it("does not inject a <style> tag when customCSS is empty string", () => {
-      act(() =>
-        render(<ScriptureMap config={makeConfig()} customCSS="" />, container)
-      );
       expect(container.querySelector("style")).toBeNull();
     });
   });

@@ -1,11 +1,15 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { Header } from "todayScreen.infrastructure.presentation.components.containers.Header";
-import { useHeader } from "todayScreen.infrastructure.presentation.hooks.useHeader";
+import { Header } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Header";
+import { useHeader } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useHeader";
 
-jest.mock("todayScreen.infrastructure.presentation.hooks.useHeader", () => ({
-  useHeader: jest.fn(),
-}));
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useHeader",
+  () => ({
+    useHeader: vi.fn(),
+  })
+);
 
 type HeaderResult = ReturnType<typeof useHeader>;
 
@@ -21,8 +25,8 @@ function makeHeaderResult(overrides: Partial<HeaderResult> = {}): HeaderResult {
     MaterialIcon,
     notificationIcon: "notifications",
     settingsIcon: "settings",
-    handleNotificationClick: jest.fn(),
-    handleSettingsClick: jest.fn(),
+    handleNotificationClick: vi.fn(),
+    handleSettingsClick: vi.fn(),
     ...overrides,
   } as unknown as HeaderResult;
 }
@@ -38,12 +42,12 @@ describe("Header", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(overrides: Partial<HeaderResult> = {}) {
     const result = makeHeaderResult(overrides);
-    (useHeader as jest.Mock).mockReturnValue(result);
+    (useHeader as Mock).mockReturnValue(result);
     act(() => render(<Header />, container));
     return result;
   }

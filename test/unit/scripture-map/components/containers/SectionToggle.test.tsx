@@ -1,14 +1,15 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import {
   SectionToggle,
   type SectionToggleProps,
-} from "scriptureMap.components.containers.SectionToggle";
-import { useSectionToggle } from "scriptureMap.hooks.useSectionToggle";
-import type { SectionInfo } from "bibleVizUtils.domain.models.arrangement";
+} from "../../../../../packages/scripture-map/components/containers/SectionToggle";
+import { useSectionToggle } from "../../../../../packages/scripture-map/hooks/useSectionToggle";
+import type { SectionInfo } from "../../../../../packages/seed-bible-utils/domain/models/arrangement";
 
-jest.mock("scriptureMap.hooks.useSectionToggle", () => ({
-  useSectionToggle: jest.fn(),
+vi.mock("../../../../../packages/scripture-map/hooks/useSectionToggle", () => ({
+  useSectionToggle: vi.fn(),
 }));
 
 function makeSection(overrides: Partial<SectionInfo> = {}): SectionInfo {
@@ -33,7 +34,7 @@ function makeProps(
   overrides: Record<string, unknown> = {}
 ): SectionToggleProps {
   return {
-    toggleShowSection: jest.fn(),
+    toggleShowSection: vi.fn(),
     showingContent: false as boolean | undefined,
     section: makeSection(),
     style: {} as React.CSSProperties,
@@ -48,13 +49,13 @@ describe("SectionToggle", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useSectionToggle as jest.Mock).mockReturnValue(makeHookResult());
+    (useSectionToggle as Mock).mockReturnValue(makeHookResult());
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(propOverrides: Record<string, unknown> = {}) {
@@ -64,13 +65,15 @@ describe("SectionToggle", () => {
   }
 
   function toggleEl() {
-    return container.querySelector<HTMLDivElement>(".toggle");
+    return container.querySelector<HTMLDivElement>(".scripture-map-toggle");
   }
 
   describe("structure", () => {
-    it("renders the .toggle.toggle-section wrapper", () => {
+    it("renders the .scripture-map-toggle.toggle-section wrapper", () => {
       setup();
-      expect(container.querySelector(".toggle.toggle-section")).not.toBeNull();
+      expect(
+        container.querySelector(".scripture-map-toggle.toggle-section")
+      ).not.toBeNull();
     });
 
     it("renders .toggle-title span", () => {
@@ -109,7 +112,7 @@ describe("SectionToggle", () => {
 
   describe("content", () => {
     it("renders toggleTitleContent in .toggle-title", () => {
-      (useSectionToggle as jest.Mock).mockReturnValue(
+      (useSectionToggle as Mock).mockReturnValue(
         makeHookResult({ toggleTitleContent: "History" })
       );
       setup();
@@ -119,7 +122,7 @@ describe("SectionToggle", () => {
     });
 
     it("renders toggleArrowContent in .toggle-arrow", () => {
-      (useSectionToggle as jest.Mock).mockReturnValue(
+      (useSectionToggle as Mock).mockReturnValue(
         makeHookResult({ toggleArrowContent: "keyboard_arrow_up" })
       );
       setup();
@@ -138,7 +141,7 @@ describe("SectionToggle", () => {
 
   describe("onClick", () => {
     it("calls toggleShowSection with sectionKey when clicked", () => {
-      const toggleShowSection = jest.fn();
+      const toggleShowSection = vi.fn();
       setup({ toggleShowSection, sectionKey: "my-section" });
       act(() => {
         toggleEl()!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
@@ -147,7 +150,7 @@ describe("SectionToggle", () => {
     });
 
     it("calls toggleShowSection exactly once per click", () => {
-      const toggleShowSection = jest.fn();
+      const toggleShowSection = vi.fn();
       setup({ toggleShowSection });
       act(() => {
         toggleEl()!.dispatchEvent(new MouseEvent("click", { bubbles: true }));

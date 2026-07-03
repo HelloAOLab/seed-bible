@@ -1,23 +1,36 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { ScriptureMapWrapper } from "scriptureMap.components.containers.ScriptureMapWrapper";
-import { useScriptureMapWrapper } from "scriptureMap.hooks.useScriptureMapWrapper";
+import { ScriptureMapWrapper } from "../../../../../packages/scripture-map/components/containers/ScriptureMapWrapper";
+import { useScriptureMapWrapper } from "../../../../../packages/scripture-map/hooks/useScriptureMapWrapper";
 
-jest.mock("scriptureMap.hooks.useScriptureMapWrapper", () => ({
-  useScriptureMapWrapper: jest.fn(),
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/hooks/useScriptureMapWrapper",
+  () => ({
+    useScriptureMapWrapper: vi.fn(),
+  })
+);
 
-jest.mock("scriptureMap.components.containers.Settings", () => ({
-  Settings: () => <div data-testid="settings" />,
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/components/containers/Settings",
+  () => ({
+    Settings: () => <div data-testid="settings" />,
+  })
+);
 
-jest.mock("scriptureMap.components.containers.Container", () => ({
-  Container: () => <div data-testid="container" />,
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/components/containers/Container",
+  () => ({
+    Container: () => <div data-testid="container" />,
+  })
+);
 
-jest.mock("scriptureMap.components.containers.Controls", () => ({
-  Controls: () => <div data-testid="controls" />,
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/components/containers/Controls",
+  () => ({
+    Controls: () => <div data-testid="controls" />,
+  })
+);
 
 function makeHookResult(style: React.CSSProperties = {}) {
   return { style };
@@ -29,19 +42,17 @@ describe("ScriptureMapWrapper", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useScriptureMapWrapper as jest.Mock).mockReturnValue(makeHookResult());
+    (useScriptureMapWrapper as Mock).mockReturnValue(makeHookResult());
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(style: React.CSSProperties = {}) {
-    (useScriptureMapWrapper as jest.Mock).mockReturnValue(
-      makeHookResult(style)
-    );
+    (useScriptureMapWrapper as Mock).mockReturnValue(makeHookResult(style));
     act(() => render(<ScriptureMapWrapper />, container));
     return container;
   }

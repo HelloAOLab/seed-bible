@@ -1,36 +1,37 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { HistoryCard } from "todayScreen.infrastructure.presentation.components.containers.HistoryCard";
-import { useHistoryCard } from "todayScreen.infrastructure.presentation.hooks.useHistoryCard";
+import { HistoryCard } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/HistoryCard";
+import { useHistoryCard } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useHistoryCard";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.hooks.useHistoryCard",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useHistoryCard",
   () => ({
-    useHistoryCard: jest.fn(),
+    useHistoryCard: vi.fn(),
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.containers.FilteredReading",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/FilteredReading",
   () => ({
-    FilteredReading: jest.fn(() => <div data-testid="filtered-reading" />),
+    FilteredReading: vi.fn(() => <div data-testid="filtered-reading" />),
   })
 );
 
 // Deps used by the internal ReadingHistoryTimelineSection.
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.today.TodayContext",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
   () => ({
-    useTodayContext: jest.fn(() => ({
+    useTodayContext: vi.fn(() => ({
       ReadingHistoryTimeline: () => <div data-testid="timeline" />,
     })),
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.hooks.useReadingHistoryTimeline",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useReadingHistoryTimeline",
   () => ({
-    useReadingHistoryTimeline: jest.fn(() => ({
+    useReadingHistoryTimeline: vi.fn(() => ({
       itemsData: [],
       timelineRef: { current: null },
       footer: {},
@@ -70,12 +71,12 @@ function makeResult(options: {
     MaterialIcon,
     userFilterOpen: { value: options.userFilterOpen ?? false },
     userFilterIcon: { value: options.userFilterIcon ?? "keyboard_arrow_down" },
-    handleUserFilterClick: options.handleUserFilterClick ?? jest.fn(),
+    handleUserFilterClick: options.handleUserFilterClick ?? vi.fn(),
     optionsRef: options.optionsRef ?? { current: null },
     optionsContainerRef: options.optionsContainerRef ?? { current: null },
     userFilters: options.userFilters ?? new Map(),
     userProfileMap: options.userProfileMap ?? new Map(),
-    handleFilterOptionClick: options.handleFilterOptionClick ?? jest.fn(),
+    handleFilterOptionClick: options.handleFilterOptionClick ?? vi.fn(),
     userFilterText: options.userFilterText ?? "Everyone",
     timespanFilterOptionsData: { value: options.timespanOptions ?? [] },
     selectedTimespanOptionId: {
@@ -97,12 +98,12 @@ describe("HistoryCard", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(options: Parameters<typeof makeResult>[0] = {}) {
     const result = makeResult(options);
-    (useHistoryCard as jest.Mock).mockReturnValue(result);
+    (useHistoryCard as Mock).mockReturnValue(result);
     act(() => render(<HistoryCard />, container));
     return result;
   }
@@ -165,7 +166,7 @@ describe("HistoryCard", () => {
     });
 
     it("calls handleFilterOptionClick with the user id when an option is clicked", () => {
-      const handleFilterOptionClick = jest.fn();
+      const handleFilterOptionClick = vi.fn();
       setup({
         userFilterOpen: true,
         handleFilterOptionClick,
@@ -182,14 +183,14 @@ describe("HistoryCard", () => {
     });
 
     it("calls handleUserFilterClick when the filter container is clicked", () => {
-      const handleUserFilterClick = jest.fn();
+      const handleUserFilterClick = vi.fn();
       setup({ handleUserFilterClick });
       act(() => q<HTMLDivElement>(".user-filter-container")!.click());
       expect(handleUserFilterClick).toHaveBeenCalledTimes(1);
     });
 
     it("stops propagation so clicking the options list does not toggle the filter", () => {
-      const handleUserFilterClick = jest.fn();
+      const handleUserFilterClick = vi.fn();
       setup({
         userFilterOpen: true,
         handleUserFilterClick,
@@ -211,13 +212,13 @@ describe("HistoryCard", () => {
             id: "twoDays",
             label: "Last 48h",
             isSelected: true,
-            onClick: jest.fn(),
+            onClick: vi.fn(),
           },
           {
             id: "week",
             label: "This week",
             isSelected: false,
-            onClick: jest.fn(),
+            onClick: vi.fn(),
           },
         ],
       });
@@ -231,7 +232,7 @@ describe("HistoryCard", () => {
     });
 
     it("calls the option's onClick when a timespan button is clicked", () => {
-      const onClick = jest.fn();
+      const onClick = vi.fn();
       setup({
         timespanOptions: [
           { id: "week", label: "This week", isSelected: false, onClick },

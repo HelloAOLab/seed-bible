@@ -4,14 +4,14 @@ import {
   SelectorOption,
   SelectorOptionClasses,
   type SelectorOptionProps,
-} from "scriptureMap.components.ui.SelectorOption";
+} from "../../../../../packages/scripture-map/components/ui/SelectorOption";
 
 function makeProps(
   overrides: Partial<SelectorOptionProps> = {}
 ): SelectorOptionProps {
   return {
     content: { title: "All" },
-    onClick: jest.fn(),
+    onClick: vi.fn(),
     selected: false,
     className: SelectorOptionClasses.UserFilter,
     ...overrides,
@@ -29,7 +29,7 @@ describe("SelectorOption", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(overrides: Partial<SelectorOptionProps> = {}) {
@@ -104,7 +104,7 @@ describe("SelectorOption", () => {
 
   describe("onClick", () => {
     it("calls onClick when the span is clicked", () => {
-      const onClick = jest.fn();
+      const onClick = vi.fn();
       setup({ onClick });
       act(() => {
         spanEl()!.dispatchEvent(new MouseEvent("click", { bubbles: true }));

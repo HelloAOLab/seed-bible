@@ -4,7 +4,7 @@ import {
   SocialSectionProvider,
   useSocialSectionContext,
   type SocialSectionContextType,
-} from "todayScreen.infrastructure.presentation.contexts.socialSection.SocialSectionContext";
+} from "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext";
 
 function makeValue(
   overrides: Partial<SocialSectionContextType> = {}
@@ -15,9 +15,9 @@ function makeValue(
     year: 2026,
     timespan: undefined,
     communityReading: {},
-    selectYear: jest.fn(),
-    selectDay: jest.fn(),
-    toggleUserFilter: jest.fn(),
+    selectYear: vi.fn(),
+    selectDay: vi.fn(),
+    toggleUserFilter: vi.fn(),
     ...overrides,
   };
 }
@@ -33,7 +33,7 @@ describe("SocialSectionContext", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it("provides the context value to consumers within the provider", () => {
@@ -71,7 +71,7 @@ describe("SocialSectionContext", () => {
   });
 
   it("throws when used outside of a provider", () => {
-    const consoleError = jest
+    const consoleError = vi
       .spyOn(console, "error")
       .mockImplementation(() => {});
 

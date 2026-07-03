@@ -1,14 +1,18 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import {
   TestamentToggle,
   type TestamentToggleProps,
-} from "scriptureMap.components.containers.TestamentToggle";
-import { useTestamentToggle } from "scriptureMap.hooks.useTestamentToggle";
+} from "../../../../../packages/scripture-map/components/containers/TestamentToggle";
+import { useTestamentToggle } from "../../../../../packages/scripture-map/hooks/useTestamentToggle";
 
-jest.mock("scriptureMap.hooks.useTestamentToggle", () => ({
-  useTestamentToggle: jest.fn(),
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/hooks/useTestamentToggle",
+  () => ({
+    useTestamentToggle: vi.fn(),
+  })
+);
 
 function makeHookResult(overrides: Record<string, unknown> = {}) {
   return {
@@ -23,7 +27,7 @@ function makeProps(
   overrides: Partial<TestamentToggleProps> = {}
 ): TestamentToggleProps {
   return {
-    toggleshowContent: jest.fn(),
+    toggleshowContent: vi.fn(),
     showingContent: false,
     ...overrides,
   };
@@ -35,13 +39,13 @@ describe("TestamentToggle", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useTestamentToggle as jest.Mock).mockReturnValue(makeHookResult());
+    (useTestamentToggle as Mock).mockReturnValue(makeHookResult());
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(propOverrides: Partial<TestamentToggleProps> = {}) {
@@ -55,10 +59,10 @@ describe("TestamentToggle", () => {
   }
 
   describe("structure", () => {
-    it("renders the .toggle.toggle-testament wrapper", () => {
+    it("renders the .scripture-map-toggle.toggle-testament wrapper", () => {
       setup();
       expect(
-        container.querySelector(".toggle.toggle-testament")
+        container.querySelector(".scripture-map-toggle.toggle-testament")
       ).not.toBeNull();
     });
 
@@ -80,7 +84,7 @@ describe("TestamentToggle", () => {
 
   describe("content from hook", () => {
     it("renders toggleTitleContent in .toggle-title", () => {
-      (useTestamentToggle as jest.Mock).mockReturnValue(
+      (useTestamentToggle as Mock).mockReturnValue(
         makeHookResult({ toggleTitleContent: "New Testament" })
       );
       setup();
@@ -90,7 +94,7 @@ describe("TestamentToggle", () => {
     });
 
     it("renders toggleDescriptionContent in .toggle-description", () => {
-      (useTestamentToggle as jest.Mock).mockReturnValue(
+      (useTestamentToggle as Mock).mockReturnValue(
         makeHookResult({ toggleDescriptionContent: "27 books" })
       );
       setup();
@@ -100,7 +104,7 @@ describe("TestamentToggle", () => {
     });
 
     it("renders toggleArrowContent in .toggle-arrow", () => {
-      (useTestamentToggle as jest.Mock).mockReturnValue(
+      (useTestamentToggle as Mock).mockReturnValue(
         makeHookResult({ toggleArrowContent: "keyboard_arrow_up" })
       );
       setup();
@@ -112,7 +116,7 @@ describe("TestamentToggle", () => {
 
   describe("onClick", () => {
     it("calls toggleshowContent when the wrapper is clicked", () => {
-      const toggleshowContent = jest.fn();
+      const toggleshowContent = vi.fn();
       setup({ toggleshowContent });
       act(() => {
         toggleEl()!.dispatchEvent(new MouseEvent("click", { bubbles: true }));

@@ -1,15 +1,16 @@
+import type { MockInstance } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useWhyChanged } from "scriptureMap.hooks.useWhyChanged";
+import { useWhyChanged } from "../../../../packages/scripture-map/hooks/useWhyChanged";
 
 describe("useWhyChanged", () => {
   let container: HTMLDivElement;
-  let consoleSpy: jest.SpyInstance;
+  let consoleSpy: MockInstance;
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    consoleSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+    consoleSpy = vi.spyOn(console, "log").mockImplementation(() => {});
   });
 
   afterEach(() => {

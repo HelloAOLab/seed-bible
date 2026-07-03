@@ -1,39 +1,52 @@
+import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { TestamentContainer } from "scriptureMap.components.containers.TestamentContainer";
-import { useTestamentContainer } from "scriptureMap.hooks.useTestamentContainer";
-import type { TestamentInfo } from "bibleVizUtils.domain.models.arrangement";
+import { TestamentContainer } from "../../../../../packages/scripture-map/components/containers/TestamentContainer";
+import { useTestamentContainer } from "../../../../../packages/scripture-map/hooks/useTestamentContainer";
+import type { TestamentInfo } from "../../../../../packages/seed-bible-utils/domain/models/arrangement";
 
-jest.mock("scriptureMap.hooks.useTestamentContainer", () => ({
-  useTestamentContainer: jest.fn(),
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/hooks/useTestamentContainer",
+  () => ({
+    useTestamentContainer: vi.fn(),
+  })
+);
 
-jest.mock("scriptureMap.contexts.Testament.TestamentContext", () => ({
-  TestamentProvider: ({ children }: { children: preact.ComponentChildren }) =>
-    children,
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/contexts/Testament/TestamentContext",
+  () => ({
+    TestamentProvider: ({ children }: { children: preact.ComponentChildren }) =>
+      children,
+  })
+);
 
-jest.mock("scriptureMap.components.containers.TestamentToggle", () => ({
-  TestamentToggle: ({
-    toggleshowContent,
-    showingContent,
-  }: {
-    toggleshowContent: () => void;
-    showingContent: boolean;
-  }) => (
-    <div
-      data-testid="testament-toggle"
-      data-showing={String(showingContent)}
-      onClick={toggleshowContent}
-    />
-  ),
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/components/containers/TestamentToggle",
+  () => ({
+    TestamentToggle: ({
+      toggleshowContent,
+      showingContent,
+    }: {
+      toggleshowContent: () => void;
+      showingContent: boolean;
+    }) => (
+      <div
+        data-testid="testament-toggle"
+        data-showing={String(showingContent)}
+        onClick={toggleshowContent}
+      />
+    ),
+  })
+);
 
-jest.mock("scriptureMap.components.containers.TestamentContent", () => ({
-  TestamentContent: ({ hidden }: { hidden: boolean }) => (
-    <div data-testid="testament-content" data-hidden={String(hidden)} />
-  ),
-}));
+vi.mock(
+  "../../../../../packages/scripture-map/components/containers/TestamentContent",
+  () => ({
+    TestamentContent: ({ hidden }: { hidden: boolean }) => (
+      <div data-testid="testament-content" data-hidden={String(hidden)} />
+    ),
+  })
+);
 
 function makeTestament(overrides: Partial<TestamentInfo> = {}): TestamentInfo {
   return {
@@ -46,7 +59,7 @@ function makeTestament(overrides: Partial<TestamentInfo> = {}): TestamentInfo {
 function makeHookResult(overrides: Record<string, unknown> = {}) {
   return {
     showTestamentLabels: false,
-    toggleshowContent: jest.fn(),
+    toggleshowContent: vi.fn(),
     showContent: true,
     ...overrides,
   };
@@ -58,13 +71,13 @@ describe("TestamentContainer", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
-    (useTestamentContainer as jest.Mock).mockReturnValue(makeHookResult());
+    (useTestamentContainer as Mock).mockReturnValue(makeHookResult());
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(
@@ -73,7 +86,7 @@ describe("TestamentContainer", () => {
     hookOverrides: Record<string, unknown> = {}
   ) {
     if (Object.keys(hookOverrides).length > 0) {
-      (useTestamentContainer as jest.Mock).mockReturnValue(
+      (useTestamentContainer as Mock).mockReturnValue(
         makeHookResult(hookOverrides)
       );
     }
@@ -123,7 +136,7 @@ describe("TestamentContainer", () => {
     });
 
     it("passes toggleshowContent to TestamentToggle", () => {
-      const toggleshowContent = jest.fn();
+      const toggleshowContent = vi.fn();
       setup(makeTestament(), 0, {
         showTestamentLabels: true,
         toggleshowContent,

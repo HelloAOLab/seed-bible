@@ -1,21 +1,22 @@
+import type { Mock } from "vitest";
 import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
-import { SocialSection } from "todayScreen.infrastructure.presentation.components.containers.SocialSection";
-import { useSocialSection } from "todayScreen.infrastructure.presentation.hooks.useSocialSection";
-import { SocialSectionProvider } from "todayScreen.infrastructure.presentation.contexts.socialSection.SocialSectionContext";
-import { TitledSection } from "todayScreen.infrastructure.presentation.components.ui.TitledSection";
+import { SocialSection } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/SocialSection";
+import { useSocialSection } from "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useSocialSection";
+import { SocialSectionProvider } from "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext";
+import { TitledSection } from "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/TitledSection";
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.hooks.useSocialSection",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/hooks/useSocialSection",
   () => ({
-    useSocialSection: jest.fn(),
+    useSocialSection: vi.fn(),
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.contexts.socialSection.SocialSectionContext",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext",
   () => ({
-    SocialSectionProvider: jest.fn(
+    SocialSectionProvider: vi.fn(
       ({ children }: { value: unknown; children: ComponentChildren }) => (
         <div data-testid="social-provider">{children}</div>
       )
@@ -23,10 +24,10 @@ jest.mock(
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.ui.TitledSection",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/components/ui/TitledSection",
   () => ({
-    TitledSection: jest.fn(
+    TitledSection: vi.fn(
       ({ title, children }: { title: string; children: ComponentChildren }) => (
         <div data-testid="titled-section" data-title={title}>
           {children}
@@ -36,10 +37,10 @@ jest.mock(
   })
 );
 
-jest.mock(
-  "todayScreen.infrastructure.presentation.components.containers.HistoryCard",
+vi.mock(
+  "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/HistoryCard",
   () => ({
-    HistoryCard: jest.fn(() => <div data-testid="history-card" />),
+    HistoryCard: vi.fn(() => <div data-testid="history-card" />),
   })
 );
 
@@ -50,12 +51,12 @@ function makeResult(overrides: Partial<Result> = {}): Result {
     title: "COMMUNITY",
     userFilters: new Map([["u1", true]]),
     userProfileMap: new Map(),
-    toggleUserFilter: jest.fn(),
+    toggleUserFilter: vi.fn(),
     year: 2026,
     timespan: { from: 1, to: 2 },
     communityReading: {},
-    selectYear: jest.fn(),
-    selectDay: jest.fn(),
+    selectYear: vi.fn(),
+    selectDay: vi.fn(),
     ...overrides,
   } as unknown as Result;
 }
@@ -71,12 +72,12 @@ describe("SocialSection", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(overrides: Partial<Result> = {}) {
     const result = makeResult(overrides);
-    (useSocialSection as jest.Mock).mockReturnValue(result);
+    (useSocialSection as Mock).mockReturnValue(result);
     act(() => render(<SocialSection />, container));
     return result;
   }
@@ -101,7 +102,7 @@ describe("SocialSection", () => {
 
   it("passes the social-section state (without title) to the provider value", () => {
     const result = setup();
-    const value = (SocialSectionProvider as jest.Mock).mock.calls[0]![0].value;
+    const value = (SocialSectionProvider as Mock).mock.calls[0]![0].value;
 
     expect(value).toEqual({
       userFilters: result.userFilters,
@@ -118,8 +119,6 @@ describe("SocialSection", () => {
 
   it("forwards the title only to TitledSection, not into the provider value", () => {
     setup({ title: "COMMUNITY" });
-    expect((TitledSection as jest.Mock).mock.calls[0]![0].title).toBe(
-      "COMMUNITY"
-    );
+    expect((TitledSection as Mock).mock.calls[0]![0].title).toBe("COMMUNITY");
   });
 });

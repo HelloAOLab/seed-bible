@@ -1,12 +1,12 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { useTooltip } from "scriptureMap.hooks.useTooltip";
+import { useTooltip } from "../../../../packages/scripture-map/hooks/useTooltip";
 
 describe("useTooltip", () => {
   let container: HTMLDivElement;
 
   function mockRect(overrides: Partial<DOMRect> = {}) {
-    jest.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue({
       width: 0,
       height: 0,
       top: 0,
@@ -33,7 +33,7 @@ describe("useTooltip", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   function setup(

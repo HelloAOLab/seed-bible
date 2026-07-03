@@ -3,7 +3,7 @@ import { act } from "preact/test-utils";
 import {
   Chapter,
   type Props,
-} from "todayScreen.infrastructure.presentation.components.containers.Chapter";
+} from "../../../../../../../packages/today-screen/infrastructure/presentation/components/containers/Chapter";
 
 type UserData = Props["usersData"][number];
 
@@ -37,14 +37,14 @@ describe("Chapter", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   function setup(props: Partial<Props> = {}) {
     const fullProps: Props = {
       number: 1,
       usersData: [],
-      handleClick: jest.fn(),
+      handleClick: vi.fn(),
       ...props,
     };
     act(() => render(<Chapter {...fullProps} />, container));
