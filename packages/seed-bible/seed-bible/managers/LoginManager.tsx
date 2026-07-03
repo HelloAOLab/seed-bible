@@ -424,6 +424,7 @@ export function createLoginManager({
     userInfo,
     authBot: userInfo,
     profile,
+    profilePromise,
 
     isLoginOpen,
 
