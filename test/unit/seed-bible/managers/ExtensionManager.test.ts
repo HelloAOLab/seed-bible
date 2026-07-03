@@ -373,7 +373,7 @@ describe("createExtensionManager", () => {
   ) {
     vi.doMock(url, async () => {
       loadedModules.push(url);
-      return moduleFactory ? await moduleFactory() : {};
+      return moduleFactory ? await moduleFactory() : { default: vi.fn() };
     });
   }
 
@@ -710,7 +710,7 @@ describe("createExtensionManager", () => {
 
     mockExtensionModule("pkg://slow", async () => {
       await installGate;
-      return {};
+      return { default: vi.fn() };
     });
 
     const extension = {
@@ -903,6 +903,133 @@ describe("createExtensionManager", () => {
     expect(known).toHaveLength(1);
     expect(known[0]?.extension?.meta.id).toBe("ext.unload-known");
     expect(known[0]?.installed).toBe(false);
+  });
+
+  it("loadExtension() re-invokes a url-based module's default export so an extension can be reinstalled after being unloaded", async () => {
+    const manager = createExtensionManager(login);
+    const defaultFn = vi.fn(() => {
+      registerExtension({ id: "ext.reinstall", init: () => ({}) });
+    });
+    mockExtensionModule("pkg://reinstall", () => ({ default: defaultFn }));
+
+    const extension = {
+      url: "pkg://reinstall",
+      meta: {
+        id: "ext.reinstall",
+        translations: {
+          en: { title: "Reinstall", description: "Reinstall extension" },
+        },
+      },
+    };
+
+    expect(await manager.loadExtension(extension)).toBe(true);
+    expect(defaultFn).toHaveBeenCalledTimes(1);
+    expect(loadedModules).toEqual(["pkg://reinstall"]);
+    expect(
+      ExtensionInitalizer.getInstance().isExtensionRegistered("ext.reinstall")
+    ).toBe(true);
+
+    manager.unloadExtension("ext.reinstall");
+    expect(
+      ExtensionInitalizer.getInstance().isExtensionRegistered("ext.reinstall")
+    ).toBe(false);
+
+    expect(await manager.loadExtension(extension)).toBe(true);
+    // Called a second time even though the module body did NOT re-evaluate
+    // (loadedModules is still length 1) - this is the fix: ExtensionManager
+    // re-invokes the cached default export explicitly.
+    expect(defaultFn).toHaveBeenCalledTimes(2);
+    expect(loadedModules).toEqual(["pkg://reinstall"]);
+    expect(
+      ExtensionInitalizer.getInstance().isExtensionRegistered("ext.reinstall")
+    ).toBe(true);
+  });
+
+  it("loadExtension() re-invokes an ImportExtension's default export so an extension can be reinstalled after being unloaded", async () => {
+    const manager = createExtensionManager(login);
+    const defaultFn = vi.fn(() => {
+      registerExtension({ id: "ext.import-reinstall", init: () => ({}) });
+    });
+    const extension = {
+      import: () => Promise.resolve({ default: defaultFn }),
+      meta: {
+        id: "ext.import-reinstall",
+        translations: {
+          en: {
+            title: "Import Reinstall",
+            description: "Import reinstall extension",
+          },
+        },
+      },
+    };
+
+    expect(await manager.loadExtension(extension)).toBe(true);
+    expect(defaultFn).toHaveBeenCalledTimes(1);
+    expect(
+      ExtensionInitalizer.getInstance().isExtensionRegistered(
+        "ext.import-reinstall"
+      )
+    ).toBe(true);
+
+    manager.unloadExtension("ext.import-reinstall");
+    expect(
+      ExtensionInitalizer.getInstance().isExtensionRegistered(
+        "ext.import-reinstall"
+      )
+    ).toBe(false);
+
+    expect(await manager.loadExtension(extension)).toBe(true);
+    expect(defaultFn).toHaveBeenCalledTimes(2);
+    expect(
+      ExtensionInitalizer.getInstance().isExtensionRegistered(
+        "ext.import-reinstall"
+      )
+    ).toBe(true);
+  });
+
+  it("loadExtension() fails and logs when a url-based module has no default export function", async () => {
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://no-default", () => ({}));
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+
+    const loaded = await manager.loadExtension({
+      url: "pkg://no-default",
+      meta: {
+        id: "ext.no-default",
+        translations: { en: { title: "No default", description: "x" } },
+      },
+    });
+
+    expect(loaded).toBe(false);
+    expect(errorSpy).toHaveBeenCalled();
+    expect(
+      ExtensionInitalizer.getInstance().isExtensionRegistered("ext.no-default")
+    ).toBe(false);
+  });
+
+  it("loadExtension() fails and logs when an ImportExtension module has no default export function", async () => {
+    const manager = createExtensionManager(login);
+    const errorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => undefined);
+
+    const loaded = await manager.loadExtension({
+      import: () => Promise.resolve({}),
+      meta: {
+        id: "ext.import-no-default",
+        translations: { en: { title: "No default", description: "x" } },
+      },
+    });
+
+    expect(loaded).toBe(false);
+    expect(errorSpy).toHaveBeenCalled();
+    expect(
+      ExtensionInitalizer.getInstance().isExtensionRegistered(
+        "ext.import-no-default"
+      )
+    ).toBe(false);
   });
 
   it("getAllExtensionsAsSet() returns undefined and warns when there are no extension packages", () => {
