@@ -39,6 +39,36 @@ jobs:
       - name: Build
         run: |
           pnpm build
+      - name: Report build sizes
+        run: |
+          {
+            echo "### Build Output Sizes"
+            echo ""
+            echo "| Output | Size |"
+            echo "| --- | --- |"
+
+            OUTPUTS=(
+              "Client bundle (\`standalone/dist/client\`)|standalone/dist/client"
+              "SSR bundle (\`standalone/dist/server\`)|standalone/dist/server"
+              "Server bundle (\`server/dist/index.js\`)|server/dist/index.js"
+              "Patterns (\`pattern-dist\`)|pattern-dist"
+            )
+
+            total=0
+            for entry in "${OUTPUTS[@]}"; do
+              label="${entry%%|*}"
+              path="${entry##*|}"
+              if [ -e "$path" ]; then
+                bytes=$(du -sb "$path" | cut -f1)
+                total=$((total + bytes))
+                echo "| $label | $(numfmt --to=iec --suffix=B "$bytes") |"
+              else
+                echo "| $label | _not found_ |"
+              fi
+            done
+
+            echo "| **Total** | **$(numfmt --to=iec --suffix=B "$total")** |"
+          } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v7
         with:
           name: "client-stats.html"
