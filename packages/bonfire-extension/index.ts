@@ -1,1 +1,1 @@
-import "./ext_Bonfire/main/init";
+export { default } from "./ext_Bonfire/main/init";
