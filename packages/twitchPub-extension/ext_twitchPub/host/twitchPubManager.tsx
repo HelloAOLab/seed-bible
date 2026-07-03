@@ -9,6 +9,7 @@ import { type SeedBibleState } from "seed-bible";
 import sendMessage from "./sendMessage";
 import { fromByteArray } from "base64-js";
 import { v4 as uuid } from "uuid";
+import { type TranscriptionManager } from "@seed-bible/ai-transcript-extension/transcriptionManager";
 
 const sendAnnouncement = (
   accessToken: string,
@@ -157,16 +158,20 @@ function createRateLimiter(
 
 export function CreateTwitchPubState({
   toast,
+  transcriptionManager,
+  seedBibleState,
 }: {
   toast: (message: string) => void;
+  transcriptionManager: TranscriptionManager;
+  seedBibleState: SeedBibleState;
 }): TwitchPubState {
   /** manages twitch interface state */
   const interfaceEnabled = signal<boolean>(
-    !!window.localStorage?.interfaceEnabled || false
+    window.localStorage?.interfaceEnabled === "true" || false
   );
   const currentPage = signal<
     "login" | "authorization" | "interface" | "settings"
-  >(window.localStorage?.currentPage || "login");
+  >(window.localStorage?.currentPage || "interface");
   const loading = signal<boolean>(false);
   const uiHidden = signal<boolean>(false);
   const savedSettings = (() => {
@@ -183,6 +188,7 @@ export function CreateTwitchPubState({
       enabled: savedSettings?.translation?.enabled ?? false,
     }),
     highlight: signal({ enabled: savedSettings?.highlight?.enabled ?? true }),
+    aiFollow: signal({ enabled: savedSettings?.aiFollow?.enabled ?? false }),
     announcementTimer: signal({
       enabled: savedSettings?.announcementTimer?.enabled ?? false,
       interval: savedSettings?.announcementTimer?.interval ?? 0,
@@ -190,6 +196,8 @@ export function CreateTwitchPubState({
   });
   let announcementTimerInterval: number | null = null;
   let uiHiddenTimeout: number | null = null;
+  const navigatingRef = signal<string | null>(null);
+  let navMsgTimeout: number | null = null;
 
   const deviceCode = signal<string | null>(
     window.localStorage?.deviceCode || null
@@ -392,6 +400,7 @@ export function CreateTwitchPubState({
       JSON.stringify({
         translation: settings.value.translation.value,
         highlight: settings.value.highlight.value,
+        aiFollow: settings.value.aiFollow.value,
         announcementTimer: settings.value.announcementTimer.value,
       })
     );
@@ -401,8 +410,125 @@ export function CreateTwitchPubState({
     );
   });
 
+  const initializeAITranscription = async () => {
+    if (
+      settings.value.aiFollow.value.enabled &&
+      transcriptionManager &&
+      interfaceEnabled.value
+    ) {
+      await transcriptionManager.checkLogin();
+      if (!transcriptionManager.isLoggedIn.value) {
+        console.warn("User is not logged in to the transcription service.");
+        settings.value.aiFollow.value = {
+          ...settings.value.aiFollow.value,
+          enabled: false,
+        };
+        return;
+      }
+      transcriptionManager.mode.value = "live";
+      transcriptionManager.startLive();
+    } else if (transcriptionManager) {
+      transcriptionManager.stopLive();
+    }
+  };
+
+  effect(() => {
+    initializeAITranscription();
+  });
+
+  async function highlightRefVerse(
+    seedBibleState: SeedBibleState,
+    ref: string,
+    interval = 5000
+  ): Promise<void> {
+    const [book, chapter, verse] = ref.split(":");
+
+    const selectedTabId = seedBibleState.tabs.selectedTabId;
+    let selectedTab = seedBibleState.tabs.tabs.value.find(
+      (tab) => tab.id === selectedTabId.value
+    );
+
+    const currentReadingState = seedBibleState.app.currentReadingState.value;
+
+    if (selectedTab && book) {
+      const { bookId, chapterNumber } = selectedTab.readingState;
+
+      if (bookId.value !== book || chapterNumber.value !== Number(chapter)) {
+        // check if book exists in tabs
+        const existingTab = seedBibleState.tabs.tabs.value.find(
+          (tab) =>
+            tab.readingState.bookId.value === book &&
+            tab.readingState.chapterNumber.value === Number(chapter)
+        );
+        if (existingTab) {
+          seedBibleState.app.selectTab(existingTab.id);
+          selectedTab = existingTab;
+        } else {
+          const newTab = seedBibleState.tabs.addTab(undefined, {
+            initialTranslationId: currentReadingState?.translationId || "ABB",
+            initialBookId: book,
+            initialChapterNumber: Number(chapter),
+          });
+          seedBibleState.app.selectTab(newTab.id);
+          selectedTab = newTab;
+        }
+      }
+
+      await selectedTab.readingState.selectTranslationAndChapter(
+        currentReadingState?.translationId || "ABB",
+        book,
+        Number(chapter) || 1,
+        verse ? { scrollToVerse: Number(verse) } : {}
+      );
+      if (verse && chapter) {
+        selectedTab.readingState.decorateVerses(
+          book,
+          Number(chapter),
+          Number(verse),
+          {
+            className: "sb-verse-decoration-initial-verse-highlight",
+            removeAfterMs: interval,
+          }
+        );
+        rateLimiter(
+          "refHighlight",
+          JSON.stringify({
+            bookId: book,
+            chapter: Number(chapter),
+            verse: Number(verse),
+          })
+        );
+      }
+    }
+  }
+
+  effect(() => {
+    if (
+      settings.value.aiFollow.value.enabled &&
+      transcriptionManager &&
+      transcriptionManager.liveSegments.value.length > 0
+    ) {
+      const latestSegment =
+        transcriptionManager.liveSegments.value[
+          transcriptionManager.liveSegments.value.length - 1
+        ];
+      const latestRef = latestSegment?.references[0] || null;
+      if (latestRef) {
+        navigatingRef.value = latestRef;
+        if (navMsgTimeout) clearTimeout(navMsgTimeout);
+        navMsgTimeout = setTimeout(() => {
+          navigatingRef.value = null;
+          highlightRefVerse(seedBibleState, latestRef, 5000).catch((err) => {
+            console.error("Error highlighting verse:", err);
+          });
+        }, 2000) as unknown as number;
+      }
+    }
+  });
+
   return {
     interfaceEnabled,
+    navigatingRef,
     twitchConfig,
     currentPage,
     deviceCode,

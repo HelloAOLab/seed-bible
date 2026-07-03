@@ -3,11 +3,18 @@ import QRCodeComponent from "./QRCode";
 import { TwitchIcon, SettingsIcon } from "./icons";
 import { type TwitchPubState } from "./interface";
 import { useI18n } from "seed-bible/i18n";
-import { closeInterface } from "./closeInterface";
+import { fmtRef } from "@seed-bible/ai-transcript-extension/highlight";
 
 const TwitchInterface = (props: { state: TwitchPubState }) => {
-  const { uiHidden, qrValue, setCurrentPage, hideUI, showUI, toast } =
-    props.state;
+  const {
+    uiHidden,
+    qrValue,
+    navigatingRef,
+    setCurrentPage,
+    hideUI,
+    showUI,
+    interfaceEnabled,
+  } = props.state;
 
   effect(() => {
     const draggableElement = document.getElementById("draggable-container");
@@ -85,7 +92,12 @@ const TwitchInterface = (props: { state: TwitchPubState }) => {
             >
               <SettingsIcon width={18} height={18} />
             </button>
-            <button className="icon-btn" onClick={() => closeInterface()}>
+            <button
+              className="icon-btn"
+              onClick={() => {
+                interfaceEnabled.value = false;
+              }}
+            >
               <span className="material-symbols-outlined">close</span>
             </button>
           </div>
@@ -96,12 +108,17 @@ const TwitchInterface = (props: { state: TwitchPubState }) => {
               value={qrValue.value}
               size={150}
               uiHidden={uiHidden.value}
-              onClick={() => {
-                navigator.clipboard.writeText(qrValue.value);
-                toast("Link copied to clipboard!");
-              }}
             />
           </div>
+          {navigatingRef.value && (
+            <span key={navigatingRef.value} className="twitchPub-nav-notice">
+              {t("twitchInterface.navigatingTo", {
+                ns: "ext_twitchPub",
+                defaultValue: "Navigating to {{ref}}",
+                ref: fmtRef(navigatingRef.value),
+              })}
+            </span>
+          )}
 
           <span
             style={
