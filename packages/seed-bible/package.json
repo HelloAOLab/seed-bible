@@ -36,6 +36,7 @@
     "typesense": "catalog:",
     "zod": "catalog:",
     "axios": "catalog:",
-    "react-avatar-editor": "15.1.0"
+    "react-avatar-editor": "15.1.0",
+    "rxjs": "catalog:"
   }
 }
