@@ -9,4 +9,6 @@ bun.lock
 !.vscode/settings.json
 !.vscode/launch.json
 ./cursor/*
+
+secrets.json
 .pnpm-store/*

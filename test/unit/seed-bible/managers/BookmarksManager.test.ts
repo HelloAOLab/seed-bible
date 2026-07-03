@@ -47,6 +47,7 @@ describe("BookmarksManager", () => {
     login = {
       authBot: signal(null),
       userId: signal("user-1"),
+      connectionId: "conn-1",
       profile: signal(null),
       updateProfile: vi.fn().mockResolvedValue(undefined),
       login: vi.fn().mockResolvedValue(undefined),
@@ -59,12 +60,10 @@ describe("BookmarksManager", () => {
       requestLoginByEmail: vi
         .fn()
         .mockResolvedValue({ success: true, requestId: "req-1" }),
-      submitLoginCode: vi
-        .fn()
-        .mockResolvedValue({
-          success: true,
-          userInfo: { id: "user-1", email: "test@example.com" },
-        }),
+      submitLoginCode: vi.fn().mockResolvedValue({
+        success: true,
+        userInfo: { id: "user-1", email: "test@example.com" },
+      }),
     };
   });
 
