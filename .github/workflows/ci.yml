@@ -72,8 +72,8 @@ jobs:
             echo ""
             echo "#### Client Chunks"
             echo ""
-            echo "| Chunk | Size |"
-            echo "| --- | --- |"
+            echo "| Chunk | Raw | Gzip |"
+            echo "| --- | --- | --- |"
 
             shopt -s nullglob
             CHUNKS=(
@@ -86,12 +86,29 @@ jobs:
               files=($pattern)
               if [ "${#files[@]}" -gt 0 ]; then
                 bytes=$(du -cb "${files[@]}" | tail -1 | cut -f1)
-                echo "| $label | $(numfmt --to=iec --suffix=B "$bytes") |"
+                gzip_bytes=$(cat "${files[@]}" | gzip -c | wc -c)
+                echo "| $label | $(numfmt --to=iec --suffix=B "$bytes") | $(numfmt --to=iec --suffix=B "$gzip_bytes") |"
               else
-                echo "| $label | _not found_ |"
+                echo "| $label | _not found_ | _not found_ |"
               fi
             done
             shopt -u nullglob
+
+            echo ""
+            echo "#### Top 5 Largest Files (client build)"
+            echo ""
+            echo "| File | Raw | Gzip |"
+            echo "| --- | --- | --- |"
+
+            if [ -d standalone/dist/client ]; then
+              find standalone/dist/client -type f ! -name "*.map" -printf '%s\t%p\n' | sort -rn | head -5 | while IFS=$'\t' read -r bytes file; do
+                gzip_bytes=$(gzip -c "$file" | wc -c)
+                rel="${file#standalone/dist/client/}"
+                echo "| \`$rel\` | $(numfmt --to=iec --suffix=B "$bytes") | $(numfmt --to=iec --suffix=B "$gzip_bytes") |"
+              done
+            else
+              echo "| _not found_ | | |"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v7
         with:
