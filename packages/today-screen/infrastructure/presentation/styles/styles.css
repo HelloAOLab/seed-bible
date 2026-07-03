@@ -701,6 +701,7 @@
 
 .today-container .reading-history-timeline-container {
   grid-column: 1 / 3;
+  grid-row: unset;
 }
 
 .today-container .reading-history-timeline {

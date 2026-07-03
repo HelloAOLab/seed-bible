@@ -1,5 +1,7 @@
-const recencyThresholdTimeSeconds = 1; // TODO: Find the real value in previous versions at thisBot.masks.readingHistoryRecencyThresholdTimeSeconds;
-
+const tenDaysAgo = new Date();
+tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+tenDaysAgo.setHours(0, 0, 0, 0);
+const recencyThresholdTimeSeconds = Math.floor(tenDaysAgo.getTime() / 1000);
 export class ReadingHistoryConfigProvider {
   getRecencyThresholdTimeSeconds() {
     return recencyThresholdTimeSeconds;
