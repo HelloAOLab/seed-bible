@@ -18,7 +18,7 @@ const MaterialIcon = ({ children }: { children: string }) => (
 
 interface ConnectedUser {
   profile?: { pictureUrl?: string | null } | undefined;
-  color: string;
+  visual: { color: string };
   userId?: string;
   connectionId: string;
 }
@@ -118,13 +118,13 @@ describe("usePresenceCard", () => {
           users: [
             {
               profile: { pictureUrl: "http://a.png" },
-              color: "rgb(1, 2, 3)",
+              visual: { color: "rgb(1, 2, 3)" },
               userId: "u1",
               connectionId: "c1",
             },
             {
               profile: undefined,
-              color: "rgb(4, 5, 6)",
+              visual: { color: "rgb(4, 5, 6)" },
               connectionId: "c2",
             },
           ],
@@ -154,7 +154,7 @@ describe("usePresenceCard", () => {
     it("is true with a session and at least one connected user", () => {
       const result = setup([
         makeSession({
-          users: [{ color: "rgb(0,0,0)", connectionId: "c1" }],
+          users: [{ visual: { color: "rgb(0,0,0)" }, connectionId: "c1" }],
         }),
       ]);
       expect(result.current.showCard.value).toBe(true);

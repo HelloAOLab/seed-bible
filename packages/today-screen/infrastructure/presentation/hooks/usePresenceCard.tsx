@@ -43,7 +43,7 @@ export const usePresenceCard: UsePresenceCard = () => {
 
     return session.value.connectedUsers.value.map((user) => ({
       pictureUrl: user.profile?.pictureUrl ?? undefined,
-      color: user.color,
+      color: user.visual.color,
       icon: userDeterministicIdentityProvider.getIconById(
         user.userId ?? user.connectionId
       ),

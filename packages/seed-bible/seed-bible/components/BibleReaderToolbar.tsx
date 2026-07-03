@@ -18,8 +18,8 @@ import {
   getSelfDisplayName,
   openBookmarkCategoryModal,
 } from "./Tabs";
-import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
-import { getExtensionExports } from "../managers";
+// import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
+// import { getExtensionExports } from "../managers";
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
 

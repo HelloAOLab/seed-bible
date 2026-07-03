@@ -27,10 +27,10 @@ import {
   handleGridKeyNav,
   handleHorizontalListKeyNav,
 } from "../components/KeyboardNav";
-import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
+// import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
 import { SessionUserAvatar } from "./Avatar";
 import { useEffect, useRef } from "preact/hooks";
-import { getExtensionExports } from "../managers";
+// import { getExtensionExports } from "../managers";
 
 interface SidebarProps {
   state: SeedBibleState;
