@@ -7,9 +7,24 @@ on:
   push:
   pull_request:
 
+# Cancel a superseded run for the same branch/PR — the base-branch build below
+# makes each run meaningfully more expensive, so rapid pushes shouldn't pile up.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    # `issues: write` is load-bearing for the PR comment step below — PR
+    # comment endpoints are `/issues/{n}/comments` under the hood, scoped
+    # under `issues`, not `pull-requests`. `pull-requests: write` is kept for
+    # clarity/future use but isn't sufficient alone.
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
 
     strategy:
       matrix:
@@ -39,77 +54,97 @@ jobs:
       - name: Build
         run: |
           pnpm build
-      - name: Report build sizes
+      - name: Measure build sizes (head)
+        run: pnpm build-size-report measure --out size-head.json
+
+      # ─── PR-only: build the target branch too, so sizes can be diffed ──────
+      # Sibling-checked-out into base-branch/ rather than a separate job/cache
+      # lookup — the build is fast (~10-15s) and pnpm's content-addressable
+      # store is already warm from the head install above, so this doesn't
+      # meaningfully slow the job down. continue-on-error is set on all three
+      # steps so a broken base branch can't fail every PR's CI — the report
+      # step below just notes the comparison was unavailable instead.
+      - name: Checkout base branch
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base-branch
+
+      # No deploy-related env vars (ASSET_BASE_URL/DEPLOY_BRANCH/DEPLOY_BUILD_ID)
+      # are set here, matching the head Build step above exactly — setting them
+      # on only one side would change Vite's `base`/`isRootBuild` and pollute
+      # the size diff with unrelated churn.
+      - name: Build base branch
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
         run: |
-          {
-            echo "### Build Output Sizes"
-            echo ""
-            echo "| Output | Size |"
-            echo "| --- | --- |"
+          if [ ! -d base-branch ]; then
+            echo "base branch checkout missing, skipping base build" >&2
+            exit 0
+          fi
+          cd base-branch
+          pnpm install
+          pnpm build
+      - name: Measure build sizes (base branch)
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: |
+          if [ -d base-branch/standalone/dist/client ] || [ -d base-branch/standalone/dist/server ]; then
+            pnpm build-size-report measure --root base-branch --out size-base.json
+          else
+            echo "base branch build output missing, skipping size measurement" >&2
+          fi
 
-            OUTPUTS=(
-              "Client bundle (\`standalone/dist/client\`)|standalone/dist/client"
-              "SSR bundle (\`standalone/dist/server\`)|standalone/dist/server"
-              "Server bundle (\`server/dist/index.js\`)|server/dist/index.js"
-              "Patterns (\`pattern-dist\`)|pattern-dist"
-            )
+      - name: Generate build size report
+        run: |
+          ARGS=(report --head size-head.json --out size-report.md --threshold-kb 300)
+          if [ -f size-base.json ]; then
+            ARGS+=(--base size-base.json)
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            ARGS+=(--base-unavailable)
+          fi
+          pnpm build-size-report "${ARGS[@]}"
+          cat size-report.md >> "$GITHUB_STEP_SUMMARY"
 
-            total=0
-            for entry in "${OUTPUTS[@]}"; do
-              label="${entry%%|*}"
-              path="${entry##*|}"
-              if [ -e "$path" ]; then
-                bytes=$(du -sb "$path" | cut -f1)
-                total=$((total + bytes))
-                echo "| $label | $(numfmt --to=iec --suffix=B "$bytes") |"
-              else
-                echo "| $label | _not found_ |"
-              fi
-            done
-
-            echo "| **Total** | **$(numfmt --to=iec --suffix=B "$total")** |"
-
-            echo ""
-            echo "#### Client Chunks"
-            echo ""
-            echo "| Chunk | Raw | Gzip |"
-            echo "| --- | --- | --- |"
-
-            shopt -s nullglob
-            CHUNKS=(
-              "Vendor (\`vendor-*.js\`)|standalone/dist/client/assets/vendor-*.js"
-              "Index (\`index-*.js\`)|standalone/dist/client/assets/index-*.js"
-            )
-            for entry in "${CHUNKS[@]}"; do
-              label="${entry%%|*}"
-              pattern="${entry##*|}"
-              files=($pattern)
-              if [ "${#files[@]}" -gt 0 ]; then
-                bytes=$(du -cb "${files[@]}" | tail -1 | cut -f1)
-                gzip_bytes=$(cat "${files[@]}" | gzip -c | wc -c)
-                echo "| $label | $(numfmt --to=iec --suffix=B "$bytes") | $(numfmt --to=iec --suffix=B "$gzip_bytes") |"
-              else
-                echo "| $label | _not found_ | _not found_ |"
-              fi
-            done
-            shopt -u nullglob
-
-            echo ""
-            echo "#### Top 5 Largest Files (client build)"
-            echo ""
-            echo "| File | Raw | Gzip |"
-            echo "| --- | --- | --- |"
-
-            if [ -d standalone/dist/client ]; then
-              find standalone/dist/client -type f ! -name "*.map" -printf '%s\t%p\n' | sort -rn | head -5 | while IFS=$'\t' read -r bytes file; do
-                gzip_bytes=$(gzip -c "$file" | wc -c)
-                rel="${file#standalone/dist/client/}"
-                echo "| \`$rel\` | $(numfmt --to=iec --suffix=B "$bytes") | $(numfmt --to=iec --suffix=B "$gzip_bytes") |"
-              done
-            else
-              echo "| _not found_ | | |"
-            fi
-          } >> "$GITHUB_STEP_SUMMARY"
+      # Only one matrix leg exists today, so exactly one job instance posts
+      # this comment. If the matrix ever grows, multiple legs would race to
+      # create/update the same PR comment via the same marker.
+      - name: Comment on pull request
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const marker = "<!-- build-size-report -->";
+            try {
+              const body = `${marker}\n## 📦 Build Size Report\n\n${fs.readFileSync("size-report.md", "utf8")}`;
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+              const existing = comments.find((c) => c.body && c.body.includes(marker));
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                  body,
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body,
+                });
+              }
+            } catch (error) {
+              core.warning(`Failed to post build size comment: ${error}`);
+            }
       - uses: actions/upload-artifact@v7
         with:
           name: "client-stats.html"
