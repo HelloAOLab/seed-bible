@@ -814,6 +814,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           >
             {isSmallScreen.value ? (
               <>
+                {/* Today tab temporarily disabled until the Today screen ships.
                 <MobileBottomTab
                   iconNode={
                     <svg
@@ -864,6 +865,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     );
                   }}
                 />
+                */}
 
                 <MobileBottomTab
                   iconNode={<SelfAvatarVisual state={props.state} />}

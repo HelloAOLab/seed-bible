@@ -1443,6 +1443,7 @@ export function Tabs(props: TabsProps) {
               {t("tabs", { defaultValue: "Tabs" })}
             </h3>
             <div className="sb-sidebar-tabs-header-actions">
+              {/* Today/Tasks button temporarily disabled until the Today screen ships.
               <button
                 type="button"
                 className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-tasks-button"
@@ -1487,6 +1488,7 @@ export function Tabs(props: TabsProps) {
                   />
                 </svg>
               </button>
+              */}
 
               <button
                 type="button"
