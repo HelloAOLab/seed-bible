@@ -13,7 +13,10 @@ export const TestamentToggle = ({
     useTestamentToggle({ showingContent });
 
   return (
-    <div className="toggle toggle-testament" onClick={toggleshowContent}>
+    <div
+      className="scripture-map-toggle toggle-testament"
+      onClick={toggleshowContent}
+    >
       <span className="toggle-title">{toggleTitleContent}</span>
       <span className="toggle-description">{toggleDescriptionContent}</span>
       <span className="material-symbols-outlined toggle-arrow">

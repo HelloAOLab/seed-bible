@@ -673,7 +673,7 @@
   opacity: 0.7;
 }
 
-.toggle {
+.scripture-map-toggle {
   width: 100%;
   padding: calc(12px * var(--scale-factor)) calc(20px * var(--scale-factor));
   color: black;
@@ -681,15 +681,15 @@
   cursor: pointer;
 }
 
-.toggle > span {
+.scripture-map-toggle > span {
   text-align: center;
   vertical-align: middle;
   text-box: auto;
   /* font-size: calc(32px * var(--scale-factor)); */
 }
 
-.toggle > span.toggle-title,
-.toggle > span.toggle-description {
+.scripture-map-toggle > span.toggle-title,
+.scripture-map-toggle > span.toggle-description {
   font-family: system-ui;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -697,18 +697,18 @@
   color: var(--sb-reader-font-color);
 }
 
-.toggle > span.toggle-title {
+.scripture-map-toggle > span.toggle-title {
   font-size: calc(24px * var(--scale-factor));
   font-weight: 500;
 }
 
-.toggle > span.toggle-description {
+.scripture-map-toggle > span.toggle-description {
   font-size: calc(18px * var(--scale-factor));
   color: var(--sb-reader-font-color);
   grid-area: description;
 }
 
-.toggle > span.toggle-arrow {
+.scripture-map-toggle > span.toggle-arrow {
   grid-area: arrow;
   aspect-ratio: 1;
   display: flex;

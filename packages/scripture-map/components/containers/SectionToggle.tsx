@@ -26,7 +26,7 @@ export const SectionToggle = memo(
 
     return (
       <div
-        className={`toggle toggle-section${showingContent ? " toggle-section-enabled" : ""}`}
+        className={`scripture-map-toggle toggle-section${showingContent ? " toggle-section-enabled" : ""}`}
         onClick={() => {
           toggleShowSection(sectionKey);
         }}
