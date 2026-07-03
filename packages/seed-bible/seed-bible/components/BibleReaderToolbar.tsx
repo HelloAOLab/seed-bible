@@ -135,17 +135,6 @@ function MobileMoreMenu(props: MobileMoreMenuProps) {
     //     );
     //   },
     // },
-    // {
-    //   id: "chat",
-    //   label: t("chat", { defaultValue: "Chat" }),
-    //   iconName: "chat_bubble_outline",
-    //   onClick: () => {
-    //     onClose();
-    //     os.toast(
-    //       t("chat-coming-soon", { defaultValue: "Chat is coming soon" })
-    //     );
-    //   },
-    // },
     ...extraItems,
   ];
 
@@ -365,6 +354,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     selector,
     panes,
     sidebar,
+    chats,
     tools: toolsManager,
     settings,
     bookmarks,
@@ -396,6 +386,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       window: {
         isMobile: props.state.app.isMobile.value,
       },
+      chats,
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
       openChat: sidebar.openChatPanel,
@@ -404,13 +395,32 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
   });
 
+  const unreadChatIndicator = useComputed(() => {
+    if (chats.numberOfUnreadMessages.value <= 0) {
+      return null;
+    }
+
+    if (chats.wasMentioned.value) {
+      return "@";
+    }
+
+    return chats.numberOfUnreadMessages.value > 99
+      ? "99+"
+      : `${chats.numberOfUnreadMessages.value}`;
+  });
+
+  const hasTypingInChats = useComputed(() =>
+    chats.chats.value.some((chat) =>
+      chat.typingParticipants.value.some((participant) => !participant.isSelf)
+    )
+  );
+
   const hiddenToolIds = new Set([
     "previous-chapter",
     "next-chapter",
     "open-selector",
     "open-sidebar",
     "open-search",
-    "open-chat",
   ]);
 
   const moreTools = useComputed(() =>
@@ -429,6 +439,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       window: {
         isMobile: props.state.app.isMobile.value,
       },
+      chats,
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
       openChat: sidebar.openChatPanel,
@@ -803,6 +814,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
           >
             {isSmallScreen.value ? (
               <>
+                {/* Today tab temporarily disabled until the Today screen ships.
                 <MobileBottomTab
                   iconNode={
                     <svg
@@ -853,6 +865,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     );
                   }}
                 />
+                */}
 
                 <MobileBottomTab
                   iconNode={<SelfAvatarVisual state={props.state} />}
@@ -1040,6 +1053,26 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         <span className="sb-reader-toolbar-button-label">
                           {label}
                         </span>
+                      )}
+                      {tool.id === "open-chat" && unreadChatIndicator.value && (
+                        <span
+                          className="sb-reader-toolbar-unread-indicator"
+                          aria-label={
+                            chats.wasMentioned.value
+                              ? "Unread mention"
+                              : `Unread messages: ${unreadChatIndicator.value}`
+                          }
+                        >
+                          {unreadChatIndicator.value}
+                        </span>
+                      )}
+                      {tool.id === "open-chat" && hasTypingInChats.value && (
+                        <span
+                          className="sb-reader-toolbar-typing-indicator"
+                          aria-label={t("someone-is-typing", {
+                            defaultValue: "Someone is typing...",
+                          })}
+                        />
                       )}
                     </button>
                     {hasMenuItems &&

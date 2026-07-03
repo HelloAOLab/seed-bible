@@ -1,8 +1,13 @@
-import { signal } from "@preact/signals";
+import { effect, signal } from "@preact/signals";
 import { orderBy, union } from "es-toolkit";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import type { LoginManager } from "../managers/LoginManager";
 import { addTranslations } from "../i18n/I18nManager";
 import { safeLocalStorage } from "../app/ssrEnv";
+import {
+  getProfileConfigValue,
+  saveProfileConfigValue,
+} from "./ProfileConfigSync";
 import hash from "hash.js";
 import stringify from "@casual-simulation/fast-json-stable-stringify";
 
@@ -75,11 +80,40 @@ export interface UploadedExtension {
 }
 
 export interface ImportExtension {
-  /** The function to dynamically import the extension module. */
+  /**
+   * The function to dynamically import the extension module. The resolved
+   * module must `export default` a function matching `ExtensionEntryPoint` —
+   * the loader calls it explicitly to (re)trigger registration on every
+   * install attempt, since ES module evaluation only runs once per
+   * specifier.
+   */
   import: () => Promise<unknown>;
 
   /** The metadata for this extension. */
   meta: ExtensionMeta;
+}
+
+/**
+ * The contract an extension module's default export must satisfy. Calling
+ * this function triggers the extension's registration (typically via a
+ * `registerExtension(...)` call). It must be safe to call more than once per
+ * page load: native ES module evaluation is cached per specifier, so after
+ * `unloadExtension()` a later `loadExtension()`/`loadExtensionFromUrl()` call
+ * re-invokes this cached function reference rather than re-running the
+ * module's top-level code.
+ */
+export type ExtensionEntryPoint = () =>
+  | void
+  | CleanupFunction
+  | Promise<void | CleanupFunction>;
+
+/**
+ * The expected shape of a dynamically-imported extension module: an ES
+ * module namespace object with a `default` export matching
+ * `ExtensionEntryPoint`.
+ */
+export interface ExtensionModule {
+  default: ExtensionEntryPoint;
 }
 
 export interface ExtensionSet {
@@ -321,7 +355,26 @@ export interface ExtensionManagerOptions {
   defaultExtensions?: ExtensionSet | null;
 }
 
-export function createExtensionManager(options: ExtensionManagerOptions = {}) {
+/**
+ * Runtime type guard for `ExtensionModule`. The actual shape of a
+ * dynamically-imported extension module can't be statically verified —
+ * `uploaded.import()` and `import(url)` both resolve to whatever the
+ * extension package actually exports — so this is checked at the call sites
+ * that invoke an extension's default export.
+ */
+function isExtensionModule(value: unknown): value is ExtensionModule {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "default" in value &&
+    typeof (value as { default: unknown }).default === "function"
+  );
+}
+
+export function createExtensionManager(
+  login: LoginManager,
+  options: ExtensionManagerOptions = {}
+) {
   const defaultExtensions = options.defaultExtensions ?? null;
   const knownExtensionsById = new Map<string, Extension>();
   const knownExtensionsSetsByExtensionId = new Map<string, ExtensionSet>();
@@ -366,12 +419,52 @@ export function createExtensionManager(options: ExtensionManagerOptions = {}) {
     }
   };
 
+  /**
+   * The key under which the IDs of the user's installed extensions are stored in
+   * the user's profile config, so they sync to the account and are restored on
+   * any device the user logs into.
+   */
+  const INSTALLED_EXTENSIONS_CONFIG_KEY = "installedExtensions";
+
+  /**
+   * Reads the set of installed extension IDs from the logged-in user's profile
+   * config. Returns an empty set when logged out, the profile hasn't loaded yet,
+   * or the stored value isn't a string array.
+   */
+  const readProfileExtensionIds = (): Set<string> => {
+    const value = getProfileConfigValue(
+      login.profile.value,
+      INSTALLED_EXTENSIONS_CONFIG_KEY
+    );
+    if (Array.isArray(value)) {
+      return new Set(value.filter((id) => typeof id === "string"));
+    }
+    return new Set();
+  };
+
+  /**
+   * Writes the given set of installed extension IDs to the user's profile config.
+   * No-ops when logged out or when the value is unchanged (handled by
+   * saveProfileConfigValue).
+   */
+  const writeProfileExtensionIds = (ids: Set<string>) => {
+    saveProfileConfigValue(login, INSTALLED_EXTENSIONS_CONFIG_KEY, [...ids]);
+  };
+
   /** Records that the extension with the given ID has been installed. */
   const persistInstalledExtensionId = (id: string) => {
     const ids = readPersistedExtensionIds();
     if (!ids.has(id)) {
       ids.add(id);
       writePersistedExtensionIds(ids);
+    }
+    // Mirror the install into the user's profile config so it follows them
+    // across devices. Reads the profile set independently of local storage in
+    // case the two have diverged.
+    const profileIds = readProfileExtensionIds();
+    if (!profileIds.has(id)) {
+      profileIds.add(id);
+      writeProfileExtensionIds(profileIds);
     }
   };
 
@@ -380,6 +473,10 @@ export function createExtensionManager(options: ExtensionManagerOptions = {}) {
     const ids = readPersistedExtensionIds();
     if (ids.delete(id)) {
       writePersistedExtensionIds(ids);
+    }
+    const profileIds = readProfileExtensionIds();
+    if (profileIds.delete(id)) {
+      writeProfileExtensionIds(profileIds);
     }
   };
 
@@ -469,7 +566,15 @@ export function createExtensionManager(options: ExtensionManagerOptions = {}) {
     }
 
     try {
-      await import(/** @vite-ignore */ url);
+      const mod: unknown = await import(/** @vite-ignore */ url);
+      if (!isExtensionModule(mod)) {
+        refreshExtensionsSignal();
+        console.error(
+          `Failed to install extension '${id}': the module at '${url}' does not \`export default\` a function. Extensions must export a default function that triggers registration when called.`
+        );
+        return false;
+      }
+      await mod.default();
       installedExtensionIds.add(id);
       refreshExtensionsSignal();
       // shout("onExtensionInstalled", id);
@@ -548,7 +653,21 @@ export function createExtensionManager(options: ExtensionManagerOptions = {}) {
         installStack.delete(extensionId);
         return installed;
       } else if ("import" in uploaded && uploaded.import) {
-        await uploaded.import();
+        try {
+          const mod: unknown = await uploaded.import();
+          if (!isExtensionModule(mod)) {
+            console.error(
+              `Failed to install extension '${extensionId}': its module does not \`export default\` a function. Extensions must export a default function that triggers registration when called.`
+            );
+            installStack.delete(extensionId);
+            return false;
+          }
+          await mod.default();
+        } catch (err) {
+          installStack.delete(extensionId);
+          console.error("Failed to install extension:", extensionId, err);
+          return false;
+        }
         installStack.delete(extensionId);
         return true;
       } else {
@@ -607,13 +726,27 @@ export function createExtensionManager(options: ExtensionManagerOptions = {}) {
   };
 
   /**
-   * Loads the extensions that the user previously installed, as recorded in
-   * local storage. Extensions that are already installed are skipped, and IDs
-   * that are not part of any known extension set are left in storage (a later
-   * build may reintroduce them) but skipped for now.
+   * Loads the extensions that the user previously installed. The saved set is
+   * the union of the IDs persisted in local storage and the IDs stored in the
+   * logged-in user's profile config — so extensions installed while logged out
+   * are adopted into the account, and extensions installed on another device are
+   * installed here. The merged set is written back to both stores. Extensions
+   * that are already installed are skipped, and IDs that are not part of any
+   * known extension set are left in storage (a later build may reintroduce them)
+   * but skipped for now.
    */
   const loadSavedExtensions = async () => {
-    const savedIds = readPersistedExtensionIds();
+    const localIds = readPersistedExtensionIds();
+    const profileIds = readProfileExtensionIds();
+    const savedIds = new Set([...localIds, ...profileIds]);
+
+    // Write the merged set back to both stores so the two stay in sync.
+    if (savedIds.size !== localIds.size) {
+      writePersistedExtensionIds(savedIds);
+    }
+    if (savedIds.size !== profileIds.size) {
+      writeProfileExtensionIds(savedIds);
+    }
 
     const promises: Promise<boolean>[] = [];
     for (const id of savedIds) {
@@ -703,6 +836,26 @@ export function createExtensionManager(options: ExtensionManagerOptions = {}) {
 
     return setData;
   };
+
+  // Re-sync the user's saved extensions when they log in. The installed-extension
+  // IDs live on the user's profile config, which loads asynchronously after
+  // login, so we react to `login.profile` (not just `login.userId`) and sync once
+  // per user. Logging out resets the guard so a later login re-syncs; it does not
+  // uninstall anything, since extensions remain locally installed and persisted.
+  const syncedUserId = signal<string | null>(null);
+  effect(() => {
+    const userId = login.userId.value;
+    const profile = login.profile.value;
+    if (!userId) {
+      syncedUserId.value = null;
+      return;
+    }
+    if (!profile || syncedUserId.value === userId) {
+      return;
+    }
+    syncedUserId.value = userId;
+    void loadSavedExtensions();
+  });
 
   refreshExtensionsSignal();
 

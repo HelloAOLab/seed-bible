@@ -1,1 +1,1 @@
-import "./ext_Example/init";
+export { default } from "./ext_Example/init";

@@ -3,12 +3,19 @@ import {
   type NavigationManager,
 } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { createSidebar } from "@packages/seed-bible/seed-bible/managers/SidebarManager";
+import { signal } from "@preact/signals";
+
+function createChatsManagerMock() {
+  return {
+    isOpen: signal(false),
+  } as any;
+}
 
 describe("createSidebar", () => {
-  let navigationManager: NavigationManager;
+  let navigation: NavigationManager;
 
   beforeEach(() => {
-    navigationManager = createNavigationManager();
+    navigation = createNavigationManager();
   });
 
   afterEach(() => {
@@ -18,7 +25,10 @@ describe("createSidebar", () => {
   });
 
   it("initializes with settings closed, sidebar expanded, and mobile closed", () => {
-    const sidebar = createSidebar(navigationManager);
+    const sidebar = createSidebar({
+      navigation,
+      chatsManager: createChatsManagerMock(),
+    });
 
     expect(sidebar.isSettingsOpen.value).toBe(false);
     expect(sidebar.isSidebarCollapsed.value).toBe(false);
@@ -26,7 +36,10 @@ describe("createSidebar", () => {
   });
 
   it("openSettings() opens settings without changing mobile sidebar state", () => {
-    const sidebar = createSidebar(navigationManager);
+    const sidebar = createSidebar({
+      navigation,
+      chatsManager: createChatsManagerMock(),
+    });
     sidebar.openSidebar();
 
     expect(sidebar.isSettingsOpen.value).toBe(false);
@@ -38,7 +51,10 @@ describe("createSidebar", () => {
   });
 
   it("toggleSettings() toggles settings without changing mobile sidebar state", () => {
-    const sidebar = createSidebar(navigationManager);
+    const sidebar = createSidebar({
+      navigation,
+      chatsManager: createChatsManagerMock(),
+    });
     sidebar.openSidebar();
     sidebar.requestedSettingsView.value = null;
 
@@ -51,7 +67,10 @@ describe("createSidebar", () => {
   });
 
   it("toggleSettings() closes settings when already open", () => {
-    const sidebar = createSidebar(navigationManager);
+    const sidebar = createSidebar({
+      navigation,
+      chatsManager: createChatsManagerMock(),
+    });
     sidebar.openSidebar();
     sidebar.openSettings();
 
@@ -65,7 +84,10 @@ describe("createSidebar", () => {
   });
 
   it("closeSettings() closes settings and dismisses the mobile drawer", () => {
-    const sidebar = createSidebar(navigationManager);
+    const sidebar = createSidebar({
+      navigation,
+      chatsManager: createChatsManagerMock(),
+    });
     sidebar.openSettings();
     sidebar.openSidebar();
 
@@ -76,7 +98,10 @@ describe("createSidebar", () => {
   });
 
   it("toggleSidebarCollapsed() toggles collapsed state", () => {
-    const sidebar = createSidebar(navigationManager);
+    const sidebar = createSidebar({
+      navigation,
+      chatsManager: createChatsManagerMock(),
+    });
 
     sidebar.toggleSidebarCollapsed();
     expect(sidebar.isSidebarCollapsed.value).toBe(true);
@@ -86,7 +111,10 @@ describe("createSidebar", () => {
   });
 
   it("openSidebar() and closeSidebar() control mobile open state", () => {
-    const sidebar = createSidebar(navigationManager);
+    const sidebar = createSidebar({
+      navigation,
+      chatsManager: createChatsManagerMock(),
+    });
 
     sidebar.openSidebar();
     expect(sidebar.isMobileOpen.value).toBe(true);
@@ -96,8 +124,14 @@ describe("createSidebar", () => {
   });
 
   it("shares URL-synced state across instances but keeps collapsed state isolated", () => {
-    const first = createSidebar(navigationManager);
-    const second = createSidebar(navigationManager);
+    const first = createSidebar({
+      navigation,
+      chatsManager: createChatsManagerMock(),
+    });
+    const second = createSidebar({
+      navigation,
+      chatsManager: createChatsManagerMock(),
+    });
 
     first.openSettings();
     first.toggleSidebarCollapsed();
@@ -116,7 +150,7 @@ describe("createSidebar", () => {
   });
 
   // it("syncs configBot.tags.settingsView when requestedSettingsView changes", () => {
-  //   const sidebar = createSidebar(navigationManager);
+  //   const sidebar = createSidebar({ navigation, chatsManager: createChatsManagerMock() });
 
   //   expect(configBot.tags.settingsView).toBe(null);
 
@@ -128,17 +162,20 @@ describe("createSidebar", () => {
   // });
 
   it("syncs requestedSettingsView when the settingsView URL param changes", () => {
-    const sidebar = createSidebar(navigationManager);
+    const sidebar = createSidebar({
+      navigation,
+      chatsManager: createChatsManagerMock(),
+    });
 
-    navigationManager.push("?settingsView=extensions");
+    navigation.push("?settingsView=extensions");
     expect(sidebar.requestedSettingsView.value).toBe("extensions");
 
-    navigationManager.push(window.location.pathname);
+    navigation.push(window.location.pathname);
     expect(sidebar.requestedSettingsView.value).toBe(null);
   });
 
   // it("syncs isMobileOpen when configBot.sidebar changes", async () => {
-  //   const sidebar = createSidebar(navigationManager);
+  //   const sidebar = createSidebar({ navigation, chatsManager: createChatsManagerMock() });
   //   const listener = addBotListenerMock.mock.calls[0]?.[2] as
   //     | ((that: unknown) => Promise<void>)
   //     | undefined;
@@ -158,7 +195,7 @@ describe("createSidebar", () => {
   // });
 
   // it("syncs configBot.tags.sidebar when isMobileOpen changes", () => {
-  //   const sidebar = createSidebar(navigationManager);
+  //   const sidebar = createSidebar({ navigation, chatsManager: createChatsManagerMock() });
 
   //   expect(configBot.tags.sidebar).toBe(null);
 
@@ -168,4 +205,33 @@ describe("createSidebar", () => {
   //   sidebar.closeSidebar();
   //   expect(configBot.tags.sidebar).toBe(null);
   // });
+
+  it("openChatPanel() calls onOpenChatPanel callback", () => {
+    const onOpenChatPanel = vi.fn();
+    const sidebar = createSidebar({
+      navigation,
+      chatsManager: createChatsManagerMock(),
+      onOpenChatPanel,
+    });
+
+    sidebar.openChatPanel();
+
+    expect(onOpenChatPanel).toHaveBeenCalledTimes(1);
+    expect(sidebar.isChatPanelOpen.value).toBe(true);
+  });
+
+  it("toggleChatPanel() calls onOpenChatPanel only when opening", () => {
+    const onOpenChatPanel = vi.fn();
+    const sidebar = createSidebar({
+      navigation,
+      chatsManager: createChatsManagerMock(),
+      onOpenChatPanel,
+    });
+
+    sidebar.toggleChatPanel();
+    sidebar.toggleChatPanel();
+
+    expect(onOpenChatPanel).toHaveBeenCalledTimes(1);
+    expect(sidebar.isChatPanelOpen.value).toBe(false);
+  });
 });

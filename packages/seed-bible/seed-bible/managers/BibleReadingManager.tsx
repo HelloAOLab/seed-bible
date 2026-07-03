@@ -123,7 +123,7 @@ export interface BibleReadingState {
   /** The default translation for the current language. */
   defaultTranslation: TranslationWithLanguage;
   /** Selected translation ID. Null while unresolved or endpoint-derived during startup. */
-  translationId: Signal<string | null>;
+  translationId: Signal<string>;
   /** Selected translation metadata derived from `translationBooks`. */
   translation: Signal<Translation | null>;
   /** Selected book ID (for example: GEN, JHN). */
@@ -437,10 +437,11 @@ export function createBibleReadingState(
     getDefaultTranslationForLanguage(i18nManager.defaultLanguage) ??
     FALLBACK_TRANSLATION;
 
-  const translationId = signal<string | null>(
+  const translationId = signal<string>(
+    initialTranslationInput.translationId ?? defaultTranslation.id
+  );
+  const useFirstAvailableTranslation = signal<boolean>(
     shouldUseFirstAvailableTranslation
-      ? null
-      : (initialTranslationInput.translationId ?? defaultTranslation.id)
   );
   const endpointOverride = signal<string | null>(initialEndpointOverride);
   const bookId = signal<string | null>(options.initialBookId ?? null);
@@ -862,7 +863,7 @@ export function createBibleReadingState(
   };
 
   const selectBook = async (book: string) => {
-    if (!translationId.value || !translationBooks.value) {
+    if (!translationBooks.value) {
       return;
     }
 
@@ -947,10 +948,6 @@ export function createBibleReadingState(
   };
 
   const selectChapter = async (book: string, chapter: number) => {
-    if (!translationId.value) {
-      return;
-    }
-
     loading.value = true;
     error.value = null;
 
@@ -1004,28 +1001,25 @@ export function createBibleReadingState(
       );
 
       const firstAvailableTranslation = loadedTranslations[0];
-      const requestedTranslation = translationId.value
-        ? availableTranslations.value.translations.find(
+      const currentTranslation = useFirstAvailableTranslation.value
+        ? firstAvailableTranslation
+        : (availableTranslations.value.translations.find(
             (translation) => translation.id === translationId.value
-          )
-        : null;
-      const currentTranslation =
-        requestedTranslation ??
-        (shouldUseFirstAvailableTranslation ||
-        shouldFallbackToFirstAvailableTranslation
-          ? firstAvailableTranslation
-          : null);
+          ) ??
+          (shouldFallbackToFirstAvailableTranslation
+            ? firstAvailableTranslation
+            : undefined));
       if (!currentTranslation) {
-        if (shouldUseFirstAvailableTranslation) {
-          throw new Error("No available translations found for endpoint.");
-        }
         throw new Error(
-          `Translation with ID "${translationId.value}" not available.`
+          useFirstAvailableTranslation.value
+            ? "No available translations found for endpoint."
+            : `Translation with ID "${translationId.value}" not available.`
         );
       }
 
       const nextTranslationId = currentTranslation.id;
       translationId.value = nextTranslationId;
+      useFirstAvailableTranslation.value = false;
 
       const books = await dataManager.getTranslationBooks(nextTranslationId);
       translationBooks.value = books;
