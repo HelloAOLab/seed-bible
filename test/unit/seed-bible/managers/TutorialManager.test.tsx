@@ -36,7 +36,10 @@ describe("createTutorialManager — session-link joins", () => {
     window.localStorage.clear();
   });
 
-  it("does NOT auto-start the onboarding tour when joined via a session link", () => {
+  it("does NOT offer the onboarding tour when joined via a session link", () => {
+    // The auto-start surfaces an offer card (`promptVisible`) rather than
+    // launching the tour unannounced; a session-link join suppresses that card
+    // (and so never reaches `running`).
     const tutorial = createTutorialManager(
       createLogin(),
       createOnboarding("done"),
@@ -45,12 +48,13 @@ describe("createTutorialManager — session-link joins", () => {
       /* joinedViaSessionLink */ true
     );
 
+    expect(tutorial.promptVisible.value).toBe(false);
     expect(tutorial.running.value).toBe(false);
   });
 
-  it("auto-starts the onboarding tour on a normal (non-session-link) visit", () => {
+  it("offers the onboarding tour on a normal (non-session-link) visit", () => {
     // Control for the test above: same state, only the flag differs — proving
-    // it's the session-link flag that suppresses the tour, not the setup.
+    // it's the session-link flag that suppresses the offer, not the setup.
     const tutorial = createTutorialManager(
       createLogin(),
       createOnboarding("done"),
@@ -58,7 +62,7 @@ describe("createTutorialManager — session-link joins", () => {
       signal(false)
     );
 
-    expect(tutorial.running.value).toBe(true);
+    expect(tutorial.promptVisible.value).toBe(true);
   });
 
   it("does NOT pop a contextual tutorial when joined via a session link", () => {
