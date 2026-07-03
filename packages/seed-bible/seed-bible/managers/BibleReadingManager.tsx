@@ -816,9 +816,9 @@ export function createBibleReadingState(
       decorationRemovalTimers.delete(id);
     }
 
-    const existingDecorationIndex = decorations.value.findIndex(
-      (currentDecoration) => currentDecoration.id === id
-    );
+    const existingDecorationIndex = decorations
+      .peek()
+      .findIndex((currentDecoration) => currentDecoration.id === id);
 
     const nextDecoration: VerseDecoration = {
       id,
@@ -830,11 +830,13 @@ export function createBibleReadingState(
     };
 
     if (existingDecorationIndex >= 0) {
-      decorations.value = decorations.value.map((currentDecoration, index) =>
-        index === existingDecorationIndex ? nextDecoration : currentDecoration
-      );
+      decorations.value = decorations
+        .peek()
+        .map((currentDecoration, index) =>
+          index === existingDecorationIndex ? nextDecoration : currentDecoration
+        );
     } else {
-      decorations.value = [...decorations.value, nextDecoration];
+      decorations.value = [...decorations.peek(), nextDecoration];
     }
 
     if (
@@ -858,9 +860,9 @@ export function createBibleReadingState(
       decorationRemovalTimers.delete(decorationId);
     }
 
-    decorations.value = decorations.value.filter(
-      (decoration) => decoration.id !== decorationId
-    );
+    decorations.value = decorations
+      .peek()
+      .filter((decoration) => decoration.id !== decorationId);
   };
 
   const loadPreviousChapter = async () => {
