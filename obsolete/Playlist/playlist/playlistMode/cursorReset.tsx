@@ -1,1 +1,1 @@
-os.unregisterApp('mouseCursor')
+os.unregisterApp("mouseCursor");

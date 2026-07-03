@@ -68,6 +68,14 @@ const i18nUnusedKeysRule = createRule<Options, MessageIds>({
           return;
         }
 
+        if (key.includes("_")) {
+          const lastIndex = key.lastIndexOf("_");
+          const baseKey = key.substring(0, lastIndex);
+          if (analysis.usedKeys.has(baseKey)) {
+            return;
+          }
+        }
+
         if (!analysis.usedKeys.has(key)) {
           context.report({
             node,

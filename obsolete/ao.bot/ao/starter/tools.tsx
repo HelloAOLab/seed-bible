@@ -2,7 +2,8 @@ const tools = [
   {
     type: "function",
     name: "openSeedBible",
-    description: "a function takes whatever user needs to open book/chapter /specific translation specific verse ",
+    description:
+      "a function takes whatever user needs to open book/chapter /specific translation specific verse ",
     parameters: {
       type: "object",
       properties: {
@@ -10,22 +11,24 @@ const tools = [
           type: "string",
           description: "the book that user want or the refrence book",
         },
-         chapter: {
+        chapter: {
           type: "string",
           description: "the chapter that user want or the refrence chapter",
         },
-         translation: {
+        translation: {
           type: "string",
-          description: "the translation that user want or the refrence translation",
+          description:
+            "the translation that user want or the refrence translation",
         },
-         verse: {
+        verse: {
           type: "string",
-          description:"retun this if u have a speific verese to give to user as refrence",
+          description:
+            "retun this if u have a speific verese to give to user as refrence",
         },
       },
-    //   required: ["sign"],
+      //   required: ["sign"],
     },
   },
 ];
 
-return tools
+return tools;

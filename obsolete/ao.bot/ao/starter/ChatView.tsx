@@ -124,7 +124,8 @@ const QRCodeComponent = ({ url, index }) => {
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.transform = "scale(1.05)";
-            e.currentTarget.style.boxShadow = "0 4px 12px rgba(230, 126, 80, 0.3)";
+            e.currentTarget.style.boxShadow =
+              "0 4px 12px rgba(230, 126, 80, 0.3)";
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = "scale(1)";
@@ -465,10 +466,10 @@ export const ChatView = ({ initialQuery, newMessageId }) => {
     const messageContainer = document.getElementById("message-container");
     messageContainer.scrollTo({
       top: messageContainer.scrollHeight,
-      behavior: "smooth"
+      behavior: "smooth",
     });
-    console.log("scrolling")
-  }, [messages])
+    console.log("scrolling");
+  }, [messages]);
 
   return (
     <div
@@ -515,7 +516,7 @@ export const ChatView = ({ initialQuery, newMessageId }) => {
             gap: "30px",
             height: "calc(100dvh - 150px)",
             scrollbarWidth: "none",
-            width: "45dvw"
+            width: "45dvw",
           }}
         >
           {messages.map((msg, idx) => (
@@ -533,7 +534,15 @@ export const ChatView = ({ initialQuery, newMessageId }) => {
               {msg.role === "assistant" && (
                 <div
                   style={{
-                    width: "28px", height: "28px", minWidth: "28px", backgroundColor: "#2a2a2a", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px",
+                    width: "28px",
+                    height: "28px",
+                    minWidth: "28px",
+                    backgroundColor: "#2a2a2a",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "14px",
                   }}
                 >
                   <img
@@ -557,7 +566,9 @@ export const ChatView = ({ initialQuery, newMessageId }) => {
                   marginRight: msg.role === "user" ? null : "auto",
                 }}
               >
-                {msg.role !== "assistant" ? <div>{msg.message}</div> : (
+                {msg.role !== "assistant" ? (
+                  <div>{msg.message}</div>
+                ) : (
                   <MessageContent
                     text={msg.message}
                     isWriting={assistantWriting || userWriting}
@@ -642,7 +653,7 @@ export const ChatView = ({ initialQuery, newMessageId }) => {
                 display: "flex",
                 gap: "12px",
                 alignItems: "flex-start",
-                marginLeft: "auto"
+                marginLeft: "auto",
               }}
             >
               <div

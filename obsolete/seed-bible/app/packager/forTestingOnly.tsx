@@ -1,5 +1,3 @@
+console.log("my content", that.content);
 
-
-console.log('my content', that.content)
-
-globalThis[`{packageName}_package`].onClick()
+globalThis[`{packageName}_package`].onClick();

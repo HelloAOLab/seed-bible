@@ -1,0 +1,13 @@
+if(thisBot.tags.isBaseStackSection) return;
+
+const dimension = os.getCurrentDimension();
+if(dimension === that.dimension)
+{
+    if(!thisBot.masks.isOnTheGround)
+    {
+        if(thisBot.masks.highlighted)
+        {
+            thisBot.forceUnhighlight();
+        }
+    }
+}

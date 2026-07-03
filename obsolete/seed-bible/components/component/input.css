@@ -36,21 +36,21 @@
   margin-top: 5px;
 }
 
-.input-field:focus+.input-label,
-.input-field:not(:placeholder-shown)+.input-label {
+.input-field:focus + .input-label,
+.input-field:not(:placeholder-shown) + .input-label {
   top: -10px;
   font-size: 12px;
   color: #007bff;
   /* Blue label color on focus and when text is entered */
 }
 
-.input-field:focus+.input-label,
-.input-field:hover+.input-label {
+.input-field:focus + .input-label,
+.input-field:hover + .input-label {
   color: #007bff;
   /* Blue label color on focus and hover */
 }
 
-.input-field:invalid+.error-message {
+.input-field:invalid + .error-message {
   display: block;
 }
 
@@ -60,5 +60,8 @@
   left: 12px;
   transform: translateY(-50%);
   pointer-events: none;
-  transition: top 0.3s ease-in-out, font-size 0.3s ease-in-out, color 0.3s ease-in-out;
+  transition:
+    top 0.3s ease-in-out,
+    font-size 0.3s ease-in-out,
+    color 0.3s ease-in-out;
 }

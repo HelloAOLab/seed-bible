@@ -1,2 +1,2 @@
-setOpenSidebar(prev => !prev);
+setOpenSidebar((prev) => !prev);
 setCurrentExperience(0);

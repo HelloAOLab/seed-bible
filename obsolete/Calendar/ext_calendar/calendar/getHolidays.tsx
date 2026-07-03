@@ -29,35 +29,35 @@ function getEvangelicalHolidays(year) {
       start: `${year}-12-25`,
       allDay: true,
       color: "red",
-      extendedProps: { isHoliday: true }
+      extendedProps: { isHoliday: true },
     },
     {
       title: "Good Friday ",
       start: goodFriday.toISOString().split("T")[0],
       allDay: true,
       color: "red",
-      extendedProps: { isHoliday: true }
+      extendedProps: { isHoliday: true },
     },
     {
       title: "Easter Sunday ",
       start: easter.toISOString().split("T")[0],
       allDay: true,
       color: "red",
-      extendedProps: { isHoliday: true }
+      extendedProps: { isHoliday: true },
     },
     {
       title: "Ascension Day",
       start: ascension.toISOString().split("T")[0],
       allDay: true,
       color: "red",
-      extendedProps: { isHoliday: true }
+      extendedProps: { isHoliday: true },
     },
     {
       title: "Pentecost ",
       start: pentecost.toISOString().split("T")[0],
       allDay: true,
       color: "red",
-      extendedProps: { isHoliday: true }
+      extendedProps: { isHoliday: true },
     },
   ];
 }

@@ -5,3 +5,11 @@
 # The driver itself is registered per-clone by script/setupMergeDriver.ts, which
 # runs from the `prepare` npm script. See script/mergeI18nJson.ts.
 packages/seed-bible/seed-bible/i18n/*.json merge=i18n-json
+
+*.js diff
+*.jsx diff
+*.ts diff
+*.tsx diff
+*.html diff
+*.css diff
+*.txt diff

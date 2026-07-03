@@ -1,6 +1,5 @@
-const {mapData} = that;
+const { mapData } = that;
 
-if(mapData.currentPlaylistShownId && mapData.isPlaylistPathEnabled)
-{
-    thisBot.ShowPlaylistPathOnMap({mapData})
+if (mapData.currentPlaylistShownId && mapData.isPlaylistPathEnabled) {
+  thisBot.ShowPlaylistPathOnMap({ mapData });
 }
