@@ -1,9 +1,10 @@
 import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
-import { computed, effect, signal } from "@preact/signals";
+import { batch, computed, effect, signal } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
 import type { ReaderTab, TabsManager } from "./TabsManager";
 import { v4 as uuid } from "uuid";
+import { range } from "es-toolkit";
 
 export const VerseRefSchema = z.object({
   bookId: z.string(),
@@ -165,14 +166,29 @@ export function createPlayingState(
       return;
     }
     const { ref, translationId } = item;
-    // `translationId` is optional on the item; fall back to the tab's current
-    // translation. `.peek()` avoids re-navigating when the tab changes it.
-    void tab.readingState.selectTranslationAndChapter(
-      translationId ?? tab.readingState.translationId.peek(),
-      ref.bookId,
-      ref.chapter,
-      { scrollToVerse: ref.verse }
-    );
+
+    batch(() => {
+      // `translationId` is optional on the item; fall back to the tab's current
+      // translation. `.peek()` avoids re-navigating when the tab changes it.
+      void tab.readingState.selectTranslationAndChapter(
+        translationId ?? tab.readingState.translationId.peek(),
+        ref.bookId,
+        ref.chapter,
+        { scrollToVerse: ref.verse }
+      );
+
+      if (ref.verse) {
+        void tab.readingState.decorateVerses(
+          ref.bookId,
+          ref.chapter,
+          ref.endVerse ? range(ref.verse, ref.endVerse) : [ref.verse],
+          {
+            className: "sb-verse-decoration-playlist-verse-highlight",
+            removeAfterMs: 3000,
+          }
+        );
+      }
+    });
   });
 
   /** Tears down the navigation effect. Call when playback ends or is replaced. */
