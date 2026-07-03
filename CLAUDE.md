@@ -81,7 +81,7 @@ This is a **monorepo** (pnpm workspaces) containing a Preact-based Bible reader.
 
 ### Extensions (`packages/*-extension/`)
 
-Separate packages that call `registerExtension({ id, init })`; the `init(context)` generator receives the `SeedBibleState` and yields cleanup functions. `seed-bible-refresh-example-extension` is the reference template.
+Separate packages that `export default` a function which, when called, calls `registerExtension({ id, init })`; the `init(context)` generator receives the `SeedBibleState` and yields cleanup functions. `ExtensionManager` invokes the default export on every install attempt (not just once at module load), which is what allows an extension to be uninstalled and reinstalled within the same session. `seed-bible-refresh-example-extension` is the reference template.
 
 ### Tests (`test/`)
 

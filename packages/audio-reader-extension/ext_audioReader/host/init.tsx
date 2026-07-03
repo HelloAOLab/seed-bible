@@ -70,52 +70,54 @@ function PauseIcon() {
   );
 }
 
-registerExtension({
-  id: "ext_audioReader",
-  init: function* (context: SeedBibleState) {
-    // The play/pause control lives in the reader's top quick toolbar,
-    // beside the bookmark button. It only shows for chapters with audio.
-    yield context.tools.registerQuickTool({
-      id: "ext_audioReader-play",
-      priority: 250,
-      title: {
-        key: "toolbarTitle",
-        defaultValue: "Listen",
-        ns: "ext_audioReader",
-      },
-      icon: () => (isPlaying.value ? <PauseIcon /> : <PlayIcon />),
-      isVisible: (ctx) =>
-        computed(() => chapterAudioUrl(ctx.readingState) !== null),
-      onSelect: (ctx) => {
-        const url = chapterAudioUrl(ctx.readingState);
-        if (!url) {
-          context.app.toast("No audio is available for this chapter.");
-          return;
-        }
-        const el = ensureAudio();
-        if (!el) return;
-        if (currentUrl !== url) {
-          el.src = url;
-          currentUrl = url;
-        }
-        if (el.paused) {
-          void el.play();
-        } else {
-          el.pause();
-        }
-      },
-    });
+export default function initAudioReaderExtension() {
+  registerExtension({
+    id: "ext_audioReader",
+    init: function* (context: SeedBibleState) {
+      // The play/pause control lives in the reader's top quick toolbar,
+      // beside the bookmark button. It only shows for chapters with audio.
+      yield context.tools.registerQuickTool({
+        id: "ext_audioReader-play",
+        priority: 250,
+        title: {
+          key: "toolbarTitle",
+          defaultValue: "Listen",
+          ns: "ext_audioReader",
+        },
+        icon: () => (isPlaying.value ? <PauseIcon /> : <PlayIcon />),
+        isVisible: (ctx) =>
+          computed(() => chapterAudioUrl(ctx.readingState) !== null),
+        onSelect: (ctx) => {
+          const url = chapterAudioUrl(ctx.readingState);
+          if (!url) {
+            context.app.toast("No audio is available for this chapter.");
+            return;
+          }
+          const el = ensureAudio();
+          if (!el) return;
+          if (currentUrl !== url) {
+            el.src = url;
+            currentUrl = url;
+          }
+          if (el.paused) {
+            void el.play();
+          } else {
+            el.pause();
+          }
+        },
+      });
 
-    // Stop and rewind whenever the active chapter changes so a previous
-    // chapter's narration never keeps playing under a new one.
-    yield effect(() => {
-      // Reading `.value` subscribes this effect to chapter navigation.
-      void context.app.currentReadingState.value;
-      if (audioEl && !audioEl.paused) {
-        audioEl.pause();
-        audioEl.currentTime = 0;
-      }
-      isPlaying.value = false;
-    });
-  },
-});
+      // Stop and rewind whenever the active chapter changes so a previous
+      // chapter's narration never keeps playing under a new one.
+      yield effect(() => {
+        // Reading `.value` subscribes this effect to chapter navigation.
+        void context.app.currentReadingState.value;
+        if (audioEl && !audioEl.paused) {
+          audioEl.pause();
+          audioEl.currentTime = 0;
+        }
+        isPlaying.value = false;
+      });
+    },
+  });
+}
