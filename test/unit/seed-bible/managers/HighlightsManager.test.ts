@@ -33,6 +33,7 @@ describe("HighlightsManager", () => {
     login = {
       authBot: signal(null),
       userId: signal("user-1"),
+      connectionId: "conn-1",
       profile: signal(null),
       updateProfile: vi.fn().mockResolvedValue(undefined),
       login: vi.fn().mockResolvedValue(undefined),

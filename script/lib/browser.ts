@@ -329,6 +329,7 @@ export const DEFAULT_EXTENSIONS = [
   "twitchPub-extension",
   "today-screen",
   "audio-reader-extension",
+  "apologist-extension",
   // "BookSelector",
   // "Object Pooler",
   // "GeoImporter",

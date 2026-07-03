@@ -1,6 +1,10 @@
 node_modules
 dist
 pattern-dist
+/base-branch
+size-head.json
+size-base.json
+size-report.md
 .DS_Store
 package-lock.json
 .claude
@@ -9,7 +13,6 @@ bun.lock
 !.vscode/settings.json
 !.vscode/launch.json
 ./cursor/*
-.pnpm-store/*
-
-# Test coverage reports
 coverage/
+secrets.json
+.pnpm-store/*
