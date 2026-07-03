@@ -153,6 +153,7 @@ jobs:
             HOST_INVALIDATE_URL="https://alpha.seedbible.org/__invalidate"
           fi
           curl -fsS -X POST \
+            -H "x-invalidation-secret: ${{ secrets.INVALIDATION_SECRET }}" \
             "${HOST_INVALIDATE_URL}?branch=${{ steps.ids.outputs.branch }}" \
             || echo "invalidate ping failed (non-fatal)"
       - uses: actions/upload-artifact@v7
