@@ -1,12 +1,12 @@
 # UI Scaling Refactor — Work Log & Handoff
 
-**Branch:** `fix/1281-ui-scaling` · **Issue:** #1281 · **Status:** Rem-based UI scaling — **Phases 0, 1, 2, 3, 4, 5, 7 done.**
+**Branch:** `fix/1281-ui-scaling` · **Issue:** #1281 · **Status:** Rem-based UI scaling — **Phases 0, 1, 2, 3, 4, 5, 6, 7 done.**
 
-- **Committed:** Phase 0+1 (`5e752106`), Phase 7 (`f0e2c921`), Phase 2 (`0190a5b7`), Phase 4 (`e469fbb`). Plus the ThemeManager var-collision fix (`5ec5f44f`).
+- **Committed:** Phase 0+1 (`5e752106`), Phase 7 (`f0e2c921`), Phase 2 (`0190a5b7`), Phase 4 (`e469fbb`), Phase 5 (`337b1794`). Plus the ThemeManager var-collision fix (`5ec5f44f`). `develop` was merged in (`168b7fbb`).
 - **Phase 3** = verified clean, **no code changes** (see §4).
-- **Phase 5** (modals/overlays) is **in the working tree, uncommitted** — user hands-on QA in progress.
+- **Phase 6** (mobile) is **in the working tree, uncommitted** — awaiting the user's hands-on mobile QA gate + `/commit`.
 - **Naming:** the scale-map constant was renamed `UI_TEXT_SIZE_SCALE` → **`UI_TEXT_SIZE_SCALE_MAP`** (in `e469fbb`). Older references below may still say the old name.
-- **Remaining:** Phase 6 (mobile, + hands-on QA gate); deferred **Phase 8** (book-selector responsiveness) / **Phase 9** (optional a11y browser-pref); and **Phase 10 — cleanup (runs last, after all other phases)** — see §8.
+- **Remaining:** deferred **Phase 8** (book-selector responsiveness) / **Phase 9** (optional a11y browser-pref); and **Phase 10 — cleanup (runs last, after all other phases)** — see §8.
 - **Commit policy:** never commit on your own — only when the user invokes `/commit`.
 
 This doc is the single source of truth for resuming this work in a new thread / on
@@ -111,6 +111,15 @@ Files changed (now **committed** as `5e752106`; the list below is historical):
 - **14 inline `px → rem` conversions** across `BibleSelector.tsx` (11) + `SettingsPage.tsx` (3): border-radii, padding/margin, gaps, width/height, font-sizes. **Kept px:** `1px` borders, the `9999px` overlay-mask box-shadow, `icons.tsx` borders.
 - **Decisions:** footnote-modal font **kept** tracking the reader knob (intentional — it's reading content); book-selector responsiveness **deferred → Phase 8**.
 
+### Phase 6 — mobile ✅ (working tree, uncommitted — awaiting hands-on mobile QA)
+
+- **`MobileSettingsSheet.tsx`** — the **4 remaining inline `px` font-sizes → rem** (the codemod only touched `main.css`, so JSX inline styles were never migrated). All exact no-ops at UI size M: header `auto_stories` icon `22 → 1.375rem`; the two scripture "A" affordance buttons `14 → 0.875rem` / `20 → 1.25rem`; the UI-text-size preview ramp `` `${12 + i*2}px` `` → `` `${(12 + i*2)/16}rem` `` (0.75/0.875/1/1.125rem).
+- **⚠️ Divergence from this doc's original Phase 6 plan (§8), and why:** the plan said to keep the `${12 + i*2}px` ramp as **px** in a `READER_PREVIEW_PX` const because it "mirrors the reader glyph knob." That was written against a **pre-`develop`-merge** file layout. In the current file that line is the **UI-text-size selector ramp** (chrome, iterating `UI_TEXT_SIZE_OPTIONS` = S/M/L/XL, 4 buttons — not the doc's stale 5-entry array), **not** a reader preview. By the §2 invariant, chrome font-size → rem, so it now scales with the UI knob like the rest of the sheet. There is no reader-glyph preview ramp in the current file, so nothing here should stay px.
+- **Consistency check:** the two scripture "A" buttons now use the **identical** rem values (`0.875rem` / `1.25rem`) that desktop's already-shipped `.sb-scripture-quick-btn-a-small` / `-a-large` (`main.css`) use — mobile now matches desktop.
+- **`READER_PREVIEW_PX` const not created** — the plan's rationale (keep-px) no longer applies; kept the inline rem computation (adaptive to the options-array length) with a clarifying comment.
+- **Gates green:** `check:ts` (0) · `lint` (0 err / 438 pre-existing warns) · `test` (581/581) · `build` (✓).
+- **Not code (verify at the QA gate):** 768px breakpoint + swipe carousel at all UI sizes. The reader-size preview const the plan mentioned (`${12 + i * 2}px`) does not exist as a _reader_ preview post-merge (see divergence above).
+
 ## 5. Verification done (Phase 1)
 
 - **Static gates green:** `pnpm check:ts` (0 errors), `pnpm lint` (0 errors; 438 pre-existing warnings), `pnpm test` (580/580), `pnpm build` (✓).
@@ -197,9 +206,9 @@ so the rest of `:root` was hand-converted (see §4).
 
 ## 8. NEXT STEPS
 
-**Phases 0–5 + 7 — DONE.** See §4 for what each did and its commit ref. Only Phase 6, the deferred Phases 8–9, and the final Phase 10 (cleanup) remain.
+**Phases 0–7 — DONE** (code). See §4 for what each did and its commit ref. Phase 6 is in the working tree awaiting the user's hands-on mobile QA gate + `/commit`. Only the deferred Phases 8–9 and the final Phase 10 (cleanup) remain.
 
-**Phase 6 — mobile (NEXT):** inline → rem in `MobileSettingsSheet.tsx` (re-locate the spots — the old `97,124,137,167` line refs predate the develop merge); the computed reader-size preview `${12 + i * 2}px` → a `READER_PREVIEW_PX = [12,14,16,18,20]` const (**keep px** — it mirrors the reader glyph knob). Verify the 768px breakpoint + swipe at all UI sizes. **Then pause for the user's hands-on mobile QA gate.**
+**Phase 6 — mobile ✅ (code done, awaiting QA gate):** `MobileSettingsSheet.tsx` 4 inline px font-sizes → rem (see §4 for details + the divergence from this plan's original "keep px" note). **Now paused for the user's hands-on mobile QA gate** (768px breakpoint + swipe carousel at all UI sizes). ⚠️ The original plan text below is **superseded** — kept for the record: it said to make a `READER_PREVIEW_PX = [12,14,16,18,20]` px const, but that plan targeted a pre-`develop`-merge layout where `${12 + i*2}px` was a reader preview; post-merge it's the chrome UI-text-size ramp (4 options), correctly converted to rem instead.
 
 --- Deferred items (given their own phases so they aren't lost) ---
 
@@ -231,9 +240,9 @@ Setting `--sb-ui-scale` directly is faithful — it's exactly what `SettingsMana
 
 ## 10. Commit / push status
 
-- [x] Phase 0 + 1 committed (`5e752106`), merged with latest `develop`.
-- [x] Phase 7 (`f0e2c921`), Phase 2 (`0190a5b7`), Phase 4 + rename (`e469fbb`) committed.
+- [x] Phase 0 + 1 committed (`5e752106`), merged with latest `develop` (`168b7fbb`).
+- [x] Phase 7 (`f0e2c921`), Phase 2 (`0190a5b7`), Phase 4 + rename (`e469fbb`), Phase 5 (`337b1794`) committed.
 - [x] Phase 3 — verified clean, no code changes.
-- [ ] Phase 5 (modals/overlays) — in the working tree, awaiting user QA + `/commit`.
+- [ ] Phase 6 (mobile) — in the working tree, awaiting user hands-on mobile QA + `/commit`.
 - [ ] Push `fix/1281-ui-scaling` to the remote — **only when the user explicitly asks.**
-- [ ] Phase 6 (mobile), deferred Phase 8/9, Phase 10 (cleanup — runs last) — not started.
+- [ ] Deferred Phase 8/9, Phase 10 (cleanup — runs last) — not started.

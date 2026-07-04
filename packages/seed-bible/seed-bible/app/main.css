@@ -4016,7 +4016,7 @@ h6 {
   min-height: 0;
   flex: 1;
   overflow-y: auto;
-  margin-bottom: 4rem;
+  padding-bottom: 3rem;
 }
 
 .sb-sidebar-settings-content .sb-settings-page {
