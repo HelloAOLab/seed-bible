@@ -37,7 +37,13 @@ export function createSidebar(options: CreateSidebarOptions) {
   // Floating reader panels (anchored above the reader toolbar) — separate
   // from the sidebar drawer. Only one can be open at a time so clicking
   // one closes the other.
-  const isSearchPanelOpen = signal(false);
+  //
+  // Two-way bound to the `?search=open` query param below so the mobile Back
+  // button/gesture closes the panel: opening pushes a history entry, and
+  // Back pops it, which clears the param and flips this signal to false.
+  const isSearchPanelOpen = signal(
+    navigation.currentUrl.value.searchParams.get("search") === "open"
+  );
   const isChatPanelOpen = options.chatsManager.isOpen;
 
   const openSearchPanel = () => {
@@ -131,6 +137,14 @@ export function createSidebar(options: CreateSidebarOptions) {
       },
       set value(newValue) {
         isMobileOpen.value = newValue === "open";
+      },
+    },
+    search: {
+      get value() {
+        return isSearchPanelOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        isSearchPanelOpen.value = newValue === "open";
       },
     },
   });
