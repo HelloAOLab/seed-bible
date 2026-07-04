@@ -250,8 +250,8 @@ function broadcastDecorationToSession(
       }
     : undefined;
   const className = details.customColor
-    ? ""
-    : `sb-highlight-${details.colorId}`;
+    ? "sb-highlight"
+    : `sb-highlight sb-highlight-${details.colorId}`;
 
   for (const verse of verses) {
     const id = sharedHighlightDecorationId(

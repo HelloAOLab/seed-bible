@@ -95,7 +95,7 @@ describe("ThemeManager CSS helpers", () => {
         "background-color: var(--sb-highlight-yellow-color);"
       );
       expect(css).toContain("color: var(--sb-highlight-yellow-font-color);");
-      expect(css).toContain("&.sb-words-of-jesus {");
+      expect(css).toContain("& .sb-words-of-jesus {");
       expect(css).toContain(
         "color: var(--sb-highlight-yellow-words-of-jesus-font-color);"
       );

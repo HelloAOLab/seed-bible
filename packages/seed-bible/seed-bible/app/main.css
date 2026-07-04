@@ -204,7 +204,7 @@ html {
   --sb-highlight-green-font-color: #333;
   --sb-highlight-green-words-of-jesus-font-color: #e07b4c;
 
-  --sb-highlight-blue-color: #fff59d;
+  --sb-highlight-blue-color: #90caf9;
   --sb-highlight-blue-font-color: #333;
   --sb-highlight-blue-words-of-jesus-font-color: #e07b4c;
 
@@ -219,6 +219,10 @@ html {
   --sb-highlight-orange-color: #ffcc80;
   --sb-highlight-orange-font-color: #333;
   --sb-highlight-orange-words-of-jesus-font-color: #e07b4c;
+
+  --sb-highlight-radius: 0.3em;
+  --sb-highlight-padding-inline: 0.18em;
+  --sb-highlight-padding-block: 0.06em;
 
   --sb-dynamic-range-limit: standard;
 }
@@ -1409,6 +1413,25 @@ a:visited {
 }
 
 .sb-verse-decorator {
+  transition:
+    background-color 0.2s ease,
+    background 0.3s ease,
+    color 0.2s ease;
+}
+
+/*
+ * Marker "shape" for a highlighted run of verses. Kept separate from
+ * .sb-verse-decorator (which wraps every verse, highlighted or not) so
+ * unhighlighted text is unaffected. box-decoration-break: clone makes the
+ * browser round every wrapped visual line independently, giving the
+ * highlighter-marker look instead of one flat rectangle.
+ */
+.sb-highlight {
+  border-radius: var(--sb-highlight-radius);
+  padding-inline: var(--sb-highlight-padding-inline);
+  padding-block: var(--sb-highlight-padding-block);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
   transition:
     background-color 0.2s ease,
     background 0.3s ease,

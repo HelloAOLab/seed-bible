@@ -511,26 +511,34 @@ function renderChapterContent(
     return null;
   };
 
+  // groupKey identifies runs of contiguous prose verses that share the exact
+  // same highlight presentation, so they can be rendered as one wrapping
+  // element (letting box-decoration-break: clone round every wrapped line
+  // seamlessly, instead of leaving seams between separate per-verse spans).
   const getHighlightPresentation = (highlight: ChapterHighlight | null) => {
     if (!highlight) {
       return {
         className: "",
         style: undefined,
+        groupKey: "",
       } as const;
     }
 
     if (highlight.customColor && highlight.customFontColor) {
       return {
-        className: "",
+        className: "sb-highlight",
         style: {
           backgroundColor: highlight.customColor,
           color: highlight.customFontColor,
         },
+        groupKey: `custom:${highlight.customColor}:${highlight.customFontColor}`,
       } as const;
     }
 
     return {
-      className: ` sb-highlight-${highlight.colorId}`,
+      className: `sb-highlight sb-highlight-${highlight.colorId}`,
+      style: undefined,
+      groupKey: `color:${highlight.colorId}`,
     } as const;
   };
 
@@ -570,33 +578,70 @@ function renderChapterContent(
   };
 
   const entries = chapterData.chapter.content;
-  return entries.map((entry, entryIndex) => {
+  const outputNodes: JSX.Element[] = [];
+
+  // Accumulates a run of contiguous prose verses that share the same
+  // highlight presentation, so they can be flushed as one wrapping
+  // `.sb-highlight` span instead of one per verse.
+  let pendingGroup: {
+    key: string;
+    className: string;
+    style: JSX.CSSProperties | undefined;
+    entryIndex: number;
+    nodes: JSX.Element[];
+  } | null = null;
+
+  const flushGroup = () => {
+    if (!pendingGroup) {
+      return;
+    }
+    const group = pendingGroup;
+    pendingGroup = null;
+    outputNodes.push(
+      <span
+        key={`highlight-${group.entryIndex}`}
+        className={group.className}
+        style={group.style}
+      >
+        {group.nodes}
+      </span>
+    );
+  };
+
+  entries.forEach((entry, entryIndex) => {
     if (!entry || typeof entry !== "object") {
-      return null;
+      return;
     }
 
     const value = entry;
 
     if (value.type === "heading" && Array.isArray(value.content)) {
+      flushGroup();
       if (!scriptureElements.showHeadings) {
-        return null;
+        return;
       }
       const heading = (value.content as unknown[])
         .filter((item) => typeof item === "string")
         .join(" ");
-      return (
+      outputNodes.push(
         <h3 key={`heading-${entryIndex}`} className="sb-chapter-heading">
           {heading}
         </h3>
       );
+      return;
     }
 
     if (value.type === "line_break") {
-      return <div key={`break-${entryIndex}`} className="sb-line-break" />;
+      flushGroup();
+      outputNodes.push(
+        <div key={`break-${entryIndex}`} className="sb-line-break" />
+      );
+      return;
     }
 
     if (value.type === "hebrew_subtitle" && Array.isArray(value.content)) {
-      return (
+      flushGroup();
+      outputNodes.push(
         <p key={`subtitle-${entryIndex}`} className="sb-subtitle">
           {value.content.map((part, index) =>
             renderInlineContent(
@@ -610,6 +655,7 @@ function renderChapterContent(
           )}
         </p>
       );
+      return;
     }
 
     if (
@@ -658,20 +704,25 @@ function renderChapterContent(
       ]
         .filter(Boolean)
         .join(" ");
-      const verseDecoratorClassName = [
-        "sb-verse-decorator",
-        highlightPresentation.className.trim(),
-        decorationPresentation.className.trim(),
-      ]
-        .filter(Boolean)
-        .join(" ");
-      const verseDecoratorStyle = {
-        ...(highlightPresentation.style ?? {}),
-        ...(decorationPresentation.style ?? {}),
-      };
 
       if (hasPoetry) {
-        return (
+        // Poetry lines are always their own block-level element (never share
+        // a horizontal line with a sibling verse), so there's no seam to
+        // avoid here — each line keeps carrying its own highlight class and
+        // is never merged into (or merged with) a prose highlight group.
+        flushGroup();
+        const verseDecoratorClassName = [
+          "sb-verse-decorator",
+          highlightPresentation.className.trim(),
+          decorationPresentation.className.trim(),
+        ]
+          .filter(Boolean)
+          .join(" ");
+        const verseDecoratorStyle = {
+          ...(highlightPresentation.style ?? {}),
+          ...(decorationPresentation.style ?? {}),
+        };
+        outputNodes.push(
           <span
             key={`verse-${entryIndex}`}
             className={verseClassName}
@@ -749,9 +800,24 @@ function renderChapterContent(
             })}
           </span>
         );
+        return;
       }
 
-      return (
+      // Prose verse: the decorator only ever carries decoration (search
+      // hits / live session broadcasts) now — the highlight color/shape
+      // lives on the wrapping wrapper below, so a multi-verse highlighted
+      // run becomes one seamless element instead of separate boxes.
+      const verseDecoratorClassName = [
+        "sb-verse-decorator",
+        decorationPresentation.className.trim(),
+      ]
+        .filter(Boolean)
+        .join(" ");
+      const verseDecoratorStyle = {
+        ...(decorationPresentation.style ?? {}),
+      };
+
+      const verseNode = (
         <span
           key={`verse-${entryIndex}`}
           className={verseClassName}
@@ -784,10 +850,31 @@ function renderChapterContent(
           </span>
         </span>
       );
-    }
 
-    return null;
+      if (!highlightPresentation.groupKey) {
+        flushGroup();
+        outputNodes.push(verseNode);
+        return;
+      }
+
+      if (pendingGroup && pendingGroup.key === highlightPresentation.groupKey) {
+        pendingGroup.nodes.push(verseNode);
+      } else {
+        flushGroup();
+        pendingGroup = {
+          key: highlightPresentation.groupKey,
+          className: highlightPresentation.className,
+          style: highlightPresentation.style,
+          entryIndex,
+          nodes: [verseNode],
+        };
+      }
+      return;
+    }
   });
+
+  flushGroup();
+  return outputNodes;
 }
 
 interface BibleReaderProps {
