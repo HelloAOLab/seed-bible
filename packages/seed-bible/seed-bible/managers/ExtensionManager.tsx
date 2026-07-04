@@ -80,11 +80,40 @@ export interface UploadedExtension {
 }
 
 export interface ImportExtension {
-  /** The function to dynamically import the extension module. */
+  /**
+   * The function to dynamically import the extension module. The resolved
+   * module must `export default` a function matching `ExtensionEntryPoint` —
+   * the loader calls it explicitly to (re)trigger registration on every
+   * install attempt, since ES module evaluation only runs once per
+   * specifier.
+   */
   import: () => Promise<unknown>;
 
   /** The metadata for this extension. */
   meta: ExtensionMeta;
+}
+
+/**
+ * The contract an extension module's default export must satisfy. Calling
+ * this function triggers the extension's registration (typically via a
+ * `registerExtension(...)` call). It must be safe to call more than once per
+ * page load: native ES module evaluation is cached per specifier, so after
+ * `unloadExtension()` a later `loadExtension()`/`loadExtensionFromUrl()` call
+ * re-invokes this cached function reference rather than re-running the
+ * module's top-level code.
+ */
+export type ExtensionEntryPoint = () =>
+  | void
+  | CleanupFunction
+  | Promise<void | CleanupFunction>;
+
+/**
+ * The expected shape of a dynamically-imported extension module: an ES
+ * module namespace object with a `default` export matching
+ * `ExtensionEntryPoint`.
+ */
+export interface ExtensionModule {
+  default: ExtensionEntryPoint;
 }
 
 export interface ExtensionSet {
@@ -326,6 +355,22 @@ export interface ExtensionManagerOptions {
   defaultExtensions?: ExtensionSet | null;
 }
 
+/**
+ * Runtime type guard for `ExtensionModule`. The actual shape of a
+ * dynamically-imported extension module can't be statically verified —
+ * `uploaded.import()` and `import(url)` both resolve to whatever the
+ * extension package actually exports — so this is checked at the call sites
+ * that invoke an extension's default export.
+ */
+function isExtensionModule(value: unknown): value is ExtensionModule {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "default" in value &&
+    typeof (value as { default: unknown }).default === "function"
+  );
+}
+
 export function createExtensionManager(
   login: LoginManager,
   options: ExtensionManagerOptions = {}
@@ -521,7 +566,15 @@ export function createExtensionManager(
     }
 
     try {
-      await import(/** @vite-ignore */ url);
+      const mod: unknown = await import(/** @vite-ignore */ url);
+      if (!isExtensionModule(mod)) {
+        refreshExtensionsSignal();
+        console.error(
+          `Failed to install extension '${id}': the module at '${url}' does not \`export default\` a function. Extensions must export a default function that triggers registration when called.`
+        );
+        return false;
+      }
+      await mod.default();
       installedExtensionIds.add(id);
       refreshExtensionsSignal();
       // shout("onExtensionInstalled", id);
@@ -600,7 +653,21 @@ export function createExtensionManager(
         installStack.delete(extensionId);
         return installed;
       } else if ("import" in uploaded && uploaded.import) {
-        await uploaded.import();
+        try {
+          const mod: unknown = await uploaded.import();
+          if (!isExtensionModule(mod)) {
+            console.error(
+              `Failed to install extension '${extensionId}': its module does not \`export default\` a function. Extensions must export a default function that triggers registration when called.`
+            );
+            installStack.delete(extensionId);
+            return false;
+          }
+          await mod.default();
+        } catch (err) {
+          installStack.delete(extensionId);
+          console.error("Failed to install extension:", extensionId, err);
+          return false;
+        }
         installStack.delete(extensionId);
         return true;
       } else {

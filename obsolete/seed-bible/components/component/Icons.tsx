@@ -1,9 +1,9 @@
 const ArrowForward = () => {
-    return <>
-        <p>Hello</p>
+  return (
+    <>
+      <p>Hello</p>
     </>
+  );
 };
 
-export {
-    ArrowForward
-}
+export { ArrowForward };

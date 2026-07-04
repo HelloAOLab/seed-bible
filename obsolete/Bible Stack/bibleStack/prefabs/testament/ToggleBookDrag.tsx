@@ -1,1 +1,1 @@
-setTag(thisBot,"draggable",that.draggable);
+setTag(thisBot, "draggable", that.draggable);

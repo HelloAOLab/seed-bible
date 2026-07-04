@@ -494,20 +494,32 @@ export function createPanes(
       return;
     }
 
+    const $panes = panes.peek();
+
     // Do not auto-replace a component-backed pane with a tab.
     if (selectedPane.component !== null) {
-      selectedPane = panes.value.find((p) => p.tab !== null) ?? null;
+      selectedPane = $panes.find((p) => p.tab !== null) ?? null;
+    }
 
-      if (!selectedPane) {
-        return;
-      }
+    if (!selectedPane) {
+      // no reading tabs to replace, so replace the first attached pane instead
+      selectedPane = $panes.find((p) => !p.detached) ?? null;
+    }
+
+    if (!selectedPane) {
+      // still no pane, so open a new attached one
+      openPane({
+        type: "attached",
+        tabId: nextTab.id,
+      });
+      return;
     }
 
     if (selectedPane.tab?.id === nextTab.id) {
       return;
     }
 
-    panes.value = panes.value.map((pane) =>
+    panes.value = $panes.map((pane) =>
       pane.id === selectedPane.id
         ? {
             ...pane,

@@ -156,6 +156,7 @@ function createTabsManager({
     navigation,
     dataManager,
     highlightsManager,
+    {} as any,
     i18nManager
   );
 
@@ -208,10 +209,13 @@ describe("createTabs", () => {
       updateOptions: vi.fn(),
       removeSharedDecoration: vi.fn(),
       dispose: vi.fn(),
+      allUsers: signal([]),
       connectedUsers: signal([]),
       localSessionId: signal("session-123"),
       userCanDecorate: vi.fn().mockReturnValue(true),
       userCanNavigate: vi.fn().mockReturnValue(true),
+      currentUser: signal(null),
+      isHost: vi.fn().mockReturnValue(false),
     } as BibleReadingSession;
 
     const nextTab = manager.addTab(sharedSession);

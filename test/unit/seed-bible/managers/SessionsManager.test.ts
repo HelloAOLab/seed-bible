@@ -1,6 +1,7 @@
 import { batch, signal } from "@preact/signals";
 import {
   createSessionsManager,
+  getUserAnimalVisual,
   type BibleReadingSession,
 } from "@packages/seed-bible/seed-bible/managers/SessionsManager";
 import { createBibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
@@ -33,7 +34,6 @@ type TestRemoteClientEvent = {
   isSelf: boolean;
   client: {
     connectionId: string;
-    sessionId: string | null;
     userId: string | null;
   };
 };
@@ -1209,7 +1209,6 @@ describe("SessionsManager", () => {
       isSelf: false,
       client: {
         connectionId: "conn-1",
-        sessionId: "group-abc",
         userId: "user-1",
       },
     });
@@ -1219,7 +1218,6 @@ describe("SessionsManager", () => {
       isSelf: false,
       client: {
         connectionId: "conn-2",
-        sessionId: "group-abc",
         userId: null,
       },
     });
@@ -1236,14 +1234,43 @@ describe("SessionsManager", () => {
             name: "Profile user-1",
           },
           isSelf: false,
-          color: expect.any(String),
+          isActive: true,
+          visual: getUserAnimalVisual("conn-1"),
+          joinedAtMs: null,
         },
         {
           connectionId: "conn-2",
           userId: null,
           profile: null,
           isSelf: false,
-          color: expect.any(String),
+          isActive: true,
+          visual: getUserAnimalVisual("conn-2"),
+          joinedAtMs: null,
+        },
+      ])
+    );
+
+    expect(session.allUsers.value).toEqual(
+      expect.arrayContaining([
+        {
+          connectionId: "conn-1",
+          userId: "user-1",
+          profile: {
+            name: "Profile user-1",
+          },
+          isSelf: false,
+          isActive: true,
+          visual: getUserAnimalVisual("conn-1"),
+          joinedAtMs: null,
+        },
+        {
+          connectionId: "conn-2",
+          userId: null,
+          profile: null,
+          isSelf: false,
+          isActive: true,
+          visual: getUserAnimalVisual("conn-2"),
+          joinedAtMs: null,
         },
       ])
     );
@@ -1264,7 +1291,6 @@ describe("SessionsManager", () => {
       isSelf: false,
       client: {
         connectionId: "conn-1",
-        sessionId: "group-abc",
         userId: "user-1",
       },
     });
@@ -1276,11 +1302,65 @@ describe("SessionsManager", () => {
       isSelf: false,
       client: {
         connectionId: "conn-1",
-        sessionId: "group-abc",
         userId: "user-1",
       },
     });
 
     await waitFor(() => session.connectedUsers.value.length === 0);
+
+    expect(session.allUsers.value).toEqual(
+      expect.arrayContaining([
+        {
+          connectionId: "conn-1",
+          userId: "user-1",
+          profile: {
+            name: "Profile user-1",
+          },
+          isSelf: false,
+          isActive: false,
+          visual: getUserAnimalVisual("conn-1"),
+          joinedAtMs: null,
+        },
+      ])
+    );
+  });
+
+  it("joins with inactive users seeded from user_profiles map", async () => {
+    mockUserProfilesMap.set("conn-old", {
+      userId: "user-old",
+      profile: {
+        name: "Old User",
+      },
+    });
+
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    await waitFor(() =>
+      session.allUsers.value.some((user) => user.connectionId === "conn-old")
+    );
+
+    expect(session.connectedUsers.value).toHaveLength(0);
+    expect(session.allUsers.value).toEqual(
+      expect.arrayContaining([
+        {
+          connectionId: "conn-old",
+          userId: "user-old",
+          profile: {
+            name: "Old User",
+          },
+          isSelf: false,
+          isActive: false,
+          visual: getUserAnimalVisual("conn-old"),
+          joinedAtMs: null,
+        },
+      ])
+    );
   });
 });

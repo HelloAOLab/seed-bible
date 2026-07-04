@@ -26,7 +26,7 @@ html,
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: rgb(197, 194, 194)
+  background: rgb(197, 194, 194);
 }
 
 .sidebar-tool {
@@ -45,7 +45,6 @@ html,
   z-index: 10;
 }
 
-
 .sidebar-tool .tool-item {
   padding: 8px;
   border: 1px solid #ddd;
@@ -56,8 +55,6 @@ html,
   cursor: pointer;
   background-color: var(--primary);
 }
-
-
 
 .sidebar-tool .tool-item:hover {
   background-color: var(--primary-varient);
@@ -89,8 +86,6 @@ html,
   pointer-events: none;
 }
 
-
-
 /* hide the scrollbar in non-touch devices */
 @media (hover: hover) {
   .sidebar-tool::-webkit-scrollbar {
@@ -105,17 +100,17 @@ html,
 }
 
 .tooltip .tooltiptext {
-    visibility: hidden;
-    position: absolute;
-    width: 120px;
-    background-color: var(--on-bg);
-    color: var(--bg);
-    text-align: center;
-    padding: 5px 0;
-    border-radius: 6px;
-    z-index: 1;
-    opacity: 0;
-    transition: opacity 0.3s;
+  visibility: hidden;
+  position: absolute;
+  width: 120px;
+  background-color: var(--on-bg);
+  color: var(--bg);
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.3s;
 }
 
 .tooltip .tooltiptext::after {
@@ -130,20 +125,20 @@ html,
 }
 
 .subIcon {
-    border: none;
-    visibility: hidden;
-    position: absolute;
-    width: 16px;
-    text-align: center;
-    border-radius: 8px;
-    z-index: 1;
-    opacity: 0;
-    transition: opacity 0.3s;
-    font-size: 20px !important;
-    font-weight: bold !important;
-    top: -7px;
-    right: -6px;
-    color: var(--on-bg) !important;
+  border: none;
+  visibility: hidden;
+  position: absolute;
+  width: 16px;
+  text-align: center;
+  border-radius: 8px;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 20px !important;
+  font-weight: bold !important;
+  top: -7px;
+  right: -6px;
+  color: var(--on-bg) !important;
 }
 
 .tooltip:hover .tooltiptext {
@@ -157,6 +152,6 @@ html,
 }
 
 .tooltip-right {
-    /* top: -5px; */
-    left: 140%;
+  /* top: -5px; */
+  left: 140%;
 }

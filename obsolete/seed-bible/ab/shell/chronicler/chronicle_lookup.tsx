@@ -4,15 +4,21 @@
 const targetAddress = that.address;
 const periodCount = (targetAddress.match(/\./g) || []).length;
 
-let targetTag = that.chronicle_tag && !that.privateChronicle ? "publicRead:" + that.chronicle_tag : false;
+let targetTag =
+  that.chronicle_tag && !that.privateChronicle
+    ? "publicRead:" + that.chronicle_tag
+    : false;
 
-if (periodCount == 3)
-{
-    const recordName = targetAddress.substring(0, targetAddress.lastIndexOf(".")).replaceAll(".", "_");
-    const recordAddress = targetAddress.substring(targetAddress.lastIndexOf(".") + 1);
-    const recordData = await os.getData(recordName, recordAddress);
+if (periodCount == 3) {
+  const recordName = targetAddress
+    .substring(0, targetAddress.lastIndexOf("."))
+    .replaceAll(".", "_");
+  const recordAddress = targetAddress.substring(
+    targetAddress.lastIndexOf(".") + 1
+  );
+  const recordData = await os.getData(recordName, recordAddress);
 
-    return [recordData];
+  return [recordData];
 }
 
 const recordName = targetAddress.replaceAll(".", "_");
@@ -21,31 +27,25 @@ let lastAddress;
 const items = [];
 
 //list all data in the record with appropriate tags
-if (!targetTag && !that.privateChronicle) 
-{
-    targetTag = "publicRead";
+if (!targetTag && !that.privateChronicle) {
+  targetTag = "publicRead";
 }
-console.log("TARGET TAG:", targetTag)
+console.log("TARGET TAG:", targetTag);
 
-while (true) 
-{
-    const result = await os.listDataByMarker(recordName, targetTag, lastAddress);
+while (true) {
+  const result = await os.listDataByMarker(recordName, targetTag, lastAddress);
 
-    if (result.success) 
-    {
-        items.push(...result.items);
+  if (result.success) {
+    items.push(...result.items);
 
-        if (result.items.length > 0) {
-            lastAddress = result.items[result.items.length - 1].address;
-        }
-        else {
-            break;
-        }
+    if (result.items.length > 0) {
+      lastAddress = result.items[result.items.length - 1].address;
+    } else {
+      break;
     }
-    else 
-    {
-        return result;
-    }
+  } else {
+    return result;
+  }
 }
 
 return items;
