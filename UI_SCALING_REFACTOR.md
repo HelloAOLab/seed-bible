@@ -2,11 +2,11 @@
 
 **Branch:** `fix/1281-ui-scaling` · **Issue:** #1281 · **Status:** Rem-based UI scaling — **Phases 0, 1, 2, 3, 4, 5, 6, 7 done.**
 
-- **Committed:** Phase 0+1 (`5e752106`), Phase 7 (`f0e2c921`), Phase 2 (`0190a5b7`), Phase 4 (`e469fbb`), Phase 5 (`337b1794`). Plus the ThemeManager var-collision fix (`5ec5f44f`). `develop` was merged in (`168b7fbb`).
+- **Committed:** Phase 0+1 (`5e752106`), Phase 7 (`f0e2c921`), Phase 2 (`0190a5b7`), Phase 4 (`e469fbb`), Phase 5 (`337b1794`), Phase 6 (`275184e7`). Plus the ThemeManager var-collision fix (`5ec5f44f`). An earlier `develop` merge landed at `168b7fbb`.
 - **Phase 3** = verified clean, **no code changes** (see §4).
-- **Phase 6** (mobile) is **in the working tree, uncommitted** — awaiting the user's hands-on mobile QA gate + `/commit`.
+- **⚠️ A second `develop` merge (2026-07-03) is in the working tree, UNCOMMITTED** — `main.css` conflict resolved + one semantic collision (`main.tsx` `fontSizeClass`) fixed, both staged. This merge spawned integration **Phases 11–14** (§8). Full gates not yet re-run post-merge.
 - **Naming:** the scale-map constant was renamed `UI_TEXT_SIZE_SCALE` → **`UI_TEXT_SIZE_SCALE_MAP`** (in `e469fbb`). Older references below may still say the old name.
-- **Remaining:** deferred **Phase 8** (book-selector responsiveness) / **Phase 9** (optional a11y browser-pref); and **Phase 10 — cleanup (runs last, after all other phases)** — see §8.
+- **Remaining:** **Phase 8** (book-selector responsiveness); **Phases 11–14** (develop-merge integration: chat / tutorial-prompt / today-screen / scripture-map); deferred **Phase 9** (optional a11y browser-pref); and **Phase 10 — cleanup (runs last, after all other phases)** — see §8.
 - **Commit policy:** never commit on your own — only when the user invokes `/commit`.
 
 This doc is the single source of truth for resuming this work in a new thread / on
@@ -206,7 +206,9 @@ so the rest of `:root` was hand-converted (see §4).
 
 ## 8. NEXT STEPS
 
-**Phases 0–7 — DONE** (code). See §4 for what each did and its commit ref. Phase 6 is in the working tree awaiting the user's hands-on mobile QA gate + `/commit`. Only the deferred Phases 8–9 and the final Phase 10 (cleanup) remain.
+**Phases 0–7 — DONE** (code). See §4 for what each did and its commit ref. Phase 6 is committed (`275184e7`). Remaining: **Phase 8** (book-selector responsiveness, in progress), the deferred **Phase 9** (optional a11y), the **develop-merge integration phases 11–14** (new — see below), and the **final Phase 10 (cleanup)** which runs after all of them.
+
+> **`develop` merge (2026-07-03):** a large feature merge brought in new UI written in the **pre-refactor px idiom**. The merge itself is in the working tree, uncommitted (the CSS conflict + one semantic collision are resolved & staged — see §10). develop's new UI does not honor the UI Text Size knob until converted; this spawned integration Phases **11–14** below. Decision (2026-07-03): the two separate feature packages (Today, Scripture Map) **should** scale — treat as chrome, convert px→rem (the map keeps its canvas/marker geometry in px).
 
 **Phase 6 — mobile ✅ (code done, awaiting QA gate):** `MobileSettingsSheet.tsx` 4 inline px font-sizes → rem (see §4 for details + the divergence from this plan's original "keep px" note). **Now paused for the user's hands-on mobile QA gate** (768px breakpoint + swipe carousel at all UI sizes). ⚠️ The original plan text below is **superseded** — kept for the record: it said to make a `READER_PREVIEW_PX = [12,14,16,18,20]` px const, but that plan targeted a pre-`develop`-merge layout where `${12 + i*2}px` was a reader preview; post-merge it's the chrome UI-text-size ramp (4 options), correctly converted to rem instead.
 
@@ -218,7 +220,19 @@ so the rest of `:root` was hand-converted (see §4).
 
 **Deferred candidate — unverified (panes):** the attached-pane splitter minimums (`minFrac = 80/rect.width`, `60/rect.height` in `PaneLayout`'s `handlePointerMove`) are raw px that reserve room for rem-sized attached-pane chrome. Not flagged by the sweep and left untouched in Phase 4. If attached panes feel cramped at XL, scale these `80`/`60` by the UI knob too (fold into Phase 8 or a Phase 4 follow-up).
 
-**Phase 10 — cleanup (FINAL — runs after every other phase):** remove the `postcss-pxtorem` dev-dep; add a `main.css` header comment documenting the rem/em/px invariant + the codemod blacklist as source of truth. Consider deleting this handoff doc once merged.
+--- develop-merge integration phases (added 2026-07-03) — apply the §2 invariant to develop's new px-idiom UI ---
+
+**Phase 11 — Chat UI rem pass:** develop redesigned the floating chat panel (adopted wholesale when resolving the `main.css` merge conflict). `main.css` `.sb-floating-chat-*` / `.sb-chat-*` — **~119 rules, ~190 px** in the chat block (lines ~8600–9550) — currently all px. Convert chrome px→rem (keep `1px` borders, `box-shadow` offsets, `@media` breakpoints per §2). `ChatView.tsx` has **no** inline styles. Largest of the merge phases; self-contained in `main.css`. No-op at UI M.
+
+**Phase 12 — TutorialPrompt / tour review:** develop's new `TutorialPrompt` component (`feat/restore-tutorial-prompt`). ✅ The merge already fixed a dangling `fontSizeClass` reference in `main.tsx` — develop reintroduced the **pre-refactor overlay convention** (`className={`${fontSizeClass} ${webkitClass}`}`); stripped to `${webkitClass}` to match its chrome siblings (`Tutorial`/`OnboardingModals`/`BibleSelector`). Remaining: audit the shared `.sb-tour-\*`CSS (~35 rules) + any`.sb-tutorial-prompt`rules for **new** px introduced by develop _after_ Phase 1's codemod (pre-existing tour CSS is already rem). Small — a verify + convert-if-found pass.`TutorialPrompt.tsx` has no inline styles.
+
+**Phase 13 — Today screen (`packages/today-screen/`):** separate monorepo package (DDD-layered). `infrastructure/presentation/styles/styles.css` = **866 lines, ~161 px, 28 font-size decls, 0 rem**; plus **4 inline-style files** (`components/containers/Chapter.tsx`, `HistoryCard.tsx`, `Welcome.tsx`, `components/ui/UserIcon.tsx`). Renders in the same document as the reader, so rem tracks the global `html` knob — convert chrome px→rem (same blacklist: `1px` borders, breakpoints, `box-shadow`). Classify chrome vs any fixed-graphic (avatars/icons) per §2. No-op at UI M (px/16 at the 16px base).
+
+**Phase 14 — Scripture Map (`packages/scripture-map/`):** separate package. `styles/styles.css` = **865 lines, ~153 px, 25 font-size decls, ~0 rem**; plus **2 inline-style files** (`components/containers/Container.tsx`, `Tooltip.tsx`). Convert **chrome UI** (controls, settings panel, tooltips, book list, labels) px→rem, but **keep px for map-canvas / marker / coordinate geometry** — the spatial canvas is its own coordinate space (same rule as the pane `x/y/w/h` model, §2). **Riskiest** of the merge phases: classify "UI chrome" vs "map geometry" _before_ converting; the `Container.tsx`/`Tooltip.tsx` inline styles likely mix marker positioning (keep px) with box styling (rem).
+
+**Merge-phase ordering:** run 11–14 in the per-area rollout, before Phase 10 (cleanup). Suggested order: **11** (chat, in-family) → **12** (tutorial, small) → **13** (today) → **14** (map, needs classification). Each gets the static gates (`check:ts`/`lint`/`test`/`build`) and is a no-op at UI M.
+
+**Phase 10 — cleanup (FINAL — runs after every other phase, incl. 8–9 and the merge phases 11–14):** remove the `postcss-pxtorem` dev-dep; add a `main.css` header comment documenting the rem/em/px invariant + the codemod blacklist as source of truth. Consider deleting this handoff doc once merged.
 
 **JS sanity (both size-tracking exceptions now fixed):** no JS reads `--sb-ui-zoom`/`element.style.zoom`. Pane drag/resize **deltas**, swipe, tutorial, context menu, keyboard-nav, and ripple are delta/ratio math in one CSS-px space — correct-by-construction after removing zoom. The two size-tracking constants the sweep found (`PanesManager` min-floors, `BibleSelector` popover offset) are now fixed (Phases 4 & 5). Only remaining unverified candidate: the attached-pane splitter mins above.
 
@@ -240,9 +254,9 @@ Setting `--sb-ui-scale` directly is faithful — it's exactly what `SettingsMana
 
 ## 10. Commit / push status
 
-- [x] Phase 0 + 1 committed (`5e752106`), merged with latest `develop` (`168b7fbb`).
-- [x] Phase 7 (`f0e2c921`), Phase 2 (`0190a5b7`), Phase 4 + rename (`e469fbb`), Phase 5 (`337b1794`) committed.
+- [x] Phase 0 + 1 committed (`5e752106`), merged with `develop` (`168b7fbb`).
+- [x] Phase 7 (`f0e2c921`), Phase 2 (`0190a5b7`), Phase 4 + rename (`e469fbb`), Phase 5 (`337b1794`), Phase 6 (`275184e7`) committed.
 - [x] Phase 3 — verified clean, no code changes.
-- [ ] Phase 6 (mobile) — in the working tree, awaiting user hands-on mobile QA + `/commit`.
+- [ ] **Second `develop` merge (2026-07-03) — in the working tree, UNCOMMITTED.** Conflict resolution staged (`main.css` + `main.tsx`); merge commit is the user's to make. Re-run full gates before committing.
 - [ ] Push `fix/1281-ui-scaling` to the remote — **only when the user explicitly asks.**
-- [ ] Deferred Phase 8/9, Phase 10 (cleanup — runs last) — not started.
+- [ ] Phase 8 (book selector); Phases 11–14 (merge integration); deferred Phase 9; Phase 10 (cleanup — runs last) — not started.

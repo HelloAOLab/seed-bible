@@ -196,7 +196,7 @@ function MainContent(props: {
 
         <TutorialPrompt
           tutorial={state.tutorial}
-          className={`${fontSizeClass} ${webkitClass}`}
+          className={`${webkitClass}`}
         />
 
         <Tutorial
