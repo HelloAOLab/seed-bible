@@ -471,6 +471,25 @@ a:visited {
   /* margin-right: 27%; */
 }
 
+/* Mobile-only: two anchored panes stacked top/bottom (single column, two
+   rows). Produced by the app's effective layout on mobile viewports. */
+.sb-panes-layout[data-layout="stacked-2"] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 768px) {
+  /* On mobile, detached panes are locked to the bottom anchor (see
+     effectivePanes). They sit as a sheet directly above the default reader
+     toolbar — which is fixed at the very bottom — so both stay usable, and in
+     front of the anchored panes. The `!important` overrides the inline
+     `bottom: 0` PaneLayout applies for the bottom anchor. */
+  .sb-pane-shell-detached[data-anchor="bottom"] {
+    bottom: var(--sb-mobile-detached-bottom-offset, 68px) !important;
+    max-height: 60vh;
+  }
+}
+
 .sb-main-content {
   flex: 1;
   overflow: hidden;
@@ -1532,6 +1551,47 @@ a:visited {
   font-family: var(--sb-font-family);
   color: var(--sb-font-color);
   font-weight: 600;
+}
+
+/* Mobile "open panel over split view" warning modal body. */
+.sb-split-panel-warning-message {
+  margin: 0 0 20px 0;
+}
+
+.sb-split-panel-warning-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.sb-split-panel-warning-button {
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-family: var(--sb-font-family);
+  font-size: 0.95em;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--sb-secondary-color);
+}
+
+.sb-split-panel-warning-button-secondary {
+  background: transparent;
+  color: var(--sb-font-color);
+}
+
+.sb-split-panel-warning-button-secondary:hover {
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 65%);
+}
+
+.sb-split-panel-warning-button-primary {
+  background: var(--sb-primary-color);
+  color: #fff;
+  border-color: var(--sb-primary-color);
+}
+
+.sb-split-panel-warning-button-primary:hover {
+  background: color-mix(in srgb, var(--sb-primary-color), #000 12%);
 }
 
 /* Onboarding (welcome + install-to-home-screen) modals */
@@ -5182,6 +5242,7 @@ a:visited {
   .sb-panes-layout .sb-pane-shell {
     grid-column: auto !important;
     grid-row: auto !important;
+    border-top: 1px solid var(--sb-primary-color) !important;
   }
 
   .sb-pane-resize-handle,

@@ -503,6 +503,85 @@ describe("createSeedBibleState", () => {
     expect(state.selector.pane.value?.id).toBe(emptyPane!.id);
   });
 
+  describe("mobile pane restrictions", () => {
+    // isMobile is derived from viewportWidth; the returned signal is the same
+    // writable instance, so tests drive the mobile layout by writing to it.
+    const setViewportWidth = (state: SeedBibleState, width: number) => {
+      (state.app.viewportWidth as unknown as { value: number }).value = width;
+    };
+
+    it("shows at most two anchored panes, stacked top/bottom, on mobile", async () => {
+      const state = await createState();
+      // A four-slot desktop layout leaves four attached panes in the manager.
+      state.panes.setLayout("grid-2x2");
+      expect(
+        state.panes.panes.value.filter((pane) => !pane.detached)
+      ).toHaveLength(4);
+
+      setViewportWidth(state, 500);
+
+      const shownAttached = state.app.effectivePanes.value.filter(
+        (pane) => !pane.detached
+      );
+      expect(shownAttached).toHaveLength(2);
+      expect(state.app.effectiveLayout.value).toBe("stacked-2");
+
+      // The manager's own layout/panes are left untouched so they are restored
+      // on desktop.
+      expect(state.panes.layout.value).toBe("grid-2x2");
+      expect(
+        state.panes.panes.value.filter((pane) => !pane.detached)
+      ).toHaveLength(4);
+    });
+
+    it("uses the single layout on mobile when only one anchored pane exists", async () => {
+      const state = await createState();
+      setViewportWidth(state, 500);
+
+      expect(
+        state.app.effectivePanes.value.filter((pane) => !pane.detached)
+      ).toHaveLength(1);
+      expect(state.app.effectiveLayout.value).toBe("single");
+    });
+
+    it("restores the desktop layout when the viewport grows back", async () => {
+      const state = await createState();
+      state.panes.setLayout("grid-2x2");
+
+      setViewportWidth(state, 500);
+      expect(state.app.effectiveLayout.value).toBe("stacked-2");
+
+      setViewportWidth(state, 1200);
+      expect(state.app.effectiveLayout.value).toBe("grid-2x2");
+      expect(
+        state.app.effectivePanes.value.filter((pane) => !pane.detached)
+      ).toHaveLength(4);
+    });
+
+    it("renders detached panes anchored to the bottom on mobile without changing their stored anchor", async () => {
+      const state = await createState();
+      const detached = state.panes.openPane({
+        type: "detached",
+        component: () => null,
+      });
+      expect(detached).not.toBeNull();
+      expect(detached!.detachedAnchor).toBe("floating");
+
+      setViewportWidth(state, 500);
+
+      const effectiveDetached = state.app.effectivePanes.value.find(
+        (pane) => pane.detached
+      );
+      expect(effectiveDetached?.detachedAnchor).toBe("bottom");
+
+      // The stored anchor is preserved for when the layout returns to desktop.
+      const storedDetached = state.panes.panes.value.find(
+        (pane) => pane.detached
+      );
+      expect(storedDetached?.detachedAnchor).toBe("floating");
+    });
+  });
+
   describe("reading history autosave", () => {
     beforeEach(() => {
       vi.useFakeTimers();
