@@ -3297,7 +3297,7 @@ h6 {
     position: fixed;
     inset-block: 0;
     inset-inline-start: 0;
-    z-index: 100;
+    z-index: 121;
     height: 100%;
     box-shadow: 0 0 24px rgba(0, 0, 0, 0.18);
     /* The docked sidebar's `--sb-sidebar-background` is transparent in the
@@ -3308,14 +3308,10 @@ h6 {
   }
 }
 
-/* Scrim rendered behind the sidebar when it floats over the reader as an
-   overlay (compact-desktop band). Sits above the reader but below the sidebar
-   (z-index 100), so it blocks input to elements underneath and collapses the
-   sidebar when clicked. */
 .sb-sidebar-scrim {
   position: fixed;
   inset: 0;
-  z-index: 99;
+  z-index: 120;
   background: rgba(0, 0, 0, 0.16);
 }
 
