@@ -16,14 +16,11 @@ import {
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import { MaterialIcon, SettingsIcon } from "../components/icons";
 import { SettingsPage } from "../components/SettingsPage";
-import type { UserProfile } from "../managers/LoginManager";
 import {
   isSessionHost,
   type BibleReadingSession,
-  type ConnectedSessionUser,
   getConnectedUserVisualKey,
   getUserAnimalVisual,
-  type BibleReadingSession,
 } from "../managers/SessionsManager";
 import { safeLocalStorage } from "../app/ssrEnv";
 import { useI18n } from "../i18n/I18nManager";
@@ -33,7 +30,7 @@ import {
   handleHorizontalListKeyNav,
 } from "../components/KeyboardNav";
 import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
-import { SessionUserAvatar } from "./Avatar";
+import { SessionUserAvatar, getUserDisplayName } from "./Avatar";
 import { useEffect, useRef } from "preact/hooks";
 import { getExtensionExports } from "../managers";
 
@@ -126,7 +123,13 @@ function isLocalSessionHost(
   const options = session.options.value;
   return (
     isSessionHost(options, state.login.userId.value) ||
-    isSessionHost(options, getSelfVisualKey(state))
+    isSessionHost(
+      options,
+      getConnectedUserVisualKey({
+        userId: state.login.userId.value,
+        connectionId: state.os.connectionId,
+      })
+    )
   );
 }
 
@@ -396,7 +399,7 @@ function SessionSettingsModalContent(props: {
               const coHostKey = getConnectedUserVisualKey(user);
               const isCoHost = coHostUserIds.includes(coHostKey);
               const visual = getUserAnimalVisual(coHostKey);
-              const imageUrl = getUserImageUrl(user.profile);
+              const imageUrl = user.profile?.pictureUrl ?? null;
               return (
                 <li key={user.connectionId} className="sb-session-participant">
                   <span
@@ -411,7 +414,9 @@ function SessionSettingsModalContent(props: {
                     }
                     aria-hidden="true"
                   >
-                    {!imageUrl && <MaterialIcon>{visual.icon}</MaterialIcon>}
+                    {!imageUrl && (
+                      <MaterialIcon>{visual.defaultIcon}</MaterialIcon>
+                    )}
                   </span>
                   <span
                     className="sb-session-participant-name"
@@ -1071,9 +1076,17 @@ function TabRow(props: TabRowProps) {
                   }
                 }}
               >
-                {t("open-chat", {
-                  defaultValue: `Open chat`,
-                })}
+                <MaterialIcon
+                  className="sb-tab-menu-item-icon"
+                  aria-hidden="true"
+                >
+                  chat_bubble
+                </MaterialIcon>
+                <span>
+                  {t("open-chat", {
+                    defaultValue: `Open chat`,
+                  })}
+                </span>
               </ContextMenuItem>
             )}
             {(() => {
