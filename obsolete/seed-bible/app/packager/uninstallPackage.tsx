@@ -1,59 +1,58 @@
-
 // return
-const { address } = that
-shout('onUnInstallPackage', { name: address })
+const { address } = that;
+shout("onUnInstallPackage", { name: address });
 
-console.log(masks[`${address}-data`], 'package for uninstall')
+console.log(masks[`${address}-data`], "package for uninstall");
 if (masks[`${address}-data`]) {
-    const { mainBotTag, otherBots, configEditor, dependencies } = masks[`${address}-data`]
-    destroy(getBots('forPackage', address))
+  const { mainBotTag, otherBots, configEditor, dependencies } =
+    masks[`${address}-data`];
+  destroy(getBots("forPackage", address));
 
-    if (mainBotTag)
-        destroy(getBot('system', mainBotTag))
+  if (mainBotTag) destroy(getBot("system", mainBotTag));
 
-    // replace dependencies.forEach
-    for (let i = 0; i < dependencies.length; i++) {
-        const { name, type } = dependencies[i]
-        if (type === 'package') {
-            await thisBot.uninstallPackage({ address: name })
-        } else if (type === "dependency") {
-            destroy(getBots('forPackage', address));
-        }
+  // replace dependencies.forEach
+  for (let i = 0; i < dependencies.length; i++) {
+    const { name, type } = dependencies[i];
+    if (type === "package") {
+      await thisBot.uninstallPackage({ address: name });
+    } else if (type === "dependency") {
+      destroy(getBots("forPackage", address));
     }
+  }
 
-    // replace otherBots.forEach
-    for (let i = 0; i < otherBots.length; i++) {
-        const bot = otherBots[i]
-        const sysTag = bot?.tags?.system || bot.tag
-        if (getBot('system', sysTag)) {
-            destroy(getBot('system', sysTag))
-        }
+  // replace otherBots.forEach
+  for (let i = 0; i < otherBots.length; i++) {
+    const bot = otherBots[i];
+    const sysTag = bot?.tags?.system || bot.tag;
+    if (getBot("system", sysTag)) {
+      destroy(getBot("system", sysTag));
     }
+  }
 
-    if (!globalThis.ContextMenuOptions)
-        globalThis.ContextMenuOptions = []
+  if (!globalThis.ContextMenuOptions) globalThis.ContextMenuOptions = [];
 
-    globalThis.ContextMenuOptions = globalThis.ContextMenuOptions.filter(e => e.address !== address)
+  globalThis.ContextMenuOptions = globalThis.ContextMenuOptions.filter(
+    (e) => e.address !== address
+  );
 
-    if (globalThis.RemoveTool) {
-        if (configEditor) {
-            try {
-                const label = configEditor?.toolbarConfig?.label
-                globalThis.RemoveTool(label)
-                const panelKey = `${label.toUpperCase().replace(/\s/g, '_')}_PANEL_ID`
-                RemoveApplicationByID(globalThis[panelKey])
-            } catch (err) {
-                console.error(err)
-            }
-        }
+  if (globalThis.RemoveTool) {
+    if (configEditor) {
+      try {
+        const label = configEditor?.toolbarConfig?.label;
+        globalThis.RemoveTool(label);
+        const panelKey = `${label.toUpperCase().replace(/\s/g, "_")}_PANEL_ID`;
+        RemoveApplicationByID(globalThis[panelKey]);
+      } catch (err) {
+        console.error(err);
+      }
     }
-    if (SetPackageAddingOptions) {
-        SetPackageAddingOptions(prev => prev.filter(e => e.pkg === address))
-    }
+  }
+  if (SetPackageAddingOptions) {
+    SetPackageAddingOptions((prev) => prev.filter((e) => e.pkg === address));
+  }
 }
 
-setTagMask(thisBot, `${address}-data`, null)
-
+setTagMask(thisBot, `${address}-data`, null);
 
 // console.log()
 
@@ -71,7 +70,6 @@ setTagMask(thisBot, `${address}-data`, null)
 
 // if (masks.installedPackages)
 //     setTagMask(thisBot, 'installedPackages', [], 'local');
-
 
 // if (!configEditor) {
 //     os.toast('no config')

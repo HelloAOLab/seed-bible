@@ -16,16 +16,32 @@ import type {
 import { v4 as uuid } from "uuid";
 import type { I18nManager } from "../i18n/I18nManager";
 
+export interface ConnectionSessionUserVisual {
+  defaultIcon: string;
+  color: string;
+  colorName: string;
+}
+
 export interface ConnectedSessionUser extends SessionConnectionInfo {
   /**
    * The user's profile information. Null if the user is not logged in or if the profile information could not be loaded.
    */
   profile: UserProfile | null;
 
+  /** The visual representation of the user, including icon and color. */
+  visual: ConnectionSessionUserVisual;
+
   /**
-   * A color assigned to this user for display purposes. This is generated based on the connection ID.
+   * Whether this user is currently connected to the session.
    */
-  color: string;
+  isActive: boolean;
+
+  /**
+   * The `Date.now()` timestamp when this user first broadcast their profile
+   * into the session, i.e. when they joined. Null if the user has not
+   * broadcast a join time (e.g. legacy entries written before this existed).
+   */
+  joinedAtMs: number | null;
 }
 
 export interface SessionConnectionInfo {
@@ -89,6 +105,13 @@ type SessionDecorationValue = VerseDecoration;
 interface SharedUserProfileEntry {
   userId: string | null;
   profile: UserProfile | null;
+  /**
+   * The `Date.now()` timestamp captured by the user the first time they
+   * broadcast their profile into the session, i.e. when they joined.
+   * Preserved across subsequent re-broadcasts. `null` for entries written
+   * before this field existed.
+   */
+  joinedAtMs: number | null;
 }
 
 function parseSharedUserProfileEntry(
@@ -105,7 +128,11 @@ function parseSharedUserProfileEntry(
     rawProfile && typeof rawProfile === "object"
       ? (rawProfile as UserProfile)
       : null;
-  return { userId, profile };
+  const joinedAtMs =
+    typeof record.joinedAtMs === "number" && Number.isFinite(record.joinedAtMs)
+      ? record.joinedAtMs
+      : null;
+  return { userId, profile, joinedAtMs };
 }
 
 function sharedUserProfileEntriesMatch(
@@ -114,6 +141,7 @@ function sharedUserProfileEntriesMatch(
 ): boolean {
   return (
     left.userId === right.userId &&
+    left.joinedAtMs === right.joinedAtMs &&
     JSON.stringify(left.profile) === JSON.stringify(right.profile)
   );
 }
@@ -281,7 +309,8 @@ function applySessionDataToReadingState(
   sessionData: SessionData
 ) {
   if (readingState.translationId.value !== sessionData.translationId) {
-    readingState.translationId.value = sessionData.translationId;
+    readingState.translationId.value =
+      sessionData.translationId ?? readingState.translationId.value;
   }
   if (readingState.bookId.value !== sessionData.bookId) {
     readingState.bookId.value = sessionData.bookId;
@@ -314,13 +343,110 @@ function canLoadSessionData(sessionData: SessionData): sessionData is {
   );
 }
 
+/**
+ * Deterministic animal-icon + color assignment for a user.
+ *
+ * One function, one rule: a given user key always maps to the same
+ * `(icon, color)` pair — everywhere on every client. No list context, no
+ * walk-forward. Used for:
+ *   - The sidebar self-avatar (bottom-right)
+ *   - The connected-users list inside a shared tab
+ *   - The "Shared with you" toasts
+ *
+ * We lift the palette to 10 icons × 12 colors = 120 combos. Collision
+ * probability for N users visible at the same time is `1 - Π(1 - i/120)`
+ * for i ∈ [0..N-1] — ~4% for 3 users, ~8% for 5 users. In exchange we get
+ * full cross-client and cross-surface consistency: the color you see on
+ * the sidebar is the same color the tab shows is the same color every
+ * other participant sees for you.
+ *
+ * NOTE: Make sure to keep icons updated in the translation files (e.g. `en.json`)
+ */
+const USER_ANIMAL_ICONS = [
+  "forest", // tree
+  "park", // log
+  "eco", // leaf
+  "pets", // dog
+  "cruelty_free", // bunny-style
+  "local_cafe", // coffee
+  "local_florist", // flower
+  "grass", // grass
+  "potted_plant", // plant
+  "nature", // tree
+] as const;
+
+// NOTE: Make sure to keep colors updated in the translation files (e.g. `en.json`)
+const USER_PRESENCE_COLORS = [
+  ["#34D399", "emerald"], // emerald
+  ["#60A5FA", "blue"], // blue
+  ["#F472B6", "pink"], // pink
+  ["#FBBF24", "amber"], // amber
+  ["#A78BFA", "violet"], // violet
+  ["#F87171", "red"], // red
+  ["#10B981", "green"], // green
+  ["#F59E0B", "orange"], // orange
+  ["#06B6D4", "cyan"], // cyan
+  ["#EC4899", "rose"], // rose
+  ["#8B5CF6", "purple"], // purple
+  ["#14B8A6", "teal"], // teal
+] as const;
+
+function hashUserKey(key: string): number {
+  let h = 5381;
+  for (let i = 0; i < key.length; i++) {
+    h = ((h << 5) + h) ^ key.charCodeAt(i);
+  }
+  return h >>> 0;
+}
+
+/**
+ * Pure-hash user visual. Same input → same output, forever. The icon and
+ * color are derived independently from the hash so small changes to the
+ * key (e.g. user id suffix) distribute across the whole palette.
+ */
+export function getUserAnimalVisual(key: string): ConnectionSessionUserVisual {
+  const normalized = key && key.length > 0 ? key : "anonymous";
+  const hash = hashUserKey(normalized);
+  const iconIndex = hash % USER_ANIMAL_ICONS.length;
+  const colorIndex =
+    Math.floor(hash / USER_ANIMAL_ICONS.length) % USER_PRESENCE_COLORS.length;
+  const color = USER_PRESENCE_COLORS[colorIndex]!;
+  return {
+    defaultIcon: USER_ANIMAL_ICONS[iconIndex]!,
+    color: color[0],
+    colorName: color[1],
+  };
+}
+
+/**
+ * Given a `ConnectedSessionUser`, returns the SAME key that the sidebar
+ * self-avatar would use for this same person on their own client. This
+ * guarantees visual consistency between "how I see myself in the sidebar"
+ * and "how others see me in the connected users row".
+ */
+export function getConnectedUserVisualKey(user: {
+  userId?: string | null;
+  connectionId?: string | null;
+}): string {
+  return user.userId ?? user.connectionId ?? "anonymous";
+}
+
 export interface BibleReadingSession {
   id: string;
   document: SharedDocument;
   options: ReadonlySignal<SessionOptions>;
   updateOptions: (newOptions: Partial<SessionOptions>) => void;
   readingState: BibleReadingState;
+  allUsers: ReadonlySignal<ConnectedSessionUser[]>;
   connectedUsers: ReadonlySignal<ConnectedSessionUser[]>;
+  currentUser: ReadonlySignal<ConnectedSessionUser | null>;
+
+  /**
+   * Whether the given user is the session host, based on the session's current options.
+   * @param user The user to check.
+   */
+  isHost(user: ConnectedSessionUser | null): boolean;
+
   /**
    * Removes a decoration by id from the session's shared CRDT map. Use
    * this instead of `readingState.removeDecoration` when you need the
@@ -362,29 +488,6 @@ function toPositiveIntOrNull(value: unknown): number | null {
     : null;
 }
 
-export const connectedUserColors = [
-  "#34D399",
-  "#60A5FA",
-  "#F472B6",
-  "#FBBF24",
-  "#A78BFA",
-  "#F87171",
-  "#10B981",
-  "#F59E0B",
-];
-
-function hashString(str: string): number {
-  let h = 5381;
-  for (let i = 0; i < str.length; i++) h = ((h << 5) + h) ^ str.charCodeAt(i);
-  return h >>> 0;
-}
-
-function getRandomColor(key: string): string {
-  const color =
-    connectedUserColors[hashString(key) % connectedUserColors.length];
-  return color ?? "#E5E7EB";
-}
-
 async function createBibleReadingSession(
   os: CasualOSManager,
   dataManager: BibleDataManager,
@@ -413,6 +516,7 @@ async function createBibleReadingSession(
   const userProfilesMap =
     document.getMap<SharedUserProfileEntry>("user_profiles");
   const options = signal<SessionOptions>(DEFAULT_SESSION_OPTIONS);
+  const allUsers = signal<ConnectedSessionUser[]>([]);
   const connectedUsers = signal<ConnectedSessionUser[]>([]);
   const connectedClients = new Map<string, SessionConnectionInfo>();
   const profileCache = new Map<string, UserProfile>();
@@ -420,6 +524,10 @@ async function createBibleReadingSession(
   // (typeof configBot !== "undefined" ? toStringOrNull(configBot?.id) : null) ??
   // "local";
   const decorationOwners = new Map<string, string>();
+
+  const currentUser = computed(
+    () => connectedUsers.value.find((user) => user.isSelf) ?? null
+  );
   const localSessionId = computed(
     () => loginManager.userId.value ?? localConnectionId
   );
@@ -573,7 +681,7 @@ async function createBibleReadingSession(
           }
         }
 
-        const color = getRandomColor(client.connectionId);
+        const visual = getUserAnimalVisual(client.connectionId);
 
         return {
           isSelf: client.isSelf,
@@ -581,7 +689,9 @@ async function createBibleReadingSession(
           // sessionId: client.sessionId,
           userId: effectiveUserId,
           profile,
-          color: color,
+          visual,
+          isActive: true,
+          joinedAtMs: sharedEntry?.joinedAtMs ?? null,
         };
       })
     );
@@ -591,6 +701,48 @@ async function createBibleReadingSession(
     }
 
     connectedUsers.value = nextUsers;
+
+    const previousUsersByConnectionId = new Map(
+      allUsers.value.map((user) => [user.connectionId, user] as const)
+    );
+    const nextUsersByConnectionId = new Map<string, ConnectedSessionUser>();
+
+    for (const previousUser of previousUsersByConnectionId.values()) {
+      nextUsersByConnectionId.set(previousUser.connectionId, {
+        ...previousUser,
+        isActive: false,
+      });
+    }
+
+    for (const nextUser of nextUsers) {
+      nextUsersByConnectionId.set(nextUser.connectionId, nextUser);
+    }
+
+    userProfilesMap.forEach((value, connectionId) => {
+      if (typeof connectionId !== "string") {
+        return;
+      }
+      if (nextUsersByConnectionId.has(connectionId)) {
+        return;
+      }
+
+      const sharedEntry = parseSharedUserProfileEntry(value);
+      if (!sharedEntry) {
+        return;
+      }
+
+      nextUsersByConnectionId.set(connectionId, {
+        isSelf: connectionId === localConnectionId,
+        connectionId,
+        userId: sharedEntry.userId,
+        profile: sharedEntry.profile,
+        visual: getUserAnimalVisual(connectionId),
+        isActive: false,
+        joinedAtMs: sharedEntry.joinedAtMs,
+      });
+    });
+
+    allUsers.value = Array.from(nextUsersByConnectionId.values());
   };
 
   const syncReadingStateFromSessionData = async (
@@ -685,10 +837,13 @@ async function createBibleReadingSession(
   const stopBroadcastLocalIdentity = effect(() => {
     const userId = loginManager.userId.value;
     const profile = loginManager.profile.value;
-    const nextEntry: SharedUserProfileEntry = { userId, profile };
     const currentEntry = parseSharedUserProfileEntry(
       userProfilesMap.get(localConnectionId)
     );
+    // Stamp the join time on the first broadcast and preserve it across
+    // subsequent re-broadcasts (login/logout, profile edits).
+    const joinedAtMs = currentEntry?.joinedAtMs ?? Date.now();
+    const nextEntry: SharedUserProfileEntry = { userId, profile, joinedAtMs };
     if (
       currentEntry &&
       sharedUserProfileEntriesMatch(currentEntry, nextEntry)
@@ -720,6 +875,8 @@ async function createBibleReadingSession(
       void syncConnectedUsers(nextVersion);
     }
   );
+
+  void syncConnectedUsers(++remoteClientsVersion);
 
   const stopSync = effect(() => {
     if (applyingRemoteState) {
@@ -957,15 +1114,27 @@ async function createBibleReadingSession(
     document.unsubscribe();
   };
 
+  const isHost = (user: ConnectedSessionUser | null): boolean => {
+    if (!user) return false;
+    const hostUserId = options.value.hostUserId;
+    if (!hostUserId) {
+      return false;
+    }
+    return user.userId === hostUserId || user.connectionId === hostUserId;
+  };
+
   return {
     id,
     document,
     options,
     updateOptions,
     readingState,
+    allUsers,
     connectedUsers,
+    currentUser,
     removeSharedDecoration,
     dispose,
+    isHost,
     localSessionId,
     userCanNavigate,
     userCanDecorate,

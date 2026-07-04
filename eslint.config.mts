@@ -138,6 +138,32 @@ export default defineConfig([
             "4-psalms",
             "5-psalms",
 
+            // Colors
+            "color-emerald",
+            "color-blue",
+            "color-pink",
+            "color-amber",
+            "color-violet",
+            "color-red",
+            "color-green",
+            "color-orange",
+            "color-cyan",
+            "color-rose",
+            "color-purple",
+            "color-teal",
+
+            // Animal icons
+            "animal-forest",
+            "animal-park",
+            "animal-eco",
+            "animal-pets",
+            "animal-cruelty_free",
+            "animal-local_cafe",
+            "animal-local_florist",
+            "animal-grass",
+            "animal-potted_plant",
+            "animal-nature",
+
             "terms-of-service-policy",
             "privacy-policy-policy",
             "code-of-conduct-policy",

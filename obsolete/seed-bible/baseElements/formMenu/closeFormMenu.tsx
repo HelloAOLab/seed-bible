@@ -1,1 +1,1 @@
-os.unregisterApp('formMenu')
+os.unregisterApp("formMenu");

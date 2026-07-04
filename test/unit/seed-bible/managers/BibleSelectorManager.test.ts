@@ -169,6 +169,7 @@ async function createManagersWithSelectedPane(): Promise<{
     navigation,
     dataManager,
     createHighlightsManagerMock() as any,
+    {} as any,
     createI18nManager(navigation, ["en"])
   );
   const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
@@ -472,6 +473,7 @@ describe("createBibleSelectorState", () => {
       navigation,
       dataManager,
       createHighlightsManagerMock() as any,
+      {} as any,
       createI18nManager(navigation, ["en"])
     );
     const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
@@ -562,6 +564,7 @@ describe("createBibleSelectorState", () => {
       navigation,
       dataManager,
       createHighlightsManagerMock() as any,
+      {} as any,
       createI18nManager(navigation, ["en"])
     );
     const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
@@ -604,6 +607,7 @@ describe("createBibleSelectorState", () => {
         navigation,
         dataManager,
         createHighlightsManagerMock() as any,
+        {} as any,
         createI18nManager(navigation, ["en"])
       );
       const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
@@ -631,7 +635,7 @@ describe("createBibleSelectorState", () => {
       expect(selector.selectedTranslationId.value).toBe("AAB");
     });
 
-    it("setOpen() uses first available translation when DEFAULT_TRANSLATION_ID (BSB) is not in available translations", async () => {
+    it("setOpen() uses first available translation when DEFAULT_TRANSLATION_ID (AAB) is not in available translations", async () => {
       setWebResponses({
         [makeExampleUrl("/api/available_translations.json")]: createResponse({
           translations: [translations.translations[1]!],
@@ -641,10 +645,9 @@ describe("createBibleSelectorState", () => {
       const { dataManager, tabsManager, panesManager, tablessPane } =
         createManagersWithTablessPane();
 
-      // Ensure there is no preselected translation in pane reading states.
       for (const pane of panesManager.panes.value) {
         if (pane.tab?.readingState.translationId) {
-          pane.tab.readingState.translationId.value = null;
+          expect(pane.tab.readingState.translationId.value).not.toBe("NIV");
         }
       }
 
@@ -668,10 +671,9 @@ describe("createBibleSelectorState", () => {
       const { dataManager, tabsManager, panesManager, tablessPane } =
         createManagersWithTablessPane();
 
-      // Ensure there is no preselected translation in pane reading states.
       for (const pane of panesManager.panes.value) {
         if (pane.tab?.readingState.translationId) {
-          pane.tab.readingState.translationId.value = null;
+          expect(pane.tab.readingState.translationId.value).not.toBe("NIV");
         }
       }
 

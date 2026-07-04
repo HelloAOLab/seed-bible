@@ -16,7 +16,7 @@ button {
   background-color: #fff;
   cursor: pointer;
   color: #000;
-  font-family: 'Material Symbols Outlined', sans-serif;
+  font-family: "Material Symbols Outlined", sans-serif;
 }
 button:hover {
   color: #fff;
@@ -24,8 +24,8 @@ button:hover {
 }
 .material-symbols-outlined {
   font-variation-settings:
-  'FILL' 0,
-  'wght' 400,
-  'GRAD' 0,
-  'opsz' 24
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
 }

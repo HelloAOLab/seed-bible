@@ -27,6 +27,9 @@ catalogs:
     i18next-resources-to-backend:
       specifier: ^1.2.1
       version: 1.2.1
+    luxon:
+      specifier: ^3.7.2
+      version: 3.7.2
     preact:
       specifier: 10.29.2
       version: 10.29.2
@@ -42,6 +45,9 @@ catalogs:
     react-dom:
       specifier: npm:@preact/compat@^18.3.2
       version: 18.3.2
+    rxjs:
+      specifier: 8.0.0-alpha.14
+      version: 8.0.0-alpha.14
     typesense:
       specifier: ^3.0.5
       version: 3.0.5
@@ -218,6 +224,9 @@ importers:
       '@types/jsdom':
         specifier: ^28.0.3
         version: 28.0.3
+      '@types/luxon':
+        specifier: ^3.7.2
+        version: 3.7.2
       '@types/node':
         specifier: ^24.5.2
         version: 24.10.9
@@ -303,8 +312,8 @@ importers:
         specifier: ^24.30.0
         version: 24.36.0(typescript@6.0.3)
       rxjs:
-        specifier: ^7.8.2
-        version: 7.8.2
+        specifier: 'catalog:'
+        version: 8.0.0-alpha.14
       ts-jest:
         specifier: ^29.4.6
         version: 29.4.6(@babel/core@7.28.6)(@jest/transform@30.2.0)(@jest/types@30.3.0)(babel-jest@30.2.0(@babel/core@7.28.6))(esbuild@0.25.12)(jest-util@30.3.0)(jest@30.2.0(@types/node@24.10.9))(typescript@6.0.3)
@@ -342,13 +351,37 @@ importers:
         specifier: ^4.1.8
         version: 4.1.8(@opentelemetry/api@1.9.0)(@types/node@24.10.9)(jsdom@29.1.1)(vite@8.0.13(@types/node@24.10.9)(esbuild@0.25.12)(jiti@2.6.1)(terser@5.48.0)(tsx@4.21.0))
 
+  packages/apologist-extension:
+    dependencies:
+      luxon:
+        specifier: 'catalog:'
+        version: 3.7.2
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+      uuid:
+        specifier: 'catalog:'
+        version: 13.0.0
+
   packages/audio-reader-extension:
     dependencies:
       seed-bible:
         specifier: workspace:*
         version: link:../seed-bible
 
+  packages/bonfire-extension:
+    dependencies:
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+
   packages/locations-extension:
+    dependencies:
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+
+  packages/scripture-map:
     dependencies:
       seed-bible:
         specifier: workspace:*
@@ -371,6 +404,9 @@ importers:
       i18next:
         specifier: 'catalog:'
         version: 26.2.0(typescript@6.0.3)
+      luxon:
+        specifier: 'catalog:'
+        version: 3.7.2
       preact:
         specifier: 'catalog:'
         version: 10.29.2
@@ -386,6 +422,9 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: '@preact/compat@18.3.2(preact@10.29.2)'
+      rxjs:
+        specifier: 'catalog:'
+        version: 8.0.0-alpha.14
       typesense:
         specifier: 'catalog:'
         version: 3.0.5(@babel/runtime@7.29.2)
@@ -394,6 +433,18 @@ importers:
         version: 4.4.3
 
   packages/seed-bible-refresh-example-extension:
+    dependencies:
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+
+  packages/seed-bible-utils:
+    dependencies:
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+
+  packages/today-screen:
     dependencies:
       seed-bible:
         specifier: workspace:*
@@ -3048,6 +3099,9 @@ packages:
   '@types/linkify-it@5.0.0':
     resolution: {integrity: sha512-sVDA58zAw4eWAffKOaQH5/5j3XeayukzDk+ewSsnv3p4yJEZHCCzMDiZM8e0OUrRvmpGZ85jf4yDHkHsgBNr9Q==}
 
+  '@types/luxon@3.7.2':
+    resolution: {integrity: sha512-gW+Oib+vUtGJBtNC8V9Reww0oIpusw+4m81uncg9REGZAJfqOQHfo/nkabnc7w0QReXyPqjrbWMJk6NuAkiX3Q==}
+
   '@types/markdown-it@14.1.2':
     resolution: {integrity: sha512-promo4eFwuiW+TfGxhi+0x3czqTYJkG8qB17ZUJiVF10Xm7NLVRSLUsfRTU/6h1e24VvRnXCx+hG7li58lkzog==}
 
@@ -5306,6 +5360,10 @@ packages:
     resolution: {integrity: sha512-zobTr7akeGHnv7eBOXcRgMeCP6+uyYsczwmeRCauvpvaAltgNyTbLH/+VaEAPUeWBT+1GuNmz4wC/6jtQzbbVA==}
     engines: {node: '>=12'}
 
+  luxon@3.7.2:
+    resolution: {integrity: sha512-vtEhXh/gNjI9Yg1u4jX/0YVPMvxzHuGgCm6tC5kZyb08yjGWGnqAjGJvcXbqQR2P3MyMEFnRbpcdFS6PBcLqew==}
+    engines: {node: '>=12'}
+
   lz-string@1.5.0:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
     hasBin: true
@@ -6009,9 +6067,6 @@ packages:
 
   run-parallel@1.2.0:
     resolution: {integrity: sha512-5l4VyZR86LZ/lDxZTR6jqL8AFE2S0IFLMP26AbjsLVADxHdhB/c0GUsH+y39UfCi3dzz8OlQuPmnaJOMoDHQBA==}
-
-  rxjs@7.8.2:
-    resolution: {integrity: sha512-dhKf903U/PQZY6boNNtAGdWbG85WAbjT/1xYoZIC7FAY0yWapOBQVsVrDl58W86//e1VpMNBtRV4MaXfdMySFA==}
 
   rxjs@8.0.0-alpha.14:
     resolution: {integrity: sha512-oRCzFwbAMbo0+dVUeGUCCEf339mW7CESFvVDG3RTncD6yMtV2XoubFMpKEhBd2a9d04EpHl8QSz84/V/agG6bw==}
@@ -9977,6 +10032,8 @@ snapshots:
 
   '@types/linkify-it@5.0.0': {}
 
+  '@types/luxon@3.7.2': {}
+
   '@types/markdown-it@14.1.2':
     dependencies:
       '@types/linkify-it': 5.0.0
@@ -12720,6 +12777,8 @@ snapshots:
 
   luxon@3.4.4: {}
 
+  luxon@3.7.2: {}
+
   lz-string@1.5.0: {}
 
   magic-string@0.30.21:
@@ -13510,10 +13569,6 @@ snapshots:
   run-parallel@1.2.0:
     dependencies:
       queue-microtask: 1.2.3
-
-  rxjs@7.8.2:
-    dependencies:
-      tslib: 2.8.1
 
   rxjs@8.0.0-alpha.14: {}
 

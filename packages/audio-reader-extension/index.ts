@@ -1,1 +1,1 @@
-import "./ext_audioReader/host/init";
+export { default } from "./ext_audioReader/host/init";

@@ -66,27 +66,34 @@ registerExtension({
             context.app.currentReadingState.value?.bookId || "GEN",
             context.app.currentReadingState.value?.chapterNumber || 1
           );
+          if (chapterHighlights.value.highlights.length > 0) {
+            twitchPubState.handleHighlightUpdate(
+              chapterHighlights.value.highlights,
+              context.app.currentReadingState.value?.bookId || "GEN",
+              context.app.currentReadingState.value?.chapterNumber || 1
+            );
+          }
         }
-      }
-    });
+      });
 
-    yield effect(() => {
-      const { broadcasterId, clientId, userAccessToken, senderId } =
-        twitchPubState.twitchConfig.value;
-      if (
-        broadcasterId.value &&
-        clientId.value &&
-        userAccessToken.value &&
-        senderId.value
-      ) {
-        initializeTwitchBot({
-          broadcasterId,
-          senderId,
-          userAccessToken,
-          clientId,
-          qrValue: twitchPubState.qrValue,
-        });
-      }
-    });
-  },
-});
+      yield effect(() => {
+        const { broadcasterId, clientId, userAccessToken, senderId } =
+          twitchPubState.twitchConfig.value;
+        if (
+          broadcasterId.value &&
+          clientId.value &&
+          userAccessToken.value &&
+          senderId.value
+        ) {
+          initializeTwitchBot({
+            broadcasterId,
+            senderId,
+            userAccessToken,
+            clientId,
+            qrValue: twitchPubState.qrValue,
+          });
+        }
+      });
+    },
+  });
+}

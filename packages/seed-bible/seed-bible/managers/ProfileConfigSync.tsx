@@ -23,14 +23,33 @@ export function getProfileConfigValue(
  * Persists a single config key to the logged-in user's profile, merging
  * with the existing profile.config so other keys aren't clobbered. No-ops
  * if the user isn't authenticated or the value matches what's already saved.
+ *
+ * Also no-ops while `login.profile` hasn't loaded yet. `profile` is fetched
+ * asynchronously after login, so a null profile while `userId` is set means
+ * the fetch is still in flight — not that the profile is empty. Writing in
+ * that window would save a bare `{ name: "" }` profile and permanently wipe
+ * whatever was actually stored on the account once the write lands.
  */
-export function saveProfileConfigValue(
+export async function saveProfileConfigValue(
   login: LoginManager,
   key: string,
   value: unknown
-): void {
+): Promise<void> {
   if (!login.userId.value) {
     return;
+  }
+
+  if (!login.profile.value) {
+    if (login.profilePromise) {
+      await login.profilePromise;
+    }
+
+    if (!login.profile.value) {
+      console.warn(
+        "Cannot save profile config value: profile has not loaded yet"
+      );
+      return;
+    }
   }
 
   const existingProfile = login.profile.value;

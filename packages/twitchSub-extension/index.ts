@@ -1,1 +1,1 @@
-import "./ext_twitchSub/client/init";
+export { default } from "./ext_twitchSub/client/init";
