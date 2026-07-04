@@ -8741,6 +8741,7 @@ a:visited {
        row and results below re-enable pointer events. */
     pointer-events: none;
   }
+}
 
 .sb-floating-chat-header-members-button-icon {
   display: inline-flex;

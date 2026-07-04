@@ -497,26 +497,6 @@ export function createSeedBibleState(
       viewportWidth.value > viewportHeight.value
   );
 
-  // True when a multi-pane layout is active — i.e. the user picked anything
-  // other than "single" from the Panels menu (split-2v, split-3v, grid-2x2,
-  // …), or more than one attached pane is otherwise open. Detached overlay
-  // panes (extension tools, playlist, etc.) don't count. Keyed primarily off
-  // the layout preset so selecting a layout from the menu reacts immediately.
-  const hasMultiplePanes = computed(
-    () =>
-      panelsEnabled.value &&
-      (panes.layout.value !== "single" ||
-        panes.panes.value.filter((pane) => !pane.detached).length > 1)
-  );
-
-  // A docked-sidebar desktop layout that has become too narrow for the
-  // sidebar and reader to comfortably share the row. Excludes mobile
-  // (<= 768), where the sidebar is a drawer and `isSidebarCollapsed` does not
-  // apply. The 1200px ceiling mirrors the CSS breakpoint.
-  const isNarrowDesktop = computed(
-    () => viewportWidth.value > 768 && viewportWidth.value <= 1200
-  );
-
   effect(() => {
     if (typeof window === "undefined") {
       return;
