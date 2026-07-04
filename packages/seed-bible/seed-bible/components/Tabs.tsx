@@ -19,6 +19,7 @@ import { SettingsPage } from "../components/SettingsPage";
 import {
   isSessionHost,
   type BibleReadingSession,
+  type ConnectedSessionUser,
   getConnectedUserVisualKey,
   getUserAnimalVisual,
 } from "../managers/SessionsManager";
@@ -30,7 +31,11 @@ import {
   handleHorizontalListKeyNav,
 } from "../components/KeyboardNav";
 import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
-import { SessionUserAvatar, getUserDisplayName } from "./Avatar";
+import {
+  SessionUserAvatar,
+  getUserDisplayName,
+  type SessionRole,
+} from "./Avatar";
 import { useEffect, useRef } from "preact/hooks";
 import { getExtensionExports } from "../managers";
 
@@ -970,11 +975,50 @@ function TabRow(props: TabRowProps) {
         {tab.sharedSession && connectedUsers.length > 0 && (
           <div className="sb-tab-users-section">
             <div className="sb-tab-users-list">
-              {connectedUsers.map((user) => {
-                return (
-                  <SessionUserAvatar key={user.connectionId} user={user} />
+              {(() => {
+                const sessionOptions = tab.sharedSession.options.value;
+                const roleFor = (
+                  user: ConnectedSessionUser
+                ): SessionRole | null => {
+                  if (
+                    sessionOptions.hostUserId === user.userId ||
+                    sessionOptions.hostUserId === user.connectionId
+                  ) {
+                    return "host";
+                  }
+                  if (
+                    isSessionHost(sessionOptions, user.userId) ||
+                    isSessionHost(sessionOptions, user.connectionId)
+                  ) {
+                    return "co-host";
+                  }
+                  return null;
+                };
+                const rank = (role: SessionRole | null) =>
+                  role === "host" ? 0 : role === "co-host" ? 1 : 2;
+                // Host first, then co-hosts, then everyone else — Array.sort
+                // is stable so peers keep their existing order within a rank.
+                const sortedUsers = [...connectedUsers].sort(
+                  (a, b) => rank(roleFor(a)) - rank(roleFor(b))
                 );
-              })}
+                return sortedUsers.map((user) => {
+                  const role = roleFor(user);
+                  const roleLabel =
+                    role === "host"
+                      ? t("host", { defaultValue: "Host" })
+                      : role === "co-host"
+                        ? t("co-host", { defaultValue: "Co-host" })
+                        : undefined;
+                  return (
+                    <SessionUserAvatar
+                      key={user.connectionId}
+                      user={user}
+                      role={role}
+                      roleLabel={roleLabel}
+                    />
+                  );
+                });
+              })()}
             </div>
           </div>
         )}
@@ -1036,59 +1080,6 @@ function TabRow(props: TabRowProps) {
       >
         {tab.sharedSession && (
           <>
-            <ContextMenuItem
-              className="sb-tab-menu-item"
-              title={t("share-session", {
-                defaultValue: `Share session`,
-              })}
-              onClick={() => {
-                if (tab.sharedSession) {
-                  const url = getSessionUrl(tab.sharedSession);
-
-                  navigator.share({
-                    title: document.title,
-                    url: url.href,
-                  });
-                }
-              }}
-            >
-              <MaterialIcon
-                className="sb-tab-menu-item-icon"
-                aria-hidden="true"
-              >
-                ios_share
-              </MaterialIcon>
-              <span>
-                {t("share-session", {
-                  defaultValue: `Share session`,
-                })}
-              </span>
-            </ContextMenuItem>
-            {tab.sharedChat && (
-              <ContextMenuItem
-                className="sb-tab-menu-item"
-                title={t("open-chat", {
-                  defaultValue: `Open chat`,
-                })}
-                onClick={() => {
-                  if (tab.sharedChat) {
-                    state.app.openChat(tab.sharedChat);
-                  }
-                }}
-              >
-                <MaterialIcon
-                  className="sb-tab-menu-item-icon"
-                  aria-hidden="true"
-                >
-                  chat_bubble
-                </MaterialIcon>
-                <span>
-                  {t("open-chat", {
-                    defaultValue: `Open chat`,
-                  })}
-                </span>
-              </ContextMenuItem>
-            )}
             {(() => {
               const isHost = isLocalSessionHost(state, tab.sharedSession);
               if (!isHost) return null;
@@ -1134,6 +1125,59 @@ function TabRow(props: TabRowProps) {
                 </ContextMenuItem>
               );
             })()}
+            <ContextMenuItem
+              className="sb-tab-menu-item"
+              title={t("share-session", {
+                defaultValue: `Share session`,
+              })}
+              onClick={() => {
+                if (tab.sharedSession) {
+                  const url = getSessionUrl(tab.sharedSession);
+
+                  navigator.share({
+                    title: document.title,
+                    url: url.href,
+                  });
+                }
+              }}
+            >
+              <MaterialIcon
+                className="sb-tab-menu-item-icon"
+                aria-hidden="true"
+              >
+                ios_share
+              </MaterialIcon>
+              <span>
+                {t("share-session", {
+                  defaultValue: `Share session`,
+                })}
+              </span>
+            </ContextMenuItem>
+            {tab.sharedChat && (
+              <ContextMenuItem
+                className="sb-tab-menu-item"
+                title={t("open-chat", {
+                  defaultValue: `Open chat`,
+                })}
+                onClick={() => {
+                  if (tab.sharedChat) {
+                    state.app.openChat(tab.sharedChat);
+                  }
+                }}
+              >
+                <MaterialIcon
+                  className="sb-tab-menu-item-icon"
+                  aria-hidden="true"
+                >
+                  chat_bubble_outline
+                </MaterialIcon>
+                <span>
+                  {t("open-chat", {
+                    defaultValue: `Open chat`,
+                  })}
+                </span>
+              </ContextMenuItem>
+            )}
           </>
         )}
         {!tab.sharedSession && (
