@@ -1,11 +1,11 @@
 {
-    "author": "Sujan",
-    "app": "",
-    "toolbarConfig": {
-        "icon": "title",
-        "label": "Text Tool",
-        "hasToggle": "true",
-        "run": "createMindmap",
-        "to": "canvas"
-    }
+  "author": "Sujan",
+  "app": "",
+  "toolbarConfig": {
+    "icon": "title",
+    "label": "Text Tool",
+    "hasToggle": "true",
+    "run": "createMindmap",
+    "to": "canvas"
+  }
 }

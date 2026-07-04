@@ -1,1 +1,1 @@
-whisper(thisBot, "onInstJoined")
+whisper(thisBot, "onInstJoined");

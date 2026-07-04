@@ -37,6 +37,42 @@ function getPresetConfig(settingsPreset: SettingsPresetId): AppConfig {
   return DEFAULT_CONFIG_PRESETS[settingsPreset] ?? FULL_CONFIG;
 }
 
+// localStorage key holding the anonymous local config cache so edits survive a
+// browser refresh (the profile remains the source of truth once logged in).
+const LOCAL_CONFIG_STORAGE_KEY = "sb-app-config";
+
+type LocalConfigTags = Record<string, string | boolean | number>;
+
+function readStoredTags(): LocalConfigTags {
+  if (typeof window === "undefined") {
+    return {};
+  }
+  try {
+    const raw = window.localStorage.getItem(LOCAL_CONFIG_STORAGE_KEY);
+    if (!raw) {
+      return {};
+    }
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      return parsed as LocalConfigTags;
+    }
+  } catch {
+    // Ignore malformed/unavailable storage; fall back to an empty cache.
+  }
+  return {};
+}
+
+function writeStoredTags(tags: LocalConfigTags): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  try {
+    window.localStorage.setItem(LOCAL_CONFIG_STORAGE_KEY, JSON.stringify(tags));
+  } catch {
+    // Best-effort; the profile record is the durable source of truth.
+  }
+}
+
 function parseSettingsPreset(value: unknown): SettingsPresetId {
   if (value === "minimal" || value === "full") {
     return value;
@@ -89,6 +125,26 @@ export function createConfig(
   login: LoginManager,
   navigation: NavigationManager
 ) {
+  // Local cache for anonymous use, seeded from localStorage then the URL (so a
+  // deep-linked value still overrides a stored one). The profile is the source
+  // of truth once the user logs in; until then this holds edits so they survive
+  // re-reads triggered by unrelated URL changes (e.g. opening or closing the
+  // settings page) and browser refreshes — writes are mirrored to localStorage
+  // via `setLocalTag`. Mirrors the pattern in SettingsManager.
+  const localConfigCache = {
+    tags: {
+      ...readStoredTags(),
+      ...(Object.fromEntries(
+        navigation.currentUrl.value.searchParams
+      ) as LocalConfigTags),
+    } as LocalConfigTags,
+  };
+
+  const setLocalTag = (key: string, value: string | boolean | number) => {
+    localConfigCache.tags[key] = value;
+    writeStoredTags(localConfigCache.tags);
+  };
+
   const readConfig = (): AppConfig => {
     const url = navigation.currentUrl.value;
     const settingsPreset = parseSettingsPreset(
@@ -97,15 +153,14 @@ export function createConfig(
     const presetConfig = getPresetConfig(settingsPreset);
     const profile = login.profile.value;
     const fontSizeFromProfile = parseFontSize(
-      getProfileConfigValue(profile, "fontSize"),
-      parseFontSize(url.searchParams.get("app.fontSize"), presetConfig.fontSize)
+      getProfileConfigValue(profile, "fontSize") ??
+        localConfigCache.tags["app.fontSize"],
+      presetConfig.fontSize
     );
     const disablePanelsFromProfile = parseBoolean(
-      getProfileConfigValue(profile, "disablePanels"),
-      parseBoolean(
-        url.searchParams.get("app.disablePanels"),
-        presetConfig.disablePanels
-      )
+      getProfileConfigValue(profile, "disablePanels") ??
+        localConfigCache.tags["app.disablePanels"],
+      presetConfig.disablePanels
     );
 
     return {
@@ -143,6 +198,7 @@ export function createConfig(
       disablePanels,
     };
     config.value = nextConfig;
+    setLocalTag("app.disablePanels", disablePanels);
     saveProfileConfigValue(login, "disablePanels", disablePanels);
   };
 
@@ -153,6 +209,7 @@ export function createConfig(
       fontSize: nextFontSize,
     };
     config.value = nextConfig;
+    setLocalTag("app.fontSize", nextFontSize);
     saveProfileConfigValue(login, "fontSize", nextFontSize);
   };
 

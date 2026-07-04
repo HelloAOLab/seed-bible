@@ -129,7 +129,8 @@ export interface OnboardingManager {
  * entry — are hidden once installed.
  */
 export function createOnboardingManager(
-  login: LoginManager
+  login: LoginManager,
+  joinedViaSessionLink = false
 ): OnboardingManager {
   const platform = getPlatform();
   const standalone = isStandalone();
@@ -193,6 +194,12 @@ export function createOnboardingManager(
   const installAvailable = () => !installed.value && !dismissed.value;
 
   const computeInitialStep = (): OnboardingStep => {
+    // Opened via a shared-session invite link: don't interrupt the join with
+    // the first-run welcome/install prompts. We deliberately don't write
+    // WELCOME_SEEN_KEY, so a later visit without a session link still shows it.
+    if (joinedViaSessionLink) {
+      return "done";
+    }
     if (!readFlag(WELCOME_SEEN_KEY)) {
       return "welcome";
     }

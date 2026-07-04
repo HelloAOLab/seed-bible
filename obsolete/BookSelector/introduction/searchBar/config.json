@@ -1,11 +1,11 @@
 {
-    "author": "Sujan Barman",
-    "app": "",
-    "toolbarConfig": {
-        "icon": "book",
-        "label": "Books",
-        "hasToggle": "true",
-        "run": "togglePanel",
-        "iconUrl": "https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
-    }
+  "author": "Sujan Barman",
+  "app": "",
+  "toolbarConfig": {
+    "icon": "book",
+    "label": "Books",
+    "hasToggle": "true",
+    "run": "togglePanel",
+    "iconUrl": "https://res.cloudinary.com/dfbtwwa8p/image/upload/v1755365776/717a8527988cca7e0bdc9449ec68581a8400b977_vqc7mx.png"
+  }
 }

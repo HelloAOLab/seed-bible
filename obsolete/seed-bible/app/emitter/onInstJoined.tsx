@@ -1,4 +1,4 @@
-thisBot.start()
+thisBot.start();
 import {
   TreeIcon,
   LogIcon,
@@ -6,8 +6,7 @@ import {
   CatIcon,
   DogIcon,
   CoffeBeanIcon,
-} from "app.components.phosphoricons"
-
+} from "app.components.phosphoricons";
 
 // // Array of icons
 // export const icons = [
@@ -38,8 +37,6 @@ import {
 //   return { Icon: randomIcon, color: randomColor }
 // }
 
-
 // const { Icon, color } = getRandomIconAndColor()
-
 
 // sendRemoteData(masks['otherRemotes'],'userJoined',)

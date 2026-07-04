@@ -1,9 +1,8 @@
-if(thisBot.masks.initialized) return;
+if (thisBot.masks.initialized) return;
 
 setTagMask(thisBot, "initialized", true);
-if(typeof MapsManager === "undefined")
-{
-    globalThis.MapsManager = thisBot;
+if (typeof MapsManager === "undefined") {
+  globalThis.MapsManager = thisBot;
 }
 
 thisBot.vars.arrangementIndex = 0;

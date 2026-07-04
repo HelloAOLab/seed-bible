@@ -104,7 +104,7 @@ seed-bible/
 │       ├── Assistant/
 │       ├── Bible Stack/
 │       ├── Tabernacle/
-│       ├── Scripture Map 2D/
+│       ├── Scripture Map/
 │       ├── Scripture Map 3D/
 │       └── ...
 │
@@ -713,7 +713,7 @@ Study existing extensions to learn patterns:
 - **[Assistant](../Assistant/)** - AI Voice Assistant integration
 - **[Bible Stack](../Bible%20Stack/)** - 3D visualization with Canvas
 - **[Tabernacle](../Tabernacle/)** - Complex 3D environment
-- **[Scripture Map 2D](../Scripture%20Map%202D/)** - Geographic visualization
+- **[Scripture Map](../Scripture%20Map%202D/)** - Geographic visualization
 - **[Playlist](../Playlist/)** - Recording and playback features
 
 ### Join the Community

@@ -4,17 +4,15 @@ await os.requestAuthBot();
 
 let updatedTags = that.chronicle_tags;
 
-if (!that.privateChronicle && that.chronicle_tags)
-{
-    updatedTags = [];
+if (!that.privateChronicle && that.chronicle_tags) {
+  updatedTags = [];
 
-    for (let i = 0; i < that.chronicle_tags.length; i++)
-    {
-        const currentValue = that.chronicle_tags[i];
-        const updatedValue = "publicRead:" + currentValue;
+  for (let i = 0; i < that.chronicle_tags.length; i++) {
+    const currentValue = that.chronicle_tags[i];
+    const updatedValue = "publicRead:" + currentValue;
 
-        updatedTags.push(updatedValue);
-    }
+    updatedTags.push(updatedValue);
+  }
 }
 
 const targetBook = that.book;
@@ -22,62 +20,63 @@ const targetChapter = that.chapter;
 const targetTags = updatedTags ?? [];
 const targetRecordKey = `${authBot.id}_${targetBook}_${targetChapter}`;
 const targetTranslation = that.translation;
-const dataToSave = that.data; 
+const dataToSave = that.data;
 const possibleBooks = tags.possibleBooks;
 
 let bookMatch;
 
-for (let i = 0; i < possibleBooks.length; i++)
-{
-    const activeBook = possibleBooks[i];
+for (let i = 0; i < possibleBooks.length; i++) {
+  const activeBook = possibleBooks[i];
 
-    if (activeBook == targetBook)
-    {
-        bookMatch = true;
-    }
+  if (activeBook == targetBook) {
+    bookMatch = true;
+  }
 }
 
 //DO A CHECK ON CHAPTER BY THE DESCRIBED BOOK
 
-if (!targetBook || !targetChapter || !authBot || !bookMatch || !dataToSave)
-{
-    return;
+if (!targetBook || !targetChapter || !authBot || !bookMatch || !dataToSave) {
+  return;
 }
 
 let recordKey = targetRecordKey;
-let fileUpload = await os.recordFile(recordKey, dataToSave, {description: targetRecordKey});
+let fileUpload = await os.recordFile(recordKey, dataToSave, {
+  description: targetRecordKey,
+});
 
 //console.log(`${tags.system}_${tagName} fileUpload: `, fileUpload);
 
-if (!fileUpload.success && fileUpload.errorCode == "record_not_found")
-{
-    const recordName = await os.getPublicRecordKey(targetRecordKey);
+if (!fileUpload.success && fileUpload.errorCode == "record_not_found") {
+  const recordName = await os.getPublicRecordKey(targetRecordKey);
 
-    recordKey = recordName.recordKey;
+  recordKey = recordName.recordKey;
 
-    fileUpload = await os.recordFile(recordKey, dataToSave, {description: targetRecordKey});
+  fileUpload = await os.recordFile(recordKey, dataToSave, {
+    description: targetRecordKey,
+  });
 }
 
-if (!fileUpload.success) 
-{
-    if (fileUpload.errorCode == "file_already_exists")
-    {
-        return fileUpload;
-    }
-
-    await os.grantInstAdminPermission(recordKey);
-
-    fileUpload = await os.recordFile(recordKey, dataToSave, {description: targetRecordKey});
-}
-
-if (!fileUpload.success)
-{
+if (!fileUpload.success) {
+  if (fileUpload.errorCode == "file_already_exists") {
     return fileUpload;
+  }
+
+  await os.grantInstAdminPermission(recordKey);
+
+  fileUpload = await os.recordFile(recordKey, dataToSave, {
+    description: targetRecordKey,
+  });
+}
+
+if (!fileUpload.success) {
+  return fileUpload;
 }
 
 const chroniclerID = that.address ?? uuid();
 const previousChronicler = await os.getData(recordKey, chroniclerID);
-const previousURLArray = previousChronicler.success ? previousChronicler.data.urlArray : [];
+const previousURLArray = previousChronicler.success
+  ? previousChronicler.data.urlArray
+  : [];
 const chroniclerData = {};
 const date = DateTime.now().toMillis();
 
@@ -88,41 +87,54 @@ chroniclerData.urlArray.push(fileUpload.url);
 
 //console.log(`${tags.system}_${tagName} chronicler: `, chroniclerData);
 
-if (targetTranslation)
-{
-    targetTags.unshift(targetTranslation);
+if (targetTranslation) {
+  targetTags.unshift(targetTranslation);
 }
 
 //DECIDES IF THE CHRONICLE IS PRIVATE
-if (!that.privateChronicle)
-{
-    targetTags.unshift("publicRead");
+if (!that.privateChronicle) {
+  targetTags.unshift("publicRead");
 }
 
-if (targetTags.length > 10)
-{
-    targetTags.slice(0, 10);
+if (targetTags.length > 10) {
+  targetTags.slice(0, 10);
 }
 
-console.log("TARGET TAGS: ", targetTags)
+console.log("TARGET TAGS: ", targetTags);
 
 //PUBLISH chroniclerData
-const recordData = await os.recordData(recordKey, chroniclerID, chroniclerData, {markers: targetTags});
+const recordData = await os.recordData(
+  recordKey,
+  chroniclerID,
+  chroniclerData,
+  { markers: targetTags }
+);
 
-if (!that.privateChronicle)
-{
-    //UPDATE LAST UPDATE
-    const recordUpdate = await os.recordData(authBot.id, "chronicler_lastUpdate", date, {markers: ["publicRead"]});
+if (!that.privateChronicle) {
+  //UPDATE LAST UPDATE
+  const recordUpdate = await os.recordData(
+    authBot.id,
+    "chronicler_lastUpdate",
+    date,
+    { markers: ["publicRead"] }
+  );
 
-    if (!recordUpdate.success)
-    {
-        await os.grantInstAdminPermission(authBot.id);
+  if (!recordUpdate.success) {
+    await os.grantInstAdminPermission(authBot.id);
 
-        await os.recordData(authBot.id, "chronicler_lastUpdate", date, {markers: ["publicRead"]});
-    }
+    await os.recordData(authBot.id, "chronicler_lastUpdate", date, {
+      markers: ["publicRead"],
+    });
+  }
 }
 
 //COPY THE LOCATION
 const location = `${authBot.id}.${targetBook}.${targetChapter}.${chroniclerID}`;
 
-return {succes: recordData.success, address: location, fileURL: fileUpload.url, time: date, version: chroniclerData.urlArray.length};
+return {
+  succes: recordData.success,
+  address: location,
+  fileURL: fileUpload.url,
+  time: date,
+  version: chroniclerData.urlArray.length,
+};

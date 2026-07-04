@@ -836,6 +836,7 @@ export function PaneReader(props: PaneReaderScrollerProps) {
           currentPane={pane}
           toast={state.app.toast}
           openChat={state.sidebar.openChatPanel}
+          chats={state.chats}
         />
       )}
     </div>

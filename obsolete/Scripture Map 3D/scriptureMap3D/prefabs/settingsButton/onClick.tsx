@@ -1,1 +1,1 @@
-shout(`OnLayoutSettingsButtonClicked`, {settingsButton: thisBot});
+shout(`OnLayoutSettingsButtonClicked`, { settingsButton: thisBot });

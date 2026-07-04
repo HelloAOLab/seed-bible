@@ -1,0 +1,194 @@
+import { HexToRgb } from "bibleVizUtils.functions.index";
+
+return
+if(thisBot.masks.isInTransition || thisBot.masks.isExpanding || thisBot.masks.isConvertedIntoATray) return;
+
+const initialAnimationDuration = 1.5;
+if(thisBot.masks.isManagingExpandStop)
+{
+    thisBot.stopExpandTransition();
+    thisBot.tags.expandAnimationDuration = (1 - thisBot.masks.expandTransitionPercentage) * thisBot.tags.expandAnimationDuration;
+}
+else
+{
+    setTagMask(thisBot, "expandTransitionPercentage", 0);
+}
+const dimension = os.getCurrentDimension();
+const mainWord = getBot("isMainWord", true);
+setTagMask(thisBot, "isExpanding", true);
+setTagMask(mainWord, "lastBookExpandingId", getID(thisBot));
+
+// if(!thisBot.masks.isExpanded)
+// {
+//     const bookExpandShadow = CreateExpandShadow(thisBot.tags.bookExpandedDesiredScaleX, 1 + (thisBot.tags.numberOfChapters * 0.15), thisBot.tags.bookExpandedDesiredScaleZ, thisBot.tags.initialColor);
+//     try
+//     {
+//         await Promise.all([
+//             animateTag(thisBot, "formOpacity", {
+//                 toValue: 1,
+//                 duration: thisBot.tags.expandAnimationDuration,
+//                 easing: thisBot.masks.isManagingExpandStop ? {type: "linear"} : {type: "cubic", mode: "in"}
+//             }),
+//             animateTag(thisBot, "labelOpacity", {
+//                 toValue: 1,
+//                 duration: thisBot.tags.expandAnimationDuration,
+//                 easing: {type: "cubic", mode: "in"}
+//             }),
+//             animateTag(thisBot, "scaleX", {
+//                 toValue: thisBot.tags.bookExpandedDesiredScaleX,
+//                 duration: thisBot.tags.expandAnimationDuration,
+//                 easing: thisBot.masks.isManagingExpandStop ? {type: "linear"} : {type: "cubic", mode: "in"}
+//             }),
+//             animateTag(thisBot, "scaleY", {
+//                 toValue: 1 + (thisBot.tags.numberOfChapters * 0.15),
+//                 duration: thisBot.tags.expandAnimationDuration,
+//                 easing: thisBot.masks.isManagingExpandStop ? {type: "linear"} : {type: "cubic", mode: "in"}
+//             }),
+//             animateTag(thisBot, "scaleZ", {
+//                 toValue: thisBot.tags.bookExpandedDesiredScaleZ,
+//                 duration: thisBot.tags.expandAnimationDuration,
+//                 easing: thisBot.masks.isManagingExpandStop ? {type: "linear"} : {type: "cubic", mode: "in"}
+//             }),
+//             animateTag(thisBot, "expandTransitionPercentage", {
+//                 toValue: 1,
+//                 duration: thisBot.tags.expandAnimationDuration,
+//                 easing: {type: "linear"}
+//             })
+//         ]).then(async () => {
+//             setTagMask(thisBot, "expandTransitionPercentage", 0);
+//             setTagMask(thisBot, "isExpanded", true);
+//             setTagMask(bookExpandShadow, "scaleX", thisBot.tags.trayDesiredScaleX);
+//             setTagMask(bookExpandShadow, "scaleY", thisBot.tags.trayDesiredScaleY);
+//             setTagMask(bookExpandShadow, "scaleZ", thisBot.tags.trayDesiredScaleZ);
+//             setTagMask(bookExpandShadow, "color", "white");
+//             thisBot.tags.expandAnimationDuration = initialAnimationDuration;
+
+//             await Promise.all([
+//                 animateTag(thisBot, "scaleX", {
+//                     toValue: thisBot.tags.trayDesiredScaleX,
+//                     duration: thisBot.tags.expandAnimationDuration,
+//                     easing: {type: "cubic", mode: "out"}
+//                 }),
+//                 animateTag(thisBot, "scaleY", {
+//                     toValue: thisBot.tags.trayDesiredScaleY,
+//                     duration: thisBot.tags.expandAnimationDuration,
+//                     easing: {type: "cubic", mode: "out"}
+//                 }),
+//                 animateTag(thisBot, "scaleZ", {
+//                     toValue: thisBot.tags.trayDesiredScaleZ,
+//                     duration: thisBot.tags.expandAnimationDuration,
+//                     easing: {type: "cubic", mode: "out"}
+//                 }),
+//                 animateTag(thisBot, "expandTransitionPercentage", {
+//                     toValue: 1,
+//                     duration: thisBot.tags.expandAnimationDuration,
+//                     easing: {type: "linear"}
+//                 }),
+//                 animateTag(thisBot, "labelOpacity", {
+//                     toValue: 0,
+//                     duration: thisBot.tags.expandAnimationDuration
+//                 }),
+//                 thisBot.lerpColor({startingColor: HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: thisBot.tags.expandAnimationDuration})
+//                 ColorLerper.LerpTag({startingColor: HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: thisBot.tags.expandAnimationDuration, bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
+
+//             ]).then(() => {
+//                 thisBot.setThisBookAsTheTray();
+//                 destroy(bookExpandShadow);
+//                 mainWord.resizeBible();
+//             })
+//         })
+//     }
+//     catch(error) {console.error(error)}
+// }
+// else
+// {
+    if(!thisBot.masks.isConvertedIntoATray)
+    {
+        try
+        {
+            await animateTag(thisBot, "expandTransitionPercentage", {
+                toValue: thisBot.tags.expandAnimationClickThreshold / thisBot.tags.expandAnimationDuration,
+                duration: thisBot.tags.expandAnimationClickThreshold,
+                easing: {type: "linear"}
+            }).then(async () => {
+                const bookExpandShadow = CreateExpandShadow(thisBot.tags.trayDesiredScaleX, thisBot.tags.trayDesiredScaleY, thisBot.tags.trayDesiredScaleZ, "white");
+                thisBot.lerpColor({startingColor: HexToRgb(thisBot.tags.initialColor), endingColor: [255, 255, 255], durationInSeconds: thisBot.tags.expandAnimationDuration})
+                ColorLerper.LerpTag({startingColor: [255, 255, 255], endingColor: HexToRgb(thisBot.tags.initialColor), durationInSeconds: (animationDuration / 5), bot: thisBot, tag: BibleVizUtils.Data.tags.InterpolatableColorTags.Color});
+
+                await Promise.all([
+                    animateTag(thisBot, "scaleX", {
+                        toValue: thisBot.tags.trayDesiredScaleX,
+                        duration: thisBot.tags.expandAnimationDuration - thisBot.tags.expandAnimationClickThreshold,
+                        easing: {type: "cubic", mode: "inout"}
+                    }),
+                    animateTag(thisBot, "scaleY", {
+                        toValue: thisBot.tags.trayDesiredScaleY,
+                        duration: thisBot.tags.expandAnimationDuration - thisBot.tags.expandAnimationClickThreshold,
+                        easing: {type: "cubic", mode: "inout"}
+                    }),
+                    animateTag(thisBot, "scaleZ", {
+                        toValue: thisBot.tags.trayDesiredScaleZ,
+                        duration: thisBot.tags.expandAnimationDuration - thisBot.tags.expandAnimationClickThreshold,
+                        easing: {type: "cubic", mode: "out"}
+                    }),
+                    animateTag(thisBot, "expandTransitionPercentage", {
+                        toValue: 1,
+                        duration: thisBot.tags.expandAnimationDuration - thisBot.tags.expandAnimationClickThreshold,
+                        easing: {type: "linear"}
+                    }),
+                    animateTag(thisBot, "labelOpacity", {
+                        toValue: 0,
+                        duration: thisBot.tags.expandAnimationDuration - thisBot.tags.expandAnimationClickThreshold
+                    })
+                ]).then(() => {
+                    setTagMask(thisBot, "isExpanded", true);
+                    thisBot.setThisBookAsTheTray();
+                    destroy(bookExpandShadow);
+                    mainWord.resizeBible();
+                })
+            })
+        }
+        catch(error) {console.error(error)}
+    }
+// }
+
+setTagMask(thisBot, "isExpanding", false);
+
+function CreateExpandShadow(scaleX, scaleY, scaleZ, color)
+{
+    const expandShadow = create({
+        space: "tempLocal",
+        pointable: false,
+        isBookExpandShadow: true,
+        parentBookId: getID(thisBot),
+        [dimension]: true,
+        [dimension + "X"]: thisBot.masks[dimension + "X"] ?? thisBot.tags[dimension + "X"],
+        [dimension + "Y"]: thisBot.masks[dimension + "Y"] ?? thisBot.tags[dimension + "Y"],
+        [dimension + "Z"]: thisBot.masks[dimension + "Z"] ?? thisBot.tags[dimension + "Z"],
+        color: color,
+        scaleX: scaleX,
+        scaleY: scaleY,
+        scaleZ: scaleZ,
+        formOpacity: 0.05,
+        onCreate: `@
+        setTagMask(thisBot, "isBlinking", true);
+        const animationDuration = 0.3;
+
+        while(thisBot.masks.isBlinking)
+        {
+            await animateTag(thisBot, "formOpacity", {
+                toValue: 0.3,
+                duration: animationDuration,
+                easing: {type: "sinusoidal", mode: "inout"}
+            })
+            await animateTag(thisBot, "formOpacity", {
+                toValue: 0.05,
+                duration: animationDuration,
+                easing: {type: "sinusoidal", mode: "inout"}
+            })
+        }
+        `,
+        onDestroy: `@setTagMask(thisBot, "isBlinking", false)`
+    });
+    return expandShadow;
+}

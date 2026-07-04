@@ -1,4 +1,0 @@
-if(thisBot.tags.isBaseInfoLabelTransformer) return;
-const children = getBots("transformer", getID(thisBot));
-thisBot.StopShakeAnimation();
-destroy(children);

@@ -1,3 +1,3 @@
-export function getStyleOf(name){
-    return tags[name]
+export function getStyleOf(name) {
+  return tags[name];
 }

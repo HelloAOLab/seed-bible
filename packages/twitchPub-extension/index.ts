@@ -1,1 +1,1 @@
-import "./ext_twitchPub/host/init";
+export { default } from "./ext_twitchPub/host/init";

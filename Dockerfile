@@ -10,7 +10,7 @@ RUN corepack enable
 RUN mkdir -p /temp/dev
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml /temp/dev/
 COPY patches /temp/dev/patches
-RUN cd /temp/dev && pnpm install --frozen-lockfile
+RUN cd /temp/dev && pnpm install --frozen-lockfile --ignore-scripts
 
 # install with --production (exclude devDependencies)
 RUN mkdir -p /temp/prod
