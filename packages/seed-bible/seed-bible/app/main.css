@@ -4085,6 +4085,7 @@ a:visited {
 }
 
 .sb-collapsed-tab-tile {
+  position: relative;
   width: 53px;
   height: 53px;
   border-radius: 10px;
@@ -4100,6 +4101,66 @@ a:visited {
   line-height: 1;
   gap: 5px;
   border: 1px solid;
+}
+
+/* A shared-session tile reserves room for the "Shared" tag at the top and
+   the presence dots along the bottom edge. */
+.sb-collapsed-tab-tile-shared {
+  padding-top: 10px;
+  padding-bottom: 8px;
+}
+
+.sb-collapsed-tab-tag {
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 6px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 4px;
+  border-radius: 4px;
+  white-space: nowrap;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 82%);
+  color: var(--sb-primary-color);
+  pointer-events: none;
+}
+
+.sb-collapsed-tab-presence {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.sb-collapsed-tab-presence-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  box-sizing: border-box;
+}
+
+/* Host / co-host dots get a colored ring so roles read at a glance. */
+.sb-collapsed-tab-presence-dot-host {
+  box-shadow: 0 0 0 1.5px #f59e0b;
+}
+
+.sb-collapsed-tab-presence-dot-cohost {
+  box-shadow: 0 0 0 1.5px #6366f1;
+}
+
+.sb-collapsed-tab-presence-more {
+  font-size: 7px;
+  font-weight: 700;
+  line-height: 1;
+  color: color-mix(in srgb, var(--sb-tab-font-color), transparent 25%);
 }
 
 .sb-collapsed-tab-tile-selected {

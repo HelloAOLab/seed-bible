@@ -20,6 +20,7 @@ import {
   isSessionHost,
   type BibleReadingSession,
   type ConnectedSessionUser,
+  type SessionOptions,
   getConnectedUserVisualKey,
   getUserAnimalVisual,
 } from "../managers/SessionsManager";
@@ -136,6 +137,35 @@ function isLocalSessionHost(
       })
     )
   );
+}
+
+/**
+ * Leadership role of a connected user within a session, or null for a plain
+ * participant. Shared by the tab avatar row and the collapsed-sidebar
+ * presence dots so both surfaces agree on who's a host / co-host.
+ */
+function getUserSessionRole(
+  options: SessionOptions,
+  user: ConnectedSessionUser
+): SessionRole | null {
+  if (
+    options.hostUserId === user.userId ||
+    options.hostUserId === user.connectionId
+  ) {
+    return "host";
+  }
+  if (
+    isSessionHost(options, user.userId) ||
+    isSessionHost(options, user.connectionId)
+  ) {
+    return "co-host";
+  }
+  return null;
+}
+
+/** Host first, then co-hosts, then everyone else. */
+function sessionRoleRank(role: SessionRole | null): number {
+  return role === "host" ? 0 : role === "co-host" ? 1 : 2;
 }
 
 function SessionSettingsModalContent(props: {
@@ -977,32 +1007,15 @@ function TabRow(props: TabRowProps) {
             <div className="sb-tab-users-list">
               {(() => {
                 const sessionOptions = tab.sharedSession.options.value;
-                const roleFor = (
-                  user: ConnectedSessionUser
-                ): SessionRole | null => {
-                  if (
-                    sessionOptions.hostUserId === user.userId ||
-                    sessionOptions.hostUserId === user.connectionId
-                  ) {
-                    return "host";
-                  }
-                  if (
-                    isSessionHost(sessionOptions, user.userId) ||
-                    isSessionHost(sessionOptions, user.connectionId)
-                  ) {
-                    return "co-host";
-                  }
-                  return null;
-                };
-                const rank = (role: SessionRole | null) =>
-                  role === "host" ? 0 : role === "co-host" ? 1 : 2;
                 // Host first, then co-hosts, then everyone else — Array.sort
                 // is stable so peers keep their existing order within a rank.
                 const sortedUsers = [...connectedUsers].sort(
-                  (a, b) => rank(roleFor(a)) - rank(roleFor(b))
+                  (a, b) =>
+                    sessionRoleRank(getUserSessionRole(sessionOptions, a)) -
+                    sessionRoleRank(getUserSessionRole(sessionOptions, b))
                 );
                 return sortedUsers.map((user) => {
-                  const role = roleFor(user);
+                  const role = getUserSessionRole(sessionOptions, user);
                   const roleLabel =
                     role === "host"
                       ? t("host", { defaultValue: "Host" })
@@ -1777,6 +1790,9 @@ export function Tabs(props: TabsProps) {
             tab.readingState.chapterData.value?.book.name ?? bookId;
           const chapter = tab.readingState.chapterNumber.value;
 
+          const session = tab.sharedSession;
+          const sessionUsers = session?.connectedUsers.value ?? [];
+
           return (
             <button
               key={tab.id}
@@ -1787,12 +1803,61 @@ export function Tabs(props: TabsProps) {
               }}
               className={`sb-collapsed-tab-tile${
                 isSelected ? " sb-collapsed-tab-tile-selected" : ""
-              }`}
-              aria-label={`${bookName} ${chapter}`}
+              }${session ? " sb-collapsed-tab-tile-shared" : ""}`}
+              aria-label={
+                session && sessionUsers.length > 0
+                  ? t("collapsed-tab-shared_x", {
+                      book: bookName,
+                      chapter,
+                      count: sessionUsers.length,
+                      defaultValue:
+                        "{{book}} {{chapter}} — shared session, {{count}} present",
+                    })
+                  : `${bookName} ${chapter}`
+              }
               title={`${bookName} ${chapter}`}
             >
+              {session && (
+                <span className="sb-collapsed-tab-tag">
+                  {t("shared", { defaultValue: "Shared" })}
+                </span>
+              )}
               <span className="sb-collapsed-tab-book">{bookId}</span>
               <span className="sb-collapsed-tab-chapter">{chapter}</span>
+              {session &&
+                sessionUsers.length > 0 &&
+                (() => {
+                  const options = session.options.value;
+                  const sorted = [...sessionUsers].sort(
+                    (a, b) =>
+                      sessionRoleRank(getUserSessionRole(options, a)) -
+                      sessionRoleRank(getUserSessionRole(options, b))
+                  );
+                  const shown = sorted.slice(0, 3);
+                  const extra = sorted.length - shown.length;
+                  return (
+                    <span
+                      className="sb-collapsed-tab-presence"
+                      aria-hidden="true"
+                    >
+                      {shown.map((user) => {
+                        const role = getUserSessionRole(options, user);
+                        return (
+                          <span
+                            key={user.connectionId}
+                            className={`sb-collapsed-tab-presence-dot${role ? ` sb-collapsed-tab-presence-dot-${role === "co-host" ? "cohost" : "host"}` : ""}`}
+                            style={{ backgroundColor: user.visual.color }}
+                          />
+                        );
+                      })}
+                      {extra > 0 && (
+                        <span className="sb-collapsed-tab-presence-more">
+                          +{extra}
+                        </span>
+                      )}
+                    </span>
+                  );
+                })()}
             </button>
           );
         })}
