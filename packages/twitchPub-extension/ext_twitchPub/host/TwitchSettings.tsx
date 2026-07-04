@@ -358,6 +358,7 @@ const InfoTooltip = ({ text }: { text: string }) => {
           e.stopPropagation();
           setOpen((v) => !v);
         }}
+        style={{ fontSize: "18px" }}
         // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
       >
         info
