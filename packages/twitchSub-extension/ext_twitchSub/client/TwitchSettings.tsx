@@ -1,6 +1,7 @@
 import { TwitchIcon } from "./icons";
 import { useI18n } from "seed-bible/i18n";
 import { type TwitchSubInterface } from "./interface";
+import { useRef, useEffect, useState } from "preact/hooks";
 
 const TwitchSettings = (props: {
   settings: TwitchSubInterface["settings"];
@@ -37,18 +38,13 @@ const TwitchSettings = (props: {
               ns: "ext_twitchSub",
               defaultValue: "Twitch Settings",
             })}
-            <button
-              className="icon-btn material-symbols-outlined"
-              style={{ fontSize: "20px", opacity: 0.7 }}
-              title={t("infoTooltip", {
+            <InfoTooltip
+              text={t("infoTooltip", {
                 ns: "ext_twitchSub",
                 defaultValue:
                   "Choose which updates you receive when a streamer you follow takes action.",
               })}
-              // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
-            >
-              info
-            </button>
+            />
           </span>
           <button
             className="icon-btn material-symbols-outlined"
@@ -87,6 +83,21 @@ const TwitchSettings = (props: {
                 (props.settings.value.highlightEnabled.value = value)
               }
               id={"highlightToggle"}
+            />
+          </div>
+          <div className="twitchSub-settings-item">
+            <span>
+              {t("followRefEvent", {
+                ns: "ext_twitchSub",
+                defaultValue: "Follow reference event",
+              })}
+            </span>
+            <ToggleBtn
+              toggle={props.settings.value.refFollowEnabled.value}
+              setToggle={(value) =>
+                (props.settings.value.refFollowEnabled.value = value)
+              }
+              id={"refFollowToggle"}
             />
           </div>
           <div className="twitchSub-settings-item">
@@ -134,6 +145,54 @@ const TwitchSettings = (props: {
         </div>
       </div>
     </>
+  );
+};
+
+const InfoTooltip = ({ text }: { text: string }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+
+  // Close when tapping/clicking anywhere outside the tooltip (needed on mobile,
+  // where there is no hover to dismiss it).
+  useEffect(() => {
+    if (!open) return;
+    const onOutside = (e: Event) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onOutside);
+    document.addEventListener("touchstart", onOutside);
+    return () => {
+      document.removeEventListener("mousedown", onOutside);
+      document.removeEventListener("touchstart", onOutside);
+    };
+  }, [open]);
+
+  return (
+    <span
+      ref={ref}
+      className={`twitch-tooltip ${open ? "twitch-tooltip--open" : ""}`}
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        className="icon-btn material-symbols-outlined twitch-tooltip__icon"
+        aria-label={text}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen((v) => !v);
+        }}
+        // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
+      >
+        info
+      </button>
+      <span className="twitch-tooltip__bubble" role="tooltip">
+        {text}
+      </span>
+    </span>
   );
 };
 

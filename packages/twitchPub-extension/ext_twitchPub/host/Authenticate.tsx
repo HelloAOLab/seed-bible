@@ -35,10 +35,10 @@ const Authorization = (props: { state: TwitchPubState }) => {
         <button
           className="icon-btn"
           onClick={() => {
-            props.state.interfaceEnabled.value = false;
+            props.state.setCurrentPage("login");
           }}
         >
-          <span className="material-symbols-outlined">close</span>
+          <span className="material-symbols-outlined">arrow_back</span>
         </button>
       </div>
       <div className="twitchPub-content">

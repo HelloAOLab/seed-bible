@@ -37,6 +37,7 @@ export function CreateTwitchSubState(
     : {
         translationEnabled: true,
         highlightEnabled: true,
+        refFollowEnabled: true,
         chapterFollowEnabled: true,
       };
   const settings = signal({
@@ -44,6 +45,7 @@ export function CreateTwitchSubState(
       savedSettings.translationEnabled ?? true
     ),
     highlightEnabled: signal<boolean>(savedSettings.highlightEnabled ?? true),
+    refFollowEnabled: signal<boolean>(savedSettings.refFollowEnabled ?? true),
     chapterFollowEnabled: signal<boolean>(
       savedSettings.chapterFollowEnabled ?? true
     ),
@@ -235,6 +237,48 @@ export function CreateTwitchSubState(
               );
             });
           }
+          break;
+        }
+        case "refHighlight": {
+          if (!settings.value.refFollowEnabled.value) {
+            console.log(
+              "Reference follow is disabled, ignoring refHighlight event"
+            );
+            return;
+          }
+          const { bookId, chapter, verse } = JSON.parse(config.payload) as {
+            bookId: string;
+            chapter: number;
+            verse: number;
+          };
+          seedBibleState.app.toast(`Navigating to ${bookId} ${chapter}`);
+          const selectedTabId = seedBibleState.tabs.selectedTabId;
+          const selectedTab = seedBibleState.tabs.tabs.value.find(
+            (tab) => tab.id === selectedTabId.value
+          );
+          const currentReadingState =
+            seedBibleState.app.currentReadingState.value;
+
+          if (selectedTab && bookId) {
+            await selectedTab.readingState.selectTranslationAndChapter(
+              currentReadingState?.translationId || "ABB",
+              bookId,
+              Number(chapter) || 1,
+              verse ? { scrollToVerse: Number(verse) } : {}
+            );
+            if (verse && chapter) {
+              selectedTab.readingState.decorateVerses(
+                bookId,
+                Number(chapter),
+                Number(verse),
+                {
+                  className: "sb-verse-decoration-initial-verse-highlight",
+                  removeAfterMs: 5000,
+                }
+              );
+            }
+          }
+          break;
         }
       }
     }
@@ -278,6 +322,7 @@ export function CreateTwitchSubState(
         translationEnabled: settings.value.translationEnabled.value,
         highlightEnabled: settings.value.highlightEnabled.value,
         chapterFollowEnabled: settings.value.chapterFollowEnabled.value,
+        refFollowEnabled: settings.value.refFollowEnabled.value,
       })
     );
   });

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "preact/hooks";
 import { useI18n } from "seed-bible/i18n";
 
 const TwitchSettings = (props: { state: TwitchPubState }) => {
-  const { setCurrentPage, settings } = props.state;
+  const { setCurrentPage, settings, resetState } = props.state;
 
   const { t } = useI18n();
 
@@ -288,6 +288,32 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
                 </div>
               )}
             </div>
+          </div>
+          <div className="twitchPub-settings-item">
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            ></span>
+            <button
+              onClick={resetState}
+              style={{
+                padding: "6px 14px",
+                fontSize: "14px",
+                background: "var(--sb-primary-color)",
+                color: "var(--sb-primary-font-color)",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer",
+              }}
+            >
+              {t("twitchSettings.logout", {
+                ns: "ext_twitchPub",
+                defaultValue: "Logout",
+              })}
+            </button>
           </div>
         </div>
       </div>

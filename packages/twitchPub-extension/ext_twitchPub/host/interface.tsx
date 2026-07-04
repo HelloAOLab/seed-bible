@@ -44,6 +44,7 @@ interface TwitchPubState {
     bookId: string,
     chapterNumber: number
   ) => void;
+  resetState: () => void;
 }
 
 // ── Twitch EventSub WebSocket message interfaces ──────────────────────────────

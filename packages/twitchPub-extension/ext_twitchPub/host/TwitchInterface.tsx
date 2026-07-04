@@ -14,6 +14,7 @@ const TwitchInterface = (props: { state: TwitchPubState }) => {
     hideUI,
     showUI,
     interfaceEnabled,
+    toast,
   } = props.state;
 
   effect(() => {
@@ -108,6 +109,10 @@ const TwitchInterface = (props: { state: TwitchPubState }) => {
               value={qrValue.value}
               size={150}
               uiHidden={uiHidden.value}
+              onClick={() => {
+                navigator.clipboard.writeText(qrValue.value);
+                toast("Link copied to clipboard!");
+              }}
             />
           </div>
           {navigatingRef.value && (

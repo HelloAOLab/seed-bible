@@ -9,6 +9,7 @@
       "followTranslationEvent": "Follow translation event",
       "followHighlightEvent": "Follow highlight event",
       "followChapterEvent": "Follow chapter event",
+      "followRefEvent": "Follow reference event",
       "rejoinSession": "Rejoin session",
       "leaveSession": "Leave session"
     },
@@ -20,6 +21,7 @@
       "followTranslationEvent": "Seguir evento de traducción",
       "followHighlightEvent": "Seguir evento de destacado",
       "followChapterEvent": "Seguir evento de capítulo",
+      "followRefEvent": "Seguir evento de referencia",
       "rejoinSession": "Volver a unirse a la sesión",
       "leaveSession": "Abandonar sesión"
     },
@@ -31,6 +33,7 @@
       "followTranslationEvent": "የትርጉም ክስተት ይከተሉ",
       "followHighlightEvent": "የጎላ ክስተት ይከተሉ",
       "followChapterEvent": "የምዕራፍ ክስተት ይከተሉ",
+      "followRefEvent": "የማመሳከሪያ ክስተት ይከተሉ",
       "rejoinSession": "ክፍለ ጊዜ እንደገና ይቀላቀሉ",
       "leaveSession": "ክፍለ ጊዜ ይልቀቁ"
     },
@@ -42,6 +45,7 @@
       "followTranslationEvent": "متابعة حدث الترجمة",
       "followHighlightEvent": "متابعة حدث التمييز",
       "followChapterEvent": "متابعة حدث الفصل",
+      "followRefEvent": "متابعة حدث المرجع",
       "rejoinSession": "إعادة الانضمام للجلسة",
       "leaveSession": "مغادرة الجلسة"
     },
@@ -53,6 +57,7 @@
       "followTranslationEvent": "অনুবাদ ইভেন্ট অনুসরণ করুন",
       "followHighlightEvent": "হাইলাইট ইভেন্ট অনুসরণ করুন",
       "followChapterEvent": "অধ্যায় ইভেন্ট অনুসরণ করুন",
+      "followRefEvent": "রেফারেন্স ইভেন্ট অনুসরণ করুন",
       "rejoinSession": "সেশনে পুনরায় যোগ দিন",
       "leaveSession": "সেশন ছেড়ে দিন"
     },
@@ -64,6 +69,7 @@
       "followTranslationEvent": "دنبال کردن رویداد ترجمه",
       "followHighlightEvent": "دنبال کردن رویداد برجسته‌سازی",
       "followChapterEvent": "دنبال کردن رویداد فصل",
+      "followRefEvent": "دنبال کردن رویداد مرجع",
       "rejoinSession": "بازپیوستن به جلسه",
       "leaveSession": "ترک جلسه"
     },
@@ -75,6 +81,7 @@
       "followTranslationEvent": "Suivre l'événement de traduction",
       "followHighlightEvent": "Suivre l'événement de surbrillance",
       "followChapterEvent": "Suivre l'événement de chapitre",
+      "followRefEvent": "Suivre l'événement de référence",
       "rejoinSession": "Rejoindre la session",
       "leaveSession": "Quitter la session"
     },
@@ -86,6 +93,7 @@
       "followTranslationEvent": "अनुवाद इवेंट फॉलो करें",
       "followHighlightEvent": "हाइलाइट इवेंट फॉलो करें",
       "followChapterEvent": "अध्याय इवेंट फॉलो करें",
+      "followRefEvent": "संदर्भ इवेंट का अनुसरण करें",
       "rejoinSession": "सत्र में पुनः शामिल हों",
       "leaveSession": "सत्र छोड़ें"
     },
@@ -97,6 +105,7 @@
       "followTranslationEvent": "Ikuti acara terjemahan",
       "followHighlightEvent": "Ikuti acara sorotan",
       "followChapterEvent": "Ikuti acara bab",
+      "followRefEvent": "Ikuti acara referensi",
       "rejoinSession": "Bergabung kembali ke sesi",
       "leaveSession": "Tinggalkan sesi"
     },
@@ -108,6 +117,7 @@
       "followTranslationEvent": "翻訳イベントを追う",
       "followHighlightEvent": "ハイライトイベントを追う",
       "followChapterEvent": "章イベントを追う",
+      "followRefEvent": "参照イベントをフォロー",
       "rejoinSession": "セッションに再参加",
       "leaveSession": "セッションを離れる"
     },
@@ -119,6 +129,7 @@
       "followTranslationEvent": "번역 이벤트 팔로우",
       "followHighlightEvent": "하이라이트 이벤트 팔로우",
       "followChapterEvent": "챕터 이벤트 팔로우",
+      "followRefEvent": "참조 이벤트 팔로우",
       "rejoinSession": "세션 다시 참가",
       "leaveSession": "세션 나가기"
     },
@@ -130,6 +141,7 @@
       "followTranslationEvent": "Орчуулгын үйл явдлыг дагах",
       "followHighlightEvent": "Тэмдэглэлийн үйл явдлыг дагах",
       "followChapterEvent": "Бүлгийн үйл явдлыг дагах",
+      "followRefEvent": "Лавлагааны үйл явдлыг дагах",
       "rejoinSession": "Сесс рүү дахин нэгдэх",
       "leaveSession": "Сессийг орхих"
     },
@@ -141,6 +153,7 @@
       "followTranslationEvent": "अनुवाद घटना पछ्याउनुहोस्",
       "followHighlightEvent": "हाइलाइट घटना पछ्याउनुहोस्",
       "followChapterEvent": "अध्याय घटना पछ्याउनुहोस्",
+      "followRefEvent": "सन्दर्भ घटना अनुसरण गर्नुहोस्",
       "rejoinSession": "सत्रमा पुनः सामेल हुनुहोस्",
       "leaveSession": "सत्र छोड्नुहोस्"
     },
@@ -152,6 +165,7 @@
       "followTranslationEvent": "د ژباړې پیښه تعقیب کړئ",
       "followHighlightEvent": "د روښانه کولو پیښه تعقیب کړئ",
       "followChapterEvent": "د فصل پیښه تعقیب کړئ",
+      "followRefEvent": "د حوالې پیښه تعقیب کړئ",
       "rejoinSession": "بیرته ناستې ته ګډون وکړئ",
       "leaveSession": "ناسته پریږدئ"
     },
@@ -163,6 +177,7 @@
       "followTranslationEvent": "Seguir evento de tradução",
       "followHighlightEvent": "Seguir evento de destaque",
       "followChapterEvent": "Seguir evento de capítulo",
+      "followRefEvent": "Seguir evento de referência",
       "rejoinSession": "Reingressar na sessão",
       "leaveSession": "Sair da sessão"
     },
@@ -174,6 +189,7 @@
       "followTranslationEvent": "Следить за событием перевода",
       "followHighlightEvent": "Следить за событием выделения",
       "followChapterEvent": "Следить за событием главы",
+      "followRefEvent": "Следить за событием ссылки",
       "rejoinSession": "Повторно присоединиться к сессии",
       "leaveSession": "Покинуть сессию"
     },
@@ -185,6 +201,7 @@
       "followTranslationEvent": "Fuata tukio la tafsiri",
       "followHighlightEvent": "Fuata tukio la kuangaziwa",
       "followChapterEvent": "Fuata tukio la sura",
+      "followRefEvent": "Fuata tukio la marejeleo",
       "rejoinSession": "Jiunge tena na kikao",
       "leaveSession": "Acha kikao"
     },
@@ -196,6 +213,7 @@
       "followTranslationEvent": "ናይ ትርጉም ፍጻሜ ሰዓቦ",
       "followHighlightEvent": "ናይ ምድማቕ ፍጻሜ ሰዓቦ",
       "followChapterEvent": "ናይ ምዕራፍ ፍጻሜ ሰዓቦ",
+      "followRefEvent": "ናይ መወከሲ ፍጻሜ ይከተሉ",
       "rejoinSession": "ናብ ኣኼባ ደጊምካ ተጸምበር",
       "leaveSession": "ካብ ኣኼባ ውጻእ"
     },
@@ -207,6 +225,7 @@
       "followTranslationEvent": "Çeviri etkinliğini takip et",
       "followHighlightEvent": "Vurgulama etkinliğini takip et",
       "followChapterEvent": "Bölüm etkinliğini takip et",
+      "followRefEvent": "Referans etkinliğini takip et",
       "rejoinSession": "Oturuma yeniden katıl",
       "leaveSession": "Oturumdan çık"
     },
@@ -218,6 +237,7 @@
       "followTranslationEvent": "تەرجىمە ۋەقەسىنى ئىز قوغلاڭ",
       "followHighlightEvent": "يورۇتۇش ۋەقەسىنى ئىز قوغلاڭ",
       "followChapterEvent": "بۆلۈم ۋەقەسىنى ئىز قوغلاڭ",
+      "followRefEvent": "پايدىلىنىش ۋەقەسىگە ئەگىشىڭ",
       "rejoinSession": "يىغىنغا قايتا قوشۇلۇڭ",
       "leaveSession": "يىغىندىن چىقىڭ"
     },
@@ -229,6 +249,7 @@
       "followTranslationEvent": "Стежити за подією перекладу",
       "followHighlightEvent": "Стежити за подією виділення",
       "followChapterEvent": "Стежити за подією розділу",
+      "followRefEvent": "Стежити за подією посилання",
       "rejoinSession": "Повторно приєднатися до сесії",
       "leaveSession": "Покинути сесію"
     },
@@ -240,6 +261,7 @@
       "followTranslationEvent": "ترجمہ ایونٹ فالو کریں",
       "followHighlightEvent": "ہائی لائٹ ایونٹ فالو کریں",
       "followChapterEvent": "باب ایونٹ فالو کریں",
+      "followRefEvent": "ریفرنس ایونٹ کی پیروی کریں",
       "rejoinSession": "سیشن میں دوبارہ شامل ہوں",
       "leaveSession": "سیشن چھوڑیں"
     },
@@ -251,6 +273,7 @@
       "followTranslationEvent": "Theo dõi sự kiện dịch thuật",
       "followHighlightEvent": "Theo dõi sự kiện tô sáng",
       "followChapterEvent": "Theo dõi sự kiện chương",
+      "followRefEvent": "Theo dõi sự kiện tham chiếu",
       "rejoinSession": "Tham gia lại phiên",
       "leaveSession": "Rời phiên"
     },
@@ -262,6 +285,7 @@
       "followTranslationEvent": "关注翻译事件",
       "followHighlightEvent": "关注高亮事件",
       "followChapterEvent": "关注章节事件",
+      "followRefEvent": "关注参考事件",
       "rejoinSession": "重新加入会话",
       "leaveSession": "离开会话"
     },
@@ -273,6 +297,7 @@
       "followTranslationEvent": "Ikuti acara terjemahan",
       "followHighlightEvent": "Ikuti acara sorotan",
       "followChapterEvent": "Ikuti acara bab",
+      "followRefEvent": "Ikuti acara referensi",
       "rejoinSession": "Bergabung kembali ke sesi",
       "leaveSession": "Tinggalkan sesi"
     },
@@ -284,6 +309,7 @@
       "followTranslationEvent": "Volg vertaalgebeurtenis",
       "followHighlightEvent": "Volg hoogtepuntgebeurtenis",
       "followChapterEvent": "Volg hoofstukgebeurtenis",
+      "followRefEvent": "Volg verwysingsgebeurtenis",
       "rejoinSession": "Sluit weer aan by die sessie",
       "leaveSession": "Verlaat sessie"
     },
@@ -295,6 +321,7 @@
       "followTranslationEvent": "Tərcümə tədbirini izləyin",
       "followHighlightEvent": "Ən yaddaqalan tədbiri izləyin",
       "followChapterEvent": "Fəsil tədbirini izləyin",
+      "followRefEvent": "İstinad hadisəsini izləyin",
       "rejoinSession": "Sessiyaya yenidən qoşulun",
       "leaveSession": "Sessiyadan çıxın"
     },
@@ -306,6 +333,7 @@
       "followTranslationEvent": "Сачыць за падзеяй перакладу",
       "followHighlightEvent": "Сачыце за падзеяй",
       "followChapterEvent": "Падпішыцеся на падзею аддзялення",
+      "followRefEvent": "Сачыць за падзеяй спасылкі",
       "rejoinSession": "Зноў далучыцца да сесіі",
       "leaveSession": "Пакінуць сеанс"
     },
@@ -317,6 +345,7 @@
       "followTranslationEvent": "Следвайте събитието за превод",
       "followHighlightEvent": "Следвайте акцентното събитие",
       "followChapterEvent": "Следвайте събитието на клона",
+      "followRefEvent": "Следване на събитие с препратка",
       "rejoinSession": "Присъединете се отново към сесията",
       "leaveSession": "Напускане на сесията"
     },
@@ -328,6 +357,7 @@
       "followTranslationEvent": "Pratite događaj prevođenja",
       "followHighlightEvent": "Pratite istaknuti događaj",
       "followChapterEvent": "Pratite događaj poglavlja",
+      "followRefEvent": "Prati referentni događaj",
       "rejoinSession": "Ponovo se pridruži sesiji",
       "leaveSession": "Napusti sesiju"
     },
@@ -339,6 +369,7 @@
       "followTranslationEvent": "Segueix l'esdeveniment de traducció",
       "followHighlightEvent": "Segueix l'esdeveniment destacat",
       "followChapterEvent": "Segueix l'esdeveniment del capítol",
+      "followRefEvent": "Segueix l'esdeveniment de referència",
       "rejoinSession": "Torna a unir-te a la sessió",
       "leaveSession": "Surt de la sessió"
     },
@@ -350,6 +381,7 @@
       "followTranslationEvent": "Sledujte překladatelskou událost",
       "followHighlightEvent": "Sledujte hlavní událost",
       "followChapterEvent": "Sledujte událost kapitoly",
+      "followRefEvent": "Sledovat referenční událost",
       "rejoinSession": "Znovu se připojit k relaci",
       "leaveSession": "Opustit relaci"
     },
@@ -361,6 +393,7 @@
       "followTranslationEvent": "Dilynwch y digwyddiad cyfieithu",
       "followHighlightEvent": "Dilynwch y digwyddiad uchafbwynt",
       "followChapterEvent": "Dilynwch ddigwyddiad y bennod",
+      "followRefEvent": "Dilyn digwyddiad cyfeirio",
       "rejoinSession": "Ailymuno â'r sesiwn",
       "leaveSession": "Gadael y sesiwn"
     },
@@ -372,6 +405,7 @@
       "followTranslationEvent": "Følg oversættelsesbegivenheden",
       "followHighlightEvent": "Følg højdepunktsbegivenheden",
       "followChapterEvent": "Følg kapitelbegivenheden",
+      "followRefEvent": "Følg referencehændelse",
       "rejoinSession": "Genoptag sessionen",
       "leaveSession": "Forlad sessionen"
     },
@@ -383,6 +417,7 @@
       "followTranslationEvent": "Folgen Sie dem Übersetzungsereignis",
       "followHighlightEvent": "Folgen Sie dem Highlight-Event",
       "followChapterEvent": "Folgen Sie der Kapitelveranstaltung",
+      "followRefEvent": "Referenzereignis folgen",
       "rejoinSession": "Sitzung wieder beitreten",
       "leaveSession": "Sitzung verlassen"
     },
@@ -394,6 +429,7 @@
       "followTranslationEvent": "Παρακολούθηση συμβάντος μετάφρασης",
       "followHighlightEvent": "Ακολουθήστε το σημαντικότερο συμβάν",
       "followChapterEvent": "Ακολουθήστε την εκδήλωση του κεφαλαίου",
+      "followRefEvent": "Παρακολούθηση συμβάντος αναφοράς",
       "rejoinSession": "Επανένταξη στην συνεδρία",
       "leaveSession": "Αποχώρηση από την περίοδο λειτουργίας"
     },
@@ -405,6 +441,7 @@
       "followTranslationEvent": "Jälgi tõlkeüritust",
       "followHighlightEvent": "Jälgi tippsündmust",
       "followChapterEvent": "Jälgi peatüki sündmust",
+      "followRefEvent": "Jälgi viitesündmust",
       "rejoinSession": "Liitu seansiga uuesti",
       "leaveSession": "Lahku seansist"
     },
@@ -416,6 +453,7 @@
       "followTranslationEvent": "Seuraa käännöstapahtumaa",
       "followHighlightEvent": "Seuraa kohokohtatapahtumaa",
       "followChapterEvent": "Seuraa luvun tapahtumaa",
+      "followRefEvent": "Seuraa viitetapahtumaa",
       "rejoinSession": "Liity istuntoon uudelleen",
       "leaveSession": "Poistu istunnosta"
     },
@@ -427,6 +465,7 @@
       "followTranslationEvent": "Sundan ang kaganapan sa pagsasalin",
       "followHighlightEvent": "Sundan ang highlight event",
       "followChapterEvent": "Sundan ang kaganapan ng kabanata",
+      "followRefEvent": "Sundan ang kaganapan ng sanggunian",
       "rejoinSession": "Sumali muli sa sesyon",
       "leaveSession": "Umalis sa sesyon"
     },
@@ -438,6 +477,7 @@
       "followTranslationEvent": "Folgje oersettingsevenemint",
       "followHighlightEvent": "Folgje hichtepuntevenemint",
       "followChapterEvent": "Folgje haadstikevenemint",
+      "followRefEvent": "Folgje referinsje-evenemint",
       "rejoinSession": "Wer meidwaan oan sesje",
       "leaveSession": "Sesje ferlitte"
     },
@@ -449,6 +489,7 @@
       "followTranslationEvent": "Seguir evento de tradución",
       "followHighlightEvent": "Seguir evento destacado",
       "followChapterEvent": "Seguir o evento do capítulo",
+      "followRefEvent": "Seguir evento de referencia",
       "rejoinSession": "Volver unirse á sesión",
       "leaveSession": "Abandonar a sesión"
     },
@@ -460,6 +501,7 @@
       "followTranslationEvent": "Segui evento de traducción",
       "followHighlightEvent": "Segui evento resaltado",
       "followChapterEvent": "Segui pe acontecimiento capítulo-pegua",
+      "followRefEvent": "Tapykuého evento de referencia",
       "rejoinSession": "Eike jey sesión-pe",
       "leaveSession": "Oheja sesión"
     },
@@ -471,6 +513,7 @@
       "followTranslationEvent": "અનુવાદ ઇવેન્ટને અનુસરો",
       "followHighlightEvent": "હાઇલાઇટ ઇવેન્ટને અનુસરો",
       "followChapterEvent": "પ્રકરણ ઘટનાને અનુસરો",
+      "followRefEvent": "સંદર્ભ ઇવેન્ટ અનુસરો",
       "rejoinSession": "સત્રમાં ફરી જોડાઓ",
       "leaveSession": "સત્ર છોડો"
     },
@@ -482,6 +525,7 @@
       "followTranslationEvent": "עקוב אחר אירוע התרגום",
       "followHighlightEvent": "עקוב אחר אירוע הדגשה",
       "followChapterEvent": "עקוב אחר אירוע הפרק",
+      "followRefEvent": "עקוב אחר אירוע הפניה",
       "rejoinSession": "הצטרפות מחדש לפגישה",
       "leaveSession": "עזוב את הסשן"
     },
@@ -493,6 +537,7 @@
       "followTranslationEvent": "Pratite događaj prevođenja",
       "followHighlightEvent": "Prati istaknuti događaj",
       "followChapterEvent": "Pratite događaj poglavlja",
+      "followRefEvent": "Prati referentni događaj",
       "rejoinSession": "Ponovno se pridruži sesiji",
       "leaveSession": "Napusti sesiju"
     },
@@ -504,6 +549,7 @@
       "followTranslationEvent": "Fordítási esemény követése",
       "followHighlightEvent": "Kövesd a kiemelt eseményt",
       "followChapterEvent": "Fejezet eseményének követése",
+      "followRefEvent": "Hivatkozási esemény követése",
       "rejoinSession": "Újracsatlakozás munkamenethez",
       "leaveSession": "Kilépés a munkamenetből"
     },
@@ -515,6 +561,7 @@
       "followTranslationEvent": "Fylgja þýðingarviðburði",
       "followHighlightEvent": "Fylgjast með hápunktsviðburði",
       "followChapterEvent": "Fylgja viðburði kafla",
+      "followRefEvent": "Fylgjast með tilvísunarviðburði",
       "rejoinSession": "Tengjast aftur lotu",
       "leaveSession": "Hætta við fund"
     },
@@ -526,6 +573,7 @@
       "followTranslationEvent": "Segui l'evento di traduzione",
       "followHighlightEvent": "Segui l'evento in evidenza",
       "followChapterEvent": "Segui gli eventi del capitolo",
+      "followRefEvent": "Segui evento di riferimento",
       "rejoinSession": "Rientra nella sessione",
       "leaveSession": "Uscita dalla sessione"
     },
@@ -537,6 +585,7 @@
       "followTranslationEvent": "עקוב אחר אירוע התרגום",
       "followHighlightEvent": "עקוב אחר אירוע הדגשה",
       "followChapterEvent": "עקוב אחר אירוע הפרק",
+      "followRefEvent": "עקוב אחר אירוע הפניה",
       "rejoinSession": "הצטרפות מחדש לפגישה",
       "leaveSession": "עזוב את הסשן"
     },
@@ -548,6 +597,7 @@
       "followTranslationEvent": "თვალყური ადევნეთ თარგმანის მოვლენას",
       "followHighlightEvent": "თვალყური ადევნეთ მნიშვნელოვან მოვლენას",
       "followChapterEvent": "თვალყური ადევნეთ თავის ღონისძიებას",
+      "followRefEvent": "მიჰყევით მითითების მოვლენას",
       "rejoinSession": "სესიასთან ხელახლა შეერთება",
       "leaveSession": "სესიის დატოვება"
     },
@@ -559,6 +609,7 @@
       "followTranslationEvent": "តាមដានព្រឹត្តិការណ៍បកប្រែ",
       "followHighlightEvent": "តាមដានព្រឹត្តិការណ៍សំខាន់ៗ",
       "followChapterEvent": "តាមដានព្រឹត្តិការណ៍ជំពូក",
+      "followRefEvent": "តាមដានព្រឹត្តិការណ៍យោង",
       "rejoinSession": "ចូលរួមវគ្គឡើងវិញ",
       "leaveSession": "ចាកចេញពីវគ្គ"
     },
@@ -570,6 +621,7 @@
       "followTranslationEvent": "ಅನುವಾದ ಕಾರ್ಯಕ್ರಮವನ್ನು ಅನುಸರಿಸಿ",
       "followHighlightEvent": "ಹೈಲೈಟ್ ಈವೆಂಟ್ ಅನ್ನು ಅನುಸರಿಸಿ",
       "followChapterEvent": "ಅಧ್ಯಾಯದ ಈವೆಂಟ್ ಅನ್ನು ಅನುಸರಿಸಿ",
+      "followRefEvent": "ಉಲ್ಲೇಖ ಘಟನೆಯನ್ನು ಅನುಸರಿಸಿ",
       "rejoinSession": "ಅಧಿವೇಶನಕ್ಕೆ ಮತ್ತೆ ಸೇರಿ",
       "leaveSession": "ಸೆಶನ್ ತೊರೆಯಿರಿ"
     },
@@ -581,6 +633,7 @@
       "followTranslationEvent": "Котормо иш-чарасына жазылыңыз",
       "followHighlightEvent": "Негизги иш-чарага көз салуу",
       "followChapterEvent": "Бөлүмдөгү иш-чарага жазылыңыз",
+      "followRefEvent": "Шилтеме окуясын ээрчүү",
       "rejoinSession": "Сессияга кайра кошулуу",
       "leaveSession": "Сеанстан чыгуу"
     },
@@ -592,6 +645,7 @@
       "followTranslationEvent": "Bolanda molulu ya kobongola",
       "followHighlightEvent": "Landa événement ya highlight",
       "followChapterEvent": "Landa likambo ya mokapo",
+      "followRefEvent": "Landa likambo ya référence",
       "rejoinSession": "Kosangana lisusu na session",
       "leaveSession": "Kotika session"
     },
@@ -603,6 +657,7 @@
       "followTranslationEvent": "ຕິດຕາມເຫດການການແປພາສາ",
       "followHighlightEvent": "ຕິດຕາມເຫດການເດັ່ນ",
       "followChapterEvent": "ຕິດຕາມເຫດການຂອງບົດ",
+      "followRefEvent": "ຕິດຕາມເຫດການອ້າງອີງ",
       "rejoinSession": "ເຂົ້າຮ່ວມກອງປະຊຸມຄືນໃໝ່",
       "leaveSession": "ອອກຈາກກອງປະຊຸມ"
     },
@@ -614,6 +669,7 @@
       "followTranslationEvent": "Sekti vertimo įvykį",
       "followHighlightEvent": "Sekite svarbiausią įvykį",
       "followChapterEvent": "Sekti skyriaus įvykį",
+      "followRefEvent": "Sekti nuorodos įvykį",
       "rejoinSession": "Prisijunkite iš naujo",
       "leaveSession": "Išeiti iš sesijos"
     },
@@ -625,6 +681,7 @@
       "followTranslationEvent": "Sekot tulkošanas notikumam",
       "followHighlightEvent": "Sekot svarīgākajam notikumam",
       "followChapterEvent": "Sekot nodaļas notikumam",
+      "followRefEvent": "Sekot atsauces notikumam",
       "rejoinSession": "Atkārtoti pievienoties sesijai",
       "leaveSession": "Iziet no sesijas"
     },
@@ -636,6 +693,7 @@
       "followTranslationEvent": "Следете го настанот за превод",
       "followHighlightEvent": "Следете го најважниот настан",
       "followChapterEvent": "Следете го настанот во поглавјето",
+      "followRefEvent": "Следи референтен настан",
       "rejoinSession": "Повторно придружи се на сесијата",
       "leaveSession": "Напуштете ја сесијата"
     },
@@ -647,6 +705,7 @@
       "followTranslationEvent": "വിവർത്തന പരിപാടി പിന്തുടരുക",
       "followHighlightEvent": "ഹൈലൈറ്റ് ഇവന്റ് പിന്തുടരുക",
       "followChapterEvent": "ചാപ്റ്റർ ഇവന്റ് പിന്തുടരുക",
+      "followRefEvent": "റഫറൻസ് ഇവന്റ് പിന്തുടരുക",
       "rejoinSession": "സെഷനിൽ വീണ്ടും ചേരുക",
       "leaveSession": "സെഷൻ വിടുക"
     },
@@ -658,6 +717,7 @@
       "followTranslationEvent": "अनुवाद कार्यक्रमाचे अनुसरण करा",
       "followHighlightEvent": "हायलाइट इव्हेंट फॉलो करा",
       "followChapterEvent": "अध्याय कार्यक्रमाचे अनुसरण करा",
+      "followRefEvent": "संदर्भ कार्यक्रमाचे अनुसरण करा",
       "rejoinSession": "पुन्हा सामील होण्याचे सत्र",
       "leaveSession": "सत्र सोडा"
     },
@@ -669,6 +729,7 @@
       "followTranslationEvent": "Ikuti acara terjemahan",
       "followHighlightEvent": "Ikuti acara sorotan",
       "followChapterEvent": "Ikuti acara bab",
+      "followRefEvent": "Ikuti acara rujukan",
       "rejoinSession": "Sertai semula sesi",
       "leaveSession": "Tinggalkan sesi"
     },
@@ -680,6 +741,7 @@
       "followTranslationEvent": "ဘာသာပြန်အစီအစဉ်ကို လိုက်ကြည့်ပါ",
       "followHighlightEvent": "အဓိကအချက်ကို လိုက်ကြည့်ပါ",
       "followChapterEvent": "အခန်းဖြစ်ရပ်ကို လိုက်နာပါ",
+      "followRefEvent": "ကိုးကားမှု ဖြစ်ရပ်ကို စောင့်ကြည့်ပါ",
       "rejoinSession": "အစည်းအဝေးကို ပြန်လည်ဝင်ရောက်ပါ",
       "leaveSession": "အစည်းအဝေးမှ ထွက်ခွာရန်"
     },
@@ -691,6 +753,7 @@
       "followTranslationEvent": "Følg oversettelseshendelsen",
       "followHighlightEvent": "Følg høydepunkthendelsen",
       "followChapterEvent": "Følg kapittelarrangementet",
+      "followRefEvent": "Følg referansehendelse",
       "rejoinSession": "Bli med i økten igjen",
       "leaveSession": "Forlat økten"
     },
@@ -702,6 +765,7 @@
       "followTranslationEvent": "Volg het vertaalevenement",
       "followHighlightEvent": "Volg het hoogtepunt van het evenement",
       "followChapterEvent": "Volg het hoofdstukevenement",
+      "followRefEvent": "Referentiegebeurtenis volgen",
       "rejoinSession": "Deelnemen aan de sessie",
       "leaveSession": "Verlaat de sessie"
     },
@@ -713,6 +777,7 @@
       "followTranslationEvent": "Følg oversettelseshendelsen",
       "followHighlightEvent": "Følg høydepunkthendelsen",
       "followChapterEvent": "Følg kapittelarrangementet",
+      "followRefEvent": "Følg referansehendelse",
       "rejoinSession": "Bli med i økten igjen",
       "leaveSession": "Forlat økten"
     },
@@ -724,6 +789,7 @@
       "followTranslationEvent": "ਅਨੁਵਾਦ ਘਟਨਾ ਦਾ ਪਾਲਣ ਕਰੋ",
       "followHighlightEvent": "ਹਾਈਲਾਈਟ ਇਵੈਂਟ ਦਾ ਪਾਲਣ ਕਰੋ",
       "followChapterEvent": "ਚੈਪਟਰ ਇਵੈਂਟ ਦੀ ਪਾਲਣਾ ਕਰੋ",
+      "followRefEvent": "ਹਵਾਲਾ ਇਵੈਂਟ ਦੀ ਪਾਲਣਾ ਕਰੋ",
       "rejoinSession": "ਸੈਸ਼ਨ ਵਿੱਚ ਦੁਬਾਰਾ ਸ਼ਾਮਲ ਹੋਵੋ",
       "leaveSession": "ਸੈਸ਼ਨ ਛੱਡੋ"
     },
@@ -735,6 +801,7 @@
       "followTranslationEvent": "Śledź wydarzenie związane z tłumaczeniem",
       "followHighlightEvent": "Śledź najważniejsze wydarzenie",
       "followChapterEvent": "Śledź wydarzenie w rozdziale",
+      "followRefEvent": "Śledź zdarzenie referencyjne",
       "rejoinSession": "Dołącz ponownie do sesji",
       "leaveSession": "Opuść sesję"
     },
@@ -746,6 +813,7 @@
       "followTranslationEvent": "Urmărește evenimentul de traducere",
       "followHighlightEvent": "Urmărește evenimentul important",
       "followChapterEvent": "Urmărește evenimentul capitolului",
+      "followRefEvent": "Urmărește evenimentul de referință",
       "rejoinSession": "Reconectare la sesiune",
       "leaveSession": "Părăsiți sesiunea"
     },
@@ -757,6 +825,7 @@
       "followTranslationEvent": "Sledujte udalosť prekladu",
       "followHighlightEvent": "Sledujte hlavnú udalosť",
       "followChapterEvent": "Sledujte udalosť kapitoly",
+      "followRefEvent": "Sledovať referenčnú udalosť",
       "rejoinSession": "Znovu sa pripojiť k relácii",
       "leaveSession": "Opustiť reláciu"
     },
@@ -768,6 +837,7 @@
       "followTranslationEvent": "Spremljaj prevajalski dogodek",
       "followHighlightEvent": "Spremljajte vrhunec dogodka",
       "followChapterEvent": "Spremljajte dogodek poglavja",
+      "followRefEvent": "Sledi referenčnemu dogodku",
       "rejoinSession": "Ponovno se pridruži seji",
       "leaveSession": "Zapusti sejo"
     },
@@ -779,6 +849,7 @@
       "followTranslationEvent": "Ndiqni ngjarjen e përkthimit",
       "followHighlightEvent": "Ndiq ngjarjen kryesore",
       "followChapterEvent": "Ndiq ngjarjen e kapitullit",
+      "followRefEvent": "Ndiq ngjarjen e referencës",
       "rejoinSession": "Ribashkohu me sesionin",
       "leaveSession": "Largohu nga seanca"
     },
@@ -790,6 +861,7 @@
       "followTranslationEvent": "Följ översättningshändelsen",
       "followHighlightEvent": "Följ höjdpunktshändelsen",
       "followChapterEvent": "Följ kapitelhändelse",
+      "followRefEvent": "Följ referenshändelse",
       "rejoinSession": "Återanslut till sessionen",
       "leaveSession": "Lämna sessionen"
     },
@@ -801,6 +873,7 @@
       "followTranslationEvent": "மொழிபெயர்ப்பு நிகழ்வைப் பின்தொடரவும்",
       "followHighlightEvent": "முக்கிய நிகழ்வைப் பின்தொடரவும்",
       "followChapterEvent": "அத்தியாய நிகழ்வைப் பின்தொடர்ந்தது",
+      "followRefEvent": "குறிப்பு நிகழ்வைப் பின்தொடரவும்",
       "rejoinSession": "அமர்வில் மீண்டும் சேரவும்",
       "leaveSession": "விடுப்பு அமர்வு"
     },
@@ -812,6 +885,7 @@
       "followTranslationEvent": "అనువాద ఈవెంట్‌ను అనుసరించండి",
       "followHighlightEvent": "హైలైట్ ఈవెంట్‌ను అనుసరించండి",
       "followChapterEvent": "అధ్యాయ ఈవెంట్‌ను అనుసరించండి",
+      "followRefEvent": "రిఫరెన్స్ ఈవెంట్‌ను అనుసరించండి",
       "rejoinSession": "సెషన్‌లో తిరిగి చేరండి",
       "leaveSession": "సెషన్‌ను వదిలివేయండి"
     },
@@ -823,6 +897,7 @@
       "followTranslationEvent": "ติดตามกิจกรรมการแปล",
       "followHighlightEvent": "ติดตามกิจกรรมเด่น",
       "followChapterEvent": "ติดตามกิจกรรมของบทนี้",
+      "followRefEvent": "ติดตามเหตุการณ์อ้างอิง",
       "rejoinSession": "เข้าร่วมการประชุมอีกครั้ง",
       "leaveSession": "ออกจากการประชุม"
     },
@@ -834,6 +909,7 @@
       "followTranslationEvent": "Sundan ang kaganapan sa pagsasalin",
       "followHighlightEvent": "Sundan ang highlight event",
       "followChapterEvent": "Sundan ang kaganapan ng kabanata",
+      "followRefEvent": "Sundan ang kaganapan ng sanggunian",
       "rejoinSession": "Sumali muli sa sesyon",
       "leaveSession": "Umalis sa sesyon"
     },
@@ -845,6 +921,7 @@
       "followTranslationEvent": "Tarjima tadbirini kuzatib boring",
       "followHighlightEvent": "Muhim voqeani kuzatib boring",
       "followChapterEvent": "Bob tadbirini kuzatib boring",
+      "followRefEvent": "Havola hodisasini kuzatib boring",
       "rejoinSession": "Sessiyaga qayta qo'shilish",
       "leaveSession": "Sessiyadan chiqish"
     },
@@ -856,6 +933,7 @@
       "followTranslationEvent": "Landela umcimbi wokuhumusha",
       "followHighlightEvent": "Landela umcimbi ogqamile",
       "followChapterEvent": "Landela umcimbi wesahluko",
+      "followRefEvent": "Landela umcimbi wereferensi",
       "rejoinSession": "Joyina kabusha iseshini",
       "leaveSession": "Shiya iseshini"
     }
