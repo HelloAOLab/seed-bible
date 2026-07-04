@@ -365,6 +365,8 @@ describe("SessionsManager", () => {
       hostUserId: "test-config-bot-id",
       highlightDurationSeconds: 16,
       endedAt: null,
+      shareTranslation: false,
+      coHostUserIds: [],
     });
   });
 
@@ -412,6 +414,8 @@ describe("SessionsManager", () => {
       hostUserId: null,
       highlightDurationSeconds: 16,
       endedAt: null,
+      shareTranslation: false,
+      coHostUserIds: [],
     });
   });
 
@@ -443,6 +447,8 @@ describe("SessionsManager", () => {
       hostUserId: null,
       highlightDurationSeconds: 16,
       endedAt: null,
+      shareTranslation: false,
+      coHostUserIds: [],
     });
     expect(mockOptionsMap.set).not.toHaveBeenCalled();
   });
@@ -477,6 +483,8 @@ describe("SessionsManager", () => {
       hostUserId: null,
       highlightDurationSeconds: null,
       endedAt: null,
+      shareTranslation: false,
+      coHostUserIds: [],
     });
   });
 
@@ -506,6 +514,8 @@ describe("SessionsManager", () => {
       hostUserId: null,
       highlightDurationSeconds: 16,
       endedAt: null,
+      shareTranslation: false,
+      coHostUserIds: [],
     });
   });
 
@@ -876,6 +886,8 @@ describe("SessionsManager", () => {
       translationId: "NIV",
       bookId: "EXO",
       chapterNumber: 4,
+      // Translation only propagates when sharing is enabled.
+      shareTranslation: true,
     });
     mockDocument.getMap.mockReturnValue(mockMap);
 
@@ -903,6 +915,8 @@ describe("SessionsManager", () => {
       bookId: "EXO",
       chapterNumber: 4,
       scrollToVerse: 12,
+      // Translation only propagates when sharing is enabled.
+      shareTranslation: true,
     });
     mockDocument.getMap.mockReturnValue(mockMap);
 
@@ -923,6 +937,8 @@ describe("SessionsManager", () => {
   });
 
   it("syncs reading state changes to the shared document", async () => {
+    // Translation only propagates when sharing is enabled.
+    mockOptionsMap.set("shareTranslation", true);
     const manager = createSessionsManager(
       os,
       mockDataManager as any,
@@ -967,6 +983,8 @@ describe("SessionsManager", () => {
 
   it("does not loop when local state changes are echoed back from the shared map", async () => {
     mockMap.setEmitOnSet(true);
+    // Translation only propagates when sharing is enabled.
+    mockOptionsMap.set("shareTranslation", true);
 
     const manager = createSessionsManager(
       os,
@@ -992,6 +1010,8 @@ describe("SessionsManager", () => {
   });
 
   it("applies shared document changes to the session reading state", async () => {
+    // Translation only propagates when sharing is enabled.
+    mockOptionsMap.set("shareTranslation", true);
     const manager = createSessionsManager(
       os,
       mockDataManager as any,
@@ -1031,6 +1051,8 @@ describe("SessionsManager", () => {
 
   it("keeps local selection when user changes chapter during remote sync", async () => {
     const chapterDeferred = deferred<any>();
+    // Translation only propagates when sharing is enabled.
+    mockOptionsMap.set("shareTranslation", true);
 
     const manager = createSessionsManager(
       os,

@@ -51,6 +51,7 @@ import {
 } from "../managers/BookmarksManager";
 import {
   createSessionsManager,
+  isSessionHost,
   type BibleReadingSession,
   type SessionsManager,
 } from "../managers/SessionsManager";
@@ -860,12 +861,27 @@ export function createSeedBibleState(
       // after a login/logout the current login.userId / configBot.id no
       // longer match the original `hostUserId`, but we're still the host
       // of sessions we created in this run.
+      const options = session.options.value;
       const isHost =
         locallyHostedSessionIds.has(session.id) ||
         (hostUserId !== null &&
-          (hostUserId === localId || hostUserId === localConnectionId));
+          (hostUserId === localId || hostUserId === localConnectionId)) ||
+        isSessionHost(options, localId) ||
+        isSessionHost(options, localConnectionId);
 
-      if (isHost && session.options.value.endedAt === null) {
+      // Only end the session for everyone when the leaving client is the
+      // LAST connected host/co-host. If another host/co-host is still
+      // present (e.g. one was just appointed), hand the session off instead
+      // of ending it. Explicit "End session" writes `endedAt` directly, so
+      // it bypasses this heuristic.
+      const anotherHostStillConnected = session.connectedUsers.value.some(
+        (user) =>
+          !user.isSelf &&
+          (isSessionHost(options, user.userId) ||
+            isSessionHost(options, user.connectionId))
+      );
+
+      if (isHost && !anotherHostStillConnected && options.endedAt === null) {
         try {
           session.updateOptions({ endedAt: Date.now() });
         } catch {
@@ -936,8 +952,13 @@ export function createSeedBibleState(
       if (!hostId) continue;
 
       const users = session.connectedUsers.value;
+      // A session stays alive as long as the host OR any co-host is present,
+      // so appointing a co-host lets the original host leave without kicking
+      // everyone else out.
       const hostIsConnected = users.some(
-        (user) => user.userId === hostId || user.connectionId === hostId
+        (user) =>
+          isSessionHost(session.options.value, user.userId) ||
+          isSessionHost(session.options.value, user.connectionId)
       );
 
       if (hostIsConnected) {

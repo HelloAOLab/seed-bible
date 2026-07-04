@@ -74,6 +74,38 @@ export interface SessionOptions {
    * so the CRDT update propagates to other clients.
    */
   endedAt: number | null;
+  /**
+   * Whether the reading translation is shared across the session. When
+   * `false` (the default) each participant keeps their own translation and
+   * only book/chapter/scroll navigation is synced — changing your
+   * translation never affects other participants. When `true`, translation
+   * changes propagate to everyone.
+   */
+  shareTranslation: boolean;
+  /**
+   * Additional user ids (or connection ids) that share the host's powers:
+   * they can change session settings and always navigate/decorate even when
+   * those actions are host-restricted. Used by the "appoint a co-host" flow
+   * so a leaving host can hand the session off instead of ending it.
+   */
+  coHostUserIds: string[];
+}
+
+/**
+ * True when `sessionId` (a userId or connectionId) is the host or a co-host
+ * of the session described by `options`.
+ */
+export function isSessionHost(
+  options: SessionOptions,
+  sessionId: string | null
+): boolean {
+  if (!sessionId) {
+    return false;
+  }
+  return (
+    options.hostUserId === sessionId ||
+    (options.coHostUserIds ?? []).includes(sessionId)
+  );
 }
 
 type SessionOptionValue = SessionOptions[keyof SessionOptions];
@@ -124,6 +156,8 @@ const DEFAULT_SESSION_OPTIONS: SessionOptions = {
   hostUserId: null,
   highlightDurationSeconds: 16,
   endedAt: null,
+  shareTranslation: false,
+  coHostUserIds: [],
 };
 
 function getSessionDataSnapshot(
@@ -165,6 +199,7 @@ function getSessionOptionsFromMap(
 ): SessionOptions {
   const rawDuration = optionsMap.get("highlightDurationSeconds");
   const rawEndedAt = optionsMap.get("endedAt");
+  const rawShareTranslation = optionsMap.get("shareTranslation");
   return {
     allowedNavigators: toStringArrayOrNull(optionsMap.get("allowedNavigators")),
     allowedDecorators: toStringArrayOrNull(optionsMap.get("allowedDecorators")),
@@ -181,6 +216,11 @@ function getSessionOptionsFromMap(
       typeof rawEndedAt === "number" && Number.isFinite(rawEndedAt)
         ? rawEndedAt
         : null,
+    shareTranslation:
+      typeof rawShareTranslation === "boolean"
+        ? rawShareTranslation
+        : DEFAULT_SESSION_OPTIONS.shareTranslation,
+    coHostUserIds: toStringArrayOrNull(optionsMap.get("coHostUserIds")) ?? [],
   };
 }
 
@@ -208,7 +248,9 @@ function sessionOptionsMatch(
     stringArraysMatch(left.allowedDecorators, right.allowedDecorators) &&
     left.hostUserId === right.hostUserId &&
     left.highlightDurationSeconds === right.highlightDurationSeconds &&
-    left.endedAt === right.endedAt
+    left.endedAt === right.endedAt &&
+    left.shareTranslation === right.shareTranslation &&
+    stringArraysMatch(left.coHostUserIds, right.coHostUserIds)
   );
 }
 
@@ -440,6 +482,12 @@ async function createBibleReadingSession(
           defaultOptions.highlightDurationSeconds
         );
       }
+      if (optionsMap.get("shareTranslation") === undefined) {
+        optionsMap.set("shareTranslation", defaultOptions.shareTranslation);
+      }
+      if (optionsMap.get("coHostUserIds") === undefined) {
+        optionsMap.set("coHostUserIds", defaultOptions.coHostUserIds);
+      }
     });
   }
 
@@ -453,6 +501,10 @@ async function createBibleReadingSession(
   let applyingRemoteDecorations = false;
 
   const userCanNavigate = (sessionId: string): boolean => {
+    // Hosts and co-hosts may always navigate, even when restricted.
+    if (isSessionHost(options.value, sessionId)) {
+      return true;
+    }
     const { allowedNavigators } = options.value;
     if (!allowedNavigators || allowedNavigators.length === 0) {
       return true;
@@ -461,6 +513,10 @@ async function createBibleReadingSession(
   };
 
   const userCanDecorate = (sessionId: string): boolean => {
+    // Hosts and co-hosts may always decorate, even when restricted.
+    if (isSessionHost(options.value, sessionId)) {
+      return true;
+    }
     const { allowedDecorators } = options.value;
     if (!allowedDecorators || allowedDecorators.length === 0) {
       return true;
@@ -594,10 +650,24 @@ async function createBibleReadingSession(
     connectedUsers.value = nextUsers;
   };
 
+  // When the translation isn't shared, keep the local reader on their own
+  // translation while still following the shared book/chapter/scroll. This
+  // substitutes the local translationId for whatever a peer navigated with.
+  const toEffectiveSessionData = (sessionData: SessionData): SessionData => {
+    if (options.value.shareTranslation) {
+      return sessionData;
+    }
+    return {
+      ...sessionData,
+      translationId: readingState.translationId.value,
+    };
+  };
+
   const syncReadingStateFromSessionData = async (
-    sessionData: SessionData,
+    rawSessionData: SessionData,
     version: number
   ) => {
+    const sessionData = toEffectiveSessionData(rawSessionData);
     if (!canLoadSessionData(sessionData)) {
       applyingRemoteState = true;
       try {
@@ -636,7 +706,7 @@ async function createBibleReadingSession(
 
     if (version !== syncVersion) {
       const latestSessionData = getSessionDataFromMap(stateMap);
-      if (canLoadSessionData(latestSessionData)) {
+      if (canLoadSessionData(toEffectiveSessionData(latestSessionData))) {
         const nextVersion = ++syncVersion;
         void syncReadingStateFromSessionData(latestSessionData, nextVersion);
       }
@@ -731,7 +801,18 @@ async function createBibleReadingSession(
       return;
     }
 
-    const nextSessionData = getSessionDataSnapshot(readingState);
+    const rawNextSessionData = getSessionDataSnapshot(readingState);
+    const currentSessionData = getSessionDataFromMap(stateMap);
+
+    // When the translation isn't shared, never publish our translationId —
+    // mask it with whatever is already in the shared map so a local
+    // translation change neither counts as a change nor gets written.
+    const nextSessionData = options.value.shareTranslation
+      ? rawNextSessionData
+      : {
+          ...rawNextSessionData,
+          translationId: currentSessionData.translationId,
+        };
 
     if (
       pendingRemoteTarget &&
@@ -739,8 +820,6 @@ async function createBibleReadingSession(
     ) {
       return;
     }
-
-    const currentSessionData = getSessionDataFromMap(stateMap);
 
     if (sessionDataMatches(nextSessionData, currentSessionData)) {
       return;
@@ -860,6 +939,14 @@ async function createBibleReadingSession(
         typeof newOptions.endedAt === "undefined"
           ? currentOptions.endedAt
           : newOptions.endedAt,
+      shareTranslation:
+        typeof newOptions.shareTranslation === "undefined"
+          ? currentOptions.shareTranslation
+          : newOptions.shareTranslation,
+      coHostUserIds:
+        typeof newOptions.coHostUserIds === "undefined"
+          ? currentOptions.coHostUserIds
+          : newOptions.coHostUserIds,
     };
 
     if (sessionOptionsMatch(currentOptions, nextOptions)) {
@@ -901,6 +988,19 @@ async function createBibleReadingSession(
 
       if (currentOptions.endedAt !== nextOptions.endedAt) {
         optionsMap.set("endedAt", nextOptions.endedAt);
+      }
+
+      if (currentOptions.shareTranslation !== nextOptions.shareTranslation) {
+        optionsMap.set("shareTranslation", nextOptions.shareTranslation);
+      }
+
+      if (
+        !stringArraysMatch(
+          currentOptions.coHostUserIds,
+          nextOptions.coHostUserIds
+        )
+      ) {
+        optionsMap.set("coHostUserIds", nextOptions.coHostUserIds);
       }
     });
 

@@ -4469,6 +4469,222 @@ h6 {
   background: #dc2626;
 }
 
+/* Session ID row (top of the session settings panel) */
+.sb-session-settings-id {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-session-settings-id-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 8px 8px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+}
+
+.sb-session-settings-id-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+}
+
+.sb-session-settings-copy-id {
+  border: none;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 34%);
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sb-session-settings-copy-id:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  color: var(--sb-font-color);
+}
+
+/* Grouped sections (Navigation / Sharing) */
+.sb-session-settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sb-session-settings-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+/* Dynamic explanatory text under a toggle */
+.sb-session-settings-description {
+  margin: -4px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+/* Close / end-session confirmation */
+.sb-session-close-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 280px;
+  color: var(--sb-font-color);
+}
+
+.sb-session-close-confirm-message {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.sb-session-close-confirm-dontshow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+  cursor: pointer;
+}
+
+.sb-session-close-confirm-dontshow input[type="checkbox"] {
+  cursor: pointer;
+}
+
+.sb-session-close-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sb-session-cohost-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sb-session-cohost-instructions {
+  font-size: 13px;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+}
+
+.sb-session-cohost-option {
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 84%);
+  background: transparent;
+  color: var(--sb-font-color);
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.sb-session-cohost-option:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+/* Participants list (host can promote/demote co-hosts inline) */
+.sb-session-participants {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sb-session-participant {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sb-session-participant-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 16px;
+  background-size: cover;
+  background-position: center;
+}
+
+.sb-session-participant-avatar-has-image {
+  border: 2px solid;
+}
+
+.sb-session-participant-avatar .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.sb-session-participant-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+
+.sb-session-participant-badge {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 82%);
+  color: var(--sb-primary-color);
+}
+
+.sb-session-participant-action {
+  flex-shrink: 0;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 84%);
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.sb-session-participant-action:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-session-participant-action-active {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 86%);
+  color: var(--sb-primary-color);
+}
+
 .sb-sidebar-self-avatar {
   width: 36px;
   height: 36px;
