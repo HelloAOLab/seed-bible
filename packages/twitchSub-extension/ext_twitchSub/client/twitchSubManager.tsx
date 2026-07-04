@@ -28,12 +28,12 @@ export function CreateTwitchSubState(
 
   const wsPaused = signal(
     getBooleanMaskValue(
-      window.localStorage.getItem("twitchWebsocketClientPaused"),
+      window.sessionStorage.getItem("twitchWebsocketClientPaused"),
       false
     )
   );
-  const savedSettings = window.localStorage.getItem("twitchSubSettings")
-    ? JSON.parse(window.localStorage.getItem("twitchSubSettings") || "{}")
+  const savedSettings = window.sessionStorage.getItem("twitchSubSettings")
+    ? JSON.parse(window.sessionStorage.getItem("twitchSubSettings") || "{}")
     : {
         translationEnabled: true,
         highlightEnabled: true,
@@ -116,7 +116,7 @@ export function CreateTwitchSubState(
       config.value.bookId.value = null;
       config.value.chapter.value = null;
       config.value.translation.value = null;
-      window.localStorage.setItem(
+      window.sessionStorage.setItem(
         "twitchSubConfig",
         JSON.stringify(config.value)
       );
@@ -312,11 +312,11 @@ export function CreateTwitchSubState(
   });
 
   effect(() => {
-    window.localStorage.setItem(
+    window.sessionStorage.setItem(
       "twitchWebsocketClientPaused",
       wsPaused.value.toString()
     );
-    window.localStorage.setItem(
+    window.sessionStorage.setItem(
       "twitchSubSettings",
       JSON.stringify({
         translationEnabled: settings.value.translationEnabled.value,
@@ -347,12 +347,15 @@ async function getConfig({
   eventSubWebsocketUrl: string;
   navigation: NavigationManager;
 }) {
-  const stored = window.localStorage.getItem("twitchSubConfig");
+  const stored = window.sessionStorage.getItem("twitchSubConfig");
   if (stored) {
     try {
       return JSON.parse(stored);
     } catch (e) {
-      console.error("Failed to parse Twitch Sub config from localStorage:", e);
+      console.error(
+        "Failed to parse Twitch Sub config from session storage:",
+        e
+      );
       return null;
     }
   }
@@ -403,7 +406,7 @@ async function getConfig({
     chapter,
     translation,
   };
-  window.localStorage.setItem("twitchSubConfig", JSON.stringify(config));
+  window.sessionStorage.setItem("twitchSubConfig", JSON.stringify(config));
 
   if (typeof posthog !== "undefined") {
     posthog.capture("twitch_sub_client_joined", {});
