@@ -1,1 +1,1 @@
-shout("OnLayoutBookLabelInteracted", {bookLabel: thisBot});
+shout("OnLayoutBookLabelInteracted", { bookLabel: thisBot });

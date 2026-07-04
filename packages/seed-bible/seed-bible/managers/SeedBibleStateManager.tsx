@@ -3,6 +3,7 @@ import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import {
   createBibleDataManager,
   type BibleDataManager,
+  type VerseRef,
 } from "../managers/BibleDataManager";
 import { createBibleToolsManager } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
@@ -50,6 +51,11 @@ import {
   type BookmarksManager,
 } from "../managers/BookmarksManager";
 import {
+  createChatsManager,
+  type ChatSession,
+  type ChatsManager,
+} from "./ChatsManager";
+import {
   createSessionsManager,
   type BibleReadingSession,
   type SessionsManager,
@@ -86,6 +92,7 @@ import {
   createTutorialManager,
   type TutorialManager,
 } from "../managers/TutorialManager";
+import { range } from "es-toolkit";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
@@ -192,6 +199,12 @@ export interface AppState {
    * (only one toast is ever visible at a time, always the most recent).
    */
   toast: (message: string) => void;
+
+  /** Opens a chat session. */
+  openChat: (sharedChat: ChatSession) => void;
+
+  /** Opens a verse reference. */
+  openVerseReference: (ref: VerseRef) => Promise<void>;
 }
 
 /**
@@ -232,6 +245,8 @@ export interface SeedBibleState {
   bookmarks: BookmarksManager;
   /** Annotation manager for notes/metadata. */
   annotations: AnnotationsManager;
+  /** Chat session manager for in-app chat state. */
+  chats: ChatsManager;
   /** Shared reading sessions manager. */
   sessions: SessionsManager;
   /** Modal manager for app-wide dialog state and rendering. */
@@ -321,8 +336,9 @@ export function createSeedBibleState(
   const bookmarks = createBookmarksManager(os, login);
   const config = createConfig(login, navigation);
   const themeManager = createTheme(login, navigation);
-  const sidebar = createSidebar(navigation);
-  const tabs = createTabs(navigation, data, highlights, i18n);
+  const chats = createChatsManager(login, i18n);
+  const sidebar = createSidebar({ navigation, chatsManager: chats });
+  const tabs = createTabs(navigation, data, highlights, chats, i18n);
   const panes = createPanes(tabs, tabs.selectedTabId);
   const settings = createSettings(os, login, navigation);
   const selector = createBibleSelectorState(
@@ -343,7 +359,17 @@ export function createSeedBibleState(
   });
   const modals = createModalManager();
   const search = createSearchManager();
-  const onboarding = createOnboardingManager(login);
+
+  // When the app is opened via a shared-session invite link (`?sessionId=...`),
+  // the user came to join a session, not to onboard — so we skip the welcome
+  // screen and the auto-starting tutorial for this visit. This is derived from
+  // the current URL rather than persisted, so it only affects this tab/load:
+  // revisiting without a `sessionId` shows onboarding and tutorials as usual.
+  const joinedViaSessionLink =
+    typeof window !== "undefined" &&
+    !!navigation.currentUrl.value.searchParams.get("sessionId");
+
+  const onboarding = createOnboardingManager(login, joinedViaSessionLink);
 
   // Terms of Service modal. Two-way bound to the `?terms=open` query param so
   // it can be deep-linked: setting the param opens the modal, and closing the
@@ -453,7 +479,13 @@ export function createSeedBibleState(
   );
   const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
 
-  const tutorial = createTutorialManager(login, onboarding, selector, isMobile);
+  const tutorial = createTutorialManager(
+    login,
+    onboarding,
+    selector,
+    isMobile,
+    joinedViaSessionLink
+  );
 
   // A phone held sideways: landscape orientation with the short viewport
   // height typical of phones. Tablets/desktops in landscape have more
@@ -463,6 +495,26 @@ export function createSeedBibleState(
       viewportHeight.value > 0 &&
       viewportHeight.value <= 600 &&
       viewportWidth.value > viewportHeight.value
+  );
+
+  // True when a multi-pane layout is active — i.e. the user picked anything
+  // other than "single" from the Panels menu (split-2v, split-3v, grid-2x2,
+  // …), or more than one attached pane is otherwise open. Detached overlay
+  // panes (extension tools, playlist, etc.) don't count. Keyed primarily off
+  // the layout preset so selecting a layout from the menu reacts immediately.
+  const hasMultiplePanes = computed(
+    () =>
+      panelsEnabled.value &&
+      (panes.layout.value !== "single" ||
+        panes.panes.value.filter((pane) => !pane.detached).length > 1)
+  );
+
+  // A docked-sidebar desktop layout that has become too narrow for the
+  // sidebar and reader to comfortably share the row. Excludes mobile
+  // (<= 768), where the sidebar is a drawer and `isSidebarCollapsed` does not
+  // apply. The 1200px ceiling mirrors the CSS breakpoint.
+  const isNarrowDesktop = computed(
+    () => viewportWidth.value > 768 && viewportWidth.value <= 1200
   );
 
   effect(() => {
@@ -1007,6 +1059,49 @@ export function createSeedBibleState(
     return session;
   };
 
+  const handleOpenVerseReference = async (ref: VerseRef) => {
+    let tab = selectedTab.value;
+
+    if (!tab) {
+      tab = tabs.tabs.value[0] ?? null;
+    }
+
+    if (tab) {
+      const translationid =
+        tab.readingState.translationId.value ??
+        tab.readingState.defaultTranslation.id;
+      await tab.readingState.selectTranslationAndChapter(
+        translationid,
+        ref.book,
+        ref.chapter,
+        {
+          scrollToVerse: ref.verse,
+        }
+      );
+    } else {
+      tab = tabs.addTab(undefined, {
+        initialBookId: ref.book,
+        initialChapterNumber: ref.chapter,
+        scrollToVerse: ref.verse,
+      });
+    }
+
+    if (ref.verse) {
+      const verses = ref.endVerse
+        ? range(ref.verse, ref.endVerse + 1)
+        : ref.verse;
+      tab.readingState.decorateVerses(ref.book, ref.chapter, verses, {
+        className: "sb-verse-decoration-open-reference-highlight",
+        removeAfterMs: 3000,
+      });
+    }
+  };
+
+  const handleOpenChat = (sharedChat: ChatSession) => {
+    sidebar.openChatPanel();
+    chats.selectChat(sharedChat.id);
+  };
+
   const invitations = createInvitationsManager(os, login, async (sessionId) => {
     await handleJoinSharedSession(sessionId);
   });
@@ -1064,6 +1159,7 @@ export function createSeedBibleState(
     highlights,
     bookmarks,
     annotations,
+    chats,
     sessions,
     modals,
     settings,
@@ -1100,6 +1196,8 @@ export function createSeedBibleState(
       openInNewPane: handleOpenInNewPane,
       openInDetachedPane: handleOpenInDetachedPane,
       selectPane: handleSelectPane,
+      openVerseReference: handleOpenVerseReference,
+      openChat: handleOpenChat,
       title,
       description,
       siteName,

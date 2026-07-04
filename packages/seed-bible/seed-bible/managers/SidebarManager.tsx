@@ -1,5 +1,6 @@
 import { computed, signal } from "@preact/signals";
 import type { NavigationManager } from "./NavigationManager";
+import type { ChatsManager } from "./ChatsManager";
 
 /**
  * Which settings subpage the SettingsPage should jump to on its next mount.
@@ -15,7 +16,14 @@ export type RequestedSettingsView =
   | "toolbar"
   | "extensions";
 
-export function createSidebar(navigation: NavigationManager) {
+export interface CreateSidebarOptions {
+  chatsManager: ChatsManager;
+  navigation: NavigationManager;
+  onOpenChatPanel?: () => void;
+}
+
+export function createSidebar(options: CreateSidebarOptions) {
+  const navigation = options.navigation;
   const initialView = navigation.currentUrl.value.searchParams.get(
     "settingsView"
   ) as RequestedSettingsView | null;
@@ -30,7 +38,7 @@ export function createSidebar(navigation: NavigationManager) {
   // from the sidebar drawer. Only one can be open at a time so clicking
   // one closes the other.
   const isSearchPanelOpen = signal(false);
-  const isChatPanelOpen = signal(false);
+  const isChatPanelOpen = options.chatsManager.isOpen;
 
   const openSearchPanel = () => {
     isChatPanelOpen.value = false;
@@ -51,6 +59,7 @@ export function createSidebar(navigation: NavigationManager) {
   };
 
   const openChatPanel = () => {
+    options?.onOpenChatPanel?.();
     isSearchPanelOpen.value = false;
     isChatPanelOpen.value = true;
   };
