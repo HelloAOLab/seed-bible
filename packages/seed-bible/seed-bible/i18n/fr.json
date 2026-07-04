@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Bienvenue sur Seed Bible. Souhaitez-vous un tutoriel ?",
   "tutorial.promptBody": "Une visite guidée est disponible pour vous aider à découvrir tous les tenants et aboutissants de la Seed Bible.",
   "tutorial.promptDecline": "Non merci",
-  "tutorial.promptAccept": "Faites la visite"
+  "tutorial.promptAccept": "Faites la visite",
+  "split-panel-warning-title": "Ouvrir le panneau au-dessus de la vue divisée ?",
+  "split-panel-warning-message": "Vous avez déjà une disposition divisée en deux panneaux. Sur un petit écran, ouvrir un autre panneau par-dessus peut sembler à l'étroit.",
+  "split-panel-warning-keep": "Conserver la division",
+  "split-panel-warning-collapse": "Fermer la division"
 }

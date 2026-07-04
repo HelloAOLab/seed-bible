@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Boyei malamu na Seed Bible. Olingi kozwa mateya?",
   "tutorial.promptBody": "Tour guidé ezali mpo na kosalisa yo oyeba makambo ya kati mpe ya libanda ya Biblia ya Momboto.",
   "tutorial.promptDecline": "Te, merci",
-  "tutorial.promptAccept": "Salá mobembo yango"
+  "tutorial.promptAccept": "Salá mobembo yango",
+  "split-panel-warning-title": "Kofungola paneli likoló ya emonaneli ekabwani?",
+  "split-panel-warning-message": "Ozali déjà na bofandisi ekabwani na paneli mibale. Na ekran ya moke, kofungola paneli mosusu likoló na yango ekoki komonana ya kokakema.",
+  "split-panel-warning-keep": "Kobatela bokabwani",
+  "split-panel-warning-collapse": "Kokanga bokabwani"
 }

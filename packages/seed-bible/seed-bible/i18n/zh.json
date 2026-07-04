@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "欢迎来到种子圣经。您需要教程吗？",
   "tutorial.promptBody": "我们提供导览服务，帮助您了解 Seed Bible 的方方面面。",
   "tutorial.promptDecline": "不，谢谢",
-  "tutorial.promptAccept": "参加参观"
+  "tutorial.promptAccept": "参加参观",
+  "split-panel-warning-title": "在分屏视图上方打开面板？",
+  "split-panel-warning-message": "您已有一个包含两个面板的分屏布局。在小屏幕上，再在其上方打开一个面板可能会显得拥挤。",
+  "split-panel-warning-keep": "保留分屏",
+  "split-panel-warning-collapse": "关闭分屏"
 }

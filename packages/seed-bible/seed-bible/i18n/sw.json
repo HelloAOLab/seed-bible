@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Karibu kwenye Biblia ya Mbegu. Ungependa mafunzo?",
   "tutorial.promptBody": "Ziara inayoongozwa inapatikana ili kukusaidia kujifunza mambo muhimu na ya kipekee kuhusu Biblia ya Mbegu.",
   "tutorial.promptDecline": "Hapana, asante",
-  "tutorial.promptAccept": "Chukua ziara"
+  "tutorial.promptAccept": "Chukua ziara",
+  "split-panel-warning-title": "Fungua paneli juu ya mwonekano uliogawanywa?",
+  "split-panel-warning-message": "Tayari una mpangilio uliogawanywa wenye paneli mbili. Kwenye skrini ndogo, kufungua paneli nyingine juu yao kunaweza kuhisi kubana.",
+  "split-panel-warning-keep": "Weka mgawanyiko",
+  "split-panel-warning-collapse": "Funga mgawanyiko"
 }

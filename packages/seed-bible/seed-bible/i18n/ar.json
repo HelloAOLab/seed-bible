@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "أهلاً بكم في موقع \"سيد بايبل\". هل ترغبون في الحصول على شرح؟",
   "tutorial.promptBody": "تتوفر جولة إرشادية لمساعدتك على التعرف على تفاصيل وخبايا \"سيد بايبل\".",
   "tutorial.promptDecline": "ًلا شكرا",
-  "tutorial.promptAccept": "قم بجولة"
+  "tutorial.promptAccept": "قم بجولة",
+  "split-panel-warning-title": "فتح لوحة فوق العرض المقسّم؟",
+  "split-panel-warning-message": "لديك بالفعل تخطيط مقسّم بلوحتين. على شاشة صغيرة، قد يبدو فتح لوحة أخرى فوقهما ضيقًا.",
+  "split-panel-warning-keep": "الإبقاء على التقسيم",
+  "split-panel-warning-collapse": "إغلاق التقسيم"
 }

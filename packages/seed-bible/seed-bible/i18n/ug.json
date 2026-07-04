@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "ئۇرۇق ئىنجىلغا خۇش كەپسىز. سىزگە بىر دەرسلىك كېرەكمۇ؟",
   "tutorial.promptBody": "«Seed Bible» نىڭ ئىچكى-تاشقى تەپسىلاتلىرىنى ئۆگىنىشىڭىزگە ياردەم بېرىدىغان يېتەكچىلىك ساياھىتى بار.",
   "tutorial.promptDecline": "ياق، رەھمەت",
-  "tutorial.promptAccept": "ساياھەتكە چىقىڭ"
+  "tutorial.promptAccept": "ساياھەتكە چىقىڭ",
+  "split-panel-warning-title": "پانېلنى بۆلۈنگەن كۆرۈنۈش ئۈستىگە ئاچامسىز؟",
+  "split-panel-warning-message": "سىزدە ئاللىبۇرۇن ئىككى پانېللىق بۆلۈنگەن ئورۇنلاشتۇرۇش بار. كىچىك ئېكراندا ئۇلارنىڭ ئۈستىگە يەنە بىر پانېل ئېچىش تار ھېس قىلدۇرۇشى مۇمكىن.",
+  "split-panel-warning-keep": "بۆلۈشنى ساقلاش",
+  "split-panel-warning-collapse": "بۆلۈشنى تاقاش"
 }

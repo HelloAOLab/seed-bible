@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Selamat datang ke Seed Bible. Anda ingin tutorial?",
   "tutorial.promptBody": "Lawatan berpandu disediakan untuk membantu anda mempelajari selok-belok Seed Bible.",
   "tutorial.promptDecline": "Tidak, terima kasih",
-  "tutorial.promptAccept": "Ikuti lawatan itu"
+  "tutorial.promptAccept": "Ikuti lawatan itu",
+  "split-panel-warning-title": "Buka panel di atas paparan terpisah?",
+  "split-panel-warning-message": "Anda sudah mempunyai susun atur terpisah dengan dua panel. Pada skrin kecil, membuka panel lain di atasnya mungkin terasa sempit.",
+  "split-panel-warning-keep": "Kekalkan pemisahan",
+  "split-panel-warning-collapse": "Tutup pemisahan"
 }

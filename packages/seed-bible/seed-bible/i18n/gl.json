@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Benvido/a á Biblia das Sementes. Queres un tutorial?",
   "tutorial.promptBody": "Hai unha visita guiada dispoñible para axudarche a aprender os detalles da Biblia das Sementes.",
   "tutorial.promptDecline": "Non, grazas",
-  "tutorial.promptAccept": "Fai o percorrido"
+  "tutorial.promptAccept": "Fai o percorrido",
+  "split-panel-warning-title": "Abrir o panel sobre a vista dividida?",
+  "split-panel-warning-message": "Xa tes unha disposición dividida con dous paneis. Nunha pantalla pequena, abrir outro panel enriba pode resultar apertado.",
+  "split-panel-warning-keep": "Manter a división",
+  "split-panel-warning-collapse": "Pechar a división"
 }

@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "సీడ్ బైబిల్‌కు స్వాగతం. మీకు ట్యుటోరియల్ కావాలా?",
   "tutorial.promptBody": "సీడ్ బైబిల్ యొక్క సమగ్ర విషయాలను తెలుసుకోవడంలో మీకు సహాయపడటానికి గైడెడ్ టూర్ అందుబాటులో ఉంది.",
   "tutorial.promptDecline": "వద్దు, ధన్యవాదాలు",
-  "tutorial.promptAccept": "పర్యటన చేయండి"
+  "tutorial.promptAccept": "పర్యటన చేయండి",
+  "split-panel-warning-title": "విభజిత వీక్షణపై ప్యానెల్‌ను తెరవాలా?",
+  "split-panel-warning-message": "మీకు ఇప్పటికే రెండు ప్యానెల్‌లతో విభజిత లేఔట్ ఉంది. చిన్న స్క్రీన్‌లో వాటిపై మరో ప్యానెల్‌ను తెరవడం ఇరుకుగా అనిపించవచ్చు.",
+  "split-panel-warning-keep": "విభజనను ఉంచు",
+  "split-panel-warning-collapse": "విభజనను మూసివేయి"
 }

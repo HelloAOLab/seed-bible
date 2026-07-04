@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "به Seed Bible خوش آمدید. آیا مایل به دریافت آموزش هستید؟",
   "tutorial.promptBody": "یک تور با راهنما برای کمک به شما در یادگیری جزئیات Seed Bible در دسترس است.",
   "tutorial.promptDecline": "نه، ممنون",
-  "tutorial.promptAccept": "تور را طی کنید"
+  "tutorial.promptAccept": "تور را طی کنید",
+  "split-panel-warning-title": "پنل روی نمای تقسیم‌شده باز شود؟",
+  "split-panel-warning-message": "شما از قبل یک چیدمان تقسیم‌شده با دو پنل دارید. در صفحه‌ی کوچک، باز کردن پنل دیگری روی آن‌ها ممکن است تنگ به نظر برسد.",
+  "split-panel-warning-keep": "حفظ تقسیم",
+  "split-panel-warning-collapse": "بستن تقسیم"
 }

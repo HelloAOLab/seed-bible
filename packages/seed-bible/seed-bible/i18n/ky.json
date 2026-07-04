@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Seed Bible сайтына кош келиңиз. Окуу куралын каалайсызбы?",
   "tutorial.promptBody": "Seed Bible китебинин майда-чүйдөсүнө чейин үйрөнүүгө жардам берүү үчүн экскурсия уюштурулган.",
   "tutorial.promptDecline": "Жок, рахмат",
-  "tutorial.promptAccept": "Экскурсияга чыгыңыз"
+  "tutorial.promptAccept": "Экскурсияга чыгыңыз",
+  "split-panel-warning-title": "Панелди бөлүнгөн көрүнүштүн үстүнөн ачасызбы?",
+  "split-panel-warning-message": "Сизде эки панелдүү бөлүнгөн жайгашуу бар. Кичине экранда алардын үстүнө дагы бир панель ачуу тар сезилиши мүмкүн.",
+  "split-panel-warning-keep": "Бөлүүнү сактоо",
+  "split-panel-warning-collapse": "Бөлүүнү жабуу"
 }

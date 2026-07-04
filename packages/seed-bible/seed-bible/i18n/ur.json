@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "سیڈ بائبل میں خوش آمدید۔ کیا آپ ایک سبق پسند کریں گے؟",
   "tutorial.promptBody": "سیڈ بائبل کے اندر اور باہر سیکھنے میں آپ کی مدد کے لیے ایک گائیڈڈ ٹور دستیاب ہے۔",
   "tutorial.promptDecline": "نہیں، شکریہ",
-  "tutorial.promptAccept": "ٹور لیں۔"
+  "tutorial.promptAccept": "ٹور لیں۔",
+  "split-panel-warning-title": "تقسیم شدہ منظر کے اوپر پینل کھولیں؟",
+  "split-panel-warning-message": "آپ کے پاس پہلے سے دو پینلز کے ساتھ تقسیم شدہ ترتیب موجود ہے۔ چھوٹی اسکرین پر اُن کے اوپر ایک اور پینل کھولنا تنگ محسوس ہو سکتا ہے۔",
+  "split-panel-warning-keep": "تقسیم برقرار رکھیں",
+  "split-panel-warning-collapse": "تقسیم بند کریں"
 }

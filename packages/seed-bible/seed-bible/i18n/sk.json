@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Vitajte v Seed Bible. Chcete tutoriál?",
   "tutorial.promptBody": "K dispozícii je prehliadka so sprievodcom, ktorá vám pomôže dozvedieť sa všetko o Seed Bible.",
   "tutorial.promptDecline": "Nie, ďakujem",
-  "tutorial.promptAccept": "Absolvujte prehliadku"
+  "tutorial.promptAccept": "Absolvujte prehliadku",
+  "split-panel-warning-title": "Otvoriť panel nad rozdeleným zobrazením?",
+  "split-panel-warning-message": "Už máte rozdelené rozloženie s dvoma panelmi. Na malej obrazovke môže byť otvorenie ďalšieho panela nad nimi stiesnené.",
+  "split-panel-warning-keep": "Zachovať rozdelenie",
+  "split-panel-warning-collapse": "Zavrieť rozdelenie"
 }

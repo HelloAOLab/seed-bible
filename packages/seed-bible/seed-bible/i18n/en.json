@@ -316,5 +316,9 @@
   "inactive": "Inactive",
   "available": "Available",
   "everyone": "Everyone",
-  "open-chat": "Open chat"
+  "open-chat": "Open chat",
+  "split-panel-warning-title": "Open panel over split view?",
+  "split-panel-warning-message": "You already have a split layout with two panels. On a small screen, opening another panel on top of them can feel cramped.",
+  "split-panel-warning-keep": "Keep split",
+  "split-panel-warning-collapse": "Close split"
 }

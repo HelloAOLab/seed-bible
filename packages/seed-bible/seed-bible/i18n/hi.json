@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "सीड बाइबल में आपका स्वागत है। क्या आप ट्यूटोरियल चाहेंगे?",
   "tutorial.promptBody": "सीड बाइबल के बारे में पूरी जानकारी प्राप्त करने में आपकी सहायता के लिए एक निर्देशित भ्रमण उपलब्ध है।",
   "tutorial.promptDecline": "जी नहीं, धन्यवाद",
-  "tutorial.promptAccept": "भ्रमण पर जाएं"
+  "tutorial.promptAccept": "भ्रमण पर जाएं",
+  "split-panel-warning-title": "विभाजित दृश्य के ऊपर पैनल खोलें?",
+  "split-panel-warning-message": "आपके पास पहले से दो पैनल वाला विभाजित लेआउट है। छोटी स्क्रीन पर उनके ऊपर एक और पैनल खोलना तंग लग सकता है।",
+  "split-panel-warning-keep": "विभाजन रखें",
+  "split-panel-warning-collapse": "विभाजन बंद करें"
 }

@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Dobrodošli u Seed Bible. Želite li tutorial?",
   "tutorial.promptBody": "Dostupan je vođeni obilazak koji će vam pomoći da naučite sve o Seed Bible.",
   "tutorial.promptDecline": "Ne, hvala",
-  "tutorial.promptAccept": "Krenite na obilazak"
+  "tutorial.promptAccept": "Krenite na obilazak",
+  "split-panel-warning-title": "Otvoriti ploču preko podijeljenog prikaza?",
+  "split-panel-warning-message": "Već imate podijeljeni raspored s dvije ploče. Na malom zaslonu otvaranje još jedne ploče preko njih može djelovati skučeno.",
+  "split-panel-warning-keep": "Zadrži podjelu",
+  "split-panel-warning-collapse": "Zatvori podjelu"
 }

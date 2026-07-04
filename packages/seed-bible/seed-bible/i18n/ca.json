@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Benvingut/da a Seed Bible. Voleu un tutorial?",
   "tutorial.promptBody": "S'ofereix una visita guiada per ajudar-vos a aprendre els detalls de la Bíblia de les llavors.",
   "tutorial.promptDecline": "No, gràcies",
-  "tutorial.promptAccept": "Fes el recorregut"
+  "tutorial.promptAccept": "Fes el recorregut",
+  "split-panel-warning-title": "Voleu obrir el tauler sobre la vista dividida?",
+  "split-panel-warning-message": "Ja teniu una disposició dividida amb dos taulers. En una pantalla petita, obrir-ne un altre a sobre pot semblar atapeït.",
+  "split-panel-warning-keep": "Mantén la divisió",
+  "split-panel-warning-collapse": "Tanca la divisió"
 }

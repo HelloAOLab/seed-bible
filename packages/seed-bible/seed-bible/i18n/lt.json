@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Sveiki atvykę į „Seed Bible“. Ar norėtumėte pamokos?",
   "tutorial.promptBody": "Siūloma ekskursija su gidu, kuri padės jums sužinoti apie „Seed Bible“ subtilybes.",
   "tutorial.promptDecline": "Ne, ačiū",
-  "tutorial.promptAccept": "Apsilankykite ekskursijoje"
+  "tutorial.promptAccept": "Apsilankykite ekskursijoje",
+  "split-panel-warning-title": "Atverti skydelį virš padalyto rodinio?",
+  "split-panel-warning-message": "Jau turite padalytą išdėstymą su dviem skydeliais. Mažame ekrane atveriant dar vieną skydelį virš jų gali būti ankšta.",
+  "split-panel-warning-keep": "Palikti padalijimą",
+  "split-panel-warning-collapse": "Uždaryti padalijimą"
 }

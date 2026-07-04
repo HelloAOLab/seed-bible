@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Peju porãite Seed Bible-pe. ¿Reipota piko peteĩ tutorial?",
   "tutorial.promptBody": "Ojeguereko peteĩ visita guiada nepytyvõtava reikuaa hag̃ua umi mbaʼe iñimportantevéva Seed Bible-pe.",
   "tutorial.promptDecline": "Nahániri, aguyje",
-  "tutorial.promptAccept": "Ejapo pe gira"
+  "tutorial.promptAccept": "Ejapo pe gira",
+  "split-panel-warning-title": "¿Embojuruja panel temiandu jekytĩ ári?",
+  "split-panel-warning-message": "Reguerekóma peteĩ ñemohenda jekytĩ mokõi panel reheve. Ta'anga'ata michĩvape, embojuruja ambue panel ijati'y ári ikatu ojehecha ipytũ.",
+  "split-panel-warning-keep": "Emoĩ jekytĩ",
+  "split-panel-warning-collapse": "Emboty jekytĩ"
 }

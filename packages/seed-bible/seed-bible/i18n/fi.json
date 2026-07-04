@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Tervetuloa Seed Bibleen. Haluatko opetusohjelman?",
   "tutorial.promptBody": "Opastettu kierros auttaa sinua oppimaan Seed Biblen salat.",
   "tutorial.promptDecline": "Ei kiitos",
-  "tutorial.promptAccept": "Osallistu kierrokselle"
+  "tutorial.promptAccept": "Osallistu kierrokselle",
+  "split-panel-warning-title": "Avataanko paneeli jaetun näkymän päälle?",
+  "split-panel-warning-message": "Sinulla on jo jaettu asettelu, jossa on kaksi paneelia. Pienellä näytöllä uuden paneelin avaaminen niiden päälle voi tuntua ahtaalta.",
+  "split-panel-warning-keep": "Säilytä jako",
+  "split-panel-warning-collapse": "Sulje jako"
 }

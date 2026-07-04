@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Maligayang pagdating sa Seed Bible. Gusto mo ba ng tutorial?",
   "tutorial.promptBody": "May guided tour na makakatulong sa iyong matutunan ang mga detalye ng Seed Bible.",
   "tutorial.promptDecline": "Hindi, salamat",
-  "tutorial.promptAccept": "Sumakay sa tour"
+  "tutorial.promptAccept": "Sumakay sa tour",
+  "split-panel-warning-title": "Buksan ang panel sa ibabaw ng hating view?",
+  "split-panel-warning-message": "Mayroon ka nang hating layout na may dalawang panel. Sa maliit na screen, maaaring maramdaman na masikip ang pagbubukas ng isa pang panel sa ibabaw nila.",
+  "split-panel-warning-keep": "Panatilihin ang hati",
+  "split-panel-warning-collapse": "Isara ang hati"
 }

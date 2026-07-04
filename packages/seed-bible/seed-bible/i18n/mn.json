@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Seed Bible-д тавтай морил. Та хичээл авахыг хүсэж байна уу?",
   "tutorial.promptBody": "Seed Bible-ийн нарийн ширийн зүйлийг сурахад тань туслах хөтөчтэй аялал байдаг.",
   "tutorial.promptDecline": "Үгүй ээ, баярлалаа",
-  "tutorial.promptAccept": "Аялалд оролцоорой"
+  "tutorial.promptAccept": "Аялалд оролцоорой",
+  "split-panel-warning-title": "Хуваасан харагдацын дээр самбар нээх үү?",
+  "split-panel-warning-message": "Танд аль хэдийн хоёр самбартай хуваасан байрлал бий. Жижиг дэлгэц дээр тэдгээрийн дээр өөр самбар нээх нь давчуу санагдаж болзошгүй.",
+  "split-panel-warning-keep": "Хуваалтыг хадгалах",
+  "split-panel-warning-collapse": "Хуваалтыг хаах"
 }

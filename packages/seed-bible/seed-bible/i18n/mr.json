@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "सीड बायबलमध्ये आपले स्वागत आहे. तुम्हाला ट्युटोरियल हवे आहे का?",
   "tutorial.promptBody": "सीड बायबलची सखोल माहिती शिकण्यासाठी एक मार्गदर्शित दौरा उपलब्ध आहे.",
   "tutorial.promptDecline": "नको, धन्यवाद.",
-  "tutorial.promptAccept": "दौरा करा"
+  "tutorial.promptAccept": "दौरा करा",
+  "split-panel-warning-title": "विभाजित दृश्यावर पॅनेल उघडायचे?",
+  "split-panel-warning-message": "तुमच्याकडे आधीच दोन पॅनेल असलेली विभाजित मांडणी आहे. लहान स्क्रीनवर त्यांच्यावर आणखी एक पॅनेल उघडणे अरुंद वाटू शकते.",
+  "split-panel-warning-keep": "विभाजन ठेवा",
+  "split-panel-warning-collapse": "विभाजन बंद करा"
 }

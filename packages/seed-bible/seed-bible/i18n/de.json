@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Willkommen bei Seed Bible. Möchten Sie ein Tutorial?",
   "tutorial.promptBody": "Es wird eine geführte Tour angeboten, die Ihnen hilft, die Funktionsweise der Seed Bible kennenzulernen.",
   "tutorial.promptDecline": "Nein danke",
-  "tutorial.promptAccept": "Nehmen Sie an der Tour teil"
+  "tutorial.promptAccept": "Nehmen Sie an der Tour teil",
+  "split-panel-warning-title": "Panel über der geteilten Ansicht öffnen?",
+  "split-panel-warning-message": "Sie haben bereits ein geteiltes Layout mit zwei Panels. Auf einem kleinen Bildschirm kann es beengt wirken, ein weiteres Panel darüber zu öffnen.",
+  "split-panel-warning-keep": "Teilung behalten",
+  "split-panel-warning-collapse": "Teilung schließen"
 }

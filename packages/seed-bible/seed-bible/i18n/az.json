@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Seed Bible-a xoş gəlmisiniz. Dərslik istərdinizmi?",
   "tutorial.promptBody": "Seed Bible-ın incəliklərini öyrənməyinizə kömək etmək üçün bələdçi turu mövcuddur.",
   "tutorial.promptDecline": "Xeyr, təşəkkürlər",
-  "tutorial.promptAccept": "Tura çıxın"
+  "tutorial.promptAccept": "Tura çıxın",
+  "split-panel-warning-title": "Panel bölünmüş görünüşün üzərində açılsın?",
+  "split-panel-warning-message": "Artıq iki panelli bölünmüş düzəniniz var. Kiçik ekranda onların üzərində başqa panel açmaq sıxıntılı görünə bilər.",
+  "split-panel-warning-keep": "Bölünməni saxla",
+  "split-panel-warning-collapse": "Bölünməni bağla"
 }

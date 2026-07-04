@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Dobrodošli u Seed Bible. Želite li tutorijal?",
   "tutorial.promptBody": "Dostupna je vođena tura koja će vam pomoći da saznate sve o Seed Bible.",
   "tutorial.promptDecline": "Ne, hvala",
-  "tutorial.promptAccept": "Krenite na obilazak"
+  "tutorial.promptAccept": "Krenite na obilazak",
+  "split-panel-warning-title": "Otvoriti panel preko podijeljenog prikaza?",
+  "split-panel-warning-message": "Već imate podijeljeni raspored s dva panela. Na malom ekranu otvaranje još jednog panela preko njih može djelovati skučeno.",
+  "split-panel-warning-keep": "Zadrži podjelu",
+  "split-panel-warning-collapse": "Zatvori podjelu"
 }

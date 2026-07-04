@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "সীড বাইবেলে আপনাকে স্বাগতম। আপনি কি একটি টিউটোরিয়াল চান?",
   "tutorial.promptBody": "সীড বাইবেলের খুঁটিনাটি জানতে একটি গাইডেড ট্যুরের ব্যবস্থা রয়েছে।",
   "tutorial.promptDecline": "না, ধন্যবাদ।",
-  "tutorial.promptAccept": "ভ্রমণ করুন"
+  "tutorial.promptAccept": "ভ্রমণ করুন",
+  "split-panel-warning-title": "বিভক্ত ভিউয়ের উপরে প্যানেল খুলবেন?",
+  "split-panel-warning-message": "আপনার ইতিমধ্যে দুটি প্যানেল সহ একটি বিভক্ত লেআউট রয়েছে। ছোট স্ক্রিনে তাদের উপরে আরেকটি প্যানেল খুললে সংকীর্ণ মনে হতে পারে।",
+  "split-panel-warning-keep": "বিভাজন রাখুন",
+  "split-panel-warning-collapse": "বিভাজন বন্ধ করুন"
 }

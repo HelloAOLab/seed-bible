@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Tere tulemast Seed Bible'i. Kas soovite õpetust?",
   "tutorial.promptBody": "Saadaval on giidiga ekskursioon, mis aitab teil Seed Bible'i plusse ja miinuseid tundma õppida.",
   "tutorial.promptDecline": "Ei, aitäh",
-  "tutorial.promptAccept": "Tehke ringkäik"
+  "tutorial.promptAccept": "Tehke ringkäik",
+  "split-panel-warning-title": "Kas avada paneel jagatud vaate peale?",
+  "split-panel-warning-message": "Teil on juba kahe paneeliga jagatud paigutus. Väikesel ekraanil võib nende peale veel ühe paneeli avamine tunduda kitsas.",
+  "split-panel-warning-keep": "Säilita jaotus",
+  "split-panel-warning-collapse": "Sulge jaotus"
 }

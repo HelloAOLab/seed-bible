@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Velkommen til Seed Bible. Kunne du tænke dig en vejledning?",
   "tutorial.promptBody": "En guidet tur er tilgængelig, der kan hjælpe dig med at lære Seed Bibles ind og ud.",
   "tutorial.promptDecline": "Nej, tak",
-  "tutorial.promptAccept": "Tag turen"
+  "tutorial.promptAccept": "Tag turen",
+  "split-panel-warning-title": "Åbn panel oven på opdelt visning?",
+  "split-panel-warning-message": "Du har allerede et opdelt layout med to paneler. På en lille skærm kan det føles trangt at åbne endnu et panel oven på dem.",
+  "split-panel-warning-keep": "Behold opdeling",
+  "split-panel-warning-collapse": "Luk opdeling"
 }

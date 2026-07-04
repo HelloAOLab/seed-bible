@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Wolkom by Seed Bible. Wolle jo in tutorial?",
   "tutorial.promptBody": "In rûnlieding is beskikber om jo te helpen de yns en outs fan Seed Bible te learen.",
   "tutorial.promptDecline": "Nee, tank",
-  "tutorial.promptAccept": "Nim de toer"
+  "tutorial.promptAccept": "Nim de toer",
+  "split-panel-warning-title": "Paniel oer de splitste werjefte iepenje?",
+  "split-panel-warning-message": "Jo hawwe al in splitste yndieling mei twa panielen. Op in lyts skerm kin it kreapel fiele om noch in paniel dêroerhinne te iepenjen.",
+  "split-panel-warning-keep": "Split hâlde",
+  "split-panel-warning-collapse": "Split slute"
 }

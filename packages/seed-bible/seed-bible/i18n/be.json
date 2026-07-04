@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Сардэчна запрашаем у Seed Bible. Хочаце падручнік?",
   "tutorial.promptBody": "Даступная экскурсія з гідам, якая дапаможа вам даведацца пра ўсе тонкасці Бібліі насення.",
   "tutorial.promptDecline": "Не, дзякуй",
-  "tutorial.promptAccept": "Азнаёмцеся з экскурсіяй"
+  "tutorial.promptAccept": "Азнаёмцеся з экскурсіяй",
+  "split-panel-warning-title": "Адкрыць панэль паверх падзеленага выгляду?",
+  "split-panel-warning-message": "У вас ужо ёсць падзелены макет з дзвюма панэлямі. На малым экране адкрыццё яшчэ адной панэлі над імі можа быць цесным.",
+  "split-panel-warning-keep": "Пакінуць падзел",
+  "split-panel-warning-collapse": "Закрыць падзел"
 }

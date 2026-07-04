@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "ወደ Seed Bible እንኳን በደህና መጡ። አጋዥ ስልጠና ይፈልጋሉ?",
   "tutorial.promptBody": "የ Seed Bible ውስጣዊና ውጫዊ ነገሮችን ለመማር የሚያግዝዎት የሚመራ ጉብኝት አለ።",
   "tutorial.promptDecline": "አልፈልግም፣አመሰግናለሁ",
-  "tutorial.promptAccept": "ጉብኝቱን ይውሰዱ"
+  "tutorial.promptAccept": "ጉብኝቱን ይውሰዱ",
+  "split-panel-warning-title": "ፓነልን ከተከፈለ እይታ በላይ ይክፈት?",
+  "split-panel-warning-message": "አስቀድሞ በሁለት ፓነሎች የተከፈለ አቀማመጥ አለዎት። በትንሽ ማያ ገጽ ላይ ሌላ ፓነል ከእነሱ በላይ መክፈት ጠባብ ሊሰማ ይችላል።",
+  "split-panel-warning-keep": "ክፍፍሉን አቆይ",
+  "split-panel-warning-collapse": "ክፍፍሉን ዝጋ"
 }

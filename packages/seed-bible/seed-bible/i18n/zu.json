@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "Siyakwamukela ku-Seed Bible. Ungathanda yini isifundo?",
   "tutorial.promptBody": "Uhambo oluqondisiwe luyatholakala ukukusiza ufunde okujulile nokungaphandle kweSeed Bible.",
   "tutorial.promptDecline": "Cha ngiyabonga",
-  "tutorial.promptAccept": "Thatha uhambo"
+  "tutorial.promptAccept": "Thatha uhambo",
+  "split-panel-warning-title": "Vula iphaneli ngaphezu kombukiso ohlukanisiwe?",
+  "split-panel-warning-message": "Usuvele unesakhiwo esihlukanisiwe esinamaphaneli amabili. Esikrinini esincane, ukuvula elinye iphaneli ngaphezu kwawo kungazwakala kuminyene.",
+  "split-panel-warning-keep": "Gcina ukwehlukanisa",
+  "split-panel-warning-collapse": "Vala ukwehlukanisa"
 }

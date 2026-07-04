@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "እንቋዕ ናብ ዘርኢ መጽሓፍ ቅዱስ ብደሓን መጻእኩም። ትምህርቲ ትደልዩ ዶ?",
   "tutorial.promptBody": "ውሽጣውን ደጋውን ናይ ዘርኢ መጽሓፍ ቅዱስ ንኽትመሃር ዝሕግዘካ ብመሪሕ ዑደት ኣሎ።",
   "tutorial.promptDecline": "ኣይፋልን የቐንየለይ",
-  "tutorial.promptAccept": "ዑደት ውሰድዎ።"
+  "tutorial.promptAccept": "ዑደት ውሰድዎ።",
+  "split-panel-warning-title": "ነቲ ፓነል ኣብ ልዕሊ እቲ ዝተኸፍለ ትርኢት ይኽፈት?",
+  "split-panel-warning-message": "ኣቐዲምካ ብኽልተ ፓነላት ዝተኸፍለ ኣቀማምጣ ኣለካ። ኣብ ንእሽቶ ስክሪን ካልእ ፓነል ኣብ ልዕሊኦም ምኽፋት ጸቢብ ክስምዓካ ይኽእል።",
+  "split-panel-warning-keep": "ምክፍፋል ሓዝ",
+  "split-panel-warning-collapse": "ምክፍፋል ዕጾ"
 }

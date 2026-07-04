@@ -317,5 +317,9 @@
   "tutorial.promptTitle": "سیډ بایبل ته ښه راغلاست. ایا تاسو یو درس غواړئ؟",
   "tutorial.promptBody": "د سیډ بایبل د داخلي او خارجي برخو زده کولو کې ستاسو سره د مرستې لپاره یو لارښود سفر شتون لري.",
   "tutorial.promptDecline": "نه، مننه",
-  "tutorial.promptAccept": "سفر وکړئ"
+  "tutorial.promptAccept": "سفر وکړئ",
+  "split-panel-warning-title": "پینل د ویشل شوي لید پر سر خلاص شي؟",
+  "split-panel-warning-message": "تاسو دمخه د دوو پینلونو سره ویشل شوی ترتیب لرئ. په کوچني سکرین کې د دوی پر سر د بل پینل خلاصول ممکن تنگ احساس شي.",
+  "split-panel-warning-keep": "ویش وساتئ",
+  "split-panel-warning-collapse": "ویش وتړئ"
 }
