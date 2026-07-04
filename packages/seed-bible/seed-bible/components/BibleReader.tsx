@@ -530,6 +530,7 @@ function renderChapterContent(
         style: {
           backgroundColor: highlight.customColor,
           color: highlight.customFontColor,
+          "--sb-highlight-bg": highlight.customColor,
         },
         groupKey: `custom:${highlight.customColor}:${highlight.customFontColor}`,
       } as const;

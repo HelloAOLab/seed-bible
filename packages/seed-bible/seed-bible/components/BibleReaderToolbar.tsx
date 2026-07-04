@@ -247,6 +247,7 @@ function broadcastDecorationToSession(
         backgroundColor: details.customColor,
         color:
           details.customFontColor ?? getContrastTextColor(details.customColor),
+        "--sb-highlight-bg": details.customColor,
       }
     : undefined;
   const className = details.customColor

@@ -455,6 +455,7 @@ export function generateThemeCssClasses(theme: BibleTheme): string {
         `.sb-highlight-${colorId} {`,
         `background-color: var(--sb-highlight-${colorId}-color);`,
         `color: var(--sb-highlight-${colorId}-font-color);`,
+        `--sb-highlight-bg: var(--sb-highlight-${colorId}-color);`,
         `& .sb-words-of-jesus { `,
         `color: var(--sb-highlight-${colorId}-words-of-jesus-font-color);`,
         `}`,

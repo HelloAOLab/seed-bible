@@ -221,8 +221,8 @@ html {
   --sb-highlight-orange-words-of-jesus-font-color: #e07b4c;
 
   --sb-highlight-radius: 0.3em;
-  --sb-highlight-padding-inline: 0.18em;
-  --sb-highlight-padding-block: 0.06em;
+  --sb-highlight-padding-inline: 0.22em;
+  --sb-highlight-padding-block: 0.12em;
 
   --sb-dynamic-range-limit: standard;
 }
@@ -1425,17 +1425,34 @@ a:visited {
  * unhighlighted text is unaffected. box-decoration-break: clone makes the
  * browser round every wrapped visual line independently, giving the
  * highlighter-marker look instead of one flat rectangle.
+ *
+ * Horizontal bleed is painted with box-shadow (offset +/-padding-inline, no
+ * blur/spread) instead of real padding-inline. box-decoration-break: clone
+ * re-applies padding to EVERY wrapped fragment, not just the run's first/
+ * last line, so real padding-inline would push glyphs right on every
+ * interior wrapped line with no way to cancel it (a negative margin-inline
+ * only offsets the run's overall first/last fragment). box-shadow never
+ * participates in layout, so every cloned fragment gets the same bleed
+ * without moving any text. --sb-highlight-bg carries whatever background
+ * color is active (set by .sb-highlight-{colorId} or, for custom colors,
+ * inline style) so the shadow always matches. Assumes an opaque color —
+ * semi-transparent highlight colors would double-composite where the two
+ * shadow copies overlap the box, producing a visible seam.
  */
 .sb-highlight {
   border-radius: var(--sb-highlight-radius);
-  padding-inline: var(--sb-highlight-padding-inline);
   padding-block: var(--sb-highlight-padding-block);
+  box-shadow:
+    var(--sb-highlight-padding-inline) 0 0 var(--sb-highlight-bg, transparent),
+    calc(-1 * var(--sb-highlight-padding-inline)) 0 0
+      var(--sb-highlight-bg, transparent);
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
   transition:
     background-color 0.2s ease,
     background 0.3s ease,
-    color 0.2s ease;
+    color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .sb-verse-poetry {
