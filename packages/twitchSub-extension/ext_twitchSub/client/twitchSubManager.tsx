@@ -133,6 +133,67 @@ export function CreateTwitchSubState(
     }
   });
 
+  async function highlightRefVerse(
+    seedBibleState: SeedBibleState,
+    bookData: {
+      book: string;
+      chapter: number;
+      verse: number;
+    },
+    interval = 5000
+  ): Promise<void> {
+    const { book, chapter, verse } = bookData;
+
+    const selectedTabId = seedBibleState.tabs.selectedTabId;
+    let selectedTab = seedBibleState.tabs.tabs.value.find(
+      (tab) => tab.id === selectedTabId.value
+    );
+
+    const currentReadingState = seedBibleState.app.currentReadingState.value;
+
+    if (selectedTab && book) {
+      const { bookId, chapterNumber } = selectedTab.readingState;
+
+      if (bookId.value !== book || chapterNumber.value !== Number(chapter)) {
+        const existingTab = seedBibleState.tabs.tabs.value.find(
+          (tab) =>
+            tab.readingState.bookId.value === book &&
+            tab.readingState.chapterNumber.value === Number(chapter)
+        );
+        if (existingTab) {
+          seedBibleState.app.selectTab(existingTab.id);
+          selectedTab = existingTab;
+        } else {
+          const newTab = seedBibleState.tabs.addTab(undefined, {
+            initialTranslationId: currentReadingState?.translationId || "ABB",
+            initialBookId: book,
+            initialChapterNumber: Number(chapter),
+          });
+          seedBibleState.app.selectTab(newTab.id);
+          selectedTab = newTab;
+        }
+      }
+
+      await selectedTab.readingState.selectTranslationAndChapter(
+        currentReadingState?.translationId || "ABB",
+        book,
+        Number(chapter) || 1,
+        verse ? { scrollToVerse: Number(verse) } : {}
+      );
+      if (verse && chapter) {
+        selectedTab.readingState.decorateVerses(
+          book,
+          Number(chapter),
+          Number(verse),
+          {
+            className: "sb-verse-decoration-initial-verse-highlight",
+            removeAfterMs: interval,
+          }
+        );
+      }
+    }
+  }
+
   const handleWSEvents = async (config: { type: string; payload: string }) => {
     if (!wsPaused.value && websocketSessionID.value && webSocketClient.value) {
       switch (config.type) {
@@ -251,33 +312,10 @@ export function CreateTwitchSubState(
             chapter: number;
             verse: number;
           };
-          seedBibleState.app.toast(`Navigating to ${bookId} ${chapter}`);
-          const selectedTabId = seedBibleState.tabs.selectedTabId;
-          const selectedTab = seedBibleState.tabs.tabs.value.find(
-            (tab) => tab.id === selectedTabId.value
+          seedBibleState.app.toast(
+            `Highlighting ${bookId} ${chapter}:${verse || ""}`
           );
-          const currentReadingState =
-            seedBibleState.app.currentReadingState.value;
-
-          if (selectedTab && bookId) {
-            await selectedTab.readingState.selectTranslationAndChapter(
-              currentReadingState?.translationId || "ABB",
-              bookId,
-              Number(chapter) || 1,
-              verse ? { scrollToVerse: Number(verse) } : {}
-            );
-            if (verse && chapter) {
-              selectedTab.readingState.decorateVerses(
-                bookId,
-                Number(chapter),
-                Number(verse),
-                {
-                  className: "sb-verse-decoration-initial-verse-highlight",
-                  removeAfterMs: 5000,
-                }
-              );
-            }
-          }
+          highlightRefVerse(seedBibleState, { book: bookId, chapter, verse });
           break;
         }
       }
@@ -416,7 +454,11 @@ async function getConfig({
   if (urlWithoutHash) {
     navigation.replace(urlWithoutHash);
   }
-  return null;
+  // Return the freshly built config so it's applied on this first load.
+  // `navigation.replace` only soft-updates the URL (history.replaceState, no
+  // reload), so returning null here would leave the config unapplied until the
+  // user manually refreshes and it's re-read from sessionStorage.
+  return config;
 }
 
 async function openBookAndChapter(
