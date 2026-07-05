@@ -158,21 +158,37 @@ export function createLoginManager({
     const data = await os.getData(userId, "profile");
 
     if (!data.success) {
-      console.log("[LoginManager] No profile data found for user:", userId);
-      // Return a default profile
-      return {
-        name: "",
-      };
+      if (data.errorCode === "data_not_found") {
+        // The account genuinely has no profile record yet (new user). A blank
+        // default is the correct, authoritative answer here — the user can
+        // start filling it in and writes should be allowed.
+        console.log("[LoginManager] No profile data found for user:", userId);
+        return {
+          name: "",
+        };
+      }
+
+      // Any other failure (server error, `not_authorized`, network blip — all
+      // common on mobile) is transient: the profile may well exist, we just
+      // couldn't read it right now. We must NOT fall back to a blank profile,
+      // because the caller stores it in `profile.value` and the next config
+      // write (`saveProfileConfigValue` / `updateProfile`) merges into it and
+      // persists it — permanently wiping the real name/location/picture and
+      // every other config key. Surface the failure instead so callers keep
+      // whatever profile they already had.
+      throw new Error(
+        `[LoginManager] Failed to load profile (${data.errorCode}): ${data.errorMessage}`
+      );
     }
 
     const parsed = userProfileSchema.safeParse(data.data);
 
     if (!parsed.success) {
+      // The record exists but doesn't match the expected shape. Returning a
+      // blank default here would also let the next write clobber the stored
+      // record, so treat it as a load failure rather than an empty profile.
       console.warn("Failed to parse user profile data:", parsed.error);
-      // Return a default profile
-      return {
-        name: "",
-      };
+      throw new Error("[LoginManager] Stored profile failed validation");
     }
     return parsed.data;
   };
@@ -366,10 +382,42 @@ export function createLoginManager({
       posthog.identify(userId.value);
     }
 
-    profilePromise = getUserProfile(userId.value).then((p) => {
-      profile.value = p;
-      return p;
-    });
+    const loadingForUserId = userId.value;
+    const loadPromise = getUserProfile(loadingForUserId)
+      .then((p) => {
+        // Guard against a stale load resolving after the user switched
+        // (e.g. logout, then a different login) — don't apply an old
+        // account's profile over the current one.
+        if (userId.value === loadingForUserId) {
+          profile.value = p;
+        }
+        return p;
+      })
+      .catch((err) => {
+        // A transient load failure must not disturb whatever profile we
+        // already hold. Leaving `profile.value` untouched (previous value or
+        // null) is what keeps a network blip from turning into an account
+        // wipe: writes only merge into a real, successfully-loaded profile,
+        // never into a blank fallback.
+        console.warn(
+          "[LoginManager] Failed to load user profile; keeping existing profile",
+          err
+        );
+        // If we already have a profile loaded, treat the promise as resolved
+        // with it so awaiters (e.g. saveProfileConfigValue) can proceed
+        // against the good data instead of hitting an unhandled rejection.
+        if (profile.value) {
+          return profile.value;
+        }
+        throw err;
+      });
+
+    // Attach a passive rejection handler so a load failure that nobody awaits
+    // doesn't surface as an unhandled promise rejection (which would fire on
+    // every transient failure). Real awaiters of `profilePromise` — e.g.
+    // `saveProfileConfigValue` — still receive the rejection.
+    loadPromise.catch(() => undefined);
+    profilePromise = loadPromise;
   });
 
   effect(() => {
@@ -396,8 +444,18 @@ export function createLoginManager({
       return;
     }
 
+    if (!profile.value) {
+      // The profile hasn't finished loading (or its load failed transiently).
+      // Writing now would merge `newData` into a bare `{ name: "" }` base and
+      // persist it, wiping whatever is actually stored on the account. Refuse
+      // rather than risk the wipe — the caller can retry once the profile is
+      // available.
+      console.warn("Cannot update profile: profile has not loaded yet");
+      return;
+    }
+
     const nextProfile: UserProfile = {
-      ...(profile.value ?? { name: "" }),
+      ...profile.value,
       ...newData,
     };
     profile.value = nextProfile;
@@ -430,7 +488,14 @@ export function createLoginManager({
     userInfo,
     authBot: userInfo,
     profile,
-    profilePromise,
+    // Exposed as a getter so external readers see the promise assigned by the
+    // profile-loading effect below. A plain property would capture the value
+    // at construction time (null), which stays null after a fresh login and
+    // silently defeats `saveProfileConfigValue`'s "wait for the profile to
+    // load" guard.
+    get profilePromise() {
+      return profilePromise;
+    },
 
     isLoginOpen,
 

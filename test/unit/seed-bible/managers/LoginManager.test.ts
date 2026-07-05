@@ -267,6 +267,76 @@ describe("createLoginManager", () => {
 
       expect(getDataMock).toHaveBeenCalledWith(USER_ID, "profile");
     });
+
+    it("keeps profile null (does not fabricate a blank) when the load fails transiently", async () => {
+      // A server/network error is NOT the same as "no profile exists". If we
+      // collapsed it to `{ name: "" }`, the next config write would merge into
+      // that blank and wipe the real stored account (the mobile wipe bug).
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "boom",
+      });
+
+      const manager = createAuthenticatedManager();
+
+      await waitFor(() => manager.userId.value === USER_ID);
+      await flush();
+
+      expect(manager.profile.value).toBeNull();
+    });
+
+    it("does not overwrite an already-loaded profile when a later reload fails", async () => {
+      getDataMock.mockResolvedValueOnce({
+        success: true,
+        data: { name: "Alice", location: "Earth" },
+      });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value?.name === "Alice");
+
+      // A subsequent reload (e.g. triggered by a session refresh) fails. The
+      // good profile must survive so writes don't merge into a blank.
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "not_authorized",
+        errorMessage: "stale key",
+      });
+
+      await manager.getUserProfile(USER_ID).catch(() => undefined);
+      await flush();
+
+      expect(manager.profile.value).toEqual({
+        name: "Alice",
+        location: "Earth",
+      });
+    });
+
+    it("returns a blank default only when the profile genuinely does not exist", async () => {
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "No data found for the given key.",
+      });
+
+      const manager = createLoginManager({ os });
+
+      await expect(manager.getUserProfile(USER_ID)).resolves.toEqual({
+        name: "",
+      });
+    });
+
+    it("throws instead of returning a blank when the load fails transiently", async () => {
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "boom",
+      });
+
+      const manager = createLoginManager({ os });
+
+      await expect(manager.getUserProfile(USER_ID)).rejects.toThrow();
+    });
   });
 
   describe("session refresh on init", () => {
@@ -479,6 +549,24 @@ describe("createLoginManager", () => {
       expect(recordDataMock).not.toHaveBeenCalled();
       expect(warnSpy).toHaveBeenCalledWith(
         "Cannot update profile: no authenticated user"
+      );
+    });
+
+    it("updateProfile() does not persist while the profile is still loading", async () => {
+      // Authenticated, but the profile fetch is still pending (or failed), so
+      // `profile.value` is null. Writing now would persist a bare `{ name: "" }`
+      // base over the real stored profile — refuse instead.
+      getDataMock.mockReturnValue(new Promise(() => undefined));
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userId.value === USER_ID);
+      expect(manager.profile.value).toBeNull();
+
+      manager.updateProfile({ name: "Updated" });
+
+      expect(recordDataMock).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith(
+        "Cannot update profile: profile has not loaded yet"
       );
     });
 
