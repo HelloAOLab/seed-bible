@@ -459,6 +459,16 @@ export function generateThemeCssClasses(theme: BibleTheme): string {
         `color: var(--sb-highlight-${colorId}-words-of-jesus-font-color);`,
         `}`,
         ` }`,
+        // When a highlighted verse is selected, color its underline with a
+        // darker shade of the highlight's own fill. A plain underline (the
+        // verse text color) gets lost on top of a bright highlight, so we
+        // derive a same-hue-but-darker line that stays clear on the fill.
+        // Non-highlighted verses keep the adaptive currentColor set on
+        // `.sb-verse-selected .sb-verse-decorator`. The extra `.sb-highlight-*`
+        // class raises specificity so this wins over that base rule.
+        `.sb-verse-selected .sb-verse-decorator.sb-highlight-${colorId} {`,
+        `border-bottom-color: color-mix(in srgb, var(--sb-highlight-${colorId}-color), #000 50%);`,
+        `}`,
       ].join("\n");
     })
     .join("\n");
@@ -506,7 +516,7 @@ const LIGHT_THEME: BibleTheme = {
     verseFontColor: "#333",
     verseCursor: "pointer",
 
-    selectedVerseBorderBottom: "2px dashed currentColor",
+    selectedVerseBorderBottom: "3px solid currentColor",
     selectedVerseTextDecoration: "none",
     selectedVerseTextDecorationColor: "currentColor",
 
@@ -646,7 +656,7 @@ const DARK_THEME: BibleTheme = {
     verseFontColor: "#e6e6e6",
     verseCursor: "pointer",
 
-    selectedVerseBorderBottom: "2px dashed currentColor",
+    selectedVerseBorderBottom: "3px solid currentColor",
     selectedVerseTextDecoration: "none",
     selectedVerseTextDecorationColor: "currentColor",
 

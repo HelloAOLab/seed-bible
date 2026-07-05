@@ -8,13 +8,19 @@ color: var(--sb-highlight-yellow-font-color);
 color: var(--sb-highlight-yellow-words-of-jesus-font-color);
 }
  }
+.sb-verse-selected .sb-verse-decorator.sb-highlight-yellow {
+border-bottom-color: color-mix(in srgb, var(--sb-highlight-yellow-color), #000 50%);
+}
 .sb-highlight-mint {
 background-color: var(--sb-highlight-mint-color);
 color: var(--sb-highlight-mint-font-color);
 &.sb-words-of-jesus { 
 color: var(--sb-highlight-mint-words-of-jesus-font-color);
 }
- }"
+ }
+.sb-verse-selected .sb-verse-decorator.sb-highlight-mint {
+border-bottom-color: color-mix(in srgb, var(--sb-highlight-mint-color), #000 50%);
+}"
 `;
 
 exports[`ThemeManager CSS helpers > generateThemeCssVariables > converts theme variables into CSS custom properties 1`] = `
