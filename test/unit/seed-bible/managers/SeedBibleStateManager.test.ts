@@ -518,7 +518,7 @@ describe("createSeedBibleState", () => {
         state.panes.panes.value.filter((pane) => !pane.detached)
       ).toHaveLength(4);
 
-      setViewportWidth(state, 500);
+      setViewportWidth(state, 400);
 
       const shownAttached = state.app.effectivePanes.value.filter(
         (pane) => !pane.detached
@@ -536,7 +536,7 @@ describe("createSeedBibleState", () => {
 
     it("uses the single layout on mobile when only one anchored pane exists", async () => {
       const state = await createState();
-      setViewportWidth(state, 500);
+      setViewportWidth(state, 400);
 
       expect(
         state.app.effectivePanes.value.filter((pane) => !pane.detached)
@@ -548,7 +548,7 @@ describe("createSeedBibleState", () => {
       const state = await createState();
       state.panes.setLayout("grid-2x2");
 
-      setViewportWidth(state, 500);
+      setViewportWidth(state, 400);
       expect(state.app.effectiveLayout.value).toBe("stacked-2");
 
       setViewportWidth(state, 1200);
@@ -567,7 +567,7 @@ describe("createSeedBibleState", () => {
       expect(detached).not.toBeNull();
       expect(detached!.detachedAnchor).toBe("floating");
 
-      setViewportWidth(state, 500);
+      setViewportWidth(state, 400);
 
       const effectiveDetached = state.app.effectivePanes.value.find(
         (pane) => pane.detached
