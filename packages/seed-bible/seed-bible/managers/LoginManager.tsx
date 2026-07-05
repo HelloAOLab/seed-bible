@@ -469,6 +469,28 @@ export function createLoginManager({
       return;
     }
 
+    // Make sure the profile has loaded before we upload anything. `updateProfile`
+    // refuses to write while the profile is null (to avoid wiping the account),
+    // so persisting the URL would silently no-op if we ran ahead of the load —
+    // and the caller would see a resolved promise and report a false success.
+    // Failing here, before the (billable) file upload, avoids paying for a file
+    // we couldn't attach to the profile anyway.
+    if (!profile.value) {
+      if (profilePromise) {
+        try {
+          await profilePromise;
+        } catch {
+          // Ignored; the guard below turns a failed load into a thrown error.
+        }
+      }
+
+      if (!profile.value) {
+        throw new Error(
+          "Failed to upload profile picture: profile has not loaded"
+        );
+      }
+    }
+
     const result = await os.recordFile(userId.value, file, {
       mimeType: file.type,
       marker: "publicRead",

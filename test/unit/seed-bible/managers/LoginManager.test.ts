@@ -685,6 +685,32 @@ describe("createLoginManager", () => {
 
       expect(manager.profile.value?.pictureUrl).toBeUndefined();
     });
+
+    it("throws (and skips the file upload) when the profile never loads", async () => {
+      // The profile load fails transiently, so profile.value stays null.
+      // updateProfile would refuse to persist the URL, so uploading first would
+      // report a false success and burn a real file upload. Fail loudly, and
+      // before recordFile is ever called.
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "boom",
+      });
+      recordFileMock.mockResolvedValue({
+        success: true,
+        url: "https://example.com/avatar.png",
+      });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userId.value === USER_ID);
+
+      await expect(manager.uploadProfilePicture(makeFile())).rejects.toThrow(
+        "profile has not loaded"
+      );
+
+      expect(recordFileMock).not.toHaveBeenCalled();
+      expect(manager.profile.value).toBeNull();
+    });
   });
 });
 
