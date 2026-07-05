@@ -4093,12 +4093,12 @@ a:visited {
   color: var(--sb-tab-font-color);
   cursor: pointer;
   display: inline-flex;
-  flex-direction: column;
-  align-items: center;
+  flex-direction: row;
+  align-items: baseline;
   justify-content: center;
   padding: 0;
   line-height: 1;
-  gap: 2px;
+  gap: 5px;
   border: 1px solid;
 }
 
