@@ -642,7 +642,7 @@ a:visited {
   flex: 1;
   overflow: auto;
 
-  background: var(--sb-detached-pane-body-background);
+  background: var(--sb-reader-background);
   color: var(--sb-detached-pane-body-font-color);
 }
 
