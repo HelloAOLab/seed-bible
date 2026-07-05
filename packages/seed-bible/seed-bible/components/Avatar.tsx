@@ -1,6 +1,8 @@
 import {
+  isSessionHost,
   type ConnectedSessionUser,
   type ConnectionSessionUserVisual,
+  type SessionOptions,
 } from "../managers/SessionsManager";
 
 /** Session leadership role for a connected user, shown as an avatar badge. */
@@ -11,6 +13,36 @@ export function getUserDisplayName(user: ConnectedSessionUser): string {
     user.profile?.name ??
     `User ${(user.userId ?? user.connectionId).slice(0, 8)}`
   );
+}
+
+/**
+ * Leadership role of a connected user within a session, or null for a plain
+ * participant. Shared by the sidebar tab avatar row, the collapsed-sidebar
+ * presence dots, and the mobile reader participants stack so every surface
+ * agrees on who's a host / co-host.
+ */
+export function getUserSessionRole(
+  options: SessionOptions,
+  user: ConnectedSessionUser
+): SessionRole | null {
+  if (
+    options.hostUserId === user.userId ||
+    options.hostUserId === user.connectionId
+  ) {
+    return "host";
+  }
+  if (
+    isSessionHost(options, user.userId) ||
+    isSessionHost(options, user.connectionId)
+  ) {
+    return "co-host";
+  }
+  return null;
+}
+
+/** Host first, then co-hosts, then everyone else. */
+export function sessionRoleRank(role: SessionRole | null): number {
+  return role === "host" ? 0 : role === "co-host" ? 1 : 2;
 }
 
 export function Avatar({
