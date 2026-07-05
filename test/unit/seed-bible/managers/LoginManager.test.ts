@@ -325,6 +325,39 @@ describe("createLoginManager", () => {
       }
     });
 
+    it("drops the previous account's profile when switching accounts and the new load fails", async () => {
+      // Switch userId A -> B directly (without logging out, which would clear
+      // the profile). If B's profile load then fails transiently, A's profile
+      // must NOT linger under B — otherwise a later write would merge A's data
+      // into B's record.
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { name: "Alice", location: "Earth" },
+      });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value?.name === "Alice");
+
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "not_authorized",
+        errorMessage: "stale key",
+      });
+
+      // Swap the session key to a different account's key. userId is derived
+      // from it, so this moves A -> B without passing through a logged-out null.
+      os.sessionKey.value = formatV1SessionKey(
+        "user-2",
+        "session-2",
+        "secret-2",
+        Date.now() + 1000 * 60 * 60 * 24 * 14
+      );
+      await waitFor(() => manager.userId.value === "user-2");
+      await flush();
+
+      expect(manager.profile.value).toBeNull();
+    });
+
     it("returns a blank default only when the profile genuinely does not exist", async () => {
       getDataMock.mockResolvedValue({
         success: false,

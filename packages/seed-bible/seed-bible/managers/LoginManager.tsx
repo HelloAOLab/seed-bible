@@ -153,6 +153,10 @@ export function createLoginManager({
   // const userId = os.userId;
   const profile = signal<UserProfile | null>(null);
   let profilePromise: Promise<UserProfile> | null = null;
+  // Tracks which account `profile.value` currently belongs to, so an account
+  // switch can never leave the previous account's profile in place (which a
+  // later write would then merge into the new account's record).
+  let profileUserId: string | null = null;
 
   const getUserProfile = async (userId: string): Promise<UserProfile> => {
     const data = await os.getData(userId, "profile");
@@ -371,7 +375,17 @@ export function createLoginManager({
   effect(() => {
     if (!userId.value) {
       profile.value = null;
+      profileUserId = null;
       return;
+    }
+
+    // If the profile we're holding belongs to a different account — i.e. the
+    // user switched accounts without a full logout clearing it first — drop it
+    // now so we never display, or (via a later write) merge, one account's
+    // profile under another's id.
+    if (profileUserId !== null && profileUserId !== userId.value) {
+      profile.value = null;
+      profileUserId = null;
     }
 
     if (typeof posthog !== "undefined" && posthog) {
@@ -390,6 +404,7 @@ export function createLoginManager({
         // account's profile over the current one.
         if (userId.value === loadingForUserId) {
           profile.value = p;
+          profileUserId = loadingForUserId;
         }
         return p;
       })
@@ -406,7 +421,11 @@ export function createLoginManager({
         // If we already have a profile loaded, treat the promise as resolved
         // with it so awaiters (e.g. saveProfileConfigValue) can proceed
         // against the good data instead of hitting an unhandled rejection.
-        if (profile.value) {
+        // Only do so when the load is still current and the held profile
+        // belongs to this account (the account-switch clear above guarantees a
+        // non-null profile.value here belongs to loadingForUserId). Otherwise
+        // rethrow so a stale/foreign profile is never handed back.
+        if (userId.value === loadingForUserId && profile.value) {
           return profile.value;
         }
         throw err;
