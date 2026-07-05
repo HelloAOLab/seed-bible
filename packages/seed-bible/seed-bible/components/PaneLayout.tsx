@@ -973,6 +973,24 @@ export function PaneLayout(props: PaneLayoutProps) {
         startX: number;
         startY: number;
         anchor?: DetachedPaneAnchor;
+        /**
+         * Geometry captured at drag start, used to clamp a floating pane
+         * within the viewport against its *actual* rendered box. This keeps the
+         * math correct regardless of the UI `zoom` or the shell's positioned
+         * ancestor:
+         * - grabOffset: pointer position relative to the pane's top-left (px)
+         * - paneWidthPx/paneHeightPx: rendered footprint in real viewport px
+         * - originX/originY, scaleX/scaleY: the linear map from the pane's CSS
+         *   coordinate (left/top) to real viewport px, sampled from the element.
+         */
+        grabOffsetX?: number;
+        grabOffsetY?: number;
+        paneWidthPx?: number;
+        paneHeightPx?: number;
+        originX?: number;
+        originY?: number;
+        scaleX?: number;
+        scaleY?: number;
       }
     | {
         type: "attached-resize";
@@ -1193,7 +1211,35 @@ export function PaneLayout(props: PaneLayoutProps) {
           : event.clientY - dragState.startY;
 
       if (dragState.mode === "move") {
-        panesManager.movePane(dragState.paneId, deltaX, deltaY);
+        // Desired top-left of the pane in real viewport px, from the pointer
+        // and the offset where it grabbed the toolbar.
+        const grabOffsetX = dragState.grabOffsetX ?? 0;
+        const grabOffsetY = dragState.grabOffsetY ?? 0;
+        const paneWidthPx = dragState.paneWidthPx ?? 0;
+        const paneHeightPx = dragState.paneHeightPx ?? 0;
+        const scaleX = dragState.scaleX || 1;
+        const scaleY = dragState.scaleY || 1;
+        const originX = dragState.originX ?? 0;
+        const originY = dragState.originY ?? 0;
+
+        // Clamp so the whole pane — including its toolbar — stays on-screen.
+        const maxLeft = Math.max(0, window.innerWidth - paneWidthPx);
+        const maxTop = Math.max(0, window.innerHeight - paneHeightPx);
+        const viewportLeft = Math.min(
+          Math.max(0, event.clientX - grabOffsetX),
+          maxLeft
+        );
+        const viewportTop = Math.min(
+          Math.max(0, event.clientY - grabOffsetY),
+          maxTop
+        );
+
+        // Map the clamped viewport position back to the pane's CSS left/top.
+        panesManager.setPanePosition(
+          dragState.paneId,
+          (viewportLeft - originX) / scaleX,
+          (viewportTop - originY) / scaleY
+        );
       } else {
         panesManager.resizePane(dragState.paneId, deltaX, deltaY);
       }
@@ -1520,12 +1566,32 @@ export function PaneLayout(props: PaneLayoutProps) {
                 }
                 event.stopPropagation();
                 app.selectPane(pane.id);
+
+                // Sample the pane's actual rendered geometry so the drag can be
+                // clamped in real viewport pixels. `rect` already reflects the
+                // UI zoom and the shell's positioned ancestor; deriving the
+                // scale/origin from it lets us map back to the pane's CSS
+                // left/top exactly.
+                const element = paneElementMapRef.current.get(pane.id);
+                const rect = element?.getBoundingClientRect();
+                const scaleX = rect && pane.width ? rect.width / pane.width : 1;
+                const scaleY =
+                  rect && pane.height ? rect.height / pane.height : 1;
+
                 dragStateRef.current = {
                   type: "detached",
                   mode: "move",
                   paneId: pane.id,
                   startX: event.clientX,
                   startY: event.clientY,
+                  grabOffsetX: rect ? event.clientX - rect.left : 0,
+                  grabOffsetY: rect ? event.clientY - rect.top : 0,
+                  paneWidthPx: rect?.width ?? pane.width,
+                  paneHeightPx: rect?.height ?? pane.height,
+                  scaleX,
+                  scaleY,
+                  originX: rect ? rect.left - pane.x * scaleX : 0,
+                  originY: rect ? rect.top - pane.y * scaleY : 0,
                 };
               }}
             >
