@@ -13,8 +13,14 @@ import {
   FreeUseBibleAPI,
   getDefaultAPIEndpoint,
 } from "../managers/FreeUseBibleAPI";
+import { h } from "preact";
 import { createPanes } from "../managers/PanesManager";
-import type { Pane, PanesManager } from "../managers/PanesManager";
+import type {
+  Pane,
+  PaneLayoutId,
+  PanesManager,
+} from "../managers/PanesManager";
+import { MobileSplitPanelWarningContent } from "../components/MobileSplitPanelWarning";
 import { createLoginManager } from "../managers/LoginManager";
 import type { LoginManager } from "../managers/LoginManager";
 import { createSidebar } from "../managers/SidebarManager";
@@ -130,6 +136,13 @@ export interface AppState {
   selectedTab: ReadonlySignal<ReaderTab | null>;
   /** Effective pane list shown by the UI (single pane fallback when panels are disabled). */
   effectivePanes: ReadonlySignal<Pane[]>;
+  /**
+   * Effective attached layout the UI should render. Mirrors the pane manager's
+   * layout on desktop, but on mobile it is coerced to the only two shapes a
+   * phone supports — `single` or `stacked-2` (two panes top/bottom) — without
+   * mutating the manager's stored layout.
+   */
+  effectiveLayout: ReadonlySignal<PaneLayoutId>;
 
   /** Current window inner width in pixels. Updated on resize. */
   viewportWidth: ReadonlySignal<number>;
@@ -567,27 +580,61 @@ export function createSeedBibleState(
       return buildSingleSelectedPane();
     }
     if (isMobile.value) {
-      // On mobile we only show a single attached pane at a time. Prefer the
-      // pane that hosts the currently selected tab; fall back to the manager's
-      // selected pane, then the first attached pane.
+      // Mobile pane restrictions. These are applied to the rendered view only —
+      // the pane manager's own settings (layout, extra panes, detached anchors)
+      // are left untouched so they are restored when the viewport grows back to
+      // a desktop size.
+      //
+      //   - Anchored (attached) panes: at most two, shown stacked top/bottom.
+      //     Any further attached panes are hidden. When more than two exist we
+      //     keep the pane hosting the currently selected tab (or the manager's
+      //     selected pane) visible.
+      //   - Detached panes: always rendered anchored to the bottom, regardless
+      //     of their stored anchor, so they float above the default toolbar and
+      //     in front of the anchored panes (PaneLayout gives detached panes a
+      //     higher z-index than attached ones).
       const allPanes = panes.panes.value;
-      const tab = selectedTab.value;
-      const selectedPaneId = panes.selectedPaneId.value;
       const attachedPanes = allPanes.filter((p) => !p.detached);
-      const detachedPanes = allPanes.filter((p) => p.detached);
-      const matching =
-        (tab ? attachedPanes.find((p) => p.tab?.id === tab.id) : null) ??
-        attachedPanes.find((p) => p.id === selectedPaneId) ??
-        attachedPanes[0] ??
-        null;
-      const base = matching ? [matching] : buildSingleSelectedPane();
-      // Detached panes (extension tools, playlist, etc.) are always kept so
-      // they render as overlays in front of the attached pane. PaneLayout
-      // gives detached panes a higher z-index than attached ones, so they sit
-      // above the reader and stay interactable instead of being hidden.
-      return [...base, ...detachedPanes];
+      const detachedPanes = allPanes
+        .filter((p) => p.detached)
+        .map((p) =>
+          p.detachedAnchor === "bottom"
+            ? p
+            : { ...p, detachedAnchor: "bottom" as const }
+        );
+
+      let shownAttached: Pane[];
+      if (attachedPanes.length === 0) {
+        shownAttached = buildSingleSelectedPane();
+      } else if (attachedPanes.length <= 2) {
+        shownAttached = attachedPanes;
+      } else {
+        const tab = selectedTab.value;
+        const selectedPaneId = panes.selectedPaneId.value;
+        const preferred =
+          (tab ? attachedPanes.find((p) => p.tab?.id === tab.id) : null) ??
+          attachedPanes.find((p) => p.id === selectedPaneId) ??
+          attachedPanes[0]!;
+        const next = attachedPanes.find((p) => p.id !== preferred.id)!;
+        shownAttached = [preferred, next];
+      }
+
+      return [...shownAttached, ...detachedPanes];
     }
     return panes.panes.value;
+  });
+
+  const effectiveLayout = computed<PaneLayoutId>(() => {
+    if (!panelsEnabled.value) {
+      return "single";
+    }
+    if (isMobile.value) {
+      const attachedShown = effectivePanes.value.filter(
+        (pane) => !pane.detached
+      ).length;
+      return attachedShown >= 2 ? "stacked-2" : "single";
+    }
+    return panes.layout.value;
   });
   const currentReadingState = computed(() => {
     const selectedTabValue = selectedTab.value;
@@ -825,13 +872,51 @@ export function createSeedBibleState(
   };
 
   const handleOpenInDetachedPane = (tabId: string) => {
-    closeSidebarAndSettings();
-    const paneTabId = resolveTabForNewPane(tabId);
-    panes.openPane({
-      type: "detached",
-      tabId: paneTabId,
-    });
-    tabs.selectTab(paneTabId);
+    const openDetached = () => {
+      closeSidebarAndSettings();
+      const paneTabId = resolveTabForNewPane(tabId);
+      panes.openPane({
+        type: "detached",
+        tabId: paneTabId,
+      });
+      tabs.selectTab(paneTabId);
+    };
+
+    // On mobile a detached panel renders as a bottom sheet stacked over the
+    // anchored panes. When the anchored layout is already split into two panes,
+    // adding a third surface on a small screen is cramped, so warn first and
+    // let the user collapse the split, keep it, or cancel.
+    const anchoredCount = panes.panes.value.filter(
+      (pane) => !pane.detached
+    ).length;
+    if (isMobile.value && anchoredCount >= 2) {
+      const modalId = "mobile-split-detached-warning";
+      modals.openModal({
+        id: modalId,
+        title: {
+          key: "split-panel-warning-title",
+          defaultValue: "Open panel over split view?",
+        },
+        content: () =>
+          h(MobileSplitPanelWarningContent, {
+            onCancel: () => modals.closeModal(modalId),
+            onKeep: () => {
+              modals.closeModal(modalId);
+              openDetached();
+            },
+            onCollapse: () => {
+              modals.closeModal(modalId);
+              // Collapse the anchored split back to a single pane. This only
+              // changes the active layout preset; hidden panes are preserved.
+              panes.setLayout("single");
+              openDetached();
+            },
+          }),
+      });
+      return;
+    }
+
+    openDetached();
   };
 
   const handleSelectPane = (paneId: string) => {
@@ -1186,6 +1271,7 @@ export function createSeedBibleState(
       panelsEnabled,
       selectedTab,
       effectivePanes,
+      effectiveLayout,
       viewportWidth,
       viewportHeight,
       isMobile,

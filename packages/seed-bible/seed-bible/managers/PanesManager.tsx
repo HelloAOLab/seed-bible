@@ -9,7 +9,12 @@ export type PaneLayoutId =
   | "split-left-two-right"
   | "split-3v"
   | "grid-2x2"
-  | "split-4v";
+  | "split-4v"
+  // Mobile-only: two attached panes stacked top/bottom. This is never a
+  // user-selectable preset (it is intentionally absent from
+  // PANE_LAYOUT_OPTIONS) — it is only produced by the app's effective layout
+  // when a mobile viewport shows two anchored panes.
+  | "stacked-2";
 
 export interface PaneLayoutOption {
   /** Stable layout identifier. */
