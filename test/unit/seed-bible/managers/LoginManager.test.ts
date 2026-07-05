@@ -287,29 +287,42 @@ describe("createLoginManager", () => {
     });
 
     it("does not overwrite an already-loaded profile when a later reload fails", async () => {
-      getDataMock.mockResolvedValueOnce({
-        success: true,
-        data: { name: "Alice", location: "Earth" },
-      });
+      // posthog being present makes the profile-loading effect depend on
+      // userInfo, which is exactly how a session refresh re-triggers a profile
+      // reload in production. We drive that same path here.
+      const posthogStub = { identify: vi.fn(), setPersonProperties: vi.fn() };
+      (globalThis as any).posthog = posthogStub;
 
-      const manager = createAuthenticatedManager();
-      await waitFor(() => manager.profile.value?.name === "Alice");
+      try {
+        getDataMock.mockResolvedValue({
+          success: true,
+          data: { name: "Alice", location: "Earth" },
+        });
 
-      // A subsequent reload (e.g. triggered by a session refresh) fails. The
-      // good profile must survive so writes don't merge into a blank.
-      getDataMock.mockResolvedValue({
-        success: false,
-        errorCode: "not_authorized",
-        errorMessage: "stale key",
-      });
+        const manager = createAuthenticatedManager();
+        await waitFor(() => manager.profile.value?.name === "Alice");
 
-      await manager.getUserProfile(USER_ID).catch(() => undefined);
-      await flush();
+        // A subsequent reload (e.g. triggered by a session refresh updating
+        // userInfo) fails. The good profile must survive so writes don't merge
+        // into a blank.
+        getDataMock.mockResolvedValue({
+          success: false,
+          errorCode: "not_authorized",
+          errorMessage: "stale key",
+        });
 
-      expect(manager.profile.value).toEqual({
-        name: "Alice",
-        location: "Earth",
-      });
+        // Bump userInfo to a new reference to re-run the loading effect, the
+        // same way a session refresh does.
+        manager.userInfo.value = { id: USER_ID, email: EMAIL };
+        await flush();
+
+        expect(manager.profile.value).toEqual({
+          name: "Alice",
+          location: "Earth",
+        });
+      } finally {
+        delete (globalThis as any).posthog;
+      }
     });
 
     it("returns a blank default only when the profile genuinely does not exist", async () => {
