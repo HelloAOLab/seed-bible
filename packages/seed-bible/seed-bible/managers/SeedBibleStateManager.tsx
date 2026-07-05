@@ -63,6 +63,7 @@ import {
 } from "./ChatsManager";
 import {
   createSessionsManager,
+  isSessionHost,
   type BibleReadingSession,
   type SessionsManager,
 } from "../managers/SessionsManager";
@@ -107,10 +108,20 @@ type SearchManager = ReturnType<typeof createSearchManager>;
  * App-wide mobile breakpoint, in pixels. Viewports at or below this width use
  * the mobile layout (drawer sidebar, mobile header, full-screen selector);
  * above it the docked desktop layout applies. This is the single source of
- * truth for the JS side — the matching `@media (max-width: 768px)` /
- * `(min-width: 769px)` rules in app/main.css must be kept in sync by hand.
+ * truth for the JS side — the matching `@media (max-width: 480px)` /
+ * `(min-width: 481px)` rules in app/main.css must be kept in sync by hand.
  */
-export const MOBILE_BREAKPOINT = 768;
+export const MOBILE_BREAKPOINT = 480;
+
+/**
+ * Upper bound of the "compact desktop" band. For viewports above
+ * {@link MOBILE_BREAKPOINT} but at or below this width the screen is too narrow
+ * to dock a 320px sidebar beside the reader, so an *expanded* sidebar floats
+ * over the reader instead of splitting the layout row. Kept in sync with the
+ * matching `@media (min-width: 481px) and (max-width: 768px)` rules in
+ * app/main.css by hand.
+ */
+export const SIDEBAR_OVERLAY_MAX_WIDTH = 768;
 
 /**
  * Derived app-level state and high-level actions used by UI components.
@@ -138,10 +149,16 @@ export interface AppState {
   /** Current window inner height in pixels. Updated on resize. */
   viewportHeight: ReadonlySignal<number>;
 
-  /** True when viewport width is at or below the mobile breakpoint (768px). */
+  /** True when viewport width is at or below the mobile breakpoint (480px). */
   isMobile: ReadonlySignal<boolean>;
   /** True when on a phone-sized viewport held in landscape orientation. */
   isMobileLandscape: ReadonlySignal<boolean>;
+  /**
+   * True in the "compact desktop" band (just above the mobile breakpoint) where
+   * an expanded sidebar floats over the reader as an overlay rather than
+   * docking beside it.
+   */
+  isCompactDesktop: ReadonlySignal<boolean>;
 
   /**
    * Snapshot of the current chapter selection for analytics and integrations.
@@ -494,26 +511,6 @@ export function createSeedBibleState(
       viewportWidth.value > viewportHeight.value
   );
 
-  // True when a multi-pane layout is active — i.e. the user picked anything
-  // other than "single" from the Panels menu (split-2v, split-3v, grid-2x2,
-  // …), or more than one attached pane is otherwise open. Detached overlay
-  // panes (extension tools, playlist, etc.) don't count. Keyed primarily off
-  // the layout preset so selecting a layout from the menu reacts immediately.
-  const hasMultiplePanes = computed(
-    () =>
-      panelsEnabled.value &&
-      (panes.layout.value !== "single" ||
-        panes.panes.value.filter((pane) => !pane.detached).length > 1)
-  );
-
-  // A docked-sidebar desktop layout that has become too narrow for the
-  // sidebar and reader to comfortably share the row. Excludes mobile
-  // (<= 768), where the sidebar is a drawer and `isSidebarCollapsed` does not
-  // apply. The 1200px ceiling mirrors the CSS breakpoint.
-  const isNarrowDesktop = computed(
-    () => viewportWidth.value > 768 && viewportWidth.value <= 1200
-  );
-
   effect(() => {
     if (typeof window === "undefined") {
       return;
@@ -540,31 +537,20 @@ export function createSeedBibleState(
     }
   });
 
-  // Collapse the docked sidebar by default when a multi-pane layout is active,
-  // so the panes get the horizontal space instead of competing with the
-  // sidebar. Reacting only to the boolean means this fires once per transition
-  // into multi-pane and still lets the user manually re-expand afterwards.
+  // The "compact desktop" band (just above the mobile breakpoint): an
+  // expanded sidebar would overlay the reader rather than dock beside it
+  // (see app/main.css), so start collapsed to a rail when entering the band.
+  // Same once-per-transition pattern as the landscape collapse above, so the
+  // user can still expand the floating sidebar afterwards.
+  const isCompactDesktop = computed(
+    () =>
+      viewportWidth.value > MOBILE_BREAKPOINT &&
+      viewportWidth.value <= SIDEBAR_OVERLAY_MAX_WIDTH
+  );
   effect(() => {
-    if (hasMultiplePanes.value) {
+    if (isCompactDesktop.value) {
       sidebar.isSidebarCollapsed.value = true;
     }
-  });
-
-  // Drive the docked sidebar's collapsed state from the viewport width so the
-  // three layouts hand off cleanly:
-  //   - mobile (<= 768): the sidebar is a drawer (isMobileOpen); the docked
-  //     collapsed flag does not apply, so leave it untouched.
-  //   - narrow desktop (769–1200): collapse to sb-tabs-sidebar-collapsed so
-  //     the reader keeps usable horizontal space.
-  //   - wide desktop (> 1200): restore the regular expanded sidebar.
-  // The effect reads only the booleans (not raw width), so it re-runs solely
-  // when crossing the 768/1200 boundaries — manual toggling within a band is
-  // preserved.
-  effect(() => {
-    if (isMobile.value) {
-      return;
-    }
-    sidebar.isSidebarCollapsed.value = isNarrowDesktop.value;
   });
 
   const buildSingleSelectedPane = (): Pane[] =>
@@ -977,12 +963,27 @@ export function createSeedBibleState(
       // after a login/logout the current login.userId / configBot.id no
       // longer match the original `hostUserId`, but we're still the host
       // of sessions we created in this run.
+      const options = session.options.value;
       const isHost =
         locallyHostedSessionIds.has(session.id) ||
         (hostUserId !== null &&
-          (hostUserId === localId || hostUserId === localConnectionId));
+          (hostUserId === localId || hostUserId === localConnectionId)) ||
+        isSessionHost(options, localId) ||
+        isSessionHost(options, localConnectionId);
 
-      if (isHost && session.options.value.endedAt === null) {
+      // Only end the session for everyone when the leaving client is the
+      // LAST connected host/co-host. If another host/co-host is still
+      // present (e.g. one was just appointed), hand the session off instead
+      // of ending it. Explicit "End session" writes `endedAt` directly, so
+      // it bypasses this heuristic.
+      const anotherHostStillConnected = session.connectedUsers.value.some(
+        (user) =>
+          !user.isSelf &&
+          (isSessionHost(options, user.userId) ||
+            isSessionHost(options, user.connectionId))
+      );
+
+      if (isHost && !anotherHostStillConnected && options.endedAt === null) {
         try {
           session.updateOptions({ endedAt: Date.now() });
         } catch {
@@ -1053,8 +1054,13 @@ export function createSeedBibleState(
       if (!hostId) continue;
 
       const users = session.connectedUsers.value;
+      // A session stays alive as long as the host OR any co-host is present,
+      // so appointing a co-host lets the original host leave without kicking
+      // everyone else out.
       const hostIsConnected = users.some(
-        (user) => user.userId === hostId || user.connectionId === hostId
+        (user) =>
+          isSessionHost(session.options.value, user.userId) ||
+          isSessionHost(session.options.value, user.connectionId)
       );
 
       if (hostIsConnected) {
@@ -1270,6 +1276,7 @@ export function createSeedBibleState(
       viewportHeight,
       isMobile,
       isMobileLandscape,
+      isCompactDesktop,
       currentReadingState,
       selectTab: handleSelectTab,
       addTab: handleAddTab,

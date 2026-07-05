@@ -1189,39 +1189,41 @@ export function BibleReader(props: BibleReaderProps) {
         </>
       ) : (
         <>
-          {state && (
-            <ReaderBookmarkButton
-              state={state}
-              translationId={translationId.value}
-              bookId={bookId.value}
-              chapterNumber={chapterNumber.value}
-            />
-          )}
-          {state && (
-            <QuickToolbar
-              toolsManager={state.tools}
-              readingState={readingState}
-              className="sb-quick-toolbar-reader"
-            />
-          )}
-          <h2
-            onClick={() => selectorState.setOpen(true, currentPane)}
-            className="sb-bible-reader-title"
-          >
-            <span className="sb-bible-reader-book">
-              {currentBook.value?.name ?? bookId.value ?? "Select a book"}
-            </span>
-            <span className="sb-bible-reader-title-sep" aria-hidden="true">
-              {" – "}
-            </span>
-            <span className="sb-bible-reader-chapter">
-              {chapterNumber.value}
-            </span>
-            <span className="sb-bible-reader-translation">
-              {" / "}
-              {translationId.value ?? ""}
-            </span>
-          </h2>
+          <div className="sb-bible-reader-header">
+            <h2
+              onClick={() => selectorState.setOpen(true, currentPane)}
+              className="sb-bible-reader-title"
+            >
+              <span className="sb-bible-reader-book">
+                {currentBook.value?.name ?? bookId.value ?? "Select a book"}
+              </span>
+              <span className="sb-bible-reader-title-sep" aria-hidden="true">
+                {" – "}
+              </span>
+              <span className="sb-bible-reader-chapter">
+                {chapterNumber.value}
+              </span>
+              <span className="sb-bible-reader-translation">
+                {" / "}
+                {translationId.value ?? ""}
+              </span>
+            </h2>
+            {state && (
+              <div className="sb-bible-reader-actions">
+                <QuickToolbar
+                  toolsManager={state.tools}
+                  readingState={readingState}
+                  className="sb-quick-toolbar-reader"
+                />
+                <ReaderBookmarkButton
+                  state={state}
+                  translationId={translationId.value}
+                  bookId={bookId.value}
+                  chapterNumber={chapterNumber.value}
+                />
+              </div>
+            )}
+          </div>
           {renderMainContent()}
         </>
       )}

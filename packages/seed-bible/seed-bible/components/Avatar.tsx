@@ -3,6 +3,9 @@ import {
   type ConnectionSessionUserVisual,
 } from "../managers/SessionsManager";
 
+/** Session leadership role for a connected user, shown as an avatar badge. */
+export type SessionRole = "host" | "co-host";
+
 export function getUserDisplayName(user: ConnectedSessionUser): string {
   return (
     user.profile?.name ??
@@ -48,13 +51,34 @@ export function Avatar({
   );
 }
 
-export function SessionUserAvatar({ user }: { user: ConnectedSessionUser }) {
+export function SessionUserAvatar({
+  user,
+  role,
+  roleLabel,
+}: {
+  user: ConnectedSessionUser;
+  role?: SessionRole | null;
+  roleLabel?: string;
+}) {
   return (
-    <Avatar
-      imageUrl={user.profile?.pictureUrl ?? null}
-      visual={user.visual}
-      title={getUserDisplayName(user)}
-      isSelf={user.isSelf}
-    />
+    <span className="sb-tab-user">
+      <Avatar
+        imageUrl={user.profile?.pictureUrl ?? null}
+        visual={user.visual}
+        title={
+          roleLabel
+            ? `${getUserDisplayName(user)} · ${roleLabel}`
+            : getUserDisplayName(user)
+        }
+        isSelf={user.isSelf}
+      />
+      {role && roleLabel && (
+        <span
+          className={`sb-tab-user-role sb-tab-user-role-${role === "co-host" ? "cohost" : "host"}`}
+        >
+          {roleLabel}
+        </span>
+      )}
+    </span>
   );
 }
