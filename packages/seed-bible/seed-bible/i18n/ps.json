@@ -318,8 +318,8 @@
   "tutorial.promptBody": "د سیډ بایبل د داخلي او خارجي برخو زده کولو کې ستاسو سره د مرستې لپاره یو لارښود سفر شتون لري.",
   "tutorial.promptDecline": "نه، مننه",
   "tutorial.promptAccept": "سفر وکړئ",
-  "split-panel-warning-title": "پینل د ویشل شوي لید پر سر خلاص شي؟",
-  "split-panel-warning-message": "تاسو دمخه د دوو پینلونو سره ویشل شوی ترتیب لرئ. په کوچني سکرین کې د دوی پر سر د بل پینل خلاصول ممکن تنگ احساس شي.",
-  "split-panel-warning-keep": "ویش وساتئ",
-  "split-panel-warning-collapse": "ویش وتړئ"
+  "split-panel-warning-title": "د ویشل شوي لید په سر پینل خلاص کړئ؟",
+  "split-panel-warning-message": "تاسو دمخه د دوو پینلونو سره یو ویشل شوی ترتیب لرئ. په یوه کوچنۍ سکرین کې، د دوی په سر کې د بل پینل پرانیستل ممکن تنګ احساس کړي.",
+  "split-panel-warning-keep": "جلا وساتئ",
+  "split-panel-warning-collapse": "وېش بند کړئ"
 }

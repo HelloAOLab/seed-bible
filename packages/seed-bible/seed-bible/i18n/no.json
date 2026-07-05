@@ -318,8 +318,8 @@
   "tutorial.promptBody": "En guidet omvisning er tilgjengelig for å hjelpe deg med å lære alt om Seed Bible.",
   "tutorial.promptDecline": "Nei, takk",
   "tutorial.promptAccept": "Ta turen",
-  "split-panel-warning-title": "Åpne panel over delt visning?",
-  "split-panel-warning-message": "Du har allerede et delt oppsett med to paneler. På en liten skjerm kan det føles trangt å åpne enda et panel oppå dem.",
-  "split-panel-warning-keep": "Behold deling",
+  "split-panel-warning-title": "Åpne panelet over delt visning?",
+  "split-panel-warning-message": "Du har allerede et delt oppsett med to paneler. På en liten skjerm kan det føles trangt å åpne et annet panel oppå dem.",
+  "split-panel-warning-keep": "Hold splitt",
   "split-panel-warning-collapse": "Lukk deling"
 }

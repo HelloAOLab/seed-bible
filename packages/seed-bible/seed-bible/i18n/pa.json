@@ -318,8 +318,8 @@
   "tutorial.promptBody": "ਸੀਡ ਬਾਈਬਲ ਦੀਆਂ ਬਾਰੀਕੀਆਂ ਸਿੱਖਣ ਵਿੱਚ ਤੁਹਾਡੀ ਮਦਦ ਕਰਨ ਲਈ ਇੱਕ ਗਾਈਡਡ ਟੂਰ ਉਪਲਬਧ ਹੈ।",
   "tutorial.promptDecline": "ਨਹੀਂ ਧੰਨਵਾਦ",
   "tutorial.promptAccept": "ਟੂਰ ਲਓ",
-  "split-panel-warning-title": "ਵੰਡੇ ਦ੍ਰਿਸ਼ ਉੱਤੇ ਪੈਨਲ ਖੋਲ੍ਹਣਾ ਹੈ?",
-  "split-panel-warning-message": "ਤੁਹਾਡੇ ਕੋਲ ਪਹਿਲਾਂ ਹੀ ਦੋ ਪੈਨਲਾਂ ਵਾਲਾ ਵੰਡਿਆ ਲੇਆਉਟ ਹੈ। ਛੋਟੀ ਸਕ੍ਰੀਨ 'ਤੇ ਉਹਨਾਂ ਉੱਤੇ ਹੋਰ ਪੈਨਲ ਖੋਲ੍ਹਣਾ ਤੰਗ ਲੱਗ ਸਕਦਾ ਹੈ।",
-  "split-panel-warning-keep": "ਵੰਡ ਰੱਖੋ",
-  "split-panel-warning-collapse": "ਵੰਡ ਬੰਦ ਕਰੋ"
+  "split-panel-warning-title": "ਕੀ ਪੈਨਲ ਨੂੰ ਸਪਲਿਟ ਵਿਊ ਉੱਤੇ ਖੋਲ੍ਹਣਾ ਹੈ?",
+  "split-panel-warning-message": "ਤੁਹਾਡੇ ਕੋਲ ਪਹਿਲਾਂ ਹੀ ਦੋ ਪੈਨਲਾਂ ਵਾਲਾ ਇੱਕ ਸਪਲਿਟ ਲੇਆਉਟ ਹੈ। ਇੱਕ ਛੋਟੀ ਸਕ੍ਰੀਨ 'ਤੇ, ਉਨ੍ਹਾਂ ਦੇ ਉੱਪਰ ਇੱਕ ਹੋਰ ਪੈਨਲ ਖੋਲ੍ਹਣ ਨਾਲ ਤੰਗ ਮਹਿਸੂਸ ਹੋ ਸਕਦਾ ਹੈ।",
+  "split-panel-warning-keep": "ਵੰਡ ਕੇ ਰੱਖੋ",
+  "split-panel-warning-collapse": "ਬੰਦ ਸਪਲਿਟ"
 }

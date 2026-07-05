@@ -318,8 +318,8 @@
   "tutorial.promptBody": "Uhambo oluqondisiwe luyatholakala ukukusiza ufunde okujulile nokungaphandle kweSeed Bible.",
   "tutorial.promptDecline": "Cha ngiyabonga",
   "tutorial.promptAccept": "Thatha uhambo",
-  "split-panel-warning-title": "Vula iphaneli ngaphezu kombukiso ohlukanisiwe?",
-  "split-panel-warning-message": "Usuvele unesakhiwo esihlukanisiwe esinamaphaneli amabili. Esikrinini esincane, ukuvula elinye iphaneli ngaphezu kwawo kungazwakala kuminyene.",
-  "split-panel-warning-keep": "Gcina ukwehlukanisa",
-  "split-panel-warning-collapse": "Vala ukwehlukanisa"
+  "split-panel-warning-title": "Vula iphaneli phezu kokubuka okuhlukanisiwe?",
+  "split-panel-warning-message": "Usuvele unesakhiwo esihlukanisiwe esinamaphaneli amabili. Esikrinini esincane, ukuvula elinye iphaneli phezu kwawo kungazwakala kunciphile.",
+  "split-panel-warning-keep": "Gcina uhlukaniswe",
+  "split-panel-warning-collapse": "Vala ukuhlukanisa"
 }

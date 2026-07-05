@@ -318,8 +318,8 @@
   "tutorial.promptBody": "มีบริการนำชมเพื่อช่วยให้คุณเรียนรู้รายละเอียดต่างๆ ของ Seed Bible อย่างครบถ้วน",
   "tutorial.promptDecline": "ไม่เป็นไร ขอบคุณ",
   "tutorial.promptAccept": "ไปทัวร์กันเลย",
-  "split-panel-warning-title": "เปิดแผงเหนือมุมมองแบบแบ่งหรือไม่?",
-  "split-panel-warning-message": "คุณมีเลย์เอาต์แบบแบ่งที่มีสองแผงอยู่แล้ว บนหน้าจอขนาดเล็ก การเปิดอีกแผงทับไว้อาจรู้สึกคับแคบ",
-  "split-panel-warning-keep": "คงการแบ่งไว้",
-  "split-panel-warning-collapse": "ปิดการแบ่ง"
+  "split-panel-warning-title": "เปิดแผงควบคุมทับมุมมองแบบแบ่งหน้าจอใช่ไหม?",
+  "split-panel-warning-message": "คุณมีการจัดวางแบบแบ่งหน้าจอเป็นสองส่วนอยู่แล้ว การเปิดส่วนเพิ่มเติมทับลงไปบนหน้าจอขนาดเล็กอาจทำให้ดูคับแคบได้",
+  "split-panel-warning-keep": "แยกออกต่อไป",
+  "split-panel-warning-collapse": "การแบ่งที่ใกล้เคียงกัน"
 }

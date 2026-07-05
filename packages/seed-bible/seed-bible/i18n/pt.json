@@ -318,8 +318,8 @@
   "tutorial.promptBody": "Está disponível uma visita guiada para ajudá-lo a aprender todos os detalhes da Seed Bible.",
   "tutorial.promptDecline": "Não, obrigado",
   "tutorial.promptAccept": "Faça o tour",
-  "split-panel-warning-title": "Abrir painel sobre a vista dividida?",
-  "split-panel-warning-message": "Você já tem um layout dividido com dois painéis. Em uma tela pequena, abrir outro painel sobre eles pode parecer apertado.",
-  "split-panel-warning-keep": "Manter divisão",
-  "split-panel-warning-collapse": "Fechar divisão"
+  "split-panel-warning-title": "Abrir painel sobre a visualização dividida?",
+  "split-panel-warning-message": "Você já tem um layout dividido com dois painéis. Em uma tela pequena, abrir outro painel sobre eles pode dar a sensação de aperto.",
+  "split-panel-warning-keep": "Mantenha dividido",
+  "split-panel-warning-collapse": "Divisão apertada"
 }

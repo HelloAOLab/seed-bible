@@ -318,8 +318,8 @@
   "tutorial.promptBody": "Një tur me guidë është në dispozicion për t'ju ndihmuar të mësoni hollësitë e Biblës së Seed-it.",
   "tutorial.promptDecline": "Jo, faleminderit",
   "tutorial.promptAccept": "Bëni turin",
-  "split-panel-warning-title": "Të hapet paneli mbi pamjen e ndarë?",
-  "split-panel-warning-message": "Ju tashmë keni një skemë të ndarë me dy panele. Në një ekran të vogël, hapja e një paneli tjetër mbi to mund të duket e ngushtë.",
-  "split-panel-warning-keep": "Ruaj ndarjen",
-  "split-panel-warning-collapse": "Mbyll ndarjen"
+  "split-panel-warning-title": "Të hapet paneli në pamjen e ndarë?",
+  "split-panel-warning-message": "Tashmë keni një paraqitje të ndarë me dy panele. Në një ekran të vogël, hapja e një paneli tjetër sipër tyre mund të duket e ngushtë.",
+  "split-panel-warning-keep": "Mbaj të ndarë",
+  "split-panel-warning-collapse": "Ndarje e ngushtë"
 }

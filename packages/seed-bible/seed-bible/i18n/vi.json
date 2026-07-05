@@ -318,8 +318,8 @@
   "tutorial.promptBody": "Có tour tham quan có hướng dẫn viên giúp bạn tìm hiểu mọi ngóc ngách của Seed Bible.",
   "tutorial.promptDecline": "Không, cảm ơn",
   "tutorial.promptAccept": "Hãy tham gia chuyến tham quan.",
-  "split-panel-warning-title": "Mở bảng điều khiển phía trên chế độ xem chia đôi?",
-  "split-panel-warning-message": "Bạn đã có bố cục chia đôi với hai bảng. Trên màn hình nhỏ, việc mở thêm một bảng chồng lên chúng có thể cảm thấy chật chội.",
-  "split-panel-warning-keep": "Giữ chia đôi",
-  "split-panel-warning-collapse": "Đóng chia đôi"
+  "split-panel-warning-title": "Mở bảng điều khiển trên chế độ xem chia đôi?",
+  "split-panel-warning-message": "Bạn đã có bố cục chia đôi với hai bảng điều khiển. Trên màn hình nhỏ, việc mở thêm một bảng điều khiển khác chồng lên trên có thể tạo cảm giác chật chội.",
+  "split-panel-warning-keep": "Giữ nguyên trạng thái tách biệt",
+  "split-panel-warning-collapse": "Chia tách gần"
 }

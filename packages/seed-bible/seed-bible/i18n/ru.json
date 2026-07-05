@@ -318,8 +318,8 @@
   "tutorial.promptBody": "Для того чтобы вы могли узнать все тонкости Seed Bible, предлагается экскурсия с гидом.",
   "tutorial.promptDecline": "Нет, спасибо",
   "tutorial.promptAccept": "Пройдите экскурсию",
-  "split-panel-warning-title": "Открыть панель поверх разделённого вида?",
-  "split-panel-warning-message": "У вас уже есть разделённый макет с двумя панелями. На маленьком экране открытие ещё одной панели поверх них может показаться тесным.",
-  "split-panel-warning-keep": "Оставить разделение",
-  "split-panel-warning-collapse": "Закрыть разделение"
+  "split-panel-warning-title": "Открыть панель вместо разделенного экрана?",
+  "split-panel-warning-message": "У вас уже есть разделенная панель с двумя окнами. На маленьком экране открытие еще одной панели поверх них может показаться неудобным.",
+  "split-panel-warning-keep": "Продолжайте разделение",
+  "split-panel-warning-collapse": "Разделение на две части"
 }

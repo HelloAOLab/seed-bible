@@ -318,8 +318,8 @@
   "tutorial.promptBody": "Ir pieejama ekskursija ar gidu, lai palīdzētu jums apgūt Seed Bible būtību.",
   "tutorial.promptDecline": "Nē, paldies",
   "tutorial.promptAccept": "Dodieties ekskursijā",
-  "split-panel-warning-title": "Vai atvērt paneli virs sadalītā skata?",
-  "split-panel-warning-message": "Jums jau ir sadalīts izkārtojums ar diviem paneļiem. Mazā ekrānā vēl viena paneļa atvēršana virs tiem var šķist saspiesta.",
-  "split-panel-warning-keep": "Paturēt sadalījumu",
+  "split-panel-warning-title": "Atvērt paneli dalītā skatā?",
+  "split-panel-warning-message": "Jums jau ir sadalīts izkārtojums ar diviem paneļiem. Mazā ekrānā cita paneļa atvēršana virs tiem var šķist šaura.",
+  "split-panel-warning-keep": "Saglabāt sadalījumu",
   "split-panel-warning-collapse": "Aizvērt sadalījumu"
 }

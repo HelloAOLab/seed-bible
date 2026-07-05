@@ -319,7 +319,7 @@
   "tutorial.promptDecline": "Non, grazas",
   "tutorial.promptAccept": "Fai o percorrido",
   "split-panel-warning-title": "Abrir o panel sobre a vista dividida?",
-  "split-panel-warning-message": "Xa tes unha disposición dividida con dous paneis. Nunha pantalla pequena, abrir outro panel enriba pode resultar apertado.",
-  "split-panel-warning-keep": "Manter a división",
+  "split-panel-warning-message": "Xa tes un deseño dividido con dous paneis. Nunha pantalla pequena, abrir outro panel enriba deles pode resultar axustado.",
+  "split-panel-warning-keep": "Manter dividido",
   "split-panel-warning-collapse": "Pechar a división"
 }

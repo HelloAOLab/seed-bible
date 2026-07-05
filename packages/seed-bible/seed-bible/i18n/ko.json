@@ -318,8 +318,8 @@
   "tutorial.promptBody": "Seed Bible의 모든 것을 자세히 알아볼 수 있도록 가이드 투어가 제공됩니다.",
   "tutorial.promptDecline": "아니요, 괜찮습니다.",
   "tutorial.promptAccept": "투어에 참여하세요",
-  "split-panel-warning-title": "분할 보기 위에 패널을 여시겠습니까?",
-  "split-panel-warning-message": "이미 두 개의 패널로 분할된 레이아웃이 있습니다. 작은 화면에서는 그 위에 다른 패널을 열면 답답하게 느껴질 수 있습니다.",
-  "split-panel-warning-keep": "분할 유지",
-  "split-panel-warning-collapse": "분할 닫기"
+  "split-panel-warning-title": "분할 화면 위에 패널을 열겠습니까?",
+  "split-panel-warning-message": "이미 두 개의 패널로 분할된 레이아웃을 사용하고 계십니다. 작은 화면에서는 그 위에 다른 패널을 열면 공간이 좁아 보일 수 있습니다.",
+  "split-panel-warning-keep": "분할을 유지하세요",
+  "split-panel-warning-collapse": "클로즈 스플릿"
 }

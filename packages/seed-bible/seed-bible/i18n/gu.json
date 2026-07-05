@@ -318,8 +318,8 @@
   "tutorial.promptBody": "સીડ બાઇબલની ઝીણવટભરી બાબતો શીખવામાં તમારી મદદ માટે માર્ગદર્શિત પ્રવાસ ઉપલબ્ધ છે.",
   "tutorial.promptDecline": "ના, આભાર",
   "tutorial.promptAccept": "પ્રવાસ લો",
-  "split-panel-warning-title": "વિભાજિત દૃશ્ય પર પેનલ ખોલવું છે?",
-  "split-panel-warning-message": "તમારી પાસે પહેલેથી જ બે પેનલ સાથે વિભાજિત લેઆઉટ છે. નાની સ્ક્રીન પર તેમની ઉપર બીજું પેનલ ખોલવું સાંકડું લાગી શકે છે.",
-  "split-panel-warning-keep": "વિભાજન રાખો",
-  "split-panel-warning-collapse": "વિભાજન બંધ કરો"
+  "split-panel-warning-title": "સ્પ્લિટ વ્યૂ પર પેનલ ખોલીએ?",
+  "split-panel-warning-message": "તમારી પાસે પહેલાથી જ બે પેનલ સાથે વિભાજિત લેઆઉટ છે. નાની સ્ક્રીન પર, તેમની ઉપર બીજી પેનલ ખોલવાથી ખેંચાણ અનુભવાઈ શકે છે.",
+  "split-panel-warning-keep": "વિભાજિત રાખો",
+  "split-panel-warning-collapse": "બંધ વિભાજન"
 }

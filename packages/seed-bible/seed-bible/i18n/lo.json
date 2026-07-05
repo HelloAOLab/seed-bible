@@ -318,8 +318,8 @@
   "tutorial.promptBody": "ມີການທ່ອງທ່ຽວແບບມີຄູ່ມືເພື່ອຊ່ວຍໃຫ້ທ່ານຮຽນຮູ້ລາຍລະອຽດຂອງ Seed Bible.",
   "tutorial.promptDecline": "ບໍ່, ຂອບໃຈ",
   "tutorial.promptAccept": "ໄປທ່ຽວຊົມ",
-  "split-panel-warning-title": "ເປີດແຜງຢູ່ເທິງມຸມມອງທີ່ແບ່ງ?",
-  "split-panel-warning-message": "ທ່ານມີໂຄງຮ່າງທີ່ແບ່ງດ້ວຍສອງແຜງແລ້ວ. ໃນຈໍນ້ອຍ, ການເປີດແຜງອື່ນຢູ່ເທິງພວກມັນອາດຮູ້ສຶກຄັບແຄບ.",
+  "split-panel-warning-title": "ເປີດແຜງຄວບຄຸມມຸມມອງແບບແຍກບໍ?",
+  "split-panel-warning-message": "ທ່ານມີຮູບແບບແຍກສອງແຜງແລ້ວ. ໃນໜ້າຈໍຂະໜາດນ້ອຍ, ການເປີດແຜງອື່ນທັບເທິງພວກມັນອາດເຮັດໃຫ້ຮູ້ສຶກຄັບແຄບ.",
   "split-panel-warning-keep": "ຮັກສາການແບ່ງ",
-  "split-panel-warning-collapse": "ປິດການແບ່ງ"
+  "split-panel-warning-collapse": "ປິດການແຍກ"
 }

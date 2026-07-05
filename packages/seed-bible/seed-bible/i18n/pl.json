@@ -318,8 +318,8 @@
   "tutorial.promptBody": "Dostępna jest wycieczka z przewodnikiem, dzięki której możesz poznać tajniki Seed Bible.",
   "tutorial.promptDecline": "Nie, dziękuję",
   "tutorial.promptAccept": "Wybierz się na wycieczkę",
-  "split-panel-warning-title": "Otworzyć panel nad widokiem podzielonym?",
+  "split-panel-warning-title": "Otworzyć panel w widoku podzielonym?",
   "split-panel-warning-message": "Masz już podzielony układ z dwoma panelami. Na małym ekranie otwarcie kolejnego panelu na nich może wydawać się ciasne.",
   "split-panel-warning-keep": "Zachowaj podział",
-  "split-panel-warning-collapse": "Zamknij podział"
+  "split-panel-warning-collapse": "Bliski podział"
 }

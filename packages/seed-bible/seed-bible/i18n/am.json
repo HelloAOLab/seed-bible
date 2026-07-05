@@ -318,8 +318,8 @@
   "tutorial.promptBody": "የ Seed Bible ውስጣዊና ውጫዊ ነገሮችን ለመማር የሚያግዝዎት የሚመራ ጉብኝት አለ።",
   "tutorial.promptDecline": "አልፈልግም፣አመሰግናለሁ",
   "tutorial.promptAccept": "ጉብኝቱን ይውሰዱ",
-  "split-panel-warning-title": "ፓነልን ከተከፈለ እይታ በላይ ይክፈት?",
-  "split-panel-warning-message": "አስቀድሞ በሁለት ፓነሎች የተከፈለ አቀማመጥ አለዎት። በትንሽ ማያ ገጽ ላይ ሌላ ፓነል ከእነሱ በላይ መክፈት ጠባብ ሊሰማ ይችላል።",
-  "split-panel-warning-keep": "ክፍፍሉን አቆይ",
-  "split-panel-warning-collapse": "ክፍፍሉን ዝጋ"
+  "split-panel-warning-title": "በተከፈለ እይታ ላይ ፓነል ይከፍታል?",
+  "split-panel-warning-message": "ሁለት ፓነሎች ያሉት የተከፋፈለ አቀማመጥ አለዎት። በትንሽ ስክሪን ላይ ሌላ ፓነል በላያቸው ላይ መክፈት ጠባብ ሊመስል ይችላል።",
+  "split-panel-warning-keep": "ለሁለት ተከፈለው ያስቀምጡ",
+  "split-panel-warning-collapse": "ክፋይ ዝጋ"
 }

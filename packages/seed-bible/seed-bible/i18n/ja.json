@@ -318,8 +318,8 @@
   "tutorial.promptBody": "シードバイブルのあらゆる側面を学ぶのに役立つガイド付きツアーをご利用いただけます。",
   "tutorial.promptDecline": "結構です",
   "tutorial.promptAccept": "ツアーに参加する",
-  "split-panel-warning-title": "分割表示の上にパネルを開きますか？",
-  "split-panel-warning-message": "すでに2つのパネルに分割されたレイアウトがあります。小さな画面では、その上にさらにパネルを開くと窮屈に感じることがあります。",
-  "split-panel-warning-keep": "分割を保持",
-  "split-panel-warning-collapse": "分割を閉じる"
+  "split-panel-warning-title": "分割画面の上にパネルを開きますか？",
+  "split-panel-warning-message": "既に2つのパネルで構成された分割レイアウトになっています。小さな画面では、その上にさらに別のパネルを開くと窮屈に感じるかもしれません。",
+  "split-panel-warning-keep": "分割を維持する",
+  "split-panel-warning-collapse": "僅差"
 }

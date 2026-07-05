@@ -318,8 +318,8 @@
   "tutorial.promptBody": "סיור מודרך זמין שיעזור לכם ללמוד את כל הפרטים על תנ\"ך הזרעים.",
   "tutorial.promptDecline": "לא, תודה",
   "tutorial.promptAccept": "צא לסיור",
-  "split-panel-warning-title": "לפתוח פאנל מעל התצוגה המפוצלת?",
-  "split-panel-warning-message": "כבר יש לך פריסה מפוצלת עם שני פאנלים. במסך קטן, פתיחת פאנל נוסף מעליהם עלולה להרגיש צפופה.",
-  "split-panel-warning-keep": "השאר פיצול",
-  "split-panel-warning-collapse": "סגור פיצול"
+  "split-panel-warning-title": "פתיחת פאנל בתצוגה מפוצלת?",
+  "split-panel-warning-message": "כבר יש לך פריסה מפוצלת עם שני פאנלים. על מסך קטן, פתיחת פאנל נוסף מעליהם יכולה להרגיש צפופה.",
+  "split-panel-warning-keep": "שמור על פיצול",
+  "split-panel-warning-collapse": "סגירת פיצול"
 }

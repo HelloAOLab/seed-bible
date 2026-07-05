@@ -318,8 +318,8 @@
   "tutorial.promptBody": "Seed Bible kitobining nozik va nozik tomonlarini o'rganishingizga yordam beradigan ekskursiya mavjud.",
   "tutorial.promptDecline": "Yo'q rahmat",
   "tutorial.promptAccept": "Ekskursiyaga chiqing",
-  "split-panel-warning-title": "Panel bo‘lingan ko‘rinish ustida ochilsinmi?",
-  "split-panel-warning-message": "Sizda allaqachon ikkita panelli bo‘lingan tartib mavjud. Kichik ekranda ular ustida yana bir panel ochish tor bo‘lib tuyulishi mumkin.",
-  "split-panel-warning-keep": "Bo‘linishni saqlash",
-  "split-panel-warning-collapse": "Bo‘linishni yopish"
+  "split-panel-warning-title": "Panelni bo'lingan ko'rinishda ochasizmi?",
+  "split-panel-warning-message": "Sizda allaqachon ikkita panelli bo'lingan maket mavjud. Kichkina ekranda ularning ustiga boshqa panelni ochish tordek tuyulishi mumkin.",
+  "split-panel-warning-keep": "Bo'lingan holda qoling",
+  "split-panel-warning-collapse": "Yopiq bo'linish"
 }

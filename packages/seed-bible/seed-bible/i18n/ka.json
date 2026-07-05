@@ -318,8 +318,8 @@
   "tutorial.promptBody": "ხელმისაწვდომია გიდის თანხლებით ტური, რათა გაიგოთ „სეედ ბიბლიის“ ყველა დეტალი.",
   "tutorial.promptDecline": "არა, გმადლობთ",
   "tutorial.promptAccept": "გაიარეთ ტური",
-  "split-panel-warning-title": "გავხსნათ პანელი გაყოფილ ხედზე?",
-  "split-panel-warning-message": "თქვენ უკვე გაქვთ გაყოფილი განლაგება ორი პანელით. პატარა ეკრანზე მათ ზემოთ კიდევ ერთი პანელის გახსნა შეიძლება ვიწრო აღმოჩნდეს.",
-  "split-panel-warning-keep": "გაყოფის შენარჩუნება",
-  "split-panel-warning-collapse": "გაყოფის დახურვა"
+  "split-panel-warning-title": "პანელის გაყოფილი ხედის რეჟიმში გახსნა?",
+  "split-panel-warning-message": "თქვენ უკვე გაქვთ გაყოფილი განლაგება ორი პანელით. პატარა ეკრანზე, მათ ზემოთ კიდევ ერთი პანელის გახსნა შეიძლება ვიწროდ მოგეჩვენოთ.",
+  "split-panel-warning-keep": "გაყოფილი შენარჩუნება",
+  "split-panel-warning-collapse": "დახურვა გაყოფა"
 }

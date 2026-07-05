@@ -318,8 +318,8 @@
   "tutorial.promptBody": "Seed Bible ရဲ့ အသေးစိတ်အချက်အလက်တွေကို လေ့လာနိုင်ဖို့ လမ်းညွှန်ခရီးစဉ်တစ်ခု ရရှိနိုင်ပါတယ်။",
   "tutorial.promptDecline": "ရပါတယ်ကျေးဇူးပါ",
   "tutorial.promptAccept": "ခရီးစဉ်ကို လိုက်ပါပါ",
-  "split-panel-warning-title": "ခွဲထားသောမြင်ကွင်းအပေါ်တွင် panel ဖွင့်မလား?",
-  "split-panel-warning-message": "သင့်တွင် panel နှစ်ခုပါသော ခွဲထားသည့်အပြင်အဆင် ရှိပြီးဖြစ်သည်။ ဖန်သားပြင်သေးငယ်တွင် ၎င်းတို့အပေါ်၌ နောက်ထပ် panel တစ်ခုဖွင့်ခြင်းသည် ကျဉ်းကြပ်နိုင်သည်။",
-  "split-panel-warning-keep": "ခွဲထားမှုကို ဆက်ထားရန်",
-  "split-panel-warning-collapse": "ခွဲထားမှုကို ပိတ်ရန်"
+  "split-panel-warning-title": "split view မှာ panel ဖွင့်မလား။",
+  "split-panel-warning-message": "သင်သည် panel နှစ်ခုပါသော split layout တစ်ခုရှိပြီးသားဖြစ်သည်။ မျက်နှာပြင်ငယ်တစ်ခုတွင် ၎င်းတို့အပေါ်တွင် အခြား panel တစ်ခုဖွင့်ခြင်းသည် ကျဉ်းကျပ်သည်ဟု ခံစားရနိုင်သည်။",
+  "split-panel-warning-keep": "ခွဲထားပါ",
+  "split-panel-warning-collapse": "ပိတ်ပြီး ခွဲထုတ်ပါ"
 }

@@ -318,8 +318,8 @@
   "tutorial.promptBody": "Leiðsögn er í boði til að hjálpa þér að læra allt um Seed Bible.",
   "tutorial.promptDecline": "Nei, takk",
   "tutorial.promptAccept": "Taktu skoðunarferðina",
-  "split-panel-warning-title": "Opna spjald yfir skiptu sýninni?",
-  "split-panel-warning-message": "Þú ert nú þegar með skipta uppsetningu með tveimur spjöldum. Á litlum skjá getur verið þröngt að opna annað spjald ofan á þeim.",
-  "split-panel-warning-keep": "Halda skiptingu",
+  "split-panel-warning-title": "Opna spjaldið yfir skipt sýn?",
+  "split-panel-warning-message": "Þú ert nú þegar með tvöfalt skipulag með tveimur spjöldum. Á litlum skjá getur verið þröngt að opna annað spjald ofan á þeim.",
+  "split-panel-warning-keep": "Halda sundrun",
   "split-panel-warning-collapse": "Loka skiptingu"
 }

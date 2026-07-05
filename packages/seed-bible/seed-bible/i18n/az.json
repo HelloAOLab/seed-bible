@@ -318,8 +318,8 @@
   "tutorial.promptBody": "Seed Bible-ın incəliklərini öyrənməyinizə kömək etmək üçün bələdçi turu mövcuddur.",
   "tutorial.promptDecline": "Xeyr, təşəkkürlər",
   "tutorial.promptAccept": "Tura çıxın",
-  "split-panel-warning-title": "Panel bölünmüş görünüşün üzərində açılsın?",
-  "split-panel-warning-message": "Artıq iki panelli bölünmüş düzəniniz var. Kiçik ekranda onların üzərində başqa panel açmaq sıxıntılı görünə bilər.",
-  "split-panel-warning-keep": "Bölünməni saxla",
-  "split-panel-warning-collapse": "Bölünməni bağla"
+  "split-panel-warning-title": "Panel bölünmüş görünüş üzərində açılsın?",
+  "split-panel-warning-message": "Artıq iki paneldən ibarət bölünmüş bir düzəniniz var. Kiçik bir ekranda, onların üstündə başqa bir paneli açmaq darıxdırıcı hiss oluna bilər.",
+  "split-panel-warning-keep": "Bölünmüş saxlayın",
+  "split-panel-warning-collapse": "Bölünməni bağlayın"
 }

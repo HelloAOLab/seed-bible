@@ -318,8 +318,8 @@
   "tutorial.promptBody": "Na voljo je voden ogled, ki vam bo pomagal spoznati podrobnosti Seed Bible.",
   "tutorial.promptDecline": "Ne, hvala",
   "tutorial.promptAccept": "Udeležite se ogleda",
-  "split-panel-warning-title": "Odpreti ploščo nad razdeljenim pogledom?",
-  "split-panel-warning-message": "Že imate razdeljeno postavitev z dvema ploščama. Na majhnem zaslonu je odpiranje še ene plošče nad njima lahko utesnjeno.",
+  "split-panel-warning-title": "Odprta plošča prek razdeljenega pogleda?",
+  "split-panel-warning-message": "Že imate razdeljeno postavitev z dvema ploščama. Na majhnem zaslonu se lahko odpiranje še ene plošče na njiju zdi utesnjeno.",
   "split-panel-warning-keep": "Ohrani razdelitev",
-  "split-panel-warning-collapse": "Zapri razdelitev"
+  "split-panel-warning-collapse": "Tesna razdelitev"
 }

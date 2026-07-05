@@ -318,8 +318,8 @@
   "tutorial.promptBody": "Tur berpemandu tersedia untuk membantu Anda mempelajari seluk-beluk Seed Bible.",
   "tutorial.promptDecline": "Tidak, terima kasih",
   "tutorial.promptAccept": "Ikuti tur",
-  "split-panel-warning-title": "Buka panel di atas tampilan terbagi?",
-  "split-panel-warning-message": "Anda sudah memiliki tata letak terbagi dengan dua panel. Di layar kecil, membuka panel lain di atasnya bisa terasa sempit.",
-  "split-panel-warning-keep": "Pertahankan pembagian",
-  "split-panel-warning-collapse": "Tutup pembagian"
+  "split-panel-warning-title": "Buka panel di atas tampilan terpisah?",
+  "split-panel-warning-message": "Anda sudah memiliki tata letak terpisah dengan dua panel. Pada layar kecil, membuka panel lain di atasnya dapat terasa sempit.",
+  "split-panel-warning-keep": "Tetap terpisah",
+  "split-panel-warning-collapse": "Pembagian yang tipis"
 }

@@ -318,8 +318,8 @@
   "tutorial.promptBody": "Mae taith dywys ar gael i'ch helpu i ddysgu manylion Beibl Hadau.",
   "tutorial.promptDecline": "Na, diolch",
   "tutorial.promptAccept": "Cymerwch y daith",
-  "split-panel-warning-title": "Agor panel dros yr olwg hollt?",
-  "split-panel-warning-message": "Mae gennych gynllun hollt gyda dau banel eisoes. Ar sgrin fach, gall agor panel arall ar eu pen deimlo'n gyfyng.",
-  "split-panel-warning-keep": "Cadw'r hollt",
+  "split-panel-warning-title": "Agor panel dros olygfa hollt?",
+  "split-panel-warning-message": "Mae gennych chi gynllun hollt gyda dau banel yn barod. Ar sgrin fach, gall agor panel arall ar eu pennau deimlo'n gyfyng.",
+  "split-panel-warning-keep": "Cadwch y rhaniad",
   "split-panel-warning-collapse": "Cau'r hollt"
 }

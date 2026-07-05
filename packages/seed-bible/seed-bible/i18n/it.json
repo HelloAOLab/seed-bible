@@ -319,7 +319,7 @@
   "tutorial.promptDecline": "No grazie",
   "tutorial.promptAccept": "Fai il tour",
   "split-panel-warning-title": "Aprire il pannello sopra la vista divisa?",
-  "split-panel-warning-message": "Hai già un layout diviso con due pannelli. Su uno schermo piccolo, aprire un altro pannello sopra può risultare stretto.",
-  "split-panel-warning-keep": "Mantieni divisione",
-  "split-panel-warning-collapse": "Chiudi divisione"
+  "split-panel-warning-message": "Hai già un layout diviso con due pannelli. Su uno schermo piccolo, aprire un altro pannello sopra di essi può dare una sensazione di spazio ristretto.",
+  "split-panel-warning-keep": "Mantieni diviso",
+  "split-panel-warning-collapse": "Separazione ravvicinata"
 }

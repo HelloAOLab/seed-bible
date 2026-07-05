@@ -319,7 +319,7 @@
   "tutorial.promptDecline": "Ne, hvala",
   "tutorial.promptAccept": "Krenite na obilazak",
   "split-panel-warning-title": "Otvoriti panel preko podijeljenog prikaza?",
-  "split-panel-warning-message": "Već imate podijeljeni raspored s dva panela. Na malom ekranu otvaranje još jednog panela preko njih može djelovati skučeno.",
-  "split-panel-warning-keep": "Zadrži podjelu",
-  "split-panel-warning-collapse": "Zatvori podjelu"
+  "split-panel-warning-message": "Već imate podijeljeni raspored s dva panela. Na malom ekranu, otvaranje još jednog panela preko njih može biti skučeno.",
+  "split-panel-warning-keep": "Održavaj podjelu",
+  "split-panel-warning-collapse": "Bliska podjela"
 }

@@ -318,8 +318,8 @@
   "tutorial.promptBody": "'n Begeleide toer is beskikbaar om jou te help om die fynere besonderhede van Seed Bible te leer.",
   "tutorial.promptDecline": "Nee, dankie",
   "tutorial.promptAccept": "Neem die toer",
-  "split-panel-warning-title": "Maak paneel oor verdeelde aansig oop?",
-  "split-panel-warning-message": "Jy het reeds 'n verdeelde uitleg met twee panele. Op 'n klein skerm kan dit benoud voel om nog 'n paneel bo-op hulle oop te maak.",
-  "split-panel-warning-keep": "Hou verdeling",
-  "split-panel-warning-collapse": "Sluit verdeling"
+  "split-panel-warning-title": "Maak paneel oop oor gesplete aansig?",
+  "split-panel-warning-message": "Jy het reeds 'n gesplete uitleg met twee panele. Op 'n klein skerm kan dit beknop voel om nog 'n paneel bo-op hulle oop te maak.",
+  "split-panel-warning-keep": "Hou verdeel",
+  "split-panel-warning-collapse": "Maak split toe"
 }

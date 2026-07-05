@@ -318,8 +318,8 @@
   "tutorial.promptBody": "Даступная экскурсія з гідам, якая дапаможа вам даведацца пра ўсе тонкасці Бібліі насення.",
   "tutorial.promptDecline": "Не, дзякуй",
   "tutorial.promptAccept": "Азнаёмцеся з экскурсіяй",
-  "split-panel-warning-title": "Адкрыць панэль паверх падзеленага выгляду?",
-  "split-panel-warning-message": "У вас ужо ёсць падзелены макет з дзвюма панэлямі. На малым экране адкрыццё яшчэ адной панэлі над імі можа быць цесным.",
-  "split-panel-warning-keep": "Пакінуць падзел",
-  "split-panel-warning-collapse": "Закрыць падзел"
+  "split-panel-warning-title": "Адкрыць панэль у рэжыме падзеленага выгляду?",
+  "split-panel-warning-message": "У вас ужо ёсць падзеленая макетка з двума панэлямі. На маленькім экране адкрыццё яшчэ адной панэлі паверх іх можа здацца цесным.",
+  "split-panel-warning-keep": "Захоўваць падзел",
+  "split-panel-warning-collapse": "Блізкі разрыў"
 }
