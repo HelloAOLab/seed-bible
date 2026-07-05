@@ -1351,6 +1351,10 @@ a:visited {
   cursor: default;
 }
 
+.sb-mobile-settings-sheet-toggle-row {
+  margin-bottom: 8px;
+}
+
 .sb-mobile-settings-sheet-divider {
   height: 1px;
   background: color-mix(in srgb, var(--sb-font-color), transparent 85%);

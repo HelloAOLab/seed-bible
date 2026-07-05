@@ -173,6 +173,25 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
           ))}
         </div>
 
+        <div className="sb-settings-toggle-row sb-mobile-settings-sheet-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-mobile-wake-lock-toggle"
+          >
+            {t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
+          </label>
+          <input
+            id="sb-mobile-wake-lock-toggle"
+            type="checkbox"
+            checked={current.keepScreenAwake}
+            onChange={(event: Event) => {
+              settings.setKeepScreenAwake(
+                (event.currentTarget as HTMLInputElement).checked
+              );
+            }}
+          />
+        </div>
+
         <div className="sb-mobile-settings-sheet-divider" />
 
         <button
