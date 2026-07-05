@@ -4094,11 +4094,14 @@ a:visited {
   cursor: pointer;
   display: inline-flex;
   flex-direction: row;
+  flex-wrap: wrap;
   align-items: baseline;
+  align-content: center;
   justify-content: center;
-  padding: 0;
+  padding: 0 2px;
   line-height: 1;
-  gap: 5px;
+  column-gap: 5px;
+  row-gap: 2px;
   border: 1px solid;
 }
 
@@ -4113,11 +4116,13 @@ a:visited {
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .sb-collapsed-tab-chapter {
   font-size: 11px;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .sb-sidebar-settings-view {
