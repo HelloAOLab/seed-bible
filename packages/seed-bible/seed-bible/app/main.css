@@ -237,7 +237,7 @@ body {
  * browsers don't show the default white "overscroll" gap when the user
  * pulls the page up past the bottom toolbar. Scrolling happens inside
  * the inner panes (which have their own overflow scrollers). */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   html,
   body {
     position: fixed;
@@ -311,12 +311,7 @@ a:visited {
 }
 
 .sb-bible-reader-bookmark-button {
-  position: absolute;
-  /* Center the 36px button box on the title's first line (which starts at the
-     reader's 30px padding-top with a 36px line box) so it stays aligned with
-     the title even when a narrow reader pulls the title text out to meet it. */
-  top: 30px;
-  inset-inline-end: 16px;
+  position: relative;
   width: 36px;
   height: 36px;
   display: inline-flex;
@@ -356,14 +351,11 @@ a:visited {
   gap: 4px;
 }
 
-/* Desktop: dock to the top-right of the chapter content, just left of the
-   bookmark button (which sits at inset-inline-end: 16px with width 36px). */
+/* Desktop: sits in the header's action cluster, just left of the bookmark
+   button. Flow layout (not absolute) so it pushes the title instead of
+   overlapping it. */
 .sb-quick-toolbar-reader {
-  position: absolute;
-  /* Match the bookmark button's vertical alignment with the title row. */
-  top: 30px;
-  inset-inline-end: 60px;
-  z-index: 1;
+  flex-shrink: 0;
 }
 
 .sb-quick-toolbar-mobile-header {
@@ -409,8 +401,8 @@ a:visited {
 
 /* Force a tight 1% reader margin in mobile view, regardless of the
    user's saved scriptureMargin setting. Breakpoint mirrors `isMobile`
-   in SeedBibleStateManager (viewportWidth <= 768). */
-@media (max-width: 768px) {
+   in SeedBibleStateManager (viewportWidth <= 480). */
+@media (max-width: 480px) {
   .sb-bible-reader {
     width: 100%;
     padding-right: 1%;
@@ -929,7 +921,21 @@ a:visited {
   cursor: default;
 }
 
+/* Reader header: lays the chapter title and the right-hand action cluster
+   (quick toolbar + bookmark button) in a flex row so the buttons can never
+   overlap the title, regardless of how many quick tools are registered. */
+.sb-bible-reader-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 28px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--sb-divider-color);
+}
+
 .sb-bible-reader-title {
+  flex: 1 1 auto;
+  min-width: 0;
   font-family: var(--text-bookTitle-font);
   /* color: var(--text-bookTitle-color); */
   color: var(--sb-book-title-font-color);
@@ -937,13 +943,20 @@ a:visited {
   font-style: var(--text-bookTitle-font-style);
   text-decoration: var(--text-bookTitle-text-decoration);
   text-align: var(--text-bookTitle-alignment);
-  margin: 0 0 28px;
-  padding-bottom: 18px;
-  border-bottom: 1px solid var(--sb-divider-color);
+  margin: 0;
   font-size: 36px;
   line-height: 1;
   cursor: pointer;
   letter-spacing: 0;
+}
+
+/* Right-hand action cluster, aligned to the top of the title. Sized to its
+   contents so it pushes back on the title instead of overlapping it. */
+.sb-bible-reader-actions {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .sb-bible-reader-title-sep {
@@ -2172,7 +2185,7 @@ a:visited {
   display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .sb-reader-toolbar-wrap {
     position: fixed;
     left: 50%;
@@ -3098,7 +3111,7 @@ a:visited {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .sb-selector-overlay {
     display: none;
     pointer-events: all;
@@ -3137,7 +3150,7 @@ a:visited {
   transform: translateY(0);
 }
 
-@media only screen and (min-width: 769px) {
+@media only screen and (min-width: 481px) {
   .sb-selector-panel {
     width: 650px;
     height: 80dvh;
@@ -3308,7 +3321,7 @@ a:visited {
   text-transform: capitalize;
 }
 
-@media (min-width: 769px) {
+@media (min-width: 481px) {
   .sb-selector-book-button {
     width: 200px;
   }
@@ -3358,7 +3371,7 @@ a:visited {
   color: var(--sb-primary-font-color);
 }
 
-@media (min-width: 769px) {
+@media (min-width: 481px) {
   .sb-selector-chapter-grid {
     grid-template-columns: repeat(auto-fit, minmax(38px, 1fr));
   }
@@ -3379,7 +3392,7 @@ a:visited {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .sb-selector-grid {
     grid-template-columns: 1fr;
     gap: 12px;
@@ -3418,6 +3431,35 @@ a:visited {
   .sb-sidebar-top-row {
     justify-content: center;
   }
+}
+
+/* Compact desktop (just above the mobile breakpoint): the row is too narrow
+   to dock a 320px sidebar beside the reader without squashing it. So the
+   *expanded* sidebar floats over the reader (fixed, full-height, anchored to
+   the inline-start edge) instead of taking layout space. The collapsed rail
+   stays in flow so the expand button remains reachable. Mirrors the
+   SIDEBAR_OVERLAY_MAX_WIDTH band in SeedBibleStateManager. */
+@media (min-width: 481px) and (max-width: 768px) {
+  .sb-tabs-sidebar:not(.sb-tabs-sidebar-collapsed) {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: 121;
+    height: 100%;
+    box-shadow: 0 0 24px rgba(0, 0, 0, 0.18);
+    /* The docked sidebar's `--sb-sidebar-background` is transparent in the
+       light theme (it blends with the page behind it). Floating over the
+       reader there's text behind it, so paint the opaque page background —
+       same approach as the mobile drawer (`.sb-tabs-sidebar-mobile-open`). */
+    background: var(--sb-background);
+  }
+}
+
+.sb-sidebar-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  background: rgba(0, 0, 0, 0.16);
 }
 
 .sb-sidebar-bottom-actions {
@@ -3925,7 +3967,7 @@ a:visited {
 /* Mobile: dock the picker modal to the bottom of the screen as a sheet
  * (matches the design spec). The modal frame itself is reused, but the
  * outer overlay aligns it to the bottom and stretches it to full width. */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .sb-footnote-modal-overlay:has(.sb-bookmark-picker) {
     align-items: flex-end;
     padding: 0;
@@ -5114,7 +5156,7 @@ a:visited {
   border-radius: 6px;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .sb-tabs-sidebar {
     display: none;
   }
@@ -5562,7 +5604,7 @@ a:visited {
   display: none;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .sb-tabs-sidebar-mobile-open .sb-tab-mobile-add-fab {
     display: inline-flex;
   }
@@ -5984,7 +6026,7 @@ a:visited {
    the default downward-opening absolute menu spills off-screen behind the tab
    bar. Render it as a bottom-anchored sheet that stays above the nav bar and
    scrolls internally, with the overlay dimming the whole screen. */
-@media (max-width: 768px) {
+@media (max-width: 480px) {
   .sb-language-picker-overlay {
     z-index: 9998;
     background: rgba(0, 0, 0, 0.3);
@@ -7627,7 +7669,7 @@ a:visited {
 /* Desktop only (mobile search is left untouched): give the book/translation
    search field a clearly defined boundary and breathing room so it's obvious
    where the input begins and ends. */
-@media only screen and (min-width: 769px) {
+@media only screen and (min-width: 481px) {
   .searchbar {
     height: 44px;
     padding: 8px 14px;
@@ -8107,7 +8149,7 @@ a:visited {
   }
 }
 
-@media only screen and (max-width: 768px) {
+@media only screen and (max-width: 480px) {
   .dropdown {
     /* display: none; */
     width: 62%;
@@ -8666,8 +8708,39 @@ a:visited {
   text-overflow: ellipsis;
 }
 
-.sb-floating-chat-header-members-anchor {
-  flex-shrink: 0;
+@media (max-width: 480px) {
+  /* Search is a bottom-anchored sheet on mobile: the input sits just above the
+     5-tab bar and results grow upward. It is capped to the *small* viewport
+     height (`svh`, which excludes the Android address bar) and anchored to the
+     bottom rather than `top: 0`, so the top results can never be pushed behind
+     the browser chrome (the old full-screen `top: 0` overlay anchored to the
+     taller layout viewport, hiding the first results until the bar collapsed).
+     Keeping it off the top of the screen also leaves the reader above the sheet
+     visible and tappable, so the app never feels frozen — tapping a reader
+     control closes search (via the outside-tap handler) and activates it. */
+  .sb-floating-search-panel {
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: 72px;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(
+      100svh - 72px - env(safe-area-inset-top, 0px) -
+        env(safe-area-inset-bottom, 0px) - 12px
+    );
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 14px;
+    background: transparent;
+    gap: 14px;
+    animation: none;
+    /* Empty areas of the sheet let taps fall through to the reader; the input
+       row and results below re-enable pointer events. */
+    pointer-events: none;
+  }
 }
 
 .sb-floating-chat-header-members-button-icon {

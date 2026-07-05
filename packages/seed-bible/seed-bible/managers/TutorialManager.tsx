@@ -125,7 +125,7 @@ export const ONBOARDING_STEPS: TutorialStep[] = [
 export const TUTORIAL_STEPS = ONBOARDING_STEPS;
 
 /**
- * The mobile tour. Below 768px the desktop selector sub-controls (translation,
+ * The mobile tour. Below 480px the desktop selector sub-controls (translation,
  * testament) and the pane-layout menu aren't rendered, so mobile gets its own
  * step list targeting the mobile header, the book selector grid, and the
  * bottom toolbar. The book step reuses the `selector-books` id so the
