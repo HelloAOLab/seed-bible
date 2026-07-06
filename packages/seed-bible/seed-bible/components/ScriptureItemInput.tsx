@@ -46,7 +46,7 @@ export function ScriptureItemInput(props: ScriptureItemInputProps) {
     <>
       <div className="sb-playlist-add-row">
         <input
-          className="sb-discover-title-input"
+          className="sb-settings-text-input sb-playlist-input"
           type="text"
           value={value}
           dir="auto"

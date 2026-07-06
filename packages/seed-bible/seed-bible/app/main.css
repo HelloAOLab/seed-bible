@@ -10671,10 +10671,28 @@ img.sb-chat-view-message-avatar {
   color: var(--sb-primary-font-color);
 }
 
+.sb-playlist-item-input {
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+  padding: 8px;
+}
+
 .sb-playlist-add-row {
   display: flex;
-  align-items: flex-end;
   gap: 8px;
+}
+
+.sb-playlist-add-text-row,
+.sb-playlist-add-link-row {
+  flex-direction: column;
+
+  > .sb-settings-save-button {
+    align-self: flex-end;
+  }
+}
+
+.sb-playlist-add-title-input {
+  margin-bottom: 8px;
 }
 
 .sb-playlist-add-textarea {
@@ -10683,10 +10701,20 @@ img.sb-chat-view-message-avatar {
   resize: vertical;
 }
 
+/*
+ * Playlist text inputs reuse the account settings' filled-box look
+ * (`sb-settings-text-input`); this glue lets them flex next to the add button
+ * inside `.sb-playlist-add-row`.
+ */
+.sb-playlist-input {
+  flex: 1;
+  min-width: 0;
+}
+
 .sb-playlist-add-editor {
   font-size: 14px;
   font-weight: 400;
-  padding: 4px 6px;
+  padding: 10px 12px;
 }
 
 .sb-playlist-add-editor .ProseMirror {

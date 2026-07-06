@@ -69,32 +69,13 @@ export function PlaylistItemInput(props: PlaylistItemInputProps) {
 
   return (
     <DiscoverSection
+      className="sb-playlist-item-input"
       title={
         isEditing
           ? t("playlist-edit-item", { defaultValue: "Edit item" })
           : t("playlist-add-item", { defaultValue: "Add item" })
       }
     >
-      {!isEditing ? (
-        <div className="sb-playlist-add-modes" role="tablist">
-          {MODES.map((option) => (
-            <button
-              key={option.mode}
-              type="button"
-              role="tab"
-              aria-selected={mode === option.mode}
-              className={
-                "sb-playlist-add-mode" +
-                (mode === option.mode ? " sb-playlist-add-mode--active" : "")
-              }
-              onClick={() => setMode(option.mode)}
-            >
-              {t(option.labelKey, { defaultValue: option.defaultLabel })}
-            </button>
-          ))}
-        </div>
-      ) : null}
-
       {mode === "scripture" ? (
         <ScriptureItemInput
           books={books}
@@ -115,6 +96,24 @@ export function PlaylistItemInput(props: PlaylistItemInputProps) {
           submitLabel={submitLabel}
         />
       )}
+
+      <div className="sb-playlist-add-modes" role="tablist">
+        {MODES.map((option) => (
+          <button
+            key={option.mode}
+            type="button"
+            role="tab"
+            aria-selected={mode === option.mode}
+            className={
+              "sb-playlist-add-mode" +
+              (mode === option.mode ? " sb-playlist-add-mode--active" : "")
+            }
+            onClick={() => setMode(option.mode)}
+          >
+            {t(option.labelKey, { defaultValue: option.defaultLabel })}
+          </button>
+        ))}
+      </div>
 
       {isEditing ? (
         <button

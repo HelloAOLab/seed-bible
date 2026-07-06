@@ -49,7 +49,7 @@ export function TextItemInput(props: TextItemInputProps) {
   return (
     <>
       <input
-        className="sb-discover-title-input"
+        className="sb-settings-text-input sb-playlist-input sb-playlist-add-title-input"
         type="text"
         value={title}
         dir="auto"
@@ -60,17 +60,17 @@ export function TextItemInput(props: TextItemInputProps) {
           setTitle((event.currentTarget as HTMLInputElement).value);
         }}
       />
-      <div className="sb-playlist-add-row">
+      <div className="sb-playlist-add-row sb-playlist-add-text-row">
         <Suspense
           fallback={
             <div
-              className="sb-discover-title-input sb-playlist-add-editor sb-playlist-add-editor--loading"
+              className="sb-settings-text-input sb-playlist-input sb-playlist-add-editor sb-playlist-add-editor--loading"
               aria-busy="true"
             />
           }
         >
           <TipTapEditor
-            className="sb-discover-title-input sb-playlist-add-editor"
+            className="sb-settings-text-input sb-playlist-input sb-playlist-add-editor"
             initialContent={initialItem?.html}
             onEditor={(editor) => {
               editorRef.current = editor;

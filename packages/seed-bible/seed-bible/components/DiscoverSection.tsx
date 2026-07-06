@@ -3,9 +3,10 @@ import type { ComponentChildren } from "preact";
 export function DiscoverSection(props: {
   title: string;
   children: ComponentChildren;
+  className?: string;
 }) {
   return (
-    <section className="sb-discover-section">
+    <section className={`sb-discover-section ${props.className ?? ""}`}>
       <h3 className="sb-discover-section-title">{props.title}</h3>
       {props.children}
     </section>

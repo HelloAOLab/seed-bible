@@ -52,7 +52,7 @@ export function LinkItemInput(props: LinkItemInputProps) {
   return (
     <>
       <input
-        className="sb-discover-title-input"
+        className="sb-settings-text-input sb-playlist-input sb-playlist-add-title-input"
         type="text"
         value={title}
         dir="auto"
@@ -69,9 +69,9 @@ export function LinkItemInput(props: LinkItemInputProps) {
           }
         }}
       />
-      <div className="sb-playlist-add-row">
+      <div className="sb-playlist-add-row sb-playlist-add-link-row">
         <input
-          className="sb-discover-title-input"
+          className="sb-settings-text-input sb-playlist-input"
           type="url"
           value={value}
           dir="auto"

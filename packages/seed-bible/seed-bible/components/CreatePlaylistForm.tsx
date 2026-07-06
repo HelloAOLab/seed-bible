@@ -57,7 +57,7 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
       <div className="sb-discover-header">
         <MaterialIcon className="sb-discover-title-icon">explore</MaterialIcon>
         <input
-          className="sb-discover-title-input"
+          className="sb-settings-text-input sb-playlist-input"
           type="text"
           value={editing?.title ?? ""}
           dir="auto"
