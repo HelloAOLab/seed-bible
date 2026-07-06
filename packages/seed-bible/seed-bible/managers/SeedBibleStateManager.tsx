@@ -1254,6 +1254,11 @@ export function createSeedBibleState(
   };
 
   const handleOpenDiscover = () => {
+    const openPane = panes.panes.value.find((p) => p.id === "discover-pane");
+    if (openPane) {
+      panes.closePane(openPane.id);
+      return;
+    }
     panes.openPane({
       id: "discover-pane",
       type: "detached",
