@@ -10865,6 +10865,10 @@ img.sb-chat-view-message-avatar {
   gap: 8px;
 }
 
+.sb-playlist-item {
+  cursor: pointer;
+}
+
 .sb-discover-item-main {
   display: flex;
   flex-direction: column;

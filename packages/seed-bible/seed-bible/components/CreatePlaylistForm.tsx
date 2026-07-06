@@ -55,7 +55,14 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
   return (
     <div className="sb-discover-pane">
       <div className="sb-discover-header">
-        <MaterialIcon className="sb-discover-title-icon">explore</MaterialIcon>
+        <button
+          type="button"
+          className="sb-reading-plans-back"
+          aria-label={t("back", { defaultValue: "Back" })}
+          onClick={() => playlists.cancelEditingPlaylist()}
+        >
+          <MaterialIcon>arrow_back</MaterialIcon>
+        </button>
         <input
           className="sb-settings-text-input sb-playlist-input"
           type="text"

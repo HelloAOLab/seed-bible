@@ -103,8 +103,9 @@ function PlaylistSection({
           {userPlaylists.map((playlist) => (
             <li
               key={playlist.id}
-              className="sb-discover-item sb-discover-item--row"
+              className="sb-discover-item sb-discover-item--row sb-playlist-item"
               dir="auto"
+              onClick={() => playlists.startPlaying(playlist)}
             >
               <div className="sb-discover-item-main">
                 <span className="sb-discover-item-title">
