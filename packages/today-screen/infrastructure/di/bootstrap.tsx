@@ -239,121 +239,151 @@ export const bootstrapExtension = () => {
        * can be reused both by the toolbar tool and exposed as the extension's
        * public API (`getExtensionExports("today-screen").open`).
        */
-      const openToday = () => {
-        const component = () => {
-          const { t, language } = useI18n();
-          return (
-            <Today
-              config={{
-                MaterialIcon,
-                language,
-                username: context.login.profile.value?.name,
-                userId: context.login.userId.value ?? undefined,
-                userLastReading,
-                getCommunityReading,
-                translate: (key, options) =>
-                  t(key, {
-                    ns: [extensionId, "seed-bible"],
-                    ...(options ?? {}),
-                  }),
-                bookNames,
-                addTab: (
-                  bookId: string,
-                  chapter: number,
-                  translationId: string | undefined,
-                  verse: number | undefined
-                ) => {
-                  const tab = context.tabs.addTab(undefined, {
-                    initialBookId: bookId,
-                    initialChapterNumber: chapter,
-                    initialTranslationId: translationId,
-                    scrollToVerse: verse,
-                  });
-                  // `scrollToVerse` only scrolls; the highlight is a separate
-                  // decoration (same pattern as the reader's search panel).
-                  if (verse !== undefined) {
-                    tab.readingState.decorateVerses(bookId, chapter, verse, {
-                      className: "sb-verse-decoration-search-result",
-                      removeAfterMs: 3000,
-                    });
-                  }
-                  const paneId = context.panes.selectedPaneId.value;
-                  if (paneId) {
-                    context.panes.openInPane(paneId, { tabId: tab.id });
-                  }
-                  context.app.selectTab(tab.id);
-                },
-                getDefaultTranslation: () => {
-                  const readingState = context.app.currentReadingState.value;
-                  return (
-                    readingState?.tab.readingState.defaultTranslation.id ??
-                    getDefaultTranslationForLanguage(
-                      context.i18n.defaultLanguage
-                    ).id
-                  );
-                },
-                searchVerses,
-                getVerseText,
-                lastTranslationId,
-                openBookSelector: () => {
-                  const pane =
-                    context.panes.panes.value.find(
-                      (p) => p.id === context.panes.selectedPaneId.value
-                    ) ?? null;
-                  if (pane) {
-                    context.selector.setOpen(true, pane);
-                  }
-                },
-                translationBooks: lastTranslationBooks,
-                translationBooksMap,
-                subscribedUsersProfileProvider: fakeSubscribedUsersProvider,
-                subscribedUsersIdsProvider: fakeSubscribedUsersProvider,
-                ReadingHistoryTimeline,
-                getDayRangeSeconds,
-                getReadingHistoryEvents: fakeGetReadingHistoryEvents,
-                GetPastDateInfo,
-                CapitalizeFirstLetter,
-                theme: context.theme.currentTheme.value,
-                readingHistoryService,
-                sharedSessions,
-                userDeterministicIdentityProvider: {
-                  getColorById: (id: string) =>
-                    sessionProvider.getUserColorById(id),
-                  getIconById: (id: string) =>
-                    sessionProvider.getUserIconById(id),
-                },
-                joinSharedSession: (id: string) =>
-                  context.app.joinSharedSession(id),
-                bookmarks: context.bookmarks.bookmarks,
-                getTranslationBooks: (translation: string) =>
-                  context.bibleData.getTranslationBooks(translation),
-                readingHistoryConfigProvider,
-                getHighlightedWelcomeVerse,
-                useHorizontalScroll,
-              }}
-            />
-          );
-        };
 
-        const paneId = context.panes.selectedPaneId.value;
-        if (paneId) {
-          context.tabs.selectTab("");
-          context.panes.openInPane(paneId, { component });
+      let wasTodayOpen = false;
+
+      const openToday = () => {
+        const url = context.navigation.currentUrl.value;
+        const isTodayOpen = url.searchParams.get("today") === "true";
+        if (isTodayOpen) {
+          context.navigation.updateQueryParam("today", null);
+        } else {
+          context.navigation.updateQueryParam("today", "true");
         }
       };
 
-      // yield context.tools.registerToolbarTool({
-      //   id: "today",
-      //   priority: 0,
-      //   title: "Today",
-      //   icon: Icon,
-      //   onSelect: openToday,
-      // });
+      const urlListenerCleanup = effect(() => {
+        const url = context.navigation.currentUrl.value;
+        const isTodayOpen = url.searchParams.get("today") === "true";
+        const paneId = context.panes.selectedPaneId.value;
+        if (isTodayOpen && !wasTodayOpen) {
+          wasTodayOpen = true;
+
+          if (paneId) {
+            context.tabs.selectTab("");
+
+            const component = () => {
+              const { t, language } = useI18n();
+              return (
+                <Today
+                  config={{
+                    MaterialIcon,
+                    language,
+                    username: context.login.profile.value?.name,
+                    userId: context.login.userId.value ?? undefined,
+                    userLastReading,
+                    getCommunityReading,
+                    translate: (key, options) =>
+                      t(key, {
+                        ns: [extensionId, "seed-bible"],
+                        ...(options ?? {}),
+                      }),
+                    bookNames,
+                    addTab: (
+                      bookId: string,
+                      chapter: number,
+                      translationId: string | undefined,
+                      verse: number | undefined
+                    ) => {
+                      const tab = context.tabs.addTab(undefined, {
+                        initialBookId: bookId,
+                        initialChapterNumber: chapter,
+                        initialTranslationId: translationId,
+                        scrollToVerse: verse,
+                      });
+                      // `scrollToVerse` only scrolls; the highlight is a separate
+                      // decoration (same pattern as the reader's search panel).
+                      if (verse !== undefined) {
+                        tab.readingState.decorateVerses(
+                          bookId,
+                          chapter,
+                          verse,
+                          {
+                            className: "sb-verse-decoration-search-result",
+                            removeAfterMs: 3000,
+                          }
+                        );
+                      }
+                      const paneId = context.panes.selectedPaneId.value;
+                      if (paneId) {
+                        context.panes.openInPane(paneId, { tabId: tab.id });
+                      }
+                      context.app.selectTab(tab.id);
+                    },
+                    getDefaultTranslation: () => {
+                      const readingState =
+                        context.app.currentReadingState.value;
+                      return (
+                        readingState?.tab.readingState.defaultTranslation.id ??
+                        getDefaultTranslationForLanguage(
+                          context.i18n.defaultLanguage
+                        ).id
+                      );
+                    },
+                    searchVerses,
+                    getVerseText,
+                    lastTranslationId,
+                    openBookSelector: () => {
+                      const pane =
+                        context.panes.panes.value.find(
+                          (p) => p.id === context.panes.selectedPaneId.value
+                        ) ?? null;
+                      if (pane) {
+                        context.selector.setOpen(true, pane);
+                      }
+                    },
+                    translationBooks: lastTranslationBooks,
+                    translationBooksMap,
+                    subscribedUsersProfileProvider: fakeSubscribedUsersProvider,
+                    subscribedUsersIdsProvider: fakeSubscribedUsersProvider,
+                    ReadingHistoryTimeline,
+                    getDayRangeSeconds,
+                    getReadingHistoryEvents: fakeGetReadingHistoryEvents,
+                    GetPastDateInfo,
+                    CapitalizeFirstLetter,
+                    theme: context.theme.currentTheme.value,
+                    readingHistoryService,
+                    sharedSessions,
+                    userDeterministicIdentityProvider: {
+                      getColorById: (id: string) =>
+                        sessionProvider.getUserColorById(id),
+                      getIconById: (id: string) =>
+                        sessionProvider.getUserIconById(id),
+                    },
+                    joinSharedSession: (id: string) =>
+                      context.app.joinSharedSession(id),
+                    bookmarks: context.bookmarks.bookmarks,
+                    getTranslationBooks: (translation: string) =>
+                      context.bibleData.getTranslationBooks(translation),
+                    readingHistoryConfigProvider,
+                    getHighlightedWelcomeVerse,
+                    useHorizontalScroll,
+                  }}
+                />
+              );
+            };
+            context.panes.openInPane(paneId, {
+              component,
+            });
+          }
+        } else if (!isTodayOpen && wasTodayOpen) {
+          wasTodayOpen = false;
+
+          const fallbackTab = context.tabs.tabs.value[0];
+          if (fallbackTab) {
+            context.tabs.selectTab(fallbackTab.id);
+            if (paneId) {
+              context.panes.openInPane(paneId, { tabId: fallbackTab.id });
+            }
+          }
+        }
+      });
 
       yield () => {
         cleanupUserLastReading();
         cleanupTranslationBooks();
         cleanupTranslationId();
+        urlListenerCleanup();
       };
 
       // Public API: lets the host app (or other extensions) open the Today
