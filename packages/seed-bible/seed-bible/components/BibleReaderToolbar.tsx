@@ -11,7 +11,7 @@ import {
   handleHorizontalListKeyNav,
   handleVerticalListKeyNav,
 } from "../components/KeyboardNav";
-import { SeedBibleIcon } from "../components/icons";
+import { MaterialIcon, SeedBibleIcon } from "../components/icons";
 import { useEffect, useRef } from "preact/hooks";
 import {
   SelfAvatarVisual,
@@ -522,6 +522,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         .getQuickTools({ readingState: readingState.value! })
         .find((tool) => tool.id === "ext_audioReader-play") ?? null
   );
+  // The mobile floating nav pill sits above everything, including the
+  // fullscreen Discover panel used for playback. While a playlist is
+  // playing, its chapter prev/next arrows are replaced with playlist
+  // item prev/next arrows so they don't fight the playlist's own navigation.
+  const playingPlaylist = useComputed(
+    () => props.state.playlists.playing.value
+  );
 
   const floatingAnchor = useComputed(() =>
     readingState.value!.selectedVerses.value.reduce<{
@@ -741,10 +748,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 audioPlayTool.value && audioPlayTool.value.visible.value
                   ? audioPlayTool.value
                   : null;
-              const prev = previousChapterTool.value;
-              const next = nextChapterTool.value;
+              const playing = playingPlaylist.value;
+              const prev = playing ? null : previousChapterTool.value;
+              const next = playing ? null : nextChapterTool.value;
               const selector = openSelectorTool.value;
-              if (!audio && !prev && !next && !selector) return null;
+              if (!audio && !prev && !next && !selector && !playing) {
+                return null;
+              }
 
               const AudioIcon = audio?.icon;
               const PrevIcon = prev?.icon;
@@ -770,19 +780,35 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     </button>
                   )}
 
-                  {(prev || next || selector) && (
+                  {(prev || next || selector || playing) && (
                     <div className="sb-reader-floating-nav-group">
-                      {prev && PrevIcon && (
+                      {playing ? (
                         <button
                           type="button"
-                          disabled={prev.disabled.value}
-                          onClick={prev.onSelect}
+                          disabled={!playing.hasPrevious.value}
+                          onClick={() => playing.previous()}
                           onPointerDown={spawnRipple}
                           className="sb-reader-floating-nav-arrow"
-                          aria-label={translateTitle(t, prev.title)}
+                          aria-label={t("previous", {
+                            defaultValue: "Previous",
+                          })}
                         >
-                          <PrevIcon />
+                          <MaterialIcon>skip_previous</MaterialIcon>
                         </button>
+                      ) : (
+                        prev &&
+                        PrevIcon && (
+                          <button
+                            type="button"
+                            disabled={prev.disabled.value}
+                            onClick={prev.onSelect}
+                            onPointerDown={spawnRipple}
+                            className="sb-reader-floating-nav-arrow"
+                            aria-label={translateTitle(t, prev.title)}
+                          >
+                            <PrevIcon />
+                          </button>
+                        )
                       )}
 
                       {selector && (
@@ -799,17 +825,31 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         </button>
                       )}
 
-                      {next && NextIcon && (
+                      {playing ? (
                         <button
                           type="button"
-                          disabled={next.disabled.value}
-                          onClick={next.onSelect}
+                          disabled={!playing.hasNext.value}
+                          onClick={() => playing.next()}
                           onPointerDown={spawnRipple}
                           className="sb-reader-floating-nav-arrow"
-                          aria-label={translateTitle(t, next.title)}
+                          aria-label={t("next", { defaultValue: "Next" })}
                         >
-                          <NextIcon />
+                          <MaterialIcon>skip_next</MaterialIcon>
                         </button>
+                      ) : (
+                        next &&
+                        NextIcon && (
+                          <button
+                            type="button"
+                            disabled={next.disabled.value}
+                            onClick={next.onSelect}
+                            onPointerDown={spawnRipple}
+                            className="sb-reader-floating-nav-arrow"
+                            aria-label={translateTitle(t, next.title)}
+                          >
+                            <NextIcon />
+                          </button>
+                        )
                       )}
                     </div>
                   )}

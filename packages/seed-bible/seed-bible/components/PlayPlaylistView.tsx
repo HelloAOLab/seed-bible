@@ -2,6 +2,7 @@ import { useEffect, useRef } from "preact/hooks";
 import { useI18n } from "../i18n/I18nManager";
 import type { TabsManager } from "../managers/TabsManager";
 import type { PlaylistManager } from "../managers/PlaylistManager";
+import type { ModalManager } from "../managers/ModalManager";
 import { setSafeHtml } from "../managers/Sanitization";
 import { resolveLinkMedia } from "../managers/resolveLinkMedia";
 import { MaterialIcon } from "./icons";
@@ -11,26 +12,62 @@ import { playlistItemLabel } from "./playlistItemLabel";
 interface PlayPlaylistViewProps {
   playlists: PlaylistManager;
   tabs: TabsManager;
+  modals: ModalManager;
 }
+
+/** Stable id so navigating between non-verse items updates the same modal instead of closing/reopening it. */
+const PLAYLIST_ITEM_MODAL_ID = "playlist-item-content";
 
 /**
  * Playback screen shown inside the discover pane while a playlist is playing.
  * Displays the playlist title, the queue of items, and a bottom-anchored bar
- * with the current item and previous/next controls.
+ * with the current item and previous/next controls. Video, link, and text
+ * (html) items open in the app's generic modal rather than rendering inline.
  */
 export function PlayPlaylistView(props: PlayPlaylistViewProps) {
-  const { playlists, tabs } = props;
+  const { playlists, tabs, modals } = props;
   const { t } = useI18n();
 
   // Reading `.value` during render subscribes the component to updates.
   const playing = playlists.playing.value;
+  const currentItem = playing?.currentItem.value ?? null;
+
+  // Keyed on `currentItem` so stepping between non-verse items updates the
+  // open modal's content in place instead of flicker-closing and reopening.
+  useEffect(() => {
+    if (!currentItem || currentItem.type === "bible-verse") {
+      modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
+      return;
+    }
+
+    modals.openModal({
+      id: PLAYLIST_ITEM_MODAL_ID,
+      title:
+        currentItem.title?.trim() || t("content", { defaultValue: "Content" }),
+      content: () =>
+        currentItem.type === "html" ? (
+          <PlaylistHtmlContent html={currentItem.html} />
+        ) : (
+          <PlaylistLinkContent
+            url={currentItem.url}
+            title={currentItem.title}
+            embed={currentItem.embed}
+          />
+        ),
+    });
+  }, [currentItem]);
+
+  // Dismiss the modal if this view is torn down, e.g. playback stops.
+  useEffect(() => {
+    return () => modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
+  }, []);
+
   if (!playing) {
     return null;
   }
 
   const queue = playing.queue.value;
   const currentIndex = playing.currentIndex.value;
-  const currentItem = playing.currentItem.value;
   const sourcePlaylists = playing.playlists.value;
 
   // Resolve verse book IDs to full book names using the selected tab's loaded
@@ -92,27 +129,6 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
           </ul>
         </DiscoverSection>
       </div>
-
-      {currentItem && currentItem.type !== "bible-verse" ? (
-        <div className="sb-play-playlist-content">
-          <DiscoverSection
-            title={
-              currentItem.title?.trim() ||
-              t("content", { defaultValue: "Content" })
-            }
-          >
-            {currentItem.type === "html" ? (
-              <PlaylistHtmlContent html={currentItem.html} />
-            ) : (
-              <PlaylistLinkContent
-                url={currentItem.url}
-                title={currentItem.title}
-                embed={currentItem.embed}
-              />
-            )}
-          </DiscoverSection>
-        </div>
-      ) : null}
 
       <div className="sb-play-controls">
         <span className="sb-play-controls-label" dir="auto">

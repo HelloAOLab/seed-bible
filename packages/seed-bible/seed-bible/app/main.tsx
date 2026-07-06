@@ -160,6 +160,7 @@ function MainContent(props: {
             <DiscoverPane
               tabs={state.tabs}
               playlists={state.playlists}
+              modals={state.modals}
               onClose={state.app.closeDiscover}
             />
           </div>

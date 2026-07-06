@@ -3,6 +3,7 @@ import type { TabsManager, ReaderTab } from "../managers/TabsManager";
 import type { Playlist, PlaylistManager } from "../managers/PlaylistManager";
 import type { DiscoverReference } from "../managers/DiscoverManager";
 import type { TranslationBook } from "../managers/FreeUseBibleAPI";
+import type { ModalManager } from "../managers/ModalManager";
 import { MaterialIcon } from "./icons";
 import { CreatePlaylistForm } from "./CreatePlaylistForm";
 import { PlayPlaylistView } from "./PlayPlaylistView";
@@ -11,6 +12,7 @@ import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
 interface DiscoverPaneProps {
   tabs: TabsManager;
   playlists: PlaylistManager;
+  modals: ModalManager;
   /** Closes the Discover panel. When provided, a close button is shown. */
   onClose?: () => void;
 }
@@ -23,7 +25,7 @@ type ReferenceWithBookData = DiscoverReference & { bookData: TranslationBook };
  * selected reader tab. Annotations are a placeholder for now (display-only).
  */
 export function DiscoverPane(props: DiscoverPaneProps) {
-  const { tabs, playlists, onClose } = props;
+  const { tabs, playlists, modals, onClose } = props;
   const { t } = useI18n();
   const { view } = playlists;
 
@@ -32,7 +34,9 @@ export function DiscoverPane(props: DiscoverPaneProps) {
   }
 
   if (view.value === "play_playlist") {
-    return <PlayPlaylistView playlists={playlists} tabs={tabs} />;
+    return (
+      <PlayPlaylistView playlists={playlists} tabs={tabs} modals={modals} />
+    );
   }
 
   // Reading `.value` during render subscribes the component to updates.
