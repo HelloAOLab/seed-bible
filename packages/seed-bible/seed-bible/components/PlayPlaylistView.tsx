@@ -1,6 +1,8 @@
+import { useEffect, useRef } from "preact/hooks";
 import { useI18n } from "../i18n/I18nManager";
 import type { TabsManager } from "../managers/TabsManager";
 import type { PlaylistManager } from "../managers/PlaylistManager";
+import { setSafeHtml } from "../managers/Sanitization";
 import { MaterialIcon } from "./icons";
 import { DiscoverSection } from "./DiscoverSection";
 import { playlistItemLabel } from "./playlistItemLabel";
@@ -90,6 +92,35 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
         </DiscoverSection>
       </div>
 
+      {currentItem && currentItem.type !== "bible-verse" ? (
+        <div className="sb-play-playlist-content">
+          <DiscoverSection title={t("content", { defaultValue: "Content" })}>
+            {currentItem.type === "html" ? (
+              <PlaylistHtmlContent html={currentItem.html} />
+            ) : (
+              <div className="sb-play-playlist-content-link-wrapper">
+                <iframe
+                  className="sb-play-playlist-content-iframe"
+                  src={currentItem.url}
+                  sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
+                  referrerpolicy="no-referrer"
+                  title={currentItem.url}
+                />
+                <a
+                  className="sb-play-playlist-content-link"
+                  href={currentItem.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  dir="auto"
+                >
+                  {currentItem.url}
+                </a>
+              </div>
+            )}
+          </DiscoverSection>
+        </div>
+      ) : null}
+
       <div className="sb-play-controls">
         <span className="sb-play-controls-label" dir="auto">
           {currentItem
@@ -119,4 +150,20 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
       </div>
     </div>
   );
+}
+
+/**
+ * Renders a playlist HTML snippet. The stored value was sanitized when the item
+ * was created, but playlists are publicly readable and may come from untrusted
+ * authors, so the HTML is sanitized again on render via {@link setSafeHtml}.
+ */
+function PlaylistHtmlContent(props: { html: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (el) {
+      void setSafeHtml(props.html, el);
+    }
+  }, [props.html]);
+  return <div ref={ref} className="sb-play-playlist-content-html" dir="auto" />;
 }
