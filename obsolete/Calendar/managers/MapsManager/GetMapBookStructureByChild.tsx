@@ -1,5 +1,7 @@
-const {mapBookData, mapBookLabel} = that;
+const { mapBookData, mapBookLabel } = that;
 
 return thisBot.vars.mapBooksStructure.find((structure) => {
-    return mapBookData ? structure.mapBookData.id == mapBookData.id : structure.nameLabel.id == mapBookLabel.id
+  return mapBookData
+    ? structure.mapBookData.id == mapBookData.id
+    : structure.nameLabel.id == mapBookLabel.id;
 });

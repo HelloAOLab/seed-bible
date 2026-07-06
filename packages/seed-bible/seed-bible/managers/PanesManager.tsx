@@ -9,7 +9,12 @@ export type PaneLayoutId =
   | "split-left-two-right"
   | "split-3v"
   | "grid-2x2"
-  | "split-4v";
+  | "split-4v"
+  // Mobile-only: two attached panes stacked top/bottom. This is never a
+  // user-selectable preset (it is intentionally absent from
+  // PANE_LAYOUT_OPTIONS) — it is only produced by the app's effective layout
+  // when a mobile viewport shows two anchored panes.
+  | "stacked-2";
 
 export interface PaneLayoutOption {
   /** Stable layout identifier. */
@@ -494,20 +499,32 @@ export function createPanes(
       return;
     }
 
+    const $panes = panes.peek();
+
     // Do not auto-replace a component-backed pane with a tab.
     if (selectedPane.component !== null) {
-      selectedPane = panes.value.find((p) => p.tab !== null) ?? null;
+      selectedPane = $panes.find((p) => p.tab !== null) ?? null;
+    }
 
-      if (!selectedPane) {
-        return;
-      }
+    if (!selectedPane) {
+      // no reading tabs to replace, so replace the first attached pane instead
+      selectedPane = $panes.find((p) => !p.detached) ?? null;
+    }
+
+    if (!selectedPane) {
+      // still no pane, so open a new attached one
+      openPane({
+        type: "attached",
+        tabId: nextTab.id,
+      });
+      return;
     }
 
     if (selectedPane.tab?.id === nextTab.id) {
       return;
     }
 
-    panes.value = panes.value.map((pane) =>
+    panes.value = $panes.map((pane) =>
       pane.id === selectedPane.id
         ? {
             ...pane,

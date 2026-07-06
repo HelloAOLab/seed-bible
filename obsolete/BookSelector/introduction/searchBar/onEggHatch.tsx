@@ -1,1 +1,1 @@
-whisper(thisBot, 'initialize')
+whisper(thisBot, "initialize");

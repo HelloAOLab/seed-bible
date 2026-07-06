@@ -1,11 +1,11 @@
 {
-    "author": "Sujan",
-    "app": "",
-    "toolbarConfig": {
-        "icon": "ink_eraser_off",
-        "label": "Eraser",
-        "hasToggle": "true",
-        "run": "createEraser",
-        "to": "canvas"
-    }
+  "author": "Sujan",
+  "app": "",
+  "toolbarConfig": {
+    "icon": "ink_eraser_off",
+    "label": "Eraser",
+    "hasToggle": "true",
+    "run": "createEraser",
+    "to": "canvas"
+  }
 }

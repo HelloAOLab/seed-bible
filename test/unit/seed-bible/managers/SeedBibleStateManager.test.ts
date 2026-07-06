@@ -128,6 +128,17 @@ async function createStateWithTwoTabs() {
 }
 
 describe("createSeedBibleState", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    jsdom.reconfigure({
+      url: "https://example.com",
+    });
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("created with default values", async () => {
     const state = await createState();
 
@@ -492,6 +503,85 @@ describe("createSeedBibleState", () => {
     expect(state.selector.pane.value?.id).toBe(emptyPane!.id);
   });
 
+  describe("mobile pane restrictions", () => {
+    // isMobile is derived from viewportWidth; the returned signal is the same
+    // writable instance, so tests drive the mobile layout by writing to it.
+    const setViewportWidth = (state: SeedBibleState, width: number) => {
+      (state.app.viewportWidth as unknown as { value: number }).value = width;
+    };
+
+    it("shows at most two anchored panes, stacked top/bottom, on mobile", async () => {
+      const state = await createState();
+      // A four-slot desktop layout leaves four attached panes in the manager.
+      state.panes.setLayout("grid-2x2");
+      expect(
+        state.panes.panes.value.filter((pane) => !pane.detached)
+      ).toHaveLength(4);
+
+      setViewportWidth(state, 400);
+
+      const shownAttached = state.app.effectivePanes.value.filter(
+        (pane) => !pane.detached
+      );
+      expect(shownAttached).toHaveLength(2);
+      expect(state.app.effectiveLayout.value).toBe("stacked-2");
+
+      // The manager's own layout/panes are left untouched so they are restored
+      // on desktop.
+      expect(state.panes.layout.value).toBe("grid-2x2");
+      expect(
+        state.panes.panes.value.filter((pane) => !pane.detached)
+      ).toHaveLength(4);
+    });
+
+    it("uses the single layout on mobile when only one anchored pane exists", async () => {
+      const state = await createState();
+      setViewportWidth(state, 400);
+
+      expect(
+        state.app.effectivePanes.value.filter((pane) => !pane.detached)
+      ).toHaveLength(1);
+      expect(state.app.effectiveLayout.value).toBe("single");
+    });
+
+    it("restores the desktop layout when the viewport grows back", async () => {
+      const state = await createState();
+      state.panes.setLayout("grid-2x2");
+
+      setViewportWidth(state, 400);
+      expect(state.app.effectiveLayout.value).toBe("stacked-2");
+
+      setViewportWidth(state, 1200);
+      expect(state.app.effectiveLayout.value).toBe("grid-2x2");
+      expect(
+        state.app.effectivePanes.value.filter((pane) => !pane.detached)
+      ).toHaveLength(4);
+    });
+
+    it("renders detached panes anchored to the bottom on mobile without changing their stored anchor", async () => {
+      const state = await createState();
+      const detached = state.panes.openPane({
+        type: "detached",
+        component: () => null,
+      });
+      expect(detached).not.toBeNull();
+      expect(detached!.detachedAnchor).toBe("floating");
+
+      setViewportWidth(state, 400);
+
+      const effectiveDetached = state.app.effectivePanes.value.find(
+        (pane) => pane.detached
+      );
+      expect(effectiveDetached?.detachedAnchor).toBe("bottom");
+
+      // The stored anchor is preserved for when the layout returns to desktop.
+      const storedDetached = state.panes.panes.value.find(
+        (pane) => pane.detached
+      );
+      expect(storedDetached?.detachedAnchor).toBe("floating");
+    });
+  });
+
   describe("reading history autosave", () => {
     beforeEach(() => {
       vi.useFakeTimers();
@@ -696,6 +786,163 @@ describe("createSeedBibleState", () => {
         translationId: "esv",
         bookId: "genesis",
         chapter: "2",
+      });
+    });
+  });
+
+  describe("openVerseReference", () => {
+    it("navigates the selected tab to the given book and chapter", async () => {
+      const state = await createState();
+      const tab = state.tabs.tabs.value[0]!;
+      const selectSpy = vi
+        .spyOn(tab.readingState, "selectTranslationAndChapter")
+        .mockResolvedValue(undefined);
+
+      await state.app.openVerseReference({ book: "GEN", chapter: 2 });
+
+      expect(selectSpy).toHaveBeenCalledWith(expect.any(String), "GEN", 2, {
+        scrollToVerse: undefined,
+      });
+    });
+
+    it("uses the tab's current translationId when navigating", async () => {
+      const state = await createState();
+      const tab = state.tabs.tabs.value[0]!;
+      tab.readingState.translationId.value = "niv";
+      const selectSpy = vi
+        .spyOn(tab.readingState, "selectTranslationAndChapter")
+        .mockResolvedValue(undefined);
+
+      await state.app.openVerseReference({ book: "GEN", chapter: 1 });
+
+      expect(selectSpy).toHaveBeenCalledWith("niv", "GEN", 1, {
+        scrollToVerse: undefined,
+      });
+    });
+
+    it("falls back to DEFAULT_TRANSLATION_ID when the tab has no translationId", async () => {
+      const state = await createState();
+      const tab = state.tabs.tabs.value[0]!;
+      const selectSpy = vi
+        .spyOn(tab.readingState, "selectTranslationAndChapter")
+        .mockResolvedValue(undefined);
+
+      await state.app.openVerseReference({ book: "EXO", chapter: 3 });
+
+      expect(selectSpy).toHaveBeenCalledWith("AAB", "EXO", 3, {
+        scrollToVerse: undefined,
+      });
+    });
+
+    it("falls back to the first tab when the selected tab id does not match any tab", async () => {
+      const state = await createStateWithTwoTabs();
+      const firstTab = state.tabs.tabs.value[0]!;
+      const secondTab = state.tabs.tabs.value[1]!;
+      state.tabs.selectedTabId.value = "nonexistent";
+      const firstTabSpy = vi
+        .spyOn(firstTab.readingState, "selectTranslationAndChapter")
+        .mockResolvedValue(undefined);
+      const secondTabSpy = vi
+        .spyOn(secondTab.readingState, "selectTranslationAndChapter")
+        .mockResolvedValue(undefined);
+
+      await state.app.openVerseReference({ book: "JHN", chapter: 3 });
+
+      expect(firstTabSpy).toHaveBeenCalledTimes(1);
+      expect(secondTabSpy).not.toHaveBeenCalled();
+    });
+
+    it("passes the verse number as scrollToVerse when navigating", async () => {
+      const state = await createState();
+      const tab = state.tabs.tabs.value[0]!;
+      const selectSpy = vi
+        .spyOn(tab.readingState, "selectTranslationAndChapter")
+        .mockResolvedValue(undefined);
+
+      await state.app.openVerseReference({
+        book: "JHN",
+        chapter: 3,
+        verse: 16,
+      });
+
+      expect(selectSpy).toHaveBeenCalledWith(expect.any(String), "JHN", 3, {
+        scrollToVerse: 16,
+      });
+    });
+
+    it("decorates the verse after navigating when a single verse is specified", async () => {
+      const state = await createState();
+      const tab = state.tabs.tabs.value[0]!;
+      vi.spyOn(
+        tab.readingState,
+        "selectTranslationAndChapter"
+      ).mockResolvedValue(undefined);
+      const decorateSpy = vi.spyOn(tab.readingState, "decorateVerses");
+
+      await state.app.openVerseReference({
+        book: "JHN",
+        chapter: 3,
+        verse: 16,
+      });
+
+      expect(decorateSpy).toHaveBeenCalledWith("JHN", 3, 16, {
+        className: "sb-verse-decoration-open-reference-highlight",
+        removeAfterMs: 3000,
+      });
+    });
+
+    it("decorates a range of verses when endVerse is specified", async () => {
+      const state = await createState();
+      const tab = state.tabs.tabs.value[0]!;
+      vi.spyOn(
+        tab.readingState,
+        "selectTranslationAndChapter"
+      ).mockResolvedValue(undefined);
+      const decorateSpy = vi.spyOn(tab.readingState, "decorateVerses");
+
+      await state.app.openVerseReference({
+        book: "PSA",
+        chapter: 23,
+        verse: 1,
+        endVerse: 3,
+      });
+
+      expect(decorateSpy).toHaveBeenCalledWith("PSA", 23, [1, 2, 3], {
+        className: "sb-verse-decoration-open-reference-highlight",
+        removeAfterMs: 3000,
+      });
+    });
+
+    it("does not decorate when no verse is specified", async () => {
+      const state = await createState();
+      const tab = state.tabs.tabs.value[0]!;
+      vi.spyOn(
+        tab.readingState,
+        "selectTranslationAndChapter"
+      ).mockResolvedValue(undefined);
+      const decorateSpy = vi.spyOn(tab.readingState, "decorateVerses");
+
+      await state.app.openVerseReference({ book: "GEN", chapter: 1 });
+
+      expect(decorateSpy).not.toHaveBeenCalled();
+    });
+
+    it("creates a new tab when no tabs exist", async () => {
+      const state = await createState();
+      const initialTabId = state.tabs.tabs.value[0]!.id;
+      state.tabs.removeTab(initialTabId);
+      const addTabSpy = vi.spyOn(state.tabs, "addTab");
+
+      await state.app.openVerseReference({
+        book: "GEN",
+        chapter: 1,
+        verse: 1,
+      });
+
+      expect(addTabSpy).toHaveBeenCalledWith(undefined, {
+        initialBookId: "GEN",
+        initialChapterNumber: 1,
+        scrollToVerse: 1,
       });
     });
   });

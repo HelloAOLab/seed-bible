@@ -18,6 +18,8 @@ import {
   getSelfDisplayName,
   openBookmarkCategoryModal,
 } from "./Tabs";
+import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
+import { getExtensionExports } from "../managers";
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
 
@@ -132,17 +134,6 @@ function MobileMoreMenu(props: MobileMoreMenuProps) {
     //       t("discovery-coming-soon", {
     //         defaultValue: "Discovery is coming soon",
     //       })
-    //     );
-    //   },
-    // },
-    // {
-    //   id: "chat",
-    //   label: t("chat", { defaultValue: "Chat" }),
-    //   iconName: "chat_bubble_outline",
-    //   onClick: () => {
-    //     onClose();
-    //     os.toast(
-    //       t("chat-coming-soon", { defaultValue: "Chat is coming soon" })
     //     );
     //   },
     // },
@@ -365,6 +356,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     selector,
     panes,
     sidebar,
+    chats,
     tools: toolsManager,
     settings,
     bookmarks,
@@ -396,6 +388,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       window: {
         isMobile: props.state.app.isMobile.value,
       },
+      chats,
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
       openChat: sidebar.openChatPanel,
@@ -403,6 +396,26 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     });
     return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
   });
+
+  const unreadChatIndicator = useComputed(() => {
+    if (chats.numberOfUnreadMessages.value <= 0) {
+      return null;
+    }
+
+    if (chats.wasMentioned.value) {
+      return "@";
+    }
+
+    return chats.numberOfUnreadMessages.value > 99
+      ? "99+"
+      : `${chats.numberOfUnreadMessages.value}`;
+  });
+
+  const hasTypingInChats = useComputed(() =>
+    chats.chats.value.some((chat) =>
+      chat.typingParticipants.value.some((participant) => !participant.isSelf)
+    )
+  );
 
   const hiddenToolIds = new Set([
     "previous-chapter",
@@ -428,6 +441,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       window: {
         isMobile: props.state.app.isMobile.value,
       },
+      chats,
       openSidebar: sidebar.openSidebar,
       openSearch: sidebar.openSearch,
       openChat: sidebar.openChatPanel,
@@ -447,7 +461,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const hasVerseSelection = useComputed(
     () => readingState.value!.selectedVerses.value.length > 0
   );
-  // Align with the app-wide mobile breakpoint (`state.app.isMobile`, 768px).
+  // Align with the app-wide mobile breakpoint (`state.app.isMobile`, 480px).
   // Kept as a local computed signal so its own viewport listener continues to
   // drive re-renders even if `app.isMobile` is not consumed elsewhere.
   const isSmallScreen = props.state.app.isMobile;
@@ -839,17 +853,24 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   active={activeMobileTab.value === "today"}
                   onClick={() => {
                     isMoreMenuOpen.value = false;
+
                     sidebar.closeSearchPanel();
                     sidebar.closeChatPanel();
                     sidebar.closeSettings();
                     sidebar.closeSidebar();
                     localBottomTab.value = "today";
 
-                    props.state.app.toast(
-                      t("today-coming-soon", {
-                        defaultValue: "Today screen is coming soon",
-                      })
-                    );
+                    const today =
+                      getExtensionExports<TodayScreenAPI>("today-screen");
+                    if (today) {
+                      today.open();
+                    } else {
+                      props.state.app.toast(
+                        t("today-coming-soon", {
+                          defaultValue: "Today screen is coming soon",
+                        })
+                      );
+                    }
                   }}
                 />
 
@@ -1039,6 +1060,26 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         <span className="sb-reader-toolbar-button-label">
                           {label}
                         </span>
+                      )}
+                      {tool.id === "open-chat" && unreadChatIndicator.value && (
+                        <span
+                          className="sb-reader-toolbar-unread-indicator"
+                          aria-label={
+                            chats.wasMentioned.value
+                              ? "Unread mention"
+                              : `Unread messages: ${unreadChatIndicator.value}`
+                          }
+                        >
+                          {unreadChatIndicator.value}
+                        </span>
+                      )}
+                      {tool.id === "open-chat" && hasTypingInChats.value && (
+                        <span
+                          className="sb-reader-toolbar-typing-indicator"
+                          aria-label={t("someone-is-typing", {
+                            defaultValue: "Someone is typing...",
+                          })}
+                        />
                       )}
                     </button>
                     {hasMenuItems &&

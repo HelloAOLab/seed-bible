@@ -1,4 +1,6 @@
-os.log("geoJSON - feature support for geometry collection is nor included yet...")
+os.log(
+  "geoJSON - feature support for geometry collection is nor included yet..."
+);
 
 // var feature = that;
 // var geometries = feature.geometries;

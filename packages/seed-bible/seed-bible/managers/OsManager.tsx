@@ -12,14 +12,32 @@ import { InstRecordsClient } from "@casual-simulation/aux-common/websockets/Inst
 import { PartitionAuthSource } from "@casual-simulation/aux-common/partitions/PartitionAuthSource";
 import { AuthenticatedConnectionClient } from "@casual-simulation/aux-common/websockets/AuthenticatedConnectionClient";
 import { computed, effect, signal } from "@preact/signals";
-import { parseSessionKey } from "@casual-simulation/aux-common";
+import {
+  parseSessionKey,
+  generateV1ConnectionToken,
+} from "@casual-simulation/aux-common";
 import { sha256 } from "hash.js";
+import { first, firstValueFrom } from "rxjs";
 
 export type CasualOSManager = ReturnType<typeof CasualOSManager>;
 
 export interface UserInfo {
   id: string;
   email: string;
+}
+
+/**
+ * The `beforeinstallprompt` event fired by Chromium browsers when the app is
+ * eligible for installation. Not part of the standard TS DOM lib, so we declare
+ * the shape we rely on here.
+ */
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: "accepted" | "dismissed";
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
 }
 
 const UNSAFE_HEADERS = new Set([
@@ -42,6 +60,23 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
   const client = createRecordsClient(endpoint);
   const connectionId = uuid();
   let currentWakeLock: WakeLockSentinel | null = null;
+
+  // Captured `beforeinstallprompt` event, used to trigger the native PWA
+  // install dialog on Chromium browsers. Only available once the browser deems
+  // the app installable (never on iOS Safari, or if already installed).
+  let deferredInstallPrompt: BeforeInstallPromptEvent | null = null;
+  if (typeof window !== "undefined") {
+    window.addEventListener("beforeinstallprompt", (event) => {
+      // Prevent the browser's default mini-infobar so we can trigger the
+      // prompt from our own onboarding UI instead.
+      event.preventDefault();
+      deferredInstallPrompt = event as BeforeInstallPromptEvent;
+    });
+    window.addEventListener("appinstalled", () => {
+      // The event is single-use and no longer valid once installed.
+      deferredInstallPrompt = null;
+    });
+  }
 
   let instRecordsClient: InstRecordsClient | null = null;
   let authSource: PartitionAuthSource | null = null;
@@ -83,18 +118,68 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
     if (!authSource) {
       const source = (authSource = new PartitionAuthSource());
       source.onAuthMessage.subscribe((message) => {
-        // TODO: handle other message types and error cases
-        if (message.type === "request") {
-          if (message.kind === "need_indicator") {
-            // TODO: Support returning connection tokens
+        const provideIndicator = (recordName: string | null, inst: string) => {
+          const key = connectionKey.value;
+          // Send response back asynchronously so that we can ensure the requester is listening for the response
+          setTimeout(() => {
+            let token: string | null = null;
+            if (key) {
+              token = generateV1ConnectionToken(
+                key,
+                connectionId,
+                recordName,
+                inst
+              );
+            }
+
             source.sendAuthResponse({
               type: "response",
               success: true,
               origin: message.origin,
-              indicator: {
-                connectionId: connectionId,
-              },
+              indicator: token
+                ? {
+                    connectionToken: token,
+                  }
+                : {
+                    connectionId: connectionId,
+                  },
             });
+          });
+        };
+
+        // TODO: handle other message types and error cases
+        if (message.type === "request") {
+          if (
+            message.kind === "need_indicator" ||
+            message.kind === "invalid_indicator"
+          ) {
+            provideIndicator(null, "seed-bible");
+          } else if (message.kind === "not_authorized") {
+            console.log("Handling not_authorized message:", message);
+            if (message.reason?.type === "invalid_token") {
+              const recordName = message.resource?.recordName;
+              const inst = message.resource?.inst;
+              const branch = message.resource?.branch;
+
+              if (!recordName || !inst || !branch) {
+                console.log(
+                  `[AuthCoordinator] Invalid token request missing recordName, inst, or branch`
+                );
+                return;
+              }
+
+              // Only allow automatically loading branches that start with 'doc/'
+              // This is a temporary solution to prevent loading actual existing inst data and instead only allow loading
+              // shared documents from other records
+              if (!branch.startsWith("doc/")) {
+                console.error(
+                  `[AuthCoordinator] Invalid token request branch does not start with 'doc/'`
+                );
+                return;
+              }
+
+              provideIndicator(recordName, inst);
+            }
           }
         }
       });
@@ -118,7 +203,11 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
       markers: options?.markers ? options.markers : undefined,
     });
 
-    await doc.init();
+    doc.connect();
+
+    await firstValueFrom(
+      doc.onStatusUpdated.pipe(first((s) => s.type === "sync" && s.synced))
+    );
 
     return doc;
   }
@@ -231,7 +320,19 @@ export function CasualOSManager(endpoint: string = "https://auth.ao.bot") {
       outcome: "accepted" | "dismissed";
       platform: string;
     }> => {
-      throw new Error("Not implemented yet");
+      if (!deferredInstallPrompt) {
+        // No captured event: the browser doesn't support programmatic install
+        // (e.g. iOS Safari), the app is already installed, or the prompt has
+        // already been consumed.
+        throw new Error("PWA installation is not available on this device");
+      }
+
+      const promptEvent = deferredInstallPrompt;
+      // The event can only be used once — clear it before awaiting the choice.
+      deferredInstallPrompt = null;
+
+      await promptEvent.prompt();
+      return promptEvent.userChoice;
     },
   };
 }

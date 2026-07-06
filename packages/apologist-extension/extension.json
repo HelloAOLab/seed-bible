@@ -1,0 +1,313 @@
+{
+  "id": "ext_Apologist",
+  "translations": {
+    "en": {
+      "title": "Apologist",
+      "description": "Be curious. Be humble. Learn boldly. This is AI for seekers of spiritual truth"
+    },
+    "es": {
+      "title": "Apologista",
+      "description": "Sé curioso. Sé humilde. Aprende con valentía. Esta es IA para buscadores de la verdad espiritual"
+    },
+    "af": {
+      "title": "Apologeet",
+      "description": "Wees nuuskierig. Wees nederig. Leer met vrymoedigheid. Dit is KI vir soekers na geestelike waarheid."
+    },
+    "am": {
+      "title": "አፖሎጂስት",
+      "description": "የማወቅ ጉጉት ይኑራችሁ። ትሑት ሁኑ። በድፍረት ይማሩ። ይህ ለመንፈሳዊ እውነት ፈላጊዎች AI ነው።"
+    },
+    "ar": {
+      "title": "مدافع عن العقيدة",
+      "description": "كن فضوليًا. كن متواضعًا. تعلّم بجرأة. هذا هو الذكاء الاصطناعي للباحثين عن الحقيقة الروحية."
+    },
+    "az": {
+      "title": "Apologet",
+      "description": "Maraqlı olun. Təvazökar olun. Cəsarətlə öyrənin. Bu, mənəvi həqiqət axtaranlar üçün süni intellektdir"
+    },
+    "be": {
+      "title": "Апалагет",
+      "description": "Будзьце цікаўнымі. Будзьце сціплымі. Вучыцеся смела. Гэта штучны інтэлект для шукальнікаў духоўнай ісціны."
+    },
+    "bg": {
+      "title": "Апологет",
+      "description": "Бъдете любопитни. Бъдете смирени. Учете се смело. Това е изкуствен интелект за търсачи на духовна истина."
+    },
+    "bn": {
+      "title": "ক্ষমা প্রার্থনাকারী",
+      "description": "কৌতূহলী হোন। বিনয়ী হোন। সাহসের সাথে শিখুন। আধ্যাত্মিক সত্যের সন্ধানীদের জন্য এই এআই।"
+    },
+    "bs": {
+      "title": "Apologeta",
+      "description": "Budite znatiželjni. Budite skromni. Učite hrabro. Ovo je vještačka inteligencija za tragaoce duhovne istine."
+    },
+    "ca": {
+      "title": "Apologista",
+      "description": "Sigues curiós. Sigues humil. Aprèn amb valentia. Aquesta és la IA per a buscadors de la veritat espiritual."
+    },
+    "cs": {
+      "title": "Obhájce",
+      "description": "Buďte zvědaví. Buďte pokorní. Učte se směle. Toto je umělá inteligence pro hledače duchovní pravdy."
+    },
+    "cy": {
+      "title": "Apologydd",
+      "description": "Byddwch yn chwilfrydig. Byddwch yn ostyngedig. Dysgwch yn feiddgar. Dyma AI ar gyfer ceiswyr gwirionedd ysbrydol."
+    },
+    "da": {
+      "title": "Apologet",
+      "description": "Vær nysgerrig. Vær ydmyg. Lær modigt. Dette er kunstig intelligens for dem, der søger åndelig sandhed."
+    },
+    "de": {
+      "title": "Apologet",
+      "description": "Sei neugierig. Sei demütig. Lerne mutig. Dies ist KI für Suchende nach spiritueller Wahrheit."
+    },
+    "el": {
+      "title": "Απολογητής",
+      "description": "Να είστε περίεργοι. Να είστε ταπεινοί. Να μαθαίνετε με τόλμη. Αυτή είναι η Τεχνητή Νοημοσύνη για τους αναζητητές της πνευματικής αλήθειας."
+    },
+    "et": {
+      "title": "Apologeet",
+      "description": "Ole uudishimulik. Ole alandlik. Õpi julgelt. See on tehisintellekt vaimse tõe otsijatele."
+    },
+    "fa": {
+      "title": "عذرخواه",
+      "description": "کنجکاو باشید. فروتن باشید. جسورانه یاد بگیرید. این هوش مصنوعی برای جویندگان حقیقت معنوی است."
+    },
+    "fi": {
+      "title": "APOSTOLOIJAN",
+      "description": "Ole utelias. Ole nöyrä. Opi rohkeasti. Tämä on tekoälyä hengellisen totuuden etsijöille."
+    },
+    "fil": {
+      "title": "Tagapagtanggol",
+      "description": "Maging mausisa. Maging mapagpakumbaba. Matuto nang buong tapang. Ito ang AI para sa mga naghahanap ng espirituwal na katotohanan"
+    },
+    "fr": {
+      "title": "Apologiste",
+      "description": "Soyez curieux. Soyez humble. Apprenez avec audace. Voici l'IA pour les chercheurs de vérité spirituelle."
+    },
+    "fy": {
+      "title": "Apologeet",
+      "description": "Wês nijsgjirrich. Wês nederich. Learje mei moed. Dit is KI foar sikers fan geastlike wierheid"
+    },
+    "gl": {
+      "title": "Apologista",
+      "description": "Sé curioso. Sé humilde. Aprende con audacia. Esta é a IA para buscadores da verdade espiritual."
+    },
+    "gn": {
+      "title": "Disculpa ojeruréva",
+      "description": "Eñehaʼãkena reikuaasetereíkena. Eñemomirĩ. Eaprende pyʼaguasúpe. Kóva ha’e AI umi ohekávape ĝuarã añetegua espiritual"
+    },
+    "gu": {
+      "title": "માફી માંગનાર",
+      "description": "જિજ્ઞાસુ બનો. નમ્ર બનો. હિંમતભેર શીખો. આ આધ્યાત્મિક સત્યના શોધકો માટે AI છે."
+    },
+    "he": {
+      "title": "אפולוגט",
+      "description": "היו סקרנים. היו ענווים. למדו באומץ. זוהי בינה מלאכותית למחפשי אמת רוחנית"
+    },
+    "hi": {
+      "title": "क्षमा की प्रार्थना करनेवाला",
+      "description": "जिज्ञासु बनो। विनम्र बनो। निडर होकर सीखो। यह आध्यात्मिक सत्य के साधकों के लिए बनाया गया एआई है।"
+    },
+    "hr": {
+      "title": "Apologeta",
+      "description": "Budite znatiželjni. Budite ponizni. Učite hrabro. Ovo je umjetna inteligencija za tražitelje duhovne istine."
+    },
+    "hu": {
+      "title": "Hitvédő",
+      "description": "Légy kíváncsi. Légy alázatos. Tanulj bátran. Ez a mesterséges intelligencia a spirituális igazság keresőinek szól."
+    },
+    "ind": {
+      "title": "Pembela",
+      "description": "Jadilah ingin tahu. Jadilah rendah hati. Belajarlah dengan berani. Inilah AI untuk para pencari kebenaran spiritual."
+    },
+    "is": {
+      "title": "Afsökunarbeiðni",
+      "description": "Vertu forvitinn. Vertu auðmjúkur. Lærðu af djörfung. Þetta er gervigreind fyrir þá sem leita að andlegum sannleika."
+    },
+    "it": {
+      "title": "Apologeta",
+      "description": "Siate curiosi. Siate umili. Imparate con audacia. Questa è l'intelligenza artificiale per chi cerca la verità spirituale."
+    },
+    "iw": {
+      "title": "אפולוגט",
+      "description": "היו סקרנים. היו ענווים. למדו באומץ. זוהי בינה מלאכותית למחפשי אמת רוחנית"
+    },
+    "ja": {
+      "title": "擁護者",
+      "description": "好奇心を持ち、謙虚さを持ち、大胆に学びましょう。これは、精神的な真理を求める人々のためのAIです。"
+    },
+    "ka": {
+      "title": "აპოლოგეტი",
+      "description": "იყავით ცნობისმოყვარე. იყავით თავმდაბალი. ისწავლეთ თამამად. ეს არის ხელოვნური ინტელექტი სულიერი ჭეშმარიტების მაძიებლებისთვის."
+    },
+    "km": {
+      "title": "អ្នកសុំទោស",
+      "description": "ចូរចង់ដឹងចង់ឃើញ។ ចូរមានចិត្តរាបទាប។ រៀនដោយក្លាហាន។ នេះគឺជា AI សម្រាប់អ្នកស្វែងរកសេចក្តីពិតខាងវិញ្ញាណ"
+    },
+    "kn": {
+      "title": "ಕ್ಷಮೆಯಾಚಿಸುವವರು",
+      "description": "ಕುತೂಹಲದಿಂದಿರಿ. ವಿನಮ್ರರಾಗಿರಿ. ಧೈರ್ಯದಿಂದ ಕಲಿಯಿರಿ. ಇದು ಆಧ್ಯಾತ್ಮಿಕ ಸತ್ಯವನ್ನು ಹುಡುಕುವವರಿಗೆ AI ಆಗಿದೆ."
+    },
+    "ko": {
+      "title": "변호자",
+      "description": "호기심을 가지세요. 겸손하세요. 과감하게 배우세요. 이것은 영적 진리를 추구하는 사람들을 위한 AI입니다."
+    },
+    "ky": {
+      "title": "Аполог",
+      "description": "Кызыгыңыз. Момун болуңуз. Кайраттуулук менен үйрөнүңүз. Бул руханий чындыкты издегендер үчүн жасалма интеллект"
+    },
+    "ln": {
+      "title": "Mosɛngi ya bolimbisi",
+      "description": "Zalá na mposa ya koyeba makambo. Zalá na komikitisa. Yekola na mpiko nyonso. Oyo ezali AI mpo na baluki ya bosolo ya molimo"
+    },
+    "lo": {
+      "title": "ຜູ້ແກ້ຕົວ",
+      "description": "ຈົ່ງຢາກຮູ້ຢາກເຫັນ. ຈົ່ງຖ່ອມຕົວ. ຮຽນຮູ້ຢ່າງກ້າຫານ. ນີ້ແມ່ນ AI ສຳລັບຜູ້ສະແຫວງຫາຄວາມຈິງທາງວິນຍານ"
+    },
+    "lt": {
+      "title": "Apologetas",
+      "description": "Būkite smalsūs. Būkite nuolankūs. Mokykitės drąsiai. Tai dirbtinis intelektas dvasinės tiesos ieškotojams."
+    },
+    "lv": {
+      "title": "Apologists",
+      "description": "Esi zinātkārs. Esi pazemīgs. Mācies drosmīgi. Šis ir mākslīgais intelekts garīgās patiesības meklētājiem."
+    },
+    "mk": {
+      "title": "Апологет",
+      "description": "Биди љубопитен. Биди скромна. Учеј храбро. Ова е вештачка интелигенција за трагачи по духовна вистина"
+    },
+    "ml": {
+      "title": "ക്ഷമാപണം നടത്തുന്നയാൾ",
+      "description": "ജിജ്ഞാസുക്കളായിരിക്കുക. വിനയാന്വിതരായിരിക്കുക. ധൈര്യത്തോടെ പഠിക്കുക. ആത്മീയ സത്യാന്വേഷികൾക്കുള്ള AI ആണിത്."
+    },
+    "mn": {
+      "title": "Уучлалт гуйгч",
+      "description": "Сониуч бай. Даруу бай. Зоригтой суралц. Энэ бол сүнслэг үнэнийг эрэлхийлэгчдэд зориулсан хиймэл оюун ухаан юм"
+    },
+    "mr": {
+      "title": "माफी मागणारा",
+      "description": "जिज्ञासू व्हा. नम्र व्हा. धैर्याने शिका. हे आहे आध्यात्मिक सत्याच्या साधकांसाठी असलेले एआय."
+    },
+    "ms": {
+      "title": "Ahli Apologis",
+      "description": "Jadilah ingin tahu. Jadilah rendah diri. Belajar dengan berani. Ini adalah AI untuk pencari kebenaran rohani"
+    },
+    "my": {
+      "title": "တောင်းပန်သူ",
+      "description": "စူးစမ်းလိုစိတ်ရှိပါ။ နှိမ့်ချပါ။ ရဲရင့်စွာ လေ့လာပါ။ ဤသည်မှာ ဝိညာဉ်ရေးရာ အမှန်တရားကို ရှာဖွေသူများအတွက် AI ဖြစ်သည်"
+    },
+    "nb": {
+      "title": "Apologet",
+      "description": "Vær nysgjerrig. Vær ydmyk. Lær frimodig. Dette er kunstig intelligens for søkere av åndelig sannhet"
+    },
+    "ne": {
+      "title": "क्षमा याचनाकर्ता",
+      "description": "जिज्ञासु बन्नुहोस्। विनम्र बन्नुहोस्। साहसपूर्वक सिक्नुहोस्। यो आध्यात्मिक सत्यको खोजी गर्नेहरूका लागि एआई हो।"
+    },
+    "nl": {
+      "title": "Apologeet",
+      "description": "Wees nieuwsgierig. Wees nederig. Leer met lef. Dit is AI voor zoekers naar spirituele waarheid."
+    },
+    "no": {
+      "title": "Apologet",
+      "description": "Vær nysgjerrig. Vær ydmyk. Lær frimodig. Dette er kunstig intelligens for søkere av åndelig sannhet"
+    },
+    "pa": {
+      "title": "ਮੁਆਫ਼ੀ ਮੰਗਣ ਵਾਲਾ",
+      "description": "ਉਤਸੁਕ ਰਹੋ। ਨਿਮਰ ਬਣੋ। ਦਲੇਰੀ ਨਾਲ ਸਿੱਖੋ। ਇਹ ਅਧਿਆਤਮਿਕ ਸੱਚਾਈ ਦੇ ਖੋਜੀਆਂ ਲਈ ਏਆਈ ਹੈ।"
+    },
+    "pl": {
+      "title": "Apologeta",
+      "description": "Bądź ciekawy. Bądź pokorny. Ucz się śmiało. To sztuczna inteligencja dla poszukiwaczy duchowej prawdy."
+    },
+    "ps": {
+      "title": "بښنه غوښتونکی",
+      "description": "لیواله اوسئ. عاجز اوسئ. په زړورتیا زده کړه وکړئ. دا د روحاني حقیقت غوښتونکو لپاره مصنوعي ذهانت دی."
+    },
+    "pt": {
+      "title": "Apologista",
+      "description": "Seja curioso. Seja humilde. Aprenda com ousadia. Esta é a IA para buscadores da verdade espiritual."
+    },
+    "ro": {
+      "title": "Apologet",
+      "description": "Fii curios. Fii umil. Învață cu îndrăzneală. Aceasta este inteligența artificială pentru căutătorii adevărului spiritual."
+    },
+    "ru": {
+      "title": "Апологет",
+      "description": "Будьте любопытны. Будьте смиренны. Учитесь смело. Это искусственный интеллект для искателей духовной истины."
+    },
+    "sk": {
+      "title": "Obhajca",
+      "description": "Buďte zvedaví. Buďte pokorní. Učte sa odvážne. Toto je umelá inteligencia pre hľadačov duchovnej pravdy."
+    },
+    "sl": {
+      "title": "Apologet",
+      "description": "Bodite radovedni. Bodite ponižni. Učite se pogumno. To je umetna inteligenca za iskalce duhovne resnice."
+    },
+    "sq": {
+      "title": "Apolog",
+      "description": "Ji kurioz. Ji i përulur. Mëso me guxim. Kjo është inteligjenca artificiale për kërkuesit e së vërtetës shpirtërore."
+    },
+    "sv": {
+      "title": "Apologet",
+      "description": "Var nyfiken. Var ödmjuk. Lär dig djärvt. Detta är AI för sökare av andlig sanning."
+    },
+    "sw": {
+      "title": "Mtetezi wa msamaha",
+      "description": "Kuwa mdadisi. Kuwa mnyenyekevu. Jifunze kwa ujasiri. Hii ni akili bandia kwa wanaotafuta ukweli wa kiroho"
+    },
+    "ta": {
+      "title": "அப்பாலஜிஸ்ட்",
+      "description": "ஆர்வமாக இருங்கள். பணிவுடன் இருங்கள். துணிச்சலுடன் கற்றுக்கொள்ளுங்கள். இது ஆன்மீக உண்மையைத் தேடுபவர்களுக்கான செயற்கை நுண்ணறிவு."
+    },
+    "te": {
+      "title": "సమర్థకుడు",
+      "description": "జిజ్ఞాసతో ఉండండి. వినయంగా ఉండండి. ధైర్యంగా నేర్చుకోండి. ఆధ్యాత్మిక సత్యాన్వేషకుల కోసం ఇది AI."
+    },
+    "th": {
+      "title": "นักแก้ตัว",
+      "description": "จงอยากรู้อยากเห็น จงอ่อนน้อมถ่อมตน จงเรียนรู้อย่างกล้าหาญ นี่คือ AI สำหรับผู้แสวงหาความจริงทางจิตวิญญาณ"
+    },
+    "ti": {
+      "title": "ይቕሬታ ዝሓትት።",
+      "description": "ክትፈልጥ ትደሊ። ትሑት ኩን። ብትብዓት ተማሃሩ። እዚ ንደለይቲ መንፈሳዊ ሓቂ AI እዩ።"
+    },
+    "tl": {
+      "title": "Tagapagtanggol",
+      "description": "Maging mausisa. Maging mapagpakumbaba. Matuto nang buong tapang. Ito ang AI para sa mga naghahanap ng espirituwal na katotohanan"
+    },
+    "tr": {
+      "title": "Savunucu",
+      "description": "Meraklı olun. Alçakgönüllü olun. Cesurca öğrenin. Bu, manevi gerçeği arayanlar için yapay zekadır."
+    },
+    "ug": {
+      "title": "كەچۈرۈم سوراشچى",
+      "description": "قىزىقىشچان بولۇڭ. تۆۋەن بولۇڭ. جاسارەت بىلەن ئۆگىنىڭ. بۇ روھىي ھەقىقەتنى ئىزدىگۈچىلەر ئۈچۈن سۈنئىي ئەقىل."
+    },
+    "uk": {
+      "title": "Апологет",
+      "description": "Будьте допитливими. Будьте скромними. Навчайтеся сміливо. Це ШІ для шукачів духовної істини."
+    },
+    "ur": {
+      "title": "معافی مانگنے والا",
+      "description": "متجسس رہیں۔ عاجزی اختیار کرو۔ ہمت سے سیکھیں۔ یہ روحانی سچائی کے متلاشیوں کے لیے اے آئی ہے۔"
+    },
+    "uz": {
+      "title": "Apolog",
+      "description": "Qiziquvchan bo'ling. Kamtarin bo'ling. Jasorat bilan o'rganing. Bu ma'naviy haqiqatni izlovchilar uchun sun'iy intellekt"
+    },
+    "vi": {
+      "title": "Người biện hộ",
+      "description": "Hãy tò mò. Hãy khiêm tốn. Hãy học hỏi một cách mạnh dạn. Đây là trí tuệ nhân tạo dành cho những người tìm kiếm chân lý tâm linh."
+    },
+    "zh": {
+      "title": "辩护者",
+      "description": "保持好奇心。保持谦逊。勇于学习。这是为寻求精神真理的人们打造的人工智能。"
+    },
+    "zu": {
+      "title": "Umxolisi",
+      "description": "Yiba nelukuluku. Thobeka. Funda ngesibindi. Lokhu kuyi-AI yabafuna iqiniso elingokomoya"
+    }
+  }
+}
