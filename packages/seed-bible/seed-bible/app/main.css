@@ -10979,10 +10979,22 @@ img.sb-chat-view-message-avatar {
   background: var(--sb-divider-color);
 }
 
+.sb-play-playlist-content-video {
+  width: 100%;
+  max-height: 240px;
+  border-radius: 8px;
+  background: #000;
+}
+
 .sb-play-playlist-content-link {
   font-size: 13px;
   color: var(--sb-primary-color);
   overflow-wrap: anywhere;
+}
+
+.sb-play-playlist-open-button {
+  align-self: flex-start;
+  text-decoration: none;
 }
 
 .sb-discover-item--row .sb-discover-item-title {
