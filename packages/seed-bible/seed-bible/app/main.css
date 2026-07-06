@@ -10590,6 +10590,7 @@ img.sb-chat-view-message-avatar {
   height: 100%;
   overflow-y: auto;
   padding: 12px;
+  gap: 8px;
   color: var(--sb-font-color);
 }
 
@@ -10968,6 +10969,12 @@ img.sb-chat-view-message-avatar {
   overflow-y: auto;
   padding-top: 12px;
   border-top: 1px solid var(--sb-divider-color);
+
+  padding: 12px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 12px;
+  background: var(--sb-background);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .sb-play-playlist-content .sb-discover-section {
