@@ -1,6 +1,6 @@
 # UI Scaling Refactor — Work Log & Handoff
 
-**Branch:** `fix/1281-ui-scaling` · **Issue:** #1281 · **Status:** Rem-based UI scaling — **Phases 0–8, 10, 11–14 done. Refactor complete; only the optional Phase 9 (a11y browser-pref) remains deferred. Ready to push / open PR.**
+**Branch:** `fix/1281-ui-scaling` · **Issue:** #1281 · **Status:** Rem-based UI scaling — **Phases 0–8, 10–15 done. Refactor complete through a second `develop` merge (2026-07-06). Only the optional Phase 9 (a11y browser-pref) remains deferred.**
 
 - **Committed:** Phase 0+1 (`5e752106`), Phase 7 (`f0e2c921`), Phase 2 (`0190a5b7`), Phase 4 (`e469fbb`), Phase 5 (`337b1794`), Phase 6 (`275184e7`). Plus the ThemeManager var-collision fix (`5ec5f44f`). An earlier `develop` merge landed at `168b7fbb`.
 - **Phase 3** = verified clean, **no code changes** (see §4).
@@ -9,10 +9,12 @@
 - **Phase 12 (tutorial/tour)** = ✅ committed (`9c4a7fe6`). Code half was `4ed4b607` (`fontSizeClass` strip); the CSS-audit half converted the `.sb-tutorial-prompt` block (12 px→rem). See §4.
 - **Phase 13 (today screen)** = ✅ committed (`a674f8e7`). `today-screen` package: whole `styles.css` + 3 inline icon sizes → rem; 2 unit tests updated. See §4.
 - **Phase 14 (scripture map)** = ✅ committed (`c0f424f1`, together with the icon-scaling QA fixes). `scripture-map` chrome px→rem (settings/controls/tooltip), **map-canvas geometry kept px** (scale-factor coordinate space); 2 inline px + 2 pinned tests updated. See §4.
-- **Phase 8 (book-selector responsiveness)** = ✅ **complete, uncommitted in working tree** (2026-07-06). Capped `.sb-selector-panel` width to the viewport so it stops clipping at L/XL. See §7/§8.
+- **Phase 8 (book-selector responsiveness)** = ✅ committed (`da1d42f0`). Capped `.sb-selector-panel` width to the viewport so it stops clipping at L/XL. See §7/§8.
+- **Phase 10 (cleanup)** = ✅ committed (`10619bdb`). Removed `postcss-pxtorem`; added the rem/em/px invariant header to `main.css`.
 - **Icon-scaling QA fixes** (committed `c0f424f1`): app-wide `body .material-symbols-outlined { font-size: 1.5rem }` base + per-button SVG rem sizing + the scripture-map settings `<img>` `.coloredIcon`. See §7.
+- **Phase 15 (second `develop` merge integration)** = ✅ **complete, uncommitted in working tree** (2026-07-06). A second large `develop` merge (merge commit `0d511209`) brought new UI in the px idiom (session participants/settings, collapsed-tab presence, tab-user roles, mobile split-panel warning, reader-header flex refactor). Converted **~101 chrome px→rem** in `main.css` + the pre-existing `PaneLayout` fullscreen-exit CSS-in-JS block. See §4.
 - **Naming:** the scale-map constant was renamed `UI_TEXT_SIZE_SCALE` → **`UI_TEXT_SIZE_SCALE_MAP`** (in `e469fbb`). Older references below may still say the old name.
-- **Remaining:** only the deferred **Phase 9** (optional a11y browser-pref, not required for #1281). Everything else — mechanism swap, all per-area passes, all develop-merge integration, book-selector responsiveness, and final cleanup — is done. Next action is push + PR.
+- **Remaining:** only the deferred **Phase 9** (optional a11y browser-pref, not required for #1281). Everything else is done.
 - **Commit policy:** never commit on your own — only when the user invokes `/commit`.
 
 This doc is the single source of truth for resuming this work in a new thread / on
@@ -171,6 +173,17 @@ Files changed (now **committed** as `5e752106`; the list below is historical):
 - **Gates green:** `check:ts` (0 err) · `lint` (0 err / 251 pre-existing warns) · `test` (2520/2520) · `build` (✓). Exact no-op at UI size M.
 - **Not code (verify at QA):** open the Scripture Map at UI L/XL — the settings panel, controls/zoom bar, and tooltips should scale; the **book/chapter grid must NOT change** with UI size (it only responds to its own zoom control). Also confirm the map still zooms correctly via its own control at each UI size.
 
+### Phase 15 — second `develop` merge integration ✅ (working tree, uncommitted — 2026-07-06)
+
+- **Context:** a second large `develop` merge (merge commit `0d511209`, resolving 8 `main.css` conflicts — see the conflict log in git) brought new UI in the pre-refactor px idiom. Scoping (diff of merge-base → develop) showed develop touched **only `main.css`** for CSS (today-screen / scripture-map / ThemeManager untouched), plus components that style via classes (so their styling is all in `main.css`).
+- **Method:** re-added `postcss-pxtorem`, re-ran the **whole-file codemod** on `main.css` (safe: it only touches px, so already-rem rules are no-ops and the propList/blacklist protect borders/box-shadow/breakpoints/`.sb-font-size-*`), Prettier'd, then re-removed the dep. **~101 chrome px→rem.** Verified `git diff -w` is purely px→rem, and the reader glyph `.sb-font-size-*` (12–22px) stayed px (blacklisted).
+- **New feature areas converted:** session participants + settings (`.sb-session-*` — the largest, from `SessionParticipants.tsx`), collapsed-tab presence/tags (`.sb-collapsed-tab-presence-*`, tiny dots/badges), tab-user roles (`.sb-tab-user-role*`), mobile split-panel warning modal (`.sb-split-panel-warning-*`), and the reader-header flex refactor (`.sb-bible-reader-header`/`-actions`).
+- **Kept px (judgment):** the mobile detached-pane bottom offset (`bottom: var(--sb-mobile-detached-bottom-offset, 68px)` + paired `padding-bottom: 68px` reserve) — a JS-driven mobile coordinate offset the codemod left inside the `var()` fallback; kept px so the offset and its reserve stay consistent. Borders/box-shadow/breakpoints kept as usual.
+- **Icons:** the new features use **Material Symbols font glyphs** (`material-symbols-outlined` / the `MaterialIcon` wrapper), already covered by the `body .material-symbols-outlined` base rule — **no per-button SVG rem sizing needed** this time.
+- **Also converted (pre-existing miss, not develop's):** `PaneLayout.tsx`'s `FULLSCREEN_EXIT_BUTTON_CSS` template-string block (`.sb-fullscreen-exit-*`) — CSS-in-JS the original codemod never saw. `top/right 12px → 0.75rem`, `gap 6px → 0.375rem`, `padding 6px 14px → 0.375rem 0.875rem`, `border-radius 8px → 0.5rem`, `font-size 14px/18px → 0.875rem/1.125rem`; kept the `box-shadow` and `blur(4px)`.
+- **Left px (pre-existing, out of scope):** a `line-height: 16px` on an unread-count badge (`~7447`) — inert (the badge centers via `inline-flex`), not develop's, not the merge's.
+- **Gates green:** `check:ts` (0 err) · `lint` (0 err / 261 pre-existing warns) · `test` (2535/2535) · `build` (✓). Exact no-op at UI size M.
+
 ## 5. Verification done (Phase 1)
 
 - **Static gates green:** `pnpm check:ts` (0 errors), `pnpm lint` (0 errors; 438 pre-existing warnings), `pnpm test` (580/580), `pnpm build` (✓).
@@ -316,6 +329,8 @@ Setting `--sb-ui-scale` directly is faithful — it's exactly what `SettingsMana
 - [x] Phase 13 (today screen) — committed (`a674f8e7`).
 - [x] Phase 14 (scripture map) + icon-scaling QA fixes — committed (`c0f424f1`).
 - [x] Phase 8 (book selector) — committed (`da1d42f0`).
-- [ ] **Phase 10 (cleanup) — in the working tree, UNCOMMITTED** (`package.json` + `pnpm-lock.yaml` postcss-pxtorem removal + `main.css` invariant header + this doc). Gates green. Commit is the user's to make (`/commit`).
+- [x] Phase 10 (cleanup) — committed (`10619bdb`).
+- [x] Second `develop` merge — committed + pushed (merge commit `0d511209`; 8 `main.css` conflicts resolved).
+- [ ] **Phase 15 (second develop-merge integration) — in the working tree, UNCOMMITTED** (`main.css` ~101 px→rem + `PaneLayout.tsx` fullscreen-exit block + `package.json`/`pnpm-lock.yaml` re-removal of postcss-pxtorem + this doc). Gates green. Commit is the user's to make (`/commit`).
 - [ ] Push `fix/1281-ui-scaling` to the remote — **only when the user explicitly asks.**
 - [ ] Deferred Phase 9 (optional a11y) — not started, not required for #1281.

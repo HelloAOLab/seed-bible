@@ -250,8 +250,8 @@ interface GridPortalPaneProps {
 const FULLSCREEN_EXIT_BUTTON_CSS = `
   .sb-fullscreen-exit-wrapper {
     position: fixed;
-    top: 12px;
-    right: 12px;
+    top: 0.75rem;
+    right: 0.75rem;
     z-index: 1000;
     pointer-events: auto;
   }
@@ -259,13 +259,13 @@ const FULLSCREEN_EXIT_BUTTON_CSS = `
   .sb-fullscreen-exit-button {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
+    gap: 0.375rem;
+    padding: 0.375rem 0.875rem;
     border: none;
-    border-radius: 8px;
+    border-radius: 0.5rem;
     background: rgba(0, 0, 0, 0.72);
     color: white;
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.32);
@@ -278,7 +278,7 @@ const FULLSCREEN_EXIT_BUTTON_CSS = `
   }
 
   .sb-fullscreen-exit-button .material-symbols-outlined {
-    font-size: 18px;
+    font-size: 1.125rem;
   }
 `;
 

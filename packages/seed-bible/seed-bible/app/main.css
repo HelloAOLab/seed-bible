@@ -1032,9 +1032,9 @@ a:visited {
 .sb-bible-reader-header {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  margin: 0 0 28px;
-  padding-bottom: 18px;
+  gap: 0.5rem;
+  margin: 0 0 1.75rem;
+  padding-bottom: 1.125rem;
   border-bottom: 1px solid var(--sb-divider-color);
 }
 
@@ -1061,7 +1061,7 @@ a:visited {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
 }
 
 .sb-bible-reader-title-sep {
@@ -1477,7 +1477,7 @@ a:visited {
 
 @media (max-width: 480px) {
   .sb-chapter-content {
-    padding-inline: 10px;
+    padding-inline: 0.625rem;
   }
 }
 
@@ -1658,19 +1658,19 @@ a:visited {
 
 /* Mobile "open panel over split view" warning modal body. */
 .sb-split-panel-warning-message {
-  margin: 0 0 20px 0;
+  margin: 0 0 1.25rem 0;
 }
 
 .sb-split-panel-warning-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-split-panel-warning-button {
-  padding: 8px 16px;
-  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  border-radius: 0.625rem;
   font-family: var(--sb-font-family);
   font-size: 0.95em;
   font-weight: 600;
@@ -2177,16 +2177,16 @@ a:visited {
 
 .sb-reader-toolbar-unread-indicator {
   position: absolute;
-  top: 3px;
-  right: 4px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 999px;
+  top: 0.1875rem;
+  right: 0.25rem;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.25rem;
+  border-radius: 62.4375rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 700;
   line-height: 1;
   background: var(--sb-primary-color);
@@ -2196,10 +2196,10 @@ a:visited {
 
 .sb-reader-toolbar-typing-indicator {
   position: absolute;
-  right: 6px;
-  bottom: 8px;
-  width: 8px;
-  height: 8px;
+  right: 0.375rem;
+  bottom: 0.5rem;
+  width: 0.5rem;
+  height: 0.5rem;
   border-radius: 50%;
   background: #22c55e;
   box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
@@ -4295,32 +4295,32 @@ a:visited {
   align-items: baseline;
   align-content: center;
   justify-content: center;
-  padding: 0 2px;
+  padding: 0 0.125rem;
   line-height: 1;
-  column-gap: 5px;
-  row-gap: 2px;
+  column-gap: 0.3125rem;
+  row-gap: 0.125rem;
   border: 1px solid;
 }
 
 /* A shared-session tile reserves room for the "Shared" tag at the top and
    the presence dots along the bottom edge. */
 .sb-collapsed-tab-tile-shared {
-  padding-top: 10px;
-  padding-bottom: 8px;
+  padding-top: 0.625rem;
+  padding-bottom: 0.5rem;
 }
 
 .sb-collapsed-tab-tag {
   position: absolute;
-  top: 3px;
+  top: 0.1875rem;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 6px;
+  font-size: 0.375rem;
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 2px 4px;
-  border-radius: 4px;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
   white-space: nowrap;
   background: color-mix(in srgb, var(--sb-primary-color), transparent 82%);
   color: var(--sb-primary-color);
@@ -4329,20 +4329,20 @@ a:visited {
 
 .sb-collapsed-tab-presence {
   position: absolute;
-  bottom: 4px;
+  bottom: 0.25rem;
   left: 0;
   right: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 0.125rem;
   pointer-events: none;
 }
 
 .sb-collapsed-tab-presence-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 62.4375rem;
   box-sizing: border-box;
 }
 
@@ -4356,7 +4356,7 @@ a:visited {
 }
 
 .sb-collapsed-tab-presence-more {
-  font-size: 7px;
+  font-size: 0.4375rem;
   font-weight: 700;
   line-height: 1;
   color: color-mix(in srgb, var(--sb-tab-font-color), transparent 25%);
@@ -4535,16 +4535,16 @@ a:visited {
 
 .sb-tab-user-role {
   position: absolute;
-  bottom: -4px;
+  bottom: -0.25rem;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 6px;
+  font-size: 0.375rem;
   line-height: 1;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  padding: 1px 3px;
-  border-radius: 4px;
+  padding: 1px 0.1875rem;
+  border-radius: 0.25rem;
   white-space: nowrap;
   pointer-events: none;
   box-shadow: 0 0 0 1.5px var(--sb-background, #ffffff);
@@ -4594,8 +4594,8 @@ a:visited {
   align-items: center;
   border: none;
   background: transparent;
-  padding: 2px 4px;
-  border-radius: 999px;
+  padding: 0.125rem 0.25rem;
+  border-radius: 62.4375rem;
   cursor: pointer;
 }
 
@@ -4620,7 +4620,7 @@ a:visited {
 }
 
 .sb-session-participants-stack-item + .sb-session-participants-stack-item {
-  margin-inline-start: -8px;
+  margin-inline-start: -0.5rem;
 }
 
 .sb-session-participants-stack-more {
@@ -4631,18 +4631,18 @@ a:visited {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 5px;
-  margin-inline-start: -8px;
-  border-radius: 999px;
+  min-width: 1.375rem;
+  height: 1.375rem;
+  padding: 0 0.3125rem;
+  margin-inline-start: -0.5rem;
+  border-radius: 62.4375rem;
   background: color-mix(
     in srgb,
     var(--sb-font-color) 16%,
     var(--sb-reader-background)
   );
   color: var(--sb-font-color);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
   box-shadow: 0 0 0 2px var(--sb-reader-background, #fff);
 }
@@ -4651,34 +4651,34 @@ a:visited {
 .sb-session-participants-list {
   list-style: none;
   margin: 0;
-  padding: 8px 4px 4px;
+  padding: 0.5rem 0.25rem 0.25rem;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem;
   overflow-y: auto;
 }
 
 .sb-session-participants-list-item {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 8px;
-  border-radius: 10px;
+  gap: 0.875rem;
+  padding: 0.5rem;
+  border-radius: 0.625rem;
 }
 
 .sb-session-participants-list-item .sb-tab-user-icon {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
 }
 
 .sb-session-participants-list-item
   .sb-tab-user-icon-animal
   .material-symbols-outlined {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .sb-session-participants-list-name {
-  font-size: 15px;
+  font-size: 0.9375rem;
   color: var(--sb-font-color);
   white-space: nowrap;
   overflow: hidden;
@@ -4690,15 +4690,15 @@ a:visited {
 .sb-session-participants-settings-button {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
   width: 100%;
-  margin-top: 8px;
-  padding: 12px 8px;
+  margin-top: 0.5rem;
+  padding: 0.75rem 0.5rem;
   border: none;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: transparent;
   color: var(--sb-primary-color);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 500;
   font-family: inherit;
   text-align: start;
@@ -5045,16 +5045,16 @@ a:visited {
 .sb-session-settings-id {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .sb-session-settings-id-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 8px 8px 8px 12px;
-  border-radius: 10px;
+  gap: 0.5rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+  border-radius: 0.625rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
 }
 
@@ -5063,7 +5063,7 @@ a:visited {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
 }
 
@@ -5071,9 +5071,9 @@ a:visited {
   border: none;
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 34%);
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.375rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -5090,11 +5090,11 @@ a:visited {
 .sb-session-settings-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .sb-session-settings-section-title {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -5103,8 +5103,8 @@ a:visited {
 
 /* Dynamic explanatory text under a toggle */
 .sb-session-settings-description {
-  margin: -4px 0 0;
-  font-size: 12px;
+  margin: -0.25rem 0 0;
+  font-size: 0.75rem;
   line-height: 1.4;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
@@ -5113,22 +5113,22 @@ a:visited {
 .sb-session-close-confirm {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  min-width: 280px;
+  gap: 1rem;
+  min-width: 17.5rem;
   color: var(--sb-font-color);
 }
 
 .sb-session-close-confirm-message {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.5;
 }
 
 .sb-session-close-confirm-dontshow {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
   cursor: pointer;
 }
@@ -5141,17 +5141,17 @@ a:visited {
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-session-cohost-picker {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-session-cohost-instructions {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
 }
 
@@ -5159,9 +5159,9 @@ a:visited {
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 84%);
   background: transparent;
   color: var(--sb-font-color);
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 13px;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
   font-family: inherit;
   text-align: left;
   cursor: pointer;
@@ -5179,25 +5179,25 @@ a:visited {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-session-participant {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .sb-session-participant-avatar {
-  width: 30px;
-  height: 30px;
+  width: 1.875rem;
+  height: 1.875rem;
   border-radius: 50%;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  font-size: 16px;
+  font-size: 1rem;
   background-size: cover;
   background-position: center;
 }
@@ -5207,7 +5207,7 @@ a:visited {
 }
 
 .sb-session-participant-avatar .material-symbols-outlined {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .sb-session-participant-name {
@@ -5215,21 +5215,21 @@ a:visited {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .sb-session-participant-badge {
   flex-shrink: 0;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  padding: 2px 6px;
-  border-radius: 6px;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.375rem;
   background: color-mix(in srgb, var(--sb-primary-color), transparent 82%);
   color: var(--sb-primary-color);
 }
@@ -5239,9 +5239,9 @@ a:visited {
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 84%);
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
-  padding: 5px 10px;
-  border-radius: 8px;
-  font-size: 12px;
+  padding: 0.3125rem 0.625rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
   font-family: inherit;
   cursor: pointer;
   transition: background-color 0.15s ease;
@@ -6429,7 +6429,7 @@ a:visited {
 .sb-context-menu-toggle-label {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .sb-pill-toggle {
@@ -9346,20 +9346,20 @@ a:visited {
     left: 0;
     right: 0;
     top: auto;
-    bottom: 72px;
+    bottom: 4.5rem;
     transform: none;
     width: 100%;
     max-width: 100%;
     max-height: calc(
-      100svh - 72px - env(safe-area-inset-top, 0px) -
-        env(safe-area-inset-bottom, 0px) - 12px
+      100svh - 4.5rem - env(safe-area-inset-top, 0px) -
+        env(safe-area-inset-bottom, 0px) - 0.75rem
     );
     border-radius: 0;
     border: none;
     box-shadow: none;
-    padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 14px;
+    padding: calc(env(safe-area-inset-top, 0px) + 0.875rem) 1rem 0.875rem;
     background: transparent;
-    gap: 14px;
+    gap: 0.875rem;
     animation: none;
     /* Empty areas of the sheet let taps fall through to the reader; the input
        row and results below re-enable pointer events. */
