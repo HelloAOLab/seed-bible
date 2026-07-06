@@ -1393,6 +1393,12 @@ a:visited {
   zoom: calc(1 / var(--sb-ui-zoom, 1));
 }
 
+@media (max-width: 480px) {
+  .sb-chapter-content {
+    padding-inline: 10px;
+  }
+}
+
 .sb-chapter-heading {
   font-family: var(--text-heading-font);
   /* color: var(--text-heading-color); */
