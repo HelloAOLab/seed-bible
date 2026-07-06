@@ -821,6 +821,7 @@ export function PaneReader(props: PaneReaderScrollerProps) {
         selectorState={state.selector}
         state={state}
         mobileChrome={mobileChrome}
+        sharedSession={tab.sharedSession}
       />
       {!isMobile && displayBelowReaderToolbar && (
         <BelowReaderToolbar

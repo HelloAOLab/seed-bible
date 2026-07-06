@@ -4490,6 +4490,139 @@ a:visited {
     color-mix(in srgb, var(--sb-font-color), transparent 72%);
 }
 
+/* Mobile reader header: compact shared-session presence indicator. Shows an
+ * overlapping stack of participant avatars (host first) that opens the
+ * participants sheet when tapped. Mirrors the chat presence-avatar overlap. */
+.sb-session-participants-stack {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: transparent;
+  padding: 2px 4px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.sb-session-participants-stack:active {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-session-participants-stack-item {
+  display: inline-flex;
+}
+
+.sb-session-participants-stack-item .sb-tab-user-icon {
+  box-shadow: 0 0 0 2px var(--sb-reader-background, #fff);
+}
+
+/* Host / co-host: accent ring (a background-colored gap keeps it distinct from
+ * the avatar's own colored border). Rule follows the default so it wins. */
+.sb-session-participants-stack-item-lead .sb-tab-user-icon {
+  box-shadow:
+    0 0 0 1.5px var(--sb-reader-background, #fff),
+    0 0 0 3px var(--sb-primary-color);
+}
+
+.sb-session-participants-stack-item + .sb-session-participants-stack-item {
+  margin-inline-start: -8px;
+}
+
+.sb-session-participants-stack-more {
+  /* Sits in front of the last avatar (opaque background + z-index) so it reads
+   * as being on top of the stack, not tucked behind it. */
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  margin-inline-start: -8px;
+  border-radius: 999px;
+  background: color-mix(
+    in srgb,
+    var(--sb-font-color) 16%,
+    var(--sb-reader-background)
+  );
+  color: var(--sb-font-color);
+  font-size: 11px;
+  font-weight: 700;
+  box-shadow: 0 0 0 2px var(--sb-reader-background, #fff);
+}
+
+/* Participants sheet — reuses the mobile settings sheet shell, adds a roster. */
+.sb-session-participants-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 4px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+}
+
+.sb-session-participants-list-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px;
+  border-radius: 10px;
+}
+
+.sb-session-participants-list-item .sb-tab-user-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.sb-session-participants-list-item
+  .sb-tab-user-icon-animal
+  .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.sb-session-participants-list-name {
+  font-size: 15px;
+  color: var(--sb-font-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Host-only shortcut into the full session settings dialog, pinned below the
+ * participants roster. Styled as an accent list row: gear, label, chevron. */
+.sb-session-participants-settings-button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 12px 8px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font-size: 15px;
+  font-weight: 500;
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-session-participants-settings-label {
+  flex: 1 1 auto;
+}
+
+.sb-session-participants-settings-chevron {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.sb-session-participants-settings-button:active {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+}
+
 /* "Shared with you" — top-right floating toasts */
 .sb-shared-toasts {
   position: fixed;
@@ -5673,6 +5806,11 @@ a:visited {
   }
 
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-title {
+    /* Grow to fill the row so the new-session (+) and bookmarks buttons group
+     * together at the trailing edge instead of being spread by space-between. */
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
     font-size: 24px;
     margin: 0;
     font-size: 24px;

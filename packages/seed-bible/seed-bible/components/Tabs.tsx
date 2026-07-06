@@ -19,8 +19,6 @@ import { SettingsPage } from "../components/SettingsPage";
 import {
   isSessionHost,
   type BibleReadingSession,
-  type ConnectedSessionUser,
-  type SessionOptions,
   getConnectedUserVisualKey,
   getUserAnimalVisual,
 } from "../managers/SessionsManager";
@@ -35,7 +33,8 @@ import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bo
 import {
   SessionUserAvatar,
   getUserDisplayName,
-  type SessionRole,
+  getUserSessionRole,
+  sessionRoleRank,
 } from "./Avatar";
 import { useEffect, useRef } from "preact/hooks";
 import { getExtensionExports } from "../managers";
@@ -122,7 +121,7 @@ function isSessionCloseConfirmDismissed(): boolean {
 /**
  * True when the local client is the host or a co-host of the given session.
  */
-function isLocalSessionHost(
+export function isLocalSessionHost(
   state: SeedBibleState,
   session: BibleReadingSession
 ): boolean {
@@ -137,35 +136,6 @@ function isLocalSessionHost(
       })
     )
   );
-}
-
-/**
- * Leadership role of a connected user within a session, or null for a plain
- * participant. Shared by the tab avatar row and the collapsed-sidebar
- * presence dots so both surfaces agree on who's a host / co-host.
- */
-function getUserSessionRole(
-  options: SessionOptions,
-  user: ConnectedSessionUser
-): SessionRole | null {
-  if (
-    options.hostUserId === user.userId ||
-    options.hostUserId === user.connectionId
-  ) {
-    return "host";
-  }
-  if (
-    isSessionHost(options, user.userId) ||
-    isSessionHost(options, user.connectionId)
-  ) {
-    return "co-host";
-  }
-  return null;
-}
-
-/** Host first, then co-hosts, then everyone else. */
-function sessionRoleRank(role: SessionRole | null): number {
-  return role === "host" ? 0 : role === "co-host" ? 1 : 2;
 }
 
 function SessionSettingsModalContent(props: {
@@ -630,6 +600,41 @@ function SessionCloseConfirmModalContent(props: {
       )}
     </div>
   );
+}
+
+/**
+ * Opens the session settings modal for a shared session. Shared by the tab
+ * kebab and the mobile reader participants sheet so both open the exact same
+ * dialog. Ending the session from the modal removes whichever tab is backed by
+ * this session.
+ */
+export function openSessionSettingsModal(
+  state: SeedBibleState,
+  session: BibleReadingSession
+) {
+  const modalId = `session-settings-${session.id}`;
+  state.modals.openModal({
+    id: modalId,
+    title: {
+      key: "session-settings",
+      defaultValue: "Session settings",
+    },
+    content: () => (
+      <SessionSettingsModalContent
+        state={state}
+        session={session}
+        onEndSession={() => {
+          const tab = state.tabs.tabs.value.find(
+            (t) => t.sharedSession === session
+          );
+          if (tab) state.tabs.removeTab(tab.id);
+        }}
+        onClose={() => {
+          state.modals.closeModal(modalId);
+        }}
+      />
+    ),
+  });
 }
 
 /**
@@ -1102,26 +1107,7 @@ function TabRow(props: TabRowProps) {
                   onClick={() => {
                     const session = tab.sharedSession;
                     if (!session) return;
-                    const modalId = `session-settings-${session.id}`;
-                    state.modals.openModal({
-                      id: modalId,
-                      title: {
-                        key: "session-settings",
-                        defaultValue: "Session settings",
-                      },
-                      content: () => (
-                        <SessionSettingsModalContent
-                          state={state}
-                          session={session}
-                          onEndSession={() => {
-                            state.tabs.removeTab(tab.id);
-                          }}
-                          onClose={() => {
-                            state.modals.closeModal(modalId);
-                          }}
-                        />
-                      ),
-                    });
+                    openSessionSettingsModal(state, session);
                   }}
                 >
                   <MaterialIcon
@@ -2121,6 +2107,21 @@ export function Tabs(props: TabsProps) {
                   stroke-linejoin="round"
                 />
               </svg>
+            </button>
+            <button
+              type="button"
+              className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-new-session-button"
+              aria-label={t("new-shared-session", {
+                defaultValue: "New shared session",
+              })}
+              title={t("new-shared-session", {
+                defaultValue: "New shared session",
+              })}
+              onClick={() => {
+                void state.app.createSharedSession();
+              }}
+            >
+              <MaterialIcon aria-hidden="true">fiber_smart_record</MaterialIcon>
             </button>
           </>
         )}
