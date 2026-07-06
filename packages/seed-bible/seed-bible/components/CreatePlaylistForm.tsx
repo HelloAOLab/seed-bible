@@ -17,9 +17,17 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
   const { playlists, tabs } = props;
   const { t } = useI18n();
   const [saving, setSaving] = useState(false);
+  // Index of the item currently open for editing in the input section below, or
+  // null when the section is adding a new item.
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   // The playlist being edited is owned by the manager; edits update the signal.
   const editing = playlists.editingPlaylist.value;
+
+  // The item currently open for editing, resolved from the selected index. Null
+  // when adding a new item or when the index no longer points at an item.
+  const editingItem =
+    editingIndex !== null ? (editing?.items[editingIndex] ?? null) : null;
 
   // Resolve verse book IDs to full book names using the selected tab's loaded
   // translation, when available. Falls back to the raw book ID otherwise.
@@ -78,18 +86,40 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
             {editing.items.map((item, index) => (
               <li
                 key={index}
-                className="sb-discover-item sb-discover-item--row"
+                className={
+                  "sb-discover-item sb-discover-item--row" +
+                  (index === editingIndex ? " sb-discover-item--editing" : "")
+                }
               >
-                <span className="sb-discover-item-title">
-                  {playlistItemLabel(item, t, resolveBookName)}
-                </span>
+                <button
+                  type="button"
+                  className="sb-discover-item-button"
+                  aria-label={t("edit-playlist-item", {
+                    defaultValue: "Edit item",
+                  })}
+                  aria-current={index === editingIndex}
+                  onClick={() => setEditingIndex(index)}
+                >
+                  <span className="sb-discover-item-title" dir="auto">
+                    {playlistItemLabel(item, t, resolveBookName)}
+                  </span>
+                </button>
                 <button
                   type="button"
                   className="sb-discover-item-delete"
                   aria-label={t("remove-playlist-item", {
                     defaultValue: "Remove item",
                   })}
-                  onClick={() => playlists.removeEditingPlaylistItem(index)}
+                  onClick={() => {
+                    playlists.removeEditingPlaylistItem(index);
+                    // Keep the edit target pointed at the same item, or drop out
+                    // of editing when the edited item itself was removed.
+                    setEditingIndex((current) => {
+                      if (current === null) return null;
+                      if (current === index) return null;
+                      return current > index ? current - 1 : current;
+                    });
+                  }}
                 >
                   <MaterialIcon>delete</MaterialIcon>
                 </button>
@@ -100,8 +130,24 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
       </DiscoverSection>
 
       <PlaylistItemInput
+        // Remount when the edit target changes so the sub-inputs seed fresh
+        // values from the newly-selected item (or reset for adding).
+        key={editingItem ? `edit-${editingIndex}` : "add"}
         books={books}
         onAdd={(item) => playlists.addEditingPlaylistItem(item)}
+        editItem={editingItem ?? undefined}
+        editScriptureText={
+          editingItem?.type === "bible-verse"
+            ? playlistItemLabel(editingItem, t, resolveBookName)
+            : undefined
+        }
+        onUpdate={(item) => {
+          if (editingIndex !== null) {
+            playlists.updateEditingPlaylistItem(editingIndex, item);
+          }
+          setEditingIndex(null);
+        }}
+        onCancelEdit={() => setEditingIndex(null)}
       />
 
       <div className="sb-settings-actions">

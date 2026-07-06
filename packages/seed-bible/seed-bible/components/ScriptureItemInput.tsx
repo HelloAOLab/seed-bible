@@ -7,6 +7,10 @@ import { parseVerseReference } from "../managers/parseVerseReference";
 interface ScriptureItemInputProps {
   books: TranslationBook[];
   onAdd: (item: PlaylistItemData) => void;
+  /** Reference text the field starts with, e.g. when editing an item. */
+  initialValue?: string;
+  /** Overrides the submit button label (defaults to "Add item"). */
+  submitLabel?: string;
 }
 
 /**
@@ -14,9 +18,9 @@ interface ScriptureItemInputProps {
  * in-progress reference text and any parse error.
  */
 export function ScriptureItemInput(props: ScriptureItemInputProps) {
-  const { books, onAdd } = props;
+  const { books, onAdd, initialValue, submitLabel } = props;
   const { t } = useI18n();
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState(initialValue ?? "");
   const [error, setError] = useState<string | null>(null);
 
   const handleAdd = () => {
@@ -66,7 +70,8 @@ export function ScriptureItemInput(props: ScriptureItemInputProps) {
           onClick={handleAdd}
           disabled={!value.trim()}
         >
-          {t("playlist-add-button", { defaultValue: "Add item" })}
+          {submitLabel ??
+            t("playlist-add-button", { defaultValue: "Add item" })}
         </button>
       </div>
       {error ? <div className="sb-playlist-add-error">{error}</div> : null}

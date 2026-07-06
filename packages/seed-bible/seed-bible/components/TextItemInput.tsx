@@ -11,6 +11,10 @@ const TipTapEditor = lazy(() => import("./TipTapEditor"));
 
 interface TextItemInputProps {
   onAdd: (item: PlaylistItemData) => void;
+  /** HTML and title the fields start with, e.g. when editing an item. */
+  initialItem?: { html: string; title?: string };
+  /** Overrides the submit button label (defaults to "Add item"). */
+  submitLabel?: string;
 }
 
 /**
@@ -18,11 +22,12 @@ interface TextItemInputProps {
  * instance and its empty state; the HTML is serialized only on submit.
  */
 export function TextItemInput(props: TextItemInputProps) {
-  const { onAdd } = props;
+  const { onAdd, initialItem, submitLabel } = props;
   const { t } = useI18n();
   const editorRef = useRef<Editor | null>(null);
-  const [editorEmpty, setEditorEmpty] = useState(true);
-  const [title, setTitle] = useState("");
+  // Seeded content counts as non-empty so the submit button starts enabled.
+  const [editorEmpty, setEditorEmpty] = useState(!initialItem?.html);
+  const [title, setTitle] = useState(initialItem?.title ?? "");
 
   const handleAdd = async () => {
     const editor = editorRef.current;
@@ -66,6 +71,7 @@ export function TextItemInput(props: TextItemInputProps) {
         >
           <TipTapEditor
             className="sb-discover-title-input sb-playlist-add-editor"
+            initialContent={initialItem?.html}
             onEditor={(editor) => {
               editorRef.current = editor;
             }}
@@ -78,7 +84,8 @@ export function TextItemInput(props: TextItemInputProps) {
           onClick={handleAdd}
           disabled={editorEmpty}
         >
-          {t("playlist-add-button", { defaultValue: "Add item" })}
+          {submitLabel ??
+            t("playlist-add-button", { defaultValue: "Add item" })}
         </button>
       </div>
     </>

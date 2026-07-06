@@ -332,6 +332,27 @@ export function createPlaylistManager(
   };
 
   /**
+   * Replaces the item at the given index in the currently-edited playlist.
+   * No-op when there is no playlist being edited or the index is out of range.
+   * Persisting happens later via `saveEditingPlaylist`.
+   */
+  const updateEditingPlaylistItem = (
+    index: number,
+    item: PlaylistItemData
+  ): void => {
+    const current = editingPlaylist.value;
+    if (!current || index < 0 || index >= current.items.length) {
+      return;
+    }
+    editingPlaylist.value = {
+      ...current,
+      items: current.items.map((existing, i) =>
+        i === index ? item : existing
+      ),
+    };
+  };
+
+  /**
    * Removes the item at the given index from the currently-edited playlist.
    * No-op when there is no playlist being edited. Persisting happens later via
    * `saveEditingPlaylist`.
@@ -403,6 +424,7 @@ export function createPlaylistManager(
     editPlaylist,
     saveEditingPlaylist,
     addEditingPlaylistItem,
+    updateEditingPlaylistItem,
     removeEditingPlaylistItem,
     cancelEditingPlaylist,
     listPlaylists,

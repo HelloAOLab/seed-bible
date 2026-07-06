@@ -8,6 +8,8 @@ import { MaterialIcon } from "./icons";
 
 interface TipTapEditorProps {
   className?: string;
+  /** HTML the editor starts with, e.g. when editing an existing item. */
+  initialContent?: string;
   /** Receives the editor instance once it's ready, and null when torn down. */
   onEditor: (editor: Editor | null) => void;
   /** Called whenever the editor transitions between empty and non-empty. */
@@ -22,8 +24,11 @@ interface TipTapEditorProps {
  * its contents.
  */
 export default function TipTapEditor(props: TipTapEditorProps) {
-  const { className, onEditor, onEmptyChange } = props;
+  const { className, initialContent, onEditor, onEmptyChange } = props;
   const elementRef = useRef<HTMLDivElement>(null);
+  // Captured once so the mount-only effect starts the editor with this content
+  // without re-creating it if the prop identity changes.
+  const initialContentRef = useRef(initialContent);
   // Rendered so the menu bar can appear once the editor is ready; the parent
   // still receives the instance through `onEditor`.
   const [editor, setEditor] = useState<Editor | null>(null);
@@ -43,6 +48,7 @@ export default function TipTapEditor(props: TipTapEditorProps) {
     }
     const editor = new Editor({
       element: elementRef.current,
+      content: initialContentRef.current,
       extensions: [
         StarterKit,
         Underline,

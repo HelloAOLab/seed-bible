@@ -4,6 +4,10 @@ import type { PlaylistItemData } from "../managers/PlaylistManager";
 
 interface LinkItemInputProps {
   onAdd: (item: PlaylistItemData) => void;
+  /** URL and title the fields start with, e.g. when editing an item. */
+  initialItem?: { url: string; title?: string };
+  /** Overrides the submit button label (defaults to "Add item"). */
+  submitLabel?: string;
 }
 
 /**
@@ -11,10 +15,10 @@ interface LinkItemInputProps {
  * any validation error.
  */
 export function LinkItemInput(props: LinkItemInputProps) {
-  const { onAdd } = props;
+  const { onAdd, initialItem, submitLabel } = props;
   const { t } = useI18n();
-  const [value, setValue] = useState("");
-  const [title, setTitle] = useState("");
+  const [value, setValue] = useState(initialItem?.url ?? "");
+  const [title, setTitle] = useState(initialItem?.title ?? "");
   const [error, setError] = useState<string | null>(null);
 
   const handleAdd = () => {
@@ -84,7 +88,8 @@ export function LinkItemInput(props: LinkItemInputProps) {
           onClick={handleAdd}
           disabled={!value.trim()}
         >
-          {t("playlist-add-button", { defaultValue: "Add item" })}
+          {submitLabel ??
+            t("playlist-add-button", { defaultValue: "Add item" })}
         </button>
       </div>
       {error ? <div className="sb-playlist-add-error">{error}</div> : null}
