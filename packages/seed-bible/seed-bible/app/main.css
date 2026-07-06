@@ -10915,10 +10915,12 @@ img.sb-chat-view-message-avatar {
   align-items: center;
   gap: 8px;
   margin-top: auto;
-  padding-top: 12px;
-  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid var(--sb-divider-color);
+  margin-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  padding: 12px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 12px;
   background: var(--sb-background);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .sb-play-controls-label {
