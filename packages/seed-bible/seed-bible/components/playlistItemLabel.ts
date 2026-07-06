@@ -19,8 +19,11 @@ export function playlistItemLabel(
         : `${book} ${chapter}:${verse}`;
     }
     case "link":
-      return item.url;
+      return item.title?.trim() || item.url;
     case "html":
-      return t("playlist-item-html", { defaultValue: "HTML snippet" });
+      return (
+        item.title?.trim() ||
+        t("playlist-item-html", { defaultValue: "HTML snippet" })
+      );
   }
 }

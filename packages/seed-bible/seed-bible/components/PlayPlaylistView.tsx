@@ -94,7 +94,12 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
 
       {currentItem && currentItem.type !== "bible-verse" ? (
         <div className="sb-play-playlist-content">
-          <DiscoverSection title={t("content", { defaultValue: "Content" })}>
+          <DiscoverSection
+            title={
+              currentItem.title?.trim() ||
+              t("content", { defaultValue: "Content" })
+            }
+          >
             {currentItem.type === "html" ? (
               <PlaylistHtmlContent html={currentItem.html} />
             ) : (
@@ -104,7 +109,7 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
                   src={currentItem.url}
                   sandbox="allow-scripts allow-same-origin allow-popups allow-forms"
                   referrerpolicy="no-referrer"
-                  title={currentItem.url}
+                  title={currentItem.title?.trim() || currentItem.url}
                 />
                 <a
                   className="sb-play-playlist-content-link"

@@ -22,10 +22,12 @@ export const PlaylistItem = z.discriminatedUnion("type", [
   }),
   z.object({
     type: z.literal("html"),
+    title: z.string().optional(),
     html: z.string(),
   }),
   z.object({
     type: z.literal("link"),
+    title: z.string().optional(),
     url: z.url(),
   }),
 ]);

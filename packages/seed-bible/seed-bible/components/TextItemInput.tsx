@@ -22,44 +22,65 @@ export function TextItemInput(props: TextItemInputProps) {
   const { t } = useI18n();
   const editorRef = useRef<Editor | null>(null);
   const [editorEmpty, setEditorEmpty] = useState(true);
+  const [title, setTitle] = useState("");
 
   const handleAdd = async () => {
     const editor = editorRef.current;
     if (!editor || editor.isEmpty) {
       return;
     }
+    const trimmedTitle = title.trim();
     // Serialize the contents only now, on submit, rather than on every keystroke.
-    onAdd({ type: "html", html: await sanitize(editor.getHTML()) });
+    onAdd({
+      type: "html",
+      html: await sanitize(editor.getHTML()),
+      title: trimmedTitle || undefined,
+    });
     editor.commands.clearContent();
     setEditorEmpty(true);
+    setTitle("");
   };
 
   return (
-    <div className="sb-playlist-add-row">
-      <Suspense
-        fallback={
-          <div
-            className="sb-discover-title-input sb-playlist-add-editor sb-playlist-add-editor--loading"
-            aria-busy="true"
+    <>
+      <input
+        className="sb-discover-title-input"
+        type="text"
+        value={title}
+        dir="auto"
+        placeholder={t("playlist-item-title-placeholder", {
+          defaultValue: "Title (optional)",
+        })}
+        onInput={(event: Event) => {
+          setTitle((event.currentTarget as HTMLInputElement).value);
+        }}
+      />
+      <div className="sb-playlist-add-row">
+        <Suspense
+          fallback={
+            <div
+              className="sb-discover-title-input sb-playlist-add-editor sb-playlist-add-editor--loading"
+              aria-busy="true"
+            />
+          }
+        >
+          <TipTapEditor
+            className="sb-discover-title-input sb-playlist-add-editor"
+            onEditor={(editor) => {
+              editorRef.current = editor;
+            }}
+            onEmptyChange={setEditorEmpty}
           />
-        }
-      >
-        <TipTapEditor
-          className="sb-discover-title-input sb-playlist-add-editor"
-          onEditor={(editor) => {
-            editorRef.current = editor;
-          }}
-          onEmptyChange={setEditorEmpty}
-        />
-      </Suspense>
-      <button
-        type="button"
-        className="sb-settings-save-button"
-        onClick={handleAdd}
-        disabled={editorEmpty}
-      >
-        {t("playlist-add-button", { defaultValue: "Add item" })}
-      </button>
-    </div>
+        </Suspense>
+        <button
+          type="button"
+          className="sb-settings-save-button"
+          onClick={handleAdd}
+          disabled={editorEmpty}
+        >
+          {t("playlist-add-button", { defaultValue: "Add item" })}
+        </button>
+      </div>
+    </>
   );
 }

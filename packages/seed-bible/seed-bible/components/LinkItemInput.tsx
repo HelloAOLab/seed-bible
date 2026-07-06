@@ -14,6 +14,7 @@ export function LinkItemInput(props: LinkItemInputProps) {
   const { onAdd } = props;
   const { t } = useI18n();
   const [value, setValue] = useState("");
+  const [title, setTitle] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const handleAdd = () => {
@@ -30,13 +31,33 @@ export function LinkItemInput(props: LinkItemInputProps) {
       );
       return;
     }
-    onAdd({ type: "link", url });
+    const trimmedTitle = title.trim();
+    onAdd({ type: "link", url, title: trimmedTitle || undefined });
     setValue("");
+    setTitle("");
     setError(null);
   };
 
   return (
     <>
+      <input
+        className="sb-discover-title-input"
+        type="text"
+        value={title}
+        dir="auto"
+        placeholder={t("playlist-item-title-placeholder", {
+          defaultValue: "Title (optional)",
+        })}
+        onInput={(event: Event) => {
+          setTitle((event.currentTarget as HTMLInputElement).value);
+        }}
+        onKeyDown={(event: KeyboardEvent) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            handleAdd();
+          }
+        }}
+      />
       <div className="sb-playlist-add-row">
         <input
           className="sb-discover-title-input"
