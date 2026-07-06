@@ -171,6 +171,12 @@ export function createConfig(
 
   const config = signal<AppConfig>(readConfig());
 
+  // Set while `syncConfigFromBot` is applying a language it just read from the
+  // profile, so the `languageChanged` listener below doesn't mistake that
+  // profile-to-i18n sync for a user-driven change and write the same value
+  // straight back to the profile it came from.
+  let isApplyingProfileLanguage = false;
+
   const syncConfigFromBot = (
     profile: UserProfile | null = login.profile.value
   ) => {
@@ -184,7 +190,10 @@ export function createConfig(
         : url.searchParams.get("lang");
 
     if (nextLanguage && nextLanguage !== i18n.language) {
-      i18n.changeLanguage(nextLanguage);
+      isApplyingProfileLanguage = true;
+      void i18n.changeLanguage(nextLanguage).finally(() => {
+        isApplyingProfileLanguage = false;
+      });
     }
   };
 
@@ -214,6 +223,9 @@ export function createConfig(
   };
 
   i18n.on("languageChanged", (language: string) => {
+    if (isApplyingProfileLanguage) {
+      return;
+    }
     console.log("languageChanged event received from i18n:", language);
     saveProfileConfigValue(login, "lang", language);
   });
