@@ -821,6 +821,7 @@ export function PaneReader(props: PaneReaderScrollerProps) {
         selectorState={state.selector}
         state={state}
         mobileChrome={mobileChrome}
+        sharedSession={tab.sharedSession}
       />
       {!isMobile && displayBelowReaderToolbar && (
         <BelowReaderToolbar
@@ -939,6 +940,8 @@ function getLayoutGridDimensions(layout: string): {
       return { cols: 2, rows: 2 };
     case "split-left-two-right":
       return { cols: 2, rows: 2 };
+    case "stacked-2":
+      return { cols: 1, rows: 2 };
     default:
       return { cols: 1, rows: 1 };
   }
@@ -958,7 +961,8 @@ export function PaneLayout(props: PaneLayoutProps) {
     tools: toolsManager,
   } = state;
   const panes = app.effectivePanes.value;
-  const layout = app.panelsEnabled.value ? panesManager.layout.value : "single";
+  const isMobile = app.isMobile.value;
+  const layout = app.effectiveLayout.value;
   const selectedPaneId = app.panelsEnabled.value
     ? panesManager.selectedPaneId.value
     : (panes[0]?.id ?? null);
@@ -1577,30 +1581,37 @@ export function PaneLayout(props: PaneLayoutProps) {
                 </>
               )}
 
-              <div className="sb-detached-pane-toolbar-item">
-                <button
-                  className="sb-detached-pane-toolbar-button"
-                  aria-label={t("toggle-fullscreen-panel")}
-                  title={t("fullscreen")}
-                  onPointerDown={(event: PointerEvent) => {
-                    event.stopPropagation();
-                  }}
-                  onClick={(event: MouseEvent) => {
-                    event.stopPropagation();
-                    panesManager.setDetachedAnchor(
-                      pane.id,
-                      pane.detachedAnchor === "fullscreen"
-                        ? "floating"
-                        : "fullscreen"
-                    );
-                  }}
-                >
-                  <span className="material-symbols-outlined">fullscreen</span>
-                  <span className="sr-only">{t("fullscreen")}</span>
-                </button>
-              </div>
+              {/* On mobile, detached panes are locked to the bottom anchor, so
+                  the fullscreen / side / floating controls are hidden. The
+                  stored anchor is left untouched and restored on desktop. */}
+              {!isMobile && (
+                <div className="sb-detached-pane-toolbar-item">
+                  <button
+                    className="sb-detached-pane-toolbar-button"
+                    aria-label={t("toggle-fullscreen-panel")}
+                    title={t("fullscreen")}
+                    onPointerDown={(event: PointerEvent) => {
+                      event.stopPropagation();
+                    }}
+                    onClick={(event: MouseEvent) => {
+                      event.stopPropagation();
+                      panesManager.setDetachedAnchor(
+                        pane.id,
+                        pane.detachedAnchor === "fullscreen"
+                          ? "floating"
+                          : "fullscreen"
+                      );
+                    }}
+                  >
+                    <span className="material-symbols-outlined">
+                      fullscreen
+                    </span>
+                    <span className="sr-only">{t("fullscreen")}</span>
+                  </button>
+                </div>
+              )}
 
-              {pane.detachedAnchor !== "side" && (
+              {!isMobile && pane.detachedAnchor !== "side" && (
                 <div className="sb-detached-pane-toolbar-item">
                   <button
                     className="sb-detached-pane-toolbar-button"
@@ -1622,7 +1633,7 @@ export function PaneLayout(props: PaneLayoutProps) {
                 </div>
               )}
 
-              {pane.detachedAnchor !== "floating" && (
+              {!isMobile && pane.detachedAnchor !== "floating" && (
                 <div className="sb-detached-pane-toolbar-item">
                   <button
                     className="sb-detached-pane-toolbar-button"

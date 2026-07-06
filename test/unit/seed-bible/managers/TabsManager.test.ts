@@ -203,6 +203,8 @@ describe("createTabs", () => {
         hostUserId: null,
         highlightDurationSeconds: 16,
         endedAt: null,
+        shareTranslation: false,
+        coHostUserIds: [],
       }),
       updateOptions: vi.fn(),
       removeSharedDecoration: vi.fn(),

@@ -390,6 +390,12 @@ importers:
         specifier: workspace:*
         version: link:../seed-bible
 
+  packages/scripture-map:
+    dependencies:
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+
   packages/seed-bible:
     dependencies:
       '@casual-simulation/aux-common':
@@ -484,6 +490,18 @@ importers:
         version: 4.4.3
 
   packages/seed-bible-refresh-example-extension:
+    dependencies:
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+
+  packages/seed-bible-utils:
+    dependencies:
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+
+  packages/today-screen:
     dependencies:
       seed-bible:
         specifier: workspace:*

@@ -41,7 +41,14 @@ export async function saveProfileConfigValue(
 
   if (!login.profile.value) {
     if (login.profilePromise) {
-      await login.profilePromise;
+      // The load may reject (transient/server/auth failure). Swallow it here —
+      // the `profile.value` re-check below is what decides whether it's safe
+      // to write, and a rejected load simply means "not safe yet".
+      try {
+        await login.profilePromise;
+      } catch {
+        // Intentionally ignored; handled by the guard below.
+      }
     }
 
     if (!login.profile.value) {

@@ -11,7 +11,7 @@ import {
   type WebResponseMap,
   createExampleManagerResponseMap,
 } from "./testUtils/mockBibleApiData";
-import { signal } from "@preact/signals";
+import { effect, signal } from "@preact/signals";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import type { Mock } from "vitest";
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
@@ -170,22 +170,94 @@ describe("createPanes", () => {
     expect(tabPane?.tab?.id).toBe("tab-2");
   });
 
-  it("does nothing when the selected pane is component-backed and no tab-backed pane exists", async () => {
+  it("replaces the first attached pane when there is no tab-backed pane to redirect to", async () => {
     const { panesManager } = await createManagers({ extraTabs: 1 });
 
-    const onlyPane = panesManager.panes.value[0]!;
-    panesManager.openInPane(onlyPane.id, {
-      component: () => "Test Component",
+    panesManager.setLayout("split-2v");
+    const [firstPane, secondPane] = panesManager.panes.value;
+
+    // Make every attached pane component-backed so there is no tab-backed pane
+    // to redirect to.
+    panesManager.openInPane(firstPane!.id, {
+      component: () => "First Component",
     });
+    panesManager.openInPane(secondPane!.id, {
+      component: () => "Second Component",
+    });
+    // Even with the second pane selected, the fallback targets the first
+    // attached pane.
+    panesManager.selectPane(secondPane!.id);
 
     panesManager.setSelectedPaneTab("tab-2");
 
-    const pane = panesManager.panes.value.find((p) => p.id === onlyPane.id);
-    expect(pane?.component?.()).toBe("Test Component");
-    expect(pane?.tab).toBeNull();
-    expect(panesManager.panes.value.some((p) => p.tab?.id === "tab-2")).toBe(
-      false
+    // The first attached pane is replaced with the tab...
+    const replaced = panesManager.panes.value.find(
+      (p) => p.id === firstPane!.id
     );
+    expect(replaced?.tab?.id).toBe("tab-2");
+    expect(replaced?.component).toBeNull();
+
+    // ...and the other component pane is left untouched.
+    const untouched = panesManager.panes.value.find(
+      (p) => p.id === secondPane!.id
+    );
+    expect(untouched?.component?.()).toBe("Second Component");
+    expect(untouched?.tab).toBeNull();
+  });
+
+  it("creates a new attached pane when there are no attached panes to replace", async () => {
+    const { panesManager } = await createManagers({ extraTabs: 1 });
+
+    // Construct a state where the only pane is detached and component-backed,
+    // so neither a tab-backed pane nor an attached pane exists to reuse.
+    const detachedPane = panesManager.openPane({
+      type: "detached",
+      component: () => "Detached Component",
+    })!;
+    panesManager.panes.value = panesManager.panes.value.filter(
+      (p) => p.detached
+    );
+    panesManager.selectedPaneId.value = detachedPane.id;
+
+    panesManager.setSelectedPaneTab("tab-2");
+
+    // A brand new attached pane is created to hold the tab.
+    const attached = panesManager.panes.value.filter((p) => !p.detached);
+    expect(attached).toHaveLength(1);
+    expect(attached[0]?.tab?.id).toBe("tab-2");
+
+    // The detached component pane is preserved.
+    expect(
+      panesManager.panes.value.some(
+        (p) => p.detached && p.component?.() === "Detached Component"
+      )
+    ).toBe(true);
+  });
+
+  it("does not cause update cycles when called from inside an effect", async () => {
+    const { panesManager } = await createManagers({ extraTabs: 1 });
+
+    const targetTabId = signal("tab-1");
+    let runCount = 0;
+
+    // setSelectedPaneTab reads and writes the panes signal; calling it from an
+    // effect must not create a self-triggering update cycle.
+    const dispose = effect(() => {
+      runCount += 1;
+      panesManager.setSelectedPaneTab(targetTabId.value);
+    });
+
+    expect(() => {
+      targetTabId.value = "tab-2";
+    }).not.toThrow();
+
+    expect(panesManager.panes.value.some((p) => p.tab?.id === "tab-2")).toBe(
+      true
+    );
+    // The effect must settle after a bounded number of runs rather than loop.
+    expect(runCount).toBeLessThan(10);
+
+    dispose();
   });
 
   it("supports opening content in an existing pane", async () => {

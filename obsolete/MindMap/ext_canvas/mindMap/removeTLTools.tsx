@@ -5,17 +5,17 @@ let arrowRights = getBots(byTag("arrowRight"));
 let arrowLefts = getBots(byTag("arrowLeft"));
 let dataslits = getBots(byTag("dataSlit"));
 let eventBots = getBots("eventBot");
-destroy(arrowUps)
-destroy(arrowDowns)
-destroy(arrowRights)
-destroy(arrowLefts)
-destroy(dataslits)
+destroy(arrowUps);
+destroy(arrowDowns);
+destroy(arrowRights);
+destroy(arrowLefts);
+destroy(dataslits);
 destroy(eventBots);
 
 typingTool.tags.eventSlitManager = {
-    "dataList": [],
-    "selectedIndex": 0,
-    "state": ""
+  dataList: [],
+  selectedIndex: 0,
+  state: "",
 };
 
-os.unregisterApp('slider')
+os.unregisterApp("slider");

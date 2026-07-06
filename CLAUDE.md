@@ -2,6 +2,38 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Communication Style
+
+Write explanations to be understood on the first read. The reader may not have the code in front of them.
+
+- **Plain language over jargon.** When a technical term is unavoidable, explain it in everyday words right after.
+- **Lead with the short answer**, then the detail. Don't make the reader assemble the conclusion from scattered pieces.
+- **Use concrete before/after.** To explain a change in behavior, describe what happened _before_ and what happens _now_, with a real example ("books used to enter one by one; now they enter all at once").
+- **Explain the _why_, not just the _what_.** If something couldn't be done, say plainly what blocked it.
+- **Avoid over-compression.** A few clear sentences beat one dense sentence packed with terms. Don't sacrifice clarity to be brief.
+- **Don't bury trade-offs.** When presenting options, make the consequence of each one obvious.
+
+This applies to all prose responses — summaries, explanations, and trade-off discussions — not to code itself.
+
+## Project Overview
+
+**Seed Bible** is a collaborative, web-based Bible study and visualization platform built on top of [CasualOS](https://github.com/casual-simulation/casualos) — a distributed runtime that manages bots, state, and real-time collaboration. The app compiles into `.aux` files (CasualOS's binary script format) and runs inside a CasualOS simulation.
+
+## Package Manager
+
+This project requires **pnpm v10+**. Do not use npm or yarn.
+
+### Dev REPL commands (after `pnpm dev`)
+
+```bash
+.save [name]     Save simulation state to filesystem
+.reload          Hot reload from disk
+.system          Open system portal
+.download        Download .aux file
+run(script)      Execute an AUX script in the simulation
+shout(name, arg) Trigger a shout event
+```
+
 ## Common Commands
 
 ```bash
@@ -20,6 +52,7 @@ pnpm format            # Prettier formatting
 
 ```bash
 pnpm vitest run FreeUseBibleAPI.test.ts
+>>>>>>> develop
 ```
 
 ## Architecture

@@ -1,23 +1,23 @@
 const { render } = os.appHooks;
 
-import App from 'aiApps.voiceAssistant.VoiceAssistant'
+import App from "aiApps.voiceAssistant.VoiceAssistant";
 
 let prevPainter = document.getElementById("voiceAssistant-container");
 
 if (prevPainter) {
-    if(globalThis?.AISetStart){
-        AISetStart(false);
-        await os.sleep(200);
-    }
-    prevPainter.remove();
+  if (globalThis?.AISetStart) {
+    AISetStart(false);
+    await os.sleep(200);
+  }
+  prevPainter.remove();
 } else {
-    let painterDiv = document.createElement('div');
+  let painterDiv = document.createElement("div");
 
-    painterDiv.id = "voiceAssistant-container";
+  painterDiv.id = "voiceAssistant-container";
 
-    painterDiv.className = 'voiceAssistant';
+  painterDiv.className = "voiceAssistant";
 
-    document.body.appendChild(painterDiv);
+  document.body.appendChild(painterDiv);
 
-    render(<App />, document.getElementById("voiceAssistant-container"))
+  render(<App />, document.getElementById("voiceAssistant-container"));
 }

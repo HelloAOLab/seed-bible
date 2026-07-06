@@ -13,6 +13,6 @@ bun.lock
 !.vscode/settings.json
 !.vscode/launch.json
 ./cursor/*
-
+coverage/
 secrets.json
 .pnpm-store/*
