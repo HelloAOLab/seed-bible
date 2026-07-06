@@ -1,4 +1,49 @@
 /* eslint-disable css/use-baseline */
+
+/* =============================================================================
+ * UI SCALING MODEL — the rem / em / px invariant (source of truth for #1281)
+ * -----------------------------------------------------------------------------
+ * The "UI Text Size" setting (S/M/L/XL) is the single UI scaling mechanism. It
+ * drives `--sb-ui-scale` (0.85 / 1.0 / 1.15 / 1.3, set by SettingsManager),
+ * which the `html` rule below turns into the root font-size:
+ *     html { font-size: calc(16px * var(--sb-ui-scale)) }  =>  1rem = scaled base
+ * So at size M (`--sb-ui-scale: 1`) 1rem = 16px and every rule below is a no-op
+ * vs. plain px; at other sizes, everything expressed in `rem` scales together.
+ *
+ * Which unit to use:
+ *   • rem  — ALL chrome: dimensions, spacing, radius, positioning offsets, and
+ *            chrome font-size. Tracks the UI Text Size knob. This is the default.
+ *   • px   — things that must NOT scale with UI Text Size:
+ *              - reader glyph size: `.sb-font-size-*` on `.sb-bible-reader`
+ *                (its own independent knob; the cascade anchor lives there so it
+ *                doesn't leak into chrome `em`/`inherit`);
+ *              - 1px / sub-2px hairline borders & dividers;
+ *              - `@media` breakpoint conditions;
+ *              - `box-shadow` / `outline` / `transform` offsets;
+ *              - coordinate spaces: the pane x/y/w/h "canvas" model, and the
+ *                Scripture Map cell geometry (its `calc(<px> * var(--scale-factor))`
+ *                + `--chapter-*`/`--book-*` vars scale with the MAP's own zoom).
+ *   • em   — reader-internal spacing only (tracks the reader glyph knob, not the
+ *            UI knob): e.g. `.sb-line-break`, `.sb-verse-number`, chapter heading.
+ *
+ * Icons:
+ *   • Material Symbols glyphs are sized by `font-size`. The `body
+ *     .material-symbols-outlined` base rule below re-expresses the font's fixed
+ *     24px as 1.5rem so icons scale by default; scoped `.sb-* …` rules override.
+ *   • SVG icons are sized by width/height, NOT font-size, so each chrome icon
+ *     button needs an explicit rem width/height rule (no app-wide base works —
+ *     SVGs vary in intrinsic size / aspect ratio).
+ *
+ * How the CSS was migrated: a one-time `postcss-pxtorem` codemod (rootValue 16,
+ * minPixelValue 2 so 1px hairlines stay px, mediaQuery false so breakpoint
+ * conditions stay px) over the chrome; `border` / `box-shadow` / `transform` /
+ * `line-height` were excluded from its propList (kept px), and the reader
+ * selectors (`.sb-font-size-*`, `.sb-chapter-heading`, `.sb-line-break`,
+ * `.sb-verse-number`) plus `html` were blacklisted. New chrome CSS added after
+ * the migration should follow the same rules: author it in `rem`.
+ * =============================================================================
+ */
+
 html {
   visibility: visible;
   opacity: 1;

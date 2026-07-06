@@ -1,6 +1,6 @@
 # UI Scaling Refactor — Work Log & Handoff
 
-**Branch:** `fix/1281-ui-scaling` · **Issue:** #1281 · **Status:** Rem-based UI scaling — **Phases 0–8 + 11–14 done. All develop-merge integration (11–14) complete; only optional Phase 9 + final cleanup Phase 10 remain.**
+**Branch:** `fix/1281-ui-scaling` · **Issue:** #1281 · **Status:** Rem-based UI scaling — **Phases 0–8, 10, 11–14 done. Refactor complete; only the optional Phase 9 (a11y browser-pref) remains deferred. Ready to push / open PR.**
 
 - **Committed:** Phase 0+1 (`5e752106`), Phase 7 (`f0e2c921`), Phase 2 (`0190a5b7`), Phase 4 (`e469fbb`), Phase 5 (`337b1794`), Phase 6 (`275184e7`). Plus the ThemeManager var-collision fix (`5ec5f44f`). An earlier `develop` merge landed at `168b7fbb`.
 - **Phase 3** = verified clean, **no code changes** (see §4).
@@ -12,7 +12,7 @@
 - **Phase 8 (book-selector responsiveness)** = ✅ **complete, uncommitted in working tree** (2026-07-06). Capped `.sb-selector-panel` width to the viewport so it stops clipping at L/XL. See §7/§8.
 - **Icon-scaling QA fixes** (committed `c0f424f1`): app-wide `body .material-symbols-outlined { font-size: 1.5rem }` base + per-button SVG rem sizing + the scripture-map settings `<img>` `.coloredIcon`. See §7.
 - **Naming:** the scale-map constant was renamed `UI_TEXT_SIZE_SCALE` → **`UI_TEXT_SIZE_SCALE_MAP`** (in `e469fbb`). Older references below may still say the old name.
-- **Remaining:** deferred **Phase 9** (optional a11y browser-pref, not required for #1281); and **Phase 10 — cleanup (runs last, after all other phases)** — see §8.
+- **Remaining:** only the deferred **Phase 9** (optional a11y browser-pref, not required for #1281). Everything else — mechanism swap, all per-area passes, all develop-merge integration, book-selector responsiveness, and final cleanup — is done. Next action is push + PR.
 - **Commit policy:** never commit on your own — only when the user invokes `/commit`.
 
 This doc is the single source of truth for resuming this work in a new thread / on
@@ -285,7 +285,7 @@ so the rest of `:root` was hand-converted (see §4).
 
 **Merge-phase ordering:** run 11–14 in the per-area rollout, before Phase 10 (cleanup). Order run: **11** (chat) ✅ → **12** (tutorial) ✅ → **13** (today) ✅ → **14** (map, classified canvas vs chrome) ✅. **All merge phases complete.** Each got the static gates (`check:ts`/`lint`/`test`/`build`) and is a no-op at UI M.
 
-**Phase 10 — cleanup (FINAL — runs after every other phase, incl. 8–9 and the merge phases 11–14):** remove the `postcss-pxtorem` dev-dep; add a `main.css` header comment documenting the rem/em/px invariant + the codemod blacklist as source of truth. Consider deleting this handoff doc once merged.
+**Phase 10 — cleanup ✅ DONE (working tree, uncommitted — 2026-07-06):** removed the `postcss-pxtorem` dev-dep (`package.json` + `pnpm-lock.yaml`) — it was only needed for the one-time codemods, which are all done and nothing else in the repo referenced it; build still green. Added a source-of-truth header comment to the top of `main.css` documenting the rem/em/px invariant, the icon rules (Material Symbols base vs. per-button SVG sizing), and the codemod blacklist. **Deferred to merge:** deleting this handoff doc — keep it until `fix/1281-ui-scaling` merges, then it can go.
 
 **JS sanity (both size-tracking exceptions now fixed):** no JS reads `--sb-ui-zoom`/`element.style.zoom`. Pane drag/resize **deltas**, swipe, tutorial, context menu, keyboard-nav, and ripple are delta/ratio math in one CSS-px space — correct-by-construction after removing zoom. The two size-tracking constants the sweep found (`PanesManager` min-floors, `BibleSelector` popover offset) are now fixed (Phases 4 & 5). Only remaining unverified candidate: the attached-pane splitter mins above.
 
@@ -315,6 +315,7 @@ Setting `--sb-ui-scale` directly is faithful — it's exactly what `SettingsMana
 - [x] Phase 12 (tutorial/tour) — committed (`9c4a7fe6`).
 - [x] Phase 13 (today screen) — committed (`a674f8e7`).
 - [x] Phase 14 (scripture map) + icon-scaling QA fixes — committed (`c0f424f1`).
-- [ ] **Phase 8 (book selector) — in the working tree, UNCOMMITTED** (`main.css` `.sb-selector-panel` width cap + this doc). Gates green. Commit is the user's to make (`/commit`).
+- [x] Phase 8 (book selector) — committed (`da1d42f0`).
+- [ ] **Phase 10 (cleanup) — in the working tree, UNCOMMITTED** (`package.json` + `pnpm-lock.yaml` postcss-pxtorem removal + `main.css` invariant header + this doc). Gates green. Commit is the user's to make (`/commit`).
 - [ ] Push `fix/1281-ui-scaling` to the remote — **only when the user explicitly asks.**
-- [ ] Deferred Phase 9; Phase 10 (cleanup — runs last) — not started.
+- [ ] Deferred Phase 9 (optional a11y) — not started, not required for #1281.

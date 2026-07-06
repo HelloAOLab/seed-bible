@@ -92,7 +92,6 @@
     "jest-environment-jsdom": "^30.3.0",
     "jiti": "^2.6.1",
     "jsdom": "^29.1.1",
-    "postcss-pxtorem": "^6.1.0",
     "preact": "catalog:",
     "preact-iso": "catalog:",
     "prettier": "^3.6.2",
