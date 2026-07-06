@@ -1848,29 +1848,29 @@ a:visited {
    instead of launching it unannounced. Shares the tour's visual language. */
 .sb-tutorial-prompt {
   position: fixed;
-  top: 16px;
-  right: 16px;
+  top: 1rem;
+  right: 1rem;
   z-index: 1200;
   box-sizing: border-box;
-  width: min(340px, calc(100vw - 32px));
+  width: min(21.25rem, calc(100vw - 2rem));
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
-  border-radius: 14px;
-  padding: 18px;
+  border-radius: 0.875rem;
+  padding: 1.125rem;
   box-shadow: 0 16px 40px #00000040;
   font-family: var(--sb-font-family);
 }
 
 .sb-tutorial-prompt-title {
-  margin: 0 0 6px;
+  margin: 0 0 0.375rem;
   font-family: "Satoshi", system-ui, sans-serif;
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.2;
   font-weight: 700;
 }
 
 .sb-tutorial-prompt-body {
-  margin: 0 0 16px;
+  margin: 0 0 1rem;
   font-family: "DM Sans", sans-serif;
   line-height: 1.55;
   font-size: 0.95em;
@@ -1882,14 +1882,14 @@ a:visited {
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-tutorial-prompt-btn {
   appearance: none;
   border: 1px solid transparent;
-  border-radius: 10px;
-  padding: 8px 16px;
+  border-radius: 0.625rem;
+  padding: 0.5rem 1rem;
   font-family: var(--sb-font-family);
   font-size: 0.9em;
   font-weight: 600;
@@ -1911,7 +1911,7 @@ a:visited {
   color: var(--sb-primary-font-color);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .sb-tutorial-prompt-arrow {
