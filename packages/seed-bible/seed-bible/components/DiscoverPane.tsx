@@ -11,6 +11,8 @@ import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
 interface DiscoverPaneProps {
   tabs: TabsManager;
   playlists: PlaylistManager;
+  /** Closes the Discover panel. When provided, a close button is shown. */
+  onClose?: () => void;
 }
 
 type ReferenceWithBookData = DiscoverReference & { bookData: TranslationBook };
@@ -21,7 +23,7 @@ type ReferenceWithBookData = DiscoverReference & { bookData: TranslationBook };
  * selected reader tab. Annotations are a placeholder for now (display-only).
  */
 export function DiscoverPane(props: DiscoverPaneProps) {
-  const { tabs, playlists } = props;
+  const { tabs, playlists, onClose } = props;
   const { t } = useI18n();
   const { view } = playlists;
 
@@ -61,6 +63,17 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         >
           + {t("create-playlist", { defaultValue: "Create" })}
         </button>
+        {onClose && (
+          <button
+            type="button"
+            className="sb-discover-close"
+            aria-label={t("close")}
+            title={t("close")}
+            onClick={onClose}
+          >
+            <MaterialIcon>close</MaterialIcon>
+          </button>
+        )}
       </div>
 
       <PlaylistSection userPlaylists={userPlaylists} playlists={playlists} />

@@ -228,11 +228,16 @@ export interface AppState {
   /** Opens a verse reference. */
   openVerseReference: (ref: VerseRef) => Promise<void>;
 
+  /** Whether the Discover panel is currently open. */
+  isDiscoverOpen: ReadonlySignal<boolean>;
+
   /**
-   * Opens the discover pane.
-   * @returns
+   * Toggles the Discover panel open/closed.
    */
   openDiscover: () => void;
+
+  /** Closes the Discover panel. */
+  closeDiscover: () => void;
 }
 
 /**
@@ -335,7 +340,6 @@ export interface SeedBibleState {
 // script/lib/vite-plugin-extensions.ts.
 import SEED_BIBLE_EXTENSIONS from "virtual:@extensions";
 import { createPlaylistManager, type PlaylistManager } from "./PlaylistManager";
-import { DiscoverPane } from "../components/DiscoverPane";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -1253,18 +1257,12 @@ export function createSeedBibleState(
     }, 3500);
   };
 
+  const isDiscoverOpen = signal(false);
   const handleOpenDiscover = () => {
-    const openPane = panes.panes.value.find((p) => p.id === "discover-pane");
-    if (openPane) {
-      panes.closePane(openPane.id);
-      return;
-    }
-    panes.openPane({
-      id: "discover-pane",
-      type: "detached",
-      detachedAnchor: "side",
-      component: () => <DiscoverPane tabs={tabs} playlists={playlists} />,
-    });
+    isDiscoverOpen.value = !isDiscoverOpen.value;
+  };
+  const handleCloseDiscover = () => {
+    isDiscoverOpen.value = false;
   };
 
   const state: SeedBibleState = {
@@ -1336,7 +1334,9 @@ export function createSeedBibleState(
       socialTitle,
       currentToast,
       toast,
+      isDiscoverOpen,
       openDiscover: handleOpenDiscover,
+      closeDiscover: handleCloseDiscover,
     },
   };
 

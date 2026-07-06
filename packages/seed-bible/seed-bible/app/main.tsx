@@ -1,6 +1,7 @@
 import { I18nProvider, useI18n } from "../i18n/I18nManager";
 import {} from "../i18n/I18nManager";
 import { PaneLayout } from "../components/PaneLayout";
+import { DiscoverPane } from "../components/DiscoverPane";
 import { BibleSelector } from "../components/BibleSelector";
 import { BibleReaderToolbar } from "../components/BibleReaderToolbar";
 import { FloatingReaderPanels } from "../components/FloatingReaderPanels";
@@ -149,6 +150,20 @@ function MainContent(props: {
         <main className="sb-main-content">
           <PaneLayout state={state} />
         </main>
+
+        {state.app.isDiscoverOpen.value && (
+          <div
+            className={`sb-discover-panel${
+              state.app.isMobile.value ? " sb-discover-panel--mobile" : ""
+            }`}
+          >
+            <DiscoverPane
+              tabs={state.tabs}
+              playlists={state.playlists}
+              onClose={state.app.closeDiscover}
+            />
+          </div>
+        )}
 
         <ToastHost app={state.app} />
 
