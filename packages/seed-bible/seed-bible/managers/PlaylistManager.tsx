@@ -10,7 +10,7 @@ export const VerseRefSchema = z.object({
   bookId: z.string(),
   chapter: z.number().positive(),
   endChapter: z.number().positive().optional(),
-  verse: z.number().positive(),
+  verse: z.number().positive().optional(),
   endVerse: z.number().positive().optional(),
 });
 

@@ -110,8 +110,24 @@ describe("parseVerseReference", () => {
     expect(parseVerseReference("Nope 1:1", BOOKS)).toBeNull();
   });
 
-  it("returns null when a verse is missing", () => {
-    expect(parseVerseReference("Genesis 1", BOOKS)).toBeNull();
+  it("parses a whole-chapter reference (verse omitted)", () => {
+    expect(parseVerseReference("Genesis 1", BOOKS)).toEqual({
+      bookId: "GEN",
+      chapter: 1,
+    });
+  });
+
+  it("parses a whole-chapter range (verses omitted)", () => {
+    expect(parseVerseReference("John 1-3", BOOKS)).toEqual({
+      bookId: "JHN",
+      chapter: 1,
+      endChapter: 3,
+    });
+  });
+
+  it("returns null for a chapter start with a verse end", () => {
+    // "John 1-2:3" mixes a whole-chapter start with a verse end (ambiguous).
+    expect(parseVerseReference("John 1-2:3", BOOKS)).toBeNull();
   });
 
   it("returns null for empty or malformed input", () => {

@@ -51,7 +51,7 @@ export function ScriptureItemInput(props: ScriptureItemInputProps) {
           value={value}
           dir="auto"
           placeholder={t("playlist-add-scripture-placeholder", {
-            defaultValue: "e.g. John 3:16",
+            defaultValue: "e.g. John 3 or John 3:16",
           })}
           onInput={(event: Event) => {
             setValue((event.currentTarget as HTMLInputElement).value);

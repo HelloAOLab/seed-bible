@@ -41,9 +41,12 @@ function findBook(
  * "Genesis 1:1-2:3") into a {@link VerseRef}, matching the book name against the
  * provided translation books.
  *
+ * The verse may be omitted to reference a whole chapter, so a bare "Genesis 1"
+ * yields `{ bookId, chapter }`, and a chapter range like "John 1-3" yields
+ * `{ bookId, chapter: 1, endChapter: 3 }`. Mixing a chapter start with a verse
+ * end (e.g. "John 1-2:3") is ambiguous and treated as invalid.
+ *
  * Returns `null` when the book can't be matched or the format is invalid.
- * Both a chapter and a verse are required (matching `VerseRefSchema`), so a bare
- * "Genesis 1" yields `null`.
  */
 export function parseVerseReference(
   input: string,
@@ -66,9 +69,8 @@ export function parseVerseReference(
 
   const [, bookName, chapterStr, verseStr, endChapterStr, endVerseStr] = match;
 
-  // A book name, chapter, and verse are all required (matching `VerseRefSchema`).
-  // A bare "Genesis 1" has no verse and is treated as invalid.
-  if (!bookName || !chapterStr || !verseStr) {
+  // A book name and chapter are always required.
+  if (!bookName || !chapterStr) {
     return null;
   }
 
@@ -77,20 +79,28 @@ export function parseVerseReference(
     return null;
   }
 
-  const chapter = Number(chapterStr);
-  const verse = Number(verseStr);
-
   const ref: VerseRef = {
     bookId: book.id,
-    chapter,
-    verse,
+    chapter: Number(chapterStr),
   };
 
-  if (endVerseStr) {
-    ref.endVerse = Number(endVerseStr);
-  }
-  if (endChapterStr) {
-    ref.endChapter = Number(endChapterStr);
+  if (verseStr) {
+    // Verse-based reference: "John 3:16", "John 3:16-18", "Genesis 1:1-2:3".
+    ref.verse = Number(verseStr);
+    if (endVerseStr) {
+      ref.endVerse = Number(endVerseStr);
+    }
+    if (endChapterStr) {
+      ref.endChapter = Number(endChapterStr);
+    }
+  } else if (endVerseStr) {
+    // Whole-chapter range: "John 1-3". Without a start verse the trailing number
+    // is an end chapter, not an end verse. A colon there (e.g. "John 1-2:3")
+    // would mix a chapter start with a verse end, so reject that ambiguity.
+    if (endChapterStr) {
+      return null;
+    }
+    ref.endChapter = Number(endVerseStr);
   }
 
   return ref;
