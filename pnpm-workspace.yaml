@@ -62,3 +62,6 @@ catalog:
   "@tiptap/extension-text-style": "3.27.1"
   "@tiptap/extension-underline": "3.27.1"
   "@tiptap/starter-kit": "3.27.1"
+  "prosemirror-model": "1.25.9"
+overrides:
+  "prosemirror-model": "catalog:"
