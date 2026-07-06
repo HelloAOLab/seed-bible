@@ -6444,6 +6444,10 @@ a:visited {
   padding: 6px 4px;
 }
 
+.sb-settings-wake-lock-row {
+  margin: 4px 0;
+}
+
 .sb-settings-toggle-label {
   font-size: 14px;
   font-weight: 500;
