@@ -9,7 +9,12 @@ export type PaneLayoutId =
   | "split-left-two-right"
   | "split-3v"
   | "grid-2x2"
-  | "split-4v";
+  | "split-4v"
+  // Mobile-only: two attached panes stacked top/bottom. This is never a
+  // user-selectable preset (it is intentionally absent from
+  // PANE_LAYOUT_OPTIONS) — it is only produced by the app's effective layout
+  // when a mobile viewport shows two anchored panes.
+  | "stacked-2";
 
 export interface PaneLayoutOption {
   /** Stable layout identifier. */
@@ -380,8 +385,8 @@ export interface PanesManager {
    */
   setDetachedAnchor: (paneId: string, anchor: DetachedPaneAnchor) => boolean;
 
-  /** Moves a floating detached pane by delta values. */
-  movePane: (paneId: string, deltaX: number, deltaY: number) => void;
+  /** Sets the absolute position (CSS left/top) of a floating detached pane. */
+  setPanePosition: (paneId: string, x: number, y: number) => void;
 
   /**
    * Resizes a detached pane by delta values.
@@ -883,7 +888,14 @@ export function createPanes(
     return true;
   };
 
-  const movePane = (paneId: string, deltaX: number, deltaY: number) => {
+  /**
+   * Sets the absolute position of a floating pane (in the pane's own CSS
+   * coordinate space, i.e. the `left`/`top` values). The caller is responsible
+   * for keeping the pane on-screen — the drag handler in PaneLayout clamps
+   * against the pane's actual rendered geometry so the result is correct even
+   * with the UI `zoom` and the shell's positioned ancestor in play.
+   */
+  const setPanePosition = (paneId: string, x: number, y: number) => {
     panes.value = panes.value.map((pane) => {
       if (pane.id !== paneId) {
         return pane;
@@ -895,8 +907,8 @@ export function createPanes(
 
       return {
         ...pane,
-        x: Math.max(0, pane.x + deltaX),
-        y: Math.max(0, pane.y + deltaY),
+        x: Math.max(0, x),
+        y: Math.max(0, y),
       };
     });
   };
@@ -950,7 +962,7 @@ export function createPanes(
     closePane,
     setDetached,
     setDetachedAnchor,
-    movePane,
+    setPanePosition,
     resizePane,
   };
 }

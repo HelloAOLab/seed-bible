@@ -464,7 +464,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const hasVerseSelection = useComputed(
     () => readingState.value!.selectedVerses.value.length > 0
   );
-  // Align with the app-wide mobile breakpoint (`state.app.isMobile`, 768px).
+  // Align with the app-wide mobile breakpoint (`state.app.isMobile`, 480px).
   // Kept as a local computed signal so its own viewport listener continues to
   // drive re-renders even if `app.isMobile` is not consumed elsewhere.
   const isSmallScreen = props.state.app.isMobile;

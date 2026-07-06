@@ -206,6 +206,47 @@ describe("createSidebar", () => {
   //   expect(configBot.tags.sidebar).toBe(null);
   // });
 
+  it("openSearchPanel() writes ?search=open and closeSearchPanel() clears it", () => {
+    const sidebar = createSidebar({
+      navigation,
+      chatsManager: createChatsManagerMock(),
+    });
+
+    sidebar.openSearchPanel();
+    expect(sidebar.isSearchPanelOpen.value).toBe(true);
+    expect(navigation.currentUrl.value.searchParams.get("search")).toBe("open");
+
+    sidebar.closeSearchPanel();
+    expect(sidebar.isSearchPanelOpen.value).toBe(false);
+    expect(navigation.currentUrl.value.searchParams.get("search")).toBe(null);
+  });
+
+  it("closes the search panel when the search URL param is removed (Back button)", () => {
+    const sidebar = createSidebar({
+      navigation,
+      chatsManager: createChatsManagerMock(),
+    });
+
+    sidebar.openSearchPanel();
+    expect(sidebar.isSearchPanelOpen.value).toBe(true);
+
+    // Simulate the mobile Back button/gesture popping the pushed history
+    // entry, which returns to a URL without the search param.
+    navigation.push(window.location.pathname);
+    expect(sidebar.isSearchPanelOpen.value).toBe(false);
+  });
+
+  it("initializes the search panel open when the URL already has ?search=open", () => {
+    navigation.push("?search=open");
+
+    const sidebar = createSidebar({
+      navigation,
+      chatsManager: createChatsManagerMock(),
+    });
+
+    expect(sidebar.isSearchPanelOpen.value).toBe(true);
+  });
+
   it("openChatPanel() calls onOpenChatPanel callback", () => {
     const onOpenChatPanel = vi.fn();
     const sidebar = createSidebar({

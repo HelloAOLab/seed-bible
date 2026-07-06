@@ -541,7 +541,7 @@ describe("createPanes", () => {
     ).toHaveLength(1);
   });
 
-  it("supports moving detached panes", async () => {
+  it("supports positioning detached panes", async () => {
     const { panesManager } = await createManagers();
 
     panesManager.openPane({
@@ -552,13 +552,33 @@ describe("createPanes", () => {
       (pane) => pane.component?.() === "Detached Component"
     )!;
 
-    panesManager.movePane(detachedPane.id, 10, 20);
+    panesManager.setPanePosition(detachedPane.id, 120, 240);
 
     const movedPane = panesManager.panes.value.find(
       (pane) => pane.id === detachedPane.id
     );
-    expect(movedPane?.x).toBe(detachedPane.x + 10);
-    expect(movedPane?.y).toBe(detachedPane.y + 20);
+    expect(movedPane?.x).toBe(120);
+    expect(movedPane?.y).toBe(240);
+  });
+
+  it("never positions a detached pane above/left of the origin", async () => {
+    const { panesManager } = await createManagers();
+
+    panesManager.openPane({
+      type: "detached",
+      component: () => "Detached Component",
+    });
+    const detachedPane = panesManager.panes.value.find(
+      (pane) => pane.component?.() === "Detached Component"
+    )!;
+
+    panesManager.setPanePosition(detachedPane.id, -500, -500);
+
+    const movedPane = panesManager.panes.value.find(
+      (pane) => pane.id === detachedPane.id
+    )!;
+    expect(movedPane.x).toBe(0);
+    expect(movedPane.y).toBe(0);
   });
 
   it("supports resizing detached panes", async () => {

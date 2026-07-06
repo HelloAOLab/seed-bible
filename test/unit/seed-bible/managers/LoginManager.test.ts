@@ -267,6 +267,122 @@ describe("createLoginManager", () => {
 
       expect(getDataMock).toHaveBeenCalledWith(USER_ID, "profile");
     });
+
+    it("keeps profile null (does not fabricate a blank) when the load fails transiently", async () => {
+      // A server/network error is NOT the same as "no profile exists". If we
+      // collapsed it to `{ name: "" }`, the next config write would merge into
+      // that blank and wipe the real stored account (the mobile wipe bug).
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "boom",
+      });
+
+      const manager = createAuthenticatedManager();
+
+      await waitFor(() => manager.userId.value === USER_ID);
+      await flush();
+
+      expect(manager.profile.value).toBeNull();
+    });
+
+    it("does not overwrite an already-loaded profile when a later reload fails", async () => {
+      // posthog being present makes the profile-loading effect depend on
+      // userInfo, which is exactly how a session refresh re-triggers a profile
+      // reload in production. We drive that same path here.
+      const posthogStub = { identify: vi.fn(), setPersonProperties: vi.fn() };
+      (globalThis as any).posthog = posthogStub;
+
+      try {
+        getDataMock.mockResolvedValue({
+          success: true,
+          data: { name: "Alice", location: "Earth" },
+        });
+
+        const manager = createAuthenticatedManager();
+        await waitFor(() => manager.profile.value?.name === "Alice");
+
+        // A subsequent reload (e.g. triggered by a session refresh updating
+        // userInfo) fails. The good profile must survive so writes don't merge
+        // into a blank.
+        getDataMock.mockResolvedValue({
+          success: false,
+          errorCode: "not_authorized",
+          errorMessage: "stale key",
+        });
+
+        // Bump userInfo to a new reference to re-run the loading effect, the
+        // same way a session refresh does.
+        manager.userInfo.value = { id: USER_ID, email: EMAIL };
+        await flush();
+
+        expect(manager.profile.value).toEqual({
+          name: "Alice",
+          location: "Earth",
+        });
+      } finally {
+        delete (globalThis as any).posthog;
+      }
+    });
+
+    it("drops the previous account's profile when switching accounts and the new load fails", async () => {
+      // Switch userId A -> B directly (without logging out, which would clear
+      // the profile). If B's profile load then fails transiently, A's profile
+      // must NOT linger under B — otherwise a later write would merge A's data
+      // into B's record.
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { name: "Alice", location: "Earth" },
+      });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value?.name === "Alice");
+
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "not_authorized",
+        errorMessage: "stale key",
+      });
+
+      // Swap the session key to a different account's key. userId is derived
+      // from it, so this moves A -> B without passing through a logged-out null.
+      os.sessionKey.value = formatV1SessionKey(
+        "user-2",
+        "session-2",
+        "secret-2",
+        Date.now() + 1000 * 60 * 60 * 24 * 14
+      );
+      await waitFor(() => manager.userId.value === "user-2");
+      await flush();
+
+      expect(manager.profile.value).toBeNull();
+    });
+
+    it("returns a blank default only when the profile genuinely does not exist", async () => {
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "No data found for the given key.",
+      });
+
+      const manager = createLoginManager({ os });
+
+      await expect(manager.getUserProfile(USER_ID)).resolves.toEqual({
+        name: "",
+      });
+    });
+
+    it("throws instead of returning a blank when the load fails transiently", async () => {
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "boom",
+      });
+
+      const manager = createLoginManager({ os });
+
+      await expect(manager.getUserProfile(USER_ID)).rejects.toThrow();
+    });
   });
 
   describe("session refresh on init", () => {
@@ -482,6 +598,24 @@ describe("createLoginManager", () => {
       );
     });
 
+    it("updateProfile() does not persist while the profile is still loading", async () => {
+      // Authenticated, but the profile fetch is still pending (or failed), so
+      // `profile.value` is null. Writing now would persist a bare `{ name: "" }`
+      // base over the real stored profile — refuse instead.
+      getDataMock.mockReturnValue(new Promise(() => undefined));
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userId.value === USER_ID);
+      expect(manager.profile.value).toBeNull();
+
+      manager.updateProfile({ name: "Updated" });
+
+      expect(recordDataMock).not.toHaveBeenCalled();
+      expect(warnSpy).toHaveBeenCalledWith(
+        "Cannot update profile: profile has not loaded yet"
+      );
+    });
+
     it("getUserProfile() retrieves the user profile from storage", async () => {
       getDataMock.mockResolvedValue({ success: true, data: { name: "Dave" } });
 
@@ -583,6 +717,32 @@ describe("createLoginManager", () => {
       );
 
       expect(manager.profile.value?.pictureUrl).toBeUndefined();
+    });
+
+    it("throws (and skips the file upload) when the profile never loads", async () => {
+      // The profile load fails transiently, so profile.value stays null.
+      // updateProfile would refuse to persist the URL, so uploading first would
+      // report a false success and burn a real file upload. Fail loudly, and
+      // before recordFile is ever called.
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "server_error",
+        errorMessage: "boom",
+      });
+      recordFileMock.mockResolvedValue({
+        success: true,
+        url: "https://example.com/avatar.png",
+      });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userId.value === USER_ID);
+
+      await expect(manager.uploadProfilePicture(makeFile())).rejects.toThrow(
+        "profile has not loaded"
+      );
+
+      expect(recordFileMock).not.toHaveBeenCalled();
+      expect(manager.profile.value).toBeNull();
     });
   });
 });

@@ -14,13 +14,15 @@ import {
   ContextMenuWithButton,
 } from "../components/ContextMenu";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
-import { SettingsIcon } from "../components/icons";
+import { MaterialIcon, SettingsIcon } from "../components/icons";
 import { SettingsPage } from "../components/SettingsPage";
 import {
+  isSessionHost,
+  type BibleReadingSession,
   getConnectedUserVisualKey,
   getUserAnimalVisual,
-  type BibleReadingSession,
 } from "../managers/SessionsManager";
+import { safeLocalStorage } from "../app/ssrEnv";
 import { useI18n } from "../i18n/I18nManager";
 import { SidebarSearch } from "../components/SidebarSearch";
 import {
@@ -28,7 +30,12 @@ import {
   handleHorizontalListKeyNav,
 } from "../components/KeyboardNav";
 import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
-import { SessionUserAvatar } from "./Avatar";
+import {
+  SessionUserAvatar,
+  getUserDisplayName,
+  getUserSessionRole,
+  sessionRoleRank,
+} from "./Avatar";
 import { useEffect, useRef } from "preact/hooks";
 import { getExtensionExports } from "../managers";
 
@@ -97,22 +104,51 @@ const HIGHLIGHT_DURATION_OPTIONS: { label: string; value: number | null }[] = [
  *
  * Non-host participants see the current settings but can't change them.
  */
+/**
+ * localStorage flag: once the host ticks "Don't show this again" in the
+ * close-confirmation dialog, subsequent host-closes skip the dialog and end
+ * the session directly.
+ */
+const SESSION_CLOSE_CONFIRM_DISMISSED_KEY =
+  "sb-session-close-confirm-dismissed";
+
+function isSessionCloseConfirmDismissed(): boolean {
+  return (
+    safeLocalStorage.getItem(SESSION_CLOSE_CONFIRM_DISMISSED_KEY) === "true"
+  );
+}
+
+/**
+ * True when the local client is the host or a co-host of the given session.
+ */
+export function isLocalSessionHost(
+  state: SeedBibleState,
+  session: BibleReadingSession
+): boolean {
+  const options = session.options.value;
+  return (
+    isSessionHost(options, state.login.userId.value) ||
+    isSessionHost(
+      options,
+      getConnectedUserVisualKey({
+        userId: state.login.userId.value,
+        connectionId: state.os.connectionId,
+      })
+    )
+  );
+}
+
 function SessionSettingsModalContent(props: {
   state: SeedBibleState;
-  session: import("../managers/SessionsManager").BibleReadingSession;
+  session: BibleReadingSession;
   onEndSession: () => void;
   onClose: () => void;
 }) {
   const { state, session, onEndSession, onClose } = props;
+  const { t } = useI18n();
   const options = session.options.value;
   const hostId = options.hostUserId;
-  const currentIdentity = getConnectedUserVisualKey({
-    userId: state.login.userId.value,
-    connectionId: state.os.connectionId,
-  });
-  const isHost =
-    hostId !== null &&
-    (state.login.userId.value === hostId || currentIdentity === hostId);
+  const isHost = isLocalSessionHost(state, session);
 
   const onlyHostNavigate =
     Array.isArray(options.allowedNavigators) &&
@@ -120,6 +156,20 @@ function SessionSettingsModalContent(props: {
   const onlyHostHighlight =
     Array.isArray(options.allowedDecorators) &&
     options.allowedDecorators.length > 0;
+  const shareTranslation = options.shareTranslation;
+
+  const idCopied = useSignal(false);
+  const copySessionId = () => {
+    try {
+      navigator.clipboard.writeText(session.id);
+      idCopied.value = true;
+      setTimeout(() => {
+        idCopied.value = false;
+      }, 1200);
+    } catch (error) {
+      console.error("Failed to copy session ID.", error);
+    }
+  };
 
   const setNavigatorsOnlyHost = (onlyHost: boolean) => {
     if (!isHost || !hostId) return;
@@ -140,10 +190,59 @@ function SessionSettingsModalContent(props: {
     session.updateOptions({ highlightDurationSeconds: seconds });
   };
 
-  const { t } = useI18n();
+  const setShareTranslation = (share: boolean) => {
+    if (!isHost) return;
+    session.updateOptions({ shareTranslation: share });
+  };
+
+  const coHostUserIds = options.coHostUserIds ?? [];
+  const setCoHost = (coHostKey: string, makeCoHost: boolean) => {
+    if (!isHost) return;
+    const existing = options.coHostUserIds ?? [];
+    const next = makeCoHost
+      ? existing.includes(coHostKey)
+        ? existing
+        : [...existing, coHostKey]
+      : existing.filter((id) => id !== coHostKey);
+    session.updateOptions({ coHostUserIds: next });
+  };
+
+  // Everyone connected except the immutable host, so the host can promote or
+  // demote co-hosts inline.
+  const participants = session.connectedUsers.value.filter(
+    (user) =>
+      options.hostUserId !== user.userId &&
+      options.hostUserId !== user.connectionId
+  );
 
   return (
     <div className="sb-session-settings">
+      <div className="sb-session-settings-id">
+        <span className="sb-session-settings-label">
+          {t("session-id", { defaultValue: "Session ID" })}
+        </span>
+        <div className="sb-session-settings-id-row">
+          <span className="sb-session-settings-id-value" title={session.id}>
+            {session.id}
+          </span>
+          <button
+            type="button"
+            className="sb-session-settings-copy-id"
+            onClick={copySessionId}
+            aria-label={t("copy", { defaultValue: "Copy" })}
+            title={
+              idCopied.value
+                ? t("copied", { defaultValue: "Copied" })
+                : t("copy", { defaultValue: "Copy" })
+            }
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">
+              {idCopied.value ? "check" : "content_copy"}
+            </span>
+          </button>
+        </div>
+      </div>
+
       {!isHost && (
         <p className="sb-session-settings-note">
           {t("session-settings-host-only_note", {
@@ -152,97 +251,206 @@ function SessionSettingsModalContent(props: {
         </p>
       )}
 
-      <div className="sb-session-settings-row">
-        <label
-          className="sb-session-settings-label"
-          htmlFor="sb-session-only-host-navigate"
-        >
-          {t("session-settings-host-only_navigate", {
-            defaultValue: "Only host can navigate",
-          })}
-        </label>
-        <input
-          id="sb-session-only-host-navigate"
-          type="checkbox"
-          checked={onlyHostNavigate}
-          disabled={!isHost}
-          onChange={(event: Event) => {
-            setNavigatorsOnlyHost(
-              (event.currentTarget as HTMLInputElement).checked
-            );
-          }}
-        />
-      </div>
-
-      <div className="sb-session-settings-row">
-        <label
-          className="sb-session-settings-label"
-          htmlFor="sb-session-only-host-highlight"
-        >
-          {t("session-settings-host-only_highlight", {
-            defaultValue: "Only host can highlight",
-          })}
-        </label>
-        <input
-          id="sb-session-only-host-highlight"
-          type="checkbox"
-          checked={onlyHostHighlight}
-          disabled={!isHost}
-          onChange={(event: Event) => {
-            setDecoratorsOnlyHost(
-              (event.currentTarget as HTMLInputElement).checked
-            );
-          }}
-        />
-      </div>
-
-      <div className="sb-session-settings-row">
-        <span className="sb-session-settings-label">
-          {t("session-id_x", {
-            sessionId: session.id,
-            defaultValue: "Session ID: {{sessionId}}",
-          })}
-        </span>
-      </div>
-
-      <div className="sb-session-settings-duration">
-        <div className="sb-session-settings-duration-title">
-          {t("session-settings-highlight-duration", {
-            defaultValue: "Highlight for",
+      <div className="sb-session-settings-section">
+        <div className="sb-session-settings-section-title">
+          {t("session-settings-section-navigation", {
+            defaultValue: "Navigation",
           })}
         </div>
-        <div
-          className="sb-session-settings-duration-options"
-          role="radiogroup"
-          onKeyDown={(event) => {
-            handleHorizontalListKeyNav(event, event.currentTarget);
-          }}
-        >
-          {HIGHLIGHT_DURATION_OPTIONS.map((option) => {
-            const selected = options.highlightDurationSeconds === option.value;
-            return (
-              <button
-                key={option.label}
-                type="button"
-                className={`sb-session-settings-duration-option${selected ? " sb-session-settings-duration-option-selected" : ""}`}
-                disabled={!isHost}
-                onClick={() => setHighlightDuration(option.value)}
-              >
-                {option.label}
-              </button>
-            );
-          })}
+
+        <div className="sb-session-settings-row">
+          <label
+            className="sb-session-settings-label"
+            htmlFor="sb-session-only-host-navigate"
+          >
+            {t("session-settings-host-only_navigate", {
+              defaultValue: "Only host can navigate",
+            })}
+          </label>
+          <input
+            id="sb-session-only-host-navigate"
+            type="checkbox"
+            checked={onlyHostNavigate}
+            disabled={!isHost}
+            onChange={(event: Event) => {
+              setNavigatorsOnlyHost(
+                (event.currentTarget as HTMLInputElement).checked
+              );
+            }}
+          />
+        </div>
+        <p className="sb-session-settings-description">
+          {onlyHostNavigate
+            ? t("session-settings-navigate-desc_host", {
+                defaultValue:
+                  "Only the host can change the passage for everyone.",
+              })
+            : t("session-settings-navigate-desc_all", {
+                defaultValue: "Everyone in the session can change the passage.",
+              })}
+        </p>
+
+        <div className="sb-session-settings-row">
+          <label
+            className="sb-session-settings-label"
+            htmlFor="sb-session-only-host-highlight"
+          >
+            {t("session-settings-host-only_highlight", {
+              defaultValue: "Only host can highlight",
+            })}
+          </label>
+          <input
+            id="sb-session-only-host-highlight"
+            type="checkbox"
+            checked={onlyHostHighlight}
+            disabled={!isHost}
+            onChange={(event: Event) => {
+              setDecoratorsOnlyHost(
+                (event.currentTarget as HTMLInputElement).checked
+              );
+            }}
+          />
+        </div>
+        <p className="sb-session-settings-description">
+          {onlyHostHighlight
+            ? t("session-settings-highlight-desc_host", {
+                defaultValue: "Only the host can highlight for everyone.",
+              })
+            : t("session-settings-highlight-desc_all", {
+                defaultValue: "Everyone in the session can highlight.",
+              })}
+        </p>
+
+        <div className="sb-session-settings-duration">
+          <div className="sb-session-settings-duration-title">
+            {t("session-settings-highlight-duration", {
+              defaultValue: "Highlight for",
+            })}
+          </div>
+          <div
+            className="sb-session-settings-duration-options"
+            role="radiogroup"
+            onKeyDown={(event) => {
+              handleHorizontalListKeyNav(event, event.currentTarget);
+            }}
+          >
+            {HIGHLIGHT_DURATION_OPTIONS.map((option) => {
+              const selected =
+                options.highlightDurationSeconds === option.value;
+              return (
+                <button
+                  key={option.label}
+                  type="button"
+                  className={`sb-session-settings-duration-option${selected ? " sb-session-settings-duration-option-selected" : ""}`}
+                  disabled={!isHost}
+                  onClick={() => setHighlightDuration(option.value)}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
+
+      <div className="sb-session-settings-section">
+        <div className="sb-session-settings-section-title">
+          {t("session-settings-section-sharing", { defaultValue: "Sharing" })}
+        </div>
+
+        <div className="sb-session-settings-row">
+          <label
+            className="sb-session-settings-label"
+            htmlFor="sb-session-share-translation"
+          >
+            {t("session-settings-share-translation", {
+              defaultValue: "Share translation",
+            })}
+          </label>
+          <input
+            id="sb-session-share-translation"
+            type="checkbox"
+            checked={shareTranslation}
+            disabled={!isHost}
+            onChange={(event: Event) => {
+              setShareTranslation(
+                (event.currentTarget as HTMLInputElement).checked
+              );
+            }}
+          />
+        </div>
+        <p className="sb-session-settings-description">
+          {shareTranslation
+            ? t("session-settings-share-translation-desc_shared", {
+                defaultValue:
+                  "Everyone reads the same translation. Changing it updates it for everyone.",
+              })
+            : t("session-settings-share-translation-desc_unique", {
+                defaultValue:
+                  "Each person keeps their own translation. Changing yours won't affect others.",
+              })}
+        </p>
+      </div>
+
+      {isHost && participants.length > 0 && (
+        <div className="sb-session-settings-section">
+          <div className="sb-session-settings-section-title">
+            {t("session-settings-section-participants", {
+              defaultValue: "Participants",
+            })}
+          </div>
+          <ul className="sb-session-participants">
+            {participants.map((user) => {
+              const coHostKey = getConnectedUserVisualKey(user);
+              const isCoHost = coHostUserIds.includes(coHostKey);
+              const visual = getUserAnimalVisual(coHostKey);
+              const imageUrl = user.profile?.pictureUrl ?? null;
+              return (
+                <li key={user.connectionId} className="sb-session-participant">
+                  <span
+                    className={`sb-session-participant-avatar${imageUrl ? " sb-session-participant-avatar-has-image" : ""}`}
+                    style={
+                      imageUrl
+                        ? {
+                            borderColor: visual.color,
+                            backgroundImage: `url(${imageUrl})`,
+                          }
+                        : { backgroundColor: visual.color }
+                    }
+                    aria-hidden="true"
+                  >
+                    {!imageUrl && (
+                      <MaterialIcon>{visual.defaultIcon}</MaterialIcon>
+                    )}
+                  </span>
+                  <span
+                    className="sb-session-participant-name"
+                    title={getUserDisplayName(user)}
+                  >
+                    {getUserDisplayName(user)}
+                    {isCoHost && (
+                      <span className="sb-session-participant-badge">
+                        {t("co-host", { defaultValue: "Co-host" })}
+                      </span>
+                    )}
+                  </span>
+                  <button
+                    type="button"
+                    className={`sb-session-participant-action${isCoHost ? " sb-session-participant-action-active" : ""}`}
+                    onClick={() => setCoHost(coHostKey, !isCoHost)}
+                  >
+                    {isCoHost
+                      ? t("remove-co-host", { defaultValue: "Remove co-host" })
+                      : t("make-co-host", { defaultValue: "Make co-host" })}
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
 
       <div className="sb-session-settings-actions">
-        <button
-          type="button"
-          className="sb-session-settings-cancel"
-          onClick={onClose}
-        >
-          {t("close", { defaultValue: "Close" })}
-        </button>
         <button
           type="button"
           className="sb-session-settings-end"
@@ -253,9 +461,215 @@ function SessionSettingsModalContent(props: {
         >
           {t("end-session", { defaultValue: "End Session" })}
         </button>
+        <button
+          type="button"
+          className="sb-session-settings-cancel"
+          onClick={onClose}
+        >
+          {t("close", { defaultValue: "Close" })}
+        </button>
       </div>
     </div>
   );
+}
+
+/**
+ * Confirmation shown when a host closes a session that still has other
+ * participants. The host can either end the session for everyone or appoint
+ * a co-host to keep it running after they leave. "Don't show this again"
+ * persists so future closes skip straight to ending.
+ */
+function SessionCloseConfirmModalContent(props: {
+  state: SeedBibleState;
+  session: BibleReadingSession;
+  tabId: string;
+  onClose: () => void;
+}) {
+  const { state, session, tabId, onClose } = props;
+  const { t } = useI18n();
+  const showCoHostPicker = useSignal(false);
+  const dontShowAgain = useSignal(false);
+
+  const persistDontShow = () => {
+    if (dontShowAgain.value) {
+      safeLocalStorage.setItem(SESSION_CLOSE_CONFIRM_DISMISSED_KEY, "true");
+    }
+  };
+
+  const endForEveryone = () => {
+    persistDontShow();
+    try {
+      session.updateOptions({ endedAt: Date.now() });
+    } catch {
+      // Best-effort — teardown below still ends the session locally.
+    }
+    state.tabs.removeTab(tabId);
+    onClose();
+  };
+
+  const appointCoHost = (coHostKey: string) => {
+    persistDontShow();
+    const existing = session.options.value.coHostUserIds ?? [];
+    if (!existing.includes(coHostKey)) {
+      session.updateOptions({ coHostUserIds: [...existing, coHostKey] });
+    }
+    // Leave without setting `endedAt`; the new co-host keeps the session
+    // alive (see wrapSessionLifecycle's last-host rule).
+    state.tabs.removeTab(tabId);
+    onClose();
+  };
+
+  const options = session.options.value;
+  const candidates = session.connectedUsers.value.filter(
+    (user) =>
+      !user.isSelf &&
+      !isSessionHost(options, user.userId) &&
+      !isSessionHost(options, user.connectionId)
+  );
+
+  return (
+    <div className="sb-session-close-confirm">
+      <p className="sb-session-close-confirm-message">
+        {t("session-close-confirm-message", {
+          defaultValue: "Closing this will end the session for everyone.",
+        })}
+      </p>
+
+      {showCoHostPicker.value ? (
+        <div className="sb-session-cohost-picker">
+          <div className="sb-session-cohost-instructions">
+            {t("appoint-co-host-instructions", {
+              defaultValue: "Choose someone to keep the session running:",
+            })}
+          </div>
+          {candidates.map((user) => {
+            const coHostKey = getConnectedUserVisualKey(user);
+            return (
+              <button
+                key={user.connectionId}
+                type="button"
+                className="sb-session-cohost-option"
+                onClick={() => appointCoHost(coHostKey)}
+              >
+                {getUserDisplayName(user)}
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <>
+          {candidates.length > 0 && (
+            <label className="sb-session-close-confirm-dontshow">
+              <input
+                type="checkbox"
+                checked={dontShowAgain.value}
+                onChange={(event: Event) => {
+                  dontShowAgain.value = (
+                    event.currentTarget as HTMLInputElement
+                  ).checked;
+                }}
+              />
+              <span>
+                {t("dont-show-again", {
+                  defaultValue: "Don't show this again",
+                })}
+              </span>
+            </label>
+          )}
+          <div className="sb-session-close-confirm-actions">
+            {candidates.length > 0 && (
+              <button
+                type="button"
+                className="sb-session-settings-cancel"
+                onClick={() => {
+                  showCoHostPicker.value = true;
+                }}
+              >
+                {t("appoint-co-host", { defaultValue: "Appoint a co-host" })}
+              </button>
+            )}
+            <button
+              type="button"
+              className="sb-session-settings-end"
+              onClick={endForEveryone}
+            >
+              {t("end-session-for-everyone", { defaultValue: "End session" })}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Opens the session settings modal for a shared session. Shared by the tab
+ * kebab and the mobile reader participants sheet so both open the exact same
+ * dialog. Ending the session from the modal removes whichever tab is backed by
+ * this session.
+ */
+export function openSessionSettingsModal(
+  state: SeedBibleState,
+  session: BibleReadingSession
+) {
+  const modalId = `session-settings-${session.id}`;
+  state.modals.openModal({
+    id: modalId,
+    title: {
+      key: "session-settings",
+      defaultValue: "Session settings",
+    },
+    content: () => (
+      <SessionSettingsModalContent
+        state={state}
+        session={session}
+        onEndSession={() => {
+          const tab = state.tabs.tabs.value.find(
+            (t) => t.sharedSession === session
+          );
+          if (tab) state.tabs.removeTab(tab.id);
+        }}
+        onClose={() => {
+          state.modals.closeModal(modalId);
+        }}
+      />
+    ),
+  });
+}
+
+/**
+ * Entry point for closing a tab. A host closing a session that still has
+ * other participants gets the end/hand-off confirmation; everyone else (and
+ * hosts who dismissed the dialog) closes directly, which ends the session
+ * for everyone when the last host leaves.
+ */
+function requestCloseTab(state: SeedBibleState, tab: ReaderTab) {
+  const session = tab.sharedSession;
+  if (session && isLocalSessionHost(state, session)) {
+    const hasOtherParticipants = session.connectedUsers.value.some(
+      (user) => !user.isSelf
+    );
+    if (hasOtherParticipants && !isSessionCloseConfirmDismissed()) {
+      const modalId = `session-close-confirm-${session.id}`;
+      state.modals.openModal({
+        id: modalId,
+        title: {
+          key: "session-close-confirm-title",
+          defaultValue: "End session?",
+        },
+        content: () => (
+          <SessionCloseConfirmModalContent
+            state={state}
+            session={session}
+            tabId={tab.id}
+            onClose={() => state.modals.closeModal(modalId)}
+          />
+        ),
+      });
+      return;
+    }
+  }
+  state.tabs.removeTab(tab.id);
 }
 
 export function TabsHeader(props: TabsHeaderProps) {
@@ -362,13 +776,25 @@ export function TabsHeader(props: TabsHeaderProps) {
             title={t("more", { defaultValue: "More" })}
           >
             <ContextMenuItem
+              className="sb-tab-menu-item"
               onClick={() => {
                 createSharedSession();
               }}
             >
-              {t("new-shared-session", { defaultValue: "New shared session" })}
+              <MaterialIcon
+                className="sb-tab-menu-item-icon"
+                aria-hidden="true"
+              >
+                fiber_smart_record
+              </MaterialIcon>
+              <span>
+                {t("new-shared-session", {
+                  defaultValue: "New shared session",
+                })}
+              </span>
             </ContextMenuItem>
             <ContextMenuItem
+              className="sb-tab-menu-item"
               onClick={() => {
                 window.open(
                   "https://docs.google.com/forms/d/e/1FAIpQLSejiuVM8xguEHKZ2Kv5DX-jE98zYwxFiPwpYrFSmvVgMejZzQ/viewform",
@@ -376,7 +802,13 @@ export function TabsHeader(props: TabsHeaderProps) {
                 );
               }}
             >
-              {t("report-a-bug", { defaultValue: "Report a bug" })}
+              <MaterialIcon
+                className="sb-tab-menu-item-icon"
+                aria-hidden="true"
+              >
+                bug_report
+              </MaterialIcon>
+              <span>{t("report-a-bug", { defaultValue: "Report a bug" })}</span>
             </ContextMenuItem>
             <ContextMenuItem
               className="sb-context-menu-toggle-item"
@@ -387,8 +819,18 @@ export function TabsHeader(props: TabsHeaderProps) {
                 settings.setKeepScreenAwake(!isAwake);
               }}
             >
-              <span>
-                {t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
+              <span className="sb-context-menu-toggle-label">
+                <MaterialIcon
+                  className="sb-tab-menu-item-icon"
+                  aria-hidden="true"
+                >
+                  light_mode
+                </MaterialIcon>
+                <span>
+                  {t("keep-screen-awake", {
+                    defaultValue: "Keep screen awake",
+                  })}
+                </span>
               </span>
               <span
                 className={`sb-pill-toggle${isAwake ? " is-on" : ""}`}
@@ -568,11 +1010,33 @@ function TabRow(props: TabRowProps) {
         {tab.sharedSession && connectedUsers.length > 0 && (
           <div className="sb-tab-users-section">
             <div className="sb-tab-users-list">
-              {connectedUsers.map((user) => {
-                return (
-                  <SessionUserAvatar key={user.connectionId} user={user} />
+              {(() => {
+                const sessionOptions = tab.sharedSession.options.value;
+                // Host first, then co-hosts, then everyone else — Array.sort
+                // is stable so peers keep their existing order within a rank.
+                const sortedUsers = [...connectedUsers].sort(
+                  (a, b) =>
+                    sessionRoleRank(getUserSessionRole(sessionOptions, a)) -
+                    sessionRoleRank(getUserSessionRole(sessionOptions, b))
                 );
-              })}
+                return sortedUsers.map((user) => {
+                  const role = getUserSessionRole(sessionOptions, user);
+                  const roleLabel =
+                    role === "host"
+                      ? t("host", { defaultValue: "Host" })
+                      : role === "co-host"
+                        ? t("co-host", { defaultValue: "Co-host" })
+                        : undefined;
+                  return (
+                    <SessionUserAvatar
+                      key={user.connectionId}
+                      user={user}
+                      role={role}
+                      roleLabel={roleLabel}
+                    />
+                  );
+                });
+              })()}
             </div>
           </div>
         )}
@@ -634,6 +1098,32 @@ function TabRow(props: TabRowProps) {
       >
         {tab.sharedSession && (
           <>
+            {(() => {
+              const isHost = isLocalSessionHost(state, tab.sharedSession);
+              if (!isHost) return null;
+              return (
+                <ContextMenuItem
+                  className="sb-tab-menu-item"
+                  onClick={() => {
+                    const session = tab.sharedSession;
+                    if (!session) return;
+                    openSessionSettingsModal(state, session);
+                  }}
+                >
+                  <MaterialIcon
+                    className="sb-tab-menu-item-icon"
+                    aria-hidden="true"
+                  >
+                    settings
+                  </MaterialIcon>
+                  <span>
+                    {t("session-settings", {
+                      defaultValue: "Session settings",
+                    })}
+                  </span>
+                </ContextMenuItem>
+              );
+            })()}
             <ContextMenuItem
               className="sb-tab-menu-item"
               title={t("share-session", {
@@ -650,12 +1140,12 @@ function TabRow(props: TabRowProps) {
                 }
               }}
             >
-              <span
-                className="material-symbols-outlined sb-tab-menu-item-icon"
+              <MaterialIcon
+                className="sb-tab-menu-item-icon"
                 aria-hidden="true"
               >
                 ios_share
-              </span>
+              </MaterialIcon>
               <span>
                 {t("share-session", {
                   defaultValue: `Share session`,
@@ -674,58 +1164,19 @@ function TabRow(props: TabRowProps) {
                   }
                 }}
               >
-                {t("open-chat", {
-                  defaultValue: `Open chat`,
-                })}
+                <MaterialIcon
+                  className="sb-tab-menu-item-icon"
+                  aria-hidden="true"
+                >
+                  chat_bubble_outline
+                </MaterialIcon>
+                <span>
+                  {t("open-chat", {
+                    defaultValue: `Open chat`,
+                  })}
+                </span>
               </ContextMenuItem>
             )}
-            {(() => {
-              const isHost = tab.sharedSession.isHost(
-                tab.sharedSession.currentUser.value
-              );
-              if (!isHost) return null;
-              return (
-                <ContextMenuItem
-                  className="sb-tab-menu-item"
-                  onClick={() => {
-                    const session = tab.sharedSession;
-                    if (!session) return;
-                    const modalId = `session-settings-${session.id}`;
-                    state.modals.openModal({
-                      id: modalId,
-                      title: {
-                        key: "session-settings",
-                        defaultValue: "Session settings",
-                      },
-                      content: () => (
-                        <SessionSettingsModalContent
-                          state={state}
-                          session={session}
-                          onEndSession={() => {
-                            state.tabs.removeTab(tab.id);
-                          }}
-                          onClose={() => {
-                            state.modals.closeModal(modalId);
-                          }}
-                        />
-                      ),
-                    });
-                  }}
-                >
-                  <span
-                    className="material-symbols-outlined sb-tab-menu-item-icon"
-                    aria-hidden="true"
-                  >
-                    settings
-                  </span>
-                  <span>
-                    {t("session-settings", {
-                      defaultValue: "Session settings",
-                    })}
-                  </span>
-                </ContextMenuItem>
-              );
-            })()}
           </>
         )}
         {!tab.sharedSession && (
@@ -735,12 +1186,9 @@ function TabRow(props: TabRowProps) {
               handleBookmarkAction();
             }}
           >
-            <span
-              className="material-symbols-outlined sb-tab-menu-item-icon"
-              aria-hidden="true"
-            >
+            <MaterialIcon className="sb-tab-menu-item-icon" aria-hidden="true">
               {isTabBookmarked ? "bookmark_remove" : "bookmark_add"}
-            </span>
+            </MaterialIcon>
             <span>
               {isTabBookmarked
                 ? t("remove-bookmark", { defaultValue: "Remove bookmark" })
@@ -748,20 +1196,7 @@ function TabRow(props: TabRowProps) {
             </span>
           </ContextMenuItem>
         )}
-        <ContextMenuItem
-          className="sb-tab-menu-item"
-          onClick={() => {
-            state.tabs.removeTab(tab.id);
-          }}
-        >
-          <span
-            className="material-symbols-outlined sb-tab-menu-item-icon"
-            aria-hidden="true"
-          >
-            close
-          </span>
-          <span>{t("close", { defaultValue: "Close" })}</span>
-        </ContextMenuItem>
+
         {panelsEnabled && (
           <>
             <ContextMenuItem
@@ -770,12 +1205,12 @@ function TabRow(props: TabRowProps) {
               }}
               className="sb-tab-menu-item"
             >
-              <span
-                className="material-symbols-outlined sb-tab-menu-item-icon"
+              <MaterialIcon
+                className="sb-tab-menu-item-icon"
                 aria-hidden="true"
               >
                 splitscreen_right
-              </span>
+              </MaterialIcon>
               <span>
                 {t("open-in-new-panel", { defaultValue: "Open in new panel" })}
               </span>
@@ -786,12 +1221,12 @@ function TabRow(props: TabRowProps) {
               }}
               className="sb-tab-menu-item"
             >
-              <span
-                className="material-symbols-outlined sb-tab-menu-item-icon"
+              <MaterialIcon
+                className="sb-tab-menu-item-icon"
                 aria-hidden="true"
               >
                 open_in_new
-              </span>
+              </MaterialIcon>
               <span>
                 {t("open-in-detached-panel", {
                   defaultValue: "Open in detached panel",
@@ -800,6 +1235,17 @@ function TabRow(props: TabRowProps) {
             </ContextMenuItem>
           </>
         )}
+        <ContextMenuItem
+          className="sb-tab-menu-item"
+          onClick={() => {
+            requestCloseTab(state, tab);
+          }}
+        >
+          <MaterialIcon className="sb-tab-menu-item-icon" aria-hidden="true">
+            close
+          </MaterialIcon>
+          <span>{t("close", { defaultValue: "Close" })}</span>
+        </ContextMenuItem>
       </ContextMenuWithButton>
     </div>
   );
@@ -1330,6 +1776,9 @@ export function Tabs(props: TabsProps) {
             tab.readingState.chapterData.value?.book.name ?? bookId;
           const chapter = tab.readingState.chapterNumber.value;
 
+          const session = tab.sharedSession;
+          const sessionUsers = session?.connectedUsers.value ?? [];
+
           return (
             <button
               key={tab.id}
@@ -1340,12 +1789,61 @@ export function Tabs(props: TabsProps) {
               }}
               className={`sb-collapsed-tab-tile${
                 isSelected ? " sb-collapsed-tab-tile-selected" : ""
-              }`}
-              aria-label={`${bookName} ${chapter}`}
+              }${session ? " sb-collapsed-tab-tile-shared" : ""}`}
+              aria-label={
+                session && sessionUsers.length > 0
+                  ? t("collapsed-tab-shared_x", {
+                      book: bookName,
+                      chapter,
+                      count: sessionUsers.length,
+                      defaultValue:
+                        "{{book}} {{chapter}} — shared session, {{count}} present",
+                    })
+                  : `${bookName} ${chapter}`
+              }
               title={`${bookName} ${chapter}`}
             >
+              {session && (
+                <span className="sb-collapsed-tab-tag">
+                  {t("shared", { defaultValue: "Shared" })}
+                </span>
+              )}
               <span className="sb-collapsed-tab-book">{bookId}</span>
               <span className="sb-collapsed-tab-chapter">{chapter}</span>
+              {session &&
+                sessionUsers.length > 0 &&
+                (() => {
+                  const options = session.options.value;
+                  const sorted = [...sessionUsers].sort(
+                    (a, b) =>
+                      sessionRoleRank(getUserSessionRole(options, a)) -
+                      sessionRoleRank(getUserSessionRole(options, b))
+                  );
+                  const shown = sorted.slice(0, 3);
+                  const extra = sorted.length - shown.length;
+                  return (
+                    <span
+                      className="sb-collapsed-tab-presence"
+                      aria-hidden="true"
+                    >
+                      {shown.map((user) => {
+                        const role = getUserSessionRole(options, user);
+                        return (
+                          <span
+                            key={user.connectionId}
+                            className={`sb-collapsed-tab-presence-dot${role ? ` sb-collapsed-tab-presence-dot-${role === "co-host" ? "cohost" : "host"}` : ""}`}
+                            style={{ backgroundColor: user.visual.color }}
+                          />
+                        );
+                      })}
+                      {extra > 0 && (
+                        <span className="sb-collapsed-tab-presence-more">
+                          +{extra}
+                        </span>
+                      )}
+                    </span>
+                  );
+                })()}
             </button>
           );
         })}
@@ -1610,6 +2108,21 @@ export function Tabs(props: TabsProps) {
                 />
               </svg>
             </button>
+            <button
+              type="button"
+              className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-new-session-button"
+              aria-label={t("new-shared-session", {
+                defaultValue: "New shared session",
+              })}
+              title={t("new-shared-session", {
+                defaultValue: "New shared session",
+              })}
+              onClick={() => {
+                void state.app.createSharedSession();
+              }}
+            >
+              <MaterialIcon aria-hidden="true">fiber_smart_record</MaterialIcon>
+            </button>
           </>
         )}
       </div>
@@ -1837,6 +2350,12 @@ export function Sidebar(props: SidebarProps) {
   const effectivelyCollapsed = isCollapsed && !isMobileOpen && !isSettingsOpen;
   const isLayoutMenuOpen = useSignal(false);
 
+  // In the compact-desktop band an expanded sidebar floats over the reader as
+  // an overlay (see app/main.css). When it does, we render a scrim behind it so
+  // that (a) input to the reader below is blocked while the overlay is up and
+  // (b) clicking anywhere outside the sidebar collapses it back to the rail.
+  const isOverlay = app.isCompactDesktop.value && !effectivelyCollapsed;
+
   // The guided tour opens the pane-layout menu while its step is active so the
   // layout options are visible behind the coachmark.
   const tourWantsLayoutMenu =
@@ -1850,73 +2369,82 @@ export function Sidebar(props: SidebarProps) {
   const { t } = useI18n();
 
   return (
-    <aside
-      className={`sb-tabs-sidebar${effectivelyCollapsed ? " sb-tabs-sidebar-collapsed" : ""}${isMobileOpen ? " sb-tabs-sidebar-mobile-open" : ""}`}
-    >
-      {!isSettingsOpen && (
-        <TabsHeader
-          state={state}
-          effectivelyCollapsed={effectivelyCollapsed}
-          panelsEnabled={panelsEnabled}
-          paneLayout={paneLayout}
-          isLayoutMenuOpen={isLayoutMenuOpen.value || tourWantsLayoutMenu}
-          toggleLayoutMenu={() => {
-            closeContextMenus();
-            const willOpen = !isLayoutMenuOpen.value;
-            isLayoutMenuOpen.value = willOpen;
-            // Teach the panel layout the first time the user opens it.
-            if (willOpen) {
-              state.tutorial.startContextual("pane-layout");
-            }
-          }}
-          closeLayoutMenu={closeLayoutMenu}
-          setLayout={(layout) => {
-            panes.setLayout(layout);
-            closeLayoutMenu();
-          }}
-          createSharedSession={async () => {
-            const session = await state.app.createSharedSession();
-            const url = getSessionUrl(session);
-
-            navigator.clipboard.writeText(url.href);
-            state.app.toast(
-              t("link-to-join-shared-session-copied", {
-                defaultValue:
-                  "A link to join the shared session was copied to your clipboard",
-              })
-            );
-          }}
+    <>
+      {isOverlay && (
+        <div
+          className="sb-sidebar-scrim"
+          onClick={sidebar.collapseSidebarOverlay}
+          aria-hidden="true"
         />
       )}
-
-      {isSettingsOpen ? (
-        <Settings state={state} />
-      ) : (
-        <Tabs
-          state={state}
-          closeLayoutMenu={closeLayoutMenu}
-          effectivelyCollapsed={effectivelyCollapsed}
-        />
-      )}
-
-      <div
-        className={`sb-sidebar-bottom-actions${
-          effectivelyCollapsed ? " sb-sidebar-bottom-actions-collapsed" : ""
-        }`}
+      <aside
+        className={`sb-tabs-sidebar${effectivelyCollapsed ? " sb-tabs-sidebar-collapsed" : ""}${isMobileOpen ? " sb-tabs-sidebar-mobile-open" : ""}`}
       >
-        <button
-          onClick={sidebar.toggleSettings}
-          data-tutorial="settings"
-          className={`sb-sidebar-icon-button${
-            isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
+        {!isSettingsOpen && (
+          <TabsHeader
+            state={state}
+            effectivelyCollapsed={effectivelyCollapsed}
+            panelsEnabled={panelsEnabled}
+            paneLayout={paneLayout}
+            isLayoutMenuOpen={isLayoutMenuOpen.value || tourWantsLayoutMenu}
+            toggleLayoutMenu={() => {
+              closeContextMenus();
+              const willOpen = !isLayoutMenuOpen.value;
+              isLayoutMenuOpen.value = willOpen;
+              // Teach the panel layout the first time the user opens it.
+              if (willOpen) {
+                state.tutorial.startContextual("pane-layout");
+              }
+            }}
+            closeLayoutMenu={closeLayoutMenu}
+            setLayout={(layout) => {
+              panes.setLayout(layout);
+              closeLayoutMenu();
+            }}
+            createSharedSession={async () => {
+              const session = await state.app.createSharedSession();
+              const url = getSessionUrl(session);
+
+              navigator.clipboard.writeText(url.href);
+              state.app.toast(
+                t("link-to-join-shared-session-copied", {
+                  defaultValue:
+                    "A link to join the shared session was copied to your clipboard",
+                })
+              );
+            }}
+          />
+        )}
+
+        {isSettingsOpen ? (
+          <Settings state={state} />
+        ) : (
+          <Tabs
+            state={state}
+            closeLayoutMenu={closeLayoutMenu}
+            effectivelyCollapsed={effectivelyCollapsed}
+          />
+        )}
+
+        <div
+          className={`sb-sidebar-bottom-actions${
+            effectivelyCollapsed ? " sb-sidebar-bottom-actions-collapsed" : ""
           }`}
-          aria-label={t("open-settings", { defaultValue: "Open settings" })}
-          title={t("settings", { defaultValue: "Settings" })}
         >
-          <SettingsIcon />
-        </button>
-        <SelfAvatarButton state={state} />
-      </div>
-    </aside>
+          <button
+            onClick={sidebar.toggleSettings}
+            data-tutorial="settings"
+            className={`sb-sidebar-icon-button${
+              isSettingsOpen ? " sb-sidebar-icon-button-selected" : ""
+            }`}
+            aria-label={t("open-settings", { defaultValue: "Open settings" })}
+            title={t("settings", { defaultValue: "Settings" })}
+          >
+            <SettingsIcon />
+          </button>
+          <SelfAvatarButton state={state} />
+        </div>
+      </aside>
+    </>
   );
 }
