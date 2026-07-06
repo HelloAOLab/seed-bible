@@ -29,6 +29,12 @@ export const PlaylistItem = z.discriminatedUnion("type", [
     type: z.literal("link"),
     title: z.string().optional(),
     url: z.url(),
+    /**
+     * When true, the play view embeds the URL in an iframe instead of showing
+     * an "Open" link. Video URL detection still takes precedence (see
+     * {@link resolveLinkMedia}).
+     */
+    embed: z.boolean().optional(),
   }),
 ]);
 

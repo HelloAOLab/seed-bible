@@ -107,6 +107,7 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
               <PlaylistLinkContent
                 url={currentItem.url}
                 title={currentItem.title}
+                embed={currentItem.embed}
               />
             )}
           </DiscoverSection>
@@ -165,8 +166,17 @@ function PlaylistHtmlContent(props: { html: string }) {
  * {@link resolveLinkMedia}): a direct video file plays in a `<video>` element,
  * a known video site (YouTube, Vimeo) embeds in an `<iframe>`, and anything
  * else shows the URL with a prominent "Open" button that opens a new tab.
+ *
+ * When the author checked "embed", any URL that isn't already a video or a
+ * known video site is shown in an `<iframe>` instead of an "Open" link. Video
+ * detection still takes precedence, so ticking embed never changes how a
+ * recognized video renders.
  */
-function PlaylistLinkContent(props: { url: string; title?: string }) {
+function PlaylistLinkContent(props: {
+  url: string;
+  title?: string;
+  embed?: boolean;
+}) {
   const { t } = useI18n();
   const media = resolveLinkMedia(props.url);
 
@@ -181,7 +191,7 @@ function PlaylistLinkContent(props: { url: string; title?: string }) {
     );
   }
 
-  if (media.kind === "embed") {
+  if (media.kind === "embed" || (media.kind === "link" && props.embed)) {
     return (
       <iframe
         className="sb-play-playlist-content-iframe"

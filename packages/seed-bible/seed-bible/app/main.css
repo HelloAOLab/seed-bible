@@ -10779,6 +10779,19 @@ img.sb-chat-view-message-avatar {
   color: var(--sb-error-color, #d64545);
 }
 
+.sb-playlist-embed-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.sb-playlist-embed-toggle input {
+  cursor: pointer;
+}
+
 .sb-discover-section {
   margin-bottom: 16px;
 }

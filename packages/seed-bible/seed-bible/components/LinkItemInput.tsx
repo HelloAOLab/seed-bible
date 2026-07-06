@@ -4,8 +4,8 @@ import type { PlaylistItemData } from "../managers/PlaylistManager";
 
 interface LinkItemInputProps {
   onAdd: (item: PlaylistItemData) => void;
-  /** URL and title the fields start with, e.g. when editing an item. */
-  initialItem?: { url: string; title?: string };
+  /** URL, title, and embed flag the fields start with, e.g. when editing an item. */
+  initialItem?: { url: string; title?: string; embed?: boolean };
   /** Overrides the submit button label (defaults to "Add item"). */
   submitLabel?: string;
 }
@@ -19,6 +19,7 @@ export function LinkItemInput(props: LinkItemInputProps) {
   const { t } = useI18n();
   const [value, setValue] = useState(initialItem?.url ?? "");
   const [title, setTitle] = useState(initialItem?.title ?? "");
+  const [embed, setEmbed] = useState(initialItem?.embed ?? false);
   const [error, setError] = useState<string | null>(null);
 
   const handleAdd = () => {
@@ -36,9 +37,15 @@ export function LinkItemInput(props: LinkItemInputProps) {
       return;
     }
     const trimmedTitle = title.trim();
-    onAdd({ type: "link", url, title: trimmedTitle || undefined });
+    onAdd({
+      type: "link",
+      url,
+      title: trimmedTitle || undefined,
+      embed: embed || undefined,
+    });
     setValue("");
     setTitle("");
+    setEmbed(false);
     setError(null);
   };
 
@@ -92,6 +99,20 @@ export function LinkItemInput(props: LinkItemInputProps) {
             t("playlist-add-button", { defaultValue: "Add item" })}
         </button>
       </div>
+      <label className="sb-playlist-embed-toggle">
+        <input
+          type="checkbox"
+          checked={embed}
+          onChange={(event: Event) => {
+            setEmbed((event.currentTarget as HTMLInputElement).checked);
+          }}
+        />
+        <span>
+          {t("playlist-add-link-embed", {
+            defaultValue: "Embed this link",
+          })}
+        </span>
+      </label>
       {error ? <div className="sb-playlist-add-error">{error}</div> : null}
     </>
   );
