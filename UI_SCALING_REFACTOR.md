@@ -1,15 +1,16 @@
 # UI Scaling Refactor — Work Log & Handoff
 
-**Branch:** `fix/1281-ui-scaling` · **Issue:** #1281 · **Status:** Rem-based UI scaling — **Phases 0, 1, 2, 3, 4, 5, 6, 7, 11, 12, 13 done.**
+**Branch:** `fix/1281-ui-scaling` · **Issue:** #1281 · **Status:** Rem-based UI scaling — **Phases 0, 1, 2, 3, 4, 5, 6, 7, 11, 12, 13, 14 done. All develop-merge integration (11–14) complete.**
 
 - **Committed:** Phase 0+1 (`5e752106`), Phase 7 (`f0e2c921`), Phase 2 (`0190a5b7`), Phase 4 (`e469fbb`), Phase 5 (`337b1794`), Phase 6 (`275184e7`). Plus the ThemeManager var-collision fix (`5ec5f44f`). An earlier `develop` merge landed at `168b7fbb`.
 - **Phase 3** = verified clean, **no code changes** (see §4).
 - **✅ The second `develop` merge (2026-07-03) is now COMMITTED** — merge commit `16461f74`, followed by `4ed4b607` (the TutorialPrompt `fontSizeClass` strip — the code half of Phase 12). The `main.css` conflict + `main.tsx` `fontSizeClass` collision were resolved in that merge. This merge spawned integration **Phases 11–14** (§8). Full gates re-run green post-merge (see §5).
 - **Phase 11 (chat UI)** = ✅ committed (`3c3731f`) — see §4.
 - **Phase 12 (tutorial/tour)** = ✅ committed (`9c4a7fe6`). Code half was `4ed4b607` (`fontSizeClass` strip); the CSS-audit half converted the `.sb-tutorial-prompt` block (12 px→rem). See §4.
-- **Phase 13 (today screen)** = ✅ **complete, uncommitted in working tree** (2026-07-06). `today-screen` package: whole `styles.css` + 3 inline icon sizes → rem; 2 unit tests updated. See §4.
+- **Phase 13 (today screen)** = ✅ committed (`a674f8e7`). `today-screen` package: whole `styles.css` + 3 inline icon sizes → rem; 2 unit tests updated. See §4.
+- **Phase 14 (scripture map)** = ✅ **complete, uncommitted in working tree** (2026-07-06). `scripture-map` chrome px→rem (settings/controls/tooltip), **map-canvas geometry kept px** (scale-factor coordinate space); 2 inline px + 2 pinned tests updated. See §4.
 - **Naming:** the scale-map constant was renamed `UI_TEXT_SIZE_SCALE` → **`UI_TEXT_SIZE_SCALE_MAP`** (in `e469fbb`). Older references below may still say the old name.
-- **Remaining:** **Phase 8** (book-selector responsiveness); **Phase 14** (develop-merge integration: scripture-map); deferred **Phase 9** (optional a11y browser-pref); and **Phase 10 — cleanup (runs last, after all other phases)** — see §8.
+- **Remaining:** **Phase 8** (book-selector responsiveness); deferred **Phase 9** (optional a11y browser-pref); and **Phase 10 — cleanup (runs last, after all other phases)** — see §8.
 - **Commit policy:** never commit on your own — only when the user invokes `/commit`.
 
 This doc is the single source of truth for resuming this work in a new thread / on
@@ -143,7 +144,7 @@ Files changed (now **committed** as `5e752106`; the list below is historical):
 - **`TutorialPrompt.tsx` has no inline styles** — nothing to convert in JSX.
 - **Gates green:** `check:ts` (0 err) · `lint` (0 err / 251 pre-existing warns) · `test` (2520/2520) · `build` (✓). Exact no-op at UI size M.
 
-### Phase 13 — Today screen rem pass ✅ (working tree, uncommitted — 2026-07-06)
+### Phase 13 — Today screen rem pass ✅ (committed `a674f8e7`)
 
 - **Render context confirmed:** `today-screen` is an in-process extension (not an `ao.bot` iframe) — `Today.tsx` does `import "./../styles/styles.css"`, so its CSS lands in the main document and **`rem` tracks the global `html` knob** (rem is root-relative, no inheritance caveats).
 - **`styles.css` (866 lines, was 150 px / 0 rem):** ran the whole-file codemod (`pxtorem-full.cjs`, same Phase-1 opts) — the file has no reader/`html` selectors so the whole thing is chrome. **~130 declarations px→rem.** **20 px kept** (verified): `1px`/`2px`/`solid` borders, the 3 `box-shadow`s, the `0.5px` hairline divider, two `transform: translate` offsets, `text-underline-offset: 4px`, the `@media (width <= 480px)` condition, and the `mask-image` fade-gradient stops (`0px`/`8px` — a visual affordance, like box-shadow).
@@ -153,6 +154,20 @@ Files changed (now **committed** as `5e752106`; the list below is historical):
 - **Other inline styles are color-only** (`Chapter.tsx`, `HistoryCard.tsx`, `UserIcon.tsx` — `backgroundColor` from theme/data), nothing to convert.
 - **Gates green:** `check:ts` (0 err) · `lint` (0 err / 251 pre-existing warns) · `test` (2520/2520, after updating the 2 icon-style assertions) · `build` (✓). Exact no-op at UI size M.
 - **Not code (verify at QA):** open Today at UI L/XL and eyeball the header, resume card, search dropdown, history filters, presence card, and bookmarks row for layout/wrap breakage.
+
+### Phase 14 — Scripture Map rem pass ✅ (working tree, uncommitted — 2026-07-06)
+
+- **The classification (the whole point of this phase):** the map is a **zoomable canvas**. Its cell geometry scales with the map's _own_ zoom via `calc(<px> * var(--scale-factor))` and the `--chapter-*`/`--book-*` CSS vars (set inline by `useScriptureMapWrapper`, in px). Converting those px to rem would make the map **double-scale** (its own zoom × the UI text knob) — wrong. So map geometry stays px; only the surrounding chrome converts.
+  - **Canvas → keep px (styles.css ~lines 491–743):** `.scripture-map-container` and everything nested — `.testament-*`, `.scripture-map-books-container`, `.book-container`/`.book-cover`/`.book-header`/`.book-id`/`.book-name`, `.chapter` (+ presence rings), and the scale-factor-driven `.scripture-map-toggle`/`.toggle-*` section headers. Includes the non-scaled canvas floors (`.scripture-map-container padding`, `.book-container min-height: 80px`) — they're map-coordinate space, not chrome, so tying them to the UI knob would be wrong.
+  - **Chrome → rem (styles.css ~1–489 + 745–866):** wrapper frame, settings bar/panel/filters/selection, controls bar, zoom selector, tooltip, dividers, filter swatch.
+- **Method:** a **targeted postcss transform** (`scripture-map-pxtorem.cjs`) — same rem base + kept-px rules as Phase 1, but it **skips any rule whose selector names a canvas token AND any declaration referencing `var(--scale-factor|--chapter|--book)`** (belt-and-suspenders). **85 chrome declarations px→rem.** Verified: zero rem landed inside any scale-factor `calc()`; the diff hunks are confined to lines ≤489 and ≥752 (canvas region 490–751 untouched).
+- **Kept px (besides all canvas geometry):** `1px`/`1.5px` hairlines, `2px`/`3px`/`5px` borders, box-shadows, `transform: translate` offsets, and the `.zoom-level-selector > button` `calc(var(--scale-factor) * 4px)` radius (a lone scale-factor use in chrome — left as-is rather than risk a behavior change).
+- **Inline styles (2 px):** `Tooltip.tsx` `+N` overflow-badge `fontSize 12px → 0.75rem` (box styling); `useScriptureMapWrapper.tsx` `paddingBottom 40px/16px → 2.5rem/1rem` (chrome frame). The wrapper's `--book-width`/`--chapter-*` vars **stay px** (canvas coord space).
+- **Tooltip positioning left px (intentional):** `useTooltip.tsx` sets `top/left` from `getBoundingClientRect` coords and an `offset = 8` anchor gap — a CSS-px coordinate space (like the Phase 7 verse-toolbar), so it stays px. `Container.tsx` inline is `gap: 0` (nothing to convert).
+- **QA fix (settings-button icon):** the header settings button (`Settings.tsx`) renders an **`<img>`** (`SETTINGS_ICON`, an external 16×16 SVG) with class `.coloredIcon`, which had **no CSS at all** — so `font-size` never sized it (it was a dead `28px→1.75rem` no-op, pre-existing from develop), and the icon stayed a fixed 16px while its grid cell scaled. Added `.settings-button .coloredIcon { width: 1rem; height: 1rem }` — 1rem = its intrinsic 16px at M (no-op), scales at L/XL. NB: the button's `font-size: 1.75rem !important` implies a 28px design intent that never took effect on the `<img>`; left the icon at its real 16px (bump `.coloredIcon` to `1.75rem` if a larger gear is wanted — a separate size decision, not a scaling fix).
+- **Tests:** 2 pinned assertions updated (`useScriptureMapWrapper.test.tsx` `paddingBottom` → rem); the `--chapter-*` px assertions in that same file were **left unchanged** (canvas vars, correctly still px). The `ScriptureMapWrapper.test.tsx` component tests mock the hook with arbitrary px and assert forwarding — unaffected.
+- **Gates green:** `check:ts` (0 err) · `lint` (0 err / 251 pre-existing warns) · `test` (2520/2520) · `build` (✓). Exact no-op at UI size M.
+- **Not code (verify at QA):** open the Scripture Map at UI L/XL — the settings panel, controls/zoom bar, and tooltips should scale; the **book/chapter grid must NOT change** with UI size (it only responds to its own zoom control). Also confirm the map still zooms correctly via its own control at each UI size.
 
 ## 5. Verification done (Phase 1)
 
@@ -230,6 +245,8 @@ so the rest of `:root` was hand-converted (see §4).
 
 ## 7. QA findings / known issues
 
+- **[✅ FIXED — QA 2026-07-06] Material Symbols icons didn't scale with UI Text Size (systemic).** The Material Symbols font stylesheet (loaded via the Google Fonts `<link>` in `main.tsx`) ships a base `.material-symbols-outlined { font-size: 24px }`. Any icon _without_ a scoped rem/em override fell through to that fixed 24px and ignored the UI knob (surfaced during Phase 14 QA on the scripture-map header and the detached-pane toolbar, whose own icon rule was commented out). **Fix:** one systemic base rule in `main.css` — `body .material-symbols-outlined { font-size: 1.5rem }` (1.5rem = 24px at M, no-op at M; every icon now scales by default). Specificity `(0,1,1)` beats the font's base `(0,1,0)` regardless of stylesheet load order, and loses to the scoped `.sb-* .material-symbols-outlined` overrides `(0,2,0)`, which keep their sizes. **QA at L/XL:** watch for any icon overflowing a still-fixed container (intended-to-scale, but worth an eyeball). NB: the scripture-map settings button is a separate case — it's an `<img>`, not a font glyph, fixed separately via `.settings-button .coloredIcon` rem sizing (see §4 Phase 14).
+- **[✅ FIXED — QA 2026-07-06] SVG icon-buttons didn't scale with UI Text Size.** Distinct from the Material Symbols issue above: several chrome icon-buttons render their icon as an **`<svg>`** (inline or an icon component from `icons.tsx`) with fixed px `width`/`height` attributes, so the button box scaled (rem) but the icon inside stayed fixed. The font base rule can't help — SVGs are sized by width/height, not `font-size`. **Fix (`main.css`):** a consolidated block sizing each button's `svg` in rem (CSS width/height overrides the SVG's px attributes; values = current px ÷ 16, no-op at M): `.sb-quick-toolbar-button` / `.sb-sidebar-icon-button` (settings) / `.sb-sidebar-tabs-header-icon-button` (bookmarks + tasks) → `1.5rem` (24px); `.sb-bible-reader-bookmark-button` → `1.375rem` (22px); `.sb-tab-bookmark-button` → `1.125rem` (18px). Non-square/`size`-prop icons keep their aspect since each group matches its icon's real dimensions. **Note for future icons:** any new chrome button using an `<svg>` icon needs a rem width/height rule (no app-wide base is possible for SVGs — they vary in intrinsic size and aspect ratio, unlike the uniform Material Symbols glyphs).
 - **[DEFERRED → Phase 8] Book selector not fully responsive ~1250px at UI Text Size > M** — edges get cut off at the screen edges. Confirmed this was _also_ a bug under the old `zoom` impl, so it's not a rem-refactor regression. Decided (2026-07-02) to give it its **own focused fix** — see **Phase 8** in §8 (it's a responsive-layout bug, not a px→rem swap).
 - **[Phase 7 ✅ DONE] Verse-toolbar edge clamp at L/XL** — the floating verse-selection toolbar's `84`/`64` clamp insets now scale by `UI_TEXT_SIZE_SCALE[uiTextSize]`. Fixed + verified; awaiting joint QA.
 - **[Sibling raw-px-under-rem bugs found by the Phase 7 verification sweep — both minor, both pre-existing rem-refactor regressions — NOW FIXED]:**
@@ -240,7 +257,7 @@ so the rest of `:root` was hand-converted (see §4).
 
 ## 8. NEXT STEPS
 
-**Phases 0–7 + 11 + 12 + 13 — DONE** (code). See §4 for what each did and its commit ref. Phases 11 (`3c3731f`) + 12 (`9c4a7fe6`) are committed; Phase 13 (today screen) is done in the working tree, uncommitted. Remaining: **Phase 8** (book-selector responsiveness), **Phase 14** (scripture map), the deferred **Phase 9** (optional a11y), and the **final Phase 10 (cleanup)** which runs after all of them.
+**Phases 0–7 + 11 + 12 + 13 + 14 — DONE** (code). All develop-merge integration phases (11–14) are complete. See §4 for what each did and its commit ref. Phases 11 (`3c3731f`) + 12 (`9c4a7fe6`) + 13 (`a674f8e7`) are committed; Phase 14 (scripture map) is done in the working tree, uncommitted. Remaining: **Phase 8** (book-selector responsiveness), the deferred **Phase 9** (optional a11y), and the **final Phase 10 (cleanup)** which runs after all of them.
 
 > **`develop` merge (2026-07-03):** a large feature merge brought in new UI written in the **pre-refactor px idiom**. The merge itself is in the working tree, uncommitted (the CSS conflict + one semantic collision are resolved & staged — see §10). develop's new UI does not honor the UI Text Size knob until converted; this spawned integration Phases **11–14** below. Decision (2026-07-03): the two separate feature packages (Today, Scripture Map) **should** scale — treat as chrome, convert px→rem (the map keeps its canvas/marker geometry in px).
 
@@ -262,9 +279,9 @@ so the rest of `:root` was hand-converted (see §4).
 
 **Phase 13 — Today screen ✅ DONE (working tree, uncommitted — 2026-07-06):** `packages/today-screen/` (DDD-layered). `styles.css` whole-file codemod (~130 px→rem, 20 px kept) + 2 hand-converted px `line-height`s + 3 inline icon sizes → rem (in `Welcome.tsx` and the `useWelcome`/`useSearchSection` hooks, not the 4 files this plan originally guessed) + 2 unit-test assertions updated. Renders in-document (in-process extension), so rem tracks the global knob. Icons/avatars scale (chrome, no internal px coord system); the only pixel-lattice `useMicroGrid` is dormant (commented out). See §4 for the full breakdown. Gates green (2520/2520).
 
-**Phase 14 — Scripture Map (`packages/scripture-map/`):** separate package. `styles/styles.css` = **865 lines, ~153 px, 25 font-size decls, ~0 rem**; plus **2 inline-style files** (`components/containers/Container.tsx`, `Tooltip.tsx`). Convert **chrome UI** (controls, settings panel, tooltips, book list, labels) px→rem, but **keep px for map-canvas / marker / coordinate geometry** — the spatial canvas is its own coordinate space (same rule as the pane `x/y/w/h` model, §2). **Riskiest** of the merge phases: classify "UI chrome" vs "map geometry" _before_ converting; the `Container.tsx`/`Tooltip.tsx` inline styles likely mix marker positioning (keep px) with box styling (rem).
+**Phase 14 — Scripture Map ✅ DONE (working tree, uncommitted — 2026-07-06):** `packages/scripture-map/`. Classified chrome vs map-canvas up front (the map cells scale with the map's own zoom via `calc(<px> * var(--scale-factor))` + `--chapter-*`/`--book-*` vars). Ran a **targeted transform** that converts chrome only and skips canvas selectors + any scale-factor/chapter/book var (85 chrome decls px→rem); map geometry kept px. 2 inline px converted (tooltip badge font, wrapper paddingBottom), tooltip _positioning_ left px (coordinate space), 2 pinned tests updated. See §4 for the full classification. Gates green (2520/2520).
 
-**Merge-phase ordering:** run 11–14 in the per-area rollout, before Phase 10 (cleanup). Suggested order: **11** (chat, in-family) ✅ → **12** (tutorial, small) ✅ → **13** (today) ✅ → **14** (map, needs classification). Each gets the static gates (`check:ts`/`lint`/`test`/`build`) and is a no-op at UI M.
+**Merge-phase ordering:** run 11–14 in the per-area rollout, before Phase 10 (cleanup). Order run: **11** (chat) ✅ → **12** (tutorial) ✅ → **13** (today) ✅ → **14** (map, classified canvas vs chrome) ✅. **All merge phases complete.** Each got the static gates (`check:ts`/`lint`/`test`/`build`) and is a no-op at UI M.
 
 **Phase 10 — cleanup (FINAL — runs after every other phase, incl. 8–9 and the merge phases 11–14):** remove the `postcss-pxtorem` dev-dep; add a `main.css` header comment documenting the rem/em/px invariant + the codemod blacklist as source of truth. Consider deleting this handoff doc once merged.
 
@@ -294,6 +311,7 @@ Setting `--sb-ui-scale` directly is faithful — it's exactly what `SettingsMana
 - [x] **Second `develop` merge (2026-07-03) — COMMITTED** (`16461f74`), plus `4ed4b607` (Phase 12 `fontSizeClass` strip). Full gates re-run green post-merge.
 - [x] Phase 11 (chat UI) — committed (`3c3731f`).
 - [x] Phase 12 (tutorial/tour) — committed (`9c4a7fe6`).
-- [ ] **Phase 13 (today screen) — in the working tree, UNCOMMITTED** (`today-screen` `styles.css` + `Welcome.tsx` + `useWelcome`/`useSearchSection` hooks + their 2 tests + this doc). Gates green. Commit is the user's to make (`/commit`).
+- [x] Phase 13 (today screen) — committed (`a674f8e7`).
+- [ ] **Phase 14 (scripture map) — in the working tree, UNCOMMITTED** (`scripture-map` `styles.css` + `Tooltip.tsx` + `useScriptureMapWrapper.tsx` + `useScriptureMapWrapper.test.tsx` + this doc). Gates green. Commit is the user's to make (`/commit`).
 - [ ] Push `fix/1281-ui-scaling` to the remote — **only when the user explicitly asks.**
-- [ ] Phase 8 (book selector); Phase 14 (scripture map); deferred Phase 9; Phase 10 (cleanup — runs last) — not started.
+- [ ] Phase 8 (book selector); deferred Phase 9; Phase 10 (cleanup — runs last) — not started.

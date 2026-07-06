@@ -10,6 +10,17 @@ html {
   font-size: calc(16px * var(--sb-ui-scale, 1));
 }
 
+/* Material Symbols icons ship with a fixed `font-size: 24px` from the Google
+   Fonts stylesheet (loaded in main.tsx), which ignores the UI Text Size knob.
+   Re-express that base in rem so every icon scales with the chrome by default
+   (1.5rem = 24px at size M — a no-op at M). Scoped
+   `.sb-* .material-symbols-outlined` rules (specificity 0,2,0) still win and
+   keep their own sizes; the `body` prefix here (0,1,1) only outranks the font's
+   own base rule (0,1,0), so this wins regardless of stylesheet load order. */
+body .material-symbols-outlined {
+  font-size: 1.5rem;
+}
+
 :root {
   --sb-ui-scale: 1;
   --sb-scripture-margin: 27%;
@@ -409,8 +420,32 @@ a:visited {
   cursor: default;
 }
 
+/* Chrome icon-buttons render their icons as <svg> (inline or icon components)
+   with fixed px width/height attributes, which ignore the UI Text Size knob.
+   (Material Symbols glyphs are handled by the base rule near the top of this
+   file; SVGs are sized by width/height, not font-size, so they need explicit
+   rem sizing here.) CSS width/height overrides the SVG's px attributes; the rem
+   values equal each icon's current px ÷ 16, so these are no-ops at size M. */
 .sb-quick-toolbar-button svg {
   display: block;
+  width: 1.5rem; /* 24px */
+  height: 1.5rem;
+}
+
+.sb-sidebar-icon-button svg,
+.sb-sidebar-tabs-header-icon-button svg {
+  width: 1.5rem; /* 24px */
+  height: 1.5rem;
+}
+
+.sb-bible-reader-bookmark-button svg {
+  width: 1.375rem; /* 22px */
+  height: 1.375rem;
+}
+
+.sb-tab-bookmark-button svg {
+  width: 1.125rem; /* 18px */
+  height: 1.125rem;
 }
 
 /* Force a tight 1% reader margin in mobile view, regardless of the
