@@ -3178,7 +3178,11 @@ a:visited {
 
 @media only screen and (min-width: 769px) {
   .sb-selector-panel {
-    width: 40.625rem;
+    /* Cap to the viewport (minus the overlay's 1.25rem padding each side) so
+       the panel never extends past the screen edges at UI Text Size > M, where
+       the fixed rem width would otherwise scale wider than the viewport. No-op
+       when the viewport is wide enough to hold the full 40.625rem. */
+    width: min(40.625rem, calc(100vw - 2.5rem));
     height: 80dvh;
     bottom: 5rem;
   }
@@ -3186,7 +3190,7 @@ a:visited {
 
 @media only screen and (min-width: 1201px) {
   .sb-selector-panel {
-    width: 68.75rem;
+    width: min(68.75rem, calc(100vw - 2.5rem));
     height: 80dvh;
     bottom: 5rem;
   }

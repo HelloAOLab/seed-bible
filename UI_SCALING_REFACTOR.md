@@ -1,6 +1,6 @@
 # UI Scaling Refactor — Work Log & Handoff
 
-**Branch:** `fix/1281-ui-scaling` · **Issue:** #1281 · **Status:** Rem-based UI scaling — **Phases 0, 1, 2, 3, 4, 5, 6, 7, 11, 12, 13, 14 done. All develop-merge integration (11–14) complete.**
+**Branch:** `fix/1281-ui-scaling` · **Issue:** #1281 · **Status:** Rem-based UI scaling — **Phases 0–8 + 11–14 done. All develop-merge integration (11–14) complete; only optional Phase 9 + final cleanup Phase 10 remain.**
 
 - **Committed:** Phase 0+1 (`5e752106`), Phase 7 (`f0e2c921`), Phase 2 (`0190a5b7`), Phase 4 (`e469fbb`), Phase 5 (`337b1794`), Phase 6 (`275184e7`). Plus the ThemeManager var-collision fix (`5ec5f44f`). An earlier `develop` merge landed at `168b7fbb`.
 - **Phase 3** = verified clean, **no code changes** (see §4).
@@ -8,9 +8,11 @@
 - **Phase 11 (chat UI)** = ✅ committed (`3c3731f`) — see §4.
 - **Phase 12 (tutorial/tour)** = ✅ committed (`9c4a7fe6`). Code half was `4ed4b607` (`fontSizeClass` strip); the CSS-audit half converted the `.sb-tutorial-prompt` block (12 px→rem). See §4.
 - **Phase 13 (today screen)** = ✅ committed (`a674f8e7`). `today-screen` package: whole `styles.css` + 3 inline icon sizes → rem; 2 unit tests updated. See §4.
-- **Phase 14 (scripture map)** = ✅ **complete, uncommitted in working tree** (2026-07-06). `scripture-map` chrome px→rem (settings/controls/tooltip), **map-canvas geometry kept px** (scale-factor coordinate space); 2 inline px + 2 pinned tests updated. See §4.
+- **Phase 14 (scripture map)** = ✅ committed (`c0f424f1`, together with the icon-scaling QA fixes). `scripture-map` chrome px→rem (settings/controls/tooltip), **map-canvas geometry kept px** (scale-factor coordinate space); 2 inline px + 2 pinned tests updated. See §4.
+- **Phase 8 (book-selector responsiveness)** = ✅ **complete, uncommitted in working tree** (2026-07-06). Capped `.sb-selector-panel` width to the viewport so it stops clipping at L/XL. See §7/§8.
+- **Icon-scaling QA fixes** (committed `c0f424f1`): app-wide `body .material-symbols-outlined { font-size: 1.5rem }` base + per-button SVG rem sizing + the scripture-map settings `<img>` `.coloredIcon`. See §7.
 - **Naming:** the scale-map constant was renamed `UI_TEXT_SIZE_SCALE` → **`UI_TEXT_SIZE_SCALE_MAP`** (in `e469fbb`). Older references below may still say the old name.
-- **Remaining:** **Phase 8** (book-selector responsiveness); deferred **Phase 9** (optional a11y browser-pref); and **Phase 10 — cleanup (runs last, after all other phases)** — see §8.
+- **Remaining:** deferred **Phase 9** (optional a11y browser-pref, not required for #1281); and **Phase 10 — cleanup (runs last, after all other phases)** — see §8.
 - **Commit policy:** never commit on your own — only when the user invokes `/commit`.
 
 This doc is the single source of truth for resuming this work in a new thread / on
@@ -247,7 +249,7 @@ so the rest of `:root` was hand-converted (see §4).
 
 - **[✅ FIXED — QA 2026-07-06] Material Symbols icons didn't scale with UI Text Size (systemic).** The Material Symbols font stylesheet (loaded via the Google Fonts `<link>` in `main.tsx`) ships a base `.material-symbols-outlined { font-size: 24px }`. Any icon _without_ a scoped rem/em override fell through to that fixed 24px and ignored the UI knob (surfaced during Phase 14 QA on the scripture-map header and the detached-pane toolbar, whose own icon rule was commented out). **Fix:** one systemic base rule in `main.css` — `body .material-symbols-outlined { font-size: 1.5rem }` (1.5rem = 24px at M, no-op at M; every icon now scales by default). Specificity `(0,1,1)` beats the font's base `(0,1,0)` regardless of stylesheet load order, and loses to the scoped `.sb-* .material-symbols-outlined` overrides `(0,2,0)`, which keep their sizes. **QA at L/XL:** watch for any icon overflowing a still-fixed container (intended-to-scale, but worth an eyeball). NB: the scripture-map settings button is a separate case — it's an `<img>`, not a font glyph, fixed separately via `.settings-button .coloredIcon` rem sizing (see §4 Phase 14).
 - **[✅ FIXED — QA 2026-07-06] SVG icon-buttons didn't scale with UI Text Size.** Distinct from the Material Symbols issue above: several chrome icon-buttons render their icon as an **`<svg>`** (inline or an icon component from `icons.tsx`) with fixed px `width`/`height` attributes, so the button box scaled (rem) but the icon inside stayed fixed. The font base rule can't help — SVGs are sized by width/height, not `font-size`. **Fix (`main.css`):** a consolidated block sizing each button's `svg` in rem (CSS width/height overrides the SVG's px attributes; values = current px ÷ 16, no-op at M): `.sb-quick-toolbar-button` / `.sb-sidebar-icon-button` (settings) / `.sb-sidebar-tabs-header-icon-button` (bookmarks + tasks) → `1.5rem` (24px); `.sb-bible-reader-bookmark-button` → `1.375rem` (22px); `.sb-tab-bookmark-button` → `1.125rem` (18px). Non-square/`size`-prop icons keep their aspect since each group matches its icon's real dimensions. **Note for future icons:** any new chrome button using an `<svg>` icon needs a rem width/height rule (no app-wide base is possible for SVGs — they vary in intrinsic size and aspect ratio, unlike the uniform Material Symbols glyphs).
-- **[DEFERRED → Phase 8] Book selector not fully responsive ~1250px at UI Text Size > M** — edges get cut off at the screen edges. Confirmed this was _also_ a bug under the old `zoom` impl, so it's not a rem-refactor regression. Decided (2026-07-02) to give it its **own focused fix** — see **Phase 8** in §8 (it's a responsive-layout bug, not a px→rem swap).
+- **[✅ FIXED — Phase 8, 2026-07-06] Book selector clipped at the screen edges ~1250px at UI Text Size > M.** Root cause: `.sb-selector-panel` used a fixed rem width (`40.625rem` ≥769px, `68.75rem` ≥1201px) that scaled past the viewport at L/XL (`68.75rem` = 1100px at M but 1265px at L / 1430px at XL). The panel is a centered `position: absolute` element, so once wider than the viewport its left/right edges ran off-screen. Pre-existing (also broken under old `zoom`). **Fix:** capped both desktop widths to the viewport — `width: min(<rem>, calc(100vw - 2.5rem))` (the `2.5rem` = the overlay's `1.25rem` padding each side), matching the chat/search/login `min()` pattern. No-op at M / on wide viewports; fits with margin at L/XL. See §8 Phase 8.
 - **[Phase 7 ✅ DONE] Verse-toolbar edge clamp at L/XL** — the floating verse-selection toolbar's `84`/`64` clamp insets now scale by `UI_TEXT_SIZE_SCALE[uiTextSize]`. Fixed + verified; awaiting joint QA.
 - **[Sibling raw-px-under-rem bugs found by the Phase 7 verification sweep — both minor, both pre-existing rem-refactor regressions — NOW FIXED]:**
   - **[Phase 4 ✅ FIXED `e469fbb`] Floating detached-pane min-size floors** — `PanesManager.resizePane` now takes a `uiScale` param and scales the floors (`320`/`180`/`280×180`) by `UI_TEXT_SIZE_SCALE_MAP[uiTextSize]` (threaded from `PaneLayout` via `getUiScale()`). Pane `x/y/w/h` stay unscaled px (canvas). New unit test asserts the floating floor clamps to `280×1.3 / 180×1.3` at scale 1.3.
@@ -265,7 +267,7 @@ so the rest of `:root` was hand-converted (see §4).
 
 --- Deferred items (given their own phases so they aren't lost) ---
 
-**Phase 8 — book-selector responsiveness (deferred):** the book/translation selector clips at the screen edges around ~1250px when UI Text Size > M. Pre-existing (also broken under the old `zoom` impl), so **not** a rem-refactor regression. Needs a focused responsive-layout fix (grid / overflow / max-width), not a px→rem swap. See §7.
+**Phase 8 — book-selector responsiveness ✅ DONE (working tree, uncommitted — 2026-07-06):** the book/translation selector clipped at the screen edges around ~1250px when UI Text Size > M. Root cause: `.sb-selector-panel`'s fixed rem width (`40.625rem`/`68.75rem`) scaled past the viewport at L/XL on a centered `position: absolute` panel. **Fix:** capped both desktop breakpoint widths to `min(<rem>, calc(100vw - 2.5rem))` — a responsive cap (not a px→rem swap), matching the chat/search/login `min()` pattern; no-op at M. See §7 for the before/after. Gates green (2520/2520). **Verify at QA:** open the selector at ~1250px viewport with UI Text Size L/XL — the panel should now sit within the screen with a small margin instead of running off both edges.
 
 **Phase 9 — (optional, a11y) honor browser font-size:** make the root base `100%` (browser preference) instead of a fixed `16px`, as an accessibility option layered on top of the UI Text Size knob (see §3, "Root font base"). Low priority; not required for #1281.
 
@@ -312,6 +314,7 @@ Setting `--sb-ui-scale` directly is faithful — it's exactly what `SettingsMana
 - [x] Phase 11 (chat UI) — committed (`3c3731f`).
 - [x] Phase 12 (tutorial/tour) — committed (`9c4a7fe6`).
 - [x] Phase 13 (today screen) — committed (`a674f8e7`).
-- [ ] **Phase 14 (scripture map) — in the working tree, UNCOMMITTED** (`scripture-map` `styles.css` + `Tooltip.tsx` + `useScriptureMapWrapper.tsx` + `useScriptureMapWrapper.test.tsx` + this doc). Gates green. Commit is the user's to make (`/commit`).
+- [x] Phase 14 (scripture map) + icon-scaling QA fixes — committed (`c0f424f1`).
+- [ ] **Phase 8 (book selector) — in the working tree, UNCOMMITTED** (`main.css` `.sb-selector-panel` width cap + this doc). Gates green. Commit is the user's to make (`/commit`).
 - [ ] Push `fix/1281-ui-scaling` to the remote — **only when the user explicitly asks.**
-- [ ] Phase 8 (book selector); deferred Phase 9; Phase 10 (cleanup — runs last) — not started.
+- [ ] Deferred Phase 9; Phase 10 (cleanup — runs last) — not started.
