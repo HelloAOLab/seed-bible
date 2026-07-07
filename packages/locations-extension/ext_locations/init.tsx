@@ -1,7 +1,7 @@
 import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { computed } from "@preact/signals";
 import { registerExtension } from "seed-bible";
-import { LocationIcon } from "seed-bible/components";
+import { LocationIcon, PortalComponent } from "seed-bible/components";
 import locations from "./locations.json";
 import geoImporterPattern from "virtual:@pattern/geo-importer";
 import { v4 as uuid } from "uuid";
@@ -94,13 +94,19 @@ export default function initLocationsExtension() {
         const data = await response.text();
 
         context.panes.openPane({
-          type: "detached",
-          mapPortal: "map",
-          pattern: geoImporterPattern,
-          inst: uuid(),
-          query: {
-            mapData: data,
-          },
+          placement: "floating",
+          title: place.place,
+          component: () => (
+            <PortalComponent
+              portal="map"
+              portalType="map"
+              pattern={geoImporterPattern}
+              inst={uuid()}
+              query={{
+                mapData: data,
+              }}
+            />
+          ),
         });
       };
 

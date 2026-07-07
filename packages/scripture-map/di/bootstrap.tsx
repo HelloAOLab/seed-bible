@@ -79,8 +79,8 @@ export const bootstrapExtension = () => {
         icon: Icon,
         onSelect: () => {
           context.panes.openPane({
-            type: "detached",
-            detachedAnchor: "side",
+            placement: "side",
+            title: "Scripture Map",
             component: () => {
               const { t, language } = useI18n();
 

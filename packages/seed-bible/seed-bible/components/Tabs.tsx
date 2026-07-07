@@ -5,9 +5,9 @@ import {
 } from "../managers/BookmarksManager";
 import type { ReaderTab } from "../managers/TabsManager";
 import {
-  PANE_LAYOUT_OPTIONS,
-  type PaneLayoutId,
-} from "../managers/PanesManager";
+  TAB_SLOT_LAYOUT_OPTIONS,
+  type TabSlotLayoutId,
+} from "../managers/TabsLayoutManager";
 import {
   closeContextMenus,
   ContextMenuItem,
@@ -53,11 +53,11 @@ interface TabsHeaderProps {
   state: SeedBibleState;
   effectivelyCollapsed: boolean;
   panelsEnabled: boolean;
-  paneLayout: PaneLayoutId | "single";
+  paneLayout: TabSlotLayoutId | "single";
   isLayoutMenuOpen: boolean;
   toggleLayoutMenu: () => void;
   closeLayoutMenu: () => void;
-  setLayout: (layout: PaneLayoutId) => void;
+  setLayout: (layout: TabSlotLayoutId) => void;
   createSharedSession: () => void;
 }
 
@@ -65,10 +65,10 @@ interface SettingsProps {
   state: SeedBibleState;
 }
 
-function renderLayoutPreview(layoutId: PaneLayoutId) {
+function renderLayoutPreview(layoutId: TabSlotLayoutId) {
   const slotCount =
-    PANE_LAYOUT_OPTIONS.find((layout) => layout.id === layoutId)?.slotCount ??
-    1;
+    TAB_SLOT_LAYOUT_OPTIONS.find((layout) => layout.id === layoutId)
+      ?.slotCount ?? 1;
 
   return (
     <div className="sb-pane-layout-preview" data-layout={layoutId}>
@@ -745,7 +745,7 @@ export function TabsHeader(props: TabsHeaderProps) {
                     handleGridKeyNav(event, event.currentTarget);
                   }}
                 >
-                  {PANE_LAYOUT_OPTIONS.map((layout) => (
+                  {TAB_SLOT_LAYOUT_OPTIONS.map((layout) => (
                     <button
                       key={layout.id}
                       onClick={() => setLayout(layout.id)}
@@ -1198,42 +1198,19 @@ function TabRow(props: TabRowProps) {
         )}
 
         {panelsEnabled && (
-          <>
-            <ContextMenuItem
-              onClick={() => {
-                app.openInNewPane(tab.id);
-              }}
-              className="sb-tab-menu-item"
-            >
-              <MaterialIcon
-                className="sb-tab-menu-item-icon"
-                aria-hidden="true"
-              >
-                splitscreen_right
-              </MaterialIcon>
-              <span>
-                {t("open-in-new-panel", { defaultValue: "Open in new panel" })}
-              </span>
-            </ContextMenuItem>
-            <ContextMenuItem
-              onClick={() => {
-                app.openInDetachedPane(tab.id);
-              }}
-              className="sb-tab-menu-item"
-            >
-              <MaterialIcon
-                className="sb-tab-menu-item-icon"
-                aria-hidden="true"
-              >
-                open_in_new
-              </MaterialIcon>
-              <span>
-                {t("open-in-detached-panel", {
-                  defaultValue: "Open in detached panel",
-                })}
-              </span>
-            </ContextMenuItem>
-          </>
+          <ContextMenuItem
+            onClick={() => {
+              app.openInNewSlot(tab.id);
+            }}
+            className="sb-tab-menu-item"
+          >
+            <MaterialIcon className="sb-tab-menu-item-icon" aria-hidden="true">
+              splitscreen_right
+            </MaterialIcon>
+            <span>
+              {t("open-in-new-panel", { defaultValue: "Open in new panel" })}
+            </span>
+          </ContextMenuItem>
         )}
         <ContextMenuItem
           className="sb-tab-menu-item"
@@ -1758,9 +1735,9 @@ function BookmarksSection(props: BookmarksSectionProps) {
 export function Tabs(props: TabsProps) {
   const { state, closeLayoutMenu, effectivelyCollapsed } = props;
   const { app, tabs: tabsManager, bookmarks } = state;
-  // Pane-only tabs back an "open in new/detached panel" and are intentionally
+  // Slot-only tabs back an "open in new panel" clone and are intentionally
   // hidden from the tab strip.
-  const tabs = tabsManager.tabs.value.filter((tab) => !tab.paneOnly);
+  const tabs = tabsManager.tabs.value.filter((tab) => !tab.slotOnly);
   const selectedTabId = tabsManager.selectedTabId.value;
   const panelsEnabled = app.panelsEnabled.value;
   const isBookmarkFilterActive = bookmarks.isFilterActive.value;
@@ -2341,8 +2318,10 @@ function SelfAvatarButton(props: { state: SeedBibleState }) {
 
 export function Sidebar(props: SidebarProps) {
   const { state } = props;
-  const { app, panes, sidebar } = state;
-  const paneLayout = app.panelsEnabled.value ? panes.layout.value : "single";
+  const { app, tabsLayout, sidebar } = state;
+  const paneLayout = app.panelsEnabled.value
+    ? tabsLayout.layout.value
+    : "single";
   const panelsEnabled = app.panelsEnabled.value;
   const isSettingsOpen = sidebar.isSettingsOpen.value;
   const isCollapsed = sidebar.isSidebarCollapsed.value;
@@ -2398,7 +2377,7 @@ export function Sidebar(props: SidebarProps) {
             }}
             closeLayoutMenu={closeLayoutMenu}
             setLayout={(layout) => {
-              panes.setLayout(layout);
+              tabsLayout.setLayout(layout);
               closeLayoutMenu();
             }}
             createSharedSession={async () => {

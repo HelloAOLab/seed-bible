@@ -3,7 +3,7 @@ import { act } from "preact/test-utils";
 import { BibleSelector } from "@packages/seed-bible/seed-bible/components/BibleSelector";
 import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
-import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
+import type { TabSlot } from "@packages/seed-bible/seed-bible/managers/TabsLayoutManager";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import {
   createTestSeedBibleState,
@@ -39,7 +39,7 @@ type SelectorFixture = {
   state: SeedBibleState;
   selectorState: BibleSelectorState;
   bibleDataManager: SeedBibleState["bibleData"];
-  pane: Pane;
+  slot: TabSlot;
   selectChapter: Mock;
   setSearch: Mock;
 };

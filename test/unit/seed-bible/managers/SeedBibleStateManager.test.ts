@@ -149,11 +149,15 @@ describe("createSeedBibleState", () => {
     expect(state.tabs.selectedTabId.value).toBe("tab-1");
     expect(state.app.selectedTab.value?.id).toBe("tab-1");
 
-    expect(state.panes.panes.value).toHaveLength(1);
-    expect(state.panes.panes.value[0]?.tab?.id).toBe("tab-1");
-    expect(state.panes.selectedPaneId.value).toBe(
-      state.panes.panes.value[0]?.id ?? null
+    expect(state.tabsLayout.slots.value).toHaveLength(1);
+    expect(state.tabsLayout.slots.value[0]?.tab?.id).toBe("tab-1");
+    expect(state.tabsLayout.selectedSlotId.value).toBe(
+      state.tabsLayout.slots.value[0]?.id ?? null
     );
+
+    // Custom panes (fullscreen/side/floating) are a separate, initially-empty
+    // list — no pane is created just because a tab exists.
+    expect(state.panes.panes.value).toHaveLength(0);
 
     expect(state.selector.isOpen.value).toBe(false);
     expect(state.highlights).toBe(mockHighlightsManager as any);
@@ -177,11 +181,13 @@ describe("createSeedBibleState", () => {
     expect(state.tabs.selectedTabId.value).toBe("tab-1");
     expect(state.app.selectedTab.value?.id).toBe("tab-1");
 
-    expect(state.panes.panes.value).toHaveLength(1);
-    expect(state.panes.panes.value[0]?.tab?.id).toBe("tab-1");
-    expect(state.panes.selectedPaneId.value).toBe(
-      state.panes.panes.value[0]?.id ?? null
+    expect(state.tabsLayout.slots.value).toHaveLength(1);
+    expect(state.tabsLayout.slots.value[0]?.tab?.id).toBe("tab-1");
+    expect(state.tabsLayout.selectedSlotId.value).toBe(
+      state.tabsLayout.slots.value[0]?.id ?? null
     );
+
+    expect(state.panes.panes.value).toHaveLength(0);
 
     expect(state.selector.isOpen.value).toBe(false);
     expect(state.highlights).toBe(mockHighlightsManager as any);
@@ -191,36 +197,34 @@ describe("createSeedBibleState", () => {
     expect(state.bibleData.api.endpoint).toBe("https://bible.helloao.org/");
   });
 
-  it("selecting a tab selects the tab and switches the pane to display the selected tab", async () => {
+  it("selecting a tab selects the tab and switches the slot to display the selected tab", async () => {
     const state = await createStateWithTwoTabs();
 
-    state.panes.setLayout("split-2v");
-    const firstPane = state.panes.panes.value[0]!;
-    const secondPane = state.panes.panes.value[1]!;
-    state.panes.openInPane(secondPane.id, {
-      tabId: "tab-2",
-    });
-    state.panes.selectPane(firstPane.id);
+    state.tabsLayout.setLayout("split-2v");
+    const firstSlot = state.tabsLayout.slots.value[0]!;
+    const secondSlot = state.tabsLayout.slots.value[1]!;
+    state.tabsLayout.openTabInSlot(secondSlot.id, "tab-2");
+    state.tabsLayout.selectSlot(firstSlot.id);
 
     state.app.selectTab("tab-2");
 
-    const selectedPane = state.panes.panes.value.find(
-      (pane) => pane.id === state.panes.selectedPaneId.value
+    const selectedSlot = state.tabsLayout.slots.value.find(
+      (slot) => slot.id === state.tabsLayout.selectedSlotId.value
     );
 
     expect(state.tabs.selectedTabId.value).toBe("tab-2");
-    expect(selectedPane?.tab?.id).toBe("tab-2");
+    expect(selectedSlot?.tab?.id).toBe("tab-2");
   });
 
-  it("adding a tab opens the bible selector in new-tab mode for the selected pane", async () => {
+  it("adding a tab opens the bible selector in new-tab mode for the selected slot", async () => {
     const state = await createState();
-    const selectedPaneId = state.panes.selectedPaneId.value;
+    const selectedSlotId = state.tabsLayout.selectedSlotId.value;
     const previousTabCount = state.tabs.tabs.value.length;
 
     state.app.addTab();
 
     // forceNewTab is set synchronously inside setOpen before the async
-    // syncStateFromPane work; isOpen flips to true only after that work
+    // syncStateFromSlot work; isOpen flips to true only after that work
     // resolves, so wait for it.
     await waitFor(() => state.selector.isOpen.value === true);
 
@@ -228,7 +232,7 @@ describe("createSeedBibleState", () => {
     // selector first so the new tab can be seeded with the chosen book.
     expect(state.tabs.tabs.value).toHaveLength(previousTabCount);
     expect(state.selector.forceNewTab.value).toBe(true);
-    expect(state.selector.pane.value?.id).toBe(selectedPaneId);
+    expect(state.selector.slot.value?.id).toBe(selectedSlotId);
   });
 
   it("createSharedSession() creates a shared session and adds a tab for its reading state", async () => {

@@ -355,6 +355,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     tabs,
     selector,
     panes,
+    tabsLayout,
     sidebar,
     chats,
     tools: toolsManager,
@@ -385,6 +386,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       selectorState: selector,
       tabs: tabs,
       panesManager: panes,
+      tabsLayoutManager: tabsLayout,
       window: {
         isMobile: props.state.app.isMobile.value,
       },
@@ -438,6 +440,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       selectorState: selector,
       tabs: tabs,
       panesManager: panes,
+      tabsLayoutManager: tabsLayout,
       window: {
         isMobile: props.state.app.isMobile.value,
       },

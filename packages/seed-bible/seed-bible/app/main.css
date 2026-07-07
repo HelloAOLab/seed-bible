@@ -470,16 +470,12 @@ a:visited {
   grid-template-rows: repeat(2, minmax(0, 1fr));
 }
 
-@media (max-width: 768px) {
-  /* On mobile, detached panes are locked to the bottom anchor (see
-     effectivePanes). They sit as a sheet directly above the default reader
-     toolbar — which is fixed at the very bottom — so both stay usable, and in
-     front of the anchored panes. The `!important` overrides the inline
-     `bottom: 0` PaneLayout applies for the bottom anchor. */
-  .sb-pane-shell-detached[data-anchor="bottom"] {
-    bottom: var(--sb-mobile-detached-bottom-offset, 68px) !important;
-    max-height: 60vh;
-  }
+.sb-content-row {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
 }
 
 .sb-main-content {
@@ -494,6 +490,24 @@ a:visited {
   width: 100vw !important;
   height: 100vh !important;
 }
+
+/* Side pane: a normal flex child of .sb-content-row (not position:fixed), so
+   it pushes the tabs layout out of the way instead of overlaying it. */
+.sb-pane-side-shell {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 320px;
+  background: var(--sb-reader-background);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--sb-secondary-color), transparent 40%),
+    0 22px 40px #0000002c;
+}
+
+/* On mobile, panes always render fullscreen (see app.effectivePanes), so
+   .sb-pane-side-shell never renders there. */
 
 .sb-panes-layout {
   height: 100%;
@@ -587,40 +601,57 @@ a:visited {
 .sb-pane-shell-detached {
   position: absolute;
   z-index: 20;
-  box-shadow: 0 18px 36px #00000024;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--sb-secondary-color), transparent 40%),
+    0 22px 40px #0000002c;
   display: flex;
   flex-direction: column;
   overflow: visible;
 }
 
-.sb-pane-shell-detached-anchored {
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--sb-secondary-color), transparent 40%),
-    0 22px 40px #0000002c;
-}
-
-.sb-pane-shell-detached[data-anchor="fullscreen"] {
+.sb-pane-shell-detached[data-placement="fullscreen"] {
   box-shadow: none;
   border-radius: 0;
 }
 
-.sb-pane-shell-detached[data-anchor="floating"] {
-  box-shadow: none;
-  border-radius: 0;
-  background: transparent;
+/* Chrome shown at the top of every pane: a title and a close button, and
+   nothing else. Floating panes use it as a drag handle to move the window;
+   side/fullscreen panes don't move, so it's just a static header there. */
+.sb-pane-header {
+  height: 42px;
+  flex: 0 0 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 12px;
+
+  color: var(--sb-detached-pane-toolbar-font-color);
+  background: var(--sb-detached-pane-toolbar-background);
+
+  cursor: default;
+  user-select: none;
 }
 
-.sb-pane-detached-title {
+.sb-pane-shell-detached[data-placement="floating"] .sb-pane-header {
+  cursor: move;
+}
+
+.sb-pane-header-title {
   font-weight: 700;
   letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.sb-pane-detached-close-button {
+.sb-pane-header-close-button {
+  flex: 0 0 auto;
   border: none;
   background: transparent;
-  color: var(--sb-font-color);
-  width: 24px;
-  height: 24px;
+  color: inherit;
+  width: 28px;
+  height: 28px;
   border-radius: 6px;
   display: inline-flex;
   align-items: center;
@@ -629,13 +660,9 @@ a:visited {
   padding: 0;
 }
 
-.sb-pane-detached-close-button:hover {
+.sb-pane-header-close-button:hover {
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 65%);
 }
-
-/* .sb-pane-detached-close-button .material-symbols-outlined {
-  font-size: 18px;
-} */
 
 .sb-pane-detached-body {
   min-height: 0;
@@ -645,73 +672,6 @@ a:visited {
   background: var(--sb-reader-background);
   color: var(--sb-detached-pane-body-font-color);
 }
-
-.sb-pane-shell-detached[data-anchor="floating"] .sb-pane-detached-body {
-  position: relative;
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--sb-secondary-color), transparent 40%),
-    0 22px 40px #0000002c;
-  border-radius: 8px;
-}
-
-.sb-detached-pane-toolbar {
-  height: 42px;
-  flex: 0 0 42px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 0 10px;
-
-  color: var(--sb-detached-pane-toolbar-font-color);
-  background: var(--sb-detached-pane-toolbar-background);
-
-  cursor: move;
-  user-select: none;
-}
-
-.sb-pane-shell-detached[data-anchor="side"] .sb-detached-pane-toolbar,
-.sb-pane-shell-detached[data-anchor="bottom"] .sb-detached-pane-toolbar {
-  cursor: default;
-}
-
-.sb-pane-shell-detached[data-anchor="floating"] .sb-detached-pane-toolbar {
-  margin-top: 8px;
-  border-radius: 8px;
-  align-self: center;
-  justify-content: space-evenly;
-}
-
-.sb-detached-pane-toolbar-item {
-  flex: 0 0 auto;
-}
-
-.sb-detached-pane-toolbar-button {
-  border: none;
-  background: transparent;
-  height: 40px;
-  min-width: 40px;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  padding: 0 6px;
-  color: inherit;
-}
-
-.sb-detached-pane-toolbar-button:hover {
-  background: color-mix(in srgb, var(--sb-secondary-color), transparent 65%);
-}
-
-.sb-detached-pane-toolbar-button-active,
-.sb-detached-pane-toolbar-button-active:hover {
-  background: color-mix(in srgb, var(--sb-secondary-color), transparent 45%);
-}
-
-/* .sb-detached-pane-toolbar-button .material-symbols-outlined {
-  font-size: 18px;
-} */
 
 .sb-pane-detached-resize-handle {
   position: absolute;
@@ -737,7 +697,7 @@ a:visited {
     color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
 
-/* Side-anchored panes - resize handle on the left edge */
+/* Side pane - resize handle on the left edge */
 .sb-pane-detached-resize-handle-side {
   position: absolute;
   left: -12px;
@@ -759,31 +719,6 @@ a:visited {
     var(--sb-divider-color),
     var(--sb-font-color) 12%
   );
-}
-
-/* Bottom-anchored panes - resize handle on the top edge */
-.sb-pane-detached-resize-handle-bottom {
-  position: absolute;
-  top: -10px;
-  left: calc(50% - 10px);
-  height: 20px;
-  width: 20px;
-  cursor: ns-resize;
-  /* north-south resize cursor */
-  opacity: 0.5;
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.sb-pane-detached-resize-handle-bottom:hover {
-  opacity: 1;
-}
-
-/* Floating panes - resize handle on the bottom-right corner */
-.sb-pane-detached-resize-handle:not(.sb-pane-detached-resize-handle-side):not(
-    .sb-pane-detached-resize-handle-bottom
-  ) {
-  cursor: nwse-resize;
-  /* northwest-southeast resize cursor */
 }
 
 .sb-pane-component,

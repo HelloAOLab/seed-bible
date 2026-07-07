@@ -15,7 +15,7 @@ import type {
   ChapterHighlights,
 } from "../managers/HighlightsManager";
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
-import type { Pane } from "../managers/PanesManager";
+import type { TabSlot } from "../managers/TabsLayoutManager";
 import type { ScriptureElementsBehavior } from "../managers/SettingsManager";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import type { BibleReadingSession } from "../managers/SessionsManager";
@@ -793,7 +793,7 @@ function renderChapterContent(
 }
 
 interface BibleReaderProps {
-  currentPane: Pane;
+  currentSlot: TabSlot;
   readingState: BibleReadingState;
   selectorState: BibleSelectorState;
   scriptureElements?: ScriptureElementsBehavior;
@@ -899,7 +899,7 @@ function ChapterContent(props: ChapterContentProps) {
 
 export function BibleReader(props: BibleReaderProps) {
   const {
-    currentPane,
+    currentSlot,
     readingState,
     selectorState,
     state,
@@ -956,10 +956,10 @@ export function BibleReader(props: BibleReaderProps) {
 
   const openBookSelector = () => {
     selectorState.selectingTranslation.value = false;
-    void selectorState.setOpen(true, currentPane);
+    void selectorState.setOpen(true, currentSlot);
   };
   const openTranslationSelector = async () => {
-    await selectorState.setOpen(true, currentPane);
+    await selectorState.setOpen(true, currentSlot);
     selectorState.selectingTranslation.value = true;
   };
 
@@ -1208,7 +1208,7 @@ export function BibleReader(props: BibleReaderProps) {
         <>
           <div className="sb-bible-reader-header">
             <h2
-              onClick={() => selectorState.setOpen(true, currentPane)}
+              onClick={() => selectorState.setOpen(true, currentSlot)}
               className="sb-bible-reader-title"
             >
               <span className="sb-bible-reader-book">

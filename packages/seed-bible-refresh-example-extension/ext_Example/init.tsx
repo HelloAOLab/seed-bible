@@ -1,7 +1,7 @@
 /* eslint-disable seed-bible-i18n/i18n-untranslated-content */
 import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
-import { MaterialIcon } from "seed-bible/components";
+import { MaterialIcon, PortalComponent } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
 
 function OpenGridPortalIcon() {
@@ -30,8 +30,8 @@ export default function initExampleExtension() {
         onSelect: () => {
           console.log("Example tool selected!");
           context.panes.openPane({
-            type: "detached",
-            detachedAnchor: "side",
+            placement: "side",
+            title: "My Example Tool",
             component: () => {
               // You can use the useI18n hook in your tool component to get translated strings
               const { t } = useI18n("example-extension");
@@ -94,49 +94,58 @@ export default function initExampleExtension() {
         priority: 100,
       });
 
-      // Empty pane tools are shown in the empty state of a pane and can be used to open portals or other content in the pane
-      yield context.tools.registerEmptyPaneTool({
+      // Toolbar tools can open a pane directly via context.panesManager.openPane.
+      // Both tools below share the same stable pane id, so opening either one
+      // replaces the other's content in place rather than opening a second
+      // pane — only one of these portals is ever open at a time.
+      yield context.tools.registerToolbarTool({
         id: "open-grid-portal",
-        priority: 100,
+        priority: 200,
         title: {
           key: "open-grid-portal",
           defaultValue: "Open grid portal",
           ns: "example-extension",
         },
         icon: OpenGridPortalIcon,
-        isDisabled: (context) =>
-          context.panesManager.panes.value.some(
-            (pane) =>
-              (pane.gridPortal !== null || pane.mapPortal !== null) &&
-              pane.id !== context.currentPane.id
-          ),
         onSelect: (context) => {
-          context.panesManager.openInPane(context.currentPane.id, {
-            gridPortal: "home",
+          context.panesManager.openPane({
+            id: "example-portal-pane",
+            placement: "floating",
+            title: "Grid Portal",
+            component: () => (
+              <PortalComponent
+                portal="home"
+                portalType="grid"
+                inst={crypto.randomUUID()}
+                pattern={null}
+              />
+            ),
           });
         },
       });
 
-      yield context.tools.registerEmptyPaneTool({
+      yield context.tools.registerToolbarTool({
         id: "open-map-portal",
-        priority: 110,
+        priority: 210,
         title: {
           key: "open-map-portal",
           defaultValue: "Open map portal",
           ns: "example-extension",
         },
         icon: OpenMapPortalIcon,
-        isDisabled: (context) =>
-          context.panesManager.panes.value.some(
-            (pane) =>
-              (pane.gridPortal !== null || pane.mapPortal !== null) &&
-              pane.id !== context.currentPane.id
-          ),
         onSelect: (context) => {
-          context.panesManager.closePane(context.currentPane.id);
           context.panesManager.openPane({
-            type: "detached",
-            mapPortal: "map_portal",
+            id: "example-portal-pane",
+            placement: "floating",
+            title: "Map Portal",
+            component: () => (
+              <PortalComponent
+                portal="map_portal"
+                portalType="map"
+                inst={crypto.randomUUID()}
+                pattern={null}
+              />
+            ),
           });
         },
       });

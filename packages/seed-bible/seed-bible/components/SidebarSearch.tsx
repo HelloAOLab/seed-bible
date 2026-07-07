@@ -26,7 +26,7 @@ function getOrCreateSearchTargetTab(state: SeedBibleState): ReaderTab {
   }
 
   const tab = state.tabs.addTab();
-  state.panes.setSelectedPaneTab(tab.id);
+  state.tabsLayout.setSelectedSlotTab(tab.id);
   return tab;
 }
 

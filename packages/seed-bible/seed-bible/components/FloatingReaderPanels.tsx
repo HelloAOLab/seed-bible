@@ -129,7 +129,7 @@ function getOrCreateSearchTargetTab(state: SeedBibleState): ReaderTab {
     return selectedTab;
   }
   const tab = state.tabs.addTab();
-  state.panes.setSelectedPaneTab(tab.id);
+  state.tabsLayout.setSelectedSlotTab(tab.id);
   return tab;
 }
 
@@ -324,7 +324,7 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
       initialBookId: result.bookId,
       initialChapterNumber: result.chapterNumber,
     });
-    state.panes.setSelectedPaneTab(targetTab.id);
+    state.tabsLayout.setSelectedSlotTab(targetTab.id);
     await navigateTabToResult(targetTab, result);
   };
 

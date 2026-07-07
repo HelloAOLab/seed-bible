@@ -2,7 +2,8 @@ import { type ToolsManager } from "../managers/BibleToolsManager";
 import type { BibleReadingState } from "../managers/BibleReadingManager";
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import type { TabsManager } from "../managers/TabsManager";
-import type { Pane, PanesManager } from "../managers/PanesManager";
+import type { PanesManager } from "../managers/PanesManager";
+import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
 import { useI18n } from "../i18n/I18nManager";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import { translateTitle } from "../components/Utils";
@@ -17,7 +18,8 @@ interface BelowReaderToolbarProps {
   selectorState: BibleSelectorState;
   tabsManager: TabsManager;
   panesManager: PanesManager;
-  currentPane: Pane;
+  tabsLayoutManager: TabsLayoutManager;
+  currentSlot: TabSlot;
   chats: ChatsManager;
   openSidebar: () => void;
   openSearch: () => void;
@@ -33,9 +35,10 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
     selectorState,
     tabsManager,
     panesManager,
+    tabsLayoutManager,
     openSidebar,
     openSearch,
-    currentPane,
+    currentSlot,
     toast,
     openChat,
     chats,
@@ -46,8 +49,9 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
     selectorState,
     tabs: tabsManager,
     panesManager,
+    tabsLayoutManager,
     openSidebar,
-    currentPane,
+    currentSlot,
     openSearch,
     toast,
     openChat,
