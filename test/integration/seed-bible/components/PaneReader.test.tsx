@@ -199,6 +199,12 @@ function createMobileState(): SeedBibleState {
     bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
+    playlists: {
+      playing: signal(null),
+    },
+    features: {
+      isFeatureEnabled: vi.fn(() => true),
+    },
   } as any as SeedBibleState;
 }
 
@@ -223,6 +229,12 @@ function createDesktopState(): SeedBibleState {
     bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
+    playlists: {
+      playing: signal(null),
+    },
+    features: {
+      isFeatureEnabled: vi.fn(() => true),
+    },
   } as any as SeedBibleState;
 }
 

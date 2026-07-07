@@ -14,6 +14,8 @@ import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/Se
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import { vi, type Mock } from "vitest";
+import { createPlaylistManager } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import type { pl } from "zod/locales";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
@@ -211,6 +213,12 @@ function createMobileState(): SeedBibleState {
       toggleBookmarkAtLocation: vi.fn(async () => {}),
     },
     tools: createBibleToolsManager(),
+    playlists: {
+      playing: signal(null),
+    },
+    features: {
+      isFeatureEnabled: vi.fn(() => true),
+    },
   } as any as SeedBibleState;
 }
 

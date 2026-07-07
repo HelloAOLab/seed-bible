@@ -317,7 +317,7 @@ describe("createPlaylistManager", () => {
     await manager.createNewPlaylist();
 
     expect(manager.editingPlaylist.value).toBeNull();
-    expect(manager.view.value).toBe("discover");
+    expect(manager.view.value).toBe(null);
     expect(warnSpy).toHaveBeenCalled();
   });
 
@@ -329,7 +329,7 @@ describe("createPlaylistManager", () => {
     await manager.saveEditingPlaylist();
 
     expect(recordDataMock).not.toHaveBeenCalled();
-    expect(manager.view.value).toBe("discover");
+    expect(manager.view.value).toBe(null);
   });
 
   it("saveEditingPlaylist persists a new draft, appends it, and resets the editor", async () => {
