@@ -308,6 +308,7 @@
   "playlist-add-link-embed": "Embed this link",
   "play-playlist": "Play playlist",
   "now-playing": "Now playing",
+  "now-playing-x": "Now playing: {{title}}",
   "queue": "Queue",
   "previous": "Previous",
   "next": "Next",

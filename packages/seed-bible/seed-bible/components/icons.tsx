@@ -1673,6 +1673,21 @@ const ChatParticipantsIcon = (props: any) => {
   );
 };
 
+export function StopIcon() {
+  return (
+    <svg
+      width={28}
+      height={28}
+      viewBox="0 0 36 36"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <circle cx={18} cy={18} r={18} fill="#000" />
+      <rect x={11} y={11} width={14} height={14} rx={1} fill="#fff" />
+    </svg>
+  );
+}
+
 export {
   DualScreenIcon,
   ColorSelect,

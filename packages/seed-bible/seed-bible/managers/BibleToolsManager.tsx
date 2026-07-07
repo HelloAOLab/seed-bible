@@ -18,6 +18,7 @@ import type { ChatsManager } from "./ChatsManager";
 import type { ReadingPlansManager } from "../managers/ReadingPlansManager";
 import { ReadingPlansPane } from "../components/ReadingPlansPane";
 import type { PlaylistManager } from "./PlaylistManager";
+import { useI18n } from "../i18n";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -288,12 +289,20 @@ export type ManagedBibleBelowReaderToolbarToolItem =
 export interface QuickToolContext {
   /** Active reading state for the current reader surface. */
   readingState: BibleReadingState;
+
+  /**
+   * Playlist manager state.
+   */
+  playlists: PlaylistManager;
+
   /** Optional window metrics for responsive tool behavior. */
   window?: WindowContext | null;
 }
 
 /** Fully resolved quick toolbar tool ready for rendering. */
 export interface BibleQuickToolbarTool extends ResolvedBibleTool {
+  /** Optional class name for custom styling. */
+  className?: string;
   /** Disabled signal resolved for current context. */
   disabled: ReadonlySignal<boolean>;
   /** Visibility signal resolved for current context. */
@@ -309,6 +318,9 @@ export type ManagedBibleQuickToolbarToolItem =
 
 /** Registerable quick toolbar tool definition. */
 export interface ManagedBibleQuickToolbarTool extends BibleTool<QuickToolContext> {
+  /** Optional class name for custom styling. */
+  className?: string;
+
   /** Optional disabled predicate (boolean or signal). */
   isDisabled?: ToolPredicate<QuickToolContext>;
   /** Optional visibility predicate (boolean or signal). */
@@ -455,6 +467,37 @@ function getDefaultBelowReaderToolbarTools(): ManagedBibleBelowReaderToolbarTool
       ),
       isDisabled: () => true,
       onSelect: () => {},
+    },
+  ];
+}
+
+function NowPlayingIcon({ playlists }: { playlists: PlaylistManager }) {
+  const { t } = useI18n();
+  const title =
+    playlists.playing.value?.playlists.value[0]?.title ??
+    t("untitled-playlist", { defaultValue: "Untitled playlist" });
+  return (
+    <span>
+      {t("now-playing-x", { defaultValue: "Now playing: {{title}}", title })}
+    </span>
+  );
+}
+
+function getDefaultQuickToolbarTools(): ManagedBibleQuickToolbarTool[] {
+  return [
+    {
+      id: "current-playlist",
+      priority: 0,
+      title: {
+        key: "current-playlist",
+        defaultValue: "Current Playlist",
+      },
+      className: "sb-quick-toolbar-current-playlist",
+      icon: (c) => <NowPlayingIcon playlists={c.playlists} />,
+      isVisible: (c) => !!c.playlists.playing.value?.playlists.value.length,
+      onSelect: (c) => {
+        c.playlists.view.value = "play_playlist";
+      },
     },
   ];
 }
@@ -819,7 +862,9 @@ export function createBibleToolsManager(): ToolsManager {
   const belowReaderTools = signal<ManagedBibleBelowReaderToolbarTool[]>(
     getDefaultBelowReaderToolbarTools()
   );
-  const quickTools = signal<ManagedBibleQuickToolbarTool[]>([]);
+  const quickTools = signal<ManagedBibleQuickToolbarTool[]>(
+    getDefaultQuickToolbarTools()
+  );
 
   const registerToolbarTool = (tool: ManagedBibleToolbarTool) => {
     validateToolActions(tool);
@@ -985,6 +1030,7 @@ export function createBibleToolsManager(): ToolsManager {
       visible: resolveToolPredicate(tool.isVisible, context, true),
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
+      className: tool.className,
     }));
 
     return sortBy(tools, [(tool) => tool.priority]);

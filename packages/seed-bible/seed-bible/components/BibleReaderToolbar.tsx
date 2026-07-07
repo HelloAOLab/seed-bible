@@ -11,7 +11,7 @@ import {
   handleHorizontalListKeyNav,
   handleVerticalListKeyNav,
 } from "../components/KeyboardNav";
-import { MaterialIcon, SeedBibleIcon } from "../components/icons";
+import { MaterialIcon, SeedBibleIcon, StopIcon } from "../components/icons";
 import { useEffect, useRef } from "preact/hooks";
 import {
   SelfAvatarVisual,
@@ -519,7 +519,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const audioPlayTool = useComputed(
     () =>
       toolsManager
-        .getQuickTools({ readingState: readingState.value! })
+        .getQuickTools({
+          readingState: readingState.value!,
+          playlists: props.state.playlists,
+        })
         .find((tool) => tool.id === "ext_audioReader-play") ?? null
   );
   // The mobile floating nav pill sits above everything, including the
@@ -786,7 +789,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       className="sb-reader-floating-nav-play"
                       aria-label={t("stop", { defaultValue: "Stop" })}
                     >
-                      <MaterialIcon>stop</MaterialIcon>
+                      <StopIcon />
                     </button>
                   )}
 

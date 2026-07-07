@@ -365,6 +365,14 @@ a:visited {
 .sb-quick-toolbar-item {
   position: relative;
   display: inline-flex;
+
+  &.sb-quick-toolbar-current-playlist {
+    > .sb-quick-toolbar-button {
+      width: auto;
+      height: auto;
+      font-size: 12px;
+    }
+  }
 }
 
 .sb-quick-toolbar-button {

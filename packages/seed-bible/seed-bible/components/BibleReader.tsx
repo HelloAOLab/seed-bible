@@ -1132,6 +1132,7 @@ export function BibleReader(props: BibleReaderProps) {
             <QuickToolbar
               toolsManager={state.tools}
               readingState={readingState}
+              playlists={state.playlists}
               className="sb-quick-toolbar-mobile-header"
             />
             {sharedSession && (
@@ -1140,12 +1141,14 @@ export function BibleReader(props: BibleReaderProps) {
                 session={sharedSession}
               />
             )}
-            <ReaderBookmarkButton
-              state={state}
-              translationId={translationId.value}
-              bookId={bookId.value}
-              chapterNumber={chapterNumber.value}
-            />
+            {!state.playlists.playing.value && (
+              <ReaderBookmarkButton
+                state={state}
+                translationId={translationId.value}
+                bookId={bookId.value}
+                chapterNumber={chapterNumber.value}
+              />
+            )}
             <button
               type="button"
               className="sb-bible-reader-mobile-header-settings"
@@ -1230,14 +1233,17 @@ export function BibleReader(props: BibleReaderProps) {
                 <QuickToolbar
                   toolsManager={state.tools}
                   readingState={readingState}
+                  playlists={state.playlists}
                   className="sb-quick-toolbar-reader"
                 />
-                <ReaderBookmarkButton
-                  state={state}
-                  translationId={translationId.value}
-                  bookId={bookId.value}
-                  chapterNumber={chapterNumber.value}
-                />
+                {!state.playlists.playing.value && (
+                  <ReaderBookmarkButton
+                    state={state}
+                    translationId={translationId.value}
+                    bookId={bookId.value}
+                    chapterNumber={chapterNumber.value}
+                  />
+                )}
               </div>
             )}
           </div>
