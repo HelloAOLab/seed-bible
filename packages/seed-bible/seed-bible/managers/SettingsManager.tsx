@@ -322,7 +322,7 @@ export function applyToolbarCustomization<T extends { id: string }>(
 
 export const UI_TEXT_SIZE_OPTIONS: UITextSize[] = ["S", "M", "L", "XL"];
 
-export const UI_TEXT_SIZE_ZOOM: Record<UITextSize, number> = {
+export const UI_TEXT_SIZE_SCALE_MAP: Record<UITextSize, number> = {
   S: 0.85,
   M: 1.0,
   L: 1.15,
@@ -870,17 +870,16 @@ export function createSettings(
     );
   };
 
-  // Scale UI surfaces via `zoom` on the document root, while exposing
-  // `--sb-ui-zoom` so reader content (e.g. `.sb-chapter-content`) can
-  // counter-zoom and remain controlled by its own font-size setting.
+  // Scale UI surfaces via `--sb-ui-scale`, which drives `html { font-size }`
+  // (see main.css). Chrome sized in `rem` tracks this; reader text keeps its
+  // own font-size knob (`.sb-bible-reader` carries `.sb-font-size-*`), so it
+  // stays independent without the old root-`zoom` + counter-zoom hack.
   effect(() => {
     if (typeof document === "undefined") {
       return;
     }
-    const zoom = UI_TEXT_SIZE_ZOOM[settings.value.uiTextSize];
-    const root = document.documentElement;
-    root.style.setProperty("--sb-ui-zoom", String(zoom));
-    (root.style as CSSStyleDeclaration & { zoom: string }).zoom = String(zoom);
+    const scale = UI_TEXT_SIZE_SCALE_MAP[settings.value.uiTextSize];
+    document.documentElement.style.setProperty("--sb-ui-scale", String(scale));
   });
 
   // Publish per-section text config as CSS variables (`--text-<section>-*`)

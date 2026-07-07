@@ -2,7 +2,10 @@ import { useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import { useI18n } from "../i18n/I18nManager";
 import { translateTitle } from "../components/Utils";
-import { applyToolbarCustomization } from "../managers/SettingsManager";
+import {
+  applyToolbarCustomization,
+  UI_TEXT_SIZE_SCALE_MAP,
+} from "../managers/SettingsManager";
 import { highlightContainsVerse } from "../managers/HighlightsManager";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import type { BibleReadingState } from "../managers/BibleReadingManager";
@@ -542,15 +545,20 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       return latest;
     }, null)
   );
-  const floatingX = useComputed(() =>
-    Math.min(
-      Math.max(floatingAnchor.value?.x ?? viewportWidth.value / 2, 84),
-      Math.max(84, viewportWidth.value - 84)
-    )
+  const uiScale = useComputed(
+    () => UI_TEXT_SIZE_SCALE_MAP[settings.settings.value.uiTextSize]
   );
-  const floatingY = useComputed(() =>
-    Math.max((floatingAnchor.value?.y ?? 0) - 64, 64)
-  );
+  const floatingX = useComputed(() => {
+    const inset = 84 * uiScale.value;
+    return Math.min(
+      Math.max(floatingAnchor.value?.x ?? viewportWidth.value / 2, inset),
+      Math.max(inset, viewportWidth.value - inset)
+    );
+  });
+  const floatingY = useComputed(() => {
+    const inset = 64 * uiScale.value;
+    return Math.max((floatingAnchor.value?.y ?? 0) - inset, inset);
+  });
 
   // Drag-to-move offset applied on top of the anchor-computed position.
   // Reset when a fresh verse selection arrives so the toolbar re-docks.
@@ -786,10 +794,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           onPointerDown={spawnRipple}
                           className="sb-reader-floating-nav-label"
                         >
-                          {readingState.value?.chapterData.value?.book.name ??
-                            readingState.value?.bookId.value ??
-                            " "}{" "}
-                          {readingState.value?.chapterNumber.value}
+                          <div>
+                            {readingState.value?.chapterData.value?.book.name ??
+                              readingState.value?.bookId.value ??
+                              " "}
+                          </div>
+                          <div>{readingState.value?.chapterNumber.value}</div>
                         </button>
                       )}
 

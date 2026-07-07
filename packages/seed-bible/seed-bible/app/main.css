@@ -1,11 +1,73 @@
 /* eslint-disable css/use-baseline */
+
+/* =============================================================================
+ * UI SCALING MODEL — the rem / em / px invariant (source of truth for #1281)
+ * -----------------------------------------------------------------------------
+ * The "UI Text Size" setting (S/M/L/XL) is the single UI scaling mechanism. It
+ * drives `--sb-ui-scale` (0.85 / 1.0 / 1.15 / 1.3, set by SettingsManager),
+ * which the `html` rule below turns into the root font-size:
+ *     html { font-size: calc(16px * var(--sb-ui-scale)) }  =>  1rem = scaled base
+ * So at size M (`--sb-ui-scale: 1`) 1rem = 16px and every rule below is a no-op
+ * vs. plain px; at other sizes, everything expressed in `rem` scales together.
+ *
+ * Which unit to use:
+ *   • rem  — ALL chrome: dimensions, spacing, radius, positioning offsets, and
+ *            chrome font-size. Tracks the UI Text Size knob. This is the default.
+ *   • px   — things that must NOT scale with UI Text Size:
+ *              - reader glyph size: `.sb-font-size-*` on `.sb-bible-reader`
+ *                (its own independent knob; the cascade anchor lives there so it
+ *                doesn't leak into chrome `em`/`inherit`);
+ *              - 1px / sub-2px hairline borders & dividers;
+ *              - `@media` breakpoint conditions;
+ *              - `box-shadow` / `outline` / `transform` offsets;
+ *              - coordinate spaces: the pane x/y/w/h "canvas" model, and the
+ *                Scripture Map cell geometry (its `calc(<px> * var(--scale-factor))`
+ *                + `--chapter-*`/`--book-*` vars scale with the MAP's own zoom).
+ *   • em   — reader-internal spacing only (tracks the reader glyph knob, not the
+ *            UI knob): e.g. `.sb-line-break`, `.sb-verse-number`, chapter heading.
+ *
+ * Icons:
+ *   • Material Symbols glyphs are sized by `font-size`. The `body
+ *     .material-symbols-outlined` base rule below re-expresses the font's fixed
+ *     24px as 1.5rem so icons scale by default; scoped `.sb-* …` rules override.
+ *   • SVG icons are sized by width/height, NOT font-size, so each chrome icon
+ *     button needs an explicit rem width/height rule (no app-wide base works —
+ *     SVGs vary in intrinsic size / aspect ratio).
+ *
+ * How the CSS was migrated: a one-time `postcss-pxtorem` codemod (rootValue 16,
+ * minPixelValue 2 so 1px hairlines stay px, mediaQuery false so breakpoint
+ * conditions stay px) over the chrome; `border` / `box-shadow` / `transform` /
+ * `line-height` were excluded from its propList (kept px), and the reader
+ * selectors (`.sb-font-size-*`, `.sb-chapter-heading`, `.sb-line-break`,
+ * `.sb-verse-number`) plus `html` were blacklisted. New chrome CSS added after
+ * the migration should follow the same rules: author it in `rem`.
+ * =============================================================================
+ */
+
 html {
   visibility: visible;
   opacity: 1;
+
+  /* UI scale: the "UI Text Size" setting (S/M/L/XL) drives `--sb-ui-scale`
+   * (set in SettingsManager). 1rem = the scaled UI base, so every chrome size
+   * expressed in `rem` tracks this knob. Reader glyph size stays in px on
+   * `.sb-bible-reader` (`.sb-font-size-*`) and is therefore unaffected. */
+  font-size: calc(16px * var(--sb-ui-scale, 1));
+}
+
+/* Material Symbols icons ship with a fixed `font-size: 24px` from the Google
+   Fonts stylesheet (loaded in main.tsx), which ignores the UI Text Size knob.
+   Re-express that base in rem so every icon scales with the chrome by default
+   (1.5rem = 24px at size M — a no-op at M). Scoped
+   `.sb-* .material-symbols-outlined` rules (specificity 0,2,0) still win and
+   keep their own sizes; the `body` prefix here (0,1,1) only outranks the font's
+   own base rule (0,1,0), so this wins regardless of stylesheet load order. */
+body .material-symbols-outlined {
+  font-size: 1.5rem;
 }
 
 :root {
-  --sb-ui-zoom: 1;
+  --sb-ui-scale: 1;
   --sb-scripture-margin: 27%;
 
   /* Text config variables — overridden at runtime by SettingsManager. */
@@ -88,10 +150,10 @@ html {
   --sb-hebrew-subtitle-font-color: #333;
   --sb-hebrew-subtitle-font-style: italic;
 
-  --sb-reader-toolbar-bottom: 18px;
-  --sb-reader-toolbar-gap: 4px;
-  --sb-reader-toolbar-padding: 1px 5px;
-  --sb-reader-toolbar-border-radius: 20px;
+  --sb-reader-toolbar-bottom: 1.125rem;
+  --sb-reader-toolbar-gap: 0.25rem;
+  --sb-reader-toolbar-padding: 1px 0.3125rem;
+  --sb-reader-toolbar-border-radius: 1.25rem;
   --sb-reader-toolbar-background: #ffffff;
   --sb-reader-toolbar-border: 1px solid #00000024;
   --sb-reader-toolbar-box-shadow:
@@ -101,30 +163,30 @@ html {
   --sb-reader-toolbar-font-family: "Satoshi", system-ui, sans-serif;
   --sb-reader-toolbar-font-color: #333;
 
-  --sb-reader-toolbar-button-height: 52px;
-  --sb-reader-toolbar-button-padding: 6px 10px;
-  --sb-reader-toolbar-button-border-radius: 12px;
-  --sb-reader-toolbar-button-icon-size: 24px;
+  --sb-reader-toolbar-button-height: 3.25rem;
+  --sb-reader-toolbar-button-padding: 0.375rem 0.625rem;
+  --sb-reader-toolbar-button-border-radius: 0.75rem;
+  --sb-reader-toolbar-button-icon-size: 1.5rem;
   --sb-reader-toolbar-button-label-font-family: "DM Sans";
-  --sb-reader-toolbar-button-label-font-size: 11px;
+  --sb-reader-toolbar-button-label-font-size: 0.6875rem;
   --sb-reader-toolbar-button-label-line-height: 1;
-  --sb-reader-toolbar-button-label-height: 13px;
+  --sb-reader-toolbar-button-label-height: 0.8125rem;
 
-  --sb-reader-toolbar-arrow-size: 40px;
-  --sb-reader-toolbar-arrow-padding: 8px;
+  --sb-reader-toolbar-arrow-size: 2.5rem;
+  --sb-reader-toolbar-arrow-padding: 0.5rem;
 
-  --sb-reader-toolbar-floating-button-top: -68px;
-  --sb-reader-toolbar-floating-button-width: 48px;
-  --sb-reader-toolbar-floating-button-height: 48px;
+  --sb-reader-toolbar-floating-button-top: -4.25rem;
+  --sb-reader-toolbar-floating-button-width: 3rem;
+  --sb-reader-toolbar-floating-button-height: 3rem;
   --sb-reader-toolbar-floating-button-border: 1px solid #00000024;
-  --sb-reader-toolbar-floating-button-border-radius: 999px;
+  --sb-reader-toolbar-floating-button-border-radius: 62.4375rem;
   --sb-reader-toolbar-floating-button-background: #fff;
   --sb-reader-toolbar-floating-button-font-color: #333;
   --sb-reader-toolbar-floating-button-box-shadow: 0 10px 24px #0000001a;
 
-  --sb-verse-toolbar-gap: 2px;
-  --sb-verse-toolbar-padding: 4px 8px;
-  --sb-verse-toolbar-border-radius: 10px;
+  --sb-verse-toolbar-gap: 0.125rem;
+  --sb-verse-toolbar-padding: 0.25rem 0.5rem;
+  --sb-verse-toolbar-border-radius: 0.625rem;
   --sb-verse-toolbar-border: 1px solid var(--sb-divider-color);
   --sb-verse-toolbar-box-shadow: 0 26px 10px var(--sb-shadow-color);
   --sb-verse-toolbar-z-index: 100;
@@ -132,15 +194,15 @@ html {
   --sb-verse-toolbar-background: var(--sb-menu-background);
 
   --sb-reader-toolbar-mobile-layout-height: auto;
-  --sb-reader-toolbar-mobile-layout-padding: 10px 35px;
-  --sb-reader-toolbar-mobile-layout-gap: 16px;
-  --sb-reader-toolbar-mobile-layout-item-size: 44px;
-  --sb-reader-toolbar-mobile-layout-center-button-width: 87px;
-  --sb-reader-toolbar-mobile-layout-center-button-height: 42px;
-  --sb-reader-toolbar-mobile-layout-button-border-radius: 40px;
-  --sb-reader-toolbar-mobile-tabs-label-font-size: 12px;
+  --sb-reader-toolbar-mobile-layout-padding: 0.625rem 2.1875rem;
+  --sb-reader-toolbar-mobile-layout-gap: 1rem;
+  --sb-reader-toolbar-mobile-layout-item-size: 2.75rem;
+  --sb-reader-toolbar-mobile-layout-center-button-width: 5.4375rem;
+  --sb-reader-toolbar-mobile-layout-center-button-height: 2.625rem;
+  --sb-reader-toolbar-mobile-layout-button-border-radius: 2.5rem;
+  --sb-reader-toolbar-mobile-tabs-label-font-size: 0.75rem;
 
-  --sb-reader-toolbar-floating-button-side-offset: 16px;
+  --sb-reader-toolbar-floating-button-side-offset: 1rem;
 
   /* Full-width floating chapter-nav bar. Composed from theme-injected vars so
    * the bar, arrow circles, and peach play button adapt across themes. */
@@ -177,8 +239,8 @@ html {
   --sb-detached-pane-body-background: #fff;
   --sb-detached-pane-body-font-color: #333;
 
-  --sb-verse-toolbar-tools-gap: 2px;
-  --sb-verse-toolbar-mobile-bottom: 18px;
+  --sb-verse-toolbar-tools-gap: 0.125rem;
+  --sb-verse-toolbar-mobile-bottom: 1.125rem;
 
   --sb-divider-color: rgba(0, 0, 0, 0.12);
   --sb-shadow-color: rgba(0, 0, 0, 0.14);
@@ -298,9 +360,9 @@ a:visited {
 
 .sb-bible-reader {
   width: calc(100% - (var(--sb-scripture-margin) * 2));
-  min-width: 275px;
-  padding-top: 30px;
-  padding-bottom: 96px;
+  min-width: 17.1875rem;
+  padding-top: 1.875rem;
+  padding-bottom: 6rem;
   margin: 0 auto;
   box-sizing: border-box;
   position: relative;
@@ -312,13 +374,13 @@ a:visited {
 
 .sb-bible-reader-bookmark-button {
   position: relative;
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
   cursor: pointer;
@@ -348,7 +410,7 @@ a:visited {
 .sb-quick-toolbar {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
 }
 
 /* Desktop: sits in the header's action cluster, just left of the bookmark
@@ -371,8 +433,8 @@ a:visited {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
   padding: 0;
   border: none;
   border-radius: 50%;
@@ -395,8 +457,32 @@ a:visited {
   cursor: default;
 }
 
+/* Chrome icon-buttons render their icons as <svg> (inline or icon components)
+   with fixed px width/height attributes, which ignore the UI Text Size knob.
+   (Material Symbols glyphs are handled by the base rule near the top of this
+   file; SVGs are sized by width/height, not font-size, so they need explicit
+   rem sizing here.) CSS width/height overrides the SVG's px attributes; the rem
+   values equal each icon's current px ÷ 16, so these are no-ops at size M. */
 .sb-quick-toolbar-button svg {
   display: block;
+  width: 1.5rem; /* 24px */
+  height: 1.5rem;
+}
+
+.sb-sidebar-icon-button svg,
+.sb-sidebar-tabs-header-icon-button svg {
+  width: 1.5rem; /* 24px */
+  height: 1.5rem;
+}
+
+.sb-bible-reader-bookmark-button svg {
+  width: 1.375rem; /* 22px */
+  height: 1.375rem;
+}
+
+.sb-tab-bookmark-button svg {
+  width: 1.125rem; /* 18px */
+  height: 1.125rem;
 }
 
 /* Force a tight 1% reader margin in mobile view, regardless of the
@@ -487,7 +573,7 @@ a:visited {
   overflow: hidden;
   background: var(--sb-sidebar-background);
   scrollbar-width: none;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -502,9 +588,9 @@ a:visited {
   align-items: stretch;
   overflow: hidden;
   position: relative;
-  padding: 5px;
+  padding: 0.3125rem;
   /* padding-left: 0px; */
-  margin-left: -10px;
+  margin-left: -0.625rem;
 }
 
 .sb-attached-pane-resize-handle {
@@ -529,7 +615,7 @@ a:visited {
   background: var(--sb-reader-background);
   overflow: hidden;
   scrollbar-width: none;
-  border-radius: 12px;
+  border-radius: 0.75rem;
 }
 
 .sb-pane-resize-handle {
@@ -541,7 +627,7 @@ a:visited {
 .sb-pane-resize-handle::after {
   content: "";
   position: absolute;
-  border-radius: 2px;
+  border-radius: 0.125rem;
   /* opacity: 0; */
   /* transition: opacity 0.15s; */
   background: color-mix(in srgb, var(--sb-primary-color), transparent 40%);
@@ -553,34 +639,34 @@ a:visited {
 }
 
 .sb-pane-resize-handle-col {
-  width: 9px;
+  width: 0.5625rem;
   top: 0;
   bottom: 0;
   cursor: col-resize;
 }
 
 .sb-pane-resize-handle-col::after {
-  left: 4px;
-  right: 4px;
+  left: 0.25rem;
+  right: 0.25rem;
   top: 0;
   bottom: 0;
 }
 
 .sb-pane-resize-handle-row {
-  height: 9px;
+  height: 0.5625rem;
   cursor: row-resize;
 }
 
 .sb-pane-resize-handle-row::after {
-  top: 4px;
-  bottom: 4px;
+  top: 0.25rem;
+  bottom: 0.25rem;
   left: 0;
   right: 0;
 }
 
 .sb-pane-shell:not(.sb-pane-shell-detached) {
-  border-radius: 12px;
-  margin: 12px;
+  border-radius: 0.75rem;
+  margin: 0.75rem;
   /* box-shadow: 0px 0px 10px 2px rgba(0, 0, 0, 0.2); */
 }
 
@@ -619,9 +705,9 @@ a:visited {
   border: none;
   background: transparent;
   color: var(--sb-font-color);
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.375rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -651,17 +737,17 @@ a:visited {
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--sb-secondary-color), transparent 40%),
     0 22px 40px #0000002c;
-  border-radius: 8px;
+  border-radius: 0.5rem;
 }
 
 .sb-detached-pane-toolbar {
-  height: 42px;
-  flex: 0 0 42px;
+  height: 2.625rem;
+  flex: 0 0 2.625rem;
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
-  padding: 0 10px;
+  gap: 0.5rem;
+  padding: 0 0.625rem;
 
   color: var(--sb-detached-pane-toolbar-font-color);
   background: var(--sb-detached-pane-toolbar-background);
@@ -676,8 +762,8 @@ a:visited {
 }
 
 .sb-pane-shell-detached[data-anchor="floating"] .sb-detached-pane-toolbar {
-  margin-top: 8px;
-  border-radius: 8px;
+  margin-top: 0.5rem;
+  border-radius: 0.5rem;
   align-self: center;
   justify-content: space-evenly;
 }
@@ -689,14 +775,14 @@ a:visited {
 .sb-detached-pane-toolbar-button {
   border: none;
   background: transparent;
-  height: 40px;
-  min-width: 40px;
-  border-radius: 8px;
+  height: 2.5rem;
+  min-width: 2.5rem;
+  border-radius: 0.5rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  padding: 0 6px;
+  padding: 0 0.375rem;
   color: inherit;
 }
 
@@ -717,8 +803,8 @@ a:visited {
   position: absolute;
   right: 0;
   bottom: 0;
-  width: 20px;
-  height: 20px;
+  width: 1.25rem;
+  height: 1.25rem;
   cursor: nwse-resize;
 }
 
@@ -727,10 +813,10 @@ a:visited {
   )::before {
   content: "";
   position: absolute;
-  right: 4px;
-  bottom: 4px;
-  width: 10px;
-  height: 10px;
+  right: 0.25rem;
+  bottom: 0.25rem;
+  width: 0.625rem;
+  height: 0.625rem;
   border-right: 2px solid
     color-mix(in srgb, var(--sb-font-color), transparent 35%);
   border-bottom: 2px solid
@@ -740,17 +826,17 @@ a:visited {
 /* Side-anchored panes - resize handle on the left edge */
 .sb-pane-detached-resize-handle-side {
   position: absolute;
-  left: -12px;
-  top: calc(50% - 30px);
-  width: 24px;
-  height: 60px;
+  left: -0.75rem;
+  top: calc(50% - 1.875rem);
+  width: 1.5rem;
+  height: 3.75rem;
   cursor: ew-resize;
   /* east-west resize cursor */
   background: var(--sb-divider-color);
   display: flex;
   justify-items: center;
   align-items: center;
-  border-radius: 4px;
+  border-radius: 0.25rem;
 }
 
 .sb-pane-detached-resize-handle-side:hover {
@@ -764,10 +850,10 @@ a:visited {
 /* Bottom-anchored panes - resize handle on the top edge */
 .sb-pane-detached-resize-handle-bottom {
   position: absolute;
-  top: -10px;
-  left: calc(50% - 10px);
-  height: 20px;
-  width: 20px;
+  top: -0.625rem;
+  left: calc(50% - 0.625rem);
+  height: 1.25rem;
+  width: 1.25rem;
   cursor: ns-resize;
   /* north-south resize cursor */
   opacity: 0.5;
@@ -798,10 +884,10 @@ a:visited {
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 0.75rem;
   height: 100%;
   width: 100%;
-  padding: 20px;
+  padding: 1.25rem;
   box-sizing: border-box;
 }
 
@@ -814,15 +900,15 @@ a:visited {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 
   font-family: var(--sb-font-family);
   border: var(--sb-empty-pane-toolbar-button-border);
   background: var(--sb-empty-pane-toolbar-button-background);
   color: var(--sb-empty-pane-toolbar-button-color);
 
-  border-radius: 12px;
-  padding: 20px 28px;
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.75rem;
 
   cursor: pointer;
   font: inherit;
@@ -886,11 +972,11 @@ a:visited {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 18px 12px;
+  gap: 0.5rem;
+  padding: 1.125rem 0.75rem;
   flex-shrink: 0;
   flex-wrap: wrap;
-  padding-bottom: 130px;
+  padding-bottom: 8.125rem;
 }
 
 .sb-below-reader-toolbar::before {
@@ -911,7 +997,7 @@ a:visited {
   z-index: 1;
   background: var(--sb-reader-toolbar-background);
   border: var(--sb-reader-toolbar-border);
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
@@ -920,14 +1006,14 @@ a:visited {
   align-items: center;
   justify-content: center;
   border: none;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   background: transparent;
   color: inherit;
   cursor: pointer;
-  padding: 6px 14px;
+  padding: 0.375rem 0.875rem;
   font: inherit;
-  height: 36px;
-  min-width: 44px;
+  height: 2.25rem;
+  min-width: 2.75rem;
   transition: background-color 0.2s ease;
 }
 
@@ -946,9 +1032,9 @@ a:visited {
 .sb-bible-reader-header {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  margin: 0 0 28px;
-  padding-bottom: 18px;
+  gap: 0.5rem;
+  margin: 0 0 1.75rem;
+  padding-bottom: 1.125rem;
   border-bottom: 1px solid var(--sb-divider-color);
 }
 
@@ -963,7 +1049,7 @@ a:visited {
   text-decoration: var(--text-bookTitle-text-decoration);
   text-align: var(--text-bookTitle-alignment);
   margin: 0;
-  font-size: 36px;
+  font-size: 2.25rem;
   line-height: 1;
   cursor: pointer;
   letter-spacing: 0;
@@ -975,7 +1061,7 @@ a:visited {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
 }
 
 .sb-bible-reader-title-sep {
@@ -987,7 +1073,7 @@ a:visited {
 
 .sb-bible-reader-translation {
   font-family: "Plus Jakarta Sans", sans-serif;
-  font-size: 24px;
+  font-size: 1.5rem;
   font-weight: 600;
   line-height: 1;
   letter-spacing: 0;
@@ -1002,18 +1088,18 @@ a:visited {
 }
 
 .sb-inline-footnote-button {
-  margin-inline-start: 4px;
-  margin-inline-end: 4px;
+  margin-inline-start: 0.25rem;
+  margin-inline-end: 0.25rem;
   border: none;
   background: transparent;
   color: inherit;
   cursor: pointer;
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   padding: 0;
   vertical-align: super;
 }
@@ -1048,8 +1134,8 @@ a:visited {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 12px;
-  gap: 8px;
+  padding: 0.25rem 0.75rem;
+  gap: 0.5rem;
   background: var(--sb-reader-background);
   border-bottom: 1px solid
     color-mix(in srgb, var(--sb-font-color), transparent 85%);
@@ -1064,7 +1150,7 @@ a:visited {
 
 .sb-bible-reader-mobile-header-title {
   margin: 0;
-  font-size: 19px;
+  font-size: 1.1875rem;
   font-weight: 600;
   font-family: var(--text-bookTitle-font);
   color: var(--sb-book-title-font-color);
@@ -1073,7 +1159,7 @@ a:visited {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-bible-reader-mobile-header-book {
@@ -1082,14 +1168,14 @@ a:visited {
 }
 
 .sb-bible-reader-mobile-header-translation {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 400;
   cursor: pointer;
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   display: inline-flex;
-  padding: 5px 10px;
-  border-radius: 15px;
+  padding: 0.3125rem 0.625rem;
+  border-radius: 0.9375rem;
 }
 
 .sb-bible-reader-mobile-header-play {
@@ -1097,15 +1183,15 @@ a:visited {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
   border: none;
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
   cursor: pointer;
   padding: 0;
-  margin-inline-start: 8px;
+  margin-inline-start: 0.5rem;
   transition: filter 0.15s ease;
   display: none;
 }
@@ -1115,9 +1201,9 @@ a:visited {
 }
 
 .sb-bible-reader-mobile-header-play .material-symbols-outlined {
-  font-size: 22px;
+  font-size: 1.375rem;
   font-variation-settings: "FILL" 1;
-  margin-inline-start: 2px;
+  margin-inline-start: 0.125rem;
 }
 
 /* The chapter-bookmark toggle joins the header's right-hand icon cluster on
@@ -1127,8 +1213,8 @@ a:visited {
 .sb-bible-reader-mobile-header .sb-bible-reader-bookmark-button {
   position: static;
   flex-shrink: 0;
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
   margin-inline-start: auto;
 }
@@ -1138,8 +1224,8 @@ a:visited {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
   border: none;
   background: transparent;
@@ -1174,7 +1260,7 @@ a:visited {
 }
 
 .sb-bible-reader-mobile .sb-reader-swipe-panel {
-  padding-top: 40px;
+  padding-top: 2.5rem;
 }
 
 .sb-language-english-name {
@@ -1209,7 +1295,7 @@ a:visited {
    collapse the header's layout space in sync with the slide so the chapter
    content rises to fill the gap (no leftover white strip). */
 .sb-bible-reader-mobile-header {
-  max-height: 40px;
+  max-height: 2.5rem;
   overflow: hidden;
   transition:
     transform 0.25s ease,
@@ -1242,16 +1328,16 @@ a:visited {
   z-index: 9999;
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
   box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
-  padding: 16px;
+  padding: 1rem;
   /* Cap to the viewport and scroll internally so a tall sheet (or one opened
      with the keyboard up) can always reach its bottom content. */
   max-height: 85dvh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   font-family: var(--sb-reader-font-family);
   animation: sb-mobile-settings-slide-up 0.25s ease-out;
 }
@@ -1270,14 +1356,14 @@ a:visited {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 1.25rem;
 }
 
 .sb-mobile-settings-sheet-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 18px;
+  gap: 0.5rem;
+  font-size: 1.125rem;
   font-weight: 600;
 }
 
@@ -1286,29 +1372,29 @@ a:visited {
   border: none;
   cursor: pointer;
   color: inherit;
-  padding: 4px;
+  padding: 0.25rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
 .sb-mobile-settings-sheet-section-label {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .sb-mobile-settings-sheet-size-row {
   display: flex;
   justify-content: space-between;
-  gap: 6px;
-  margin-bottom: 20px;
+  gap: 0.375rem;
+  margin-bottom: 1.25rem;
 }
 
 .sb-mobile-settings-sheet-size-button {
   flex: 1;
-  height: 48px;
-  border-radius: 6px;
+  height: 3rem;
+  border-radius: 0.375rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
   background: var(--sb-reader-background);
   color: inherit;
@@ -1328,14 +1414,14 @@ a:visited {
 
 .sb-mobile-settings-sheet-scripture-row {
   display: flex;
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: 0.625rem;
+  margin-bottom: 1rem;
 }
 
 .sb-mobile-settings-sheet-scripture-button {
   flex: 1;
-  height: 48px;
-  border-radius: 8px;
+  height: 3rem;
+  border-radius: 0.5rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
   background: var(--sb-reader-background);
   color: inherit;
@@ -1354,21 +1440,21 @@ a:visited {
 .sb-mobile-settings-sheet-divider {
   height: 1px;
   background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  margin: 8px 0 16px 0;
+  margin: 0.5rem 0 1rem 0;
 }
 
 .sb-mobile-settings-sheet-all-settings {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   border: none;
   background: none;
   cursor: pointer;
   color: var(--sb-primary-color);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   font-family: inherit;
-  padding: 4px 0;
+  padding: 0.25rem 0;
   width: 100%;
 }
 
@@ -1386,16 +1472,12 @@ a:visited {
   font-family: var(--sb-verse-font-family);
   font-size: 1em;
 
-  padding-bottom: 130px;
-
-  /* Counter-zoom to exclude reader text from the UI text-size scaling. */
-  /* stylelint-disable-next-line property-no-unknown */
-  zoom: calc(1 / var(--sb-ui-zoom, 1));
+  padding-bottom: 8.125rem;
 }
 
 @media (max-width: 480px) {
   .sb-chapter-content {
-    padding-inline: 10px;
+    padding-inline: 0.625rem;
   }
 }
 
@@ -1411,12 +1493,12 @@ a:visited {
   margin-bottom: var(--text-heading-margin-bottom);
   margin-left: var(--text-heading-margin-left);
   margin-right: var(--text-heading-margin-right);
-  font-size: 18px;
+  font-size: 1.125em;
   line-height: 1;
 }
 
 .sb-line-break {
-  height: 10px;
+  height: 0.625em;
 }
 
 .sb-subtitle {
@@ -1478,8 +1560,10 @@ a:visited {
   top: -0.4em;
   white-space: nowrap;
   vertical-align: middle;
-  margin-inline-start: 6px;
-  margin-inline-end: 3px;
+  /* Phase 2 (UI-scaling): gutters in em so they track the reader glyph knob.
+     Color/opacity adopted from develop. */
+  margin-inline-start: 0.625em;
+  margin-inline-end: 0.3125em;
   color: inherit;
   opacity: 0.7;
 }
@@ -1512,20 +1596,20 @@ a:visited {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: 1rem;
   box-sizing: border-box;
 }
 
 .sb-footnote-modal {
-  width: min(455px, 100%);
-  max-height: min(640px, calc(100dvh - 32px));
+  width: min(28.4375rem, 100%);
+  max-height: min(40rem, calc(100dvh - 2rem));
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
   display: flex;
   flex-direction: column;
-  padding: 18px 16px 24px;
+  padding: 1.125rem 1rem 1.5rem;
   box-sizing: border-box;
-  border-radius: 14px;
+  border-radius: 0.875rem;
   border: 1px solid var(--sb-secondary-color);
   box-shadow: 0 20px 48px #00000040;
 }
@@ -1535,7 +1619,7 @@ a:visited {
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--sb-secondary-color);
-  padding-bottom: 10px;
+  padding-bottom: 0.625rem;
 }
 
 .sb-footnote-modal-title {
@@ -1549,8 +1633,8 @@ a:visited {
   border: none;
   background: transparent;
   color: var(--sb-font-color);
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -1558,7 +1642,7 @@ a:visited {
 }
 
 .sb-footnote-modal-content {
-  margin-top: 16px;
+  margin-top: 1rem;
   font-family: var(--sb-font-family);
   color: var(--sb-font-color);
   line-height: 1.6;
@@ -1566,7 +1650,7 @@ a:visited {
 }
 
 .sb-footnote-modal-reference {
-  margin: 0 0 10px 0;
+  margin: 0 0 0.625rem 0;
   font-family: var(--sb-font-family);
   color: var(--sb-font-color);
   font-weight: 600;
@@ -1574,19 +1658,19 @@ a:visited {
 
 /* Mobile "open panel over split view" warning modal body. */
 .sb-split-panel-warning-message {
-  margin: 0 0 20px 0;
+  margin: 0 0 1.25rem 0;
 }
 
 .sb-split-panel-warning-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-split-panel-warning-button {
-  padding: 8px 16px;
-  border-radius: 10px;
+  padding: 0.5rem 1rem;
+  border-radius: 0.625rem;
   font-family: var(--sb-font-family);
   font-size: 0.95em;
   font-weight: 600;
@@ -1622,24 +1706,24 @@ a:visited {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: 1rem;
   box-sizing: border-box;
   font-family: var(--sb-font-family);
 }
 
 .sb-onboarding-card {
-  width: min(420px, 100%);
+  width: min(26.25rem, 100%);
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
-  border-radius: 20px;
+  border-radius: 1.25rem;
   box-shadow: 0 20px 48px #00000040;
-  padding: 36px 32px 32px;
+  padding: 2.25rem 2rem 2rem;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 16px;
+  gap: 1rem;
 }
 
 .sb-onboarding-logo {
@@ -1656,7 +1740,7 @@ a:visited {
 }
 
 .sb-onboarding-icon .material-symbols-outlined {
-  font-size: 52px;
+  font-size: 3.25rem;
 }
 
 .sb-onboarding-title {
@@ -1685,7 +1769,7 @@ a:visited {
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 0.125rem;
 }
 
 .sb-onboarding-inline-icon {
@@ -1696,22 +1780,22 @@ a:visited {
 .sb-onboarding-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 0.75rem;
   justify-content: center;
-  margin-top: 8px;
+  margin-top: 0.5rem;
   width: 100%;
 }
 
 .sb-onboarding-btn {
   appearance: none;
   border: 1px solid transparent;
-  border-radius: 12px;
-  padding: 12px 24px;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1.5rem;
   font-family: var(--sb-font-family);
   font-size: 1em;
   font-weight: 600;
   cursor: pointer;
-  min-width: 120px;
+  min-width: 7.5rem;
   transition:
     filter 0.15s ease,
     background 0.15s ease;
@@ -1749,7 +1833,7 @@ a:visited {
 
 .sb-tour-spotlight {
   position: absolute;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
   border: 2px solid var(--sb-primary-color);
   pointer-events: none;
@@ -1765,8 +1849,8 @@ a:visited {
   box-sizing: border-box;
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
-  border-radius: 14px;
-  padding: 18px;
+  border-radius: 0.875rem;
+  padding: 1.125rem;
   box-shadow: 0 16px 40px #00000040;
   pointer-events: auto;
 }
@@ -1775,19 +1859,19 @@ a:visited {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: min(300px, calc(100vw - 32px));
+  width: min(18.75rem, calc(100vw - 2rem));
 }
 
 .sb-tour-popover-progress {
   display: flex;
-  gap: 6px;
-  margin-bottom: 12px;
+  gap: 0.375rem;
+  margin-bottom: 0.75rem;
 }
 
 .sb-tour-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 62.4375rem;
   background: var(--sb-secondary-color);
   transition:
     width 0.2s ease,
@@ -1795,20 +1879,20 @@ a:visited {
 }
 
 .sb-tour-dot-active {
-  width: 18px;
+  width: 1.125rem;
   background: var(--sb-primary-color);
 }
 
 .sb-tour-popover-title {
-  margin: 0 0 6px;
+  margin: 0 0 0.375rem;
   font-family: "Satoshi", system-ui, sans-serif;
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1;
   font-weight: 700;
 }
 
 .sb-tour-popover-body {
-  margin: 0 0 16px;
+  margin: 0 0 1rem;
   font-family: "DM Sans", sans-serif;
   line-height: 1.55;
   font-size: 0.95em;
@@ -1819,7 +1903,7 @@ a:visited {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-tour-popover-actions-spacer {
@@ -1828,7 +1912,7 @@ a:visited {
 
 .sb-tour-popover-actions-right {
   display: flex;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-tour-btn-back {
@@ -1837,16 +1921,16 @@ a:visited {
   opacity: 0.75;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding-left: 2px;
-  padding-right: 2px;
+  gap: 0.375rem;
+  padding-left: 0.125rem;
+  padding-right: 0.125rem;
 }
 
 .sb-tour-btn {
   appearance: none;
   border: 1px solid transparent;
-  border-radius: 10px;
-  padding: 8px 16px;
+  border-radius: 0.625rem;
+  padding: 0.5rem 1rem;
   font-family: var(--sb-font-family);
   font-size: 0.9em;
   font-weight: 600;
@@ -1873,8 +1957,8 @@ a:visited {
   color: var(--sb-font-color);
   font-family: "DM Sans", sans-serif;
   opacity: 0.7;
-  padding-left: 2px;
-  padding-right: 2px;
+  padding-left: 0.125rem;
+  padding-right: 0.125rem;
 }
 
 .sb-tour-btn-next {
@@ -1882,9 +1966,9 @@ a:visited {
   color: var(--sb-primary-color);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding-left: 2px;
-  padding-right: 2px;
+  gap: 0.375rem;
+  padding-left: 0.125rem;
+  padding-right: 0.125rem;
 }
 
 .sb-tour-next-arrow {
@@ -1895,8 +1979,8 @@ a:visited {
 /* Pointer arrow — a rotated square that merges with the card edge. */
 .sb-tour-arrow {
   position: absolute;
-  width: 14px;
-  height: 14px;
+  width: 0.875rem;
+  height: 0.875rem;
   background: var(--sb-reader-background);
   transform: rotate(45deg);
 }
@@ -1904,48 +1988,48 @@ a:visited {
 /* `side` = where the popover sits relative to the target, so the arrow goes on
    the opposite edge of the card (pointing back toward the target). */
 .sb-tour-arrow-bottom {
-  top: -7px;
+  top: -0.4375rem;
 }
 
 .sb-tour-arrow-top {
-  bottom: -7px;
+  bottom: -0.4375rem;
 }
 
 .sb-tour-arrow-right {
-  left: -7px;
+  left: -0.4375rem;
 }
 
 .sb-tour-arrow-left {
-  right: -7px;
+  right: -0.4375rem;
 }
 
 /* First-run offer card — pinned top-right, invites the user into the tour
    instead of launching it unannounced. Shares the tour's visual language. */
 .sb-tutorial-prompt {
   position: fixed;
-  top: 16px;
-  right: 16px;
+  top: 1rem;
+  right: 1rem;
   z-index: 1200;
   box-sizing: border-box;
-  width: min(340px, calc(100vw - 32px));
+  width: min(21.25rem, calc(100vw - 2rem));
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
-  border-radius: 14px;
-  padding: 18px;
+  border-radius: 0.875rem;
+  padding: 1.125rem;
   box-shadow: 0 16px 40px #00000040;
   font-family: var(--sb-font-family);
 }
 
 .sb-tutorial-prompt-title {
-  margin: 0 0 6px;
+  margin: 0 0 0.375rem;
   font-family: "Satoshi", system-ui, sans-serif;
-  font-size: 16px;
+  font-size: 1rem;
   line-height: 1.2;
   font-weight: 700;
 }
 
 .sb-tutorial-prompt-body {
-  margin: 0 0 16px;
+  margin: 0 0 1rem;
   font-family: "DM Sans", sans-serif;
   line-height: 1.55;
   font-size: 0.95em;
@@ -1957,14 +2041,14 @@ a:visited {
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-tutorial-prompt-btn {
   appearance: none;
   border: 1px solid transparent;
-  border-radius: 10px;
-  padding: 8px 16px;
+  border-radius: 0.625rem;
+  padding: 0.5rem 1rem;
   font-family: var(--sb-font-family);
   font-size: 0.9em;
   font-weight: 600;
@@ -1986,7 +2070,7 @@ a:visited {
   color: var(--sb-primary-font-color);
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .sb-tutorial-prompt-arrow {
@@ -2023,7 +2107,7 @@ a:visited {
 }
 
 .sb-reader-toolbar-item {
-  flex: 0 0 44px;
+  flex: 0 0 2.75rem;
   height: 100%;
   position: relative;
   transition: transform 0.25s ease;
@@ -2060,7 +2144,7 @@ a:visited {
 .sb-reader-toolbar-labeled .sb-reader-toolbar-button {
   flex-direction: column;
   justify-content: flex-end;
-  gap: 3px;
+  gap: 0.1875rem;
   border-radius: var(--sb-reader-toolbar-button-border-radius);
   height: var(--sb-reader-toolbar-button-height);
   padding: var(--sb-reader-toolbar-button-padding);
@@ -2093,16 +2177,16 @@ a:visited {
 
 .sb-reader-toolbar-unread-indicator {
   position: absolute;
-  top: 3px;
-  right: 4px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 999px;
+  top: 0.1875rem;
+  right: 0.25rem;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.25rem;
+  border-radius: 62.4375rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 700;
   line-height: 1;
   background: var(--sb-primary-color);
@@ -2112,10 +2196,10 @@ a:visited {
 
 .sb-reader-toolbar-typing-indicator {
   position: absolute;
-  right: 6px;
-  bottom: 8px;
-  width: 8px;
-  height: 8px;
+  right: 0.375rem;
+  bottom: 0.5rem;
+  width: 0.5rem;
+  height: 0.5rem;
   border-radius: 50%;
   background: #22c55e;
   box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
@@ -2149,11 +2233,11 @@ a:visited {
 
 .sb-reader-toolbar-divider {
   width: 1px;
-  height: 35px;
+  height: 2.1875rem;
   background: var(--sb-divider-color);
   flex-shrink: 0;
   align-self: center;
-  margin: 0 4px;
+  margin: 0 0.25rem;
 }
 
 /* Raster icons supplied by extensions can't inherit `currentColor`, so we
@@ -2179,27 +2263,27 @@ a:visited {
 .sb-reader-toolbar-more-menu {
   position: absolute;
   right: 0;
-  bottom: calc(100% + 10px);
-  min-width: 180px;
+  bottom: calc(100% + 0.625rem);
+  min-width: 11.25rem;
   border-radius: var(--sb-reader-toolbar-border-radius);
   border: var(--sb-reader-toolbar-border);
   background: var(--sb-reader-toolbar-background);
   box-shadow: var(--sb-reader-toolbar-box-shadow);
-  padding: 6px;
+  padding: 0.375rem;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.25rem;
 }
 
 .sb-reader-toolbar-more-item {
   border: none;
   background: transparent;
   text-align: left;
-  padding: 8px 10px;
-  border-radius: 8px;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.5rem;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   cursor: pointer;
 }
 
@@ -2210,16 +2294,16 @@ a:visited {
 .sb-tool-context-menu {
   position: absolute;
   right: 0;
-  bottom: calc(100% + 8px);
-  min-width: 180px;
+  bottom: calc(100% + 0.5rem);
+  min-width: 11.25rem;
   border-radius: var(--sb-reader-toolbar-border-radius);
   border: var(--sb-reader-toolbar-border);
   background: var(--sb-reader-toolbar-background);
   box-shadow: var(--sb-reader-toolbar-box-shadow);
-  padding: 6px;
+  padding: 0.375rem;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.25rem;
   z-index: 2;
 }
 
@@ -2227,11 +2311,11 @@ a:visited {
   border: none;
   background: transparent;
   text-align: left;
-  padding: 8px 10px;
-  border-radius: 8px;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.5rem;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   cursor: pointer;
   color: inherit;
   font: inherit;
@@ -2244,7 +2328,7 @@ a:visited {
 .sb-tool-context-menu-inline {
   position: static;
   min-width: 0;
-  margin-top: 4px;
+  margin-top: 0.25rem;
 }
 
 .sb-reader-toolbar-floating-button {
@@ -2277,11 +2361,11 @@ a:visited {
     right: 0;
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
     background: var(--sb-reader-toolbar-background);
     color: var(--sb-font-color);
-    height: 50px;
+    height: 3.125rem;
     transition: transform 0.3s ease;
   }
 
@@ -2294,13 +2378,13 @@ a:visited {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
+    width: 2.125rem;
+    height: 2.125rem;
     padding: 0;
     border: none;
     background: transparent;
     cursor: pointer;
-    border-radius: 999px;
+    border-radius: 62.4375rem;
   }
 
   .sb-reader-floating-nav-play:disabled {
@@ -2309,8 +2393,8 @@ a:visited {
   }
 
   .sb-reader-floating-nav-play > svg {
-    width: 44px;
-    height: 44px;
+    width: 2.75rem;
+    height: 2.75rem;
   }
 
   .sb-reader-floating-nav-play > svg circle {
@@ -2335,9 +2419,9 @@ a:visited {
        internal spacing instead of dead inset. */
     gap: 0;
     min-width: 0;
-    min-height: 46px;
+    min-height: 2.875rem;
     border: 1px solid var(--sb-reader-floating-nav-group-border);
-    border-radius: 999px;
+    border-radius: 62.4375rem;
     background: var(--sb-reader-floating-nav-group-background);
     user-select: none;
     overflow: hidden;
@@ -2349,7 +2433,7 @@ a:visited {
     /* Full-height, wide hit region; the visual circle lives in ::before so the
        whole button is tappable with no dead margin around the chevron. */
     align-self: stretch;
-    min-width: 72px;
+    min-width: min(4.5rem, 18vw);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2369,10 +2453,10 @@ a:visited {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 34px;
-    height: 34px;
+    width: 2.125rem;
+    height: 2.125rem;
     transform: translate(-50%, -50%);
-    border-radius: 999px;
+    border-radius: 62.4375rem;
     transition: background-color 0.12s ease;
     z-index: 0;
   }
@@ -2396,35 +2480,43 @@ a:visited {
   .sb-reader-floating-nav-arrow > .material-symbols-outlined {
     position: relative;
     z-index: 1;
-    width: 20px;
-    height: 20px;
-    font-size: 20px;
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 1.25rem;
   }
 
   .sb-reader-floating-nav-label {
     position: relative;
-    /* Grows to fill the entire center, so the gap that space-between used to
-       leave around the label is now part of the selector's hit target. The
-       stretched height makes the full center band clickable; the button keeps
-       its default text centering, so ellipsis still works on long names. */
     flex: 1 1 auto;
     align-self: stretch;
     min-width: 0;
-    padding: 0 4px;
+    padding: 0;
     border: none;
     background: transparent;
     color: var(--sb-book-title-font-color);
     font-family: var(--text-bookTitle-font);
-    font-size: 20px;
+    font-size: min(1.2rem, 22px);
     font-weight: 700;
-    text-align: center;
-    white-space: nowrap;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: center;
+    column-gap: 0.35em;
     overflow: hidden;
-    text-overflow: ellipsis;
     cursor: pointer;
     transition:
       background-color 0.12s ease,
       transform 0.12s ease;
+  }
+
+  /* The book name ellipsizes instead of forcing the pill wider; the chapter
+     number keeps its own line when the row wraps. */
+  .sb-reader-floating-nav-label > :first-child {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   /* Press feedback for the book/chapter label, matching the arrows. */
@@ -2466,7 +2558,7 @@ a:visited {
     height: auto;
     width: 100%;
     border-radius: 0;
-    padding: 8px 8px 10px;
+    padding: 0.5rem 0.5rem 0.625rem;
     justify-content: space-around;
     align-items: stretch;
     gap: 0;
@@ -2486,6 +2578,7 @@ a:visited {
     display: flex;
     align-items: stretch;
     position: relative;
+    flex-basis: auto;
   }
 
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
@@ -2494,14 +2587,14 @@ a:visited {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    padding: 6px 4px;
-    min-height: 52px;
+    gap: 0.25rem;
+    padding: 0.375rem 0.25rem;
+    min-height: 3.25rem;
     width: 100%;
     height: auto;
     background: transparent;
     color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-    border-radius: 8px;
+    border-radius: 0.5rem;
     transition: color 0.15s ease;
   }
 
@@ -2533,20 +2626,20 @@ a:visited {
   }
 
   .sb-reader-toolbar-mobile-tab-icon {
-    font-size: 24px;
+    font-size: 1.5rem;
     line-height: 1;
     flex-shrink: 0;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    height: 24px;
+    height: 1.5rem;
   }
 
   .sb-reader-toolbar-mobile-tab-icon-custom > img,
   .sb-reader-toolbar-mobile-tab-icon-custom > svg {
     display: block;
-    max-width: 24px;
-    max-height: 24px;
+    max-width: 1.5rem;
+    max-height: 1.5rem;
   }
 
   .sb-reader-toolbar-mobile-tab-label {
@@ -2561,30 +2654,30 @@ a:visited {
   .sb-mobile-more-menu {
     position: absolute;
     right: 0;
-    bottom: calc(100% + 8px);
-    min-width: 200px;
-    padding: 10px;
+    bottom: calc(100% + 0.5rem);
+    min-width: 12.5rem;
+    padding: 0.625rem;
     background: var(--sb-reader-toolbar-background);
     border: 1px solid var(--sb-divider-color);
-    border-radius: 14px;
+    border-radius: 0.875rem;
     box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
     display: flex;
     flex-direction: column-reverse;
-    gap: 6px;
+    gap: 0.375rem;
     z-index: 100;
   }
 
   .sb-mobile-more-menu-item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
     border: none;
     background: transparent;
     color: var(--sb-font-color);
     font: inherit;
-    font-size: 15px;
-    border-radius: 10px;
+    font-size: 0.9375rem;
+    border-radius: 0.625rem;
     cursor: pointer;
     text-align: left;
     transition: background-color 0.15s ease;
@@ -2595,12 +2688,12 @@ a:visited {
   }
 
   .sb-mobile-more-menu-icon {
-    width: 22px;
-    height: 22px;
+    width: 1.375rem;
+    height: 1.375rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
+    font-size: 1.375rem;
     color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
     flex-shrink: 0;
   }
@@ -2624,14 +2717,14 @@ a:visited {
       var(--sb-primary-color),
       color-mix(in srgb, var(--sb-primary-color), #000 40%)
     );
-    border-radius: 999px;
+    border-radius: 62.4375rem;
   }
 
   .sb-mobile-more-menu-toggle {
     flex-shrink: 0;
-    width: 38px;
-    height: 22px;
-    border-radius: 999px;
+    width: 2.375rem;
+    height: 1.375rem;
+    border-radius: 62.4375rem;
     border: none;
     background: color-mix(in srgb, var(--sb-font-color), transparent 80%);
     position: relative;
@@ -2646,10 +2739,10 @@ a:visited {
 
   .sb-mobile-more-menu-toggle-thumb {
     position: absolute;
-    top: 2px;
-    left: 2px;
-    width: 18px;
-    height: 18px;
+    top: 0.125rem;
+    left: 0.125rem;
+    width: 1.125rem;
+    height: 1.125rem;
     border-radius: 50%;
     background: #fff;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -2657,7 +2750,7 @@ a:visited {
   }
 
   .sb-mobile-more-menu-toggle-on .sb-mobile-more-menu-toggle-thumb {
-    left: 18px;
+    left: 1.125rem;
   }
 
   .sb-reader-toolbar-floating-button {
@@ -2733,15 +2826,15 @@ a:visited {
 }
 
 .sb-verse-toolbar-ref {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.01em;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-  padding: 0 4px 6px;
+  padding: 0 0.25rem 0.375rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 320px;
+  max-width: 20rem;
 }
 
 /* Verse toolbar — color picker mode (ported from develop)
@@ -2749,12 +2842,12 @@ a:visited {
    to the far right. */
 .sb-verse-toolbar-picker {
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-verse-toolbar-color-button {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   padding: 0;
   border: none;
   background: transparent;
@@ -2767,8 +2860,8 @@ a:visited {
 
 .sb-verse-toolbar-color {
   display: inline-block;
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   border-radius: 50%;
   border: 1px solid var(--sb-divider-color);
   transition: transform 0.15s ease;
@@ -2783,8 +2876,8 @@ a:visited {
 }
 
 .sb-verse-toolbar-back {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   padding: 0;
   border: none;
   background: transparent;
@@ -2806,18 +2899,18 @@ a:visited {
    it (back + colours) stays grouped on the left. */
 .sb-verse-toolbar-plus,
 .sb-verse-toolbar-clear {
-  height: 32px;
-  padding: 0 12px;
+  height: 2rem;
+  padding: 0 0.75rem;
   border: none;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
   cursor: pointer;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  font-size: 13px;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   white-space: nowrap;
   transition:
@@ -2863,12 +2956,12 @@ a:visited {
 .sb-verse-toolbar-clear .material-symbols-outlined,
 .sb-verse-toolbar-highlight-trigger .material-symbols-outlined,
 .sb-verse-toolbar-bookmark-trigger .material-symbols-outlined {
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 
 .sb-verse-toolbar-plus .material-symbols-outlined,
 .sb-verse-toolbar-clear .material-symbols-outlined {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 /* The bookmark trigger lights up in the theme primary color when the current
@@ -2920,18 +3013,18 @@ a:visited {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  padding: 4px 6px;
-  min-width: 44px;
+  gap: 0.125rem;
+  padding: 0.25rem 0.375rem;
+  min-width: 2.75rem;
   background: transparent;
   border: none;
   cursor: pointer;
   color: var(--sb-font-color);
   font-family: inherit;
   font-weight: 400;
-  font-size: 11px;
+  font-size: 0.6875rem;
   line-height: 1;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   transition: background-color 0.15s ease;
 }
 
@@ -2948,22 +3041,22 @@ a:visited {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .sb-verse-toolbar-action-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .sb-verse-toolbar-action-icon .material-symbols-outlined {
-  font-size: 20px;
+  font-size: 1.25rem;
   line-height: 1;
 }
 
 .sb-verse-toolbar-action-label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   line-height: 1;
   white-space: nowrap;
 }
@@ -2976,12 +3069,12 @@ a:visited {
   width: 100%;
   max-width: 100%;
   align-items: stretch;
-  padding: 8px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+  padding: 0.5rem 1rem calc(0.875rem + env(safe-area-inset-bottom, 0px));
   border-left: none;
   border-right: none;
   border-bottom: none;
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
+  border-top-left-radius: 1.25rem;
+  border-top-right-radius: 1.25rem;
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
   box-shadow: 0 -8px 24px var(--sb-shadow-color);
@@ -2989,21 +3082,21 @@ a:visited {
 
 /* Grab-handle pill at the top of the mobile verse sheet (visual affordance). */
 .sb-verse-toolbar-handle {
-  width: 36px;
-  height: 4px;
-  border-radius: 999px;
+  width: 2.25rem;
+  height: 0.25rem;
+  border-radius: 62.4375rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 70%);
-  margin: 2px auto 8px;
+  margin: 0.125rem auto 0.5rem;
   flex: none;
 }
 
 /* Small dismiss button pinned to the top-right corner of the mobile sheet. */
 .sb-verse-toolbar-close {
   position: absolute;
-  top: 10px;
-  right: 12px;
-  width: 30px;
-  height: 30px;
+  top: 0.625rem;
+  right: 0.75rem;
+  width: 1.875rem;
+  height: 1.875rem;
   padding: 0;
   border: none;
   border-radius: 50%;
@@ -3022,7 +3115,7 @@ a:visited {
 }
 
 .sb-verse-toolbar-close .material-symbols-outlined {
-  font-size: 20px;
+  font-size: 1.25rem;
   line-height: 1;
 }
 
@@ -3031,16 +3124,16 @@ a:visited {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  margin-top: 10px;
-  font-size: 12px;
+  gap: 0.375rem;
+  margin-top: 0.625rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
   display: none;
 }
 
 .sb-verse-toolbar-swipe-hint .material-symbols-outlined {
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1;
 }
 
@@ -3050,8 +3143,8 @@ a:visited {
   text-align: center;
   align-self: stretch;
   max-width: none;
-  padding-left: 40px;
-  padding-right: 40px;
+  padding-left: 2.5rem;
+  padding-right: 2.5rem;
 }
 
 /* The action row scrolls horizontally on narrow phones rather than overflowing
@@ -3074,24 +3167,24 @@ a:visited {
 .sb-verse-toolbar-mobile .sb-verse-toolbar-cards {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0.5rem;
   overflow: visible;
   width: 100%;
 }
 
 .sb-verse-toolbar-cards .sb-verse-toolbar-action-item {
   flex: 1 1 20%;
-  min-width: 72px;
+  min-width: 4.5rem;
 }
 
 .sb-verse-toolbar-cards .sb-verse-toolbar-action {
   width: 100%;
-  gap: 6px;
-  padding: 12px 6px;
-  min-height: 64px;
-  border-radius: 14px;
+  gap: 0.375rem;
+  padding: 0.75rem 0.375rem;
+  min-height: 4rem;
+  border-radius: 0.875rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .sb-verse-toolbar-cards .sb-verse-toolbar-action:hover:not(:disabled) {
@@ -3099,7 +3192,7 @@ a:visited {
 }
 
 .sb-verse-toolbar-cards .sb-verse-toolbar-action-label {
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 /* The More/Less toggle reads as the same card, with a visible outline when the
@@ -3112,7 +3205,7 @@ a:visited {
 /* The card grid hosts its own dismiss control (the corner X), and the ref label
    sits centered above it, so don't reserve extra side padding. */
 .sb-verse-toolbar-mobile .sb-verse-toolbar-cards .sb-tool-context-menu {
-  bottom: calc(100% + 6px);
+  bottom: calc(100% + 0.375rem);
 }
 
 /* Inline highlight swatches grouped as their own rounded pill, set off from the
@@ -3120,11 +3213,11 @@ a:visited {
 .sb-verse-toolbar-colors-inline {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
   flex: none;
-  padding: 2px 6px;
-  margin-right: 4px;
-  border-radius: 999px;
+  padding: 0.125rem 0.375rem;
+  margin-right: 0.25rem;
+  border-radius: 62.4375rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
 }
 
@@ -3151,7 +3244,7 @@ a:visited {
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 20px;
+  padding: 1.25rem;
 
   transition: background 0.3s ease;
 }
@@ -3191,10 +3284,10 @@ a:visited {
 .sb-selector-panel {
   position: absolute;
   overflow: auto;
-  padding: 18px 20px 20px;
+  padding: 1.125rem 1.25rem 1.25rem;
   background: var(--sb-book-selector-background);
   color: var(--sb-book-selector-font-color);
-  border-radius: 16px;
+  border-radius: 1rem;
   border: 1px solid var(--sb-divider-color);
 
   width: 100%;
@@ -3218,17 +3311,21 @@ a:visited {
 
 @media only screen and (min-width: 481px) {
   .sb-selector-panel {
-    width: 650px;
+    /* Cap to the viewport (minus the overlay's 1.25rem padding each side) so
+       the panel never extends past the screen edges at UI Text Size > M, where
+       the fixed rem width would otherwise scale wider than the viewport. No-op
+       when the viewport is wide enough to hold the full 40.625rem. */
+    width: min(40.625rem, calc(100vw - 2.5rem));
     height: 80dvh;
-    bottom: 80px;
+    bottom: 5rem;
   }
 }
 
 @media only screen and (min-width: 1201px) {
   .sb-selector-panel {
-    width: 1100px;
+    width: min(68.75rem, calc(100vw - 2.5rem));
     height: 80dvh;
-    bottom: 80px;
+    bottom: 5rem;
   }
 }
 
@@ -3236,7 +3333,7 @@ a:visited {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 0.625rem;
 }
 
 /* .sb-selector-title {
@@ -3245,8 +3342,8 @@ a:visited {
 
 .sb-selector-close-button {
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 6px;
-  padding: 4px 8px;
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.5rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
   cursor: pointer;
@@ -3255,30 +3352,30 @@ a:visited {
 .sb-selector-pane-picker {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
   flex-wrap: wrap;
 }
 
 .sb-selector-pane-picker-label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--sb-book-selector-font-color);
   opacity: 0.85;
 }
 
 .sb-selector-pane-picker-options {
   display: flex;
-  gap: 6px;
+  gap: 0.375rem;
   flex-wrap: wrap;
 }
 
 .sb-selector-pane-chip {
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 999px;
-  padding: 4px 10px;
+  border-radius: 62.4375rem;
+  padding: 0.25rem 0.625rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
-  font-size: 12px;
+  font-size: 0.75rem;
   cursor: pointer;
   white-space: nowrap;
 }
@@ -3291,15 +3388,15 @@ a:visited {
 
 .sb-selector-controls {
   display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .sb-selector-translation-select {
-  min-width: 96px;
+  min-width: 6rem;
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 6px;
-  padding: 6px 8px;
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.5rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
 }
@@ -3307,16 +3404,16 @@ a:visited {
 .sb-selector-search-input {
   flex: 1;
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 6px;
-  padding: 6px 10px;
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.625rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
 }
 
 .sb-selector-all-books {
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 6px;
-  padding: 6px 10px;
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.625rem;
   background: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
   white-space: nowrap;
@@ -3325,27 +3422,27 @@ a:visited {
 .sb-selector-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 16px;
+  gap: 1rem;
 }
 
 .sb-selector-column-divider {
   border-right: 1px solid var(--sb-secondary-color);
-  padding-right: 12px;
+  padding-right: 0.75rem;
 }
 
 .sb-selector-section-title {
   margin-top: 0;
-  margin-bottom: 10px;
+  margin-bottom: 0.625rem;
 
   font-family: var(--sb-font-family), system-ui, sans-serif;
   font-weight: 700;
-  padding-left: 10px;
+  padding-left: 0.625rem;
 }
 
 .sb-selector-books-grid {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .sb-selector-books-row-group {
@@ -3356,16 +3453,16 @@ a:visited {
 .sb-selector-books-row {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
-  gap: 6px 10px;
+  gap: 0.375rem 0.625rem;
 }
 
 .sb-selector-book-button {
   width: 100%;
-  height: 40px;
+  height: 2.5rem;
   text-align: left;
   border: none;
   background: transparent;
-  padding: 10px;
+  padding: 0.625rem;
   font-weight: 400;
   cursor: pointer;
 
@@ -3389,7 +3486,7 @@ a:visited {
 
 @media (min-width: 481px) {
   .sb-selector-book-button {
-    width: 200px;
+    width: 12.5rem;
   }
 }
 
@@ -3411,20 +3508,20 @@ a:visited {
   grid-template-columns: repeat(5, minmax(0, 1fr));
   justify-content: space-between;
 
-  gap: 13px 10px;
-  padding: 2px 4px 8px 4px;
+  gap: 0.8125rem 0.625rem;
+  padding: 0.125rem 0.25rem 0.5rem 0.25rem;
 
   background-color: var(--sb-book-selector-background);
 }
 
 .sb-selector-chapter-grid-inline {
-  margin-top: 4px;
-  margin-bottom: 4px;
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
 }
 
 .sb-selector-chapter-button {
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 5px;
+  border-radius: 0.3125rem;
   background: var(--sb-secondary-color);
   width: 100%;
   cursor: pointer;
@@ -3439,29 +3536,29 @@ a:visited {
 
 @media (min-width: 481px) {
   .sb-selector-chapter-grid {
-    grid-template-columns: repeat(auto-fit, minmax(38px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(2.375rem, 1fr));
   }
 
   .sb-selector-chapter-button {
-    width: 38px;
+    width: 2.375rem;
     justify-self: center;
   }
 }
 
 @media (min-width: 1201px) {
   .sb-selector-chapter-grid {
-    grid-template-columns: repeat(auto-fit, minmax(40px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(2.5rem, 1fr));
   }
 
   .sb-selector-chapter-button {
-    width: 40px;
+    width: 2.5rem;
   }
 }
 
 @media (max-width: 480px) {
   .sb-selector-grid {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 0.75rem;
   }
 
   .sb-selector-column-divider {
@@ -3477,11 +3574,11 @@ a:visited {
 }
 
 .sb-tabs-sidebar {
-  width: 320px;
-  padding: 14px 16px 16px;
+  width: 20rem;
+  padding: 0.875rem 1rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 0.875rem;
   background: var(--sb-sidebar-background);
   color: var(--sb-font-color);
   flex-shrink: 0;
@@ -3490,9 +3587,9 @@ a:visited {
 }
 
 .sb-tabs-sidebar-collapsed {
-  width: 56px;
-  padding: 10px 8px 16px;
-  padding-left: 19px; /* center the collapse button in the collapsed sidebar */
+  width: 3.5rem;
+  padding: 0.625rem 0.5rem 1rem;
+  padding-left: 1.1875rem; /* center the collapse button in the collapsed sidebar */
 
   .sb-sidebar-top-row {
     justify-content: center;
@@ -3538,21 +3635,21 @@ a:visited {
 .sb-sidebar-bottom-actions-collapsed {
   flex-direction: column;
   justify-content: flex-end;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .sb-sidebar-top-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 28px;
-  padding-bottom: 6px;
+  min-height: 1.75rem;
+  padding-bottom: 0.375rem;
 }
 
 .sb-sidebar-top-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-sidebar-collapse-button {
@@ -3560,8 +3657,8 @@ a:visited {
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;
-  width: 24px;
-  height: 24px;
+  width: 1.5rem;
+  height: 1.5rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3573,8 +3670,8 @@ a:visited {
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3585,20 +3682,20 @@ a:visited {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 2px;
+  padding-top: 0.125rem;
 }
 
 .sb-sidebar-tabs-title {
   margin: 0;
   font-weight: 700;
-  font-size: 18px;
+  font-size: 1.125rem;
   color: var(--sb-font-color);
 }
 
 .sb-sidebar-tabs-header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-sidebar-tabs-header-icon-button {
@@ -3606,9 +3703,9 @@ a:visited {
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
   cursor: pointer;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3624,7 +3721,7 @@ a:visited {
 }
 
 .sb-sidebar-tabs-header-icon-button .material-symbols-outlined {
-  font-size: 22px;
+  font-size: 1.375rem;
 }
 
 /* The X close button inside the Tabs header-actions is mobile-only.
@@ -3653,11 +3750,11 @@ a:visited {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  margin-inline-start: 2px;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-inline-start: 0.125rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
   cursor: pointer;
@@ -3684,14 +3781,14 @@ a:visited {
 .sb-bookmarks-section {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  margin-bottom: 4px;
+  gap: 0.25rem;
+  margin-bottom: 0.25rem;
 }
 
 .sb-sidebar-tabs-divider {
   height: 1px;
   background: var(--sb-divider-color);
-  margin: 8px 0 10px;
+  margin: 0.5rem 0 0.625rem;
 }
 
 .sb-bookmark-category {
@@ -3702,7 +3799,7 @@ a:visited {
 .sb-bookmark-category-header {
   display: flex;
   align-items: center;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   transition: background-color 0.15s ease;
 }
 
@@ -3715,14 +3812,14 @@ a:visited {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 6px 8px 6px;
+  gap: 0.5rem;
+  padding: 0.5rem 0.375rem 0.5rem 0.375rem;
   border: none;
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;
   text-align: start;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
 }
 
@@ -3749,7 +3846,7 @@ a:visited {
 }
 
 .sb-bookmark-category-chevron .material-symbols-outlined {
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 
 .sb-bookmark-category-chevron-open {
@@ -3763,8 +3860,8 @@ a:visited {
   color: inherit;
   background: transparent;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 6px;
-  padding: 2px 6px;
+  border-radius: 0.375rem;
+  padding: 0.125rem 0.375rem;
   outline: none;
 }
 
@@ -3781,10 +3878,10 @@ a:visited {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
   cursor: pointer;
@@ -3798,20 +3895,20 @@ a:visited {
 .sb-bookmark-category-items {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding-inline-start: 24px;
+  gap: 0.25rem;
+  padding-inline-start: 1.5rem;
 }
 
 .sb-bookmark-category-empty {
-  padding: 6px 8px;
-  font-size: 12px;
+  padding: 0.375rem 0.5rem;
+  font-size: 0.75rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
 }
 
 .sb-bookmark-item {
   display: flex;
   align-items: center;
-  border-radius: 8px;
+  border-radius: 0.5rem;
 }
 
 .sb-bookmark-item:hover {
@@ -3828,17 +3925,17 @@ a:visited {
 .sb-bookmark-item-verse::before {
   content: "";
   position: absolute;
-  inset-inline-start: 2px;
+  inset-inline-start: 0.125rem;
   top: 50%;
-  width: 3px;
-  height: 18px;
-  margin-top: -9px;
-  border-radius: 2px;
+  width: 0.1875rem;
+  height: 1.125rem;
+  margin-top: -0.5625rem;
+  border-radius: 0.125rem;
   background: var(--sb-primary-color);
 }
 
 .sb-bookmark-item-verse .sb-bookmark-item-button {
-  padding-inline-start: 10px;
+  padding-inline-start: 0.625rem;
 }
 
 .sb-bookmark-item-button {
@@ -3846,14 +3943,14 @@ a:visited {
   min-width: 0;
   display: flex;
   align-items: baseline;
-  gap: 4px;
-  padding: 8px 8px;
+  gap: 0.25rem;
+  padding: 0.5rem 0.5rem;
   border: none;
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;
   text-align: start;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 /* ------------------------------------------------------------------
@@ -3863,26 +3960,26 @@ a:visited {
 .sb-bookmark-picker {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 0.875rem;
 }
 
 .sb-bookmark-picker-categories {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-bookmark-picker-category {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
+  gap: 0.75rem;
+  padding: 0.75rem 0.875rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 88%);
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: transparent;
   color: var(--sb-font-color);
-  font-size: 14px;
+  font-size: 0.875rem;
   cursor: pointer;
   text-align: start;
   transition:
@@ -3905,8 +4002,8 @@ a:visited {
 }
 
 .sb-bookmark-picker-radio {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   border-radius: 50%;
   border: 2px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
   flex-shrink: 0;
@@ -3923,7 +4020,7 @@ a:visited {
 .sb-bookmark-picker-radio-checked::after {
   content: "";
   position: absolute;
-  inset: 3px;
+  inset: 0.1875rem;
   border-radius: 50%;
   background: var(--sb-primary-color);
 }
@@ -3937,36 +4034,36 @@ a:visited {
 .sb-bookmark-picker-add-new {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
   align-self: flex-start;
   border: none;
   background: transparent;
   color: var(--sb-primary-color);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
-  padding: 4px 0;
+  padding: 0.25rem 0;
   cursor: pointer;
 }
 
 .sb-bookmark-picker-add-new .material-symbols-outlined {
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 
 .sb-bookmark-picker-new-row {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .sb-bookmark-picker-new-input {
   width: 100%;
-  padding: 10px 12px;
+  padding: 0.625rem 0.75rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: transparent;
   color: var(--sb-font-color);
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   box-sizing: border-box;
 }
 
@@ -3977,25 +4074,25 @@ a:visited {
 
 .sb-bookmark-picker-new-error {
   color: #b91c1c;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .sb-bookmark-picker-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 .sb-bookmark-picker-cancel,
 .sb-bookmark-picker-save {
-  min-width: 84px;
-  height: 36px;
-  padding: 0 16px;
-  border-radius: 8px;
+  min-width: 5.25rem;
+  height: 2.25rem;
+  padding: 0 1rem;
+  border-radius: 0.5rem;
   font: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   border: 1px solid transparent;
@@ -4042,7 +4139,7 @@ a:visited {
   .sb-footnote-modal:has(.sb-bookmark-picker) {
     width: 100%;
     max-width: 100%;
-    border-radius: 16px 16px 0 0;
+    border-radius: 1rem 1rem 0 0;
     border-bottom: none;
     box-shadow: 0 -8px 28px #00000033;
   }
@@ -4050,26 +4147,26 @@ a:visited {
 
 .sb-sidebar-search-shell {
   position: relative;
-  margin-top: 8px;
-  margin-bottom: 10px;
+  margin-top: 0.5rem;
+  margin-bottom: 0.625rem;
   display: none;
 }
 
 .sb-sidebar-search-bar {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 42px;
-  padding: 0 12px;
+  gap: 0.625rem;
+  min-height: 2.625rem;
+  padding: 0 0.75rem;
   border: 1px solid color-mix(in srgb, var(--sb-secondary-color), #000 8%);
-  border-radius: 12px;
+  border-radius: 0.75rem;
   background: color-mix(in srgb, var(--sb-reader-background), transparent 4%);
   box-shadow: inset 0 1px 0 #ffffff66;
 }
 
 .sb-sidebar-search-icon {
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 
 .sb-sidebar-search-input {
@@ -4079,7 +4176,7 @@ a:visited {
   background: transparent;
   color: var(--sb-font-color);
   outline: none;
-  padding: 10px 0;
+  padding: 0.625rem 0;
 }
 
 .sb-sidebar-search-input::placeholder {
@@ -4090,8 +4187,8 @@ a:visited {
   border: none;
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 28%);
-  width: 24px;
-  height: 24px;
+  width: 1.5rem;
+  height: 1.5rem;
   padding: 0;
   display: inline-flex;
   align-items: center;
@@ -4101,14 +4198,14 @@ a:visited {
 
 .sb-sidebar-search-panel {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 0.625rem);
   left: 0;
   right: 0;
-  max-height: min(420px, 55vh);
+  max-height: min(26.25rem, 55vh);
   overflow-y: auto;
-  padding: 8px;
+  padding: 0.5rem;
   border: 1px solid color-mix(in srgb, var(--sb-secondary-color), #000 8%);
-  border-radius: 14px;
+  border-radius: 0.875rem;
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);
   box-shadow: 0 18px 36px #00000024;
@@ -4116,7 +4213,7 @@ a:visited {
 }
 
 .sb-sidebar-search-status {
-  padding: 16px 14px;
+  padding: 1rem 0.875rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 22%);
 }
 
@@ -4127,20 +4224,20 @@ a:visited {
 .sb-sidebar-search-results-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .sb-sidebar-search-result-button {
   border: 2px solid transparent;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: transparent;
   color: inherit;
   text-align: left;
-  padding: 10px;
+  padding: 0.625rem;
   cursor: pointer;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .sb-verse-decoration-search-result,
@@ -4166,9 +4263,9 @@ a:visited {
 .sb-sidebar-search-result-meta {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
   flex-wrap: wrap;
-  font-size: 12px;
+  font-size: 0.75rem;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
@@ -4182,21 +4279,21 @@ a:visited {
 .sb-sidebar-tab-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .sb-sidebar-collapsed-tab-list {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-collapsed-tab-tile {
   position: relative;
-  width: 53px;
-  height: 53px;
-  border-radius: 10px;
+  width: 3.3125rem;
+  height: 3.3125rem;
+  border-radius: 0.625rem;
   border: var(--sb-tab-border);
   background: var(--sb-tab-background);
   color: var(--sb-tab-font-color);
@@ -4207,32 +4304,32 @@ a:visited {
   align-items: baseline;
   align-content: center;
   justify-content: center;
-  padding: 0 2px;
+  padding: 0 0.125rem;
   line-height: 1;
-  column-gap: 5px;
-  row-gap: 2px;
+  column-gap: 0.3125rem;
+  row-gap: 0.125rem;
   border: 1px solid;
 }
 
 /* A shared-session tile reserves room for the "Shared" tag at the top and
    the presence dots along the bottom edge. */
 .sb-collapsed-tab-tile-shared {
-  padding-top: 10px;
-  padding-bottom: 8px;
+  padding-top: 0.625rem;
+  padding-bottom: 0.5rem;
 }
 
 .sb-collapsed-tab-tag {
   position: absolute;
-  top: 3px;
+  top: 0.1875rem;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 6px;
+  font-size: 0.375rem;
   font-weight: 700;
   line-height: 1;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  padding: 2px 4px;
-  border-radius: 4px;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
   white-space: nowrap;
   background: color-mix(in srgb, var(--sb-primary-color), transparent 82%);
   color: var(--sb-primary-color);
@@ -4241,20 +4338,20 @@ a:visited {
 
 .sb-collapsed-tab-presence {
   position: absolute;
-  bottom: 4px;
+  bottom: 0.25rem;
   left: 0;
   right: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 0.125rem;
   pointer-events: none;
 }
 
 .sb-collapsed-tab-presence-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
+  width: 0.4375rem;
+  height: 0.4375rem;
+  border-radius: 62.4375rem;
   box-sizing: border-box;
 }
 
@@ -4268,7 +4365,7 @@ a:visited {
 }
 
 .sb-collapsed-tab-presence-more {
-  font-size: 7px;
+  font-size: 0.4375rem;
   font-weight: 700;
   line-height: 1;
   color: color-mix(in srgb, var(--sb-tab-font-color), transparent 25%);
@@ -4281,7 +4378,7 @@ a:visited {
 }
 
 .sb-collapsed-tab-book {
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -4289,7 +4386,7 @@ a:visited {
 }
 
 .sb-collapsed-tab-chapter {
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -4297,16 +4394,16 @@ a:visited {
 .sb-sidebar-settings-view {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.625rem;
   min-height: 0;
   flex: 1;
 }
 
 .sb-sidebar-settings-close-button {
   border: none;
-  border-radius: 7px;
-  width: 30px;
-  height: 30px;
+  border-radius: 0.4375rem;
+  width: 1.875rem;
+  height: 1.875rem;
   background: var(--sb-secondary-color);
   color: var(--sb-font-color);
   cursor: pointer;
@@ -4320,6 +4417,7 @@ a:visited {
   min-height: 0;
   flex: 1;
   overflow-y: auto;
+  padding-bottom: 3rem;
 }
 
 .sb-sidebar-settings-content .sb-settings-page {
@@ -4336,8 +4434,8 @@ a:visited {
   align-items: stretch;
   position: relative;
 
-  padding: 8px 6px 8px 12px;
-  border-radius: 8px;
+  padding: 0.5rem 0.375rem 0.5rem 0.75rem;
+  border-radius: 0.5rem;
   border: 1px solid transparent;
   background: var(--sb-tab-background);
   color: var(--sb-tab-font-color);
@@ -4372,9 +4470,9 @@ a:visited {
   display: flex;
   align-items: center;
   justify-content: start;
-  gap: 6px;
-  min-height: 22px;
-  font-size: 14px;
+  gap: 0.375rem;
+  min-height: 1.375rem;
+  font-size: 0.875rem;
 }
 
 .sb-tab-main-title {
@@ -4387,13 +4485,13 @@ a:visited {
 
 .sb-tab-main-sep {
   color: #545454;
-  font-size: 10px;
+  font-size: 0.625rem;
   line-height: 1;
 }
 
 .sb-tab-main-translation {
   font-weight: 500;
-  font-size: 12px;
+  font-size: 0.75rem;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: #545454;
@@ -4407,8 +4505,8 @@ a:visited {
 .sb-tab-users-section {
   border-top: 1px solid
     color-mix(in srgb, var(--sb-font-color), transparent 78%);
-  margin-top: 2px;
-  padding-top: 7px;
+  margin-top: 0.125rem;
+  padding-top: 0.4375rem;
 }
 
 .sb-tab-users-list {
@@ -4417,14 +4515,14 @@ a:visited {
   flex-wrap: wrap;
   /* Extra column gap leaves room for the overlaid role label to overflow a
      little; row gap keeps the label clear of a wrapped row below. */
-  gap: 12px 10px;
+  gap: 0.75rem 0.625rem;
 }
 
 .sb-tab-user-icon {
   position: relative;
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 62.4375rem;
   border: 2px solid transparent;
   background: transparent;
   display: inline-flex;
@@ -4446,16 +4544,16 @@ a:visited {
 
 .sb-tab-user-role {
   position: absolute;
-  bottom: -4px;
+  bottom: -0.25rem;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 6px;
+  font-size: 0.375rem;
   line-height: 1;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  padding: 1px 3px;
-  border-radius: 4px;
+  padding: 1px 0.1875rem;
+  border-radius: 0.25rem;
   white-space: nowrap;
   pointer-events: none;
   box-shadow: 0 0 0 1.5px var(--sb-background, #ffffff);
@@ -4486,7 +4584,7 @@ a:visited {
 }
 
 .sb-tab-user-icon-animal .material-symbols-outlined {
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1;
   font-weight: 600;
 }
@@ -4505,8 +4603,8 @@ a:visited {
   align-items: center;
   border: none;
   background: transparent;
-  padding: 2px 4px;
-  border-radius: 999px;
+  padding: 0.125rem 0.25rem;
+  border-radius: 62.4375rem;
   cursor: pointer;
 }
 
@@ -4531,7 +4629,7 @@ a:visited {
 }
 
 .sb-session-participants-stack-item + .sb-session-participants-stack-item {
-  margin-inline-start: -8px;
+  margin-inline-start: -0.5rem;
 }
 
 .sb-session-participants-stack-more {
@@ -4542,18 +4640,18 @@ a:visited {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 5px;
-  margin-inline-start: -8px;
-  border-radius: 999px;
+  min-width: 1.375rem;
+  height: 1.375rem;
+  padding: 0 0.3125rem;
+  margin-inline-start: -0.5rem;
+  border-radius: 62.4375rem;
   background: color-mix(
     in srgb,
     var(--sb-font-color) 16%,
     var(--sb-reader-background)
   );
   color: var(--sb-font-color);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
   box-shadow: 0 0 0 2px var(--sb-reader-background, #fff);
 }
@@ -4562,34 +4660,34 @@ a:visited {
 .sb-session-participants-list {
   list-style: none;
   margin: 0;
-  padding: 8px 4px 4px;
+  padding: 0.5rem 0.25rem 0.25rem;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem;
   overflow-y: auto;
 }
 
 .sb-session-participants-list-item {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 8px;
-  border-radius: 10px;
+  gap: 0.875rem;
+  padding: 0.5rem;
+  border-radius: 0.625rem;
 }
 
 .sb-session-participants-list-item .sb-tab-user-icon {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
 }
 
 .sb-session-participants-list-item
   .sb-tab-user-icon-animal
   .material-symbols-outlined {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .sb-session-participants-list-name {
-  font-size: 15px;
+  font-size: 0.9375rem;
   color: var(--sb-font-color);
   white-space: nowrap;
   overflow: hidden;
@@ -4601,15 +4699,15 @@ a:visited {
 .sb-session-participants-settings-button {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
   width: 100%;
-  margin-top: 8px;
-  padding: 12px 8px;
+  margin-top: 0.5rem;
+  padding: 0.75rem 0.5rem;
   border: none;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: transparent;
   color: var(--sb-primary-color);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 500;
   font-family: inherit;
   text-align: start;
@@ -4632,13 +4730,13 @@ a:visited {
 /* "Shared with you" — top-right floating toasts */
 .sb-shared-toasts {
   position: fixed;
-  right: 16px;
-  top: 16px;
+  right: 1rem;
+  top: 1rem;
   z-index: 60;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-width: 320px;
+  gap: 0.5rem;
+  max-width: 20rem;
   pointer-events: none;
 }
 
@@ -4658,11 +4756,11 @@ a:visited {
   pointer-events: auto;
   display: flex;
   align-items: stretch;
-  gap: 4px;
-  padding: 4px;
-  padding-right: 8px;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  padding-right: 0.5rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
-  border-radius: 12px;
+  border-radius: 0.75rem;
   background: var(--sb-reader-background);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
   animation: sb-shared-toast-slide-in 0.25s ease-out;
@@ -4672,10 +4770,10 @@ a:visited {
   flex: 1;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 8px;
+  gap: 0.625rem;
+  padding: 0.375rem 0.5rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: transparent;
   color: var(--sb-font-color);
   font-family: inherit;
@@ -4691,13 +4789,13 @@ a:visited {
 .sb-shared-toast-main {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem;
   min-width: 0;
   flex: 1;
 }
 
 .sb-shared-toast-host {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: var(--sb-font-color);
   overflow: hidden;
@@ -4706,7 +4804,7 @@ a:visited {
 }
 
 .sb-shared-toast-label {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -4714,10 +4812,10 @@ a:visited {
 }
 
 .sb-shared-toast-dismiss {
-  width: 28px;
+  width: 1.75rem;
   padding: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
   cursor: pointer;
@@ -4735,28 +4833,28 @@ a:visited {
 }
 
 .sb-shared-toast-dismiss .material-symbols-outlined {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .sb-shared-toast .sb-tab-user-icon {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
 }
 
 .sb-shared-toast .sb-tab-user-icon-animal .material-symbols-outlined {
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 
 /* App-level toast — single transient popup centered at the bottom of the screen. */
 .sb-toast-host {
   position: fixed;
   left: 50%;
-  bottom: 24px;
+  bottom: 1.5rem;
   transform: translateX(-50%);
   z-index: 1000;
   display: flex;
   justify-content: center;
-  max-width: min(90vw, 420px);
+  max-width: min(90vw, 26.25rem);
   pointer-events: none;
 }
 
@@ -4774,12 +4872,12 @@ a:visited {
 
 .sb-toast {
   pointer-events: auto;
-  padding: 10px 18px;
+  padding: 0.625rem 1.125rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
-  border-radius: 12px;
+  border-radius: 0.75rem;
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.4;
   text-align: center;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -4790,17 +4888,17 @@ a:visited {
 .sb-session-settings {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  min-width: 280px;
+  gap: 1rem;
+  min-width: 17.5rem;
   color: var(--sb-font-color);
 }
 
 .sb-session-settings-note {
   margin: 0;
-  padding: 10px 12px;
-  border-radius: 8px;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.5rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
-  font-size: 12px;
+  font-size: 0.75rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 
@@ -4808,20 +4906,20 @@ a:visited {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .sb-session-settings-label {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
 }
 
 .sb-session-settings-row input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
-  width: 44px;
-  height: 24px;
-  border-radius: 12px;
+  width: 2.75rem;
+  height: 1.5rem;
+  border-radius: 0.75rem;
   background-color: color-mix(in srgb, var(--sb-font-color), transparent 78%);
   position: relative;
   cursor: pointer;
@@ -4835,10 +4933,10 @@ a:visited {
 .sb-session-settings-row input[type="checkbox"]::before {
   content: "";
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 1.25rem;
+  height: 1.25rem;
   border-radius: 50%;
   background-color: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -4850,7 +4948,7 @@ a:visited {
 }
 
 .sb-session-settings-row input[type="checkbox"]:checked::before {
-  left: 22px;
+  left: 1.375rem;
 }
 
 .sb-session-settings-row input[type="checkbox"]:disabled {
@@ -4861,32 +4959,32 @@ a:visited {
 .sb-session-settings-duration {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-top: 4px;
+  gap: 0.625rem;
+  padding-top: 0.25rem;
   border-top: 1px solid
     color-mix(in srgb, var(--sb-font-color), transparent 88%);
 }
 
 .sb-session-settings-duration-title {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
 }
 
 .sb-session-settings-duration-options {
   display: flex;
-  gap: 8px;
+  gap: 0.5rem;
   align-items: center;
 }
 
 .sb-session-settings-duration-option {
-  min-width: 48px;
-  padding: 8px 14px;
+  min-width: 3rem;
+  padding: 0.5rem 0.875rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: transparent;
   color: var(--sb-font-color);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
   transition:
@@ -4914,9 +5012,9 @@ a:visited {
 .sb-session-settings-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 4px;
-  padding-top: 12px;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+  padding-top: 0.75rem;
   border-top: 1px solid
     color-mix(in srgb, var(--sb-font-color), transparent 88%);
 }
@@ -4924,9 +5022,9 @@ a:visited {
 .sb-session-settings-cancel,
 .sb-session-settings-end {
   border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 13px;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
@@ -4956,16 +5054,16 @@ a:visited {
 .sb-session-settings-id {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .sb-session-settings-id-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  padding: 8px 8px 8px 12px;
-  border-radius: 10px;
+  gap: 0.5rem;
+  padding: 0.5rem 0.5rem 0.5rem 0.75rem;
+  border-radius: 0.625rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
 }
 
@@ -4974,7 +5072,7 @@ a:visited {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
 }
 
@@ -4982,9 +5080,9 @@ a:visited {
   border: none;
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 34%);
-  width: 32px;
-  height: 32px;
-  border-radius: 6px;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.375rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -5001,11 +5099,11 @@ a:visited {
 .sb-session-settings-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .sb-session-settings-section-title {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -5014,8 +5112,8 @@ a:visited {
 
 /* Dynamic explanatory text under a toggle */
 .sb-session-settings-description {
-  margin: -4px 0 0;
-  font-size: 12px;
+  margin: -0.25rem 0 0;
+  font-size: 0.75rem;
   line-height: 1.4;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
@@ -5024,22 +5122,22 @@ a:visited {
 .sb-session-close-confirm {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  min-width: 280px;
+  gap: 1rem;
+  min-width: 17.5rem;
   color: var(--sb-font-color);
 }
 
 .sb-session-close-confirm-message {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.5;
 }
 
 .sb-session-close-confirm-dontshow {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
   cursor: pointer;
 }
@@ -5052,17 +5150,17 @@ a:visited {
   display: flex;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-session-cohost-picker {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-session-cohost-instructions {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
 }
 
@@ -5070,9 +5168,9 @@ a:visited {
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 84%);
   background: transparent;
   color: var(--sb-font-color);
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 13px;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
   font-family: inherit;
   text-align: left;
   cursor: pointer;
@@ -5090,25 +5188,25 @@ a:visited {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-session-participant {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .sb-session-participant-avatar {
-  width: 30px;
-  height: 30px;
+  width: 1.875rem;
+  height: 1.875rem;
   border-radius: 50%;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: #ffffff;
-  font-size: 16px;
+  font-size: 1rem;
   background-size: cover;
   background-position: center;
 }
@@ -5118,7 +5216,7 @@ a:visited {
 }
 
 .sb-session-participant-avatar .material-symbols-outlined {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .sb-session-participant-name {
@@ -5126,21 +5224,21 @@ a:visited {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .sb-session-participant-badge {
   flex-shrink: 0;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  padding: 2px 6px;
-  border-radius: 6px;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.375rem;
   background: color-mix(in srgb, var(--sb-primary-color), transparent 82%);
   color: var(--sb-primary-color);
 }
@@ -5150,9 +5248,9 @@ a:visited {
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 84%);
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
-  padding: 5px 10px;
-  border-radius: 8px;
-  font-size: 12px;
+  padding: 0.3125rem 0.625rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
   font-family: inherit;
   cursor: pointer;
   transition: background-color 0.15s ease;
@@ -5169,12 +5267,12 @@ a:visited {
 }
 
 .sb-sidebar-self-avatar {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
   padding: 0;
   border: none;
   background: transparent;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -5187,25 +5285,25 @@ a:visited {
 }
 
 .sb-sidebar-self-avatar .sb-tab-user-icon {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   border-width: 2px;
 }
 
 .sb-sidebar-self-avatar .sb-tab-user-icon-animal .material-symbols-outlined {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .sb-tab-title {
-  font-size: 12px;
+  font-size: 0.75rem;
   opacity: 0.75;
 }
 
 .sb-tab-add-button {
   border: none;
-  border-radius: 8px;
-  width: 32px;
-  height: 32px;
+  border-radius: 0.5rem;
+  width: 2rem;
+  height: 2rem;
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
   cursor: pointer;
@@ -5216,8 +5314,8 @@ a:visited {
   transition: filter 0.15s ease;
 
   &.sb-collapsed-tab-add-button {
-    width: 53px;
-    height: 53px;
+    width: 3.3125rem;
+    height: 3.3125rem;
   }
 }
 
@@ -5226,7 +5324,7 @@ a:visited {
 }
 
 .sb-tab-add-button .material-symbols-outlined {
-  font-size: 22px;
+  font-size: 1.375rem;
   font-weight: 500;
 }
 
@@ -5241,15 +5339,15 @@ a:visited {
 
 .sb-notif-badge {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 999px;
+  top: 0.125rem;
+  right: 0.125rem;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.25rem;
+  border-radius: 62.4375rem;
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 700;
   line-height: 1;
   display: inline-flex;
@@ -5261,14 +5359,14 @@ a:visited {
 
 .sb-notif-menu {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 0.5rem);
   right: 0;
-  width: 320px;
-  max-height: 420px;
+  width: 20rem;
+  max-height: 26.25rem;
   overflow-y: auto;
-  padding: 14px;
+  padding: 0.875rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  border-radius: 12px;
+  border-radius: 0.75rem;
   background: var(--sb-reader-background);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
   z-index: 55;
@@ -5276,16 +5374,16 @@ a:visited {
 }
 
 .sb-notif-menu-title {
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: var(--sb-font-color);
-  margin-bottom: 10px;
+  margin-bottom: 0.625rem;
 }
 
 .sb-notif-empty {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
-  padding: 10px 4px;
+  padding: 0.625rem 0.25rem;
 }
 
 .sb-notif-list {
@@ -5294,20 +5392,20 @@ a:visited {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .sb-notif-item {
   display: flex;
-  gap: 10px;
-  padding: 10px;
-  border-radius: 10px;
+  gap: 0.625rem;
+  padding: 0.625rem;
+  border-radius: 0.625rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
 }
 
 .sb-notif-avatar {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
   border-radius: 50%;
   flex-shrink: 0;
   display: flex;
@@ -5316,7 +5414,7 @@ a:visited {
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
   font-weight: 700;
-  font-size: 14px;
+  font-size: 0.875rem;
   overflow: hidden;
 }
 
@@ -5330,12 +5428,12 @@ a:visited {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.25rem;
   min-width: 0;
 }
 
 .sb-notif-item-title {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--sb-font-color);
   line-height: 1.3;
 }
@@ -5345,7 +5443,7 @@ a:visited {
 }
 
 .sb-notif-item-message {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-style: italic;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
   line-height: 1.4;
@@ -5353,22 +5451,22 @@ a:visited {
 }
 
 .sb-notif-item-meta {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
 }
 
 .sb-notif-item-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 .sb-notif-accept,
 .sb-notif-dismiss {
   border: none;
-  border-radius: 8px;
-  padding: 6px 12px;
-  font-size: 12px;
+  border-radius: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
@@ -5396,25 +5494,25 @@ a:visited {
 .sb-invite-modal {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .sb-invite-modal label {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: 13px;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 
 .sb-invite-modal input {
-  padding: 10px 12px;
+  padding: 0.625rem 0.75rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: var(--sb-reader-background);
   color: var(--sb-font-color);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-family: inherit;
   outline: none;
   transition: border-color 0.15s ease;
@@ -5425,25 +5523,25 @@ a:visited {
 }
 
 .sb-invite-error {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: #dc2626;
-  padding: 8px 10px;
-  border-radius: 6px;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.375rem;
   background: color-mix(in srgb, #dc2626, transparent 90%);
 }
 
 .sb-invite-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 .sb-invite-actions button {
   border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 13px;
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   cursor: pointer;
   font-family: inherit;
@@ -5468,21 +5566,21 @@ a:visited {
 
 .sb-pane-layout-menu {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 0.5rem);
   left: 0;
-  width: 372px;
-  padding: 20px;
+  width: 23.25rem;
+  padding: 1.25rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  border-radius: 14px;
+  border-radius: 0.875rem;
   background: var(--sb-reader-background);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
   z-index: 50;
 }
 
 .sb-pane-layout-menu-title {
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 600;
-  margin-bottom: 14px;
+  margin-bottom: 0.875rem;
   color: var(--sb-font-color);
   letter-spacing: -0.01em;
 }
@@ -5490,14 +5588,14 @@ a:visited {
 .sb-pane-layout-options {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .sb-pane-layout-option {
   border: 2px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  padding: 12px;
+  padding: 0.75rem;
   background: transparent;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   cursor: pointer;
   transition:
     border-color 0.2s ease,
@@ -5517,9 +5615,9 @@ a:visited {
 
 .sb-pane-layout-preview {
   display: grid;
-  gap: 4px;
-  height: 64px;
-  border-radius: 6px;
+  gap: 0.25rem;
+  height: 4rem;
+  border-radius: 0.375rem;
   overflow: hidden;
   background: transparent;
   padding: 0;
@@ -5576,9 +5674,9 @@ a:visited {
   justify-content: center;
   background: color-mix(in srgb, var(--sb-primary-color), transparent 55%);
   color: var(--sb-primary-font-color);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
-  border-radius: 4px;
+  border-radius: 0.25rem;
   transition: background-color 0.2s ease;
 }
 
@@ -5588,27 +5686,27 @@ a:visited {
 }
 
 .sb-tab-pane-count {
-  min-width: 20px;
-  height: 20px;
-  border-radius: 999px;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 62.4375rem;
   background: color-mix(in srgb, var(--sb-primary-color), white 25%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
-  padding: 0 6px;
-  margin-right: 28px;
+  padding: 0 0.375rem;
+  margin-right: 1.75rem;
 }
 
 .sb-tab-menu {
   position: absolute;
   right: 0;
-  top: calc(100% + 6px);
-  min-width: 210px;
-  padding: 6px;
+  top: calc(100% + 0.375rem);
+  min-width: 13.125rem;
+  padding: 0.375rem;
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);
   box-shadow: 0 10px 30px #00000014;
@@ -5619,18 +5717,18 @@ a:visited {
   /* width: 100%; */
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
   border: none;
   background: transparent;
   color: var(--sb-font-color);
   text-align: left;
-  padding: 8px 10px;
-  border-radius: 6px;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.375rem;
   cursor: pointer;
 }
 
 .sb-tab-menu-item-icon {
-  font-size: 18px;
+  font-size: 1.125rem;
   flex-shrink: 0;
   opacity: 0.85;
 }
@@ -5640,21 +5738,21 @@ a:visited {
 }
 
 .sb-tab-more-icon {
-  font-size: 18px;
+  font-size: 1.125rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
 }
 
 .sb-sidebar-icon-button {
   border: none;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 35px;
-  width: 35px;
+  height: 2.1875rem;
+  width: 2.1875rem;
 }
 
 .sb-sidebar-icon-button path {
@@ -5671,13 +5769,13 @@ a:visited {
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   margin-left: auto;
   align-items: center;
   justify-content: center;
   padding: 0;
-  border-radius: 6px;
+  border-radius: 0.375rem;
 }
 
 @media (max-width: 480px) {
@@ -5703,7 +5801,7 @@ a:visited {
     background: var(--sb-background);
     /* Bottom buffer (+ safe area) so the last setting clears the screen edge.
        NOTE: a stray `padding: 0` here previously clobbered the bottom padding. */
-    padding: 0 0 calc(32px + env(safe-area-inset-bottom, 0px));
+    padding: 0 0 calc(2rem + env(safe-area-inset-bottom, 0px));
   }
 
   @keyframes sb-sidebar-slide-in {
@@ -5761,7 +5859,7 @@ a:visited {
   }
 
   .sb-pane-layout-menu {
-    width: 280px;
+    width: 17.5rem;
   }
 
   .sb-pane-layout-options {
@@ -5808,7 +5906,7 @@ a:visited {
   /* Header gets a little more breathing room and a bottom divider so it
    * reads as a real top-bar over the tab list. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-header {
-    padding: 7px 16px;
+    padding: 0.4375rem 1rem;
   }
 
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tabs-title {
@@ -5817,9 +5915,8 @@ a:visited {
     flex: 1 1 auto;
     min-width: 0;
     overflow: hidden;
-    font-size: 24px;
     margin: 0;
-    font-size: 24px;
+    font-size: 1.5rem;
     font-weight: 600;
     font-family: var(--text-bookTitle-font);
     color: var(--sb-book-title-font-color);
@@ -5830,17 +5927,17 @@ a:visited {
   /* Tab list takes the body of the sidebar; leave room at the bottom for
    * the floating Add button so the last tab isn't covered. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
-    padding: 16px 16px 96px;
-    gap: 12px;
+    padding: 1rem 1rem 6rem;
+    gap: 0.75rem;
   }
 
   /* Tab card on mobile — plain by default, peach pill when selected. */
   .sb-tabs-sidebar-mobile-open .sb-tab-row {
-    padding: 12px 14px;
-    border-radius: 12px;
+    padding: 0.75rem 0.875rem;
+    border-radius: 0.75rem;
     background: var(--sb-tertiary-color);
     border: 1px solid transparent;
-    min-height: 52px;
+    min-height: 3.25rem;
     align-items: center;
   }
 
@@ -5850,7 +5947,7 @@ a:visited {
   }
 
   .sb-tabs-sidebar-mobile-open .sb-tab-main-content {
-    font-size: 16px;
+    font-size: 1rem;
   }
 
   .sb-tabs-sidebar-mobile-open .sb-tab-main-title {
@@ -5869,14 +5966,14 @@ a:visited {
   .sb-tabs-sidebar-mobile-open .sb-tab-mobile-add-inline {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin: 0px 16px 0;
-    padding: 8px 15px;
+    gap: 0.75rem;
+    margin: 0px 1rem 0;
+    padding: 0.5rem 0.9375rem;
     border: none;
     background: var(--sb-tertiary-color);
     color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
     font: inherit;
-    font-size: 15px;
+    font-size: 0.9375rem;
     cursor: pointer;
     text-align: start;
     justify-content: space-between;
@@ -5886,9 +5983,9 @@ a:visited {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.5rem;
     background: var(--sb-primary-color);
     color: var(--sb-primary-font-color);
     flex-shrink: 0;
@@ -5897,20 +5994,20 @@ a:visited {
   .sb-tabs-sidebar-mobile-open
     .sb-tab-mobile-add-inline-icon
     .material-symbols-outlined {
-    font-size: 22px;
+    font-size: 1.375rem;
     font-weight: 500;
   }
 
   /* Add a thin divider above the inline button so it visually separates
    * from the tab list, matching the design. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
-    margin-inline: 16px;
-    padding: 12px 0;
+    margin-inline: 1rem;
+    padding: 0.75rem 0;
   }
 
   /* Reset the desktop tab list padding now that we apply our own. */
   .sb-tabs-sidebar-mobile-open .sb-sidebar-tab-list {
-    padding-bottom: 12px;
+    padding-bottom: 0.75rem;
     border-bottom: 1px solid var(--sb-divider-color);
   }
 
@@ -5920,29 +6017,29 @@ a:visited {
    * bookmark rows larger touch targets and a touch more breathing room.
    * ------------------------------------------------------------------ */
   .sb-tabs-sidebar-mobile-open .sb-bookmarks-section {
-    gap: 6px;
-    margin-bottom: 8px;
+    gap: 0.375rem;
+    margin-bottom: 0.5rem;
   }
 
   .sb-tabs-sidebar-mobile-open .sb-bookmark-category-toggle {
-    padding: 12px 8px;
-    font-size: 16px;
+    padding: 0.75rem 0.5rem;
+    font-size: 1rem;
   }
 
   .sb-tabs-sidebar-mobile-open .sb-bookmark-category-items {
-    gap: 6px;
-    padding-inline-start: 26px;
+    gap: 0.375rem;
+    padding-inline-start: 1.625rem;
   }
 
   .sb-tabs-sidebar-mobile-open .sb-bookmark-item-button {
-    padding: 12px 10px;
-    font-size: 15px;
+    padding: 0.75rem 0.625rem;
+    font-size: 0.9375rem;
   }
 
   .sb-tabs-sidebar-mobile-open
     .sb-bookmark-item-verse
     .sb-bookmark-item-button {
-    padding-inline-start: 14px;
+    padding-inline-start: 0.875rem;
   }
 
   /* ------------------------------------------------------------------
@@ -5961,8 +6058,8 @@ a:visited {
   .sb-bookmarks-mobile-header {
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
+    gap: 0.5rem;
+    padding: 0.625rem 0.75rem;
     border-bottom: 1px solid var(--sb-divider-color);
   }
 
@@ -5970,7 +6067,7 @@ a:visited {
     flex: 1 1 auto;
     margin: 0;
     text-align: center;
-    font-size: 20px;
+    font-size: 1.25rem;
     font-weight: 600;
     font-family: var(--text-bookTitle-font);
     color: var(--sb-book-title-font-color);
@@ -5984,14 +6081,14 @@ a:visited {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 2.5rem;
+    height: 2.5rem;
     padding: 0;
     border: none;
     background: transparent;
     color: var(--sb-font-color);
     cursor: pointer;
-    border-radius: 999px;
+    border-radius: 62.4375rem;
   }
 
   .sb-bookmarks-mobile-header-button:hover {
@@ -6002,7 +6099,7 @@ a:visited {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
-    padding: 12px 16px 96px;
+    padding: 0.75rem 1rem 6rem;
   }
 
   /* ------------------------------------------------------------------
@@ -6014,7 +6111,7 @@ a:visited {
     width: 100%;
     height: 100dvh;
     bottom: 0;
-    padding: 16px 0 10px;
+    padding: 1rem 0 0.625rem;
     border-radius: 0;
     border: none;
     transition: none;
@@ -6029,13 +6126,13 @@ a:visited {
 
   /* Tighten the header row to fit version-dropdown + testament-dropdown + X. */
   .sb-selector-panel .sidebar-book-selector {
-    padding: 0 16px;
-    gap: 8px;
+    padding: 0 1rem;
+    gap: 0.5rem;
   }
 
   .sb-selector-panel .sidebar-translation-selector {
     min-width: 0;
-    flex: 0 1 110px;
+    flex: 0 1 6.875rem;
   }
 
   .sb-selector-panel .dropdown {
@@ -6051,8 +6148,8 @@ a:visited {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
+    width: 2.25rem;
+    height: 2.25rem;
     border: none;
     background: transparent;
     color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
@@ -6066,7 +6163,7 @@ a:visited {
     height: auto;
     flex: 1;
     min-height: 0;
-    padding: 8px 10px 0px;
+    padding: 0.5rem 0.625rem 0px;
   }
 
   /* Single-column books — full-width rows with chevrons + dividers. */
@@ -6079,7 +6176,7 @@ a:visited {
 
   .sb-selector-panel .books-item {
     flex-direction: column;
-    gap: 5px;
+    gap: 0.3125rem;
   }
 
   .sb-selector-panel .sidebar-itm,
@@ -6102,14 +6199,14 @@ a:visited {
 
   /* OT/NT title bigger on mobile to match the design. */
   .sb-selector-panel .testament-title {
-    font-size: 18px;
-    padding-left: 8px;
-    padding-bottom: 5px;
-    padding-top: 8px;
+    font-size: 1.125rem;
+    padding-left: 0.5rem;
+    padding-bottom: 0.3125rem;
+    padding-top: 0.5rem;
     color: inherit;
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 0.3125rem;
     color: color-mix(in srgb, var(--sb-font-color), transparent 60%);
   }
 
@@ -6122,7 +6219,7 @@ a:visited {
   }
 
   .sb-tab-mobile-add-fab .material-symbols-outlined {
-    font-size: 28px;
+    font-size: 1.75rem;
     color: var(--sb-primary-font-color);
   }
 }
@@ -6141,22 +6238,22 @@ a:visited {
 }
 
 .sb-settings-page {
-  padding: 12px 8px 24px;
+  padding: 0.75rem 0.5rem 1.5rem;
   color: var(--sb-font-color);
   font-family: "Satoshi", "DM Sans", system-ui, sans-serif;
 }
 
 .sb-settings-section {
-  padding: 8px 0;
-  max-width: 480px;
+  padding: 0.5rem 0;
+  max-width: 30rem;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 0.875rem;
 }
 
 .sb-settings-subheading {
-  margin: 12px 0 4px;
-  font-size: 13px;
+  margin: 0.75rem 0 0.25rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -6166,7 +6263,7 @@ a:visited {
 .sb-settings-divider {
   height: 1px;
   background-color: color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  margin: 4px 0;
+  margin: 0.25rem 0;
   border: 0;
 }
 
@@ -6176,7 +6273,7 @@ a:visited {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-extensions-list-disabled {
@@ -6186,35 +6283,35 @@ a:visited {
 .sb-extension-row {
   display: flex;
   align-items: stretch;
-  gap: 8px;
+  gap: 0.5rem;
   position: relative;
 }
 
 .sb-extension-row-body {
   text-align: left;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 86%);
-  border-radius: 8px;
-  padding: 10px 12px;
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.75rem;
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 75%);
   color: var(--sb-font-color);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
   flex: 1;
 }
 
 .sb-extension-row-actions {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
   margin-left: auto;
 }
 
 .sb-extension-row-action-button {
-  width: 30px;
-  height: 30px;
+  width: 1.875rem;
+  height: 1.875rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: color-mix(in srgb, var(--sb-secondary-color), transparent 70%);
   color: var(--sb-font-color);
   cursor: pointer;
@@ -6229,25 +6326,25 @@ a:visited {
 }
 
 .sb-extension-row-action-button .material-symbols-outlined {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .sb-extension-row-content {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  gap: 2px;
+  gap: 0.125rem;
   flex: 1;
 }
 
 .sb-extension-name {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   line-height: 1.2;
 }
 
 .sb-extension-description {
-  font-size: 12px;
+  font-size: 0.75rem;
   opacity: 0.78;
   line-height: 1.25;
   overflow: hidden;
@@ -6255,7 +6352,7 @@ a:visited {
 }
 
 .sb-extension-state-icon {
-  font-size: 18px;
+  font-size: 1.125rem;
   flex: 0 0 auto;
 }
 
@@ -6280,10 +6377,10 @@ a:visited {
 }
 
 .sb-context-menu-button {
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   background: transparent;
   color: var(--sb-font-color);
   cursor: pointer;
@@ -6298,18 +6395,18 @@ a:visited {
 }
 
 .sb-context-more-icon {
-  font-size: 18px;
+  font-size: 1.125rem;
   opacity: 0.9;
 }
 
 .sb-context-menu {
   position: absolute;
   width: max-content;
-  min-width: 200px;
-  max-width: 280px;
-  padding: 6px;
+  min-width: 12.5rem;
+  max-width: 17.5rem;
+  padding: 0.375rem;
   border: 1px solid var(--sb-secondary-color);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);
   box-shadow: 0 10px 30px #00000014;
@@ -6322,8 +6419,8 @@ a:visited {
   background: transparent;
   color: var(--sb-font-color);
   text-align: left;
-  padding: 8px 10px;
-  border-radius: 6px;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.375rem;
   cursor: pointer;
 }
 
@@ -6335,20 +6432,20 @@ a:visited {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .sb-context-menu-toggle-label {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .sb-pill-toggle {
   display: inline-block;
-  width: 44px;
-  height: 24px;
-  border-radius: 12px;
+  width: 2.75rem;
+  height: 1.5rem;
+  border-radius: 0.75rem;
   background-color: color-mix(in srgb, var(--sb-font-color), transparent 78%);
   position: relative;
   flex-shrink: 0;
@@ -6358,10 +6455,10 @@ a:visited {
 .sb-pill-toggle::before {
   content: "";
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 1.25rem;
+  height: 1.25rem;
   border-radius: 50%;
   background-color: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -6373,19 +6470,19 @@ a:visited {
 }
 
 .sb-pill-toggle.is-on::before {
-  left: 22px;
+  left: 1.375rem;
 }
 
 .sb-extension-footer-actions {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 8px;
-  margin-top: 12px;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
 }
 
 .sb-settings-title {
-  margin: 0 0 10px 4px;
-  font-size: 18px;
+  margin: 0 0 0.625rem 0.25rem;
+  font-size: 1.125rem;
   font-weight: 600;
   color: var(--sb-font-color);
   letter-spacing: -0.01em;
@@ -6394,17 +6491,17 @@ a:visited {
 .sb-settings-theme-options {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
 }
 
 .sb-settings-theme-button {
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  border-radius: 10px;
-  padding: 10px 16px;
+  border-radius: 0.625rem;
+  padding: 0.625rem 1rem;
   background: transparent;
   color: var(--sb-font-color);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
@@ -6426,23 +6523,23 @@ a:visited {
 .sb-settings-field-row {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 4px 4px;
+  gap: 0.5rem;
+  padding: 0.25rem 0.25rem;
 }
 
 .sb-settings-field-label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 
 .sb-settings-language-select {
   border: none;
-  border-radius: 8px;
-  padding: 12px 16px;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-family: inherit;
   cursor: pointer;
   /* max-width: 220px; */
@@ -6466,7 +6563,7 @@ a:visited {
 .sb-language-picker-button {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-language-picker-overlay {
@@ -6478,17 +6575,17 @@ a:visited {
 .sb-language-picker-menu {
   position: absolute;
   right: 0;
-  top: calc(100% + 4px);
+  top: calc(100% + 0.25rem);
   z-index: 100;
-  min-width: 220px;
-  max-height: 320px;
+  min-width: 13.75rem;
+  max-height: 20rem;
   overflow-y: auto;
   background: var(--sb-menu-background);
   color: var(--sb-menu-font-color);
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  border-radius: 10px;
+  border-radius: 0.625rem;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  padding: 4px;
+  padding: 0.25rem;
 }
 
 .sb-language-picker-search {
@@ -6496,9 +6593,9 @@ a:visited {
   top: 0;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  margin-bottom: 4px;
+  gap: 0.375rem;
+  padding: 0.375rem 0.5rem;
+  margin-bottom: 0.25rem;
   background: var(--sb-menu-background);
   border-bottom: 1px solid
     color-mix(in srgb, var(--sb-font-color), transparent 90%);
@@ -6506,7 +6603,7 @@ a:visited {
 }
 
 .sb-language-picker-search-icon {
-  font-size: 18px;
+  font-size: 1.125rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
@@ -6518,8 +6615,8 @@ a:visited {
   background: transparent;
   color: var(--sb-font-color);
   font-family: inherit;
-  font-size: 14px;
-  padding: 4px 0;
+  font-size: 0.875rem;
+  padding: 0.25rem 0;
 }
 
 .sb-language-picker-search-input::placeholder {
@@ -6527,8 +6624,8 @@ a:visited {
 }
 
 .sb-language-picker-empty {
-  padding: 12px 10px;
-  font-size: 13px;
+  padding: 0.75rem 0.625rem;
+  font-size: 0.8125rem;
   text-align: center;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
@@ -6536,14 +6633,14 @@ a:visited {
 .sb-language-picker-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   width: 100%;
-  padding: 8px 10px;
+  padding: 0.5rem 0.625rem;
   border: none;
-  border-radius: 6px;
+  border-radius: 0.375rem;
   background: transparent;
   color: var(--sb-font-color);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-family: inherit;
   cursor: pointer;
   text-align: left;
@@ -6570,13 +6667,13 @@ a:visited {
 
   .sb-language-picker-menu {
     position: fixed;
-    left: 12px;
-    right: 12px;
+    left: 0.75rem;
+    right: 0.75rem;
     top: auto;
-    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(5.25rem + env(safe-area-inset-bottom, 0px));
     z-index: 9999;
     min-width: 0;
-    max-height: min(50dvh, 360px);
+    max-height: min(50dvh, 22.5rem);
   }
 }
 
@@ -6584,12 +6681,12 @@ a:visited {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 6px 4px;
+  gap: 0.75rem;
+  padding: 0.375rem 0.25rem;
 }
 
 .sb-settings-toggle-label {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--sb-font-color);
 }
@@ -6598,9 +6695,9 @@ a:visited {
 .sb-settings-toggle-row input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
-  width: 44px;
-  height: 24px;
-  border-radius: 12px;
+  width: 2.75rem;
+  height: 1.5rem;
+  border-radius: 0.75rem;
   background-color: color-mix(in srgb, var(--sb-font-color), transparent 78%);
   position: relative;
   cursor: pointer;
@@ -6614,10 +6711,10 @@ a:visited {
 .sb-settings-toggle-row input[type="checkbox"]::before {
   content: "";
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 1.25rem;
+  height: 1.25rem;
   border-radius: 50%;
   background-color: #fff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -6629,7 +6726,7 @@ a:visited {
 }
 
 .sb-settings-toggle-row input[type="checkbox"]:checked::before {
-  left: 22px;
+  left: 1.375rem;
 }
 
 .sb-settings-toggle-row input[type="checkbox"]:focus-visible {
@@ -6643,7 +6740,7 @@ a:visited {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem;
 }
 
 .sb-settings-nav-item {
@@ -6651,16 +6748,16 @@ a:visited {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 7px;
-  padding: 14px 12px;
+  gap: 0.4375rem;
+  padding: 0.875rem 0.75rem;
   background: transparent;
   border: none;
   color: var(--sb-font-color);
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
   text-align: left;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   transition: background-color 0.2s ease;
   font-family: inherit;
 }
@@ -6671,12 +6768,12 @@ a:visited {
 
 .sb-settings-nav-item .material-symbols-outlined {
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 
 .sb-settings-nav-icon {
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -6685,13 +6782,13 @@ a:visited {
 }
 
 .sb-settings-nav-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 1.25rem;
+  height: 1.25rem;
   display: block;
 }
 
 .sb-settings-nav-icon .material-symbols-outlined {
-  font-size: 20px;
+  font-size: 1.25rem;
   color: var(--sb-font-color);
 }
 
@@ -6703,9 +6800,9 @@ a:visited {
 .sb-settings-subpage-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding: 0 4px;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0 0.25rem;
 }
 
 .sb-settings-back-button {
@@ -6714,8 +6811,8 @@ a:visited {
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
   cursor: pointer;
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -6731,18 +6828,18 @@ a:visited {
 
 .sb-settings-subpage-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 600;
   color: var(--sb-font-color);
 }
 
 .sb-settings-text-input {
   border: none;
-  border-radius: 8px;
-  padding: 14px 16px;
+  border-radius: 0.5rem;
+  padding: 0.875rem 1rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-family: inherit;
   width: 100%;
   box-sizing: border-box;
@@ -6759,16 +6856,16 @@ a:visited {
 }
 
 .sb-settings-actions {
-  margin-top: 14px;
+  margin-top: 0.875rem;
 }
 
 .sb-settings-save-button {
   border: none;
-  border-radius: 10px;
-  padding: 10px 20px;
+  border-radius: 0.625rem;
+  padding: 0.625rem 1.25rem;
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
@@ -6787,11 +6884,11 @@ a:visited {
 
 .sb-settings-action-button {
   border: none;
-  border-radius: 8px;
-  padding: 12px 16px;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
@@ -6813,10 +6910,10 @@ a:visited {
 .sb-settings-breadcrumbs {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 4px;
-  margin-bottom: 10px;
-  font-size: 12px;
+  gap: 0.375rem;
+  padding: 0 0.25rem;
+  margin-bottom: 0.625rem;
+  font-size: 0.75rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
@@ -6825,8 +6922,8 @@ a:visited {
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
   cursor: pointer;
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
@@ -6841,17 +6938,17 @@ a:visited {
 }
 
 .sb-settings-breadcrumbs-back .material-symbols-outlined {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .sb-settings-breadcrumbs-item {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
 }
 
 .sb-settings-breadcrumbs-sep {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 60%);
 }
 
@@ -6868,25 +6965,25 @@ a:visited {
 .sb-settings-hero {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 0 4px;
-  margin-bottom: 20px;
+  gap: 0.375rem;
+  padding: 0 0.25rem;
+  margin-bottom: 1.25rem;
 }
 
 .sb-settings-hero-title {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .sb-settings-hero-icon {
-  font-size: 24px;
+  font-size: 1.5rem;
   color: var(--sb-font-color);
 }
 
 .sb-settings-hero-text {
   margin: 0;
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--sb-font-color);
@@ -6894,7 +6991,7 @@ a:visited {
 
 .sb-settings-hero-description {
   margin: 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
@@ -6902,18 +6999,18 @@ a:visited {
 /* Ready-themes preview gallery */
 .sb-theme-ready-gallery {
   display: flex;
-  gap: 12px;
+  gap: 0.75rem;
   overflow-x: auto;
-  padding: 4px 2px 12px;
+  padding: 0.25rem 0.125rem 0.75rem;
   scrollbar-width: thin;
 }
 
 .sb-theme-ready-card {
   flex: 0 0 auto;
-  width: 120px;
+  width: 7.5rem;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.5rem;
   padding: 0;
   background: transparent;
   border: none;
@@ -6926,12 +7023,12 @@ a:visited {
 .sb-theme-ready-preview {
   width: 100%;
   aspect-ratio: 1.2;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   border: 2px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  padding: 10px;
+  padding: 0.625rem;
   display: flex;
   align-items: flex-end;
-  gap: 6px;
+  gap: 0.375rem;
   transition:
     border-color 0.2s ease,
     transform 0.1s ease;
@@ -6946,44 +7043,44 @@ a:visited {
 }
 
 .sb-theme-ready-swatch {
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   border-radius: 50%;
   border: 1px solid color-mix(in srgb, black, transparent 80%);
 }
 
 .sb-theme-ready-swatch-a {
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
 }
 
 .sb-theme-ready-label {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 500;
-  padding: 0 4px;
+  padding: 0 0.25rem;
 }
 
 .sb-theme-ready-check {
-  font-size: 16px;
+  font-size: 1rem;
   color: var(--sb-primary-color);
 }
 
 /* Scripture quick-settings (font size + line height) */
 .sb-scripture-quick-row {
   display: flex;
-  gap: 10px;
-  margin-bottom: 24px;
+  gap: 0.625rem;
+  margin-bottom: 1.5rem;
 }
 
 .sb-scripture-quick-btn {
   flex: 1;
-  height: 48px;
+  height: 3rem;
   background: var(--sb-reader-background, var(--sb-background));
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -6999,11 +7096,11 @@ a:visited {
 }
 
 .sb-scripture-quick-btn-a-small {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .sb-scripture-quick-btn-a-large {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 500;
 }
 
@@ -7011,11 +7108,11 @@ a:visited {
 .sb-scripture-margins-label {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 14px;
+  gap: 0.375rem;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--sb-font-color);
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .sb-scripture-margins-label .sb-margin-icon-wrap {
@@ -7026,8 +7123,8 @@ a:visited {
 .sb-scripture-margins-row {
   display: flex;
   align-items: center;
-  margin-bottom: 24px;
-  gap: 8px;
+  margin-bottom: 1.5rem;
+  gap: 0.5rem;
 }
 
 .sb-scripture-margins-step {
@@ -7037,11 +7134,11 @@ a:visited {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.5rem;
   color: var(--sb-font-color);
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 600;
   line-height: 1;
   flex-shrink: 0;
@@ -7057,14 +7154,14 @@ a:visited {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 2px;
+  gap: 0.125rem;
 }
 
 .sb-scripture-margins-input {
   border: none;
   outline: none;
-  font-size: 16px;
-  width: 20px;
+  font-size: 1rem;
+  width: 1.25rem;
   background: transparent;
   color: var(--sb-font-color);
   font-family: inherit;
@@ -7081,7 +7178,7 @@ a:visited {
 }
 
 .sb-scripture-margins-unit {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
@@ -7089,8 +7186,8 @@ a:visited {
 .sb-text-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 16px 4px;
+  gap: 0.625rem;
+  padding: 1rem 0.25rem;
   border-bottom: 1px solid
     color-mix(in srgb, var(--sb-font-color), transparent 90%);
 }
@@ -7100,8 +7197,8 @@ a:visited {
 }
 
 .sb-text-section-title {
-  margin: 0 0 6px;
-  font-size: 15px;
+  margin: 0 0 0.375rem;
+  font-size: 0.9375rem;
   font-weight: 600;
   color: var(--sb-font-color);
 }
@@ -7110,20 +7207,20 @@ a:visited {
 .sb-text-format-toolbar {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 8px;
-  border-radius: 10px;
+  gap: 0.25rem;
+  padding: 0.5rem;
+  border-radius: 0.625rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 93%);
   flex-wrap: wrap;
 }
 
 .sb-text-format-btn {
-  width: 34px;
-  height: 34px;
+  width: 2.125rem;
+  height: 2.125rem;
   border: none;
   background: transparent;
   color: var(--sb-font-color);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -7146,14 +7243,14 @@ a:visited {
 }
 
 .sb-text-format-btn .material-symbols-outlined {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .sb-text-format-divider {
   width: 1px;
-  height: 22px;
+  height: 1.375rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 80%);
-  margin: 0 4px;
+  margin: 0 0.25rem;
 }
 
 .sb-text-format-color-wrap {
@@ -7163,11 +7260,11 @@ a:visited {
 }
 
 .sb-text-format-color-button {
-  width: 34px;
-  height: 34px;
+  width: 2.125rem;
+  height: 2.125rem;
   border: none;
   background: transparent;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -7181,30 +7278,30 @@ a:visited {
 }
 
 .sb-text-format-color-swatch {
-  width: 20px;
-  height: 20px;
+  width: 1.25rem;
+  height: 1.25rem;
   border-radius: 50%;
   border: 1px solid color-mix(in srgb, black, transparent 80%);
 }
 
 .sb-text-format-palette {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 0.375rem);
   right: 0;
   display: grid;
-  grid-template-columns: repeat(7, 22px);
-  gap: 6px;
-  padding: 10px;
+  grid-template-columns: repeat(7, 1.375rem);
+  gap: 0.375rem;
+  padding: 0.625rem;
   background: var(--sb-reader-background, #fff);
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  border-radius: 10px;
+  border-radius: 0.625rem;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
   z-index: 50;
 }
 
 .sb-text-format-palette-swatch {
-  width: 22px;
-  height: 22px;
+  width: 1.375rem;
+  height: 1.375rem;
   border-radius: 50%;
   border: 1px solid color-mix(in srgb, black, transparent 80%);
   padding: 0;
@@ -7221,17 +7318,17 @@ a:visited {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  font-size: 12px;
+  gap: 0.5rem;
+  font-size: 0.75rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
-  padding-top: 6px;
+  padding-top: 0.375rem;
   border-top: 1px solid
     color-mix(in srgb, var(--sb-font-color), transparent 88%);
 }
 
 .sb-text-format-palette-custom input[type="color"] {
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   padding: 0;
   border: none;
   background: transparent;
@@ -7245,15 +7342,15 @@ a:visited {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.25rem;
 }
 
 .sb-toolbar-config-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 10px;
+  gap: 0.625rem;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.625rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
   transition:
     background-color 0.2s ease,
@@ -7271,18 +7368,18 @@ a:visited {
 .sb-toolbar-config-reorder {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem;
   flex-shrink: 0;
 }
 
 .sb-toolbar-config-move-button {
-  width: 22px;
-  height: 18px;
+  width: 1.375rem;
+  height: 1.125rem;
   padding: 0;
   border: none;
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  border-radius: 4px;
+  border-radius: 0.25rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -7303,12 +7400,12 @@ a:visited {
 }
 
 .sb-toolbar-config-move-button .material-symbols-outlined {
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .sb-toolbar-config-title {
   flex: 1;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--sb-font-color);
   overflow: hidden;
@@ -7323,9 +7420,9 @@ a:visited {
 
 .sb-highlight-preview-pill {
   display: inline-block;
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
+  padding: 0.25rem 0.625rem;
+  border-radius: 62.4375rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   line-height: 1.2;
@@ -7346,15 +7443,15 @@ a:visited {
 
 .sb-notif-badge {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border-radius: 999px;
+  top: 0.125rem;
+  right: 0.125rem;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.25rem;
+  border-radius: 62.4375rem;
   background: #dc2626;
   color: #ffffff;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 700;
   line-height: 16px;
   display: inline-flex;
@@ -7366,33 +7463,33 @@ a:visited {
 
 .sb-notif-menu {
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + 0.5rem);
   right: 0;
-  min-width: 320px;
-  max-width: 360px;
+  min-width: 20rem;
+  max-width: 22.5rem;
   max-height: 70vh;
   overflow-y: auto;
-  padding: 8px;
+  padding: 0.5rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 85%);
-  border-radius: 12px;
+  border-radius: 0.75rem;
   background: var(--sb-reader-background);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
   z-index: 50;
 }
 
 .sb-notif-menu-title {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
-  padding: 6px 10px 10px;
+  padding: 0.375rem 0.625rem 0.625rem;
 }
 
 .sb-notif-empty {
-  padding: 18px 10px;
+  padding: 1.125rem 0.625rem;
   text-align: center;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
@@ -7402,15 +7499,15 @@ a:visited {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.25rem;
 }
 
 .sb-notif-item {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 10px;
-  border-radius: 8px;
+  gap: 0.625rem;
+  padding: 0.625rem;
+  border-radius: 0.5rem;
   transition: background-color 0.15s ease;
 }
 
@@ -7419,8 +7516,8 @@ a:visited {
 }
 
 .sb-notif-avatar {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
@@ -7429,7 +7526,7 @@ a:visited {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 
@@ -7445,14 +7542,14 @@ a:visited {
 }
 
 .sb-notif-item-title {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--sb-font-color);
   line-height: 1.35;
 }
 
 .sb-notif-item-message {
-  margin-top: 4px;
-  font-size: 12px;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
   font-style: italic;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
   line-height: 1.35;
@@ -7465,23 +7562,23 @@ a:visited {
 }
 
 .sb-notif-item-meta {
-  margin-top: 4px;
-  font-size: 11px;
+  margin-top: 0.25rem;
+  font-size: 0.6875rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
 }
 
 .sb-notif-item-actions {
   display: flex;
-  gap: 8px;
-  margin-top: 8px;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 .sb-notif-accept,
 .sb-notif-dismiss {
   border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
+  padding: 0.375rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
@@ -7511,26 +7608,26 @@ a:visited {
 .sb-invite-modal {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  min-width: 280px;
+  gap: 0.75rem;
+  min-width: 17.5rem;
 }
 
 .sb-invite-modal label {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: 13px;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 
 .sb-invite-modal input {
   border: none;
-  border-radius: 8px;
-  padding: 10px 12px;
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.75rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-family: inherit;
 }
 
@@ -7540,25 +7637,25 @@ a:visited {
 }
 
 .sb-invite-error {
-  padding: 8px 10px;
-  border-radius: 6px;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.375rem;
   background: color-mix(in srgb, #dc2626, transparent 88%);
   color: #b91c1c;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .sb-invite-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 .sb-invite-actions button {
   border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 13px;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
@@ -7592,7 +7689,7 @@ a:visited {
 .sb-theme-colors-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .sb-theme-colors-list {
@@ -7601,16 +7698,16 @@ a:visited {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem;
 }
 
 .sb-theme-color-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 8px;
-  border-radius: 8px;
+  gap: 0.75rem;
+  padding: 0.625rem 0.5rem;
+  border-radius: 0.5rem;
   transition: background-color 0.2s ease;
 }
 
@@ -7621,19 +7718,19 @@ a:visited {
 .sb-theme-color-row-main {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem;
   min-width: 0;
   flex: 1;
 }
 
 .sb-theme-color-label {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   color: var(--sb-font-color);
 }
 
 .sb-theme-color-value {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   text-overflow: ellipsis;
@@ -7644,16 +7741,16 @@ a:visited {
 .sb-theme-color-row-controls {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
   flex-shrink: 0;
 }
 
 .sb-theme-color-input {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
   padding: 0;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   background: transparent;
   cursor: pointer;
   appearance: none;
@@ -7666,17 +7763,17 @@ a:visited {
 
 .sb-theme-color-input::-webkit-color-swatch {
   border: none;
-  border-radius: 6px;
+  border-radius: 0.375rem;
 }
 
 .sb-theme-color-input::-moz-color-swatch {
   border: none;
-  border-radius: 6px;
+  border-radius: 0.375rem;
 }
 
 .sb-theme-color-reset {
-  width: 32px;
-  height: 32px;
+  width: 2rem;
+  height: 2rem;
   padding: 0;
   border: none;
   border-radius: 50%;
@@ -7697,13 +7794,13 @@ a:visited {
 }
 
 .sb-theme-color-reset .material-symbols-outlined {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .sb-settings-login-prompt {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .sb-settings-login-prompt p {
@@ -7714,27 +7811,27 @@ a:visited {
 .sb-account-settings-layout {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1rem;
 }
 
 .sb-account-settings-intro {
   margin: 0;
   line-height: 1.45;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
-  max-width: 220px;
+  max-width: 13.75rem;
 }
 
 .sb-account-picture-row {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 0.875rem;
 }
 
 .sb-account-picture-preview,
 .sb-account-picture-placeholder {
-  width: 62px;
-  height: 62px !important;
-  border-radius: 999px;
+  width: 3.875rem;
+  height: 3.875rem !important;
+  border-radius: 62.4375rem;
   flex-shrink: 0;
 }
 
@@ -7752,13 +7849,13 @@ a:visited {
 }
 
 .sb-account-picture-placeholder .material-symbols-outlined {
-  font-size: 30px;
+  font-size: 1.875rem;
 }
 
 .sb-account-picture-button {
   border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 10%);
-  border-radius: 4px;
-  padding: 10px 18px;
+  border-radius: 0.25rem;
+  padding: 0.625rem 1.125rem;
   background: transparent;
   color: var(--sb-primary-color);
   font-weight: 500;
@@ -7779,20 +7876,20 @@ a:visited {
 .sb-photo-choice-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .sb-photo-choice-button {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
   width: 100%;
   border: none;
-  border-radius: 8px;
-  padding: 14px 16px;
+  border-radius: 0.5rem;
+  padding: 0.875rem 1rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   font-family: inherit;
   text-align: left;
@@ -7812,7 +7909,7 @@ a:visited {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 1rem;
 }
 
 .sb-photo-crop-title {
@@ -7830,7 +7927,7 @@ a:visited {
 .sb-photo-crop-zoom {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
   width: 100%;
 }
 
@@ -7845,17 +7942,17 @@ a:visited {
 .sb-photo-modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 0.625rem;
   width: 100%;
 }
 
 .sb-photo-modal-button {
   border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 10%);
-  border-radius: 8px;
-  padding: 10px 18px;
+  border-radius: 0.5rem;
+  padding: 0.625rem 1.125rem;
   background: transparent;
   color: var(--sb-primary-color);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
@@ -7884,18 +7981,18 @@ a:visited {
 .sb-account-text-input,
 .sb-account-textarea,
 .sb-account-uid-row {
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: color-mix(in srgb, var(--sb-secondary-color), #9fa5ad 28%);
 }
 
 .sb-account-text-input,
 .sb-account-textarea {
   border-color: transparent;
-  padding: 14px 16px;
+  padding: 0.875rem 1rem;
 }
 
 .sb-account-textarea {
-  min-height: 100px;
+  min-height: 6.25rem;
   resize: vertical;
 }
 
@@ -7913,7 +8010,7 @@ a:visited {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 10px 10px 14px;
+  padding: 0.625rem 0.625rem 0.625rem 0.875rem;
 }
 
 .sb-account-uid-value {
@@ -7928,9 +8025,9 @@ a:visited {
   border: none;
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 34%);
-  width: 34px;
-  height: 34px;
-  border-radius: 6px;
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: 0.375rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -7944,23 +8041,23 @@ a:visited {
 
 .sb-account-save-button {
   width: 100%;
-  border-radius: 6px;
-  padding: 14px 18px;
+  border-radius: 0.375rem;
+  padding: 0.875rem 1.125rem;
   font-weight: 700;
 }
 
 .sb-account-signout-section {
-  margin-top: 10px;
+  margin-top: 0.625rem;
   border-top: 1px solid
     color-mix(in srgb, var(--sb-font-color), transparent 82%);
-  padding-top: 16px;
+  padding-top: 1rem;
 }
 
 .sb-account-signout-button {
   width: 100%;
   border: 2px solid #db1c1c;
-  border-radius: 6px;
-  padding: 12px 16px;
+  border-radius: 0.375rem;
+  padding: 0.75rem 1rem;
   background: transparent;
   color: #db1c1c;
   font-weight: 500;
@@ -7968,7 +8065,7 @@ a:visited {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .sb-account-signout-button:hover {
@@ -7994,20 +8091,20 @@ a:visited {
 /* Flex utilities */
 .flex-gap-md {
   display: flex;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .flex-col-gap-sm {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 0.3125rem;
 }
 
 .flex-row-wrap-around {
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 0.625rem;
   justify-content: space-around;
 }
 
@@ -8034,21 +8131,21 @@ a:visited {
 .flex-col-gap-md {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .flex-start-center-gap-sm {
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  gap: 5px;
+  gap: 0.3125rem;
 }
 
 .flex-between-center-gap-md {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .flex-between-center {
@@ -8073,13 +8170,13 @@ a:visited {
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
-  gap: 5px;
+  gap: 0.3125rem;
 }
 
 .flex-wrap-start {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 0.625rem;
   justify-content: flex-start;
   align-items: flex-start;
 }
@@ -8088,24 +8185,24 @@ a:visited {
   display: inline-flex;
   justify-content: flex-start;
   align-items: center;
-  gap: 5px;
+  gap: 0.3125rem;
 }
 
 .books-container {
   width: 100%;
-  height: calc(80dvh - 75px);
+  height: calc(80dvh - 4.6875rem);
   position: absolute;
   left: 0;
-  padding: 0px 10px;
+  padding: 0px 0.625rem;
 }
 
 .testament-title {
   font-family: "Satoshi", system-ui, sans-serif;
   font-weight: 700;
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1.1;
-  padding-left: 12px;
-  padding-bottom: 8px;
+  padding-left: 0.75rem;
+  padding-bottom: 0.5rem;
   display: block;
   color: var(--sb-font-color);
 }
@@ -8136,16 +8233,16 @@ a:visited {
   -webkit-appearance: none;
   -moz-appearance: none;
 
-  padding: 8px 32px 8px 14px;
-  font-size: 14px;
-  height: 40px;
+  padding: 0.5rem 2rem 0.5rem 0.875rem;
+  font-size: 0.875rem;
+  height: 2.5rem;
 
   border: 1px solid var(--sb-divider-color);
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%)
     url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")
     no-repeat right 10px center;
-  background-size: 16px;
+  background-size: 1rem;
 
   cursor: pointer;
   outline: none;
@@ -8160,39 +8257,39 @@ a:visited {
 
 .dropdown-select-icon {
   position: absolute;
-  right: 10px;
+  right: 0.625rem;
   pointer-events: none;
-  font-size: 24px;
+  font-size: 1.5rem;
 }
 
 .dropdown-option {
   background: var(--sb-book-selector-background);
   color: var(--sb-font-color);
-  padding: 8px 12px;
+  padding: 0.5rem 0.75rem;
   cursor: pointer;
 }
 
 .searchbar {
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
   border: 1px solid var(--sb-divider-color);
-  padding: 6px 12px;
+  padding: 0.375rem 0.75rem;
   width: 80%;
-  height: 40px;
+  height: 2.5rem;
   overflow: hidden;
   color: var(--sb-font-color);
 }
 
 .search-icon {
-  margin-right: 8px;
+  margin-right: 0.5rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 
 .searchbar input {
   border: none;
   outline: none;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-family: "Satoshi", system-ui, sans-serif;
   background: transparent;
   color: var(--sb-font-color);
@@ -8207,9 +8304,9 @@ a:visited {
    where the input begins and ends. */
 @media only screen and (min-width: 481px) {
   .searchbar {
-    height: 44px;
-    padding: 8px 14px;
-    margin: 6px 0;
+    height: 2.75rem;
+    padding: 0.5rem 0.875rem;
+    margin: 0.375rem 0;
     border: 1.5px solid
       color-mix(in srgb, var(--sb-font-color), transparent 80%);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -8227,12 +8324,12 @@ a:visited {
 
 .share-btn {
   border: none;
-  font-size: 18px;
-  height: 24px;
-  width: 24px;
+  font-size: 1.125rem;
+  height: 1.5rem;
+  width: 1.5rem;
   background: transparent;
-  border-radius: 5px;
-  padding: 3px;
+  border-radius: 0.3125rem;
+  padding: 0.1875rem;
   color: var(--sb-font-color);
   cursor: pointer;
 }
@@ -8244,9 +8341,9 @@ a:visited {
 .custom-translation-header {
   height: fit-content;
   width: 100%;
-  padding: 0px 10px;
-  font-size: 16px;
-  margin-top: 5px;
+  padding: 0px 0.625rem;
+  font-size: 1rem;
+  margin-top: 0.3125rem;
   font-weight: normal;
   color: var(--sb-font-color);
   font-family: "Satoshi";
@@ -8254,12 +8351,12 @@ a:visited {
 
 .custom-translation-container {
   width: 100%;
-  padding: 10px;
+  padding: 0.625rem;
   font-family: "Satoshi";
 }
 
 .custom-tr-api {
-  padding: 5px;
+  padding: 0.3125rem;
   width: 100%;
 }
 
@@ -8270,12 +8367,12 @@ a:visited {
 
 .custom-tr-in {
   width: 100%;
-  height: 40px;
-  border-radius: 5px;
-  padding-right: 80px;
+  height: 2.5rem;
+  border-radius: 0.3125rem;
+  padding-right: 5rem;
   border: none;
-  padding-left: 5px;
-  font-size: 16px;
+  padding-left: 0.3125rem;
+  font-size: 1rem;
   background-color: var(--sb-background);
   color: var(--sb-font-color);
   outline: none;
@@ -8283,10 +8380,10 @@ a:visited {
 
 .import-btn {
   position: absolute;
-  right: 5px;
-  width: 70px;
-  height: 30px;
-  border-radius: 5px;
+  right: 0.3125rem;
+  width: 4.375rem;
+  height: 1.875rem;
+  border-radius: 0.3125rem;
   background-color: var(--sb-primary-color);
   color: var(--sb-font-color);
   border: none;
@@ -8296,31 +8393,31 @@ a:visited {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .sidebar-translation-selector {
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
   border: 1px solid var(--sb-divider-color);
-  padding: 0 8px 0 14px;
-  height: 40px;
-  min-width: 130px;
+  padding: 0 0.5rem 0 0.875rem;
+  height: 2.5rem;
+  min-width: 8.125rem;
   width: auto;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   color: var(--sb-font-color);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .translation-option {
-  margin-bottom: 5px;
+  margin-bottom: 0.3125rem;
   width: 100%;
-  padding: 5px;
-  border-radius: 5px;
+  padding: 0.3125rem;
+  border-radius: 0.3125rem;
   cursor: pointer;
   /* width: 300px; */
 }
@@ -8328,12 +8425,12 @@ a:visited {
 .translation-title {
   width: 25%;
   font-weight: bold;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-family: "Satoshi", system-ui, sans-serif;
 }
 
 .sidebar-selected-title {
-  font-size: 14px;
+  font-size: 0.875rem;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: "Satoshi", system-ui, sans-serif;
@@ -8344,7 +8441,7 @@ a:visited {
 
 .translation-description {
   font-weight: normal;
-  font-size: 14px;
+  font-size: 0.875rem;
   width: 100%;
   font-family: "Satoshi";
 }
@@ -8352,9 +8449,9 @@ a:visited {
 .psalms-btn {
   background-color: var(--sb-secondary-color);
   color: var(--sb-font-color);
-  padding: 10px;
-  border-radius: 5px;
-  font-size: 14px;
+  padding: 0.625rem;
+  border-radius: 0.3125rem;
+  font-size: 0.875rem;
   grid-column: 1 / -1;
   border: none;
   font-family: "Satoshi", system-ui, sans-serif;
@@ -8366,18 +8463,18 @@ a:visited {
   border: none;
   outline: none;
   cursor: pointer;
-  width: 40px;
+  width: 2.5rem;
   aspect-ratio: 1 / 1;
   background-color: color-mix(
     in srgb,
     var(--sb-secondary-color) 50%,
     transparent
   );
-  border-radius: 5px;
+  border-radius: 0.3125rem;
   color: var(--sb-font-color);
   transition: all 0.3s;
   position: relative;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .chapter-btn:hover {
@@ -8401,52 +8498,52 @@ a:visited {
 
 .show-sidebar-chapter {
   display: grid;
-  grid-template-columns: repeat(auto-fit, 40px);
+  grid-template-columns: repeat(auto-fit, 2.5rem);
   justify-content: space-between;
   width: 100%;
   height: fit-content;
-  gap: 10px;
-  row-gap: 13px;
+  gap: 0.625rem;
+  row-gap: 0.8125rem;
   flex-wrap: wrap;
   background-color: var(--sb-background);
-  padding: 8px;
-  border-radius: 5px;
+  padding: 0.5rem;
+  border-radius: 0.3125rem;
 }
 
 .sidebar {
-  width: 1100px;
+  width: 68.75rem;
   background-color: var(--sb-background);
   color: var(--sb-font-color);
-  padding: 10px;
+  padding: 0.625rem;
   transition: all 0.5s;
   scrollbar-width: none;
-  border-top-left-radius: 10px;
-  border-bottom-left-radius: 10px;
-  border-top-right-radius: 10px;
-  border-bottom-right-radius: 10px;
+  border-top-left-radius: 0.625rem;
+  border-bottom-left-radius: 0.625rem;
+  border-top-right-radius: 0.625rem;
+  border-bottom-right-radius: 0.625rem;
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;
   height: 0dvh;
-  bottom: 10px;
+  bottom: 0.625rem;
 }
 
 .testament-selection {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0px 0px 15px 0px;
-  border-radius: 5px;
-  gap: 10px;
+  padding: 0px 0px 0.9375rem 0px;
+  border-radius: 0.3125rem;
+  gap: 0.625rem;
 }
 
 .sidebar-select {
   width: 100%;
   height: fit-content;
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: bold;
-  border-radius: 10px;
+  border-radius: 0.625rem;
   outline: 0px;
   animation: fadeInAnimation2 ease 1s;
   animation-iteration-count: 1;
@@ -8460,20 +8557,20 @@ a:visited {
   overflow-y: auto;
   scrollbar-width: none;
   transition: all 0.3s;
-  height: calc(80dvh - 50px);
+  height: calc(80dvh - 3.125rem);
 }
 
 .sidebar-itm {
-  height: 44px;
-  width: 200px;
-  border-radius: 8px;
+  height: 2.75rem;
+  width: 12.5rem;
+  border-radius: 0.5rem;
   cursor: pointer;
   transition:
     background-color 0.2s ease,
     color 0.2s ease;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 500;
-  padding: 10px 12px;
+  padding: 0.625rem 0.75rem;
   font-family: "Satoshi", system-ui, sans-serif;
   color: var(--sb-font-color);
   text-transform: capitalize;
@@ -8482,13 +8579,13 @@ a:visited {
 .sidebar-itm > span:last-child,
 .sidebar-itm .material-symbols-outlined {
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
-  font-size: 22px;
+  font-size: 1.375rem;
   transition: transform 0.2s ease;
 }
 
 .sidebar-ghost-itm {
-  height: 44px;
-  width: 200px;
+  height: 2.75rem;
+  width: 12.5rem;
   user-select: none;
   opacity: 0;
 }
@@ -8509,7 +8606,7 @@ a:visited {
 
 .sidebar-selected-itm {
   color: var(--sb-primary-color);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   border-bottom-color: transparent;
 }
 
@@ -8520,7 +8617,7 @@ a:visited {
 .open-sideBar {
   opacity: 1;
   height: 80dvh;
-  bottom: 80px;
+  bottom: 5rem;
   box-shadow: 0px 3px 8px var(--sb-detached-pane-toolbar-background);
 }
 
@@ -8544,51 +8641,51 @@ a:visited {
 }
 
 .modal {
-  width: 375px;
+  width: 23.4375rem;
   background: var(--sb-book-selector-background);
-  border-radius: 8px;
+  border-radius: 0.5rem;
   box-shadow: 0 10px 20px var(--sb-detached-pane-toolbar-background);
-  padding: 10px 10px 45px 10px;
+  padding: 0.625rem 0.625rem 2.8125rem 0.625rem;
   z-index: 2;
   position: absolute;
-  top: 70px;
-  left: 20px;
+  top: 4.375rem;
+  left: 1.25rem;
 }
 
 .translationSettingsModal {
-  left: 185px;
-  top: 100px;
-  width: 200px;
+  left: 11.5625rem;
+  top: 6.25rem;
+  width: 12.5rem;
   z-index: 1000;
-  padding: 5px;
-  border-radius: 5px;
+  padding: 0.3125rem;
+  border-radius: 0.3125rem;
 }
 
 .translationInfoModal {
   position: absolute;
   width: fit-content;
-  max-width: 350px;
+  max-width: 21.875rem;
   z-index: 1000;
-  padding: 5px;
-  border-radius: 5px;
+  padding: 0.3125rem;
+  border-radius: 0.3125rem;
   word-wrap: break-word;
   overflow-wrap: break-word;
 }
 
 .filters-icon {
-  height: 30px;
-  width: 30px;
+  height: 1.875rem;
+  width: 1.875rem;
   background: var(--sb-background);
-  border-radius: 5px;
-  padding: 2px;
+  border-radius: 0.3125rem;
+  padding: 0.125rem;
   cursor: pointer;
 }
 
 .emptyCircle {
   display: inline-block;
   border: 2px solid transparent;
-  height: 15px;
-  width: 15px;
+  height: 0.9375rem;
+  width: 0.9375rem;
   border-radius: 50%;
 }
 
@@ -8597,16 +8694,16 @@ a:visited {
 }
 
 .language-list {
-  height: 300px;
+  height: 18.75rem;
   overflow-y: auto;
   scrollbar-width: none;
   font-family: "Satoshi";
 }
 
 .item {
-  padding: 5px 10px;
+  padding: 0.3125rem 0.625rem;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 0.375rem;
 }
 
 .item:hover {
@@ -8621,7 +8718,7 @@ a:visited {
 }
 
 .footer {
-  padding: 10px;
+  padding: 0.625rem;
   text-align: center;
   color: #ff5722;
   font-weight: 500;
@@ -8633,23 +8730,23 @@ a:visited {
   bottom: 0;
   height: fit-content;
   background-color: var(--sb-book-selector-background);
-  border-bottom-right-radius: 10px;
-  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 0.625rem;
+  border-bottom-left-radius: 0.625rem;
 }
 
 .sb-lg-centered {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
   text-align: center;
 }
 
 .sb-lg-expandButton {
   display: flex;
   background: var(--sb-primary-color);
-  padding: 5px;
-  border-radius: 5px;
+  padding: 0.3125rem;
+  border-radius: 0.3125rem;
   border: none;
   outline: none;
   color: var(--sb-font-color);
@@ -8666,18 +8763,18 @@ a:visited {
 
 @media only screen and (max-width: 1200px) {
   .sidebar {
-    width: 650px;
+    width: 40.625rem;
   }
 
   .show-sidebar-chapter {
-    grid-template-columns: repeat(auto-fit, 38px);
+    grid-template-columns: repeat(auto-fit, 2.375rem);
   }
 
   .separator {
-    width: 2px;
+    width: 0.125rem;
     height: 100%;
     position: absolute;
-    left: calc(66.66% - 5px);
+    left: calc(66.66% - 0.3125rem);
   }
 
   .searchbar {
@@ -8696,23 +8793,23 @@ a:visited {
   }
 
   .sidebar-translation-selector {
-    width: 90px;
+    width: 5.625rem;
   }
 
   .testament-selection {
-    padding: 5px 15px;
+    padding: 0.3125rem 0.9375rem;
   }
 
   .sidebar-selected-title {
-    font-size: 16px;
+    font-size: 1rem;
     font-weight: bold;
   }
 
   .sidebar {
     transition: all 0.5s;
     height: 80dvh;
-    padding-bottom: 40px;
-    width: 330px;
+    padding-bottom: 2.5rem;
+    width: 20.625rem;
   }
 
   .sidebar-results {
@@ -8720,7 +8817,7 @@ a:visited {
   }
 
   .books-container {
-    height: calc(100dvh - 80px);
+    height: calc(100dvh - 5rem);
     flex-direction: column;
     overflow: auto;
   }
@@ -8746,20 +8843,20 @@ a:visited {
   }
 
   .sidebar.experience_id-3 {
-    width: calc(100vw - 40px);
+    width: calc(100vw - 2.5rem);
     height: 80dvh;
   }
 
   .sidebar.experience_id-3.close-sideBar {
     height: 45dvh;
-    width: 200px;
+    width: 12.5rem;
   }
 
   .open-sideBar {
     right: 0;
     opacity: 1;
-    bottom: 45px;
-    height: calc(100dvh - 70px);
+    bottom: 2.8125rem;
+    height: calc(100dvh - 4.375rem);
     width: 100dvw;
     border-radius: 0px;
     box-shadow: none;
@@ -8767,7 +8864,7 @@ a:visited {
   }
 
   .close-sideBar {
-    right: -200px;
+    right: -12.5rem;
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -8775,19 +8872,19 @@ a:visited {
 
   .sidebar-itm {
     width: 100%;
-    font-size: 16px;
+    font-size: 1rem;
   }
 
   .chapter-btn {
-    width: calc(20% - 10px);
+    width: calc(20% - 0.625rem);
   }
 
   .show-sidebar-chapter {
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    column-gap: 12px;
-    row-gap: 13px;
+    column-gap: 0.75rem;
+    row-gap: 0.8125rem;
     height: fit-content;
     justify-content: flex-start;
     background: transparent;
@@ -8799,16 +8896,16 @@ a:visited {
   }
 
   .psalms-btn {
-    width: 164px;
+    width: 10.25rem;
   }
 
   .sidebar-select {
-    font-size: 18px;
+    font-size: 1.125rem;
     padding-left: 0px;
   }
 
   .show-sidebar-chapter {
-    margin-top: -10px;
+    margin-top: -0.625rem;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
     width: 100%;
@@ -8823,43 +8920,43 @@ a:visited {
 
   .separator {
     width: 100%;
-    height: 2px;
+    height: 0.125rem;
     position: relative;
     left: 0px;
     margin-right: 0px;
-    margin-top: 10px;
+    margin-top: 0.625rem;
     display: block;
   }
 
   .modal {
     width: 100%;
     left: 0;
-    top: 5px;
-    height: calc(100% - 50px);
+    top: 0.3125rem;
+    height: calc(100% - 3.125rem);
     border-radius: 0;
     box-shadow: none;
   }
 
   .translationSettingsModal {
-    top: 55px;
-    padding: 0px 10px;
+    top: 3.4375rem;
+    padding: 0px 0.625rem;
     height: fit-content;
-    width: 200px;
+    width: 12.5rem;
     left: auto;
-    right: 40px;
+    right: 2.5rem;
     box-shadow: 0 5px 10px
       color-mix(
         in srgb,
         var(--sb-detached-pane-toolbar-background) 15%,
         transparent
       );
-    border-radius: 5px;
+    border-radius: 0.3125rem;
   }
 
   .translationInfoModal {
-    width: 250px;
+    width: 15.625rem;
     height: fit-content;
-    border-radius: 5px;
+    border-radius: 0.3125rem;
     box-shadow: 0 5px 10px
       color-mix(
         in srgb,
@@ -8869,11 +8966,11 @@ a:visited {
   }
 
   .language-list {
-    height: calc(100% - 20px);
+    height: calc(100% - 1.25rem);
   }
 
   .footer {
-    bottom: -45px;
+    bottom: -2.8125rem;
   }
 
   .sb-select-modal-overlay {
@@ -8892,19 +8989,19 @@ a:visited {
     width: 100%;
     height: fit-content;
     background: var(--sb-book-selector-background);
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    border-top-left-radius: 0.625rem;
+    border-top-right-radius: 0.625rem;
     box-shadow: 0 -5px 10px
       color-mix(
         in srgb,
         var(--sb-detached-pane-toolbar-background) 15%,
         transparent
       );
-    padding: 20px 10px;
+    padding: 1.25rem 0.625rem;
   }
 
   .sb-select-modal-content {
-    padding: 10px 24px 30px 24px;
+    padding: 0.625rem 1.5rem 1.875rem 1.5rem;
     /* height: 100%; */
     overflow-y: auto;
     display: flex;
@@ -8914,22 +9011,22 @@ a:visited {
 
   .sb-select-modal-title-icon {
     display: flex;
-    font-size: 22px;
+    font-size: 1.375rem;
     color: var(--sb-primary-color);
     /* padding: 10px; */
-    border-radius: 5px;
+    border-radius: 0.3125rem;
     background: var(--sb-tertiary-color);
-    width: 45px;
-    height: 45px;
+    width: 2.8125rem;
+    height: 2.8125rem;
     justify-content: center;
     align-items: center;
   }
 
   .sb-select-modal-title {
-    font-size: 24px;
+    font-size: 1.5rem;
     font-weight: 500;
     color: var(--sb-font-color);
-    margin-left: 10px;
+    margin-left: 0.625rem;
     text-align: center;
   }
 
@@ -8937,16 +9034,16 @@ a:visited {
     width: 100%;
     display: flex;
     justify-content: center;
-    gap: 10px;
+    gap: 0.625rem;
   }
 
   .sb-select-modal-action-btn {
     border: none;
-    padding: 10px;
-    border-radius: 5px;
+    padding: 0.625rem;
+    border-radius: 0.3125rem;
     width: 40%;
     justify-content: center;
-    gap: 10px;
+    gap: 0.625rem;
     font-weight: 500;
   }
 }
@@ -8971,7 +9068,7 @@ a:visited {
   z-index: 98;
   background: var(--sb-reader-toolbar-background);
   border: 1px solid var(--sb-divider-color);
-  border-radius: 14px;
+  border-radius: 0.875rem;
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
   color: var(--sb-font-color);
   font-family: var(--sb-font-family);
@@ -8991,32 +9088,32 @@ a:visited {
 }
 
 .sb-floating-search-panel {
-  bottom: 100px;
-  width: min(620px, calc(100vw - 32px));
-  padding: 10px 14px;
+  bottom: 6.25rem;
+  width: min(38.75rem, calc(100vw - 2rem));
+  padding: 0.625rem 0.875rem;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-height: min(560px, calc(100vh - 200px));
+  gap: 0.625rem;
+  max-height: min(35rem, calc(100vh - 12.5rem));
 }
 
 .sb-floating-search-panel-expanded {
-  padding-bottom: 12px;
+  padding-bottom: 0.75rem;
 }
 
 .sb-floating-search-input-wrap {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 6px 10px;
-  border-radius: 10px;
+  gap: 0.625rem;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.625rem;
   background: var(--sb-reader-background);
   flex-shrink: 0;
 }
 
 .sb-floating-search-icon {
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
-  font-size: 22px;
+  font-size: 1.375rem;
 }
 
 .sb-floating-search-input {
@@ -9027,8 +9124,8 @@ a:visited {
   color: var(--sb-font-color);
   font: inherit;
   outline: none;
-  font-size: 15px;
-  padding: 6px 0;
+  font-size: 0.9375rem;
+  padding: 0.375rem 0;
 }
 
 .sb-floating-search-input::placeholder {
@@ -9039,11 +9136,11 @@ a:visited {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 1.625rem;
+  height: 1.625rem;
   padding: 0;
   border: none;
-  border-radius: 999px;
+  border-radius: 62.4375rem;
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
   cursor: pointer;
@@ -9058,7 +9155,7 @@ a:visited {
 }
 
 .sb-floating-search-clear .material-symbols-outlined {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 .sb-floating-search-results {
@@ -9070,8 +9167,8 @@ a:visited {
 }
 
 .sb-floating-search-status {
-  padding: 14px 12px;
-  font-size: 14px;
+  padding: 0.875rem 0.75rem;
+  font-size: 0.875rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
 }
 
@@ -9082,16 +9179,16 @@ a:visited {
 .sb-floating-search-results-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .sb-floating-search-result {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px 14px;
+  gap: 0.5rem;
+  padding: 0.75rem 0.875rem;
   border: 1px solid var(--sb-divider-color);
-  border-radius: 12px;
+  border-radius: 0.75rem;
   background: var(--sb-reader-background);
   color: inherit;
   cursor: pointer;
@@ -9111,8 +9208,8 @@ a:visited {
 .sb-floating-search-result-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  gap: 0.5rem;
+  font-size: 0.875rem;
 }
 
 .sb-floating-search-result-ref {
@@ -9122,7 +9219,7 @@ a:visited {
 
 .sb-floating-search-result-sep {
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
-  font-size: 11px;
+  font-size: 0.6875rem;
   line-height: 1;
 }
 
@@ -9138,9 +9235,9 @@ a:visited {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.375rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
   cursor: pointer;
   opacity: 0;
@@ -9168,7 +9265,7 @@ a:visited {
 
 .sb-floating-search-result-text {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.5;
   color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
 }
@@ -9177,15 +9274,15 @@ a:visited {
 
 .sb-floating-chat-panel {
   inset-inline-start: auto;
-  inset-inline-end: 16px;
+  inset-inline-end: 1rem;
   transform: none;
-  bottom: 8px;
-  width: min(320px, calc(100vw - 32px));
-  min-height: 400px;
+  bottom: 0.5rem;
+  width: min(20rem, calc(100vw - 2rem));
+  min-height: 25rem;
   padding: 0;
   display: flex;
   flex-direction: column;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   animation: sb-floating-chat-panel-rise 0.18s ease-out;
 }
 
@@ -9203,17 +9300,17 @@ a:visited {
 .sb-floating-chat-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 26px;
-  padding: 12px;
+  gap: 0.625rem;
+  min-height: 1.625rem;
+  padding: 0.75rem;
   border-bottom: 1px solid var(--sb-divider-color);
 }
 
 .sb-floating-chat-header-back {
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
   border: none;
-  border-radius: 8px;
+  border-radius: 0.5rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -9235,7 +9332,7 @@ a:visited {
   margin: 0;
   min-width: 0;
   flex: 1;
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.3;
   font-weight: 700;
   color: var(--sb-font-color);
@@ -9258,20 +9355,20 @@ a:visited {
     left: 0;
     right: 0;
     top: auto;
-    bottom: 72px;
+    bottom: 4.5rem;
     transform: none;
     width: 100%;
     max-width: 100%;
     max-height: calc(
-      100svh - 72px - env(safe-area-inset-top, 0px) -
-        env(safe-area-inset-bottom, 0px) - 12px
+      100svh - 4.5rem - env(safe-area-inset-top, 0px) -
+        env(safe-area-inset-bottom, 0px) - 0.75rem
     );
     border-radius: 0;
     border: none;
     box-shadow: none;
-    padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 14px;
+    padding: calc(env(safe-area-inset-top, 0px) + 0.875rem) 1rem 0.875rem;
     background: transparent;
-    gap: 14px;
+    gap: 0.875rem;
     animation: none;
     /* Empty areas of the sheet let taps fall through to the reader; the input
        row and results below re-enable pointer events. */
@@ -9281,26 +9378,26 @@ a:visited {
 
 .sb-floating-chat-header-members-button-icon {
   display: inline-flex;
-  gap: 4px;
+  gap: 0.25rem;
   align-items: center;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .sb-floating-chat-members-menu {
-  min-width: 220px;
+  min-width: 13.75rem;
 }
 
 .sb-floating-chat-members-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   color: var(--sb-menu-font-color);
 }
 
 .sb-floating-chat-members-avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 62.4375rem;
   object-fit: cover;
   flex: 0 0 auto;
 }
@@ -9311,7 +9408,7 @@ a:visited {
   justify-content: center;
   background: color-mix(in srgb, var(--sb-font-color), transparent 87%);
   color: color-mix(in srgb, var(--sb-font-color), transparent 14%);
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -9327,16 +9424,16 @@ a:visited {
 .sb-floating-chat-list {
   display: flex;
   flex-direction: column;
-  max-height: 360px;
+  max-height: 22.5rem;
   overflow: auto;
-  padding: 4px;
+  padding: 0.25rem;
   flex: 1 1 auto;
 }
 
 .sb-floating-chat-list-shell {
   position: relative;
-  padding-top: 4px;
-  padding-bottom: 4px;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
   flex: 1 1 auto;
   display: flex;
   flex-direction: column;
@@ -9344,14 +9441,14 @@ a:visited {
 
 .sb-floating-chat-list-create-anchor {
   position: absolute;
-  right: 14px;
-  bottom: 14px;
+  right: 0.875rem;
+  bottom: 0.875rem;
 }
 
 .sb-floating-chat-list-create-button {
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: 62.4375rem;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
   background: var(--sb-primary-color);
   color: #fff;
@@ -9366,7 +9463,7 @@ a:visited {
 }
 
 .sb-floating-chat-list-create-menu {
-  min-width: 220px;
+  min-width: 13.75rem;
   bottom: 0;
 }
 
@@ -9382,9 +9479,9 @@ a:visited {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
   text-align: left;
-  padding: 10px 18px;
+  padding: 0.625rem 1.125rem;
   cursor: pointer;
   transition:
     background-color 0.15s ease,
@@ -9405,7 +9502,7 @@ a:visited {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 /* --- Avatar clusters in chat list --- */
@@ -9421,63 +9518,63 @@ a:visited {
 
 /* Single avatar */
 .sb-chat-list-avatar-cluster-1 {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .sb-chat-list-avatar-cluster-1 .sb-tab-user-icon {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
 }
 
 .sb-chat-list-avatar-cluster-1
   .sb-tab-user-icon-animal
   .material-symbols-outlined {
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 
 /* Two avatars: side by side, first overlaps second */
 .sb-chat-list-avatar-cluster-2 {
-  width: 46px;
-  height: 28px;
+  width: 2.875rem;
+  height: 1.75rem;
   display: flex;
   align-items: center;
 }
 
 .sb-chat-list-avatar-cluster-2 .sb-tab-user-icon {
-  width: 28px;
-  height: 28px;
+  width: 1.75rem;
+  height: 1.75rem;
 }
 
 .sb-chat-list-avatar-cluster-2
   .sb-tab-user-icon-animal
   .material-symbols-outlined {
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .sb-chat-list-avatar-cluster-2 .sb-tab-user-icon + .sb-tab-user-icon {
-  margin-left: -10px;
+  margin-left: -0.625rem;
 }
 
 /* Three avatars: triangle (one top-center, two bottom) */
 .sb-chat-list-avatar-cluster-3 {
-  width: 38px;
-  height: 32px;
+  width: 2.375rem;
+  height: 2rem;
 }
 
 .sb-chat-list-avatar-cluster-3 .sb-tab-user-icon {
   position: absolute;
-  width: 20px;
-  height: 20px;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .sb-chat-list-avatar-cluster-3
   .sb-tab-user-icon-animal
   .material-symbols-outlined {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .sb-chat-list-avatar-cluster-3 .sb-tab-user-icon:nth-child(1) {
@@ -9498,23 +9595,23 @@ a:visited {
 
 /* Four items: 2×2 grid with overflow badge in the 4th cell */
 .sb-chat-list-avatar-cluster-4 {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
   display: grid;
-  grid-template-columns: 17px 17px;
-  grid-template-rows: 17px 17px;
-  gap: 2px;
+  grid-template-columns: 1.0625rem 1.0625rem;
+  grid-template-rows: 1.0625rem 1.0625rem;
+  gap: 0.125rem;
 }
 
 .sb-chat-list-avatar-cluster-4 .sb-tab-user-icon {
-  width: 17px;
-  height: 17px;
+  width: 1.0625rem;
+  height: 1.0625rem;
 }
 
 .sb-chat-list-avatar-cluster-4
   .sb-tab-user-icon-animal
   .material-symbols-outlined {
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .sb-chat-list-avatar-overflow {
@@ -9522,7 +9619,7 @@ a:visited {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  font-size: 9px;
+  font-size: 0.5625rem;
   font-weight: 600;
   background: color-mix(in srgb, var(--sb-font-color), transparent 80%);
   color: color-mix(in srgb, var(--sb-font-color), transparent 10%);
@@ -9530,20 +9627,20 @@ a:visited {
 }
 
 .sb-chat-list-avatar-cluster-4 .sb-chat-list-avatar-overflow {
-  width: 17px;
-  height: 17px;
+  width: 1.0625rem;
+  height: 1.0625rem;
 }
 
 .sb-floating-chat-list-item-header {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.625rem;
 }
 
 .sb-floating-chat-list-item-title {
   flex: 1;
   min-width: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--sb-font-color);
   white-space: nowrap;
@@ -9554,24 +9651,24 @@ a:visited {
 .sb-floating-chat-list-item-meta {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   flex-shrink: 0;
 }
 
 .sb-floating-chat-list-item-time {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
 .sb-floating-chat-list-item-unread {
-  min-width: 20px;
-  height: 20px;
-  border-radius: 999px;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 62.4375rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 6px;
-  font-size: 11px;
+  padding: 0 0.375rem;
+  font-size: 0.6875rem;
   font-weight: 700;
   color: #fff;
   background: var(--sb-primary-color);
@@ -9579,7 +9676,7 @@ a:visited {
 
 .sb-floating-chat-list-item-preview {
   margin: 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.45;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
   white-space: nowrap;
@@ -9590,27 +9687,27 @@ a:visited {
 .sb-chat-view {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  min-height: 220px;
+  gap: 0.75rem;
+  min-height: 13.75rem;
   flex: 1 1 auto;
 }
 
 .sb-chat-view-messages {
   flex: 1;
   min-height: 0;
-  max-height: 280px;
+  max-height: 17.5rem;
   overflow: auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: 0.625rem;
+  padding: 0.75rem 0.875rem;
 
   .sb-chat-view-message-avatar-shell > .sb-tab-user-icon {
-    width: 30px;
-    height: 30px;
+    width: 1.875rem;
+    height: 1.875rem;
 
     > .material-symbols-outlined {
-      font-size: 15px;
+      font-size: 0.9375rem;
     }
   }
 }
@@ -9621,26 +9718,26 @@ a:visited {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 0.625rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
 }
 
 .sb-chat-view-empty-icon {
-  width: 36px;
-  height: 36px;
+  width: 2.25rem;
+  height: 2.25rem;
 }
 
 .sb-chat-view-empty-title {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .sb-chat-view-presence {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 6px;
-  margin-top: 4px;
+  gap: 0.375rem;
+  margin-top: 0.25rem;
 }
 
 .sb-chat-view-presence-avatars {
@@ -9649,55 +9746,55 @@ a:visited {
 }
 
 .sb-chat-view-presence-avatars .sb-tab-user-icon {
-  width: 26px;
-  height: 26px;
+  width: 1.625rem;
+  height: 1.625rem;
   box-shadow: 0 0 0 2px var(--sb-reader-toolbar-background, #fff);
 }
 
 .sb-chat-view-presence-avatars
   .sb-tab-user-icon-animal
   .material-symbols-outlined {
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 
 .sb-chat-view-presence-avatars[data-count="2"]
   .sb-tab-user-icon
   + .sb-tab-user-icon {
-  margin-left: -6px;
+  margin-left: -0.375rem;
 }
 
 .sb-chat-view-presence-avatars[data-count="3"]
   .sb-tab-user-icon
   + .sb-tab-user-icon {
-  margin-left: -9px;
+  margin-left: -0.5625rem;
 }
 
 .sb-chat-view-presence-avatars[data-count="4"]
   .sb-tab-user-icon
   + .sb-tab-user-icon {
-  margin-left: -12px;
+  margin-left: -0.75rem;
 }
 
 .sb-chat-view-presence-avatars[data-count="5"]
   .sb-tab-user-icon
   + .sb-tab-user-icon,
 .sb-chat-view-presence-avatars.overflow .sb-tab-user-icon + .sb-tab-user-icon {
-  margin-left: -14px;
+  margin-left: -0.875rem;
 }
 
 .sb-chat-view-presence-label {
   margin: 0;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 
 .sb-chat-view-presence-overflow {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 1.625rem;
+  height: 1.625rem;
   border-radius: 50%;
-  font-size: 10px;
+  font-size: 0.625rem;
   font-weight: 600;
   background: color-mix(in srgb, var(--sb-font-color), transparent 80%);
   color: color-mix(in srgb, var(--sb-font-color), transparent 10%);
@@ -9712,7 +9809,7 @@ a:visited {
 .sb-chat-view-message-group-row {
   display: flex;
   align-items: flex-end;
-  gap: 4px;
+  gap: 0.25rem;
   flex-direction: row-reverse;
 }
 
@@ -9721,9 +9818,9 @@ a:visited {
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  padding: 8px;
-  font-size: 10px;
+  gap: 0.375rem;
+  padding: 0.5rem;
+  font-size: 0.625rem;
   text-align: center;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
@@ -9732,12 +9829,12 @@ a:visited {
   display: flex;
 
   > .sb-tab-user-icon {
-    width: 14px;
-    height: 14px;
-    margin-inline-start: -6px;
+    width: 0.875rem;
+    height: 0.875rem;
+    margin-inline-start: -0.375rem;
 
     > .material-symbols-outlined {
-      font-size: 10px;
+      font-size: 0.625rem;
     }
   }
 }
@@ -9747,7 +9844,7 @@ a:visited {
 }
 
 .sb-chat-view-event .relative-date-time {
-  font-size: 11px;
+  font-size: 0.6875rem;
 }
 
 .sb-chat-view-message-group.is-self > .sb-chat-view-message-group-row {
@@ -9761,7 +9858,7 @@ a:visited {
 .sb-chat-view-message-bubbles {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 0.125rem;
   min-width: 0;
 }
 
@@ -9769,9 +9866,9 @@ a:visited {
   width: fit-content;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  border-radius: 16px;
-  padding: 8px 14px;
+  gap: 0.25rem;
+  border-radius: 1rem;
+  padding: 0.5rem 0.875rem;
   background: color-mix(
     in srgb,
     var(--sb-background, #fff),
@@ -9784,9 +9881,9 @@ a:visited {
 }
 
 img.sb-chat-view-message-avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 999px;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 62.4375rem;
   object-fit: cover;
   display: inline-flex;
   align-items: center;
@@ -9796,7 +9893,7 @@ img.sb-chat-view-message-avatar {
 .sb-chat-view-message-avatar-fallback {
   background: color-mix(in srgb, var(--sb-font-color), transparent 87%);
   color: color-mix(in srgb, var(--sb-font-color), transparent 14%);
-  font-size: 11px;
+  font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
@@ -9812,25 +9909,25 @@ img.sb-chat-view-message-avatar {
 .sb-chat-view-message-header {
   display: flex;
   align-items: center;
-  margin-bottom: 4px;
-  gap: 8px;
+  margin-bottom: 0.25rem;
+  gap: 0.5rem;
 }
 
 .sb-chat-view-message-author {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 500;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
 }
 
 .sb-chat-view-message-timestamp {
-  font-size: 11px;
+  font-size: 0.6875rem;
   align-self: flex-end;
   color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
 }
 
 .sb-chat-view-message-body {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.4;
   color: var(--sb-font-color);
   white-space: pre-wrap;
@@ -9839,7 +9936,7 @@ img.sb-chat-view-message-avatar {
 
 .sb-chat-view-compose {
   display: flex;
-  gap: 8px;
+  gap: 0.5rem;
   align-items: center;
 }
 
@@ -9847,28 +9944,28 @@ img.sb-chat-view-message-avatar {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 10px;
+  gap: 0.5rem;
+  padding: 0.625rem;
 }
 
 .sb-chat-view-typing-indicator {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  min-height: 20px;
-  font-size: 12px;
+  gap: 0.5rem;
+  min-height: 1.25rem;
+  font-size: 0.75rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 28%);
 }
 
 .sb-chat-view-typing-dots {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
 }
 
 .sb-chat-view-typing-dot {
-  width: 5px;
-  height: 5px;
+  width: 0.3125rem;
+  height: 0.3125rem;
   border-radius: 50%;
   background: color-mix(in srgb, var(--sb-font-color), transparent 38%);
   animation: sb-chat-typing-dot-bounce 1.1s ease-in-out infinite;
@@ -9907,11 +10004,11 @@ img.sb-chat-view-message-avatar {
 .sb-chat-view-mention-picker {
   position: absolute;
   left: 0;
-  right: 46px;
-  bottom: calc(100% + 8px);
+  right: 2.875rem;
+  bottom: calc(100% + 0.5rem);
   z-index: 20;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
-  border-radius: 12px;
+  border-radius: 0.75rem;
   background: color-mix(in srgb, var(--sb-background, #fff), transparent 1%);
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
   overflow: hidden;
@@ -9919,8 +10016,8 @@ img.sb-chat-view-message-avatar {
 
 .sb-chat-view-mention-picker-title {
   margin: 0;
-  padding: 10px 12px 8px;
-  font-size: 11px;
+  padding: 0.625rem 0.75rem 0.5rem;
+  font-size: 0.6875rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 700;
@@ -9932,13 +10029,13 @@ img.sb-chat-view-message-avatar {
 .sb-chat-view-mention-picker-list {
   display: flex;
   flex-direction: column;
-  max-height: 220px;
+  max-height: 13.75rem;
   overflow: auto;
 }
 
 .sb-chat-view-mention-picker-empty {
-  padding: 10px 12px 12px;
-  font-size: 13px;
+  padding: 0.625rem 0.75rem 0.75rem;
+  font-size: 0.8125rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 36%);
 }
 
@@ -9946,12 +10043,12 @@ img.sb-chat-view-message-avatar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 0.625rem;
   width: 100%;
   border: 0;
   background: transparent;
   color: var(--sb-font-color);
-  padding: 10px 12px;
+  padding: 0.625rem 0.75rem;
   text-align: left;
   cursor: pointer;
 }
@@ -9962,7 +10059,7 @@ img.sb-chat-view-message-avatar {
 }
 
 .sb-chat-view-mention-picker-name {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
   min-width: 0;
   overflow: hidden;
@@ -9972,7 +10069,7 @@ img.sb-chat-view-message-avatar {
 
 .sb-chat-view-mention-picker-meta {
   flex: 0 0 auto;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 42%);
   white-space: nowrap;
 }
@@ -9981,11 +10078,11 @@ img.sb-chat-view-message-avatar {
   flex: 1;
   min-width: 0;
   border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 78%);
-  border-radius: 10px;
+  border-radius: 0.625rem;
   background: color-mix(in srgb, var(--sb-background, #fff), transparent 5%);
   color: var(--sb-font-color);
-  padding: 10px 12px;
-  font-size: 14px;
+  padding: 0.625rem 0.75rem;
+  font-size: 0.875rem;
   line-height: 1.2;
 }
 
@@ -9996,9 +10093,9 @@ img.sb-chat-view-message-avatar {
 
 .sb-chat-view-send {
   border: none;
-  border-radius: 10px;
-  width: 38px;
-  height: 38px;
+  border-radius: 0.625rem;
+  width: 2.375rem;
+  height: 2.375rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -10018,7 +10115,7 @@ img.sb-chat-view-message-avatar {
 
 .sb-chat-view-error {
   margin: 0;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: #b84747;
 }
 
@@ -10028,27 +10125,27 @@ img.sb-chat-view-message-avatar {
   align-items: center;
   justify-content: center;
   text-align: center;
-  gap: 8px;
-  padding: 20px 16px 56px;
+  gap: 0.5rem;
+  padding: 1.25rem 1rem 3.5rem;
   flex: 1 1 auto;
 }
 
 .sb-floating-chat-empty-icon {
-  font-size: 36px;
+  font-size: 2.25rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
-  margin-bottom: 4px;
+  margin-bottom: 0.25rem;
 }
 
 .sb-floating-chat-empty-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--sb-font-color);
 }
 
 .sb-floating-chat-empty-body {
   margin: 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
   color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
@@ -10057,7 +10154,7 @@ img.sb-chat-view-message-avatar {
   .sb-floating-chat-panel {
     left: 50%;
     right: auto;
-    bottom: 100px;
+    bottom: 6.25rem;
     transform: translateX(-50%);
     animation: sb-floating-panel-rise 0.18s ease-out;
   }
@@ -10077,20 +10174,20 @@ img.sb-chat-view-message-avatar {
     left: 0;
     right: 0;
     top: auto;
-    bottom: 72px;
+    bottom: 4.5rem;
     transform: none;
     width: 100%;
     max-width: 100%;
     max-height: calc(
-      100svh - 72px - env(safe-area-inset-top, 0px) -
-        env(safe-area-inset-bottom, 0px) - 12px
+      100svh - 4.5rem - env(safe-area-inset-top, 0px) -
+        env(safe-area-inset-bottom, 0px) - 0.75rem
     );
     border-radius: 0;
     border: none;
     box-shadow: none;
-    padding: calc(env(safe-area-inset-top, 0px) + 14px) 16px 14px;
+    padding: calc(env(safe-area-inset-top, 0px) + 0.875rem) 1rem 0.875rem;
     background: transparent;
-    gap: 14px;
+    gap: 0.875rem;
     animation: none;
     /* Empty areas of the sheet let taps fall through to the reader; the input
        row and results below re-enable pointer events. */
@@ -10128,7 +10225,7 @@ img.sb-chat-view-message-avatar {
     left: 50%;
     right: auto;
     transform: translateX(-50%);
-    bottom: 120px;
+    bottom: 7.5rem;
     width: 100%;
     animation: sb-floating-panel-rise 0.18s ease-out;
     border-radius: 0;
@@ -10148,15 +10245,15 @@ img.sb-chat-view-message-avatar {
 /* Login modal -------------------------------------------------------------- */
 
 .sb-login-modal {
-  width: min(420px, 100%);
-  max-height: min(640px, calc(100dvh - 32px));
+  width: min(26.25rem, 100%);
+  max-height: min(40rem, calc(100dvh - 2rem));
 }
 
 .sb-login-modal-body {
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  padding: 8px 12px;
+  gap: 1.25rem;
+  padding: 0.5rem 0.75rem;
   overflow: auto;
 }
 
@@ -10165,14 +10262,14 @@ img.sb-chat-view-message-avatar {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-login-logo {
-  height: 40px;
+  height: 2.5rem;
   width: auto;
   object-fit: contain;
-  margin-bottom: 8px;
+  margin-bottom: 0.5rem;
 }
 
 .sb-login-title {
@@ -10185,7 +10282,7 @@ img.sb-chat-view-message-avatar {
 
 .sb-login-subtitle {
   margin: 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.5;
   color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
 }
@@ -10193,17 +10290,17 @@ img.sb-chat-view-message-avatar {
 .sb-login-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1rem;
 }
 
 .sb-login-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.375rem;
 }
 
 .sb-login-label {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
 }
@@ -10211,8 +10308,8 @@ img.sb-chat-view-message-avatar {
 .sb-login-terms {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  font-size: 14px;
+  gap: 0.625rem;
+  font-size: 0.875rem;
   line-height: 1.4;
   color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
   cursor: pointer;
@@ -10220,8 +10317,8 @@ img.sb-chat-view-message-avatar {
 
 .sb-login-terms-checkbox {
   margin: 0;
-  width: 18px;
-  height: 18px;
+  width: 1.125rem;
+  height: 1.125rem;
   flex-shrink: 0;
   accent-color: var(--sb-primary-color);
   cursor: pointer;
@@ -10245,8 +10342,8 @@ img.sb-chat-view-message-avatar {
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  font-size: 13px;
+  gap: 1rem;
+  font-size: 0.8125rem;
 }
 
 .sb-login-legal .sb-login-link {
@@ -10261,7 +10358,7 @@ img.sb-chat-view-message-avatar {
 /* Terms of service modal --------------------------------------------------- */
 
 .sb-tos-content {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .sb-tos-content h1,
@@ -10288,7 +10385,7 @@ img.sb-chat-view-message-avatar {
 
 .sb-login-error {
   margin: 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.4;
   color: #dc2626;
 }
@@ -10296,17 +10393,17 @@ img.sb-chat-view-message-avatar {
 .sb-login-actions {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 .sb-login-submit {
   border: none;
-  border-radius: 8px;
-  padding: 12px 16px;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
@@ -10327,11 +10424,11 @@ img.sb-chat-view-message-avatar {
 
 .sb-login-secondary {
   border: none;
-  border-radius: 8px;
-  padding: 10px 16px;
+  border-radius: 0.5rem;
+  padding: 0.625rem 1rem;
   background: transparent;
   color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   font-family: inherit;
   cursor: pointer;
@@ -10353,9 +10450,9 @@ img.sb-chat-view-message-avatar {
   border: none;
   background: transparent;
   padding: 0;
-  margin-top: 4px;
+  margin-top: 0.25rem;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   cursor: pointer;
 }
 
@@ -10368,7 +10465,7 @@ img.sb-chat-view-message-avatar {
 .sb-login-code-row {
   display: flex;
   align-items: stretch;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .sb-login-code-input {
@@ -10379,14 +10476,14 @@ img.sb-chat-view-message-avatar {
 .sb-login-resend {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
   flex-shrink: 0;
   border: none;
   background: transparent;
-  padding: 0 8px;
+  padding: 0 0.5rem;
   color: var(--sb-primary-color);
   font-family: inherit;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
@@ -10403,7 +10500,7 @@ img.sb-chat-view-message-avatar {
 }
 
 .sb-login-resend-icon {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 /* Side-by-side Cancel / Confirm buttons on the code step. */
@@ -10432,7 +10529,7 @@ img.sb-chat-view-message-avatar {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 0.625rem;
   background:
     radial-gradient(
       circle at 30% 20%,
@@ -10448,17 +10545,17 @@ img.sb-chat-view-message-avatar {
 }
 
 .sb-grid-portal-pane-badge {
-  padding: 4px 10px;
-  border-radius: 999px;
+  padding: 0.25rem 0.625rem;
+  border-radius: 62.4375rem;
   border: 1px solid color-mix(in srgb, var(--sb-primary-color), transparent 45%);
-  font-size: 12px;
+  font-size: 0.75rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 700;
 }
 
 .sb-grid-portal-pane-name {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 700;
   color: color-mix(in srgb, var(--sb-font-color), transparent 10%);
 }
@@ -10469,5 +10566,5 @@ img.sb-chat-view-message-avatar {
   width: 100%;
   height: 100%;
   border: none;
-  border-radius: 10px;
+  border-radius: 0.625rem;
 }

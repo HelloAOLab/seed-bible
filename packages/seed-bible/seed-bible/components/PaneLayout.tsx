@@ -13,6 +13,7 @@ import type {
 } from "../managers/PanesManager";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import { type ToolsManager } from "../managers/BibleToolsManager";
+import { UI_TEXT_SIZE_SCALE_MAP } from "../managers/SettingsManager";
 import { batch, effect } from "@preact/signals";
 import { useI18n } from "../i18n/I18nManager";
 import { translateTitle } from "../components/Utils";
@@ -249,8 +250,8 @@ interface GridPortalPaneProps {
 const FULLSCREEN_EXIT_BUTTON_CSS = `
   .sb-fullscreen-exit-wrapper {
     position: fixed;
-    top: 12px;
-    right: 12px;
+    top: 0.75rem;
+    right: 0.75rem;
     z-index: 1000;
     pointer-events: auto;
   }
@@ -258,13 +259,13 @@ const FULLSCREEN_EXIT_BUTTON_CSS = `
   .sb-fullscreen-exit-button {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
+    gap: 0.375rem;
+    padding: 0.375rem 0.875rem;
     border: none;
-    border-radius: 8px;
+    border-radius: 0.5rem;
     background: rgba(0, 0, 0, 0.72);
     color: white;
-    font-size: 14px;
+    font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.32);
@@ -277,7 +278,7 @@ const FULLSCREEN_EXIT_BUTTON_CSS = `
   }
 
   .sb-fullscreen-exit-button .material-symbols-outlined {
-    font-size: 18px;
+    font-size: 1.125rem;
   }
 `;
 
@@ -960,6 +961,9 @@ export function PaneLayout(props: PaneLayoutProps) {
     tabs: tabsManager,
     tools: toolsManager,
   } = state;
+  // Read at call time (not captured) so the long-lived pointermove listener never uses a stale UI scale.
+  const getUiScale = () =>
+    UI_TEXT_SIZE_SCALE_MAP[state.settings.settings.value.uiTextSize];
   const panes = app.effectivePanes.value;
   const isMobile = app.isMobile.value;
   const layout = app.effectiveLayout.value;
@@ -1242,7 +1246,7 @@ export function PaneLayout(props: PaneLayoutProps) {
           (viewportTop - originY) / scaleY
         );
       } else {
-        panesManager.resizePane(dragState.paneId, deltaX, deltaY);
+        panesManager.resizePane(dragState.paneId, deltaX, deltaY, getUiScale());
       }
 
       dragStateRef.current = {
@@ -1611,7 +1615,8 @@ export function PaneLayout(props: PaneLayoutProps) {
                         panesManager.resizePane(
                           pane.id,
                           400 - pane.width,
-                          300 - pane.height
+                          300 - pane.height,
+                          getUiScale()
                         );
                       }}
                     >
@@ -1634,7 +1639,8 @@ export function PaneLayout(props: PaneLayoutProps) {
                         panesManager.resizePane(
                           pane.id,
                           600 - pane.width,
-                          400 - pane.height
+                          400 - pane.height,
+                          getUiScale()
                         );
                       }}
                     >
