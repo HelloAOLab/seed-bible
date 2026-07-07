@@ -313,6 +313,11 @@ export interface SeedBibleState {
   /** Extension loading and runtime manager. */
   extensions: ExtensionManager;
 
+  /**
+   * Feature flag manager for enabling/disabling features at runtime.
+   */
+  features: FeaturesManager;
+
   /** True when the Terms of Service modal is open. */
   isTermsOpen: ReadonlySignal<boolean>;
   /** Opens the Terms of Service modal (reflected in the URL as `?terms=open`). */
@@ -340,6 +345,7 @@ export interface SeedBibleState {
 // script/lib/vite-plugin-extensions.ts.
 import SEED_BIBLE_EXTENSIONS from "virtual:@extensions";
 import { createPlaylistManager, type PlaylistManager } from "./PlaylistManager";
+import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -360,6 +366,7 @@ export function createSeedBibleState(
 ): SeedBibleState {
   console.log("Creating SeedBibleState with options:", options);
 
+  const features = createFeaturesManager((globalThis as any).posthog ?? null);
   const navigation = createNavigationManager({
     initialHref: options.initialHref,
     basePath: options.config?.basePath,
@@ -1368,6 +1375,7 @@ export function createSeedBibleState(
     isCodeOfConductOpen,
     openCodeOfConduct,
     closeCodeOfConduct,
+    features,
     app: {
       createSharedSession: handleCreateSharedSession,
       joinSharedSession: handleJoinSharedSession,

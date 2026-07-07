@@ -1133,6 +1133,7 @@ export function BibleReader(props: BibleReaderProps) {
               toolsManager={state.tools}
               readingState={readingState}
               playlists={state.playlists}
+              features={state.features}
               className="sb-quick-toolbar-mobile-header"
             />
             {sharedSession && (
@@ -1234,6 +1235,7 @@ export function BibleReader(props: BibleReaderProps) {
                   toolsManager={state.tools}
                   readingState={readingState}
                   playlists={state.playlists}
+                  features={state.features}
                   className="sb-quick-toolbar-reader"
                 />
                 {!state.playlists.playing.value && (

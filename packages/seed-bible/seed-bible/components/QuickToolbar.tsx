@@ -5,11 +5,13 @@ import { translateTitle } from "../components/Utils";
 import { handleHorizontalListKeyNav } from "../components/KeyboardNav";
 import { useState } from "preact/hooks";
 import type { PlaylistManager } from "../managers/PlaylistManager";
+import type { FeaturesManager } from "../managers/FeaturesManager";
 
 interface QuickToolbarProps {
   toolsManager: ToolsManager;
   readingState: BibleReadingState;
   playlists: PlaylistManager;
+  features: FeaturesManager;
   /** Extra class for layout differences (e.g. desktop vs mobile header). */
   className?: string;
 }
@@ -26,7 +28,11 @@ export function QuickToolbar(props: QuickToolbarProps) {
   const { t } = useI18n();
   const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
 
-  const tools = toolsManager.getQuickTools({ readingState, playlists });
+  const tools = toolsManager.getQuickTools({
+    readingState,
+    playlists,
+    features: props.features,
+  });
   const visibleTools = tools.filter((tool) => tool.visible.value);
 
   if (visibleTools.length === 0) {

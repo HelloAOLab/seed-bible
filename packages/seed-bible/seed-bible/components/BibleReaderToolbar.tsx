@@ -387,6 +387,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       panesManager: panes,
       readingPlans: props.state.readingPlans,
       playlists: props.state.playlists,
+      features: props.state.features,
       window: {
         isMobile: props.state.app.isMobile.value,
       },
@@ -443,6 +444,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       panesManager: panes,
       readingPlans: props.state.readingPlans,
       playlists: props.state.playlists,
+      features: props.state.features,
       window: {
         isMobile: props.state.app.isMobile.value,
       },
@@ -522,6 +524,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         .getQuickTools({
           readingState: readingState.value!,
           playlists: props.state.playlists,
+          features: props.state.features,
         })
         .find((tool) => tool.id === "ext_audioReader-play") ?? null
   );

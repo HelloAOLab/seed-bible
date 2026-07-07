@@ -19,6 +19,11 @@ import type { ReadingPlansManager } from "../managers/ReadingPlansManager";
 import { ReadingPlansPane } from "../components/ReadingPlansPane";
 import type { PlaylistManager } from "./PlaylistManager";
 import { useI18n } from "../i18n";
+import {
+  FEATURE_KEY_PLAYLISTS,
+  FEATURE_KEY_READING_PLANS,
+  type FeaturesManager,
+} from "./FeaturesManager";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -148,6 +153,9 @@ export interface BibleToolContext {
   readingPlans?: ReadingPlansManager;
   /** Playlist manager */
   playlists?: PlaylistManager;
+
+  /** Features manager */
+  features: FeaturesManager;
 }
 
 /** Fully resolved reader toolbar tool ready for rendering. */
@@ -294,6 +302,8 @@ export interface QuickToolContext {
    * Playlist manager state.
    */
   playlists: PlaylistManager;
+
+  features: FeaturesManager;
 
   /** Optional window metrics for responsive tool behavior. */
   window?: WindowContext | null;
@@ -495,6 +505,7 @@ function getDefaultQuickToolbarTools(): ManagedBibleQuickToolbarTool[] {
       className: "sb-quick-toolbar-current-playlist",
       icon: (c) => <NowPlayingIcon playlists={c.playlists} />,
       isVisible: (c) =>
+        c.features.isFeatureEnabled(FEATURE_KEY_PLAYLISTS) &&
         !!c.playlists.playing.value?.playlists.value.length &&
         c.playlists.isMobile.value,
       onSelect: (c) => {
@@ -582,7 +593,9 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       priority: 115,
       title: { key: "plans", defaultValue: "Plans" },
       icon: () => <MaterialIcon>menu_book</MaterialIcon>,
-      isVisible: (context) => !!context.readingPlans,
+      isVisible: (context) =>
+        !!context.readingPlans &&
+        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS),
       onSelect: (context) => {
         const readingPlans = context.readingPlans;
         if (!readingPlans) {
@@ -601,7 +614,9 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       priority: 120,
       title: { key: "discover", defaultValue: "Discover" },
       icon: () => <MaterialIcon>explore</MaterialIcon>,
-      isVisible: (context) => !!context.openDiscover,
+      isVisible: (context) =>
+        !!context.openDiscover &&
+        context.features.isFeatureEnabled(FEATURE_KEY_PLAYLISTS),
       onSelect: (context) => {
         if (!context.openDiscover) {
           return;
