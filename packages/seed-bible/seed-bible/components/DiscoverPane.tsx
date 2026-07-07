@@ -33,17 +33,31 @@ export function DiscoverPane(props: DiscoverPaneProps) {
   const { view } = playlists;
 
   if (view.value === "create_playlist") {
-    return <CreatePlaylistForm playlists={playlists} tabs={tabs} />;
+    return (
+      <div
+        className={`sb-discover-panel${
+          state.app.isMobile.value ? " sb-discover-panel--mobile" : ""
+        }`}
+      >
+        <CreatePlaylistForm playlists={playlists} tabs={tabs} />;
+      </div>
+    );
   }
 
   if (view.value === "play_playlist") {
     return (
-      <PlayPlaylistView
-        state={props.state}
-        playlists={playlists}
-        tabs={tabs}
-        modals={modals}
-      />
+      <div
+        className={`sb-discover-panel${
+          state.app.isMobile.value ? " sb-discover-panel--mobile" : ""
+        }`}
+      >
+        <PlayPlaylistView
+          state={props.state}
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />
+      </div>
     );
   }
 
