@@ -187,14 +187,39 @@ export function createNavigationManager(
     push(next);
   };
 
+  const updateQueryParams = (update: Record<string, string | null>) => {
+    // peek() so effects that call updateQueryParam don't subscribe to
+    // currentUrl — they would re-run on the very write they cause.
+    const current = currentUrl.peek();
+    const next = new URL(current);
+    let hasChanges = false;
+    for (const [key, value] of Object.entries(update)) {
+      if (current.searchParams.get(key) === value) {
+        continue;
+      }
+      hasChanges = true;
+
+      if (!value) {
+        next.searchParams.delete(key);
+      } else {
+        next.searchParams.set(key, value);
+      }
+      console.log(`Updating URL query param: ${key} =`, value);
+    }
+
+    push(next);
+  };
+
   const syncSignalsToUrl = (
     signals: Record<string, SimpleSignal<string | null>>
   ) => {
     const cleanup1 = effect(() => {
+      let update: Record<string, string | null> = {};
       for (const [key, signal] of Object.entries(signals)) {
         const requestedValue = signal.value;
-        updateQueryParam(key, requestedValue);
+        update[key] = requestedValue;
       }
+      updateQueryParams(update);
     });
 
     const cleanup2 = effect(() => {
@@ -233,6 +258,7 @@ export function createNavigationManager(
     replace,
     push,
     updateQueryParam,
+    updateQueryParams,
     syncSignalsToUrl,
     linkToQuery,
   };
