@@ -11,11 +11,13 @@ import { resolveLinkMedia } from "../managers/resolveLinkMedia";
 import { MaterialIcon } from "./icons";
 import { DiscoverSection } from "./DiscoverSection";
 import { playlistItemLabel } from "./playlistItemLabel";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 
 interface PlayPlaylistViewProps {
   playlists: PlaylistManager;
   tabs: TabsManager;
   modals: ModalManager;
+  state: SeedBibleState;
 }
 
 /** Stable id so navigating between non-verse items updates the same modal instead of closing/reopening it. */
@@ -28,7 +30,7 @@ const PLAYLIST_ITEM_MODAL_ID = "playlist-item-content";
  * (html) items open in the app's generic modal rather than rendering inline.
  */
 export function PlayPlaylistView(props: PlayPlaylistViewProps) {
-  const { playlists, tabs, modals } = props;
+  const { playlists, tabs, modals, state } = props;
   const { t } = useI18n();
 
   // Reading `.value` during render subscribes the component to updates.
@@ -92,6 +94,10 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
   const title =
     sourcePlaylists[0]?.title ??
     t("untitled-playlist", { defaultValue: "Untitled playlist" });
+
+  if (state.app.isMobile.value && !playing.isMobileOpen.value) {
+    return null;
+  }
 
   return (
     <div className="sb-discover-pane sb-play-playlist">

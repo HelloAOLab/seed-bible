@@ -152,19 +152,14 @@ function MainContent(props: {
         </main>
 
         {state.app.isDiscoverOpen.value && (
-          <div
-            className={`sb-discover-panel${
-              state.app.isMobile.value ? " sb-discover-panel--mobile" : ""
-            }`}
-          >
-            <DiscoverPane
-              tabs={state.tabs}
-              playlists={state.playlists}
-              modals={state.modals}
-              toast={state.app.toast}
-              onClose={state.app.closeDiscover}
-            />
-          </div>
+          <DiscoverPane
+            state={state}
+            tabs={state.tabs}
+            playlists={state.playlists}
+            modals={state.modals}
+            toast={state.app.toast}
+            onClose={state.app.closeDiscover}
+          />
         )}
 
         <ToastHost app={state.app} />

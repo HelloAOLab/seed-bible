@@ -99,6 +99,7 @@ export function createPlayingState(
     sourcePlaylists.flatMap((playlist) => [...playlist.items])
   );
   const currentIndex = signal<number>(queue.value.length > 0 ? 0 : -1);
+  const isMobileOpen = signal(false);
 
   /** The item at `currentIndex`, or null when the queue is empty. */
   const currentItem = computed<PlaylistItemData | null>(
@@ -245,6 +246,7 @@ export function createPlayingState(
     reorderQueue,
     reset,
     dispose,
+    isMobileOpen,
   };
 }
 

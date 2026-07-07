@@ -14,6 +14,7 @@ interface DiscoverPaneProps {
   tabs: TabsManager;
   playlists: PlaylistManager;
   modals: ModalManager;
+  state: SeedBibleState;
   toast: SeedBibleState["app"]["toast"];
   /** Closes the Discover panel. When provided, a close button is shown. */
   onClose?: () => void;
@@ -27,7 +28,7 @@ type ReferenceWithBookData = DiscoverReference & { bookData: TranslationBook };
  * selected reader tab. Annotations are a placeholder for now (display-only).
  */
 export function DiscoverPane(props: DiscoverPaneProps) {
-  const { tabs, playlists, modals, onClose } = props;
+  const { state, tabs, playlists, modals, onClose } = props;
   const { t } = useI18n();
   const { view } = playlists;
 
@@ -37,7 +38,12 @@ export function DiscoverPane(props: DiscoverPaneProps) {
 
   if (view.value === "play_playlist") {
     return (
-      <PlayPlaylistView playlists={playlists} tabs={tabs} modals={modals} />
+      <PlayPlaylistView
+        state={props.state}
+        playlists={playlists}
+        tabs={tabs}
+        modals={modals}
+      />
     );
   }
 
@@ -49,58 +55,66 @@ export function DiscoverPane(props: DiscoverPaneProps) {
     selectedTab?.readingState.chapterData.value ?? null;
 
   return (
-    <div className="sb-discover-pane">
-      <div className="sb-discover-header">
-        <MaterialIcon className="sb-discover-title-icon">explore</MaterialIcon>
-        <h2 className="sb-discover-title">
-          {currentChapterData
-            ? t("discover-book-chapter", {
-                book: currentChapterData.book.name,
-                chapter: currentChapterData.chapter.number,
-                defaultValue: "Discover {{book}} {{chapter}}",
-              })
-            : t("discover", { defaultValue: "Discover" })}
-        </h2>
-        <span className="spacer" />
-        <button
-          type="button"
-          className="sb-discover-create"
-          onClick={() => playlists.createNewPlaylist()}
-        >
-          + {t("create-playlist", { defaultValue: "Create" })}
-        </button>
-        {onClose && (
+    <div
+      className={`sb-discover-panel${
+        state.app.isMobile.value ? " sb-discover-panel--mobile" : ""
+      }`}
+    >
+      <div className="sb-discover-pane">
+        <div className="sb-discover-header">
+          <MaterialIcon className="sb-discover-title-icon">
+            explore
+          </MaterialIcon>
+          <h2 className="sb-discover-title">
+            {currentChapterData
+              ? t("discover-book-chapter", {
+                  book: currentChapterData.book.name,
+                  chapter: currentChapterData.chapter.number,
+                  defaultValue: "Discover {{book}} {{chapter}}",
+                })
+              : t("discover", { defaultValue: "Discover" })}
+          </h2>
+          <span className="spacer" />
           <button
             type="button"
-            className="sb-discover-close"
-            aria-label={t("close")}
-            title={t("close")}
-            onClick={onClose}
+            className="sb-discover-create"
+            onClick={() => playlists.createNewPlaylist()}
           >
-            <MaterialIcon>close</MaterialIcon>
+            + {t("create-playlist", { defaultValue: "Create" })}
           </button>
-        )}
-      </div>
+          {onClose && (
+            <button
+              type="button"
+              className="sb-discover-close"
+              aria-label={t("close")}
+              title={t("close")}
+              onClick={onClose}
+            >
+              <MaterialIcon>close</MaterialIcon>
+            </button>
+          )}
+        </div>
 
-      <PlaylistSection
-        userPlaylists={userPlaylists}
-        playlists={playlists}
-        toast={props.toast}
-      />
-
-      <DiscoverSection
-        title={t("annotations", { defaultValue: "Annotations" })}
-      >
-        <DiscoverEmpty
-          text={t("discover-annotations-empty", {
-            defaultValue: "You have no annotations",
-          })}
+        <PlaylistSection
+          userPlaylists={userPlaylists}
+          playlists={playlists}
+          toast={props.toast}
         />
-      </DiscoverSection>
 
-      <CrossReferencesSection tab={selectedTab} />
-      <StudyNotesSection tab={selectedTab} />
-      <ContentSection tab={selectedTab} />
+        <DiscoverSection
+          title={t("annotations", { defaultValue: "Annotations" })}
+        >
+          <DiscoverEmpty
+            text={t("discover-annotations-empty", {
+              defaultValue: "You have no annotations",
+            })}
+          />
+        </DiscoverSection>
+
+        <CrossReferencesSection tab={selectedTab} />
+        <StudyNotesSection tab={selectedTab} />
+        <ContentSection tab={selectedTab} />
+      </div>
     </div>
   );
 }
