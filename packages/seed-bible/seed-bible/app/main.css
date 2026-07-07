@@ -4155,7 +4155,15 @@ a:visited {
 .sb-verse-decoration-initial-verse-highlight,
 .sb-verse-decoration-open-reference-highlight,
 .sb-verse-decoration-playlist-verse-highlight {
-  background: color-mix(in srgb, var(--sb-secondary-color), transparent 28%);
+  /* eslint-disable-next-line css/no-important */
+  background: color-mix(
+    in srgb,
+    var(--sb-secondary-color),
+    transparent 28%
+  ) !important;
+
+  /* eslint-disable-next-line css/no-important */
+  color: var(--sb-reader-font-color) !important;
 }
 
 .sb-sidebar-search-result-button:hover {
