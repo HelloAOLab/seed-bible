@@ -2578,6 +2578,7 @@ a:visited {
     display: flex;
     align-items: stretch;
     position: relative;
+    flex-basis: auto;
   }
 
   .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
