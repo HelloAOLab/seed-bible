@@ -406,5 +406,6 @@
   "failed-to-load-playlist": "Failed to load playlist",
   "share-playlist": "Share playlist",
   "playlist-url-copied": "Playlist URL copied to clipboard",
-  "current-playlist": "Current playlist"
+  "current-playlist": "Current playlist",
+  "playlist-add-mode-label": "Item type"
 }

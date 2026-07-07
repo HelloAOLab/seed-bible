@@ -10699,15 +10699,11 @@ img.sb-chat-view-message-avatar {
   border-bottom-color: var(--sb-primary-color);
 }
 
-.sb-playlist-add-modes {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.sb-playlist-add-mode {
-  flex: 1;
+.sb-playlist-add-mode-select {
+  display: block;
+  width: 100%;
   padding: 6px 10px;
+  margin-bottom: 10px;
   border: 1px solid var(--sb-divider-color);
   border-radius: 8px;
   background: transparent;
@@ -10716,14 +10712,8 @@ img.sb-chat-view-message-avatar {
   cursor: pointer;
 }
 
-.sb-playlist-add-mode:hover {
+.sb-playlist-add-mode-select:hover {
   border-color: var(--sb-primary-color);
-}
-
-.sb-playlist-add-mode--active {
-  border-color: var(--sb-primary-color);
-  background: var(--sb-primary-color);
-  color: var(--sb-primary-font-color);
 }
 
 .sb-playlist-item-input {

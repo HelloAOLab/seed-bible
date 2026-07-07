@@ -76,6 +76,22 @@ export function PlaylistItemInput(props: PlaylistItemInputProps) {
           : t("playlist-add-item", { defaultValue: "Add item" })
       }
     >
+      <select
+        className="sb-playlist-add-mode-select"
+        value={mode}
+        aria-label={t("playlist-add-mode-label", { defaultValue: "Item type" })}
+        onChange={(event: Event) => {
+          const target = event.currentTarget as HTMLSelectElement;
+          setMode(target.value as AddMode);
+        }}
+      >
+        {MODES.map((option) => (
+          <option key={option.mode} value={option.mode}>
+            {t(option.labelKey, { defaultValue: option.defaultLabel })}
+          </option>
+        ))}
+      </select>
+
       {mode === "scripture" ? (
         <ScriptureItemInput
           books={books}
@@ -96,24 +112,6 @@ export function PlaylistItemInput(props: PlaylistItemInputProps) {
           submitLabel={submitLabel}
         />
       )}
-
-      <div className="sb-playlist-add-modes" role="tablist">
-        {MODES.map((option) => (
-          <button
-            key={option.mode}
-            type="button"
-            role="tab"
-            aria-selected={mode === option.mode}
-            className={
-              "sb-playlist-add-mode" +
-              (mode === option.mode ? " sb-playlist-add-mode--active" : "")
-            }
-            onClick={() => setMode(option.mode)}
-          >
-            {t(option.labelKey, { defaultValue: option.defaultLabel })}
-          </button>
-        ))}
-      </div>
 
       {isEditing ? (
         <button
