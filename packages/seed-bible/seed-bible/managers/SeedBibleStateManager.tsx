@@ -1257,6 +1257,14 @@ export function createSeedBibleState(
     }, 3500);
   };
 
+  const isDiscoverOpen = signal(false);
+  const handleOpenDiscover = () => {
+    isDiscoverOpen.value = !isDiscoverOpen.value;
+  };
+  const handleCloseDiscover = () => {
+    isDiscoverOpen.value = false;
+  };
+
   // When the app is opened via a shared `?playlist={recordName}.{id}` link,
   // load that playlist and start playing it immediately. The locator's `id` is
   // always `playlist_<uuid>` (never contains a dot), so we split on the LAST dot
@@ -1280,6 +1288,7 @@ export function createSeedBibleState(
     try {
       const playlist = await playlists.loadPlaylist(recordName, id);
       playlists.startPlaying(playlist);
+      handleOpenDiscover();
     } catch (error) {
       console.error("Failed to load playlist from URL:", error);
       const { t } = i18n;
@@ -1295,14 +1304,6 @@ export function createSeedBibleState(
   // shared-session tab, so a link carrying both `?sessionId=` and `?playlist=`
   // should target the session tab created by the join.
   void setupInitialSession().then(() => setupInitialPlaylist());
-
-  const isDiscoverOpen = signal(false);
-  const handleOpenDiscover = () => {
-    isDiscoverOpen.value = !isDiscoverOpen.value;
-  };
-  const handleCloseDiscover = () => {
-    isDiscoverOpen.value = false;
-  };
 
   const state: SeedBibleState = {
     os,
