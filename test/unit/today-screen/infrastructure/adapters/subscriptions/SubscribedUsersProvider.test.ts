@@ -1,4 +1,4 @@
-import { SubscribedUsersProvider } from "../../../../../../packages/today-screen/infrastructure/adapters/fake/SubscribedUsersProvider";
+import { SubscribedUsersProvider } from "../../../../../../packages/today-screen/infrastructure/adapters/subscriptions/SubscribedUsersProvider";
 
 // The fake user/event generation was removed (branch: fix/remove-today-fake-data).
 // `SubscribedUsersProvider` is now an empty stub: no subscribed users, no

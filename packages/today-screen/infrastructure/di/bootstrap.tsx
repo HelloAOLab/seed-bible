@@ -4,7 +4,7 @@ import { MaterialIcon } from "@packages/seed-bible/seed-bible/components";
 import { Today } from "../presentation/components/Today";
 import { useI18n } from "@packages/seed-bible/seed-bible/i18n";
 import { TodayReadingHistoryService } from "@packages/today-screen/application/services/TodayReadingHistoryService";
-import { SubscribedUsersProvider } from "../adapters/fake/SubscribedUsersProvider";
+import { SubscribedUsersProvider } from "../adapters/subscriptions/SubscribedUsersProvider";
 import type {
   FilteredReading,
   UserLastReading,
