@@ -646,5 +646,6 @@ export function createPlaylistManager(
     getPlaylistUrl,
     isDiscoverOpen,
     goBackFromPlayingView,
+    isMobile,
   };
 }

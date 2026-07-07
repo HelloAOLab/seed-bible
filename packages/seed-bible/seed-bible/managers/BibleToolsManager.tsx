@@ -494,7 +494,9 @@ function getDefaultQuickToolbarTools(): ManagedBibleQuickToolbarTool[] {
       },
       className: "sb-quick-toolbar-current-playlist",
       icon: (c) => <NowPlayingIcon playlists={c.playlists} />,
-      isVisible: (c) => !!c.playlists.playing.value?.playlists.value.length,
+      isVisible: (c) =>
+        !!c.playlists.playing.value?.playlists.value.length &&
+        c.playlists.isMobile.value,
       onSelect: (c) => {
         c.playlists.view.value = "play_playlist";
       },
