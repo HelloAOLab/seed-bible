@@ -6,6 +6,7 @@ import type { ReaderTab, TabsManager } from "./TabsManager";
 import { v4 as uuid } from "uuid";
 import { range } from "es-toolkit";
 import type { NavigationManager } from "./NavigationManager";
+import { parseNumber } from "./Utils";
 
 export const VerseRefSchema = z.object({
   bookId: z.string(),
@@ -49,6 +50,29 @@ export const PlaylistSchema = z.object({
   createdAtMs: z.number().positive(),
   updatedAtMs: z.number().positive(),
 });
+
+function getPlaylistLocator(playlist: {
+  recordName: string;
+  id: string;
+}): string {
+  return `${playlist.recordName}.${playlist.id}`;
+}
+
+function parsePlaylistLocator(
+  locator: string | null | undefined
+): { recordName: string; id: string } | null {
+  if (!locator) {
+    return null;
+  }
+  const lastDot = locator.lastIndexOf(".");
+  if (lastDot <= 0 || lastDot === locator.length - 1) {
+    console.error("Invalid playlist locator:", locator);
+    return null;
+  }
+  const recordName = locator.slice(0, lastDot);
+  const id = locator.slice(lastDot + 1);
+  return { recordName, id };
+}
 
 export type Playlist = z.infer<typeof PlaylistSchema>;
 export type PlaylistItemData = z.infer<typeof PlaylistItem>;
@@ -230,6 +254,12 @@ export function createPlaylistManager(
   tabs: TabsManager,
   navigation: NavigationManager
 ) {
+  const initialPlaylistLocator = signal(
+    navigation.currentUrl.value.searchParams.get("playlist")
+  );
+  const initialPlaylistStep = signal(
+    navigation.currentUrl.value.searchParams.get("playlistStep")
+  );
   const userPlaylists = signal<Playlist[]>([]);
   const view = signal<"discover" | "create_playlist" | "play_playlist">(
     "discover"
@@ -404,7 +434,7 @@ export function createPlaylistManager(
    * fresh queue built from a copy of their items. The currently selected reader
    * tab is saved into the playing state so bible-verse items navigate it.
    */
-  const startPlaying = (playlist: Playlist | Playlist[]): void => {
+  const startPlaying = (playlist: Playlist | Playlist[]): PlayingState => {
     playing.value?.dispose();
     const playlists = Array.isArray(playlist) ? playlist : [playlist];
     const sharedTab = tabs.tabs.value.find((tab) => tab.sharedSession) ?? null;
@@ -414,6 +444,28 @@ export function createPlaylistManager(
       null;
     playing.value = createPlayingState(playlists, targetTab);
     view.value = "play_playlist";
+    return playing.value;
+  };
+
+  const startPlayingLocator = async (
+    locator: string,
+    step: string | null
+  ): Promise<void> => {
+    const parsed = parsePlaylistLocator(locator);
+    if (!parsed) {
+      console.error("Invalid playlist locator in URL:", locator);
+      return;
+    }
+    const { recordName, id } = parsed;
+    try {
+      const playlist = await loadPlaylist(recordName, id);
+      const state = startPlaying(playlist);
+
+      const stepIndex = Math.floor(parseNumber(step, 0));
+      state.jumpTo(stepIndex);
+    } catch (err) {
+      console.error("Failed to load playlist for playback:", err);
+    }
   };
 
   /**
@@ -422,10 +474,7 @@ export function createPlaylistManager(
   const getPlaylistUrl = (playlist: Playlist): string => {
     const shareUrl = new URL(navigation.currentUrl.value);
     shareUrl.search = "";
-    shareUrl.searchParams.set(
-      "playlist",
-      `${playlist.recordName}.${playlist.id}`
-    );
+    shareUrl.searchParams.set("playlist", getPlaylistLocator(playlist));
     return shareUrl.toString();
   };
 
@@ -435,6 +484,8 @@ export function createPlaylistManager(
   const stopPlaying = (): void => {
     playing.value?.dispose();
     playing.value = null;
+    initialPlaylistLocator.value = null;
+    initialPlaylistStep.value = null;
     view.value = "discover";
   };
 
@@ -455,6 +506,53 @@ export function createPlaylistManager(
   effect(() => {
     void syncPlaylists();
   });
+
+  navigation.syncSignalsToUrl({
+    playlist: {
+      get value() {
+        const playingState = playing.value;
+        if (!playingState) {
+          return initialPlaylistLocator.value;
+        }
+        const firstPlaylist = playingState.playlists.value[0];
+        if (!firstPlaylist) {
+          return null;
+        }
+        return getPlaylistLocator(firstPlaylist);
+      },
+      set value(val) {
+        if (!val) {
+          stopPlaying();
+        } else {
+          void startPlayingLocator(val, initialPlaylistStep.value);
+        }
+      },
+    },
+    playlistStep: {
+      get value() {
+        const playingState = playing.value;
+        if (!playingState) {
+          return null;
+        }
+        return playingState.currentIndex.value.toString();
+      },
+      set value(val) {
+        const playingState = playing.value;
+        if (!playingState || val === null) {
+          return;
+        }
+        const index = Math.floor(parseNumber(val, 0));
+        playingState.jumpTo(index);
+      },
+    },
+  });
+
+  if (initialPlaylistLocator.value) {
+    void startPlayingLocator(
+      initialPlaylistLocator.value,
+      initialPlaylistStep.value
+    );
+  }
 
   return {
     savePlaylist,

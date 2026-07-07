@@ -1259,51 +1259,59 @@ export function createSeedBibleState(
 
   const isDiscoverOpen = signal(false);
   const handleOpenDiscover = () => {
-    isDiscoverOpen.value = !isDiscoverOpen.value;
+    isDiscoverOpen.value = !isDiscoverOpen.peek();
   };
   const handleCloseDiscover = () => {
     isDiscoverOpen.value = false;
   };
 
-  // When the app is opened via a shared `?playlist={recordName}.{id}` link,
-  // load that playlist and start playing it immediately. The locator's `id` is
-  // always `playlist_<uuid>` (never contains a dot), so we split on the LAST dot
-  // to stay correct even when the `recordName` itself contains dots.
-  const setupInitialPlaylist = async () => {
-    // Loading/playing touches the network and the reader — never during SSR.
-    if (typeof window === "undefined") {
-      return;
+  effect(() => {
+    const isPlaying = !!playlists.playing.value;
+    if (isPlaying) {
+      isDiscoverOpen.value = true;
     }
-    const locator = navigation.currentUrl.value.searchParams.get("playlist");
-    if (!locator) {
-      return;
-    }
-    const lastDot = locator.lastIndexOf(".");
-    if (lastDot <= 0 || lastDot === locator.length - 1) {
-      console.error("Invalid playlist locator:", locator);
-      return;
-    }
-    const recordName = locator.slice(0, lastDot);
-    const id = locator.slice(lastDot + 1);
-    try {
-      const playlist = await playlists.loadPlaylist(recordName, id);
-      playlists.startPlaying(playlist);
-      handleOpenDiscover();
-    } catch (error) {
-      console.error("Failed to load playlist from URL:", error);
-      const { t } = i18n;
-      toast(
-        t("failed-to-load-playlist", {
-          defaultValue: "Failed to load playlist",
-        })
-      );
-    }
-  };
+  });
+
+  // // When the app is opened via a shared `?playlist={recordName}.{id}` link,
+  // // load that playlist and start playing it immediately. The locator's `id` is
+  // // always `playlist_<uuid>` (never contains a dot), so we split on the LAST dot
+  // // to stay correct even when the `recordName` itself contains dots.
+  // const setupInitialPlaylist = async () => {
+  //   // Loading/playing touches the network and the reader — never during SSR.
+  //   if (typeof window === "undefined") {
+  //     return;
+  //   }
+  //   const locator = navigation.currentUrl.value.searchParams.get("playlist");
+  //   if (!locator) {
+  //     return;
+  //   }
+  //   const lastDot = locator.lastIndexOf(".");
+  //   if (lastDot <= 0 || lastDot === locator.length - 1) {
+  //     console.error("Invalid playlist locator:", locator);
+  //     return;
+  //   }
+  //   const recordName = locator.slice(0, lastDot);
+  //   const id = locator.slice(lastDot + 1);
+  //   try {
+  //     const playlist = await playlists.loadPlaylist(recordName, id);
+  //     playlists.startPlaying(playlist);
+  //     handleOpenDiscover();
+  //   } catch (error) {
+  //     console.error("Failed to load playlist from URL:", error);
+  //     const { t } = i18n;
+  //     toast(
+  //       t("failed-to-load-playlist", {
+  //         defaultValue: "Failed to load playlist",
+  //       })
+  //     );
+  //   }
+  // };
 
   // Run the playlist setup after the session join: `startPlaying` prefers a
   // shared-session tab, so a link carrying both `?sessionId=` and `?playlist=`
   // should target the session tab created by the join.
-  void setupInitialSession().then(() => setupInitialPlaylist());
+  void setupInitialSession();
+  //.then(() => setupInitialPlaylist());
 
   const state: SeedBibleState = {
     os,

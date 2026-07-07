@@ -7,6 +7,7 @@ import {
 import * as z from "zod/v4";
 import type { CasualOSManager } from "./OsManager";
 import type { NavigationManager } from "./NavigationManager";
+import { parseNumber } from "./Utils";
 
 export type BookOrientation = "traditional" | "tanakh";
 export type UITextSize = "S" | "M" | "L" | "XL";
@@ -428,15 +429,6 @@ function parseAlignment(
     value === "right"
     ? value
     : fallback;
-}
-
-function parseNumber(value: unknown, fallback: number): number {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string") {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return fallback;
 }
 
 function parseTextSection(
