@@ -11066,7 +11066,7 @@ img.sb-chat-view-message-avatar {
 
 .sb-play-playlist-content-iframe {
   width: 100%;
-  height: 180px;
+  height: 250px;
   border: none;
   border-radius: 8px;
   background: var(--sb-divider-color);
