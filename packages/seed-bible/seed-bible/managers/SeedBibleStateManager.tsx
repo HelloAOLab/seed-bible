@@ -403,16 +403,18 @@ export function createSeedBibleState(
   const modals = createModalManager();
   const search = createSearchManager();
 
-  // When the app is opened via a shared-session invite link (`?sessionId=...`),
-  // the user came to join a session, not to onboard — so we skip the welcome
-  // screen and the auto-starting tutorial for this visit. This is derived from
-  // the current URL rather than persisted, so it only affects this tab/load:
-  // revisiting without a `sessionId` shows onboarding and tutorials as usual.
-  const joinedViaSessionLink =
+  // When the app is opened via a content link — a shared-session invite
+  // (`?sessionId=...`) or a shared playlist (`?playlist=...`) — the user came to
+  // view that content, not to onboard, so we skip the welcome screen and the
+  // auto-starting tutorial for this visit. This is derived from the current URL
+  // rather than persisted, so it only affects this tab/load: revisiting without
+  // either param shows onboarding and tutorials as usual.
+  const openedViaContentLink =
     typeof window !== "undefined" &&
-    !!navigation.currentUrl.value.searchParams.get("sessionId");
+    (!!navigation.currentUrl.value.searchParams.get("sessionId") ||
+      !!navigation.currentUrl.value.searchParams.get("playlist"));
 
-  const onboarding = createOnboardingManager(login, joinedViaSessionLink);
+  const onboarding = createOnboardingManager(login, openedViaContentLink);
 
   // Terms of Service modal. Two-way bound to the `?terms=open` query param so
   // it can be deep-linked: setting the param opens the modal, and closing the
@@ -529,7 +531,7 @@ export function createSeedBibleState(
     onboarding,
     selector,
     isMobile,
-    joinedViaSessionLink
+    openedViaContentLink
   );
 
   // A phone held sideways: landscape orientation with the short viewport
@@ -1237,8 +1239,6 @@ export function createSeedBibleState(
     await handleJoinSharedSession(initialSessionId);
   };
 
-  void setupInitialSession();
-
   // App-level toast: a single popup shown at the bottom of the screen for 3.5s.
   // A new call overwrites the current toast and restarts the timer, so only the
   // most recent message is ever visible. The incrementing id keys the render so
@@ -1256,6 +1256,45 @@ export function createSeedBibleState(
       toastTimer = null;
     }, 3500);
   };
+
+  // When the app is opened via a shared `?playlist={recordName}.{id}` link,
+  // load that playlist and start playing it immediately. The locator's `id` is
+  // always `playlist_<uuid>` (never contains a dot), so we split on the LAST dot
+  // to stay correct even when the `recordName` itself contains dots.
+  const setupInitialPlaylist = async () => {
+    // Loading/playing touches the network and the reader — never during SSR.
+    if (typeof window === "undefined") {
+      return;
+    }
+    const locator = navigation.currentUrl.value.searchParams.get("playlist");
+    if (!locator) {
+      return;
+    }
+    const lastDot = locator.lastIndexOf(".");
+    if (lastDot <= 0 || lastDot === locator.length - 1) {
+      console.error("Invalid playlist locator:", locator);
+      return;
+    }
+    const recordName = locator.slice(0, lastDot);
+    const id = locator.slice(lastDot + 1);
+    try {
+      const playlist = await playlists.loadPlaylist(recordName, id);
+      playlists.startPlaying(playlist);
+    } catch (error) {
+      console.error("Failed to load playlist from URL:", error);
+      const { t } = i18n;
+      toast(
+        t("failed-to-load-playlist", {
+          defaultValue: "Failed to load playlist",
+        })
+      );
+    }
+  };
+
+  // Run the playlist setup after the session join: `startPlaying` prefers a
+  // shared-session tab, so a link carrying both `?sessionId=` and `?playlist=`
+  // should target the session tab created by the join.
+  void setupInitialSession().then(() => setupInitialPlaylist());
 
   const isDiscoverOpen = signal(false);
   const handleOpenDiscover = () => {

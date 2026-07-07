@@ -264,6 +264,23 @@ export function createPlaylistManager(
   };
 
   /**
+   * Loads a single playlist by its `{recordName, id}` locator. Used to open a
+   * playlist that isn't the current user's own — e.g. from a shared `?playlist=`
+   * link. Playlists are stored with the `publicRead:playlists` marker, so this
+   * succeeds without being signed in.
+   */
+  const loadPlaylist = async (
+    recordName: string,
+    id: string
+  ): Promise<Playlist> => {
+    const result = await os.getData(recordName, id);
+    if (!result.success) {
+      throw new Error(`Failed to load playlist: ${result.errorCode}`);
+    }
+    return PlaylistSchema.parse(result.data);
+  };
+
+  /**
    * Starts creating a new playlist: opens the create view and sets
    * `editingPlaylist` to a fresh, empty (unsaved) playlist. Persisting happens
    * later via `saveEditingPlaylist`. No-op when not signed in.
@@ -434,6 +451,7 @@ export function createPlaylistManager(
     removeEditingPlaylistItem,
     cancelEditingPlaylist,
     listPlaylists,
+    loadPlaylist,
     userPlaylists,
     availablePlaylists,
     view,

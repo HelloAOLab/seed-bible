@@ -77,6 +77,7 @@ function makeTab(
     readingState: {
       selectTranslationAndChapter,
       translationId: signal(translationId),
+      decorateVerses: vi.fn(),
     },
     sharedSession: null,
   } as unknown as NonNullable<TabArg>;
@@ -93,6 +94,7 @@ function makeTabs(tab: NonNullable<TabArg>): TabsArg {
 describe("createPlaylistManager", () => {
   let recordDataMock: Mock;
   let listDataByMarkerMock: Mock;
+  let getDataMock: Mock;
   let loginMock: Mock;
   let selectTranslationAndChapterMock: Mock;
   let warnSpy: Mock;
@@ -109,6 +111,7 @@ describe("createPlaylistManager", () => {
     Object.assign(os, {
       recordData: recordDataMock,
       listDataByMarker: listDataByMarkerMock,
+      getData: getDataMock,
     });
     const login = { userId, login: loginMock } as unknown as LoginArg;
     const tabs =
@@ -122,6 +125,7 @@ describe("createPlaylistManager", () => {
     listDataByMarkerMock = vi
       .fn()
       .mockResolvedValue({ success: true, items: [] });
+    getDataMock = vi.fn().mockResolvedValue({ success: true, data: null });
     loginMock = vi.fn().mockResolvedValue(null);
     selectTranslationAndChapterMock = vi.fn().mockResolvedValue(undefined);
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
@@ -215,6 +219,44 @@ describe("createPlaylistManager", () => {
     await expect(manager.listPlaylists("user-1")).rejects.toThrow(
       "Failed to list playlists: boom"
     );
+  });
+
+  it("loadPlaylist fetches by locator and parses the record on success", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    const playlist = makePlaylist({ id: "playlist-9", recordName: "user-9" });
+    getDataMock.mockResolvedValueOnce({ success: true, data: playlist });
+
+    await expect(manager.loadPlaylist("user-9", "playlist-9")).resolves.toEqual(
+      playlist
+    );
+    expect(getDataMock).toHaveBeenCalledWith("user-9", "playlist-9");
+  });
+
+  it("loadPlaylist throws when the record cannot be fetched", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    getDataMock.mockResolvedValueOnce({
+      success: false,
+      errorCode: "not_found",
+    });
+
+    await expect(
+      manager.loadPlaylist("user-9", "playlist-missing")
+    ).rejects.toThrow("Failed to load playlist: not_found");
+  });
+
+  it("loadPlaylist throws when the record data is not a valid playlist", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    getDataMock.mockResolvedValueOnce({
+      success: true,
+      data: { nope: true },
+    });
+
+    await expect(
+      manager.loadPlaylist("user-9", "playlist-bad")
+    ).rejects.toThrow();
   });
 
   it("createNewPlaylist opens the create view with a fresh empty playlist", async () => {
