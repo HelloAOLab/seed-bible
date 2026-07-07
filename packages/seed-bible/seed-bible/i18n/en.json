@@ -405,5 +405,6 @@
   "dont-show-again": "Don't show this again",
   "failed-to-load-playlist": "Failed to load playlist",
   "share-playlist": "Share playlist",
-  "playlist-url-copied": "Playlist URL copied to clipboard"
+  "playlist-url-copied": "Playlist URL copied to clipboard",
+  "current-playlist": "Current playlist"
 }
