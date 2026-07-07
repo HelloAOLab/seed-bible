@@ -309,6 +309,7 @@
   "play-playlist": "Play playlist",
   "now-playing": "Now playing",
   "now-playing-x": "Now playing: {{title}}",
+  "stop": "Stop",
   "queue": "Queue",
   "previous": "Previous",
   "next": "Next",
