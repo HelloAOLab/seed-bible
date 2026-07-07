@@ -9,6 +9,7 @@ import { translateTitle } from "../components/Utils";
 import { handleVerticalListKeyNav } from "../components/KeyboardNav";
 import type { ChatsManager } from "../managers/ChatsManager";
 import { useState } from "preact/hooks";
+import type { FeaturesManager } from "../managers/FeaturesManager";
 
 interface BelowReaderToolbarProps {
   toolsManager: ToolsManager;
@@ -19,6 +20,7 @@ interface BelowReaderToolbarProps {
   panesManager: PanesManager;
   currentPane: Pane;
   chats: ChatsManager;
+  features: FeaturesManager;
   openSidebar: () => void;
   openSearch: () => void;
   toast: (message: string) => void;
@@ -39,6 +41,7 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
     toast,
     openChat,
     chats,
+    features,
   } = props;
   const tools = toolsManager.getBelowReaderTools({
     readingState,
@@ -52,6 +55,7 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
     toast,
     openChat,
     chats,
+    features,
   });
 
   if (tools.length === 0) {

@@ -39,6 +39,9 @@ function createContext(): BibleToolContext {
       chats: signal([]),
       providers: signal([]),
     } as any,
+    features: {
+      isFeatureEnabled: vi.fn().mockReturnValue(true),
+    },
   };
 }
 

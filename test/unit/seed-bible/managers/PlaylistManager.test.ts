@@ -1,4 +1,9 @@
-import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers";
+import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
+import {
+  CasualOSManager,
+  createModalManager,
+  createNavigationManager,
+} from "@packages/seed-bible/seed-bible/managers";
 import {
   PlaylistItem,
   PlaylistSchema,
@@ -117,7 +122,19 @@ describe("createPlaylistManager", () => {
     const tabs =
       tabsManager ??
       makeTabs(makeTab("tab-1", selectTranslationAndChapterMock));
-    return createPlaylistManager(os, login, tabs);
+    const navigation = createNavigationManager();
+    const isMobile = signal(false);
+    const modals = createModalManager();
+    const i18n = createI18nManager(navigation, ["en"]);
+    return createPlaylistManager(
+      os,
+      login,
+      tabs,
+      navigation,
+      isMobile,
+      modals,
+      i18n
+    );
   };
 
   beforeEach(() => {
