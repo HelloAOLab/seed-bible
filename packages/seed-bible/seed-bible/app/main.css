@@ -2433,7 +2433,7 @@ a:visited {
     /* Full-height, wide hit region; the visual circle lives in ::before so the
        whole button is tappable with no dead margin around the chevron. */
     align-self: stretch;
-    min-width: 4.5rem;
+    min-width: min(4.5rem, 18vw);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2487,28 +2487,36 @@ a:visited {
 
   .sb-reader-floating-nav-label {
     position: relative;
-    /* Grows to fill the entire center, so the gap that space-between used to
-       leave around the label is now part of the selector's hit target. The
-       stretched height makes the full center band clickable; the button keeps
-       its default text centering, so ellipsis still works on long names. */
     flex: 1 1 auto;
     align-self: stretch;
     min-width: 0;
-    padding: 0 0.25rem;
+    padding: 0;
     border: none;
     background: transparent;
     color: var(--sb-book-title-font-color);
     font-family: var(--text-bookTitle-font);
-    font-size: 1.25rem;
+    font-size: min(1.2rem, 22px);
     font-weight: 700;
-    text-align: center;
-    white-space: nowrap;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: center;
+    column-gap: 0.35em;
     overflow: hidden;
-    text-overflow: ellipsis;
     cursor: pointer;
     transition:
       background-color 0.12s ease,
       transform 0.12s ease;
+  }
+
+  /* The book name ellipsizes instead of forcing the pill wider; the chapter
+     number keeps its own line when the row wraps. */
+  .sb-reader-floating-nav-label > :first-child {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   /* Press feedback for the book/chapter label, matching the arrows. */

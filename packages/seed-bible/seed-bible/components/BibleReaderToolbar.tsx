@@ -794,10 +794,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           onPointerDown={spawnRipple}
                           className="sb-reader-floating-nav-label"
                         >
-                          {readingState.value?.chapterData.value?.book.name ??
-                            readingState.value?.bookId.value ??
-                            " "}{" "}
-                          {readingState.value?.chapterNumber.value}
+                          <div>
+                            {readingState.value?.chapterData.value?.book.name ??
+                              readingState.value?.bookId.value ??
+                              " "}
+                          </div>
+                          <div>{readingState.value?.chapterNumber.value}</div>
                         </button>
                       )}
 
