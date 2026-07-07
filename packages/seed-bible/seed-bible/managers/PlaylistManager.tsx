@@ -13,6 +13,10 @@ import { v4 as uuid } from "uuid";
 import { range } from "es-toolkit";
 import type { NavigationManager } from "./NavigationManager";
 import { parseNumber } from "./Utils";
+import type { ModalManager } from "./ModalManager";
+import { PlaylistHtmlContent } from "../components/PlaylistHtmlContent";
+import { PlaylistLinkContent } from "../components/PlaylistLinkContent";
+import type { I18nManager } from "../i18n";
 
 export const VerseRefSchema = z.object({
   bookId: z.string(),
@@ -254,12 +258,17 @@ export function createPlayingState(
   };
 }
 
+/** Stable id so navigating between non-verse items updates the same modal instead of closing/reopening it. */
+const PLAYLIST_ITEM_MODAL_ID = "playlist-item-content";
+
 export function createPlaylistManager(
   os: CasualOSManager,
   login: LoginManager,
   tabs: TabsManager,
   navigation: NavigationManager,
-  isMobile: ReadonlySignal<boolean>
+  isMobile: ReadonlySignal<boolean>,
+  modals: ModalManager,
+  i18n: I18nManager
 ) {
   const initialPlaylistLocator = signal(
     navigation.currentUrl.value.searchParams.get("playlist")
@@ -282,6 +291,33 @@ export function createPlaylistManager(
   const availablePlaylists = computed(() => {
     return userPlaylists;
   });
+
+  // Opens the content modal for a non-verse item (video/link/text), or closes it
+  // for verse items which are shown in the reader instead. Called both when the
+  // current item changes and when the user taps a queue item directly.
+  const showItemInModal = (item: PlaylistItemData | null) => {
+    if (!item || item.type === "bible-verse") {
+      modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
+      return;
+    }
+
+    const { t } = i18n;
+
+    modals.openModal({
+      id: PLAYLIST_ITEM_MODAL_ID,
+      title: item.title?.trim() || t("content", { defaultValue: "Content" }),
+      content: () =>
+        item.type === "html" ? (
+          <PlaylistHtmlContent html={item.html} />
+        ) : (
+          <PlaylistLinkContent
+            url={item.url}
+            title={item.title}
+            embed={item.embed}
+          />
+        ),
+    });
+  };
 
   const savePlaylist = async (playlist: Playlist) => {
     await os.recordData(playlist.recordName, playlist.id, playlist, {
@@ -510,6 +546,7 @@ export function createPlaylistManager(
     playing.value = null;
     initialPlaylistLocator.value = null;
     initialPlaylistStep.value = null;
+    modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
     if (view.peek()) {
       view.value = "discover";
     }
@@ -531,6 +568,14 @@ export function createPlaylistManager(
 
   effect(() => {
     void syncPlaylists();
+  });
+
+  effect(() => {
+    if (!playing.value) {
+      return;
+    }
+
+    showItemInModal(playing.value.currentItem.value);
   });
 
   navigation.syncSignalsToUrl({

@@ -529,7 +529,9 @@ export function createSeedBibleState(
     login,
     tabs,
     navigation,
-    isMobile
+    isMobile,
+    modals,
+    i18n
   );
   const tutorial = createTutorialManager(
     login,
