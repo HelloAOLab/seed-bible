@@ -1764,7 +1764,7 @@ function DynamicExtensionLoader() {
         const Tabernacle = lazy(() => import("../Tabernacle"));
         setExtensionComponent(() => Tabernacle);
       } else if (data.bookName === "Acts") {
-        const Map = lazy(() => import("../Scripture Map 2D"));
+        const Map = lazy(() => import("../Scripture Map"));
         setExtensionComponent(() => Map);
       }
     };

@@ -122,6 +122,7 @@ export function ContextMenuWithButton({
   className,
   onClick,
   onKeyDown,
+  icon = "more_vert",
   ...props
 }: {
   children: ComponentChildren;
@@ -129,6 +130,7 @@ export function ContextMenuWithButton({
   buttonClassName?: string;
   menuClassName?: string;
   iconClassName?: string;
+  icon?: string | ComponentChildren;
 } & ComponentProps<"button">) {
   const menuId = useSignal("");
   const menuStyle = useSignal<ComponentProps<"div">["style"]>(undefined);
@@ -238,6 +240,21 @@ export function ContextMenuWithButton({
   const getMenuContainer = () =>
     anchorRef.current?.querySelector<HTMLDivElement>('[role="menu"]') ?? null;
 
+  const iconContent =
+    typeof icon === "string" ? (
+      <span
+        className={joinClassNames(
+          "material-symbols-outlined",
+          "sb-context-more-icon",
+          iconClassName
+        )}
+      >
+        {icon}
+      </span>
+    ) : (
+      icon
+    );
+
   return (
     <div
       ref={anchorRef}
@@ -271,16 +288,7 @@ export function ContextMenuWithButton({
         }}
         {...props}
       >
-        <span
-          className={joinClassNames(
-            "material-symbols-outlined",
-            "sb-context-more-icon",
-            iconClassName
-          )}
-          // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
-        >
-          more_vert
-        </span>
+        {iconContent}
       </button>
       <ContextMenu
         isOpen={currentIsOpen}

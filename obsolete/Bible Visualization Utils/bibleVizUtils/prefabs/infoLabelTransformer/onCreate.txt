@@ -1,6 +1,0 @@
-if(thisBot.tags.isBaseInfoLabelTransformer) return;
-
-if(thisBot.tags.isAnimatable)
-{
-    thisBot.StartShakeAnimation();
-}

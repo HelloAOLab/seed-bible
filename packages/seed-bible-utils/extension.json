@@ -1,0 +1,390 @@
+{
+  "id": "seed-bible-utils",
+  "translations": {
+    "en": {
+      "title": "Seed bible utils",
+      "description": "Shared service layer for Bible visualization extensions, providing arrangement management, scripture reference mapping, and user presence tracking.",
+      "below-reader-tool": "Seed bible utils"
+    },
+    "af": {
+      "title": "Saad Bybel hulpmiddels",
+      "description": "Gedeelde dienslaag vir Bybelvisualiseringsuitbreidings, wat rangskikkingsbestuur, Skrifverwysingskartering en gebruikersteenwoordigheidopsporing bied.",
+      "below-reader-tool": "Saad Bybel hulpmiddels"
+    },
+    "am": {
+      "title": "የዘር መጽሐፍ ቅዱስ ጥቅሞች",
+      "description": "ለመጽሐፍ ቅዱስ ምስላዊ ቅጥያዎች የተጋራ የአገልግሎት ንብርብር፣ የዝግጅት አስተዳደርን፣ የቅዱሳት መጻሕፍት ማጣቀሻ ካርታ ስራን እና የተጠቃሚ ተገኝነት ክትትልን ያቀርባል።",
+      "below-reader-tool": "የዘር መጽሐፍ ቅዱስ ጥቅሞች"
+    },
+    "ar": {
+      "title": "أدوات الكتاب المقدس للبذور",
+      "description": "طبقة خدمة مشتركة لتوسيعات عرض الكتاب المقدس، توفر إدارة الترتيب، ورسم خرائط مرجعية للنصوص المقدسة، وتتبع وجود المستخدم.",
+      "below-reader-tool": "أدوات الكتاب المقدس للبذور"
+    },
+    "az": {
+      "title": "Toxum Müqəddəs Kitabı istifadələri",
+      "description": "Müqəddəs Kitab vizuallaşdırması üçün genişləndirmələr üçün ortaq xidmət təbəqəsi, tənzimləmə idarəetməsi, ayə istinad xəritələşdirilməsi və istifadəçi varlığının izlənməsini təmin edir.",
+      "below-reader-tool": "Toxum Müqəddəs Kitabı istifadələri"
+    },
+    "be": {
+      "title": "Карысныя праграмы Seed Bible",
+      "description": "Агульны сэрвісны ўзровень для пашырэнняў візуалізацыі Бібліі, які забяспечвае кіраванне аранжыроўкамі, адлюстраванне спасылак на Святое Пісанне і адсочванне прысутнасці карыстальнікаў.",
+      "below-reader-tool": "Карысныя праграмы Seed Bible"
+    },
+    "bg": {
+      "title": "Помощни програми за библия на семена",
+      "description": "Споделен сервизен слой за разширения за визуализация на Библията, осигуряващ управление на подредбата, картографиране на препратки към писания и проследяване на присъствието на потребителите.",
+      "below-reader-tool": "Помощни програми за библия на семена"
+    },
+    "bn": {
+      "title": "বীজ বাইবেল ইউটিলস",
+      "description": "বাইবেল ভিজ্যুয়ালাইজেশন এক্সটেনশনের জন্য শেয়ার্ড সার্ভিস লেয়ার, যা বিন্যাস ব্যবস্থাপনা, ধর্মগ্রন্থের রেফারেন্স ম্যাপিং এবং ব্যবহারকারীর উপস্থিতি ট্র্যাকিং প্রদান করে।",
+      "below-reader-tool": "বীজ বাইবেল ইউটিলস"
+    },
+    "bs": {
+      "title": "Seed Bible utils",
+      "description": "Sloj dijeljene usluge za proširenja vizualizacije Biblije, koji omogućava upravljanje rasporedom, mapiranje referenci na Sveto pismo i praćenje prisutnosti korisnika.",
+      "below-reader-tool": "Seed Bible utils"
+    },
+    "ca": {
+      "title": "Utilitats de la Bíblia de llavors",
+      "description": "Capa de servei compartida per a extensions de visualització de la Bíblia, que proporciona gestió d'arranjaments, mapatge de referències de les Escriptures i seguiment de la presència d'usuaris.",
+      "below-reader-tool": "Utilitats de la Bíblia de llavors"
+    },
+    "cs": {
+      "title": "Seed Bible utils",
+      "description": "Sdílená servisní vrstva pro rozšíření vizualizace Bible, která poskytuje správu uspořádání, mapování odkazů na Písmo a sledování přítomnosti uživatelů.",
+      "below-reader-tool": "Seed Bible utils"
+    },
+    "cy": {
+      "title": "Cyfleusterau Beibl Hadau",
+      "description": "Haen gwasanaeth a rennir ar gyfer estyniadau delweddu'r Beibl, gan ddarparu rheoli trefniadau, mapio cyfeiriadau ysgrythurau, ac olrhain presenoldeb defnyddwyr.",
+      "below-reader-tool": "Cyfleusterau Beibl Hadau"
+    },
+    "da": {
+      "title": "Seed Bible-værktøjer",
+      "description": "Delt servicelag til udvidelser til bibelvisualisering, der leverer arrangementsstyring, kortlægning af skriftstedshenvisninger og sporing af brugertilstedeværelse.",
+      "below-reader-tool": "Seed Bible-værktøjer"
+    },
+    "de": {
+      "title": "Seed Bible Utilities",
+      "description": "Gemeinsame Serviceebene für Erweiterungen zur Bibelvisualisierung, die Anordnungsmanagement, Zuordnung von Bibelstellenverweisen und Benutzerpräsenzverfolgung bietet.",
+      "below-reader-tool": "Seed Bible Utilities"
+    },
+    "el": {
+      "title": "Βοηθητικά προγράμματα για τη Βίβλο των σπόρων",
+      "description": "Κοινόχρηστο επίπεδο υπηρεσίας για επεκτάσεις οπτικοποίησης της Βίβλου, που παρέχει διαχείριση διάταξης, χαρτογράφηση αναφορών γραφών και παρακολούθηση παρουσίας χρηστών.",
+      "below-reader-tool": "Βοηθητικά προγράμματα για τη Βίβλο των σπόρων"
+    },
+    "es": {
+      "title": "Utilidades de la Biblia de Semillas",
+      "description": "Capa de servicio compartido para extensiones de visualización bíblica, que proporciona gestión de la organización, mapeo de referencias bíblicas y seguimiento de la presencia del usuario.",
+      "below-reader-tool": "Utilidades de la Biblia de Semillas"
+    },
+    "et": {
+      "title": "Seemnepiibli utiliidid",
+      "description": "Piibli visualiseerimise laienduste jagatud teenusekiht, mis pakub paigutuse haldamist, pühakirjaviidete kaardistamist ja kasutaja kohaloleku jälgimist.",
+      "below-reader-tool": "Seemnepiibli utiliidid"
+    },
+    "fa": {
+      "title": "ابزارهای کتاب مقدس بذر",
+      "description": "لایه سرویس مشترک برای افزونه‌های مصورسازی کتاب مقدس، که مدیریت چیدمان، نگاشت ارجاعات کتاب مقدس و ردیابی حضور کاربر را ارائه می‌دهد.",
+      "below-reader-tool": "ابزارهای کتاب مقدس بذر"
+    },
+    "fi": {
+      "title": "Seed Bible -apuohjelmat",
+      "description": "Jaettu palvelutaso Raamatun visualisointilaajennuksille, joka tarjoaa järjestelyn hallinnan, raamatunkohtien viitekartoituksen ja käyttäjän läsnäolon seurannan.",
+      "below-reader-tool": "Seed Bible -apuohjelmat"
+    },
+    "fil": {
+      "title": "Mga kagamitan sa bibliya ng binhi",
+      "description": "Ibinahaging service layer para sa mga extension ng visualization ng Bibliya, na nagbibigay ng pamamahala ng kaayusan, pagmamapa ng mga sanggunian sa banal na kasulatan, at pagsubaybay sa presensya ng gumagamit.",
+      "below-reader-tool": "Mga kagamitan sa bibliya ng binhi"
+    },
+    "fr": {
+      "title": "utilitaires bibliques de semences",
+      "description": "Couche de service partagée pour les extensions de visualisation biblique, assurant la gestion des agencements, le mappage des références bibliques et le suivi de la présence des utilisateurs.",
+      "below-reader-tool": "utilitaires bibliques de semences"
+    },
+    "fy": {
+      "title": "Seed bible utils",
+      "description": "Dielde tsjinstlaach foar útwreidings fan Bibelvisualisaasje, dy't regelingsbehear, skriftferwizingsmapping en it folgjen fan brûkersoanwêzigens leveret.",
+      "below-reader-tool": "Seed bible utils"
+    },
+    "gl": {
+      "title": "Utilidades da Biblia das Sementes",
+      "description": "Capa de servizos compartidos para extensións de visualización da Biblia, que proporciona xestión de arranxos, mapeo de referencias das escrituras e seguimento da presenza do usuario.",
+      "below-reader-tool": "Utilidades da Biblia das Sementes"
+    },
+    "gn": {
+      "title": "Semilla biblia utils rehegua",
+      "description": "Capa de servicio compartido umi extensión visualización bíblica-pe ĝuarã, ome’ẽva gestión de arreglo, mapeo referencia escritura-pe ha seguimiento presencia usuario rehegua.",
+      "below-reader-tool": "Semilla biblia utils rehegua"
+    },
+    "gu": {
+      "title": "બીજ બાઇબલ ઉપયોગીતાઓ",
+      "description": "બાઇબલ વિઝ્યુલાઇઝેશન એક્સટેન્શન માટે શેર્ડ સર્વિસ લેયર, ગોઠવણી વ્યવસ્થાપન, શાસ્ત્ર સંદર્ભ મેપિંગ અને વપરાશકર્તા હાજરી ટ્રેકિંગ પ્રદાન કરે છે.",
+      "below-reader-tool": "બીજ બાઇબલ ઉપયોગીતાઓ"
+    },
+    "he": {
+      "title": "כלי עזר לתנ\"ך זרעים",
+      "description": "שכבת שירות משותפת עבור הרחבות ויזואליזציה של תנ\"ך, המספקת ניהול סידורים, מיפוי הפניות לכתבי הקודש ומעקב אחר נוכחות משתמשים.",
+      "below-reader-tool": "כלי עזר לתנ\"ך זרעים"
+    },
+    "hi": {
+      "title": "सीड बाइबल यूटिल्स",
+      "description": "बाइबल विज़ुअलाइज़ेशन एक्सटेंशन के लिए साझा सेवा परत, जो व्यवस्था प्रबंधन, शास्त्र संदर्भ मानचित्रण और उपयोगकर्ता उपस्थिति ट्रैकिंग प्रदान करती है।",
+      "below-reader-tool": "सीड बाइबल यूटिल्स"
+    },
+    "hr": {
+      "title": "Alati za sjemensku bibliju",
+      "description": "Sloj dijeljene usluge za proširenja vizualizacije Biblije, koji omogućuje upravljanje rasporedom, mapiranje referenci na Sveto pismo i praćenje prisutnosti korisnika.",
+      "below-reader-tool": "Alati za sjemensku bibliju"
+    },
+    "hu": {
+      "title": "Seed bibliai segédprogramok",
+      "description": "Megosztott szolgáltatásréteg a Biblia vizualizációs bővítményeihez, amely elrendezéskezelést, szentíráshivatkozás-térképezést és felhasználói jelenlét nyomon követését biztosítja.",
+      "below-reader-tool": "Seed bibliai segédprogramok"
+    },
+    "ind": {
+      "title": "Alkitab benih utilitas",
+      "description": "Lapisan layanan bersama untuk ekstensi visualisasi Alkitab, menyediakan manajemen pengaturan, pemetaan referensi kitab suci, dan pelacakan kehadiran pengguna.",
+      "below-reader-tool": "Alkitab benih utilitas"
+    },
+    "is": {
+      "title": "Seed Bible gagnsemi",
+      "description": "Sameiginlegt þjónustulag fyrir viðbætur við biblíusýnileika, sem býður upp á stjórnun á fyrirkomulagi, kortlagningu tilvísana í ritningarvers og mælingar á viðveru notenda.",
+      "below-reader-tool": "Seed Bible gagnsemi"
+    },
+    "it": {
+      "title": "Utilità della Bibbia dei semi",
+      "description": "Livello di servizio condiviso per le estensioni di visualizzazione biblica, che fornisce gestione della disposizione, mappatura dei riferimenti scritturali e tracciamento della presenza degli utenti.",
+      "below-reader-tool": "Utilità della Bibbia dei semi"
+    },
+    "iw": {
+      "title": "כלי עזר לתנ\"ך זרעים",
+      "description": "שכבת שירות משותפת עבור הרחבות ויזואליזציה של תנ\"ך, המספקת ניהול סידורים, מיפוי הפניות לכתבי הקודש ומעקב אחר נוכחות משתמשים.",
+      "below-reader-tool": "כלי עזר לתנ\"ך זרעים"
+    },
+    "ja": {
+      "title": "シードバイブルユーティリティ",
+      "description": "聖書視覚化拡張機能のための共有サービスレイヤーであり、配置管理、聖句参照マッピング、およびユーザー存在追跡機能を提供する。",
+      "below-reader-tool": "シードバイブルユーティリティ"
+    },
+    "ka": {
+      "title": "სათესლე ბიბლიური უტილიტები",
+      "description": "ბიბლიის ვიზუალიზაციის გაფართოებებისთვის გაზიარებული სერვისული ფენა, რომელიც უზრუნველყოფს განლაგების მართვას, წმინდა წერილების მითითებების რუკების შედგენას და მომხმარებლის ყოფნის თვალყურის დევნებას.",
+      "below-reader-tool": "სათესლე ბიბლიური უტილიტები"
+    },
+    "km": {
+      "title": "គ្រាប់ពូជព្រះគម្ពីរមានប្រយោជន៍",
+      "description": "ស្រទាប់សេវាកម្មដែលបានចែករំលែកសម្រាប់ផ្នែកបន្ថែមនៃការមើលឃើញព្រះគម្ពីរ ដោយផ្តល់នូវការគ្រប់គ្រងការរៀបចំ ការគូសផែនទីឯកសារយោងព្រះគម្ពីរ និងការតាមដានវត្តមានរបស់អ្នកប្រើប្រាស់។",
+      "below-reader-tool": "គ្រាប់ពូជព្រះគម្ពីរមានប្រយោជន៍"
+    },
+    "kn": {
+      "title": "ಬೀಜ ಬೈಬಲ್ ಉಪಯುಕ್ತತೆಗಳು",
+      "description": "ಬೈಬಲ್ ದೃಶ್ಯೀಕರಣ ವಿಸ್ತರಣೆಗಳಿಗಾಗಿ ಹಂಚಿಕೊಂಡ ಸೇವಾ ಪದರ, ವ್ಯವಸ್ಥೆ ನಿರ್ವಹಣೆ, ಧರ್ಮಗ್ರಂಥ ಉಲ್ಲೇಖ ಮ್ಯಾಪಿಂಗ್ ಮತ್ತು ಬಳಕೆದಾರರ ಉಪಸ್ಥಿತಿ ಟ್ರ್ಯಾಕಿಂಗ್ ಅನ್ನು ಒದಗಿಸುತ್ತದೆ.",
+      "below-reader-tool": "ಬೀಜ ಬೈಬಲ್ ಉಪಯುಕ್ತತೆಗಳು"
+    },
+    "ko": {
+      "title": "씨앗 성경 유틸리티",
+      "description": "성경 시각화 확장 기능을 위한 공유 서비스 계층으로, 배열 관리, 성경 구절 참조 매핑 및 사용자 상태 추적 기능을 제공합니다.",
+      "below-reader-tool": "씨앗 성경 유틸리티"
+    },
+    "ky": {
+      "title": "Ыйык Китептин үрөн колдонулуштары",
+      "description": "Ыйык Китепти визуалдаштыруу кеңейтүүлөрү үчүн жалпы кызмат катмары, ал аралаштырууларды башкарууну, ыйык китептик шилтемелерди картага түшүрүүнү жана колдонуучулардын катышуусун көзөмөлдөөнү камсыз кылат.",
+      "below-reader-tool": "Ыйык Китептин үрөн колдонулуштары"
+    },
+    "ln": {
+      "title": "Momboto bible utils",
+      "description": "Couche ya service ya kokabola mpo na ba extensions ya visualisation ya Biblia, kopesa gestion ya arrangement, cartographie ya référence ya makomi, mpe suivi ya présence ya usager.",
+      "below-reader-tool": "Momboto bible utils"
+    },
+    "lo": {
+      "title": "ປະໂຫຍດຂອງຄຳພີໄບເບິນກ່ຽວກັບແກ່ນພັນ",
+      "description": "ຊັ້ນການບໍລິການຮ່ວມກັນສຳລັບການຂະຫຍາຍການສະແດງພາບຄຳພີໄບເບິນ, ການສະໜອງການຈັດການການຈັດລຽງ, ການສ້າງແຜນທີ່ອ້າງອີງພຣະຄຳພີ, ແລະ ການຕິດຕາມການມີຢູ່ຂອງຜູ້ໃຊ້.",
+      "below-reader-tool": "ປະໂຫຍດຂອງຄຳພີໄບເບິນກ່ຽວກັບແກ່ນພັນ"
+    },
+    "lt": {
+      "title": "Sėklų Biblijos įrankiai",
+      "description": "Bendrinamas paslaugų sluoksnis Biblijos vizualizacijos plėtiniams, teikiantis išdėstymo valdymą, Šventojo Rašto nuorodų atvaizdavimą ir naudotojų buvimo stebėjimą.",
+      "below-reader-tool": "Sėklų Biblijos įrankiai"
+    },
+    "lv": {
+      "title": "Sēklu Bībeles utilīti",
+      "description": "Koplietots pakalpojumu slānis Bībeles vizualizācijas paplašinājumiem, kas nodrošina izkārtojuma pārvaldību, Svēto Rakstu atsauču kartēšanu un lietotāja klātbūtnes izsekošanu.",
+      "below-reader-tool": "Sēklu Bībeles utilīti"
+    },
+    "mk": {
+      "title": "Семенски библиски алатки",
+      "description": "Споделен сервисен слој за екстензии за визуелизација на Библијата, кој овозможува управување со аранжманите, мапирање на референци од стихови и следење на присуството на корисниците.",
+      "below-reader-tool": "Семенски библиски алатки"
+    },
+    "ml": {
+      "title": "വിത്ത് ബൈബിൾ യൂട്ടിലിറ്റുകൾ",
+      "description": "ബൈബിൾ വിഷ്വലൈസേഷൻ എക്സ്റ്റൻഷനുകൾക്കായുള്ള പങ്കിട്ട സേവന പാളി, ക്രമീകരണ മാനേജ്മെന്റ്, തിരുവെഴുത്ത് റഫറൻസ് മാപ്പിംഗ്, ഉപയോക്തൃ സാന്നിധ്യ ട്രാക്കിംഗ് എന്നിവ നൽകുന്നു.",
+      "below-reader-tool": "വിത്ത് ബൈബിൾ യൂട്ടിലിറ്റുകൾ"
+    },
+    "mn": {
+      "title": "Үрийн Библийн хэрэглээ",
+      "description": "Библийн дүрслэлийн өргөтгөлүүдэд зориулсан хуваалцсан үйлчилгээний давхарга нь зохицуулалтын менежмент, судрын лавлагааны зураглал, хэрэглэгчийн оролцоог хянах боломжийг олгодог.",
+      "below-reader-tool": "Үрийн Библийн хэрэглээ"
+    },
+    "mr": {
+      "title": "सीड बायबल युटील्स",
+      "description": "बायबल व्हिज्युअलायझेशन एक्सटेंशन्ससाठी सामायिक सेवा स्तर, जो मांडणी व्यवस्थापन, धर्मग्रंथ संदर्भ मॅपिंग आणि वापरकर्ता उपस्थिती ट्रॅकिंग प्रदान करतो.",
+      "below-reader-tool": "सीड बायबल युटील्स"
+    },
+    "ms": {
+      "title": "Utiliti Bible Benih",
+      "description": "Lapisan perkhidmatan kongsi untuk sambungan visualisasi Bible, menyediakan pengurusan susunan, pemetaan rujukan kitab suci dan penjejakan kehadiran pengguna.",
+      "below-reader-tool": "Utiliti Bible Benih"
+    },
+    "my": {
+      "title": "မျိုးစေ့ သမ္မာကျမ်းစာ အသုံးဝင်မှုများ",
+      "description": "သမ္မာကျမ်းစာ visualization extension များအတွက် shared service layer၊ အစီအစဉ်စီမံခန့်ခွဲမှု၊ ကျမ်းစာရည်ညွှန်းမြေပုံရေးဆွဲခြင်းနှင့် အသုံးပြုသူရှိနေခြင်းကို ခြေရာခံခြင်းတို့ကို ပံ့ပိုးပေးသည်။",
+      "below-reader-tool": "မျိုးစေ့ သမ္မာကျမ်းစာ အသုံးဝင်မှုများ"
+    },
+    "nb": {
+      "title": "Seed Bible-verktøy",
+      "description": "Delt tjenestelag for utvidelser av bibelvisualisering, som tilbyr arrangementsadministrasjon, kartlegging av bibelsteder og sporing av brukertilstedeværelse.",
+      "below-reader-tool": "Seed Bible-verktøy"
+    },
+    "ne": {
+      "title": "बीउ बाइबल उपयोगिताहरू",
+      "description": "बाइबल दृश्य विस्तारहरूको लागि साझा सेवा तह, व्यवस्था व्यवस्थापन, धर्मशास्त्र सन्दर्भ म्यापिङ, र प्रयोगकर्ता उपस्थिति ट्र्याकिङ प्रदान गर्दै।",
+      "below-reader-tool": "बीउ बाइबल उपयोगिताहरू"
+    },
+    "nl": {
+      "title": "Seed bible utils",
+      "description": "Gedeelde servicelaag voor extensies voor Bijbelvisualisatie, met functies voor het beheren van de indeling, het in kaart brengen van Bijbelverwijzingen en het bijhouden van de aanwezigheid van gebruikers.",
+      "below-reader-tool": "Seed bible utils"
+    },
+    "no": {
+      "title": "Seed Bible-verktøy",
+      "description": "Delt tjenestelag for utvidelser av bibelvisualisering, som tilbyr arrangementsadministrasjon, kartlegging av bibelsteder og sporing av brukertilstedeværelse.",
+      "below-reader-tool": "Seed Bible-verktøy"
+    },
+    "pa": {
+      "title": "ਬੀਜ ਬਾਈਬਲ ਉਪਯੋਗਤਾਵਾਂ",
+      "description": "ਬਾਈਬਲ ਵਿਜ਼ੂਅਲਾਈਜ਼ੇਸ਼ਨ ਐਕਸਟੈਂਸ਼ਨਾਂ ਲਈ ਸਾਂਝੀ ਸੇਵਾ ਪਰਤ, ਪ੍ਰਬੰਧ ਪ੍ਰਬੰਧਨ, ਸ਼ਾਸਤਰ ਸੰਦਰਭ ਮੈਪਿੰਗ, ਅਤੇ ਉਪਭੋਗਤਾ ਮੌਜੂਦਗੀ ਟਰੈਕਿੰਗ ਪ੍ਰਦਾਨ ਕਰਦੀ ਹੈ।",
+      "below-reader-tool": "ਬੀਜ ਬਾਈਬਲ ਉਪਯੋਗਤਾਵਾਂ"
+    },
+    "pl": {
+      "title": "Narzędzia Biblii nasion",
+      "description": "Wspólna warstwa usług dla rozszerzeń wizualizacji Biblii, umożliwiająca zarządzanie aranżacjami, mapowanie odniesień do pism świętych i śledzenie obecności użytkownika.",
+      "below-reader-tool": "Narzędzia Biblii nasion"
+    },
+    "ps": {
+      "title": "د تخم بائبل ګټورې",
+      "description": "د بائبل د لید پراخولو لپاره د خدماتو شریکه طبقه، د ترتیب مدیریت چمتو کول، د صحیفې حوالې نقشه کول، او د کارونکي شتون تعقیب.",
+      "below-reader-tool": "د تخم بائبل ګټورې"
+    },
+    "pt": {
+      "title": "Utilitários da Bíblia de Sementes",
+      "description": "Camada de serviço compartilhada para extensões de visualização bíblica, fornecendo gerenciamento de organização, mapeamento de referências bíblicas e rastreamento da presença do usuário.",
+      "below-reader-tool": "Utilitários da Bíblia de Sementes"
+    },
+    "ro": {
+      "title": "Utilitare biblice pentru semințe",
+      "description": "Strat de servicii partajate pentru extensii de vizualizare a Bibliei, care oferă gestionarea aranjamentelor, maparea referințelor scripturale și urmărirea prezenței utilizatorilor.",
+      "below-reader-tool": "Utilitare biblice pentru semințe"
+    },
+    "ru": {
+      "title": "Seed bible utils",
+      "description": "Общий сервисный уровень для расширений визуализации Библии, обеспечивающий управление расположением элементов, сопоставление ссылок на Священное Писание и отслеживание присутствия пользователей.",
+      "below-reader-tool": "Seed bible utils"
+    },
+    "sk": {
+      "title": "Seed Bible Utils",
+      "description": "Zdieľaná servisná vrstva pre rozšírenia vizualizácie Biblie, ktorá poskytuje správu usporiadania, mapovanie odkazov na Písmo a sledovanie prítomnosti používateľov.",
+      "below-reader-tool": "Seed Bible Utils"
+    },
+    "sl": {
+      "title": "Uporabni programi za semensko biblijo",
+      "description": "Skupna storitvena plast za razširitve vizualizacije Svetega pisma, ki omogoča upravljanje razporeditve, preslikavo svetopisemskih referenc in sledenje prisotnosti uporabnikov.",
+      "below-reader-tool": "Uporabni programi za semensko biblijo"
+    },
+    "sq": {
+      "title": "Utils biblike të farës",
+      "description": "Shtresë shërbimi e përbashkët për zgjerimet e vizualizimit të Biblës, duke ofruar menaxhim të rregullimeve, hartëzim të referencave të shkrimeve të shenjta dhe gjurmim të pranisë së përdoruesit.",
+      "below-reader-tool": "Utils biblike të farës"
+    },
+    "sv": {
+      "title": "Seed Bible-verktyg",
+      "description": "Delat tjänstelager för bibelvisualiseringstillägg, som tillhandahåller hantering av arrangemang, mappning av skriftställen och spårning av användares närvaro.",
+      "below-reader-tool": "Seed Bible-verktyg"
+    },
+    "sw": {
+      "title": "Matumizi ya Biblia ya Mbegu",
+      "description": "Safu ya huduma inayoshirikiwa kwa ajili ya upanuzi wa taswira ya Biblia, kutoa usimamizi wa mpangilio, uchoraji ramani wa marejeleo ya maandiko, na ufuatiliaji wa uwepo wa mtumiaji.",
+      "below-reader-tool": "Matumizi ya Biblia ya Mbegu"
+    },
+    "ta": {
+      "title": "விதை பைபிள் பயன்பாடுகள்",
+      "description": "விவிலியக் காட்சிப்படுத்தல் நீட்டிப்புகளுக்கான பகிரப்பட்ட சேவை அடுக்கு, இது வரிசைமுறை மேலாண்மை, வேதவசனக் குறிப்புப் பொருத்தம் மற்றும் பயனர் வருகைக் கண்காணிப்பு ஆகியவற்றை வழங்குகிறது.",
+      "below-reader-tool": "விதை பைபிள் பயன்பாடுகள்"
+    },
+    "te": {
+      "title": "సీడ్ బైబిల్ యుటిల్స్",
+      "description": "బైబిల్ విజువలైజేషన్ ఎక్స్‌టెన్షన్‌ల కోసం షేర్డ్ సర్వీస్ లేయర్, ఇది అమరిక నిర్వహణ, లేఖన సూచన మ్యాపింగ్ మరియు వినియోగదారు ఉనికి ట్రాకింగ్‌ను అందిస్తుంది.",
+      "below-reader-tool": "సీడ్ బైబిల్ యుటిల్స్"
+    },
+    "th": {
+      "title": "ยูทิลิตี้พระคัมภีร์เมล็ดพันธุ์",
+      "description": "เลเยอร์บริการส่วนกลางสำหรับส่วนขยายการแสดงภาพพระคัมภีร์ ซึ่งประกอบด้วยการจัดการการจัดเรียง การจับคู่ข้ออ้างอิงพระคัมภีร์ และการติดตามสถานะการใช้งานของผู้ใช้",
+      "below-reader-tool": "ยูทิลิตี้พระคัมภีร์เมล็ดพันธุ์"
+    },
+    "ti": {
+      "title": "ዘርኢ መጽሓፍ ቅዱስ utils",
+      "description": "ንመቐጸልታታት ምስሊ መጽሓፍ ቅዱስ ዝኸውን ናይ ሓባር ኣገልግሎት ንጣብ፣ ምሕደራ ምድላው፣ መወከሲ ቅዱሳት መጻሕፍቲ ካርታን ምክትታል ህላወ ተጠቃሚን ምሃብ።",
+      "below-reader-tool": "ዘርኢ መጽሓፍ ቅዱስ utils"
+    },
+    "tl": {
+      "title": "Mga kagamitan sa bibliya ng binhi",
+      "description": "Ibinahaging service layer para sa mga extension ng visualization ng Bibliya, na nagbibigay ng pamamahala ng kaayusan, pagmamapa ng mga sanggunian sa banal na kasulatan, at pagsubaybay sa presensya ng gumagamit.",
+      "below-reader-tool": "Mga kagamitan sa bibliya ng binhi"
+    },
+    "tr": {
+      "title": "Tohum İncili yardımcı programları",
+      "description": "İncil görselleştirme eklentileri için paylaşımlı hizmet katmanı; düzenleme yönetimi, ayet referans eşleştirmesi ve kullanıcı varlığı takibi sağlar.",
+      "below-reader-tool": "Tohum İncili yardımcı programları"
+    },
+    "ug": {
+      "title": "ئۇرۇق ئىنجىل ئىشلىتىش ئۇسۇللىرى",
+      "description": "ئىنجىلنى كۆرسىتىش كېڭەيتىشلىرى ئۈچۈن ئورتاق مۇلازىمەت قەۋىتى، تەرتىپ باشقۇرۇش، مۇقەددەس يازمىلارغا پايدىلىنىش خەرىتىسىنى خەرىتىلەش ۋە ئىشلەتكۈچىنىڭ مەۋجۇتلۇقىنى نازارەت قىلىش قاتارلىق مۇلازىمەتلەرنى تەمىنلەيدۇ.",
+      "below-reader-tool": "ئۇرۇق ئىنجىل ئىشلىتىش ئۇسۇللىرى"
+    },
+    "uk": {
+      "title": "Утиліти Біблії насіння",
+      "description": "Спільний сервісний рівень для розширень візуалізації Біблії, що забезпечує керування аранжуванням, зіставлення посилань на Писання та відстеження присутності користувачів.",
+      "below-reader-tool": "Утиліти Біблії насіння"
+    },
+    "ur": {
+      "title": "سیڈ بائبل کے استعمال",
+      "description": "بائبل ویژولائزیشن ایکسٹینشنز کے لیے مشترکہ سروس پرت، انتظامات کا انتظام، صحیفے کے حوالہ جات کی نقشہ سازی، اور صارف کی موجودگی کا پتہ لگانا۔",
+      "below-reader-tool": "سیڈ بائبل کے استعمال"
+    },
+    "uz": {
+      "title": "Urug'lik Injilidan foydalanish",
+      "description": "Muqaddas Kitob vizualizatsiyasi kengaytmalari uchun umumiy xizmat ko'rsatish qatlami, tartibni boshqarish, Muqaddas Kitobga havolalarni xaritalash va foydalanuvchi mavjudligini kuzatishni ta'minlaydi.",
+      "below-reader-tool": "Urug'lik Injilidan foydalanish"
+    },
+    "vi": {
+      "title": "Công cụ kinh thánh hạt giống",
+      "description": "Lớp dịch vụ dùng chung cho các tiện ích mở rộng trực quan hóa Kinh Thánh, cung cấp chức năng quản lý sắp xếp, lập bản đồ tham chiếu kinh thánh và theo dõi sự hiện diện của người dùng.",
+      "below-reader-tool": "Công cụ kinh thánh hạt giống"
+    },
+    "zh": {
+      "title": "种子圣经工具",
+      "description": "圣经可视化扩展的共享服务层，提供编排管理、经文参考映射和用户在线状态跟踪。",
+      "below-reader-tool": "种子圣经工具"
+    },
+    "zu": {
+      "title": "Izinsiza zeBhayibheli lembewu",
+      "description": "Isendlalelo sesevisi esabiwe sezandiso zokuboniswa kweBhayibheli, ukuhlinzeka ngokuphathwa kokuhlelwa, imephu yezinkomba zemibhalo, kanye nokulandelela ubukhona bomsebenzisi.",
+      "below-reader-tool": "Izinsiza zeBhayibheli lembewu"
+    }
+  }
+}

@@ -163,15 +163,15 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
   const isLoggedIn = useComputed(() => login.userId.value !== null);
   const profile = useComputed(() => login.profile.value);
 
-  const newName = useSignal<string>("");
-  const name = useComputed(() => (newName.value || profile.value?.name) ?? "");
-  const newLocation = useSignal<string>("");
+  const newName = useSignal<string | null>(null);
+  const name = useComputed(() => newName.value ?? profile.value?.name ?? "");
+  const newLocation = useSignal<string | null>(null);
   const location = useComputed(
-    () => (newLocation.value || profile.value?.location) ?? ""
+    () => newLocation.value ?? profile.value?.location ?? ""
   );
-  const newDescription = useSignal<string>("");
+  const newDescription = useSignal<string | null>(null);
   const description = useComputed(
-    () => (newDescription.value || profile.value?.description) ?? ""
+    () => newDescription.value ?? profile.value?.description ?? ""
   );
   const pictureUrl = useComputed(() => profile.value?.pictureUrl ?? "");
   const isUploadingPicture = useSignal(false);
@@ -184,9 +184,9 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
       description: description.value || null,
       pictureUrl: pictureUrl.value || null,
     });
-    newName.value = "";
-    newLocation.value = "";
-    newDescription.value = "";
+    newName.value = null;
+    newLocation.value = null;
+    newDescription.value = null;
   };
 
   const handleUploadPicture = () => {

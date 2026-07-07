@@ -3,6 +3,7 @@ import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import {
   createBibleDataManager,
   type BibleDataManager,
+  type VerseRef,
 } from "../managers/BibleDataManager";
 import { createBibleToolsManager } from "../managers/BibleToolsManager";
 import type { ToolsManager } from "../managers/BibleToolsManager";
@@ -12,8 +13,14 @@ import {
   FreeUseBibleAPI,
   getDefaultAPIEndpoint,
 } from "../managers/FreeUseBibleAPI";
+import { h } from "preact";
 import { createPanes } from "../managers/PanesManager";
-import type { Pane, PanesManager } from "../managers/PanesManager";
+import type {
+  Pane,
+  PaneLayoutId,
+  PanesManager,
+} from "../managers/PanesManager";
+import { MobileSplitPanelWarningContent } from "../components/MobileSplitPanelWarning";
 import { createLoginManager } from "../managers/LoginManager";
 import type { LoginManager } from "../managers/LoginManager";
 import { createSidebar } from "../managers/SidebarManager";
@@ -50,7 +57,13 @@ import {
   type BookmarksManager,
 } from "../managers/BookmarksManager";
 import {
+  createChatsManager,
+  type ChatSession,
+  type ChatsManager,
+} from "./ChatsManager";
+import {
   createSessionsManager,
+  isSessionHost,
   type BibleReadingSession,
   type SessionsManager,
 } from "../managers/SessionsManager";
@@ -86,6 +99,7 @@ import {
   createTutorialManager,
   type TutorialManager,
 } from "../managers/TutorialManager";
+import { range } from "es-toolkit";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
@@ -94,10 +108,20 @@ type SearchManager = ReturnType<typeof createSearchManager>;
  * App-wide mobile breakpoint, in pixels. Viewports at or below this width use
  * the mobile layout (drawer sidebar, mobile header, full-screen selector);
  * above it the docked desktop layout applies. This is the single source of
- * truth for the JS side — the matching `@media (max-width: 768px)` /
- * `(min-width: 769px)` rules in app/main.css must be kept in sync by hand.
+ * truth for the JS side — the matching `@media (max-width: 480px)` /
+ * `(min-width: 481px)` rules in app/main.css must be kept in sync by hand.
  */
-export const MOBILE_BREAKPOINT = 768;
+export const MOBILE_BREAKPOINT = 480;
+
+/**
+ * Upper bound of the "compact desktop" band. For viewports above
+ * {@link MOBILE_BREAKPOINT} but at or below this width the screen is too narrow
+ * to dock a 320px sidebar beside the reader, so an *expanded* sidebar floats
+ * over the reader instead of splitting the layout row. Kept in sync with the
+ * matching `@media (min-width: 481px) and (max-width: 768px)` rules in
+ * app/main.css by hand.
+ */
+export const SIDEBAR_OVERLAY_MAX_WIDTH = 768;
 
 /**
  * Derived app-level state and high-level actions used by UI components.
@@ -112,16 +136,29 @@ export interface AppState {
   selectedTab: ReadonlySignal<ReaderTab | null>;
   /** Effective pane list shown by the UI (single pane fallback when panels are disabled). */
   effectivePanes: ReadonlySignal<Pane[]>;
+  /**
+   * Effective attached layout the UI should render. Mirrors the pane manager's
+   * layout on desktop, but on mobile it is coerced to the only two shapes a
+   * phone supports — `single` or `stacked-2` (two panes top/bottom) — without
+   * mutating the manager's stored layout.
+   */
+  effectiveLayout: ReadonlySignal<PaneLayoutId>;
 
   /** Current window inner width in pixels. Updated on resize. */
   viewportWidth: ReadonlySignal<number>;
   /** Current window inner height in pixels. Updated on resize. */
   viewportHeight: ReadonlySignal<number>;
 
-  /** True when viewport width is at or below the mobile breakpoint (768px). */
+  /** True when viewport width is at or below the mobile breakpoint (480px). */
   isMobile: ReadonlySignal<boolean>;
   /** True when on a phone-sized viewport held in landscape orientation. */
   isMobileLandscape: ReadonlySignal<boolean>;
+  /**
+   * True in the "compact desktop" band (just above the mobile breakpoint) where
+   * an expanded sidebar floats over the reader as an overlay rather than
+   * docking beside it.
+   */
+  isCompactDesktop: ReadonlySignal<boolean>;
 
   /**
    * Snapshot of the current chapter selection for analytics and integrations.
@@ -176,6 +213,12 @@ export interface AppState {
    * (only one toast is ever visible at a time, always the most recent).
    */
   toast: (message: string) => void;
+
+  /** Opens a chat session. */
+  openChat: (sharedChat: ChatSession) => void;
+
+  /** Opens a verse reference. */
+  openVerseReference: (ref: VerseRef) => Promise<void>;
 }
 
 /**
@@ -216,6 +259,8 @@ export interface SeedBibleState {
   bookmarks: BookmarksManager;
   /** Annotation manager for notes/metadata. */
   annotations: AnnotationsManager;
+  /** Chat session manager for in-app chat state. */
+  chats: ChatsManager;
   /** Shared reading sessions manager. */
   sessions: SessionsManager;
   /** Modal manager for app-wide dialog state and rendering. */
@@ -305,8 +350,9 @@ export function createSeedBibleState(
   const bookmarks = createBookmarksManager(os, login);
   const config = createConfig(login, navigation);
   const themeManager = createTheme(login, navigation);
-  const sidebar = createSidebar(navigation);
-  const tabs = createTabs(navigation, data, highlights, i18n);
+  const chats = createChatsManager(login, i18n);
+  const sidebar = createSidebar({ navigation, chatsManager: chats });
+  const tabs = createTabs(navigation, data, highlights, chats, i18n);
   const panes = createPanes(tabs, tabs.selectedTabId);
   const settings = createSettings(os, login, navigation);
   const selector = createBibleSelectorState(
@@ -327,7 +373,17 @@ export function createSeedBibleState(
   });
   const modals = createModalManager();
   const search = createSearchManager();
-  const onboarding = createOnboardingManager(login);
+
+  // When the app is opened via a shared-session invite link (`?sessionId=...`),
+  // the user came to join a session, not to onboard — so we skip the welcome
+  // screen and the auto-starting tutorial for this visit. This is derived from
+  // the current URL rather than persisted, so it only affects this tab/load:
+  // revisiting without a `sessionId` shows onboarding and tutorials as usual.
+  const joinedViaSessionLink =
+    typeof window !== "undefined" &&
+    !!navigation.currentUrl.value.searchParams.get("sessionId");
+
+  const onboarding = createOnboardingManager(login, joinedViaSessionLink);
 
   // Terms of Service modal. Two-way bound to the `?terms=open` query param so
   // it can be deep-linked: setting the param opens the modal, and closing the
@@ -437,7 +493,13 @@ export function createSeedBibleState(
   );
   const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
 
-  const tutorial = createTutorialManager(login, onboarding, selector, isMobile);
+  const tutorial = createTutorialManager(
+    login,
+    onboarding,
+    selector,
+    isMobile,
+    joinedViaSessionLink
+  );
 
   // A phone held sideways: landscape orientation with the short viewport
   // height typical of phones. Tablets/desktops in landscape have more
@@ -447,26 +509,6 @@ export function createSeedBibleState(
       viewportHeight.value > 0 &&
       viewportHeight.value <= 600 &&
       viewportWidth.value > viewportHeight.value
-  );
-
-  // True when a multi-pane layout is active — i.e. the user picked anything
-  // other than "single" from the Panels menu (split-2v, split-3v, grid-2x2,
-  // …), or more than one attached pane is otherwise open. Detached overlay
-  // panes (extension tools, playlist, etc.) don't count. Keyed primarily off
-  // the layout preset so selecting a layout from the menu reacts immediately.
-  const hasMultiplePanes = computed(
-    () =>
-      panelsEnabled.value &&
-      (panes.layout.value !== "single" ||
-        panes.panes.value.filter((pane) => !pane.detached).length > 1)
-  );
-
-  // A docked-sidebar desktop layout that has become too narrow for the
-  // sidebar and reader to comfortably share the row. Excludes mobile
-  // (<= 768), where the sidebar is a drawer and `isSidebarCollapsed` does not
-  // apply. The 1200px ceiling mirrors the CSS breakpoint.
-  const isNarrowDesktop = computed(
-    () => viewportWidth.value > 768 && viewportWidth.value <= 1200
   );
 
   effect(() => {
@@ -495,31 +537,20 @@ export function createSeedBibleState(
     }
   });
 
-  // Collapse the docked sidebar by default when a multi-pane layout is active,
-  // so the panes get the horizontal space instead of competing with the
-  // sidebar. Reacting only to the boolean means this fires once per transition
-  // into multi-pane and still lets the user manually re-expand afterwards.
+  // The "compact desktop" band (just above the mobile breakpoint): an
+  // expanded sidebar would overlay the reader rather than dock beside it
+  // (see app/main.css), so start collapsed to a rail when entering the band.
+  // Same once-per-transition pattern as the landscape collapse above, so the
+  // user can still expand the floating sidebar afterwards.
+  const isCompactDesktop = computed(
+    () =>
+      viewportWidth.value > MOBILE_BREAKPOINT &&
+      viewportWidth.value <= SIDEBAR_OVERLAY_MAX_WIDTH
+  );
   effect(() => {
-    if (hasMultiplePanes.value) {
+    if (isCompactDesktop.value) {
       sidebar.isSidebarCollapsed.value = true;
     }
-  });
-
-  // Drive the docked sidebar's collapsed state from the viewport width so the
-  // three layouts hand off cleanly:
-  //   - mobile (<= 768): the sidebar is a drawer (isMobileOpen); the docked
-  //     collapsed flag does not apply, so leave it untouched.
-  //   - narrow desktop (769–1200): collapse to sb-tabs-sidebar-collapsed so
-  //     the reader keeps usable horizontal space.
-  //   - wide desktop (> 1200): restore the regular expanded sidebar.
-  // The effect reads only the booleans (not raw width), so it re-runs solely
-  // when crossing the 768/1200 boundaries — manual toggling within a band is
-  // preserved.
-  effect(() => {
-    if (isMobile.value) {
-      return;
-    }
-    sidebar.isSidebarCollapsed.value = isNarrowDesktop.value;
   });
 
   const buildSingleSelectedPane = (): Pane[] =>
@@ -549,27 +580,61 @@ export function createSeedBibleState(
       return buildSingleSelectedPane();
     }
     if (isMobile.value) {
-      // On mobile we only show a single attached pane at a time. Prefer the
-      // pane that hosts the currently selected tab; fall back to the manager's
-      // selected pane, then the first attached pane.
+      // Mobile pane restrictions. These are applied to the rendered view only —
+      // the pane manager's own settings (layout, extra panes, detached anchors)
+      // are left untouched so they are restored when the viewport grows back to
+      // a desktop size.
+      //
+      //   - Anchored (attached) panes: at most two, shown stacked top/bottom.
+      //     Any further attached panes are hidden. When more than two exist we
+      //     keep the pane hosting the currently selected tab (or the manager's
+      //     selected pane) visible.
+      //   - Detached panes: always rendered anchored to the bottom, regardless
+      //     of their stored anchor, so they float above the default toolbar and
+      //     in front of the anchored panes (PaneLayout gives detached panes a
+      //     higher z-index than attached ones).
       const allPanes = panes.panes.value;
-      const tab = selectedTab.value;
-      const selectedPaneId = panes.selectedPaneId.value;
       const attachedPanes = allPanes.filter((p) => !p.detached);
-      const detachedPanes = allPanes.filter((p) => p.detached);
-      const matching =
-        (tab ? attachedPanes.find((p) => p.tab?.id === tab.id) : null) ??
-        attachedPanes.find((p) => p.id === selectedPaneId) ??
-        attachedPanes[0] ??
-        null;
-      const base = matching ? [matching] : buildSingleSelectedPane();
-      // Detached panes (extension tools, playlist, etc.) are always kept so
-      // they render as overlays in front of the attached pane. PaneLayout
-      // gives detached panes a higher z-index than attached ones, so they sit
-      // above the reader and stay interactable instead of being hidden.
-      return [...base, ...detachedPanes];
+      const detachedPanes = allPanes
+        .filter((p) => p.detached)
+        .map((p) =>
+          p.detachedAnchor === "bottom"
+            ? p
+            : { ...p, detachedAnchor: "bottom" as const }
+        );
+
+      let shownAttached: Pane[];
+      if (attachedPanes.length === 0) {
+        shownAttached = buildSingleSelectedPane();
+      } else if (attachedPanes.length <= 2) {
+        shownAttached = attachedPanes;
+      } else {
+        const tab = selectedTab.value;
+        const selectedPaneId = panes.selectedPaneId.value;
+        const preferred =
+          (tab ? attachedPanes.find((p) => p.tab?.id === tab.id) : null) ??
+          attachedPanes.find((p) => p.id === selectedPaneId) ??
+          attachedPanes[0]!;
+        const next = attachedPanes.find((p) => p.id !== preferred.id)!;
+        shownAttached = [preferred, next];
+      }
+
+      return [...shownAttached, ...detachedPanes];
     }
     return panes.panes.value;
+  });
+
+  const effectiveLayout = computed<PaneLayoutId>(() => {
+    if (!panelsEnabled.value) {
+      return "single";
+    }
+    if (isMobile.value) {
+      const attachedShown = effectivePanes.value.filter(
+        (pane) => !pane.detached
+      ).length;
+      return attachedShown >= 2 ? "stacked-2" : "single";
+    }
+    return panes.layout.value;
   });
   const currentReadingState = computed(() => {
     const selectedTabValue = selectedTab.value;
@@ -807,13 +872,51 @@ export function createSeedBibleState(
   };
 
   const handleOpenInDetachedPane = (tabId: string) => {
-    closeSidebarAndSettings();
-    const paneTabId = resolveTabForNewPane(tabId);
-    panes.openPane({
-      type: "detached",
-      tabId: paneTabId,
-    });
-    tabs.selectTab(paneTabId);
+    const openDetached = () => {
+      closeSidebarAndSettings();
+      const paneTabId = resolveTabForNewPane(tabId);
+      panes.openPane({
+        type: "detached",
+        tabId: paneTabId,
+      });
+      tabs.selectTab(paneTabId);
+    };
+
+    // On mobile a detached panel renders as a bottom sheet stacked over the
+    // anchored panes. When the anchored layout is already split into two panes,
+    // adding a third surface on a small screen is cramped, so warn first and
+    // let the user collapse the split, keep it, or cancel.
+    const anchoredCount = panes.panes.value.filter(
+      (pane) => !pane.detached
+    ).length;
+    if (isMobile.value && anchoredCount >= 2) {
+      const modalId = "mobile-split-detached-warning";
+      modals.openModal({
+        id: modalId,
+        title: {
+          key: "split-panel-warning-title",
+          defaultValue: "Open panel over split view?",
+        },
+        content: () =>
+          h(MobileSplitPanelWarningContent, {
+            onCancel: () => modals.closeModal(modalId),
+            onKeep: () => {
+              modals.closeModal(modalId);
+              openDetached();
+            },
+            onCollapse: () => {
+              modals.closeModal(modalId);
+              // Collapse the anchored split back to a single pane. This only
+              // changes the active layout preset; hidden panes are preserved.
+              panes.setLayout("single");
+              openDetached();
+            },
+          }),
+      });
+      return;
+    }
+
+    openDetached();
   };
 
   const handleSelectPane = (paneId: string) => {
@@ -860,12 +963,27 @@ export function createSeedBibleState(
       // after a login/logout the current login.userId / configBot.id no
       // longer match the original `hostUserId`, but we're still the host
       // of sessions we created in this run.
+      const options = session.options.value;
       const isHost =
         locallyHostedSessionIds.has(session.id) ||
         (hostUserId !== null &&
-          (hostUserId === localId || hostUserId === localConnectionId));
+          (hostUserId === localId || hostUserId === localConnectionId)) ||
+        isSessionHost(options, localId) ||
+        isSessionHost(options, localConnectionId);
 
-      if (isHost && session.options.value.endedAt === null) {
+      // Only end the session for everyone when the leaving client is the
+      // LAST connected host/co-host. If another host/co-host is still
+      // present (e.g. one was just appointed), hand the session off instead
+      // of ending it. Explicit "End session" writes `endedAt` directly, so
+      // it bypasses this heuristic.
+      const anotherHostStillConnected = session.connectedUsers.value.some(
+        (user) =>
+          !user.isSelf &&
+          (isSessionHost(options, user.userId) ||
+            isSessionHost(options, user.connectionId))
+      );
+
+      if (isHost && !anotherHostStillConnected && options.endedAt === null) {
         try {
           session.updateOptions({ endedAt: Date.now() });
         } catch {
@@ -936,8 +1054,13 @@ export function createSeedBibleState(
       if (!hostId) continue;
 
       const users = session.connectedUsers.value;
+      // A session stays alive as long as the host OR any co-host is present,
+      // so appointing a co-host lets the original host leave without kicking
+      // everyone else out.
       const hostIsConnected = users.some(
-        (user) => user.userId === hostId || user.connectionId === hostId
+        (user) =>
+          isSessionHost(session.options.value, user.userId) ||
+          isSessionHost(session.options.value, user.connectionId)
       );
 
       if (hostIsConnected) {
@@ -1022,6 +1145,49 @@ export function createSeedBibleState(
     return session;
   };
 
+  const handleOpenVerseReference = async (ref: VerseRef) => {
+    let tab = selectedTab.value;
+
+    if (!tab) {
+      tab = tabs.tabs.value[0] ?? null;
+    }
+
+    if (tab) {
+      const translationid =
+        tab.readingState.translationId.value ??
+        tab.readingState.defaultTranslation.id;
+      await tab.readingState.selectTranslationAndChapter(
+        translationid,
+        ref.book,
+        ref.chapter,
+        {
+          scrollToVerse: ref.verse,
+        }
+      );
+    } else {
+      tab = tabs.addTab(undefined, {
+        initialBookId: ref.book,
+        initialChapterNumber: ref.chapter,
+        scrollToVerse: ref.verse,
+      });
+    }
+
+    if (ref.verse) {
+      const verses = ref.endVerse
+        ? range(ref.verse, ref.endVerse + 1)
+        : ref.verse;
+      tab.readingState.decorateVerses(ref.book, ref.chapter, verses, {
+        className: "sb-verse-decoration-open-reference-highlight",
+        removeAfterMs: 3000,
+      });
+    }
+  };
+
+  const handleOpenChat = (sharedChat: ChatSession) => {
+    sidebar.openChatPanel();
+    chats.selectChat(sharedChat.id);
+  };
+
   const invitations = createInvitationsManager(os, login, async (sessionId) => {
     await handleJoinSharedSession(sessionId);
   });
@@ -1079,6 +1245,7 @@ export function createSeedBibleState(
     highlights,
     bookmarks,
     annotations,
+    chats,
     sessions,
     modals,
     settings,
@@ -1104,16 +1271,20 @@ export function createSeedBibleState(
       panelsEnabled,
       selectedTab,
       effectivePanes,
+      effectiveLayout,
       viewportWidth,
       viewportHeight,
       isMobile,
       isMobileLandscape,
+      isCompactDesktop,
       currentReadingState,
       selectTab: handleSelectTab,
       addTab: handleAddTab,
       openInNewPane: handleOpenInNewPane,
       openInDetachedPane: handleOpenInDetachedPane,
       selectPane: handleSelectPane,
+      openVerseReference: handleOpenVerseReference,
+      openChat: handleOpenChat,
       title,
       description,
       siteName,

@@ -1,2 +1,2 @@
 const dim = os.getCurrentDimension();
-thisBot.tags[dim + "RotationZ"] = 0
+thisBot.tags[dim + "RotationZ"] = 0;

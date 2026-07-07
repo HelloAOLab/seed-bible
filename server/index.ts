@@ -51,6 +51,8 @@ const ASSET_HOST = process.env.ASSET_HOST ?? "";
 const POINTER_TTL_MS = Number(process.env.POINTER_TTL_MS ?? 10_000);
 const MODULE_CACHE_MAX = Number(process.env.MODULE_CACHE_MAX ?? 20);
 
+const INVALIDATION_SECRET = process.env.INVALIDATION_SECRET ?? "";
+
 /**
  * Comma-separated whitelist of branches that are server-side rendered by their
  * own SSR bundle. A branch outside this set never has its (untrusted) bundle
@@ -353,6 +355,15 @@ async function handle(
   }
 
   if (url.startsWith("/__invalidate")) {
+    if (
+      INVALIDATION_SECRET &&
+      req.headers["x-invalidation-secret"] !== INVALIDATION_SECRET
+    ) {
+      res.writeHead(403, { "content-type": "text/plain" });
+      res.end("Forbidden");
+      return;
+    }
+
     const branch = new URL(url, "http://localhost").searchParams.get("branch");
     if (branch) {
       pointerCache.delete(branch);

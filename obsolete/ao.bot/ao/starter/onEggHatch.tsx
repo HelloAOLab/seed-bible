@@ -1,3 +1,1 @@
-
-
-thisBot.init()
+thisBot.init();

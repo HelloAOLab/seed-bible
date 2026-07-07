@@ -1,0 +1,5 @@
+const sectionBooks = getBots(byTag("isBook", true), byTag("sectionName", thisBot.tags.sectionName));
+const mainWord = getBot("isMainWord", true);
+
+sectionBooks.forEach((book) => {book.tryToIncludeInTheBible({callingFrom: "reformSection"})})
+mainWord.resizeBible();

@@ -7,6 +7,7 @@ import { useI18n } from "../i18n/I18nManager";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import { translateTitle } from "../components/Utils";
 import { handleVerticalListKeyNav } from "../components/KeyboardNav";
+import type { ChatsManager } from "../managers/ChatsManager";
 import { useState } from "preact/hooks";
 
 interface BelowReaderToolbarProps {
@@ -17,6 +18,7 @@ interface BelowReaderToolbarProps {
   tabsManager: TabsManager;
   panesManager: PanesManager;
   currentPane: Pane;
+  chats: ChatsManager;
   openSidebar: () => void;
   openSearch: () => void;
   toast: (message: string) => void;
@@ -36,6 +38,7 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
     currentPane,
     toast,
     openChat,
+    chats,
   } = props;
   const tools = toolsManager.getBelowReaderTools({
     readingState,
@@ -48,6 +51,7 @@ export function BelowReaderToolbar(props: BelowReaderToolbarProps) {
     openSearch,
     toast,
     openChat,
+    chats,
   });
 
   if (tools.length === 0) {

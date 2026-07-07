@@ -35,11 +35,18 @@ async function emitData(functionName, data) {
   // For book events: skip if same destination as last emit (dedup)
   if (functionName === "book") {
     const lastData = globalThis.__lastEmitData["book"];
-    if (lastData && lastData.bookId === data?.bookId && lastData.chapter === data?.chapter) {
+    if (
+      lastData &&
+      lastData.bookId === data?.bookId &&
+      lastData.chapter === data?.chapter
+    ) {
       os.log("emitData: skipping duplicate book emit - same destination");
       return;
     }
-    globalThis.__lastEmitData["book"] = { bookId: data?.bookId, chapter: data?.chapter };
+    globalThis.__lastEmitData["book"] = {
+      bookId: data?.bookId,
+      chapter: data?.chapter,
+    };
   }
 
   // Debounce rapid emissions of same event type (short - just prevents accidental double-clicks)
@@ -51,13 +58,13 @@ async function emitData(functionName, data) {
   globalThis.__lastEmitTime[functionName] = now;
 
   const remotes = await os.remotes();
-  const otherRemotes = remotes.filter(id => id !== remoteId);
+  const otherRemotes = remotes.filter((id) => id !== remoteId);
 
   // Include senderId in payload to help receivers detect their own echoes
   const payload = {
     ...data,
     senderId: remoteId,
-    timestamp: now
+    timestamp: now,
   };
 
   os.log("emitting", functionName, "to", otherRemotes);
