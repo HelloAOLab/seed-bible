@@ -2,14 +2,14 @@ import { render } from "preact";
 import { act, setupRerender, teardown } from "preact/test-utils";
 import { computed, signal, type Signal } from "@preact/signals";
 import { BibleReader } from "@packages/seed-bible/seed-bible/components/BibleReader";
-import { PaneReader } from "@packages/seed-bible/seed-bible/components/PaneLayout";
+import { TabSlotReader } from "@packages/seed-bible/seed-bible/components/TabsLayout";
 import {
   type BibleReadingState,
   type SelectedFootnote,
   type VerseDecoration,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
-import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
+import type { TabSlot } from "@packages/seed-bible/seed-bible/managers/TabsLayoutManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
@@ -29,7 +29,7 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
 });
 
 type ReaderFixture = {
-  pane: Pane;
+  slot: TabSlot;
   selectorState: BibleSelectorState;
   readingState: BibleReadingState;
   chapterData: Signal<TranslationBookChapter | null>;
