@@ -263,5 +263,9 @@
   "no-languages-found": "Мови не знайдено",
   "today-coming-soon": "Сьогоднішній екран з'явиться незабаром",
   "link-to-join-shared-session-copied": "Посилання для приєднання до спільного сеансу скопійовано до буфера обміну",
-  "copied-translation-share-link": "Скопійоване посилання для обміну перекладом"
+  "copied-translation-share-link": "Скопійоване посилання для обміну перекладом",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

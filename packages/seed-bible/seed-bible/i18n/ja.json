@@ -263,5 +263,9 @@
   "no-languages-found": "言語が見つかりません",
   "today-coming-soon": "本日のスクリーンはまもなく登場します",
   "link-to-join-shared-session-copied": "共有セッションに参加するためのリンクがクリップボードにコピーされました。",
-  "copied-translation-share-link": "翻訳共有リンクをコピーしました"
+  "copied-translation-share-link": "翻訳共有リンクをコピーしました",
+  "languageUnavailable.title": "言語は利用できません",
+  "languageUnavailable.body": "この言語には現在対応していませんが、{{fallback}}には対応しています。{{fallback}}に切り替えますか？",
+  "languageUnavailable.yesContinue": "はい、続ける",
+  "languageUnavailable.noGoBack": "いいえ、戻る"
 }

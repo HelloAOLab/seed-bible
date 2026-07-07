@@ -263,5 +263,9 @@
   "no-languages-found": "மொழிகள் எதுவும் காணப்படவில்லை",
   "today-coming-soon": "இன்றைய திரை விரைவில் வருகிறது",
   "link-to-join-shared-session-copied": "பகிரப்பட்ட அமர்வில் சேர்வதற்கான இணைப்பு உங்கள் கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது.",
-  "copied-translation-share-link": "நகலெடுக்கப்பட்ட மொழிபெயர்ப்பு பகிர்வு இணைப்பு"
+  "copied-translation-share-link": "நகலெடுக்கப்பட்ட மொழிபெயர்ப்பு பகிர்வு இணைப்பு",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

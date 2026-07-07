@@ -263,5 +263,9 @@
   "no-languages-found": "Ni chanfuwyd unrhyw ieithoedd",
   "today-coming-soon": "Mae sgrin heddiw yn dod yn fuan",
   "link-to-join-shared-session-copied": "Copïwyd dolen i ymuno â'r sesiwn a rennir i'ch clipfwrdd",
-  "copied-translation-share-link": "Copïwyd dolen rhannu cyfieithiad"
+  "copied-translation-share-link": "Copïwyd dolen rhannu cyfieithiad",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

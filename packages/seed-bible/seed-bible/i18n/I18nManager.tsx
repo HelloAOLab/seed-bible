@@ -6,6 +6,7 @@ import { navigatorLanguages } from "../app/ssrEnv";
 import { createContext, type ComponentChildren } from "preact";
 import type { NavigationManager } from "../managers/NavigationManager";
 import { computed, signal } from "@preact/signals";
+import { getBibleTranslationFallbackUiLanguage } from "../managers/BibleReadingManager";
 
 function getLanguageName(importPath: string): string {
   const match = importPath.match(/\.\/([a-z-]+)\.json$/i);
@@ -103,6 +104,12 @@ export function getUrlLanguage(url: URL): string | null {
   return null;
 }
 
+export type LanguageFallbackPrompt = {
+  requestedLanguage: string;
+  fallbackLanguage: string;
+  previousLanguage: string;
+};
+
 export function createI18nManager(
   navigation: NavigationManager,
   acceptedLanguages: string[]
@@ -179,10 +186,74 @@ export function createI18nManager(
 
   const isRtl = computed(() => isRightToLeftLanguage(language.value));
 
+  const languageFallbackPrompt = signal<LanguageFallbackPrompt | null>(null);
+
+  const changeLanguage = i18n.changeLanguage.bind(i18n);
+
+  const requestLanguageChange = async (nextLanguage: string) => {
+    const previousLanguage = language.value;
+    if (nextLanguage === previousLanguage) {
+      return;
+    }
+
+    const fallbackLanguage =
+      getBibleTranslationFallbackUiLanguage(nextLanguage);
+    if (fallbackLanguage && fallbackLanguage !== previousLanguage) {
+      languageFallbackPrompt.value = {
+        requestedLanguage: nextLanguage,
+        fallbackLanguage,
+        previousLanguage,
+      };
+      return;
+    }
+
+    await changeLanguage(nextLanguage);
+  };
+
+  const confirmLanguageFallback = async () => {
+    const prompt = languageFallbackPrompt.value;
+    if (!prompt) {
+      return;
+    }
+    languageFallbackPrompt.value = null;
+    await changeLanguage(prompt.fallbackLanguage);
+  };
+
+  const cancelLanguageFallback = async () => {
+    const prompt = languageFallbackPrompt.value;
+    if (!prompt) {
+      return;
+    }
+    languageFallbackPrompt.value = null;
+    if (language.value !== prompt.previousLanguage) {
+      await changeLanguage(prompt.previousLanguage);
+    }
+  };
+
+  const checkInitialLanguageFallback = () => {
+    const currentLanguage = language.value;
+    const fallbackLanguage =
+      getBibleTranslationFallbackUiLanguage(currentLanguage);
+    if (!fallbackLanguage || fallbackLanguage === currentLanguage) {
+      return;
+    }
+
+    languageFallbackPrompt.value = {
+      requestedLanguage: currentLanguage,
+      fallbackLanguage,
+      previousLanguage: currentLanguage,
+    };
+  };
+
   return {
     i18n,
     t: i18n.t.bind(i18n),
-    changeLanguage: i18n.changeLanguage.bind(i18n),
+    changeLanguage,
+    requestLanguageChange,
+    confirmLanguageFallback,
+    cancelLanguageFallback,
+    checkInitialLanguageFallback,
+    languageFallbackPrompt,
     defaultLanguage,
     availableLanguages,
     language,
@@ -255,7 +326,7 @@ export function useI18n(ns?: string) {
   const isRtl = isRightToLeftLanguage(i18nManager.language.value);
 
   const setLanguage = async (language: string) => {
-    await i18n.changeLanguage(language);
+    await i18nManager.requestLanguageChange(language);
   };
 
   const translate = ns
@@ -271,6 +342,10 @@ export function useI18n(ns?: string) {
       isRtl,
       availableLanguages,
       setLanguage,
+      requestLanguageChange: i18nManager.requestLanguageChange,
+      confirmLanguageFallback: i18nManager.confirmLanguageFallback,
+      cancelLanguageFallback: i18nManager.cancelLanguageFallback,
+      languageFallbackPrompt: i18nManager.languageFallbackPrompt,
       i18n: i18n,
     }),
     [t, i18n.language]

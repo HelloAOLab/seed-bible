@@ -263,5 +263,9 @@
   "no-languages-found": "ಯಾವುದೇ ಭಾಷೆಗಳು ಕಂಡುಬಂದಿಲ್ಲ.",
   "today-coming-soon": "ಇಂದಿನ ಪರದೆ ಶೀಘ್ರದಲ್ಲೇ ಬರಲಿದೆ",
   "link-to-join-shared-session-copied": "ಹಂಚಿಕೊಂಡ ಸೆಷನ್‌ಗೆ ಸೇರಲು ಲಿಂಕ್ ಅನ್ನು ನಿಮ್ಮ ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ.",
-  "copied-translation-share-link": "ಅನುವಾದ ಹಂಚಿಕೆ ಲಿಂಕ್ ಅನ್ನು ನಕಲಿಸಲಾಗಿದೆ"
+  "copied-translation-share-link": "ಅನುವಾದ ಹಂಚಿಕೆ ಲಿಂಕ್ ಅನ್ನು ನಕಲಿಸಲಾಗಿದೆ",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

@@ -263,5 +263,9 @@
   "no-languages-found": "هیڅ ژبه ونه موندل شوه",
   "today-coming-soon": "نن سکرین ډېر ژر راځي",
   "link-to-join-shared-session-copied": "ستاسو کلپ بورډ ته د شریکې ناستې سره د یوځای کیدو لینک کاپي شو.",
-  "copied-translation-share-link": "کاپي شوی ژباړه شریکول لینک"
+  "copied-translation-share-link": "کاپي شوی ژباړه شریکول لینک",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

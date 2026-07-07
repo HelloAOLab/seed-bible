@@ -263,5 +263,9 @@
   "no-languages-found": "Ingen sprog fundet",
   "today-coming-soon": "Dagens skærm kommer snart",
   "link-to-join-shared-session-copied": "Et link til at deltage i den delte session blev kopieret til din udklipsholder",
-  "copied-translation-share-link": "Kopieret link til deling af oversættelse"
+  "copied-translation-share-link": "Kopieret link til deling af oversættelse",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

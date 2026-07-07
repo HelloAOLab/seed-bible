@@ -263,5 +263,9 @@
   "no-languages-found": "No se encontraron idiomas",
   "today-coming-soon": "La pantalla de hoy estará disponible pronto.",
   "link-to-join-shared-session-copied": "Se ha copiado en el portapapeles un enlace para unirse a la sesión compartida.",
-  "copied-translation-share-link": "Enlace para compartir la traducción copiada"
+  "copied-translation-share-link": "Enlace para compartir la traducción copiada",
+  "languageUnavailable.title": "Idioma no disponible",
+  "languageUnavailable.body": "Actualmente no admitimos este idioma, pero sí admitimos {{fallback}}. ¿Te gustaría cambiar a {{fallback}}?",
+  "languageUnavailable.yesContinue": "Sí, continuar",
+  "languageUnavailable.noGoBack": "No, volver"
 }

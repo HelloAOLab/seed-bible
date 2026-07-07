@@ -263,5 +263,9 @@
   "no-languages-found": "រកមិនឃើញភាសាទេ",
   "today-coming-soon": "អេក្រង់ថ្ងៃនេះនឹងមកដល់ឆាប់ៗនេះ",
   "link-to-join-shared-session-copied": "តំណភ្ជាប់ដើម្បីចូលរួមវគ្គដែលបានចែករំលែកត្រូវបានចម្លងទៅក្ដារតម្បៀតខ្ទាស់របស់អ្នក",
-  "copied-translation-share-link": "បានចម្លងការបកប្រែ ចែករំលែកតំណភ្ជាប់"
+  "copied-translation-share-link": "បានចម្លងការបកប្រែ ចែករំលែកតំណភ្ជាប់",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

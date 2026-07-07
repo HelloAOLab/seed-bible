@@ -263,5 +263,9 @@
   "no-languages-found": "لم يتم العثور على أي لغات",
   "today-coming-soon": "شاشة اليوم قادمة قريباً",
   "link-to-join-shared-session-copied": "تم نسخ رابط للانضمام إلى الجلسة المشتركة إلى حافظتك",
-  "copied-translation-share-link": "تم نسخ رابط مشاركة الترجمة"
+  "copied-translation-share-link": "تم نسخ رابط مشاركة الترجمة",
+  "languageUnavailable.title": "اللغة غير متوفرة",
+  "languageUnavailable.body": "لا ندعم هذه اللغة حاليًا، لكننا ندعم {{fallback}}. هل تريد التبديل إلى {{fallback}} بدلاً من ذلك؟",
+  "languageUnavailable.yesContinue": "نعم، متابعة",
+  "languageUnavailable.noGoBack": "لا، ارجع"
 }

@@ -263,5 +263,9 @@
   "no-languages-found": "Tidak ditemukan bahasa apa pun.",
   "today-coming-soon": "Layar hari ini akan segera hadir",
   "link-to-join-shared-session-copied": "Tautan untuk bergabung dengan sesi bersama telah disalin ke papan klip Anda.",
-  "copied-translation-share-link": "Tautan berbagi terjemahan yang disalin"
+  "copied-translation-share-link": "Tautan berbagi terjemahan yang disalin",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

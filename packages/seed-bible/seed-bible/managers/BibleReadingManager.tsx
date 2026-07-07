@@ -24,6 +24,7 @@ import type {
 } from "../managers/HighlightsManager";
 import { v4 as uuid } from "uuid";
 import type { I18nManager } from "../i18n";
+import { LANG_META } from "../i18n/languageMeta";
 
 export interface BibleSelectedVerse {
   /** Book identifier (for example: GEN, MAT). */
@@ -282,8 +283,50 @@ const FALLBACK_TRANSLATION: TranslationWithLanguage = {
 
 // const DEFAULT_TRANSLATION =;
 
-export function getDefaultTranslationForLanguage(language: string) {
-  return DEFAULT_TRANSLATIONS_BY_LANGUAGE.get(language) ?? FALLBACK_TRANSLATION;
+export function getDefaultTranslationForLanguage(
+  language: string,
+  visited: Set<string> = new Set()
+): TranslationWithLanguage {
+  const direct = DEFAULT_TRANSLATIONS_BY_LANGUAGE.get(language);
+  if (direct) {
+    return direct;
+  }
+
+  if (visited.has(language)) {
+    return FALLBACK_TRANSLATION;
+  }
+  visited.add(language);
+
+  const fallbackLanguage = LANG_META[language]?.fallback;
+  if (fallbackLanguage) {
+    return getDefaultTranslationForLanguage(fallbackLanguage, visited);
+  }
+
+  return FALLBACK_TRANSLATION;
+}
+
+/** UI language to offer when `language` has no direct Bible translation. */
+export function getBibleTranslationFallbackUiLanguage(
+  language: string
+): string | null {
+  if (DEFAULT_TRANSLATIONS_BY_LANGUAGE.has(language)) {
+    return null;
+  }
+
+  const visited = new Set<string>([language]);
+  let current = LANG_META[language]?.fallback;
+  while (current) {
+    if (DEFAULT_TRANSLATIONS_BY_LANGUAGE.has(current)) {
+      return current;
+    }
+    if (visited.has(current)) {
+      return "en";
+    }
+    visited.add(current);
+    current = LANG_META[current]?.fallback;
+  }
+
+  return "en";
 }
 
 export const DEFAULT_BOOK_ID = "GEN";

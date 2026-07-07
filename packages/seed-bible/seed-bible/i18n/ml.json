@@ -263,5 +263,9 @@
   "no-languages-found": "ഭാഷകളൊന്നും കണ്ടെത്തിയില്ല.",
   "today-coming-soon": "ഇന്നത്തെ സ്ക്രീൻ ഉടൻ വരുന്നു",
   "link-to-join-shared-session-copied": "പങ്കിട്ട സെഷനിൽ ചേരുന്നതിനുള്ള ഒരു ലിങ്ക് നിങ്ങളുടെ ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി.",
-  "copied-translation-share-link": "വിവർത്തന പങ്കിടൽ ലിങ്ക് പകർത്തി"
+  "copied-translation-share-link": "വിവർത്തന പങ്കിടൽ ലിങ്ക് പകർത്തി",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

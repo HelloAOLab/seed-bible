@@ -263,5 +263,9 @@
   "no-languages-found": "Hakuna lugha zilizopatikana",
   "today-coming-soon": "Skrini ya leo inakuja hivi karibuni",
   "link-to-join-shared-session-copied": "Kiungo cha kujiunga na kipindi kilichoshirikiwa kimenakiliwa kwenye ubao wako wa kunakili",
-  "copied-translation-share-link": "Kiungo cha kushiriki tafsiri kimenakiliwa"
+  "copied-translation-share-link": "Kiungo cha kushiriki tafsiri kimenakiliwa",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

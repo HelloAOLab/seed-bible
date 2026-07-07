@@ -263,5 +263,9 @@
   "no-languages-found": "Nenalezeny žádné jazyky",
   "today-coming-soon": "Dnešní obrazovka bude brzy k dispozici",
   "link-to-join-shared-session-copied": "Odkaz pro připojení ke sdílené relaci byl zkopírován do schránky.",
-  "copied-translation-share-link": "Odkaz na sdílení překladu byl zkopírován"
+  "copied-translation-share-link": "Odkaz na sdílení překladu byl zkopírován",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

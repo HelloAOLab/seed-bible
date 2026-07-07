@@ -263,5 +263,9 @@
   "no-languages-found": "Языки не найдены",
   "today-coming-soon": "Сегодняшний экран скоро появится",
   "link-to-join-shared-session-copied": "Ссылка для присоединения к общей сессии была скопирована в буфер обмена.",
-  "copied-translation-share-link": "Скопированная ссылка для обмена переводом"
+  "copied-translation-share-link": "Скопированная ссылка для обмена переводом",
+  "languageUnavailable.title": "Язык недоступен",
+  "languageUnavailable.body": "Мы пока не поддерживаем этот язык, но поддерживаем {{fallback}}. Хотите переключиться на {{fallback}}?",
+  "languageUnavailable.yesContinue": "Да, продолжить",
+  "languageUnavailable.noGoBack": "Нет, вернуться"
 }

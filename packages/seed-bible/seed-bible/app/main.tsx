@@ -1,5 +1,4 @@
 import { I18nProvider, useI18n } from "../i18n/I18nManager";
-import {} from "../i18n/I18nManager";
 import { PaneLayout } from "../components/PaneLayout";
 import { BibleSelector } from "../components/BibleSelector";
 import { BibleReaderToolbar } from "../components/BibleReaderToolbar";
@@ -22,7 +21,10 @@ import {
   type AppConfig,
 } from "./appConfig";
 import "./main.css";
-import { OnboardingModals } from "../components/Onboarding";
+import {
+  OnboardingModals,
+  LanguageUnavailableModal,
+} from "../components/Onboarding";
 import { Tutorial } from "../components/Tutorial";
 
 /**
@@ -123,6 +125,10 @@ function MainContent(props: {
   const appDirection = isRtl ? "rtl" : "ltr";
   const { theme, selector } = state;
 
+  useEffect(() => {
+    state.i18n.checkInitialLanguageFallback();
+  }, []);
+
   return (
     <>
       <div
@@ -201,6 +207,10 @@ function MainContent(props: {
           tutorial={state.tutorial}
           className={`${fontSizeClass} ${webkitClass}`}
           groupFilter="non-selector"
+        />
+
+        <LanguageUnavailableModal
+          className={`${fontSizeClass} ${webkitClass}`}
         />
       </div>
     </>

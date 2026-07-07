@@ -263,5 +263,9 @@
   "no-languages-found": "کوئی زبانیں نہیں ملی",
   "today-coming-soon": "آج اسکرین جلد آرہی ہے۔",
   "link-to-join-shared-session-copied": "مشترکہ سیشن میں شامل ہونے کا ایک لنک آپ کے کلپ بورڈ پر کاپی کیا گیا تھا۔",
-  "copied-translation-share-link": "کاپی کیا گیا ترجمہ شیئر لنک"
+  "copied-translation-share-link": "کاپی کیا گیا ترجمہ شیئر لنک",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

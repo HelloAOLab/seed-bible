@@ -263,5 +263,9 @@
   "no-languages-found": "કોઈ ભાષા મળી નથી.",
   "today-coming-soon": "આજે સ્ક્રીન ટૂંક સમયમાં આવી રહી છે",
   "link-to-join-shared-session-copied": "શેર કરેલા સત્રમાં જોડાવા માટેની લિંક તમારા ક્લિપબોર્ડ પર કૉપિ કરવામાં આવી છે.",
-  "copied-translation-share-link": "અનુવાદ શેર લિંક કૉપિ કરી"
+  "copied-translation-share-link": "અનુવાદ શેર લિંક કૉપિ કરી",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }
