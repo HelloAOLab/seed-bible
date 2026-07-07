@@ -1,6 +1,12 @@
 import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
-import { batch, computed, effect, signal } from "@preact/signals";
+import {
+  batch,
+  computed,
+  effect,
+  signal,
+  type ReadonlySignal,
+} from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
 import type { ReaderTab, TabsManager } from "./TabsManager";
 import { v4 as uuid } from "uuid";
@@ -99,7 +105,6 @@ export function createPlayingState(
     sourcePlaylists.flatMap((playlist) => [...playlist.items])
   );
   const currentIndex = signal<number>(queue.value.length > 0 ? 0 : -1);
-  const isMobileOpen = signal(false);
 
   /** The item at `currentIndex`, or null when the queue is empty. */
   const currentItem = computed<PlaylistItemData | null>(
@@ -246,7 +251,6 @@ export function createPlayingState(
     reorderQueue,
     reset,
     dispose,
-    isMobileOpen,
   };
 }
 
@@ -254,7 +258,8 @@ export function createPlaylistManager(
   os: CasualOSManager,
   login: LoginManager,
   tabs: TabsManager,
-  navigation: NavigationManager
+  navigation: NavigationManager,
+  isMobile: ReadonlySignal<boolean>
 ) {
   const initialPlaylistLocator = signal(
     navigation.currentUrl.value.searchParams.get("playlist")
@@ -263,9 +268,12 @@ export function createPlaylistManager(
     navigation.currentUrl.value.searchParams.get("playlistStep")
   );
   const userPlaylists = signal<Playlist[]>([]);
-  const view = signal<"discover" | "create_playlist" | "play_playlist">(
-    "discover"
+  const view = signal<null | "discover" | "create_playlist" | "play_playlist">(
+    null
   );
+
+  const isDiscoverOpen = computed(() => !!view.value);
+
   /** The playlist currently being edited/created in the pane, or null. */
   const editingPlaylist = signal<Playlist | null>(null);
   /** The active playback state, or null when nothing is playing. */
@@ -446,6 +454,12 @@ export function createPlaylistManager(
       null;
     playing.value = createPlayingState(playlists, targetTab);
     view.value = "play_playlist";
+
+    if (isMobile.value) {
+      // on mobile, close the discover pane so the reader is visible while playing
+      view.value = null;
+    }
+
     return playing.value;
   };
 
@@ -480,6 +494,14 @@ export function createPlaylistManager(
     return shareUrl.toString();
   };
 
+  const goBackFromPlayingView = () => {
+    if (isMobile.value) {
+      view.value = null;
+    } else {
+      stopPlaying();
+    }
+  };
+
   /**
    * Stops playback, clears the playing state, and returns to the discover view.
    */
@@ -488,7 +510,9 @@ export function createPlaylistManager(
     playing.value = null;
     initialPlaylistLocator.value = null;
     initialPlaylistStep.value = null;
-    view.value = "discover";
+    if (view.peek()) {
+      view.value = "discover";
+    }
   };
 
   const syncPlaylists = async () => {
@@ -575,5 +599,7 @@ export function createPlaylistManager(
     startPlaying,
     stopPlaying,
     getPlaylistUrl,
+    isDiscoverOpen,
+    goBackFromPlayingView,
   };
 }

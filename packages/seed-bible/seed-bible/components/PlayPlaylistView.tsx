@@ -30,7 +30,7 @@ const PLAYLIST_ITEM_MODAL_ID = "playlist-item-content";
  * (html) items open in the app's generic modal rather than rendering inline.
  */
 export function PlayPlaylistView(props: PlayPlaylistViewProps) {
-  const { playlists, tabs, modals, state } = props;
+  const { playlists, tabs, modals } = props;
   const { t } = useI18n();
 
   // Reading `.value` during render subscribes the component to updates.
@@ -95,10 +95,6 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
     sourcePlaylists[0]?.title ??
     t("untitled-playlist", { defaultValue: "Untitled playlist" });
 
-  if (state.app.isMobile.value && !playing.isMobileOpen.value) {
-    return null;
-  }
-
   return (
     <div className="sb-discover-pane sb-play-playlist">
       <div className="sb-discover-header">
@@ -106,7 +102,7 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
           type="button"
           className="sb-reading-plans-back"
           aria-label={t("back", { defaultValue: "Back" })}
-          onClick={() => playlists.stopPlaying()}
+          onClick={() => playlists.goBackFromPlayingView()}
         >
           <MaterialIcon>arrow_back</MaterialIcon>
         </button>

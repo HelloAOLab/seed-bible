@@ -482,7 +482,6 @@ export function createSeedBibleState(
     },
   });
   const readingPlans = createReadingPlansManager(os, login);
-  const playlists = createPlaylistManager(os, login, tabs, navigation);
 
   const { currentTheme } = themeManager;
   const theme = computed(() => currentTheme.value);
@@ -525,7 +524,13 @@ export function createSeedBibleState(
       : window.innerHeight
   );
   const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
-
+  const playlists = createPlaylistManager(
+    os,
+    login,
+    tabs,
+    navigation,
+    isMobile
+  );
   const tutorial = createTutorialManager(
     login,
     onboarding,
@@ -1257,18 +1262,24 @@ export function createSeedBibleState(
     }, 3500);
   };
 
-  const isDiscoverOpen = signal(false);
+  // const isDiscoverOpen = signal(false);
   const handleOpenDiscover = () => {
-    isDiscoverOpen.value = !isDiscoverOpen.peek();
+    if (!playlists.view.peek()) {
+      playlists.view.value = playlists.playing.peek()
+        ? "play_playlist"
+        : "discover";
+    } else {
+      playlists.view.value = null;
+    }
   };
   const handleCloseDiscover = () => {
-    isDiscoverOpen.value = false;
+    playlists.view.value = null;
   };
 
   effect(() => {
     const isPlaying = !!playlists.playing.value;
     if (isPlaying) {
-      isDiscoverOpen.value = true;
+      handleOpenDiscover();
     }
   });
 
@@ -1382,7 +1393,7 @@ export function createSeedBibleState(
       socialTitle,
       currentToast,
       toast,
-      isDiscoverOpen,
+      isDiscoverOpen: playlists.isDiscoverOpen,
       openDiscover: handleOpenDiscover,
       closeDiscover: handleCloseDiscover,
     },
