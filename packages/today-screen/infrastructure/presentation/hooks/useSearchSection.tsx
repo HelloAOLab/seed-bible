@@ -25,8 +25,8 @@ export const useSearchSection: UseSearchSection = () => {
 
   const seedBibleIconStyle = useMemo<React.CSSProperties>(() => {
     return {
-      width: "24px",
-      height: "24px",
+      width: "1.5rem",
+      height: "1.5rem",
       backgroundColor: theme.variables.secondaryFontColor,
     };
   }, [theme]);

@@ -94,7 +94,7 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
             <span
               className="material-symbols-outlined"
               aria-hidden="true"
-              style={{ fontSize: 22 }}
+              style={{ fontSize: "1.375rem" }}
             >
               auto_stories
             </span>
@@ -121,7 +121,7 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
             aria-label={t("decrease-scripture-font-size", {
               defaultValue: "Decrease scripture font size",
             })}
-            style={{ fontSize: 14 }}
+            style={{ fontSize: "0.875rem" }}
             // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
           >
             A
@@ -134,7 +134,7 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
             aria-label={t("increase-scripture-font-size", {
               defaultValue: "Increase scripture font size",
             })}
-            style={{ fontSize: 20, fontWeight: 500 }}
+            style={{ fontSize: "1.25rem", fontWeight: 500 }}
             // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
           >
             A
@@ -164,7 +164,7 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
                   : ""
               }`}
               onClick={() => settings.setUITextSize(size as UITextSize)}
-              style={{ fontSize: `${12 + i * 2}px` }}
+              style={{ fontSize: `${(12 + i * 2) / 16}rem` }}
               aria-label={size}
               // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
             >

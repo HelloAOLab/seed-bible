@@ -129,8 +129,8 @@ describe("useWelcome", () => {
     it("builds the seed-bible icon style from the theme", () => {
       const result = setup();
       expect(result.current.seedBibleIconStyle).toEqual({
-        width: "20px",
-        height: "20px",
+        width: "1.25rem",
+        height: "1.25rem",
         backgroundColor: "#112233",
       });
     });

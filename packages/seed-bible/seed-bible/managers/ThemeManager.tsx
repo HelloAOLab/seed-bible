@@ -284,9 +284,14 @@ export interface BibleThemeVariables {
   readerToolbarMobileLayoutItemSize?: string | null;
 
   /**
-   * The mobile layout center button size of the reader toolbar.
+   * The mobile layout center button width of the reader toolbar.
    */
-  readerToolbarMobileLayoutCenterButtonSize?: string | null;
+  readerToolbarMobileLayoutCenterButtonWidth?: string | null;
+
+  /**
+   * The mobile layout center button height of the reader toolbar.
+   */
+  readerToolbarMobileLayoutCenterButtonHeight?: string | null;
 
   /**
    * The mobile layout button border radius of the reader toolbar.
@@ -514,44 +519,46 @@ const LIGHT_THEME: BibleTheme = {
     hebrewSubtitleFontColor: "#333",
     hebrewSubtitleFontStyle: "italic",
 
-    readerToolbarBottom: "18px",
-    readerToolbarGap: "10px",
-    readerToolbarPadding: "8px 20px",
-    readerToolbarBorderRadius: "22px",
+    readerToolbarBottom: "1.125rem",
+    readerToolbarGap: "0.25rem",
+    readerToolbarPadding: "1px 0.3125rem",
+    readerToolbarBorderRadius: "1.25rem",
     readerToolbarBackground: "#ffffff",
     readerToolbarBorder: "1px solid #00000024",
-    readerToolbarBoxShadow: "0 26px 10px #0000001a",
+    readerToolbarBoxShadow:
+      "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
     readerToolbarZIndex: "99",
-    readerToolbarHeight: "50px",
+    readerToolbarHeight: "auto",
 
-    readerToolbarFloatingButtonTop: "-68px",
-    readerToolbarFloatingButtonWidth: "48px",
-    readerToolbarFloatingButtonHeight: "48px",
+    readerToolbarFloatingButtonTop: "-4.25rem",
+    readerToolbarFloatingButtonWidth: "3rem",
+    readerToolbarFloatingButtonHeight: "3rem",
     readerToolbarFloatingButtonBorder: "1px solid #00000024",
-    readerToolbarFloatingButtonBorderRadius: "999px",
+    readerToolbarFloatingButtonBorderRadius: "62.4375rem",
     readerToolbarFloatingButtonBackground: "#ffffff",
     readerToolbarFloatingButtonFontColor: "#333",
     readerToolbarFloatingButtonBoxShadow: "0 10px 24px #0000001a",
 
-    verseToolbarGap: "10px",
-    verseToolbarPadding: "8px 16px",
-    verseToolbarBorderRadius: "10px",
-    verseToolbarBorder: "1px solid #00000024",
-    verseToolbarBoxShadow: "0 26px 10px #0000001a",
+    verseToolbarGap: "0.125rem",
+    verseToolbarPadding: "0.25rem 0.5rem",
+    verseToolbarBorderRadius: "0.625rem",
+    verseToolbarBorder: "1px solid var(--sb-divider-color)",
+    verseToolbarBoxShadow: "0 26px 10px var(--sb-shadow-color)",
     verseToolbarZIndex: "100",
-    verseToolbarMinHeight: "50px",
+    verseToolbarMinHeight: "0",
 
-    readerToolbarMobileLayoutHeight: "70px",
-    readerToolbarMobileLayoutPadding: "10px 14px",
-    readerToolbarMobileLayoutGap: "8px",
-    readerToolbarMobileLayoutItemSize: "44px",
-    readerToolbarMobileLayoutCenterButtonSize: "52px",
-    readerToolbarMobileLayoutButtonBorderRadius: "999px",
+    readerToolbarMobileLayoutHeight: "auto",
+    readerToolbarMobileLayoutPadding: "0.625rem 2.1875rem",
+    readerToolbarMobileLayoutGap: "1rem",
+    readerToolbarMobileLayoutItemSize: "2.75rem",
+    readerToolbarMobileLayoutCenterButtonWidth: "5.4375rem",
+    readerToolbarMobileLayoutCenterButtonHeight: "2.625rem",
+    readerToolbarMobileLayoutButtonBorderRadius: "2.5rem",
 
-    readerToolbarFloatingButtonSideOffset: "16px",
+    readerToolbarFloatingButtonSideOffset: "1rem",
 
-    verseToolbarToolsGap: "10px",
-    verseToolbarMobileBottom: "18px",
+    verseToolbarToolsGap: "0.125rem",
+    verseToolbarMobileBottom: "1.125rem",
 
     menuBackground: "#ffffff",
     menuFontColor: "#333",
@@ -654,43 +661,44 @@ const DARK_THEME: BibleTheme = {
     hebrewSubtitleFontColor: "#e6e6e6",
     hebrewSubtitleFontStyle: "italic",
 
-    readerToolbarBottom: "18px",
-    readerToolbarGap: "10px",
-    readerToolbarPadding: "8px 20px",
-    readerToolbarBorderRadius: "22px",
+    readerToolbarBottom: "1.125rem",
+    readerToolbarGap: "0.25rem",
+    readerToolbarPadding: "1px 0.3125rem",
+    readerToolbarBorderRadius: "1.25rem",
     readerToolbarBackground: "#181818",
     readerToolbarBorder: "1px solid rgba(255, 255, 255, 0.1)",
     readerToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.5)",
     readerToolbarZIndex: "99",
-    readerToolbarHeight: "50px",
-    readerToolbarFloatingButtonTop: "-68px",
-    readerToolbarFloatingButtonWidth: "48px",
-    readerToolbarFloatingButtonHeight: "48px",
+    readerToolbarHeight: "auto",
+    readerToolbarFloatingButtonTop: "-4.25rem",
+    readerToolbarFloatingButtonWidth: "3rem",
+    readerToolbarFloatingButtonHeight: "3rem",
     readerToolbarFloatingButtonBorder: "1px solid rgba(255, 255, 255, 0.1)",
-    readerToolbarFloatingButtonBorderRadius: "999px",
+    readerToolbarFloatingButtonBorderRadius: "62.4375rem",
     readerToolbarFloatingButtonBackground: "#181818",
     readerToolbarFloatingButtonFontColor: "#e6e6e6",
     readerToolbarFloatingButtonBoxShadow: "0 10px 24px rgba(0, 0, 0, 0.5)",
 
-    verseToolbarGap: "10px",
-    verseToolbarPadding: "8px 16px",
-    verseToolbarBorderRadius: "10px",
-    verseToolbarBorder: "1px solid rgba(255, 255, 255, 0.1)",
-    verseToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.5)",
+    verseToolbarGap: "0.125rem",
+    verseToolbarPadding: "0.25rem 0.5rem",
+    verseToolbarBorderRadius: "0.625rem",
+    verseToolbarBorder: "1px solid var(--sb-divider-color)",
+    verseToolbarBoxShadow: "0 26px 10px var(--sb-shadow-color)",
     verseToolbarZIndex: "100",
-    verseToolbarMinHeight: "50px",
+    verseToolbarMinHeight: "0",
 
-    readerToolbarMobileLayoutHeight: "70px",
-    readerToolbarMobileLayoutPadding: "10px 14px",
-    readerToolbarMobileLayoutGap: "8px",
-    readerToolbarMobileLayoutItemSize: "44px",
-    readerToolbarMobileLayoutCenterButtonSize: "52px",
-    readerToolbarMobileLayoutButtonBorderRadius: "999px",
+    readerToolbarMobileLayoutHeight: "auto",
+    readerToolbarMobileLayoutPadding: "0.625rem 2.1875rem",
+    readerToolbarMobileLayoutGap: "1rem",
+    readerToolbarMobileLayoutItemSize: "2.75rem",
+    readerToolbarMobileLayoutCenterButtonWidth: "5.4375rem",
+    readerToolbarMobileLayoutCenterButtonHeight: "2.625rem",
+    readerToolbarMobileLayoutButtonBorderRadius: "2.5rem",
 
-    readerToolbarFloatingButtonSideOffset: "16px",
+    readerToolbarFloatingButtonSideOffset: "1rem",
 
-    verseToolbarToolsGap: "10px",
-    verseToolbarMobileBottom: "18px",
+    verseToolbarToolsGap: "0.125rem",
+    verseToolbarMobileBottom: "1.125rem",
 
     menuBackground: "#181818",
     menuFontColor: "#e6e6e6",

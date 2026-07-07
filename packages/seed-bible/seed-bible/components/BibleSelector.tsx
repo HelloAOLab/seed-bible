@@ -41,7 +41,7 @@ import { MOBILE_BREAKPOINT } from "../managers/SeedBibleStateManager";
 const SPOTLIGHT_STYLE = {
   position: "relative",
   zIndex: 2,
-  borderRadius: "8px",
+  borderRadius: "0.5rem",
   boxShadow: "0 0 0 9999px rgba(0,0,0,0.6)",
 } as const;
 
@@ -109,11 +109,11 @@ export function BibleSelector(props: BibleSelectorProps) {
           className={`sb-tour-popover${className ? ` ${className}` : ""}`}
           style={{
             position: "fixed",
-            bottom: "28px",
+            bottom: "1.75rem",
             left: "50%",
             transform: "translateX(-50%)",
             width: "100%",
-            maxWidth: "458px",
+            maxWidth: "28.625rem",
             boxSizing: "border-box",
             zIndex: 10000,
           }}
@@ -414,7 +414,7 @@ const SideBarBooks = (props: {
               <span
                 style={{
                   display: "flex",
-                  gap: "3px",
+                  gap: "0.1875rem",
                   width: "100%",
                   justifyContent: "space-between",
                   ...itemStyle,
@@ -921,7 +921,7 @@ const TranslationModal = (props: {
         >
           <div
             class="sidebar-book-selector flex-between-center-gap-md"
-            style={{ padding: "15px 5px" }}
+            style={{ padding: "0.9375rem 0.3125rem" }}
           >
             {isMobile.value && (
               <span
@@ -938,7 +938,7 @@ const TranslationModal = (props: {
             )}
             <div
               className="searchbar flex-align-center"
-              style={{ width: "100%", height: "30px" }}
+              style={{ width: "100%", height: "1.875rem" }}
             >
               <span className="search-icon material-symbols-outlined">
                 Search
@@ -1111,8 +1111,8 @@ const LanguageComponent = (props: {
         }}
         style={{
           backgroundColor: showSig.value ? "" : "var(--sb-background)",
-          marginBottom: showSig.value ? "0px" : "10px",
-          gap: "8px",
+          marginBottom: showSig.value ? "0px" : "0.625rem",
+          gap: "0.5rem",
         }}
       >
         <span style={{ textTransform: "capitalize", flex: "1 1 auto" }}>
@@ -1137,7 +1137,7 @@ const LanguageComponent = (props: {
       </div>
       {showSig.value && (
         <>
-          <div style={{ margin: "5px 5px" }}>
+          <div style={{ margin: "0.3125rem 0.3125rem" }}>
             {sortedTranslations.map((value) => {
               const completionPercentage = Math.ceil(
                 (value.numberOfBooks / 66) * 100
@@ -1202,7 +1202,7 @@ const LanguageComponent = (props: {
                         })}
                       >
                         <span
-                          style={{ fontSize: "18px" }}
+                          style={{ fontSize: "1.125rem" }}
                           class="material-symbols-outlined"
                         >
                           info
@@ -1402,7 +1402,7 @@ const TranslationInfo = (props: {
             }
           : {
               top: `calc(${position.y}px)`,
-              left: `calc(${position.x}px - 265px)`,
+              left: `calc(${position.x}px - 16.5625rem)`,
             }
       }
       className="modal translationInfoModal"
@@ -1439,11 +1439,11 @@ const ApocryphaInfo = (props: { bibleSelectorState: BibleSelectorState }) => {
     >
       <div
         className="sb-select-modal flex-center"
-        style={{ position: "relative", width: "90%", borderRadius: "10px" }}
+        style={{ position: "relative", width: "90%", borderRadius: "0.625rem" }}
       >
         <div
           class="flex-between-center-gap-md"
-          style={{ width: "100%", marginBottom: "15px" }}
+          style={{ width: "100%", marginBottom: "0.9375rem" }}
         >
           <span class="sb-mobile-settings-sheet-title">
             {t("about-extrabiblical-writings", {
