@@ -1,7 +1,10 @@
 import { useEffect, useRef } from "preact/hooks";
 import { useI18n } from "../i18n/I18nManager";
 import type { TabsManager } from "../managers/TabsManager";
-import type { PlaylistManager } from "../managers/PlaylistManager";
+import type {
+  PlaylistManager,
+  PlaylistItemData,
+} from "../managers/PlaylistManager";
 import type { ModalManager } from "../managers/ModalManager";
 import { setSafeHtml } from "../managers/Sanitization";
 import { resolveLinkMedia } from "../managers/resolveLinkMedia";
@@ -32,29 +35,35 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
   const playing = playlists.playing.value;
   const currentItem = playing?.currentItem.value ?? null;
 
-  // Keyed on `currentItem` so stepping between non-verse items updates the
-  // open modal's content in place instead of flicker-closing and reopening.
-  useEffect(() => {
-    if (!currentItem || currentItem.type === "bible-verse") {
+  // Opens the content modal for a non-verse item (video/link/text), or closes it
+  // for verse items which are shown in the reader instead. Called both when the
+  // current item changes and when the user taps a queue item directly.
+  const showItemInModal = (item: PlaylistItemData | null) => {
+    if (!item || item.type === "bible-verse") {
       modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
       return;
     }
 
     modals.openModal({
       id: PLAYLIST_ITEM_MODAL_ID,
-      title:
-        currentItem.title?.trim() || t("content", { defaultValue: "Content" }),
+      title: item.title?.trim() || t("content", { defaultValue: "Content" }),
       content: () =>
-        currentItem.type === "html" ? (
-          <PlaylistHtmlContent html={currentItem.html} />
+        item.type === "html" ? (
+          <PlaylistHtmlContent html={item.html} />
         ) : (
           <PlaylistLinkContent
-            url={currentItem.url}
-            title={currentItem.title}
-            embed={currentItem.embed}
+            url={item.url}
+            title={item.title}
+            embed={item.embed}
           />
         ),
     });
+  };
+
+  // Keyed on `currentItem` so stepping between non-verse items updates the
+  // open modal's content in place instead of flicker-closing and reopening.
+  useEffect(() => {
+    showItemInModal(currentItem);
   }, [currentItem]);
 
   // Dismiss the modal if this view is torn down, e.g. playback stops.
@@ -118,7 +127,13 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
                   type="button"
                   className="sb-play-playlist-item-button"
                   aria-current={index === currentIndex}
-                  onClick={() => playing.jumpTo(index)}
+                  onClick={() => {
+                    playing.jumpTo(index);
+                    // Open the modal explicitly so tapping the already-current
+                    // item reopens it (jumpTo alone leaves currentItem unchanged,
+                    // so the currentItem effect wouldn't re-fire).
+                    showItemInModal(item);
+                  }}
                 >
                   <span className="sb-discover-item-title">
                     {playlistItemLabel(item, t, resolveBookName)}
