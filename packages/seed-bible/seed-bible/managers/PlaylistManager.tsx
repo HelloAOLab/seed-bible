@@ -201,6 +201,15 @@ export function createPlayingState(
     currentIndex.value = queue.value.length > 0 ? 0 : -1;
   };
 
+  let decorationId: string | null = null;
+
+  const disposeDecoration = () => {
+    if (tab && decorationId) {
+      tab.readingState.removeDecoration(decorationId);
+      decorationId = null;
+    }
+  };
+
   // Navigate the saved tab to the current item when it is a bible verse. Runs
   // immediately, so playback jumps to the first item's verse right away.
   const disposeNavigation = effect(() => {
@@ -221,17 +230,18 @@ export function createPlayingState(
       );
 
       if (ref.verse) {
-        void tab.readingState.decorateVerses(
+        decorationId = tab.readingState.decorateVerses(
           ref.bookId,
           ref.chapter,
           ref.endVerse ? range(ref.verse, ref.endVerse) : [ref.verse],
           {
             className: "sb-verse-decoration-playlist-verse-highlight",
-            removeAfterMs: 3000,
           }
         );
       }
     });
+
+    return () => disposeDecoration();
   });
 
   /** Tears down the navigation effect. Call when playback ends or is replaced. */
