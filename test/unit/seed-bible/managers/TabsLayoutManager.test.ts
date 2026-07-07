@@ -190,14 +190,17 @@ describe("createTabsLayout", () => {
 
       tabsLayout.setLayout("split-2v");
       const secondSlot = tabsLayout.slots.value[1]!;
+      // Explicitly show tab-2 in the second slot — setLayout only
+      // redistributes tabs that slots already reference, it never pulls in
+      // tabs from the tabs list on its own.
+      tabsLayout.openTabInSlot(secondSlot.id, "tab-2");
       tabsLayout.selectSlot(secondSlot.id);
-      const secondSlotTabId = secondSlot.tab!.id;
 
       // Collapsing to a single slot should retain the focused slot's tab.
       tabsLayout.setLayout("single");
 
       expect(tabsLayout.slots.value).toHaveLength(1);
-      expect(tabsLayout.slots.value[0]!.tab?.id).toBe(secondSlotTabId);
+      expect(tabsLayout.slots.value[0]!.tab?.id).toBe("tab-2");
     });
 
     it("deduplicates a tab that ends up referenced by two slots", async () => {
@@ -439,7 +442,7 @@ describe("createTabsLayout", () => {
       expect(tabsLayout.slots.value).toHaveLength(4);
     });
 
-    it("still adds slots but keeps the layout single when panelsEnabled is false", async () => {
+    it("does not surface a new slot when panelsEnabled is false", async () => {
       const { tabsLayout } = await createManagers({
         panelsEnabled: signal(false),
       });
@@ -448,9 +451,15 @@ describe("createTabsLayout", () => {
         tabsLayout.slots.value[0]!.tab!.id
       );
 
+      // A slot is momentarily created, but since panelsEnabled forces the
+      // layout to "single", applyLayoutToSlots immediately collapses back
+      // down to a single slot and the new one never becomes visible.
       expect(result).not.toBeNull();
-      expect(tabsLayout.slots.value).toHaveLength(2);
       expect(tabsLayout.layout.value).toBe("single");
+      expect(tabsLayout.slots.value).toHaveLength(1);
+      expect(
+        tabsLayout.slots.value.some((slot) => slot.id === result?.id)
+      ).toBe(false);
     });
   });
 
