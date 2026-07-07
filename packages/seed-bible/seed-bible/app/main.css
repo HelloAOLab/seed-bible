@@ -10614,11 +10614,11 @@ img.sb-chat-view-message-avatar {
 /* Mobile: pulled out of flow and rendered fullscreen above the panes. */
 .sb-discover-panel--mobile {
   position: fixed;
-  inset: 0;
+  inset: 0 0 120px 0;
   z-index: 100;
   flex: none;
-  width: 100vw;
-  height: 100vh;
+  width: auto;
+  height: auto;
 }
 
 .sb-discover-pane {
@@ -10725,6 +10725,11 @@ img.sb-chat-view-message-avatar {
 .sb-playlist-add-row {
   display: flex;
   gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sb-playlist-add-link-controls {
+  justify-content: space-between;
 }
 
 .sb-playlist-add-text-row,

@@ -89,6 +89,22 @@ export function LinkItemInput(props: LinkItemInputProps) {
             }
           }}
         />
+      </div>
+      <div className="sb-playlist-add-row sb-playlist-add-link-controls">
+        <label className="sb-playlist-embed-toggle">
+          <input
+            type="checkbox"
+            checked={embed}
+            onChange={(event: Event) => {
+              setEmbed((event.currentTarget as HTMLInputElement).checked);
+            }}
+          />
+          <span>
+            {t("playlist-add-link-embed", {
+              defaultValue: "Embed this link",
+            })}
+          </span>
+        </label>
         <button
           type="button"
           className="sb-settings-save-button"
@@ -99,20 +115,6 @@ export function LinkItemInput(props: LinkItemInputProps) {
             t("playlist-add-button", { defaultValue: "Add item" })}
         </button>
       </div>
-      <label className="sb-playlist-embed-toggle">
-        <input
-          type="checkbox"
-          checked={embed}
-          onChange={(event: Event) => {
-            setEmbed((event.currentTarget as HTMLInputElement).checked);
-          }}
-        />
-        <span>
-          {t("playlist-add-link-embed", {
-            defaultValue: "Embed this link",
-          })}
-        </span>
-      </label>
       {error ? <div className="sb-playlist-add-error">{error}</div> : null}
     </>
   );

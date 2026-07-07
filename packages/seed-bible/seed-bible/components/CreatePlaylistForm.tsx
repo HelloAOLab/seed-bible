@@ -157,7 +157,7 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
         onCancelEdit={() => setEditingIndex(null)}
       />
 
-      <div className="sb-settings-actions">
+      <div>
         <button
           type="button"
           className="sb-reading-plans-back"
