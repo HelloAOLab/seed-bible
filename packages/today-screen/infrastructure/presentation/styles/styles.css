@@ -679,11 +679,12 @@
   z-index: 1;
 }
 
-.today-container .filtered-reading-chapter > div > div:first-child {
+.today-container .filtered-reading-chapter > div > *:first-child {
   margin-left: 0;
 }
 
-.today-container .filtered-reading-chapter > div > div {
+
+.today-container .filtered-reading-chapter > div > * {
   width: 1rem;
   height: 1rem;
   display: flex;
@@ -692,6 +693,16 @@
   border-radius: 50%;
   border: solid 1px var(--sb-reader-background);
   margin-left: -0.75rem;
+}
+
+.today-container .filtered-reading-chapter > div > div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.today-container .filtered-reading-chapter > div > img {
+  object-fit: cover;
 }
 
 .today-container .filtered-reading-chapter > div > div > span {
