@@ -679,19 +679,26 @@
   z-index: 1;
 }
 
-.today-container .filtered-reading-chapter > div > div:first-child {
+.today-container .filtered-reading-chapter > div > *:first-child {
   margin-left: 0;
 }
 
-.today-container .filtered-reading-chapter > div > div {
+.today-container .filtered-reading-chapter > div > * {
   width: 16px;
   height: 16px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
   border-radius: 50%;
   border: solid 1px var(--sb-reader-background);
   margin-left: -12px;
+}
+
+.today-container .filtered-reading-chapter > div > div {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.today-container .filtered-reading-chapter > div > img {
+  object-fit: cover;
 }
 
 .today-container .filtered-reading-chapter > div > div > span {

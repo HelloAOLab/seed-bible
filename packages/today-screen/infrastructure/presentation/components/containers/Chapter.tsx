@@ -13,16 +13,6 @@ export interface Props {
   handleClick: () => void;
 }
 
-const Icon = ({
-  style,
-  children,
-}: {
-  style: React.CSSProperties;
-  children: React.ReactNode;
-}) => {
-  return <div style={style}>{children}</div>;
-};
-
 export const Chapter = ({ number, usersData, handleClick }: Props) => {
   return (
     <div
@@ -33,16 +23,12 @@ export const Chapter = ({ number, usersData, handleClick }: Props) => {
       {usersData.length > 0 && (
         <div>
           {usersData.map((data) => {
-            return (
-              <Icon
-                style={{ backgroundColor: data.pictureUrl ? null : data.color }}
-              >
-                {data.pictureUrl ? (
-                  <img src={data.pictureUrl} />
-                ) : (
-                  <data.MaterialIcon>{data.icon}</data.MaterialIcon>
-                )}
-              </Icon>
+            return data.pictureUrl ? (
+              <img src={data.pictureUrl} />
+            ) : (
+              <div style={{ backgroundColor: data.color }}>
+                <data.MaterialIcon>{data.icon}</data.MaterialIcon>
+              </div>
             );
           })}
         </div>
