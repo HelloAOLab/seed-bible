@@ -5,6 +5,7 @@ import type { CasualOSManager } from "./OsManager";
 import type { ReaderTab, TabsManager } from "./TabsManager";
 import { v4 as uuid } from "uuid";
 import { range } from "es-toolkit";
+import type { NavigationManager } from "./NavigationManager";
 
 export const VerseRefSchema = z.object({
   bookId: z.string(),
@@ -226,7 +227,8 @@ export function createPlayingState(
 export function createPlaylistManager(
   os: CasualOSManager,
   login: LoginManager,
-  tabs: TabsManager
+  tabs: TabsManager,
+  navigation: NavigationManager
 ) {
   const userPlaylists = signal<Playlist[]>([]);
   const view = signal<"discover" | "create_playlist" | "play_playlist">(
@@ -415,6 +417,19 @@ export function createPlaylistManager(
   };
 
   /**
+   * Gets a shareable URL for the given playlist, which opens the app with that
+   */
+  const getPlaylistUrl = (playlist: Playlist): string => {
+    const shareUrl = new URL(navigation.currentUrl.value);
+    shareUrl.search = "";
+    shareUrl.searchParams.set(
+      "playlist",
+      `${playlist.recordName}.${playlist.id}`
+    );
+    return shareUrl.toString();
+  };
+
+  /**
    * Stops playback, clears the playing state, and returns to the discover view.
    */
   const stopPlaying = (): void => {
@@ -459,5 +474,6 @@ export function createPlaylistManager(
     playing,
     startPlaying,
     stopPlaying,
+    getPlaylistUrl,
   };
 }

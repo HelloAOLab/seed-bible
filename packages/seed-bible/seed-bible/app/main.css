@@ -10919,6 +10919,7 @@ img.sb-chat-view-message-avatar {
 
 .sb-discover-item-edit,
 .sb-discover-item-play,
+.sb-discover-item-share,
 .sb-discover-item-delete {
   flex: 0 0 auto;
   display: inline-flex;

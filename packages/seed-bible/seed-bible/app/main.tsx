@@ -161,6 +161,7 @@ function MainContent(props: {
               tabs={state.tabs}
               playlists={state.playlists}
               modals={state.modals}
+              toast={state.app.toast}
               onClose={state.app.closeDiscover}
             />
           </div>

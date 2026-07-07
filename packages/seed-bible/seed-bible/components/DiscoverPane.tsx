@@ -8,11 +8,13 @@ import { MaterialIcon } from "./icons";
 import { CreatePlaylistForm } from "./CreatePlaylistForm";
 import { PlayPlaylistView } from "./PlayPlaylistView";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
+import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 
 interface DiscoverPaneProps {
   tabs: TabsManager;
   playlists: PlaylistManager;
   modals: ModalManager;
+  toast: SeedBibleState["app"]["toast"];
   /** Closes the Discover panel. When provided, a close button is shown. */
   onClose?: () => void;
 }
@@ -80,7 +82,11 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         )}
       </div>
 
-      <PlaylistSection userPlaylists={userPlaylists} playlists={playlists} />
+      <PlaylistSection
+        userPlaylists={userPlaylists}
+        playlists={playlists}
+        toast={props.toast}
+      />
 
       <DiscoverSection
         title={t("annotations", { defaultValue: "Annotations" })}
@@ -102,9 +108,11 @@ export function DiscoverPane(props: DiscoverPaneProps) {
 function PlaylistSection({
   userPlaylists,
   playlists,
+  toast,
 }: {
   userPlaylists: Playlist[];
   playlists: PlaylistManager;
+  toast: SeedBibleState["app"]["toast"];
 }) {
   const { t } = useI18n();
   return (
@@ -149,11 +157,33 @@ function PlaylistSection({
               </button>
               <button
                 type="button"
+                className="sb-discover-item-share"
+                aria-label={t("share-playlist", {
+                  defaultValue: "Share playlist",
+                })}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const url = playlists.getPlaylistUrl(playlist);
+                  navigator.clipboard.writeText(url);
+                  toast(
+                    t("playlist-url-copied", {
+                      defaultValue: "Playlist URL copied to clipboard",
+                    })
+                  );
+                }}
+              >
+                <MaterialIcon>share</MaterialIcon>
+              </button>
+              <button
+                type="button"
                 className="sb-discover-item-edit"
                 aria-label={t("edit-playlist", {
                   defaultValue: "Edit playlist",
                 })}
-                onClick={() => playlists.editPlaylist(playlist)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  playlists.editPlaylist(playlist);
+                }}
               >
                 <MaterialIcon>edit</MaterialIcon>
               </button>

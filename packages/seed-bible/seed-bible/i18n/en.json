@@ -400,5 +400,8 @@
   "appoint-co-host": "Appoint a co-host",
   "appoint-co-host-instructions": "Choose someone to keep the session running:",
   "end-session-for-everyone": "End session",
-  "dont-show-again": "Don't show this again"
+  "dont-show-again": "Don't show this again",
+  "failed-to-load-playlist": "Failed to load playlist",
+  "share-playlist": "Share playlist",
+  "playlist-url-copied": "Playlist URL copied to clipboard"
 }
