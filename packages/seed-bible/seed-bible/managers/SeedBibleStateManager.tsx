@@ -1259,13 +1259,6 @@ export function createSeedBibleState(
 
   const isDiscoverOpen = signal(false);
   const handleOpenDiscover = () => {
-    if (isMobile.value && isDiscoverOpen.peek()) {
-      const playing = playlists.playing.peek();
-      if (playing) {
-        playing.isMobileOpen.value = !playing.isMobileOpen.peek();
-        return;
-      }
-    }
     isDiscoverOpen.value = !isDiscoverOpen.peek();
   };
   const handleCloseDiscover = () => {

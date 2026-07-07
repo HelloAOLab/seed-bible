@@ -768,7 +768,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     defaultValue: "Chapter navigation",
                   })}
                 >
-                  {audio && AudioIcon && (
+                  {!playing && audio && AudioIcon && (
                     <button
                       type="button"
                       disabled={audio.disabled.value}
@@ -777,6 +777,16 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       aria-label={translateTitle(t, audio.title)}
                     >
                       <AudioIcon />
+                    </button>
+                  )}
+                  {playing && (
+                    <button
+                      type="button"
+                      onClick={() => props.state.playlists.stopPlaying()}
+                      className="sb-reader-floating-nav-play"
+                      aria-label={t("stop", { defaultValue: "Stop" })}
+                    >
+                      <MaterialIcon>stop</MaterialIcon>
                     </button>
                   )}
 
