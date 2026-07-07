@@ -10606,7 +10606,7 @@ img.sb-chat-view-message-avatar {
 
 .sb-reading-plans-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
 }
 
@@ -10616,7 +10616,7 @@ img.sb-chat-view-message-avatar {
   border-radius: 8px;
   background: var(--sb-primary-color);
   color: var(--sb-background);
-  font-size: 13px;
+  font-size: 1rem;
   cursor: pointer;
 }
 
@@ -10626,7 +10626,7 @@ img.sb-chat-view-message-avatar {
 
 .sb-reading-plans-empty {
   padding: 16px 8px;
-  font-size: 13px;
+  font-size: 1rem;
   text-align: center;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
@@ -10665,12 +10665,12 @@ img.sb-chat-view-message-avatar {
 }
 
 .sb-reading-plan-item-title {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
 }
 
 .sb-reading-plan-item-description {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
@@ -10683,7 +10683,7 @@ img.sb-chat-view-message-avatar {
   border-radius: 8px;
   background: transparent;
   color: var(--sb-font-color);
-  font-size: 13px;
+  font-size: 0.8125rem;
   cursor: pointer;
 }
 
@@ -10760,7 +10760,7 @@ img.sb-chat-view-message-avatar {
 
 .sb-discover-title {
   margin: 0;
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
 }
 
@@ -10770,7 +10770,7 @@ img.sb-chat-view-message-avatar {
   border-radius: 8px;
   background: var(--sb-primary-color);
   color: var(--sb-background);
-  font-size: 13px;
+  font-size: 0.8125rem;
   cursor: pointer;
 }
 
@@ -10787,7 +10787,7 @@ img.sb-chat-view-message-avatar {
   border-bottom: 1px solid var(--sb-divider-color);
   background: transparent;
   color: var(--sb-font-color);
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
 }
 
@@ -10805,7 +10805,7 @@ img.sb-chat-view-message-avatar {
   border-radius: 8px;
   background: transparent;
   color: var(--sb-font-color);
-  font-size: 13px;
+  font-size: 0.8125rem;
   cursor: pointer;
 }
 
@@ -10843,7 +10843,7 @@ img.sb-chat-view-message-avatar {
 }
 
 .sb-playlist-add-textarea {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 400;
   resize: vertical;
 }
@@ -10859,7 +10859,7 @@ img.sb-chat-view-message-avatar {
 }
 
 .sb-playlist-add-editor {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 400;
   padding: 10px 12px;
 }
@@ -10951,7 +10951,7 @@ img.sb-chat-view-message-avatar {
 
 .sb-playlist-add-error {
   margin-top: 6px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--sb-error-color, #d64545);
 }
 
@@ -10960,7 +10960,7 @@ img.sb-chat-view-message-avatar {
   align-items: center;
   gap: 8px;
   margin-top: 8px;
-  font-size: 14px;
+  font-size: 0.875rem;
   cursor: pointer;
 }
 
@@ -10974,7 +10974,7 @@ img.sb-chat-view-message-avatar {
 
 .sb-discover-section-title {
   margin: 0 0 6px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -10983,7 +10983,7 @@ img.sb-chat-view-message-avatar {
 
 .sb-discover-empty {
   padding: 12px 8px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
@@ -11055,7 +11055,7 @@ img.sb-chat-view-message-avatar {
 .sb-discover-item-edit .material-symbols-outlined,
 .sb-discover-item-play .material-symbols-outlined,
 .sb-discover-item-delete .material-symbols-outlined {
-  font-size: 18px;
+  font-size: 1.125rem;
 }
 
 /* Play-playlist view: scrollable queue above a pinned controls bar. */
@@ -11205,7 +11205,7 @@ img.sb-chat-view-message-avatar {
 }
 
 .sb-discover-item-title {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 500;
 }
 
@@ -11237,11 +11237,11 @@ img.sb-chat-view-message-avatar {
 }
 
 .sb-discover-item-description {
-  font-size: 12px;
+  font-size: 0.75rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
 }
 
 .sb-discover-item-content {
-  font-size: 13px;
+  font-size: 0.8125rem;
   margin-top: 4px;
 }
