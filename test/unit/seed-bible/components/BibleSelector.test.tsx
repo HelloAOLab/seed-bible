@@ -60,20 +60,20 @@ async function createSelectorFixture(
       ...options.responses,
     },
   });
-  const pane = state.panes.panes.value[0] as Pane;
-  if (!pane) {
-    throw new Error("Expected an initial pane.");
+  const slot = state.tabsLayout.slots.value[0] as TabSlot;
+  if (!slot) {
+    throw new Error("Expected an initial slot.");
   }
 
   if (options.open !== false) {
-    await state.selector.setOpen(true, pane);
+    await state.selector.setOpen(true, slot);
   }
 
   return {
     state,
     selectorState: state.selector,
     bibleDataManager: state.bibleData,
-    pane,
+    slot,
     selectChapter: vi.spyOn(state.selector, "selectChapter"),
     setSearch: vi.spyOn(state.selector, "setSearch"),
   };
@@ -387,11 +387,11 @@ describe("BibleSelector", () => {
     };
 
     const state = await createTestSeedBibleState({ responses });
-    const pane = state.panes.panes.value[0] as Pane;
-    if (!pane) {
-      throw new Error("Expected an initial pane.");
+    const slot = state.tabsLayout.slots.value[0] as TabSlot;
+    if (!slot) {
+      throw new Error("Expected an initial slot.");
     }
-    await state.selector.setOpen(true, pane);
+    await state.selector.setOpen(true, slot);
 
     const { selectorState, bibleDataManager } = {
       selectorState: state.selector,
@@ -438,11 +438,11 @@ describe("BibleSelector", () => {
       await Promise.resolve();
     });
 
-    await waitFor(() => pane.tab?.readingState.bookId.value === "GEN");
-    await waitFor(() => pane.tab?.readingState.chapterNumber.value === 10);
+    await waitFor(() => slot.tab?.readingState.bookId.value === "GEN");
+    await waitFor(() => slot.tab?.readingState.chapterNumber.value === 10);
 
-    expect(pane.tab?.readingState.bookId.value).toBe("GEN");
-    expect(pane.tab?.readingState.chapterNumber.value).toBe(10);
+    expect(slot.tab?.readingState.bookId.value).toBe("GEN");
+    expect(slot.tab?.readingState.chapterNumber.value).toBe(10);
     expect(selectorState.isOpen.value).toBe(false);
   });
 
@@ -465,11 +465,11 @@ describe("BibleSelector", () => {
 
     for (const testCase of cases) {
       const state = await createTestSeedBibleState({ responses });
-      const pane = state.panes.panes.value[0] as Pane;
-      if (!pane) {
-        throw new Error("Expected an initial pane.");
+      const slot = state.tabsLayout.slots.value[0] as TabSlot;
+      if (!slot) {
+        throw new Error("Expected an initial slot.");
       }
-      await state.selector.setOpen(true, pane);
+      await state.selector.setOpen(true, slot);
 
       const { selectorState, bibleDataManager } = {
         selectorState: state.selector,
@@ -521,12 +521,12 @@ describe("BibleSelector", () => {
       });
 
       await waitFor(
-        () => pane.tab?.readingState.bookId.value === testCase.expectedBookId
+        () => slot.tab?.readingState.bookId.value === testCase.expectedBookId
       );
-      await waitFor(() => pane.tab?.readingState.chapterNumber.value === 1);
+      await waitFor(() => slot.tab?.readingState.chapterNumber.value === 1);
 
-      expect(pane.tab?.readingState.bookId.value).toBe(testCase.expectedBookId);
-      expect(pane.tab?.readingState.chapterNumber.value).toBe(1);
+      expect(slot.tab?.readingState.bookId.value).toBe(testCase.expectedBookId);
+      expect(slot.tab?.readingState.chapterNumber.value).toBe(1);
       expect(selectorState.isOpen.value).toBe(false);
 
       render(null, container);
@@ -561,11 +561,11 @@ describe("BibleSelector", () => {
     };
 
     const state = await createTestSeedBibleState({ responses });
-    const pane = state.panes.panes.value[0] as Pane;
-    if (!pane) {
-      throw new Error("Expected an initial pane.");
+    const slot = state.tabsLayout.slots.value[0] as TabSlot;
+    if (!slot) {
+      throw new Error("Expected an initial slot.");
     }
-    await state.selector.setOpen(true, pane);
+    await state.selector.setOpen(true, slot);
 
     const { selectorState, bibleDataManager } = {
       selectorState: state.selector,
@@ -1087,17 +1087,17 @@ describe("BibleSelector translation selector", () => {
   });
 
   it("selecting a translation selects the current book/chapter in that translation and closes the selector", async () => {
-    const { selectorState, bibleDataManager, pane, state } =
+    const { selectorState, bibleDataManager, slot, state } =
       await createSelectorFixture();
 
-    await pane.tab!.readingState.selectChapter("EXO", 2);
+    await slot.tab!.readingState.selectChapter("EXO", 2);
 
-    expect(pane.tab?.readingState.translationId.value).toBe("AAB");
+    expect(slot.tab?.readingState.translationId.value).toBe("AAB");
 
-    const initialBookId = pane.tab?.readingState.bookId.value;
+    const initialBookId = slot.tab?.readingState.bookId.value;
     expect(initialBookId).toBe("EXO");
 
-    const initialChapter = pane.tab?.readingState.chapterNumber.value;
+    const initialChapter = slot.tab?.readingState.chapterNumber.value;
     expect(initialChapter).toBe(2);
 
     act(() => {
@@ -1137,14 +1137,14 @@ describe("BibleSelector translation selector", () => {
 
     await waitFor(() => selectorState.selectedTranslationId.value === "BSB");
 
-    await waitFor(() => pane.tab?.readingState.translationId.value === "BSB");
+    await waitFor(() => slot.tab?.readingState.translationId.value === "BSB");
     await waitFor(() => selectorState.isOpen.value === false);
 
     expect(selectorState.selectingTranslation.value).toBe(false);
     expect(selectorState.isOpen.value).toBe(false);
-    expect(pane.tab?.readingState.translationId.value).toBe("BSB");
-    expect(pane.tab?.readingState.bookId.value).toBe(initialBookId);
-    expect(pane.tab?.readingState.chapterNumber.value).toBe(initialChapter);
+    expect(slot.tab?.readingState.translationId.value).toBe("BSB");
+    expect(slot.tab?.readingState.bookId.value).toBe(initialBookId);
+    expect(slot.tab?.readingState.chapterNumber.value).toBe(initialChapter);
   });
 
   it("selecting a translation falls back to the first book and its first available chapter when the current book is unavailable", async () => {
@@ -1193,13 +1193,13 @@ describe("BibleSelector translation selector", () => {
       },
     });
 
-    const pane = state.panes.panes.value[0] as Pane;
-    if (!pane) {
-      throw new Error("Expected an initial pane.");
+    const slot = state.tabsLayout.slots.value[0] as TabSlot;
+    if (!slot) {
+      throw new Error("Expected an initial slot.");
     }
 
-    await pane.tab!.readingState.selectChapter("EXO", 2);
-    await state.selector.setOpen(true, pane);
+    await slot.tab!.readingState.selectChapter("EXO", 2);
+    await state.selector.setOpen(true, slot);
 
     const { selectorState, bibleDataManager } = {
       selectorState: state.selector,
@@ -1242,16 +1242,16 @@ describe("BibleSelector translation selector", () => {
     });
 
     await waitFor(() => selectorState.selectedTranslationId.value === "ALT");
-    await waitFor(() => pane.tab?.readingState.translationId.value === "ALT");
-    await waitFor(() => pane.tab?.readingState.bookId.value === "MAT");
-    await waitFor(() => pane.tab?.readingState.chapterNumber.value === 3);
+    await waitFor(() => slot.tab?.readingState.translationId.value === "ALT");
+    await waitFor(() => slot.tab?.readingState.bookId.value === "MAT");
+    await waitFor(() => slot.tab?.readingState.chapterNumber.value === 3);
     await waitFor(() => selectorState.isOpen.value === false);
 
     expect(selectorState.selectingTranslation.value).toBe(false);
     expect(selectorState.isOpen.value).toBe(false);
-    expect(pane.tab?.readingState.translationId.value).toBe("ALT");
-    expect(pane.tab?.readingState.bookId.value).toBe("MAT");
-    expect(pane.tab?.readingState.chapterNumber.value).toBe(3);
+    expect(slot.tab?.readingState.translationId.value).toBe("ALT");
+    expect(slot.tab?.readingState.bookId.value).toBe("MAT");
+    expect(slot.tab?.readingState.chapterNumber.value).toBe(3);
   });
 
   it("displays only complete translations when in complete mode", async () => {
@@ -1457,9 +1457,9 @@ describe("BibleSelector translation selector", () => {
     };
 
     const state = await createTestSeedBibleState({ responses });
-    const pane = state.panes.panes.value[0] as Pane;
-    if (!pane) throw new Error("Expected an initial pane.");
-    await state.selector.setOpen(true, pane);
+    const slot = state.tabsLayout.slots.value[0] as TabSlot;
+    if (!slot) throw new Error("Expected an initial slot.");
+    await state.selector.setOpen(true, slot);
 
     const { selectorState, bibleDataManager } = {
       selectorState: state.selector,
