@@ -1,5 +1,5 @@
 import "./PaneLayout.css";
-import { PaneHeader } from "../PaneHeader";
+import { PaneHeader } from "../PaneHeader/PaneHeader";
 import type { Pane } from "../../managers/PanesManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { UI_TEXT_SIZE_SCALE_MAP } from "../../managers/SettingsManager";

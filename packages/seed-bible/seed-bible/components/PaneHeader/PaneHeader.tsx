@@ -1,5 +1,6 @@
+import "./PaneHeader.css";
 import type { ComponentChild } from "preact";
-import { useI18n } from "../i18n/I18nManager";
+import { useI18n } from "../../i18n/I18nManager";
 
 export interface PaneHeaderProps {
   /** Title shown in the header. */

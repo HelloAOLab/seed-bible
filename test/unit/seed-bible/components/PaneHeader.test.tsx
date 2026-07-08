@@ -1,6 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { PaneHeader } from "@packages/seed-bible/seed-bible/components/PaneHeader";
+import { PaneHeader } from "@packages/seed-bible/seed-bible/components/PaneHeader/PaneHeader";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
