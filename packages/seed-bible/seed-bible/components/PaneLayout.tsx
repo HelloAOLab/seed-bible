@@ -2,7 +2,6 @@ import type { Pane } from "../managers/PanesManager";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import { useEffect, useRef } from "preact/hooks";
 import { PaneHeader } from "../components/PaneHeader";
-import { MaterialIcon } from "../components/icons";
 import { UI_TEXT_SIZE_SCALE_MAP } from "../managers/SettingsManager";
 
 interface DragState {
@@ -269,13 +268,14 @@ export function SidePane(props: SidePaneProps) {
         <div className="sb-pane-component">
           <pane.component />
         </div>
-        <div
-          className="sb-pane-detached-resize-handle sb-pane-detached-resize-handle-side"
-          onPointerDown={(event: PointerEvent) => startResize(pane, event)}
-        >
-          <MaterialIcon>drag_indicator</MaterialIcon>
-        </div>
       </div>
+      {/* Invisible full-height grab strip along the pane's resize edge. It's a
+          direct child of the shell (not the scrolling body) so it spans the
+          whole side and isn't clipped. */}
+      <div
+        className="sb-pane-detached-resize-handle-side"
+        onPointerDown={(event: PointerEvent) => startResize(pane, event)}
+      ></div>
     </div>
   );
 }

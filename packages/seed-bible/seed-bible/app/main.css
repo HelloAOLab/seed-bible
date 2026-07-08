@@ -771,9 +771,7 @@ a:visited {
   cursor: nwse-resize;
 }
 
-.sb-pane-detached-resize-handle:not(
-    .sb-pane-detached-resize-handle-side
-  )::before {
+.sb-pane-detached-resize-handle::before {
   content: "";
   position: absolute;
   right: 0.25rem;
@@ -786,28 +784,17 @@ a:visited {
     color-mix(in srgb, var(--sb-font-color), transparent 35%);
 }
 
-/* Side pane - resize handle on the left edge */
+/* Side pane: an invisible grab strip running the full height of the pane's
+   resize (left) edge. Rendered as a direct child of the shell so it spans the
+   whole side and isn't clipped by the pane body's scroll overflow. */
 .sb-pane-detached-resize-handle-side {
   position: absolute;
-  left: -0.75rem;
-  top: calc(50% - 1.875rem);
-  width: 1.5rem;
-  height: 3.75rem;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0.75rem;
   cursor: ew-resize;
-  /* east-west resize cursor */
-  background: var(--sb-divider-color);
-  display: flex;
-  justify-items: center;
-  align-items: center;
-  border-radius: 0.25rem;
-}
-
-.sb-pane-detached-resize-handle-side:hover {
-  background: color-mix(
-    in srgb,
-    var(--sb-divider-color),
-    var(--sb-font-color) 12%
-  );
+  z-index: 10;
 }
 
 .sb-pane-component,
