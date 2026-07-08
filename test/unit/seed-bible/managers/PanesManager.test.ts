@@ -243,6 +243,77 @@ describe("createPanes", () => {
     });
   });
 
+  describe("custom header", () => {
+    it("leaves header undefined when none is provided", () => {
+      const panes = createPanes();
+
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+      });
+
+      expect(pane.header).toBeUndefined();
+    });
+
+    it("stores the header render function on the pane", () => {
+      const panes = createPanes();
+
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+        header: componentReturning("Header Buttons"),
+      });
+
+      expect(pane.header?.()).toBe("Header Buttons");
+      expect(panes.panes.value[0]?.header?.()).toBe("Header Buttons");
+    });
+
+    it("updates the header when a pane is reused by id", () => {
+      const panes = createPanes();
+
+      panes.openPane({
+        id: "reusable-pane",
+        placement: "floating",
+        title: "First",
+        component: componentReturning("First"),
+        header: componentReturning("First Header"),
+      });
+
+      const result = panes.openPane({
+        id: "reusable-pane",
+        placement: "floating",
+        title: "Second",
+        component: componentReturning("Second"),
+        header: componentReturning("Second Header"),
+      });
+
+      expect(result.header?.()).toBe("Second Header");
+    });
+
+    it("clears the header when a pane is reused without one", () => {
+      const panes = createPanes();
+
+      panes.openPane({
+        id: "reusable-pane",
+        placement: "floating",
+        title: "First",
+        component: componentReturning("First"),
+        header: componentReturning("First Header"),
+      });
+
+      const result = panes.openPane({
+        id: "reusable-pane",
+        placement: "floating",
+        title: "Second",
+        component: componentReturning("Second"),
+      });
+
+      expect(result.header).toBeUndefined();
+    });
+  });
+
   describe("closePane", () => {
     it("removes the pane and returns true", () => {
       const panes = createPanes();

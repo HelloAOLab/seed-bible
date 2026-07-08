@@ -14,6 +14,12 @@ export interface Pane {
   title: string;
   /** Custom component rendered in this pane. */
   component: () => ComponentChild;
+  /**
+   * Optional custom header content rendered inside the pane's header, between
+   * the title and the close button. Rendered as a component so it can use
+   * hooks (i18n, signals). Omit for a plain title-and-close header.
+   */
+  header?: () => ComponentChild;
   /** Placement mode, fixed at creation time. */
   placement: PanePlacement;
   /** Pane X position for floating placement. */
@@ -33,6 +39,12 @@ export interface PaneOpenOptions {
   title: string;
   /** Custom component rendered in the pane. */
   component: () => ComponentChild;
+  /**
+   * Optional custom header content rendered inside the pane's header, between
+   * the title and the close button. Rendered as a component so it can use
+   * hooks (i18n, signals). Omit for a plain title-and-close header.
+   */
+  header?: () => ComponentChild;
   /**
    * Optional stable pane identifier.
    * When provided, an existing pane with this ID is reused and updated with
@@ -86,7 +98,8 @@ function createPaneFactory() {
     title: string,
     component: () => ComponentChild,
     placement: PanePlacement,
-    customId?: string
+    customId?: string,
+    header?: () => ComponentChild
   ): Pane => {
     const paneId = nextPaneId;
     nextPaneId += 1;
@@ -96,6 +109,7 @@ function createPaneFactory() {
       id: customId ?? `pane-${paneId}`,
       title,
       component,
+      header,
       placement,
       x: 48 + offset,
       y: 48 + offset,
@@ -150,6 +164,7 @@ export function createPanes(): PanesManager {
           ...existingPane,
           title: options.title,
           component: options.component,
+          header: options.header,
         };
         syncPaneState(
           panes.value.map((pane) =>
@@ -171,7 +186,8 @@ export function createPanes(): PanesManager {
       options.title,
       options.component,
       options.placement,
-      options.id
+      options.id,
+      options.header
     );
     syncPaneState([...basePanes, nextPane], nextPane.id);
     return nextPane;

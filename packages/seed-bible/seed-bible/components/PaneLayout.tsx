@@ -212,6 +212,7 @@ export function PaneLayout(props: PaneLayoutProps) {
         >
           <PaneHeader
             title={pane.title}
+            header={pane.header}
             onClose={() => panesManager.closePane(pane.id)}
             onPointerDown={(event: PointerEvent) => startMove(pane, event)}
           />
@@ -261,6 +262,7 @@ export function SidePane(props: SidePaneProps) {
     >
       <PaneHeader
         title={pane.title}
+        header={pane.header}
         onClose={() => panesManager.closePane(pane.id)}
       />
       <div className="sb-pane-detached-body">

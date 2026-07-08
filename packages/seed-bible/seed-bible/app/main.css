@@ -716,11 +716,22 @@ a:visited {
 }
 
 .sb-pane-header-title {
+  flex: 1 1 auto;
+  min-width: 0;
   font-weight: 700;
   letter-spacing: 0.02em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Caller-provided header content (e.g. extension buttons), rendered between the
+   title and the close button. */
+.sb-pane-header-actions {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .sb-pane-header-close-button {
