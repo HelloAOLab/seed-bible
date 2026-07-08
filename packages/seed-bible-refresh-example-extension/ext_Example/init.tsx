@@ -3,6 +3,7 @@ import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { MaterialIcon, PortalComponent } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
+import { v4 as uuid } from "uuid";
 
 function OpenGridPortalIcon() {
   return <MaterialIcon>view_in_ar</MaterialIcon>;
@@ -108,6 +109,10 @@ export default function initExampleExtension() {
         },
         icon: OpenGridPortalIcon,
         onSelect: (context) => {
+          // Generate the portal instance id once, outside the render function,
+          // so re-renders (e.g. dragging the pane) reuse the same `inst` and the
+          // iframe keeps its document instead of reloading on every move.
+          const inst = uuid();
           context.panesManager.openPane({
             id: "example-portal-pane",
             placement: "floating",
@@ -116,7 +121,7 @@ export default function initExampleExtension() {
               <PortalComponent
                 portal="home"
                 portalType="grid"
-                inst={crypto.randomUUID()}
+                inst={inst}
                 pattern={null}
               />
             ),
@@ -134,6 +139,10 @@ export default function initExampleExtension() {
         },
         icon: OpenMapPortalIcon,
         onSelect: (context) => {
+          // Generate the portal instance id once, outside the render function,
+          // so re-renders (e.g. dragging the pane) reuse the same `inst` and the
+          // iframe keeps its document instead of reloading on every move.
+          const inst = uuid();
           context.panesManager.openPane({
             id: "example-portal-pane",
             placement: "floating",
@@ -142,7 +151,7 @@ export default function initExampleExtension() {
               <PortalComponent
                 portal="map_portal"
                 portalType="map"
-                inst={crypto.randomUUID()}
+                inst={inst}
                 pattern={null}
               />
             ),

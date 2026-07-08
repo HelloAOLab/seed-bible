@@ -93,6 +93,12 @@ export default function initLocationsExtension() {
 
         const data = await response.text();
 
+        // Generate the portal instance id once, here — not inside the pane's
+        // render function — so re-renders (dragging/resizing the pane) reuse the
+        // same `inst` and the map iframe keeps its document instead of
+        // reloading.
+        const inst = uuid();
+
         context.panes.openPane({
           placement: "floating",
           title: place.place,
@@ -101,7 +107,7 @@ export default function initLocationsExtension() {
               portal="map"
               portalType="map"
               pattern={geoImporterPattern}
-              inst={uuid()}
+              inst={inst}
               query={{
                 mapData: data,
               }}
