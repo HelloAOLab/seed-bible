@@ -1,5 +1,5 @@
-import { BibleReader } from "../components/BibleReader";
-import { BelowReaderToolbar } from "../components/BelowReaderToolbar";
+import { BibleReader } from "./BibleReader/BibleReader";
+import { BelowReaderToolbar } from "./BelowReaderToolbar/BelowReaderToolbar";
 import type { TranslationBookChapter } from "../managers/FreeUseBibleAPI";
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import type { ReaderTab, TabsManager } from "../managers/TabsManager";
@@ -8,7 +8,7 @@ import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import { type ToolsManager } from "../managers/BibleToolsManager";
 import { batch, effect } from "@preact/signals";
 import { useI18n } from "../i18n/I18nManager";
-import { translateTitle } from "../components/Utils";
+import { translateTitle } from "../app/utils";
 import { useEffect, useRef, useState } from "preact/hooks";
 
 interface TabSlotReaderProps {
