@@ -135,17 +135,20 @@
 .sb-pane-shell-detached {
   position: absolute;
   z-index: 20;
-  box-shadow: 0 18px 36px #00000024;
   display: flex;
   flex-direction: column;
-  overflow: visible;
-  display: flex;
-  flex-direction: column;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--sb-secondary-color), transparent 40%),
+    0 22px 40px #0000002c;
 }
 
-.sb-pane-shell-detached[data-placement="floating"] {
+.sb-pane-shell-detached[data-placement="fullscreen"] {
   box-shadow: none;
   border-radius: 0;
+}
+
+.sb-pane-shell-detached[data-placement="floating"] .sb-pane-header {
+  cursor: move;
 }
 
 /* Chrome shown at the top of every pane: a title and a close button, and
@@ -163,10 +166,6 @@
     color-mix(in srgb, var(--sb-font-color), transparent 35%);
   cursor: default;
   user-select: none;
-}
-
-.sb-pane-shell-detached[data-placement="side"] .sb-pane-header {
-  cursor: move;
 }
 
 .sb-pane-header-title {
@@ -511,5 +510,4 @@
   width: 100%;
   height: 100%;
   border: none;
-  border-radius: 0.625rem;
 }
