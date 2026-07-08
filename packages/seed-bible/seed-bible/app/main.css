@@ -3,7 +3,7 @@
 /* =============================================================================
  * UI SCALING MODEL — the rem / em / px invariant (source of truth for #1281)
  * -----------------------------------------------------------------------------
- * The "UI Text Size" setting (S/M/L/XL) is the single UI scaling mechanism. It
+ * The "UI Size" setting (S/M/L/XL) is the single UI scaling mechanism. It
  * drives `--sb-ui-scale` (0.85 / 1.0 / 1.15 / 1.3, set by SettingsManager),
  * which the `html` rule below turns into the root font-size:
  *     html { font-size: calc(16px * var(--sb-ui-scale)) }  =>  1rem = scaled base
@@ -12,8 +12,8 @@
  *
  * Which unit to use:
  *   • rem  — ALL chrome: dimensions, spacing, radius, positioning offsets, and
- *            chrome font-size. Tracks the UI Text Size knob. This is the default.
- *   • px   — things that must NOT scale with UI Text Size:
+ *            chrome font-size. Tracks the UI Size knob. This is the default.
+ *   • px   — things that must NOT scale with UI Size:
  *              - reader glyph size: `.sb-font-size-*` on `.sb-bible-reader`
  *                (its own independent knob; the cascade anchor lives there so it
  *                doesn't leak into chrome `em`/`inherit`);
@@ -48,7 +48,7 @@ html {
   visibility: visible;
   opacity: 1;
 
-  /* UI scale: the "UI Text Size" setting (S/M/L/XL) drives `--sb-ui-scale`
+  /* UI scale: the "UI Size" setting (S/M/L/XL) drives `--sb-ui-scale`
    * (set in SettingsManager). 1rem = the scaled UI base, so every chrome size
    * expressed in `rem` tracks this knob. Reader glyph size stays in px on
    * `.sb-bible-reader` (`.sb-font-size-*`) and is therefore unaffected. */
@@ -56,7 +56,7 @@ html {
 }
 
 /* Material Symbols icons ship with a fixed `font-size: 24px` from the Google
-   Fonts stylesheet (loaded in main.tsx), which ignores the UI Text Size knob.
+   Fonts stylesheet (loaded in main.tsx), which ignores the UI Size knob.
    Re-express that base in rem so every icon scales with the chrome by default
    (1.5rem = 24px at size M — a no-op at M). Scoped
    `.sb-* .material-symbols-outlined` rules (specificity 0,2,0) still win and
@@ -458,7 +458,7 @@ a:visited {
 }
 
 /* Chrome icon-buttons render their icons as <svg> (inline or icon components)
-   with fixed px width/height attributes, which ignore the UI Text Size knob.
+   with fixed px width/height attributes, which ignore the UI Size knob.
    (Material Symbols glyphs are handled by the base rule near the top of this
    file; SVGs are sized by width/height, not font-size, so they need explicit
    rem sizing here.) CSS width/height overrides the SVG's px attributes; the rem
@@ -3312,7 +3312,7 @@ a:visited {
 @media only screen and (min-width: 481px) {
   .sb-selector-panel {
     /* Cap to the viewport (minus the overlay's 1.25rem padding each side) so
-       the panel never extends past the screen edges at UI Text Size > M, where
+       the panel never extends past the screen edges at UI Size > M, where
        the fixed rem width would otherwise scale wider than the viewport. No-op
        when the viewport is wide enough to hold the full 40.625rem. */
     width: min(40.625rem, calc(100vw - 2.5rem));

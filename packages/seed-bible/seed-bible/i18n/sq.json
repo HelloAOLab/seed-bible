@@ -102,7 +102,6 @@
   "customize-colors": "Personalizo ngjyrat",
   "highlight-colors": "Ngjyrat e theksuara",
   "reset-all-custom-colors": "Rivendos të gjitha ngjyrat e personalizuara",
-  "ui-text-size": "Madhësia e tekstit të ndërfaqes së përdoruesit",
   "book-order": "Porosit rezervimi",
   "selection-ui": "Ndërfaqja e përdoruesit e përzgjedhjes",
   "show-selected-items": "Shfaq artikujt e zgjedhur",
@@ -344,5 +343,6 @@
   "appoint-co-host": "Caktoni një bashkë-organizator",
   "appoint-co-host-instructions": "Zgjidh dikë që ta mbajë sesionin në punë:",
   "end-session-for-everyone": "Përfundo seancën",
-  "dont-show-again": "Mos e shfaq më këtë"
+  "dont-show-again": "Mos e shfaq më këtë",
+  "ui-size": "Madhësia e ndërfaqes së përdoruesit"
 }

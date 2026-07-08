@@ -13,7 +13,7 @@ import type {
 } from "../managers/PanesManager";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import { type ToolsManager } from "../managers/BibleToolsManager";
-import { UI_TEXT_SIZE_SCALE_MAP } from "../managers/SettingsManager";
+import { UI_SIZE_SCALE_MAP } from "../managers/SettingsManager";
 import { batch, effect } from "@preact/signals";
 import { useI18n } from "../i18n/I18nManager";
 import { translateTitle } from "../components/Utils";
@@ -963,7 +963,7 @@ export function PaneLayout(props: PaneLayoutProps) {
   } = state;
   // Read at call time (not captured) so the long-lived pointermove listener never uses a stale UI scale.
   const getUiScale = () =>
-    UI_TEXT_SIZE_SCALE_MAP[state.settings.settings.value.uiTextSize];
+    UI_SIZE_SCALE_MAP[state.settings.settings.value.uiSize];
   const panes = app.effectivePanes.value;
   const isMobile = app.isMobile.value;
   const layout = app.effectiveLayout.value;

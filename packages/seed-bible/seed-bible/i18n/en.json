@@ -127,7 +127,7 @@
   "customize-colors": "Customize colors",
   "highlight-colors": "Highlight colors",
   "reset-all-custom-colors": "Reset all custom colors",
-  "ui-text-size": "UI text size",
+  "ui-size": "UI size",
   "book-order": "Book order",
   "selection-ui": "Selection UI",
   "show-selected-items": "Show selected items",

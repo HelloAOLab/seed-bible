@@ -102,7 +102,6 @@
   "customize-colors": "Tinkinkite spalvas",
   "highlight-colors": "Paryškinimo spalvos",
   "reset-all-custom-colors": "Atkurti visas pasirinktines spalvas",
-  "ui-text-size": "UI teksto dydis",
   "book-order": "Užsakymas",
   "selection-ui": "Pasirinkimo vartotojo sąsaja",
   "show-selected-items": "Rodyti pasirinktus elementus",
@@ -344,5 +343,6 @@
   "appoint-co-host": "Paskirkite bendravedėją",
   "appoint-co-host-instructions": "Pasirinkite asmenį, kuris palaikys sesiją:",
   "end-session-for-everyone": "Baigti sesiją",
-  "dont-show-again": "Daugiau to nerodyti"
+  "dont-show-again": "Daugiau to nerodyti",
+  "ui-size": "Vartotojo sąsajos dydis"
 }

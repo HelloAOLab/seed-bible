@@ -89,7 +89,6 @@
   "customize-colors": "ሕብርታት ብዝጥዕመካ ምትዕርራይ",
   "highlight-colors": "ሕብርታት ኣጉልሕ",
   "reset-all-custom-colors": "ኩሎም ብሕታዊ ሕብርታት ዳግማይ ኣቐምጦም",
-  "ui-text-size": "UI ጽሑፍ ዓቐን",
   "book-order": "ትእዛዝ መጽሓፍ",
   "selection-ui": "ምርጫ UI",
   "show-selected-items": "ዝተመርጹ ነገራት ኣርእዩ",
@@ -344,5 +343,6 @@
   "appoint-co-host": "ሓባራዊ ኣአንጋዲ ምሻም",
   "appoint-co-host-instructions": "እቲ ክፍለ ግዜ ንኽቕጽል ዝሕግዝ ሰብ ምረጽ፤",
   "end-session-for-everyone": "ክፍለ ግዜ ምዝዛም",
-  "dont-show-again": "እዚ ዳግማይ ኣይተርእይዎ።"
+  "dont-show-again": "እዚ ዳግማይ ኣይተርእይዎ።",
+  "ui-size": "UI ስፍሓት"
 }

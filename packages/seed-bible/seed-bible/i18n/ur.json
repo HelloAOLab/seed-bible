@@ -89,7 +89,6 @@
   "customize-colors": "رنگوں کو اپنی مرضی کے مطابق بنائیں",
   "highlight-colors": "رنگوں کو نمایاں کریں۔",
   "reset-all-custom-colors": "تمام حسب ضرورت رنگ ری سیٹ کریں۔",
-  "ui-text-size": "UI ٹیکسٹ سائز",
   "book-order": "بک آرڈر",
   "selection-ui": "انتخاب UI",
   "show-selected-items": "منتخب آئٹمز دکھائیں۔",
@@ -344,5 +343,6 @@
   "appoint-co-host": "شریک میزبان مقرر کریں۔",
   "appoint-co-host-instructions": "سیشن کو جاری رکھنے کے لیے کسی کا انتخاب کریں:",
   "end-session-for-everyone": "سیشن ختم کریں۔",
-  "dont-show-again": "اسے دوبارہ مت دکھائیں۔"
+  "dont-show-again": "اسے دوبارہ مت دکھائیں۔",
+  "ui-size": "UI سائز"
 }

@@ -102,7 +102,6 @@
   "customize-colors": "Ranglarni moslashtiring",
   "highlight-colors": "Ranglarni ajratib ko'rsatish",
   "reset-all-custom-colors": "Barcha maxsus ranglarni tiklash",
-  "ui-text-size": "UI matn hajmi",
   "book-order": "Buyurtma buyurtmasi",
   "selection-ui": "Tanlov interfeysi",
   "show-selected-items": "Tanlangan elementlarni ko'rsatish",
@@ -344,5 +343,6 @@
   "appoint-co-host": "Hamkor mezbonni tayinlang",
   "appoint-co-host-instructions": "Sessiyani davom ettirish uchun kimnidir tanlang:",
   "end-session-for-everyone": "Sessiyani tugatish",
-  "dont-show-again": "Buni boshqa ko'rsatmang"
+  "dont-show-again": "Buni boshqa ko'rsatmang",
+  "ui-size": "UI hajmi"
 }

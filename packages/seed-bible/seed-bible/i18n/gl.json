@@ -102,7 +102,6 @@
   "customize-colors": "Personalizar as cores",
   "highlight-colors": "Cores de realce",
   "reset-all-custom-colors": "Restablecer todas as cores personalizadas",
-  "ui-text-size": "Tamaño do texto da IU",
   "book-order": "Pedido de libros",
   "selection-ui": "IU de selección",
   "show-selected-items": "Mostrar os elementos seleccionados",
@@ -344,5 +343,6 @@
   "appoint-co-host": "Nomear un coanfitrión",
   "appoint-co-host-instructions": "Escolle alguén para manter a sesión en funcionamento:",
   "end-session-for-everyone": "Rematar sesión",
-  "dont-show-again": "Non volver mostrar isto"
+  "dont-show-again": "Non volver mostrar isto",
+  "ui-size": "Tamaño da IU"
 }

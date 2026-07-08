@@ -102,7 +102,6 @@
   "customize-colors": "Tilpas farver",
   "highlight-colors": "Fremhæv farver",
   "reset-all-custom-colors": "Nulstil alle brugerdefinerede farver",
-  "ui-text-size": "Tekststørrelse i brugergrænsefladen",
   "book-order": "Bogordre",
   "selection-ui": "Valggrænseflade",
   "show-selected-items": "Vis valgte elementer",
@@ -344,5 +343,6 @@
   "appoint-co-host": "Udpeg en medvært",
   "appoint-co-host-instructions": "Vælg en person til at holde sessionen kørende:",
   "end-session-for-everyone": "Afslut session",
-  "dont-show-again": "Vis ikke dette igen"
+  "dont-show-again": "Vis ikke dette igen",
+  "ui-size": "Brugergrænsefladestørrelse"
 }

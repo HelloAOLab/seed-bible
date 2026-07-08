@@ -89,7 +89,6 @@
   "customize-colors": "رنګونه تنظیم کړئ",
   "highlight-colors": "رنګونه روښانه کړئ",
   "reset-all-custom-colors": "ټول دودیز رنګونه بیا تنظیم کړئ",
-  "ui-text-size": "د UI متن اندازه",
   "book-order": "د کتاب امر",
   "selection-ui": "د انتخاب UI",
   "show-selected-items": "غوره شوي توکي وښایاست",
@@ -344,5 +343,6 @@
   "appoint-co-host": "یو شریک کوربه وټاکئ",
   "appoint-co-host-instructions": "د غونډې د دوام لپاره یو څوک غوره کړئ:",
   "end-session-for-everyone": "غونډه پای ته ورسوئ",
-  "dont-show-again": "دا بیا مه ښکاره کوه"
+  "dont-show-again": "دا بیا مه ښکاره کوه",
+  "ui-size": "د UI اندازه"
 }

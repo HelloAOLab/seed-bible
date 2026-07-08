@@ -1,9 +1,9 @@
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 import {
-  UI_TEXT_SIZE_OPTIONS,
+  UI_SIZE_OPTIONS,
   VERSE_LINE_HEIGHT_OPTIONS,
   DEFAULT_VERSE_LINE_HEIGHT,
-  type UITextSize,
+  type UISize,
 } from "../managers/SettingsManager";
 import { useI18n } from "../i18n/I18nManager";
 import { SettingsIcon } from "./icons";
@@ -151,19 +151,19 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
           </button>
         </div>
         <div className="sb-mobile-settings-sheet-section-label">
-          {t("ui-text-size", { defaultValue: "UI text size" })}
+          {t("ui-size", { defaultValue: "UI size" })}
         </div>
         <div className="sb-mobile-settings-sheet-size-row">
-          {UI_TEXT_SIZE_OPTIONS.map((size, i) => (
+          {UI_SIZE_OPTIONS.map((size, i) => (
             <button
               key={size}
               type="button"
               className={`sb-mobile-settings-sheet-size-button${
-                current.uiTextSize === size
+                current.uiSize === size
                   ? " sb-mobile-settings-sheet-size-button-selected"
                   : ""
               }`}
-              onClick={() => settings.setUITextSize(size as UITextSize)}
+              onClick={() => settings.setUISize(size as UISize)}
               style={{ fontSize: `${(12 + i * 2) / 16}rem` }}
               aria-label={size}
               // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content

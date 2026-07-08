@@ -4,7 +4,7 @@ import { useI18n } from "../i18n/I18nManager";
 import { translateTitle } from "../components/Utils";
 import {
   applyToolbarCustomization,
-  UI_TEXT_SIZE_SCALE_MAP,
+  UI_SIZE_SCALE_MAP,
 } from "../managers/SettingsManager";
 import { highlightContainsVerse } from "../managers/HighlightsManager";
 import type { BibleReadingSession } from "../managers/SessionsManager";
@@ -546,7 +546,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     }, null)
   );
   const uiScale = useComputed(
-    () => UI_TEXT_SIZE_SCALE_MAP[settings.settings.value.uiTextSize]
+    () => UI_SIZE_SCALE_MAP[settings.settings.value.uiSize]
   );
   const floatingX = useComputed(() => {
     const inset = 84 * uiScale.value;

@@ -102,7 +102,6 @@
   "customize-colors": "Kleuren aanpassen",
   "highlight-colors": "Markeer kleuren",
   "reset-all-custom-colors": "Alle aangepaste kleuren resetten",
-  "ui-text-size": "UI-tekstgrootte",
   "book-order": "Boekbestelling",
   "selection-ui": "Selectie-UI",
   "show-selected-items": "Toon geselecteerde items",
@@ -344,5 +343,6 @@
   "appoint-co-host": "Wijs een co-host aan.",
   "appoint-co-host-instructions": "Kies iemand die de sessie gaande houdt:",
   "end-session-for-everyone": "Sessie beëindigen",
-  "dont-show-again": "Niet meer laten zien"
+  "dont-show-again": "Niet meer laten zien",
+  "ui-size": "UI-grootte"
 }

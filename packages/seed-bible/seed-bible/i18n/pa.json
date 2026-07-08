@@ -102,7 +102,6 @@
   "customize-colors": "ਰੰਗਾਂ ਨੂੰ ਅਨੁਕੂਲਿਤ ਕਰੋ",
   "highlight-colors": "ਰੰਗਾਂ ਨੂੰ ਉਜਾਗਰ ਕਰੋ",
   "reset-all-custom-colors": "ਸਾਰੇ ਕਸਟਮ ਰੰਗ ਰੀਸੈਟ ਕਰੋ",
-  "ui-text-size": "UI ਟੈਕਸਟ ਆਕਾਰ",
   "book-order": "ਆਰਡਰ ਬੁੱਕ ਕਰੋ",
   "selection-ui": "ਚੋਣ UI",
   "show-selected-items": "ਚੁਣੀਆਂ ਗਈਆਂ ਆਈਟਮਾਂ ਦਿਖਾਓ",
@@ -344,5 +343,6 @@
   "appoint-co-host": "ਇੱਕ ਸਹਿ-ਹੋਸਟ ਨਿਯੁਕਤ ਕਰੋ",
   "appoint-co-host-instructions": "ਸੈਸ਼ਨ ਨੂੰ ਚੱਲਦਾ ਰੱਖਣ ਲਈ ਕਿਸੇ ਨੂੰ ਚੁਣੋ:",
   "end-session-for-everyone": "ਸੈਸ਼ਨ ਸਮਾਪਤ ਕਰੋ",
-  "dont-show-again": "ਇਸਨੂੰ ਦੁਬਾਰਾ ਨਾ ਦਿਖਾਓ"
+  "dont-show-again": "ਇਸਨੂੰ ਦੁਬਾਰਾ ਨਾ ਦਿਖਾਓ",
+  "ui-size": "UI ਆਕਾਰ"
 }

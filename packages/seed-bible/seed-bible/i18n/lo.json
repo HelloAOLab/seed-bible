@@ -102,7 +102,6 @@
   "customize-colors": "ປັບແຕ່ງສີ",
   "highlight-colors": "ສີໄຮໄລ້",
   "reset-all-custom-colors": "ຣີເຊັດສີທີ່ກຳນົດເອງທັງໝົດ",
-  "ui-text-size": "ຂະໜາດຂໍ້ຄວາມ UI",
   "book-order": "ການສັ່ງຊື້ປຶ້ມ",
   "selection-ui": "UI ການເລືອກ",
   "show-selected-items": "ສະແດງລາຍການທີ່ເລືອກ",
@@ -344,5 +343,6 @@
   "appoint-co-host": "ແຕ່ງຕັ້ງຜູ້ຮ່ວມເປັນເຈົ້າພາບ",
   "appoint-co-host-instructions": "ເລືອກຜູ້ໃດຜູ້ໜຶ່ງເພື່ອຮັກສາກອງປະຊຸມໃຫ້ດຳເນີນຕໍ່ໄປ:",
   "end-session-for-everyone": "ສິ້ນສຸດກອງປະຊຸມ",
-  "dont-show-again": "ຢ່າສະແດງສິ່ງນີ້ອີກ"
+  "dont-show-again": "ຢ່າສະແດງສິ່ງນີ້ອີກ",
+  "ui-size": "ຂະໜາດ UI"
 }

@@ -102,7 +102,6 @@
   "customize-colors": "Rəngləri fərdiləşdirin",
   "highlight-colors": "Rəngləri vurğulayın",
   "reset-all-custom-colors": "Bütün xüsusi rəngləri sıfırlayın",
-  "ui-text-size": "UI mətn ölçüsü",
   "book-order": "Sifariş sifarişi",
   "selection-ui": "Seçim UI",
   "show-selected-items": "Seçilmiş elementləri göstər",
@@ -344,5 +343,6 @@
   "appoint-co-host": "Birgə ev sahibi təyin edin",
   "appoint-co-host-instructions": "Sessiyanın davam etməsi üçün birini seçin:",
   "end-session-for-everyone": "Sessiyanı bitirin",
-  "dont-show-again": "Bunu bir daha göstərməyin"
+  "dont-show-again": "Bunu bir daha göstərməyin",
+  "ui-size": "UI ölçüsü"
 }

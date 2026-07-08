@@ -102,7 +102,6 @@
   "customize-colors": "ปรับแต่งสี",
   "highlight-colors": "สีเด่น",
   "reset-all-custom-colors": "รีเซ็ตสีที่กำหนดเองทั้งหมด",
-  "ui-text-size": "ขนาดตัวอักษร UI",
   "book-order": "สั่งซื้อหนังสือ",
   "selection-ui": "ส่วนติดต่อผู้ใช้สำหรับการเลือก",
   "show-selected-items": "แสดงรายการที่เลือก",
@@ -344,5 +343,6 @@
   "appoint-co-host": "แต่งตั้งผู้ร่วมเป็นเจ้าภาพ",
   "appoint-co-host-instructions": "เลือกคนที่จะทำหน้าที่ดำเนินกิจกรรมต่อไป:",
   "end-session-for-everyone": "สิ้นสุดการประชุม",
-  "dont-show-again": "อย่าแสดงสิ่งนี้อีก"
+  "dont-show-again": "อย่าแสดงสิ่งนี้อีก",
+  "ui-size": "ขนาด UI"
 }

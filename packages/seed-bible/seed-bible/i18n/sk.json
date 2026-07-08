@@ -102,7 +102,6 @@
   "customize-colors": "Prispôsobiť farby",
   "highlight-colors": "Zvýraznenie farieb",
   "reset-all-custom-colors": "Obnoviť všetky vlastné farby",
-  "ui-text-size": "Veľkosť textu používateľského rozhrania",
   "book-order": "Objednávka knihy",
   "selection-ui": "Výber používateľského rozhrania",
   "show-selected-items": "Zobraziť vybrané položky",
@@ -344,5 +343,6 @@
   "appoint-co-host": "Vymenujte spoluhostiteľa",
   "appoint-co-host-instructions": "Vyberte niekoho, kto bude reláciu udržiavať v chode:",
   "end-session-for-everyone": "Ukončiť reláciu",
-  "dont-show-again": "Toto už viac nezobrazovať"
+  "dont-show-again": "Toto už viac nezobrazovať",
+  "ui-size": "Veľkosť používateľského rozhrania"
 }

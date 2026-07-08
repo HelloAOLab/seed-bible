@@ -102,7 +102,6 @@
   "customize-colors": "Tilpass farger",
   "highlight-colors": "Uthev farger",
   "reset-all-custom-colors": "Tilbakestill alle egendefinerte farger",
-  "ui-text-size": "Tekststørrelse i brukergrensesnittet",
   "book-order": "Bokbestilling",
   "selection-ui": "Utvalgsgrensesnitt",
   "show-selected-items": "Vis valgte elementer",
@@ -344,5 +343,6 @@
   "appoint-co-host": "Utnevne en medvert",
   "appoint-co-host-instructions": "Velg noen til å holde økten i gang:",
   "end-session-for-everyone": "Avslutt økten",
-  "dont-show-again": "Ikke vis dette igjen"
+  "dont-show-again": "Ikke vis dette igjen",
+  "ui-size": "UI-størrelse"
 }

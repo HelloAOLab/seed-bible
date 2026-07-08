@@ -102,7 +102,6 @@
   "customize-colors": "I-customize ang mga kulay",
   "highlight-colors": "I-highlight ang mga kulay",
   "reset-all-custom-colors": "I-reset ang lahat ng custom na kulay",
-  "ui-text-size": "Laki ng teksto ng UI",
   "book-order": "Order ng libro",
   "selection-ui": "UI ng Pagpili",
   "show-selected-items": "Ipakita ang mga napiling item",
@@ -344,5 +343,6 @@
   "appoint-co-host": "Magtalaga ng isang co-host",
   "appoint-co-host-instructions": "Pumili ng isang tao para patuloy na patakbuhin ang sesyon:",
   "end-session-for-everyone": "Tapusin ang sesyon",
-  "dont-show-again": "Huwag mo na itong ipakita muli"
+  "dont-show-again": "Huwag mo na itong ipakita muli",
+  "ui-size": "Laki ng UI"
 }

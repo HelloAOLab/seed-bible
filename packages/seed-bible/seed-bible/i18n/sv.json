@@ -102,7 +102,6 @@
   "customize-colors": "Anpassa färger",
   "highlight-colors": "Markera färger",
   "reset-all-custom-colors": "Återställ alla anpassade färger",
-  "ui-text-size": "Textstorlek i användargränssnittet",
   "book-order": "Bokbeställning",
   "selection-ui": "Urvalsgränssnitt",
   "show-selected-items": "Visa valda objekt",
@@ -344,5 +343,6 @@
   "appoint-co-host": "Utse en medvärd",
   "appoint-co-host-instructions": "Välj någon som ska hålla sessionen igång:",
   "end-session-for-everyone": "Avsluta sessionen",
-  "dont-show-again": "Visa inte detta igen"
+  "dont-show-again": "Visa inte detta igen",
+  "ui-size": "UI-storlek"
 }

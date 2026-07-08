@@ -102,7 +102,6 @@
   "customize-colors": "రంగులను అనుకూలీకరించండి",
   "highlight-colors": "హైలైట్ రంగులు",
   "reset-all-custom-colors": "అన్ని కస్టమ్ రంగులను రీసెట్ చేయండి",
-  "ui-text-size": "UI టెక్స్ట్ పరిమాణం",
   "book-order": "పుస్తక ఆర్డర్",
   "selection-ui": "ఎంపిక UI",
   "show-selected-items": "ఎంచుకున్న అంశాలను చూపించు",
@@ -344,5 +343,6 @@
   "appoint-co-host": "సహ-హోస్ట్‌ను నియమించండి",
   "appoint-co-host-instructions": "సెషన్‌ను కొనసాగించడానికి ఒకరిని ఎంచుకోండి:",
   "end-session-for-everyone": "సెషన్‌ను ముగించండి",
-  "dont-show-again": "దీన్ని మళ్ళీ చూపించవద్దు"
+  "dont-show-again": "దీన్ని మళ్ళీ చూపించవద్దు",
+  "ui-size": "UI పరిమాణం"
 }

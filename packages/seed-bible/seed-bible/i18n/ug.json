@@ -89,7 +89,6 @@
   "customize-colors": "رەڭلەرنى خاسلاشتۇرۇڭ",
   "highlight-colors": "رەڭلەرنى گەۋدىلەندۈرۈش",
   "reset-all-custom-colors": "بارلىق خاسلاشتۇرۇلغان رەڭلەرنى قايتا تەڭشىلىڭ",
-  "ui-text-size": "UI تېكىست چوڭلۇقى",
   "book-order": "زاكاز قىلىش",
   "selection-ui": "تاللاش UI",
   "show-selected-items": "تاللانغان تۈرلەرنى كۆرسىتىش",
@@ -344,5 +343,6 @@
   "appoint-co-host": "بىرلىكتە رىياسەتچى تەيىنلەڭ",
   "appoint-co-host-instructions": "بۇ يىغىننىڭ داۋاملىشىشىنى داۋاملاشتۇرىدىغان بىر كىشىنى تاللاڭ:",
   "end-session-for-everyone": "يىغىننى ئاخىرلاشتۇرۇڭ",
-  "dont-show-again": "بۇنى قايتا كۆرسەتمەڭ"
+  "dont-show-again": "بۇنى قايتا كۆرسەتمەڭ",
+  "ui-size": "UI چوڭلۇقى"
 }

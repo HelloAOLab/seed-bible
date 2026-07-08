@@ -102,7 +102,6 @@
   "customize-colors": "നിറങ്ങൾ ഇഷ്ടാനുസൃതമാക്കുക",
   "highlight-colors": "ഹൈലൈറ്റ് നിറങ്ങൾ",
   "reset-all-custom-colors": "എല്ലാ ഇഷ്ടാനുസൃത നിറങ്ങളും പുനഃസജ്ജമാക്കുക",
-  "ui-text-size": "UI ടെക്സ്റ്റ് വലുപ്പം",
   "book-order": "ബുക്ക് ഓർഡർ",
   "selection-ui": "തിരഞ്ഞെടുക്കൽ UI",
   "show-selected-items": "തിരഞ്ഞെടുത്ത ഇനങ്ങൾ കാണിക്കുക",
@@ -344,5 +343,6 @@
   "appoint-co-host": "ഒരു സഹ-ഹോസ്റ്റിനെ നിയമിക്കുക",
   "appoint-co-host-instructions": "സെഷൻ പ്രവർത്തിപ്പിക്കാൻ ആരെയെങ്കിലും തിരഞ്ഞെടുക്കുക:",
   "end-session-for-everyone": "സെഷൻ അവസാനിപ്പിക്കുക",
-  "dont-show-again": "ഇത് വീണ്ടും കാണിക്കരുത്"
+  "dont-show-again": "ഇത് വീണ്ടും കാണിക്കരുത്",
+  "ui-size": "UI വലുപ്പം"
 }

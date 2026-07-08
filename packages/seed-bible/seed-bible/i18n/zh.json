@@ -89,7 +89,6 @@
   "customize-colors": "自定义颜色",
   "highlight-colors": "高亮颜色",
   "reset-all-custom-colors": "重置所有自定义颜色",
-  "ui-text-size": "用户界面文本大小",
   "book-order": "预订",
   "selection-ui": "选择界面",
   "show-selected-items": "显示所选项目",
@@ -344,5 +343,6 @@
   "appoint-co-host": "指定一位联合主持人",
   "appoint-co-host-instructions": "选择一人来维持会话运行：",
   "end-session-for-everyone": "会议结束",
-  "dont-show-again": "不要再次显示此内容"
+  "dont-show-again": "不要再次显示此内容",
+  "ui-size": "用户界面大小"
 }

@@ -102,7 +102,6 @@
   "customize-colors": "Addasu lliwiau",
   "highlight-colors": "Amlygu lliwiau",
   "reset-all-custom-colors": "Ailosod pob lliw personol",
-  "ui-text-size": "Maint testun y rhyngwyneb defnyddiwr",
   "book-order": "Archeb llyfr",
   "selection-ui": "UI Dewis",
   "show-selected-items": "Dangos eitemau a ddewiswyd",
@@ -344,5 +343,6 @@
   "appoint-co-host": "Penodi cyd-gynhaliwr",
   "appoint-co-host-instructions": "Dewiswch rywun i gadw'r sesiwn i fynd:",
   "end-session-for-everyone": "Gorffen sesiwn",
-  "dont-show-again": "Peidiwch â dangos hyn eto"
+  "dont-show-again": "Peidiwch â dangos hyn eto",
+  "ui-size": "Maint y rhyngwyneb defnyddiwr"
 }

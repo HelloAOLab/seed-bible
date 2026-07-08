@@ -102,7 +102,6 @@
   "customize-colors": "Kohanda värve",
   "highlight-colors": "Esiletõstetud värvid",
   "reset-all-custom-colors": "Lähtesta kõik kohandatud värvid",
-  "ui-text-size": "Kasutajaliidese teksti suurus",
   "book-order": "Broneeri tellimus",
   "selection-ui": "Valiku kasutajaliides",
   "show-selected-items": "Kuva valitud üksused",
@@ -344,5 +343,6 @@
   "appoint-co-host": "Määrake kaasvõõrustaja",
   "appoint-co-host-instructions": "Valige keegi seansi käigus hoidmiseks:",
   "end-session-for-everyone": "Lõpeta seanss",
-  "dont-show-again": "Ära seda enam näita"
+  "dont-show-again": "Ära seda enam näita",
+  "ui-size": "Kasutajaliidese suurus"
 }

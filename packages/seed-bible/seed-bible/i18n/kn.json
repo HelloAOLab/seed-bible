@@ -102,7 +102,6 @@
   "customize-colors": "ಬಣ್ಣಗಳನ್ನು ಕಸ್ಟಮೈಸ್ ಮಾಡಿ",
   "highlight-colors": "ಬಣ್ಣಗಳನ್ನು ಹೈಲೈಟ್ ಮಾಡಿ",
   "reset-all-custom-colors": "ಎಲ್ಲಾ ಕಸ್ಟಮ್ ಬಣ್ಣಗಳನ್ನು ಮರುಹೊಂದಿಸಿ",
-  "ui-text-size": "UI ಪಠ್ಯ ಗಾತ್ರ",
   "book-order": "ಪುಸ್ತಕ ಆರ್ಡರ್",
   "selection-ui": "ಆಯ್ಕೆ UI",
   "show-selected-items": "ಆಯ್ಕೆಮಾಡಿದ ಐಟಂಗಳನ್ನು ತೋರಿಸಿ",
@@ -344,5 +343,6 @@
   "appoint-co-host": "ಸಹ-ಹೋಸ್ಟ್ ಅನ್ನು ನೇಮಿಸಿ",
   "appoint-co-host-instructions": "ಅಧಿವೇಶನವನ್ನು ನಡೆಸಲು ಯಾರನ್ನಾದರೂ ಆರಿಸಿ:",
   "end-session-for-everyone": "ಅಧಿವೇಶನ ಅಂತ್ಯಗೊಳಿಸಿ",
-  "dont-show-again": "ಇದನ್ನು ಮತ್ತೆ ತೋರಿಸಬೇಡಿ"
+  "dont-show-again": "ಇದನ್ನು ಮತ್ತೆ ತೋರಿಸಬೇಡಿ",
+  "ui-size": "UI ಗಾತ್ರ"
 }

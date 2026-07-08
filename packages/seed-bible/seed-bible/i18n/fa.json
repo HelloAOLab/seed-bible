@@ -89,7 +89,6 @@
   "customize-colors": "سفارشی کردن رنگ‌ها",
   "highlight-colors": "رنگ‌های برجسته",
   "reset-all-custom-colors": "تنظیم مجدد همه رنگ‌های سفارشی",
-  "ui-text-size": "اندازه متن رابط کاربری",
   "book-order": "سفارش کتاب",
   "selection-ui": "رابط کاربری انتخاب",
   "show-selected-items": "نمایش موارد انتخاب شده",
@@ -344,5 +343,6 @@
   "appoint-co-host": "یک میزبان مشترک تعیین کنید",
   "appoint-co-host-instructions": "کسی را برای ادامه‌ی جلسه انتخاب کنید:",
   "end-session-for-everyone": "پایان جلسه",
-  "dont-show-again": "اینو دیگه نشون نده"
+  "dont-show-again": "اینو دیگه نشون نده",
+  "ui-size": "اندازه رابط کاربری"
 }
