@@ -97,8 +97,8 @@ export const useWelcome: UseWelcome = () => {
 
   const seedBibleIconStyle = useMemo<React.CSSProperties>(() => {
     return {
-      width: "20px",
-      height: "20px",
+      width: "1.25rem",
+      height: "1.25rem",
       backgroundColor: theme.variables.readerFontColor,
     };
   }, [theme]);

@@ -74,7 +74,7 @@ function usePaneDrag(state: SeedBibleState) {
           (viewportTop - originY) / scaleY
         );
       } else {
-        panesManager.resizePane(dragState.paneId, deltaX, deltaY);
+        panesManager.resizePane(dragState.paneId, deltaX, deltaY, getUiScale());
       }
 
       dragStateRef.current = {

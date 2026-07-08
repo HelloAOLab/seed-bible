@@ -943,6 +943,14 @@ export function BibleReader(props: BibleReaderProps) {
 
   const isMobile = state?.app.isMobile.value ?? false;
 
+  // Reader glyph size is its own knob, independent of the UI-scale (`rem`)
+  // system. Anchoring `.sb-font-size-*` here (rather than on the chrome root)
+  // keeps `.sb-chapter-content { font-size: 1em }` and reader-`em` spacing
+  // tied to the reader setting, while chrome inherits the UI scale from `html`.
+  const readerFontSizeClass = `sb-font-size-${(
+    state?.config?.config.value.fontSize ?? "M"
+  ).toLowerCase()}`;
+
   const { t } = useI18n();
   const scriptureElements: ScriptureElementsBehavior =
     props.scriptureElements ??
@@ -1097,7 +1105,9 @@ export function BibleReader(props: BibleReaderProps) {
 
   return (
     <div
-      className={`sb-bible-reader${isMobile ? " sb-bible-reader-mobile" : ""}`}
+      className={`sb-bible-reader ${readerFontSizeClass}${
+        isMobile ? " sb-bible-reader-mobile" : ""
+      }`}
       dir={translation.value?.textDirection ?? "auto"}
     >
       {isMobile && state ? (
