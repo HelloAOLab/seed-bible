@@ -4,7 +4,6 @@ import {
   VERSE_LINE_HEIGHT_OPTIONS,
   DEFAULT_VERSE_LINE_HEIGHT,
   type UISize,
-  UI_SIZE_SCALE_MAP,
 } from "../managers/SettingsManager";
 import { useI18n } from "../i18n/I18nManager";
 import { SettingsIcon } from "./icons";
