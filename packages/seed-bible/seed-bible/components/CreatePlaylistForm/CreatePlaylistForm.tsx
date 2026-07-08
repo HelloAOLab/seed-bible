@@ -1,11 +1,14 @@
 import { useState } from "preact/hooks";
-import { useI18n } from "../i18n/I18nManager";
-import type { TabsManager } from "../managers/TabsManager";
-import type { PlaylistManager } from "../managers/PlaylistManager";
-import { MaterialIcon } from "./icons";
-import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
-import { PlaylistItemInput } from "./PlaylistItemInput";
-import { playlistItemLabel } from "./playlistItemLabel";
+import { useI18n } from "../../i18n/I18nManager";
+import type { TabsManager } from "../../managers/TabsManager";
+import type { PlaylistManager } from "../../managers/PlaylistManager";
+import { MaterialIcon } from "../icons";
+import {
+  DiscoverSection,
+  DiscoverEmpty,
+} from "../DiscoverPane/DiscoverSection";
+import { PlaylistItemInput } from "../PlaylistItemInput/PlaylistItemInput";
+import { playlistItemLabel } from "../playlistItemLabel";
 
 interface CreatePlaylistFormProps {
   playlists: PlaylistManager;

@@ -1,7 +1,7 @@
 import { I18nProvider, useI18n } from "../i18n/I18nManager";
 import {} from "../i18n/I18nManager";
 import { PaneLayout } from "../components/PaneLayout";
-import { DiscoverPane } from "../components/DiscoverPane";
+import { DiscoverPane } from "../components/DiscoverPane/DiscoverPane";
 import { BibleSelector } from "../components/BibleSelector";
 import { BibleReaderToolbar } from "../components/BibleReaderToolbar";
 import { FloatingReaderPanels } from "../components/FloatingReaderPanels";

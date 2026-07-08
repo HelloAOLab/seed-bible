@@ -3,7 +3,7 @@ import type { TabsManager } from "../managers/TabsManager";
 import type { PlaylistManager } from "../managers/PlaylistManager";
 import type { ModalManager } from "../managers/ModalManager";
 import { MaterialIcon } from "./icons";
-import { DiscoverSection } from "./DiscoverSection";
+import { DiscoverSection } from "./DiscoverPane/DiscoverSection";
 import { playlistItemLabel } from "./playlistItemLabel";
 import type { SeedBibleState } from "../managers/SeedBibleStateManager";
 

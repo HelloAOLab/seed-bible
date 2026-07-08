@@ -1,14 +1,14 @@
-import { useI18n } from "../i18n/I18nManager";
-import type { TabsManager, ReaderTab } from "../managers/TabsManager";
-import type { Playlist, PlaylistManager } from "../managers/PlaylistManager";
-import type { DiscoverReference } from "../managers/DiscoverManager";
-import type { TranslationBook } from "../managers/FreeUseBibleAPI";
-import type { ModalManager } from "../managers/ModalManager";
-import { MaterialIcon } from "./icons";
-import { CreatePlaylistForm } from "./CreatePlaylistForm";
-import { PlayPlaylistView } from "./PlayPlaylistView";
+import { useI18n } from "../../i18n/I18nManager";
+import type { TabsManager, ReaderTab } from "../../managers/TabsManager";
+import type { Playlist, PlaylistManager } from "../../managers/PlaylistManager";
+import type { DiscoverReference } from "../../managers/DiscoverManager";
+import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
+import type { ModalManager } from "../../managers/ModalManager";
+import { MaterialIcon } from "../icons";
+import { CreatePlaylistForm } from "../CreatePlaylistForm/CreatePlaylistForm";
+import { PlayPlaylistView } from "../PlayPlaylistView";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
-import type { SeedBibleState } from "../managers/SeedBibleStateManager";
+import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 
 interface DiscoverPaneProps {
   tabs: TabsManager;
