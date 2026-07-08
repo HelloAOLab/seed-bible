@@ -136,14 +136,14 @@ export interface AppState {
   selectedTab: ReadonlySignal<ReaderTab | null>;
   /**
    * Effective tab slot list shown by the UI (single-slot fallback when panels
-   * are disabled, capped to 2 stacked slots on mobile).
+   * are disabled, and always a single slot on mobile).
    */
   effectiveSlots: ReadonlySignal<TabSlot[]>;
   /**
    * Effective tab slot layout the UI should render. Mirrors the tabs layout
-   * manager's layout on desktop, but on mobile it is coerced to the only two
-   * shapes a phone supports — `single` or `stacked-2` (two slots top/bottom)
-   * — without mutating the manager's stored layout.
+   * manager's layout on desktop, but on mobile it is always coerced to
+   * `single` (one reader fills the viewport) without mutating the manager's
+   * stored layout.
    */
   effectiveSlotLayout: ReadonlySignal<TabSlotLayoutId>;
   /**
@@ -583,15 +583,15 @@ export function createSeedBibleState(
       return preferred ? [preferred] : [];
     }
     if (isMobile.value) {
-      // Mobile slot restrictions. These are applied to the rendered view
-      // only — the tabs layout manager's own settings (layout, extra slots)
-      // are left untouched so they are restored when the viewport grows back
-      // to a desktop size: at most two slots, shown stacked top/bottom. When
-      // more than two exist we keep the slot hosting the currently selected
-      // tab (or the manager's selected slot) visible.
+      // Mobile shows exactly one slot at a time — never stacked — so a single
+      // reader fills the small viewport. This is applied to the rendered view
+      // only: the tabs layout manager's own settings (layout, extra slots) are
+      // left untouched so they are restored when the viewport grows back to a
+      // desktop size. We keep the slot hosting the currently selected tab
+      // (falling back to the manager's selected slot, then the first slot).
       const allSlots = tabsLayout.slots.value;
-      if (allSlots.length <= 2) {
-        return allSlots;
+      if (allSlots.length === 0) {
+        return [];
       }
 
       const tab = selectedTab.value;
@@ -600,8 +600,7 @@ export function createSeedBibleState(
         (tab ? allSlots.find((s) => s.tab?.id === tab.id) : null) ??
         allSlots.find((s) => s.id === selectedSlotId) ??
         allSlots[0]!;
-      const next = allSlots.find((s) => s.id !== preferred.id)!;
-      return [preferred, next];
+      return [preferred];
     }
     return tabsLayout.slots.value;
   });
@@ -611,7 +610,9 @@ export function createSeedBibleState(
       return "single";
     }
     if (isMobile.value) {
-      return effectiveSlots.value.length >= 2 ? "stacked-2" : "single";
+      // Mobile never stacks — a single slot fills the viewport (see
+      // effectiveSlots).
+      return "single";
     }
     return tabsLayout.layout.value;
   });

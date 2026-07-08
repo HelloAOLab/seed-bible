@@ -458,7 +458,7 @@ describe("createSeedBibleState", () => {
       (state.app.viewportWidth as unknown as { value: number }).value = width;
     };
 
-    it("shows at most two slots, stacked top/bottom, on mobile", async () => {
+    it("shows a single slot, never stacked, on mobile", async () => {
       const state = await createState();
       // A four-slot desktop layout leaves four slots in the manager.
       state.tabsLayout.setLayout("grid-2x2");
@@ -466,8 +466,8 @@ describe("createSeedBibleState", () => {
 
       setViewportWidth(state, 400);
 
-      expect(state.app.effectiveSlots.value).toHaveLength(2);
-      expect(state.app.effectiveSlotLayout.value).toBe("stacked-2");
+      expect(state.app.effectiveSlots.value).toHaveLength(1);
+      expect(state.app.effectiveSlotLayout.value).toBe("single");
 
       // The manager's own layout/slots are left untouched so they are
       // restored on desktop.
@@ -488,7 +488,8 @@ describe("createSeedBibleState", () => {
       state.tabsLayout.setLayout("grid-2x2");
 
       setViewportWidth(state, 400);
-      expect(state.app.effectiveSlotLayout.value).toBe("stacked-2");
+      expect(state.app.effectiveSlotLayout.value).toBe("single");
+      expect(state.app.effectiveSlots.value).toHaveLength(1);
 
       setViewportWidth(state, 1200);
       expect(state.app.effectiveSlotLayout.value).toBe("grid-2x2");

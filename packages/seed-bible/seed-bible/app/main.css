@@ -549,13 +549,6 @@ a:visited {
   /* margin-right: 27%; */
 }
 
-/* Mobile-only: two anchored panes stacked top/bottom (single column, two
-   rows). Produced by the app's effective layout on mobile viewports. */
-.sb-panes-layout[data-layout="stacked-2"] {
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: repeat(2, minmax(0, 1fr));
-}
-
 .sb-content-row {
   flex: 1;
   display: flex;
