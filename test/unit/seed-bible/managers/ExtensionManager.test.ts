@@ -604,6 +604,46 @@ describe("createExtensionManager", () => {
     );
   });
 
+  it("loadExtension() adds the extension's full translations from loadFullTranslations(), not the (trimmed) meta.translations", async () => {
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://full-translations");
+
+    const trimmedTranslations = {
+      en: {
+        title: "Full Translations",
+        description: "Full Translations extension",
+      },
+    };
+    const fullTranslations = {
+      en: {
+        title: "Full Translations",
+        description: "Full Translations extension",
+        "extra-key": "Extra string",
+      },
+    };
+    const loadFullTranslations = vi.fn().mockResolvedValue(fullTranslations);
+
+    const loaded = await manager.loadExtension({
+      url: "pkg://full-translations",
+      meta: {
+        id: "ext.full-translations",
+        translations: trimmedTranslations,
+      },
+      loadFullTranslations,
+    });
+
+    expect(loaded).toBe(true);
+    expect(loadFullTranslations).toHaveBeenCalledTimes(1);
+    expect(addTranslationsMock).toHaveBeenCalledWith(
+      "ext.full-translations",
+      fullTranslations
+    );
+    expect(addTranslationsMock).not.toHaveBeenCalledWith(
+      "ext.full-translations",
+      trimmedTranslations
+    );
+  });
+
   it("loadDefaultExtensions() auto-installs extensions when the matching query param is true", async () => {
     const defaultExtensions = {
       id: "set.autoinstall",

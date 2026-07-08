@@ -1,5 +1,5 @@
 import type { Plugin, ViteDevServer } from "vite";
-import { readdir } from "node:fs/promises";
+import { readdir, readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 
@@ -11,9 +11,13 @@ import path from "node:path";
 // `extension.json` at its root (the extension's `meta`). This matches every
 // extension and excludes the main `packages/seed-bible` app, which has none.
 //
-// The module is generated as source (static `extension.json` imports for the
-// meta + `() => import(...)` thunks for the code) so Vite still bundles the meta
-// statically and code-splits each extension's entry point.
+// The module is generated as source: the `meta` for each extension is inlined
+// as a JS literal, but trimmed down to just `title`/`description` per locale —
+// the only translations needed before an extension is installed (to render it
+// in the Settings extensions list). The full per-locale translations (every
+// other UI string the extension uses) and the extension's code are each
+// exposed as `() => import(...)` thunks, so Vite code-splits both into chunks
+// that are only fetched once the extension is actually installed.
 //
 // The `\0` prefix on the resolved id is the Rollup convention that tells other
 // plugins to leave the id alone.
@@ -40,24 +44,73 @@ async function discoverExtensionFolders(): Promise<string[]> {
     .sort();
 }
 
-function generateModuleSource(folders: string[]): string {
-  const imports = folders
-    .map(
-      (folder, i) =>
-        `import meta${i} from "@packages/${folder}/extension.json";`
-    )
-    .join("\n");
+interface ExtensionTranslationFile {
+  title: string;
+  description: string;
+  [key: string]: string;
+}
+
+interface ExtensionMetaFile {
+  id: string;
+  translations: Record<string, ExtensionTranslationFile>;
+  dependencies?: string[];
+  autoinstall?: boolean;
+}
+
+async function readExtensionMeta(folder: string): Promise<ExtensionMetaFile> {
+  const raw = await readFile(extensionJsonPath(folder), "utf-8");
+  return JSON.parse(raw);
+}
+
+/**
+ * Reduces an extension's meta to just what's needed before it's installed:
+ * `title`/`description` per locale (for the Settings extensions list), plus
+ * `id`/`dependencies`/`autoinstall` (needed to resolve install order and
+ * auto-install eligibility). Every other translation key is dropped — it's
+ * only available via the extension's `loadFullTranslations()` thunk.
+ */
+function trimMeta(meta: ExtensionMetaFile): ExtensionMetaFile {
+  const translations: Record<string, ExtensionTranslationFile> = {};
+  for (const [lang, translation] of Object.entries(meta.translations)) {
+    translations[lang] = {
+      title: translation.title,
+      description: translation.description,
+    };
+  }
+
+  return {
+    id: meta.id,
+    translations,
+    ...(meta.dependencies ? { dependencies: meta.dependencies } : {}),
+    ...(meta.autoinstall !== undefined
+      ? { autoinstall: meta.autoinstall }
+      : {}),
+  };
+}
+
+// U+2028/U+2029 are valid JSON string characters but, unescaped, are illegal
+// in JS string literals in some contexts — escape them before inlining.
+function toJsLiteral(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
+async function generateModuleSource(folders: string[]): Promise<string> {
+  const metas = await Promise.all(folders.map(readExtensionMeta));
 
   const entries = folders
-    .map(
-      (folder, i) =>
-        `  { meta: meta${i}, import: () => import("@packages/${folder}/index") },`
-    )
+    .map((folder, i) => {
+      const trimmed = trimMeta(metas[i]!);
+      return `  {
+    meta: ${toJsLiteral(trimmed)},
+    loadFullTranslations: () => import("@packages/${folder}/extension.json").then((m) => m.default.translations),
+    import: () => import("@packages/${folder}/index"),
+  },`;
+    })
     .join("\n");
 
-  return `${imports}
-
-const extensions = [
+  return `const extensions = [
 ${entries}
 ];
 
@@ -93,7 +146,7 @@ export function extensionsPlugin(): Plugin {
         this.addWatchFile(extensionJsonPath(folder));
       }
 
-      return generateModuleSource(folders);
+      return await generateModuleSource(folders);
     },
 
     configureServer(server: ViteDevServer) {
