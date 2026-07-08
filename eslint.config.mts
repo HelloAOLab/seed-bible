@@ -63,7 +63,9 @@ export default defineConfig([
       "css/no-important": "warn",
       "css/no-empty-blocks": "warn",
       "css/use-baseline": "warn",
-      "css/no-invalid-properties": "warn",
+      // `--sb-*` tokens live in base.css/ThemeManager, not each file, so the
+      // per-file rule can't resolve them — allow unknown vars to avoid noise.
+      "css/no-invalid-properties": ["warn", { allowUnknownVariables: true }],
     },
   },
   {
