@@ -606,3 +606,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.sb-translation-license-notice,
+.sb-translation-website {
+  text-align: center;
+  opacity: 0.75;
+}

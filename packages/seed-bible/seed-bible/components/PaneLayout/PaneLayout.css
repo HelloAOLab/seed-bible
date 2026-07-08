@@ -428,8 +428,7 @@
   overflow: hidden;
 }
 
-.sb-pane-layout-anchor,
-.sb-notif-anchor {
+.sb-pane-layout-anchor {
   position: relative;
 }
 
