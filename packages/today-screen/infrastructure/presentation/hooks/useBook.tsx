@@ -90,6 +90,7 @@ export const useBook: UseBook = ({
             return iconData;
           })
           .filter(Boolean) as ChapterData["usersData"] | undefined) ?? [];
+      console.log(`[Debug] useBook`, { usersData });
       const handleChapterClick = () => {
         addTab(bookId, chapter, getDefaultTranslation());
       };
@@ -100,6 +101,7 @@ export const useBook: UseBook = ({
         handleClick: handleChapterClick,
       };
     });
+    console.log(`[Debug] useBook`, { chaptersData });
 
     return {
       usersIconData,

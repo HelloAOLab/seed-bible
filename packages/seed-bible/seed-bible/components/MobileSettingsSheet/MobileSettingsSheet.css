@@ -1,0 +1,158 @@
+/* ── Mobile settings bottom sheet ───────────────────────────────────────── */
+.sb-mobile-settings-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 9998;
+}
+
+.sb-mobile-settings-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.12);
+  padding: 1rem;
+  /* Cap to the viewport and scroll internally so a tall sheet (or one opened
+     with the keyboard up) can always reach its bottom content. */
+  max-height: 85dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  font-family: var(--sb-reader-font-family);
+  animation: sb-mobile-settings-slide-up 0.25s ease-out;
+}
+
+@keyframes sb-mobile-settings-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+.sb-mobile-settings-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.sb-mobile-settings-sheet-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.sb-mobile-settings-sheet-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  padding: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sb-mobile-settings-sheet-section-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.sb-mobile-settings-sheet-size-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.375rem;
+  margin-bottom: 1.25rem;
+}
+
+.sb-mobile-settings-sheet-size-button {
+  flex: 1;
+  height: 3rem;
+  border-radius: 0.375rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
+  background: var(--sb-reader-background);
+  color: inherit;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.sb-mobile-settings-sheet-size-button-selected {
+  border-color: var(--sb-primary-color);
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+}
+
+.sb-mobile-settings-sheet-scripture-row {
+  display: flex;
+  gap: 0.625rem;
+  margin-bottom: 1rem;
+}
+
+.sb-mobile-settings-sheet-scripture-button {
+  flex: 1;
+  height: 3rem;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 80%);
+  background: var(--sb-reader-background);
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+}
+
+.sb-mobile-settings-sheet-scripture-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.sb-mobile-settings-sheet-divider {
+  height: 1px;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 85%);
+  margin: 0.5rem 0 1rem 0;
+}
+
+.sb-mobile-settings-sheet-all-settings {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: var(--sb-primary-color);
+  font-size: 0.875rem;
+  font-weight: 500;
+  font-family: inherit;
+  padding: 0.25rem 0;
+  width: 100%;
+}
+
+.sb-mobile-settings-icon svg path {
+  stroke: var(--sb-primary-color);
+}
+
+.sb-mobile-settings-sheet-all-settings-chevron {
+  margin-inline-start: auto;
+  opacity: 0.7;
+}
+
+.sb-mobile-settings-sheet-toggle-row {
+  margin-bottom: 8px;
+}

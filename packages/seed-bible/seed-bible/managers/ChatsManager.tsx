@@ -14,7 +14,7 @@ import {
   type ConnectionSessionUserVisual,
 } from "./SessionsManager";
 import type { TranslatableTitle } from "./BibleToolsManager";
-import { translateTitle } from "../components/Utils";
+import { translateTitle } from "../app/utils";
 import type { VerseRef } from "./BibleDataManager";
 import { parseVerseReferences } from "./BibleDataManager";
 import { getConnectedUserVisualKey } from "./SessionsManager";

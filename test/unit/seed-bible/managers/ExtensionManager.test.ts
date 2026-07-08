@@ -27,6 +27,7 @@ import type { Mock } from "vitest";
 function createTestLogin(initial?: {
   userId?: string | null;
   profile?: UserProfile | null;
+  profilePromise?: Promise<UserProfile> | null;
 }): LoginManager {
   const userId = signal<string | null>(initial?.userId ?? null);
   const profile = signal<UserProfile | null>(initial?.profile ?? null);
@@ -36,7 +37,12 @@ function createTestLogin(initial?: {
       ...newData,
     } as UserProfile;
   };
-  return { userId, profile, updateProfile } as unknown as LoginManager;
+  return {
+    userId,
+    profile,
+    updateProfile,
+    profilePromise: initial?.profilePromise ?? null,
+  } as unknown as LoginManager;
 }
 
 describe("ExtensionInitalizer", () => {
@@ -1208,6 +1214,26 @@ describe("createExtensionManager", () => {
     }
   });
 
+  /**
+   * Builds an `import()`-style extension module whose resolution is
+   * controlled by the caller via `resolve()`, instead of resolving as soon
+   * as it's awaited. Useful for deterministically interleaving an
+   * extension's install with other async work in a test.
+   */
+  function createDeferredExtensionModule(): {
+    promise: Promise<unknown>;
+    resolve: () => void;
+  } {
+    let resolvePromise: (value: unknown) => void = () => undefined;
+    const promise = new Promise<unknown>((resolve) => {
+      resolvePromise = resolve;
+    });
+    return {
+      promise,
+      resolve: () => resolvePromise({ default: vi.fn() }),
+    };
+  }
+
   /** Reads the installed-extension IDs persisted to a login's profile config. */
   function getProfileInstalled(l: LoginManager): unknown {
     const config = l.profile.value?.config as
@@ -1414,5 +1440,93 @@ describe("createExtensionManager", () => {
     expect(login.profile.value?.name).toBe("Real Name");
     expect(login.profile.value?.location).toBe("Real Location");
     expect(getProfileInstalled(login)).toEqual(["ext.race"]);
+  });
+
+  it("does not spam-overwrite the profile when multiple extensions load while the profile fetch is still in flight (regression for #1357)", async () => {
+    let resolveProfile: (profile: UserProfile) => void = () => undefined;
+    const profilePromise = new Promise<UserProfile>((resolve) => {
+      resolveProfile = resolve;
+    });
+
+    // Simulates a returning, already-authenticated user whose session is
+    // restored synchronously but whose profile fetch (`login.profilePromise`)
+    // is still pending when extension loading kicks off at boot.
+    login = createTestLogin({
+      userId: "user-1",
+      profile: null,
+      profilePromise,
+    });
+
+    const manager = createExtensionManager(login);
+
+    // Use `import`-based (not `url`-based) extensions, each backed by a
+    // deferred promise, so each one's install resolves under direct,
+    // synchronous test control instead of racing real
+    // dynamic-import/module-mock timing.
+    const moduleA = createDeferredExtensionModule();
+    const moduleB = createDeferredExtensionModule();
+    const extensionA = {
+      import: () => moduleA.promise,
+      meta: {
+        id: "ext.spam-a",
+        translations: {
+          en: { title: "Spam A", description: "Spam A extension" },
+        },
+      },
+    };
+    const extensionB = {
+      import: () => moduleB.promise,
+      meta: {
+        id: "ext.spam-b",
+        translations: {
+          en: { title: "Spam B", description: "Spam B extension" },
+        },
+      },
+    };
+
+    const updateProfileSpy = vi.spyOn(login, "updateProfile");
+
+    const loadAPromise = manager.loadExtension(extensionA);
+    const loadBPromise = manager.loadExtension(extensionB);
+
+    // Finish extension A's install while the profile is still null — this is
+    // the exact moment the old, unguarded code would compute its profile
+    // write against an empty profile and capture a stale single-ID value.
+    moduleA.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // Finish extension B's install, still before the profile resolves.
+    moduleB.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // Now let the profile fetch resolve, exactly as `LoginManager` would:
+    // `profile.value` is set before/at the point awaiters of `profilePromise`
+    // resume.
+    const realProfile = { name: "Real Name" } as UserProfile;
+    login.profile.value = realProfile;
+    resolveProfile(realProfile);
+
+    await Promise.all([loadAPromise, loadBPromise]);
+    // Let each install's post-`await installationPromise` continuation
+    // (which awaits the now-resolved profile before writing) finish too.
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // Both extensions should have merged into a single, complete list — not
+    // overwritten each other down to just the last one to resolve.
+    expect(getProfileInstalled(login)).toEqual(
+      expect.arrayContaining(["ext.spam-a", "ext.spam-b"])
+    );
+    expect((getProfileInstalled(login) as string[]).length).toBe(2);
+
+    // This is the actual bug report (#1357): loading the app was writing the
+    // profile repeatedly with no user action. Merging both extensions should
+    // take exactly one write, not one per extension racing the profile load.
+    expect(updateProfileSpy).toHaveBeenCalledTimes(1);
   });
 });

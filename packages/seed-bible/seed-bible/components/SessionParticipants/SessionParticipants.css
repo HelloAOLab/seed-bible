@@ -1,0 +1,217 @@
+/* Mobile reader header: compact shared-session presence indicator. Shows an
+ * overlapping stack of participant avatars (host first) that opens the
+ * participants sheet when tapped. Mirrors the chat presence-avatar overlap. */
+.sb-session-participants-stack {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: transparent;
+  padding: 0.125rem 0.25rem;
+  border-radius: 62.4375rem;
+  cursor: pointer;
+}
+
+.sb-session-participants-stack:active {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-session-participants-stack-item {
+  display: inline-flex;
+}
+
+.sb-session-participants-stack-item .sb-tab-user-icon {
+  box-shadow: 0 0 0 2px var(--sb-reader-background, #fff);
+}
+
+/* Host / co-host: accent ring (a background-colored gap keeps it distinct from
+ * the avatar's own colored border). Rule follows the default so it wins. */
+.sb-session-participants-stack-item-lead .sb-tab-user-icon {
+  box-shadow:
+    0 0 0 1.5px var(--sb-reader-background, #fff),
+    0 0 0 3px var(--sb-primary-color);
+}
+
+.sb-session-participants-stack-item + .sb-session-participants-stack-item {
+  margin-inline-start: -0.5rem;
+}
+
+.sb-session-participants-stack-more {
+  /* Sits in front of the last avatar (opaque background + z-index) so it reads
+   * as being on top of the stack, not tucked behind it. */
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.375rem;
+  height: 1.375rem;
+  padding: 0 0.3125rem;
+  margin-inline-start: -0.5rem;
+  border-radius: 62.4375rem;
+  background: color-mix(
+    in srgb,
+    var(--sb-font-color) 16%,
+    var(--sb-reader-background)
+  );
+  color: var(--sb-font-color);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  box-shadow: 0 0 0 2px var(--sb-reader-background, #fff);
+}
+
+/* Participants sheet — reuses the mobile settings sheet shell, adds a roster. */
+.sb-session-participants-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0.25rem 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  overflow-y: auto;
+}
+
+.sb-session-participants-list-item {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.5rem;
+  border-radius: 0.625rem;
+}
+
+.sb-session-participants-list-item .sb-tab-user-icon {
+  width: 2rem;
+  height: 2rem;
+}
+
+.sb-session-participants-list-item
+  .sb-tab-user-icon-animal
+  .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+.sb-session-participants-list-name {
+  font-size: 0.9375rem;
+  color: var(--sb-font-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Host-only shortcut into the full session settings dialog, pinned below the
+ * participants roster. Styled as an accent list row: gear, label, chevron. */
+.sb-session-participants-settings-button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.75rem 0.5rem;
+  border: none;
+  border-radius: 0.625rem;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  font-family: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-session-participants-settings-label {
+  flex: 1 1 auto;
+}
+
+.sb-session-participants-settings-chevron {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+
+.sb-session-participants-settings-button:active {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+}
+
+/* Participants list (host can promote/demote co-hosts inline) */
+.sb-session-participants {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sb-session-participant {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.sb-session-participant-avatar {
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-size: 1rem;
+  background-size: cover;
+  background-position: center;
+}
+
+.sb-session-participant-avatar-has-image {
+  border: 2px solid;
+}
+
+.sb-session-participant-avatar .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+.sb-session-participant-name {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+}
+
+.sb-session-participant-badge {
+  flex-shrink: 0;
+  font-size: 0.625rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.375rem;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 82%);
+  color: var(--sb-primary-color);
+}
+
+.sb-session-participant-action {
+  flex-shrink: 0;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 84%);
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+  padding: 0.3125rem 0.625rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.sb-session-participant-action:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-session-participant-action-active {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 86%);
+  color: var(--sb-primary-color);
+}

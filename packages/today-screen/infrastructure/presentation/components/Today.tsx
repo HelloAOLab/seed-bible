@@ -31,6 +31,14 @@ export interface TodayConfig {
   }) => preact.JSX.Element;
   language: string;
   username: string | undefined;
+  userProfile:
+    | {
+        name: string;
+        pictureUrl: string | null | undefined;
+        color: string;
+        icon: string;
+      }
+    | undefined;
   userId: string | undefined;
   userLastReading: Signal<UserLastReading>;
   getCommunityReading: (timespan: {
