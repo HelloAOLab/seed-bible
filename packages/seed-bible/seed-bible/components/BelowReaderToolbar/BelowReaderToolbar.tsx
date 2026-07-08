@@ -4,7 +4,10 @@ import type { BibleReadingState } from "../../managers/BibleReadingManager";
 import type { BibleSelectorState } from "../../managers/BibleSelectorManager";
 import type { TabsManager } from "../../managers/TabsManager";
 import type { PanesManager } from "../../managers/PanesManager";
-import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
+import type {
+  TabSlot,
+  TabsLayoutManager,
+} from "../../managers/TabsLayoutManager";
 import { useI18n } from "../../i18n/I18nManager";
 import type { BibleReadingSession } from "../../managers/SessionsManager";
 import { translateTitle } from "../../app/utils";

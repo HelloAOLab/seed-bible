@@ -5,7 +5,7 @@ import {
   PortalComponent,
   type PortalComponentProps,
 } from "@packages/seed-bible/seed-bible/components/PortalComponent";
-import { PaneLayout } from "@packages/seed-bible/seed-bible/components/PaneLayout";
+import { PaneLayout } from "@packages/seed-bible/seed-bible/components/PaneLayout/PaneLayout";
 import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 
