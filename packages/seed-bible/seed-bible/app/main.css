@@ -685,7 +685,6 @@ a:visited {
     0 22px 40px #0000002c;
   display: flex;
   flex-direction: column;
-  overflow: visible;
 }
 
 .sb-pane-shell-detached[data-placement="fullscreen"] {
