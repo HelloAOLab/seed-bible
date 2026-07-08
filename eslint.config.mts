@@ -67,6 +67,18 @@ export default defineConfig([
     },
   },
   {
+    // The Seed Bible reader's co-located component CSS (split out of the former
+    // app/main.css) intentionally uses not-yet-baseline features; the original
+    // monolith disabled this rule at the top of the file, so keep it off here.
+    files: [
+      "packages/seed-bible/seed-bible/components/**/*.css",
+      "packages/seed-bible/seed-bible/app/styles/**/*.css",
+    ],
+    rules: {
+      "css/use-baseline": "off",
+    },
+  },
+  {
     files: ["**/*.json"],
     language: "json/json",
     plugins: {

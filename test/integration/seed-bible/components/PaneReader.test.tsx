@@ -1,7 +1,7 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { computed, signal, type Signal } from "@preact/signals";
-import { PaneReader } from "@packages/seed-bible/seed-bible/components/PaneLayout";
+import { PaneReader } from "@packages/seed-bible/seed-bible/components/PaneLayout/PaneLayout";
 import type {
   BibleReadingState,
   SelectedFootnote,
