@@ -871,7 +871,7 @@ export function createSettings(
   };
 
   // Scale UI surfaces via `--sb-ui-scale`, which drives `html { font-size }`
-  // (see main.css). Chrome sized in `rem` tracks this; reader text keeps its
+  // (see app/styles/base.css). Chrome sized in `rem` tracks this; reader text keeps its
   // own font-size knob (`.sb-bible-reader` carries `.sb-font-size-*`), so it
   // stays independent without the old root-`zoom` + counter-zoom hack.
   effect(() => {

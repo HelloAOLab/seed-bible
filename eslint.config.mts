@@ -63,7 +63,21 @@ export default defineConfig([
       "css/no-important": "warn",
       "css/no-empty-blocks": "warn",
       "css/use-baseline": "warn",
-      "css/no-invalid-properties": "warn",
+      // `--sb-*` tokens live in base.css/ThemeManager, not each file, so the
+      // per-file rule can't resolve them — allow unknown vars to avoid noise.
+      "css/no-invalid-properties": ["warn", { allowUnknownVariables: true }],
+    },
+  },
+  {
+    // The Seed Bible reader's co-located component CSS (split out of the former
+    // app/main.css) intentionally uses not-yet-baseline features; the original
+    // monolith disabled this rule at the top of the file, so keep it off here.
+    files: [
+      "packages/seed-bible/seed-bible/components/**/*.css",
+      "packages/seed-bible/seed-bible/app/styles/**/*.css",
+    ],
+    rules: {
+      "css/use-baseline": "off",
     },
   },
   {
