@@ -1043,8 +1043,24 @@ export function BibleReader(props: BibleReaderProps) {
     }
   };
 
+  const renderMobileChapterTitle = (
+    bookName: string,
+    chapter: number | string
+  ) => (
+    <h2 className="sb-bible-reader-mobile-content-title">
+      <span className="sb-bible-reader-book">{bookName}</span>
+      <span className="sb-bible-reader-chapter">{chapter}</span>
+    </h2>
+  );
+
   const renderMainContent = () => (
     <>
+      {isMobile &&
+        renderMobileChapterTitle(
+          currentBook.value?.name ?? bookId.value ?? "",
+          chapterNumber.value ?? ""
+        )}
+
       {error.value && !loading.value && (
         <p className="sb-reader-error">{error.value}</p>
       )}
@@ -1179,6 +1195,11 @@ export function BibleReader(props: BibleReaderProps) {
                 className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
                 aria-hidden="true"
               >
+                {mobileChrome?.prevChapterPreview &&
+                  renderMobileChapterTitle(
+                    mobileChrome.prevChapterPreview.book.name,
+                    mobileChrome.prevChapterPreview.chapter.number
+                  )}
                 <div className="sb-chapter-content">
                   {renderStaticChapterContent(
                     mobileChrome?.prevChapterPreview ?? null,
@@ -1196,6 +1217,11 @@ export function BibleReader(props: BibleReaderProps) {
                 className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
                 aria-hidden="true"
               >
+                {mobileChrome?.nextChapterPreview &&
+                  renderMobileChapterTitle(
+                    mobileChrome.nextChapterPreview.book.name,
+                    mobileChrome.nextChapterPreview.chapter.number
+                  )}
                 <div className="sb-chapter-content">
                   {renderStaticChapterContent(
                     mobileChrome?.nextChapterPreview ?? null,
