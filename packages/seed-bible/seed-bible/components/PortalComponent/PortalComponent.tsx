@@ -1,3 +1,4 @@
+import "./PortalComponent.css";
 import { useRef } from "preact/hooks";
 
 export type CasualOSPattern = { name: string } | { aux: string };
