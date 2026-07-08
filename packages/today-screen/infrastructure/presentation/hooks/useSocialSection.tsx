@@ -2,7 +2,7 @@ import { useTodayContext } from "../contexts/today/TodayContext";
 import { useSignal, useSignalEffect } from "@preact/signals";
 import type { FilteredReading } from "../../../domain/models/readingHistory";
 import type { SocialSectionUserProfile } from "../contexts/socialSection/SocialSectionContext";
-import { useState, useMemo, useCallback } from "preact/hooks";
+import { useState, useMemo, useCallback, useEffect } from "preact/hooks";
 import type { Timespan } from "../../../domain/models/commonTypes";
 
 type UseSocialSection = () => {
@@ -17,6 +17,14 @@ type UseSocialSection = () => {
   selectDay: (timespan: Timespan | undefined) => void;
 };
 
+type UserProfile = {
+  name: string;
+  pictureUrl?: string | null | undefined;
+  color: string;
+  icon: string;
+};
+type UserProfileMap = Map<string, UserProfile>;
+
 export const useSocialSection: UseSocialSection = () => {
   const {
     translate,
@@ -24,6 +32,8 @@ export const useSocialSection: UseSocialSection = () => {
     subscribedUsersIdsProvider,
     getCommunityReading,
     readingHistoryConfigProvider,
+    userId,
+    userProfile,
   } = useTodayContext();
 
   const initialOption = useMemo(
@@ -66,15 +76,26 @@ export const useSocialSection: UseSocialSection = () => {
     };
   });
 
-  const [userProfileMap] = useState(
-    () =>
-      new Map(
-        subscribedUsersIdsProvider.getUsersIds().map((id) => {
-          const profile = subscribedUsersProfileProvider.getUserProfile(id)!;
-          return [id, profile];
-        })
-      )
+  const [userProfileMap, setUserProfileMap] = useState<UserProfileMap>(
+    new Map()
   );
+
+  useEffect(() => {
+    if (userId && userProfile) {
+      const map: UserProfileMap = new Map([
+        [userId, userProfile],
+        ...subscribedUsersIdsProvider
+          .getUsersIds()
+          .map((id): [string, UserProfile] => [
+            id,
+            subscribedUsersProfileProvider.getUserProfile(id)!,
+          ]),
+      ]);
+      setUserProfileMap(map);
+    } else {
+      setUserProfileMap(new Map());
+    }
+  }, [userId, userProfile]);
 
   const [userFilters, setUserFilters] = useState(() => {
     return new Map(
@@ -83,6 +104,27 @@ export const useSocialSection: UseSocialSection = () => {
       })
     );
   });
+
+  useEffect(() => {
+    setUserFilters((prev) => {
+      const newMap = new Map(prev);
+      for (const id of userProfileMap.keys()) {
+        if (!newMap.has(id)) {
+          newMap.set(id, true);
+        }
+      }
+      for (const id of newMap.keys()) {
+        if (!userProfileMap.has(id)) {
+          newMap.delete(id);
+        }
+      }
+      return newMap;
+    });
+  }, [userProfileMap]);
+
+  useEffect(() => {
+    console.log(`[Debug] useSocialSection`, { userFilters, userProfileMap });
+  }, [userFilters, userProfileMap]);
 
   const toggleUserFilter = useCallback(
     (id: string) => {

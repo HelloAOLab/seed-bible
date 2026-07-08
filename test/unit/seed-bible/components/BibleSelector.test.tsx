@@ -1,6 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
-import { BibleSelector } from "@packages/seed-bible/seed-bible/components/BibleSelector";
+import { BibleSelector } from "@packages/seed-bible/seed-bible/components/BibleSelector/BibleSelector";
 import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { TabSlot } from "@packages/seed-bible/seed-bible/managers/TabsLayoutManager";

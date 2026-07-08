@@ -55,11 +55,12 @@ describe("Chapter", () => {
     return container.querySelector<HTMLDivElement>(".filtered-reading-chapter");
   }
 
-  function iconDivs() {
-    // .filtered-reading-chapter > div (wrapper) > div (Icon) ...
+  function iconEls() {
+    // .filtered-reading-chapter > div (wrapper) > (<img> for picture users,
+    // <div style=background> for icon users), one element per user in order.
     const wrapper = chapterEl()!.querySelector(":scope > div");
     return wrapper
-      ? Array.from(wrapper.querySelectorAll<HTMLDivElement>(":scope > div"))
+      ? Array.from(wrapper.querySelectorAll<HTMLElement>(":scope > *"))
       : [];
   }
 
@@ -89,14 +90,16 @@ describe("Chapter", () => {
       setup({
         usersData: [makeUser(), makeUser({ name: "Bob" }), makeUser()],
       });
-      expect(iconDivs()).toHaveLength(3);
+      expect(iconEls()).toHaveLength(3);
     });
   });
 
   describe("user icon rendering", () => {
     it("renders the MaterialIcon with the icon name and a colored background when there is no picture", () => {
       setup({ usersData: [makeUser({ icon: "star", color: "rgb(1, 2, 3)" })] });
-      const icon = iconDivs()[0]!;
+      const icon = iconEls()[0]!;
+      // Icon users are wrapped in a colored <div>.
+      expect(icon.tagName).toBe("DIV");
       expect(icon.style.backgroundColor).toBe("rgb(1, 2, 3)");
       const materialIcon = icon.querySelector(".material-icon");
       expect(materialIcon).not.toBeNull();
@@ -108,12 +111,11 @@ describe("Chapter", () => {
       setup({
         usersData: [makeUser({ pictureUrl: "https://example.com/a.png" })],
       });
-      const icon = iconDivs()[0]!;
+      const icon = iconEls()[0]!;
+      // Picture users render as a bare <img> with no colored wrapper.
+      expect(icon.tagName).toBe("IMG");
       expect(icon.style.backgroundColor).toBe("");
-      const img = icon.querySelector("img");
-      expect(img).not.toBeNull();
-      expect(img!.getAttribute("src")).toBe("https://example.com/a.png");
-      expect(icon.querySelector(".material-icon")).toBeNull();
+      expect(icon.getAttribute("src")).toBe("https://example.com/a.png");
     });
 
     it("renders a mix of picture and icon users", () => {
@@ -123,8 +125,9 @@ describe("Chapter", () => {
           makeUser({ icon: "face" }),
         ],
       });
-      const icons = iconDivs();
-      expect(icons[0]!.querySelector("img")).not.toBeNull();
+      const icons = iconEls();
+      expect(icons[0]!.tagName).toBe("IMG");
+      expect(icons[0]!.getAttribute("src")).toBe("https://example.com/a.png");
       expect(icons[1]!.querySelector(".material-icon")!.textContent).toBe(
         "face"
       );

@@ -1,0 +1,744 @@
+/* ------------------------------------------------------------------ */
+/* Floating reader panels (search + chat). Anchored above the reader  */
+/* toolbar; the toolbar sits at ~18px from the bottom and is ~68px    */
+/* tall, so we anchor the panels at ~100px to leave a small gap.      */
+/* ------------------------------------------------------------------ */
+
+.sb-floating-search-panel,
+.sb-floating-chat-panel {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 98;
+  background: var(--sb-reader-toolbar-background);
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 0.875rem;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+  color: var(--sb-font-color);
+  font-family: var(--sb-font-family);
+  animation: sb-floating-panel-rise 0.18s ease-out;
+}
+
+@keyframes sb-floating-panel-rise {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.sb-floating-search-panel {
+  bottom: 6.25rem;
+  width: min(38.75rem, calc(100vw - 2rem));
+  padding: 0.625rem 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  max-height: min(35rem, calc(100vh - 12.5rem));
+}
+
+.sb-floating-search-panel-expanded {
+  padding-bottom: 0.75rem;
+}
+
+.sb-floating-search-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.375rem 0.625rem;
+  border-radius: 0.625rem;
+  background: var(--sb-reader-background);
+  flex-shrink: 0;
+}
+
+.sb-floating-search-icon {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+  font-size: 1.375rem;
+}
+
+.sb-floating-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  font: inherit;
+  outline: none;
+  font-size: 0.9375rem;
+  padding: 0.375rem 0;
+}
+
+.sb-floating-search-input::placeholder {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+}
+
+.sb-floating-search-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.625rem;
+  height: 1.625rem;
+  padding: 0;
+  border: none;
+  border-radius: 62.4375rem;
+  background: transparent;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.sb-floating-search-clear:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
+  color: var(--sb-font-color);
+}
+
+.sb-floating-search-clear .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+.sb-floating-search-results {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.sb-floating-search-status {
+  padding: 0.875rem 0.75rem;
+  font-size: 0.875rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-floating-search-status-error {
+  color: #b42318;
+}
+
+.sb-floating-search-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.sb-floating-search-result {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 0.75rem;
+  background: var(--sb-reader-background);
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.sb-floating-search-result:hover,
+.sb-floating-search-result-highlighted {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 96%);
+  border-color: color-mix(in srgb, var(--sb-font-color), transparent 80%);
+}
+
+.sb-floating-search-result-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.sb-floating-search-result-ref {
+  font-weight: 700;
+  color: var(--sb-font-color);
+}
+
+.sb-floating-search-result-sep {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+  font-size: 0.6875rem;
+  line-height: 1;
+}
+
+.sb-floating-search-result-translation {
+  font-weight: 500;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.sb-floating-search-result-action {
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 0.375rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity 0.15s ease,
+    background-color 0.15s ease,
+    color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.sb-floating-search-result:hover .sb-floating-search-result-action,
+.sb-floating-search-result-highlighted .sb-floating-search-result-action,
+.sb-floating-search-result-action:focus-visible {
+  opacity: 1;
+}
+
+.sb-floating-search-result-action:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+}
+
+.sb-floating-search-result-action svg {
+  display: block;
+}
+
+.sb-floating-search-result-text {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
+}
+
+/* --- Chat panel --- */
+
+.sb-floating-chat-panel {
+  inset-inline-start: auto;
+  inset-inline-end: 1rem;
+  transform: none;
+  bottom: 0.5rem;
+  width: min(20rem, calc(100vw - 2rem));
+  min-height: 25rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 0.5rem;
+  animation: sb-floating-chat-panel-rise 0.18s ease-out;
+}
+
+@keyframes sb-floating-chat-panel-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.sb-floating-chat-header {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 1.625rem;
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--sb-divider-color);
+}
+
+.sb-floating-chat-header-back {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 22%);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 93%);
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.sb-floating-chat-header-back:hover,
+.sb-floating-chat-header-back:focus-visible {
+  color: var(--sb-font-color);
+  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
+}
+
+.sb-floating-chat-header-title {
+  margin: 0;
+  min-width: 0;
+  flex: 1;
+  font-size: 0.9375rem;
+  line-height: 1.3;
+  font-weight: 700;
+  color: var(--sb-font-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 480px) {
+  /* Search is a bottom-anchored sheet on mobile: the input sits just above the
+     5-tab bar and results grow upward. It is capped to the *small* viewport
+     height (`svh`, which excludes the Android address bar) and anchored to the
+     bottom rather than `top: 0`, so the top results can never be pushed behind
+     the browser chrome (the old full-screen `top: 0` overlay anchored to the
+     taller layout viewport, hiding the first results until the bar collapsed).
+     Keeping it off the top of the screen also leaves the reader above the sheet
+     visible and tappable, so the app never feels frozen — tapping a reader
+     control closes search (via the outside-tap handler) and activates it. */
+  .sb-floating-search-panel {
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: 4.5rem;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(
+      100svh - 4.5rem - env(safe-area-inset-top, 0px) -
+        env(safe-area-inset-bottom, 0px) - 0.75rem
+    );
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    padding: calc(env(safe-area-inset-top, 0px) + 0.875rem) 1rem 0.875rem;
+    background: transparent;
+    gap: 0.875rem;
+    animation: none;
+    /* Empty areas of the sheet let taps fall through to the reader; the input
+       row and results below re-enable pointer events. */
+    pointer-events: none;
+  }
+}
+
+.sb-floating-chat-header-members-button-icon {
+  display: inline-flex;
+  gap: 0.25rem;
+  align-items: center;
+  font-size: 0.875rem;
+}
+
+.sb-floating-chat-members-menu {
+  min-width: 13.75rem;
+}
+
+.sb-floating-chat-members-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--sb-menu-font-color);
+}
+
+.sb-floating-chat-members-avatar {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 62.4375rem;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.sb-floating-chat-members-avatar-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 87%);
+  color: color-mix(in srgb, var(--sb-font-color), transparent 14%);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.sb-floating-chat-members-name {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sb-floating-chat-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 22.5rem;
+  overflow: auto;
+  padding: 0.25rem;
+  flex: 1 1 auto;
+}
+
+.sb-floating-chat-list-shell {
+  position: relative;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-floating-chat-list-create-anchor {
+  position: absolute;
+  right: 0.875rem;
+  bottom: 0.875rem;
+}
+
+.sb-floating-chat-list-create-button {
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: 62.4375rem;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 82%);
+  background: var(--sb-primary-color);
+  color: #fff;
+  box-shadow: 0 10px 24px
+    color-mix(in srgb, var(--sb-primary-color), transparent 78%);
+}
+
+.sb-floating-chat-list-create-button:hover,
+.sb-floating-chat-list-create-button:focus-visible {
+  border-color: color-mix(in srgb, var(--sb-primary-color), transparent 10%);
+  background: color-mix(in srgb, var(--sb-primary-color), white 8%);
+}
+
+.sb-floating-chat-list-create-menu {
+  min-width: 13.75rem;
+  bottom: 0;
+}
+
+.sb-floating-chat-list-create-item {
+  color: var(--sb-menu-font-color);
+}
+
+.sb-floating-chat-list-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: left;
+  padding: 0.625rem 1.125rem;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.sb-floating-chat-list-item:hover,
+.sb-floating-chat-list-item:focus-visible {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+}
+
+.sb-floating-chat-list-item:active {
+  transform: translateY(1px);
+}
+
+.sb-floating-chat-list-item-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+/* --- Avatar clusters in chat list --- */
+
+.sb-chat-list-avatar-cluster {
+  flex-shrink: 0;
+  position: relative;
+}
+
+.sb-chat-list-avatar-cluster .sb-tab-user-icon {
+  box-shadow: 0 0 0 2px var(--sb-reader-toolbar-background);
+}
+
+/* Single avatar */
+.sb-chat-list-avatar-cluster-1 {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sb-chat-list-avatar-cluster-1 .sb-tab-user-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.sb-chat-list-avatar-cluster-1
+  .sb-tab-user-icon-animal
+  .material-symbols-outlined {
+  font-size: 1.25rem;
+}
+
+/* Two avatars: side by side, first overlaps second */
+.sb-chat-list-avatar-cluster-2 {
+  width: 2.875rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+}
+
+.sb-chat-list-avatar-cluster-2 .sb-tab-user-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.sb-chat-list-avatar-cluster-2
+  .sb-tab-user-icon-animal
+  .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+.sb-chat-list-avatar-cluster-2 .sb-tab-user-icon + .sb-tab-user-icon {
+  margin-left: -0.625rem;
+}
+
+/* Three avatars: triangle (one top-center, two bottom) */
+.sb-chat-list-avatar-cluster-3 {
+  width: 2.375rem;
+  height: 2rem;
+}
+
+.sb-chat-list-avatar-cluster-3 .sb-tab-user-icon {
+  position: absolute;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.sb-chat-list-avatar-cluster-3
+  .sb-tab-user-icon-animal
+  .material-symbols-outlined {
+  font-size: 0.875rem;
+}
+
+.sb-chat-list-avatar-cluster-3 .sb-tab-user-icon:nth-child(1) {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.sb-chat-list-avatar-cluster-3 .sb-tab-user-icon:nth-child(2) {
+  bottom: 0;
+  left: 0;
+}
+
+.sb-chat-list-avatar-cluster-3 .sb-tab-user-icon:nth-child(3) {
+  bottom: 0;
+  right: 0;
+}
+
+/* Four items: 2×2 grid with overflow badge in the 4th cell */
+.sb-chat-list-avatar-cluster-4 {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: grid;
+  grid-template-columns: 1.0625rem 1.0625rem;
+  grid-template-rows: 1.0625rem 1.0625rem;
+  gap: 0.125rem;
+}
+
+.sb-chat-list-avatar-cluster-4 .sb-tab-user-icon {
+  width: 1.0625rem;
+  height: 1.0625rem;
+}
+
+.sb-chat-list-avatar-cluster-4
+  .sb-tab-user-icon-animal
+  .material-symbols-outlined {
+  font-size: 0.6875rem;
+}
+
+.sb-chat-list-avatar-overflow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 80%);
+  color: color-mix(in srgb, var(--sb-font-color), transparent 10%);
+  box-shadow: 0 0 0 2px var(--sb-reader-toolbar-background);
+}
+
+.sb-chat-list-avatar-cluster-4 .sb-chat-list-avatar-overflow {
+  width: 1.0625rem;
+  height: 1.0625rem;
+}
+
+.sb-floating-chat-list-item-header {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.sb-floating-chat-list-item-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--sb-font-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sb-floating-chat-list-item-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.sb-floating-chat-list-item-time {
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-floating-chat-list-item-unread {
+  min-width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 62.4375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #fff;
+  background: var(--sb-primary-color);
+}
+
+.sb-floating-chat-list-item-preview {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 20%);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sb-floating-chat-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 0.5rem;
+  padding: 1.25rem 1rem 3.5rem;
+  flex: 1 1 auto;
+}
+
+.sb-floating-chat-empty-icon {
+  font-size: 2.25rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+  margin-bottom: 0.25rem;
+}
+
+.sb-floating-chat-empty-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--sb-font-color);
+}
+
+.sb-floating-chat-empty-body {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+}
+
+@media (max-width: 1400px) {
+  .sb-floating-chat-panel {
+    left: 50%;
+    right: auto;
+    bottom: 6.25rem;
+    transform: translateX(-50%);
+    animation: sb-floating-panel-rise 0.18s ease-out;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Search is a bottom-anchored sheet on mobile: the input sits just above the
+     5-tab bar and results grow upward. It is capped to the *small* viewport
+     height (`svh`, which excludes the Android address bar) and anchored to the
+     bottom rather than `top: 0`, so the top results can never be pushed behind
+     the browser chrome (the old full-screen `top: 0` overlay anchored to the
+     taller layout viewport, hiding the first results until the bar collapsed).
+     Keeping it off the top of the screen also leaves the reader above the sheet
+     visible and tappable, so the app never feels frozen — tapping a reader
+     control closes search (via the outside-tap handler) and activates it. */
+  .sb-floating-search-panel {
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: 4.5rem;
+    transform: none;
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(
+      100svh - 4.5rem - env(safe-area-inset-top, 0px) -
+        env(safe-area-inset-bottom, 0px) - 0.75rem
+    );
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    padding: calc(env(safe-area-inset-top, 0px) + 0.875rem) 1rem 0.875rem;
+    background: transparent;
+    gap: 0.875rem;
+    animation: none;
+    /* Empty areas of the sheet let taps fall through to the reader; the input
+       row and results below re-enable pointer events. */
+    pointer-events: none;
+  }
+
+  /* Only paint a backdrop once results (or status) are showing — while the
+     panel is just the input, keep it transparent over the reader. */
+  .sb-floating-search-panel-expanded {
+    background: var(--sb-background);
+  }
+
+  .sb-floating-search-panel .sb-floating-search-input-wrap,
+  .sb-floating-search-panel .sb-floating-search-results {
+    pointer-events: auto;
+  }
+
+  /* Fill the sheet so its empty space belongs to the (interactive) results
+     container rather than the pass-through backdrop. */
+  .sb-floating-search-panel .sb-floating-search-results {
+    flex: 1 1 auto;
+  }
+
+  .sb-floating-search-panel .sb-floating-search-input-wrap {
+    margin-top: auto;
+  }
+
+  /* No hover on touch — keep the action icon visible on each card. */
+  .sb-floating-search-result-action {
+    opacity: 1;
+  }
+
+  /* Chat keeps the floating-card look on mobile, anchored above the bar. */
+  .sb-floating-chat-panel {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    bottom: 7.5rem;
+    width: 100%;
+    animation: sb-floating-panel-rise 0.18s ease-out;
+    border-radius: 0;
+    border: none;
+    box-shadow: 0px -3px 8px 0px rgba(0, 0, 0, 0.18);
+  }
+}
