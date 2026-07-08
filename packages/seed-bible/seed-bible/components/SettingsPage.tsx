@@ -752,6 +752,25 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
           </>
         )}
 
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-keep-screen-awake"
+          >
+            {t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
+          </label>
+          <input
+            id="sb-keep-screen-awake"
+            type="checkbox"
+            checked={current.keepScreenAwake}
+            onChange={(event: Event) => {
+              settings.setKeepScreenAwake(
+                (event.currentTarget as HTMLInputElement).checked
+              );
+            }}
+          />
+        </div>
+
         <h3 className="sb-settings-subheading">
           {t("scripture-elements", { defaultValue: "Scripture elements" })}
         </h3>
@@ -1930,7 +1949,6 @@ function AllSettingsView(props: { state: SeedBibleState }) {
 function SettingsMainView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { t, language, availableLanguages, setLanguage } = useI18n();
-  const isAwake = state.settings.settings.value.keepScreenAwake;
   const isLanguageMenuOpen = useSignal(false);
   const languageSearchQuery = useSignal("");
   const languageTriggerRef = useRef<HTMLButtonElement | null>(null);
@@ -1938,10 +1956,6 @@ function SettingsMainView(props: { state: SeedBibleState }) {
 
   const onNavigate = (view: RequestedSettingsView) => {
     state.sidebar.requestedSettingsView.value = view;
-  };
-
-  const handleWakeLockToggle = (checked: boolean) => {
-    state.settings.setKeepScreenAwake(checked);
   };
 
   const currentLangMeta = LANG_META[language] ?? {
@@ -2059,26 +2073,6 @@ function SettingsMainView(props: { state: SeedBibleState }) {
               </span>
               <span className="material-symbols-outlined">chevron_right</span>
             </button>
-          </li>
-          <li>
-            <div className="sb-settings-toggle-row sb-settings-wake-lock-row">
-              <label
-                className="sb-settings-toggle-label"
-                htmlFor="sb-wake-lock-toggle"
-              >
-                {t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
-              </label>
-              <input
-                id="sb-wake-lock-toggle"
-                type="checkbox"
-                checked={isAwake}
-                onChange={(event: Event) => {
-                  handleWakeLockToggle(
-                    (event.currentTarget as HTMLInputElement).checked
-                  );
-                }}
-              />
-            </div>
           </li>
           <li>
             <div className="sb-settings-field-row">
