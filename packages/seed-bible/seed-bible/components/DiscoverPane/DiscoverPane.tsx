@@ -1,3 +1,4 @@
+import "./DiscoverPane.css";
 import { useI18n } from "../../i18n/I18nManager";
 import type { TabsManager, ReaderTab } from "../../managers/TabsManager";
 import type { Playlist, PlaylistManager } from "../../managers/PlaylistManager";

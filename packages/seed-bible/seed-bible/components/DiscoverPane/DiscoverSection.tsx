@@ -1,4 +1,5 @@
 import type { ComponentChildren } from "preact";
+import "./DiscoverSection.css";
 
 export function DiscoverSection(props: {
   title: string;

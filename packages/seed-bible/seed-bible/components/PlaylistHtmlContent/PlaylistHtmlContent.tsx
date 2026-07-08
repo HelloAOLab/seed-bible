@@ -1,3 +1,4 @@
+import "./PlaylistHtmlContent.css";
 import { useEffect, useRef } from "preact/hooks";
 import { setSafeHtml } from "../managers/Sanitization";
 

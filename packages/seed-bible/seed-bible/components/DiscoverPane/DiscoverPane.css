@@ -1,0 +1,177 @@
+/* Desktop: an in-flow flex column anchored to the right edge. Because it sits
+   beside the reader's <main> (flex: 1) in the app-root flex row, the panes
+   layout shrinks and shifts left rather than being overlaid. */
+.sb-discover-panel {
+  flex: 0 0 360px;
+  height: 100vh;
+  overflow: hidden;
+  border-left: 1px solid var(--sb-divider-color);
+  background: var(--sb-background);
+}
+
+/* Mobile: pulled out of flow and rendered fullscreen above the panes. */
+.sb-discover-panel--mobile {
+  position: fixed;
+  inset: 0 0 120px 0;
+  z-index: 100;
+  flex: none;
+  width: auto;
+  height: auto;
+}
+
+.sb-discover-pane {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  padding: 12px;
+  gap: 8px;
+  color: var(--sb-font-color);
+}
+
+.sb-discover-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+}
+
+.sb-discover-close:hover {
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 65%);
+}
+
+.sb-discover-header {
+  display: flex;
+  align-items: center;
+  justify-content: start;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sb-discover-header .spacer {
+  flex: 1;
+}
+
+.sb-discover-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.sb-discover-create {
+  padding: 6px 12px;
+  border: 1px solid var(--sb-primary-color);
+  border-radius: 8px;
+  background: var(--sb-primary-color);
+  color: var(--sb-background);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.sb-discover-create:hover {
+  opacity: 0.9;
+}
+
+/*
+ * List/item primitives below back the "discover list" markup pattern (a
+ * `.sb-discover-list` of `.sb-discover-item`s) rendered by this file's own
+ * playlist/cross-reference/study-note/content sections. CreatePlaylistForm
+ * and PlayPlaylistView reuse the same classes for their own item lists.
+ */
+.sb-discover-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sb-discover-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 8px;
+}
+
+.sb-discover-item--row {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.sb-playlist-item {
+  cursor: pointer;
+}
+
+.sb-discover-item-main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-discover-item-edit,
+.sb-discover-item-play,
+.sb-discover-item-share,
+.sb-discover-item-delete {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-discover-item-edit:hover,
+.sb-discover-item-play:hover {
+  background: var(--sb-divider-color);
+  color: var(--sb-font-color);
+}
+
+.sb-discover-item-delete:hover {
+  background: var(--sb-divider-color);
+  color: var(--sb-error-color, #d64545);
+}
+
+.sb-discover-item-edit .material-symbols-outlined,
+.sb-discover-item-play .material-symbols-outlined,
+.sb-discover-item-delete .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+.sb-discover-item--row .sb-discover-item-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-discover-item-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.sb-discover-item-description {
+  font-size: 0.75rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}
+
+.sb-discover-item-content {
+  font-size: 0.8125rem;
+  margin-top: 4px;
+}
