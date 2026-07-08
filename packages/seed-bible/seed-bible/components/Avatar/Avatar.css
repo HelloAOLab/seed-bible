@@ -1,0 +1,76 @@
+.sb-tab-user-icon {
+  position: relative;
+  width: 1.375rem;
+  height: 1.375rem;
+  border-radius: 62.4375rem;
+  border: 2px solid transparent;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+/* Avatar with an optional host / co-host label overlaid on it. The label is
+   absolutely positioned so it never changes the avatar's box — keeping every
+   avatar in the row aligned. */
+.sb-tab-user {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sb-tab-user-role {
+  position: absolute;
+  bottom: -0.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.375rem;
+  line-height: 1;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 1px 0.1875rem;
+  border-radius: 0.25rem;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 0 0 1.5px var(--sb-background, #ffffff);
+  z-index: 1;
+}
+
+.sb-tab-user-role-cohost,
+.sb-tab-user-role-host {
+  background: color-mix(in srgb, #f59e0b, transparent 82%);
+  color: var(--sb-tab-font-color);
+  /* backdrop-filter: invert(1) brightness(1.2); */
+  background: var(--sb-reader-background);
+}
+
+/* .sb-tab-user-role-cohost {
+  background: color-mix(in srgb, #6366f1, transparent 82%);
+  color: #4338ca;
+  background:wheat;
+} */
+
+.sb-tab-user-icon-has-image {
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.sb-tab-user-icon-animal {
+  color: #000000;
+}
+
+.sb-tab-user-icon-animal .material-symbols-outlined {
+  font-size: 0.875rem;
+  line-height: 1;
+  font-weight: 600;
+}
+
+.sb-tab-user-icon-self {
+  box-shadow: 0 0 0 1px
+    color-mix(in srgb, var(--sb-font-color), transparent 72%);
+}

@@ -1,0 +1,68 @@
+.sb-context-menu-anchor {
+  position: relative;
+}
+
+.sb-context-menu-button {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  border-radius: 0.375rem;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.sb-context-menu-button:hover {
+  background: color-mix(in srgb, var(--sb-secondary-color), transparent 70%);
+}
+
+.sb-context-more-icon {
+  font-size: 1.125rem;
+  opacity: 0.9;
+}
+
+.sb-context-menu {
+  position: absolute;
+  width: max-content;
+  min-width: 12.5rem;
+  max-width: 17.5rem;
+  padding: 0.375rem;
+  border: 1px solid var(--sb-secondary-color);
+  border-radius: 0.5rem;
+  background: var(--sb-menu-background);
+  color: var(--sb-menu-font-color);
+  box-shadow: 0 10px 30px #00000014;
+  z-index: 40;
+}
+
+.sb-context-menu-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  text-align: left;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.sb-context-menu-item:hover {
+  background: var(--sb-secondary-color);
+}
+
+.sb-context-menu-toggle-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.sb-context-menu-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
