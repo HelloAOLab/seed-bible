@@ -29,7 +29,7 @@ import { SidebarSearch } from "../../components/SidebarSearch/SidebarSearch";
 import {
   handleGridKeyNav,
   handleHorizontalListKeyNav,
-} from "../../components/KeyboardNav";
+} from "../../app/keyboardNav";
 import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
 import {
   SessionUserAvatar,

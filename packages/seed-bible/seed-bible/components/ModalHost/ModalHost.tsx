@@ -1,7 +1,7 @@
-import { CasualOSApp } from "../components/CasualOSApp";
-import type { ModalManager } from "../managers/ModalManager";
-import { useI18n } from "../i18n/I18nManager";
-import { translateTitle } from "../components/Utils";
+import { CasualOSApp } from "../CasualOSApp/CasualOSApp";
+import type { ModalManager } from "../../managers/ModalManager";
+import { useI18n } from "../../i18n/I18nManager";
+import { translateTitle } from "../../app/utils";
 
 export function ModalHost(props: { manager: ModalManager }) {
   const { manager } = props;

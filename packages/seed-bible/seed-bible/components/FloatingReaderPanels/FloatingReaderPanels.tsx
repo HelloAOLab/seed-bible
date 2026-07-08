@@ -20,7 +20,7 @@ import type {
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { ReaderTab } from "../../managers/TabsManager";
 import { useEffect, useRef } from "preact/hooks";
-import { translateTitle } from "../Utils";
+import { translateTitle } from "../../app/utils";
 import { Avatar } from "../Avatar/Avatar";
 import { DateTime } from "luxon";
 import { ChatParticipantsIcon } from "../icons";

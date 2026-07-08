@@ -6,8 +6,8 @@ import type { TabsManager } from "../../managers/TabsManager";
 import type { Pane, PanesManager } from "../../managers/PanesManager";
 import { useI18n } from "../../i18n/I18nManager";
 import type { BibleReadingSession } from "../../managers/SessionsManager";
-import { translateTitle } from "../../components/Utils";
-import { handleVerticalListKeyNav } from "../../components/KeyboardNav";
+import { translateTitle } from "../../app/utils";
+import { handleVerticalListKeyNav } from "../../app/keyboardNav";
 import type { ChatsManager } from "../../managers/ChatsManager";
 import { useState } from "preact/hooks";
 

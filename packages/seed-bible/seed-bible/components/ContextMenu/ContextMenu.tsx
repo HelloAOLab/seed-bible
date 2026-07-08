@@ -9,7 +9,7 @@ import type { MutableRef } from "preact/hooks";
 import {
   handleMenuTriggerKeyDown,
   handleVerticalListKeyNav,
-} from "../../components/KeyboardNav";
+} from "../../app/keyboardNav";
 
 import { useEffect, useRef } from "preact/hooks";
 

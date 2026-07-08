@@ -2,8 +2,8 @@ import "./QuickToolbar.css";
 import { type ToolsManager } from "../../managers/BibleToolsManager";
 import type { BibleReadingState } from "../../managers/BibleReadingManager";
 import { useI18n } from "../../i18n/I18nManager";
-import { translateTitle } from "../../components/Utils";
-import { handleHorizontalListKeyNav } from "../../components/KeyboardNav";
+import { translateTitle } from "../../app/utils";
+import { handleHorizontalListKeyNav } from "../../app/keyboardNav";
 import { useState } from "preact/hooks";
 
 interface QuickToolbarProps {

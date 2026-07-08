@@ -9,12 +9,12 @@ import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 import { useEffect } from "preact/hooks";
 import { useSignalEffect, type ReadonlySignal } from "@preact/signals";
 import { closeContextMenus } from "../components/ContextMenu/ContextMenu";
-import { ModalHost } from "../components/ModalHost";
+import { ModalHost } from "../components/ModalHost/ModalHost";
 import { ToastHost } from "../components/ToastHost/ToastHost";
 import { LoginModal } from "../components/LoginModal/LoginModal";
 import { TermsOfServiceModal } from "../components/TermsOfServiceModal/TermsOfServiceModal";
-import { PrivacyPolicyModal } from "../components/PrivacyPolicyModal";
-import { CodeOfConductModal } from "../components/CodeOfConductModal";
+import { PrivacyPolicyModal } from "../components/PrivacyPolicyModal/PrivacyPolicyModal";
+import { CodeOfConductModal } from "../components/CodeOfConductModal/CodeOfConductModal";
 import { useMemo } from "preact/hooks";
 import {
   AppConfigProvider,

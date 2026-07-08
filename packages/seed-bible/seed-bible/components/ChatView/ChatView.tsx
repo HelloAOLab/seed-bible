@@ -12,9 +12,9 @@ import {
   type ConnectionSessionUserVisual,
 } from "../../managers/SessionsManager";
 import { Avatar } from "../Avatar/Avatar";
-import { translateTitle } from "../Utils";
+import { translateTitle } from "../../app/utils";
 import { AskIcon } from "../icons";
-import { VerseReferenceLink } from "../VerseReferenceLink";
+import { VerseReferenceLink } from "../../app/verseReferenceLink";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { VerseRef } from "../../managers/BibleDataManager";
 import { useEffect, useRef, useState } from "preact/hooks";

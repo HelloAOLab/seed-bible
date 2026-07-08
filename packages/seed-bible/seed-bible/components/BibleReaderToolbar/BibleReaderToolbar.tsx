@@ -2,7 +2,7 @@ import "./BibleReaderToolbar.css";
 import { useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { useI18n } from "../../i18n/I18nManager";
-import { translateTitle } from "../../components/Utils";
+import { translateTitle } from "../../app/utils";
 import {
   applyToolbarCustomization,
   UI_TEXT_SIZE_SCALE_MAP,
@@ -14,7 +14,7 @@ import type { BibleReaderToolbarTool } from "../../managers/BibleToolsManager";
 import {
   handleHorizontalListKeyNav,
   handleVerticalListKeyNav,
-} from "../../components/KeyboardNav";
+} from "../../app/keyboardNav";
 import { SeedBibleIcon } from "../../components/icons";
 import { useEffect, useRef } from "preact/hooks";
 import {

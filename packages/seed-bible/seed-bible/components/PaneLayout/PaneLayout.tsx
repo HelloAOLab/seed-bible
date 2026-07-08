@@ -1,7 +1,7 @@
 import "./PaneLayout.css";
 import { BibleReader } from "../../components/BibleReader/BibleReader";
 import { BelowReaderToolbar } from "../../components/BelowReaderToolbar/BelowReaderToolbar";
-import { CasualOSApp } from "../../components/CasualOSApp";
+import { CasualOSApp } from "../CasualOSApp/CasualOSApp";
 import type { TranslationBookChapter } from "../../managers/FreeUseBibleAPI";
 import type { BibleSelectorState } from "../../managers/BibleSelectorManager";
 import type { ReaderTab, TabsManager } from "../../managers/TabsManager";
@@ -17,7 +17,7 @@ import { type ToolsManager } from "../../managers/BibleToolsManager";
 import { UI_TEXT_SIZE_SCALE_MAP } from "../../managers/SettingsManager";
 import { batch, effect } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
-import { translateTitle } from "../../components/Utils";
+import { translateTitle } from "../../app/utils";
 import { MaterialIcon } from "../../components/icons";
 import { useEffect, useRef, useState } from "preact/hooks";
 

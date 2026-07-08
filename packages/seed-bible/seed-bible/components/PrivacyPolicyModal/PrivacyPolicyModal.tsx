@@ -1,7 +1,7 @@
 import { useEffect } from "preact/hooks";
 import { signal } from "@preact/signals";
 import type { i18n as I18nInstance } from "i18next";
-import { useI18n } from "../i18n/I18nManager";
+import { useI18n } from "../../i18n/I18nManager";
 
 /**
  * Tracks which languages have had their Privacy Policy bundle loaded into i18n.

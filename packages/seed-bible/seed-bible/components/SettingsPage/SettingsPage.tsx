@@ -20,7 +20,7 @@ import {
   THEME_COLOR_GROUPS,
   type ThemeColorKey,
 } from "../../managers/ThemeManager";
-import { download, translateTitle } from "../../components/Utils";
+import { download, translateTitle } from "../../app/utils";
 import { ProfilePictureModalContent } from "../../components/ProfilePictureModal/ProfilePictureModal";
 import { ExtensionInitalizer } from "../../managers/ExtensionManager";
 import { useI18n } from "../../i18n/I18nManager";
@@ -35,7 +35,7 @@ import {
   handleGridKeyNav,
   handleMenuTriggerKeyDown,
   handleVerticalListKeyNav,
-} from "../../components/KeyboardNav";
+} from "../../app/keyboardNav";
 import { useRef } from "preact/hooks";
 import type { RequestedSettingsView } from "../../managers/SidebarManager";
 
