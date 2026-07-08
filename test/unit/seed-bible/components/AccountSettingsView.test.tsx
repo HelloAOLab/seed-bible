@@ -1,7 +1,7 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import { SettingsPage } from "@packages/seed-bible/seed-bible/components/SettingsPage";
+import { SettingsPage } from "@packages/seed-bible/seed-bible/components/SettingsPage/SettingsPage";
 import type { UserProfile } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 

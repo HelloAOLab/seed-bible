@@ -5,7 +5,7 @@ import {
   ChatList,
   FloatingChatPanel,
   FloatingReaderPanels,
-} from "@packages/seed-bible/seed-bible/components/FloatingReaderPanels";
+} from "@packages/seed-bible/seed-bible/components/FloatingReaderPanels/FloatingReaderPanels";
 import type {
   ChatSession,
   TextChatMessage,
@@ -29,55 +29,61 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   };
 });
 
-vi.mock("@packages/seed-bible/seed-bible/components/ChatView", async () => {
-  const actual = await vi.importActual(
-    "@packages/seed-bible/seed-bible/components/ChatView"
-  );
-  return {
-    ...actual,
-    ChatView: ({ chat }: { chat: { id: string } }) => (
-      <div className="sb-chat-view-stub" data-chat-id={chat.id} />
-    ),
-  };
-});
+vi.mock(
+  "@packages/seed-bible/seed-bible/components/ChatView/ChatView",
+  async () => {
+    const actual = await vi.importActual(
+      "@packages/seed-bible/seed-bible/components/ChatView/ChatView"
+    );
+    return {
+      ...actual,
+      ChatView: ({ chat }: { chat: { id: string } }) => (
+        <div className="sb-chat-view-stub" data-chat-id={chat.id} />
+      ),
+    };
+  }
+);
 
-vi.mock("@packages/seed-bible/seed-bible/components/ContextMenu", () => ({
-  closeContextMenus: vi.fn(),
-  ContextMenuItem: ({
-    children,
-    onClick,
-    className,
-  }: {
-    children: ComponentChildren;
-    onClick?: () => void;
-    className?: string;
-  }) => (
-    <button className={className} onClick={onClick} role="menuitem">
-      {children}
-    </button>
-  ),
-  ContextMenuWithButton: ({
-    children,
-    buttonClassName,
-    anchorClassName,
-    onClick,
-    icon,
-    ...props
-  }: {
-    children: ComponentChildren;
-    buttonClassName?: string;
-    anchorClassName?: string;
-    onClick?: () => void;
-    icon?: string;
-  }) => (
-    <div className={anchorClassName}>
-      <button className={buttonClassName} onClick={onClick} {...props}>
-        {icon}
+vi.mock(
+  "@packages/seed-bible/seed-bible/components/ContextMenu/ContextMenu",
+  () => ({
+    closeContextMenus: vi.fn(),
+    ContextMenuItem: ({
+      children,
+      onClick,
+      className,
+    }: {
+      children: ComponentChildren;
+      onClick?: () => void;
+      className?: string;
+    }) => (
+      <button className={className} onClick={onClick} role="menuitem">
+        {children}
       </button>
-      <div>{children}</div>
-    </div>
-  ),
-}));
+    ),
+    ContextMenuWithButton: ({
+      children,
+      buttonClassName,
+      anchorClassName,
+      onClick,
+      icon,
+      ...props
+    }: {
+      children: ComponentChildren;
+      buttonClassName?: string;
+      anchorClassName?: string;
+      onClick?: () => void;
+      icon?: string;
+    }) => (
+      <div className={anchorClassName}>
+        <button className={buttonClassName} onClick={onClick} {...props}>
+          {icon}
+        </button>
+        <div>{children}</div>
+      </div>
+    ),
+  })
+);
 
 describe("FloatingReaderPanels", () => {
   let container: HTMLDivElement;
