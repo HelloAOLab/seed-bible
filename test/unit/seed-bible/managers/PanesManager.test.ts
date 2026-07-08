@@ -448,7 +448,7 @@ describe("createPanes", () => {
       });
       const originalHeight = pane.height;
 
-      panes.resizePane(pane.id, 50, 60);
+      panes.resizePane(pane.id, 50, 60, 1);
 
       const resized = panes.panes.value.find((p) => p.id === pane.id);
       expect(resized?.width).toBe(pane.width + 50);
@@ -463,7 +463,7 @@ describe("createPanes", () => {
         component: componentReturning("Side"),
       });
 
-      panes.resizePane(pane.id, -10000, 0);
+      panes.resizePane(pane.id, -10000, 0, 1);
 
       const resized = panes.panes.value.find((p) => p.id === pane.id);
       expect(resized?.width).toBe(320);
@@ -477,7 +477,7 @@ describe("createPanes", () => {
         component: componentReturning("Notes"),
       });
 
-      panes.resizePane(pane.id, 50, 60);
+      panes.resizePane(pane.id, 50, 60, 1);
 
       const resized = panes.panes.value.find((p) => p.id === pane.id);
       expect(resized?.width).toBe(pane.width + 50);
@@ -492,7 +492,7 @@ describe("createPanes", () => {
         component: componentReturning("Notes"),
       });
 
-      panes.resizePane(pane.id, -10000, -10000);
+      panes.resizePane(pane.id, -10000, -10000, 1);
 
       const resized = panes.panes.value.find((p) => p.id === pane.id);
       expect(resized?.width).toBe(280);
@@ -507,7 +507,7 @@ describe("createPanes", () => {
         component: componentReturning("Full"),
       });
 
-      panes.resizePane(pane.id, 50, 60);
+      panes.resizePane(pane.id, 50, 60, 1);
 
       const resized = panes.panes.value.find((p) => p.id === pane.id);
       expect(resized?.width).toBe(pane.width);
@@ -523,7 +523,7 @@ describe("createPanes", () => {
       });
       const before = panes.panes.value;
 
-      panes.resizePane("does-not-exist", 50, 60);
+      panes.resizePane("does-not-exist", 50, 60, 1);
 
       expect(panes.panes.value).toEqual(before);
     });

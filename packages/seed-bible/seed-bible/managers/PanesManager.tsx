@@ -71,7 +71,12 @@ export interface PanesManager {
    * floating placement both width and height change; fullscreen panes ignore
    * this call.
    */
-  resizePane: (paneId: string, deltaWidth: number, deltaHeight: number) => void;
+  resizePane: (
+    paneId: string,
+    deltaWidth: number,
+    deltaHeight: number,
+    uiScale: number
+  ) => void;
 }
 
 function createPaneFactory() {
