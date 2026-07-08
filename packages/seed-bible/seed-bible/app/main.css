@@ -9270,6 +9270,35 @@ a:visited {
   color: color-mix(in srgb, var(--sb-font-color), transparent 15%);
 }
 
+/* --- Book / chapter matches section --- */
+
+.sb-floating-search-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sb-floating-search-section + .sb-floating-search-results-list,
+.sb-floating-search-section + .sb-floating-search-status {
+  margin-top: 0.75rem;
+}
+
+.sb-floating-search-section-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  padding-inline: 0.25rem;
+}
+
+.sb-floating-search-book-icon {
+  font-size: 1.125rem;
+  line-height: 1;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  flex-shrink: 0;
+}
+
 /* --- Chat panel --- */
 
 .sb-floating-chat-panel {
