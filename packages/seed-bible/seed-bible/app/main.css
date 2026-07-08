@@ -704,9 +704,8 @@ a:visited {
   justify-content: space-between;
   gap: 8px;
   padding: 0 12px;
-
-  color: var(--sb-detached-pane-toolbar-font-color);
-  background: var(--sb-detached-pane-toolbar-background);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--sb-font-color), transparent 35%);
 
   cursor: default;
   user-select: none;
