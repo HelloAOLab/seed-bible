@@ -753,25 +753,6 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
           </>
         )}
 
-        <div className="sb-settings-toggle-row">
-          <label
-            className="sb-settings-toggle-label"
-            htmlFor="sb-keep-screen-awake"
-          >
-            {t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
-          </label>
-          <input
-            id="sb-keep-screen-awake"
-            type="checkbox"
-            checked={current.keepScreenAwake}
-            onChange={(event: Event) => {
-              settings.setKeepScreenAwake(
-                (event.currentTarget as HTMLInputElement).checked
-              );
-            }}
-          />
-        </div>
-
         <h3 className="sb-settings-subheading">
           {t("scripture-elements", { defaultValue: "Scripture elements" })}
         </h3>
@@ -926,6 +907,25 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
               {t("tanakh", { defaultValue: "Tanakh" })}
             </option>
           </select>
+        </div>
+
+        <div className="sb-settings-toggle-row">
+          <label
+            className="sb-settings-toggle-label"
+            htmlFor="sb-keep-screen-awake"
+          >
+            {t("keep-screen-awake", { defaultValue: "Keep screen awake" })}
+          </label>
+          <input
+            id="sb-keep-screen-awake"
+            type="checkbox"
+            checked={current.keepScreenAwake}
+            onChange={(event: Event) => {
+              settings.setKeepScreenAwake(
+                (event.currentTarget as HTMLInputElement).checked
+              );
+            }}
+          />
         </div>
 
         <h3 className="sb-settings-subheading">
