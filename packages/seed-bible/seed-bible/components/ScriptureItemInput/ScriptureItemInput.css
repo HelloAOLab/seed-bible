@@ -56,7 +56,8 @@
   background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
 }
 
-/* The option Enter will pick — outlined so the default choice is obvious. */
-.sb-scripture-chapter-button--first {
+/* The highlighted option — the one Enter will pick and that arrow keys move. */
+.sb-scripture-chapter-button--highlighted {
   border-color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 82%);
 }
