@@ -35,6 +35,8 @@ export interface Pane {
 export interface PaneOpenOptions {
   /** Placement mode for the new pane. Immutable after creation. */
   placement: PanePlacement;
+
+  // TODO: Support translatable titles
   /** Title shown in the pane's header. */
   title: string;
   /** Custom component rendered in the pane. */

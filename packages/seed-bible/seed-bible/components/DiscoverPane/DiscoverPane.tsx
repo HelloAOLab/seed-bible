@@ -7,7 +7,10 @@ import type { DiscoverReference } from "../../managers/DiscoverManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
 import { MaterialIcon } from "../icons";
-import { ContextMenuWithButton, ContextMenuItem } from "../ContextMenu";
+import {
+  ContextMenuWithButton,
+  ContextMenuItem,
+} from "../ContextMenu/ContextMenu";
 import { CreatePlaylistForm } from "../CreatePlaylistForm/CreatePlaylistForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";

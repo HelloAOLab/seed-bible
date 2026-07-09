@@ -606,8 +606,10 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
         }
         context.panesManager.openPane({
           id: "reading-plans-pane",
-          type: "detached",
-          detachedAnchor: "side",
+          placement: "side",
+
+          // TODO: Translate this title
+          title: "Reading Plans",
           component: () => <ReadingPlansPane readingPlans={readingPlans} />,
         });
       },

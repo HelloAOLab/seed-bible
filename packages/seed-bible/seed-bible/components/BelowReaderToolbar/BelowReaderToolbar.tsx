@@ -14,7 +14,7 @@ import { translateTitle } from "../../app/utils";
 import { handleVerticalListKeyNav } from "../../app/keyboardNav";
 import type { ChatsManager } from "../../managers/ChatsManager";
 import { useState } from "preact/hooks";
-import type { FeaturesManager } from "../managers/FeaturesManager";
+import type { FeaturesManager } from "../../managers/FeaturesManager";
 
 interface BelowReaderToolbarProps {
   toolsManager: ToolsManager;

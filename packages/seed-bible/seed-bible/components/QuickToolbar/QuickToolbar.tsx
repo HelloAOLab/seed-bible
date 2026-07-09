@@ -5,8 +5,8 @@ import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
 import { handleHorizontalListKeyNav } from "../../app/keyboardNav";
 import { useState } from "preact/hooks";
-import type { PlaylistManager } from "../managers/PlaylistManager";
-import type { FeaturesManager } from "../managers/FeaturesManager";
+import type { PlaylistManager } from "../../managers/PlaylistManager";
+import type { FeaturesManager } from "../../managers/FeaturesManager";
 
 interface QuickToolbarProps {
   toolsManager: ToolsManager;
