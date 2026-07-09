@@ -2061,12 +2061,26 @@ export function Tabs(props: TabsProps) {
               className="sb-sidebar-tabs-header-icon-button sb-sidebar-tabs-header-close-button"
               onClick={() => {
                 state.sidebar.closeSidebar();
-                state.selector.setOpen(true);
+                if (!state.sidebar.tabsOpenedFromToolbar.value) {
+                  state.selector.setOpen(true);
+                }
               }}
-              aria-label={t("close", { defaultValue: "Close" })}
-              title={t("close", { defaultValue: "Close" })}
+              aria-label={
+                state.sidebar.tabsOpenedFromToolbar.value
+                  ? t("close", { defaultValue: "Close" })
+                  : t("back", { defaultValue: "Back" })
+              }
+              title={
+                state.sidebar.tabsOpenedFromToolbar.value
+                  ? t("close", { defaultValue: "Close" })
+                  : t("back", { defaultValue: "Back" })
+              }
             >
-              <span className="material-symbols-outlined">arrow_back</span>
+              <span className="material-symbols-outlined">
+                {state.sidebar.tabsOpenedFromToolbar.value
+                  ? "close"
+                  : "arrow_back"}
+              </span>
             </button>
             <h3 className="sb-sidebar-tabs-title">
               {t("tabs", { defaultValue: "Tabs" })}

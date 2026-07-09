@@ -361,6 +361,9 @@ export function createBibleSelectorState(
     // the selector and opening the drawer is just two query-param updates — no
     // direct history manipulation, and no back-navigation racing the push.
     void setOpen(false);
+    // Reached from the book selector, so the tabs header should show a Back
+    // arrow that returns here (not a plain Close).
+    sidebar.tabsOpenedFromToolbar.value = false;
     sidebar.openSidebar();
   };
 

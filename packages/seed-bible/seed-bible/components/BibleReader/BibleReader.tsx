@@ -25,6 +25,7 @@ import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/Mobile
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
 import { InfoSettingsIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
+import { SelfAvatarVisual, getSelfDisplayName } from "../Tabs/Tabs";
 
 interface ReaderBookmarkButtonProps {
   state: SeedBibleState;
@@ -1145,18 +1146,37 @@ export function BibleReader(props: BibleReaderProps) {
               readingState={readingState}
               className="sb-quick-toolbar-mobile-header"
             />
-            {sharedSession && (
-              <MobileSessionParticipants
-                state={state}
-                session={sharedSession}
-              />
-            )}
             <ReaderBookmarkButton
               state={state}
               translationId={translationId.value}
               bookId={bookId.value}
               chapterNumber={chapterNumber.value}
             />
+            {sharedSession ? (
+              <MobileSessionParticipants
+                state={state}
+                session={sharedSession}
+              />
+            ) : (
+              <button
+                type="button"
+                className="sb-bible-reader-mobile-header-account"
+                aria-label={`Open account settings (${getSelfDisplayName(
+                  state
+                )})`}
+                // The reader pane wrapper selects the pane on pointerdown/click
+                // (which runs closeSidebarAndSettings). Stop the tap here so it
+                // doesn't immediately dismiss the account view we're opening.
+                onPointerDown={(e: PointerEvent) => e.stopPropagation()}
+                onClick={(e: MouseEvent) => {
+                  e.stopPropagation();
+                  state.sidebar.openSidebar();
+                  state.sidebar.openSettingsToView("account");
+                }}
+              >
+                <SelfAvatarVisual state={state} />
+              </button>
+            )}
             <button
               type="button"
               className="sb-bible-reader-mobile-header-settings"

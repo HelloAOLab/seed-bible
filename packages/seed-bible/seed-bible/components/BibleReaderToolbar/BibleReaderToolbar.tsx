@@ -15,13 +15,9 @@ import {
   handleHorizontalListKeyNav,
   handleVerticalListKeyNav,
 } from "../../app/keyboardNav";
-import { SeedBibleIcon } from "../../components/icons";
+import { SeedBibleIcon, SbTabsIcon } from "../../components/icons";
 import { useEffect, useRef } from "preact/hooks";
-import {
-  SelfAvatarVisual,
-  getSelfDisplayName,
-  openBookmarkCategoryModal,
-} from "../Tabs/Tabs";
+import { openBookmarkCategoryModal } from "../Tabs/Tabs";
 import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
 import { getExtensionExports } from "../../managers";
 
@@ -97,10 +93,22 @@ function MobileBottomTab(props: MobileBottomTabProps) {
 interface MobileMoreMenuProps {
   onClose: () => void;
   tools: BibleReaderToolbarTool[];
+  /**
+   * App-level items (not extension tools) pinned to the top of the menu, e.g.
+   * Bookmarks when it has been demoted off the bottom toolbar. Each item's
+   * `onClick` is responsible for closing the menu.
+   */
+  pinnedItems?: Array<{
+    id: string;
+    label: string;
+    iconName?: string;
+    iconNode?: preact.ComponentChildren;
+    onClick: () => void;
+  }>;
 }
 
 function MobileMoreMenu(props: MobileMoreMenuProps) {
-  const { onClose, tools } = props;
+  const { onClose, tools, pinnedItems } = props;
   const { t } = useI18n();
 
   const extraItems = tools
@@ -142,6 +150,7 @@ function MobileMoreMenu(props: MobileMoreMenuProps) {
     //   },
     // },
     ...extraItems,
+    ...(pinnedItems ?? []),
   ];
 
   return (
@@ -364,6 +373,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     tools: toolsManager,
     settings,
     bookmarks,
+    extensions,
   } = props.state;
   const selectedTab = useComputed(
     () =>
@@ -480,9 +490,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const isVerseSheetExpanded = useSignal(false);
 
   // Single source of truth for which bottom-bar tab is highlighted orange.
-  // "more"/"search"/"you" are derived from real panel state; "today" and
-  // "bible" have no panel of their own, so we remember the last one the user
-  // tapped and use it as the fallback. Exactly one tab is ever active.
+  // "more"/"search"/"tabs"/"bookmarks" are derived from real panel state;
+  // "today" and "bible" have no panel of their own, so we remember the last one
+  // the user tapped and use it as the fallback. "none" means nothing is
+  // highlighted. At most one tab is ever active.
   const localBottomTab = useSignal<"today" | "bible">("bible");
   // True when the sidebar drawer is open showing the tabs/bookmarks view
   // (not the settings view) with the bookmark filter active.
@@ -493,12 +504,17 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       bookmarks.isFilterActive.value
   );
   const activeMobileTab = useComputed<
-    "today" | "you" | "bible" | "search" | "bookmarks" | "more"
+    "today" | "bible" | "search" | "tabs" | "bookmarks" | "more" | "none"
   >(() => {
     if (isMoreMenuOpen.value) return "more";
     if (sidebar.isSearchPanelOpen.value) return "search";
-    if (sidebar.isSettingsOpen.value) return "you";
-    if (isBookmarksViewOpen.value) return "bookmarks";
+    if (sidebar.isSettingsOpen.value) return "none";
+    if (isBookmarksViewOpen.value) {
+      // Bookmarks is a top-level tab only when there's no overflow. When it
+      // lives inside the More menu, keep nothing highlighted.
+      return moreTools.value.length > 0 ? "none" : "bookmarks";
+    }
+    if (sidebar.isMobileOpen.value) return "tabs";
     return localBottomTab.value;
   });
 
@@ -730,6 +746,67 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   const { t } = useI18n();
 
+  // Opens the Today screen. If the `today-screen` extension isn't installed
+  // yet, install it (the same path Settings uses — this persists the install)
+  // and then open it once it has initialized.
+  const openTodayScreen = async () => {
+    isMoreMenuOpen.value = false;
+    sidebar.closeSearchPanel();
+    sidebar.closeChatPanel();
+    sidebar.closeSettings();
+    sidebar.closeSidebar();
+    localBottomTab.value = "today";
+
+    const existing = getExtensionExports<TodayScreenAPI>("today-screen");
+    if (existing) {
+      existing.open();
+      return;
+    }
+
+    const entry = extensions.extensions.value.find(
+      (e) => e.id === "today-screen"
+    );
+    const todayPackage = entry?.extension;
+    if (!todayPackage) {
+      props.state.app.toast(
+        t("today-coming-soon", {
+          defaultValue: "Today screen is coming soon",
+        })
+      );
+      return;
+    }
+
+    const installed = await extensions.loadExtension(todayPackage);
+    if (installed) {
+      getExtensionExports<TodayScreenAPI>("today-screen")?.open();
+    } else {
+      props.state.app.toast(
+        t("today-coming-soon", {
+          defaultValue: "Today screen is coming soon",
+        })
+      );
+    }
+  };
+
+  // Opens (or closes) the bookmarks view in the sidebar drawer. Shared by the
+  // Bookmarks bottom tab and the Bookmarks entry inside the More menu.
+  const openBookmarksView = () => {
+    isMoreMenuOpen.value = false;
+    if (isBookmarksViewOpen.value) {
+      bookmarks.closeView();
+      sidebar.closeSidebar();
+      return;
+    }
+    sidebar.closeSearchPanel();
+    sidebar.closeChatPanel();
+    sidebar.closeSettings();
+    sidebar.openSidebar();
+    bookmarks.openedFromToolbar.value = true;
+    if (!bookmarks.isFilterActive.value) {
+      bookmarks.toggleFilter();
+    }
+  };
+
   return (
     <>
       {!shouldReplaceDefaultToolbar.value && (
@@ -863,62 +940,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   label={t("today", { defaultValue: "Today" })}
                   active={activeMobileTab.value === "today"}
                   onClick={() => {
-                    isMoreMenuOpen.value = false;
-
-                    sidebar.closeSearchPanel();
-                    sidebar.closeChatPanel();
-                    sidebar.closeSettings();
-                    sidebar.closeSidebar();
-                    localBottomTab.value = "today";
-
-                    const today =
-                      getExtensionExports<TodayScreenAPI>("today-screen");
-                    if (today) {
-                      today.open();
-                    } else {
-                      props.state.app.toast(
-                        t("today-coming-soon", {
-                          defaultValue: "Today screen is coming soon",
-                        })
-                      );
-                    }
-                  }}
-                />
-
-                <MobileBottomTab
-                  iconNode={<SelfAvatarVisual state={props.state} />}
-                  label={t("you", { defaultValue: "You" })}
-                  active={activeMobileTab.value === "you"}
-                  aria-label={`Open account settings (${getSelfDisplayName(
-                    props.state
-                  )})`}
-                  onClick={() => {
-                    isMoreMenuOpen.value = false;
-                    sidebar.closeSearchPanel();
-                    sidebar.closeChatPanel();
-                    sidebar.openSidebar();
-                    sidebar.openSettingsToView("account");
-                  }}
-                />
-
-                <MobileBottomTab
-                  iconNode={
-                    <SeedBibleIcon
-                      size={24}
-                      className="sb-reader-toolbar-seed-icon"
-                    />
-                  }
-                  label={t("bible", { defaultValue: "Bible" })}
-                  active={activeMobileTab.value === "bible"}
-                  onClick={() => {
-                    isMoreMenuOpen.value = false;
-                    sidebar.closeSearchPanel();
-                    sidebar.closeChatPanel();
-                    sidebar.closeSettings();
-                    sidebar.closeSidebar();
-                    localBottomTab.value = "bible";
-                    // openSelectorTool.value?.onSelect();
-                    selectedToolbarToolId.value = null;
+                    void openTodayScreen();
                   }}
                 />
 
@@ -940,57 +962,52 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
                 <MobileBottomTab
                   iconNode={
-                    <svg
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill={
-                        activeMobileTab.value === "bookmarks"
-                          ? "currentColor"
-                          : "none"
-                      }
-                      xmlns="http://www.w3.org/2000/svg"
-                      aria-hidden="true"
-                    >
-                      <path
-                        d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
+                    <SeedBibleIcon
+                      size={24}
+                      className="sb-reader-toolbar-seed-icon"
+                    />
                   }
-                  label={t("bookmarks", { defaultValue: "Bookmarks" })}
-                  active={activeMobileTab.value === "bookmarks"}
+                  label={t("bible", { defaultValue: "Bible" })}
+                  active={activeMobileTab.value === "bible"}
                   onClick={() => {
                     isMoreMenuOpen.value = false;
-                    if (isBookmarksViewOpen.value) {
-                      // Reset the bookmarks view so reopening the tabs drawer
-                      // lands on the Tabs list rather than a stale bookmarks
-                      // screen.
-                      bookmarks.closeView();
+                    sidebar.closeSearchPanel();
+                    sidebar.closeChatPanel();
+                    sidebar.closeSettings();
+                    sidebar.closeSidebar();
+                    localBottomTab.value = "bible";
+                    selectedToolbarToolId.value = null;
+                  }}
+                />
+
+                <MobileBottomTab
+                  iconNode={<SbTabsIcon />}
+                  label={t("tabs", { defaultValue: "Tabs" })}
+                  active={activeMobileTab.value === "tabs"}
+                  onClick={() => {
+                    isMoreMenuOpen.value = false;
+                    if (activeMobileTab.value === "tabs") {
+                      // Already on the tabs list — tapping again closes it.
                       sidebar.closeSidebar();
                       return;
                     }
                     sidebar.closeSearchPanel();
                     sidebar.closeChatPanel();
-                    // Clear any settings view so the drawer shows the tabs
-                    // list, then (re-)open the drawer and switch on the
-                    // bookmark filter so the bookmarks section is visible.
                     sidebar.closeSettings();
-                    sidebar.openSidebar();
-                    // Opened from the bottom toolbar: the mobile bookmarks
-                    // header should show a Close (X) that dismisses the
-                    // drawer, not a Back arrow to the Tabs list.
-                    bookmarks.openedFromToolbar.value = true;
-                    if (!bookmarks.isFilterActive.value) {
+                    // Show the tabs list, not the bookmark filter view.
+                    if (bookmarks.isFilterActive.value) {
                       bookmarks.toggleFilter();
                     }
+                    bookmarks.openedFromToolbar.value = false;
+                    // Opened straight from the toolbar (not the book selector),
+                    // so the tabs header should show a Close (X), not a Back
+                    // arrow to the selector.
+                    sidebar.tabsOpenedFromToolbar.value = true;
+                    sidebar.openSidebar();
                   }}
                 />
 
-                {moreTools.value.length > 0 && (
+                {moreTools.value.length > 0 ? (
                   <div className="sb-reader-toolbar-item sb-reader-toolbar-mobile-tab sb-reader-toolbar-more-anchor">
                     <button
                       type="button"
@@ -1024,12 +1041,67 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     {isMoreMenuOpen.value && (
                       <MobileMoreMenu
                         tools={moreTools.value}
+                        pinnedItems={[
+                          {
+                            id: "bookmarks",
+                            label: t("bookmarks", {
+                              defaultValue: "Bookmarks",
+                            }),
+                            iconNode: (
+                              <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                                aria-hidden="true"
+                              >
+                                <path
+                                  d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
+                                  stroke="currentColor"
+                                  stroke-width="1.5"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                />
+                              </svg>
+                            ),
+                            onClick: openBookmarksView,
+                          },
+                        ]}
                         onClose={() => {
                           isMoreMenuOpen.value = false;
                         }}
                       />
                     )}
                   </div>
+                ) : (
+                  <MobileBottomTab
+                    iconNode={
+                      <svg
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill={
+                          activeMobileTab.value === "bookmarks"
+                            ? "currentColor"
+                            : "none"
+                        }
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true"
+                      >
+                        <path
+                          d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
+                          stroke="currentColor"
+                          stroke-width="1.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    }
+                    label={t("bookmarks", { defaultValue: "Bookmarks" })}
+                    active={activeMobileTab.value === "bookmarks"}
+                    onClick={openBookmarksView}
+                  />
                 )}
               </>
             ) : (
