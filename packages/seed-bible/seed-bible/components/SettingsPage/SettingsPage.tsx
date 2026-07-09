@@ -67,7 +67,7 @@ const TEXT_COLOR_PALETTE = [
 
 const HEX_6 = /^#[0-9a-fA-F]{6}$/;
 
-import { LANG_META } from "../i18n/languageMeta";
+import { LANG_META } from "../../i18n/languageMeta";
 
 function FlagImg({ cc }: { cc: string }) {
   return (
