@@ -367,7 +367,6 @@ export function createSeedBibleState(
   const sidebar = createSidebar({ navigation, chatsManager: chats });
   const tabs = createTabs(navigation, data, highlights, chats, i18n);
   const tabsLayout = createTabsLayout(tabs, panelsEnabled);
-  const panes = createPanes();
   const settings = createSettings(os, login, navigation);
   const selector = createBibleSelectorState(
     data,
@@ -505,6 +504,11 @@ export function createSeedBibleState(
       : window.innerHeight
   );
   const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
+
+  // Created after `isMobile` so panes can enforce a single fullscreen pane:
+  // on mobile every pane is displayed fullscreen, so opening one closes the
+  // rest.
+  const panes = createPanes(isMobile);
 
   const tutorial = createTutorialManager(
     login,

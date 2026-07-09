@@ -1,4 +1,4 @@
-import { signal, type Signal } from "@preact/signals";
+import { signal, type ReadonlySignal, type Signal } from "@preact/signals";
 import type { ComponentChild } from "preact";
 
 /**
@@ -66,9 +66,14 @@ export interface PanesManager {
 
   /**
    * Opens a new pane, or updates an existing one when `options.id` matches an
-   * open pane. Only one `"side"` pane may be open at a time — opening a new
-   * one closes the existing side pane first. `"floating"`/`"fullscreen"`
-   * panes can coexist, stacked by open/selection order.
+   * open pane.
+   *
+   * Only one pane may fill the screen at a time: opening (or reusing) a
+   * `"fullscreen"` pane — or opening any pane while on mobile, where every
+   * pane is displayed fullscreen — closes all other panes first, leaving just
+   * the new/reused pane. Only one `"side"` pane may be open at a time; opening
+   * a new one closes the existing side pane first. `"floating"` panes
+   * otherwise coexist, stacked by open/selection order.
    */
   openPane: (options: PaneOpenOptions) => Pane;
 
@@ -126,7 +131,7 @@ function createPaneFactory() {
  * panels, grid/map portals rendered via `PortalComponent`) — Bible reading
  * tabs live in `TabsLayoutManager` instead.
  */
-export function createPanes(): PanesManager {
+export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
   const createPane = createPaneFactory();
   const panes = signal<Pane[]>([]);
   const selectedPaneId = signal<string | null>(null);
@@ -156,6 +161,12 @@ export function createPanes(): PanesManager {
   };
 
   const openPane = (options: PaneOpenOptions): Pane => {
+    // A pane fills the whole screen when it's fullscreen, or when we're on a
+    // mobile viewport (where every pane is displayed fullscreen). Only one
+    // such pane is allowed at a time, so opening one closes all others.
+    const willFillScreen =
+      options.placement === "fullscreen" || (isMobile?.value ?? false);
+
     if (options.id) {
       const existingPane =
         panes.value.find((pane) => pane.id === options.id) ?? null;
@@ -167,18 +178,22 @@ export function createPanes(): PanesManager {
           header: options.header,
         };
         syncPaneState(
-          panes.value.map((pane) =>
-            pane.id === updatedPane.id ? updatedPane : pane
-          ),
+          willFillScreen
+            ? [updatedPane]
+            : panes.value.map((pane) =>
+                pane.id === updatedPane.id ? updatedPane : pane
+              ),
           updatedPane.id
         );
         return updatedPane;
       }
     }
 
-    // Only one side pane may be open at a time — replace any existing one.
-    const basePanes =
-      options.placement === "side"
+    // A fullscreen/mobile pane closes every other pane; a side pane replaces
+    // only the existing side pane (at most one may be open at a time).
+    const basePanes = willFillScreen
+      ? []
+      : options.placement === "side"
         ? panes.value.filter((pane) => pane.placement !== "side")
         : panes.value;
 

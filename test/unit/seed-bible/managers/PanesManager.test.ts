@@ -1,4 +1,5 @@
 import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
+import { signal } from "@preact/signals";
 import type { ComponentChild } from "preact";
 
 function componentReturning(value: string): () => ComponentChild {
@@ -93,18 +94,13 @@ describe("createPanes", () => {
       );
     });
 
-    it("does not close floating/fullscreen panes when replacing the side pane", () => {
+    it("does not close a floating pane when replacing the side pane", () => {
       const panes = createPanes();
 
       const floating = panes.openPane({
         placement: "floating",
         title: "Floating",
         component: componentReturning("Floating"),
-      });
-      const fullscreen = panes.openPane({
-        placement: "fullscreen",
-        title: "Fullscreen",
-        component: componentReturning("Fullscreen"),
       });
       panes.openPane({
         placement: "side",
@@ -120,9 +116,6 @@ describe("createPanes", () => {
       expect(panes.panes.value.some((pane) => pane.id === floating.id)).toBe(
         true
       );
-      expect(panes.panes.value.some((pane) => pane.id === fullscreen.id)).toBe(
-        true
-      );
       expect(
         panes.panes.value.filter((pane) => pane.placement === "side")
       ).toHaveLength(1);
@@ -130,7 +123,31 @@ describe("createPanes", () => {
   });
 
   describe("openPane placement: fullscreen", () => {
-    it("allows multiple fullscreen panes to coexist", () => {
+    it("closes all other panes when a fullscreen pane is opened", () => {
+      const panes = createPanes();
+
+      panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+      });
+      panes.openPane({
+        placement: "side",
+        title: "Side",
+        component: componentReturning("Side"),
+      });
+      const fullscreen = panes.openPane({
+        placement: "fullscreen",
+        title: "Fullscreen",
+        component: componentReturning("Fullscreen"),
+      });
+
+      expect(panes.panes.value).toHaveLength(1);
+      expect(panes.panes.value[0]?.id).toBe(fullscreen.id);
+      expect(panes.selectedPaneId.value).toBe(fullscreen.id);
+    });
+
+    it("closes the previous fullscreen pane when a new one is opened", () => {
       const panes = createPanes();
 
       const first = panes.openPane({
@@ -144,11 +161,76 @@ describe("createPanes", () => {
         component: componentReturning("Second"),
       });
 
-      expect(panes.panes.value).toHaveLength(2);
-      expect(panes.panes.value.some((pane) => pane.id === first.id)).toBe(true);
+      expect(panes.panes.value).toHaveLength(1);
+      expect(panes.panes.value.some((pane) => pane.id === first.id)).toBe(
+        false
+      );
       expect(panes.panes.value.some((pane) => pane.id === second.id)).toBe(
         true
       );
+    });
+
+    it("closes other panes when an existing fullscreen pane is reused by id", () => {
+      const panes = createPanes();
+
+      panes.openPane({
+        id: "fullscreen-pane",
+        placement: "fullscreen",
+        title: "Fullscreen",
+        component: componentReturning("Fullscreen"),
+      });
+      // A floating pane opened afterwards coexists with nothing else here.
+      panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+      });
+
+      const reused = panes.openPane({
+        id: "fullscreen-pane",
+        placement: "fullscreen",
+        title: "Fullscreen Updated",
+        component: componentReturning("Fullscreen Updated"),
+      });
+
+      expect(panes.panes.value).toHaveLength(1);
+      expect(panes.panes.value[0]?.id).toBe(reused.id);
+      expect(reused.title).toBe("Fullscreen Updated");
+    });
+  });
+
+  describe("openPane on a mobile viewport", () => {
+    it("closes other panes when any pane is opened, since panes display fullscreen", () => {
+      const isMobile = signal(true);
+      const panes = createPanes(isMobile);
+
+      panes.openPane({
+        placement: "floating",
+        title: "First",
+        component: componentReturning("First"),
+      });
+      const second = panes.openPane({
+        placement: "floating",
+        title: "Second",
+        component: componentReturning("Second"),
+      });
+
+      expect(panes.panes.value).toHaveLength(1);
+      expect(panes.panes.value[0]?.id).toBe(second.id);
+    });
+
+    it("leaves the pane's stored placement unchanged", () => {
+      const isMobile = signal(true);
+      const panes = createPanes(isMobile);
+
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+      });
+
+      expect(pane.placement).toBe("floating");
+      expect(panes.panes.value[0]?.placement).toBe("floating");
     });
   });
 
