@@ -24,7 +24,6 @@ import {
 // Foundation stylesheets — must load before any component's co-located CSS.
 // `variables` (the :root tokens) and `base` (html/body reset) come first so
 // every component rule resolves against them.
-import "./main.css";
 import "./styles/base.css";
 import "./styles/utilities.css";
 import {
