@@ -321,6 +321,31 @@
   opacity: 0.85;
 }
 
+.sb-bible-reader-mobile-content-title {
+  margin: 2rem 0 2rem;
+  text-align: center;
+  font-family: var(--text-bookTitle-font);
+  color: var(--sb-book-title-font-color);
+  font-weight: var(--text-bookTitle-weight);
+  font-style: var(--text-bookTitle-font-style);
+  text-decoration: var(--text-bookTitle-text-decoration);
+  letter-spacing: 0;
+}
+
+.sb-bible-reader-mobile-content-title .sb-bible-reader-book {
+  display: block;
+  font-size: 1.3rem;
+  line-height: 1.15;
+  opacity: 0.6;
+}
+
+.sb-bible-reader-mobile-content-title .sb-bible-reader-chapter {
+  display: block;
+  margin-top: 0.75rem;
+  font-size: 3rem;
+  line-height: 1;
+}
+
 /* Slides the full mobile header up out of view when the user scrolls down,
    uncovering the compact scroll header. The max-height/padding transitions
    collapse the header's layout space in sync with the slide so the chapter

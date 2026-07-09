@@ -1578,6 +1578,30 @@ describe("BibleReader", () => {
     ).toBe(false);
   });
 
+  it("renders the book name and chapter number as a heading at the top of the mobile content", () => {
+    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: null,
+      previousChapterApiLink: null,
+    };
+
+    renderMobileReader({ pane, selectorState, readingState }, state, container);
+
+    const title = container.querySelector(
+      ".sb-reader-swipe-panel-current .sb-bible-reader-mobile-content-title"
+    );
+    expect(title).not.toBeNull();
+    expect(title?.querySelector(".sb-bible-reader-book")?.textContent).toBe(
+      "Genesis"
+    );
+    expect(title?.querySelector(".sb-bible-reader-chapter")?.textContent).toBe(
+      "1"
+    );
+  });
+
   it("swiping left on mobile loads the next chapter", async () => {
     const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
