@@ -35,13 +35,14 @@
   gap: 6px;
   overflow-x: auto;
   /* Keep the horizontal scrollbar from clipping the focus/hover outlines. */
-  padding-bottom: 2px;
+  padding-bottom: 8px;
   scrollbar-width: thin;
 }
 
 .sb-scripture-chapter-button {
   flex: 0 0 auto;
   min-width: 2rem;
+  min-height: 2rem;
   padding: 0.25rem 0.5rem;
   border: 2px solid transparent;
   border-radius: 0.375rem;
@@ -50,6 +51,13 @@
   font: inherit;
   font-size: 0.8125rem;
   cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .sb-scripture-chapter-button {
+    min-width: 4rem;
+    min-height: 4rem;
+  }
 }
 
 .sb-scripture-chapter-button:hover {
