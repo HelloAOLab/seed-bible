@@ -1,6 +1,6 @@
 import { I18nProvider, useI18n } from "../i18n/I18nManager";
-import {} from "../i18n/I18nManager";
-import { PaneLayout } from "../components/PaneLayout/PaneLayout";
+import { TabsLayout } from "../components/TabsLayout";
+import { PaneLayout, SidePane } from "../components/PaneLayout/PaneLayout";
 import { BibleSelector } from "../components/BibleSelector/BibleSelector";
 import { BibleReaderToolbar } from "../components/BibleReaderToolbar/BibleReaderToolbar";
 import { FloatingReaderPanels } from "../components/FloatingReaderPanels/FloatingReaderPanels";
@@ -123,6 +123,9 @@ function MainContent(props: {
   const { isRtl } = useI18n();
   const appDirection = isRtl ? "rtl" : "ltr";
   const { theme, selector } = state;
+  const sidePane =
+    state.app.effectivePanes.value.find((pane) => pane.placement === "side") ??
+    null;
 
   return (
     <>
@@ -146,9 +149,14 @@ function MainContent(props: {
         />
         <Sidebar state={state} />
 
-        <main className="sb-main-content">
-          <PaneLayout state={state} />
-        </main>
+        <div className="sb-content-row">
+          <main className="sb-main-content">
+            <TabsLayout state={state} />
+          </main>
+          {sidePane && <SidePane state={state} pane={sidePane} />}
+        </div>
+
+        <PaneLayout state={state} />
 
         <ToastHost app={state.app} />
 

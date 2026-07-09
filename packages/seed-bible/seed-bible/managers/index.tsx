@@ -21,5 +21,6 @@ export * from "./SessionsManager";
 export * from "./SettingsManager";
 export * from "./SidebarManager";
 export * from "./TabsManager";
+export * from "./TabsLayoutManager";
 export * from "./ThemeManager";
 export * from "./TutorialManager";
