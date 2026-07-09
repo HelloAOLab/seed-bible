@@ -14,7 +14,7 @@ import { range } from "es-toolkit";
 import type { NavigationManager } from "./NavigationManager";
 import { parseNumber } from "./Utils";
 import type { ModalManager } from "./ModalManager";
-import { PlaylistHtmlContent } from "../components/PlaylistHtmlContent";
+import { PlaylistHtmlContent } from "../components/PlaylistHtmlContent/PlaylistHtmlContent";
 import { PlaylistLinkContent } from "../components/PlaylistLinkContent/PlaylistLinkContent";
 import type { I18nManager } from "../i18n";
 
