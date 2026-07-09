@@ -592,13 +592,35 @@ describe("createPanes", () => {
       (pane) => pane.component?.() === "Detached Component"
     )!;
 
-    panesManager.resizePane(detachedPane.id, 50, 60);
+    panesManager.resizePane(detachedPane.id, 50, 60, 1);
 
     const resizedPane = panesManager.panes.value.find(
       (pane) => pane.id === detachedPane.id
     );
     expect(resizedPane?.width).toBe(detachedPane.width + 50);
     expect(resizedPane?.height).toBe(detachedPane.height + 60);
+  });
+
+  it("scales the detached-pane min-size floor by the UI text scale", async () => {
+    const { panesManager } = await createManagers();
+
+    panesManager.openPane({
+      type: "detached",
+      component: () => "Detached Component",
+    });
+    const detachedPane = panesManager.panes.value.find(
+      (pane) => pane.component?.() === "Detached Component"
+    )!;
+
+    // Shrink well past the minimum at UI scale 1.3 (XL): the floating floor is
+    // 280*1.3 wide / 180*1.3 tall, so the pane clamps to the scaled floor.
+    panesManager.resizePane(detachedPane.id, -1000, -1000, 1.3);
+
+    const resizedPane = panesManager.panes.value.find(
+      (pane) => pane.id === detachedPane.id
+    );
+    expect(resizedPane?.width).toBe(280 * 1.3);
+    expect(resizedPane?.height).toBe(180 * 1.3);
   });
 
   it("creates an attached pane with a stable custom ID", async () => {

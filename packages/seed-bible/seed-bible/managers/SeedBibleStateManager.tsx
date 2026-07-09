@@ -20,7 +20,7 @@ import type {
   PaneLayoutId,
   PanesManager,
 } from "../managers/PanesManager";
-import { MobileSplitPanelWarningContent } from "../components/MobileSplitPanelWarning";
+import { MobileSplitPanelWarningContent } from "../components/MobileSplitPanelWarning/MobileSplitPanelWarning";
 import { createLoginManager } from "../managers/LoginManager";
 import type { LoginManager } from "../managers/LoginManager";
 import { createSidebar } from "../managers/SidebarManager";
@@ -109,7 +109,7 @@ type SearchManager = ReturnType<typeof createSearchManager>;
  * the mobile layout (drawer sidebar, mobile header, full-screen selector);
  * above it the docked desktop layout applies. This is the single source of
  * truth for the JS side — the matching `@media (max-width: 480px)` /
- * `(min-width: 481px)` rules in app/main.css must be kept in sync by hand.
+ * `(min-width: 481px)` rules in components/Tabs/Tabs.css must be kept in sync by hand.
  */
 export const MOBILE_BREAKPOINT = 480;
 
@@ -119,7 +119,7 @@ export const MOBILE_BREAKPOINT = 480;
  * to dock a 320px sidebar beside the reader, so an *expanded* sidebar floats
  * over the reader instead of splitting the layout row. Kept in sync with the
  * matching `@media (min-width: 481px) and (max-width: 768px)` rules in
- * app/main.css by hand.
+ * components/Tabs/Tabs.css by hand.
  */
 export const SIDEBAR_OVERLAY_MAX_WIDTH = 768;
 
@@ -539,7 +539,7 @@ export function createSeedBibleState(
 
   // The "compact desktop" band (just above the mobile breakpoint): an
   // expanded sidebar would overlay the reader rather than dock beside it
-  // (see app/main.css), so start collapsed to a rail when entering the band.
+  // (see components/Tabs/Tabs.css), so start collapsed to a rail when entering the band.
   // Same once-per-transition pattern as the landscape collapse above, so the
   // user can still expand the floating sidebar afterwards.
   const isCompactDesktop = computed(

@@ -24,6 +24,14 @@ function deferred<T>() {
 const INITIAL_TIMESPAN: Timespan = { from: 100, to: 200 };
 const INITIAL_YEAR = 2024;
 
+const CURRENT_USER_ID = "me";
+const CURRENT_USER_PROFILE = {
+  name: "Me",
+  pictureUrl: null,
+  color: "color-me",
+  icon: "icon-me",
+};
+
 type Result = ReturnType<typeof useSocialSection>;
 
 describe("useSocialSection", () => {
@@ -52,6 +60,8 @@ describe("useSocialSection", () => {
       subscribedUsersProfileProvider: { getUserProfile },
       subscribedUsersIdsProvider: { getUsersIds },
       getCommunityReading,
+      userId: CURRENT_USER_ID,
+      userProfile: CURRENT_USER_PROFILE,
       readingHistoryConfigProvider: {
         buildTimespanOptionsMap: () => ({
           twoDays: { year: INITIAL_YEAR, timespan: INITIAL_TIMESPAN },
@@ -81,9 +91,17 @@ describe("useSocialSection", () => {
   });
 
   describe("user profiles and filters", () => {
-    it("builds the profile map from subscribed user ids", () => {
+    it("builds the profile map from the current user plus subscribed user ids", () => {
       const result = setup();
-      expect([...result.current.userProfileMap.keys()]).toEqual(["u1", "u2"]);
+      // The current user is added first, then the subscribed users.
+      expect([...result.current.userProfileMap.keys()]).toEqual([
+        CURRENT_USER_ID,
+        "u1",
+        "u2",
+      ]);
+      expect(result.current.userProfileMap.get(CURRENT_USER_ID)).toEqual(
+        CURRENT_USER_PROFILE
+      );
       expect(result.current.userProfileMap.get("u1")).toEqual({
         id: "u1",
         name: "Name u1",
@@ -94,6 +112,7 @@ describe("useSocialSection", () => {
 
     it("initializes every user filter to true", () => {
       const result = setup();
+      expect(result.current.userFilters.get(CURRENT_USER_ID)).toBe(true);
       expect(result.current.userFilters.get("u1")).toBe(true);
       expect(result.current.userFilters.get("u2")).toBe(true);
     });

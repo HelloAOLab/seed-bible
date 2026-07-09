@@ -58,8 +58,8 @@ describe("useSearchSection", () => {
   it("builds the seed-bible icon style from the theme", () => {
     const result = setup("rgb(10, 20, 30)");
     expect(result.current.seedBibleIconStyle).toEqual({
-      width: "24px",
-      height: "24px",
+      width: "1.5rem",
+      height: "1.5rem",
       backgroundColor: "rgb(10, 20, 30)",
     });
   });

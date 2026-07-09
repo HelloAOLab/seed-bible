@@ -1,6 +1,6 @@
 import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
-import { SidebarSearch } from "@packages/seed-bible/seed-bible/components/SidebarSearch";
+import { SidebarSearch } from "@packages/seed-bible/seed-bible/components/SidebarSearch/SidebarSearch";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
   createTestSeedBibleState,
