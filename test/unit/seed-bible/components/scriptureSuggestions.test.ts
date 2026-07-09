@@ -23,6 +23,8 @@ const BOOKS: TranslationBook[] = [
   book("JHN", "John", "John", 21),
   book("PHP", "Philippians", "Philippians", 4),
   book("PHM", "Philemon", "Philemon", 1),
+  book("JDG", "Judges", "Judges", 21),
+  book("JUD", "Jude", "Jude", 1),
 ];
 
 /** Collapses suggestions to a compact shape for readable assertions. */
@@ -78,6 +80,19 @@ describe("computeSuggestions", () => {
         ],
       },
     ]);
+  });
+
+  it("does not prefer a single-chapter book when the chapter is shared", () => {
+    // "Jud" prefixes both Judges and Jude (and equals Jude's id), and both have
+    // a chapter 1. Both should appear as whole chapter 1 — not just Jude, and
+    // not read as a verse.
+    expect(shape("Jud 1")).toEqual([
+      { id: "JDG", labels: ["1"] },
+      { id: "JUD", labels: ["1"] },
+    ]);
+    const [judges, jude] = computeSuggestions("Jud 1", BOOKS);
+    expect(judges?.options[0]?.ref).toEqual({ bookId: "JDG", chapter: 1 });
+    expect(jude?.options[0]?.ref).toEqual({ bookId: "JUD", chapter: 1 });
   });
 
   it("returns nothing for empty input or an unknown book", () => {

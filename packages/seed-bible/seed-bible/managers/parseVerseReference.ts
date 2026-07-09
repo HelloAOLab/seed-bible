@@ -7,7 +7,10 @@ function normalize(value: string): string {
 }
 
 /** Whether the given chapter number falls within the book's chapter range. */
-function bookHasChapter(book: TranslationBook, chapter: number): boolean {
+export function bookHasChapter(
+  book: TranslationBook,
+  chapter: number
+): boolean {
   const first = book.firstChapterNumber;
   const last = first + book.numberOfChapters - 1;
   return chapter >= first && chapter <= last;
@@ -44,14 +47,14 @@ function prefixBooks(
  * The trailing verse/range portion of a reference, shared by every candidate
  * book. `verse`/`endVerse`/`endChapter` mirror the fields on {@link VerseRef}.
  */
-type ReferenceTail = Pick<VerseRef, "verse" | "endVerse" | "endChapter">;
+export type ReferenceTail = Pick<VerseRef, "verse" | "endVerse" | "endChapter">;
 
 /**
  * Builds the verse/range portion of a reference from the parsed number groups,
  * or returns `null` when the format is invalid (a whole-chapter start mixed
  * with a verse end, e.g. "John 1-2:3").
  */
-function buildTail(
+export function buildTail(
   verseStr: string | undefined,
   endChapterStr: string | undefined,
   endVerseStr: string | undefined
