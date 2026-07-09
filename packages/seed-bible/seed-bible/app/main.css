@@ -6445,6 +6445,25 @@ a:visited {
   background: var(--sb-secondary-color);
 }
 
+/* Menu items that pair a leading icon with a text label. */
+.sb-context-menu-item .material-symbols-outlined {
+  font-size: 1.125rem;
+  vertical-align: middle;
+  margin-right: 0.5rem;
+}
+
+.sb-context-menu-item--danger {
+  color: var(--sb-error-color, #d64545);
+}
+
+.sb-context-menu-item--danger:hover {
+  background: color-mix(
+    in srgb,
+    var(--sb-error-color, #d64545),
+    transparent 85%
+  );
+}
+
 .sb-context-menu-toggle-item {
   display: flex;
   align-items: center;

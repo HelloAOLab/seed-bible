@@ -100,6 +100,7 @@ describe("createPlaylistManager", () => {
   let recordDataMock: Mock;
   let listDataByMarkerMock: Mock;
   let getDataMock: Mock;
+  let eraseDataMock: Mock;
   let loginMock: Mock;
   let selectTranslationAndChapterMock: Mock;
   let warnSpy: Mock;
@@ -117,6 +118,7 @@ describe("createPlaylistManager", () => {
       recordData: recordDataMock,
       listDataByMarker: listDataByMarkerMock,
       getData: getDataMock,
+      eraseData: eraseDataMock,
     });
     const login = { userId, login: loginMock } as unknown as LoginArg;
     const tabs =
@@ -143,6 +145,7 @@ describe("createPlaylistManager", () => {
       .fn()
       .mockResolvedValue({ success: true, items: [] });
     getDataMock = vi.fn().mockResolvedValue({ success: true, data: null });
+    eraseDataMock = vi.fn().mockResolvedValue({ success: true });
     loginMock = vi.fn().mockResolvedValue(null);
     selectTranslationAndChapterMock = vi.fn().mockResolvedValue(undefined);
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
@@ -215,6 +218,41 @@ describe("createPlaylistManager", () => {
       playlist,
       { marker: MARKER }
     );
+  });
+
+  it("deletePlaylist erases the record and drops it from userPlaylists", async () => {
+    listDataByMarkerMock.mockResolvedValue({
+      success: true,
+      items: [{ data: makePlaylist({ id: "playlist-a" }) }],
+    });
+    const manager = makeManager("user-1");
+    await flush();
+    expect(manager.userPlaylists.value).toHaveLength(1);
+
+    await manager.deletePlaylist(
+      makePlaylist({ id: "playlist-a", recordName: "user-1" })
+    );
+
+    expect(eraseDataMock).toHaveBeenCalledWith("user-1", "playlist-a");
+    expect(manager.userPlaylists.value).toEqual([]);
+  });
+
+  it("deletePlaylist throws and keeps the playlist when erase fails", async () => {
+    listDataByMarkerMock.mockResolvedValue({
+      success: true,
+      items: [{ data: makePlaylist({ id: "playlist-a" }) }],
+    });
+    const manager = makeManager("user-1");
+    await flush();
+    eraseDataMock.mockResolvedValueOnce({
+      success: false,
+      errorCode: "not_authorized",
+    });
+
+    await expect(
+      manager.deletePlaylist(makePlaylist({ id: "playlist-a" }))
+    ).rejects.toThrow("Failed to delete playlist: not_authorized");
+    expect(manager.userPlaylists.value).toHaveLength(1);
   });
 
   it("listPlaylists parses records on success and throws on failure", async () => {

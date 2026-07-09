@@ -7,6 +7,7 @@ import type { DiscoverReference } from "../../managers/DiscoverManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
 import { MaterialIcon } from "../icons";
+import { ContextMenuWithButton, ContextMenuItem } from "../ContextMenu";
 import { CreatePlaylistForm } from "../CreatePlaylistForm/CreatePlaylistForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
@@ -114,6 +115,7 @@ export function DiscoverPane(props: DiscoverPaneProps) {
         <PlaylistSection
           userPlaylists={userPlaylists}
           playlists={playlists}
+          modals={modals}
           toast={props.toast}
         />
 
@@ -138,10 +140,12 @@ export function DiscoverPane(props: DiscoverPaneProps) {
 function PlaylistSection({
   userPlaylists,
   playlists,
+  modals,
   toast,
 }: {
   userPlaylists: Playlist[];
   playlists: PlaylistManager;
+  modals: ModalManager;
   toast: SeedBibleState["app"]["toast"];
 }) {
   const { t } = useI18n();
@@ -181,48 +185,148 @@ function PlaylistSection({
                 aria-label={t("play-playlist", {
                   defaultValue: "Play playlist",
                 })}
-                onClick={() => playlists.startPlaying(playlist)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  playlists.startPlaying(playlist);
+                }}
               >
                 <MaterialIcon>play_arrow</MaterialIcon>
               </button>
-              <button
-                type="button"
-                className="sb-discover-item-share"
-                aria-label={t("share-playlist", {
-                  defaultValue: "Share playlist",
+              <ContextMenuWithButton
+                buttonClassName="sb-discover-item-menu"
+                aria-label={t("playlist-options", {
+                  defaultValue: "Playlist options",
                 })}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const url = playlists.getPlaylistUrl(playlist);
-                  navigator.clipboard.writeText(url);
-                  toast(
-                    t("playlist-url-copied", {
-                      defaultValue: "Playlist URL copied to clipboard",
-                    })
-                  );
-                }}
+                onClick={(e) => e.stopPropagation()}
               >
-                <MaterialIcon>share</MaterialIcon>
-              </button>
-              <button
-                type="button"
-                className="sb-discover-item-edit"
-                aria-label={t("edit-playlist", {
-                  defaultValue: "Edit playlist",
-                })}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  playlists.editPlaylist(playlist);
-                }}
-              >
-                <MaterialIcon>edit</MaterialIcon>
-              </button>
+                <ContextMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const url = playlists.getPlaylistUrl(playlist);
+                    navigator.clipboard.writeText(url);
+                    toast(
+                      t("playlist-url-copied", {
+                        defaultValue: "Playlist URL copied to clipboard",
+                      })
+                    );
+                  }}
+                >
+                  <MaterialIcon>share</MaterialIcon>
+                  {t("share-playlist", { defaultValue: "Share playlist" })}
+                </ContextMenuItem>
+                <ContextMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    playlists.editPlaylist(playlist);
+                  }}
+                >
+                  <MaterialIcon>edit</MaterialIcon>
+                  {t("edit-playlist", { defaultValue: "Edit playlist" })}
+                </ContextMenuItem>
+                <ContextMenuItem
+                  className="sb-context-menu-item--danger"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openDeletePlaylistConfirm(
+                      modals,
+                      playlists,
+                      playlist,
+                      toast
+                    );
+                  }}
+                >
+                  <MaterialIcon>delete</MaterialIcon>
+                  {t("delete-playlist", { defaultValue: "Delete" })}
+                </ContextMenuItem>
+              </ContextMenuWithButton>
             </li>
           ))}
         </ul>
       )}
     </DiscoverSection>
   );
+}
+
+/**
+ * Confirmation body shown before permanently deleting a playlist. Confirming
+ * erases the playlist and closes the modal; on failure it surfaces a toast but
+ * still closes.
+ */
+function ConfirmDeletePlaylistModalContent(props: {
+  playlists: PlaylistManager;
+  playlist: Playlist;
+  toast: SeedBibleState["app"]["toast"];
+  onClose: () => void;
+}) {
+  const { playlists, playlist, toast, onClose } = props;
+  const { t } = useI18n();
+
+  const confirm = async () => {
+    try {
+      await playlists.deletePlaylist(playlist);
+    } catch {
+      toast(
+        t("delete-playlist-failed", {
+          defaultValue: "Couldn't delete the playlist.",
+        })
+      );
+    }
+    onClose();
+  };
+
+  return (
+    <div className="sb-confirm-delete">
+      <p className="sb-confirm-delete-message">
+        {t("delete-playlist-confirm-message", {
+          title:
+            playlist.title ??
+            t("untitled-playlist", { defaultValue: "Untitled playlist" }),
+          defaultValue: 'Delete "{{title}}"? This can\'t be undone.',
+        })}
+      </p>
+      <div className="sb-confirm-delete-actions">
+        <button
+          type="button"
+          className="sb-session-settings-cancel"
+          onClick={onClose}
+        >
+          {t("cancel")}
+        </button>
+        <button
+          type="button"
+          className="sb-session-settings-end"
+          onClick={confirm}
+        >
+          {t("delete")}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Opens the delete-playlist confirmation modal. */
+function openDeletePlaylistConfirm(
+  modals: ModalManager,
+  playlists: PlaylistManager,
+  playlist: Playlist,
+  toast: SeedBibleState["app"]["toast"]
+) {
+  const modalId = `delete-playlist-confirm-${playlist.id}`;
+  modals.openModal({
+    id: modalId,
+    title: {
+      key: "delete-playlist-confirm-title",
+      defaultValue: "Delete playlist?",
+    },
+    content: () => (
+      <ConfirmDeletePlaylistModalContent
+        playlists={playlists}
+        playlist={playlist}
+        toast={toast}
+        onClose={() => modals.closeModal(modalId)}
+      />
+    ),
+  });
 }
 
 function CrossReferencesSection(props: { tab: ReaderTab | null }) {

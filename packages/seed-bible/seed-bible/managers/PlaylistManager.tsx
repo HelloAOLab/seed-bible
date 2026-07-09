@@ -335,6 +335,32 @@ export function createPlaylistManager(
     });
   };
 
+  /**
+   * Permanently deletes a playlist: erases its record, drops it from
+   * `userPlaylists`, and clears any edit/playback state that referenced it.
+   */
+  const deletePlaylist = async (playlist: Playlist): Promise<void> => {
+    const result = await os.eraseData(playlist.recordName, playlist.id);
+    if (!result.success) {
+      console.error("Failed to delete playlist:", result);
+      throw new Error(`Failed to delete playlist: ${result.errorCode}`);
+    }
+    userPlaylists.value = userPlaylists.value.filter(
+      (p) => p.id !== playlist.id
+    );
+    if (editingPlaylist.peek()?.id === playlist.id) {
+      cancelEditingPlaylist();
+    }
+    if (
+      playing
+        .peek()
+        ?.playlists.peek()
+        .some((p) => p.id === playlist.id)
+    ) {
+      stopPlaying();
+    }
+  };
+
   const listPlaylists = async (recordName: string) => {
     const records = await os.listDataByMarker(
       recordName,
@@ -637,6 +663,7 @@ export function createPlaylistManager(
 
   return {
     savePlaylist,
+    deletePlaylist,
     createNewPlaylist,
     editPlaylist,
     saveEditingPlaylist,
