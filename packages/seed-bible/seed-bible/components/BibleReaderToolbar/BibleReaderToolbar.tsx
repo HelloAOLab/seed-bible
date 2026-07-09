@@ -475,6 +475,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const shouldReplaceDefaultToolbar = useComputed(
     () => isSmallScreen.value && hasVerseSelection.value
   );
+  // A pane fills the whole screen when it's fullscreen, or (on mobile) for any
+  // open pane — mobile renders every pane fullscreen. Mirrors the "fills the
+  // screen" rule in PanesManager/SeedBibleStateManager. Used to hide the
+  // floating chapter nav so it doesn't float on top of a fullscreen pane.
+  const isFullscreenPaneVisible = useComputed(() =>
+    panes.panes.value.some(
+      (pane) => pane.placement === "fullscreen" || isSmallScreen.value
+    )
+  );
   const isMoreMenuOpen = useSignal(false);
   const selectedToolbarToolId = useSignal<string | null>(null);
   const selectedVerseToolId = useSignal<string | null>(null);
@@ -742,6 +751,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
         >
           {isSmallScreen.value &&
             activeMobileTab.value === "bible" &&
+            !isFullscreenPaneVisible.value &&
             (() => {
               const audio =
                 audioPlayTool.value && audioPlayTool.value.visible.value
