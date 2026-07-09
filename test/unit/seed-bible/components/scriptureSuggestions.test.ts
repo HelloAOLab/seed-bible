@@ -5,7 +5,8 @@ function book(
   id: string,
   commonName: string,
   name = commonName,
-  numberOfChapters = 50
+  numberOfChapters = 50,
+  totalNumberOfVerses = 1000
 ): TranslationBook {
   return {
     id,
@@ -15,16 +16,17 @@ function book(
     order: 1,
     numberOfChapters,
     firstChapterNumber: 1,
+    totalNumberOfVerses,
   } as TranslationBook;
 }
 
 const BOOKS: TranslationBook[] = [
-  book("GEN", "Genesis", "Genesis", 50),
-  book("JHN", "John", "John", 21),
-  book("PHP", "Philippians", "Philippians", 4),
-  book("PHM", "Philemon", "Philemon", 1),
-  book("JDG", "Judges", "Judges", 21),
-  book("JUD", "Jude", "Jude", 1),
+  book("GEN", "Genesis", "Genesis", 50, 1533),
+  book("JHN", "John", "John", 21, 879),
+  book("PHP", "Philippians", "Philippians", 4, 104),
+  book("PHM", "Philemon", "Philemon", 1, 25),
+  book("JDG", "Judges", "Judges", 21, 618),
+  book("JUD", "Jude", "Jude", 1, 25),
 ];
 
 /** Collapses suggestions to a compact shape for readable assertions. */
@@ -45,9 +47,18 @@ describe("computeSuggestions", () => {
     ]);
   });
 
-  it("narrows to the matching chapter once a chapter is typed", () => {
-    // Only Philippians has a chapter 2, so Philemon drops out.
-    expect(shape("Phil 2")).toEqual([{ id: "PHP", labels: ["2"] }]);
+  it("narrows to matching chapters (multi-chapter) and verses (single-chapter)", () => {
+    // Philippians (4 chapters) matches chapter 2 by prefix; Philemon (one
+    // chapter) reads "2" as verse 2 -> 1:2.
+    expect(shape("Phil 2")).toEqual([
+      { id: "PHP", labels: ["2"] },
+      { id: "PHM", labels: ["1:2"] },
+    ]);
+  });
+
+  it("prefix-matches chapters for a multi-chapter book", () => {
+    // Judges has 21 chapters, so typing "2" surfaces 2, 20 and 21.
+    expect(shape("Judg 2")).toEqual([{ id: "JDG", labels: ["2", "20", "21"] }]);
   });
 
   it("attaches the exact ref (with chapter) to each option", () => {
@@ -82,17 +93,27 @@ describe("computeSuggestions", () => {
     ]);
   });
 
-  it("does not prefer a single-chapter book when the chapter is shared", () => {
-    // "Jud" prefixes both Judges and Jude (and equals Jude's id), and both have
-    // a chapter 1. Both should appear as whole chapter 1 — not just Jude, and
-    // not read as a verse.
-    expect(shape("Jud 1")).toEqual([
-      { id: "JDG", labels: ["1"] },
-      { id: "JUD", labels: ["1"] },
+  it("mixes multi-chapter prefixing with single-chapter verses across matches", () => {
+    // "Jud" prefixes both Judges (21 chapters) and Jude (one chapter, 25
+    // verses). "Jud 2" -> Judges 2/20/21 as chapters and Jude 1:2 as a verse.
+    expect(shape("Jud 2")).toEqual([
+      { id: "JDG", labels: ["2", "20", "21"] },
+      { id: "JUD", labels: ["1:2"] },
     ]);
-    const [judges, jude] = computeSuggestions("Jud 1", BOOKS);
-    expect(judges?.options[0]?.ref).toEqual({ bookId: "JDG", chapter: 1 });
-    expect(jude?.options[0]?.ref).toEqual({ bookId: "JUD", chapter: 1 });
+    const [, jude] = computeSuggestions("Jud 2", BOOKS);
+    expect(jude?.options[0]?.ref).toEqual({
+      bookId: "JUD",
+      chapter: 1,
+      verse: 2,
+    });
+  });
+
+  it("validates single-chapter verses against totalNumberOfVerses", () => {
+    // Jude has 25 verses, so verse 22 is valid...
+    expect(shape("Jude 22")).toEqual([{ id: "JUD", labels: ["1:22"] }]);
+    // ...but 26 is past the end, so Jude offers nothing (and "Jud 26" also has
+    // no Judges chapter starting with "26").
+    expect(shape("Jud 26")).toEqual([]);
   });
 
   it("returns nothing for empty input or an unknown book", () => {

@@ -22,7 +22,7 @@ function normalize(value: string): string {
 
 /**
  * Human-readable label for a reference's chapter/verse portion, e.g. "2",
- * "3:16", "1:2" (single-chapter verse shorthand), or "1-3" (chapter range).
+ * "3:16", "1:2" (single-chapter verse), or "1-3" (chapter range).
  */
 export function formatRefLabel(ref: VerseRef): string {
   let label = String(ref.chapter);
@@ -56,8 +56,62 @@ function matchBooksByPrefix(
   );
 }
 
-function suggestion(book: TranslationBook, ref: VerseRef): BookSuggestion {
-  return { book, options: [{ ref, label: formatRefLabel(ref) }] };
+/** Every chapter number the book contains. */
+function chaptersOf(book: TranslationBook): number[] {
+  return range(
+    book.firstChapterNumber,
+    book.firstChapterNumber + book.numberOfChapters
+  );
+}
+
+function toOption(ref: VerseRef): ChapterOption {
+  return { ref, label: formatRefLabel(ref) };
+}
+
+/**
+ * The chapter/verse options offered for a single matched book once a number has
+ * been typed.
+ *
+ * - Single-chapter books (e.g. Jude): a lone number is a verse — "Jude 2" means
+ *   Jude 1:2 — accepted only when it's a real verse (1..totalNumberOfVerses).
+ *   An explicit "chapter:verse" instead targets the one chapter.
+ * - Multi-chapter books (e.g. Judges): a lone number is a chapter, matched by
+ *   prefix so "Jud 2" surfaces 2, 20 and 21. An explicit verse/range pins the
+ *   exact chapter.
+ */
+function optionsForBook(
+  book: TranslationBook,
+  chapterStr: string,
+  typed: number,
+  tail: ReturnType<typeof buildTail>,
+  isBareNumber: boolean
+): ChapterOption[] {
+  if (book.numberOfChapters === 1) {
+    if (isBareNumber) {
+      if (typed >= 1 && typed <= book.totalNumberOfVerses) {
+        return [
+          toOption({
+            bookId: book.id,
+            chapter: book.firstChapterNumber,
+            verse: typed,
+          }),
+        ];
+      }
+      return [];
+    }
+    return bookHasChapter(book, typed)
+      ? [toOption({ bookId: book.id, chapter: typed, ...tail })]
+      : [];
+  }
+
+  if (isBareNumber) {
+    return chaptersOf(book)
+      .filter((chapter) => String(chapter).startsWith(chapterStr))
+      .map((chapter) => toOption({ bookId: book.id, chapter }));
+  }
+  return bookHasChapter(book, typed)
+    ? [toOption({ bookId: book.id, chapter: typed, ...tail })]
+    : [];
 }
 
 /**
@@ -65,16 +119,9 @@ function suggestion(book: TranslationBook, ref: VerseRef): BookSuggestion {
  *
  * Books are matched purely by name/id prefix — unlike the reference parser this
  * deliberately does NOT prefer an exact match, so a query is never collapsed to
- * a single book. Typing "Jud 1" lists both Judges 1 and Jude 1 rather than only
- * Jude (whose id happens to be "JUD").
- *
- * - No chapter typed yet: every chapter of each matched book is offered.
- * - A chapter typed with several matching books: only the books that actually
- *   contain that chapter are shown (so "Phil 2" -> Philippians only).
- * - A chapter typed with a single matching book: verses/ranges carry through,
- *   and a lone number against a single-chapter book is read as a verse
- *   ("Philemon 2" -> Philemon 1:2). Verse shorthand is only used for this
- *   unambiguous case — never to break a tie between multiple books.
+ * a single book (typing "Jud" keeps both Judges and Jude). Each matched book
+ * then offers chapters or verses per {@link optionsForBook}; books with no
+ * matching chapter/verse are dropped.
  */
 export function computeSuggestions(
   input: string,
@@ -102,17 +149,13 @@ export function computeSuggestions(
     return [];
   }
 
-  // No chapter typed: offer every chapter of each matched book.
+  // No number typed yet: offer every chapter of each matched book.
   if (!chapterStr) {
     return matched.map((book) => ({
       book,
-      options: range(
-        book.firstChapterNumber,
-        book.firstChapterNumber + book.numberOfChapters
-      ).map((chapter) => ({
-        ref: { bookId: book.id, chapter },
-        label: String(chapter),
-      })),
+      options: chaptersOf(book).map((chapter) =>
+        toOption({ bookId: book.id, chapter })
+      ),
     }));
   }
 
@@ -121,26 +164,15 @@ export function computeSuggestions(
     // Invalid format, e.g. "John 1-2:3" (whole-chapter start with a verse end).
     return [];
   }
-  const chapter = Number(chapterStr);
+  const typed = Number(chapterStr);
   const isBareNumber = !verseStr && !endChapterStr && !endVerseStr;
 
-  if (matched.length === 1) {
-    const book = matched[0]!;
-    if (isBareNumber && book.numberOfChapters === 1) {
-      return [
-        suggestion(book, {
-          bookId: book.id,
-          chapter: book.firstChapterNumber,
-          verse: chapter,
-        }),
-      ];
+  const suggestions: BookSuggestion[] = [];
+  for (const book of matched) {
+    const options = optionsForBook(book, chapterStr, typed, tail, isBareNumber);
+    if (options.length > 0) {
+      suggestions.push({ book, options });
     }
-    return [suggestion(book, { bookId: book.id, chapter, ...tail })];
   }
-
-  // Several books match: show the ones that actually contain the chapter, as
-  // whole chapters (with any verse/range). No single-chapter verse shorthand.
-  return matched
-    .filter((book) => bookHasChapter(book, chapter))
-    .map((book) => suggestion(book, { bookId: book.id, chapter, ...tail }));
+  return suggestions;
 }
