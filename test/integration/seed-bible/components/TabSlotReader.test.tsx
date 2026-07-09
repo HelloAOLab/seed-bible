@@ -1,21 +1,21 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { computed, signal, type Signal } from "@preact/signals";
-import { PaneReader } from "@packages/seed-bible/seed-bible/components/PaneLayout/PaneLayout";
+import { TabSlotReader } from "@packages/seed-bible/seed-bible/components/TabsLayout";
 import type {
   BibleReadingState,
   SelectedFootnote,
   VerseDecoration,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
-import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
+import type { TabSlot } from "@packages/seed-bible/seed-bible/managers/TabsLayoutManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { Mock } from "vitest";
 
 type ReaderFixture = {
-  pane: Pane;
+  slot: TabSlot;
   selectorState: BibleSelectorState;
   readingState: BibleReadingState;
   chapterData: Signal<TranslationBookChapter | null>;
@@ -149,12 +149,13 @@ function createFixture(): ReaderFixture {
     setOpen,
   } as any as BibleSelectorState;
 
-  const pane = {
-    id: "pane-1",
-  } as Pane;
+  const slot: TabSlot = {
+    id: "slot-1",
+    tab: null,
+  };
 
   return {
-    pane,
+    slot,
     selectorState,
     readingState,
     chapterData,
@@ -231,15 +232,15 @@ function createDesktopState(): SeedBibleState {
   } as any as SeedBibleState;
 }
 
-function renderPaneReader(
-  pane: Pane,
+function renderTabSlotReader(
+  slot: TabSlot,
   readingState: BibleReadingState,
   state: SeedBibleState,
   container: HTMLDivElement
 ) {
   act(() => {
     render(
-      <PaneReader
+      <TabSlotReader
         tab={{
           id: "tab-1",
           title: "Tab 1",
@@ -248,8 +249,7 @@ function renderPaneReader(
           sharedChat: null,
         }}
         state={state}
-        pane={pane}
-        displayBelowReaderToolbar={false}
+        slot={slot}
       />,
       container
     );
@@ -269,7 +269,7 @@ function dispatchTouch(
   element.dispatchEvent(event);
 }
 
-describe("PaneReader integration", () => {
+describe("TabSlotReader integration", () => {
   let container: HTMLDivElement;
 
   beforeEach(() => {
@@ -283,10 +283,10 @@ describe("PaneReader integration", () => {
   });
 
   it("saves scroll position in non-mobile layout", () => {
-    const { pane, readingState } = createFixture();
+    const { slot, readingState } = createFixture();
     const state = createDesktopState();
 
-    renderPaneReader(pane, readingState, state, container);
+    renderTabSlotReader(slot, readingState, state, container);
 
     const scroller = container.querySelector(
       ".sb-pane-reader"
@@ -305,7 +305,7 @@ describe("PaneReader integration", () => {
   });
 
   it("saves scroll position in mobile layout", () => {
-    const { pane, readingState, chapterData } = createFixture();
+    const { slot, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -314,7 +314,7 @@ describe("PaneReader integration", () => {
       previousChapterApiLink: null,
     };
 
-    renderPaneReader(pane, readingState, state, container);
+    renderTabSlotReader(slot, readingState, state, container);
 
     const scroller = container.querySelector(
       ".sb-reader-swipe-panel-current"
@@ -332,12 +332,12 @@ describe("PaneReader integration", () => {
     expect(readingState.scrollPosition.value).toBe(87);
   });
 
-  it("restores pane scroll position in non-mobile layout", () => {
-    const { pane, readingState } = createFixture();
+  it("restores slot scroll position in non-mobile layout", () => {
+    const { slot, readingState } = createFixture();
     const state = createDesktopState();
     readingState.scrollPosition.value = 245;
 
-    renderPaneReader(pane, readingState, state, container);
+    renderTabSlotReader(slot, readingState, state, container);
 
     const scroller = container.querySelector(
       ".sb-pane-reader"
@@ -346,8 +346,8 @@ describe("PaneReader integration", () => {
     expect(scroller?.scrollTop).toBe(245);
   });
 
-  it("restores pane scroll position in mobile layout", () => {
-    const { pane, readingState, chapterData } = createFixture();
+  it("restores slot scroll position in mobile layout", () => {
+    const { slot, readingState, chapterData } = createFixture();
     const state = createMobileState();
     readingState.scrollPosition.value = 133;
 
@@ -357,7 +357,7 @@ describe("PaneReader integration", () => {
       previousChapterApiLink: null,
     };
 
-    renderPaneReader(pane, readingState, state, container);
+    renderTabSlotReader(slot, readingState, state, container);
 
     const scroller = container.querySelector(
       ".sb-reader-swipe-panel-current"
@@ -367,7 +367,7 @@ describe("PaneReader integration", () => {
   });
 
   it("scroll-to-verse scrolls to the specified verse in non-mobile layout", () => {
-    const { pane, readingState } = createFixture();
+    const { slot, readingState } = createFixture();
     const state = createDesktopState();
     readingState.scrollToVerse.value = 1;
 
@@ -385,7 +385,7 @@ describe("PaneReader integration", () => {
     });
 
     try {
-      renderPaneReader(pane, readingState, state, container);
+      renderTabSlotReader(slot, readingState, state, container);
     } finally {
       rafSpy.mockRestore();
       Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
@@ -402,7 +402,7 @@ describe("PaneReader integration", () => {
   });
 
   it("scroll-to-verse scrolls to the specified verse in mobile layout", () => {
-    const { pane, readingState, chapterData } = createFixture();
+    const { slot, readingState, chapterData } = createFixture();
     const state = createMobileState();
     readingState.scrollToVerse.value = 1;
 
@@ -426,7 +426,7 @@ describe("PaneReader integration", () => {
     });
 
     try {
-      renderPaneReader(pane, readingState, state, container);
+      renderTabSlotReader(slot, readingState, state, container);
     } finally {
       rafSpy.mockRestore();
       Object.defineProperty(HTMLElement.prototype, "scrollIntoView", {
@@ -444,7 +444,7 @@ describe("PaneReader integration", () => {
 
   it("the user can swipe to the right to go to the previous chapter in mobile layout for left-to-right text", () => {
     vi.useFakeTimers();
-    const { pane, readingState, chapterData } = createFixture();
+    const { slot, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -458,7 +458,7 @@ describe("PaneReader integration", () => {
     };
 
     try {
-      renderPaneReader(pane, readingState, state, container);
+      renderTabSlotReader(slot, readingState, state, container);
 
       const viewport = container.querySelector(
         ".sb-reader-swipe-viewport"
@@ -483,7 +483,7 @@ describe("PaneReader integration", () => {
 
   it("the user can swipe to the left to go to the next chapter in mobile layout for left-to-right text", () => {
     vi.useFakeTimers();
-    const { pane, readingState, chapterData } = createFixture();
+    const { slot, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -497,7 +497,7 @@ describe("PaneReader integration", () => {
     };
 
     try {
-      renderPaneReader(pane, readingState, state, container);
+      renderTabSlotReader(slot, readingState, state, container);
 
       const viewport = container.querySelector(
         ".sb-reader-swipe-viewport"
@@ -522,7 +522,7 @@ describe("PaneReader integration", () => {
 
   it("the user can swipe to the right to go to the next chapter in mobile layout for right-to-left text", () => {
     vi.useFakeTimers();
-    const { pane, readingState, chapterData } = createFixture();
+    const { slot, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -536,7 +536,7 @@ describe("PaneReader integration", () => {
     };
 
     try {
-      renderPaneReader(pane, readingState, state, container);
+      renderTabSlotReader(slot, readingState, state, container);
 
       const viewport = container.querySelector(
         ".sb-reader-swipe-viewport"
@@ -561,7 +561,7 @@ describe("PaneReader integration", () => {
 
   it("the user can swipe to the left to go to the previous chapter in mobile layout for right-to-left text", () => {
     vi.useFakeTimers();
-    const { pane, readingState, chapterData } = createFixture();
+    const { slot, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -575,7 +575,7 @@ describe("PaneReader integration", () => {
     };
 
     try {
-      renderPaneReader(pane, readingState, state, container);
+      renderTabSlotReader(slot, readingState, state, container);
 
       const viewport = container.querySelector(
         ".sb-reader-swipe-viewport"
@@ -600,7 +600,7 @@ describe("PaneReader integration", () => {
 
   it("does not load a previous chapter on right swipe in left-to-right text when no previous chapter exists", () => {
     vi.useFakeTimers();
-    const { pane, readingState, chapterData } = createFixture();
+    const { slot, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -614,7 +614,7 @@ describe("PaneReader integration", () => {
     };
 
     try {
-      renderPaneReader(pane, readingState, state, container);
+      renderTabSlotReader(slot, readingState, state, container);
 
       const viewport = container.querySelector(
         ".sb-reader-swipe-viewport"
@@ -640,7 +640,7 @@ describe("PaneReader integration", () => {
 
   it("does not load a next chapter on left swipe in left-to-right text when no next chapter exists", () => {
     vi.useFakeTimers();
-    const { pane, readingState, chapterData } = createFixture();
+    const { slot, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -654,7 +654,7 @@ describe("PaneReader integration", () => {
     };
 
     try {
-      renderPaneReader(pane, readingState, state, container);
+      renderTabSlotReader(slot, readingState, state, container);
 
       const viewport = container.querySelector(
         ".sb-reader-swipe-viewport"
@@ -680,7 +680,7 @@ describe("PaneReader integration", () => {
 
   it("does not load a next chapter on right swipe in right-to-left text when no next chapter exists", () => {
     vi.useFakeTimers();
-    const { pane, readingState, chapterData } = createFixture();
+    const { slot, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -694,7 +694,7 @@ describe("PaneReader integration", () => {
     };
 
     try {
-      renderPaneReader(pane, readingState, state, container);
+      renderTabSlotReader(slot, readingState, state, container);
 
       const viewport = container.querySelector(
         ".sb-reader-swipe-viewport"
@@ -720,7 +720,7 @@ describe("PaneReader integration", () => {
 
   it("does not load a previous chapter on left swipe in right-to-left text when no previous chapter exists", () => {
     vi.useFakeTimers();
-    const { pane, readingState, chapterData } = createFixture();
+    const { slot, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -734,7 +734,7 @@ describe("PaneReader integration", () => {
     };
 
     try {
-      renderPaneReader(pane, readingState, state, container);
+      renderTabSlotReader(slot, readingState, state, container);
 
       const viewport = container.querySelector(
         ".sb-reader-swipe-viewport"

@@ -368,6 +368,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     tabs,
     selector,
     panes,
+    tabsLayout,
     sidebar,
     chats,
     tools: toolsManager,
@@ -399,6 +400,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       selectorState: selector,
       tabs: tabs,
       panesManager: panes,
+      tabsLayoutManager: tabsLayout,
       window: {
         isMobile: props.state.app.isMobile.value,
       },
@@ -452,6 +454,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       selectorState: selector,
       tabs: tabs,
       panesManager: panes,
+      tabsLayoutManager: tabsLayout,
       window: {
         isMobile: props.state.app.isMobile.value,
       },
@@ -482,6 +485,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   const shouldReplaceDefaultToolbar = useComputed(
     () => isSmallScreen.value && hasVerseSelection.value
   );
+  // A pane fills the whole screen when it's fullscreen, or (on mobile) for any
+  // open pane — mobile renders every pane fullscreen. Mirrors the "fills the
+  // screen" rule in PanesManager/SeedBibleStateManager. Used to hide the
+  // floating chapter nav so it doesn't float on top of a fullscreen pane.
+  const isFullscreenPaneVisible = useComputed(() =>
+    panes.panes.value.some(
+      (pane) => pane.placement === "fullscreen" || isSmallScreen.value
+    )
+  );
   const isMoreMenuOpen = useSignal(false);
   const selectedToolbarToolId = useSignal<string | null>(null);
   const selectedVerseToolId = useSignal<string | null>(null);
@@ -489,12 +501,6 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
   // "Less" toggle). Collapsed by default; reset whenever the selection clears.
   const isVerseSheetExpanded = useSignal(false);
 
-  // Single source of truth for which bottom-bar tab is highlighted orange.
-  // "more"/"search"/"tabs"/"bookmarks" are derived from real panel state;
-  // "today" and "bible" have no panel of their own, so we remember the last one
-  // the user tapped and use it as the fallback. "none" means nothing is
-  // highlighted. At most one tab is ever active.
-  const localBottomTab = useSignal<"today" | "bible">("bible");
   // True when the sidebar drawer is open showing the tabs/bookmarks view
   // (not the settings view) with the bookmark filter active.
   const isBookmarksViewOpen = useComputed(
@@ -503,19 +509,28 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       !sidebar.isSettingsOpen.value &&
       bookmarks.isFilterActive.value
   );
+
+  const isTodayOpen = useComputed(() =>
+    panes.panes.value.some((p) => p.id === "today-screen-pane")
+  );
   const activeMobileTab = useComputed<
     "today" | "bible" | "search" | "tabs" | "bookmarks" | "more" | "none"
   >(() => {
     if (isMoreMenuOpen.value) return "more";
     if (sidebar.isSearchPanelOpen.value) return "search";
+    // The account ("You") control now lives in the reader header, so an open
+    // settings view no longer maps to a bottom-bar tab.
     if (sidebar.isSettingsOpen.value) return "none";
     if (isBookmarksViewOpen.value) {
       // Bookmarks is a top-level tab only when there's no overflow. When it
       // lives inside the More menu, keep nothing highlighted.
       return moreTools.value.length > 0 ? "none" : "bookmarks";
     }
+    if (isTodayOpen.value) return "today";
+    // Some other extension pane is covering the reader (opened from More).
+    if (isFullscreenPaneVisible.value) return "more";
     if (sidebar.isMobileOpen.value) return "tabs";
-    return localBottomTab.value;
+    return "bible";
   });
 
   const previousChapterTool = useComputed(
@@ -755,7 +770,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     sidebar.closeChatPanel();
     sidebar.closeSettings();
     sidebar.closeSidebar();
-    localBottomTab.value = "today";
+    panes.closeAll();
 
     const existing = getExtensionExports<TodayScreenAPI>("today-screen");
     if (existing) {
@@ -797,6 +812,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       sidebar.closeSidebar();
       return;
     }
+    panes.closeAll();
     sidebar.closeSearchPanel();
     sidebar.closeChatPanel();
     sidebar.closeSettings();
@@ -950,6 +966,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   active={activeMobileTab.value === "search"}
                   onClick={() => {
                     isMoreMenuOpen.value = false;
+                    panes.closeAll();
                     // Dismiss the tabs/bookmarks drawer if it's open.
                     sidebar.closeSidebar();
                     if (sidebar.isSearchPanelOpen.value) {
@@ -975,7 +992,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     sidebar.closeChatPanel();
                     sidebar.closeSettings();
                     sidebar.closeSidebar();
-                    localBottomTab.value = "bible";
+                    // Close any fullscreen extension pane (e.g. Today).
+                    panes.closeAll();
                     selectedToolbarToolId.value = null;
                   }}
                 />
@@ -991,6 +1009,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       sidebar.closeSidebar();
                       return;
                     }
+                    panes.closeAll();
                     sidebar.closeSearchPanel();
                     sidebar.closeChatPanel();
                     sidebar.closeSettings();
