@@ -4,7 +4,7 @@ import { MaterialIcon } from "@packages/seed-bible/seed-bible/components";
 import { Today } from "../presentation/components/Today";
 import { useI18n } from "@packages/seed-bible/seed-bible/i18n";
 import { TodayReadingHistoryService } from "@packages/today-screen/application/services/TodayReadingHistoryService";
-import { FakeSubscribedUsersProvider } from "../adapters/fake/FakeSubscribedUsersProvider";
+import { SubscribedUsersProvider } from "../adapters/subscriptions/SubscribedUsersProvider";
 import type {
   FilteredReading,
   UserLastReading,
@@ -51,27 +51,16 @@ export const bootstrapExtension = () => {
         seedBibleUtilsId
       ] as DependenciesMap[typeof seedBibleUtilsId];
 
-      const fakeSubscribedUsersProvider = new FakeSubscribedUsersProvider(
-        sessionProvider
-      );
+      const subscribedUsersProvider = new SubscribedUsersProvider();
+      // sessionProvider
 
-      const fakeGetReadingHistoryEvents = (
+      const localGetReadingHistoryEvents = (
         recordName: string,
         startTime: number,
         endTime: number
       ) => {
-        if (
-          context.login.userId.value &&
-          recordName === context.login.userId.value
-        ) {
-          return getReadingHistoryEvents(
-            context.os,
-            recordName,
-            startTime,
-            endTime
-          );
-        }
-        return fakeSubscribedUsersProvider.getReadingHistoryEvents(
+        return getReadingHistoryEvents(
+          context.os,
           recordName,
           startTime,
           endTime
@@ -80,9 +69,19 @@ export const bootstrapExtension = () => {
 
       const todayReadingHistoryService = new TodayReadingHistoryService({
         readingEventsProviderPort: {
-          getReadingHistoryEvents: fakeGetReadingHistoryEvents,
+          getReadingHistoryEvents: localGetReadingHistoryEvents,
         },
-        usersIdProviderPort: fakeSubscribedUsersProvider,
+        usersIdProviderPort: {
+          getUsersIds: () => {
+            if (context.login.userId.value) {
+              return [
+                context.login.userId.value,
+                ...subscribedUsersProvider.getUsersIds(),
+              ];
+            }
+            return [];
+          },
+        },
       });
 
       const userLastReading = signal<UserLastReading>(undefined);
@@ -249,6 +248,18 @@ export const bootstrapExtension = () => {
                 language,
                 username: context.login.profile.value?.name,
                 userId: context.login.userId.value ?? undefined,
+                userProfile: context.login.userId.value
+                  ? {
+                      name: context.login.profile.value?.name ?? "Guest",
+                      pictureUrl: context.login.profile.value?.pictureUrl,
+                      color: sessionProvider.getUserColorById(
+                        context.login.userId.value
+                      ),
+                      icon: sessionProvider.getUserIconById(
+                        context.login.userId.value
+                      ),
+                    }
+                  : undefined,
                 userLastReading,
                 getCommunityReading,
                 translate: (key, options) =>
@@ -277,9 +288,9 @@ export const bootstrapExtension = () => {
                       removeAfterMs: 3000,
                     });
                   }
-                  const paneId = context.panes.selectedPaneId.value;
-                  if (paneId) {
-                    context.panes.openInPane(paneId, { tabId: tab.id });
+                  const slotId = context.tabsLayout.selectedSlotId.value;
+                  if (slotId) {
+                    context.tabsLayout.openTabInSlot(slotId, tab.id);
                   }
                   context.app.selectTab(tab.id);
                 },
@@ -296,21 +307,21 @@ export const bootstrapExtension = () => {
                 getVerseText,
                 lastTranslationId,
                 openBookSelector: () => {
-                  const pane =
-                    context.panes.panes.value.find(
-                      (p) => p.id === context.panes.selectedPaneId.value
+                  const slot =
+                    context.tabsLayout.slots.value.find(
+                      (s) => s.id === context.tabsLayout.selectedSlotId.value
                     ) ?? null;
-                  if (pane) {
-                    context.selector.setOpen(true, pane);
+                  if (slot) {
+                    context.selector.setOpen(true, slot);
                   }
                 },
                 translationBooks: lastTranslationBooks,
                 translationBooksMap,
-                subscribedUsersProfileProvider: fakeSubscribedUsersProvider,
-                subscribedUsersIdsProvider: fakeSubscribedUsersProvider,
+                subscribedUsersProfileProvider: subscribedUsersProvider,
+                subscribedUsersIdsProvider: subscribedUsersProvider,
                 ReadingHistoryTimeline,
                 getDayRangeSeconds,
-                getReadingHistoryEvents: fakeGetReadingHistoryEvents,
+                getReadingHistoryEvents: localGetReadingHistoryEvents,
                 GetPastDateInfo,
                 CapitalizeFirstLetter,
                 theme: context.theme.currentTheme.value,
@@ -335,11 +346,16 @@ export const bootstrapExtension = () => {
           );
         };
 
-        const paneId = context.panes.selectedPaneId.value;
-        if (paneId) {
-          context.tabs.selectTab("");
-          context.panes.openInPane(paneId, { component });
-        }
+        // Custom components can no longer take over a tab slot — Today opens
+        // as a fullscreen pane instead. A stable id means calling `open()`
+        // again (e.g. via getExtensionExports) updates the existing pane
+        // rather than stacking a second one.
+        context.panes.openPane({
+          id: "today-screen-pane",
+          placement: "fullscreen",
+          title: "Today",
+          component,
+        });
       };
 
       // yield context.tools.registerToolbarTool({

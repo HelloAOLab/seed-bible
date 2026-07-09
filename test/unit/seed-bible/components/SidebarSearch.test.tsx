@@ -1,6 +1,6 @@
 import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
-import { SidebarSearch } from "@packages/seed-bible/seed-bible/components/SidebarSearch";
+import { SidebarSearch } from "@packages/seed-bible/seed-bible/components/SidebarSearch/SidebarSearch";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import {
   createTestSeedBibleState,
@@ -47,7 +47,7 @@ type SidebarSearchFixture = {
   search: Mock;
   addTab: Mock;
   addTabOriginal: SeedBibleState["tabs"]["addTab"];
-  setSelectedPaneTab: Mock;
+  setSelectedSlotTab: Mock;
 };
 
 async function createFixture(options?: {
@@ -64,14 +64,14 @@ async function createFixture(options?: {
   const addTabOriginal = state.tabs.addTab.bind(state.tabs);
   const search = vi.spyOn(state.search, "searchVerses");
   const addTab = vi.spyOn(state.tabs, "addTab");
-  const setSelectedPaneTab = vi.spyOn(state.panes, "setSelectedPaneTab");
+  const setSelectedSlotTab = vi.spyOn(state.tabsLayout, "setSelectedSlotTab");
 
   return {
     state,
     search,
     addTab,
     addTabOriginal,
-    setSelectedPaneTab,
+    setSelectedSlotTab,
   };
 }
 
@@ -256,7 +256,7 @@ describe("SidebarSearch", () => {
     expect(fixture.addTab).toHaveBeenCalledTimes(1);
     const newTab = fixture.state.app.selectedTab.value;
     expect(newTab).not.toBeNull();
-    expect(fixture.setSelectedPaneTab).toHaveBeenCalledWith(newTab!.id);
+    expect(fixture.setSelectedSlotTab).toHaveBeenCalledWith(newTab!.id);
     expect(newTabSelect).not.toBeNull();
     expect(newTabSelect).toHaveBeenCalledWith("NIV", "MAT", 5, {
       scrollToVerse: 9,

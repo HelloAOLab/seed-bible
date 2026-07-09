@@ -134,3 +134,111 @@ describe("createSearchManager", () => {
     });
   });
 });
+
+describe("matchBookReferences", () => {
+  let matchBookReferences: typeof import("@packages/seed-bible/seed-bible/managers/SearchManager").matchBookReferences;
+
+  type TranslationBook =
+    import("@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI").TranslationBook;
+
+  const makeBook = (
+    partial: Pick<
+      TranslationBook,
+      "id" | "commonName" | "order" | "lastChapterNumber"
+    > &
+      Partial<TranslationBook>
+  ): TranslationBook => ({
+    name: partial.commonName,
+    title: null,
+    firstChapterNumber: 1,
+    numberOfChapters: partial.lastChapterNumber,
+    firstChapterApiLink: "",
+    lastChapterApiLink: "",
+    totalNumberOfVerses: 0,
+    ...partial,
+  });
+
+  const books: TranslationBook[] = [
+    makeBook({
+      id: "GEN",
+      commonName: "Genesis",
+      order: 1,
+      lastChapterNumber: 50,
+    }),
+    makeBook({
+      id: "EXO",
+      commonName: "Exodus",
+      order: 2,
+      lastChapterNumber: 40,
+    }),
+    makeBook({
+      id: "PSA",
+      commonName: "Psalms",
+      order: 19,
+      lastChapterNumber: 150,
+    }),
+    makeBook({
+      id: "JHN",
+      commonName: "John",
+      order: 43,
+      lastChapterNumber: 21,
+    }),
+    makeBook({
+      id: "1JN",
+      commonName: "1 John",
+      order: 62,
+      lastChapterNumber: 5,
+    }),
+  ];
+
+  beforeAll(async () => {
+    ({ matchBookReferences } =
+      await import("@packages/seed-bible/seed-bible/managers/SearchManager"));
+  });
+
+  it("returns the matching book as the top result", () => {
+    const matches = matchBookReferences("gen", books);
+    expect(matches[0]?.bookId).toBe("GEN");
+    expect(matches[0]?.chapterNumber).toBeNull();
+  });
+
+  it("resolves a trailing chapter number", () => {
+    const matches = matchBookReferences("Gen 2", books);
+    expect(matches[0]).toMatchObject({ bookId: "GEN", chapterNumber: 2 });
+  });
+
+  it("resolves multi-digit chapters", () => {
+    const matches = matchBookReferences("psa 51", books);
+    expect(matches[0]).toMatchObject({ bookId: "PSA", chapterNumber: 51 });
+  });
+
+  it("matches on the book id / abbreviation", () => {
+    const matches = matchBookReferences("PSA 5", books);
+    expect(matches[0]).toMatchObject({ bookId: "PSA", chapterNumber: 5 });
+  });
+
+  it("ignores an out-of-range chapter number", () => {
+    const matches = matchBookReferences("Gen 99", books);
+    expect(matches[0]).toMatchObject({ bookId: "GEN", chapterNumber: null });
+  });
+
+  it("returns nothing for a bare number or empty text", () => {
+    expect(matchBookReferences("5", books)).toEqual([]);
+    expect(matchBookReferences("   ", books)).toEqual([]);
+  });
+
+  it("ranks a starts-with match above an includes-only match", () => {
+    const matches = matchBookReferences("john", books);
+    expect(matches[0]?.bookId).toBe("JHN");
+    expect(matches.map((m) => m.bookId)).toContain("1JN");
+    expect(
+      matches.indexOf(matches.find((m) => m.bookId === "JHN")!)
+    ).toBeLessThan(matches.indexOf(matches.find((m) => m.bookId === "1JN")!));
+  });
+
+  it("respects the result limit", () => {
+    // "o" appears in Exodus, John, and 1 John.
+    const matches = matchBookReferences("o", books, 2);
+    expect(matches).toHaveLength(2);
+  });
+});

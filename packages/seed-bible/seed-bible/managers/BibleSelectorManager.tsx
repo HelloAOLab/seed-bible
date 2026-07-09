@@ -6,7 +6,7 @@ import type {
 import { safeLocalStorage } from "../app/ssrEnv";
 import type { BibleDataManager } from "../managers/BibleDataManager";
 import { type BibleReadingState } from "../managers/BibleReadingManager";
-import type { Pane, PanesManager } from "../managers/PanesManager";
+import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
 import type { TabsManager } from "../managers/TabsManager";
 import type {
   BookOrientation,
@@ -27,15 +27,15 @@ type SidebarManager = ReturnType<typeof createSidebar>;
 
 /** Optional options used when opening the selector. */
 export interface BibleSelectorOptions {
-  /** Pane context to bind selector actions to. */
-  pane?: Pane;
+  /** Slot context to bind selector actions to. */
+  slot?: TabSlot;
 }
 
 /** Options passed to `setOpen` to control selector behavior on open. */
 export interface BibleSelectorSetOpenOptions {
   /**
    * When true, the next chapter selection always creates a new tab and binds
-   * it to the target pane, even if the pane already has a tab.
+   * it to the target slot, even if the slot already has a tab.
    * Cleared automatically when the selector closes.
    */
   forNewTab?: boolean;
@@ -64,21 +64,21 @@ export type BibleSelectorPsalmsGroups =
 /**
  * Reactive state + actions for the Bible selector overlay.
  *
- * The selector is pane-aware: chapter selections are applied to the bound pane
- * (or a new tab may be created if the pane has no tab content yet).
+ * The selector is slot-aware: chapter selections are applied to the bound
+ * slot (or a new tab may be created if the slot has no tab content yet).
  */
 export interface BibleSelectorState {
   /** Whether the selector overlay is currently open. */
   isOpen: Signal<boolean>;
-  /** Pane currently targeted by selector actions. */
-  pane: Signal<Pane | null>;
-  /** Reading state for the active pane (null when pane has no tab). */
+  /** Slot currently targeted by selector actions. */
+  slot: Signal<TabSlot | null>;
+  /** Reading state for the active slot (null when slot has no tab). */
   readingState: ReadonlySignal<BibleReadingState | null>;
-  /** Active pane translation ID snapshot. */
+  /** Active slot translation ID snapshot. */
   currentTranslationId: ReadonlySignal<string | null>;
-  /** Active pane book ID snapshot. */
+  /** Active slot book ID snapshot. */
   currentBookId: ReadonlySignal<string | null>;
-  /** Active pane chapter number snapshot. */
+  /** Active slot chapter number snapshot. */
   currentChapterNumber: ReadonlySignal<number | null>;
 
   /** Current book-arrangement orientation (used for section labelling). */
@@ -111,26 +111,26 @@ export interface BibleSelectorState {
 
   /**
    * True while the selector is in "create a new tab" mode — chapter
-   * selections create a brand new tab and bind it to the target pane
-   * instead of reusing the pane's existing tab.
+   * selections create a brand new tab and bind it to the target slot
+   * instead of reusing the slot's existing tab.
    */
   forceNewTab: Signal<boolean>;
 
-  /** All panes available as targets for the selector. */
-  availablePanes: ReadonlySignal<Pane[]>;
+  /** All slots available as targets for the selector. */
+  availableSlots: ReadonlySignal<TabSlot[]>;
 
   /**
    * Opens/closes selector.
-   * When opening, optionally rebinds selector to a pane and synchronizes data.
+   * When opening, optionally rebinds selector to a slot and synchronizes data.
    */
   setOpen: (
     open: boolean,
-    pane?: Pane,
+    slot?: TabSlot,
     options?: BibleSelectorSetOpenOptions
   ) => Promise<void>;
 
-  /** Switches the target pane while the selector is open. */
-  setTargetPane: (paneId: string) => void;
+  /** Switches the target slot while the selector is open. */
+  setTargetSlot: (slotId: string) => void;
 
   /** Sets the current selector search query. */
   setSearch: (value: string) => void;
@@ -142,8 +142,8 @@ export interface BibleSelectorState {
   selectTranslation: (translationId: string) => Promise<void>;
 
   /**
-   * Applies chapter selection to the bound pane/tab and closes selector.
-   * Creates a new tab if needed when the bound pane has no tab content,
+   * Applies chapter selection to the bound slot/tab and closes selector.
+   * Creates a new tab if needed when the bound slot has no tab content,
    * or when `forceNewTab` is true.
    */
   selectChapter: (bookId: string, chapterNumber: number) => void;
@@ -220,31 +220,31 @@ function groupBooks(translationBooks: TranslationBooks | null, search: string) {
  * Creates the Bible selector manager.
  *
  * Behavior summary:
- * - Maintains selector open/close state and pane binding.
- * - Synchronizes selector translation/book context from active pane reading state.
+ * - Maintains selector open/close state and slot binding.
+ * - Synchronizes selector translation/book context from active slot reading state.
  * - Mirrors open/close state to the `?selector=open` URL param via the
  *   NavigationManager, giving back-button / shareable-URL support.
  * - Computes responsive Old/New Testament rows based on viewport width.
- * - Routes chapter selection into the bound pane/tab reading state.
+ * - Routes chapter selection into the bound slot/tab reading state.
  */
 export function createBibleSelectorState(
   dataManager: BibleDataManager,
   tabsManager: TabsManager,
-  panesManager: PanesManager,
+  tabsLayoutManager: TabsLayoutManager,
   settings: SettingsManager,
   sidebar: SidebarManager,
   bookmarks: BookmarksManager,
   navigation: NavigationManager
 ): BibleSelectorState {
   const isOpen = signal(false);
-  const pane = signal<Pane | null>(null);
+  const slot = signal<TabSlot | null>(null);
   const forceNewTab = signal(false);
   const showApocryphaInfo = signal(false);
-  const availablePanes = computed(() => panesManager.panes.value);
+  const availableSlots = computed(() => tabsLayoutManager.slots.value);
   const availableTranslations = computed(
     () => dataManager.availableTranslations.value
   );
-  const readingState = computed(() => pane.value?.tab?.readingState ?? null);
+  const readingState = computed(() => slot.value?.tab?.readingState ?? null);
   const currentTranslationId = computed(
     () => readingState.value?.translationId.value ?? null
   );
@@ -270,7 +270,7 @@ export function createBibleSelectorState(
   );
   const expandedBookId = signal<string | null>(null);
 
-  const syncStateFromPane = async () => {
+  const syncStateFromSlot = async () => {
     loading.value = true;
     error.value = null;
 
@@ -281,9 +281,9 @@ export function createBibleSelectorState(
 
       const nextTranslationId =
         readingState.value?.translationId.value ??
-        // Find the first pane with a translation ID in its reading state
-        panesManager.panes.value.find(
-          (p) => p.tab?.readingState.translationId.value
+        // Find the first slot with a translation ID in its reading state
+        tabsLayoutManager.slots.value.find(
+          (s) => s.tab?.readingState.translationId.value
         )?.tab?.readingState.translationId.value ??
         // Fall back to default translation or first available translation
         dataManager.availableTranslations.value.find(
@@ -307,7 +307,7 @@ export function createBibleSelectorState(
           ? err.message
           : "Failed to load selector translation data.";
       if (typeof process === "object" && process.env.NODE_ENV === "test") {
-        console.error("Error syncing Bible selector state from pane:", err);
+        console.error("Error syncing Bible selector state from slot:", err);
       }
     } finally {
       loading.value = false;
@@ -316,24 +316,24 @@ export function createBibleSelectorState(
 
   const setOpen = async (
     open: boolean,
-    nextPane?: Pane,
+    nextSlot?: TabSlot,
     options?: BibleSelectorSetOpenOptions
   ) => {
     if (open) {
-      if (nextPane) {
-        pane.value = nextPane;
+      if (nextSlot) {
+        slot.value = nextSlot;
       }
 
-      const effectivePane = nextPane ?? pane.value;
-      if (!effectivePane) {
-        console.warn("No pane available to open Bible selector with.");
+      const effectiveSlot = nextSlot ?? slot.value;
+      if (!effectiveSlot) {
+        console.warn("No slot available to open Bible selector with.");
         return;
       }
 
-      pane.value = effectivePane;
+      slot.value = effectiveSlot;
       forceNewTab.value = options?.forNewTab === true;
 
-      await syncStateFromPane();
+      await syncStateFromSlot();
     } else {
       forceNewTab.value = false;
     }
@@ -341,13 +341,13 @@ export function createBibleSelectorState(
     isOpen.value = open;
   };
 
-  const setTargetPane = (paneId: string) => {
-    const nextPane =
-      panesManager.panes.value.find((p) => p.id === paneId) ?? null;
-    if (!nextPane) {
+  const setTargetSlot = (slotId: string) => {
+    const nextSlot =
+      tabsLayoutManager.slots.value.find((s) => s.id === slotId) ?? null;
+    if (!nextSlot) {
       return;
     }
-    pane.value = nextPane;
+    slot.value = nextSlot;
   };
 
   const openTabs = () => {
@@ -368,7 +368,7 @@ export function createBibleSelectorState(
   // browser back/forward buttons (and shared/bookmarked URLs) drive it, the
   // same way SidebarManager binds `sidebar`. The setter routes through
   // `setOpen` rather than writing `isOpen` directly so opening still binds the
-  // pane and loads translation data via `syncStateFromPane()`.
+  // slot and loads translation data via `syncStateFromSlot()`.
   navigation.syncSignalsToUrl({
     selector: {
       get value() {
@@ -406,7 +406,7 @@ export function createBibleSelectorState(
     selectedBookId: string,
     chapter: number
   ) => {
-    if (!pane.value) {
+    if (!slot.value) {
       return;
     }
 
@@ -416,11 +416,11 @@ export function createBibleSelectorState(
       return;
     }
 
-    // Ensure selected-tab synchronization targets this pane, not a stale selection.
-    panesManager.selectPane(pane.value.id);
+    // Ensure selected-tab synchronization targets this slot, not a stale selection.
+    tabsLayoutManager.selectSlot(slot.value.id);
 
-    if (pane.value.tab && !forceNewTab.value) {
-      await pane.value.tab.readingState.selectTranslationAndChapter(
+    if (slot.value.tab && !forceNewTab.value) {
+      await slot.value.tab.readingState.selectTranslationAndChapter(
         selectedTranslationId.value,
         selectedBookId,
         chapter
@@ -434,9 +434,7 @@ export function createBibleSelectorState(
       initialBookId: selectedBookId,
       initialChapterNumber: chapter,
     });
-    panesManager.openInPane(pane.value.id, {
-      tabId: newTab.id,
-    });
+    tabsLayoutManager.openTabInSlot(slot.value.id, newTab.id);
     setOpen(false);
   };
 
@@ -932,7 +930,7 @@ export function createBibleSelectorState(
 
   return {
     isOpen,
-    pane,
+    slot,
     readingState,
     groupedBooks,
     availableTranslations,
@@ -948,9 +946,9 @@ export function createBibleSelectorState(
     selectedTranslationBooks,
     expandedBookId,
     forceNewTab,
-    availablePanes,
+    availableSlots,
     setOpen,
-    setTargetPane,
+    setTargetSlot,
     setSearch,
     setExpandedBook,
     selectTranslation,

@@ -1,15 +1,15 @@
 import { render } from "preact";
 import { act, setupRerender, teardown } from "preact/test-utils";
 import { computed, signal, type Signal } from "@preact/signals";
-import { BibleReader } from "@packages/seed-bible/seed-bible/components/BibleReader";
-import { PaneReader } from "@packages/seed-bible/seed-bible/components/PaneLayout";
+import { BibleReader } from "@packages/seed-bible/seed-bible/components/BibleReader/BibleReader";
+import { TabSlotReader } from "@packages/seed-bible/seed-bible/components/TabsLayout";
 import {
   type BibleReadingState,
   type SelectedFootnote,
   type VerseDecoration,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
-import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
+import type { TabSlot } from "@packages/seed-bible/seed-bible/managers/TabsLayoutManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
@@ -31,7 +31,7 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
 });
 
 type ReaderFixture = {
-  pane: Pane;
+  slot: TabSlot;
   selectorState: BibleSelectorState;
   readingState: BibleReadingState;
   chapterData: Signal<TranslationBookChapter | null>;
@@ -176,12 +176,13 @@ function createFixture(): ReaderFixture {
     setOpen,
   } as any as BibleSelectorState;
 
-  const pane = {
-    id: "pane-1",
-  } as Pane;
+  const slot: TabSlot = {
+    id: "slot-1",
+    tab: null,
+  };
 
   return {
-    pane,
+    slot,
     selectorState,
     readingState,
     chapterData,
@@ -236,13 +237,13 @@ function dispatchTouch(
 }
 
 function renderMobileReader(
-  fixture: Pick<ReaderFixture, "pane" | "selectorState" | "readingState">,
+  fixture: Pick<ReaderFixture, "slot" | "selectorState" | "readingState">,
   state: SeedBibleState,
   container: HTMLDivElement
 ) {
   act(() => {
     render(
-      <PaneReader
+      <TabSlotReader
         tab={{
           id: "tab-1",
           title: "Tab 1",
@@ -251,8 +252,7 @@ function renderMobileReader(
           sharedChat: null,
         }}
         state={state}
-        pane={fixture.pane}
-        displayBelowReaderToolbar={false}
+        slot={fixture.slot}
       />,
       container
     );
@@ -281,12 +281,12 @@ describe("BibleReader", () => {
   });
 
   it("opens the selector when the title is clicked", () => {
-    const { pane, selectorState, readingState, setOpen } = createFixture();
+    const { slot, selectorState, readingState, setOpen } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -301,16 +301,16 @@ describe("BibleReader", () => {
       title?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    expect(setOpen).toHaveBeenCalledWith(true, pane);
+    expect(setOpen).toHaveBeenCalledWith(true, slot);
   });
 
   it("updates the displayed book name when the current book changes", () => {
-    const { pane, selectorState, readingState } = createFixture();
+    const { slot, selectorState, readingState } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -374,7 +374,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={first.pane}
+          currentSlot={first.slot}
           selectorState={first.selectorState}
           readingState={first.readingState}
         />,
@@ -389,7 +389,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={second.pane}
+          currentSlot={second.slot}
           selectorState={second.selectorState}
           readingState={second.readingState}
         />,
@@ -403,12 +403,12 @@ describe("BibleReader", () => {
   });
 
   it("clicking a verse selects it with event coordinates", () => {
-    const { pane, selectorState, readingState, selectVerse } = createFixture();
+    const { slot, selectorState, readingState, selectVerse } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -443,13 +443,13 @@ describe("BibleReader", () => {
   });
 
   it("clicking a footnote button opens the matching note", () => {
-    const { pane, selectorState, readingState, selectFootnote, selectVerse } =
+    const { slot, selectorState, readingState, selectFootnote, selectVerse } =
       createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -477,7 +477,7 @@ describe("BibleReader", () => {
   });
 
   it("marks selected and poetry verses with their CSS classes", () => {
-    const { pane, selectorState, readingState, selectedVerses } =
+    const { slot, selectorState, readingState, selectedVerses } =
       createFixture();
 
     selectedVerses.value = [
@@ -496,7 +496,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -510,7 +510,7 @@ describe("BibleReader", () => {
   });
 
   it("applies sb-highlight-{colorId} class for color-id highlights", () => {
-    const { pane, selectorState, readingState, highlights } = createFixture();
+    const { slot, selectorState, readingState, highlights } = createFixture();
 
     highlights.value = {
       highlights: [
@@ -524,7 +524,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -545,7 +545,7 @@ describe("BibleReader", () => {
   });
 
   it("applies inline custom highlight colors when highlight uses a custom color", () => {
-    const { pane, selectorState, readingState, highlights } = createFixture();
+    const { slot, selectorState, readingState, highlights } = createFixture();
 
     highlights.value = {
       highlights: [
@@ -561,7 +561,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -584,12 +584,12 @@ describe("BibleReader", () => {
   });
 
   it("reacts to highlight signal changes for the current chapter", () => {
-    const { pane, selectorState, readingState, highlights } = createFixture();
+    const { slot, selectorState, readingState, highlights } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -628,7 +628,7 @@ describe("BibleReader", () => {
   });
 
   it("applies verse decorations and lets decoration styles override highlight styles", () => {
-    const { pane, selectorState, readingState, highlights, decorations } =
+    const { slot, selectorState, readingState, highlights, decorations } =
       createFixture();
 
     highlights.value = {
@@ -659,7 +659,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -684,7 +684,7 @@ describe("BibleReader", () => {
   });
 
   it("displays decorations for any translation when decoration translationId is null", () => {
-    const { pane, selectorState, readingState, decorations } = createFixture();
+    const { slot, selectorState, readingState, decorations } = createFixture();
 
     decorations.value = [
       {
@@ -700,7 +700,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -722,7 +722,7 @@ describe("BibleReader", () => {
   });
 
   it("displays multiple decorations on a single verse", () => {
-    const { pane, selectorState, readingState, decorations } = createFixture();
+    const { slot, selectorState, readingState, decorations } = createFixture();
 
     decorations.value = [
       {
@@ -752,7 +752,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -775,7 +775,7 @@ describe("BibleReader", () => {
   });
 
   it("merges decoration classes together for a single verse", () => {
-    const { pane, selectorState, readingState, decorations } = createFixture();
+    const { slot, selectorState, readingState, decorations } = createFixture();
 
     decorations.value = [
       {
@@ -799,7 +799,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -824,7 +824,7 @@ describe("BibleReader", () => {
   });
 
   it("displays decorations and highlights together for a single verse", () => {
-    const { pane, selectorState, readingState, highlights, decorations } =
+    const { slot, selectorState, readingState, highlights, decorations } =
       createFixture();
 
     highlights.value = {
@@ -849,7 +849,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -874,12 +874,12 @@ describe("BibleReader", () => {
   });
 
   it("wraps inline verse groups in a verse decorator span", () => {
-    const { pane, selectorState, readingState } = createFixture();
+    const { slot, selectorState, readingState } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -902,12 +902,12 @@ describe("BibleReader", () => {
   });
 
   it("wraps poetry lines in verse decorator spans", () => {
-    const { pane, selectorState, readingState } = createFixture();
+    const { slot, selectorState, readingState } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -933,7 +933,7 @@ describe("BibleReader", () => {
   });
 
   it("applies targetContent decorations only to the matching text", () => {
-    const { pane, selectorState, readingState, decorations } = createFixture();
+    const { slot, selectorState, readingState, decorations } = createFixture();
 
     decorations.value = [
       {
@@ -953,7 +953,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -982,7 +982,7 @@ describe("BibleReader", () => {
   });
 
   it("applies targetContent only within start/end indexes", () => {
-    const { pane, selectorState, readingState, decorations } = createFixture();
+    const { slot, selectorState, readingState, decorations } = createFixture();
 
     decorations.value = [
       {
@@ -1001,7 +1001,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -1017,7 +1017,7 @@ describe("BibleReader", () => {
   });
 
   it("applies start/end-only decoration to just that index range", () => {
-    const { pane, selectorState, readingState, decorations } = createFixture();
+    const { slot, selectorState, readingState, decorations } = createFixture();
 
     decorations.value = [
       {
@@ -1035,7 +1035,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -1059,12 +1059,12 @@ describe("BibleReader", () => {
   });
 
   it("renders chapter content parts and inline markers", () => {
-    const { pane, selectorState, readingState } = createFixture();
+    const { slot, selectorState, readingState } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -1109,12 +1109,12 @@ describe("BibleReader", () => {
   });
 
   it("hides chapter headings when scriptureElements.showHeadings is false", () => {
-    const { pane, selectorState, readingState } = createFixture();
+    const { slot, selectorState, readingState } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
           scriptureElements={{
@@ -1133,12 +1133,12 @@ describe("BibleReader", () => {
   });
 
   it("hides verse numbers when scriptureElements.showVerseNumbers is false", () => {
-    const { pane, selectorState, readingState } = createFixture();
+    const { slot, selectorState, readingState } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
           scriptureElements={{
@@ -1157,7 +1157,7 @@ describe("BibleReader", () => {
   });
 
   it("hides inline footnote buttons and the footnote modal when scriptureElements.showFootnotes is false", () => {
-    const { pane, selectorState, readingState, selectedFootnote, chapterData } =
+    const { slot, selectorState, readingState, selectedFootnote, chapterData } =
       createFixture();
 
     selectedFootnote.value = {
@@ -1173,7 +1173,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
           scriptureElements={{
@@ -1193,7 +1193,7 @@ describe("BibleReader", () => {
   });
 
   it("hides highlight classes/styles when scriptureElements.showHighlights is false", () => {
-    const { pane, selectorState, readingState, highlights } = createFixture();
+    const { slot, selectorState, readingState, highlights } = createFixture();
 
     highlights.value = {
       highlights: [
@@ -1209,7 +1209,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
           scriptureElements={{
@@ -1238,12 +1238,12 @@ describe("BibleReader", () => {
   });
 
   it("omits sb-words-of-jesus class when scriptureElements.showRedLettering is false", () => {
-    const { pane, selectorState, readingState } = createFixture();
+    const { slot, selectorState, readingState } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
           scriptureElements={{
@@ -1262,12 +1262,12 @@ describe("BibleReader", () => {
   });
 
   it("applies sb-words-of-jesus class when scriptureElements.showRedLettering is true", () => {
-    const { pane, selectorState, readingState } = createFixture();
+    const { slot, selectorState, readingState } = createFixture();
 
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
           scriptureElements={{
@@ -1289,7 +1289,7 @@ describe("BibleReader", () => {
 
   it("renders an open footnote modal and closes it", () => {
     const {
-      pane,
+      slot,
       selectorState,
       readingState,
       selectedFootnote,
@@ -1310,7 +1310,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -1338,7 +1338,7 @@ describe("BibleReader", () => {
   });
 
   it("shows translation license notice and website when licenseNotice is present", () => {
-    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const { slot, selectorState, readingState, chapterData } = createFixture();
 
     chapterData.value = {
       ...chapterData.value!,
@@ -1352,7 +1352,7 @@ describe("BibleReader", () => {
     act(() => {
       render(
         <BibleReader
-          currentPane={pane}
+          currentSlot={slot}
           selectorState={selectorState}
           readingState={readingState}
         />,
@@ -1377,7 +1377,7 @@ describe("BibleReader", () => {
   });
 
   it("updates readingState.scrollPosition when the chapter scroller scrolls", () => {
-    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -1386,7 +1386,7 @@ describe("BibleReader", () => {
       previousChapterApiLink: null,
     };
 
-    renderMobileReader({ pane, selectorState, readingState }, state, container);
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
 
     const scroller = container.querySelector(
       ".sb-reader-swipe-panel-current"
@@ -1405,7 +1405,7 @@ describe("BibleReader", () => {
   });
 
   it("sets the scroller scrollTop from readingState.scrollPosition", () => {
-    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -1415,7 +1415,7 @@ describe("BibleReader", () => {
     };
     readingState.scrollPosition.value = 123;
 
-    renderMobileReader({ pane, selectorState, readingState }, state, container);
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
 
     const scroller = container.querySelector(
       ".sb-reader-swipe-panel-current"
@@ -1425,7 +1425,7 @@ describe("BibleReader", () => {
   });
 
   it("scrolls a requested verse into view when readingState.scrollToVerse is set", () => {
-    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -1450,7 +1450,7 @@ describe("BibleReader", () => {
 
     try {
       renderMobileReader(
-        { pane, selectorState, readingState },
+        { slot, selectorState, readingState },
         state,
         container
       );
@@ -1470,7 +1470,7 @@ describe("BibleReader", () => {
   });
 
   it("does not update readingState.scrollPosition when reading state points at a different chapter", () => {
-    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -1479,7 +1479,7 @@ describe("BibleReader", () => {
       previousChapterApiLink: null,
     };
 
-    renderMobileReader({ pane, selectorState, readingState }, state, container);
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
 
     const scroller = container.querySelector(
       ".sb-reader-swipe-panel-current"
@@ -1500,7 +1500,7 @@ describe("BibleReader", () => {
   });
 
   it("registers the scroll listener as passive", () => {
-    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -1523,7 +1523,7 @@ describe("BibleReader", () => {
 
     try {
       renderMobileReader(
-        { pane, selectorState, readingState },
+        { slot, selectorState, readingState },
         state,
         container
       );
@@ -1542,7 +1542,7 @@ describe("BibleReader", () => {
   });
 
   it("applies and removes the mobile hidden-header class based on scroll direction and threshold", () => {
-    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -1551,7 +1551,7 @@ describe("BibleReader", () => {
       previousChapterApiLink: null,
     };
 
-    renderMobileReader({ pane, selectorState, readingState }, state, container);
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
 
     const scroller = container.querySelector(
       ".sb-reader-swipe-panel-current"
@@ -1590,7 +1590,7 @@ describe("BibleReader", () => {
   });
 
   it("swiping left on mobile loads the next chapter", async () => {
-    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -1602,7 +1602,7 @@ describe("BibleReader", () => {
     vi.useFakeTimers();
     try {
       renderMobileReader(
-        { pane, selectorState, readingState },
+        { slot, selectorState, readingState },
         state,
         container
       );
@@ -1633,7 +1633,7 @@ describe("BibleReader", () => {
   });
 
   it("swiping right on mobile loads the previous chapter", async () => {
-    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -1645,7 +1645,7 @@ describe("BibleReader", () => {
     vi.useFakeTimers();
     try {
       renderMobileReader(
-        { pane, selectorState, readingState },
+        { slot, selectorState, readingState },
         state,
         container
       );

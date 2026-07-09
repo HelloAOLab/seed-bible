@@ -33,6 +33,17 @@ function createContext(): BibleToolContext {
     openSidebar: vi.fn(),
     openSearch: vi.fn(),
     panesManager: {} as any,
+    tabsLayoutManager: {
+      slots: signal([]),
+      layout: signal("single"),
+      selectedSlotId: signal(null),
+      selectSlot: vi.fn(),
+      setLayout: vi.fn(),
+      setSelectedSlotTab: vi.fn(),
+      openTabInSlot: vi.fn(),
+      openTabInNewSlot: vi.fn(),
+      closeSlot: vi.fn(),
+    } as any,
     tabs: {} as any,
     toast: vi.fn(),
     chats: {

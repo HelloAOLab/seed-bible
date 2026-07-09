@@ -72,12 +72,13 @@ export interface ReaderTab {
   /** Attached shared chat for collaborative tabs. */
   sharedChat: ChatSession | null;
   /**
-   * When true, this tab only exists to back a pane (e.g. a chapter opened in a
-   * new/detached panel) and is hidden from the tab strip. It is disposed
-   * automatically once no pane references it. Panes are bound to tabs by id, so
-   * such a panel still needs a real tab to own its independent reading state.
+   * When true, this tab only exists to back a tab slot (e.g. a chapter opened
+   * in a new panel) and is hidden from the tab strip. It is disposed
+   * automatically once no slot references it. Slots are bound to tabs by id,
+   * so such a slot still needs a real tab to own its independent reading
+   * state.
    */
-  paneOnly?: boolean;
+  slotOnly?: boolean;
 }
 
 function getInitialFirstTabBookId(url: URL): string {
@@ -204,14 +205,15 @@ export interface TabsManager {
    * adopts an existing state. Passing this avoids a race where the new tab's
    * `loadInitialData()` defaults to GEN 1 while the caller's follow-up
    * `selectTranslationAndChapter()` is still in flight.
-   * @param tabOptions Extra tab metadata. `paneOnly` marks the tab as hidden
-   * from the tab strip; it only backs a pane and is disposed when unreferenced.
+   * @param tabOptions Extra tab metadata. `slotOnly` marks the tab as hidden
+   * from the tab strip; it only backs a tab slot and is disposed when
+   * unreferenced.
    * @returns The newly created tab.
    */
   addTab: (
     source?: NewTabSource,
     initialReadingOptions?: InitialBibleReadingOptions,
-    tabOptions?: { paneOnly?: boolean }
+    tabOptions?: { slotOnly?: boolean }
   ) => ReaderTab;
 
   /**
@@ -383,7 +385,7 @@ export function createTabs(
   const addTab = (
     source?: NewTabSource,
     initialReadingOptions?: InitialBibleReadingOptions,
-    tabOptions?: { paneOnly?: boolean }
+    tabOptions?: { slotOnly?: boolean }
   ) => {
     const currentTabs = tabs.value;
     const nextNumber = currentTabs.length + 1;
@@ -405,7 +407,7 @@ export function createTabs(
         ),
       sharedSession,
       sharedChat,
-      paneOnly: tabOptions?.paneOnly ?? false,
+      slotOnly: tabOptions?.slotOnly ?? false,
     };
     tabs.value = [...currentTabs, nextTab];
     selectedTabId.value = nextTab.id;

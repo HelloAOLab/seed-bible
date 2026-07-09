@@ -1,31 +1,35 @@
 import { I18nProvider, useI18n } from "../i18n/I18nManager";
-import {} from "../i18n/I18nManager";
-import { PaneLayout } from "../components/PaneLayout";
+import { TabsLayout } from "../components/TabsLayout";
+import { PaneLayout, SidePane } from "../components/PaneLayout/PaneLayout";
 import { DiscoverPane } from "../components/DiscoverPane/DiscoverPane";
-import { BibleSelector } from "../components/BibleSelector";
-import { BibleReaderToolbar } from "../components/BibleReaderToolbar";
-import { FloatingReaderPanels } from "../components/FloatingReaderPanels";
-import { Sidebar, SharedSessionsToasts } from "../components/Tabs";
+import { BibleSelector } from "../components/BibleSelector/BibleSelector";
+import { BibleReaderToolbar } from "../components/BibleReaderToolbar/BibleReaderToolbar";
+import { FloatingReaderPanels } from "../components/FloatingReaderPanels/FloatingReaderPanels";
+import { Sidebar, SharedSessionsToasts } from "../components/Tabs/Tabs";
 import { createSeedBibleState } from "../managers/SeedBibleStateManager";
 import { useEffect } from "preact/hooks";
 import { useSignalEffect, type ReadonlySignal } from "@preact/signals";
-import { closeContextMenus } from "../components/ContextMenu";
-import { ModalHost } from "../components/ModalHost";
-import { ToastHost } from "../components/ToastHost";
-import { LoginModal } from "../components/LoginModal";
-import { TermsOfServiceModal } from "../components/TermsOfServiceModal";
-import { PrivacyPolicyModal } from "../components/PrivacyPolicyModal";
-import { CodeOfConductModal } from "../components/CodeOfConductModal";
+import { closeContextMenus } from "../components/ContextMenu/ContextMenu";
+import { ModalHost } from "../components/ModalHost/ModalHost";
+import { ToastHost } from "../components/ToastHost/ToastHost";
+import { LoginModal } from "../components/LoginModal/LoginModal";
+import { TermsOfServiceModal } from "../components/TermsOfServiceModal/TermsOfServiceModal";
+import { PrivacyPolicyModal } from "../components/PrivacyPolicyModal/PrivacyPolicyModal";
+import { CodeOfConductModal } from "../components/CodeOfConductModal/CodeOfConductModal";
 import { useMemo } from "preact/hooks";
 import {
   AppConfigProvider,
   DEFAULT_APP_CONFIG,
   type AppConfig,
 } from "./appConfig";
-import "./main.css";
-import { OnboardingModals } from "../components/Onboarding";
-import { Tutorial } from "../components/Tutorial";
-import { TutorialPrompt } from "../components/TutorialPrompt";
+// Foundation stylesheets — must load before any component's co-located CSS.
+// `variables` (the :root tokens) and `base` (html/body reset) come first so
+// every component rule resolves against them.
+import "./styles/base.css";
+import "./styles/utilities.css";
+import { OnboardingModals } from "../components/Onboarding/Onboarding";
+import { Tutorial } from "../components/Tutorial/Tutorial";
+import { TutorialPrompt } from "../components/TutorialPrompt/TutorialPrompt";
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -120,6 +124,9 @@ function MainContent(props: {
   const { isRtl } = useI18n();
   const appDirection = isRtl ? "rtl" : "ltr";
   const { theme, selector } = state;
+  const sidePane =
+    state.app.effectivePanes.value.find((pane) => pane.placement === "side") ??
+    null;
 
   return (
     <>
@@ -143,9 +150,14 @@ function MainContent(props: {
         />
         <Sidebar state={state} />
 
-        <main className="sb-main-content">
-          <PaneLayout state={state} />
-        </main>
+        <div className="sb-content-row">
+          <main className="sb-main-content">
+            <TabsLayout state={state} />
+          </main>
+          {sidePane && <SidePane state={state} pane={sidePane} />}
+        </div>
+
+        <PaneLayout state={state} />
 
         {state.app.isDiscoverOpen.value && (
           <DiscoverPane

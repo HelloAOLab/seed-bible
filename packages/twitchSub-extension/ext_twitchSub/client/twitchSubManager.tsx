@@ -377,23 +377,23 @@ async function openBookAndChapter(
   bookId: string,
   chapter: string
 ) {
-  const selectedPane = seedBibleState.panes.panes.value.find(
-    (pane) => pane.id === seedBibleState.panes.selectedPaneId.value
+  const selectedSlot = seedBibleState.tabsLayout.slots.value.find(
+    (slot) => slot.id === seedBibleState.tabsLayout.selectedSlotId.value
   );
-  if (!selectedPane) {
+  if (!selectedSlot) {
     console.error(
-      "No pane found with id:",
-      seedBibleState.panes.selectedPaneId.value
+      "No slot found with id:",
+      seedBibleState.tabsLayout.selectedSlotId.value
     );
     return;
   }
 
-  seedBibleState.panes.selectPane(selectedPane.id);
+  seedBibleState.tabsLayout.selectSlot(selectedSlot.id);
 
-  let readingState = selectedPane.tab?.readingState;
+  let readingState = selectedSlot.tab?.readingState;
   if (!readingState) {
     const newTab = seedBibleState.tabs.addTab();
-    seedBibleState.panes.openInPane(selectedPane.id, { tabId: newTab.id });
+    seedBibleState.tabsLayout.openTabInSlot(selectedSlot.id, newTab.id);
     readingState = newTab.readingState;
   }
 
