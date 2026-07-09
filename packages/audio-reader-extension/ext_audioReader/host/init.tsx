@@ -48,8 +48,18 @@ function PlayIcon() {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <circle cx={18} cy={18} r={18} fill="#D36433" />
-      <path d="M14 25V11L25 18L14 25Z" fill="white" />
+      <circle
+        cx={18}
+        cy={18}
+        r={18}
+        fill="#e07b4c"
+        style={{ fill: "var(--sb-primary-color, #e07b4c)" }}
+      />
+      <path
+        d="M14 25V11L25 18L14 25Z"
+        fill="#fff"
+        style={{ fill: "var(--sb-primary-font-color, #fff)" }}
+      />
     </svg>
   );
 }
@@ -63,9 +73,31 @@ function PauseIcon() {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <circle cx={18} cy={18} r={18} fill="#D36433" />
-      <rect x={13} y={11} width={3.5} height={14} rx={1} fill="white" />
-      <rect x={19.5} y={11} width={3.5} height={14} rx={1} fill="white" />
+      <circle
+        cx={18}
+        cy={18}
+        r={18}
+        fill="#e07b4c"
+        style={{ fill: "var(--sb-primary-color, #e07b4c)" }}
+      />
+      <rect
+        x={13}
+        y={11}
+        width={3.5}
+        height={14}
+        rx={1}
+        fill="#fff"
+        style={{ fill: "var(--sb-primary-font-color, #fff)" }}
+      />
+      <rect
+        x={19.5}
+        y={11}
+        width={3.5}
+        height={14}
+        rx={1}
+        fill="#fff"
+        style={{ fill: "var(--sb-primary-font-color, #fff)" }}
+      />
     </svg>
   );
 }
