@@ -406,7 +406,7 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
       initialBookId: match.bookId,
       initialChapterNumber: chapterNumber,
     });
-    state.panes.setSelectedPaneTab(targetTab.id);
+    state.tabs.selectedTabId.value = targetTab.id;
     await targetTab.readingState.selectTranslationAndChapter(
       translationId,
       match.bookId,
