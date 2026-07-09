@@ -1,4 +1,7 @@
-import { parseVerseReference } from "@packages/seed-bible/seed-bible/managers/parseVerseReference";
+import {
+  parseVerseReference,
+  parseVerseReferences,
+} from "@packages/seed-bible/seed-bible/managers/parseVerseReference";
 import type { TranslationBook } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
 function book(
@@ -218,5 +221,54 @@ describe("parseVerseReference", () => {
     expect(parseVerseReference("", BOOKS)).toBeNull();
     expect(parseVerseReference("   ", BOOKS)).toBeNull();
     expect(parseVerseReference("John", BOOKS)).toBeNull();
+  });
+});
+
+describe("parseVerseReferences", () => {
+  it("returns a single-element list for an unambiguous reference", () => {
+    expect(parseVerseReferences("John 3:16", BOOKS)).toEqual([
+      { bookId: "JHN", chapter: 3, verse: 16 },
+    ]);
+  });
+
+  it("returns every book that matches an ambiguous prefix", () => {
+    // "Phil" prefixes both Philippians and Philemon, and both have a chapter 1.
+    expect(parseVerseReferences("Phil 1:1", BOOKS)).toEqual([
+      { bookId: "PHP", chapter: 1, verse: 1 },
+      { bookId: "PHM", chapter: 1, verse: 1 },
+    ]);
+    // Bare chapter form is ambiguous the same way.
+    expect(parseVerseReferences("Phil 1", BOOKS)).toEqual([
+      { bookId: "PHP", chapter: 1 },
+      { bookId: "PHM", chapter: 1 },
+    ]);
+  });
+
+  it("narrows an ambiguous prefix by chapter, leaving one match", () => {
+    // Only Philippians has a chapter 2, so Philemon drops out.
+    expect(parseVerseReferences("Phil 2", BOOKS)).toEqual([
+      { bookId: "PHP", chapter: 2 },
+    ]);
+  });
+
+  it("returns an empty list for an unknown book or invalid format", () => {
+    expect(parseVerseReferences("Nope 1:1", BOOKS)).toEqual([]);
+    expect(parseVerseReferences("John 1-2:3", BOOKS)).toEqual([]);
+    expect(parseVerseReferences("", BOOKS)).toEqual([]);
+  });
+
+  it("applies the single-chapter verse shorthand for a unique name", () => {
+    expect(parseVerseReferences("Philemon 2", BOOKS)).toEqual([
+      { bookId: "PHM", chapter: 1, verse: 2 },
+    ]);
+  });
+
+  it("returns exactly what parseVerseReference collapses to", () => {
+    // Unambiguous -> the sole element; ambiguous or unmatched -> null.
+    expect(parseVerseReference("Phil 2", BOOKS)).toEqual(
+      parseVerseReferences("Phil 2", BOOKS)[0]
+    );
+    expect(parseVerseReferences("Phil 1", BOOKS)).toHaveLength(2);
+    expect(parseVerseReference("Phil 1", BOOKS)).toBeNull();
   });
 });
