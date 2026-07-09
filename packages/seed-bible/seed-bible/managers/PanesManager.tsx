@@ -80,6 +80,9 @@ export interface PanesManager {
   /** Closes a pane. Returns true when a pane was closed. */
   closePane: (paneId: string) => boolean;
 
+  /** Closes all panes. */
+  closeAll: () => void;
+
   /** Sets the absolute position (CSS left/top) of a floating pane. */
   setPanePosition: (paneId: string, x: number, y: number) => void;
 
@@ -269,6 +272,10 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
     });
   };
 
+  const closeAll = () => {
+    syncPaneState([]);
+  };
+
   return {
     panes,
     selectedPaneId,
@@ -277,5 +284,6 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
     closePane,
     setPanePosition,
     resizePane,
+    closeAll,
   };
 }
