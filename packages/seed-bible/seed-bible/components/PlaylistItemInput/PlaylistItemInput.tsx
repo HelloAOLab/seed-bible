@@ -4,8 +4,8 @@ import { useI18n } from "../../i18n/I18nManager";
 import type { PlaylistItemData } from "../../managers/PlaylistManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import { DiscoverSection } from "../DiscoverPane/DiscoverSection";
-import { ScriptureItemInput } from "../ScriptureItemInput";
-import { TextItemInput } from "../TextItemInput";
+import { ScriptureItemInput } from "../ScriptureItemInput/ScriptureItemInput";
+import { TextItemInput } from "../TextItemInput/TextItemInput";
 import { LinkItemInput } from "../LinkItemInput";
 
 interface PlaylistItemInputProps {

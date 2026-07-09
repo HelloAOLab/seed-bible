@@ -1,6 +1,6 @@
 import "./PlaylistHtmlContent.css";
 import { useEffect, useRef } from "preact/hooks";
-import { setSafeHtml } from "../managers/Sanitization";
+import { setSafeHtml } from "../../managers/Sanitization";
 
 /**
  * Renders a playlist HTML snippet. The stored value was sanitized when the item

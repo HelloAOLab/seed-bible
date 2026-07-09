@@ -1,13 +1,14 @@
+import "./TextItemInput.css";
 import { useRef, useState } from "preact/hooks";
 import { lazy, Suspense } from "preact/compat";
-import { useI18n } from "../i18n/I18nManager";
-import type { PlaylistItemData } from "../managers/PlaylistManager";
-import { sanitize } from "../managers/Sanitization";
+import { useI18n } from "../../i18n/I18nManager";
+import type { PlaylistItemData } from "../../managers/PlaylistManager";
+import { sanitize } from "../../managers/Sanitization";
 import type { Editor } from "@tiptap/core";
 
 // Load TipTap lazily so its (sizeable) bundle is only fetched when the user
 // actually opens the text editor; Suspense shows a placeholder meanwhile.
-const TipTapEditor = lazy(() => import("./TipTapEditor"));
+const TipTapEditor = lazy(() => import("../TipTapEditor/TipTapEditor"));
 
 interface TextItemInputProps {
   onAdd: (item: PlaylistItemData) => void;

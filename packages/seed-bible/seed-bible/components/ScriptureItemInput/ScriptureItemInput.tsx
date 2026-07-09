@@ -1,8 +1,8 @@
 import { useState } from "preact/hooks";
-import { useI18n } from "../i18n/I18nManager";
-import type { PlaylistItemData } from "../managers/PlaylistManager";
-import type { TranslationBook } from "../managers/FreeUseBibleAPI";
-import { parseVerseReference } from "../managers/parseVerseReference";
+import { useI18n } from "../../i18n/I18nManager";
+import type { PlaylistItemData } from "../../managers/PlaylistManager";
+import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
+import { parseVerseReference } from "../../managers/parseVerseReference";
 
 interface ScriptureItemInputProps {
   books: TranslationBook[];

@@ -7,7 +7,7 @@ import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
 import { MaterialIcon } from "../icons";
 import { CreatePlaylistForm } from "../CreatePlaylistForm/CreatePlaylistForm";
-import { PlayPlaylistView } from "../PlayPlaylistView";
+import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 

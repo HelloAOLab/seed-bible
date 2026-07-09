@@ -16,7 +16,7 @@ import { sortBy } from "es-toolkit";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import type { ChatsManager } from "./ChatsManager";
 import type { ReadingPlansManager } from "../managers/ReadingPlansManager";
-import { ReadingPlansPane } from "../components/ReadingPlansPane";
+import { ReadingPlansPane } from "../components/ReadingPlansPane/ReadingPlansPane";
 import type { PlaylistManager } from "./PlaylistManager";
 import { useI18n } from "../i18n";
 import {

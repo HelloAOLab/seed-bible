@@ -1,5 +1,6 @@
-import { useI18n } from "../i18n";
-import { resolveLinkMedia } from "../managers/resolveLinkMedia";
+import "./PlaylistLinkContent.css";
+import { useI18n } from "../../i18n";
+import { resolveLinkMedia } from "../../managers/resolveLinkMedia";
 
 /**
  * Renders a playlist link item based on what its URL points at (see

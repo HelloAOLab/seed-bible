@@ -1,6 +1,7 @@
+import "./ReadingPlansPane.css";
 import { useState } from "preact/hooks";
-import { useI18n } from "../i18n/I18nManager";
-import type { ReadingPlansManager } from "../managers/ReadingPlansManager";
+import { useI18n } from "../../i18n/I18nManager";
+import type { ReadingPlansManager } from "../../managers/ReadingPlansManager";
 
 interface ReadingPlansPaneProps {
   readingPlans: ReadingPlansManager;

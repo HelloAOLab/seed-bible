@@ -15,7 +15,7 @@ import type { NavigationManager } from "./NavigationManager";
 import { parseNumber } from "./Utils";
 import type { ModalManager } from "./ModalManager";
 import { PlaylistHtmlContent } from "../components/PlaylistHtmlContent";
-import { PlaylistLinkContent } from "../components/PlaylistLinkContent";
+import { PlaylistLinkContent } from "../components/PlaylistLinkContent/PlaylistLinkContent";
 import type { I18nManager } from "../i18n";
 
 export const VerseRefSchema = z.object({
