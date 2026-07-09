@@ -260,10 +260,6 @@
   "today-coming-soon": "Өнөөдрийн дэлгэц удахгүй гарах болно",
   "link-to-join-shared-session-copied": "Хуваалцсан хуралдаанд нэгдэх холбоосыг таны санах ой руу хуулсан",
   "copied-translation-share-link": "Орчуулгын хуваалцах холбоосыг хуулсан",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "Нэргүй",
   "no-chat-messages": "Одоогоор мессеж алга",
   "start-conversation": "Яриа эхлүүлэх",
@@ -348,5 +344,9 @@
   "appoint-co-host": "Хамтран зохион байгуулагчийг томилох",
   "appoint-co-host-instructions": "Сессийг ажиллуулах хэн нэгнийг сонгоно уу:",
   "end-session-for-everyone": "Хуралдааныг дуусгах",
-  "dont-show-again": "Үүнийг дахин бүү харуул"
+  "dont-show-again": "Үүнийг дахин бүү харуул",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

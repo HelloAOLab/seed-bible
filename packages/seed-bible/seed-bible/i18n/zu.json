@@ -260,10 +260,6 @@
   "today-coming-soon": "Isikrini sanamuhla siyeza maduze",
   "link-to-join-shared-session-copied": "Isixhumanisi sokujoyina iseshini eyabiwe sikopishwe ebhodini lakho lokunamathisela",
   "copied-translation-share-link": "Isixhumanisi sokwabelana ngokuhumusha esikopishiwe",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "Ongaziwa",
   "no-chat-messages": "Azikho imilayezo okwamanje",
   "start-conversation": "Qala ingxoxo",
@@ -348,5 +344,9 @@
   "appoint-co-host": "Khetha umsizi ohambisana naye",
   "appoint-co-host-instructions": "Khetha umuntu ozogcina iseshini isebenza:",
   "end-session-for-everyone": "Qeda iseshini",
-  "dont-show-again": "Ungabonisi lokhu futhi"
+  "dont-show-again": "Ungabonisi lokhu futhi",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

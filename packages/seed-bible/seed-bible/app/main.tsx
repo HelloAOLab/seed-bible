@@ -126,10 +126,6 @@ function MainContent(props: {
   const appDirection = isRtl ? "rtl" : "ltr";
   const { theme, selector } = state;
 
-  useEffect(() => {
-    state.i18n.checkInitialLanguageFallback();
-  }, []);
-
   return (
     <>
       <div

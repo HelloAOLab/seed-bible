@@ -260,10 +260,6 @@
   "today-coming-soon": "დღევანდელი ეკრანი მალე გამოვა",
   "link-to-join-shared-session-copied": "გაზიარებულ სესიასთან შეერთების ბმული თქვენს ბუფერში დაკოპირდა",
   "copied-translation-share-link": "კოპირებული თარგმანის გაზიარების ბმული",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "ანონიმური",
   "no-chat-messages": "შეტყობინებები ჯერ არ არის",
   "start-conversation": "საუბრის დაწყება",
@@ -348,5 +344,9 @@
   "appoint-co-host": "თანამასპინძლის დანიშვნა",
   "appoint-co-host-instructions": "აირჩიეთ ვინმე, ვინც სესიას გააგრძელებს:",
   "end-session-for-everyone": "სესიის დასრულება",
-  "dont-show-again": "ეს აღარ აჩვენო"
+  "dont-show-again": "ეს აღარ აჩვენო",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

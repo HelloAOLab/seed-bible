@@ -260,10 +260,6 @@
   "today-coming-soon": "מסך היום יגיע בקרוב",
   "link-to-join-shared-session-copied": "קישור להצטרפות לסשן המשותף הועתק ללוח שלך",
   "copied-translation-share-link": "קישור שיתוף התרגום הועתק",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "אֲנוֹנִימִי",
   "no-chat-messages": "אין עדיין הודעות",
   "start-conversation": "התחל שיחה",
@@ -348,5 +344,9 @@
   "appoint-co-host": "למנות מארח משותף",
   "appoint-co-host-instructions": "בחר מישהו שימשיך את ההפעלה:",
   "end-session-for-everyone": "סיום סשן",
-  "dont-show-again": "אל תציג את זה שוב"
+  "dont-show-again": "אל תציג את זה שוב",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

@@ -260,10 +260,6 @@
   "today-coming-soon": "আজকের স্ক্রিন শীঘ্রই আসছে",
   "link-to-join-shared-session-copied": "শেয়ার করা সেশনে যোগদানের একটি লিঙ্ক আপনার ক্লিপবোর্ডে কপি করা হয়েছে।",
   "copied-translation-share-link": "অনুলিপি করা অনুবাদ শেয়ার লিঙ্ক",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "বেনামী",
   "no-chat-messages": "এখনো কোনো বার্তা আসেনি",
   "start-conversation": "কথোপকথন শুরু করুন",
@@ -348,5 +344,9 @@
   "appoint-co-host": "একজন সহ-উপস্থাপক নিয়োগ করুন",
   "appoint-co-host-instructions": "সেশনটি চালু রাখার জন্য একজনকে বেছে নিন:",
   "end-session-for-everyone": "অধিবেশন শেষ করুন",
-  "dont-show-again": "এটা আবার দেখাবেন না"
+  "dont-show-again": "এটা আবার দেখাবেন না",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

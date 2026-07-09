@@ -260,10 +260,6 @@
   "today-coming-soon": "Skjárinn í dag kemur bráðum",
   "link-to-join-shared-session-copied": "Tengill til að taka þátt í sameiginlegu lotunni var afritaður á klippiborðið þitt",
   "copied-translation-share-link": "Afritaði tengil til að deila þýðingu",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "Nafnlaust",
   "no-chat-messages": "Engin skilaboð ennþá",
   "start-conversation": "Hefja samtal",
@@ -348,5 +344,9 @@
   "appoint-co-host": "Tilnefna meðgestgjafa",
   "appoint-co-host-instructions": "Veldu einhvern til að halda fundinum gangandi:",
   "end-session-for-everyone": "Loka lotu",
-  "dont-show-again": "Ekki sýna þetta aftur"
+  "dont-show-again": "Ekki sýna þetta aftur",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

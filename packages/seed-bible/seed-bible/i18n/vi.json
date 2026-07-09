@@ -260,10 +260,6 @@
   "today-coming-soon": "Màn hình hôm nay sẽ sớm ra mắt.",
   "link-to-join-shared-session-copied": "Một liên kết để tham gia phiên họp chung đã được sao chép vào khay nhớ tạm của bạn.",
   "copied-translation-share-link": "Đã sao chép liên kết chia sẻ bản dịch",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "Vô danh",
   "no-chat-messages": "Chưa có tin nhắn nào",
   "start-conversation": "Bắt đầu một cuộc trò chuyện",
@@ -348,5 +344,9 @@
   "appoint-co-host": "Chỉ định một người đồng chủ trì",
   "appoint-co-host-instructions": "Hãy chọn một người để điều hành buổi họp:",
   "end-session-for-everyone": "Kết thúc phiên",
-  "dont-show-again": "Đừng hiển thị lại cái này nữa"
+  "dont-show-again": "Đừng hiển thị lại cái này nữa",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

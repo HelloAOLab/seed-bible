@@ -260,10 +260,6 @@
   "today-coming-soon": "بۈگۈنكى ئېكران تېزلا كېلىدۇ",
   "link-to-join-shared-session-copied": "ئورتاقلىشىش يىغىنىغا قاتنىشىش ئۇلىنىشى سىزنىڭ چاپلاش تاختىسىڭىزغا كۆچۈرۈلدى",
   "copied-translation-share-link": "تەرجىمە ھەمبەھىرلەش ئۇلىنىشى كۆچۈرۈلدى",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "نامسىز",
   "no-chat-messages": "ھازىرغىچە ئۇچۇر يوق",
   "start-conversation": "سۆھبەت باشلاڭ",
@@ -348,5 +344,9 @@
   "appoint-co-host": "بىرلىكتە رىياسەتچى تەيىنلەڭ",
   "appoint-co-host-instructions": "بۇ يىغىننىڭ داۋاملىشىشىنى داۋاملاشتۇرىدىغان بىر كىشىنى تاللاڭ:",
   "end-session-for-everyone": "يىغىننى ئاخىرلاشتۇرۇڭ",
-  "dont-show-again": "بۇنى قايتا كۆرسەتمەڭ"
+  "dont-show-again": "بۇنى قايتا كۆرسەتمەڭ",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

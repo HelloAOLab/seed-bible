@@ -260,10 +260,6 @@
   "today-coming-soon": "ఈరోజు స్క్రీన్ త్వరలో వస్తుంది",
   "link-to-join-shared-session-copied": "భాగస్వామ్య సెషన్‌లో చేరడానికి సంబంధించిన లింక్ మీ క్లిప్‌బోర్డ్‌లోకి కాపీ చేయబడింది.",
   "copied-translation-share-link": "కాపీ చేయబడిన అనువాద భాగస్వామ్య లింక్",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "అనామక",
   "no-chat-messages": "ఇంకా సందేశాలు లేవు",
   "start-conversation": "సంభాషణను ప్రారంభించండి",
@@ -348,5 +344,9 @@
   "appoint-co-host": "సహ-హోస్ట్‌ను నియమించండి",
   "appoint-co-host-instructions": "సెషన్‌ను కొనసాగించడానికి ఒకరిని ఎంచుకోండి:",
   "end-session-for-everyone": "సెషన్‌ను ముగించండి",
-  "dont-show-again": "దీన్ని మళ్ళీ చూపించవద్దు"
+  "dont-show-again": "దీన్ని మళ్ళీ చూపించవద్దు",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

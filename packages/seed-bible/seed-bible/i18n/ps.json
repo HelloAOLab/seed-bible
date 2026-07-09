@@ -260,10 +260,6 @@
   "today-coming-soon": "نن سکرین ډېر ژر راځي",
   "link-to-join-shared-session-copied": "ستاسو کلپ بورډ ته د شریکې ناستې سره د یوځای کیدو لینک کاپي شو.",
   "copied-translation-share-link": "کاپي شوی ژباړه شریکول لینک",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "بې نومه",
   "no-chat-messages": "تراوسه کوم پیغام نشته",
   "start-conversation": "خبرې اترې پیل کړئ",
@@ -348,5 +344,9 @@
   "appoint-co-host": "یو شریک کوربه وټاکئ",
   "appoint-co-host-instructions": "د غونډې د دوام لپاره یو څوک غوره کړئ:",
   "end-session-for-everyone": "غونډه پای ته ورسوئ",
-  "dont-show-again": "دا بیا مه ښکاره کوه"
+  "dont-show-again": "دا بیا مه ښکاره کوه",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

@@ -260,10 +260,6 @@
   "today-coming-soon": "Dnešná obrazovka bude čoskoro k dispozícii",
   "link-to-join-shared-session-copied": "Odkaz na pripojenie k zdieľanej relácii bol skopírovaný do schránky",
   "copied-translation-share-link": "Odkaz na zdieľanie prekladu bol skopírovaný",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "Anonymný",
   "no-chat-messages": "Zatiaľ žiadne správy",
   "start-conversation": "Začať konverzáciu",
@@ -348,5 +344,9 @@
   "appoint-co-host": "Vymenujte spoluhostiteľa",
   "appoint-co-host-instructions": "Vyberte niekoho, kto bude reláciu udržiavať v chode:",
   "end-session-for-everyone": "Ukončiť reláciu",
-  "dont-show-again": "Toto už viac nezobrazovať"
+  "dont-show-again": "Toto už viac nezobrazovať",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

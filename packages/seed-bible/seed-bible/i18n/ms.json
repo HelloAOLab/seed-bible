@@ -260,10 +260,6 @@
   "today-coming-soon": "Skrin hari ini akan datang tidak lama lagi",
   "link-to-join-shared-session-copied": "Pautan untuk menyertai sesi kongsi telah disalin ke papan keratan anda",
   "copied-translation-share-link": "Pautan kongsi terjemahan yang disalin",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "Tanpa Nama",
   "no-chat-messages": "Tiada mesej lagi",
   "start-conversation": "Mulakan perbualan",
@@ -348,5 +344,9 @@
   "appoint-co-host": "Lantik hos bersama",
   "appoint-co-host-instructions": "Pilih seseorang untuk memastikan sesi ini berjalan:",
   "end-session-for-everyone": "Tamat sesi",
-  "dont-show-again": "Jangan tunjukkan ini lagi"
+  "dont-show-again": "Jangan tunjukkan ini lagi",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

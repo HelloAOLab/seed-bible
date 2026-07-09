@@ -260,10 +260,6 @@
   "today-coming-soon": "今天屏幕即将上线",
   "link-to-join-shared-session-copied": "加入共享会话的链接已复制到您的剪贴板。",
   "copied-translation-share-link": "复制的翻译分享链接",
-  "languageUnavailable.title": "语言不可用",
-  "languageUnavailable.body": "我们目前不支持此语言，但支持{{fallback}}。您要改用{{fallback}}吗？",
-  "languageUnavailable.yesContinue": "是，继续",
-  "languageUnavailable.noGoBack": "否，返回",
   "anonymous": "匿名的",
   "no-chat-messages": "暂无消息",
   "start-conversation": "开始对话",
@@ -348,5 +344,9 @@
   "appoint-co-host": "指定一位联合主持人",
   "appoint-co-host-instructions": "选择一人来维持会话运行：",
   "end-session-for-everyone": "会议结束",
-  "dont-show-again": "不要再次显示此内容"
+  "dont-show-again": "不要再次显示此内容",
+  "languageUnavailable.title": "语言不可用",
+  "languageUnavailable.body": "我们目前没有此语言的圣经译本，但有{{fallback}}。要将圣经文本切换为{{fallback}}吗？",
+  "languageUnavailable.yesContinue": "是，继续",
+  "languageUnavailable.noGoBack": "否，返回"
 }

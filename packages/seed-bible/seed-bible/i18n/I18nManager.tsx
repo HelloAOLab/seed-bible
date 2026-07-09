@@ -6,7 +6,11 @@ import { navigatorLanguages } from "../app/ssrEnv";
 import { createContext, type ComponentChildren } from "preact";
 import type { NavigationManager } from "../managers/NavigationManager";
 import { computed, signal } from "@preact/signals";
-import { getBibleTranslationFallbackUiLanguage } from "../managers/BibleReadingManager";
+import {
+  getNearestBibleTranslationForUiLanguage,
+  type TranslationWithLanguage,
+} from "../managers/BibleReadingManager";
+import type { Translation } from "../managers/FreeUseBibleAPI";
 
 function getLanguageName(importPath: string): string {
   const match = importPath.match(/\.\/([a-z-]+)\.json$/i);
@@ -104,10 +108,14 @@ export function getUrlLanguage(url: URL): string | null {
   return null;
 }
 
+/**
+ * Shown when the UI language has no direct Bible text and we would switch the
+ * reader to a nearest available translation (e.g. Gujarati → Hindi).
+ */
 export type LanguageFallbackPrompt = {
   requestedLanguage: string;
   fallbackLanguage: string;
-  previousLanguage: string;
+  fallbackTranslation: TranslationWithLanguage;
 };
 
 export function createI18nManager(
@@ -188,26 +196,77 @@ export function createI18nManager(
 
   const languageFallbackPrompt = signal<LanguageFallbackPrompt | null>(null);
 
+  /**
+   * Wired by SeedBibleState so UI language changes also select the nearest
+   * available Bible translation. Direct matches apply silently; fallback
+   * suggestions (e.g. Gujarati → Hindi) show a warning modal first.
+   */
+  let applyBibleTranslation:
+    | ((translation: TranslationWithLanguage) => Promise<void>)
+    | null = null;
+  let getActiveBibleTranslationId: (() => string | null) | null = null;
+  let getAvailableTranslations: (() => readonly Translation[] | null) | null =
+    null;
+  let ensureTranslationsLoaded:
+    | (() => Promise<readonly Translation[] | null>)
+    | null = null;
+
+  const setBibleTranslationApplicator = (
+    applicator:
+      | ((translation: TranslationWithLanguage) => Promise<void>)
+      | null,
+    getTranslationId: (() => string | null) | null = null,
+    getTranslations: (() => readonly Translation[] | null) | null = null,
+    loadTranslations:
+      | (() => Promise<readonly Translation[] | null>)
+      | null = null
+  ) => {
+    applyBibleTranslation = applicator;
+    getActiveBibleTranslationId = getTranslationId;
+    getAvailableTranslations = getTranslations;
+    ensureTranslationsLoaded = loadTranslations;
+  };
+
   const changeLanguage = i18n.changeLanguage.bind(i18n);
 
-  const requestLanguageChange = async (nextLanguage: string) => {
-    const previousLanguage = language.value;
-    if (nextLanguage === previousLanguage) {
+  const applyBibleTranslationForUiLanguage = async (uiLanguage: string) => {
+    let available = getAvailableTranslations?.() ?? null;
+    if (!available?.length && ensureTranslationsLoaded) {
+      available = (await ensureTranslationsLoaded()) ?? null;
+    }
+
+    const nearest = getNearestBibleTranslationForUiLanguage(
+      uiLanguage,
+      available
+    );
+    const activeId = getActiveBibleTranslationId?.() ?? null;
+    if (activeId === nearest.translation.id) {
+      languageFallbackPrompt.value = null;
       return;
     }
 
-    const fallbackLanguage =
-      getBibleTranslationFallbackUiLanguage(nextLanguage);
-    if (fallbackLanguage && fallbackLanguage !== previousLanguage) {
+    // Direct support: apply silently. Nearest suggestion: ask first.
+    if (nearest.usedFallback) {
       languageFallbackPrompt.value = {
-        requestedLanguage: nextLanguage,
-        fallbackLanguage,
-        previousLanguage,
+        requestedLanguage: uiLanguage,
+        fallbackLanguage: nearest.resolvedUiLanguage,
+        fallbackTranslation: nearest.translation,
       };
       return;
     }
 
-    await changeLanguage(nextLanguage);
+    languageFallbackPrompt.value = null;
+    if (!applyBibleTranslation) {
+      return;
+    }
+    await applyBibleTranslation(nearest.translation);
+  };
+
+  const requestLanguageChange = async (nextLanguage: string) => {
+    if (nextLanguage !== language.value) {
+      await changeLanguage(nextLanguage);
+    }
+    await applyBibleTranslationForUiLanguage(nextLanguage);
   };
 
   const confirmLanguageFallback = async () => {
@@ -216,33 +275,11 @@ export function createI18nManager(
       return;
     }
     languageFallbackPrompt.value = null;
-    await changeLanguage(prompt.fallbackLanguage);
+    await applyBibleTranslation?.(prompt.fallbackTranslation);
   };
 
-  const cancelLanguageFallback = async () => {
-    const prompt = languageFallbackPrompt.value;
-    if (!prompt) {
-      return;
-    }
+  const cancelLanguageFallback = () => {
     languageFallbackPrompt.value = null;
-    if (language.value !== prompt.previousLanguage) {
-      await changeLanguage(prompt.previousLanguage);
-    }
-  };
-
-  const checkInitialLanguageFallback = () => {
-    const currentLanguage = language.value;
-    const fallbackLanguage =
-      getBibleTranslationFallbackUiLanguage(currentLanguage);
-    if (!fallbackLanguage || fallbackLanguage === currentLanguage) {
-      return;
-    }
-
-    languageFallbackPrompt.value = {
-      requestedLanguage: currentLanguage,
-      fallbackLanguage,
-      previousLanguage: currentLanguage,
-    };
   };
 
   return {
@@ -252,7 +289,7 @@ export function createI18nManager(
     requestLanguageChange,
     confirmLanguageFallback,
     cancelLanguageFallback,
-    checkInitialLanguageFallback,
+    setBibleTranslationApplicator,
     languageFallbackPrompt,
     defaultLanguage,
     availableLanguages,

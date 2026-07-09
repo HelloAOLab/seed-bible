@@ -260,10 +260,6 @@
   "today-coming-soon": "شاشة اليوم قادمة قريباً",
   "link-to-join-shared-session-copied": "تم نسخ رابط للانضمام إلى الجلسة المشتركة إلى حافظتك",
   "copied-translation-share-link": "تم نسخ رابط مشاركة الترجمة",
-  "languageUnavailable.title": "اللغة غير متوفرة",
-  "languageUnavailable.body": "لا ندعم هذه اللغة حاليًا، لكننا ندعم {{fallback}}. هل تريد التبديل إلى {{fallback}} بدلاً من ذلك؟",
-  "languageUnavailable.yesContinue": "نعم، متابعة",
-  "languageUnavailable.noGoBack": "لا، ارجع",
   "anonymous": "مجهول",
   "no-chat-messages": "لم يتم إرسال أي رسالة بعد",
   "start-conversation": "ابدأ محادثة",
@@ -348,5 +344,9 @@
   "appoint-co-host": "عيّن مضيفًا مشاركًا",
   "appoint-co-host-instructions": "اختر شخصًا ما للحفاظ على استمرار الجلسة:",
   "end-session-for-everyone": "إنهاء الجلسة",
-  "dont-show-again": "لا تعرض هذا مرة أخرى"
+  "dont-show-again": "لا تعرض هذا مرة أخرى",
+  "languageUnavailable.title": "اللغة غير متوفرة",
+  "languageUnavailable.body": "ليس لدينا حاليًا ترجمة للكتاب المقدس لهذه اللغة، لكن لدينا {{fallback}}. هل تريد تبديل نص الكتاب المقدس إلى {{fallback}}؟",
+  "languageUnavailable.yesContinue": "نعم، متابعة",
+  "languageUnavailable.noGoBack": "لا، ارجع"
 }

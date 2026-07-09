@@ -260,10 +260,6 @@
   "today-coming-soon": "Skrini ya leo inakuja hivi karibuni",
   "link-to-join-shared-session-copied": "Kiungo cha kujiunga na kipindi kilichoshirikiwa kimenakiliwa kwenye ubao wako wa kunakili",
   "copied-translation-share-link": "Kiungo cha kushiriki tafsiri kimenakiliwa",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "Mtu Asiyejulikana",
   "no-chat-messages": "Hakuna ujumbe bado",
   "start-conversation": "Anza mazungumzo",
@@ -348,5 +344,9 @@
   "appoint-co-host": "Teua mwenyeji mwenza",
   "appoint-co-host-instructions": "Chagua mtu wa kuendelea na kipindi:",
   "end-session-for-everyone": "Maliza kipindi",
-  "dont-show-again": "Usionyeshe hii tena"
+  "dont-show-again": "Usionyeshe hii tena",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

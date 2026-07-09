@@ -260,10 +260,6 @@
   "today-coming-soon": "Šodienas ekrāns drīz būs pieejams",
   "link-to-join-shared-session-copied": "Saite, lai pievienotos koplietotajai sesijai, tika kopēta jūsu starpliktuvē.",
   "copied-translation-share-link": "Kopēta tulkojuma kopīgošanas saite",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "Anonīms",
   "no-chat-messages": "Vēl nav ziņojumu",
   "start-conversation": "Sākt sarunu",
@@ -348,5 +344,9 @@
   "appoint-co-host": "Norīkot līdzsaimnieku",
   "appoint-co-host-instructions": "Izvēlieties kādu, kas uzturēs sesiju:",
   "end-session-for-everyone": "Beigt sesiju",
-  "dont-show-again": "Nerādīt šo vairs"
+  "dont-show-again": "Nerādīt šo vairs",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

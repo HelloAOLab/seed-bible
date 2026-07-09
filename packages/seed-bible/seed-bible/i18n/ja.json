@@ -260,10 +260,6 @@
   "today-coming-soon": "本日のスクリーンはまもなく登場します",
   "link-to-join-shared-session-copied": "共有セッションに参加するためのリンクがクリップボードにコピーされました。",
   "copied-translation-share-link": "翻訳共有リンクをコピーしました",
-  "languageUnavailable.title": "言語は利用できません",
-  "languageUnavailable.body": "この言語には現在対応していませんが、{{fallback}}には対応しています。{{fallback}}に切り替えますか？",
-  "languageUnavailable.yesContinue": "はい、続ける",
-  "languageUnavailable.noGoBack": "いいえ、戻る",
   "anonymous": "匿名",
   "no-chat-messages": "まだメッセージはありません",
   "start-conversation": "会話を始める",
@@ -348,5 +344,9 @@
   "appoint-co-host": "共同司会者を任命する",
   "appoint-co-host-instructions": "セッションを継続する担当者を一人選んでください。",
   "end-session-for-everyone": "セッションを終了する",
-  "dont-show-again": "今後表示しない"
+  "dont-show-again": "今後表示しない",
+  "languageUnavailable.title": "言語は利用できません",
+  "languageUnavailable.body": "この言語の聖書翻訳は現在ありませんが、{{fallback}}はあります。聖書テキストを{{fallback}}に切り替えますか？",
+  "languageUnavailable.yesContinue": "はい、続ける",
+  "languageUnavailable.noGoBack": "いいえ、戻る"
 }

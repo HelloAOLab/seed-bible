@@ -260,10 +260,6 @@
   "today-coming-soon": "ഇന്നത്തെ സ്ക്രീൻ ഉടൻ വരുന്നു",
   "link-to-join-shared-session-copied": "പങ്കിട്ട സെഷനിൽ ചേരുന്നതിനുള്ള ഒരു ലിങ്ക് നിങ്ങളുടെ ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി.",
   "copied-translation-share-link": "വിവർത്തന പങ്കിടൽ ലിങ്ക് പകർത്തി",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "അജ്ഞാതൻ",
   "no-chat-messages": "ഇതുവരെ സന്ദേശങ്ങളൊന്നുമില്ല.",
   "start-conversation": "ഒരു സംഭാഷണം ആരംഭിക്കുക",
@@ -348,5 +344,9 @@
   "appoint-co-host": "ഒരു സഹ-ഹോസ്റ്റിനെ നിയമിക്കുക",
   "appoint-co-host-instructions": "സെഷൻ പ്രവർത്തിപ്പിക്കാൻ ആരെയെങ്കിലും തിരഞ്ഞെടുക്കുക:",
   "end-session-for-everyone": "സെഷൻ അവസാനിപ്പിക്കുക",
-  "dont-show-again": "ഇത് വീണ്ടും കാണിക്കരുത്"
+  "dont-show-again": "ഇത് വീണ്ടും കാണിക്കരുത്",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

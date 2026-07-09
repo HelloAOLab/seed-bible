@@ -260,10 +260,6 @@
   "today-coming-soon": "ဒီနေ့ မျက်နှာပြင် မကြာခင် လာတော့မယ်",
   "link-to-join-shared-session-copied": "မျှဝေထားသော အစည်းအဝေးသို့ ဝင်ရောက်ရန် လင့်ခ်ကို သင့်ကလစ်ဘုတ်သို့ ကူးယူပြီးပါပြီ",
   "copied-translation-share-link": "ဘာသာပြန်ဆိုချက် ကူးယူပြီး လင့်ခ်မျှဝေပါ",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "အမည်မဖော်လိုသူ",
   "no-chat-messages": "မက်ဆေ့ချ်များ မရှိသေးပါ",
   "start-conversation": "စကားဝိုင်းတစ်ခု စတင်ပါ",
@@ -348,5 +344,9 @@
   "appoint-co-host": "တွဲဖက်အိမ်ရှင်တစ်ဦးကို ခန့်အပ်ပါ",
   "appoint-co-host-instructions": "အစည်းအဝေးကို ဆက်လက်လုပ်ဆောင်ရန် တစ်စုံတစ်ဦးကို ရွေးချယ်ပါ-",
   "end-session-for-everyone": "အစည်းအဝေးကို အဆုံးသတ်ပါ",
-  "dont-show-again": "ဒါကို ထပ်မပြပါနဲ့"
+  "dont-show-again": "ဒါကို ထပ်မပြပါနဲ့",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

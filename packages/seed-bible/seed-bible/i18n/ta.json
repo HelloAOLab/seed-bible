@@ -260,10 +260,6 @@
   "today-coming-soon": "இன்றைய திரை விரைவில் வருகிறது",
   "link-to-join-shared-session-copied": "பகிரப்பட்ட அமர்வில் சேர்வதற்கான இணைப்பு உங்கள் கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது.",
   "copied-translation-share-link": "நகலெடுக்கப்பட்ட மொழிபெயர்ப்பு பகிர்வு இணைப்பு",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "அநாமதேய",
   "no-chat-messages": "இன்னும் செய்திகள் வரவில்லை",
   "start-conversation": "உரையாடலைத் தொடங்குங்கள்",
@@ -348,5 +344,9 @@
   "appoint-co-host": "ஒரு இணை தொகுப்பாளரை நியமிக்கவும்",
   "appoint-co-host-instructions": "அமர்வைத் தொடர்ந்து நடத்துவதற்கு ஒருவரைத் தேர்ந்தெடுக்கவும்:",
   "end-session-for-everyone": "அமர்வை முடிக்கவும்",
-  "dont-show-again": "இதை மீண்டும் காட்ட வேண்டாம்"
+  "dont-show-again": "இதை மீண்டும் காட்ட வேண்டாம்",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

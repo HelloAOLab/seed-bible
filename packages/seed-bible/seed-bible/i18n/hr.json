@@ -260,10 +260,6 @@
   "today-coming-soon": "Današnji ekran uskoro stiže",
   "link-to-join-shared-session-copied": "Veza za pridruživanje dijeljenoj sesiji kopirana je u vaš međuspremnik",
   "copied-translation-share-link": "Kopirana je poveznica za dijeljenje prijevoda",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "Anonimno",
   "no-chat-messages": "Još nema poruka",
   "start-conversation": "Započni razgovor",
@@ -348,5 +344,9 @@
   "appoint-co-host": "Imenujte suvoditelja",
   "appoint-co-host-instructions": "Odaberite nekoga tko će voditi sesiju:",
   "end-session-for-everyone": "Završi sesiju",
-  "dont-show-again": "Ne prikazuj ovo više"
+  "dont-show-again": "Ne prikazuj ovo više",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

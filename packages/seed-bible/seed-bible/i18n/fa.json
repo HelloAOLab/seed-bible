@@ -260,10 +260,6 @@
   "today-coming-soon": "صفحه نمایش امروز به زودی منتشر می‌شود",
   "link-to-join-shared-session-copied": "پیوندی برای پیوستن به جلسه مشترک در کلیپ‌بورد شما کپی شد",
   "copied-translation-share-link": "لینک اشتراک‌گذاری ترجمه کپی شد",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "ناشناس",
   "no-chat-messages": "هنوز پیامی ارسال نشده است",
   "start-conversation": "شروع مکالمه",
@@ -348,5 +344,9 @@
   "appoint-co-host": "یک میزبان مشترک تعیین کنید",
   "appoint-co-host-instructions": "کسی را برای ادامه‌ی جلسه انتخاب کنید:",
   "end-session-for-everyone": "پایان جلسه",
-  "dont-show-again": "اینو دیگه نشون نده"
+  "dont-show-again": "اینو دیگه نشون نده",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

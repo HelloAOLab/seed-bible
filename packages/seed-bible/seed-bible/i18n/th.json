@@ -260,10 +260,6 @@
   "today-coming-soon": "หน้าจอวันนี้จะมาเร็วๆ นี้",
   "link-to-join-shared-session-copied": "ลิงก์สำหรับเข้าร่วมเซสชันที่ใช้ร่วมกันถูกคัดลอกไปยังคลิปบอร์ดของคุณแล้ว",
   "copied-translation-share-link": "คัดลอกลิงก์แชร์คำแปล",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "นิรนาม",
   "no-chat-messages": "ยังไม่มีข้อความใดๆ",
   "start-conversation": "เริ่มต้นการสนทนา",
@@ -348,5 +344,9 @@
   "appoint-co-host": "แต่งตั้งผู้ร่วมเป็นเจ้าภาพ",
   "appoint-co-host-instructions": "เลือกคนที่จะทำหน้าที่ดำเนินกิจกรรมต่อไป:",
   "end-session-for-everyone": "สิ้นสุดการประชุม",
-  "dont-show-again": "อย่าแสดงสิ่งนี้อีก"
+  "dont-show-again": "อย่าแสดงสิ่งนี้อีก",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

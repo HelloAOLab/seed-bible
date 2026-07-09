@@ -260,10 +260,6 @@
   "today-coming-soon": "टुडे स्क्रीन जल्द आ रहा है",
   "link-to-join-shared-session-copied": "साझा सत्र में शामिल होने का लिंक आपके क्लिपबोर्ड पर कॉपी कर दिया गया है।",
   "copied-translation-share-link": "अनुवादित प्रतिलिपि का साझा लिंक",
-  "languageUnavailable.title": "भाषा उपलब्ध नहीं है",
-  "languageUnavailable.body": "हम वर्तमान में इस भाषा का समर्थन नहीं करते हैं, लेकिन हम {{fallback}} का समर्थन करते हैं। क्या आप इसके बजाय {{fallback}} पर स्विच करना चाहेंगे?",
-  "languageUnavailable.yesContinue": "हाँ, जारी रखें",
-  "languageUnavailable.noGoBack": "नहीं, वापस जाएँ",
   "anonymous": "गुमनाम",
   "no-chat-messages": "अभी तक कोई संदेश नहीं",
   "start-conversation": "एक बातचीत शुरू",
@@ -348,5 +344,9 @@
   "appoint-co-host": "एक सह-मेजबान नियुक्त करें",
   "appoint-co-host-instructions": "सेशन को चालू रखने के लिए किसी व्यक्ति को चुनें:",
   "end-session-for-everyone": "सत्र समाप्त",
-  "dont-show-again": "इसे दोबारा मत दिखाओ"
+  "dont-show-again": "इसे दोबारा मत दिखाओ",
+  "languageUnavailable.title": "भाषा उपलब्ध नहीं है",
+  "languageUnavailable.body": "हमारे पास वर्तमान में इस भाषा के लिए बाइबिल अनुवाद नहीं है, लेकिन {{fallback}} के लिए है। क्या आप बाइबिल पाठ को {{fallback}} पर स्विच करना चाहेंगे?",
+  "languageUnavailable.yesContinue": "हाँ, जारी रखें",
+  "languageUnavailable.noGoBack": "नहीं, वापस जाएँ"
 }

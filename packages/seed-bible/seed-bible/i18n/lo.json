@@ -260,10 +260,6 @@
   "today-coming-soon": "ມື້ນີ້ໜ້າຈໍຈະມາໄວໆນີ້",
   "link-to-join-shared-session-copied": "ລິ້ງເພື່ອເຂົ້າຮ່ວມເຊດຊັນທີ່ແບ່ງປັນໄດ້ຖືກຄັດລອກໄປໃສ່ຄລິບບອດຂອງທ່ານແລ້ວ",
   "copied-translation-share-link": "ສຳເນົາຄຳແປແລ້ວ ແບ່ງປັນລິ້ງ",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "ບໍ່ປະສົງອອກນາມ",
   "no-chat-messages": "ຍັງບໍ່ມີຂໍ້ຄວາມເທື່ອ",
   "start-conversation": "ເລີ່ມການສົນທະນາ",
@@ -348,5 +344,9 @@
   "appoint-co-host": "ແຕ່ງຕັ້ງຜູ້ຮ່ວມເປັນເຈົ້າພາບ",
   "appoint-co-host-instructions": "ເລືອກຜູ້ໃດຜູ້ໜຶ່ງເພື່ອຮັກສາກອງປະຊຸມໃຫ້ດຳເນີນຕໍ່ໄປ:",
   "end-session-for-everyone": "ສິ້ນສຸດກອງປະຊຸມ",
-  "dont-show-again": "ຢ່າສະແດງສິ່ງນີ້ອີກ"
+  "dont-show-again": "ຢ່າສະແດງສິ່ງນີ້ອີກ",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

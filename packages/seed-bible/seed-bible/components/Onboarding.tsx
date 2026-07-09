@@ -93,6 +93,10 @@ export function OnboardingModals({
   return card(<InstallContent onboarding={onboarding} os={os} toast={toast} />);
 }
 
+/**
+ * Warns when the chosen UI language has no Bible text and offers the nearest
+ * available translation (e.g. Gujarati UI → Hindi Bible). UI language stays put.
+ */
 export function LanguageUnavailableModal({
   className = "",
 }: {
@@ -129,7 +133,7 @@ export function LanguageUnavailableModal({
         <p className="sb-onboarding-body">
           {t("languageUnavailable.body", {
             defaultValue:
-              "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
+              "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
             fallback: fallbackDisplay,
           })}
         </p>

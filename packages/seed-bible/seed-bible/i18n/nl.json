@@ -260,10 +260,6 @@
   "today-coming-soon": "Vandaag verschijnt het scherm binnenkort.",
   "link-to-join-shared-session-copied": "Een link om deel te nemen aan de gedeelde sessie is naar uw klembord gekopieerd.",
   "copied-translation-share-link": "Gekopieerde vertaling deellink",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "Anoniem",
   "no-chat-messages": "Nog geen berichten",
   "start-conversation": "Begin een gesprek",
@@ -348,5 +344,9 @@
   "appoint-co-host": "Wijs een co-host aan.",
   "appoint-co-host-instructions": "Kies iemand die de sessie gaande houdt:",
   "end-session-for-everyone": "Sessie beëindigen",
-  "dont-show-again": "Niet meer laten zien"
+  "dont-show-again": "Niet meer laten zien",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

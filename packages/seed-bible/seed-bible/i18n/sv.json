@@ -260,10 +260,6 @@
   "today-coming-soon": "Dagens skärm kommer snart",
   "link-to-join-shared-session-copied": "En länk för att ansluta till den delade sessionen kopierades till ditt urklipp",
   "copied-translation-share-link": "Kopierad länk för delning av översättning",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "Anonym",
   "no-chat-messages": "Inga meddelanden ännu",
   "start-conversation": "Starta en konversation",
@@ -348,5 +344,9 @@
   "appoint-co-host": "Utse en medvärd",
   "appoint-co-host-instructions": "Välj någon som ska hålla sessionen igång:",
   "end-session-for-everyone": "Avsluta sessionen",
-  "dont-show-again": "Visa inte detta igen"
+  "dont-show-again": "Visa inte detta igen",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

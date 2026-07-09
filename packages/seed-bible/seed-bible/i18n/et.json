@@ -260,10 +260,6 @@
   "today-coming-soon": "Tänane ekraan tuleb varsti",
   "link-to-join-shared-session-copied": "Jagatud seansiga liitumise link kopeeriti teie lõikelauale.",
   "copied-translation-share-link": "Kopeeritud tõlke jagamise link",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "Anonüümne",
   "no-chat-messages": "Sõnumeid pole veel",
   "start-conversation": "Alusta vestlust",
@@ -348,5 +344,9 @@
   "appoint-co-host": "Määrake kaasvõõrustaja",
   "appoint-co-host-instructions": "Valige keegi seansi käigus hoidmiseks:",
   "end-session-for-everyone": "Lõpeta seanss",
-  "dont-show-again": "Ära seda enam näita"
+  "dont-show-again": "Ära seda enam näita",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

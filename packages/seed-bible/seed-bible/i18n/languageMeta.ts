@@ -70,7 +70,7 @@ export const LANG_META: Record<string, LanguageMeta> = {
   sq: { cc: "al", display: "Shqip", fallback: "fr" },
   sv: { cc: "se", display: "Svenska", fallback: "en" },
   sw: { cc: "tz", display: "Kiswahili" },
-  ta: { cc: "in", display: "தமிழ்", fallback: "en" },
+  ta: { cc: "in", display: "தமிழ்", fallback: "hi" },
   te: { cc: "in", display: "తెలుగు", fallback: "hi" },
   th: { cc: "th", display: "ไทย", fallback: "en" },
   ti: { cc: "er", display: "ትግርኛ", fallback: "am" },

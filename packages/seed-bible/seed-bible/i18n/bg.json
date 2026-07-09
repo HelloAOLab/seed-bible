@@ -260,10 +260,6 @@
   "today-coming-soon": "Днешният екран ще се появи скоро",
   "link-to-join-shared-session-copied": "Връзка за присъединяване към споделената сесия беше копирана в клипборда ви",
   "copied-translation-share-link": "Линкът за споделяне на превода е копиран",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "Анонимен",
   "no-chat-messages": "Все още няма съобщения",
   "start-conversation": "Започнете разговор",
@@ -348,5 +344,9 @@
   "appoint-co-host": "Назначете съ-домакин",
   "appoint-co-host-instructions": "Изберете някой, който да поддържа сесията:",
   "end-session-for-everyone": "Край на сесията",
-  "dont-show-again": "Не показвай това отново"
+  "dont-show-again": "Не показвай това отново",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

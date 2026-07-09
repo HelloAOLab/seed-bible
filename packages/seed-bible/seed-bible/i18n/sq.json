@@ -260,10 +260,6 @@
   "today-coming-soon": "Ekrani i sotëm vjen së shpejti",
   "link-to-join-shared-session-copied": "Një lidhje për t'u bashkuar me sesionin e përbashkët u kopjua në kujtesën tënde të përkohshme",
   "copied-translation-share-link": "Lidhja e ndarjes së përkthimit u kopjua",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "Anonim",
   "no-chat-messages": "Nuk ka ende mesazhe",
   "start-conversation": "Fillo një bisedë",
@@ -348,5 +344,9 @@
   "appoint-co-host": "Caktoni një bashkë-organizator",
   "appoint-co-host-instructions": "Zgjidh dikë që ta mbajë sesionin në punë:",
   "end-session-for-everyone": "Përfundo seancën",
-  "dont-show-again": "Mos e shfaq më këtë"
+  "dont-show-again": "Mos e shfaq më këtë",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

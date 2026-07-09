@@ -257,8 +257,8 @@ export const DEFAULT_TRANSLATIONS_BY_LANGUAGE = new Map<
   ["es", { id: "spa_onbv", language: "spa" }], // Spanish ONBV | Biblica® Open Nueva Biblia Viva 2008
   ["fa", { id: "pes_opcb", language: "pes" }], // Open Persian Contemporary Bible | Biblica® Open Persian Contemporary Bible 2022
   ["fr", { id: "fra_ncl", language: "fra" }], // French néo-Crampon Libre | Sainte Bible néo-Crampon Libre
-  ["hi", { id: "hin_cvb", language: "fra" }], // Hindi Contemporary Version Bible | Biblica® हिंदी समकालीन संस्करण-स्वतंत्र उपलब्धि
-  ["ind", { id: "ind_ayt", language: "fra" }], // Indonesian AYT Bible | Alkitab Yang Terbuka
+  ["hi", { id: "hin_cvb", language: "hin" }], // Hindi Contemporary Version Bible | Biblica® हिंदी समकालीन संस्करण-स्वतंत्र उपलब्धि
+  ["ind", { id: "ind_ayt", language: "ind" }], // Indonesian AYT Bible | Alkitab Yang Terbuka
   ["ja", { id: "jpn_loc", language: "jpn" }], // New Japanese NT | 新改訳新約聖書(1965年版)
   ["ko", { id: "kor_old", language: "kor" }], // Korean Bible 1910 | 한국어 성경
   // ['mn', { id: '', language: 'fra' }], // We don't have anything for Mongolian
@@ -281,52 +281,219 @@ const FALLBACK_TRANSLATION: TranslationWithLanguage = {
   language: "eng",
 };
 
-// const DEFAULT_TRANSLATION =;
+/**
+ * UI locale → ISO 639-3 codes used by the Bible API `translation.language`.
+ * Includes aliases so we can match the nearest available text even when the
+ * preferred hardcoded ID is missing from the loaded catalog.
+ */
+const UI_TO_BIBLE_LANGUAGE_CODES: Record<string, string[]> = {
+  am: ["amh"],
+  ar: ["arb", "ara"],
+  bn: ["ben"],
+  en: ["eng"],
+  es: ["spa"],
+  fa: ["pes", "fas"],
+  fr: ["fra"],
+  he: ["heb"],
+  hi: ["hin"],
+  ind: ["ind"],
+  iw: ["heb"],
+  ja: ["jpn"],
+  ko: ["kor"],
+  ne: ["npi", "nep"],
+  pt: ["por"],
+  ru: ["rus"],
+  sw: ["swh", "swa"],
+  tr: ["tur"],
+  ug: ["uig"],
+  uk: ["ukr"],
+  ur: ["urd"],
+  vi: ["vie"],
+  zh: ["cmn", "zho"],
+  de: ["deu", "ger"],
+  it: ["ita"],
+  nl: ["nld", "dut"],
+  pl: ["pol"],
+  sv: ["swe"],
+  th: ["tha"],
+  ta: ["tam"],
+  te: ["tel"],
+  gu: ["guj"],
+  ml: ["mal"],
+  mr: ["mar"],
+  kn: ["kan"],
+  pa: ["pan"],
+  ms: ["zlm", "msa", "may"],
+  fil: ["tgl", "fil"],
+  tl: ["tgl", "fil"],
+  ca: ["cat"],
+  ro: ["ron", "rum"],
+  cs: ["ces", "cze"],
+  sk: ["slk", "slo"],
+  el: ["ell", "gre"],
+  hu: ["hun"],
+  fi: ["fin"],
+  da: ["dan"],
+  no: ["nor", "nob"],
+  nb: ["nob", "nor"],
+  is: ["isl", "ice"],
+  af: ["afr"],
+  zu: ["zul"],
+  my: ["mya", "bur"],
+  km: ["khm"],
+  lo: ["lao"],
+  mn: ["mon", "khk"],
+};
 
-export function getDefaultTranslationForLanguage(
-  language: string,
-  visited: Set<string> = new Set()
-): TranslationWithLanguage {
-  const direct = DEFAULT_TRANSLATIONS_BY_LANGUAGE.get(language);
-  if (direct) {
-    return direct;
+function bibleLanguageCodesForUi(uiLanguage: string): string[] {
+  const mapped = UI_TO_BIBLE_LANGUAGE_CODES[uiLanguage];
+  if (mapped?.length) {
+    return mapped;
   }
-
-  if (visited.has(language)) {
-    return FALLBACK_TRANSLATION;
-  }
-  visited.add(language);
-
-  const fallbackLanguage = LANG_META[language]?.fallback;
-  if (fallbackLanguage) {
-    return getDefaultTranslationForLanguage(fallbackLanguage, visited);
-  }
-
-  return FALLBACK_TRANSLATION;
+  const preferred = DEFAULT_TRANSLATIONS_BY_LANGUAGE.get(uiLanguage)?.language;
+  return preferred ? [preferred] : [];
 }
 
-/** UI language to offer when `language` has no direct Bible translation. */
-export function getBibleTranslationFallbackUiLanguage(
-  language: string
-): string | null {
-  if (DEFAULT_TRANSLATIONS_BY_LANGUAGE.has(language)) {
+function findAvailableTranslationForUiLanguage(
+  uiLanguage: string,
+  availableTranslations: readonly Translation[] | null | undefined
+): TranslationWithLanguage | null {
+  if (!availableTranslations?.length) {
     return null;
   }
 
-  const visited = new Set<string>([language]);
-  let current = LANG_META[language]?.fallback;
-  while (current) {
-    if (DEFAULT_TRANSLATIONS_BY_LANGUAGE.has(current)) {
-      return current;
+  const preferred = DEFAULT_TRANSLATIONS_BY_LANGUAGE.get(uiLanguage);
+  if (preferred) {
+    const byId = availableTranslations.find((t) => t.id === preferred.id);
+    if (byId) {
+      return { id: byId.id, language: byId.language };
     }
-    if (visited.has(current)) {
-      return "en";
-    }
-    visited.add(current);
-    current = LANG_META[current]?.fallback;
   }
 
-  return "en";
+  const codes = new Set(
+    bibleLanguageCodesForUi(uiLanguage).map((code) => code.toLowerCase())
+  );
+  if (codes.size === 0) {
+    return null;
+  }
+
+  const byLanguage = availableTranslations.find((t) =>
+    codes.has(t.language.toLowerCase())
+  );
+  if (!byLanguage) {
+    return null;
+  }
+
+  return { id: byLanguage.id, language: byLanguage.language };
+}
+
+/**
+ * Picks the nearest Bible translation for a UI language:
+ * 1. Hardcoded preferred default for that UI language (always — so Hindi still
+ *    resolves to hin_cvb even if the catalog hasn't finished loading)
+ * 2. If a catalog is available, prefer that preferred ID when present, otherwise
+ *    any translation in a matching Bible-API language code (e.g. German → deu)
+ * 3. Walk `LANG_META.fallback` the same way (e.g. Gujarati → Hindi)
+ * 4. English (`AAB`) as last resort
+ */
+export function getDefaultTranslationForLanguage(
+  language: string,
+  visited: Set<string> = new Set(),
+  availableTranslations?: readonly Translation[] | null
+): TranslationWithLanguage {
+  return resolveNearestBibleTranslation(
+    language,
+    visited,
+    availableTranslations
+  ).translation;
+}
+
+export type NearestBibleTranslation = {
+  translation: TranslationWithLanguage;
+  /** UI language whose default we resolved to (same as requested when direct). */
+  resolvedUiLanguage: string;
+  /** True when we had to use LANG_META.fallback (or English) instead of a direct match. */
+  usedFallback: boolean;
+};
+
+function resolveNearestBibleTranslation(
+  language: string,
+  visited: Set<string> = new Set(),
+  availableTranslations?: readonly Translation[] | null
+): NearestBibleTranslation {
+  if (visited.has(language)) {
+    return {
+      translation: FALLBACK_TRANSLATION,
+      resolvedUiLanguage: "en",
+      usedFallback: true,
+    };
+  }
+  visited.add(language);
+
+  const preferred = DEFAULT_TRANSLATIONS_BY_LANGUAGE.get(language);
+  if (preferred) {
+    if (availableTranslations?.length) {
+      const fromCatalog = findAvailableTranslationForUiLanguage(
+        language,
+        availableTranslations
+      );
+      return {
+        translation: fromCatalog ?? preferred,
+        resolvedUiLanguage: language,
+        usedFallback: false,
+      };
+    }
+    return {
+      translation: preferred,
+      resolvedUiLanguage: language,
+      usedFallback: false,
+    };
+  }
+
+  if (availableTranslations?.length) {
+    const fromCatalog = findAvailableTranslationForUiLanguage(
+      language,
+      availableTranslations
+    );
+    if (fromCatalog) {
+      return {
+        translation: fromCatalog,
+        resolvedUiLanguage: language,
+        usedFallback: false,
+      };
+    }
+  }
+
+  const fallbackLanguage = LANG_META[language]?.fallback;
+  if (fallbackLanguage) {
+    const resolved = resolveNearestBibleTranslation(
+      fallbackLanguage,
+      visited,
+      availableTranslations
+    );
+    return {
+      ...resolved,
+      usedFallback: true,
+    };
+  }
+
+  return {
+    translation: FALLBACK_TRANSLATION,
+    resolvedUiLanguage: "en",
+    usedFallback: true,
+  };
+}
+
+/** Resolves nearest Bible text and whether a warning modal should be shown. */
+export function getNearestBibleTranslationForUiLanguage(
+  language: string,
+  availableTranslations?: readonly Translation[] | null
+): NearestBibleTranslation {
+  return resolveNearestBibleTranslation(
+    language,
+    new Set(),
+    availableTranslations
+  );
 }
 
 export const DEFAULT_BOOK_ID = "GEN";

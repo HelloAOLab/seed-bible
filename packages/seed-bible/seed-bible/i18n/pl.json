@@ -260,10 +260,6 @@
   "today-coming-soon": "Już wkrótce pojawi się ekran dzisiejszy",
   "link-to-join-shared-session-copied": "Link umożliwiający dołączenie do sesji współdzielonej został skopiowany do schowka",
   "copied-translation-share-link": "Skopiowano tłumaczenie, udostępnij link",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "Anonimowy",
   "no-chat-messages": "Brak wiadomości",
   "start-conversation": "Rozpocznij rozmowę",
@@ -348,5 +344,9 @@
   "appoint-co-host": "Wyznacz współgospodarza",
   "appoint-co-host-instructions": "Wybierz osobę, która będzie nadzorować sesję:",
   "end-session-for-everyone": "Zakończ sesję",
-  "dont-show-again": "Nie pokazuj tego ponownie"
+  "dont-show-again": "Nie pokazuj tego ponownie",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }

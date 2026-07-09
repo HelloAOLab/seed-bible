@@ -260,10 +260,6 @@
   "today-coming-soon": "Bugünkü ekran yakında geliyor.",
   "link-to-join-shared-session-copied": "Paylaşılan oturuma katılmak için bir bağlantı panonuza kopyalandı.",
   "copied-translation-share-link": "Kopyalanan çeviri paylaşım bağlantısı",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently support this language, but we do support {{fallback}}. Would you like to switch to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
   "anonymous": "Anonim",
   "no-chat-messages": "Henüz mesaj yok.",
   "start-conversation": "Bir konuşma başlatın",
@@ -348,5 +344,9 @@
   "appoint-co-host": "Bir yardımcı sunucu atayın",
   "appoint-co-host-instructions": "Oturumun devamlılığını sağlamak için birini seçin:",
   "end-session-for-everyone": "Oturumu sonlandır",
-  "dont-show-again": "Bunu bir daha gösterme"
+  "dont-show-again": "Bunu bir daha gösterme",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back"
 }
