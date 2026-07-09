@@ -26,6 +26,8 @@ const BOOKS: TranslationBook[] = [
   book("PHP", "Philippians", "Philippians", 4),
   book("PHM", "Philemon", "Philemon", 1),
   book("JON", "Jonah", "Jonah", 4),
+  book("JDG", "Judges", "Judges", 21),
+  book("JUD", "Jude", "Jude", 1),
 ];
 
 describe("parseVerseReference", () => {
@@ -115,6 +117,67 @@ describe("parseVerseReference", () => {
       bookId: "JHN",
       chapter: 10,
       verse: 1,
+    });
+  });
+
+  it("reads a bare number as a verse for a unique single-chapter book", () => {
+    // Philemon has one chapter, so "Philemon 2" means verse 2, not chapter 2.
+    expect(parseVerseReference("Philemon 2", BOOKS)).toEqual({
+      bookId: "PHM",
+      chapter: 1,
+      verse: 2,
+    });
+    // Jude is unique and single-chapter, so "Jude 3" -> Jude 1:3.
+    expect(parseVerseReference("Jude 3", BOOKS)).toEqual({
+      bookId: "JUD",
+      chapter: 1,
+      verse: 3,
+    });
+    // "Jud" exactly matches Jude's id, so it resolves unambiguously even though
+    // it is also a prefix of Judges -> Jude 1:3.
+    expect(parseVerseReference("Jud 3", BOOKS)).toEqual({
+      bookId: "JUD",
+      chapter: 1,
+      verse: 3,
+    });
+    // A single-chapter book reached by a unique prefix works too.
+    expect(parseVerseReference("Philem 2", BOOKS)).toEqual({
+      bookId: "PHM",
+      chapter: 1,
+      verse: 2,
+    });
+  });
+
+  it("does not apply verse shorthand to a multi-chapter book", () => {
+    // Philippians has several chapters, so a bare number stays a chapter.
+    expect(parseVerseReference("Philippians 2", BOOKS)).toEqual({
+      bookId: "PHP",
+      chapter: 2,
+    });
+  });
+
+  it("does not apply verse shorthand when the name is ambiguous", () => {
+    // "Phil" matches Philippians and Philemon and neither is an exact match, so
+    // the single-chapter book (Philemon) can't claim the number as a verse.
+    // Both books have a chapter 1, so a bare "Phil 1" stays ambiguous (null)
+    // rather than resolving to Philemon 1:1.
+    expect(parseVerseReference("Phil 1", BOOKS)).toBeNull();
+  });
+
+  it("resolves a unique multi-chapter prefix to a whole chapter", () => {
+    // "Judg" uniquely prefixes Judges (Jude does not start with "judg").
+    expect(parseVerseReference("Judg 3", BOOKS)).toEqual({
+      bookId: "JDG",
+      chapter: 3,
+    });
+  });
+
+  it("keeps an explicit chapter:verse reference in a single-chapter book", () => {
+    // "Philemon 1:2" is unaffected by the shorthand.
+    expect(parseVerseReference("Philemon 1:2", BOOKS)).toEqual({
+      bookId: "PHM",
+      chapter: 1,
+      verse: 2,
     });
   });
 

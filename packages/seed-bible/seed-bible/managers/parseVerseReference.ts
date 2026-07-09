@@ -13,6 +13,52 @@ function bookHasChapter(book: TranslationBook, chapter: number): boolean {
   return chapter >= first && chapter <= last;
 }
 
+/** Exact (case-insensitive) match on the book's common name, name, or id. */
+function exactBook(
+  target: string,
+  books: TranslationBook[]
+): TranslationBook | null {
+  return (
+    books.find(
+      (b) =>
+        normalize(b.commonName) === target ||
+        normalize(b.name) === target ||
+        normalize(b.id) === target
+    ) ?? null
+  );
+}
+
+/** All books whose common name or name starts with the target. */
+function prefixBooks(
+  target: string,
+  books: TranslationBook[]
+): TranslationBook[] {
+  return books.filter(
+    (b) =>
+      normalize(b.commonName).startsWith(target) ||
+      normalize(b.name).startsWith(target)
+  );
+}
+
+/**
+ * Resolves a typed name to a single book *by name alone*: an exact match, or a
+ * prefix that matches exactly one book. Returns `null` when the name is
+ * ambiguous (e.g. "Phil" matches both Philippians and Philemon). Used to decide
+ * whether the verse-only shorthand for single-chapter books may apply.
+ */
+function findBookByName(
+  bookName: string,
+  books: TranslationBook[]
+): TranslationBook | null {
+  const target = normalize(bookName);
+  const exact = exactBook(target, books);
+  if (exact) {
+    return exact;
+  }
+  const prefixMatches = prefixBooks(target, books);
+  return prefixMatches.length === 1 ? prefixMatches[0]! : null;
+}
+
 /**
  * Resolves a typed book name to a translation book. Tries, in order:
  * 1. An exact (case-insensitive) match on the book's common name, name, or id.
@@ -30,21 +76,12 @@ function findBook(
 ): TranslationBook | null {
   const target = normalize(bookName);
 
-  const exact = books.find(
-    (b) =>
-      normalize(b.commonName) === target ||
-      normalize(b.name) === target ||
-      normalize(b.id) === target
-  );
+  const exact = exactBook(target, books);
   if (exact) {
     return exact;
   }
 
-  const prefixMatches = books.filter(
-    (b) =>
-      normalize(b.commonName).startsWith(target) ||
-      normalize(b.name).startsWith(target)
-  );
+  const prefixMatches = prefixBooks(target, books);
   if (prefixMatches.length === 1) {
     return prefixMatches[0]!;
   }
@@ -73,6 +110,10 @@ function findBook(
  * Philippians and Philemon), the chapter number is used to disambiguate: only
  * books that actually contain that chapter are considered, so "Phil 2" resolves
  * to Philippians because Philemon has a single chapter.
+ *
+ * For a book that has only one chapter and is named unambiguously, a bare
+ * trailing number is read as a verse rather than a chapter, so "Philemon 2"
+ * yields `{ bookId, chapter: 1, verse: 2 }` and "Jude 3" yields Jude 1:3.
  *
  * Returns `null` when the book can't be matched or the format is invalid.
  */
@@ -103,6 +144,24 @@ export function parseVerseReference(
   }
 
   const chapter = Number(chapterStr);
+
+  // Verse-only shorthand: for a bare "Book N" (no colon, no range) where the
+  // name resolves unambiguously to a single-chapter book, the lone number is a
+  // verse, not a chapter — so "Philemon 2" means Philemon 1:2 and "Jude 3"
+  // means Jude 1:3. Only applies when the name is unique; ambiguous prefixes
+  // (e.g. "Jud", which also matches Judges) fall through to the chapter logic.
+  const isBareNumber = !verseStr && !endChapterStr && !endVerseStr;
+  if (isBareNumber) {
+    const namedBook = findBookByName(bookName, books);
+    if (namedBook && namedBook.numberOfChapters === 1) {
+      return {
+        bookId: namedBook.id,
+        chapter: namedBook.firstChapterNumber,
+        verse: chapter,
+      };
+    }
+  }
+
   const book = findBook(bookName, books, chapter);
   if (!book) {
     return null;
