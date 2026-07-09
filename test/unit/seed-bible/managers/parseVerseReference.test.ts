@@ -4,7 +4,8 @@ import type { TranslationBook } from "@packages/seed-bible/seed-bible/managers/F
 function book(
   id: string,
   commonName: string,
-  name = commonName
+  name = commonName,
+  numberOfChapters = 50
 ): TranslationBook {
   return {
     id,
@@ -12,19 +13,19 @@ function book(
     commonName,
     title: null,
     order: 1,
-    numberOfChapters: 50,
+    numberOfChapters,
     firstChapterNumber: 1,
   } as TranslationBook;
 }
 
 const BOOKS: TranslationBook[] = [
-  book("GEN", "Genesis"),
-  book("JHN", "John"),
-  book("1JN", "1 John"),
-  book("SNG", "Song of Songs"),
-  book("PHP", "Philippians"),
-  book("PHM", "Philemon"),
-  book("JON", "Jonah"),
+  book("GEN", "Genesis", "Genesis", 50),
+  book("JHN", "John", "John", 21),
+  book("1JN", "1 John", "1 John", 5),
+  book("SNG", "Song of Songs", "Song of Songs", 8),
+  book("PHP", "Philippians", "Philippians", 4),
+  book("PHM", "Philemon", "Philemon", 1),
+  book("JON", "Jonah", "Jonah", 4),
 ];
 
 describe("parseVerseReference", () => {
@@ -90,11 +91,31 @@ describe("parseVerseReference", () => {
     });
   });
 
-  it("returns null for an ambiguous prefix", () => {
-    // "Phil" starts both Philippians and Philemon.
+  it("returns null for an ambiguous prefix when the chapter can't disambiguate", () => {
+    // "Phil" starts both Philippians and Philemon, and both have a chapter 1.
     expect(parseVerseReference("Phil 1:1", BOOKS)).toBeNull();
-    // "Jo" starts both John and Jonah.
+    // "Jo" starts both John and Jonah, both of which have a chapter 1.
     expect(parseVerseReference("Jo 1:1", BOOKS)).toBeNull();
+  });
+
+  it("disambiguates an ambiguous prefix using the chapter number", () => {
+    // "Phil" matches both Philippians and Philemon, but Philemon has only one
+    // chapter, so "Phil 2" can only mean Philippians.
+    expect(parseVerseReference("Phil 2", BOOKS)).toEqual({
+      bookId: "PHP",
+      chapter: 2,
+    });
+    expect(parseVerseReference("Phil 2:1", BOOKS)).toEqual({
+      bookId: "PHP",
+      chapter: 2,
+      verse: 1,
+    });
+    // Jonah has 4 chapters and John has 21, so chapter 10 only fits John.
+    expect(parseVerseReference("Jo 10:1", BOOKS)).toEqual({
+      bookId: "JHN",
+      chapter: 10,
+      verse: 1,
+    });
   });
 
   it("prefers an exact match over a prefix match", () => {

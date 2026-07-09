@@ -6,15 +6,27 @@ function normalize(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+/** Whether the given chapter number falls within the book's chapter range. */
+function bookHasChapter(book: TranslationBook, chapter: number): boolean {
+  const first = book.firstChapterNumber;
+  const last = first + book.numberOfChapters - 1;
+  return chapter >= first && chapter <= last;
+}
+
 /**
  * Resolves a typed book name to a translation book. Tries, in order:
  * 1. An exact (case-insensitive) match on the book's common name, name, or id.
- * 2. A prefix match on the common name or name (e.g. "Phil" -> "Philippians"),
- *    but only when exactly one book matches — ambiguous prefixes yield `null`.
+ * 2. A prefix match on the common name or name (e.g. "Phil" -> "Philippians").
+ *    A single match wins outright. When several books share the prefix, the
+ *    requested `chapter` breaks the tie: if exactly one of them actually has
+ *    that chapter, it's chosen (e.g. "Phil 2" -> Philippians, since Philemon
+ *    has only one chapter). Otherwise the prefix stays ambiguous and yields
+ *    `null`.
  */
 function findBook(
   bookName: string,
-  books: TranslationBook[]
+  books: TranslationBook[],
+  chapter: number
 ): TranslationBook | null {
   const target = normalize(bookName);
 
@@ -33,7 +45,18 @@ function findBook(
       normalize(b.commonName).startsWith(target) ||
       normalize(b.name).startsWith(target)
   );
-  return prefixMatches.length === 1 ? prefixMatches[0]! : null;
+  if (prefixMatches.length === 1) {
+    return prefixMatches[0]!;
+  }
+  if (prefixMatches.length > 1) {
+    // Several books share the prefix; keep only those that contain the
+    // requested chapter. A unique survivor resolves the ambiguity.
+    const withChapter = prefixMatches.filter((b) => bookHasChapter(b, chapter));
+    if (withChapter.length === 1) {
+      return withChapter[0]!;
+    }
+  }
+  return null;
 }
 
 /**
@@ -45,6 +68,11 @@ function findBook(
  * yields `{ bookId, chapter }`, and a chapter range like "John 1-3" yields
  * `{ bookId, chapter: 1, endChapter: 3 }`. Mixing a chapter start with a verse
  * end (e.g. "John 1-2:3") is ambiguous and treated as invalid.
+ *
+ * When a shortened book name matches more than one book (e.g. "Phil" ->
+ * Philippians and Philemon), the chapter number is used to disambiguate: only
+ * books that actually contain that chapter are considered, so "Phil 2" resolves
+ * to Philippians because Philemon has a single chapter.
  *
  * Returns `null` when the book can't be matched or the format is invalid.
  */
@@ -74,14 +102,15 @@ export function parseVerseReference(
     return null;
   }
 
-  const book = findBook(bookName, books);
+  const chapter = Number(chapterStr);
+  const book = findBook(bookName, books, chapter);
   if (!book) {
     return null;
   }
 
   const ref: VerseRef = {
     bookId: book.id,
-    chapter: Number(chapterStr),
+    chapter,
   };
 
   if (verseStr) {
