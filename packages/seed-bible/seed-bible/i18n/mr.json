@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "सत्र चालू ठेवण्यासाठी कोणाची तरी निवड करा:",
   "end-session-for-everyone": "सत्र समाप्त करा",
   "dont-show-again": "हे पुन्हा दाखवू नका",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "भाषा उपलब्ध नाही",
+  "languageUnavailable.body": "या भाषेसाठी आमच्याकडे सध्या बायबल भाषांतर नाही, पण आम्ही {{fallback}} ला समर्थन करतो. तुम्ही बायबल मजकूर {{fallback}} वर बदलू इच्छिता?",
+  "languageUnavailable.yesContinue": "होय, सुरू ठेवा",
+  "languageUnavailable.noGoBack": "नाही, मागे जा",
   "ui-size": "UI आकार"
 }

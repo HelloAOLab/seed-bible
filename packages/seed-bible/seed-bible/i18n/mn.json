@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "Сессийг ажиллуулах хэн нэгнийг сонгоно уу:",
   "end-session-for-everyone": "Хуралдааныг дуусгах",
   "dont-show-again": "Үүнийг дахин бүү харуул",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "Хэл боломжгүй",
+  "languageUnavailable.body": "Бид одоогоор энэ хэлний Библийн орчуулга байхгүй боловч {{fallback}}-г дэмждэг. Библийн текстийг {{fallback}} руу шилжүүлэхийг хүсч байна уу?",
+  "languageUnavailable.yesContinue": "Тийм, үргэлжлүүлэх",
+  "languageUnavailable.noGoBack": "Үгүй, буцах",
   "ui-size": "Хэрэглэгчийн интерфэйсийн хэмжээ"
 }

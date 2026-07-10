@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "సెషన్‌ను కొనసాగించడానికి ఒకరిని ఎంచుకోండి:",
   "end-session-for-everyone": "సెషన్‌ను ముగించండి",
   "dont-show-again": "దీన్ని మళ్ళీ చూపించవద్దు",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "భాష అందుబాటులో లేదు",
+  "languageUnavailable.body": "ఈ భాషకు మాకు ప్రస్తుతం బైబిల్ అనువాదం లేదు, కానీ మేము {{fallback}} కు మద్దతు ఇస్తున్నాము. బైబిల్ వచనాన్ని {{fallback}} కు మార్చాలనుకుంటున్నారా?",
+  "languageUnavailable.yesContinue": "అవును, కొనసాగించు",
+  "languageUnavailable.noGoBack": "లేదు, వెనక్కి వెళ్ళు",
   "ui-size": "UI పరిమాణం"
 }

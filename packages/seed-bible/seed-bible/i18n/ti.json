@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "እቲ ክፍለ ግዜ ንኽቕጽል ዝሕግዝ ሰብ ምረጽ፤",
   "end-session-for-everyone": "ክፍለ ግዜ ምዝዛም",
   "dont-show-again": "እዚ ዳግማይ ኣይተርእይዎ።",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "ቋንቋ ኣይተረኽበን",
+  "languageUnavailable.body": "ንዚ ቋንቋ ሕጂ ትርጉም መጽሓፍ ቅዱስ የለናን፣ {{fallback}} ግን ንድግፎ ኢና። ነቲ ናይ መጽሓፍ ቅዱስ ጽሑፍ ናብ {{fallback}} ክትቀይሮ ትደልዩ ዲኻ?",
+  "languageUnavailable.yesContinue": "እወ፣ ቀጽል",
+  "languageUnavailable.noGoBack": "ኣይፋል፣ ተመለስ",
   "ui-size": "UI ስፍሓት"
 }

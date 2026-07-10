@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "کسی را برای ادامه‌ی جلسه انتخاب کنید:",
   "end-session-for-everyone": "پایان جلسه",
   "dont-show-again": "اینو دیگه نشون نده",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "زبان در دسترس نیست",
+  "languageUnavailable.body": "ما در حال حاضر ترجمهٔ کتاب مقدس برای این زبان نداریم، اما {{fallback}} را پشتیبانی می‌کنیم. آیا می‌خواهید متن کتاب مقدس را به {{fallback}} تغییر دهید؟",
+  "languageUnavailable.yesContinue": "بله، ادامه",
+  "languageUnavailable.noGoBack": "خیر، بازگشت",
   "ui-size": "اندازه رابط کاربری"
 }

@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "Oturumun devamlılığını sağlamak için birini seçin:",
   "end-session-for-everyone": "Oturumu sonlandır",
   "dont-show-again": "Bunu bir daha gösterme",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "Dil Kullanılamıyor",
+  "languageUnavailable.body": "Şu anda bu dil için bir İncil çevirimiz yok, ancak {{fallback}} dilini destekliyoruz. İncil metnini {{fallback}} diline geçirmek ister misiniz?",
+  "languageUnavailable.yesContinue": "Evet, devam et",
+  "languageUnavailable.noGoBack": "Hayır, geri dön",
   "ui-size": "Kullanıcı arayüzü boyutu"
 }

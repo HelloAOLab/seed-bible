@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "সেশনটি চালু রাখার জন্য একজনকে বেছে নিন:",
   "end-session-for-everyone": "অধিবেশন শেষ করুন",
   "dont-show-again": "এটা আবার দেখাবেন না",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "ভাষা উপলব্ধ নয়",
+  "languageUnavailable.body": "আমাদের কাছে বর্তমানে এই ভাষার জন্য কোনো বাইবেল অনুবাদ নেই, তবে আমরা {{fallback}} সমর্থন করি। আপনি কি বাইবেলের পাঠ্যটি {{fallback}}-এ পরিবর্তন করতে চান?",
+  "languageUnavailable.yesContinue": "হ্যাঁ, চালিয়ে যান",
+  "languageUnavailable.noGoBack": "না, ফিরে যান",
   "ui-size": "UI আকার"
 }

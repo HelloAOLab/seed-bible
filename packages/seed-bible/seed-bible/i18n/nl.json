@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "Kies iemand die de sessie gaande houdt:",
   "end-session-for-everyone": "Sessie beëindigen",
   "dont-show-again": "Niet meer laten zien",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "Taal niet beschikbaar",
+  "languageUnavailable.body": "We hebben momenteel geen Bijbelvertaling voor deze taal, maar we ondersteunen wel {{fallback}}. Wil je de Bijbeltekst overschakelen naar {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ja, doorgaan",
+  "languageUnavailable.noGoBack": "Nee, ga terug",
   "ui-size": "UI-grootte"
 }

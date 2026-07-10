@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "Zgjidh dikë që ta mbajë sesionin në punë:",
   "end-session-for-everyone": "Përfundo seancën",
   "dont-show-again": "Mos e shfaq më këtë",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "Gjuha nuk disponohet",
+  "languageUnavailable.body": "Aktualisht nuk kemi përkthim të Biblës për këtë gjuhë, por mbështesim {{fallback}}. Dëshironi të ndryshoni tekstin e Biblës në {{fallback}}?",
+  "languageUnavailable.yesContinue": "Po, vazhdo",
+  "languageUnavailable.noGoBack": "Jo, kthehu",
   "ui-size": "Madhësia e ndërfaqes së përdoruesit"
 }

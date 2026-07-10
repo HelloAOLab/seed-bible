@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "Изберете некој што ќе ја одржува сесијата:",
   "end-session-for-everyone": "Заврши сесија",
   "dont-show-again": "Не го прикажувај ова повторно",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "Јазикот не е достапен",
+  "languageUnavailable.body": "Во моментов немаме превод на Библијата за овој јазик, но поддржуваме {{fallback}}. Дали сакате да го промените текстот на Библијата на {{fallback}}?",
+  "languageUnavailable.yesContinue": "Да, продолжи",
+  "languageUnavailable.noGoBack": "Не, назад",
   "ui-size": "Големина на корисничкиот интерфејс"
 }

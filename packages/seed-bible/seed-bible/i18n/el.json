@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "Επιλέξτε κάποιον για να διατηρήσετε την συνεδρία σε εξέλιξη:",
   "end-session-for-everyone": "Λήξη συνεδρίας",
   "dont-show-again": "Να μην εμφανιστεί ξανά αυτό",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "Η γλώσσα δεν είναι διαθέσιμη",
+  "languageUnavailable.body": "Δεν διαθέτουμε προς το παρόν μετάφραση της Βίβλου για αυτή τη γλώσσα, αλλά υποστηρίζουμε {{fallback}}. Θέλετε να αλλάξετε το κείμενο της Βίβλου σε {{fallback}};",
+  "languageUnavailable.yesContinue": "Ναι, συνέχεια",
+  "languageUnavailable.noGoBack": "Όχι, πίσω",
   "ui-size": "Μέγεθος διεπαφής χρήστη"
 }

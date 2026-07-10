@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "Vyberte někoho, kdo bude relaci udržovat v chodu:",
   "end-session-for-everyone": "Ukončit relaci",
   "dont-show-again": "Tohle už znovu nezobrazovat",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "Jazyk není k dispozici",
+  "languageUnavailable.body": "V současnosti nemáme překlad Bible pro tento jazyk, ale podporujeme {{fallback}}. Chcete přepnout text Bible na {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ano, pokračovat",
+  "languageUnavailable.noGoBack": "Ne, zpět",
   "ui-size": "Velikost uživatelského rozhraní"
 }

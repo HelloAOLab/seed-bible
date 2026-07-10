@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "بۇ يىغىننىڭ داۋاملىشىشىنى داۋاملاشتۇرىدىغان بىر كىشىنى تاللاڭ:",
   "end-session-for-everyone": "يىغىننى ئاخىرلاشتۇرۇڭ",
   "dont-show-again": "بۇنى قايتا كۆرسەتمەڭ",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "تىل يوق",
+  "languageUnavailable.body": "بىز ھازىرچە بۇ تىل ئۈچۈن مۇقەددەس كىتاب تەرجىمىسىگە ئىگە ئەمەس، ئەمما {{fallback}} نى قوللايمىز. مۇقەددەس كىتاب تېكىستىنى {{fallback}} گە ئالماشتۇرۇشنى خالامسىز?",
+  "languageUnavailable.yesContinue": "ھەئە، داۋاملاشتۇرۇش",
+  "languageUnavailable.noGoBack": "ياق، قايتىش",
   "ui-size": "UI چوڭلۇقى"
 }

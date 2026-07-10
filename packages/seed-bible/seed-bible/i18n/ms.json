@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "Pilih seseorang untuk memastikan sesi ini berjalan:",
   "end-session-for-everyone": "Tamat sesi",
   "dont-show-again": "Jangan tunjukkan ini lagi",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "Bahasa Tidak Tersedia",
+  "languageUnavailable.body": "Kami pada masa ini tidak mempunyai terjemahan Alkitab untuk bahasa ini, tetapi kami menyokong {{fallback}}. Adakah anda ingin menukar teks Alkitab kepada {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ya, teruskan",
+  "languageUnavailable.noGoBack": "Tidak, kembali",
   "ui-size": "Saiz UI"
 }

@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "בחר מישהו שימשיך את ההפעלה:",
   "end-session-for-everyone": "סיום סשן",
   "dont-show-again": "אל תציג את זה שוב",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "השפה אינה זמינה",
+  "languageUnavailable.body": "אין לנו כרגע תרגום מקרא לשפה זו, אך אנו תומכים ב-{{fallback}}. האם ברצונך להחליף את טקסט המקרא ל-{{fallback}}?",
+  "languageUnavailable.yesContinue": "כן, המשך",
+  "languageUnavailable.noGoBack": "לא, חזור",
   "ui-size": "גודל ממשק המשתמש"
 }

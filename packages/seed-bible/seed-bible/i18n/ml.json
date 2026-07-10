@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "സെഷൻ പ്രവർത്തിപ്പിക്കാൻ ആരെയെങ്കിലും തിരഞ്ഞെടുക്കുക:",
   "end-session-for-everyone": "സെഷൻ അവസാനിപ്പിക്കുക",
   "dont-show-again": "ഇത് വീണ്ടും കാണിക്കരുത്",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "ഭാഷ ലഭ്യമല്ല",
+  "languageUnavailable.body": "ഈ ഭാഷയ്ക്ക് നിലവിൽ ബൈബിൾ വിവർത്തനം ഞങ്ങൾക്കില്ല, പക്ഷേ ഞങ്ങൾ {{fallback}} പിന്തുണയ്ക്കുന്നു. ബൈബിൾ വാചകം {{fallback}} ലേക്ക് മാറ്റാൻ നിങ്ങൾ ആഗ്രഹിക്കുന്നുണ്ടോ?",
+  "languageUnavailable.yesContinue": "അതെ, തുടരുക",
+  "languageUnavailable.noGoBack": "ഇല്ല, തിരികെ പോകുക",
   "ui-size": "UI വലുപ്പം"
 }

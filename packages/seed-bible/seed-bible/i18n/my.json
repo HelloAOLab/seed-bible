@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "အစည်းအဝေးကို ဆက်လက်လုပ်ဆောင်ရန် တစ်စုံတစ်ဦးကို ရွေးချယ်ပါ-",
   "end-session-for-everyone": "အစည်းအဝေးကို အဆုံးသတ်ပါ",
   "dont-show-again": "ဒါကို ထပ်မပြပါနဲ့",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "ဘာသာစကား မရရှိနိုင်ပါ",
+  "languageUnavailable.body": "ဤဘာသာစကားအတွက် ကျွန်ုပ်တို့တွင် ယခု ဖန်တီးခြင်းသွင်းကျမ်းမြည်းဘာသာပြန်မရှိသေးပါ၊ သို့သော် {{fallback}} ကို ပြင်ဆင်ထားပါသည်။ သင်သည် ကျမ်းစာစာသားကို {{fallback}} သို့ ပြောင်းလိုပါသလား?",
+  "languageUnavailable.yesContinue": "ဟုတ်ကဲ့၊ ဆက်လက်လုပ်ဆောင်ပါ",
+  "languageUnavailable.noGoBack": "မဟုတ်ပါ၊ ပြန်သွားပါ",
   "ui-size": "UI အရွယ်အစား"
 }

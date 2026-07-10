@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "Hãy chọn một người để điều hành buổi họp:",
   "end-session-for-everyone": "Kết thúc phiên",
   "dont-show-again": "Đừng hiển thị lại cái này nữa",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "Ngôn ngữ không khả dụng",
+  "languageUnavailable.body": "Chúng tôi hiện chưa có bản dịch Kinh Thánh cho ngôn ngữ này, nhưng chúng tôi hỗ trợ {{fallback}}. Bạn có muốn chuyển văn bản Kinh Thánh sang {{fallback}} không?",
+  "languageUnavailable.yesContinue": "Có, tiếp tục",
+  "languageUnavailable.noGoBack": "Không, quay lại",
   "ui-size": "Kích thước giao diện người dùng"
 }

@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "Velg noen til å holde økten i gang:",
   "end-session-for-everyone": "Avslutt økten",
   "dont-show-again": "Ikke vis dette igjen",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "Språk ikke tilgjengelig",
+  "languageUnavailable.body": "Vi har for øyeblikket ingen bibeloversettelse for dette språket, men vi støtter {{fallback}}. Vil du bytte bibelteksten til {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ja, fortsett",
+  "languageUnavailable.noGoBack": "Nei, gå tilbake",
   "ui-size": "UI-størrelse"
 }

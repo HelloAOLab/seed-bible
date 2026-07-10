@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "Pona moto oyo akosala ete session ezala malamu:",
   "end-session-for-everyone": "Suka session",
   "dont-show-again": "Kolakisa lisusu likambo oyo te",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "Lokótá Ezwani Te",
+  "languageUnavailable.body": "Tozali na ebandeli ya Biblia mpo na lokótá oyo te sik'oyo, kasi tozali kolandela {{fallback}}. Olingi kobongola mokanda ya Biblia na {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ɛɛ, kokoba",
+  "languageUnavailable.noGoBack": "Te, kozonga",
   "ui-size": "Taille ya UI"
 }

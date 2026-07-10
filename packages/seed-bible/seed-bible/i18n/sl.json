@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "Izberite nekoga, ki bo vodil sejo:",
   "end-session-for-everyone": "Končaj sejo",
   "dont-show-again": "Tega ne prikaži več",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "Jezik ni na voljo",
+  "languageUnavailable.body": "Trenutno nimamo prevoda Biblije za ta jezik, vendar podpiramo {{fallback}}. Ali želite preklopiti besedilo Biblije na {{fallback}}?",
+  "languageUnavailable.yesContinue": "Da, nadaljuj",
+  "languageUnavailable.noGoBack": "Ne, nazaj",
   "ui-size": "Velikost uporabniškega vmesnika"
 }

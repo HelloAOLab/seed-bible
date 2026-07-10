@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "Chagua mtu wa kuendelea na kipindi:",
   "end-session-for-everyone": "Maliza kipindi",
   "dont-show-again": "Usionyeshe hii tena",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "Lugha Haipatikani",
+  "languageUnavailable.body": "Kwa sasa hatuna tafsiri ya Biblia kwa lugha hii, lakini tunaunga mkono {{fallback}}. Je, ungependa kubadilisha maandiko ya Biblia kuwa {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ndio, endelea",
+  "languageUnavailable.noGoBack": "Hapana, rudi",
   "ui-size": "Ukubwa wa kiolesura"
 }

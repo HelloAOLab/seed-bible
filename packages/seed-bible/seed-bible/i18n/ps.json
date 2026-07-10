@@ -331,9 +331,9 @@
   "appoint-co-host-instructions": "د غونډې د دوام لپاره یو څوک غوره کړئ:",
   "end-session-for-everyone": "غونډه پای ته ورسوئ",
   "dont-show-again": "دا بیا مه ښکاره کوه",
-  "languageUnavailable.title": "Language Unavailable",
-  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
-  "languageUnavailable.yesContinue": "Yes, Continue",
-  "languageUnavailable.noGoBack": "No, Go back",
+  "languageUnavailable.title": "ژبه شتون نلري",
+  "languageUnavailable.body": "موږ په دې وخت کې د دې ژبې لپاره د بایبل ژباړه نه لرو، خو موږ د {{fallback}} ملاتړ کوو. ایا تاسو غواړئ د بایبل متن {{fallback}} ته واړوئ؟",
+  "languageUnavailable.yesContinue": "هو، دوام ورکړئ",
+  "languageUnavailable.noGoBack": "نه، بیرته لاړ شئ",
   "ui-size": "د UI اندازه"
 }
