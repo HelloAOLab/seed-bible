@@ -1727,7 +1727,7 @@ export function createBibleReadingState(
     const selectedChapter = chapterNumber.value;
     const selectedTranslation = translationId.value;
 
-    const query: Record<string, string | null> = {};
+    let query: Record<string, string | null> = {};
 
     const url = currentUrl;
 
@@ -1745,6 +1745,16 @@ export function createBibleReadingState(
         translationId !== defaultTranslation.id
       ) {
         query.translation = translationId;
+      }
+    }
+
+    for (const extension of enabledExtensions.value) {
+      if (extension.instance.transformQueryParams) {
+        query = extension.instance.transformQueryParams({
+          readingState: readingStateRef,
+          data: extension.data,
+          queryParams: query,
+        });
       }
     }
 

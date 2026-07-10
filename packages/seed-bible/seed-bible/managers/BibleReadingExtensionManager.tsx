@@ -54,6 +54,12 @@ export type DiscoveredContentHook<TData = unknown> = (ctx: {
   results: DiscoverTypedProviderResults<DiscoverResultWithBookData>[];
 }) => DiscoverTypedProviderResults<DiscoverResultWithBookData>[];
 
+export type GetUrlQueryParamsHook<TData = unknown> = (ctx: {
+  readingState: BibleReadingState;
+  data: Signal<TData>;
+  queryParams: Record<string, string | null>;
+}) => Record<string, string | null>;
+
 /**
  * The per-reading-state instance an extension returns from `activate()`.
  * Every hook is optional; an extension only implements what it needs.
@@ -65,6 +71,14 @@ export interface ReadingExtensionInstance<TData = unknown> {
   navigatePrevious?: ReadingNavigationHook<TData>;
   /** Adds to, filters, or replaces the discovered content for the chapter. */
   transformDiscoveredContent?: DiscoveredContentHook<TData>;
+
+  /**
+   * Gets the URL query parameters for the current reading state.
+   * @param currentUrl The current URL.
+   * @returns An object representing the query parameters.
+   */
+  transformQueryParams?: GetUrlQueryParamsHook<TData>;
+
   /** Called when the extension is disabled or the reading state is disposed. */
   dispose?: () => void;
 }
