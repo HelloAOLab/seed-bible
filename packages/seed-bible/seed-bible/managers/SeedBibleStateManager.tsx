@@ -1208,7 +1208,6 @@ export function createSeedBibleState(
       }
       await selector.selectTranslation(translation.id);
     },
-    () => selectedTab.value?.readingState.translationId.value ?? null,
     () => data.availableTranslations.value,
     async () => {
       if (data.availableTranslations.value.length === 0) {

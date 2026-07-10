@@ -204,7 +204,6 @@ export function createI18nManager(
   let applyBibleTranslation:
     | ((translation: TranslationWithLanguage) => Promise<void>)
     | null = null;
-  let getActiveBibleTranslationId: (() => string | null) | null = null;
   let getAvailableTranslations: (() => readonly Translation[] | null) | null =
     null;
   let ensureTranslationsLoaded:
@@ -215,14 +214,12 @@ export function createI18nManager(
     applicator:
       | ((translation: TranslationWithLanguage) => Promise<void>)
       | null,
-    getTranslationId: (() => string | null) | null = null,
     getTranslations: (() => readonly Translation[] | null) | null = null,
     loadTranslations:
       | (() => Promise<readonly Translation[] | null>)
       | null = null
   ) => {
     applyBibleTranslation = applicator;
-    getActiveBibleTranslationId = getTranslationId;
     getAvailableTranslations = getTranslations;
     ensureTranslationsLoaded = loadTranslations;
   };
