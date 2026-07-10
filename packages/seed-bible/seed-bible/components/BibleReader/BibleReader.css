@@ -610,8 +610,13 @@
 
 .sb-verse-decoration-search-result,
 .sb-verse-decoration-initial-verse-highlight,
-.sb-verse-decoration-open-reference-highlight {
-  background: color-mix(in srgb, var(--sb-secondary-color), transparent 28%);
+.sb-verse-decoration-open-reference-highlight,
+.sb-verse-decoration-playlist-verse-highlight {
+  background: color-mix(
+    in srgb,
+    var(--sb-secondary-color),
+    transparent 28%
+  ) !important;
 }
 
 .sb-highlight-preview-pill {
