@@ -16,7 +16,7 @@ import type {
   ChapterHighlights,
 } from "../../managers/HighlightsManager";
 import type { BibleSelectorState } from "../../managers/BibleSelectorManager";
-import type { Pane } from "../../managers/PanesManager";
+import type { TabSlot } from "../../managers/TabsLayoutManager";
 import type { ScriptureElementsBehavior } from "../../managers/SettingsManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import type { BibleReadingSession } from "../../managers/SessionsManager";
@@ -794,7 +794,7 @@ function renderChapterContent(
 }
 
 interface BibleReaderProps {
-  currentPane: Pane;
+  currentSlot: TabSlot;
   readingState: BibleReadingState;
   selectorState: BibleSelectorState;
   scriptureElements?: ScriptureElementsBehavior;
@@ -900,7 +900,7 @@ function ChapterContent(props: ChapterContentProps) {
 
 export function BibleReader(props: BibleReaderProps) {
   const {
-    currentPane,
+    currentSlot,
     readingState,
     selectorState,
     state,
@@ -965,10 +965,10 @@ export function BibleReader(props: BibleReaderProps) {
 
   const openBookSelector = () => {
     selectorState.selectingTranslation.value = false;
-    void selectorState.setOpen(true, currentPane);
+    void selectorState.setOpen(true, currentSlot);
   };
   const openTranslationSelector = async () => {
-    await selectorState.setOpen(true, currentPane);
+    await selectorState.setOpen(true, currentSlot);
     selectorState.selectingTranslation.value = true;
   };
 
@@ -1044,8 +1044,24 @@ export function BibleReader(props: BibleReaderProps) {
     }
   };
 
+  const renderMobileChapterTitle = (
+    bookName: string,
+    chapter: number | string
+  ) => (
+    <h2 className="sb-bible-reader-mobile-content-title">
+      <span className="sb-bible-reader-book">{bookName}</span>
+      <span className="sb-bible-reader-chapter">{chapter}</span>
+    </h2>
+  );
+
   const renderMainContent = () => (
     <>
+      {isMobile &&
+        renderMobileChapterTitle(
+          currentBook.value?.name ?? bookId.value ?? "",
+          chapterNumber.value ?? ""
+        )}
+
       {error.value && !loading.value && (
         <p className="sb-reader-error">{error.value}</p>
       )}
@@ -1180,6 +1196,11 @@ export function BibleReader(props: BibleReaderProps) {
                 className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
                 aria-hidden="true"
               >
+                {mobileChrome?.prevChapterPreview &&
+                  renderMobileChapterTitle(
+                    mobileChrome.prevChapterPreview.book.name,
+                    mobileChrome.prevChapterPreview.chapter.number
+                  )}
                 <div className="sb-chapter-content">
                   {renderStaticChapterContent(
                     mobileChrome?.prevChapterPreview ?? null,
@@ -1197,6 +1218,11 @@ export function BibleReader(props: BibleReaderProps) {
                 className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
                 aria-hidden="true"
               >
+                {mobileChrome?.nextChapterPreview &&
+                  renderMobileChapterTitle(
+                    mobileChrome.nextChapterPreview.book.name,
+                    mobileChrome.nextChapterPreview.chapter.number
+                  )}
                 <div className="sb-chapter-content">
                   {renderStaticChapterContent(
                     mobileChrome?.nextChapterPreview ?? null,
@@ -1219,7 +1245,7 @@ export function BibleReader(props: BibleReaderProps) {
         <>
           <div className="sb-bible-reader-header">
             <h2
-              onClick={() => selectorState.setOpen(true, currentPane)}
+              onClick={() => selectorState.setOpen(true, currentSlot)}
               className="sb-bible-reader-title"
             >
               <span className="sb-bible-reader-book">

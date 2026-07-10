@@ -74,9 +74,18 @@ export interface UploadedExtension {
   url: string;
 
   /**
-   * The metadata for this extension.
+   * The metadata for this extension. `meta.translations` may be trimmed down
+   * to just `title`/`description` per locale — see `loadFullTranslations`.
    */
   meta: ExtensionMeta;
+
+  /**
+   * Loads this extension's full per-locale translations (every key, not just
+   * `title`/`description`). Optional: extensions whose `meta.translations`
+   * is already complete (e.g. fetched over the network rather than bundled)
+   * don't need it, and callers fall back to `meta.translations`.
+   */
+  loadFullTranslations?: () => Promise<ExtensionMeta["translations"]>;
 }
 
 export interface ImportExtension {
@@ -89,8 +98,19 @@ export interface ImportExtension {
    */
   import: () => Promise<unknown>;
 
-  /** The metadata for this extension. */
+  /**
+   * The metadata for this extension. `meta.translations` may be trimmed down
+   * to just `title`/`description` per locale — see `loadFullTranslations`.
+   */
   meta: ExtensionMeta;
+
+  /**
+   * Loads this extension's full per-locale translations (every key, not just
+   * `title`/`description`). Bundled extensions (see `vite-plugin-extensions.ts`)
+   * defer everything but `title`/`description` to this dynamic import, so the
+   * full translation payload is only fetched once the extension is installed.
+   */
+  loadFullTranslations?: () => Promise<ExtensionMeta["translations"]>;
 }
 
 /**
@@ -691,7 +711,10 @@ export function createExtensionManager(
         }
       }
 
-      addTranslations(uploaded.meta.id, uploaded.meta.translations);
+      const translations = uploaded.loadFullTranslations
+        ? await uploaded.loadFullTranslations()
+        : uploaded.meta.translations;
+      addTranslations(uploaded.meta.id, translations);
 
       if ("url" in uploaded && uploaded.url) {
         const installed = await loadExtensionFromUrl(extensionId, uploaded.url);

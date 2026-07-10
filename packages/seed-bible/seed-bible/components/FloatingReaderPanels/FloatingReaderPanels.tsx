@@ -12,6 +12,11 @@ import {
   ContextMenuWithButton,
 } from "../ContextMenu/ContextMenu";
 import { getDefaultTranslationForLanguage } from "../../managers/BibleReadingManager";
+import {
+  matchBookReferences,
+  type BookReferenceMatch,
+} from "../../managers/SearchManager";
+import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type {
   ChatMessage,
   ChatProvider,
@@ -130,7 +135,7 @@ function getOrCreateSearchTargetTab(state: SeedBibleState): ReaderTab {
     return selectedTab;
   }
   const tab = state.tabs.addTab();
-  state.panes.setSelectedPaneTab(tab.id);
+  state.tabsLayout.setSelectedSlotTab(tab.id);
   return tab;
 }
 
@@ -162,6 +167,8 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
 
   const searchQuery = useSignal("");
   const searchResults = useSignal<SearchResult[]>([]);
+  const bookMatches = useSignal<BookReferenceMatch[]>([]);
+  const translationBooks = useSignal<TranslationBook[]>([]);
   const searchLoading = useSignal(false);
   const searchError = useSignal<string | null>(null);
   const highlightedResultIndex = useSignal(-1);
@@ -169,7 +176,18 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const resultRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const latestRequestRef = useRef(0);
+  const booksRequestRef = useRef(0);
   const debounceTimeoutRef = useRef<number | null>(null);
+
+  // The book matches (if any) sit above the verse results and share a single
+  // keyboard-navigable index: books first, then verses.
+  const resolveActiveTranslationId = () =>
+    state.app.currentReadingState.value?.translationId ??
+    getDefaultTranslationForLanguage(state.i18n.defaultLanguage).id;
+  const resolveActiveLanguage = () =>
+    state.app.currentReadingState.value?.tab.readingState.translation.value
+      ?.language ??
+    getDefaultTranslationForLanguage(state.i18n.defaultLanguage).language;
 
   useEffect(() => {
     return () => {
@@ -193,11 +211,41 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
     latestRequestRef.current++;
     searchQuery.value = "";
     searchResults.value = [];
+    bookMatches.value = [];
     searchLoading.value = false;
     searchError.value = null;
     highlightedResultIndex.value = -1;
     return undefined;
   }, [isOpen]);
+
+  // Load the active translation's book list while the panel is open so book /
+  // chapter matches can be computed locally (no network) as the user types.
+  // getTranslationBooks is cached by BibleDataManager, so this is cheap.
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const translationId = resolveActiveTranslationId();
+    const requestId = ++booksRequestRef.current;
+
+    state.bibleData
+      .getTranslationBooks(translationId)
+      .then((result) => {
+        if (booksRequestRef.current !== requestId) return;
+        translationBooks.value = result.books;
+        // Books may arrive after the user has already typed; refresh matches.
+        const query = searchQuery.value.trim();
+        bookMatches.value = query
+          ? matchBookReferences(query, result.books)
+          : [];
+      })
+      .catch(() => {
+        if (booksRequestRef.current !== requestId) return;
+        translationBooks.value = [];
+        bookMatches.value = [];
+      });
+
+    return undefined;
+  }, [isOpen, state.app.currentReadingState.value?.translationId]);
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -232,22 +280,22 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
     }
 
     const query = nextQuery.trim();
-    const activeTranslationId =
-      state.app.currentReadingState.value?.translationId ??
-      getDefaultTranslationForLanguage(state.i18n.defaultLanguage).id;
-    const activeLanguage =
-      state.app.currentReadingState.value?.tab.readingState.translation.value
-        ?.language ??
-      getDefaultTranslationForLanguage(state.i18n.defaultLanguage).language;
+    const activeTranslationId = resolveActiveTranslationId();
+    const activeLanguage = resolveActiveLanguage();
     const requestId = ++latestRequestRef.current;
 
     if (!query) {
       searchResults.value = [];
+      bookMatches.value = [];
       searchLoading.value = false;
       searchError.value = null;
       highlightedResultIndex.value = -1;
       return;
     }
+
+    // Book / chapter matches resolve locally from the loaded book list, so we
+    // can surface them immediately rather than waiting on the verse debounce.
+    bookMatches.value = matchBookReferences(query, translationBooks.value);
 
     searchLoading.value = true;
     searchError.value = null;
@@ -325,18 +373,74 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
       initialBookId: result.bookId,
       initialChapterNumber: result.chapterNumber,
     });
-    state.panes.setSelectedPaneTab(targetTab.id);
+    state.tabsLayout.setSelectedSlotTab(targetTab.id);
     await navigateTabToResult(targetTab, result);
   };
 
-  const moveHighlightedResult = (direction: 1 | -1) => {
-    if (searchResults.value.length === 0) return;
-    const nextIndex = highlightedResultIndex.value + direction;
-    if (nextIndex < 0) {
-      highlightedResultIndex.value = searchResults.value.length - 1;
+  const resolveBookChapter = (match: BookReferenceMatch): number => {
+    if (match.chapterNumber !== null) return match.chapterNumber;
+    const book = translationBooks.value.find((b) => b.id === match.bookId);
+    return book?.firstChapterNumber ?? 1;
+  };
+
+  const openBookMatch = async (match: BookReferenceMatch) => {
+    closeContextMenus();
+    sidebar.closeSearchPanel();
+
+    const targetTab = getOrCreateSearchTargetTab(state);
+    await targetTab.readingState.selectTranslationAndChapter(
+      resolveActiveTranslationId(),
+      match.bookId,
+      resolveBookChapter(match)
+    );
+  };
+
+  const openBookMatchInNewTab = async (match: BookReferenceMatch) => {
+    closeContextMenus();
+    sidebar.closeSearchPanel();
+
+    const translationId = resolveActiveTranslationId();
+    const chapterNumber = resolveBookChapter(match);
+    const targetTab = state.tabs.addTab(undefined, {
+      initialTranslationId: translationId,
+      initialBookId: match.bookId,
+      initialChapterNumber: chapterNumber,
+    });
+    state.tabs.selectedTabId.value = targetTab.id;
+    await targetTab.readingState.selectTranslationAndChapter(
+      translationId,
+      match.bookId,
+      chapterNumber
+    );
+  };
+
+  // Books occupy indices [0, bookMatches.length); verses follow. Enter/arrow
+  // navigation operates over this combined ordering.
+  const openHighlightedEntry = () => {
+    const index = highlightedResultIndex.value;
+    if (index < 0) return;
+    const bookCount = bookMatches.value.length;
+    if (index < bookCount) {
+      const match = bookMatches.value[index];
+      if (match) void openBookMatch(match);
       return;
     }
-    if (nextIndex >= searchResults.value.length) {
+    const result = searchResults.value[index - bookCount];
+    if (result) void openSearchResult(result);
+  };
+
+  const totalEntryCount = () =>
+    bookMatches.value.length + searchResults.value.length;
+
+  const moveHighlightedResult = (direction: 1 | -1) => {
+    const total = totalEntryCount();
+    if (total === 0) return;
+    const nextIndex = highlightedResultIndex.value + direction;
+    if (nextIndex < 0) {
+      highlightedResultIndex.value = total - 1;
+      return;
+    }
+    if (nextIndex >= total) {
       highlightedResultIndex.value = 0;
       return;
     }
@@ -355,11 +459,9 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
       return;
     }
     if (event.key === "Enter") {
-      const highlighted =
-        searchResults.value[highlightedResultIndex.value] ?? null;
-      if (!highlighted) return;
+      if (highlightedResultIndex.value < 0) return;
       event.preventDefault();
-      void openSearchResult(highlighted);
+      openHighlightedEntry();
       return;
     }
     if (event.key === "Escape") {
@@ -388,6 +490,88 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
     >
       {showResultsArea && (
         <div className="sb-floating-search-results" role="listbox">
+          {bookMatches.value.length > 0 && (
+            <div className="sb-floating-search-section">
+              <div className="sb-floating-search-section-title">
+                {t("books", { defaultValue: "Books" })}
+              </div>
+              <div className="sb-floating-search-results-list">
+                {bookMatches.value.map((match, index) => {
+                  const label =
+                    match.chapterNumber !== null
+                      ? `${match.bookName} ${match.chapterNumber}`
+                      : match.bookName;
+                  return (
+                    <button
+                      key={`${match.bookId}-${match.chapterNumber ?? "book"}`}
+                      ref={(element) => {
+                        resultRefs.current[index] = element;
+                      }}
+                      type="button"
+                      onClick={() => {
+                        void openBookMatch(match);
+                      }}
+                      onMouseEnter={() => {
+                        highlightedResultIndex.value = index;
+                      }}
+                      className={`sb-floating-search-result sb-floating-search-book${
+                        highlightedResultIndex.value === index
+                          ? " sb-floating-search-result-highlighted"
+                          : ""
+                      }`}
+                      role="option"
+                      aria-selected={highlightedResultIndex.value === index}
+                    >
+                      <header className="sb-floating-search-result-header">
+                        <span
+                          className="material-symbols-outlined sb-floating-search-book-icon"
+                          aria-hidden="true"
+                        >
+                          menu_book
+                        </span>
+                        <span className="sb-floating-search-result-ref">
+                          {label}
+                        </span>
+                        <span
+                          className="sb-floating-search-result-action"
+                          role="button"
+                          tabIndex={0}
+                          aria-label={t("open-chapter", {
+                            defaultValue: "Open chapter",
+                          })}
+                          title={t("open-chapter", {
+                            defaultValue: "Open chapter",
+                          })}
+                          onClick={(event: MouseEvent) => {
+                            event.stopPropagation();
+                            void openBookMatchInNewTab(match);
+                          }}
+                          onKeyDown={(event: KeyboardEvent) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              void openBookMatchInNewTab(match);
+                            }
+                          }}
+                        >
+                          <span
+                            className="material-symbols-outlined"
+                            aria-hidden="true"
+                          >
+                            open_in_new
+                          </span>
+                        </span>
+                      </header>
+                      <p className="sb-floating-search-result-text">
+                        {t("open-chapter", { defaultValue: "Open chapter" })}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {searchLoading.value && (
             <div className="sb-floating-search-status">
               {t("searching", { defaultValue: "Searching..." })}
@@ -402,7 +586,8 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
 
           {!searchLoading.value &&
             !searchError.value &&
-            searchResults.value.length === 0 && (
+            searchResults.value.length === 0 &&
+            bookMatches.value.length === 0 && (
               <div className="sb-floating-search-status">
                 {t("no-search-results", {
                   defaultValue: "No matching verses.",
@@ -414,74 +599,77 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
             !searchError.value &&
             searchResults.value.length > 0 && (
               <div className="sb-floating-search-results-list">
-                {searchResults.value.map((result, index) => (
-                  <button
-                    key={result.id}
-                    ref={(element) => {
-                      resultRefs.current[index] = element;
-                    }}
-                    type="button"
-                    onClick={() => {
-                      void openSearchResult(result);
-                    }}
-                    onMouseEnter={() => {
-                      highlightedResultIndex.value = index;
-                    }}
-                    className={`sb-floating-search-result${
-                      highlightedResultIndex.value === index
-                        ? " sb-floating-search-result-highlighted"
-                        : ""
-                    }`}
-                    role="option"
-                    aria-selected={highlightedResultIndex.value === index}
-                  >
-                    <header className="sb-floating-search-result-header">
-                      <span className="sb-floating-search-result-ref">
-                        {result.reference}
-                      </span>
-                      <span
-                        className="sb-floating-search-result-sep"
-                        aria-hidden="true"
-                      >
-                        •
-                      </span>
-                      <span className="sb-floating-search-result-translation">
-                        {result.translationLabel}
-                      </span>
-                      <span
-                        className="sb-floating-search-result-action"
-                        role="button"
-                        tabIndex={0}
-                        aria-label={t("add-verse", {
-                          defaultValue: "Add verse",
-                        })}
-                        title={t("add", { defaultValue: "Add" })}
-                        onClick={(event: MouseEvent) => {
-                          event.stopPropagation();
-                          void openSearchResultInNewTab(result);
-                        }}
-                        onKeyDown={(event: KeyboardEvent) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            void openSearchResultInNewTab(result);
-                          }
-                        }}
-                      >
+                {searchResults.value.map((result, verseIndex) => {
+                  const index = bookMatches.value.length + verseIndex;
+                  return (
+                    <button
+                      key={result.id}
+                      ref={(element) => {
+                        resultRefs.current[index] = element;
+                      }}
+                      type="button"
+                      onClick={() => {
+                        void openSearchResult(result);
+                      }}
+                      onMouseEnter={() => {
+                        highlightedResultIndex.value = index;
+                      }}
+                      className={`sb-floating-search-result${
+                        highlightedResultIndex.value === index
+                          ? " sb-floating-search-result-highlighted"
+                          : ""
+                      }`}
+                      role="option"
+                      aria-selected={highlightedResultIndex.value === index}
+                    >
+                      <header className="sb-floating-search-result-header">
+                        <span className="sb-floating-search-result-ref">
+                          {result.reference}
+                        </span>
                         <span
-                          className="material-symbols-outlined"
+                          className="sb-floating-search-result-sep"
                           aria-hidden="true"
                         >
-                          open_in_new
+                          •
                         </span>
-                      </span>
-                    </header>
-                    <p className="sb-floating-search-result-text">
-                      {result.text ||
-                        t("open-chapter", { defaultValue: "Open chapter" })}
-                    </p>
-                  </button>
-                ))}
+                        <span className="sb-floating-search-result-translation">
+                          {result.translationLabel}
+                        </span>
+                        <span
+                          className="sb-floating-search-result-action"
+                          role="button"
+                          tabIndex={0}
+                          aria-label={t("add-verse", {
+                            defaultValue: "Add verse",
+                          })}
+                          title={t("add", { defaultValue: "Add" })}
+                          onClick={(event: MouseEvent) => {
+                            event.stopPropagation();
+                            void openSearchResultInNewTab(result);
+                          }}
+                          onKeyDown={(event: KeyboardEvent) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              void openSearchResultInNewTab(result);
+                            }
+                          }}
+                        >
+                          <span
+                            className="material-symbols-outlined"
+                            aria-hidden="true"
+                          >
+                            open_in_new
+                          </span>
+                        </span>
+                      </header>
+                      <p className="sb-floating-search-result-text">
+                        {result.text ||
+                          t("open-chapter", { defaultValue: "Open chapter" })}
+                      </p>
+                    </button>
+                  );
+                })}
               </div>
             )}
         </div>

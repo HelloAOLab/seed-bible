@@ -6,7 +6,8 @@ import {
   DEFAULT_BOOK_ID,
   type BibleReadingState,
 } from "../managers/BibleReadingManager";
-import type { Pane, PanesManager } from "../managers/PanesManager";
+import type { PanesManager } from "../managers/PanesManager";
+import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
 import {
   formatVerseSelection,
   type TabsManager,
@@ -122,6 +123,8 @@ export interface BibleToolContext {
   tabs: TabsManager;
   /** Panes manager for pane-level actions/selection context. */
   panesManager: PanesManager;
+  /** Tabs layout manager for slot-level actions/selection context. */
+  tabsLayoutManager: TabsLayoutManager;
 
   /**
    * Chats manager for chat-related actions.
@@ -194,22 +197,22 @@ export interface ManagedBibleVerseToolbarTool extends BibleTool<BibleToolContext
   getItems?: (context: BibleToolContext) => ManagedBibleVerseToolbarToolItem[];
 }
 
-/** Runtime context passed to empty-pane tool surface. */
-export interface EmptyPaneToolContext {
-  /** Bible selector state for opening in empty panes. */
+/** Runtime context passed to empty-slot tool surface. */
+export interface EmptySlotToolContext {
+  /** Bible selector state for opening in empty slots. */
   selectorState: BibleSelectorState;
-  /** Pane currently receiving empty-pane actions. */
-  currentPane: Pane;
-  /** Panes manager for pane-level operations. */
-  panesManager: PanesManager;
+  /** Slot currently receiving empty-slot actions. */
+  currentSlot: TabSlot;
+  /** Tabs layout manager for slot-level operations. */
+  tabsLayoutManager: TabsLayoutManager;
   /** Tabs manager for cross-tab interactions. */
   tabs: TabsManager;
   /** Optional window metrics for responsive behavior. */
   window?: WindowContext | null;
 }
 
-/** Fully resolved empty-pane tool ready for rendering. */
-export interface BibleEmptyPaneTool extends ResolvedBibleTool {
+/** Fully resolved empty-slot tool ready for rendering. */
+export interface BibleEmptySlotTool extends ResolvedBibleTool {
   /** Disabled signal resolved for current context. */
   disabled: ReadonlySignal<boolean>;
   /** Visibility signal resolved for current context. */
@@ -220,19 +223,19 @@ export interface BibleEmptyPaneTool extends ResolvedBibleTool {
   getItems?: () => ResolvedBibleToolItem[];
 }
 
-export type ManagedBibleEmptyPaneToolItem =
-  ManagedBibleToolItem<EmptyPaneToolContext>;
+export type ManagedBibleEmptySlotToolItem =
+  ManagedBibleToolItem<EmptySlotToolContext>;
 
-/** Registerable empty-pane tool definition. */
-export interface ManagedBibleEmptyPaneTool extends BibleTool<EmptyPaneToolContext> {
+/** Registerable empty-slot tool definition. */
+export interface ManagedBibleEmptySlotTool extends BibleTool<EmptySlotToolContext> {
   /** Optional disabled predicate (boolean or signal). */
-  isDisabled?: ToolPredicate<EmptyPaneToolContext>;
+  isDisabled?: ToolPredicate<EmptySlotToolContext>;
   /** Optional visibility predicate (boolean or signal). */
-  isVisible?: ToolPredicate<EmptyPaneToolContext>;
+  isVisible?: ToolPredicate<EmptySlotToolContext>;
   /** Optional action callback for tool activation. Mutually exclusive with getItems(). */
-  onSelect?: (context: EmptyPaneToolContext) => void;
+  onSelect?: (context: EmptySlotToolContext) => void;
   /** Optional context-menu items resolver. Mutually exclusive with onSelect(). */
-  getItems?: (context: EmptyPaneToolContext) => ManagedBibleEmptyPaneToolItem[];
+  getItems?: (context: EmptySlotToolContext) => ManagedBibleEmptySlotToolItem[];
 }
 
 /** Fully resolved below-reader tool ready for rendering. */
@@ -249,8 +252,8 @@ export interface BibleBelowReaderToolbarTool extends ResolvedBibleTool {
 
 /** Runtime context for below-reader tool surface. */
 export interface BibleBelowReaderToolContext extends BibleToolContext {
-  /** Pane containing the active reader. */
-  currentPane: Pane;
+  /** Slot containing the active reader. */
+  currentSlot: TabSlot;
 }
 
 /** Registerable below-reader tool definition. */
@@ -314,7 +317,7 @@ function validateToolActions(
   tool:
     | ManagedBibleToolbarTool
     | ManagedBibleVerseToolbarTool
-    | ManagedBibleEmptyPaneTool
+    | ManagedBibleEmptySlotTool
     | ManagedBibleBelowReaderToolbarTool
     | ManagedBibleQuickToolbarTool
 ) {
@@ -419,7 +422,7 @@ function OpenInSelectorIcon() {
   return <MaterialIcon>menu_book</MaterialIcon>;
 }
 
-function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
+function getDefaultEmptySlotToolbarTools(): ManagedBibleEmptySlotTool[] {
   return [
     {
       id: "open-in-selector",
@@ -427,7 +430,7 @@ function getDefaultEmptyPaneToolbarTools(): ManagedBibleEmptyPaneTool[] {
       title: { key: "books", defaultValue: "Books" },
       icon: OpenInSelectorIcon,
       onSelect: (context) => {
-        context.selectorState.setOpen(true, context.currentPane);
+        context.selectorState.setOpen(true, context.currentSlot);
       },
     },
   ];
@@ -487,15 +490,15 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       icon: OpenSelectorIcon,
       isDisabled: (context) => context.readingState.loading.value,
       onSelect: (context) => {
-        const currentPane =
-          context.panesManager.panes.value.find(
-            (pane) => pane.id === context.panesManager.selectedPaneId.value
+        const currentSlot =
+          context.tabsLayoutManager.slots.value.find(
+            (slot) => slot.id === context.tabsLayoutManager.selectedSlotId.value
           ) ?? null;
-        if (!currentPane) {
+        if (!currentSlot) {
           return;
         }
 
-        context.selectorState.setOpen(true, currentPane);
+        context.selectorState.setOpen(true, currentSlot);
       },
     },
     {
@@ -642,14 +645,14 @@ export interface ToolsManager {
   /** Lists verse toolbar tool metadata without resolving any context. */
   listVerseToolbarTools: () => ToolMetadata[];
 
-  /** Registers an empty-pane tool and returns an unregister callback. */
-  registerEmptyPaneTool: (tool: ManagedBibleEmptyPaneTool) => () => void;
+  /** Registers an empty-slot tool and returns an unregister callback. */
+  registerEmptySlotTool: (tool: ManagedBibleEmptySlotTool) => () => void;
 
-  /** Unregisters an empty-pane tool by ID. */
-  unregisterEmptyPaneTool: (toolId: string) => void;
+  /** Unregisters an empty-slot tool by ID. */
+  unregisterEmptySlotTool: (toolId: string) => void;
 
-  /** Resolves/sorts empty-pane tools for the given context. */
-  getEmptyPaneTools: (context: EmptyPaneToolContext) => BibleEmptyPaneTool[];
+  /** Resolves/sorts empty-slot tools for the given context. */
+  getEmptySlotTools: (context: EmptySlotToolContext) => BibleEmptySlotTool[];
 
   /** Registers a below-reader tool and returns an unregister callback. */
   registerBelowReaderTool: (
@@ -744,8 +747,8 @@ export function createBibleToolsManager(): ToolsManager {
   const verseToolbarTools = signal<ManagedBibleVerseToolbarTool[]>(
     getDefaultVerseToolbarTools()
   );
-  const emptyPaneTools = signal<ManagedBibleEmptyPaneTool[]>(
-    getDefaultEmptyPaneToolbarTools()
+  const emptySlotTools = signal<ManagedBibleEmptySlotTool[]>(
+    getDefaultEmptySlotToolbarTools()
   );
   const belowReaderTools = signal<ManagedBibleBelowReaderToolbarTool[]>(
     getDefaultBelowReaderToolbarTools()
@@ -824,26 +827,26 @@ export function createBibleToolsManager(): ToolsManager {
   const listVerseToolbarTools = (): ToolMetadata[] =>
     verseToolbarTools.value.map((tool) => ({ id: tool.id, title: tool.title }));
 
-  const registerEmptyPaneTool = (tool: ManagedBibleEmptyPaneTool) => {
+  const registerEmptySlotTool = (tool: ManagedBibleEmptySlotTool) => {
     validateToolActions(tool);
-    const nextTools = emptyPaneTools.value.filter(
+    const nextTools = emptySlotTools.value.filter(
       (entry) => entry.id !== tool.id
     );
-    emptyPaneTools.value = [...nextTools, tool];
+    emptySlotTools.value = [...nextTools, tool];
 
     return () => {
-      unregisterEmptyPaneTool(tool.id);
+      unregisterEmptySlotTool(tool.id);
     };
   };
 
-  const unregisterEmptyPaneTool = (toolId: string) => {
-    emptyPaneTools.value = emptyPaneTools.value.filter(
+  const unregisterEmptySlotTool = (toolId: string) => {
+    emptySlotTools.value = emptySlotTools.value.filter(
       (tool) => tool.id !== toolId
     );
   };
 
-  const getEmptyPaneTools = (context: EmptyPaneToolContext) => {
-    const tools = emptyPaneTools.value.map((tool) => ({
+  const getEmptySlotTools = (context: EmptySlotToolContext) => {
+    const tools = emptySlotTools.value.map((tool) => ({
       id: tool.id,
       priority: resolveToolPriority(tool.priority, context),
       title: tool.title,
@@ -933,9 +936,9 @@ export function createBibleToolsManager(): ToolsManager {
     unregisterVerseToolbarTool,
     getVerseToolbarTools,
     listVerseToolbarTools,
-    registerEmptyPaneTool,
-    unregisterEmptyPaneTool,
-    getEmptyPaneTools,
+    registerEmptySlotTool,
+    unregisterEmptySlotTool,
+    getEmptySlotTools,
     registerBelowReaderTool,
     unregisterBelowReaderTool,
     getBelowReaderTools,
