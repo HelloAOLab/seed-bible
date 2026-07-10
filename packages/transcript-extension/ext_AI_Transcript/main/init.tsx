@@ -1,6 +1,8 @@
 import { registerExtension } from "seed-bible";
 
-registerExtension({
-  id: "ext_AI_Transcript_UI",
-  init: function* () {},
-});
+export default function initAiTranscriptExtension() {
+  registerExtension({
+    id: "ext_AI_Transcript_UI",
+    init: function* () {},
+  });
+}
