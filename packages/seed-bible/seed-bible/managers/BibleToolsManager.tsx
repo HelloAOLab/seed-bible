@@ -25,6 +25,7 @@ import {
   FEATURE_KEY_READING_PLANS,
   type FeaturesManager,
 } from "./FeaturesManager";
+import { playlistItemLabel } from "../components/playlistItemLabel";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -484,17 +485,34 @@ function getDefaultBelowReaderToolbarTools(): ManagedBibleBelowReaderToolbarTool
   ];
 }
 
-function NowPlayingIcon({ playlists }: { playlists: PlaylistManager }) {
+function NowPlayingIcon({
+  playlists,
+  readingState,
+}: {
+  playlists: PlaylistManager;
+  readingState: BibleReadingState;
+}) {
   const { t } = useI18n();
+  const currentlyPlaying = playlists.playing.value;
+  if (!currentlyPlaying) return null;
+  const currentPlaylist = currentlyPlaying.playlists.value[0];
+  const currentItem = currentlyPlaying.currentItem.value;
+
+  const books = readingState.translationBooks.value;
+  const resolveBookName = (bookId: string): string => {
+    const book = books?.books.find((b) => b.id === bookId);
+    return book?.name ?? book?.commonName ?? bookId;
+  };
+
   const title =
-    playlists.playing.value?.playlists.value[0]?.title ??
+    currentPlaylist?.title ??
     t("untitled-playlist", { defaultValue: "Untitled playlist" });
   return (
     <span className="sb-now-playing-icon">
-      <h4 className="sb-now-playing-icon-title">
-        {t("now-playing", { defaultValue: "Now playing" })}
-      </h4>
-      <span>{title}</span>
+      <h4 className="sb-now-playing-icon-title">{title}</h4>
+      {currentItem && (
+        <span>{playlistItemLabel(currentItem, t, resolveBookName)}</span>
+      )}
     </span>
   );
 }
@@ -509,7 +527,9 @@ function getDefaultQuickToolbarTools(): ManagedBibleQuickToolbarTool[] {
         defaultValue: "Current Playlist",
       },
       className: "sb-quick-toolbar-current-playlist",
-      icon: (c) => <NowPlayingIcon playlists={c.playlists} />,
+      icon: (c) => (
+        <NowPlayingIcon playlists={c.playlists} readingState={c.readingState} />
+      ),
       isVisible: (c) =>
         c.features.isFeatureEnabled(FEATURE_KEY_PLAYLISTS) &&
         !!c.playlists.playing.value?.playlists.value.length &&
