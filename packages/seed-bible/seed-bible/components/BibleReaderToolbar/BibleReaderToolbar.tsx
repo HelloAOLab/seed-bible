@@ -967,17 +967,28 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         )
                       )}
 
-                      {selector && (
+                      {playing ? (
                         <button
                           type="button"
-                          onClick={selector.onSelect}
+                          onClick={() =>
+                            (props.state.playlists.view.value = "play_playlist")
+                          }
                           onPointerDown={spawnRipple}
                           className="sb-reader-floating-nav-label"
                         >
-                          {playing
-                            ? getPlayingNavLabel(playing)
-                            : getReaderNavLabel()}
+                          {getPlayingNavLabel(playing)}
                         </button>
+                      ) : (
+                        selector && (
+                          <button
+                            type="button"
+                            onClick={selector.onSelect}
+                            onPointerDown={spawnRipple}
+                            className="sb-reader-floating-nav-label"
+                          >
+                            {getReaderNavLabel()}
+                          </button>
+                        )
                       )}
 
                       {playing ? (
