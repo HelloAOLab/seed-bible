@@ -26,6 +26,12 @@ export interface Pane {
    * hooks (i18n, signals). Omit for a plain title-and-close header.
    */
   header?: () => ComponentChild;
+  /**
+   * Optional callback invoked when the user closes the pane by clicking the
+   * header's close (X) button. Not called for programmatic closes via
+   * `closePane`/`closeAll`, or when a pane is displaced by another opening.
+   */
+  onClose?: () => void;
   /** Placement mode, fixed at creation time. */
   placement: PanePlacement;
   /** Pane X position for floating placement. */
@@ -56,6 +62,12 @@ export interface PaneOpenOptions {
    * hooks (i18n, signals). Omit for a plain title-and-close header.
    */
   header?: () => ComponentChild;
+  /**
+   * Optional callback invoked when the user closes the pane by clicking the
+   * header's close (X) button. Not called for programmatic closes via
+   * `closePane`/`closeAll`, or when a pane is displaced by another opening.
+   */
+  onUserClose?: () => void;
   /**
    * Optional stable pane identifier.
    * When provided, an existing pane with this ID is reused and updated with
@@ -118,7 +130,8 @@ function createPaneFactory() {
     component: () => ComponentChild,
     placement: PanePlacement,
     customId?: string,
-    header?: () => ComponentChild
+    header?: () => ComponentChild,
+    onClose?: () => void
   ): Pane => {
     const paneId = nextPaneId;
     nextPaneId += 1;
@@ -129,6 +142,7 @@ function createPaneFactory() {
       title,
       component,
       header,
+      onClose,
       placement,
       x: 48 + offset,
       y: 48 + offset,
@@ -190,6 +204,7 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
           title: options.title,
           component: options.component,
           header: options.header,
+          onClose: options.onUserClose,
         };
         syncPaneState(
           willFillScreen
@@ -218,7 +233,8 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
       options.component,
       options.placement,
       options.id,
-      options.header
+      options.header,
+      options.onUserClose
     );
     syncPaneState([...basePanes, nextPane], nextPane.id);
     return nextPane;
