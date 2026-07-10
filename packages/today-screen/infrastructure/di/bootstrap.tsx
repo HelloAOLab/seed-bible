@@ -297,6 +297,9 @@ export const bootstrapExtension = () => {
                   }
                   context.app.selectTab(tab.id);
                 },
+                closeToday: () => {
+                  isTodayOpen.value = false;
+                },
                 getDefaultTranslation: () => {
                   const readingState = context.app.currentReadingState.value;
                   return (

@@ -22,7 +22,7 @@ type UseBookmarksSection = () => {
 };
 
 export const useBookmarksSection: UseBookmarksSection = () => {
-  const { bookmarks, addTab, translate, getTranslationBooks } =
+  const { bookmarks, addTab, closeToday, translate, getTranslationBooks } =
     useTodayContext();
   const translateSignal = useSignal(translate);
   useEffect(() => {
@@ -71,6 +71,7 @@ export const useBookmarksSection: UseBookmarksSection = () => {
         text: `${name} ${chapterNumber}`,
         handleClick: () => {
           addTab(bookId, chapterNumber, translationId);
+          closeToday();
         },
         key: bookmark.id,
         // iconName: "home",
