@@ -19,7 +19,7 @@ export function createFeaturesManager(posthog: PostHog | null) {
       return true;
     }
 
-    return posthog.isFeatureEnabled(featureKey);
+    return posthog.isFeatureEnabled(featureKey) ?? false;
   };
 
   return {
