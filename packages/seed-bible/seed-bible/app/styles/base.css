@@ -1,7 +1,7 @@
 /* =============================================================================
  * UI SCALING MODEL — the rem / em / px invariant (source of truth for #1281)
  * -----------------------------------------------------------------------------
- * The "UI Text Size" setting (S/M/L/XL) is the single UI scaling mechanism. It
+ * The "UI Size" setting (S/M/L/XL) is the single UI scaling mechanism. It
  * drives `--sb-ui-scale` (0.85 / 1.0 / 1.15 / 1.3, set by SettingsManager),
  * which the `html` rule below turns into the root font-size:
  *     html { font-size: calc(16px * var(--sb-ui-scale)) }  =>  1rem = scaled base
@@ -10,8 +10,8 @@
  *
  * Which unit to use:
  *   • rem  — ALL chrome: dimensions, spacing, radius, positioning offsets, and
- *            chrome font-size. Tracks the UI Text Size knob. This is the default.
- *   • px   — things that must NOT scale with UI Text Size:
+ *            chrome font-size. Tracks the UI Size knob. This is the default.
+ *   • px   — things that must NOT scale with UI Size:
  *              - reader glyph size: `.sb-font-size-*` on `.sb-bible-reader`
  *                (its own independent knob; the cascade anchor lives there so it
  *                doesn't leak into chrome `em`/`inherit`);
@@ -265,7 +265,7 @@ html {
   visibility: visible;
   opacity: 1;
 
-  /* UI scale: the "UI Text Size" setting (S/M/L/XL) drives `--sb-ui-scale`
+  /* UI scale: the "UI Size" setting (S/M/L/XL) drives `--sb-ui-scale`
    * (set in SettingsManager). 1rem = the scaled UI base, so every chrome size
    * expressed in `rem` tracks this knob. Reader glyph size stays in px on
    * `.sb-bible-reader` (`.sb-font-size-*`) and is therefore unaffected. */
@@ -273,7 +273,7 @@ html {
 }
 
 /* Material Symbols icons ship with a fixed `font-size: 24px` from the Google
-   Fonts stylesheet (loaded in main.tsx), which ignores the UI Text Size knob.
+   Fonts stylesheet (loaded in main.tsx), which ignores the UI Size knob.
    Re-express that base in rem so every icon scales with the chrome by default
    (1.5rem = 24px at size M — a no-op at M). Scoped
    `.sb-* .material-symbols-outlined` rules (specificity 0,2,0) still win and
@@ -354,4 +354,49 @@ a {
 
 a:visited {
   color: var(--sb-secondary-color);
+}
+
+.sb-font-size-xs {
+  font-size: 12px;
+}
+
+.sb-font-size-s {
+  font-size: 14px;
+}
+
+.sb-font-size-m {
+  font-size: 16px;
+}
+
+.sb-font-size-l {
+  font-size: 18px;
+}
+
+.sb-font-size-xl {
+  font-size: 20px;
+}
+
+.sb-font-size-xxl {
+  font-size: 22px;
+}
+
+.sb-main-content {
+  flex: 1;
+  overflow: hidden;
+  background: var(--sb-sidebar-background);
+  scrollbar-width: none;
+  border-radius: 0.75rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw !important;
+  height: 100vh !important;
+}
+
+.sb-content-row {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
 }

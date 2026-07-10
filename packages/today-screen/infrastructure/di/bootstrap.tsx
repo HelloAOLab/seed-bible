@@ -288,9 +288,9 @@ export const bootstrapExtension = () => {
                       removeAfterMs: 3000,
                     });
                   }
-                  const paneId = context.panes.selectedPaneId.value;
-                  if (paneId) {
-                    context.panes.openInPane(paneId, { tabId: tab.id });
+                  const slotId = context.tabsLayout.selectedSlotId.value;
+                  if (slotId) {
+                    context.tabsLayout.openTabInSlot(slotId, tab.id);
                   }
                   context.app.selectTab(tab.id);
                 },
@@ -307,12 +307,12 @@ export const bootstrapExtension = () => {
                 getVerseText,
                 lastTranslationId,
                 openBookSelector: () => {
-                  const pane =
-                    context.panes.panes.value.find(
-                      (p) => p.id === context.panes.selectedPaneId.value
+                  const slot =
+                    context.tabsLayout.slots.value.find(
+                      (s) => s.id === context.tabsLayout.selectedSlotId.value
                     ) ?? null;
-                  if (pane) {
-                    context.selector.setOpen(true, pane);
+                  if (slot) {
+                    context.selector.setOpen(true, slot);
                   }
                 },
                 translationBooks: lastTranslationBooks,
@@ -346,11 +346,16 @@ export const bootstrapExtension = () => {
           );
         };
 
-        const paneId = context.panes.selectedPaneId.value;
-        if (paneId) {
-          context.tabs.selectTab("");
-          context.panes.openInPane(paneId, { component });
-        }
+        // Custom components can no longer take over a tab slot — Today opens
+        // as a fullscreen pane instead. A stable id means calling `open()`
+        // again (e.g. via getExtensionExports) updates the existing pane
+        // rather than stacking a second one.
+        context.panes.openPane({
+          id: "today-screen-pane",
+          placement: "fullscreen",
+          title: "Today",
+          component,
+        });
       };
 
       // yield context.tools.registerToolbarTool({

@@ -61,43 +61,6 @@
   }
 }
 
-.sb-font-size-xs {
-  font-size: 12px;
-}
-
-.sb-font-size-s {
-  font-size: 14px;
-}
-
-.sb-font-size-m {
-  font-size: 16px;
-}
-
-.sb-font-size-l {
-  font-size: 18px;
-}
-
-.sb-font-size-xl {
-  font-size: 20px;
-}
-
-.sb-font-size-xxl {
-  font-size: 22px;
-}
-
-.sb-main-content {
-  flex: 1;
-  overflow: hidden;
-  background: var(--sb-sidebar-background);
-  scrollbar-width: none;
-  border-radius: 0.75rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100vw !important;
-  height: 100vh !important;
-}
-
 .sb-bible-reader {
   flex: 1;
 }
@@ -356,6 +319,31 @@
 .sb-reader-swipe-panel-side {
   pointer-events: none;
   opacity: 0.85;
+}
+
+.sb-bible-reader-mobile-content-title {
+  margin: 2rem 0 2rem;
+  text-align: center;
+  font-family: var(--text-bookTitle-font);
+  color: var(--sb-book-title-font-color);
+  font-weight: var(--text-bookTitle-weight);
+  font-style: var(--text-bookTitle-font-style);
+  text-decoration: var(--text-bookTitle-text-decoration);
+  letter-spacing: 0;
+}
+
+.sb-bible-reader-mobile-content-title .sb-bible-reader-book {
+  display: block;
+  font-size: 1.3rem;
+  line-height: 1.15;
+  opacity: 0.6;
+}
+
+.sb-bible-reader-mobile-content-title .sb-bible-reader-chapter {
+  display: block;
+  margin-top: 0.75rem;
+  font-size: 3rem;
+  line-height: 1;
 }
 
 /* Slides the full mobile header up out of view when the user scrolls down,

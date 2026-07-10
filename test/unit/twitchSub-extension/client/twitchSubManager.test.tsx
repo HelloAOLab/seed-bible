@@ -46,8 +46,8 @@ function createSeedBibleStateMock() {
   const readingState = {
     selectTranslationAndChapter,
   };
-  const selectedPane = {
-    id: "pane-1",
+  const selectedSlot = {
+    id: "slot-1",
     tab: {
       readingState,
     },
@@ -77,11 +77,11 @@ function createSeedBibleStateMock() {
         getAvailableTranslations: vi.fn().mockResolvedValue(undefined),
       },
     },
-    panes: {
-      panes: signal([selectedPane]),
-      selectedPaneId: signal("pane-1"),
-      selectPane: vi.fn(),
-      openInPane: vi.fn(),
+    tabsLayout: {
+      slots: signal([selectedSlot]),
+      selectedSlotId: signal("slot-1"),
+      selectSlot: vi.fn(),
+      openTabInSlot: vi.fn(),
     },
     tabs: {
       selectedTabId,
@@ -221,7 +221,7 @@ describe("CreateTwitchSubState", () => {
 
     await waitFor(() => selectTranslationAndChapter.mock.calls.length >= 1);
 
-    expect(seedBibleState.panes.selectPane).toHaveBeenCalledWith("pane-1");
+    expect(seedBibleState.tabsLayout.selectSlot).toHaveBeenCalledWith("slot-1");
     expect(selectTranslationAndChapter).toHaveBeenCalledWith("KJV", "LUK", 4);
   });
 

@@ -13,14 +13,14 @@ import {
   FreeUseBibleAPI,
   getDefaultAPIEndpoint,
 } from "../managers/FreeUseBibleAPI";
-import { h } from "preact";
 import { createPanes } from "../managers/PanesManager";
+import type { Pane, PanesManager } from "../managers/PanesManager";
+import { createTabsLayout } from "../managers/TabsLayoutManager";
 import type {
-  Pane,
-  PaneLayoutId,
-  PanesManager,
-} from "../managers/PanesManager";
-import { MobileSplitPanelWarningContent } from "../components/MobileSplitPanelWarning/MobileSplitPanelWarning";
+  TabSlot,
+  TabSlotLayoutId,
+  TabsLayoutManager,
+} from "../managers/TabsLayoutManager";
 import { createLoginManager } from "../managers/LoginManager";
 import type { LoginManager } from "../managers/LoginManager";
 import { createSidebar } from "../managers/SidebarManager";
@@ -130,19 +130,29 @@ export const SIDEBAR_OVERLAY_MAX_WIDTH = 768;
  * the currently active reading context and pane selection.
  */
 export interface AppState {
-  /** True when multi-pane layouts are enabled by config. */
+  /** True when multi-slot tab layouts are enabled by config. */
   panelsEnabled: ReadonlySignal<boolean>;
   /** Currently selected reading tab, or null when no tab is available. */
   selectedTab: ReadonlySignal<ReaderTab | null>;
-  /** Effective pane list shown by the UI (single pane fallback when panels are disabled). */
-  effectivePanes: ReadonlySignal<Pane[]>;
   /**
-   * Effective attached layout the UI should render. Mirrors the pane manager's
-   * layout on desktop, but on mobile it is coerced to the only two shapes a
-   * phone supports — `single` or `stacked-2` (two panes top/bottom) — without
-   * mutating the manager's stored layout.
+   * Effective tab slot list shown by the UI (single-slot fallback when panels
+   * are disabled, and always a single slot on mobile).
    */
-  effectiveLayout: ReadonlySignal<PaneLayoutId>;
+  effectiveSlots: ReadonlySignal<TabSlot[]>;
+  /**
+   * Effective tab slot layout the UI should render. Mirrors the tabs layout
+   * manager's layout on desktop, but on mobile it is always coerced to
+   * `single` (one reader fills the viewport) without mutating the manager's
+   * stored layout.
+   */
+  effectiveSlotLayout: ReadonlySignal<TabSlotLayoutId>;
+  /**
+   * Effective custom-pane list shown by the UI — identical to
+   * `panes.panes` on desktop, but on mobile every pane is remapped to
+   * `"fullscreen"` placement for rendering only (the manager's stored
+   * placement is left untouched).
+   */
+  effectivePanes: ReadonlySignal<Pane[]>;
 
   /** Current window inner width in pixels. Updated on resize. */
   viewportWidth: ReadonlySignal<number>;
@@ -172,15 +182,15 @@ export interface AppState {
     chapterNumber: number | null;
   } | null>;
 
-  /** Selects a tab and synchronizes pane focus. */
+  /** Selects a tab and synchronizes slot focus. */
   selectTab: (tabId: string) => void;
   /** Creates a new tab and selects it. */
   addTab: () => void;
-  /** Opens an existing tab in a new attached pane. */
-  openInNewPane: (tabId: string) => void;
-  /** Opens an existing tab in a detached pane. */
-  openInDetachedPane: (tabId: string) => void;
-  /** Selects a pane and updates related UI state. */
+  /** Opens an existing tab in a new tab slot. */
+  openInNewSlot: (tabId: string) => void;
+  /** Selects a tab slot and updates related UI state. */
+  selectSlot: (slotId: string) => void;
+  /** Selects a custom pane. */
   selectPane: (paneId: string) => void;
   /** Creates a shared reading session and opens it in a new tab. */
   createSharedSession: () => Promise<BibleReadingSession>;
@@ -243,7 +253,9 @@ export interface SeedBibleState {
   sidebar: SidebarManager;
   /** Reader tab lifecycle manager. */
   tabs: TabsManager;
-  /** Pane layout and detached pane manager. */
+  /** Tab slot layout manager — Bible reading content always lives here. */
+  tabsLayout: TabsLayoutManager;
+  /** Custom (non-tab) pane manager: fullscreen/side/floating panes. */
   panes: PanesManager;
   /** Bible selector state for book/chapter picking. */
   selector: BibleSelectorState;
@@ -265,7 +277,7 @@ export interface SeedBibleState {
   sessions: SessionsManager;
   /** Modal manager for app-wide dialog state and rendering. */
   modals: ModalManager;
-  /** App-level settings: book orientation, UI text size, selection UI, etc. */
+  /** App-level settings: book orientation, UI size, selection UI, etc. */
   settings: SettingsManager;
   /** Incoming session invitations and invite-sending. */
   invitations: InvitationsManager;
@@ -349,16 +361,17 @@ export function createSeedBibleState(
   const highlights = createHighlightsManager(os, login);
   const bookmarks = createBookmarksManager(os, login);
   const config = createConfig(login, navigation);
+  const panelsEnabled = computed(() => !config.config.value.disablePanels);
   const themeManager = createTheme(login, navigation);
   const chats = createChatsManager(login, i18n);
   const sidebar = createSidebar({ navigation, chatsManager: chats });
   const tabs = createTabs(navigation, data, highlights, chats, i18n);
-  const panes = createPanes(tabs, tabs.selectedTabId);
+  const tabsLayout = createTabsLayout(tabs, panelsEnabled);
   const settings = createSettings(os, login, navigation);
   const selector = createBibleSelectorState(
     data,
     tabs,
-    panes,
+    tabsLayout,
     settings,
     sidebar,
     bookmarks,
@@ -468,7 +481,6 @@ export function createSeedBibleState(
     prevPresetId = id;
     settings.resetTextColors();
   });
-  const panelsEnabled = computed(() => !config.config.value.disablePanels);
   const selectedTab = computed(
     () =>
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
@@ -492,6 +504,11 @@ export function createSeedBibleState(
       : window.innerHeight
   );
   const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
+
+  // Created after `isMobile` so panes can enforce a single fullscreen pane:
+  // on mobile every pane is displayed fullscreen, so opening one closes the
+  // rest.
+  const panes = createPanes(isMobile);
 
   const tutorial = createTutorialManager(
     login,
@@ -553,88 +570,69 @@ export function createSeedBibleState(
     }
   });
 
-  const buildSingleSelectedPane = (): Pane[] =>
-    selectedTab.value
-      ? [
-          {
-            id: "single-pane",
-            tab: selectedTab.value,
-            component: null,
-            gridPortal: null,
-            mapPortal: null,
-            inst: null,
-            pattern: null,
-            query: null,
-            detached: false,
-            detachedAnchor: "floating" as const,
-            x: 0,
-            y: 0,
-            width: 0,
-            height: 0,
-          },
-        ]
-      : [];
-
-  const effectivePanes = computed(() => {
+  const effectiveSlots = computed(() => {
     if (!panelsEnabled.value) {
-      return buildSingleSelectedPane();
+      // tabsLayout.setLayout already forces "single" whenever panelsEnabled
+      // is false, but the manager's stored slots may still lag behind a
+      // config change that happened without an explicit setLayout call, so
+      // clamp here too. This is applied to the rendered view only — the
+      // manager's own slots are left untouched so they are restored when
+      // panels are re-enabled.
+      const allSlots = tabsLayout.slots.value;
+      const tab = selectedTab.value;
+      const preferred =
+        (tab ? allSlots.find((s) => s.tab?.id === tab.id) : null) ??
+        allSlots[0] ??
+        null;
+      return preferred ? [preferred] : [];
     }
     if (isMobile.value) {
-      // Mobile pane restrictions. These are applied to the rendered view only —
-      // the pane manager's own settings (layout, extra panes, detached anchors)
-      // are left untouched so they are restored when the viewport grows back to
-      // a desktop size.
-      //
-      //   - Anchored (attached) panes: at most two, shown stacked top/bottom.
-      //     Any further attached panes are hidden. When more than two exist we
-      //     keep the pane hosting the currently selected tab (or the manager's
-      //     selected pane) visible.
-      //   - Detached panes: always rendered anchored to the bottom, regardless
-      //     of their stored anchor, so they float above the default toolbar and
-      //     in front of the anchored panes (PaneLayout gives detached panes a
-      //     higher z-index than attached ones).
-      const allPanes = panes.panes.value;
-      const attachedPanes = allPanes.filter((p) => !p.detached);
-      const detachedPanes = allPanes
-        .filter((p) => p.detached)
-        .map((p) =>
-          p.detachedAnchor === "bottom"
-            ? p
-            : { ...p, detachedAnchor: "bottom" as const }
-        );
-
-      let shownAttached: Pane[];
-      if (attachedPanes.length === 0) {
-        shownAttached = buildSingleSelectedPane();
-      } else if (attachedPanes.length <= 2) {
-        shownAttached = attachedPanes;
-      } else {
-        const tab = selectedTab.value;
-        const selectedPaneId = panes.selectedPaneId.value;
-        const preferred =
-          (tab ? attachedPanes.find((p) => p.tab?.id === tab.id) : null) ??
-          attachedPanes.find((p) => p.id === selectedPaneId) ??
-          attachedPanes[0]!;
-        const next = attachedPanes.find((p) => p.id !== preferred.id)!;
-        shownAttached = [preferred, next];
+      // Mobile shows exactly one slot at a time — never stacked — so a single
+      // reader fills the small viewport. This is applied to the rendered view
+      // only: the tabs layout manager's own settings (layout, extra slots) are
+      // left untouched so they are restored when the viewport grows back to a
+      // desktop size. We keep the slot hosting the currently selected tab
+      // (falling back to the manager's selected slot, then the first slot).
+      const allSlots = tabsLayout.slots.value;
+      if (allSlots.length === 0) {
+        return [];
       }
 
-      return [...shownAttached, ...detachedPanes];
+      const tab = selectedTab.value;
+      const selectedSlotId = tabsLayout.selectedSlotId.value;
+      const preferred =
+        (tab ? allSlots.find((s) => s.tab?.id === tab.id) : null) ??
+        allSlots.find((s) => s.id === selectedSlotId) ??
+        allSlots[0]!;
+      return [preferred];
     }
-    return panes.panes.value;
+    return tabsLayout.slots.value;
   });
 
-  const effectiveLayout = computed<PaneLayoutId>(() => {
+  const effectiveSlotLayout = computed<TabSlotLayoutId>(() => {
     if (!panelsEnabled.value) {
       return "single";
     }
     if (isMobile.value) {
-      const attachedShown = effectivePanes.value.filter(
-        (pane) => !pane.detached
-      ).length;
-      return attachedShown >= 2 ? "stacked-2" : "single";
+      // Mobile never stacks — a single slot fills the viewport (see
+      // effectiveSlots).
+      return "single";
     }
-    return panes.layout.value;
+    return tabsLayout.layout.value;
+  });
+
+  // Effective custom-pane list shown by the UI: on mobile every pane is
+  // forced to fullscreen placement for rendering only — the manager's stored
+  // placement is left untouched so it's restored on a desktop-size viewport.
+  const effectivePanes = computed(() => {
+    if (!isMobile.value) {
+      return panes.panes.value;
+    }
+    return panes.panes.value.map((pane) =>
+      pane.placement === "fullscreen"
+        ? pane
+        : { ...pane, placement: "fullscreen" as const }
+    );
   });
   const currentReadingState = computed(() => {
     const selectedTabValue = selectedTab.value;
@@ -654,11 +652,12 @@ export function createSeedBibleState(
 
   effect(() => {
     if (selectedTab.value) {
-      const matchingPane =
-        panes.panes.value.find((p) => p.tab?.id === selectedTab.value?.id) ??
-        null;
-      if (matchingPane) {
-        panes.selectPane(matchingPane.id);
+      const matchingSlot =
+        tabsLayout.slots.value.find(
+          (s) => s.tab?.id === selectedTab.value?.id
+        ) ?? null;
+      if (matchingSlot) {
+        tabsLayout.selectSlot(matchingSlot.id);
       }
     }
   });
@@ -805,140 +804,41 @@ export function createSeedBibleState(
   const handleSelectTab = (tabId: string) => {
     closeSidebarAndSettings();
     tabs.selectTab(tabId);
-    panes.setSelectedPaneTab(tabId);
+    tabsLayout.setSelectedSlotTab(tabId);
   };
 
   const handleAddTab = () => {
     closeSidebarAndSettings();
-    const targetPane =
-      panes.panes.value.find(
-        (pane) => pane.id === panes.selectedPaneId.value
-      ) ??
-      panes.panes.value.find((pane) => !pane.detached) ??
-      panes.panes.value[0] ??
-      null;
+    const targetSlot =
+      tabsLayout.slots.value.find(
+        (slot) => slot.id === tabsLayout.selectedSlotId.value
+      ) ?? tabsLayout.slots.value[0]!;
 
-    if (!targetPane) {
-      // No panes — fall back to plain tab creation.
-      const tab = tabs.addTab();
-      panes.setSelectedPaneTab(tab.id);
-      return;
-    }
-
-    void selector.setOpen(true, targetPane, { forNewTab: true });
+    void selector.setOpen(true, targetSlot, { forNewTab: true });
   };
 
-  // Resolves which tab should be opened in a brand-new pane. A pane is bound to
-  // a tab by id, and panes sharing a tab also share its reading state and get
-  // de-duplicated into a single slot. So when the requested tab is already
-  // displayed in a pane (the common case — it's the tab currently being read),
-  // opening it again would either leave an empty pane or move both panes when
-  // navigating chapters. To give the user an independent, navigable panel we
-  // clone the tab into a fresh one seeded at the same reading location.
-  const resolveTabForNewPane = (tabId: string): string => {
-    const sourceTab = tabs.tabs.value.find((tab) => tab.id === tabId) ?? null;
-    if (!sourceTab) {
-      return tabId;
-    }
-
-    const alreadyShown = panes.panes.value.some(
-      (pane) => pane.tab?.id === tabId
-    );
-    if (!alreadyShown) {
-      return tabId;
-    }
-
-    const readingState = sourceTab.readingState;
-    const clone = tabs.addTab(
-      undefined,
-      {
-        initialTranslationId: readingState.translationId.value,
-        initialBookId: readingState.bookId.value,
-        initialChapterNumber: readingState.chapterNumber.value,
-      },
-      { paneOnly: true }
-    );
-    return clone.id;
-  };
-
-  const handleOpenInNewPane = (tabId: string) => {
+  const handleOpenInNewSlot = (tabId: string) => {
     closeSidebarAndSettings();
-    const paneTabId = resolveTabForNewPane(tabId);
-    panes.openPane({
-      type: "attached",
-      tabId: paneTabId,
-    });
-    tabs.selectTab(paneTabId);
+    const slot = tabsLayout.openTabInNewSlot(tabId);
+    if (slot?.tab) {
+      tabs.selectTab(slot.tab.id);
+    }
   };
 
-  const handleOpenInDetachedPane = (tabId: string) => {
-    const openDetached = () => {
-      closeSidebarAndSettings();
-      const paneTabId = resolveTabForNewPane(tabId);
-      panes.openPane({
-        type: "detached",
-        tabId: paneTabId,
-      });
-      tabs.selectTab(paneTabId);
-    };
+  const handleSelectSlot = (slotId: string) => {
+    closeSidebarAndSettings();
+    tabsLayout.selectSlot(slotId);
 
-    // On mobile a detached panel renders as a bottom sheet stacked over the
-    // anchored panes. When the anchored layout is already split into two panes,
-    // adding a third surface on a small screen is cramped, so warn first and
-    // let the user collapse the split, keep it, or cancel.
-    const anchoredCount = panes.panes.value.filter(
-      (pane) => !pane.detached
-    ).length;
-    if (isMobile.value && anchoredCount >= 2) {
-      const modalId = "mobile-split-detached-warning";
-      modals.openModal({
-        id: modalId,
-        title: {
-          key: "split-panel-warning-title",
-          defaultValue: "Open panel over split view?",
-        },
-        content: () =>
-          h(MobileSplitPanelWarningContent, {
-            onCancel: () => modals.closeModal(modalId),
-            onKeep: () => {
-              modals.closeModal(modalId);
-              openDetached();
-            },
-            onCollapse: () => {
-              modals.closeModal(modalId);
-              // Collapse the anchored split back to a single pane. This only
-              // changes the active layout preset; hidden panes are preserved.
-              panes.setLayout("single");
-              openDetached();
-            },
-          }),
-      });
-      return;
+    const selectedSlot =
+      tabsLayout.slots.value.find((slot) => slot.id === slotId) ?? null;
+    if (selectedSlot?.tab) {
+      tabs.selectTab(selectedSlot.tab.id);
     }
-
-    openDetached();
   };
 
   const handleSelectPane = (paneId: string) => {
     closeSidebarAndSettings();
     panes.selectPane(paneId);
-
-    const selectedPane =
-      panes.panes.value.find((pane) => pane.id === paneId) ?? null;
-    if (selectedPane?.tab) {
-      tabs.selectTab(selectedPane.tab.id);
-      return;
-    }
-
-    if (
-      selectedPane?.component !== null ||
-      selectedPane?.gridPortal !== null ||
-      selectedPane?.mapPortal !== null
-    ) {
-      return;
-    }
-
-    selector.setOpen(true, selectedPane);
   };
 
   // Wraps a session so that when it's disposed (via tabs.removeTab), its
@@ -1127,7 +1027,7 @@ export function createSeedBibleState(
     // invite/notification step.
     void invitations.publishSession(session);
     const tab = tabs.addTab(session);
-    panes.setSelectedPaneTab(tab.id);
+    tabsLayout.setSelectedSlotTab(tab.id);
     return session;
   };
 
@@ -1141,7 +1041,7 @@ export function createSeedBibleState(
     }
     wrapSessionLifecycle(session);
     const tab = tabs.addTab(session);
-    panes.setSelectedPaneTab(tab.id);
+    tabsLayout.setSelectedSlotTab(tab.id);
     return session;
   };
 
@@ -1237,6 +1137,7 @@ export function createSeedBibleState(
     },
     sidebar,
     tabs,
+    tabsLayout,
     panes,
     selector,
     tools,
@@ -1270,8 +1171,9 @@ export function createSeedBibleState(
       joinSharedSession: handleJoinSharedSession,
       panelsEnabled,
       selectedTab,
+      effectiveSlots,
+      effectiveSlotLayout,
       effectivePanes,
-      effectiveLayout,
       viewportWidth,
       viewportHeight,
       isMobile,
@@ -1280,8 +1182,8 @@ export function createSeedBibleState(
       currentReadingState,
       selectTab: handleSelectTab,
       addTab: handleAddTab,
-      openInNewPane: handleOpenInNewPane,
-      openInDetachedPane: handleOpenInDetachedPane,
+      openInNewSlot: handleOpenInNewSlot,
+      selectSlot: handleSelectSlot,
       selectPane: handleSelectPane,
       openVerseReference: handleOpenVerseReference,
       openChat: handleOpenChat,

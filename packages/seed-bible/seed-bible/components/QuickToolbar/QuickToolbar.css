@@ -51,7 +51,7 @@
 }
 
 /* Chrome icon-buttons render their icons as <svg> (inline or icon components)
-   with fixed px width/height attributes, which ignore the UI Text Size knob.
+   with fixed px width/height attributes, which ignore the UI Size knob.
    (Material Symbols glyphs are handled by the base rule near the top of this
    file; SVGs are sized by width/height, not font-size, so they need explicit
    rem sizing here.) CSS width/height overrides the SVG's px attributes; the rem
