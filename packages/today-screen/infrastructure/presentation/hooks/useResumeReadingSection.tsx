@@ -18,6 +18,7 @@ export const useResumeReadingSection: UseResumeReadingSection = () => {
     translate,
     bookNames,
     addTab,
+    closeToday,
     getDefaultTranslation,
   } = useTodayContext();
 
@@ -44,6 +45,7 @@ export const useResumeReadingSection: UseResumeReadingSection = () => {
       userLastReading.value!.chapter,
       getDefaultTranslation()
     );
+    closeToday();
   }, [userLastReading.value]);
 
   return {

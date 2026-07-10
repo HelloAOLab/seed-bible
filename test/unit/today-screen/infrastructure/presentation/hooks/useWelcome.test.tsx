@@ -30,6 +30,7 @@ describe("useWelcome", () => {
   let container: HTMLDivElement;
   let openBookSelector: Mock;
   let addTab: Mock;
+  let closeToday: Mock;
   let getVerseText: Mock;
   let getDefaultTranslation: Mock;
   let getHighlightedWelcomeVerse: Mock;
@@ -40,6 +41,7 @@ describe("useWelcome", () => {
     document.body.appendChild(container);
     openBookSelector = vi.fn();
     addTab = vi.fn();
+    closeToday = vi.fn();
     getVerseText = vi.fn(async () => "raw verse");
     getDefaultTranslation = vi.fn(() => "DEF");
     getHighlightedWelcomeVerse = vi.fn(
@@ -73,6 +75,7 @@ describe("useWelcome", () => {
       openBookSelector,
       MaterialIcon,
       addTab,
+      closeToday,
       theme: { variables: { readerFontColor: "#112233" } },
     });
     const result = { current: null as unknown as Result };
@@ -206,6 +209,12 @@ describe("useWelcome", () => {
       const result = setup();
       act(() => result.current.handleStartButtonClick());
       expect(addTab).toHaveBeenCalledWith("GEN", 1, "KJV");
+    });
+
+    it("closes the Today screen", () => {
+      const result = setup();
+      act(() => result.current.handleStartButtonClick());
+      expect(closeToday).toHaveBeenCalledTimes(1);
     });
 
     it("falls back through the default translation then empty string", () => {

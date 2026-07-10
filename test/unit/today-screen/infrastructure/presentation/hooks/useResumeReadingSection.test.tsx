@@ -17,6 +17,7 @@ const MaterialIcon = ({ children }: { children: string }) => (
 );
 
 const addTab = vi.fn();
+const closeToday = vi.fn();
 const getDefaultTranslation = vi.fn(() => "AAB");
 
 type Result = ReturnType<typeof useResumeReadingSection>;
@@ -45,6 +46,7 @@ describe("useResumeReadingSection", () => {
       translate: vi.fn((key: string) => key),
       bookNames: signal(options.bookNames ?? new Map([["GEN", "Genesis"]])),
       addTab,
+      closeToday,
       getDefaultTranslation,
     });
     const result = { current: null as unknown as Result };
@@ -98,5 +100,11 @@ describe("useResumeReadingSection", () => {
     act(() => result.current.handleButtonClick());
     expect(getDefaultTranslation).toHaveBeenCalled();
     expect(addTab).toHaveBeenCalledWith("JHN", 3, "AAB");
+  });
+
+  it("closes the Today screen on button click", () => {
+    const result = setup({ lastReading: { bookId: "JHN", chapter: 3 } });
+    act(() => result.current.handleButtonClick());
+    expect(closeToday).toHaveBeenCalledTimes(1);
   });
 });
