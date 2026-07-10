@@ -369,6 +369,12 @@ importers:
         specifier: workspace:*
         version: link:../seed-bible
 
+  packages/bible-stack:
+    dependencies:
+      seed-bible:
+        specifier: workspace:*
+        version: link:../seed-bible
+
   packages/bonfire-extension:
     dependencies:
       seed-bible:

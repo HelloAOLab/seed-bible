@@ -1,0 +1,14 @@
+{
+  "name": "@seed-bible/bible-stack",
+  "version": "1.0.0",
+  "description": "TODO",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./index.ts"
+    }
+  },
+  "dependencies": {
+    "seed-bible": "workspace:*"
+  }
+}
