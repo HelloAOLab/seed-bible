@@ -438,6 +438,14 @@ function ChevronRightIcon() {
   return <MaterialIcon>chevron_right</MaterialIcon>;
 }
 
+function NextItemIcon() {
+  return <MaterialIcon>skip_next</MaterialIcon>;
+}
+
+function PreviousItemIcon() {
+  return <MaterialIcon>skip_previous</MaterialIcon>;
+}
+
 function CopyVerseIcon() {
   return <MaterialIcon>content_copy</MaterialIcon>;
 }
@@ -556,8 +564,26 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       isDisabled: (context) =>
         !context.readingState.chapterData.value?.previousChapterApiLink ||
         context.readingState.loading.value,
+      isVisible: (context) => !context.playlists?.playing?.value,
       onSelect: (context) => {
         context.readingState.loadPreviousChapter();
+      },
+    },
+    {
+      id: "previous-item",
+      priority: 0,
+      title: { key: "previous", defaultValue: "Previous" },
+      icon: (context) =>
+        context.readingState.translation.value?.textDirection === "rtl" ? (
+          <NextItemIcon />
+        ) : (
+          <PreviousItemIcon />
+        ),
+      isDisabled: (context) =>
+        !context.playlists?.playing?.value?.hasPrevious.value,
+      isVisible: (context) => !!context.playlists?.playing?.value,
+      onSelect: (context) => {
+        context.playlists?.playing.value?.previous();
       },
     },
     {
@@ -665,8 +691,26 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       isDisabled: (context) =>
         !context.readingState.chapterData.value?.nextChapterApiLink ||
         context.readingState.loading.value,
+      isVisible: (context) => !context.playlists?.playing?.value,
       onSelect: (context) => {
         context.readingState.loadNextChapter();
+      },
+    },
+    {
+      id: "next-item",
+      priority: 1000,
+      title: { key: "next", defaultValue: "Next" },
+      icon: (context) =>
+        context.readingState.translation.value?.textDirection === "rtl" ? (
+          <PreviousItemIcon />
+        ) : (
+          <NextItemIcon />
+        ),
+      isDisabled: (context) =>
+        !context.playlists?.playing?.value?.hasNext.value,
+      isVisible: (context) => !!context.playlists?.playing?.value,
+      onSelect: (context) => {
+        context.playlists?.playing.value?.next();
       },
     },
   ];

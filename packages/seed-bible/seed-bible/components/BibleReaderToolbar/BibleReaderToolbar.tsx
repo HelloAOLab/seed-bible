@@ -1227,7 +1227,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   tool.getItems?.().filter((item) => item.visible.value) ?? [];
                 const hasMenuItems = menuItems.length > 0;
                 const isArrow =
-                  tool.id === "previous-chapter" || tool.id === "next-chapter";
+                  tool.id === "previous-chapter" ||
+                  tool.id === "next-chapter" ||
+                  tool.id === "previous-item" ||
+                  tool.id === "next-item";
                 const label = translateTitle(t, tool.title);
                 if (!tool.visible.value) return [];
                 const itemElement = (
@@ -1320,7 +1323,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       )}
                   </div>
                 );
-                if (tool.id === "previous-chapter") {
+                if (
+                  tool.id === "previous-chapter" ||
+                  tool.id === "previous-item"
+                ) {
                   return [
                     itemElement,
                     <div
@@ -1330,7 +1336,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                     />,
                   ];
                 }
-                if (tool.id === "next-chapter") {
+                if (tool.id === "next-chapter" || tool.id === "next-item") {
                   return [
                     <div
                       key="divider-before-next"
