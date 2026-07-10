@@ -25,6 +25,8 @@ import { useEffect, useRef } from "preact/hooks";
 import { openBookmarkCategoryModal } from "../Tabs/Tabs";
 import type { TodayScreenAPI } from "@packages/today-screen/infrastructure/di/bootstrap";
 import { getExtensionExports } from "../../managers";
+import { playlistItemLabel } from "../playlistItemLabel";
+import type { PlayingState } from "../../managers/PlaylistManager";
 
 const DEFAULT_HIGHLIGHT_COLOR_IDS = ["yellow", "green", "blue"] as const;
 
@@ -847,6 +849,36 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     }
   };
 
+  const getReaderNavLabel = () => {
+    return (
+      <>
+        <div>
+          {readingState.value?.chapterData.value?.book.name ??
+            readingState.value?.bookId.value ??
+            " "}
+        </div>
+        <div>{readingState.value?.chapterNumber.value}</div>
+      </>
+    );
+  };
+
+  const getPlayingNavLabel = (playing: PlayingState) => {
+    const currentItem = playing.currentItem.value;
+    if (currentItem) {
+      const label = playlistItemLabel(currentItem, t, (bookId: string) => {
+        const book = readingState.value?.chapterData.value?.book;
+        return book?.name ?? book?.commonName ?? bookId;
+      });
+      return (
+        <>
+          <div>{label}</div>
+        </>
+      );
+    }
+
+    return getReaderNavLabel();
+  };
+
   return (
     <>
       {!shouldReplaceDefaultToolbar.value && (
@@ -861,6 +893,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 audioPlayTool.value && audioPlayTool.value.visible.value
                   ? audioPlayTool.value
                   : null;
+
               const playing = playingPlaylist.value;
               const prev = playing ? null : previousChapterTool.value;
               const next = playing ? null : nextChapterTool.value;
@@ -941,12 +974,9 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           onPointerDown={spawnRipple}
                           className="sb-reader-floating-nav-label"
                         >
-                          <div>
-                            {readingState.value?.chapterData.value?.book.name ??
-                              readingState.value?.bookId.value ??
-                              " "}
-                          </div>
-                          <div>{readingState.value?.chapterNumber.value}</div>
+                          {playing
+                            ? getPlayingNavLabel(playing)
+                            : getReaderNavLabel()}
                         </button>
                       )}
 
