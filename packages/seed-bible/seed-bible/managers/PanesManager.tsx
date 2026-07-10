@@ -174,7 +174,7 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
 
     if (options.id) {
       const existingPane =
-        panes.value.find((pane) => pane.id === options.id) ?? null;
+        panes.peek().find((pane) => pane.id === options.id) ?? null;
       if (existingPane) {
         const updatedPane: Pane = {
           ...existingPane,
@@ -185,9 +185,11 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
         syncPaneState(
           willFillScreen
             ? [updatedPane]
-            : panes.value.map((pane) =>
-                pane.id === updatedPane.id ? updatedPane : pane
-              ),
+            : panes
+                .peek()
+                .map((pane) =>
+                  pane.id === updatedPane.id ? updatedPane : pane
+                ),
           updatedPane.id
         );
         return updatedPane;
