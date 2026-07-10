@@ -121,12 +121,6 @@
   color: var(--sb-error-color, #d64545);
 }
 
-.sb-discover-item-edit .material-symbols-outlined,
-.sb-discover-item-play .material-symbols-outlined,
-.sb-discover-item-delete .material-symbols-outlined {
-  font-size: 1.125rem;
-}
-
 .sb-discover-item--row .sb-discover-item-title {
   flex: 1;
   min-width: 0;
