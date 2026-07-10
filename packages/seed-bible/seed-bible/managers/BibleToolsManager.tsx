@@ -490,8 +490,11 @@ function NowPlayingIcon({ playlists }: { playlists: PlaylistManager }) {
     playlists.playing.value?.playlists.value[0]?.title ??
     t("untitled-playlist", { defaultValue: "Untitled playlist" });
   return (
-    <span>
-      {t("now-playing-x", { defaultValue: "Now playing: {{title}}", title })}
+    <span className="sb-now-playing-icon">
+      <h4 className="sb-now-playing-icon-title">
+        {t("now-playing", { defaultValue: "Now playing" })}
+      </h4>
+      <span>{title}</span>
     </span>
   );
 }

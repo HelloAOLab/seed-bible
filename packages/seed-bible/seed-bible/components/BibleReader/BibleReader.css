@@ -384,7 +384,7 @@
    collapse the header's layout space in sync with the slide so the chapter
    content rises to fill the gap (no leftover white strip). */
 .sb-bible-reader-mobile-header {
-  max-height: 2.5rem;
+  max-height: 3.5rem;
   overflow: hidden;
   transition:
     transform 0.25s ease,
