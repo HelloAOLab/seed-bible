@@ -43,6 +43,22 @@ describe("PaneHeader", () => {
     ).not.toBeNull();
   });
 
+  it("renders a function title as a component inside the title slot", () => {
+    act(() => {
+      render(
+        <PaneHeader
+          title={() => <span className="custom-title">Custom</span>}
+          onClose={vi.fn()}
+        />,
+        container
+      );
+    });
+
+    const titleSlot = container.querySelector(".sb-pane-header-title");
+    expect(titleSlot?.querySelector(".custom-title")).not.toBeNull();
+    expect(titleSlot?.textContent).toBe("Custom");
+  });
+
   it("renders the custom header between the title and the close button", () => {
     act(() => {
       render(

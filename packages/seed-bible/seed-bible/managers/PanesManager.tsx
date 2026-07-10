@@ -7,11 +7,17 @@ import type { ComponentChild } from "preact";
  */
 export type PanePlacement = "fullscreen" | "side" | "floating";
 
+/**
+ * A pane title: either a plain string, or a render function (like `header`)
+ * rendered as a component in the header so it can use hooks (i18n, signals).
+ */
+export type PaneTitle = string | (() => ComponentChild);
+
 export interface Pane {
   /** Stable pane identifier. */
   id: string;
   /** Title shown in the pane's header. */
-  title: string;
+  title: PaneTitle;
   /** Custom component rendered in this pane. */
   component: () => ComponentChild;
   /**
@@ -36,9 +42,12 @@ export interface PaneOpenOptions {
   /** Placement mode for the new pane. Immutable after creation. */
   placement: PanePlacement;
 
-  // TODO: Support translatable titles
-  /** Title shown in the pane's header. */
-  title: string;
+  /**
+   * Title shown in the pane's header. Either a plain string, or a render
+   * function (like `header`) rendered as a component so it can use hooks
+   * (i18n, signals) — e.g. for a translated or reactive title.
+   */
+  title: PaneTitle;
   /** Custom component rendered in the pane. */
   component: () => ComponentChild;
   /**
@@ -105,7 +114,7 @@ function createPaneFactory() {
   let nextPaneId = 1;
 
   return (
-    title: string,
+    title: PaneTitle,
     component: () => ComponentChild,
     placement: PanePlacement,
     customId?: string,
