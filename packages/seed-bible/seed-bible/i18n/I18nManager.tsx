@@ -214,7 +214,6 @@ export function createI18nManager(
     applicator:
       | ((translation: TranslationWithLanguage) => Promise<void>)
       | null,
-    getTranslationId: (() => string | null) | null = null,
     getTranslations: (() => readonly Translation[] | null) | null = null,
     loadTranslations:
       | (() => Promise<readonly Translation[] | null>)
