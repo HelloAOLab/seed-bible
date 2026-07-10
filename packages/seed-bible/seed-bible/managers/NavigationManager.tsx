@@ -207,6 +207,10 @@ export function createNavigationManager(
       console.log(`Updating URL query param: ${key} =`, value);
     }
 
+    if (!hasChanges) {
+      return;
+    }
+
     push(next);
   };
 
