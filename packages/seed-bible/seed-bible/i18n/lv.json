@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Izvēlieties kādu, kas uzturēs sesiju:",
   "end-session-for-everyone": "Beigt sesiju",
   "dont-show-again": "Nerādīt šo vairs",
+  "languageUnavailable.title": "Valoda nav pieejama",
+  "languageUnavailable.body": "Mums pašlaik nav Bībeles tulkojuma šai valodai, bet mēs atbalstām {{fallback}}. Vai vēlaties pārslēgt Bībeles tekstu uz {{fallback}}?",
+  "languageUnavailable.yesContinue": "Jā, turpināt",
+  "languageUnavailable.noGoBack": "Nē, atpakaļ",
   "ui-size": "Lietotāja interfeisa izmērs"
 }

@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Valige keegi seansi käigus hoidmiseks:",
   "end-session-for-everyone": "Lõpeta seanss",
   "dont-show-again": "Ära seda enam näita",
+  "languageUnavailable.title": "Keel pole saadaval",
+  "languageUnavailable.body": "Meil pole praegu selle keele jaoks Piibli tõlget, kuid toetame {{fallback}}. Kas soovite Piibli teksti {{fallback}} keelde vahetada?",
+  "languageUnavailable.yesContinue": "Jah, jätka",
+  "languageUnavailable.noGoBack": "Ei, mine tagasi",
   "ui-size": "Kasutajaliidese suurus"
 }

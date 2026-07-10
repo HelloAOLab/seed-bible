@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "سیشن کو جاری رکھنے کے لیے کسی کا انتخاب کریں:",
   "end-session-for-everyone": "سیشن ختم کریں۔",
   "dont-show-again": "اسے دوبارہ مت دکھائیں۔",
+  "languageUnavailable.title": "زبان دستیاب نہیں",
+  "languageUnavailable.body": "ہمارے پاس فی الوقت اس زبان کے لیے بائبل کا ترجمہ نہیں ہے، لیکن ہم {{fallback}} کو سپورٹ کرتے ہیں۔ کیا آپ بائبل کا متن {{fallback}} میں تبدیل کرنا چاہیں گے؟",
+  "languageUnavailable.yesContinue": "ہاں، جاری رکھیں",
+  "languageUnavailable.noGoBack": "نہیں، واپس جائیں",
   "ui-size": "UI سائز"
 }

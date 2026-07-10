@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "بۇ يىغىننىڭ داۋاملىشىشىنى داۋاملاشتۇرىدىغان بىر كىشىنى تاللاڭ:",
   "end-session-for-everyone": "يىغىننى ئاخىرلاشتۇرۇڭ",
   "dont-show-again": "بۇنى قايتا كۆرسەتمەڭ",
+  "languageUnavailable.title": "تىل يوق",
+  "languageUnavailable.body": "بىز ھازىرچە بۇ تىل ئۈچۈن مۇقەددەس كىتاب تەرجىمىسىگە ئىگە ئەمەس، ئەمما {{fallback}} نى قوللايمىز. مۇقەددەس كىتاب تېكىستىنى {{fallback}} گە ئالماشتۇرۇشنى خالامسىز?",
+  "languageUnavailable.yesContinue": "ھەئە، داۋاملاشتۇرۇش",
+  "languageUnavailable.noGoBack": "ياق، قايتىش",
   "ui-size": "UI چوڭلۇقى"
 }

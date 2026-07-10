@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Pilih seseorang untuk memastikan sesi ini berjalan:",
   "end-session-for-everyone": "Tamat sesi",
   "dont-show-again": "Jangan tunjukkan ini lagi",
+  "languageUnavailable.title": "Bahasa Tidak Tersedia",
+  "languageUnavailable.body": "Kami pada masa ini tidak mempunyai terjemahan Alkitab untuk bahasa ini, tetapi kami menyokong {{fallback}}. Adakah anda ingin menukar teks Alkitab kepada {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ya, teruskan",
+  "languageUnavailable.noGoBack": "Tidak, kembali",
   "ui-size": "Saiz UI"
 }

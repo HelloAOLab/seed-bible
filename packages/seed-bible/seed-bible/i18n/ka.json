@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "აირჩიეთ ვინმე, ვინც სესიას გააგრძელებს:",
   "end-session-for-everyone": "სესიის დასრულება",
   "dont-show-again": "ეს აღარ აჩვენო",
+  "languageUnavailable.title": "ენა მიუწვდომელია",
+  "languageUnavailable.body": "ამ ენისთვის ამჟამად არ გვაქვს ბიბლიის თარგმანი, მაგრამ გვაქვს {{fallback}}. გსურთ ბიბლიის ტექსტი გადართოთ {{fallback}}-ზე?",
+  "languageUnavailable.yesContinue": "დიახ, გაგრძელება",
+  "languageUnavailable.noGoBack": "არა, უკან",
   "ui-size": "ინტერფეისის ზომა"
 }

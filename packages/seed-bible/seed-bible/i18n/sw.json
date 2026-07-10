@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Chagua mtu wa kuendelea na kipindi:",
   "end-session-for-everyone": "Maliza kipindi",
   "dont-show-again": "Usionyeshe hii tena",
+  "languageUnavailable.title": "Lugha Haipatikani",
+  "languageUnavailable.body": "Kwa sasa hatuna tafsiri ya Biblia kwa lugha hii, lakini tunaunga mkono {{fallback}}. Je, ungependa kubadilisha maandiko ya Biblia kuwa {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ndio, endelea",
+  "languageUnavailable.noGoBack": "Hapana, rudi",
   "ui-size": "Ukubwa wa kiolesura"
 }

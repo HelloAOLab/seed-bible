@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "እቲ ክፍለ ግዜ ንኽቕጽል ዝሕግዝ ሰብ ምረጽ፤",
   "end-session-for-everyone": "ክፍለ ግዜ ምዝዛም",
   "dont-show-again": "እዚ ዳግማይ ኣይተርእይዎ።",
+  "languageUnavailable.title": "ቋንቋ ኣይተረኽበን",
+  "languageUnavailable.body": "ንዚ ቋንቋ ሕጂ ትርጉም መጽሓፍ ቅዱስ የለናን፣ {{fallback}} ግን ንድግፎ ኢና። ነቲ ናይ መጽሓፍ ቅዱስ ጽሑፍ ናብ {{fallback}} ክትቀይሮ ትደልዩ ዲኻ?",
+  "languageUnavailable.yesContinue": "እወ፣ ቀጽል",
+  "languageUnavailable.noGoBack": "ኣይፋል፣ ተመለስ",
   "ui-size": "UI ስፍሓት"
 }

@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Sessiyani davom ettirish uchun kimnidir tanlang:",
   "end-session-for-everyone": "Sessiyani tugatish",
   "dont-show-again": "Buni boshqa ko'rsatmang",
+  "languageUnavailable.title": "Til mavjud emas",
+  "languageUnavailable.body": "Hozirda bizda bu til uchun Muqaddas Kitob tarjimasi yo'q, lekin biz {{fallback}} ni qo'llab-quvvatlaymiz. Muqaddas Kitob matnini {{fallback}} ga o'tkazmoqchimisiz?",
+  "languageUnavailable.yesContinue": "Ha, davom etish",
+  "languageUnavailable.noGoBack": "Yo'q, orqaga",
   "ui-size": "UI hajmi"
 }

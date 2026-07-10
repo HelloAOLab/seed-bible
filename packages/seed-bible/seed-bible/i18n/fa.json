@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "کسی را برای ادامه‌ی جلسه انتخاب کنید:",
   "end-session-for-everyone": "پایان جلسه",
   "dont-show-again": "اینو دیگه نشون نده",
+  "languageUnavailable.title": "زبان در دسترس نیست",
+  "languageUnavailable.body": "ما در حال حاضر ترجمهٔ کتاب مقدس برای این زبان نداریم، اما {{fallback}} را پشتیبانی می‌کنیم. آیا می‌خواهید متن کتاب مقدس را به {{fallback}} تغییر دهید؟",
+  "languageUnavailable.yesContinue": "بله، ادامه",
+  "languageUnavailable.noGoBack": "خیر، بازگشت",
   "ui-size": "اندازه رابط کاربری"
 }

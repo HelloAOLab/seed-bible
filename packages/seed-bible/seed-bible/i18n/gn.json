@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Eiporavo peteĩ tapicha omantene hag̃ua pe sesión:",
   "end-session-for-everyone": "Oñemohu’ã sesión",
   "dont-show-again": "Ani rehechauka jey ko mba'e",
+  "languageUnavailable.title": "Ñe'ẽ Ndaipóri",
+  "languageUnavailable.body": "Roguerekói gueteri moñe'ẽrã Tupãpa'u ko ñe'ẽme, ha katu roipytyvõ {{fallback}}. ¿Redesepáke Tupãpa'u jehaiha {{fallback}} pe?",
+  "languageUnavailable.yesContinue": "Hẽ, mbojoapy",
+  "languageUnavailable.noGoBack": "Nahániri, jujey",
   "ui-size": "UI tuichakue"
 }

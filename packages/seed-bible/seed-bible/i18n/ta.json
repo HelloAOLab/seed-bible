@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "அமர்வைத் தொடர்ந்து நடத்துவதற்கு ஒருவரைத் தேர்ந்தெடுக்கவும்:",
   "end-session-for-everyone": "அமர்வை முடிக்கவும்",
   "dont-show-again": "இதை மீண்டும் காட்ட வேண்டாம்",
+  "languageUnavailable.title": "மொழி கிடைக்கவில்லை",
+  "languageUnavailable.body": "இந்த மொழிக்கு தற்போது எங்களிடம் பைபிள் மொழிபெயர்ப்பு இல்லை, ஆனால் நாங்கள் {{fallback}} ஐ ஆதரிக்கிறோம். பைபிள் உரையை {{fallback}} க்கு மாற்ற விரும்புகிறீர்களா?",
+  "languageUnavailable.yesContinue": "ஆம், தொடரவும்",
+  "languageUnavailable.noGoBack": "இல்லை, திரும்பிச் செல்லவும்",
   "ui-size": "UI அளவு"
 }

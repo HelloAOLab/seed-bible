@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Válasszon ki valakit, aki folytatja a munkamenetet:",
   "end-session-for-everyone": "Munkamenet vége",
   "dont-show-again": "Ne mutasd ezt újra",
+  "languageUnavailable.title": "A nyelv nem érhető el",
+  "languageUnavailable.body": "Jelenleg nincs Bibliafordításunk erre a nyelvre, de támogatjuk a {{fallback}} nyelvet. Át szeretné váltani a Biblia szövegét {{fallback}} nyelvre?",
+  "languageUnavailable.yesContinue": "Igen, folytatás",
+  "languageUnavailable.noGoBack": "Nem, vissza",
   "ui-size": "Felhasználói felület mérete"
 }

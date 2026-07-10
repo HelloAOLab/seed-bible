@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "सत्र चालू ठेवण्यासाठी कोणाची तरी निवड करा:",
   "end-session-for-everyone": "सत्र समाप्त करा",
   "dont-show-again": "हे पुन्हा दाखवू नका",
+  "languageUnavailable.title": "भाषा उपलब्ध नाही",
+  "languageUnavailable.body": "या भाषेसाठी आमच्याकडे सध्या बायबल भाषांतर नाही, पण आम्ही {{fallback}} ला समर्थन करतो. तुम्ही बायबल मजकूर {{fallback}} वर बदलू इच्छिता?",
+  "languageUnavailable.yesContinue": "होय, सुरू ठेवा",
+  "languageUnavailable.noGoBack": "नाही, मागे जा",
   "ui-size": "UI आकार"
 }

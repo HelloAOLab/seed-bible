@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Trieu algú per mantenir la sessió en marxa:",
   "end-session-for-everyone": "Finalitza la sessió",
   "dont-show-again": "No ho tornis a mostrar",
+  "languageUnavailable.title": "Idioma no disponible",
+  "languageUnavailable.body": "Actualment no tenim una traducció de la Bíblia per a aquest idioma, però sí que tenim {{fallback}}. Vols canviar el text bíblic a {{fallback}}?",
+  "languageUnavailable.yesContinue": "Sí, continuar",
+  "languageUnavailable.noGoBack": "No, tornar enrere",
   "ui-size": "Mida de la interfície d'usuari"
 }

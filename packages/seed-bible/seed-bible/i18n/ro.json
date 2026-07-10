@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Alegeți pe cineva care să mențină sesiunea în desfășurare:",
   "end-session-for-everyone": "Încheiați sesiunea",
   "dont-show-again": "Nu mai afișa asta",
+  "languageUnavailable.title": "Limbă indisponibilă",
+  "languageUnavailable.body": "Nu avem în prezent o traducere a Bibliei pentru această limbă, dar suportăm {{fallback}}. Doriți să schimbați textul biblic la {{fallback}}?",
+  "languageUnavailable.yesContinue": "Da, continuă",
+  "languageUnavailable.noGoBack": "Nu, înapoi",
   "ui-size": "Dimensiunea interfeței utilizator"
 }

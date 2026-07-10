@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "ክፍለ ጊዜውን እንዲቀጥል የሚያደርግ ሰው ይምረጡ፦",
   "end-session-for-everyone": "ክፍለ ጊዜን ጨርስ",
   "dont-show-again": "ይህንን ዳግመኛ አታሳይ",
+  "languageUnavailable.title": "ቋንቋ አይገኝም",
+  "languageUnavailable.body": "ለዚህ ቋንቋ በአሁኑ ጊዜ የመጽሐፍ ቅዱስ ትርጉም የለንም፣ ግን {{fallback}} እንደሚደግፍ ነው። የመጽሐፍ ቅዱስ ጽሑፍ ወደ {{fallback}} መቀየር ይፈልጋሉ?",
+  "languageUnavailable.yesContinue": "አዎ፣ ቀጥል",
+  "languageUnavailable.noGoBack": "አይ፣ ተመለስ",
   "ui-size": "የUI መጠን"
 }

@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Wybierz osobę, która będzie nadzorować sesję:",
   "end-session-for-everyone": "Zakończ sesję",
   "dont-show-again": "Nie pokazuj tego ponownie",
+  "languageUnavailable.title": "Język niedostępny",
+  "languageUnavailable.body": "Obecnie nie mamy tłumaczenia Biblii na ten język, ale obsługujemy {{fallback}}. Czy chcesz przełączyć tekst Biblii na {{fallback}}?",
+  "languageUnavailable.yesContinue": "Tak, kontynuuj",
+  "languageUnavailable.noGoBack": "Nie, wróć",
   "ui-size": "Rozmiar interfejsu użytkownika"
 }

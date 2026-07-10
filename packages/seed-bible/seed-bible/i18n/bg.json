@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Изберете някой, който да поддържа сесията:",
   "end-session-for-everyone": "Край на сесията",
   "dont-show-again": "Не показвай това отново",
+  "languageUnavailable.title": "Езикът не е наличен",
+  "languageUnavailable.body": "В момента нямаме превод на Библията на този език, но поддържаме {{fallback}}. Искате ли да превключите текста на Библията на {{fallback}}?",
+  "languageUnavailable.yesContinue": "Да, продължи",
+  "languageUnavailable.noGoBack": "Не, върни се",
   "ui-size": "Размер на потребителския интерфейс"
 }

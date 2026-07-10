@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Scegliete qualcuno che mantenga la sessione attiva:",
   "end-session-for-everyone": "Fine della sessione",
   "dont-show-again": "Non mostrare più questo contenuto",
+  "languageUnavailable.title": "Lingua non disponibile",
+  "languageUnavailable.body": "Al momento non abbiamo una traduzione della Bibbia per questa lingua, ma supportiamo {{fallback}}. Vuoi passare il testo della Bibbia a {{fallback}}?",
+  "languageUnavailable.yesContinue": "Sì, continua",
+  "languageUnavailable.noGoBack": "No, torna indietro",
   "ui-size": "dimensione dell'interfaccia utente"
 }

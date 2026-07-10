@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Välj någon som ska hålla sessionen igång:",
   "end-session-for-everyone": "Avsluta sessionen",
   "dont-show-again": "Visa inte detta igen",
+  "languageUnavailable.title": "Språk inte tillgängligt",
+  "languageUnavailable.body": "Vi har för närvarande ingen bibelöversättning för detta språk, men vi stöder {{fallback}}. Vill du byta bibeltexten till {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ja, fortsätt",
+  "languageUnavailable.noGoBack": "Nej, gå tillbaka",
   "ui-size": "UI-storlek"
 }

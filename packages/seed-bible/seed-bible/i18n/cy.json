@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Dewiswch rywun i gadw'r sesiwn i fynd:",
   "end-session-for-everyone": "Gorffen sesiwn",
   "dont-show-again": "Peidiwch â dangos hyn eto",
+  "languageUnavailable.title": "Iaith Ddim ar Gael",
+  "languageUnavailable.body": "Nid oes gennym gyfieithiad Beibl ar gyfer yr iaith hon ar hyn o bryd, ond mae gennym {{fallback}}. Hoffech chi newid testun y Beibl i {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ie, parhau",
+  "languageUnavailable.noGoBack": "Na, ewch yn ôl",
   "ui-size": "Maint y rhyngwyneb defnyddiwr"
 }

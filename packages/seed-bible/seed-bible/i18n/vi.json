@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Hãy chọn một người để điều hành buổi họp:",
   "end-session-for-everyone": "Kết thúc phiên",
   "dont-show-again": "Đừng hiển thị lại cái này nữa",
+  "languageUnavailable.title": "Ngôn ngữ không khả dụng",
+  "languageUnavailable.body": "Chúng tôi hiện chưa có bản dịch Kinh Thánh cho ngôn ngữ này, nhưng chúng tôi hỗ trợ {{fallback}}. Bạn có muốn chuyển văn bản Kinh Thánh sang {{fallback}} không?",
+  "languageUnavailable.yesContinue": "Có, tiếp tục",
+  "languageUnavailable.noGoBack": "Không, quay lại",
   "ui-size": "Kích thước giao diện người dùng"
 }

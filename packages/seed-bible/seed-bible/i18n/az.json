@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Sessiyanın davam etməsi üçün birini seçin:",
   "end-session-for-everyone": "Sessiyanı bitirin",
   "dont-show-again": "Bunu bir daha göstərməyin",
+  "languageUnavailable.title": "Dil mövcud deyil",
+  "languageUnavailable.body": "Hal-hazırda bu dil üçün Bibliya tərcüməmiz yoxdur, lakin {{fallback}} dəstəkləyirik. Bibliya mətnini {{fallback}} dilinə keçirmək istərdinizmi?",
+  "languageUnavailable.yesContinue": "Bəli, davam et",
+  "languageUnavailable.noGoBack": "Xeyr, geri get",
   "ui-size": "UI ölçüsü"
 }

@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "セッションを継続する担当者を一人選んでください。",
   "end-session-for-everyone": "セッションを終了する",
   "dont-show-again": "今後表示しない",
+  "languageUnavailable.title": "言語は利用できません",
+  "languageUnavailable.body": "この言語の聖書翻訳は現在ありませんが、{{fallback}}はあります。聖書テキストを{{fallback}}に切り替えますか？",
+  "languageUnavailable.yesContinue": "はい、続ける",
+  "languageUnavailable.noGoBack": "いいえ、戻る",
   "ui-size": "UIサイズ"
 }

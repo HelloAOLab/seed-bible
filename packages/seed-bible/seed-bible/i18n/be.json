@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Выберыце каго-небудзь, хто будзе падтрымліваць сеанс:",
   "end-session-for-everyone": "Завяршыць сеанс",
   "dont-show-again": "Больш не паказваць",
+  "languageUnavailable.title": "Мова недаступная",
+  "languageUnavailable.body": "У нас зараз няма перакладу Бібліі на гэтую мову, але мы падтрымліваем {{fallback}}. Хочаце пераключыць тэкст Бібліі на {{fallback}}?",
+  "languageUnavailable.yesContinue": "Так, працягнуць",
+  "languageUnavailable.noGoBack": "Не, вярнуцца",
   "ui-size": "Памер карыстальніцкага інтэрфейсу"
 }

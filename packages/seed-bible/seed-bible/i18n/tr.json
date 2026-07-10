@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Oturumun devamlılığını sağlamak için birini seçin:",
   "end-session-for-everyone": "Oturumu sonlandır",
   "dont-show-again": "Bunu bir daha gösterme",
+  "languageUnavailable.title": "Dil Kullanılamıyor",
+  "languageUnavailable.body": "Şu anda bu dil için bir İncil çevirimiz yok, ancak {{fallback}} dilini destekliyoruz. İncil metnini {{fallback}} diline geçirmek ister misiniz?",
+  "languageUnavailable.yesContinue": "Evet, devam et",
+  "languageUnavailable.noGoBack": "Hayır, geri dön",
   "ui-size": "Kullanıcı arayüzü boyutu"
 }

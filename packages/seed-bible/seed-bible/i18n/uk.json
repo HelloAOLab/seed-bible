@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Оберіть когось, хто продовжить сеанс:",
   "end-session-for-everyone": "Завершити сеанс",
   "dont-show-again": "Не показувати це більше",
+  "languageUnavailable.title": "Мова недоступна",
+  "languageUnavailable.body": "Наразі у нас немає перекладу Біблії для цієї мови, але ми підтримуємо {{fallback}}. Бажаєте перемкнути текст Біблії на {{fallback}}?",
+  "languageUnavailable.yesContinue": "Так, продовжити",
+  "languageUnavailable.noGoBack": "Ні, повернутися",
   "ui-size": "Розмір інтерфейсу користувача"
 }

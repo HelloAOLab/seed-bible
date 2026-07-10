@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Pumili ng isang tao para patuloy na patakbuhin ang sesyon:",
   "end-session-for-everyone": "Tapusin ang sesyon",
   "dont-show-again": "Huwag mo na itong ipakita muli",
+  "languageUnavailable.title": "Hindi Available ang Wika",
+  "languageUnavailable.body": "Wala kaming salin ng Bibliya para sa wikang ito sa ngayon, ngunit sinusuportahan namin ang {{fallback}}. Gusto mo bang ilipat ang teksto ng Bibliya sa {{fallback}}?",
+  "languageUnavailable.yesContinue": "Oo, magpatuloy",
+  "languageUnavailable.noGoBack": "Hindi, bumalik",
   "ui-size": "Laki ng UI"
 }

@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "اختر شخصًا ما للحفاظ على استمرار الجلسة:",
   "end-session-for-everyone": "إنهاء الجلسة",
   "dont-show-again": "لا تعرض هذا مرة أخرى",
+  "languageUnavailable.title": "اللغة غير متوفرة",
+  "languageUnavailable.body": "ليس لدينا حاليًا ترجمة للكتاب المقدس لهذه اللغة، لكن لدينا {{fallback}}. هل تريد تبديل نص الكتاب المقدس إلى {{fallback}}؟",
+  "languageUnavailable.yesContinue": "نعم، متابعة",
+  "languageUnavailable.noGoBack": "لا، ارجع",
   "ui-size": "حجم واجهة المستخدم"
 }

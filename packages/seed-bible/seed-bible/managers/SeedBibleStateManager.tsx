@@ -1197,6 +1197,26 @@ export function createSeedBibleState(
     },
   };
 
+  // Settings UI language changes also select the nearest available Bible
+  // translation (preferred ID → same language in catalog → LANG_META.fallback
+  // → English), using existing tabs + selector state.
+  i18n.setBibleTranslationApplicator(
+    async (translation) => {
+      const tab = selectedTab.value;
+      if (tab) {
+        await tab.readingState.selectTranslation(translation.id);
+      }
+      await selector.selectTranslation(translation.id);
+    },
+    () => data.availableTranslations.value,
+    async () => {
+      if (data.availableTranslations.value.length === 0) {
+        await data.getTranslations();
+      }
+      return data.availableTranslations.value;
+    }
+  );
+
   setupExtensionContext(state);
 
   return state;

@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "ਸੈਸ਼ਨ ਨੂੰ ਚੱਲਦਾ ਰੱਖਣ ਲਈ ਕਿਸੇ ਨੂੰ ਚੁਣੋ:",
   "end-session-for-everyone": "ਸੈਸ਼ਨ ਸਮਾਪਤ ਕਰੋ",
   "dont-show-again": "ਇਸਨੂੰ ਦੁਬਾਰਾ ਨਾ ਦਿਖਾਓ",
+  "languageUnavailable.title": "ਭਾਸ਼ਾ ਉਪਲਬਧ ਨਹੀਂ ਹੈ",
+  "languageUnavailable.body": "ਸਾਡੇ ਕੋਲ ਇਸ ਸਮੇਂ ਇਸ ਭਾਸ਼ਾ ਲਈ ਬਾਈਬਲ ਦਾ ਅਨੁਵਾਦ ਨਹੀਂ ਹੈ, ਪਰ ਅਸੀਂ {{fallback}} ਦਾ ਸਮਰਥਨ ਕਰਦੇ ਹਾਂ। ਕੀ ਤੁਸੀਂ ਬਾਈਬਲ ਲਿਖਤ ਨੂੰ {{fallback}} ਵਿੱਚ ਬਦਲਣਾ ਚਾਹੁੰਦੇ ਹੋ?",
+  "languageUnavailable.yesContinue": "ਹਾਂ, ਜਾਰੀ ਰੱਖੋ",
+  "languageUnavailable.noGoBack": "ਨਹੀਂ, ਵਾਪਸ ਜਾਓ",
   "ui-size": "UI ਆਕਾਰ"
 }

@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "د غونډې د دوام لپاره یو څوک غوره کړئ:",
   "end-session-for-everyone": "غونډه پای ته ورسوئ",
   "dont-show-again": "دا بیا مه ښکاره کوه",
+  "languageUnavailable.title": "ژبه شتون نلري",
+  "languageUnavailable.body": "موږ په دې وخت کې د دې ژبې لپاره د بایبل ژباړه نه لرو، خو موږ د {{fallback}} ملاتړ کوو. ایا تاسو غواړئ د بایبل متن {{fallback}} ته واړوئ؟",
+  "languageUnavailable.yesContinue": "هو، دوام ورکړئ",
+  "languageUnavailable.noGoBack": "نه، بیرته لاړ شئ",
   "ui-size": "د UI اندازه"
 }

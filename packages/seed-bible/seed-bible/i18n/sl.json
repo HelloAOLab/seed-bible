@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Izberite nekoga, ki bo vodil sejo:",
   "end-session-for-everyone": "Končaj sejo",
   "dont-show-again": "Tega ne prikaži več",
+  "languageUnavailable.title": "Jezik ni na voljo",
+  "languageUnavailable.body": "Trenutno nimamo prevoda Biblije za ta jezik, vendar podpiramo {{fallback}}. Ali želite preklopiti besedilo Biblije na {{fallback}}?",
+  "languageUnavailable.yesContinue": "Da, nadaljuj",
+  "languageUnavailable.noGoBack": "Ne, nazaj",
   "ui-size": "Velikost uporabniškega vmesnika"
 }

@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Wählen Sie jemanden aus, der die Sitzung am Laufen hält:",
   "end-session-for-everyone": "Sitzung beenden",
   "dont-show-again": "Zeig das nicht noch einmal",
+  "languageUnavailable.title": "Sprache nicht verfügbar",
+  "languageUnavailable.body": "Für diese Sprache haben wir derzeit keine Bibelübersetzung, aber für {{fallback}}. Möchten Sie den Bibeltext auf {{fallback}} umstellen?",
+  "languageUnavailable.yesContinue": "Ja, fortfahren",
+  "languageUnavailable.noGoBack": "Nein, zurück",
   "ui-size": "UI-Größe"
 }

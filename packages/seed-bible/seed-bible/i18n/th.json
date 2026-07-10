@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "เลือกคนที่จะทำหน้าที่ดำเนินกิจกรรมต่อไป:",
   "end-session-for-everyone": "สิ้นสุดการประชุม",
   "dont-show-again": "อย่าแสดงสิ่งนี้อีก",
+  "languageUnavailable.title": "ภาษาไม่พร้อมใช้งาน",
+  "languageUnavailable.body": "ขณะนี้เรายังไม่มีการแปลพระคัมภีร์สำหรับภาษานี้ แต่เรารองรับ {{fallback}} คุณต้องการเปลี่ยนข้อความพระคัมภีร์เป็น {{fallback}} หรือไม่?",
+  "languageUnavailable.yesContinue": "ใช่ ดำเนินการต่อ",
+  "languageUnavailable.noGoBack": "ไม่ กลับ",
   "ui-size": "ขนาด UI"
 }

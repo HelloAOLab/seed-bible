@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Valitse joku pitämään istunnon käynnissä:",
   "end-session-for-everyone": "Lopeta istunto",
   "dont-show-again": "Älä näytä tätä uudelleen",
+  "languageUnavailable.title": "Kieli ei ole saatavilla",
+  "languageUnavailable.body": "Meillä ei tällä hetkellä ole raamatun käännöstä tälle kielelle, mutta tuemme {{fallback}}. Haluatko vaihtaa raamatun tekstin kieleen {{fallback}}?",
+  "languageUnavailable.yesContinue": "Kyllä, jatka",
+  "languageUnavailable.noGoBack": "Ei, palaa takaisin",
   "ui-size": "Käyttöliittymän koko"
 }

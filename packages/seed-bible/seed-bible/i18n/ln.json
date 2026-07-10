@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Pona moto oyo akosala ete session ezala malamu:",
   "end-session-for-everyone": "Suka session",
   "dont-show-again": "Kolakisa lisusu likambo oyo te",
+  "languageUnavailable.title": "Lokótá Ezwani Te",
+  "languageUnavailable.body": "Tozali na ebandeli ya Biblia mpo na lokótá oyo te sik'oyo, kasi tozali kolandela {{fallback}}. Olingi kobongola mokanda ya Biblia na {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ɛɛ, kokoba",
+  "languageUnavailable.noGoBack": "Te, kozonga",
   "ui-size": "Taille ya UI"
 }

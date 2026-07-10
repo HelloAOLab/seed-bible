@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Khetha umuntu ozogcina iseshini isebenza:",
   "end-session-for-everyone": "Qeda iseshini",
   "dont-show-again": "Ungabonisi lokhu futhi",
+  "languageUnavailable.title": "Ulimi Alutholakali",
+  "languageUnavailable.body": "Asinayo ukuhumusha kweBhayibheli kolu limi okwamanje, kodwa sisekela i-{{fallback}}. Ungathanda ukushintshela umbhalo weBhayibheli uye ku-{{fallback}}?",
+  "languageUnavailable.yesContinue": "Yebo, qhubeka",
+  "languageUnavailable.noGoBack": "Cha, buyela emuva",
   "ui-size": "Usayizi we-UI"
 }

@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Сессияны улантуу үчүн бирөөнү тандаңыз:",
   "end-session-for-everyone": "Сеансты аяктоо",
   "dont-show-again": "Муну экинчи көрсөтпө",
+  "languageUnavailable.title": "Тил жеткиликтүү эмес",
+  "languageUnavailable.body": "Бизде учурда бул тил үчүн Библия котормосу жок, бирок биз {{fallback}} колдойбуз. Библия текстин {{fallback}} тилине которгуңуз келеби?",
+  "languageUnavailable.yesContinue": "Ооба, улантуу",
+  "languageUnavailable.noGoBack": "Жок, артка",
   "ui-size": "UI өлчөмү"
 }

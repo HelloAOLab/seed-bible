@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "ಅಧಿವೇಶನವನ್ನು ನಡೆಸಲು ಯಾರನ್ನಾದರೂ ಆರಿಸಿ:",
   "end-session-for-everyone": "ಅಧಿವೇಶನ ಅಂತ್ಯಗೊಳಿಸಿ",
   "dont-show-again": "ಇದನ್ನು ಮತ್ತೆ ತೋರಿಸಬೇಡಿ",
+  "languageUnavailable.title": "ಭಾಷೆ ಲಭ್ಯವಿಲ್ಲ",
+  "languageUnavailable.body": "ಈ ಭಾಷೆಗೆ ನಮ್ಮಲ್ಲಿ ಪ್ರಸ್ತುತ ಬೈಬಲ್ ಅನುವಾದವಿಲ್ಲ, ಆದರೆ ನಾವು {{fallback}} ಅನ್ನು ಬೆಂಬಲಿಸುತ್ತೇವೆ. ಬೈಬಲ್ ಪಠ್ಯವನ್ನು {{fallback}} ಗೆ ಬದಲಾಯಿಸಲು ಬಯಸುತ್ತೀರಾ?",
+  "languageUnavailable.yesContinue": "ಹೌದು, ಮುಂದುವರಿಸಿ",
+  "languageUnavailable.noGoBack": "ಇಲ್ಲ, ಹಿಂತಿರುಗಿ",
   "ui-size": "UI ಗಾತ್ರ"
 }

@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Выберите того, кто будет поддерживать сессию:",
   "end-session-for-everyone": "Завершение сессии",
   "dont-show-again": "Больше не показывайте это",
+  "languageUnavailable.title": "Язык недоступен",
+  "languageUnavailable.body": "У нас пока нет перевода Библии на этот язык, но есть для {{fallback}}. Хотите переключить библейский текст на {{fallback}}?",
+  "languageUnavailable.yesContinue": "Да, продолжить",
+  "languageUnavailable.noGoBack": "Нет, вернуться",
   "ui-size": "размер пользовательского интерфейса"
 }

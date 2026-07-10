@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "ເລືອກຜູ້ໃດຜູ້ໜຶ່ງເພື່ອຮັກສາກອງປະຊຸມໃຫ້ດຳເນີນຕໍ່ໄປ:",
   "end-session-for-everyone": "ສິ້ນສຸດກອງປະຊຸມ",
   "dont-show-again": "ຢ່າສະແດງສິ່ງນີ້ອີກ",
+  "languageUnavailable.title": "ບໍ່ມີພາສາ",
+  "languageUnavailable.body": "ພວກເຮົາຍັງບໍ່ມີການແປພະຄຳພີເປັນພາສານີ້ໃນຕອນນີ້, ແຕ່ພວກເຮົາຮອງຮັບ {{fallback}}. ທ່ານຕ້ອງການປ່ຽນຂໍ້ຄວາມພະຄຳພີເປັນ {{fallback}} ບໍ?",
+  "languageUnavailable.yesContinue": "ແມ່ນ, ສືບຕໍ່",
+  "languageUnavailable.noGoBack": "ບໍ່, ກັບຄືນ",
   "ui-size": "ຂະໜາດ UI"
 }

@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Kies iemand om die sessie aan die gang te hou:",
   "end-session-for-everyone": "Eindig sessie",
   "dont-show-again": "Moenie dit weer wys nie",
+  "languageUnavailable.title": "Taal Nie Beskikbaar Nie",
+  "languageUnavailable.body": "Ons het tans nie 'n Bybelvertaling vir hierdie taal nie, maar ons ondersteun wel {{fallback}}. Wil jy die Bybelteks na {{fallback}} verander?",
+  "languageUnavailable.yesContinue": "Ja, gaan voort",
+  "languageUnavailable.noGoBack": "Nee, gaan terug",
   "ui-size": "UI-grootte"
 }

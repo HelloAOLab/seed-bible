@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Vyberte niekoho, kto bude reláciu udržiavať v chode:",
   "end-session-for-everyone": "Ukončiť reláciu",
   "dont-show-again": "Toto už viac nezobrazovať",
+  "languageUnavailable.title": "Jazyk nie je k dispozícii",
+  "languageUnavailable.body": "Momentálne nemáme preklad Biblie pre tento jazyk, ale podporujeme {{fallback}}. Chcete prepnúť text Biblie na {{fallback}}?",
+  "languageUnavailable.yesContinue": "Áno, pokračovať",
+  "languageUnavailable.noGoBack": "Nie, späť",
   "ui-size": "Veľkosť používateľského rozhrania"
 }

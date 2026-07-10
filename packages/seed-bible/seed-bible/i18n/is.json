@@ -331,5 +331,9 @@
   "appoint-co-host-instructions": "Veldu einhvern til að halda fundinum gangandi:",
   "end-session-for-everyone": "Loka lotu",
   "dont-show-again": "Ekki sýna þetta aftur",
+  "languageUnavailable.title": "Tungumál ekki tiltækt",
+  "languageUnavailable.body": "Við höfum ekki Biblíuþýðingu fyrir þetta tungumál eins og er, en við styðjum {{fallback}}. Viltu skipta Biblíutextanum yfir á {{fallback}}?",
+  "languageUnavailable.yesContinue": "Já, halda áfram",
+  "languageUnavailable.noGoBack": "Nei, fara til baka",
   "ui-size": "Stærð notendaviðmóts"
 }

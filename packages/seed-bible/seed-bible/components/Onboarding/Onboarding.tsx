@@ -1,6 +1,7 @@
 import "./Onboarding.css";
 import type { ComponentChildren } from "preact";
 import { useI18n } from "../../i18n/I18nManager";
+import { LANG_META } from "../../i18n/languageMeta";
 import {
   SeedBibleWordmark,
   InstallAppsIcon,
@@ -91,6 +92,79 @@ export function OnboardingModals({
   }
 
   return card(<InstallContent onboarding={onboarding} os={os} toast={toast} />);
+}
+
+/**
+ * Warns when the chosen UI language has no Bible text and offers the nearest
+ * available translation (e.g. Gujarati UI → Hindi Bible). UI language stays put.
+ */
+export function LanguageUnavailableModal({
+  className = "",
+}: {
+  className?: string;
+}) {
+  const {
+    t,
+    languageFallbackPrompt,
+    confirmLanguageFallback,
+    cancelLanguageFallback,
+  } = useI18n();
+  const prompt = languageFallbackPrompt.value;
+
+  if (!prompt) {
+    return null;
+  }
+
+  const fallbackDisplay =
+    LANG_META[prompt.fallbackLanguage]?.display ?? prompt.fallbackLanguage;
+
+  return (
+    <div className={`sb-onboarding-overlay ${className}`}>
+      <div
+        className="sb-onboarding-card"
+        role="dialog"
+        aria-modal="true"
+        onClick={(event: MouseEvent) => event.stopPropagation()}
+      >
+        <h2 className="sb-onboarding-title">
+          {t("languageUnavailable.title", {
+            defaultValue: "Language Unavailable",
+          })}
+        </h2>
+        <p className="sb-onboarding-body">
+          {t("languageUnavailable.body", {
+            defaultValue:
+              "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+            fallback: fallbackDisplay,
+          })}
+        </p>
+        <div className="sb-onboarding-actions">
+          <button
+            type="button"
+            className="sb-onboarding-btn sb-onboarding-btn-primary"
+            onClick={() => {
+              void confirmLanguageFallback();
+            }}
+          >
+            {t("languageUnavailable.yesContinue", {
+              defaultValue: "Yes, Continue",
+            })}
+          </button>
+          <button
+            type="button"
+            className="sb-onboarding-btn sb-onboarding-btn-secondary"
+            onClick={() => {
+              void cancelLanguageFallback();
+            }}
+          >
+            {t("languageUnavailable.noGoBack", {
+              defaultValue: "No, Go back",
+            })}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function InstallContent({
