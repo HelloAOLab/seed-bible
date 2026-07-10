@@ -60,6 +60,7 @@ import type { NavigationManager } from "./NavigationManager";
 import type { I18nManager } from "../i18n";
 import type { DiscoverManager } from "./DiscoverManager";
 import type { BibleReadingExtensionManager } from "./BibleReadingExtensionManager";
+import { difference } from "es-toolkit";
 
 export interface ReaderTab {
   /** Unique tab identifier (for example: tab-1, tab-2). */
@@ -344,42 +345,26 @@ export function createTabs(
     );
   };
 
+  let oldQueryParams: Record<string, string | null> = {};
+
   effect(() => {
     const readingState = selectedTab.value?.readingState;
-    const selectedBookId = readingState?.bookId.value;
-    const selectedChapter = readingState?.chapterNumber.value;
-    const selectedTranslation = readingState?.translationId.value;
+    const nextQueryParams =
+      readingState?.getUrlQueryParams(navigation.currentUrl.peek()) ?? {};
 
-    const url = new URL(navigation.currentUrl.peek());
-    navigation.updateQueryParam("book", selectedBookId ?? null);
-    navigation.updateQueryParam(
-      "chapter",
-      selectedChapter ? String(selectedChapter) : null
-    );
+    const oldKeys = Object.keys(oldQueryParams);
+    const newKeys = Object.keys(nextQueryParams);
 
-    if (selectedTranslation) {
-      const translationId = dataManager.buildTranslationId(selectedTranslation);
-
-      if (url.searchParams.has("translationId")) {
-        navigation.updateQueryParam("translationId", translationId);
-      } else if (
-        url.searchParams.has("translation") ||
-        translationId !== defaultTranslation.id
-      ) {
-        navigation.updateQueryParam("translation", translationId);
-      }
+    oldQueryParams = nextQueryParams;
+    const queryUpdate = {
+      ...nextQueryParams,
+    };
+    const removedKeys = difference(oldKeys, newKeys);
+    for (const key of removedKeys) {
+      queryUpdate[key] = null;
     }
 
-    const verseNumbers = readingState?.selectedVerses.value
-      .filter(
-        (verse) =>
-          verse.bookId === selectedBookId &&
-          verse.chapterNumber === selectedChapter
-      )
-      .map((verse) => verse.verse.number);
-
-    const formatted = verseNumbers ? formatVerseSelection(verseNumbers) : null;
-    navigation.updateQueryParam("verse", formatted);
+    navigation.updateQueryParams(queryUpdate);
   });
 
   effect(() => {

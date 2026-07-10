@@ -332,6 +332,13 @@ export interface BibleReadingState {
   disableExtension: (extensionId: string) => void;
 
   /**
+   * Gets the query parameters that should be set on this reading state's URL.
+   * @param currentUrl The current URL.
+   * @returns The query parameters that should be set the URL when this reading state is selected.
+   */
+  getUrlQueryParams: (currentUrl: URL) => Record<string, string | null>;
+
+  /**
    * Releases all resources held by this reading state: disables every enabled
    * extension, clears pending decoration timers, and stops internal effects.
    * Called when the owning tab is closed.
@@ -1710,6 +1717,52 @@ export function createBibleReadingState(
     effectDisposers.push(stopDiscoverEffect);
   }
 
+  /**
+   * Gets the URL query parameters for the current reading state.
+   * @param currentUrl The current URL.
+   * @returns An object representing the query parameters.
+   */
+  const getUrlQueryParams = (currentUrl: URL) => {
+    const selectedBookId = bookId.value;
+    const selectedChapter = chapterNumber.value;
+    const selectedTranslation = translationId.value;
+
+    const query: Record<string, string | null> = {};
+
+    const url = currentUrl;
+
+    query.book = selectedBookId ?? null;
+    query.chapter = selectedChapter ? String(selectedChapter) : null;
+
+    if (selectedTranslation) {
+      const translationId = dataManager.buildTranslationId(selectedTranslation);
+
+      if (url.searchParams.has("translationId")) {
+        query.translationId = translationId;
+        // navigation.updateQueryParam("translationId", translationId);
+      } else if (
+        url.searchParams.has("translation") ||
+        translationId !== defaultTranslation.id
+      ) {
+        query.translation = translationId;
+      }
+    }
+
+    // const verseNumbers = selectedVerses.value
+    //   .filter(
+    //     (verse) =>
+    //       verse.bookId === selectedBookId &&
+    //       verse.chapterNumber === selectedChapter
+    //   )
+    //   .map((verse) => verse.verse.number);
+
+    // const formatted = verseNumbers ? formatVerseSelection(verseNumbers) : null;
+    // query.verse = formatted;
+    // // navigation.updateQueryParam("verse", formatted);
+
+    return query;
+  };
+
   loadInitialData();
 
   readingStateRef = {
@@ -1752,6 +1805,7 @@ export function createBibleReadingState(
     enableExtension,
     disableExtension,
     dispose: disposeReadingState,
+    getUrlQueryParams,
   };
 
   return readingStateRef;
