@@ -26,9 +26,8 @@ export default function initTranscriptUI() {
         onSelect: async () => {
           if (!currentPane) {
             currentPane = context.panes.openPane({
-              type: "attached",
+              placement: "side",
               component: () => {
-                // You can use the useI18n hook in your tool component to get translated strings
                 return (
                   <ManagerProvider
                     value={{
@@ -40,6 +39,7 @@ export default function initTranscriptUI() {
                   </ManagerProvider>
                 );
               },
+              title: "AI Transcript",
             });
 
             await transcriptionManager.checkLogin();
