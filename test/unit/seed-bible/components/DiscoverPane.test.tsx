@@ -4,6 +4,7 @@ import { signal } from "@preact/signals";
 import {
   DiscoverPane,
   DiscoverPaneHeader,
+  DiscoverPaneTitle,
 } from "@packages/seed-bible/seed-bible/components/DiscoverPane/DiscoverPane";
 import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type {
@@ -101,6 +102,8 @@ interface MockPlaylistsResult {
   editPlaylist: ReturnType<typeof vi.fn>;
   deletePlaylist: ReturnType<typeof vi.fn>;
   getPlaylistUrl: ReturnType<typeof vi.fn>;
+  cancelEditingPlaylist: ReturnType<typeof vi.fn>;
+  goBackFromPlayingView: ReturnType<typeof vi.fn>;
 }
 
 function createMockPlaylists(
@@ -121,6 +124,8 @@ function createMockPlaylists(
   const getPlaylistUrl = vi.fn(
     (playlist: Playlist) => `https://example.com/?playlist=${playlist.id}`
   );
+  const cancelEditingPlaylist = vi.fn();
+  const goBackFromPlayingView = vi.fn();
 
   const playlists = {
     view: signal(overrides.view ?? "discover"),
@@ -132,12 +137,12 @@ function createMockPlaylists(
     editPlaylist,
     deletePlaylist,
     getPlaylistUrl,
-    cancelEditingPlaylist: vi.fn(),
+    cancelEditingPlaylist,
     saveEditingPlaylist: vi.fn().mockResolvedValue(undefined),
     addEditingPlaylistItem: vi.fn(),
     updateEditingPlaylistItem: vi.fn(),
     removeEditingPlaylistItem: vi.fn(),
-    goBackFromPlayingView: vi.fn(),
+    goBackFromPlayingView,
   } as unknown as PlaylistManager;
 
   return {
@@ -147,6 +152,8 @@ function createMockPlaylists(
     editPlaylist,
     deletePlaylist,
     getPlaylistUrl,
+    cancelEditingPlaylist,
+    goBackFromPlayingView,
   };
 }
 
@@ -707,7 +714,9 @@ describe("DiscoverPane", () => {
       );
     });
 
-    expect(container.querySelector(".sb-playlist-input")).not.toBeNull();
+    // The title input now lives in the pane header (DiscoverPaneTitle); the
+    // form body still renders its Save button.
+    expect(container.querySelector(".sb-settings-save-button")).not.toBeNull();
     expect(container.querySelector(".sb-discover-create")).toBeNull();
   });
 
@@ -736,5 +745,122 @@ describe("DiscoverPane", () => {
 
     expect(container.querySelector(".sb-play-playlist")).not.toBeNull();
     expect(container.querySelector(".sb-discover-create")).toBeNull();
+  });
+});
+
+describe("DiscoverPaneTitle", () => {
+  let container: HTMLDivElement;
+
+  beforeEach(() => {
+    container = document.createElement("div");
+    document.body.appendChild(container);
+  });
+
+  afterEach(() => {
+    render(null, container);
+    container.remove();
+    vi.restoreAllMocks();
+  });
+
+  it("shows the plain 'Discover' label in the discover view", () => {
+    const { playlists } = createMockPlaylists({ view: "discover" });
+
+    act(() => {
+      render(<DiscoverPaneTitle playlists={playlists} />, container);
+    });
+
+    expect(container.textContent).toBe("Discover");
+    expect(container.querySelector(".sb-reading-plans-back")).toBeNull();
+  });
+
+  it("shows a back button and the playlist title in the play view", () => {
+    const { playlists, goBackFromPlayingView } = createMockPlaylists({
+      view: "play_playlist",
+      playing: createPlayingState([
+        createPlaylist({ title: "Evening Reading" }),
+      ]),
+    });
+
+    act(() => {
+      render(<DiscoverPaneTitle playlists={playlists} />, container);
+    });
+
+    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
+      "Evening Reading"
+    );
+
+    const backButton = container.querySelector(
+      ".sb-reading-plans-back"
+    ) as HTMLButtonElement;
+    act(() => {
+      backButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(goBackFromPlayingView).toHaveBeenCalledTimes(1);
+  });
+
+  it("falls back to 'Untitled playlist' in the play view", () => {
+    const { playlists } = createMockPlaylists({
+      view: "play_playlist",
+      playing: createPlayingState([createPlaylist({ title: null })]),
+    });
+
+    act(() => {
+      render(<DiscoverPaneTitle playlists={playlists} />, container);
+    });
+
+    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
+      "Untitled playlist"
+    );
+  });
+
+  it("shows a back button and an editable title input in the create view", () => {
+    const { playlists, cancelEditingPlaylist } = createMockPlaylists({
+      view: "create_playlist",
+      editingPlaylist: createPlaylist({ title: "Draft" }),
+    });
+
+    act(() => {
+      render(<DiscoverPaneTitle playlists={playlists} />, container);
+    });
+
+    const input = container.querySelector(
+      ".sb-playlist-input"
+    ) as HTMLInputElement;
+    expect(input.value).toBe("Draft");
+
+    act(() => {
+      input.value = "Morning Devotion";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    expect(playlists.editingPlaylist.value?.title).toBe("Morning Devotion");
+
+    const backButton = container.querySelector(
+      ".sb-reading-plans-back"
+    ) as HTMLButtonElement;
+    act(() => {
+      backButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+    expect(cancelEditingPlaylist).toHaveBeenCalledTimes(1);
+  });
+
+  it("stores a whitespace-only title as null in the create view", () => {
+    const { playlists } = createMockPlaylists({
+      view: "create_playlist",
+      editingPlaylist: createPlaylist({ title: "Something" }),
+    });
+
+    act(() => {
+      render(<DiscoverPaneTitle playlists={playlists} />, container);
+    });
+
+    const input = container.querySelector(
+      ".sb-playlist-input"
+    ) as HTMLInputElement;
+    act(() => {
+      input.value = "   ";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+
+    expect(playlists.editingPlaylist.value?.title).toBeNull();
   });
 });

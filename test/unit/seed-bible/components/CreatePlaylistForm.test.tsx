@@ -175,11 +175,10 @@ describe("CreatePlaylistForm", () => {
     vi.restoreAllMocks();
   });
 
-  function titleInput(): HTMLInputElement {
-    return container.querySelector(".sb-playlist-input") as HTMLInputElement;
-  }
+  // The title input and the header back button now live in the pane header
+  // (`DiscoverPaneTitle`), covered by the DiscoverPane test suite.
 
-  it("shows an empty title and empty-items message for a fresh playlist", () => {
+  it("shows the empty-items message for a fresh playlist", () => {
     const { playlists } = createMockPlaylists(createPlaylist());
     const tabs = createMockTabs();
 
@@ -190,55 +189,12 @@ describe("CreatePlaylistForm", () => {
       );
     });
 
-    expect(titleInput().value).toBe("");
     expect(container.querySelector(".sb-discover-empty")?.textContent).toBe(
       "No items yet."
     );
   });
 
-  it("typing a title updates editingPlaylist.title", () => {
-    const { playlists } = createMockPlaylists(createPlaylist());
-    const tabs = createMockTabs();
-
-    act(() => {
-      render(
-        <CreatePlaylistForm playlists={playlists} tabs={tabs} />,
-        container
-      );
-    });
-
-    act(() => {
-      const input = titleInput();
-      input.value = "Morning Devotion";
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-
-    expect(playlists.editingPlaylist.value?.title).toBe("Morning Devotion");
-  });
-
-  it("stores a whitespace-only title as null", () => {
-    const { playlists } = createMockPlaylists(
-      createPlaylist({ title: "Something" })
-    );
-    const tabs = createMockTabs();
-
-    act(() => {
-      render(
-        <CreatePlaylistForm playlists={playlists} tabs={tabs} />,
-        container
-      );
-    });
-
-    act(() => {
-      const input = titleInput();
-      input.value = "   ";
-      input.dispatchEvent(new Event("input", { bubbles: true }));
-    });
-
-    expect(playlists.editingPlaylist.value?.title).toBeNull();
-  });
-
-  it("calls cancelEditingPlaylist from both the back button and the Cancel button", () => {
+  it("calls cancelEditingPlaylist from the Cancel button", () => {
     const { playlists, cancelEditingPlaylist } =
       createMockPlaylists(createPlaylist());
     const tabs = createMockTabs();
@@ -250,21 +206,13 @@ describe("CreatePlaylistForm", () => {
       );
     });
 
-    const backButton = container.querySelector(
-      ".sb-discover-header .sb-reading-plans-back"
-    ) as HTMLButtonElement;
-    act(() => {
-      backButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-    expect(cancelEditingPlaylist).toHaveBeenCalledTimes(1);
-
     const cancelButton = Array.from(
       container.querySelectorAll(".sb-reading-plans-back")
     ).find((el) => el.textContent === "Cancel") as HTMLButtonElement;
     act(() => {
       cancelButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
-    expect(cancelEditingPlaylist).toHaveBeenCalledTimes(2);
+    expect(cancelEditingPlaylist).toHaveBeenCalledTimes(1);
   });
 
   it("lists items using their resolved label and falls back to the raw book id", () => {

@@ -35,7 +35,6 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
 
   const queue = playing.queue.value;
   const currentIndex = playing.currentIndex.value;
-  const sourcePlaylists = playing.playlists.value;
 
   // Resolve verse book IDs to full book names using the selected tab's loaded
   // translation, when available. Falls back to the raw book ID otherwise.
@@ -47,26 +46,8 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
     return book?.name ?? book?.commonName ?? bookId;
   };
 
-  const title =
-    sourcePlaylists[0]?.title ??
-    t("untitled-playlist", { defaultValue: "Untitled playlist" });
-
   return (
     <div className="sb-discover-pane sb-play-playlist">
-      <div className="sb-discover-header">
-        <button
-          type="button"
-          className="sb-reading-plans-back"
-          aria-label={t("back", { defaultValue: "Back" })}
-          onClick={() => playlists.goBackFromPlayingView()}
-        >
-          <MaterialIcon>arrow_back</MaterialIcon>
-        </button>
-        <h2 className="sb-discover-title" dir="auto">
-          {title}
-        </h2>
-      </div>
-
       <div className="sb-play-playlist-body">
         <DiscoverSection title={t("queue", { defaultValue: "Queue" })}>
           <ul className="sb-discover-list">

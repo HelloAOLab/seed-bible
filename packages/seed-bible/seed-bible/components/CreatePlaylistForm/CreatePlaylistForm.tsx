@@ -58,35 +58,6 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
 
   return (
     <div className="sb-discover-pane">
-      <div className="sb-discover-header">
-        <button
-          type="button"
-          className="sb-reading-plans-back"
-          aria-label={t("back", { defaultValue: "Back" })}
-          onClick={() => playlists.cancelEditingPlaylist()}
-        >
-          <MaterialIcon>arrow_back</MaterialIcon>
-        </button>
-        <input
-          className="sb-settings-text-input sb-playlist-input"
-          type="text"
-          value={editing?.title ?? ""}
-          dir="auto"
-          onInput={(event: Event) => {
-            const value = (event.currentTarget as HTMLInputElement).value;
-            if (editing) {
-              playlists.editingPlaylist.value = {
-                ...editing,
-                title: value.trim() ? value : null,
-              };
-            }
-          }}
-          placeholder={t("playlist-title_placeholder", {
-            defaultValue: "Playlist title",
-          })}
-        />
-      </div>
-
       <DiscoverSection title={t("items", { defaultValue: "Items" })}>
         {!editing?.items.length ? (
           <DiscoverEmpty

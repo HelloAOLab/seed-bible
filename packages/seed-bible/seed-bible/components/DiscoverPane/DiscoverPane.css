@@ -11,16 +11,23 @@
   color: var(--sb-font-color);
 }
 
-.sb-discover-header {
+/* Back-button + title row shown in the pane header while viewing/editing a
+   playlist (see `DiscoverPaneTitle`). Fills the header's title slot; the title
+   text (or edit input) flexes and truncates so the back button stays visible. */
+.sb-discover-title-row {
   display: flex;
   align-items: center;
-  justify-content: start;
   gap: 8px;
-  margin-bottom: 12px;
+  min-width: 0;
+  width: 100%;
 }
 
-.sb-discover-header .spacer {
+.sb-discover-title-row .sb-discover-title {
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sb-discover-title {

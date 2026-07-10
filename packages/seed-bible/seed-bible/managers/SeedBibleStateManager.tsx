@@ -361,6 +361,7 @@ import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
 import {
   DiscoverPane,
   DiscoverPaneHeader,
+  DiscoverPaneTitle,
 } from "../components/DiscoverPane/DiscoverPane";
 
 /**
@@ -1332,7 +1333,7 @@ export function createSeedBibleState(
       panes.openPane({
         id: DISCOVER_PANE_ID,
         placement: "side",
-        title: i18n.t("discover", { defaultValue: "Discover" }),
+        title: () => <DiscoverPaneTitle playlists={playlists} />,
         header: () => <DiscoverPaneHeader playlists={playlists} />,
         component: () => (
           <DiscoverPane

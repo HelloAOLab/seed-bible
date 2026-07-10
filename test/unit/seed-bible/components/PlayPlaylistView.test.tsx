@@ -127,78 +127,8 @@ describe("PlayPlaylistView", () => {
     expect(container.querySelector(".sb-play-playlist")).toBeNull();
   });
 
-  it("shows the playlist title, falling back to 'Untitled playlist'", () => {
-    const untitled = createPlaylist({ title: null });
-    const playing = createPlayingState([untitled]);
-    const { playlists } = createMockPlaylists(playing);
-    const tabs = createMockTabs();
-
-    act(() => {
-      render(
-        <PlayPlaylistView
-          playlists={playlists}
-          tabs={tabs}
-          modals={modals}
-          state={state}
-        />,
-        container
-      );
-    });
-
-    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
-      "Untitled playlist"
-    );
-  });
-
-  it("shows the source playlist's title when set", () => {
-    const playlist = createPlaylist({ title: "Evening Reading" });
-    const playing = createPlayingState([playlist]);
-    const { playlists } = createMockPlaylists(playing);
-    const tabs = createMockTabs();
-
-    act(() => {
-      render(
-        <PlayPlaylistView
-          playlists={playlists}
-          tabs={tabs}
-          modals={modals}
-          state={state}
-        />,
-        container
-      );
-    });
-
-    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
-      "Evening Reading"
-    );
-  });
-
-  it("calls goBackFromPlayingView when the back button is clicked", () => {
-    const playing = createPlayingState([createPlaylist()]);
-    const { playlists, goBackFromPlayingView } = createMockPlaylists(playing);
-    const tabs = createMockTabs();
-
-    act(() => {
-      render(
-        <PlayPlaylistView
-          playlists={playlists}
-          tabs={tabs}
-          modals={modals}
-          state={state}
-        />,
-        container
-      );
-    });
-
-    const backButton = container.querySelector(
-      ".sb-reading-plans-back"
-    ) as HTMLButtonElement;
-    act(() => {
-      backButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    expect(goBackFromPlayingView).toHaveBeenCalledTimes(1);
-  });
+  // The playlist title and back button now live in the pane header
+  // (`DiscoverPaneTitle`), covered by the DiscoverPane test suite.
 
   it("renders one queue item per item and marks the current one", () => {
     const playlist = createPlaylist({

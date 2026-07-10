@@ -52,6 +52,78 @@ export function DiscoverPaneHeader(props: { playlists: PlaylistManager }) {
 }
 
 /**
+ * Title rendered in the pane's `PaneHeader` (passed as the pane's `title`
+ * render function, see `SeedBibleStateManager`). In the discover sub-view it's
+ * just the "Discover" label; while viewing or editing a playlist it becomes a
+ * back button plus the playlist title (an editable input when editing), so
+ * those controls live in the pane header rather than below it. Reads the
+ * `view`/`playing`/`editingPlaylist` signals, so it stays reactive.
+ */
+export function DiscoverPaneTitle(props: { playlists: PlaylistManager }) {
+  const { playlists } = props;
+  const { t } = useI18n();
+  const view = playlists.view.value;
+
+  if (view === "play_playlist") {
+    const playing = playlists.playing.value;
+    const title =
+      playing?.playlists.value[0]?.title ??
+      t("untitled-playlist", { defaultValue: "Untitled playlist" });
+    return (
+      <div className="sb-discover-title-row">
+        <button
+          type="button"
+          className="sb-reading-plans-back"
+          aria-label={t("back", { defaultValue: "Back" })}
+          onClick={() => playlists.goBackFromPlayingView()}
+        >
+          <MaterialIcon>arrow_back</MaterialIcon>
+        </button>
+        <span className="sb-discover-title" dir="auto">
+          {title}
+        </span>
+      </div>
+    );
+  }
+
+  if (view === "create_playlist") {
+    const editing = playlists.editingPlaylist.value;
+    return (
+      <div className="sb-discover-title-row">
+        <button
+          type="button"
+          className="sb-reading-plans-back"
+          aria-label={t("back", { defaultValue: "Back" })}
+          onClick={() => playlists.cancelEditingPlaylist()}
+        >
+          <MaterialIcon>arrow_back</MaterialIcon>
+        </button>
+        <input
+          className="sb-settings-text-input sb-playlist-input"
+          type="text"
+          value={editing?.title ?? ""}
+          dir="auto"
+          onInput={(event: Event) => {
+            const value = (event.currentTarget as HTMLInputElement).value;
+            if (editing) {
+              playlists.editingPlaylist.value = {
+                ...editing,
+                title: value.trim() ? value : null,
+              };
+            }
+          }}
+          placeholder={t("playlist-title_placeholder", {
+            defaultValue: "Playlist title",
+          })}
+        />
+      </div>
+    );
+  }
+
+  return <>{t("discover", { defaultValue: "Discover" })}</>;
+}
+
+/**
  * Pane content for the "Discover" tool. Shows the user's authored playlists plus
  * discovered cross references, study notes, and content for the currently
  * selected reader tab. Annotations are a placeholder for now (display-only).
