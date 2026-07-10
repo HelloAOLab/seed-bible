@@ -42,11 +42,22 @@ export default function initTranscriptUI() {
               title: "AI Transcript",
             });
 
-            await transcriptionManager.checkLogin();
-
-            if (!transcriptionManager.isLoggedIn && currentPane) {
-              context.panes.closePane(currentPane.id);
-              currentPane = null;
+            const { login } = context;
+            if (!login.userId.value && currentPane) {
+              const userInfo = await login.login().catch(() => {
+                if (currentPane) {
+                  context.panes.closePane(currentPane.id);
+                  currentPane = null;
+                }
+              });
+              if (!userInfo) {
+                context.panes.closePane(currentPane.id);
+                currentPane = null;
+              } else {
+                transcriptionManager.askForDonation();
+              }
+            } else {
+              transcriptionManager.askForDonation();
             }
           } else {
             context.panes.closePane(currentPane.id);

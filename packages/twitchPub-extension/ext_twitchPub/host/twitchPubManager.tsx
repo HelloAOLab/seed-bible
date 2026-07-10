@@ -462,6 +462,7 @@ export function CreateTwitchPubState({
       interfaceEnabled.value
     ) {
       if (login.userId.value) {
+        transcriptionManager.askForDonation();
         transcriptionManager.mode.value = "live";
         await transcriptionManager.startLive();
       } else {

@@ -19,6 +19,7 @@ import {
 import { extractExplicitRefs as extractExplicitRefsLib } from "./explicit";
 import { inferRefs as inferRefsLib, type InferSegment } from "./infer";
 import { type SeedBibleState } from "seed-bible";
+import openDonationDialog from "./donation";
 
 const STREAM_MAX_ATTEMPTS = 3;
 
@@ -43,6 +44,7 @@ type TranscriptionManagerType = {
     "idle" | "connecting" | "recording" | "transcribing" | "error"
   >;
   liveSegments: Signal<OutputSegment[]>;
+  askedForDonation: Signal<boolean>;
 
   addFiles: (input: FileList | File[]) => void;
   removeFile: (id: string) => void;
@@ -63,6 +65,7 @@ type TranscriptionManagerType = {
   downloadResult: (fileId: string) => void;
   downloadAll: () => void;
   checkLogin: () => Promise<void>;
+  askForDonation: () => void;
 };
 
 function createTranscriptionManager(
@@ -80,6 +83,9 @@ function createTranscriptionManager(
   const minConfidence = signal(0.85);
   const inferEnabled = signal(true);
   const error = signal<string | null>(null);
+  const askedForDonation = signal(
+    window.localStorage?.askedForDonation === "true" || false
+  );
 
   // --- Live (microphone) mode ----------------------------------------------
   // Which input UI is active, and the lifecycle of a live recording session.
@@ -557,6 +563,21 @@ function createTranscriptionManager(
     isLoggedIn.value = !!userInfo;
   }
 
+  const askForDonation = () => {
+    if (!askedForDonation.value) {
+      const { login } = seedBibleState;
+      if (login.userId.value) {
+        openDonationDialog({
+          onSuccess: () => {
+            askedForDonation.value = true;
+            window.localStorage.setItem("askedForDonation", "true");
+          },
+          context: seedBibleState,
+        });
+      }
+    }
+  };
+
   return {
     // signals
     isLoggedIn,
@@ -573,6 +594,7 @@ function createTranscriptionManager(
     mode,
     liveStatus,
     liveSegments,
+    askedForDonation,
     // methods
     addFiles,
     removeFile,
@@ -589,6 +611,7 @@ function createTranscriptionManager(
     downloadResult,
     downloadAll,
     checkLogin,
+    askForDonation,
   };
 }
 
