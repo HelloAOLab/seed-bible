@@ -94,7 +94,6 @@
   "customize-colors": "Rəngləri fərdiləşdirin",
   "highlight-colors": "Rəngləri vurğulayın",
   "reset-all-custom-colors": "Bütün xüsusi rəngləri sıfırlayın",
-  "ui-text-size": "UI mətn ölçüsü",
   "book-order": "Sifariş sifarişi",
   "selection-ui": "Seçim UI",
   "show-selected-items": "Seçilmiş elementləri göstər",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Pleylist yüklənmədi",
   "share-playlist": "Pleylisti paylaşın",
   "playlist-url-copied": "Pleylist URL-i panoya kopyalandı",
-  "current-playlist": "Cari pleylist"
+  "current-playlist": "Cari pleylist",
+  "languageUnavailable.title": "Dil mövcud deyil",
+  "languageUnavailable.body": "Hal-hazırda bu dil üçün Bibliya tərcüməmiz yoxdur, lakin {{fallback}} dəstəkləyirik. Bibliya mətnini {{fallback}} dilinə keçirmək istərdinizmi?",
+  "languageUnavailable.yesContinue": "Bəli, davam et",
+  "languageUnavailable.noGoBack": "Xeyr, geri get",
+  "ui-size": "UI ölçüsü"
 }

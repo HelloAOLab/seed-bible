@@ -94,7 +94,6 @@
   "customize-colors": "Mukauta värejä",
   "highlight-colors": "Korosta värit",
   "reset-all-custom-colors": "Palauta kaikki mukautetut värit",
-  "ui-text-size": "Käyttöliittymän tekstin koko",
   "book-order": "Kirjan tilaus",
   "selection-ui": "Valintakäyttöliittymä",
   "show-selected-items": "Näytä valitut kohteet",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Soittolistan lataaminen epäonnistui",
   "share-playlist": "Jaa soittolista",
   "playlist-url-copied": "Soittolistan URL-osoite kopioitu leikepöydälle",
-  "current-playlist": "Nykyinen soittolista"
+  "current-playlist": "Nykyinen soittolista",
+  "languageUnavailable.title": "Kieli ei ole saatavilla",
+  "languageUnavailable.body": "Meillä ei tällä hetkellä ole raamatun käännöstä tälle kielelle, mutta tuemme {{fallback}}. Haluatko vaihtaa raamatun tekstin kieleen {{fallback}}?",
+  "languageUnavailable.yesContinue": "Kyllä, jatka",
+  "languageUnavailable.noGoBack": "Ei, palaa takaisin",
+  "ui-size": "Käyttöliittymän koko"
 }

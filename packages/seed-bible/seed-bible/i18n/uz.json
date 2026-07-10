@@ -94,7 +94,6 @@
   "customize-colors": "Ranglarni moslashtiring",
   "highlight-colors": "Ranglarni ajratib ko'rsatish",
   "reset-all-custom-colors": "Barcha maxsus ranglarni tiklash",
-  "ui-text-size": "UI matn hajmi",
   "book-order": "Buyurtma buyurtmasi",
   "selection-ui": "Tanlov interfeysi",
   "show-selected-items": "Tanlangan elementlarni ko'rsatish",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Pleylistni yuklashda xatolik yuz berdi",
   "share-playlist": "Pleylistni ulashish",
   "playlist-url-copied": "Pleylist URL manzili buferga nusxalandi",
-  "current-playlist": "Joriy pleylist"
+  "current-playlist": "Joriy pleylist",
+  "languageUnavailable.title": "Til mavjud emas",
+  "languageUnavailable.body": "Hozirda bizda bu til uchun Muqaddas Kitob tarjimasi yo'q, lekin biz {{fallback}} ni qo'llab-quvvatlaymiz. Muqaddas Kitob matnini {{fallback}} ga o'tkazmoqchimisiz?",
+  "languageUnavailable.yesContinue": "Ha, davom etish",
+  "languageUnavailable.noGoBack": "Yo'q, orqaga",
+  "ui-size": "UI hajmi"
 }

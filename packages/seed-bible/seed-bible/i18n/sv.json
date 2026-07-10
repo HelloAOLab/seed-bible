@@ -94,7 +94,6 @@
   "customize-colors": "Anpassa färger",
   "highlight-colors": "Markera färger",
   "reset-all-custom-colors": "Återställ alla anpassade färger",
-  "ui-text-size": "Textstorlek i användargränssnittet",
   "book-order": "Bokbeställning",
   "selection-ui": "Urvalsgränssnitt",
   "show-selected-items": "Visa valda objekt",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Misslyckades med att ladda spellistan",
   "share-playlist": "Dela spellista",
   "playlist-url-copied": "Spellistan-URL kopierad till urklipp",
-  "current-playlist": "Aktuell spellista"
+  "current-playlist": "Aktuell spellista",
+  "languageUnavailable.title": "Språk inte tillgängligt",
+  "languageUnavailable.body": "Vi har för närvarande ingen bibelöversättning för detta språk, men vi stöder {{fallback}}. Vill du byta bibeltexten till {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ja, fortsätt",
+  "languageUnavailable.noGoBack": "Nej, gå tillbaka",
+  "ui-size": "UI-storlek"
 }

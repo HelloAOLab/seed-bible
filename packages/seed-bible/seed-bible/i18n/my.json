@@ -94,7 +94,6 @@
   "customize-colors": "အရောင်များကို စိတ်ကြိုက်ပြင်ဆင်ပါ",
   "highlight-colors": "အရောင်များကို မီးမောင်းထိုးပြပါ",
   "reset-all-custom-colors": "စိတ်ကြိုက်အရောင်အားလုံးကို ပြန်လည်သတ်မှတ်ပါ",
-  "ui-text-size": "UI စာသားအရွယ်အစား",
   "book-order": "စာအုပ်မှာယူမှု",
   "selection-ui": "ရွေးချယ်မှု UI",
   "show-selected-items": "ရွေးချယ်ထားသော အရာများကို ပြပါ",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "သီချင်းစာရင်းကို တင်၍မရပါ",
   "share-playlist": "သီချင်းစာရင်းကို မျှဝေပါ",
   "playlist-url-copied": "သီချင်းစာရင်း URL ကို ကလစ်ဘုတ်သို့ ကူးယူပြီးပါပြီ",
-  "current-playlist": "လက်ရှိ သီချင်းစာရင်း"
+  "current-playlist": "လက်ရှိ သီချင်းစာရင်း",
+  "languageUnavailable.title": "ဘာသာစကား မရရှိနိုင်ပါ",
+  "languageUnavailable.body": "ဤဘာသာစကားအတွက် ကျွန်ုပ်တို့တွင် ယခု ဖန်တီးခြင်းသွင်းကျမ်းမြည်းဘာသာပြန်မရှိသေးပါ၊ သို့သော် {{fallback}} ကို ပြင်ဆင်ထားပါသည်။ သင်သည် ကျမ်းစာစာသားကို {{fallback}} သို့ ပြောင်းလိုပါသလား?",
+  "languageUnavailable.yesContinue": "ဟုတ်ကဲ့၊ ဆက်လက်လုပ်ဆောင်ပါ",
+  "languageUnavailable.noGoBack": "မဟုတ်ပါ၊ ပြန်သွားပါ",
+  "ui-size": "UI အရွယ်အစား"
 }

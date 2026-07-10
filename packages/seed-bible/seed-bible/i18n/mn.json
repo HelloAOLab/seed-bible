@@ -81,7 +81,6 @@
   "customize-colors": "Өнгийг өөрчлөх",
   "highlight-colors": "Тодруулсан өнгөнүүд",
   "reset-all-custom-colors": "Бүх өөрчлөн тохируулсан өнгийг дахин тохируулах",
-  "ui-text-size": "UI текстийн хэмжээ",
   "book-order": "Захиалгын захиалга",
   "selection-ui": "Сонголтын интерфэйс",
   "show-selected-items": "Сонгосон зүйлсийг харуулах",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Тоглуулах жагсаалтыг ачаалж чадсангүй",
   "share-playlist": "Тоглуулах жагсаалтыг хуваалцах",
   "playlist-url-copied": "Тоглуулах жагсаалтын URL-г санах ойд хуулсан",
-  "current-playlist": "Одоогийн тоглуулах жагсаалт"
+  "current-playlist": "Одоогийн тоглуулах жагсаалт",
+  "languageUnavailable.title": "Хэл боломжгүй",
+  "languageUnavailable.body": "Бид одоогоор энэ хэлний Библийн орчуулга байхгүй боловч {{fallback}}-г дэмждэг. Библийн текстийг {{fallback}} руу шилжүүлэхийг хүсч байна уу?",
+  "languageUnavailable.yesContinue": "Тийм, үргэлжлүүлэх",
+  "languageUnavailable.noGoBack": "Үгүй, буцах",
+  "ui-size": "Хэрэглэгчийн интерфэйсийн хэмжээ"
 }

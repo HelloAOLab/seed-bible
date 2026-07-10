@@ -94,7 +94,6 @@
   "customize-colors": "Pasmaak kleure",
   "highlight-colors": "Merk kleure uit",
   "reset-all-custom-colors": "Stel alle persoonlike kleure terug",
-  "ui-text-size": "UI-teksgrootte",
   "book-order": "Boekbestelling",
   "selection-ui": "Seleksie-UI",
   "show-selected-items": "Wys geselekteerde items",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Kon nie snitlys laai nie",
   "share-playlist": "Deel snitlys",
   "playlist-url-copied": "Speellys-URL na knipbord gekopieer",
-  "current-playlist": "Huidige snitlys"
+  "current-playlist": "Huidige snitlys",
+  "languageUnavailable.title": "Taal Nie Beskikbaar Nie",
+  "languageUnavailable.body": "Ons het tans nie 'n Bybelvertaling vir hierdie taal nie, maar ons ondersteun wel {{fallback}}. Wil jy die Bybelteks na {{fallback}} verander?",
+  "languageUnavailable.yesContinue": "Ja, gaan voort",
+  "languageUnavailable.noGoBack": "Nee, gaan terug",
+  "ui-size": "UI-grootte"
 }

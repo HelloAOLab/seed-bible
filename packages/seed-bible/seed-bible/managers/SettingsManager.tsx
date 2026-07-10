@@ -10,7 +10,7 @@ import type { NavigationManager } from "./NavigationManager";
 import { parseNumber } from "./Utils";
 
 export type BookOrientation = "traditional" | "tanakh";
-export type UITextSize = "S" | "M" | "L" | "XL";
+export type UISize = "S" | "M" | "L" | "XL";
 export type TextAlignment = "unset" | "left" | "center" | "right";
 export type TextSectionId = "bookTitle" | "heading" | "verse";
 
@@ -56,7 +56,7 @@ export interface ToolbarCustomization {
 
 export interface AppSettings {
   bookOrientation: BookOrientation;
-  uiTextSize: UITextSize;
+  uiSize: UISize;
   selectionUI: SelectionUIBehavior;
   scriptureElements: ScriptureElementsBehavior;
   textConfig: TextConfig;
@@ -70,7 +70,7 @@ export interface AppSettings {
 
 export const AppSettingsSchema = z.object({
   bookOrientation: z.enum(["traditional", "tanakh"]),
-  uiTextSize: z.enum(["S", "M", "L", "XL"]),
+  uiSize: z.enum(["S", "M", "L", "XL"]),
   selectionUI: z.object({
     showSelectedItems: z.boolean(),
     showHighlightColors: z.boolean(),
@@ -136,7 +136,7 @@ export const MOBILE_SCRIPTURE_MARGIN = 5;
 export const MAX_CUSTOM_HIGHLIGHT_COLORS = 3;
 
 const TAG_BOOK_ORIENTATION = "app.bookOrientation";
-const TAG_UI_TEXT_SIZE = "app.uiTextSize";
+const TAG_UI_SIZE = "app.uiSize";
 const TAG_SELECTION_UI = "app.selectionUI";
 const TAG_SCRIPTURE_ELEMENTS = "app.scriptureElements";
 const TAG_TEXT_CONFIG = "app.textConfig";
@@ -148,7 +148,7 @@ const TAG_SCRIPTURE_MARGIN = "app.scriptureMargin";
 // Profile.config keys are stored unprefixed (matching the pattern set by
 // ConfigManager for `fontSize`, `lang`, `disablePanels`).
 const PROFILE_BOOK_ORIENTATION = "bookOrientation";
-const PROFILE_UI_TEXT_SIZE = "uiTextSize";
+const PROFILE_UI_SIZE = "uiSize";
 const PROFILE_SELECTION_UI = "selectionUI";
 const PROFILE_SCRIPTURE_ELEMENTS = "scriptureElements";
 const PROFILE_TEXT_CONFIG = "textConfig";
@@ -255,7 +255,7 @@ const DEFAULT_TOOLBAR_CONFIG: ToolbarCustomization = {
 
 const DEFAULT_SETTINGS: AppSettings = {
   bookOrientation: "traditional",
-  uiTextSize: "M",
+  uiSize: "M",
   selectionUI: DEFAULT_SELECTION_UI,
   scriptureElements: DEFAULT_SCRIPTURE_ELEMENTS,
   textConfig: DEFAULT_TEXT_CONFIG,
@@ -321,9 +321,9 @@ export function applyToolbarCustomization<T extends { id: string }>(
   return ordered;
 }
 
-export const UI_TEXT_SIZE_OPTIONS: UITextSize[] = ["S", "M", "L", "XL"];
+export const UI_SIZE_OPTIONS: UISize[] = ["S", "M", "L", "XL"];
 
-export const UI_TEXT_SIZE_SCALE_MAP: Record<UITextSize, number> = {
+export const UI_SIZE_SCALE_MAP: Record<UISize, number> = {
   S: 0.85,
   M: 1.0,
   L: 1.15,
@@ -337,13 +337,13 @@ function parseBookOrientation(
   return value === "tanakh" || value === "traditional" ? value : fallback;
 }
 
-function parseUITextSize(value: unknown, fallback: UITextSize): UITextSize {
+function parseUISize(value: unknown, fallback: UISize): UISize {
   if (typeof value !== "string") {
     return fallback;
   }
   const normalized = value.trim().toUpperCase();
-  return UI_TEXT_SIZE_OPTIONS.includes(normalized as UITextSize)
-    ? (normalized as UITextSize)
+  return UI_SIZE_OPTIONS.includes(normalized as UISize)
+    ? (normalized as UISize)
     : fallback;
 }
 
@@ -539,7 +539,7 @@ function applyTextConfigToCSSVars(config: TextConfig) {
 export interface SettingsManager {
   settings: Signal<AppSettings>;
   setBookOrientation: (orientation: BookOrientation) => void;
-  setUITextSize: (size: UITextSize) => void;
+  setUISize: (size: UISize) => void;
   setSelectionUI: (patch: Partial<SelectionUIBehavior>) => void;
   setScriptureElements: (patch: Partial<ScriptureElementsBehavior>) => void;
   updateTextSection: (
@@ -586,10 +586,10 @@ export function createSettings(
           configBot.tags[TAG_BOOK_ORIENTATION],
         DEFAULT_SETTINGS.bookOrientation
       ),
-      uiTextSize: parseUITextSize(
-        getProfileConfigValue(profile, PROFILE_UI_TEXT_SIZE) ??
-          configBot.tags[TAG_UI_TEXT_SIZE],
-        DEFAULT_SETTINGS.uiTextSize
+      uiSize: parseUISize(
+        getProfileConfigValue(profile, PROFILE_UI_SIZE) ??
+          configBot.tags[TAG_UI_SIZE],
+        DEFAULT_SETTINGS.uiSize
       ),
       selectionUI: parseSelectionUI(
         getProfileConfigValue(profile, PROFILE_SELECTION_UI) ??
@@ -648,10 +648,10 @@ export function createSettings(
     saveProfileConfigValue(login, PROFILE_BOOK_ORIENTATION, orientation);
   };
 
-  const setUITextSize = (size: UITextSize) => {
-    settings.value = { ...settings.value, uiTextSize: size };
-    configBot.tags[TAG_UI_TEXT_SIZE] = size;
-    saveProfileConfigValue(login, PROFILE_UI_TEXT_SIZE, size);
+  const setUISize = (size: UISize) => {
+    settings.value = { ...settings.value, uiSize: size };
+    configBot.tags[TAG_UI_SIZE] = size;
+    saveProfileConfigValue(login, PROFILE_UI_SIZE, size);
   };
 
   const setSelectionUI = (patch: Partial<SelectionUIBehavior>) => {
@@ -811,7 +811,7 @@ export function createSettings(
   const resetToDefaults = () => {
     settings.value = DEFAULT_SETTINGS;
     configBot.tags[TAG_BOOK_ORIENTATION] = DEFAULT_SETTINGS.bookOrientation;
-    configBot.tags[TAG_UI_TEXT_SIZE] = DEFAULT_SETTINGS.uiTextSize;
+    configBot.tags[TAG_UI_SIZE] = DEFAULT_SETTINGS.uiSize;
     configBot.tags[TAG_SELECTION_UI] = JSON.stringify(
       DEFAULT_SETTINGS.selectionUI
     );
@@ -828,11 +828,7 @@ export function createSettings(
       PROFILE_BOOK_ORIENTATION,
       DEFAULT_SETTINGS.bookOrientation
     );
-    saveProfileConfigValue(
-      login,
-      PROFILE_UI_TEXT_SIZE,
-      DEFAULT_SETTINGS.uiTextSize
-    );
+    saveProfileConfigValue(login, PROFILE_UI_SIZE, DEFAULT_SETTINGS.uiSize);
     saveProfileConfigValue(
       login,
       PROFILE_SELECTION_UI,
@@ -870,7 +866,7 @@ export function createSettings(
     if (typeof document === "undefined") {
       return;
     }
-    const scale = UI_TEXT_SIZE_SCALE_MAP[settings.value.uiTextSize];
+    const scale = UI_SIZE_SCALE_MAP[settings.value.uiSize];
     document.documentElement.style.setProperty("--sb-ui-scale", String(scale));
   });
 
@@ -904,7 +900,7 @@ export function createSettings(
   return {
     settings,
     setBookOrientation,
-    setUITextSize,
+    setUISize: setUISize,
     setSelectionUI,
     setScriptureElements,
     updateTextSection,

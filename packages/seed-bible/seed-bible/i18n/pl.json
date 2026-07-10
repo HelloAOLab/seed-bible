@@ -94,7 +94,6 @@
   "customize-colors": "Dostosuj kolory",
   "highlight-colors": "Podświetl kolory",
   "reset-all-custom-colors": "Zresetuj wszystkie niestandardowe kolory",
-  "ui-text-size": "Rozmiar tekstu interfejsu użytkownika",
   "book-order": "Zamówienie książki",
   "selection-ui": "Interfejs użytkownika wyboru",
   "show-selected-items": "Pokaż wybrane elementy",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Nie udało się załadować listy odtwarzania",
   "share-playlist": "Udostępnij playlistę",
   "playlist-url-copied": "Adres URL listy odtwarzania skopiowany do schowka",
-  "current-playlist": "Aktualna lista odtwarzania"
+  "current-playlist": "Aktualna lista odtwarzania",
+  "languageUnavailable.title": "Język niedostępny",
+  "languageUnavailable.body": "Obecnie nie mamy tłumaczenia Biblii na ten język, ale obsługujemy {{fallback}}. Czy chcesz przełączyć tekst Biblii na {{fallback}}?",
+  "languageUnavailable.yesContinue": "Tak, kontynuuj",
+  "languageUnavailable.noGoBack": "Nie, wróć",
+  "ui-size": "Rozmiar interfejsu użytkownika"
 }

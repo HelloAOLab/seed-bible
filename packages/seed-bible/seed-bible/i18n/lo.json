@@ -94,7 +94,6 @@
   "customize-colors": "ປັບແຕ່ງສີ",
   "highlight-colors": "ສີໄຮໄລ້",
   "reset-all-custom-colors": "ຣີເຊັດສີທີ່ກຳນົດເອງທັງໝົດ",
-  "ui-text-size": "ຂະໜາດຂໍ້ຄວາມ UI",
   "book-order": "ການສັ່ງຊື້ປຶ້ມ",
   "selection-ui": "UI ການເລືອກ",
   "show-selected-items": "ສະແດງລາຍການທີ່ເລືອກ",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "ໂຫຼດລາຍການຫຼິ້ນບໍ່ສຳເລັດ",
   "share-playlist": "ແບ່ງປັນລາຍການຫຼິ້ນ",
   "playlist-url-copied": "ສຳເນົາ URL ລາຍການເພງໄປໃສ່ຄລິບບອດແລ້ວ",
-  "current-playlist": "ລາຍການຫຼິ້ນປັດຈຸບັນ"
+  "current-playlist": "ລາຍການຫຼິ້ນປັດຈຸບັນ",
+  "languageUnavailable.title": "ບໍ່ມີພາສາ",
+  "languageUnavailable.body": "ພວກເຮົາຍັງບໍ່ມີການແປພະຄຳພີເປັນພາສານີ້ໃນຕອນນີ້, ແຕ່ພວກເຮົາຮອງຮັບ {{fallback}}. ທ່ານຕ້ອງການປ່ຽນຂໍ້ຄວາມພະຄຳພີເປັນ {{fallback}} ບໍ?",
+  "languageUnavailable.yesContinue": "ແມ່ນ, ສືບຕໍ່",
+  "languageUnavailable.noGoBack": "ບໍ່, ກັບຄືນ",
+  "ui-size": "ຂະໜາດ UI"
 }

@@ -94,7 +94,6 @@
   "customize-colors": "Tilpas farver",
   "highlight-colors": "Fremhæv farver",
   "reset-all-custom-colors": "Nulstil alle brugerdefinerede farver",
-  "ui-text-size": "Tekststørrelse i brugergrænsefladen",
   "book-order": "Bogordre",
   "selection-ui": "Valggrænseflade",
   "show-selected-items": "Vis valgte elementer",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Kunne ikke indlæse playlisten",
   "share-playlist": "Del playliste",
   "playlist-url-copied": "URL til afspilningsliste kopieret til udklipsholder",
-  "current-playlist": "Aktuel playliste"
+  "current-playlist": "Aktuel playliste",
+  "languageUnavailable.title": "Sprog ikke tilgængeligt",
+  "languageUnavailable.body": "Vi har i øjeblikket ikke en bibeloversættelse for dette sprog, men vi understøtter {{fallback}}. Vil du skifte bibelteksten til {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ja, fortsæt",
+  "languageUnavailable.noGoBack": "Nej, gå tilbage",
+  "ui-size": "Brugergrænsefladestørrelse"
 }

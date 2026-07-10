@@ -94,7 +94,6 @@
   "customize-colors": "வண்ணங்களைத் தனிப்பயனாக்குங்கள்",
   "highlight-colors": "ஹைலைட் வண்ணங்கள்",
   "reset-all-custom-colors": "அனைத்து தனிப்பயன் வண்ணங்களையும் மீட்டமைக்கவும்",
-  "ui-text-size": "UI உரை அளவு",
   "book-order": "புத்தக ஆர்டர்",
   "selection-ui": "தேர்வு பயனர் இடைமுகம்",
   "show-selected-items": "தேர்ந்தெடுக்கப்பட்ட உருப்படிகளைக் காட்டு",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "பிளேலிஸ்ட்டை ஏற்ற முடியவில்லை",
   "share-playlist": "பிளேலிஸ்ட்டைப் பகிரவும்",
   "playlist-url-copied": "பிளேலிஸ்ட் URL கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது.",
-  "current-playlist": "தற்போதைய பிளேலிஸ்ட்"
+  "current-playlist": "தற்போதைய பிளேலிஸ்ட்",
+  "languageUnavailable.title": "மொழி கிடைக்கவில்லை",
+  "languageUnavailable.body": "இந்த மொழிக்கு தற்போது எங்களிடம் பைபிள் மொழிபெயர்ப்பு இல்லை, ஆனால் நாங்கள் {{fallback}} ஐ ஆதரிக்கிறோம். பைபிள் உரையை {{fallback}} க்கு மாற்ற விரும்புகிறீர்களா?",
+  "languageUnavailable.yesContinue": "ஆம், தொடரவும்",
+  "languageUnavailable.noGoBack": "இல்லை, திரும்பிச் செல்லவும்",
+  "ui-size": "UI அளவு"
 }

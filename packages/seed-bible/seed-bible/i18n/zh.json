@@ -81,7 +81,6 @@
   "customize-colors": "自定义颜色",
   "highlight-colors": "高亮颜色",
   "reset-all-custom-colors": "重置所有自定义颜色",
-  "ui-text-size": "用户界面文本大小",
   "book-order": "预订",
   "selection-ui": "选择界面",
   "show-selected-items": "显示所选项目",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "播放列表加载失败",
   "share-playlist": "分享播放列表",
   "playlist-url-copied": "播放列表网址已复制到剪贴板",
-  "current-playlist": "当前播放列表"
+  "current-playlist": "当前播放列表",
+  "languageUnavailable.title": "语言不可用",
+  "languageUnavailable.body": "我们目前没有此语言的圣经译本，但有{{fallback}}。要将圣经文本切换为{{fallback}}吗？",
+  "languageUnavailable.yesContinue": "是，继续",
+  "languageUnavailable.noGoBack": "否，返回",
+  "ui-size": "用户界面大小"
 }

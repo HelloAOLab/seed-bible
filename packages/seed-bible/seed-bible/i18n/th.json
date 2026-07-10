@@ -94,7 +94,6 @@
   "customize-colors": "ปรับแต่งสี",
   "highlight-colors": "สีเด่น",
   "reset-all-custom-colors": "รีเซ็ตสีที่กำหนดเองทั้งหมด",
-  "ui-text-size": "ขนาดตัวอักษร UI",
   "book-order": "สั่งซื้อหนังสือ",
   "selection-ui": "ส่วนติดต่อผู้ใช้สำหรับการเลือก",
   "show-selected-items": "แสดงรายการที่เลือก",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "ไม่สามารถโหลดเพลย์ลิสต์ได้",
   "share-playlist": "แชร์เพลย์ลิสต์",
   "playlist-url-copied": "คัดลอก URL ของเพลย์ลิสต์ไปยังคลิปบอร์ดแล้ว",
-  "current-playlist": "เพลย์ลิสต์ปัจจุบัน"
+  "current-playlist": "เพลย์ลิสต์ปัจจุบัน",
+  "languageUnavailable.title": "ภาษาไม่พร้อมใช้งาน",
+  "languageUnavailable.body": "ขณะนี้เรายังไม่มีการแปลพระคัมภีร์สำหรับภาษานี้ แต่เรารองรับ {{fallback}} คุณต้องการเปลี่ยนข้อความพระคัมภีร์เป็น {{fallback}} หรือไม่?",
+  "languageUnavailable.yesContinue": "ใช่ ดำเนินการต่อ",
+  "languageUnavailable.noGoBack": "ไม่ กลับ",
+  "ui-size": "ขนาด UI"
 }

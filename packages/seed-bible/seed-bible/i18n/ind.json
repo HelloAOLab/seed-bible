@@ -81,7 +81,6 @@
   "customize-colors": "Sesuaikan warna",
   "highlight-colors": "Warna sorotan",
   "reset-all-custom-colors": "Atur ulang semua warna kustom",
-  "ui-text-size": "Ukuran teks UI",
   "book-order": "Pesan buku",
   "selection-ui": "UI Pemilihan",
   "show-selected-items": "Tampilkan item yang dipilih",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Gagal memuat daftar putar",
   "share-playlist": "Bagikan daftar putar",
   "playlist-url-copied": "URL daftar putar disalin ke papan klip",
-  "current-playlist": "Daftar putar saat ini"
+  "current-playlist": "Daftar putar saat ini",
+  "languageUnavailable.title": "Bahasa Tidak Tersedia",
+  "languageUnavailable.body": "Kami saat ini belum memiliki terjemahan Alkitab untuk bahasa ini, tetapi kami mendukung {{fallback}}. Apakah Anda ingin mengganti teks Alkitab ke {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ya, lanjutkan",
+  "languageUnavailable.noGoBack": "Tidak, kembali",
+  "ui-size": "Ukuran UI"
 }

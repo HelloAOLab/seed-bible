@@ -208,10 +208,18 @@ function createMobileState(): SeedBibleState {
     sidebar: {
       openSettings: vi.fn(),
       openSidebar: vi.fn(),
+      openSettingsToView: vi.fn(),
     },
     bookmarks: {
       isLocationBookmarked: vi.fn(() => false),
       toggleBookmarkAtLocation: vi.fn(async () => {}),
+    },
+    login: {
+      userId: signal<string | null>(null),
+      profile: signal<{ name?: string; pictureUrl?: string } | null>(null),
+    },
+    os: {
+      connectionId: "test-connection",
     },
     tools: createBibleToolsManager(),
     playlists: {
@@ -1587,6 +1595,30 @@ describe("BibleReader", () => {
         .querySelector(mobileHeaderSelector)
         ?.classList.contains("sb-bible-reader-mobile-header-hidden")
     ).toBe(false);
+  });
+
+  it("renders the book name and chapter number as a heading at the top of the mobile content", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: null,
+      previousChapterApiLink: null,
+    };
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+
+    const title = container.querySelector(
+      ".sb-reader-swipe-panel-current .sb-bible-reader-mobile-content-title"
+    );
+    expect(title).not.toBeNull();
+    expect(title?.querySelector(".sb-bible-reader-book")?.textContent).toBe(
+      "Genesis"
+    );
+    expect(title?.querySelector(".sb-bible-reader-chapter")?.textContent).toBe(
+      "1"
+    );
   });
 
   it("swiping left on mobile loads the next chapter", async () => {

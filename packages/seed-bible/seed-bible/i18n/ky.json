@@ -94,7 +94,6 @@
   "customize-colors": "Түстөрдү ыңгайлаштыруу",
   "highlight-colors": "Түстөрдү бөлүп көрсөтүү",
   "reset-all-custom-colors": "Бардык ыңгайлаштырылган түстөрдү баштапкы абалга келтирүү",
-  "ui-text-size": "UI текст өлчөмү",
   "book-order": "Китепке буйрутма берүү",
   "selection-ui": "Тандоо интерфейси",
   "show-selected-items": "Тандалган нерселерди көрсөтүү",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Ойнотмо тизме жүктөлбөй калды",
   "share-playlist": "Ойнотмо тизмени бөлүшүү",
   "playlist-url-copied": "Ойнотмо тизменин URL дареги алмашуу буферине көчүрүлдү",
-  "current-playlist": "Учурдагы ойнотмо тизме"
+  "current-playlist": "Учурдагы ойнотмо тизме",
+  "languageUnavailable.title": "Тил жеткиликтүү эмес",
+  "languageUnavailable.body": "Бизде учурда бул тил үчүн Библия котормосу жок, бирок биз {{fallback}} колдойбуз. Библия текстин {{fallback}} тилине которгуңуз келеби?",
+  "languageUnavailable.yesContinue": "Ооба, улантуу",
+  "languageUnavailable.noGoBack": "Жок, артка",
+  "ui-size": "UI өлчөмү"
 }

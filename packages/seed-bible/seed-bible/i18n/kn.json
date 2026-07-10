@@ -94,7 +94,6 @@
   "customize-colors": "ಬಣ್ಣಗಳನ್ನು ಕಸ್ಟಮೈಸ್ ಮಾಡಿ",
   "highlight-colors": "ಬಣ್ಣಗಳನ್ನು ಹೈಲೈಟ್ ಮಾಡಿ",
   "reset-all-custom-colors": "ಎಲ್ಲಾ ಕಸ್ಟಮ್ ಬಣ್ಣಗಳನ್ನು ಮರುಹೊಂದಿಸಿ",
-  "ui-text-size": "UI ಪಠ್ಯ ಗಾತ್ರ",
   "book-order": "ಪುಸ್ತಕ ಆರ್ಡರ್",
   "selection-ui": "ಆಯ್ಕೆ UI",
   "show-selected-items": "ಆಯ್ಕೆಮಾಡಿದ ಐಟಂಗಳನ್ನು ತೋರಿಸಿ",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "ಪ್ಲೇಪಟ್ಟಿಯನ್ನು ಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ",
   "share-playlist": "ಪ್ಲೇಪಟ್ಟಿ ಹಂಚಿಕೊಳ್ಳಿ",
   "playlist-url-copied": "ಪ್ಲೇಪಟ್ಟಿ URL ಅನ್ನು ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ",
-  "current-playlist": "ಪ್ರಸ್ತುತ ಪ್ಲೇಪಟ್ಟಿ"
+  "current-playlist": "ಪ್ರಸ್ತುತ ಪ್ಲೇಪಟ್ಟಿ",
+  "languageUnavailable.title": "ಭಾಷೆ ಲಭ್ಯವಿಲ್ಲ",
+  "languageUnavailable.body": "ಈ ಭಾಷೆಗೆ ನಮ್ಮಲ್ಲಿ ಪ್ರಸ್ತುತ ಬೈಬಲ್ ಅನುವಾದವಿಲ್ಲ, ಆದರೆ ನಾವು {{fallback}} ಅನ್ನು ಬೆಂಬಲಿಸುತ್ತೇವೆ. ಬೈಬಲ್ ಪಠ್ಯವನ್ನು {{fallback}} ಗೆ ಬದಲಾಯಿಸಲು ಬಯಸುತ್ತೀರಾ?",
+  "languageUnavailable.yesContinue": "ಹೌದು, ಮುಂದುವರಿಸಿ",
+  "languageUnavailable.noGoBack": "ಇಲ್ಲ, ಹಿಂತಿರುಗಿ",
+  "ui-size": "UI ಗಾತ್ರ"
 }

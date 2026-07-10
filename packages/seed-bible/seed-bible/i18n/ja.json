@@ -81,7 +81,6 @@
   "customize-colors": "色をカスタマイズ",
   "highlight-colors": "ハイライトカラー",
   "reset-all-custom-colors": "すべてのカスタムカラーをリセット",
-  "ui-text-size": "UIテキストサイズ",
   "book-order": "書籍注文",
   "selection-ui": "選択UI",
   "show-selected-items": "選択したアイテムを表示する",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "プレイリストの読み込みに失敗しました",
   "share-playlist": "プレイリストを共有する",
   "playlist-url-copied": "プレイリストのURLがクリップボードにコピーされました",
-  "current-playlist": "現在のプレイリスト"
+  "current-playlist": "現在のプレイリスト",
+  "languageUnavailable.title": "言語は利用できません",
+  "languageUnavailable.body": "この言語の聖書翻訳は現在ありませんが、{{fallback}}はあります。聖書テキストを{{fallback}}に切り替えますか？",
+  "languageUnavailable.yesContinue": "はい、続ける",
+  "languageUnavailable.noGoBack": "いいえ、戻る",
+  "ui-size": "UIサイズ"
 }

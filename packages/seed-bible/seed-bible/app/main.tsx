@@ -27,7 +27,10 @@ import {
 // every component rule resolves against them.
 import "./styles/base.css";
 import "./styles/utilities.css";
-import { OnboardingModals } from "../components/Onboarding/Onboarding";
+import {
+  OnboardingModals,
+  LanguageUnavailableModal,
+} from "../components/Onboarding/Onboarding";
 import { Tutorial } from "../components/Tutorial/Tutorial";
 import { TutorialPrompt } from "../components/TutorialPrompt/TutorialPrompt";
 
@@ -228,6 +231,8 @@ function MainContent(props: {
           className={`${webkitClass}`}
           groupFilter="non-selector"
         />
+
+        <LanguageUnavailableModal className={`${webkitClass}`} />
       </div>
     </>
   );

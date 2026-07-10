@@ -81,7 +81,6 @@
   "customize-colors": "Renkleri özelleştirin",
   "highlight-colors": "Vurgu renkleri",
   "reset-all-custom-colors": "Tüm özel renkleri sıfırla",
-  "ui-text-size": "Kullanıcı arayüzü metin boyutu",
   "book-order": "Kitap siparişi",
   "selection-ui": "Seçim Kullanıcı Arayüzü",
   "show-selected-items": "Seçilen öğeleri göster",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Oynatma listesi yüklenemedi.",
   "share-playlist": "Oynatma listesini paylaş",
   "playlist-url-copied": "Çalma listesi URL'si panoya kopyalandı",
-  "current-playlist": "Mevcut çalma listesi"
+  "current-playlist": "Mevcut çalma listesi",
+  "languageUnavailable.title": "Dil Kullanılamıyor",
+  "languageUnavailable.body": "Şu anda bu dil için bir İncil çevirimiz yok, ancak {{fallback}} dilini destekliyoruz. İncil metnini {{fallback}} diline geçirmek ister misiniz?",
+  "languageUnavailable.yesContinue": "Evet, devam et",
+  "languageUnavailable.noGoBack": "Hayır, geri dön",
+  "ui-size": "Kullanıcı arayüzü boyutu"
 }

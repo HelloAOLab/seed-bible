@@ -94,7 +94,6 @@
   "customize-colors": "ფერების მორგება",
   "highlight-colors": "მონიშნული ფერები",
   "reset-all-custom-colors": "ყველა მორგებული ფერის გადაყენება",
-  "ui-text-size": "ინტერფეისის ტექსტის ზომა",
   "book-order": "დაჯავშნის შეკვეთა",
   "selection-ui": "შერჩევის ინტერფეისი",
   "show-selected-items": "არჩეული ერთეულების ჩვენება",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "დასაკრავი სიის ჩატვირთვა ვერ მოხერხდა. ის ვერ მოხერხდა.",
   "share-playlist": "დასაკრავი სიის გაზიარება დასაკრავი სიის გაზიარებით",
   "playlist-url-copied": "დასაკრავი სიის URL კოპირებულია ბუფერში",
-  "current-playlist": "მიმდინარე დასაკრავი სია მიმდინარე დასაკრავი სიიდან."
+  "current-playlist": "მიმდინარე დასაკრავი სია მიმდინარე დასაკრავი სიიდან.",
+  "languageUnavailable.title": "ენა მიუწვდომელია",
+  "languageUnavailable.body": "ამ ენისთვის ამჟამად არ გვაქვს ბიბლიის თარგმანი, მაგრამ გვაქვს {{fallback}}. გსურთ ბიბლიის ტექსტი გადართოთ {{fallback}}-ზე?",
+  "languageUnavailable.yesContinue": "დიახ, გაგრძელება",
+  "languageUnavailable.noGoBack": "არა, უკან",
+  "ui-size": "ინტერფეისის ზომა"
 }

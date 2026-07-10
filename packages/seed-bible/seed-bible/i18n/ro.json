@@ -94,7 +94,6 @@
   "customize-colors": "Personalizați culorile",
   "highlight-colors": "Evidențiați culorile",
   "reset-all-custom-colors": "Resetați toate culorile personalizate",
-  "ui-text-size": "Dimensiunea textului interfeței utilizator",
   "book-order": "Comandă de carte",
   "selection-ui": "Interfață de selecție",
   "show-selected-items": "Afișați elementele selectate",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Nu s-a putut încărca lista de redare",
   "share-playlist": "Distribuie playlist",
   "playlist-url-copied": "Adresa URL a listei de redare a fost copiată în clipboard",
-  "current-playlist": "Playlist curent"
+  "current-playlist": "Playlist curent",
+  "languageUnavailable.title": "Limbă indisponibilă",
+  "languageUnavailable.body": "Nu avem în prezent o traducere a Bibliei pentru această limbă, dar suportăm {{fallback}}. Doriți să schimbați textul biblic la {{fallback}}?",
+  "languageUnavailable.yesContinue": "Da, continuă",
+  "languageUnavailable.noGoBack": "Nu, înapoi",
+  "ui-size": "Dimensiunea interfeței utilizator"
 }

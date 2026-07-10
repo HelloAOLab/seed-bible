@@ -94,7 +94,6 @@
   "customize-colors": "Színek testreszabása",
   "highlight-colors": "Kiemelő színek",
   "reset-all-custom-colors": "Az összes egyéni szín visszaállítása",
-  "ui-text-size": "Felhasználói felület szövegmérete",
   "book-order": "Foglalás rendelése",
   "selection-ui": "Kiválasztási felhasználói felület",
   "show-selected-items": "Kijelölt elemek megjelenítése",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Nem sikerült betölteni a lejátszási listát",
   "share-playlist": "Lejátszási lista megosztása",
   "playlist-url-copied": "Lejátszási lista URL-címe a vágólapra másolva",
-  "current-playlist": "Aktuális lejátszási lista"
+  "current-playlist": "Aktuális lejátszási lista",
+  "languageUnavailable.title": "A nyelv nem érhető el",
+  "languageUnavailable.body": "Jelenleg nincs Bibliafordításunk erre a nyelvre, de támogatjuk a {{fallback}} nyelvet. Át szeretné váltani a Biblia szövegét {{fallback}} nyelvre?",
+  "languageUnavailable.yesContinue": "Igen, folytatás",
+  "languageUnavailable.noGoBack": "Nem, vissza",
+  "ui-size": "Felhasználói felület mérete"
 }

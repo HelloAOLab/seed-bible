@@ -94,7 +94,6 @@
   "customize-colors": "Tilpass farger",
   "highlight-colors": "Uthev farger",
   "reset-all-custom-colors": "Tilbakestill alle egendefinerte farger",
-  "ui-text-size": "Tekststørrelse i brukergrensesnittet",
   "book-order": "Bokbestilling",
   "selection-ui": "Utvalgsgrensesnitt",
   "show-selected-items": "Vis valgte elementer",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Kunne ikke laste inn spillelisten",
   "share-playlist": "Del spilleliste",
   "playlist-url-copied": "Spilleliste-URL kopiert til utklippstavlen",
-  "current-playlist": "Gjeldende spilleliste"
+  "current-playlist": "Gjeldende spilleliste",
+  "languageUnavailable.title": "Språk ikke tilgjengelig",
+  "languageUnavailable.body": "Vi har for øyeblikket ingen bibeloversettelse for dette språket, men vi støtter {{fallback}}. Vil du bytte bibelteksten til {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ja, fortsett",
+  "languageUnavailable.noGoBack": "Nei, gå tilbake",
+  "ui-size": "UI-størrelse"
 }

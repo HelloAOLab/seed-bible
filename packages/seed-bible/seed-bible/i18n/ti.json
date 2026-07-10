@@ -81,7 +81,6 @@
   "customize-colors": "ሕብርታት ብዝጥዕመካ ምትዕርራይ",
   "highlight-colors": "ሕብርታት ኣጉልሕ",
   "reset-all-custom-colors": "ኩሎም ብሕታዊ ሕብርታት ዳግማይ ኣቐምጦም",
-  "ui-text-size": "UI ጽሑፍ ዓቐን",
   "book-order": "ትእዛዝ መጽሓፍ",
   "selection-ui": "ምርጫ UI",
   "show-selected-items": "ዝተመርጹ ነገራት ኣርእዩ",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "ዝርዝር ደርፍታት ምጽዓን ኣይከኣለን",
   "share-playlist": "ዝርዝር ደርፍታት ሼር ግበር",
   "playlist-url-copied": "ዝርዝር ደርፍታት URL ናብ ቅንጥብጣብ ሰሌዳ ተቐዲሑ",
-  "current-playlist": "ናይ ሕጂ ዝርዝር ደርፍታት"
+  "current-playlist": "ናይ ሕጂ ዝርዝር ደርፍታት",
+  "languageUnavailable.title": "ቋንቋ ኣይተረኽበን",
+  "languageUnavailable.body": "ንዚ ቋንቋ ሕጂ ትርጉም መጽሓፍ ቅዱስ የለናን፣ {{fallback}} ግን ንድግፎ ኢና። ነቲ ናይ መጽሓፍ ቅዱስ ጽሑፍ ናብ {{fallback}} ክትቀይሮ ትደልዩ ዲኻ?",
+  "languageUnavailable.yesContinue": "እወ፣ ቀጽል",
+  "languageUnavailable.noGoBack": "ኣይፋል፣ ተመለስ",
+  "ui-size": "UI ስፍሓት"
 }

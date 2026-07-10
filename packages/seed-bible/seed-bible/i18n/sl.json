@@ -94,7 +94,6 @@
   "customize-colors": "Prilagodi barve",
   "highlight-colors": "Označite barve",
   "reset-all-custom-colors": "Ponastavi vse barve po meri",
-  "ui-text-size": "Velikost besedila uporabniškega vmesnika",
   "book-order": "Naročilo knjige",
   "selection-ui": "Izbirni uporabniški vmesnik",
   "show-selected-items": "Prikaži izbrane elemente",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Nalaganje seznama predvajanja ni uspelo.",
   "share-playlist": "Deli seznam predvajanja",
   "playlist-url-copied": "URL seznama predvajanja kopiran v odložišče",
-  "current-playlist": "Trenutni seznam predvajanja"
+  "current-playlist": "Trenutni seznam predvajanja",
+  "languageUnavailable.title": "Jezik ni na voljo",
+  "languageUnavailable.body": "Trenutno nimamo prevoda Biblije za ta jezik, vendar podpiramo {{fallback}}. Ali želite preklopiti besedilo Biblije na {{fallback}}?",
+  "languageUnavailable.yesContinue": "Da, nadaljuj",
+  "languageUnavailable.noGoBack": "Ne, nazaj",
+  "ui-size": "Velikost uporabniškega vmesnika"
 }

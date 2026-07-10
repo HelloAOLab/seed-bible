@@ -94,7 +94,6 @@
   "customize-colors": "Kohanda värve",
   "highlight-colors": "Esiletõstetud värvid",
   "reset-all-custom-colors": "Lähtesta kõik kohandatud värvid",
-  "ui-text-size": "Kasutajaliidese teksti suurus",
   "book-order": "Broneeri tellimus",
   "selection-ui": "Valiku kasutajaliides",
   "show-selected-items": "Kuva valitud üksused",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Esitusloendi laadimine ebaõnnestus",
   "share-playlist": "Jaga esitusloendit",
   "playlist-url-copied": "Esitusloendi URL kopeeriti lõikelauale",
-  "current-playlist": "Praegune esitusloend"
+  "current-playlist": "Praegune esitusloend",
+  "languageUnavailable.title": "Keel pole saadaval",
+  "languageUnavailable.body": "Meil pole praegu selle keele jaoks Piibli tõlget, kuid toetame {{fallback}}. Kas soovite Piibli teksti {{fallback}} keelde vahetada?",
+  "languageUnavailable.yesContinue": "Jah, jätka",
+  "languageUnavailable.noGoBack": "Ei, mine tagasi",
+  "ui-size": "Kasutajaliidese suurus"
 }

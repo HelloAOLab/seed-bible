@@ -94,7 +94,6 @@
   "customize-colors": "Personnaliser ba couleurs",
   "highlight-colors": "Salá ete balangi ezala polele",
   "reset-all-custom-colors": "Réinitialiser ba couleurs nionso ya personnalisé",
-  "ui-text-size": "Taille ya texte ya UI",
   "book-order": "Commande ya buku",
   "selection-ui": "UI ya boponi",
   "show-selected-items": "Lakisa biloko oyo oponi",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Elongi te ko charger liste ya ba playlist",
   "share-playlist": "Bokabola liste ya ba nzembo",
   "playlist-url-copied": "URL ya liste ya kobɛta oyo esalemi kopi na tableau de bord",
-  "current-playlist": "Liste ya ba nzembo ya lelo"
+  "current-playlist": "Liste ya ba nzembo ya lelo",
+  "languageUnavailable.title": "Lokótá Ezwani Te",
+  "languageUnavailable.body": "Tozali na ebandeli ya Biblia mpo na lokótá oyo te sik'oyo, kasi tozali kolandela {{fallback}}. Olingi kobongola mokanda ya Biblia na {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ɛɛ, kokoba",
+  "languageUnavailable.noGoBack": "Te, kozonga",
+  "ui-size": "Taille ya UI"
 }

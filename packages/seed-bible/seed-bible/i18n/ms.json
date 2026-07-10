@@ -94,7 +94,6 @@
   "customize-colors": "Sesuaikan warna",
   "highlight-colors": "Serlahkan warna",
   "reset-all-custom-colors": "Tetapkan semula semua warna tersuai",
-  "ui-text-size": "Saiz teks UI",
   "book-order": "Pesanan buku",
   "selection-ui": "UI Pemilihan",
   "show-selected-items": "Tunjukkan item yang dipilih",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Gagal memuatkan senarai main",
   "share-playlist": "Kongsi senarai main",
   "playlist-url-copied": "URL senarai main disalin ke papan keratan",
-  "current-playlist": "Senarai main semasa"
+  "current-playlist": "Senarai main semasa",
+  "languageUnavailable.title": "Bahasa Tidak Tersedia",
+  "languageUnavailable.body": "Kami pada masa ini tidak mempunyai terjemahan Alkitab untuk bahasa ini, tetapi kami menyokong {{fallback}}. Adakah anda ingin menukar teks Alkitab kepada {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ya, teruskan",
+  "languageUnavailable.noGoBack": "Tidak, kembali",
+  "ui-size": "Saiz UI"
 }

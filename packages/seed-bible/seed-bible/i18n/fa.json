@@ -81,7 +81,6 @@
   "customize-colors": "سفارشی کردن رنگ‌ها",
   "highlight-colors": "رنگ‌های برجسته",
   "reset-all-custom-colors": "تنظیم مجدد همه رنگ‌های سفارشی",
-  "ui-text-size": "اندازه متن رابط کاربری",
   "book-order": "سفارش کتاب",
   "selection-ui": "رابط کاربری انتخاب",
   "show-selected-items": "نمایش موارد انتخاب شده",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "بارگیری لیست پخش ناموفق بود",
   "share-playlist": "اشتراک‌گذاری لیست پخش",
   "playlist-url-copied": "آدرس اینترنتی لیست پخش در کلیپ‌بورد کپی شد",
-  "current-playlist": "لیست پخش فعلی"
+  "current-playlist": "لیست پخش فعلی",
+  "languageUnavailable.title": "زبان در دسترس نیست",
+  "languageUnavailable.body": "ما در حال حاضر ترجمهٔ کتاب مقدس برای این زبان نداریم، اما {{fallback}} را پشتیبانی می‌کنیم. آیا می‌خواهید متن کتاب مقدس را به {{fallback}} تغییر دهید؟",
+  "languageUnavailable.yesContinue": "بله، ادامه",
+  "languageUnavailable.noGoBack": "خیر، بازگشت",
+  "ui-size": "اندازه رابط کاربری"
 }

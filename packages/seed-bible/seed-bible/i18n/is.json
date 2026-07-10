@@ -94,7 +94,6 @@
   "customize-colors": "Sérsníða liti",
   "highlight-colors": "Hápunktarlitir",
   "reset-all-custom-colors": "Endurstilla alla sérsniðna liti",
-  "ui-text-size": "Stærð texta í notendaviðmóti",
   "book-order": "Bókapöntun",
   "selection-ui": "Valviðmót",
   "show-selected-items": "Sýna valin atriði",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Mistókst að hlaða spilunarlista",
   "share-playlist": "Deila spilunarlista",
   "playlist-url-copied": "Vefslóð spilunarlista afrituð á klippiborð",
-  "current-playlist": "Núverandi spilunarlisti"
+  "current-playlist": "Núverandi spilunarlisti",
+  "languageUnavailable.title": "Tungumál ekki tiltækt",
+  "languageUnavailable.body": "Við höfum ekki Biblíuþýðingu fyrir þetta tungumál eins og er, en við styðjum {{fallback}}. Viltu skipta Biblíutextanum yfir á {{fallback}}?",
+  "languageUnavailable.yesContinue": "Já, halda áfram",
+  "languageUnavailable.noGoBack": "Nei, fara til baka",
+  "ui-size": "Stærð notendaviðmóts"
 }

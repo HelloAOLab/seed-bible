@@ -25,6 +25,7 @@ import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/Mobile
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
 import { InfoSettingsIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
+import { SelfAvatarVisual, getSelfDisplayName } from "../Tabs/Tabs";
 
 interface ReaderBookmarkButtonProps {
   state: SeedBibleState;
@@ -1044,8 +1045,24 @@ export function BibleReader(props: BibleReaderProps) {
     }
   };
 
+  const renderMobileChapterTitle = (
+    bookName: string,
+    chapter: number | string
+  ) => (
+    <h2 className="sb-bible-reader-mobile-content-title">
+      <span className="sb-bible-reader-book">{bookName}</span>
+      <span className="sb-bible-reader-chapter">{chapter}</span>
+    </h2>
+  );
+
   const renderMainContent = () => (
     <>
+      {isMobile &&
+        renderMobileChapterTitle(
+          currentBook.value?.name ?? bookId.value ?? "",
+          chapterNumber.value ?? ""
+        )}
+
       {error.value && !loading.value && (
         <p className="sb-reader-error">{error.value}</p>
       )}
@@ -1147,12 +1164,6 @@ export function BibleReader(props: BibleReaderProps) {
               features={state.features}
               className="sb-quick-toolbar-mobile-header"
             />
-            {sharedSession && (
-              <MobileSessionParticipants
-                state={state}
-                session={sharedSession}
-              />
-            )}
             {!state.playlists.playing.value && (
               <ReaderBookmarkButton
                 state={state}
@@ -1160,6 +1171,31 @@ export function BibleReader(props: BibleReaderProps) {
                 bookId={bookId.value}
                 chapterNumber={chapterNumber.value}
               />
+            )}
+            {sharedSession ? (
+              <MobileSessionParticipants
+                state={state}
+                session={sharedSession}
+              />
+            ) : (
+              <button
+                type="button"
+                className="sb-bible-reader-mobile-header-account"
+                aria-label={`Open account settings (${getSelfDisplayName(
+                  state
+                )})`}
+                // The reader pane wrapper selects the pane on pointerdown/click
+                // (which runs closeSidebarAndSettings). Stop the tap here so it
+                // doesn't immediately dismiss the account view we're opening.
+                onPointerDown={(e: PointerEvent) => e.stopPropagation()}
+                onClick={(e: MouseEvent) => {
+                  e.stopPropagation();
+                  state.sidebar.openSidebar();
+                  state.sidebar.openSettingsToView("account");
+                }}
+              >
+                <SelfAvatarVisual state={state} />
+              </button>
             )}
             <button
               type="button"
@@ -1184,6 +1220,11 @@ export function BibleReader(props: BibleReaderProps) {
                 className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
                 aria-hidden="true"
               >
+                {mobileChrome?.prevChapterPreview &&
+                  renderMobileChapterTitle(
+                    mobileChrome.prevChapterPreview.book.name,
+                    mobileChrome.prevChapterPreview.chapter.number
+                  )}
                 <div className="sb-chapter-content">
                   {renderStaticChapterContent(
                     mobileChrome?.prevChapterPreview ?? null,
@@ -1201,6 +1242,11 @@ export function BibleReader(props: BibleReaderProps) {
                 className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
                 aria-hidden="true"
               >
+                {mobileChrome?.nextChapterPreview &&
+                  renderMobileChapterTitle(
+                    mobileChrome.nextChapterPreview.book.name,
+                    mobileChrome.nextChapterPreview.chapter.number
+                  )}
                 <div className="sb-chapter-content">
                   {renderStaticChapterContent(
                     mobileChrome?.nextChapterPreview ?? null,

@@ -94,7 +94,6 @@
   "customize-colors": "Emohenda umi sa’y",
   "highlight-colors": "Emomba’eguasu umi sa’y",
   "reset-all-custom-colors": "Emohenda jey opaite sa’y jeporupyre",
-  "ui-text-size": "UI jehaipyre tuichakue",
   "book-order": "Aranduka rembiaporã",
   "selection-ui": "UI jeporavo rehegua",
   "show-selected-items": "Ohechauka umi mba’e ojeporavóva",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Ndoikói ojekarga hag̃ua lista de reproducción",
   "share-playlist": "Compartir lista de reproducción rehegua",
   "playlist-url-copied": "URL lista de reproducción ojekopia portapapeles-pe",
-  "current-playlist": "Ñembopu lista ko’áĝagua"
+  "current-playlist": "Ñembopu lista ko’áĝagua",
+  "languageUnavailable.title": "Ñe'ẽ Ndaipóri",
+  "languageUnavailable.body": "Roguerekói gueteri moñe'ẽrã Tupãpa'u ko ñe'ẽme, ha katu roipytyvõ {{fallback}}. ¿Redesepáke Tupãpa'u jehaiha {{fallback}} pe?",
+  "languageUnavailable.yesContinue": "Hẽ, mbojoapy",
+  "languageUnavailable.noGoBack": "Nahániri, jujey",
+  "ui-size": "UI tuichakue"
 }

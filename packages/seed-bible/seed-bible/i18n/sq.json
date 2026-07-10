@@ -94,7 +94,6 @@
   "customize-colors": "Personalizo ngjyrat",
   "highlight-colors": "Ngjyrat e theksuara",
   "reset-all-custom-colors": "Rivendos të gjitha ngjyrat e personalizuara",
-  "ui-text-size": "Madhësia e tekstit të ndërfaqes së përdoruesit",
   "book-order": "Porosit rezervimi",
   "selection-ui": "Ndërfaqja e përdoruesit e përzgjedhjes",
   "show-selected-items": "Shfaq artikujt e zgjedhur",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Ngarkimi i listës për luajtje dështoi.",
   "share-playlist": "Ndani listën e luajtjes për të ndarë.",
   "playlist-url-copied": "URL-ja e listës për luajtje u kopjua në kujtesën e përkohshme",
-  "current-playlist": "Lista aktuale e luajtjes për luajtje është ajo e listave të luajtjes, të cilat janë aktualisht në dispozicion."
+  "current-playlist": "Lista aktuale e luajtjes për luajtje është ajo e listave të luajtjes, të cilat janë aktualisht në dispozicion.",
+  "languageUnavailable.title": "Gjuha nuk disponohet",
+  "languageUnavailable.body": "Aktualisht nuk kemi përkthim të Biblës për këtë gjuhë, por mbështesim {{fallback}}. Dëshironi të ndryshoni tekstin e Biblës në {{fallback}}?",
+  "languageUnavailable.yesContinue": "Po, vazhdo",
+  "languageUnavailable.noGoBack": "Jo, kthehu",
+  "ui-size": "Madhësia e ndërfaqes së përdoruesit"
 }

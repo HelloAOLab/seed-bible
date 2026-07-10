@@ -94,7 +94,6 @@
   "customize-colors": "I-customize ang mga kulay",
   "highlight-colors": "I-highlight ang mga kulay",
   "reset-all-custom-colors": "I-reset ang lahat ng custom na kulay",
-  "ui-text-size": "Laki ng teksto ng UI",
   "book-order": "Order ng libro",
   "selection-ui": "UI ng Pagpili",
   "show-selected-items": "Ipakita ang mga napiling item",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Nabigong i-load ang playlist",
   "share-playlist": "Ibahagi ang playlist",
   "playlist-url-copied": "Nakopya ang URL ng playlist sa clipboard",
-  "current-playlist": "Kasalukuyang playlist"
+  "current-playlist": "Kasalukuyang playlist",
+  "languageUnavailable.title": "Hindi Available ang Wika",
+  "languageUnavailable.body": "Wala kaming salin ng Bibliya para sa wikang ito sa ngayon, ngunit sinusuportahan namin ang {{fallback}}. Gusto mo bang ilipat ang teksto ng Bibliya sa {{fallback}}?",
+  "languageUnavailable.yesContinue": "Oo, magpatuloy",
+  "languageUnavailable.noGoBack": "Hindi, bumalik",
+  "ui-size": "Laki ng UI"
 }

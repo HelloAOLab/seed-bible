@@ -81,7 +81,6 @@
   "customize-colors": "Налаштувати кольори",
   "highlight-colors": "Виділення кольорів",
   "reset-all-custom-colors": "Скинути всі власні кольори",
-  "ui-text-size": "Розмір тексту інтерфейсу користувача",
   "book-order": "Замовлення книги",
   "selection-ui": "Інтерфейс вибору",
   "show-selected-items": "Показати вибрані елементи",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Не вдалося завантажити список відтворення",
   "share-playlist": "Поділитися списком відтворення",
   "playlist-url-copied": "URL-адресу списку відтворення скопійовано в буфер обміну",
-  "current-playlist": "Поточний плейлист"
+  "current-playlist": "Поточний плейлист",
+  "languageUnavailable.title": "Мова недоступна",
+  "languageUnavailable.body": "Наразі у нас немає перекладу Біблії для цієї мови, але ми підтримуємо {{fallback}}. Бажаєте перемкнути текст Біблії на {{fallback}}?",
+  "languageUnavailable.yesContinue": "Так, продовжити",
+  "languageUnavailable.noGoBack": "Ні, повернутися",
+  "ui-size": "Розмір інтерфейсу користувача"
 }

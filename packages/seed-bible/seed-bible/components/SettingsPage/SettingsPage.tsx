@@ -6,14 +6,14 @@ import {
   TEXT_FONT_OPTIONS,
   TEXT_SECTION_THEME_COLOR_VAR,
   TEXT_WEIGHT_OPTIONS,
-  UI_TEXT_SIZE_OPTIONS,
+  UI_SIZE_OPTIONS,
   VERSE_LINE_HEIGHT_OPTIONS,
   DEFAULT_VERSE_LINE_HEIGHT,
   type BookOrientation,
   type TextAlignment,
   type TextSectionConfig,
   type TextSectionId,
-  type UITextSize,
+  type UISize,
 } from "../../managers/SettingsManager";
 import {
   DEFAULT_HIGHLIGHT_IDS,
@@ -67,85 +67,7 @@ const TEXT_COLOR_PALETTE = [
 
 const HEX_6 = /^#[0-9a-fA-F]{6}$/;
 
-const LANG_META: Record<string, { cc: string; display: string }> = {
-  af: { cc: "za", display: "Afrikaans" },
-  am: { cc: "et", display: "አማርኛ" },
-  ar: { cc: "sa", display: "العربية" },
-  az: { cc: "az", display: "Azərbaycan dili" },
-  be: { cc: "by", display: "Беларуская" },
-  bg: { cc: "bg", display: "Български" },
-  bn: { cc: "bd", display: "বাংলা" },
-  bs: { cc: "ba", display: "Bosanski" },
-  ca: { cc: "es", display: "Català" },
-  cs: { cc: "cz", display: "Čeština" },
-  cy: { cc: "gb", display: "Cymraeg" },
-  da: { cc: "dk", display: "Dansk" },
-  de: { cc: "de", display: "Deutsch" },
-  el: { cc: "gr", display: "Ελληνικά" },
-  en: { cc: "us", display: "English" },
-  es: { cc: "es", display: "Español" },
-  et: { cc: "ee", display: "Eesti" },
-  fa: { cc: "ir", display: "فارسی" },
-  fi: { cc: "fi", display: "Suomi" },
-  fil: { cc: "ph", display: "Filipino" },
-  fr: { cc: "fr", display: "Français" },
-  fy: { cc: "nl", display: "Frysk" },
-  gl: { cc: "es", display: "Galego" },
-  gn: { cc: "py", display: "Avañe'ẽ" },
-  gu: { cc: "in", display: "ગુજરાતી" },
-  he: { cc: "il", display: "עברית" },
-  hi: { cc: "in", display: "हिन्दी" },
-  hr: { cc: "hr", display: "Hrvatski" },
-  hu: { cc: "hu", display: "Magyar" },
-  ind: { cc: "id", display: "Bahasa Indonesia" },
-  is: { cc: "is", display: "Íslenska" },
-  it: { cc: "it", display: "Italiano" },
-  iw: { cc: "il", display: "עברית" },
-  ja: { cc: "jp", display: "日本語" },
-  ka: { cc: "ge", display: "ქართული" },
-  km: { cc: "kh", display: "ខ្មែរ" },
-  kn: { cc: "in", display: "ಕನ್ನಡ" },
-  ko: { cc: "kr", display: "한국어" },
-  ky: { cc: "kg", display: "Кыргызча" },
-  ln: { cc: "cd", display: "Lingála" },
-  lo: { cc: "la", display: "ລາວ" },
-  lt: { cc: "lt", display: "Lietuvių" },
-  lv: { cc: "lv", display: "Latviešu" },
-  mk: { cc: "mk", display: "Македонски" },
-  mn: { cc: "mn", display: "Монгол хэл" },
-  ml: { cc: "in", display: "മലയാളം" },
-  mr: { cc: "in", display: "मराठी" },
-  ms: { cc: "my", display: "Bahasa Melayu" },
-  my: { cc: "mm", display: "မြန်မာ" },
-  nb: { cc: "no", display: "Norsk bokmål" },
-  ne: { cc: "np", display: "नेपाली" },
-  nl: { cc: "nl", display: "Nederlands" },
-  no: { cc: "no", display: "Norsk" },
-  pa: { cc: "in", display: "ਪੰਜਾਬੀ" },
-  pl: { cc: "pl", display: "Polski" },
-  ps: { cc: "af", display: "پښتو" },
-  pt: { cc: "br", display: "Português" },
-  ro: { cc: "ro", display: "Română" },
-  ru: { cc: "ru", display: "Русский" },
-  sk: { cc: "sk", display: "Slovenčina" },
-  sl: { cc: "si", display: "Slovenščina" },
-  sq: { cc: "al", display: "Shqip" },
-  sv: { cc: "se", display: "Svenska" },
-  sw: { cc: "tz", display: "Kiswahili" },
-  ta: { cc: "in", display: "தமிழ்" },
-  te: { cc: "in", display: "తెలుగు" },
-  th: { cc: "th", display: "ไทย" },
-  ti: { cc: "er", display: "ትግርኛ" },
-  tl: { cc: "ph", display: "Tagalog" },
-  tr: { cc: "tr", display: "Türkçe" },
-  ug: { cc: "cn", display: "ئۇيغۇرچە" },
-  uk: { cc: "ua", display: "Українська" },
-  ur: { cc: "pk", display: "اردو" },
-  uz: { cc: "uz", display: "Oʻzbekcha" },
-  vi: { cc: "vn", display: "Tiếng Việt" },
-  zh: { cc: "cn", display: "中文" },
-  zu: { cc: "za", display: "isiZulu" },
-};
+import { LANG_META } from "../../i18n/languageMeta";
 
 function FlagImg({ cc }: { cc: string }) {
   return (
@@ -863,20 +785,20 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
         <div className="sb-settings-field-row">
           <label
             className="sb-settings-field-label"
-            htmlFor="sb-ui-text-size-select"
+            htmlFor="sb-ui-size-select"
           >
-            {t("ui-text-size", { defaultValue: "UI text size" })}
+            {t("ui-size", { defaultValue: "UI size" })}
           </label>
           <select
-            id="sb-ui-text-size-select"
+            id="sb-ui-size-select"
             className="sb-settings-language-select"
-            value={current.uiTextSize}
+            value={current.uiSize}
             onChange={(event: Event) => {
               const target = event.currentTarget as HTMLSelectElement;
-              settings.setUITextSize(target.value as UITextSize);
+              settings.setUISize(target.value as UISize);
             }}
           >
-            {UI_TEXT_SIZE_OPTIONS.map((size) => (
+            {UI_SIZE_OPTIONS.map((size) => (
               <option key={size} value={size}>
                 {size}
               </option>

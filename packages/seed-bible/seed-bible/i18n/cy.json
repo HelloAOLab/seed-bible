@@ -94,7 +94,6 @@
   "customize-colors": "Addasu lliwiau",
   "highlight-colors": "Amlygu lliwiau",
   "reset-all-custom-colors": "Ailosod pob lliw personol",
-  "ui-text-size": "Maint testun y rhyngwyneb defnyddiwr",
   "book-order": "Archeb llyfr",
   "selection-ui": "UI Dewis",
   "show-selected-items": "Dangos eitemau a ddewiswyd",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Methwyd llwytho rhestr chwarae",
   "share-playlist": "Rhannu rhestr chwarae",
   "playlist-url-copied": "URL y rhestr chwarae wedi'i gopïo i'r clipfwrdd",
-  "current-playlist": "Rhestr chwarae gyfredol"
+  "current-playlist": "Rhestr chwarae gyfredol",
+  "languageUnavailable.title": "Iaith Ddim ar Gael",
+  "languageUnavailable.body": "Nid oes gennym gyfieithiad Beibl ar gyfer yr iaith hon ar hyn o bryd, ond mae gennym {{fallback}}. Hoffech chi newid testun y Beibl i {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ie, parhau",
+  "languageUnavailable.noGoBack": "Na, ewch yn ôl",
+  "ui-size": "Maint y rhyngwyneb defnyddiwr"
 }

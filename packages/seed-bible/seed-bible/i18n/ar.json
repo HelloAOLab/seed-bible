@@ -81,7 +81,6 @@
   "customize-colors": "تخصيص الألوان",
   "highlight-colors": "ألوان مميزة",
   "reset-all-custom-colors": "إعادة ضبط جميع الألوان المخصصة",
-  "ui-text-size": "حجم نص واجهة المستخدم",
   "book-order": "طلب كتاب",
   "selection-ui": "واجهة المستخدم للاختيار",
   "show-selected-items": "عرض العناصر المختارة",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "فشل تحميل قائمة التشغيل",
   "share-playlist": "مشاركة قائمة التشغيل",
   "playlist-url-copied": "تم نسخ رابط قائمة التشغيل إلى الحافظة",
-  "current-playlist": "قائمة التشغيل الحالية"
+  "current-playlist": "قائمة التشغيل الحالية",
+  "languageUnavailable.title": "اللغة غير متوفرة",
+  "languageUnavailable.body": "ليس لدينا حاليًا ترجمة للكتاب المقدس لهذه اللغة، لكن لدينا {{fallback}}. هل تريد تبديل نص الكتاب المقدس إلى {{fallback}}؟",
+  "languageUnavailable.yesContinue": "نعم، متابعة",
+  "languageUnavailable.noGoBack": "لا، ارجع",
+  "ui-size": "حجم واجهة المستخدم"
 }

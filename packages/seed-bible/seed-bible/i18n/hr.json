@@ -94,7 +94,6 @@
   "customize-colors": "Prilagodi boje",
   "highlight-colors": "Istaknite boje",
   "reset-all-custom-colors": "Poništi sve prilagođene boje",
-  "ui-text-size": "Veličina teksta korisničkog sučelja",
   "book-order": "Narudžba knjige",
   "selection-ui": "Odabir korisničkog sučelja",
   "show-selected-items": "Prikaži odabrane stavke",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Učitavanje popisa za reprodukciju nije uspjelo",
   "share-playlist": "Podijeli popis za reprodukciju",
   "playlist-url-copied": "URL popisa za reprodukciju kopiran u međuspremnik",
-  "current-playlist": "Trenutna popis pjesama za reprodukciju"
+  "current-playlist": "Trenutna popis pjesama za reprodukciju",
+  "languageUnavailable.title": "Jezik nije dostupan",
+  "languageUnavailable.body": "Trenutno nemamo prijevod Biblije za ovaj jezik, ali podržavamo {{fallback}}. Želite li prebaciti tekst Biblije na {{fallback}}?",
+  "languageUnavailable.yesContinue": "Da, nastavi",
+  "languageUnavailable.noGoBack": "Ne, vrati se",
+  "ui-size": "Veličina korisničkog sučelja"
 }

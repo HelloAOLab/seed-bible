@@ -94,7 +94,6 @@
   "customize-colors": "Kleuren oanpasse",
   "highlight-colors": "Markearje kleuren",
   "reset-all-custom-colors": "Alle oanpaste kleuren weromsette",
-  "ui-text-size": "UI-tekstgrutte",
   "book-order": "Boekbestelling",
   "selection-ui": "Seleksje-UI",
   "show-selected-items": "Selektearre items sjen litte",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Koe net ôfspiellist laden",
   "share-playlist": "Diel de playlist",
   "playlist-url-copied": "URL fan 'e playlist kopiearre nei klamboerd",
-  "current-playlist": "Hjoeddeiske ôfspiellist"
+  "current-playlist": "Hjoeddeiske ôfspiellist",
+  "languageUnavailable.title": "Taal net beskikber",
+  "languageUnavailable.body": "Wy hawwe op it stuit gjin Bybeloersetting foar dizze taal, mar wy stypje {{fallback}}. Wolle jo de Bybeltekst oerskeakelje nei {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ja, trochgean",
+  "languageUnavailable.noGoBack": "Nee, weromgean",
+  "ui-size": "UI-grutte"
 }

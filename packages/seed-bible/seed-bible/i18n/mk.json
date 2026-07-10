@@ -94,7 +94,6 @@
   "customize-colors": "Прилагоди бои",
   "highlight-colors": "Бои за означување",
   "reset-all-custom-colors": "Ресетирај ги сите прилагодени бои",
-  "ui-text-size": "Големина на текст на корисничкиот интерфејс",
   "book-order": "Нарачка на книга",
   "selection-ui": "Кориснички интерфејс за избор",
   "show-selected-items": "Прикажи ги избраните ставки",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Неуспешно вчитување на плејлистата. ...",
   "share-playlist": "Сподели плејлиста ...",
   "playlist-url-copied": "URL-адресата на плејлистата е копирана во привремената меморија",
-  "current-playlist": "Тековна плејлиста со тековни песни е достапна."
+  "current-playlist": "Тековна плејлиста со тековни песни е достапна.",
+  "languageUnavailable.title": "Јазикот не е достапен",
+  "languageUnavailable.body": "Во моментов немаме превод на Библијата за овој јазик, но поддржуваме {{fallback}}. Дали сакате да го промените текстот на Библијата на {{fallback}}?",
+  "languageUnavailable.yesContinue": "Да, продолжи",
+  "languageUnavailable.noGoBack": "Не, назад",
+  "ui-size": "Големина на корисничкиот интерфејс"
 }

@@ -81,7 +81,6 @@
   "customize-colors": "রং কাস্টমাইজ করুন",
   "highlight-colors": "হাইলাইট রঙ",
   "reset-all-custom-colors": "সমস্ত কাস্টম রঙ রিসেট করুন",
-  "ui-text-size": "UI টেক্সট সাইজ",
   "book-order": "বইয়ের অর্ডার",
   "selection-ui": "নির্বাচন UI",
   "show-selected-items": "নির্বাচিত আইটেমগুলি দেখান",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "প্লেলিস্ট লোড করতে ব্যর্থ হয়েছে",
   "share-playlist": "প্লেলিস্ট শেয়ার করুন",
   "playlist-url-copied": "প্লেলিস্ট ইউআরএল ক্লিপবোর্ডে কপি করা হয়েছে",
-  "current-playlist": "বর্তমান প্লেলিস্ট"
+  "current-playlist": "বর্তমান প্লেলিস্ট",
+  "languageUnavailable.title": "ভাষা উপলব্ধ নয়",
+  "languageUnavailable.body": "আমাদের কাছে বর্তমানে এই ভাষার জন্য কোনো বাইবেল অনুবাদ নেই, তবে আমরা {{fallback}} সমর্থন করি। আপনি কি বাইবেলের পাঠ্যটি {{fallback}}-এ পরিবর্তন করতে চান?",
+  "languageUnavailable.yesContinue": "হ্যাঁ, চালিয়ে যান",
+  "languageUnavailable.noGoBack": "না, ফিরে যান",
+  "ui-size": "UI আকার"
 }

@@ -94,7 +94,6 @@
   "customize-colors": "നിറങ്ങൾ ഇഷ്ടാനുസൃതമാക്കുക",
   "highlight-colors": "ഹൈലൈറ്റ് നിറങ്ങൾ",
   "reset-all-custom-colors": "എല്ലാ ഇഷ്ടാനുസൃത നിറങ്ങളും പുനഃസജ്ജമാക്കുക",
-  "ui-text-size": "UI ടെക്സ്റ്റ് വലുപ്പം",
   "book-order": "ബുക്ക് ഓർഡർ",
   "selection-ui": "തിരഞ്ഞെടുക്കൽ UI",
   "show-selected-items": "തിരഞ്ഞെടുത്ത ഇനങ്ങൾ കാണിക്കുക",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "പ്ലേലിസ്റ്റ് ലോഡ് ചെയ്യുന്നതിൽ പരാജയപ്പെട്ടു",
   "share-playlist": "പ്ലേലിസ്റ്റ് പങ്കിടുക",
   "playlist-url-copied": "പ്ലേലിസ്റ്റ് URL ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി",
-  "current-playlist": "നിലവിലെ പ്ലേലിസ്റ്റ്"
+  "current-playlist": "നിലവിലെ പ്ലേലിസ്റ്റ്",
+  "languageUnavailable.title": "ഭാഷ ലഭ്യമല്ല",
+  "languageUnavailable.body": "ഈ ഭാഷയ്ക്ക് നിലവിൽ ബൈബിൾ വിവർത്തനം ഞങ്ങൾക്കില്ല, പക്ഷേ ഞങ്ങൾ {{fallback}} പിന്തുണയ്ക്കുന്നു. ബൈബിൾ വാചകം {{fallback}} ലേക്ക് മാറ്റാൻ നിങ്ങൾ ആഗ്രഹിക്കുന്നുണ്ടോ?",
+  "languageUnavailable.yesContinue": "അതെ, തുടരുക",
+  "languageUnavailable.noGoBack": "ഇല്ല, തിരികെ പോകുക",
+  "ui-size": "UI വലുപ്പം"
 }

@@ -94,7 +94,6 @@
   "customize-colors": "Tinkinkite spalvas",
   "highlight-colors": "Paryškinimo spalvos",
   "reset-all-custom-colors": "Atkurti visas pasirinktines spalvas",
-  "ui-text-size": "UI teksto dydis",
   "book-order": "Užsakymas",
   "selection-ui": "Pasirinkimo vartotojo sąsaja",
   "show-selected-items": "Rodyti pasirinktus elementus",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Nepavyko įkelti grojaraščio",
   "share-playlist": "Bendrinti grojaraštį",
   "playlist-url-copied": "Grojaraščio URL nukopijuotas į iškarpinę",
-  "current-playlist": "Dabartinis grojaraštis"
+  "current-playlist": "Dabartinis grojaraštis",
+  "languageUnavailable.title": "Kalba nepasiekiama",
+  "languageUnavailable.body": "Šiuo metu neturime Biblijos vertimo šia kalba, bet palaikome {{fallback}}. Ar norite perjungti Biblijos tekstą į {{fallback}}?",
+  "languageUnavailable.yesContinue": "Taip, tęsti",
+  "languageUnavailable.noGoBack": "Ne, grįžti",
+  "ui-size": "Vartotojo sąsajos dydis"
 }

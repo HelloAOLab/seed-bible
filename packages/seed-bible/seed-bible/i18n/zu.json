@@ -94,7 +94,6 @@
   "customize-colors": "Yenza ngezifiso imibala",
   "highlight-colors": "Gqamisa imibala",
   "reset-all-custom-colors": "Setha kabusha yonke imibala eyenziwe ngokwezifiso",
-  "ui-text-size": "Usayizi wombhalo we-UI",
   "book-order": "I-oda lencwadi",
   "selection-ui": "I-UI yokukhetha",
   "show-selected-items": "Bonisa izinto ezikhethiwe",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Yehlulekile ukulayisha uhlu lwadlalwayo",
   "share-playlist": "Yabelana ngohlu lwadlalwayo",
   "playlist-url-copied": "I-URL yohlu lokudlalayo ikopishwe ebhodini lokunamathisela",
-  "current-playlist": "Uhlu lwadlalwayo lwamanje"
+  "current-playlist": "Uhlu lwadlalwayo lwamanje",
+  "languageUnavailable.title": "Ulimi Alutholakali",
+  "languageUnavailable.body": "Asinayo ukuhumusha kweBhayibheli kolu limi okwamanje, kodwa sisekela i-{{fallback}}. Ungathanda ukushintshela umbhalo weBhayibheli uye ku-{{fallback}}?",
+  "languageUnavailable.yesContinue": "Yebo, qhubeka",
+  "languageUnavailable.noGoBack": "Cha, buyela emuva",
+  "ui-size": "Usayizi we-UI"
 }

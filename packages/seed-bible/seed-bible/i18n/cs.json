@@ -94,7 +94,6 @@
   "customize-colors": "Přizpůsobit barvy",
   "highlight-colors": "Zvýrazněte barvy",
   "reset-all-custom-colors": "Obnovit všechny vlastní barvy",
-  "ui-text-size": "Velikost textu uživatelského rozhraní",
   "book-order": "Objednávka knihy",
   "selection-ui": "Uživatelské rozhraní pro výběr",
   "show-selected-items": "Zobrazit vybrané položky",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Načtení playlistu se nezdařilo",
   "share-playlist": "Sdílet playlist",
   "playlist-url-copied": "URL playlistu zkopírována do schránky",
-  "current-playlist": "Aktuální playlist"
+  "current-playlist": "Aktuální playlist",
+  "languageUnavailable.title": "Jazyk není k dispozici",
+  "languageUnavailable.body": "V současnosti nemáme překlad Bible pro tento jazyk, ale podporujeme {{fallback}}. Chcete přepnout text Bible na {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ano, pokračovat",
+  "languageUnavailable.noGoBack": "Ne, zpět",
+  "ui-size": "Velikost uživatelského rozhraní"
 }

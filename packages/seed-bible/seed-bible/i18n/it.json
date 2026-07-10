@@ -94,7 +94,6 @@
   "customize-colors": "Personalizza i colori",
   "highlight-colors": "Colori di evidenziazione",
   "reset-all-custom-colors": "Reimposta tutti i colori personalizzati",
-  "ui-text-size": "dimensione del testo dell'interfaccia utente",
   "book-order": "Ordine del libro",
   "selection-ui": "Interfaccia utente di selezione",
   "show-selected-items": "Mostra gli elementi selezionati",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Impossibile caricare la playlist",
   "share-playlist": "Condividi la playlist",
   "playlist-url-copied": "URL della playlist copiato negli appunti",
-  "current-playlist": "Playlist attuale"
+  "current-playlist": "Playlist attuale",
+  "languageUnavailable.title": "Lingua non disponibile",
+  "languageUnavailable.body": "Al momento non abbiamo una traduzione della Bibbia per questa lingua, ma supportiamo {{fallback}}. Vuoi passare il testo della Bibbia a {{fallback}}?",
+  "languageUnavailable.yesContinue": "Sì, continua",
+  "languageUnavailable.noGoBack": "No, torna indietro",
+  "ui-size": "dimensione dell'interfaccia utente"
 }

@@ -81,7 +81,6 @@
   "customize-colors": "Настройте цвета",
   "highlight-colors": "Выделение цветов",
   "reset-all-custom-colors": "Сбросить все пользовательские цвета",
-  "ui-text-size": "размер текста пользовательского интерфейса",
   "book-order": "Заказ книг",
   "selection-ui": "Пользовательский интерфейс выбора",
   "show-selected-items": "Показать выбранные элементы",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Не удалось загрузить плейлист.",
   "share-playlist": "Поделиться плейлистом",
   "playlist-url-copied": "URL плейлиста скопирован в буфер обмена.",
-  "current-playlist": "Текущий плейлист"
+  "current-playlist": "Текущий плейлист",
+  "languageUnavailable.title": "Язык недоступен",
+  "languageUnavailable.body": "У нас пока нет перевода Библии на этот язык, но есть для {{fallback}}. Хотите переключить библейский текст на {{fallback}}?",
+  "languageUnavailable.yesContinue": "Да, продолжить",
+  "languageUnavailable.noGoBack": "Нет, вернуться",
+  "ui-size": "размер пользовательского интерфейса"
 }

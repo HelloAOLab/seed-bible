@@ -81,7 +81,6 @@
   "customize-colors": "ቀለሞችን አብጅ",
   "highlight-colors": "የድምቀት ቀለሞች",
   "reset-all-custom-colors": "ሁሉንም ብጁ ቀለሞች ዳግም አስጀምር",
-  "ui-text-size": "የUI የጽሑፍ መጠን",
   "book-order": "የቦታ ማዘዣ",
   "selection-ui": "የምርጫ በይነገጽ",
   "show-selected-items": "የተመረጡትን ንጥሎች አሳይ",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "የአጫዋች ዝርዝር መጫን አልተሳካም",
   "share-playlist": "የአጫዋች ዝርዝር አጋራ",
   "playlist-url-copied": "የአጫዋች ዝርዝር ዩአርኤል ወደ ቅንጥብ ሰሌዳ ተቀድቷል",
-  "current-playlist": "የአሁኑ የአጫዋች ዝርዝር"
+  "current-playlist": "የአሁኑ የአጫዋች ዝርዝር",
+  "languageUnavailable.title": "ቋንቋ አይገኝም",
+  "languageUnavailable.body": "ለዚህ ቋንቋ በአሁኑ ጊዜ የመጽሐፍ ቅዱስ ትርጉም የለንም፣ ግን {{fallback}} እንደሚደግፍ ነው። የመጽሐፍ ቅዱስ ጽሑፍ ወደ {{fallback}} መቀየር ይፈልጋሉ?",
+  "languageUnavailable.yesContinue": "አዎ፣ ቀጥል",
+  "languageUnavailable.noGoBack": "አይ፣ ተመለስ",
+  "ui-size": "የUI መጠን"
 }

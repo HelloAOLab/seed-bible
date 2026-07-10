@@ -81,7 +81,6 @@
   "customize-colors": "Badilisha rangi",
   "highlight-colors": "Rangi za kuangazia",
   "reset-all-custom-colors": "Weka upya rangi zote maalum",
-  "ui-text-size": "Ukubwa wa maandishi ya kiolesura",
   "book-order": "Agiza kitabu",
   "selection-ui": "Kiolesura cha Uteuzi",
   "show-selected-items": "Onyesha vipengee vilivyochaguliwa",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Imeshindwa kupakia orodha ya kucheza",
   "share-playlist": "Shiriki orodha ya kucheza",
   "playlist-url-copied": "URL ya Orodha ya Kucheza Imenakiliwa kwenye ubao wa kunakili",
-  "current-playlist": "Orodha ya kucheza ya sasa"
+  "current-playlist": "Orodha ya kucheza ya sasa",
+  "languageUnavailable.title": "Lugha Haipatikani",
+  "languageUnavailable.body": "Kwa sasa hatuna tafsiri ya Biblia kwa lugha hii, lakini tunaunga mkono {{fallback}}. Je, ungependa kubadilisha maandiko ya Biblia kuwa {{fallback}}?",
+  "languageUnavailable.yesContinue": "Ndio, endelea",
+  "languageUnavailable.noGoBack": "Hapana, rudi",
+  "ui-size": "Ukubwa wa kiolesura"
 }

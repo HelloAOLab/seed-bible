@@ -94,7 +94,6 @@
   "customize-colors": "Prispôsobiť farby",
   "highlight-colors": "Zvýraznenie farieb",
   "reset-all-custom-colors": "Obnoviť všetky vlastné farby",
-  "ui-text-size": "Veľkosť textu používateľského rozhrania",
   "book-order": "Objednávka knihy",
   "selection-ui": "Výber používateľského rozhrania",
   "show-selected-items": "Zobraziť vybrané položky",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Načítanie playlistu sa nepodarilo",
   "share-playlist": "Zdieľať zoznam skladieb",
   "playlist-url-copied": "URL zoznamu skladieb skopírovaná do schránky",
-  "current-playlist": "Aktuálny zoznam skladieb"
+  "current-playlist": "Aktuálny zoznam skladieb",
+  "languageUnavailable.title": "Jazyk nie je k dispozícii",
+  "languageUnavailable.body": "Momentálne nemáme preklad Biblie pre tento jazyk, ale podporujeme {{fallback}}. Chcete prepnúť text Biblie na {{fallback}}?",
+  "languageUnavailable.yesContinue": "Áno, pokračovať",
+  "languageUnavailable.noGoBack": "Nie, späť",
+  "ui-size": "Veľkosť používateľského rozhrania"
 }

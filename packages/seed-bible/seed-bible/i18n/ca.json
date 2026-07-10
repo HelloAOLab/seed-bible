@@ -94,7 +94,6 @@
   "customize-colors": "Personalitza els colors",
   "highlight-colors": "Ressaltar els colors",
   "reset-all-custom-colors": "Restableix tots els colors personalitzats",
-  "ui-text-size": "Mida del text de la interfície d'usuari",
   "book-order": "Comanda de llibres",
   "selection-ui": "Interfície d'usuari de selecció",
   "show-selected-items": "Mostra els elements seleccionats",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "No s'ha pogut carregar la llista de reproducció",
   "share-playlist": "Comparteix la llista de reproducció",
   "playlist-url-copied": "L'URL de la llista de reproducció s'ha copiat al porta-retalls",
-  "current-playlist": "Llista de reproducció actual"
+  "current-playlist": "Llista de reproducció actual",
+  "languageUnavailable.title": "Idioma no disponible",
+  "languageUnavailable.body": "Actualment no tenim una traducció de la Bíblia per a aquest idioma, però sí que tenim {{fallback}}. Vols canviar el text bíblic a {{fallback}}?",
+  "languageUnavailable.yesContinue": "Sí, continuar",
+  "languageUnavailable.noGoBack": "No, tornar enrere",
+  "ui-size": "Mida de la interfície d'usuari"
 }

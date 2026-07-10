@@ -81,7 +81,6 @@
   "customize-colors": "رەڭلەرنى خاسلاشتۇرۇڭ",
   "highlight-colors": "رەڭلەرنى گەۋدىلەندۈرۈش",
   "reset-all-custom-colors": "بارلىق خاسلاشتۇرۇلغان رەڭلەرنى قايتا تەڭشىلىڭ",
-  "ui-text-size": "UI تېكىست چوڭلۇقى",
   "book-order": "زاكاز قىلىش",
   "selection-ui": "تاللاش UI",
   "show-selected-items": "تاللانغان تۈرلەرنى كۆرسىتىش",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "قويۇش تىزىملىكىنى يۈكلەش مەغلۇپ بولدى",
   "share-playlist": "ناخشا تىزىملىكىنى ئورتاقلىشىش",
   "playlist-url-copied": "ناخشا قويۇش URL سى چاپلاش تاختىسىغا كۆچۈرۈلدى",
-  "current-playlist": "نۆۋەتتىكى قويۇلۇش تىزىملىكى"
+  "current-playlist": "نۆۋەتتىكى قويۇلۇش تىزىملىكى",
+  "languageUnavailable.title": "تىل يوق",
+  "languageUnavailable.body": "بىز ھازىرچە بۇ تىل ئۈچۈن مۇقەددەس كىتاب تەرجىمىسىگە ئىگە ئەمەس، ئەمما {{fallback}} نى قوللايمىز. مۇقەددەس كىتاب تېكىستىنى {{fallback}} گە ئالماشتۇرۇشنى خالامسىز?",
+  "languageUnavailable.yesContinue": "ھەئە، داۋاملاشتۇرۇش",
+  "languageUnavailable.noGoBack": "ياق، قايتىش",
+  "ui-size": "UI چوڭلۇقى"
 }

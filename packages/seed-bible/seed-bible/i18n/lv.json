@@ -94,7 +94,6 @@
   "customize-colors": "Pielāgot krāsas",
   "highlight-colors": "Izcelt krāsas",
   "reset-all-custom-colors": "Atiestatīt visas pielāgotās krāsas",
-  "ui-text-size": "Lietotāja interfeisa teksta lielums",
   "book-order": "Grāmatas pasūtīšana",
   "selection-ui": "Atlases lietotāja interfeiss",
   "show-selected-items": "Rādīt atlasītos vienumus",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Neizdevās ielādēt atskaņošanas sarakstu",
   "share-playlist": "Kopīgot atskaņošanas sarakstu",
   "playlist-url-copied": "Atskaņošanas saraksta URL kopēts starpliktuvē",
-  "current-playlist": "Pašreizējais atskaņošanas saraksts"
+  "current-playlist": "Pašreizējais atskaņošanas saraksts",
+  "languageUnavailable.title": "Valoda nav pieejama",
+  "languageUnavailable.body": "Mums pašlaik nav Bībeles tulkojuma šai valodai, bet mēs atbalstām {{fallback}}. Vai vēlaties pārslēgt Bībeles tekstu uz {{fallback}}?",
+  "languageUnavailable.yesContinue": "Jā, turpināt",
+  "languageUnavailable.noGoBack": "Nē, atpakaļ",
+  "ui-size": "Lietotāja interfeisa izmērs"
 }

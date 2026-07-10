@@ -81,7 +81,6 @@
   "customize-colors": "Tùy chỉnh màu sắc",
   "highlight-colors": "Màu sắc nổi bật",
   "reset-all-custom-colors": "Đặt lại tất cả màu sắc tùy chỉnh",
-  "ui-text-size": "kích thước văn bản giao diện người dùng",
   "book-order": "Đặt sách",
   "selection-ui": "Giao diện người dùng lựa chọn",
   "show-selected-items": "Hiển thị các mục đã chọn",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Không thể tải danh sách phát",
   "share-playlist": "Chia sẻ danh sách phát",
   "playlist-url-copied": "URL danh sách phát đã được sao chép vào clipboard",
-  "current-playlist": "Danh sách phát hiện tại"
+  "current-playlist": "Danh sách phát hiện tại",
+  "languageUnavailable.title": "Ngôn ngữ không khả dụng",
+  "languageUnavailable.body": "Chúng tôi hiện chưa có bản dịch Kinh Thánh cho ngôn ngữ này, nhưng chúng tôi hỗ trợ {{fallback}}. Bạn có muốn chuyển văn bản Kinh Thánh sang {{fallback}} không?",
+  "languageUnavailable.yesContinue": "Có, tiếp tục",
+  "languageUnavailable.noGoBack": "Không, quay lại",
+  "ui-size": "Kích thước giao diện người dùng"
 }

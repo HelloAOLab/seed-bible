@@ -81,7 +81,6 @@
   "customize-colors": "رنگوں کو اپنی مرضی کے مطابق بنائیں",
   "highlight-colors": "رنگوں کو نمایاں کریں۔",
   "reset-all-custom-colors": "تمام حسب ضرورت رنگ ری سیٹ کریں۔",
-  "ui-text-size": "UI ٹیکسٹ سائز",
   "book-order": "بک آرڈر",
   "selection-ui": "انتخاب UI",
   "show-selected-items": "منتخب آئٹمز دکھائیں۔",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "پلے لسٹ لوڈ کرنے میں ناکام",
   "share-playlist": "پلے لسٹ کا اشتراک کریں۔",
   "playlist-url-copied": "پلے لسٹ کا URL کلپ بورڈ پر کاپی ہو گیا۔",
-  "current-playlist": "موجودہ پلے لسٹ"
+  "current-playlist": "موجودہ پلے لسٹ",
+  "languageUnavailable.title": "زبان دستیاب نہیں",
+  "languageUnavailable.body": "ہمارے پاس فی الوقت اس زبان کے لیے بائبل کا ترجمہ نہیں ہے، لیکن ہم {{fallback}} کو سپورٹ کرتے ہیں۔ کیا آپ بائبل کا متن {{fallback}} میں تبدیل کرنا چاہیں گے؟",
+  "languageUnavailable.yesContinue": "ہاں، جاری رکھیں",
+  "languageUnavailable.noGoBack": "نہیں، واپس جائیں",
+  "ui-size": "UI سائز"
 }

@@ -119,7 +119,6 @@
   "customize-colors": "Customize colors",
   "highlight-colors": "Highlight colors",
   "reset-all-custom-colors": "Reset all custom colors",
-  "ui-text-size": "UI text size",
   "book-order": "Book order",
   "selection-ui": "Selection UI",
   "show-selected-items": "Show selected items",
@@ -399,5 +398,10 @@
   "share-playlist": "Share playlist",
   "playlist-url-copied": "Playlist URL copied to clipboard",
   "current-playlist": "Current playlist",
-  "playlist-add-mode-label": "Item type"
+  "playlist-add-mode-label": "Item type",
+  "languageUnavailable.title": "Language Unavailable",
+  "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
+  "languageUnavailable.yesContinue": "Yes, Continue",
+  "languageUnavailable.noGoBack": "No, Go back",
+  "ui-size": "UI size"
 }

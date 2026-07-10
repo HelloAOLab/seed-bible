@@ -94,7 +94,6 @@
   "customize-colors": "రంగులను అనుకూలీకరించండి",
   "highlight-colors": "హైలైట్ రంగులు",
   "reset-all-custom-colors": "అన్ని కస్టమ్ రంగులను రీసెట్ చేయండి",
-  "ui-text-size": "UI టెక్స్ట్ పరిమాణం",
   "book-order": "పుస్తక ఆర్డర్",
   "selection-ui": "ఎంపిక UI",
   "show-selected-items": "ఎంచుకున్న అంశాలను చూపించు",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "ప్లేలిస్ట్‌ను లోడ్ చేయడంలో విఫలమైంది",
   "share-playlist": "ప్లేలిస్ట్‌ను పంచుకోండి",
   "playlist-url-copied": "ప్లేలిస్ట్ URL క్లిప్‌బోర్డ్‌కు కాపీ చేయబడింది",
-  "current-playlist": "ప్రస్తుత ప్లేలిస్ట్"
+  "current-playlist": "ప్రస్తుత ప్లేలిస్ట్",
+  "languageUnavailable.title": "భాష అందుబాటులో లేదు",
+  "languageUnavailable.body": "ఈ భాషకు మాకు ప్రస్తుతం బైబిల్ అనువాదం లేదు, కానీ మేము {{fallback}} కు మద్దతు ఇస్తున్నాము. బైబిల్ వచనాన్ని {{fallback}} కు మార్చాలనుకుంటున్నారా?",
+  "languageUnavailable.yesContinue": "అవును, కొనసాగించు",
+  "languageUnavailable.noGoBack": "లేదు, వెనక్కి వెళ్ళు",
+  "ui-size": "UI పరిమాణం"
 }

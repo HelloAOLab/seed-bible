@@ -81,7 +81,6 @@
   "customize-colors": "رنګونه تنظیم کړئ",
   "highlight-colors": "رنګونه روښانه کړئ",
   "reset-all-custom-colors": "ټول دودیز رنګونه بیا تنظیم کړئ",
-  "ui-text-size": "د UI متن اندازه",
   "book-order": "د کتاب امر",
   "selection-ui": "د انتخاب UI",
   "show-selected-items": "غوره شوي توکي وښایاست",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "د پلې لیست پورته کول ناکام شول",
   "share-playlist": "د پلې لیست شریکول",
   "playlist-url-copied": "د پلې لیست URL کلپ بورډ ته کاپي شو",
-  "current-playlist": "اوسنی پلی لیست"
+  "current-playlist": "اوسنی پلی لیست",
+  "languageUnavailable.title": "ژبه شتون نلري",
+  "languageUnavailable.body": "موږ په دې وخت کې د دې ژبې لپاره د بایبل ژباړه نه لرو، خو موږ د {{fallback}} ملاتړ کوو. ایا تاسو غواړئ د بایبل متن {{fallback}} ته واړوئ؟",
+  "languageUnavailable.yesContinue": "هو، دوام ورکړئ",
+  "languageUnavailable.noGoBack": "نه، بیرته لاړ شئ",
+  "ui-size": "د UI اندازه"
 }

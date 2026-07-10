@@ -94,7 +94,6 @@
   "customize-colors": "રંગો કસ્ટમાઇઝ કરો",
   "highlight-colors": "રંગો હાઇલાઇટ કરો",
   "reset-all-custom-colors": "બધા કસ્ટમ રંગો રીસેટ કરો",
-  "ui-text-size": "UI ટેક્સ્ટ કદ",
   "book-order": "બુક ઓર્ડર",
   "selection-ui": "પસંદગી UI",
   "show-selected-items": "પસંદ કરેલી આઇટમ્સ બતાવો",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "પ્લેલિસ્ટ લોડ કરવામાં નિષ્ફળ થયાં",
   "share-playlist": "પ્લેલિસ્ટ શેર કરો",
   "playlist-url-copied": "પ્લેલિસ્ટ URL ક્લિપબોર્ડ પર કૉપિ કર્યું",
-  "current-playlist": "વર્તમાન પ્લેલિસ્ટ"
+  "current-playlist": "વર્તમાન પ્લેલિસ્ટ",
+  "languageUnavailable.title": "ભાષા ઉપલબ્ધ નથી",
+  "languageUnavailable.body": "અમારી પાસે હાલમાં આ ભાષા માટે બાઇબલ અનુવાદ નથી, પરંતુ અમે {{fallback}} ને સપોર્ટ કરીએ છીએ. શું તમે બાઇબલ ટેક્સ્ટ {{fallback}} માં બદલવા માંગો છો?",
+  "languageUnavailable.yesContinue": "હા, ચાલુ રાખો",
+  "languageUnavailable.noGoBack": "ના, પાછા જાઓ",
+  "ui-size": "UI કદ"
 }

@@ -94,7 +94,6 @@
   "customize-colors": "Наладзіць колеры",
   "highlight-colors": "Вылучыце колеры",
   "reset-all-custom-colors": "Скінуць усе карыстальніцкія колеры",
-  "ui-text-size": "Памер тэксту карыстальніцкага інтэрфейсу",
   "book-order": "Заказ кнігі",
   "selection-ui": "Выбар інтэрфейсу",
   "show-selected-items": "Паказаць выбраныя элементы",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Не атрымалася загрузіць плэйліст",
   "share-playlist": "Падзяліцца плэйлістам",
   "playlist-url-copied": "URL-адрас плэйліста скапіраваны ў буфер абмену",
-  "current-playlist": "Бягучы плэйліст"
+  "current-playlist": "Бягучы плэйліст",
+  "languageUnavailable.title": "Мова недаступная",
+  "languageUnavailable.body": "У нас зараз няма перакладу Бібліі на гэтую мову, але мы падтрымліваем {{fallback}}. Хочаце пераключыць тэкст Бібліі на {{fallback}}?",
+  "languageUnavailable.yesContinue": "Так, працягнуць",
+  "languageUnavailable.noGoBack": "Не, вярнуцца",
+  "ui-size": "Памер карыстальніцкага інтэрфейсу"
 }

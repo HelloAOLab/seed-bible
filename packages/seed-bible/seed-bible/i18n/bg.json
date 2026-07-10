@@ -94,7 +94,6 @@
   "customize-colors": "Персонализиране на цветовете",
   "highlight-colors": "Цветове за маркиране",
   "reset-all-custom-colors": "Нулиране на всички персонализирани цветове",
-  "ui-text-size": "Размер на текста в потребителския интерфейс",
   "book-order": "Поръчка на книга",
   "selection-ui": "Потребителски интерфейс за избор",
   "show-selected-items": "Показване на избраните елементи",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "Зареждането на плейлиста не бе успешно",
   "share-playlist": "Споделяне на плейлист",
   "playlist-url-copied": "URL адресът на плейлиста е копиран в буферната памет",
-  "current-playlist": "Текущ плейлист"
+  "current-playlist": "Текущ плейлист",
+  "languageUnavailable.title": "Езикът не е наличен",
+  "languageUnavailable.body": "В момента нямаме превод на Библията на този език, но поддържаме {{fallback}}. Искате ли да превключите текста на Библията на {{fallback}}?",
+  "languageUnavailable.yesContinue": "Да, продължи",
+  "languageUnavailable.noGoBack": "Не, върни се",
+  "ui-size": "Размер на потребителския интерфейс"
 }

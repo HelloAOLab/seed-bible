@@ -94,7 +94,6 @@
   "customize-colors": "התאמה אישית של צבעים",
   "highlight-colors": "צבעים מודגשים",
   "reset-all-custom-colors": "איפוס כל הצבעים המותאמים אישית",
-  "ui-text-size": "גודל טקסט בממשק המשתמש",
   "book-order": "הזמנת ספר",
   "selection-ui": "ממשק משתמש לבחירה",
   "show-selected-items": "הצג פריטים שנבחרו",
@@ -395,5 +394,10 @@
   "failed-to-load-playlist": "טעינת רשימת ההשמעה נכשלה",
   "share-playlist": "שתף רשימת השמעה",
   "playlist-url-copied": "כתובת ה-URL של רשימת ההשמעה הועתקה ללוח",
-  "current-playlist": "רשימת ההשמעה הנוכחית"
+  "current-playlist": "רשימת ההשמעה הנוכחית",
+  "languageUnavailable.title": "השפה אינה זמינה",
+  "languageUnavailable.body": "אין לנו כרגע תרגום מקרא לשפה זו, אך אנו תומכים ב-{{fallback}}. האם ברצונך להחליף את טקסט המקרא ל-{{fallback}}?",
+  "languageUnavailable.yesContinue": "כן, המשך",
+  "languageUnavailable.noGoBack": "לא, חזור",
+  "ui-size": "גודל ממשק המשתמש"
 }
