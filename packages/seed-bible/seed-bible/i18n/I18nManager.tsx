@@ -239,13 +239,6 @@ export function createI18nManager(
       uiLanguage,
       available
     );
-    const activeId = getActiveBibleTranslationId?.() ?? null;
-    // Already on the right translation — skip unless the UI language still needs
-    // a fallback warning (e.g. English Bible while switching UI to Welsh).
-    if (activeId === nearest.translation.id && !nearest.usedFallback) {
-      languageFallbackPrompt.value = null;
-      return;
-    }
 
     // Direct support: apply silently. Nearest suggestion: ask first.
     if (nearest.usedFallback) {
