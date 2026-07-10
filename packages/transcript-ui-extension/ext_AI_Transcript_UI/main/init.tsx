@@ -27,7 +27,6 @@ export default function initTranscriptUI() {
           if (!currentPane) {
             currentPane = context.panes.openPane({
               type: "attached",
-              detachedAnchor: "side",
               component: () => {
                 // You can use the useI18n hook in your tool component to get translated strings
                 return (
