@@ -1090,26 +1090,6 @@
   z-index: 40;
 }
 
-.sb-tab-menu-item {
-  /* width: 100%; */
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  border: none;
-  background: transparent;
-  color: var(--sb-font-color);
-  text-align: left;
-  padding: 0.5rem 0.625rem;
-  border-radius: 0.375rem;
-  cursor: pointer;
-}
-
-.sb-tab-menu-item-icon {
-  font-size: 1.125rem;
-  flex-shrink: 0;
-  opacity: 0.85;
-}
-
 .sb-tab-menu-item:hover {
   background: var(--sb-secondary-color);
 }

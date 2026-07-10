@@ -257,7 +257,9 @@ function PlaylistSection({
                     );
                   }}
                 >
-                  <MaterialIcon>share</MaterialIcon>
+                  <MaterialIcon className="sb-context-menu-item-icon">
+                    share
+                  </MaterialIcon>
                   {t("share-playlist", { defaultValue: "Share playlist" })}
                 </ContextMenuItem>
                 <ContextMenuItem
@@ -266,7 +268,9 @@ function PlaylistSection({
                     playlists.editPlaylist(playlist);
                   }}
                 >
-                  <MaterialIcon>edit</MaterialIcon>
+                  <MaterialIcon className="sb-context-menu-item-icon">
+                    edit
+                  </MaterialIcon>
                   {t("edit-playlist", { defaultValue: "Edit playlist" })}
                 </ContextMenuItem>
                 <ContextMenuItem
@@ -281,7 +285,9 @@ function PlaylistSection({
                     );
                   }}
                 >
-                  <MaterialIcon>delete</MaterialIcon>
+                  <MaterialIcon className="sb-context-menu-item-icon">
+                    delete
+                  </MaterialIcon>
                   {t("delete-playlist", { defaultValue: "Delete" })}
                 </ContextMenuItem>
               </ContextMenuWithButton>

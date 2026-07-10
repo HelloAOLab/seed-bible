@@ -777,13 +777,12 @@ export function TabsHeader(props: TabsHeaderProps) {
             title={t("more", { defaultValue: "More" })}
           >
             <ContextMenuItem
-              className="sb-tab-menu-item"
               onClick={() => {
                 createSharedSession();
               }}
             >
               <MaterialIcon
-                className="sb-tab-menu-item-icon"
+                className="sb-context-menu-item-icon"
                 aria-hidden="true"
               >
                 fiber_smart_record
@@ -795,7 +794,7 @@ export function TabsHeader(props: TabsHeaderProps) {
               </span>
             </ContextMenuItem>
             <ContextMenuItem
-              className="sb-tab-menu-item"
+              className="sb-context-menu-item"
               onClick={() => {
                 window.open(
                   "https://docs.google.com/forms/d/e/1FAIpQLSejiuVM8xguEHKZ2Kv5DX-jE98zYwxFiPwpYrFSmvVgMejZzQ/viewform",
@@ -804,7 +803,7 @@ export function TabsHeader(props: TabsHeaderProps) {
               }}
             >
               <MaterialIcon
-                className="sb-tab-menu-item-icon"
+                className="sb-context-menu-item-icon"
                 aria-hidden="true"
               >
                 bug_report
@@ -822,7 +821,7 @@ export function TabsHeader(props: TabsHeaderProps) {
             >
               <span className="sb-context-menu-toggle-label">
                 <MaterialIcon
-                  className="sb-tab-menu-item-icon"
+                  className="sb-context-menu-item-icon"
                   aria-hidden="true"
                 >
                   light_mode
@@ -1112,7 +1111,7 @@ function TabRow(props: TabRowProps) {
                   }}
                 >
                   <MaterialIcon
-                    className="sb-tab-menu-item-icon"
+                    className="sb-context-menu-item-icon"
                     aria-hidden="true"
                   >
                     settings
@@ -1142,7 +1141,7 @@ function TabRow(props: TabRowProps) {
               }}
             >
               <MaterialIcon
-                className="sb-tab-menu-item-icon"
+                className="sb-context-menu-item-icon"
                 aria-hidden="true"
               >
                 ios_share
@@ -1166,7 +1165,7 @@ function TabRow(props: TabRowProps) {
                 }}
               >
                 <MaterialIcon
-                  className="sb-tab-menu-item-icon"
+                  className="sb-context-menu-item-icon"
                   aria-hidden="true"
                 >
                   chat_bubble_outline
@@ -1187,7 +1186,10 @@ function TabRow(props: TabRowProps) {
               handleBookmarkAction();
             }}
           >
-            <MaterialIcon className="sb-tab-menu-item-icon" aria-hidden="true">
+            <MaterialIcon
+              className="sb-context-menu-item-icon"
+              aria-hidden="true"
+            >
               {isTabBookmarked ? "bookmark_remove" : "bookmark_add"}
             </MaterialIcon>
             <span>
@@ -1205,7 +1207,10 @@ function TabRow(props: TabRowProps) {
             }}
             className="sb-tab-menu-item"
           >
-            <MaterialIcon className="sb-tab-menu-item-icon" aria-hidden="true">
+            <MaterialIcon
+              className="sb-context-menu-item-icon"
+              aria-hidden="true"
+            >
               splitscreen_right
             </MaterialIcon>
             <span>
@@ -1219,7 +1224,10 @@ function TabRow(props: TabRowProps) {
             requestCloseTab(state, tab);
           }}
         >
-          <MaterialIcon className="sb-tab-menu-item-icon" aria-hidden="true">
+          <MaterialIcon
+            className="sb-context-menu-item-icon"
+            aria-hidden="true"
+          >
             close
           </MaterialIcon>
           <span>{t("close", { defaultValue: "Close" })}</span>
