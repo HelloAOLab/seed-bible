@@ -203,10 +203,18 @@ function createMobileState(): SeedBibleState {
     sidebar: {
       openSettings: vi.fn(),
       openSidebar: vi.fn(),
+      openSettingsToView: vi.fn(),
     },
     bookmarks: {
       isLocationBookmarked: vi.fn(() => false),
       toggleBookmarkAtLocation: vi.fn(async () => {}),
+    },
+    login: {
+      userId: signal<string | null>(null),
+      profile: signal<{ name?: string; pictureUrl?: string } | null>(null),
+    },
+    os: {
+      connectionId: "test-connection",
     },
     tools: createBibleToolsManager(),
   } as any as SeedBibleState;

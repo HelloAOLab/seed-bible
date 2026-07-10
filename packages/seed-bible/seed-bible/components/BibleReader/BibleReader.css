@@ -278,6 +278,39 @@
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
 }
 
+/* Account ("You") avatar button — sits between the bookmark and settings
+ * buttons in the mobile header, matching their 2rem circular footprint.
+ * Replaced by the session participants stack when in a shared session. */
+.sb-bible-reader-mobile-header-account {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  margin-inline-start: 0;
+}
+
+.sb-bible-reader-mobile-header-account:active {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-bible-reader-mobile-header-account .sb-tab-user-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.sb-bible-reader-mobile-header-account
+  .sb-tab-user-icon-animal
+  .material-symbols-outlined {
+  font-size: 1rem;
+}
+
 .sb-reader-swipe-viewport {
   flex: 1 1 auto;
   position: relative;
