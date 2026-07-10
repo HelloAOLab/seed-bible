@@ -19,6 +19,7 @@ import {
   type I18nManager,
 } from "@packages/seed-bible/seed-bible/i18n";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import { createBibleReadingExtensionManager } from "@packages/seed-bible/seed-bible/managers/BibleReadingExtensionManager";
 
 vi.mock("@packages/seed-bible/seed-bible/managers/BibleReadingManager", () => ({
   createBibleReadingState: vi.fn(),
@@ -149,6 +150,26 @@ function createMockReadingState() {
     );
   });
 
+  const enabledExtensions = signal<any[]>([]);
+  const enableExtension = vi.fn((id: string, data?: unknown) => {
+    const existing = enabledExtensions.value.find(
+      (runtime) => runtime.id === id
+    );
+    if (existing) {
+      existing.data.value = data;
+      return;
+    }
+    enabledExtensions.value = [
+      ...enabledExtensions.value,
+      { id, data: signal(data) },
+    ];
+  });
+  const disableExtension = vi.fn((id: string) => {
+    enabledExtensions.value = enabledExtensions.value.filter(
+      (runtime) => runtime.id !== id
+    );
+  });
+
   return {
     translationId,
     bookId,
@@ -161,6 +182,11 @@ function createMockReadingState() {
     error: signal<string | null>(null),
     decorateVerses,
     removeDecoration,
+    enabledExtensions,
+    enableExtension,
+    disableExtension,
+    isExtensionEnabled: (id: string) =>
+      enabledExtensions.value.some((runtime) => runtime.id === id),
     selectTranslationAndChapter: vi.fn(
       async (
         nextTranslationId: string,
@@ -256,6 +282,7 @@ describe("SessionsManager", () => {
     profile: ReturnType<typeof signal<UserProfile | null>>;
   };
   let mockUserProfilesMap: ReturnType<typeof createMockSharedMap>;
+  let mockExtensionsMap: ReturnType<typeof createMockSharedMap>;
   let mockHighlightsManager: {
     getChapterHighlights: Mock;
   };
@@ -276,6 +303,7 @@ describe("SessionsManager", () => {
     mockOptionsMap = createMockSharedMap();
     mockDecorationsMap = createMockSharedMap();
     mockUserProfilesMap = createMockSharedMap();
+    mockExtensionsMap = createMockSharedMap();
     mockRemoteClients = createMockRemoteClientsObservable();
     mockDocument = {
       getMap: vi.fn((name: string) => {
@@ -289,6 +317,10 @@ describe("SessionsManager", () => {
 
         if (name === "user_profiles") {
           return mockUserProfilesMap;
+        }
+
+        if (name === "reading_extensions") {
+          return mockExtensionsMap;
         }
 
         return mockMap;
@@ -1362,5 +1394,71 @@ describe("SessionsManager", () => {
         },
       ])
     );
+  });
+
+  describe("reading extension sync", () => {
+    function createManagerWith(
+      registry: ReturnType<typeof createBibleReadingExtensionManager>
+    ) {
+      return createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n,
+        registry
+      );
+    }
+
+    it("writes locally enabled extensions and their data into the shared map", async () => {
+      const registry = createBibleReadingExtensionManager();
+      registry.registerReadingExtension({ id: "x", activate: () => ({}) });
+      const session = await createManagerWith(registry).createSession();
+
+      session.readingState.enableExtension("x", { v: 1 });
+
+      expect(mockExtensionsMap.set).toHaveBeenCalledWith("x", {
+        enabled: true,
+        data: { v: 1 },
+      });
+    });
+
+    it("enables extensions present in the shared map when joining", async () => {
+      mockExtensionsMap.set("x", { enabled: true, data: { v: 2 } });
+      const registry = createBibleReadingExtensionManager();
+      registry.registerReadingExtension({ id: "x", activate: () => ({}) });
+
+      const session = await createManagerWith(registry).joinSession("abc");
+
+      expect(session.readingState.enableExtension).toHaveBeenCalledWith("x", {
+        v: 2,
+      });
+      expect(session.readingState.isExtensionEnabled("x")).toBe(true);
+    });
+
+    it("skips shared extensions that are not registered locally", async () => {
+      mockExtensionsMap.set("y", { enabled: true, data: {} });
+      const registry = createBibleReadingExtensionManager();
+
+      const session = await createManagerWith(registry).joinSession("abc");
+
+      expect(session.readingState.enableExtension).not.toHaveBeenCalled();
+      expect(session.readingState.isExtensionEnabled("y")).toBe(false);
+    });
+
+    it("disables an extension when it is removed from the shared map", async () => {
+      mockExtensionsMap.setEmitOnSet(true);
+      mockExtensionsMap.set("x", { enabled: true, data: {} });
+      const registry = createBibleReadingExtensionManager();
+      registry.registerReadingExtension({ id: "x", activate: () => ({}) });
+
+      const session = await createManagerWith(registry).joinSession("abc");
+      expect(session.readingState.isExtensionEnabled("x")).toBe(true);
+
+      mockExtensionsMap.delete("x");
+
+      expect(session.readingState.disableExtension).toHaveBeenCalledWith("x");
+      expect(session.readingState.isExtensionEnabled("x")).toBe(false);
+    });
   });
 });

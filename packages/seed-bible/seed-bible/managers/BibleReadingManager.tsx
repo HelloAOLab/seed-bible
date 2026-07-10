@@ -33,8 +33,14 @@ import type {
   DiscoverReference,
   DiscoverStudyNoteResult,
 } from "../managers/DiscoverManager";
+import type {
+  BibleReadingExtensionManager,
+  ReadingExtensionInstance,
+  ReadingExtensionRuntime,
+  ReadingNavigationOutcome,
+} from "../managers/BibleReadingExtensionManager";
 
-interface DiscoverTypedProviderResults<TResult> {
+export interface DiscoverTypedProviderResults<TResult> {
   providerId: string;
   results: TResult[];
 }
@@ -65,7 +71,7 @@ type DiscoverStudyNoteResultWithBookData = Omit<
   reference: DiscoverReferenceWithBookData;
 };
 
-type DiscoverResultWithBookData =
+export type DiscoverResultWithBookData =
   | DiscoverCrossReferenceResultWithBookData
   | DiscoverContentResultWithBookData
   | DiscoverStudyNoteResultWithBookData;
@@ -295,6 +301,42 @@ export interface BibleReadingState {
   discoveredStudyNotes: ReadonlySignal<
     DiscoverTypedProviderResults<DiscoverStudyNoteResultWithBookData>[]
   >;
+
+  /**
+   * True while this reading state is part of a shared/multiplayer session.
+   * `SessionsManager` flips this on when it wraps the state; reading extensions
+   * observe it via their activation context.
+   */
+  isShared: ReadonlySignal<boolean>;
+
+  /** Reading extensions currently enabled on this reading state. */
+  enabledExtensions: ReadonlySignal<ReadingExtensionRuntime[]>;
+
+  /** Returns true when the given reading extension is enabled on this state. */
+  isExtensionEnabled: (extensionId: string) => boolean;
+
+  /**
+   * Enables a registered reading extension for this reading state. Extensions
+   * are never enabled by default — this is how you turn one on.
+   *
+   * If the extension is already enabled, its custom data is updated (when
+   * `data` is provided) instead of re-activating. If no extension with the given
+   * id is registered, this is a no-op.
+   *
+   * @param extensionId The id of a registered reading extension.
+   * @param data Optional initial (or updated) custom data for the extension.
+   */
+  enableExtension: (extensionId: string, data?: unknown) => void;
+
+  /** Disables a reading extension for this state, running its cleanup. */
+  disableExtension: (extensionId: string) => void;
+
+  /**
+   * Releases all resources held by this reading state: disables every enabled
+   * extension, clears pending decoration timers, and stops internal effects.
+   * Called when the owning tab is closed.
+   */
+  dispose: () => void;
 }
 
 export interface TranslationWithLanguage {
@@ -564,6 +606,13 @@ export interface InitialBibleReadingOptions {
    * The verse to scroll to after the initial chapter loads. Should be a valid verse number within the initial chapter, otherwise it will be ignored.
    */
   scrollToVerse?: number;
+
+  /**
+   * Whether this reading state is part of a shared/multiplayer session.
+   * `SessionsManager` sets this when it creates the session's reading state so
+   * reading extensions can observe it via `isShared`. Defaults to `false`.
+   */
+  isShared?: boolean;
 }
 
 export interface SelectTranslationAndChapterOptions {
@@ -671,7 +720,8 @@ export function createBibleReadingState(
   highlightsManager: HighlightsManager,
   i18nManager: I18nManager,
   options: InitialBibleReadingOptions = {},
-  discoverManager?: DiscoverManager
+  discoverManager?: DiscoverManager,
+  readingExtensionManager?: BibleReadingExtensionManager
 ): BibleReadingState {
   const isSameSelectedVerse = (
     left: BibleSelectedVerse,
@@ -743,6 +793,134 @@ export function createBibleReadingState(
   const error = signal<string | null>(null);
   const scrollPosition = signal<number>(0);
   const scrollToVerse = signal<number | null>(null);
+
+  // Reading-extension enablement (per reading state). Extensions are registered
+  // globally on the BibleReadingExtensionManager but never enabled by default;
+  // `enableExtension` turns one on for this state only.
+  const isShared = signal<boolean>(options.isShared ?? false);
+  const enabledRuntimes = signal<Map<string, ReadingExtensionRuntime>>(
+    new Map()
+  );
+  const enabledExtensions = computed<ReadingExtensionRuntime[]>(() =>
+    Array.from(enabledRuntimes.value.values())
+  );
+  const orderedEnabledRuntimes = computed<ReadingExtensionRuntime[]>(() =>
+    sortBy(enabledExtensions.value, [
+      (runtime) => -(runtime.definition.priority ?? 0),
+    ])
+  );
+
+  // Disposers for internal effects, released by `dispose()`.
+  const effectDisposers: Array<() => void> = [];
+
+  // Forward reference to the object returned by this factory. It is assigned
+  // just before `return`, so it is always set by the time any public method
+  // (which is what triggers extension activation) is invoked.
+  let readingStateRef!: BibleReadingState;
+
+  const enableExtension = (extensionId: string, data?: unknown) => {
+    const existing = enabledRuntimes.value.get(extensionId);
+    if (existing) {
+      if (data !== undefined) {
+        existing.data.value = data;
+      }
+      return;
+    }
+
+    const definition =
+      readingExtensionManager?.getReadingExtension(extensionId);
+    if (!definition) {
+      console.warn(
+        `Cannot enable reading extension "${extensionId}": it is not registered.`
+      );
+      return;
+    }
+
+    const dataSignal = signal<unknown>(data);
+    const instance: ReadingExtensionInstance = definition.activate({
+      readingState: readingStateRef,
+      data: dataSignal,
+      isShared,
+    });
+
+    const runtime: ReadingExtensionRuntime = {
+      id: extensionId,
+      definition,
+      instance,
+      data: dataSignal,
+    };
+
+    const nextRuntimes = new Map(enabledRuntimes.value);
+    nextRuntimes.set(extensionId, runtime);
+    enabledRuntimes.value = nextRuntimes;
+  };
+
+  const disableExtension = (extensionId: string) => {
+    const runtime = enabledRuntimes.value.get(extensionId);
+    if (!runtime) {
+      return;
+    }
+
+    try {
+      runtime.instance.dispose?.();
+    } catch (err) {
+      console.error(`Error disposing reading extension "${extensionId}":`, err);
+    }
+
+    const nextRuntimes = new Map(enabledRuntimes.value);
+    nextRuntimes.delete(extensionId);
+    enabledRuntimes.value = nextRuntimes;
+  };
+
+  const isExtensionEnabled = (extensionId: string) =>
+    enabledRuntimes.value.has(extensionId);
+
+  /**
+   * Runs the enabled extensions' navigation hooks in priority order, returning
+   * the first non-`default` outcome (or `default` when none intervene).
+   */
+  const runNavigationHooks = async (
+    direction: "next" | "previous"
+  ): Promise<ReadingNavigationOutcome> => {
+    const currentChapter = chapterData.value;
+    if (!currentChapter) {
+      return { type: "default" };
+    }
+
+    for (const runtime of orderedEnabledRuntimes.value) {
+      const hook =
+        direction === "next"
+          ? runtime.instance.navigateNext
+          : runtime.instance.navigatePrevious;
+      if (!hook) {
+        continue;
+      }
+
+      const outcome = await hook({
+        readingState: readingStateRef,
+        currentChapter,
+        data: runtime.data,
+      });
+      if (outcome.type !== "default") {
+        return outcome;
+      }
+    }
+
+    return { type: "default" };
+  };
+
+  const disposeReadingState = () => {
+    for (const extensionId of Array.from(enabledRuntimes.value.keys())) {
+      disableExtension(extensionId);
+    }
+    for (const timer of decorationRemovalTimers.values()) {
+      clearTimeout(timer);
+    }
+    decorationRemovalTimers.clear();
+    for (const dispose of effectDisposers.splice(0)) {
+      dispose();
+    }
+  };
 
   const translation = computed(
     () => translationBooks.value?.translation ?? null
@@ -1080,11 +1258,19 @@ export function createBibleReadingState(
       return;
     }
 
+    const outcome = await runNavigationHooks("previous");
+    if (outcome.type === "prevent" || outcome.type === "handled") {
+      return;
+    }
+
     loading.value = true;
     error.value = null;
 
     try {
-      const chapter = await dataManager.getPreviousChapter(chapterData.value);
+      const chapter =
+        outcome.type === "navigate"
+          ? outcome.chapter
+          : await dataManager.getPreviousChapter(chapterData.value);
       if (!chapter) {
         return;
       }
@@ -1241,11 +1427,19 @@ export function createBibleReadingState(
       return;
     }
 
+    const outcome = await runNavigationHooks("next");
+    if (outcome.type === "prevent" || outcome.type === "handled") {
+      return;
+    }
+
     loading.value = true;
     error.value = null;
 
     try {
-      const chapter = await dataManager.getNextChapter(chapterData.value);
+      const chapter =
+        outcome.type === "navigate"
+          ? outcome.chapter
+          : await dataManager.getNextChapter(chapterData.value);
       if (!chapter) {
         return;
       }
@@ -1383,10 +1577,32 @@ export function createBibleReadingState(
       .filter((providerResults) => providerResults.results.length > 0);
   });
 
+  // Discovered content shown to the user: the chapter-filtered provider results
+  // passed through each enabled extension's `transformDiscoveredContent` hook in
+  // priority order. Extensions can add content, filter it, or return `[]` to
+  // suppress everything. The three by-type computeds below read this.
+  const discoveredResultsForDisplay = computed<
+    DiscoverTypedProviderResults<DiscoverResultWithBookData>[]
+  >(() => {
+    let results = discoveredResultsFiltered.value;
+    for (const runtime of orderedEnabledRuntimes.value) {
+      const transform = runtime.instance.transformDiscoveredContent;
+      if (!transform) {
+        continue;
+      }
+      results = transform({
+        readingState: readingStateRef,
+        data: runtime.data,
+        results,
+      });
+    }
+    return results;
+  });
+
   const discoveredCrossReferences = computed<
     DiscoverTypedProviderResults<DiscoverCrossReferenceResultWithBookData>[]
   >(() => {
-    return discoveredResultsFiltered.value
+    return discoveredResultsForDisplay.value
       .map((providerResults) => ({
         providerId: providerResults.providerId,
         results: providerResults.results.filter(
@@ -1400,7 +1616,7 @@ export function createBibleReadingState(
   const discoveredContent = computed<
     DiscoverTypedProviderResults<DiscoverContentResultWithBookData>[]
   >(() => {
-    return discoveredResultsFiltered.value
+    return discoveredResultsForDisplay.value
       .map((providerResults) => ({
         providerId: providerResults.providerId,
         results: providerResults.results.filter(
@@ -1414,7 +1630,7 @@ export function createBibleReadingState(
   const discoveredStudyNotes = computed<
     DiscoverTypedProviderResults<DiscoverStudyNoteResultWithBookData>[]
   >(() => {
-    return discoveredResultsFiltered.value
+    return discoveredResultsForDisplay.value
       .map((providerResults) => ({
         providerId: providerResults.providerId,
         results: providerResults.results.filter(
@@ -1428,7 +1644,7 @@ export function createBibleReadingState(
   if (discoverManager) {
     let discoverGeneration = 0;
 
-    effect(() => {
+    const stopDiscoverEffect = effect(() => {
       const chapter = chapterData.value;
       if (!chapter) {
         discoveredResults.value = [];
@@ -1491,11 +1707,12 @@ export function createBibleReadingState(
         }
       })();
     });
+    effectDisposers.push(stopDiscoverEffect);
   }
 
   loadInitialData();
 
-  return {
+  readingStateRef = {
     defaultTranslation,
     translationId,
     translation,
@@ -1529,5 +1746,13 @@ export function createBibleReadingState(
     discoveredCrossReferences,
     discoveredContent,
     discoveredStudyNotes,
+    isShared: computed(() => isShared.value),
+    enabledExtensions,
+    isExtensionEnabled,
+    enableExtension,
+    disableExtension,
+    dispose: disposeReadingState,
   };
+
+  return readingStateRef;
 }

@@ -108,6 +108,10 @@ import {
   createDiscoverManager,
   type DiscoverManager,
 } from "../managers/DiscoverManager";
+import {
+  createBibleReadingExtensionManager,
+  type BibleReadingExtensionManager,
+} from "../managers/BibleReadingExtensionManager";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
@@ -317,6 +321,11 @@ export interface SeedBibleState {
   /** Discover manager for contextual content providers. */
   discover: DiscoverManager;
   /**
+   * Registry of reading extensions that can be enabled per reading state to
+   * enhance navigation, discovered content, and session-synced custom data.
+   */
+  readingExtensions: BibleReadingExtensionManager;
+  /**
    * Playlist manager for creating, editing, and syncing user playlists.
    */
   playlists: PlaylistManager;
@@ -407,7 +416,16 @@ export function createSeedBibleState(
   const chats = createChatsManager(login, i18n);
   const sidebar = createSidebar({ navigation, chatsManager: chats });
   const discover = createDiscoverManager();
-  const tabs = createTabs(navigation, data, highlights, chats, i18n, discover);
+  const readingExtensions = createBibleReadingExtensionManager();
+  const tabs = createTabs(
+    navigation,
+    data,
+    highlights,
+    chats,
+    i18n,
+    discover,
+    readingExtensions
+  );
   const tabsLayout = createTabsLayout(tabs, panelsEnabled);
   const settings = createSettings(os, login, navigation);
   const selector = createBibleSelectorState(
@@ -422,7 +440,14 @@ export function createSeedBibleState(
   const tools = createBibleToolsManager();
   const readingHistory = createReadingHistoryManager(os, login);
   const annotations = createAnnotationsManager(os, login);
-  const sessions = createSessionsManager(os, data, login, highlights, i18n);
+  const sessions = createSessionsManager(
+    os,
+    data,
+    login,
+    highlights,
+    i18n,
+    readingExtensions
+  );
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
   });
@@ -1268,6 +1293,7 @@ export function createSeedBibleState(
     navigation,
     i18n,
     discover,
+    readingExtensions,
     extensions,
     readingPlans,
     playlists,

@@ -59,6 +59,7 @@ export function parseVerseSelection(verse: string): number[] {
 import type { NavigationManager } from "./NavigationManager";
 import type { I18nManager } from "../i18n";
 import type { DiscoverManager } from "./DiscoverManager";
+import type { BibleReadingExtensionManager } from "./BibleReadingExtensionManager";
 
 export interface ReaderTab {
   /** Unique tab identifier (for example: tab-1, tab-2). */
@@ -121,7 +122,8 @@ export function createInitialTabs(
   highlightsManager: HighlightsManager,
   i18nManager: I18nManager,
   options: InitialTabsOptions,
-  discoverManager?: DiscoverManager
+  discoverManager?: DiscoverManager,
+  readingExtensionManager?: BibleReadingExtensionManager
 ): ReaderTab[] {
   const { translationId, bookId, chapter, highlightedVerses = [] } = options;
 
@@ -138,7 +140,8 @@ export function createInitialTabs(
         initialChapterNumber: chapter,
         scrollToVerse: highlightedVerses[0] ?? undefined,
       },
-      discoverManager
+      discoverManager,
+      readingExtensionManager
     ),
     sharedSession: null,
     sharedChat: null,
@@ -244,7 +247,8 @@ export function createTabs(
   highlightsManager: HighlightsManager,
   chatsManager: ReturnType<typeof createChatsManager>,
   i18nManager: I18nManager,
-  discoverManager?: DiscoverManager
+  discoverManager?: DiscoverManager,
+  readingExtensionManager?: BibleReadingExtensionManager
 ): TabsManager {
   const defaultTranslation = getDefaultTranslationForLanguage(
     i18nManager.defaultLanguage
@@ -275,7 +279,8 @@ export function createTabs(
           navigation.currentUrl.value
         ),
       },
-      discoverManager
+      discoverManager,
+      readingExtensionManager
     )
   );
   const selectedTabId = signal<string>(tabs.value[0]?.id ?? "");
@@ -403,7 +408,8 @@ export function createTabs(
           highlightsManager,
           i18nManager,
           initialReadingOptions,
-          discoverManager
+          discoverManager,
+          readingExtensionManager
         ),
       sharedSession,
       sharedChat,
@@ -419,6 +425,9 @@ export function createTabs(
     if (tab?.sharedSession) {
       tab.sharedSession.dispose();
     }
+    // Release the tab's reading state (disables its extensions, clears timers
+    // and internal effects). Safe to call even for session-backed tabs.
+    tab?.readingState.dispose();
 
     const nextTabs = tabs.value.filter((tab) => tab.id !== tabId);
     tabs.value = nextTabs;

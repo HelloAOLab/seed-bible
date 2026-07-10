@@ -6,6 +6,7 @@ import {
   type VerseDecorationInput,
 } from "../managers/BibleReadingManager";
 import type { HighlightsManager } from "../managers/HighlightsManager";
+import type { BibleReadingExtensionManager } from "../managers/BibleReadingExtensionManager";
 import type { BibleDataManager } from "../managers/BibleDataManager";
 import type { LoginManager, UserProfile } from "../managers/LoginManager";
 import type { CasualOSManager } from "./OsManager";
@@ -126,6 +127,21 @@ export function isSessionHost(
 
 type SessionOptionValue = SessionOptions[keyof SessionOptions];
 type SessionDecorationValue = VerseDecoration;
+
+/**
+ * The shape each enabled reading extension publishes into the session's
+ * `reading_extensions` map, keyed by extension id: whether it is enabled plus
+ * the extension's custom (JSON-serializable) data.
+ */
+interface SessionExtensionValue {
+  enabled: boolean;
+  data: unknown;
+}
+
+/** Structural equality for reading-extension data (JSON-serializable values). */
+function extensionDataMatches(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
+}
 
 /**
  * The shape each client publishes into the session's `user_profiles` map
@@ -536,19 +552,28 @@ async function createBibleReadingSession(
   loginManager: LoginManager,
   highlightsManager: HighlightsManager,
   i18nManager: I18nManager,
+  readingExtensionManager: BibleReadingExtensionManager | undefined,
   id: string,
   defaultOptions?: SessionOptions
 ): Promise<BibleReadingSession> {
   const readingState = createBibleReadingState(
     dataManager,
     highlightsManager,
-    i18nManager
+    i18nManager,
+    { isShared: true },
+    undefined,
+    readingExtensionManager
   );
   const document = await os.getSharedDocument(null, id, "session_data");
   const stateMap =
     document.getMap<SessionData[keyof SessionData]>("reading_state");
   const optionsMap = document.getMap<SessionOptionValue>("options");
   const decorationsMap = document.getMap<SessionDecorationValue>("decorations");
+  // Enabled reading extensions and their custom data, keyed by extension id.
+  // Enabling an extension (and editing its data) propagates to every
+  // participant, who auto-enables it when the extension is registered locally.
+  const extensionsMap =
+    document.getMap<SessionExtensionValue>("reading_extensions");
   // Per-connection identity broadcast. The OS doesn't re-emit
   // remoteClients events when a peer logs in or out, so without this map
   // joiners would forever see the userId/profile each peer had at connect
@@ -606,6 +631,7 @@ async function createBibleReadingSession(
   let pendingRemoteTarget: SessionData | null = null;
   let remoteClientsVersion = 0;
   let applyingRemoteDecorations = false;
+  let applyingRemoteExtensions = false;
 
   const userCanNavigate = (sessionId: string): boolean => {
     // Hosts and co-hosts may always navigate, even when restricted.
@@ -1072,6 +1098,100 @@ async function createBibleReadingSession(
     });
   });
 
+  // --- Reading-extension sync ---------------------------------------------
+  // Only wired when a reading-extension registry is available (always so in the
+  // app; omitted in some unit tests). When present, the enabled-extension set
+  // and each extension's data converge across all participants.
+  let stopExtensionSync: (() => void) | null = null;
+  let extensionsSubscription: { unsubscribe: () => void } | null = null;
+
+  if (readingExtensionManager) {
+    const registry = readingExtensionManager;
+
+    // Applies the shared enabled-extension set + data onto the local reading
+    // state. Extensions the local client hasn't registered are skipped.
+    const syncExtensionsFromSession = () => {
+      applyingRemoteExtensions = true;
+      try {
+        const remoteEntries = new Map<string, SessionExtensionValue>();
+        extensionsMap.forEach((value, key) => {
+          remoteEntries.set(key, value);
+        });
+
+        for (const [extensionId, value] of remoteEntries) {
+          if (!value || value.enabled === false) {
+            continue;
+          }
+          if (!registry.getReadingExtension(extensionId)) {
+            continue;
+          }
+          readingState.enableExtension(extensionId, value.data);
+        }
+
+        // Disable locally-enabled extensions no longer in the shared set.
+        for (const runtime of readingState.enabledExtensions.value) {
+          const remote = remoteEntries.get(runtime.id);
+          if (!remote || remote.enabled === false) {
+            readingState.disableExtension(runtime.id);
+          }
+        }
+      } finally {
+        applyingRemoteExtensions = false;
+      }
+    };
+
+    syncExtensionsFromSession();
+
+    // Mirror the local enabled-extension set + each extension's data into the
+    // shared map so every participant converges. Reading `runtime.data.value`
+    // here means data edits also propagate.
+    stopExtensionSync = effect(() => {
+      const snapshot = readingState.enabledExtensions.value.map((runtime) => ({
+        id: runtime.id,
+        data: runtime.data.value,
+      }));
+
+      if (applyingRemoteExtensions) {
+        return;
+      }
+
+      const localIds = new Set(snapshot.map((entry) => entry.id));
+
+      const keysToDelete: string[] = [];
+      extensionsMap.forEach((_value, key) => {
+        if (!localIds.has(key)) {
+          keysToDelete.push(key);
+        }
+      });
+
+      const entriesToUpsert = snapshot.filter((entry) => {
+        const existing = extensionsMap.get(entry.id);
+        return (
+          !existing ||
+          existing.enabled !== true ||
+          !extensionDataMatches(existing.data, entry.data)
+        );
+      });
+
+      if (keysToDelete.length === 0 && entriesToUpsert.length === 0) {
+        return;
+      }
+
+      document.transact(() => {
+        for (const key of keysToDelete) {
+          extensionsMap.delete(key);
+        }
+        for (const entry of entriesToUpsert) {
+          extensionsMap.set(entry.id, { enabled: true, data: entry.data });
+        }
+      });
+    });
+
+    extensionsSubscription = extensionsMap.changes.subscribe(() => {
+      syncExtensionsFromSession();
+    });
+  }
+
   const updateOptions = (newOptions: Partial<SessionOptions>) => {
     const currentOptions = getSessionOptionsFromMap(optionsMap);
     const nextOptions: SessionOptions = {
@@ -1197,10 +1317,12 @@ async function createBibleReadingSession(
     mapSubscription.unsubscribe();
     optionsSubscription.unsubscribe();
     decorationsSubscription.unsubscribe();
+    extensionsSubscription?.unsubscribe();
     userProfilesSubscription.unsubscribe();
     remoteClientsSubscription.unsubscribe();
     stopSync();
     stopDecorationSync();
+    stopExtensionSync?.();
     stopBroadcastLocalIdentity();
     // Drop our identity entry so peers' lookup for this connection no
     // longer resolves once we're gone.
@@ -1251,7 +1373,8 @@ export function createSessionsManager(
   dataManager: BibleDataManager,
   loginManager: LoginManager,
   highlightsManager: HighlightsManager,
-  i18nManager: I18nManager
+  i18nManager: I18nManager,
+  readingExtensionManager?: BibleReadingExtensionManager
 ): SessionsManager {
   const createSession = async () => {
     const id = createSessionId();
@@ -1264,6 +1387,7 @@ export function createSessionsManager(
       loginManager,
       highlightsManager,
       i18nManager,
+      readingExtensionManager,
       id,
       { ...DEFAULT_SESSION_OPTIONS, hostUserId }
     );
@@ -1276,6 +1400,7 @@ export function createSessionsManager(
       loginManager,
       highlightsManager,
       i18nManager,
+      readingExtensionManager,
       id
     );
   };
