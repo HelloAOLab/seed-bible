@@ -204,6 +204,7 @@ export function createI18nManager(
   let applyBibleTranslation:
     | ((translation: TranslationWithLanguage) => Promise<void>)
     | null = null;
+  let getActiveBibleTranslationId: (() => string | null) | null = null;
   let getAvailableTranslations: (() => readonly Translation[] | null) | null =
     null;
   let ensureTranslationsLoaded:
@@ -214,12 +215,14 @@ export function createI18nManager(
     applicator:
       | ((translation: TranslationWithLanguage) => Promise<void>)
       | null,
+    getTranslationId: (() => string | null) | null = null,
     getTranslations: (() => readonly Translation[] | null) | null = null,
     loadTranslations:
       | (() => Promise<readonly Translation[] | null>)
       | null = null
   ) => {
     applyBibleTranslation = applicator;
+    getActiveBibleTranslationId = getTranslationId;
     getAvailableTranslations = getTranslations;
     ensureTranslationsLoaded = loadTranslations;
   };
@@ -236,6 +239,13 @@ export function createI18nManager(
       uiLanguage,
       available
     );
+    const activeId = getActiveBibleTranslationId?.() ?? null;
+    // Already on the right translation — skip unless the UI language still needs
+    // a fallback warning (e.g. English Bible while switching UI to Welsh).
+    if (activeId === nearest.translation.id && !nearest.usedFallback) {
+      languageFallbackPrompt.value = null;
+      return;
+    }
 
     // Direct support: apply silently. Nearest suggestion: ask first.
     if (nearest.usedFallback) {
