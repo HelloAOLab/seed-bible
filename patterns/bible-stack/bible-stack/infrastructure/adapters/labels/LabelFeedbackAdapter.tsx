@@ -12,14 +12,14 @@ import type {
 } from "../../../../../pattern-typings/AuxLibraryDefinitions";
 import type { InfoLabelTailMapper } from "../../mappers/InfoLabelTailMapper";
 import type { InfoLabelDateMapper } from "../../mappers/InfoLabelDateMapper";
+import type { PieceBot } from "../../models/casualos";
 import type {
   ActivityIndicatorBot,
   InfoLabelDateBot,
   InfoLabelTailBot,
   InfoLabelTextBot,
   InfoLabelTransformerBot,
-  PieceBot,
-} from "../../models/casualos";
+} from "../../models/stack";
 import type { InfoLabelTransformerMapper } from "../../mappers/InfoLabelTransformerMapper";
 import type {
   ShowAnimationDurationMapType,

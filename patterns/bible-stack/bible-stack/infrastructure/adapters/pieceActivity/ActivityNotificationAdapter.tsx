@@ -1,18 +1,17 @@
 import { computeNotificationDirection } from "../../functions/layout";
 import type { StackChapterData } from "../../../domain/entities/StackChapterData";
-import type { LayoutChapterData } from "bibleVizUtils.domain.entities.LayoutChapterData";
 import type {
   ActivityNotificationAdapterPort,
   ShowNotificationCommand,
-} from "bibleVizUtils.domain.ports.pieceActivity";
+} from "../../../application/ports/out/PieceActivity";
 import type { ActivityNotification } from "../../../domain/models/canvas";
-import { ActivityNotificationMapper } from "bibleVizUtils.infrastructure.mappers.ActivityNotificationMapper";
+import { ActivityNotificationMapper } from "../../mappers/ActivityNotificationMapper";
 import { BiblePieces } from "../../../domain/models/canvas";
 import type {
   ActivityNotificationBot,
   ActivityNotificationTags,
-  BibleVizUtilsObjectPoolerMap,
-} from "../../models/casualos";
+} from "../../models/stack";
+import type { BibleStackObjectPoolerMap } from "../../models/objectPooler";
 import { GetBotScales } from "../../functions/casualos";
 import type { PieceMapperPort } from "../../mappers/PieceMapper";
 import type { ObjectPooler } from "../environment/ObjectPooler";
@@ -22,7 +21,7 @@ interface DimensionProviderPort {
 }
 
 interface AdapterParams {
-  objectPooler: ObjectPooler<BibleVizUtilsObjectPoolerMap>;
+  objectPooler: ObjectPooler<BibleStackObjectPoolerMap>;
   dimensionProviderPort: DimensionProviderPort;
   pieceMapperPort: PieceMapperPort;
 }
@@ -109,7 +108,7 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
     applyMod(notificationBot, mod);
     return ActivityNotificationMapper.toDomain(notificationBot);
   }
-  updateNotificationPosition(container: StackChapterData | LayoutChapterData) {
+  updateNotificationPosition(container: StackChapterData) {
     if (!container.activityNotification) {
       throw new Error(
         `ActivityNotificationAdapter: container.activityNotification not defined at updateNotificationPosition`
@@ -184,7 +183,7 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
       activityNotificationDesiredPosition.z
     );
   }
-  updateNotificationDirection(container: StackChapterData | LayoutChapterData) {
+  updateNotificationDirection(container: StackChapterData) {
     if (!container.piece) {
       throw new Error(
         `ActivityNotificatioNAdapter: container.piece not defined at updateNotificationDirection`

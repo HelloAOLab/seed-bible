@@ -15,14 +15,14 @@ import {
   type Piece,
 } from "../../../domain/models/canvas";
 import { InfoLabelData } from "../../../domain/entities/InfoLabelData";
+import type { PieceBot } from "../../models/casualos";
 import type {
   ActivityIndicatorBot,
   ExtraBackgroundActivityIndicatorTags,
   ExtraContentActivityIndicatorTags,
   InfoLabelTextBot,
-  PieceBot,
   RegularActivityIndicatorTags,
-} from "../../models/casualos";
+} from "../../models/stack";
 import type { IndicatorsRepositoryPort } from "../../../application/ports/out/PieceActivity";
 import type { ObjectPooler } from "../environment/ObjectPooler";
 import type { ActivityIndicatorVisualConfig } from "../../config/activityIndicators/visuals";

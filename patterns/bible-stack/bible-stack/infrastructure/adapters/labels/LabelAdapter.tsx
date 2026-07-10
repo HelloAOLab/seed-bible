@@ -15,7 +15,6 @@ import {
 } from "../../../domain/models/label";
 import type { PieceMapperPort } from "../../mappers/PieceMapper";
 import type {
-  BibleVizUtilsObjectPoolerMap,
   InfoLabelDateBot,
   InfoLabelDateTags,
   InfoLabelTailBot,
@@ -23,7 +22,8 @@ import type {
   InfoLabelTextBot,
   InfoLabelTextTags,
   InfoLabelTransformerTags,
-} from "../../models/casualos";
+} from "../../models/stack";
+import type { BibleStackObjectPoolerMap } from "../../models/objectPooler";
 import type { LabelAdapterPort } from "../../../application/ports/out/PieceLabel";
 import type { ObjectPooler } from "../environment/ObjectPooler";
 import type { InfoLabelTransformerMapper } from "../../mappers/InfoLabelTransformerMapper";
@@ -56,7 +56,7 @@ interface InfoLabelTextMapperPort {
 }
 
 interface ServiceParams {
-  objectPooler: ObjectPooler<BibleVizUtilsObjectPoolerMap>;
+  objectPooler: ObjectPooler<BibleStackObjectPoolerMap>;
   labelConfigProviderPort: LabelConfigProviderPort;
   dimensionProviderPort: DimensionProviderPort;
   infoLabelTextMapperPort: InfoLabelTextMapperPort;

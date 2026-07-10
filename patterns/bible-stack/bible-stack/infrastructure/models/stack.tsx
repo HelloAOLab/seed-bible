@@ -1,5 +1,9 @@
 import { BiblePieces } from "../../domain/models/canvas";
-import type { PieceBotTags, TypedBot } from "./casualos";
+import type { ActivityIndicator } from "../../domain/models/canvas";
+import type { PieceBot, PieceBotTags, TypedBot } from "./casualos";
+import type { HexString, Point2D } from "../../domain/models/commonTypes";
+import type { ActivityContainer } from "../../domain/models/activity";
+import type { Vector3 } from "../../../../pattern-typings/AuxLibraryDefinitions";
 
 type TBiblePiece = typeof BiblePieces;
 
@@ -152,3 +156,147 @@ export interface BibleShadowTags extends StackStaticPieceBotTags<"StackShadow"> 
 }
 
 export type BibleShadowBot = TypedBot<BibleShadowTags>;
+
+export interface ActivityIndicatorTags extends PieceBotTags<"ActivityIndicator"> {
+  indicatorType?: ActivityIndicator["indicatorType"];
+  index?: number;
+  color: HexString;
+  ownerBotId?: PieceBot["id"];
+  ownerDataId?: ActivityContainer["id"];
+  scaleX: number;
+  scaleY: number;
+  scaleZ: number;
+  targetOpacity: number;
+  formOpacity: number;
+  form: "sphere" | "circle";
+  isActivityIndicator: boolean;
+  isActivityIndicatorPrefab?: boolean;
+  label?: string;
+  initialPosition?: Vector3;
+  labelOpacity?: number;
+  formRenderOrder?: number;
+}
+
+export type ActivityIndicatorBot = TypedBot<ActivityIndicatorTags>;
+
+export interface ActivityNotificationTags extends PieceBotTags<"ActivityNotification"> {
+  label: string;
+  ownerDataId: ActivityContainer["id"];
+  ownerBotId?: PieceBot<"StackChapter">["id"];
+  formOpacity: number;
+  direction?: Point2D;
+  color: HexString;
+  offset?: number;
+  scaleX: number;
+  scaleY: number;
+  isActivityNotificationPrefab: boolean;
+}
+
+export type ActivityNotificationBot = TypedBot<ActivityNotificationTags>;
+
+export interface InfoLabelTransformerTags extends PieceBotTags<"InfoLabelTransformer"> {
+  isInfoLabelTransformerPrefab: boolean;
+  scaleX?: number;
+  scaleY?: number;
+  scaleZ?: number;
+  ownerBotId?: string;
+  ownerDataId?: string;
+  isAnimatable?: boolean;
+  targetOpacity?: number;
+  pointableDefault?: boolean;
+}
+
+export type InfoLabelTransformerBot = TypedBot<InfoLabelTransformerTags>;
+
+export interface InfoLabelDateTags extends PieceBotTags<"InfoLabelDate"> {
+  isInfoLabelDatePrefab: boolean;
+  ownerBotId?: string;
+  relativeDateScales?: Point2D;
+  absoluteDateScales?: Point2D;
+  relativeDateFormAddress?: string;
+  absoluteDateFormAddress?: string;
+  initialPosition?: Vector3;
+  label: string;
+  color: string;
+  formAddress: string;
+  scaleX?: number;
+  scaleY?: number;
+  scaleZ?: number;
+  labelColor?: string;
+  formOpacity?: number;
+}
+
+export type InfoLabelDateBot = TypedBot<InfoLabelDateTags>;
+
+export interface InfoLabelTailTags extends PieceBotTags<"InfoLabelTail"> {
+  isInfoLabelTailPrefab: boolean;
+  ownerBotId?: string;
+  initialPosition?: Vector3;
+  transformer?: string;
+  scaleX: number;
+  scaleY: number;
+  scaleZ: number;
+  color: string;
+  formOpacity: number;
+}
+
+export type InfoLabelTailBot = TypedBot<InfoLabelTailTags>;
+
+export interface RegularActivityIndicatorTags extends ActivityIndicatorTags {
+  indicatorType: "regular";
+}
+
+export interface ExtraBackgroundActivityIndicatorTags extends ActivityIndicatorTags {
+  indicatorType: "extraBackground";
+  color: "#000000";
+}
+
+export interface ExtraContentActivityIndicatorTags extends ActivityIndicatorTags {
+  indicatorType: "extraContent";
+  color: "#ffffff";
+  label: string;
+  labelOpacity: number;
+}
+
+export type ExtraBackgroundActivityIndicatorBot =
+  TypedBot<ExtraBackgroundActivityIndicatorTags>;
+
+export interface InfoLabelTextTags extends PieceBotTags<"InfoLabelText"> {
+  initialPosition?: Vector3;
+  isInfoLabelTextPrefab: boolean;
+  ownerBotId?: string;
+  onBotChanged?: string;
+  label?: string;
+  scaleX?: number;
+  scaleY?: number;
+  scaleZ?: number;
+  formAddress?: string;
+  pointable: boolean;
+  formOpacity: number;
+  labelOpacity: number;
+  color: string;
+  labelColor: string;
+}
+
+export type InfoLabelTextBot = TypedBot<InfoLabelTextTags>;
+
+export interface BotTypeMap {
+  [BiblePieces.StackTestament]: TestamentBot;
+  [BiblePieces.StackSection]: SectionBot;
+  [BiblePieces.StackSectionShadow]: SectionShadowBot;
+  [BiblePieces.StackSectionBook]: BookBot;
+  [BiblePieces.StackBook]: BookBot;
+  [BiblePieces.StackChapter]: ChapterBot;
+  [BiblePieces.VersesBundle]: VersesBundleBot;
+  [BiblePieces.Verse]: VerseBot;
+  [BiblePieces.StackCover]: CoverBot;
+  [BiblePieces.StackCrossLine]: CrossLineBot;
+  [BiblePieces.StackTransformer]: BibleTransformerBot;
+  [BiblePieces.StackShadow]: BibleShadowBot;
+  [BiblePieces.ActivityIndicator]: ActivityIndicatorBot;
+  [BiblePieces.ActivityNotification]: ActivityNotificationBot;
+  [BiblePieces.InfoLabelTransformer]: InfoLabelTransformerBot;
+  [BiblePieces.InfoLabelText]: InfoLabelTextBot;
+  [BiblePieces.InfoLabelTail]: InfoLabelTailBot;
+  [BiblePieces.InfoLabelDate]: InfoLabelDateBot;
+}

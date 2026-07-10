@@ -10,9 +10,7 @@ import { HighlightStates } from "../../domain/models/highlight";
 import type { LabelDataStorePort } from "../ports/out/PieceActivity";
 import type {
   DataRegistryPort,
-  IndicatorsRepositoryPort,
   ArrangementServicePort,
-  ScriptureServicePort,
   UserPresenceServicePort,
   ActivityIndicatorsAdapterPort,
   ActivityNotificationAdapterPort,
@@ -33,9 +31,7 @@ import type {
 
 interface ServiceParams {
   dataRegistryPort: DataRegistryPort;
-  indicatorsRepositoryPort: IndicatorsRepositoryPort;
   arrangementServicePort: ArrangementServicePort;
-  scriptureServicePort: ScriptureServicePort;
   labelDataStorePort: LabelDataStorePort;
   maxIndicators?: number;
   userPresenceServicePort: UserPresenceServicePort;

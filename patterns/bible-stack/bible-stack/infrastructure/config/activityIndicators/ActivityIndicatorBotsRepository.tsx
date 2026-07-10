@@ -1,4 +1,4 @@
-import type { ActivityIndicatorBot } from "../../models/casualos";
+import type { ActivityIndicatorBot } from "../../models/stack";
 import type {
   BotFilterFunction,
   TagFilter,

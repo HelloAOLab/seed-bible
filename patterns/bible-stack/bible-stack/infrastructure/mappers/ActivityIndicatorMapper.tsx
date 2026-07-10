@@ -1,5 +1,5 @@
 import type { ActivityIndicator } from "../../domain/models/canvas";
-import type { ActivityIndicatorBot } from "../models/casualos";
+import type { ActivityIndicatorBot } from "../models/stack";
 
 export class ActivityIndicatorMapper {
   toDomain(bot: ActivityIndicatorBot): ActivityIndicator {

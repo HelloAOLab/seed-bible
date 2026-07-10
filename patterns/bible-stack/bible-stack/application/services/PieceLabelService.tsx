@@ -10,15 +10,15 @@ import type {
   LabelAdapterPort,
   LabelDataStorePort,
   IndicatorsUpdaterPort,
-  DateFormatGetterPort,
   IdGeneratorPort,
   ActivityIndicatorsAdapterPort,
   LabelFeedbackAdapterPort,
 } from "../ports/out/PieceLabel";
+import type { LabelDateFormatGetterPort } from "../ports/in/LabelDate";
 
 export interface LabelStrategy<P extends Piece> {
   getLabel: (piece: P) => string;
-  getDate: (piece: P) => string | undefined;
+  getDate?: undefined | ((piece: P) => string);
   getColor: (piece: P) => string;
   getLabelColor: (piece: P) => string;
   labelPositioning: LabelPosition;
@@ -35,7 +35,7 @@ export interface PieceLabelServiceParams<T extends BiblePiece> {
   labelDataStorePort: LabelDataStorePort;
   indicatorsUpdaterPort: IndicatorsUpdaterPort;
   labelPropertiesStrategies: LabelPropertiesStrategies<T>;
-  dateFormatGetterPort: DateFormatGetterPort;
+  dateFormatGetterPort: LabelDateFormatGetterPort;
   idGeneratorPort: IdGeneratorPort;
   activityIndicatorsAdapterPort: ActivityIndicatorsAdapterPort;
   labelAnimationAdapterPort: LabelFeedbackAdapterPort;
@@ -100,13 +100,13 @@ export class PieceLabelService<
     }
 
     const label = strategy.getLabel(piece);
-    const date = strategy.getDate(piece);
+    const date = strategy.getDate?.(piece);
     const color = strategy.getColor(piece);
     const labelColor = strategy.getLabelColor(piece);
     const makesAttentionFeedback = strategy.makesAttentionFeedback;
     const labelPositioning = strategy.labelPositioning;
     const isInteractable = strategy.isInteractable;
-    const dateFormat = this.#dateFormatGetterPort.getDateformat();
+    const dateFormat = this.#dateFormatGetterPort.dateFormat;
 
     const {
       transformer: labelTransformer,

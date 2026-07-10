@@ -1,4 +1,4 @@
-import type { InfoLabelDateBot } from "../models/casualos";
+import type { InfoLabelDateBot } from "../models/stack";
 import type { Piece } from "../../domain/models/canvas";
 import type { PieceMapperPort } from "./PieceMapper";
 

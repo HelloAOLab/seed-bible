@@ -54,10 +54,6 @@ export interface IndicatorsUpdaterPort {
   updateIndicators: (container: InfoLabelData) => ActivityIndicator[];
 }
 
-export interface DateFormatGetterPort {
-  getDateformat: () => LabelDateFormat;
-}
-
 export interface IdGeneratorPort {
   getId: () => string;
 }

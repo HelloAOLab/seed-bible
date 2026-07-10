@@ -2,7 +2,7 @@ import { PieceMapper } from "../mappers/PieceMapper";
 import { LayoutConfigProvider } from "../config/layout/LayoutConfigProvider";
 import { ObjectPooler } from "../adapters/environment/ObjectPooler";
 import type { BibleStackObjectPoolerMap } from "../models/objectPooler";
-import { BiblePieces } from "../../domain/models/canvas";
+import { BiblePieces, type Piece } from "../../domain/models/canvas";
 import { thisTypedBot as testamentPrefab } from "../prefabs/testament/botAdapter";
 import { AudioAdapter } from "../adapters/audio/AudioAdapter";
 import { BibleSetupCameraAdapter } from "../adapters/environment/BibleSetupCameraAdapter";
@@ -138,6 +138,12 @@ import { UserPresenceService } from "../../application/services/UserPresenceServ
 import { ActivityIndicatorsAdapter } from "../adapters/pieceActivity/ActivityIndicatorsAdapter";
 import { ActivityIndicatorsConfigProvider } from "../config/activityIndicators/ActivityIndicatorsConfigProvider";
 import { ActivityIndicatorBotsRepository } from "../config/activityIndicators/ActivityIndicatorBotsRepository";
+import { ActivityNotificationAdapter } from "../adapters/pieceActivity/ActivityNotificationAdapter";
+import { PieceLabelService } from "../../application/services/PieceLabelService";
+import { LabelAdapter } from "../adapters/labels/LabelAdapter";
+import { LabelsConfigProvider } from "../config/labels/LabelsConfigProvider";
+import { LabelDateService } from "../../application/services/LabelDateService";
+import { PiecesConfigProvider } from "../config/pieces.tsx/PiecesConfigProvider";
 
 export const bootstrapExtension = () => {
   // // 1. Instantiating mappers
@@ -186,6 +192,8 @@ export const bootstrapExtension = () => {
   const sectionSelectionConfigProvider = new SectionSelectionConfigProvider();
   const activityIndicatorsConfigProvider =
     new ActivityIndicatorsConfigProvider();
+  const labelsConfigProvider = new LabelsConfigProvider();
+  const piecesConfigProvider = new PiecesConfigProvider();
 
   // // 3. Instantiating adapters
 
@@ -194,215 +202,95 @@ export const bootstrapExtension = () => {
       {
         key: BiblePieces.StackTestament,
         prefab: testamentPrefab,
-        customTags: {
-          draggable: false,
-          formOpacity: 1,
-          scale: 1,
-          color: "#ffffff",
-          scaleX: 1,
-          scaleY: 1,
-          scaleZ: 1,
-          pointable: false,
-          system: undefined,
-          cursor: "pointer",
-          formAddress:
-            "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/Sandbox/5686459242af8261bbab101a8d2c7ceaab6ef8ffcf0f96fe62c622d0322c6c30.webp",
-          strokeWidth: 1,
-        },
+        customTags: piecesConfigProvider.getInitialConfig(
+          BiblePieces.StackTestament
+        ),
         size: 2,
       },
       {
         key: BiblePieces.StackSection,
         prefab: sectionPrefab,
-        customTags: {
-          draggable: false,
-          formOpacity: 0.7,
-          scale: 1,
-          color: "#ffffff",
-          strokeColor: "#ffffff",
-          labelOpacity: 1,
-          scaleX: 1,
-          scaleY: 1,
-          scaleZ: 1,
-          system: undefined,
-          cursor: "pointer",
-          formAddress:
-            "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/Sandbox/5686459242af8261bbab101a8d2c7ceaab6ef8ffcf0f96fe62c622d0322c6c30.webp",
-          strokeWidth: 1,
-        },
+        customTags: piecesConfigProvider.getInitialConfig(
+          BiblePieces.StackSection
+        ),
         size: 8,
       },
       {
         key: BiblePieces.StackBook,
         prefab: bookPrefab,
-        customTags: {
-          draggable: false,
-          formOpacity: 0,
-          color: "#ffffff",
-          strokeColor: "#ffffff",
-          labelOpacity: 1,
-          scaleX: 1,
-          scaleY: 1,
-          scaleZ: 1,
-          system: undefined,
-          cursor: "pointer",
-          formAddress:
-            "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/Sandbox/5686459242af8261bbab101a8d2c7ceaab6ef8ffcf0f96fe62c622d0322c6c30.webp",
-          strokeWidth: 2,
-        },
+        customTags: piecesConfigProvider.getInitialConfig(
+          BiblePieces.StackBook
+        ),
         size: 20,
       },
       {
         key: BiblePieces.StackSectionBook,
         prefab: bookPrefab,
-        customTags: {
-          draggable: false,
-          formOpacity: 0,
-          color: "#ffffff",
-          strokeColor: "#ffffff",
-          labelOpacity: 1,
-          scaleX: 1,
-          scaleY: 1,
-          scaleZ: 1,
-          system: undefined,
-          cursor: "pointer",
-          formAddress:
-            "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/Sandbox/5686459242af8261bbab101a8d2c7ceaab6ef8ffcf0f96fe62c622d0322c6c30.webp",
-          strokeWidth: 2,
-        },
+        customTags: piecesConfigProvider.getInitialConfig(
+          BiblePieces.StackSectionBook
+        ),
         size: 8,
       },
       {
         key: BiblePieces.StackChapter,
         prefab: chapterPrefab,
-        customTags: {
-          draggable: true,
-          pointable: true,
-          color: "#e8e8e8",
-          label: "1",
-          labelPosition: "front",
-          scaleX: 1,
-          scaleY: 1,
-          scaleZ: 1,
-          system: undefined,
-          cursor: "pointer",
-        },
+        customTags: piecesConfigProvider.getInitialConfig(
+          BiblePieces.StackChapter
+        ),
         size: 20,
       },
       {
         key: BiblePieces.StackSectionShadow,
         prefab: sectionShadowPrefab,
-        customTags: {
-          draggable: false,
-          pointable: false,
-          formOpacity: 0,
-          color: undefined,
-          scaleX: undefined,
-          scaleY: undefined,
-          scaleZ: undefined,
-          sectionName: undefined,
-          sectionDataId: undefined,
-          system: undefined,
-          cursor: "pointer",
-          formDepthTest: false,
-        },
+        customTags: piecesConfigProvider.getInitialConfig(
+          BiblePieces.StackSectionShadow
+        ),
         size: 8,
       },
       {
         key: BiblePieces.VersesBundle,
         prefab: versesBunblePrefab,
-        customTags: {
-          color: "#d3d3d3",
-          labelOpacity: 1,
-          scaleX: 3.5,
-          scaleY: 1,
-          scaleZ: 0,
-          label: undefined,
-          draggable: undefined,
-          system: undefined,
-          cursor: "pointer",
-        },
+        customTags: piecesConfigProvider.getInitialConfig(
+          BiblePieces.VersesBundle
+        ),
         size: 3,
       },
       {
         key: BiblePieces.Verse,
         prefab: versePrefab,
-        customTags: {
-          scaleZ: 1,
-          system: undefined,
-          color: "#c1c1c1",
-          cursor: "pointer",
-          labelPosition: "top",
-        },
+        customTags: piecesConfigProvider.getInitialConfig(BiblePieces.Verse),
         size: 3,
       },
       {
         key: BiblePieces.StackCover,
         prefab: coverPrefab,
-        customTags: {
-          draggable: false,
-          color: "black",
-          pointable: undefined,
-          scaleX: 1,
-          scaleY: 1,
-          scaleZ: 1,
-          stackBibleId: undefined,
-          system: undefined,
-          scale: 1,
-          cursor: "pointer",
-          formOpacity: 1,
-          labelSize: 1,
-        },
+        customTags: piecesConfigProvider.getInitialConfig(
+          BiblePieces.StackCover
+        ),
         size: 3,
       },
       {
         key: BiblePieces.StackCrossLine,
         prefab: crossLinePrefab,
-        customTags: {
-          draggable: false,
-          color: "#FFD700",
-          pointable: false,
-          formOpacity: 1,
-          scaleX: 1,
-          scaleY: 1,
-          scaleZ: 0.05,
-          stackBibleId: undefined,
-          system: undefined,
-          cursor: "pointer",
-        },
+        customTags: piecesConfigProvider.getInitialConfig(
+          BiblePieces.StackCrossLine
+        ),
         size: 2,
       },
       {
         key: BiblePieces.StackTransformer,
         prefab: bibleTransformerPrefab,
-        customTags: {
-          draggable: false,
-          pointable: false,
-          color: "clear",
-          toErase: true,
-          stackBibleId: undefined,
-          system: undefined,
-          scale: 1,
-          scaleZ: 1,
-        },
+        customTags: piecesConfigProvider.getInitialConfig(
+          BiblePieces.StackTransformer
+        ),
         size: 1,
       },
       {
         key: BiblePieces.StackShadow,
         prefab: bibleShadowPrefab,
-        customTags: {
-          draggable: false,
-          pointable: false,
-          color: "#7B64FF",
-          stackBibleId: undefined,
-          system: undefined,
-          form: "sprite",
-          formAddress:
-            "https://publicos-link-filesbucket-404655125928.s3.amazonaws.com/ab-1/e58dd8fde3202f0ec0f3cfb1f87b1cf516c195202e67d618a8a88c7384d674de.png",
-          formOpacity: 0.3,
-          scaleX: 6,
-          scaleY: 6,
-        },
+        customTags: piecesConfigProvider.getInitialConfig(
+          BiblePieces.StackShadow
+        ),
         size: 1,
       },
     ],
@@ -677,6 +565,25 @@ export const bootstrapExtension = () => {
       getDimension: () => os.getCurrentDimension(),
     },
   });
+  const activityNotificationAdapter = new ActivityNotificationAdapter({
+    objectPooler,
+    dimensionProviderPort: {
+      getDimension: () => os.getCurrentDimension(),
+    },
+    pieceMapperPort: pieceMapper,
+  });
+  const labelAdapter = new LabelAdapter({
+    objectPooler,
+    labelConfigProviderPort: labelsConfigProvider,
+    dimensionProviderPort: {
+      getDimension: () => os.getCurrentDimension(),
+    },
+    infoLabelTextMapperPort: infoLabelTextMapper,
+    infoLabelTransformerMapperPort: infoLabelTransformerMapper,
+    infoLabelDateMapperPort: infoLabelDateMapper,
+    infoLabelTailMapperPort: infoLabelTailMapper,
+    pieceMapperPort: pieceMapper,
+  });
 
   // 4. Instantiating services
   //
@@ -689,6 +596,10 @@ export const bootstrapExtension = () => {
 
   // Single event bus for the whole stack, typed with the domain event map.
   // Satisfies every `*EventPort` (each is a narrower view over BibleStackEvents).
+  const bibleStackEventManager = new BaseEventManager<BibleStackEvents>();
+  const labelDateService = new LabelDateService({
+    eventPort: bibleStackEventManager,
+  });
   const userPresenceService = new UserPresenceService({
     userPresenceProviderPort: {
       getSelectedReadingInstance: () => undefined,
@@ -705,8 +616,149 @@ export const bootstrapExtension = () => {
     labelDataStorePort: labelDataStore,
     userPresenceServicePort: userPresenceService,
     activityIndicatorsAdapterPort: activityIndicatorsAdapter,
+    activityNotificationAdapterPort: activityNotificationAdapter,
+    userColorStorePort: {
+      getUserColor: () => undefined,
+    },
+    readingInstanceProviderPort: {
+      getOwnReadingInstances: () => [],
+      getRemotesReadingInstances: () => [],
+    },
+    loggerPort: loggerAdapter,
   });
-  const bibleStackEventManager = new BaseEventManager<BibleStackEvents>();
+  const peiceLabelService = new PieceLabelService({
+    labelAdapterPort: labelAdapter,
+    labelDataStorePort: labelDataStore,
+    indicatorsUpdaterPort: pieceActivityService,
+    dateFormatGetterPort: labelDateService,
+    idGeneratorPort: {
+      getId: () => uuid(),
+    },
+    activityIndicatorsAdapterPort: activityIndicatorsAdapter,
+    labelAnimationAdapterPort: labelFeedbackAdapter,
+    labelPropertiesStrategies: {
+      [BiblePieces.StackTestament]: {
+        getLabel: (piece: Piece<"StackTestament">) => {
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `BibleStack bootstrap: data not found at getLabel at createPieceLabelService`
+            );
+          }
+          return data.getPieceInfoProperty("name");
+        },
+        getColor: (piece: Piece<"StackTestament">) => {
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `BibleStack bootstrap: data not found at getColor at createPieceLabelService`
+            );
+          }
+          return data.getPieceInfoProperty("color") ?? "#ffffff"; // TODO: Properly find the color
+        },
+        getLabelColor: (piece: Piece<"StackTestament">) => {
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `BibleStack bootstrap: data not found at getColor at createPieceLabelService`
+            );
+          }
+          return data.getPieceInfoProperty("color") ?? "#ffffff"; // TODO: Properly find the color
+        },
+        labelPositioning: "LeftSided",
+        isInteractable: true,
+        makesAttentionFeedback: false,
+      },
+      [BiblePieces.StackSection]: {
+        getLabel: (piece: Piece<"StackSection">) => {
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `BibleStack bootstrap: data not found at getLabel at createPieceLabelService`
+            );
+          }
+          return data.getPieceInfoProperty("name");
+        },
+        getDate: (piece: Piece<"StackSection">) => undefined, // TODO: Properly find the date
+        getColor: (piece: Piece<"StackSection">) => {
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `BibleStack bootstrap: data not found at getColor at createPieceLabelService`
+            );
+          }
+          return data.getPieceInfoProperty("color") ?? "#ffffff"; // TODO: Properly find the color
+        },
+        getLabelColor: (piece: Piece<"StackSection">) => {
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `BibleStack bootstrap: data not found at getColor at createPieceLabelService`
+            );
+          }
+          return data.getPieceInfoProperty("color") ?? "#ffffff"; // TODO: Properly find the color
+        },
+        labelPositioning: "LeftSided",
+        isInteractable: true,
+      },
+      [BiblePieces.StackSectionShadow]: {
+        getLabel: (piece: Piece<"StackSectionShadow">) => {
+          return "";
+        },
+        getDate: (piece: Piece<"StackSectionShadow">) => undefined, // TODO: Properly find the date
+        getColor: (piece: Piece<"StackSectionShadow">) => {
+          return "";
+        },
+        getLabelColor: (piece: Piece<"StackSectionShadow">) => {
+          return "";
+        },
+        labelPositioning: "LeftSided",
+        isInteractable: true,
+      },
+      [BiblePieces.StackSectionBook]: {
+        getLabel: (piece: Piece<"StackSectionBook">) => {
+          return "";
+        },
+        getDate: (piece: Piece<"StackSectionBook">) => undefined, // TODO: Properly find the date
+        getColor: (piece: Piece<"StackSectionBook">) => {
+          return "";
+        },
+        getLabelColor: (piece: Piece<"StackSectionBook">) => {
+          return "";
+        },
+        labelPositioning: "LeftSided",
+        isInteractable: true,
+      },
+      [BiblePieces.StackBook]: {
+        getLabel: (piece: Piece<"StackBook">) => {
+          return "";
+        },
+        getDate: (piece: Piece<"StackBook">) => undefined, // TODO: Properly find the date
+        getColor: (piece: Piece<"StackBook">) => {
+          return "";
+        },
+        getLabelColor: (piece: Piece<"StackBook">) => {
+          return "";
+        },
+        labelPositioning: "LeftSided",
+        isInteractable: true,
+      },
+      [BiblePieces.StackChapter]: {
+        getLabel: (piece: Piece<"StackChapter">) => {
+          return "";
+        },
+        getDate: (piece: Piece<"StackChapter">) => undefined, // TODO: Properly find the date
+        getColor: (piece: Piece<"StackChapter">) => {
+          return "";
+        },
+        getLabelColor: (piece: Piece<"StackChapter">) => {
+          return "";
+        },
+        labelPositioning: "LeftSided",
+        isInteractable: true,
+      },
+    },
+  });
 
   const pieceHierarchyService = new PieceHierarchyService({
     pieceDataRepositoryPort: pieceDataRepository,
@@ -732,8 +784,10 @@ export const bootstrapExtension = () => {
     loggerPort: loggerAdapter,
     chapterSelectionAdapterPort: chapterSelectionAdapter,
     versesBundleLifecycleAdapterPort: stackPieceLifecycleAdapter,
-    // TODO (manual): indicatorsDeleterPort, indicatorsUpdaterPort,
-    // notificationDeleterPort, labelManagerPort — no instances.
+    indicatorsDeleterPort: pieceActivityService,
+    indicatorsUpdaterPort: pieceActivityService,
+    notificationDeleterPort: pieceActivityService,
+    labelManagerPort: peiceLabelService,
   });
   const versesBundleSelectionService = new VersesBundleSelectionService({
     sequenceStateServicePort: sequenceStateService,

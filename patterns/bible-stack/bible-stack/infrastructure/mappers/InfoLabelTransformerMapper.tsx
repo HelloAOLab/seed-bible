@@ -1,4 +1,4 @@
-import type { InfoLabelTransformerBot } from "../models/casualos";
+import type { InfoLabelTransformerBot } from "../models/stack";
 import type { Piece } from "../../domain/models/canvas";
 import type { PieceMapperPort } from "./PieceMapper";
 

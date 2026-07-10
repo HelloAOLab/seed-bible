@@ -2,6 +2,10 @@ import type { BiblePieces } from "../../domain/models/canvas";
 import type {
   ActivityIndicatorBot,
   ActivityNotificationBot,
+  InfoLabelDateBot,
+  InfoLabelTailBot,
+  InfoLabelTextBot,
+  InfoLabelTransformerBot,
   TypedBot,
 } from "./casualos";
 import type {
@@ -33,6 +37,10 @@ export type BibleStackObjectPoolerMap = {
   StackShadow: BibleShadowBot;
   [BiblePieces.ActivityIndicator]: ActivityIndicatorBot;
   [BiblePieces.ActivityNotification]: ActivityNotificationBot;
+  [BiblePieces.InfoLabelDate]: InfoLabelDateBot;
+  [BiblePieces.InfoLabelTail]: InfoLabelTailBot;
+  [BiblePieces.InfoLabelText]: InfoLabelTextBot;
+  [BiblePieces.InfoLabelTransformer]: InfoLabelTransformerBot;
 };
 
 // eslint-disable-next-line
