@@ -1,7 +1,10 @@
 import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import { DiscoverPane } from "@packages/seed-bible/seed-bible/components/DiscoverPane/DiscoverPane";
+import {
+  DiscoverPane,
+  DiscoverPaneHeader,
+} from "@packages/seed-bible/seed-bible/components/DiscoverPane/DiscoverPane";
 import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type {
   Playlist,
@@ -206,155 +209,30 @@ describe("DiscoverPane", () => {
     vi.restoreAllMocks();
   });
 
-  it("shows the generic title when there is no current chapter", () => {
-    const { playlists } = createMockPlaylists();
-    const tabs = createMockTabs();
-    const modals = createModalManager();
-    const state = createMockState();
-
-    act(() => {
-      render(
-        <DiscoverPane
-          tabs={tabs}
-          playlists={playlists}
-          modals={modals}
-          state={state}
-          toast={state.app.toast}
-        />,
-        container
-      );
+  it("DiscoverPaneHeader shows + Create only in the discover sub-view, and clicking it calls createNewPlaylist", () => {
+    const { playlists, createNewPlaylist } = createMockPlaylists({
+      view: "discover",
     });
 
-    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
-      "Discover"
-    );
-  });
-
-  it("shows the book/chapter title when a tab has chapter data", () => {
-    const { playlists } = createMockPlaylists();
-    const tab = createMockTab({
-      chapterData: { book: { name: "Genesis" }, chapter: { number: 1 } },
-    });
-    const tabs = createMockTabs(tab);
-    const modals = createModalManager();
-    const state = createMockState();
-
     act(() => {
-      render(
-        <DiscoverPane
-          tabs={tabs}
-          playlists={playlists}
-          modals={modals}
-          state={state}
-          toast={state.app.toast}
-        />,
-        container
-      );
-    });
-
-    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
-      "Discover Genesis 1"
-    );
-  });
-
-  it("applies the mobile class only when state.app.isMobile is true", () => {
-    const { playlists } = createMockPlaylists();
-    const tabs = createMockTabs();
-    const modals = createModalManager();
-    const state = createMockState(true);
-
-    act(() => {
-      render(
-        <DiscoverPane
-          tabs={tabs}
-          playlists={playlists}
-          modals={modals}
-          state={state}
-          toast={state.app.toast}
-        />,
-        container
-      );
-    });
-
-    expect(
-      container
-        .querySelector(".sb-discover-panel")
-        ?.classList.contains("sb-discover-panel--mobile")
-    ).toBe(true);
-  });
-
-  it("clicking + Create calls createNewPlaylist", () => {
-    const { playlists, createNewPlaylist } = createMockPlaylists();
-    const tabs = createMockTabs();
-    const modals = createModalManager();
-    const state = createMockState();
-
-    act(() => {
-      render(
-        <DiscoverPane
-          tabs={tabs}
-          playlists={playlists}
-          modals={modals}
-          state={state}
-          toast={state.app.toast}
-        />,
-        container
-      );
+      render(<DiscoverPaneHeader playlists={playlists} />, container);
     });
 
     const createButton = container.querySelector(
       ".sb-discover-create"
     ) as HTMLButtonElement;
+    expect(createButton).not.toBeNull();
+
     act(() => {
       createButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
-
     expect(createNewPlaylist).toHaveBeenCalledTimes(1);
-  });
 
-  it("shows a close button only when onClose is provided, and calls it when clicked", () => {
-    const { playlists } = createMockPlaylists();
-    const tabs = createMockTabs();
-    const modals = createModalManager();
-    const state = createMockState();
-
+    // Hidden while creating/playing a playlist.
     act(() => {
-      render(
-        <DiscoverPane
-          tabs={tabs}
-          playlists={playlists}
-          modals={modals}
-          state={state}
-          toast={state.app.toast}
-        />,
-        container
-      );
+      playlists.view.value = "create_playlist";
     });
-    expect(container.querySelector(".sb-discover-close")).toBeNull();
-
-    const onClose = vi.fn();
-    act(() => {
-      render(
-        <DiscoverPane
-          tabs={tabs}
-          playlists={playlists}
-          modals={modals}
-          state={state}
-          toast={state.app.toast}
-          onClose={onClose}
-        />,
-        container
-      );
-    });
-    const closeButton = container.querySelector(
-      ".sb-discover-close"
-    ) as HTMLButtonElement;
-    expect(closeButton).not.toBeNull();
-
-    act(() => {
-      closeButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(container.querySelector(".sb-discover-create")).toBeNull();
   });
 
   it("shows the empty-playlists message when there are no playlists", () => {

@@ -22,48 +22,61 @@ interface DiscoverPaneProps {
   modals: ModalManager;
   state: SeedBibleState;
   toast: SeedBibleState["app"]["toast"];
-  /** Closes the Discover panel. When provided, a close button is shown. */
-  onClose?: () => void;
 }
 
 type ReferenceWithBookData = DiscoverReference & { bookData: TranslationBook };
 
 /**
+ * Header actions rendered in the pane's `PaneHeader` slot (see how the Discover
+ * side pane is opened in `SeedBibleStateManager`). Only the discover sub-view
+ * offers "create a playlist", so the button hides itself during the
+ * create/play sub-views. Reads the `view` signal, so it stays reactive.
+ */
+export function DiscoverPaneHeader(props: { playlists: PlaylistManager }) {
+  const { playlists } = props;
+  const { t } = useI18n();
+
+  if (playlists.view.value !== "discover") {
+    return null;
+  }
+
+  return (
+    <button
+      type="button"
+      className="sb-discover-create"
+      onClick={() => playlists.createNewPlaylist()}
+    >
+      + {t("create-playlist", { defaultValue: "Create" })}
+    </button>
+  );
+}
+
+/**
  * Pane content for the "Discover" tool. Shows the user's authored playlists plus
  * discovered cross references, study notes, and content for the currently
  * selected reader tab. Annotations are a placeholder for now (display-only).
+ *
+ * Rendered inside the managed side pane (`SidePane`), so the pane shell supplies
+ * the surrounding chrome — the title/close (`PaneHeader`), the docking layout,
+ * and the mobile-fullscreen behavior. This component just renders the content.
  */
 export function DiscoverPane(props: DiscoverPaneProps) {
-  const { state, tabs, playlists, modals, onClose } = props;
+  const { tabs, playlists, modals } = props;
   const { t } = useI18n();
   const { view } = playlists;
 
   if (view.value === "create_playlist") {
-    return (
-      <div
-        className={`sb-discover-panel${
-          state.app.isMobile.value ? " sb-discover-panel--mobile" : ""
-        }`}
-      >
-        <CreatePlaylistForm playlists={playlists} tabs={tabs} />;
-      </div>
-    );
+    return <CreatePlaylistForm playlists={playlists} tabs={tabs} />;
   }
 
   if (view.value === "play_playlist") {
     return (
-      <div
-        className={`sb-discover-panel${
-          state.app.isMobile.value ? " sb-discover-panel--mobile" : ""
-        }`}
-      >
-        <PlayPlaylistView
-          state={props.state}
-          playlists={playlists}
-          tabs={tabs}
-          modals={modals}
-        />
-      </div>
+      <PlayPlaylistView
+        state={props.state}
+        playlists={playlists}
+        tabs={tabs}
+        modals={modals}
+      />
     );
   }
 
@@ -71,71 +84,29 @@ export function DiscoverPane(props: DiscoverPaneProps) {
   const userPlaylists = playlists.userPlaylists.value;
   const selectedTab =
     tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null;
-  const currentChapterData =
-    selectedTab?.readingState.chapterData.value ?? null;
 
   return (
-    <div
-      className={`sb-discover-panel${
-        state.app.isMobile.value ? " sb-discover-panel--mobile" : ""
-      }`}
-    >
-      <div className="sb-discover-pane">
-        <div className="sb-discover-header">
-          <MaterialIcon className="sb-discover-title-icon">
-            explore
-          </MaterialIcon>
-          <h2 className="sb-discover-title">
-            {currentChapterData
-              ? t("discover-book-chapter", {
-                  book: currentChapterData.book.name,
-                  chapter: currentChapterData.chapter.number,
-                  defaultValue: "Discover {{book}} {{chapter}}",
-                })
-              : t("discover", { defaultValue: "Discover" })}
-          </h2>
-          <span className="spacer" />
-          <button
-            type="button"
-            className="sb-discover-create"
-            onClick={() => playlists.createNewPlaylist()}
-          >
-            + {t("create-playlist", { defaultValue: "Create" })}
-          </button>
-          {onClose && (
-            <button
-              type="button"
-              className="sb-discover-close"
-              aria-label={t("close")}
-              title={t("close")}
-              onClick={onClose}
-            >
-              <MaterialIcon>close</MaterialIcon>
-            </button>
-          )}
-        </div>
+    <div className="sb-discover-pane">
+      <PlaylistSection
+        userPlaylists={userPlaylists}
+        playlists={playlists}
+        modals={modals}
+        toast={props.toast}
+      />
 
-        <PlaylistSection
-          userPlaylists={userPlaylists}
-          playlists={playlists}
-          modals={modals}
-          toast={props.toast}
+      <DiscoverSection
+        title={t("annotations", { defaultValue: "Annotations" })}
+      >
+        <DiscoverEmpty
+          text={t("discover-annotations-empty", {
+            defaultValue: "You have no annotations",
+          })}
         />
+      </DiscoverSection>
 
-        <DiscoverSection
-          title={t("annotations", { defaultValue: "Annotations" })}
-        >
-          <DiscoverEmpty
-            text={t("discover-annotations-empty", {
-              defaultValue: "You have no annotations",
-            })}
-          />
-        </DiscoverSection>
-
-        <CrossReferencesSection tab={selectedTab} />
-        <StudyNotesSection tab={selectedTab} />
-        <ContentSection tab={selectedTab} />
-      </div>
+      <CrossReferencesSection tab={selectedTab} />
+      <StudyNotesSection tab={selectedTab} />
+      <ContentSection tab={selectedTab} />
     </div>
   );
 }

@@ -358,6 +358,10 @@ export interface SeedBibleState {
 import SEED_BIBLE_EXTENSIONS from "virtual:@extensions";
 import { createPlaylistManager, type PlaylistManager } from "./PlaylistManager";
 import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
+import {
+  DiscoverPane,
+  DiscoverPaneHeader,
+} from "../components/DiscoverPane/DiscoverPane";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -1311,6 +1315,52 @@ export function createSeedBibleState(
       closeDiscover: handleCloseDiscover,
     },
   };
+
+  // Discover is rendered as the app's single managed side pane, mirrored from
+  // `playlists.view` (defined here rather than next to `handleOpenDiscover`
+  // above so the pane's `component` thunk can close over the finished `state`).
+  // `view` stays the source of truth for both whether Discover is open and
+  // which sub-view shows inside it; DiscoverPane routes discover/create/play
+  // internally off the same signal.
+  const DISCOVER_PANE_ID = "discover-pane";
+
+  // view -> pane: open (or refresh, by reusing the id) while a view is set,
+  // close when it clears. Subscribes only to `view`, so the user closing the
+  // pane below doesn't retrigger this.
+  effect(() => {
+    if (playlists.view.value) {
+      panes.openPane({
+        id: DISCOVER_PANE_ID,
+        placement: "side",
+        title: i18n.t("discover", { defaultValue: "Discover" }),
+        header: () => <DiscoverPaneHeader playlists={playlists} />,
+        component: () => (
+          <DiscoverPane
+            state={state}
+            tabs={tabs}
+            playlists={playlists}
+            modals={modals}
+            toast={state.app.toast}
+          />
+        ),
+      });
+    } else {
+      panes.closePane(DISCOVER_PANE_ID); // no-op when already closed
+    }
+  });
+
+  // pane -> view: when the pane is closed via its header, or replaced by
+  // another side pane (only one side pane may be open at a time), clear the
+  // view so the toggle re-opens it on the next click. `peek()` keeps this from
+  // looping against the effect above.
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === DISCOVER_PANE_ID
+    );
+    if (!paneOpen && playlists.view.peek()) {
+      playlists.view.value = null;
+    }
+  });
 
   // Settings UI language changes also select the nearest available Bible
   // translation (preferred ID → same language in catalog → LANG_META.fallback

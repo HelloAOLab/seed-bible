@@ -1,7 +1,6 @@
 import { I18nProvider, useI18n } from "../i18n/I18nManager";
 import { TabsLayout } from "../components/TabsLayout";
 import { PaneLayout, SidePane } from "../components/PaneLayout/PaneLayout";
-import { DiscoverPane } from "../components/DiscoverPane/DiscoverPane";
 import { BibleSelector } from "../components/BibleSelector/BibleSelector";
 import { BibleReaderToolbar } from "../components/BibleReaderToolbar/BibleReaderToolbar";
 import { FloatingReaderPanels } from "../components/FloatingReaderPanels/FloatingReaderPanels";
@@ -161,17 +160,6 @@ function MainContent(props: {
         </div>
 
         <PaneLayout state={state} />
-
-        {state.app.isDiscoverOpen.value && (
-          <DiscoverPane
-            state={state}
-            tabs={state.tabs}
-            playlists={state.playlists}
-            modals={state.modals}
-            toast={state.app.toast}
-            onClose={state.app.closeDiscover}
-          />
-        )}
 
         <ToastHost app={state.app} />
 

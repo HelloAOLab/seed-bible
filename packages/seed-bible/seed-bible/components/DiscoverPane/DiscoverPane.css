@@ -1,24 +1,6 @@
-/* Desktop: an in-flow flex column anchored to the right edge. Because it sits
-   beside the reader's <main> (flex: 1) in the app-root flex row, the panes
-   layout shrinks and shifts left rather than being overlaid. */
-.sb-discover-panel {
-  flex: 0 0 360px;
-  height: 100vh;
-  overflow: hidden;
-  border-left: 1px solid var(--sb-divider-color);
-  background: var(--sb-background);
-}
-
-/* Mobile: pulled out of flow and rendered fullscreen above the panes. */
-.sb-discover-panel--mobile {
-  position: fixed;
-  inset: 0 0 120px 0;
-  z-index: 100;
-  flex: none;
-  width: auto;
-  height: auto;
-}
-
+/* Content column for the discover sub-view. The surrounding shell (docking,
+   background, mobile-fullscreen) is provided by the managed side pane
+   (`SidePane`/`PaneLayout`), so this only lays out the scrolling content. */
 .sb-discover-pane {
   display: flex;
   flex-direction: column;
@@ -27,24 +9,6 @@
   padding: 12px;
   gap: 8px;
   color: var(--sb-font-color);
-}
-
-.sb-discover-close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--sb-font-color);
-  cursor: pointer;
-}
-
-.sb-discover-close:hover {
-  background: color-mix(in srgb, var(--sb-secondary-color), transparent 65%);
 }
 
 .sb-discover-header {
