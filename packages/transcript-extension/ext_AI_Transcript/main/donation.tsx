@@ -14,7 +14,6 @@ const DonationDialog = (props: {
   i18n: SeedBibleState["i18n"];
 }) => {
   function donate() {
-    // Send the user to the donation page, then tear down and notify the caller.
     window.open(DONATE_URL, "_blank", "noopener,noreferrer");
     props.onSuccess();
     closeDonationDialog();
@@ -73,7 +72,10 @@ const DonationDialog = (props: {
             color: "var(--sb-primary-font-color, #fff)",
           }}
         >
-          Donate
+          {props.i18n.t("donate", {
+            ns: "ext_AI_Transcript",
+            defaultValue: "Donate",
+          })}
         </button>
       </div>
     </div>
