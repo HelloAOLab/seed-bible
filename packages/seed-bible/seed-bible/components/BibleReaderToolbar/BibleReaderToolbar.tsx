@@ -450,6 +450,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     "open-selector",
     "open-sidebar",
     "open-search",
+    "previous-item",
+    "next-item",
   ]);
 
   const moreTools = useComputed(() =>
