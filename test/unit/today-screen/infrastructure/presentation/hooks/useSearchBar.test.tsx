@@ -17,6 +17,7 @@ const MaterialIcon = ({ children }: { children: string }) => (
 );
 
 const addTab = vi.fn();
+const closeToday = vi.fn();
 const DEBOUNCE_MS = 180;
 
 function makeResult(
@@ -58,6 +59,7 @@ describe("useSearchBar", () => {
     (useTodayContext as Mock).mockReturnValue({
       searchVerses,
       addTab,
+      closeToday,
       translate: vi.fn((key: string) => key),
       MaterialIcon,
     });
@@ -222,6 +224,7 @@ describe("useSearchBar", () => {
       expect(addTab).toHaveBeenCalledWith("GEN", 1, "AAB", 5);
       expect(result.current.query.value).toBe("");
       expect(result.current.isOpen.value).toBe(false);
+      expect(closeToday).toHaveBeenCalledTimes(1);
     });
 
     it("passes undefined when the result has no verse number", () => {

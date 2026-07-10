@@ -53,6 +53,7 @@ export interface TodayConfig {
     translationId?: string | undefined,
     verse?: number | undefined
   ) => void;
+  closeToday: () => void;
   getDefaultTranslation: () => string | undefined;
   /** The last translation id that was in use (last valid, persists across deselection). */
   lastTranslationId: Signal<string | undefined>;

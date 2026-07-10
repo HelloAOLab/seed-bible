@@ -47,6 +47,7 @@ type UseBookResult = ReturnType<typeof useBook>;
 describe("useBook", () => {
   let container: HTMLDivElement;
   const addTab = vi.fn();
+  const closeToday = vi.fn();
   const getDefaultTranslation = vi.fn(() => "AAB");
 
   function configureContexts(options: {
@@ -61,6 +62,7 @@ describe("useBook", () => {
         options.booksMap ?? new Map([["GEN", { numberOfChapters: 3 }]])
       ),
       addTab,
+      closeToday,
       getDefaultTranslation,
     });
     (useSocialSectionContext as Mock).mockReturnValue({
@@ -221,6 +223,12 @@ describe("useBook", () => {
       act(() => result.current.chaptersData[0]!.handleClick());
       expect(getDefaultTranslation).toHaveBeenCalled();
       expect(addTab).toHaveBeenCalledWith("GEN", 1, "AAB");
+    });
+
+    it("closes the Today screen when a chapter is clicked", () => {
+      const result = setup(props());
+      act(() => result.current.chaptersData[0]!.handleClick());
+      expect(closeToday).toHaveBeenCalledTimes(1);
     });
   });
 });
