@@ -182,16 +182,11 @@ export function PaneLayout(props: PaneLayoutProps) {
           }`}
           data-placement={pane.placement}
           style={{
+            // Fullscreen geometry lives in CSS (see PaneLayout.css) so a mobile
+            // media query can inset the pane's bottom to clear the fixed reader
+            // toolbar. Floating panes keep their dynamic geometry inline.
             ...(pane.placement === "fullscreen"
-              ? {
-                  position: "fixed",
-                  top: "0px",
-                  left: "0px",
-                  right: "0px",
-                  bottom: "0px",
-                  width: "100%",
-                  height: "100%",
-                }
+              ? {}
               : {
                   left: `${pane.x}px`,
                   top: `${pane.y}px`,

@@ -145,6 +145,23 @@
 .sb-pane-shell-detached[data-placement="fullscreen"] {
   box-shadow: none;
   border-radius: 0;
+  position: fixed;
+  inset: 0;
+}
+
+/* On mobile, every pane renders fullscreen (see app.effectivePanes) and the
+   reader toolbar is a fixed bar pinned to the bottom of the viewport. Inset the
+   pane's bottom by the toolbar's height so the pane's own content (footers,
+   close controls) isn't hidden behind the toolbar. Height stays unset so the
+   pane stretches between top: 0 and this bottom inset.
+   Toolbar height = 0.5rem top padding + 3.25rem tab min-height + 0.625rem
+   bottom padding (see BibleReaderToolbar.css mobile layout). The toolbar sits
+   flush at bottom: 0 with no safe-area padding of its own, so we reserve its
+   exact box height (no env() addition, which would open a gap below the pane). */
+@media (max-width: 480px) {
+  .sb-pane-shell-detached[data-placement="fullscreen"] {
+    bottom: 4.375rem;
+  }
 }
 
 .sb-pane-shell-detached[data-placement="floating"] .sb-pane-header {
