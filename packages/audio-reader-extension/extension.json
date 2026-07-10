@@ -1,5 +1,6 @@
 {
   "id": "ext_audioReader",
+  "autoinstall": true,
   "translations": {
     "en": {
       "title": "Audio Reader",

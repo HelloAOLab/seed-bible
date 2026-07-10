@@ -1,5 +1,6 @@
 import * as Typesense from "typesense";
 import * as z from "zod/v4";
+import type { TranslationBook } from "./FreeUseBibleAPI";
 
 const TYPESENSE_NODE_URL = new URL("https://search.ao.bot");
 const TYPESENSE_API_KEY = "5A496vKeCWhVxntITkcrZ6i7Fehh9lCB";
@@ -30,6 +31,106 @@ export const VerseSearchDocumentSchema = z.object({
 export type VerseSearchDocument = z.infer<typeof VerseSearchDocumentSchema>;
 
 export type VerseSearchResponse = Typesense.SearchResponse<VerseSearchDocument>;
+
+/**
+ * A book (optionally with a specific chapter) that matches a search query.
+ * Produced locally from the already-loaded book list — no network request.
+ */
+export interface BookReferenceMatch {
+  /** The ID of the matched book. */
+  bookId: string;
+  /** The display name of the book (the translation's common name). */
+  bookName: string;
+  /**
+   * The chapter the query resolved to, or `null` when no valid chapter number
+   * was typed. `null` means "open the book at its first chapter".
+   */
+  chapterNumber: number | null;
+  /** The book's canonical order, used for stable ranking tie-breaks. */
+  order: number;
+}
+
+/**
+ * Ranks book matches so the intended book surfaces first: an exact book-id
+ * match beats a name that starts with the query, which beats one that merely
+ * contains it. Lower is better; ties fall back to the book's canonical order.
+ */
+function bookMatchRank(book: TranslationBook, loweredText: string): number {
+  if (book.id.toLowerCase() === loweredText) {
+    return 0;
+  }
+
+  const startsWith =
+    book.commonName.toLowerCase().startsWith(loweredText) ||
+    book.name.toLowerCase().startsWith(loweredText) ||
+    book.id.toLowerCase().startsWith(loweredText);
+  if (startsWith) {
+    return 1;
+  }
+
+  return 2;
+}
+
+/**
+ * Finds the books (and optional chapter) that match a free-text search query.
+ *
+ * The query is split into a text part and an optional trailing chapter number,
+ * mirroring the Bible selector's convention (`BibleSelectorManager`). For
+ * example `"Gen 2"` matches Genesis and resolves chapter 2, `"psa 51"` matches
+ * Psalms chapter 51, and `"PSA 5"` resolves via the book id. A bare number or
+ * empty text returns nothing (we don't list every book for `"5"`).
+ *
+ * @param query The raw search query.
+ * @param books The books of the active translation.
+ * @param limit The maximum number of matches to return.
+ */
+export function matchBookReferences(
+  query: string,
+  books: TranslationBook[],
+  limit = 6
+): BookReferenceMatch[] {
+  const chapterStr = query.match(/(\d+)\s*$/)?.[1];
+  const loweredText = query
+    .replace(/\d+\s*$/, "")
+    .trim()
+    .toLowerCase();
+
+  if (!loweredText) {
+    return [];
+  }
+
+  const matched = books
+    .filter(
+      (book) =>
+        book.id.toLowerCase().includes(loweredText) ||
+        book.commonName.toLowerCase().includes(loweredText) ||
+        book.name.toLowerCase().includes(loweredText) ||
+        (book.title?.toLowerCase().includes(loweredText) ?? false)
+    )
+    .map((book) => ({ book, rank: bookMatchRank(book, loweredText) }))
+    .sort((a, b) => a.rank - b.rank || a.book.order - b.book.order)
+    .slice(0, limit);
+
+  return matched.map(({ book }) => {
+    let chapterNumber: number | null = null;
+    if (chapterStr !== undefined) {
+      const parsed = Number.parseInt(chapterStr, 10);
+      if (
+        parsed >= book.firstChapterNumber &&
+        parsed <= book.lastChapterNumber
+      ) {
+        chapterNumber = parsed;
+      }
+    }
+
+    return {
+      bookId: book.id,
+      bookName: book.commonName,
+      chapterNumber,
+      order: book.order,
+    };
+  });
+}
 
 export interface SearchManager {
   /**

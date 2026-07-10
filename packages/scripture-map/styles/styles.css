@@ -6,11 +6,11 @@
   background-color: white;
   pointer-events: all;
   overflow: hidden;
-  gap: 8px;
+  gap: 0.5rem;
   height: 100%;
   --timelineItemSize: 16px;
   position: relative;
-  padding-top: 16px;
+  padding-top: 1rem;
   background-color: var(--sb-reader-background);
 }
 
@@ -27,14 +27,14 @@
   /* z-index: 10; */
   top: 0;
   width: 100%;
-  gap: 4px;
+  gap: 0.25rem;
   display: grid;
-  grid-template-columns: 16px 1fr 40px 16px;
-  grid-template-rows: 40px 20px auto auto;
+  grid-template-columns: 1rem 1fr 2.5rem 1rem;
+  grid-template-rows: 2.5rem 1.25rem auto auto;
 }
 
 .scripture-map-settings.collapsed {
-  grid-template-rows: 40px 20px;
+  grid-template-rows: 2.5rem 1.25rem;
 }
 
 .scripture-map-settings .horizontal-divider {
@@ -57,13 +57,13 @@
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   grid-column: 2 / 3;
   grid-row: 1 / 2;
 }
 
 .settings-title > span {
-  font-size: 20px;
+  font-size: 1.25rem;
   font-weight: 600;
 }
 
@@ -80,10 +80,19 @@
 
 .settings-button {
   grid-column: 3 / 4;
-  font-size: 28px !important;
+  font-size: 1.75rem !important;
   /* border: 1px solid var(--sb-divider-color); */
-  border-radius: 4px;
-  padding: 6px;
+  border-radius: 0.25rem;
+  padding: 0.375rem;
+}
+
+/* The settings icon is an <img> (not a font glyph), so the button's font-size
+   above doesn't size it — give it an explicit rem size so it scales with the
+   UI Size knob like the rest of the chrome. 1rem = its intrinsic 16px at
+   size M, so this is a no-op at M. */
+.settings-button .coloredIcon {
+  width: 1rem;
+  height: 1rem;
 }
 
 .header-button.settings-button:hover:not(
@@ -99,19 +108,19 @@
 .settings-options-container {
   position: absolute;
   right: 0;
-  top: calc(100% + 4px);
+  top: calc(100% + 0.25rem);
   background-color: var(--sb-reader-background);
   color: var(--sb-reader-font-color);
-  padding: 12px;
-  border-radius: 8px;
-  gap: 4px;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  gap: 0.25rem;
   border: 1px solid var(--sb-secondary-color);
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
-  min-width: 208px;
-  min-height: 20px;
+  min-width: 13rem;
+  min-height: 1.25rem;
   z-index: 1;
   box-shadow: 0 0 5px 0px var(--sb-divider-color);
 }
@@ -123,15 +132,15 @@
 }
 
 .settings-options-container > span:nth-of-type(1) {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 500;
-  padding: 4px 8px 0;
+  padding: 0.25rem 0.5rem 0;
 }
 
 .settings-options-container > span:nth-of-type(2) {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 100;
-  padding: 0 8px 8px;
+  padding: 0 0.5rem 0.5rem;
 }
 
 .settings-options-container > button {
@@ -142,19 +151,19 @@
   border: none;
   cursor: pointer;
   text-align: start;
-  border-radius: 4px;
+  border-radius: 0.25rem;
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   white-space: nowrap;
   font-weight: 400;
-  padding: 4px 8px;
-  font-size: 16px;
+  padding: 0.25rem 0.5rem;
+  font-size: 1rem;
 }
 
 .settings-options-container > button > span {
-  font-size: 20px;
+  font-size: 1.25rem;
 }
 
 .settings-options-container > button:hover {
@@ -164,9 +173,9 @@
 .option-divider {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   min-width: 100%;
-  margin: 4px 0;
+  margin: 0.25rem 0;
 }
 
 .option-divider::before {
@@ -181,12 +190,12 @@
 
 .project-state-setter {
   width: 100%;
-  padding: 4px;
+  padding: 0.25rem;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .scripture-map-settings.collapsed .project-state-setter {
@@ -204,33 +213,33 @@
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   flex-wrap: wrap;
   width: 100%;
 }
 
 .project-state-setter > div:nth-of-type(2) > span:nth-of-type(1) {
   font-family: system-ui;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .selection-mode-toggle {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .selection-mode-toggle > span:nth-of-type(1) {
   background-color: white;
   border: solid 2px black;
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 0.25rem;
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .selection-mode-toggle > span:nth-of-type(1).checked {
@@ -244,21 +253,21 @@
 }
 
 .selection-mode-toggle > span:nth-of-type(3) {
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .selection-options {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
 }
 
 .selection-options > button {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 4px;
+  gap: 0.25rem;
   appearance: none;
   border: none;
   background-color: transparent;
@@ -273,12 +282,12 @@
 }
 
 .selection-options > button > span {
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .divider {
   width: 1px;
-  height: 20px;
+  height: 1.25rem;
   background-color: #d2d2d2;
 }
 
@@ -296,7 +305,7 @@
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   flex-wrap: wrap;
 }
 
@@ -318,16 +327,16 @@
 }
 
 .project-state-button {
-  padding: 6px 12px;
+  padding: 0.375rem 0.75rem;
   background-color: var(--sb-divider-color);
   border: solid 2px var(--sb-divider-color);
-  border-radius: 25px;
-  font-size: 12px;
+  border-radius: 1.5625rem;
+  font-size: 0.75rem;
   font-weight: 500;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 6px;
+  gap: 0.375rem;
   cursor: pointer;
   color: var(--sb-reader-font-color);
 }
@@ -339,9 +348,9 @@
 }
 
 .filter-option-icon {
-  width: 12px;
-  height: 12px;
-  border-radius: 20px;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 1.25rem;
   border-width: 2px;
 }
 
@@ -353,11 +362,11 @@
 }
 
 .scripture-map-wrapper .scripture-map-controls {
-  height: 60px;
+  height: 3.75rem;
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   width: 100%;
 }
 
@@ -365,8 +374,8 @@
   background-color: var(--toolbarBackground);
   box-shadow: 0 0 6px 0 #0000002e;
   display: flex;
-  border-radius: 4px;
-  padding: 4px;
+  border-radius: 0.25rem;
+  padding: 0.25rem;
 }
 
 .scripture-map-wrapper .scripture-map-controls .zoom-container > button {
@@ -374,10 +383,10 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 32px;
+  height: 2rem;
   border: none;
-  border-radius: 4px;
-  padding: 0 8px;
+  border-radius: 0.25rem;
+  padding: 0 0.5rem;
   position: relative;
   background-color: transparent;
   color: var(--sb-reader-font-color);
@@ -398,7 +407,7 @@
   .scripture-map-controls
   .zoom-container
   > button:nth-of-type(3) {
-  width: 32px;
+  width: 2rem;
 }
 
 /* .scripture-map-wrapper
@@ -419,7 +428,7 @@
   .zoom-container
   > button:nth-of-type(3)
   > span {
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .scripture-map-wrapper
@@ -435,27 +444,27 @@
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(100% + 12px);
+  bottom: calc(100% + 0.75rem);
   background-color: var(--sb-reader-background);
-  padding: 4px;
-  border-radius: 8px;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   align-items: flex-start;
-  min-width: 148px;
+  min-width: 9.25rem;
   border: solid 1px var(--sb-secondary-color);
   box-shadow: 0 0 5px 0px var(--sb-divider-color);
 }
 
 .zoom-level-selector > * {
-  padding: 8px;
+  padding: 0.5rem;
   width: 100%;
   color: var(--sb-reader-font-color);
 }
 
 .zoom-level-selector > span {
-  font-size: 16px;
+  font-size: 1rem;
   font-weight: 600;
   text-align: start;
   /* margin-bottom: 8px; */
@@ -468,7 +477,7 @@
   appearance: none;
   border: none;
   background-color: transparent;
-  font-size: 16px;
+  font-size: 1rem;
   border-radius: calc(var(--scale-factor) * 4px);
 }
 
@@ -481,9 +490,9 @@
 }
 
 .zoom-level-selector > button > span:nth-of-type(2) {
-  border-radius: 25px;
-  width: 16px;
-  height: 16px;
+  border-radius: 1.5625rem;
+  width: 1rem;
+  height: 1rem;
   background-color: transparent;
   border: solid 5px var(--sb-primary-color);
 }
@@ -749,17 +758,17 @@
   color: var(--sb-reader-background);
   text-align: center;
   z-index: 100;
-  border-radius: 12px;
+  border-radius: 0.75rem;
   position: fixed;
-  padding: 12px;
+  padding: 0.75rem;
   pointer-events: none;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: 0.5rem;
   white-space: nowrap;
-  font-size: 14px;
+  font-size: 0.875rem;
   transition:
     color 0.3s ease,
     background-color 0.3s ease;
@@ -784,8 +793,8 @@
   display: flex;
   justify-content: flex-start;
   align-items: center;
-  font-size: 16px;
-  gap: 6px;
+  font-size: 1rem;
+  gap: 0.375rem;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -800,14 +809,14 @@
 
 .tooltip .user-presence-tooltip-content > div {
   display: flex;
-  padding-left: 12px;
+  padding-left: 0.75rem;
 }
 
 .tooltip .user-presence-tooltip-content > div > div {
-  height: 24px;
-  width: 24px;
-  border-radius: 12px;
-  margin-left: -12px;
+  height: 1.5rem;
+  width: 1.5rem;
+  border-radius: 0.75rem;
+  margin-left: -0.75rem;
   border: solid 3px var(--sb-reader-font-color);
 }
 
@@ -818,17 +827,17 @@
 }
 
 .tooltip .tooltip-reading-history-content > span:nth-of-type(1) {
-  border-radius: 10px;
-  width: 14px;
-  height: 14px;
+  border-radius: 0.625rem;
+  width: 0.875rem;
+  height: 0.875rem;
 }
 
 .tooltip .tooltip-reading-history-content > span:nth-of-type(2) {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 .tooltip .tooltip-reading-history-content > span:nth-of-type(3) {
-  font-size: 11px;
+  font-size: 0.6875rem;
   color: var(--gray2-color);
 }
 

@@ -74,9 +74,18 @@ export interface UploadedExtension {
   url: string;
 
   /**
-   * The metadata for this extension.
+   * The metadata for this extension. `meta.translations` may be trimmed down
+   * to just `title`/`description` per locale — see `loadFullTranslations`.
    */
   meta: ExtensionMeta;
+
+  /**
+   * Loads this extension's full per-locale translations (every key, not just
+   * `title`/`description`). Optional: extensions whose `meta.translations`
+   * is already complete (e.g. fetched over the network rather than bundled)
+   * don't need it, and callers fall back to `meta.translations`.
+   */
+  loadFullTranslations?: () => Promise<ExtensionMeta["translations"]>;
 }
 
 export interface ImportExtension {
@@ -89,8 +98,19 @@ export interface ImportExtension {
    */
   import: () => Promise<unknown>;
 
-  /** The metadata for this extension. */
+  /**
+   * The metadata for this extension. `meta.translations` may be trimmed down
+   * to just `title`/`description` per locale — see `loadFullTranslations`.
+   */
   meta: ExtensionMeta;
+
+  /**
+   * Loads this extension's full per-locale translations (every key, not just
+   * `title`/`description`). Bundled extensions (see `vite-plugin-extensions.ts`)
+   * defer everything but `title`/`description` to this dynamic import, so the
+   * full translation payload is only fetched once the extension is installed.
+   */
+  loadFullTranslations?: () => Promise<ExtensionMeta["translations"]>;
 }
 
 /**
@@ -427,6 +447,26 @@ export function createExtensionManager(
   const INSTALLED_EXTENSIONS_CONFIG_KEY = "installedExtensions";
 
   /**
+   * Waits for an in-flight profile load to settle, if the user is logged in
+   * and the profile hasn't resolved yet. Without this, a read of
+   * `login.profile.value` taken while the profile is still loading sees an
+   * empty profile, and any merge computed from it (e.g. the installed
+   * extensions list) then overwrites the real, not-yet-arrived profile data
+   * once the pending write actually lands. Resolves synchronously (no
+   * microtask hop) when the profile has already loaded or there's nothing to
+   * wait for, so callers that don't need to wait aren't forced through an
+   * extra async tick.
+   */
+  const awaitProfileLoaded = (): Promise<void> | void => {
+    if (login.userId.value && !login.profile.value && login.profilePromise) {
+      return login.profilePromise.then(
+        () => undefined,
+        () => undefined
+      );
+    }
+  };
+
+  /**
    * Reads the set of installed extension IDs from the logged-in user's profile
    * config. Returns an empty set when logged out, the profile hasn't loaded yet,
    * or the stored value isn't a string array.
@@ -452,32 +492,57 @@ export function createExtensionManager(
   };
 
   /** Records that the extension with the given ID has been installed. */
-  const persistInstalledExtensionId = (id: string) => {
+  const persistInstalledExtensionId = (id: string): void | Promise<void> => {
     const ids = readPersistedExtensionIds();
     if (!ids.has(id)) {
       ids.add(id);
       writePersistedExtensionIds(ids);
     }
+
     // Mirror the install into the user's profile config so it follows them
     // across devices. Reads the profile set independently of local storage in
     // case the two have diverged.
-    const profileIds = readProfileExtensionIds();
-    if (!profileIds.has(id)) {
-      profileIds.add(id);
-      writeProfileExtensionIds(profileIds);
+    const mirrorToProfile = () => {
+      const profileIds = readProfileExtensionIds();
+      if (!profileIds.has(id)) {
+        profileIds.add(id);
+        writeProfileExtensionIds(profileIds);
+      }
+    };
+
+    // Wait for the profile load first when it's still in flight, so this
+    // doesn't compute against an empty profile and clobber the real list.
+    // When the profile has already loaded, run synchronously — most call
+    // sites don't await this, and deferring the write through an extra
+    // microtask would make it observable a tick later than the caller.
+    const pendingLoad = awaitProfileLoaded();
+    if (!pendingLoad) {
+      mirrorToProfile();
+      return;
     }
+    return pendingLoad.then(mirrorToProfile);
   };
 
   /** Removes the extension with the given ID from the persisted set. */
-  const forgetInstalledExtensionId = (id: string) => {
+  const forgetInstalledExtensionId = (id: string): void | Promise<void> => {
     const ids = readPersistedExtensionIds();
     if (ids.delete(id)) {
       writePersistedExtensionIds(ids);
     }
-    const profileIds = readProfileExtensionIds();
-    if (profileIds.delete(id)) {
-      writeProfileExtensionIds(profileIds);
+
+    const forgetFromProfile = () => {
+      const profileIds = readProfileExtensionIds();
+      if (profileIds.delete(id)) {
+        writeProfileExtensionIds(profileIds);
+      }
+    };
+
+    const pendingLoad = awaitProfileLoaded();
+    if (!pendingLoad) {
+      forgetFromProfile();
+      return;
     }
+    return pendingLoad.then(forgetFromProfile);
   };
 
   const computeExtensions = (): ExtensionListEntry[] => {
@@ -646,7 +711,10 @@ export function createExtensionManager(
         }
       }
 
-      addTranslations(uploaded.meta.id, uploaded.meta.translations);
+      const translations = uploaded.loadFullTranslations
+        ? await uploaded.loadFullTranslations()
+        : uploaded.meta.translations;
+      addTranslations(uploaded.meta.id, translations);
 
       if ("url" in uploaded && uploaded.url) {
         const installed = await loadExtensionFromUrl(extensionId, uploaded.url);
@@ -685,7 +753,7 @@ export function createExtensionManager(
     try {
       const result = await installationPromise;
       if (result) {
-        persistInstalledExtensionId(extensionId);
+        await persistInstalledExtensionId(extensionId);
       }
       return result;
     } finally {
@@ -736,6 +804,7 @@ export function createExtensionManager(
    * but skipped for now.
    */
   const loadSavedExtensions = async () => {
+    await awaitProfileLoaded();
     const localIds = readPersistedExtensionIds();
     const profileIds = readProfileExtensionIds();
     const savedIds = new Set([...localIds, ...profileIds]);
@@ -797,7 +866,7 @@ export function createExtensionManager(
   const unloadExtension = (id: string) => {
     unregisterExtension(id);
     installedExtensionIds.delete(id);
-    forgetInstalledExtensionId(id);
+    void forgetInstalledExtensionId(id);
     refreshExtensionsSignal();
   };
 

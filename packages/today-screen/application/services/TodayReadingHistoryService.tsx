@@ -79,7 +79,9 @@ export class TodayReadingHistoryService
             if (!bookIds[bookId][chapter]) {
               bookIds[bookId][chapter] = [];
             }
-            bookIds[bookId][chapter].push(userId);
+            if (!bookIds[bookId][chapter].includes(userId)) {
+              bookIds[bookId][chapter].push(userId);
+            }
           }
         }
       }
