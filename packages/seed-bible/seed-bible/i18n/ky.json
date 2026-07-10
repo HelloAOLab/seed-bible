@@ -94,7 +94,6 @@
   "customize-colors": "Түстөрдү ыңгайлаштыруу",
   "highlight-colors": "Түстөрдү бөлүп көрсөтүү",
   "reset-all-custom-colors": "Бардык ыңгайлаштырылган түстөрдү баштапкы абалга келтирүү",
-  "ui-text-size": "UI текст өлчөмү",
   "book-order": "Китепке буйрутма берүү",
   "selection-ui": "Тандоо интерфейси",
   "show-selected-items": "Тандалган нерселерди көрсөтүү",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Коштоочуну дайындаңыз",
   "appoint-co-host-instructions": "Сессияны улантуу үчүн бирөөнү тандаңыз:",
   "end-session-for-everyone": "Сеансты аяктоо",
-  "dont-show-again": "Муну экинчи көрсөтпө"
+  "dont-show-again": "Муну экинчи көрсөтпө",
+  "ui-size": "UI өлчөмү"
 }

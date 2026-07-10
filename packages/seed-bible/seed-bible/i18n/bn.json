@@ -81,7 +81,6 @@
   "customize-colors": "রং কাস্টমাইজ করুন",
   "highlight-colors": "হাইলাইট রঙ",
   "reset-all-custom-colors": "সমস্ত কাস্টম রঙ রিসেট করুন",
-  "ui-text-size": "UI টেক্সট সাইজ",
   "book-order": "বইয়ের অর্ডার",
   "selection-ui": "নির্বাচন UI",
   "show-selected-items": "নির্বাচিত আইটেমগুলি দেখান",
@@ -331,5 +330,6 @@
   "appoint-co-host": "একজন সহ-উপস্থাপক নিয়োগ করুন",
   "appoint-co-host-instructions": "সেশনটি চালু রাখার জন্য একজনকে বেছে নিন:",
   "end-session-for-everyone": "অধিবেশন শেষ করুন",
-  "dont-show-again": "এটা আবার দেখাবেন না"
+  "dont-show-again": "এটা আবার দেখাবেন না",
+  "ui-size": "UI আকার"
 }

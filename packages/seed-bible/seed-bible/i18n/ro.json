@@ -94,7 +94,6 @@
   "customize-colors": "Personalizați culorile",
   "highlight-colors": "Evidențiați culorile",
   "reset-all-custom-colors": "Resetați toate culorile personalizate",
-  "ui-text-size": "Dimensiunea textului interfeței utilizator",
   "book-order": "Comandă de carte",
   "selection-ui": "Interfață de selecție",
   "show-selected-items": "Afișați elementele selectate",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Numește o co-gazdă",
   "appoint-co-host-instructions": "Alegeți pe cineva care să mențină sesiunea în desfășurare:",
   "end-session-for-everyone": "Încheiați sesiunea",
-  "dont-show-again": "Nu mai afișa asta"
+  "dont-show-again": "Nu mai afișa asta",
+  "ui-size": "Dimensiunea interfeței utilizator"
 }

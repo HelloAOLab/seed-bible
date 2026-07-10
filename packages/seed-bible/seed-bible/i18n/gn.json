@@ -94,7 +94,6 @@
   "customize-colors": "Emohenda umi sa’y",
   "highlight-colors": "Emomba’eguasu umi sa’y",
   "reset-all-custom-colors": "Emohenda jey opaite sa’y jeporupyre",
-  "ui-text-size": "UI jehaipyre tuichakue",
   "book-order": "Aranduka rembiaporã",
   "selection-ui": "UI jeporavo rehegua",
   "show-selected-items": "Ohechauka umi mba’e ojeporavóva",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Oñemoĩ peteĩ co-anfitrión",
   "appoint-co-host-instructions": "Eiporavo peteĩ tapicha omantene hag̃ua pe sesión:",
   "end-session-for-everyone": "Oñemohu’ã sesión",
-  "dont-show-again": "Ani rehechauka jey ko mba'e"
+  "dont-show-again": "Ani rehechauka jey ko mba'e",
+  "ui-size": "UI tuichakue"
 }

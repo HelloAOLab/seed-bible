@@ -81,7 +81,6 @@
   "customize-colors": "रङहरू अनुकूलित गर्नुहोस्",
   "highlight-colors": "रङहरू हाइलाइट गर्नुहोस्",
   "reset-all-custom-colors": "सबै अनुकूलन रङहरू रिसेट गर्नुहोस्",
-  "ui-text-size": "UI पाठ आकार",
   "book-order": "बुक अर्डर",
   "selection-ui": "चयन UI",
   "show-selected-items": "चयन गरिएका वस्तुहरू देखाउनुहोस्",
@@ -331,5 +330,6 @@
   "appoint-co-host": "सह-आयोजक नियुक्त गर्नुहोस्",
   "appoint-co-host-instructions": "सत्र सञ्चालन गर्न कसैलाई छान्नुहोस्:",
   "end-session-for-everyone": "सत्र समाप्त गर्नुहोस्",
-  "dont-show-again": "यो फेरि नदेखाउनुहोस्"
+  "dont-show-again": "यो फेरि नदेखाउनुहोस्",
+  "ui-size": "UI आकार"
 }

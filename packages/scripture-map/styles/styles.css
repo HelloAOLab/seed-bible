@@ -88,7 +88,7 @@
 
 /* The settings icon is an <img> (not a font glyph), so the button's font-size
    above doesn't size it — give it an explicit rem size so it scales with the
-   UI Text Size knob like the rest of the chrome. 1rem = its intrinsic 16px at
+   UI Size knob like the rest of the chrome. 1rem = its intrinsic 16px at
    size M, so this is a no-op at M. */
 .settings-button .coloredIcon {
   width: 1rem;

@@ -1579,7 +1579,7 @@ describe("BibleReader", () => {
   });
 
   it("renders the book name and chapter number as a heading at the top of the mobile content", () => {
-    const { pane, selectorState, readingState, chapterData } = createFixture();
+    const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();
 
     chapterData.value = {
@@ -1588,7 +1588,7 @@ describe("BibleReader", () => {
       previousChapterApiLink: null,
     };
 
-    renderMobileReader({ pane, selectorState, readingState }, state, container);
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
 
     const title = container.querySelector(
       ".sb-reader-swipe-panel-current .sb-bible-reader-mobile-content-title"

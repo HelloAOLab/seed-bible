@@ -81,7 +81,6 @@
   "customize-colors": "Renkleri özelleştirin",
   "highlight-colors": "Vurgu renkleri",
   "reset-all-custom-colors": "Tüm özel renkleri sıfırla",
-  "ui-text-size": "Kullanıcı arayüzü metin boyutu",
   "book-order": "Kitap siparişi",
   "selection-ui": "Seçim Kullanıcı Arayüzü",
   "show-selected-items": "Seçilen öğeleri göster",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Bir yardımcı sunucu atayın",
   "appoint-co-host-instructions": "Oturumun devamlılığını sağlamak için birini seçin:",
   "end-session-for-everyone": "Oturumu sonlandır",
-  "dont-show-again": "Bunu bir daha gösterme"
+  "dont-show-again": "Bunu bir daha gösterme",
+  "ui-size": "Kullanıcı arayüzü boyutu"
 }

@@ -94,7 +94,6 @@
   "customize-colors": "Personnaliser ba couleurs",
   "highlight-colors": "Salá ete balangi ezala polele",
   "reset-all-custom-colors": "Réinitialiser ba couleurs nionso ya personnalisé",
-  "ui-text-size": "Taille ya texte ya UI",
   "book-order": "Commande ya buku",
   "selection-ui": "UI ya boponi",
   "show-selected-items": "Lakisa biloko oyo oponi",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Pona co-hôte moko",
   "appoint-co-host-instructions": "Pona moto oyo akosala ete session ezala malamu:",
   "end-session-for-everyone": "Suka session",
-  "dont-show-again": "Kolakisa lisusu likambo oyo te"
+  "dont-show-again": "Kolakisa lisusu likambo oyo te",
+  "ui-size": "Taille ya UI"
 }

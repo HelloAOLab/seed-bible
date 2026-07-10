@@ -94,7 +94,6 @@
   "customize-colors": "Наладзіць колеры",
   "highlight-colors": "Вылучыце колеры",
   "reset-all-custom-colors": "Скінуць усе карыстальніцкія колеры",
-  "ui-text-size": "Памер тэксту карыстальніцкага інтэрфейсу",
   "book-order": "Заказ кнігі",
   "selection-ui": "Выбар інтэрфейсу",
   "show-selected-items": "Паказаць выбраныя элементы",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Прызначыць сувядучага",
   "appoint-co-host-instructions": "Выберыце каго-небудзь, хто будзе падтрымліваць сеанс:",
   "end-session-for-everyone": "Завяршыць сеанс",
-  "dont-show-again": "Больш не паказваць"
+  "dont-show-again": "Больш не паказваць",
+  "ui-size": "Памер карыстальніцкага інтэрфейсу"
 }

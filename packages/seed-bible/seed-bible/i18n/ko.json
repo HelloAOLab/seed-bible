@@ -81,7 +81,6 @@
   "customize-colors": "색상 맞춤 설정",
   "highlight-colors": "강조 색상",
   "reset-all-custom-colors": "모든 사용자 지정 색상 초기화",
-  "ui-text-size": "UI 텍스트 크기",
   "book-order": "책 주문",
   "selection-ui": "선택 UI",
   "show-selected-items": "선택한 항목 표시",
@@ -331,5 +330,6 @@
   "appoint-co-host": "공동 진행자를 임명하세요",
   "appoint-co-host-instructions": "세션을 계속 진행할 담당자를 선택하세요.",
   "end-session-for-everyone": "세션 종료",
-  "dont-show-again": "이 메시지를 다시 표시하지 마세요"
+  "dont-show-again": "이 메시지를 다시 표시하지 마세요",
+  "ui-size": "UI 크기"
 }

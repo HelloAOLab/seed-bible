@@ -81,7 +81,6 @@
   "customize-colors": "Tùy chỉnh màu sắc",
   "highlight-colors": "Màu sắc nổi bật",
   "reset-all-custom-colors": "Đặt lại tất cả màu sắc tùy chỉnh",
-  "ui-text-size": "kích thước văn bản giao diện người dùng",
   "book-order": "Đặt sách",
   "selection-ui": "Giao diện người dùng lựa chọn",
   "show-selected-items": "Hiển thị các mục đã chọn",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Chỉ định một người đồng chủ trì",
   "appoint-co-host-instructions": "Hãy chọn một người để điều hành buổi họp:",
   "end-session-for-everyone": "Kết thúc phiên",
-  "dont-show-again": "Đừng hiển thị lại cái này nữa"
+  "dont-show-again": "Đừng hiển thị lại cái này nữa",
+  "ui-size": "Kích thước giao diện người dùng"
 }

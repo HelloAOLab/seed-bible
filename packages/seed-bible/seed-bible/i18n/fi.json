@@ -94,7 +94,6 @@
   "customize-colors": "Mukauta värejä",
   "highlight-colors": "Korosta värit",
   "reset-all-custom-colors": "Palauta kaikki mukautetut värit",
-  "ui-text-size": "Käyttöliittymän tekstin koko",
   "book-order": "Kirjan tilaus",
   "selection-ui": "Valintakäyttöliittymä",
   "show-selected-items": "Näytä valitut kohteet",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Nimeä apuisäntä",
   "appoint-co-host-instructions": "Valitse joku pitämään istunnon käynnissä:",
   "end-session-for-everyone": "Lopeta istunto",
-  "dont-show-again": "Älä näytä tätä uudelleen"
+  "dont-show-again": "Älä näytä tätä uudelleen",
+  "ui-size": "Käyttöliittymän koko"
 }

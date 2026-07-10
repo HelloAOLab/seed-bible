@@ -94,7 +94,6 @@
   "customize-colors": "Farben anpassen",
   "highlight-colors": "Hervorhebungsfarben",
   "reset-all-custom-colors": "Alle benutzerdefinierten Farben zurücksetzen",
-  "ui-text-size": "UI-Textgröße",
   "book-order": "Buchbestellung",
   "selection-ui": "Auswahl-UI",
   "show-selected-items": "Ausgewählte Elemente anzeigen",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Einen Co-Moderator ernennen",
   "appoint-co-host-instructions": "Wählen Sie jemanden aus, der die Sitzung am Laufen hält:",
   "end-session-for-everyone": "Sitzung beenden",
-  "dont-show-again": "Zeig das nicht noch einmal"
+  "dont-show-again": "Zeig das nicht noch einmal",
+  "ui-size": "UI-Größe"
 }

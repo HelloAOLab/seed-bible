@@ -6,14 +6,14 @@ import {
   TEXT_FONT_OPTIONS,
   TEXT_SECTION_THEME_COLOR_VAR,
   TEXT_WEIGHT_OPTIONS,
-  UI_TEXT_SIZE_OPTIONS,
+  UI_SIZE_OPTIONS,
   VERSE_LINE_HEIGHT_OPTIONS,
   DEFAULT_VERSE_LINE_HEIGHT,
   type BookOrientation,
   type TextAlignment,
   type TextSectionConfig,
   type TextSectionId,
-  type UITextSize,
+  type UISize,
 } from "../../managers/SettingsManager";
 import {
   DEFAULT_HIGHLIGHT_IDS,
@@ -863,20 +863,20 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
         <div className="sb-settings-field-row">
           <label
             className="sb-settings-field-label"
-            htmlFor="sb-ui-text-size-select"
+            htmlFor="sb-ui-size-select"
           >
-            {t("ui-text-size", { defaultValue: "UI text size" })}
+            {t("ui-size", { defaultValue: "UI size" })}
           </label>
           <select
-            id="sb-ui-text-size-select"
+            id="sb-ui-size-select"
             className="sb-settings-language-select"
-            value={current.uiTextSize}
+            value={current.uiSize}
             onChange={(event: Event) => {
               const target = event.currentTarget as HTMLSelectElement;
-              settings.setUITextSize(target.value as UITextSize);
+              settings.setUISize(target.value as UISize);
             }}
           >
-            {UI_TEXT_SIZE_OPTIONS.map((size) => (
+            {UI_SIZE_OPTIONS.map((size) => (
               <option key={size} value={size}>
                 {size}
               </option>

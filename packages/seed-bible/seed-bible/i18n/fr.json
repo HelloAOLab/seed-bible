@@ -81,7 +81,6 @@
   "customize-colors": "Personnaliser les couleurs",
   "highlight-colors": "Couleurs de surbrillance",
   "reset-all-custom-colors": "Réinitialiser toutes les couleurs personnalisées",
-  "ui-text-size": "taille du texte de l'interface utilisateur",
   "book-order": "Commande de livres",
   "selection-ui": "Interface utilisateur de sélection",
   "show-selected-items": "Afficher les éléments sélectionnés",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Désignez un co-animateur",
   "appoint-co-host-instructions": "Désignez une personne pour assurer le bon déroulement de la session :",
   "end-session-for-everyone": "Fin de la session",
-  "dont-show-again": "Ne plus afficher ceci"
+  "dont-show-again": "Ne plus afficher ceci",
+  "ui-size": "taille de l'interface utilisateur"
 }

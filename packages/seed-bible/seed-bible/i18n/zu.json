@@ -94,7 +94,6 @@
   "customize-colors": "Yenza ngezifiso imibala",
   "highlight-colors": "Gqamisa imibala",
   "reset-all-custom-colors": "Setha kabusha yonke imibala eyenziwe ngokwezifiso",
-  "ui-text-size": "Usayizi wombhalo we-UI",
   "book-order": "I-oda lencwadi",
   "selection-ui": "I-UI yokukhetha",
   "show-selected-items": "Bonisa izinto ezikhethiwe",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Khetha umsizi ohambisana naye",
   "appoint-co-host-instructions": "Khetha umuntu ozogcina iseshini isebenza:",
   "end-session-for-everyone": "Qeda iseshini",
-  "dont-show-again": "Ungabonisi lokhu futhi"
+  "dont-show-again": "Ungabonisi lokhu futhi",
+  "ui-size": "Usayizi we-UI"
 }

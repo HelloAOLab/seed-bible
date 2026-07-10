@@ -94,7 +94,6 @@
   "customize-colors": "ფერების მორგება",
   "highlight-colors": "მონიშნული ფერები",
   "reset-all-custom-colors": "ყველა მორგებული ფერის გადაყენება",
-  "ui-text-size": "ინტერფეისის ტექსტის ზომა",
   "book-order": "დაჯავშნის შეკვეთა",
   "selection-ui": "შერჩევის ინტერფეისი",
   "show-selected-items": "არჩეული ერთეულების ჩვენება",
@@ -331,5 +330,6 @@
   "appoint-co-host": "თანამასპინძლის დანიშვნა",
   "appoint-co-host-instructions": "აირჩიეთ ვინმე, ვინც სესიას გააგრძელებს:",
   "end-session-for-everyone": "სესიის დასრულება",
-  "dont-show-again": "ეს აღარ აჩვენო"
+  "dont-show-again": "ეს აღარ აჩვენო",
+  "ui-size": "ინტერფეისის ზომა"
 }

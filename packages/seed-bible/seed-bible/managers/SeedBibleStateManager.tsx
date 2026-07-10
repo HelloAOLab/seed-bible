@@ -277,7 +277,7 @@ export interface SeedBibleState {
   sessions: SessionsManager;
   /** Modal manager for app-wide dialog state and rendering. */
   modals: ModalManager;
-  /** App-level settings: book orientation, UI text size, selection UI, etc. */
+  /** App-level settings: book orientation, UI size, selection UI, etc. */
   settings: SettingsManager;
   /** Incoming session invitations and invite-sending. */
   invitations: InvitationsManager;

@@ -110,7 +110,7 @@ function makePaneState() {
       selectPane: panes.selectPane,
     },
     panes,
-    settings: { settings: signal({ uiTextSize: "medium" }) },
+    settings: { settings: signal({ uiSize: "M" }) },
   } as unknown as SeedBibleState;
   return { state, panes };
 }

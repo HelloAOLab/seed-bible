@@ -94,7 +94,6 @@
   "customize-colors": "Sesuaikan warna",
   "highlight-colors": "Serlahkan warna",
   "reset-all-custom-colors": "Tetapkan semula semua warna tersuai",
-  "ui-text-size": "Saiz teks UI",
   "book-order": "Pesanan buku",
   "selection-ui": "UI Pemilihan",
   "show-selected-items": "Tunjukkan item yang dipilih",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Lantik hos bersama",
   "appoint-co-host-instructions": "Pilih seseorang untuk memastikan sesi ini berjalan:",
   "end-session-for-everyone": "Tamat sesi",
-  "dont-show-again": "Jangan tunjukkan ini lagi"
+  "dont-show-again": "Jangan tunjukkan ini lagi",
+  "ui-size": "Saiz UI"
 }

@@ -81,7 +81,6 @@
   "customize-colors": "ቀለሞችን አብጅ",
   "highlight-colors": "የድምቀት ቀለሞች",
   "reset-all-custom-colors": "ሁሉንም ብጁ ቀለሞች ዳግም አስጀምር",
-  "ui-text-size": "የUI የጽሑፍ መጠን",
   "book-order": "የቦታ ማዘዣ",
   "selection-ui": "የምርጫ በይነገጽ",
   "show-selected-items": "የተመረጡትን ንጥሎች አሳይ",
@@ -331,5 +330,6 @@
   "appoint-co-host": "ተባባሪ አስተናጋጅ ይሾሙ",
   "appoint-co-host-instructions": "ክፍለ ጊዜውን እንዲቀጥል የሚያደርግ ሰው ይምረጡ፦",
   "end-session-for-everyone": "ክፍለ ጊዜን ጨርስ",
-  "dont-show-again": "ይህንን ዳግመኛ አታሳይ"
+  "dont-show-again": "ይህንን ዳግመኛ አታሳይ",
+  "ui-size": "የUI መጠን"
 }

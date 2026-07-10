@@ -81,7 +81,6 @@
   "customize-colors": "Badilisha rangi",
   "highlight-colors": "Rangi za kuangazia",
   "reset-all-custom-colors": "Weka upya rangi zote maalum",
-  "ui-text-size": "Ukubwa wa maandishi ya kiolesura",
   "book-order": "Agiza kitabu",
   "selection-ui": "Kiolesura cha Uteuzi",
   "show-selected-items": "Onyesha vipengee vilivyochaguliwa",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Teua mwenyeji mwenza",
   "appoint-co-host-instructions": "Chagua mtu wa kuendelea na kipindi:",
   "end-session-for-everyone": "Maliza kipindi",
-  "dont-show-again": "Usionyeshe hii tena"
+  "dont-show-again": "Usionyeshe hii tena",
+  "ui-size": "Ukubwa wa kiolesura"
 }

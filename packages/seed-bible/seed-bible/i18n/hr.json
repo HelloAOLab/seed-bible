@@ -94,7 +94,6 @@
   "customize-colors": "Prilagodi boje",
   "highlight-colors": "Istaknite boje",
   "reset-all-custom-colors": "Poništi sve prilagođene boje",
-  "ui-text-size": "Veličina teksta korisničkog sučelja",
   "book-order": "Narudžba knjige",
   "selection-ui": "Odabir korisničkog sučelja",
   "show-selected-items": "Prikaži odabrane stavke",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Imenujte suvoditelja",
   "appoint-co-host-instructions": "Odaberite nekoga tko će voditi sesiju:",
   "end-session-for-everyone": "Završi sesiju",
-  "dont-show-again": "Ne prikazuj ovo više"
+  "dont-show-again": "Ne prikazuj ovo više",
+  "ui-size": "Veličina korisničkog sučelja"
 }

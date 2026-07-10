@@ -81,7 +81,6 @@
   "customize-colors": "تخصيص الألوان",
   "highlight-colors": "ألوان مميزة",
   "reset-all-custom-colors": "إعادة ضبط جميع الألوان المخصصة",
-  "ui-text-size": "حجم نص واجهة المستخدم",
   "book-order": "طلب كتاب",
   "selection-ui": "واجهة المستخدم للاختيار",
   "show-selected-items": "عرض العناصر المختارة",
@@ -331,5 +330,6 @@
   "appoint-co-host": "عيّن مضيفًا مشاركًا",
   "appoint-co-host-instructions": "اختر شخصًا ما للحفاظ على استمرار الجلسة:",
   "end-session-for-everyone": "إنهاء الجلسة",
-  "dont-show-again": "لا تعرض هذا مرة أخرى"
+  "dont-show-again": "لا تعرض هذا مرة أخرى",
+  "ui-size": "حجم واجهة المستخدم"
 }

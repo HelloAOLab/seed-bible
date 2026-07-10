@@ -81,7 +81,6 @@
   "customize-colors": "Налаштувати кольори",
   "highlight-colors": "Виділення кольорів",
   "reset-all-custom-colors": "Скинути всі власні кольори",
-  "ui-text-size": "Розмір тексту інтерфейсу користувача",
   "book-order": "Замовлення книги",
   "selection-ui": "Інтерфейс вибору",
   "show-selected-items": "Показати вибрані елементи",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Призначити співведучого",
   "appoint-co-host-instructions": "Оберіть когось, хто продовжить сеанс:",
   "end-session-for-everyone": "Завершити сеанс",
-  "dont-show-again": "Не показувати це більше"
+  "dont-show-again": "Не показувати це більше",
+  "ui-size": "Розмір інтерфейсу користувача"
 }

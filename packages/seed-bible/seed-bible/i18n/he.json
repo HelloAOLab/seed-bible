@@ -94,7 +94,6 @@
   "customize-colors": "התאמה אישית של צבעים",
   "highlight-colors": "צבעים מודגשים",
   "reset-all-custom-colors": "איפוס כל הצבעים המותאמים אישית",
-  "ui-text-size": "גודל טקסט בממשק המשתמש",
   "book-order": "הזמנת ספר",
   "selection-ui": "ממשק משתמש לבחירה",
   "show-selected-items": "הצג פריטים שנבחרו",
@@ -331,5 +330,6 @@
   "appoint-co-host": "למנות מארח משותף",
   "appoint-co-host-instructions": "בחר מישהו שימשיך את ההפעלה:",
   "end-session-for-everyone": "סיום סשן",
-  "dont-show-again": "אל תציג את זה שוב"
+  "dont-show-again": "אל תציג את זה שוב",
+  "ui-size": "גודל ממשק המשתמש"
 }

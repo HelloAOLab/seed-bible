@@ -94,7 +94,6 @@
   "customize-colors": "Kleuren oanpasse",
   "highlight-colors": "Markearje kleuren",
   "reset-all-custom-colors": "Alle oanpaste kleuren weromsette",
-  "ui-text-size": "UI-tekstgrutte",
   "book-order": "Boekbestelling",
   "selection-ui": "Seleksje-UI",
   "show-selected-items": "Selektearre items sjen litte",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Beneam in mei-host",
   "appoint-co-host-instructions": "Kies ien om de sesje te hâlden:",
   "end-session-for-everyone": "Sesje einigje",
-  "dont-show-again": "Dit net wer sjen litte"
+  "dont-show-again": "Dit net wer sjen litte",
+  "ui-size": "UI-grutte"
 }

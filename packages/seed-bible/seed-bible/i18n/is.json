@@ -94,7 +94,6 @@
   "customize-colors": "Sérsníða liti",
   "highlight-colors": "Hápunktarlitir",
   "reset-all-custom-colors": "Endurstilla alla sérsniðna liti",
-  "ui-text-size": "Stærð texta í notendaviðmóti",
   "book-order": "Bókapöntun",
   "selection-ui": "Valviðmót",
   "show-selected-items": "Sýna valin atriði",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Tilnefna meðgestgjafa",
   "appoint-co-host-instructions": "Veldu einhvern til að halda fundinum gangandi:",
   "end-session-for-everyone": "Loka lotu",
-  "dont-show-again": "Ekki sýna þetta aftur"
+  "dont-show-again": "Ekki sýna þetta aftur",
+  "ui-size": "Stærð notendaviðmóts"
 }

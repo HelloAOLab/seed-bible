@@ -94,7 +94,6 @@
   "customize-colors": "रंग सानुकूल करा",
   "highlight-colors": "हायलाइट रंग",
   "reset-all-custom-colors": "सर्व सानुकूल रंग रीसेट करा",
-  "ui-text-size": "UI मजकूर आकार",
   "book-order": "पुस्तक ऑर्डर",
   "selection-ui": "निवड UI",
   "show-selected-items": "निवडलेले आयटम दाखवा",
@@ -331,5 +330,6 @@
   "appoint-co-host": "सह-यजमानाची नियुक्ती करा",
   "appoint-co-host-instructions": "सत्र चालू ठेवण्यासाठी कोणाची तरी निवड करा:",
   "end-session-for-everyone": "सत्र समाप्त करा",
-  "dont-show-again": "हे पुन्हा दाखवू नका"
+  "dont-show-again": "हे पुन्हा दाखवू नका",
+  "ui-size": "UI आकार"
 }

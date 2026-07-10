@@ -81,7 +81,6 @@
   "customize-colors": "रंगों को अनुकूलित करें",
   "highlight-colors": "रंगों को हाइलाइट करें",
   "reset-all-custom-colors": "सभी कस्टम रंगों को रीसेट करें",
-  "ui-text-size": "यूआई टेक्स्ट आकार",
   "book-order": "बुक ऑर्डर",
   "selection-ui": "चयन यूआई",
   "show-selected-items": "चयनित आइटम दिखाएँ",
@@ -331,5 +330,6 @@
   "appoint-co-host": "एक सह-मेजबान नियुक्त करें",
   "appoint-co-host-instructions": "सेशन को चालू रखने के लिए किसी व्यक्ति को चुनें:",
   "end-session-for-everyone": "सत्र समाप्त",
-  "dont-show-again": "इसे दोबारा मत दिखाओ"
+  "dont-show-again": "इसे दोबारा मत दिखाओ",
+  "ui-size": "यूआई आकार"
 }

@@ -81,7 +81,6 @@
   "customize-colors": "Өнгийг өөрчлөх",
   "highlight-colors": "Тодруулсан өнгөнүүд",
   "reset-all-custom-colors": "Бүх өөрчлөн тохируулсан өнгийг дахин тохируулах",
-  "ui-text-size": "UI текстийн хэмжээ",
   "book-order": "Захиалгын захиалга",
   "selection-ui": "Сонголтын интерфэйс",
   "show-selected-items": "Сонгосон зүйлсийг харуулах",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Хамтран зохион байгуулагчийг томилох",
   "appoint-co-host-instructions": "Сессийг ажиллуулах хэн нэгнийг сонгоно уу:",
   "end-session-for-everyone": "Хуралдааныг дуусгах",
-  "dont-show-again": "Үүнийг дахин бүү харуул"
+  "dont-show-again": "Үүнийг дахин бүү харуул",
+  "ui-size": "Хэрэглэгчийн интерфэйсийн хэмжээ"
 }

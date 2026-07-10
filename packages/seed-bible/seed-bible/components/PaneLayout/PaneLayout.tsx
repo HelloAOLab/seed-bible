@@ -2,7 +2,7 @@ import "./PaneLayout.css";
 import { PaneHeader } from "../PaneHeader/PaneHeader";
 import type { Pane } from "../../managers/PanesManager";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import { UI_TEXT_SIZE_SCALE_MAP } from "../../managers/SettingsManager";
+import { UI_SIZE_SCALE_MAP } from "../../managers/SettingsManager";
 import { useEffect, useRef } from "preact/hooks";
 
 interface DragState {
@@ -36,7 +36,7 @@ function usePaneDrag(state: SeedBibleState) {
   const { panes: panesManager, app } = state;
 
   const getUiScale = () =>
-    UI_TEXT_SIZE_SCALE_MAP[state.settings.settings.value.uiTextSize];
+    UI_SIZE_SCALE_MAP[state.settings.settings.value.uiSize];
 
   useEffect(() => {
     const handlePointerMove = (event: PointerEvent) => {

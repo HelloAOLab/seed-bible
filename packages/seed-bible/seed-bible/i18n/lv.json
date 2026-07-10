@@ -94,7 +94,6 @@
   "customize-colors": "Pielāgot krāsas",
   "highlight-colors": "Izcelt krāsas",
   "reset-all-custom-colors": "Atiestatīt visas pielāgotās krāsas",
-  "ui-text-size": "Lietotāja interfeisa teksta lielums",
   "book-order": "Grāmatas pasūtīšana",
   "selection-ui": "Atlases lietotāja interfeiss",
   "show-selected-items": "Rādīt atlasītos vienumus",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Norīkot līdzsaimnieku",
   "appoint-co-host-instructions": "Izvēlieties kādu, kas uzturēs sesiju:",
   "end-session-for-everyone": "Beigt sesiju",
-  "dont-show-again": "Nerādīt šo vairs"
+  "dont-show-again": "Nerādīt šo vairs",
+  "ui-size": "Lietotāja interfeisa izmērs"
 }

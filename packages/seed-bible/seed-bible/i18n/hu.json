@@ -94,7 +94,6 @@
   "customize-colors": "Színek testreszabása",
   "highlight-colors": "Kiemelő színek",
   "reset-all-custom-colors": "Az összes egyéni szín visszaállítása",
-  "ui-text-size": "Felhasználói felület szövegmérete",
   "book-order": "Foglalás rendelése",
   "selection-ui": "Kiválasztási felhasználói felület",
   "show-selected-items": "Kijelölt elemek megjelenítése",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Társházigazdát kijelölni",
   "appoint-co-host-instructions": "Válasszon ki valakit, aki folytatja a munkamenetet:",
   "end-session-for-everyone": "Munkamenet vége",
-  "dont-show-again": "Ne mutasd ezt újra"
+  "dont-show-again": "Ne mutasd ezt újra",
+  "ui-size": "Felhasználói felület mérete"
 }

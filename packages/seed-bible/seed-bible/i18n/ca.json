@@ -94,7 +94,6 @@
   "customize-colors": "Personalitza els colors",
   "highlight-colors": "Ressaltar els colors",
   "reset-all-custom-colors": "Restableix tots els colors personalitzats",
-  "ui-text-size": "Mida del text de la interfície d'usuari",
   "book-order": "Comanda de llibres",
   "selection-ui": "Interfície d'usuari de selecció",
   "show-selected-items": "Mostra els elements seleccionats",
@@ -331,5 +330,6 @@
   "appoint-co-host": "Designar un coamfitrió",
   "appoint-co-host-instructions": "Trieu algú per mantenir la sessió en marxa:",
   "end-session-for-everyone": "Finalitza la sessió",
-  "dont-show-again": "No ho tornis a mostrar"
+  "dont-show-again": "No ho tornis a mostrar",
+  "ui-size": "Mida de la interfície d'usuari"
 }
