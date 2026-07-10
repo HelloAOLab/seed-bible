@@ -6,6 +6,11 @@ import { navigatorLanguages } from "../app/ssrEnv";
 import { createContext, type ComponentChildren } from "preact";
 import type { NavigationManager } from "../managers/NavigationManager";
 import { computed, signal } from "@preact/signals";
+import {
+  getNearestBibleTranslationForUiLanguage,
+  type TranslationWithLanguage,
+} from "../managers/BibleReadingManager";
+import type { Translation } from "../managers/FreeUseBibleAPI";
 
 function getLanguageName(importPath: string): string {
   const match = importPath.match(/\.\/([a-z-]+)\.json$/i);
@@ -103,6 +108,16 @@ export function getUrlLanguage(url: URL): string | null {
   return null;
 }
 
+/**
+ * Shown when the UI language has no direct Bible text and we would switch the
+ * reader to a nearest available translation (e.g. Gujarati → Hindi).
+ */
+export type LanguageFallbackPrompt = {
+  requestedLanguage: string;
+  fallbackLanguage: string;
+  fallbackTranslation: TranslationWithLanguage;
+};
+
 export function createI18nManager(
   navigation: NavigationManager,
   acceptedLanguages: string[]
@@ -179,10 +194,95 @@ export function createI18nManager(
 
   const isRtl = computed(() => isRightToLeftLanguage(language.value));
 
+  const languageFallbackPrompt = signal<LanguageFallbackPrompt | null>(null);
+
+  /**
+   * Wired by SeedBibleState so UI language changes also select the nearest
+   * available Bible translation. Direct matches apply silently; fallback
+   * suggestions (e.g. Gujarati → Hindi) show a warning modal first.
+   */
+  let applyBibleTranslation:
+    | ((translation: TranslationWithLanguage) => Promise<void>)
+    | null = null;
+  let getAvailableTranslations: (() => readonly Translation[] | null) | null =
+    null;
+  let ensureTranslationsLoaded:
+    | (() => Promise<readonly Translation[] | null>)
+    | null = null;
+
+  const setBibleTranslationApplicator = (
+    applicator:
+      | ((translation: TranslationWithLanguage) => Promise<void>)
+      | null,
+    getTranslations: (() => readonly Translation[] | null) | null = null,
+    loadTranslations:
+      | (() => Promise<readonly Translation[] | null>)
+      | null = null
+  ) => {
+    applyBibleTranslation = applicator;
+    getAvailableTranslations = getTranslations;
+    ensureTranslationsLoaded = loadTranslations;
+  };
+
+  const changeLanguage = i18n.changeLanguage.bind(i18n);
+
+  const applyBibleTranslationForUiLanguage = async (uiLanguage: string) => {
+    let available = getAvailableTranslations?.() ?? null;
+    if (!available?.length && ensureTranslationsLoaded) {
+      available = (await ensureTranslationsLoaded()) ?? null;
+    }
+
+    const nearest = getNearestBibleTranslationForUiLanguage(
+      uiLanguage,
+      available
+    );
+
+    // Direct support: apply silently. Nearest suggestion: ask first.
+    if (nearest.usedFallback) {
+      languageFallbackPrompt.value = {
+        requestedLanguage: uiLanguage,
+        fallbackLanguage: nearest.resolvedUiLanguage,
+        fallbackTranslation: nearest.translation,
+      };
+      return;
+    }
+
+    languageFallbackPrompt.value = null;
+    if (!applyBibleTranslation) {
+      return;
+    }
+    await applyBibleTranslation(nearest.translation);
+  };
+
+  const requestLanguageChange = async (nextLanguage: string) => {
+    if (nextLanguage !== language.value) {
+      await changeLanguage(nextLanguage);
+    }
+    await applyBibleTranslationForUiLanguage(nextLanguage);
+  };
+
+  const confirmLanguageFallback = async () => {
+    const prompt = languageFallbackPrompt.value;
+    if (!prompt) {
+      return;
+    }
+    languageFallbackPrompt.value = null;
+    await applyBibleTranslation?.(prompt.fallbackTranslation);
+  };
+
+  const cancelLanguageFallback = () => {
+    languageFallbackPrompt.value = null;
+  };
+
   return {
     i18n,
     t: i18n.t.bind(i18n),
-    changeLanguage: i18n.changeLanguage.bind(i18n),
+    changeLanguage,
+    requestLanguageChange,
+    confirmLanguageFallback,
+    cancelLanguageFallback,
+    setBibleTranslationApplicator,
+    languageFallbackPrompt,
     defaultLanguage,
     availableLanguages,
     language,
@@ -255,7 +355,7 @@ export function useI18n(ns?: string) {
   const isRtl = isRightToLeftLanguage(i18nManager.language.value);
 
   const setLanguage = async (language: string) => {
-    await i18n.changeLanguage(language);
+    await i18nManager.requestLanguageChange(language);
   };
 
   const translate = ns
@@ -271,6 +371,10 @@ export function useI18n(ns?: string) {
       isRtl,
       availableLanguages,
       setLanguage,
+      requestLanguageChange: i18nManager.requestLanguageChange,
+      confirmLanguageFallback: i18nManager.confirmLanguageFallback,
+      cancelLanguageFallback: i18nManager.cancelLanguageFallback,
+      languageFallbackPrompt: i18nManager.languageFallbackPrompt,
       i18n: i18n,
     }),
     [t, i18n.language]

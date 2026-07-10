@@ -44,7 +44,7 @@ export const Welcome = () => {
         </button>
       </div>
       <div className={"welcome-screen-footer"}>
-        {<SpinnerIcon style={{ width: "36px", height: "36px" }} />}
+        {<SpinnerIcon style={{ width: "2.25rem", height: "2.25rem" }} />}
         <h3 className={"welcome-screen-footer-title"}>{footerTitle}</h3>
         <span className={"welcome-screen-footer-content"}>{footerContent}</span>
       </div>

@@ -1,0 +1,186 @@
+/* Guided tutorial (coachmark tour) */
+.sb-tour-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  font-family: var(--sb-font-family);
+}
+
+/* Contextual tips can fire while a high z-index panel/sheet (e.g. mobile
+ * settings) is open, which would otherwise hide the tip. `elevated` steps lift
+ * the overlay above those panels so the spotlight + popover land on top. */
+.sb-tour-overlay-raised {
+  z-index: 10001;
+}
+
+.sb-tour-spotlight {
+  position: absolute;
+  border-radius: 0.625rem;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+  border: 2px solid var(--sb-primary-color);
+  pointer-events: none;
+  transition:
+    top 0.2s ease,
+    left 0.2s ease,
+    width 0.2s ease,
+    height 0.2s ease;
+}
+
+.sb-tour-popover {
+  position: absolute;
+  box-sizing: border-box;
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  border-radius: 0.875rem;
+  padding: 1.125rem;
+  box-shadow: 0 16px 40px #00000040;
+  pointer-events: auto;
+}
+
+.sb-tour-popover-centered {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(18.75rem, calc(100vw - 2rem));
+}
+
+.sb-tour-popover-progress {
+  display: flex;
+  gap: 0.375rem;
+  margin-bottom: 0.75rem;
+}
+
+.sb-tour-dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 62.4375rem;
+  background: var(--sb-secondary-color);
+  transition:
+    width 0.2s ease,
+    background 0.2s ease;
+}
+
+.sb-tour-dot-active {
+  width: 1.125rem;
+  background: var(--sb-primary-color);
+}
+
+.sb-tour-popover-title {
+  margin: 0 0 0.375rem;
+  font-family: "Satoshi", system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1;
+  font-weight: 700;
+}
+
+.sb-tour-popover-body {
+  margin: 0 0 1rem;
+  font-family: "DM Sans", sans-serif;
+  line-height: 1.55;
+  font-size: 0.95em;
+  opacity: 0.7;
+}
+
+.sb-tour-popover-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.sb-tour-popover-actions-spacer {
+  flex: 1 1 auto;
+}
+
+.sb-tour-popover-actions-right {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sb-tour-btn-back {
+  background: transparent;
+  color: var(--sb-font-color);
+  opacity: 0.75;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding-left: 0.125rem;
+  padding-right: 0.125rem;
+}
+
+.sb-tour-btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 0.625rem;
+  padding: 0.5rem 1rem;
+  font-family: var(--sb-font-family);
+  font-size: 0.9em;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-tour-btn:hover {
+  filter: brightness(0.96);
+}
+
+.sb-tour-btn-primary {
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+}
+
+.sb-tour-btn-secondary {
+  background: var(--sb-reader-background);
+  color: var(--sb-font-color);
+  border-color: var(--sb-secondary-color);
+}
+
+.sb-tour-btn-text {
+  background: transparent;
+  color: var(--sb-font-color);
+  font-family: "DM Sans", sans-serif;
+  opacity: 0.7;
+  padding-left: 0.125rem;
+  padding-right: 0.125rem;
+}
+
+.sb-tour-btn-next {
+  background: transparent;
+  color: var(--sb-primary-color);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding-left: 0.125rem;
+  padding-right: 0.125rem;
+}
+
+.sb-tour-next-arrow {
+  font-size: 1.05em;
+  line-height: 1;
+}
+
+/* Pointer arrow — a rotated square that merges with the card edge. */
+.sb-tour-arrow {
+  position: absolute;
+  width: 0.875rem;
+  height: 0.875rem;
+  background: var(--sb-reader-background);
+  transform: rotate(45deg);
+}
+
+/* `side` = where the popover sits relative to the target, so the arrow goes on
+   the opposite edge of the card (pointing back toward the target). */
+.sb-tour-arrow-bottom {
+  top: -0.4375rem;
+}
+
+.sb-tour-arrow-top {
+  bottom: -0.4375rem;
+}
+
+.sb-tour-arrow-right {
+  left: -0.4375rem;
+}
+
+.sb-tour-arrow-left {
+  right: -0.4375rem;
+}

@@ -4,10 +4,8 @@ import {
   createI18nManager,
   type I18nManager,
 } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
-import {
-  type NavigationManager,
-  createNavigationManager,
-} from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
+import { type NavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { signal, type Signal } from "@preact/signals";
 
 const i18nFolder = path.resolve(
@@ -133,5 +131,53 @@ describe("I18nManager getInitialLanguage()", () => {
     const language = getDefaultLanguage();
 
     expect(language).toBe("en");
+  });
+});
+
+describe("I18nManager language fallback prompt", () => {
+  let nav: NavigationManager;
+  let manager: I18nManager;
+  let currentUrl: Signal<URL>;
+
+  beforeEach(() => {
+    currentUrl = signal(new URL("https://example.com/"));
+    nav = {
+      currentUrl,
+      syncSignalsToUrl: vi.fn(),
+      go: vi.fn(),
+      replace: vi.fn(),
+      push: vi.fn(),
+      updateQueryParam: vi.fn(),
+      linkToQuery: vi.fn(),
+    } as NavigationManager;
+    manager = createI18nManager(nav, ["en"]);
+    manager.setBibleTranslationApplicator(vi.fn(), () => null, null);
+  });
+
+  it("shows the fallback prompt when the nearest translation is already active", async () => {
+    await manager.requestLanguageChange("cy");
+
+    expect(manager.languageFallbackPrompt.value).toEqual({
+      requestedLanguage: "cy",
+      fallbackLanguage: "en",
+      fallbackTranslation: { id: "AAB", language: "eng" },
+    });
+  });
+
+  it("does not show the fallback prompt when the UI language has a direct translation", async () => {
+    const apply = vi.fn();
+    manager.setBibleTranslationApplicator(
+      apply,
+      () => [{ id: "spa_onbv", language: "spa" } as Translation],
+      null
+    );
+
+    await manager.requestLanguageChange("es");
+
+    expect(manager.languageFallbackPrompt.value).toBeNull();
+    expect(apply).toHaveBeenCalledWith({
+      id: "spa_onbv",
+      language: "spa",
+    });
   });
 });

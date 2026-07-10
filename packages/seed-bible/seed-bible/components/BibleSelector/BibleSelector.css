@@ -1,0 +1,1191 @@
+.sb-open-selector-icon {
+  flex: 1;
+}
+
+.sb-selector-overlay {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.25rem;
+
+  transition: background 0.3s ease;
+}
+
+.sb-selector-overlay.open {
+  pointer-events: all;
+  /* background: rgba(0, 0, 0, 0.3); */
+}
+
+@media (max-width: 480px) {
+  .sb-selector-overlay {
+    display: none;
+    pointer-events: all;
+  }
+
+  .sb-selector-overlay.open {
+    display: flex;
+  }
+}
+
+.sb-selector-panel {
+  position: absolute;
+  overflow: auto;
+  padding: 1.125rem 1.25rem 1.25rem;
+  background: var(--sb-book-selector-background);
+  color: var(--sb-book-selector-font-color);
+  border-radius: 1rem;
+  border: 1px solid var(--sb-divider-color);
+
+  width: 100%;
+  height: 100dvh;
+  bottom: 0;
+
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  transform: translateY(50%);
+  transition: all 0.5s;
+  scrollbar-width: none;
+
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-selector-overlay.open .sb-selector-panel {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media only screen and (min-width: 481px) {
+  .sb-selector-panel {
+    /* Cap to the viewport (minus the overlay's 1.25rem padding each side) so
+       the panel never extends past the screen edges at UI Size > M, where
+       the fixed rem width would otherwise scale wider than the viewport. No-op
+       when the viewport is wide enough to hold the full 40.625rem. */
+    width: min(40.625rem, calc(100vw - 2.5rem));
+    height: 80dvh;
+    bottom: 5rem;
+  }
+}
+
+@media only screen and (min-width: 1201px) {
+  .sb-selector-panel {
+    width: min(68.75rem, calc(100vw - 2.5rem));
+    height: 80dvh;
+    bottom: 5rem;
+  }
+}
+
+.sb-selector-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.625rem;
+}
+
+/* .sb-selector-title {
+  color: var(--sb-selector-heading-color);
+} */
+
+.sb-selector-close-button {
+  border: 1px solid var(--sb-secondary-color);
+  border-radius: 0.375rem;
+  padding: 0.25rem 0.5rem;
+  background: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
+  cursor: pointer;
+}
+
+.sb-selector-pane-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.sb-selector-pane-picker-label {
+  font-size: 0.8125rem;
+  color: var(--sb-book-selector-font-color);
+  opacity: 0.85;
+}
+
+.sb-selector-pane-picker-options {
+  display: flex;
+  gap: 0.375rem;
+  flex-wrap: wrap;
+}
+
+.sb-selector-pane-chip {
+  border: 1px solid var(--sb-secondary-color);
+  border-radius: 62.4375rem;
+  padding: 0.25rem 0.625rem;
+  background: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
+  font-size: 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.sb-selector-pane-chip-selected {
+  border-color: var(--sb-primary-color);
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+}
+
+.sb-selector-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.sb-selector-translation-select {
+  min-width: 6rem;
+  border: 1px solid var(--sb-secondary-color);
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.5rem;
+  background: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
+}
+
+.sb-selector-search-input {
+  flex: 1;
+  border: 1px solid var(--sb-secondary-color);
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  background: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
+}
+
+.sb-selector-all-books {
+  border: 1px solid var(--sb-secondary-color);
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  background: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
+  white-space: nowrap;
+}
+
+.sb-selector-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+}
+
+.sb-selector-column-divider {
+  border-right: 1px solid var(--sb-secondary-color);
+  padding-right: 0.75rem;
+}
+
+.sb-selector-section-title {
+  margin-top: 0;
+  margin-bottom: 0.625rem;
+
+  font-family: var(--sb-font-family), system-ui, sans-serif;
+  font-weight: 700;
+  padding-left: 0.625rem;
+}
+
+.sb-selector-books-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.sb-selector-books-row-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.sb-selector-books-row {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 0.375rem 0.625rem;
+}
+
+.sb-selector-book-button {
+  width: 100%;
+  height: 2.5rem;
+  text-align: left;
+  border: none;
+  background: transparent;
+  padding: 0.625rem;
+  font-weight: 400;
+  cursor: pointer;
+
+  color: var(--sb-book-selector-font-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  transition: all 0.3s;
+}
+
+.sb-selector-book-button:hover {
+  background-color: var(--sb-secondary-color);
+  color: var(--sb-secondary-font-color);
+}
+
+.sb-selector-book-button-name {
+  width: 100%;
+  text-transform: capitalize;
+}
+
+@media (min-width: 481px) {
+  .sb-selector-book-button {
+    width: 12.5rem;
+  }
+}
+
+.sb-selector-book-button-current {
+  font-weight: 700;
+}
+
+.sb-selector-book-button > .material-symbols-outlined {
+  transition: all 0.3s;
+}
+
+.sb-selector-book-button.expanded > .material-symbols-outlined {
+  transform: rotate(180deg);
+}
+
+.sb-selector-chapter-grid {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  justify-content: space-between;
+
+  gap: 0.8125rem 0.625rem;
+  padding: 0.125rem 0.25rem 0.5rem 0.25rem;
+
+  background-color: var(--sb-book-selector-background);
+}
+
+.sb-selector-chapter-grid-inline {
+  margin-top: 0.25rem;
+  margin-bottom: 0.25rem;
+}
+
+.sb-selector-chapter-button {
+  border: 1px solid var(--sb-secondary-color);
+  border-radius: 0.3125rem;
+  background: var(--sb-secondary-color);
+  width: 100%;
+  cursor: pointer;
+  color: var(--sb-secondary-font-color);
+  aspect-ratio: 1;
+}
+
+.sb-selector-chapter-button-current {
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+}
+
+@media (min-width: 481px) {
+  .sb-selector-chapter-grid {
+    grid-template-columns: repeat(auto-fit, minmax(2.375rem, 1fr));
+  }
+
+  .sb-selector-chapter-button {
+    width: 2.375rem;
+    justify-self: center;
+  }
+}
+
+@media (min-width: 1201px) {
+  .sb-selector-chapter-grid {
+    grid-template-columns: repeat(auto-fit, minmax(2.5rem, 1fr));
+  }
+
+  .sb-selector-chapter-button {
+    width: 2.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .sb-selector-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .sb-selector-column-divider {
+    border-right: none;
+    padding-right: 0;
+  }
+
+  .sb-pane-shell:not(.sb-pane-shell-detached) {
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+.books-container {
+  width: 100%;
+  height: calc(80dvh - 4.6875rem);
+  position: absolute;
+  left: 0;
+  padding: 0px 0.625rem;
+}
+
+.testament-title {
+  font-family: "Satoshi", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.125rem;
+  line-height: 1.1;
+  padding-left: 0.75rem;
+  padding-bottom: 0.5rem;
+  display: block;
+  color: var(--sb-font-color);
+}
+
+.books-item {
+  width: 100%;
+  height: fit-content;
+  scrollbar-width: none;
+  overflow: auto;
+}
+
+.separator {
+  width: 1px;
+  height: 100%;
+  background-color: var(--sb-font-color);
+  margin-right: -1px;
+  opacity: 0.1;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.dropdown-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  padding: 0.5rem 2rem 0.5rem 0.875rem;
+  font-size: 0.875rem;
+  height: 2.5rem;
+
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 0.625rem;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%)
+    url("data:image/svg+xml;utf8,<svg fill='gray' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>")
+    no-repeat right 10px center;
+  background-size: 1rem;
+
+  cursor: pointer;
+  outline: none;
+  outline-width: 0px;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+  margin-right: 0;
+  font-family: "Satoshi", system-ui, sans-serif;
+  color: var(--sb-font-color);
+}
+
+.dropdown-select-icon {
+  position: absolute;
+  right: 0.625rem;
+  pointer-events: none;
+  font-size: 1.5rem;
+}
+
+.dropdown-option {
+  background: var(--sb-book-selector-background);
+  color: var(--sb-font-color);
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+}
+
+.searchbar {
+  border-radius: 0.625rem;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+  border: 1px solid var(--sb-divider-color);
+  padding: 0.375rem 0.75rem;
+  width: 80%;
+  height: 2.5rem;
+  overflow: hidden;
+  color: var(--sb-font-color);
+}
+
+.search-icon {
+  margin-right: 0.5rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+  font-size: 1.25rem;
+}
+
+.searchbar input {
+  border: none;
+  outline: none;
+  font-size: 0.875rem;
+  font-family: "Satoshi", system-ui, sans-serif;
+  background: transparent;
+  color: var(--sb-font-color);
+}
+
+.searchbar input::placeholder {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 50%);
+}
+
+/* Desktop only (mobile search is left untouched): give the book/translation
+   search field a clearly defined boundary and breathing room so it's obvious
+   where the input begins and ends. */
+@media only screen and (min-width: 481px) {
+  .searchbar {
+    height: 2.75rem;
+    padding: 0.5rem 0.875rem;
+    margin: 0.375rem 0;
+    border: 1.5px solid
+      color-mix(in srgb, var(--sb-font-color), transparent 80%);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  .searchbar:focus-within {
+    border-color: var(--sb-primary-color);
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--sb-primary-color), transparent 82%);
+  }
+}
+
+.share-btn {
+  border: none;
+  font-size: 1.125rem;
+  height: 1.5rem;
+  width: 1.5rem;
+  background: transparent;
+  border-radius: 0.3125rem;
+  padding: 0.1875rem;
+  color: var(--sb-font-color);
+  cursor: pointer;
+}
+
+.share-btn:active {
+  background-color: rgba(1, 87, 155, 0.3);
+}
+
+.custom-translation-header {
+  height: fit-content;
+  width: 100%;
+  padding: 0px 0.625rem;
+  font-size: 1rem;
+  margin-top: 0.3125rem;
+  font-weight: normal;
+  color: var(--sb-font-color);
+  font-family: "Satoshi";
+}
+
+.custom-translation-container {
+  width: 100%;
+  padding: 0.625rem;
+  font-family: "Satoshi";
+}
+
+.custom-tr-api {
+  padding: 0.3125rem;
+  width: 100%;
+}
+
+.custom-tr-in-con {
+  /* height: 20px; */
+  position: relative;
+}
+
+.custom-tr-in {
+  width: 100%;
+  height: 2.5rem;
+  border-radius: 0.3125rem;
+  padding-right: 5rem;
+  border: none;
+  padding-left: 0.3125rem;
+  font-size: 1rem;
+  background-color: var(--sb-background);
+  color: var(--sb-font-color);
+  outline: none;
+}
+
+.import-btn {
+  position: absolute;
+  right: 0.3125rem;
+  width: 4.375rem;
+  height: 1.875rem;
+  border-radius: 0.3125rem;
+  background-color: var(--sb-primary-color);
+  color: var(--sb-font-color);
+  border: none;
+}
+
+.sidebar-book-selector {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.sidebar-translation-selector {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+  border: 1px solid var(--sb-divider-color);
+  padding: 0 0.5rem 0 0.875rem;
+  height: 2.5rem;
+  min-width: 8.125rem;
+  width: auto;
+  border-radius: 0.625rem;
+  color: var(--sb-font-color);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.translation-option {
+  margin-bottom: 0.3125rem;
+  width: 100%;
+  padding: 0.3125rem;
+  border-radius: 0.3125rem;
+  cursor: pointer;
+  /* width: 300px; */
+}
+
+.translation-title {
+  width: 25%;
+  font-weight: bold;
+  font-size: 0.875rem;
+  font-family: "Satoshi", system-ui, sans-serif;
+}
+
+.sidebar-selected-title {
+  font-size: 0.875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "Satoshi", system-ui, sans-serif;
+  flex: 1;
+  overflow: hidden;
+  font-weight: 500;
+}
+
+.translation-description {
+  font-weight: normal;
+  font-size: 0.875rem;
+  width: 100%;
+  font-family: "Satoshi";
+}
+
+.psalms-btn {
+  background-color: var(--sb-secondary-color);
+  color: var(--sb-font-color);
+  padding: 0.625rem;
+  border-radius: 0.3125rem;
+  font-size: 0.875rem;
+  grid-column: 1 / -1;
+  border: none;
+  font-family: "Satoshi", system-ui, sans-serif;
+  text-align: left;
+}
+
+.chapter-btn {
+  padding: 0;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  width: 2.5rem;
+  aspect-ratio: 1 / 1;
+  background-color: color-mix(
+    in srgb,
+    var(--sb-secondary-color) 50%,
+    transparent
+  );
+  border-radius: 0.3125rem;
+  color: var(--sb-font-color);
+  transition: all 0.3s;
+  position: relative;
+  font-size: 1rem;
+}
+
+.chapter-btn:hover {
+  background-color: var(--sb-highlight-orange-color);
+  color: var(--sb-font-color);
+}
+
+@keyframes fadeInAnimation2 {
+  0% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.sidebar-chapters {
+  display: none;
+}
+
+.show-sidebar-chapter {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 2.5rem);
+  justify-content: space-between;
+  width: 100%;
+  height: fit-content;
+  gap: 0.625rem;
+  row-gap: 0.8125rem;
+  flex-wrap: wrap;
+  background-color: var(--sb-background);
+  padding: 0.5rem;
+  border-radius: 0.3125rem;
+}
+
+.sidebar {
+  width: 68.75rem;
+  background-color: var(--sb-background);
+  color: var(--sb-font-color);
+  padding: 0.625rem;
+  transition: all 0.5s;
+  scrollbar-width: none;
+  border-top-left-radius: 0.625rem;
+  border-bottom-left-radius: 0.625rem;
+  border-top-right-radius: 0.625rem;
+  border-bottom-right-radius: 0.625rem;
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  height: 0dvh;
+  bottom: 0.625rem;
+}
+
+.testament-selection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0px 0px 0.9375rem 0px;
+  border-radius: 0.3125rem;
+  gap: 0.625rem;
+}
+
+.sidebar-select {
+  width: 100%;
+  height: fit-content;
+  font-size: 1.25rem;
+  font-weight: bold;
+  border-radius: 0.625rem;
+  outline: 0px;
+  animation: fadeInAnimation2 ease 1s;
+  animation-iteration-count: 1;
+  animation-fill-mode: forwards;
+  cursor: pointer;
+}
+
+.sidebar-results {
+  width: 100%;
+  scroll-behavior: smooth;
+  overflow-y: auto;
+  scrollbar-width: none;
+  transition: all 0.3s;
+  height: calc(80dvh - 3.125rem);
+}
+
+.sidebar-itm {
+  height: 2.75rem;
+  width: 12.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  padding: 0.625rem 0.75rem;
+  font-family: "Satoshi", system-ui, sans-serif;
+  color: var(--sb-font-color);
+  text-transform: capitalize;
+}
+
+.sidebar-itm > span:last-child,
+.sidebar-itm .material-symbols-outlined {
+  color: color-mix(in srgb, var(--sb-font-color), transparent 55%);
+  font-size: 1.375rem;
+  transition: transform 0.2s ease;
+}
+
+.sidebar-ghost-itm {
+  height: 2.75rem;
+  width: 12.5rem;
+  user-select: none;
+  opacity: 0;
+}
+
+.sidebar-itm:hover {
+  background-color: color-mix(in srgb, var(--sb-font-color), transparent 95%);
+  color: var(--sb-font-color);
+}
+
+.sidebar-selected-itm:hover {
+  background-color: color-mix(
+    in srgb,
+    var(--sb-primary-color),
+    transparent 80%
+  );
+  color: var(--sb-primary-color);
+}
+
+.sidebar-selected-itm {
+  color: var(--sb-primary-color);
+  border-radius: 0.5rem;
+  border-bottom-color: transparent;
+}
+
+.sidebar-selected-itm .material-symbols-outlined {
+  color: var(--sb-primary-color);
+}
+
+.open-sideBar {
+  opacity: 1;
+  height: 80dvh;
+  bottom: 5rem;
+  box-shadow: 0px 3px 8px var(--sb-detached-pane-toolbar-background);
+}
+
+.close-sideBar {
+  right: 0;
+  height: 0;
+  user-select: none;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.upside-down {
+  transform: rotate(180deg);
+  transition: transform 0.3s;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+}
+
+.modal {
+  width: 23.4375rem;
+  background: var(--sb-book-selector-background);
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 20px var(--sb-detached-pane-toolbar-background);
+  padding: 0.625rem 0.625rem 2.8125rem 0.625rem;
+  z-index: 2;
+  position: absolute;
+  top: 4.375rem;
+  left: 1.25rem;
+}
+
+.translationSettingsModal {
+  left: 11.5625rem;
+  top: 6.25rem;
+  width: 12.5rem;
+  z-index: 1000;
+  padding: 0.3125rem;
+  border-radius: 0.3125rem;
+}
+
+.translationInfoModal {
+  position: absolute;
+  width: fit-content;
+  max-width: 21.875rem;
+  z-index: 1000;
+  padding: 0.3125rem;
+  border-radius: 0.3125rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.filters-icon {
+  height: 1.875rem;
+  width: 1.875rem;
+  background: var(--sb-background);
+  border-radius: 0.3125rem;
+  padding: 0.125rem;
+  cursor: pointer;
+}
+
+.emptyCircle {
+  display: inline-block;
+  border: 2px solid transparent;
+  height: 0.9375rem;
+  width: 0.9375rem;
+  border-radius: 50%;
+}
+
+.translation-title {
+  width: 100%;
+}
+
+.language-list {
+  height: 18.75rem;
+  overflow-y: auto;
+  scrollbar-width: none;
+  font-family: "Satoshi";
+}
+
+.item {
+  padding: 0.3125rem 0.625rem;
+  cursor: pointer;
+  border-radius: 0.375rem;
+}
+
+.item:hover {
+  background: #f5f5f5;
+}
+
+.language-separator {
+  text-align: center;
+  border-top: 1px solid #eee;
+  height: 0px;
+  background-color: #fff;
+}
+
+.footer {
+  padding: 0.625rem;
+  text-align: center;
+  color: #ff5722;
+  font-weight: 500;
+  cursor: pointer;
+  border-top: 1px solid #eee;
+  position: absolute;
+  width: 100%;
+  left: 0;
+  bottom: 0;
+  height: fit-content;
+  background-color: var(--sb-book-selector-background);
+  border-bottom-right-radius: 0.625rem;
+  border-bottom-left-radius: 0.625rem;
+}
+
+.sb-lg-centered {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.625rem;
+  text-align: center;
+}
+
+.sb-lg-expandButton {
+  display: flex;
+  background: var(--sb-primary-color);
+  padding: 0.3125rem;
+  border-radius: 0.3125rem;
+  border: none;
+  outline: none;
+  color: var(--sb-font-color);
+  width: max-content;
+}
+
+.sb-lg-loadMoreButton {
+  justify-content: center;
+}
+
+.sb-lg-expandIcon {
+  transition: transform 0.3s;
+}
+
+@media only screen and (max-width: 1200px) {
+  .sidebar {
+    width: 40.625rem;
+  }
+
+  .show-sidebar-chapter {
+    grid-template-columns: repeat(auto-fit, 2.375rem);
+  }
+
+  .separator {
+    width: 0.125rem;
+    height: 100%;
+    position: absolute;
+    left: calc(66.66% - 0.3125rem);
+  }
+
+  .searchbar {
+    width: 60%;
+  }
+}
+
+@media only screen and (max-width: 480px) {
+  .dropdown {
+    /* display: none; */
+    width: 62%;
+  }
+
+  .searchbar {
+    width: 80%;
+  }
+
+  .sidebar-translation-selector {
+    width: 5.625rem;
+  }
+
+  .testament-selection {
+    padding: 0.3125rem 0.9375rem;
+  }
+
+  .sidebar-selected-title {
+    font-size: 1rem;
+    font-weight: bold;
+  }
+
+  .sidebar {
+    transition: all 0.5s;
+    height: 80dvh;
+    padding-bottom: 2.5rem;
+    width: 20.625rem;
+  }
+
+  .sidebar-results {
+    height: calc(95dvh);
+  }
+
+  .books-container {
+    height: calc(100dvh - 5rem);
+    flex-direction: column;
+    overflow: auto;
+  }
+
+  .dropdown-select {
+    width: 100%;
+    font-weight: bold;
+  }
+
+  .dropdown-option {
+    width: 100%;
+  }
+
+  .testament-title {
+    text-align: left;
+    padding-left: 0px;
+    width: 100%;
+  }
+
+  .sidebar.experience_id-3 {
+    width: calc(100vw - 2.5rem);
+    height: 80dvh;
+  }
+
+  .sidebar.experience_id-3.close-sideBar {
+    height: 45dvh;
+    width: 12.5rem;
+  }
+
+  .open-sideBar {
+    right: 0;
+    opacity: 1;
+    bottom: 2.8125rem;
+    height: calc(100dvh - 4.375rem);
+    width: 100dvw;
+    border-radius: 0px;
+    box-shadow: none;
+    top: 0px;
+  }
+
+  .close-sideBar {
+    right: -12.5rem;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .sidebar-itm {
+    width: 100%;
+    font-size: 1rem;
+  }
+
+  .chapter-btn {
+    width: calc(20% - 0.625rem);
+  }
+
+  .show-sidebar-chapter {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    column-gap: 0.75rem;
+    row-gap: 0.8125rem;
+    height: fit-content;
+    justify-content: flex-start;
+    background: transparent;
+  }
+
+  .sb-selector-panel .sidebar-selected-itm:hover {
+    background: transparent;
+    color: var(--sb-primary-color);
+  }
+
+  .psalms-btn {
+    width: 10.25rem;
+  }
+
+  .sidebar-select {
+    font-size: 1.125rem;
+    padding-left: 0px;
+  }
+
+  .show-sidebar-chapter {
+    margin-top: -0.625rem;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    width: 100%;
+  }
+
+  .sidebar-selected-itm {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    color: var(--sb-primary-color);
+    font-weight: 600;
+  }
+
+  .separator {
+    width: 100%;
+    height: 0.125rem;
+    position: relative;
+    left: 0px;
+    margin-right: 0px;
+    margin-top: 0.625rem;
+    display: block;
+  }
+
+  .modal {
+    width: 100%;
+    left: 0;
+    top: 0.3125rem;
+    height: calc(100% - 3.125rem);
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .translationSettingsModal {
+    top: 3.4375rem;
+    padding: 0px 0.625rem;
+    height: fit-content;
+    width: 12.5rem;
+    left: auto;
+    right: 2.5rem;
+    box-shadow: 0 5px 10px
+      color-mix(
+        in srgb,
+        var(--sb-detached-pane-toolbar-background) 15%,
+        transparent
+      );
+    border-radius: 0.3125rem;
+  }
+
+  .translationInfoModal {
+    width: 15.625rem;
+    height: fit-content;
+    border-radius: 0.3125rem;
+    box-shadow: 0 5px 10px
+      color-mix(
+        in srgb,
+        var(--sb-detached-pane-toolbar-background) 15%,
+        transparent
+      );
+  }
+
+  .language-list {
+    height: calc(100% - 1.25rem);
+  }
+
+  .footer {
+    bottom: -2.8125rem;
+  }
+
+  .sb-select-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+    background: rgba(0, 0, 0, 0.4);
+  }
+
+  .sb-select-modal {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: fit-content;
+    background: var(--sb-book-selector-background);
+    border-top-left-radius: 0.625rem;
+    border-top-right-radius: 0.625rem;
+    box-shadow: 0 -5px 10px
+      color-mix(
+        in srgb,
+        var(--sb-detached-pane-toolbar-background) 15%,
+        transparent
+      );
+    padding: 1.25rem 0.625rem;
+  }
+
+  .sb-select-modal-content {
+    padding: 0.625rem 1.5rem 1.875rem 1.5rem;
+    /* height: 100%; */
+    overflow-y: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sb-select-modal-title-icon {
+    display: flex;
+    font-size: 1.375rem;
+    color: var(--sb-primary-color);
+    /* padding: 10px; */
+    border-radius: 0.3125rem;
+    background: var(--sb-tertiary-color);
+    width: 2.8125rem;
+    height: 2.8125rem;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .sb-select-modal-title {
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--sb-font-color);
+    margin-left: 0.625rem;
+    text-align: center;
+  }
+
+  .sb-select-modal-actions {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 0.625rem;
+  }
+
+  .sb-select-modal-action-btn {
+    border: none;
+    padding: 0.625rem;
+    border-radius: 0.3125rem;
+    width: 40%;
+    justify-content: center;
+    gap: 0.625rem;
+    font-weight: 500;
+  }
+}
+
+/* BibleSelector's testament columns stack full-width on mobile. Migrated from
+   the former global legacy.css. The bare selector also matches scripture-map's
+   .testament-container, but harmlessly: scripture-map sets its own width via a
+   higher-specificity rule and colors its text on child elements. */
+@media only screen and (max-width: 480px) {
+  .testament-container {
+    width: 100%;
+    color: var(--sb-font-color);
+  }
+}

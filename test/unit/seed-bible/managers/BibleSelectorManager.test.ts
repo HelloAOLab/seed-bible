@@ -6,8 +6,8 @@ import {
   type BibleSelectorState,
   createBibleSelectorState,
 } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
-import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
-import type { Pane } from "@packages/seed-bible/seed-bible/managers/PanesManager";
+import { createTabsLayout } from "@packages/seed-bible/seed-bible/managers/TabsLayoutManager";
+import type { TabSlot } from "@packages/seed-bible/seed-bible/managers/TabsLayoutManager";
 import { createTabs } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import {
   EXAMPLE_API_ENDPOINT,
@@ -91,12 +91,12 @@ function createBookmarksManagerMock() {
 function createSelectorState(
   dataManager: ReturnType<typeof createDataManager>,
   tabsManager: ReturnType<typeof createTabs>,
-  panesManager: ReturnType<typeof createPanes>
+  tabsLayoutManager: ReturnType<typeof createTabsLayout>
 ): BibleSelectorState {
   return createBibleSelectorState(
     dataManager,
     tabsManager,
-    panesManager,
+    tabsLayoutManager,
     createSettingsManagerMock() as any,
     createSidebarManagerMock() as any,
     createBookmarksManagerMock() as any,
@@ -156,11 +156,11 @@ function makeTranslationWithLanguage(props: {
   };
 }
 
-async function createManagersWithSelectedPane(): Promise<{
+async function createManagersWithSelectedSlot(): Promise<{
   readingState: BibleReadingState;
-  pane: Pane;
+  slot: TabSlot;
   tabsManager: ReturnType<typeof createTabs>;
-  panesManager: ReturnType<typeof createPanes>;
+  tabsLayoutManager: ReturnType<typeof createTabsLayout>;
   dataManager: ReturnType<typeof createDataManager>;
 }> {
   const dataManager = createDataManager();
@@ -172,23 +172,23 @@ async function createManagersWithSelectedPane(): Promise<{
     {} as any,
     createI18nManager(navigation, ["en"])
   );
-  const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
+  const tabsLayoutManager = createTabsLayout(tabsManager, signal(true));
 
-  const pane = panesManager.panes.value[0];
-  if (!pane?.tab) {
-    throw new Error("Expected an initial pane with a tab.");
+  const slot = tabsLayoutManager.slots.value[0];
+  if (!slot?.tab) {
+    throw new Error("Expected an initial slot with a tab.");
   }
 
-  const readingState = pane.tab.readingState;
+  const readingState = slot.tab.readingState;
   await waitForInitialLoad(readingState);
   await readingState.selectTranslation("BSB");
   await readingState.selectChapter("GEN", 1);
 
   return {
     readingState,
-    pane,
+    slot,
     tabsManager,
-    panesManager,
+    tabsLayoutManager,
     dataManager,
   };
 }
@@ -206,15 +206,15 @@ describe("createBibleSelectorState", () => {
 
   it("setOpen() opens the selector and displays books", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const { dataManager, pane, tabsManager, panesManager } =
-      await createManagersWithSelectedPane();
+    const { dataManager, slot, tabsManager, tabsLayoutManager } =
+      await createManagersWithSelectedSlot();
 
     const selector = createSelectorState(
       dataManager,
       tabsManager,
-      panesManager
+      tabsLayoutManager
     );
-    await selector.setOpen(true, pane);
+    await selector.setOpen(true, slot);
 
     expect(selector.isOpen.value).toBe(true);
     expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
@@ -223,16 +223,16 @@ describe("createBibleSelectorState", () => {
 
   it("syncs the open state to the `selector` URL query param", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const { dataManager, pane, tabsManager, panesManager } =
-      await createManagersWithSelectedPane();
+    const { dataManager, slot, tabsManager, tabsLayoutManager } =
+      await createManagersWithSelectedSlot();
 
     const selector = createSelectorState(
       dataManager,
       tabsManager,
-      panesManager
+      tabsLayoutManager
     );
 
-    await selector.setOpen(true, pane);
+    await selector.setOpen(true, slot);
     expect(new URLSearchParams(window.location.search).get("selector")).toBe(
       "open"
     );
@@ -245,17 +245,17 @@ describe("createBibleSelectorState", () => {
 
   it("setOpen() opens the selector and expands the current book", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const { dataManager, pane, tabsManager, panesManager } =
-      await createManagersWithSelectedPane();
+    const { dataManager, slot, tabsManager, tabsLayoutManager } =
+      await createManagersWithSelectedSlot();
 
-    await pane.tab!.readingState.selectChapter("EXO", 2);
+    await slot.tab!.readingState.selectChapter("EXO", 2);
 
     const selector = createSelectorState(
       dataManager,
       tabsManager,
-      panesManager
+      tabsLayoutManager
     );
-    await selector.setOpen(true, pane);
+    await selector.setOpen(true, slot);
 
     expect(selector.isOpen.value).toBe(true);
     expect(getDisplayedBookIds(selector)).toEqual(["GEN", "EXO", "MAT"]);
@@ -267,16 +267,16 @@ describe("createBibleSelectorState", () => {
 
   it("setSearch() filters books", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const { dataManager, pane, tabsManager, panesManager } =
-      await createManagersWithSelectedPane();
+    const { dataManager, slot, tabsManager, tabsLayoutManager } =
+      await createManagersWithSelectedSlot();
 
     const selector = createSelectorState(
       dataManager,
       tabsManager,
-      panesManager
+      tabsLayoutManager
     );
 
-    await selector.setOpen(true, pane);
+    await selector.setOpen(true, slot);
 
     expect(selector.isOpen.value).toBe(true);
 
@@ -288,16 +288,16 @@ describe("createBibleSelectorState", () => {
 
   it("setExpandedBook() sets expandedBookId", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const { dataManager, pane, tabsManager, panesManager } =
-      await createManagersWithSelectedPane();
+    const { dataManager, slot, tabsManager, tabsLayoutManager } =
+      await createManagersWithSelectedSlot();
 
     const selector = createSelectorState(
       dataManager,
       tabsManager,
-      panesManager
+      tabsLayoutManager
     );
 
-    await selector.setOpen(true, pane);
+    await selector.setOpen(true, slot);
     expect(selector.isOpen.value).toBe(true);
 
     selector.setExpandedBook("EXO");
@@ -307,16 +307,16 @@ describe("createBibleSelectorState", () => {
 
   it("selectTranslation() selects the translation and updates the selector state", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const { dataManager, readingState, pane, tabsManager, panesManager } =
-      await createManagersWithSelectedPane();
+    const { dataManager, readingState, slot, tabsManager, tabsLayoutManager } =
+      await createManagersWithSelectedSlot();
 
     const selector = createSelectorState(
       dataManager,
       tabsManager,
-      panesManager
+      tabsLayoutManager
     );
 
-    await selector.setOpen(true, pane);
+    await selector.setOpen(true, slot);
     expect(selector.isOpen.value).toBe(true);
 
     await selector.selectTranslation("NIV");
@@ -336,16 +336,16 @@ describe("createBibleSelectorState", () => {
 
   it("selectChapter() applies selector translation and chapter to reading state", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const { dataManager, readingState, pane, tabsManager, panesManager } =
-      await createManagersWithSelectedPane();
+    const { dataManager, readingState, slot, tabsManager, tabsLayoutManager } =
+      await createManagersWithSelectedSlot();
 
     const selector = createSelectorState(
       dataManager,
       tabsManager,
-      panesManager
+      tabsLayoutManager
     );
 
-    await selector.setOpen(true, pane);
+    await selector.setOpen(true, slot);
     await selector.selectTranslation("NIV");
 
     await selector.selectChapter("MAT", 1);
@@ -355,68 +355,70 @@ describe("createBibleSelectorState", () => {
     expect(readingState.chapterNumber.value).toBe(1);
   });
 
-  it("setOpen({forNewTab}) flips forceNewTab and selectChapter creates a new tab bound to the pane", async () => {
+  it("setOpen({forNewTab}) flips forceNewTab and selectChapter creates a new tab bound to the slot", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const { dataManager, pane, tabsManager, panesManager } =
-      await createManagersWithSelectedPane();
+    const { dataManager, slot, tabsManager, tabsLayoutManager } =
+      await createManagersWithSelectedSlot();
 
     const selector = createSelectorState(
       dataManager,
       tabsManager,
-      panesManager
+      tabsLayoutManager
     );
 
     const initialTabCount = tabsManager.tabs.value.length;
-    const originalTabId = pane.tab!.id;
+    const originalTabId = slot.tab!.id;
 
-    await selector.setOpen(true, pane, { forNewTab: true });
+    await selector.setOpen(true, slot, { forNewTab: true });
     expect(selector.forceNewTab.value).toBe(true);
 
     await selector.selectChapter("EXO", 2);
 
-    // A brand new tab is created — the pane's existing tab is not reused.
+    // A brand new tab is created — the slot's existing tab is not reused.
     expect(tabsManager.tabs.value).toHaveLength(initialTabCount + 1);
     const newTab = tabsManager.tabs.value[initialTabCount]!;
     expect(newTab.id).not.toBe(originalTabId);
 
-    // The new tab is bound to the originally targeted pane.
-    const updatedPane = panesManager.panes.value.find((p) => p.id === pane.id);
-    expect(updatedPane?.tab?.id).toBe(newTab.id);
+    // The new tab is bound to the originally targeted slot.
+    const updatedSlot = tabsLayoutManager.slots.value.find(
+      (s) => s.id === slot.id
+    );
+    expect(updatedSlot?.tab?.id).toBe(newTab.id);
 
     // forceNewTab is cleared, selector closes.
     expect(selector.isOpen.value).toBe(false);
     expect(selector.forceNewTab.value).toBe(false);
   });
 
-  it("setTargetPane() switches the pane that the next chapter selection binds to", async () => {
+  it("setTargetSlot() switches the slot that the next chapter selection binds to", async () => {
     setWebResponses(createExampleManagerResponseMap());
-    const { dataManager, pane, tabsManager, panesManager } =
-      await createManagersWithSelectedPane();
+    const { dataManager, slot, tabsManager, tabsLayoutManager } =
+      await createManagersWithSelectedSlot();
 
-    panesManager.setLayout("split-2v");
-    const otherPane =
-      panesManager.panes.value.find((p) => p.id !== pane.id) ?? null;
-    expect(otherPane).not.toBeNull();
+    tabsLayoutManager.setLayout("split-2v");
+    const otherSlot =
+      tabsLayoutManager.slots.value.find((s) => s.id !== slot.id) ?? null;
+    expect(otherSlot).not.toBeNull();
 
     const selector = createSelectorState(
       dataManager,
       tabsManager,
-      panesManager
+      tabsLayoutManager
     );
 
-    await selector.setOpen(true, pane, { forNewTab: true });
-    expect(selector.pane.value?.id).toBe(pane.id);
+    await selector.setOpen(true, slot, { forNewTab: true });
+    expect(selector.slot.value?.id).toBe(slot.id);
 
-    selector.setTargetPane(otherPane!.id);
-    expect(selector.pane.value?.id).toBe(otherPane!.id);
+    selector.setTargetSlot(otherSlot!.id);
+    expect(selector.slot.value?.id).toBe(otherSlot!.id);
 
     await selector.selectChapter("GEN", 1);
 
-    const updatedOtherPane = panesManager.panes.value.find(
-      (p) => p.id === otherPane!.id
+    const updatedOtherSlot = tabsLayoutManager.slots.value.find(
+      (s) => s.id === otherSlot!.id
     );
     const newTabId = tabsManager.tabs.value.at(-1)!.id;
-    expect(updatedOtherPane?.tab?.id).toBe(newTabId);
+    expect(updatedOtherSlot?.tab?.id).toBe(newTabId);
   });
 
   it("groups api translations by language code instead of language english name", async () => {
@@ -476,18 +478,20 @@ describe("createBibleSelectorState", () => {
       {} as any,
       createI18nManager(navigation, ["en"])
     );
-    const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
+    const tabsLayoutManager = createTabsLayout(tabsManager, signal(true));
 
-    const initialPane = panesManager.panes.value[0]!;
-    panesManager.openInPane(initialPane.id, { component: null });
-    const tablessPane = panesManager.panes.value[0]!;
+    const initialSlot = tabsLayoutManager.slots.value[0]!;
+    tabsLayoutManager.slots.value = tabsLayoutManager.slots.value.map((slot) =>
+      slot.id === initialSlot.id ? { ...slot, tab: null } : slot
+    );
+    const tablessSlot = tabsLayoutManager.slots.value[0]!;
 
     const selector = createSelectorState(
       dataManager,
       tabsManager,
-      panesManager
+      tabsLayoutManager
     );
-    await selector.setOpen(true, tablessPane);
+    await selector.setOpen(true, tablessSlot);
 
     expect(
       selector.apiTranslations.value.map((group) => group.language)
@@ -567,18 +571,20 @@ describe("createBibleSelectorState", () => {
       {} as any,
       createI18nManager(navigation, ["en"])
     );
-    const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
+    const tabsLayoutManager = createTabsLayout(tabsManager, signal(true));
 
-    const initialPane = panesManager.panes.value[0]!;
-    panesManager.openInPane(initialPane.id, { component: null });
-    const tablessPane = panesManager.panes.value[0]!;
+    const initialSlot = tabsLayoutManager.slots.value[0]!;
+    tabsLayoutManager.slots.value = tabsLayoutManager.slots.value.map((slot) =>
+      slot.id === initialSlot.id ? { ...slot, tab: null } : slot
+    );
+    const tablessSlot = tabsLayoutManager.slots.value[0]!;
 
     const selector = createSelectorState(
       dataManager,
       tabsManager,
-      panesManager
+      tabsLayoutManager
     );
-    await selector.setOpen(true, tablessPane);
+    await selector.setOpen(true, tablessSlot);
 
     selector.languageQuery.value = "english";
 
@@ -600,7 +606,7 @@ describe("createBibleSelectorState", () => {
       nestedLogSpy.mockRestore();
     });
 
-    function createManagersWithTablessPane() {
+    function createManagersWithTablessSlot() {
       const dataManager = createDataManager();
       const navigation = createNavigationManager();
       const tabsManager = createTabs(
@@ -610,26 +616,28 @@ describe("createBibleSelectorState", () => {
         {} as any,
         createI18nManager(navigation, ["en"])
       );
-      const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
+      const tabsLayoutManager = createTabsLayout(tabsManager, signal(true));
 
-      const initialPane = panesManager.panes.value[0]!;
-      panesManager.openInPane(initialPane.id, { component: null });
-      const tablessPane = panesManager.panes.value[0]!;
+      const initialSlot = tabsLayoutManager.slots.value[0]!;
+      tabsLayoutManager.slots.value = tabsLayoutManager.slots.value.map(
+        (slot) => (slot.id === initialSlot.id ? { ...slot, tab: null } : slot)
+      );
+      const tablessSlot = tabsLayoutManager.slots.value[0]!;
 
-      return { dataManager, tabsManager, panesManager, tablessPane };
+      return { dataManager, tabsManager, tabsLayoutManager, tablessSlot };
     }
 
-    it("setOpen() selects DEFAULT_TRANSLATION_ID (AAB) when no pane has a tab but AAB is in available translations", async () => {
+    it("setOpen() selects DEFAULT_TRANSLATION_ID (AAB) when no slot has a tab but AAB is in available translations", async () => {
       setWebResponses(createExampleManagerResponseMap());
-      const { dataManager, tabsManager, panesManager, tablessPane } =
-        createManagersWithTablessPane();
+      const { dataManager, tabsManager, tabsLayoutManager, tablessSlot } =
+        createManagersWithTablessSlot();
 
       const selector = createSelectorState(
         dataManager,
         tabsManager,
-        panesManager
+        tabsLayoutManager
       );
-      await selector.setOpen(true, tablessPane);
+      await selector.setOpen(true, tablessSlot);
 
       expect(selector.isOpen.value).toBe(true);
       expect(selector.selectedTranslationId.value).toBe("AAB");
@@ -642,21 +650,21 @@ describe("createBibleSelectorState", () => {
         }),
         [makeExampleUrl("/api/NIV/books.json")]: createResponse(nivBooks),
       });
-      const { dataManager, tabsManager, panesManager, tablessPane } =
-        createManagersWithTablessPane();
+      const { dataManager, tabsManager, tabsLayoutManager, tablessSlot } =
+        createManagersWithTablessSlot();
 
-      for (const pane of panesManager.panes.value) {
-        if (pane.tab?.readingState.translationId) {
-          expect(pane.tab.readingState.translationId.value).not.toBe("NIV");
+      for (const slot of tabsLayoutManager.slots.value) {
+        if (slot.tab?.readingState.translationId) {
+          expect(slot.tab.readingState.translationId.value).not.toBe("NIV");
         }
       }
 
       const selector = createSelectorState(
         dataManager,
         tabsManager,
-        panesManager
+        tabsLayoutManager
       );
-      await selector.setOpen(true, tablessPane);
+      await selector.setOpen(true, tablessSlot);
 
       expect(selector.isOpen.value).toBe(true);
       expect(selector.selectedTranslationId.value).toBe("NIV");
@@ -668,22 +676,22 @@ describe("createBibleSelectorState", () => {
           translations: [],
         }),
       });
-      const { dataManager, tabsManager, panesManager, tablessPane } =
-        createManagersWithTablessPane();
+      const { dataManager, tabsManager, tabsLayoutManager, tablessSlot } =
+        createManagersWithTablessSlot();
 
-      for (const pane of panesManager.panes.value) {
-        if (pane.tab?.readingState.translationId) {
-          expect(pane.tab.readingState.translationId.value).not.toBe("NIV");
+      for (const slot of tabsLayoutManager.slots.value) {
+        if (slot.tab?.readingState.translationId) {
+          expect(slot.tab.readingState.translationId.value).not.toBe("NIV");
         }
       }
 
       const selector = createSelectorState(
         dataManager,
         tabsManager,
-        panesManager
+        tabsLayoutManager
       );
 
-      await selector.setOpen(true, tablessPane);
+      await selector.setOpen(true, tablessSlot);
 
       expect(selector.error.value).toBe("No available translations found.");
       expect(selector.isOpen.value).toBe(true);

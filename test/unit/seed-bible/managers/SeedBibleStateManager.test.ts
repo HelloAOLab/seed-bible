@@ -149,11 +149,15 @@ describe("createSeedBibleState", () => {
     expect(state.tabs.selectedTabId.value).toBe("tab-1");
     expect(state.app.selectedTab.value?.id).toBe("tab-1");
 
-    expect(state.panes.panes.value).toHaveLength(1);
-    expect(state.panes.panes.value[0]?.tab?.id).toBe("tab-1");
-    expect(state.panes.selectedPaneId.value).toBe(
-      state.panes.panes.value[0]?.id ?? null
+    expect(state.tabsLayout.slots.value).toHaveLength(1);
+    expect(state.tabsLayout.slots.value[0]?.tab?.id).toBe("tab-1");
+    expect(state.tabsLayout.selectedSlotId.value).toBe(
+      state.tabsLayout.slots.value[0]?.id ?? null
     );
+
+    // Custom panes (fullscreen/side/floating) are a separate, initially-empty
+    // list — no pane is created just because a tab exists.
+    expect(state.panes.panes.value).toHaveLength(0);
 
     expect(state.selector.isOpen.value).toBe(false);
     expect(state.highlights).toBe(mockHighlightsManager as any);
@@ -177,11 +181,13 @@ describe("createSeedBibleState", () => {
     expect(state.tabs.selectedTabId.value).toBe("tab-1");
     expect(state.app.selectedTab.value?.id).toBe("tab-1");
 
-    expect(state.panes.panes.value).toHaveLength(1);
-    expect(state.panes.panes.value[0]?.tab?.id).toBe("tab-1");
-    expect(state.panes.selectedPaneId.value).toBe(
-      state.panes.panes.value[0]?.id ?? null
+    expect(state.tabsLayout.slots.value).toHaveLength(1);
+    expect(state.tabsLayout.slots.value[0]?.tab?.id).toBe("tab-1");
+    expect(state.tabsLayout.selectedSlotId.value).toBe(
+      state.tabsLayout.slots.value[0]?.id ?? null
     );
+
+    expect(state.panes.panes.value).toHaveLength(0);
 
     expect(state.selector.isOpen.value).toBe(false);
     expect(state.highlights).toBe(mockHighlightsManager as any);
@@ -191,36 +197,34 @@ describe("createSeedBibleState", () => {
     expect(state.bibleData.api.endpoint).toBe("https://bible.helloao.org/");
   });
 
-  it("selecting a tab selects the tab and switches the pane to display the selected tab", async () => {
+  it("selecting a tab selects the tab and switches the slot to display the selected tab", async () => {
     const state = await createStateWithTwoTabs();
 
-    state.panes.setLayout("split-2v");
-    const firstPane = state.panes.panes.value[0]!;
-    const secondPane = state.panes.panes.value[1]!;
-    state.panes.openInPane(secondPane.id, {
-      tabId: "tab-2",
-    });
-    state.panes.selectPane(firstPane.id);
+    state.tabsLayout.setLayout("split-2v");
+    const firstSlot = state.tabsLayout.slots.value[0]!;
+    const secondSlot = state.tabsLayout.slots.value[1]!;
+    state.tabsLayout.openTabInSlot(secondSlot.id, "tab-2");
+    state.tabsLayout.selectSlot(firstSlot.id);
 
     state.app.selectTab("tab-2");
 
-    const selectedPane = state.panes.panes.value.find(
-      (pane) => pane.id === state.panes.selectedPaneId.value
+    const selectedSlot = state.tabsLayout.slots.value.find(
+      (slot) => slot.id === state.tabsLayout.selectedSlotId.value
     );
 
     expect(state.tabs.selectedTabId.value).toBe("tab-2");
-    expect(selectedPane?.tab?.id).toBe("tab-2");
+    expect(selectedSlot?.tab?.id).toBe("tab-2");
   });
 
-  it("adding a tab opens the bible selector in new-tab mode for the selected pane", async () => {
+  it("adding a tab opens the bible selector in new-tab mode for the selected slot", async () => {
     const state = await createState();
-    const selectedPaneId = state.panes.selectedPaneId.value;
+    const selectedSlotId = state.tabsLayout.selectedSlotId.value;
     const previousTabCount = state.tabs.tabs.value.length;
 
     state.app.addTab();
 
     // forceNewTab is set synchronously inside setOpen before the async
-    // syncStateFromPane work; isOpen flips to true only after that work
+    // syncStateFromSlot work; isOpen flips to true only after that work
     // resolves, so wait for it.
     await waitFor(() => state.selector.isOpen.value === true);
 
@@ -228,7 +232,7 @@ describe("createSeedBibleState", () => {
     // selector first so the new tab can be seeded with the chosen book.
     expect(state.tabs.tabs.value).toHaveLength(previousTabCount);
     expect(state.selector.forceNewTab.value).toBe(true);
-    expect(state.selector.pane.value?.id).toBe(selectedPaneId);
+    expect(state.selector.slot.value?.id).toBe(selectedSlotId);
   });
 
   it("createSharedSession() creates a shared session and adds a tab for its reading state", async () => {
@@ -381,204 +385,180 @@ describe("createSeedBibleState", () => {
     }
   });
 
-  it("tabs can be opened in new panes", async () => {
+  it("tabs can be opened in new slots", async () => {
     const state = await createStateWithTwoTabs();
 
-    state.app.openInNewPane("tab-2");
+    state.app.openInNewSlot("tab-2");
 
-    expect(state.panes.panes.value).toHaveLength(2);
+    expect(state.tabsLayout.slots.value).toHaveLength(2);
     expect(
-      state.panes.panes.value.some((pane) => pane.tab?.id === "tab-2")
+      state.tabsLayout.slots.value.some((slot) => slot.tab?.id === "tab-2")
     ).toBe(true);
     expect(state.tabs.selectedTabId.value).toBe("tab-2");
   });
 
-  it("opens an independent, hidden tab in a new pane when the tab is already shown in the current pane", async () => {
+  it("opens an independent, hidden tab in a new slot when the tab is already shown in the current slot", async () => {
     const state = await createState();
-    // The single pane shows the selected tab (tab-1).
-    expect(state.panes.panes.value).toHaveLength(1);
-    expect(state.panes.panes.value[0]?.tab?.id).toBe("tab-1");
+    // The single slot shows the selected tab (tab-1).
+    expect(state.tabsLayout.slots.value).toHaveLength(1);
+    expect(state.tabsLayout.slots.value[0]?.tab?.id).toBe("tab-1");
 
-    state.app.openInNewPane("tab-1");
+    state.app.openInNewSlot("tab-1");
 
-    // A second pane appears, bound to a *different* tab so it is not
-    // de-duplicated away (would leave an empty pane) and so chapter navigation
-    // moves only one pane (independent reading states).
-    expect(state.panes.panes.value).toHaveLength(2);
-    const tabIds = state.panes.panes.value.map((pane) => pane.tab?.id ?? null);
+    // A second slot appears, bound to a *different* tab so it is not
+    // de-duplicated away (would leave an empty slot) and so chapter navigation
+    // moves only one slot (independent reading states).
+    expect(state.tabsLayout.slots.value).toHaveLength(2);
+    const tabIds = state.tabsLayout.slots.value.map(
+      (slot) => slot.tab?.id ?? null
+    );
     expect(tabIds.every((id) => id !== null)).toBe(true);
     expect(new Set(tabIds).size).toBe(2);
 
-    // The cloned tab is pane-only (hidden from the tab strip): the user still
+    // The cloned tab is slot-only (hidden from the tab strip): the user still
     // sees a single visible tab.
-    const visibleTabs = state.tabs.tabs.value.filter((tab) => !tab.paneOnly);
+    const visibleTabs = state.tabs.tabs.value.filter((tab) => !tab.slotOnly);
     expect(visibleTabs).toHaveLength(1);
     expect(visibleTabs[0]?.id).toBe("tab-1");
   });
 
-  it("opens an independent, hidden tab in a detached pane when the tab is already shown in the current pane", async () => {
-    const state = await createState();
-    expect(state.panes.panes.value).toHaveLength(1);
-    const originalTabId = state.panes.panes.value[0]?.tab?.id ?? null;
-
-    state.app.openInDetachedPane("tab-1");
-
-    const detachedPanes = state.panes.panes.value.filter(
-      (pane) => pane.detached
-    );
-    expect(detachedPanes).toHaveLength(1);
-    // The detached pane gets its own tab so navigating it does not move the
-    // attached pane.
-    const detachedTabId = detachedPanes[0]?.tab?.id ?? null;
-    expect(detachedTabId).not.toBe(null);
-    expect(detachedTabId).not.toBe(originalTabId);
-    expect(state.tabs.tabs.value.filter((tab) => !tab.paneOnly)).toHaveLength(
-      1
-    );
-
-    // Closing the detached pane disposes the hidden tab so it does not leak.
-    state.panes.closePane(detachedPanes[0]!.id);
-    expect(state.tabs.tabs.value.some((tab) => tab.id === detachedTabId)).toBe(
-      false
-    );
-  });
-
-  it("selecting a pane that has a tab also selects the tab for the pane", async () => {
+  it("selecting a slot that has a tab also selects the tab for the slot", async () => {
     const state = await createStateWithTwoTabs();
 
-    state.panes.setLayout("split-2v");
-    const secondPane = state.panes.panes.value[1]!;
-    state.panes.openInPane(secondPane.id, {
-      tabId: "tab-2",
-    });
-    state.app.selectPane(secondPane.id);
+    state.tabsLayout.setLayout("split-2v");
+    const secondSlot = state.tabsLayout.slots.value[1]!;
+    state.tabsLayout.openTabInSlot(secondSlot.id, "tab-2");
 
-    expect(state.panes.selectedPaneId.value).toBe(secondPane.id);
+    state.app.selectSlot(secondSlot.id);
+
+    expect(state.tabsLayout.selectedSlotId.value).toBe(secondSlot.id);
     expect(state.tabs.selectedTabId.value).toBe("tab-2");
   });
 
-  it("selecting a pane that has a grid portal doesn't open the bible selector", async () => {
+  it("selecting a pane only selects it, without affecting the selector or tab selection", async () => {
     const state = await createState();
-
-    state.panes.openPane({
-      type: "attached",
-      gridPortal: "test_portal",
+    const pane = state.panes.openPane({
+      placement: "side",
+      title: "Test Pane",
+      component: () => null,
     });
-    const secondPane = state.panes.panes.value[1]!;
-    state.app.selectPane(secondPane.id);
+    const previousSelectedTabId = state.tabs.selectedTabId.value;
 
-    expect(state.panes.selectedPaneId.value).toBe(secondPane.id);
+    state.app.selectPane(pane.id);
+
+    expect(state.panes.selectedPaneId.value).toBe(pane.id);
+    expect(state.tabs.selectedTabId.value).toBe(previousSelectedTabId);
     expect(state.selector.isOpen.value).toBe(false);
   });
 
-  it("selecting a pane that has a map portal doesn't open the bible selector", async () => {
-    const state = await createState();
-
-    state.panes.openPane({
-      type: "attached",
-      mapPortal: "test_portal",
-    });
-    const secondPane = state.panes.panes.value[1]!;
-    state.app.selectPane(secondPane.id);
-
-    expect(state.panes.selectedPaneId.value).toBe(secondPane.id);
-    expect(state.selector.isOpen.value).toBe(false);
-  });
-
-  it("selecting an empty pane opens the bible selector", async () => {
-    const state = await createState();
-
-    state.panes.setLayout("split-2v");
-    const emptyPane =
-      state.panes.panes.value.find(
-        (pane) => pane.tab === null && pane.component === null
-      ) ?? null;
-
-    expect(emptyPane).not.toBeNull();
-
-    state.app.selectPane(emptyPane!.id);
-    await waitFor(() => state.selector.isOpen.value === true);
-
-    expect(state.selector.isOpen.value).toBe(true);
-    expect(state.selector.pane.value?.id).toBe(emptyPane!.id);
-  });
-
-  describe("mobile pane restrictions", () => {
+  describe("mobile tab slot restrictions", () => {
     // isMobile is derived from viewportWidth; the returned signal is the same
     // writable instance, so tests drive the mobile layout by writing to it.
     const setViewportWidth = (state: SeedBibleState, width: number) => {
       (state.app.viewportWidth as unknown as { value: number }).value = width;
     };
 
-    it("shows at most two anchored panes, stacked top/bottom, on mobile", async () => {
+    it("shows a single slot, never stacked, on mobile", async () => {
       const state = await createState();
-      // A four-slot desktop layout leaves four attached panes in the manager.
-      state.panes.setLayout("grid-2x2");
-      expect(
-        state.panes.panes.value.filter((pane) => !pane.detached)
-      ).toHaveLength(4);
+      // A four-slot desktop layout leaves four slots in the manager.
+      state.tabsLayout.setLayout("grid-2x2");
+      expect(state.tabsLayout.slots.value).toHaveLength(4);
 
       setViewportWidth(state, 400);
 
-      const shownAttached = state.app.effectivePanes.value.filter(
-        (pane) => !pane.detached
-      );
-      expect(shownAttached).toHaveLength(2);
-      expect(state.app.effectiveLayout.value).toBe("stacked-2");
+      expect(state.app.effectiveSlots.value).toHaveLength(1);
+      expect(state.app.effectiveSlotLayout.value).toBe("single");
 
-      // The manager's own layout/panes are left untouched so they are restored
-      // on desktop.
-      expect(state.panes.layout.value).toBe("grid-2x2");
-      expect(
-        state.panes.panes.value.filter((pane) => !pane.detached)
-      ).toHaveLength(4);
+      // The manager's own layout/slots are left untouched so they are
+      // restored on desktop.
+      expect(state.tabsLayout.layout.value).toBe("grid-2x2");
+      expect(state.tabsLayout.slots.value).toHaveLength(4);
     });
 
-    it("uses the single layout on mobile when only one anchored pane exists", async () => {
+    it("uses the single layout on mobile when only one slot exists", async () => {
       const state = await createState();
       setViewportWidth(state, 400);
 
-      expect(
-        state.app.effectivePanes.value.filter((pane) => !pane.detached)
-      ).toHaveLength(1);
-      expect(state.app.effectiveLayout.value).toBe("single");
+      expect(state.app.effectiveSlots.value).toHaveLength(1);
+      expect(state.app.effectiveSlotLayout.value).toBe("single");
     });
 
     it("restores the desktop layout when the viewport grows back", async () => {
       const state = await createState();
-      state.panes.setLayout("grid-2x2");
+      state.tabsLayout.setLayout("grid-2x2");
 
       setViewportWidth(state, 400);
-      expect(state.app.effectiveLayout.value).toBe("stacked-2");
+      expect(state.app.effectiveSlotLayout.value).toBe("single");
+      expect(state.app.effectiveSlots.value).toHaveLength(1);
 
       setViewportWidth(state, 1200);
-      expect(state.app.effectiveLayout.value).toBe("grid-2x2");
-      expect(
-        state.app.effectivePanes.value.filter((pane) => !pane.detached)
-      ).toHaveLength(4);
+      expect(state.app.effectiveSlotLayout.value).toBe("grid-2x2");
+      expect(state.app.effectiveSlots.value).toHaveLength(4);
     });
 
-    it("renders detached panes anchored to the bottom on mobile without changing their stored anchor", async () => {
+    it("shows a single slot matching the selected tab when panels are disabled", async () => {
+      const state = await createStateWithTwoTabs();
+      state.tabsLayout.setLayout("split-2v");
+      const secondSlot = state.tabsLayout.slots.value[1]!;
+      state.tabsLayout.openTabInSlot(secondSlot.id, "tab-2");
+      state.app.selectTab("tab-2");
+
+      state.config.setDisablePanels(true);
+
+      expect(state.app.panelsEnabled.value).toBe(false);
+      expect(state.app.effectiveSlots.value).toHaveLength(1);
+      expect(state.app.effectiveSlots.value[0]?.tab?.id).toBe("tab-2");
+    });
+  });
+
+  describe("mobile pane placement remap", () => {
+    const setViewportWidth = (state: SeedBibleState, width: number) => {
+      (state.app.viewportWidth as unknown as { value: number }).value = width;
+    };
+
+    it("remaps side/floating panes to fullscreen on mobile without changing the stored placement", async () => {
       const state = await createState();
-      const detached = state.panes.openPane({
-        type: "detached",
+      const sidePane = state.panes.openPane({
+        placement: "side",
+        title: "Side Pane",
         component: () => null,
       });
-      expect(detached).not.toBeNull();
-      expect(detached!.detachedAnchor).toBe("floating");
 
       setViewportWidth(state, 400);
 
-      const effectiveDetached = state.app.effectivePanes.value.find(
-        (pane) => pane.detached
+      const effectivePane = state.app.effectivePanes.value.find(
+        (pane) => pane.id === sidePane.id
       );
-      expect(effectiveDetached?.detachedAnchor).toBe("bottom");
+      expect(effectivePane?.placement).toBe("fullscreen");
 
-      // The stored anchor is preserved for when the layout returns to desktop.
-      const storedDetached = state.panes.panes.value.find(
-        (pane) => pane.detached
+      // The manager's own stored placement is untouched, so it snaps back
+      // when the viewport grows back to a desktop size.
+      const storedPane = state.panes.panes.value.find(
+        (pane) => pane.id === sidePane.id
       );
-      expect(storedDetached?.detachedAnchor).toBe("floating");
+      expect(storedPane?.placement).toBe("side");
+
+      setViewportWidth(state, 1200);
+      const restoredPane = state.app.effectivePanes.value.find(
+        (pane) => pane.id === sidePane.id
+      );
+      expect(restoredPane?.placement).toBe("side");
+    });
+
+    it("leaves fullscreen panes unchanged on mobile", async () => {
+      const state = await createState();
+      const fullscreenPane = state.panes.openPane({
+        placement: "fullscreen",
+        title: "Fullscreen Pane",
+        component: () => null,
+      });
+
+      setViewportWidth(state, 400);
+
+      const effectivePane = state.app.effectivePanes.value.find(
+        (pane) => pane.id === fullscreenPane.id
+      );
+      expect(effectivePane?.placement).toBe("fullscreen");
     });
   });
 
