@@ -151,12 +151,7 @@ describe("I18nManager language fallback prompt", () => {
       linkToQuery: vi.fn(),
     } as NavigationManager;
     manager = createI18nManager(nav, ["en"]);
-    manager.setBibleTranslationApplicator(
-      vi.fn(),
-      () => "AAB",
-      () => null,
-      null
-    );
+    manager.setBibleTranslationApplicator(vi.fn(), () => null, null);
   });
 
   it("shows the fallback prompt when the nearest translation is already active", async () => {
@@ -173,7 +168,6 @@ describe("I18nManager language fallback prompt", () => {
     const apply = vi.fn();
     manager.setBibleTranslationApplicator(
       apply,
-      () => "AAB",
       () => [{ id: "spa_onbv", language: "spa" } as Translation],
       null
     );
