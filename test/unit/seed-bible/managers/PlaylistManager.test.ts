@@ -4,6 +4,7 @@ import {
   createModalManager,
   createNavigationManager,
 } from "@packages/seed-bible/seed-bible/managers";
+import { createBibleReadingExtensionManager } from "@packages/seed-bible/seed-bible/managers/BibleReadingExtensionManager";
 import {
   PlaylistItem,
   PlaylistSchema,
@@ -83,6 +84,8 @@ function makeTab(
       selectTranslationAndChapter,
       translationId: signal(translationId),
       decorateVerses: vi.fn(),
+      enableExtension: vi.fn(),
+      disableExtension: vi.fn(),
     },
     sharedSession: null,
   } as unknown as NonNullable<TabArg>;
@@ -94,6 +97,36 @@ function makeTabs(tab: NonNullable<TabArg>): TabsArg {
     tabs: signal([tab]),
     selectedTabId: signal(tab.id),
   } as unknown as TabsArg;
+}
+
+/**
+ * Builds a mock reader tab along with directly-referenceable
+ * `enableExtension`/`disableExtension` mocks, for tests asserting on those
+ * calls specifically (mirrors `makeTab`, which doesn't expose them directly).
+ */
+function makeTabWithExtensionMocks(
+  id: string,
+  selectTranslationAndChapter: Mock
+): {
+  tab: NonNullable<TabArg>;
+  enableExtension: Mock;
+  disableExtension: Mock;
+} {
+  const enableExtension = vi.fn();
+  const disableExtension = vi.fn();
+  const tab = {
+    id,
+    title: id,
+    readingState: {
+      selectTranslationAndChapter,
+      translationId: signal("BSB"),
+      decorateVerses: vi.fn(),
+      enableExtension,
+      disableExtension,
+    },
+    sharedSession: null,
+  } as unknown as NonNullable<TabArg>;
+  return { tab, enableExtension, disableExtension };
 }
 
 describe("createPlaylistManager", () => {
@@ -111,7 +144,21 @@ describe("createPlaylistManager", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
   };
 
-  const makeManager = (id: string | null = "user-1", tabsManager?: TabsArg) => {
+  /**
+   * The `navigation`/`readingExtensionManager` instances used by the most
+   * recent `makeManager()` call, for tests that need to reach into URL sync
+   * or the registered extension without changing every existing call site.
+   */
+  let lastNavigation: ReturnType<typeof createNavigationManager>;
+  let lastReadingExtensionManager: ReturnType<
+    typeof createBibleReadingExtensionManager
+  >;
+
+  const makeManager = (
+    id: string | null = "user-1",
+    tabsManager?: TabsArg,
+    initialHref?: string
+  ) => {
     userId = signal<string | null>(id);
     const os = CasualOSManager();
     Object.assign(os, {
@@ -124,10 +171,15 @@ describe("createPlaylistManager", () => {
     const tabs =
       tabsManager ??
       makeTabs(makeTab("tab-1", selectTranslationAndChapterMock));
-    const navigation = createNavigationManager();
+    const navigation = createNavigationManager(
+      initialHref ? { initialHref } : undefined
+    );
     const isMobile = signal(false);
     const modals = createModalManager();
     const i18n = createI18nManager(navigation, ["en"]);
+    const readingExtensionManager = createBibleReadingExtensionManager();
+    lastNavigation = navigation;
+    lastReadingExtensionManager = readingExtensionManager;
     return createPlaylistManager(
       os,
       login,
@@ -135,7 +187,8 @@ describe("createPlaylistManager", () => {
       navigation,
       isMobile,
       modals,
-      i18n
+      i18n,
+      readingExtensionManager
     );
   };
 
@@ -155,6 +208,9 @@ describe("createPlaylistManager", () => {
   afterEach(() => {
     warnSpy.mockRestore();
     errorSpy.mockRestore();
+    // Clear any query params written by URL sync so they don't leak into the
+    // next test's initial navigation state.
+    window.history.replaceState(null, "", window.location.pathname);
   });
 
   it("syncs the user's playlists on creation", async () => {
@@ -527,6 +583,215 @@ describe("createPlaylistManager", () => {
       ...a.items,
       ...b.items,
     ]);
+  });
+
+  it("enables the playlist reading extension on the target tab when playback starts, and disables it on stop", async () => {
+    const { tab, enableExtension, disableExtension } =
+      makeTabWithExtensionMocks("tab-1", selectTranslationAndChapterMock);
+    const manager = makeManager("user-1", makeTabs(tab));
+    await flush();
+    const playlist = makePlaylist({
+      items: [{ type: "html", html: "<p>hi</p>" }],
+    });
+
+    manager.startPlaying(playlist);
+    expect(enableExtension).toHaveBeenCalledWith("playlist");
+    expect(disableExtension).not.toHaveBeenCalled();
+
+    manager.stopPlaying();
+    expect(disableExtension).toHaveBeenCalledWith("playlist");
+  });
+
+  it("disables the extension on the previous target tab when playback moves to a different tab", async () => {
+    const first = makeTabWithExtensionMocks(
+      "tab-1",
+      selectTranslationAndChapterMock
+    );
+    const second = makeTabWithExtensionMocks(
+      "tab-2",
+      selectTranslationAndChapterMock
+    );
+    const tabsManager = makeTabs(first.tab);
+    tabsManager.tabs.value = [first.tab, second.tab];
+    const manager = makeManager("user-1", tabsManager);
+    await flush();
+
+    tabsManager.selectedTabId.value = "tab-1";
+    manager.startPlaying(
+      makePlaylist({ id: "a", items: [{ type: "html", html: "a" }] })
+    );
+    expect(first.enableExtension).toHaveBeenCalledWith("playlist");
+
+    tabsManager.selectedTabId.value = "tab-2";
+    manager.startPlaying(
+      makePlaylist({ id: "b", items: [{ type: "html", html: "b" }] })
+    );
+    expect(first.disableExtension).toHaveBeenCalledWith("playlist");
+    expect(second.enableExtension).toHaveBeenCalledWith("playlist");
+  });
+
+  describe("playlist reading extension", () => {
+    /** Activates the registered "playlist" reading extension in isolation. */
+    const activateExtension = (isShared: boolean) => {
+      const definition =
+        lastReadingExtensionManager.getReadingExtension("playlist");
+      if (!definition) {
+        throw new Error('"playlist" reading extension was not registered');
+      }
+      return definition.activate({
+        // Unused by activate()/its hooks; only `isShared` is read.
+        readingState: {} as any,
+        data: signal(undefined),
+        isShared: signal(isShared),
+      });
+    };
+
+    it("navigateNext/navigatePrevious default when nothing is playing", async () => {
+      makeManager("user-1");
+      await flush();
+      const instance = activateExtension(false);
+
+      // These hooks resolve synchronously; the hook type also allows a
+      // Promise, but no `await`/`.resolves` is needed for this implementation.
+      expect(instance.navigateNext!({} as any)).toEqual({ type: "default" });
+      expect(instance.navigatePrevious!({} as any)).toEqual({
+        type: "default",
+      });
+    });
+
+    it("navigateNext/navigatePrevious advance the queue and prevent at the bounds", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(
+        makePlaylist({
+          items: [
+            { type: "html", html: "a" },
+            { type: "html", html: "b" },
+          ],
+        })
+      );
+      const instance = activateExtension(false);
+
+      expect(instance.navigatePrevious!({} as any)).toEqual({
+        type: "prevent",
+      });
+      expect(instance.navigateNext!({} as any)).toEqual({ type: "handled" });
+      expect(manager.playing.value?.currentIndex.value).toBe(1);
+      expect(instance.navigateNext!({} as any)).toEqual({ type: "prevent" });
+    });
+
+    it("omits navigateNext/navigatePrevious for a shared reading state, but keeps transformQueryParams", async () => {
+      makeManager("user-1");
+      await flush();
+      const instance = activateExtension(true);
+
+      expect(instance.navigateNext).toBeUndefined();
+      expect(instance.navigatePrevious).toBeUndefined();
+      expect(typeof instance.transformQueryParams).toBe("function");
+    });
+
+    it("transformQueryParams falls back to the initial URL locator (no step fallback) while nothing is playing", async () => {
+      makeManager(
+        "user-1",
+        undefined,
+        "http://localhost:3000/?playlist=user-1.playlist-1"
+      );
+      // No flush(): the construction-time deep-link autoplay is still async
+      // and hasn't resolved yet, so nothing is playing.
+      const instance = activateExtension(false);
+
+      const result = instance.transformQueryParams!({
+        readingState: {} as any,
+        data: signal(undefined),
+        queryParams: {},
+      });
+
+      expect(result.playlist).toBe("user-1.playlist-1");
+      expect(result.playlistStep).toBeNull();
+    });
+
+    it("transformQueryParams reflects the currently playing playlist and step", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      manager.startPlaying(
+        makePlaylist({
+          id: "playlist-9",
+          items: [
+            { type: "html", html: "a" },
+            { type: "html", html: "b" },
+          ],
+        })
+      );
+      manager.playing.value?.jumpTo(1);
+      const instance = activateExtension(false);
+
+      const result = instance.transformQueryParams!({
+        readingState: {} as any,
+        data: signal(undefined),
+        queryParams: { book: "GEN" },
+      });
+
+      expect(result).toEqual({
+        book: "GEN",
+        playlist: "user-1.playlist-9",
+        playlistStep: "1",
+      });
+    });
+  });
+
+  it("resolves the playlist and step from a single coordinated URL change, even while another playlist is already playing", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    manager.startPlaying(
+      makePlaylist({ id: "first", items: [{ type: "html", html: "a" }] })
+    );
+    expect(manager.playing.value?.currentIndex.value).toBe(0);
+
+    const second = makePlaylist({
+      id: "second",
+      recordName: "user-2",
+      items: [
+        { type: "html", html: "x" },
+        { type: "html", html: "y" },
+        { type: "html", html: "z" },
+      ],
+    });
+    getDataMock.mockResolvedValueOnce({ success: true, data: second });
+
+    const url = new URL(lastNavigation.currentUrl.value);
+    url.search = "";
+    url.searchParams.set("playlist", "user-2.second");
+    url.searchParams.set("playlistStep", "2");
+    lastNavigation.push(url.toString());
+    await flush();
+
+    expect(getDataMock).toHaveBeenCalledWith("user-2", "second");
+    expect(manager.playing.value?.playlists.value).toEqual([second]);
+    expect(manager.playing.value?.currentIndex.value).toBe(2);
+  });
+
+  it("stops playback when the playlist URL param is cleared", async () => {
+    const playlist = makePlaylist({
+      id: "playlist-1",
+      items: [{ type: "html", html: "a" }],
+    });
+    getDataMock.mockResolvedValue({ success: true, data: playlist });
+
+    const manager = makeManager(
+      "user-1",
+      undefined,
+      "http://localhost:3000/?playlist=user-1.playlist-1"
+    );
+    await flush();
+    expect(manager.playing.value).not.toBeNull();
+
+    const url = new URL(lastNavigation.currentUrl.value);
+    url.searchParams.delete("playlist");
+    url.searchParams.delete("playlistStep");
+    lastNavigation.push(url.toString());
+    await flush();
+
+    expect(manager.playing.value).toBeNull();
   });
 });
 

@@ -17,6 +17,7 @@ import type { ModalManager } from "./ModalManager";
 import { PlaylistHtmlContent } from "../components/PlaylistHtmlContent/PlaylistHtmlContent";
 import { PlaylistLinkContent } from "../components/PlaylistLinkContent/PlaylistLinkContent";
 import type { I18nManager } from "../i18n";
+import type { BibleReadingExtensionManager } from "./BibleReadingExtensionManager";
 
 export const VerseRefSchema = z.object({
   bookId: z.string(),
@@ -271,6 +272,13 @@ export function createPlayingState(
 /** Stable id so navigating between non-verse items updates the same modal instead of closing/reopening it. */
 const PLAYLIST_ITEM_MODAL_ID = "playlist-item-content";
 
+/**
+ * Id of the reading extension that lets a reading state's own next/previous-
+ * chapter controls (keyboard, swipe, toolbar) advance playlist playback
+ * instead, and lets its URL query params include `playlist`/`playlistStep`.
+ */
+const PLAYLIST_READING_EXTENSION_ID = "playlist";
+
 export function createPlaylistManager(
   os: CasualOSManager,
   login: LoginManager,
@@ -278,7 +286,8 @@ export function createPlaylistManager(
   navigation: NavigationManager,
   isMobile: ReadonlySignal<boolean>,
   modals: ModalManager,
-  i18n: I18nManager
+  i18n: I18nManager,
+  readingExtensionManager: BibleReadingExtensionManager
 ) {
   const initialPlaylistLocator = signal(
     navigation.currentUrl.value.searchParams.get("playlist")
@@ -517,7 +526,10 @@ export function createPlaylistManager(
    * tab is saved into the playing state so bible-verse items navigate it.
    */
   const startPlaying = (playlist: Playlist | Playlist[]): PlayingState => {
+    const previousTab = playing.value?.tab ?? null;
     playing.value?.dispose();
+    previousTab?.readingState.disableExtension(PLAYLIST_READING_EXTENSION_ID);
+
     const playlists = Array.isArray(playlist) ? playlist : [playlist];
     const sharedTab = tabs.tabs.value.find((tab) => tab.sharedSession) ?? null;
     const targetTab =
@@ -525,6 +537,7 @@ export function createPlaylistManager(
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ??
       null;
     playing.value = createPlayingState(playlists, targetTab);
+    targetTab?.readingState.enableExtension(PLAYLIST_READING_EXTENSION_ID);
     view.value = "play_playlist";
 
     if (isMobile.value) {
@@ -578,14 +591,47 @@ export function createPlaylistManager(
    * Stops playback, clears the playing state, and returns to the discover view.
    */
   const stopPlaying = (): void => {
+    const previousTab = playing.value?.tab ?? null;
     playing.value?.dispose();
     playing.value = null;
+    previousTab?.readingState.disableExtension(PLAYLIST_READING_EXTENSION_ID);
     initialPlaylistLocator.value = null;
     initialPlaylistStep.value = null;
     modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
     if (view.peek()) {
       view.value = "discover";
     }
+  };
+
+  /**
+   * The `playlist` URL query param value for the current state: the playing
+   * queue's first playlist, or (while nothing is playing) whatever locator was
+   * last seen in the URL — preserved so the param doesn't flash-clear while an
+   * async `startPlayingLocator` load is in flight.
+   */
+  const currentPlaylistLocator = (): string | null => {
+    const playingState = playing.value;
+    if (!playingState) {
+      return initialPlaylistLocator.value;
+    }
+    const firstPlaylist = playingState.playlists.value[0];
+    if (!firstPlaylist) {
+      return null;
+    }
+    return getPlaylistLocator(firstPlaylist);
+  };
+
+  /**
+   * The `playlistStep` URL query param value for the current state. Unlike
+   * `currentPlaylistLocator`, this has no fallback while nothing is playing —
+   * it is simply absent.
+   */
+  const currentPlaylistStep = (): string | null => {
+    const playingState = playing.value;
+    if (!playingState) {
+      return null;
+    }
+    return playingState.currentIndex.value.toString();
   };
 
   const syncPlaylists = async () => {
@@ -614,44 +660,98 @@ export function createPlaylistManager(
     showItemInModal(playing.value.currentItem.value);
   });
 
-  navigation.syncSignalsToUrl({
-    playlist: {
-      get value() {
-        const playingState = playing.value;
-        if (!playingState) {
-          return initialPlaylistLocator.value;
+  // Registered before the deep-link autoplay check below, since that check can
+  // synchronously reach `startPlaying` -> `enableExtension`.
+  readingExtensionManager.registerReadingExtension({
+    id: PLAYLIST_READING_EXTENSION_ID,
+    activate: ({ isShared }) => ({
+      // Always active, regardless of `isShared`: lets `getUrlQueryParams()`
+      // include `playlist`/`playlistStep` for a shared reading state too (the
+      // shareable-URL behavior is purely per-browser and doesn't care whether
+      // the tab happens to be shared).
+      transformQueryParams: ({ queryParams }) => ({
+        ...queryParams,
+        playlist: currentPlaylistLocator(),
+        playlistStep: currentPlaylistStep(),
+      }),
+      // Navigation interception is per-browser only. A shared reading state's
+      // enabled-extension set is mirrored across session participants
+      // (SessionsManager), so if these hooks existed unconditionally, one
+      // participant stopping playback would disable them out from under
+      // another participant still playing on the same shared tab.
+      ...(!isShared.value && {
+        navigateNext: () => {
+          const state = playing.value;
+          if (!state) {
+            return { type: "default" as const };
+          }
+          if (!state.hasNext.value) {
+            return { type: "prevent" as const };
+          }
+          state.next();
+          return { type: "handled" as const };
+        },
+        navigatePrevious: () => {
+          const state = playing.value;
+          if (!state) {
+            return { type: "default" as const };
+          }
+          if (!state.hasPrevious.value) {
+            return { type: "prevent" as const };
+          }
+          state.previous();
+          return { type: "handled" as const };
+        },
+      }),
+    }),
+  });
+
+  // Inbound (URL -> state) half of the `playlist`/`playlistStep` sync. Reads
+  // both params together so pasting a link with a nonzero step while
+  // something else is playing resolves to the right playlist *and* step in
+  // one coordinated call, rather than racing an async playlist load against a
+  // synchronous jump on the (still old) previous playing state.
+  //
+  // Every playback-state read below uses `.peek()` deliberately: this must be
+  // an effect over `navigation.currentUrl` alone. If it also tracked `playing`
+  // (etc.), it would re-run every time playback state changes for any reason
+  // (e.g. `startPlaying` itself) and, seeing the URL hasn't caught up yet
+  // (that happens separately, via `transformQueryParams`/`TabsManager`), would
+  // wrongly treat the still-stale URL as an external "stop playback" request.
+  const syncPlayingFromUrl = () => {
+    const url = navigation.currentUrl.value;
+    const requestedLocator = url.searchParams.get("playlist");
+    const requestedStep = url.searchParams.get("playlistStep");
+
+    const playingState = playing.peek();
+    const firstPlaylist = playingState?.playlists.peek()[0];
+    const locator = playingState
+      ? firstPlaylist
+        ? getPlaylistLocator(firstPlaylist)
+        : null
+      : initialPlaylistLocator.peek();
+
+    if (requestedLocator === locator) {
+      if (playingState && requestedStep !== null) {
+        const step = playingState.currentIndex.peek().toString();
+        if (requestedStep !== step) {
+          playingState.jumpTo(Math.floor(parseNumber(requestedStep, 0)));
         }
-        const firstPlaylist = playingState.playlists.value[0];
-        if (!firstPlaylist) {
-          return null;
-        }
-        return getPlaylistLocator(firstPlaylist);
-      },
-      set value(val) {
-        if (!val) {
-          stopPlaying();
-        } else {
-          void startPlayingLocator(val, initialPlaylistStep.value);
-        }
-      },
-    },
-    playlistStep: {
-      get value() {
-        const playingState = playing.value;
-        if (!playingState) {
-          return null;
-        }
-        return playingState.currentIndex.value.toString();
-      },
-      set value(val) {
-        const playingState = playing.value;
-        if (!playingState || val === null) {
-          return;
-        }
-        const index = Math.floor(parseNumber(val, 0));
-        playingState.jumpTo(index);
-      },
-    },
+      }
+      return;
+    }
+
+    if (!requestedLocator) {
+      stopPlaying();
+      return;
+    }
+
+    void startPlayingLocator(requestedLocator, requestedStep);
+  };
+
+  effect(() => {
+    void navigation.currentUrl.value;
+    syncPlayingFromUrl();
   });
 
   if (initialPlaylistLocator.value) {
