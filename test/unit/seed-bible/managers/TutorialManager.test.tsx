@@ -4,6 +4,10 @@ import { createTutorialManager } from "@packages/seed-bible/seed-bible/managers/
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type { OnboardingManager } from "@packages/seed-bible/seed-bible/managers/OnboardingManager";
 import type { BibleSelectorState } from "@packages/seed-bible/seed-bible/managers/BibleSelectorManager";
+import type { PanesManager } from "@packages/seed-bible/seed-bible/managers/PanesManager";
+import { createSidebar as createRealSidebar } from "@packages/seed-bible/seed-bible/managers/SidebarManager";
+
+type SidebarManager = ReturnType<typeof createRealSidebar>;
 
 function createLogin(): LoginManager {
   return {
@@ -29,6 +33,22 @@ function createSelector(): BibleSelectorState {
   } as unknown as BibleSelectorState;
 }
 
+function createPanes(): PanesManager {
+  return {
+    panes: signal([]),
+    closeAll: vi.fn(),
+  } as unknown as PanesManager;
+}
+
+function createSidebar(): SidebarManager {
+  return {
+    closeSearchPanel: vi.fn(),
+    closeChatPanel: vi.fn(),
+    closeSettings: vi.fn(),
+    closeSidebar: vi.fn(),
+  } as unknown as SidebarManager;
+}
+
 describe("createTutorialManager — session-link joins", () => {
   beforeEach(() => {
     // Flags persist in localStorage; start each test from a clean slate so
@@ -45,6 +65,8 @@ describe("createTutorialManager — session-link joins", () => {
       createOnboarding("done"),
       createSelector(),
       signal(false),
+      createPanes(),
+      createSidebar(),
       /* joinedViaSessionLink */ true
     );
 
@@ -59,7 +81,9 @@ describe("createTutorialManager — session-link joins", () => {
       createLogin(),
       createOnboarding("done"),
       createSelector(),
-      signal(false)
+      signal(false),
+      createPanes(),
+      createSidebar()
     );
 
     expect(tutorial.promptVisible.value).toBe(true);
@@ -75,6 +99,8 @@ describe("createTutorialManager — session-link joins", () => {
       createOnboarding("done"),
       createSelector(),
       signal(false),
+      createPanes(),
+      createSidebar(),
       /* joinedViaSessionLink */ true
     );
 
@@ -90,7 +116,9 @@ describe("createTutorialManager — session-link joins", () => {
       createLogin(),
       createOnboarding("done"),
       createSelector(),
-      signal(false)
+      signal(false),
+      createPanes(),
+      createSidebar()
     );
 
     tutorial.startContextual("search");

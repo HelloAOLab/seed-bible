@@ -2,10 +2,14 @@ import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
 import type { LoginManager } from "../managers/LoginManager";
 import type { OnboardingManager } from "../managers/OnboardingManager";
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
+import type { PanesManager } from "../managers/PanesManager";
+import { createSidebar } from "../managers/SidebarManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
 } from "../managers/ProfileConfigSync";
+
+type SidebarManager = ReturnType<typeof createSidebar>;
 
 const TUTORIAL_SEEN_KEY = "sb-tutorial-seen";
 const TUTORIAL_OPTED_OUT_KEY = "sb-tutorial-opted-out";
@@ -346,6 +350,8 @@ export function createTutorialManager(
   onboarding: OnboardingManager,
   selector: BibleSelectorState,
   isMobile: ReadonlySignal<boolean>,
+  panes: PanesManager,
+  sidebar: SidebarManager,
   joinedViaSessionLink = false
 ): TutorialManager {
   const running = signal<boolean>(false);
@@ -518,6 +524,17 @@ export function createTutorialManager(
   };
 
   const start = () => {
+    // Close whatever overlapping UI is up first — coach marks target the
+    // normal reader UI, so a fullscreen pane (e.g. the Today screen) or an
+    // open sidebar panel left up would hide the very elements being
+    // highlighted. Mirrors the teardown `BibleReaderToolbar` does before
+    // showing reader UI over the Today screen.
+    sidebar.closeSearchPanel();
+    sidebar.closeChatPanel();
+    sidebar.closeSettings();
+    sidebar.closeSidebar();
+    panes.closeAll();
+
     // Pick the step set for the current viewport before showing the tour.
     mode.value = isMobile.value ? "onboarding-mobile" : "onboarding-desktop";
     activeSteps.value = isMobile.value
