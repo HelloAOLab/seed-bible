@@ -362,8 +362,22 @@ export const bootstrapExtension = () => {
         });
       };
 
+      // Today opens automatically on a cold load (no explicit `?today=`
+      // param) as long as the URL isn't already pointing somewhere specific —
+      // a book/chapter/verse deep link, or a shared-session invite
+      // (`?sessionId=`). An explicit `?today=` param always wins either way,
+      // matching the deep-linkable modals in SeedBibleStateManager.
+      const initialUrlParams = context.navigation.currentUrl.value.searchParams;
+      const hasCompetingDeepLink =
+        initialUrlParams.has("book") ||
+        initialUrlParams.has("chapter") ||
+        initialUrlParams.has("verse") ||
+        initialUrlParams.has("sessionId");
+      const requestedToday = initialUrlParams.get("today");
       const isTodayOpen = signal(
-        context.navigation.currentUrl.value.searchParams.get("today") === "open"
+        requestedToday !== null
+          ? requestedToday === "open"
+          : !hasCompetingDeepLink
       );
 
       const cleanupTodayUrlSync = context.navigation.syncSignalsToUrl({
