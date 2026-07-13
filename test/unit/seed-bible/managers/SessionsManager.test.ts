@@ -1446,6 +1446,41 @@ describe("SessionsManager", () => {
       expect(session.readingState.isExtensionEnabled("y")).toBe(false);
     });
 
+    it("round-trips playlist playback data (playlists + queue + step) through the shared map", async () => {
+      const registry = createBibleReadingExtensionManager();
+      registry.registerReadingExtension({
+        id: "playlist",
+        activate: () => ({}),
+      });
+      const session = await createManagerWith(registry).createSession();
+
+      // The playlist extension stores its playback state here; it must survive
+      // the JSON-based mirror unchanged so peers rebuild the same playback.
+      const data = {
+        playlists: [
+          {
+            id: "playlist-1",
+            recordName: "user-1",
+            authorUserId: "user-1",
+            title: "P",
+            description: null,
+            items: [{ type: "html", html: "a" }],
+            createdAtMs: 1,
+            updatedAtMs: 1,
+          },
+        ],
+        queue: [{ type: "html", html: "a" }],
+        step: 0,
+      };
+
+      session.readingState.enableExtension("playlist", data);
+
+      expect(mockExtensionsMap.set).toHaveBeenCalledWith("playlist", {
+        enabled: true,
+        data,
+      });
+    });
+
     it("disables an extension when it is removed from the shared map", async () => {
       mockExtensionsMap.setEmitOnSet(true);
       mockExtensionsMap.set("x", { enabled: true, data: {} });

@@ -6,6 +6,7 @@ import {
   effect,
   signal,
   type ReadonlySignal,
+  type Signal,
 } from "@preact/signals";
 import type { CasualOSManager } from "./OsManager";
 import type { ReaderTab, TabsManager } from "./TabsManager";
@@ -17,7 +18,10 @@ import type { ModalManager } from "./ModalManager";
 import { PlaylistHtmlContent } from "../components/PlaylistHtmlContent/PlaylistHtmlContent";
 import { PlaylistLinkContent } from "../components/PlaylistLinkContent/PlaylistLinkContent";
 import type { I18nManager } from "../i18n";
-import type { BibleReadingExtensionManager } from "./BibleReadingExtensionManager";
+import type {
+  BibleReadingExtensionManager,
+  ReadingExtensionInstance,
+} from "./BibleReadingExtensionManager";
 
 export const VerseRefSchema = z.object({
   bookId: z.string(),
@@ -91,6 +95,35 @@ export type VerseRef = z.infer<typeof VerseRefSchema>;
 
 export type PlaylistManager = ReturnType<typeof createPlaylistManager>;
 export type PlayingState = ReturnType<typeof createPlayingState>;
+
+/**
+ * The serializable playback state the playlist reading extension stores in its
+ * per-enablement `data`. Kept as plain JSON so it can be mirrored across a
+ * shared session (see `SessionsManager`). The live {@link PlayingState} (which
+ * holds signals and effects) is built from this and never stored here.
+ *
+ * `queue` is a copy of the source playlists' items, so it can be reordered or
+ * have items added/removed without mutating `playlists`; both are synced.
+ */
+export interface PlaylistReadingData {
+  playlists: Playlist[];
+  queue: PlaylistItemData[];
+  step: number;
+}
+
+/**
+ * The reading-extension instance the playlist extension returns from
+ * `activate()`. It carries the live {@link PlayingState} so `PlaylistManager`
+ * can read it off the enabled runtime instead of storing playback itself.
+ */
+export interface PlaylistReadingExtensionInstance extends ReadingExtensionInstance<PlaylistReadingData> {
+  playingState: PlayingState;
+}
+
+/** Structural equality via JSON, used to guard the playback sync effects. */
+function jsonEqual(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
+}
 
 /**
  * Creates an in-memory playing state for stepping through one or more
@@ -202,6 +235,29 @@ export function createPlayingState(
     currentIndex.value = queue.value.length > 0 ? 0 : -1;
   };
 
+  /**
+   * Applies a full playback snapshot. Used by the playlist reading extension to
+   * hydrate from and stay in sync with its serializable `data` (including a
+   * queue changed by a session peer). Each field is written only when it
+   * differs from the current value, so applying an inbound snapshot doesn't
+   * re-trigger the outbound sync effect for unchanged fields.
+   */
+  const setState = (state: PlaylistReadingData): void => {
+    if (!jsonEqual(playlists.peek(), state.playlists)) {
+      playlists.value = state.playlists;
+    }
+    if (!jsonEqual(queue.peek(), state.queue)) {
+      queue.value = state.queue;
+    }
+    const clampedStep =
+      state.queue.length > 0
+        ? Math.min(Math.max(Math.floor(state.step), 0), state.queue.length - 1)
+        : -1;
+    if (currentIndex.peek() !== clampedStep) {
+      currentIndex.value = clampedStep;
+    }
+  };
+
   let decorationId: string | null = null;
 
   const disposeDecoration = () => {
@@ -265,6 +321,7 @@ export function createPlayingState(
     removeFromQueue,
     reorderQueue,
     reset,
+    setState,
     dispose,
   };
 }
@@ -304,8 +361,31 @@ export function createPlaylistManager(
 
   /** The playlist currently being edited/created in the pane, or null. */
   const editingPlaylist = signal<Playlist | null>(null);
-  /** The active playback state, or null when nothing is playing. */
-  const playing = signal<PlayingState | null>(null);
+
+  /**
+   * The active playback state, or null when nothing is playing. Derived (not
+   * stored): playback now lives inside the playlist reading extension's
+   * per-enablement state, so this reads the live `PlayingState` off whichever
+   * tab currently has the extension enabled. A shared-session tab is preferred
+   * so following participants track the shared playback; otherwise the first
+   * tab that has it enabled wins, which keeps playback visible even after the
+   * user switches the selected tab.
+   */
+  const playing = computed<PlayingState | null>(() => {
+    const ordered = [...tabs.tabs.value].sort(
+      (a, b) => (b.sharedSession ? 1 : 0) - (a.sharedSession ? 1 : 0)
+    );
+    for (const tab of ordered) {
+      const runtime = tab.readingState.enabledExtensions.value.find(
+        (r) => r.id === PLAYLIST_READING_EXTENSION_ID
+      );
+      if (runtime) {
+        return (runtime.instance as PlaylistReadingExtensionInstance)
+          .playingState;
+      }
+    }
+    return null;
+  });
 
   const availablePlaylists = computed(() => {
     return userPlaylists;
@@ -521,23 +601,48 @@ export function createPlaylistManager(
   };
 
   /**
-   * Starts playing the given playlist(s), replacing any current playback with a
-   * fresh queue built from a copy of their items. The currently selected reader
-   * tab is saved into the playing state so bible-verse items navigate it.
+   * Starts playing the given playlist(s) at `initialStep`, by enabling the
+   * playlist reading extension on the target tab (a shared-session tab if there
+   * is one, otherwise the selected tab) with the playback state as its data. A
+   * fresh queue is built from a copy of the playlists' items so it can be
+   * reordered/edited without mutating the playlists. The extension owns the live
+   * playing state; this manager reads it back via the `playing` computed.
+   *
+   * Returns the live playing state, or null when there is no tab to play on.
    */
-  const startPlaying = (playlist: Playlist | Playlist[]): PlayingState => {
-    const previousTab = playing.value?.tab ?? null;
-    playing.value?.dispose();
-    previousTab?.readingState.disableExtension(PLAYLIST_READING_EXTENSION_ID);
-
+  const startPlaying = (
+    playlist: Playlist | Playlist[],
+    initialStep = 0
+  ): PlayingState | null => {
     const playlists = Array.isArray(playlist) ? playlist : [playlist];
     const sharedTab = tabs.tabs.value.find((tab) => tab.sharedSession) ?? null;
     const targetTab =
       sharedTab ??
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ??
       null;
-    playing.value = createPlayingState(playlists, targetTab);
-    targetTab?.readingState.enableExtension(PLAYLIST_READING_EXTENSION_ID);
+
+    // Never let playback run on two tabs at once: disable it anywhere it is
+    // enabled but isn't the target (disabling disposes that playing state).
+    for (const tab of tabs.tabs.value) {
+      if (
+        tab !== targetTab &&
+        tab.readingState.isExtensionEnabled(PLAYLIST_READING_EXTENSION_ID)
+      ) {
+        tab.readingState.disableExtension(PLAYLIST_READING_EXTENSION_ID);
+      }
+    }
+
+    const queue = playlists.flatMap((p) => [...p.items]);
+    const step =
+      queue.length > 0
+        ? Math.min(Math.max(Math.floor(initialStep), 0), queue.length - 1)
+        : -1;
+
+    targetTab?.readingState.enableExtension(PLAYLIST_READING_EXTENSION_ID, {
+      playlists,
+      queue,
+      step,
+    } satisfies PlaylistReadingData);
     view.value = "play_playlist";
 
     if (isMobile.value) {
@@ -560,10 +665,7 @@ export function createPlaylistManager(
     const { recordName, id } = parsed;
     try {
       const playlist = await loadPlaylist(recordName, id);
-      const state = startPlaying(playlist);
-
-      const stepIndex = Math.floor(parseNumber(step, 0));
-      state.jumpTo(stepIndex);
+      startPlaying(playlist, Math.floor(parseNumber(step, 0)));
     } catch (err) {
       console.error("Failed to load playlist for playback:", err);
     }
@@ -588,50 +690,22 @@ export function createPlaylistManager(
   };
 
   /**
-   * Stops playback, clears the playing state, and returns to the discover view.
+   * Stops playback and returns to the discover view. Disabling the extension on
+   * every tab that has it disposes the live playing state (and, in a shared
+   * session, propagates the stop to every participant).
    */
   const stopPlaying = (): void => {
-    const previousTab = playing.value?.tab ?? null;
-    playing.value?.dispose();
-    playing.value = null;
-    previousTab?.readingState.disableExtension(PLAYLIST_READING_EXTENSION_ID);
+    for (const tab of tabs.tabs.value) {
+      if (tab.readingState.isExtensionEnabled(PLAYLIST_READING_EXTENSION_ID)) {
+        tab.readingState.disableExtension(PLAYLIST_READING_EXTENSION_ID);
+      }
+    }
     initialPlaylistLocator.value = null;
     initialPlaylistStep.value = null;
     modals.closeModal(PLAYLIST_ITEM_MODAL_ID);
     if (view.peek()) {
       view.value = "discover";
     }
-  };
-
-  /**
-   * The `playlist` URL query param value for the current state: the playing
-   * queue's first playlist, or (while nothing is playing) whatever locator was
-   * last seen in the URL — preserved so the param doesn't flash-clear while an
-   * async `startPlayingLocator` load is in flight.
-   */
-  const currentPlaylistLocator = (): string | null => {
-    const playingState = playing.value;
-    if (!playingState) {
-      return initialPlaylistLocator.value;
-    }
-    const firstPlaylist = playingState.playlists.value[0];
-    if (!firstPlaylist) {
-      return null;
-    }
-    return getPlaylistLocator(firstPlaylist);
-  };
-
-  /**
-   * The `playlistStep` URL query param value for the current state. Unlike
-   * `currentPlaylistLocator`, this has no fallback while nothing is playing —
-   * it is simply absent.
-   */
-  const currentPlaylistStep = (): string | null => {
-    const playingState = playing.value;
-    if (!playingState) {
-      return null;
-    }
-    return playingState.currentIndex.value.toString();
   };
 
   const syncPlaylists = async () => {
@@ -662,48 +736,110 @@ export function createPlaylistManager(
 
   // Registered before the deep-link autoplay check below, since that check can
   // synchronously reach `startPlaying` -> `enableExtension`.
+  //
+  // Each enablement owns its own live playing state, built here from the
+  // serializable `data` the enablement was given. Because `SessionsManager`
+  // mirrors that `data` across a shared session, playback (queue + position)
+  // stays in sync between participants.
   readingExtensionManager.registerReadingExtension({
     id: PLAYLIST_READING_EXTENSION_ID,
-    activate: ({ isShared }) => ({
-      // Always active, regardless of `isShared`: lets `getUrlQueryParams()`
-      // include `playlist`/`playlistStep` for a shared reading state too (the
-      // shareable-URL behavior is purely per-browser and doesn't care whether
-      // the tab happens to be shared).
-      transformQueryParams: ({ queryParams }) => ({
-        ...queryParams,
-        playlist: currentPlaylistLocator(),
-        playlistStep: currentPlaylistStep(),
-      }),
-      // Navigation interception is per-browser only. A shared reading state's
-      // enabled-extension set is mirrored across session participants
-      // (SessionsManager), so if these hooks existed unconditionally, one
-      // participant stopping playback would disable them out from under
-      // another participant still playing on the same shared tab.
-      ...(!isShared.value && {
+    activate: (ctx): ReadingExtensionInstance => {
+      const { readingState } = ctx;
+      // The registry is non-generic (`TData = unknown`); this extension owns the
+      // shape it stores, so narrow the data signal to it here.
+      const data = ctx.data as Signal<PlaylistReadingData | undefined>;
+      const initial: PlaylistReadingData = data.peek() ?? {
+        playlists: [],
+        queue: [],
+        step: 0,
+      };
+
+      // The tab this reading state belongs to, so bible-verse items navigate it.
+      const tab =
+        tabs.tabs.value.find((t) => t.readingState === readingState) ?? null;
+
+      const playingState = createPlayingState(initial.playlists, tab);
+      // Apply the synced queue + position (a peer's queue may differ from the
+      // raw playlist items after add/remove/reorder).
+      playingState.setState(initial);
+
+      // Outbound: mirror local playback changes (advance, queue edits) into the
+      // serializable `data` so they propagate to session participants. Guarded
+      // by a structural compare so it never fights the inbound effect.
+      const disposeOut = effect(() => {
+        const snapshot: PlaylistReadingData = {
+          playlists: playingState.playlists.value,
+          queue: playingState.queue.value,
+          step: playingState.currentIndex.value,
+        };
+        if (!jsonEqual(data.peek(), snapshot)) {
+          data.value = snapshot;
+        }
+      });
+
+      // Inbound: apply remote `data` changes onto the live playing state.
+      // `setState` no-ops per field when unchanged, so this settles without
+      // ping-ponging with the outbound effect.
+      const disposeIn = effect(() => {
+        const next = data.value;
+        if (next) {
+          playingState.setState(next);
+        }
+      });
+
+      const instance: PlaylistReadingExtensionInstance = {
+        playingState,
+        // Always active (independent of `isShared`): contributes the
+        // `playlist`/`playlistStep` query params for this reading state's URL.
+        // Falls back to the last-seen locator while nothing is playing so the
+        // param doesn't flash-clear during an async deep-link load.
+        transformQueryParams: ({ queryParams }) => {
+          const current = data.value;
+          const firstPlaylist = current?.playlists[0];
+          // Emit `playlistStep` only when a playlist is actually loaded; an
+          // enablement with no playlist reads as "nothing playing" (step
+          // absent), with `playlist` falling back to the last-seen locator.
+          return {
+            ...queryParams,
+            playlist: firstPlaylist
+              ? getPlaylistLocator(firstPlaylist)
+              : initialPlaylistLocator.value,
+            playlistStep: firstPlaylist ? current!.step.toString() : null,
+          };
+        },
+        // Navigation hooks are unconditional now that playback state is synced:
+        // any participant can drive next/previous and it propagates via `data`.
         navigateNext: () => {
-          const state = playing.value;
-          if (!state) {
+          if (playingState.queue.value.length === 0) {
             return { type: "default" as const };
           }
-          if (!state.hasNext.value) {
+          if (!playingState.hasNext.value) {
             return { type: "prevent" as const };
           }
-          state.next();
+          playingState.next();
           return { type: "handled" as const };
         },
         navigatePrevious: () => {
-          const state = playing.value;
-          if (!state) {
+          if (playingState.queue.value.length === 0) {
             return { type: "default" as const };
           }
-          if (!state.hasPrevious.value) {
+          if (!playingState.hasPrevious.value) {
             return { type: "prevent" as const };
           }
-          state.previous();
+          playingState.previous();
           return { type: "handled" as const };
         },
-      }),
-    }),
+        dispose: () => {
+          disposeOut();
+          disposeIn();
+          playingState.dispose();
+        },
+      };
+      // The registry erases `TData` to `unknown`; the extra `playingState`
+      // property and the data-typed hooks are safe here (the hooks read
+      // playback from the closure, not `ctx.data`).
+      return instance as unknown as ReadingExtensionInstance;
+    },
   });
 
   // Inbound (URL -> state) half of the `playlist`/`playlistStep` sync. Reads

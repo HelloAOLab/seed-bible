@@ -4,7 +4,10 @@ import {
   createModalManager,
   createNavigationManager,
 } from "@packages/seed-bible/seed-bible/managers";
-import { createBibleReadingExtensionManager } from "@packages/seed-bible/seed-bible/managers/BibleReadingExtensionManager";
+import {
+  createBibleReadingExtensionManager,
+  type ReadingExtensionRuntime,
+} from "@packages/seed-bible/seed-bible/managers/BibleReadingExtensionManager";
 import {
   PlaylistItem,
   PlaylistSchema,
@@ -12,8 +15,10 @@ import {
   createPlayingState,
   type Playlist,
   type PlaylistItemData,
+  type PlaylistReadingData,
+  type PlaylistReadingExtensionInstance,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
-import { signal } from "@preact/signals";
+import { computed, signal } from "@preact/signals";
 import type { Mock } from "vitest";
 
 const START_MS = Date.UTC(2026, 5, 17, 13, 45, 0);
@@ -71,6 +76,70 @@ type LoginArg = Parameters<typeof createPlaylistManager>[1];
 type TabsArg = Parameters<typeof createPlaylistManager>[2];
 type TabArg = Parameters<typeof createPlayingState>[1];
 
+/**
+ * The reading-extension registry shared by the fake reading states and the
+ * manager under test, so enabling the "playlist" extension on a tab resolves
+ * the definition the manager registered. Set in the `createPlaylistManager`
+ * `beforeEach`; unused by the standalone `createPlayingState` tests.
+ */
+let sharedReadingExtensionManager:
+  | ReturnType<typeof createBibleReadingExtensionManager>
+  | undefined;
+
+/**
+ * Builds a fake reading state that actually enables/disables reading
+ * extensions (via {@link sharedReadingExtensionManager}), so `manager.playing`
+ * — which now derives from the tab's enabled "playlist" runtime — resolves.
+ * Also provides the stubs `createPlayingState`'s navigation effect touches.
+ */
+function makeReadingState(
+  selectTranslationAndChapter: Mock,
+  translationId = "BSB"
+) {
+  const runtimes = signal(new Map<string, ReadingExtensionRuntime>());
+  const self: any = {
+    selectTranslationAndChapter,
+    translationId: signal(translationId),
+    decorateVerses: vi.fn(),
+    removeDecoration: vi.fn(),
+    enabledExtensions: computed(() => Array.from(runtimes.value.values())),
+    isExtensionEnabled: (id: string) => runtimes.value.has(id),
+    enableExtension: (id: string, data?: unknown) => {
+      const existing = runtimes.value.get(id);
+      if (existing) {
+        if (data !== undefined) {
+          existing.data.value = data;
+        }
+        return;
+      }
+      const definition = sharedReadingExtensionManager?.getReadingExtension(id);
+      if (!definition) {
+        return;
+      }
+      const dataSignal = signal<unknown>(data);
+      const instance = definition.activate({
+        readingState: self,
+        data: dataSignal,
+        isShared: signal(false),
+      });
+      const next = new Map(runtimes.value);
+      next.set(id, { id, definition, instance, data: dataSignal });
+      runtimes.value = next;
+    },
+    disableExtension: (id: string) => {
+      const runtime = runtimes.value.get(id);
+      if (!runtime) {
+        return;
+      }
+      runtime.instance.dispose?.();
+      const next = new Map(runtimes.value);
+      next.delete(id);
+      runtimes.value = next;
+    },
+  };
+  return self;
+}
+
 /** Builds a mock reader tab whose reading state records navigation calls. */
 function makeTab(
   id: string,
@@ -80,13 +149,7 @@ function makeTab(
   return {
     id,
     title: id,
-    readingState: {
-      selectTranslationAndChapter,
-      translationId: signal(translationId),
-      decorateVerses: vi.fn(),
-      enableExtension: vi.fn(),
-      disableExtension: vi.fn(),
-    },
+    readingState: makeReadingState(selectTranslationAndChapter, translationId),
     sharedSession: null,
   } as unknown as NonNullable<TabArg>;
 }
@@ -112,18 +175,21 @@ function makeTabWithExtensionMocks(
   enableExtension: Mock;
   disableExtension: Mock;
 } {
-  const enableExtension = vi.fn();
-  const disableExtension = vi.fn();
+  const readingState = makeReadingState(selectTranslationAndChapter);
+  // Wrap the real enable/disable so tests can assert on the calls while the
+  // extension still actually activates (which is what `manager.playing` reads).
+  const realEnable = readingState.enableExtension;
+  const realDisable = readingState.disableExtension;
+  const enableExtension = vi.fn((extId: string, data?: unknown) =>
+    realEnable(extId, data)
+  );
+  const disableExtension = vi.fn((extId: string) => realDisable(extId));
+  readingState.enableExtension = enableExtension;
+  readingState.disableExtension = disableExtension;
   const tab = {
     id,
     title: id,
-    readingState: {
-      selectTranslationAndChapter,
-      translationId: signal("BSB"),
-      decorateVerses: vi.fn(),
-      enableExtension,
-      disableExtension,
-    },
+    readingState,
     sharedSession: null,
   } as unknown as NonNullable<TabArg>;
   return { tab, enableExtension, disableExtension };
@@ -177,7 +243,9 @@ describe("createPlaylistManager", () => {
     const isMobile = signal(false);
     const modals = createModalManager();
     const i18n = createI18nManager(navigation, ["en"]);
-    const readingExtensionManager = createBibleReadingExtensionManager();
+    // Reuse the registry the fake reading states share, so the extension the
+    // manager registers is the one those tabs can enable.
+    const readingExtensionManager = sharedReadingExtensionManager!;
     lastNavigation = navigation;
     lastReadingExtensionManager = readingExtensionManager;
     return createPlaylistManager(
@@ -203,6 +271,7 @@ describe("createPlaylistManager", () => {
     selectTranslationAndChapterMock = vi.fn().mockResolvedValue(undefined);
     warnSpy = vi.spyOn(console, "warn").mockImplementation(() => undefined);
     errorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+    sharedReadingExtensionManager = createBibleReadingExtensionManager();
   });
 
   afterEach(() => {
@@ -595,7 +664,11 @@ describe("createPlaylistManager", () => {
     });
 
     manager.startPlaying(playlist);
-    expect(enableExtension).toHaveBeenCalledWith("playlist");
+    expect(enableExtension).toHaveBeenCalledWith("playlist", {
+      playlists: [playlist],
+      queue: playlist.items,
+      step: 0,
+    });
     expect(disableExtension).not.toHaveBeenCalled();
 
     manager.stopPlaying();
@@ -617,39 +690,51 @@ describe("createPlaylistManager", () => {
     await flush();
 
     tabsManager.selectedTabId.value = "tab-1";
-    manager.startPlaying(
-      makePlaylist({ id: "a", items: [{ type: "html", html: "a" }] })
-    );
-    expect(first.enableExtension).toHaveBeenCalledWith("playlist");
+    const a = makePlaylist({ id: "a", items: [{ type: "html", html: "a" }] });
+    manager.startPlaying(a);
+    expect(first.enableExtension).toHaveBeenCalledWith("playlist", {
+      playlists: [a],
+      queue: a.items,
+      step: 0,
+    });
 
     tabsManager.selectedTabId.value = "tab-2";
-    manager.startPlaying(
-      makePlaylist({ id: "b", items: [{ type: "html", html: "b" }] })
-    );
+    const b = makePlaylist({ id: "b", items: [{ type: "html", html: "b" }] });
+    manager.startPlaying(b);
     expect(first.disableExtension).toHaveBeenCalledWith("playlist");
-    expect(second.enableExtension).toHaveBeenCalledWith("playlist");
+    expect(second.enableExtension).toHaveBeenCalledWith("playlist", {
+      playlists: [b],
+      queue: b.items,
+      step: 0,
+    });
   });
 
   describe("playlist reading extension", () => {
-    /** Activates the registered "playlist" reading extension in isolation. */
-    const activateExtension = (isShared: boolean) => {
+    /**
+     * Activates the registered "playlist" reading extension in isolation, with
+     * the given per-enablement `data`. The returned instance owns its own live
+     * playing state, built from that data.
+     */
+    const activateExtension = (
+      data?: PlaylistReadingData,
+      isShared = false
+    ): PlaylistReadingExtensionInstance => {
       const definition =
         lastReadingExtensionManager.getReadingExtension("playlist");
       if (!definition) {
         throw new Error('"playlist" reading extension was not registered');
       }
       return definition.activate({
-        // Unused by activate()/its hooks; only `isShared` is read.
         readingState: {} as any,
-        data: signal(undefined),
+        data: signal(data),
         isShared: signal(isShared),
-      });
+      }) as unknown as PlaylistReadingExtensionInstance;
     };
 
     it("navigateNext/navigatePrevious default when nothing is playing", async () => {
       makeManager("user-1");
       await flush();
-      const instance = activateExtension(false);
+      const instance = activateExtension();
 
       // These hooks resolve synchronously; the hook type also allows a
       // Promise, but no `await`/`.resolves` is needed for this implementation.
@@ -660,33 +745,36 @@ describe("createPlaylistManager", () => {
     });
 
     it("navigateNext/navigatePrevious advance the queue and prevent at the bounds", async () => {
-      const manager = makeManager("user-1");
+      makeManager("user-1");
       await flush();
-      manager.startPlaying(
-        makePlaylist({
-          items: [
-            { type: "html", html: "a" },
-            { type: "html", html: "b" },
-          ],
-        })
-      );
-      const instance = activateExtension(false);
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+      const instance = activateExtension({
+        playlists: [playlist],
+        queue: playlist.items,
+        step: 0,
+      });
 
       expect(instance.navigatePrevious!({} as any)).toEqual({
         type: "prevent",
       });
       expect(instance.navigateNext!({} as any)).toEqual({ type: "handled" });
-      expect(manager.playing.value?.currentIndex.value).toBe(1);
+      expect(instance.playingState.currentIndex.value).toBe(1);
       expect(instance.navigateNext!({} as any)).toEqual({ type: "prevent" });
     });
 
-    it("omits navigateNext/navigatePrevious for a shared reading state, but keeps transformQueryParams", async () => {
+    it("keeps navigateNext/navigatePrevious (and transformQueryParams) even for a shared reading state", async () => {
       makeManager("user-1");
       await flush();
-      const instance = activateExtension(true);
+      // Navigation is now synced, so the hooks are active regardless of sharing.
+      const instance = activateExtension(undefined, true);
 
-      expect(instance.navigateNext).toBeUndefined();
-      expect(instance.navigatePrevious).toBeUndefined();
+      expect(typeof instance.navigateNext).toBe("function");
+      expect(typeof instance.navigatePrevious).toBe("function");
       expect(typeof instance.transformQueryParams).toBe("function");
     });
 
@@ -697,12 +785,12 @@ describe("createPlaylistManager", () => {
         "http://localhost:3000/?playlist=user-1.playlist-1"
       );
       // No flush(): the construction-time deep-link autoplay is still async
-      // and hasn't resolved yet, so nothing is playing.
-      const instance = activateExtension(false);
+      // and hasn't resolved yet, so this enablement has no playlist data.
+      const instance = activateExtension();
 
       const result = instance.transformQueryParams!({
         readingState: {} as any,
-        data: signal(undefined),
+        data: signal(undefined) as any,
         queryParams: {},
       });
 
@@ -711,23 +799,24 @@ describe("createPlaylistManager", () => {
     });
 
     it("transformQueryParams reflects the currently playing playlist and step", async () => {
-      const manager = makeManager("user-1");
+      makeManager("user-1");
       await flush();
-      manager.startPlaying(
-        makePlaylist({
-          id: "playlist-9",
-          items: [
-            { type: "html", html: "a" },
-            { type: "html", html: "b" },
-          ],
-        })
-      );
-      manager.playing.value?.jumpTo(1);
-      const instance = activateExtension(false);
+      const playlist = makePlaylist({
+        id: "playlist-9",
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+      const instance = activateExtension({
+        playlists: [playlist],
+        queue: playlist.items,
+        step: 1,
+      });
 
       const result = instance.transformQueryParams!({
         readingState: {} as any,
-        data: signal(undefined),
+        data: signal(undefined) as any,
         queryParams: { book: "GEN" },
       });
 
@@ -736,6 +825,69 @@ describe("createPlaylistManager", () => {
         playlist: "user-1.playlist-9",
         playlistStep: "1",
       });
+    });
+
+    it("mirrors local navigation into the serializable data (outbound sync)", async () => {
+      makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+        ],
+      });
+      const data = signal<unknown>({
+        playlists: [playlist],
+        queue: playlist.items,
+        step: 0,
+      });
+      const definition =
+        lastReadingExtensionManager.getReadingExtension("playlist")!;
+      const instance = definition.activate({
+        readingState: {} as any,
+        data,
+        isShared: signal(false),
+      }) as unknown as PlaylistReadingExtensionInstance;
+
+      // Advancing the queue writes the new step back into `data`.
+      instance.playingState.next();
+      expect((data.value as PlaylistReadingData).step).toBe(1);
+    });
+
+    it("applies remote data changes onto the live playing state (inbound sync)", async () => {
+      makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        items: [
+          { type: "html", html: "a" },
+          { type: "html", html: "b" },
+          { type: "html", html: "c" },
+        ],
+      });
+      const data = signal<unknown>({
+        playlists: [playlist],
+        queue: playlist.items,
+        step: 0,
+      });
+      const definition =
+        lastReadingExtensionManager.getReadingExtension("playlist")!;
+      const instance = definition.activate({
+        readingState: {} as any,
+        data,
+        isShared: signal(false),
+      }) as unknown as PlaylistReadingExtensionInstance;
+
+      // A peer removes the first item and moves to step 1.
+      data.value = {
+        playlists: [playlist],
+        queue: playlist.items.slice(1),
+        step: 1,
+      } satisfies PlaylistReadingData;
+
+      expect(instance.playingState.queue.value).toEqual(
+        playlist.items.slice(1)
+      );
+      expect(instance.playingState.currentIndex.value).toBe(1);
     });
   });
 
@@ -949,6 +1101,28 @@ describe("createPlayingState", () => {
     state.reset();
 
     expect(state.currentIndex.value).toBe(0);
+  });
+
+  it("setState replaces playlists/queue and clamps the step into range", () => {
+    const a = makePlaylist({ id: "a", items: makeItems(3) });
+    const state = createPlayingState([a]);
+    const b = makePlaylist({ id: "b", items: makeItems(2) });
+
+    state.setState({ playlists: [b], queue: b.items, step: 5 });
+
+    expect(state.playlists.value).toEqual([b]);
+    expect(state.queue.value).toEqual(b.items);
+    // step is clamped to the last index of the new queue
+    expect(state.currentIndex.value).toBe(1);
+  });
+
+  it("setState uses currentIndex -1 for an empty queue", () => {
+    const state = createPlayingState([makePlaylist({ items: makeItems(3) })]);
+
+    state.setState({ playlists: [], queue: [], step: 0 });
+
+    expect(state.queue.value).toEqual([]);
+    expect(state.currentIndex.value).toBe(-1);
   });
 
   describe("tab navigation", () => {
