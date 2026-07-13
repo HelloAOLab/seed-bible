@@ -1,6 +1,6 @@
 import { render, type ComponentChildren } from "preact";
 import { act } from "preact/test-utils";
-import { signal } from "@preact/signals";
+import { computed, signal } from "@preact/signals";
 import {
   DiscoverPane,
   DiscoverPaneHeader,
@@ -127,8 +127,10 @@ function createMockPlaylists(
   const cancelEditingPlaylist = vi.fn();
   const goBackFromPlayingView = vi.fn();
 
+  const view = signal(overrides.view ?? "discover");
   const playlists = {
-    view: signal(overrides.view ?? "discover"),
+    view,
+    actualView: view,
     userPlaylists: signal(overrides.userPlaylists ?? []),
     editingPlaylist: signal(overrides.editingPlaylist ?? null),
     playing: signal(overrides.playing ?? null),

@@ -586,7 +586,7 @@ describe("createPlaylistManager", () => {
     expect(recordDataMock).not.toHaveBeenCalled();
   });
 
-  it("startPlaying prefers shared tabs over selected tabs", async () => {
+  it("startPlaying prefers always uses the selected tab", async () => {
     const tabs = makeTabs(makeTab("tab-1", selectTranslationAndChapterMock));
     tabs.tabs.value = [
       ...tabs.tabs.value,
@@ -611,7 +611,7 @@ describe("createPlaylistManager", () => {
     expect(manager.playing.value?.playlists.value).toEqual([playlist]);
     expect(manager.view.value).toBe("play_playlist");
     // The currently selected tab is saved into the playing state.
-    expect(manager.playing.value?.tab?.id).toBe("tab-2");
+    expect(manager.playing.value?.tab?.id).toBe("tab-1");
 
     manager.stopPlaying();
     expect(manager.playing.value).toBeNull();
