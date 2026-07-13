@@ -164,6 +164,10 @@ function createTabsManager({
 }
 
 describe("createTabs", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("addTab() creates a new tab with new reading state", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const { tabs: manager } = createTabsManager();
@@ -351,6 +355,9 @@ describe("createTabs", () => {
     const currentBookId = readingState.bookId.value;
     const currentChapter = readingState.chapterNumber.value;
 
+    const pushSpy = vi.spyOn(window.history, "pushState");
+    const replaceSpy = vi.spyOn(window.history, "replaceState");
+
     readingState.selectedVerses.value = [
       {
         bookId: currentBookId,
@@ -370,7 +377,10 @@ describe("createTabs", () => {
     ];
 
     const url = new URL(window.location.href);
-    expect(url.searchParams.get("verse")).toBe("1,3");
+    expect(url.searchParams.get("verse")).toBe("1-3");
+
+    expect(pushSpy).not.toHaveBeenCalled();
+    expect(replaceSpy).toHaveBeenCalled();
   });
 
   it("clears the verse URL param when selected verses become empty", async () => {

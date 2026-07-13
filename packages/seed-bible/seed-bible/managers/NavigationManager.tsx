@@ -187,7 +187,16 @@ export function createNavigationManager(
     push(next);
   };
 
-  const updateQueryParams = (update: Record<string, string | null>) => {
+  /**
+   * Updates the given query parameters in the URL and pushes a new history entry.
+   * @param update The update object containing query parameters to be updated.
+   * @param replaceState Whether to replace the current history entry instead of pushing a new one. Defaults to false.
+   * @returns
+   */
+  const updateQueryParams = (
+    update: Record<string, string | null>,
+    replaceState: boolean = false
+  ) => {
     // peek() so effects that call updateQueryParam don't subscribe to
     // currentUrl — they would re-run on the very write they cause.
     const current = currentUrl.peek();
@@ -211,7 +220,11 @@ export function createNavigationManager(
       return;
     }
 
-    push(next);
+    if (replaceState) {
+      replace(next);
+    } else {
+      push(next);
+    }
   };
 
   const syncSignalsToUrl = (

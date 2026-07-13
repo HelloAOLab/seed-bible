@@ -368,6 +368,22 @@ export function createTabs(
   });
 
   effect(() => {
+    const params: Record<string, string | null> = {
+      verse: null,
+    };
+
+    const readingState = selectedTab.value?.readingState;
+    if (readingState) {
+      const formatted = formatVerseSelection(
+        readingState.selectedVerses.value.map((v) => v.verse.number)
+      );
+      params.verse = formatted;
+    }
+
+    navigation.updateQueryParams(params, true);
+  });
+
+  effect(() => {
     void navigation.currentUrl.value;
     syncSelectedTabFromUrl();
   });
