@@ -675,7 +675,7 @@ describe("createPlaylistManager", () => {
     expect(disableExtension).toHaveBeenCalledWith("playlist");
   });
 
-  it("disables the extension on the previous target tab when playback moves to a different tab", async () => {
+  it("keeps other tabs' playback when starting playback on a different tab (isolation)", async () => {
     const first = makeTabWithExtensionMocks(
       "tab-1",
       selectTranslationAndChapterMock
@@ -701,12 +701,90 @@ describe("createPlaylistManager", () => {
     tabsManager.selectedTabId.value = "tab-2";
     const b = makePlaylist({ id: "b", items: [{ type: "html", html: "b" }] });
     manager.startPlaying(b);
-    expect(first.disableExtension).toHaveBeenCalledWith("playlist");
+
+    // Starting on tab-2 leaves tab-1's playback running: each reading state
+    // owns its own playback.
+    expect(first.disableExtension).not.toHaveBeenCalled();
     expect(second.enableExtension).toHaveBeenCalledWith("playlist", {
       playlists: [b],
       queue: b.items,
       step: 0,
     });
+    expect(first.tab.readingState.isExtensionEnabled("playlist")).toBe(true);
+    expect(second.tab.readingState.isExtensionEnabled("playlist")).toBe(true);
+  });
+
+  it("stopPlaying only stops the active tab, leaving other tabs playing", async () => {
+    const first = makeTabWithExtensionMocks(
+      "tab-1",
+      selectTranslationAndChapterMock
+    );
+    const second = makeTabWithExtensionMocks(
+      "tab-2",
+      selectTranslationAndChapterMock
+    );
+    const tabsManager = makeTabs(first.tab);
+    tabsManager.tabs.value = [first.tab, second.tab];
+    const manager = makeManager("user-1", tabsManager);
+    await flush();
+
+    tabsManager.selectedTabId.value = "tab-1";
+    manager.startPlaying(
+      makePlaylist({ id: "a", items: [{ type: "html", html: "a" }] })
+    );
+    tabsManager.selectedTabId.value = "tab-2";
+    manager.startPlaying(
+      makePlaylist({ id: "b", items: [{ type: "html", html: "b" }] })
+    );
+
+    // Stop while tab-2 is active: only tab-2 stops.
+    manager.stopPlaying();
+    expect(second.disableExtension).toHaveBeenCalledWith("playlist");
+    expect(first.disableExtension).not.toHaveBeenCalled();
+    expect(first.tab.readingState.isExtensionEnabled("playlist")).toBe(true);
+  });
+
+  it("switching to a non-playing tab does not stop another tab's playback (just changes the UI)", async () => {
+    const playingTab = makeTabWithExtensionMocks(
+      "tab-1",
+      selectTranslationAndChapterMock
+    );
+    const otherTab = makeTabWithExtensionMocks(
+      "tab-2",
+      selectTranslationAndChapterMock
+    );
+    const tabsManager = makeTabs(playingTab.tab);
+    tabsManager.tabs.value = [playingTab.tab, otherTab.tab];
+    const manager = makeManager("user-1", tabsManager);
+    await flush();
+
+    tabsManager.selectedTabId.value = "tab-1";
+    manager.startPlaying(
+      makePlaylist({ items: [{ type: "html", html: "a" }] })
+    );
+    expect(manager.playing.value).not.toBeNull();
+
+    // Switch to the non-playing tab; the UI stops reflecting playback...
+    tabsManager.selectedTabId.value = "tab-2";
+    expect(manager.playing.value).toBeNull();
+
+    // ...and even when the URL loses its `playlist` param (as TabsManager would
+    // when flushing the non-playing tab), tab-1's playback is untouched.
+    const url = new URL(lastNavigation.currentUrl.value);
+    url.searchParams.set("book", "EXO"); // force a URL change so the sync runs
+    url.searchParams.delete("playlist");
+    url.searchParams.delete("playlistStep");
+    lastNavigation.push(url.toString());
+    await flush();
+
+    expect(playingTab.tab.readingState.isExtensionEnabled("playlist")).toBe(
+      true
+    );
+    expect(playingTab.disableExtension).not.toHaveBeenCalled();
+
+    // Switching back reflects the still-running playback again.
+    tabsManager.selectedTabId.value = "tab-1";
+    expect(manager.playing.value).not.toBeNull();
   });
 
   describe("playlist reading extension", () => {

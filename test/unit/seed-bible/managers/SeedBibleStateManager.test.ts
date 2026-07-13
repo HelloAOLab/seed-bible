@@ -96,6 +96,12 @@ function createMockSharedSession(id: string) {
       selectedVerses: signal([]),
       translationBooks: signal(null),
       selectTranslationAndChapter: vi.fn().mockResolvedValue(undefined),
+      getUrlQueryParams: vi.fn().mockReturnValue({}),
+      // Reading-extension surface the (derived) playlist `playing` state reads.
+      enabledExtensions: signal([]),
+      isExtensionEnabled: vi.fn().mockReturnValue(false),
+      enableExtension: vi.fn(),
+      disableExtension: vi.fn(),
     },
     document: {} as SharedDocument,
     options: signal({

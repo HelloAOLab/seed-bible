@@ -363,28 +363,33 @@ export function createPlaylistManager(
   const editingPlaylist = signal<Playlist | null>(null);
 
   /**
-   * The active playback state, or null when nothing is playing. Derived (not
-   * stored): playback now lives inside the playlist reading extension's
-   * per-enablement state, so this reads the live `PlayingState` off whichever
-   * tab currently has the extension enabled. A shared-session tab is preferred
-   * so following participants track the shared playback; otherwise the first
-   * tab that has it enabled wins, which keeps playback visible even after the
-   * user switches the selected tab.
+   * The reading state playback is bound to: the shared-session tab if one
+   * exists (so session participants converge on it), otherwise the selected
+   * tab. Every playback operation and the URL sync target THIS tab only, so
+   * playback on other tabs is never disturbed — switching tabs just changes
+   * which reading state the UI reflects, it never stops or starts playback.
+   */
+  const activeTab = computed<ReaderTab | null>(
+    () =>
+      tabs.tabs.value.find((tab) => tab.sharedSession) ??
+      tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ??
+      null
+  );
+
+  /**
+   * The playback state shown in the UI, or null when the active tab isn't
+   * playing. Derived (not stored): playback lives inside the active reading
+   * state's playlist-extension enablement, so this reads the live
+   * `PlayingState` off that runtime. Switching the selected tab recomputes
+   * this — it does not tear anything down.
    */
   const playing = computed<PlayingState | null>(() => {
-    const ordered = [...tabs.tabs.value].sort(
-      (a, b) => (b.sharedSession ? 1 : 0) - (a.sharedSession ? 1 : 0)
+    const runtime = activeTab.value?.readingState.enabledExtensions.value.find(
+      (r) => r.id === PLAYLIST_READING_EXTENSION_ID
     );
-    for (const tab of ordered) {
-      const runtime = tab.readingState.enabledExtensions.value.find(
-        (r) => r.id === PLAYLIST_READING_EXTENSION_ID
-      );
-      if (runtime) {
-        return (runtime.instance as PlaylistReadingExtensionInstance)
-          .playingState;
-      }
-    }
-    return null;
+    return runtime
+      ? (runtime.instance as PlaylistReadingExtensionInstance).playingState
+      : null;
   });
 
   const availablePlaylists = computed(() => {
@@ -615,22 +620,9 @@ export function createPlaylistManager(
     initialStep = 0
   ): PlayingState | null => {
     const playlists = Array.isArray(playlist) ? playlist : [playlist];
-    const sharedTab = tabs.tabs.value.find((tab) => tab.sharedSession) ?? null;
-    const targetTab =
-      sharedTab ??
-      tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ??
-      null;
-
-    // Never let playback run on two tabs at once: disable it anywhere it is
-    // enabled but isn't the target (disabling disposes that playing state).
-    for (const tab of tabs.tabs.value) {
-      if (
-        tab !== targetTab &&
-        tab.readingState.isExtensionEnabled(PLAYLIST_READING_EXTENSION_ID)
-      ) {
-        tab.readingState.disableExtension(PLAYLIST_READING_EXTENSION_ID);
-      }
-    }
+    // Play on the active tab only. Other tabs keep their own playback (if any)
+    // untouched, so playback is isolated per reading state.
+    const targetTab = activeTab.value;
 
     const queue = playlists.flatMap((p) => [...p.items]);
     const step =
@@ -690,15 +682,15 @@ export function createPlaylistManager(
   };
 
   /**
-   * Stops playback and returns to the discover view. Disabling the extension on
-   * every tab that has it disposes the live playing state (and, in a shared
-   * session, propagates the stop to every participant).
+   * Stops the active tab's playback and returns to the discover view. Only the
+   * active reading state is disabled (disposing its live playing state, and in
+   * a shared session propagating the stop to participants) — other tabs'
+   * playback is left running.
    */
   const stopPlaying = (): void => {
-    for (const tab of tabs.tabs.value) {
-      if (tab.readingState.isExtensionEnabled(PLAYLIST_READING_EXTENSION_ID)) {
-        tab.readingState.disableExtension(PLAYLIST_READING_EXTENSION_ID);
-      }
+    const tab = activeTab.peek();
+    if (tab?.readingState.isExtensionEnabled(PLAYLIST_READING_EXTENSION_ID)) {
+      tab.readingState.disableExtension(PLAYLIST_READING_EXTENSION_ID);
     }
     initialPlaylistLocator.value = null;
     initialPlaylistStep.value = null;
@@ -894,7 +886,13 @@ export function createPlaylistManager(
     void startPlayingLocator(
       initialPlaylistLocator.value,
       initialPlaylistStep.value
-    );
+    ).finally(() => {
+      // The fallback locator only bridges this initial async load. Clear it
+      // once settled so a later switch to a non-playing tab (whose URL has no
+      // `playlist`) isn't misread as a stale request for it.
+      initialPlaylistLocator.value = null;
+      initialPlaylistStep.value = null;
+    });
   }
 
   return {
