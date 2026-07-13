@@ -64,6 +64,8 @@ function makeScriptureMapCtx(overrides: Record<string, unknown> = {}) {
   return {
     scaleFactor: 1,
     showingAllChapters: false,
+    openBookOverrides: {},
+    setBookOpen: vi.fn(),
     isUserPresenceEnabled: false,
     isReadingHistoryEnabled: false,
     content: new Map(),
@@ -228,7 +230,7 @@ describe("useBook", () => {
   });
 
   describe("showChapters", () => {
-    it("starts as false when showingAllChapters is false", () => {
+    it("starts as false when showingAllChapters is false and no override", () => {
       (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ showingAllChapters: false })
       );
@@ -236,7 +238,7 @@ describe("useBook", () => {
       expect(result.current.showChapters).toBe(false);
     });
 
-    it("starts as true when showingAllChapters is true", () => {
+    it("starts as true when showingAllChapters is true and no override", () => {
       (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ showingAllChapters: true })
       );
@@ -244,20 +246,50 @@ describe("useBook", () => {
       expect(result.current.showChapters).toBe(true);
     });
 
-    it("handleBookClick sets showChapters to true when it was false", () => {
-      const result = setup();
-      expect(result.current.showChapters).toBe(false);
-      act(() => result.current.handleBookClick());
+    it("a per-book override in openBookOverrides wins over showingAllChapters", () => {
+      (useScriptureMapContext as Mock).mockReturnValue(
+        makeScriptureMapCtx({
+          showingAllChapters: false,
+          openBookOverrides: { GEN: true },
+        })
+      );
+      const result = setup({ bookId: "GEN" });
       expect(result.current.showChapters).toBe(true);
     });
 
-    it("handleBookClick does not toggle showChapters when it was already true", () => {
+    it("handleBookClick calls setBookOpen(bookId, true) when it was false", () => {
+      const setBookOpen = vi.fn();
       (useScriptureMapContext as Mock).mockReturnValue(
-        makeScriptureMapCtx({ showingAllChapters: true })
+        makeScriptureMapCtx({ showingAllChapters: false, setBookOpen })
       );
-      const result = setup();
+      const result = setup({ bookId: "GEN" });
       act(() => result.current.handleBookClick());
-      expect(result.current.showChapters).toBe(true);
+      expect(setBookOpen).toHaveBeenCalledWith("GEN", true);
+    });
+
+    it("handleBookClick does not call setBookOpen when it was already true", () => {
+      const setBookOpen = vi.fn();
+      (useScriptureMapContext as Mock).mockReturnValue(
+        makeScriptureMapCtx({ showingAllChapters: true, setBookOpen })
+      );
+      const result = setup({ bookId: "GEN" });
+      act(() => result.current.handleBookClick());
+      expect(setBookOpen).not.toHaveBeenCalled();
+    });
+
+    it("a quick click-and-hold release toggles the book via setBookOpen", () => {
+      const setBookOpen = vi.fn();
+      (useScriptureMapContext as Mock).mockReturnValue(
+        makeScriptureMapCtx({ showingAllChapters: false, setBookOpen })
+      );
+      const result = setup({ bookId: "GEN" });
+      const fakeEvent = { stopPropagation: vi.fn() } as unknown as PointerEvent;
+
+      act(() => result.current.handleBookHeaderPointerDown(fakeEvent as any));
+      act(() => void vi.advanceTimersByTime(200));
+      act(() => result.current.handleBookHeaderPointerUp(fakeEvent as any));
+
+      expect(setBookOpen).toHaveBeenCalledWith("GEN", true);
     });
   });
 

@@ -19,7 +19,7 @@ import type { BookProps, ChapterData } from "../components/containers/Book";
 import type { Range } from "../models/commonTypes";
 import { getFirstNonSpaceChars } from "../functions/scripture";
 
-import { useState, useMemo, useEffect, useCallback } from "preact/hooks";
+import { useState, useMemo, useCallback } from "preact/hooks";
 
 type UseBookProps = Pick<
   BookProps,
@@ -87,6 +87,8 @@ export const useBook: UseBook = (props) => {
   const {
     scaleFactor,
     showingAllChapters,
+    openBookOverrides,
+    setBookOpen,
     isUserPresenceEnabled,
     isReadingHistoryEnabled,
     content,
@@ -120,7 +122,7 @@ export const useBook: UseBook = (props) => {
     myAuthBotId,
   } = useReadingHistoryContext();
 
-  const [showChapters, setShowChapters] = useState<boolean>(showingAllChapters);
+  const showChapters = openBookOverrides[bookId] ?? showingAllChapters;
   const [containerRect, setContainerRect] = useState<DOMRect | null>(null);
 
   const { tooltipAnchor } = useMemo<{
@@ -190,18 +192,16 @@ export const useBook: UseBook = (props) => {
       onBookNameClickAndHold?.(showChapters, key, checked);
     },
     holdCancelCallback: () => {
-      setShowChapters((prev) => !prev);
+      setBookOpen(bookId, !showChapters);
     },
     dependencies: [
       ...(onBookNameClickAndHoldDependencies ?? []),
       checked,
       showChapters,
+      setBookOpen,
+      bookId,
     ],
   });
-
-  useEffect(() => {
-    setShowChapters(showingAllChapters);
-  }, [showingAllChapters]);
 
   const { fixedBackground, tooltipContentsData } = useMemo<{
     fixedBackground: React.CSSProperties["color"];
@@ -674,8 +674,8 @@ export const useBook: UseBook = (props) => {
   // }, [isUserPresenceEnabled, bookBorderGradientColors, book])
 
   const handleBookClick = useCallback<() => void>(() => {
-    if (!showChapters) setShowChapters(true);
-  }, [showChapters, setShowChapters]);
+    if (!showChapters) setBookOpen(bookId, true);
+  }, [showChapters, setBookOpen, bookId]);
 
   const handleBookHeaderPointerDown = useCallback<
     UseBookType["handleBookHeaderPointerDown"]

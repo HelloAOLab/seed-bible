@@ -32,6 +32,8 @@ export interface ScriptureMapContextType extends ScriptureMapConfig {
   arrangement?: ArrangementInfo;
   showingAllChapters: boolean;
   setShowingAllChapters: Dispatch<StateUpdater<boolean>>;
+  openBookOverrides: Record<string, boolean>;
+  setBookOpen: (bookId: string, open: boolean) => void;
   isUserPresenceEnabled: boolean;
   setIsUserPresenceEnabled: Dispatch<StateUpdater<boolean>>;
   isReadingHistoryEnabled: boolean;

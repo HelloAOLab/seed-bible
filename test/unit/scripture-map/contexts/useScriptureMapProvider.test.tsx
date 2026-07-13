@@ -6,6 +6,26 @@ vi.mock("../../../../packages/scripture-map/hooks/useIsMobile", () => ({
   useIsMobile: vi.fn(() => false),
 }));
 
+function makeSeedBibleState(overrides: Record<string, unknown> = {}) {
+  return {
+    theme: {
+      currentTheme: {
+        value: { variables: {} },
+      },
+    },
+    tabs: {
+      tabs: { value: [] },
+      selectedTabId: { value: "" },
+    },
+    login: {
+      userId: { value: "user-1" },
+      profile: { value: null },
+      updateProfile: vi.fn(),
+    },
+    ...overrides,
+  };
+}
+
 function makeConfig(overrides: Record<string, unknown> = {}) {
   return {
     arrangementService: {
@@ -25,17 +45,7 @@ function makeConfig(overrides: Record<string, unknown> = {}) {
     userPresenceService: {
       getUserPresence: vi.fn(() => new Map()),
     },
-    seedBibleState: {
-      theme: {
-        currentTheme: {
-          value: { variables: {} },
-        },
-      },
-      tabs: {
-        tabs: { value: [] },
-        selectedTabId: { value: "" },
-      },
-    },
+    seedBibleState: makeSeedBibleState(),
     getDayRangeSeconds: vi.fn((time: number) => ({
       start: time / 1000,
       end: time / 1000 + 86400,
@@ -186,6 +196,73 @@ describe("useScriptureMapProvider", () => {
     it("uses initialShowingAllChapters from config", () => {
       const result = setup(makeConfig({ initialShowingAllChapters: true }));
       expect(result.current.showingAllChapters).toBe(true);
+    });
+  });
+
+  describe("openBookOverrides", () => {
+    function makeLogin(profileConfig: Record<string, unknown> | null = null) {
+      return {
+        userId: { value: "user-1" },
+        profile: {
+          value: profileConfig ? { name: "", config: profileConfig } : null,
+        },
+        updateProfile: vi.fn(),
+      };
+    }
+
+    it("defaults to an empty map when the profile has no saved value", () => {
+      const result = setup();
+      expect(result.current.openBookOverrides).toEqual({});
+    });
+
+    it("reads per-book overrides saved on the profile", () => {
+      const login = makeLogin({
+        scriptureMapOpenBooks: { GEN: true, EXO: false },
+      });
+      const result = setup(
+        makeConfig({ seedBibleState: makeSeedBibleState({ login }) })
+      );
+      expect(result.current.openBookOverrides).toEqual({
+        GEN: true,
+        EXO: false,
+      });
+    });
+
+    it("falls back to an empty map when the saved value is malformed", () => {
+      const login = makeLogin({ scriptureMapOpenBooks: "not-an-object" });
+      const result = setup(
+        makeConfig({ seedBibleState: makeSeedBibleState({ login }) })
+      );
+      expect(result.current.openBookOverrides).toEqual({});
+    });
+
+    it("setBookOpen updates the map and persists it to the profile", () => {
+      const login = makeLogin({});
+      const result = setup(
+        makeConfig({ seedBibleState: makeSeedBibleState({ login }) })
+      );
+
+      act(() => result.current.setBookOpen("GEN", true));
+
+      expect(result.current.openBookOverrides).toEqual({ GEN: true });
+      expect(login.updateProfile).toHaveBeenCalledWith({
+        config: { scriptureMapOpenBooks: { GEN: true } },
+      });
+    });
+
+    it("handleShowAllChaptersToggle clears any per-book overrides and persists the cleared map", () => {
+      const login = makeLogin({ scriptureMapOpenBooks: { GEN: true } });
+      const result = setup(
+        makeConfig({ seedBibleState: makeSeedBibleState({ login }) })
+      );
+      expect(result.current.openBookOverrides).toEqual({ GEN: true });
+
+      act(() => result.current.handleShowAllChaptersToggle());
+
+      expect(result.current.openBookOverrides).toEqual({});
+      expect(login.updateProfile).toHaveBeenCalledWith({
+        config: { scriptureMapOpenBooks: {} },
+      });
     });
   });
 

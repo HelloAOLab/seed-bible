@@ -11,10 +11,33 @@ import type { ArrangementInfo } from "../../../seed-bible-utils/domain/models/ar
 import type { UserPresence } from "../../../seed-bible-utils/domain/models/userPresence";
 import type { ScriptureMapConfig } from "../../components/ScriptureMap";
 import type { UserData } from "../../../seed-bible-utils/domain/models/userPresence";
+import {
+  getProfileConfigValue,
+  saveProfileConfigValue,
+} from "../../../seed-bible/seed-bible/managers/ProfileConfigSync";
 
 import { computed } from "@preact/signals";
 
 import { useState, useCallback, useMemo, useEffect } from "preact/hooks";
+
+const PROFILE_OPEN_BOOK_OVERRIDES = "scriptureMapOpenBooks";
+
+/** Individual books the user has explicitly opened/closed, keyed by book id. Books with no entry fall back to `showingAllChapters`. */
+function parseOpenBookOverrides(value: unknown): Record<string, boolean> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+
+  const result: Record<string, boolean> = {};
+  for (const [bookId, open] of Object.entries(
+    value as Record<string, unknown>
+  )) {
+    if (typeof open === "boolean") {
+      result[bookId] = open;
+    }
+  }
+  return result;
+}
 
 type UseScriptureMapProvider = (
   config: ScriptureMapConfig
@@ -228,6 +251,16 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
   const [showingAllChapters, setShowingAllChapters] = useState<boolean>(
     initialShowingAllChapters
   );
+  const [openBookOverrides, setOpenBookOverrides] = useState<
+    Record<string, boolean>
+  >(() =>
+    parseOpenBookOverrides(
+      getProfileConfigValue(
+        seedBibleState.login.profile.value,
+        PROFILE_OPEN_BOOK_OVERRIDES
+      )
+    )
+  );
   const [showingBooksColors, setShowingBooksColors] = useState<boolean>(true);
   const [showTestamentLabels, setShowTestamentLabels] = useState<boolean>(
     initialShowTestamentLabels
@@ -293,9 +326,47 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
     setShowSectionLabels((prev) => !prev);
   }, []);
 
+  // Re-derive from the profile once it finishes its async load (or on
+  // login/logout), so a slow profile fetch doesn't leave books stuck on the
+  // pre-login default.
+  useEffect(() => {
+    setOpenBookOverrides(
+      parseOpenBookOverrides(
+        getProfileConfigValue(
+          seedBibleState.login.profile.value,
+          PROFILE_OPEN_BOOK_OVERRIDES
+        )
+      )
+    );
+  }, [seedBibleState.login.profile.value]);
+
+  const setBookOpen = useCallback<(bookId: string, open: boolean) => void>(
+    (bookId, open) => {
+      setOpenBookOverrides((prev) => {
+        if (prev[bookId] === open) return prev;
+        const next = { ...prev, [bookId]: open };
+        saveProfileConfigValue(
+          seedBibleState.login,
+          PROFILE_OPEN_BOOK_OVERRIDES,
+          next
+        );
+        return next;
+      });
+    },
+    [seedBibleState.login]
+  );
+
   const handleShowAllChaptersToggle = useCallback<() => void>(() => {
     setShowingAllChapters((prev) => !prev);
-  }, []);
+    // A bulk open/close-all replaces any per-book overrides, matching what
+    // already happens in-session (each Book resyncs to showingAllChapters).
+    setOpenBookOverrides({});
+    saveProfileConfigValue(
+      seedBibleState.login,
+      PROFILE_OPEN_BOOK_OVERRIDES,
+      {}
+    );
+  }, [seedBibleState.login]);
 
   const handleProjectFilterOptionClick = useCallback<
     (key: "all" | ProjectChapterStateType) => void
@@ -364,6 +435,8 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
       arrangement,
       showingAllChapters,
       setShowingAllChapters,
+      openBookOverrides,
+      setBookOpen,
       isUserPresenceEnabled,
       setIsUserPresenceEnabled,
       isReadingHistoryEnabled,
@@ -405,6 +478,8 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
     arrangement,
     showingAllChapters,
     setShowingAllChapters,
+    openBookOverrides,
+    setBookOpen,
     isUserPresenceEnabled,
     setIsUserPresenceEnabled,
     isReadingHistoryEnabled,
