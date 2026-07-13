@@ -1219,8 +1219,10 @@ export function createSeedBibleState(
 
   effect(() => {
     const isPlaying = !!playlists.playing.value;
-    if (isPlaying) {
-      handleOpenDiscover();
+    if (isPlaying && !isMobile.value) {
+      playlists.view.value = playlists.playing.peek()
+        ? "play_playlist"
+        : "discover";
     }
   });
 

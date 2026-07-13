@@ -392,6 +392,14 @@ export function createPlaylistManager(
       : null;
   });
 
+  const actualView = computed(() => {
+    if (view.value === "play_playlist" && !playing.value) {
+      return "discover";
+    }
+
+    return view.value;
+  });
+
   const availablePlaylists = computed(() => {
     return userPlaylists;
   });
@@ -910,6 +918,7 @@ export function createPlaylistManager(
     userPlaylists,
     availablePlaylists,
     view,
+    actualView,
     editingPlaylist,
     playing,
     startPlaying,

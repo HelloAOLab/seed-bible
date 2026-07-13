@@ -135,13 +135,13 @@ export function DiscoverPaneTitle(props: { playlists: PlaylistManager }) {
 export function DiscoverPane(props: DiscoverPaneProps) {
   const { tabs, playlists, modals } = props;
   const { t } = useI18n();
-  const { view } = playlists;
+  const { actualView } = playlists;
 
-  if (view.value === "create_playlist") {
+  if (actualView.value === "create_playlist") {
     return <CreatePlaylistForm playlists={playlists} tabs={tabs} />;
   }
 
-  if (view.value === "play_playlist") {
+  if (actualView.value === "play_playlist") {
     return (
       <PlayPlaylistView
         state={props.state}
