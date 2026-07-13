@@ -13,6 +13,7 @@ import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/Se
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { Mock } from "vitest";
+import type { ReadingExtensionRuntime } from "@packages/seed-bible/seed-bible/managers";
 
 type ReaderFixture = {
   slot: TabSlot;
@@ -146,6 +147,13 @@ function createFixture(): ReaderFixture {
     discoveredContent: signal([]),
     discoveredCrossReferences: signal([]),
     discoveredStudyNotes: signal([]),
+    disableExtension: vi.fn(async () => undefined),
+    enableExtension: vi.fn(async () => undefined),
+    isShared: signal(false),
+    dispose: vi.fn(async () => undefined),
+    enabledExtensions: signal<ReadingExtensionRuntime[]>([]),
+    isExtensionEnabled: vi.fn(() => false),
+    getUrlQueryParams: vi.fn(() => ({})),
   } as BibleReadingState;
 
   const selectorState = {

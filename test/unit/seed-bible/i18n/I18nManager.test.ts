@@ -51,6 +51,7 @@ describe("I18nManager getInitialLanguage()", () => {
       push: vi.fn(),
       updateQueryParam: vi.fn(),
       linkToQuery: vi.fn(),
+      updateQueryParams: vi.fn(),
     } as NavigationManager;
     manager = createI18nManager(nav, ssrLanguages);
   });
@@ -148,6 +149,7 @@ describe("I18nManager language fallback prompt", () => {
       replace: vi.fn(),
       push: vi.fn(),
       updateQueryParam: vi.fn(),
+      updateQueryParams: vi.fn(),
       linkToQuery: vi.fn(),
     } as NavigationManager;
     manager = createI18nManager(nav, ["en"]);
