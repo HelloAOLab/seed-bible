@@ -1,5 +1,5 @@
-import type { BiblePieces } from "bibleVizUtils.domain.models.canvas";
-import type { HexString } from "bibleVizUtils.domain.models.commonTypes";
+import { BiblePieces } from "../../domain/models/canvas";
+import type { HexString } from "../../domain/models/commonTypes";
 
 export interface BibleTransformerState {
   initialPositionZ: number;

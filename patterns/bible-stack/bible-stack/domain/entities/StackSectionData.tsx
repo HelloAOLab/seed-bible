@@ -3,6 +3,7 @@ import { StackBookData } from "./StackBookData";
 import type {
   BiblePiece,
   ParentDataIds,
+  SectionShadow,
   StackSectionCreationParams,
 } from "../models/canvas";
 import type { SectionInfo, BookInfo } from "../models/arrangement";
@@ -36,7 +37,7 @@ export class StackSectionData extends StackPieceData<
 > {
   #isInExplodedView: DataParams["isInExplodedView"];
   #isInsideTestament: DataParams["isInsideTestament"];
-  #shadow: Piece<"StackSectionShadow"> | undefined;
+  #shadow: SectionShadow | undefined;
 
   constructor({
     childrenData = [],
@@ -95,11 +96,11 @@ export class StackSectionData extends StackPieceData<
   get shadow() {
     return this.#shadow;
   }
-  attachShadow(shadow: Piece<"StackSectionShadow">) {
+  attachShadow(shadow: SectionShadow) {
     this.#shadow = shadow;
   }
-  detachShadow(): Piece<"StackSectionShadow"> | undefined {
-    let shadow: Piece<"StackSectionShadow"> | undefined;
+  detachShadow(): SectionShadow | undefined {
+    let shadow: SectionShadow | undefined;
     if (this.#shadow) {
       shadow = this.#shadow;
       this.#shadow = undefined;

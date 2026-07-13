@@ -1,8 +1,7 @@
 import type { CrossLineBot } from "../models/stack";
 import type { StackCrossLine } from "../../domain/models/pieces";
-import type { StackCrossLineMapperPort } from "../ports/stackPieceLifecycle";
 
-export class StackCrossLineMapper implements StackCrossLineMapperPort {
+export class StackCrossLineMapper {
   toDomain(bot: CrossLineBot): StackCrossLine {
     return { id: bot.id, type: bot.tags.type, bibleId: bot.tags.stackBibleId };
   }

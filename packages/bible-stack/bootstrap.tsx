@@ -58,6 +58,7 @@ export const bootstrapExtension = () => {
                 dataRepository.getBooksStaticInfo()
               ),
               bookNames: JSON.stringify(Object.fromEntries(bookNames.value)),
+              language: context.i18n.language.value,
             },
           });
         },

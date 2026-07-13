@@ -35,24 +35,20 @@ export interface PieceDataMap {
   [BiblePieces.StackSection]: StackSectionData;
   [BiblePieces.StackSectionBook]: StackSectionBookData;
   [BiblePieces.StackTestament]: StackTestamentData;
-  [BiblePieces.StackSectionShadow]: StackSectionData;
+  // [BiblePieces.StackSectionShadow]: StackSectionData;
 }
 
-export interface GetPieceDataParams<T> {
-  pieceType: T;
-  pieceId: Piece["id"];
-}
-
-export type GetPieceData = <T extends keyof PieceDataMap>(
-  params: GetPieceDataParams<T>
-) => PieceDataMap[T];
+export type GetPieceDataById = <T extends keyof PieceDataMap>(params: {
+  type: T;
+  id: Piece["id"];
+}) => PieceDataMap[T] | undefined;
 
 export type GetAllPiecesDataByType = <T extends keyof PieceDataMap>(
   type: T
 ) => PieceDataMap[T][];
 
 export interface DataRegistryPort {
-  getPieceData: GetPieceData;
+  getDataById: GetPieceDataById;
   getAllPiecesDataByType: GetAllPiecesDataByType;
 }
 

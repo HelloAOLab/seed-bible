@@ -10,16 +10,14 @@ import type {
   DimensionProviderPort,
   VisualStateRegistryPort,
 } from "bibleStack.infrastructure.ports.bibleSetup";
-import type {
-  StackCoverMapperPort,
-  StackLowerCoverMapperPort,
-  StackCrossLineMapperPort,
-  StackTestamentMapperPort,
-  StackSectionMapperPort,
-  StackSectionBookMapperPort,
-  StackBookMapperPort,
-  StackSectionShadowMapperPort,
-} from "bibleStack.infrastructure.ports.stackPieceLifecycle";
+import type { StackCoverMapper } from "../../mappers/StackCoverMapper";
+import type { StackLowerCoverMapper } from "../../mappers/StackLowerCoverMapper";
+import type { StackCrossLineMapper } from "../../mappers/StackCrossLineMapper";
+import type { StackTestamentMapper } from "../../mappers/StackTestamentMapper";
+import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
+import type { StackSectionBookMapper } from "../../mappers/StackSectionBookMapper";
+import type { StackBookMapper } from "../../mappers/StackBookMapper";
+import type { StackSectionShadowMapper } from "../../mappers/StackSectionShadowMapper";
 import { BibleTypes, type Piece } from "bibleVizUtils.domain.models.canvas";
 import {
   ApplyStrictMod,
@@ -42,14 +40,14 @@ interface BibleSequenceAdapterParams {
   configProviderPort: BibleSequenceAdapterConfigProviderPort;
   dimensionProviderPort: DimensionProviderPort;
   visualStateRegistryPort: VisualStateRegistryPort;
-  coverMapperPort: StackCoverMapperPort;
-  lowerCoverMapperPort: StackLowerCoverMapperPort;
-  crossLineMapperPort: StackCrossLineMapperPort;
-  testamentMapperPort: StackTestamentMapperPort;
-  sectionMapperPort: StackSectionMapperPort;
-  sectionBookMapperPort: StackSectionBookMapperPort;
-  bookMapperPort: StackBookMapperPort;
-  sectionShadowMapperPort: StackSectionShadowMapperPort;
+  coverMapperPort: StackCoverMapper;
+  lowerCoverMapperPort: StackLowerCoverMapper;
+  crossLineMapperPort: StackCrossLineMapper;
+  testamentMapperPort: StackTestamentMapper;
+  sectionMapperPort: StackSectionMapper;
+  sectionBookMapperPort: StackSectionBookMapper;
+  bookMapperPort: StackBookMapper;
+  sectionShadowMapperPort: StackSectionShadowMapper;
   pieceMapperPort: PieceMapperPort;
   pieceAdapterPort: PieceAdapterPort;
   sectionInfoMapperPort: SectionInfoMapperPort;

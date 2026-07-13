@@ -1,8 +1,7 @@
 import type { LowerCoverBot } from "../models/stack";
 import type { StackCover } from "../../domain/models/pieces";
-import type { StackLowerCoverMapperPort } from "../ports/stackPieceLifecycle";
 
-export class StackLowerCoverMapper implements StackLowerCoverMapperPort {
+export class StackLowerCoverMapper {
   toDomain(bot: LowerCoverBot): StackCover {
     return { id: bot.id, type: bot.tags.type, bibleId: bot.tags.stackBibleId };
   }

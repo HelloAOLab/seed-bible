@@ -1,6 +1,6 @@
-import type { Piece } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/canvas";
-import type { VisualStateMap } from "bibleStack.infrastructure.models.visualState";
-import { BiblePieces } from "bibleVizUtils.domain.models.canvas";
+import type { Piece } from "../../../domain/models/canvas";
+import type { VisualStateMap } from "../../models/visualState";
+import { BiblePieces } from "../../../domain/models/canvas";
 
 export class VisualStateRegistry {
   #statesMap: {

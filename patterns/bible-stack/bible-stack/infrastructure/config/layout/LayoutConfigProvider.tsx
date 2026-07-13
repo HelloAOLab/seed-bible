@@ -1,18 +1,15 @@
 import {
   StackPieceMeasurements,
   type StackPieceMeasurementsType,
-} from "bibleVizUtils.infrastructure.config.stacks.measurements";
-import {
-  StackSpacings,
-  type StackSpacingsType,
-} from "bibleVizUtils.infrastructure.config.stacks.spacings";
+} from "./measurements";
+import { StackSpacings, type StackSpacingsType } from "./spacings";
 // import { StackAnimationsDuration } from "bibleVizUtils.infrastructure.config.stacks.animations";
-import {
-  StackOpacities,
-  type StackOpacitiesType,
-} from "bibleVizUtils.infrastructure.config.stacks.opacities";
+import { StackOpacities, type StackOpacitiesType } from "./opacities";
+import type { PieceLifecycleConfigProviderPort } from "../../../application/ports/out/PieceLifecycle";
 
-export class LayoutConfigProvider {
+const VERSES_PER_BUNDLE = 12;
+
+export class LayoutConfigProvider implements PieceLifecycleConfigProviderPort {
   getStackPieceMeasurements(): StackPieceMeasurementsType {
     return StackPieceMeasurements;
   }
@@ -52,4 +49,8 @@ export class LayoutConfigProvider {
   ) => StackOpacitiesType[K] = (opacity) => {
     return this.getStackOpacities()[opacity];
   };
+
+  getVersesPerBundle() {
+    return VERSES_PER_BUNDLE;
+  }
 }

@@ -4,7 +4,7 @@ import type { Piece } from "bibleVizUtils.domain.models.canvas";
 import type { PieceBot } from "bibleVizUtils.infrastructure.models.casualos";
 import type { VisualStateMap } from "bibleStack.infrastructure.models.visualState";
 import type { StackPieceLifecycleAdapterPort } from "bibleStack.application.ports.pieceLifecycle";
-import type { StackTestamentMapperPort } from "bibleStack.infrastructure.ports.stackPieceLifecycle";
+import type { StackTestamentMapper } from "../mappers/StackTestamentMapper";
 
 export interface BibleSetupConfigProviderPort {
   getStackPieceMeasurement<K extends keyof StackPieceMeasurementsType>(
@@ -54,5 +54,5 @@ export interface BibleSetupAdapterParams {
     StackPieceLifecycleAdapterPort,
     "spawnTestament"
   >;
-  testamentMapperPort: StackTestamentMapperPort;
+  testamentMapperPort: StackTestamentMapper;
 }

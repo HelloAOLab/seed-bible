@@ -30,6 +30,10 @@ export interface Piece<T extends BiblePiece = BiblePiece> {
   type: T;
 }
 
+export interface SectionShadow extends Piece<"StackSectionShadow"> {
+  sectionDataId: string;
+}
+
 export interface ActivityIndicator extends Piece<"ActivityIndicator"> {
   indicatorType: "regular" | "extraContent" | "extraBackground";
   index: number;

@@ -4,7 +4,6 @@ import type {
   PieceLifecycleAdapterPort,
   BibleDataRepositoryPort,
   BibleLifecycleEventPort,
-  ArrangementServicePort,
   IdGeneratorPort,
   StackPieceLifecycleAdapterPort,
   BibleSetupAdapterPort,
@@ -16,28 +15,29 @@ import {
   type BibleType,
 } from "../../domain/models/canvas";
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
+import type { ArrangementProvider } from "../ports/in/Arrangement";
 
-interface BibleLifecycleServiceParams {
+interface ServiceParams {
   pieceLifecycleAdapterPort: PieceLifecycleAdapterPort;
   pieceLifecycleServicePort: PieceLifecycleServicePort;
   bibleDataRepositoryPort: BibleDataRepositoryPort;
   bibleLifecycleEventPort: BibleLifecycleEventPort;
-  arrangementServicePort: ArrangementServicePort;
+  arrangementServicePort: ArrangementProvider;
   idGeneratorPort: IdGeneratorPort;
   stackPieceLifecycleAdapterPort: StackPieceLifecycleAdapterPort;
   bibleSetupAdapterPort: BibleSetupAdapterPort;
 }
 
 export class BibleLifecycleService {
-  #pieceLifecycleAdapterPort: BibleLifecycleServiceParams["pieceLifecycleAdapterPort"];
-  #pieceLifecycleServicePort: BibleLifecycleServiceParams["pieceLifecycleServicePort"];
-  #bibleDataRepositoryPort: BibleLifecycleServiceParams["bibleDataRepositoryPort"];
-  #bibleLifecycleEventPort: BibleLifecycleServiceParams["bibleLifecycleEventPort"];
-  #arrangementServicePort: BibleLifecycleServiceParams["arrangementServicePort"];
-  #idGeneratorPort: BibleLifecycleServiceParams["idGeneratorPort"];
+  #pieceLifecycleAdapterPort: ServiceParams["pieceLifecycleAdapterPort"];
+  #pieceLifecycleServicePort: ServiceParams["pieceLifecycleServicePort"];
+  #bibleDataRepositoryPort: ServiceParams["bibleDataRepositoryPort"];
+  #bibleLifecycleEventPort: ServiceParams["bibleLifecycleEventPort"];
+  #arrangementServicePort: ServiceParams["arrangementServicePort"];
+  #idGeneratorPort: ServiceParams["idGeneratorPort"];
   #hasABibleEverBeenCreated: boolean = false;
-  #stackPieceLifecycleAdapterPort: BibleLifecycleServiceParams["stackPieceLifecycleAdapterPort"];
-  #bibleSetupAdapterPort: BibleLifecycleServiceParams["bibleSetupAdapterPort"];
+  #stackPieceLifecycleAdapterPort: ServiceParams["stackPieceLifecycleAdapterPort"];
+  #bibleSetupAdapterPort: ServiceParams["bibleSetupAdapterPort"];
 
   constructor({
     pieceLifecycleAdapterPort,
@@ -48,7 +48,7 @@ export class BibleLifecycleService {
     idGeneratorPort,
     stackPieceLifecycleAdapterPort,
     bibleSetupAdapterPort,
-  }: BibleLifecycleServiceParams) {
+  }: ServiceParams) {
     this.#pieceLifecycleAdapterPort = pieceLifecycleAdapterPort;
     this.#pieceLifecycleServicePort = pieceLifecycleServicePort;
     this.#bibleDataRepositoryPort = bibleDataRepositoryPort;

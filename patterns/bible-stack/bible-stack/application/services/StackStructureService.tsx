@@ -8,11 +8,11 @@ import { StackChapterData } from "../../domain/entities/StackChapterData";
 import { StackBibleData } from "../../domain/entities/StackBibleData";
 import type {
   PieceAdapterPort,
-  PieceLifecycleServicePort,
   StackStructureEventPort,
 } from "../ports/stackStructure";
 import type { StackPieceDataMap } from "../ports/pieces";
 import type { BookInfo } from "../../domain/models/arrangement";
+import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 
 interface ServiceParams {
   pieceAdapterPort: PieceAdapterPort;
@@ -42,7 +42,6 @@ const copyTestamentStrategy: CopyStrategy<
   StackPieceDataMap["StackTestament"]
 > = ({ data, pieceLifecycleServicePort, bibleData }) => {
   return pieceLifecycleServicePort.createTestament({
-    arrangementIndex: data.getArrangementIndex(),
     testamentIndex: data.getTestamentIndex(),
     bibleDataId: bibleData?.id,
     isHidden: true,
@@ -53,7 +52,6 @@ const rawCopySectionStrategy: CopyStrategy<
   StackPieceDataMap["StackSection" | "StackSectionBook"]
 > = ({ data, pieceLifecycleServicePort, bibleData, testamentData }) => {
   return pieceLifecycleServicePort.createSection({
-    arrangementIndex: data.getArrangementIndex(),
     testamentIndex: data.getTestamentIndex(),
     sectionIndex: data.getSectionIndex(),
     isInsideBible: true,
@@ -83,7 +81,6 @@ const copyBookStrategy: CopyStrategy<StackPieceDataMap["StackBook"]> = ({
   sectionData,
 }) => {
   return pieceLifecycleServicePort.createBook({
-    arrangementIndex: data.getArrangementIndex(),
     testamentIndex: data.getTestamentIndex(),
     sectionIndex: data.getSectionIndex(),
     levelIndex: data.getLevelIndex(),

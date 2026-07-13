@@ -14,7 +14,7 @@ export class BooksStaticInfoRepository implements BooksStaticInfoRepositoryPort 
     this.#booksStaticInfo = booksStaticInfo;
   }
 
-  getBookStaticInfo(book: string): BookStaticInfoConfig | undefined {
-    return this.#booksStaticInfo[book];
+  getBookStaticInfo(bookId: string): BookStaticInfoConfig | undefined {
+    return this.#booksStaticInfo[bookId];
   }
 }

@@ -76,10 +76,10 @@ export interface PieceDataRepositoryPort {
   getAllPiecesDataByType: <K extends keyof StackPieceDataMap>(
     type: K
   ) => StackPieceDataMap[K][];
-  getDataById: <K extends keyof StackPieceDataMap>(
-    type: K,
-    id: StackPieceDataMap[K]["id"]
-  ) => StackPieceDataMap[K] | undefined;
+  getDataById: <K extends keyof StackPieceDataMap>(params: {
+    type: K;
+    id: StackPieceDataMap[K]["id"];
+  }) => StackPieceDataMap[K] | undefined;
 }
 
 export type PieceHierarchyPieceDataRepositoryPort = Pick<

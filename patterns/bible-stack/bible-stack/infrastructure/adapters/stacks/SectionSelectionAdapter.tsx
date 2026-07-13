@@ -2,20 +2,17 @@ import {
   AnimateStrictTag,
   GetBotScales,
   SetStrictTag,
-} from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/functions/casualos";
+} from "../../functions/casualos";
 import type { SectionSelectionConfigProvider } from "../../config/sectionSelection/SectionSelectionConfigProvider";
-import type { SectionSelectionAdapterPort } from "bibleStack.application.ports.out.SectionSelection";
-import type { StackSectionData } from "bibleVizUtils.domain.entities.StackSectionData";
+import type { SectionSelectionAdapterPort } from "../../../application/ports/out/SectionSelection";
+import type { StackSectionData } from "../../../domain/entities/StackSectionData";
 import type { StackSectionShadowMapper } from "../../mappers/StackSectionShadowMapper";
 import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
-import type {
-  SectionBot,
-  SectionTags,
-} from "@packages/Bible Stack/bibleStack/models/stack";
+import type { SectionBot, SectionTags } from "../../models/stack";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
-import type { StackConfigProvider } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/stacks/StackConfigProvider";
+import type { LayoutConfigProvider } from "../../config/layout/LayoutConfigProvider";
 import type { Easing } from "../../../../../pattern-typings/AuxLibraryDefinitions";
-import type { StackBookData } from "bibleVizUtils.domain.entities.StackBookData";
+import type { StackBookData } from "../../../domain/entities/StackBookData";
 import type { StackBookMapper } from "../../mappers/StackBookMapper";
 import type { BookSetupAdapter } from "./BookSetupAdapter";
 import type { BookStackLayoutAdapter } from "./BookStackLayoutAdapter";
@@ -26,7 +23,7 @@ interface AdapterParams {
   shadowMapper: StackSectionShadowMapper;
   sectionMapper: StackSectionMapper;
   visualStateRegistry: VisualStateRegistry;
-  stackConfigProvider: StackConfigProvider;
+  stackConfigProvider: LayoutConfigProvider;
   bookSetupAdapter: BookSetupAdapter;
   bookMapper: StackBookMapper;
   bookStackLayoutAdapter: BookStackLayoutAdapter;

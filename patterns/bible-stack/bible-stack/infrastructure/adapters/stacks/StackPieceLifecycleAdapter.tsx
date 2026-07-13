@@ -1,5 +1,5 @@
-import type { StackPieceLifecycleAdapterPort as PieceLifecycleAdapterPort } from "bibleStack.application.ports.pieceLifecycle";
-import type { StackPieceLifecycleAdapterPort as BibleLifecycleAdapterPort } from "bibleStack.application.ports.bibleLifecycle";
+import type { StackPieceLifecycleAdapterPort as PieceLifecycleAdapterPort } from "../../../application/ports/pieceLifecycle";
+import type { StackPieceLifecycleAdapterPort as BibleLifecycleAdapterPort } from "../../../application/ports/bibleLifecycle";
 import type {
   BookBot,
   ChapterBot,
@@ -8,20 +8,53 @@ import type {
   TestamentBot,
   VerseBot,
   VersesBundleBot,
-} from "bibleStack.models.stack";
-import type { Piece } from "bibleVizUtils.domain.models.canvas";
-import type { StackPieceLifecycleAdapterParams } from "bibleStack.infrastructure.ports.stackPieceLifecycle";
-import type { StackBibleData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBibleData";
+} from "../../models/stack";
+import type { Piece, SectionShadow } from "../../../domain/models/canvas";
+import type { StackBibleData } from "../../../domain/entities/StackBibleData";
 import type {
   StackCover,
   StackCrossLine,
   StackShadow,
   StackTransformer,
-} from "bibleStack.domain.models.pieces";
-import { SetStrictTag } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/functions/casualos";
+} from "../../../domain/models/pieces";
+import { SetStrictTag } from "../../functions/casualos";
+import type { ObjectPooler } from "../environment/ObjectPooler";
+import type { BibleStackObjectPoolerMap } from "../../models/objectPooler";
+import type { StackTestamentMapper } from "../../mappers/StackTestamentMapper";
+import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
+import type { StackBookMapper } from "../../mappers/StackBookMapper";
+import type { StackChapterMapper } from "../../mappers/StackChapterMapper";
+import type { StackSectionShadowMapper } from "../../mappers/StackSectionShadowMapper";
+import type { StackSectionBookMapper } from "../../mappers/StackSectionBookMapper";
+import type { VersesBundleMapper } from "../../mappers/VersesBundleMapper";
+import type { VerseMapper } from "../../mappers/VerseMapper";
+import type { StackTransformerMapper } from "../../mappers/StackTransformerMapper";
+import type { StackCoverMapper } from "../../mappers/StackCoverMapper";
+import type { StackCrossLineMapper } from "../../mappers/StackCrossLineMapper";
+import type { StackShadowMapper } from "../../mappers/StackShadowMapper";
+import type { PieceLifecycleAdapterPort as BibleLifecyclePieceLifecycleAdapterPort } from "../../../application/ports/bibleLifecycle";
+
+export interface StackPieceLifecycleAdapterParams {
+  objectPoolerPort: ObjectPooler<BibleStackObjectPoolerMap>;
+  testamentMapperPort: StackTestamentMapper;
+  sectionMapperPort: StackSectionMapper;
+  bookMapperPort: StackBookMapper;
+  chapterMapperPort: StackChapterMapper;
+  sectionShadowMapperPort: StackSectionShadowMapper;
+  sectionBookMapperPort: StackSectionBookMapper;
+  versesBundleMapperPort: VersesBundleMapper;
+  verseMapperPort: VerseMapper;
+  stackTransformerMapperPort: StackTransformerMapper;
+  coverMapperPort: StackCoverMapper;
+  crossLineMapperPort: StackCrossLineMapper;
+  stackShadowMapperPort: StackShadowMapper;
+}
 
 export class StackPieceLifecycleAdapter
-  implements PieceLifecycleAdapterPort, BibleLifecycleAdapterPort
+  implements
+    PieceLifecycleAdapterPort,
+    BibleLifecycleAdapterPort,
+    BibleLifecyclePieceLifecycleAdapterPort
 {
   #objectPoolerPort: StackPieceLifecycleAdapterParams["objectPoolerPort"];
   #testamentMapperPort: StackPieceLifecycleAdapterParams["testamentMapperPort"];
@@ -134,11 +167,14 @@ export class StackPieceLifecycleAdapter
     return this.#objectPoolerPort.getObject("StackSectionShadow");
   }
 
-  spawnSectionShadowDomain(): Piece<"StackSectionShadow"> {
-    return this.#sectionShadowMapperPort.toDomain(this.spawnSectionShadow());
+  spawnSectionShadowDomain(sectionDataId: string): SectionShadow {
+    return this.#sectionShadowMapperPort.toDomain(
+      this.spawnSectionShadow(),
+      sectionDataId
+    );
   }
 
-  despawnSectionShadow(piece: Piece<"StackSectionShadow">): void {
+  despawnSectionShadow(piece: SectionShadow): void {
     const bot = this.#sectionShadowMapperPort.toInfrastructure(piece);
     if (bot) this.#objectPoolerPort.releaseObject(bot, "StackSectionShadow");
   }
@@ -187,7 +223,7 @@ export class StackPieceLifecycleAdapter
       case "StackChapter":
         return this.despawnChapter(piece as Piece<"StackChapter">);
       case "StackSectionShadow":
-        return this.despawnSectionShadow(piece as Piece<"StackSectionShadow">);
+        return this.despawnSectionShadow(piece as SectionShadow);
       case "VersesBundle":
         return this.despawnVersesBundle(piece as Piece<"VersesBundle">);
       case "Verse":
@@ -199,6 +235,12 @@ export class StackPieceLifecycleAdapter
     }
   }
 
+  despawnPieces(pieces: Piece[]): void {
+    for (const piece of pieces) {
+      this.despawn(piece);
+    }
+  }
+
   spawnBibleTransformer(bibleId: StackBibleData["id"]): StackTransformer {
     const bot = this.#objectPoolerPort.getObject("StackTransformer");
     SetStrictTag(bot, "stackBibleId", bibleId);
@@ -207,14 +249,14 @@ export class StackPieceLifecycleAdapter
   }
 
   spawnCover(bibleId: StackBibleData["id"]): StackCover {
-    const bot = this.#objectPoolerPort.getObject("Cover");
+    const bot = this.#objectPoolerPort.getObject("StackCover");
     SetStrictTag(bot, "stackBibleId", bibleId);
     const piece = this.#coverMapperPort.toDomain(bot);
     return piece;
   }
 
   spawnCrossLine(bibleId: StackBibleData["id"]): StackCrossLine {
-    const bot = this.#objectPoolerPort.getObject("CrossLine");
+    const bot = this.#objectPoolerPort.getObject("StackCrossLine");
     SetStrictTag(bot, "stackBibleId", bibleId);
     const piece = this.#crossLineMapperPort.toDomain(bot);
     return piece;

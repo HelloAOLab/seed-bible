@@ -1,9 +1,8 @@
-import type { Piece } from "../../domain/models/canvas";
+import type { Piece, SectionShadow } from "../../domain/models/canvas";
 import type { InfoLabelData } from "../../domain/entities/InfoLabelData";
 import type { StackBibleData } from "../../domain/entities/StackBibleData";
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
 import type { BibleStackEvents } from "../../domain/models/events";
-import type { ArrangementInfo } from "../../domain/models/arrangement";
 import type {
   StackCover,
   StackCrossLine,
@@ -59,11 +58,6 @@ export interface BibleLifecycleEventPort {
   ) => void;
 }
 
-export interface ArrangementServicePort {
-  getCurrentArrangementIndex(): number;
-  getArrangementByIndex(index: number): ArrangementInfo | undefined;
-}
-
 export interface IdGeneratorPort {
   getId(): string;
 }
@@ -73,7 +67,7 @@ export interface StackPieceLifecycleAdapterPort {
   spawnCover(bibleId: StackBibleData["id"]): StackCover;
   spawnCrossLine(bibleId: StackBibleData["id"]): StackCrossLine;
   spawnShadow(bibleId: StackBibleData["id"]): StackShadow;
-  despawnSectionShadow(piece: Piece<"StackSectionShadow">): void;
+  despawnSectionShadow(piece: SectionShadow): void;
   despawnTestament(piece: Piece<"StackTestament">): void;
   despawnSection(piece: Piece<"StackSection">): void;
   despawnBook(piece: Piece<"StackBook">): void;

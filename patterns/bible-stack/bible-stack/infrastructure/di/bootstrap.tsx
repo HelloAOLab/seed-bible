@@ -2,7 +2,11 @@ import { PieceMapper } from "../mappers/PieceMapper";
 import { LayoutConfigProvider } from "../config/layout/LayoutConfigProvider";
 import { ObjectPooler } from "../adapters/environment/ObjectPooler";
 import type { BibleStackObjectPoolerMap } from "../models/objectPooler";
-import { BiblePieces, type Piece } from "../../domain/models/canvas";
+import {
+  BiblePieces,
+  type Piece,
+  type SectionShadow,
+} from "../../domain/models/canvas";
 import { thisTypedBot as testamentPrefab } from "../prefabs/testament/botAdapter";
 import { AudioAdapter } from "../adapters/audio/AudioAdapter";
 import { BibleSetupCameraAdapter } from "../adapters/environment/BibleSetupCameraAdapter";
@@ -144,6 +148,10 @@ import { LabelAdapter } from "../adapters/labels/LabelAdapter";
 import { LabelsConfigProvider } from "../config/labels/LabelsConfigProvider";
 import { LabelDateService } from "../../application/services/LabelDateService";
 import { PiecesConfigProvider } from "../config/pieces.tsx/PiecesConfigProvider";
+import { CapitalizeFirstLetter } from "../../domain/functions/string";
+import { TranslationsConfigProvider } from "../config/translation/TranslationsConfigProvider";
+import type { ArrangementTranslationKey } from "../config/translation/ArrangementTranslations";
+import { ComputeDateLabelText } from "../../domain/functions/time";
 
 export const bootstrapExtension = () => {
   // // 1. Instantiating mappers
@@ -194,6 +202,9 @@ export const bootstrapExtension = () => {
     new ActivityIndicatorsConfigProvider();
   const labelsConfigProvider = new LabelsConfigProvider();
   const piecesConfigProvider = new PiecesConfigProvider();
+  const translationsConfigProvider = new TranslationsConfigProvider(
+    configBot.tags.language
+  );
 
   // // 3. Instantiating adapters
 
@@ -626,7 +637,7 @@ export const bootstrapExtension = () => {
     },
     loggerPort: loggerAdapter,
   });
-  const peiceLabelService = new PieceLabelService({
+  const pieceLabelService = new PieceLabelService({
     labelAdapterPort: labelAdapter,
     labelDataStorePort: labelDataStore,
     indicatorsUpdaterPort: pieceActivityService,
@@ -654,7 +665,7 @@ export const bootstrapExtension = () => {
               `BibleStack bootstrap: data not found at getColor at createPieceLabelService`
             );
           }
-          return data.getPieceInfoProperty("color") ?? "#ffffff"; // TODO: Properly find the color
+          return "#ffffff";
         },
         getLabelColor: (piece: Piece<"StackTestament">) => {
           const data = pieceDataRepository.getPieceData(piece);
@@ -663,9 +674,20 @@ export const bootstrapExtension = () => {
               `BibleStack bootstrap: data not found at getColor at createPieceLabelService`
             );
           }
-          return data.getPieceInfoProperty("color") ?? "#ffffff"; // TODO: Properly find the color
+          return visualStateRegistry.getStateProperty({
+            piece,
+            property: "labelTextColor",
+          });
         },
-        labelPositioning: "LeftSided",
+        getLabelPositioning: (piece: Piece<"StackTestament">) => {
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `bible-stack bootstrap: data not found at getLabelPositioning at pieceLabelService`
+            );
+          }
+          return data.isOnTheGround ? "Top" : "LeftSided";
+        },
         isInteractable: true,
         makesAttentionFeedback: false,
       },
@@ -677,9 +699,22 @@ export const bootstrapExtension = () => {
               `BibleStack bootstrap: data not found at getLabel at createPieceLabelService`
             );
           }
-          return data.getPieceInfoProperty("name");
+          let name: string | undefined;
+          const translationKey = data.getPieceInfoProperty("translationKey");
+          if (translationKey) {
+            const translatedName =
+              translationsConfigProvider.getArrangementTranslation(
+                translationKey as ArrangementTranslationKey
+              );
+            if (translatedName) {
+              name = translatedName;
+            }
+          }
+          if (!name) {
+            name = data.getPieceInfoProperty("name");
+          }
+          return CapitalizeFirstLetter(name.split("-").join(" "));
         },
-        getDate: (piece: Piece<"StackSection">) => undefined, // TODO: Properly find the date
         getColor: (piece: Piece<"StackSection">) => {
           const data = pieceDataRepository.getPieceData(piece);
           if (!data) {
@@ -687,7 +722,7 @@ export const bootstrapExtension = () => {
               `BibleStack bootstrap: data not found at getColor at createPieceLabelService`
             );
           }
-          return data.getPieceInfoProperty("color") ?? "#ffffff"; // TODO: Properly find the color
+          return data.getPieceInfoProperty("color");
         },
         getLabelColor: (piece: Piece<"StackSection">) => {
           const data = pieceDataRepository.getPieceData(piece);
@@ -696,66 +731,275 @@ export const bootstrapExtension = () => {
               `BibleStack bootstrap: data not found at getColor at createPieceLabelService`
             );
           }
-          return data.getPieceInfoProperty("color") ?? "#ffffff"; // TODO: Properly find the color
+          return visualStateRegistry.getStateProperty({
+            piece,
+            property: "labelTextColor",
+          });
         },
-        labelPositioning: "LeftSided",
+        getLabelPositioning: (piece: Piece<"StackSection">) => {
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `bible-stack bootstrap: data not found at getLabelPositioning at pieceLabelService`
+            );
+          }
+          return data.isOnTheGround ? "Top" : "LeftSided";
+        },
+        makesAttentionFeedback: true,
         isInteractable: true,
       },
       [BiblePieces.StackSectionShadow]: {
         getLabel: (piece: Piece<"StackSectionShadow">) => {
-          return "";
+          const sectionData = pieceDataRepository.getDataById(
+            "StackSection",
+            (piece as SectionShadow).sectionDataId
+          );
+          if (!sectionData) {
+            throw new Error(
+              "bible-stack bootstrap: sectionData not fonud at getLabel"
+            );
+          }
+          let name: string | undefined;
+          const translationKey =
+            sectionData.getPieceInfoProperty("translationKey");
+          if (translationKey) {
+            const translatedName =
+              translationsConfigProvider.getArrangementTranslation(
+                translationKey as ArrangementTranslationKey
+              );
+            if (translatedName) {
+              name = translatedName;
+            }
+          }
+          if (!name) {
+            name = sectionData.getPieceInfoProperty("name");
+          }
+          return CapitalizeFirstLetter(name.split("-").join(" "));
         },
-        getDate: (piece: Piece<"StackSectionShadow">) => undefined, // TODO: Properly find the date
         getColor: (piece: Piece<"StackSectionShadow">) => {
-          return "";
+          const sectionData = pieceDataRepository.getDataById(
+            "StackSection",
+            (piece as SectionShadow).sectionDataId
+          );
+          if (!sectionData) {
+            throw new Error(
+              "bible-stack bootstrap: sectionData not fonud at getLabel"
+            );
+          }
+          if (!sectionData.piece) {
+            throw new Error(
+              "bible-stack bootstrap: sectionData.piede not defined at getLabel"
+            );
+          }
+          return visualStateRegistry.getStateProperty({
+            piece: sectionData.piece,
+            property: "labelTextColor",
+          });
         },
-        getLabelColor: (piece: Piece<"StackSectionShadow">) => {
-          return "";
+        getLabelColor: () => {
+          return "#ffffff";
         },
-        labelPositioning: "LeftSided",
+        getLabelPositioning: (piece: Piece<"StackSectionShadow">) => {
+          const sectionData = pieceDataRepository.getDataById(
+            "StackSection",
+            (piece as SectionShadow).sectionDataId
+          );
+          if (!sectionData) {
+            throw new Error(
+              "bible-stack bootstrap: sectionData not fonud at getLabel"
+            );
+          }
+          if (sectionData.isOnTheGround) {
+            return "Top";
+          }
+          return "RightSidedCorner";
+        },
         isInteractable: true,
+        makesAttentionFeedback: false,
       },
       [BiblePieces.StackSectionBook]: {
         getLabel: (piece: Piece<"StackSectionBook">) => {
-          return "";
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `BibleStack bootstrap: data not found at getLabel at pieceLabelService`
+            );
+          }
+          const bookId = data.getPieceBookInfoProperty("bookId");
+          return bookNamesProvider.getBookName(bookId) ?? bookId;
         },
-        getDate: (piece: Piece<"StackSectionBook">) => undefined, // TODO: Properly find the date
+        getDate: (piece: Piece<"StackSectionBook">) => {
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `BibleStack bootstrap: data not found at getLabel at pieceLabelService`
+            );
+          }
+          if (scripturePiecesStateService.shouldShowLabelDates) {
+            const staticInfo = booksStaticInfoRepository.getBookStaticInfo(
+              data.getPieceBookInfoProperty("bookId")
+            );
+            if (staticInfo) {
+              const currentYear = new Date().getFullYear();
+              return staticInfo.relativeDateRange
+                ? ComputeDateLabelText({
+                    format: labelDateService.dateFormat,
+                    range: staticInfo.relativeDateRange,
+                    currentYear,
+                  })
+                : undefined;
+            }
+          }
+          return undefined;
+        },
         getColor: (piece: Piece<"StackSectionBook">) => {
-          return "";
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `BibleStack bootstrap: data not found at getColor at pieceLabelService`
+            );
+          }
+          if (data.selectionState === "Selected") {
+            return visualStateRegistry.getStateProperty({
+              piece,
+              property: "labelTextColor",
+            });
+          }
+          return "#ffffff";
         },
         getLabelColor: (piece: Piece<"StackSectionBook">) => {
-          return "";
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `BibleStack bootstrap: data not found at getLabelColor at pieceLabelService`
+            );
+          }
+          if (data.selectionState === "Selected") {
+            return "#ffffff";
+          }
+          return visualStateRegistry.getStateProperty({
+            piece,
+            property: "labelTextColor",
+          });
         },
-        labelPositioning: "LeftSided",
+        getLabelPositioning: (piece: Piece<"StackSectionBook">) => {
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `BibleStack bootstrap: data not found at getLabelPositioning at pieceLabelService`
+            );
+          }
+          return data.isOnTheGround ? "Top" : "LeftSided";
+        },
         isInteractable: true,
+        makesAttentionFeedback: true,
       },
       [BiblePieces.StackBook]: {
         getLabel: (piece: Piece<"StackBook">) => {
-          return "";
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `BibleStack bootstrap: data not found at getLabel at pieceLabelService`
+            );
+          }
+          const bookId = data.getPieceInfoProperty("bookId");
+          return bookNamesProvider.getBookName(bookId) ?? bookId;
         },
-        getDate: (piece: Piece<"StackBook">) => undefined, // TODO: Properly find the date
+        getDate: (piece: Piece<"StackBook">) => {
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `BibleStack bootstrap: data not found at getLabel at pieceLabelService`
+            );
+          }
+          if (scripturePiecesStateService.shouldShowLabelDates) {
+            const staticInfo = booksStaticInfoRepository.getBookStaticInfo(
+              data.getPieceInfoProperty("bookId")
+            );
+            if (staticInfo) {
+              const currentYear = new Date().getFullYear();
+              return staticInfo.relativeDateRange
+                ? ComputeDateLabelText({
+                    format: labelDateService.dateFormat,
+                    range: staticInfo.relativeDateRange,
+                    currentYear,
+                  })
+                : undefined;
+            }
+          }
+          return undefined;
+        },
         getColor: (piece: Piece<"StackBook">) => {
-          return "";
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `BibleStack bootstrap: data not found at getColor at pieceLabelService`
+            );
+          }
+          if (data.selectionState === "Selected") {
+            return visualStateRegistry.getStateProperty({
+              piece,
+              property: "labelTextColor",
+            });
+          }
+          return "#ffffff";
         },
         getLabelColor: (piece: Piece<"StackBook">) => {
-          return "";
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `BibleStack bootstrap: data not found at getLabelColor at pieceLabelService`
+            );
+          }
+          if (data.selectionState === "Selected") {
+            return "#ffffff";
+          }
+          return visualStateRegistry.getStateProperty({
+            piece,
+            property: "labelTextColor",
+          });
         },
-        labelPositioning: "LeftSided",
+        getLabelPositioning: (piece: Piece<"StackBook">) => {
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `BibleStack bootstrap: data not found at getLabelPositioning at pieceLabelService`
+            );
+          }
+          return data.isOnTheGround ? "Top" : "LeftSided";
+        },
         isInteractable: true,
+        makesAttentionFeedback: true,
       },
       [BiblePieces.StackChapter]: {
         getLabel: (piece: Piece<"StackChapter">) => {
-          return "";
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `bible-stack bootstrap: data not found at getLabel at pieceLabelService`
+            );
+          }
+          const bookId = data.getCreationParam("bookId");
+          const bookName = bookNamesProvider.getBookName(bookId) ?? bookId;
+          return `${bookName} ${data.getPieceInfoProperty("number")}`;
         },
-        getDate: (piece: Piece<"StackChapter">) => undefined, // TODO: Properly find the date
-        getColor: (piece: Piece<"StackChapter">) => {
-          return "";
+        getColor: () => {
+          return "#ffffff";
         },
-        getLabelColor: (piece: Piece<"StackChapter">) => {
-          return "";
+        getLabelColor: () => {
+          return "#000000";
         },
-        labelPositioning: "LeftSided",
-        isInteractable: true,
+        getLabelPositioning: (piece: Piece<"StackChapter">) => {
+          const data = pieceDataRepository.getPieceData(piece);
+          if (!data) {
+            throw new Error(
+              `bible-Stack bootstrap: data not found at getLabelPositioning at pieceLabelService`
+            );
+          }
+          return data.isOnTheGround ? "Top" : "LeftSided";
+        },
+        isInteractable: false,
+        makesAttentionFeedback: false,
       },
     },
   });
@@ -787,7 +1031,7 @@ export const bootstrapExtension = () => {
     indicatorsDeleterPort: pieceActivityService,
     indicatorsUpdaterPort: pieceActivityService,
     notificationDeleterPort: pieceActivityService,
-    labelManagerPort: peiceLabelService,
+    labelManagerPort: pieceLabelService,
   });
   const versesBundleSelectionService = new VersesBundleSelectionService({
     sequenceStateServicePort: sequenceStateService,

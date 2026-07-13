@@ -18,26 +18,17 @@ interface DataRepositoryPort {
     | undefined;
 }
 
-interface ArrangementServicePort {
-  getAllArrangements: () => ArrangementInfo[];
-  getCurrentArrangementIndex: () => number;
-  getArrangementByIndex: (index: number) => ArrangementInfo | undefined;
-}
-
 export class ScriptureService implements ScripturePort {
   #dataRepositoryPort: DataRepositoryPort;
-  #arrangementServicePort: ArrangementServicePort;
   #biggerChapter: number | undefined;
-  #biggerChapterArrangementIndex: number;
+  #arrangement: ArrangementInfo;
 
   constructor(
     dataRepositoryPort: DataRepositoryPort,
-    arrangementServicePort: ArrangementServicePort
+    arrangement: ArrangementInfo
   ) {
     this.#dataRepositoryPort = dataRepositoryPort;
-    this.#arrangementServicePort = arrangementServicePort;
-    this.#biggerChapterArrangementIndex =
-      this.#arrangementServicePort.getCurrentArrangementIndex();
+    this.#arrangement = arrangement;
   }
 
   mapSubsetToCompleteBook({
@@ -79,20 +70,11 @@ export class ScriptureService implements ScripturePort {
     };
   }
 
-  getBiggerChapter: (arrangementIndex?: number) => number = (
-    arrangementIndex = this.#arrangementServicePort.getCurrentArrangementIndex()
-  ) => {
-    if (
-      this.#biggerChapterArrangementIndex !== arrangementIndex ||
-      this.#biggerChapter === undefined
-    ) {
-      this.#biggerChapterArrangementIndex = arrangementIndex;
-      const arrangement =
-        this.#arrangementServicePort.getArrangementByIndex(arrangementIndex);
-
+  getBiggerChapter: () => number = () => {
+    if (this.#biggerChapter === undefined) {
       this.#biggerChapter = 0;
 
-      if (!arrangement) {
+      if (!this.#arrangement) {
         throw new Error(
           "ScriptureService: arrangement not found at getBiggerChapter"
         );
@@ -100,7 +82,7 @@ export class ScriptureService implements ScripturePort {
 
       let currentCount = 0;
 
-      for (const testament of arrangement.testaments) {
+      for (const testament of this.#arrangement.testaments) {
         for (const sectionInfo of testament.sections) {
           for (const book of sectionInfo.books) {
             const bookInfo = this.#dataRepositoryPort.getBookStaticInfo(

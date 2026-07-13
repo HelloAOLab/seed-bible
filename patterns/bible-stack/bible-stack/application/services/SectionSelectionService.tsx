@@ -65,34 +65,6 @@ export class SectionSelectionService implements SectionSelectionServicePort {
     this.#bookSpawnerPort = bookSpawnerPort;
   }
 
-  async select({
-    data,
-  }: {
-    data: StackSectionData;
-    source: PieceSelectionSource;
-    pacing?: StackPresenceNavigationPacing;
-  }): Promise<void> {
-    this.#selectionNameRegistry.add(data.getPieceInfoProperty("name"));
-
-    await this.#prepareSelection(data);
-
-    await this.#sectionSelectionAdapterPort.select(data);
-
-    const stack = (data.parentDataIds
-      ? data.getOldestAncestor()
-      : undefined) ?? {
-      id: data.id,
-      type: data.type,
-    };
-    await this.#stackUpdateServicePort.updateStack(
-      stack.id,
-      stack.type,
-      "Regular"
-    );
-
-    this.#finalizeSelection(data);
-  }
-
   async #prepareSelection(data: StackSectionData): Promise<void> {
     this.#sectionSelectionEventPort.emit("OnSectionBeginSelect", { data });
 
@@ -158,6 +130,34 @@ export class SectionSelectionService implements SectionSelectionServicePort {
       });
     }
     this.#sectionSelectionEventPort.emit("OnSectionEndSelect", { data });
+  }
+
+  async select({
+    data,
+  }: {
+    data: StackSectionData;
+    source: PieceSelectionSource;
+    pacing?: StackPresenceNavigationPacing;
+  }): Promise<void> {
+    this.#selectionNameRegistry.add(data.getPieceInfoProperty("name"));
+
+    await this.#prepareSelection(data);
+
+    await this.#sectionSelectionAdapterPort.select(data);
+
+    const stack = (data.parentDataIds
+      ? data.getOldestAncestor()
+      : undefined) ?? {
+      id: data.id,
+      type: data.type,
+    };
+    await this.#stackUpdateServicePort.updateStack(
+      stack.id,
+      stack.type,
+      "Regular"
+    );
+
+    this.#finalizeSelection(data);
   }
 
   async deselect(data: StackSectionData): Promise<void> {

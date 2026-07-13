@@ -54,9 +54,9 @@ const testamentActivityStrategy: ActivityStrategyType<"StackTestament"> = (
   piece,
   dataRegistryPort
 ) => {
-  const data = dataRegistryPort.getPieceData({
-    pieceId: piece.id,
-    pieceType: piece.type,
+  const data = dataRegistryPort.getDataById({
+    id: piece.id,
+    type: piece.type,
   });
   const key = data.getPieceInfoProperty("name");
   const typeOfPiece = BiblePieces.StackTestament;
@@ -67,9 +67,9 @@ const testamentActivityStrategy: ActivityStrategyType<"StackTestament"> = (
 const sectionActivityStrategy: ActivityStrategyType<
   "StackSection" | "StackSectionShadow"
 > = (piece, dataRegistryPort) => {
-  const data = dataRegistryPort.getPieceData({
-    pieceId: piece.id,
-    pieceType: piece.type,
+  const data = dataRegistryPort.getDataById({
+    id: piece.id,
+    type: piece.type,
   });
   const key = data.getPieceInfoProperty("name");
   const typeOfPiece = BiblePieces.StackSection;
@@ -81,9 +81,9 @@ const bookActivityStrategy: ActivityStrategyType<"StackBook"> = (
   piece,
   dataRegistryPort
 ) => {
-  const data = dataRegistryPort.getPieceData({
-    pieceId: piece.id,
-    pieceType: piece.type,
+  const data = dataRegistryPort.getDataById({
+    id: piece.id,
+    type: piece.type,
   });
   const key = data.getPieceInfoProperty("bookId");
   const typeOfPiece = BiblePieces.StackBook;
@@ -95,9 +95,9 @@ const sectionBookActivityStrategy: ActivityStrategyType<"StackSectionBook"> = (
   piece,
   dataRegistryPort
 ) => {
-  const data = dataRegistryPort.getPieceData({
-    pieceId: piece.id,
-    pieceType: piece.type,
+  const data = dataRegistryPort.getDataById({
+    id: piece.id,
+    type: piece.type,
   });
   const key = data.getPieceBookInfoProperty("bookId");
   const typeOfPiece = BiblePieces.StackBook;
@@ -109,9 +109,9 @@ const chapterActivityStrategy: ActivityStrategyType<"StackChapter"> = (
   piece,
   dataRegistryPort
 ) => {
-  const data = dataRegistryPort.getPieceData({
-    pieceId: piece.id,
-    pieceType: piece.type,
+  const data = dataRegistryPort.getDataById({
+    id: piece.id,
+    type: piece.type,
   });
   const key = `${data.getCreationParam("bookId")} ${data.getPieceInfoProperty("number")}`;
   const typeOfPiece = BiblePieces.StackChapter;
@@ -156,9 +156,9 @@ const pieceIndicatorsStrategy: IndicatorsStrategyType<"StackChapter"> = ({
   piece,
   dataRegistryPort,
 }) => {
-  const pieceData = dataRegistryPort.getPieceData({
-    pieceType: piece.type,
-    pieceId: piece.id,
+  const pieceData = dataRegistryPort.getDataById({
+    type: piece.type,
+    id: piece.id,
   });
 
   if (!pieceData) return [];

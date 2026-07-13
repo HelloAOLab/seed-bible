@@ -1,5 +1,5 @@
 import type { PieceDataRepositoryPort as BasePieceDataRepositoryPort } from "./pieces";
-import type { PieceLabelServicePort as BasePieceLabelServicePort } from "bibleVizUtils.domain.ports.label";
+import type { PieceLabelServicePort as BasePieceLabelServicePort } from "./in/PieceLabel";
 import type { StackLabelableBiblePiece } from "../../domain/models/pieceLifecycle";
 import type {
   BookBot,
@@ -10,14 +10,12 @@ import type {
   VerseBot,
   VersesBundleBot,
 } from "../../infrastructure/models/stack";
-import type { Piece } from "../../domain/models/canvas";
+import type { Piece, SectionShadow } from "../../domain/models/canvas";
 import type { BibleStackEvents } from "../../domain/models/events";
 import type {
   BookPathIndices,
   SectionPathIndices,
   TestamentPathIndices,
-} from "bibleVizUtils.application.services.ArrangementService";
-import type {
   BookInfo,
   SectionInfo,
   TestamentInfo,
@@ -53,8 +51,8 @@ export interface StackPieceLifecycleAdapterPort {
   spawnChapter: () => ChapterBot;
   despawnChapter: (piece: Piece<"StackChapter">) => void;
   spawnSectionShadow: () => SectionShadowBot;
-  spawnSectionShadowDomain: () => Piece<"StackSectionShadow">;
-  despawnSectionShadow: (piece: Piece<"StackSectionShadow">) => void;
+  spawnSectionShadowDomain: (sectionDataId: string) => SectionShadow;
+  despawnSectionShadow: (piece: SectionShadow) => void;
   despawnSectionBook: (piece: Piece<"StackSectionBook">) => void;
   spawnVersesBundle: () => VersesBundleBot;
   despawnVersesBundle: (piece: Piece<"VersesBundle">) => void;

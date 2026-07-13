@@ -42,7 +42,9 @@ export class SectionStackUpdaterService implements UpdaterServicePort {
     if (!data.isSplitIntoBooks) return;
 
     if (!data.shadow) {
-      const shadowDomain = this.#pieceLifecyclePort.spawnSectionShadowDomain();
+      const shadowDomain = this.#pieceLifecyclePort.spawnSectionShadowDomain(
+        data.id
+      );
       data.attachShadow(shadowDomain);
     }
 

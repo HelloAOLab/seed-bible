@@ -7,13 +7,11 @@ import type {
   HighlightAnimationConfigProviderPort,
 } from "bibleStack.infrastructure.ports.highlight";
 import type { PieceHighlightPieceDataRepositoryPort } from "bibleStack.application.ports.pieces";
-import type {
-  StackTestamentMapperPort,
-  StackSectionMapperPort,
-  StackSectionBookMapperPort,
-  StackBookMapperPort,
-  StackChapterMapperPort,
-} from "bibleStack.infrastructure.ports.stackPieceLifecycle";
+import type { StackTestamentMapper } from "../../mappers/StackTestamentMapper";
+import type { StackSectionMapper } from "../../mappers/StackSectionMapper";
+import type { StackSectionBookMapper } from "../../mappers/StackSectionBookMapper";
+import type { StackBookMapper } from "../../mappers/StackBookMapper";
+import type { StackChapterMapper } from "../../mappers/StackChapterMapper";
 import type {
   TestamentBot,
   SectionBot,
@@ -29,11 +27,11 @@ type StackPieceUnion =
   | Piece<"StackChapter">;
 
 export class PieceHighlightAdapter implements PieceHighlightAdapterPort {
-  #testamentMapperPort: StackTestamentMapperPort;
-  #sectionMapperPort: StackSectionMapperPort;
-  #sectionBookMapperPort: StackSectionBookMapperPort;
-  #bookMapperPort: StackBookMapperPort;
-  #chapterMapperPort: StackChapterMapperPort;
+  #testamentMapperPort: StackTestamentMapper;
+  #sectionMapperPort: StackSectionMapper;
+  #sectionBookMapperPort: StackSectionBookMapper;
+  #bookMapperPort: StackBookMapper;
+  #chapterMapperPort: StackChapterMapper;
   #visualStatePort: HighlightVisualStatePort;
   #animationConfigProviderPort: HighlightAnimationConfigProviderPort;
   #pieceDataRepositoryPort: PieceHighlightPieceDataRepositoryPort;

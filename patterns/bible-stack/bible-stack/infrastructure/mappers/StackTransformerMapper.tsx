@@ -1,8 +1,7 @@
 import type { BibleTransformerBot } from "../models/stack";
 import type { StackTransformer } from "../../domain/models/pieces";
-import type { StackTransformerMapperPort } from "../ports/stackPieceLifecycle";
 
-export class StackTransformerMapper implements StackTransformerMapperPort {
+export class StackTransformerMapper {
   toDomain(bot: BibleTransformerBot): StackTransformer {
     return { id: bot.id, type: bot.tags.type, bibleId: bot.tags.stackBibleId };
   }

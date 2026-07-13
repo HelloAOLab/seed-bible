@@ -1,8 +1,7 @@
 import type { CoverBot } from "../models/stack";
 import type { StackCover } from "../../domain/models/pieces";
-import type { StackCoverMapperPort } from "../ports/stackPieceLifecycle";
 
-export class StackCoverMapper implements StackCoverMapperPort {
+export class StackCoverMapper {
   toDomain(bot: CoverBot): StackCover {
     return { id: bot.id, type: bot.tags.type, bibleId: bot.tags.stackBibleId };
   }

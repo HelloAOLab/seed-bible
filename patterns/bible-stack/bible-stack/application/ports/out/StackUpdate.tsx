@@ -15,8 +15,8 @@ export interface PieceDataRepositoryPort {
   getStandaloneSections(): StackSectionData[];
   getStandaloneSectionBooks(): StackSectionBookData[];
   getStandaloneBooks(): StackBookData[];
-  getDataById<K extends keyof StackPieceDataMap>(
-    type: K,
-    id: StackPieceDataMap[K]["id"]
-  ): StackPieceDataMap[K] | undefined;
+  getDataById<K extends keyof StackPieceDataMap>(params: {
+    type: K;
+    id: StackPieceDataMap[K]["id"];
+  }): StackPieceDataMap[K] | undefined;
 }

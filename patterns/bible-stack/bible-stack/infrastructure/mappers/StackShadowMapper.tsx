@@ -1,8 +1,7 @@
 import type { BibleShadowBot } from "../models/stack";
 import type { StackShadow } from "../../domain/models/pieces";
-import type { StackShadowMapperPort } from "../ports/stackPieceLifecycle";
 
-export class StackShadowMapper implements StackShadowMapperPort {
+export class StackShadowMapper {
   toDomain(bot: BibleShadowBot): StackShadow {
     return { id: bot.id, type: bot.tags.type, bibleId: bot.tags.stackBibleId };
   }

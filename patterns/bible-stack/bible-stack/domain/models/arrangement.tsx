@@ -84,6 +84,7 @@ export interface ArrangementInfo {
 }
 
 export interface TestamentPathIndices {
+  arrangementIndex: number;
   testamentIndex: number;
 }
 

@@ -1,16 +1,16 @@
-import { BiblePieces, type Piece } from "bibleVizUtils.domain.models.canvas";
-import { StackTestamentData } from "bibleVizUtils.domain.entities.StackTestamentData";
-import { StackSectionData } from "bibleVizUtils.domain.entities.StackSectionData";
-import { StackSectionBookData } from "bibleVizUtils.domain.entities.StackSectionBookData";
-import { StackBookData } from "bibleVizUtils.domain.entities.StackBookData";
-import { StackChapterData } from "bibleVizUtils.domain.entities.StackChapterData";
+import { BiblePieces, type Piece } from "../../../domain/models/canvas";
+import { StackTestamentData } from "../../../domain/entities/StackTestamentData";
+import { StackSectionData } from "../../../domain/entities/StackSectionData";
+import { StackSectionBookData } from "../../../domain/entities/StackSectionBookData";
+import { StackBookData } from "../../../domain/entities/StackBookData";
+import { StackChapterData } from "../../../domain/entities/StackChapterData";
 import type {
   PieceDataRepositoryPort,
   StackPieceDataMap,
-} from "bibleStack.application.ports.pieces";
-import type { PieceDataRepositoryPort as StackManagementPieceDataRepositoryPort } from "bibleStack.application.ports.stackManagement";
-import type { PieceDataRepositoryPort as StackUpdatePieceDataRepositoryPort } from "@packages/Bible Stack/bibleStack/application/ports/out/StackUpdate";
-import type { PieceDataRepositoryPort as ViewportPieceDataRepositoryPort } from "@packages/Bible Stack/bibleStack/application/ports/out/ViewportService";
+} from "../../../application/ports/pieces";
+import type { PieceDataRepositoryPort as StackManagementPieceDataRepositoryPort } from "../../../application/ports/stackManagement";
+import type { PieceDataRepositoryPort as StackUpdatePieceDataRepositoryPort } from "../../../application/ports/out/StackUpdate";
+import type { PieceDataRepositoryPort as ViewportPieceDataRepositoryPort } from "../../../application/ports/out/ViewportService";
 
 export class PieceDataRepository
   implements
@@ -172,10 +172,10 @@ export class PieceDataRepository
     return Array.from(data);
   }
 
-  getDataById: <K extends keyof StackPieceDataMap>(
-    type: K,
-    id: StackPieceDataMap[K]["id"]
-  ) => StackPieceDataMap[K] | undefined = (type, id) => {
+  getDataById: <K extends keyof StackPieceDataMap>(params: {
+    type: K;
+    id: StackPieceDataMap[K]["id"];
+  }) => StackPieceDataMap[K] | undefined = ({ type, id }) => {
     const targetSet = this.#dataStrategy[type];
     for (const data of targetSet) {
       if (data.id === id) {

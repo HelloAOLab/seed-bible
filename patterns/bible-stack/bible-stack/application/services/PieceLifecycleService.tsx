@@ -27,7 +27,6 @@ import type { BookInfo, ChapterInfo } from "../../domain/models/arrangement";
 import { VersesBundleData } from "../../domain/entities/VersesBundleData";
 import { VerseData } from "../../domain/entities/VerseData";
 import { ShowSequencePacings } from "../../domain/models/label";
-import type { PieceLifecycleServicePort as StackStructurePieceLifecycleServicePort } from "../ports/stackStructure";
 import type { PieceLifecycleConfigProviderPort } from "../ports/out/PieceLifecycle";
 import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 
@@ -44,9 +43,7 @@ interface PieceLifecycleServiceProps {
   configProviderPort: PieceLifecycleConfigProviderPort;
 }
 
-export class PieceLifecycleService
-  implements StackStructurePieceLifecycleServicePort, PieceLifecycleServicePort
-{
+export class PieceLifecycleService implements PieceLifecycleServicePort {
   #pieceDataRepositoryPort: PieceLifecycleServiceProps["pieceDataRepositoryPort"];
   #pieceLabelServicePort: PieceLifecycleServiceProps["pieceLabelServicePort"];
   #stackPieceLifecycleAdapterPort: PieceLifecycleServiceProps["stackPieceLifecycleAdapterPort"];
@@ -94,7 +91,6 @@ export class PieceLifecycleService
     isHidden?: boolean;
   }): StackTestamentData {
     const testamentInfo = this.#arrangementServicePort.getTestamentByIndices({
-      arrangementIndex,
       testamentIndex,
     });
 
@@ -161,7 +157,6 @@ export class PieceLifecycleService
     isHidden?: boolean;
   }): StackSectionData | StackSectionBookData {
     const sectionInfo = this.#arrangementServicePort.getSectionByIndices({
-      arrangementIndex,
       testamentIndex,
       sectionIndex,
     });
@@ -310,7 +305,6 @@ export class PieceLifecycleService
     isHidden?: boolean;
   }) {
     const bookInfo = this.#arrangementServicePort.getBookByIndices({
-      arrangementIndex,
       testamentIndex,
       sectionIndex,
       bookIndex,

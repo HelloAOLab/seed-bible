@@ -18,10 +18,10 @@ import type { LabelDateFormatGetterPort } from "../ports/in/LabelDate";
 
 export interface LabelStrategy<P extends Piece> {
   getLabel: (piece: P) => string;
-  getDate?: undefined | ((piece: P) => string);
+  getDate?: undefined | ((piece: P) => string | undefined);
   getColor: (piece: P) => string;
   getLabelColor: (piece: P) => string;
-  labelPositioning: LabelPosition;
+  getLabelPositioning: (piece: P) => LabelPosition;
   isInteractable: boolean;
   makesAttentionFeedback: boolean;
 }
@@ -104,7 +104,7 @@ export class PieceLabelService<
     const color = strategy.getColor(piece);
     const labelColor = strategy.getLabelColor(piece);
     const makesAttentionFeedback = strategy.makesAttentionFeedback;
-    const labelPositioning = strategy.labelPositioning;
+    const labelPositioning = strategy.getLabelPositioning(piece);
     const isInteractable = strategy.isInteractable;
     const dateFormat = this.#dateFormatGetterPort.dateFormat;
 

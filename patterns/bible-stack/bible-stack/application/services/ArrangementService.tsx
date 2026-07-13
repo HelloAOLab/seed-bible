@@ -10,13 +10,19 @@ import type {
   SectionPathIndices,
   BookPathIndices,
 } from "../../domain/models/arrangement";
-import type { BookInfoPathGetter } from "../ports/in/Arrangement";
+import type {
+  BookInfoPathGetter,
+  BookInfoGetter,
+  ArrangementProvider,
+} from "../ports/in/Arrangement";
 
 interface ArrangementServiceProps {
   arrangement: ArrangementInfo;
 }
 
-export class ArrangementService implements BookInfoPathGetter {
+export class ArrangementService
+  implements BookInfoPathGetter, BookInfoGetter, ArrangementProvider
+{
   #arrangement: ArrangementInfo;
 
   constructor({ arrangement }: ArrangementServiceProps) {
