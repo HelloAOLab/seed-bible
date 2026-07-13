@@ -21,6 +21,7 @@ import { computed } from "@preact/signals";
 import { useState, useCallback, useMemo, useEffect } from "preact/hooks";
 
 const PROFILE_OPEN_BOOK_OVERRIDES = "scriptureMapOpenBooks";
+const PROFILE_SHOWING_ALL_CHAPTERS = "scriptureMapShowingAllChapters";
 
 /** Individual books the user has explicitly opened/closed, keyed by book id. Books with no entry fall back to `showingAllChapters`. */
 function parseOpenBookOverrides(value: unknown): Record<string, boolean> {
@@ -37,6 +38,30 @@ function parseOpenBookOverrides(value: unknown): Record<string, boolean> {
     }
   }
   return result;
+}
+
+function parseShowingAllChapters(value: unknown, fallback: boolean): boolean {
+  return typeof value === "boolean" ? value : fallback;
+}
+
+/** Whether at least one book in the arrangement is currently open, considering per-book overrides. */
+function computeAnyBookOpen(
+  arrangement: ArrangementInfo | undefined,
+  openBookOverrides: Record<string, boolean>,
+  showingAllChapters: boolean
+): boolean {
+  if (!arrangement) return showingAllChapters;
+
+  for (const testament of arrangement.testaments) {
+    for (const section of testament.sections) {
+      for (const book of section.books) {
+        if (openBookOverrides[book.bookId] ?? showingAllChapters) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
 }
 
 type UseScriptureMapProvider = (
@@ -248,8 +273,14 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
   }, []);
 
   const [scaleFactor, setScaleFactor] = useState<number>(initialScaleFactor);
-  const [showingAllChapters, setShowingAllChapters] = useState<boolean>(
-    initialShowingAllChapters
+  const [showingAllChapters, setShowingAllChapters] = useState<boolean>(() =>
+    parseShowingAllChapters(
+      getProfileConfigValue(
+        seedBibleState.login.profile.value,
+        PROFILE_SHOWING_ALL_CHAPTERS
+      ),
+      initialShowingAllChapters
+    )
   );
   const [openBookOverrides, setOpenBookOverrides] = useState<
     Record<string, boolean>
@@ -338,7 +369,22 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
         )
       )
     );
-  }, [seedBibleState.login.profile.value]);
+    setShowingAllChapters(
+      parseShowingAllChapters(
+        getProfileConfigValue(
+          seedBibleState.login.profile.value,
+          PROFILE_SHOWING_ALL_CHAPTERS
+        ),
+        initialShowingAllChapters
+      )
+    );
+  }, [seedBibleState.login.profile.value, initialShowingAllChapters]);
+
+  const anyBookOpen = useMemo<boolean>(
+    () =>
+      computeAnyBookOpen(arrangement, openBookOverrides, showingAllChapters),
+    [arrangement, openBookOverrides, showingAllChapters]
+  );
 
   const setBookOpen = useCallback<(bookId: string, open: boolean) => void>(
     (bookId, open) => {
@@ -357,7 +403,13 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
   );
 
   const handleShowAllChaptersToggle = useCallback<() => void>(() => {
-    setShowingAllChapters((prev) => !prev);
+    const next = !anyBookOpen;
+    setShowingAllChapters(next);
+    saveProfileConfigValue(
+      seedBibleState.login,
+      PROFILE_SHOWING_ALL_CHAPTERS,
+      next
+    );
     // A bulk open/close-all replaces any per-book overrides, matching what
     // already happens in-session (each Book resyncs to showingAllChapters).
     setOpenBookOverrides({});
@@ -366,7 +418,7 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
       PROFILE_OPEN_BOOK_OVERRIDES,
       {}
     );
-  }, [seedBibleState.login]);
+  }, [seedBibleState.login, anyBookOpen]);
 
   const handleProjectFilterOptionClick = useCallback<
     (key: "all" | ProjectChapterStateType) => void
@@ -437,6 +489,7 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
       setShowingAllChapters,
       openBookOverrides,
       setBookOpen,
+      anyBookOpen,
       isUserPresenceEnabled,
       setIsUserPresenceEnabled,
       isReadingHistoryEnabled,
@@ -480,6 +533,7 @@ export const useScriptureMapProvider: UseScriptureMapProvider = (config) => {
     setShowingAllChapters,
     openBookOverrides,
     setBookOpen,
+    anyBookOpen,
     isUserPresenceEnabled,
     setIsUserPresenceEnabled,
     isReadingHistoryEnabled,

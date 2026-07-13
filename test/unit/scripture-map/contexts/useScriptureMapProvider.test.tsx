@@ -197,6 +197,57 @@ describe("useScriptureMapProvider", () => {
       const result = setup(makeConfig({ initialShowingAllChapters: true }));
       expect(result.current.showingAllChapters).toBe(true);
     });
+
+    function makeLogin(profileConfig: Record<string, unknown> | null = null) {
+      return {
+        userId: { value: "user-1" },
+        profile: {
+          value: profileConfig ? { name: "", config: profileConfig } : null,
+        },
+        updateProfile: vi.fn(),
+      };
+    }
+
+    it("reads a saved showingAllChapters value from the profile, overriding initialShowingAllChapters", () => {
+      const login = makeLogin({ scriptureMapShowingAllChapters: true });
+      const result = setup(
+        makeConfig({
+          initialShowingAllChapters: false,
+          seedBibleState: makeSeedBibleState({ login }),
+        })
+      );
+      expect(result.current.showingAllChapters).toBe(true);
+    });
+
+    it("falls back to initialShowingAllChapters when the saved value is malformed", () => {
+      const login = makeLogin({ scriptureMapShowingAllChapters: "yes" });
+      const result = setup(
+        makeConfig({
+          initialShowingAllChapters: true,
+          seedBibleState: makeSeedBibleState({ login }),
+        })
+      );
+      expect(result.current.showingAllChapters).toBe(true);
+    });
+
+    it("handleShowAllChaptersToggle persists the new showingAllChapters value to the profile", () => {
+      const login = makeLogin({});
+      const result = setup(
+        makeConfig({
+          initialShowingAllChapters: false,
+          seedBibleState: makeSeedBibleState({ login }),
+        })
+      );
+
+      act(() => result.current.handleShowAllChaptersToggle());
+
+      expect(result.current.showingAllChapters).toBe(true);
+      expect(login.updateProfile).toHaveBeenCalledWith({
+        config: expect.objectContaining({
+          scriptureMapShowingAllChapters: true,
+        }),
+      });
+    });
   });
 
   describe("openBookOverrides", () => {
@@ -263,6 +314,113 @@ describe("useScriptureMapProvider", () => {
       expect(login.updateProfile).toHaveBeenCalledWith({
         config: { scriptureMapOpenBooks: {} },
       });
+    });
+  });
+
+  describe("anyBookOpen", () => {
+    function makeLogin(profileConfig: Record<string, unknown> | null = null) {
+      return {
+        userId: { value: "user-1" },
+        profile: {
+          value: profileConfig ? { name: "", config: profileConfig } : null,
+        },
+        updateProfile: vi.fn(),
+      };
+    }
+
+    function makeArrangementService(bookIds: string[] = ["GEN", "EXO"]) {
+      return {
+        getCurrentArrangementIndex: vi.fn(() => 0),
+        getArrangementByIndex: vi.fn(() => ({
+          name: "default",
+          testaments: [
+            {
+              sections: [
+                {
+                  books: bookIds.map((bookId) => ({
+                    bookId,
+                    type: "complete",
+                  })),
+                },
+              ],
+            },
+          ],
+        })),
+      };
+    }
+
+    it("is true when showingAllChapters is true and no overrides", () => {
+      const result = setup(
+        makeConfig({
+          initialShowingAllChapters: true,
+          arrangementService: makeArrangementService(),
+        })
+      );
+      expect(result.current.anyBookOpen).toBe(true);
+    });
+
+    it("is false when showingAllChapters is false and no overrides", () => {
+      const result = setup(
+        makeConfig({
+          initialShowingAllChapters: false,
+          arrangementService: makeArrangementService(),
+        })
+      );
+      expect(result.current.anyBookOpen).toBe(false);
+    });
+
+    it("is true when showingAllChapters is false but one book is overridden open", () => {
+      const login = makeLogin({ scriptureMapOpenBooks: { GEN: true } });
+      const result = setup(
+        makeConfig({
+          initialShowingAllChapters: false,
+          arrangementService: makeArrangementService(),
+          seedBibleState: makeSeedBibleState({ login }),
+        })
+      );
+      expect(result.current.anyBookOpen).toBe(true);
+    });
+
+    it("is false when showingAllChapters is true but every book is overridden closed", () => {
+      const login = makeLogin({
+        scriptureMapOpenBooks: { GEN: false, EXO: false },
+      });
+      const result = setup(
+        makeConfig({
+          initialShowingAllChapters: true,
+          arrangementService: makeArrangementService(),
+          seedBibleState: makeSeedBibleState({ login }),
+        })
+      );
+      expect(result.current.anyBookOpen).toBe(false);
+    });
+
+    it("closing all books then manually opening one, 'Close books' closes it instead of reopening every book", () => {
+      const login = makeLogin({});
+      const result = setup(
+        makeConfig({
+          initialShowingAllChapters: true,
+          arrangementService: makeArrangementService(),
+          seedBibleState: makeSeedBibleState({ login }),
+        })
+      );
+
+      // Close all books.
+      act(() => result.current.handleShowAllChaptersToggle());
+      expect(result.current.showingAllChapters).toBe(false);
+      expect(result.current.anyBookOpen).toBe(false);
+
+      // Manually reopen Genesis.
+      act(() => result.current.setBookOpen("GEN", true));
+      expect(result.current.openBookOverrides).toEqual({ GEN: true });
+      expect(result.current.anyBookOpen).toBe(true);
+
+      // Clicking "Close books" (now shown because anyBookOpen is true) must
+      // close Genesis too, not flip showingAllChapters back to open-all.
+      act(() => result.current.handleShowAllChaptersToggle());
+      expect(result.current.showingAllChapters).toBe(false);
+      expect(result.current.openBookOverrides).toEqual({});
+      expect(result.current.anyBookOpen).toBe(false);
     });
   });
 
