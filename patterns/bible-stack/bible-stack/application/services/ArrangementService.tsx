@@ -23,19 +23,27 @@ interface ArrangementServiceProps {
 export class ArrangementService
   implements BookInfoPathGetter, BookInfoGetter, ArrangementProvider
 {
-  #arrangement: ArrangementInfo;
+  #arrangements: Array<ArrangementInfo>;
 
   constructor({ arrangement }: ArrangementServiceProps) {
-    this.#arrangement = arrangement;
+    this.#arrangements = [arrangement];
+  }
+
+  getCurrentArrangementIndex(): number {
+    return 0;
+  }
+
+  getArrangementByIndex(index: number): ArrangementInfo | undefined {
+    return this.#arrangements[index];
   }
 
   getCurrentArrangementName(): string | undefined {
-    return this.#arrangement.name;
+    return this.#arrangements[this.getCurrentArrangementIndex()]?.name;
   }
 
   getTestamentByIndices(path: TestamentPathIndices): TestamentInfo | undefined {
-    const { testamentIndex } = path;
-    return this.#arrangement.testaments[testamentIndex];
+    const { testamentIndex, arrangementIndex } = path;
+    return this.#arrangements[arrangementIndex]?.testaments[testamentIndex];
   }
 
   getSectionByIndices(path: SectionPathIndices): SectionInfo | undefined {
@@ -51,6 +59,7 @@ export class ArrangementService
 
   getTestamentInfoPathByName: (name: string) => {
     found: boolean;
+    arrangementIndex?: number | undefined;
     testamentIndex?: number | undefined;
   } = (name) => {
     const checkPathInArrangement: (arrangement: ArrangementInfo) =>
