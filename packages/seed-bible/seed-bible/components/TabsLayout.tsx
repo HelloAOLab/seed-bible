@@ -17,6 +17,12 @@ interface TabSlotReaderProps {
   state: SeedBibleState;
 }
 
+// How close (in px) the mobile reader must be to the end of the chapter before
+// the toolbar auto-expands back into view. A few pixels of slack absorbs
+// sub-pixel rounding and elastic overscroll so the reveal fires reliably at
+// the true bottom.
+const BOTTOM_REVEAL_MARGIN = 4;
+
 export function TabSlotReader(props: TabSlotReaderProps) {
   const { slot, tab, state } = props;
   const readingState = tab.readingState;
@@ -106,7 +112,13 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         }
 
         const currentScrollTop = element.scrollTop;
-        if (currentScrollTop <= 0) {
+        // Distance from the current scroll position to the very bottom of the
+        // chapter. When the reader lands within a small threshold of the end,
+        // re-show the toolbar so the chapter-navigation controls are within
+        // reach — even though the user is still scrolling down.
+        const distanceToBottom =
+          element.scrollHeight - (currentScrollTop + element.clientHeight);
+        if (currentScrollTop <= 0 || distanceToBottom <= BOTTOM_REVEAL_MARGIN) {
           setIsScrolled(false);
         } else if (
           currentScrollTop > lastScrollTopRef.current &&
