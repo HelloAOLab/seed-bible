@@ -371,9 +371,7 @@ export function createPlaylistManager(
    */
   const activeTab = computed<ReaderTab | null>(
     () =>
-      tabs.tabs.value.find((tab) => tab.sharedSession) ??
-      tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ??
-      null
+      tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
   );
 
   /**
