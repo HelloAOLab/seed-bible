@@ -1,4 +1,3 @@
-import type { Tab } from "bibleVizUtils.domain.models.seedBible";
 import type { Piece, PieceSelectionSource } from "../../domain/models/canvas";
 import type { StackBibleData } from "../../domain/entities/StackBibleData";
 import type { StackBookData } from "../../domain/entities/StackBookData";
@@ -6,9 +5,10 @@ import type { StackSectionBookData } from "../../domain/entities/StackSectionBoo
 import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
 import type { StackPresenceNavigationPacing } from "../../domain/models/userPresence";
+import type { UserReadingInstance } from "../../domain/models/reading";
 
 export interface PresenceProviderPort {
-  getActiveTab(): Tab | undefined;
+  getActiveTab(): UserReadingInstance | undefined;
 }
 
 export interface DimensionProviderPort {

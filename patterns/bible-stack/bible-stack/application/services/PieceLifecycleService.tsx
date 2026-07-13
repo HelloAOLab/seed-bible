@@ -12,7 +12,6 @@ import type {
   ArrangementServicePort,
   IdGeneratorPort,
   ScriptureServicePort,
-  StackStructureServicePort,
   VersesBundleDataRepositoryPort,
 } from "../ports/pieceLifecycle";
 import type {
@@ -29,6 +28,7 @@ import { VerseData } from "../../domain/entities/VerseData";
 import { ShowSequencePacings } from "../../domain/models/label";
 import type { PieceLifecycleConfigProviderPort } from "../ports/out/PieceLifecycle";
 import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
+import { GetSectionLevels } from "../../domain/functions/arrangement";
 
 interface PieceLifecycleServiceProps {
   pieceDataRepositoryPort: PieceDataRepositoryPort;
@@ -38,7 +38,6 @@ interface PieceLifecycleServiceProps {
   arrangementServicePort: ArrangementServicePort;
   idGenerator: IdGeneratorPort;
   scriptureServicePort: ScriptureServicePort;
-  stackStructureServicePort: StackStructureServicePort;
   versesBundleDataRepositoryPort: VersesBundleDataRepositoryPort;
   configProviderPort: PieceLifecycleConfigProviderPort;
 }
@@ -51,7 +50,6 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
   #arrangementServicePort: PieceLifecycleServiceProps["arrangementServicePort"];
   #idGenerator: PieceLifecycleServiceProps["idGenerator"];
   #scriptureServicePort: PieceLifecycleServiceProps["scriptureServicePort"];
-  #stackStructureServicePort: PieceLifecycleServiceProps["stackStructureServicePort"];
   #versesBundleDataRepositoryPort: PieceLifecycleServiceProps["versesBundleDataRepositoryPort"];
   #configProviderPort: PieceLifecycleServiceProps["configProviderPort"];
 
@@ -63,7 +61,6 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
     arrangementServicePort,
     idGenerator,
     scriptureServicePort,
-    stackStructureServicePort,
     versesBundleDataRepositoryPort,
     configProviderPort,
   }: PieceLifecycleServiceProps) {
@@ -74,7 +71,6 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
     this.#arrangementServicePort = arrangementServicePort;
     this.#idGenerator = idGenerator;
     this.#scriptureServicePort = scriptureServicePort;
-    this.#stackStructureServicePort = stackStructureServicePort;
     this.#versesBundleDataRepositoryPort = versesBundleDataRepositoryPort;
     this.#configProviderPort = configProviderPort;
   }
@@ -91,6 +87,7 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
     isHidden?: boolean;
   }): StackTestamentData {
     const testamentInfo = this.#arrangementServicePort.getTestamentByIndices({
+      arrangementIndex,
       testamentIndex,
     });
 
@@ -157,6 +154,7 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
     isHidden?: boolean;
   }): StackSectionData | StackSectionBookData {
     const sectionInfo = this.#arrangementServicePort.getSectionByIndices({
+      arrangementIndex,
       testamentIndex,
       sectionIndex,
     });
@@ -184,9 +182,7 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
     const sectionDataId = this.#idGenerator.getId();
 
     if (sectionInfo.books.length > 1) {
-      const levels = this.#stackStructureServicePort.getSectionLevels(
-        sectionInfo.books
-      );
+      const levels = GetSectionLevels(sectionInfo.books);
       const levelsLenght = levels.length;
       const booksDataArray: StackBookData[][] = [];
       const bookIndexMap = new Map(
@@ -305,6 +301,7 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
     isHidden?: boolean;
   }) {
     const bookInfo = this.#arrangementServicePort.getBookByIndices({
+      arrangementIndex,
       testamentIndex,
       sectionIndex,
       bookIndex,

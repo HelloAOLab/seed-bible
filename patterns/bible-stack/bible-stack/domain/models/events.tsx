@@ -169,6 +169,8 @@ export interface BibleStackEvents {
   OnSectionEndSelect: { data: StackSectionData };
   OnCameraRotationChanged: void;
   OnLabelDateFormatChange: void;
+  OnArrangementIndexChanged: { newIndex: number };
+  OnCustomArrangementsChanged: void;
 }
 
 export type BibleStackEvent = keyof BibleStackEvents;

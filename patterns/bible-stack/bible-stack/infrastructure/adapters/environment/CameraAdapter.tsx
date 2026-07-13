@@ -1,14 +1,15 @@
-import type { SequenceConfigProviderPort } from "bibleStack.infrastructure.ports.sequences";
-import type { GenericCameraAdapterPort } from "bibleStack.infrastructure.ports.camera";
-import type { WorldPosition } from "bibleStack.domain.models.spatial";
-import type { FocusOnAnimationKey } from "bibleStack.infrastructure.config.sequences.focusOnAnimations";
+import type { WorldPosition } from "../../../domain/models/spatial";
+import type { FocusOnAnimationKey } from "../../config/sequences/focusOnAnimations";
+import { GetCamRotationFocusPoint } from "../../functions/casualos";
+import type { CameraAdapterPort } from "../../../application/ports/bibleLifecycle";
+import type { SequenceConfigProvider } from "../../config/sequences/SequenceConfigProvider";
 
 interface CameraAdapterParams {
-  sequenceConfigProviderPort: SequenceConfigProviderPort;
+  sequenceConfigProviderPort: SequenceConfigProvider;
 }
 
-export class CameraAdapter implements GenericCameraAdapterPort {
-  #sequenceConfigProviderPort: SequenceConfigProviderPort;
+export class CameraAdapter implements CameraAdapterPort {
+  #sequenceConfigProviderPort: CameraAdapterParams["sequenceConfigProviderPort"];
 
   constructor({ sequenceConfigProviderPort }: CameraAdapterParams) {
     this.#sequenceConfigProviderPort = sequenceConfigProviderPort;

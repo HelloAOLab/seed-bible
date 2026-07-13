@@ -5,6 +5,12 @@ import type {
 } from "../../../../pattern-typings/AuxLibraryDefinitions";
 import type { AnimateTagData, SetTagData, TypedBot } from "../models/casualos";
 
+type GetCamRotationFocusPointType = (params: {
+  theta: number;
+  phi: number;
+  botPosition: Vector3Type;
+}) => Vector3Type;
+
 type DistanceBetweenBotAndCameraType = (params: { bot: Bot }) => number;
 
 type ComputeAnimateTagType = (obj: AnimateTagData) => Promise<void>;
@@ -190,3 +196,30 @@ export function AnimateStrictTag<
     options
   );
 }
+
+export const GetCamRotationFocusPoint: GetCamRotationFocusPointType = ({
+  theta,
+  phi,
+  botPosition,
+}) => {
+  const x = Math.sin(phi) * Math.cos(theta + math.degreesToRadians(270));
+  const y = Math.sin(phi) * Math.sin(theta + math.degreesToRadians(270));
+  const z = Math.cos(phi);
+  const camDesiredForwardDirection = new Vector3(x, y, z).negate().normalize();
+  const camDesiredForwardDirectionXY = new Vector3(
+    camDesiredForwardDirection.x,
+    camDesiredForwardDirection.y,
+    0
+  ).normalize();
+  const vectorZ = new Vector3(0, 0, camDesiredForwardDirection.z > 0 ? 1 : -1);
+  const angleBetween =
+    math.degreesToRadians(90) -
+    Vector3.angleBetween(camDesiredForwardDirection, vectorZ);
+  const vectorMagnitude = botPosition.z / Math.tan(angleBetween);
+  const desiredFocusOnPosition = new Vector3(
+    botPosition.x,
+    botPosition.y,
+    0
+  ).add(camDesiredForwardDirectionXY.multiplyScalar(vectorMagnitude));
+  return desiredFocusOnPosition;
+};

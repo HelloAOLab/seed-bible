@@ -1,8 +1,6 @@
 import type { StackBookData } from "../../domain/entities/StackBookData";
 import type { StackSectionBookData } from "../../domain/entities/StackSectionBookData";
 import type { StackAncestor } from "../../domain/models/canvas";
-// import type { PieceSelectionSource } from "../../domain/models/canvas";
-import type { BookSelectionServicePort } from "../ports/books";
 import type {
   BookSelectionEventPort,
   PieceAdapterPort,
@@ -11,6 +9,7 @@ import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
 import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import type { LoggerPort } from "../ports/in/Logger";
 import type { StackUpdatePacing } from "../../domain/models/stacks";
+import type { BookSelectionServicePort } from "../ports/in/BookSelection";
 
 type BookEntity = StackBookData | StackSectionBookData;
 

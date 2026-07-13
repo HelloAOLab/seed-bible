@@ -107,7 +107,7 @@ export class ExperienceService {
             position,
             type: BibleTypes.Default,
           });
-          this.#cameraAdapterPort.focusOn(position);
+          this.#cameraAdapterPort.focusOn(position, "bibleSetup");
           await this.#bibleSequenceServicePort.crackOpenBible(bibleData);
           await this.#stackPresenceNavigationServicePort.update();
         });

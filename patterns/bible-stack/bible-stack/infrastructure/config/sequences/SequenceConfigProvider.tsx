@@ -1,28 +1,25 @@
 import {
   FocusOnAnimations,
   type FocusOnAnimationKey,
-} from "bibleStack.infrastructure.config.sequences.focusOnAnimations";
+} from "./focusOnAnimations";
 import {
   CrackOpenBibleAnimationDurations,
   CrackOpenBibleAnimationEasing,
   CrackOpenBibleHighlightConfig,
   type CrackOpenBibleHighlightConfigType,
-} from "bibleStack.infrastructure.config.sequences.crackOpenBibleAnimation";
+} from "./crackOpenBibleAnimation";
 import {
   CloseBibleAnimationDurations,
   CloseBibleAnimationEasing,
-} from "bibleStack.infrastructure.config.sequences.closeBibleAnimation";
+} from "./closeBibleAnimation";
 import {
   OpenBibleAnimationDurations,
   OpenBibleAnimationEasing,
-} from "bibleStack.infrastructure.config.sequences.openBibleAnimation";
-import type { BibleType } from "bibleVizUtils.domain.models.canvas";
-import type { SequenceConfigProviderPort } from "bibleStack.infrastructure.ports.sequences";
-import type { BibleSequenceServiceConfigProviderPort } from "bibleStack.application.ports.bibleLifecycle";
+} from "./openBibleAnimation";
+import type { BibleType } from "../../../domain/models/canvas";
+import type { BibleSequenceServiceConfigProviderPort } from "../../../application/ports/bibleLifecycle";
 
-export class SequenceConfigProvider
-  implements SequenceConfigProviderPort, BibleSequenceServiceConfigProviderPort
-{
+export class SequenceConfigProvider implements BibleSequenceServiceConfigProviderPort {
   getFocusOnAnimationConfig(key: FocusOnAnimationKey) {
     return FocusOnAnimations[key];
   }

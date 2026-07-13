@@ -14,6 +14,7 @@ import type { BibleType } from "../../domain/models/canvas";
 import type { StackPresenceNavigationPacing } from "../../domain/models/userPresence";
 import type { StackBookData } from "../../domain/entities/StackBookData";
 import type { StackSectionBookData } from "../../domain/entities/StackSectionBookData";
+import type { FocusOnAnimationKey } from "../../infrastructure/config/sequences/focusOnAnimations";
 
 export interface BibleSetupAdapterPort {
   setUp(params: {
@@ -77,7 +78,7 @@ export interface StackPieceLifecycleAdapterPort {
 }
 
 export interface CameraAdapterPort {
-  focusOn(position: WorldPosition): void;
+  focusOn(position: WorldPosition, animationKey: FocusOnAnimationKey): void;
 }
 
 export interface BibleLifecycleServicePort {
@@ -155,7 +156,7 @@ export interface LabelDataRepositoryPort {
 }
 
 export interface PieceAdapterPort {
-  makeNonInteractable(piece: Piece): boolean;
+  makeNonInteractable(piece: Piece): void;
   isPieceBeingUsed(piece: Piece): boolean;
 }
 

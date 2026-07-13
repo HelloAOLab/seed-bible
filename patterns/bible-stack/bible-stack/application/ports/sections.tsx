@@ -6,12 +6,9 @@ import type {
   DraggingEvent as DomainDraggingEvent,
   DropEvent as DomainDropEvent,
   Piece,
-  PieceSelectionSource,
   SelectionModality,
 } from "../../domain/models/canvas";
 import type { SectionBot } from "../../infrastructure/models/stack";
-import type { StackSectionData } from "../../domain/entities/StackSectionData";
-import type { StackPresenceNavigationPacing } from "../../domain/models/userPresence";
 
 export interface SectionInteractionServicePort {
   handleSectionSelection({
@@ -57,13 +54,4 @@ export interface DraggingEventMapperPort {
 
 export interface DropEventMapperPort {
   toDomain: (event: InfrastructureDropEvent) => DomainDropEvent;
-}
-
-export interface SectionSelectionServicePort {
-  select: (params: {
-    data: StackSectionData;
-    source: PieceSelectionSource;
-    pacing?: StackPresenceNavigationPacing;
-  }) => Promise<void>;
-  deselect: (data: StackSectionData) => void;
 }

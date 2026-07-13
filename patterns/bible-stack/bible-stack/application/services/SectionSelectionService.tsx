@@ -1,6 +1,5 @@
 import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import type { PieceSelectionSource } from "../../domain/models/canvas";
-import type { SectionSelectionServicePort } from "../ports/sections";
 import type { StackPresenceNavigationPacing } from "../../domain/models/userPresence";
 import type {
   LabelDataStorePort,
@@ -14,6 +13,7 @@ import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
 import type { ExplodedViewServicePort } from "../ports/in/ExplodedView";
 import type { BookSpawnerPort } from "../ports/in/PieceSpawn";
+import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 
 interface ServiceParams {
   labelDataStorePort: LabelDataStorePort;

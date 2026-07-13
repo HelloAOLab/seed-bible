@@ -47,4 +47,6 @@ export interface PieceHighlighterPort {
     >;
     intensity: LabelTranslucencyMode;
   }) => void; // TODO: Change this to use a particular interface for the intensity. Leave LabelTranslucencyMode to the label only.
+  clearScheduledUnhighlights(): void;
+  clearHighlightedPieces(): void;
 }

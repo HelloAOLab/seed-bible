@@ -1,4 +1,5 @@
 import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
+import type { BibleSequenceServicePort } from "../ports/in/BibleSequence";
 import type { StackBibleData } from "../../domain/entities/StackBibleData";
 import type {
   BibleSequenceEventPort,
@@ -23,6 +24,7 @@ import {
   BibleTypes,
   BibleVisualizationStates,
   type Piece,
+  type SectionShadow,
 } from "../../domain/models/canvas";
 import type { StackPresenceNavigationPacing } from "../../domain/models/userPresence";
 import type { InfoLabelData } from "../../domain/entities/InfoLabelData";
@@ -52,7 +54,7 @@ interface BibleSequenceServiceParams {
   >;
 }
 
-export class BibleSequenceService {
+export class BibleSequenceService implements BibleSequenceServicePort {
   #eventPort: BibleSequenceServiceParams["eventPort"];
   #bibleSequenceAdapterPort: BibleSequenceServiceParams["bibleSequenceAdapterPort"];
   #scripturePiecesStateServicePort: BibleSequenceServiceParams["scripturePiecesStateServicePort"];
@@ -257,7 +259,7 @@ export class BibleSequenceService {
           break;
         case "StackSectionShadow":
           this.#stackPieceLifecycleAdapterPort.despawnSectionShadow(
-            piece as Piece<"StackSectionShadow">
+            piece as SectionShadow
           );
           break;
         default:

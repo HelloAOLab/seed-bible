@@ -5,7 +5,6 @@ import {
   type DropEvent,
 } from "../../domain/models/canvas";
 import type {
-  ChapterSelectionServicePort,
   PieceAdapterPort,
   PieceDropEventPort,
   ScripturePieceDropDataRepositoryPort,
@@ -20,13 +19,14 @@ import type { DropServicePort as TestamentControllerDropServicePort } from "../p
 import type { DropServicePort as SectionControllerDropServicePort } from "../ports/sections";
 import type { DropServicePort as ChapterControllerDropServicePort } from "../ports/chapters";
 import { HighlightRequestSources } from "../../domain/models/pieces";
+import type { ChapterSelectionPort } from "../ports/in/ChapterSelection";
 
 interface ServiceParams {
   pieceAdapterPort: PieceAdapterPort;
   pieceDataRepositoryPort: ScripturePieceDropDataRepositoryPort;
   sequenceStateServicePort: SequenceStateServicePort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
-  chapterSelectionServicePort: ChapterSelectionServicePort;
+  chapterSelectionServicePort: ChapterSelectionPort;
   pieceHighlightServicePort: PieceHighlighterPort;
   pieceDropEventPort: PieceDropEventPort;
 }
@@ -117,7 +117,7 @@ export class ScripturePieceDropService
         );
       const actualData = bookData ?? sectionBookData;
       this.#chapterSelectionServicePort
-        .deselectChapter(pieceData, true)
+        .deselectChapter({ data: pieceData })
         .then(() => {
           this.#chapterSelectionServicePort.trySelectChapter({
             data: pieceData,

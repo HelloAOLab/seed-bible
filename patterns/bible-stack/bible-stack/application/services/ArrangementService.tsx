@@ -10,40 +10,132 @@ import type {
   SectionPathIndices,
   BookPathIndices,
 } from "../../domain/models/arrangement";
+import type { ArrangementServicePort } from "../ports/in/Arrangement";
 import type {
-  BookInfoPathGetter,
-  BookInfoGetter,
-  ArrangementProvider,
-} from "../ports/in/Arrangement";
+  ArrangementConfigProviderPort,
+  ArrangementEventPort,
+  CustomArrangementStorePort,
+} from "../ports/out/Arangement";
 
 interface ArrangementServiceProps {
-  arrangement: ArrangementInfo;
+  arrangementConfigProviderPort: ArrangementConfigProviderPort;
+  customArrangementStorePort: CustomArrangementStorePort;
+  eventManager: ArrangementEventPort;
+  arrangementIndex?: number;
 }
 
-export class ArrangementService
-  implements BookInfoPathGetter, BookInfoGetter, ArrangementProvider
-{
-  #arrangements: Array<ArrangementInfo>;
+export class ArrangementService implements ArrangementServicePort {
+  #arrangementConfigProviderPort: ArrangementServiceProps["arrangementConfigProviderPort"];
+  #eventManager: ArrangementServiceProps["eventManager"];
+  #currArrangementIndex: NonNullable<
+    ArrangementServiceProps["arrangementIndex"]
+  > = 0;
+  #customArrangementStorePort: ArrangementServiceProps["customArrangementStorePort"];
 
-  constructor({ arrangement }: ArrangementServiceProps) {
-    this.#arrangements = [arrangement];
+  constructor({
+    arrangementConfigProviderPort,
+    eventManager,
+    arrangementIndex,
+    customArrangementStorePort,
+  }: ArrangementServiceProps) {
+    this.#arrangementConfigProviderPort = arrangementConfigProviderPort;
+    this.#customArrangementStorePort = customArrangementStorePort;
+    this.#eventManager = eventManager;
+    if (arrangementIndex !== undefined)
+      this.#currArrangementIndex = arrangementIndex;
+  }
+
+  getAllArrangements(): ArrangementInfo[] {
+    const statics = this.#arrangementConfigProviderPort.getStaticArrangements();
+    const custom = this.#customArrangementStorePort.getArrangements();
+
+    return [...statics, ...custom];
   }
 
   getCurrentArrangementIndex(): number {
-    return 0;
+    return this.#currArrangementIndex;
   }
 
-  getArrangementByIndex(index: number): ArrangementInfo | undefined {
-    return this.#arrangements[index];
+  setCurrentArrangementIndex(index: number): boolean {
+    const arrangementsLength = this.getAllArrangements().length;
+    const currentIndex = this.getCurrentArrangementIndex();
+    if (index >= 0 && index < arrangementsLength && index !== currentIndex) {
+      this.#currArrangementIndex = index;
+      this.#eventManager.emit("OnArrangementIndexChanged", { newIndex: index });
+      return true;
+    }
+    return false;
+  }
+
+  setArrangementIndexByName(name: string): void {
+    const arrangements = this.getAllArrangements();
+    const newIndex = arrangements.findIndex((arrangement) => {
+      return arrangement.name === name;
+    });
+
+    if (newIndex === -1) return;
+
+    if (this.#currArrangementIndex === newIndex) return;
+
+    this.setCurrentArrangementIndex(newIndex);
+  }
+
+  getArrangementIndexByName: (name: string) => number = (name) => {
+    return this.getAllArrangements().findIndex((arrangementInfo) => {
+      return arrangementInfo.name === name;
+    });
+  };
+
+  getCurrentArrangement(): ArrangementInfo | undefined {
+    return this.getAllArrangements()[this.getCurrentArrangementIndex()];
   }
 
   getCurrentArrangementName(): string | undefined {
-    return this.#arrangements[this.getCurrentArrangementIndex()]?.name;
+    return this.getCurrentArrangement()?.name;
   }
 
+  addCustomArrangement(arrangement: ArrangementInfo): void {
+    const currentArrangementName = this.getCurrentArrangementName();
+
+    const success =
+      this.#customArrangementStorePort.tryAddArrangement(arrangement);
+    if (success) {
+      if (currentArrangementName) {
+        this.setArrangementIndexByName(currentArrangementName);
+      }
+      this.#eventManager.emit("OnCustomArrangementsChanged");
+    }
+  }
+
+  removeCustomArrangement(arrangement: ArrangementInfo): void {
+    const currentArrangementName = this.getCurrentArrangementName();
+
+    const success =
+      this.#customArrangementStorePort.tryRemoveArrangement(arrangement);
+
+    if (success) {
+      if (
+        currentArrangementName &&
+        currentArrangementName !== arrangement.name
+      ) {
+        this.setArrangementIndexByName(currentArrangementName);
+      } else {
+        this.setCurrentArrangementIndex(0);
+      }
+      this.#eventManager.emit("OnCustomArrangementsChanged");
+    }
+  }
+
+  getArrangementByIndex: (index: number) => ArrangementInfo | undefined = (
+    index
+  ) => {
+    return this.getAllArrangements()[index];
+  };
+
   getTestamentByIndices(path: TestamentPathIndices): TestamentInfo | undefined {
-    const { testamentIndex, arrangementIndex } = path;
-    return this.#arrangements[arrangementIndex]?.testaments[testamentIndex];
+    const { arrangementIndex, testamentIndex } = path;
+    const arrangement = this.getArrangementByIndex(arrangementIndex);
+    return arrangement?.testaments[testamentIndex];
   }
 
   getSectionByIndices(path: SectionPathIndices): SectionInfo | undefined {
@@ -57,11 +149,14 @@ export class ArrangementService
     return section?.books[path.bookIndex];
   }
 
-  getTestamentInfoPathByName: (name: string) => {
+  getTestamentInfoPathByName: (
+    name: string,
+    arrangementIndex?: number
+  ) => {
     found: boolean;
-    arrangementIndex?: number | undefined;
-    testamentIndex?: number | undefined;
-  } = (name) => {
+    arrangementIndex: number;
+    testamentIndex: number | undefined;
+  } = (name, arrangementIndex = this.getCurrentArrangementIndex()) => {
     const checkPathInArrangement: (arrangement: ArrangementInfo) =>
       | {
           found: true;
@@ -86,18 +181,43 @@ export class ArrangementService
       return { found: false };
     };
 
-    const result = checkPathInArrangement(this.#arrangement);
-    if (result.found) {
-      return { found: true, testamentIndex: result.data.testamentIndex };
+    let testamentIndex: number | undefined;
+    let found = false;
+    const allArrangements = this.getAllArrangements();
+    const initialArrangement = this.getArrangementByIndex(arrangementIndex);
+    if (initialArrangement) {
+      allArrangements.splice(arrangementIndex, 1);
+      allArrangements.unshift(initialArrangement);
+
+      for (
+        let currentArrangementIndex = 0;
+        currentArrangementIndex < allArrangements.length;
+        currentArrangementIndex++
+      ) {
+        const currentArrangement = allArrangements[currentArrangementIndex];
+        if (currentArrangement) {
+          const result = checkPathInArrangement(currentArrangement);
+          if (result.found) {
+            found = true;
+            arrangementIndex = currentArrangementIndex;
+            ({ testamentIndex } = result.data);
+            break;
+          }
+        }
+      }
     }
-    return { found: false };
+    return { arrangementIndex, testamentIndex, found };
   };
 
-  getSectionInfoPathByName: (name: string) => {
+  getSectionInfoPathByName: (
+    name: string,
+    arrangementIndex?: number
+  ) => {
     found: boolean;
-    testamentIndex?: number | undefined;
-    sectionIndex?: number | undefined;
-  } = (name) => {
+    arrangementIndex: number;
+    testamentIndex: number | undefined;
+    sectionIndex: number | undefined;
+  } = (name, arrangementIndex = this.getCurrentArrangementIndex()) => {
     const checkPathInArrangement: (arrangement: ArrangementInfo) =>
       | {
           found: true;
@@ -133,20 +253,41 @@ export class ArrangementService
       return { found: false };
     };
 
-    const result = checkPathInArrangement(this.#arrangement);
-    if (result.found) {
-      return { found: true, ...result.data };
-    }
+    let testamentIndex: number | undefined, sectionIndex: number | undefined;
+    let found = false;
+    const allArrangements = this.getAllArrangements();
+    const initialArrangement = this.getArrangementByIndex(arrangementIndex);
+    if (initialArrangement) {
+      allArrangements.splice(arrangementIndex, 1);
+      allArrangements.unshift(initialArrangement);
 
-    return { found: false };
+      for (
+        let currentArrangementIndex = 0;
+        currentArrangementIndex < allArrangements.length;
+        currentArrangementIndex++
+      ) {
+        const currentArrangement = allArrangements[currentArrangementIndex];
+        if (currentArrangement) {
+          const result = checkPathInArrangement(currentArrangement);
+          if (result.found) {
+            found = true;
+            arrangementIndex = currentArrangementIndex;
+            ({ testamentIndex, sectionIndex } = result.data);
+            break;
+          }
+        }
+      }
+    }
+    return { arrangementIndex, testamentIndex, sectionIndex, found };
   };
 
-  getBookInfoPathById: (params: { id: string }) => {
+  getBookInfoPathById: (params: { id: string; arrangementIndex?: number }) => {
     found: boolean;
-    testamentIndex?: number | undefined;
-    sectionIndex?: number | undefined;
-    bookIndex?: number | undefined;
-  } = ({ id }) => {
+    arrangementIndex: number;
+    testamentIndex: number | undefined;
+    sectionIndex: number | undefined;
+    bookIndex: number | undefined;
+  } = ({ id, arrangementIndex = this.getCurrentArrangementIndex() }) => {
     const checkPathInArrangement: (arrangement: ArrangementInfo) =>
       | {
           found: true;
@@ -193,21 +334,49 @@ export class ArrangementService
       return { found: false };
     };
 
-    const result = checkPathInArrangement(this.#arrangement);
-    if (result.found) {
-      return { found: true, ...result.data };
+    let testamentIndex: number | undefined,
+      sectionIndex: number | undefined,
+      bookIndex: number | undefined;
+    let found = false;
+    const allArrangements = this.getAllArrangements();
+    const initialArrangement = this.getArrangementByIndex(arrangementIndex);
+    if (initialArrangement) {
+      allArrangements.splice(arrangementIndex, 1);
+      allArrangements.unshift(initialArrangement);
+
+      for (
+        let currentArrangementIndex = 0;
+        currentArrangementIndex < allArrangements.length;
+        currentArrangementIndex++
+      ) {
+        const currentArrangement = allArrangements[currentArrangementIndex];
+        if (currentArrangement) {
+          const result = checkPathInArrangement(currentArrangement);
+          if (result.found) {
+            found = true;
+            arrangementIndex = currentArrangementIndex;
+            ({ testamentIndex, sectionIndex, bookIndex } = result.data);
+            break;
+          }
+        }
+      }
     }
-    return { found: false };
+    return { arrangementIndex, testamentIndex, sectionIndex, bookIndex, found };
   };
 
   getBookSubsetByCompleteId({
     id,
     chapterNumber,
+    arrangementIndex = this.getCurrentArrangementIndex(),
   }: {
     id: string;
     chapterNumber: number;
+    arrangementIndex?: number;
   }): SubsetBookInfo | undefined {
-    for (const testament of this.#arrangement.testaments) {
+    const arrangement = this.getArrangementByIndex(arrangementIndex);
+    if (!arrangement) return undefined;
+
+    for (const testament of arrangement.testaments) {
       for (const section of testament.sections) {
         for (const book of section.books) {
           if (book.type === "subset" && book.completeBookId === id) {
@@ -225,16 +394,19 @@ export class ArrangementService
   }
 
   getBooksNamesBySectionName: (name: string) => string[] | null = (name) => {
-    const { testamentIndex, sectionIndex, found } =
+    const { arrangementIndex, testamentIndex, sectionIndex, found } =
       this.getSectionInfoPathByName(name);
     if (found) {
-      const testament = this.#arrangement.testaments[testamentIndex as number];
-      if (testament) {
-        const section = testament.sections[sectionIndex as number];
-        if (section) {
-          return section.books.map((currBook) => {
-            return currBook.bookId;
-          });
+      const arrangement = this.getArrangementByIndex(arrangementIndex);
+      if (arrangement) {
+        const testament = arrangement.testaments[testamentIndex as number];
+        if (testament) {
+          const section = testament.sections[sectionIndex as number];
+          if (section) {
+            return section.books.map((currBook) => {
+              return currBook.bookId;
+            });
+          }
         }
       }
     }

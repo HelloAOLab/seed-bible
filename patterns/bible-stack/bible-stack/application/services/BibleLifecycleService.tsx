@@ -15,14 +15,14 @@ import {
   type BibleType,
 } from "../../domain/models/canvas";
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
-import type { ArrangementProvider } from "../ports/in/Arrangement";
+import type { ArrangementServicePort } from "../ports/in/Arrangement";
 
 interface ServiceParams {
   pieceLifecycleAdapterPort: PieceLifecycleAdapterPort;
   pieceLifecycleServicePort: PieceLifecycleServicePort;
   bibleDataRepositoryPort: BibleDataRepositoryPort;
   bibleLifecycleEventPort: BibleLifecycleEventPort;
-  arrangementServicePort: ArrangementProvider;
+  arrangementServicePort: ArrangementServicePort;
   idGeneratorPort: IdGeneratorPort;
   stackPieceLifecycleAdapterPort: StackPieceLifecycleAdapterPort;
   bibleSetupAdapterPort: BibleSetupAdapterPort;

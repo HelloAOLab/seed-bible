@@ -1,10 +1,11 @@
-import type { StackBibleData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBibleData";
-import type { StackBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBookData";
-import type { StackChapterData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackChapterData";
-import type { StackSectionBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionBookData";
-import { StackSectionData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionData";
-import { StackTestamentData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackTestamentData";
-import { BiblePieces } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/canvas";
+import type { InteractionRegistryServicePort } from "../../../application/ports/experience";
+import type { StackBibleData } from "../../../domain/entities/StackBibleData";
+import type { StackBookData } from "../../../domain/entities/StackBookData";
+import type { StackChapterData } from "../../../domain/entities/StackChapterData";
+import type { StackSectionBookData } from "../../../domain/entities/StackSectionBookData";
+import { StackSectionData } from "../../../domain/entities/StackSectionData";
+import { StackTestamentData } from "../../../domain/entities/StackTestamentData";
+import { BiblePieces } from "../../../domain/models/canvas";
 
 export type RegistryMap = {
   [BiblePieces.StackTestament]: StackTestamentData | undefined;
@@ -14,7 +15,7 @@ export type RegistryMap = {
   StackBible: StackBibleData | undefined;
 };
 
-export class InteractionRegistry {
+export class InteractionRegistry implements InteractionRegistryServicePort {
   #registryMap: RegistryMap = {
     [BiblePieces.StackTestament]: undefined,
     [BiblePieces.StackSection]: undefined,
@@ -47,5 +48,13 @@ export class InteractionRegistry {
     type: K
   ): RegistryMap[K] {
     return this.#registryMap[type];
+  }
+
+  clearAllLastInteractions() {
+    this.#registryMap[BiblePieces.StackTestament] = undefined;
+    this.#registryMap[BiblePieces.StackSection] = undefined;
+    this.#registryMap[BiblePieces.StackBook] = undefined;
+    this.#registryMap[BiblePieces.StackChapter] = undefined;
+    this.#registryMap.StackBible = undefined;
   }
 }

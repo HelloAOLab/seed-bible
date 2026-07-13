@@ -1,5 +1,4 @@
 import type { StackStructureServicePort as PieceDragStackStructureServicePort } from "../ports/scripturePieceDrag";
-import type { StackStructureServicePort as PieceLifecycleStackStructureServicePort } from "../ports/pieceLifecycle";
 import { StackTestamentData } from "../../domain/entities/StackTestamentData";
 import { StackSectionData } from "../../domain/entities/StackSectionData";
 import { StackSectionBookData } from "../../domain/entities/StackSectionBookData";
@@ -11,7 +10,6 @@ import type {
   StackStructureEventPort,
 } from "../ports/stackStructure";
 import type { StackPieceDataMap } from "../ports/pieces";
-import type { BookInfo } from "../../domain/models/arrangement";
 import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 
 interface ServiceParams {
@@ -42,6 +40,7 @@ const copyTestamentStrategy: CopyStrategy<
   StackPieceDataMap["StackTestament"]
 > = ({ data, pieceLifecycleServicePort, bibleData }) => {
   return pieceLifecycleServicePort.createTestament({
+    arrangementIndex: data.getArrangementIndex(),
     testamentIndex: data.getTestamentIndex(),
     bibleDataId: bibleData?.id,
     isHidden: true,
@@ -52,6 +51,7 @@ const rawCopySectionStrategy: CopyStrategy<
   StackPieceDataMap["StackSection" | "StackSectionBook"]
 > = ({ data, pieceLifecycleServicePort, bibleData, testamentData }) => {
   return pieceLifecycleServicePort.createSection({
+    arrangementIndex: data.getArrangementIndex(),
     testamentIndex: data.getTestamentIndex(),
     sectionIndex: data.getSectionIndex(),
     isInsideBible: true,
@@ -81,6 +81,7 @@ const copyBookStrategy: CopyStrategy<StackPieceDataMap["StackBook"]> = ({
   sectionData,
 }) => {
   return pieceLifecycleServicePort.createBook({
+    arrangementIndex: data.getArrangementIndex(),
     testamentIndex: data.getTestamentIndex(),
     sectionIndex: data.getSectionIndex(),
     levelIndex: data.getLevelIndex(),
@@ -167,11 +168,7 @@ function runPieceStrategy<K extends keyof StackPieceDataMap>(
   return copy;
 }
 
-export class StackStructureService
-  implements
-    PieceDragStackStructureServicePort,
-    PieceLifecycleStackStructureServicePort
-{
+export class StackStructureService implements PieceDragStackStructureServicePort {
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #pieceLifecycleServicePort: ServiceParams["pieceLifecycleServicePort"];
   #stackStructureEventPort: ServiceParams["stackStructureEventPort"];
@@ -221,24 +218,5 @@ export class StackStructureService
     pieceData.clearAllParentIds();
 
     this.#stackStructureEventPort.emit("OnStackPiecePulledOut");
-  };
-
-  getSectionLevels = (books: readonly BookInfo[]) => {
-    const levels: BookInfo[][] = [];
-    const groupsIncluded: number[] = [];
-    for (const book of books) {
-      if (book.group) {
-        if (groupsIncluded.includes(book.group)) continue;
-
-        const group: BookInfo[] = books.filter((currBook) => {
-          return currBook.group === book.group;
-        });
-        levels.push(group);
-        groupsIncluded.push(book.group);
-      } else {
-        levels.push([book]);
-      }
-    }
-    return levels;
   };
 }

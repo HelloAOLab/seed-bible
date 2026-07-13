@@ -14,21 +14,21 @@ import type {
   PresenceProviderPort,
   PieceAdapterPort,
   SequenceStateServicePort,
-  BibleSequenceServicePort,
-  BookSelectionServicePort,
   AwaiterPort,
   TestamentSelectionServicePort,
-  SectionSelectionServicePort,
   ExplodedViewServicePort,
 } from "../ports/userPresence";
-import type { ChapterSelectionServicePort } from "../ports/chapters";
+import type { ChapterSelectionPort } from "../ports/in/ChapterSelection";
 import { StackPresenceNavigationPacings } from "../../domain/models/userPresence";
 import type { StackPresenceNavigationServicePort } from "../ports/experience";
+import type { ArrangementServicePort } from "../ports/in/Arrangement";
 import type {
-  BookInfoPathGetter,
-  BookInfoGetter,
-} from "../ports/in/Arrangement";
-import type { BookInfo } from "../../domain/models/arrangement";
+  BookInfo,
+  BookPathIndices,
+} from "../../domain/models/arrangement";
+import type { BibleSequenceServicePort } from "../ports/in/BibleSequence";
+import type { BookSelectionServicePort } from "../ports/in/BookSelection";
+import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 
 interface ServiceParams {
   bibleDataRepositoryPort: BibleDataRepositoryPort;
@@ -39,10 +39,7 @@ interface ServiceParams {
     "getAllChapters" | "getAllBooks" | "getAllSectionBooks"
   >;
   sequenceStateServicePort: SequenceStateServicePort;
-  chapterSelectionServicePort: Pick<
-    ChapterSelectionServicePort,
-    "trySelectChapter" | "deselectChapter"
-  >;
+  chapterSelectionServicePort: ChapterSelectionPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   scriptureServicePort: ScripturePort;
   bibleSequenceServicePort: BibleSequenceServicePort;
@@ -51,8 +48,7 @@ interface ServiceParams {
   testamentSelectionServicePort: TestamentSelectionServicePort;
   sectionSelectionServicePort: SectionSelectionServicePort;
   explodedViewServicePort: ExplodedViewServicePort;
-  bookInfoPathGetter: BookInfoPathGetter;
-  bookInfoGetter: BookInfoGetter;
+  arrangementServicePort: ArrangementServicePort;
 }
 
 interface NavigationTargets {
@@ -78,8 +74,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
   #explodedViewServicePort: ServiceParams["explodedViewServicePort"];
   #isUpdateQueued: boolean = false;
   #isThereAnOngoingUpdate: boolean = false;
-  #bookInfoPathGetter: ServiceParams["bookInfoPathGetter"];
-  #bookInfoGetter: ServiceParams["bookInfoGetter"];
+  #arrangementServicePort: ServiceParams["arrangementServicePort"];
 
   constructor({
     bibleDataRepositoryPort,
@@ -96,8 +91,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     testamentSelectionServicePort,
     sectionSelectionServicePort,
     explodedViewServicePort,
-    bookInfoPathGetter,
-    bookInfoGetter,
+    arrangementServicePort,
   }: ServiceParams) {
     this.#bibleDataRepositoryPort = bibleDataRepositoryPort;
     this.#presenceProviderPort = presenceProviderPort;
@@ -113,8 +107,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     this.#testamentSelectionServicePort = testamentSelectionServicePort;
     this.#sectionSelectionServicePort = sectionSelectionServicePort;
     this.#explodedViewServicePort = explodedViewServicePort;
-    this.#bookInfoPathGetter = bookInfoPathGetter;
-    this.#bookInfoGetter = bookInfoGetter;
+    this.#arrangementServicePort = arrangementServicePort;
   }
 
   async update(): Promise<void> {
@@ -146,7 +139,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
         })
       ),
       ...chaptersToDeselect.map((data) =>
-        this.#chapterSelectionServicePort.deselectChapter(data)
+        this.#chapterSelectionServicePort.deselectChapter({ data })
       ),
     ];
 
@@ -170,14 +163,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     const chaptersToDeselect: StackChapterData[] = [];
     const chaptersToSelectDirectly: StackChapterData[] = [];
     let chapterToFocus: StackChapterData | undefined;
-    const tempBookPathMap: Map<
-      string,
-      {
-        testamentIndex: number;
-        sectionIndex: number;
-        bookIndex: number;
-      }
-    > = new Map();
+    const tempBookPathMap: Map<string, BookPathIndices> = new Map();
     const tempBookInfoMap: Map<string, BookInfo> = new Map();
 
     for (const chapterData of this.#pieceDataRepositoryPort.getAllChapters()) {
@@ -187,11 +173,12 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
       if (!bookInfo) {
         let bookPath = tempBookPathMap.get(bookId);
         if (!bookPath) {
-          const tempPath = this.#bookInfoPathGetter.getBookInfoPathById({
+          const tempPath = this.#arrangementServicePort.getBookInfoPathById({
             id: bookId,
           });
           if (tempPath.found) {
             bookPath = {
+              arrangementIndex: tempPath.arrangementIndex,
               testamentIndex: tempPath.testamentIndex!,
               sectionIndex: tempPath.sectionIndex!,
               bookIndex: tempPath.bookIndex!,
@@ -206,7 +193,8 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
             chapterToFocus: undefined,
           };
         }
-        const tempInfo = this.#bookInfoGetter.getBookByIndices(bookPath);
+        const tempInfo =
+          this.#arrangementServicePort.getBookByIndices(bookPath);
         if (tempInfo) {
           bookInfo = tempInfo;
           tempBookInfoMap.set(bookId, bookInfo);
@@ -305,6 +293,11 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
 
     // Step 1: Reset the stack or deselect a stale book before navigating
     if (shouldResetStack) {
+      if (!bibleData) {
+        throw new Error(
+          "StackPresenceNavigationService: bibleData not defined at navigateToChapter"
+        );
+      }
       await this.#bibleSequenceServicePort.resetBible({ bibleData, pacing });
     } else if (bookToDeselectData) {
       await this.#bookSelectionServicePort.deselectBook(bookToDeselectData);
@@ -330,7 +323,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
       if (sectionBookData.selectionState !== "Selected") {
         await this.#bookSelectionServicePort.selectBook({
           data: sectionBookData,
-          pacing,
+          pacing: pacing === "Regular" ? "Regular" : "Fast",
           source: PieceSelectionSources.StackPresenceNavigation,
         });
       } else {
@@ -338,7 +331,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
       }
     } else if (sectionData) {
       if (!sectionData.isSplitIntoBooks) {
-        await this.#sectionSelectionServicePort.selectSection({
+        await this.#sectionSelectionServicePort.select({
           data: sectionData,
           pacing,
           source: PieceSelectionSources.StackPresenceNavigation,
@@ -366,7 +359,7 @@ export class StackPresenceNavigationService implements StackPresenceNavigationSe
     if (bookData && bookData.selectionState !== "Selected") {
       await this.#bookSelectionServicePort.selectBook({
         data: bookData,
-        pacing,
+        pacing: pacing === "Regular" ? "Regular" : "Fast",
         source: PieceSelectionSources.StackPresenceNavigation,
       });
     } else {
