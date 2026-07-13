@@ -115,10 +115,15 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         // Distance from the current scroll position to the very bottom of the
         // chapter. When the reader lands within a small threshold of the end,
         // re-show the toolbar so the chapter-navigation controls are within
-        // reach — even though the user is still scrolling down.
+        // reach — even though the user is still scrolling down. Only counts
+        // when the content actually overflows; otherwise there's no downward
+        // scroll to reverse and `scrollHeight - clientHeight` isn't meaningful.
+        const isScrollable = element.scrollHeight > element.clientHeight;
         const distanceToBottom =
           element.scrollHeight - (currentScrollTop + element.clientHeight);
-        if (currentScrollTop <= 0 || distanceToBottom <= BOTTOM_REVEAL_MARGIN) {
+        const reachedBottom =
+          isScrollable && distanceToBottom <= BOTTOM_REVEAL_MARGIN;
+        if (currentScrollTop <= 0 || reachedBottom) {
           setIsScrolled(false);
         } else if (
           currentScrollTop > lastScrollTopRef.current &&
