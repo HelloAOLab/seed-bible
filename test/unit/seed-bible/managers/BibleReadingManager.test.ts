@@ -1962,4 +1962,233 @@ describe("createBibleReadingState", () => {
       expect(state.enabledExtensions.value).toEqual([]);
     });
   });
+
+  describe("onNavigate", () => {
+    function withNivResponses(responses: WebResponseMap): WebResponseMap {
+      responses[makeExampleUrl("/api/NIV/books.json")] =
+        createResponse(nivBooks);
+      responses[makeExampleUrl("/api/NIV/MAT/1.json")] = createResponse({
+        ...makeChapter(bsbBooks, "MAT", 1),
+        translation: nivTranslation,
+        book: nivBooks.books[0]!,
+        thisChapterLink: "/api/NIV/MAT/1.json",
+        nextChapterApiLink: "/api/NIV/MAT/2.json",
+        previousChapterApiLink: null,
+      });
+      responses[makeExampleUrl("/api/NIV/MAT/3.json")] = createResponse({
+        ...makeChapter(nivBooks, "MAT", 3),
+        translation: nivTranslation,
+        book: nivBooks.books[0]!,
+        thisChapterLink: "/api/NIV/MAT/3.json",
+        nextChapterApiLink: "/api/NIV/MAT/4.json",
+        previousChapterApiLink: "/api/NIV/MAT/2.json",
+      });
+      return responses;
+    }
+
+    it("does not fire during initial load", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      const listener = vi.fn();
+      // Subscribe before the initial load settles so any emit would be caught.
+      state.onNavigate(listener);
+
+      await waitForInitialLoad(state);
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it("fires once with { replace: false } when selecting a chapter", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.selectChapter("GEN", 5);
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({ replace: false });
+    });
+
+    it("fires once with { replace: false } when selecting a book", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.selectBook("EXO");
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({ replace: false });
+    });
+
+    it("fires once with { replace: false } when selecting a translation", async () => {
+      setWebResponses(withNivResponses(createReadingManagerResponseMap()));
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.selectTranslation("NIV");
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({ replace: false });
+    });
+
+    it("fires once with { replace: false } when selecting a translation, book, and chapter", async () => {
+      setWebResponses(withNivResponses(createReadingManagerResponseMap()));
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.selectTranslationAndChapter("NIV", "MAT", 3);
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({ replace: false });
+    });
+
+    it("fires once with { replace: false } when loading the next and previous chapter", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.loadNextChapter();
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenLastCalledWith({ replace: false });
+
+      await state.loadPreviousChapter();
+      expect(listener).toHaveBeenCalledTimes(2);
+      expect(listener).toHaveBeenLastCalledWith({ replace: false });
+    });
+
+    it("does not fire when the navigation is driven from the URL (updateUrl: false)", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.selectTranslationAndChapter("AAB", "GEN", 5, {
+        updateUrl: false,
+      });
+
+      expect(state.chapterNumber.value).toBe(5);
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it("does not fire for verse selection or clearing", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      state.selectVerse(
+        { bookId: "GEN", chapterNumber: 1, verse: makeVerse(1) } as any,
+        0,
+        0
+      );
+      state.clearSelectedVerses();
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it("fires with { replace: true } when enabling and disabling an extension", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({ id: "x", activate: () => ({}) });
+
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        manager
+      );
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      state.enableExtension("x");
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenLastCalledWith({ replace: true });
+
+      state.disableExtension("x");
+      expect(listener).toHaveBeenCalledTimes(2);
+      expect(listener).toHaveBeenLastCalledWith({ replace: true });
+    });
+
+    it("stops notifying after the returned unsubscribe is called", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      const unsubscribe = state.onNavigate(listener);
+
+      await state.selectChapter("GEN", 2);
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      unsubscribe();
+      await state.selectChapter("GEN", 5);
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    it("notifies every subscribed listener", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const first = vi.fn();
+      const second = vi.fn();
+      state.onNavigate(first);
+      state.onNavigate(second);
+
+      await state.selectChapter("GEN", 2);
+
+      expect(first).toHaveBeenCalledTimes(1);
+      expect(second).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not notify listeners after the reading state is disposed", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({ id: "x", activate: () => ({}) });
+
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        manager
+      );
+      await waitForInitialLoad(state);
+
+      state.enableExtension("x");
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      // dispose() disables extensions internally; that must not emit to
+      // listeners of a state that is being torn down.
+      state.dispose();
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+  });
 });

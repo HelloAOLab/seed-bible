@@ -339,6 +339,18 @@ export interface BibleReadingState {
   getUrlQueryParams: (currentUrl: URL) => Record<string, string | null>;
 
   /**
+   * Subscribes to navigation events for this reading state. The listener is
+   * invoked once per completed navigation (chapter/book/translation change,
+   * extension toggle, etc.), which lets the owner prescriptively update the URL
+   * exactly once per navigation instead of reacting to each underlying signal.
+   * @param listener Called with the navigation's URL intent (push vs replace).
+   * @returns An unsubscribe function.
+   */
+  onNavigate: (
+    listener: (options: ReadingNavigationOptions) => void
+  ) => () => void;
+
+  /**
    * Releases all resources held by this reading state: disables every enabled
    * extension, clears pending decoration timers, and stops internal effects.
    * Called when the owning tab is closed.
@@ -627,6 +639,23 @@ export interface SelectTranslationAndChapterOptions {
    * The verse to scroll to after the chapter loads. Should be a valid verse number within the chapter, otherwise it will be ignored.
    */
   scrollToVerse?: number;
+
+  /**
+   * Whether this navigation should update the URL (emit a navigation event).
+   * Defaults to `true`. Pass `false` when the navigation is itself being
+   * driven _from_ the URL (deep link / back-forward sync) so it does not push
+   * a redundant history entry back onto the stack.
+   */
+  updateUrl?: boolean;
+}
+
+/** Options describing how a reading-state navigation should affect the URL. */
+export interface ReadingNavigationOptions {
+  /**
+   * When `true`, the URL should be updated with `replaceState` (no new history
+   * entry). When `false`/omitted, a new history entry is pushed.
+   */
+  replace?: boolean;
 }
 
 function normalizeDecorationVerses(verses: number | number[]): number[] {
@@ -860,6 +889,10 @@ export function createBibleReadingState(
     const nextRuntimes = new Map(enabledRuntimes.value);
     nextRuntimes.set(extensionId, runtime);
     enabledRuntimes.value = nextRuntimes;
+
+    // Enabling an extension can add query params (via transformQueryParams),
+    // but it is not a chapter navigation, so update the URL in place.
+    emitNavigate({ replace: true });
   };
 
   const disableExtension = (extensionId: string) => {
@@ -877,6 +910,9 @@ export function createBibleReadingState(
     const nextRuntimes = new Map(enabledRuntimes.value);
     nextRuntimes.delete(extensionId);
     enabledRuntimes.value = nextRuntimes;
+
+    // Disabling drops the extension's query params; update the URL in place.
+    emitNavigate({ replace: true });
   };
 
   const isExtensionEnabled = (extensionId: string) =>
@@ -916,7 +952,29 @@ export function createBibleReadingState(
     return { type: "default" };
   };
 
+  const navigationListeners = new Set<
+    (options: ReadingNavigationOptions) => void
+  >();
+
+  const onNavigate = (
+    listener: (options: ReadingNavigationOptions) => void
+  ) => {
+    navigationListeners.add(listener);
+    return () => {
+      navigationListeners.delete(listener);
+    };
+  };
+
+  const emitNavigate = (options: ReadingNavigationOptions = {}) => {
+    for (const listener of Array.from(navigationListeners)) {
+      listener(options);
+    }
+  };
+
   const disposeReadingState = () => {
+    // Clear listeners first so extension teardown below cannot emit navigation
+    // events into an owner that is being torn down.
+    navigationListeners.clear();
     for (const extensionId of Array.from(enabledRuntimes.value.keys())) {
       disableExtension(extensionId);
     }
@@ -1282,6 +1340,8 @@ export function createBibleReadingState(
         return;
       }
       await syncStateFromChapter(chapter);
+
+      emitNavigate({ replace: false });
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to load previous chapter.";
@@ -1316,6 +1376,8 @@ export function createBibleReadingState(
         );
         await syncStateFromChapter(chapter);
       });
+
+      emitNavigate({ replace: false });
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to select translation.";
@@ -1348,6 +1410,8 @@ export function createBibleReadingState(
       );
 
       await syncStateFromChapter(chapter);
+
+      emitNavigate({ replace: false });
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to select book.";
@@ -1399,6 +1463,10 @@ export function createBibleReadingState(
         );
         await syncStateFromChapter(chapter, options);
       });
+
+      if (options?.updateUrl !== false) {
+        emitNavigate({ replace: false });
+      }
     } catch (err) {
       error.value =
         err instanceof Error
@@ -1421,6 +1489,8 @@ export function createBibleReadingState(
       );
 
       await syncStateFromChapter(nextChapterData);
+
+      emitNavigate({ replace: false });
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to select chapter.";
@@ -1451,6 +1521,8 @@ export function createBibleReadingState(
         return;
       }
       await syncStateFromChapter(chapter);
+
+      emitNavigate({ replace: false });
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to load next chapter.";
@@ -1816,6 +1888,7 @@ export function createBibleReadingState(
     disableExtension,
     dispose: disposeReadingState,
     getUrlQueryParams,
+    onNavigate,
   };
 
   return readingStateRef;

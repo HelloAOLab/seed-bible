@@ -97,6 +97,9 @@ function createMockSharedSession(id: string) {
       translationBooks: signal(null),
       selectTranslationAndChapter: vi.fn().mockResolvedValue(undefined),
       getUrlQueryParams: vi.fn().mockReturnValue({}),
+      // TabsManager subscribes to reading-state navigation events to drive the
+      // URL; the mock just returns a no-op unsubscribe.
+      onNavigate: vi.fn().mockReturnValue(() => undefined),
       // Reading-extension surface the (derived) playlist `playing` state reads.
       enabledExtensions: signal([]),
       isExtensionEnabled: vi.fn().mockReturnValue(false),

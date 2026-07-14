@@ -1,4 +1,10 @@
-import { computed, effect, signal, type Signal } from "@preact/signals";
+import {
+  computed,
+  effect,
+  signal,
+  untracked,
+  type Signal,
+} from "@preact/signals";
 import type { BibleDataManager } from "./BibleDataManager";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import { createChatsManager, type ChatSession } from "./ChatsManager";
@@ -338,33 +344,84 @@ export function createTabs(
       requestedBookId,
       requestedChapter,
     });
+    // This navigation originates from the URL, so pass `updateUrl: false` to
+    // keep the reading state from pushing the URL we just read back onto the
+    // history stack.
     await readingState.selectTranslationAndChapter(
       requestedTranslation,
       requestedBookId,
-      nextChapter
+      nextChapter,
+      { updateUrl: false }
     );
   };
 
   let oldQueryParams: Record<string, string | null> = {};
 
+  // The href of the last URL we wrote ourselves. Writing the URL re-runs the
+  // URL->state reader effect below (asynchronously), but the state already
+  // matches what we wrote, so the reader skips that href once and clears this.
+  // External URL changes (back/forward, deep links) never match, so they still
+  // drive the reader.
+  let lastSelfWrittenHref: string | null = null;
+
+  const writeUrl = (
+    update: Record<string, string | null>,
+    replace?: boolean
+  ) => {
+    navigation.updateQueryParams(update, replace);
+    lastSelfWrittenHref = navigation.currentUrl.peek().href;
+  };
+
+  /**
+   * Prescriptively writes the selected tab's reading position to the URL, as a
+   * single history operation. Called deliberately from navigation events (push)
+   * and on tab switch / mount (replace) — never reactively off the underlying
+   * position signals, so one navigation produces exactly one history entry.
+   */
+  const commitSelectedTabToUrl = (options: { replace?: boolean } = {}) => {
+    // Read all signals untracked: `getUrlQueryParams` touches bookId/chapter/
+    // translation/extension signals, and this runs inside a signals effect. If
+    // those reads were tracked, the effect would re-run on every position
+    // change and re-commit, defeating the prescriptive (one-write-per-nav)
+    // design.
+    untracked(() => {
+      const readingState = selectedTab.peek()?.readingState;
+      const nextQueryParams =
+        readingState?.getUrlQueryParams(navigation.currentUrl.peek()) ?? {};
+
+      const oldKeys = Object.keys(oldQueryParams);
+      const newKeys = Object.keys(nextQueryParams);
+
+      oldQueryParams = nextQueryParams;
+      const queryUpdate: Record<string, string | null> = {
+        ...nextQueryParams,
+      };
+      const removedKeys = difference(oldKeys, newKeys);
+      for (const key of removedKeys) {
+        queryUpdate[key] = null;
+      }
+
+      writeUrl(queryUpdate, options.replace);
+    });
+  };
+
+  // Subscribe to navigation events for whichever tab is currently selected.
+  // Re-runs on tab switch (subscribing to `selectedTab` only, never the raw
+  // position signals): tears down the previous tab's subscription, and commits
+  // a `replace` so the URL reflects the newly-focused tab without adding a
+  // history entry. Real navigations within the tab arrive via `onNavigate` and
+  // push a single entry each.
   effect(() => {
     const readingState = selectedTab.value?.readingState;
-    const nextQueryParams =
-      readingState?.getUrlQueryParams(navigation.currentUrl.peek()) ?? {};
-
-    const oldKeys = Object.keys(oldQueryParams);
-    const newKeys = Object.keys(nextQueryParams);
-
-    oldQueryParams = nextQueryParams;
-    const queryUpdate = {
-      ...nextQueryParams,
-    };
-    const removedKeys = difference(oldKeys, newKeys);
-    for (const key of removedKeys) {
-      queryUpdate[key] = null;
+    if (!readingState) {
+      return undefined;
     }
 
-    navigation.updateQueryParams(queryUpdate);
+    const dispose = readingState.onNavigate((options) =>
+      commitSelectedTabToUrl(options)
+    );
+    commitSelectedTabToUrl({ replace: true });
+    return dispose;
   });
 
   effect(() => {
@@ -380,11 +437,19 @@ export function createTabs(
       params.verse = formatted;
     }
 
-    navigation.updateQueryParams(params, true);
+    writeUrl(params, true);
   });
 
   effect(() => {
-    void navigation.currentUrl.value;
+    const href = navigation.currentUrl.value.href;
+    // Skip the URL change we caused ourselves — the reading state already
+    // matches it — and clear the marker so a later, genuine navigation back to
+    // the same href is not also skipped. Only external changes (back/forward,
+    // deep links) drive the reader.
+    if (href === lastSelfWrittenHref) {
+      lastSelfWrittenHref = null;
+      return;
+    }
     syncSelectedTabFromUrl();
   });
 
