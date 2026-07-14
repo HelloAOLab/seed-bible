@@ -7,7 +7,7 @@ import type {
   BotVars,
   BotTags,
 } from "../../../../pattern-typings/AuxLibraryDefinitions";
-import type { BiblePiece } from "../../domain/models/canvas";
+import type { BiblePiece, PieceState } from "../../domain/models/canvas";
 
 export interface BaseTagData<T> {
   bot: Bot;

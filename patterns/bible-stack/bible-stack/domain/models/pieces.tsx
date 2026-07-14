@@ -1,4 +1,4 @@
-import type { Piece } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/canvas";
+import type { Piece } from "./canvas";
 
 export const HighlightRequestSources = {
   UserSelection: "UserSelection",

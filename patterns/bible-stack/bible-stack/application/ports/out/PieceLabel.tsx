@@ -32,6 +32,11 @@ export type DespawnLabel = (data: InfoLabelData) => void;
 export interface LabelAdapterPort {
   spawnLabel: SpawnLabel;
   despawnLabel: DespawnLabel;
+  locateLabel(params: {
+    positioning: LabelPosition;
+    piece: Piece;
+    infoLabelTransformer: Piece<"InfoLabelTransformer">;
+  }): void;
 }
 
 export interface LabelDataStorePort {

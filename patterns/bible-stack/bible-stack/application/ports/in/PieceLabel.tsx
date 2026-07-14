@@ -1,3 +1,4 @@
+import type { InfoLabelData } from "../../../domain/entities/InfoLabelData";
 import type { Piece, BiblePiece } from "../../../domain/models/canvas";
 import type {
   LabelTranslucencyMode,
@@ -16,4 +17,6 @@ export interface PieceLabelServicePort<T extends BiblePiece> {
     translucencyMode: LabelTranslucencyMode,
     pacing?: ShowSequencePacing
   ) => Promise<void>;
+  updateLabelPosition(piece: Piece<T>): void;
+  getPieceLabel(piece: Piece<T>): InfoLabelData | undefined;
 }

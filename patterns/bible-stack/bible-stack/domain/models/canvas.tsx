@@ -2,6 +2,9 @@ import type { Span, Point2D, Point3D } from "./commonTypes";
 import type { StackBookData } from "../entities/StackBookData";
 import type { StackBibleData } from "../entities/StackBibleData";
 import type { StackChapterData } from "../entities/StackChapterData";
+import type { StackSectionData } from "../entities/StackSectionData";
+import type { StackSectionBookData } from "../entities/StackSectionBookData";
+import type { StackTestamentData } from "../entities/StackTestamentData";
 
 export const BiblePieces = {
   StackTestament: "StackTestament",
@@ -28,6 +31,15 @@ export type BiblePiece = (typeof BiblePieces)[keyof typeof BiblePieces];
 export interface Piece<T extends BiblePiece = BiblePiece> {
   id: string;
   type: T;
+}
+
+export interface PieceState {
+  positionX: number;
+  positionY: number;
+  positionZ: number;
+  sizeX: number;
+  sizeY: number;
+  sizeZ: number;
 }
 
 export interface SectionShadow extends Piece<"StackSectionShadow"> {
@@ -214,3 +226,11 @@ export interface BaseRelocationEvent {
 export type DropEvent = BaseRelocationEvent;
 
 export type DraggingEvent = BaseRelocationEvent;
+
+export interface PieceDataMap {
+  [BiblePieces.StackBook]: StackBookData;
+  [BiblePieces.StackChapter]: StackChapterData;
+  [BiblePieces.StackSection]: StackSectionData;
+  [BiblePieces.StackSectionBook]: StackSectionBookData;
+  [BiblePieces.StackTestament]: StackTestamentData;
+}

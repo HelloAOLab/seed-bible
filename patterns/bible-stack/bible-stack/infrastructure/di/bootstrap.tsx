@@ -5,6 +5,7 @@ import type { BibleStackObjectPoolerMap } from "../models/objectPooler";
 import {
   BiblePieces,
   type Piece,
+  type PieceState,
   type SectionShadow,
 } from "../../domain/models/canvas";
 import { thisTypedBot as testamentPrefab } from "../prefabs/testament/botAdapter";
@@ -154,7 +155,7 @@ import type { ArrangementTranslationKey } from "../config/translation/Arrangemen
 import { ComputeDateLabelText } from "../../domain/functions/time";
 import { ScriptureService } from "../../application/services/ScriptureService";
 import type { ArrangementInfo } from "../../domain/models/arrangement";
-import { RenderOrderAdapter } from "../adapters/environment/renderOrderAdapter";
+import { RenderOrderAdapter } from "../adapters/environment/RenderOrderAdapter";
 import { CameraController } from "../controllers/casualos/CameraController";
 import { CanvasInteractionController } from "../controllers/casualos/CanvasInteractionController";
 import { ExperienceController } from "../controllers/experience/ExperienceController";
@@ -166,6 +167,14 @@ import { TestamentInteractionController } from "../controllers/stack/TestamentIn
 import { VerseInteractionController } from "../controllers/stack/VerseInteractionController";
 import { VersesBundleInteractionController } from "../controllers/stack/VersesBundleInteractionController";
 import { RelocationEventMapper } from "../mappers/RelocationEventMapper";
+import { BotStateController } from "../controllers/stack/BotStateController";
+import {
+  bookStateUpdateStrategy,
+  labelRelocationStrategy,
+} from "../controllers/stack/PieceStateUpdateStrategies";
+import type { SectionBot, TestamentBot } from "../models/stack";
+import type { PieceBotTags } from "../models/casualos";
+import { PieceStateService } from "../../application/services/PieceStateService";
 
 export const bootstrapExtension = () => {
   // // 1. Instantiating mappers
@@ -1267,7 +1276,6 @@ export const bootstrapExtension = () => {
     chapterNavigationServicePort: {
       openChapter: () => {},
     },
-    // TODO (manual): userPresenceServicePort (core), chapterNavigationServicePort.
   });
   const versesBundleInteractionService = new VersesBundleInteractionService({
     sequenceStateServicePort: sequenceStateService,
@@ -1313,6 +1321,7 @@ export const bootstrapExtension = () => {
       sleep: (ms) => os.sleep(ms),
     },
   });
+  const pieceStateService = new PieceStateService();
 
   // 5. Instantiating controllers
 
@@ -1383,6 +1392,93 @@ export const bootstrapExtension = () => {
       versesBundleInteractionServicePort: versesBundleInteractionService,
       pieceMapperPort: pieceMapper,
     });
+
+  const dimension = os.getCurrentDimension();
+
+  const pieceStateMap: Partial<Record<string, keyof PieceState>> = {
+    [dimension + "X"]: "positionX",
+    [dimension + "Y"]: "positionY",
+    [dimension + "Z"]: "positionZ",
+    scaleX: "sizeX",
+    scaleY: "sizeY",
+    scaleZ: "sizeZ",
+  };
+
+  const botStateController = new BotStateController({
+    stateChangeStrategies: {
+      StackTestament: (bot, changedTags) => {
+        if (!bot.tags.isInUse) return;
+        const changedProperties: Array<keyof PieceState> = [];
+        for (const tag of changedTags) {
+          const property = pieceStateMap[tag];
+          if (property) {
+            changedProperties.push(property);
+          }
+        }
+        if (changedProperties.length > 0) {
+          const piece = stackTestamentMapper.toDomain(bot);
+          pieceStateService.handleTestamentStateChanged({
+            piece,
+            changedProperties,
+          });
+        }
+      },
+      StackSection: (bot, changedTags) => {
+        if (!bot.tags.isInUse) return;
+
+        const changedProperties: Array<keyof PieceState> = [];
+        for (const tag of changedTags) {
+          const property = pieceStateMap[tag];
+          if (property) {
+            changedProperties.push(property);
+          }
+        }
+        if (changedProperties.length > 0) {
+          const piece = stackSectionMapper.toDomain(bot);
+          pieceStateService.handleSectionStateChanged({
+            piece,
+            changedProperties,
+          });
+        }
+      },
+      StackBook: (bot, changedTags) => {
+        if (!bot.tags.isInUse) return;
+
+        const changedProperties: Array<keyof PieceState> = [];
+        for (const tag of changedTags) {
+          const property = pieceStateMap[tag];
+          if (property) {
+            changedProperties.push(property);
+          }
+        }
+        if (changedProperties.length > 0) {
+          const piece = stackBookMapper.toDomain(bot);
+          pieceStateService.handleBookStateChanged({
+            piece,
+            changedProperties,
+          });
+        }
+      },
+      StackChapter: (bot, changedTags) => {
+        if (!bot.tags.isInUse) return;
+
+        const changedProperties: Array<keyof PieceState> = [];
+        for (const tag of changedTags) {
+          const property = pieceStateMap[tag];
+          if (property) {
+            changedProperties.push(property);
+          }
+        }
+        if (changedProperties.length > 0) {
+          const piece = stackChapterMapper.toDomain(bot);
+          pieceStateService.handlechapterStateChanged({
+            piece,
+            changedProperties,
+          });
+        }
+      },
+    },
+  });
 
   // 6. Event wiring
 

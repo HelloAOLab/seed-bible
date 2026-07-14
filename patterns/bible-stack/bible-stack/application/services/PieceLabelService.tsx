@@ -82,9 +82,7 @@ export class PieceLabelService<
     translucencyMode: LabelTranslucencyMode;
     pacing?: ShowSequencePacing;
   }): Promise<void> {
-    const existingLabelData = this.#labelDataStorePort.getDataByOwnerId(
-      piece.id
-    );
+    const existingLabelData = this.getPieceLabel(piece);
     if (existingLabelData) {
       await this.#labelAnimationAdapterPort.displayShowFeedback({
         data: existingLabelData,
@@ -150,7 +148,7 @@ export class PieceLabelService<
     translucencyMode: LabelTranslucencyMode,
     pacing: ShowSequencePacing = "Regular"
   ): Promise<void> {
-    const labelData = this.#labelDataStorePort.getDataByOwnerId(piece.id);
+    const labelData = this.getPieceLabel(piece);
     if (!labelData) return;
 
     if (translucencyMode === "Solid") {
@@ -169,7 +167,7 @@ export class PieceLabelService<
     piece: Piece<T>,
     pacing: ShowSequencePacing = "Regular"
   ): Promise<void> {
-    const labelData = this.#labelDataStorePort.getDataByOwnerId(piece.id);
+    const labelData = this.getPieceLabel(piece);
     if (!labelData) {
       throw new Error(`PieceLabelService: labelData not found at hideLabel`);
     }
@@ -187,5 +185,22 @@ export class PieceLabelService<
     this.#labelAnimationAdapterPort.stopAttentionFeedback(labelData);
     this.#labelAdapterPort.despawnLabel(labelData);
     this.#labelDataStorePort.removeLabelData(labelData);
+  }
+
+  getPieceLabel(piece: Piece<T>) {
+    return this.#labelDataStorePort.getDataByOwnerId(piece.id);
+  }
+
+  updateLabelPosition(piece: Piece<T>) {
+    const strategy = this.#labelPropertiesStrategies[piece.type];
+    const labelPositioning = strategy.getLabelPositioning(piece);
+    const label = this.getPieceLabel(piece);
+    if (!label) return;
+
+    this.#labelAdapterPort.locateLabel({
+      positioning: labelPositioning,
+      piece,
+      infoLabelTransformer: label.transformer,
+    });
   }
 }
