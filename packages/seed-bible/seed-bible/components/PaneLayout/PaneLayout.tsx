@@ -250,7 +250,7 @@ export function FullscreenPane(props: FullscreenPaneProps) {
         left: "0px",
         right: "0px",
         bottom: "0px",
-        zIndex: 100,
+        zIndex: 35,
       }}
       onPointerDown={() => app.selectPane(pane.id)}
     >

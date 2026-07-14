@@ -527,7 +527,7 @@ const LIGHT_THEME: BibleTheme = {
     readerToolbarBorder: "1px solid #00000024",
     readerToolbarBoxShadow:
       "0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08)",
-    readerToolbarZIndex: "101",
+    readerToolbarZIndex: "99",
     readerToolbarHeight: "auto",
 
     readerToolbarFloatingButtonTop: "-4.25rem",
@@ -668,7 +668,7 @@ const DARK_THEME: BibleTheme = {
     readerToolbarBackground: "#181818",
     readerToolbarBorder: "1px solid rgba(255, 255, 255, 0.1)",
     readerToolbarBoxShadow: "0 26px 10px rgba(0, 0, 0, 0.5)",
-    readerToolbarZIndex: "101",
+    readerToolbarZIndex: "99",
     readerToolbarHeight: "auto",
     readerToolbarFloatingButtonTop: "-4.25rem",
     readerToolbarFloatingButtonWidth: "3rem",

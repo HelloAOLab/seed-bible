@@ -134,7 +134,7 @@
   --sb-reader-toolbar-border: 1px solid #00000024;
   --sb-reader-toolbar-box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
-  --sb-reader-toolbar-z-index: 101;
+  --sb-reader-toolbar-z-index: 99;
   --sb-reader-toolbar-height: auto;
   --sb-reader-toolbar-font-family: "Satoshi", system-ui, sans-serif;
   --sb-reader-toolbar-font-color: #333;
