@@ -327,6 +327,12 @@ export interface BibleReadingState {
    */
   subTitle: ReadonlySignal<string>;
 
+  /**
+   * Compact secondary title for tight spaces (the translation short name by
+   * default); reading extensions can override it via `transformShortSubTitle`.
+   */
+  shortSubTitle: ReadonlySignal<string>;
+
   /** Reading extensions currently enabled on this reading state. */
   enabledExtensions: ReadonlySignal<ReadingExtensionRuntime[]>;
 
@@ -1050,6 +1056,16 @@ export function createBibleReadingState(
     );
   });
 
+  // Default compact subtitle: the current translation's short name (e.g.
+  // "AAB"). Empty while it is not yet resolvable.
+  const baseShortSubTitle = computed<string>(() => {
+    return (
+      chapterData.value?.translation.shortName ??
+      translationBooks.value?.translation.shortName ??
+      ""
+    );
+  });
+
   // Folds a base string through each enabled extension's transform hook in
   // priority order. Mirrors `discoveredResultsForDisplay` / `getUrlQueryParams`.
   const applyTitleTransforms = (
@@ -1083,6 +1099,12 @@ export function createBibleReadingState(
   );
   const subTitle = computed<string>(() =>
     applyTitleTransforms(baseSubTitle.value, (i) => i.transformSubTitle)
+  );
+  const shortSubTitle = computed<string>(() =>
+    applyTitleTransforms(
+      baseShortSubTitle.value,
+      (i) => i.transformShortSubTitle
+    )
   );
 
   const selectedFootnote = computed<SelectedFootnote | null>(() => {
@@ -1984,6 +2006,7 @@ export function createBibleReadingState(
     title,
     shortTitle,
     subTitle,
+    shortSubTitle,
     isShared: computed(() => isShared.value),
     enabledExtensions,
     isExtensionEnabled,

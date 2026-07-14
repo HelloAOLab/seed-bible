@@ -2295,6 +2295,14 @@ describe("createBibleReadingState", () => {
       expect(state.subTitle.value).toBe("Accessible Ancients Bible");
     });
 
+    it("shortSubTitle defaults to the current translation short name", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      expect(state.shortSubTitle.value).toBe("AAB");
+    });
+
     it("lets an enabled extension override each title, restoring the defaults on disable", async () => {
       setWebResponses(createReadingManagerResponseMap());
       const manager = createBibleReadingExtensionManager();
@@ -2304,6 +2312,7 @@ describe("createBibleReadingState", () => {
           transformTitle: ({ label }) => `title: ${label}`,
           transformShortTitle: ({ label }) => `short: ${label}`,
           transformSubTitle: ({ label }) => `sub: ${label}`,
+          transformShortSubTitle: ({ label }) => `shortSub: ${label}`,
         }),
       });
 
@@ -2313,16 +2322,19 @@ describe("createBibleReadingState", () => {
       expect(state.title.value).toBe("Genesis 1");
       expect(state.shortTitle.value).toBe("GEN 1");
       expect(state.subTitle.value).toBe("Accessible Ancients Bible");
+      expect(state.shortSubTitle.value).toBe("AAB");
 
       state.enableExtension("x");
       expect(state.title.value).toBe("title: Genesis 1");
       expect(state.shortTitle.value).toBe("short: GEN 1");
       expect(state.subTitle.value).toBe("sub: Accessible Ancients Bible");
+      expect(state.shortSubTitle.value).toBe("shortSub: AAB");
 
       state.disableExtension("x");
       expect(state.title.value).toBe("Genesis 1");
       expect(state.shortTitle.value).toBe("GEN 1");
       expect(state.subTitle.value).toBe("Accessible Ancients Bible");
+      expect(state.shortSubTitle.value).toBe("AAB");
     });
 
     it("each title transform is independent (an extension can override one without touching the others)", async () => {
@@ -2343,6 +2355,7 @@ describe("createBibleReadingState", () => {
       // Untouched hooks fall through to the defaults.
       expect(state.title.value).toBe("Genesis 1");
       expect(state.subTitle.value).toBe("Accessible Ancients Bible");
+      expect(state.shortSubTitle.value).toBe("AAB");
     });
 
     it("applies transform hooks in priority order (higher first)", async () => {

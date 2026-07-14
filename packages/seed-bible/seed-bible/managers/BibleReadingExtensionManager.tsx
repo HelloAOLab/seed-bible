@@ -94,6 +94,9 @@ export interface ReadingExtensionInstance<TData = unknown> {
   /** Overrides the reading state's subtitle. Runs in priority order. */
   transformSubTitle?: TransformLabelHook<TData>;
 
+  /** Overrides the reading state's compact subtitle. Runs in priority order. */
+  transformShortSubTitle?: TransformLabelHook<TData>;
+
   /** Called when the extension is disabled or the reading state is disposed. */
   dispose?: () => void;
 }
