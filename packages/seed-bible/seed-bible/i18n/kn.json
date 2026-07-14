@@ -399,5 +399,12 @@
   "languageUnavailable.body": "ಈ ಭಾಷೆಗೆ ನಮ್ಮಲ್ಲಿ ಪ್ರಸ್ತುತ ಬೈಬಲ್ ಅನುವಾದವಿಲ್ಲ, ಆದರೆ ನಾವು {{fallback}} ಅನ್ನು ಬೆಂಬಲಿಸುತ್ತೇವೆ. ಬೈಬಲ್ ಪಠ್ಯವನ್ನು {{fallback}} ಗೆ ಬದಲಾಯಿಸಲು ಬಯಸುತ್ತೀರಾ?",
   "languageUnavailable.yesContinue": "ಹೌದು, ಮುಂದುವರಿಸಿ",
   "languageUnavailable.noGoBack": "ಇಲ್ಲ, ಹಿಂತಿರುಗಿ",
-  "ui-size": "UI ಗಾತ್ರ"
+  "ui-size": "UI ಗಾತ್ರ",
+  "delete-playlist": "ಅಳಿಸಿ",
+  "playlist-options": "ಪ್ಲೇಪಟ್ಟಿ ಆಯ್ಕೆಗಳು",
+  "delete-playlist-confirm-title": "ಪ್ಲೇಪಟ್ಟಿಯನ್ನು ಅಳಿಸುವುದೇ?",
+  "delete-playlist-confirm-message": "\" {{title}} \" ಅನ್ನು ಅಳಿಸುವುದೇ? ಇದನ್ನು ರದ್ದುಗೊಳಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+  "delete-playlist-failed": "ಪ್ಲೇಪಟ್ಟಿಯನ್ನು ಅಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
+  "collapsed-tab-shared-label": "{{title}} — ಹಂಚಿಕೊಂಡ ಅವಧಿ, {{count}} ಪ್ರಸ್ತುತ",
+  "playlist-add-mode-label": "ಐಟಂ ಪ್ರಕಾರ"
 }

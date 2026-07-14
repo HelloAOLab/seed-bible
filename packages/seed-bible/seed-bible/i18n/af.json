@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Ons het tans nie 'n Bybelvertaling vir hierdie taal nie, maar ons ondersteun wel {{fallback}}. Wil jy die Bybelteks na {{fallback}} verander?",
   "languageUnavailable.yesContinue": "Ja, gaan voort",
   "languageUnavailable.noGoBack": "Nee, gaan terug",
-  "ui-size": "UI-grootte"
+  "ui-size": "UI-grootte",
+  "delete-playlist": "Vee uit",
+  "playlist-options": "Speellysopsies",
+  "delete-playlist-confirm-title": "Vee snitlys uit?",
+  "delete-playlist-confirm-message": "Vee \" {{title}} \" uit? Dit kan nie ongedaan gemaak word nie.",
+  "delete-playlist-failed": "Kon nie die snitlys uitvee nie.",
+  "collapsed-tab-shared-label": "{{title}} — gedeelde sessie, {{count}} teenwoordig",
+  "playlist-add-mode-label": "Itemtipe"
 }

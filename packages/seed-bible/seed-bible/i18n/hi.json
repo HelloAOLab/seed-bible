@@ -399,5 +399,12 @@
   "languageUnavailable.body": "हमारे पास वर्तमान में इस भाषा के लिए बाइबिल अनुवाद नहीं है, लेकिन {{fallback}} के लिए है। क्या आप बाइबिल पाठ को {{fallback}} पर स्विच करना चाहेंगे?",
   "languageUnavailable.yesContinue": "हाँ, जारी रखें",
   "languageUnavailable.noGoBack": "नहीं, वापस जाएँ",
-  "ui-size": "यूआई आकार"
+  "ui-size": "यूआई आकार",
+  "delete-playlist": "मिटाना",
+  "playlist-options": "प्लेलिस्ट विकल्प",
+  "delete-playlist-confirm-title": "प्लेलिस्ट हटाएं?",
+  "delete-playlist-confirm-message": "क्या आप \" {{title}} \" हटाना चाहते हैं? इसे पूर्ववत नहीं किया जा सकता है।",
+  "delete-playlist-failed": "प्लेलिस्ट डिलीट नहीं हो सकी।",
+  "collapsed-tab-shared-label": "{{title}} — साझा सत्र, {{count}} उपस्थित",
+  "playlist-add-mode-label": "वस्तु का प्रकार"
 }

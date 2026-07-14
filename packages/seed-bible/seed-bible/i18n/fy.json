@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Wy hawwe op it stuit gjin Bybeloersetting foar dizze taal, mar wy stypje {{fallback}}. Wolle jo de Bybeltekst oerskeakelje nei {{fallback}}?",
   "languageUnavailable.yesContinue": "Ja, trochgean",
   "languageUnavailable.noGoBack": "Nee, weromgean",
-  "ui-size": "UI-grutte"
+  "ui-size": "UI-grutte",
+  "delete-playlist": "Wiskje",
+  "playlist-options": "Opsjes foar ôfspiellisten",
+  "delete-playlist-confirm-title": "Ofspyllist wiskje?",
+  "delete-playlist-confirm-message": "\" {{title}} \" wiskje? Dit kin net ûngedien makke wurde.",
+  "delete-playlist-failed": "Koe de playlist net wiskje.",
+  "collapsed-tab-shared-label": "{{title}} — dielde sesje, {{count}} oanwêzich",
+  "playlist-add-mode-label": "Itemtype"
 }

@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Nous n'avons pas encore de traduction biblique pour cette langue, mais nous en avons une pour {{fallback}}. Souhaitez-vous passer le texte biblique à {{fallback}} ?",
   "languageUnavailable.yesContinue": "Oui, continuer",
   "languageUnavailable.noGoBack": "Non, revenir",
-  "ui-size": "taille de l'interface utilisateur"
+  "ui-size": "taille de l'interface utilisateur",
+  "delete-playlist": "Supprimer",
+  "playlist-options": "Options de liste de lecture",
+  "delete-playlist-confirm-title": "Supprimer la playlist ?",
+  "delete-playlist-confirm-message": "Supprimer « {{title}} » ? Cette action est irréversible.",
+  "delete-playlist-failed": "Impossible de supprimer la playlist.",
+  "collapsed-tab-shared-label": "{{title}} — session partagée, {{count}} présents",
+  "playlist-add-mode-label": "Type d'article"
 }

@@ -399,5 +399,12 @@
   "languageUnavailable.body": "אין לנו כרגע תרגום מקרא לשפה זו, אך אנו תומכים ב-{{fallback}}. האם ברצונך להחליף את טקסט המקרא ל-{{fallback}}?",
   "languageUnavailable.yesContinue": "כן, המשך",
   "languageUnavailable.noGoBack": "לא, חזור",
-  "ui-size": "גודל ממשק המשתמש"
+  "ui-size": "גודל ממשק המשתמש",
+  "delete-playlist": "לִמְחוֹק",
+  "playlist-options": "אפשרויות פלייליסט",
+  "delete-playlist-confirm-title": "למחוק את רשימת ההשמעה?",
+  "delete-playlist-confirm-message": "למחוק את \" {{title}} \"? לא ניתן לבטל פעולה זו.",
+  "delete-playlist-failed": "לא ניתן היה למחוק את רשימת ההשמעה.",
+  "collapsed-tab-shared-label": "{{title}} — סשן משותף, {{count}} נוכחים",
+  "playlist-add-mode-label": "סוג הפריט"
 }

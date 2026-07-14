@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Aktualisht nuk kemi përkthim të Biblës për këtë gjuhë, por mbështesim {{fallback}}. Dëshironi të ndryshoni tekstin e Biblës në {{fallback}}?",
   "languageUnavailable.yesContinue": "Po, vazhdo",
   "languageUnavailable.noGoBack": "Jo, kthehu",
-  "ui-size": "Madhësia e ndërfaqes së përdoruesit"
+  "ui-size": "Madhësia e ndërfaqes së përdoruesit",
+  "delete-playlist": "Fshij",
+  "playlist-options": "Opsionet e listës së luajtjes",
+  "delete-playlist-confirm-title": "Të fshihet lista e luajtjes?",
+  "delete-playlist-confirm-message": "Të fshihet \" {{title}} \"? Kjo nuk mund të zhbëhet.",
+  "delete-playlist-failed": "Lista e luajtjes nuk mund të fshihej.",
+  "collapsed-tab-shared-label": "{{title}} — seancë e ndarë, {{count}} i pranishëm",
+  "playlist-add-mode-label": "Lloji i artikullit"
 }

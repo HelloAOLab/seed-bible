@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Во моментов немаме превод на Библијата за овој јазик, но поддржуваме {{fallback}}. Дали сакате да го промените текстот на Библијата на {{fallback}}?",
   "languageUnavailable.yesContinue": "Да, продолжи",
   "languageUnavailable.noGoBack": "Не, назад",
-  "ui-size": "Големина на корисничкиот интерфејс"
+  "ui-size": "Големина на корисничкиот интерфејс",
+  "delete-playlist": "Избриши",
+  "playlist-options": "Опции за плејлиста",
+  "delete-playlist-confirm-title": "Да се ​​избрише плејлистата?",
+  "delete-playlist-confirm-message": "Да се ​​избрише „ {{title}} “? Ова не може да се врати.",
+  "delete-playlist-failed": "Не можеше да се избрише плејлистата.",
+  "collapsed-tab-shared-label": "{{title}} — споделена сесија, {{count}} присутни",
+  "playlist-add-mode-label": "Тип на ставка"
 }

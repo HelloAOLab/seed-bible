@@ -399,5 +399,12 @@
   "languageUnavailable.body": "ఈ భాషకు మాకు ప్రస్తుతం బైబిల్ అనువాదం లేదు, కానీ మేము {{fallback}} కు మద్దతు ఇస్తున్నాము. బైబిల్ వచనాన్ని {{fallback}} కు మార్చాలనుకుంటున్నారా?",
   "languageUnavailable.yesContinue": "అవును, కొనసాగించు",
   "languageUnavailable.noGoBack": "లేదు, వెనక్కి వెళ్ళు",
-  "ui-size": "UI పరిమాణం"
+  "ui-size": "UI పరిమాణం",
+  "delete-playlist": "తొలగించు",
+  "playlist-options": "ప్లేలిస్ట్ ఎంపికలు",
+  "delete-playlist-confirm-title": "ప్లేలిస్ట్‌ను తొలగించాలా?",
+  "delete-playlist-confirm-message": "\" {{title}} \"ను తొలగించాలా? దీన్ని వెనక్కి తీసుకోలేరు.",
+  "delete-playlist-failed": "ప్లేలిస్ట్‌ను తొలగించలేకపోయాను.",
+  "collapsed-tab-shared-label": "{{title}} — భాగస్వామ్య సెషన్, {{count}} హాజరు",
+  "playlist-add-mode-label": "వస్తువు రకం"
 }

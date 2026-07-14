@@ -399,5 +399,12 @@
   "languageUnavailable.body": "We hebben momenteel geen Bijbelvertaling voor deze taal, maar we ondersteunen wel {{fallback}}. Wil je de Bijbeltekst overschakelen naar {{fallback}}?",
   "languageUnavailable.yesContinue": "Ja, doorgaan",
   "languageUnavailable.noGoBack": "Nee, ga terug",
-  "ui-size": "UI-grootte"
+  "ui-size": "UI-grootte",
+  "delete-playlist": "Verwijderen",
+  "playlist-options": "Afspeellijstopties",
+  "delete-playlist-confirm-title": "Playlist verwijderen?",
+  "delete-playlist-confirm-message": "\" {{title}} \" verwijderen? Dit kan niet ongedaan gemaakt worden.",
+  "delete-playlist-failed": "Ik kon de afspeellijst niet verwijderen.",
+  "collapsed-tab-shared-label": "{{title}} — gedeelde sessie, {{count}} aanwezig",
+  "playlist-add-mode-label": "Artikeltype"
 }

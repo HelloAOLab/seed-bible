@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Tozali na ebandeli ya Biblia mpo na lokótá oyo te sik'oyo, kasi tozali kolandela {{fallback}}. Olingi kobongola mokanda ya Biblia na {{fallback}}?",
   "languageUnavailable.yesContinue": "Ɛɛ, kokoba",
   "languageUnavailable.noGoBack": "Te, kozonga",
-  "ui-size": "Taille ya UI"
+  "ui-size": "Taille ya UI",
+  "delete-playlist": "Boma",
+  "playlist-options": "Ba options ya liste ya ba nzembo",
+  "delete-playlist-confirm-title": "Bolongola liste ya ba nzembo?",
+  "delete-playlist-confirm-message": "Bolongola \" {{title}} \"? Oyo ekoki kozongisama sima te.",
+  "delete-playlist-failed": "Ekokaki te ko effacer liste ya ba playlist.",
+  "collapsed-tab-shared-label": "{{title}} — session ya kokabola, {{count}} ezali",
+  "playlist-add-mode-label": "Lolenge ya eloko"
 }

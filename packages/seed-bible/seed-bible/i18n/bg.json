@@ -399,5 +399,12 @@
   "languageUnavailable.body": "В момента нямаме превод на Библията на този език, но поддържаме {{fallback}}. Искате ли да превключите текста на Библията на {{fallback}}?",
   "languageUnavailable.yesContinue": "Да, продължи",
   "languageUnavailable.noGoBack": "Не, върни се",
-  "ui-size": "Размер на потребителския интерфейс"
+  "ui-size": "Размер на потребителския интерфейс",
+  "delete-playlist": "Изтриване",
+  "playlist-options": "Опции за плейлист",
+  "delete-playlist-confirm-title": "Да се ​​изтрие ли плейлистът?",
+  "delete-playlist-confirm-message": "Да се ​​изтрие ли „ {{title}} “? Това не може да се отмени.",
+  "delete-playlist-failed": "Плейлистът не можа да бъде изтрит.",
+  "collapsed-tab-shared-label": "{{title}} — споделена сесия, {{count}} присъстващи",
+  "playlist-add-mode-label": "Тип артикул"
 }

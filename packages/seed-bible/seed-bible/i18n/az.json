@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Hal-hazırda bu dil üçün Bibliya tərcüməmiz yoxdur, lakin {{fallback}} dəstəkləyirik. Bibliya mətnini {{fallback}} dilinə keçirmək istərdinizmi?",
   "languageUnavailable.yesContinue": "Bəli, davam et",
   "languageUnavailable.noGoBack": "Xeyr, geri get",
-  "ui-size": "UI ölçüsü"
+  "ui-size": "UI ölçüsü",
+  "delete-playlist": "Sil",
+  "playlist-options": "Pleylist seçimləri",
+  "delete-playlist-confirm-title": "Pleylist silinsin?",
+  "delete-playlist-confirm-message": "\" {{title}} \" silinsin? Bunu geri qaytarmaq mümkün deyil.",
+  "delete-playlist-failed": "Pleylist silinə bilmədi.",
+  "collapsed-tab-shared-label": "{{title}} — paylaşılan sessiya, {{count}} təqdimat",
+  "playlist-add-mode-label": "Məhsul növü"
 }

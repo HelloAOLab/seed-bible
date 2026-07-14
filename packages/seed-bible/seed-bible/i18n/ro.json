@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Nu avem în prezent o traducere a Bibliei pentru această limbă, dar suportăm {{fallback}}. Doriți să schimbați textul biblic la {{fallback}}?",
   "languageUnavailable.yesContinue": "Da, continuă",
   "languageUnavailable.noGoBack": "Nu, înapoi",
-  "ui-size": "Dimensiunea interfeței utilizator"
+  "ui-size": "Dimensiunea interfeței utilizator",
+  "delete-playlist": "Şterge",
+  "playlist-options": "Opțiuni listă de redare",
+  "delete-playlist-confirm-title": "Ștergeți lista de redare?",
+  "delete-playlist-confirm-message": "Ștergeți „ {{title}} ”? Această acțiune nu poate fi anulată.",
+  "delete-playlist-failed": "Nu s-a putut șterge lista de redare.",
+  "collapsed-tab-shared-label": "{{title}} — sesiune partajată, {{count}} prezenți",
+  "playlist-add-mode-label": "Tipul articolului"
 }

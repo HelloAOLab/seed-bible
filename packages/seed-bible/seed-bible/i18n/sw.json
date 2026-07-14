@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Kwa sasa hatuna tafsiri ya Biblia kwa lugha hii, lakini tunaunga mkono {{fallback}}. Je, ungependa kubadilisha maandiko ya Biblia kuwa {{fallback}}?",
   "languageUnavailable.yesContinue": "Ndio, endelea",
   "languageUnavailable.noGoBack": "Hapana, rudi",
-  "ui-size": "Ukubwa wa kiolesura"
+  "ui-size": "Ukubwa wa kiolesura",
+  "delete-playlist": "Futa",
+  "playlist-options": "Chaguo za orodha ya kucheza",
+  "delete-playlist-confirm-title": "Futa orodha ya kucheza?",
+  "delete-playlist-confirm-message": "Futa \" {{title}} \"? Hii haiwezi kutenduliwa.",
+  "delete-playlist-failed": "Haikuweza kufuta orodha ya kucheza.",
+  "collapsed-tab-shared-label": "{{title}} — kipindi kilichoshirikiwa, {{count}} kinawasilisha",
+  "playlist-add-mode-label": "Aina ya kipengee"
 }

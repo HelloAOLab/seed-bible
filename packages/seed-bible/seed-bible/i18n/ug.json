@@ -399,5 +399,12 @@
   "languageUnavailable.body": "بىز ھازىرچە بۇ تىل ئۈچۈن مۇقەددەس كىتاب تەرجىمىسىگە ئىگە ئەمەس، ئەمما {{fallback}} نى قوللايمىز. مۇقەددەس كىتاب تېكىستىنى {{fallback}} گە ئالماشتۇرۇشنى خالامسىز?",
   "languageUnavailable.yesContinue": "ھەئە، داۋاملاشتۇرۇش",
   "languageUnavailable.noGoBack": "ياق، قايتىش",
-  "ui-size": "UI چوڭلۇقى"
+  "ui-size": "UI چوڭلۇقى",
+  "delete-playlist": "ئۆچۈرۈش",
+  "playlist-options": "ناخشا تىزىملىكى تاللانمىلىرى",
+  "delete-playlist-confirm-title": "قويۇلما تىزىملىكى ئۆچۈرۈلسۇنمۇ؟",
+  "delete-playlist-confirm-message": "« {{title}} » نى ئۆچۈرۈۋېتەمسىز؟ بۇنى ئەسلىگە كەلتۈرگىلى بولمايدۇ.",
+  "delete-playlist-failed": "قويغۇچ تىزىملىكىنى ئۆچۈرگىلى بولمىدى.",
+  "collapsed-tab-shared-label": "{{title}} — ئورتاقلاشقان سۆھبەت، {{count}} ھازىر",
+  "playlist-add-mode-label": "بۇيۇم تىپى"
 }

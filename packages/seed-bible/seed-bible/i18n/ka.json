@@ -399,5 +399,12 @@
   "languageUnavailable.body": "ამ ენისთვის ამჟამად არ გვაქვს ბიბლიის თარგმანი, მაგრამ გვაქვს {{fallback}}. გსურთ ბიბლიის ტექსტი გადართოთ {{fallback}}-ზე?",
   "languageUnavailable.yesContinue": "დიახ, გაგრძელება",
   "languageUnavailable.noGoBack": "არა, უკან",
-  "ui-size": "ინტერფეისის ზომა"
+  "ui-size": "ინტერფეისის ზომა",
+  "delete-playlist": "წაშლა",
+  "playlist-options": "დასაკრავი სიის პარამეტრები",
+  "delete-playlist-confirm-title": "დასაკრავი სიის წაშლა?",
+  "delete-playlist-confirm-message": "წავშალო „ {{title}} “? ამის გაუქმება შეუძლებელია.",
+  "delete-playlist-failed": "დასაკრავი სიის წაშლა ვერ მოხერხდა.",
+  "collapsed-tab-shared-label": "{{title}} — გაზიარებული სესია, {{count}} აწმყო",
+  "playlist-add-mode-label": "ნივთის ტიპი"
 }

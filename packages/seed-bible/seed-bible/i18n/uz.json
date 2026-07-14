@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Hozirda bizda bu til uchun Muqaddas Kitob tarjimasi yo'q, lekin biz {{fallback}} ni qo'llab-quvvatlaymiz. Muqaddas Kitob matnini {{fallback}} ga o'tkazmoqchimisiz?",
   "languageUnavailable.yesContinue": "Ha, davom etish",
   "languageUnavailable.noGoBack": "Yo'q, orqaga",
-  "ui-size": "UI hajmi"
+  "ui-size": "UI hajmi",
+  "delete-playlist": "O'chirish",
+  "playlist-options": "Pleylist parametrlari",
+  "delete-playlist-confirm-title": "Pleylist oʻchirilsinmi?",
+  "delete-playlist-confirm-message": "\" {{title}} \" o'chirilsinmi? Buni bekor qilib bo'lmaydi.",
+  "delete-playlist-failed": "Pleylistni o'chirib bo'lmadi.",
+  "collapsed-tab-shared-label": "{{title}} — umumiy sessiya, {{count}} mavjud",
+  "playlist-add-mode-label": "Mahsulot turi"
 }

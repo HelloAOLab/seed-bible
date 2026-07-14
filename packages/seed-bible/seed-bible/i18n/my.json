@@ -399,5 +399,12 @@
   "languageUnavailable.body": "ဤဘာသာစကားအတွက် ကျွန်ုပ်တို့တွင် ယခု ဖန်တီးခြင်းသွင်းကျမ်းမြည်းဘာသာပြန်မရှိသေးပါ၊ သို့သော် {{fallback}} ကို ပြင်ဆင်ထားပါသည်။ သင်သည် ကျမ်းစာစာသားကို {{fallback}} သို့ ပြောင်းလိုပါသလား?",
   "languageUnavailable.yesContinue": "ဟုတ်ကဲ့၊ ဆက်လက်လုပ်ဆောင်ပါ",
   "languageUnavailable.noGoBack": "မဟုတ်ပါ၊ ပြန်သွားပါ",
-  "ui-size": "UI အရွယ်အစား"
+  "ui-size": "UI အရွယ်အစား",
+  "delete-playlist": "ဖျက်ရန်",
+  "playlist-options": "သီချင်းစာရင်း ရွေးချယ်စရာများ",
+  "delete-playlist-confirm-title": "သီချင်းစာရင်းကို ဖျက်မလား။",
+  "delete-playlist-confirm-message": "\" {{title}} \" ကို ဖျက်မလား။ ၎င်းကို ပြန်ပြင်၍မရပါ။",
+  "delete-playlist-failed": "သီချင်းစာရင်းကို ဖျက်၍မရပါ။",
+  "collapsed-tab-shared-label": "{{title}} — မျှဝေထားသော အစည်းအဝေး၊ {{count}} ရှိနေသည်",
+  "playlist-add-mode-label": "ပစ္စည်းအမျိုးအစား"
 }

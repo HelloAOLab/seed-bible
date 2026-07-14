@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Für diese Sprache haben wir derzeit keine Bibelübersetzung, aber für {{fallback}}. Möchten Sie den Bibeltext auf {{fallback}} umstellen?",
   "languageUnavailable.yesContinue": "Ja, fortfahren",
   "languageUnavailable.noGoBack": "Nein, zurück",
-  "ui-size": "UI-Größe"
+  "ui-size": "UI-Größe",
+  "delete-playlist": "Löschen",
+  "playlist-options": "Wiedergabelistenoptionen",
+  "delete-playlist-confirm-title": "Wiedergabeliste löschen?",
+  "delete-playlist-confirm-message": "Löschen Sie \" {{title}} \"? Dies kann nicht rückgängig gemacht werden.",
+  "delete-playlist-failed": "Die Wiedergabeliste konnte nicht gelöscht werden.",
+  "collapsed-tab-shared-label": "{{title}} — gemeinsame Sitzung, {{count}} anwesend",
+  "playlist-add-mode-label": "Artikeltyp"
 }

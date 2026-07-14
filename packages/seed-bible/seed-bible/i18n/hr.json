@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Trenutno nemamo prijevod Biblije za ovaj jezik, ali podržavamo {{fallback}}. Želite li prebaciti tekst Biblije na {{fallback}}?",
   "languageUnavailable.yesContinue": "Da, nastavi",
   "languageUnavailable.noGoBack": "Ne, vrati se",
-  "ui-size": "Veličina korisničkog sučelja"
+  "ui-size": "Veličina korisničkog sučelja",
+  "delete-playlist": "Izbrisati",
+  "playlist-options": "Opcije popisa za reprodukciju",
+  "delete-playlist-confirm-title": "Izbrisati popis za reprodukciju?",
+  "delete-playlist-confirm-message": "Izbrisati \" {{title}} \"? To se ne može poništiti.",
+  "delete-playlist-failed": "Popis za reprodukciju nije moguće izbrisati.",
+  "collapsed-tab-shared-label": "{{title}} — dijeljena sesija, {{count}} prisutnih",
+  "playlist-add-mode-label": "Vrsta stavke"
 }

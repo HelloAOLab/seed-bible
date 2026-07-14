@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Бизде учурда бул тил үчүн Библия котормосу жок, бирок биз {{fallback}} колдойбуз. Библия текстин {{fallback}} тилине которгуңуз келеби?",
   "languageUnavailable.yesContinue": "Ооба, улантуу",
   "languageUnavailable.noGoBack": "Жок, артка",
-  "ui-size": "UI өлчөмү"
+  "ui-size": "UI өлчөмү",
+  "delete-playlist": "Өчүрүү",
+  "playlist-options": "Ойнотмо тизменин параметрлери",
+  "delete-playlist-confirm-title": "Ойнотмо тизмени өчүрөсүзбү?",
+  "delete-playlist-confirm-message": "\" {{title}} \" жок кылынсынбы? Муну артка кайтаруу мүмкүн эмес.",
+  "delete-playlist-failed": "Ойнотмо тизме өчүрүлгөн жок.",
+  "collapsed-tab-shared-label": "{{title}} — бөлүшүлгөн сессия, {{count}} катышууда",
+  "playlist-add-mode-label": "Буюмдун түрү"
 }

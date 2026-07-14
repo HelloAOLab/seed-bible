@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Actualment no tenim una traducció de la Bíblia per a aquest idioma, però sí que tenim {{fallback}}. Vols canviar el text bíblic a {{fallback}}?",
   "languageUnavailable.yesContinue": "Sí, continuar",
   "languageUnavailable.noGoBack": "No, tornar enrere",
-  "ui-size": "Mida de la interfície d'usuari"
+  "ui-size": "Mida de la interfície d'usuari",
+  "delete-playlist": "Suprimeix",
+  "playlist-options": "Opcions de llista de reproducció",
+  "delete-playlist-confirm-title": "Vols suprimir la llista de reproducció?",
+  "delete-playlist-confirm-message": "Voleu suprimir \" {{title}} \"? Això no es pot desfer.",
+  "delete-playlist-failed": "No s'ha pogut suprimir la llista de reproducció.",
+  "collapsed-tab-shared-label": "{{title}} — sessió compartida, {{count}} presents",
+  "playlist-add-mode-label": "Tipus d'element"
 }

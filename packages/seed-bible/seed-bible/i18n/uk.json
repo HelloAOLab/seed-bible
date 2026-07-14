@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Наразі у нас немає перекладу Біблії для цієї мови, але ми підтримуємо {{fallback}}. Бажаєте перемкнути текст Біблії на {{fallback}}?",
   "languageUnavailable.yesContinue": "Так, продовжити",
   "languageUnavailable.noGoBack": "Ні, повернутися",
-  "ui-size": "Розмір інтерфейсу користувача"
+  "ui-size": "Розмір інтерфейсу користувача",
+  "delete-playlist": "Видалити",
+  "playlist-options": "Параметри списку відтворення",
+  "delete-playlist-confirm-title": "Видалити список відтворення?",
+  "delete-playlist-confirm-message": "Видалити \" {{title}} \"? Цю дію не можна скасувати.",
+  "delete-playlist-failed": "Не вдалося видалити список відтворення.",
+  "collapsed-tab-shared-label": "{{title}} — спільний сеанс, присутніх {{count}}",
+  "playlist-add-mode-label": "Тип елемента"
 }

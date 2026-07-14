@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Vi har for øyeblikket ingen bibeloversettelse for dette språket, men vi støtter {{fallback}}. Vil du bytte bibelteksten til {{fallback}}?",
   "languageUnavailable.yesContinue": "Ja, fortsett",
   "languageUnavailable.noGoBack": "Nei, gå tilbake",
-  "ui-size": "UI-størrelse"
+  "ui-size": "UI-størrelse",
+  "delete-playlist": "Slett",
+  "playlist-options": "Spillelistealternativer",
+  "delete-playlist-confirm-title": "Slette spillelisten?",
+  "delete-playlist-confirm-message": "Slette « {{title}} »? Dette kan ikke angres.",
+  "delete-playlist-failed": "Kunne ikke slette spillelisten.",
+  "collapsed-tab-shared-label": "{{title}} — delt økt, {{count}} tilstede",
+  "playlist-add-mode-label": "Varetype"
 }

@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Chúng tôi hiện chưa có bản dịch Kinh Thánh cho ngôn ngữ này, nhưng chúng tôi hỗ trợ {{fallback}}. Bạn có muốn chuyển văn bản Kinh Thánh sang {{fallback}} không?",
   "languageUnavailable.yesContinue": "Có, tiếp tục",
   "languageUnavailable.noGoBack": "Không, quay lại",
-  "ui-size": "Kích thước giao diện người dùng"
+  "ui-size": "Kích thước giao diện người dùng",
+  "delete-playlist": "Xóa bỏ",
+  "playlist-options": "Tùy chọn danh sách phát",
+  "delete-playlist-confirm-title": "Xóa danh sách phát?",
+  "delete-playlist-confirm-message": "Xóa \" {{title}} \"? Thao tác này không thể hoàn tác.",
+  "delete-playlist-failed": "Không thể xóa danh sách phát.",
+  "collapsed-tab-shared-label": "{{title}} — phiên họp chung, {{count}} người tham dự",
+  "playlist-add-mode-label": "Loại mặt hàng"
 }

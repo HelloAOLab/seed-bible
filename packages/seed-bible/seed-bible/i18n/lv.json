@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Mums pašlaik nav Bībeles tulkojuma šai valodai, bet mēs atbalstām {{fallback}}. Vai vēlaties pārslēgt Bībeles tekstu uz {{fallback}}?",
   "languageUnavailable.yesContinue": "Jā, turpināt",
   "languageUnavailable.noGoBack": "Nē, atpakaļ",
-  "ui-size": "Lietotāja interfeisa izmērs"
+  "ui-size": "Lietotāja interfeisa izmērs",
+  "delete-playlist": "Dzēst",
+  "playlist-options": "Atskaņošanas saraksta opcijas",
+  "delete-playlist-confirm-title": "Dzēst atskaņošanas sarakstu?",
+  "delete-playlist-confirm-message": "Dzēst \" {{title}} \"? Šo darbību nevar atsaukt.",
+  "delete-playlist-failed": "Nevarēja izdzēst atskaņošanas sarakstu.",
+  "collapsed-tab-shared-label": "{{title}} — koplietota sesija, klātesoši ir {{count}}",
+  "playlist-add-mode-label": "Preces veids"
 }

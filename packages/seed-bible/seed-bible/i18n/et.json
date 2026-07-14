@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Meil pole praegu selle keele jaoks Piibli tõlget, kuid toetame {{fallback}}. Kas soovite Piibli teksti {{fallback}} keelde vahetada?",
   "languageUnavailable.yesContinue": "Jah, jätka",
   "languageUnavailable.noGoBack": "Ei, mine tagasi",
-  "ui-size": "Kasutajaliidese suurus"
+  "ui-size": "Kasutajaliidese suurus",
+  "delete-playlist": "Kustuta",
+  "playlist-options": "Esitusloendi valikud",
+  "delete-playlist-confirm-title": "Kustutada esitusloend?",
+  "delete-playlist-confirm-message": "Kas kustutada \" {{title}} \"? Seda toimingut ei saa tagasi võtta.",
+  "delete-playlist-failed": "Esitusloendit ei saanud kustutada.",
+  "collapsed-tab-shared-label": "{{title}} — jagatud seanss, kohal {{count}}",
+  "playlist-add-mode-label": "Toote tüüp"
 }

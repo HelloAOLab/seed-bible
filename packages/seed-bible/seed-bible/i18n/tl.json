@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Wala kaming salin ng Bibliya para sa wikang ito sa ngayon, ngunit sinusuportahan namin ang {{fallback}}. Gusto mo bang ilipat ang teksto ng Bibliya sa {{fallback}}?",
   "languageUnavailable.yesContinue": "Oo, magpatuloy",
   "languageUnavailable.noGoBack": "Hindi, bumalik",
-  "ui-size": "Laki ng UI"
+  "ui-size": "Laki ng UI",
+  "delete-playlist": "Burahin",
+  "playlist-options": "Mga opsyon sa playlist",
+  "delete-playlist-confirm-title": "Burahin ang playlist?",
+  "delete-playlist-confirm-message": "Burahin ang \" {{title}} \"? Hindi na ito maaaring i-undo.",
+  "delete-playlist-failed": "Hindi mabura ang playlist.",
+  "collapsed-tab-shared-label": "{{title}} — nakabahaging sesyon, {{count}} ang naroroon",
+  "playlist-add-mode-label": "Uri ng item"
 }

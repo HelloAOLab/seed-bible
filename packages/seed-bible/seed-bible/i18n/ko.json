@@ -399,5 +399,12 @@
   "languageUnavailable.body": "현재 이 언어의 성경 번역은 없지만 {{fallback}}는 있습니다. 성경 본문을 {{fallback}}로 전환하시겠습니까?",
   "languageUnavailable.yesContinue": "예, 계속",
   "languageUnavailable.noGoBack": "아니요, 돌아가기",
-  "ui-size": "UI 크기"
+  "ui-size": "UI 크기",
+  "delete-playlist": "삭제",
+  "playlist-options": "재생 목록 옵션",
+  "delete-playlist-confirm-title": "재생목록을 삭제하시겠습니까?",
+  "delete-playlist-confirm-message": "\" {{title}} \"을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+  "delete-playlist-failed": "재생목록을 삭제할 수 없었습니다.",
+  "collapsed-tab-shared-label": "{{title}} — 공유 세션, {{count}} 명 참여",
+  "playlist-add-mode-label": "품목 유형"
 }

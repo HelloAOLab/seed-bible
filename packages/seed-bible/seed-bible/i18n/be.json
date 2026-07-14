@@ -399,5 +399,12 @@
   "languageUnavailable.body": "У нас зараз няма перакладу Бібліі на гэтую мову, але мы падтрымліваем {{fallback}}. Хочаце пераключыць тэкст Бібліі на {{fallback}}?",
   "languageUnavailable.yesContinue": "Так, працягнуць",
   "languageUnavailable.noGoBack": "Не, вярнуцца",
-  "ui-size": "Памер карыстальніцкага інтэрфейсу"
+  "ui-size": "Памер карыстальніцкага інтэрфейсу",
+  "delete-playlist": "Выдаліць",
+  "playlist-options": "Параметры спісу прайгравання",
+  "delete-playlist-confirm-title": "Выдаліць плэйліст?",
+  "delete-playlist-confirm-message": "Выдаліць \" {{title}} \"? Гэта нельга адмяніць.",
+  "delete-playlist-failed": "Не атрымалася выдаліць плэйліст.",
+  "collapsed-tab-shared-label": "{{title}} — агульная сесія, {{count}} прысутных",
+  "playlist-add-mode-label": "Тып элемента"
 }

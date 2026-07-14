@@ -399,5 +399,12 @@
   "languageUnavailable.body": "ພວກເຮົາຍັງບໍ່ມີການແປພະຄຳພີເປັນພາສານີ້ໃນຕອນນີ້, ແຕ່ພວກເຮົາຮອງຮັບ {{fallback}}. ທ່ານຕ້ອງການປ່ຽນຂໍ້ຄວາມພະຄຳພີເປັນ {{fallback}} ບໍ?",
   "languageUnavailable.yesContinue": "ແມ່ນ, ສືບຕໍ່",
   "languageUnavailable.noGoBack": "ບໍ່, ກັບຄືນ",
-  "ui-size": "ຂະໜາດ UI"
+  "ui-size": "ຂະໜາດ UI",
+  "delete-playlist": "ລຶບ",
+  "playlist-options": "ຕົວເລືອກລາຍການເພງ",
+  "delete-playlist-confirm-title": "ລຶບລາຍການຫຼິ້ນບໍ?",
+  "delete-playlist-confirm-message": "ລຶບ \" {{title}} \" ບໍ? ຂັ້ນຕອນນີ້ບໍ່ສາມາດຍົກເລີກໄດ້.",
+  "delete-playlist-failed": "ບໍ່ສາມາດລຶບລາຍການຫຼິ້ນໄດ້.",
+  "collapsed-tab-shared-label": "{{title}} — ເຊດຊັນທີ່ແບ່ງປັນ, ມີຢູ່ {{count}}",
+  "playlist-add-mode-label": "ປະເພດລາຍການ"
 }

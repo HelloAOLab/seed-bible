@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Við höfum ekki Biblíuþýðingu fyrir þetta tungumál eins og er, en við styðjum {{fallback}}. Viltu skipta Biblíutextanum yfir á {{fallback}}?",
   "languageUnavailable.yesContinue": "Já, halda áfram",
   "languageUnavailable.noGoBack": "Nei, fara til baka",
-  "ui-size": "Stærð notendaviðmóts"
+  "ui-size": "Stærð notendaviðmóts",
+  "delete-playlist": "Eyða",
+  "playlist-options": "Valkostir spilunarlista",
+  "delete-playlist-confirm-title": "Eyða spilunarlista?",
+  "delete-playlist-confirm-message": "Eyða „ {{title}} “? Þetta er ekki hægt að afturkalla.",
+  "delete-playlist-failed": "Gat ekki eytt spilunarlistanum.",
+  "collapsed-tab-shared-label": "{{title}} — sameiginleg lota, {{count}} viðstaddir",
+  "playlist-add-mode-label": "Tegund hlutar"
 }

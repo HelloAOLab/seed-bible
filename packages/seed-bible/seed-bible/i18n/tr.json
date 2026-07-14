@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Şu anda bu dil için bir İncil çevirimiz yok, ancak {{fallback}} dilini destekliyoruz. İncil metnini {{fallback}} diline geçirmek ister misiniz?",
   "languageUnavailable.yesContinue": "Evet, devam et",
   "languageUnavailable.noGoBack": "Hayır, geri dön",
-  "ui-size": "Kullanıcı arayüzü boyutu"
+  "ui-size": "Kullanıcı arayüzü boyutu",
+  "delete-playlist": "Silmek",
+  "playlist-options": "Çalma listesi seçenekleri",
+  "delete-playlist-confirm-title": "Oynatma listesini sil?",
+  "delete-playlist-confirm-message": "\" {{title}} \" silinsin mi? Bu işlem geri alınamaz.",
+  "delete-playlist-failed": "Çalma listesini silemedim.",
+  "collapsed-tab-shared-label": "{{title}} — paylaşılan oturum, {{count}} katılımcı",
+  "playlist-add-mode-label": "Ürün türü"
 }

@@ -399,5 +399,12 @@
   "languageUnavailable.body": "ขณะนี้เรายังไม่มีการแปลพระคัมภีร์สำหรับภาษานี้ แต่เรารองรับ {{fallback}} คุณต้องการเปลี่ยนข้อความพระคัมภีร์เป็น {{fallback}} หรือไม่?",
   "languageUnavailable.yesContinue": "ใช่ ดำเนินการต่อ",
   "languageUnavailable.noGoBack": "ไม่ กลับ",
-  "ui-size": "ขนาด UI"
+  "ui-size": "ขนาด UI",
+  "delete-playlist": "ลบ",
+  "playlist-options": "ตัวเลือกเพลย์ลิสต์",
+  "delete-playlist-confirm-title": "ลบเพลย์ลิสต์?",
+  "delete-playlist-confirm-message": "ลบ \" {{title}} \"? ไม่สามารถย้อนกลับได้",
+  "delete-playlist-failed": "ไม่สามารถลบเพลย์ลิสต์ได้",
+  "collapsed-tab-shared-label": "{{title}} — เซสชันที่ใช้ร่วมกัน มีผู้เข้าร่วม {{count}} คน",
+  "playlist-add-mode-label": "ประเภทสินค้า"
 }

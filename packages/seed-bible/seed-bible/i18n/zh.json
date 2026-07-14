@@ -399,5 +399,12 @@
   "languageUnavailable.body": "我们目前没有此语言的圣经译本，但有{{fallback}}。要将圣经文本切换为{{fallback}}吗？",
   "languageUnavailable.yesContinue": "是，继续",
   "languageUnavailable.noGoBack": "否，返回",
-  "ui-size": "用户界面大小"
+  "ui-size": "用户界面大小",
+  "delete-playlist": "删除",
+  "playlist-options": "播放列表选项",
+  "delete-playlist-confirm-title": "删除播放列表？",
+  "delete-playlist-confirm-message": "删除“ {{title}} ”？此操作无法撤销。",
+  "delete-playlist-failed": "无法删除播放列表。",
+  "collapsed-tab-shared-label": "{{title}} — 共享会话， {{count}}人",
+  "playlist-add-mode-label": "物品类型"
 }

@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Meillä ei tällä hetkellä ole raamatun käännöstä tälle kielelle, mutta tuemme {{fallback}}. Haluatko vaihtaa raamatun tekstin kieleen {{fallback}}?",
   "languageUnavailable.yesContinue": "Kyllä, jatka",
   "languageUnavailable.noGoBack": "Ei, palaa takaisin",
-  "ui-size": "Käyttöliittymän koko"
+  "ui-size": "Käyttöliittymän koko",
+  "delete-playlist": "Poistaa",
+  "playlist-options": "Soittolista-asetukset",
+  "delete-playlist-confirm-title": "Poistetaanko soittolista?",
+  "delete-playlist-confirm-message": "Poistetaanko \" {{title}} \"? Tätä ei voi perua.",
+  "delete-playlist-failed": "Soittolistan poistaminen epäonnistui.",
+  "collapsed-tab-shared-label": "{{title}} — jaettu istunto, läsnä {{count}}",
+  "playlist-add-mode-label": "Tuotetyyppi"
 }

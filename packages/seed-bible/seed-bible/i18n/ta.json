@@ -399,5 +399,12 @@
   "languageUnavailable.body": "இந்த மொழிக்கு தற்போது எங்களிடம் பைபிள் மொழிபெயர்ப்பு இல்லை, ஆனால் நாங்கள் {{fallback}} ஐ ஆதரிக்கிறோம். பைபிள் உரையை {{fallback}} க்கு மாற்ற விரும்புகிறீர்களா?",
   "languageUnavailable.yesContinue": "ஆம், தொடரவும்",
   "languageUnavailable.noGoBack": "இல்லை, திரும்பிச் செல்லவும்",
-  "ui-size": "UI அளவு"
+  "ui-size": "UI அளவு",
+  "delete-playlist": "நீக்கு",
+  "playlist-options": "பிளேலிஸ்ட் விருப்பங்கள்",
+  "delete-playlist-confirm-title": "பிளேலிஸ்ட்டை நீக்கவா?",
+  "delete-playlist-confirm-message": "\" {{title}} \" என்பதை நீக்கவா? இதை மீண்டும் பழைய நிலைக்குக் கொண்டுவர முடியாது.",
+  "delete-playlist-failed": "பிளேலிஸ்ட்டை நீக்க முடியவில்லை.",
+  "collapsed-tab-shared-label": "{{title}} — பகிரப்பட்ட அமர்வு, {{count}} பேர் கலந்துகொள்கின்றனர்",
+  "playlist-add-mode-label": "பொருள் வகை"
 }

@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Asinayo ukuhumusha kweBhayibheli kolu limi okwamanje, kodwa sisekela i-{{fallback}}. Ungathanda ukushintshela umbhalo weBhayibheli uye ku-{{fallback}}?",
   "languageUnavailable.yesContinue": "Yebo, qhubeka",
   "languageUnavailable.noGoBack": "Cha, buyela emuva",
-  "ui-size": "Usayizi we-UI"
+  "ui-size": "Usayizi we-UI",
+  "delete-playlist": "Susa",
+  "playlist-options": "Izinketho zokudlalayo",
+  "delete-playlist-confirm-title": "Susa uhlu lwadlalwayo?",
+  "delete-playlist-confirm-message": "Susa \" {{title}} \"? Lokhu akukwazi ukuhlehliswa.",
+  "delete-playlist-failed": "Ayikwazanga ukususa uhlu lwadlalwayo.",
+  "collapsed-tab-shared-label": "{{title}} — iseshini eyabiwe, {{count}} ikhona",
+  "playlist-add-mode-label": "Uhlobo lwento"
 }

@@ -399,5 +399,12 @@
   "languageUnavailable.body": "ما در حال حاضر ترجمهٔ کتاب مقدس برای این زبان نداریم، اما {{fallback}} را پشتیبانی می‌کنیم. آیا می‌خواهید متن کتاب مقدس را به {{fallback}} تغییر دهید؟",
   "languageUnavailable.yesContinue": "بله، ادامه",
   "languageUnavailable.noGoBack": "خیر، بازگشت",
-  "ui-size": "اندازه رابط کاربری"
+  "ui-size": "اندازه رابط کاربری",
+  "delete-playlist": "حذف",
+  "playlist-options": "گزینه‌های لیست پخش",
+  "delete-playlist-confirm-title": "لیست پخش حذف شود؟",
+  "delete-playlist-confirm-message": "حذف « {{title}} »؟ این قابل بازگشت نیست.",
+  "delete-playlist-failed": "نتونستم لیست پخش رو حذف کنم.",
+  "collapsed-tab-shared-label": "{{title}} — جلسه مشترک، {{count}} موجود",
+  "playlist-add-mode-label": "نوع کالا"
 }

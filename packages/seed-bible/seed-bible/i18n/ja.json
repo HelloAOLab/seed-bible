@@ -399,5 +399,12 @@
   "languageUnavailable.body": "この言語の聖書翻訳は現在ありませんが、{{fallback}}はあります。聖書テキストを{{fallback}}に切り替えますか？",
   "languageUnavailable.yesContinue": "はい、続ける",
   "languageUnavailable.noGoBack": "いいえ、戻る",
-  "ui-size": "UIサイズ"
+  "ui-size": "UIサイズ",
+  "delete-playlist": "消去",
+  "playlist-options": "プレイリストオプション",
+  "delete-playlist-confirm-title": "プレイリストを削除しますか？",
+  "delete-playlist-confirm-message": "「 {{title}} 」を削除しますか？これは元に戻せません。",
+  "delete-playlist-failed": "プレイリストを削除できませんでした。",
+  "collapsed-tab-shared-label": "{{title}} — 共有セッション、 {{count}}個",
+  "playlist-add-mode-label": "アイテムの種類"
 }

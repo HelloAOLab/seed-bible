@@ -399,5 +399,12 @@
   "languageUnavailable.body": "ለዚህ ቋንቋ በአሁኑ ጊዜ የመጽሐፍ ቅዱስ ትርጉም የለንም፣ ግን {{fallback}} እንደሚደግፍ ነው። የመጽሐፍ ቅዱስ ጽሑፍ ወደ {{fallback}} መቀየር ይፈልጋሉ?",
   "languageUnavailable.yesContinue": "አዎ፣ ቀጥል",
   "languageUnavailable.noGoBack": "አይ፣ ተመለስ",
-  "ui-size": "የUI መጠን"
+  "ui-size": "የUI መጠን",
+  "delete-playlist": "ሰርዝ",
+  "playlist-options": "የአጫዋች ዝርዝር አማራጮች",
+  "delete-playlist-confirm-title": "የአጫዋች ዝርዝር ይሰረዝ?",
+  "delete-playlist-confirm-message": "\" {{title}} \" ይሰረዝ? ይህ ሊቀለበስ አይችልም።",
+  "delete-playlist-failed": "የአጫዋች ዝርዝሩን መሰረዝ አልተቻለም።",
+  "collapsed-tab-shared-label": "{{title}} — የተጋራ ክፍለ ጊዜ፣ {{count}} አለ",
+  "playlist-add-mode-label": "የእቃ አይነት"
 }

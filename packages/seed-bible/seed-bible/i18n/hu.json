@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Jelenleg nincs Bibliafordításunk erre a nyelvre, de támogatjuk a {{fallback}} nyelvet. Át szeretné váltani a Biblia szövegét {{fallback}} nyelvre?",
   "languageUnavailable.yesContinue": "Igen, folytatás",
   "languageUnavailable.noGoBack": "Nem, vissza",
-  "ui-size": "Felhasználói felület mérete"
+  "ui-size": "Felhasználói felület mérete",
+  "delete-playlist": "Töröl",
+  "playlist-options": "Lejátszási lista beállításai",
+  "delete-playlist-confirm-title": "Lejátszási lista törlése?",
+  "delete-playlist-confirm-message": "Törli a(z) „ {{title}} ” fájlt? Ez nem vonható vissza.",
+  "delete-playlist-failed": "Nem sikerült törölni a lejátszási listát.",
+  "collapsed-tab-shared-label": "{{title}} — megosztott munkamenet, {{count}} jelenlévő",
+  "playlist-add-mode-label": "Elemtípus"
 }

@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Momentálne nemáme preklad Biblie pre tento jazyk, ale podporujeme {{fallback}}. Chcete prepnúť text Biblie na {{fallback}}?",
   "languageUnavailable.yesContinue": "Áno, pokračovať",
   "languageUnavailable.noGoBack": "Nie, späť",
-  "ui-size": "Veľkosť používateľského rozhrania"
+  "ui-size": "Veľkosť používateľského rozhrania",
+  "delete-playlist": "Odstrániť",
+  "playlist-options": "Možnosti zoznamu skladieb",
+  "delete-playlist-confirm-title": "Odstrániť zoznam skladieb?",
+  "delete-playlist-confirm-message": "Chcete odstrániť „ {{title}} “? Túto akciu nemožno vrátiť späť.",
+  "delete-playlist-failed": "Zoznam skladieb sa nepodarilo odstrániť.",
+  "collapsed-tab-shared-label": "{{title}} — zdieľaná relácia, {{count}} prítomných",
+  "playlist-add-mode-label": "Typ položky"
 }

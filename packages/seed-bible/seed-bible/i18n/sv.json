@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Vi har för närvarande ingen bibelöversättning för detta språk, men vi stöder {{fallback}}. Vill du byta bibeltexten till {{fallback}}?",
   "languageUnavailable.yesContinue": "Ja, fortsätt",
   "languageUnavailable.noGoBack": "Nej, gå tillbaka",
-  "ui-size": "UI-storlek"
+  "ui-size": "UI-storlek",
+  "delete-playlist": "Radera",
+  "playlist-options": "Alternativ för spellista",
+  "delete-playlist-confirm-title": "Radera spellista?",
+  "delete-playlist-confirm-message": "Vill du ta bort \" {{title}} \"? Detta kan inte ångras.",
+  "delete-playlist-failed": "Kunde inte ta bort spellistan.",
+  "collapsed-tab-shared-label": "{{title}} — delad session, {{count}} närvarande",
+  "playlist-add-mode-label": "Artikeltyp"
 }

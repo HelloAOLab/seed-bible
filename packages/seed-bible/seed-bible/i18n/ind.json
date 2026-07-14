@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Kami saat ini belum memiliki terjemahan Alkitab untuk bahasa ini, tetapi kami mendukung {{fallback}}. Apakah Anda ingin mengganti teks Alkitab ke {{fallback}}?",
   "languageUnavailable.yesContinue": "Ya, lanjutkan",
   "languageUnavailable.noGoBack": "Tidak, kembali",
-  "ui-size": "Ukuran UI"
+  "ui-size": "Ukuran UI",
+  "delete-playlist": "Menghapus",
+  "playlist-options": "Opsi daftar putar",
+  "delete-playlist-confirm-title": "Hapus daftar putar?",
+  "delete-playlist-confirm-message": "Hapus \" {{title}} \"? Ini tidak bisa dibatalkan.",
+  "delete-playlist-failed": "Tidak dapat menghapus daftar putar.",
+  "collapsed-tab-shared-label": "{{title}} — sesi bersama, {{count}} hadir",
+  "playlist-add-mode-label": "Jenis barang"
 }

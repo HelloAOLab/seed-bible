@@ -399,5 +399,12 @@
   "languageUnavailable.body": "আমাদের কাছে বর্তমানে এই ভাষার জন্য কোনো বাইবেল অনুবাদ নেই, তবে আমরা {{fallback}} সমর্থন করি। আপনি কি বাইবেলের পাঠ্যটি {{fallback}}-এ পরিবর্তন করতে চান?",
   "languageUnavailable.yesContinue": "হ্যাঁ, চালিয়ে যান",
   "languageUnavailable.noGoBack": "না, ফিরে যান",
-  "ui-size": "UI আকার"
+  "ui-size": "UI আকার",
+  "delete-playlist": "মুছে ফেলুন",
+  "playlist-options": "প্লেলিস্ট বিকল্পগুলি",
+  "delete-playlist-confirm-title": "প্লেলিস্ট মুছে ফেলবেন?",
+  "delete-playlist-confirm-message": "\" {{title}} \" মুছে ফেলবেন? এটি আর পূর্বাবস্থায় ফেরানো যাবে না।",
+  "delete-playlist-failed": "প্লেলিস্টটি মুছে ফেলা যায়নি।",
+  "collapsed-tab-shared-label": "{{title}} — যৌথ অধিবেশন, {{count}} জন উপস্থিত",
+  "playlist-add-mode-label": "আইটেমের ধরন"
 }

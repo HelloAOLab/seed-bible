@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Nid oes gennym gyfieithiad Beibl ar gyfer yr iaith hon ar hyn o bryd, ond mae gennym {{fallback}}. Hoffech chi newid testun y Beibl i {{fallback}}?",
   "languageUnavailable.yesContinue": "Ie, parhau",
   "languageUnavailable.noGoBack": "Na, ewch yn ôl",
-  "ui-size": "Maint y rhyngwyneb defnyddiwr"
+  "ui-size": "Maint y rhyngwyneb defnyddiwr",
+  "delete-playlist": "Dileu",
+  "playlist-options": "Dewisiadau rhestr chwarae",
+  "delete-playlist-confirm-title": "Dileu rhestr chwarae?",
+  "delete-playlist-confirm-message": "Dileu \" {{title}} \"? Ni ellir dadwneud hyn.",
+  "delete-playlist-failed": "Methwyd dileu'r rhestr chwarae.",
+  "collapsed-tab-shared-label": "{{title}} — sesiwn a rennir, {{count}} yn bresennol",
+  "playlist-add-mode-label": "Math o eitem"
 }

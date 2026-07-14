@@ -399,5 +399,12 @@
   "languageUnavailable.body": "V současnosti nemáme překlad Bible pro tento jazyk, ale podporujeme {{fallback}}. Chcete přepnout text Bible na {{fallback}}?",
   "languageUnavailable.yesContinue": "Ano, pokračovat",
   "languageUnavailable.noGoBack": "Ne, zpět",
-  "ui-size": "Velikost uživatelského rozhraní"
+  "ui-size": "Velikost uživatelského rozhraní",
+  "delete-playlist": "Vymazat",
+  "playlist-options": "Možnosti playlistu",
+  "delete-playlist-confirm-title": "Smazat playlist?",
+  "delete-playlist-confirm-message": "Smazat „ {{title}} “? Tuto akci nelze vrátit zpět.",
+  "delete-playlist-failed": "Seznam skladeb se nepodařilo smazat.",
+  "collapsed-tab-shared-label": "{{title}} — sdílená relace, přítomných {{count}}",
+  "playlist-add-mode-label": "Typ položky"
 }

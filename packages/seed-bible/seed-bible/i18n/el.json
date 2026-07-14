@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Δεν διαθέτουμε προς το παρόν μετάφραση της Βίβλου για αυτή τη γλώσσα, αλλά υποστηρίζουμε {{fallback}}. Θέλετε να αλλάξετε το κείμενο της Βίβλου σε {{fallback}};",
   "languageUnavailable.yesContinue": "Ναι, συνέχεια",
   "languageUnavailable.noGoBack": "Όχι, πίσω",
-  "ui-size": "Μέγεθος διεπαφής χρήστη"
+  "ui-size": "Μέγεθος διεπαφής χρήστη",
+  "delete-playlist": "Διαγράφω",
+  "playlist-options": "Επιλογές λίστας αναπαραγωγής",
+  "delete-playlist-confirm-title": "Διαγραφή λίστας αναπαραγωγής;",
+  "delete-playlist-confirm-message": "Διαγραφή του \" {{title}} \"; Δεν είναι δυνατή η αναίρεση αυτής της ενέργειας.",
+  "delete-playlist-failed": "Δεν ήταν δυνατή η διαγραφή της λίστας αναπαραγωγής.",
+  "collapsed-tab-shared-label": "{{title}} — κοινόχρηστη συνεδρία, {{count}} παρόντες",
+  "playlist-add-mode-label": "Τύπος αντικειμένου"
 }

@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Roguerekói gueteri moñe'ẽrã Tupãpa'u ko ñe'ẽme, ha katu roipytyvõ {{fallback}}. ¿Redesepáke Tupãpa'u jehaiha {{fallback}} pe?",
   "languageUnavailable.yesContinue": "Hẽ, mbojoapy",
   "languageUnavailable.noGoBack": "Nahániri, jujey",
-  "ui-size": "UI tuichakue"
+  "ui-size": "UI tuichakue",
+  "delete-playlist": "Mboje'oha",
+  "playlist-options": "Opciones lista de reproducción rehegua",
+  "delete-playlist-confirm-title": "¿Ombogue lista de reproducción?",
+  "delete-playlist-confirm-message": "¿Ombogue \" {{title}} \"? Péva ndaikatúi ojedesatina.",
+  "delete-playlist-failed": "Ndaikatúi oñembogue pe lista de reproducción.",
+  "collapsed-tab-shared-label": "{{title}} — sesión oñemboja’óva, {{count}} oĩva",
+  "playlist-add-mode-label": "Mba’eichagua mba’e"
 }

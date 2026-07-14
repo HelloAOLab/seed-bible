@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Kami pada masa ini tidak mempunyai terjemahan Alkitab untuk bahasa ini, tetapi kami menyokong {{fallback}}. Adakah anda ingin menukar teks Alkitab kepada {{fallback}}?",
   "languageUnavailable.yesContinue": "Ya, teruskan",
   "languageUnavailable.noGoBack": "Tidak, kembali",
-  "ui-size": "Saiz UI"
+  "ui-size": "Saiz UI",
+  "delete-playlist": "Padam",
+  "playlist-options": "Pilihan senarai main",
+  "delete-playlist-confirm-title": "Padam senarai main?",
+  "delete-playlist-confirm-message": "Padam \" {{title}} \"? Ini tidak boleh dibuat asal.",
+  "delete-playlist-failed": "Tidak dapat memadam senarai main.",
+  "collapsed-tab-shared-label": "{{title}} — sesi kongsi, {{count}} hadir",
+  "playlist-add-mode-label": "Jenis barang"
 }

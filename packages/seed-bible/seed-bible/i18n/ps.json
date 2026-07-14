@@ -399,5 +399,12 @@
   "languageUnavailable.body": "موږ په دې وخت کې د دې ژبې لپاره د بایبل ژباړه نه لرو، خو موږ د {{fallback}} ملاتړ کوو. ایا تاسو غواړئ د بایبل متن {{fallback}} ته واړوئ؟",
   "languageUnavailable.yesContinue": "هو، دوام ورکړئ",
   "languageUnavailable.noGoBack": "نه، بیرته لاړ شئ",
-  "ui-size": "د UI اندازه"
+  "ui-size": "د UI اندازه",
+  "delete-playlist": "ړنګول",
+  "playlist-options": "د پلی لیست انتخابونه",
+  "delete-playlist-confirm-title": "د پلې لیست حذف کړئ؟",
+  "delete-playlist-confirm-message": "\" {{title}} \" ړنګ کړئ؟ دا بیرته نه شي راوستلی.",
+  "delete-playlist-failed": "پلې لیست ړنګ نشو.",
+  "collapsed-tab-shared-label": "{{title}} — شریکه غونډه، {{count}} حاضر",
+  "playlist-add-mode-label": "د توکي ډول"
 }

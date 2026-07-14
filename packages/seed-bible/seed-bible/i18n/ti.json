@@ -399,5 +399,12 @@
   "languageUnavailable.body": "ንዚ ቋንቋ ሕጂ ትርጉም መጽሓፍ ቅዱስ የለናን፣ {{fallback}} ግን ንድግፎ ኢና። ነቲ ናይ መጽሓፍ ቅዱስ ጽሑፍ ናብ {{fallback}} ክትቀይሮ ትደልዩ ዲኻ?",
   "languageUnavailable.yesContinue": "እወ፣ ቀጽል",
   "languageUnavailable.noGoBack": "ኣይፋል፣ ተመለስ",
-  "ui-size": "UI ስፍሓት"
+  "ui-size": "UI ስፍሓት",
+  "delete-playlist": "ምድምሳስ",
+  "playlist-options": "ናይ ፕለይሊስት ኣማራጺታት",
+  "delete-playlist-confirm-title": "ዝርዝር ደርፍታት ምድምሳስ?",
+  "delete-playlist-confirm-message": "\" {{title}} \" ምድምሳስ? እዚ ክምለስ ኣይክእልን እዩ።",
+  "delete-playlist-failed": "ነቲ ዝርዝር ደርፍታት ክድምስሶ ኣይከኣለን።",
+  "collapsed-tab-shared-label": "{{title}} — ዝተኻፈለ ክፍለ ግዜ፣ {{count}} ኣሎ።",
+  "playlist-add-mode-label": "ዓይነት ኣቕሓ"
 }

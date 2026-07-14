@@ -399,5 +399,12 @@
   "languageUnavailable.body": "No momento não temos uma tradução da Bíblia para este idioma, mas temos para {{fallback}}. Gostaria de mudar o texto bíblico para {{fallback}}?",
   "languageUnavailable.yesContinue": "Sim, continuar",
   "languageUnavailable.noGoBack": "Não, voltar",
-  "ui-size": "tamanho da interface do usuário"
+  "ui-size": "tamanho da interface do usuário",
+  "delete-playlist": "Excluir",
+  "playlist-options": "Opções de lista de reprodução",
+  "delete-playlist-confirm-title": "Excluir lista de reprodução?",
+  "delete-playlist-confirm-message": "Apagar \" {{title}} \"? Esta ação não pode ser desfeita.",
+  "delete-playlist-failed": "Não foi possível excluir a lista de reprodução.",
+  "collapsed-tab-shared-label": "{{title}} — sessão compartilhada, {{count}} presentes",
+  "playlist-add-mode-label": "Tipo de item"
 }

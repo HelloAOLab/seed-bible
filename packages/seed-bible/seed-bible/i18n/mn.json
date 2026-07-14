@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Бид одоогоор энэ хэлний Библийн орчуулга байхгүй боловч {{fallback}}-г дэмждэг. Библийн текстийг {{fallback}} руу шилжүүлэхийг хүсч байна уу?",
   "languageUnavailable.yesContinue": "Тийм, үргэлжлүүлэх",
   "languageUnavailable.noGoBack": "Үгүй, буцах",
-  "ui-size": "Хэрэглэгчийн интерфэйсийн хэмжээ"
+  "ui-size": "Хэрэглэгчийн интерфэйсийн хэмжээ",
+  "delete-playlist": "Устгах",
+  "playlist-options": "Тоглуулах жагсаалтын сонголтууд",
+  "delete-playlist-confirm-title": "Тоглуулах жагсаалтыг устгах уу?",
+  "delete-playlist-confirm-message": "\" {{title}} \"-г устгах уу? Үүнийг буцаах боломжгүй.",
+  "delete-playlist-failed": "Тоглуулах жагсаалтыг устгаж чадсангүй.",
+  "collapsed-tab-shared-label": "{{title}} — хуваалцсан хэсэг, {{count}} танилцуулга",
+  "playlist-add-mode-label": "Зүйлийн төрөл"
 }

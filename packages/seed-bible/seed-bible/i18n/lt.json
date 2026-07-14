@@ -399,5 +399,12 @@
   "languageUnavailable.body": "Šiuo metu neturime Biblijos vertimo šia kalba, bet palaikome {{fallback}}. Ar norite perjungti Biblijos tekstą į {{fallback}}?",
   "languageUnavailable.yesContinue": "Taip, tęsti",
   "languageUnavailable.noGoBack": "Ne, grįžti",
-  "ui-size": "Vartotojo sąsajos dydis"
+  "ui-size": "Vartotojo sąsajos dydis",
+  "delete-playlist": "Ištrinti",
+  "playlist-options": "Grojaraščio parinktys",
+  "delete-playlist-confirm-title": "Ištrinti grojaraštį?",
+  "delete-playlist-confirm-message": "Ištrinti „ {{title}} “? Šio veiksmo negalima atšaukti.",
+  "delete-playlist-failed": "Nepavyko ištrinti grojaraščio.",
+  "collapsed-tab-shared-label": "{{title}} — bendras seansas, dalyvauja {{count}}",
+  "playlist-add-mode-label": "Prekės tipas"
 }
