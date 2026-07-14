@@ -390,7 +390,7 @@ a:visited {
   justify-content: center;
   align-items: center;
   width: 100vw !important;
-  height: 100vh !important;
+  height: 100dvh !important;
 }
 
 .sb-content-row {
