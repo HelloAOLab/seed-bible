@@ -4,13 +4,17 @@ import { CreateTwitchPubState } from "./twitchPubManager";
 import initializeTwitchBot from "./initializeTwitchBot";
 import { closeInterface } from "./closeInterface";
 import { openInterface } from "./openInterface";
+import { createTranscriptionManager } from "@seed-bible/ai-transcript-extension/transcriptionManager";
 
 export default function initTwitchPubExtension() {
   registerExtension({
     id: "ext_twitchPub",
     init: function* (context: SeedBibleState) {
+      const transcriptionManager = createTranscriptionManager(context);
       const twitchPubState = CreateTwitchPubState({
         toast: context.app.toast,
+        seedBibleState: context,
+        transcriptionManager,
       });
 
       // register a new tool
@@ -32,15 +36,21 @@ export default function initTwitchPubExtension() {
           />
         ),
         onSelect: () => {
-          if (!twitchPubState.interfaceEnabled.value) {
-            twitchPubState.interfaceEnabled.value = true;
-            openInterface({ state: twitchPubState, context });
-          } else {
-            twitchPubState.interfaceEnabled.value = false;
-            closeInterface();
-          }
+          twitchPubState.interfaceEnabled.value =
+            !twitchPubState.interfaceEnabled.value;
         },
         priority: 950,
+      });
+
+      effect(() => {
+        if (!twitchPubState.interfaceEnabled.value) {
+          console.log("Closing interface");
+          closeInterface();
+          transcriptionManager.stopLive();
+        } else {
+          openInterface({ state: twitchPubState, context });
+          console.log("Opening interface");
+        }
       });
 
       yield effect(() => {

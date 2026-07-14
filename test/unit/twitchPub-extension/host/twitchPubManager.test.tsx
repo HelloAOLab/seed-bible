@@ -89,7 +89,11 @@ describe("CreateTwitchPubState", () => {
   let logSpy: Mock;
   let fetchMock: Mock;
   let toastMock: Mock;
-  let props: { toast: Mock };
+  let props: {
+    toast: Mock;
+    seedBibleState: any;
+    transcriptionManager: any;
+  };
 
   beforeEach(() => {
     window.localStorage.clear();
@@ -112,7 +116,15 @@ describe("CreateTwitchPubState", () => {
     (globalThis as any).TextEncoder = TextEncoder;
     logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
     toastMock = vi.fn();
-    props = { toast: toastMock };
+    props = {
+      toast: toastMock,
+      // AI-follow features stay disabled in these tests, so a minimal
+      // seedBibleState is enough to keep initializeAITranscription happy.
+      seedBibleState: {
+        login: { userId: { value: null }, login: vi.fn() },
+      },
+      transcriptionManager: undefined,
+    };
   });
 
   afterEach(() => {
@@ -147,7 +159,6 @@ describe("CreateTwitchPubState", () => {
     expect(url.searchParams.get("state")).toBe(
       makeBase64(
         JSON.stringify({
-          broadcaster_id: "",
           channel_id: "1455265905",
           book: "GEN",
           chapter: 1,
@@ -234,6 +245,7 @@ describe("CreateTwitchPubState", () => {
 
     state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
     state.twitchConfig.value.userAccessToken.value = "token-1";
+    state.twitchConfig.value.senderId.value = "sender-1";
 
     await waitFor(() => fetchMock.mock.calls.length === 1);
 
@@ -281,6 +293,7 @@ describe("CreateTwitchPubState", () => {
     state.settings.value.highlight.value = { enabled: false };
     state.twitchConfig.value.broadcasterId.value = "broadcaster-1";
     state.twitchConfig.value.userAccessToken.value = "token-1";
+    state.twitchConfig.value.senderId.value = "sender-1";
     state.settings.value.announcementTimer.value = {
       enabled: true,
       interval: 5000,

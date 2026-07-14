@@ -1,7 +1,10 @@
-import { closeInterface } from "./closeInterface";
 import { useState, useRef, useEffect } from "preact/hooks";
+import { type TwitchPubState } from "./interface";
 
-const DraggableContainer = (props: { children: HTMLElement }) => {
+const DraggableContainer = (props: {
+  children: HTMLElement;
+  state: TwitchPubState;
+}) => {
   const { children } = props;
   const [isDragging, setIsDragging] = useState(false);
   const [position, setPosition] = useState({
@@ -115,7 +118,7 @@ const DraggableContainer = (props: { children: HTMLElement }) => {
       isEscape = (evt as KeyboardEvent).code === "Escape";
     }
     if (isEscape) {
-      closeInterface();
+      props.state.interfaceEnabled.value = false;
     }
   };
 
