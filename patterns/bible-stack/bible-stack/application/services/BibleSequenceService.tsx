@@ -409,4 +409,35 @@ export class BibleSequenceService implements BibleSequenceServicePort {
       );
     }
   }
+
+  async float(): Promise<void> {
+    // TODO: Should we translate/implement this?
+    // const dimension = os.getCurrentDimension();
+    // const animationDuration = 6;
+    // animateTag(thisBot, dimension + "Z", null);
+    // const initialPositionZ = thisBot.tags.initialPositionZ;
+    // while (thisBot.masks.isInAwaitAnimation) {
+    //   try {
+    //     await animateTag(thisBot, dimension + "Z", {
+    //       toValue: initialPositionZ + 0.5,
+    //       duration: animationDuration / 4,
+    //       easing: { type: "sinusoidal", mode: "out" },
+    //     }).then(async () => {
+    //       await animateTag(thisBot, dimension + "Z", {
+    //         toValue: initialPositionZ - 0.5,
+    //         duration: animationDuration / 2,
+    //         easing: { type: "sinusoidal", mode: "inout" },
+    //       }).then(async () => {
+    //         await animateTag(thisBot, dimension + "Z", {
+    //           toValue: initialPositionZ,
+    //           duration: animationDuration / 4,
+    //           easing: { type: "sinusoidal", mode: "in" },
+    //         });
+    //       });
+    //     });
+    //   } catch (error) {
+    //     console.error(error);
+    //   }
+    // }
+  }
 }

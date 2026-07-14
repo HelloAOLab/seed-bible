@@ -12,6 +12,7 @@ import { BiblePieces } from "../../../domain/models/canvas";
 import {
   LabelDateFormats,
   LabelTranslucencyModes,
+  type LabelPosition,
 } from "../../../domain/models/label";
 import type { PieceMapperPort } from "../../mappers/PieceMapper";
 import type {
@@ -130,14 +131,6 @@ export class LabelAdapter implements LabelAdapterPort {
       infoLabelAspectRatio,
       this.#labelConfigProviderPort.getDialogBoxFormAddresses()
     );
-    const transformer = pieceBot.tags.transformer
-      ? getBot(byID(pieceBot.tags.transformer))
-      : null;
-    const transformerOffset = new Vector3(0, 0, 1);
-    const transformerPosition = transformer
-      ? getBotPosition(transformer, dimension).add(transformerOffset)
-      : new Vector3(0, 0, 0);
-    const piecePosition = getBotPosition(pieceBot, dimension);
     const pieceScales = GetBotScales(pieceBot);
     const infoLabelTransformer = this.#objectPooler.getObject(
       BiblePieces.InfoLabelTransformer
@@ -159,14 +152,6 @@ export class LabelAdapter implements LabelAdapterPort {
     };
     const dateGap = { x: 0.2, y: 0.05 };
 
-    const infoLabelTransformerDesiredPosition =
-      ComputeInfoLabelTransformerDesiredPosition({
-        positioning: labelPositioning,
-        piecePosition,
-        pieceScales,
-        infoLabelTransformerDesiredScales,
-        transformerPosition,
-      });
     const infoLabelOffset = ComputeInfoLabelOffset({
       positioning: labelPositioning,
       radialVector,
@@ -242,9 +227,6 @@ export class LabelAdapter implements LabelAdapterPort {
 
     const infoLabelTransformerMod: Partial<InfoLabelTransformerTags> = {
       [dimension]: true,
-      [dimension + "X"]: infoLabelTransformerDesiredPosition.x,
-      [dimension + "Y"]: infoLabelTransformerDesiredPosition.y,
-      [dimension + "Z"]: infoLabelTransformerDesiredPosition.z,
       scaleX: infoLabelTransformerDesiredScales.x,
       scaleY: infoLabelTransformerDesiredScales.y,
       scaleZ: infoLabelTransformerDesiredScales.z,
@@ -302,8 +284,17 @@ export class LabelAdapter implements LabelAdapterPort {
     }
     setTagMask(piecesToSetOpacity, "labelOpacity", 0);
 
+    this.locateLabel({
+      positioning: labelPositioning,
+      piece,
+      infoLabelTransformer,
+    });
+
+    const infoLabelTransformerDomain =
+      this.#pieceMapperPort.toDomain(infoLabelTransformer);
+
     return {
-      transformer: this.#pieceMapperPort.toDomain(infoLabelTransformer),
+      transformer: infoLabelTransformerDomain,
       tail: this.#pieceMapperPort.toDomain(infoLabelTail),
       label: this.#pieceMapperPort.toDomain(infoLabelText),
       date: infoLabelDate
@@ -311,6 +302,55 @@ export class LabelAdapter implements LabelAdapterPort {
         : undefined,
     };
   };
+
+  locateLabel({
+    positioning,
+    piece,
+    infoLabelTransformer,
+  }: {
+    positioning: LabelPosition;
+    piece: Piece;
+    infoLabelTransformer: Piece<"InfoLabelTransformer">;
+  }) {
+    const dimension = this.#dimensionProviderPort.getDimension();
+    const pieceBot = this.#pieceMapperPort.toInfrastructure(piece);
+    if (!pieceBot) {
+      throw new Error(`LabelAdapter: pieceBot not found at spawnLabelForPiece`);
+    }
+    const transformer = pieceBot.tags.transformer
+      ? getBot(byID(pieceBot.tags.transformer))
+      : null;
+    const transformerOffset = new Vector3(0, 0, 1);
+    const transformerPosition = transformer
+      ? getBotPosition(transformer, dimension).add(transformerOffset)
+      : new Vector3(0, 0, 0);
+    const piecePosition = getBotPosition(pieceBot, dimension);
+    const pieceScales = GetBotScales(pieceBot);
+    const infoLabelTransformerDesiredScales = { x: 1, y: 1, z: 1 };
+    const transformerBot =
+      this.#infoLabelTransformerMapperPort.toInfrastructure(
+        infoLabelTransformer
+      );
+
+    if (!transformerBot) {
+      throw new Error("LabelAdapter: transformerBot not found");
+    }
+
+    const infoLabelTransformerDesiredPosition =
+      ComputeInfoLabelTransformerDesiredPosition({
+        positioning,
+        piecePosition,
+        pieceScales,
+        infoLabelTransformerDesiredScales,
+        transformerPosition,
+      });
+
+    applyMod(transformerBot, {
+      [dimension + "X"]: infoLabelTransformerDesiredPosition.x,
+      [dimension + "Y"]: infoLabelTransformerDesiredPosition.y,
+      [dimension + "Z"]: infoLabelTransformerDesiredPosition.z,
+    });
+  }
 
   despawnLabel: LabelAdapterPort["despawnLabel"] = (data) => {
     const transformer = this.#infoLabelTransformerMapperPort.toInfrastructure(

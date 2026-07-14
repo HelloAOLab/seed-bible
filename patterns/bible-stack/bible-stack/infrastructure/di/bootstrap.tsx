@@ -165,6 +165,7 @@ import { SectionInteractionController } from "../controllers/stack/SectionIntera
 import { TestamentInteractionController } from "../controllers/stack/TestamentInteractionController";
 import { VerseInteractionController } from "../controllers/stack/VerseInteractionController";
 import { VersesBundleInteractionController } from "../controllers/stack/VersesBundleInteractionController";
+import { RelocationEventMapper } from "../mappers/RelocationEventMapper";
 
 export const bootstrapExtension = () => {
   // // 1. Instantiating mappers
@@ -1315,6 +1316,11 @@ export const bootstrapExtension = () => {
 
   // 5. Instantiating controllers
 
+  const relocationEventMapper = new RelocationEventMapper({
+    pieceMapperPort: pieceMapper,
+    getDimension: () => os.getCurrentDimension(),
+  });
+
   const cameraController = new CameraController({
     viewportPort: viewportService,
     renderOrderAdapter,
@@ -1335,7 +1341,8 @@ export const bootstrapExtension = () => {
     draggingServicePort: scripturePieceDraggingService,
     selectionReleaseServicePort: scripturePieceSelectionReleaseService,
     dropServicePort: scripturePieceDropService,
-    // TODO (no instance in pattern): draggingEventMapperPort, dropEventMapperPort
+    draggingEventMapperPort: relocationEventMapper,
+    dropEventMapperPort: relocationEventMapper,
   });
   const sectionInteractionController = new SectionInteractionController({
     sectionInteractionServicePort: sectionInteractionService,
@@ -1344,7 +1351,8 @@ export const bootstrapExtension = () => {
     draggingServicePort: scripturePieceDraggingService,
     selectionReleaseServicePort: scripturePieceSelectionReleaseService,
     dropServicePort: scripturePieceDropService,
-    // TODO (no instance in pattern): draggingEventMapperPort, dropEventMapperPort
+    draggingEventMapperPort: relocationEventMapper,
+    dropEventMapperPort: relocationEventMapper,
   });
   const bookInteractionController = new BookInteractionController({
     bookInteractionServicePort: bookInteractionService,
@@ -1353,7 +1361,8 @@ export const bootstrapExtension = () => {
     draggingServicePort: scripturePieceDraggingService,
     selectionReleaseServicePort: scripturePieceSelectionReleaseService,
     dropServicePort: scripturePieceDropService,
-    // TODO (no instance in pattern): draggingEventMapperPort, dropEventMapperPort
+    draggingEventMapperPort: relocationEventMapper,
+    dropEventMapperPort: relocationEventMapper,
   });
   const chapterInteractionController = new ChapterInteractionController({
     chapterInteractionServicePort: chapterInteractionService,
@@ -1362,7 +1371,8 @@ export const bootstrapExtension = () => {
     draggingServicePort: scripturePieceDraggingService,
     selectionReleaseServicePort: scripturePieceSelectionReleaseService,
     dropServicePort: scripturePieceDropService,
-    // TODO (no instance in pattern): draggingEventMapperPort, dropEventMapperPort
+    draggingEventMapperPort: relocationEventMapper,
+    dropEventMapperPort: relocationEventMapper,
   });
   const verseInteractionController = new VerseInteractionController({
     versesInteractionServicePort: versesInteractionService,

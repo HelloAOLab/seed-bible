@@ -23,7 +23,7 @@ export interface SetTagData extends BaseTagData<SetTagData> {
   tag: string;
 }
 
-interface BaseRelocationEvent {
+export interface BaseRelocationEvent {
   bot: PieceBot;
   to: {
     bot: PieceBot;
