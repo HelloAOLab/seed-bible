@@ -437,7 +437,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
 
   const moreTools = useComputed(() =>
     tools.value.filter(
-      (tool) => tool.visible.value && !hiddenToolIds.has(tool.id)
+      (tool) =>
+        tool.visible.value && !hiddenToolIds.has(tool.id) && tool.isControllable
     )
   );
 
@@ -834,7 +835,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               const prev = previousChapterTool.value;
               const next = nextChapterTool.value;
               const selector = openSelectorTool.value;
-              if (!audio) return null;
+              if (!audio && !prev && !next && !selector) return null;
 
               const AudioIcon = audio?.icon;
               const PrevIcon = prev?.icon;

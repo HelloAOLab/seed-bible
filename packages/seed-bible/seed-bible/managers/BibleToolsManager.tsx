@@ -145,6 +145,7 @@ export interface BibleToolContext {
 
 /** Fully resolved reader toolbar tool ready for rendering. */
 export interface BibleReaderToolbarTool extends ResolvedBibleTool {
+  isControllable: boolean;
   /** Disabled state signal resolved for current context. */
   disabled: ReadonlySignal<boolean>;
   /** Visibility state signal resolved for current context. */
@@ -790,6 +791,7 @@ export function createBibleToolsManager(): ToolsManager {
       visible: resolveToolPredicate(tool.isVisible, context, true),
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
+      isControllable: tool.isControllable ?? true,
     }));
 
     return sortBy(tools, [(tool) => tool.priority]);
