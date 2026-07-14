@@ -1180,7 +1180,8 @@ function ToolbarSettingsView(props: { state: SeedBibleState }) {
 
   const allIds = available.map((tool) => tool.id);
   const orderedIds = [
-    ...toolbarConfig.order.filter((id) => allIds.includes(id)),
+    // Ignore the order for now as pr Issue #1384
+    // ...toolbarConfig.order.filter((id) => allIds.includes(id)),
     ...allIds.filter((id) => !toolbarConfig.order.includes(id)),
   ];
 
@@ -1235,7 +1236,7 @@ function ToolbarSettingsView(props: { state: SeedBibleState }) {
                   isHidden ? " sb-toolbar-config-row-hidden" : ""
                 }`}
               >
-                <div className="sb-toolbar-config-reorder">
+                <div className="sb-toolbar-config-reorder hidden">
                   <button
                     type="button"
                     className="sb-toolbar-config-move-button"

@@ -1089,6 +1089,10 @@
   flex-shrink: 0;
 }
 
+.sb-toolbar-config-reorder.hidden {
+  display: none;
+}
+
 .sb-toolbar-config-move-button {
   width: 1.375rem;
   height: 1.125rem;
