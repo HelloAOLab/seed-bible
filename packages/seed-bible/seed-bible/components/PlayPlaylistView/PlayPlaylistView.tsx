@@ -3,7 +3,6 @@ import { useI18n } from "../../i18n/I18nManager";
 import type { TabsManager } from "../../managers/TabsManager";
 import type { PlaylistManager } from "../../managers/PlaylistManager";
 import type { ModalManager } from "../../managers/ModalManager";
-import { MaterialIcon } from "../icons";
 import { DiscoverSection } from "../DiscoverPane/DiscoverSection";
 import { playlistItemLabel } from "../playlistItemLabel";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
@@ -27,7 +26,6 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
 
   // Reading `.value` during render subscribes the component to updates.
   const playing = playlists.playing.value;
-  const currentItem = playing?.currentItem.value ?? null;
 
   if (!playing) {
     return null;
