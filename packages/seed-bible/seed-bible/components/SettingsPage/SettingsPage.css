@@ -1409,3 +1409,10 @@
 .sb-account-signout-button:hover {
   background: color-mix(in srgb, #db1c1c, transparent 92%);
 }
+
+/* This can be added at main css too but that is not being used by setting bar to so avoid whole css load use here */
+@media screen and (max-width: 480px) {
+  .hide-on-mobile {
+    display: none;
+  }
+}
