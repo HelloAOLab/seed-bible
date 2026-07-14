@@ -192,6 +192,8 @@ export interface AppState {
   selectSlot: (slotId: string) => void;
   /** Selects a custom pane. */
   selectPane: (paneId: string) => void;
+  /** Closes any pane filling the reader. */
+  closeFullscreenPanes: () => void;
   /** Creates a shared reading session and opens it in a new tab. */
   createSharedSession: () => Promise<BibleReadingSession>;
   /** Joins an existing shared session and opens it in a new tab. */
@@ -831,6 +833,7 @@ export function createSeedBibleState(
     closeSidebarAndSettings();
     tabs.selectTab(tabId);
     tabsLayout.setSelectedSlotTab(tabId);
+    panes.closeFullscreenPanes();
   };
 
   const handleAddTab = () => {
@@ -1072,6 +1075,7 @@ export function createSeedBibleState(
   };
 
   const handleOpenVerseReference = async (ref: VerseRef) => {
+    panes.closeFullscreenPanes();
     let tab = selectedTab.value;
 
     if (!tab) {
@@ -1211,6 +1215,7 @@ export function createSeedBibleState(
       openInNewSlot: handleOpenInNewSlot,
       selectSlot: handleSelectSlot,
       selectPane: handleSelectPane,
+      closeFullscreenPanes: panes.closeFullscreenPanes,
       openVerseReference: handleOpenVerseReference,
       openChat: handleOpenChat,
       title,
