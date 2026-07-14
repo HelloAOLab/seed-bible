@@ -112,8 +112,8 @@ describe("Sanitization", () => {
       await sanitize(html);
 
       expect(calls).toHaveLength(1);
-      expect(calls[0].input).toBe(html);
-      expect(calls[0].options).toMatchObject({
+      expect(calls[0]?.input).toBe(html);
+      expect(calls[0]?.options).toMatchObject({
         sanitizer: {
           elements: expect.arrayContaining(["p", "strong", "a"]),
           attributes: expect.arrayContaining(["href", "class"]),
@@ -173,9 +173,9 @@ describe("Sanitization", () => {
       await setSafeHtml(html, el);
 
       expect(calls).toHaveLength(1);
-      expect(calls[0].target).toBe(el);
-      expect(calls[0].input).toBe(html);
-      expect(calls[0].options).toMatchObject({
+      expect(calls[0]?.target).toBe(el);
+      expect(calls[0]?.input).toBe(html);
+      expect(calls[0]?.options).toMatchObject({
         sanitizer: {
           elements: expect.arrayContaining(["p"]),
           attributes: expect.arrayContaining(["href"]),

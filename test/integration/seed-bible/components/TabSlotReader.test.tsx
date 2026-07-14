@@ -154,6 +154,11 @@ function createFixture(): ReaderFixture {
     enabledExtensions: signal<ReadingExtensionRuntime[]>([]),
     isExtensionEnabled: vi.fn(() => false),
     getUrlQueryParams: vi.fn(() => ({})),
+    onNavigate: vi.fn(() => () => {}),
+    shortSubTitle: signal<string>(""),
+    shortTitle: signal<string>(""),
+    subTitle: signal<string>(""),
+    title: signal<string>(""),
   } as BibleReadingState;
 
   const selectorState = {
