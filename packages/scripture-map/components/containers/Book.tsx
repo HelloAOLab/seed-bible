@@ -59,7 +59,7 @@ export const Book = memo(
       chaptersData,
       bookTitle,
       bookClass,
-      bookCoverFrontClass,
+      bookPagesClass,
       handleBookClick,
       handleBookHeaderPointerDown,
       handleBookHeaderPointerUp,
@@ -112,12 +112,12 @@ export const Book = memo(
             />
           </svg>
         </div>
-        <div className="book-cover" style={bookPagesStyle}>
+        <div className={bookPagesClass} style={bookPagesStyle}>
           {chaptersData.map((data) => (
             <Chapter {...data} />
           ))}
           <div
-            className={bookCoverFrontClass}
+            className="book-cover-front"
             onPointerEnter={handleBookCoverPointerEnter}
             onPointerLeave={handleBookCoverPointerLeave}
             style={bookCoverFrontStyle}

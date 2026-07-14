@@ -46,7 +46,7 @@ interface UseBookType {
   chaptersData: ChapterData[];
   bookTitle: string;
   bookClass: string;
-  bookCoverFrontClass: string;
+  bookPagesClass: string;
   handleBookClick: () => void;
   handleBookHeaderPointerDown: (
     e: React.JSX.TargetedPointerEvent<HTMLDivElement>
@@ -660,10 +660,10 @@ export const useBook: UseBook = (props) => {
     return `book-container ${showChapters ? "book-open" : "book-closed pointable"}`;
   }, [showChapters]);
 
-  const bookCoverFrontClass = useMemo<string>(() => {
+  const bookPagesClass = useMemo<string>(() => {
     const showPresence =
       !showChapters && isUserPresenceEnabled && bookBorderGradientColors;
-    return `book-cover-front${showPresence ? " show-user-presence" : ""}`;
+    return `book-cover${showPresence ? " show-user-presence" : ""}`;
   }, [showChapters, isUserPresenceEnabled, bookBorderGradientColors]);
 
   // useEffect(() => {
@@ -723,15 +723,15 @@ export const useBook: UseBook = (props) => {
     return {
       minHeight: bookCoverHeight,
       background: "transparent",
+      "--bookUserPresenceColors": bookBorderGradientColors,
     };
-  }, [bookCoverHeight]);
+  }, [bookCoverHeight, bookBorderGradientColors]);
 
   const bookCoverFrontStyle = useMemo<React.CSSProperties>(() => {
     return {
-      "--bookUserPresenceColors": bookBorderGradientColors,
-      background: fixedBackground,
+      "--book-cover-color": fixedBackground,
     };
-  }, [fixedBackground, bookBorderGradientColors]);
+  }, [fixedBackground]);
 
   return {
     showChapters,
@@ -741,7 +741,7 @@ export const useBook: UseBook = (props) => {
     chaptersData,
     bookTitle,
     bookClass,
-    bookCoverFrontClass,
+    bookPagesClass,
     handleBookClick,
     handleBookHeaderPointerDown,
     handleBookHeaderPointerUp,

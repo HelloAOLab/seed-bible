@@ -196,13 +196,13 @@ describe("useBook", () => {
     });
   });
 
-  describe("bookCoverFrontClass", () => {
-    it("is 'book-cover-front' when closed and no user presence", () => {
+  describe("bookPagesClass", () => {
+    it("is 'book-cover' when closed and no user presence", () => {
       const result = setup({ bookBorderGradientColors: undefined });
-      expect(result.current.bookCoverFrontClass).toBe("book-cover-front");
+      expect(result.current.bookPagesClass).toBe("book-cover");
     });
 
-    it("is 'book-cover-front' (no presence border) when the book is open", () => {
+    it("is 'book-cover' (no presence border) when the book is open", () => {
       (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           isUserPresenceEnabled: true,
@@ -212,27 +212,27 @@ describe("useBook", () => {
       const result = setup({
         bookBorderGradientColors: "linear-gradient(#f00, #00f)",
       });
-      expect(result.current.bookCoverFrontClass).toBe("book-cover-front");
+      expect(result.current.bookPagesClass).toBe("book-cover");
     });
 
-    it("is 'book-cover-front show-user-presence' when closed with presence colors", () => {
+    it("is 'book-cover show-user-presence' when closed with presence colors", () => {
       (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ isUserPresenceEnabled: true })
       );
       const result = setup({
         bookBorderGradientColors: "linear-gradient(#f00, #00f)",
       });
-      expect(result.current.bookCoverFrontClass).toBe(
-        "book-cover-front show-user-presence"
+      expect(result.current.bookPagesClass).toBe(
+        "book-cover show-user-presence"
       );
     });
 
-    it("is 'book-cover-front' when presence is enabled but border colors are absent", () => {
+    it("is 'book-cover' when presence is enabled but border colors are absent", () => {
       (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ isUserPresenceEnabled: true })
       );
       const result = setup({ bookBorderGradientColors: undefined });
-      expect(result.current.bookCoverFrontClass).toBe("book-cover-front");
+      expect(result.current.bookPagesClass).toBe("book-cover");
     });
   });
 
@@ -424,7 +424,12 @@ describe("useBook", () => {
   });
 
   describe("bookCoverFrontStyle", () => {
-    it("sets bookCoverBackgroundColor as background when showingBooksColors is true and reading history is disabled", () => {
+    const coverColor = (result: ReturnType<typeof setup>) =>
+      (result.current.bookCoverFrontStyle as Record<string, unknown>)[
+        "--book-cover-color"
+      ];
+
+    it("exposes bookCoverBackgroundColor as --book-cover-color when showingBooksColors is true and reading history is disabled", () => {
       (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
           showingBooksColors: true,
@@ -432,12 +437,12 @@ describe("useBook", () => {
         })
       );
       const result = setup({ bookCoverBackgroundColor: "#ff0000" });
-      expect(result.current.bookCoverFrontStyle.background).toBe("#ff0000");
+      expect(coverColor(result)).toBe("#ff0000");
     });
 
-    it("background is undefined when showingBooksColors is false and history is disabled", () => {
+    it("--book-cover-color is undefined when showingBooksColors is false and history is disabled", () => {
       const result = setup();
-      expect(result.current.bookCoverFrontStyle.background).toBeUndefined();
+      expect(coverColor(result)).toBeUndefined();
     });
   });
 
@@ -445,6 +450,17 @@ describe("useBook", () => {
     it("keeps the pages grid background transparent so the cover carries the surface", () => {
       const result = setup();
       expect(result.current.bookPagesStyle.background).toBe("transparent");
+    });
+
+    it("exposes the presence border colours as --bookUserPresenceColors (glow lives on the pages layer)", () => {
+      const result = setup({
+        bookBorderGradientColors: "linear-gradient(#f00, #00f)",
+      });
+      expect(
+        (result.current.bookPagesStyle as Record<string, unknown>)[
+          "--bookUserPresenceColors"
+        ]
+      ).toBe("linear-gradient(#f00, #00f)");
     });
   });
 
@@ -638,9 +654,11 @@ describe("useBook", () => {
         })
       );
       const result = setup({ readingSummary: readingSummary as never });
-      expect(result.current.bookCoverFrontStyle.background).toBe(
-        "linear-gradient(red, blue)"
-      );
+      expect(
+        (result.current.bookCoverFrontStyle as Record<string, unknown>)[
+          "--book-cover-color"
+        ]
+      ).toBe("linear-gradient(red, blue)");
     });
 
     it("uses guest translation for non-self users", () => {

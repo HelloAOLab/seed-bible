@@ -67,7 +67,7 @@ function makeHookResult(overrides: Record<string, unknown> = {}) {
     chaptersData: [],
     bookTitle: "GEN",
     bookClass: "book",
-    bookCoverFrontClass: "book-cover-front",
+    bookPagesClass: "book-cover",
     handleBookClick: vi.fn(),
     handleBookHeaderPointerDown: vi.fn(),
     handleBookHeaderPointerUp: vi.fn(),
@@ -130,15 +130,13 @@ describe("Book", () => {
       expect(container.querySelector(".book-cover-front")).not.toBeNull();
     });
 
-    it("renders the flip cover overlay with bookCoverFrontClass", () => {
+    it("applies bookPagesClass to the pages grid (carries the presence border)", () => {
       (useBook as Mock).mockReturnValue(
-        makeHookResult({
-          bookCoverFrontClass: "book-cover-front show-user-presence",
-        })
+        makeHookResult({ bookPagesClass: "book-cover show-user-presence" })
       );
       setup();
       expect(
-        container.querySelector(".book-cover-front.show-user-presence")
+        container.querySelector(".book-cover.show-user-presence")
       ).not.toBeNull();
     });
 
