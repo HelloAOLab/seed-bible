@@ -945,14 +945,6 @@ function TabRow(props: TabRowProps) {
   const { app, bookmarks } = state;
   const { t } = useI18n();
 
-  const currentBookId = tab.readingState.bookId.value;
-  const currentBookName =
-    tab.readingState.translationBooks.value?.books.find(
-      (book) => book.id === currentBookId
-    )?.name ??
-    currentBookId ??
-    "-";
-  const currentChapter = tab.readingState.chapterNumber.value;
   const shortSubTitle = tab.readingState.shortSubTitle.value;
   const title = tab.readingState.title.value;
   const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
@@ -1753,11 +1745,7 @@ export function Tabs(props: TabsProps) {
       <div className="sb-sidebar-collapsed-tab-list">
         {tabs.map((tab) => {
           const isSelected = tab.id === selectedTabId;
-          const bookId = tab.readingState.bookId.value ?? "-";
-          const bookName =
-            tab.readingState.chapterData.value?.book.name ?? bookId;
-          const chapter = tab.readingState.chapterNumber.value;
-
+          const shortTitle = tab.readingState.shortTitle.value;
           const session = tab.sharedSession;
           const sessionUsers = session?.connectedUsers.value ?? [];
 
@@ -1774,24 +1762,22 @@ export function Tabs(props: TabsProps) {
               }${session ? " sb-collapsed-tab-tile-shared" : ""}`}
               aria-label={
                 session && sessionUsers.length > 0
-                  ? t("collapsed-tab-shared_x", {
-                      book: bookName,
-                      chapter,
+                  ? t("collapsed-tab-shared-label", {
+                      title: shortTitle,
                       count: sessionUsers.length,
                       defaultValue:
-                        "{{book}} {{chapter}} — shared session, {{count}} present",
+                        "{{title}} — shared session, {{count}} present",
                     })
-                  : `${bookName} ${chapter}`
+                  : shortTitle
               }
-              title={`${bookName} ${chapter}`}
+              title={shortTitle}
             >
               {session && (
                 <span className="sb-collapsed-tab-tag">
                   {t("shared", { defaultValue: "Shared" })}
                 </span>
               )}
-              <span className="sb-collapsed-tab-book">{bookId}</span>
-              <span className="sb-collapsed-tab-chapter">{chapter}</span>
+              <span className="sb-collapsed-tab-title">{shortTitle}</span>
               {session &&
                 sessionUsers.length > 0 &&
                 (() => {

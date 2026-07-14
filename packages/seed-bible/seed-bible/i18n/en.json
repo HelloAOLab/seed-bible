@@ -375,7 +375,7 @@
   "session-settings-section-navigation": "Navigation",
   "session-settings-section-sharing": "Sharing",
   "session-settings-section-participants": "Participants",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — shared session, {{count}} present",
+  "collapsed-tab-shared-label": "{{title}} — shared session, {{count}} present",
   "shared": "Shared",
   "host": "Host",
   "co-host": "Co-host",
