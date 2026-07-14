@@ -83,6 +83,14 @@ export interface PanesManager {
   /** Closes all panes. */
   closeAll: () => void;
 
+  /**
+   * Closes every pane currently filling the reader area — `"fullscreen"` panes
+   * on desktop, and (since mobile displays every pane fullscreen) all panes on
+   * mobile. Used to reveal the reader when the user navigates to a new
+   * location. No-op when nothing is filling the screen.
+   */
+  closeFullscreenPanes: () => void;
+
   /** Sets the absolute position (CSS left/top) of a floating pane. */
   setPanePosition: (paneId: string, x: number, y: number) => void;
 
@@ -276,6 +284,20 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
     syncPaneState([]);
   };
 
+  const closeFullscreenPanes = () => {
+    // On mobile every pane is displayed fullscreen (see effectivePanes /
+    // openPane's willFillScreen), so treat them all as fullscreen there; on
+    // desktop only real fullscreen panes fill the reader.
+    const remaining =
+      (isMobile?.value ?? false)
+        ? []
+        : panes.value.filter((pane) => pane.placement !== "fullscreen");
+    if (remaining.length === panes.value.length) {
+      return;
+    }
+    syncPaneState(remaining);
+  };
+
   return {
     panes,
     selectedPaneId,
@@ -285,5 +307,6 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
     setPanePosition,
     resizePane,
     closeAll,
+    closeFullscreenPanes,
   };
 }

@@ -510,6 +510,30 @@ export function createSeedBibleState(
   // rest.
   const panes = createPanes(isMobile);
 
+  // Close any fullscreen pane when the book/chapter/verse params change, so
+  // navigating reveals the reader (every navigation path writes these params).
+  // The first location only sets a baseline, so load-time init doesn't close a
+  // pane auto-opened for the same load (e.g. Today via `?today=open`).
+  let lastReadingLocation: string | null = null;
+  effect(() => {
+    const url = navigation.currentUrl.value;
+    const book = url.searchParams.get("book");
+    const chapter = url.searchParams.get("chapter");
+    const verse = url.searchParams.get("verse");
+    if (!book || !chapter) {
+      return;
+    }
+
+    const location = `${book}|${chapter}|${verse ?? ""}`;
+    const previous = lastReadingLocation;
+    lastReadingLocation = location;
+
+    if (previous === null || previous === location) {
+      return;
+    }
+    panes.closeFullscreenPanes();
+  });
+
   const tutorial = createTutorialManager(
     login,
     onboarding,
