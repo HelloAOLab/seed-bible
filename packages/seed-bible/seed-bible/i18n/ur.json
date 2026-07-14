@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "نیویگیشن",
   "session-settings-section-sharing": "شیئرنگ",
   "session-settings-section-participants": "شرکاء",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — مشترکہ سیشن، {{count}} موجود ہے۔",
+
   "shared": "مشترکہ",
   "host": "میزبان",
   "co-host": "شریک میزبان",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "سیشن ختم کریں۔",
   "dont-show-again": "اسے دوبارہ مت دکھائیں۔",
   "discover": "دریافت کریں۔",
-  "discover-book-chapter": "دریافت کریں {{book}} {{chapter}}",
+
   "playlists": "پلے لسٹس",
   "annotations": "تشریحات",
   "cross-references": "کراس حوالہ جات",
@@ -367,11 +367,9 @@
   "playlist-add-item": "آئٹم شامل کریں۔",
   "playlist-edit-item": "آئٹم میں ترمیم کریں۔",
   "playlist-save-item": "تبدیلیاں محفوظ کریں۔",
-  "playlist-add-mode-scripture": "صحیفہ",
-  "playlist-add-mode-text": "متن",
-  "playlist-add-mode-link": "لنک",
+
   "playlist-add-scripture-placeholder": "مثال کے طور پر جان 3 یا یوحنا 3:16",
-  "playlist-add-text-placeholder": "متن درج کریں۔",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "آئٹم شامل کریں۔",
   "playlist-add-scripture-error": "وہ حوالہ نہیں مل سکا",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "اس لنک کو ایمبیڈ کریں۔",
   "play-playlist": "پلے لسٹ چلائیں۔",
   "now-playing": "اب کھیل رہے ہیں۔",
-  "now-playing-x": "اب چل رہا ہے: {{title}}",
+
   "stop": "رک جاؤ",
   "queue": "قطار",
   "previous": "پچھلا",
@@ -391,7 +389,7 @@
   "editor-align-center": "مرکز میں سیدھ کریں۔",
   "editor-align-right": "دائیں سیدھ کریں۔",
   "editor-align-justify": "جواز پیش کریں۔",
-  "failed-to-load-playlist": "پلے لسٹ لوڈ کرنے میں ناکام",
+
   "share-playlist": "پلے لسٹ کا اشتراک کریں۔",
   "playlist-url-copied": "پلے لسٹ کا URL کلپ بورڈ پر کاپی ہو گیا۔",
   "current-playlist": "موجودہ پلے لسٹ",

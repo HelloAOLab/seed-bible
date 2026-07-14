@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Πλοήγηση",
   "session-settings-section-sharing": "Μοιρασιά",
   "session-settings-section-participants": "Συμμετέχοντες",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — κοινόχρηστη συνεδρία, {{count}} παρόντες",
+
   "shared": "Κοινόχρηστο",
   "host": "Πλήθος",
   "co-host": "Συνδιοργανωτής",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Λήξη συνεδρίας",
   "dont-show-again": "Να μην εμφανιστεί ξανά αυτό",
   "discover": "Ανακαλύπτω",
-  "discover-book-chapter": "Ανακαλύψτε {{book}} {{chapter}}",
+
   "playlists": "Λίστες αναπαραγωγής",
   "annotations": "Σχολιασμοί",
   "cross-references": "Διασταυρούμενες παραπομπές",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Προσθήκη στοιχείου",
   "playlist-edit-item": "Επεξεργασία στοιχείου",
   "playlist-save-item": "Αποθήκευση αλλαγών",
-  "playlist-add-mode-scripture": "Γραφή",
-  "playlist-add-mode-text": "Κείμενο",
-  "playlist-add-mode-link": "Σύνδεσμος",
+
   "playlist-add-scripture-placeholder": "π.χ. Ιωάννης 3 ή Ιωάννης 3:16",
-  "playlist-add-text-placeholder": "Εισαγωγή κειμένου",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Προσθήκη στοιχείου",
   "playlist-add-scripture-error": "Δεν ήταν δυνατή η εύρεση αυτής της αναφοράς",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Ενσωμάτωση αυτού του συνδέσμου",
   "play-playlist": "Αναπαραγωγή λίστας αναπαραγωγής με αναπαραγωγή",
   "now-playing": "Αναπαράγεται τώρα",
-  "now-playing-x": "Τώρα παίζει: {{title}}",
+
   "stop": "Στάση",
   "queue": "Ουρά",
   "previous": "Προηγούμενος",
@@ -391,7 +389,7 @@
   "editor-align-center": "Στοίχιση στο κέντρο",
   "editor-align-right": "Στοίχιση δεξιά",
   "editor-align-justify": "Δικαιολογώ",
-  "failed-to-load-playlist": "Η φόρτωση της λίστας αναπαραγωγής απέτυχε. ...",
+
   "share-playlist": "Κοινοποίηση λίστας αναπαραγωγής με κοινή χρήση.",
   "playlist-url-copied": "Η διεύθυνση URL της λίστας αναπαραγωγής αντιγράφηκε στο πρόχειρο",
   "current-playlist": "Τρέχουσα λίστα αναπαραγωγής: Τρέχουσα λίστα αναπαραγωγής",

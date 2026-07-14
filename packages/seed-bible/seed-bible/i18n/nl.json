@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Navigatie",
   "session-settings-section-sharing": "Delen",
   "session-settings-section-participants": "Deelnemers",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — gezamenlijke sessie, {{count}} aanwezig",
+
   "shared": "Gedeeld",
   "host": "Gastheer",
   "co-host": "Mede-presentator",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Sessie beëindigen",
   "dont-show-again": "Niet meer laten zien",
   "discover": "Ontdekken",
-  "discover-book-chapter": "Ontdek {{book}} {{chapter}}",
+
   "playlists": "Afspeellijsten",
   "annotations": "Annotaties",
   "cross-references": "Kruisverwijzingen",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Voeg item toe",
   "playlist-edit-item": "Item bewerken",
   "playlist-save-item": "Wijzigingen opslaan",
-  "playlist-add-mode-scripture": "Schrift",
-  "playlist-add-mode-text": "Tekst",
-  "playlist-add-mode-link": "Link",
+
   "playlist-add-scripture-placeholder": "bijvoorbeeld Johannes 3 of Johannes 3:16",
-  "playlist-add-text-placeholder": "Voer tekst in",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Voeg item toe",
   "playlist-add-scripture-error": "Ik kon die referentie niet vinden.",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Sluit deze link in",
   "play-playlist": "Speel afspeellijst af",
   "now-playing": "Nu aan het afspelen",
-  "now-playing-x": "Nu aan het spelen: {{title}}",
+
   "stop": "Stop",
   "queue": "Wachtrij",
   "previous": "Vorig",
@@ -391,7 +389,7 @@
   "editor-align-center": "Centreren",
   "editor-align-right": "Rechts uitlijnen",
   "editor-align-justify": "Verantwoorden",
-  "failed-to-load-playlist": "Afspeellijst laden mislukt",
+
   "share-playlist": "Deel afspeellijst",
   "playlist-url-copied": "De URL van de afspeellijst is naar het klembord gekopieerd.",
   "current-playlist": "Huidige afspeellijst",

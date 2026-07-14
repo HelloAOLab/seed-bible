@@ -167,7 +167,6 @@ export function MobileSettingsSheet(props: MobileSettingsSheetProps) {
               onClick={() => settings.setUISize(size as UISize)}
               style={{ fontSize: `${(12 + i * 2) / 16}rem` }}
               aria-label={size}
-              // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
             >
               {size}
             </button>

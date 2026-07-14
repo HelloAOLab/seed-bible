@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Navigaasje",
   "session-settings-section-sharing": "Dielen",
   "session-settings-section-participants": "Dielnimmers",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — dielde sesje, {{count}} oanwêzich",
+
   "shared": "Dield",
   "host": "Gasthear",
   "co-host": "Mei-host",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Sesje einigje",
   "dont-show-again": "Dit net wer sjen litte",
   "discover": "Ûntdekke",
-  "discover-book-chapter": "Untdek {{book}} {{chapter}}",
+
   "playlists": "Ofspiellisten",
   "annotations": "Annotaasjes",
   "cross-references": "Krúsferwizings",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Item tafoegje",
   "playlist-edit-item": "Item bewurkje",
   "playlist-save-item": "Bewarje wizigingen",
-  "playlist-add-mode-scripture": "Skrift",
-  "playlist-add-mode-text": "Tekst",
-  "playlist-add-mode-link": "Keppeling",
+
   "playlist-add-scripture-placeholder": "bygelyks Johannes 3 of Johannes 3:16",
-  "playlist-add-text-placeholder": "Tekst ynfiere",
+
   "playlist-add-link-placeholder": "https://foarbyld.com",
   "playlist-add-button": "Item tafoegje",
   "playlist-add-scripture-error": "Koe dy referinsje net fine",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Dizze keppeling ynbêde",
   "play-playlist": "Ofspiellist ôfspylje",
   "now-playing": "No oan it spyljen",
-  "now-playing-x": "No spile: {{title}}",
+
   "stop": "Ophâlde",
   "queue": "Wachtrige",
   "previous": "Foarige",
@@ -391,7 +389,7 @@
   "editor-align-center": "Sintrum rjochtsje",
   "editor-align-right": "Rjochts útrjochtsje",
   "editor-align-justify": "Rjochtfeardigje",
-  "failed-to-load-playlist": "Koe net ôfspiellist laden",
+
   "share-playlist": "Diel de playlist",
   "playlist-url-copied": "URL fan 'e playlist kopiearre nei klamboerd",
   "current-playlist": "Hjoeddeiske ôfspiellist",

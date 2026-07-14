@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Navigacija",
   "session-settings-section-sharing": "Deljenje",
   "session-settings-section-participants": "Udeleženci",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — deljena seja, {{count}} udeležencev",
+
   "shared": "Deljeno",
   "host": "Gostitelj",
   "co-host": "Sogostitelj",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Končaj sejo",
   "dont-show-again": "Tega ne prikaži več",
   "discover": "Odkrijte",
-  "discover-book-chapter": "Odkrijte {{book}} {{chapter}}",
+
   "playlists": "Seznami predvajanja",
   "annotations": "Opombe",
   "cross-references": "Navzkrižne reference",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Dodaj element",
   "playlist-edit-item": "Uredi element",
   "playlist-save-item": "Shrani spremembe",
-  "playlist-add-mode-scripture": "Sveto pismo",
-  "playlist-add-mode-text": "Besedilo",
-  "playlist-add-mode-link": "Povezava",
+
   "playlist-add-scripture-placeholder": "npr. Janez 3 ali Janez 3:16",
-  "playlist-add-text-placeholder": "Vnesite besedilo",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Dodaj element",
   "playlist-add-scripture-error": "Te reference nisem mogel najti.",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Vdelaj to povezavo",
   "play-playlist": "Predvajaj seznam predvajanja",
   "now-playing": "Trenutno predvajanje",
-  "now-playing-x": "Trenutno predvaja: {{title}}",
+
   "stop": "Ustavi se",
   "queue": "Čakalna vrsta",
   "previous": "Prejšnji",
@@ -391,7 +389,7 @@
   "editor-align-center": "Poravnaj na sredino",
   "editor-align-right": "Poravnaj desno",
   "editor-align-justify": "Poravnaj",
-  "failed-to-load-playlist": "Nalaganje seznama predvajanja ni uspelo.",
+
   "share-playlist": "Deli seznam predvajanja",
   "playlist-url-copied": "URL seznama predvajanja kopiran v odložišče",
   "current-playlist": "Trenutni seznam predvajanja",

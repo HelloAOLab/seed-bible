@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "मार्गदर्शन",
   "session-settings-section-sharing": "शेयरिंग",
   "session-settings-section-participants": "प्रतिभागियों",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — साझा सत्र, {{count}} उपस्थित",
+
   "shared": "साझा",
   "host": "मेज़बान",
   "co-host": "सह मेजबान",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "सत्र समाप्त",
   "dont-show-again": "इसे दोबारा मत दिखाओ",
   "discover": "खोज करना",
-  "discover-book-chapter": "{{book}} {{chapter}} के बारे में जानें",
+
   "playlists": "प्लेलिस्ट",
   "annotations": "एनोटेशन",
   "cross-references": "प्रतिकूल संदर्भ",
@@ -367,11 +367,9 @@
   "playlist-add-item": "मद जोड़ें",
   "playlist-edit-item": "आइटम संपादित करें",
   "playlist-save-item": "परिवर्तनों को सुरक्षित करें",
-  "playlist-add-mode-scripture": "इंजील",
-  "playlist-add-mode-text": "मूलपाठ",
-  "playlist-add-mode-link": "जोड़ना",
+
   "playlist-add-scripture-placeholder": "उदाहरण के लिए, यूहन्ना 3 या यूहन्ना 3:16",
-  "playlist-add-text-placeholder": "पाठ दर्ज करें",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "मद जोड़ें",
   "playlist-add-scripture-error": "मुझे वह संदर्भ नहीं मिला।",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "इस लिंक को एम्बेड करें",
   "play-playlist": "प्लेलिस्ट चलाएं",
   "now-playing": "अब खेल रहे हैं",
-  "now-playing-x": "अभी चल रहा है: {{title}}",
+
   "stop": "रुकना",
   "queue": "कतार",
   "previous": "पहले का",
@@ -391,7 +389,7 @@
   "editor-align-center": "मध्य में संरेखित करें",
   "editor-align-right": "दाईं ओर संरेखित करें",
   "editor-align-justify": "औचित्य",
-  "failed-to-load-playlist": "प्लेलिस्ट लोड करने में विफल",
+
   "share-playlist": "प्लेलिस्ट साझा करें",
   "playlist-url-copied": "प्लेलिस्ट का यूआरएल क्लिपबोर्ड पर कॉपी हो गया है",
   "current-playlist": "वर्तमान प्लेलिस्ट",

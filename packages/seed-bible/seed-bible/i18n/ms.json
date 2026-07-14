@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Navigasi",
   "session-settings-section-sharing": "Perkongsian",
   "session-settings-section-participants": "Peserta",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — sesi kongsi, {{count}} hadir",
+
   "shared": "Dikongsi",
   "host": "Hos",
   "co-host": "Pengacara bersama",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Tamat sesi",
   "dont-show-again": "Jangan tunjukkan ini lagi",
   "discover": "Temui",
-  "discover-book-chapter": "Temui {{book}} {{chapter}}",
+
   "playlists": "Senarai main",
   "annotations": "Anotasi",
   "cross-references": "Rujukan silang",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Tambah item",
   "playlist-edit-item": "Edit item",
   "playlist-save-item": "Simpan perubahan",
-  "playlist-add-mode-scripture": "Kitab Suci",
-  "playlist-add-mode-text": "Teks",
-  "playlist-add-mode-link": "Pautan",
+
   "playlist-add-scripture-placeholder": "contohnya Yohanes 3 atau Yohanes 3:16",
-  "playlist-add-text-placeholder": "Masukkan teks",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Tambah item",
   "playlist-add-scripture-error": "Tidak dapat menemui rujukan itu",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Benamkan pautan ini",
   "play-playlist": "Mainkan senarai main",
   "now-playing": "Sedang dimainkan",
-  "now-playing-x": "Sedang dimainkan: {{title}}",
+
   "stop": "Berhenti",
   "queue": "Baris",
   "previous": "Sebelumnya",
@@ -391,7 +389,7 @@
   "editor-align-center": "Jajarkan tengah",
   "editor-align-right": "Jajarkan ke kanan",
   "editor-align-justify": "Justifikasikan",
-  "failed-to-load-playlist": "Gagal memuatkan senarai main",
+
   "share-playlist": "Kongsi senarai main",
   "playlist-url-copied": "URL senarai main disalin ke papan keratan",
   "current-playlist": "Senarai main semasa",

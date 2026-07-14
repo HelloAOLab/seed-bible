@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Навигација",
   "session-settings-section-sharing": "Споделување",
   "session-settings-section-participants": "Учесници",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — споделена сесија, {{count}} присутни",
+
   "shared": "Споделено",
   "host": "Домаќин",
   "co-host": "Ко-домаќин",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Заврши сесија",
   "dont-show-again": "Не го прикажувај ова повторно",
   "discover": "Откријте",
-  "discover-book-chapter": "Откријте {{book}} {{chapter}}",
+
   "playlists": "Плејлисти",
   "annotations": "Анотации",
   "cross-references": "Вкрстени референци",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Додај ставка",
   "playlist-edit-item": "Уреди ставка",
   "playlist-save-item": "Зачувај ги промените",
-  "playlist-add-mode-scripture": "Светото писмо",
-  "playlist-add-mode-text": "Текст",
-  "playlist-add-mode-link": "Линк",
+
   "playlist-add-scripture-placeholder": "на пр. Јован 3 или Јован 3:16",
-  "playlist-add-text-placeholder": "Внесете текст",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Додај ставка",
   "playlist-add-scripture-error": "Не можев да ја најдам таа референца",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Вгради го овој линк",
   "play-playlist": "Пушти плејлиста со репродукција.",
   "now-playing": "Сега се репродуцира",
-  "now-playing-x": "Сега се репродуцира: {{title}}",
+
   "stop": "Стоп",
   "queue": "Ред",
   "previous": "Претходно",
@@ -391,7 +389,7 @@
   "editor-align-center": "Порамни во центарот",
   "editor-align-right": "Порамни десно",
   "editor-align-justify": "Порамни",
-  "failed-to-load-playlist": "Неуспешно вчитување на плејлистата. ...",
+
   "share-playlist": "Сподели плејлиста ...",
   "playlist-url-copied": "URL-адресата на плејлистата е копирана во привремената меморија",
   "current-playlist": "Тековна плејлиста со тековни песни е достапна.",

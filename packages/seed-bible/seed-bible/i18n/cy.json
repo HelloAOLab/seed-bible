@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Mordwyo",
   "session-settings-section-sharing": "Rhannu",
   "session-settings-section-participants": "Cyfranogwyr",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — sesiwn a rennir, {{count}} yn bresennol",
+
   "shared": "Wedi'i rannu",
   "host": "Gwesteiwr",
   "co-host": "Cyd-gynhaliwr",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Gorffen sesiwn",
   "dont-show-again": "Peidiwch â dangos hyn eto",
   "discover": "Darganfod",
-  "discover-book-chapter": "Darganfyddwch {{book}} {{chapter}}",
+
   "playlists": "Rhestrau chwarae",
   "annotations": "Anodiadau",
   "cross-references": "Croesgyfeiriadau",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Ychwanegu eitem",
   "playlist-edit-item": "Golygu eitem",
   "playlist-save-item": "Cadw newidiadau",
-  "playlist-add-mode-scripture": "Ysgrythur",
-  "playlist-add-mode-text": "Testun",
-  "playlist-add-mode-link": "Cyswllt",
+
   "playlist-add-scripture-placeholder": "e.e. Ioan 3 neu Ioan 3:16",
-  "playlist-add-text-placeholder": "Rhowch destun",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Ychwanegu eitem",
   "playlist-add-scripture-error": "Methu dod o hyd i'r cyfeirnod hwnnw",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Mewnosod y ddolen hon",
   "play-playlist": "Chwarae rhestr chwarae",
   "now-playing": "Nawr yn chwarae",
-  "now-playing-x": "Nawr yn chwarae: {{title}}",
+
   "stop": "Stopiwch",
   "queue": "Ciw",
   "previous": "Blaenorol",
@@ -391,7 +389,7 @@
   "editor-align-center": "Alinio canol",
   "editor-align-right": "Alinio i'r dde",
   "editor-align-justify": "Cyfiawnhau",
-  "failed-to-load-playlist": "Methwyd llwytho rhestr chwarae",
+
   "share-playlist": "Rhannu rhestr chwarae",
   "playlist-url-copied": "URL y rhestr chwarae wedi'i gopïo i'r clipfwrdd",
   "current-playlist": "Rhestr chwarae gyfredol",

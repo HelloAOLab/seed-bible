@@ -231,7 +231,7 @@ export function createNavigationManager(
     signals: Record<string, SimpleSignal<string | null>>
   ) => {
     const cleanup1 = effect(() => {
-      let update: Record<string, string | null> = {};
+      const update: Record<string, string | null> = {};
       for (const [key, signal] of Object.entries(signals)) {
         const requestedValue = signal.value;
         update[key] = requestedValue;

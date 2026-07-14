@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Navigimi",
   "session-settings-section-sharing": "Ndarja",
   "session-settings-section-participants": "Pjesëmarrësit",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — seancë e përbashkët, {{count}} i pranishëm",
+
   "shared": "I ndarë",
   "host": "Pritës",
   "co-host": "Bashkë-prezantues",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Përfundo seancën",
   "dont-show-again": "Mos e shfaq më këtë",
   "discover": "Zbulo",
-  "discover-book-chapter": "Zbuloni {{book}} {{chapter}}",
+
   "playlists": "Listat e dëgjimit",
   "annotations": "Shënime",
   "cross-references": "Referenca të kryqëzuara",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Shto artikull",
   "playlist-edit-item": "Modifiko artikullin",
   "playlist-save-item": "Ruaj ndryshimet",
-  "playlist-add-mode-scripture": "Shkrimi i Shenjtë",
-  "playlist-add-mode-text": "Tekst",
-  "playlist-add-mode-link": "Lidhje",
+
   "playlist-add-scripture-placeholder": "p.sh. Gjoni 3 ose Gjoni 3:16",
-  "playlist-add-text-placeholder": "Fut tekstin",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Shto artikull",
   "playlist-add-scripture-error": "Nuk munda ta gjej atë referencë",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Vendos këtë lidhje",
   "play-playlist": "Luaj listën e luajtjes për luajtje",
   "now-playing": "Tani po luhet",
-  "now-playing-x": "Tani luhet: {{title}}",
+
   "stop": "Ndalo",
   "queue": "Radhë",
   "previous": "Mëparshme",
@@ -391,7 +389,7 @@
   "editor-align-center": "Vendos në qendër",
   "editor-align-right": "Vendos në të djathtë",
   "editor-align-justify": "Drejtvizo",
-  "failed-to-load-playlist": "Ngarkimi i listës për luajtje dështoi.",
+
   "share-playlist": "Ndani listën e luajtjes për të ndarë.",
   "playlist-url-copied": "URL-ja e listës për luajtje u kopjua në kujtesën e përkohshme",
   "current-playlist": "Lista aktuale e luajtjes për luajtje është ajo e listave të luajtjes, të cilat janë aktualisht në dispozicion.",

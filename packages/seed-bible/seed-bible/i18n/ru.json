@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Навигация",
   "session-settings-section-sharing": "Совместное использование",
   "session-settings-section-participants": "Участники",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — общая сессия, {{count}} присутствует",
+
   "shared": "Общий",
   "host": "Хозяин",
   "co-host": "Соведущий",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Завершение сессии",
   "dont-show-again": "Больше не показывайте это",
   "discover": "Обнаружить",
-  "discover-book-chapter": "Откройте для себя {{book}} {{chapter}}",
+
   "playlists": "Плейлисты",
   "annotations": "Аннотации",
   "cross-references": "Перекрестные ссылки",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Добавить элемент",
   "playlist-edit-item": "Редактировать элемент",
   "playlist-save-item": "Сохраните изменения",
-  "playlist-add-mode-scripture": "Священное Писание",
-  "playlist-add-mode-text": "Текст",
-  "playlist-add-mode-link": "Связь",
+
   "playlist-add-scripture-placeholder": "например, Евангелие от Иоанна, глава 3, или Евангелие от Иоанна, глава 3:16",
-  "playlist-add-text-placeholder": "Введите текст",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Добавить элемент",
   "playlist-add-scripture-error": "Не смог найти эту ссылку.",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Вставьте эту ссылку",
   "play-playlist": "Воспроизвести плейлист",
   "now-playing": "Сейчас играет",
-  "now-playing-x": "Сейчас играет: {{title}}",
+
   "stop": "Останавливаться",
   "queue": "Очередь",
   "previous": "Предыдущий",
@@ -391,7 +389,7 @@
   "editor-align-center": "Выровнять по центру",
   "editor-align-right": "Выровняйте вправо",
   "editor-align-justify": "Оправдывать",
-  "failed-to-load-playlist": "Не удалось загрузить плейлист.",
+
   "share-playlist": "Поделиться плейлистом",
   "playlist-url-copied": "URL плейлиста скопирован в буфер обмена.",
   "current-playlist": "Текущий плейлист",

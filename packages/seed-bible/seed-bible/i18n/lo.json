@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "ການນຳທາງ",
   "session-settings-section-sharing": "ການແບ່ງປັນ",
   "session-settings-section-participants": "ຜູ້ເຂົ້າຮ່ວມ",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — ກອງປະຊຸມທີ່ແບ່ງປັນ, ມີ {{count}} ຢູ່",
+
   "shared": "ແບ່ງປັນແລ້ວ",
   "host": "ໂຮສ",
   "co-host": "ຮ່ວມເປັນເຈົ້າພາບ",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "ສິ້ນສຸດກອງປະຊຸມ",
   "dont-show-again": "ຢ່າສະແດງສິ່ງນີ້ອີກ",
   "discover": "ຄົ້ນພົບ",
-  "discover-book-chapter": "ຄົ້ນພົບ {{book}} {{chapter}}",
+
   "playlists": "ລາຍການເພງ",
   "annotations": "ຄຳອະທິບາຍປະກອບ",
   "cross-references": "ການອ້າງອີງຂ້າມ",
@@ -367,11 +367,9 @@
   "playlist-add-item": "ເພີ່ມລາຍການ",
   "playlist-edit-item": "ແກ້ໄຂລາຍການ",
   "playlist-save-item": "ບັນທຶກການປ່ຽນແປງ",
-  "playlist-add-mode-scripture": "ພຣະຄຳພີ",
-  "playlist-add-mode-text": "ຂໍ້ຄວາມ",
-  "playlist-add-mode-link": "ລິ້ງ",
+
   "playlist-add-scripture-placeholder": "ຕົວຢ່າງ ໂຢຮັນ 3 ຫຼື ໂຢຮັນ 3:16",
-  "playlist-add-text-placeholder": "ໃສ່ຂໍ້ຄວາມ",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "ເພີ່ມລາຍການ",
   "playlist-add-scripture-error": "ບໍ່ສາມາດຊອກຫາເອກະສານອ້າງອີງນັ້ນໄດ້",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "ຝັງລິ້ງນີ້",
   "play-playlist": "ຫຼິ້ນລາຍການເພງ",
   "now-playing": "ກຳລັງຫຼິ້ນຢູ່",
-  "now-playing-x": "ກຳລັງຫຼິ້ນຢູ່: {{title}}",
+
   "stop": "ຢຸດ",
   "queue": "ຄິວ",
   "previous": "ກ່ອນໜ້ານີ້",
@@ -391,7 +389,7 @@
   "editor-align-center": "ຈັດກາງ",
   "editor-align-right": "ຈັດໄປທາງຂວາ",
   "editor-align-justify": "ຈັດໃຫ້ຖືກຕ້ອງ",
-  "failed-to-load-playlist": "ໂຫຼດລາຍການຫຼິ້ນບໍ່ສຳເລັດ",
+
   "share-playlist": "ແບ່ງປັນລາຍການຫຼິ້ນ",
   "playlist-url-copied": "ສຳເນົາ URL ລາຍການເພງໄປໃສ່ຄລິບບອດແລ້ວ",
   "current-playlist": "ລາຍການຫຼິ້ນປັດຈຸບັນ",

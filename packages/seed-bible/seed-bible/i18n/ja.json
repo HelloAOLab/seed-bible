@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "ナビゲーション",
   "session-settings-section-sharing": "共有",
   "session-settings-section-participants": "参加者",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — 共有セッション、 {{count}}参加",
+
   "shared": "共有",
   "host": "ホスト",
   "co-host": "共同司会者",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "セッションを終了する",
   "dont-show-again": "今後表示しない",
   "discover": "発見する",
-  "discover-book-chapter": "{{book}} {{chapter}}を発見する",
+
   "playlists": "プレイリスト",
   "annotations": "注釈",
   "cross-references": "相互参照",
@@ -367,11 +367,9 @@
   "playlist-add-item": "アイテムを追加",
   "playlist-edit-item": "アイテムを編集",
   "playlist-save-item": "変更を保存する",
-  "playlist-add-mode-scripture": "聖書",
-  "playlist-add-mode-text": "文章",
-  "playlist-add-mode-link": "リンク",
+
   "playlist-add-scripture-placeholder": "例えばヨハネ3章、またはヨハネ3:16",
-  "playlist-add-text-placeholder": "テキストを入力してください",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "アイテムを追加",
   "playlist-add-scripture-error": "その参照元が見つかりませんでした",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "このリンクを埋め込む",
   "play-playlist": "プレイリストを再生",
   "now-playing": "再生中",
-  "now-playing-x": "現在再生中： {{title}}",
+
   "stop": "停止",
   "queue": "列",
   "previous": "前の",
@@ -391,7 +389,7 @@
   "editor-align-center": "中央揃え",
   "editor-align-right": "右揃え",
   "editor-align-justify": "正当化する",
-  "failed-to-load-playlist": "プレイリストの読み込みに失敗しました",
+
   "share-playlist": "プレイリストを共有する",
   "playlist-url-copied": "プレイリストのURLがクリップボードにコピーされました",
   "current-playlist": "現在のプレイリスト",

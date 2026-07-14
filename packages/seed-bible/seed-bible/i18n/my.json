@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "လမ်းညွှန်",
   "session-settings-section-sharing": "မျှဝေခြင်း",
   "session-settings-section-participants": "ပါဝင်သူများ",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — မျှဝေထားသော အစည်းအဝေး၊ {{count}} တက်ရောက်နေသည်",
+
   "shared": "မျှဝေထားသည်",
   "host": "အိမ်ရှင်",
   "co-host": "တွဲဖက်အိမ်ရှင်",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "အစည်းအဝေးကို အဆုံးသတ်ပါ",
   "dont-show-again": "ဒါကို ထပ်မပြပါနဲ့",
   "discover": "ရှာဖွေတွေ့ရှိပါ",
-  "discover-book-chapter": "{{book}} {{chapter}} ကို ရှာဖွေတွေ့ရှိပါ",
+
   "playlists": "သီချင်းစာရင်းများ",
   "annotations": "မှတ်ချက်များ",
   "cross-references": "အပြန်အလှန်ကိုးကားချက်များ",
@@ -367,11 +367,9 @@
   "playlist-add-item": "ပစ္စည်းထည့်ပါ",
   "playlist-edit-item": "အကြောင်းအရာကို တည်းဖြတ်ပါ",
   "playlist-save-item": "ပြောင်းလဲမှုများကို သိမ်းဆည်းပါ",
-  "playlist-add-mode-scripture": "ကျမ်းစာ",
-  "playlist-add-mode-text": "စာသား",
-  "playlist-add-mode-link": "လင့်ခ်",
+
   "playlist-add-scripture-placeholder": "ဥပမာ ယောဟန် ၃ သို့မဟုတ် ယောဟန် ၃:၁၆",
-  "playlist-add-text-placeholder": "စာသားထည့်ပါ",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "ပစ္စည်းထည့်ပါ",
   "playlist-add-scripture-error": "ထိုကိုးကားချက်ကို ရှာမတွေ့ပါ",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "ဒီလင့်ခ်ကို ထည့်သွင်းပါ",
   "play-playlist": "သီချင်းစာရင်းကို ဖွင့်ပါ",
   "now-playing": "ယခုဖွင့်နေသည်",
-  "now-playing-x": "ယခုဖွင့်နေသည်- {{title}}",
+
   "stop": "ရပ်",
   "queue": "တန်းစီခြင်း",
   "previous": "ယခင်",
@@ -391,7 +389,7 @@
   "editor-align-center": "အလယ်ဗဟိုသို့ ညှိပါ",
   "editor-align-right": "ညာဘက်သို့ ညှိပါ",
   "editor-align-justify": "တရားမျှတအောင်ပြုလုပ်ပါ",
-  "failed-to-load-playlist": "သီချင်းစာရင်းကို တင်၍မရပါ",
+
   "share-playlist": "သီချင်းစာရင်းကို မျှဝေပါ",
   "playlist-url-copied": "သီချင်းစာရင်း URL ကို ကလစ်ဘုတ်သို့ ကူးယူပြီးပါပြီ",
   "current-playlist": "လက်ရှိ သီချင်းစာရင်း",

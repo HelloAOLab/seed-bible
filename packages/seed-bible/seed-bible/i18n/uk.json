@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Навігація",
   "session-settings-section-sharing": "Спільне використання",
   "session-settings-section-participants": "Учасники",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — спільний сеанс, присутніх {{count}}",
+
   "shared": "Спільний доступ",
   "host": "Хост",
   "co-host": "Співведучий",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Завершити сеанс",
   "dont-show-again": "Не показувати це більше",
   "discover": "Відкрийте",
-  "discover-book-chapter": "Відкрийте для себе {{book}} {{chapter}}",
+
   "playlists": "Списки відтворення",
   "annotations": "Анотації",
   "cross-references": "Перехресні посилання",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Додати елемент",
   "playlist-edit-item": "Редагувати елемент",
   "playlist-save-item": "Зберегти зміни",
-  "playlist-add-mode-scripture": "Святе Письмо",
-  "playlist-add-mode-text": "Текст",
-  "playlist-add-mode-link": "Посилання",
+
   "playlist-add-scripture-placeholder": "наприклад, Іван 3 або Іван 3:16",
-  "playlist-add-text-placeholder": "Введіть текст",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Додати елемент",
   "playlist-add-scripture-error": "Не вдалося знайти це посилання",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Вбудувати це посилання",
   "play-playlist": "Відтворити список відтворення",
   "now-playing": "Зараз грає",
-  "now-playing-x": "Зараз грає: {{title}}",
+
   "stop": "СТІЙ",
   "queue": "Черга",
   "previous": "Попередній",
@@ -391,7 +389,7 @@
   "editor-align-center": "Вирівняти по центру",
   "editor-align-right": "Вирівняти по правому краю",
   "editor-align-justify": "Вирівнювання",
-  "failed-to-load-playlist": "Не вдалося завантажити список відтворення",
+
   "share-playlist": "Поділитися списком відтворення",
   "playlist-url-copied": "URL-адресу списку відтворення скопійовано в буфер обміну",
   "current-playlist": "Поточний плейлист",

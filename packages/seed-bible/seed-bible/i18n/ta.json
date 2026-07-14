@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "வழிசெலுத்தல்",
   "session-settings-section-sharing": "பகிர்வு",
   "session-settings-section-participants": "பங்கேற்பாளர்கள்",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — பகிரப்பட்ட அமர்வு, {{count}}",
+
   "shared": "பகிரப்பட்டது",
   "host": "ஹோஸ்ட்",
   "co-host": "இணை தொகுப்பாளர்",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "அமர்வை முடிக்கவும்",
   "dont-show-again": "இதை மீண்டும் காட்ட வேண்டாம்",
   "discover": "கண்டுபிடிப்பாளர்",
-  "discover-book-chapter": "{{book}} {{chapter}} ஐக் கண்டறியுங்கள்",
+
   "playlists": "பிளேலிஸ்ட்கள்",
   "annotations": "குறிப்புகள்",
   "cross-references": "குறுக்கு குறிப்புகள்",
@@ -367,11 +367,9 @@
   "playlist-add-item": "உருப்படியைச் சேர்க்கவும்",
   "playlist-edit-item": "உருப்படியைத் திருத்து",
   "playlist-save-item": "மாற்றங்களைச் சேமிக்கவும்",
-  "playlist-add-mode-scripture": "வேதாகமம்",
-  "playlist-add-mode-text": "உரை",
-  "playlist-add-mode-link": "இணைப்பு",
+
   "playlist-add-scripture-placeholder": "உதாரணமாக யோவான் 3 அல்லது யோவான் 3:16",
-  "playlist-add-text-placeholder": "உரையை உள்ளிடவும்",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "உருப்படியைச் சேர்க்கவும்",
   "playlist-add-scripture-error": "அந்தக் குறிப்பைக் கண்டுபிடிக்க முடியவில்லை.",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "இந்த இணைப்பை உட்பொதி",
   "play-playlist": "பிளேலிஸ்ட்",
   "now-playing": "தற்போது ஒளிபரப்பாகிறது",
-  "now-playing-x": "தற்போது ஒளிபரப்பாகிறது: {{title}}",
+
   "stop": "நிறுத்து",
   "queue": "வரிசை",
   "previous": "முந்தைய",
@@ -391,7 +389,7 @@
   "editor-align-center": "மையத்தில் சீரமைக்கவும்",
   "editor-align-right": "சரியாக சீரமைக்கவும்",
   "editor-align-justify": "நியாயப்படுத்துங்கள்",
-  "failed-to-load-playlist": "பிளேலிஸ்ட்டை ஏற்ற முடியவில்லை",
+
   "share-playlist": "பிளேலிஸ்ட்டைப் பகிரவும்",
   "playlist-url-copied": "பிளேலிஸ்ட் URL கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது.",
   "current-playlist": "தற்போதைய பிளேலிஸ்ட்",

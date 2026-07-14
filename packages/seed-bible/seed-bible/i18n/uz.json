@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Navigatsiya",
   "session-settings-section-sharing": "Ulashish",
   "session-settings-section-participants": "Ishtirokchilar",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — umumiy sessiya, {{count}} taqdimot",
+
   "shared": "Birgalikda",
   "host": "Xost",
   "co-host": "Hamkor boshlovchi",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Sessiyani tugatish",
   "dont-show-again": "Buni boshqa ko'rsatmang",
   "discover": "Kashf eting",
-  "discover-book-chapter": "{{book}} {{chapter}} ni kashf eting",
+
   "playlists": "Pleylistlar",
   "annotations": "Izohlar",
   "cross-references": "O'zaro havolalar",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Element qo'shish",
   "playlist-edit-item": "Elementni tahrirlash",
   "playlist-save-item": "O'zgarishlarni saqlash",
-  "playlist-add-mode-scripture": "Muqaddas Kitob",
-  "playlist-add-mode-text": "Matn",
-  "playlist-add-mode-link": "Havola",
+
   "playlist-add-scripture-placeholder": "masalan, Yuhanno 3 yoki Yuhanno 3:16",
-  "playlist-add-text-placeholder": "Matn kiriting",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Element qo'shish",
   "playlist-add-scripture-error": "Bu ma'lumotnomani topib bo'lmadi",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Ushbu havolani joylashtiring",
   "play-playlist": "Pleylistni ijro etish",
   "now-playing": "Hozir ijro etilmoqda",
-  "now-playing-x": "Hozir ijro etilmoqda: {{title}}",
+
   "stop": "STOP",
   "queue": "Navbat",
   "previous": "Oldingi",
@@ -391,7 +389,7 @@
   "editor-align-center": "Markazni tekislang",
   "editor-align-right": "O'ngga tekislang",
   "editor-align-justify": "Asoslash",
-  "failed-to-load-playlist": "Pleylistni yuklashda xatolik yuz berdi",
+
   "share-playlist": "Pleylistni ulashish",
   "playlist-url-copied": "Pleylist URL manzili buferga nusxalandi",
   "current-playlist": "Joriy pleylist",

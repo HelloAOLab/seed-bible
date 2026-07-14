@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Nabigasyon",
   "session-settings-section-sharing": "Pagbabahagi",
   "session-settings-section-participants": "Mga Kalahok",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — nakabahaging sesyon, {{count}} ang naroroon",
+
   "shared": "Ibinahagi",
   "host": "Tagapangasiwa",
   "co-host": "Kasamang host",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Tapusin ang sesyon",
   "dont-show-again": "Huwag mo na itong ipakita muli",
   "discover": "Tuklasin",
-  "discover-book-chapter": "Tuklasin ang {{book}} {{chapter}}",
+
   "playlists": "Mga Playlist",
   "annotations": "Mga Anotasyon",
   "cross-references": "Mga cross reference",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Magdagdag ng item",
   "playlist-edit-item": "I-edit ang item",
   "playlist-save-item": "I-save ang mga pagbabago",
-  "playlist-add-mode-scripture": "Kasulatan",
-  "playlist-add-mode-text": "Teksto",
-  "playlist-add-mode-link": "Link",
+
   "playlist-add-scripture-placeholder": "hal. Juan 3 o Juan 3:16",
-  "playlist-add-text-placeholder": "Maglagay ng teksto",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Magdagdag ng item",
   "playlist-add-scripture-error": "Hindi mahanap ang sangguniang iyon",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "I-embed ang link na ito",
   "play-playlist": "I-play ang playlist",
   "now-playing": "Nagpe-play ngayon",
-  "now-playing-x": "Pinapatugtog ngayon: {{title}}",
+
   "stop": "Huminto",
   "queue": "Pila",
   "previous": "Nakaraan",
@@ -391,7 +389,7 @@
   "editor-align-center": "Ihanay sa gitna",
   "editor-align-right": "Ihanay pakanan",
   "editor-align-justify": "Ipaliwanag",
-  "failed-to-load-playlist": "Nabigong i-load ang playlist",
+
   "share-playlist": "Ibahagi ang playlist",
   "playlist-url-copied": "Nakopya ang URL ng playlist sa clipboard",
   "current-playlist": "Kasalukuyang playlist",

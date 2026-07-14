@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "ምድህሳስ",
   "session-settings-section-sharing": "ሼር ምግባር",
   "session-settings-section-participants": "ተሳተፍቲ",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — ዝተኻፈለ ክፍለ ግዜ፣ {{count}} ኣሎ።",
+
   "shared": "ሼር ዝገበረ",
   "host": "መዳለዊ",
   "co-host": "ሓባራዊ ኣአንጋዲ",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "ክፍለ ግዜ ምዝዛም",
   "dont-show-again": "እዚ ዳግማይ ኣይተርእይዎ።",
   "discover": "ረኸበ",
-  "discover-book-chapter": "{{book}} {{chapter}} ርኸብ።",
+
   "playlists": "ዝርዝር ደርፍታት",
   "annotations": "መግለጺታት (annotations)",
   "cross-references": "መስቀላዊ መወከሲታት",
@@ -367,11 +367,9 @@
   "playlist-add-item": "ኣቕሓ ምውሳኽ",
   "playlist-edit-item": "ኣርትዖት ኣቕሓ",
   "playlist-save-item": "ለውጢ ምዕቃብ",
-  "playlist-add-mode-scripture": "ቅዱሳት መጻሕፍቲ",
-  "playlist-add-mode-text": "ጽሑፍ",
-  "playlist-add-mode-link": "ሊንክ",
+
   "playlist-add-scripture-placeholder": "ንኣብነት ዮሃንስ 3 ወይ ዮሃንስ 3፡16",
-  "playlist-add-text-placeholder": "ጽሑፍ ኣእቱ",
+
   "playlist-add-link-placeholder": "https://ኣብነት.ኮም",
   "playlist-add-button": "ኣቕሓ ምውሳኽ",
   "playlist-add-scripture-error": "ነዚ መወከሲ ክረኽቦ ኣይከኣለን",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "ነዚ ሊንክ ኣስፍርዎ።",
   "play-playlist": "ዝርዝር ደርፍታት ምጽዋት",
   "now-playing": "ሕጂ ይጻወት ኣሎ።",
-  "now-playing-x": "ሕጂ ይጻወት ኣሎ {{title}}",
+
   "stop": "ጠጠው በል",
   "queue": "ተራ",
   "previous": "ዝሓለፈ",
@@ -391,7 +389,7 @@
   "editor-align-center": "ማእከል ኣሰላልፋ",
   "editor-align-right": "ንየማን ኣሰላልፍ",
   "editor-align-justify": "ኣረጋግፅ",
-  "failed-to-load-playlist": "ዝርዝር ደርፍታት ምጽዓን ኣይከኣለን",
+
   "share-playlist": "ዝርዝር ደርፍታት ሼር ግበር",
   "playlist-url-copied": "ዝርዝር ደርፍታት URL ናብ ቅንጥብጣብ ሰሌዳ ተቐዲሑ",
   "current-playlist": "ናይ ሕጂ ዝርዝር ደርፍታት",

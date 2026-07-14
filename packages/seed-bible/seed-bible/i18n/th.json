@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "การนำทาง",
   "session-settings-section-sharing": "การแบ่งปัน",
   "session-settings-section-participants": "ผู้เข้าร่วม",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — เซสชั่นร่วมกัน, {{count}} ผู้เข้าร่วม",
+
   "shared": "แชร์",
   "host": "เจ้าภาพ",
   "co-host": "พิธีกรร่วม",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "สิ้นสุดการประชุม",
   "dont-show-again": "อย่าแสดงสิ่งนี้อีก",
   "discover": "ค้นพบ",
-  "discover-book-chapter": "ค้นพบ {{book}} {{chapter}}",
+
   "playlists": "เพลย์ลิสต์",
   "annotations": "คำอธิบายประกอบ",
   "cross-references": "การอ้างอิงโยง",
@@ -367,11 +367,9 @@
   "playlist-add-item": "เพิ่มรายการ",
   "playlist-edit-item": "แก้ไขรายการ",
   "playlist-save-item": "บันทึกการเปลี่ยนแปลง",
-  "playlist-add-mode-scripture": "พระคัมภีร์",
-  "playlist-add-mode-text": "ข้อความ",
-  "playlist-add-mode-link": "ลิงก์",
+
   "playlist-add-scripture-placeholder": "เช่น ยอห์น 3 หรือ ยอห์น 3:16",
-  "playlist-add-text-placeholder": "ป้อนข้อความ",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "เพิ่มรายการ",
   "playlist-add-scripture-error": "ไม่พบข้อมูลอ้างอิงนั้น",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "ฝังลิงก์นี้",
   "play-playlist": "เล่นเพลย์ลิสต์",
   "now-playing": "กำลังเล่น",
-  "now-playing-x": "กำลังเล่น: {{title}}",
+
   "stop": "หยุด",
   "queue": "คิว",
   "previous": "ก่อนหน้า",
@@ -391,7 +389,7 @@
   "editor-align-center": "จัดแนวให้อยู่ตรงกลาง",
   "editor-align-right": "จัดชิดขวา",
   "editor-align-justify": "พิสูจน์",
-  "failed-to-load-playlist": "ไม่สามารถโหลดเพลย์ลิสต์ได้",
+
   "share-playlist": "แชร์เพลย์ลิสต์",
   "playlist-url-copied": "คัดลอก URL ของเพลย์ลิสต์ไปยังคลิปบอร์ดแล้ว",
   "current-playlist": "เพลย์ลิสต์ปัจจุบัน",

@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Navigare",
   "session-settings-section-sharing": "Partajare",
   "session-settings-section-participants": "Participanți",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — sesiune partajată, {{count}} prezentă",
+
   "shared": "Partajat",
   "host": "Gazdă",
   "co-host": "Co-gazdă",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Încheiați sesiunea",
   "dont-show-again": "Nu mai afișa asta",
   "discover": "Descoperi",
-  "discover-book-chapter": "Descoperă {{book}} {{chapter}}",
+
   "playlists": "Liste de redare",
   "annotations": "Adnotări",
   "cross-references": "Referințe încrucișate",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Adăugați element",
   "playlist-edit-item": "Editați elementul",
   "playlist-save-item": "Salvați modificările",
-  "playlist-add-mode-scripture": "Scriptură",
-  "playlist-add-mode-text": "Text",
-  "playlist-add-mode-link": "Legătură",
+
   "playlist-add-scripture-placeholder": "de exemplu Ioan 3 sau Ioan 3:16",
-  "playlist-add-text-placeholder": "Introduceți text",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Adăugați element",
   "playlist-add-scripture-error": "Nu am găsit acea referință",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Încorporați acest link",
   "play-playlist": "Redă lista de redare",
   "now-playing": "Acum se redă",
-  "now-playing-x": "Se redă acum: {{title}}",
+
   "stop": "Stop",
   "queue": "Coadă",
   "previous": "Anterior",
@@ -391,7 +389,7 @@
   "editor-align-center": "Aliniere la centru",
   "editor-align-right": "Aliniere la dreapta",
   "editor-align-justify": "Justifica",
-  "failed-to-load-playlist": "Nu s-a putut încărca lista de redare",
+
   "share-playlist": "Distribuie playlist",
   "playlist-url-copied": "Adresa URL a listei de redare a fost copiată în clipboard",
   "current-playlist": "Playlist curent",

@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Navigācija",
   "session-settings-section-sharing": "Kopīgošana",
   "session-settings-section-participants": "Dalībnieki",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — kopīga sesija, {{count}} klāt",
+
   "shared": "Kopīgots",
   "host": "Uzņēmējs",
   "co-host": "Līdzsaimnieks",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Beigt sesiju",
   "dont-show-again": "Nerādīt šo vairs",
   "discover": "Atklājiet",
-  "discover-book-chapter": "Atklājiet {{book}} {{chapter}}",
+
   "playlists": "Atskaņošanas saraksti",
   "annotations": "Anotācijas",
   "cross-references": "Savstarpējās atsauces",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Pievienot vienumu",
   "playlist-edit-item": "Rediģēt vienumu",
   "playlist-save-item": "Saglabāt izmaiņas",
-  "playlist-add-mode-scripture": "Svētie Raksti",
-  "playlist-add-mode-text": "Teksts",
-  "playlist-add-mode-link": "Saite",
+
   "playlist-add-scripture-placeholder": "piemēram, Jāņa 3 vai Jāņa 3:16",
-  "playlist-add-text-placeholder": "Ievadiet tekstu",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Pievienot vienumu",
   "playlist-add-scripture-error": "Nevarēju atrast šo atsauci",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Iegult šo saiti",
   "play-playlist": "Atskaņot atskaņošanas sarakstu",
   "now-playing": "Tagad atskaņo",
-  "now-playing-x": "Tagad spēlē: {{title}}",
+
   "stop": "Apstāties",
   "queue": "Rinda",
   "previous": "Iepriekšējais",
@@ -391,7 +389,7 @@
   "editor-align-center": "Izlīdzināt centrā",
   "editor-align-right": "Izlīdzināt pa labi",
   "editor-align-justify": "Izlīdzināt",
-  "failed-to-load-playlist": "Neizdevās ielādēt atskaņošanas sarakstu",
+
   "share-playlist": "Kopīgot atskaņošanas sarakstu",
   "playlist-url-copied": "Atskaņošanas saraksta URL kopēts starpliktuvē",
   "current-playlist": "Pašreizējais atskaņošanas saraksts",

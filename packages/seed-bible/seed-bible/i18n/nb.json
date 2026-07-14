@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Navigasjon",
   "session-settings-section-sharing": "Deling",
   "session-settings-section-participants": "Deltakerne",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — delt økt, {{count}} tilstede",
+
   "shared": "Delt",
   "host": "Vert",
   "co-host": "Medvert",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Avslutt økten",
   "dont-show-again": "Ikke vis dette igjen",
   "discover": "Oppdage",
-  "discover-book-chapter": "Oppdag {{book}} {{chapter}}",
+
   "playlists": "Spillelister",
   "annotations": "Annoteringer",
   "cross-references": "Kryssreferanser",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Legg til element",
   "playlist-edit-item": "Rediger element",
   "playlist-save-item": "Lagre endringer",
-  "playlist-add-mode-scripture": "Skrift",
-  "playlist-add-mode-text": "Tekst",
-  "playlist-add-mode-link": "Lenke",
+
   "playlist-add-scripture-placeholder": "f.eks. Johannes 3 eller Johannes 3:16",
-  "playlist-add-text-placeholder": "Skriv inn tekst",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Legg til element",
   "playlist-add-scripture-error": "Fant ikke den referansen",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Legg inn denne lenken",
   "play-playlist": "Spill av spilleliste",
   "now-playing": "Spilles nå",
-  "now-playing-x": "Spilles nå: {{title}}",
+
   "stop": "Stoppe",
   "queue": "Kø",
   "previous": "Tidligere",
@@ -391,7 +389,7 @@
   "editor-align-center": "Juster sentrum",
   "editor-align-right": "Juster til høyre",
   "editor-align-justify": "Begrunn",
-  "failed-to-load-playlist": "Kunne ikke laste inn spillelisten",
+
   "share-playlist": "Del spilleliste",
   "playlist-url-copied": "Spilleliste-URL kopiert til utklippstavlen",
   "current-playlist": "Gjeldende spilleliste",

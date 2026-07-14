@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "નેવિગેશન",
   "session-settings-section-sharing": "શેરિંગ",
   "session-settings-section-participants": "સહભાગીઓ",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — વહેંચાયેલ સત્ર, {{count}} હાજર",
+
   "shared": "શેર કરેલ",
   "host": "યજમાન",
   "co-host": "સહ-યજમાન",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "સત્ર સમાપ્ત કરો",
   "dont-show-again": "આ ફરી બતાવશો નહીં",
   "discover": "શોધો",
-  "discover-book-chapter": "{{book}} {{chapter}} શોધો",
+
   "playlists": "પ્લેલિસ્ટ્સ",
   "annotations": "ટીકાઓ",
   "cross-references": "ક્રોસ રેફરન્સ",
@@ -367,11 +367,9 @@
   "playlist-add-item": "આઇટમ ઉમેરો",
   "playlist-edit-item": "આઇટમ સંપાદિત કરો",
   "playlist-save-item": "ફેરફારો સાચવો",
-  "playlist-add-mode-scripture": "શાસ્ત્ર",
-  "playlist-add-mode-text": "ટેક્સ્ટ",
-  "playlist-add-mode-link": "લિંક ડાઉનલોડ કરો",
+
   "playlist-add-scripture-placeholder": "દા.ત. યોહાન ૩ અથવા યોહાન ૩:૧૬",
-  "playlist-add-text-placeholder": "ટેક્સ્ટ દાખલ કરો",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "આઇટમ ઉમેરો",
   "playlist-add-scripture-error": "તે સંદર્ભ શોધી શકાયો નથી",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "આ લિંક એમ્બેડ કરો",
   "play-playlist": "પ્લેલિસ્ટ ચલાવો",
   "now-playing": "હવે ચાલી રહ્યું છે",
-  "now-playing-x": "હવે ચાલી રહ્યું છે: {{title}}",
+
   "stop": "બંધ",
   "queue": "કતાર",
   "previous": "પાછલું",
@@ -391,7 +389,7 @@
   "editor-align-center": "મધ્યમાં સંરેખિત કરો",
   "editor-align-right": "જમણે સંરેખિત કરો",
   "editor-align-justify": "સમન્વયિત કરો",
-  "failed-to-load-playlist": "પ્લેલિસ્ટ લોડ કરવામાં નિષ્ફળ થયાં",
+
   "share-playlist": "પ્લેલિસ્ટ શેર કરો",
   "playlist-url-copied": "પ્લેલિસ્ટ URL ક્લિપબોર્ડ પર કૉપિ કર્યું",
   "current-playlist": "વર્તમાન પ્લેલિસ્ટ",

@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Nawigacja",
   "session-settings-section-sharing": "Partycypujący",
   "session-settings-section-participants": "Uczestnicy",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — sesja współdzielona, ​​obecnych jest {{count}}",
+
   "shared": "Wspólny",
   "host": "Gospodarz",
   "co-host": "Współgospodarz",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Zakończ sesję",
   "dont-show-again": "Nie pokazuj tego ponownie",
   "discover": "Odkryć",
-  "discover-book-chapter": "Odkryj {{book}} {{chapter}}",
+
   "playlists": "Listy odtwarzania",
   "annotations": "Adnotacje",
   "cross-references": "Odnośniki krzyżowe",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Dodaj element",
   "playlist-edit-item": "Edytuj element",
   "playlist-save-item": "Zapisz zmiany",
-  "playlist-add-mode-scripture": "Pismo",
-  "playlist-add-mode-text": "Tekst",
-  "playlist-add-mode-link": "Połączyć",
+
   "playlist-add-scripture-placeholder": "np. Jana 3 lub Jana 3:16",
-  "playlist-add-text-placeholder": "Wprowadź tekst",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Dodaj element",
   "playlist-add-scripture-error": "Nie udało się znaleźć tego odniesienia",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Osadź ten link",
   "play-playlist": "Odtwórz playlistę",
   "now-playing": "Teraz odtwarzane",
-  "now-playing-x": "Teraz odtwarzane: {{title}}",
+
   "stop": "Zatrzymywać się",
   "queue": "Kolejka",
   "previous": "Poprzedni",
@@ -391,7 +389,7 @@
   "editor-align-center": "Wyrównaj do środka",
   "editor-align-right": "Wyrównaj do prawej",
   "editor-align-justify": "Uzasadniać",
-  "failed-to-load-playlist": "Nie udało się załadować listy odtwarzania",
+
   "share-playlist": "Udostępnij playlistę",
   "playlist-url-copied": "Adres URL listy odtwarzania skopiowany do schowka",
   "current-playlist": "Aktualna lista odtwarzania",

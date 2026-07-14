@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Urambazaji",
   "session-settings-section-sharing": "Kushiriki",
   "session-settings-section-participants": "Washiriki",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — kipindi kilichoshirikiwa, {{count}} kinawasilisha",
+
   "shared": "Imeshirikiwa",
   "host": "Mwenyeji",
   "co-host": "Mwenyeji mwenza",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Maliza kipindi",
   "dont-show-again": "Usionyeshe hii tena",
   "discover": "Gundua",
-  "discover-book-chapter": "Gundua {{book}} {{chapter}}",
+
   "playlists": "Orodha za kucheza",
   "annotations": "Maelezo",
   "cross-references": "Marejeleo ya msalaba",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Ongeza kipengee",
   "playlist-edit-item": "Hariri kipengee",
   "playlist-save-item": "Hifadhi mabadiliko",
-  "playlist-add-mode-scripture": "Maandiko",
-  "playlist-add-mode-text": "Maandishi",
-  "playlist-add-mode-link": "Kiungo",
+
   "playlist-add-scripture-placeholder": "mfano Yohana 3 au Yohana 3:16",
-  "playlist-add-text-placeholder": "Ingiza maandishi",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Ongeza kipengee",
   "playlist-add-scripture-error": "Sikuweza kupata marejeleo hayo",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Pachika kiungo hiki",
   "play-playlist": "Cheza orodha ya kucheza",
   "now-playing": "Sasa inacheza",
-  "now-playing-x": "Inachezwa sasa: {{title}}",
+
   "stop": "Simamisha",
   "queue": "Foleni",
   "previous": "Iliyotangulia",
@@ -391,7 +389,7 @@
   "editor-align-center": "Panga katikati",
   "editor-align-right": "Pangilia kulia",
   "editor-align-justify": "Thibitisha",
-  "failed-to-load-playlist": "Imeshindwa kupakia orodha ya kucheza",
+
   "share-playlist": "Shiriki orodha ya kucheza",
   "playlist-url-copied": "URL ya Orodha ya Kucheza Imenakiliwa kwenye ubao wa kunakili",
   "current-playlist": "Orodha ya kucheza ya sasa",

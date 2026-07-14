@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Leiðsögn",
   "session-settings-section-sharing": "Deiling",
   "session-settings-section-participants": "Þátttakendur",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — sameiginleg lota, {{count}} viðstaddir",
+
   "shared": "Deilt",
   "host": "Gestgjafi",
   "co-host": "Meðgestgjafi",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Loka lotu",
   "dont-show-again": "Ekki sýna þetta aftur",
   "discover": "Uppgötva",
-  "discover-book-chapter": "Uppgötvaðu {{book}} {{chapter}}",
+
   "playlists": "Spilunarlistar",
   "annotations": "Skýringar",
   "cross-references": "Krossvísanir",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Bæta við hlut",
   "playlist-edit-item": "Breyta atriði",
   "playlist-save-item": "Vista breytingar",
-  "playlist-add-mode-scripture": "Ritningin",
-  "playlist-add-mode-text": "Texti",
-  "playlist-add-mode-link": "Tengill",
+
   "playlist-add-scripture-placeholder": "t.d. Jóhannes 3 eða Jóhannes 3:16",
-  "playlist-add-text-placeholder": "Sláðu inn texta",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Bæta við hlut",
   "playlist-add-scripture-error": "Fann ekki þessa tilvísun",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Innfella þennan tengil",
   "play-playlist": "Spila spilunarlista",
   "now-playing": "Nú í spilun",
-  "now-playing-x": "Nú í spilun: {{title}}",
+
   "stop": "Stöðva",
   "queue": "Biðröð",
   "previous": "Fyrri",
@@ -391,7 +389,7 @@
   "editor-align-center": "Miðja",
   "editor-align-right": "Hægrar stilling",
   "editor-align-justify": "Réttlæta",
-  "failed-to-load-playlist": "Mistókst að hlaða spilunarlista",
+
   "share-playlist": "Deila spilunarlista",
   "playlist-url-copied": "Vefslóð spilunarlista afrituð á klippiborð",
   "current-playlist": "Núverandi spilunarlisti",

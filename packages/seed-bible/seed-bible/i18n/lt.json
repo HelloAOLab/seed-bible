@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Navigacija",
   "session-settings-section-sharing": "Dalijimasis",
   "session-settings-section-participants": "Dalyviai",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — bendras seansas, dabar {{count}}",
+
   "shared": "Bendrinama",
   "host": "Šeimininkas",
   "co-host": "Bendrabučio šeimininkas",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Baigti sesiją",
   "dont-show-again": "Daugiau to nerodyti",
   "discover": "Atraskite",
-  "discover-book-chapter": "Atraskite {{book}} {{chapter}}",
+
   "playlists": "Grojaraščiai",
   "annotations": "Anotacijos",
   "cross-references": "Kryžminės nuorodos",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Pridėti elementą",
   "playlist-edit-item": "Redaguoti elementą",
   "playlist-save-item": "Išsaugoti pakeitimus",
-  "playlist-add-mode-scripture": "Šventasis Raštas",
-  "playlist-add-mode-text": "Tekstas",
-  "playlist-add-mode-link": "Nuoroda",
+
   "playlist-add-scripture-placeholder": "pvz., Jono 3 arba Jono 3:16",
-  "playlist-add-text-placeholder": "Įveskite tekstą",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Pridėti elementą",
   "playlist-add-scripture-error": "Nepavyko rasti tos nuorodos",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Įterpti šią nuorodą",
   "play-playlist": "Leisti grojaraštį",
   "now-playing": "Dabar grojama",
-  "now-playing-x": "Dabar groja: {{title}}",
+
   "stop": "Stop",
   "queue": "Eilė",
   "previous": "Ankstesnis",
@@ -391,7 +389,7 @@
   "editor-align-center": "Sulygiuoti centrą",
   "editor-align-right": "Lygiuoti dešinėje",
   "editor-align-justify": "Lygiuoti",
-  "failed-to-load-playlist": "Nepavyko įkelti grojaraščio",
+
   "share-playlist": "Bendrinti grojaraštį",
   "playlist-url-copied": "Grojaraščio URL nukopijuotas į iškarpinę",
   "current-playlist": "Dabartinis grojaraštis",

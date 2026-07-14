@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Navegación",
   "session-settings-section-sharing": "Compartir",
   "session-settings-section-participants": "Participantes",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — sesión compartida, {{count}} presentes",
+
   "shared": "Compartido",
   "host": "Anfitrión",
   "co-host": "Copresentador/a",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Rematar sesión",
   "dont-show-again": "Non volver mostrar isto",
   "discover": "Descubrir",
-  "discover-book-chapter": "Descubra {{book}} {{chapter}}",
+
   "playlists": "Listas de reprodución",
   "annotations": "Anotacións",
   "cross-references": "Referencias cruzadas",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Engadir elemento",
   "playlist-edit-item": "Editar elemento",
   "playlist-save-item": "Gardar cambios",
-  "playlist-add-mode-scripture": "Escrituras",
-  "playlist-add-mode-text": "Texto",
-  "playlist-add-mode-link": "Ligazón",
+
   "playlist-add-scripture-placeholder": "por exemplo, Xoán 3 ou Xoán 3:16",
-  "playlist-add-text-placeholder": "Introducir texto",
+
   "playlist-add-link-placeholder": "https://exemplo.com",
   "playlist-add-button": "Engadir elemento",
   "playlist-add-scripture-error": "Non se puido atopar esa referencia",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Incrustar esta ligazón",
   "play-playlist": "Reproducir lista de reprodución",
   "now-playing": "Agora reproducíndose",
-  "now-playing-x": "Agora reproducíndose: {{title}}",
+
   "stop": "Parar",
   "queue": "Fila",
   "previous": "Anterior",
@@ -391,7 +389,7 @@
   "editor-align-center": "Aliñar no centro",
   "editor-align-right": "Aliñar á dereita",
   "editor-align-justify": "Xustificar",
-  "failed-to-load-playlist": "Non se puido cargar a lista de reprodución",
+
   "share-playlist": "Compartir lista de reprodución",
   "playlist-url-copied": "URL da lista de reprodución copiada no portapapeis",
   "current-playlist": "Lista de reprodución actual",

@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Navigation",
   "session-settings-section-sharing": "Teilen",
   "session-settings-section-participants": "Teilnehmer",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — gemeinsame Sitzung, {{count}} anwesend",
+
   "shared": "Gemeinsam",
   "host": "Gastgeber",
   "co-host": "Co-Moderator",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Sitzung beenden",
   "dont-show-again": "Zeig das nicht noch einmal",
   "discover": "Entdecken",
-  "discover-book-chapter": "Entdecken Sie {{book}} {{chapter}}",
+
   "playlists": "Wiedergabelisten",
   "annotations": "Anmerkungen",
   "cross-references": "Querverweise",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Artikel hinzufügen",
   "playlist-edit-item": "Element bearbeiten",
   "playlist-save-item": "Änderungen speichern",
-  "playlist-add-mode-scripture": "Schrift",
-  "playlist-add-mode-text": "Text",
-  "playlist-add-mode-link": "Link",
+
   "playlist-add-scripture-placeholder": "z. B. Johannes 3 oder Johannes 3,16",
-  "playlist-add-text-placeholder": "Text eingeben",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Artikel hinzufügen",
   "playlist-add-scripture-error": "Ich konnte die entsprechende Referenz nicht finden.",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Diesen Link einbetten",
   "play-playlist": "Wiedergabeliste abspielen",
   "now-playing": "Aktuell läuft",
-  "now-playing-x": "Aktuell läuft: {{title}}",
+
   "stop": "Stoppen",
   "queue": "Warteschlange",
   "previous": "Vorherige",
@@ -391,7 +389,7 @@
   "editor-align-center": "Zentrieren",
   "editor-align-right": "Rechts ausrichten",
   "editor-align-justify": "Rechtfertigen",
-  "failed-to-load-playlist": "Wiedergabeliste konnte nicht geladen werden",
+
   "share-playlist": "Playlist teilen",
   "playlist-url-copied": "Playlist-URL in die Zwischenablage kopiert",
   "current-playlist": "Aktuelle Wiedergabeliste",

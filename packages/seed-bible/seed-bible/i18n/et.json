@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Navigeerimine",
   "session-settings-section-sharing": "Jagamine",
   "session-settings-section-participants": "Osalejad",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — jagatud seanss, kohal {{count}}",
+
   "shared": "Jagatud",
   "host": "Host",
   "co-host": "Kaasvõõrustaja",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Lõpeta seanss",
   "dont-show-again": "Ära seda enam näita",
   "discover": "Avasta",
-  "discover-book-chapter": "Avasta {{book}} {{chapter}}",
+
   "playlists": "Esitusloendid",
   "annotations": "Märkused",
   "cross-references": "Ristviited",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Lisa üksus",
   "playlist-edit-item": "Redigeeri üksust",
   "playlist-save-item": "Salvesta muudatused",
-  "playlist-add-mode-scripture": "Pühakiri",
-  "playlist-add-mode-text": "Tekst",
-  "playlist-add-mode-link": "Link",
+
   "playlist-add-scripture-placeholder": "nt Johannese 3 või Johannese 3:16",
-  "playlist-add-text-placeholder": "Sisesta tekst",
+
   "playlist-add-link-placeholder": "https://näide.com",
   "playlist-add-button": "Lisa üksus",
   "playlist-add-scripture-error": "Seda viidet ei leitud",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Manusta see link",
   "play-playlist": "Esita esitusloend",
   "now-playing": "Nüüd mängib",
-  "now-playing-x": "Praegu mängib: {{title}}",
+
   "stop": "Stopp",
   "queue": "Järjekord",
   "previous": "Eelmine",
@@ -391,7 +389,7 @@
   "editor-align-center": "Joonda keskele",
   "editor-align-right": "Joonda paremale",
   "editor-align-justify": "Joonda",
-  "failed-to-load-playlist": "Esitusloendi laadimine ebaõnnestus",
+
   "share-playlist": "Jaga esitusloendit",
   "playlist-url-copied": "Esitusloendi URL kopeeriti lõikelauale",
   "current-playlist": "Praegune esitusloend",

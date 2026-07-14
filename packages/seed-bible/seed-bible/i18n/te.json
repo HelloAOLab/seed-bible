@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "నావిగేషన్",
   "session-settings-section-sharing": "పంచుకోవడం",
   "session-settings-section-participants": "పాల్గొనేవారు",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — ఉమ్మడి సమావేశం, {{count}} హాజరు",
+
   "shared": "భాగస్వామ్యం చేయబడింది",
   "host": "హోస్ట్",
   "co-host": "సహ-హోస్ట్",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "సెషన్‌ను ముగించండి",
   "dont-show-again": "దీన్ని మళ్ళీ చూపించవద్దు",
   "discover": "కనుగొనండి",
-  "discover-book-chapter": "{{book}} {{chapter}} ను కనుగొనండి",
+
   "playlists": "ప్లేజాబితాలు",
   "annotations": "వ్యాఖ్యానాలు",
   "cross-references": "క్రాస్ రిఫరెన్సులు",
@@ -367,11 +367,9 @@
   "playlist-add-item": "అంశాన్ని జోడించండి",
   "playlist-edit-item": "అంశాన్ని సవరించండి",
   "playlist-save-item": "మార్పులను సేవ్ చేయండి",
-  "playlist-add-mode-scripture": "లేఖనం",
-  "playlist-add-mode-text": "టెక్స్ట్",
-  "playlist-add-mode-link": "లింక్",
+
   "playlist-add-scripture-placeholder": "ఉదాహరణకు యోహాను 3 లేదా యోహాను 3:16",
-  "playlist-add-text-placeholder": "వచనాన్ని నమోదు చేయండి",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "అంశాన్ని జోడించండి",
   "playlist-add-scripture-error": "ఆ సూచనను కనుగొనలేకపోయాను",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "ఈ లింక్‌ను పొందుపరచండి",
   "play-playlist": "ప్లేలిస్ట్‌ను ప్లే చేయండి",
   "now-playing": "ఇప్పుడు ప్లే అవుతోంది",
-  "now-playing-x": "ప్రస్తుతం ప్లే అవుతోంది: {{title}}",
+
   "stop": "ఆపండి",
   "queue": "క్యూ",
   "previous": "మునుపటి",
@@ -391,7 +389,7 @@
   "editor-align-center": "కేంద్రాన్ని సమలేఖనం చేయండి",
   "editor-align-right": "కుడివైపు సమలేఖనం చేయండి",
   "editor-align-justify": "సమర్థించండి",
-  "failed-to-load-playlist": "ప్లేలిస్ట్‌ను లోడ్ చేయడంలో విఫలమైంది",
+
   "share-playlist": "ప్లేలిస్ట్‌ను పంచుకోండి",
   "playlist-url-copied": "ప్లేలిస్ట్ URL క్లిప్‌బోర్డ్‌కు కాపీ చేయబడింది",
   "current-playlist": "ప్రస్తుత ప్లేలిస్ట్",

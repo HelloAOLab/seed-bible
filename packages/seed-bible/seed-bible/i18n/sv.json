@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Navigering",
   "session-settings-section-sharing": "Delning",
   "session-settings-section-participants": "Deltagare",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — delad session, {{count}} närvarande",
+
   "shared": "Delad",
   "host": "Värd",
   "co-host": "Medvärd",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Avsluta sessionen",
   "dont-show-again": "Visa inte detta igen",
   "discover": "Upptäcka",
-  "discover-book-chapter": "Upptäck {{book}} {{chapter}}",
+
   "playlists": "Spellistor",
   "annotations": "Annoteringar",
   "cross-references": "Korsreferenser",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Lägg till objekt",
   "playlist-edit-item": "Redigera objekt",
   "playlist-save-item": "Spara ändringar",
-  "playlist-add-mode-scripture": "Skriften",
-  "playlist-add-mode-text": "Text",
-  "playlist-add-mode-link": "Länk",
+
   "playlist-add-scripture-placeholder": "t.ex. Johannes 3 eller Johannes 3:16",
-  "playlist-add-text-placeholder": "Ange text",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Lägg till objekt",
   "playlist-add-scripture-error": "Kunde inte hitta den referensen",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Bädda in den här länken",
   "play-playlist": "Spela upp spellista",
   "now-playing": "Spelas nu",
-  "now-playing-x": "Spelas nu: {{title}}",
+
   "stop": "Stopp",
   "queue": "Kö",
   "previous": "Tidigare",
@@ -391,7 +389,7 @@
   "editor-align-center": "Justera mitten",
   "editor-align-right": "Högerjustera",
   "editor-align-justify": "Rättfärdiga",
-  "failed-to-load-playlist": "Misslyckades med att ladda spellistan",
+
   "share-playlist": "Dela spellista",
   "playlist-url-copied": "Spellistan-URL kopierad till urklipp",
   "current-playlist": "Aktuell spellista",

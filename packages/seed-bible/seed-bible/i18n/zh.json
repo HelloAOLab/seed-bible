@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "导航",
   "session-settings-section-sharing": "分享",
   "session-settings-section-participants": "参与者",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — 共享会话， {{count}}次",
+
   "shared": "共享",
   "host": "主持人",
   "co-host": "联合主持人",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "会议结束",
   "dont-show-again": "不要再次显示此内容",
   "discover": "发现",
-  "discover-book-chapter": "发现{{book}} {{chapter}}",
+
   "playlists": "播放列表",
   "annotations": "注释",
   "cross-references": "交叉引用",
@@ -367,11 +367,9 @@
   "playlist-add-item": "添加项目",
   "playlist-edit-item": "编辑项目",
   "playlist-save-item": "保存更改",
-  "playlist-add-mode-scripture": "圣经",
-  "playlist-add-mode-text": "文本",
-  "playlist-add-mode-link": "关联",
+
   "playlist-add-scripture-placeholder": "例如约翰福音3章或约翰福音3:16",
-  "playlist-add-text-placeholder": "输入文本",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "添加项目",
   "playlist-add-scripture-error": "找不到那篇参考文献",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "嵌入此链接",
   "play-playlist": "播放列表",
   "now-playing": "正在播放",
-  "now-playing-x": "正在播放： {{title}}",
+
   "stop": "停止",
   "queue": "队列",
   "previous": "以前的",
@@ -391,7 +389,7 @@
   "editor-align-center": "居中对齐",
   "editor-align-right": "右对齐",
   "editor-align-justify": "证明合法",
-  "failed-to-load-playlist": "播放列表加载失败",
+
   "share-playlist": "分享播放列表",
   "playlist-url-copied": "播放列表网址已复制到剪贴板",
   "current-playlist": "当前播放列表",

@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Navigointi",
   "session-settings-section-sharing": "Jakaminen",
   "session-settings-section-participants": "Osallistujat",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — jaettu istunto, {{count}} läsnä",
+
   "shared": "Jaettu",
   "host": "Isäntä",
   "co-host": "Yhteisisäntä",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Lopeta istunto",
   "dont-show-again": "Älä näytä tätä uudelleen",
   "discover": "Tutustu",
-  "discover-book-chapter": "Löydä {{book}} {{chapter}}",
+
   "playlists": "Soittolistat",
   "annotations": "Merkinnät",
   "cross-references": "Ristiviittaukset",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Lisää kohde",
   "playlist-edit-item": "Muokkaa kohdetta",
   "playlist-save-item": "Tallenna muutokset",
-  "playlist-add-mode-scripture": "Raamattu",
-  "playlist-add-mode-text": "Teksti",
-  "playlist-add-mode-link": "Linkki",
+
   "playlist-add-scripture-placeholder": "esim. Joh. 3 tai Joh. 3:16",
-  "playlist-add-text-placeholder": "Kirjoita teksti",
+
   "playlist-add-link-placeholder": "https://esimerkki.com",
   "playlist-add-button": "Lisää kohde",
   "playlist-add-scripture-error": "En löytänyt kyseistä viitettä",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Upota tämä linkki",
   "play-playlist": "Toista soittolista",
   "now-playing": "Nyt toistetaan",
-  "now-playing-x": "Nyt toistetaan: {{title}}",
+
   "stop": "Stop",
   "queue": "Jonottaa",
   "previous": "Edellinen",
@@ -391,7 +389,7 @@
   "editor-align-center": "Tasaa keskelle",
   "editor-align-right": "Tasaa oikealle",
   "editor-align-justify": "Perustella",
-  "failed-to-load-playlist": "Soittolistan lataaminen epäonnistui",
+
   "share-playlist": "Jaa soittolista",
   "playlist-url-copied": "Soittolistan URL-osoite kopioitu leikepöydälle",
   "current-playlist": "Nykyinen soittolista",

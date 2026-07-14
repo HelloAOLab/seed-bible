@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "ಸಂಚರಣೆ",
   "session-settings-section-sharing": "ಹಂಚಿಕೊಳ್ಳುವುದು",
   "session-settings-section-participants": "ಭಾಗವಹಿಸುವವರು",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — ಹಂಚಿಕೊಂಡ ಅವಧಿ, {{count}} ಪ್ರಸ್ತುತ",
+
   "shared": "ಹಂಚಿಕೊಳ್ಳಲಾಗಿದೆ",
   "host": "ಹೋಸ್ಟ್",
   "co-host": "ಸಹ-ನಿರೂಪಕ",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "ಅಧಿವೇಶನ ಅಂತ್ಯಗೊಳಿಸಿ",
   "dont-show-again": "ಇದನ್ನು ಮತ್ತೆ ತೋರಿಸಬೇಡಿ",
   "discover": "ಅನ್ವೇಷಿಸಿ",
-  "discover-book-chapter": "{{book}} {{chapter}} ಅನ್ವೇಷಿಸಿ",
+
   "playlists": "ಪ್ಲೇಪಟ್ಟಿಗಳು",
   "annotations": "ಟಿಪ್ಪಣಿಗಳು",
   "cross-references": "ಅಡ್ಡ ಉಲ್ಲೇಖಗಳು",
@@ -367,11 +367,9 @@
   "playlist-add-item": "ಐಟಂ ಸೇರಿಸಿ",
   "playlist-edit-item": "ಐಟಂ ಸಂಪಾದಿಸಿ",
   "playlist-save-item": "ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಿ",
-  "playlist-add-mode-scripture": "ಧರ್ಮಗ್ರಂಥ",
-  "playlist-add-mode-text": "ಪಠ್ಯ",
-  "playlist-add-mode-link": "ಲಿಂಕ್",
+
   "playlist-add-scripture-placeholder": "ಉದಾ: ಯೋಹಾನ 3 ಅಥವಾ ಯೋಹಾನ 3:16",
-  "playlist-add-text-placeholder": "ಪಠ್ಯವನ್ನು ನಮೂದಿಸಿ",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "ಐಟಂ ಸೇರಿಸಿ",
   "playlist-add-scripture-error": "ಆ ಉಲ್ಲೇಖ ಸಿಗಲಿಲ್ಲ.",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "ಈ ಲಿಂಕ್ ಅನ್ನು ಎಂಬೆಡ್ ಮಾಡಿ",
   "play-playlist": "ಪ್ಲೇಪಟ್ಟಿ ಪ್ಲೇ ಮಾಡಿ",
   "now-playing": "ಈಗ ಪ್ಲೇ ಆಗುತ್ತಿದೆ",
-  "now-playing-x": "ಈಗ ಪ್ಲೇ ಆಗುತ್ತಿದೆ: {{title}}",
+
   "stop": "ನಿಲ್ಲಿಸಿ",
   "queue": "ಸರದಿ",
   "previous": "ಹಿಂದಿನದು",
@@ -391,7 +389,7 @@
   "editor-align-center": "ಮಧ್ಯಕ್ಕೆ ಜೋಡಿಸಿ",
   "editor-align-right": "ಬಲಕ್ಕೆ ಜೋಡಿಸಿ",
   "editor-align-justify": "ಸಮರ್ಥಿಸಿ",
-  "failed-to-load-playlist": "ಪ್ಲೇಪಟ್ಟಿಯನ್ನು ಲೋಡ್ ಮಾಡಲು ವಿಫಲವಾಗಿದೆ",
+
   "share-playlist": "ಪ್ಲೇಪಟ್ಟಿ ಹಂಚಿಕೊಳ್ಳಿ",
   "playlist-url-copied": "ಪ್ಲೇಪಟ್ಟಿ URL ಅನ್ನು ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ",
   "current-playlist": "ಪ್ರಸ್ತುತ ಪ್ಲೇಪಟ್ಟಿ",

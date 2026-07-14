@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Navegación",
   "session-settings-section-sharing": "Intercambio",
   "session-settings-section-participants": "Participantes",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — sesión compartida, {{count}} presente",
+
   "shared": "Compartido",
   "host": "Anfitrión",
   "co-host": "Copresentador",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Fin de la sesión",
   "dont-show-again": "No vuelvas a mostrar esto",
   "discover": "Descubrir",
-  "discover-book-chapter": "Descubre {{book}} {{chapter}}",
+
   "playlists": "Listas de reproducción",
   "annotations": "Anotaciones",
   "cross-references": "Referencias cruzadas",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Agregar artículo",
   "playlist-edit-item": "Editar elemento",
   "playlist-save-item": "Guardar cambios",
-  "playlist-add-mode-scripture": "Sagrada Escritura",
-  "playlist-add-mode-text": "Texto",
-  "playlist-add-mode-link": "Enlace",
+
   "playlist-add-scripture-placeholder": "Por ejemplo, Juan 3 o Juan 3:16",
-  "playlist-add-text-placeholder": "Introduzca texto",
+
   "playlist-add-link-placeholder": "https://ejemplo.com",
   "playlist-add-button": "Agregar artículo",
   "playlist-add-scripture-error": "No pude encontrar esa referencia.",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Inserta este enlace",
   "play-playlist": "Reproducir lista de reproducción",
   "now-playing": "Reproduciendo ahora",
-  "now-playing-x": "Reproduciendo ahora: {{title}}",
+
   "stop": "Detener",
   "queue": "Cola",
   "previous": "Anterior",
@@ -391,7 +389,7 @@
   "editor-align-center": "Alinear al centro",
   "editor-align-right": "Alinear a la derecha",
   "editor-align-justify": "Justificar",
-  "failed-to-load-playlist": "No se pudo cargar la lista de reproducción",
+
   "share-playlist": "Compartir lista de reproducción",
   "playlist-url-copied": "Se copió la URL de la lista de reproducción al portapapeles.",
   "current-playlist": "Lista de reproducción actual",

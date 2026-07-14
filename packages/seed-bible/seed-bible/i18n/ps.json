@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "نیویګیشن",
   "session-settings-section-sharing": "شریکول",
   "session-settings-section-participants": "ګډونوال",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — شریکه غونډه، {{count}} حاضر",
+
   "shared": "شریک شوی",
   "host": "کوربه",
   "co-host": "ګډ کوربه",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "غونډه پای ته ورسوئ",
   "dont-show-again": "دا بیا مه ښکاره کوه",
   "discover": "کشف کړئ",
-  "discover-book-chapter": "کشف کړئ {{book}} {{chapter}}",
+
   "playlists": "پلې لیستونه",
   "annotations": "یادښتونه",
   "cross-references": "متقابل حوالې",
@@ -367,11 +367,9 @@
   "playlist-add-item": "توکي اضافه کړئ",
   "playlist-edit-item": "توکي سم کړئ",
   "playlist-save-item": "بدلونونه خوندي کړئ",
-  "playlist-add-mode-scripture": "صحیفه",
-  "playlist-add-mode-text": "متن",
-  "playlist-add-mode-link": "لینک",
+
   "playlist-add-scripture-placeholder": "د مثال په توګه یوحنا ۳ یا یوحنا ۳:۱۶",
-  "playlist-add-text-placeholder": "متن دننه کړئ",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "توکي اضافه کړئ",
   "playlist-add-scripture-error": "دا حواله ونه موندل شوه",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "دا لینک دننه کړئ",
   "play-playlist": "د غږیز لیست غږول",
   "now-playing": "اوس لوبه کوي",
-  "now-playing-x": "اوس غږېږي: {{title}}",
+
   "stop": "ودروئ",
   "queue": "کتار",
   "previous": "مخکینی",
@@ -391,7 +389,7 @@
   "editor-align-center": "په مرکز کې برابر کړئ",
   "editor-align-right": "ښي خوا ته برابر کړئ",
   "editor-align-justify": "توجیه کول",
-  "failed-to-load-playlist": "د پلې لیست پورته کول ناکام شول",
+
   "share-playlist": "د پلې لیست شریکول",
   "playlist-url-copied": "د پلې لیست URL کلپ بورډ ته کاپي شو",
   "current-playlist": "اوسنی پلی لیست",

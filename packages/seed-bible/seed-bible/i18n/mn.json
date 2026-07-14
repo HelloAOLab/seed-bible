@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Навигаци",
   "session-settings-section-sharing": "Хуваалцах",
   "session-settings-section-participants": "Оролцогчид",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — хуваалцсан хэсэг, {{count}} танилцуулга",
+
   "shared": "Хуваалцсан",
   "host": "Хост",
   "co-host": "Хамтран зохион байгуулагч",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Хуралдааныг дуусгах",
   "dont-show-again": "Үүнийг дахин бүү харуул",
   "discover": "Нээх",
-  "discover-book-chapter": "{{book}} {{chapter}} г нээж илрүүлээрэй",
+
   "playlists": "Тоглуулах жагсаалтууд",
   "annotations": "Тэмдэглэгээ",
   "cross-references": "Хөндлөн лавлагаа",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Зүйл нэмэх",
   "playlist-edit-item": "Зүйлийг засах",
   "playlist-save-item": "Өөрчлөлтүүдийг хадгалах",
-  "playlist-add-mode-scripture": "Судар",
-  "playlist-add-mode-text": "Текст",
-  "playlist-add-mode-link": "Холбоос",
+
   "playlist-add-scripture-placeholder": "жишээ нь Иохан 3 эсвэл Иохан 3:16",
-  "playlist-add-text-placeholder": "Текст оруулна уу",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Зүйл нэмэх",
   "playlist-add-scripture-error": "Тэр лавлагааг олж чадсангүй",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Энэ холбоосыг оруулах",
   "play-playlist": "Тоглуулах жагсаалтыг тоглуулах",
   "now-playing": "Одоо тоглож байна",
-  "now-playing-x": "Одоо тоглож байна: {{title}}",
+
   "stop": "Зогсоох",
   "queue": "Дараалал",
   "previous": "Өмнөх",
@@ -391,7 +389,7 @@
   "editor-align-center": "Төвийг нь тэгшлэх",
   "editor-align-right": "Баруун тийш зэрэгцүүлэх",
   "editor-align-justify": "Тэгшлэх",
-  "failed-to-load-playlist": "Тоглуулах жагсаалтыг ачаалж чадсангүй",
+
   "share-playlist": "Тоглуулах жагсаалтыг хуваалцах",
   "playlist-url-copied": "Тоглуулах жагсаалтын URL-г санах ойд хуулсан",
   "current-playlist": "Одоогийн тоглуулах жагсаалт",

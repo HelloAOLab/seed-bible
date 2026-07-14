@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Навигация",
   "session-settings-section-sharing": "Споделяне",
   "session-settings-section-participants": "Участници",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — споделена сесия, {{count}} присъстващи",
+
   "shared": "Споделено",
   "host": "Домакин",
   "co-host": "Съводещ",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Край на сесията",
   "dont-show-again": "Не показвай това отново",
   "discover": "Открийте",
-  "discover-book-chapter": "Открийте {{book}} {{chapter}}",
+
   "playlists": "Плейлисти",
   "annotations": "Анотации",
   "cross-references": "Кръстосани препратки",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Добавяне на елемент",
   "playlist-edit-item": "Редактиране на елемент",
   "playlist-save-item": "Запазване на промените",
-  "playlist-add-mode-scripture": "Писание",
-  "playlist-add-mode-text": "Текст",
-  "playlist-add-mode-link": "Връзка",
+
   "playlist-add-scripture-placeholder": "напр. Йоан 3 или Йоан 3:16",
-  "playlist-add-text-placeholder": "Въведете текст",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Добавяне на елемент",
   "playlist-add-scripture-error": "Не можах да намеря тази препратка",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Вграждане на тази връзка",
   "play-playlist": "Пусни плейлист",
   "now-playing": "Сега се възпроизвежда",
-  "now-playing-x": "Сега се възпроизвежда: {{title}}",
+
   "stop": "Спри",
   "queue": "Опашка",
   "previous": "Предишен",
@@ -391,7 +389,7 @@
   "editor-align-center": "Подравняване по центъра",
   "editor-align-right": "Подравняване вдясно",
   "editor-align-justify": "Подравняване",
-  "failed-to-load-playlist": "Зареждането на плейлиста не бе успешно",
+
   "share-playlist": "Споделяне на плейлист",
   "playlist-url-copied": "URL адресът на плейлиста е копиран в буферната памет",
   "current-playlist": "Текущ плейлист",

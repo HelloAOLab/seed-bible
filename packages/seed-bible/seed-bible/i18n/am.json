@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "አሰሳ",
   "session-settings-section-sharing": "ማጋራት",
   "session-settings-section-participants": "ተሳታፊዎች",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — የተጋራ ክፍለ ጊዜ፣ {{count}} አለ",
+
   "shared": "የተጋራ",
   "host": "አስተናጋጅ",
   "co-host": "ተባባሪ አስተናጋጅ",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "ክፍለ ጊዜን ጨርስ",
   "dont-show-again": "ይህንን ዳግመኛ አታሳይ",
   "discover": "ዲስከቨር",
-  "discover-book-chapter": "ያግኙ {{book}} {{chapter}}",
+
   "playlists": "የአጫዋች ዝርዝሮች",
   "annotations": "ማብራሪያዎች",
   "cross-references": "ተሻጋሪ ማጣቀሻዎች",
@@ -367,11 +367,9 @@
   "playlist-add-item": "ንጥል ያክሉ",
   "playlist-edit-item": "ንጥልን ያርትዑ",
   "playlist-save-item": "ለውጦችን አስቀምጥ",
-  "playlist-add-mode-scripture": "ቅዱሳት መጻሕፍት",
-  "playlist-add-mode-text": "ጽሑፍ",
-  "playlist-add-mode-link": "አገናኝ",
+
   "playlist-add-scripture-placeholder": "ለምሳሌ ዮሐንስ 3 ወይም ዮሐንስ 3:16",
-  "playlist-add-text-placeholder": "ጽሑፍ ያስገቡ",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "ንጥል ያክሉ",
   "playlist-add-scripture-error": "ያንን ማጣቀሻ ማግኘት አልተቻለም",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "ይህንን አገናኝ ይክተቱ",
   "play-playlist": "የአጫዋች ዝርዝር አጫውት",
   "now-playing": "አሁን እየተጫወተ ነው",
-  "now-playing-x": "አሁን እየተጫወተ ነው፦ {{title}}",
+
   "stop": "ተወ",
   "queue": "ወረፋ",
   "previous": "ቀዳሚ",
@@ -391,7 +389,7 @@
   "editor-align-center": "መሃልን አሰልፍ",
   "editor-align-right": "ወደ ቀኝ አሰልፍ",
   "editor-align-justify": "አስተካክል",
-  "failed-to-load-playlist": "የአጫዋች ዝርዝር መጫን አልተሳካም",
+
   "share-playlist": "የአጫዋች ዝርዝር አጋራ",
   "playlist-url-copied": "የአጫዋች ዝርዝር ዩአርኤል ወደ ቅንጥብ ሰሌዳ ተቀድቷል",
   "current-playlist": "የአሁኑ የአጫዋች ዝርዝር",

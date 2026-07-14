@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Naviqasiya",
   "session-settings-section-sharing": "Paylaşma",
   "session-settings-section-participants": "İştirakçılar",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — paylaşılan sessiya, {{count}} təqdimat",
+
   "shared": "Paylaşılan",
   "host": "Ev sahibi",
   "co-host": "Birgə ev sahibi",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Sessiyanı bitirin",
   "dont-show-again": "Bunu bir daha göstərməyin",
   "discover": "Kəşf edin",
-  "discover-book-chapter": "{{book}} {{chapter}} i kəşf edin",
+
   "playlists": "Pleylistlər",
   "annotations": "Annotasiyalar",
   "cross-references": "Çarpaz istinadlar",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Element əlavə edin",
   "playlist-edit-item": "Elementi redaktə edin",
   "playlist-save-item": "Dəyişiklikləri yadda saxla",
-  "playlist-add-mode-scripture": "Müqəddəs Yazılar",
-  "playlist-add-mode-text": "Mətn",
-  "playlist-add-mode-link": "Link",
+
   "playlist-add-scripture-placeholder": "məsələn, Yəhya 3 və ya Yəhya 3:16",
-  "playlist-add-text-placeholder": "Mətn daxil edin",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Element əlavə edin",
   "playlist-add-scripture-error": "Həmin istinadı tapa bilmədim",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Bu linki yerləşdirin",
   "play-playlist": "Pleylisti oxut",
   "now-playing": "Hazırda oxudulur",
-  "now-playing-x": "Hazırda səslənir: {{title}}",
+
   "stop": "Dayan",
   "queue": "Növbə",
   "previous": "Əvvəlki",
@@ -391,7 +389,7 @@
   "editor-align-center": "Mərkəzə düzləndirin",
   "editor-align-right": "Sağa düzləndirin",
   "editor-align-justify": "Əsaslandırın",
-  "failed-to-load-playlist": "Pleylist yüklənmədi",
+
   "share-playlist": "Pleylisti paylaşın",
   "playlist-url-copied": "Pleylist URL-i panoya kopyalandı",
   "current-playlist": "Cari pleylist",

@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Kosala navigation",
   "session-settings-section-sharing": "Kokabola",
   "session-settings-section-participants": "Bato oyo bakosangana na yango",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — session ya kokabola, {{count}} ezali",
+
   "shared": "Bakabolaka yango",
   "host": "Moto ayambi bapaya",
   "co-host": "Co-moyambi ya bapaya",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Suka session",
   "dont-show-again": "Kolakisa lisusu likambo oyo te",
   "discover": "Komona",
-  "discover-book-chapter": "Boyeba {{book}} {{chapter}}",
+
   "playlists": "Ba liste ya ba nzembo",
   "annotations": "Ba annotations oyo esalemi",
   "cross-references": "Ba références croisées",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Bakisa eloko",
   "playlist-edit-item": "Bobongisi eloko",
   "playlist-save-item": "Bomba mbongwana",
-  "playlist-add-mode-scripture": "Makomi",
-  "playlist-add-mode-text": "Nkoma",
-  "playlist-add-mode-link": "Lien",
+
   "playlist-add-scripture-placeholder": "ndakisa Yoane 3 to Yoane 3:16",
-  "playlist-add-text-placeholder": "Tyá makomi",
+
   "playlist-add-link-placeholder": "https://ndakisa.com",
   "playlist-add-button": "Bakisa eloko",
   "playlist-add-scripture-error": "Akokaki kozwa référence wana te",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Embed lien oyo",
   "play-playlist": "Bobɛta liste ya ba nzembo",
   "now-playing": "Sikoyo bazali kosakana",
-  "now-playing-x": "Sikoyo kobeta: {{title}}",
+
   "stop": "Kosukisa",
   "queue": "Molongo ya kozela",
   "previous": "Oyo eleki",
@@ -391,7 +389,7 @@
   "editor-align-center": "Aligner centre",
   "editor-align-right": "Aligner na droite",
   "editor-align-justify": "Komilongisa",
-  "failed-to-load-playlist": "Elongi te ko charger liste ya ba playlist",
+
   "share-playlist": "Bokabola liste ya ba nzembo",
   "playlist-url-copied": "URL ya liste ya kobɛta oyo esalemi kopi na tableau de bord",
   "current-playlist": "Liste ya ba nzembo ya lelo",

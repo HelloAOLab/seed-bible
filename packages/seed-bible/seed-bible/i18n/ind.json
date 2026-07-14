@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Navigasi",
   "session-settings-section-sharing": "Membagikan",
   "session-settings-section-participants": "Peserta",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — sesi bersama, {{count}} hadir",
+
   "shared": "Dibagikan",
   "host": "Tuan rumah",
   "co-host": "Pembawa acara bersama",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Akhiri sesi",
   "dont-show-again": "Jangan tampilkan ini lagi",
   "discover": "Menemukan",
-  "discover-book-chapter": "Temukan {{book}} {{chapter}}",
+
   "playlists": "Daftar Putar",
   "annotations": "Catatan",
   "cross-references": "Referensi silang",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Tambahkan item",
   "playlist-edit-item": "Edit item",
   "playlist-save-item": "Simpan perubahan",
-  "playlist-add-mode-scripture": "Kitab Suci",
-  "playlist-add-mode-text": "Teks",
-  "playlist-add-mode-link": "Link",
+
   "playlist-add-scripture-placeholder": "misalnya Yohanes 3 atau Yohanes 3:16",
-  "playlist-add-text-placeholder": "Masukkan teks",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Tambahkan item",
   "playlist-add-scripture-error": "Tidak dapat menemukan referensi tersebut.",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Sematkan tautan ini",
   "play-playlist": "Putar daftar putar",
   "now-playing": "Sedang diputar",
-  "now-playing-x": "Sedang diputar: {{title}}",
+
   "stop": "Berhenti",
   "queue": "Antre",
   "previous": "Sebelumnya",
@@ -391,7 +389,7 @@
   "editor-align-center": "Sejajarkan tengah",
   "editor-align-right": "Ratakan ke kanan",
   "editor-align-justify": "Membenarkan",
-  "failed-to-load-playlist": "Gagal memuat daftar putar",
+
   "share-playlist": "Bagikan daftar putar",
   "playlist-url-copied": "URL daftar putar disalin ke papan klip",
   "current-playlist": "Daftar putar saat ini",

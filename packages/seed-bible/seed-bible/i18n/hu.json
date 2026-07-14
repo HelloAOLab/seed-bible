@@ -320,7 +320,7 @@
   "session-settings-section-navigation": "Navigáció",
   "session-settings-section-sharing": "Megosztás",
   "session-settings-section-participants": "Résztvevők",
-  "collapsed-tab-shared_x": "{{book}} {{chapter}} — megosztott ülés, {{count}} jelen van",
+
   "shared": "Megosztott",
   "host": "Házigazda",
   "co-host": "Társházigazdák",
@@ -340,7 +340,7 @@
   "end-session-for-everyone": "Munkamenet vége",
   "dont-show-again": "Ne mutasd ezt újra",
   "discover": "Felfedezés",
-  "discover-book-chapter": "Fedezze fel {{book}} {{chapter}} könyvet",
+
   "playlists": "Lejátszási listák",
   "annotations": "Jegyzetek",
   "cross-references": "Kereszthivatkozások",
@@ -367,11 +367,9 @@
   "playlist-add-item": "Elem hozzáadása",
   "playlist-edit-item": "Elem szerkesztése",
   "playlist-save-item": "Változtatások mentése",
-  "playlist-add-mode-scripture": "Szentírás",
-  "playlist-add-mode-text": "Szöveg",
-  "playlist-add-mode-link": "Link",
+
   "playlist-add-scripture-placeholder": "pl. János 3 vagy János 3:16",
-  "playlist-add-text-placeholder": "Írjon be szöveget",
+
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Elem hozzáadása",
   "playlist-add-scripture-error": "Nem találtam a hivatkozást",
@@ -379,7 +377,7 @@
   "playlist-add-link-embed": "Beágyazza ezt a linket",
   "play-playlist": "Lejátszási lista lejátszása",
   "now-playing": "Most játszik",
-  "now-playing-x": "Most játszik: {{title}}",
+
   "stop": "Stop",
   "queue": "Sorban",
   "previous": "Előző",
@@ -391,7 +389,7 @@
   "editor-align-center": "Középre igazítás",
   "editor-align-right": "Jobbra igazítás",
   "editor-align-justify": "Sorkizárás",
-  "failed-to-load-playlist": "Nem sikerült betölteni a lejátszási listát",
+
   "share-playlist": "Lejátszási lista megosztása",
   "playlist-url-copied": "Lejátszási lista URL-címe a vágólapra másolva",
   "current-playlist": "Aktuális lejátszási lista",
