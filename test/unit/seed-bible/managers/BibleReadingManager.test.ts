@@ -2242,4 +2242,84 @@ describe("createBibleReadingState", () => {
       expect(listener).toHaveBeenCalledWith({ replace: false });
     });
   });
+
+  describe("label", () => {
+    function createStateWithExtensions(
+      readingExtensionManager: ReturnType<
+        typeof createBibleReadingExtensionManager
+      >
+    ) {
+      return createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        readingExtensionManager
+      );
+    }
+
+    it("defaults to '<book name> <chapter>' and tracks navigation", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      expect(state.label.value).toBe("Genesis 1");
+
+      await state.selectChapter("GEN", 5);
+      expect(state.label.value).toBe("Genesis 5");
+
+      await state.selectBook("EXO");
+      expect(state.label.value).toBe("Exodus 1");
+    });
+
+    it("lets an enabled extension override the label, restoring the default on disable", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({
+        id: "x",
+        activate: (): ReadingExtensionInstance => ({
+          transformTitle: ({ label }) => `custom: ${label}`,
+        }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+
+      expect(state.label.value).toBe("Genesis 1");
+
+      state.enableExtension("x");
+      expect(state.label.value).toBe("custom: Genesis 1");
+
+      state.disableExtension("x");
+      expect(state.label.value).toBe("Genesis 1");
+    });
+
+    it("applies transformTitle hooks in priority order (higher first)", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({
+        id: "low",
+        priority: 1,
+        activate: (): ReadingExtensionInstance => ({
+          transformTitle: ({ label }) => `L>${label}`,
+        }),
+      });
+      manager.registerReadingExtension({
+        id: "high",
+        priority: 100,
+        activate: (): ReadingExtensionInstance => ({
+          transformTitle: ({ label }) => `H>${label}`,
+        }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+      state.enableExtension("low");
+      state.enableExtension("high");
+
+      // "high" runs first (inner), "low" wraps its output (outer).
+      expect(state.label.value).toBe("L>H>Genesis 1");
+    });
+  });
 });

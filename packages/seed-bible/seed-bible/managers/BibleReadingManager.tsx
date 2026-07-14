@@ -309,6 +309,12 @@ export interface BibleReadingState {
    */
   isShared: ReadonlySignal<boolean>;
 
+  /**
+   * Human-readable title for this reading state ("Genesis 1" by default);
+   * reading extensions can override it via `transformTitle`.
+   */
+  title: ReadonlySignal<string>;
+
   /** Reading extensions currently enabled on this reading state. */
   enabledExtensions: ReadonlySignal<ReadingExtensionRuntime[]>;
 
@@ -990,6 +996,41 @@ export function createBibleReadingState(
   const translation = computed(
     () => translationBooks.value?.translation ?? null
   );
+
+  // Default display label ("Genesis 1"), resolved from the loaded chapter when
+  // available, otherwise the books catalog by id, using the app-wide
+  // `name ?? commonName ?? id` idiom. Empty while nothing is resolvable yet.
+  const baseLabel = computed<string>(() => {
+    const chapterBook = chapterData.value?.book;
+    const catalogBook = chapterBook
+      ? undefined
+      : translationBooks.value?.books.find((b) => b.id === bookId.value);
+    const book = chapterBook ?? catalogBook;
+    const bookName = book?.name ?? book?.commonName ?? bookId.value;
+    if (!bookName) {
+      return "";
+    }
+    return `${bookName} ${chapterNumber.value}`;
+  });
+
+  // The label surfaced to consumers: the default passed through each enabled
+  // extension's `transformTitle` hook in priority order. Mirrors
+  // `discoveredResultsForDisplay` / `getUrlQueryParams`.
+  const title = computed<string>(() => {
+    let current = baseLabel.value;
+    for (const runtime of orderedEnabledRuntimes.value) {
+      const transform = runtime.instance.transformTitle;
+      if (!transform) {
+        continue;
+      }
+      current = transform({
+        readingState: readingStateRef,
+        data: runtime.data,
+        label: current,
+      });
+    }
+    return current;
+  });
 
   const selectedFootnote = computed<SelectedFootnote | null>(() => {
     const chapter = chapterData.value;
@@ -1887,6 +1928,7 @@ export function createBibleReadingState(
     discoveredCrossReferences,
     discoveredContent,
     discoveredStudyNotes,
+    title,
     isShared: computed(() => isShared.value),
     enabledExtensions,
     isExtensionEnabled,

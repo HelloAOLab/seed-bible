@@ -59,6 +59,13 @@ export type GetUrlQueryParamsHook<TData = unknown> = (ctx: {
   queryParams: Record<string, string | null>;
 }) => Record<string, string | null>;
 
+export type TransformLabelHook<TData = unknown> = (ctx: {
+  readingState: BibleReadingState;
+  data: Signal<TData>;
+  /** The label produced so far (default, or a higher-priority extension's output). */
+  label: string;
+}) => string;
+
 /**
  * The per-reading-state instance an extension returns from `activate()`.
  * Every hook is optional; an extension only implements what it needs.
@@ -77,6 +84,9 @@ export interface ReadingExtensionInstance<TData = unknown> {
    * @returns An object representing the query parameters.
    */
   transformQueryParams?: GetUrlQueryParamsHook<TData>;
+
+  /** Overrides the reading state's display label. Runs in priority order. */
+  transformTitle?: TransformLabelHook<TData>;
 
   /** Called when the extension is disabled or the reading state is disposed. */
   dispose?: () => void;
