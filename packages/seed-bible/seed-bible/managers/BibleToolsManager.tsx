@@ -164,6 +164,7 @@ export interface BibleToolContext {
 
 /** Fully resolved reader toolbar tool ready for rendering. */
 export interface BibleReaderToolbarTool extends ResolvedBibleTool {
+  isControllable: boolean;
   /** Disabled state signal resolved for current context. */
   disabled: ReadonlySignal<boolean>;
   /** Visibility state signal resolved for current context. */
@@ -185,6 +186,8 @@ export type ManagedBibleToolbarToolItem =
 
 /** Registerable reader toolbar tool definition. */
 export interface ManagedBibleToolbarTool extends BibleTool<BibleToolContext> {
+  /** Whether the tool is controllable by the user. */
+  isControllable?: boolean;
   /** Optional disabled predicate (boolean or signal). */
   isDisabled?: ToolPredicate<BibleToolContext>;
   /** Optional visibility predicate (boolean or signal). */
@@ -573,6 +576,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       onSelect: (context) => {
         context.playlists?.stopPlaying();
       },
+      isControllable: false,
     },
     {
       id: "previous-chapter",
@@ -592,6 +596,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       onSelect: (context) => {
         context.readingState.loadPreviousChapter();
       },
+      isControllable: false,
     },
     {
       id: "previous-item",
@@ -610,6 +615,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       onSelect: (context) => {
         context.playlists?.playing.value?.previous();
       },
+      isControllable: false,
     },
     {
       id: "open-sidebar",
@@ -621,6 +627,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       onSelect: (context) => {
         context.openSidebar?.();
       },
+      isControllable: false,
     },
     {
       id: "open-selector",
@@ -639,6 +646,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
 
         context.selectorState.setOpen(true, currentSlot);
       },
+      isControllable: false,
     },
     {
       id: "open-search",
@@ -721,6 +729,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       onSelect: (context) => {
         context.readingState.loadNextChapter();
       },
+      isControllable: false,
     },
     {
       id: "next-item",
@@ -739,6 +748,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       onSelect: (context) => {
         context.playlists?.playing.value?.next();
       },
+      isControllable: false,
     },
   ];
 }
@@ -838,6 +848,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
 export interface ToolMetadata {
   id: string;
   title: TranslatableTitle;
+  isControllable?: boolean;
 }
 
 /**
@@ -1010,6 +1021,7 @@ export function createBibleToolsManager(): ToolsManager {
       visible: resolveToolPredicate(tool.isVisible, context, true),
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
+      isControllable: tool.isControllable ?? true,
       hideLabel: tool.hideLabel ?? false,
     }));
 
@@ -1017,7 +1029,11 @@ export function createBibleToolsManager(): ToolsManager {
   };
 
   const listToolbarTools = (): ToolMetadata[] =>
-    toolbarTools.value.map((tool) => ({ id: tool.id, title: tool.title }));
+    toolbarTools.value.map((tool) => ({
+      id: tool.id,
+      title: tool.title,
+      isControllable: tool.isControllable ?? true,
+    }));
 
   const registerVerseToolbarTool = (tool: ManagedBibleVerseToolbarTool) => {
     validateToolActions(tool);

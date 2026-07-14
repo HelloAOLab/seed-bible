@@ -978,7 +978,6 @@
 .sb-verse-toolbar-action-label {
   font-size: 0.6875rem;
   line-height: 1;
-  white-space: nowrap;
 }
 
 .sb-verse-toolbar-mobile {
@@ -1101,7 +1100,7 @@
   width: 100%;
   gap: 0.375rem;
   padding: 0.75rem 0.375rem;
-  min-height: 4rem;
+  height: 4rem;
   border-radius: 0.875rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
   font-size: 0.75rem;

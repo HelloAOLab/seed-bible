@@ -31,6 +31,7 @@ export const useBook: UseBook = ({
     MaterialIcon,
     translationBooksMap,
     addTab,
+    closeToday,
     getDefaultTranslation,
   } = useTodayContext();
   const { userProfileMap } = useSocialSectionContext();
@@ -93,6 +94,7 @@ export const useBook: UseBook = ({
       console.log(`[Debug] useBook`, { usersData });
       const handleChapterClick = () => {
         addTab(bookId, chapter, getDefaultTranslation());
+        closeToday();
       };
       return {
         key: String(chapter),

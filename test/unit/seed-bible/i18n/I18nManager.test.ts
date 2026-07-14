@@ -45,6 +45,7 @@ describe("I18nManager getInitialLanguage()", () => {
     currentUrl = signal(new URL("https://example.com/"));
     nav = {
       currentUrl,
+      initialUrl: currentUrl.peek(),
       syncSignalsToUrl: vi.fn(),
       go: vi.fn(),
       replace: vi.fn(),
@@ -144,6 +145,7 @@ describe("I18nManager language fallback prompt", () => {
     currentUrl = signal(new URL("https://example.com/"));
     nav = {
       currentUrl,
+      initialUrl: currentUrl.peek(),
       syncSignalsToUrl: vi.fn(),
       go: vi.fn(),
       replace: vi.fn(),

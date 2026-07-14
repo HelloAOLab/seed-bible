@@ -233,12 +233,15 @@ export const bootstrapExtension = () => {
 
       const readingHistoryConfigProvider = new ReadingHistoryConfigProvider();
 
+      const TODAY_PANE_ID = "today-screen-pane";
+
       /**
-       * Opens the Today screen in the currently selected pane. Extracted so it
-       * can be reused both by the toolbar tool and exposed as the extension's
-       * public API (`getExtensionExports("today-screen").open`).
+       * Renders the Today screen as a fullscreen pane. This is the "apply the
+       * open state to the UI" half of the flow: opening is driven through the
+       * `?today=open` URL param (see `isTodayOpen` below), and the reconciling
+       * effect calls this when the state turns on.
        */
-      const openToday = () => {
+      const renderTodayPane = () => {
         const component = () => {
           const { t, language } = useI18n();
           return (
@@ -294,6 +297,9 @@ export const bootstrapExtension = () => {
                   }
                   context.app.selectTab(tab.id);
                 },
+                closeToday: () => {
+                  isTodayOpen.value = false;
+                },
                 getDefaultTranslation: () => {
                   const readingState = context.app.currentReadingState.value;
                   return (
@@ -347,29 +353,84 @@ export const bootstrapExtension = () => {
         };
 
         // Custom components can no longer take over a tab slot — Today opens
-        // as a fullscreen pane instead. A stable id means calling `open()`
-        // again (e.g. via getExtensionExports) updates the existing pane
-        // rather than stacking a second one.
+        // as a fullscreen pane instead.
         context.panes.openPane({
-          id: "today-screen-pane",
+          id: TODAY_PANE_ID,
           placement: "fullscreen",
           title: "Today",
           component,
         });
       };
 
-      // yield context.tools.registerToolbarTool({
-      //   id: "today",
-      //   priority: 0,
-      //   title: "Today",
-      //   icon: Icon,
-      //   onSelect: openToday,
-      // });
+      // Today opens automatically on a cold load (no explicit `?today=`
+      // param) as long as the URL isn't already pointing somewhere specific —
+      // a book/chapter/verse deep link, or a shared-session invite
+      // (`?sessionId=`). An explicit `?today=` param always wins either way,
+      // matching the deep-linkable modals in SeedBibleStateManager.
+      //
+      // This must read `initialUrl` (the URL as first loaded), not the live
+      // `currentUrl`: TabsManager echoes the reader's current book/chapter
+      // back into the URL as soon as it initializes (so links are always
+      // shareable), which happens well before extensions finish loading. By
+      // the time this code runs, a cold load with no book/chapter param would
+      // already show `?book=GEN&chapter=1` in the live URL — indistinguishable
+      // from a real deep link unless we look at the URL from before that echo.
+      const initialUrlParams = context.navigation.initialUrl.searchParams;
+      const hasCompetingDeepLink =
+        initialUrlParams.has("book") ||
+        initialUrlParams.has("chapter") ||
+        initialUrlParams.has("verse") ||
+        initialUrlParams.has("sessionId");
+      const requestedToday = initialUrlParams.get("today");
+      const isTodayOpen = signal(
+        requestedToday !== null
+          ? requestedToday === "open"
+          : !hasCompetingDeepLink
+      );
+
+      const cleanupTodayUrlSync = context.navigation.syncSignalsToUrl({
+        today: {
+          get value() {
+            return isTodayOpen.value ? "open" : null;
+          },
+          set value(newValue) {
+            isTodayOpen.value = newValue === "open";
+          },
+        },
+      });
+
+      const cleanupRenderTodayPane = effect(() => {
+        const shouldBeOpen = isTodayOpen.value;
+        const paneIsOpen = context.panes.panes
+          .peek()
+          .some((pane) => pane.id === TODAY_PANE_ID);
+        if (shouldBeOpen && !paneIsOpen) {
+          renderTodayPane();
+        } else if (!shouldBeOpen && paneIsOpen) {
+          context.panes.closePane(TODAY_PANE_ID);
+        }
+      });
+
+      const cleanupTodayPaneClosed = effect(() => {
+        const paneIsOpen = context.panes.panes.value.some(
+          (pane) => pane.id === TODAY_PANE_ID
+        );
+        if (!paneIsOpen && isTodayOpen.peek()) {
+          isTodayOpen.value = false;
+        }
+      });
+
+      const openToday = () => {
+        isTodayOpen.value = true;
+      };
 
       yield () => {
         cleanupUserLastReading();
         cleanupTranslationBooks();
         cleanupTranslationId();
+        cleanupTodayUrlSync();
+        cleanupRenderTodayPane();
+        cleanupTodayPaneClosed();
       };
 
       // Public API: lets the host app (or other extensions) open the Today

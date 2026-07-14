@@ -1603,6 +1603,64 @@ describe("BibleReader", () => {
     ).toBe(false);
   });
 
+  it("re-shows the mobile header when the reader reaches the bottom of the chapter", () => {
+    const { slot, selectorState, readingState, chapterData } = createFixture();
+    const state = createMobileState();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      nextChapterApiLink: null,
+      previousChapterApiLink: null,
+    };
+
+    renderMobileReader({ slot, selectorState, readingState }, state, container);
+
+    const scroller = container.querySelector(
+      ".sb-reader-swipe-panel-current"
+    ) as HTMLDivElement | null;
+    expect(scroller).not.toBeNull();
+
+    // jsdom reports 0 for layout metrics, so give the scroller real dimensions
+    // that describe a chapter taller than its viewport (600px content, 300px
+    // visible) — enough that the reveal logic has something to measure against.
+    Object.defineProperty(scroller, "scrollHeight", {
+      configurable: true,
+      value: 600,
+    });
+    Object.defineProperty(scroller, "clientHeight", {
+      configurable: true,
+      value: 300,
+    });
+
+    const mobileHeaderSelector = ".sb-bible-reader-mobile-header";
+    const isHeaderHidden = () =>
+      container
+        .querySelector(mobileHeaderSelector)
+        ?.classList.contains("sb-bible-reader-mobile-header-hidden");
+
+    // Scrolling down mid-chapter hides the header.
+    act(() => {
+      if (!scroller) {
+        return;
+      }
+      scroller.scrollTop = 150;
+      scroller.dispatchEvent(new Event("scroll"));
+    });
+    expect(isHeaderHidden()).toBe(true);
+
+    // Scrolling further down to the very bottom (scrollTop + clientHeight
+    // reaches scrollHeight) re-shows the header even though the direction is
+    // still downward.
+    act(() => {
+      if (!scroller) {
+        return;
+      }
+      scroller.scrollTop = 300;
+      scroller.dispatchEvent(new Event("scroll"));
+    });
+    expect(isHeaderHidden()).toBe(false);
+  });
+
   it("renders the book name and chapter number as a heading at the top of the mobile content", () => {
     const { slot, selectorState, readingState, chapterData } = createFixture();
     const state = createMobileState();

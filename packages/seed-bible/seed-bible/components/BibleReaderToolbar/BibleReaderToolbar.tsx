@@ -444,20 +444,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     )
   );
 
-  const hiddenToolIds = new Set([
-    "previous-chapter",
-    "next-chapter",
-    "open-selector",
-    "open-sidebar",
-    "open-search",
-    "previous-item",
-    "next-item",
-    "stop-playing",
-  ]);
+  const hiddenToolIds = new Set(["open-search"]);
 
   const moreTools = useComputed(() =>
     tools.value.filter(
-      (tool) => tool.visible.value && !hiddenToolIds.has(tool.id)
+      (tool) =>
+        tool.visible.value && !hiddenToolIds.has(tool.id) && tool.isControllable
     )
   );
 

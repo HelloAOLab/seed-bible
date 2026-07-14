@@ -40,6 +40,7 @@ export const useWelcome: UseWelcome = () => {
     openBookSelector,
     MaterialIcon,
     addTab,
+    closeToday,
     theme,
   } = useTodayContext();
 
@@ -93,7 +94,8 @@ export const useWelcome: UseWelcome = () => {
     const defaultTranslation = getDefaultTranslation();
     const translationId = lastTranslationId.value ?? defaultTranslation ?? "";
     addTab("GEN", 1, translationId);
-  }, [addTab, getDefaultTranslation, lastTranslationId.value]);
+    closeToday();
+  }, [addTab, closeToday, getDefaultTranslation, lastTranslationId.value]);
 
   const seedBibleIconStyle = useMemo<React.CSSProperties>(() => {
     return {

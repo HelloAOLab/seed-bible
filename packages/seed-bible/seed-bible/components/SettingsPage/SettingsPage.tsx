@@ -1180,21 +1180,10 @@ function ToolbarSettingsView(props: { state: SeedBibleState }) {
 
   const allIds = available.map((tool) => tool.id);
   const orderedIds = [
-    ...toolbarConfig.order.filter((id) => allIds.includes(id)),
+    // Ignore the order for now as pr Issue #1384
+    // ...toolbarConfig.order.filter((id) => allIds.includes(id)),
     ...allIds.filter((id) => !toolbarConfig.order.includes(id)),
   ];
-
-  const moveTool = (index: number, direction: -1 | 1) => {
-    const next = [...orderedIds];
-    const target = index + direction;
-    if (target < 0 || target >= next.length) return;
-    const current = next[index];
-    const swap = next[target];
-    if (current === undefined || swap === undefined) return;
-    next[index] = swap;
-    next[target] = current;
-    settings.setToolbarOrder(next);
-  };
 
   const toggleVisible = (id: string) => {
     settings.setToolbarHidden(id, !hiddenSet.has(id));
@@ -1220,13 +1209,11 @@ function ToolbarSettingsView(props: { state: SeedBibleState }) {
 
       <section className="sb-settings-section">
         <ul className="sb-toolbar-config-list">
-          {orderedIds.map((id, index) => {
+          {orderedIds.map((id) => {
             const tool = available.find((entry) => entry.id === id);
-            if (!tool) return null;
+            if (!tool || !tool.isControllable) return null;
             const title = translateTitle(t, tool.title);
             const isHidden = hiddenSet.has(id);
-            const isFirst = index === 0;
-            const isLast = index === orderedIds.length - 1;
 
             return (
               <li
@@ -1235,30 +1222,6 @@ function ToolbarSettingsView(props: { state: SeedBibleState }) {
                   isHidden ? " sb-toolbar-config-row-hidden" : ""
                 }`}
               >
-                <div className="sb-toolbar-config-reorder">
-                  <button
-                    type="button"
-                    className="sb-toolbar-config-move-button"
-                    onClick={() => moveTool(index, -1)}
-                    disabled={isFirst}
-                    aria-label={`Move ${title} up`}
-                  >
-                    <span className="material-symbols-outlined">
-                      arrow_upward
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    className="sb-toolbar-config-move-button"
-                    onClick={() => moveTool(index, 1)}
-                    disabled={isLast}
-                    aria-label={`Move ${title} down`}
-                  >
-                    <span className="material-symbols-outlined">
-                      arrow_downward
-                    </span>
-                  </button>
-                </div>
                 <span className="sb-toolbar-config-title">{title}</span>
                 <div className="sb-settings-toggle-row sb-toolbar-config-toggle">
                   <input
@@ -1936,7 +1899,7 @@ function SettingsMainView(props: { state: SeedBibleState }) {
           </li>
           <li>
             <button
-              className="sb-settings-nav-item"
+              className="sb-settings-nav-item hide-on-mobile"
               onClick={() => onNavigate("toolbar")}
             >
               <span className="sb-settings-nav-icon">
