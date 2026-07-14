@@ -919,6 +919,72 @@ describe("createPlaylistManager", () => {
       });
     });
 
+    it("subTitle/shortSubTitle use the first playlist's title while playing", async () => {
+      makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        id: "playlist-9",
+        title: "Morning Devotional",
+        items: [{ type: "html", html: "a" }],
+      });
+      const instance = activateExtension({
+        playlists: [playlist],
+        queue: playlist.items,
+        step: 0,
+      });
+
+      const ctx = {
+        readingState: {} as any,
+        data: signal({
+          playlists: [playlist],
+          queue: playlist.items,
+          step: 0,
+        }) as any,
+        label: "Genesis 1",
+      };
+
+      expect(instance.transformSubTitle!(ctx)).toBe("Morning Devotional");
+      expect(instance.transformShortSubTitle!(ctx)).toBe("Morning Devotional");
+    });
+
+    it("subTitle/shortSubTitle fall back to the default label when nothing is playing", async () => {
+      makeManager("user-1");
+      await flush();
+      const instance = activateExtension();
+
+      const ctx = {
+        readingState: {} as any,
+        data: signal(undefined) as any,
+        label: "Genesis 1",
+      };
+
+      expect(instance.transformSubTitle!(ctx)).toBe("Genesis 1");
+      expect(instance.transformShortSubTitle!(ctx)).toBe("Genesis 1");
+    });
+
+    it("subTitle/shortSubTitle fall back to the default label when the first playlist has no title", async () => {
+      makeManager("user-1");
+      await flush();
+      const playlist = makePlaylist({
+        title: null,
+        items: [{ type: "html", html: "a" }],
+      });
+      const instance = activateExtension();
+
+      const ctx = {
+        readingState: {} as any,
+        data: signal({
+          playlists: [playlist],
+          queue: playlist.items,
+          step: 0,
+        }) as any,
+        label: "Genesis 1",
+      };
+
+      expect(instance.transformSubTitle!(ctx)).toBe("Genesis 1");
+      expect(instance.transformShortSubTitle!(ctx)).toBe("Genesis 1");
+    });
+
     it("mirrors local navigation into the serializable data (outbound sync)", async () => {
       makeManager("user-1");
       await flush();

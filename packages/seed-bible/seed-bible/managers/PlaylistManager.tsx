@@ -797,6 +797,19 @@ export function createPlaylistManager(
 
       const instance: PlaylistReadingExtensionInstance = {
         playingState,
+
+        transformShortSubTitle: ({ data, label }) => {
+          const current = data.value;
+          const firstPlaylist = current?.playlists[0];
+          return firstPlaylist?.title ?? label;
+        },
+
+        transformSubTitle: ({ data, label }) => {
+          const current = data.value;
+          const firstPlaylist = current?.playlists[0];
+          return firstPlaylist?.title ?? label;
+        },
+
         // Always active (independent of `isShared`): contributes the
         // `playlist`/`playlistStep` query params for this reading state's URL.
         // Falls back to the last-seen locator while nothing is playing so the
