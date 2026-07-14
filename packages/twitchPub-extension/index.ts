@@ -1,1 +1,5 @@
-export { default } from "./ext_twitchPub/host/init";
+import initTwitchPubExtension from "./ext_twitchPub/host/init";
+
+export default function init() {
+  initTwitchPubExtension();
+}

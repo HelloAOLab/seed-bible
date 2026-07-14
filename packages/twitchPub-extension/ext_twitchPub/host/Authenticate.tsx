@@ -1,8 +1,8 @@
 import { Loading, TwitchIcon } from "./icons";
 import { useI18n } from "seed-bible/i18n";
-import { closeInterface } from "./closeInterface";
+import { type TwitchPubState } from "./interface";
 
-const Authorization = () => {
+const Authorization = (props: { state: TwitchPubState }) => {
   const { t } = useI18n();
   return (
     <div
@@ -32,8 +32,13 @@ const Authorization = () => {
             defaultValue: "Authenticating with Twitch",
           })}
         </span>
-        <button className="icon-btn" onClick={() => closeInterface()}>
-          <span className="material-symbols-outlined">close</span>
+        <button
+          className="icon-btn"
+          onClick={() => {
+            props.state.setCurrentPage("login");
+          }}
+        >
+          <span className="material-symbols-outlined">arrow_back</span>
         </button>
       </div>
       <div className="twitchPub-content">

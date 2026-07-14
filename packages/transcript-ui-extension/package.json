@@ -1,11 +1,11 @@
 {
-  "name": "@seed-bible/twitch-pub-extension",
+  "name": "@seed-bible/transcribe-ui-extension",
   "version": "1.0.0",
   "description": "",
   "type": "module",
   "exports": {
     ".": {
-      "import": "./ext_twitchPub/host/init.tsx"
+      "import": "./ext_AI_Transcript_UI/main/init.tsx"
     }
   },
   "scripts": {
@@ -13,12 +13,11 @@
   },
   "keywords": [],
   "dependencies": {
-    "@seed-bible/ai-transcript-extension": "workspace:*",
-    "base64-js": "catalog:",
-    "preact": "catalog:",
-    "qrcode": "^1.5.4",
     "seed-bible": "workspace:*",
-    "uuid": "catalog:"
+    "preact": "catalog:",
+    "base64-js": "catalog:",
+    "uuid": "catalog:",
+    "@seed-bible/ai-transcript-extension": "workspace:*"
   },
   "author": "",
   "license": "ISC",

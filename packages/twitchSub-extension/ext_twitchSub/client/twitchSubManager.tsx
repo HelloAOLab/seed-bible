@@ -28,15 +28,16 @@ export function CreateTwitchSubState(
 
   const wsPaused = signal(
     getBooleanMaskValue(
-      window.localStorage.getItem("twitchWebsocketClientPaused"),
+      window.sessionStorage.getItem("twitchWebsocketClientPaused"),
       false
     )
   );
-  const savedSettings = window.localStorage.getItem("twitchSubSettings")
-    ? JSON.parse(window.localStorage.getItem("twitchSubSettings") || "{}")
+  const savedSettings = window.sessionStorage.getItem("twitchSubSettings")
+    ? JSON.parse(window.sessionStorage.getItem("twitchSubSettings") || "{}")
     : {
         translationEnabled: true,
         highlightEnabled: true,
+        refFollowEnabled: true,
         chapterFollowEnabled: true,
       };
   const settings = signal({
@@ -44,6 +45,7 @@ export function CreateTwitchSubState(
       savedSettings.translationEnabled ?? true
     ),
     highlightEnabled: signal<boolean>(savedSettings.highlightEnabled ?? true),
+    refFollowEnabled: signal<boolean>(savedSettings.refFollowEnabled ?? true),
     chapterFollowEnabled: signal<boolean>(
       savedSettings.chapterFollowEnabled ?? true
     ),
@@ -114,7 +116,7 @@ export function CreateTwitchSubState(
       config.value.bookId.value = null;
       config.value.chapter.value = null;
       config.value.translation.value = null;
-      window.localStorage.setItem(
+      window.sessionStorage.setItem(
         "twitchSubConfig",
         JSON.stringify(config.value)
       );
@@ -130,6 +132,67 @@ export function CreateTwitchSubState(
       addTwitchIcon({ wsPaused, settingsOpened });
     }
   });
+
+  async function highlightRefVerse(
+    seedBibleState: SeedBibleState,
+    bookData: {
+      book: string;
+      chapter: number;
+      verse: number;
+    },
+    interval = 5000
+  ): Promise<void> {
+    const { book, chapter, verse } = bookData;
+
+    const selectedTabId = seedBibleState.tabs.selectedTabId;
+    let selectedTab = seedBibleState.tabs.tabs.value.find(
+      (tab) => tab.id === selectedTabId.value
+    );
+
+    const currentReadingState = seedBibleState.app.currentReadingState.value;
+
+    if (selectedTab && book) {
+      const { bookId, chapterNumber } = selectedTab.readingState;
+
+      if (bookId.value !== book || chapterNumber.value !== Number(chapter)) {
+        const existingTab = seedBibleState.tabs.tabs.value.find(
+          (tab) =>
+            tab.readingState.bookId.value === book &&
+            tab.readingState.chapterNumber.value === Number(chapter)
+        );
+        if (existingTab) {
+          seedBibleState.app.selectTab(existingTab.id);
+          selectedTab = existingTab;
+        } else {
+          const newTab = seedBibleState.tabs.addTab(undefined, {
+            initialTranslationId: currentReadingState?.translationId || "ABB",
+            initialBookId: book,
+            initialChapterNumber: Number(chapter),
+          });
+          seedBibleState.app.selectTab(newTab.id);
+          selectedTab = newTab;
+        }
+      }
+
+      await selectedTab.readingState.selectTranslationAndChapter(
+        currentReadingState?.translationId || "ABB",
+        book,
+        Number(chapter) || 1,
+        verse ? { scrollToVerse: Number(verse) } : {}
+      );
+      if (verse && chapter) {
+        selectedTab.readingState.decorateVerses(
+          book,
+          Number(chapter),
+          Number(verse),
+          {
+            className: "sb-verse-decoration-initial-verse-highlight",
+            removeAfterMs: interval,
+          }
+        );
+      }
+    }
+  }
 
   const handleWSEvents = async (config: { type: string; payload: string }) => {
     if (!wsPaused.value && websocketSessionID.value && webSocketClient.value) {
@@ -235,6 +298,25 @@ export function CreateTwitchSubState(
               );
             });
           }
+          break;
+        }
+        case "refHighlight": {
+          if (!settings.value.refFollowEnabled.value) {
+            console.log(
+              "Reference follow is disabled, ignoring refHighlight event"
+            );
+            return;
+          }
+          const { bookId, chapter, verse } = JSON.parse(config.payload) as {
+            bookId: string;
+            chapter: number;
+            verse: number;
+          };
+          seedBibleState.app.toast(
+            `Highlighting ${bookId} ${chapter}:${verse || ""}`
+          );
+          highlightRefVerse(seedBibleState, { book: bookId, chapter, verse });
+          break;
         }
       }
     }
@@ -268,16 +350,17 @@ export function CreateTwitchSubState(
   });
 
   effect(() => {
-    window.localStorage.setItem(
+    window.sessionStorage.setItem(
       "twitchWebsocketClientPaused",
       wsPaused.value.toString()
     );
-    window.localStorage.setItem(
+    window.sessionStorage.setItem(
       "twitchSubSettings",
       JSON.stringify({
         translationEnabled: settings.value.translationEnabled.value,
         highlightEnabled: settings.value.highlightEnabled.value,
         chapterFollowEnabled: settings.value.chapterFollowEnabled.value,
+        refFollowEnabled: settings.value.refFollowEnabled.value,
       })
     );
   });
@@ -302,12 +385,15 @@ async function getConfig({
   eventSubWebsocketUrl: string;
   navigation: NavigationManager;
 }) {
-  const stored = window.localStorage.getItem("twitchSubConfig");
+  const stored = window.sessionStorage.getItem("twitchSubConfig");
   if (stored) {
     try {
       return JSON.parse(stored);
     } catch (e) {
-      console.error("Failed to parse Twitch Sub config from localStorage:", e);
+      console.error(
+        "Failed to parse Twitch Sub config from session storage:",
+        e
+      );
       return null;
     }
   }
@@ -358,7 +444,7 @@ async function getConfig({
     chapter,
     translation,
   };
-  window.localStorage.setItem("twitchSubConfig", JSON.stringify(config));
+  window.sessionStorage.setItem("twitchSubConfig", JSON.stringify(config));
 
   if (typeof posthog !== "undefined") {
     posthog.capture("twitch_sub_client_joined", {});
@@ -368,7 +454,11 @@ async function getConfig({
   if (urlWithoutHash) {
     navigation.replace(urlWithoutHash);
   }
-  return null;
+  // Return the freshly built config so it's applied on this first load.
+  // `navigation.replace` only soft-updates the URL (history.replaceState, no
+  // reload), so returning null here would leave the config unapplied until the
+  // user manually refreshes and it's re-read from sessionStorage.
+  return config;
 }
 
 async function openBookAndChapter(
