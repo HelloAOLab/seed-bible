@@ -2264,13 +2264,13 @@ describe("createBibleReadingState", () => {
       const state = createBibleReadingState(createDataManager());
       await waitForInitialLoad(state);
 
-      expect(state.title.value).toBe("Genesis 1");
+      expect(state.title.value).toBe("Genesis - 1");
 
       await state.selectChapter("GEN", 5);
-      expect(state.title.value).toBe("Genesis 5");
+      expect(state.title.value).toBe("Genesis - 5");
 
       await state.selectBook("EXO");
-      expect(state.title.value).toBe("Exodus 1");
+      expect(state.title.value).toBe("Exodus - 1");
     });
 
     it("shortTitle defaults to '<book id> <chapter>' and tracks navigation", async () => {
@@ -2319,19 +2319,19 @@ describe("createBibleReadingState", () => {
       const state = createStateWithExtensions(manager);
       await waitForInitialLoad(state);
 
-      expect(state.title.value).toBe("Genesis 1");
+      expect(state.title.value).toBe("Genesis - 1");
       expect(state.shortTitle.value).toBe("GEN 1");
       expect(state.subTitle.value).toBe("Accessible Ancients Bible");
       expect(state.shortSubTitle.value).toBe("AAB");
 
       state.enableExtension("x");
-      expect(state.title.value).toBe("title: Genesis 1");
+      expect(state.title.value).toBe("title: Genesis - 1");
       expect(state.shortTitle.value).toBe("short: GEN 1");
       expect(state.subTitle.value).toBe("sub: Accessible Ancients Bible");
       expect(state.shortSubTitle.value).toBe("shortSub: AAB");
 
       state.disableExtension("x");
-      expect(state.title.value).toBe("Genesis 1");
+      expect(state.title.value).toBe("Genesis - 1");
       expect(state.shortTitle.value).toBe("GEN 1");
       expect(state.subTitle.value).toBe("Accessible Ancients Bible");
       expect(state.shortSubTitle.value).toBe("AAB");
@@ -2353,7 +2353,7 @@ describe("createBibleReadingState", () => {
 
       expect(state.shortTitle.value).toBe("custom short");
       // Untouched hooks fall through to the defaults.
-      expect(state.title.value).toBe("Genesis 1");
+      expect(state.title.value).toBe("Genesis - 1");
       expect(state.subTitle.value).toBe("Accessible Ancients Bible");
       expect(state.shortSubTitle.value).toBe("AAB");
     });
@@ -2382,7 +2382,7 @@ describe("createBibleReadingState", () => {
       state.enableExtension("high");
 
       // "high" runs first (inner), "low" wraps its output (outer).
-      expect(state.title.value).toBe("L>H>Genesis 1");
+      expect(state.title.value).toBe("L>H>Genesis - 1");
     });
   });
 });
