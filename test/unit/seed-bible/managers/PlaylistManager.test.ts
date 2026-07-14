@@ -100,6 +100,10 @@ function makeReadingState(
   const self: any = {
     selectTranslationAndChapter,
     translationId: signal(translationId),
+    // `setState` compares the current item's ref against these to decide whether
+    // a re-navigation is needed when the step is unchanged.
+    bookId: signal<string | null>(null),
+    chapterNumber: signal<number>(1),
     decorateVerses: vi.fn(),
     removeDecoration: vi.fn(),
     enabledExtensions: computed(() => Array.from(runtimes.value.values())),
@@ -814,10 +818,11 @@ describe("createPlaylistManager", () => {
       await flush();
       const instance = activateExtension();
 
-      // These hooks resolve synchronously; the hook type also allows a
-      // Promise, but no `await`/`.resolves` is needed for this implementation.
-      expect(instance.navigateNext!({} as any)).toEqual({ type: "default" });
-      expect(instance.navigatePrevious!({} as any)).toEqual({
+      // The hooks are async now (they await the playing state's navigation).
+      expect(await instance.navigateNext!({} as any)).toEqual({
+        type: "default",
+      });
+      expect(await instance.navigatePrevious!({} as any)).toEqual({
         type: "default",
       });
     });
@@ -837,12 +842,21 @@ describe("createPlaylistManager", () => {
         step: 0,
       });
 
-      expect(instance.navigatePrevious!({} as any)).toEqual({
+      // At the start of the queue, previous() is prevented.
+      expect(await instance.navigatePrevious!({} as any)).toEqual({
         type: "prevent",
       });
-      expect(instance.navigateNext!({} as any)).toEqual({ type: "handled" });
+      // Advancing is handled by the playing state itself (which drives the
+      // reader), so the hook returns "prevent" to stop the reader's own
+      // chapter navigation rather than "handled".
+      expect(await instance.navigateNext!({} as any)).toEqual({
+        type: "prevent",
+      });
       expect(instance.playingState.currentIndex.value).toBe(1);
-      expect(instance.navigateNext!({} as any)).toEqual({ type: "prevent" });
+      // At the end of the queue, next() is prevented too.
+      expect(await instance.navigateNext!({} as any)).toEqual({
+        type: "prevent",
+      });
     });
 
     it("keeps navigateNext/navigatePrevious (and transformQueryParams) even for a shared reading state", async () => {
@@ -928,7 +942,7 @@ describe("createPlaylistManager", () => {
       }) as unknown as PlaylistReadingExtensionInstance;
 
       // Advancing the queue writes the new step back into `data`.
-      instance.playingState.next();
+      await instance.playingState.next();
       expect((data.value as PlaylistReadingData).step).toBe(1);
     });
 
@@ -1073,30 +1087,30 @@ describe("createPlayingState", () => {
     expect(state.hasPrevious.value).toBe(false);
   });
 
-  it("clamps next()/previous() at the queue bounds", () => {
+  it("clamps next()/previous() at the queue bounds", async () => {
     const state = createPlayingState([makePlaylist({ items: makeItems(3) })]);
 
     expect(state.hasPrevious.value).toBe(false);
-    state.previous();
+    await state.previous();
     expect(state.currentIndex.value).toBe(0);
 
-    state.next();
+    await state.next();
     expect(state.currentIndex.value).toBe(1);
-    state.next();
+    await state.next();
     expect(state.currentIndex.value).toBe(2);
     expect(state.hasNext.value).toBe(false);
-    state.next();
+    await state.next();
     expect(state.currentIndex.value).toBe(2);
   });
 
-  it("jumps to an in-range index and ignores out-of-range jumps", () => {
+  it("jumps to an in-range index and ignores out-of-range jumps", async () => {
     const state = createPlayingState([makePlaylist({ items: makeItems(3) })]);
 
-    state.jumpTo(2);
+    await state.jumpTo(2);
     expect(state.currentIndex.value).toBe(2);
-    state.jumpTo(5);
+    await state.jumpTo(5);
     expect(state.currentIndex.value).toBe(2);
-    state.jumpTo(-1);
+    await state.jumpTo(-1);
     expect(state.currentIndex.value).toBe(2);
   });
 
@@ -1108,9 +1122,9 @@ describe("createPlayingState", () => {
     expect(state.currentIndex.value).toBe(0);
   });
 
-  it("shifts currentIndex when removing an earlier item", () => {
+  it("shifts currentIndex when removing an earlier item", async () => {
     const state = createPlayingState([makePlaylist({ items: makeItems(4) })]);
-    state.jumpTo(2);
+    await state.jumpTo(2);
 
     state.removeFromQueue(0);
 
@@ -1119,9 +1133,9 @@ describe("createPlayingState", () => {
     expect(state.currentItem.value).toEqual(item(2));
   });
 
-  it("clamps currentIndex when removing the last (current) item", () => {
+  it("clamps currentIndex when removing the last (current) item", async () => {
     const state = createPlayingState([makePlaylist({ items: makeItems(3) })]);
-    state.jumpTo(2);
+    await state.jumpTo(2);
 
     state.removeFromQueue(2);
 
@@ -1139,9 +1153,9 @@ describe("createPlayingState", () => {
     expect(state.currentItem.value).toBeNull();
   });
 
-  it("keeps the current item selected when reordering", () => {
+  it("keeps the current item selected when reordering", async () => {
     const state = createPlayingState([makePlaylist({ items: makeItems(4) })]);
-    state.jumpTo(1); // currently on item(1)
+    await state.jumpTo(1); // currently on item(1)
 
     // Move item(1) to the end; currentIndex should follow it.
     state.reorderQueue(1, 3);
@@ -1150,9 +1164,9 @@ describe("createPlayingState", () => {
     expect(state.currentItem.value).toEqual(item(1));
   });
 
-  it("shifts currentIndex when a reorder moves items across it", () => {
+  it("shifts currentIndex when a reorder moves items across it", async () => {
     const state = createPlayingState([makePlaylist({ items: makeItems(4) })]);
-    state.jumpTo(2); // currently on item(2)
+    await state.jumpTo(2); // currently on item(2)
 
     // Move a leading item to after the current one; current shifts left.
     state.reorderQueue(0, 3);
@@ -1172,21 +1186,21 @@ describe("createPlayingState", () => {
     expect(state.queue.value).toBe(before);
   });
 
-  it("reset() returns to the first item", () => {
+  it("reset() returns to the first item", async () => {
     const state = createPlayingState([makePlaylist({ items: makeItems(3) })]);
-    state.jumpTo(2);
+    await state.jumpTo(2);
 
-    state.reset();
+    await state.reset();
 
     expect(state.currentIndex.value).toBe(0);
   });
 
-  it("setState replaces playlists/queue and clamps the step into range", () => {
+  it("setState replaces playlists/queue and clamps the step into range", async () => {
     const a = makePlaylist({ id: "a", items: makeItems(3) });
     const state = createPlayingState([a]);
     const b = makePlaylist({ id: "b", items: makeItems(2) });
 
-    state.setState({ playlists: [b], queue: b.items, step: 5 });
+    await state.setState({ playlists: [b], queue: b.items, step: 5 });
 
     expect(state.playlists.value).toEqual([b]);
     expect(state.queue.value).toEqual(b.items);
@@ -1194,10 +1208,10 @@ describe("createPlayingState", () => {
     expect(state.currentIndex.value).toBe(1);
   });
 
-  it("setState uses currentIndex -1 for an empty queue", () => {
+  it("setState uses currentIndex -1 for an empty queue", async () => {
     const state = createPlayingState([makePlaylist({ items: makeItems(3) })]);
 
-    state.setState({ playlists: [], queue: [], step: 0 });
+    await state.setState({ playlists: [], queue: [], step: 0 });
 
     expect(state.queue.value).toEqual([]);
     expect(state.currentIndex.value).toBe(-1);
@@ -1225,7 +1239,7 @@ describe("createPlayingState", () => {
       expect(state.tab).toBe(tab);
     });
 
-    it("navigates the tab to the first verse immediately", () => {
+    it("does not navigate on creation (navigation is explicit, not effect-driven)", () => {
       const nav = vi.fn().mockResolvedValue(undefined);
       const tab = makeTab("tab-1", nav);
       createPlayingState(
@@ -1233,34 +1247,103 @@ describe("createPlayingState", () => {
         tab
       );
 
+      // The old effect navigated to the first verse on creation; navigation is
+      // now driven only by explicit next/previous/jumpTo/reset/setState calls.
+      expect(nav).not.toHaveBeenCalled();
+    });
+
+    it("navigates to the current verse when jumping to it", async () => {
+      const nav = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", nav);
+      const state = createPlayingState(
+        [
+          makePlaylist({
+            items: [verse("GEN", 1, 1), verse("JHN", 3, 16, "WEB")],
+          }),
+        ],
+        tab
+      );
+
+      await state.jumpTo(1);
+
       expect(nav).toHaveBeenCalledTimes(1);
       expect(nav).toHaveBeenCalledWith("WEB", "JHN", 3, { scrollToVerse: 16 });
     });
 
-    it("falls back to the tab's current translation when the item has none", () => {
+    it("navigates when setState moves to a different step", async () => {
+      const nav = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", nav, "WEB");
+      const playlist = makePlaylist({
+        items: [verse("GEN", 1, 1), verse("JHN", 3, 16, "WEB")],
+      });
+      const state = createPlayingState([playlist], tab);
+
+      // This is how playback performs its initial navigation in production: the
+      // reading extension hydrates the live state via setState.
+      await state.setState({
+        playlists: [playlist],
+        queue: playlist.items,
+        step: 1,
+      });
+
+      expect(nav).toHaveBeenCalledWith("WEB", "JHN", 3, { scrollToVerse: 16 });
+    });
+
+    it("falls back to the tab's current translation when the item has none", async () => {
       const nav = vi.fn().mockResolvedValue(undefined);
       const tab = makeTab("tab-1", nav, "BSB");
-      createPlayingState([makePlaylist({ items: [verse("GEN", 1, 1)] })], tab);
+      const state = createPlayingState(
+        [makePlaylist({ items: [verse("GEN", 1, 1)] })],
+        tab
+      );
+
+      await state.jumpTo(0);
 
       expect(nav).toHaveBeenCalledWith("BSB", "GEN", 1, { scrollToVerse: 1 });
     });
 
-    it("re-navigates when advancing to another verse", () => {
+    it("re-navigates when advancing to another verse", async () => {
       const nav = vi.fn().mockResolvedValue(undefined);
       const tab = makeTab("tab-1", nav, "BSB");
       const state = createPlayingState(
         [makePlaylist({ items: [verse("GEN", 1, 1), verse("EXO", 2, 3)] })],
         tab
       );
-      nav.mockClear();
 
-      state.next();
+      await state.next();
 
       expect(nav).toHaveBeenCalledTimes(1);
       expect(nav).toHaveBeenCalledWith("BSB", "EXO", 2, { scrollToVerse: 3 });
     });
 
-    it("does not navigate for non-verse items", () => {
+    it("next() resolves only after chapter navigation completes", async () => {
+      let resolveNav: (() => void) | undefined;
+      const nav = vi
+        .fn()
+        .mockReturnValue(new Promise<void>((r) => (resolveNav = r)));
+      const tab = makeTab("tab-1", nav, "BSB");
+      const state = createPlayingState(
+        [makePlaylist({ items: [verse("GEN", 1, 1), verse("EXO", 2, 3)] })],
+        tab
+      );
+
+      let settled = false;
+      const done = state.next().then(() => {
+        settled = true;
+      });
+
+      // Let any synchronous microtasks flush; the promise must still be pending
+      // because chapter navigation hasn't resolved.
+      await Promise.resolve();
+      expect(nav).toHaveBeenCalledWith("BSB", "EXO", 2, { scrollToVerse: 3 });
+      expect(settled).toBe(false);
+
+      resolveNav!();
+      await done;
+      expect(settled).toBe(true);
+    });
+
+    it("does not navigate for non-verse items", async () => {
       const nav = vi.fn().mockResolvedValue(undefined);
       const tab = makeTab("tab-1", nav, "BSB");
       const state = createPlayingState(
@@ -1271,35 +1354,37 @@ describe("createPlayingState", () => {
         ],
         tab
       );
-      nav.mockClear();
 
-      state.next(); // now on the html item
+      await state.next(); // now on the html item
 
       expect(nav).not.toHaveBeenCalled();
     });
 
-    it("does nothing when no tab is provided", () => {
+    it("does nothing when no tab is provided", async () => {
       const state = createPlayingState([
-        makePlaylist({ items: [verse("GEN", 1, 1)] }),
+        makePlaylist({ items: [verse("GEN", 1, 1), verse("EXO", 2, 3)] }),
       ]);
       // No tab, no throw; navigation simply doesn't happen.
-      expect(() => state.next()).not.toThrow();
+      await expect(state.next()).resolves.toBeUndefined();
       expect(state.tab).toBeNull();
     });
 
-    it("dispose stops further navigation", () => {
+    it("dispose removes the active verse decoration", async () => {
       const nav = vi.fn().mockResolvedValue(undefined);
       const tab = makeTab("tab-1", nav, "BSB");
+      const decorateVerses = tab.readingState.decorateVerses as unknown as Mock;
+      decorateVerses.mockReturnValue("dec-1");
       const state = createPlayingState(
-        [makePlaylist({ items: [verse("GEN", 1, 1), verse("EXO", 2, 3)] })],
+        [makePlaylist({ items: [verse("GEN", 1, 1)] })],
         tab
       );
-      nav.mockClear();
+
+      await state.jumpTo(0); // navigate to the verse, creating a decoration
+      expect(decorateVerses).toHaveBeenCalled();
 
       state.dispose();
-      state.next();
 
-      expect(nav).not.toHaveBeenCalled();
+      expect(tab.readingState.removeDecoration).toHaveBeenCalledWith("dec-1");
     });
   });
 });
