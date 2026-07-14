@@ -1185,18 +1185,6 @@ function ToolbarSettingsView(props: { state: SeedBibleState }) {
     ...allIds.filter((id) => !toolbarConfig.order.includes(id)),
   ];
 
-  const moveTool = (index: number, direction: -1 | 1) => {
-    const next = [...orderedIds];
-    const target = index + direction;
-    if (target < 0 || target >= next.length) return;
-    const current = next[index];
-    const swap = next[target];
-    if (current === undefined || swap === undefined) return;
-    next[index] = swap;
-    next[target] = current;
-    settings.setToolbarOrder(next);
-  };
-
   const toggleVisible = (id: string) => {
     settings.setToolbarHidden(id, !hiddenSet.has(id));
   };
@@ -1236,30 +1224,6 @@ function ToolbarSettingsView(props: { state: SeedBibleState }) {
                   isHidden ? " sb-toolbar-config-row-hidden" : ""
                 }`}
               >
-                <div className="sb-toolbar-config-reorder hidden">
-                  <button
-                    type="button"
-                    className="sb-toolbar-config-move-button"
-                    onClick={() => moveTool(index, -1)}
-                    disabled={isFirst}
-                    aria-label={`Move ${title} up`}
-                  >
-                    <span className="material-symbols-outlined">
-                      arrow_upward
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    className="sb-toolbar-config-move-button"
-                    onClick={() => moveTool(index, 1)}
-                    disabled={isLast}
-                    aria-label={`Move ${title} down`}
-                  >
-                    <span className="material-symbols-outlined">
-                      arrow_downward
-                    </span>
-                  </button>
-                </div>
                 <span className="sb-toolbar-config-title">{title}</span>
                 <div className="sb-settings-toggle-row sb-toolbar-config-toggle">
                   <input
