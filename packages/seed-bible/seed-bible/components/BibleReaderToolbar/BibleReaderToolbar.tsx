@@ -452,6 +452,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     "open-search",
     "previous-item",
     "next-item",
+    "stop-playing",
   ]);
 
   const moreTools = useComputed(() =>
@@ -1239,17 +1240,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 const menuItems =
                   tool.getItems?.().filter((item) => item.visible.value) ?? [];
                 const hasMenuItems = menuItems.length > 0;
-                const isArrow =
-                  tool.id === "previous-chapter" ||
-                  tool.id === "next-chapter" ||
-                  tool.id === "previous-item" ||
-                  tool.id === "next-item";
+                const hideLabel = tool.hideLabel;
                 const label = translateTitle(t, tool.title);
                 if (!tool.visible.value) return [];
                 const itemElement = (
                   <div
                     key={tool.id}
-                    className={`sb-reader-toolbar-item${isArrow ? " sb-reader-toolbar-item-arrow" : ""}`}
+                    className={`sb-reader-toolbar-item${hideLabel ? " sb-reader-toolbar-item-arrow" : ""}`}
                   >
                     <button
                       disabled={tool.disabled.value}
@@ -1269,7 +1266,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       aria-label={label}
                     >
                       <ToolIcon />
-                      {isArrow ? (
+                      {hideLabel ? (
                         <span className="sr-only">{label}</span>
                       ) : (
                         <span className="sb-reader-toolbar-button-label">

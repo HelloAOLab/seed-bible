@@ -1,4 +1,4 @@
-import { MaterialIcon, SeedBibleIcon } from "../components/icons";
+import { MaterialIcon, SeedBibleIcon, StopIcon } from "../components/icons";
 import type { JSX, VNode } from "preact";
 import { computed, signal } from "@preact/signals";
 import type { ReadonlySignal } from "@preact/signals";
@@ -172,6 +172,12 @@ export interface BibleReaderToolbarTool extends ResolvedBibleTool {
   onSelect: () => void;
   /** Optional context-menu items for this tool. */
   getItems?: () => ResolvedBibleToolItem[];
+
+  /**
+   * Whether the label for this tool should be hidden.
+   * Defaults to false.
+   */
+  hideLabel?: boolean;
 }
 
 export type ManagedBibleToolbarToolItem =
@@ -187,6 +193,12 @@ export interface ManagedBibleToolbarTool extends BibleTool<BibleToolContext> {
   onSelect?: (context: BibleToolContext) => void;
   /** Optional context-menu items resolver. Mutually exclusive with onSelect(). */
   getItems?: (context: BibleToolContext) => ManagedBibleToolbarToolItem[];
+
+  /**
+   * Whether the label for this tool should be hidden.
+   * Defaults to false.
+   */
+  hideLabel?: boolean;
 }
 
 /** Fully resolved verse toolbar tool ready for rendering. */
@@ -552,8 +564,20 @@ function getDefaultQuickToolbarTools(): ManagedBibleQuickToolbarTool[] {
 function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
   return [
     {
+      id: "stop-playing",
+      priority: -1,
+      hideLabel: true,
+      title: { key: "stop", defaultValue: "Stop" },
+      icon: () => <StopIcon />,
+      isVisible: (context) => !!context.playlists?.playing?.value,
+      onSelect: (context) => {
+        context.playlists?.stopPlaying();
+      },
+    },
+    {
       id: "previous-chapter",
       priority: 0,
+      hideLabel: true,
       title: { key: "previous-chapter", defaultValue: "Previous Chapter" },
       icon: (context) =>
         context.readingState.translation.value?.textDirection === "rtl" ? (
@@ -572,6 +596,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
     {
       id: "previous-item",
       priority: 0,
+      hideLabel: true,
       title: { key: "previous", defaultValue: "Previous" },
       icon: (context) =>
         context.readingState.translation.value?.textDirection === "rtl" ? (
@@ -681,6 +706,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
     {
       id: "next-chapter",
       priority: 1000,
+      hideLabel: true,
       title: { key: "next-chapter", defaultValue: "Next Chapter" },
       icon: (context) =>
         context.readingState.translation.value?.textDirection === "rtl" ? (
@@ -699,6 +725,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
     {
       id: "next-item",
       priority: 1000,
+      hideLabel: true,
       title: { key: "next", defaultValue: "Next" },
       icon: (context) =>
         context.readingState.translation.value?.textDirection === "rtl" ? (
@@ -983,6 +1010,7 @@ export function createBibleToolsManager(): ToolsManager {
       visible: resolveToolPredicate(tool.isVisible, context, true),
       onSelect: () => tool.onSelect?.(context),
       getItems: resolveToolItems(tool.getItems, context, tool.id),
+      hideLabel: tool.hideLabel ?? false,
     }));
 
     return sortBy(tools, [(tool) => tool.priority]);
