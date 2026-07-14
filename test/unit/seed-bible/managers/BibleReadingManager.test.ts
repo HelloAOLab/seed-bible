@@ -2243,7 +2243,7 @@ describe("createBibleReadingState", () => {
     });
   });
 
-  describe("label", () => {
+  describe("title / shortTitle / subTitle", () => {
     function createStateWithExtensions(
       readingExtensionManager: ReturnType<
         typeof createBibleReadingExtensionManager
@@ -2259,43 +2259,93 @@ describe("createBibleReadingState", () => {
       );
     }
 
-    it("defaults to '<book name> <chapter>' and tracks navigation", async () => {
+    it("title defaults to '<book name> <chapter>' and tracks navigation", async () => {
       setWebResponses(createReadingManagerResponseMap());
       const state = createBibleReadingState(createDataManager());
       await waitForInitialLoad(state);
 
-      expect(state.label.value).toBe("Genesis 1");
+      expect(state.title.value).toBe("Genesis 1");
 
       await state.selectChapter("GEN", 5);
-      expect(state.label.value).toBe("Genesis 5");
+      expect(state.title.value).toBe("Genesis 5");
 
       await state.selectBook("EXO");
-      expect(state.label.value).toBe("Exodus 1");
+      expect(state.title.value).toBe("Exodus 1");
     });
 
-    it("lets an enabled extension override the label, restoring the default on disable", async () => {
+    it("shortTitle defaults to '<book id> <chapter>' and tracks navigation", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      expect(state.shortTitle.value).toBe("GEN 1");
+
+      await state.selectChapter("GEN", 5);
+      expect(state.shortTitle.value).toBe("GEN 5");
+
+      await state.selectBook("EXO");
+      expect(state.shortTitle.value).toBe("EXO 1");
+    });
+
+    it("subTitle defaults to the current translation name", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      expect(state.subTitle.value).toBe("Accessible Ancients Bible");
+    });
+
+    it("lets an enabled extension override each title, restoring the defaults on disable", async () => {
       setWebResponses(createReadingManagerResponseMap());
       const manager = createBibleReadingExtensionManager();
       manager.registerReadingExtension({
         id: "x",
         activate: (): ReadingExtensionInstance => ({
-          transformTitle: ({ label }) => `custom: ${label}`,
+          transformTitle: ({ label }) => `title: ${label}`,
+          transformShortTitle: ({ label }) => `short: ${label}`,
+          transformSubTitle: ({ label }) => `sub: ${label}`,
         }),
       });
 
       const state = createStateWithExtensions(manager);
       await waitForInitialLoad(state);
 
-      expect(state.label.value).toBe("Genesis 1");
+      expect(state.title.value).toBe("Genesis 1");
+      expect(state.shortTitle.value).toBe("GEN 1");
+      expect(state.subTitle.value).toBe("Accessible Ancients Bible");
 
       state.enableExtension("x");
-      expect(state.label.value).toBe("custom: Genesis 1");
+      expect(state.title.value).toBe("title: Genesis 1");
+      expect(state.shortTitle.value).toBe("short: GEN 1");
+      expect(state.subTitle.value).toBe("sub: Accessible Ancients Bible");
 
       state.disableExtension("x");
-      expect(state.label.value).toBe("Genesis 1");
+      expect(state.title.value).toBe("Genesis 1");
+      expect(state.shortTitle.value).toBe("GEN 1");
+      expect(state.subTitle.value).toBe("Accessible Ancients Bible");
     });
 
-    it("applies transformTitle hooks in priority order (higher first)", async () => {
+    it("each title transform is independent (an extension can override one without touching the others)", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({
+        id: "x",
+        activate: (): ReadingExtensionInstance => ({
+          transformShortTitle: () => "custom short",
+        }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+      state.enableExtension("x");
+
+      expect(state.shortTitle.value).toBe("custom short");
+      // Untouched hooks fall through to the defaults.
+      expect(state.title.value).toBe("Genesis 1");
+      expect(state.subTitle.value).toBe("Accessible Ancients Bible");
+    });
+
+    it("applies transform hooks in priority order (higher first)", async () => {
       setWebResponses(createReadingManagerResponseMap());
       const manager = createBibleReadingExtensionManager();
       manager.registerReadingExtension({
@@ -2319,7 +2369,7 @@ describe("createBibleReadingState", () => {
       state.enableExtension("high");
 
       // "high" runs first (inner), "low" wraps its output (outer).
-      expect(state.label.value).toBe("L>H>Genesis 1");
+      expect(state.title.value).toBe("L>H>Genesis 1");
     });
   });
 });

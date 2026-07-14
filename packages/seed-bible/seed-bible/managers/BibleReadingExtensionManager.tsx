@@ -85,8 +85,14 @@ export interface ReadingExtensionInstance<TData = unknown> {
    */
   transformQueryParams?: GetUrlQueryParamsHook<TData>;
 
-  /** Overrides the reading state's display label. Runs in priority order. */
+  /** Overrides the reading state's display title. Runs in priority order. */
   transformTitle?: TransformLabelHook<TData>;
+
+  /** Overrides the reading state's compact short title. Runs in priority order. */
+  transformShortTitle?: TransformLabelHook<TData>;
+
+  /** Overrides the reading state's subtitle. Runs in priority order. */
+  transformSubTitle?: TransformLabelHook<TData>;
 
   /** Called when the extension is disabled or the reading state is disposed. */
   dispose?: () => void;

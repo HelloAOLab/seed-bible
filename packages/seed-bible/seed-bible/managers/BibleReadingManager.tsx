@@ -315,6 +315,18 @@ export interface BibleReadingState {
    */
   title: ReadonlySignal<string>;
 
+  /**
+   * Compact title for tight spaces ("GEN 1" by default); reading extensions
+   * can override it via `transformShortTitle`.
+   */
+  shortTitle: ReadonlySignal<string>;
+
+  /**
+   * Secondary title line (the translation name by default); reading extensions
+   * can override it via `transformSubTitle`.
+   */
+  subTitle: ReadonlySignal<string>;
+
   /** Reading extensions currently enabled on this reading state. */
   enabledExtensions: ReadonlySignal<ReadingExtensionRuntime[]>;
 
@@ -997,15 +1009,20 @@ export function createBibleReadingState(
     () => translationBooks.value?.translation ?? null
   );
 
-  // Default display label ("Genesis 1"), resolved from the loaded chapter when
-  // available, otherwise the books catalog by id, using the app-wide
-  // `name ?? commonName ?? id` idiom. Empty while nothing is resolvable yet.
-  const baseLabel = computed<string>(() => {
+  // Resolves the current book's display record from the loaded chapter when
+  // available, otherwise the books catalog by id.
+  const resolveCurrentBook = () => {
     const chapterBook = chapterData.value?.book;
-    const catalogBook = chapterBook
-      ? undefined
-      : translationBooks.value?.books.find((b) => b.id === bookId.value);
-    const book = chapterBook ?? catalogBook;
+    if (chapterBook) {
+      return chapterBook;
+    }
+    return translationBooks.value?.books.find((b) => b.id === bookId.value);
+  };
+
+  // Default title ("Genesis 1"), using the app-wide `name ?? commonName ?? id`
+  // idiom. Empty while no book is resolvable yet.
+  const baseTitle = computed<string>(() => {
+    const book = resolveCurrentBook();
     const bookName = book?.name ?? book?.commonName ?? bookId.value;
     if (!bookName) {
       return "";
@@ -1013,13 +1030,37 @@ export function createBibleReadingState(
     return `${bookName} ${chapterNumber.value}`;
   });
 
-  // The label surfaced to consumers: the default passed through each enabled
-  // extension's `transformTitle` hook in priority order. Mirrors
-  // `discoveredResultsForDisplay` / `getUrlQueryParams`.
-  const title = computed<string>(() => {
-    let current = baseLabel.value;
+  // Default short title ("GEN 1"): the compact book id + chapter form used by
+  // the collapsed tab strip. Empty while no book is selected.
+  const baseShortTitle = computed<string>(() => {
+    const id = bookId.value;
+    if (!id) {
+      return "";
+    }
+    return `${id} ${chapterNumber.value}`;
+  });
+
+  // Default subtitle: the name of the current chapter's translation. Empty
+  // while it is not yet resolvable.
+  const baseSubTitle = computed<string>(() => {
+    return (
+      chapterData.value?.translation.name ??
+      translationBooks.value?.translation.name ??
+      ""
+    );
+  });
+
+  // Folds a base string through each enabled extension's transform hook in
+  // priority order. Mirrors `discoveredResultsForDisplay` / `getUrlQueryParams`.
+  const applyTitleTransforms = (
+    base: string,
+    pick: (
+      instance: ReadingExtensionInstance
+    ) => ReadingExtensionInstance["transformTitle"]
+  ): string => {
+    let current = base;
     for (const runtime of orderedEnabledRuntimes.value) {
-      const transform = runtime.instance.transformTitle;
+      const transform = pick(runtime.instance);
       if (!transform) {
         continue;
       }
@@ -1030,7 +1071,19 @@ export function createBibleReadingState(
       });
     }
     return current;
-  });
+  };
+
+  // Titles surfaced to consumers: the defaults passed through each enabled
+  // extension's matching transform hook in priority order.
+  const title = computed<string>(() =>
+    applyTitleTransforms(baseTitle.value, (i) => i.transformTitle)
+  );
+  const shortTitle = computed<string>(() =>
+    applyTitleTransforms(baseShortTitle.value, (i) => i.transformShortTitle)
+  );
+  const subTitle = computed<string>(() =>
+    applyTitleTransforms(baseSubTitle.value, (i) => i.transformSubTitle)
+  );
 
   const selectedFootnote = computed<SelectedFootnote | null>(() => {
     const chapter = chapterData.value;
@@ -1929,6 +1982,8 @@ export function createBibleReadingState(
     discoveredContent,
     discoveredStudyNotes,
     title,
+    shortTitle,
+    subTitle,
     isShared: computed(() => isShared.value),
     enabledExtensions,
     isExtensionEnabled,
