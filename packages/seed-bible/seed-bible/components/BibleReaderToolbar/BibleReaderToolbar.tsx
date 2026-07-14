@@ -433,13 +433,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     )
   );
 
-  const hiddenToolIds = new Set([
-    "previous-chapter",
-    "next-chapter",
-    "open-selector",
-    "open-sidebar",
-    "open-search",
-  ]);
+  const hiddenToolIds = new Set(["open-search"]);
 
   const moreTools = useComputed(() =>
     tools.value.filter(
@@ -840,7 +834,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
               const prev = previousChapterTool.value;
               const next = nextChapterTool.value;
               const selector = openSelectorTool.value;
-              if (!audio && !prev && !next && !selector) return null;
+              if (!audio) return null;
 
               const AudioIcon = audio?.icon;
               const PrevIcon = prev?.icon;

@@ -1222,7 +1222,7 @@ function ToolbarSettingsView(props: { state: SeedBibleState }) {
         <ul className="sb-toolbar-config-list">
           {orderedIds.map((id, index) => {
             const tool = available.find((entry) => entry.id === id);
-            if (!tool) return null;
+            if (!tool || !tool.isControllable) return null;
             const title = translateTitle(t, tool.title);
             const isHidden = hiddenSet.has(id);
             const isFirst = index === 0;
