@@ -1081,6 +1081,43 @@ describe("SessionsManager", () => {
     expect(session.readingState.chapterNumber.value).toBe(23);
   });
 
+  it("keeps the current reading state book when the shared session book ID is null", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = (await manager.joinSession(
+      "group-abc"
+    )) as BibleReadingSession;
+
+    // The mock reading state starts on GEN.
+    expect(session.readingState.bookId.value).toBe("GEN");
+
+    // A peer publishes session data with no book (bookId null) but a new
+    // chapter. Because the book is missing, canLoadSessionData() is false, so
+    // the state is applied field-by-field instead of through a full chapter
+    // load — this is the branch that falls back to the local book ID.
+    mockMap.get.mockImplementation((key: string) => {
+      if (key === "chapterNumber") {
+        return 5;
+      }
+      // bookId (and everything else) is absent from the shared session.
+      return null;
+    });
+
+    mockMap.emitChange();
+
+    // The chapter change proves the fallback branch actually ran.
+    await waitFor(() => session.readingState.chapterNumber.value === 5);
+
+    // The book ID is null in the shared session, so it falls back to the
+    // book the reader was already on rather than being cleared.
+    expect(session.readingState.bookId.value).toBe("GEN");
+  });
+
   it("keeps local selection when user changes chapter during remote sync", async () => {
     const chapterDeferred = deferred<any>();
     // Translation only propagates when sharing is enabled.

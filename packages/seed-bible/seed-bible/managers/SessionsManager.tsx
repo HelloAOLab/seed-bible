@@ -368,10 +368,11 @@ function applySessionDataToReadingState(
 ) {
   if (readingState.translationId.value !== sessionData.translationId) {
     readingState.translationId.value =
-      sessionData.translationId ?? readingState.translationId.value;
+      sessionData.translationId ?? readingState.translationId.peek();
   }
   if (readingState.bookId.value !== sessionData.bookId) {
-    readingState.bookId.value = sessionData.bookId;
+    readingState.bookId.value =
+      sessionData.bookId ?? readingState.bookId.peek();
   }
   if (
     sessionData.chapterNumber !== null &&
