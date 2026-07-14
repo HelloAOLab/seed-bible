@@ -950,6 +950,8 @@ describe("createSeedBibleState", () => {
           (t) => t.id === state.tabs.selectedTabId.value
         ) ?? null;
       expect(tab).not.toBeNull();
+      tab!.readingState.bookId.value = bookId;
+      tab!.readingState.chapterNumber.value = chapterNumber;
       tab!.readingState.chapterData.value = {
         translation: {
           id: "test-translation",

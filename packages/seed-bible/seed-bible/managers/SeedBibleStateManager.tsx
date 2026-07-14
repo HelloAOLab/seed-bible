@@ -757,12 +757,7 @@ export function createSeedBibleState(
         return seedBibleTitle;
       }
 
-      const chapter = selectedTab.value.readingState.chapterData.value;
-      if (!chapter) {
-        return seedBibleTitle;
-      }
-
-      return `${chapter.book.name} ${chapter.chapter.number} - ${chapter.translation.name} | ${seedBibleTitle}`;
+      return `${selectedTab.value.readingState.title.value} - ${selectedTab.value.readingState.subTitle.value} | ${seedBibleTitle}`;
     };
 
     return `${isRtl ? RTLE_CHAR : ""}${getTitle()}`;
