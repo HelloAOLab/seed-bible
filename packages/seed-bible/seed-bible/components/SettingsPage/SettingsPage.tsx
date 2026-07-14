@@ -1209,7 +1209,7 @@ function ToolbarSettingsView(props: { state: SeedBibleState }) {
 
       <section className="sb-settings-section">
         <ul className="sb-toolbar-config-list">
-          {orderedIds.map((id, index) => {
+          {orderedIds.map((id) => {
             const tool = available.find((entry) => entry.id === id);
             if (!tool) return null;
             const title = translateTitle(t, tool.title);
