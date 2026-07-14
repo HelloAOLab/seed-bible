@@ -1214,8 +1214,6 @@ function ToolbarSettingsView(props: { state: SeedBibleState }) {
             if (!tool) return null;
             const title = translateTitle(t, tool.title);
             const isHidden = hiddenSet.has(id);
-            const isFirst = index === 0;
-            const isLast = index === orderedIds.length - 1;
 
             return (
               <li
