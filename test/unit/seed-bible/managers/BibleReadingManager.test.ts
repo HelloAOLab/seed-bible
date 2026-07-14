@@ -1986,6 +1986,19 @@ describe("createBibleReadingState", () => {
       return responses;
     }
 
+    function createStateWithExtension(instance: ReadingExtensionInstance) {
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({ id: "x", activate: () => instance });
+      return createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        manager
+      );
+    }
+
     it("does not fire during initial load", async () => {
       setWebResponses(createReadingManagerResponseMap());
       const state = createBibleReadingState(createDataManager());
@@ -2189,6 +2202,44 @@ describe("createBibleReadingState", () => {
       state.dispose();
 
       expect(listener).not.toHaveBeenCalled();
+    });
+
+    it("fires once with { replace: false } when a hook handles loading the next chapter", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const navigateNext = vi.fn().mockReturnValue({ type: "handled" });
+      const state = createStateWithExtension({ navigateNext });
+      await waitForInitialLoad(state);
+      state.enableExtension("x");
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.loadNextChapter();
+
+      // The extension handled the navigation itself, so the chapter does not
+      // change here — but the URL still needs to be updated to match.
+      expect(navigateNext).toHaveBeenCalledTimes(1);
+      expect(state.chapterNumber.value).toBe(1);
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({ replace: false });
+    });
+
+    it("fires once with { replace: false } when a hook handles loading the previous chapter", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const navigatePrevious = vi.fn().mockReturnValue({ type: "handled" });
+      const state = createStateWithExtension({ navigatePrevious });
+      await waitForInitialLoad(state);
+      state.enableExtension("x");
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.loadPreviousChapter();
+
+      expect(navigatePrevious).toHaveBeenCalledTimes(1);
+      expect(state.chapterNumber.value).toBe(1);
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({ replace: false });
     });
   });
 });

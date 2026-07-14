@@ -1324,7 +1324,10 @@ export function createBibleReadingState(
     }
 
     const outcome = await runNavigationHooks("previous");
-    if (outcome.type === "prevent" || outcome.type === "handled") {
+    if (outcome.type === "handled") {
+      emitNavigate({ replace: false });
+      return;
+    } else if (outcome.type === "prevent") {
       return;
     }
 
@@ -1505,7 +1508,10 @@ export function createBibleReadingState(
     }
 
     const outcome = await runNavigationHooks("next");
-    if (outcome.type === "prevent" || outcome.type === "handled") {
+    if (outcome.type === "handled") {
+      emitNavigate({ replace: false });
+      return;
+    } else if (outcome.type === "prevent") {
       return;
     }
 
