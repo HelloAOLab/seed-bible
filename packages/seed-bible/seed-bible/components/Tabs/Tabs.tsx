@@ -953,10 +953,8 @@ function TabRow(props: TabRowProps) {
     currentBookId ??
     "-";
   const currentChapter = tab.readingState.chapterNumber.value;
-  const currentTranslation =
-    tab.readingState.translationId.value ??
-    tab.readingState.defaultTranslation.id;
-  const title = currentBookName;
+  const shortSubTitle = tab.readingState.shortSubTitle.value;
+  const title = tab.readingState.title.value;
   const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
   const isTabBookmarked = bookmarks.isLocationBookmarked(
     tab.readingState.translationId.value,
@@ -998,13 +996,11 @@ function TabRow(props: TabRowProps) {
         className={`sb-tab-button`}
       >
         <div className="sb-tab-main-content">
-          <span className="sb-tab-main-title">
-            {`${title} - ${currentChapter}`}
-          </span>
+          <span className="sb-tab-main-title">{title}</span>
           <span className="sb-tab-main-sep" aria-hidden="true">
             •
           </span>
-          <span className="sb-tab-main-translation">{currentTranslation}</span>
+          <span className="sb-tab-main-translation">{shortSubTitle}</span>
         </div>
 
         {tab.sharedSession && connectedUsers.length > 0 && (

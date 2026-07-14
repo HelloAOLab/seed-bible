@@ -1033,7 +1033,7 @@ export function createBibleReadingState(
     if (!bookName) {
       return "";
     }
-    return `${bookName} ${chapterNumber.value}`;
+    return `${bookName} - ${chapterNumber.value}`;
   });
 
   // Default short title ("GEN 1"): the compact book id + chapter form used by
