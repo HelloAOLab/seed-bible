@@ -1937,7 +1937,7 @@ function SettingsMainView(props: { state: SeedBibleState }) {
           </li>
           <li>
             <button
-              className="sb-settings-nav-item"
+              className="sb-settings-nav-item hide-on-mobile"
               onClick={() => onNavigate("toolbar")}
             >
               <span className="sb-settings-nav-icon">
