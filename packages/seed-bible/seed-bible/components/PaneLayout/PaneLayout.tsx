@@ -159,15 +159,16 @@ interface PaneLayoutProps {
 }
 
 /**
- * Renders floating and fullscreen panes as overlays on top of the tabs
- * layout. Side panes render separately, as a normal flex child, via
- * `SidePane` below — they push layout instead of overlaying it.
+ * Renders floating panes as overlays on top of the tabs layout. Fullscreen
+ * panes render inside the content row via `FullscreenPane`, and side panes via
+ * `SidePane` — both as normal flex children that fit the reader area instead of
+ * covering the whole viewport, so the desktop sidebar stays visible.
  */
 export function PaneLayout(props: PaneLayoutProps) {
   const { state } = props;
   const { app, panes: panesManager } = state;
   const overlayPanes = app.effectivePanes.value.filter(
-    (pane) => pane.placement !== "side"
+    (pane) => pane.placement === "floating"
   );
   const selectedPaneId = panesManager.selectedPaneId.value;
   const { startMove, startResize, registerPaneElement } = usePaneDrag(state);
@@ -182,28 +183,14 @@ export function PaneLayout(props: PaneLayoutProps) {
           }`}
           data-placement={pane.placement}
           style={{
-            ...(pane.placement === "fullscreen"
-              ? {
-                  position: "fixed",
-                  top: "0px",
-                  left: "0px",
-                  right: "0px",
-                  bottom: "0px",
-                  width: "100%",
-                  height: "100%",
-                }
-              : {
-                  left: `${pane.x}px`,
-                  top: `${pane.y}px`,
-                  width: `${pane.width}px`,
-                  height: `${pane.height}px`,
-                }),
+            left: `${pane.x}px`,
+            top: `${pane.y}px`,
+            width: `${pane.width}px`,
+            height: `${pane.height}px`,
             zIndex:
-              pane.placement === "fullscreen"
-                ? 100
-                : pane.id === selectedPaneId
-                  ? 70 + overlayPanes.length
-                  : 50 + index,
+              pane.id === selectedPaneId
+                ? 70 + overlayPanes.length
+                : 50 + index,
           }}
           ref={(element: HTMLElement | null) =>
             registerPaneElement(pane.id, element)
@@ -220,18 +207,64 @@ export function PaneLayout(props: PaneLayoutProps) {
             <div className="sb-pane-component">
               <pane.component />
             </div>
-            {pane.placement === "floating" && (
-              <div
-                className="sb-pane-detached-resize-handle"
-                onPointerDown={(event: PointerEvent) =>
-                  startResize(pane, event)
-                }
-              ></div>
-            )}
+            <div
+              className="sb-pane-detached-resize-handle"
+              onPointerDown={(event: PointerEvent) => startResize(pane, event)}
+            ></div>
           </div>
         </div>
       ))}
     </>
+  );
+}
+
+interface FullscreenPaneProps {
+  state: SeedBibleState;
+  pane: Pane;
+}
+
+/**
+ * Renders the single fullscreen pane (if any) inside the content row, so it
+ * fills only the reader area rather than the whole app.
+ *
+ * On desktop this leaves the sidebar docked beside it, visible and
+ * interactable. On mobile the sidebar is a hidden drawer, so the content row
+ * spans the whole viewport and the pane fills the screen as before — with the
+ * bottom toolbar still floating above it (see BibleReaderToolbar).
+ *
+ * Only one pane can fill the screen at a time — opening a fullscreen pane
+ * closes every other pane (see PanesManager) — so there is never a side or
+ * floating pane sitting alongside it.
+ */
+export function FullscreenPane(props: FullscreenPaneProps) {
+  const { state, pane } = props;
+  const { app, panes: panesManager } = state;
+
+  return (
+    <div
+      className="sb-pane-shell sb-pane-shell-detached"
+      data-placement="fullscreen"
+      style={{
+        position: "absolute",
+        top: "0px",
+        left: "0px",
+        right: "0px",
+        bottom: "0px",
+        zIndex: 100,
+      }}
+      onPointerDown={() => app.selectPane(pane.id)}
+    >
+      <PaneHeader
+        title={pane.title}
+        header={pane.header}
+        onClose={() => panesManager.closePane(pane.id)}
+      />
+      <div className="sb-pane-detached-body">
+        <div className="sb-pane-component">
+          <pane.component />
+        </div>
+      </div>
+    </div>
   );
 }
 
