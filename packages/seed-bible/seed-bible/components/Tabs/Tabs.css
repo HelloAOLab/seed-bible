@@ -23,9 +23,8 @@
 }
 
 .sb-tabs-sidebar-collapsed {
-  width: 3.5rem;
+  width: 4.1rem;
   padding: 0.625rem 0.5rem 1rem;
-  padding-left: 1.1875rem; /* center the collapse button in the collapsed sidebar */
 
   .sb-sidebar-top-row {
     justify-content: center;

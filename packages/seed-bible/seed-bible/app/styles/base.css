@@ -399,4 +399,5 @@ a:visited {
   overflow: hidden;
   min-width: 0;
   min-height: 0;
+  position: relative;
 }
