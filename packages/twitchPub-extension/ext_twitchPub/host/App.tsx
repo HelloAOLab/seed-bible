@@ -14,7 +14,7 @@ function App(props: { state: TwitchPubState; i18n: SeedBibleState["i18n"] }) {
   const appContent = (
     <div className="twitchPub-container">
       {page === "login" && <Login state={state} />}
-      {page === "authorization" && <Authorization />}
+      {page === "authorization" && <Authorization state={state} />}
       {page === "interface" && <TwitchInterface state={state} />}
       {page === "settings" && <TwitchSettings state={state} />}
     </div>
@@ -23,7 +23,7 @@ function App(props: { state: TwitchPubState; i18n: SeedBibleState["i18n"] }) {
   return (
     <>
       <I18nProvider i18n={i18n}>
-        <DraggableContainer children={appContent} />
+        <DraggableContainer children={appContent} state={state} />
       </I18nProvider>
     </>
   );
