@@ -1,7 +1,7 @@
 import { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
-import TextAlign from "@tiptap/extension-text-align";
+import TextAlign from "./TextAlign";
 import "./TipTapEditor.css";
 import { useEffect, useRef, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";

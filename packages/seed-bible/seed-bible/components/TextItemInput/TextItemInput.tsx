@@ -36,10 +36,15 @@ export function TextItemInput(props: TextItemInputProps) {
       return;
     }
     const trimmedTitle = title.trim();
+    const html = editor.getHTML();
+    const sanitizedHtml = await sanitize(html);
+
+    console.log("HTML", html);
+    console.log("Sanitized HTML:", sanitizedHtml);
     // Serialize the contents only now, on submit, rather than on every keystroke.
     onAdd({
       type: "html",
-      html: await sanitize(editor.getHTML()),
+      html: sanitizedHtml,
       title: trimmedTitle || undefined,
     });
     editor.commands.clearContent();
