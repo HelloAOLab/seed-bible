@@ -177,55 +177,62 @@ describe("useBook", () => {
   });
 
   describe("bookClass", () => {
-    it("is 'book-container pointable' when showChapters is false", () => {
+    it("is 'book-container book-closed pointable' when showChapters is false", () => {
       (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ showingAllChapters: false })
       );
       const result = setup();
-      expect(result.current.bookClass).toBe("book-container pointable");
+      expect(result.current.bookClass).toBe(
+        "book-container book-closed pointable"
+      );
     });
 
-    it("is 'book-container' when showChapters is true", () => {
+    it("is 'book-container book-open' when showChapters is true", () => {
       (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ showingAllChapters: true })
       );
       const result = setup();
-      expect(result.current.bookClass).toBe("book-container");
+      expect(result.current.bookClass).toBe("book-container book-open");
     });
   });
 
-  describe("bookCoverClass", () => {
-    it("is 'book-cover' when chapters are hidden and no user presence", () => {
+  describe("bookCoverFrontClass", () => {
+    it("is 'book-cover-front' when closed and no user presence", () => {
       const result = setup({ bookBorderGradientColors: undefined });
-      expect(result.current.bookCoverClass).toBe("book-cover");
+      expect(result.current.bookCoverFrontClass).toBe("book-cover-front");
     });
 
-    it("is 'book-cover invisible' when chapters are shown", () => {
+    it("is 'book-cover-front' (no presence border) when the book is open", () => {
       (useScriptureMapContext as Mock).mockReturnValue(
-        makeScriptureMapCtx({ showingAllChapters: true })
+        makeScriptureMapCtx({
+          isUserPresenceEnabled: true,
+          showingAllChapters: true,
+        })
       );
-      const result = setup();
-      expect(result.current.bookCoverClass).toBe("book-cover invisible");
+      const result = setup({
+        bookBorderGradientColors: "linear-gradient(#f00, #00f)",
+      });
+      expect(result.current.bookCoverFrontClass).toBe("book-cover-front");
     });
 
-    it("is 'book-cover show-user-presence' when user presence is enabled and border colors exist", () => {
+    it("is 'book-cover-front show-user-presence' when closed with presence colors", () => {
       (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ isUserPresenceEnabled: true })
       );
       const result = setup({
         bookBorderGradientColors: "linear-gradient(#f00, #00f)",
       });
-      expect(result.current.bookCoverClass).toBe(
-        "book-cover show-user-presence"
+      expect(result.current.bookCoverFrontClass).toBe(
+        "book-cover-front show-user-presence"
       );
     });
 
-    it("is 'book-cover' when user presence is enabled but border colors are absent", () => {
+    it("is 'book-cover-front' when presence is enabled but border colors are absent", () => {
       (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({ isUserPresenceEnabled: true })
       );
       const result = setup({ bookBorderGradientColors: undefined });
-      expect(result.current.bookCoverClass).toBe("book-cover");
+      expect(result.current.bookCoverFrontClass).toBe("book-cover-front");
     });
   });
 
@@ -379,9 +386,10 @@ describe("useBook", () => {
   });
 
   describe("chaptersData", () => {
-    it("is empty when showChapters is false", () => {
-      const result = setup();
-      expect(result.current.chaptersData).toHaveLength(0);
+    it("is populated even when the book is closed (pages stay mounted behind the cover)", () => {
+      const result = setup({ numberOfChapters: 3 });
+      expect(result.current.showChapters).toBe(false);
+      expect(result.current.chaptersData).toHaveLength(3);
     });
 
     it("has numberOfChapters entries when showChapters is true", () => {
@@ -415,7 +423,7 @@ describe("useBook", () => {
     });
   });
 
-  describe("bookCoverStyle", () => {
+  describe("bookCoverFrontStyle", () => {
     it("sets bookCoverBackgroundColor as background when showingBooksColors is true and reading history is disabled", () => {
       (useScriptureMapContext as Mock).mockReturnValue(
         makeScriptureMapCtx({
@@ -424,12 +432,19 @@ describe("useBook", () => {
         })
       );
       const result = setup({ bookCoverBackgroundColor: "#ff0000" });
-      expect(result.current.bookCoverStyle.background).toBe("#ff0000");
+      expect(result.current.bookCoverFrontStyle.background).toBe("#ff0000");
     });
 
     it("background is undefined when showingBooksColors is false and history is disabled", () => {
       const result = setup();
-      expect(result.current.bookCoverStyle.background).toBeUndefined();
+      expect(result.current.bookCoverFrontStyle.background).toBeUndefined();
+    });
+  });
+
+  describe("bookPagesStyle", () => {
+    it("keeps the pages grid background transparent so the cover carries the surface", () => {
+      const result = setup();
+      expect(result.current.bookPagesStyle.background).toBe("transparent");
     });
   });
 
@@ -623,7 +638,7 @@ describe("useBook", () => {
         })
       );
       const result = setup({ readingSummary: readingSummary as never });
-      expect(result.current.bookCoverStyle.background).toBe(
+      expect(result.current.bookCoverFrontStyle.background).toBe(
         "linear-gradient(red, blue)"
       );
     });

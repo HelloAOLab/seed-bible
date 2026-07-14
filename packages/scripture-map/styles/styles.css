@@ -566,11 +566,49 @@
   display: grid;
   gap: var(--chapter-gap);
   position: relative;
+  perspective: calc(700px * var(--scale-factor));
   grid-template-columns: repeat(var(--book-max-columns), var(--chapter-width));
   grid-template-rows: repeat(auto-fill, var(--chapter-width));
   justify-content: center;
   align-items: center;
   justify-items: center;
+}
+
+/* The flip cover: an overlay reading as the book's front cover. It sits over
+   the chapter grid while closed and swings open on its left-edge spine. */
+.book-container .book-cover-front {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  box-sizing: border-box;
+  border-radius: calc(8px * var(--scale-factor));
+  background: var(--sb-tertiary-color);
+  box-shadow:
+    inset calc(9px * var(--scale-factor)) 0 calc(14px * var(--scale-factor))
+      calc(-8px * var(--scale-factor)) rgba(0, 0, 0, 0.3),
+    inset 0 calc(1px * var(--scale-factor)) 0 rgba(255, 255, 255, 0.16);
+  transform-origin: left center;
+  transition: transform 0.55s cubic-bezier(0.25, 0.75, 0.25, 1);
+  backface-visibility: hidden;
+  cursor: pointer;
+}
+
+.book-container.book-open .book-cover-front {
+  transform: rotateY(-150deg);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book-container .book-cover-front {
+    transition: opacity 0.25s ease;
+  }
+  .book-container.book-open .book-cover-front {
+    transform: none;
+    opacity: 0;
+  }
+  .book-header .book-caret {
+    transition: opacity 0.2s ease;
+  }
 }
 
 .book-container .book-header {
@@ -596,6 +634,23 @@
   font-size: calc(16px * var(--scale-factor));
   color: var(--sb-reader-font-color);
   font-style: italic;
+}
+
+/* Rotating caret signals the book is expandable, and which way it's going. */
+.book-header .book-caret {
+  flex: 0 0 auto;
+  width: calc(20px * var(--scale-factor));
+  height: calc(20px * var(--scale-factor));
+  color: var(--sb-reader-font-color);
+  opacity: 0.45;
+  transition:
+    transform 0.35s cubic-bezier(0.25, 0.75, 0.25, 1),
+    opacity 0.2s ease;
+}
+
+.book-container.book-open .book-header .book-caret {
+  transform: rotate(90deg);
+  opacity: 0.85;
 }
 
 .scripture-map-wrapper
@@ -643,8 +698,8 @@
 
 .book-container .book-cover .chapter.show-user-presence::before,
 .book-container .book-cover .chapter.show-user-presence::after,
-.book-container .book-cover.show-user-presence::before,
-.book-container .book-cover.show-user-presence::after {
+.book-container .book-cover-front.show-user-presence::before,
+.book-container .book-cover-front.show-user-presence::after {
   content: "";
   position: absolute;
   height: 100%;
@@ -667,8 +722,8 @@
   border-radius: calc(3px * var(--scale-factor));
 }
 
-.book-container .book-cover.show-user-presence::before,
-.book-container .book-cover.show-user-presence::after {
+.book-container .book-cover-front.show-user-presence::before,
+.book-container .book-cover-front.show-user-presence::after {
   background-image: conic-gradient(
     from var(--angle),
     var(--bookUserPresenceColors)
@@ -677,7 +732,7 @@
   border-radius: calc(10px * var(--scale-factor));
 }
 
-.book-container .book-cover.show-user-presence::before {
+.book-container .book-cover-front.show-user-presence::before {
   filter: blur(0.2rem);
   opacity: 0.7;
 }

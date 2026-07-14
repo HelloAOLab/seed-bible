@@ -59,14 +59,15 @@ export const Book = memo(
       chaptersData,
       bookTitle,
       bookClass,
-      bookCoverClass,
+      bookCoverFrontClass,
       handleBookClick,
       handleBookHeaderPointerDown,
       handleBookHeaderPointerUp,
       handleBookHeaderClick,
       handleBookCoverPointerEnter,
       handleBookCoverPointerLeave,
-      bookCoverStyle,
+      bookPagesStyle,
+      bookCoverFrontStyle,
       isReadingHistoryEnabled,
       isUserPresenceEnabled,
     } = useBook({
@@ -94,24 +95,44 @@ export const Book = memo(
           onClick={handleBookHeaderClick}
         >
           <span className="book-id">{bookTitle}</span>
+          <svg
+            className="book-caret"
+            viewBox="0 0 24 24"
+            width="1em"
+            height="1em"
+            aria-hidden="true"
+          >
+            <path
+              d="M9 6l6 6-6 6"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
         </div>
-        <div
-          className={bookCoverClass}
-          onPointerEnter={handleBookCoverPointerEnter}
-          onPointerLeave={handleBookCoverPointerLeave}
-          style={bookCoverStyle}
-        >
-          {showChapters ? (
-            chaptersData.map((data) => <Chapter {...data} />)
-          ) : (isReadingHistoryEnabled || isUserPresenceEnabled) &&
+        <div className="book-cover" style={bookPagesStyle}>
+          {chaptersData.map((data) => (
+            <Chapter {...data} />
+          ))}
+          <div
+            className={bookCoverFrontClass}
+            onPointerEnter={handleBookCoverPointerEnter}
+            onPointerLeave={handleBookCoverPointerLeave}
+            style={bookCoverFrontStyle}
+          >
+            {!showChapters &&
+            (isReadingHistoryEnabled || isUserPresenceEnabled) &&
             tooltipAnchor &&
             tooltipContentsData?.length > 0 ? (
-            <Tooltip
-              anchor={tooltipAnchor}
-              contentsData={tooltipContentsData}
-              offsetY={tooltipOffsetY}
-            />
-          ) : null}
+              <Tooltip
+                anchor={tooltipAnchor}
+                contentsData={tooltipContentsData}
+                offsetY={tooltipOffsetY}
+              />
+            ) : null}
+          </div>
         </div>
       </div>
     );

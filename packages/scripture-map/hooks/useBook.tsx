@@ -46,7 +46,7 @@ interface UseBookType {
   chaptersData: ChapterData[];
   bookTitle: string;
   bookClass: string;
-  bookCoverClass: string;
+  bookCoverFrontClass: string;
   handleBookClick: () => void;
   handleBookHeaderPointerDown: (
     e: React.JSX.TargetedPointerEvent<HTMLDivElement>
@@ -61,7 +61,8 @@ interface UseBookType {
     e: React.JSX.TargetedPointerEvent<HTMLDivElement>
   ) => void;
   handleBookCoverPointerLeave: () => void;
-  bookCoverStyle: React.CSSProperties;
+  bookPagesStyle: React.CSSProperties;
+  bookCoverFrontStyle: React.CSSProperties;
   isReadingHistoryEnabled: boolean;
   isUserPresenceEnabled: boolean;
 }
@@ -420,8 +421,6 @@ export const useBook: UseBook = (props) => {
   }, [readingEvents, readingHistoryRangeSeconds]);
 
   const chaptersData = useMemo<UseBookType["chaptersData"]>(() => {
-    if (!showChapters) return [];
-
     const now = Date.now();
     const nowSeconds = Math.floor(now / MS_PER_SECOND);
     const baseColor = BASE_BACKGROUND_COLOR;
@@ -658,11 +657,13 @@ export const useBook: UseBook = (props) => {
   }, [scaleFactor, book]);
 
   const bookClass = useMemo<string>(() => {
-    return `book-container${showChapters ? "" : " pointable"}`;
+    return `book-container ${showChapters ? "book-open" : "book-closed pointable"}`;
   }, [showChapters]);
 
-  const bookCoverClass = useMemo<string>(() => {
-    return `book-cover${showChapters ? " invisible" : isUserPresenceEnabled && bookBorderGradientColors ? " show-user-presence" : ""}`;
+  const bookCoverFrontClass = useMemo<string>(() => {
+    const showPresence =
+      !showChapters && isUserPresenceEnabled && bookBorderGradientColors;
+    return `book-cover-front${showPresence ? " show-user-presence" : ""}`;
   }, [showChapters, isUserPresenceEnabled, bookBorderGradientColors]);
 
   // useEffect(() => {
@@ -718,13 +719,19 @@ export const useBook: UseBook = (props) => {
     setContainerRect(null);
   }, [setContainerRect]);
 
-  const bookCoverStyle = useMemo<React.CSSProperties>(() => {
+  const bookPagesStyle = useMemo<React.CSSProperties>(() => {
+    return {
+      minHeight: bookCoverHeight,
+      background: "transparent",
+    };
+  }, [bookCoverHeight]);
+
+  const bookCoverFrontStyle = useMemo<React.CSSProperties>(() => {
     return {
       "--bookUserPresenceColors": bookBorderGradientColors,
-      minHeight: bookCoverHeight,
       background: fixedBackground,
     };
-  }, [bookCoverHeight, fixedBackground, bookBorderGradientColors]);
+  }, [fixedBackground, bookBorderGradientColors]);
 
   return {
     showChapters,
@@ -734,14 +741,15 @@ export const useBook: UseBook = (props) => {
     chaptersData,
     bookTitle,
     bookClass,
-    bookCoverClass,
+    bookCoverFrontClass,
     handleBookClick,
     handleBookHeaderPointerDown,
     handleBookHeaderPointerUp,
     handleBookHeaderClick,
     handleBookCoverPointerEnter,
     handleBookCoverPointerLeave,
-    bookCoverStyle,
+    bookPagesStyle,
+    bookCoverFrontStyle,
     isReadingHistoryEnabled,
     isUserPresenceEnabled,
   };
