@@ -515,6 +515,8 @@ export function createSeedBibleState(
     onboarding,
     selector,
     isMobile,
+    panes,
+    sidebar,
     joinedViaSessionLink
   );
 
