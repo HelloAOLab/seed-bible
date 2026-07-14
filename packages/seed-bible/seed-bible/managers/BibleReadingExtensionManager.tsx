@@ -15,10 +15,9 @@ import type {
  * Where a navigation hook can send the reader, or how it takes control.
  *
  * - `default` — fall through to the normal next/previous-chapter behavior.
- * - `prevent` — block navigation entirely; do nothing.
+ * - `prevent` — block navigation; reading state does nothing and does not update the URL.
  * - `navigate` — go to a specific chapter chosen by the extension.
- * - `handled` — the extension took over (for example, opened a popup); the
- *   reading state should not navigate.
+ * - `handled` — the extension took over; reading state won't change any data, but will update the URL.
  */
 export type ReadingNavigationOutcome =
   | { type: "default" }

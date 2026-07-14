@@ -1,7 +1,6 @@
 import { z } from "zod";
 import type { LoginManager } from "./LoginManager";
 import {
-  batch,
   computed,
   effect,
   signal,
@@ -151,24 +150,65 @@ export function createPlayingState(
   const hasNext = computed(() => currentIndex.value < queue.value.length - 1);
   const hasPrevious = computed(() => currentIndex.value > 0);
 
+  let decorationId: string | null = null;
+
+  const disposeDecoration = () => {
+    if (tab && decorationId) {
+      tab.readingState.removeDecoration(decorationId);
+      decorationId = null;
+    }
+  };
+
+  const navigateToCurrentItem = async () => {
+    const item = currentItem.value;
+    if (!tab || item?.type !== "bible-verse") {
+      return;
+    }
+    disposeDecoration();
+    const { ref, translationId } = item;
+
+    // `translationId` is optional on the item; fall back to the tab's current
+    // translation. `.peek()` avoids re-navigating when the tab changes it.
+    await tab.readingState.selectTranslationAndChapter(
+      translationId ?? tab.readingState.translationId.peek(),
+      ref.bookId,
+      ref.chapter,
+      { scrollToVerse: ref.verse }
+    );
+
+    if (ref.verse) {
+      decorationId = tab.readingState.decorateVerses(
+        ref.bookId,
+        ref.chapter,
+        ref.endVerse ? range(ref.verse, ref.endVerse) : [ref.verse],
+        {
+          className: "sb-verse-decoration-playlist-verse-highlight",
+        }
+      );
+    }
+  };
+
   /** Advances to the next step. No-op at the end of the queue. */
-  const next = (): void => {
+  const next = async (): Promise<void> => {
     if (hasNext.value) {
       currentIndex.value = currentIndex.value + 1;
+      await navigateToCurrentItem();
     }
   };
 
   /** Goes back to the previous step. No-op at the start of the queue. */
-  const previous = (): void => {
+  const previous = async (): Promise<void> => {
     if (hasPrevious.value) {
       currentIndex.value = currentIndex.value - 1;
+      await navigateToCurrentItem();
     }
   };
 
   /** Jumps to the given index. No-op when the index is out of range. */
-  const jumpTo = (index: number): void => {
+  const jumpTo = async (index: number): Promise<void> => {
     if (index >= 0 && index < queue.value.length) {
       currentIndex.value = index;
+      await navigateToCurrentItem();
     }
   };
 
@@ -231,8 +271,9 @@ export function createPlayingState(
   };
 
   /** Restarts playback from the first item. */
-  const reset = (): void => {
+  const reset = async (): Promise<void> => {
     currentIndex.value = queue.value.length > 0 ? 0 : -1;
+    await navigateToCurrentItem();
   };
 
   /**
@@ -242,7 +283,7 @@ export function createPlayingState(
    * differs from the current value, so applying an inbound snapshot doesn't
    * re-trigger the outbound sync effect for unchanged fields.
    */
-  const setState = (state: PlaylistReadingData): void => {
+  const setState = async (state: PlaylistReadingData): Promise<void> => {
     if (!jsonEqual(playlists.peek(), state.playlists)) {
       playlists.value = state.playlists;
     }
@@ -255,55 +296,24 @@ export function createPlayingState(
         : -1;
     if (currentIndex.peek() !== clampedStep) {
       currentIndex.value = clampedStep;
-    }
-  };
-
-  let decorationId: string | null = null;
-
-  const disposeDecoration = () => {
-    if (tab && decorationId) {
-      tab.readingState.removeDecoration(decorationId);
-      decorationId = null;
-    }
-  };
-
-  // Navigate the saved tab to the current item when it is a bible verse. Runs
-  // immediately, so playback jumps to the first item's verse right away.
-  const disposeNavigation = effect(() => {
-    const item = currentItem.value;
-    if (!tab || item?.type !== "bible-verse") {
-      return;
-    }
-    const { ref, translationId } = item;
-
-    batch(() => {
-      // `translationId` is optional on the item; fall back to the tab's current
-      // translation. `.peek()` avoids re-navigating when the tab changes it.
-      void tab.readingState.selectTranslationAndChapter(
-        translationId ?? tab.readingState.translationId.peek(),
-        ref.bookId,
-        ref.chapter,
-        { scrollToVerse: ref.verse }
-      );
-
-      if (ref.verse) {
-        decorationId = tab.readingState.decorateVerses(
-          ref.bookId,
-          ref.chapter,
-          ref.endVerse ? range(ref.verse, ref.endVerse) : [ref.verse],
-          {
-            className: "sb-verse-decoration-playlist-verse-highlight",
-          }
-        );
+      await navigateToCurrentItem();
+    } else {
+      // Check if navigation is needed to display the current reference
+      const current = currentItem.peek();
+      if (current?.type === "bible-verse" && tab?.readingState) {
+        if (
+          current.ref.bookId !== tab.readingState.bookId.peek() ||
+          current.ref.chapter !== tab.readingState.chapterNumber.peek()
+        ) {
+          await navigateToCurrentItem();
+        }
       }
-    });
-
-    return () => disposeDecoration();
-  });
+    }
+  };
 
   /** Tears down the navigation effect. Call when playback ends or is replaced. */
   const dispose = (): void => {
-    disposeNavigation();
+    disposeDecoration();
   };
 
   return {
@@ -807,25 +817,25 @@ export function createPlaylistManager(
         },
         // Navigation hooks are unconditional now that playback state is synced:
         // any participant can drive next/previous and it propagates via `data`.
-        navigateNext: () => {
+        navigateNext: async () => {
           if (playingState.queue.value.length === 0) {
-            return { type: "default" as const };
+            return { type: "default" };
           }
           if (!playingState.hasNext.value) {
-            return { type: "prevent" as const };
+            return { type: "prevent" };
           }
-          playingState.next();
-          return { type: "handled" as const };
+          await playingState.next();
+          return { type: "prevent" };
         },
-        navigatePrevious: () => {
+        navigatePrevious: async () => {
           if (playingState.queue.value.length === 0) {
-            return { type: "default" as const };
+            return { type: "default" };
           }
           if (!playingState.hasPrevious.value) {
-            return { type: "prevent" as const };
+            return { type: "prevent" };
           }
-          playingState.previous();
-          return { type: "handled" as const };
+          await playingState.previous();
+          return { type: "prevent" };
         },
         dispose: () => {
           disposeOut();
