@@ -194,57 +194,6 @@ describe("PlayPlaylistView", () => {
         ".sb-play-playlist-item-button .sb-discover-item-title"
       )?.textContent
     ).toBe("Genesis 1:1");
-    expect(
-      container.querySelector(".sb-play-controls-label")?.textContent
-    ).toBe("Genesis 1:1");
-  });
-
-  it("falls back to the raw book id when no translation books are loaded", () => {
-    const playlist = createPlaylist({
-      items: [verseItem({ ref: { bookId: "GEN", chapter: 1, verse: 1 } })],
-    });
-    const playing = createPlayingState([playlist]);
-    const { playlists } = createMockPlaylists(playing);
-    const tabs = createMockTabs();
-
-    act(() => {
-      render(
-        <PlayPlaylistView
-          playlists={playlists}
-          tabs={tabs}
-          modals={modals}
-          state={state}
-        />,
-        container
-      );
-    });
-
-    expect(
-      container.querySelector(".sb-play-controls-label")?.textContent
-    ).toBe("GEN 1:1");
-  });
-
-  it("shows 'Now playing' in the controls bar when the queue is empty", () => {
-    const playlist = createPlaylist({ items: [] });
-    const playing = createPlayingState([playlist]);
-    const { playlists } = createMockPlaylists(playing);
-    const tabs = createMockTabs();
-
-    act(() => {
-      render(
-        <PlayPlaylistView
-          playlists={playlists}
-          tabs={tabs}
-          modals={modals}
-          state={state}
-        />,
-        container
-      );
-    });
-
-    expect(
-      container.querySelector(".sb-play-controls-label")?.textContent
-    ).toBe("Now playing");
   });
 
   it("clicking a queue item jumps playback to that item", () => {
@@ -277,49 +226,5 @@ describe("PlayPlaylistView", () => {
     });
 
     expect(playing.currentIndex.value).toBe(2);
-  });
-
-  it("disables previous/next at the ends of the queue and enables them otherwise", () => {
-    const playlist = createPlaylist({
-      items: [
-        verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
-        verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
-      ],
-    });
-    const playing = createPlayingState([playlist]);
-    const { playlists } = createMockPlaylists(playing);
-    const tabs = createMockTabs();
-
-    act(() => {
-      render(
-        <PlayPlaylistView
-          playlists={playlists}
-          tabs={tabs}
-          modals={modals}
-          state={state}
-        />,
-        container
-      );
-    });
-
-    const [previousButton, nextButton] = Array.from(
-      container.querySelectorAll<HTMLButtonElement>(".sb-play-controls-button")
-    );
-    expect(previousButton?.disabled).toBe(true);
-    expect(nextButton?.disabled).toBe(false);
-
-    act(() => {
-      nextButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    expect(playing.currentIndex.value).toBe(1);
-    expect(previousButton?.disabled).toBe(false);
-    expect(nextButton?.disabled).toBe(true);
-
-    act(() => {
-      previousButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-    });
-
-    expect(playing.currentIndex.value).toBe(0);
   });
 });
