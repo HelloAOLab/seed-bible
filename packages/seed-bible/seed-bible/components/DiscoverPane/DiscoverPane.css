@@ -9,6 +9,7 @@
   padding: 12px;
   gap: 8px;
   color: var(--sb-font-color);
+  padding-bottom: 250px;
 }
 
 /* Back-button + title row shown in the pane header while viewing/editing a
