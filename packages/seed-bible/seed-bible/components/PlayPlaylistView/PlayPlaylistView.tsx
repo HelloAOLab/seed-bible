@@ -79,34 +79,6 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
           </ul>
         </DiscoverSection>
       </div>
-
-      <div className="sb-play-controls">
-        <span className="sb-play-controls-label" dir="auto">
-          {currentItem
-            ? playlistItemLabel(currentItem, t, resolveBookName)
-            : t("now-playing", { defaultValue: "Now playing" })}
-        </span>
-        <div className="sb-play-controls-buttons">
-          <button
-            type="button"
-            className="sb-play-controls-button"
-            aria-label={t("previous", { defaultValue: "Previous" })}
-            disabled={!playing.hasPrevious.value}
-            onClick={() => playing.previous()}
-          >
-            <MaterialIcon>skip_previous</MaterialIcon>
-          </button>
-          <button
-            type="button"
-            className="sb-play-controls-button"
-            aria-label={t("next", { defaultValue: "Next" })}
-            disabled={!playing.hasNext.value}
-            onClick={() => playing.next()}
-          >
-            <MaterialIcon>skip_next</MaterialIcon>
-          </button>
-        </div>
-      </div>
     </div>
   );
 }
