@@ -10,7 +10,7 @@
   gap: 8px;
   padding: 0 12px;
   border-bottom: 1px solid
-    color-mix(in srgb, var(--sb-font-color), transparent 35%);
+    color-mix(in srgb, var(--sb-font-color), transparent 75%);
   cursor: default;
   user-select: none;
 }
