@@ -101,7 +101,7 @@ const AIPlaylistItemSchema = z.object({
       .nullable(),
     link: z.object({
       title: z.string().nullable(),
-      url: z.url(),
+      url: z.string(),
     }),
     html: z.object({
       title: z.string().nullable(),
