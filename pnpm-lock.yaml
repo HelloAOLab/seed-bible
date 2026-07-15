@@ -6,6 +6,15 @@ settings:
 
 catalogs:
   default:
+    '@casual-simulation/aux-common':
+      specifier: 4.2.3
+      version: 4.2.3
+    '@casual-simulation/aux-websocket':
+      specifier: 4.2.3
+      version: 4.2.3
+    '@casual-simulation/websocket':
+      specifier: 4.0.0
+      version: 4.0.0
     '@tiptap/core':
       specifier: 3.27.1
       version: 3.27.1
@@ -51,9 +60,15 @@ catalogs:
     '@tiptap/starter-kit':
       specifier: 3.27.1
       version: 3.27.1
+    '@types/json-schema':
+      specifier: 7.0.15
+      version: 7.0.15
     axios:
       specifier: 1.13.5
       version: 1.13.5
+    base64-js:
+      specifier: 1.5.1
+      version: 1.5.1
     dompurify:
       specifier: ^3.4.11
       version: 3.4.11
@@ -63,6 +78,9 @@ catalogs:
     i18next-resources-to-backend:
       specifier: ^1.2.1
       version: 1.2.1
+    luxon:
+      specifier: ^3.7.2
+      version: 3.7.2
     preact:
       specifier: 10.29.2
       version: 10.29.2
@@ -221,6 +239,9 @@ importers:
       '@types/jsdom':
         specifier: ^28.0.3
         version: 28.0.3
+      '@types/json-schema':
+        specifier: 'catalog:'
+        version: 7.0.15
       '@types/luxon':
         specifier: ^3.7.2
         version: 3.7.2
