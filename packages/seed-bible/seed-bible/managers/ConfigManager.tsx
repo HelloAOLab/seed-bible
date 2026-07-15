@@ -1,6 +1,6 @@
 import { effect, signal } from "@preact/signals";
 import i18n from "i18next";
-import type { LoginManager, UserProfile } from "../managers/LoginManager";
+import type { LoginManager } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
@@ -171,23 +171,36 @@ export function createConfig(
 
   const config = signal<AppConfig>(readConfig());
 
-  // Set while `syncConfigFromBot` is applying a language it just read from the
-  // profile, so the `languageChanged` listener below doesn't mistake that
+  // Set while `applyProfileLanguage` is applying a language it just read from
+  // the profile, so the `languageChanged` listener below doesn't mistake that
   // profile-to-i18n sync for a user-driven change and write the same value
   // straight back to the profile it came from.
   let isApplyingProfileLanguage = false;
 
-  const syncConfigFromBot = (
-    profile: UserProfile | null = login.profile.value
-  ) => {
-    const url = navigation.currentUrl.value;
+  // Re-read the URL/profile-derived config (font size, panels, preset) whenever
+  // either the URL or the profile changes.
+  effect(() => {
     config.value = readConfig();
+  });
 
-    const profileLanguage = getProfileConfigValue(profile, "lang");
+  // Apply the profile's saved UI language, but ONLY when the profile itself
+  // changes (i.e. on login / profile load) — deliberately NOT on every URL
+  // change.
+  //
+  // The `?lang=` query param is owned by I18nManager (see its
+  // `syncSignalsToUrl({ lang })`), which is the single source of truth for the
+  // URL <-> `i18n.language` relationship. If this ran on URL changes too, it
+  // would fight the user's in-session language switch: picking a language
+  // writes `?lang=` first, that URL write would re-run this effect, and the
+  // profile's still-unsaved previous language would revert `i18n.language`
+  // (leaving only `?translation=` applied — the bug this guards against). Only
+  // read `login.profile` here so the effect subscribes to the profile alone.
+  effect(() => {
+    const profileLanguage = getProfileConfigValue(login.profile.value, "lang");
     const nextLanguage =
       typeof profileLanguage === "string" && profileLanguage.trim().length > 0
         ? profileLanguage
-        : url.searchParams.get("lang");
+        : null;
 
     if (nextLanguage && nextLanguage !== i18n.language) {
       isApplyingProfileLanguage = true;
@@ -195,10 +208,6 @@ export function createConfig(
         isApplyingProfileLanguage = false;
       });
     }
-  };
-
-  effect(() => {
-    syncConfigFromBot(login.profile.value);
   });
 
   const setDisablePanels = (disablePanels: boolean) => {
