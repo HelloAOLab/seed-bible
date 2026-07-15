@@ -509,29 +509,32 @@ export function createPlaylistManager(
    * `editingPlaylist` to a fresh, empty (unsaved) playlist. Persisting happens
    * later via `saveEditingPlaylist`. No-op when not signed in.
    */
-  const createNewPlaylist = async (): Promise<void> => {
-    let userId = login.userId.value;
-    if (!userId) {
-      const userInfo = await login.login();
-      if (!userInfo) {
-        console.warn("Cannot create a playlist while signed out.");
-        return;
+  const createNewPlaylist =
+    async (): Promise<Signal<Playlist | null> | null> => {
+      let userId = login.userId.value;
+      if (!userId) {
+        const userInfo = await login.login();
+        if (!userInfo) {
+          console.warn("Cannot create a playlist while signed out.");
+          return null;
+        }
+        userId = userInfo.id;
       }
-      userId = userInfo.id;
-    }
-    const now = Date.now();
-    editingPlaylist.value = PlaylistSchema.parse({
-      id: `playlist_${uuid()}`,
-      recordName: userId,
-      authorUserId: userId,
-      title: null,
-      description: null,
-      items: [],
-      createdAtMs: now,
-      updatedAtMs: now,
-    });
-    view.value = "create_playlist";
-  };
+      const now = Date.now();
+      editingPlaylist.value = PlaylistSchema.parse({
+        id: `playlist_${uuid()}`,
+        recordName: userId,
+        authorUserId: userId,
+        title: null,
+        description: null,
+        items: [],
+        createdAtMs: now,
+        updatedAtMs: now,
+      });
+      view.value = "create_playlist";
+
+      return editingPlaylist;
+    };
 
   /**
    * Opens an existing playlist for editing: sets `editingPlaylist` to a copy of
