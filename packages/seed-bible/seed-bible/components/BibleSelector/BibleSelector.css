@@ -330,6 +330,8 @@
   position: absolute;
   left: 0;
   padding: 0px 0.625rem;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .testament-title {
@@ -345,9 +347,44 @@
 
 .books-item {
   width: 100%;
-  height: fit-content;
   scrollbar-width: none;
   overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.books-item.grid-column-wrap-around {
+  display: grid;
+  grid-auto-flow: row;
+  align-content: start;
+  gap: 0.625rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.books-item.grid-column-wrap-around > .sidebar-itm,
+.books-item.grid-column-wrap-around > .sidebar-ghost-itm {
+  width: 100%;
+  min-width: 0;
+}
+
+.books-item.grid-column-wrap-around > .show-sidebar-chapter {
+  grid-column: 1 / -1;
+}
+
+.books-item.books-item-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  overflow-y: auto;
+}
+
+.testament-container {
+  flex: 0 1 auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .separator {
@@ -699,6 +736,7 @@
 .sidebar-itm {
   height: 2.75rem;
   width: 12.5rem;
+  max-width: 100%;
   border-radius: 0.5rem;
   cursor: pointer;
   transition:
