@@ -7,6 +7,7 @@ import {
   type ChatParticipant,
   type UserChatParticipant,
 } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
+import type { AIProviderFunctionTool } from "@packages/seed-bible/seed-bible/managers/AIManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 import type { I18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import type { i18n } from "i18next";
@@ -20,6 +21,18 @@ import {
 // existing behavior of these tests intact.
 const mockI18n = { t: (key: string) => key } as unknown as i18n;
 const mockI18nManager = { i18n: mockI18n } as unknown as I18nManager;
+
+// Builds a minimal AIProviderFunctionTool for asserting that custom context
+// flows through to a chat provider. The `function` is never invoked here.
+function makeTool(name: string): AIProviderFunctionTool {
+  return {
+    name,
+    type: "function",
+    description: `${name} tool`,
+    parameters: {} as AIProviderFunctionTool["parameters"],
+    function: async () => "ok",
+  };
+}
 
 // ChatsManager generates ids via `v4` from the "uuid" package, so mock the
 // module to produce deterministic, sequential ids.
@@ -1915,6 +1928,218 @@ describe("createChatsManager", () => {
       targets: ["provider-1"],
     });
     expect(providerResponse).toHaveBeenCalledTimes(1);
+  });
+
+  it("createLocalSession() passes custom instructions and tools to the provider", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const tool = makeTool("addItem");
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession(undefined, {
+      instructions: "Be concise.",
+      tools: [tool],
+    });
+    const providerResponse = vi.fn().mockResolvedValue({
+      type: "text",
+      text: "Provider reply",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: providerResponse,
+    });
+    session.addParticipant("provider-1");
+
+    expect(session.context.value).toEqual({
+      instructions: "Be concise.",
+      tools: [tool],
+    });
+
+    await session.sendMessage({ type: "text", text: "Hello @provider-1" });
+
+    expect(providerResponse).toHaveBeenCalledTimes(1);
+    expect(providerResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        instructions: "Be concise.",
+        tools: [tool],
+      })
+    );
+  });
+
+  it("setContext() merges fields and applies on the next message", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const tool = makeTool("addItem");
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession(undefined, { tools: [tool] });
+    const providerResponse = vi.fn().mockResolvedValue({
+      type: "text",
+      text: "Provider reply",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: providerResponse,
+    });
+    session.addParticipant("provider-1");
+
+    // Merge in instructions; the previously-set tools must be preserved.
+    session.setContext({ instructions: "Updated instructions." });
+    expect(session.context.value).toEqual({
+      instructions: "Updated instructions.",
+      tools: [tool],
+    });
+
+    await session.sendMessage({ type: "text", text: "Hi @provider-1" });
+
+    expect(providerResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        instructions: "Updated instructions.",
+        tools: [tool],
+      })
+    );
+  });
+
+  it("createLocalSession() passes undefined context fields when none provided", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+    const providerResponse = vi.fn().mockResolvedValue({
+      type: "text",
+      text: "Provider reply",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: providerResponse,
+    });
+    session.addParticipant("provider-1");
+
+    expect(session.context.value).toEqual({});
+
+    await session.sendMessage({ type: "text", text: "Hello @provider-1" });
+
+    const call = providerResponse.mock.calls[0]![0];
+    expect(call.instructions).toBeUndefined();
+    expect(call.tools).toBeUndefined();
+  });
+
+  it("addContext() merges additional instructions and tools into the default context", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const baseTool = makeTool("baseTool");
+    const playlistTool = makeTool("editPlaylist");
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession(undefined, {
+      instructions: "Be concise.",
+      tools: [baseTool],
+    });
+    const providerResponse = vi.fn().mockResolvedValue({
+      type: "text",
+      text: "Provider reply",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: providerResponse,
+    });
+    session.addParticipant("provider-1");
+
+    session.addContext({
+      id: "playlist",
+      instructions: "Current playlist: {}",
+      tools: [playlistTool],
+    });
+
+    await session.sendMessage({ type: "text", text: "Edit it @provider-1" });
+
+    expect(providerResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        instructions: "Be concise.\n\nCurrent playlist: {}",
+        tools: [baseTool, playlistTool],
+      })
+    );
+    // The default context signal is unchanged by addContext.
+    expect(session.context.value).toEqual({
+      instructions: "Be concise.",
+      tools: [baseTool],
+    });
+  });
+
+  it("addContext() replaces a context with the same id", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+    const providerResponse = vi.fn().mockResolvedValue({
+      type: "text",
+      text: "Provider reply",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: providerResponse,
+    });
+    session.addParticipant("provider-1");
+
+    session.addContext({ id: "playlist", instructions: "First playlist." });
+    session.addContext({ id: "playlist", instructions: "Second playlist." });
+
+    await session.sendMessage({ type: "text", text: "Hi @provider-1" });
+
+    expect(providerResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ instructions: "Second playlist." })
+    );
+  });
+
+  it("removeContext() drops an added context from subsequent messages", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const playlistTool = makeTool("editPlaylist");
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const session = chats.createLocalSession();
+    const providerResponse = vi.fn().mockResolvedValue({
+      type: "text",
+      text: "Provider reply",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: providerResponse,
+    });
+    session.addParticipant("provider-1");
+
+    session.addContext({
+      id: "playlist",
+      instructions: "Current playlist: {}",
+      tools: [playlistTool],
+    });
+    session.removeContext("playlist");
+
+    await session.sendMessage({ type: "text", text: "Hi @provider-1" });
+
+    const call = providerResponse.mock.calls[0]![0];
+    expect(call.instructions).toBeUndefined();
+    expect(call.tools).toBeUndefined();
   });
 
   it("sendMessage() defaults to first local AI target when no targets are resolved", async () => {

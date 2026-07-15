@@ -21,6 +21,7 @@ import { getConnectedUserVisualKey } from "./SessionsManager";
 import { v4 as uuid } from "uuid";
 import type { I18nManager } from "../i18n/I18nManager";
 import { type i18n } from "i18next";
+import type { AIProviderFunctionTool } from "./AIManager";
 
 export const chatMessageBaseSchema = z.object({
   /**
@@ -116,17 +117,65 @@ export interface ParsedVerseReferencePart {
   ref: VerseRef;
 }
 
+/**
+ * Custom context that a local chat session can provide to its AI chat providers.
+ */
+export interface LocalChatContext {
+  /**
+   * The instructions (system prompt) that should be passed to AI models.
+   * If omitted, the chat provider can choose its own instructions.
+   */
+  instructions?: string;
+
+  /**
+   * The tools that should be provided to the AI model for this chat.
+   */
+  tools?: AIProviderFunctionTool[];
+}
+
+/**
+ * A {@link LocalChatContext} that carries an `id` so it can be added to and
+ * later removed from a chat session via `addContext`/`removeContext`.
+ */
+export interface IdentifiedLocalChatContext extends LocalChatContext {
+  /**
+   * A unique identifier used to add or remove this context. Adding a context
+   * with an `id` that is already present replaces the existing one.
+   */
+  id: string;
+}
+
 export interface ChatContext {
   chatId: string;
   messages: ChatMessage[];
   participant: ChatParticipant;
   participants: ChatParticipant[];
+
+  /**
+   * The instructions (system prompt) that should be passed to AI models, if any.
+   */
+  instructions?: string;
+
+  /**
+   * The tools that should be provided to the AI model, if any.
+   */
+  tools?: AIProviderFunctionTool[];
 }
 
 export interface JoinLeaveChatContext {
   chatId: string;
   messages: ChatMessage[];
   participants: ChatParticipant[];
+
+  /**
+   * The instructions (system prompt) that should be passed to AI models, if any.
+   */
+  instructions?: string;
+
+  /**
+   * The tools that should be provided to the AI model, if any.
+   */
+  tools?: AIProviderFunctionTool[];
 }
 
 export interface ChatProvider {
@@ -307,6 +356,32 @@ export interface ChatSession {
    * @returns The authors of the message, or an empty array if the authors are anonymous or have left the session.
    */
   getMessageAuthors: (message: ChatMessage) => ChatParticipant[];
+
+  /**
+   * The custom context (instructions + tools) currently provided to AI chat providers.
+   */
+  context: ReadonlySignal<LocalChatContext>;
+
+  /**
+   * Merges the given fields into the session's default custom context.
+   * @param context The context fields to merge in.
+   */
+  setContext: (context: LocalChatContext) => void;
+
+  /**
+   * Adds an additional identified context that is merged into the default
+   * context before being sent to AI chat providers. Adding a context whose
+   * `id` is already present replaces the existing one.
+   * @param context The identified context to add.
+   */
+  addContext: (context: IdentifiedLocalChatContext) => void;
+
+  /**
+   * Removes a previously added context by its `id`. Does nothing if no context
+   * with that `id` is present.
+   * @param id The id of the context to remove.
+   */
+  removeContext: (id: string) => void;
 }
 
 export interface SharedChatSession extends ChatSession {
@@ -329,7 +404,10 @@ export interface ChatsManager {
   wasMentioned: ReadonlySignal<boolean>;
   selectedChat: ReadonlySignal<ChatSession | null>;
   createSharedSession: (session: BibleReadingSession) => ChatSession;
-  createLocalSession: (history?: ChatSessionHistory) => ChatSession;
+  createLocalSession: (
+    history?: ChatSessionHistory,
+    context?: LocalChatContext
+  ) => ChatSession;
   registerProvider: (provider: ChatProvider) => () => void;
   selectChat: (chatId: string | null) => void;
 }
@@ -442,6 +520,31 @@ function createProviderParticipantId(
   providerId: string
 ): string {
   return `${ownerConnectionId}_${providerId}`;
+}
+
+/**
+ * Combines the default chat context with any additional contexts into a single
+ * {@link LocalChatContext} to hand to an AI chat provider. Instructions are
+ * concatenated (non-empty, in order, separated by blank lines) and tool lists
+ * are concatenated in order. Empty results collapse to `undefined` so a
+ * provider can tell "no context" from "empty context".
+ */
+function mergeLocalChatContexts(
+  contexts: LocalChatContext[]
+): LocalChatContext {
+  const instructions = contexts
+    .map((context) => context.instructions)
+    .filter(
+      (instruction): instruction is string =>
+        typeof instruction === "string" && instruction.trim().length > 0
+    );
+  const tools = contexts.flatMap((context) => context.tools ?? []);
+
+  return {
+    instructions:
+      instructions.length > 0 ? instructions.join("\n\n") : undefined,
+    tools: tools.length > 0 ? tools : undefined,
+  };
 }
 
 function toAsyncTextIterator(
@@ -852,6 +955,27 @@ function createSharedChatSession(
   i18nManager: I18nManager
 ): SharedChatSession {
   const i18n = i18nManager.i18n;
+  // Custom context is stored in-memory only: it is local to this client and is
+  // not broadcast to remote participants (tool `function` callbacks are not
+  // serializable and only ever run in the local runtime).
+  const chatContext = signal<LocalChatContext>({});
+  const additionalContexts = signal<IdentifiedLocalChatContext[]>([]);
+  const setContext = (next: LocalChatContext) => {
+    chatContext.value = { ...chatContext.value, ...next };
+  };
+  const addContext = (next: IdentifiedLocalChatContext) => {
+    additionalContexts.value = [
+      ...additionalContexts.value.filter((c) => c.id !== next.id),
+      next,
+    ];
+  };
+  const removeContext = (id: string) => {
+    additionalContexts.value = additionalContexts.value.filter(
+      (c) => c.id !== id
+    );
+  };
+  const effectiveContext = () =>
+    mergeLocalChatContexts([chatContext.value, ...additionalContexts.value]);
   const chats = session.document.getArray<unknown>("chats");
   const chatProvidersMap = session.document.getMap<unknown>("chat_providers");
   const participantAliasesMap = session.document.getMap<unknown>(
@@ -1247,10 +1371,13 @@ function createSharedChatSession(
       (entry) => entry.id === localProvider.providerId
     );
     if (provider?.onJoinChat) {
+      const merged = effectiveContext();
       provider.onJoinChat({
         chatId,
         messages: messages.value,
         participants: participants.value,
+        instructions: merged.instructions,
+        tools: merged.tools,
       });
     }
   };
@@ -1325,11 +1452,14 @@ function createSharedChatSession(
         setParticipantTyping(participant.id, true);
 
         try {
+          const merged = effectiveContext();
           const response = await provider.generateResponse({
             chatId,
             messages: [...messages.value, nextMessage],
             participant,
             participants: participants.value,
+            instructions: merged.instructions,
+            tools: merged.tools,
           });
           if (!response) {
             return;
@@ -1460,10 +1590,13 @@ function createSharedChatSession(
         (entry) => entry.id === localProvider.providerId
       );
       if (provider && provider.onLeaveChat) {
+        const merged = effectiveContext();
         provider.onLeaveChat({
           chatId,
           messages: messages.value,
           participants: participants.value,
+          instructions: merged.instructions,
+          tools: merged.tools,
         });
       }
     },
@@ -1473,6 +1606,10 @@ function createSharedChatSession(
         message,
         participantIdAliases.value
       ),
+    context: chatContext,
+    setContext,
+    addContext,
+    removeContext,
     isShared: true,
     session,
   };
@@ -1519,9 +1656,28 @@ function createLocalChatSession(
   loginManager: LoginManager,
   chatProviders: Signal<ChatProvider[]>,
   i18nManager: I18nManager,
-  history?: ChatSessionHistory
+  history?: ChatSessionHistory,
+  context?: LocalChatContext
 ): ChatSession {
   const i18n = i18nManager.i18n;
+  const chatContext = signal<LocalChatContext>(context ?? {});
+  const additionalContexts = signal<IdentifiedLocalChatContext[]>([]);
+  const setContext = (next: LocalChatContext) => {
+    chatContext.value = { ...chatContext.value, ...next };
+  };
+  const addContext = (next: IdentifiedLocalChatContext) => {
+    additionalContexts.value = [
+      ...additionalContexts.value.filter((c) => c.id !== next.id),
+      next,
+    ];
+  };
+  const removeContext = (id: string) => {
+    additionalContexts.value = additionalContexts.value.filter(
+      (c) => c.id !== id
+    );
+  };
+  const effectiveContext = () =>
+    mergeLocalChatContexts([chatContext.value, ...additionalContexts.value]);
   // Join times keyed by participant id, recorded the first time each id is seen.
   const participantJoinTimes = signal<Record<string, number>>({});
   const localParticipant = computed<UserChatParticipant>(() => {
@@ -1718,10 +1874,13 @@ function createLocalChatSession(
       (entry) => entry.id === participantId
     );
     if (provider?.onJoinChat) {
+      const merged = effectiveContext();
       provider.onJoinChat({
         chatId,
         messages: messages.value,
         participants: participants.value,
+        instructions: merged.instructions,
+        tools: merged.tools,
       });
     }
   };
@@ -1795,11 +1954,14 @@ function createLocalChatSession(
         );
 
         try {
+          const merged = effectiveContext();
           const response = await provider.generateResponse({
             chatId,
             messages: [...messages.value],
             participant: target,
             participants: participants.value,
+            instructions: merged.instructions,
+            tools: merged.tools,
           });
           if (!response) {
             return;
@@ -1957,14 +2119,21 @@ function createLocalChatSession(
         (entry) => entry.id === participantId
       );
       if (provider && provider.onLeaveChat) {
+        const merged = effectiveContext();
         provider.onLeaveChat({
           chatId,
           messages: messages.value,
           participants: participants.value,
+          instructions: merged.instructions,
+          tools: merged.tools,
         });
       }
     },
     getMessageAuthors,
+    context: chatContext,
+    setContext,
+    addContext,
+    removeContext,
   };
 }
 
@@ -2019,12 +2188,16 @@ export function createChatsManager(
     };
   };
 
-  const createLocalSession = (history?: ChatSessionHistory) => {
+  const createLocalSession = (
+    history?: ChatSessionHistory,
+    context?: LocalChatContext
+  ) => {
     const chat = createLocalChatSession(
       loginManager,
       chatProviders,
       i18nManager,
-      history
+      history,
+      context
     );
     chats.value = [...chats.value, chat];
     return chat;
