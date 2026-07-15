@@ -363,6 +363,10 @@ export function createSeedBibleState(
   const highlights = createHighlightsManager(os, login);
   const bookmarks = createBookmarksManager(os, login);
   const config = createConfig(login, navigation);
+  // Persist a user's explicit language selection to their profile. Wiring it
+  // through `requestLanguageChange` (rather than a blanket `languageChanged`
+  // listener) keeps URL-driven language changes view-only.
+  i18n.setLanguagePersister(config.persistLanguage);
   const panelsEnabled = computed(() => !config.config.value.disablePanels);
   const themeManager = createTheme(login, navigation);
   const chats = createChatsManager(login, i18n);
