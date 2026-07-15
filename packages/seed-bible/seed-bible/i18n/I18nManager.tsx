@@ -233,6 +233,21 @@ export function createI18nManager(
     ensureTranslationsLoaded = loadTranslations;
   };
 
+  /**
+   * Wired by SeedBibleState to persist the user's chosen UI language (e.g. to
+   * their profile). Invoked ONLY for selector-driven changes via
+   * `requestLanguageChange` — never for URL-driven changes (deep links,
+   * browser back/forward) or profile-applied changes, so opening a shared
+   * `?lang=` link updates the view without overwriting the account's saved
+   * language.
+   */
+  let persistLanguage: ((language: string) => void) | null = null;
+  const setLanguagePersister = (
+    persister: ((language: string) => void) | null
+  ) => {
+    persistLanguage = persister;
+  };
+
   const changeLanguage = i18n.changeLanguage.bind(i18n);
 
   const applyBibleTranslationForUiLanguage = async (uiLanguage: string) => {
@@ -267,6 +282,10 @@ export function createI18nManager(
     if (nextLanguage !== language.value) {
       await changeLanguage(nextLanguage);
     }
+    // Persist the user's explicit selection. Only selector-driven changes reach
+    // this function; URL-driven changes go through the `syncSignalsToUrl`
+    // setter above and are deliberately left un-persisted.
+    persistLanguage?.(nextLanguage);
     await applyBibleTranslationForUiLanguage(nextLanguage);
   };
 
@@ -291,6 +310,7 @@ export function createI18nManager(
     confirmLanguageFallback,
     cancelLanguageFallback,
     setBibleTranslationApplicator,
+    setLanguagePersister,
     languageFallbackPrompt,
     defaultLanguage,
     availableLanguages,

@@ -171,12 +171,6 @@ export function createConfig(
 
   const config = signal<AppConfig>(readConfig());
 
-  // Set while `applyProfileLanguage` is applying a language it just read from
-  // the profile, so the `languageChanged` listener below doesn't mistake that
-  // profile-to-i18n sync for a user-driven change and write the same value
-  // straight back to the profile it came from.
-  let isApplyingProfileLanguage = false;
-
   // Re-read the URL/profile-derived config (font size, panels, preset) whenever
   // either the URL or the profile changes.
   effect(() => {
@@ -193,8 +187,8 @@ export function createConfig(
   // would fight the user's in-session language switch: picking a language
   // writes `?lang=` first, that URL write would re-run this effect, and the
   // profile's still-unsaved previous language would revert `i18n.language`
-  // (leaving only `?translation=` applied — the bug this guards against). Only
-  // read `login.profile` here so the effect subscribes to the profile alone.
+  // (leaving only `?translation=` applied). Only read `login.profile` here so
+  // the effect subscribes to the profile alone.
   effect(() => {
     const profileLanguage = getProfileConfigValue(login.profile.value, "lang");
     const nextLanguage =
@@ -203,12 +197,19 @@ export function createConfig(
         : null;
 
     if (nextLanguage && nextLanguage !== i18n.language) {
-      isApplyingProfileLanguage = true;
-      void i18n.changeLanguage(nextLanguage).finally(() => {
-        isApplyingProfileLanguage = false;
-      });
+      void i18n.changeLanguage(nextLanguage);
     }
   });
+
+  // Persist the user's chosen UI language to their profile. Wired into
+  // I18nManager's `requestLanguageChange` (the selector path) via
+  // `setLanguagePersister`, so it runs ONLY for explicit selector choices —
+  // never for URL-driven changes (a shared `?lang=` link or browser
+  // back/forward), which stay view-only, and never for the profile-to-i18n
+  // sync above (which would just write the value straight back).
+  const persistLanguage = (language: string) => {
+    void saveProfileConfigValue(login, "lang", language);
+  };
 
   const setDisablePanels = (disablePanels: boolean) => {
     const nextConfig = {
@@ -231,17 +232,10 @@ export function createConfig(
     saveProfileConfigValue(login, "fontSize", nextFontSize);
   };
 
-  i18n.on("languageChanged", (language: string) => {
-    if (isApplyingProfileLanguage) {
-      return;
-    }
-    console.log("languageChanged event received from i18n:", language);
-    saveProfileConfigValue(login, "lang", language);
-  });
-
   return {
     config,
     setDisablePanels,
     setFontSize,
+    persistLanguage,
   };
 }

@@ -63,7 +63,10 @@ describe("ConfigManager language handling", () => {
     await i18n.ready;
 
     const login = makeFakeLogin(profileWithLang("en"));
-    createConfig(login, nav);
+    const config = createConfig(login, nav);
+    // Selector-driven changes persist to the profile via this wiring (done by
+    // SeedBibleState in production).
+    i18n.setLanguagePersister(config.persistLanguage);
 
     // The scripture-translation side-effect writes `?translation=`.
     const apply = vi.fn(async () => {
@@ -104,5 +107,50 @@ describe("ConfigManager language handling", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(i18n.language.value).toBe("fr");
+  });
+
+  // A shared `?lang=` link or browser back/forward changes the displayed
+  // language, but must NOT overwrite the account's saved language — only the
+  // in-app selector persists.
+  it("does not persist a URL-driven language change to the profile", async () => {
+    const nav = createNavigationManager({ initialHref: window.location.href });
+    const i18n = createI18nManager(nav, ["en"]);
+    await i18n.ready;
+
+    const login = makeFakeLogin(profileWithLang("en"));
+    const config = createConfig(login, nav);
+    i18n.setLanguagePersister(config.persistLanguage);
+
+    // Deep-link / back-forward navigation that puts ?lang=de in the URL.
+    window.history.pushState({}, "", "/?lang=de");
+    const start = Date.now();
+    while (i18n.i18n.language !== "de" && Date.now() - start < 1000) {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+
+    // The displayed language switched ...
+    expect(i18n.language.value).toBe("de");
+    // ... but the saved profile language is untouched.
+    expect(getProfileLang(login)).toBe("en");
+  });
+
+  it("persists a selector-driven change even when the language matches no prior profile value", async () => {
+    const nav = createNavigationManager({ initialHref: window.location.href });
+    const i18n = createI18nManager(nav, ["en"]);
+    await i18n.ready;
+
+    // Logged-in user with no saved language yet.
+    const login = makeFakeLogin({
+      name: "Test",
+      config: {},
+    } as unknown as UserProfile);
+    const config = createConfig(login, nav);
+    i18n.setLanguagePersister(config.persistLanguage);
+    i18n.setBibleTranslationApplicator(vi.fn(), () => null, null);
+
+    await i18n.requestLanguageChange("de");
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(getProfileLang(login)).toBe("de");
   });
 });
