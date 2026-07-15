@@ -1,8 +1,8 @@
 import { computed, signal } from "@preact/signals";
 import { z, type ZodSchema } from "zod";
 import {
-  BibleVersePlaylistItem,
   PlaylistItem,
+  type Playlist,
   type PlaylistManager,
 } from "./PlaylistManager";
 import type { ZodStandardJSONSchemaPayload } from "zod/v4/core";
@@ -53,7 +53,7 @@ export interface AIProvider {
   generatePlaylist?: (
     prompt: string,
     options: AIProviderGenerateOptions
-  ) => Promise<void>;
+  ) => AsyncGenerator<string, void, void>;
 }
 
 export interface AIManagerOptions {
@@ -85,9 +85,60 @@ export function generateFunctionTool<T>(options: {
   };
 }
 
-// const AddPlaylistItemToolParameters = z.object({
+const AIPlaylistItemSchema = z.object({
+  item: z.object({
+    type: z.enum(["bible-verse", "link", "html"]),
+    bibleVerse: z
+      .object({
+        ref: z.object({
+          bookId: z.string(),
+          chapter: z.number().positive(),
+          endChapter: z.number().positive().nullable(),
+          verse: z.number().positive(),
+          endVerse: z.number().positive().nullable(),
+        }),
+      })
+      .nullable(),
+    link: z.object({
+      title: z.string().nullable(),
+      url: z.url(),
+    }),
+    html: z.object({
+      title: z.string().nullable(),
+      html: z.string(),
+    }),
+  }),
+});
 
-// });
+function convertToPlaylistItem(
+  item: z.infer<typeof AIPlaylistItemSchema>["item"]
+) {
+  switch (item.type) {
+    case "bible-verse":
+      return {
+        type: item.type,
+        ref: {
+          bookId: item.bibleVerse!.ref.bookId,
+          chapter: item.bibleVerse!.ref.chapter,
+          endChapter: item.bibleVerse!.ref.endChapter ?? undefined,
+          verse: item.bibleVerse!.ref.verse,
+          endVerse: item.bibleVerse!.ref.endVerse ?? undefined,
+        },
+      };
+    case "link":
+      return {
+        type: item.type,
+        title: item.link.title ?? undefined,
+        url: item.link.url,
+      };
+    case "html":
+      return {
+        type: item.type,
+        title: item.html.title ?? undefined,
+        html: item.html.html,
+      };
+  }
+}
 
 /**
  * A manager that keeps track of AI providers which can provide AI-powered features.
@@ -96,6 +147,76 @@ export function createAIManager(options: AIManagerOptions) {
   const { playlist } = options;
   const providers = signal<AIProvider[]>([]);
   const tools = signal<AIProviderFunctionTool[]>([]);
+
+  const getEditPlaylistTools = (editingPlaylist: Playlist) => {
+    const addPlaylistItemTool = generateFunctionTool({
+      name: "addPlaylistItem",
+      description: "Adds an item to the playlist.",
+      parameters: AIPlaylistItemSchema,
+      function: async (args) => {
+        // Implement the function logic here
+        playlist.addEditingPlaylistItem(convertToPlaylistItem(args.item));
+
+        return "success";
+      },
+    });
+
+    const updatePlaylistItemTool = generateFunctionTool({
+      name: "updatePlaylistItem",
+      description: "Updates an item in the playlist.",
+      parameters: AIPlaylistItemSchema.extend({
+        index: z.number(),
+      }),
+      function: async (args) => {
+        // Implement the function logic here
+        playlist.updateEditingPlaylistItem(
+          args.index,
+          convertToPlaylistItem(args.item)
+        );
+
+        return "success";
+      },
+    });
+
+    const deletePlaylistItemTool = generateFunctionTool({
+      name: "deletePlaylistItem",
+      description: "Deletes an item from the playlist.",
+      parameters: z.object({
+        index: z.number(),
+      }),
+      function: async (args) => {
+        // Implement the function logic here
+        playlist.removeEditingPlaylistItem(args.index);
+
+        return "success";
+      },
+    });
+
+    const updatePlaylistTool = generateFunctionTool({
+      name: "updatePlaylistMetadata",
+      description: "Updates the playlist metadata (title, description)",
+      parameters: z.object({
+        title: z.string(),
+        description: z.string().nullable(),
+      }),
+      function: async (args) => {
+        playlist.editingPlaylist.value = {
+          ...editingPlaylist,
+          title: args.title,
+          description: args.description ?? editingPlaylist.description ?? null,
+        };
+
+        return "success";
+      },
+    });
+
+    return [
+      updatePlaylistTool.tool,
+      addPlaylistItemTool.tool,
+      updatePlaylistItemTool.tool,
+      deletePlaylistItemTool.tool,
+    ];
+  };
 
   const registerProvider = (provider: AIProvider): (() => void) => {
     const index = providers.value.findIndex((p) => p.id === provider.id);
@@ -139,7 +260,10 @@ export function createAIManager(options: AIManagerOptions) {
    * Attempts to generate a new playlist from the given prompt using one of the available AI providers.
    * @param prompt
    */
-  const generatePlaylist = async (providerId: string, prompt: string) => {
+  const generatePlaylist = async function* (
+    providerId: string,
+    prompt: string
+  ): AsyncGenerator<string, void, void> {
     const provider = getProviderById(providerId);
     if (!provider) {
       throw new Error(`Provider with ID ${providerId} not found.`);
@@ -160,154 +284,8 @@ export function createAIManager(options: AIManagerOptions) {
 
     const myPlaylist = newPlaylist.value;
 
-    // const cancel = newPlaylist.subscribe((v) => {
-    //   if (v?.id !== myPlaylist.id) {
-    //     cancel();
-    //   }
-    // });
-
-    const addPlaylistItemTool = generateFunctionTool({
-      name: "addPlaylistItem",
-      description: "Adds an item to the playlist.",
-      parameters: z.object({
-        item: z.object({
-          type: z.literal("bible-verse"),
-          ref: z.object({
-            bookId: z.string(),
-            chapter: z.number().positive(),
-            endChapter: z.number().positive().nullable(),
-            verse: z.number().positive(),
-            endVerse: z.number().positive().nullable(),
-          }),
-        }),
-      }),
-      function: async (args) => {
-        if (cancelController.signal.aborted) {
-          return "canceled";
-        }
-
-        if (playlist.editingPlaylist.value?.id !== myPlaylist.id) {
-          cancelController.abort();
-          return "canceled";
-        }
-
-        // Implement the function logic here
-        playlist.addEditingPlaylistItem({
-          type: args.item.type,
-          ref: {
-            bookId: args.item.ref.bookId,
-            chapter: args.item.ref.chapter,
-            endChapter: args.item.ref.endChapter ?? undefined,
-            verse: args.item.ref.verse,
-            endVerse: args.item.ref.endVerse ?? undefined,
-          },
-        });
-
-        return "success";
-      },
-    });
-
-    const updatePlaylistItemTool = generateFunctionTool({
-      name: "updatePlaylistItem",
-      description: "Updates an item in the playlist.",
-      parameters: z.object({
-        item: z.object({
-          type: z.literal("bible-verse"),
-          ref: z.object({
-            bookId: z.string(),
-            chapter: z.number().positive(),
-            endChapter: z.number().positive().nullable(),
-            verse: z.number().positive(),
-            endVerse: z.number().positive().nullable(),
-          }),
-        }),
-        index: z.number(),
-      }),
-      function: async (args) => {
-        if (cancelController.signal.aborted) {
-          return "canceled";
-        }
-
-        if (playlist.editingPlaylist.value?.id !== myPlaylist.id) {
-          cancelController.abort();
-          return "canceled";
-        }
-
-        // Implement the function logic here
-        playlist.updateEditingPlaylistItem(args.index, {
-          type: args.item.type,
-          ref: {
-            bookId: args.item.ref.bookId,
-            chapter: args.item.ref.chapter,
-            endChapter: args.item.ref.endChapter ?? undefined,
-            verse: args.item.ref.verse,
-            endVerse: args.item.ref.endVerse ?? undefined,
-          },
-        });
-
-        return "success";
-      },
-    });
-
-    const deletePlaylistItemTool = generateFunctionTool({
-      name: "deletePlaylistItem",
-      description: "Deletes an item from the playlist.",
-      parameters: z.object({
-        index: z.number(),
-      }),
-      function: async (args) => {
-        if (cancelController.signal.aborted) {
-          return "canceled";
-        }
-
-        if (playlist.editingPlaylist.value?.id !== myPlaylist.id) {
-          cancelController.abort();
-          return "canceled";
-        }
-
-        // Implement the function logic here
-        playlist.removeEditingPlaylistItem(args.index);
-
-        return "success";
-      },
-    });
-
-    const updatePlaylistTool = generateFunctionTool({
-      name: "updatePlaylistMetadata",
-      description: "Updates the playlist metadata (title, description)",
-      parameters: z.object({
-        title: z.string(),
-        description: z.string().nullable(),
-      }),
-      function: async (args) => {
-        if (cancelController.signal.aborted) {
-          return "canceled";
-        }
-
-        if (playlist.editingPlaylist.value?.id !== myPlaylist.id) {
-          cancelController.abort();
-          return "canceled";
-        }
-
-        playlist.editingPlaylist.value = {
-          ...playlist.editingPlaylist.value,
-          title: args.title,
-          description:
-            args.description ?? playlist.editingPlaylist.value?.description,
-        };
-
-        return "success";
-      },
-    });
-
-    provider.generatePlaylist(prompt, {
-      tools: [
-        ...tools.value,
-        updatePlaylistTool.tool,
-        addPlaylistItemTool.tool,
-        updatePlaylistItemTool.tool,
-        deletePlaylistItemTool.tool,
-      ],
+    yield* provider.generatePlaylist(prompt, {
+      tools: [...tools.value, ...getEditPlaylistTools(myPlaylist)],
       cancelToken: cancelController.signal,
     });
   };
