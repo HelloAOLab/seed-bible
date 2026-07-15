@@ -21,7 +21,14 @@ import type {
   BibleReadingExtensionManager,
   ReadingExtensionInstance,
 } from "./BibleReadingExtensionManager";
-import { generateFunctionTool, type AIManager } from "./AIManager";
+import {
+  AIPlaylistItemSchema,
+  convertToAiPlaylistItem,
+  convertToPlaylistItem,
+  generateFunctionTool,
+  type AIManager,
+  type GeneratedPlaylist,
+} from "./AIManager";
 
 export const VerseRefSchema = z.object({
   bookId: z.string(),
@@ -94,77 +101,6 @@ function parsePlaylistLocator(
 export type Playlist = z.infer<typeof PlaylistSchema>;
 export type PlaylistItemData = z.infer<typeof PlaylistItem>;
 export type VerseRef = z.infer<typeof VerseRefSchema>;
-
-export const GeneratedPlaylistSchema = z.object({
-  items: z.array(PlaylistItem),
-  title: z.string().nullable(),
-  description: z.string().nullable(),
-});
-
-export type GeneratedPlaylist = z.infer<typeof GeneratedPlaylistSchema>;
-
-/**
- * The shape the AI is asked to produce for a single playlist item. Kept
- * distinct from {@link PlaylistItem}: it uses nullable (not optional) fields
- * so the JSON schema handed to the provider is fully specified, and carries
- * all three item variants side-by-side so a single tool definition covers
- * every type. {@link convertToPlaylistItem} maps it back to a real
- * {@link PlaylistItemData}.
- */
-const AIPlaylistItemSchema = z.object({
-  item: z.object({
-    type: z.enum(["bible-verse", "link", "html"]),
-    bibleVerse: z
-      .object({
-        ref: z.object({
-          bookId: z.string(),
-          chapter: z.number().positive(),
-          endChapter: z.number().positive().nullable(),
-          verse: z.number().positive(),
-          endVerse: z.number().positive().nullable(),
-        }),
-      })
-      .nullable(),
-    link: z.object({
-      title: z.string().nullable(),
-      url: z.string(),
-    }),
-    html: z.object({
-      title: z.string().nullable(),
-      html: z.string(),
-    }),
-  }),
-});
-
-function convertToPlaylistItem(
-  item: z.infer<typeof AIPlaylistItemSchema>["item"]
-): PlaylistItemData {
-  switch (item.type) {
-    case "bible-verse":
-      return {
-        type: item.type,
-        ref: {
-          bookId: item.bibleVerse!.ref.bookId,
-          chapter: item.bibleVerse!.ref.chapter,
-          endChapter: item.bibleVerse!.ref.endChapter ?? undefined,
-          verse: item.bibleVerse!.ref.verse,
-          endVerse: item.bibleVerse!.ref.endVerse ?? undefined,
-        },
-      };
-    case "link":
-      return {
-        type: item.type,
-        title: item.link.title ?? undefined,
-        url: item.link.url,
-      };
-    case "html":
-      return {
-        type: item.type,
-        title: item.html.title ?? undefined,
-        html: item.html.html,
-      };
-  }
-}
 
 export type PlaylistManager = ReturnType<typeof createPlaylistManager>;
 export type PlayingState = ReturnType<typeof createPlayingState>;
@@ -1014,7 +950,7 @@ export function createPlaylistManager(
       description: "Adds an item to the playlist.",
       parameters: AIPlaylistItemSchema,
       function: async (args) => {
-        addEditingPlaylistItem(convertToPlaylistItem(args.item));
+        addEditingPlaylistItem(convertToPlaylistItem(args));
 
         return "success";
       },
@@ -1027,7 +963,7 @@ export function createPlaylistManager(
         index: z.number(),
       }),
       function: async (args) => {
-        updateEditingPlaylistItem(args.index, convertToPlaylistItem(args.item));
+        updateEditingPlaylistItem(args.index, convertToPlaylistItem(args));
 
         return "success";
       },
@@ -1073,37 +1009,36 @@ export function createPlaylistManager(
   };
 
   /**
-   * Attempts to generate a new playlist from the given prompt using one of the
-   * available AI providers. Creates a fresh playlist to edit, then hands the
-   * provider the AI tool set (shared tools plus the playlist-editing tools) so
-   * it can populate the playlist as it streams.
+   * Attempts to update the given playlist from the given prompt using one of the
+   * available AI providers. Hands the provider the AI tool set (shared tools plus
+   * the playlist-editing tools) so it can populate the playlist as it streams.
    */
-  const generatePlaylist = async function* (
+  const aiUpdatePlaylist = async function* (
     providerId: string,
-    prompt: string
+    prompt: string,
+    playlist: Playlist
   ): AsyncGenerator<string, void, void> {
     const provider = ai.getProviderById(providerId);
     if (!provider) {
       throw new Error(`Provider with ID ${providerId} not found.`);
     }
 
-    if (!provider.generatePlaylist) {
+    if (!provider.updatePlaylist) {
       throw new Error(
         `Provider with ID ${providerId} does not support playlist generation.`
       );
     }
 
     const cancelController = new AbortController();
-    const newPlaylist = await createNewPlaylist();
 
-    if (!newPlaylist || !newPlaylist.value) {
-      return;
-    }
+    const aiPlaylist: GeneratedPlaylist = {
+      title: playlist.title ?? null,
+      description: playlist.description ?? null,
+      items: playlist.items.map((i) => convertToAiPlaylistItem(i)),
+    };
 
-    const myPlaylist = newPlaylist.value;
-
-    yield* provider.generatePlaylist(prompt, {
-      tools: [...ai.tools.value, ...getEditPlaylistTools(myPlaylist)],
+    yield* provider.updatePlaylist(aiPlaylist, prompt, {
+      tools: [...ai.tools.value, ...getEditPlaylistTools(playlist)],
       cancelToken: cancelController.signal,
     });
   };
@@ -1112,7 +1047,7 @@ export function createPlaylistManager(
     savePlaylist,
     deletePlaylist,
     createNewPlaylist,
-    generatePlaylist,
+    generatePlaylist: aiUpdatePlaylist,
     editPlaylist,
     saveEditingPlaylist,
     addEditingPlaylistItem,

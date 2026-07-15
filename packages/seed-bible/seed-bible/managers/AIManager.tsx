@@ -1,6 +1,7 @@
 import { computed, signal } from "@preact/signals";
-import { type ZodSchema } from "zod";
+import { z, type ZodSchema } from "zod";
 import type { ZodStandardJSONSchemaPayload } from "zod/v4/core";
+import type { Playlist, PlaylistItemData } from "./PlaylistManager";
 
 export interface AIProviderFunctionTool {
   name: string;
@@ -25,6 +26,122 @@ export interface AIProviderGenerateOptions {
   cancelToken: AbortSignal;
 }
 
+/**
+ * The shape the AI is asked to produce for a single playlist item. Kept
+ * distinct from {@link PlaylistItem}: it uses nullable (not optional) fields
+ * so the JSON schema handed to the provider is fully specified, and carries
+ * all three item variants side-by-side so a single tool definition covers
+ * every type. {@link convertToPlaylistItem} maps it back to a real
+ * {@link PlaylistItemData}.
+ */
+export const AIPlaylistItemSchema = z.object({
+  type: z.enum(["bible-verse", "link", "html"]),
+  bibleVerse: z
+    .object({
+      ref: z.object({
+        bookId: z.string(),
+        chapter: z.number().positive(),
+        endChapter: z.number().positive().nullable(),
+        verse: z.number().positive().nullable(),
+        endVerse: z.number().positive().nullable(),
+      }),
+    })
+    .nullable(),
+  link: z
+    .object({
+      title: z.string().nullable(),
+      url: z.string(),
+    })
+    .nullable(),
+  html: z
+    .object({
+      title: z.string().nullable(),
+      html: z.string(),
+    })
+    .nullable(),
+});
+
+export const GeneratedPlaylistSchema = z.object({
+  items: z.array(AIPlaylistItemSchema),
+  title: z.string().nullable(),
+  description: z.string().nullable(),
+});
+
+export type GeneratedPlaylistItem = z.infer<typeof AIPlaylistItemSchema>;
+export type GeneratedPlaylist = z.infer<typeof GeneratedPlaylistSchema>;
+
+export function convertToPlaylistItem(
+  item: GeneratedPlaylistItem
+): PlaylistItemData {
+  switch (item.type) {
+    case "bible-verse":
+      return {
+        type: item.type,
+        ref: {
+          bookId: item.bibleVerse!.ref.bookId,
+          chapter: item.bibleVerse!.ref.chapter,
+          endChapter: item.bibleVerse!.ref.endChapter ?? undefined,
+          verse: item.bibleVerse!.ref.verse ?? undefined,
+          endVerse: item.bibleVerse!.ref.endVerse ?? undefined,
+        },
+      };
+    case "link":
+      return {
+        type: item.type,
+        title: item.link!.title ?? undefined,
+        url: item.link!.url,
+      };
+    case "html":
+      return {
+        type: item.type,
+        title: item.html!.title ?? undefined,
+        html: item.html!.html,
+      };
+  }
+}
+
+export function convertToAiPlaylistItem(
+  item: PlaylistItemData
+): GeneratedPlaylistItem {
+  switch (item.type) {
+    case "bible-verse":
+      return {
+        type: item.type,
+        bibleVerse: {
+          ref: {
+            bookId: item.ref.bookId,
+            chapter: item.ref.chapter,
+            endChapter: item.ref.endChapter ?? null,
+            verse: item.ref.verse ?? null,
+            endVerse: item.ref.endVerse ?? null,
+          },
+        },
+        link: null,
+        html: null,
+      };
+    case "link":
+      return {
+        type: item.type,
+        bibleVerse: null,
+        link: {
+          title: item.title ?? null,
+          url: item.url,
+        },
+        html: null,
+      };
+    case "html":
+      return {
+        type: item.type,
+        bibleVerse: null,
+        link: null,
+        html: {
+          title: item.title ?? null,
+          html: item.html,
+        },
+      };
+  }
+}
+
 export interface AIProvider {
   /**
    * The unique ID for the AI provider.
@@ -33,11 +150,13 @@ export interface AIProvider {
 
   /**
    * Requests that the given AI provider generate a playlist based on the input and options.
+   * @param playlist The playlist that is being updated.
    * @param prompt The user-provided prompt.
    * @param options The options that should be used.
    * @returns A promise that resolves when the playlist has been generated.
    */
-  generatePlaylist?: (
+  updatePlaylist?: (
+    playlist: GeneratedPlaylist,
     prompt: string,
     options: AIProviderGenerateOptions
   ) => AsyncGenerator<string, void, void>;
@@ -110,7 +229,7 @@ export function createAIManager() {
   };
 
   const generatePlaylistProviders = computed(() =>
-    providers.value.filter((p) => p.generatePlaylist)
+    providers.value.filter((p) => p.updatePlaylist)
   );
 
   return {

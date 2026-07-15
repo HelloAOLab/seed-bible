@@ -310,7 +310,7 @@ export default function initApologistExtension() {
 
       yield context.ai.registerProvider({
         id: "apologist",
-        generatePlaylist: async function* (prompt, options) {
+        updatePlaylist: async function* (prompt, options) {
           const messages: ChatMessage[] = [
             {
               role: "user",
