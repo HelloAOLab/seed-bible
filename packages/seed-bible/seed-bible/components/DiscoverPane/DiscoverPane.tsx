@@ -48,58 +48,6 @@ export function DiscoverPaneHeader(props: {
     <>
       <button
         type="button"
-        className="sb-discover-generate"
-        onClick={() => {
-          state.modals.openModal({
-            id: "discover-generate-modal",
-            title: "Generate playlist",
-            content: () => {
-              const [input, setInput] = useState("");
-              return (
-                <div>
-                  <label for="prompt">Prompt</label>
-                  <input
-                    id="prompt"
-                    type="text"
-                    value={input}
-                    onInput={(event: Event) => {
-                      setInput((event.currentTarget as HTMLInputElement).value);
-                    }}
-                  />
-                  <button
-                    onClick={async () => {
-                      const provider =
-                        state.ai.generatePlaylistProviders.value[0]?.id;
-                      if (!provider) {
-                        state.app.toast("No AI provider available");
-                        return;
-                      }
-                      const generator = playlists.generatePlaylist(
-                        provider,
-                        input
-                      );
-
-                      let output = "";
-                      for await (let chunk of generator) {
-                        output += chunk;
-                      }
-
-                      state.app.toast(output);
-                      state.modals.closeModal("discover-generate-modal");
-                    }}
-                  >
-                    Submit
-                  </button>
-                </div>
-              );
-            },
-          });
-        }}
-      >
-        AI
-      </button>
-      <button
-        type="button"
         className="sb-discover-create"
         onClick={() => playlists.createNewPlaylist()}
       >
