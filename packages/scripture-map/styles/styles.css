@@ -84,15 +84,7 @@
   /* border: 1px solid var(--sb-divider-color); */
   border-radius: 0.25rem;
   padding: 0.375rem;
-}
-
-/* The settings icon is an <img> (not a font glyph), so the button's font-size
-   above doesn't size it — give it an explicit rem size so it scales with the
-   UI Size knob like the rest of the chrome. 1rem = its intrinsic 16px at
-   size M, so this is a no-op at M. */
-.settings-button .coloredIcon {
-  width: 1rem;
-  height: 1rem;
+  color: var(--sb-reader-font-color);
 }
 
 .header-button.settings-button:hover:not(

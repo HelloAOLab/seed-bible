@@ -81,9 +81,6 @@ export interface SettingsYearselectorOptionProps {
   content: number;
 }
 
-const SETTINGS_ICON =
-  "https://auth-aux-aobot-prod-filesbucket-141297942820.s3.amazonaws.com/aoBot/5a87cdff4617c9047e44ec47ddd8a101aa317e2223d83dd40f615e3f9740f03a.svg";
-
 const Option = (props: SettingsOptionProps) => {
   const { MaterialIcon } = useScriptureMapContext();
 
@@ -268,7 +265,7 @@ export const Settings = () => {
         ref={settingsButtonRef}
         onClick={handleSettingsButtonClick}
       >
-        <img src={SETTINGS_ICON} alt="SETTINGS_ICON" className="coloredIcon" />
+        <span className="material-symbols-outlined">more_vert</span>
         {showOptions && (
           <SettingsOptions
             setShowOptions={setShowOptions}
