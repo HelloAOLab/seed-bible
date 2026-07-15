@@ -3,7 +3,6 @@ export interface PostHog {
 }
 
 export const FEATURE_KEY_READING_PLANS = "reading-plans";
-export const FEATURE_KEY_PLAYLISTS = "playlists";
 
 export function createFeaturesManager(posthog: PostHog | null) {
   const isFeatureEnabled = (featureKey: string): boolean => {

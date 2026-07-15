@@ -21,7 +21,6 @@ import { ReadingPlansPane } from "../components/ReadingPlansPane/ReadingPlansPan
 import type { PlaylistManager } from "./PlaylistManager";
 import { useI18n } from "../i18n";
 import {
-  FEATURE_KEY_PLAYLISTS,
   FEATURE_KEY_READING_PLANS,
   type FeaturesManager,
 } from "./FeaturesManager";
@@ -554,7 +553,6 @@ function getDefaultQuickToolbarTools(): ManagedBibleQuickToolbarTool[] {
         <NowPlayingIcon playlists={c.playlists} readingState={c.readingState} />
       ),
       isVisible: (c) =>
-        c.features.isFeatureEnabled(FEATURE_KEY_PLAYLISTS) &&
         !!c.playlists.playing.value?.playlists.value.length &&
         c.playlists.isMobile.value,
       onSelect: (c) => {
@@ -701,9 +699,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       priority: 120,
       title: { key: "discover", defaultValue: "Discover" },
       icon: () => <MaterialIcon>explore</MaterialIcon>,
-      isVisible: (context) =>
-        !!context.openDiscover &&
-        context.features.isFeatureEnabled(FEATURE_KEY_PLAYLISTS),
+      isVisible: (context) => !!context.openDiscover,
       onSelect: (context) => {
         if (!context.openDiscover) {
           return;
