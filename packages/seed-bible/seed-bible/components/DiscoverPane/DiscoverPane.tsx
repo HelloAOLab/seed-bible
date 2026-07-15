@@ -67,14 +67,24 @@ export function DiscoverPaneHeader(props: {
                     }}
                   />
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       const provider =
                         state.ai.generatePlaylistProviders.value[0]?.id;
                       if (!provider) {
                         state.app.toast("No AI provider available");
                         return;
                       }
-                      state.ai.generatePlaylist(provider, input);
+                      const generator = state.ai.generatePlaylist(
+                        provider,
+                        input
+                      );
+
+                      let output = "";
+                      for await (let chunk of generator) {
+                        output += chunk;
+                      }
+
+                      state.app.toast(output);
                     }}
                   >
                     Submit
