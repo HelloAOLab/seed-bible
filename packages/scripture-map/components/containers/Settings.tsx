@@ -277,8 +277,6 @@ export const Settings = () => {
           settingsHeaderSlot.value
         )}
 
-      <span className={"horizontal-divider"}></span>
-
       {mode === ScriptureMapModes.Project && project && (
         <>
           <ProjectStateSetter />

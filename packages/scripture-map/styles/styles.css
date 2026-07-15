@@ -10,7 +10,7 @@
   height: 100%;
   --timelineItemSize: 16px;
   position: relative;
-  padding-top: 1rem;
+  padding-top: 0.5rem;
   background-color: var(--sb-reader-background);
 }
 
@@ -30,27 +30,6 @@
   gap: 0.25rem;
   display: grid;
   grid-template-columns: 1rem 1fr 2.5rem 1rem;
-  grid-template-rows: 1.25rem auto auto;
-}
-
-.scripture-map-settings.collapsed {
-  grid-template-rows: 1.25rem;
-}
-
-.scripture-map-settings .horizontal-divider {
-  background-color: var(--sb-divider-color);
-  height: 1.5px;
-}
-
-.scripture-map-settings > :nth-child(1 of .horizontal-divider) {
-  grid-column: 1 / 6;
-  grid-row: 1 / 2;
-}
-
-.scripture-map-settings > :nth-child(2 of .horizontal-divider) {
-  grid-column: 2 / 5;
-  grid-row: 5 / 6;
-  align-self: center;
 }
 
 .scripture-map-settings-header-slot {

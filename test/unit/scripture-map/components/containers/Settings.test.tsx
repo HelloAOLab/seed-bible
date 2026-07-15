@@ -178,11 +178,6 @@ describe("Settings", () => {
       expect(container.querySelector(".settings-button")).toBeNull();
       expect(portalTarget.querySelector(".settings-button")).not.toBeNull();
     });
-
-    it("renders a .horizontal-divider", () => {
-      setup();
-      expect(container.querySelector(".horizontal-divider")).not.toBeNull();
-    });
   });
 
   describe("settings button", () => {
