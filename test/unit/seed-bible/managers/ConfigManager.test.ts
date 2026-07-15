@@ -154,3 +154,119 @@ describe("ConfigManager language handling", () => {
     expect(getProfileLang(login)).toBe("de");
   });
 });
+
+// The agreement reached on PR #1444 for how the incoming `?lang=` URL
+// parameter interacts with the account's saved language:
+//   1. Signed in WITH a saved language  -> profile overrides the URL param.
+//   2. Signed in WITHOUT a saved language -> use the URL param.
+//   3. Not signed in                      -> use the URL param.
+// And in every case, merely loading a `?lang=` URL must never overwrite the
+// saved profile language (only the selector persists).
+describe("ConfigManager initial load with ?lang= URL parameter", () => {
+  let logSpy: ReturnType<typeof vi.spyOn>;
+
+  beforeEach(() => {
+    logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
+    window.history.replaceState({}, "", "/");
+    Object.defineProperty(window.navigator, "languages", {
+      configurable: true,
+      value: ["en-US"],
+    });
+  });
+
+  afterEach(() => {
+    logSpy.mockRestore();
+  });
+
+  async function settle() {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  function navWithLang(lang: string) {
+    return createNavigationManager({
+      initialHref: `http://localhost:3000/?lang=${lang}`,
+    });
+  }
+
+  // Case 1: the saved profile language wins over the URL param, and the URL
+  // param is NOT written back to the profile (Kal's reported bug).
+  it("lets a saved profile language override the URL param without overwriting the profile", async () => {
+    const nav = navWithLang("de");
+    const i18n = createI18nManager(nav, []);
+    // Ensure i18n has settled on the URL language ("de") before the
+    // profile-apply effect first runs, so the override is exercised
+    // deterministically regardless of test order (i18next is a singleton).
+    await i18n.ready;
+
+    const login = makeFakeLogin(profileWithLang("en"));
+    const config = createConfig(login, nav);
+    i18n.setLanguagePersister(config.persistLanguage);
+
+    await settle();
+
+    // Profile "en" wins over URL "de" ...
+    expect(i18n.i18n.language).toBe("en");
+    // ... and the saved language is untouched.
+    expect(getProfileLang(login)).toBe("en");
+  });
+
+  // Case 1, async: the profile loads a moment after boot (real login flow).
+  // Reproduces Kal's exact steps — the URL language shows first, then the
+  // profile language replaces it, and the profile is never overwritten.
+  it("does not overwrite the profile when the profile loads after a ?lang= boot", async () => {
+    const nav = navWithLang("de");
+    const i18n = createI18nManager(nav, []);
+    const login = makeFakeLogin(null);
+    const config = createConfig(login, nav);
+    i18n.setLanguagePersister(config.persistLanguage);
+
+    await i18n.ready;
+    await settle();
+
+    // Before login: the URL language is shown.
+    expect(i18n.i18n.language).toBe("de");
+
+    // Simulate login completing with a saved preference of "en".
+    login.userId.value = "user-1";
+    login.profile.value = profileWithLang("en");
+    await settle();
+
+    // Profile overrides the URL language ...
+    expect(i18n.i18n.language).toBe("en");
+    // ... and critically, the profile is still "en", not the URL's "de".
+    expect(getProfileLang(login)).toBe("en");
+  });
+
+  // Case 2: signed in but no saved preference -> the URL param is used, and
+  // is not persisted (no explicit selector choice was made).
+  it("uses the URL param when a signed-in user has no saved language", async () => {
+    const nav = navWithLang("de");
+    const i18n = createI18nManager(nav, []);
+    const login = makeFakeLogin({
+      name: "Test",
+      config: {},
+    } as unknown as UserProfile);
+    const config = createConfig(login, nav);
+    i18n.setLanguagePersister(config.persistLanguage);
+
+    await i18n.ready;
+    await settle();
+
+    expect(i18n.i18n.language).toBe("de");
+    expect(getProfileLang(login)).toBeUndefined();
+  });
+
+  // Case 3: not signed in -> the URL param is used.
+  it("uses the URL param when the user is not signed in", async () => {
+    const nav = navWithLang("de");
+    const i18n = createI18nManager(nav, []);
+    const login = makeFakeLogin(null);
+    const config = createConfig(login, nav);
+    i18n.setLanguagePersister(config.persistLanguage);
+
+    await i18n.ready;
+    await settle();
+
+    expect(i18n.i18n.language).toBe("de");
+  });
+});
