@@ -1,10 +1,5 @@
 import { computed, signal } from "@preact/signals";
-import { z, type ZodSchema } from "zod";
-import {
-  PlaylistItem,
-  type Playlist,
-  type PlaylistManager,
-} from "./PlaylistManager";
+import { type ZodSchema } from "zod";
 import type { ZodStandardJSONSchemaPayload } from "zod/v4/core";
 
 export interface AIProviderFunctionTool {
@@ -30,14 +25,6 @@ export interface AIProviderGenerateOptions {
   cancelToken: AbortSignal;
 }
 
-export const GeneratedPlaylistSchema = z.object({
-  items: z.array(PlaylistItem),
-  title: z.string().nullable(),
-  description: z.string().nullable(),
-});
-
-export type GeneratedPlaylist = z.infer<typeof GeneratedPlaylistSchema>;
-
 export interface AIProvider {
   /**
    * The unique ID for the AI provider.
@@ -54,10 +41,6 @@ export interface AIProvider {
     prompt: string,
     options: AIProviderGenerateOptions
   ) => AsyncGenerator<string, void, void>;
-}
-
-export interface AIManagerOptions {
-  playlist: PlaylistManager;
 }
 
 export function generateFunctionTool<T>(options: {
@@ -85,138 +68,12 @@ export function generateFunctionTool<T>(options: {
   };
 }
 
-const AIPlaylistItemSchema = z.object({
-  item: z.object({
-    type: z.enum(["bible-verse", "link", "html"]),
-    bibleVerse: z
-      .object({
-        ref: z.object({
-          bookId: z.string(),
-          chapter: z.number().positive(),
-          endChapter: z.number().positive().nullable(),
-          verse: z.number().positive(),
-          endVerse: z.number().positive().nullable(),
-        }),
-      })
-      .nullable(),
-    link: z.object({
-      title: z.string().nullable(),
-      url: z.string(),
-    }),
-    html: z.object({
-      title: z.string().nullable(),
-      html: z.string(),
-    }),
-  }),
-});
-
-function convertToPlaylistItem(
-  item: z.infer<typeof AIPlaylistItemSchema>["item"]
-) {
-  switch (item.type) {
-    case "bible-verse":
-      return {
-        type: item.type,
-        ref: {
-          bookId: item.bibleVerse!.ref.bookId,
-          chapter: item.bibleVerse!.ref.chapter,
-          endChapter: item.bibleVerse!.ref.endChapter ?? undefined,
-          verse: item.bibleVerse!.ref.verse,
-          endVerse: item.bibleVerse!.ref.endVerse ?? undefined,
-        },
-      };
-    case "link":
-      return {
-        type: item.type,
-        title: item.link.title ?? undefined,
-        url: item.link.url,
-      };
-    case "html":
-      return {
-        type: item.type,
-        title: item.html.title ?? undefined,
-        html: item.html.html,
-      };
-  }
-}
-
 /**
  * A manager that keeps track of AI providers which can provide AI-powered features.
  */
-export function createAIManager(options: AIManagerOptions) {
-  const { playlist } = options;
+export function createAIManager() {
   const providers = signal<AIProvider[]>([]);
   const tools = signal<AIProviderFunctionTool[]>([]);
-
-  const getEditPlaylistTools = (editingPlaylist: Playlist) => {
-    const addPlaylistItemTool = generateFunctionTool({
-      name: "addPlaylistItem",
-      description: "Adds an item to the playlist.",
-      parameters: AIPlaylistItemSchema,
-      function: async (args) => {
-        // Implement the function logic here
-        playlist.addEditingPlaylistItem(convertToPlaylistItem(args.item));
-
-        return "success";
-      },
-    });
-
-    const updatePlaylistItemTool = generateFunctionTool({
-      name: "updatePlaylistItem",
-      description: "Updates an item in the playlist.",
-      parameters: AIPlaylistItemSchema.extend({
-        index: z.number(),
-      }),
-      function: async (args) => {
-        // Implement the function logic here
-        playlist.updateEditingPlaylistItem(
-          args.index,
-          convertToPlaylistItem(args.item)
-        );
-
-        return "success";
-      },
-    });
-
-    const deletePlaylistItemTool = generateFunctionTool({
-      name: "deletePlaylistItem",
-      description: "Deletes an item from the playlist.",
-      parameters: z.object({
-        index: z.number(),
-      }),
-      function: async (args) => {
-        // Implement the function logic here
-        playlist.removeEditingPlaylistItem(args.index);
-
-        return "success";
-      },
-    });
-
-    const updatePlaylistTool = generateFunctionTool({
-      name: "updatePlaylistMetadata",
-      description: "Updates the playlist metadata (title, description)",
-      parameters: z.object({
-        title: z.string(),
-        description: z.string().nullable(),
-      }),
-      function: async (args) => {
-        playlist.editingPlaylist.value = {
-          ...editingPlaylist,
-          title: args.title,
-          description: args.description ?? editingPlaylist.description ?? null,
-        };
-
-        return "success";
-      },
-    });
-
-    return [
-      updatePlaylistTool.tool,
-      addPlaylistItemTool.tool,
-      updatePlaylistItemTool.tool,
-      deletePlaylistItemTool.tool,
-    ];
-  };
 
   const registerProvider = (provider: AIProvider): (() => void) => {
     const index = providers.value.findIndex((p) => p.id === provider.id);
@@ -256,49 +113,15 @@ export function createAIManager(options: AIManagerOptions) {
     providers.value.filter((p) => p.generatePlaylist)
   );
 
-  /**
-   * Attempts to generate a new playlist from the given prompt using one of the available AI providers.
-   * @param prompt
-   */
-  const generatePlaylist = async function* (
-    providerId: string,
-    prompt: string
-  ): AsyncGenerator<string, void, void> {
-    const provider = getProviderById(providerId);
-    if (!provider) {
-      throw new Error(`Provider with ID ${providerId} not found.`);
-    }
-
-    if (!provider.generatePlaylist) {
-      throw new Error(
-        `Provider with ID ${providerId} does not support playlist generation.`
-      );
-    }
-
-    const cancelController = new AbortController();
-    const newPlaylist = await playlist.createNewPlaylist();
-
-    if (!newPlaylist || !newPlaylist.value) {
-      return;
-    }
-
-    const myPlaylist = newPlaylist.value;
-
-    yield* provider.generatePlaylist(prompt, {
-      tools: [...tools.value, ...getEditPlaylistTools(myPlaylist)],
-      cancelToken: cancelController.signal,
-    });
-  };
-
   return {
     providers,
     generatePlaylistProviders,
     tools,
     registerProvider,
     unregisterProvider,
+    getProviderById,
     registerTool,
     unregisterTool,
-    generatePlaylist,
   };
 }
 

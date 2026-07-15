@@ -8,6 +8,7 @@ import {
   createBibleReadingExtensionManager,
   type ReadingExtensionRuntime,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingExtensionManager";
+import { createAIManager } from "@packages/seed-bible/seed-bible/managers/AIManager";
 import {
   PlaylistItem,
   PlaylistSchema,
@@ -260,7 +261,8 @@ describe("createPlaylistManager", () => {
       isMobile,
       modals,
       i18n,
-      readingExtensionManager
+      readingExtensionManager,
+      createAIManager()
     );
   };
 

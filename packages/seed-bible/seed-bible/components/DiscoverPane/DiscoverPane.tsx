@@ -74,7 +74,7 @@ export function DiscoverPaneHeader(props: {
                         state.app.toast("No AI provider available");
                         return;
                       }
-                      const generator = state.ai.generatePlaylist(
+                      const generator = playlists.generatePlaylist(
                         provider,
                         input
                       );

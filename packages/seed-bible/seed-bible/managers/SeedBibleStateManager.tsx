@@ -581,6 +581,7 @@ export function createSeedBibleState(
   // on mobile every pane is displayed fullscreen, so opening one closes the
   // rest.
   const panes = createPanes(isMobile);
+  const ai = createAIManager();
   const playlists = createPlaylistManager(
     os,
     login,
@@ -589,7 +590,8 @@ export function createSeedBibleState(
     isMobile,
     modals,
     i18n,
-    readingExtensions
+    readingExtensions,
+    ai
   );
   const tutorial = createTutorialManager(
     login,
@@ -600,10 +602,6 @@ export function createSeedBibleState(
     sidebar,
     openedViaContentLink
   );
-  const ai = createAIManager({
-    playlist: playlists,
-  });
-
   // A phone held sideways: landscape orientation with the short viewport
   // height typical of phones. Tablets/desktops in landscape have more
   // vertical room and are excluded by the height cap.
