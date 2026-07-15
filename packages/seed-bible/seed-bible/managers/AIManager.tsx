@@ -1,7 +1,7 @@
 import { computed, signal } from "@preact/signals";
 import { z, type ZodSchema } from "zod";
 import type { ZodStandardJSONSchemaPayload } from "zod/v4/core";
-import type { Playlist, PlaylistItemData } from "./PlaylistManager";
+import type { PlaylistItemData } from "./PlaylistManager";
 
 export interface AIProviderFunctionTool {
   name: string;

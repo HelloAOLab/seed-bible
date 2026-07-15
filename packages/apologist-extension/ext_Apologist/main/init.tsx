@@ -39,6 +39,11 @@ type ChatMessage =
       role: "tool";
       tool_call_id: string;
       content: string;
+    }
+  | {
+      type: "function_call_output";
+      call_id: string;
+      output: string;
     };
 
 const PROVIDER_ID = "apologist-chat-provider";
@@ -395,7 +400,7 @@ export default function initApologistExtension() {
                   type: "function_call_output",
                   call_id: call.call_id,
                   output: JSON.stringify(result),
-                } as any);
+                });
               }
             }
 

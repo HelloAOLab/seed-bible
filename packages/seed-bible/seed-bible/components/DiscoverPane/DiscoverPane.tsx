@@ -15,7 +15,6 @@ import { CreatePlaylistForm } from "../CreatePlaylistForm/CreatePlaylistForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import { useState } from "preact/hooks";
 
 interface DiscoverPaneProps {
   tabs: TabsManager;
@@ -33,11 +32,8 @@ type ReferenceWithBookData = DiscoverReference & { bookData: TranslationBook };
  * offers "create a playlist", so the button hides itself during the
  * create/play sub-views. Reads the `view` signal, so it stays reactive.
  */
-export function DiscoverPaneHeader(props: {
-  playlists: PlaylistManager;
-  state: SeedBibleState;
-}) {
-  const { playlists, state } = props;
+export function DiscoverPaneHeader(props: { playlists: PlaylistManager }) {
+  const { playlists } = props;
   const { t } = useI18n();
 
   if (playlists.view.value !== "discover") {
