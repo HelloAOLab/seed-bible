@@ -393,6 +393,29 @@ export interface BibleThemeVariables {
    * The font color for selected tabs.
    */
   selectedTabFontColor: string | null;
+
+  /**
+   * The border for an empty pane's toolbar buttons (e.g. "Books"). Should
+   * generally complement the secondary color, but can be customized as
+   * needed.
+   */
+  emptyPaneToolbarButtonBorder?: string | null;
+
+  /**
+   * The background for an empty pane's toolbar buttons.
+   */
+  emptyPaneToolbarButtonBackground?: string | null;
+
+  /**
+   * The font/icon color for an empty pane's toolbar buttons.
+   */
+  emptyPaneToolbarButtonColor?: string | null;
+
+  /**
+   * The border for an empty pane's toolbar buttons on hover. Should
+   * generally use the primary color so the button reads as interactive.
+   */
+  emptyPaneToolbarButtonBorderHover?: string | null;
 }
 
 export interface ThemeHighlightColor {
@@ -578,6 +601,11 @@ const LIGHT_THEME: BibleTheme = {
     selectedTabBorder: "1px solid var(--sb-primary-color)",
     selectedTabBackground: "var(--sb-secondary-color)",
     selectedTabFontColor: "var(--sb-primary-color)",
+
+    emptyPaneToolbarButtonBorder: "1px solid var(--sb-secondary-color)",
+    emptyPaneToolbarButtonBackground: "var(--sb-secondary-color)",
+    emptyPaneToolbarButtonColor: "var(--sb-font-color)",
+    emptyPaneToolbarButtonBorderHover: "1px solid var(--sb-primary-color)",
   },
   highlightColors: {
     yellow: {
@@ -718,6 +746,11 @@ const DARK_THEME: BibleTheme = {
     selectedTabBorder: "1px solid var(--sb-primary-color)",
     selectedTabBackground: "var(--sb-secondary-color)",
     selectedTabFontColor: "var(--sb-primary-color)",
+
+    emptyPaneToolbarButtonBorder: "1px solid var(--sb-secondary-color)",
+    emptyPaneToolbarButtonBackground: "var(--sb-secondary-color)",
+    emptyPaneToolbarButtonColor: "var(--sb-font-color)",
+    emptyPaneToolbarButtonBorderHover: "1px solid var(--sb-primary-color)",
   },
   highlightColors: {
     yellow: {

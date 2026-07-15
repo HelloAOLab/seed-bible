@@ -535,14 +535,39 @@
     color: var(--sb-primary-color);
   }
 
-  /* The Bible tab uses the Seed Bible logo (a PNG <img>), which can't follow
-   * the active text color like the material-symbol icons do. Tint it to the
-   * primary orange when its tab is active so it matches the orange label.
-   * `brightness(0)` first flattens the logo to a solid silhouette (preserving
-   * its alpha), then the chain recolors that silhouette toward #e07b4c. */
+  /* The Bible tab uses the Seed Bible logo (a raster <img>), which can't
+   * recolor via `currentColor` the way the SVG / material-symbol icons do
+   * (their color follows `.sb-reader-toolbar-mobile-tab-button-active`'s
+   * `color: var(--sb-primary-color)` automatically). When its tab is active,
+   * hide the raster image and paint a `currentColor`-masked copy over it
+   * instead, so the active icon always matches the active theme's primary
+   * color — previously this was hard-coded to the light theme's orange via a
+   * `filter` chain, so it stayed orange even in themes with a different
+   * primary color. */
+  .sb-reader-toolbar-mobile-tab-icon-custom:has(.sb-reader-toolbar-seed-icon) {
+    position: relative;
+  }
+
   .sb-reader-toolbar-mobile-tab-button-active .sb-reader-toolbar-seed-icon {
-    filter: brightness(0) saturate(100%) invert(58%) sepia(48%) saturate(700%)
-      hue-rotate(334deg) brightness(95%) contrast(88%);
+    opacity: 0;
+  }
+
+  .sb-reader-toolbar-mobile-tab-button-active
+    .sb-reader-toolbar-mobile-tab-icon-custom:has(
+      .sb-reader-toolbar-seed-icon
+    )::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: currentColor;
+    -webkit-mask-image: url("https://favicon.ao.bot/assets/seed-bible-isolated-minified.png");
+    mask-image: url("https://favicon.ao.bot/assets/seed-bible-isolated-minified.png");
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
   }
 
   .sb-reader-toolbar-mobile-tab-icon {
