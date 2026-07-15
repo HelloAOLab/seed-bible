@@ -276,3 +276,5 @@ export function createAIManager(options: AIManagerOptions) {
     generatePlaylist,
   };
 }
+
+export type AIManager = ReturnType<typeof createAIManager>;

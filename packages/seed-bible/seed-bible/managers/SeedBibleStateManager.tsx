@@ -262,6 +262,7 @@ export interface AppState {
  */
 export interface SeedBibleState {
   os: CasualOSManager;
+  ai: AIManager;
 
   /** Bible API and translation/chapter data orchestration. */
   bibleData: BibleDataManager;
@@ -372,6 +373,7 @@ import {
   DiscoverPaneHeader,
   DiscoverPaneTitle,
 } from "../components/DiscoverPane/DiscoverPane";
+import { createAIManager, type AIManager } from "./AIManager";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -598,6 +600,9 @@ export function createSeedBibleState(
     sidebar,
     openedViaContentLink
   );
+  const ai = createAIManager({
+    playlist: playlists,
+  });
 
   // A phone held sideways: landscape orientation with the short viewport
   // height typical of phones. Tablets/desktops in landscape have more
@@ -1309,6 +1314,7 @@ export function createSeedBibleState(
     openCodeOfConduct,
     closeCodeOfConduct,
     features,
+    ai,
     app: {
       createSharedSession: handleCreateSharedSession,
       joinSharedSession: handleJoinSharedSession,

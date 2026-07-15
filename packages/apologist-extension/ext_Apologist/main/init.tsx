@@ -30,6 +30,17 @@ const shareSchema = z.object({
   ),
 });
 
+type ChatMessage =
+  | {
+      role: "user";
+      content: string;
+    }
+  | {
+      role: "tool";
+      tool_call_id: string;
+      content: string;
+    };
+
 const PROVIDER_ID = "apologist-chat-provider";
 
 export default function initApologistExtension() {
@@ -296,6 +307,97 @@ export default function initApologistExtension() {
 
         initConversation();
       }
+
+      yield context.ai.registerProvider({
+        id: "apologist",
+        generatePlaylist: async (prompt, options) => {
+          const messages: ChatMessage[] = [
+            {
+              role: "user",
+              content: prompt,
+            },
+          ];
+          const tools = options.tools.map((t) => ({
+            type: "function",
+            function: {
+              name: t.name,
+              description: t.description,
+              parameters: t.parameters,
+              strict: true,
+            },
+          }));
+
+          while (true) {
+            const response = await fetch(
+              `https://${apologistDomain}/api/v1/chat/completions`,
+              {
+                method: "POST",
+                body: JSON.stringify({
+                  model: apologistModel,
+                  stream: false,
+                  metadata: {
+                    bible: "bsb",
+                    language: i18n.language,
+                  },
+                  messages,
+                  tools: tools,
+                }),
+                headers: apologistApiKey
+                  ? {
+                      Authorization: `Bearer ${apologistApiKey}`,
+                    }
+                  : {},
+              }
+            );
+
+            const data = await response.json();
+            console.log("[Apologist] Generate playlist response:", data);
+            const firstChoice = data.choices[0];
+
+            if (!firstChoice) {
+              throw new Error("No choices returned from API");
+            }
+
+            const message = firstChoice.message;
+            if (message) {
+              messages.push(message);
+            }
+
+            if (message.tool_calls) {
+              for (const call of message.tool_calls) {
+                console.log("[Apologist] Tool call:", call);
+
+                if (call.function) {
+                  const tool = options.tools.find(
+                    (t) => t.name === call.function.name
+                  );
+                  if (!tool) {
+                    throw new Error(`Tool not found: ${call.function.name}`);
+                  }
+
+                  const args = JSON.parse(call.function.arguments);
+                  const result = await tool.function(args);
+
+                  messages.push({
+                    role: "tool",
+                    tool_call_id: call.id,
+                    content: JSON.stringify(result),
+                  });
+                } else {
+                  console.warn("[Apologist] Tool call without function:", call);
+                }
+              }
+            }
+
+            if (firstChoice.finish_reason === "stop") {
+              break;
+            } else if (messages.length > 100) {
+              console.warn("[Apologist] Too many messages, stopping loop");
+              break;
+            }
+          }
+        },
+      });
 
       return {};
     },
