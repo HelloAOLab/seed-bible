@@ -1930,17 +1930,15 @@ describe("createChatsManager", () => {
     expect(providerResponse).toHaveBeenCalledTimes(1);
   });
 
-  it("createLocalSession() passes custom instructions and tools to the provider", async () => {
+  it("setContext() on the manager passes custom instructions and tools to the provider", async () => {
     const { loginManager, userId, profile } = createLoginManagerMock();
     userId.value = "user-1";
     profile.value = { name: "Alice" };
 
     const tool = makeTool("addItem");
     const chats = createChatsManager(loginManager, mockI18nManager);
-    const session = chats.createLocalSession(undefined, {
-      instructions: "Be concise.",
-      tools: [tool],
-    });
+    chats.setContext({ instructions: "Be concise.", tools: [tool] });
+    const session = chats.createLocalSession();
     const providerResponse = vi.fn().mockResolvedValue({
       type: "text",
       text: "Provider reply",
@@ -1953,10 +1951,12 @@ describe("createChatsManager", () => {
     });
     session.addParticipant("provider-1");
 
-    expect(session.context.value).toEqual({
+    // Both the manager and each session expose the same merged context.
+    expect(chats.context.value).toEqual({
       instructions: "Be concise.",
       tools: [tool],
     });
+    expect(session.context.value).toEqual(chats.context.value);
 
     await session.sendMessage({ type: "text", text: "Hello @provider-1" });
 
@@ -1976,7 +1976,8 @@ describe("createChatsManager", () => {
 
     const tool = makeTool("addItem");
     const chats = createChatsManager(loginManager, mockI18nManager);
-    const session = chats.createLocalSession(undefined, { tools: [tool] });
+    chats.setContext({ tools: [tool] });
+    const session = chats.createLocalSession();
     const providerResponse = vi.fn().mockResolvedValue({
       type: "text",
       text: "Provider reply",
@@ -1990,8 +1991,8 @@ describe("createChatsManager", () => {
     session.addParticipant("provider-1");
 
     // Merge in instructions; the previously-set tools must be preserved.
-    session.setContext({ instructions: "Updated instructions." });
-    expect(session.context.value).toEqual({
+    chats.setContext({ instructions: "Updated instructions." });
+    expect(chats.context.value).toEqual({
       instructions: "Updated instructions.",
       tools: [tool],
     });
@@ -2006,7 +2007,7 @@ describe("createChatsManager", () => {
     );
   });
 
-  it("createLocalSession() passes undefined context fields when none provided", async () => {
+  it("passes undefined context fields when no context is set", async () => {
     const { loginManager, userId, profile } = createLoginManagerMock();
     userId.value = "user-1";
     profile.value = { name: "Alice" };
@@ -2025,7 +2026,7 @@ describe("createChatsManager", () => {
     });
     session.addParticipant("provider-1");
 
-    expect(session.context.value).toEqual({});
+    expect(chats.context.value).toEqual({});
 
     await session.sendMessage({ type: "text", text: "Hello @provider-1" });
 
@@ -2042,10 +2043,8 @@ describe("createChatsManager", () => {
     const baseTool = makeTool("baseTool");
     const playlistTool = makeTool("editPlaylist");
     const chats = createChatsManager(loginManager, mockI18nManager);
-    const session = chats.createLocalSession(undefined, {
-      instructions: "Be concise.",
-      tools: [baseTool],
-    });
+    chats.setContext({ instructions: "Be concise.", tools: [baseTool] });
+    const session = chats.createLocalSession();
     const providerResponse = vi.fn().mockResolvedValue({
       type: "text",
       text: "Provider reply",
@@ -2058,7 +2057,7 @@ describe("createChatsManager", () => {
     });
     session.addParticipant("provider-1");
 
-    session.addContext({
+    chats.addContext({
       id: "playlist",
       instructions: "Current playlist: {}",
       tools: [playlistTool],
@@ -2072,10 +2071,10 @@ describe("createChatsManager", () => {
         tools: [baseTool, playlistTool],
       })
     );
-    // The default context signal is unchanged by addContext.
-    expect(session.context.value).toEqual({
-      instructions: "Be concise.",
-      tools: [baseTool],
+    // The merged context reflects both the default and the added context.
+    expect(chats.context.value).toEqual({
+      instructions: "Be concise.\n\nCurrent playlist: {}",
+      tools: [baseTool, playlistTool],
     });
   });
 
@@ -2098,8 +2097,8 @@ describe("createChatsManager", () => {
     });
     session.addParticipant("provider-1");
 
-    session.addContext({ id: "playlist", instructions: "First playlist." });
-    session.addContext({ id: "playlist", instructions: "Second playlist." });
+    chats.addContext({ id: "playlist", instructions: "First playlist." });
+    chats.addContext({ id: "playlist", instructions: "Second playlist." });
 
     await session.sendMessage({ type: "text", text: "Hi @provider-1" });
 
@@ -2128,18 +2127,62 @@ describe("createChatsManager", () => {
     });
     session.addParticipant("provider-1");
 
-    session.addContext({
+    chats.addContext({
       id: "playlist",
       instructions: "Current playlist: {}",
       tools: [playlistTool],
     });
-    session.removeContext("playlist");
+    chats.removeContext("playlist");
 
     await session.sendMessage({ type: "text", text: "Hi @provider-1" });
 
     const call = providerResponse.mock.calls[0]![0];
     expect(call.instructions).toBeUndefined();
     expect(call.tools).toBeUndefined();
+  });
+
+  it("makes a manager context available to providers in every chat", async () => {
+    const { loginManager, userId, profile } = createLoginManagerMock();
+    userId.value = "user-1";
+    profile.value = { name: "Alice" };
+
+    const tool = makeTool("editPlaylist");
+    const chats = createChatsManager(loginManager, mockI18nManager);
+    const providerResponse = vi.fn().mockResolvedValue({
+      type: "text",
+      text: "Provider reply",
+    });
+    chats.registerProvider({
+      id: "provider-1",
+      name: "Helper AI",
+      supportsSharedChats: true,
+      generateResponse: providerResponse,
+    });
+
+    const sessionA = chats.createLocalSession();
+    const sessionB = chats.createLocalSession();
+    sessionA.addParticipant("provider-1");
+    sessionB.addParticipant("provider-1");
+
+    // A context added to the manager is visible to both sessions.
+    chats.addContext({ id: "playlist", instructions: "Shared", tools: [tool] });
+    expect(sessionA.context.value).toEqual(sessionB.context.value);
+    expect(sessionA.context.value).toEqual({
+      instructions: "Shared",
+      tools: [tool],
+    });
+
+    await sessionA.sendMessage({ type: "text", text: "Hi @provider-1" });
+    await sessionB.sendMessage({ type: "text", text: "Hi @provider-1" });
+
+    expect(providerResponse).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ instructions: "Shared", tools: [tool] })
+    );
+    expect(providerResponse).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({ instructions: "Shared", tools: [tool] })
+    );
   });
 
   it("sendMessage() defaults to first local AI target when no targets are resolved", async () => {

@@ -358,30 +358,11 @@ export interface ChatSession {
   getMessageAuthors: (message: ChatMessage) => ChatParticipant[];
 
   /**
-   * The custom context (instructions + tools) currently provided to AI chat providers.
+   * The final (merged) custom context provided to AI chat providers. This is
+   * owned by the {@link ChatsManager} and shared across all chat sessions, so
+   * a context added to the manager is automatically available here.
    */
   context: ReadonlySignal<LocalChatContext>;
-
-  /**
-   * Merges the given fields into the session's default custom context.
-   * @param context The context fields to merge in.
-   */
-  setContext: (context: LocalChatContext) => void;
-
-  /**
-   * Adds an additional identified context that is merged into the default
-   * context before being sent to AI chat providers. Adding a context whose
-   * `id` is already present replaces the existing one.
-   * @param context The identified context to add.
-   */
-  addContext: (context: IdentifiedLocalChatContext) => void;
-
-  /**
-   * Removes a previously added context by its `id`. Does nothing if no context
-   * with that `id` is present.
-   * @param id The id of the context to remove.
-   */
-  removeContext: (id: string) => void;
 }
 
 export interface SharedChatSession extends ChatSession {
@@ -404,12 +385,38 @@ export interface ChatsManager {
   wasMentioned: ReadonlySignal<boolean>;
   selectedChat: ReadonlySignal<ChatSession | null>;
   createSharedSession: (session: BibleReadingSession) => ChatSession;
-  createLocalSession: (
-    history?: ChatSessionHistory,
-    context?: LocalChatContext
-  ) => ChatSession;
+  createLocalSession: (history?: ChatSessionHistory) => ChatSession;
   registerProvider: (provider: ChatProvider) => () => void;
   selectChat: (chatId: string | null) => void;
+
+  /**
+   * The final (merged) custom context provided to AI chat providers across all
+   * chat sessions. Combines the default context (set via {@link setContext})
+   * with any additional contexts (added via {@link addContext}).
+   */
+  context: ReadonlySignal<LocalChatContext>;
+
+  /**
+   * Merges the given fields into the default custom context. Applies to every
+   * chat session managed by this manager.
+   * @param context The context fields to merge in.
+   */
+  setContext: (context: LocalChatContext) => void;
+
+  /**
+   * Adds an additional identified context that is merged into the default
+   * context before being sent to AI chat providers. Adding a context whose
+   * `id` is already present replaces the existing one.
+   * @param context The identified context to add.
+   */
+  addContext: (context: IdentifiedLocalChatContext) => void;
+
+  /**
+   * Removes a previously added context by its `id`. Does nothing if no context
+   * with that `id` is present.
+   * @param id The id of the context to remove.
+   */
+  removeContext: (id: string) => void;
 }
 
 const DEFAULT_LOCAL_PARTICIPANT_ID = "local-user";
@@ -952,30 +959,10 @@ function getMostRecentProviderParticipant(
 function createSharedChatSession(
   session: BibleReadingSession,
   chatProviders: Signal<ChatProvider[]>,
-  i18nManager: I18nManager
+  i18nManager: I18nManager,
+  chatContext: ReadonlySignal<LocalChatContext>
 ): SharedChatSession {
   const i18n = i18nManager.i18n;
-  // Custom context is stored in-memory only: it is local to this client and is
-  // not broadcast to remote participants (tool `function` callbacks are not
-  // serializable and only ever run in the local runtime).
-  const chatContext = signal<LocalChatContext>({});
-  const additionalContexts = signal<IdentifiedLocalChatContext[]>([]);
-  const setContext = (next: LocalChatContext) => {
-    chatContext.value = { ...chatContext.value, ...next };
-  };
-  const addContext = (next: IdentifiedLocalChatContext) => {
-    additionalContexts.value = [
-      ...additionalContexts.value.filter((c) => c.id !== next.id),
-      next,
-    ];
-  };
-  const removeContext = (id: string) => {
-    additionalContexts.value = additionalContexts.value.filter(
-      (c) => c.id !== id
-    );
-  };
-  const effectiveContext = () =>
-    mergeLocalChatContexts([chatContext.value, ...additionalContexts.value]);
   const chats = session.document.getArray<unknown>("chats");
   const chatProvidersMap = session.document.getMap<unknown>("chat_providers");
   const participantAliasesMap = session.document.getMap<unknown>(
@@ -1371,7 +1358,7 @@ function createSharedChatSession(
       (entry) => entry.id === localProvider.providerId
     );
     if (provider?.onJoinChat) {
-      const merged = effectiveContext();
+      const merged = chatContext.value;
       provider.onJoinChat({
         chatId,
         messages: messages.value,
@@ -1452,7 +1439,7 @@ function createSharedChatSession(
         setParticipantTyping(participant.id, true);
 
         try {
-          const merged = effectiveContext();
+          const merged = chatContext.value;
           const response = await provider.generateResponse({
             chatId,
             messages: [...messages.value, nextMessage],
@@ -1590,7 +1577,7 @@ function createSharedChatSession(
         (entry) => entry.id === localProvider.providerId
       );
       if (provider && provider.onLeaveChat) {
-        const merged = effectiveContext();
+        const merged = chatContext.value;
         provider.onLeaveChat({
           chatId,
           messages: messages.value,
@@ -1607,9 +1594,6 @@ function createSharedChatSession(
         participantIdAliases.value
       ),
     context: chatContext,
-    setContext,
-    addContext,
-    removeContext,
     isShared: true,
     session,
   };
@@ -1656,28 +1640,10 @@ function createLocalChatSession(
   loginManager: LoginManager,
   chatProviders: Signal<ChatProvider[]>,
   i18nManager: I18nManager,
-  history?: ChatSessionHistory,
-  context?: LocalChatContext
+  chatContext: ReadonlySignal<LocalChatContext>,
+  history?: ChatSessionHistory
 ): ChatSession {
   const i18n = i18nManager.i18n;
-  const chatContext = signal<LocalChatContext>(context ?? {});
-  const additionalContexts = signal<IdentifiedLocalChatContext[]>([]);
-  const setContext = (next: LocalChatContext) => {
-    chatContext.value = { ...chatContext.value, ...next };
-  };
-  const addContext = (next: IdentifiedLocalChatContext) => {
-    additionalContexts.value = [
-      ...additionalContexts.value.filter((c) => c.id !== next.id),
-      next,
-    ];
-  };
-  const removeContext = (id: string) => {
-    additionalContexts.value = additionalContexts.value.filter(
-      (c) => c.id !== id
-    );
-  };
-  const effectiveContext = () =>
-    mergeLocalChatContexts([chatContext.value, ...additionalContexts.value]);
   // Join times keyed by participant id, recorded the first time each id is seen.
   const participantJoinTimes = signal<Record<string, number>>({});
   const localParticipant = computed<UserChatParticipant>(() => {
@@ -1874,7 +1840,7 @@ function createLocalChatSession(
       (entry) => entry.id === participantId
     );
     if (provider?.onJoinChat) {
-      const merged = effectiveContext();
+      const merged = chatContext.value;
       provider.onJoinChat({
         chatId,
         messages: messages.value,
@@ -1954,7 +1920,7 @@ function createLocalChatSession(
         );
 
         try {
-          const merged = effectiveContext();
+          const merged = chatContext.value;
           const response = await provider.generateResponse({
             chatId,
             messages: [...messages.value],
@@ -2119,7 +2085,7 @@ function createLocalChatSession(
         (entry) => entry.id === participantId
       );
       if (provider && provider.onLeaveChat) {
-        const merged = effectiveContext();
+        const merged = chatContext.value;
         provider.onLeaveChat({
           chatId,
           messages: messages.value,
@@ -2131,9 +2097,6 @@ function createLocalChatSession(
     },
     getMessageAuthors,
     context: chatContext,
-    setContext,
-    addContext,
-    removeContext,
   };
 }
 
@@ -2144,6 +2107,30 @@ export function createChatsManager(
   const chats = signal<ChatSession[]>([]);
   const isOpen = signal<boolean>(false);
   const chatProviders = signal<ChatProvider[]>([]);
+
+  // The custom context (instructions + tools) shared by every chat session.
+  // It is kept in-memory only: it is local to this client and is never
+  // broadcast to remote participants (tool `function` callbacks are not
+  // serializable and only ever run in the local runtime).
+  const defaultContext = signal<LocalChatContext>({});
+  const additionalContexts = signal<IdentifiedLocalChatContext[]>([]);
+  const context = computed<LocalChatContext>(() =>
+    mergeLocalChatContexts([defaultContext.value, ...additionalContexts.value])
+  );
+  const setContext = (next: LocalChatContext) => {
+    defaultContext.value = { ...defaultContext.value, ...next };
+  };
+  const addContext = (next: IdentifiedLocalChatContext) => {
+    additionalContexts.value = [
+      ...additionalContexts.value.filter((c) => c.id !== next.id),
+      next,
+    ];
+  };
+  const removeContext = (id: string) => {
+    additionalContexts.value = additionalContexts.value.filter(
+      (c) => c.id !== id
+    );
+  };
   const selectedChatId = signal<string | null>(null);
   const selectedChat = computed(
     () => chats.value.find((chat) => chat.id === selectedChatId.value) ?? null
@@ -2188,23 +2175,25 @@ export function createChatsManager(
     };
   };
 
-  const createLocalSession = (
-    history?: ChatSessionHistory,
-    context?: LocalChatContext
-  ) => {
+  const createLocalSession = (history?: ChatSessionHistory) => {
     const chat = createLocalChatSession(
       loginManager,
       chatProviders,
       i18nManager,
-      history,
-      context
+      context,
+      history
     );
     chats.value = [...chats.value, chat];
     return chat;
   };
 
   const createSharedSession = (session: BibleReadingSession) => {
-    const chat = createSharedChatSession(session, chatProviders, i18nManager);
+    const chat = createSharedChatSession(
+      session,
+      chatProviders,
+      i18nManager,
+      context
+    );
     chats.value = [...chats.value, chat];
     return chat;
   };
@@ -2222,5 +2211,9 @@ export function createChatsManager(
     selectChat: (chatId: string | null) => {
       selectedChatId.value = chatId;
     },
+    context,
+    setContext,
+    addContext,
+    removeContext,
   };
 }
