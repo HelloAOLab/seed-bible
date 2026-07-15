@@ -313,93 +313,95 @@ export default function initApologistExtension() {
         generatePlaylist: async (prompt, options) => {
           const messages: ChatMessage[] = [
             {
-              role: "developer",
-              content:
-                "You are being asked to generate a playlist in the Seed Bible app based on the user's input. Always use the provided tools to generate the playlist so that it is integrated with the Seed Bible.",
-            },
-            {
               role: "user",
               content: prompt,
             },
           ];
           const tools = options.tools.map((t) => ({
-            type: "function",
-            function: {
-              name: t.name,
-              description: t.description,
-              parameters: t.parameters,
-              strict: true,
-            },
+            type: t.type,
+            name: t.name,
+            description: t.description,
+            parameters: t.parameters,
+            strict: true,
           }));
 
           while (true) {
             const response = await fetch(
-              `https://${apologistDomain}/api/v1/chat/completions`,
+              `https://openai.seedbible.io/v1/responses`,
               {
                 method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
                 body: JSON.stringify({
-                  model: apologistModel,
+                  model: "gpt-5.6-terra",
+                  reasoning: {
+                    effort: "high",
+                    summary: "auto",
+                  },
                   stream: false,
                   metadata: {
                     bible: "bsb",
                     language: i18n.language,
                   },
-                  messages,
+                  instructions: `
+                    You are an AI agent that is integrated into a Christian Bible App called the Seed Bible.
+                    You are being asked to generate a playlist in the Seed Bible app based on the user's input.
+                    The playlist has already been created for you, you only have to add items and update metadata.
+                    Always use the provided tools to generate the playlist so that it is integrated with the Seed Bible.
+                  `
+                    .trim()
+                    .replace(/\n\s+/g, " "),
+                  input: messages,
                   tools: tools,
                 }),
-                headers: apologistApiKey
-                  ? {
-                      Authorization: `Bearer ${apologistApiKey}`,
-                    }
-                  : {},
               }
             );
 
             const data = await response.json();
             console.log("[Apologist] Generate playlist response:", data);
-            const firstChoice = data.choices[0];
 
-            if (!firstChoice) {
-              throw new Error("No choices returned from API");
-            }
+            let hasToolCall = false;
+            for (const output of data.output) {
+              messages.push(output);
 
-            const message = firstChoice.message;
-            if (message) {
-              messages.push(message);
-            }
-
-            if (message.tool_calls) {
-              for (const call of message.tool_calls) {
+              if (output.type === "function_call") {
+                hasToolCall = true;
+                const call = output;
+                // for (const call of output.tool_calls) {
                 console.log("[Apologist] Tool call:", call);
 
-                if (call.function) {
-                  const tool = options.tools.find(
-                    (t) => t.name === call.function.name
-                  );
-                  if (!tool) {
-                    throw new Error(`Tool not found: ${call.function.name}`);
-                  }
-
-                  const args = JSON.parse(call.function.arguments);
-                  const result = await tool.function(args);
-
-                  messages.push({
-                    role: "tool",
-                    tool_call_id: call.id,
-                    content: JSON.stringify(result),
-                  });
-                } else {
-                  console.warn("[Apologist] Tool call without function:", call);
+                const tool = options.tools.find((t) => t.name === call.name);
+                if (!tool) {
+                  throw new Error(`Tool not found: ${call.name}`);
                 }
+
+                const args = JSON.parse(call.arguments);
+                const result = await tool.function(args);
+
+                messages.push({
+                  type: "function_call_output",
+                  call_id: call.call_id,
+                  output: JSON.stringify(result),
+                } as any);
               }
             }
 
-            if (firstChoice.finish_reason === "stop") {
+            if (!hasToolCall) {
+              console.log("[Apologist] Stopping");
               break;
             } else if (messages.length > 100) {
               console.warn("[Apologist] Too many messages, stopping loop");
               break;
+            } else {
+              console.log("[Apologist] Continuing conversation");
             }
+            // if (firstChoice.finish_reason === "stop") {
+            //   break;
+            // } else if (messages.length > 100) {
+            //   console.warn("[Apologist] Too many messages, stopping loop");
+            //   break;
+            // }
           }
         },
       });

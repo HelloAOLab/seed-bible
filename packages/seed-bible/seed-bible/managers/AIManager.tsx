@@ -1,6 +1,10 @@
 import { computed, signal } from "@preact/signals";
 import { z, type ZodSchema } from "zod";
-import { PlaylistItem, type PlaylistManager } from "./PlaylistManager";
+import {
+  BibleVersePlaylistItem,
+  PlaylistItem,
+  type PlaylistManager,
+} from "./PlaylistManager";
 import type { ZodStandardJSONSchemaPayload } from "zod/v4/core";
 
 export interface AIProviderFunctionTool {
@@ -166,20 +170,40 @@ export function createAIManager(options: AIManagerOptions) {
       name: "addPlaylistItem",
       description: "Adds an item to the playlist.",
       parameters: z.object({
-        item: PlaylistItem,
+        item: z.object({
+          type: z.literal("bible-verse"),
+          ref: z.object({
+            bookId: z.string(),
+            chapter: z.number().positive(),
+            endChapter: z.number().positive().nullable(),
+            verse: z.number().positive(),
+            endVerse: z.number().positive().nullable(),
+          }),
+        }),
       }),
       function: async (args) => {
         if (cancelController.signal.aborted) {
-          return;
+          return "canceled";
         }
 
         if (playlist.editingPlaylist.value?.id !== myPlaylist.id) {
           cancelController.abort();
-          return;
+          return "canceled";
         }
 
         // Implement the function logic here
-        playlist.addEditingPlaylistItem(args.item);
+        playlist.addEditingPlaylistItem({
+          type: args.item.type,
+          ref: {
+            bookId: args.item.ref.bookId,
+            chapter: args.item.ref.chapter,
+            endChapter: args.item.ref.endChapter ?? undefined,
+            verse: args.item.ref.verse,
+            endVerse: args.item.ref.endVerse ?? undefined,
+          },
+        });
+
+        return "success";
       },
     });
 
@@ -187,21 +211,41 @@ export function createAIManager(options: AIManagerOptions) {
       name: "updatePlaylistItem",
       description: "Updates an item in the playlist.",
       parameters: z.object({
-        item: PlaylistItem,
+        item: z.object({
+          type: z.literal("bible-verse"),
+          ref: z.object({
+            bookId: z.string(),
+            chapter: z.number().positive(),
+            endChapter: z.number().positive().nullable(),
+            verse: z.number().positive(),
+            endVerse: z.number().positive().nullable(),
+          }),
+        }),
         index: z.number(),
       }),
       function: async (args) => {
         if (cancelController.signal.aborted) {
-          return;
+          return "canceled";
         }
 
         if (playlist.editingPlaylist.value?.id !== myPlaylist.id) {
           cancelController.abort();
-          return;
+          return "canceled";
         }
 
         // Implement the function logic here
-        playlist.updateEditingPlaylistItem(args.index, args.item);
+        playlist.updateEditingPlaylistItem(args.index, {
+          type: args.item.type,
+          ref: {
+            bookId: args.item.ref.bookId,
+            chapter: args.item.ref.chapter,
+            endChapter: args.item.ref.endChapter ?? undefined,
+            verse: args.item.ref.verse,
+            endVerse: args.item.ref.endVerse ?? undefined,
+          },
+        });
+
+        return "success";
       },
     });
 
@@ -209,21 +253,22 @@ export function createAIManager(options: AIManagerOptions) {
       name: "deletePlaylistItem",
       description: "Deletes an item from the playlist.",
       parameters: z.object({
-        item: PlaylistItem,
         index: z.number(),
       }),
       function: async (args) => {
         if (cancelController.signal.aborted) {
-          return;
+          return "canceled";
         }
 
         if (playlist.editingPlaylist.value?.id !== myPlaylist.id) {
           cancelController.abort();
-          return;
+          return "canceled";
         }
 
         // Implement the function logic here
         playlist.removeEditingPlaylistItem(args.index);
+
+        return "success";
       },
     });
 
@@ -232,16 +277,16 @@ export function createAIManager(options: AIManagerOptions) {
       description: "Updates the playlist metadata (title, description)",
       parameters: z.object({
         title: z.string(),
-        description: z.string().nullable().optional(),
+        description: z.string().nullable(),
       }),
       function: async (args) => {
         if (cancelController.signal.aborted) {
-          return;
+          return "canceled";
         }
 
         if (playlist.editingPlaylist.value?.id !== myPlaylist.id) {
           cancelController.abort();
-          return;
+          return "canceled";
         }
 
         playlist.editingPlaylist.value = {
@@ -250,6 +295,8 @@ export function createAIManager(options: AIManagerOptions) {
           description:
             args.description ?? playlist.editingPlaylist.value?.description,
         };
+
+        return "success";
       },
     });
 

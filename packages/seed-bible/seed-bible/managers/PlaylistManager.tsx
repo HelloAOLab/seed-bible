@@ -30,12 +30,14 @@ export const VerseRefSchema = z.object({
   endVerse: z.number().positive().optional(),
 });
 
+export const BibleVersePlaylistItem = z.object({
+  type: z.literal("bible-verse"),
+  ref: VerseRefSchema,
+  translationId: z.string().optional(),
+});
+
 export const PlaylistItem = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal("bible-verse"),
-    ref: VerseRefSchema,
-    translationId: z.string().optional(),
-  }),
+  BibleVersePlaylistItem,
   z.object({
     type: z.literal("html"),
     title: z.string().optional(),
