@@ -85,6 +85,7 @@ export function DiscoverPaneHeader(props: {
                       }
 
                       state.app.toast(output);
+                      state.modals.closeModal("discover-generate-modal");
                     }}
                   >
                     Submit
