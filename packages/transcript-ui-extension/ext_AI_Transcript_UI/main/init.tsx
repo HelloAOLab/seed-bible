@@ -1,4 +1,4 @@
-import { effect } from "@preact/signals";
+import { effect, signal } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { createTranscriptionManager } from "@seed-bible/ai-transcript-extension/transcriptionManager";
 import { App } from "./App";
@@ -39,7 +39,7 @@ export default function initTranscriptUI() {
                   </ManagerProvider>
                 );
               },
-              title: "AI Transcript",
+              title: signal("AI Transcript"),
             });
 
             const { login } = context;
