@@ -310,7 +310,7 @@ export default function initApologistExtension() {
 
       yield context.ai.registerProvider({
         id: "apologist",
-        updatePlaylist: async function* (prompt, options) {
+        updatePlaylist: async function* (playlist, prompt, options) {
           const messages: ChatMessage[] = [
             {
               role: "user",
@@ -324,6 +324,20 @@ export default function initApologistExtension() {
             parameters: t.parameters,
             strict: true,
           }));
+
+          const instructions = `
+              You are an AI agent that is integrated into a Christian Bible App called the Seed Bible.
+              You are being asked to edit a playlist in the Seed Bible app based on the user's input.
+              The playlist has already been created for you, you only have to add/update/delete items and optionally update metadata.
+              Always use the provided tools to generate the playlist so that it is integrated with the Seed Bible.
+
+              Current playlist:
+              \`\`\`json
+              ${JSON.stringify(playlist)}
+              \`\`\`
+            `
+            .trim()
+            .replace(/\n\s+/g, " ");
 
           while (true) {
             const response = await fetch(
@@ -344,14 +358,7 @@ export default function initApologistExtension() {
                     bible: "bsb",
                     language: i18n.language,
                   },
-                  instructions: `
-                    You are an AI agent that is integrated into a Christian Bible App called the Seed Bible.
-                    You are being asked to generate a playlist in the Seed Bible app based on the user's input.
-                    The playlist has already been created for you, you only have to add items and update metadata.
-                    Always use the provided tools to generate the playlist so that it is integrated with the Seed Bible.
-                  `
-                    .trim()
-                    .replace(/\n\s+/g, " "),
+                  instructions,
                   input: messages,
                   tools: tools,
                 }),
@@ -374,7 +381,6 @@ export default function initApologistExtension() {
               } else if (output.type === "function_call") {
                 hasToolCall = true;
                 const call = output;
-                // for (const call of output.tool_calls) {
                 console.log("[Apologist] Tool call:", call);
 
                 const tool = options.tools.find((t) => t.name === call.name);
