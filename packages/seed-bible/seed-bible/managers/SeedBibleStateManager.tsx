@@ -1366,7 +1366,9 @@ export function createSeedBibleState(
         id: DISCOVER_PANE_ID,
         placement: "side",
         title: () => <DiscoverPaneTitle playlists={playlists} />,
-        header: () => <DiscoverPaneHeader playlists={playlists} />,
+        header: () => (
+          <DiscoverPaneHeader playlists={playlists} state={state} />
+        ),
         onUserClose: () => {
           const currentlyPlaying = playlists.playing.value;
           if (currentlyPlaying) {

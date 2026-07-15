@@ -15,6 +15,7 @@ import { CreatePlaylistForm } from "../CreatePlaylistForm/CreatePlaylistForm";
 import { PlayPlaylistView } from "../PlayPlaylistView/PlayPlaylistView";
 import { DiscoverSection, DiscoverEmpty } from "./DiscoverSection";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
+import { useState } from "preact/hooks";
 
 interface DiscoverPaneProps {
   tabs: TabsManager;
@@ -32,8 +33,11 @@ type ReferenceWithBookData = DiscoverReference & { bookData: TranslationBook };
  * offers "create a playlist", so the button hides itself during the
  * create/play sub-views. Reads the `view` signal, so it stays reactive.
  */
-export function DiscoverPaneHeader(props: { playlists: PlaylistManager }) {
-  const { playlists } = props;
+export function DiscoverPaneHeader(props: {
+  playlists: PlaylistManager;
+  state: SeedBibleState;
+}) {
+  const { playlists, state } = props;
   const { t } = useI18n();
 
   if (playlists.view.value !== "discover") {
@@ -41,13 +45,56 @@ export function DiscoverPaneHeader(props: { playlists: PlaylistManager }) {
   }
 
   return (
-    <button
-      type="button"
-      className="sb-discover-create"
-      onClick={() => playlists.createNewPlaylist()}
-    >
-      + {t("create-playlist", { defaultValue: "Create" })}
-    </button>
+    <>
+      <button
+        type="button"
+        className="sb-discover-generate"
+        onClick={() => {
+          state.modals.openModal({
+            id: "discover-generate-modal",
+            title: "Generate playlist",
+            content: () => {
+              const [input, setInput] = useState("");
+              return (
+                <div>
+                  <label for="prompt">Prompt</label>
+                  <input
+                    id="prompt"
+                    type="text"
+                    value={input}
+                    onInput={(event: Event) => {
+                      setInput((event.currentTarget as HTMLInputElement).value);
+                    }}
+                  />
+                  <button
+                    onClick={() => {
+                      const provider =
+                        state.ai.generatePlaylistProviders.value[0]?.id;
+                      if (!provider) {
+                        state.app.toast("No AI provider available");
+                        return;
+                      }
+                      state.ai.generatePlaylist(provider, input);
+                    }}
+                  >
+                    Submit
+                  </button>
+                </div>
+              );
+            },
+          });
+        }}
+      >
+        AI
+      </button>
+      <button
+        type="button"
+        className="sb-discover-create"
+        onClick={() => playlists.createNewPlaylist()}
+      >
+        + {t("create-playlist", { defaultValue: "Create" })}
+      </button>
+    </>
   );
 }
 

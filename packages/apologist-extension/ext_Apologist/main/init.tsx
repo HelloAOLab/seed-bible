@@ -32,7 +32,7 @@ const shareSchema = z.object({
 
 type ChatMessage =
   | {
-      role: "user";
+      role: "user" | "developer";
       content: string;
     }
   | {
@@ -312,6 +312,11 @@ export default function initApologistExtension() {
         id: "apologist",
         generatePlaylist: async (prompt, options) => {
           const messages: ChatMessage[] = [
+            {
+              role: "developer",
+              content:
+                "You are being asked to generate a playlist in the Seed Bible app based on the user's input. Always use the provided tools to generate the playlist so that it is integrated with the Seed Bible.",
+            },
             {
               role: "user",
               content: prompt,
