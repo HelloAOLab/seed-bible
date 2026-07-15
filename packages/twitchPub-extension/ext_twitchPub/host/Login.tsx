@@ -1,10 +1,10 @@
-import { closeInterface } from "./closeInterface";
 import { TwitchIcon } from "./icons";
 import { type TwitchPubState } from "./interface";
 import { useI18n } from "seed-bible/i18n";
 
 const Login = (props: { state: TwitchPubState }) => {
-  const { twitchConfig, getDeviceAuthUrl, loading } = props.state;
+  const { twitchConfig, getDeviceAuthUrl, loading, interfaceEnabled } =
+    props.state;
   const { t } = useI18n();
   return (
     <div
@@ -34,7 +34,12 @@ const Login = (props: { state: TwitchPubState }) => {
             defaultValue: "Twitch Host",
           })}
         </span>
-        <button className="icon-btn" onClick={() => closeInterface()}>
+        <button
+          className="icon-btn"
+          onClick={() => {
+            interfaceEnabled.value = false;
+          }}
+        >
           <span className="material-symbols-outlined">close</span>
         </button>
       </div>

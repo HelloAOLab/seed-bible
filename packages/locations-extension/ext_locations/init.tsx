@@ -19,14 +19,15 @@ export default function initLocationsExtension() {
     init: function* (context) {
       const findLocationsInText = (text: string) => {
         text = text.toLowerCase();
-        const foundPlaces = [];
-        // const locations: Record<string, PlaceData> = tags.locations;
+        const foundPlaces: PlaceData[] = [];
+        const seen = new Set<string>();
         const words = text.split(/[^\w]+/);
         for (const word of words) {
           const place = (locations as Record<string, PlaceData>)[
             word.toLowerCase()
           ];
-          if (place) {
+          if (place && !seen.has(place.place)) {
+            seen.add(place.place);
             console.log("Found place:", place);
             foundPlaces.push(place);
           }

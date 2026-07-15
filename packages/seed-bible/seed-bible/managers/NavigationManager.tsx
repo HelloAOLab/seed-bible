@@ -40,6 +40,15 @@ export function createNavigationManager(
       : "http://localhost/");
   const currentUrl = signal<URL>(new URL(initialHref));
 
+  // A frozen snapshot of the URL exactly as the page was first loaded, before
+  // any in-app navigation — including the reader's own book/chapter -> URL
+  // echo (see TabsManager) — has a chance to mutate `currentUrl`. Extensions
+  // load asynchronously, well after that echo has already run, so anything
+  // that needs to tell "the user linked here on purpose" apart from "the
+  // reader wrote its default position into the URL" must check this instead
+  // of the live `currentUrl`.
+  const initialUrl = new URL(initialHref);
+
   const basePath = options.basePath ?? "";
 
   // Keep root-absolute navigations inside the deployment's path prefix.
@@ -229,6 +238,7 @@ export function createNavigationManager(
 
   return {
     currentUrl: computed(() => currentUrl.value),
+    initialUrl,
     go,
     replace,
     push,

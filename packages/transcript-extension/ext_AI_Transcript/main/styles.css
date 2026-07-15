@@ -1,0 +1,179 @@
+.sbd-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+}
+.sbd-card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 26rem;
+  padding: 1rem;
+  border-radius: 1.25rem;
+  background: var(--sb-reader-background, #ffffff);
+  color: var(--sb-font-color, #1f2937);
+  font-family: var(
+    --sb-font-family,
+    "Plus Jakarta Sans",
+    system-ui,
+    sans-serif
+  );
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+}
+.sbd-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sbd-badge-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  background: color-mix(
+    in srgb,
+    var(--sb-primary-color, #e8623a),
+    transparent 85%
+  );
+}
+.sbd-overlay .sbd-heart-icon {
+  font-size: 1.75rem;
+  color: var(--sb-primary-color, #e8623a);
+}
+.sbd-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: color-mix(in srgb, var(--sb-font-color, #1f2937), transparent 45%);
+  transition: color 0.15s;
+}
+.sbd-close:hover {
+  color: var(--sb-font-color, #1f2937);
+}
+.sbd-overlay .sbd-close-icon {
+  font-size: 1.5rem;
+}
+.sbd-title {
+  margin: 1.25rem 0 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.sbd-body {
+  margin: 0.6rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: color-mix(in srgb, var(--sb-font-color, #1f2937), transparent 25%);
+}
+.sbd-amounts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6rem;
+  margin-top: 1.5rem;
+}
+.sbd-amount {
+  position: relative;
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 0.85rem 0.25rem;
+  border: 1.5px solid var(--sb-divider-color, #e5e7eb);
+  border-radius: 0.75rem;
+  background: var(--sb-reader-background, #ffffff);
+  color: var(--sb-font-color, #1f2937);
+  font: inherit;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background 0.15s;
+}
+.sbd-amount:hover {
+  border-color: var(--sb-primary-color, #e8623a);
+}
+.sbd-amount--selected {
+  border-color: var(--sb-primary-color, #e8623a);
+  background: color-mix(
+    in srgb,
+    var(--sb-primary-color, #e8623a),
+    transparent 92%
+  );
+}
+.sbd-amount-badge {
+  position: absolute;
+  top: -0.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: var(--sb-primary-color, #e8623a);
+  color: var(--sb-primary-font-color, #ffffff);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.sbd-donate {
+  display: block;
+  width: 100%;
+  margin-top: 1.4rem;
+  padding: 0.9rem 1rem;
+  border: none;
+  border-radius: 0.75rem;
+  background: var(--sb-primary-color, #e8623a);
+  color: var(--sb-primary-font-color, #ffffff);
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.sbd-donate:hover {
+  background: color-mix(in srgb, var(--sb-primary-color, #e8623a), #000 10%);
+}
+.sbd-dismiss {
+  display: block;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.35rem 0;
+  border: none;
+  background: none;
+  color: color-mix(in srgb, var(--sb-font-color, #1f2937), transparent 40%);
+  font: inherit;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.sbd-dismiss:hover {
+  color: var(--sb-font-color, #1f2937);
+}
+.sbd-divider {
+  margin: 1.25rem 0 0;
+  border: none;
+  border-top: 1px solid var(--sb-divider-color, #e5e7eb);
+}
+.sbd-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  color: color-mix(in srgb, var(--sb-font-color, #1f2937), transparent 55%);
+  font-size: 0.8rem;
+}
+.sbd-overlay .sbd-lock-icon {
+  font-size: 0.95rem;
+}

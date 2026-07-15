@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: flex-start;
   height: fit-content;
-  width: 350px;
+  width: 420px;
   background: var(--sb-background);
   padding: 10px 15px 15px 15px;
   border-radius: 10px;
@@ -58,6 +58,7 @@
 }
 
 .twitchPub-content {
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -65,6 +66,66 @@
   width: 100%;
   height: fit-content;
   gap: 15px;
+}
+
+/* Sits in normal flow below the QR code. `isolation: isolate` establishes a
+   stacking context so the progress fill (::before, z-index: -1) paints above
+   the track background but below the label text. */
+.twitchPub-nav-notice {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  max-width: 90%;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: var(--sb-secondary-color, #e6e6e6);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: twitchPub-nav-notice-in 0.2s ease;
+}
+
+/* Progress fill that advances over the 2s navigation delay. Painted above the
+   secondary-color track (z-index: -1) but below the label text. */
+.twitchPub-nav-notice::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  transform-origin: left center;
+  background: var(--sb-primary-color, #6441a5);
+  animation: twitchPub-nav-progress 2s linear forwards;
+}
+
+.twitchPub-nav-notice .material-symbols-outlined {
+  font-size: 16px;
+}
+
+@keyframes twitchPub-nav-notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes twitchPub-nav-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
 }
 
 .twitchPub-inputGroup {
@@ -147,6 +208,52 @@
   width: 100%;
   justify-content: space-between;
   align-items: center;
+}
+
+.twitch-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.twitch-tooltip__icon {
+  font-size: 18px;
+  height: 20px;
+  width: 20px;
+  opacity: 0.6;
+}
+
+.twitch-tooltip__icon:hover {
+  opacity: 1;
+}
+
+.twitch-tooltip__bubble {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 220px;
+  padding: 8px 10px;
+  background: rgba(20, 20, 20, 0.95);
+  color: #fff;
+  font-size: 12px;
+  font-weight: normal;
+  line-height: 1.4;
+  text-align: left;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 20;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.twitch-tooltip:hover .twitch-tooltip__bubble,
+.twitch-tooltip--open .twitch-tooltip__bubble {
+  visibility: visible;
+  opacity: 1;
 }
 
 .twitch-select-box {

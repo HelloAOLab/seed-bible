@@ -362,8 +362,30 @@ export const bootstrapExtension = () => {
         });
       };
 
+      // Today opens automatically on a cold load (no explicit `?today=`
+      // param) as long as the URL isn't already pointing somewhere specific —
+      // a book/chapter/verse deep link, or a shared-session invite
+      // (`?sessionId=`). An explicit `?today=` param always wins either way,
+      // matching the deep-linkable modals in SeedBibleStateManager.
+      //
+      // This must read `initialUrl` (the URL as first loaded), not the live
+      // `currentUrl`: TabsManager echoes the reader's current book/chapter
+      // back into the URL as soon as it initializes (so links are always
+      // shareable), which happens well before extensions finish loading. By
+      // the time this code runs, a cold load with no book/chapter param would
+      // already show `?book=GEN&chapter=1` in the live URL — indistinguishable
+      // from a real deep link unless we look at the URL from before that echo.
+      const initialUrlParams = context.navigation.initialUrl.searchParams;
+      const hasCompetingDeepLink =
+        initialUrlParams.has("book") ||
+        initialUrlParams.has("chapter") ||
+        initialUrlParams.has("verse") ||
+        initialUrlParams.has("sessionId");
+      const requestedToday = initialUrlParams.get("today");
       const isTodayOpen = signal(
-        context.navigation.currentUrl.value.searchParams.get("today") === "open"
+        requestedToday !== null
+          ? requestedToday === "open"
+          : !hasCompetingDeepLink
       );
 
       const cleanupTodayUrlSync = context.navigation.syncSignalsToUrl({

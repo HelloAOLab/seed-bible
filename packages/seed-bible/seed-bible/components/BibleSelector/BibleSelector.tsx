@@ -678,6 +678,7 @@ const SideBarChapters = (props: {
         if (!isMobile.value) return;
         bibleSelectorState.forceNewTab.value = true;
         selectChapter(bd.id, chapterNumber);
+        app.closeFullscreenPanes();
         bibleSelectorState.forceNewTab.value = false;
         bibleSelectorState.isOpen.value = false;
       }, 1000);
@@ -692,6 +693,7 @@ const SideBarChapters = (props: {
           onClick={() => {
             cancel();
             selectChapter(bd.id, chapterNumber);
+            app.closeFullscreenPanes();
             isOpen.value = false;
           }}
           {...chapterPressHandler}

@@ -25,6 +25,28 @@ const fetchUserIds = async (
   }
 };
 
+/**
+ * Confirms whether a user access token is still valid with Twitch.
+ *
+ * A 401 from a Helix endpoint doesn't necessarily mean the token expired — it
+ * can also mean a missing scope or a rejected request. The dedicated validate
+ * endpoint tells us definitively: it returns 200 for a live token and 401 only
+ * when the token itself is invalid/expired. Network errors return `true` so we
+ * never log a user out on a transient failure.
+ */
+const isTokenValid = async (token: string): Promise<boolean> => {
+  if (!token) return false;
+  try {
+    const response = await fetch("https://id.twitch.tv/oauth2/validate", {
+      headers: { Authorization: `OAuth ${token}` },
+    });
+    return response.status !== 401;
+  } catch (error) {
+    console.error("Network error while validating Twitch token:", error);
+    return true;
+  }
+};
+
 const checkAuthorizationStatus = async (
   clientId: string,
   deviceCode: string,
@@ -33,7 +55,7 @@ const checkAuthorizationStatus = async (
 ) => {
   const params = new URLSearchParams({
     client_id: clientId,
-    device_code: deviceCode || "",
+    device_code: deviceCode,
     grant_type: "urn:ietf:params:oauth:grant-type:device_code",
     scopes: senderScope,
   });
@@ -119,4 +141,5 @@ export {
   checkAuthorizationStatus,
   getDeviceAuthUrl,
   seedBibleStateChanged,
+  isTokenValid,
 };
