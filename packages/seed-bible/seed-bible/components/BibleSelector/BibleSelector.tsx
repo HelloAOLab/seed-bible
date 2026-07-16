@@ -17,6 +17,7 @@ import {
 } from "../../components/icons";
 import type { Translation } from "../../managers/FreeUseBibleAPI";
 import { computed, signal } from "@preact/signals";
+import type { JSX } from "preact";
 import type { BibleDataManager } from "../../managers/BibleDataManager";
 import type { TutorialManager } from "../../managers/TutorialManager";
 import {
@@ -360,7 +361,6 @@ const SideBarBooks = (props: {
     localSelectedTestament,
     groupedBooks,
     handleChapterClick: handleClick,
-    calcChapterPos,
     isBook,
     ghostArray,
     apocryphaAvailable,
@@ -397,26 +397,68 @@ const SideBarBooks = (props: {
 
     const getBooksGridClass = (columns: number) =>
       columns > 1 ? "grid-column-wrap-around" : "books-item-vertical";
-    const getBooksGridStyle = (columns: number) => {
+
+    // Column-major: fill down each column, then move to the next.
+    // rows = ceil(books / columns); DOM index i → col = floor(i / rows), row = i % rows.
+    const getColumnRows = (itemCount: number, columns: number) =>
+      columns <= 1 ? itemCount : Math.max(1, Math.ceil(itemCount / columns));
+
+    const getBooksGridStyle = (
+      columns: number,
+      rows: number,
+      chaptersOpen: boolean
+    ) => {
       if (columns <= 1) return undefined;
       return {
         gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
+        gridTemplateRows: `repeat(${rows + (chaptersOpen ? 1 : 0)}, auto)`,
       };
+    };
+
+    const getItemGridStyle = (
+      index: number,
+      rows: number,
+      columns: number,
+      openVisualRow: number | null
+    ) => {
+      if (columns <= 1) return undefined;
+      const visualRow = index % rows;
+      const visualCol = Math.floor(index / rows);
+      const gridRow =
+        openVisualRow !== null && visualRow > openVisualRow
+          ? visualRow + 2
+          : visualRow + 1;
+      return {
+        gridColumn: visualCol + 1,
+        gridRow,
+      };
+    };
+
+    // Last DOM index in the visual row that contains `index` (for chapter insert point).
+    const calcColumnMajorChapterPos = (
+      index: number,
+      rows: number,
+      columns: number
+    ) => {
+      if (index < 0 || columns <= 1) return index;
+      const visualRow = index % rows;
+      return visualRow + (columns - 1) * rows;
     };
 
     const { oldTestament, newTestament, apocrypha } = groupedBooks.value;
 
-    // Renders a single book entry: the clickable item (or ghost placeholder) plus
-    // the chapter panel after the last book in that visual row (via chapterPos),
-    // so it inserts as a full-width row between this row and the next.
+    // Renders a single book entry (or ghost) with optional column-major grid
+    // placement. Chapters insert as a full-width grid row between visual rows.
     const renderBook = (
       book: BibleSelectorBookItem,
       index: number,
       chapterPos: number,
       separator: number,
       chapterHint?: number,
-      itemStyle?: object,
-      narrowChapterStyle?: boolean
+      itemStyle?: JSX.CSSProperties,
+      narrowChapterStyle?: boolean,
+      itemGridStyle?: JSX.CSSProperties,
+      chapterGridStyle?: JSX.CSSProperties
     ) => {
       const isSelected = isBook(book) && index === lbc && bd?.id === book.id;
       return (
@@ -433,6 +475,7 @@ const SideBarBooks = (props: {
                 })
               }
               id={`booktab-${book.id}`}
+              style={itemGridStyle}
             >
               <span
                 style={{
@@ -457,7 +500,11 @@ const SideBarBooks = (props: {
               </span>
             </div>
           ) : (
-            <div class="sidebar-ghost-itm" tabIndex={index + 1} />
+            <div
+              class="sidebar-ghost-itm"
+              tabIndex={index + 1}
+              style={itemGridStyle}
+            />
           )}
           {chapterPos === index &&
             bd &&
@@ -465,6 +512,7 @@ const SideBarBooks = (props: {
               <div
                 class="sidebar-chapters show-sidebar-chapter"
                 style={{
+                  ...chapterGridStyle,
                   justifyContent:
                     ws <= MOBILE_BREAKPOINT ||
                     bd.numberOfChapters < 4 * separator
@@ -485,9 +533,47 @@ const SideBarBooks = (props: {
       );
     };
 
+    const renderBooksGrid = (
+      books: BibleSelectorBookItem[],
+      columns: number,
+      chapterHint?: number,
+      itemStyle?: JSX.CSSProperties,
+      narrowChapterStyle?: boolean
+    ) => {
+      const rows = getColumnRows(books.length, columns);
+      const chaptersOpen =
+        !!bd && lbc >= 0 && (chapterHint === undefined || cht === chapterHint);
+      const openVisualRow = chaptersOpen && columns > 1 ? lbc % rows : null;
+      const chapterPos =
+        columns <= 1 ? lbc : calcColumnMajorChapterPos(lbc, rows, columns);
+      const chapterGridStyle =
+        openVisualRow !== null
+          ? { gridColumn: "1 / -1", gridRow: openVisualRow + 2 }
+          : undefined;
+
+      return (
+        <div
+          class={`books-item ${getBooksGridClass(columns)}`}
+          style={getBooksGridStyle(columns, rows, chaptersOpen && columns > 1)}
+        >
+          {books.map((book: BibleSelectorBookItem, index: number) =>
+            renderBook(
+              book,
+              index,
+              chapterPos,
+              columns,
+              chapterHint,
+              itemStyle,
+              narrowChapterStyle,
+              getItemGridStyle(index, rows, columns, openVisualRow),
+              chapterGridStyle
+            )
+          )}
+        </div>
+      );
+    };
+
     if (lst === 2) {
-      const OTChapterPos = calcChapterPos(lbc, otColumns);
-      const NTChapterPos = calcChapterPos(lbc, ntColumns);
       const OTBooks = ghostArray(oldTestament, otColumns);
       const NTBooks = ghostArray(newTestament, ntColumns);
       const APBooks = ghostArray(apocrypha, ntColumns);
@@ -505,16 +591,9 @@ const SideBarBooks = (props: {
             <span class="testament-title">
               {t("old-testament", { defaultValue: "Old Testament" })}
             </span>
-            <div
-              class={`books-item ${getBooksGridClass(otColumns)}`}
-              style={getBooksGridStyle(otColumns)}
-            >
-              {OTBooks.map((book: BibleSelectorBookItem, index: number) =>
-                renderBook(book, index, OTChapterPos, otColumns, 0, {
-                  textTransform: "capitalize",
-                })
-              )}
-            </div>
+            {renderBooksGrid(OTBooks, otColumns, 0, {
+              textTransform: "capitalize",
+            })}
           </div>
           <div className="separator" />
           <div
@@ -524,22 +603,7 @@ const SideBarBooks = (props: {
             <span class="testament-title">
               {t("new-testament", { defaultValue: "New Testament" })}
             </span>
-            <div
-              class={`books-item ${getBooksGridClass(ntColumns)}`}
-              style={getBooksGridStyle(ntColumns)}
-            >
-              {NTBooks.map((book: BibleSelectorBookItem, index: number) =>
-                renderBook(
-                  book,
-                  index,
-                  NTChapterPos,
-                  ntColumns,
-                  1,
-                  undefined,
-                  true
-                )
-              )}
-            </div>
+            {renderBooksGrid(NTBooks, ntColumns, 1, undefined, true)}
           </div>
           {ws <= MOBILE_BREAKPOINT && apocryphaAvailable.value && (
             <>
@@ -565,22 +629,7 @@ const SideBarBooks = (props: {
                     info
                   </span>
                 </span>
-                <div
-                  class={`books-item ${getBooksGridClass(ntColumns)}`}
-                  style={getBooksGridStyle(ntColumns)}
-                >
-                  {APBooks.map((book: BibleSelectorBookItem, index: number) =>
-                    renderBook(
-                      book,
-                      index,
-                      NTChapterPos,
-                      ntColumns,
-                      1,
-                      undefined,
-                      true
-                    )
-                  )}
-                </div>
+                {renderBooksGrid(APBooks, ntColumns, 1, undefined, true)}
               </div>
             </>
           )}
@@ -617,7 +666,6 @@ const SideBarBooks = (props: {
     const config = singleTestamentConfig[lst];
     if (!config) return null;
 
-    const chapterPos = calcChapterPos(lbc, singleColumns);
     return (
       <div
         class="books-container flex-gap-md"
@@ -632,14 +680,7 @@ const SideBarBooks = (props: {
           {(config.alwaysShowTitle || ws > MOBILE_BREAKPOINT) && (
             <span class="testament-title">{config.title}</span>
           )}
-          <div
-            class={`books-item ${getBooksGridClass(singleColumns)}`}
-            style={getBooksGridStyle(singleColumns)}
-          >
-            {config.books.map((book: BibleSelectorBookItem, index: number) =>
-              renderBook(book, index, chapterPos, singleColumns)
-            )}
-          </div>
+          {renderBooksGrid(config.books, singleColumns)}
         </div>
       </div>
     );

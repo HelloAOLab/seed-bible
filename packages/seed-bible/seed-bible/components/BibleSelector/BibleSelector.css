@@ -355,7 +355,6 @@
 
 .books-item.grid-column-wrap-around {
   display: grid;
-  grid-auto-flow: row;
   align-content: start;
   gap: 0.625rem;
   overflow-y: auto;
