@@ -364,6 +364,7 @@
   "edit-playlist": "แก้ไขเพลย์ลิสต์",
   "remove-playlist-item": "ลบรายการ",
   "edit-playlist-item": "แก้ไขรายการ",
+  "drag-to-reorder-playlist-item": "ลากเพื่อจัดเรียงใหม่",
   "playlist-add-item": "เพิ่มรายการ",
   "playlist-edit-item": "แก้ไขรายการ",
   "playlist-save-item": "บันทึกการเปลี่ยนแปลง",

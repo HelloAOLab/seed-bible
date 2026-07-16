@@ -364,6 +364,7 @@
   "edit-playlist": "编辑播放列表",
   "remove-playlist-item": "移除项目",
   "edit-playlist-item": "编辑项目",
+  "drag-to-reorder-playlist-item": "拖动以重新排序",
   "playlist-add-item": "添加项目",
   "playlist-edit-item": "编辑项目",
   "playlist-save-item": "保存更改",

@@ -364,6 +364,7 @@
   "edit-playlist": "Edytuj playlistę",
   "remove-playlist-item": "Usuń element",
   "edit-playlist-item": "Edytuj element",
+  "drag-to-reorder-playlist-item": "Przeciągnij, aby zmienić kolejność",
   "playlist-add-item": "Dodaj element",
   "playlist-edit-item": "Edytuj element",
   "playlist-save-item": "Zapisz zmiany",

@@ -705,6 +705,32 @@ export function createPlaylistManager(
     };
   };
 
+  /**
+   * Moves an item within the currently-edited playlist from one index to
+   * another. No-op when there is no playlist being edited, either index is
+   * out of range, or the indices are equal. Mirrors `reorderQueue`'s splice
+   * semantics; unlike `reorderQueue` there's no `currentIndex`-style value to
+   * follow along here — the caller is responsible for keeping any "currently
+   * being edited" index pointed at the same logical item.
+   */
+  const reorderEditingPlaylistItem = (from: number, to: number): void => {
+    const current = editingPlaylist.value;
+    if (!current) {
+      return;
+    }
+    const length = current.items.length;
+    if (from < 0 || from >= length || to < 0 || to >= length || from === to) {
+      return;
+    }
+    const nextItems = [...current.items];
+    const [moved] = nextItems.splice(from, 1);
+    if (!moved) {
+      return;
+    }
+    nextItems.splice(to, 0, moved);
+    editingPlaylist.value = { ...current, items: nextItems };
+  };
+
   /** Discards the current edit and returns to the discover view. */
   const cancelEditingPlaylist = (): void => {
     editingPlaylist.value = null;
@@ -1025,6 +1051,7 @@ export function createPlaylistManager(
     addEditingPlaylistItem,
     updateEditingPlaylistItem,
     removeEditingPlaylistItem,
+    reorderEditingPlaylistItem,
     cancelEditingPlaylist,
     listPlaylists,
     loadPlaylist,

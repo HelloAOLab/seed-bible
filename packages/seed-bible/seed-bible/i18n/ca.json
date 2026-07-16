@@ -364,6 +364,7 @@
   "edit-playlist": "Edita la llista de reproducció",
   "remove-playlist-item": "Elimina l'element",
   "edit-playlist-item": "Edita l'element",
+  "drag-to-reorder-playlist-item": "Arrossega per reordenar",
   "playlist-add-item": "Afegeix un element",
   "playlist-edit-item": "Edita l'element",
   "playlist-save-item": "Desa els canvis",

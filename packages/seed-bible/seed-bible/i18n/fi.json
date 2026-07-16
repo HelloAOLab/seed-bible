@@ -364,6 +364,7 @@
   "edit-playlist": "Muokkaa soittolistaa",
   "remove-playlist-item": "Poista kohde",
   "edit-playlist-item": "Muokkaa kohdetta",
+  "drag-to-reorder-playlist-item": "Järjestä vetämällä",
   "playlist-add-item": "Lisää kohde",
   "playlist-edit-item": "Muokkaa kohdetta",
   "playlist-save-item": "Tallenna muutokset",

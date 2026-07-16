@@ -364,6 +364,7 @@
   "edit-playlist": "プレイリストを編集",
   "remove-playlist-item": "アイテムを削除する",
   "edit-playlist-item": "アイテムを編集",
+  "drag-to-reorder-playlist-item": "ドラッグして並べ替え",
   "playlist-add-item": "アイテムを追加",
   "playlist-edit-item": "アイテムを編集",
   "playlist-save-item": "変更を保存する",

@@ -364,6 +364,7 @@
   "edit-playlist": "Lejátszási lista szerkesztése",
   "remove-playlist-item": "Elem eltávolítása",
   "edit-playlist-item": "Elem szerkesztése",
+  "drag-to-reorder-playlist-item": "Húzza az átrendezéshez",
   "playlist-add-item": "Elem hozzáadása",
   "playlist-edit-item": "Elem szerkesztése",
   "playlist-save-item": "Változtatások mentése",

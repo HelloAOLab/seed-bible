@@ -6,6 +6,7 @@ import type { ModalManager } from "../../managers/ModalManager";
 import { DiscoverSection } from "../DiscoverPane/DiscoverSection";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { playlistItemIcon } from "../playlistItemIcon";
+import { useDragReorder } from "../useDragReorder";
 import { MaterialIcon } from "../icons";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 
@@ -28,12 +29,19 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
 
   // Reading `.value` during render subscribes the component to updates.
   const playing = playlists.playing.value;
+  const queue = playing?.queue.value ?? [];
+
+  // Called unconditionally (before the `!playing` early return below) so the
+  // hook's own hooks aren't called conditionally across renders.
+  const { getRowClassName, getHandleProps } = useDragReorder({
+    itemCount: queue.length,
+    onReorder: (from, to) => playing?.reorderQueue(from, to),
+  });
 
   if (!playing) {
     return null;
   }
 
-  const queue = playing.queue.value;
   const currentIndex = playing.currentIndex.value;
 
   // Resolve verse book IDs to full book names using the selected tab's loaded
@@ -58,10 +66,21 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
                   "sb-discover-item sb-discover-item--row sb-play-playlist-item" +
                   (index === currentIndex
                     ? " sb-play-playlist-item--current"
-                    : "")
+                    : "") +
+                  getRowClassName(index)
                 }
                 dir="auto"
               >
+                <button
+                  type="button"
+                  className="sb-discover-item-drag-handle"
+                  aria-label={t("drag-to-reorder-playlist-item", {
+                    defaultValue: "Drag to reorder",
+                  })}
+                  {...getHandleProps(index)}
+                >
+                  <MaterialIcon>drag_indicator</MaterialIcon>
+                </button>
                 <button
                   type="button"
                   className="sb-play-playlist-item-button"

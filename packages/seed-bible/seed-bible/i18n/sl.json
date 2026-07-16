@@ -364,6 +364,7 @@
   "edit-playlist": "Uredi seznam predvajanja",
   "remove-playlist-item": "Odstrani element",
   "edit-playlist-item": "Uredi element",
+  "drag-to-reorder-playlist-item": "Povlecite za spremembo vrstnega reda",
   "playlist-add-item": "Dodaj element",
   "playlist-edit-item": "Uredi element",
   "playlist-save-item": "Shrani spremembe",

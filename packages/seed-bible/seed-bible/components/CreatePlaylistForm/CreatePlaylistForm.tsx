@@ -15,6 +15,7 @@ import {
 } from "../PlaylistItemInput/PlaylistItemInput";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { playlistItemIcon } from "../playlistItemIcon";
+import { useDragReorder } from "../useDragReorder";
 
 interface CreatePlaylistFormProps {
   playlists: PlaylistManager;
@@ -127,6 +128,22 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
     return book?.name ?? book?.commonName ?? bookId;
   };
 
+  const { getRowClassName, getHandleProps } = useDragReorder({
+    itemCount: editing?.items.length ?? 0,
+    onReorder: (from, to) => {
+      playlists.reorderEditingPlaylistItem(from, to);
+      // Keep the edit target pointed at the same logical item, mirroring the
+      // arithmetic `reorderQueue` already applies to `currentIndex`.
+      setEditingIndex((current) => {
+        if (current === null) return null;
+        if (current === from) return to;
+        if (from < current && to >= current) return current - 1;
+        if (from > current && to <= current) return current + 1;
+        return current;
+      });
+    },
+  });
+
   const doSave = async () => {
     setSaving(true);
     try {
@@ -177,9 +194,20 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
                 key={index}
                 className={
                   "sb-discover-item sb-discover-item--row" +
-                  (index === editingIndex ? " sb-discover-item--editing" : "")
+                  (index === editingIndex ? " sb-discover-item--editing" : "") +
+                  getRowClassName(index)
                 }
               >
+                <button
+                  type="button"
+                  className="sb-discover-item-drag-handle"
+                  aria-label={t("drag-to-reorder-playlist-item", {
+                    defaultValue: "Drag to reorder",
+                  })}
+                  {...getHandleProps(index)}
+                >
+                  <MaterialIcon>drag_indicator</MaterialIcon>
+                </button>
                 <button
                   type="button"
                   className="sb-discover-item-button"

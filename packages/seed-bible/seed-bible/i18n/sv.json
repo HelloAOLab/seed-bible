@@ -364,6 +364,7 @@
   "edit-playlist": "Redigera spellista",
   "remove-playlist-item": "Ta bort objekt",
   "edit-playlist-item": "Redigera objekt",
+  "drag-to-reorder-playlist-item": "Dra för att ändra ordning",
   "playlist-add-item": "Lägg till objekt",
   "playlist-edit-item": "Redigera objekt",
   "playlist-save-item": "Spara ändringar",

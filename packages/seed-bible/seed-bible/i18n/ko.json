@@ -364,6 +364,7 @@
   "edit-playlist": "재생 목록 편집",
   "remove-playlist-item": "제거 항목",
   "edit-playlist-item": "항목 편집",
+  "drag-to-reorder-playlist-item": "드래그하여 순서 변경",
   "playlist-add-item": "항목 추가",
   "playlist-edit-item": "항목 편집",
   "playlist-save-item": "변경 사항 저장",

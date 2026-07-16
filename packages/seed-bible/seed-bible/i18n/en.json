@@ -288,6 +288,7 @@
   "delete-playlist-failed": "Couldn't delete the playlist.",
   "remove-playlist-item": "Remove item",
   "edit-playlist-item": "Edit item",
+  "drag-to-reorder-playlist-item": "Drag to reorder",
   "playlist-add-item": "Add item",
   "playlist-edit-item": "Edit item",
   "playlist-save-item": "Save changes",

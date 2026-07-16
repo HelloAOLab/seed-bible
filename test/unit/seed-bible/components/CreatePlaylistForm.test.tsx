@@ -125,6 +125,7 @@ interface MockPlaylistsResult {
   addEditingPlaylistItem: ReturnType<typeof vi.fn>;
   updateEditingPlaylistItem: ReturnType<typeof vi.fn>;
   removeEditingPlaylistItem: ReturnType<typeof vi.fn>;
+  reorderEditingPlaylistItem: ReturnType<typeof vi.fn>;
 }
 
 function createMockPlaylists(editing: Playlist | null): MockPlaylistsResult {
@@ -141,6 +142,15 @@ function createMockPlaylists(editing: Playlist | null): MockPlaylistsResult {
       items: current.items.filter((_, i) => i !== index),
     };
   });
+  const reorderEditingPlaylistItem = vi.fn((from: number, to: number) => {
+    const current = editingPlaylist.value;
+    if (!current) return;
+    const items = [...current.items];
+    const [moved] = items.splice(from, 1);
+    if (!moved) return;
+    items.splice(to, 0, moved);
+    editingPlaylist.value = { ...current, items };
+  });
 
   const playlists = {
     editingPlaylist,
@@ -149,6 +159,7 @@ function createMockPlaylists(editing: Playlist | null): MockPlaylistsResult {
     addEditingPlaylistItem,
     updateEditingPlaylistItem,
     removeEditingPlaylistItem,
+    reorderEditingPlaylistItem,
   } as unknown as PlaylistManager;
 
   return {
@@ -158,6 +169,7 @@ function createMockPlaylists(editing: Playlist | null): MockPlaylistsResult {
     addEditingPlaylistItem,
     updateEditingPlaylistItem,
     removeEditingPlaylistItem,
+    reorderEditingPlaylistItem,
   };
 }
 
@@ -646,6 +658,150 @@ describe("CreatePlaylistForm", () => {
       container.querySelectorAll(".sb-discover-item-icon")
     ).map((el) => el.textContent);
     expect(icons).toEqual(["menu_book", "link", "notes"]);
+  });
+
+  describe("drag to reorder", () => {
+    let offsetHeightSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      offsetHeightSpy = vi
+        .spyOn(HTMLLIElement.prototype, "offsetHeight", "get")
+        .mockReturnValue(40);
+    });
+
+    afterEach(() => {
+      offsetHeightSpy.mockRestore();
+    });
+
+    it("shows a drag handle for each item", () => {
+      const { playlists } = createMockPlaylists(
+        createPlaylist({
+          items: [verseItem("GEN", 1), verseItem("GEN", 2)],
+        })
+      );
+      const tabs = createMockTabs();
+      const modals = createModalManager();
+
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            playlists={playlists}
+            tabs={tabs}
+            modals={modals}
+          />,
+          container
+        );
+      });
+
+      const handles = container.querySelectorAll(
+        ".sb-discover-item-drag-handle"
+      );
+      expect(handles).toHaveLength(2);
+      expect(handles[0]?.getAttribute("aria-label")).toBe("Drag to reorder");
+    });
+
+    it("dragging an item's handle reorders it and keeps the edited item selected", () => {
+      const { playlists, reorderEditingPlaylistItem } = createMockPlaylists(
+        createPlaylist({
+          items: [
+            verseItem("GEN", 1),
+            verseItem("GEN", 2),
+            verseItem("GEN", 3),
+          ],
+        })
+      );
+      const tabs = createMockTabs();
+      const modals = createModalManager();
+
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            playlists={playlists}
+            tabs={tabs}
+            modals={modals}
+          />,
+          container
+        );
+      });
+
+      // Start editing the first item (index 0, "GEN 1").
+      const itemButtons = container.querySelectorAll(
+        ".sb-discover-item-button"
+      );
+      act(() => {
+        itemButtons[0]?.dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+      });
+
+      // Drag it past the second item.
+      const handles = container.querySelectorAll(
+        ".sb-discover-item-drag-handle"
+      );
+      act(() => {
+        handles[0]?.dispatchEvent(
+          new PointerEvent("pointerdown", {
+            bubbles: true,
+            pointerId: 1,
+            clientY: 0,
+          })
+        );
+        window.dispatchEvent(
+          new PointerEvent("pointermove", { pointerId: 1, clientY: 45 })
+        );
+      });
+
+      expect(reorderEditingPlaylistItem).toHaveBeenCalledWith(0, 1);
+      expect(playlists.editingPlaylist.value?.items).toEqual([
+        verseItem("GEN", 2),
+        verseItem("GEN", 1),
+        verseItem("GEN", 3),
+      ]);
+
+      // The edit target followed the dragged item to its new position.
+      const rows = container.querySelectorAll(".sb-discover-item--row");
+      expect(rows[0]?.classList.contains("sb-discover-item--editing")).toBe(
+        false
+      );
+      expect(rows[1]?.classList.contains("sb-discover-item--editing")).toBe(
+        true
+      );
+    });
+
+    it("clicking the edit button still works with the drag handle present", () => {
+      const { playlists } = createMockPlaylists(
+        createPlaylist({
+          items: [verseItem("GEN", 1), verseItem("GEN", 2)],
+        })
+      );
+      const tabs = createMockTabs();
+      const modals = createModalManager();
+
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            playlists={playlists}
+            tabs={tabs}
+            modals={modals}
+          />,
+          container
+        );
+      });
+
+      const itemButtons = container.querySelectorAll(
+        ".sb-discover-item-button"
+      );
+      act(() => {
+        itemButtons[1]?.dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+      });
+
+      const rows = container.querySelectorAll(".sb-discover-item--row");
+      expect(rows[1]?.classList.contains("sb-discover-item--editing")).toBe(
+        true
+      );
+    });
   });
 
   describe("unsaved Add Item content", () => {
