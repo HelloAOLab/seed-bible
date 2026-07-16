@@ -27,6 +27,7 @@ import type { Mock } from "vitest";
 function createTestLogin(initial?: {
   userId?: string | null;
   profile?: UserProfile | null;
+  profilePromise?: Promise<UserProfile> | null;
 }): LoginManager {
   const userId = signal<string | null>(initial?.userId ?? null);
   const profile = signal<UserProfile | null>(initial?.profile ?? null);
@@ -36,7 +37,12 @@ function createTestLogin(initial?: {
       ...newData,
     } as UserProfile;
   };
-  return { userId, profile, updateProfile } as unknown as LoginManager;
+  return {
+    userId,
+    profile,
+    updateProfile,
+    profilePromise: initial?.profilePromise ?? null,
+  } as unknown as LoginManager;
 }
 
 describe("ExtensionInitalizer", () => {
@@ -598,6 +604,46 @@ describe("createExtensionManager", () => {
     );
   });
 
+  it("loadExtension() adds the extension's full translations from loadFullTranslations(), not the (trimmed) meta.translations", async () => {
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://full-translations");
+
+    const trimmedTranslations = {
+      en: {
+        title: "Full Translations",
+        description: "Full Translations extension",
+      },
+    };
+    const fullTranslations = {
+      en: {
+        title: "Full Translations",
+        description: "Full Translations extension",
+        "extra-key": "Extra string",
+      },
+    };
+    const loadFullTranslations = vi.fn().mockResolvedValue(fullTranslations);
+
+    const loaded = await manager.loadExtension({
+      url: "pkg://full-translations",
+      meta: {
+        id: "ext.full-translations",
+        translations: trimmedTranslations,
+      },
+      loadFullTranslations,
+    });
+
+    expect(loaded).toBe(true);
+    expect(loadFullTranslations).toHaveBeenCalledTimes(1);
+    expect(addTranslationsMock).toHaveBeenCalledWith(
+      "ext.full-translations",
+      fullTranslations
+    );
+    expect(addTranslationsMock).not.toHaveBeenCalledWith(
+      "ext.full-translations",
+      trimmedTranslations
+    );
+  });
+
   it("loadDefaultExtensions() auto-installs extensions when the matching query param is true", async () => {
     const defaultExtensions = {
       id: "set.autoinstall",
@@ -628,6 +674,144 @@ describe("createExtensionManager", () => {
     }
 
     expect(loadedModules).toEqual(["pkg://autoinstall"]);
+  });
+
+  it("loadDefaultExtensions() does not reinstall an autoinstall extension after it has been uninstalled, across a reload", async () => {
+    const defaultExtensions: ExtensionSet = {
+      id: "set.autoinstall-uninstall",
+      extensions: [
+        {
+          url: "pkg://autoinstall-uninstall",
+          meta: {
+            id: "ext.autoinstall-uninstall",
+            translations: {
+              en: {
+                title: "Autoinstall",
+                description: "Autoinstall extension",
+              },
+            },
+            autoinstall: true,
+          },
+        },
+      ],
+    };
+    mockExtensionModule("pkg://autoinstall-uninstall");
+
+    const manager1 = createExtensionManager(login, { defaultExtensions });
+    await manager1.loadDefaultExtensions();
+
+    expect(loadedModules).toEqual(["pkg://autoinstall-uninstall"]);
+    expect(manager1.getExtensions()[0]?.installed).toBe(true);
+
+    manager1.unloadExtension("ext.autoinstall-uninstall");
+    expect(manager1.getExtensions()[0]?.installed).toBe(false);
+
+    // Simulate a real page reload: a fresh manager instance backed by the
+    // same persisted local storage, since in-memory state (like
+    // installedExtensionIds) never survives a reload — only what was
+    // written to storage does.
+    loadedModules.length = 0;
+    const manager2 = createExtensionManager(login, { defaultExtensions });
+    await manager2.loadDefaultExtensions();
+
+    expect(loadedModules).toEqual([]);
+    expect(manager2.getExtensions()[0]?.installed).toBe(false);
+  });
+
+  it("loadDefaultExtensions() does not reinstall an autoinstall extension's forced dependency after both have been uninstalled, across a reload", async () => {
+    const defaultExtensions: ExtensionSet = {
+      id: "set.autoinstall-dependency",
+      extensions: [
+        {
+          url: "pkg://autoinstall-dependent",
+          meta: {
+            id: "ext.autoinstall-dependent",
+            translations: {
+              en: { title: "Dependent", description: "Dependent extension" },
+            },
+            autoinstall: true,
+            dependencies: ["ext.autoinstall-dependency"],
+          },
+        },
+        {
+          url: "pkg://autoinstall-dependency",
+          meta: {
+            id: "ext.autoinstall-dependency",
+            // No autoinstall flag - only force-installed as a dependency,
+            // mirroring seed-bible-utils/today-screen in production.
+            translations: {
+              en: {
+                title: "Dependency",
+                description: "Dependency extension",
+              },
+            },
+          },
+        },
+      ],
+    };
+    mockExtensionModule("pkg://autoinstall-dependent");
+    mockExtensionModule("pkg://autoinstall-dependency");
+
+    const manager1 = createExtensionManager(login, { defaultExtensions });
+    await manager1.loadDefaultExtensions();
+
+    expect([...loadedModules].sort()).toEqual(
+      ["pkg://autoinstall-dependency", "pkg://autoinstall-dependent"].sort()
+    );
+
+    manager1.unloadExtension("ext.autoinstall-dependent");
+    manager1.unloadExtension("ext.autoinstall-dependency");
+
+    loadedModules.length = 0;
+    const manager2 = createExtensionManager(login, { defaultExtensions });
+    await manager2.loadDefaultExtensions();
+
+    expect(loadedModules).toEqual([]);
+    const known = manager2.getExtensions();
+    expect(
+      known.find((e) => e.id === "ext.autoinstall-dependent")?.installed
+    ).toBe(false);
+    expect(
+      known.find((e) => e.id === "ext.autoinstall-dependency")?.installed
+    ).toBe(false);
+  });
+
+  it("loadDefaultExtensions() still installs via URL override even when the extension is already in the autoinstall-handled set", async () => {
+    localStorage.setItem(
+      "sb-autoinstall-handled-extensions",
+      JSON.stringify(["ext.url-override-handled"])
+    );
+
+    const defaultExtensions: ExtensionSet = {
+      id: "set.url-override-handled",
+      extensions: [
+        {
+          url: "pkg://url-override-handled",
+          meta: {
+            id: "ext.url-override-handled",
+            translations: {
+              en: { title: "Override", description: "Override extension" },
+            },
+            autoinstall: true,
+          },
+        },
+      ],
+    };
+    const manager = createExtensionManager(login, { defaultExtensions });
+    mockExtensionModule("pkg://url-override-handled");
+
+    window.history.replaceState(
+      null,
+      "",
+      "/?autoinstall-ext.url-override-handled=true"
+    );
+    try {
+      await manager.loadDefaultExtensions();
+    } finally {
+      window.history.replaceState(null, "", "/");
+    }
+
+    expect(loadedModules).toEqual(["pkg://url-override-handled"]);
   });
 
   it("getExtensions() lists known extensions from loaded sets even when not installed", async () => {
@@ -1146,6 +1330,33 @@ describe("createExtensionManager", () => {
     ).toEqual([]);
   });
 
+  it("unloadExtension() records the extension in the autoinstall-handled set even when it never had autoinstall:true", async () => {
+    // Mirrors seed-bible-utils in production: an extension that's only ever
+    // force-installed as another extension's dependency, never carrying
+    // autoinstall:true itself, so loadDefaultExtensions's batch marking never
+    // touches it - this is the only path that records its uninstall.
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://handled-on-uninstall");
+
+    await manager.loadExtension({
+      url: "pkg://handled-on-uninstall",
+      meta: {
+        id: "ext.handled-on-uninstall",
+        translations: {
+          en: { title: "Handled", description: "Handled extension" },
+        },
+      },
+    });
+
+    manager.unloadExtension("ext.handled-on-uninstall");
+
+    expect(
+      JSON.parse(
+        localStorage.getItem("sb-autoinstall-handled-extensions") ?? "[]"
+      )
+    ).toEqual(["ext.handled-on-uninstall"]);
+  });
+
   it("loadSavedExtensions() re-loads extensions saved in local storage", async () => {
     localStorage.setItem(
       "sb-installed-extensions",
@@ -1208,12 +1419,40 @@ describe("createExtensionManager", () => {
     }
   });
 
+  /**
+   * Builds an `import()`-style extension module whose resolution is
+   * controlled by the caller via `resolve()`, instead of resolving as soon
+   * as it's awaited. Useful for deterministically interleaving an
+   * extension's install with other async work in a test.
+   */
+  function createDeferredExtensionModule(): {
+    promise: Promise<unknown>;
+    resolve: () => void;
+  } {
+    let resolvePromise: (value: unknown) => void = () => undefined;
+    const promise = new Promise<unknown>((resolve) => {
+      resolvePromise = resolve;
+    });
+    return {
+      promise,
+      resolve: () => resolvePromise({ default: vi.fn() }),
+    };
+  }
+
   /** Reads the installed-extension IDs persisted to a login's profile config. */
   function getProfileInstalled(l: LoginManager): unknown {
     const config = l.profile.value?.config as
       | Record<string, unknown>
       | undefined;
     return config?.installedExtensions;
+  }
+
+  /** Reads the autoinstall-handled extension IDs persisted to a login's profile config. */
+  function getProfileHandled(l: LoginManager): unknown {
+    const config = l.profile.value?.config as
+      | Record<string, unknown>
+      | undefined;
+    return config?.autoinstallHandledExtensions;
   }
 
   /** Polls until `check()` is true, or throws after `timeoutMs`. */
@@ -1360,6 +1599,41 @@ describe("createExtensionManager", () => {
     expect(getProfileInstalled(login)).toEqual(["ext.local-only"]);
   });
 
+  it("loadDefaultExtensions() merges the autoinstall-handled set between local storage and the profile config", async () => {
+    localStorage.setItem(
+      "sb-autoinstall-handled-extensions",
+      JSON.stringify(["ext.handled-local-only"])
+    );
+
+    login = createTestLogin({
+      userId: "user-1",
+      profile: {
+        name: "Test",
+        config: {
+          autoinstallHandledExtensions: ["ext.handled-profile-only"],
+        },
+      } as UserProfile,
+    });
+
+    const manager = createExtensionManager(login, {
+      defaultExtensions: { id: "set.empty-handled-merge", extensions: [] },
+    });
+
+    await manager.loadDefaultExtensions();
+
+    expect(
+      (
+        JSON.parse(
+          localStorage.getItem("sb-autoinstall-handled-extensions") ?? "[]"
+        ) as string[]
+      ).sort()
+    ).toEqual(["ext.handled-local-only", "ext.handled-profile-only"]);
+    expect((getProfileHandled(login) as string[]).sort()).toEqual([
+      "ext.handled-local-only",
+      "ext.handled-profile-only",
+    ]);
+  });
+
   it("does not wipe the profile when the boot-time extension sync races the profile load (regression for #1318)", async () => {
     localStorage.setItem(
       "sb-installed-extensions",
@@ -1414,5 +1688,93 @@ describe("createExtensionManager", () => {
     expect(login.profile.value?.name).toBe("Real Name");
     expect(login.profile.value?.location).toBe("Real Location");
     expect(getProfileInstalled(login)).toEqual(["ext.race"]);
+  });
+
+  it("does not spam-overwrite the profile when multiple extensions load while the profile fetch is still in flight (regression for #1357)", async () => {
+    let resolveProfile: (profile: UserProfile) => void = () => undefined;
+    const profilePromise = new Promise<UserProfile>((resolve) => {
+      resolveProfile = resolve;
+    });
+
+    // Simulates a returning, already-authenticated user whose session is
+    // restored synchronously but whose profile fetch (`login.profilePromise`)
+    // is still pending when extension loading kicks off at boot.
+    login = createTestLogin({
+      userId: "user-1",
+      profile: null,
+      profilePromise,
+    });
+
+    const manager = createExtensionManager(login);
+
+    // Use `import`-based (not `url`-based) extensions, each backed by a
+    // deferred promise, so each one's install resolves under direct,
+    // synchronous test control instead of racing real
+    // dynamic-import/module-mock timing.
+    const moduleA = createDeferredExtensionModule();
+    const moduleB = createDeferredExtensionModule();
+    const extensionA = {
+      import: () => moduleA.promise,
+      meta: {
+        id: "ext.spam-a",
+        translations: {
+          en: { title: "Spam A", description: "Spam A extension" },
+        },
+      },
+    };
+    const extensionB = {
+      import: () => moduleB.promise,
+      meta: {
+        id: "ext.spam-b",
+        translations: {
+          en: { title: "Spam B", description: "Spam B extension" },
+        },
+      },
+    };
+
+    const updateProfileSpy = vi.spyOn(login, "updateProfile");
+
+    const loadAPromise = manager.loadExtension(extensionA);
+    const loadBPromise = manager.loadExtension(extensionB);
+
+    // Finish extension A's install while the profile is still null — this is
+    // the exact moment the old, unguarded code would compute its profile
+    // write against an empty profile and capture a stale single-ID value.
+    moduleA.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // Finish extension B's install, still before the profile resolves.
+    moduleB.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // Now let the profile fetch resolve, exactly as `LoginManager` would:
+    // `profile.value` is set before/at the point awaiters of `profilePromise`
+    // resume.
+    const realProfile = { name: "Real Name" } as UserProfile;
+    login.profile.value = realProfile;
+    resolveProfile(realProfile);
+
+    await Promise.all([loadAPromise, loadBPromise]);
+    // Let each install's post-`await installationPromise` continuation
+    // (which awaits the now-resolved profile before writing) finish too.
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // Both extensions should have merged into a single, complete list — not
+    // overwritten each other down to just the last one to resolve.
+    expect(getProfileInstalled(login)).toEqual(
+      expect.arrayContaining(["ext.spam-a", "ext.spam-b"])
+    );
+    expect((getProfileInstalled(login) as string[]).length).toBe(2);
+
+    // This is the actual bug report (#1357): loading the app was writing the
+    // profile repeatedly with no user action. Merging both extensions should
+    // take exactly one write, not one per extension racing the profile load.
+    expect(updateProfileSpy).toHaveBeenCalledTimes(1);
   });
 });

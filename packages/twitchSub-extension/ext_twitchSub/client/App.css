@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: flex-start;
   height: fit-content;
-  width: 350px;
+  width: 420px;
   background: var(--sb-background);
   padding: 10px 15px 15px 15px;
   border-radius: 10px;
@@ -200,4 +200,50 @@
   .twitchSub-container {
     transform: scale(0.8);
   }
+}
+
+.twitch-tooltip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.twitch-tooltip__icon {
+  font-size: 18px;
+  height: 20px;
+  width: 20px;
+  opacity: 0.6;
+}
+
+.twitch-tooltip__icon:hover {
+  opacity: 1;
+}
+
+.twitch-tooltip__bubble {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 220px;
+  padding: 8px 10px;
+  background: rgba(20, 20, 20, 0.95);
+  color: #fff;
+  font-size: 12px;
+  font-weight: normal;
+  line-height: 1.4;
+  text-align: left;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 20;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+}
+
+.twitch-tooltip:hover .twitch-tooltip__bubble,
+.twitch-tooltip--open .twitch-tooltip__bubble {
+  visibility: visible;
+  opacity: 1;
 }

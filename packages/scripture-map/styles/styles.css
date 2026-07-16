@@ -1,0 +1,907 @@
+.scripture-map-wrapper {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 100%;
+  grid-template-rows: auto 1fr auto;
+  background-color: white;
+  pointer-events: all;
+  overflow: hidden;
+  gap: 0.5rem;
+  height: 100%;
+  --timelineItemSize: 16px;
+  position: relative;
+  padding-top: 0.5rem;
+  background-color: var(--sb-reader-background);
+}
+
+.scripture-map-wrapper *:not(.material-symbols-outlined) {
+  font-family: "Satoshi";
+}
+
+/* .scripture-map-wrapper > * {
+  padding-right: 24px;
+  padding-left: 16px;
+} */
+
+.scripture-map-settings {
+  /* z-index: 10; */
+  top: 0;
+  width: 100%;
+  gap: 0.25rem;
+  display: grid;
+  grid-template-columns: 1rem 1fr 2.5rem 1rem;
+}
+
+.scripture-map-settings-header-slot {
+  display: contents;
+}
+
+.header-button {
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.settings-button {
+  font-size: 1.375rem !important;
+  height: 2.5rem;
+  min-width: 2.5rem;
+  border-radius: 0.5rem;
+  padding: 0;
+  color: inherit;
+}
+
+.header-button.settings-button:hover:not(
+    :has(.settings-options-container:hover)
+  ) {
+  background-color: var(--sb-secondary-color);
+}
+
+/* .close-button {
+  grid-column: 4 / 5;
+} */
+
+.settings-options-container {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.25rem);
+  background-color: var(--sb-reader-background);
+  color: var(--sb-reader-font-color);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  gap: 0.25rem;
+  border: 1px solid var(--sb-secondary-color);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  min-width: 13rem;
+  min-height: 1.25rem;
+  z-index: 1;
+  box-shadow: 0 0 5px 0px var(--sb-divider-color);
+}
+.scripture-title {
+  color: var(--sb-reader-font-color);
+}
+.option-button {
+  color: var(--sb-reader-font-color);
+}
+
+.settings-options-container > span:nth-of-type(1) {
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem 0;
+}
+
+.settings-options-container > span:nth-of-type(2) {
+  font-size: 0.75rem;
+  font-weight: 100;
+  padding: 0 0.5rem 0.5rem;
+}
+
+.settings-options-container > button {
+  min-width: 100%;
+  background-color: transparent;
+  color: var(--sb-reader-font-color);
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  text-align: start;
+  border-radius: 0.25rem;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  font-weight: 400;
+  padding: 0.25rem 0.5rem;
+  font-size: 1rem;
+}
+
+.settings-options-container > button > span {
+  font-size: 1.25rem;
+}
+
+.settings-options-container > button:hover {
+  background-color: var(--sb-secondary-color);
+}
+
+.option-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 100%;
+  margin: 0.25rem 0;
+}
+
+.option-divider::before {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--sb-divider-color);
+}
+
+/* The reading-history footer (legend + year selector) moved into the shared
+   ReadingHistoryTimeline component (Bible Visualization Utils). Its styles now
+   live in readingHistoryTimelineStyles.css. */
+
+.project-state-setter {
+  width: 100%;
+  padding: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.scripture-map-settings.collapsed .project-state-setter {
+  display: none;
+}
+
+.project-state-setter > div:nth-of-type(1) {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.project-state-setter > div:nth-of-type(2) {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.project-state-setter > div:nth-of-type(2) > span:nth-of-type(1) {
+  font-family: system-ui;
+  font-size: 1rem;
+}
+
+.selection-mode-toggle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.selection-mode-toggle > span:nth-of-type(1) {
+  background-color: white;
+  border: solid 2px black;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 0.25rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 1rem;
+}
+
+.selection-mode-toggle > span:nth-of-type(1).checked {
+  background-color: #d36433;
+  border-color: #d36433;
+  color: white;
+}
+
+.selection-mode-toggle > span:nth-of-type(2) {
+  font-family: system-ui;
+}
+
+.selection-mode-toggle > span:nth-of-type(3) {
+  font-size: 1rem;
+}
+
+.selection-options {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.selection-options > button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.25rem;
+  appearance: none;
+  border: none;
+  background-color: transparent;
+}
+
+.selection-options > button:nth-of-type(1) {
+  color: #808080;
+}
+
+.selection-options > button:nth-of-type(2) {
+  color: #d36433;
+}
+
+.selection-options > button > span {
+  font-size: 1rem;
+}
+
+.divider {
+  width: 1px;
+  height: 1.25rem;
+  background-color: #d2d2d2;
+}
+
+.scripture-map-wrapper .scripture-map-controls {
+  width: 100%;
+}
+
+.reading-history-user-selector {
+  grid-column: 2 / 5;
+  grid-row: 3 / 4;
+}
+
+.project-filters-selector,
+.reading-history-user-selector {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.scripture-map-settings.collapsed .project-filters-selector,
+.scripture-map-settings.collapsed .reading-history-user-selector {
+  display: none;
+}
+
+/* Scripture-Map-specific placement for the shared ReadingHistoryTimeline.
+   The timeline's intrinsic appearance now lives in Bible Visualization Utils
+   (readingHistoryTimelineStyles.css), injected by the shared component. */
+.reading-history-timeline-container {
+  grid-column: 2 / 5;
+  grid-row: 4 / 5;
+}
+
+.scripture-map-settings.collapsed .reading-history-timeline-container {
+  display: none;
+}
+
+.project-state-button {
+  padding: 0.375rem 0.75rem;
+  background-color: var(--sb-divider-color);
+  border: solid 2px var(--sb-divider-color);
+  border-radius: 1.5625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.375rem;
+  cursor: pointer;
+  color: var(--sb-reader-font-color);
+}
+
+.project-filters-selector-option.selected,
+.project-state-setter-option:hover {
+  background-color: var(--sb-secondary-color);
+  border-color: var(--sb-primary-color);
+}
+
+.filter-option-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 1.25rem;
+  border-width: 2px;
+}
+
+.scripture-map-wrapper,
+.scripture-map-wrapper * {
+  box-sizing: border-box;
+  scrollbar-width: none;
+  user-select: none;
+}
+
+.scripture-map-wrapper .scripture-map-controls {
+  height: 3.75rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.scripture-map-wrapper .scripture-map-controls .zoom-container {
+  background-color: var(--toolbarBackground);
+  box-shadow: 0 0 6px 0 #0000002e;
+  display: flex;
+  border-radius: 0.25rem;
+  padding: 0.25rem;
+}
+
+.scripture-map-wrapper .scripture-map-controls .zoom-container > button {
+  appearance: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 2rem;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0 0.5rem;
+  position: relative;
+  background-color: transparent;
+  color: var(--sb-reader-font-color);
+}
+
+.scripture-map-wrapper
+  .scripture-map-controls
+  .zoom-container
+  > button.hovered:not(:has(.zoom-level-selector:hover)) {
+  background-color: var(--sb-secondary-color);
+}
+
+.scripture-map-wrapper
+  .scripture-map-controls
+  .zoom-container
+  > button:nth-of-type(1),
+.scripture-map-wrapper
+  .scripture-map-controls
+  .zoom-container
+  > button:nth-of-type(3) {
+  width: 2rem;
+}
+
+/* .scripture-map-wrapper
+  .scripture-map-controls
+  .zoom-container
+  > button
+  > span {
+  color: inherit;
+} */
+
+.scripture-map-wrapper
+  .scripture-map-controls
+  .zoom-container
+  > button:nth-of-type(1)
+  > span,
+.scripture-map-wrapper
+  .scripture-map-controls
+  .zoom-container
+  > button:nth-of-type(3)
+  > span {
+  font-size: 1rem;
+}
+
+.scripture-map-wrapper
+  .scripture-map-controls
+  .zoom-container
+  > button:nth-of-type(2)
+  > span {
+  text-box: auto;
+  color: var(--iconColor);
+}
+
+.zoom-level-selector {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(100% + 0.75rem);
+  background-color: var(--sb-reader-background);
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  min-width: 9.25rem;
+  border: solid 1px var(--sb-secondary-color);
+  box-shadow: 0 0 5px 0px var(--sb-divider-color);
+}
+
+.zoom-level-selector > * {
+  padding: 0.5rem;
+  width: 100%;
+  color: var(--sb-reader-font-color);
+}
+
+.zoom-level-selector > span {
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: start;
+  /* margin-bottom: 8px; */
+}
+
+.zoom-level-selector > button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  appearance: none;
+  border: none;
+  background-color: transparent;
+  font-size: 1rem;
+  border-radius: calc(var(--scale-factor) * 4px);
+}
+
+.zoom-level-selector button:hover {
+  background-color: var(--sb-secondary-color);
+}
+
+.zoom-level-selector > button > span {
+  color: inherit;
+}
+
+.zoom-level-selector > button > span:nth-of-type(2) {
+  border-radius: 1.5625rem;
+  width: 1rem;
+  height: 1rem;
+  background-color: transparent;
+  border: solid 5px var(--sb-primary-color);
+}
+
+.scripture-map-wrapper .scripture-map-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  justify-self: center;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  overflow: scroll;
+  gap: calc(28px * var(--scale-factor));
+  padding: 8px 16px 0;
+  /* z-index: 10; */
+}
+
+.scripture-map-wrapper .scripture-map-container .testament-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: flex-start;
+  gap: calc(12px * var(--scale-factor));
+  width: 100%;
+}
+
+.scripture-map-wrapper
+  .scripture-map-container
+  .testament-container
+  .testament-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: calc(12px * var(--scale-factor));
+  align-items: start;
+  z-index: 0;
+}
+
+.testament-content .scripture-map-books-container {
+  display: flex;
+  gap: calc(12px * var(--scale-factor));
+  width: 100%;
+  justify-content: flex-start;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.scripture-map-books-container .book-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  min-height: 80px;
+  border: solid calc(2px * var(--scale-factor)) var(--sb-divider-color);
+  border-radius: calc(10px * var(--scale-factor));
+  padding: calc(8px * var(--scale-factor));
+  gap: calc(12px * var(--scale-factor));
+}
+
+.scripture-map-wrapper
+  .scripture-map-container
+  .testament-container
+  .book-container
+  .book-cover {
+  background: var(--sb-divider-color);
+  width: 100%;
+  border-radius: calc(8px * var(--scale-factor));
+  border: solid 1px transparent;
+  display: grid;
+  gap: var(--chapter-gap);
+  position: relative;
+  grid-template-columns: repeat(var(--book-max-columns), var(--chapter-width));
+  grid-template-rows: repeat(auto-fill, var(--chapter-width));
+  justify-content: center;
+  align-items: center;
+  justify-items: center;
+}
+
+/* The flip cover: an overlay reading as the book's front cover. It sits over
+   the chapter grid while closed and swings open on its left-edge spine. */
+.book-container .book-cover-front {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  box-sizing: border-box;
+  border-top-left-radius: calc(3px * var(--scale-factor));
+  border-bottom-left-radius: calc(3px * var(--scale-factor));
+  border-top-right-radius: calc(6px * var(--scale-factor));
+  border-bottom-right-radius: calc(6px * var(--scale-factor));
+  background:
+    linear-gradient(
+      152deg,
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0.04) 36%,
+      rgba(0, 0, 0, 0.16) 150%
+    ),
+    var(--book-cover-color, var(--sb-tertiary-color));
+  box-shadow:
+    inset calc(9px * var(--scale-factor)) 0 calc(14px * var(--scale-factor))
+      calc(-8px * var(--scale-factor)) rgba(0, 0, 0, 0.3),
+    inset 0 calc(2px * var(--scale-factor)) 0 rgba(255, 255, 255, 0.25);
+  transform-origin: left center;
+  transition: transform 0.55s cubic-bezier(0.25, 0.75, 0.25, 1);
+  backface-visibility: hidden;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.book-container .book-cover-front::before {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  content: "";
+  width: calc(14px * var(--scale-factor));
+  box-shadow: inset -1px 0 2px rgba(0, 0, 0, 0.24);
+}
+
+.book-container.book-open .book-cover-front {
+  transform: perspective(calc(700px * var(--scale-factor))) rotateY(-150deg);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book-container .book-cover-front {
+    transition: opacity 0.25s ease;
+  }
+  .book-container.book-open .book-cover-front {
+    transform: none;
+    opacity: 0;
+  }
+  .book-header .book-caret {
+    transition: opacity 0.2s ease;
+  }
+}
+
+.book-container .book-header {
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.book-container .book-header > * {
+  font-family: system-ui;
+}
+
+.book-header .book-id {
+  font-size: calc(24px * var(--scale-factor));
+  font-weight: 500;
+  color: var(--sb-reader-font-color);
+  text-box: auto;
+}
+
+.book-header .book-name {
+  font-size: calc(16px * var(--scale-factor));
+  color: var(--sb-reader-font-color);
+  font-style: italic;
+}
+
+/* Rotating caret signals the book is expandable, and which way it's going. */
+.book-header .book-caret {
+  flex: 0 0 auto;
+  width: calc(20px * var(--scale-factor));
+  height: calc(20px * var(--scale-factor));
+  color: var(--sb-reader-font-color);
+  opacity: 0.45;
+  transition:
+    transform 0.35s cubic-bezier(0.25, 0.75, 0.25, 1),
+    opacity 0.2s ease;
+}
+
+.book-container.book-open .book-header .book-caret {
+  transform: rotate(90deg);
+  opacity: 0.85;
+}
+
+.scripture-map-wrapper
+  .scripture-map-container
+  .testament-container
+  .book-container
+  .book-cover
+  .chapter {
+  background: var(--sb-tertiary-color);
+  border-color: var(--sb-tertiary-color);
+  color: var(--sb-reader-font-color);
+  visibility: visible;
+  font-size: calc(12px * var(--scale-factor));
+  width: var(--chapter-width);
+  height: var(--chapter-height);
+  position: relative;
+  border-radius: calc(2px * var(--scale-factor));
+  cursor: pointer;
+  border-width: calc(3px * var(--scale-factor));
+  font-family: system-ui;
+  text-box: auto;
+  vertical-align: middle;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  --userPresenceBorderPadding: calc(var(--scale-factor) * 2px);
+}
+
+.scripture-map-wrapper
+  .scripture-map-container
+  .testament-container
+  .book-container
+  .book-cover
+  .chapter.show-user-presence {
+  width: calc(var(--chapter-width) - var(--userPresenceBorderPadding));
+  height: calc(var(--chapter-width) - var(--userPresenceBorderPadding));
+}
+
+@property --angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.book-container .book-cover .chapter.show-user-presence::before,
+.book-container .book-cover .chapter.show-user-presence::after,
+.book-container .book-cover.show-user-presence::before,
+.book-container .book-cover.show-user-presence::after {
+  content: "";
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  z-index: -1;
+  animation: 8s spin linear infinite;
+  box-sizing: content-box;
+}
+
+.book-container .book-cover .chapter.show-user-presence::before,
+.book-container .book-cover .chapter.show-user-presence::after {
+  background-image: conic-gradient(
+    from var(--angle),
+    var(--userPresenceColors)
+  );
+  padding: var(--userPresenceBorderPadding);
+  border-radius: calc(3px * var(--scale-factor));
+}
+
+.book-container .book-cover.show-user-presence::before,
+.book-container .book-cover.show-user-presence::after {
+  background-image: conic-gradient(
+    from var(--angle),
+    var(--bookUserPresenceColors)
+  );
+  padding: calc(var(--scale-factor) * 6px);
+  border-radius: calc(10px * var(--scale-factor));
+}
+
+.book-container .book-cover.show-user-presence::before {
+  filter: blur(0.2rem);
+  opacity: 0.7;
+}
+
+.scripture-map-toggle {
+  width: 100%;
+  padding: calc(12px * var(--scale-factor)) calc(20px * var(--scale-factor));
+  color: black;
+  border-radius: calc(8px * var(--scale-factor));
+  cursor: pointer;
+}
+
+.scripture-map-toggle > span {
+  text-align: center;
+  vertical-align: middle;
+  text-box: auto;
+  /* font-size: calc(32px * var(--scale-factor)); */
+}
+
+.scripture-map-toggle > span.toggle-title,
+.scripture-map-toggle > span.toggle-description {
+  font-family: system-ui;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: start;
+  color: var(--sb-reader-font-color);
+}
+
+.scripture-map-toggle > span.toggle-title {
+  font-size: calc(24px * var(--scale-factor));
+  font-weight: 500;
+}
+
+.scripture-map-toggle > span.toggle-description {
+  font-size: calc(18px * var(--scale-factor));
+  color: var(--sb-reader-font-color);
+  grid-area: description;
+}
+
+.scripture-map-toggle > span.toggle-arrow {
+  grid-area: arrow;
+  aspect-ratio: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: calc(32px * var(--scale-factor));
+  color: var(--sb-reader-font-color);
+}
+
+.toggle-testament {
+  background-color: var(--pageBackground);
+  box-shadow: 0 0 6px 0px #0000001a;
+  border-bottom: solid calc(3px * var(--scale-factor)) var(--sb-primary-color);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "title arrow"
+    "description arrow";
+  gap: calc(2px * var(--scale-factor));
+}
+
+.toggle-testament > span.toggle-title {
+  grid-area: title;
+}
+
+.toggle-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: solid calc(3px * var(--scale-factor));
+}
+
+.tooltip {
+  width: auto;
+  /* max-width: 140px; */
+  background-color: var(--sb-reader-font-color);
+  color: var(--sb-reader-background);
+  text-align: center;
+  z-index: 100;
+  border-radius: 0.75rem;
+  position: fixed;
+  padding: 0.75rem;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  transition:
+    color 0.3s ease,
+    background-color 0.3s ease;
+  box-sizing: border-box;
+  scrollbar-width: none;
+}
+
+.tooltip *:not(.material-symbols-outlined) {
+  font-family: "Satoshi";
+}
+
+.tooltip.tooltip-up {
+  transform: translate(-50%, calc((100% + 8px) * (-1)));
+}
+
+.tooltip.tooltip-down {
+  transform: translate(-50%, 8px);
+}
+
+.tooltip > span {
+  width: 100%;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  font-size: 1rem;
+  gap: 0.375rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tooltip .user-presence-tooltip-content {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* overflow: hidden; */
+}
+
+.tooltip .user-presence-tooltip-content > div {
+  display: flex;
+  padding-left: 0.75rem;
+}
+
+.tooltip .user-presence-tooltip-content > div > div {
+  height: 1.5rem;
+  width: 1.5rem;
+  border-radius: 0.75rem;
+  margin-left: -0.75rem;
+  border: solid 3px var(--sb-reader-font-color);
+}
+
+.tooltip .user-presence-tooltip-content > span {
+  /* padding-bottom: 4px; */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tooltip .tooltip-reading-history-content > span:nth-of-type(1) {
+  border-radius: 0.625rem;
+  width: 0.875rem;
+  height: 0.875rem;
+}
+
+.tooltip .tooltip-reading-history-content > span:nth-of-type(2) {
+  font-size: 0.875rem;
+}
+
+.tooltip .tooltip-reading-history-content > span:nth-of-type(3) {
+  font-size: 0.6875rem;
+  color: var(--gray2-color);
+}
+
+.tooltip-reading-history-title {
+  font-weight: 700;
+}
+
+.horizontal-divider {
+  width: 100%;
+  height: 1px;
+  background-color: var(--gray-color);
+}
+
+.pointable {
+  cursor: pointer;
+}
+
+.invisible {
+  visibility: hidden;
+}
+
+.hidden {
+  display: none !important;
+}
+
+@keyframes spin {
+  from {
+    --angle: 0deg;
+  }
+
+  to {
+    --angle: 360deg;
+  }
+}

@@ -1,0 +1,420 @@
+/* =============================================================================
+ * UI SCALING MODEL — the rem / em / px invariant (source of truth for #1281)
+ * -----------------------------------------------------------------------------
+ * The "UI Size" setting (S/M/L/XL) is the single UI scaling mechanism. It
+ * drives `--sb-ui-scale` (0.85 / 1.0 / 1.15 / 1.3, set by SettingsManager),
+ * which the `html` rule below turns into the root font-size:
+ *     html { font-size: calc(16px * var(--sb-ui-scale)) }  =>  1rem = scaled base
+ * So at size M (`--sb-ui-scale: 1`) 1rem = 16px and every rule below is a no-op
+ * vs. plain px; at other sizes, everything expressed in `rem` scales together.
+ *
+ * Which unit to use:
+ *   • rem  — ALL chrome: dimensions, spacing, radius, positioning offsets, and
+ *            chrome font-size. Tracks the UI Size knob. This is the default.
+ *   • px   — things that must NOT scale with UI Size:
+ *              - reader glyph size: `.sb-font-size-*` on `.sb-bible-reader`
+ *                (its own independent knob; the cascade anchor lives there so it
+ *                doesn't leak into chrome `em`/`inherit`);
+ *              - 1px / sub-2px hairline borders & dividers;
+ *              - `@media` breakpoint conditions;
+ *              - `box-shadow` / `outline` / `transform` offsets;
+ *              - coordinate spaces: the pane x/y/w/h "canvas" model, and the
+ *                Scripture Map cell geometry (its `calc(<px> * var(--scale-factor))`
+ *                + `--chapter-*`/`--book-*` vars scale with the MAP's own zoom).
+ *   • em   — reader-internal spacing only (tracks the reader glyph knob, not the
+ *            UI knob): e.g. `.sb-line-break`, `.sb-verse-number`, chapter heading.
+ *
+ * Icons:
+ *   • Material Symbols glyphs are sized by `font-size`. The `body
+ *     .material-symbols-outlined` base rule below re-expresses the font's fixed
+ *     24px as 1.5rem so icons scale by default; scoped `.sb-* …` rules override.
+ *   • SVG icons are sized by width/height, NOT font-size, so each chrome icon
+ *     button needs an explicit rem width/height rule (no app-wide base works —
+ *     SVGs vary in intrinsic size / aspect ratio).
+ *
+ * How the CSS was migrated: a one-time `postcss-pxtorem` codemod (rootValue 16,
+ * minPixelValue 2 so 1px hairlines stay px, mediaQuery false so breakpoint
+ * conditions stay px) over the chrome; `border` / `box-shadow` / `transform` /
+ * `line-height` were excluded from its propList (kept px), and the reader
+ * selectors (`.sb-font-size-*`, `.sb-chapter-heading`, `.sb-line-break`,
+ * `.sb-verse-number`) plus `html` were blacklisted. New chrome CSS added after
+ * the migration should follow the same rules: author it in `rem`.
+ * =============================================================================
+ */
+
+:root {
+  --sb-ui-scale: 1;
+  --sb-scripture-margin: 27%;
+
+  /* Text config variables — overridden at runtime by SettingsManager. */
+  --text-bookTitle-font: "Newsreader", serif;
+  --text-bookTitle-weight: 700;
+  --text-bookTitle-color: #333;
+  --text-bookTitle-font-style: normal;
+  --text-bookTitle-text-decoration: none;
+  --text-bookTitle-alignment: unset;
+  --text-bookTitle-margin-top: 0;
+  --text-bookTitle-margin-bottom: 0;
+  --text-bookTitle-margin-left: 0;
+  --text-bookTitle-margin-right: 0;
+
+  --text-heading-font: "Plus Jakarta Sans", sans-serif;
+  --text-heading-weight: 700;
+  --text-heading-color: #333;
+  --text-heading-font-style: normal;
+  --text-heading-text-decoration: none;
+  --text-heading-alignment: unset;
+  --text-heading-margin-top: 18px;
+  --text-heading-margin-bottom: 18px;
+  --text-heading-margin-left: 0;
+  --text-heading-margin-right: 0;
+
+  --text-verse-font: "Plus Jakarta Sans", sans-serif;
+  --text-verse-weight: 500;
+  --text-verse-color: #333;
+  --text-verse-font-style: normal;
+  --text-verse-text-decoration: none;
+  --text-verse-alignment: unset;
+  --text-verse-margin-top: 0;
+  --text-verse-margin-bottom: 0;
+  --text-verse-margin-left: 0;
+  --text-verse-margin-right: 0;
+  --text-verse-line-height: 1.7;
+
+  --sb-background: #f1f1f2;
+  --sb-font-family: "Satoshi", system-ui, sans-serif;
+  --sb-font-color: #333;
+
+  --sb-primary-color: #e07b4c;
+  --sb-primary-font-color: #fff;
+
+  --sb-secondary-color: #faddd1;
+  --sb-secondary-font-color: #333;
+
+  --sb-sidebar-background: transparent;
+  --sb-sidebar-font-family: inherit;
+  --sb-sidebar-font-color: inherit;
+
+  --sb-book-selector-background: #ffffff;
+  --sb-book-selector-font-family: inherit;
+  --sb-book-selector-font-color: #333;
+
+  --sb-reader-background: #ffffff;
+  --sb-reader-font-family: inherit;
+  --sb-reader-font-color: #333;
+
+  --sb-book-title-font-family: "Newsreader", serif;
+  --sb-book-title-font-color: #333;
+
+  --sb-chapter-heading-font-family: "Plus Jakarta Sans", sans-serif;
+  --sb-chapter-heading-font-color: #333;
+  --sb-chapter-heading-font-style: normal;
+
+  --sb-verse-font-family: "Plus Jakarta Sans", sans-serif;
+  --sb-verse-font-color: #333;
+  --sb-verse-cursor: pointer;
+
+  --sb-verse-words-of-jesus-color: #c00;
+  --sb-verse-words-of-jesus-font-family: inherit;
+  --sb-verse-words-of-jesus-font-style: inherit;
+
+  --sb-selected-verse-border-bottom: 2px dashed currentColor;
+  --sb-selected-verse-text-decoration: none;
+  --sb-selected-verse-text-decoration-color: currentColor;
+
+  --sb-hebrew-subtitle-font-family: "Newsreader", serif;
+  --sb-hebrew-subtitle-font-color: #333;
+  --sb-hebrew-subtitle-font-style: italic;
+
+  --sb-reader-toolbar-bottom: 1.125rem;
+  --sb-reader-toolbar-gap: 0.25rem;
+  --sb-reader-toolbar-padding: 1px 0.3125rem;
+  --sb-reader-toolbar-border-radius: 1.25rem;
+  --sb-reader-toolbar-background: #ffffff;
+  --sb-reader-toolbar-border: 1px solid #00000024;
+  --sb-reader-toolbar-box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+  --sb-reader-toolbar-z-index: 99;
+  --sb-reader-toolbar-height: auto;
+  --sb-reader-toolbar-font-family: "Satoshi", system-ui, sans-serif;
+  --sb-reader-toolbar-font-color: #333;
+
+  --sb-reader-toolbar-button-height: 3.25rem;
+  --sb-reader-toolbar-button-padding: 0.375rem 0.625rem;
+  --sb-reader-toolbar-button-border-radius: 0.75rem;
+  --sb-reader-toolbar-button-icon-size: 1.5rem;
+  --sb-reader-toolbar-button-label-font-family: "DM Sans";
+  --sb-reader-toolbar-button-label-font-size: 0.6875rem;
+  --sb-reader-toolbar-button-label-line-height: 1;
+  --sb-reader-toolbar-button-label-height: 0.8125rem;
+
+  --sb-reader-toolbar-arrow-size: 2.5rem;
+  --sb-reader-toolbar-arrow-padding: 0.5rem;
+
+  --sb-reader-toolbar-floating-button-top: -4.25rem;
+  --sb-reader-toolbar-floating-button-width: 3rem;
+  --sb-reader-toolbar-floating-button-height: 3rem;
+  --sb-reader-toolbar-floating-button-border: 1px solid #00000024;
+  --sb-reader-toolbar-floating-button-border-radius: 62.4375rem;
+  --sb-reader-toolbar-floating-button-background: #fff;
+  --sb-reader-toolbar-floating-button-font-color: #333;
+  --sb-reader-toolbar-floating-button-box-shadow: 0 10px 24px #0000001a;
+
+  --sb-verse-toolbar-gap: 0.125rem;
+  --sb-verse-toolbar-padding: 0.25rem 0.5rem;
+  --sb-verse-toolbar-border-radius: 0.625rem;
+  --sb-verse-toolbar-border: 1px solid var(--sb-divider-color);
+  --sb-verse-toolbar-box-shadow: 0 26px 10px var(--sb-shadow-color);
+  --sb-verse-toolbar-z-index: 100;
+  --sb-verse-toolbar-min-height: 0;
+  --sb-verse-toolbar-background: var(--sb-menu-background);
+
+  --sb-reader-toolbar-mobile-layout-height: auto;
+  --sb-reader-toolbar-mobile-layout-padding: 0.625rem 2.1875rem;
+  --sb-reader-toolbar-mobile-layout-gap: 1rem;
+  --sb-reader-toolbar-mobile-layout-item-size: 2.75rem;
+  --sb-reader-toolbar-mobile-layout-center-button-width: 5.4375rem;
+  --sb-reader-toolbar-mobile-layout-center-button-height: 2.625rem;
+  --sb-reader-toolbar-mobile-layout-button-border-radius: 2.5rem;
+  --sb-reader-toolbar-mobile-tabs-label-font-size: 0.75rem;
+
+  --sb-reader-toolbar-floating-button-side-offset: 1rem;
+
+  /* Full-width floating chapter-nav bar. Composed from theme-injected vars so
+   * the bar, arrow circles, and peach play button adapt across themes. */
+  --sb-reader-floating-nav-background: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    var(--sb-reader-background) 90%
+  );
+  --sb-reader-floating-nav-arrow-background: color-mix(
+    in srgb,
+    var(--sb-font-color),
+    var(--sb-reader-background) 80%
+  );
+  --sb-reader-floating-nav-play-background: color-mix(
+    in srgb,
+    var(--sb-primary-color),
+    #ffffff 58%
+  );
+  --sb-reader-floating-nav-play-glyph: #1f1f1f;
+  --sb-reader-floating-nav-group-background: transparent;
+  --sb-reader-floating-nav-group-border: color-mix(
+    in srgb,
+    var(--sb-font-color) 30%,
+    transparent
+  );
+
+  --sb-empty-pane-toolbar-button-border: 1px solid var(--sb-secondary-color);
+  --sb-empty-pane-toolbar-button-background: var(--sb-secondary-color);
+  --sb-empty-pane-toolbar-button-color: var(--sb-font-color);
+  --sb-empty-pane-toolbar-button-border-hover: 1px solid var(--sb-primary-color);
+
+  --sb-detached-pane-toolbar-background: #000000b0;
+  --sb-detached-pane-toolbar-font-color: #fff;
+  --sb-detached-pane-body-background: #fff;
+  --sb-detached-pane-body-font-color: #333;
+
+  --sb-verse-toolbar-tools-gap: 0.125rem;
+  --sb-verse-toolbar-mobile-bottom: 1.125rem;
+
+  --sb-divider-color: rgba(0, 0, 0, 0.12);
+  --sb-shadow-color: rgba(0, 0, 0, 0.14);
+
+  --sb-menu-background: #fff;
+  --sb-menu-font-color: #333;
+
+  --sb-toolbar-icon-invert: 0;
+
+  --sb-tab-border: 1px solid transparent;
+  --sb-tab-background: inherit;
+  --sb-tab-font-color: inherit;
+
+  --sb-selected-tab-border: 1px solid var(--sb-primary-color);
+  --sb-selected-tab-background: var(--sb-secondary-color);
+  --sb-selected-tab-font-color: var(--sb-primary-color);
+
+  --sb-highlight-yellow-color: #fff59d;
+  --sb-highlight-yellow-font-color: #333;
+  --sb-highlight-yellow-words-of-jesus-font-color: #e07b4c;
+
+  --sb-highlight-green-color: #a5d6a7;
+  --sb-highlight-green-font-color: #333;
+  --sb-highlight-green-words-of-jesus-font-color: #e07b4c;
+
+  --sb-highlight-blue-color: #fff59d;
+  --sb-highlight-blue-font-color: #333;
+  --sb-highlight-blue-words-of-jesus-font-color: #e07b4c;
+
+  --sb-highlight-pink-color: #f48fb1;
+  --sb-highlight-pink-font-color: #333;
+  --sb-highlight-pink-words-of-jesus-font-color: #e07b4c;
+
+  --sb-highlight-purple-color: #ce93d8;
+  --sb-highlight-purple-font-color: #333;
+  --sb-highlight-purple-words-of-jesus-font-color: #e07b4c;
+
+  --sb-highlight-orange-color: #ffcc80;
+  --sb-highlight-orange-font-color: #333;
+  --sb-highlight-orange-words-of-jesus-font-color: #e07b4c;
+
+  --sb-dynamic-range-limit: standard;
+}
+
+html {
+  visibility: visible;
+  opacity: 1;
+
+  /* UI scale: the "UI Size" setting (S/M/L/XL) drives `--sb-ui-scale`
+   * (set in SettingsManager). 1rem = the scaled UI base, so every chrome size
+   * expressed in `rem` tracks this knob. Reader glyph size stays in px on
+   * `.sb-bible-reader` (`.sb-font-size-*`) and is therefore unaffected. */
+  font-size: calc(16px * var(--sb-ui-scale, 1));
+}
+
+/* Material Symbols icons ship with a fixed `font-size: 24px` from the Google
+   Fonts stylesheet (loaded in main.tsx), which ignores the UI Size knob.
+   Re-express that base in rem so every icon scales with the chrome by default
+   (1.5rem = 24px at size M — a no-op at M). Scoped
+   `.sb-* .material-symbols-outlined` rules (specificity 0,2,0) still win and
+   keep their own sizes; the `body` prefix here (0,1,1) only outranks the font's
+   own base rule (0,1,0), so this wins regardless of stylesheet load order. */
+body .material-symbols-outlined {
+  font-size: 1.5rem;
+}
+
+body {
+  background: var(--sb-background);
+  color: var(--sb-font-color);
+  font-family: var(--sb-font-family);
+
+  /* dynamic-range-limit prevents user-provided images from changing the dynamic range */
+  /* eslint-disable-next-line css/no-invalid-properties */
+  dynamic-range-limit: var(--sb-dynamic-range-limit);
+}
+
+/* On mobile, lock the document to the visual viewport so iOS/Android
+ * browsers don't show the default white "overscroll" gap when the user
+ * pulls the page up past the bottom toolbar. Scrolling happens inside
+ * the inner panes (which have their own overflow scrollers). */
+@media (max-width: 480px) {
+  html,
+  body {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+  }
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+h1 {
+  font-size: 2em;
+}
+
+h2 {
+  font-size: 1.5em;
+}
+
+h3 {
+  font-size: 1.2em;
+}
+
+h4 {
+  font-size: 1em;
+}
+
+h5 {
+  font-size: 0.9em;
+}
+
+h6 {
+  font-size: 0.8em;
+}
+
+*,
+:after,
+:before {
+  box-sizing: border-box;
+}
+
+a {
+  color: var(--sb-primary-color);
+}
+
+a:visited {
+  color: var(--sb-secondary-color);
+}
+
+.sb-font-size-xs {
+  font-size: 12px;
+}
+
+.sb-font-size-s {
+  font-size: 14px;
+}
+
+.sb-font-size-m {
+  font-size: 16px;
+}
+
+.sb-font-size-l {
+  font-size: 18px;
+}
+
+.sb-font-size-xl {
+  font-size: 20px;
+}
+
+.sb-font-size-xxl {
+  font-size: 22px;
+}
+
+.sb-main-content {
+  flex: 1;
+  overflow: hidden;
+  background: var(--sb-sidebar-background);
+  scrollbar-width: none;
+  border-radius: 0.75rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100vw !important;
+  height: 100dvh !important;
+}
+
+.sb-content-row {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+}
+
+/* Used for TipTap created content */
+.text-left {
+  text-align: left;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-justify {
+  text-align: justify;
+}

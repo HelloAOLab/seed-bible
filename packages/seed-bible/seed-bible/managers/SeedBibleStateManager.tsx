@@ -15,6 +15,12 @@ import {
 } from "../managers/FreeUseBibleAPI";
 import { createPanes } from "../managers/PanesManager";
 import type { Pane, PanesManager } from "../managers/PanesManager";
+import { createTabsLayout } from "../managers/TabsLayoutManager";
+import type {
+  TabSlot,
+  TabSlotLayoutId,
+  TabsLayoutManager,
+} from "../managers/TabsLayoutManager";
 import { createLoginManager } from "../managers/LoginManager";
 import type { LoginManager } from "../managers/LoginManager";
 import { createSidebar } from "../managers/SidebarManager";
@@ -57,6 +63,7 @@ import {
 } from "./ChatsManager";
 import {
   createSessionsManager,
+  isSessionHost,
   type BibleReadingSession,
   type SessionsManager,
 } from "../managers/SessionsManager";
@@ -93,6 +100,18 @@ import {
   type TutorialManager,
 } from "../managers/TutorialManager";
 import { range } from "es-toolkit";
+import {
+  createReadingPlansManager,
+  type ReadingPlansManager,
+} from "../managers/ReadingPlansManager";
+import {
+  createDiscoverManager,
+  type DiscoverManager,
+} from "../managers/DiscoverManager";
+import {
+  createBibleReadingExtensionManager,
+  type BibleReadingExtensionManager,
+} from "../managers/BibleReadingExtensionManager";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
@@ -101,10 +120,20 @@ type SearchManager = ReturnType<typeof createSearchManager>;
  * App-wide mobile breakpoint, in pixels. Viewports at or below this width use
  * the mobile layout (drawer sidebar, mobile header, full-screen selector);
  * above it the docked desktop layout applies. This is the single source of
- * truth for the JS side — the matching `@media (max-width: 768px)` /
- * `(min-width: 769px)` rules in app/main.css must be kept in sync by hand.
+ * truth for the JS side — the matching `@media (max-width: 480px)` /
+ * `(min-width: 481px)` rules in components/Tabs/Tabs.css must be kept in sync by hand.
  */
-export const MOBILE_BREAKPOINT = 768;
+export const MOBILE_BREAKPOINT = 480;
+
+/**
+ * Upper bound of the "compact desktop" band. For viewports above
+ * {@link MOBILE_BREAKPOINT} but at or below this width the screen is too narrow
+ * to dock a 320px sidebar beside the reader, so an *expanded* sidebar floats
+ * over the reader instead of splitting the layout row. Kept in sync with the
+ * matching `@media (min-width: 481px) and (max-width: 768px)` rules in
+ * components/Tabs/Tabs.css by hand.
+ */
+export const SIDEBAR_OVERLAY_MAX_WIDTH = 768;
 
 /**
  * Derived app-level state and high-level actions used by UI components.
@@ -113,11 +142,28 @@ export const MOBILE_BREAKPOINT = 768;
  * the currently active reading context and pane selection.
  */
 export interface AppState {
-  /** True when multi-pane layouts are enabled by config. */
+  /** True when multi-slot tab layouts are enabled by config. */
   panelsEnabled: ReadonlySignal<boolean>;
   /** Currently selected reading tab, or null when no tab is available. */
   selectedTab: ReadonlySignal<ReaderTab | null>;
-  /** Effective pane list shown by the UI (single pane fallback when panels are disabled). */
+  /**
+   * Effective tab slot list shown by the UI (single-slot fallback when panels
+   * are disabled, and always a single slot on mobile).
+   */
+  effectiveSlots: ReadonlySignal<TabSlot[]>;
+  /**
+   * Effective tab slot layout the UI should render. Mirrors the tabs layout
+   * manager's layout on desktop, but on mobile it is always coerced to
+   * `single` (one reader fills the viewport) without mutating the manager's
+   * stored layout.
+   */
+  effectiveSlotLayout: ReadonlySignal<TabSlotLayoutId>;
+  /**
+   * Effective custom-pane list shown by the UI — identical to
+   * `panes.panes` on desktop, but on mobile every pane is remapped to
+   * `"fullscreen"` placement for rendering only (the manager's stored
+   * placement is left untouched).
+   */
   effectivePanes: ReadonlySignal<Pane[]>;
 
   /** Current window inner width in pixels. Updated on resize. */
@@ -125,10 +171,16 @@ export interface AppState {
   /** Current window inner height in pixels. Updated on resize. */
   viewportHeight: ReadonlySignal<number>;
 
-  /** True when viewport width is at or below the mobile breakpoint (768px). */
+  /** True when viewport width is at or below the mobile breakpoint (480px). */
   isMobile: ReadonlySignal<boolean>;
   /** True when on a phone-sized viewport held in landscape orientation. */
   isMobileLandscape: ReadonlySignal<boolean>;
+  /**
+   * True in the "compact desktop" band (just above the mobile breakpoint) where
+   * an expanded sidebar floats over the reader as an overlay rather than
+   * docking beside it.
+   */
+  isCompactDesktop: ReadonlySignal<boolean>;
 
   /**
    * Snapshot of the current chapter selection for analytics and integrations.
@@ -142,16 +194,18 @@ export interface AppState {
     chapterNumber: number | null;
   } | null>;
 
-  /** Selects a tab and synchronizes pane focus. */
+  /** Selects a tab and synchronizes slot focus. */
   selectTab: (tabId: string) => void;
   /** Creates a new tab and selects it. */
   addTab: () => void;
-  /** Opens an existing tab in a new attached pane. */
-  openInNewPane: (tabId: string) => void;
-  /** Opens an existing tab in a detached pane. */
-  openInDetachedPane: (tabId: string) => void;
-  /** Selects a pane and updates related UI state. */
+  /** Opens an existing tab in a new tab slot. */
+  openInNewSlot: (tabId: string) => void;
+  /** Selects a tab slot and updates related UI state. */
+  selectSlot: (slotId: string) => void;
+  /** Selects a custom pane. */
   selectPane: (paneId: string) => void;
+  /** Closes any pane filling the reader. */
+  closeFullscreenPanes: () => void;
   /** Creates a shared reading session and opens it in a new tab. */
   createSharedSession: () => Promise<BibleReadingSession>;
   /** Joins an existing shared session and opens it in a new tab. */
@@ -189,6 +243,17 @@ export interface AppState {
 
   /** Opens a verse reference. */
   openVerseReference: (ref: VerseRef) => Promise<void>;
+
+  /** Whether the Discover panel is currently open. */
+  isDiscoverOpen: ReadonlySignal<boolean>;
+
+  /**
+   * Toggles the Discover panel open/closed.
+   */
+  openDiscover: () => void;
+
+  /** Closes the Discover panel. */
+  closeDiscover: () => void;
 }
 
 /**
@@ -213,7 +278,9 @@ export interface SeedBibleState {
   sidebar: SidebarManager;
   /** Reader tab lifecycle manager. */
   tabs: TabsManager;
-  /** Pane layout and detached pane manager. */
+  /** Tab slot layout manager — Bible reading content always lives here. */
+  tabsLayout: TabsLayoutManager;
+  /** Custom (non-tab) pane manager: fullscreen/side/floating panes. */
   panes: PanesManager;
   /** Bible selector state for book/chapter picking. */
   selector: BibleSelectorState;
@@ -235,7 +302,7 @@ export interface SeedBibleState {
   sessions: SessionsManager;
   /** Modal manager for app-wide dialog state and rendering. */
   modals: ModalManager;
-  /** App-level settings: book orientation, UI text size, selection UI, etc. */
+  /** App-level settings: book orientation, UI size, selection UI, etc. */
   settings: SettingsManager;
   /** Incoming session invitations and invite-sending. */
   invitations: InvitationsManager;
@@ -251,10 +318,28 @@ export interface SeedBibleState {
    * Internationalization manager: current language, translation function, etc.
    */
   i18n: I18nManager;
+  /** Reading plans: authoring, progress, and calendar. */
+  readingPlans: ReadingPlansManager;
+  /** Discover manager for contextual content providers. */
+  discover: DiscoverManager;
+  /**
+   * Registry of reading extensions that can be enabled per reading state to
+   * enhance navigation, discovered content, and session-synced custom data.
+   */
+  readingExtensions: BibleReadingExtensionManager;
+  /**
+   * Playlist manager for creating, editing, and syncing user playlists.
+   */
+  playlists: PlaylistManager;
   /** Aggregated computed app state and top-level UI actions. */
   app: AppState;
   /** Extension loading and runtime manager. */
   extensions: ExtensionManager;
+
+  /**
+   * Feature flag manager for enabling/disabling features at runtime.
+   */
+  features: FeaturesManager;
 
   /** True when the Terms of Service modal is open. */
   isTermsOpen: ReadonlySignal<boolean>;
@@ -282,6 +367,13 @@ export interface SeedBibleState {
 // `packages/` by the `vite-plugin-extensions` plugin. See
 // script/lib/vite-plugin-extensions.ts.
 import SEED_BIBLE_EXTENSIONS from "virtual:@extensions";
+import { createPlaylistManager, type PlaylistManager } from "./PlaylistManager";
+import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
+import {
+  DiscoverPane,
+  DiscoverPaneHeader,
+  DiscoverPaneTitle,
+} from "../components/DiscoverPane/DiscoverPane";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -302,6 +394,8 @@ export function createSeedBibleState(
 ): SeedBibleState {
   console.log("Creating SeedBibleState with options:", options);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const features = createFeaturesManager((globalThis as any).posthog ?? null);
   const navigation = createNavigationManager({
     initialHref: options.initialHref,
     basePath: options.config?.basePath,
@@ -319,16 +413,31 @@ export function createSeedBibleState(
   const highlights = createHighlightsManager(os, login);
   const bookmarks = createBookmarksManager(os, login);
   const config = createConfig(login, navigation);
+  // Persist a user's explicit language selection to their profile. Wiring it
+  // through `requestLanguageChange` (rather than a blanket `languageChanged`
+  // listener) keeps URL-driven language changes view-only.
+  i18n.setLanguagePersister(config.persistLanguage);
+  const panelsEnabled = computed(() => !config.config.value.disablePanels);
   const themeManager = createTheme(login, navigation);
   const chats = createChatsManager(login, i18n);
   const sidebar = createSidebar({ navigation, chatsManager: chats });
-  const tabs = createTabs(navigation, data, highlights, chats, i18n);
-  const panes = createPanes(tabs, tabs.selectedTabId);
+  const discover = createDiscoverManager();
+  const readingExtensions = createBibleReadingExtensionManager();
+  const tabs = createTabs(
+    navigation,
+    data,
+    highlights,
+    chats,
+    i18n,
+    discover,
+    readingExtensions
+  );
+  const tabsLayout = createTabsLayout(tabs, panelsEnabled);
   const settings = createSettings(os, login, navigation);
   const selector = createBibleSelectorState(
     data,
     tabs,
-    panes,
+    tabsLayout,
     settings,
     sidebar,
     bookmarks,
@@ -337,13 +446,32 @@ export function createSeedBibleState(
   const tools = createBibleToolsManager();
   const readingHistory = createReadingHistoryManager(os, login);
   const annotations = createAnnotationsManager(os, login);
-  const sessions = createSessionsManager(os, data, login, highlights, i18n);
+  const sessions = createSessionsManager(
+    os,
+    data,
+    login,
+    highlights,
+    i18n,
+    readingExtensions
+  );
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
   });
   const modals = createModalManager();
   const search = createSearchManager();
-  const onboarding = createOnboardingManager(login);
+
+  // When the app is opened via a content link — a shared-session invite
+  // (`?sessionId=...`) or a shared playlist (`?playlist=...`) — the user came to
+  // view that content, not to onboard, so we skip the welcome screen and the
+  // auto-starting tutorial for this visit. This is derived from the current URL
+  // rather than persisted, so it only affects this tab/load: revisiting without
+  // either param shows onboarding and tutorials as usual.
+  const openedViaContentLink =
+    typeof window !== "undefined" &&
+    (!!navigation.currentUrl.value.searchParams.get("sessionId") ||
+      !!navigation.currentUrl.value.searchParams.get("playlist"));
+
+  const onboarding = createOnboardingManager(login, openedViaContentLink);
 
   // Terms of Service modal. Two-way bound to the `?terms=open` query param so
   // it can be deep-linked: setting the param opens the modal, and closing the
@@ -410,6 +538,7 @@ export function createSeedBibleState(
       },
     },
   });
+  const readingPlans = createReadingPlansManager(os, login);
 
   const { currentTheme } = themeManager;
   const theme = computed(() => currentTheme.value);
@@ -428,7 +557,6 @@ export function createSeedBibleState(
     prevPresetId = id;
     settings.resetTextColors();
   });
-  const panelsEnabled = computed(() => !config.config.value.disablePanels);
   const selectedTab = computed(
     () =>
       tabs.tabs.value.find((tab) => tab.id === tabs.selectedTabId.value) ?? null
@@ -453,7 +581,53 @@ export function createSeedBibleState(
   );
   const isMobile = computed(() => viewportWidth.value <= MOBILE_BREAKPOINT);
 
-  const tutorial = createTutorialManager(login, onboarding, selector, isMobile);
+  // Created after `isMobile` so panes can enforce a single fullscreen pane:
+  // on mobile every pane is displayed fullscreen, so opening one closes the
+  // rest.
+  const panes = createPanes(isMobile);
+  const playlists = createPlaylistManager(
+    os,
+    login,
+    tabs,
+    navigation,
+    isMobile,
+    modals,
+    i18n,
+    readingExtensions
+  );
+  // Close any fullscreen pane when the book/chapter/verse params change, so
+  // navigating reveals the reader (every navigation path writes these params).
+  // The first location only sets a baseline, so load-time init doesn't close a
+  // pane auto-opened for the same load (e.g. Today via `?today=open`).
+  let lastReadingLocation: string | null = null;
+  effect(() => {
+    const url = navigation.currentUrl.value;
+    const book = url.searchParams.get("book");
+    const chapter = url.searchParams.get("chapter");
+    const verse = url.searchParams.get("verse");
+    if (!book || !chapter) {
+      return;
+    }
+
+    const location = `${book}|${chapter}|${verse ?? ""}`;
+    const previous = lastReadingLocation;
+    lastReadingLocation = location;
+
+    if (previous === null || previous === location) {
+      return;
+    }
+    panes.closeFullscreenPanes();
+  });
+
+  const tutorial = createTutorialManager(
+    login,
+    onboarding,
+    selector,
+    isMobile,
+    panes,
+    sidebar,
+    openedViaContentLink
+  );
 
   // A phone held sideways: landscape orientation with the short viewport
   // height typical of phones. Tablets/desktops in landscape have more
@@ -463,26 +637,6 @@ export function createSeedBibleState(
       viewportHeight.value > 0 &&
       viewportHeight.value <= 600 &&
       viewportWidth.value > viewportHeight.value
-  );
-
-  // True when a multi-pane layout is active — i.e. the user picked anything
-  // other than "single" from the Panels menu (split-2v, split-3v, grid-2x2,
-  // …), or more than one attached pane is otherwise open. Detached overlay
-  // panes (extension tools, playlist, etc.) don't count. Keyed primarily off
-  // the layout preset so selecting a layout from the menu reacts immediately.
-  const hasMultiplePanes = computed(
-    () =>
-      panelsEnabled.value &&
-      (panes.layout.value !== "single" ||
-        panes.panes.value.filter((pane) => !pane.detached).length > 1)
-  );
-
-  // A docked-sidebar desktop layout that has become too narrow for the
-  // sidebar and reader to comfortably share the row. Excludes mobile
-  // (<= 768), where the sidebar is a drawer and `isSidebarCollapsed` does not
-  // apply. The 1200px ceiling mirrors the CSS breakpoint.
-  const isNarrowDesktop = computed(
-    () => viewportWidth.value > 768 && viewportWidth.value <= 1200
   );
 
   effect(() => {
@@ -511,81 +665,85 @@ export function createSeedBibleState(
     }
   });
 
-  // Collapse the docked sidebar by default when a multi-pane layout is active,
-  // so the panes get the horizontal space instead of competing with the
-  // sidebar. Reacting only to the boolean means this fires once per transition
-  // into multi-pane and still lets the user manually re-expand afterwards.
+  // The "compact desktop" band (just above the mobile breakpoint): an
+  // expanded sidebar would overlay the reader rather than dock beside it
+  // (see components/Tabs/Tabs.css), so start collapsed to a rail when entering the band.
+  // Same once-per-transition pattern as the landscape collapse above, so the
+  // user can still expand the floating sidebar afterwards.
+  const isCompactDesktop = computed(
+    () =>
+      viewportWidth.value > MOBILE_BREAKPOINT &&
+      viewportWidth.value <= SIDEBAR_OVERLAY_MAX_WIDTH
+  );
   effect(() => {
-    if (hasMultiplePanes.value) {
+    if (isCompactDesktop.value) {
       sidebar.isSidebarCollapsed.value = true;
     }
   });
 
-  // Drive the docked sidebar's collapsed state from the viewport width so the
-  // three layouts hand off cleanly:
-  //   - mobile (<= 768): the sidebar is a drawer (isMobileOpen); the docked
-  //     collapsed flag does not apply, so leave it untouched.
-  //   - narrow desktop (769–1200): collapse to sb-tabs-sidebar-collapsed so
-  //     the reader keeps usable horizontal space.
-  //   - wide desktop (> 1200): restore the regular expanded sidebar.
-  // The effect reads only the booleans (not raw width), so it re-runs solely
-  // when crossing the 768/1200 boundaries — manual toggling within a band is
-  // preserved.
-  effect(() => {
-    if (isMobile.value) {
-      return;
+  const effectiveSlots = computed(() => {
+    if (!panelsEnabled.value) {
+      // tabsLayout.setLayout already forces "single" whenever panelsEnabled
+      // is false, but the manager's stored slots may still lag behind a
+      // config change that happened without an explicit setLayout call, so
+      // clamp here too. This is applied to the rendered view only — the
+      // manager's own slots are left untouched so they are restored when
+      // panels are re-enabled.
+      const allSlots = tabsLayout.slots.value;
+      const tab = selectedTab.value;
+      const preferred =
+        (tab ? allSlots.find((s) => s.tab?.id === tab.id) : null) ??
+        allSlots[0] ??
+        null;
+      return preferred ? [preferred] : [];
     }
-    sidebar.isSidebarCollapsed.value = isNarrowDesktop.value;
+    if (isMobile.value) {
+      // Mobile shows exactly one slot at a time — never stacked — so a single
+      // reader fills the small viewport. This is applied to the rendered view
+      // only: the tabs layout manager's own settings (layout, extra slots) are
+      // left untouched so they are restored when the viewport grows back to a
+      // desktop size. We keep the slot hosting the currently selected tab
+      // (falling back to the manager's selected slot, then the first slot).
+      const allSlots = tabsLayout.slots.value;
+      if (allSlots.length === 0) {
+        return [];
+      }
+
+      const tab = selectedTab.value;
+      const selectedSlotId = tabsLayout.selectedSlotId.value;
+      const preferred =
+        (tab ? allSlots.find((s) => s.tab?.id === tab.id) : null) ??
+        allSlots.find((s) => s.id === selectedSlotId) ??
+        allSlots[0]!;
+      return [preferred];
+    }
+    return tabsLayout.slots.value;
   });
 
-  const buildSingleSelectedPane = (): Pane[] =>
-    selectedTab.value
-      ? [
-          {
-            id: "single-pane",
-            tab: selectedTab.value,
-            component: null,
-            gridPortal: null,
-            mapPortal: null,
-            inst: null,
-            pattern: null,
-            query: null,
-            detached: false,
-            detachedAnchor: "floating" as const,
-            x: 0,
-            y: 0,
-            width: 0,
-            height: 0,
-          },
-        ]
-      : [];
-
-  const effectivePanes = computed(() => {
+  const effectiveSlotLayout = computed<TabSlotLayoutId>(() => {
     if (!panelsEnabled.value) {
-      return buildSingleSelectedPane();
+      return "single";
     }
     if (isMobile.value) {
-      // On mobile we only show a single attached pane at a time. Prefer the
-      // pane that hosts the currently selected tab; fall back to the manager's
-      // selected pane, then the first attached pane.
-      const allPanes = panes.panes.value;
-      const tab = selectedTab.value;
-      const selectedPaneId = panes.selectedPaneId.value;
-      const attachedPanes = allPanes.filter((p) => !p.detached);
-      const detachedPanes = allPanes.filter((p) => p.detached);
-      const matching =
-        (tab ? attachedPanes.find((p) => p.tab?.id === tab.id) : null) ??
-        attachedPanes.find((p) => p.id === selectedPaneId) ??
-        attachedPanes[0] ??
-        null;
-      const base = matching ? [matching] : buildSingleSelectedPane();
-      // Detached panes (extension tools, playlist, etc.) are always kept so
-      // they render as overlays in front of the attached pane. PaneLayout
-      // gives detached panes a higher z-index than attached ones, so they sit
-      // above the reader and stay interactable instead of being hidden.
-      return [...base, ...detachedPanes];
+      // Mobile never stacks — a single slot fills the viewport (see
+      // effectiveSlots).
+      return "single";
     }
-    return panes.panes.value;
+    return tabsLayout.layout.value;
+  });
+
+  // Effective custom-pane list shown by the UI: on mobile every pane is
+  // forced to fullscreen placement for rendering only — the manager's stored
+  // placement is left untouched so it's restored on a desktop-size viewport.
+  const effectivePanes = computed(() => {
+    if (!isMobile.value) {
+      return panes.panes.value;
+    }
+    return panes.panes.value.map((pane) =>
+      pane.placement === "fullscreen"
+        ? pane
+        : { ...pane, placement: "fullscreen" as const }
+    );
   });
   const currentReadingState = computed(() => {
     const selectedTabValue = selectedTab.value;
@@ -603,14 +761,37 @@ export function createSeedBibleState(
     };
   });
 
+  // Keep selection and slots aligned. Clicking a tab goes through
+  // handleSelectTab (which also calls setSelectedSlotTab). removeTab only
+  // updates selectedTabId — TabsLayoutManager's sync then clears the closed
+  // tab from its slot (tab → null). If that emptied slot is still selected,
+  // put the newly selected tab into it so TabsLayout keeps rendering a reader.
+  //
+  // Only fill empty slots: never overwrite a slot that already has a tab.
+  // openInNewSlot clones via addTab (which selects the clone) before the new
+  // slot exists; overwriting here would steal the original slot and leave an
+  // empty pane after layout de-dupes the shared tab id.
   effect(() => {
-    if (selectedTab.value) {
-      const matchingPane =
-        panes.panes.value.find((p) => p.tab?.id === selectedTab.value?.id) ??
-        null;
-      if (matchingPane) {
-        panes.selectPane(matchingPane.id);
-      }
+    const tab = selectedTab.value;
+    if (!tab) {
+      return;
+    }
+
+    const matchingSlot =
+      tabsLayout.slots.value.find((s) => s.tab?.id === tab.id) ?? null;
+    if (matchingSlot) {
+      tabsLayout.selectSlot(matchingSlot.id);
+      return;
+    }
+
+    const selectedSlot =
+      tabsLayout.slots.value.find(
+        (s) => s.id === tabsLayout.selectedSlotId.value
+      ) ??
+      tabsLayout.slots.value[0] ??
+      null;
+    if (selectedSlot && !selectedSlot.tab) {
+      tabsLayout.setSelectedSlotTab(tab.id);
     }
   });
 
@@ -630,12 +811,7 @@ export function createSeedBibleState(
         return seedBibleTitle;
       }
 
-      const chapter = selectedTab.value.readingState.chapterData.value;
-      if (!chapter) {
-        return seedBibleTitle;
-      }
-
-      return `${chapter.book.name} ${chapter.chapter.number} - ${chapter.translation.name} | ${seedBibleTitle}`;
+      return `${selectedTab.value.readingState.title.value} - ${selectedTab.value.readingState.subTitle.value} | ${seedBibleTitle}`;
     };
 
     return `${isRtl ? RTLE_CHAR : ""}${getTitle()}`;
@@ -756,102 +932,42 @@ export function createSeedBibleState(
   const handleSelectTab = (tabId: string) => {
     closeSidebarAndSettings();
     tabs.selectTab(tabId);
-    panes.setSelectedPaneTab(tabId);
+    tabsLayout.setSelectedSlotTab(tabId);
+    panes.closeFullscreenPanes();
   };
 
   const handleAddTab = () => {
     closeSidebarAndSettings();
-    const targetPane =
-      panes.panes.value.find(
-        (pane) => pane.id === panes.selectedPaneId.value
-      ) ??
-      panes.panes.value.find((pane) => !pane.detached) ??
-      panes.panes.value[0] ??
-      null;
+    const targetSlot =
+      tabsLayout.slots.value.find(
+        (slot) => slot.id === tabsLayout.selectedSlotId.value
+      ) ?? tabsLayout.slots.value[0]!;
 
-    if (!targetPane) {
-      // No panes — fall back to plain tab creation.
-      const tab = tabs.addTab();
-      panes.setSelectedPaneTab(tab.id);
-      return;
-    }
-
-    void selector.setOpen(true, targetPane, { forNewTab: true });
+    void selector.setOpen(true, targetSlot, { forNewTab: true });
   };
 
-  // Resolves which tab should be opened in a brand-new pane. A pane is bound to
-  // a tab by id, and panes sharing a tab also share its reading state and get
-  // de-duplicated into a single slot. So when the requested tab is already
-  // displayed in a pane (the common case — it's the tab currently being read),
-  // opening it again would either leave an empty pane or move both panes when
-  // navigating chapters. To give the user an independent, navigable panel we
-  // clone the tab into a fresh one seeded at the same reading location.
-  const resolveTabForNewPane = (tabId: string): string => {
-    const sourceTab = tabs.tabs.value.find((tab) => tab.id === tabId) ?? null;
-    if (!sourceTab) {
-      return tabId;
-    }
-
-    const alreadyShown = panes.panes.value.some(
-      (pane) => pane.tab?.id === tabId
-    );
-    if (!alreadyShown) {
-      return tabId;
-    }
-
-    const readingState = sourceTab.readingState;
-    const clone = tabs.addTab(
-      undefined,
-      {
-        initialTranslationId: readingState.translationId.value,
-        initialBookId: readingState.bookId.value,
-        initialChapterNumber: readingState.chapterNumber.value,
-      },
-      { paneOnly: true }
-    );
-    return clone.id;
-  };
-
-  const handleOpenInNewPane = (tabId: string) => {
+  const handleOpenInNewSlot = (tabId: string) => {
     closeSidebarAndSettings();
-    const paneTabId = resolveTabForNewPane(tabId);
-    panes.openPane({
-      type: "attached",
-      tabId: paneTabId,
-    });
-    tabs.selectTab(paneTabId);
+    const slot = tabsLayout.openTabInNewSlot(tabId);
+    if (slot?.tab) {
+      tabs.selectTab(slot.tab.id);
+    }
   };
 
-  const handleOpenInDetachedPane = (tabId: string) => {
+  const handleSelectSlot = (slotId: string) => {
     closeSidebarAndSettings();
-    const paneTabId = resolveTabForNewPane(tabId);
-    panes.openPane({
-      type: "detached",
-      tabId: paneTabId,
-    });
-    tabs.selectTab(paneTabId);
+    tabsLayout.selectSlot(slotId);
+
+    const selectedSlot =
+      tabsLayout.slots.value.find((slot) => slot.id === slotId) ?? null;
+    if (selectedSlot?.tab) {
+      tabs.selectTab(selectedSlot.tab.id);
+    }
   };
 
   const handleSelectPane = (paneId: string) => {
     closeSidebarAndSettings();
     panes.selectPane(paneId);
-
-    const selectedPane =
-      panes.panes.value.find((pane) => pane.id === paneId) ?? null;
-    if (selectedPane?.tab) {
-      tabs.selectTab(selectedPane.tab.id);
-      return;
-    }
-
-    if (
-      selectedPane?.component !== null ||
-      selectedPane?.gridPortal !== null ||
-      selectedPane?.mapPortal !== null
-    ) {
-      return;
-    }
-
-    selector.setOpen(true, selectedPane);
   };
 
   // Wraps a session so that when it's disposed (via tabs.removeTab), its
@@ -876,12 +992,27 @@ export function createSeedBibleState(
       // after a login/logout the current login.userId / configBot.id no
       // longer match the original `hostUserId`, but we're still the host
       // of sessions we created in this run.
+      const options = session.options.value;
       const isHost =
         locallyHostedSessionIds.has(session.id) ||
         (hostUserId !== null &&
-          (hostUserId === localId || hostUserId === localConnectionId));
+          (hostUserId === localId || hostUserId === localConnectionId)) ||
+        isSessionHost(options, localId) ||
+        isSessionHost(options, localConnectionId);
 
-      if (isHost && session.options.value.endedAt === null) {
+      // Only end the session for everyone when the leaving client is the
+      // LAST connected host/co-host. If another host/co-host is still
+      // present (e.g. one was just appointed), hand the session off instead
+      // of ending it. Explicit "End session" writes `endedAt` directly, so
+      // it bypasses this heuristic.
+      const anotherHostStillConnected = session.connectedUsers.value.some(
+        (user) =>
+          !user.isSelf &&
+          (isSessionHost(options, user.userId) ||
+            isSessionHost(options, user.connectionId))
+      );
+
+      if (isHost && !anotherHostStillConnected && options.endedAt === null) {
         try {
           session.updateOptions({ endedAt: Date.now() });
         } catch {
@@ -952,8 +1083,13 @@ export function createSeedBibleState(
       if (!hostId) continue;
 
       const users = session.connectedUsers.value;
+      // A session stays alive as long as the host OR any co-host is present,
+      // so appointing a co-host lets the original host leave without kicking
+      // everyone else out.
       const hostIsConnected = users.some(
-        (user) => user.userId === hostId || user.connectionId === hostId
+        (user) =>
+          isSessionHost(session.options.value, user.userId) ||
+          isSessionHost(session.options.value, user.connectionId)
       );
 
       if (hostIsConnected) {
@@ -1020,7 +1156,7 @@ export function createSeedBibleState(
     // invite/notification step.
     void invitations.publishSession(session);
     const tab = tabs.addTab(session);
-    panes.setSelectedPaneTab(tab.id);
+    tabsLayout.setSelectedSlotTab(tab.id);
     return session;
   };
 
@@ -1034,11 +1170,12 @@ export function createSeedBibleState(
     }
     wrapSessionLifecycle(session);
     const tab = tabs.addTab(session);
-    panes.setSelectedPaneTab(tab.id);
+    tabsLayout.setSelectedSlotTab(tab.id);
     return session;
   };
 
   const handleOpenVerseReference = async (ref: VerseRef) => {
+    panes.closeFullscreenPanes();
     let tab = selectedTab.value;
 
     if (!tab) {
@@ -1099,8 +1236,6 @@ export function createSeedBibleState(
     await handleJoinSharedSession(initialSessionId);
   };
 
-  void setupInitialSession();
-
   // App-level toast: a single popup shown at the bottom of the screen for 3.5s.
   // A new call overwrites the current toast and restarts the timer, so only the
   // most recent message is ever visible. The incrementing id keys the render so
@@ -1119,6 +1254,70 @@ export function createSeedBibleState(
     }, 3500);
   };
 
+  // const isDiscoverOpen = signal(false);
+  const handleOpenDiscover = () => {
+    if (!playlists.view.peek()) {
+      playlists.view.value = playlists.playing.peek()
+        ? "play_playlist"
+        : "discover";
+    } else {
+      playlists.view.value = null;
+    }
+  };
+  const handleCloseDiscover = () => {
+    playlists.view.value = null;
+  };
+
+  effect(() => {
+    const isPlaying = !!playlists.playing.value;
+    if (isPlaying && !isMobile.value) {
+      playlists.view.value = playlists.playing.peek()
+        ? "play_playlist"
+        : "discover";
+    }
+  });
+
+  // // When the app is opened via a shared `?playlist={recordName}.{id}` link,
+  // // load that playlist and start playing it immediately. The locator's `id` is
+  // // always `playlist_<uuid>` (never contains a dot), so we split on the LAST dot
+  // // to stay correct even when the `recordName` itself contains dots.
+  // const setupInitialPlaylist = async () => {
+  //   // Loading/playing touches the network and the reader — never during SSR.
+  //   if (typeof window === "undefined") {
+  //     return;
+  //   }
+  //   const locator = navigation.currentUrl.value.searchParams.get("playlist");
+  //   if (!locator) {
+  //     return;
+  //   }
+  //   const lastDot = locator.lastIndexOf(".");
+  //   if (lastDot <= 0 || lastDot === locator.length - 1) {
+  //     console.error("Invalid playlist locator:", locator);
+  //     return;
+  //   }
+  //   const recordName = locator.slice(0, lastDot);
+  //   const id = locator.slice(lastDot + 1);
+  //   try {
+  //     const playlist = await playlists.loadPlaylist(recordName, id);
+  //     playlists.startPlaying(playlist);
+  //     handleOpenDiscover();
+  //   } catch (error) {
+  //     console.error("Failed to load playlist from URL:", error);
+  //     const { t } = i18n;
+  //     toast(
+  //       t("failed-to-load-playlist", {
+  //         defaultValue: "Failed to load playlist",
+  //       })
+  //     );
+  //   }
+  // };
+
+  // Run the playlist setup after the session join: `startPlaying` prefers a
+  // shared-session tab, so a link carrying both `?sessionId=` and `?playlist=`
+  // should target the session tab created by the join.
+  void setupInitialSession();
+  //.then(() => setupInitialPlaylist());
+
   const state: SeedBibleState = {
     os,
     bibleData: data,
@@ -1130,6 +1329,7 @@ export function createSeedBibleState(
     },
     sidebar,
     tabs,
+    tabsLayout,
     panes,
     selector,
     tools,
@@ -1146,7 +1346,11 @@ export function createSeedBibleState(
     search,
     navigation,
     i18n,
+    discover,
+    readingExtensions,
     extensions,
+    readingPlans,
+    playlists,
     tutorial,
     onboarding,
     isTermsOpen,
@@ -1158,22 +1362,27 @@ export function createSeedBibleState(
     isCodeOfConductOpen,
     openCodeOfConduct,
     closeCodeOfConduct,
+    features,
     app: {
       createSharedSession: handleCreateSharedSession,
       joinSharedSession: handleJoinSharedSession,
       panelsEnabled,
       selectedTab,
+      effectiveSlots,
+      effectiveSlotLayout,
       effectivePanes,
       viewportWidth,
       viewportHeight,
       isMobile,
       isMobileLandscape,
+      isCompactDesktop,
       currentReadingState,
       selectTab: handleSelectTab,
       addTab: handleAddTab,
-      openInNewPane: handleOpenInNewPane,
-      openInDetachedPane: handleOpenInDetachedPane,
+      openInNewSlot: handleOpenInNewSlot,
+      selectSlot: handleSelectSlot,
       selectPane: handleSelectPane,
+      closeFullscreenPanes: panes.closeFullscreenPanes,
       openVerseReference: handleOpenVerseReference,
       openChat: handleOpenChat,
       title,
@@ -1183,8 +1392,83 @@ export function createSeedBibleState(
       socialTitle,
       currentToast,
       toast,
+      isDiscoverOpen: playlists.isDiscoverOpen,
+      openDiscover: handleOpenDiscover,
+      closeDiscover: handleCloseDiscover,
     },
   };
+
+  // Discover is rendered as the app's single managed side pane, mirrored from
+  // `playlists.view` (defined here rather than next to `handleOpenDiscover`
+  // above so the pane's `component` thunk can close over the finished `state`).
+  // `view` stays the source of truth for both whether Discover is open and
+  // which sub-view shows inside it; DiscoverPane routes discover/create/play
+  // internally off the same signal.
+  const DISCOVER_PANE_ID = "discover-pane";
+
+  // view -> pane: open (or refresh, by reusing the id) while a view is set,
+  // close when it clears. Subscribes only to `view`, so the user closing the
+  // pane below doesn't retrigger this.
+  effect(() => {
+    if (playlists.view.value) {
+      panes.openPane({
+        id: DISCOVER_PANE_ID,
+        placement: "side",
+        title: () => <DiscoverPaneTitle playlists={playlists} />,
+        header: () => <DiscoverPaneHeader playlists={playlists} />,
+        onUserClose: () => {
+          const currentlyPlaying = playlists.playing.value;
+          if (currentlyPlaying) {
+            playlists.stopPlaying();
+          }
+        },
+        component: () => (
+          <DiscoverPane
+            state={state}
+            tabs={tabs}
+            playlists={playlists}
+            modals={modals}
+            toast={state.app.toast}
+          />
+        ),
+      });
+    } else {
+      panes.closePane(DISCOVER_PANE_ID); // no-op when already closed
+    }
+  });
+
+  // pane -> view: when the pane is closed via its header, or replaced by
+  // another side pane (only one side pane may be open at a time), clear the
+  // view so the toggle re-opens it on the next click. `peek()` keeps this from
+  // looping against the effect above.
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === DISCOVER_PANE_ID
+    );
+    if (!paneOpen && playlists.view.peek()) {
+      playlists.view.value = null;
+    }
+  });
+
+  // Settings UI language changes also select the nearest available Bible
+  // translation (preferred ID → same language in catalog → LANG_META.fallback
+  // → English), using existing tabs + selector state.
+  i18n.setBibleTranslationApplicator(
+    async (translation) => {
+      const tab = selectedTab.value;
+      if (tab) {
+        await tab.readingState.selectTranslation(translation.id);
+      }
+      await selector.selectTranslation(translation.id);
+    },
+    () => data.availableTranslations.value,
+    async () => {
+      if (data.availableTranslations.value.length === 0) {
+        await data.getTranslations();
+      }
+      return data.availableTranslations.value;
+    }
+  );
 
   setupExtensionContext(state);
 

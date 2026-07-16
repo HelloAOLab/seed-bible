@@ -1,6 +1,5 @@
 import { type Signal } from "@preact/signals";
 import { type SeedBibleState } from "seed-bible";
-
 interface IconProps {
   width?: number | string;
   height?: number | string;
@@ -17,21 +16,23 @@ interface TwitchPubState {
     senderId: Signal<string>;
     userAccessToken: Signal<string>;
   }>;
+  toast: (message: string) => void;
   currentPage: Signal<"login" | "authorization" | "interface" | "settings">;
   deviceCode: Signal<string | null>;
   loading: Signal<boolean>;
   settings: Signal<{
     translation: Signal<{ enabled: boolean }>;
     highlight: Signal<{ enabled: boolean }>;
+    aiFollow: Signal<{ enabled: boolean }>;
     announcementTimer: Signal<{ enabled: boolean; interval: number | null }>;
   }>;
   uiHidden: Signal<boolean>;
   qrValue: Signal<string>;
+  navigatingRef: Signal<string | null>;
   getDeviceAuthUrl: (state: TwitchPubState) => void;
   setCurrentPage: (page: TwitchPubState["currentPage"]["value"]) => void;
   hideUI: () => void;
   showUI: () => void;
-  toast: (message: string) => void;
   handleSeedBibleUpdate: (seedBibleState: SeedBibleState) => void;
   handleHighlightUpdate: (
     highlights: {
@@ -43,6 +44,7 @@ interface TwitchPubState {
     bookId: string,
     chapterNumber: number
   ) => void;
+  resetState: () => void;
 }
 
 // ── Twitch EventSub WebSocket message interfaces ──────────────────────────────

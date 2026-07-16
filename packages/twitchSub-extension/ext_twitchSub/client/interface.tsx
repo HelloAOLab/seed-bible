@@ -121,6 +121,7 @@ export interface TwitchSubInterface {
   settings: Signal<{
     translationEnabled: Signal<boolean>;
     highlightEnabled: Signal<boolean>;
+    refFollowEnabled: Signal<boolean>;
     chapterFollowEnabled: Signal<boolean>;
   }>;
   config: Signal<{

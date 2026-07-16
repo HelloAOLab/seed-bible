@@ -4,7 +4,7 @@ import {
   ContextMenu,
   ContextMenuItem,
   ContextMenuWithButton,
-} from "@packages/seed-bible/seed-bible/components/ContextMenu";
+} from "@packages/seed-bible/seed-bible/components/ContextMenu/ContextMenu";
 
 function createDomRect(partial: Partial<DOMRect> = {}): DOMRect {
   return {

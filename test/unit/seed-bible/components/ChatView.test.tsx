@@ -1,7 +1,7 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import { ChatView } from "@packages/seed-bible/seed-bible/components/ChatView";
+import { ChatView } from "@packages/seed-bible/seed-bible/components/ChatView/ChatView";
 import type {
   ChatSession,
   ParsedChatTextMessage,

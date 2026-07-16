@@ -1,0 +1,1151 @@
+.sb-reader-toolbar {
+  position: fixed;
+  left: 50%;
+  bottom: var(--sb-reader-toolbar-bottom);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: var(--sb-reader-toolbar-gap);
+  padding: var(--sb-reader-toolbar-padding);
+  border-radius: var(--sb-reader-toolbar-border-radius);
+  background: var(--sb-reader-toolbar-background);
+  border: var(--sb-reader-toolbar-border);
+  box-shadow: var(--sb-reader-toolbar-box-shadow);
+  z-index: var(--sb-reader-toolbar-z-index);
+  height: var(--sb-reader-toolbar-height);
+
+  font-family: var(--sb-reader-toolbar-font-family);
+  color: var(--sb-reader-toolbar-font-color);
+
+  transition: transform 0.3s ease;
+  user-select: none;
+}
+
+.sb-reader-toolbar-wrap {
+  position: static;
+  transition: transform 0.3s ease;
+}
+
+.sb-reader-toolbar-item {
+  flex: 0 0 2.75rem;
+  height: 100%;
+  position: relative;
+  transition: transform 0.25s ease;
+}
+
+.sb-reader-toolbar-labeled .sb-reader-toolbar-item {
+  flex: 0 0 auto;
+  height: auto;
+}
+
+.sb-reader-toolbar-button {
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  color: inherit;
+
+  transition:
+    background-color 0.2s ease,
+    transform 0.25s ease;
+}
+
+.sb-reader-toolbar-button:hover:not(:disabled) {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.sb-reader-toolbar-labeled .sb-reader-toolbar-button {
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 0.1875rem;
+  border-radius: var(--sb-reader-toolbar-button-border-radius);
+  height: var(--sb-reader-toolbar-button-height);
+  padding: var(--sb-reader-toolbar-button-padding);
+}
+
+.sb-reader-toolbar-labeled .sb-reader-toolbar-button > svg,
+.sb-reader-toolbar-labeled
+  .sb-reader-toolbar-button
+  > .material-symbols-outlined {
+  width: var(--sb-reader-toolbar-button-icon-size);
+  height: var(--sb-reader-toolbar-button-icon-size);
+  font-size: var(--sb-reader-toolbar-button-icon-size);
+  flex-shrink: 0;
+}
+
+.sb-reader-toolbar-labeled .sb-reader-toolbar-button > img {
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.sb-reader-toolbar-button-label {
+  font-family: var(--sb-reader-toolbar-button-label-font-family);
+  font-size: var(--sb-reader-toolbar-button-label-font-size);
+  font-weight: 400;
+  color: var(--sb-reader-toolbar-font-color);
+  white-space: nowrap;
+  line-height: var(--sb-reader-toolbar-button-label-line-height);
+  height: var(--sb-reader-toolbar-button-label-height);
+}
+
+.sb-reader-toolbar-unread-indicator {
+  position: absolute;
+  top: 0.1875rem;
+  right: 0.25rem;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.25rem;
+  border-radius: 62.4375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.625rem;
+  font-weight: 700;
+  line-height: 1;
+  background: var(--sb-primary-color);
+  color: var(--sb-primary-font-color);
+  pointer-events: none;
+}
+
+.sb-reader-toolbar-typing-indicator {
+  position: absolute;
+  right: 0.375rem;
+  bottom: 0.5rem;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
+  pointer-events: none;
+  animation: sb-reader-toolbar-typing-pulse 1.4s ease-out infinite;
+}
+
+@keyframes sb-reader-toolbar-typing-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55);
+  }
+  70% {
+    transform: scale(1.06);
+    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+}
+
+.sb-reader-toolbar-item-arrow .sb-reader-toolbar-button {
+  flex-direction: row;
+  border-radius: 50%;
+  width: var(--sb-reader-toolbar-arrow-size);
+  height: var(--sb-reader-toolbar-arrow-size);
+  padding: var(--sb-reader-toolbar-arrow-padding);
+  gap: 0;
+}
+
+.sb-reader-toolbar-divider {
+  width: 1px;
+  height: 2.1875rem;
+  background: var(--sb-divider-color);
+  flex-shrink: 0;
+  align-self: center;
+  margin: 0 0.25rem;
+}
+
+/* Raster icons supplied by extensions can't inherit `currentColor`, so we
+ * invert them in dark themes (toolbarIconInvert=1) to keep dark glyphs
+ * visible on dark surfaces. SVG icons are unaffected — they already use
+ * `currentColor` and follow the toolbar font color. */
+.sb-reader-toolbar-button img,
+.sb-reader-toolbar-more-item img,
+.sb-tool-context-menu-item img,
+.sb-verse-toolbar-draggable button img,
+.sb-verse-toolbar img {
+  filter: invert(var(--sb-toolbar-icon-invert));
+}
+
+.sb-reader-toolbar-center-item {
+  margin: 0 auto;
+}
+
+.sb-reader-toolbar-more-anchor {
+  position: relative;
+}
+
+.sb-reader-toolbar-more-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.625rem);
+  min-width: 11.25rem;
+  border-radius: var(--sb-reader-toolbar-border-radius);
+  border: var(--sb-reader-toolbar-border);
+  background: var(--sb-reader-toolbar-background);
+  box-shadow: var(--sb-reader-toolbar-box-shadow);
+  padding: 0.375rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.sb-reader-toolbar-more-item {
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.sb-reader-toolbar-more-item:hover {
+  background: var(--sb-secondary-color);
+}
+
+.sb-tool-context-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 0.5rem);
+  min-width: 11.25rem;
+  border-radius: var(--sb-reader-toolbar-border-radius);
+  border: var(--sb-reader-toolbar-border);
+  background: var(--sb-reader-toolbar-background);
+  box-shadow: var(--sb-reader-toolbar-box-shadow);
+  padding: 0.375rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  z-index: 2;
+}
+
+.sb-tool-context-menu-item {
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.sb-tool-context-menu-item:hover {
+  background: var(--sb-secondary-color);
+}
+
+.sb-tool-context-menu-inline {
+  position: static;
+  min-width: 0;
+  margin-top: 0.25rem;
+}
+
+.sb-reader-toolbar-floating-button {
+  display: none;
+}
+
+@media (max-width: 480px) {
+  .sb-reader-toolbar-wrap {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    /* Sit above the mobile sidebar/settings overlay (z-index: 100) so the
+     * bottom bar of options stays visible while the account panel is open.
+     * The overlay already reserves `padding-bottom: 68px` for it. */
+    z-index: 101;
+    width: 100vw;
+    /* max-width: 420px; */
+  }
+
+  /* Full-width floating bar above the bottom nav: play (audio reader) on the
+   * far left, with previous / chapter label / next centered. Sits directly
+   * above the main bottom toolbar and is always visible. When the user
+   * scrolls down, the toolbar slides off the bottom and this bar drops into
+   * its place (see the scroll-hide rule below). */
+  .sb-reader-floating-nav {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--sb-reader-toolbar-background);
+    color: var(--sb-font-color);
+    height: 3.125rem;
+    transition: transform 0.3s ease;
+  }
+
+  /* Play button — peach circle with a dark glyph. The audio extension draws
+   * its own filled circle + glyph via presentation `fill` attributes, which
+   * CSS `fill` overrides, so we recolor it here to match the design without
+   * losing the play/pause state swap the extension owns. */
+  .sb-reader-floating-nav-play {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.125rem;
+    height: 2.125rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 62.4375rem;
+  }
+
+  .sb-reader-floating-nav-play:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .sb-reader-floating-nav-play > svg {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .sb-reader-floating-nav-play > svg circle {
+    fill: var(--sb-reader-floating-nav-play-background);
+  }
+
+  .sb-reader-floating-nav-play > svg path,
+  .sb-reader-floating-nav-play > svg rect {
+    fill: var(--sb-reader-floating-nav-play-glyph);
+  }
+
+  /* Capsule that wraps the arrows + book label: a pill with a subtle border,
+   * the chevrons pushed to its edges and the label centered between them. */
+  .sb-reader-floating-nav-group {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    /* No gap or padding: the three buttons tile the whole pill so every pixel
+       is a hit target (prev / label / next) — no dead zones between them. The
+       former 6px/12px padding is preserved as min-height + the buttons' own
+       internal spacing instead of dead inset. */
+    gap: 0;
+    min-width: 0;
+    min-height: 2.875rem;
+    border: 1px solid var(--sb-reader-floating-nav-group-border);
+    border-radius: 62.4375rem;
+    background: var(--sb-reader-floating-nav-group-background);
+    user-select: none;
+    overflow: hidden;
+  }
+
+  .sb-reader-floating-nav-arrow {
+    position: relative;
+    flex: 0 0 auto;
+    /* Full-height, wide hit region; the visual circle lives in ::before so the
+       whole button is tappable with no dead margin around the chevron. */
+    align-self: stretch;
+    min-width: min(4.5rem, 18vw);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--sb-font-color);
+    cursor: pointer;
+    transition: transform 0.12s ease;
+  }
+
+  /* The 34px visual circle, centered in the wider hit region. Carries the
+     press-feedback fill so the feedback stays circular even though the
+     clickable button now fills its whole third of the pill. */
+  .sb-reader-floating-nav-arrow::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 2.125rem;
+    height: 2.125rem;
+    transform: translate(-50%, -50%);
+    border-radius: 62.4375rem;
+    transition: background-color 0.12s ease;
+    z-index: 0;
+  }
+
+  /* Press feedback: the circle fills and the button shrinks briefly on tap so
+     the arrow feels responsive. */
+  .sb-reader-floating-nav-arrow:active:not(:disabled)::before {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 82%);
+  }
+
+  .sb-reader-floating-nav-arrow:active:not(:disabled) {
+    transform: scale(0.9);
+  }
+
+  .sb-reader-floating-nav-arrow:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  .sb-reader-floating-nav-arrow > svg,
+  .sb-reader-floating-nav-arrow > .material-symbols-outlined {
+    position: relative;
+    z-index: 1;
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 1.25rem;
+  }
+
+  .sb-reader-floating-nav-label {
+    position: relative;
+    flex: 1 1 auto;
+    align-self: stretch;
+    min-width: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--sb-book-title-font-color);
+    font-family: var(--text-bookTitle-font);
+    font-size: min(1.2rem, 22px);
+    font-weight: 700;
+    display: flex;
+    flex-wrap: wrap;
+    align-content: center;
+    justify-content: center;
+    column-gap: 0.35em;
+    overflow: hidden;
+    cursor: pointer;
+    transition:
+      background-color 0.12s ease,
+      transform 0.12s ease;
+  }
+
+  /* The book name ellipsizes instead of forcing the pill wider; the chapter
+     number keeps its own line when the row wraps. */
+  .sb-reader-floating-nav-label > :first-child {
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* Press feedback for the book/chapter label, matching the arrows. */
+  .sb-reader-floating-nav-label:active {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
+    transform: scale(0.97);
+  }
+
+  /* Tap ripple: a circle that expands from the touch point and fades out.
+     Spawned by spawnRipple() and removed on animationend. */
+  .sb-ripple {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    background: var(--sb-primary-color);
+    transform: scale(0);
+    opacity: 0.9;
+    animation: sb-ripple-fade 0.5s ease-out forwards;
+  }
+
+  @keyframes sb-ripple-fade {
+    to {
+      transform: scale(1);
+      opacity: 0;
+    }
+  }
+
+  .sb-action-btns {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout {
+    position: static;
+    transform: none;
+    left: auto;
+    bottom: auto;
+    height: auto;
+    width: 100%;
+    border-radius: 0;
+    padding: 0.5rem 0.5rem 0.625rem;
+    justify-content: space-around;
+    align-items: stretch;
+    gap: 0;
+    background: var(--sb-reader-toolbar-background);
+    border: none;
+    box-shadow: none;
+  }
+
+  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout .sb-reader-toolbar-item {
+    flex: 1 1 0;
+    height: auto;
+    min-width: 0;
+  }
+
+  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
+    .sb-reader-toolbar-mobile-tab {
+    display: flex;
+    align-items: stretch;
+    position: relative;
+    flex-basis: auto;
+  }
+
+  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
+    .sb-reader-toolbar-mobile-tab-button {
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.25rem;
+    min-height: 3.25rem;
+    width: 100%;
+    height: auto;
+    background: transparent;
+    color: color-mix(in srgb, var(--sb-font-color), transparent 35%);
+    border-radius: 0.5rem;
+    transition: color 0.15s ease;
+  }
+
+  /* Exclude the active tab from hover: on touch devices `:hover` sticks after
+   * a tap, and (being more specific than the active rule) it would otherwise
+   * override the active tab's theme color back to the dark font color — which
+   * left the label black while the icon stayed colored. */
+  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
+    .sb-reader-toolbar-mobile-tab-button:hover:not(:disabled):not(
+      .sb-reader-toolbar-mobile-tab-button-active
+    ) {
+    background: transparent;
+    color: var(--sb-font-color);
+  }
+
+  .sb-reader-toolbar.sb-reader-toolbar-mobile-layout
+    .sb-reader-toolbar-mobile-tab-button-active {
+    color: var(--sb-primary-color);
+  }
+
+  /* The Bible tab uses the Seed Bible logo (a PNG <img>), which can't follow
+   * the active text color like the material-symbol icons do. Tint it to the
+   * primary orange when its tab is active so it matches the orange label.
+   * `brightness(0)` first flattens the logo to a solid silhouette (preserving
+   * its alpha), then the chain recolors that silhouette toward #e07b4c. */
+  .sb-reader-toolbar-mobile-tab-button-active .sb-reader-toolbar-seed-icon {
+    filter: brightness(0) saturate(100%) invert(58%) sepia(48%) saturate(700%)
+      hue-rotate(334deg) brightness(95%) contrast(88%);
+  }
+
+  .sb-reader-toolbar-mobile-tab-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 1.5rem;
+  }
+
+  .sb-reader-toolbar-mobile-tab-icon-custom > img,
+  .sb-reader-toolbar-mobile-tab-icon-custom > svg {
+    display: block;
+    max-width: 1.5rem;
+    max-height: 1.5rem;
+  }
+
+  .sb-reader-toolbar-mobile-tab-label {
+    font-size: var(--sb-reader-toolbar-mobile-tabs-label-font-size);
+    font-weight: 500;
+    text-align: center;
+    line-height: 1;
+    color: inherit;
+  }
+
+  /* More popover anchored above the More tab */
+  .sb-mobile-more-menu {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 0.5rem);
+    min-width: 12.5rem;
+    padding: 0.625rem;
+    background: var(--sb-reader-toolbar-background);
+    border: 1px solid var(--sb-divider-color);
+    border-radius: 0.875rem;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.18);
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.375rem;
+    z-index: 100;
+  }
+
+  .sb-mobile-more-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.625rem 0.75rem;
+    border: none;
+    background: transparent;
+    color: var(--sb-font-color);
+    font: inherit;
+    font-size: 0.9375rem;
+    border-radius: 0.625rem;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.15s ease;
+  }
+
+  .sb-mobile-more-menu-item:hover {
+    background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+  }
+
+  .sb-mobile-more-menu-icon {
+    width: 1.375rem;
+    height: 1.375rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.375rem;
+    color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+    flex-shrink: 0;
+  }
+
+  .sb-mobile-more-menu-label {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .sb-mobile-more-menu-social {
+    cursor: default;
+  }
+
+  .sb-mobile-more-menu-social:hover {
+    background: transparent;
+  }
+
+  .sb-mobile-more-menu-social-avatar {
+    background: radial-gradient(
+      circle at 30% 30%,
+      var(--sb-primary-color),
+      color-mix(in srgb, var(--sb-primary-color), #000 40%)
+    );
+    border-radius: 62.4375rem;
+  }
+
+  .sb-mobile-more-menu-toggle {
+    flex-shrink: 0;
+    width: 2.375rem;
+    height: 1.375rem;
+    border-radius: 62.4375rem;
+    border: none;
+    background: color-mix(in srgb, var(--sb-font-color), transparent 80%);
+    position: relative;
+    cursor: pointer;
+    padding: 0;
+    transition: background-color 0.2s ease;
+  }
+
+  .sb-mobile-more-menu-toggle-on {
+    background: var(--sb-primary-color);
+  }
+
+  .sb-mobile-more-menu-toggle-thumb {
+    position: absolute;
+    top: 0.125rem;
+    left: 0.125rem;
+    width: 1.125rem;
+    height: 1.125rem;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    transition: left 0.2s ease;
+  }
+
+  .sb-mobile-more-menu-toggle-on .sb-mobile-more-menu-toggle-thumb {
+    left: 1.125rem;
+  }
+
+  .sb-reader-toolbar-floating-button {
+    position: absolute;
+    top: var(--sb-reader-toolbar-floating-button-top);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--sb-reader-toolbar-floating-button-width);
+    height: var(--sb-reader-toolbar-floating-button-height);
+    border: var(--sb-reader-toolbar-floating-button-border);
+    border-radius: var(--sb-reader-toolbar-floating-button-border-radius);
+    background: var(--sb-reader-toolbar-floating-button-background);
+    color: var(--sb-reader-toolbar-floating-button-font-color);
+    box-shadow: var(--sb-reader-toolbar-floating-button-box-shadow);
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .sb-reader-toolbar-floating-button-left {
+    inset-inline-start: var(--sb-reader-toolbar-floating-button-side-offset);
+  }
+
+  .sb-reader-toolbar-floating-button-right {
+    inset-inline-end: var(--sb-reader-toolbar-floating-button-side-offset);
+  }
+
+  /* When the user scrolls down on a mobile reader, slide the wrap down by
+   * exactly the toolbar's own height (100%). That drops the main bottom
+   * toolbar off the bottom of the viewport while the floating chapter-nav
+   * bar — which sits directly above the toolbar at `bottom: 100%` — lands
+   * flush at the bottom and stays visible, taking the toolbar's place.
+   * Scrolling back up removes the body class and both slide back. */
+  body.sb-scroll-hide-bars .sb-reader-toolbar-wrap {
+    transform: translateX(-50%) translateY(100%);
+  }
+}
+
+.sb-verse-toolbar {
+  position: fixed;
+  transform: translate(-50%, -100%);
+  display: flex;
+  background: var(--sb-verse-toolbar-background);
+  gap: var(--sb-verse-toolbar-gap);
+  padding: var(--sb-verse-toolbar-padding);
+  border-radius: var(--sb-verse-toolbar-border-radius);
+  border: var(--sb-verse-toolbar-border);
+  box-shadow: var(--sb-verse-toolbar-box-shadow);
+  z-index: var(--sb-verse-toolbar-z-index);
+  min-height: var(--sb-verse-toolbar-min-height);
+}
+
+.sb-verse-toolbar-draggable {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.sb-verse-toolbar-draggable:active {
+  cursor: grabbing;
+}
+
+.sb-verse-toolbar-draggable button {
+  cursor: pointer;
+}
+
+/* Selected-verse reference label shown above the verse toolbar tools */
+.sb-verse-toolbar {
+  flex-direction: column;
+  align-items: stretch;
+  background-color: var(--sb-reader-background);
+}
+
+.sb-verse-toolbar-ref {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  padding: 0 0.25rem 0.375rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 20rem;
+}
+
+/* Verse toolbar — color picker mode (ported from develop)
+   Layout: back + color swatches grouped on the left, Add/Clear pills pushed
+   to the far right. */
+.sb-verse-toolbar-picker {
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sb-verse-toolbar-color-button {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sb-verse-toolbar-color {
+  display: inline-block;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  border: 1px solid var(--sb-divider-color);
+  transition: transform 0.15s ease;
+}
+
+.sb-verse-toolbar-color-button:hover .sb-verse-toolbar-color {
+  transform: scale(1.1);
+}
+
+.sb-verse-toolbar-color-button:active .sb-verse-toolbar-color {
+  transform: scale(0.95);
+}
+
+.sb-verse-toolbar-back {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+}
+
+.sb-verse-toolbar-back:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
+}
+
+/* Add / Clear: labelled pill buttons pushed to the right of the picker. The
+   first of the pair carries `margin-inline-start: auto` so everything before
+   it (back + colours) stays grouped on the left. */
+.sb-verse-toolbar-plus,
+.sb-verse-toolbar-clear {
+  height: 2rem;
+  padding: 0 0.75rem;
+  border: none;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+  color: var(--sb-font-color);
+  cursor: pointer;
+  border-radius: 62.4375rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    filter 0.15s ease;
+}
+
+.sb-verse-toolbar-plus {
+  margin-inline-start: auto;
+  background: transparent;
+  border: 1px dashed color-mix(in srgb, var(--sb-font-color), transparent 55%);
+}
+
+.sb-verse-toolbar-clear {
+  background: color-mix(
+    in srgb,
+    var(--sb-error-color, #d64545),
+    transparent 85%
+  );
+  color: var(--sb-error-color, #d64545);
+}
+
+.sb-verse-toolbar-plus:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
+}
+
+.sb-verse-toolbar-clear:hover:not(:disabled) {
+  filter: brightness(0.95);
+  background: color-mix(
+    in srgb,
+    var(--sb-error-color, #d64545),
+    transparent 78%
+  );
+}
+
+.sb-verse-toolbar-clear:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.sb-verse-toolbar-back .material-symbols-outlined,
+.sb-verse-toolbar-plus .material-symbols-outlined,
+.sb-verse-toolbar-clear .material-symbols-outlined,
+.sb-verse-toolbar-highlight-trigger .material-symbols-outlined,
+.sb-verse-toolbar-bookmark-trigger .material-symbols-outlined {
+  font-size: 1.25rem;
+}
+
+.sb-verse-toolbar-plus .material-symbols-outlined,
+.sb-verse-toolbar-clear .material-symbols-outlined {
+  font-size: 1.125rem;
+}
+
+/* The bookmark trigger lights up in the theme primary color when the current
+ * selection already matches a saved bookmark, so the verse toolbar reads as
+ * a toggle. */
+.sb-verse-toolbar-bookmark-trigger-active,
+.sb-verse-toolbar-bookmark-trigger-active:hover {
+  color: var(--sb-primary-color);
+}
+
+.sb-verse-toolbar-color-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  padding: 0;
+  border: none;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sb-verse-toolbar-tools {
+  display: flex;
+  gap: var(--sb-verse-toolbar-tools-gap);
+  align-items: stretch;
+}
+
+@media (max-width: 330px) {
+  .sb-verse-toolbar-tools {
+    gap: 0;
+  }
+}
+
+@media (max-width: 300px) {
+  .sb-verse-toolbar {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+/* Vertical icon-above-label button used inside the floating verse toolbar.
+   Mirrors `.mobile-action-btn` from the develop branch's verseToolbar. */
+.sb-verse-toolbar-action-item {
+  display: flex;
+  position: relative;
+}
+
+.sb-verse-toolbar-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+  padding: 0.25rem 0.375rem;
+  min-width: 2.75rem;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--sb-font-color);
+  font-family: inherit;
+  font-weight: 400;
+  font-size: 0.6875rem;
+  line-height: 1;
+  border-radius: 0.375rem;
+  transition: background-color 0.15s ease;
+}
+
+.sb-verse-toolbar-action:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
+}
+
+.sb-verse-toolbar-action:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.sb-verse-toolbar-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.sb-verse-toolbar-action-icon svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.sb-verse-toolbar-action-icon .material-symbols-outlined {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.sb-verse-toolbar-action-label {
+  font-size: 0.6875rem;
+  line-height: 1;
+}
+
+.sb-verse-toolbar-mobile {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  transform: none;
+  width: 100%;
+  max-width: 100%;
+  align-items: stretch;
+  padding: 0.5rem 1rem calc(0.875rem + env(safe-area-inset-bottom, 0px));
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  border-top-left-radius: 1.25rem;
+  border-top-right-radius: 1.25rem;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  box-shadow: 0 -8px 24px var(--sb-shadow-color);
+}
+
+/* Grab-handle pill at the top of the mobile verse sheet (visual affordance). */
+.sb-verse-toolbar-handle {
+  width: 2.25rem;
+  height: 0.25rem;
+  border-radius: 62.4375rem;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 70%);
+  margin: 0.125rem auto 0.5rem;
+  flex: none;
+}
+
+/* Small dismiss button pinned to the top-right corner of the mobile sheet. */
+.sb-verse-toolbar-close {
+  position: absolute;
+  top: 0.625rem;
+  right: 0.75rem;
+  width: 1.875rem;
+  height: 1.875rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+  color: var(--sb-font-color);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s ease;
+  z-index: 1;
+}
+
+.sb-verse-toolbar-close:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 84%);
+}
+
+.sb-verse-toolbar-close .material-symbols-outlined {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+/* Static "swipe up to view more" affordance shown at the foot of the sheet. */
+.sb-verse-toolbar-swipe-hint {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  margin-top: 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 45%);
+  display: none;
+}
+
+.sb-verse-toolbar-swipe-hint .material-symbols-outlined {
+  font-size: 1.125rem;
+  line-height: 1;
+}
+
+/* On mobile the reference label is always shown and centered above the row.
+   The inline padding keeps a long reference clear of the corner close button. */
+.sb-verse-toolbar-mobile .sb-verse-toolbar-ref {
+  text-align: center;
+  align-self: stretch;
+  max-width: none;
+  padding-left: 2.5rem;
+  padding-right: 2.5rem;
+}
+
+/* The action row scrolls horizontally on narrow phones rather than overflowing
+   the screen or wrapping awkwardly. */
+.sb-verse-toolbar-mobile .sb-verse-toolbar-tools {
+  max-width: 100%;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  align-items: center;
+  scrollbar-width: none;
+}
+
+.sb-verse-toolbar-mobile .sb-verse-toolbar-tools::-webkit-scrollbar {
+  display: none;
+}
+
+/* Card-grid variant of the mobile action row. Each action becomes a rounded
+   tappable card; cards flex-wrap roughly four per row, and a short final row
+   (e.g. Bookmark / Copy / Share) stretches to fill the width. */
+.sb-verse-toolbar-mobile .sb-verse-toolbar-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  overflow: visible;
+  width: 100%;
+}
+
+.sb-verse-toolbar-cards .sb-verse-toolbar-action-item {
+  flex: 1 1 20%;
+  min-width: 4.5rem;
+}
+
+.sb-verse-toolbar-cards .sb-verse-toolbar-action {
+  width: 100%;
+  gap: 0.375rem;
+  padding: 0.75rem 0.375rem;
+  height: 4rem;
+  border-radius: 0.875rem;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
+  font-size: 0.75rem;
+}
+
+.sb-verse-toolbar-cards .sb-verse-toolbar-action:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
+}
+
+.sb-verse-toolbar-cards .sb-verse-toolbar-action-label {
+  font-size: 0.75rem;
+}
+
+/* The More/Less toggle reads as the same card, with a visible outline when the
+   sheet is expanded (matching the "Less" state in the design). */
+.sb-verse-toolbar-cards .sb-verse-toolbar-more-toggle-active {
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--sb-font-color), transparent 70%);
+}
+
+/* The card grid hosts its own dismiss control (the corner X), and the ref label
+   sits centered above it, so don't reserve extra side padding. */
+.sb-verse-toolbar-mobile .sb-verse-toolbar-cards .sb-tool-context-menu {
+  bottom: calc(100% + 0.375rem);
+}
+
+/* Inline highlight swatches grouped as their own rounded pill, set off from the
+   action buttons (Save / Copy / Share). */
+.sb-verse-toolbar-colors-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: none;
+  padding: 0.125rem 0.375rem;
+  margin-right: 0.25rem;
+  border-radius: 62.4375rem;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+}
+
+/* "More colors" swatch — a multi-hue circle that opens the full picker. */
+.sb-verse-toolbar-more-colors-swatch {
+  background: conic-gradient(
+    var(--sb-highlight-yellow-color),
+    var(--sb-highlight-green-color),
+    var(--sb-highlight-blue-color),
+    var(--sb-highlight-yellow-color)
+  );
+}

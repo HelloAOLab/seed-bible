@@ -1,0 +1,35 @@
+SoundsManager.playBookExpandSound();
+setTagMask(thisBot, "isInTransition", true);
+
+const animationDuration = 0.5
+
+await Promise.allSettled([
+    animateTag(thisBot, "formOpacity", {
+        toValue: 1,
+        duration: animationDuration,
+        easing: {type: "sinusoidal", mode: "inout"}
+    }),
+    animateTag(thisBot, "labelOpacity", {
+        toValue: 1,
+        duration: animationDuration,
+        easing: {type: "sinusoidal", mode: "inout"}
+    }),
+    animateTag(thisBot, "scaleX", {
+        toValue: 5,
+        duration: animationDuration,
+        easing: {type: "elastic", mode: "out"}
+    }),
+    animateTag(thisBot, "scaleY", {
+        toValue: 1 + (thisBot.tags.numberOfChapters * 0.15),
+        duration: animationDuration,
+        easing: {type: "elastic", mode: "out"}
+    }),
+    animateTag(thisBot, "scaleZ", {
+        toValue: 0.5,
+        duration: animationDuration,
+        easing: {type: "elastic", mode: "out"}
+    }),
+])
+
+setTagMask(thisBot, "isInTransition", false);
+setTagMask(thisBot, "isExpanded", true);

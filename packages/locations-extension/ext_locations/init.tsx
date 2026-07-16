@@ -1,7 +1,7 @@
 import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { computed } from "@preact/signals";
 import { registerExtension } from "seed-bible";
-import { LocationIcon } from "seed-bible/components";
+import { LocationIcon, PortalComponent } from "seed-bible/components";
 import locations from "./locations.json";
 import geoImporterPattern from "virtual:@pattern/geo-importer";
 import { v4 as uuid } from "uuid";
@@ -19,14 +19,15 @@ export default function initLocationsExtension() {
     init: function* (context) {
       const findLocationsInText = (text: string) => {
         text = text.toLowerCase();
-        const foundPlaces = [];
-        // const locations: Record<string, PlaceData> = tags.locations;
+        const foundPlaces: PlaceData[] = [];
+        const seen = new Set<string>();
         const words = text.split(/[^\w]+/);
         for (const word of words) {
           const place = (locations as Record<string, PlaceData>)[
             word.toLowerCase()
           ];
-          if (place) {
+          if (place && !seen.has(place.place)) {
+            seen.add(place.place);
             console.log("Found place:", place);
             foundPlaces.push(place);
           }
@@ -93,14 +94,26 @@ export default function initLocationsExtension() {
 
         const data = await response.text();
 
+        // Generate the portal instance id once, here — not inside the pane's
+        // render function — so re-renders (dragging/resizing the pane) reuse the
+        // same `inst` and the map iframe keeps its document instead of
+        // reloading.
+        const inst = uuid();
+
         context.panes.openPane({
-          type: "detached",
-          mapPortal: "map",
-          pattern: geoImporterPattern,
-          inst: uuid(),
-          query: {
-            mapData: data,
-          },
+          placement: "floating",
+          title: place.place,
+          component: () => (
+            <PortalComponent
+              portal="map"
+              portalType="map"
+              pattern={geoImporterPattern}
+              inst={inst}
+              query={{
+                mapData: data,
+              }}
+            />
+          ),
         });
       };
 

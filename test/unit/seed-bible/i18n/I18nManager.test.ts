@@ -4,9 +4,10 @@ import {
   createI18nManager,
   type I18nManager,
 } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import {
-  type NavigationManager,
   createNavigationManager,
+  type NavigationManager,
 } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { signal, type Signal } from "@preact/signals";
 
@@ -47,12 +48,14 @@ describe("I18nManager getInitialLanguage()", () => {
     currentUrl = signal(new URL("https://example.com/"));
     nav = {
       currentUrl,
+      initialUrl: currentUrl.peek(),
       syncSignalsToUrl: vi.fn(),
       go: vi.fn(),
       replace: vi.fn(),
       push: vi.fn(),
       updateQueryParam: vi.fn(),
       linkToQuery: vi.fn(),
+      updateQueryParams: vi.fn(),
     } as NavigationManager;
     manager = createI18nManager(nav, ssrLanguages);
   });
@@ -133,5 +136,100 @@ describe("I18nManager getInitialLanguage()", () => {
     const language = getDefaultLanguage();
 
     expect(language).toBe("en");
+  });
+});
+
+describe("I18nManager language fallback prompt", () => {
+  let nav: NavigationManager;
+  let manager: I18nManager;
+  let currentUrl: Signal<URL>;
+
+  beforeEach(() => {
+    currentUrl = signal(new URL("https://example.com/"));
+    nav = {
+      currentUrl,
+      initialUrl: currentUrl.peek(),
+      syncSignalsToUrl: vi.fn(),
+      go: vi.fn(),
+      replace: vi.fn(),
+      push: vi.fn(),
+      updateQueryParam: vi.fn(),
+      updateQueryParams: vi.fn(),
+      linkToQuery: vi.fn(),
+    } as NavigationManager;
+    manager = createI18nManager(nav, ["en"]);
+    manager.setBibleTranslationApplicator(vi.fn(), () => null, null);
+  });
+
+  it("shows the fallback prompt when the nearest translation is already active", async () => {
+    await manager.requestLanguageChange("cy");
+
+    expect(manager.languageFallbackPrompt.value).toEqual({
+      requestedLanguage: "cy",
+      fallbackLanguage: "en",
+      fallbackTranslation: { id: "AAB", language: "eng" },
+    });
+  });
+
+  it("does not show the fallback prompt when the UI language has a direct translation", async () => {
+    const apply = vi.fn();
+    manager.setBibleTranslationApplicator(
+      apply,
+      () => [{ id: "spa_onbv", language: "spa" } as Translation],
+      null
+    );
+
+    await manager.requestLanguageChange("es");
+
+    expect(manager.languageFallbackPrompt.value).toBeNull();
+    expect(apply).toHaveBeenCalledWith({
+      id: "spa_onbv",
+      language: "spa",
+    });
+  });
+});
+
+describe("I18nManager URL <-> language sync", () => {
+  beforeEach(() => {
+    window.history.replaceState({}, "", "/");
+    Object.defineProperty(window.navigator, "languages", {
+      configurable: true,
+      value: ["en-US"],
+    });
+  });
+
+  // Regression for #1443: the `?lang=` query param is the source of truth for
+  // the UI language. When it changes on its own (deep link, browser
+  // back/forward), the actual i18next translations must reload — not just the
+  // `language` signal — otherwise `t()` keeps returning the old language.
+  it("reloads i18n when ?lang= changes in the URL", async () => {
+    const nav = createNavigationManager({ initialHref: window.location.href });
+    const manager = createI18nManager(nav, ["en"]);
+    await manager.ready;
+    expect(manager.i18n.language).toBe("en");
+
+    window.history.pushState({}, "", "/?lang=de");
+
+    const start = Date.now();
+    while (manager.i18n.language !== "de" && Date.now() - start < 1000) {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+
+    expect(manager.i18n.language).toBe("de");
+    expect(manager.language.value).toBe("de");
+  });
+
+  // Selecting a UI language writes `?lang=` to the URL (primary), and the
+  // signal reflects the new language.
+  it("writes ?lang= when the UI language is changed", async () => {
+    const nav = createNavigationManager({ initialHref: window.location.href });
+    const manager = createI18nManager(nav, ["en"]);
+    await manager.ready;
+    manager.setBibleTranslationApplicator(vi.fn(), () => null, null);
+
+    await manager.requestLanguageChange("fr");
+
+    expect(manager.language.value).toBe("fr");
+    expect(nav.currentUrl.value.searchParams.get("lang")).toBe("fr");
   });
 });

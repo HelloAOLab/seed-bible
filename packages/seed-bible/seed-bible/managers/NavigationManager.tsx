@@ -40,6 +40,15 @@ export function createNavigationManager(
       : "http://localhost/");
   const currentUrl = signal<URL>(new URL(initialHref));
 
+  // A frozen snapshot of the URL exactly as the page was first loaded, before
+  // any in-app navigation — including the reader's own book/chapter -> URL
+  // echo (see TabsManager) — has a chance to mutate `currentUrl`. Extensions
+  // load asynchronously, well after that echo has already run, so anything
+  // that needs to tell "the user linked here on purpose" apart from "the
+  // reader wrote its default position into the URL" must check this instead
+  // of the live `currentUrl`.
+  const initialUrl = new URL(initialHref);
+
   const basePath = options.basePath ?? "";
 
   // Keep root-absolute navigations inside the deployment's path prefix.
@@ -187,14 +196,56 @@ export function createNavigationManager(
     push(next);
   };
 
+  /**
+   * Updates the given query parameters in the URL and pushes a new history entry.
+   * @param update The update object containing query parameters to be updated.
+   * @param replaceState Whether to replace the current history entry instead of pushing a new one. Defaults to false.
+   * @returns
+   */
+  const updateQueryParams = (
+    update: Record<string, string | null>,
+    replaceState: boolean = false
+  ) => {
+    // peek() so effects that call updateQueryParam don't subscribe to
+    // currentUrl — they would re-run on the very write they cause.
+    const current = currentUrl.peek();
+    const next = new URL(current);
+    let hasChanges = false;
+    for (const [key, value] of Object.entries(update)) {
+      if (current.searchParams.get(key) === value) {
+        continue;
+      }
+      hasChanges = true;
+
+      if (!value) {
+        next.searchParams.delete(key);
+      } else {
+        next.searchParams.set(key, value);
+      }
+      console.log(`Updating URL query param: ${key} =`, value);
+    }
+
+    if (!hasChanges) {
+      return;
+    }
+
+    if (replaceState) {
+      replace(next);
+    } else {
+      push(next);
+    }
+  };
+
   const syncSignalsToUrl = (
     signals: Record<string, SimpleSignal<string | null>>
   ) => {
     const cleanup1 = effect(() => {
+      const update: Record<string, string | null> = {};
       for (const [key, signal] of Object.entries(signals)) {
         const requestedValue = signal.value;
-        updateQueryParam(key, requestedValue);
+        update[key] = requestedValue;
       }
+      updateQueryParams(update);
     });
 
     const cleanup2 = effect(() => {
@@ -229,10 +280,12 @@ export function createNavigationManager(
 
   return {
     currentUrl: computed(() => currentUrl.value),
+    initialUrl,
     go,
     replace,
     push,
     updateQueryParam,
+    updateQueryParams,
     syncSignalsToUrl,
     linkToQuery,
   };

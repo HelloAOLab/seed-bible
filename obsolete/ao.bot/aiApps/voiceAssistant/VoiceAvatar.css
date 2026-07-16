@@ -9,7 +9,13 @@
 }
 
 .ai-circle.disconnected {
-  background: radial-gradient(circle at 15% 15%, #e0e0e0, #b0b0b0, #6c7a89, #F1F1F1);
+  background: radial-gradient(
+    circle at 15% 15%,
+    #e0e0e0,
+    #b0b0b0,
+    #6c7a89,
+    #f1f1f1
+  );
   animation: flow 12s ease-in-out infinite;
   position: absolute;
   border-radius: 50%;
@@ -21,8 +27,16 @@
 }
 
 .ai-circle.connecting {
-  background: radial-gradient(circle at 15% 15%, #fff2cc, #ffd966, #a3c4f3, #F1F1F1);
-  animation: flow 8s ease-in-out infinite, pulse 1.2s ease-in-out infinite;
+  background: radial-gradient(
+    circle at 15% 15%,
+    #fff2cc,
+    #ffd966,
+    #a3c4f3,
+    #f1f1f1
+  );
+  animation:
+    flow 8s ease-in-out infinite,
+    pulse 1.2s ease-in-out infinite;
   position: absolute;
   border-radius: 50%;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
@@ -33,7 +47,13 @@
 }
 
 .ai-circle.connected {
-  background: radial-gradient(circle at 15% 15%, #c6e3e7, #001455, #025837, #F1F1F1);
+  background: radial-gradient(
+    circle at 15% 15%,
+    #c6e3e7,
+    #001455,
+    #025837,
+    #f1f1f1
+  );
   animation: flow 12s ease-in-out infinite;
   position: absolute;
   border-radius: 50%;
@@ -45,8 +65,16 @@
 }
 
 .ai-circle.listening {
-  background: radial-gradient(circle at 15% 15%, #c6e3e7, #6f8ae2, #e1f87a, #F1F1F1);
-  animation: flow 4s ease-in-out infinite, pulse 1.2s ease-in-out infinite;
+  background: radial-gradient(
+    circle at 15% 15%,
+    #c6e3e7,
+    #6f8ae2,
+    #e1f87a,
+    #f1f1f1
+  );
+  animation:
+    flow 4s ease-in-out infinite,
+    pulse 1.2s ease-in-out infinite;
   position: absolute;
   border-radius: 50%;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
@@ -57,8 +85,16 @@
 }
 
 .ai-circle.speaking {
-  background: radial-gradient(circle at 15% 15%, #c6e3e7, #f73939, #3d31ee, #F1F1F1);
-  animation: flow 4s ease-in-out infinite, pulse 1.2s ease-in-out infinite;
+  background: radial-gradient(
+    circle at 15% 15%,
+    #c6e3e7,
+    #f73939,
+    #3d31ee,
+    #f1f1f1
+  );
+  animation:
+    flow 4s ease-in-out infinite,
+    pulse 1.2s ease-in-out infinite;
   position: absolute;
   border-radius: 50%;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
@@ -68,8 +104,14 @@
   transition: all 1s ease-in-out;
 }
 
-.ai-circle.muted{
-  background: radial-gradient(circle at 15% 15%, #e0e0e0, #b0b0b0, #6c7a89, #F1F1F1);
+.ai-circle.muted {
+  background: radial-gradient(
+    circle at 15% 15%,
+    #e0e0e0,
+    #b0b0b0,
+    #6c7a89,
+    #f1f1f1
+  );
   animation: flow 12s ease-in-out infinite;
   position: absolute;
   border-radius: 50%;
@@ -80,7 +122,7 @@
   transition: all 1s ease-in-out;
 }
 
-.ai-circle:hover{
+.ai-circle:hover {
   animation: flow 4s ease-in-out infinite;
   position: absolute;
   border-radius: 50%;
@@ -114,7 +156,6 @@
 }
 
 @keyframes pulse {
-
   0%,
   100% {
     transform: scale(1);

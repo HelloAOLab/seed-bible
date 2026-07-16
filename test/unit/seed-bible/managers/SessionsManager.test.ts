@@ -19,6 +19,7 @@ import {
   type I18nManager,
 } from "@packages/seed-bible/seed-bible/i18n";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
+import { createBibleReadingExtensionManager } from "@packages/seed-bible/seed-bible/managers/BibleReadingExtensionManager";
 
 vi.mock("@packages/seed-bible/seed-bible/managers/BibleReadingManager", () => ({
   createBibleReadingState: vi.fn(),
@@ -149,6 +150,26 @@ function createMockReadingState() {
     );
   });
 
+  const enabledExtensions = signal<any[]>([]);
+  const enableExtension = vi.fn((id: string, data?: unknown) => {
+    const existing = enabledExtensions.value.find(
+      (runtime) => runtime.id === id
+    );
+    if (existing) {
+      existing.data.value = data;
+      return;
+    }
+    enabledExtensions.value = [
+      ...enabledExtensions.value,
+      { id, data: signal(data) },
+    ];
+  });
+  const disableExtension = vi.fn((id: string) => {
+    enabledExtensions.value = enabledExtensions.value.filter(
+      (runtime) => runtime.id !== id
+    );
+  });
+
   return {
     translationId,
     bookId,
@@ -161,6 +182,11 @@ function createMockReadingState() {
     error: signal<string | null>(null),
     decorateVerses,
     removeDecoration,
+    enabledExtensions,
+    enableExtension,
+    disableExtension,
+    isExtensionEnabled: (id: string) =>
+      enabledExtensions.value.some((runtime) => runtime.id === id),
     selectTranslationAndChapter: vi.fn(
       async (
         nextTranslationId: string,
@@ -256,6 +282,7 @@ describe("SessionsManager", () => {
     profile: ReturnType<typeof signal<UserProfile | null>>;
   };
   let mockUserProfilesMap: ReturnType<typeof createMockSharedMap>;
+  let mockExtensionsMap: ReturnType<typeof createMockSharedMap>;
   let mockHighlightsManager: {
     getChapterHighlights: Mock;
   };
@@ -276,6 +303,7 @@ describe("SessionsManager", () => {
     mockOptionsMap = createMockSharedMap();
     mockDecorationsMap = createMockSharedMap();
     mockUserProfilesMap = createMockSharedMap();
+    mockExtensionsMap = createMockSharedMap();
     mockRemoteClients = createMockRemoteClientsObservable();
     mockDocument = {
       getMap: vi.fn((name: string) => {
@@ -289,6 +317,10 @@ describe("SessionsManager", () => {
 
         if (name === "user_profiles") {
           return mockUserProfilesMap;
+        }
+
+        if (name === "reading_extensions") {
+          return mockExtensionsMap;
         }
 
         return mockMap;
@@ -365,6 +397,8 @@ describe("SessionsManager", () => {
       hostUserId: "test-config-bot-id",
       highlightDurationSeconds: 16,
       endedAt: null,
+      shareTranslation: false,
+      coHostUserIds: [],
     });
   });
 
@@ -412,6 +446,8 @@ describe("SessionsManager", () => {
       hostUserId: null,
       highlightDurationSeconds: 16,
       endedAt: null,
+      shareTranslation: false,
+      coHostUserIds: [],
     });
   });
 
@@ -443,6 +479,8 @@ describe("SessionsManager", () => {
       hostUserId: null,
       highlightDurationSeconds: 16,
       endedAt: null,
+      shareTranslation: false,
+      coHostUserIds: [],
     });
     expect(mockOptionsMap.set).not.toHaveBeenCalled();
   });
@@ -477,6 +515,8 @@ describe("SessionsManager", () => {
       hostUserId: null,
       highlightDurationSeconds: null,
       endedAt: null,
+      shareTranslation: false,
+      coHostUserIds: [],
     });
   });
 
@@ -506,6 +546,8 @@ describe("SessionsManager", () => {
       hostUserId: null,
       highlightDurationSeconds: 16,
       endedAt: null,
+      shareTranslation: false,
+      coHostUserIds: [],
     });
   });
 
@@ -876,6 +918,8 @@ describe("SessionsManager", () => {
       translationId: "NIV",
       bookId: "EXO",
       chapterNumber: 4,
+      // Translation only propagates when sharing is enabled.
+      shareTranslation: true,
     });
     mockDocument.getMap.mockReturnValue(mockMap);
 
@@ -903,6 +947,8 @@ describe("SessionsManager", () => {
       bookId: "EXO",
       chapterNumber: 4,
       scrollToVerse: 12,
+      // Translation only propagates when sharing is enabled.
+      shareTranslation: true,
     });
     mockDocument.getMap.mockReturnValue(mockMap);
 
@@ -923,6 +969,8 @@ describe("SessionsManager", () => {
   });
 
   it("syncs reading state changes to the shared document", async () => {
+    // Translation only propagates when sharing is enabled.
+    mockOptionsMap.set("shareTranslation", true);
     const manager = createSessionsManager(
       os,
       mockDataManager as any,
@@ -967,6 +1015,8 @@ describe("SessionsManager", () => {
 
   it("does not loop when local state changes are echoed back from the shared map", async () => {
     mockMap.setEmitOnSet(true);
+    // Translation only propagates when sharing is enabled.
+    mockOptionsMap.set("shareTranslation", true);
 
     const manager = createSessionsManager(
       os,
@@ -992,6 +1042,8 @@ describe("SessionsManager", () => {
   });
 
   it("applies shared document changes to the session reading state", async () => {
+    // Translation only propagates when sharing is enabled.
+    mockOptionsMap.set("shareTranslation", true);
     const manager = createSessionsManager(
       os,
       mockDataManager as any,
@@ -1029,8 +1081,47 @@ describe("SessionsManager", () => {
     expect(session.readingState.chapterNumber.value).toBe(23);
   });
 
+  it("keeps the current reading state book when the shared session book ID is null", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = (await manager.joinSession(
+      "group-abc"
+    )) as BibleReadingSession;
+
+    // The mock reading state starts on GEN.
+    expect(session.readingState.bookId.value).toBe("GEN");
+
+    // A peer publishes session data with no book (bookId null) but a new
+    // chapter. Because the book is missing, canLoadSessionData() is false, so
+    // the state is applied field-by-field instead of through a full chapter
+    // load — this is the branch that falls back to the local book ID.
+    mockMap.get.mockImplementation((key: string) => {
+      if (key === "chapterNumber") {
+        return 5;
+      }
+      // bookId (and everything else) is absent from the shared session.
+      return null;
+    });
+
+    mockMap.emitChange();
+
+    // The chapter change proves the fallback branch actually ran.
+    await waitFor(() => session.readingState.chapterNumber.value === 5);
+
+    // The book ID is null in the shared session, so it falls back to the
+    // book the reader was already on rather than being cleared.
+    expect(session.readingState.bookId.value).toBe("GEN");
+  });
+
   it("keeps local selection when user changes chapter during remote sync", async () => {
     const chapterDeferred = deferred<any>();
+    // Translation only propagates when sharing is enabled.
+    mockOptionsMap.set("shareTranslation", true);
 
     const manager = createSessionsManager(
       os,
@@ -1340,5 +1431,131 @@ describe("SessionsManager", () => {
         },
       ])
     );
+  });
+
+  describe("reading extension sync", () => {
+    function createManagerWith(
+      registry: ReturnType<typeof createBibleReadingExtensionManager>
+    ) {
+      return createSessionsManager(
+        os,
+        mockDataManager as any,
+        mockLoginManager as any,
+        mockHighlightsManager as any,
+        i18n,
+        registry
+      );
+    }
+
+    it("writes locally enabled extensions and their data into the shared map", async () => {
+      const registry = createBibleReadingExtensionManager();
+      registry.registerReadingExtension({ id: "x", activate: () => ({}) });
+      const session = await createManagerWith(registry).createSession();
+
+      session.readingState.enableExtension("x", { v: 1 });
+
+      expect(mockExtensionsMap.set).toHaveBeenCalledWith("x", {
+        enabled: true,
+        data: { v: 1 },
+      });
+    });
+
+    it("enables extensions present in the shared map when joining", async () => {
+      mockExtensionsMap.set("x", { enabled: true, data: { v: 2 } });
+      const registry = createBibleReadingExtensionManager();
+      registry.registerReadingExtension({ id: "x", activate: () => ({}) });
+
+      const session = await createManagerWith(registry).joinSession("abc");
+
+      expect(session.readingState.enableExtension).toHaveBeenCalledWith("x", {
+        v: 2,
+      });
+      expect(session.readingState.isExtensionEnabled("x")).toBe(true);
+    });
+
+    it("skips shared extensions that are not registered locally", async () => {
+      mockExtensionsMap.set("y", { enabled: true, data: {} });
+      const registry = createBibleReadingExtensionManager();
+
+      const session = await createManagerWith(registry).joinSession("abc");
+
+      expect(session.readingState.enableExtension).not.toHaveBeenCalled();
+      expect(session.readingState.isExtensionEnabled("y")).toBe(false);
+    });
+
+    it("round-trips playlist playback data (playlists + queue + step) through the shared map", async () => {
+      const registry = createBibleReadingExtensionManager();
+      registry.registerReadingExtension({
+        id: "playlist",
+        activate: () => ({}),
+      });
+      const session = await createManagerWith(registry).createSession();
+
+      // The playlist extension stores its playback state here; it must survive
+      // the JSON-based mirror unchanged so peers rebuild the same playback.
+      const data = {
+        playlists: [
+          {
+            id: "playlist-1",
+            recordName: "user-1",
+            authorUserId: "user-1",
+            title: "P",
+            description: null,
+            items: [{ type: "html", html: "a" }],
+            createdAtMs: 1,
+            updatedAtMs: 1,
+          },
+        ],
+        queue: [{ type: "html", html: "a" }],
+        step: 0,
+      };
+
+      session.readingState.enableExtension("playlist", data);
+
+      expect(mockExtensionsMap.set).toHaveBeenCalledWith("playlist", {
+        enabled: true,
+        data,
+      });
+    });
+
+    it("does not sync extension data (e.g. playlist advance) when the current user is not an allowed navigator", async () => {
+      mockLoginManager.userId.value = "user-blocked";
+      const registry = createBibleReadingExtensionManager();
+      registry.registerReadingExtension({
+        id: "playlist",
+        activate: () => ({}),
+      });
+      const session =
+        await createManagerWith(registry).joinSession("group-abc");
+
+      mockOptionsMap.setEmitOnSet(true);
+      session.updateOptions({
+        allowedNavigators: ["user-allowed", "conn-self"],
+      });
+
+      mockExtensionsMap.set.mockClear();
+
+      // Simulates a restricted (non-host) participant advancing a playlist:
+      // its outbound `data` mirror must not reach the shared map, the same
+      // restriction that already applies to ordinary chapter navigation.
+      session.readingState.enableExtension("playlist", { step: 1 });
+
+      expect(mockExtensionsMap.set).not.toHaveBeenCalled();
+    });
+
+    it("disables an extension when it is removed from the shared map", async () => {
+      mockExtensionsMap.setEmitOnSet(true);
+      mockExtensionsMap.set("x", { enabled: true, data: {} });
+      const registry = createBibleReadingExtensionManager();
+      registry.registerReadingExtension({ id: "x", activate: () => ({}) });
+
+      const session = await createManagerWith(registry).joinSession("abc");
+      expect(session.readingState.isExtensionEnabled("x")).toBe(true);
+
+      mockExtensionsMap.delete("x");
+
+      expect(session.readingState.disableExtension).toHaveBeenCalledWith("x");
+      expect(session.readingState.isExtensionEnabled("x")).toBe(false);
+    });
   });
 });

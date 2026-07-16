@@ -6,6 +6,7 @@ import {
   type VerseDecorationInput,
 } from "../managers/BibleReadingManager";
 import type { HighlightsManager } from "../managers/HighlightsManager";
+import type { BibleReadingExtensionManager } from "../managers/BibleReadingExtensionManager";
 import type { BibleDataManager } from "../managers/BibleDataManager";
 import type { LoginManager, UserProfile } from "../managers/LoginManager";
 import type { CasualOSManager } from "./OsManager";
@@ -90,10 +91,57 @@ export interface SessionOptions {
    * so the CRDT update propagates to other clients.
    */
   endedAt: number | null;
+  /**
+   * Whether the reading translation is shared across the session. When
+   * `false` (the default) each participant keeps their own translation and
+   * only book/chapter/scroll navigation is synced — changing your
+   * translation never affects other participants. When `true`, translation
+   * changes propagate to everyone.
+   */
+  shareTranslation: boolean;
+  /**
+   * Additional user ids (or connection ids) that share the host's powers:
+   * they can change session settings and always navigate/decorate even when
+   * those actions are host-restricted. Used by the "appoint a co-host" flow
+   * so a leaving host can hand the session off instead of ending it.
+   */
+  coHostUserIds: string[];
+}
+
+/**
+ * True when `sessionId` (a userId or connectionId) is the host or a co-host
+ * of the session described by `options`.
+ */
+export function isSessionHost(
+  options: SessionOptions,
+  sessionId: string | null
+): boolean {
+  if (!sessionId) {
+    return false;
+  }
+  return (
+    options.hostUserId === sessionId ||
+    (options.coHostUserIds ?? []).includes(sessionId)
+  );
 }
 
 type SessionOptionValue = SessionOptions[keyof SessionOptions];
 type SessionDecorationValue = VerseDecoration;
+
+/**
+ * The shape each enabled reading extension publishes into the session's
+ * `reading_extensions` map, keyed by extension id: whether it is enabled plus
+ * the extension's custom (JSON-serializable) data.
+ */
+interface SessionExtensionValue {
+  enabled: boolean;
+  data: unknown;
+}
+
+/** Structural equality for reading-extension data (JSON-serializable values). */
+function extensionDataMatches(left: unknown, right: unknown): boolean {
+  return JSON.stringify(left ?? null) === JSON.stringify(right ?? null);
+}
 
 /**
  * The shape each client publishes into the session's `user_profiles` map
@@ -152,6 +200,8 @@ const DEFAULT_SESSION_OPTIONS: SessionOptions = {
   hostUserId: null,
   highlightDurationSeconds: 16,
   endedAt: null,
+  shareTranslation: false,
+  coHostUserIds: [],
 };
 
 function getSessionDataSnapshot(
@@ -193,6 +243,7 @@ function getSessionOptionsFromMap(
 ): SessionOptions {
   const rawDuration = optionsMap.get("highlightDurationSeconds");
   const rawEndedAt = optionsMap.get("endedAt");
+  const rawShareTranslation = optionsMap.get("shareTranslation");
   return {
     allowedNavigators: toStringArrayOrNull(optionsMap.get("allowedNavigators")),
     allowedDecorators: toStringArrayOrNull(optionsMap.get("allowedDecorators")),
@@ -209,6 +260,11 @@ function getSessionOptionsFromMap(
       typeof rawEndedAt === "number" && Number.isFinite(rawEndedAt)
         ? rawEndedAt
         : null,
+    shareTranslation:
+      typeof rawShareTranslation === "boolean"
+        ? rawShareTranslation
+        : DEFAULT_SESSION_OPTIONS.shareTranslation,
+    coHostUserIds: toStringArrayOrNull(optionsMap.get("coHostUserIds")) ?? [],
   };
 }
 
@@ -236,7 +292,9 @@ function sessionOptionsMatch(
     stringArraysMatch(left.allowedDecorators, right.allowedDecorators) &&
     left.hostUserId === right.hostUserId &&
     left.highlightDurationSeconds === right.highlightDurationSeconds &&
-    left.endedAt === right.endedAt
+    left.endedAt === right.endedAt &&
+    left.shareTranslation === right.shareTranslation &&
+    stringArraysMatch(left.coHostUserIds, right.coHostUserIds)
   );
 }
 
@@ -310,10 +368,11 @@ function applySessionDataToReadingState(
 ) {
   if (readingState.translationId.value !== sessionData.translationId) {
     readingState.translationId.value =
-      sessionData.translationId ?? readingState.translationId.value;
+      sessionData.translationId ?? readingState.translationId.peek();
   }
   if (readingState.bookId.value !== sessionData.bookId) {
-    readingState.bookId.value = sessionData.bookId;
+    readingState.bookId.value =
+      sessionData.bookId ?? readingState.bookId.peek();
   }
   if (
     sessionData.chapterNumber !== null &&
@@ -494,19 +553,28 @@ async function createBibleReadingSession(
   loginManager: LoginManager,
   highlightsManager: HighlightsManager,
   i18nManager: I18nManager,
+  readingExtensionManager: BibleReadingExtensionManager | undefined,
   id: string,
   defaultOptions?: SessionOptions
 ): Promise<BibleReadingSession> {
   const readingState = createBibleReadingState(
     dataManager,
     highlightsManager,
-    i18nManager
+    i18nManager,
+    { isShared: true },
+    undefined,
+    readingExtensionManager
   );
   const document = await os.getSharedDocument(null, id, "session_data");
   const stateMap =
     document.getMap<SessionData[keyof SessionData]>("reading_state");
   const optionsMap = document.getMap<SessionOptionValue>("options");
   const decorationsMap = document.getMap<SessionDecorationValue>("decorations");
+  // Enabled reading extensions and their custom data, keyed by extension id.
+  // Enabling an extension (and editing its data) propagates to every
+  // participant, who auto-enables it when the extension is registered locally.
+  const extensionsMap =
+    document.getMap<SessionExtensionValue>("reading_extensions");
   // Per-connection identity broadcast. The OS doesn't re-emit
   // remoteClients events when a peer logs in or out, so without this map
   // joiners would forever see the userId/profile each peer had at connect
@@ -547,6 +615,12 @@ async function createBibleReadingSession(
           defaultOptions.highlightDurationSeconds
         );
       }
+      if (optionsMap.get("shareTranslation") === undefined) {
+        optionsMap.set("shareTranslation", defaultOptions.shareTranslation);
+      }
+      if (optionsMap.get("coHostUserIds") === undefined) {
+        optionsMap.set("coHostUserIds", defaultOptions.coHostUserIds);
+      }
     });
   }
 
@@ -558,8 +632,13 @@ async function createBibleReadingSession(
   let pendingRemoteTarget: SessionData | null = null;
   let remoteClientsVersion = 0;
   let applyingRemoteDecorations = false;
+  let applyingRemoteExtensions = false;
 
   const userCanNavigate = (sessionId: string): boolean => {
+    // Hosts and co-hosts may always navigate, even when restricted.
+    if (isSessionHost(options.value, sessionId)) {
+      return true;
+    }
     const { allowedNavigators } = options.value;
     if (!allowedNavigators || allowedNavigators.length === 0) {
       return true;
@@ -568,6 +647,10 @@ async function createBibleReadingSession(
   };
 
   const userCanDecorate = (sessionId: string): boolean => {
+    // Hosts and co-hosts may always decorate, even when restricted.
+    if (isSessionHost(options.value, sessionId)) {
+      return true;
+    }
     const { allowedDecorators } = options.value;
     if (!allowedDecorators || allowedDecorators.length === 0) {
       return true;
@@ -745,10 +828,24 @@ async function createBibleReadingSession(
     allUsers.value = Array.from(nextUsersByConnectionId.values());
   };
 
+  // When the translation isn't shared, keep the local reader on their own
+  // translation while still following the shared book/chapter/scroll. This
+  // substitutes the local translationId for whatever a peer navigated with.
+  const toEffectiveSessionData = (sessionData: SessionData): SessionData => {
+    if (options.value.shareTranslation) {
+      return sessionData;
+    }
+    return {
+      ...sessionData,
+      translationId: readingState.translationId.value,
+    };
+  };
+
   const syncReadingStateFromSessionData = async (
-    sessionData: SessionData,
+    rawSessionData: SessionData,
     version: number
   ) => {
+    const sessionData = toEffectiveSessionData(rawSessionData);
     if (!canLoadSessionData(sessionData)) {
       applyingRemoteState = true;
       try {
@@ -787,7 +884,7 @@ async function createBibleReadingSession(
 
     if (version !== syncVersion) {
       const latestSessionData = getSessionDataFromMap(stateMap);
-      if (canLoadSessionData(latestSessionData)) {
+      if (canLoadSessionData(toEffectiveSessionData(latestSessionData))) {
         const nextVersion = ++syncVersion;
         void syncReadingStateFromSessionData(latestSessionData, nextVersion);
       }
@@ -887,7 +984,18 @@ async function createBibleReadingSession(
       return;
     }
 
-    const nextSessionData = getSessionDataSnapshot(readingState);
+    const rawNextSessionData = getSessionDataSnapshot(readingState);
+    const currentSessionData = getSessionDataFromMap(stateMap);
+
+    // When the translation isn't shared, never publish our translationId —
+    // mask it with whatever is already in the shared map so a local
+    // translation change neither counts as a change nor gets written.
+    const nextSessionData = options.value.shareTranslation
+      ? rawNextSessionData
+      : {
+          ...rawNextSessionData,
+          translationId: currentSessionData.translationId,
+        };
 
     if (
       pendingRemoteTarget &&
@@ -895,8 +1003,6 @@ async function createBibleReadingSession(
     ) {
       return;
     }
-
-    const currentSessionData = getSessionDataFromMap(stateMap);
 
     if (sessionDataMatches(nextSessionData, currentSessionData)) {
       return;
@@ -993,6 +1099,108 @@ async function createBibleReadingSession(
     });
   });
 
+  // --- Reading-extension sync ---------------------------------------------
+  // Only wired when a reading-extension registry is available (always so in the
+  // app; omitted in some unit tests). When present, the enabled-extension set
+  // and each extension's data converge across all participants.
+  let stopExtensionSync: (() => void) | null = null;
+  let extensionsSubscription: { unsubscribe: () => void } | null = null;
+
+  if (readingExtensionManager) {
+    const registry = readingExtensionManager;
+
+    // Applies the shared enabled-extension set + data onto the local reading
+    // state. Extensions the local client hasn't registered are skipped.
+    const syncExtensionsFromSession = () => {
+      applyingRemoteExtensions = true;
+      try {
+        const remoteEntries = new Map<string, SessionExtensionValue>();
+        extensionsMap.forEach((value, key) => {
+          remoteEntries.set(key, value);
+        });
+
+        for (const [extensionId, value] of remoteEntries) {
+          if (!value || value.enabled === false) {
+            continue;
+          }
+          if (!registry.getReadingExtension(extensionId)) {
+            continue;
+          }
+          readingState.enableExtension(extensionId, value.data);
+        }
+
+        // Disable locally-enabled extensions no longer in the shared set.
+        for (const runtime of readingState.enabledExtensions.value) {
+          const remote = remoteEntries.get(runtime.id);
+          if (!remote || remote.enabled === false) {
+            readingState.disableExtension(runtime.id);
+          }
+        }
+      } finally {
+        applyingRemoteExtensions = false;
+      }
+    };
+
+    syncExtensionsFromSession();
+
+    // Mirror the local enabled-extension set + each extension's data into the
+    // shared map so every participant converges. Reading `runtime.data.value`
+    // here means data edits also propagate.
+    stopExtensionSync = effect(() => {
+      const snapshot = readingState.enabledExtensions.value.map((runtime) => ({
+        id: runtime.id,
+        data: runtime.data.value,
+      }));
+
+      if (applyingRemoteExtensions) {
+        return;
+      }
+
+      // Extension data (e.g. playlist queue/step) drives navigation just like
+      // ordinary chapter navigation, so it's gated by the same "only host can
+      // navigate" restriction as `stopSync` above — otherwise a restricted
+      // participant could still advance a playlist for everyone.
+      if (!userCanNavigate(localSessionId.value)) {
+        return;
+      }
+
+      const localIds = new Set(snapshot.map((entry) => entry.id));
+
+      const keysToDelete: string[] = [];
+      extensionsMap.forEach((_value, key) => {
+        if (!localIds.has(key)) {
+          keysToDelete.push(key);
+        }
+      });
+
+      const entriesToUpsert = snapshot.filter((entry) => {
+        const existing = extensionsMap.get(entry.id);
+        return (
+          !existing ||
+          existing.enabled !== true ||
+          !extensionDataMatches(existing.data, entry.data)
+        );
+      });
+
+      if (keysToDelete.length === 0 && entriesToUpsert.length === 0) {
+        return;
+      }
+
+      document.transact(() => {
+        for (const key of keysToDelete) {
+          extensionsMap.delete(key);
+        }
+        for (const entry of entriesToUpsert) {
+          extensionsMap.set(entry.id, { enabled: true, data: entry.data });
+        }
+      });
+    });
+
+    extensionsSubscription = extensionsMap.changes.subscribe(() => {
+      syncExtensionsFromSession();
+    });
+  }
+
   const updateOptions = (newOptions: Partial<SessionOptions>) => {
     const currentOptions = getSessionOptionsFromMap(optionsMap);
     const nextOptions: SessionOptions = {
@@ -1016,6 +1224,14 @@ async function createBibleReadingSession(
         typeof newOptions.endedAt === "undefined"
           ? currentOptions.endedAt
           : newOptions.endedAt,
+      shareTranslation:
+        typeof newOptions.shareTranslation === "undefined"
+          ? currentOptions.shareTranslation
+          : newOptions.shareTranslation,
+      coHostUserIds:
+        typeof newOptions.coHostUserIds === "undefined"
+          ? currentOptions.coHostUserIds
+          : newOptions.coHostUserIds,
     };
 
     if (sessionOptionsMatch(currentOptions, nextOptions)) {
@@ -1058,6 +1274,19 @@ async function createBibleReadingSession(
       if (currentOptions.endedAt !== nextOptions.endedAt) {
         optionsMap.set("endedAt", nextOptions.endedAt);
       }
+
+      if (currentOptions.shareTranslation !== nextOptions.shareTranslation) {
+        optionsMap.set("shareTranslation", nextOptions.shareTranslation);
+      }
+
+      if (
+        !stringArraysMatch(
+          currentOptions.coHostUserIds,
+          nextOptions.coHostUserIds
+        )
+      ) {
+        optionsMap.set("coHostUserIds", nextOptions.coHostUserIds);
+      }
     });
 
     if (!sessionOptionsMatch(options.value, nextOptions)) {
@@ -1097,10 +1326,12 @@ async function createBibleReadingSession(
     mapSubscription.unsubscribe();
     optionsSubscription.unsubscribe();
     decorationsSubscription.unsubscribe();
+    extensionsSubscription?.unsubscribe();
     userProfilesSubscription.unsubscribe();
     remoteClientsSubscription.unsubscribe();
     stopSync();
     stopDecorationSync();
+    stopExtensionSync?.();
     stopBroadcastLocalIdentity();
     // Drop our identity entry so peers' lookup for this connection no
     // longer resolves once we're gone.
@@ -1151,7 +1382,8 @@ export function createSessionsManager(
   dataManager: BibleDataManager,
   loginManager: LoginManager,
   highlightsManager: HighlightsManager,
-  i18nManager: I18nManager
+  i18nManager: I18nManager,
+  readingExtensionManager?: BibleReadingExtensionManager
 ): SessionsManager {
   const createSession = async () => {
     const id = createSessionId();
@@ -1164,6 +1396,7 @@ export function createSessionsManager(
       loginManager,
       highlightsManager,
       i18nManager,
+      readingExtensionManager,
       id,
       { ...DEFAULT_SESSION_OPTIONS, hostUserId }
     );
@@ -1176,6 +1409,7 @@ export function createSessionsManager(
       loginManager,
       highlightsManager,
       i18nManager,
+      readingExtensionManager,
       id
     );
   };

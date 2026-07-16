@@ -73,6 +73,16 @@ export default defineConfig(({ isSsrBuild }) => ({
               id: "seed-bible",
               name: "Seed Bible",
               short_name: "Seed Bible",
+              description: "A free, open-source Bible reader and study tool.",
+              lang: "en",
+              categories: [
+                "bible",
+                "study",
+                "christianity",
+                "religion",
+                "reference",
+                "education",
+              ],
               start_url: "/",
               display: "standalone",
               background_color: "#FFFFFF",
@@ -182,7 +192,6 @@ export default defineConfig(({ isSsrBuild }) => ({
         sourcemap: true,
       }
     : {
-        minify: false,
         // Client build: hashed assets + a manifest mapping the entry to its
         // emitted files. The SSR entry reads the manifest to emit the correct
         // <script>/<link> tags (prefixed with the CDN host).
@@ -217,6 +226,22 @@ export default defineConfig(({ isSsrBuild }) => ({
       "@packages": path.resolve(__dirname, "packages"),
       // ...moduleAliases,
     },
+    // Force a single preact instance across the host app and dynamically-loaded
+    // extensions. Two copies (the CasualOS SDK pulls in preact 10.28.4 while the
+    // app uses the catalog's 10.29.2) break hooks with
+    // "Cannot read properties of undefined (reading '__H')".
+    dedupe: [
+      "preact",
+      "preact/hooks",
+      "preact/compat",
+      "preact/jsx-runtime",
+      "@preact/signals",
+      "@preact/signals-core",
+      "prosemirror-model",
+      "prosemirror-state",
+      "prosemirror-transform",
+      "prosemirror-view",
+    ],
   },
 
   test: {

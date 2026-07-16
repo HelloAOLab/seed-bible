@@ -1,585 +1,759 @@
 import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
-import {
-  createTabs,
-  type ReaderTab,
-} from "@packages/seed-bible/seed-bible/managers/TabsManager";
-import { createBibleDataManager } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
-import type { BibleReadingState } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
-import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
-import {
-  EXAMPLE_API_ENDPOINT,
-  type WebResponseMap,
-  createExampleManagerResponseMap,
-} from "./testUtils/mockBibleApiData";
 import { signal } from "@preact/signals";
-import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
-import type { Mock } from "vitest";
-import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
+import type { ComponentChild } from "preact";
 
-let fetchMock: Mock;
-let logSpy: Mock;
-const originalFetch = globalThis.fetch;
-
-beforeEach(() => {
-  fetchMock = vi.fn();
-  logSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
-
-  globalThis.fetch = fetchMock;
-});
-
-afterEach(() => {
-  logSpy.mockRestore();
-  globalThis.fetch = originalFetch;
-});
-
-function setWebResponses(responses: WebResponseMap): void {
-  fetchMock.mockImplementation((url: string) => {
-    const response = responses[url];
-    if (!response) {
-      throw new Error(`No mocked response for ${url}`);
-    }
-    return Promise.resolve(response);
-  });
-}
-
-function createApi(): FreeUseBibleAPI {
-  return new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT);
-}
-
-function createDataManager() {
-  return createBibleDataManager(createApi());
-}
-
-function createHighlightsManagerMock() {
-  return {
-    getChapterHighlights: vi.fn().mockReturnValue(signal({ highlights: [] })),
-  };
-}
-
-async function waitFor(
-  condition: () => boolean,
-  timeoutMs = 1000
-): Promise<void> {
-  const start = Date.now();
-  while (!condition()) {
-    if (Date.now() - start > timeoutMs) {
-      throw new Error("Timed out waiting for condition.");
-    }
-    await new Promise((resolve) => setTimeout(resolve, 0));
-  }
-}
-
-async function waitForInitialLoad(state: BibleReadingState): Promise<void> {
-  await waitFor(() => state.loading.value === false);
-}
-
-async function waitForTabsToLoad(tabs: ReaderTab[]): Promise<void> {
-  await Promise.all(tabs.map((tab) => waitForInitialLoad(tab.readingState)));
-}
-
-async function createManagers(options: { extraTabs?: number } = {}) {
-  setWebResponses(createExampleManagerResponseMap());
-  const navigation = createNavigationManager();
-  const tabsManager = createTabs(
-    navigation,
-    createDataManager(),
-    createHighlightsManagerMock() as any,
-    {} as any,
-    createI18nManager(navigation, ["en"])
-  );
-  await waitForTabsToLoad(tabsManager.tabs.value);
-  const initialSelectedTabId = tabsManager.selectedTabId.value;
-  const extraTabs = options.extraTabs ?? 0;
-  for (let i = 0; i < extraTabs; i++) {
-    const extraTab = tabsManager.addTab();
-    await waitForInitialLoad(extraTab.readingState);
-  }
-  if (extraTabs > 0) {
-    tabsManager.selectTab(initialSelectedTabId);
-  }
-  const panesManager = createPanes(tabsManager, tabsManager.selectedTabId);
-  return { tabsManager, panesManager };
+function componentReturning(value: string): () => ComponentChild {
+  return () => value;
 }
 
 describe("createPanes", () => {
-  it("automatically creates a pane for the initial tab", async () => {
-    const { tabsManager, panesManager } = await createManagers();
+  it("starts with no panes and no selection", () => {
+    const panes = createPanes();
 
-    expect(panesManager.panes.value).toHaveLength(1);
-    expect(panesManager.panes.value[0]?.tab?.id).toBe(
-      tabsManager.selectedTabId.value
-    );
-    expect(panesManager.selectedPaneId.value).toBe(
-      panesManager.panes.value[0]?.id ?? null
-    );
+    expect(panes.panes.value).toHaveLength(0);
+    expect(panes.selectedPaneId.value).toBeNull();
   });
 
-  it("supports selecting a pane", async () => {
-    const { panesManager } = await createManagers();
+  describe("openPane placement: floating", () => {
+    it("creates a floating pane and selects it", () => {
+      const panes = createPanes();
 
-    panesManager.setLayout("split-2v");
-    const secondPane = panesManager.panes.value[1]!;
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes Component"),
+      });
 
-    panesManager.selectPane(secondPane.id);
-
-    expect(panesManager.selectedPaneId.value).toBe(secondPane.id);
-  });
-
-  it("supports selecting a pane by tab id", async () => {
-    const { tabsManager, panesManager } = await createManagers({
-      extraTabs: 1,
+      expect(panes.panes.value).toHaveLength(1);
+      expect(pane.placement).toBe("floating");
+      expect(pane.title).toBe("Notes");
+      expect(pane.component()).toBe("Notes Component");
+      expect(panes.selectedPaneId.value).toBe(pane.id);
     });
 
-    panesManager.setLayout("split-2v");
-    const secondPane = panesManager.panes.value[1]!;
-    panesManager.selectPane(secondPane.id);
-    panesManager.setSelectedPaneTab("tab-2");
+    it("stores a render-function title as-is", () => {
+      const panes = createPanes();
 
-    expect(
-      panesManager.panes.value.find((pane) => pane.id === secondPane.id)?.tab
-        ?.id
-    ).toBe("tab-2");
-    expect(tabsManager.tabs.value.some((tab) => tab.id === "tab-2")).toBe(true);
-  });
+      const title = componentReturning("Rendered Title");
+      const pane = panes.openPane({
+        placement: "floating",
+        title,
+        component: componentReturning("Body"),
+      });
 
-  it("redirects setSelectedPaneTab to a tab-backed pane when the selected pane is component-backed", async () => {
-    const { panesManager } = await createManagers({ extraTabs: 1 });
-
-    panesManager.setLayout("split-2v");
-    const [firstPane, secondPane] = panesManager.panes.value;
-
-    // Make the selected pane component-backed.
-    panesManager.openInPane(secondPane!.id, {
-      component: () => "Test Component",
-    });
-    panesManager.selectPane(secondPane!.id);
-
-    panesManager.setSelectedPaneTab("tab-2");
-
-    // The component pane must be left untouched...
-    const componentPane = panesManager.panes.value.find(
-      (pane) => pane.id === secondPane!.id
-    );
-    expect(componentPane?.component?.()).toBe("Test Component");
-    expect(componentPane?.tab).toBeNull();
-
-    // ...and the tab must land on the other, tab-backed pane instead.
-    const tabPane = panesManager.panes.value.find(
-      (pane) => pane.id === firstPane!.id
-    );
-    expect(tabPane?.tab?.id).toBe("tab-2");
-  });
-
-  it("does nothing when the selected pane is component-backed and no tab-backed pane exists", async () => {
-    const { panesManager } = await createManagers({ extraTabs: 1 });
-
-    const onlyPane = panesManager.panes.value[0]!;
-    panesManager.openInPane(onlyPane.id, {
-      component: () => "Test Component",
+      expect(typeof pane.title).toBe("function");
+      expect(pane.title).toBe(title);
     });
 
-    panesManager.setSelectedPaneTab("tab-2");
+    it("allows multiple floating panes to coexist, stacked/offset from one another", () => {
+      const panes = createPanes();
 
-    const pane = panesManager.panes.value.find((p) => p.id === onlyPane.id);
-    expect(pane?.component?.()).toBe("Test Component");
-    expect(pane?.tab).toBeNull();
-    expect(panesManager.panes.value.some((p) => p.tab?.id === "tab-2")).toBe(
-      false
-    );
+      const first = panes.openPane({
+        placement: "floating",
+        title: "First",
+        component: componentReturning("First"),
+      });
+      const second = panes.openPane({
+        placement: "floating",
+        title: "Second",
+        component: componentReturning("Second"),
+      });
+
+      expect(panes.panes.value).toHaveLength(2);
+      expect(panes.panes.value.map((pane) => pane.id)).toEqual([
+        first.id,
+        second.id,
+      ]);
+      // Each new floating pane is offset from the previous one so stacked
+      // panes don't sit exactly on top of each other.
+      expect(second.x).toBeGreaterThan(first.x);
+      expect(second.y).toBeGreaterThan(first.y);
+    });
   });
 
-  it("supports opening content in an existing pane", async () => {
-    const { tabsManager, panesManager } = await createManagers();
+  describe("openPane placement: side", () => {
+    it("creates a side pane", () => {
+      const panes = createPanes();
 
-    const nextTab = tabsManager.addTab();
-    await waitForInitialLoad(nextTab.readingState);
-    panesManager.setLayout("split-2v");
-    const secondPane = panesManager.panes.value[1]!;
+      const pane = panes.openPane({
+        placement: "side",
+        title: "Side Panel",
+        component: componentReturning("Side Component"),
+      });
 
-    const result = panesManager.openInPane(secondPane.id, {
-      tabId: nextTab.id,
+      expect(pane.placement).toBe("side");
+      expect(panes.panes.value).toHaveLength(1);
     });
 
-    expect(result).toBe(true);
-    expect(
-      panesManager.panes.value.find((pane) => pane.id === secondPane.id)?.tab
-        ?.id
-    ).toBe(nextTab.id);
-  });
+    it("replaces an existing side pane when a new one is opened", () => {
+      const panes = createPanes();
 
-  it("supports opening a component in an existing pane", async () => {
-    const { panesManager } = await createManagers();
+      const firstSide = panes.openPane({
+        placement: "side",
+        title: "First Side",
+        component: componentReturning("First Side"),
+      });
+      const secondSide = panes.openPane({
+        placement: "side",
+        title: "Second Side",
+        component: componentReturning("Second Side"),
+      });
 
-    const selectedPaneId = panesManager.selectedPaneId.value!;
-    const result = panesManager.openInPane(selectedPaneId, {
-      component: () => "Test Component",
+      expect(panes.panes.value).toHaveLength(1);
+      expect(panes.panes.value.some((pane) => pane.id === firstSide.id)).toBe(
+        false
+      );
+      expect(panes.panes.value.some((pane) => pane.id === secondSide.id)).toBe(
+        true
+      );
     });
 
-    expect(result).toBe(true);
-    const selectedPane = panesManager.panes.value.find(
-      (pane) => pane.id === selectedPaneId
-    );
-    expect(selectedPane?.component?.()).toBe("Test Component");
-    expect(selectedPane?.tab).toBeNull();
+    it("does not close a floating pane when replacing the side pane", () => {
+      const panes = createPanes();
+
+      const floating = panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+      });
+      panes.openPane({
+        placement: "side",
+        title: "First Side",
+        component: componentReturning("First Side"),
+      });
+      panes.openPane({
+        placement: "side",
+        title: "Second Side",
+        component: componentReturning("Second Side"),
+      });
+
+      expect(panes.panes.value.some((pane) => pane.id === floating.id)).toBe(
+        true
+      );
+      expect(
+        panes.panes.value.filter((pane) => pane.placement === "side")
+      ).toHaveLength(1);
+    });
   });
 
-  it("rejects detaching the only attached pane", async () => {
-    const { panesManager } = await createManagers();
+  describe("openPane placement: fullscreen", () => {
+    it("closes all other panes when a fullscreen pane is opened", () => {
+      const panes = createPanes();
 
-    const result = panesManager.setDetached(
-      panesManager.panes.value[0]!.id,
-      true
-    );
+      panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+      });
+      panes.openPane({
+        placement: "side",
+        title: "Side",
+        component: componentReturning("Side"),
+      });
+      const fullscreen = panes.openPane({
+        placement: "fullscreen",
+        title: "Fullscreen",
+        component: componentReturning("Fullscreen"),
+      });
 
-    expect(result).toBe(false);
-    expect(panesManager.panes.value[0]?.detached).toBe(false);
-  });
-
-  it("supports opening a tab in a new attached pane", async () => {
-    const { panesManager } = await createManagers({ extraTabs: 1 });
-
-    const result = panesManager.openPane({
-      type: "attached",
-      tabId: "tab-2",
+      expect(panes.panes.value).toHaveLength(1);
+      expect(panes.panes.value[0]?.id).toBe(fullscreen.id);
+      expect(panes.selectedPaneId.value).toBe(fullscreen.id);
     });
 
-    expect(result).not.toBeNull();
-    expect(result?.tab?.id).toBe("tab-2");
-    expect(panesManager.panes.value).toHaveLength(2);
-    expect(panesManager.layout.value).toBe("split-2v");
-  });
+    it("closes the previous fullscreen pane when a new one is opened", () => {
+      const panes = createPanes();
 
-  it("supports opening a tab in a detached pane", async () => {
-    const { panesManager } = await createManagers({ extraTabs: 1 });
+      const first = panes.openPane({
+        placement: "fullscreen",
+        title: "First",
+        component: componentReturning("First"),
+      });
+      const second = panes.openPane({
+        placement: "fullscreen",
+        title: "Second",
+        component: componentReturning("Second"),
+      });
 
-    const result = panesManager.openPane({
-      type: "detached",
-      tabId: "tab-2",
+      expect(panes.panes.value).toHaveLength(1);
+      expect(panes.panes.value.some((pane) => pane.id === first.id)).toBe(
+        false
+      );
+      expect(panes.panes.value.some((pane) => pane.id === second.id)).toBe(
+        true
+      );
     });
 
-    expect(result).not.toBeNull();
-    expect(result?.tab?.id).toBe("tab-2");
-    expect(result?.detached).toBe(true);
+    it("closes other panes when an existing fullscreen pane is reused by id", () => {
+      const panes = createPanes();
+
+      panes.openPane({
+        id: "fullscreen-pane",
+        placement: "fullscreen",
+        title: "Fullscreen",
+        component: componentReturning("Fullscreen"),
+      });
+      // A floating pane opened afterwards coexists with nothing else here.
+      panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+      });
+
+      const reused = panes.openPane({
+        id: "fullscreen-pane",
+        placement: "fullscreen",
+        title: "Fullscreen Updated",
+        component: componentReturning("Fullscreen Updated"),
+      });
+
+      expect(panes.panes.value).toHaveLength(1);
+      expect(panes.panes.value[0]?.id).toBe(reused.id);
+      expect(reused.title).toBe("Fullscreen Updated");
+    });
   });
 
-  it("supports opening a detached pane with a component", async () => {
-    const { panesManager } = await createManagers();
+  describe("openPane on a mobile viewport", () => {
+    it("closes other panes when any pane is opened, since panes display fullscreen", () => {
+      const isMobile = signal(true);
+      const panes = createPanes(isMobile);
 
-    const result = panesManager.openPane({
-      type: "detached",
-      component: () => "Detached Component",
+      panes.openPane({
+        placement: "floating",
+        title: "First",
+        component: componentReturning("First"),
+      });
+      const second = panes.openPane({
+        placement: "floating",
+        title: "Second",
+        component: componentReturning("Second"),
+      });
+
+      expect(panes.panes.value).toHaveLength(1);
+      expect(panes.panes.value[0]?.id).toBe(second.id);
     });
 
-    expect(result).not.toBeNull();
-    expect(result?.component?.()).toBe("Detached Component");
-    expect(result?.detached).toBe(true);
+    it("leaves the pane's stored placement unchanged", () => {
+      const isMobile = signal(true);
+      const panes = createPanes(isMobile);
+
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+      });
+
+      expect(pane.placement).toBe("floating");
+      expect(panes.panes.value[0]?.placement).toBe("floating");
+    });
   });
 
-  it("supports opening a grid portal pane", async () => {
-    const { panesManager } = await createManagers();
+  describe("openPane with a stable custom id", () => {
+    it("creates a pane using the provided id", () => {
+      const panes = createPanes();
 
-    const result = panesManager.openPane({
-      type: "attached",
-      gridPortal: "home",
+      const pane = panes.openPane({
+        id: "my-custom-pane",
+        placement: "floating",
+        title: "Custom",
+        component: componentReturning("Custom"),
+      });
+
+      expect(pane.id).toBe("my-custom-pane");
+      expect(
+        panes.panes.value.find((p) => p.id === "my-custom-pane")
+      ).toBeDefined();
     });
 
-    expect(result).not.toBeNull();
-    expect(result?.gridPortal).toBe("home");
-    expect(result?.mapPortal).toBeNull();
+    it("reuses the existing pane and updates its title/component instead of creating a duplicate", () => {
+      const panes = createPanes();
+
+      panes.openPane({
+        id: "reusable-pane",
+        placement: "floating",
+        title: "First Title",
+        component: componentReturning("First Content"),
+      });
+
+      const result = panes.openPane({
+        id: "reusable-pane",
+        placement: "floating",
+        title: "Updated Title",
+        component: componentReturning("Updated Content"),
+      });
+
+      expect(result.id).toBe("reusable-pane");
+      expect(result.title).toBe("Updated Title");
+      expect(result.component()).toBe("Updated Content");
+      expect(
+        panes.panes.value.filter((pane) => pane.id === "reusable-pane")
+      ).toHaveLength(1);
+    });
+
+    it("does not change the placement of an existing pane on a second call, even when a different placement is requested", () => {
+      const panes = createPanes();
+
+      panes.openPane({
+        id: "reusable-pane",
+        placement: "side",
+        title: "First Title",
+        component: componentReturning("First Content"),
+      });
+
+      const result = panes.openPane({
+        id: "reusable-pane",
+        placement: "floating",
+        title: "Updated Title",
+        component: componentReturning("Updated Content"),
+      });
+
+      // PanesManager's openPane only updates title/component on reuse; the
+      // options.placement passed on the second call is ignored entirely.
+      expect(result.placement).toBe("side");
+    });
+
+    it("selects the reused pane", () => {
+      const panes = createPanes();
+
+      panes.openPane({
+        id: "reusable-pane",
+        placement: "floating",
+        title: "First",
+        component: componentReturning("First"),
+      });
+      const otherPane = panes.openPane({
+        placement: "floating",
+        title: "Other",
+        component: componentReturning("Other"),
+      });
+      expect(panes.selectedPaneId.value).toBe(otherPane.id);
+
+      const result = panes.openPane({
+        id: "reusable-pane",
+        placement: "floating",
+        title: "Updated",
+        component: componentReturning("Updated"),
+      });
+
+      expect(panes.selectedPaneId.value).toBe(result.id);
+    });
   });
 
-  it("supports replacing a grid portal pane with a map portal pane", async () => {
-    const { panesManager } = await createManagers();
+  describe("custom header", () => {
+    it("leaves header undefined when none is provided", () => {
+      const panes = createPanes();
 
-    panesManager.openPane({
-      type: "attached",
-      gridPortal: "home",
-    });
-    const gridPane = panesManager.panes.value.find(
-      (pane) => pane.gridPortal === "home"
-    )!;
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+      });
 
-    const result = panesManager.openInPane(gridPane.id, {
-      mapPortal: "map_portal",
+      expect(pane.header).toBeUndefined();
     });
 
-    expect(result).toBe(true);
-    expect(
-      panesManager.panes.value.some((pane) => pane.gridPortal !== null)
-    ).toBe(false);
-    expect(
-      panesManager.panes.value.some((pane) => pane.mapPortal === "map_portal")
-    ).toBe(true);
+    it("stores the header render function on the pane", () => {
+      const panes = createPanes();
+
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+        header: componentReturning("Header Buttons"),
+      });
+
+      expect(pane.header?.()).toBe("Header Buttons");
+      expect(panes.panes.value[0]?.header?.()).toBe("Header Buttons");
+    });
+
+    it("updates the header when a pane is reused by id", () => {
+      const panes = createPanes();
+
+      panes.openPane({
+        id: "reusable-pane",
+        placement: "floating",
+        title: "First",
+        component: componentReturning("First"),
+        header: componentReturning("First Header"),
+      });
+
+      const result = panes.openPane({
+        id: "reusable-pane",
+        placement: "floating",
+        title: "Second",
+        component: componentReturning("Second"),
+        header: componentReturning("Second Header"),
+      });
+
+      expect(result.header?.()).toBe("Second Header");
+    });
+
+    it("clears the header when a pane is reused without one", () => {
+      const panes = createPanes();
+
+      panes.openPane({
+        id: "reusable-pane",
+        placement: "floating",
+        title: "First",
+        component: componentReturning("First"),
+        header: componentReturning("First Header"),
+      });
+
+      const result = panes.openPane({
+        id: "reusable-pane",
+        placement: "floating",
+        title: "Second",
+        component: componentReturning("Second"),
+      });
+
+      expect(result.header).toBeUndefined();
+    });
   });
 
-  it("supports multiple attached panes each with their own grid/map portal", async () => {
-    const { panesManager } = await createManagers();
+  describe("closePane", () => {
+    it("removes the pane and returns true", () => {
+      const panes = createPanes();
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+      });
 
-    panesManager.openPane({
-      type: "attached",
-      gridPortal: "home",
-    });
-    panesManager.openPane({
-      type: "attached",
-      mapPortal: "map_portal",
-    });
+      const result = panes.closePane(pane.id);
 
-    const portalPanes = panesManager.panes.value.filter(
-      (pane) => pane.gridPortal !== null || pane.mapPortal !== null
-    );
-
-    // Opening a second portal pane no longer clears the first one.
-    expect(
-      panesManager.panes.value.some((pane) => pane.gridPortal === "home")
-    ).toBe(true);
-    expect(
-      panesManager.panes.value.some((pane) => pane.mapPortal === "map_portal")
-    ).toBe(true);
-    expect(portalPanes).toHaveLength(2);
-  });
-
-  it("supports changing the layout", async () => {
-    const { panesManager } = await createManagers();
-
-    panesManager.setLayout("grid-2x2");
-
-    expect(panesManager.layout.value).toBe("grid-2x2");
-    expect(
-      panesManager.panes.value.filter((pane) => !pane.detached)
-    ).toHaveLength(4);
-  });
-
-  it("keeps panes in place when re-applying a layout with a non-first pane selected", async () => {
-    const { panesManager } = await createManagers({ extraTabs: 1 });
-
-    panesManager.openPane({ type: "attached", tabId: "tab-2" });
-    const attachedBefore = panesManager.panes.value.filter(
-      (pane) => !pane.detached
-    );
-    const firstPaneId = attachedBefore[0]!.id;
-    const firstPaneTabId = attachedBefore[0]!.tab?.id;
-
-    // Select the second (right) pane, then re-apply the same layout. The
-    // content must not jump to the first slot, otherwise clicking the first
-    // pane would select the wrong tab.
-    panesManager.selectPane(attachedBefore[1]!.id);
-    panesManager.setLayout("split-2v");
-
-    const attachedAfter = panesManager.panes.value.filter(
-      (pane) => !pane.detached
-    );
-    expect(attachedAfter[0]!.id).toBe(firstPaneId);
-    expect(attachedAfter[0]!.tab?.id).toBe(firstPaneTabId);
-  });
-
-  it("keeps the selected pane's content when shrinking the layout", async () => {
-    const { panesManager } = await createManagers({ extraTabs: 1 });
-
-    panesManager.openPane({ type: "attached", tabId: "tab-2" });
-    const secondPane = panesManager.panes.value.find(
-      (pane) => pane.tab?.id === "tab-2"
-    )!;
-    panesManager.selectPane(secondPane.id);
-
-    // Collapsing to a single slot should retain the focused pane's tab.
-    panesManager.setLayout("single");
-
-    const attached = panesManager.panes.value.filter((pane) => !pane.detached);
-    expect(attached).toHaveLength(1);
-    expect(attached[0]!.tab?.id).toBe("tab-2");
-  });
-
-  it("supports detaching and reattaching a pane", async () => {
-    const { panesManager } = await createManagers({ extraTabs: 1 });
-
-    panesManager.openPane({
-      type: "attached",
-      tabId: "tab-2",
-    });
-    const secondPane = panesManager.panes.value.find(
-      (pane) => pane.tab?.id === "tab-2"
-    )!;
-
-    const detachResult = panesManager.setDetached(secondPane.id, true);
-
-    expect(detachResult).toBe(true);
-    expect(
-      panesManager.panes.value.find((pane) => pane.id === secondPane.id)
-        ?.detached
-    ).toBe(true);
-    expect(panesManager.layout.value).toBe("single");
-
-    const attachResult = panesManager.setDetached(secondPane.id, false);
-
-    expect(attachResult).toBe(true);
-    expect(
-      panesManager.panes.value.find((pane) => pane.id === secondPane.id)
-        ?.detached
-    ).toBe(false);
-    expect(panesManager.layout.value).toBe("split-2v");
-  });
-
-  it("supports closing detached panes", async () => {
-    const { panesManager } = await createManagers();
-
-    panesManager.openPane({
-      type: "detached",
-      component: () => "Detached Component",
-    });
-    const detachedPane = panesManager.panes.value.find(
-      (pane) => pane.component?.() === "Detached Component"
-    )!;
-
-    const result = panesManager.closePane(detachedPane.id);
-
-    expect(result).toBe(true);
-    expect(
-      panesManager.panes.value.some((pane) => pane.id === detachedPane.id)
-    ).toBe(false);
-  });
-
-  it("supports closing attached panes by shrinking the layout", async () => {
-    const { panesManager } = await createManagers({ extraTabs: 1 });
-
-    panesManager.openPane({
-      type: "attached",
-      tabId: "tab-2",
-    });
-    const secondPane = panesManager.panes.value.find(
-      (pane) => pane.tab?.id === "tab-2"
-    )!;
-
-    const result = panesManager.closePane(secondPane.id);
-
-    expect(result).toBe(true);
-    expect(panesManager.layout.value).toBe("single");
-    expect(
-      panesManager.panes.value.filter((pane) => !pane.detached)
-    ).toHaveLength(1);
-  });
-
-  it("rejects closing the only attached pane", async () => {
-    const { panesManager } = await createManagers();
-
-    const result = panesManager.closePane(panesManager.panes.value[0]!.id);
-
-    expect(result).toBe(false);
-    expect(
-      panesManager.panes.value.filter((pane) => !pane.detached)
-    ).toHaveLength(1);
-  });
-
-  it("supports moving detached panes", async () => {
-    const { panesManager } = await createManagers();
-
-    panesManager.openPane({
-      type: "detached",
-      component: () => "Detached Component",
-    });
-    const detachedPane = panesManager.panes.value.find(
-      (pane) => pane.component?.() === "Detached Component"
-    )!;
-
-    panesManager.movePane(detachedPane.id, 10, 20);
-
-    const movedPane = panesManager.panes.value.find(
-      (pane) => pane.id === detachedPane.id
-    );
-    expect(movedPane?.x).toBe(detachedPane.x + 10);
-    expect(movedPane?.y).toBe(detachedPane.y + 20);
-  });
-
-  it("supports resizing detached panes", async () => {
-    const { panesManager } = await createManagers();
-
-    panesManager.openPane({
-      type: "detached",
-      component: () => "Detached Component",
-    });
-    const detachedPane = panesManager.panes.value.find(
-      (pane) => pane.component?.() === "Detached Component"
-    )!;
-
-    panesManager.resizePane(detachedPane.id, 50, 60);
-
-    const resizedPane = panesManager.panes.value.find(
-      (pane) => pane.id === detachedPane.id
-    );
-    expect(resizedPane?.width).toBe(detachedPane.width + 50);
-    expect(resizedPane?.height).toBe(detachedPane.height + 60);
-  });
-
-  it("creates an attached pane with a stable custom ID", async () => {
-    const { panesManager } = await createManagers();
-
-    const result = panesManager.openPane({
-      type: "attached",
-      id: "my-custom-pane",
-      component: () => "Custom ID Pane",
+      expect(result).toBe(true);
+      expect(panes.panes.value.some((p) => p.id === pane.id)).toBe(false);
     });
 
-    expect(result).not.toBeNull();
-    expect(result?.id).toBe("my-custom-pane");
-    expect(
-      panesManager.panes.value.find((pane) => pane.id === "my-custom-pane")
-    ).toBeDefined();
+    it("returns false for an unknown pane id", () => {
+      const panes = createPanes();
+
+      const result = panes.closePane("does-not-exist");
+
+      expect(result).toBe(false);
+    });
+
+    it("returns false when closing an already-closed pane", () => {
+      const panes = createPanes();
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+      });
+
+      panes.closePane(pane.id);
+      const result = panes.closePane(pane.id);
+
+      expect(result).toBe(false);
+    });
   });
 
-  it("creates a detached pane with a stable custom ID", async () => {
-    const { panesManager } = await createManagers();
+  describe("selectPane / selectedPaneId", () => {
+    it("selects a pane by id", () => {
+      const panes = createPanes();
+      const first = panes.openPane({
+        placement: "floating",
+        title: "First",
+        component: componentReturning("First"),
+      });
+      panes.openPane({
+        placement: "floating",
+        title: "Second",
+        component: componentReturning("Second"),
+      });
 
-    const result = panesManager.openPane({
-      type: "detached",
-      id: "my-detached-pane",
-      component: () => "Detached Custom ID",
+      panes.selectPane(first.id);
+
+      expect(panes.selectedPaneId.value).toBe(first.id);
     });
 
-    expect(result).not.toBeNull();
-    expect(result?.id).toBe("my-detached-pane");
-    expect(result?.detached).toBe(true);
+    it("ignores selecting an unknown pane id", () => {
+      const panes = createPanes();
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "First",
+        component: componentReturning("First"),
+      });
+
+      panes.selectPane("does-not-exist");
+
+      expect(panes.selectedPaneId.value).toBe(pane.id);
+    });
+
+    it("keeps the selection when a different pane is closed", () => {
+      const panes = createPanes();
+      const first = panes.openPane({
+        placement: "floating",
+        title: "First",
+        component: componentReturning("First"),
+      });
+      const second = panes.openPane({
+        placement: "floating",
+        title: "Second",
+        component: componentReturning("Second"),
+      });
+      panes.selectPane(first.id);
+
+      panes.closePane(second.id);
+
+      expect(panes.selectedPaneId.value).toBe(first.id);
+    });
+
+    it("falls back to the last remaining pane when the selected pane is closed", () => {
+      const panes = createPanes();
+      panes.openPane({
+        placement: "floating",
+        title: "First",
+        component: componentReturning("First"),
+      });
+      const second = panes.openPane({
+        placement: "floating",
+        title: "Second",
+        component: componentReturning("Second"),
+      });
+      const third = panes.openPane({
+        placement: "floating",
+        title: "Third",
+        component: componentReturning("Third"),
+      });
+      panes.selectPane(third.id);
+
+      panes.closePane(third.id);
+
+      // syncPaneState's fallback picks the last pane in the list, not the
+      // first, when the previously-selected pane is gone.
+      expect(panes.selectedPaneId.value).toBe(second.id);
+    });
+
+    it("clears the selection when the last pane is closed", () => {
+      const panes = createPanes();
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Only",
+        component: componentReturning("Only"),
+      });
+
+      panes.closePane(pane.id);
+
+      expect(panes.selectedPaneId.value).toBeNull();
+    });
   });
 
-  it("reuses an existing pane when its ID is provided", async () => {
-    const { panesManager } = await createManagers();
+  describe("setPanePosition", () => {
+    it("updates the position of a floating pane", () => {
+      const panes = createPanes();
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+      });
 
-    panesManager.openPane({
-      type: "attached",
-      id: "reusable-pane",
-      component: () => "First Content",
+      panes.setPanePosition(pane.id, 120, 240);
+
+      const moved = panes.panes.value.find((p) => p.id === pane.id);
+      expect(moved?.x).toBe(120);
+      expect(moved?.y).toBe(240);
     });
 
-    const result = panesManager.openPane({
-      type: "attached",
-      id: "reusable-pane",
-      component: () => "Updated Content",
+    it("never positions a floating pane above/left of the origin", () => {
+      const panes = createPanes();
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+      });
+
+      panes.setPanePosition(pane.id, -500, -500);
+
+      const moved = panes.panes.value.find((p) => p.id === pane.id);
+      expect(moved?.x).toBe(0);
+      expect(moved?.y).toBe(0);
     });
 
-    expect(result?.id).toBe("reusable-pane");
-    expect(result?.component?.()).toBe("Updated Content");
-    expect(
-      panesManager.panes.value.filter((pane) => pane.id === "reusable-pane")
-    ).toHaveLength(1);
+    it("does not move a side pane", () => {
+      const panes = createPanes();
+      const pane = panes.openPane({
+        placement: "side",
+        title: "Side",
+        component: componentReturning("Side"),
+      });
+      const originalX = pane.x;
+      const originalY = pane.y;
+
+      panes.setPanePosition(pane.id, 300, 300);
+
+      const unchanged = panes.panes.value.find((p) => p.id === pane.id);
+      expect(unchanged?.x).toBe(originalX);
+      expect(unchanged?.y).toBe(originalY);
+    });
+
+    it("does not move a fullscreen pane", () => {
+      const panes = createPanes();
+      const pane = panes.openPane({
+        placement: "fullscreen",
+        title: "Full",
+        component: componentReturning("Full"),
+      });
+      const originalX = pane.x;
+      const originalY = pane.y;
+
+      panes.setPanePosition(pane.id, 300, 300);
+
+      const unchanged = panes.panes.value.find((p) => p.id === pane.id);
+      expect(unchanged?.x).toBe(originalX);
+      expect(unchanged?.y).toBe(originalY);
+    });
   });
 
-  it("does not create a duplicate pane when reusing an ID", async () => {
-    const { panesManager } = await createManagers({ extraTabs: 1 });
-    const initialPaneCount = panesManager.panes.value.length;
+  describe("resizePane", () => {
+    it("resizes a side pane's width only, ignoring height deltas", () => {
+      const panes = createPanes();
+      const pane = panes.openPane({
+        placement: "side",
+        title: "Side",
+        component: componentReturning("Side"),
+      });
+      const originalHeight = pane.height;
 
-    panesManager.openPane({
-      type: "attached",
-      id: "stable-pane",
-      tabId: "tab-2",
+      panes.resizePane(pane.id, 50, 60, 1);
+
+      const resized = panes.panes.value.find((p) => p.id === pane.id);
+      expect(resized?.width).toBe(pane.width + 50);
+      expect(resized?.height).toBe(originalHeight);
     });
 
-    const afterFirst = panesManager.panes.value.length;
+    it("clamps a side pane's width to a 320px minimum", () => {
+      const panes = createPanes();
+      const pane = panes.openPane({
+        placement: "side",
+        title: "Side",
+        component: componentReturning("Side"),
+      });
 
-    panesManager.openPane({
-      type: "attached",
-      id: "stable-pane",
-      tabId: "tab-1",
+      panes.resizePane(pane.id, -10000, 0, 1);
+
+      const resized = panes.panes.value.find((p) => p.id === pane.id);
+      expect(resized?.width).toBe(320);
     });
 
-    expect(panesManager.panes.value.length).toBe(afterFirst);
-    expect(panesManager.panes.value.length).toBeGreaterThan(initialPaneCount);
+    it("resizes both width and height for a floating pane", () => {
+      const panes = createPanes();
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+      });
+
+      panes.resizePane(pane.id, 50, 60, 1);
+
+      const resized = panes.panes.value.find((p) => p.id === pane.id);
+      expect(resized?.width).toBe(pane.width + 50);
+      expect(resized?.height).toBe(pane.height + 60);
+    });
+
+    it("clamps a floating pane's width to 280px and height to 180px minimums", () => {
+      const panes = createPanes();
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+      });
+
+      panes.resizePane(pane.id, -10000, -10000, 1);
+
+      const resized = panes.panes.value.find((p) => p.id === pane.id);
+      expect(resized?.width).toBe(280);
+      expect(resized?.height).toBe(180);
+    });
+
+    it("does not resize a fullscreen pane", () => {
+      const panes = createPanes();
+      const pane = panes.openPane({
+        placement: "fullscreen",
+        title: "Full",
+        component: componentReturning("Full"),
+      });
+
+      panes.resizePane(pane.id, 50, 60, 1);
+
+      const resized = panes.panes.value.find((p) => p.id === pane.id);
+      expect(resized?.width).toBe(pane.width);
+      expect(resized?.height).toBe(pane.height);
+    });
+
+    it("does nothing for an unknown pane id", () => {
+      const panes = createPanes();
+      panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+      });
+      const before = panes.panes.value;
+
+      panes.resizePane("does-not-exist", 50, 60, 1);
+
+      expect(panes.panes.value).toEqual(before);
+    });
+  });
+
+  describe("closeFullscreenPanes", () => {
+    it("closes a fullscreen pane on desktop", () => {
+      const panes = createPanes();
+      panes.openPane({
+        placement: "fullscreen",
+        title: "Full",
+        component: componentReturning("Full"),
+      });
+
+      panes.closeFullscreenPanes();
+
+      expect(panes.panes.value).toHaveLength(0);
+      expect(panes.selectedPaneId.value).toBeNull();
+    });
+
+    it("leaves floating panes open on desktop", () => {
+      const panes = createPanes();
+      const floating = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+      });
+
+      panes.closeFullscreenPanes();
+
+      expect(panes.panes.value).toHaveLength(1);
+      expect(panes.panes.value[0]?.id).toBe(floating.id);
+      expect(panes.selectedPaneId.value).toBe(floating.id);
+    });
+
+    it("closes every pane on mobile, where all panes display fullscreen", () => {
+      const isMobile = signal(true);
+      const panes = createPanes(isMobile);
+      panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+      });
+
+      panes.closeFullscreenPanes();
+
+      expect(panes.panes.value).toHaveLength(0);
+    });
+
+    it("does not write when nothing is filling the screen", () => {
+      const panes = createPanes();
+      panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+      });
+      const before = panes.panes.value;
+
+      panes.closeFullscreenPanes();
+
+      // No fullscreen pane to close, so the signal is left untouched (same
+      // reference) — navigation must not thrash panes state on every change.
+      expect(panes.panes.value).toBe(before);
+    });
   });
 });

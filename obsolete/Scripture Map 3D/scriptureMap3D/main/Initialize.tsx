@@ -17,6 +17,7 @@ if (typeof ScriptureMap3DManager === "undefined") {
 }
 
 PieceDataRegistry.registerProvider(
+  // TODO: Fix this
   ObjectPoolTags.LayoutBook,
   PieceDataRepository.getPieceData
 );

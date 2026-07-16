@@ -38,6 +38,22 @@
     "react-dom": "catalog:",
     "typesense": "catalog:",
     "zod": "catalog:",
-    "rxjs": "catalog:"
+    "rxjs": "catalog:",
+    "dompurify": "catalog:",
+    "@tiptap/core": "catalog:",
+    "@tiptap/pm": "catalog:",
+    "@tiptap/extension-bullet-list": "catalog:",
+    "@tiptap/extension-color": "catalog:",
+    "@tiptap/extension-highlight": "catalog:",
+    "@tiptap/extension-image": "catalog:",
+    "@tiptap/extension-link": "catalog:",
+    "@tiptap/extension-list-item": "catalog:",
+    "@tiptap/extension-ordered-list": "catalog:",
+    "@tiptap/extension-subscript": "catalog:",
+    "@tiptap/extension-superscript": "catalog:",
+    "@tiptap/extension-text-align": "catalog:",
+    "@tiptap/extension-text-style": "catalog:",
+    "@tiptap/extension-underline": "catalog:",
+    "@tiptap/starter-kit": "catalog:"
   }
 }

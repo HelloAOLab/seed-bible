@@ -1,10 +1,10 @@
 import { TwitchIcon } from "./icons";
 import { type TwitchPubState } from "./interface";
-import { useState } from "preact/hooks";
+import { useState, useRef, useEffect } from "preact/hooks";
 import { useI18n } from "seed-bible/i18n";
 
 const TwitchSettings = (props: { state: TwitchPubState }) => {
-  const { setCurrentPage, settings } = props.state;
+  const { setCurrentPage, settings, resetState } = props.state;
 
   const { t } = useI18n();
 
@@ -55,11 +55,24 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
         </div>
         <div className="twitchPub-content">
           <div className="twitchPub-settings-item">
-            <span>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
               {t("twitchSettings.broadcastTranslationEvents", {
                 ns: "ext_twitchPub",
                 defaultValue: "Broadcast translation events",
               })}
+              <InfoTooltip
+                text={t("twitchSettings.broadcastTranslationEventsTooltip", {
+                  ns: "ext_twitchPub",
+                  defaultValue:
+                    "Broadcasts the Bible translation you're reading so your viewers' readers switch to match whenever you change it.",
+                })}
+              />
             </span>
             <ToggleBtn
               toggle={settings.value.translation.value.enabled}
@@ -73,11 +86,24 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
             />
           </div>
           <div className="twitchPub-settings-item">
-            <span>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
               {t("twitchSettings.broadcastHighlightEvents", {
                 ns: "ext_twitchPub",
                 defaultValue: "Broadcast highlight events",
               })}
+              <InfoTooltip
+                text={t("twitchSettings.broadcastHighlightEventsTooltip", {
+                  ns: "ext_twitchPub",
+                  defaultValue:
+                    "Broadcasts the verses you highlight so your viewers see the same highlights in their reader.",
+                })}
+              />
             </span>
             <ToggleBtn
               toggle={settings.value.highlight.value.enabled}
@@ -91,11 +117,55 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
             />
           </div>
           <div className="twitchPub-settings-item">
-            <span>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              {t("twitchSettings.broadcastAiFollowEvents", {
+                ns: "ext_twitchPub",
+                defaultValue: "Broadcast verse reference events",
+              })}
+              <InfoTooltip
+                text={t("twitchSettings.broadcastAiFollowEventsTooltip", {
+                  ns: "ext_twitchPub",
+                  defaultValue:
+                    "Detects the Bible verses you mention aloud during your stream and broadcasts them so your viewers' readers follow along automatically.",
+                })}
+              />
+            </span>
+            <ToggleBtn
+              toggle={settings.value.aiFollow.value.enabled}
+              setToggle={(value) =>
+                (settings.value.aiFollow.value = {
+                  ...settings.value.aiFollow.value,
+                  enabled: value,
+                })
+              }
+              id={"aiFollowToggle"}
+            />
+          </div>
+          <div className="twitchPub-settings-item">
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
               {t("twitchSettings.announcementTimer", {
                 ns: "ext_twitchPub",
                 defaultValue: "Announcement Timer",
               })}
+              <InfoTooltip
+                text={t("twitchSettings.announcementTimerTooltip", {
+                  ns: "ext_twitchPub",
+                  defaultValue:
+                    "Automatically posts a chat announcement with your join link at the chosen interval so new viewers can follow along.",
+                })}
+              />
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
               <select
@@ -219,9 +289,84 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
               )}
             </div>
           </div>
+          <div className="twitchPub-settings-item">
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            ></span>
+            <button
+              onClick={resetState}
+              style={{
+                padding: "6px 14px",
+                fontSize: "14px",
+                background: "var(--sb-primary-color)",
+                color: "var(--sb-primary-font-color)",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer",
+              }}
+            >
+              {t("twitchSettings.logout", {
+                ns: "ext_twitchPub",
+                defaultValue: "Logout",
+              })}
+            </button>
+          </div>
         </div>
       </div>
     </>
+  );
+};
+
+const InfoTooltip = ({ text }: { text: string }) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+
+  // Close when tapping/clicking anywhere outside the tooltip (needed on mobile,
+  // where there is no hover to dismiss it).
+  useEffect(() => {
+    if (!open) return;
+    const onOutside = (e: Event) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onOutside);
+    document.addEventListener("touchstart", onOutside);
+    return () => {
+      document.removeEventListener("mousedown", onOutside);
+      document.removeEventListener("touchstart", onOutside);
+    };
+  }, [open]);
+
+  return (
+    <span
+      ref={ref}
+      className={`twitch-tooltip ${open ? "twitch-tooltip--open" : ""}`}
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+    >
+      <button
+        type="button"
+        className="icon-btn material-symbols-outlined twitch-tooltip__icon"
+        aria-label={text}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen((v) => !v);
+        }}
+        style={{ fontSize: "18px" }}
+        // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
+      >
+        info
+      </button>
+      <span className="twitch-tooltip__bubble" role="tooltip">
+        {text}
+      </span>
+    </span>
   );
 };
 
@@ -271,4 +416,5 @@ const ToggleBtn = ({
     </>
   );
 };
+
 export default TwitchSettings;

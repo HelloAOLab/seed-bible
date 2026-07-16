@@ -1,6 +1,8 @@
 const { book, bookId, chapter } = that;
 
-const verses = thisBot.tags.scriptureData[bookId]?.[chapter];
+const verses = thisBot.tags.scriptureData[bookId]?.[chapter] as
+  | Record<string, string[]>
+  | undefined;
 
 await os.sleep(200);
 

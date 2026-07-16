@@ -29,6 +29,9 @@ export function createSidebar(options: CreateSidebarOptions) {
   ) as RequestedSettingsView | null;
   const isSidebarCollapsed = signal(false);
   const isMobileOpen = signal(false);
+  // True when the mobile tabs drawer was opened directly from the bottom
+  // toolbar (rather than from the book selector).
+  const tabsOpenedFromToolbar = signal(false);
   const requestedSettingsView = signal<RequestedSettingsView>(initialView);
   const isSettingsOpen = computed(() => requestedSettingsView.value !== null);
 
@@ -37,7 +40,13 @@ export function createSidebar(options: CreateSidebarOptions) {
   // Floating reader panels (anchored above the reader toolbar) — separate
   // from the sidebar drawer. Only one can be open at a time so clicking
   // one closes the other.
-  const isSearchPanelOpen = signal(false);
+  //
+  // Two-way bound to the `?search=open` query param below so the mobile Back
+  // button/gesture closes the panel: opening pushes a history entry, and
+  // Back pops it, which clears the param and flips this signal to false.
+  const isSearchPanelOpen = signal(
+    navigation.currentUrl.value.searchParams.get("search") === "open"
+  );
   const isChatPanelOpen = options.chatsManager.isOpen;
 
   const openSearchPanel = () => {
@@ -123,6 +132,19 @@ export function createSidebar(options: CreateSidebarOptions) {
     isMobileOpen.value = false;
   };
 
+  /**
+   * Dismisses the sidebar when it is shown as a floating overlay (the compact
+   * desktop band, where an expanded sidebar floats over the reader). Closes any
+   * open settings view and collapses the sidebar back to its rail. Wired to the
+   * scrim rendered behind the overlay so clicking anywhere on the page outside
+   * the sidebar collapses it again.
+   */
+  const collapseSidebarOverlay = () => {
+    requestedSettingsView.value = null;
+    isMobileOpen.value = false;
+    isSidebarCollapsed.value = true;
+  };
+
   navigation.syncSignalsToUrl({
     settingsView: requestedSettingsView,
     sidebar: {
@@ -133,12 +155,21 @@ export function createSidebar(options: CreateSidebarOptions) {
         isMobileOpen.value = newValue === "open";
       },
     },
+    search: {
+      get value() {
+        return isSearchPanelOpen.value ? "open" : null;
+      },
+      set value(newValue) {
+        isSearchPanelOpen.value = newValue === "open";
+      },
+    },
   });
 
   return {
     isSettingsOpen,
     isSidebarCollapsed,
     isMobileOpen,
+    tabsOpenedFromToolbar,
     requestedSettingsView,
     toggleSettings,
     openSettings,
@@ -147,6 +178,7 @@ export function createSidebar(options: CreateSidebarOptions) {
     toggleSidebarCollapsed,
     openSidebar,
     closeSidebar,
+    collapseSidebarOverlay,
     openSearch,
     shouldFocusSearch,
     isSearchPanelOpen,
