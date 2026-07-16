@@ -30,13 +30,14 @@ type ReferenceWithBookData = DiscoverReference & { bookData: TranslationBook };
  * Header actions rendered in the pane's `PaneHeader` slot (see how the Discover
  * side pane is opened in `SeedBibleStateManager`). Only the discover sub-view
  * offers "create a playlist", so the button hides itself during the
- * create/play sub-views. Reads the `view` signal, so it stays reactive.
+ * create/play sub-views. Reads the `actualView` signal, so it stays reactive
+ * and resets alongside the pane body when the active tab stops playing.
  */
 export function DiscoverPaneHeader(props: { playlists: PlaylistManager }) {
   const { playlists } = props;
   const { t } = useI18n();
 
-  if (playlists.view.value !== "discover") {
+  if (playlists.actualView.value !== "discover") {
     return null;
   }
 
@@ -57,12 +58,13 @@ export function DiscoverPaneHeader(props: { playlists: PlaylistManager }) {
  * just the "Discover" label; while viewing or editing a playlist it becomes a
  * back button plus the playlist title (an editable input when editing), so
  * those controls live in the pane header rather than below it. Reads the
- * `view`/`playing`/`editingPlaylist` signals, so it stays reactive.
+ * `actualView`/`playing`/`editingPlaylist` signals, so it stays reactive and
+ * resets alongside the pane body when the active tab stops playing.
  */
 export function DiscoverPaneTitle(props: { playlists: PlaylistManager }) {
   const { playlists } = props;
   const { t } = useI18n();
-  const view = playlists.view.value;
+  const view = playlists.actualView.value;
 
   if (view === "play_playlist") {
     const playing = playlists.playing.value;

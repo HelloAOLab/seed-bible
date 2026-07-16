@@ -1435,6 +1435,34 @@ describe("createPlayingState", () => {
       expect(state.tab).toBeNull();
     });
 
+    it("highlights the full verse range, including the end verse", async () => {
+      const nav = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", nav, "BSB");
+      const decorateVerses = tab.readingState.decorateVerses as unknown as Mock;
+      const state = createPlayingState(
+        [
+          makePlaylist({
+            items: [
+              {
+                type: "bible-verse",
+                ref: { bookId: "EXO", chapter: 5, verse: 2, endVerse: 5 },
+              },
+            ],
+          }),
+        ],
+        tab
+      );
+
+      await state.jumpTo(0);
+
+      expect(decorateVerses).toHaveBeenCalledWith(
+        "EXO",
+        5,
+        [2, 3, 4, 5],
+        expect.any(Object)
+      );
+    });
+
     it("dispose removes the active verse decoration", async () => {
       const nav = vi.fn().mockResolvedValue(undefined);
       const tab = makeTab("tab-1", nav, "BSB");

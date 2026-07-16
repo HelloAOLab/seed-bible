@@ -815,6 +815,50 @@ describe("DiscoverPaneTitle", () => {
     );
   });
 
+  it("resets to the 'Discover' title when playback stops without `view` being reset (tab switch)", () => {
+    // Mirrors PlaylistManager's real `actualView`: it derives from `view` and
+    // `playing`, falling back to "discover" once `playing` goes null even
+    // though nothing ever writes `view` back from "play_playlist". A prior
+    // bug had the header read the raw `view` signal instead of `actualView`,
+    // so switching tabs away from an active playlist left the back arrow and
+    // "Untitled playlist" showing even after the pane body reset.
+    const view = signal<"discover" | "create_playlist" | "play_playlist">(
+      "play_playlist"
+    );
+    const playing = signal<ReturnType<typeof createPlayingState> | null>(
+      createPlayingState([createPlaylist({ title: "Evening Reading" })])
+    );
+    const actualView = computed(() => {
+      if (view.value === "play_playlist" && !playing.value) {
+        return "discover";
+      }
+      return view.value;
+    });
+    const playlists = {
+      view,
+      actualView,
+      playing,
+      editingPlaylist: signal(null),
+      goBackFromPlayingView: vi.fn(),
+    } as unknown as PlaylistManager;
+
+    act(() => {
+      render(<DiscoverPaneTitle playlists={playlists} />, container);
+    });
+    expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
+      "Evening Reading"
+    );
+
+    // Simulate switching to a non-playlist tab: `playing` clears, but nothing
+    // ever resets the raw `view` signal away from "play_playlist".
+    act(() => {
+      playing.value = null;
+    });
+
+    expect(container.textContent).toBe("Discover");
+    expect(container.querySelector(".sb-reading-plans-back")).toBeNull();
+  });
+
   it("shows a back button and an editable title input in the create view", () => {
     const { playlists, cancelEditingPlaylist } = createMockPlaylists({
       view: "create_playlist",

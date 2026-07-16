@@ -180,7 +180,7 @@ export function createPlayingState(
       decorationId = tab.readingState.decorateVerses(
         ref.bookId,
         ref.chapter,
-        ref.endVerse ? range(ref.verse, ref.endVerse) : [ref.verse],
+        ref.endVerse ? range(ref.verse, ref.endVerse + 1) : [ref.verse],
         {
           className: "sb-verse-decoration-playlist-verse-highlight",
         }

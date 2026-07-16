@@ -21,6 +21,9 @@ export function playlistItemLabel(
           ? `${book} ${chapter}-${endChapter}`
           : `${book} ${chapter}`;
       }
+      if (endChapter != null && endVerse != null) {
+        return `${book} ${chapter}:${verse}-${endChapter}:${endVerse}`;
+      }
       return endVerse
         ? `${book} ${chapter}:${verse}-${endVerse}`
         : `${book} ${chapter}:${verse}`;
