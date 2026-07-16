@@ -2,9 +2,9 @@ import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { CreateTwitchPubState } from "./twitchPubManager";
 import initializeTwitchBot from "./initializeTwitchBot";
-import { closeInterface } from "./closeInterface";
-import { openInterface } from "./openInterface";
 import { createTranscriptionManager } from "@seed-bible/ai-transcript-extension/transcriptionManager";
+import App from "./App";
+import TwitchHeader from "./header";
 
 export default function initTwitchPubExtension() {
   registerExtension({
@@ -16,7 +16,6 @@ export default function initTwitchPubExtension() {
         seedBibleState: context,
         transcriptionManager,
       });
-
       // register a new tool
       yield context.tools.registerToolbarTool({
         id: "ext_twitchPub",
@@ -43,13 +42,25 @@ export default function initTwitchPubExtension() {
       });
 
       effect(() => {
-        if (!twitchPubState.interfaceEnabled.value) {
-          console.log("Closing interface");
-          closeInterface();
+        if (
+          !twitchPubState.interfaceEnabled.value &&
+          twitchPubState.currentPane.value
+        ) {
+          context.panes.closePane(twitchPubState.currentPane.value.id);
+          twitchPubState.currentPane.value = null;
           transcriptionManager.stopLive();
-        } else {
-          openInterface({ state: twitchPubState, context });
-          console.log("Opening interface");
+        } else if (
+          twitchPubState.interfaceEnabled.value &&
+          !twitchPubState.currentPane.value
+        ) {
+          twitchPubState.currentPane.value = context.panes.openPane({
+            placement: "floating",
+            component: () => {
+              return <App state={twitchPubState} i18n={context.i18n} />;
+            },
+            title: "Twitch",
+            header: () => <TwitchHeader state={twitchPubState} />,
+          });
         }
       });
 

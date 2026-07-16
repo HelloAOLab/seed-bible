@@ -1,4 +1,3 @@
-import { TwitchIcon } from "./icons";
 import { useI18n } from "seed-bible/i18n";
 import { type TwitchSubInterface } from "./interface";
 import { useRef, useEffect, useState } from "preact/hooks";
@@ -7,6 +6,7 @@ const TwitchSettings = (props: {
   settings: TwitchSubInterface["settings"];
   wsPaused: TwitchSubInterface["wsPaused"];
   settingsOpened: TwitchSubInterface["settingsOpened"];
+  isMobile: boolean;
 }) => {
   const { t } = useI18n();
 
@@ -17,162 +17,141 @@ const TwitchSettings = (props: {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          justifyContent: "center",
-          height: "fit-content",
+          justifyContent: "flex-start",
+          height: "100%",
           width: "100%",
         }}
       >
-        <div className="twitchSub-header">
-          <span
-            style={{
-              margin: 0,
-              fontSize: "16px",
-              fontWeight: "bold",
-              display: "flex",
-              alignItems: "center",
-              gap: "2px",
-            }}
-          >
-            <TwitchIcon style={{ width: "24px", height: "24px" }} />
-            {t("settingsTitle", {
-              ns: "ext_twitchSub",
-              defaultValue: "Twitch Settings",
-            })}
-            <InfoTooltip
-              text={t("infoTooltip", {
-                ns: "ext_twitchSub",
-                defaultValue:
-                  "Choose which updates you receive when a streamer you follow takes action.",
-              })}
-            />
-          </span>
-          <button
-            className="icon-btn material-symbols-outlined"
-            onClick={() => (props.settingsOpened.value = false)}
-            // eslint-disable-next-line seed-bible-i18n/i18n-untranslated-content
-          >
-            close
-          </button>
-        </div>
-        <div className="twitchSub-content">
-          <div className="twitchSub-settings-item">
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              {t("followTranslationEvent", {
-                ns: "ext_twitchSub",
-                defaultValue: "Follow translation event",
-              })}
-              <InfoTooltip
-                text={t("followTranslationEventTooltip", {
-                  ns: "ext_twitchSub",
-                  defaultValue:
-                    "Match the streamer's Bible translation when they switch it.",
-                })}
-              />
-            </span>
-            <ToggleBtn
-              toggle={props.settings.value.translationEnabled.value}
-              setToggle={(value) =>
-                (props.settings.value.translationEnabled.value = value)
-              }
-              id={"translationToggle"}
-            />
-          </div>
-          <div className="twitchSub-settings-item">
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              {t("followChapterEvent", {
-                ns: "ext_twitchSub",
-                defaultValue: "Follow chapter event",
-              })}
-              <InfoTooltip
-                text={t("followChapterEventTooltip", {
-                  ns: "ext_twitchSub",
-                  defaultValue:
-                    "Follow along to the chapter the streamer opens.",
-                })}
-              />
-            </span>
-            <ToggleBtn
-              toggle={props.settings.value.chapterFollowEnabled.value}
-              setToggle={(value) =>
-                (props.settings.value.chapterFollowEnabled.value = value)
-              }
-              id={"chapterFollowToggle"}
-            />
-          </div>
-          <div className="twitchSub-settings-item">
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              {t("followHighlightEvent", {
-                ns: "ext_twitchSub",
-                defaultValue: "Follow highlight event",
-              })}
-              <InfoTooltip
-                text={t("followHighlightEventTooltip", {
-                  ns: "ext_twitchSub",
-                  defaultValue: "Show the verses the streamer highlights.",
-                })}
-              />
-            </span>
-            <ToggleBtn
-              toggle={props.settings.value.highlightEnabled.value}
-              setToggle={(value) =>
-                (props.settings.value.highlightEnabled.value = value)
-              }
-              id={"highlightToggle"}
-            />
-          </div>
-          <div className="twitchSub-settings-item">
-            <span
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "4px",
-              }}
-            >
-              {t("followRefEvent", {
-                ns: "ext_twitchSub",
-                defaultValue: "Follow reference event",
-              })}
-              <InfoTooltip
-                text={t("followRefEventTooltip", {
-                  ns: "ext_twitchSub",
-                  defaultValue:
-                    "Jump to the verses the streamer references in the stream.",
-                })}
-              />
-            </span>
-            <ToggleBtn
-              toggle={props.settings.value.refFollowEnabled.value}
-              setToggle={(value) =>
-                (props.settings.value.refFollowEnabled.value = value)
-              }
-              id={"refFollowToggle"}
-            />
-          </div>
+        <div
+          className="twitchSub-content"
+          style={{
+            justifyContent: "flex-start",
+            height: props.isMobile ? "calc(100% - 90px)" : "100%",
+          }}
+        >
           <div
-            style={{
-              width: "100%",
-              height: "1px",
-              backgroundColor: "var(--text1)",
-            }}
-          ></div>
+            className="twitchSub-content"
+            style={{ justifyContent: "flex-start" }}
+          >
+            <div className="twitchSub-settings-item">
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                {t("followTranslationEvent", {
+                  ns: "ext_twitchSub",
+                  defaultValue: "Follow translation event",
+                })}
+                <InfoTooltip
+                  text={t("followTranslationEventTooltip", {
+                    ns: "ext_twitchSub",
+                    defaultValue:
+                      "Match the streamer's Bible translation when they switch it.",
+                  })}
+                />
+              </span>
+              <ToggleBtn
+                toggle={props.settings.value.translationEnabled.value}
+                setToggle={(value) =>
+                  (props.settings.value.translationEnabled.value = value)
+                }
+                id={"translationToggle"}
+              />
+            </div>
+            <div className="twitchSub-settings-item">
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                {t("followChapterEvent", {
+                  ns: "ext_twitchSub",
+                  defaultValue: "Follow chapter event",
+                })}
+                <InfoTooltip
+                  text={t("followChapterEventTooltip", {
+                    ns: "ext_twitchSub",
+                    defaultValue:
+                      "Follow along to the chapter the streamer opens.",
+                  })}
+                />
+              </span>
+              <ToggleBtn
+                toggle={props.settings.value.chapterFollowEnabled.value}
+                setToggle={(value) =>
+                  (props.settings.value.chapterFollowEnabled.value = value)
+                }
+                id={"chapterFollowToggle"}
+              />
+            </div>
+            <div className="twitchSub-settings-item">
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                {t("followHighlightEvent", {
+                  ns: "ext_twitchSub",
+                  defaultValue: "Follow highlight event",
+                })}
+                <InfoTooltip
+                  text={t("followHighlightEventTooltip", {
+                    ns: "ext_twitchSub",
+                    defaultValue: "Show the verses the streamer highlights.",
+                  })}
+                />
+              </span>
+              <ToggleBtn
+                toggle={props.settings.value.highlightEnabled.value}
+                setToggle={(value) =>
+                  (props.settings.value.highlightEnabled.value = value)
+                }
+                id={"highlightToggle"}
+              />
+            </div>
+            <div className="twitchSub-settings-item">
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "4px",
+                }}
+              >
+                {t("followRefEvent", {
+                  ns: "ext_twitchSub",
+                  defaultValue: "Follow reference event",
+                })}
+                <InfoTooltip
+                  text={t("followRefEventTooltip", {
+                    ns: "ext_twitchSub",
+                    defaultValue:
+                      "Jump to the verses the streamer references in the stream.",
+                  })}
+                />
+              </span>
+              <ToggleBtn
+                toggle={props.settings.value.refFollowEnabled.value}
+                setToggle={(value) =>
+                  (props.settings.value.refFollowEnabled.value = value)
+                }
+                id={"refFollowToggle"}
+              />
+            </div>
+            <div
+              style={{
+                width: "100%",
+                height: "1px",
+                backgroundColor: "var(--text1)",
+              }}
+            ></div>
+          </div>
           <div className="twitchSub-settings-item">
             <div></div>
             <button
@@ -199,7 +178,7 @@ const TwitchSettings = (props: {
   );
 };
 
-const InfoTooltip = ({ text }: { text: string }) => {
+export const InfoTooltip = ({ text }: { text: string }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
 

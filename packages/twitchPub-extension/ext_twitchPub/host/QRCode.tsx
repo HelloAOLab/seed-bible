@@ -1,9 +1,8 @@
 import { useI18n } from "seed-bible/i18n";
 import QRCode from "https://esm.run/qrcode";
-import { useEffect, useRef, useState, useCallback } from "preact/hooks";
-
-const MIN = 150;
-const MAX = 300;
+import { type TwitchPubState } from "./interface";
+import { useEffect, useRef, useState } from "preact/hooks";
+const QR_RENDER_SIZE = 512;
 
 function QRCodeComponent(props: {
   value: string;
@@ -12,84 +11,65 @@ function QRCodeComponent(props: {
   light?: string;
   uiHidden: boolean;
   onClick?: () => void;
+  state: TwitchPubState;
 }) {
   const {
     value,
-    size = 256,
+    size = 100,
     dark = "#000000",
     light = "#ffffff",
     uiHidden,
     onClick,
   } = props;
   const { t } = useI18n();
-  const canvasRef = useRef(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [error, setError] = useState(null);
-  const [dim, setDim] = useState(size);
-  const dragRef = useRef<{
-    startX: number;
-    startY: number;
-    startDim: number;
-  } | null>(null);
+  // Displayed pixel width. Kept relative to the surrounding .twitchPub-page;
+  // falls back to `size` until the page has been measured.
+  const [pixelSize, setPixelSize] = useState(size);
+  const pixelSizeRef = useRef(pixelSize);
+  pixelSizeRef.current = pixelSize;
 
-  // Render QR whenever value or dim changes
+  useEffect(() => {
+    const page = canvasRef.current?.closest<HTMLElement>(".twitchPub-page");
+    if (!page) return;
+
+    const update = () => {
+      const next = Math.round(
+        Math.min(page.clientWidth * 0.75, page.clientHeight * 0.65)
+      );
+      if (next > 0) setPixelSize(next);
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(page);
+    return () => observer.disconnect();
+  }, []);
+
   useEffect(() => {
     if (!value || !canvasRef.current) return;
     QRCode.toCanvas(canvasRef.current, value, {
-      width: dim,
+      width: QR_RENDER_SIZE,
       color: { dark, light },
       errorCorrectionLevel: "H",
-    }).then(() => setError(null));
-  }, [value, dim, dark, light]);
+    }).then(() => {
+      setError(null);
+      const canvas = canvasRef.current;
+      if (canvas) {
+        canvas.style.width = pixelSizeRef.current + "px";
+        canvas.style.height = pixelSizeRef.current + "px";
+      }
+    });
+  }, [value, dark, light]);
 
-  const onMouseDown = useCallback(
-    (e: MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dragRef.current = { startX: e.clientX, startY: e.clientY, startDim: dim };
-
-      const onMove = (e: MouseEvent) => {
-        if (!dragRef.current) return;
-        const { startX, startY, startDim } = dragRef.current;
-        const delta = (e.clientX - startX + e.clientY - startY) / 2;
-        setDim(Math.round(Math.min(MAX, Math.max(MIN, startDim + delta))));
-      };
-      const onUp = () => {
-        window.removeEventListener("mousemove", onMove);
-        window.removeEventListener("mouseup", onUp);
-      };
-      window.addEventListener("mousemove", onMove);
-      window.addEventListener("mouseup", onUp);
-    },
-    [dim]
-  );
-
-  // Touch support
-  const onTouchStart = useCallback(
-    (e: TouchEvent) => {
-      const t = e.touches[0];
-      if (!t) return;
-      dragRef.current = { startX: t.clientX, startY: t.clientY, startDim: dim };
-
-      const onMove = (e: TouchEvent) => {
-        const t = e.touches[0];
-        if (!dragRef.current || !t) return;
-        const { startX, startY, startDim } = dragRef.current;
-        const delta = (t.clientX - startX + t.clientY - startY) / 2;
-        setDim(Math.round(Math.min(MAX, Math.max(MIN, startDim + delta))));
-      };
-      const onEnd = () => {
-        window.removeEventListener("touchmove", onMove);
-        window.removeEventListener("touchend", onEnd);
-      };
-      window.addEventListener("touchmove", onMove, { passive: true });
-      window.addEventListener("touchend", onEnd);
-    },
-    [dim]
-  );
-
-  // useEffect(() => {
-  //   setTagMask(thisBot, "qrDim", dim, "local");
-  // }, [dim]);
+  // Rescale the on-screen canvas whenever the target display size changes.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.style.width = pixelSize + "px";
+    canvas.style.height = pixelSize + "px";
+  }, [pixelSize]);
 
   if (error)
     return (
@@ -122,36 +102,6 @@ function QRCodeComponent(props: {
             onClick?.();
           }}
         />
-
-        <div
-          onMouseDown={onMouseDown}
-          onTouchStart={onTouchStart}
-          title={t("dragToResize", { ns: "ext_twitchPub" })}
-          style={{
-            position: "absolute",
-            bottom: 0,
-            right: 0,
-            width: 18,
-            height: 18,
-            cursor: "nwse-resize",
-            background: "rgba(0,0,0,0.35)",
-            borderRadius: "4px 0 0 0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          className="qr-drag-handle"
-        >
-          {/* Grip dots */}
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="white">
-            <circle cx="8" cy="2" r="1.2" />
-            <circle cx="8" cy="6" r="1.2" />
-            <circle cx="4" cy="6" r="1.2" />
-            <circle cx="8" cy="10" r="1.2" />
-            <circle cx="4" cy="10" r="1.2" />
-            <circle cx="0" cy="10" r="1.2" />
-          </svg>
-        </div>
       </div>
     </>
   );
