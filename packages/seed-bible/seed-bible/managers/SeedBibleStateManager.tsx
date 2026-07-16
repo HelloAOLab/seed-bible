@@ -638,7 +638,6 @@ export function createSeedBibleState(
         allSlots[0]!;
       return [preferred];
     }
-    console.log("logs effectiveSlots computed", tabsLayout.slots.value);
     return tabsLayout.slots.value;
   });
 

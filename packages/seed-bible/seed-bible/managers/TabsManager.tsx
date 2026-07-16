@@ -269,9 +269,9 @@ export function createTabs(
     })
   );
   const selectedTabId = signal<string>(tabs.value[0]?.id ?? "");
-  const selectedTab = computed(() => {
-    return tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null;
-  });
+  const selectedTab = computed(
+    () => tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null
+  );
 
   const syncSelectedTabFromUrl = async () => {
     const selectedTab =
