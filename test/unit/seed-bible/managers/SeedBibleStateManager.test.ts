@@ -225,6 +225,35 @@ describe("createSeedBibleState", () => {
     expect(selectedSlot?.tab?.id).toBe("tab-2");
   });
 
+  it("regression #1442: deleting the selected tab displays the remaining tab instead of an empty slot", async () => {
+    // Reproduces https://github.com/HelloAOLab/seed-bible/issues/1442:
+    // 1. Start with one tab, add a second (auto-selected).
+    // 2. Select the second tab explicitly.
+    // 3. Delete the second tab.
+    // 4. The first tab should become selected AND should actually be shown in
+    //    the slot — not leave the slot pointing at the now-removed tab.
+    const state = await createState();
+    const firstTabId = state.tabs.selectedTabId.value;
+
+    const secondTab = state.tabs.addTab();
+    await waitForInitialLoad(secondTab.readingState, 1000);
+    state.app.selectTab(secondTab.id);
+
+    expect(state.tabs.selectedTabId.value).toBe(secondTab.id);
+
+    state.tabs.removeTab(secondTab.id);
+
+    expect(state.tabs.selectedTabId.value).toBe(firstTabId);
+    expect(state.app.selectedTab.value?.id).toBe(firstTabId);
+
+    const selectedSlot = state.tabsLayout.slots.value.find(
+      (slot) => slot.id === state.tabsLayout.selectedSlotId.value
+    );
+    // Before the fix, the slot that used to show the deleted tab was left
+    // empty (tab: null) even though selectedTabId pointed at the first tab.
+    expect(selectedSlot?.tab?.id).toBe(firstTabId);
+  });
+
   it("adding a tab opens the bible selector in new-tab mode for the selected slot", async () => {
     const state = await createState();
     const selectedSlotId = state.tabsLayout.selectedSlotId.value;
