@@ -1,4 +1,4 @@
-// import { effect } from "@preact/signals";
+import { signal, type Signal } from "@preact/signals";
 import {
   registerExtension,
   type SeedBibleState,
@@ -15,6 +15,17 @@ import type { ScriptureMapEvents } from "../models/events";
 const Icon = () => {
   return <MaterialIcon>splitscreen_portrait</MaterialIcon>;
 };
+
+// Portal target for the settings button: the pane's `header` slot can't reach
+// ScriptureMap's context, since it's a sibling of the body, not a descendant.
+const SettingsHeaderSlot = ({ node }: { node: Signal<HTMLElement | null> }) => (
+  <div
+    className="scripture-map-settings-header-slot"
+    ref={(element: HTMLDivElement | null) => {
+      node.value = element;
+    }}
+  />
+);
 
 // const customCSS = getCustomStyles();
 
@@ -78,15 +89,30 @@ export const bootstrapExtension = () => {
         },
         icon: Icon,
         onSelect: () => {
+          const settingsHeaderSlot = signal<HTMLElement | null>(null);
+
           context.panes.openPane({
             placement: "side",
-            title: "Scripture Map",
+            // `title` is a signal (not a hook), so it's translated directly
+            // through the i18n manager; passing the current `language.value`
+            // as `lng` subscribes this computed to language changes so the
+            // title stays in sync while the pane is open.
+            title: () => {
+              const { t } = useI18n();
+              return t("scripture-map", {
+                ns: "scripture-map",
+                defaultValue: "Scripture Map",
+              });
+            },
+            icon: Icon,
+            header: () => <SettingsHeaderSlot node={settingsHeaderSlot} />,
             component: () => {
               const { t, language } = useI18n();
 
               return (
                 <ScriptureMap
                   config={{
+                    settingsHeaderSlot,
                     mode: ScriptureMapModes.Viewer,
                     onChapterClick: (_, key) => {
                       let { bookId } = key;

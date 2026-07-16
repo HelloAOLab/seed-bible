@@ -31,7 +31,7 @@ describe("PaneHeader", () => {
 
   it("renders only a title and close button when no header is provided", () => {
     act(() => {
-      render(<PaneHeader title="My Pane" onClose={vi.fn()} />, container);
+      render(<PaneHeader title={"My Pane"} onClose={vi.fn()} />, container);
     });
 
     expect(container.querySelector(".sb-pane-header-title")?.textContent).toBe(
@@ -63,7 +63,7 @@ describe("PaneHeader", () => {
     act(() => {
       render(
         <PaneHeader
-          title="My Pane"
+          title={"My Pane"}
           onClose={vi.fn()}
           header={() => <button className="my-custom-button">Refresh</button>}
         />,
@@ -100,7 +100,7 @@ describe("PaneHeader", () => {
     act(() => {
       render(
         <PaneHeader
-          title="My Pane"
+          title={"My Pane"}
           onClose={vi.fn()}
           onPointerDown={onPointerDown}
           header={() => <button className="my-custom-button">Refresh</button>}
@@ -125,7 +125,7 @@ describe("PaneHeader", () => {
     act(() => {
       render(
         <PaneHeader
-          title="My Pane"
+          title={"My Pane"}
           onClose={vi.fn()}
           onPointerDown={onPointerDown}
           header={() => <button className="my-custom-button">Refresh</button>}

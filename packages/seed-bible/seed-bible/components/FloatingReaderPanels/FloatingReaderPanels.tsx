@@ -359,6 +359,7 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
   const openSearchResult = async (result: SearchResult) => {
     closeContextMenus();
     sidebar.closeSearchPanel();
+    state.panes.closeFullscreenPanes();
 
     const targetTab = getOrCreateSearchTargetTab(state);
     await navigateTabToResult(targetTab, result);
@@ -367,6 +368,7 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
   const openSearchResultInNewTab = async (result: SearchResult) => {
     closeContextMenus();
     sidebar.closeSearchPanel();
+    state.panes.closeFullscreenPanes();
 
     const targetTab = state.tabs.addTab(undefined, {
       initialTranslationId: result.translationId,
@@ -386,6 +388,7 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
   const openBookMatch = async (match: BookReferenceMatch) => {
     closeContextMenus();
     sidebar.closeSearchPanel();
+    state.panes.closeFullscreenPanes();
 
     const targetTab = getOrCreateSearchTargetTab(state);
     await targetTab.readingState.selectTranslationAndChapter(
@@ -398,6 +401,7 @@ function FloatingSearchPanel(props: FloatingReaderPanelsProps) {
   const openBookMatchInNewTab = async (match: BookReferenceMatch) => {
     closeContextMenus();
     sidebar.closeSearchPanel();
+    state.panes.closeFullscreenPanes();
 
     const translationId = resolveActiveTranslationId();
     const chapterNumber = resolveBookChapter(match);

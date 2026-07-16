@@ -2576,6 +2576,5 @@
       "Transcribe": "Bhala"
     }
   },
-  "dependencies": ["ext_AI_Transcript"],
-  "autoinstall": true
+  "dependencies": ["ext_AI_Transcript"]
 }

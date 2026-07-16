@@ -120,7 +120,7 @@
 .sb-toast-host {
   position: fixed;
   left: 50%;
-  bottom: 1.5rem;
+  bottom: 6rem;
   transform: translateX(-50%);
   z-index: 1000;
   display: flex;
@@ -131,7 +131,19 @@
 
 @keyframes sb-toast-slide-up {
   from {
-    transform: translateY(16px);
+    transform: translateY(2rem);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes sb-toast-slide-down {
+  from {
+    transform: translateY(-2rem);
     opacity: 0;
   }
 
@@ -153,4 +165,15 @@
   text-align: center;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   animation: sb-toast-slide-up 0.25s ease-out;
+}
+
+@media (max-width: 480px) {
+  .sb-toast-host {
+    bottom: auto;
+    top: 3rem;
+  }
+
+  .sb-toast {
+    animation: sb-toast-slide-down 0.25s ease-out;
+  }
 }
