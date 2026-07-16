@@ -725,9 +725,11 @@ export function getShareUrl(readingState: BibleReadingState) {
  * @returns A string representing the formatted selected verses.
  */
 function formatSelectedVerses(readingState: BibleReadingState) {
+  // When you copy the verse book is always open
+  const bookName = readingState.chapterData.value?.book.name;
   return readingState.selectedVerses.value
     .map((verse) => {
-      const verseReference = `${verse.bookId} ${verse.chapterNumber}:${verse.verse.number}`;
+      const verseReference = `${bookName ?? verse.bookId} ${verse.chapterNumber}:${verse.verse.number}`;
       return `${verse.verse.content
         .map((part) => {
           if (typeof part === "string") return part;
