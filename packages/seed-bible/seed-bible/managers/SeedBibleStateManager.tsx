@@ -682,22 +682,36 @@ export function createSeedBibleState(
     };
   });
 
-  // Keep the selected tab visible in a slot. Clicking a tab goes through
-  // handleSelectTab, which calls setSelectedSlotTab. removeTab only updates
-  // selectedTabId — and TabsLayoutManager's sync then clears the closed
-  // tab from its slot (tab → null). Without this branch, that empty slot
-  // stays empty and TabsLayout renders EmptySlotToolbar instead of the
-  // newly selected tab's reader.
+  // Keep selection and slots aligned. Clicking a tab goes through
+  // handleSelectTab (which also calls setSelectedSlotTab). removeTab only
+  // updates selectedTabId — TabsLayoutManager's sync then clears the closed
+  // tab from its slot (tab → null). If that emptied slot is still selected,
+  // put the newly selected tab into it so TabsLayout keeps rendering a reader.
+  //
+  // Only fill empty slots: never overwrite a slot that already has a tab.
+  // openInNewSlot clones via addTab (which selects the clone) before the new
+  // slot exists; overwriting here would steal the original slot and leave an
+  // empty pane after layout de-dupes the shared tab id.
   effect(() => {
     const tab = selectedTab.value;
     if (!tab) {
       return;
     }
+
     const matchingSlot =
       tabsLayout.slots.value.find((s) => s.tab?.id === tab.id) ?? null;
     if (matchingSlot) {
       tabsLayout.selectSlot(matchingSlot.id);
-    } else {
+      return;
+    }
+
+    const selectedSlot =
+      tabsLayout.slots.value.find(
+        (s) => s.id === tabsLayout.selectedSlotId.value
+      ) ??
+      tabsLayout.slots.value[0] ??
+      null;
+    if (selectedSlot && !selectedSlot.tab) {
       tabsLayout.setSelectedSlotTab(tab.id);
     }
   });
