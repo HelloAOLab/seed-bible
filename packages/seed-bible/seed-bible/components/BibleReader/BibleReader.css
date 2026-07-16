@@ -624,14 +624,11 @@
   }
 }
 
-.sb-verse-decoration-search-result,
-.sb-verse-decoration-initial-verse-highlight,
-.sb-verse-decoration-open-reference-highlight,
-.sb-verse-decoration-playlist-verse-highlight {
+.sb-verse-decoration-highlight {
   background: color-mix(
     in srgb,
     var(--sb-secondary-color),
-    transparent 28%
+    transparent 20%
   ) !important;
 }
 
