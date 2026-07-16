@@ -33,7 +33,8 @@
       "last-48-hours": "Last 48 hours",
       "Everyone": "Everyone",
       "Custom": "Custom",
-      "None": "None"
+      "None": "None",
+      "today": "Today"
     },
     "af": {
       "everything-begins-small": "Alles begin klein.",

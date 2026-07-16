@@ -97,14 +97,13 @@ export const bootstrapExtension = () => {
             // through the i18n manager; passing the current `language.value`
             // as `lng` subscribes this computed to language changes so the
             // title stays in sync while the pane is open.
-            title: computed(() => {
-              const { value: language } = context.i18n.language;
-              return context.i18n.t("scripture-map", {
-                ns: extensionId,
+            title: () => {
+              const { t } = useI18n();
+              return t("scripture-map", {
+                ns: "scripture-map",
                 defaultValue: "Scripture Map",
-                lng: language,
               });
-            }),
+            },
             icon: Icon,
             header: () => <SettingsHeaderSlot node={settingsHeaderSlot} />,
             component: () => {

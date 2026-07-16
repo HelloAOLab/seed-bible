@@ -76,7 +76,7 @@ export default function initExampleExtension() {
           console.log("Example tool selected!");
           context.panes.openPane({
             placement: "side",
-            title: signal("My Example Tool"),
+            title: "My Example Tool",
             component: () => {
               // You can use the useI18n hook in your tool component to get translated strings
               const { t } = useI18n("example-extension");
@@ -160,7 +160,7 @@ export default function initExampleExtension() {
           context.panesManager.openPane({
             id: "example-portal-pane",
             placement: "floating",
-            title: signal("Grid Portal"),
+            title: "Grid Portal",
             component: () => (
               <PortalComponent
                 portal="home"
@@ -190,7 +190,7 @@ export default function initExampleExtension() {
           context.panesManager.openPane({
             id: "example-portal-pane",
             placement: "floating",
-            title: signal("Map Portal"),
+            title: "Map Portal",
             component: () => (
               <PortalComponent
                 portal="map_portal"

@@ -138,7 +138,7 @@ describe("PortalComponent inside a dragged floating pane", () => {
     panes.openPane({
       id: "portal-pane",
       placement: "floating",
-      title: signal("Map Portal"),
+      title: "Map Portal",
       component: () => {
         renderCount += 1;
         return (

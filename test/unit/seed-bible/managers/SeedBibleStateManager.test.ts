@@ -448,7 +448,7 @@ describe("createSeedBibleState", () => {
     const state = await createState();
     const pane = state.panes.openPane({
       placement: "side",
-      title: signal("Test Pane"),
+      title: "Test Pane",
       component: () => null,
     });
     const previousSelectedTabId = state.tabs.selectedTabId.value;
@@ -529,7 +529,7 @@ describe("createSeedBibleState", () => {
       const state = await createState();
       const sidePane = state.panes.openPane({
         placement: "side",
-        title: signal("Side Pane"),
+        title: "Side Pane",
         component: () => null,
       });
 
@@ -558,7 +558,7 @@ describe("createSeedBibleState", () => {
       const state = await createState();
       const fullscreenPane = state.panes.openPane({
         placement: "fullscreen",
-        title: signal("Fullscreen Pane"),
+        title: "Fullscreen Pane",
         component: () => null,
       });
 

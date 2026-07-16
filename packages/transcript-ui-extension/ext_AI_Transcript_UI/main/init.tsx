@@ -4,6 +4,7 @@ import { createTranscriptionManager } from "@seed-bible/ai-transcript-extension/
 import { App } from "./App";
 import { ManagerProvider } from "./context";
 import type { Pane } from "seed-bible/managers";
+import { useI18n } from "@packages/seed-bible/seed-bible/i18n";
 
 export default function initTranscriptUI() {
   registerExtension({
@@ -39,7 +40,13 @@ export default function initTranscriptUI() {
                   </ManagerProvider>
                 );
               },
-              title: signal("AI Transcript"),
+              title: () => {
+                const { t } = useI18n();
+                return t("title", {
+                  ns: "ext_AI_Transcript_UI",
+                  defaultValue: "AI Transcript",
+                });
+              },
             });
 
             const { login } = context;

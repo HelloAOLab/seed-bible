@@ -102,7 +102,7 @@ export default function initLocationsExtension() {
 
         context.panes.openPane({
           placement: "floating",
-          title: signal(place.place),
+          title: place.place,
           component: () => (
             <PortalComponent
               portal="map"
