@@ -166,7 +166,10 @@
 }
 
 .sb-discover-item--dragging {
-  opacity: 0.6;
+  position: relative;
+  z-index: 1;
+  background: var(--sb-background);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .sb-discover-item-description {

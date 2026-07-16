@@ -1,7 +1,11 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
-import { PlayPlaylistView } from "@packages/seed-bible/seed-bible/components/PlayPlaylistView/PlayPlaylistView";
+import type { DragEndEvent } from "@dnd-kit/core";
+import {
+  PlayPlaylistView,
+  createQueueDragEndHandler,
+} from "@packages/seed-bible/seed-bible/components/PlayPlaylistView/PlayPlaylistView";
 import {
   createPlayingState,
   type Playlist,
@@ -15,6 +19,17 @@ import type {
 import type { TranslationBook } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { ModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+
+/**
+ * dnd-kit's internals use `ResizeObserver`, which jsdom doesn't implement.
+ * Merely mounting `DndContext`/`useSortable` needs it, regardless of whether
+ * a drag is simulated, so this is installed for every test in this file.
+ */
+class MockResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
@@ -101,11 +116,15 @@ describe("PlayPlaylistView", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
+    (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver =
+      MockResizeObserver;
   });
 
   afterEach(() => {
     render(null, container);
     container.remove();
+    delete (globalThis as unknown as { ResizeObserver?: unknown })
+      .ResizeObserver;
   });
 
   it("renders nothing when nothing is playing", () => {
@@ -261,18 +280,6 @@ describe("PlayPlaylistView", () => {
   });
 
   describe("drag to reorder", () => {
-    let offsetHeightSpy: ReturnType<typeof vi.spyOn>;
-
-    beforeEach(() => {
-      offsetHeightSpy = vi
-        .spyOn(HTMLLIElement.prototype, "offsetHeight", "get")
-        .mockReturnValue(40);
-    });
-
-    afterEach(() => {
-      offsetHeightSpy.mockRestore();
-    });
-
     it("shows a drag handle for each queue item", () => {
       const playlist = createPlaylist({
         items: [
@@ -303,60 +310,45 @@ describe("PlayPlaylistView", () => {
       expect(handles[0]?.getAttribute("aria-label")).toBe("Drag to reorder");
     });
 
-    it("dragging a queue item's handle reorders the queue and keeps the current item highlighted", () => {
-      const playlist = createPlaylist({
-        items: [
-          verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
+    describe("createQueueDragEndHandler", () => {
+      it("reorders the queue via reorderQueue", () => {
+        const playlist = createPlaylist({
+          items: [
+            verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
+            verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
+            verseItem({ ref: { bookId: "GEN", chapter: 3 } }),
+          ],
+        });
+        const playing = createPlayingState([playlist]);
+
+        const handleDragEnd = createQueueDragEndHandler(playing.reorderQueue);
+        handleDragEnd({
+          active: { id: 0 },
+          over: { id: 1 },
+        } as unknown as DragEndEvent);
+
+        expect(playing.queue.value).toEqual([
           verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
+          verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
           verseItem({ ref: { bookId: "GEN", chapter: 3 } }),
-        ],
-      });
-      const playing = createPlayingState([playlist]);
-      const { playlists } = createMockPlaylists(playing);
-      const tabs = createMockTabs();
-
-      act(() => {
-        render(
-          <PlayPlaylistView
-            playlists={playlists}
-            tabs={tabs}
-            modals={modals}
-            state={state}
-          />,
-          container
-        );
+        ]);
+        // reorderQueue's own logic keeps the current item (index 0) selected
+        // as it follows the drag — already covered directly in
+        // PlaylistManager.test.ts; asserted again here as a smoke check.
+        expect(playing.currentIndex.value).toBe(1);
       });
 
-      // Currently playing item 0; drag it past item 1.
-      const handles = container.querySelectorAll(
-        ".sb-discover-item-drag-handle"
-      );
-      act(() => {
-        handles[0]?.dispatchEvent(
-          new PointerEvent("pointerdown", {
-            bubbles: true,
-            pointerId: 1,
-            clientY: 0,
-          })
-        );
-        window.dispatchEvent(
-          new PointerEvent("pointermove", { pointerId: 1, clientY: 45 })
-        );
+      it("does nothing when dropped back on itself", () => {
+        const reorderQueue = vi.fn();
+        const handleDragEnd = createQueueDragEndHandler(reorderQueue);
+
+        handleDragEnd({
+          active: { id: 1 },
+          over: { id: 1 },
+        } as unknown as DragEndEvent);
+
+        expect(reorderQueue).not.toHaveBeenCalled();
       });
-
-      expect(playing.queue.value).toEqual([
-        verseItem({ ref: { bookId: "GEN", chapter: 2 } }),
-        verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
-        verseItem({ ref: { bookId: "GEN", chapter: 3 } }),
-      ]);
-      expect(playing.currentIndex.value).toBe(1);
-
-      const items = Array.from(
-        container.querySelectorAll(".sb-play-playlist-item")
-      );
-      expect(
-        items[1]?.classList.contains("sb-play-playlist-item--current")
-      ).toBe(true);
     });
 
     it("clicking a queue item still jumps playback with the drag handle present", () => {

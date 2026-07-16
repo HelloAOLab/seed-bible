@@ -223,6 +223,44 @@ export default defineConfig(({ isSsrBuild }) => ({
       // instance. preact/compat ships useSyncExternalStore natively.
       "use-sync-external-store/shim/index.js": "preact/compat",
       "use-sync-external-store/shim": "preact/compat",
+      // @preact/compat's npm package ships separate CJS ("index.js") and ESM
+      // ("index.mjs") builds. If one consumer's "react" import resolves
+      // through the "require" condition while another resolves through
+      // "import", Node treats them as two distinct module instances (a dual
+      // package hazard) — breaking hooks the same way two different preact
+      // copies would. Aliasing "react"/"react-dom" straight to "preact/compat"
+      // routes every consumer (dnd-kit included) through the one specifier
+      // the rest of the app already imports directly, sidestepping the
+      // hazard entirely instead of relying on pnpm's catalog substitution.
+      react: "preact/compat",
+      "react-dom/test-utils": "preact/test-utils",
+      "react-dom": "preact/compat",
+      // @dnd-kit/* ships only legacy "main" (CJS)/"module" (ESM) package.json
+      // fields, no "exports" map. Without one, Vite/Vitest can resolve a bare
+      // `"@dnd-kit/core"` import through the CJS "main" build in some
+      // contexts, whose *internal* `require("react")` bypasses the `react`
+      // alias above entirely (Node's own CJS resolution, not Vite's) —
+      // loading a second, `require`-condition copy of preact/compat that
+      // doesn't share hook state with the app's ESM-resolved one. Aliasing
+      // straight to each package's ESM entry file forces the same build (and
+      // therefore the same "react" alias) everywhere, regardless of how the
+      // bare specifier would otherwise have resolved.
+      "@dnd-kit/core": path.resolve(
+        __dirname,
+        "node_modules/@dnd-kit/core/dist/core.esm.js"
+      ),
+      "@dnd-kit/sortable": path.resolve(
+        __dirname,
+        "node_modules/@dnd-kit/sortable/dist/sortable.esm.js"
+      ),
+      "@dnd-kit/utilities": path.resolve(
+        __dirname,
+        "node_modules/@dnd-kit/utilities/dist/utilities.esm.js"
+      ),
+      "@dnd-kit/accessibility": path.resolve(
+        __dirname,
+        "node_modules/.pnpm/@dnd-kit+accessibility@3.1.1_@preact+compat@18.3.2_preact@10.29.2_/node_modules/@dnd-kit/accessibility/dist/accessibility.esm.js"
+      ),
       "@packages": path.resolve(__dirname, "packages"),
       // ...moduleAliases,
     },
@@ -241,6 +279,14 @@ export default defineConfig(({ isSsrBuild }) => ({
       "prosemirror-state",
       "prosemirror-transform",
       "prosemirror-view",
+      // @dnd-kit/* depends on "react"/"react-dom", aliased to preact/compat
+      // by the pnpm catalog — without deduping, pnpm's peer-dependency
+      // resolution can still produce a second, distinct preact/compat
+      // instance for these packages, breaking hooks the same way as above.
+      "@dnd-kit/core",
+      "@dnd-kit/sortable",
+      "@dnd-kit/utilities",
+      "@dnd-kit/accessibility",
     ],
   },
 
@@ -249,10 +295,13 @@ export default defineConfig(({ isSsrBuild }) => ({
     globals: true,
     // Inline react-i18next so the use-sync-external-store alias above applies
     // to its imports (aliases don't reach externalized modules, which are
-    // loaded directly by Node).
+    // loaded directly by Node). @dnd-kit/* needs the same treatment: its ESM
+    // build (aliased to above) still needs Vite's own transform pipeline to
+    // run, rather than Node's native loader (which would choke on `.js`
+    // files using `import`/`export` syntax without a `"type": "module"`).
     server: {
       deps: {
-        inline: [/react-i18next/],
+        inline: [/react-i18next/, /@dnd-kit\//],
       },
     },
     exclude: ["**/node_modules/**", "**/.git/**", "**/obsolete/**"],

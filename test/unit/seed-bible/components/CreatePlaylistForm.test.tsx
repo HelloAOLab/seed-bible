@@ -3,8 +3,23 @@ import { act } from "preact/test-utils";
 import { forwardRef } from "preact/compat";
 import { useImperativeHandle } from "preact/hooks";
 import { signal } from "@preact/signals";
-import { CreatePlaylistForm } from "@packages/seed-bible/seed-bible/components/CreatePlaylistForm/CreatePlaylistForm";
+import type { DragEndEvent } from "@dnd-kit/core";
+import {
+  CreatePlaylistForm,
+  createPlaylistItemsDragEndHandler,
+} from "@packages/seed-bible/seed-bible/components/CreatePlaylistForm/CreatePlaylistForm";
 import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
+
+/**
+ * dnd-kit's internals use `ResizeObserver`, which jsdom doesn't implement.
+ * Merely mounting `DndContext`/`useSortable` needs it, regardless of whether
+ * a drag is simulated, so this is installed for every test in this file.
+ */
+class MockResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
 import type {
   Playlist,
   PlaylistItemData,
@@ -203,12 +218,16 @@ describe("CreatePlaylistForm", () => {
     document.body.appendChild(container);
     stubItemInputControl.isDirty = false;
     stubItemInputControl.commitResult = true;
+    (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver =
+      MockResizeObserver;
   });
 
   afterEach(() => {
     render(null, container);
     container.remove();
     vi.restoreAllMocks();
+    delete (globalThis as unknown as { ResizeObserver?: unknown })
+      .ResizeObserver;
   });
 
   // The title input and the header back button now live in the pane header
@@ -661,18 +680,6 @@ describe("CreatePlaylistForm", () => {
   });
 
   describe("drag to reorder", () => {
-    let offsetHeightSpy: ReturnType<typeof vi.spyOn>;
-
-    beforeEach(() => {
-      offsetHeightSpy = vi
-        .spyOn(HTMLLIElement.prototype, "offsetHeight", "get")
-        .mockReturnValue(40);
-    });
-
-    afterEach(() => {
-      offsetHeightSpy.mockRestore();
-    });
-
     it("shows a drag handle for each item", () => {
       const { playlists } = createMockPlaylists(
         createPlaylist({
@@ -700,72 +707,47 @@ describe("CreatePlaylistForm", () => {
       expect(handles[0]?.getAttribute("aria-label")).toBe("Drag to reorder");
     });
 
-    it("dragging an item's handle reorders it and keeps the edited item selected", () => {
-      const { playlists, reorderEditingPlaylistItem } = createMockPlaylists(
-        createPlaylist({
-          items: [
-            verseItem("GEN", 1),
-            verseItem("GEN", 2),
-            verseItem("GEN", 3),
-          ],
-        })
-      );
-      const tabs = createMockTabs();
-      const modals = createModalManager();
-
-      act(() => {
-        render(
-          <CreatePlaylistForm
-            playlists={playlists}
-            tabs={tabs}
-            modals={modals}
-          />,
-          container
+    describe("createPlaylistItemsDragEndHandler", () => {
+      it("reorders the item and keeps the edited item selected", () => {
+        const reorderEditingPlaylistItem = vi.fn();
+        const setEditingIndex = vi.fn();
+        const handleDragEnd = createPlaylistItemsDragEndHandler(
+          reorderEditingPlaylistItem,
+          setEditingIndex
         );
+
+        handleDragEnd({
+          active: { id: 0 },
+          over: { id: 1 },
+        } as unknown as DragEndEvent);
+
+        expect(reorderEditingPlaylistItem).toHaveBeenCalledWith(0, 1);
+        const updater = setEditingIndex.mock.calls[0]?.[0] as (
+          current: number | null
+        ) => number | null;
+        // The item being edited (index 0) followed the drag to its new spot.
+        expect(updater(0)).toBe(1);
+        // An unrelated edit target isn't affected by the move.
+        expect(updater(2)).toBe(2);
+        expect(updater(null)).toBeNull();
       });
 
-      // Start editing the first item (index 0, "GEN 1").
-      const itemButtons = container.querySelectorAll(
-        ".sb-discover-item-button"
-      );
-      act(() => {
-        itemButtons[0]?.dispatchEvent(
-          new MouseEvent("click", { bubbles: true })
+      it("does nothing when dropped back on itself", () => {
+        const reorderEditingPlaylistItem = vi.fn();
+        const setEditingIndex = vi.fn();
+        const handleDragEnd = createPlaylistItemsDragEndHandler(
+          reorderEditingPlaylistItem,
+          setEditingIndex
         );
+
+        handleDragEnd({
+          active: { id: 1 },
+          over: { id: 1 },
+        } as unknown as DragEndEvent);
+
+        expect(reorderEditingPlaylistItem).not.toHaveBeenCalled();
+        expect(setEditingIndex).not.toHaveBeenCalled();
       });
-
-      // Drag it past the second item.
-      const handles = container.querySelectorAll(
-        ".sb-discover-item-drag-handle"
-      );
-      act(() => {
-        handles[0]?.dispatchEvent(
-          new PointerEvent("pointerdown", {
-            bubbles: true,
-            pointerId: 1,
-            clientY: 0,
-          })
-        );
-        window.dispatchEvent(
-          new PointerEvent("pointermove", { pointerId: 1, clientY: 45 })
-        );
-      });
-
-      expect(reorderEditingPlaylistItem).toHaveBeenCalledWith(0, 1);
-      expect(playlists.editingPlaylist.value?.items).toEqual([
-        verseItem("GEN", 2),
-        verseItem("GEN", 1),
-        verseItem("GEN", 3),
-      ]);
-
-      // The edit target followed the dragged item to its new position.
-      const rows = container.querySelectorAll(".sb-discover-item--row");
-      expect(rows[0]?.classList.contains("sb-discover-item--editing")).toBe(
-        false
-      );
-      expect(rows[1]?.classList.contains("sb-discover-item--editing")).toBe(
-        true
-      );
     });
 
     it("clicking the edit button still works with the drag handle present", () => {

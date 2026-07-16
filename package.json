@@ -114,6 +114,9 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1069.0",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "bowser": "^2.14.1",
     "debounce": "^2.2.0",
     "get-tsconfig": "^4.13.0",
@@ -121,13 +124,13 @@
     "i18next": "catalog:",
     "i18next-resources-to-backend": "catalog:",
     "imagetracerjs": "^1.2.6",
+    "luxon": "catalog:",
     "opentype.js": "^1.3.4",
     "preact-render-to-string": "catalog:",
     "prompts": "^2.4.2",
     "react": "catalog:",
     "react-dom": "catalog:",
     "typesense": "catalog:",
-    "zod": "catalog:",
-    "luxon": "catalog:"
+    "zod": "catalog:"
   }
 }

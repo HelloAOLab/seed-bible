@@ -6,6 +6,15 @@ settings:
 
 catalogs:
   default:
+    '@casual-simulation/aux-common':
+      specifier: 4.2.3
+      version: 4.2.3
+    '@casual-simulation/aux-websocket':
+      specifier: 4.2.3
+      version: 4.2.3
+    '@casual-simulation/websocket':
+      specifier: 4.0.0
+      version: 4.0.0
     '@tiptap/core':
       specifier: 3.27.1
       version: 3.27.1
@@ -54,6 +63,9 @@ catalogs:
     axios:
       specifier: 1.13.5
       version: 1.13.5
+    base64-js:
+      specifier: 1.5.1
+      version: 1.5.1
     dompurify:
       specifier: ^3.4.11
       version: 3.4.11
@@ -63,6 +75,9 @@ catalogs:
     i18next-resources-to-backend:
       specifier: ^1.2.1
       version: 1.2.1
+    luxon:
+      specifier: ^3.7.2
+      version: 3.7.2
     preact:
       specifier: 10.29.2
       version: 10.29.2
@@ -106,6 +121,15 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.1069.0
         version: 3.1069.0
+      '@dnd-kit/core':
+        specifier: ^6.3.1
+        version: 6.3.1(@preact/compat@18.3.2(preact@10.29.2))(@preact/compat@18.3.2(preact@10.29.2))
+      '@dnd-kit/sortable':
+        specifier: ^10.0.0
+        version: 10.0.0(@dnd-kit/core@6.3.1(@preact/compat@18.3.2(preact@10.29.2))(@preact/compat@18.3.2(preact@10.29.2)))(@preact/compat@18.3.2(preact@10.29.2))
+      '@dnd-kit/utilities':
+        specifier: ^3.2.2
+        version: 3.2.2(@preact/compat@18.3.2(preact@10.29.2))
       bowser:
         specifier: ^2.14.1
         version: 2.14.1
@@ -395,6 +419,15 @@ importers:
       '@casual-simulation/websocket':
         specifier: 'catalog:'
         version: 4.0.0
+      '@dnd-kit/core':
+        specifier: ^6.3.1
+        version: 6.3.1(@preact/compat@18.3.2(preact@10.29.2))(@preact/compat@18.3.2(preact@10.29.2))
+      '@dnd-kit/sortable':
+        specifier: ^10.0.0
+        version: 10.0.0(@dnd-kit/core@6.3.1(@preact/compat@18.3.2(preact@10.29.2))(@preact/compat@18.3.2(preact@10.29.2)))(@preact/compat@18.3.2(preact@10.29.2))
+      '@dnd-kit/utilities':
+        specifier: ^3.2.2
+        version: 3.2.2(@preact/compat@18.3.2(preact@10.29.2))
       '@tiptap/core':
         specifier: 'catalog:'
         version: 3.27.1(@tiptap/pm@3.27.1)
@@ -1461,6 +1494,28 @@ packages:
   '@csstools/css-tokenizer@4.0.0':
     resolution: {integrity: sha512-QxULHAm7cNu72w97JUNCBFODFaXpbDg+dP8b/oWFAZ2MTRppA3U00Y2L1HqaS4J6yBqxwa/Y3nMBaxVKbB/NsA==}
     engines: {node: '>=20.19.0'}
+
+  '@dnd-kit/accessibility@3.1.1':
+    resolution: {integrity: sha512-2P+YgaXF+gRsIihwwY1gCsQSYnu9Zyj2py8kY5fFvUM1qm2WA2u639R6YNVfU4GWr+ZM5mqEsfHZZLoRONbemw==}
+    peerDependencies:
+      react: '>=16.8.0'
+
+  '@dnd-kit/core@6.3.1':
+    resolution: {integrity: sha512-xkGBRQQab4RLwgXxoqETICr6S5JlogafbhNsidmrkVv2YRs5MLwpjoF2qpiGjQt8S9AoxtIV603s0GIUpY5eYQ==}
+    peerDependencies:
+      react: '>=16.8.0'
+      react-dom: '>=16.8.0'
+
+  '@dnd-kit/sortable@10.0.0':
+    resolution: {integrity: sha512-+xqhmIIzvAYMGfBYYnbKuNicfSsk4RksY2XdmJhT+HAC01nix6fHCztU68jooFiMUB01Ky3F0FyOvhG/BZrWkg==}
+    peerDependencies:
+      '@dnd-kit/core': ^6.3.0
+      react: '>=16.8.0'
+
+  '@dnd-kit/utilities@3.2.2':
+    resolution: {integrity: sha512-+MKAJEOfaBe5SmV6t34p80MMKhjvUz0vRrvVJbPT0WElzaOJ/1xs+D+KDv+tD/NE5ujfrChEcshd4fLn0wpiqg==}
+    peerDependencies:
+      react: '>=16.8.0'
 
   '@emnapi/core@1.10.0':
     resolution: {integrity: sha512-yq6OkJ4p82CAfPl0u9mQebQHKPJkY7WrIuk205cTYnYe+k2Z8YBh11FrbRG/H6ihirqcacOgl2BIO8oyMQLeXw==}
@@ -8476,6 +8531,31 @@ snapshots:
   '@csstools/css-tokenizer@3.0.4': {}
 
   '@csstools/css-tokenizer@4.0.0': {}
+
+  '@dnd-kit/accessibility@3.1.1(@preact/compat@18.3.2(preact@10.29.2))':
+    dependencies:
+      react: '@preact/compat@18.3.2(preact@10.29.2)'
+      tslib: 2.8.1
+
+  '@dnd-kit/core@6.3.1(@preact/compat@18.3.2(preact@10.29.2))(@preact/compat@18.3.2(preact@10.29.2))':
+    dependencies:
+      '@dnd-kit/accessibility': 3.1.1(@preact/compat@18.3.2(preact@10.29.2))
+      '@dnd-kit/utilities': 3.2.2(@preact/compat@18.3.2(preact@10.29.2))
+      react: '@preact/compat@18.3.2(preact@10.29.2)'
+      react-dom: '@preact/compat@18.3.2(preact@10.29.2)'
+      tslib: 2.8.1
+
+  '@dnd-kit/sortable@10.0.0(@dnd-kit/core@6.3.1(@preact/compat@18.3.2(preact@10.29.2))(@preact/compat@18.3.2(preact@10.29.2)))(@preact/compat@18.3.2(preact@10.29.2))':
+    dependencies:
+      '@dnd-kit/core': 6.3.1(@preact/compat@18.3.2(preact@10.29.2))(@preact/compat@18.3.2(preact@10.29.2))
+      '@dnd-kit/utilities': 3.2.2(@preact/compat@18.3.2(preact@10.29.2))
+      react: '@preact/compat@18.3.2(preact@10.29.2)'
+      tslib: 2.8.1
+
+  '@dnd-kit/utilities@3.2.2(@preact/compat@18.3.2(preact@10.29.2))':
+    dependencies:
+      react: '@preact/compat@18.3.2(preact@10.29.2)'
+      tslib: 2.8.1
 
   '@emnapi/core@1.10.0':
     dependencies:

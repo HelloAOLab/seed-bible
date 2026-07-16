@@ -15,7 +15,14 @@ import {
 } from "../PlaylistItemInput/PlaylistItemInput";
 import { playlistItemLabel } from "../playlistItemLabel";
 import { playlistItemIcon } from "../playlistItemIcon";
-import { useDragReorder } from "../useDragReorder";
+import { DndContext, closestCenter, type DragEndEvent } from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { SortableRow } from "../SortableRow";
+import { resolveReorderIndices } from "../resolveReorderIndices";
+import { useListReorderSensors } from "../useListReorderSensors";
 
 interface CreatePlaylistFormProps {
   playlists: PlaylistManager;
@@ -100,6 +107,34 @@ function openUnsavedItemConfirm(
   });
 }
 
+/**
+ * Builds the Items list's `onDragEnd` handler. Exported so tests can call it
+ * directly with a fake `{active, over}` event instead of simulating a full
+ * drag gesture through dnd-kit's sensors.
+ */
+export function createPlaylistItemsDragEndHandler(
+  reorderEditingPlaylistItem: (from: number, to: number) => void,
+  setEditingIndex: (updater: (current: number | null) => number | null) => void
+) {
+  return (event: DragEndEvent) => {
+    const indices = resolveReorderIndices(event);
+    if (!indices) {
+      return;
+    }
+    const { from, to } = indices;
+    reorderEditingPlaylistItem(from, to);
+    // Keep the edit target pointed at the same logical item, mirroring the
+    // arithmetic `reorderQueue` already applies to `currentIndex`.
+    setEditingIndex((current) => {
+      if (current === null) return null;
+      if (current === from) return to;
+      if (from < current && to >= current) return current - 1;
+      if (from > current && to <= current) return current + 1;
+      return current;
+    });
+  };
+}
+
 /** Create-playlist screen shown inside the discover pane. */
 export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
   const { playlists, tabs, modals } = props;
@@ -128,21 +163,11 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
     return book?.name ?? book?.commonName ?? bookId;
   };
 
-  const { getRowClassName, getHandleProps } = useDragReorder({
-    itemCount: editing?.items.length ?? 0,
-    onReorder: (from, to) => {
-      playlists.reorderEditingPlaylistItem(from, to);
-      // Keep the edit target pointed at the same logical item, mirroring the
-      // arithmetic `reorderQueue` already applies to `currentIndex`.
-      setEditingIndex((current) => {
-        if (current === null) return null;
-        if (current === from) return to;
-        if (from < current && to >= current) return current - 1;
-        if (from > current && to <= current) return current + 1;
-        return current;
-      });
-    },
-  });
+  const sensors = useListReorderSensors();
+  const handleDragEnd = createPlaylistItemsDragEndHandler(
+    playlists.reorderEditingPlaylistItem,
+    setEditingIndex
+  );
 
   const doSave = async () => {
     setSaving(true);
@@ -188,64 +213,82 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
             text={t("playlist-items-empty", { defaultValue: "No items yet." })}
           />
         ) : (
-          <ul className="sb-discover-list">
-            {editing.items.map((item, index) => (
-              <li
-                key={index}
-                className={
-                  "sb-discover-item sb-discover-item--row" +
-                  (index === editingIndex ? " sb-discover-item--editing" : "") +
-                  getRowClassName(index)
-                }
-              >
-                <button
-                  type="button"
-                  className="sb-discover-item-drag-handle"
-                  aria-label={t("drag-to-reorder-playlist-item", {
-                    defaultValue: "Drag to reorder",
-                  })}
-                  {...getHandleProps(index)}
-                >
-                  <MaterialIcon>drag_indicator</MaterialIcon>
-                </button>
-                <button
-                  type="button"
-                  className="sb-discover-item-button"
-                  aria-label={t("edit-playlist-item", {
-                    defaultValue: "Edit item",
-                  })}
-                  aria-current={index === editingIndex}
-                  onClick={() => setEditingIndex(index)}
-                >
-                  <MaterialIcon className="sb-discover-item-icon">
-                    {playlistItemIcon(item)}
-                  </MaterialIcon>
-                  <span className="sb-discover-item-title" dir="auto">
-                    {playlistItemLabel(item, t, resolveBookName)}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  className="sb-discover-item-delete"
-                  aria-label={t("remove-playlist-item", {
-                    defaultValue: "Remove item",
-                  })}
-                  onClick={() => {
-                    playlists.removeEditingPlaylistItem(index);
-                    // Keep the edit target pointed at the same item, or drop out
-                    // of editing when the edited item itself was removed.
-                    setEditingIndex((current) => {
-                      if (current === null) return null;
-                      if (current === index) return null;
-                      return current > index ? current - 1 : current;
-                    });
-                  }}
-                >
-                  <MaterialIcon>delete</MaterialIcon>
-                </button>
-              </li>
-            ))}
-          </ul>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={editing.items.map((_, index) => index)}
+              strategy={verticalListSortingStrategy}
+            >
+              <ul className="sb-discover-list">
+                {editing.items.map((item, index) => (
+                  <SortableRow
+                    key={index}
+                    id={index}
+                    className={
+                      "sb-discover-item sb-discover-item--row" +
+                      (index === editingIndex
+                        ? " sb-discover-item--editing"
+                        : "")
+                    }
+                  >
+                    {(handleProps) => (
+                      <>
+                        <button
+                          type="button"
+                          className="sb-discover-item-drag-handle"
+                          aria-label={t("drag-to-reorder-playlist-item", {
+                            defaultValue: "Drag to reorder",
+                          })}
+                          {...handleProps}
+                        >
+                          <MaterialIcon>drag_indicator</MaterialIcon>
+                        </button>
+                        <button
+                          type="button"
+                          className="sb-discover-item-button"
+                          aria-label={t("edit-playlist-item", {
+                            defaultValue: "Edit item",
+                          })}
+                          aria-current={index === editingIndex}
+                          onClick={() => setEditingIndex(index)}
+                        >
+                          <MaterialIcon className="sb-discover-item-icon">
+                            {playlistItemIcon(item)}
+                          </MaterialIcon>
+                          <span className="sb-discover-item-title" dir="auto">
+                            {playlistItemLabel(item, t, resolveBookName)}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          className="sb-discover-item-delete"
+                          aria-label={t("remove-playlist-item", {
+                            defaultValue: "Remove item",
+                          })}
+                          onClick={() => {
+                            playlists.removeEditingPlaylistItem(index);
+                            // Keep the edit target pointed at the same item, or
+                            // drop out of editing when the edited item itself
+                            // was removed.
+                            setEditingIndex((current) => {
+                              if (current === null) return null;
+                              if (current === index) return null;
+                              return current > index ? current - 1 : current;
+                            });
+                          }}
+                        >
+                          <MaterialIcon>delete</MaterialIcon>
+                        </button>
+                      </>
+                    )}
+                  </SortableRow>
+                ))}
+              </ul>
+            </SortableContext>
+          </DndContext>
         )}
       </DiscoverSection>
 
