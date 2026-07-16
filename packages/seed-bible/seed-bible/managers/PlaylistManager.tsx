@@ -270,7 +270,9 @@ export function createPlayingState(
         ref.chapter,
         endVerse ? range(ref.verse, endVerse + 1) : [ref.verse],
         {
-          className: "sb-verse-decoration-playlist-verse-highlight",
+          className: "sb-verse-decoration-diminish",
+          containerClassName: "sb-chapter-decoration-diminish",
+          removeAfterMs: 3000,
         }
       );
     }

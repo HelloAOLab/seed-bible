@@ -198,7 +198,7 @@ describe("SidebarSearch", () => {
         bookId: "GEN",
         chapterNumber: 1,
         verses: [1],
-        className: "sb-verse-decoration-search-result",
+        className: "sb-verse-decoration-diminish",
         removeAfterMs: 3000,
       },
     ]);

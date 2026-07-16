@@ -527,7 +527,7 @@ describe("createTabs", () => {
 
       expect(decorateVersesSpy).not.toBeNull();
       expect(decorateVersesSpy).toHaveBeenCalledWith("GEN", 1, [3, 5, 6], {
-        className: "sb-verse-decoration-initial-verse-highlight",
+        className: "sb-verse-decoration-diminish",
         removeAfterMs: 5000,
       });
     } finally {

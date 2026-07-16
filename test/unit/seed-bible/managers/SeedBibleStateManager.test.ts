@@ -875,7 +875,7 @@ describe("createSeedBibleState", () => {
       });
 
       expect(decorateSpy).toHaveBeenCalledWith("JHN", 3, 16, {
-        className: "sb-verse-decoration-open-reference-highlight",
+        className: "sb-verse-decoration-diminish",
         removeAfterMs: 3000,
       });
     });
@@ -897,7 +897,7 @@ describe("createSeedBibleState", () => {
       });
 
       expect(decorateSpy).toHaveBeenCalledWith("PSA", 23, [1, 2, 3], {
-        className: "sb-verse-decoration-open-reference-highlight",
+        className: "sb-verse-decoration-diminish",
         removeAfterMs: 3000,
       });
     });

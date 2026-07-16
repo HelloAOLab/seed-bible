@@ -121,6 +121,8 @@ export interface VerseDecoration {
   endIndex?: number;
   /** Optional CSS class to apply to the decorated verse/range. */
   className?: string;
+  /** Optional CSS class to apply to the entire chapter container. */
+  containerClassName?: string;
   /** Optional inline style to apply to the decorated verse/range. */
   style?: JSX.CSSProperties;
   /** Optional delay in milliseconds before this decoration auto-removes itself. */
@@ -141,6 +143,9 @@ export interface VerseDecorationInput {
   endIndex?: number;
   /** Optional CSS class to apply to the decorated verse/range. */
   className?: string;
+  /** Optional CSS class to apply to the entire chapter container. */
+  containerClassName?: string;
+
   /** Optional inline style to apply to the decorated verse/range. */
   style?: JSX.CSSProperties;
   /** Optional delay in milliseconds before this decoration auto-removes itself. */
