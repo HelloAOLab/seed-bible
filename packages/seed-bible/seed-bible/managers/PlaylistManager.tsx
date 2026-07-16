@@ -916,6 +916,9 @@ export function createPlaylistManager(
       const instance: PlaylistReadingExtensionInstance = {
         playingState,
 
+        hasNext: playingState.hasNext,
+        hasPrevious: playingState.hasPrevious,
+
         transformShortSubTitle: ({ data, label }) => {
           const current = data.value;
           const firstPlaylist = current?.playlists[0];

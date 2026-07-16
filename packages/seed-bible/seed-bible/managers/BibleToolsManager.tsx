@@ -588,7 +588,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
           <ChevronLeftIcon />
         ),
       isDisabled: (context) =>
-        !context.readingState.chapterData.value?.previousChapterApiLink ||
+        !context.readingState.hasPrevious.value ||
         context.readingState.loading.value,
       isVisible: (context) => !context.playlists?.playing?.value,
       onSelect: (context) => {
@@ -719,7 +719,7 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
           <ChevronRightIcon />
         ),
       isDisabled: (context) =>
-        !context.readingState.chapterData.value?.nextChapterApiLink ||
+        !context.readingState.hasNext.value ||
         context.readingState.loading.value,
       isVisible: (context) => !context.playlists?.playing?.value,
       onSelect: (context) => {
