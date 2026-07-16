@@ -535,16 +535,6 @@
     color: var(--sb-primary-color);
   }
 
-  /* The Bible tab uses the Seed Bible logo (a PNG <img>), which can't follow
-   * the active text color like the material-symbol icons do. Tint it to the
-   * primary orange when its tab is active so it matches the orange label.
-   * `brightness(0)` first flattens the logo to a solid silhouette (preserving
-   * its alpha), then the chain recolors that silhouette toward #e07b4c. */
-  .sb-reader-toolbar-mobile-tab-button-active .sb-reader-toolbar-seed-icon {
-    filter: brightness(0) saturate(100%) invert(58%) sepia(48%) saturate(700%)
-      hue-rotate(334deg) brightness(95%) contrast(88%);
-  }
-
   .sb-reader-toolbar-mobile-tab-icon {
     font-size: 1.5rem;
     line-height: 1;
