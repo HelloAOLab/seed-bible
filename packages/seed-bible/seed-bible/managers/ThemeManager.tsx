@@ -454,11 +454,13 @@ export function generateThemeCssVariables(variables: BibleTheme): string {
 }
 
 export function generateThemeCssClasses(theme: BibleTheme): string {
+  // Highlighted text keeps a readable font color; the highlight *background* is
+  // drawn behind the text by the ribbon layer (from `--sb-highlight-<id>-color`),
+  // not as a `background-color` here.
   return Object.entries(theme.highlightColors)
     .map(([colorId]) => {
       return [
         `.sb-highlight-${colorId} {`,
-        `background-color: var(--sb-highlight-${colorId}-color);`,
         `color: var(--sb-highlight-${colorId}-font-color);`,
         `&.sb-words-of-jesus { `,
         `color: var(--sb-highlight-${colorId}-words-of-jesus-font-color);`,

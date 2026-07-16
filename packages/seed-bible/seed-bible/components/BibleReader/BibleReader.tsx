@@ -4,8 +4,15 @@ import {
   type ChapterVerse,
 } from "../../managers/FreeUseBibleAPI";
 import type { JSX } from "preact";
-import { Suspense, useRef } from "preact/compat";
+import { Suspense, useRef, useLayoutEffect, useState } from "preact/compat";
 import { computed, type ReadonlySignal, type Signal } from "@preact/signals";
+import {
+  buildRibbonPath,
+  collectLineRects,
+  RIBBON_RADIUS_EM,
+  RIBBON_PAD_X_EM,
+  RIBBON_PAD_Y_EM,
+} from "../../app/highlightRibbon";
 import type {
   BibleReadingState,
   BibleSelectedVerse,
@@ -515,27 +522,32 @@ function renderChapterContent(
     return null;
   };
 
+  // The highlight background is drawn behind the text by the ribbon layer (see
+  // ChapterContent), so a highlighted run's wrapper paints no background itself.
+  // It only carries the readable font color and a `fill` (a CSS-var reference for
+  // preset colors, or the custom hex) that the layer reads back off the DOM.
   const getHighlightPresentation = (highlight: ChapterHighlight | null) => {
     if (!highlight) {
       return {
         className: "",
-        style: undefined,
-      } as const;
+        style: undefined as JSX.CSSProperties | undefined,
+        fill: null as string | null,
+      };
     }
 
     if (highlight.customColor && highlight.customFontColor) {
       return {
-        className: " sb-highlight",
-        style: {
-          backgroundColor: highlight.customColor,
-          color: highlight.customFontColor,
-        },
-      } as const;
+        className: "sb-highlight",
+        style: { color: highlight.customFontColor } as JSX.CSSProperties,
+        fill: highlight.customColor,
+      };
     }
 
     return {
-      className: ` sb-highlight sb-highlight-${highlight.colorId}`,
-    } as const;
+      className: `sb-highlight sb-highlight-${highlight.colorId}`,
+      style: undefined as JSX.CSSProperties | undefined,
+      fill: `var(--sb-highlight-${highlight.colorId}-color)`,
+    };
   };
 
   const getDecorationPresentation = (verseDecorations: VerseDecoration[]) => {
@@ -583,15 +595,10 @@ function renderChapterContent(
     return highlight.colorId;
   };
 
-  // Renders a single verse's `<span class="sb-verse">`. `carryHighlight` decides
-  // whether this verse's own decorator paints the highlight background. When a
-  // run of contiguous verses shares a color we pass `false` and let the run
-  // wrapper (below) paint one continuous ribbon instead of a box per verse.
-  const renderVerseNode = (
-    value: ChapterVerse,
-    entryIndex: number,
-    carryHighlight: boolean
-  ) => {
+  // Renders a single verse's `<span class="sb-verse">`. The highlight background
+  // is never painted here — an enclosing run wrapper (below) carries it and the
+  // ribbon layer draws it behind the text. Verse decorations still apply here.
+  const renderVerseNode = (value: ChapterVerse, entryIndex: number) => {
     const verse: BibleSelectedVerse = {
       bookId: chapterData.book.id,
       chapterNumber: chapterData.chapter.number,
@@ -606,12 +613,6 @@ function renderChapterContent(
     );
     const segments = splitVerseIntoSegments(value.content);
     const hasPoetry = segments.some((s) => s.type === "poetry");
-    const highlight = scriptureElements.showHighlights
-      ? getVerseHighlight(value.number)
-      : null;
-    const highlightPresentation = carryHighlight
-      ? getHighlightPresentation(highlight)
-      : ({ className: "", style: undefined } as const);
     const verseDecorations = getVerseDecorations(value.number);
     const decorationPresentation = getDecorationPresentation(verseDecorations);
     const contentDecorations = verseDecorations.filter((decoration) =>
@@ -636,13 +637,11 @@ function renderChapterContent(
       .join(" ");
     const verseDecoratorClassName = [
       "sb-verse-decorator",
-      highlightPresentation.className.trim(),
       decorationPresentation.className.trim(),
     ]
       .filter(Boolean)
       .join(" ");
     const verseDecoratorStyle = {
-      ...(highlightPresentation.style ?? {}),
       ...(decorationPresentation.style ?? {}),
     };
 
@@ -829,18 +828,26 @@ function renderChapterContent(
         ? getVerseHighlight(entry.number)
         : null;
       const colorKey = getHighlightColorKey(highlight);
+
+      if (colorKey === null) {
+        nodes.push(renderVerseNode(entry, i));
+        i += 1;
+        continue;
+      }
+
       const isPoetry = splitVerseIntoSegments(entry.content).some(
         (s) => s.type === "poetry"
       );
 
-      // Group consecutive prose verses that resolve to the same highlight color
-      // into one wrapper so the highlight renders as a single continuous ribbon
-      // (rounded only at the run's outer line edges, seamless where one verse
-      // flows into the next). Poetry is excluded because its lines are
-      // block-level and can't share an inline background.
-      if (colorKey !== null && !isPoetry) {
-        const runIndices = [i];
-        let j = i + 1;
+      // Every highlighted unit is wrapped in a `display: contents` element that
+      // carries the fill (for the ribbon layer) and font color. Contiguous
+      // same-color PROSE verses are grouped into one wrapper so the layer draws
+      // a single continuous ribbon across them. Poetry stays one verse per
+      // wrapper: its indented lines already read as a connected shape, and
+      // merging block-level verses would be visually noisy.
+      const runIndices = [i];
+      let j = i + 1;
+      if (!isPoetry) {
         while (j < entries.length) {
           const next = entries[j];
           if (!isVerseEntry(next)) {
@@ -860,27 +867,22 @@ function renderChapterContent(
           runIndices.push(j);
           j += 1;
         }
-
-        if (runIndices.length > 1) {
-          const presentation = getHighlightPresentation(highlight);
-          nodes.push(
-            <span
-              key={`highlight-run-${i}`}
-              className={presentation.className.trim()}
-              style={presentation.style}
-            >
-              {runIndices.map((idx) =>
-                renderVerseNode(entries[idx] as ChapterVerse, idx, false)
-              )}
-            </span>
-          );
-          i = j;
-          continue;
-        }
       }
 
-      nodes.push(renderVerseNode(entry, i, true));
-      i += 1;
+      const presentation = getHighlightPresentation(highlight);
+      nodes.push(
+        <span
+          key={`highlight-run-${i}`}
+          className={presentation.className}
+          style={presentation.style}
+          data-highlight-fill={presentation.fill ?? undefined}
+        >
+          {runIndices.map((idx) =>
+            renderVerseNode(entries[idx] as ChapterVerse, idx)
+          )}
+        </span>
+      );
+      i = j;
       continue;
     }
 
@@ -963,18 +965,78 @@ function ChapterContent(props: ChapterContentProps) {
     scriptureElements,
   } = props;
 
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [ribbons, setRibbons] = useState<Array<{ d: string; fill: string }>>(
+    []
+  );
+  const signatureRef = useRef("");
+
+  // Measure the highlighted runs' live text geometry and turn each into a
+  // rounded ribbon path drawn behind the text by the SVG layer. Runs after
+  // every render (highlights/chapter/settings changes re-render this component)
+  // and on reflow via the ResizeObserver below. The signature guard keeps the
+  // measure -> setState -> re-render cycle from looping.
+  const measureRibbons = () => {
+    const content = contentRef.current;
+    if (!content) return;
+    const box = content.getBoundingClientRect();
+    const fontSize = parseFloat(getComputedStyle(content).fontSize) || 16;
+    const radius = RIBBON_RADIUS_EM * fontSize;
+    const padX = RIBBON_PAD_X_EM * fontSize;
+    const padY = RIBBON_PAD_Y_EM * fontSize;
+
+    const next: Array<{ d: string; fill: string }> = [];
+    content
+      .querySelectorAll<HTMLElement>("[data-highlight-fill]")
+      .forEach((el) => {
+        const fill = el.getAttribute("data-highlight-fill");
+        if (!fill) return;
+        const d = buildRibbonPath(
+          collectLineRects(el, box.left, box.top),
+          radius,
+          padX,
+          padY
+        );
+        if (d) next.push({ d, fill });
+      });
+
+    const signature = JSON.stringify(next);
+    if (signature !== signatureRef.current) {
+      signatureRef.current = signature;
+      setRibbons(next);
+    }
+  };
+
+  useLayoutEffect(() => {
+    measureRibbons();
+  });
+
+  useLayoutEffect(() => {
+    const content = contentRef.current;
+    if (!content || typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(() => measureRibbons());
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, []);
+
   if (chapterData.value === null) {
     throw chapterDataPromise;
   }
 
   return (
     <div
+      ref={contentRef}
       className="sb-chapter-content"
       onPointerDown={() => {
         justConvertedSelectionRef.current = false;
       }}
       onPointerUp={selectVersesFromTextSelection}
     >
+      <svg className="sb-highlight-layer" aria-hidden="true">
+        {ribbons.map((ribbon, index) => (
+          <path key={index} d={ribbon.d} style={{ fill: ribbon.fill }} />
+        ))}
+      </svg>
       {renderChapterContent(
         chapterData.value,
         (verse, event) => {

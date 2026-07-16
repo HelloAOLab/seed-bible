@@ -407,6 +407,25 @@
   font-size: 1em;
 
   padding-bottom: 8.125rem;
+
+  /* Positioning context + own stacking context so the highlight ribbon layer
+     can sit behind the scripture text (z-index: -1) without slipping behind the
+     page background. */
+  position: relative;
+  isolation: isolate;
+}
+
+/* The highlight ribbons are drawn here, behind the text: an SVG overlay sized to
+   the content box, filled by measured rounded paths (see ChapterContent). Behind
+   the text it can never shift a line or cover a glyph. */
+.sb-highlight-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  overflow: visible;
 }
 
 @media (max-width: 480px) {
@@ -469,23 +488,14 @@
     color 0.2s ease;
 }
 
-/* Shared treatment for any highlighted verse (preset or custom color). Applied
-   either to a verse's own decorator or, when several same-color verses are
-   contiguous, to a wrapper around the whole run so the run reads as one ribbon.
-
-   Only block-direction padding is used — it lifts the tint above and below the
-   text without growing the inline box, so highlighting never reflows scripture.
-   There is deliberately no inline padding: extending the tint sideways past the
-   text would either shift the line or (with a compensating negative margin)
-   bleed over and cover the neighbouring verse's text.
-
-   `box-decoration-break: clone` gives every wrapped line its own rounded corners
-   so no line end is ever left square. */
+/* Wrapper around a highlighted run (one prose run, or one poetry verse). It
+   paints no background itself — the ribbon layer draws the highlight behind the
+   text. `display: contents` means the wrapper adds no box of its own, so it
+   never affects layout; it only carries the readable font color (via
+   `.sb-highlight-<id>`, or an inline color for custom highlights) and the
+   `data-highlight-fill` the layer reads. */
 .sb-highlight {
-  padding-block: 0.14em;
-  border-radius: 0.4em;
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
+  display: contents;
 }
 
 .sb-verse-poetry {

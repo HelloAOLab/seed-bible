@@ -91,9 +91,9 @@ describe("ThemeManager CSS helpers", () => {
     it("uses CSS variables for normal and words-of-jesus text colors", () => {
       const css = generateThemeCssClasses(createTheme());
 
-      expect(css).toContain(
-        "background-color: var(--sb-highlight-yellow-color);"
-      );
+      // The highlight background is drawn by the ribbon layer, not as a
+      // background-color on the text.
+      expect(css).not.toContain("background-color");
       expect(css).toContain("color: var(--sb-highlight-yellow-font-color);");
       expect(css).toContain("&.sb-words-of-jesus {");
       expect(css).toContain(
