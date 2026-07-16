@@ -1,5 +1,6 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { signal } from "@preact/signals";
 import { PaneHeader } from "@packages/seed-bible/seed-bible/components/PaneHeader/PaneHeader";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
@@ -31,7 +32,10 @@ describe("PaneHeader", () => {
 
   it("renders only a title and close button when no header is provided", () => {
     act(() => {
-      render(<PaneHeader title="My Pane" onClose={vi.fn()} />, container);
+      render(
+        <PaneHeader title={signal("My Pane")} onClose={vi.fn()} />,
+        container
+      );
     });
 
     expect(container.querySelector(".sb-pane-header-title")?.textContent).toBe(
@@ -63,7 +67,7 @@ describe("PaneHeader", () => {
     act(() => {
       render(
         <PaneHeader
-          title="My Pane"
+          title={signal("My Pane")}
           onClose={vi.fn()}
           header={() => <button className="my-custom-button">Refresh</button>}
         />,
@@ -100,7 +104,7 @@ describe("PaneHeader", () => {
     act(() => {
       render(
         <PaneHeader
-          title="My Pane"
+          title={signal("My Pane")}
           onClose={vi.fn()}
           onPointerDown={onPointerDown}
           header={() => <button className="my-custom-button">Refresh</button>}
@@ -125,7 +129,7 @@ describe("PaneHeader", () => {
     act(() => {
       render(
         <PaneHeader
-          title="My Pane"
+          title={signal("My Pane")}
           onClose={vi.fn()}
           onPointerDown={onPointerDown}
           header={() => <button className="my-custom-button">Refresh</button>}
