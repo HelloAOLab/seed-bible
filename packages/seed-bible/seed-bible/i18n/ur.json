@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" کو حذف کریں؟ اسے کالعدم نہیں کیا جا سکتا۔",
   "delete-playlist-failed": "پلے لسٹ کو حذف نہیں کیا جا سکا۔",
   "collapsed-tab-shared-label": "{{title}} — مشترکہ سیشن، {{count}} موجودہ",
-  "playlist-add-mode-label": "آئٹم کی قسم"
+  "playlist-add-mode-label": "آئٹم کی قسم",
+  "saving": "محفوظ ہو رہا ہے…",
+  "unsaved-item-confirm-title": "غیر محفوظ آئٹم",
+  "unsaved-item-confirm-message": "آپ نے ایک ایسا آئٹم شامل کرنا شروع کیا ہے جو ابھی تک پلے لسٹ میں شامل نہیں کیا گیا۔ آپ کیا کرنا چاہیں گے؟",
+  "discard-and-save": "مسترد کریں اور محفوظ کریں",
+  "add-and-save": "شامل کریں اور محفوظ کریں"
 }

@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" жок кылынсынбы? Муну артка кайтаруу мүмкүн эмес.",
   "delete-playlist-failed": "Ойнотмо тизме өчүрүлгөн жок.",
   "collapsed-tab-shared-label": "{{title}} — бөлүшүлгөн сессия, {{count}} катышууда",
-  "playlist-add-mode-label": "Буюмдун түрү"
+  "playlist-add-mode-label": "Буюмдун түрү",
+  "saving": "Сакталууда…",
+  "unsaved-item-confirm-title": "Сакталбаган элемент",
+  "unsaved-item-confirm-message": "Сиз ойнотуу тизмесине азырынча кошулбаган нерсени кошо баштадыңыз. Эмне кылгыңыз келет?",
+  "discard-and-save": "Жокко чыгаруу жана сактоо",
+  "add-and-save": "Кошуу жана сактоо"
 }

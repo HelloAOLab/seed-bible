@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "Ștergeți „ {{title}} ”? Această acțiune nu poate fi anulată.",
   "delete-playlist-failed": "Nu s-a putut șterge lista de redare.",
   "collapsed-tab-shared-label": "{{title}} — sesiune partajată, {{count}} prezenți",
-  "playlist-add-mode-label": "Tipul articolului"
+  "playlist-add-mode-label": "Tipul articolului",
+  "saving": "Se salvează…",
+  "unsaved-item-confirm-title": "Element nesalvat",
+  "unsaved-item-confirm-message": "Ați început să adăugați un element care nu a fost încă adăugat în playlist. Ce doriți să faceți?",
+  "discard-and-save": "Renunță și salvează",
+  "add-and-save": "Adaugă și salvează"
 }

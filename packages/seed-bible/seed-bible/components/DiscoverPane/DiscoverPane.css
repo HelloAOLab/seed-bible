@@ -132,6 +132,13 @@
   font-weight: 500;
 }
 
+/* Leading type icon in a row (e.g. playlist item type). */
+.sb-discover-item-icon {
+  flex-shrink: 0;
+  font-size: 1.125rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
 .sb-discover-item-description {
   font-size: 0.75rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);

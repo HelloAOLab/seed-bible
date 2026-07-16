@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \"ను తొలగించాలా? దీన్ని వెనక్కి తీసుకోలేరు.",
   "delete-playlist-failed": "ప్లేలిస్ట్‌ను తొలగించలేకపోయాను.",
   "collapsed-tab-shared-label": "{{title}} — భాగస్వామ్య సెషన్, {{count}} హాజరు",
-  "playlist-add-mode-label": "వస్తువు రకం"
+  "playlist-add-mode-label": "వస్తువు రకం",
+  "saving": "సేవ్ చేస్తోంది…",
+  "unsaved-item-confirm-title": "సేవ్ చేయని అంశం",
+  "unsaved-item-confirm-message": "మీరు ఇంకా ప్లేలిస్ట్‌కు జోడించని అంశాన్ని జోడించడం ప్రారంభించారు. మీరు ఏమి చేయాలనుకుంటున్నారు?",
+  "discard-and-save": "విస్మరించి సేవ్ చేయండి",
+  "add-and-save": "జోడించి సేవ్ చేయండి"
 }

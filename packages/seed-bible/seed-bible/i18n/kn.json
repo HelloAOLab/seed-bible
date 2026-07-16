@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" ಅನ್ನು ಅಳಿಸುವುದೇ? ಇದನ್ನು ರದ್ದುಗೊಳಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.",
   "delete-playlist-failed": "ಪ್ಲೇಪಟ್ಟಿಯನ್ನು ಅಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
   "collapsed-tab-shared-label": "{{title}} — ಹಂಚಿಕೊಂಡ ಅವಧಿ, {{count}} ಪ್ರಸ್ತುತ",
-  "playlist-add-mode-label": "ಐಟಂ ಪ್ರಕಾರ"
+  "playlist-add-mode-label": "ಐಟಂ ಪ್ರಕಾರ",
+  "saving": "ಉಳಿಸಲಾಗುತ್ತಿದೆ…",
+  "unsaved-item-confirm-title": "ಉಳಿಸದ ಐಟಂ",
+  "unsaved-item-confirm-message": "ನೀವು ಇನ್ನೂ ಪ್ಲೇಪಟ್ಟಿಗೆ ಸೇರಿಸದ ಐಟಂ ಅನ್ನು ಸೇರಿಸಲು ಪ್ರಾರಂಭಿಸಿದ್ದೀರಿ. ನೀವು ಏನು ಮಾಡಲು ಬಯಸುತ್ತೀರಿ?",
+  "discard-and-save": "ತಿರಸ್ಕರಿಸಿ ಮತ್ತು ಉಳಿಸಿ",
+  "add-and-save": "ಸೇರಿಸಿ ಮತ್ತು ಉಳಿಸಿ"
 }

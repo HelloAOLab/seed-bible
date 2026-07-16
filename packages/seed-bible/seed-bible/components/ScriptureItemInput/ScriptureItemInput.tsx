@@ -1,5 +1,6 @@
 import "./ScriptureItemInput.css";
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useEffect, useImperativeHandle, useRef, useState } from "preact/hooks";
+import { forwardRef } from "preact/compat";
 import { useI18n } from "../../i18n/I18nManager";
 import type {
   PlaylistItemData,
@@ -15,6 +16,15 @@ interface ScriptureItemInputProps {
   initialValue?: string;
   /** Overrides the submit button label (defaults to "Add item"). */
   submitLabel?: string;
+}
+
+/** Imperative handle so a parent can check for / commit an in-progress draft. */
+export interface ScriptureItemInputHandle {
+  /** Whether the user has typed a reference that hasn't been added yet. */
+  isDirty: () => boolean;
+  /** Submits the current input, same as clicking "Add". Returns whether it
+   * actually added an item (false if empty or the reference didn't resolve). */
+  commit: () => boolean;
 }
 
 /** Position of the highlighted option within the suggestions list. */
@@ -34,7 +44,10 @@ function clamp(value: number, min: number, max: number): number {
  * move between chapters within a book, clicking adds an option, and Enter adds
  * the highlighted one.
  */
-export function ScriptureItemInput(props: ScriptureItemInputProps) {
+export const ScriptureItemInput = forwardRef<
+  ScriptureItemInputHandle,
+  ScriptureItemInputProps
+>(function ScriptureItemInput(props, ref) {
   const { books, onAdd, initialValue, submitLabel } = props;
   const { t } = useI18n();
   const [value, setValue] = useState(initialValue ?? "");
@@ -93,16 +106,17 @@ export function ScriptureItemInput(props: ScriptureItemInputProps) {
     });
   };
 
-  const addRef = (ref: VerseRef) => {
-    onAdd({ type: "bible-verse", ref });
+  const addRef = (verseRef: VerseRef) => {
+    onAdd({ type: "bible-verse", ref: verseRef });
     setValue("");
     setError(null);
     setHighlight({ book: 0, option: 0 });
   };
 
-  const handleSubmit = () => {
+  /** Submits the current input. Returns whether it actually added an item. */
+  const handleSubmit = (): boolean => {
     if (!value.trim()) {
-      return;
+      return false;
     }
     if (!highlightedOption) {
       setError(
@@ -110,10 +124,20 @@ export function ScriptureItemInput(props: ScriptureItemInputProps) {
           defaultValue: "Couldn't find that reference",
         })
       );
-      return;
+      return false;
     }
     addRef(highlightedOption.ref);
+    return true;
   };
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      isDirty: () => value.trim() !== "",
+      commit: handleSubmit,
+    }),
+    [value, highlightedOption]
+  );
 
   return (
     <>
@@ -247,4 +271,4 @@ export function ScriptureItemInput(props: ScriptureItemInputProps) {
       {error ? <div className="sb-playlist-add-error">{error}</div> : null}
     </>
   );
-}
+});

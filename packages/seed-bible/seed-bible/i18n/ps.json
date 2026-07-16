@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" ړنګ کړئ؟ دا بیرته نه شي راوستلی.",
   "delete-playlist-failed": "پلې لیست ړنګ نشو.",
   "collapsed-tab-shared-label": "{{title}} — شریکه غونډه، {{count}} حاضر",
-  "playlist-add-mode-label": "د توکي ډول"
+  "playlist-add-mode-label": "د توکي ډول",
+  "saving": "خوندي کول…",
+  "unsaved-item-confirm-title": "ناخوندي شوی توکی",
+  "unsaved-item-confirm-message": "تاسو د یو داسې توکي زیاتولو پیل کړی چې لا تر اوسه پلی لست ته نه دی زیات شوی. تاسو څه غواړئ وکړئ؟",
+  "discard-and-save": "لغوه کول او خوندي کول",
+  "add-and-save": "زیاتول او خوندي کول"
 }

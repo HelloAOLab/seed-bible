@@ -13,12 +13,21 @@
   flex: 1;
   min-width: 0;
   display: flex;
-  padding: 0;
+  align-items: center;
+  gap: 8px;
   border: none;
   background: transparent;
   color: inherit;
   text-align: start;
   cursor: pointer;
+  /* Stretch to fill the row's full height (not just the label's own line),
+   * absorbing the row's own padding so the whole row is clickable. There's
+   * no sibling button in this row, so all four edges can extend evenly. */
+  align-self: stretch;
+  padding-block: 8px;
+  padding-inline: 10px;
+  margin-block: -8px;
+  margin-inline: -10px;
 }
 
 .sb-play-playlist-item--current {

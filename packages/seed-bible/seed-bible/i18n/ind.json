@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "Hapus \" {{title}} \"? Ini tidak bisa dibatalkan.",
   "delete-playlist-failed": "Tidak dapat menghapus daftar putar.",
   "collapsed-tab-shared-label": "{{title}} — sesi bersama, {{count}} hadir",
-  "playlist-add-mode-label": "Jenis barang"
+  "playlist-add-mode-label": "Jenis barang",
+  "saving": "Menyimpan…",
+  "unsaved-item-confirm-title": "Item belum disimpan",
+  "unsaved-item-confirm-message": "Anda mulai menambahkan item yang belum ditambahkan ke daftar putar. Apa yang ingin Anda lakukan?",
+  "discard-and-save": "Buang dan simpan",
+  "add-and-save": "Tambah dan simpan"
 }

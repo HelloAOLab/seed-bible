@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" என்பதை நீக்கவா? இதை மீண்டும் பழைய நிலைக்குக் கொண்டுவர முடியாது.",
   "delete-playlist-failed": "பிளேலிஸ்ட்டை நீக்க முடியவில்லை.",
   "collapsed-tab-shared-label": "{{title}} — பகிரப்பட்ட அமர்வு, {{count}} பேர் கலந்துகொள்கின்றனர்",
-  "playlist-add-mode-label": "பொருள் வகை"
+  "playlist-add-mode-label": "பொருள் வகை",
+  "saving": "சேமிக்கிறது…",
+  "unsaved-item-confirm-title": "சேமிக்கப்படாத உருப்படி",
+  "unsaved-item-confirm-message": "இன்னும் பிளேலிஸ்ட்டில் சேர்க்கப்படாத ஒரு உருப்படியை நீங்கள் சேர்க்கத் தொடங்கியுள்ளீர்கள். நீங்கள் என்ன செய்ய விரும்புகிறீர்கள்?",
+  "discard-and-save": "நிராகரித்து சேமி",
+  "add-and-save": "சேர்த்து சேமி"
 }

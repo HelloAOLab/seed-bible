@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "Törli a(z) „ {{title}} ” fájlt? Ez nem vonható vissza.",
   "delete-playlist-failed": "Nem sikerült törölni a lejátszási listát.",
   "collapsed-tab-shared-label": "{{title}} — megosztott munkamenet, {{count}} jelenlévő",
-  "playlist-add-mode-label": "Elemtípus"
+  "playlist-add-mode-label": "Elemtípus",
+  "saving": "Mentés…",
+  "unsaved-item-confirm-title": "Nem mentett elem",
+  "unsaved-item-confirm-message": "Elkezdett hozzáadni egy elemet, amelyet még nem adott hozzá a lejátszási listához. Mit szeretne tenni?",
+  "discard-and-save": "Elvetés és mentés",
+  "add-and-save": "Hozzáadás és mentés"
 }

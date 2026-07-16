@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "Susa \" {{title}} \"? Lokhu akukwazi ukuhlehliswa.",
   "delete-playlist-failed": "Ayikwazanga ukususa uhlu lwadlalwayo.",
   "collapsed-tab-shared-label": "{{title}} — iseshini eyabiwe, {{count}} ikhona",
-  "playlist-add-mode-label": "Uhlobo lwento"
+  "playlist-add-mode-label": "Uhlobo lwento",
+  "saving": "Kuyalondolozwa…",
+  "unsaved-item-confirm-title": "Into engalondolozwanga",
+  "unsaved-item-confirm-message": "Uqale ukungeza into engakangezwa ohlwini lokudlala. Yini ongathanda ukuyenza?",
+  "discard-and-save": "Lahla futhi ulondoloze",
+  "add-and-save": "Ngeza futhi ulondoloze"
 }

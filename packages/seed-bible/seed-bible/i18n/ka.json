@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "წავშალო „ {{title}} “? ამის გაუქმება შეუძლებელია.",
   "delete-playlist-failed": "დასაკრავი სიის წაშლა ვერ მოხერხდა.",
   "collapsed-tab-shared-label": "{{title}} — გაზიარებული სესია, {{count}} აწმყო",
-  "playlist-add-mode-label": "ნივთის ტიპი"
+  "playlist-add-mode-label": "ნივთის ტიპი",
+  "saving": "ინახება…",
+  "unsaved-item-confirm-title": "შეუნახავი ერთეული",
+  "unsaved-item-confirm-message": "თქვენ დაიწყეთ ისეთი ერთეულის დამატება, რომელიც ჯერ არ დამატებულა პლეილისტში. რა გსურთ გააკეთოთ?",
+  "discard-and-save": "გაუქმება და შენახვა",
+  "add-and-save": "დამატება და შენახვა"
 }

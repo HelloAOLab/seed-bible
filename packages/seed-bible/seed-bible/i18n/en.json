@@ -400,5 +400,10 @@
   "languageUnavailable.body": "We don't currently have a Bible translation for this language, but we do support {{fallback}}. Would you like to switch the Bible text to {{fallback}} instead?",
   "languageUnavailable.yesContinue": "Yes, Continue",
   "languageUnavailable.noGoBack": "No, Go back",
-  "ui-size": "UI size"
+  "ui-size": "UI size",
+  "saving": "Saving…",
+  "unsaved-item-confirm-title": "Unsaved item",
+  "unsaved-item-confirm-message": "You've started adding an item that hasn't been added to the playlist yet. What would you like to do?",
+  "discard-and-save": "Discard and save",
+  "add-and-save": "Add and save"
 }

@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \"을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
   "delete-playlist-failed": "재생목록을 삭제할 수 없었습니다.",
   "collapsed-tab-shared-label": "{{title}} — 공유 세션, {{count}} 명 참여",
-  "playlist-add-mode-label": "품목 유형"
+  "playlist-add-mode-label": "품목 유형",
+  "saving": "저장 중…",
+  "unsaved-item-confirm-title": "저장되지 않은 항목",
+  "unsaved-item-confirm-message": "아직 재생목록에 추가되지 않은 항목을 입력하기 시작했습니다. 어떻게 하시겠습니까?",
+  "discard-and-save": "삭제하고 저장",
+  "add-and-save": "추가하고 저장"
 }

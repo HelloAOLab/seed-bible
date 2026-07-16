@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "Bolongola \" {{title}} \"? Oyo ekoki kozongisama sima te.",
   "delete-playlist-failed": "Ekokaki te ko effacer liste ya ba playlist.",
   "collapsed-tab-shared-label": "{{title}} — session ya kokabola, {{count}} ezali",
-  "playlist-add-mode-label": "Lolenge ya eloko"
+  "playlist-add-mode-label": "Lolenge ya eloko",
+  "saving": "Ezali kobombama…",
+  "unsaved-item-confirm-title": "Eloko ebombami te",
+  "unsaved-item-confirm-message": "Obandaki kobakisa eloko oyo ebakisami naino te na playlist. Olingi kosala nini?",
+  "discard-and-save": "Bwaka mpe bomba",
+  "add-and-save": "Bakisa mpe bomba"
 }

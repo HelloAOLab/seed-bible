@@ -1,7 +1,10 @@
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { forwardRef } from "preact/compat";
+import { useImperativeHandle } from "preact/hooks";
 import { signal } from "@preact/signals";
 import { CreatePlaylistForm } from "@packages/seed-bible/seed-bible/components/CreatePlaylistForm/CreatePlaylistForm";
+import { createModalManager } from "@packages/seed-bible/seed-bible/managers/ModalManager";
 import type {
   Playlist,
   PlaylistItemData,
@@ -44,37 +47,56 @@ const STUB_UPDATED_ITEM: PlaylistItemData = {
   ref: { bookId: "EXO", chapter: 6 },
 };
 
+/**
+ * Lets tests drive the stubbed `PlaylistItemInput`'s imperative handle
+ * (`isDirty`/`commit`), which `CreatePlaylistForm` uses to warn before Save
+ * discards an in-progress "Add item" draft. Reset in `beforeEach`.
+ */
+const stubItemInputControl = {
+  isDirty: false,
+  commitResult: true as boolean | Promise<boolean>,
+};
+
 vi.mock(
   "@packages/seed-bible/seed-bible/components/PlaylistItemInput/PlaylistItemInput",
   () => ({
-    PlaylistItemInput: (props: StubPlaylistItemInputProps) => (
-      <div className="stub-playlist-item-input">
-        <span className="stub-edit-scripture-text">
-          {props.editScriptureText ?? ""}
-        </span>
-        <button
-          type="button"
-          className="stub-add"
-          onClick={() => props.onAdd(STUB_ADDED_ITEM)}
-        >
-          add
-        </button>
-        <button
-          type="button"
-          className="stub-update"
-          onClick={() => props.onUpdate?.(STUB_UPDATED_ITEM)}
-        >
-          update
-        </button>
-        <button
-          type="button"
-          className="stub-cancel"
-          onClick={() => props.onCancelEdit?.()}
-        >
-          cancel
-        </button>
-      </div>
-    ),
+    PlaylistItemInput: forwardRef(function StubPlaylistItemInput(
+      props: StubPlaylistItemInputProps,
+      ref
+    ) {
+      useImperativeHandle(ref, () => ({
+        isDirty: () => stubItemInputControl.isDirty,
+        commit: () => stubItemInputControl.commitResult,
+      }));
+      return (
+        <div className="stub-playlist-item-input">
+          <span className="stub-edit-scripture-text">
+            {props.editScriptureText ?? ""}
+          </span>
+          <button
+            type="button"
+            className="stub-add"
+            onClick={() => props.onAdd(STUB_ADDED_ITEM)}
+          >
+            add
+          </button>
+          <button
+            type="button"
+            className="stub-update"
+            onClick={() => props.onUpdate?.(STUB_UPDATED_ITEM)}
+          >
+            update
+          </button>
+          <button
+            type="button"
+            className="stub-cancel"
+            onClick={() => props.onCancelEdit?.()}
+          >
+            cancel
+          </button>
+        </div>
+      );
+    }),
   })
 );
 
@@ -167,6 +189,8 @@ describe("CreatePlaylistForm", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
+    stubItemInputControl.isDirty = false;
+    stubItemInputControl.commitResult = true;
   });
 
   afterEach(() => {
@@ -181,10 +205,15 @@ describe("CreatePlaylistForm", () => {
   it("shows the empty-items message for a fresh playlist", () => {
     const { playlists } = createMockPlaylists(createPlaylist());
     const tabs = createMockTabs();
+    const modals = createModalManager();
 
     act(() => {
       render(
-        <CreatePlaylistForm playlists={playlists} tabs={tabs} />,
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
         container
       );
     });
@@ -198,10 +227,15 @@ describe("CreatePlaylistForm", () => {
     const { playlists, cancelEditingPlaylist } =
       createMockPlaylists(createPlaylist());
     const tabs = createMockTabs();
+    const modals = createModalManager();
 
     act(() => {
       render(
-        <CreatePlaylistForm playlists={playlists} tabs={tabs} />,
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
         container
       );
     });
@@ -220,10 +254,15 @@ describe("CreatePlaylistForm", () => {
       createPlaylist({ items: [verseItem("GEN", 1)] })
     );
     const tabs = createMockTabs();
+    const modals = createModalManager();
 
     act(() => {
       render(
-        <CreatePlaylistForm playlists={playlists} tabs={tabs} />,
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
         container
       );
     });
@@ -239,10 +278,15 @@ describe("CreatePlaylistForm", () => {
     );
     const tab = createMockTab([book("GEN", "Genesis")]);
     const tabs = createMockTabs(tab);
+    const modals = createModalManager();
 
     act(() => {
       render(
-        <CreatePlaylistForm playlists={playlists} tabs={tabs} />,
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
         container
       );
     });
@@ -260,10 +304,15 @@ describe("CreatePlaylistForm", () => {
     );
     const tab = createMockTab([book("GEN", "Genesis")]);
     const tabs = createMockTabs(tab);
+    const modals = createModalManager();
 
     act(() => {
       render(
-        <CreatePlaylistForm playlists={playlists} tabs={tabs} />,
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
         container
       );
     });
@@ -290,10 +339,15 @@ describe("CreatePlaylistForm", () => {
     const { playlists, addEditingPlaylistItem } =
       createMockPlaylists(createPlaylist());
     const tabs = createMockTabs();
+    const modals = createModalManager();
 
     act(() => {
       render(
-        <CreatePlaylistForm playlists={playlists} tabs={tabs} />,
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
         container
       );
     });
@@ -311,10 +365,15 @@ describe("CreatePlaylistForm", () => {
       createPlaylist({ items: [verseItem("GEN", 1)] })
     );
     const tabs = createMockTabs();
+    const modals = createModalManager();
 
     act(() => {
       render(
-        <CreatePlaylistForm playlists={playlists} tabs={tabs} />,
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
         container
       );
     });
@@ -352,10 +411,15 @@ describe("CreatePlaylistForm", () => {
       createPlaylist({ items: [verseItem("GEN", 1)] })
     );
     const tabs = createMockTabs();
+    const modals = createModalManager();
 
     act(() => {
       render(
-        <CreatePlaylistForm playlists={playlists} tabs={tabs} />,
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
         container
       );
     });
@@ -385,10 +449,15 @@ describe("CreatePlaylistForm", () => {
       createPlaylist({ items: [verseItem("GEN", 1), verseItem("GEN", 2)] })
     );
     const tabs = createMockTabs();
+    const modals = createModalManager();
 
     act(() => {
       render(
-        <CreatePlaylistForm playlists={playlists} tabs={tabs} />,
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
         container
       );
     });
@@ -419,10 +488,15 @@ describe("CreatePlaylistForm", () => {
       })
     );
     const tabs = createMockTabs();
+    const modals = createModalManager();
 
     act(() => {
       render(
-        <CreatePlaylistForm playlists={playlists} tabs={tabs} />,
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
         container
       );
     });
@@ -466,10 +540,15 @@ describe("CreatePlaylistForm", () => {
         })
     );
     const tabs = createMockTabs();
+    const modals = createModalManager();
 
     act(() => {
       render(
-        <CreatePlaylistForm playlists={playlists} tabs={tabs} />,
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
         container
       );
     });
@@ -478,12 +557,14 @@ describe("CreatePlaylistForm", () => {
       ".sb-settings-save-button"
     ) as HTMLButtonElement;
     expect(saveButton.disabled).toBe(false);
+    expect(saveButton.textContent).toBe("Save");
 
     await act(async () => {
       saveButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
       await Promise.resolve();
     });
     expect(saveButton.disabled).toBe(true);
+    expect(saveButton.textContent).toBe("Saving…");
 
     await act(async () => {
       rejectSave?.(new Error("save failed"));
@@ -493,6 +574,7 @@ describe("CreatePlaylistForm", () => {
 
     expect(consoleError).toHaveBeenCalled();
     expect(saveButton.disabled).toBe(false);
+    expect(saveButton.textContent).toBe("Save");
   });
 
   it("does not call saveEditingPlaylist twice for a double click while saving", async () => {
@@ -506,10 +588,15 @@ describe("CreatePlaylistForm", () => {
         })
     );
     const tabs = createMockTabs();
+    const modals = createModalManager();
 
     act(() => {
       render(
-        <CreatePlaylistForm playlists={playlists} tabs={tabs} />,
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
         container
       );
     });
@@ -529,5 +616,312 @@ describe("CreatePlaylistForm", () => {
 
     expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
     resolveSave?.();
+  });
+
+  it("shows a leading icon per item type", () => {
+    const { playlists } = createMockPlaylists(
+      createPlaylist({
+        items: [
+          verseItem("GEN", 1),
+          { type: "link", url: "https://example.com" },
+          { type: "html", html: "<p>hi</p>" },
+        ],
+      })
+    );
+    const tabs = createMockTabs();
+    const modals = createModalManager();
+
+    act(() => {
+      render(
+        <CreatePlaylistForm
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+        />,
+        container
+      );
+    });
+
+    const icons = Array.from(
+      container.querySelectorAll(".sb-discover-item-icon")
+    ).map((el) => el.textContent);
+    expect(icons).toEqual(["menu_book", "link", "notes"]);
+  });
+
+  describe("unsaved Add Item content", () => {
+    it("clicking Save with a clean draft saves directly, without a confirm dialog", () => {
+      const { playlists, saveEditingPlaylist } =
+        createMockPlaylists(createPlaylist());
+      const tabs = createMockTabs();
+      const modals = createModalManager();
+      stubItemInputControl.isDirty = false;
+
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            playlists={playlists}
+            tabs={tabs}
+            modals={modals}
+          />,
+          container
+        );
+      });
+
+      const saveButton = container.querySelector(
+        ".sb-settings-save-button"
+      ) as HTMLButtonElement;
+      act(() => {
+        saveButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
+      expect(modals.modals.value).toHaveLength(0);
+    });
+
+    it("clicking Save with a dirty draft opens a confirm dialog instead of saving", () => {
+      const { playlists, saveEditingPlaylist } =
+        createMockPlaylists(createPlaylist());
+      const tabs = createMockTabs();
+      const modals = createModalManager();
+      stubItemInputControl.isDirty = true;
+
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            playlists={playlists}
+            tabs={tabs}
+            modals={modals}
+          />,
+          container
+        );
+      });
+
+      const saveButton = container.querySelector(
+        ".sb-settings-save-button"
+      ) as HTMLButtonElement;
+      act(() => {
+        saveButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(saveEditingPlaylist).not.toHaveBeenCalled();
+      const modal = modals.modals.value.find(
+        (m) => m.id === "playlist-unsaved-item-confirm"
+      );
+      expect(modal).not.toBeUndefined();
+    });
+
+    it("does not warn about a dirty draft while mid-edit of an existing item", () => {
+      const { playlists, saveEditingPlaylist } = createMockPlaylists(
+        createPlaylist({ items: [verseItem("GEN", 1)] })
+      );
+      const tabs = createMockTabs();
+      const modals = createModalManager();
+      stubItemInputControl.isDirty = true;
+
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            playlists={playlists}
+            tabs={tabs}
+            modals={modals}
+          />,
+          container
+        );
+      });
+
+      act(() => {
+        container
+          .querySelector(".sb-discover-item-button")
+          ?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      const saveButton = container.querySelector(
+        ".sb-settings-save-button"
+      ) as HTMLButtonElement;
+      act(() => {
+        saveButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
+      expect(modals.modals.value).toHaveLength(0);
+    });
+
+    /** Opens the confirm dialog and renders its content into a side container. */
+    function openConfirmDialog(
+      container: HTMLDivElement,
+      modals: ReturnType<typeof createModalManager>
+    ): HTMLDivElement {
+      const saveButton = container.querySelector(
+        ".sb-settings-save-button"
+      ) as HTMLButtonElement;
+      act(() => {
+        saveButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      const modal = modals.modals.value.find(
+        (m) => m.id === "playlist-unsaved-item-confirm"
+      );
+      const modalContainer = document.createElement("div");
+      document.body.appendChild(modalContainer);
+      act(() => {
+        render(
+          modal!.content({
+            t: (key, options) => (options?.defaultValue as string) ?? key,
+          }),
+          modalContainer
+        );
+      });
+      return modalContainer;
+    }
+
+    it("'Back' closes the dialog without saving, leaving the draft untouched", () => {
+      const { playlists, saveEditingPlaylist } =
+        createMockPlaylists(createPlaylist());
+      const tabs = createMockTabs();
+      const modals = createModalManager();
+      stubItemInputControl.isDirty = true;
+
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            playlists={playlists}
+            tabs={tabs}
+            modals={modals}
+          />,
+          container
+        );
+      });
+
+      const modalContainer = openConfirmDialog(container, modals);
+      const backButton = Array.from(
+        modalContainer.querySelectorAll("button")
+      ).find((el) => el.textContent === "Back") as HTMLButtonElement;
+
+      act(() => {
+        backButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(saveEditingPlaylist).not.toHaveBeenCalled();
+      expect(
+        modals.modals.value.some(
+          (m) => m.id === "playlist-unsaved-item-confirm"
+        )
+      ).toBe(false);
+
+      render(null, modalContainer);
+      modalContainer.remove();
+    });
+
+    it("'Discard and save' saves without committing the draft", () => {
+      const { playlists, saveEditingPlaylist, addEditingPlaylistItem } =
+        createMockPlaylists(createPlaylist());
+      const tabs = createMockTabs();
+      const modals = createModalManager();
+      stubItemInputControl.isDirty = true;
+
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            playlists={playlists}
+            tabs={tabs}
+            modals={modals}
+          />,
+          container
+        );
+      });
+
+      const modalContainer = openConfirmDialog(container, modals);
+      const discardButton = Array.from(
+        modalContainer.querySelectorAll("button")
+      ).find(
+        (el) => el.textContent === "Discard and save"
+      ) as HTMLButtonElement;
+
+      act(() => {
+        discardButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      });
+
+      expect(addEditingPlaylistItem).not.toHaveBeenCalled();
+      expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
+
+      render(null, modalContainer);
+      modalContainer.remove();
+    });
+
+    it("'Add and save' commits the draft, then saves, when the draft is valid", async () => {
+      const { playlists, saveEditingPlaylist } =
+        createMockPlaylists(createPlaylist());
+      const tabs = createMockTabs();
+      const modals = createModalManager();
+      stubItemInputControl.isDirty = true;
+      stubItemInputControl.commitResult = true;
+
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            playlists={playlists}
+            tabs={tabs}
+            modals={modals}
+          />,
+          container
+        );
+      });
+
+      const modalContainer = openConfirmDialog(container, modals);
+      const addAndSaveButton = Array.from(
+        modalContainer.querySelectorAll("button")
+      ).find((el) => el.textContent === "Add and save") as HTMLButtonElement;
+
+      await act(async () => {
+        addAndSaveButton.dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(saveEditingPlaylist).toHaveBeenCalledTimes(1);
+
+      render(null, modalContainer);
+      modalContainer.remove();
+    });
+
+    it("'Add and save' does not save when the draft fails to commit (e.g. invalid input)", async () => {
+      const { playlists, saveEditingPlaylist } =
+        createMockPlaylists(createPlaylist());
+      const tabs = createMockTabs();
+      const modals = createModalManager();
+      stubItemInputControl.isDirty = true;
+      stubItemInputControl.commitResult = false;
+
+      act(() => {
+        render(
+          <CreatePlaylistForm
+            playlists={playlists}
+            tabs={tabs}
+            modals={modals}
+          />,
+          container
+        );
+      });
+
+      const modalContainer = openConfirmDialog(container, modals);
+      const addAndSaveButton = Array.from(
+        modalContainer.querySelectorAll("button")
+      ).find((el) => el.textContent === "Add and save") as HTMLButtonElement;
+
+      await act(async () => {
+        addAndSaveButton.dispatchEvent(
+          new MouseEvent("click", { bubbles: true })
+        );
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(saveEditingPlaylist).not.toHaveBeenCalled();
+
+      render(null, modalContainer);
+      modalContainer.remove();
+    });
   });
 });

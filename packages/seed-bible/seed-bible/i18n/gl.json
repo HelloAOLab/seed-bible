@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "Eliminar \" {{title}} \"? Isto non se pode desfacer.",
   "delete-playlist-failed": "Non se puido eliminar a lista de reprodución.",
   "collapsed-tab-shared-label": "{{title}} — sesión compartida, {{count}} presentes",
-  "playlist-add-mode-label": "Tipo de elemento"
+  "playlist-add-mode-label": "Tipo de elemento",
+  "saving": "Gardando…",
+  "unsaved-item-confirm-title": "Elemento sen gardar",
+  "unsaved-item-confirm-message": "Comezaches a engadir un elemento que aínda non foi engadido á lista de reprodución. Que che gustaría facer?",
+  "discard-and-save": "Descartar e gardar",
+  "add-and-save": "Engadir e gardar"
 }

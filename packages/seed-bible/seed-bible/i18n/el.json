@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "Διαγραφή του \" {{title}} \"; Δεν είναι δυνατή η αναίρεση αυτής της ενέργειας.",
   "delete-playlist-failed": "Δεν ήταν δυνατή η διαγραφή της λίστας αναπαραγωγής.",
   "collapsed-tab-shared-label": "{{title}} — κοινόχρηστη συνεδρία, {{count}} παρόντες",
-  "playlist-add-mode-label": "Τύπος αντικειμένου"
+  "playlist-add-mode-label": "Τύπος αντικειμένου",
+  "saving": "Αποθήκευση…",
+  "unsaved-item-confirm-title": "Μη αποθηκευμένο στοιχείο",
+  "unsaved-item-confirm-message": "Έχετε ξεκινήσει να προσθέτετε ένα στοιχείο που δεν έχει προστεθεί ακόμα στη λίστα αναπαραγωγής. Τι θα θέλατε να κάνετε;",
+  "discard-and-save": "Απόρριψη και αποθήκευση",
+  "add-and-save": "Προσθήκη και αποθήκευση"
 }

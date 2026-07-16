@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \"-г устгах уу? Үүнийг буцаах боломжгүй.",
   "delete-playlist-failed": "Тоглуулах жагсаалтыг устгаж чадсангүй.",
   "collapsed-tab-shared-label": "{{title}} — хуваалцсан хэсэг, {{count}} танилцуулга",
-  "playlist-add-mode-label": "Зүйлийн төрөл"
+  "playlist-add-mode-label": "Зүйлийн төрөл",
+  "saving": "Хадгалж байна…",
+  "unsaved-item-confirm-title": "Хадгалаагүй зүйл",
+  "unsaved-item-confirm-message": "Та тоглуулах жагсаалтад хараахан нэмэгдээгүй зүйл нэмж эхэлсэн байна. Та юу хийхийг хүсэж байна вэ?",
+  "discard-and-save": "Цуцлаад хадгалах",
+  "add-and-save": "Нэмээд хадгалах"
 }

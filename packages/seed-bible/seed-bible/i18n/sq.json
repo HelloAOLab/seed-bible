@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "Të fshihet \" {{title}} \"? Kjo nuk mund të zhbëhet.",
   "delete-playlist-failed": "Lista e luajtjes nuk mund të fshihej.",
   "collapsed-tab-shared-label": "{{title}} — seancë e ndarë, {{count}} i pranishëm",
-  "playlist-add-mode-label": "Lloji i artikullit"
+  "playlist-add-mode-label": "Lloji i artikullit",
+  "saving": "Duke ruajtur…",
+  "unsaved-item-confirm-title": "Artikull i paruajtur",
+  "unsaved-item-confirm-message": "Keni filluar të shtoni një artikull që nuk është shtuar ende në listën e luajtjes. Çfarë do të donit të bënit?",
+  "discard-and-save": "Hidhe dhe ruaj",
+  "add-and-save": "Shto dhe ruaj"
 }

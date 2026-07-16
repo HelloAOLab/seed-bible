@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "Voleu suprimir \" {{title}} \"? Això no es pot desfer.",
   "delete-playlist-failed": "No s'ha pogut suprimir la llista de reproducció.",
   "collapsed-tab-shared-label": "{{title}} — sessió compartida, {{count}} presents",
-  "playlist-add-mode-label": "Tipus d'element"
+  "playlist-add-mode-label": "Tipus d'element",
+  "saving": "Desant…",
+  "unsaved-item-confirm-title": "Element no desat",
+  "unsaved-item-confirm-message": "Has començat a afegir un element que encara no s'ha afegit a la llista de reproducció. Què vols fer?",
+  "discard-and-save": "Descarta i desa",
+  "add-and-save": "Afegeix i desa"
 }

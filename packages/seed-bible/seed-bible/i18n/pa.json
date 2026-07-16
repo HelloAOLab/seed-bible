@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" ਮਿਟਾਉਣਾ ਹੈ? ਇਸਨੂੰ ਵਾਪਸ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।",
   "delete-playlist-failed": "ਪਲੇਲਿਸਟ ਨੂੰ ਮਿਟਾ ਨਹੀਂ ਸਕਿਆ।",
   "collapsed-tab-shared-label": "{{title}} — ਸਾਂਝਾ ਸੈਸ਼ਨ, {{count}} ਮੌਜੂਦ",
-  "playlist-add-mode-label": "ਆਈਟਮ ਦੀ ਕਿਸਮ"
+  "playlist-add-mode-label": "ਆਈਟਮ ਦੀ ਕਿਸਮ",
+  "saving": "ਸੇਵ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ…",
+  "unsaved-item-confirm-title": "ਨਾ-ਸੇਵ ਕੀਤੀ ਆਈਟਮ",
+  "unsaved-item-confirm-message": "ਤੁਸੀਂ ਇੱਕ ਆਈਟਮ ਜੋੜਨੀ ਸ਼ੁਰੂ ਕੀਤੀ ਹੈ ਜੋ ਅਜੇ ਪਲੇਲਿਸਟ ਵਿੱਚ ਸ਼ਾਮਲ ਨਹੀਂ ਕੀਤੀ ਗਈ। ਤੁਸੀਂ ਕੀ ਕਰਨਾ ਚਾਹੋਗੇ?",
+  "discard-and-save": "ਰੱਦ ਕਰੋ ਅਤੇ ਸੇਵ ਕਰੋ",
+  "add-and-save": "ਸ਼ਾਮਲ ਕਰੋ ਅਤੇ ਸੇਵ ਕਰੋ"
 }

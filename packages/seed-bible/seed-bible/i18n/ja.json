@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "「 {{title}} 」を削除しますか？これは元に戻せません。",
   "delete-playlist-failed": "プレイリストを削除できませんでした。",
   "collapsed-tab-shared-label": "{{title}} — 共有セッション、 {{count}}個",
-  "playlist-add-mode-label": "アイテムの種類"
+  "playlist-add-mode-label": "アイテムの種類",
+  "saving": "保存中…",
+  "unsaved-item-confirm-title": "未保存のアイテム",
+  "unsaved-item-confirm-message": "まだプレイリストに追加されていないアイテムの入力を開始しています。どうしますか?",
+  "discard-and-save": "破棄して保存",
+  "add-and-save": "追加して保存"
 }

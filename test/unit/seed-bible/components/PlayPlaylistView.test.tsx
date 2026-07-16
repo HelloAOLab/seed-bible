@@ -227,4 +227,34 @@ describe("PlayPlaylistView", () => {
 
     expect(playing.currentIndex.value).toBe(2);
   });
+
+  it("shows a leading icon per item type", () => {
+    const playlist = createPlaylist({
+      items: [
+        verseItem({ ref: { bookId: "GEN", chapter: 1 } }),
+        { type: "link", url: "https://example.com" },
+        { type: "html", html: "<p>hi</p>" },
+      ],
+    });
+    const playing = createPlayingState([playlist]);
+    const { playlists } = createMockPlaylists(playing);
+    const tabs = createMockTabs();
+
+    act(() => {
+      render(
+        <PlayPlaylistView
+          playlists={playlists}
+          tabs={tabs}
+          modals={modals}
+          state={state}
+        />,
+        container
+      );
+    });
+
+    const icons = Array.from(
+      container.querySelectorAll(".sb-discover-item-icon")
+    ).map((el) => el.textContent);
+    expect(icons).toEqual(["menu_book", "link", "notes"]);
+  });
 });

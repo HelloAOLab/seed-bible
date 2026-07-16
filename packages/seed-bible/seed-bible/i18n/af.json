@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "Vee \" {{title}} \" uit? Dit kan nie ongedaan gemaak word nie.",
   "delete-playlist-failed": "Kon nie die snitlys uitvee nie.",
   "collapsed-tab-shared-label": "{{title}} — gedeelde sessie, {{count}} teenwoordig",
-  "playlist-add-mode-label": "Itemtipe"
+  "playlist-add-mode-label": "Itemtipe",
+  "saving": "Stoor…",
+  "unsaved-item-confirm-title": "Ongestoorde item",
+  "unsaved-item-confirm-message": "Jy het begin om 'n item by te voeg wat nog nie by die speellys gevoeg is nie. Wat wil jy doen?",
+  "discard-and-save": "Verwerp en stoor",
+  "add-and-save": "Voeg by en stoor"
 }

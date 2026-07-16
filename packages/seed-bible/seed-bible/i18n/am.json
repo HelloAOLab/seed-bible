@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" ይሰረዝ? ይህ ሊቀለበስ አይችልም።",
   "delete-playlist-failed": "የአጫዋች ዝርዝሩን መሰረዝ አልተቻለም።",
   "collapsed-tab-shared-label": "{{title}} — የተጋራ ክፍለ ጊዜ፣ {{count}} አለ",
-  "playlist-add-mode-label": "የእቃ አይነት"
+  "playlist-add-mode-label": "የእቃ አይነት",
+  "saving": "በማስቀመጥ ላይ…",
+  "unsaved-item-confirm-title": "ያልተቀመጠ ንጥል",
+  "unsaved-item-confirm-message": "ገና ወደ ማጫወቻ ዝርዝሩ ያልታከለ ንጥል መጨመር ጀምረዋል። ምን ማድረግ ይፈልጋሉ?",
+  "discard-and-save": "አስወግድ እና አስቀምጥ",
+  "add-and-save": "ጨምር እና አስቀምጥ"
 }

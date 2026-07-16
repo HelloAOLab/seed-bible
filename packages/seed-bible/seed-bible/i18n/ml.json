@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" ഇല്ലാതാക്കണോ? ഇത് പഴയപടിയാക്കാൻ കഴിയില്ല.",
   "delete-playlist-failed": "പ്ലേലിസ്റ്റ് ഇല്ലാതാക്കാൻ കഴിഞ്ഞില്ല.",
   "collapsed-tab-shared-label": "{{title}} — പങ്കിട്ട സെഷൻ, {{count}} പേർ ഉണ്ട്",
-  "playlist-add-mode-label": "ഇന തരം"
+  "playlist-add-mode-label": "ഇന തരം",
+  "saving": "സേവ് ചെയ്യുന്നു…",
+  "unsaved-item-confirm-title": "സേവ് ചെയ്യാത്ത ഇനം",
+  "unsaved-item-confirm-message": "പ്ലേലിസ്റ്റിലേക്ക് ഇതുവരെ ചേർക്കാത്ത ഒരു ഇനം നിങ്ങൾ ചേർക്കാൻ തുടങ്ങിയിരിക്കുന്നു. നിങ്ങൾക്ക് എന്ത് ചെയ്യണം?",
+  "discard-and-save": "നിരസിച്ച് സേവ് ചെയ്യുക",
+  "add-and-save": "ചേർത്ത് സേവ് ചെയ്യുക"
 }

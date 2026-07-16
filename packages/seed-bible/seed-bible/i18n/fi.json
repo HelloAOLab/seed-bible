@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "Poistetaanko \" {{title}} \"? Tätä ei voi perua.",
   "delete-playlist-failed": "Soittolistan poistaminen epäonnistui.",
   "collapsed-tab-shared-label": "{{title}} — jaettu istunto, läsnä {{count}}",
-  "playlist-add-mode-label": "Tuotetyyppi"
+  "playlist-add-mode-label": "Tuotetyyppi",
+  "saving": "Tallennetaan…",
+  "unsaved-item-confirm-title": "Tallentamaton kohde",
+  "unsaved-item-confirm-message": "Olet aloittanut kohteen lisäämisen, jota ei ole vielä lisätty soittolistaan. Mitä haluat tehdä?",
+  "discard-and-save": "Hylkää ja tallenna",
+  "add-and-save": "Lisää ja tallenna"
 }

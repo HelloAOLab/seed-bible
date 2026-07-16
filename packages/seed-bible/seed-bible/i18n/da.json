@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "Slet \" {{title}} \"? Dette kan ikke fortrydes.",
   "delete-playlist-failed": "Kunne ikke slette playlisten.",
   "collapsed-tab-shared-label": "{{title}} — delt session, {{count}} til stede",
-  "playlist-add-mode-label": "Varetype"
+  "playlist-add-mode-label": "Varetype",
+  "saving": "Gemmer…",
+  "unsaved-item-confirm-title": "Ugemt element",
+  "unsaved-item-confirm-message": "Du er begyndt at tilføje et element, der endnu ikke er føjet til playlisten. Hvad vil du gøre?",
+  "discard-and-save": "Kassér og gem",
+  "add-and-save": "Tilføj og gem"
 }

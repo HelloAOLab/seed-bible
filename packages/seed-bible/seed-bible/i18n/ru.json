@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "Удалить \" {{title}} \"? Это нельзя отменить.",
   "delete-playlist-failed": "Не удалось удалить плейлист.",
   "collapsed-tab-shared-label": "{{title}} — общая сессия, {{count}} присутствует",
-  "playlist-add-mode-label": "Тип товара"
+  "playlist-add-mode-label": "Тип товара",
+  "saving": "Сохранение…",
+  "unsaved-item-confirm-title": "Несохранённый элемент",
+  "unsaved-item-confirm-message": "Вы начали добавлять элемент, который ещё не добавлен в плейлист. Что вы хотите сделать?",
+  "discard-and-save": "Отменить и сохранить",
+  "add-and-save": "Добавить и сохранить"
 }

@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "क्या आप \" {{title}} \" हटाना चाहते हैं? इसे पूर्ववत नहीं किया जा सकता है।",
   "delete-playlist-failed": "प्लेलिस्ट डिलीट नहीं हो सकी।",
   "collapsed-tab-shared-label": "{{title}} — साझा सत्र, {{count}} उपस्थित",
-  "playlist-add-mode-label": "वस्तु का प्रकार"
+  "playlist-add-mode-label": "वस्तु का प्रकार",
+  "saving": "सेव हो रहा है…",
+  "unsaved-item-confirm-title": "असेव आइटम",
+  "unsaved-item-confirm-message": "आपने एक आइटम जोड़ना शुरू किया है जो अभी तक प्लेलिस्ट में नहीं जोड़ा गया है। आप क्या करना चाहेंगे?",
+  "discard-and-save": "छोड़ें और सेव करें",
+  "add-and-save": "जोड़ें और सेव करें"
 }

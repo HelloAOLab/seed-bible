@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" ကို ဖျက်မလား။ ၎င်းကို ပြန်ပြင်၍မရပါ။",
   "delete-playlist-failed": "သီချင်းစာရင်းကို ဖျက်၍မရပါ။",
   "collapsed-tab-shared-label": "{{title}} — မျှဝေထားသော အစည်းအဝေး၊ {{count}} ရှိနေသည်",
-  "playlist-add-mode-label": "ပစ္စည်းအမျိုးအစား"
+  "playlist-add-mode-label": "ပစ္စည်းအမျိုးအစား",
+  "saving": "သိမ်းဆည်းနေသည်…",
+  "unsaved-item-confirm-title": "မသိမ်းရသေးသော အရာ",
+  "unsaved-item-confirm-message": "ပလေးလစ်တွင် မထည့်ရသေးသော အရာတစ်ခုကို ထည့်နေပါသည်။ သင်ဘာလုပ်လိုပါသလဲ?",
+  "discard-and-save": "စွန့်ပယ်ပြီး သိမ်းမည်",
+  "add-and-save": "ထည့်ပြီး သိမ်းမည်"
 }

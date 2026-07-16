@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" કાઢી નાખો છો? આ પૂર્વવત્ કરી શકાતું નથી.",
   "delete-playlist-failed": "પ્લેલિસ્ટ કાઢી શકાઈ નથી.",
   "collapsed-tab-shared-label": "{{title}} — શેર કરેલ સત્ર, {{count}} હાજર",
-  "playlist-add-mode-label": "વસ્તુનો પ્રકાર"
+  "playlist-add-mode-label": "વસ્તુનો પ્રકાર",
+  "saving": "સાચવી રહ્યાં છીએ…",
+  "unsaved-item-confirm-title": "ન સાચવેલી આઇટમ",
+  "unsaved-item-confirm-message": "તમે એક આઇટમ ઉમેરવાનું શરૂ કર્યું છે જે હજુ સુધી પ્લેલિસ્ટમાં ઉમેરાઈ નથી. તમે શું કરવા માંગો છો?",
+  "discard-and-save": "કાઢી નાખો અને સાચવો",
+  "add-and-save": "ઉમેરો અને સાચવો"
 }

@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "Löschen Sie \" {{title}} \"? Dies kann nicht rückgängig gemacht werden.",
   "delete-playlist-failed": "Die Wiedergabeliste konnte nicht gelöscht werden.",
   "collapsed-tab-shared-label": "{{title}} — gemeinsame Sitzung, {{count}} anwesend",
-  "playlist-add-mode-label": "Artikeltyp"
+  "playlist-add-mode-label": "Artikeltyp",
+  "saving": "Wird gespeichert…",
+  "unsaved-item-confirm-title": "Nicht gespeicherter Eintrag",
+  "unsaved-item-confirm-message": "Du hast begonnen, einen Eintrag hinzuzufügen, der der Playlist noch nicht hinzugefügt wurde. Was möchtest du tun?",
+  "discard-and-save": "Verwerfen und speichern",
+  "add-and-save": "Hinzufügen und speichern"
 }

@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" o'chirilsinmi? Buni bekor qilib bo'lmaydi.",
   "delete-playlist-failed": "Pleylistni o'chirib bo'lmadi.",
   "collapsed-tab-shared-label": "{{title}} — umumiy sessiya, {{count}} mavjud",
-  "playlist-add-mode-label": "Mahsulot turi"
+  "playlist-add-mode-label": "Mahsulot turi",
+  "saving": "Saqlanmoqda…",
+  "unsaved-item-confirm-title": "Saqlanmagan element",
+  "unsaved-item-confirm-message": "Siz hali pleylistga qo'shilmagan elementni qo'shishni boshladingiz. Nima qilmoqchisiz?",
+  "discard-and-save": "Bekor qilish va saqlash",
+  "add-and-save": "Qo'shish va saqlash"
 }

@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "Padam \" {{title}} \"? Ini tidak boleh dibuat asal.",
   "delete-playlist-failed": "Tidak dapat memadam senarai main.",
   "collapsed-tab-shared-label": "{{title}} — sesi kongsi, {{count}} hadir",
-  "playlist-add-mode-label": "Jenis barang"
+  "playlist-add-mode-label": "Jenis barang",
+  "saving": "Menyimpan…",
+  "unsaved-item-confirm-title": "Item belum disimpan",
+  "unsaved-item-confirm-message": "Anda telah mula menambah item yang belum ditambah ke senarai main. Apakah yang anda ingin lakukan?",
+  "discard-and-save": "Buang dan simpan",
+  "add-and-save": "Tambah dan simpan"
 }

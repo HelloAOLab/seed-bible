@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "« {{title}} » نى ئۆچۈرۈۋېتەمسىز؟ بۇنى ئەسلىگە كەلتۈرگىلى بولمايدۇ.",
   "delete-playlist-failed": "قويغۇچ تىزىملىكىنى ئۆچۈرگىلى بولمىدى.",
   "collapsed-tab-shared-label": "{{title}} — ئورتاقلاشقان سۆھبەت، {{count}} ھازىر",
-  "playlist-add-mode-label": "بۇيۇم تىپى"
+  "playlist-add-mode-label": "بۇيۇم تىپى",
+  "saving": "ساقلاۋاتىدۇ…",
+  "unsaved-item-confirm-title": "ساقلانمىغان تۈر",
+  "unsaved-item-confirm-message": "سىز تېخى قويۇش تىزىملىكىگە قوشۇلمىغان بىر تۈرنى قوشۇشنى باشلىدىڭىز. نېمە قىلماقچىسىز؟",
+  "discard-and-save": "تاشلىۋېتىش ۋە ساقلاش",
+  "add-and-save": "قوشۇش ۋە ساقلاش"
 }

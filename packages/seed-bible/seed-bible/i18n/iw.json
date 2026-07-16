@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "למחוק את \" {{title}} \"? לא ניתן לבטל פעולה זו.",
   "delete-playlist-failed": "לא ניתן היה למחוק את רשימת ההשמעה.",
   "collapsed-tab-shared-label": "{{title}} — סשן משותף, {{count}} נוכחים",
-  "playlist-add-mode-label": "סוג הפריט"
+  "playlist-add-mode-label": "סוג הפריט",
+  "saving": "שומר…",
+  "unsaved-item-confirm-title": "פריט לא שמור",
+  "unsaved-item-confirm-message": "התחלת להוסיף פריט שעדיין לא נוסף לרשימת ההשמעה. מה תרצה לעשות?",
+  "discard-and-save": "בטל ושמור",
+  "add-and-save": "הוסף ושמור"
 }

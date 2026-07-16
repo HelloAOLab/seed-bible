@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "Eyða „ {{title}} “? Þetta er ekki hægt að afturkalla.",
   "delete-playlist-failed": "Gat ekki eytt spilunarlistanum.",
   "collapsed-tab-shared-label": "{{title}} — sameiginleg lota, {{count}} viðstaddir",
-  "playlist-add-mode-label": "Tegund hlutar"
+  "playlist-add-mode-label": "Tegund hlutar",
+  "saving": "Vistar…",
+  "unsaved-item-confirm-title": "Óvistað atriði",
+  "unsaved-item-confirm-message": "Þú ert byrjaður að bæta við atriði sem hefur ekki enn verið bætt við spilunarlistann. Hvað viltu gera?",
+  "discard-and-save": "Henda og vista",
+  "add-and-save": "Bæta við og vista"
 }

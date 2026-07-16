@@ -5,6 +5,8 @@ import type { PlaylistManager } from "../../managers/PlaylistManager";
 import type { ModalManager } from "../../managers/ModalManager";
 import { DiscoverSection } from "../DiscoverPane/DiscoverSection";
 import { playlistItemLabel } from "../playlistItemLabel";
+import { playlistItemIcon } from "../playlistItemIcon";
+import { MaterialIcon } from "../icons";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 
 interface PlayPlaylistViewProps {
@@ -68,6 +70,9 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
                     playing.jumpTo(index);
                   }}
                 >
+                  <MaterialIcon className="sb-discover-item-icon">
+                    {playlistItemIcon(item)}
+                  </MaterialIcon>
                   <span className="sb-discover-item-title">
                     {playlistItemLabel(item, t, resolveBookName)}
                   </span>

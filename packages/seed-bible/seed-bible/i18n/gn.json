@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "¿Ombogue \" {{title}} \"? Péva ndaikatúi ojedesatina.",
   "delete-playlist-failed": "Ndaikatúi oñembogue pe lista de reproducción.",
   "collapsed-tab-shared-label": "{{title}} — sesión oñemboja’óva, {{count}} oĩva",
-  "playlist-add-mode-label": "Mba’eichagua mba’e"
+  "playlist-add-mode-label": "Mba’eichagua mba’e",
+  "saving": "Oñeñongatu…",
+  "unsaved-item-confirm-title": "Mba'e ndoñongatuiva",
+  "unsaved-item-confirm-message": "Reñepyrũ emoĩ peteĩ mba'e ndojejapóiva gueteri playlist-pe. Mba'épa reipota?",
+  "discard-and-save": "Emombo ha eñongatu",
+  "add-and-save": "Emoĩ ha eñongatu"
 }

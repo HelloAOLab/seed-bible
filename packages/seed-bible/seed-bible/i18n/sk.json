@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "Chcete odstrániť „ {{title}} “? Túto akciu nemožno vrátiť späť.",
   "delete-playlist-failed": "Zoznam skladieb sa nepodarilo odstrániť.",
   "collapsed-tab-shared-label": "{{title}} — zdieľaná relácia, {{count}} prítomných",
-  "playlist-add-mode-label": "Typ položky"
+  "playlist-add-mode-label": "Typ položky",
+  "saving": "Ukladá sa…",
+  "unsaved-item-confirm-title": "Neuložená položka",
+  "unsaved-item-confirm-message": "Začali ste pridávať položku, ktorá zatiaľ nebola pridaná do playlistu. Čo by ste chceli urobiť?",
+  "discard-and-save": "Zahodiť a uložiť",
+  "add-and-save": "Pridať a uložiť"
 }

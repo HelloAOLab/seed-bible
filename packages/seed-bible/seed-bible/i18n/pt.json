@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "Apagar \" {{title}} \"? Esta ação não pode ser desfeita.",
   "delete-playlist-failed": "Não foi possível excluir a lista de reprodução.",
   "collapsed-tab-shared-label": "{{title}} — sessão compartilhada, {{count}} presentes",
-  "playlist-add-mode-label": "Tipo de item"
+  "playlist-add-mode-label": "Tipo de item",
+  "saving": "Salvando…",
+  "unsaved-item-confirm-title": "Item não salvo",
+  "unsaved-item-confirm-message": "Você começou a adicionar um item que ainda não foi adicionado à playlist. O que gostaria de fazer?",
+  "discard-and-save": "Descartar e salvar",
+  "add-and-save": "Adicionar e salvar"
 }

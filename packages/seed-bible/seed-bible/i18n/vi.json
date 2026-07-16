@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "Xóa \" {{title}} \"? Thao tác này không thể hoàn tác.",
   "delete-playlist-failed": "Không thể xóa danh sách phát.",
   "collapsed-tab-shared-label": "{{title}} — phiên họp chung, {{count}} người tham dự",
-  "playlist-add-mode-label": "Loại mặt hàng"
+  "playlist-add-mode-label": "Loại mặt hàng",
+  "saving": "Đang lưu…",
+  "unsaved-item-confirm-title": "Mục chưa lưu",
+  "unsaved-item-confirm-message": "Bạn đã bắt đầu thêm một mục chưa được thêm vào danh sách phát. Bạn muốn làm gì?",
+  "discard-and-save": "Bỏ qua và lưu",
+  "add-and-save": "Thêm và lưu"
 }

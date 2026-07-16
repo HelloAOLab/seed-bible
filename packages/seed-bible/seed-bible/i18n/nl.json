@@ -403,5 +403,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" verwijderen? Dit kan niet ongedaan gemaakt worden.",
   "delete-playlist-failed": "Ik kon de afspeellijst niet verwijderen.",
   "collapsed-tab-shared-label": "{{title}} — gedeelde sessie, {{count}} aanwezig",
-  "playlist-add-mode-label": "Artikeltype"
+  "playlist-add-mode-label": "Artikeltype",
+  "saving": "Bezig met opslaan…",
+  "unsaved-item-confirm-title": "Niet-opgeslagen item",
+  "unsaved-item-confirm-message": "Je bent begonnen met het toevoegen van een item dat nog niet aan de afspeellijst is toegevoegd. Wat wil je doen?",
+  "discard-and-save": "Negeren en opslaan",
+  "add-and-save": "Toevoegen en opslaan"
 }
