@@ -538,20 +538,6 @@ function renderChapterContent(
     } as const;
   };
 
-  // Two adjacent verses share a highlight when they resolve to the same color
-  // (whether that's a preset color id or the same custom color). When they do,
-  // we flatten the corners between them so the highlight looks like one
-  // continuous block rather than two separate rounded pills.
-  const getHighlightColorKey = (highlight: ChapterHighlight | null) => {
-    if (!highlight) {
-      return null;
-    }
-    if (highlight.customColor) {
-      return `custom:${highlight.customColor}`;
-    }
-    return highlight.colorId;
-  };
-
   const getDecorationPresentation = (verseDecorations: VerseDecoration[]) => {
     const matchingDecorations = verseDecorations.filter((decoration) => {
       return !hasContentTargeting(decoration);
@@ -653,27 +639,6 @@ function renderChapterContent(
         ? getVerseHighlight(value.number)
         : null;
       const highlightPresentation = getHighlightPresentation(highlight);
-      const highlightColorKey = getHighlightColorKey(highlight);
-      const continuesLeft =
-        highlightColorKey !== null &&
-        getHighlightColorKey(
-          scriptureElements.showHighlights
-            ? getVerseHighlight(value.number - 1)
-            : null
-        ) === highlightColorKey;
-      const continuesRight =
-        highlightColorKey !== null &&
-        getHighlightColorKey(
-          scriptureElements.showHighlights
-            ? getVerseHighlight(value.number + 1)
-            : null
-        ) === highlightColorKey;
-      const highlightContinuationClassName = [
-        continuesLeft ? "sb-highlight-continues-left" : "",
-        continuesRight ? "sb-highlight-continues-right" : "",
-      ]
-        .filter(Boolean)
-        .join(" ");
       const verseDecorations = getVerseDecorations(value.number);
       const decorationPresentation =
         getDecorationPresentation(verseDecorations);
@@ -700,7 +665,6 @@ function renderChapterContent(
       const verseDecoratorClassName = [
         "sb-verse-decorator",
         highlightPresentation.className.trim(),
-        highlightContinuationClassName,
         decorationPresentation.className.trim(),
       ]
         .filter(Boolean)

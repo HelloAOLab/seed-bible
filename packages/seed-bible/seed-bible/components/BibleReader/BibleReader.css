@@ -470,31 +470,17 @@
 }
 
 /* Shared treatment for any highlighted verse span (preset or custom color).
-   `box-decoration-break: clone` makes the padding + rounded corners repeat on
-   every line the highlight wraps onto, instead of only the first and last
-   fragment. These spans are inline, so the vertical padding extends the tinted
-   background above and below the text for breathing room without changing line
-   height or pushing lines apart. */
+   The negative `margin-inline` cancels the inline padding's width, so the tint
+   still bleeds past the text but applying a highlight never reflows scripture.
+   `box-decoration-break: clone` gives every wrapped line its own rounded corners
+   so no end is left square. */
 .sb-highlight {
-  padding: 0.14em 0.2em;
+  padding-block: 0.14em;
+  padding-inline: 0.2em;
+  margin-inline: -0.2em;
   border-radius: 0.4em;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
-}
-
-/* When the same highlight color continues onto an adjacent verse, flatten the
-   touching corners and drop the padding on that side so the two verses read as
-   one continuous block instead of two rounded pills with a pinch between them. */
-.sb-highlight-continues-left {
-  border-start-start-radius: 0;
-  border-end-start-radius: 0;
-  padding-inline-start: 0;
-}
-
-.sb-highlight-continues-right {
-  border-start-end-radius: 0;
-  border-end-end-radius: 0;
-  padding-inline-end: 0;
 }
 
 .sb-verse-poetry {
