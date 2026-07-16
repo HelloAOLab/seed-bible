@@ -21,7 +21,6 @@ type Point = [number, number];
 // ribbon scales with the reader's font-size setting). Tuned in the prototype.
 export const RIBBON_RADIUS_EM = 0.4;
 export const RIBBON_PAD_X_EM = 0.2;
-export const RIBBON_PAD_Y_EM = 0.15;
 
 // Drop points that repeat their predecessor, the cyclic closing duplicate, and
 // any point that is collinear with its neighbours (a straight run of points).
@@ -65,12 +64,16 @@ function simplify(points: Point[]): Point[] {
 }
 
 // Inflate each line horizontally by padX and close the vertical gaps between
-// lines (extend each line to meet its neighbour) so the run reads as one solid
-// body; pad the very top and very bottom by padY.
+// lines (extend each line to meet its neighbour at the midpoint) so the run reads
+// as one solid body. The very top and bottom are extended by half the line's
+// leading — the empty space in a line slot — so the ribbon fills its full outer
+// line slots too. That makes a ribbon meet a vertically-adjacent ribbon (even a
+// different color) exactly at the shared slot boundary, with no leading gap
+// between them, at any line height.
 function inflate(
   lines: RibbonRect[],
   padX: number,
-  padY: number
+  linePitch: number
 ): RibbonRect[] {
   const out = lines.map((l) => ({
     left: l.left - padX,
@@ -78,15 +81,24 @@ function inflate(
     top: l.top,
     bottom: l.bottom,
   }));
-  for (let i = 0; i < out.length - 1; i++) {
+  const n = out.length;
+  // Prefer the measured spacing between the first two lines; fall back to the
+  // passed line-height for single-line runs.
+  const pitch = n > 1 ? out[1]!.top - out[0]!.top : linePitch;
+  const halfLeadTop = Math.max(0, (pitch - (out[0]!.bottom - out[0]!.top)) / 2);
+  const halfLeadBottom = Math.max(
+    0,
+    (pitch - (out[n - 1]!.bottom - out[n - 1]!.top)) / 2
+  );
+  for (let i = 0; i < n - 1; i++) {
     const a = out[i]!;
     const b = out[i + 1]!;
     const mid = (a.bottom + b.top) / 2;
     a.bottom = mid;
     b.top = mid;
   }
-  out[0]!.top -= padY;
-  out[out.length - 1]!.bottom += padY;
+  out[0]!.top -= halfLeadTop;
+  out[n - 1]!.bottom += halfLeadBottom;
   return out;
 }
 
@@ -146,16 +158,18 @@ function roundedPath(points: Point[], radius: number): string {
 
 /**
  * Build the rounded SVG path (`d` attribute) for one highlighted run from its
- * per-line rectangles. Returns "" when there is nothing to draw.
+ * per-line rectangles. `linePitch` is the line-height in px (used only for
+ * single-line runs; multi-line runs derive the pitch from the measured lines).
+ * Returns "" when there is nothing to draw.
  */
 export function buildRibbonPath(
   lines: RibbonRect[],
   radius: number,
   padX: number,
-  padY: number
+  linePitch: number
 ): string {
   if (!lines.length) return "";
-  return roundedPath(outline(inflate(lines, padX, padY)), radius);
+  return roundedPath(outline(inflate(lines, padX, linePitch)), radius);
 }
 
 function isBlockLevel(node: Node): boolean {

@@ -11,7 +11,6 @@ import {
   collectLineRects,
   RIBBON_RADIUS_EM,
   RIBBON_PAD_X_EM,
-  RIBBON_PAD_Y_EM,
 } from "../../app/highlightRibbon";
 import type {
   BibleReadingState,
@@ -980,10 +979,16 @@ function ChapterContent(props: ChapterContentProps) {
     const content = contentRef.current;
     if (!content) return;
     const box = content.getBoundingClientRect();
-    const fontSize = parseFloat(getComputedStyle(content).fontSize) || 16;
+    const style = getComputedStyle(content);
+    const fontSize = parseFloat(style.fontSize) || 16;
     const radius = RIBBON_RADIUS_EM * fontSize;
     const padX = RIBBON_PAD_X_EM * fontSize;
-    const padY = RIBBON_PAD_Y_EM * fontSize;
+    // Line pitch (slot height) so a run's outer edges fill their line slots and
+    // adjacent ribbons meet with no leading gap. Only used for single-line runs;
+    // multi-line runs derive the pitch from their measured lines. Guard against a
+    // non-px / "normal" computed line-height by falling back to ~1.5em.
+    const computedPitch = parseFloat(style.lineHeight);
+    const linePitch = computedPitch > fontSize ? computedPitch : fontSize * 1.5;
 
     const next: Array<{ d: string; fill: string }> = [];
     content
@@ -995,7 +1000,7 @@ function ChapterContent(props: ChapterContentProps) {
           collectLineRects(el, box.left, box.top),
           radius,
           padX,
-          padY
+          linePitch
         );
         if (d) next.push({ d, fill });
       });
