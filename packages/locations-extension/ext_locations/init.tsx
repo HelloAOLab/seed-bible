@@ -1,5 +1,5 @@
 import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
-import { computed, signal } from "@preact/signals";
+import { computed } from "@preact/signals";
 import { registerExtension } from "seed-bible";
 import { LocationIcon, PortalComponent } from "seed-bible/components";
 import locations from "./locations.json";

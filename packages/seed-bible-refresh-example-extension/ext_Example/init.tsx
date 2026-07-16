@@ -1,5 +1,5 @@
 /* eslint-disable seed-bible-i18n/i18n-untranslated-content */
-import { effect, signal } from "@preact/signals";
+import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { MaterialIcon, PortalComponent } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";

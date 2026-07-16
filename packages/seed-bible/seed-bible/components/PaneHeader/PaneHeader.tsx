@@ -1,6 +1,5 @@
 import "./PaneHeader.css";
 import type { ComponentChild } from "preact";
-import type { Signal } from "@preact/signals";
 import type { PaneTitle } from "../../managers/PanesManager";
 import { useI18n } from "../../i18n/I18nManager";
 

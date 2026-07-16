@@ -1,4 +1,4 @@
-import { computed, signal, type Signal } from "@preact/signals";
+import { signal, type Signal } from "@preact/signals";
 import {
   registerExtension,
   type SeedBibleState,

@@ -1,4 +1,4 @@
-import { effect, signal } from "@preact/signals";
+import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { createTranscriptionManager } from "@seed-bible/ai-transcript-extension/transcriptionManager";
 import { App } from "./App";
