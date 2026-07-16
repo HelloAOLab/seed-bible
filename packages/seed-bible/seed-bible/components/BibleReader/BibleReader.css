@@ -499,6 +499,8 @@
   border-bottom: var(--sb-selected-verse-border-bottom);
   text-decoration: var(--sb-selected-verse-text-decoration);
   text-decoration-color: var(--sb-selected-verse-text-decoration-color);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.4em;
 }
 
 .sb-verse-number {

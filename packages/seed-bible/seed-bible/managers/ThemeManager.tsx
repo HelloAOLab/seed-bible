@@ -511,8 +511,8 @@ const LIGHT_THEME: BibleTheme = {
     verseFontColor: "#333",
     verseCursor: "pointer",
 
-    selectedVerseBorderBottom: "2px dashed currentColor",
-    selectedVerseTextDecoration: "none",
+    selectedVerseBorderBottom: "none",
+    selectedVerseTextDecoration: "underline dotted",
     selectedVerseTextDecorationColor: "currentColor",
 
     hebrewSubtitleFontFamily: "Newsreader, serif",
@@ -653,8 +653,8 @@ const DARK_THEME: BibleTheme = {
     verseFontColor: "#e6e6e6",
     verseCursor: "pointer",
 
-    selectedVerseBorderBottom: "2px dashed currentColor",
-    selectedVerseTextDecoration: "none",
+    selectedVerseBorderBottom: "none",
+    selectedVerseTextDecoration: "underline dotted",
     selectedVerseTextDecorationColor: "currentColor",
 
     hebrewSubtitleFontFamily: "Newsreader, serif",
