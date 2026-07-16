@@ -16,6 +16,7 @@ import {
 import { SortableRow } from "../SortableRow";
 import { resolveReorderIndices } from "../resolveReorderIndices";
 import { useListReorderSensors } from "../useListReorderSensors";
+import { useStableListIds } from "../useStableListIds";
 
 interface PlayPlaylistViewProps {
   playlists: PlaylistManager;
@@ -32,10 +33,11 @@ interface PlayPlaylistViewProps {
  * adjusts `currentIndex` internally.
  */
 export function createQueueDragEndHandler(
+  ids: readonly (string | number)[],
   reorderQueue: (from: number, to: number) => void
 ) {
   return (event: DragEndEvent) => {
-    const indices = resolveReorderIndices(event);
+    const indices = resolveReorderIndices(event, ids);
     if (!indices) {
       return;
     }
@@ -60,7 +62,8 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
   // Called unconditionally (before the `!playing` early return below) so the
   // hooks are never called conditionally across renders.
   const sensors = useListReorderSensors();
-  const handleDragEnd = createQueueDragEndHandler((from, to) =>
+  const queueIds = useStableListIds(queue);
+  const handleDragEnd = createQueueDragEndHandler(queueIds, (from, to) =>
     playing?.reorderQueue(from, to)
   );
 
@@ -90,14 +93,14 @@ export function PlayPlaylistView(props: PlayPlaylistViewProps) {
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={queue.map((_, index) => index)}
+              items={queueIds}
               strategy={verticalListSortingStrategy}
             >
               <ul className="sb-discover-list">
                 {queue.map((item, index) => (
                   <SortableRow
-                    key={index}
-                    id={index}
+                    key={queueIds[index]}
+                    id={queueIds[index]!}
                     className={
                       "sb-discover-item sb-discover-item--row sb-play-playlist-item" +
                       (index === currentIndex

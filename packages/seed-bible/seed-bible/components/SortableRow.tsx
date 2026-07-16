@@ -17,9 +17,9 @@ interface SortableRowProps extends Omit<
   JSX.HTMLAttributes<HTMLLIElement>,
   "children" | "id"
 > {
-  /** The row's array index for the duration of one drag gesture — reorders
-   * are only committed on drop, so plain indices stay valid as ids for the
-   * whole gesture without needing a stable per-item id on the data itself. */
+  /** A stable id that follows this row's item across renders and reorders
+   * (see `useStableListIds`) — not its array index, which would leave dnd-kit
+   * tracking a fixed slot instead of the item itself. */
   id: number;
   className: string;
   children: (handleProps: SortableHandleProps) => ComponentChildren;

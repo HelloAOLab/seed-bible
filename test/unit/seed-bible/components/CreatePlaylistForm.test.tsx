@@ -712,6 +712,7 @@ describe("CreatePlaylistForm", () => {
         const reorderEditingPlaylistItem = vi.fn();
         const setEditingIndex = vi.fn();
         const handleDragEnd = createPlaylistItemsDragEndHandler(
+          [0, 1, 2],
           reorderEditingPlaylistItem,
           setEditingIndex
         );
@@ -736,6 +737,7 @@ describe("CreatePlaylistForm", () => {
         const reorderEditingPlaylistItem = vi.fn();
         const setEditingIndex = vi.fn();
         const handleDragEnd = createPlaylistItemsDragEndHandler(
+          [0, 1],
           reorderEditingPlaylistItem,
           setEditingIndex
         );

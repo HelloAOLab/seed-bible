@@ -23,6 +23,7 @@ import {
 import { SortableRow } from "../SortableRow";
 import { resolveReorderIndices } from "../resolveReorderIndices";
 import { useListReorderSensors } from "../useListReorderSensors";
+import { useStableListIds } from "../useStableListIds";
 
 interface CreatePlaylistFormProps {
   playlists: PlaylistManager;
@@ -113,11 +114,12 @@ function openUnsavedItemConfirm(
  * drag gesture through dnd-kit's sensors.
  */
 export function createPlaylistItemsDragEndHandler(
+  ids: readonly (string | number)[],
   reorderEditingPlaylistItem: (from: number, to: number) => void,
   setEditingIndex: (updater: (current: number | null) => number | null) => void
 ) {
   return (event: DragEndEvent) => {
-    const indices = resolveReorderIndices(event);
+    const indices = resolveReorderIndices(event, ids);
     if (!indices) {
       return;
     }
@@ -164,7 +166,9 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
   };
 
   const sensors = useListReorderSensors();
+  const itemIds = useStableListIds(editing?.items ?? []);
   const handleDragEnd = createPlaylistItemsDragEndHandler(
+    itemIds,
     playlists.reorderEditingPlaylistItem,
     setEditingIndex
   );
@@ -219,14 +223,14 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
             onDragEnd={handleDragEnd}
           >
             <SortableContext
-              items={editing.items.map((_, index) => index)}
+              items={itemIds}
               strategy={verticalListSortingStrategy}
             >
               <ul className="sb-discover-list">
                 {editing.items.map((item, index) => (
                   <SortableRow
-                    key={index}
-                    id={index}
+                    key={itemIds[index]}
+                    id={itemIds[index]!}
                     className={
                       "sb-discover-item sb-discover-item--row" +
                       (index === editingIndex

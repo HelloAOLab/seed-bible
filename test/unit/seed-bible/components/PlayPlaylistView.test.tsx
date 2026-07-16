@@ -321,7 +321,10 @@ describe("PlayPlaylistView", () => {
         });
         const playing = createPlayingState([playlist]);
 
-        const handleDragEnd = createQueueDragEndHandler(playing.reorderQueue);
+        const handleDragEnd = createQueueDragEndHandler(
+          [0, 1, 2],
+          playing.reorderQueue
+        );
         handleDragEnd({
           active: { id: 0 },
           over: { id: 1 },
@@ -340,7 +343,7 @@ describe("PlayPlaylistView", () => {
 
       it("does nothing when dropped back on itself", () => {
         const reorderQueue = vi.fn();
-        const handleDragEnd = createQueueDragEndHandler(reorderQueue);
+        const handleDragEnd = createQueueDragEndHandler([0, 1], reorderQueue);
 
         handleDragEnd({
           active: { id: 1 },
