@@ -269,13 +269,14 @@ export function createTabs(
     })
   );
   const selectedTabId = signal<string>(tabs.value[0]?.id ?? "");
-  const selectedTab = computed(
-    () => tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null
-  );
+  const selectedTab = computed(() => {
+    return tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null;
+  });
 
   const syncSelectedTabFromUrl = async () => {
     const selectedTab =
       tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null;
+
     if (!selectedTab) {
       return;
     }
@@ -405,15 +406,20 @@ export function createTabs(
 
   const removeTab = (tabId: string) => {
     const tab = tabs.value.find((t) => t.id === tabId);
+
+    const currentTabIndex = tabs.value.findIndex((t) => t.id === tabId);
+
     if (tab?.sharedSession) {
       tab.sharedSession.dispose();
     }
 
     const nextTabs = tabs.value.filter((tab) => tab.id !== tabId);
+
     tabs.value = nextTabs;
 
     if (selectedTabId.value === tabId) {
-      selectedTabId.value = nextTabs[0]?.id ?? "";
+      selectedTabId.value =
+        nextTabs[currentTabIndex - 1]?.id ?? nextTabs[0]?.id ?? "";
     }
   };
 

@@ -638,6 +638,7 @@ export function createSeedBibleState(
         allSlots[0]!;
       return [preferred];
     }
+    console.log("logs effectiveSlots computed", tabsLayout.slots.value);
     return tabsLayout.slots.value;
   });
 
@@ -682,15 +683,23 @@ export function createSeedBibleState(
     };
   });
 
+  // Keep the selected tab visible in a slot. Clicking a tab goes through
+  // handleSelectTab, which calls setSelectedSlotTab. removeTab only updates
+  // selectedTabId — and TabsLayoutManager's sync then clears the closed
+  // tab from its slot (tab → null). Without this branch, that empty slot
+  // stays empty and TabsLayout renders EmptySlotToolbar instead of the
+  // newly selected tab's reader.
   effect(() => {
-    if (selectedTab.value) {
-      const matchingSlot =
-        tabsLayout.slots.value.find(
-          (s) => s.tab?.id === selectedTab.value?.id
-        ) ?? null;
-      if (matchingSlot) {
-        tabsLayout.selectSlot(matchingSlot.id);
-      }
+    const tab = selectedTab.value;
+    if (!tab) {
+      return;
+    }
+    const matchingSlot =
+      tabsLayout.slots.value.find((s) => s.tab?.id === tab.id) ?? null;
+    if (matchingSlot) {
+      tabsLayout.selectSlot(matchingSlot.id);
+    } else {
+      tabsLayout.setSelectedSlotTab(tab.id);
     }
   });
 

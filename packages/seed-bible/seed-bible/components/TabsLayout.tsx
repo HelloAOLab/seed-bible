@@ -667,6 +667,7 @@ export function TabsLayout(props: TabsLayoutProps) {
     tools: toolsManager,
   } = state;
   const slots = app.effectiveSlots.value;
+  console.log("logs slots", slots);
   const layout = app.effectiveSlotLayout.value;
   const selectedSlotId = app.panelsEnabled.value
     ? tabsLayoutManager.selectedSlotId.value
