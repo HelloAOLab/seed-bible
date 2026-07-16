@@ -192,7 +192,6 @@ export default defineConfig(({ isSsrBuild }) => ({
         sourcemap: true,
       }
     : {
-        minify: false,
         // Client build: hashed assets + a manifest mapping the entry to its
         // emitted files. The SSR entry reads the manifest to emit the correct
         // <script>/<link> tags (prefixed with the CDN host).

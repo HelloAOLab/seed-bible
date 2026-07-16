@@ -491,6 +491,72 @@ export function createExtensionManager(
     saveProfileConfigValue(login, INSTALLED_EXTENSIONS_CONFIG_KEY, [...ids]);
   };
 
+  /**
+   * The localStorage key under which the IDs of extensions that the
+   * `autoinstall` reconciliation in `loadDefaultExtensions` has already acted
+   * on are persisted. This is distinct from `INSTALLED_EXTENSIONS_STORAGE_KEY`:
+   * that set tracks what's *currently* installed and shrinks on uninstall,
+   * while this one only ever grows — it exists so `loadDefaultExtensions`
+   * doesn't force-reinstall an `autoinstall: true` extension the user has
+   * already uninstalled once, while still auto-installing it the first time
+   * for anyone who's never seen it (e.g. a new default extension added in a
+   * later release, for existing users).
+   */
+  const AUTOINSTALL_HANDLED_STORAGE_KEY = "sb-autoinstall-handled-extensions";
+
+  /** Reads the persisted "autoinstall handled" ID set from local storage. */
+  const readPersistedHandledExtensionIds = (): Set<string> => {
+    try {
+      const raw = safeLocalStorage.getItem(AUTOINSTALL_HANDLED_STORAGE_KEY);
+      if (!raw) {
+        return new Set();
+      }
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        return new Set(parsed.filter((id) => typeof id === "string"));
+      }
+    } catch (err) {
+      console.error("Failed to read persisted handled extensions:", err);
+    }
+    return new Set();
+  };
+
+  /** Writes the given "autoinstall handled" ID set to local storage. */
+  const writePersistedHandledExtensionIds = (ids: Set<string>) => {
+    try {
+      safeLocalStorage.setItem(
+        AUTOINSTALL_HANDLED_STORAGE_KEY,
+        JSON.stringify([...ids])
+      );
+    } catch (err) {
+      console.error("Failed to persist handled extensions:", err);
+    }
+  };
+
+  /**
+   * The key under which the "autoinstall handled" ID set is mirrored into the
+   * user's profile config, so a returning user doesn't have an `autoinstall`
+   * extension they uninstalled on one device reinstalled on another.
+   */
+  const AUTOINSTALL_HANDLED_CONFIG_KEY = "autoinstallHandledExtensions";
+
+  /** Reads the "autoinstall handled" ID set from the user's profile config. */
+  const readProfileHandledExtensionIds = (): Set<string> => {
+    const value = getProfileConfigValue(
+      login.profile.value,
+      AUTOINSTALL_HANDLED_CONFIG_KEY
+    );
+    if (Array.isArray(value)) {
+      return new Set(value.filter((id) => typeof id === "string"));
+    }
+    return new Set();
+  };
+
+  /** Writes the given "autoinstall handled" ID set to the user's profile config. */
+  const writeProfileHandledExtensionIds = (ids: Set<string>) => {
+    saveProfileConfigValue(login, AUTOINSTALL_HANDLED_CONFIG_KEY, [...ids]);
+  };
+
   /** Records that the extension with the given ID has been installed. */
   const persistInstalledExtensionId = (id: string): void | Promise<void> => {
     const ids = readPersistedExtensionIds();
@@ -543,6 +609,39 @@ export function createExtensionManager(
       return;
     }
     return pendingLoad.then(forgetFromProfile);
+  };
+
+  /**
+   * Records that the `autoinstall` reconciliation has handled the extension
+   * with the given ID, so `loadDefaultExtensions` won't force-reinstall it
+   * again on a later load. Used directly (rather than via the batch write in
+   * `loadDefaultExtensions`) by `unloadExtension`, since extensions that are
+   * only ever force-installed as a dependency (e.g. `seed-bible-utils`) never
+   * carry `autoinstall: true` themselves and so never pass through that
+   * batch write at all — this is the only place their uninstall gets
+   * recorded into the handled set.
+   */
+  const persistHandledExtensionId = (id: string): void | Promise<void> => {
+    const ids = readPersistedHandledExtensionIds();
+    if (!ids.has(id)) {
+      ids.add(id);
+      writePersistedHandledExtensionIds(ids);
+    }
+
+    const mirrorToProfile = () => {
+      const profileIds = readProfileHandledExtensionIds();
+      if (!profileIds.has(id)) {
+        profileIds.add(id);
+        writeProfileHandledExtensionIds(profileIds);
+      }
+    };
+
+    const pendingLoad = awaitProfileLoaded();
+    if (!pendingLoad) {
+      mirrorToProfile();
+      return;
+    }
+    return pendingLoad.then(mirrorToProfile);
   };
 
   const computeExtensions = (): ExtensionListEntry[] => {
@@ -766,14 +865,15 @@ export function createExtensionManager(
    * Loads the extensions from the given extension set.
    * @param set The extension set to load.
    * @param filter The filter function to determine which extensions within the set should be loaded. By default, all extensions in the set will be loaded.
+   * @returns A map of the id of each extension that matched `filter` to whether its install succeeded.
    */
   const loadExtensionSet = async (
     set: ExtensionSet,
     filter: (ext: Extension) => boolean = () => true
-  ) => {
+  ): Promise<Map<string, boolean>> => {
     trackExtensionSet(set);
 
-    const promises: Promise<boolean>[] = [];
+    const idsAndPromises: [string, Promise<boolean>][] = [];
     for (const ext of set.extensions) {
       knownExtensionsById.set(ext.meta.id, ext);
       knownExtensionsSetsByExtensionId.set(ext.meta.id, set);
@@ -782,15 +882,17 @@ export function createExtensionManager(
       if (!filter(ext)) {
         continue;
       }
-      promises.push(loadExtension(ext));
+      idsAndPromises.push([ext.meta.id, loadExtension(ext)]);
     }
 
-    const results = await Promise.all(promises);
+    const results = await Promise.all(idsAndPromises.map(([, p]) => p));
     const successCount = results.filter((r) => r).length;
     console.log(
       `Finished loading extension set '${set.id}'. Successfully loaded ${successCount} out of ${set.extensions.length} extensions.`
     );
     // shout("onExtensionSetLoaded", set.id);
+
+    return new Map(idsAndPromises.map(([id], index) => [id, results[index]!]));
   };
 
   /**
@@ -840,6 +942,17 @@ export function createExtensionManager(
   /**
    * Loads the default set of extensions specified in bot tags, then re-loads any
    * extensions the user previously installed (persisted in local storage).
+   *
+   * `autoinstall: true` extensions are only installed here once ever per user:
+   * an id that installs successfully is recorded in the "autoinstall handled"
+   * set (merged across local storage and profile config, mirroring
+   * `loadSavedExtensions`'s merge below), so a later uninstall of it sticks
+   * instead of being undone by the next reload. An id whose install fails is
+   * NOT recorded, so it keeps retrying on the next load, same as before this
+   * set existed. IDs forced in only because the user hasn't yet declined them
+   * (URL `autoinstall-<id>=true` overrides) are intentionally never added to
+   * this set, since that's an explicit per-visit action, not the static
+   * default-extension reconciliation this set governs.
    */
   const loadDefaultExtensions = async () => {
     if (!defaultExtensions) {
@@ -847,14 +960,47 @@ export function createExtensionManager(
       return;
     }
     console.log("Loading default extension set:", defaultExtensions);
+
+    await awaitProfileLoaded();
+    const localHandledIds = readPersistedHandledExtensionIds();
+    const profileHandledIds = readProfileHandledExtensionIds();
+    const alreadyHandledIds = new Set([
+      ...localHandledIds,
+      ...profileHandledIds,
+    ]);
+
+    if (alreadyHandledIds.size !== localHandledIds.size) {
+      writePersistedHandledExtensionIds(alreadyHandledIds);
+    }
+    if (alreadyHandledIds.size !== profileHandledIds.size) {
+      writeProfileHandledExtensionIds(alreadyHandledIds);
+    }
+
     const url = new URL(window.location.href);
-    await loadExtensionSet(
+    const isUrlOverride = (ext: Extension) =>
+      url.searchParams.get(`autoinstall-${ext.meta.id}`) === "true";
+    const isEligibleForAutoinstall = (ext: Extension) =>
+      Boolean(ext.meta.autoinstall) && !alreadyHandledIds.has(ext.meta.id);
+
+    const results = await loadExtensionSet(
       defaultExtensions,
-      (ext) =>
-        (ext.meta.autoinstall ||
-          url.searchParams.get(`autoinstall-${ext.meta.id}`) === "true") ??
-        false
+      (ext) => isUrlOverride(ext) || isEligibleForAutoinstall(ext)
     );
+
+    const newlyHandledIds = defaultExtensions.extensions
+      .filter(
+        (ext) => isEligibleForAutoinstall(ext) && results.get(ext.meta.id)
+      )
+      .map((ext) => ext.meta.id);
+
+    if (newlyHandledIds.length > 0) {
+      const nextHandledIds = new Set([
+        ...alreadyHandledIds,
+        ...newlyHandledIds,
+      ]);
+      writePersistedHandledExtensionIds(nextHandledIds);
+      writeProfileHandledExtensionIds(nextHandledIds);
+    }
 
     await loadSavedExtensions();
   };
@@ -867,6 +1013,12 @@ export function createExtensionManager(
     unregisterExtension(id);
     installedExtensionIds.delete(id);
     void forgetInstalledExtensionId(id);
+    // Extensions that are only ever force-installed as a dependency (e.g.
+    // `seed-bible-utils`) never carry `autoinstall: true` themselves, so
+    // `loadDefaultExtensions` never records them in the "handled" set. This
+    // is what records their uninstall, so they aren't dragged back in the
+    // next time their dependent gets (re)installed.
+    void persistHandledExtensionId(id);
     refreshExtensionsSignal();
   };
 
