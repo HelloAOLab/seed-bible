@@ -876,6 +876,7 @@ describe("createSeedBibleState", () => {
 
       expect(decorateSpy).toHaveBeenCalledWith("JHN", 3, 16, {
         className: "sb-verse-decoration-diminish",
+        containerClassName: "sb-chapter-decoration-diminish",
         removeAfterMs: 3000,
       });
     });
@@ -898,6 +899,7 @@ describe("createSeedBibleState", () => {
 
       expect(decorateSpy).toHaveBeenCalledWith("PSA", 23, [1, 2, 3], {
         className: "sb-verse-decoration-diminish",
+        containerClassName: "sb-chapter-decoration-diminish",
         removeAfterMs: 3000,
       });
     });
