@@ -12,6 +12,12 @@ name: Continuous Deployment
 
 on:
   push:
+  # Backfills the deployment-link comment on PRs opened *after* their branch
+  # already deployed (the push job only comments on PRs that exist at the
+  # time it runs). Does not rebuild/redeploy — see the comment-existing-
+  # deployment job below.
+  pull_request:
+    types: [opened, reopened]
 
 # Cancel an in-flight deploy for the same branch when a newer commit lands.
 concurrency:
@@ -26,6 +32,7 @@ permissions:
 
 jobs:
   deploy:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -193,53 +200,24 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const commentDeployment = require("./.github/scripts/comment-deployment.cjs");
             const branch = process.env.BRANCH;
             const buildId = process.env.BUILD_ID;
-            const marker = "<!-- deployment-link -->";
 
-            try {
-              const url =
-                branch === "main"
-                  ? "https://prod.seedbible.org"
-                  : `https://alpha.seedbible.org/b/${branch}/${buildId}`;
-              const summary =
-                branch === "main"
-                  ? `Deployed **main** to the site root → ${url}`
-                  : `Deployed branch **${branch}** → ${url}`;
-              const body = `${marker}\n## 🚀 Deployment\n\n${summary}\n\nCommit: \`${buildId}\``;
+            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+            });
 
-              const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                commit_sha: context.sha,
-              });
-
-              for (const pr of prs) {
-                const { data: comments } = await github.rest.issues.listComments({
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  issue_number: pr.number,
-                });
-                const existing = comments.find((c) => c.body && c.body.includes(marker));
-                if (existing) {
-                  await github.rest.issues.updateComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    comment_id: existing.id,
-                    body,
-                  });
-                } else {
-                  await github.rest.issues.createComment({
-                    owner: context.repo.owner,
-                    repo: context.repo.repo,
-                    issue_number: pr.number,
-                    body,
-                  });
-                }
-              }
-            } catch (error) {
-              core.warning(`Failed to post deployment comment: ${error}`);
-            }
+            await commentDeployment({
+              github,
+              context,
+              core,
+              branch,
+              buildId,
+              prNumbers: prs.map((pr) => pr.number),
+            });
       - name: Summary
         env:
           BRANCH: ${{ steps.ids.outputs.branch }}
@@ -250,3 +228,54 @@ jobs:
           else
             echo "Deployed branch **$BRANCH** → \`https://alpha.seedbible.org/b/$BRANCH/$BUILD_ID\`" >> "$GITHUB_STEP_SUMMARY"
           fi
+
+  # Covers the case where a branch was already deployed (via `push`) before
+  # its PR was opened: the deploy job's comment step only finds PRs that
+  # exist *at the time it runs*, so a later-opened PR gets no comment. This
+  # job doesn't build or deploy anything — it just checks whether the
+  # branch's pointer file already exists in S3 and, if so, posts/updates the
+  # same deployment-link comment on the PR that just opened.
+  comment-existing-deployment:
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    env:
+      S3_BUCKET: ${{ secrets.DEPLOY_BUCKET }}
+      AWS_REGION: ${{ vars.AWS_REGION }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Look up existing deployment pointer for this branch
+        id: pointer
+        run: |
+          BRANCH=$(echo "${{ github.head_ref }}" | sed 's/\//_/g')
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          if aws s3 cp "s3://$S3_BUCKET/branches/$BRANCH/current.json" current.json; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+            echo "build_id=$(jq -r .buildId current.json)" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Comment on pull request with deployment link
+        if: steps.pointer.outputs.found == 'true'
+        continue-on-error: true
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const commentDeployment = require("./.github/scripts/comment-deployment.cjs");
+            await commentDeployment({
+              github,
+              context,
+              core,
+              branch: "${{ steps.pointer.outputs.branch }}",
+              buildId: "${{ steps.pointer.outputs.build_id }}",
+              prNumbers: [context.issue.number],
+            });
