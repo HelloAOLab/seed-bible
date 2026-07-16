@@ -69,4 +69,19 @@ describe("playlistItemLabel", () => {
       )
     ).toBe("GEN 1:2-3:4");
   });
+
+  it("labels a toEndOfChapter fragment (synthesized for cross-chapter playback)", () => {
+    expect(
+      playlistItemLabel(
+        verseItem({
+          bookId: "GEN",
+          chapter: 1,
+          verse: 2,
+          toEndOfChapter: true,
+        }),
+        t,
+        resolveBookName
+      )
+    ).toBe("GEN 1:2-end");
+  });
 });

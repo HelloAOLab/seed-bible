@@ -28,6 +28,15 @@ export const VerseRefSchema = z.object({
   endChapter: z.number().positive().optional(),
   verse: z.number().positive().optional(),
   endVerse: z.number().positive().optional(),
+  /**
+   * Internal marker set only on queue fragments synthesized by
+   * `expandCrossChapterItem` (never written by the playlist editor, never
+   * part of a saved item): highlight from `verse` through however many
+   * verses this chapter actually has. Resolved lazily in
+   * `navigateToCurrentItem` from the chapter data navigation already loads,
+   * since the count isn't known synchronously at queue-build time.
+   */
+  toEndOfChapter: z.boolean().optional(),
 });
 
 export const PlaylistItem = z.discriminatedUnion("type", [
@@ -124,6 +133,70 @@ function jsonEqual(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
+/** No book of the Bible (Psalms, the longest) has more than 150 chapters. */
+const MAX_CHAPTER_NUMBER = 150;
+
+/**
+ * Expands a `bible-verse` item spanning multiple chapters into one item per
+ * chapter in the range, so playback (queue stepping, highlighting) advances
+ * chapter by chapter instead of only ever visiting the first chapter. Other
+ * item types, and bible-verse items that don't cross a chapter boundary, pass
+ * through unchanged.
+ */
+function expandCrossChapterItem(item: PlaylistItemData): PlaylistItemData[] {
+  if (item.type !== "bible-verse") {
+    return [item];
+  }
+
+  const { ref, translationId } = item;
+  const endChapter = ref.endChapter;
+  if (
+    endChapter == null ||
+    endChapter <= ref.chapter ||
+    endChapter > MAX_CHAPTER_NUMBER
+  ) {
+    return [item];
+  }
+
+  const items: PlaylistItemData[] = [];
+
+  for (let chapter = ref.chapter; chapter <= endChapter; chapter++) {
+    if (chapter === ref.chapter) {
+      items.push({
+        type: "bible-verse",
+        translationId,
+        ref:
+          ref.verse != null
+            ? {
+                bookId: ref.bookId,
+                chapter,
+                verse: ref.verse,
+                toEndOfChapter: true,
+              }
+            : { bookId: ref.bookId, chapter },
+      });
+    } else if (chapter === endChapter) {
+      items.push({
+        type: "bible-verse",
+        translationId,
+        ref:
+          ref.endVerse != null
+            ? { bookId: ref.bookId, chapter, verse: 1, endVerse: ref.endVerse }
+            : { bookId: ref.bookId, chapter },
+      });
+    } else {
+      // Fully-included middle chapter: whole-chapter reference, no highlight.
+      items.push({
+        type: "bible-verse",
+        translationId,
+        ref: { bookId: ref.bookId, chapter },
+      });
+    }
+  }
+
+  return items;
+}
+
 /**
  * Creates an in-memory playing state for stepping through one or more
  * playlists. The queue is a copy of the source playlists' items, so
@@ -139,7 +212,9 @@ export function createPlayingState(
 ) {
   const playlists = signal<Playlist[]>(sourcePlaylists);
   const queue = signal<PlaylistItemData[]>(
-    sourcePlaylists.flatMap((playlist) => [...playlist.items])
+    sourcePlaylists.flatMap((playlist) =>
+      playlist.items.flatMap(expandCrossChapterItem)
+    )
   );
   const currentIndex = signal<number>(queue.value.length > 0 ? 0 : -1);
 
@@ -177,10 +252,23 @@ export function createPlayingState(
     );
 
     if (ref.verse) {
+      // `toEndOfChapter` fragments (from `expandCrossChapterItem`) don't know
+      // the chapter's actual verse count until it's loaded; resolve it here,
+      // guarding against stale chapter data left over from a failed fetch
+      // (`selectTranslationAndChapter` doesn't clear `chapterData` on error).
+      const loadedChapter = tab.readingState.chapterData.value;
+      const chapterDataMatches =
+        loadedChapter?.book.id === ref.bookId &&
+        loadedChapter?.chapter.number === ref.chapter;
+      const endVerse = ref.toEndOfChapter
+        ? chapterDataMatches
+          ? loadedChapter.numberOfVerses
+          : undefined
+        : ref.endVerse;
       decorationId = tab.readingState.decorateVerses(
         ref.bookId,
         ref.chapter,
-        ref.endVerse ? range(ref.verse, ref.endVerse + 1) : [ref.verse],
+        endVerse ? range(ref.verse, endVerse + 1) : [ref.verse],
         {
           className: "sb-verse-decoration-playlist-verse-highlight",
         }
@@ -214,7 +302,7 @@ export function createPlayingState(
 
   /** Appends an item to the end of the queue. */
   const addToQueue = (item: PlaylistItemData): void => {
-    queue.value = [...queue.value, item];
+    queue.value = [...queue.value, ...expandCrossChapterItem(item)];
     if (currentIndex.value < 0) {
       currentIndex.value = 0;
     }
@@ -640,7 +728,9 @@ export function createPlaylistManager(
     // untouched, so playback is isolated per reading state.
     const targetTab = activeTab.value;
 
-    const queue = playlists.flatMap((p) => [...p.items]);
+    const queue = playlists.flatMap((p) =>
+      p.items.flatMap(expandCrossChapterItem)
+    );
     const step =
       queue.length > 0
         ? Math.min(Math.max(Math.floor(initialStep), 0), queue.length - 1)

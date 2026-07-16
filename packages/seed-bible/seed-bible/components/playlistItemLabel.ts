@@ -12,7 +12,8 @@ export function playlistItemLabel(
 ): string {
   switch (item.type) {
     case "bible-verse": {
-      const { bookId, chapter, verse, endVerse, endChapter } = item.ref;
+      const { bookId, chapter, verse, endVerse, endChapter, toEndOfChapter } =
+        item.ref;
       const book = resolveBookName(bookId);
       // No verse means whole chapters are referenced: "Genesis 1" or, with an
       // end chapter, a range like "John 1-3".
@@ -23,6 +24,11 @@ export function playlistItemLabel(
       }
       if (endChapter != null && endVerse != null) {
         return `${book} ${chapter}:${verse}-${endChapter}:${endVerse}`;
+      }
+      // A queue fragment synthesized for a cross-chapter range whose actual
+      // end verse isn't known here (it's resolved during navigation).
+      if (toEndOfChapter) {
+        return `${book} ${chapter}:${verse}-end`;
       }
       return endVerse
         ? `${book} ${chapter}:${verse}-${endVerse}`
