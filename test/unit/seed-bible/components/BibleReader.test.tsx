@@ -541,6 +541,100 @@ describe("BibleReader", () => {
     );
   });
 
+  it("merges contiguous same-color prose verses into one highlight ribbon", () => {
+    const { slot, selectorState, readingState, highlights, chapterData } =
+      createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          { type: "verse", number: 1, content: ["First verse. "] },
+          { type: "verse", number: 2, content: ["Second verse."] },
+        ],
+      },
+    };
+
+    highlights.value = {
+      highlights: [
+        { verse: 1, colorId: "yellow" },
+        { verse: 2, colorId: "yellow" },
+      ],
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // A single wrapper carries the highlight for the whole run — not the
+    // per-verse decorators — so the two verses paint one continuous ribbon.
+    const highlightEls = container.querySelectorAll(".sb-highlight-yellow");
+    expect(highlightEls.length).toBe(1);
+    const wrapper = highlightEls[0] as HTMLElement;
+    expect(wrapper.classList.contains("sb-verse-decorator")).toBe(false);
+    expect(wrapper.querySelectorAll(".sb-verse").length).toBe(2);
+    // The verses' own decorators stay transparent (no highlight of their own).
+    const decorators = wrapper.querySelectorAll(".sb-verse-decorator");
+    expect(decorators.length).toBe(2);
+    decorators.forEach((decorator) =>
+      expect(decorator.classList.contains("sb-highlight-yellow")).toBe(false)
+    );
+  });
+
+  it("does not merge adjacent verses highlighted with different colors", () => {
+    const { slot, selectorState, readingState, highlights, chapterData } =
+      createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          { type: "verse", number: 1, content: ["First verse. "] },
+          { type: "verse", number: 2, content: ["Second verse."] },
+        ],
+      },
+    };
+
+    highlights.value = {
+      highlights: [
+        { verse: 1, colorId: "yellow" },
+        { verse: 2, colorId: "green" },
+      ],
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // Different colors don't share a ribbon: each verse keeps the highlight on
+    // its own decorator, and there is no run wrapper.
+    const verses = container.querySelectorAll(".sb-verse");
+    const firstDecorator = verses[0]?.querySelector(".sb-verse-decorator");
+    const secondDecorator = verses[1]?.querySelector(".sb-verse-decorator");
+    expect(firstDecorator?.classList.contains("sb-highlight-yellow")).toBe(
+      true
+    );
+    expect(secondDecorator?.classList.contains("sb-highlight-green")).toBe(
+      true
+    );
+  });
+
   it("applies inline custom highlight colors when highlight uses a custom color", () => {
     const { slot, selectorState, readingState, highlights } = createFixture();
 

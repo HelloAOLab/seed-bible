@@ -469,15 +469,20 @@
     color 0.2s ease;
 }
 
-/* Shared treatment for any highlighted verse span (preset or custom color).
-   The negative `margin-inline` cancels the inline padding's width, so the tint
-   still bleeds past the text but applying a highlight never reflows scripture.
+/* Shared treatment for any highlighted verse (preset or custom color). Applied
+   either to a verse's own decorator or, when several same-color verses are
+   contiguous, to a wrapper around the whole run so the run reads as one ribbon.
+
+   Only block-direction padding is used — it lifts the tint above and below the
+   text without growing the inline box, so highlighting never reflows scripture.
+   There is deliberately no inline padding: extending the tint sideways past the
+   text would either shift the line or (with a compensating negative margin)
+   bleed over and cover the neighbouring verse's text.
+
    `box-decoration-break: clone` gives every wrapped line its own rounded corners
-   so no end is left square. */
+   so no line end is ever left square. */
 .sb-highlight {
   padding-block: 0.14em;
-  padding-inline: 0.2em;
-  margin-inline: -0.2em;
   border-radius: 0.4em;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;

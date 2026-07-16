@@ -573,188 +573,80 @@ function renderChapterContent(
     );
   };
 
-  const entries = chapterData.chapter.content;
-  return entries.map((entry, entryIndex) => {
-    if (!entry || typeof entry !== "object") {
+  const getHighlightColorKey = (highlight: ChapterHighlight | null) => {
+    if (!highlight) {
       return null;
     }
-
-    const value = entry;
-
-    if (value.type === "heading" && Array.isArray(value.content)) {
-      if (!scriptureElements.showHeadings) {
-        return null;
-      }
-      const heading = (value.content as unknown[])
-        .filter((item) => typeof item === "string")
-        .join(" ");
-      return (
-        <h3 key={`heading-${entryIndex}`} className="sb-chapter-heading">
-          {heading}
-        </h3>
-      );
+    if (highlight.customColor && highlight.customFontColor) {
+      return `custom:${highlight.customColor}:${highlight.customFontColor}`;
     }
+    return highlight.colorId;
+  };
 
-    if (value.type === "line_break") {
-      return <div key={`break-${entryIndex}`} className="sb-line-break" />;
-    }
+  // Renders a single verse's `<span class="sb-verse">`. `carryHighlight` decides
+  // whether this verse's own decorator paints the highlight background. When a
+  // run of contiguous verses shares a color we pass `false` and let the run
+  // wrapper (below) paint one continuous ribbon instead of a box per verse.
+  const renderVerseNode = (
+    value: ChapterVerse,
+    entryIndex: number,
+    carryHighlight: boolean
+  ) => {
+    const verse: BibleSelectedVerse = {
+      bookId: chapterData.book.id,
+      chapterNumber: chapterData.chapter.number,
+      verse: value,
+      translationId: chapterData.translation.id,
+    };
+    const isSelected = selectedVerses.some(
+      (v) =>
+        v.verse.number === value.number &&
+        v.bookId === chapterData.book.id &&
+        v.chapterNumber === chapterData.chapter.number
+    );
+    const segments = splitVerseIntoSegments(value.content);
+    const hasPoetry = segments.some((s) => s.type === "poetry");
+    const highlight = scriptureElements.showHighlights
+      ? getVerseHighlight(value.number)
+      : null;
+    const highlightPresentation = carryHighlight
+      ? getHighlightPresentation(highlight)
+      : ({ className: "", style: undefined } as const);
+    const verseDecorations = getVerseDecorations(value.number);
+    const decorationPresentation = getDecorationPresentation(verseDecorations);
+    const contentDecorations = verseDecorations.filter((decoration) =>
+      hasContentTargeting(decoration)
+    );
+    const contentRanges = toContentDecorationRanges(
+      getVersePlainText(value.content),
+      contentDecorations
+    );
+    let currentTextOffset = 0;
+    const getPartTextStartIndex = (part: ChapterVerse["content"][0]) => {
+      const startIndex = currentTextOffset;
+      currentTextOffset += getInlineText(part).length;
+      return startIndex;
+    };
+    const verseClassName = [
+      "sb-verse",
+      hasPoetry ? "sb-verse-poetry" : "",
+      isSelected ? "sb-verse-selected" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const verseDecoratorClassName = [
+      "sb-verse-decorator",
+      highlightPresentation.className.trim(),
+      decorationPresentation.className.trim(),
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const verseDecoratorStyle = {
+      ...(highlightPresentation.style ?? {}),
+      ...(decorationPresentation.style ?? {}),
+    };
 
-    if (value.type === "hebrew_subtitle" && Array.isArray(value.content)) {
-      return (
-        <p key={`subtitle-${entryIndex}`} className="sb-subtitle">
-          {value.content.map((part, index) =>
-            renderInlineContent(
-              part,
-              index,
-              (noteId) => onOpenFootnote(noteId, null),
-              scriptureElements.showHeadings,
-              scriptureElements.showFootnotes,
-              scriptureElements.showRedLettering
-            )
-          )}
-        </p>
-      );
-    }
-
-    if (
-      value.type === "verse" &&
-      typeof value.number === "number" &&
-      Array.isArray(value.content)
-    ) {
-      const verse: BibleSelectedVerse = {
-        bookId: chapterData.book.id,
-        chapterNumber: chapterData.chapter.number,
-        verse: value,
-        translationId: chapterData.translation.id,
-      };
-      const isSelected = selectedVerses.some(
-        (v) =>
-          v.verse.number === value.number &&
-          v.bookId === chapterData.book.id &&
-          v.chapterNumber === chapterData.chapter.number
-      );
-      const segments = splitVerseIntoSegments(value.content);
-      const hasPoetry = segments.some((s) => s.type === "poetry");
-      const highlight = scriptureElements.showHighlights
-        ? getVerseHighlight(value.number)
-        : null;
-      const highlightPresentation = getHighlightPresentation(highlight);
-      const verseDecorations = getVerseDecorations(value.number);
-      const decorationPresentation =
-        getDecorationPresentation(verseDecorations);
-      const contentDecorations = verseDecorations.filter((decoration) =>
-        hasContentTargeting(decoration)
-      );
-      const contentRanges = toContentDecorationRanges(
-        getVersePlainText(value.content),
-        contentDecorations
-      );
-      let currentTextOffset = 0;
-      const getPartTextStartIndex = (part: ChapterVerse["content"][0]) => {
-        const startIndex = currentTextOffset;
-        currentTextOffset += getInlineText(part).length;
-        return startIndex;
-      };
-      const verseClassName = [
-        "sb-verse",
-        hasPoetry ? "sb-verse-poetry" : "",
-        isSelected ? "sb-verse-selected" : "",
-      ]
-        .filter(Boolean)
-        .join(" ");
-      const verseDecoratorClassName = [
-        "sb-verse-decorator",
-        highlightPresentation.className.trim(),
-        decorationPresentation.className.trim(),
-      ]
-        .filter(Boolean)
-        .join(" ");
-      const verseDecoratorStyle = {
-        ...(highlightPresentation.style ?? {}),
-        ...(decorationPresentation.style ?? {}),
-      };
-
-      if (hasPoetry) {
-        return (
-          <span
-            key={`verse-${entryIndex}`}
-            className={verseClassName}
-            data-verse-number={value.number}
-            onClick={(event: MouseEvent) => {
-              onVerseClick(verse, event);
-            }}
-            style={{
-              cursor: "pointer",
-            }}
-            role="button"
-            tabIndex={0}
-          >
-            {segments.map((segment, segIndex) => {
-              if (segment.type === "inline") {
-                return (
-                  <span
-                    key={`verse-${entryIndex}-seg-${segIndex}-inline`}
-                    className={verseDecoratorClassName}
-                    style={verseDecoratorStyle}
-                  >
-                    {segIndex === 0 && scriptureElements.showVerseNumbers && (
-                      <sup className="sb-verse-number">{value.number}</sup>
-                    )}
-                    {segment.parts.map((part, partIndex) =>
-                      renderInlineContent(
-                        part,
-                        segIndex * 10000 + partIndex,
-                        (noteId) => onOpenFootnote(noteId, value),
-                        scriptureElements.showHeadings,
-                        scriptureElements.showFootnotes,
-                        scriptureElements.showRedLettering,
-                        contentRanges,
-                        getPartTextStartIndex(part)
-                      )
-                    )}
-                  </span>
-                );
-              }
-              return segment.lines.map((line, lineIndex) => (
-                <span
-                  key={`verse-${entryIndex}-seg-${segIndex}-line-${lineIndex}`}
-                  className="sb-verse-line"
-                  style={{
-                    paddingInlineStart:
-                      line.indentLevel > 0
-                        ? `${line.indentLevel * 30}px`
-                        : undefined,
-                  }}
-                >
-                  <span
-                    className={verseDecoratorClassName}
-                    style={verseDecoratorStyle}
-                  >
-                    {segIndex === 0 &&
-                      lineIndex === 0 &&
-                      scriptureElements.showVerseNumbers && (
-                        <sup className="sb-verse-number">{value.number}</sup>
-                      )}
-                    {line.parts.map((part, partIndex) =>
-                      renderInlineContent(
-                        part,
-                        partIndex,
-                        (noteId) => onOpenFootnote(noteId, value),
-                        scriptureElements.showHeadings,
-                        scriptureElements.showFootnotes,
-                        scriptureElements.showRedLettering,
-                        contentRanges,
-                        getPartTextStartIndex(part)
-                      )
-                    )}
-                  </span>
-                </span>
-              ));
-            })}
-          </span>
-        );
-      }
-
+    if (hasPoetry) {
       return (
         <span
           key={`verse-${entryIndex}`}
@@ -769,29 +661,234 @@ function renderChapterContent(
           role="button"
           tabIndex={0}
         >
-          <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
-            {scriptureElements.showVerseNumbers && (
-              <sup className="sb-verse-number">{value.number}</sup>
-            )}
-            {value.content.map((part, index) =>
-              renderInlineContent(
-                part,
-                index,
-                (noteId) => onOpenFootnote(noteId, value),
-                scriptureElements.showHeadings,
-                scriptureElements.showFootnotes,
-                scriptureElements.showRedLettering,
-                contentRanges,
-                getPartTextStartIndex(part)
-              )
-            )}
-          </span>
+          {segments.map((segment, segIndex) => {
+            if (segment.type === "inline") {
+              return (
+                <span
+                  key={`verse-${entryIndex}-seg-${segIndex}-inline`}
+                  className={verseDecoratorClassName}
+                  style={verseDecoratorStyle}
+                >
+                  {segIndex === 0 && scriptureElements.showVerseNumbers && (
+                    <sup className="sb-verse-number">{value.number}</sup>
+                  )}
+                  {segment.parts.map((part, partIndex) =>
+                    renderInlineContent(
+                      part,
+                      segIndex * 10000 + partIndex,
+                      (noteId) => onOpenFootnote(noteId, value),
+                      scriptureElements.showHeadings,
+                      scriptureElements.showFootnotes,
+                      scriptureElements.showRedLettering,
+                      contentRanges,
+                      getPartTextStartIndex(part)
+                    )
+                  )}
+                </span>
+              );
+            }
+            return segment.lines.map((line, lineIndex) => (
+              <span
+                key={`verse-${entryIndex}-seg-${segIndex}-line-${lineIndex}`}
+                className="sb-verse-line"
+                style={{
+                  paddingInlineStart:
+                    line.indentLevel > 0
+                      ? `${line.indentLevel * 30}px`
+                      : undefined,
+                }}
+              >
+                <span
+                  className={verseDecoratorClassName}
+                  style={verseDecoratorStyle}
+                >
+                  {segIndex === 0 &&
+                    lineIndex === 0 &&
+                    scriptureElements.showVerseNumbers && (
+                      <sup className="sb-verse-number">{value.number}</sup>
+                    )}
+                  {line.parts.map((part, partIndex) =>
+                    renderInlineContent(
+                      part,
+                      partIndex,
+                      (noteId) => onOpenFootnote(noteId, value),
+                      scriptureElements.showHeadings,
+                      scriptureElements.showFootnotes,
+                      scriptureElements.showRedLettering,
+                      contentRanges,
+                      getPartTextStartIndex(part)
+                    )
+                  )}
+                </span>
+              </span>
+            ));
+          })}
         </span>
       );
     }
 
-    return null;
-  });
+    return (
+      <span
+        key={`verse-${entryIndex}`}
+        className={verseClassName}
+        data-verse-number={value.number}
+        onClick={(event: MouseEvent) => {
+          onVerseClick(verse, event);
+        }}
+        style={{
+          cursor: "pointer",
+        }}
+        role="button"
+        tabIndex={0}
+      >
+        <span className={verseDecoratorClassName} style={verseDecoratorStyle}>
+          {scriptureElements.showVerseNumbers && (
+            <sup className="sb-verse-number">{value.number}</sup>
+          )}
+          {value.content.map((part, index) =>
+            renderInlineContent(
+              part,
+              index,
+              (noteId) => onOpenFootnote(noteId, value),
+              scriptureElements.showHeadings,
+              scriptureElements.showFootnotes,
+              scriptureElements.showRedLettering,
+              contentRanges,
+              getPartTextStartIndex(part)
+            )
+          )}
+        </span>
+      </span>
+    );
+  };
+
+  const isVerseEntry = (entry: unknown): entry is ChapterVerse =>
+    !!entry &&
+    typeof entry === "object" &&
+    (entry as { type?: unknown }).type === "verse" &&
+    typeof (entry as ChapterVerse).number === "number" &&
+    Array.isArray((entry as ChapterVerse).content);
+
+  const entries = chapterData.chapter.content;
+  const nodes: (JSX.Element | null)[] = [];
+
+  for (let i = 0; i < entries.length; ) {
+    const entry = entries[i];
+
+    if (!entry || typeof entry !== "object") {
+      nodes.push(null);
+      i += 1;
+      continue;
+    }
+
+    if (entry.type === "heading" && Array.isArray(entry.content)) {
+      if (!scriptureElements.showHeadings) {
+        nodes.push(null);
+        i += 1;
+        continue;
+      }
+      const heading = (entry.content as unknown[])
+        .filter((item) => typeof item === "string")
+        .join(" ");
+      nodes.push(
+        <h3 key={`heading-${i}`} className="sb-chapter-heading">
+          {heading}
+        </h3>
+      );
+      i += 1;
+      continue;
+    }
+
+    if (entry.type === "line_break") {
+      nodes.push(<div key={`break-${i}`} className="sb-line-break" />);
+      i += 1;
+      continue;
+    }
+
+    if (entry.type === "hebrew_subtitle" && Array.isArray(entry.content)) {
+      nodes.push(
+        <p key={`subtitle-${i}`} className="sb-subtitle">
+          {entry.content.map((part, index) =>
+            renderInlineContent(
+              part,
+              index,
+              (noteId) => onOpenFootnote(noteId, null),
+              scriptureElements.showHeadings,
+              scriptureElements.showFootnotes,
+              scriptureElements.showRedLettering
+            )
+          )}
+        </p>
+      );
+      i += 1;
+      continue;
+    }
+
+    if (isVerseEntry(entry)) {
+      const highlight = scriptureElements.showHighlights
+        ? getVerseHighlight(entry.number)
+        : null;
+      const colorKey = getHighlightColorKey(highlight);
+      const isPoetry = splitVerseIntoSegments(entry.content).some(
+        (s) => s.type === "poetry"
+      );
+
+      // Group consecutive prose verses that resolve to the same highlight color
+      // into one wrapper so the highlight renders as a single continuous ribbon
+      // (rounded only at the run's outer line edges, seamless where one verse
+      // flows into the next). Poetry is excluded because its lines are
+      // block-level and can't share an inline background.
+      if (colorKey !== null && !isPoetry) {
+        const runIndices = [i];
+        let j = i + 1;
+        while (j < entries.length) {
+          const next = entries[j];
+          if (!isVerseEntry(next)) {
+            break;
+          }
+          const nextKey = getHighlightColorKey(
+            scriptureElements.showHighlights
+              ? getVerseHighlight(next.number)
+              : null
+          );
+          const nextIsPoetry = splitVerseIntoSegments(next.content).some(
+            (s) => s.type === "poetry"
+          );
+          if (nextKey !== colorKey || nextIsPoetry) {
+            break;
+          }
+          runIndices.push(j);
+          j += 1;
+        }
+
+        if (runIndices.length > 1) {
+          const presentation = getHighlightPresentation(highlight);
+          nodes.push(
+            <span
+              key={`highlight-run-${i}`}
+              className={presentation.className.trim()}
+              style={presentation.style}
+            >
+              {runIndices.map((idx) =>
+                renderVerseNode(entries[idx] as ChapterVerse, idx, false)
+              )}
+            </span>
+          );
+          i = j;
+          continue;
+        }
+      }
+
+      nodes.push(renderVerseNode(entry, i, true));
+      i += 1;
+      continue;
+    }
+
+    nodes.push(null);
+    i += 1;
+  }
+
+  return nodes;
 }
 
 interface BibleReaderProps {
