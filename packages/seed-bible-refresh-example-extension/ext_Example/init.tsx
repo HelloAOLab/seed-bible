@@ -1,5 +1,5 @@
 /* eslint-disable seed-bible-i18n/i18n-untranslated-content */
-import { effect } from "@preact/signals";
+import { effect, signal } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { MaterialIcon, PortalComponent } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
@@ -32,7 +32,7 @@ export default function initExampleExtension() {
           console.log("Example tool selected!");
           context.panes.openPane({
             placement: "side",
-            title: "My Example Tool",
+            title: signal("My Example Tool"),
             component: () => {
               // You can use the useI18n hook in your tool component to get translated strings
               const { t } = useI18n("example-extension");
@@ -116,7 +116,7 @@ export default function initExampleExtension() {
           context.panesManager.openPane({
             id: "example-portal-pane",
             placement: "floating",
-            title: "Grid Portal",
+            title: signal("Grid Portal"),
             component: () => (
               <PortalComponent
                 portal="home"
@@ -146,7 +146,7 @@ export default function initExampleExtension() {
           context.panesManager.openPane({
             id: "example-portal-pane",
             placement: "floating",
-            title: "Map Portal",
+            title: signal("Map Portal"),
             component: () => (
               <PortalComponent
                 portal="map_portal"

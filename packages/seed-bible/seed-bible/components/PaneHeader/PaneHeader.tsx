@@ -1,12 +1,19 @@
 import "./PaneHeader.css";
 import type { ComponentChild } from "preact";
+import type { Signal } from "@preact/signals";
 import { useI18n } from "../../i18n/I18nManager";
 
 export interface PaneHeaderProps {
-  /** Title shown in the header. */
-  title: string;
+  /** Title shown in the header. A signal so translated titles stay in sync
+   * with UI language changes while the pane is open. */
+  title: Signal<string>;
   /** Called when the close button is pressed. */
   onClose: () => void;
+  /**
+   * Optional icon rendered before the title. Rendered as a component so it
+   * can use hooks.
+   */
+  icon?: () => ComponentChild;
   /**
    * Optional custom header content rendered between the title and the close
    * button. Rendered as a component so it can use hooks (i18n, signals).
@@ -25,12 +32,19 @@ export interface PaneHeaderProps {
  * header slot, and a close button.
  */
 export function PaneHeader(props: PaneHeaderProps) {
-  const { title, onClose, header: Header, onPointerDown } = props;
+  const { title, onClose, icon: Icon, header: Header, onPointerDown } = props;
   const { t } = useI18n();
 
   return (
     <div className="sb-pane-header" onPointerDown={onPointerDown}>
-      <div className="sb-pane-header-title">{title}</div>
+      <div className="sb-pane-header-title">
+        {Icon && (
+          <span className="sb-pane-header-icon">
+            <Icon />
+          </span>
+        )}
+        <span className="sb-pane-header-title-text">{title.value}</span>
+      </div>
       {Header && (
         <div
           className="sb-pane-header-actions"

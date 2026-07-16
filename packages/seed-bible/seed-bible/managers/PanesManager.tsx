@@ -11,9 +11,14 @@ export interface Pane {
   /** Stable pane identifier. */
   id: string;
   /** Title shown in the pane's header. */
-  title: string;
+  title: Signal<string>;
   /** Custom component rendered in this pane. */
   component: () => ComponentChild;
+  /**
+   * Optional icon rendered before the title in the pane's header. Rendered as
+   * a component so it can use hooks.
+   */
+  icon?: () => ComponentChild;
   /**
    * Optional custom header content rendered inside the pane's header, between
    * the title and the close button. Rendered as a component so it can use
@@ -36,9 +41,14 @@ export interface PaneOpenOptions {
   /** Placement mode for the new pane. Immutable after creation. */
   placement: PanePlacement;
   /** Title shown in the pane's header. */
-  title: string;
+  title: Signal<string>;
   /** Custom component rendered in the pane. */
   component: () => ComponentChild;
+  /**
+   * Optional icon rendered before the title in the pane's header. Rendered as
+   * a component so it can use hooks.
+   */
+  icon?: () => ComponentChild;
   /**
    * Optional custom header content rendered inside the pane's header, between
    * the title and the close button. Rendered as a component so it can use
@@ -111,11 +121,12 @@ function createPaneFactory() {
   let nextPaneId = 1;
 
   return (
-    title: string,
+    title: Signal<string>,
     component: () => ComponentChild,
     placement: PanePlacement,
     customId?: string,
-    header?: () => ComponentChild
+    header?: () => ComponentChild,
+    icon?: () => ComponentChild
   ): Pane => {
     const paneId = nextPaneId;
     nextPaneId += 1;
@@ -125,6 +136,7 @@ function createPaneFactory() {
       id: customId ?? `pane-${paneId}`,
       title,
       component,
+      icon,
       header,
       placement,
       x: 48 + offset,
@@ -186,6 +198,7 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
           ...existingPane,
           title: options.title,
           component: options.component,
+          icon: options.icon,
           header: options.header,
         };
         syncPaneState(
@@ -213,7 +226,8 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
       options.component,
       options.placement,
       options.id,
-      options.header
+      options.header,
+      options.icon
     );
     syncPaneState([...basePanes, nextPane], nextPane.id);
     return nextPane;

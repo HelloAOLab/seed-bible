@@ -1,5 +1,5 @@
 import type { ChapterVerse } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
-import { computed } from "@preact/signals";
+import { computed, signal } from "@preact/signals";
 import { registerExtension } from "seed-bible";
 import { LocationIcon, PortalComponent } from "seed-bible/components";
 import locations from "./locations.json";
@@ -102,7 +102,7 @@ export default function initLocationsExtension() {
 
         context.panes.openPane({
           placement: "floating",
-          title: place.place,
+          title: signal(place.place),
           component: () => (
             <PortalComponent
               portal="map"

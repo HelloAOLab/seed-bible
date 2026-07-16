@@ -14,6 +14,10 @@ vi.mock("../../../../../packages/scripture-map/hooks/useSettings", () => ({
   useSettings: vi.fn(),
 }));
 
+const { settingsHeaderSlotMock } = vi.hoisted(() => ({
+  settingsHeaderSlotMock: { value: null as HTMLElement | null },
+}));
+
 vi.mock(
   "../../../../../packages/scripture-map/contexts/ScriptureMap/ScriptureMapContext",
   () => ({
@@ -27,6 +31,7 @@ vi.mock(
           data-has-footer={footer ? "true" : "false"}
         />
       ),
+      settingsHeaderSlot: settingsHeaderSlotMock,
     })),
   })
 );
@@ -120,7 +125,6 @@ function makeHookResult(overrides: Record<string, unknown> = {}) {
     legendSquaresData: [] as SettingsLegendSquareData[],
     yearSelectorLabelTextContent: "2024",
     yearSelectorOptionsData: [] as SettingsYearselectorOptionData[],
-    title: "Scripture Map",
     optionsTitle: "Options",
     optionsDescription: "Manage your view.",
     lessText: "Less",
@@ -131,16 +135,25 @@ function makeHookResult(overrides: Record<string, unknown> = {}) {
 
 describe("Settings", () => {
   let container: HTMLDivElement;
+  // The settings button portals into the pane header's slot rather than
+  // rendering inline (see Settings.tsx), so it lives in its own DOM node,
+  // separate from `container`.
+  let portalTarget: HTMLDivElement;
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
+    portalTarget = document.createElement("div");
+    document.body.appendChild(portalTarget);
+    settingsHeaderSlotMock.value = portalTarget;
     (useSettings as Mock).mockReturnValue(makeHookResult());
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
+    portalTarget.remove();
+    settingsHeaderSlotMock.value = null;
     vi.clearAllMocks();
   });
 
@@ -160,23 +173,10 @@ describe("Settings", () => {
       ).not.toBeNull();
     });
 
-    it("renders .settings-title with the title text", () => {
-      setup({ title: "My Map" });
-      const titleEl = container.querySelector(
-        ".settings-title .scripture-title"
-      );
-      expect(titleEl).not.toBeNull();
-      expect(titleEl!.textContent).toBe("My Map");
-    });
-
-    it("renders the settings button", () => {
+    it("renders the settings button into the pane header's slot", () => {
       setup();
-      expect(container.querySelector(".settings-button")).not.toBeNull();
-    });
-
-    it("renders a .horizontal-divider", () => {
-      setup();
-      expect(container.querySelector(".horizontal-divider")).not.toBeNull();
+      expect(container.querySelector(".settings-button")).toBeNull();
+      expect(portalTarget.querySelector(".settings-button")).not.toBeNull();
     });
   });
 
@@ -185,36 +185,45 @@ describe("Settings", () => {
       const handleSettingsButtonClick = vi.fn();
       setup({ handleSettingsButtonClick });
       act(() => {
-        container
+        portalTarget
           .querySelector(".settings-button")!
           .dispatchEvent(new MouseEvent("click", { bubbles: true }));
       });
       expect(handleSettingsButtonClick).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not render the settings button when the header slot isn't mounted yet", () => {
+      settingsHeaderSlotMock.value = null;
+      setup();
+      expect(container.querySelector(".settings-button")).toBeNull();
+      expect(portalTarget.querySelector(".settings-button")).toBeNull();
     });
   });
 
   describe("SettingsOptions panel", () => {
     it("does not render .settings-options-container when showOptions is false", () => {
       setup({ showOptions: false });
-      expect(container.querySelector(".settings-options-container")).toBeNull();
+      expect(
+        portalTarget.querySelector(".settings-options-container")
+      ).toBeNull();
     });
 
     it("renders .settings-options-container when showOptions is true", () => {
       setup({ showOptions: true });
       expect(
-        container.querySelector(".settings-options-container")
+        portalTarget.querySelector(".settings-options-container")
       ).not.toBeNull();
     });
 
     it("renders optionsTitle inside the options container", () => {
       setup({ showOptions: true, optionsTitle: "Settings" });
-      const panel = container.querySelector(".settings-options-container")!;
+      const panel = portalTarget.querySelector(".settings-options-container")!;
       expect(panel.textContent).toContain("Settings");
     });
 
     it("renders optionsDescription inside the options container", () => {
       setup({ showOptions: true, optionsDescription: "Configure your view." });
-      const panel = container.querySelector(".settings-options-container")!;
+      const panel = portalTarget.querySelector(".settings-options-container")!;
       expect(panel.textContent).toContain("Configure your view.");
     });
 
@@ -226,7 +235,7 @@ describe("Settings", () => {
           makeStaticOption({ key: "b", staticText: "Hide colors" }),
         ],
       });
-      const buttons = container.querySelectorAll(".option-button");
+      const buttons = portalTarget.querySelectorAll(".option-button");
       expect(buttons).toHaveLength(2);
       expect(buttons[0]!.textContent).toContain("Open books");
       expect(buttons[1]!.textContent).toContain("Hide colors");
@@ -243,9 +252,9 @@ describe("Settings", () => {
           }),
         ],
       });
-      expect(container.querySelector(".option-button")!.textContent).toContain(
-        "Hide timeline"
-      );
+      expect(
+        portalTarget.querySelector(".option-button")!.textContent
+      ).toContain("Hide timeline");
     });
 
     it("renders dynamic option text using disabledText when condition is false", () => {
@@ -259,9 +268,9 @@ describe("Settings", () => {
           }),
         ],
       });
-      expect(container.querySelector(".option-button")!.textContent).toContain(
-        "Show timeline"
-      );
+      expect(
+        portalTarget.querySelector(".option-button")!.textContent
+      ).toContain("Show timeline");
     });
 
     it("calls the option callback when an option button is clicked", () => {
@@ -271,7 +280,7 @@ describe("Settings", () => {
         optionsData: [makeStaticOption({ key: "x", callback })],
       });
       act(() => {
-        container
+        portalTarget
           .querySelector(".option-button")!
           .dispatchEvent(new MouseEvent("click", { bubbles: true }));
       });

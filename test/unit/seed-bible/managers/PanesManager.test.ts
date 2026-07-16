@@ -20,13 +20,13 @@ describe("createPanes", () => {
 
       const pane = panes.openPane({
         placement: "floating",
-        title: "Notes",
+        title: signal("Notes"),
         component: componentReturning("Notes Component"),
       });
 
       expect(panes.panes.value).toHaveLength(1);
       expect(pane.placement).toBe("floating");
-      expect(pane.title).toBe("Notes");
+      expect(pane.title.value).toBe("Notes");
       expect(pane.component()).toBe("Notes Component");
       expect(panes.selectedPaneId.value).toBe(pane.id);
     });
@@ -36,12 +36,12 @@ describe("createPanes", () => {
 
       const first = panes.openPane({
         placement: "floating",
-        title: "First",
+        title: signal("First"),
         component: componentReturning("First"),
       });
       const second = panes.openPane({
         placement: "floating",
-        title: "Second",
+        title: signal("Second"),
         component: componentReturning("Second"),
       });
 
@@ -63,7 +63,7 @@ describe("createPanes", () => {
 
       const pane = panes.openPane({
         placement: "side",
-        title: "Side Panel",
+        title: signal("Side Panel"),
         component: componentReturning("Side Component"),
       });
 
@@ -76,12 +76,12 @@ describe("createPanes", () => {
 
       const firstSide = panes.openPane({
         placement: "side",
-        title: "First Side",
+        title: signal("First Side"),
         component: componentReturning("First Side"),
       });
       const secondSide = panes.openPane({
         placement: "side",
-        title: "Second Side",
+        title: signal("Second Side"),
         component: componentReturning("Second Side"),
       });
 
@@ -99,17 +99,17 @@ describe("createPanes", () => {
 
       const floating = panes.openPane({
         placement: "floating",
-        title: "Floating",
+        title: signal("Floating"),
         component: componentReturning("Floating"),
       });
       panes.openPane({
         placement: "side",
-        title: "First Side",
+        title: signal("First Side"),
         component: componentReturning("First Side"),
       });
       panes.openPane({
         placement: "side",
-        title: "Second Side",
+        title: signal("Second Side"),
         component: componentReturning("Second Side"),
       });
 
@@ -128,17 +128,17 @@ describe("createPanes", () => {
 
       panes.openPane({
         placement: "floating",
-        title: "Floating",
+        title: signal("Floating"),
         component: componentReturning("Floating"),
       });
       panes.openPane({
         placement: "side",
-        title: "Side",
+        title: signal("Side"),
         component: componentReturning("Side"),
       });
       const fullscreen = panes.openPane({
         placement: "fullscreen",
-        title: "Fullscreen",
+        title: signal("Fullscreen"),
         component: componentReturning("Fullscreen"),
       });
 
@@ -152,12 +152,12 @@ describe("createPanes", () => {
 
       const first = panes.openPane({
         placement: "fullscreen",
-        title: "First",
+        title: signal("First"),
         component: componentReturning("First"),
       });
       const second = panes.openPane({
         placement: "fullscreen",
-        title: "Second",
+        title: signal("Second"),
         component: componentReturning("Second"),
       });
 
@@ -176,26 +176,26 @@ describe("createPanes", () => {
       panes.openPane({
         id: "fullscreen-pane",
         placement: "fullscreen",
-        title: "Fullscreen",
+        title: signal("Fullscreen"),
         component: componentReturning("Fullscreen"),
       });
       // A floating pane opened afterwards coexists with nothing else here.
       panes.openPane({
         placement: "floating",
-        title: "Floating",
+        title: signal("Floating"),
         component: componentReturning("Floating"),
       });
 
       const reused = panes.openPane({
         id: "fullscreen-pane",
         placement: "fullscreen",
-        title: "Fullscreen Updated",
+        title: signal("Fullscreen Updated"),
         component: componentReturning("Fullscreen Updated"),
       });
 
       expect(panes.panes.value).toHaveLength(1);
       expect(panes.panes.value[0]?.id).toBe(reused.id);
-      expect(reused.title).toBe("Fullscreen Updated");
+      expect(reused.title.value).toBe("Fullscreen Updated");
     });
   });
 
@@ -206,12 +206,12 @@ describe("createPanes", () => {
 
       panes.openPane({
         placement: "floating",
-        title: "First",
+        title: signal("First"),
         component: componentReturning("First"),
       });
       const second = panes.openPane({
         placement: "floating",
-        title: "Second",
+        title: signal("Second"),
         component: componentReturning("Second"),
       });
 
@@ -225,7 +225,7 @@ describe("createPanes", () => {
 
       const pane = panes.openPane({
         placement: "floating",
-        title: "Floating",
+        title: signal("Floating"),
         component: componentReturning("Floating"),
       });
 
@@ -241,7 +241,7 @@ describe("createPanes", () => {
       const pane = panes.openPane({
         id: "my-custom-pane",
         placement: "floating",
-        title: "Custom",
+        title: signal("Custom"),
         component: componentReturning("Custom"),
       });
 
@@ -257,19 +257,19 @@ describe("createPanes", () => {
       panes.openPane({
         id: "reusable-pane",
         placement: "floating",
-        title: "First Title",
+        title: signal("First Title"),
         component: componentReturning("First Content"),
       });
 
       const result = panes.openPane({
         id: "reusable-pane",
         placement: "floating",
-        title: "Updated Title",
+        title: signal("Updated Title"),
         component: componentReturning("Updated Content"),
       });
 
       expect(result.id).toBe("reusable-pane");
-      expect(result.title).toBe("Updated Title");
+      expect(result.title.value).toBe("Updated Title");
       expect(result.component()).toBe("Updated Content");
       expect(
         panes.panes.value.filter((pane) => pane.id === "reusable-pane")
@@ -282,14 +282,14 @@ describe("createPanes", () => {
       panes.openPane({
         id: "reusable-pane",
         placement: "side",
-        title: "First Title",
+        title: signal("First Title"),
         component: componentReturning("First Content"),
       });
 
       const result = panes.openPane({
         id: "reusable-pane",
         placement: "floating",
-        title: "Updated Title",
+        title: signal("Updated Title"),
         component: componentReturning("Updated Content"),
       });
 
@@ -304,12 +304,12 @@ describe("createPanes", () => {
       panes.openPane({
         id: "reusable-pane",
         placement: "floating",
-        title: "First",
+        title: signal("First"),
         component: componentReturning("First"),
       });
       const otherPane = panes.openPane({
         placement: "floating",
-        title: "Other",
+        title: signal("Other"),
         component: componentReturning("Other"),
       });
       expect(panes.selectedPaneId.value).toBe(otherPane.id);
@@ -317,7 +317,7 @@ describe("createPanes", () => {
       const result = panes.openPane({
         id: "reusable-pane",
         placement: "floating",
-        title: "Updated",
+        title: signal("Updated"),
         component: componentReturning("Updated"),
       });
 
@@ -331,7 +331,7 @@ describe("createPanes", () => {
 
       const pane = panes.openPane({
         placement: "floating",
-        title: "Notes",
+        title: signal("Notes"),
         component: componentReturning("Notes"),
       });
 
@@ -343,7 +343,7 @@ describe("createPanes", () => {
 
       const pane = panes.openPane({
         placement: "floating",
-        title: "Notes",
+        title: signal("Notes"),
         component: componentReturning("Notes"),
         header: componentReturning("Header Buttons"),
       });
@@ -358,7 +358,7 @@ describe("createPanes", () => {
       panes.openPane({
         id: "reusable-pane",
         placement: "floating",
-        title: "First",
+        title: signal("First"),
         component: componentReturning("First"),
         header: componentReturning("First Header"),
       });
@@ -366,7 +366,7 @@ describe("createPanes", () => {
       const result = panes.openPane({
         id: "reusable-pane",
         placement: "floating",
-        title: "Second",
+        title: signal("Second"),
         component: componentReturning("Second"),
         header: componentReturning("Second Header"),
       });
@@ -380,7 +380,7 @@ describe("createPanes", () => {
       panes.openPane({
         id: "reusable-pane",
         placement: "floating",
-        title: "First",
+        title: signal("First"),
         component: componentReturning("First"),
         header: componentReturning("First Header"),
       });
@@ -388,7 +388,7 @@ describe("createPanes", () => {
       const result = panes.openPane({
         id: "reusable-pane",
         placement: "floating",
-        title: "Second",
+        title: signal("Second"),
         component: componentReturning("Second"),
       });
 
@@ -401,7 +401,7 @@ describe("createPanes", () => {
       const panes = createPanes();
       const pane = panes.openPane({
         placement: "floating",
-        title: "Notes",
+        title: signal("Notes"),
         component: componentReturning("Notes"),
       });
 
@@ -423,7 +423,7 @@ describe("createPanes", () => {
       const panes = createPanes();
       const pane = panes.openPane({
         placement: "floating",
-        title: "Notes",
+        title: signal("Notes"),
         component: componentReturning("Notes"),
       });
 
@@ -439,12 +439,12 @@ describe("createPanes", () => {
       const panes = createPanes();
       const first = panes.openPane({
         placement: "floating",
-        title: "First",
+        title: signal("First"),
         component: componentReturning("First"),
       });
       panes.openPane({
         placement: "floating",
-        title: "Second",
+        title: signal("Second"),
         component: componentReturning("Second"),
       });
 
@@ -457,7 +457,7 @@ describe("createPanes", () => {
       const panes = createPanes();
       const pane = panes.openPane({
         placement: "floating",
-        title: "First",
+        title: signal("First"),
         component: componentReturning("First"),
       });
 
@@ -470,12 +470,12 @@ describe("createPanes", () => {
       const panes = createPanes();
       const first = panes.openPane({
         placement: "floating",
-        title: "First",
+        title: signal("First"),
         component: componentReturning("First"),
       });
       const second = panes.openPane({
         placement: "floating",
-        title: "Second",
+        title: signal("Second"),
         component: componentReturning("Second"),
       });
       panes.selectPane(first.id);
@@ -489,17 +489,17 @@ describe("createPanes", () => {
       const panes = createPanes();
       panes.openPane({
         placement: "floating",
-        title: "First",
+        title: signal("First"),
         component: componentReturning("First"),
       });
       const second = panes.openPane({
         placement: "floating",
-        title: "Second",
+        title: signal("Second"),
         component: componentReturning("Second"),
       });
       const third = panes.openPane({
         placement: "floating",
-        title: "Third",
+        title: signal("Third"),
         component: componentReturning("Third"),
       });
       panes.selectPane(third.id);
@@ -515,7 +515,7 @@ describe("createPanes", () => {
       const panes = createPanes();
       const pane = panes.openPane({
         placement: "floating",
-        title: "Only",
+        title: signal("Only"),
         component: componentReturning("Only"),
       });
 
@@ -530,7 +530,7 @@ describe("createPanes", () => {
       const panes = createPanes();
       const pane = panes.openPane({
         placement: "floating",
-        title: "Notes",
+        title: signal("Notes"),
         component: componentReturning("Notes"),
       });
 
@@ -545,7 +545,7 @@ describe("createPanes", () => {
       const panes = createPanes();
       const pane = panes.openPane({
         placement: "floating",
-        title: "Notes",
+        title: signal("Notes"),
         component: componentReturning("Notes"),
       });
 
@@ -560,7 +560,7 @@ describe("createPanes", () => {
       const panes = createPanes();
       const pane = panes.openPane({
         placement: "side",
-        title: "Side",
+        title: signal("Side"),
         component: componentReturning("Side"),
       });
       const originalX = pane.x;
@@ -577,7 +577,7 @@ describe("createPanes", () => {
       const panes = createPanes();
       const pane = panes.openPane({
         placement: "fullscreen",
-        title: "Full",
+        title: signal("Full"),
         component: componentReturning("Full"),
       });
       const originalX = pane.x;
@@ -596,7 +596,7 @@ describe("createPanes", () => {
       const panes = createPanes();
       const pane = panes.openPane({
         placement: "side",
-        title: "Side",
+        title: signal("Side"),
         component: componentReturning("Side"),
       });
       const originalHeight = pane.height;
@@ -612,7 +612,7 @@ describe("createPanes", () => {
       const panes = createPanes();
       const pane = panes.openPane({
         placement: "side",
-        title: "Side",
+        title: signal("Side"),
         component: componentReturning("Side"),
       });
 
@@ -626,7 +626,7 @@ describe("createPanes", () => {
       const panes = createPanes();
       const pane = panes.openPane({
         placement: "floating",
-        title: "Notes",
+        title: signal("Notes"),
         component: componentReturning("Notes"),
       });
 
@@ -641,7 +641,7 @@ describe("createPanes", () => {
       const panes = createPanes();
       const pane = panes.openPane({
         placement: "floating",
-        title: "Notes",
+        title: signal("Notes"),
         component: componentReturning("Notes"),
       });
 
@@ -656,7 +656,7 @@ describe("createPanes", () => {
       const panes = createPanes();
       const pane = panes.openPane({
         placement: "fullscreen",
-        title: "Full",
+        title: signal("Full"),
         component: componentReturning("Full"),
       });
 
@@ -671,7 +671,7 @@ describe("createPanes", () => {
       const panes = createPanes();
       panes.openPane({
         placement: "floating",
-        title: "Notes",
+        title: signal("Notes"),
         component: componentReturning("Notes"),
       });
       const before = panes.panes.value;
@@ -687,7 +687,7 @@ describe("createPanes", () => {
       const panes = createPanes();
       panes.openPane({
         placement: "fullscreen",
-        title: "Full",
+        title: signal("Full"),
         component: componentReturning("Full"),
       });
 
@@ -701,7 +701,7 @@ describe("createPanes", () => {
       const panes = createPanes();
       const floating = panes.openPane({
         placement: "floating",
-        title: "Notes",
+        title: signal("Notes"),
         component: componentReturning("Notes"),
       });
 
@@ -717,7 +717,7 @@ describe("createPanes", () => {
       const panes = createPanes(isMobile);
       panes.openPane({
         placement: "floating",
-        title: "Notes",
+        title: signal("Notes"),
         component: componentReturning("Notes"),
       });
 
@@ -730,7 +730,7 @@ describe("createPanes", () => {
       const panes = createPanes();
       panes.openPane({
         placement: "floating",
-        title: "Notes",
+        title: signal("Notes"),
         component: componentReturning("Notes"),
       });
       const before = panes.panes.value;
