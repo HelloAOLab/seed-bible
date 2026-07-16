@@ -1,0 +1,78 @@
+/*
+ * Styles shared across the discover/playlist feature — used by more than one
+ * component (reading plans pane, playlist item inputs, play view, etc.), so
+ * they live here rather than in any single component's CSS file. Loaded via
+ * DiscoverPane, which the app imports eagerly.
+ */
+
+/* Generic pane back button (reading plans, play view, create form, item input). */
+.sb-reading-plans-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+.sb-reading-plans-back:hover {
+  background: var(--sb-secondary-color);
+}
+
+/* Add-item row shared by the scripture, text, and link item inputs. */
+.sb-playlist-add-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.sb-playlist-add-text-row,
+.sb-playlist-add-link-row {
+  flex-direction: column;
+
+  > .sb-settings-save-button {
+    align-self: flex-end;
+  }
+}
+
+.sb-playlist-add-title-input {
+  margin-bottom: 8px;
+}
+
+/*
+ * Playlist text inputs reuse the account settings' filled-box look
+ * (`sb-settings-text-input`); this glue lets them flex next to the add button
+ * inside `.sb-playlist-add-row`.
+ */
+.sb-playlist-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.sb-playlist-add-error {
+  margin-top: 6px;
+  font-size: 0.8125rem;
+  color: var(--sb-error-color, #d64545);
+}
+
+.sb-play-playlist-content {
+  flex: 0 0 auto;
+  max-height: 40%;
+  overflow-y: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--sb-divider-color);
+
+  padding: 12px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 12px;
+  background: var(--sb-background);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.sb-play-playlist-content .sb-discover-section {
+  margin-bottom: 0;
+}

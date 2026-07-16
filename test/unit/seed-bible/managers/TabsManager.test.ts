@@ -164,6 +164,10 @@ function createTabsManager({
 }
 
 describe("createTabs", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("addTab() creates a new tab with new reading state", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const { tabs: manager } = createTabsManager();
@@ -351,6 +355,9 @@ describe("createTabs", () => {
     const currentBookId = readingState.bookId.value;
     const currentChapter = readingState.chapterNumber.value;
 
+    const pushSpy = vi.spyOn(window.history, "pushState");
+    const replaceSpy = vi.spyOn(window.history, "replaceState");
+
     readingState.selectedVerses.value = [
       {
         bookId: currentBookId,
@@ -370,7 +377,10 @@ describe("createTabs", () => {
     ];
 
     const url = new URL(window.location.href);
-    expect(url.searchParams.get("verse")).toBe("1,3");
+    expect(url.searchParams.get("verse")).toBe("1-3");
+
+    expect(pushSpy).not.toHaveBeenCalled();
+    expect(replaceSpy).toHaveBeenCalled();
   });
 
   it("clears the verse URL param when selected verses become empty", async () => {
@@ -431,6 +441,69 @@ describe("createTabs", () => {
 
     url = new URL(window.location.href);
     expect(url.searchParams.get("verse")).toBe("6");
+  });
+
+  it("performs exactly one pushState for a single translation navigation", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const readingState = manager.tabs.value[0]!.readingState;
+
+    // Spy only after the initial mount commit (a replace) has happened.
+    const pushSpy = vi.spyOn(window.history, "pushState");
+
+    await readingState.selectTranslation("NIV");
+    await waitFor(() => readingState.translationId.value === "NIV");
+    await waitForInitialLoad(readingState);
+
+    // Selecting a translation loads its first book/chapter asynchronously in
+    // several steps; prescriptive updates collapse that into a single entry.
+    expect(readingState.bookId.value).toBe("MAT");
+    expect(pushSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("switching tabs replaces the URL without pushing a new history entry", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const secondTab = manager.addTab();
+    await waitForInitialLoad(secondTab.readingState);
+    // Move the second tab to a different position so switching back changes the
+    // URL (otherwise the commit would be a no-op).
+    await secondTab.readingState.selectChapter("EXO", 2);
+    await waitFor(() => secondTab.readingState.bookId.value === "EXO");
+
+    const pushSpy = vi.spyOn(window.history, "pushState");
+    const replaceSpy = vi.spyOn(window.history, "replaceState");
+
+    manager.selectTab(manager.tabs.value[0]!.id);
+    await waitFor(
+      () => new URL(window.location.href).searchParams.get("book") === "GEN"
+    );
+
+    expect(pushSpy).not.toHaveBeenCalled();
+    expect(replaceSpy).toHaveBeenCalled();
+  });
+
+  it("syncing reading state from the URL does not push a new history entry", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager, navigation } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const readingState = manager.tabs.value[0]!.readingState;
+
+    const pushSpy = vi.spyOn(window.history, "pushState");
+
+    // Simulate a back/forward / deep-link URL change; the reader should update
+    // the reading state without writing the URL back.
+    navigation.replace("?book=EXO&chapter=2");
+    await waitFor(() => readingState.bookId.value === "EXO");
+    await waitForInitialLoad(readingState);
+
+    expect(readingState.chapterNumber.value).toBe(2);
+    expect(pushSpy).not.toHaveBeenCalled();
   });
 
   it("decorates initial verses from the verse URL param on the initial tab", async () => {

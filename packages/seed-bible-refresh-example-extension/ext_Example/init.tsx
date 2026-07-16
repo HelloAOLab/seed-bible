@@ -1,5 +1,5 @@
 /* eslint-disable seed-bible-i18n/i18n-untranslated-content */
-import { effect, signal } from "@preact/signals";
+import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { MaterialIcon, PortalComponent } from "seed-bible/components";
 import { useI18n } from "seed-bible/i18n";
@@ -19,6 +19,50 @@ export default function initExampleExtension() {
     init: function* (context: SeedBibleState) {
       console.log("Example extension initialized with context:", context);
 
+      context.discover.registerDiscoverProvider({
+        id: "example-discover-provider",
+        description: "An example discover provider that returns dummy results.",
+        title: "Example Discover Provider",
+        discover: async (context) => {
+          console.log("Discover called with context:", context);
+          if (context.book === "JHN" && context.chapter === 1) {
+            return [
+              {
+                type: "cross-reference",
+                reference: {
+                  book: "JHN",
+                  chapter: 1,
+                  verse: 1,
+                },
+                crossReference: {
+                  book: "GEN",
+                  chapter: 1,
+                  verse: 1,
+                },
+              },
+            ];
+          } else if (context.book === "GEN" && context.chapter === 1) {
+            return [
+              {
+                type: "cross-reference",
+                reference: {
+                  book: "GEN",
+                  chapter: 1,
+                  verse: 1,
+                },
+                crossReference: {
+                  book: "JHN",
+                  chapter: 1,
+                  verse: 1,
+                },
+              },
+            ];
+          }
+
+          return [];
+        },
+      });
+
       // register a new tool
       yield context.tools.registerToolbarTool({
         id: "my-example-tool",
@@ -32,7 +76,7 @@ export default function initExampleExtension() {
           console.log("Example tool selected!");
           context.panes.openPane({
             placement: "side",
-            title: signal("My Example Tool"),
+            title: "My Example Tool",
             component: () => {
               // You can use the useI18n hook in your tool component to get translated strings
               const { t } = useI18n("example-extension");
@@ -116,7 +160,7 @@ export default function initExampleExtension() {
           context.panesManager.openPane({
             id: "example-portal-pane",
             placement: "floating",
-            title: signal("Grid Portal"),
+            title: "Grid Portal",
             component: () => (
               <PortalComponent
                 portal="home"
@@ -146,7 +190,7 @@ export default function initExampleExtension() {
           context.panesManager.openPane({
             id: "example-portal-pane",
             placement: "floating",
-            title: signal("Map Portal"),
+            title: "Map Portal",
             component: () => (
               <PortalComponent
                 portal="map_portal"

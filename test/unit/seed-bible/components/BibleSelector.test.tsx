@@ -858,6 +858,9 @@ describe("BibleSelector translation selector", () => {
       }
       translationSearchInput.value = "international";
       translationSearchInput.dispatchEvent(
+        new Event("input", { bubbles: true })
+      );
+      translationSearchInput.dispatchEvent(
         new Event("change", { bubbles: true })
       );
     });
@@ -929,6 +932,9 @@ describe("BibleSelector translation selector", () => {
       }
       translationSearchInput.value = "rvr";
       translationSearchInput.dispatchEvent(
+        new Event("input", { bubbles: true })
+      );
+      translationSearchInput.dispatchEvent(
         new Event("change", { bubbles: true })
       );
     });
@@ -999,6 +1005,9 @@ describe("BibleSelector translation selector", () => {
         return;
       }
       translationSearchInput.value = "spanish";
+      translationSearchInput.dispatchEvent(
+        new Event("input", { bubbles: true })
+      );
       translationSearchInput.dispatchEvent(
         new Event("change", { bubbles: true })
       );
@@ -1073,6 +1082,9 @@ describe("BibleSelector translation selector", () => {
         return;
       }
       translationSearchInput.value = "espanol";
+      translationSearchInput.dispatchEvent(
+        new Event("input", { bubbles: true })
+      );
       translationSearchInput.dispatchEvent(
         new Event("change", { bubbles: true })
       );
@@ -1494,6 +1506,7 @@ describe("BibleSelector translation selector", () => {
 
     act(() => {
       urlInput.value = EXAMPLE_API_ENDPOINT;
+      urlInput.dispatchEvent(new Event("input", { bubbles: true }));
       urlInput.dispatchEvent(new Event("change", { bubbles: true }));
     });
 

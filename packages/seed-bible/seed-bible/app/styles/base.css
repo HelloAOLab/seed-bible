@@ -401,3 +401,20 @@ a:visited {
   min-height: 0;
   position: relative;
 }
+
+/* Used for TipTap created content */
+.text-left {
+  text-align: left;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-justify {
+  text-align: justify;
+}

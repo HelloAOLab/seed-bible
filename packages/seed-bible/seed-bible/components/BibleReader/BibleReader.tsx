@@ -1160,14 +1160,18 @@ export function BibleReader(props: BibleReaderProps) {
             <QuickToolbar
               toolsManager={state.tools}
               readingState={readingState}
+              playlists={state.playlists}
+              features={state.features}
               className="sb-quick-toolbar-mobile-header"
             />
-            <ReaderBookmarkButton
-              state={state}
-              translationId={translationId.value}
-              bookId={bookId.value}
-              chapterNumber={chapterNumber.value}
-            />
+            {!state.playlists.playing.value && (
+              <ReaderBookmarkButton
+                state={state}
+                translationId={translationId.value}
+                bookId={bookId.value}
+                chapterNumber={chapterNumber.value}
+              />
+            )}
             {sharedSession ? (
               <MobileSessionParticipants
                 state={state}
@@ -1272,14 +1276,16 @@ export function BibleReader(props: BibleReaderProps) {
                 {currentBook.value?.name ?? bookId.value ?? "Select a book"}
               </span>
               <span className="sb-bible-reader-title-sep" aria-hidden="true">
-                {" – "}
+                {" "}
               </span>
               <span className="sb-bible-reader-chapter">
                 {chapterNumber.value}
               </span>
               <span className="sb-bible-reader-translation">
-                {" / "}
-                {translationId.value ?? ""}
+                <span aria-hidden="true">{" / "}</span>
+                <span aria-label={translation.value?.name ?? ""}>
+                  {translationId.value ?? ""}
+                </span>
               </span>
             </h2>
             {state && (
@@ -1287,14 +1293,18 @@ export function BibleReader(props: BibleReaderProps) {
                 <QuickToolbar
                   toolsManager={state.tools}
                   readingState={readingState}
+                  playlists={state.playlists}
+                  features={state.features}
                   className="sb-quick-toolbar-reader"
                 />
-                <ReaderBookmarkButton
-                  state={state}
-                  translationId={translationId.value}
-                  bookId={bookId.value}
-                  chapterNumber={chapterNumber.value}
-                />
+                {!state.playlists.playing.value && (
+                  <ReaderBookmarkButton
+                    state={state}
+                    translationId={translationId.value}
+                    bookId={bookId.value}
+                    chapterNumber={chapterNumber.value}
+                  />
+                )}
               </div>
             )}
           </div>

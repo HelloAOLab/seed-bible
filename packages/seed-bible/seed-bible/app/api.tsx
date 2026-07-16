@@ -9,6 +9,17 @@ import type {
   ExtensionInitializer,
   ExtensionRegistration,
 } from "../managers/ExtensionManager";
+import type {
+  BibleReadingExtensionManager,
+  DiscoveredContentHook,
+  ReadingExtensionContext,
+  ReadingExtensionDefinition,
+  ReadingExtensionInstance,
+  ReadingExtensionRuntime,
+  ReadingNavigationHook,
+  ReadingNavigationHookContext,
+  ReadingNavigationOutcome,
+} from "../managers/BibleReadingExtensionManager";
 
 export type { SeedBibleState };
 export type {
@@ -16,6 +27,17 @@ export type {
   ExtensionDependencies,
   ExtensionInitializer,
   ExtensionRegistration,
+};
+export type {
+  BibleReadingExtensionManager,
+  DiscoveredContentHook,
+  ReadingExtensionContext,
+  ReadingExtensionDefinition,
+  ReadingExtensionInstance,
+  ReadingExtensionRuntime,
+  ReadingNavigationHook,
+  ReadingNavigationHookContext,
+  ReadingNavigationOutcome,
 };
 
 export function getExtensionExports<T extends object>(id: string): T | null {

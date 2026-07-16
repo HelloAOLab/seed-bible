@@ -96,6 +96,15 @@ function createMockSharedSession(id: string) {
       selectedVerses: signal([]),
       translationBooks: signal(null),
       selectTranslationAndChapter: vi.fn().mockResolvedValue(undefined),
+      getUrlQueryParams: vi.fn().mockReturnValue({}),
+      // TabsManager subscribes to reading-state navigation events to drive the
+      // URL; the mock just returns a no-op unsubscribe.
+      onNavigate: vi.fn().mockReturnValue(() => undefined),
+      // Reading-extension surface the (derived) playlist `playing` state reads.
+      enabledExtensions: signal([]),
+      isExtensionEnabled: vi.fn().mockReturnValue(false),
+      enableExtension: vi.fn(),
+      disableExtension: vi.fn(),
     },
     document: {} as SharedDocument,
     options: signal({
@@ -439,7 +448,7 @@ describe("createSeedBibleState", () => {
     const state = await createState();
     const pane = state.panes.openPane({
       placement: "side",
-      title: signal("Test Pane"),
+      title: "Test Pane",
       component: () => null,
     });
     const previousSelectedTabId = state.tabs.selectedTabId.value;
@@ -520,7 +529,7 @@ describe("createSeedBibleState", () => {
       const state = await createState();
       const sidePane = state.panes.openPane({
         placement: "side",
-        title: signal("Side Pane"),
+        title: "Side Pane",
         component: () => null,
       });
 
@@ -549,7 +558,7 @@ describe("createSeedBibleState", () => {
       const state = await createState();
       const fullscreenPane = state.panes.openPane({
         placement: "fullscreen",
-        title: signal("Fullscreen Pane"),
+        title: "Fullscreen Pane",
         component: () => null,
       });
 
@@ -941,6 +950,8 @@ describe("createSeedBibleState", () => {
           (t) => t.id === state.tabs.selectedTabId.value
         ) ?? null;
       expect(tab).not.toBeNull();
+      tab!.readingState.bookId.value = bookId;
+      tab!.readingState.chapterNumber.value = chapterNumber;
       tab!.readingState.chapterData.value = {
         translation: {
           id: "test-translation",

@@ -14,6 +14,7 @@ import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/Se
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import { vi, type Mock } from "vitest";
+import type { ReadingExtensionRuntime } from "@packages/seed-bible/seed-bible/managers";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
@@ -165,6 +166,21 @@ function createFixture(): ReaderFixture {
     highlights,
     chapterDataPromise: Promise.resolve(),
     defaultTranslation: { id: "BSB", language: "en" },
+    discoveredContent: signal([]),
+    discoveredCrossReferences: signal([]),
+    discoveredStudyNotes: signal([]),
+    disableExtension: vi.fn(async () => undefined),
+    enableExtension: vi.fn(async () => undefined),
+    isShared: signal(false),
+    dispose: vi.fn(async () => undefined),
+    enabledExtensions: signal<ReadingExtensionRuntime[]>([]),
+    isExtensionEnabled: vi.fn(() => false),
+    getUrlQueryParams: vi.fn(() => ({})),
+    onNavigate: vi.fn(() => () => {}),
+    shortSubTitle: signal<string>("shortSubTitle"),
+    shortTitle: signal<string>("shortTitle"),
+    subTitle: signal<string>("subTitle"),
+    title: signal<string>("title"),
   } as BibleReadingState;
 
   const selectorState = {
@@ -217,6 +233,12 @@ function createMobileState(): SeedBibleState {
       connectionId: "test-connection",
     },
     tools: createBibleToolsManager(),
+    playlists: {
+      playing: signal(null),
+    },
+    features: {
+      isFeatureEnabled: vi.fn(() => true),
+    },
   } as any as SeedBibleState;
 }
 

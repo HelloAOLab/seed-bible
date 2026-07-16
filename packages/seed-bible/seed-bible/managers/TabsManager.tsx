@@ -1,4 +1,10 @@
-import { computed, effect, signal, type Signal } from "@preact/signals";
+import {
+  computed,
+  effect,
+  signal,
+  untracked,
+  type Signal,
+} from "@preact/signals";
 import type { BibleDataManager } from "./BibleDataManager";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import { createChatsManager, type ChatSession } from "./ChatsManager";
@@ -58,6 +64,9 @@ export function parseVerseSelection(verse: string): number[] {
 }
 import type { NavigationManager } from "./NavigationManager";
 import type { I18nManager } from "../i18n";
+import type { DiscoverManager } from "./DiscoverManager";
+import type { BibleReadingExtensionManager } from "./BibleReadingExtensionManager";
+import { difference } from "es-toolkit";
 
 export interface ReaderTab {
   /** Unique tab identifier (for example: tab-1, tab-2). */
@@ -119,7 +128,9 @@ export function createInitialTabs(
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager,
   i18nManager: I18nManager,
-  options: InitialTabsOptions
+  options: InitialTabsOptions,
+  discoverManager?: DiscoverManager,
+  readingExtensionManager?: BibleReadingExtensionManager
 ): ReaderTab[] {
   const { translationId, bookId, chapter, highlightedVerses = [] } = options;
 
@@ -135,7 +146,9 @@ export function createInitialTabs(
         initialBookId: bookId,
         initialChapterNumber: chapter,
         scrollToVerse: highlightedVerses[0] ?? undefined,
-      }
+      },
+      discoverManager,
+      readingExtensionManager
     ),
     sharedSession: null,
     sharedChat: null,
@@ -240,7 +253,9 @@ export function createTabs(
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager,
   chatsManager: ReturnType<typeof createChatsManager>,
-  i18nManager: I18nManager
+  i18nManager: I18nManager,
+  discoverManager?: DiscoverManager,
+  readingExtensionManager?: BibleReadingExtensionManager
 ): TabsManager {
   const defaultTranslation = getDefaultTranslationForLanguage(
     i18nManager.defaultLanguage
@@ -259,14 +274,21 @@ export function createTabs(
   });
 
   const tabs = signal<ReaderTab[]>(
-    createInitialTabs(dataManager, highlightsManager, i18nManager, {
-      translationId: initialTranslationId,
-      bookId: initialBookId,
-      chapter: initialChapter,
-      highlightedVerses: getInitialHighlightedVerses(
-        navigation.currentUrl.value
-      ),
-    })
+    createInitialTabs(
+      dataManager,
+      highlightsManager,
+      i18nManager,
+      {
+        translationId: initialTranslationId,
+        bookId: initialBookId,
+        chapter: initialChapter,
+        highlightedVerses: getInitialHighlightedVerses(
+          navigation.currentUrl.value
+        ),
+      },
+      discoverManager,
+      readingExtensionManager
+    )
   );
   const selectedTabId = signal<string>(tabs.value[0]?.id ?? "");
   const selectedTab = computed(
@@ -322,53 +344,112 @@ export function createTabs(
       requestedBookId,
       requestedChapter,
     });
+    // This navigation originates from the URL, so pass `updateUrl: false` to
+    // keep the reading state from pushing the URL we just read back onto the
+    // history stack.
     await readingState.selectTranslationAndChapter(
       requestedTranslation,
       requestedBookId,
-      nextChapter
+      nextChapter,
+      { updateUrl: false }
     );
   };
 
+  let oldQueryParams: Record<string, string | null> = {};
+
+  // The href of the last URL we wrote ourselves. Writing the URL re-runs the
+  // URL->state reader effect below (asynchronously), but the state already
+  // matches what we wrote, so the reader skips that href once and clears this.
+  // External URL changes (back/forward, deep links) never match, so they still
+  // drive the reader.
+  let lastSelfWrittenHref: string | null = null;
+
+  const writeUrl = (
+    update: Record<string, string | null>,
+    replace?: boolean
+  ) => {
+    navigation.updateQueryParams(update, replace);
+    lastSelfWrittenHref = navigation.currentUrl.peek().href;
+  };
+
+  /**
+   * Prescriptively writes the selected tab's reading position to the URL, as a
+   * single history operation. Called deliberately from navigation events (push)
+   * and on tab switch / mount (replace) — never reactively off the underlying
+   * position signals, so one navigation produces exactly one history entry.
+   */
+  const commitSelectedTabToUrl = (options: { replace?: boolean } = {}) => {
+    // Read all signals untracked: `getUrlQueryParams` touches bookId/chapter/
+    // translation/extension signals, and this runs inside a signals effect. If
+    // those reads were tracked, the effect would re-run on every position
+    // change and re-commit, defeating the prescriptive (one-write-per-nav)
+    // design.
+    untracked(() => {
+      const readingState = selectedTab.peek()?.readingState;
+      const nextQueryParams =
+        readingState?.getUrlQueryParams(navigation.currentUrl.peek()) ?? {};
+
+      const oldKeys = Object.keys(oldQueryParams);
+      const newKeys = Object.keys(nextQueryParams);
+
+      oldQueryParams = nextQueryParams;
+      const queryUpdate: Record<string, string | null> = {
+        ...nextQueryParams,
+      };
+      const removedKeys = difference(oldKeys, newKeys);
+      for (const key of removedKeys) {
+        queryUpdate[key] = null;
+      }
+
+      writeUrl(queryUpdate, options.replace);
+    });
+  };
+
+  // Subscribe to navigation events for whichever tab is currently selected.
+  // Re-runs on tab switch (subscribing to `selectedTab` only, never the raw
+  // position signals): tears down the previous tab's subscription, and commits
+  // a `replace` so the URL reflects the newly-focused tab without adding a
+  // history entry. Real navigations within the tab arrive via `onNavigate` and
+  // push a single entry each.
   effect(() => {
     const readingState = selectedTab.value?.readingState;
-    const selectedBookId = readingState?.bookId.value;
-    const selectedChapter = readingState?.chapterNumber.value;
-    const selectedTranslation = readingState?.translationId.value;
-
-    const url = new URL(navigation.currentUrl.peek());
-    navigation.updateQueryParam("book", selectedBookId ?? null);
-    navigation.updateQueryParam(
-      "chapter",
-      selectedChapter ? String(selectedChapter) : null
-    );
-
-    if (selectedTranslation) {
-      const translationId = dataManager.buildTranslationId(selectedTranslation);
-
-      if (url.searchParams.has("translationId")) {
-        navigation.updateQueryParam("translationId", translationId);
-      } else if (
-        url.searchParams.has("translation") ||
-        translationId !== defaultTranslation.id
-      ) {
-        navigation.updateQueryParam("translation", translationId);
-      }
+    if (!readingState) {
+      return undefined;
     }
 
-    const verseNumbers = readingState?.selectedVerses.value
-      .filter(
-        (verse) =>
-          verse.bookId === selectedBookId &&
-          verse.chapterNumber === selectedChapter
-      )
-      .map((verse) => verse.verse.number);
-
-    const formatted = verseNumbers ? formatVerseSelection(verseNumbers) : null;
-    navigation.updateQueryParam("verse", formatted);
+    const dispose = readingState.onNavigate((options) =>
+      commitSelectedTabToUrl(options)
+    );
+    commitSelectedTabToUrl({ replace: true });
+    return dispose;
   });
 
   effect(() => {
-    void navigation.currentUrl.value;
+    const params: Record<string, string | null> = {
+      verse: null,
+    };
+
+    const readingState = selectedTab.value?.readingState;
+    if (readingState) {
+      const formatted = formatVerseSelection(
+        readingState.selectedVerses.value.map((v) => v.verse.number)
+      );
+      params.verse = formatted;
+    }
+
+    writeUrl(params, true);
+  });
+
+  effect(() => {
+    const href = navigation.currentUrl.value.href;
+    // Skip the URL change we caused ourselves — the reading state already
+    // matches it — and clear the marker so a later, genuine navigation back to
+    // the same href is not also skipped. Only external changes (back/forward,
+    // deep links) drive the reader.
+    if (href === lastSelfWrittenHref) {
+      lastSelfWrittenHref = null;
+      return;
+    }
     syncSelectedTabFromUrl();
   });
 
@@ -392,7 +473,9 @@ export function createTabs(
           dataManager,
           highlightsManager,
           i18nManager,
-          initialReadingOptions
+          initialReadingOptions,
+          discoverManager,
+          readingExtensionManager
         ),
       sharedSession,
       sharedChat,
@@ -408,6 +491,9 @@ export function createTabs(
     if (tab?.sharedSession) {
       tab.sharedSession.dispose();
     }
+    // Release the tab's reading state (disables its extensions, clears timers
+    // and internal effects). Safe to call even for session-backed tabs.
+    tab?.readingState.dispose();
 
     const nextTabs = tabs.value.filter((tab) => tab.id !== tabId);
     tabs.value = nextTabs;

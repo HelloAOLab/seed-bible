@@ -11,6 +11,7 @@ import sendMessage from "./sendMessage";
 import { fromByteArray } from "base64-js";
 import { v4 as uuid } from "uuid";
 import { type TranscriptionManager } from "@seed-bible/ai-transcript-extension/transcriptionManager";
+import { pick } from "es-toolkit";
 
 const sendAnnouncement = (
   accessToken: string,
@@ -314,7 +315,12 @@ export function CreateTwitchPubState({
       );
     }
 
-    window.localStorage.setItem("prevSeedBibleState", JSON.stringify(current));
+    window.localStorage.setItem(
+      "prevSeedBibleState",
+      JSON.stringify(
+        pick(current, ["translationId", "bookId", "chapterNumber"])
+      )
+    );
   };
 
   const handleHighlightUpdate = (
