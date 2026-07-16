@@ -235,32 +235,6 @@ export default defineConfig(({ isSsrBuild }) => ({
       react: "preact/compat",
       "react-dom/test-utils": "preact/test-utils",
       "react-dom": "preact/compat",
-      // @dnd-kit/* ships only legacy "main" (CJS)/"module" (ESM) package.json
-      // fields, no "exports" map. Without one, Vite/Vitest can resolve a bare
-      // `"@dnd-kit/core"` import through the CJS "main" build in some
-      // contexts, whose *internal* `require("react")` bypasses the `react`
-      // alias above entirely (Node's own CJS resolution, not Vite's) —
-      // loading a second, `require`-condition copy of preact/compat that
-      // doesn't share hook state with the app's ESM-resolved one. Aliasing
-      // straight to each package's ESM entry file forces the same build (and
-      // therefore the same "react" alias) everywhere, regardless of how the
-      // bare specifier would otherwise have resolved.
-      "@dnd-kit/core": path.resolve(
-        __dirname,
-        "node_modules/@dnd-kit/core/dist/core.esm.js"
-      ),
-      "@dnd-kit/sortable": path.resolve(
-        __dirname,
-        "node_modules/@dnd-kit/sortable/dist/sortable.esm.js"
-      ),
-      "@dnd-kit/utilities": path.resolve(
-        __dirname,
-        "node_modules/@dnd-kit/utilities/dist/utilities.esm.js"
-      ),
-      "@dnd-kit/accessibility": path.resolve(
-        __dirname,
-        "node_modules/.pnpm/@dnd-kit+accessibility@3.1.1_@preact+compat@18.3.2_preact@10.29.2_/node_modules/@dnd-kit/accessibility/dist/accessibility.esm.js"
-      ),
       "@packages": path.resolve(__dirname, "packages"),
       // ...moduleAliases,
     },

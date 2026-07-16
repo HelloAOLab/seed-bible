@@ -121,14 +121,17 @@ importers:
       '@aws-sdk/client-s3':
         specifier: ^3.1069.0
         version: 3.1069.0
+      '@dnd-kit/accessibility':
+        specifier: 3.1.1
+        version: 3.1.1(@preact/compat@18.3.2(preact@10.29.2))
       '@dnd-kit/core':
-        specifier: ^6.3.1
+        specifier: 6.3.1
         version: 6.3.1(@preact/compat@18.3.2(preact@10.29.2))(@preact/compat@18.3.2(preact@10.29.2))
       '@dnd-kit/sortable':
-        specifier: ^10.0.0
+        specifier: 10.0.0
         version: 10.0.0(@dnd-kit/core@6.3.1(@preact/compat@18.3.2(preact@10.29.2))(@preact/compat@18.3.2(preact@10.29.2)))(@preact/compat@18.3.2(preact@10.29.2))
       '@dnd-kit/utilities':
-        specifier: ^3.2.2
+        specifier: 3.2.2
         version: 3.2.2(@preact/compat@18.3.2(preact@10.29.2))
       bowser:
         specifier: ^2.14.1
