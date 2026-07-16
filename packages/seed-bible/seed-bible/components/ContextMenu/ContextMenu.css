@@ -40,7 +40,9 @@
 }
 
 .sb-context-menu-item {
-  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
   border: none;
   background: transparent;
   color: var(--sb-font-color);
@@ -52,6 +54,12 @@
 
 .sb-context-menu-item:hover {
   background: var(--sb-secondary-color);
+}
+
+.sb-context-menu-item-icon {
+  font-size: 1.125rem;
+  flex-shrink: 0;
+  opacity: 0.85;
 }
 
 .sb-context-menu-toggle-item {

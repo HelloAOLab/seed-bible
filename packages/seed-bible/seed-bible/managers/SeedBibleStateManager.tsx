@@ -100,6 +100,18 @@ import {
   type TutorialManager,
 } from "../managers/TutorialManager";
 import { range } from "es-toolkit";
+import {
+  createReadingPlansManager,
+  type ReadingPlansManager,
+} from "../managers/ReadingPlansManager";
+import {
+  createDiscoverManager,
+  type DiscoverManager,
+} from "../managers/DiscoverManager";
+import {
+  createBibleReadingExtensionManager,
+  type BibleReadingExtensionManager,
+} from "../managers/BibleReadingExtensionManager";
 
 type SidebarManager = ReturnType<typeof createSidebar>;
 type SearchManager = ReturnType<typeof createSearchManager>;
@@ -231,6 +243,17 @@ export interface AppState {
 
   /** Opens a verse reference. */
   openVerseReference: (ref: VerseRef) => Promise<void>;
+
+  /** Whether the Discover panel is currently open. */
+  isDiscoverOpen: ReadonlySignal<boolean>;
+
+  /**
+   * Toggles the Discover panel open/closed.
+   */
+  openDiscover: () => void;
+
+  /** Closes the Discover panel. */
+  closeDiscover: () => void;
 }
 
 /**
@@ -295,10 +318,28 @@ export interface SeedBibleState {
    * Internationalization manager: current language, translation function, etc.
    */
   i18n: I18nManager;
+  /** Reading plans: authoring, progress, and calendar. */
+  readingPlans: ReadingPlansManager;
+  /** Discover manager for contextual content providers. */
+  discover: DiscoverManager;
+  /**
+   * Registry of reading extensions that can be enabled per reading state to
+   * enhance navigation, discovered content, and session-synced custom data.
+   */
+  readingExtensions: BibleReadingExtensionManager;
+  /**
+   * Playlist manager for creating, editing, and syncing user playlists.
+   */
+  playlists: PlaylistManager;
   /** Aggregated computed app state and top-level UI actions. */
   app: AppState;
   /** Extension loading and runtime manager. */
   extensions: ExtensionManager;
+
+  /**
+   * Feature flag manager for enabling/disabling features at runtime.
+   */
+  features: FeaturesManager;
 
   /** True when the Terms of Service modal is open. */
   isTermsOpen: ReadonlySignal<boolean>;
@@ -326,6 +367,13 @@ export interface SeedBibleState {
 // `packages/` by the `vite-plugin-extensions` plugin. See
 // script/lib/vite-plugin-extensions.ts.
 import SEED_BIBLE_EXTENSIONS from "virtual:@extensions";
+import { createPlaylistManager, type PlaylistManager } from "./PlaylistManager";
+import { createFeaturesManager, type FeaturesManager } from "./FeaturesManager";
+import {
+  DiscoverPane,
+  DiscoverPaneHeader,
+  DiscoverPaneTitle,
+} from "../components/DiscoverPane/DiscoverPane";
 
 /**
  * Creates and wires the full Seed Bible application state graph.
@@ -346,6 +394,8 @@ export function createSeedBibleState(
 ): SeedBibleState {
   console.log("Creating SeedBibleState with options:", options);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const features = createFeaturesManager((globalThis as any).posthog ?? null);
   const navigation = createNavigationManager({
     initialHref: options.initialHref,
     basePath: options.config?.basePath,
@@ -363,11 +413,25 @@ export function createSeedBibleState(
   const highlights = createHighlightsManager(os, login);
   const bookmarks = createBookmarksManager(os, login);
   const config = createConfig(login, navigation);
+  // Persist a user's explicit language selection to their profile. Wiring it
+  // through `requestLanguageChange` (rather than a blanket `languageChanged`
+  // listener) keeps URL-driven language changes view-only.
+  i18n.setLanguagePersister(config.persistLanguage);
   const panelsEnabled = computed(() => !config.config.value.disablePanels);
   const themeManager = createTheme(login, navigation);
   const chats = createChatsManager(login, i18n);
   const sidebar = createSidebar({ navigation, chatsManager: chats });
-  const tabs = createTabs(navigation, data, highlights, chats, i18n);
+  const discover = createDiscoverManager();
+  const readingExtensions = createBibleReadingExtensionManager();
+  const tabs = createTabs(
+    navigation,
+    data,
+    highlights,
+    chats,
+    i18n,
+    discover,
+    readingExtensions
+  );
   const tabsLayout = createTabsLayout(tabs, panelsEnabled);
   const settings = createSettings(os, login, navigation);
   const selector = createBibleSelectorState(
@@ -382,23 +446,32 @@ export function createSeedBibleState(
   const tools = createBibleToolsManager();
   const readingHistory = createReadingHistoryManager(os, login);
   const annotations = createAnnotationsManager(os, login);
-  const sessions = createSessionsManager(os, data, login, highlights, i18n);
+  const sessions = createSessionsManager(
+    os,
+    data,
+    login,
+    highlights,
+    i18n,
+    readingExtensions
+  );
   const extensions = createExtensionManager(login, {
     defaultExtensions: SEED_BIBLE_EXTENSIONS,
   });
   const modals = createModalManager();
   const search = createSearchManager();
 
-  // When the app is opened via a shared-session invite link (`?sessionId=...`),
-  // the user came to join a session, not to onboard — so we skip the welcome
-  // screen and the auto-starting tutorial for this visit. This is derived from
-  // the current URL rather than persisted, so it only affects this tab/load:
-  // revisiting without a `sessionId` shows onboarding and tutorials as usual.
-  const joinedViaSessionLink =
+  // When the app is opened via a content link — a shared-session invite
+  // (`?sessionId=...`) or a shared playlist (`?playlist=...`) — the user came to
+  // view that content, not to onboard, so we skip the welcome screen and the
+  // auto-starting tutorial for this visit. This is derived from the current URL
+  // rather than persisted, so it only affects this tab/load: revisiting without
+  // either param shows onboarding and tutorials as usual.
+  const openedViaContentLink =
     typeof window !== "undefined" &&
-    !!navigation.currentUrl.value.searchParams.get("sessionId");
+    (!!navigation.currentUrl.value.searchParams.get("sessionId") ||
+      !!navigation.currentUrl.value.searchParams.get("playlist"));
 
-  const onboarding = createOnboardingManager(login, joinedViaSessionLink);
+  const onboarding = createOnboardingManager(login, openedViaContentLink);
 
   // Terms of Service modal. Two-way bound to the `?terms=open` query param so
   // it can be deep-linked: setting the param opens the modal, and closing the
@@ -465,6 +538,7 @@ export function createSeedBibleState(
       },
     },
   });
+  const readingPlans = createReadingPlansManager(os, login);
 
   const { currentTheme } = themeManager;
   const theme = computed(() => currentTheme.value);
@@ -511,7 +585,16 @@ export function createSeedBibleState(
   // on mobile every pane is displayed fullscreen, so opening one closes the
   // rest.
   const panes = createPanes(isMobile);
-
+  const playlists = createPlaylistManager(
+    os,
+    login,
+    tabs,
+    navigation,
+    isMobile,
+    modals,
+    i18n,
+    readingExtensions
+  );
   // Close any fullscreen pane when the book/chapter/verse params change, so
   // navigating reveals the reader (every navigation path writes these params).
   // The first location only sets a baseline, so load-time init doesn't close a
@@ -543,7 +626,7 @@ export function createSeedBibleState(
     isMobile,
     panes,
     sidebar,
-    joinedViaSessionLink
+    openedViaContentLink
   );
 
   // A phone held sideways: landscape orientation with the short viewport
@@ -678,15 +761,37 @@ export function createSeedBibleState(
     };
   });
 
+  // Keep selection and slots aligned. Clicking a tab goes through
+  // handleSelectTab (which also calls setSelectedSlotTab). removeTab only
+  // updates selectedTabId — TabsLayoutManager's sync then clears the closed
+  // tab from its slot (tab → null). If that emptied slot is still selected,
+  // put the newly selected tab into it so TabsLayout keeps rendering a reader.
+  //
+  // Only fill empty slots: never overwrite a slot that already has a tab.
+  // openInNewSlot clones via addTab (which selects the clone) before the new
+  // slot exists; overwriting here would steal the original slot and leave an
+  // empty pane after layout de-dupes the shared tab id.
   effect(() => {
-    if (selectedTab.value) {
-      const matchingSlot =
-        tabsLayout.slots.value.find(
-          (s) => s.tab?.id === selectedTab.value?.id
-        ) ?? null;
-      if (matchingSlot) {
-        tabsLayout.selectSlot(matchingSlot.id);
-      }
+    const tab = selectedTab.value;
+    if (!tab) {
+      return;
+    }
+
+    const matchingSlot =
+      tabsLayout.slots.value.find((s) => s.tab?.id === tab.id) ?? null;
+    if (matchingSlot) {
+      tabsLayout.selectSlot(matchingSlot.id);
+      return;
+    }
+
+    const selectedSlot =
+      tabsLayout.slots.value.find(
+        (s) => s.id === tabsLayout.selectedSlotId.value
+      ) ??
+      tabsLayout.slots.value[0] ??
+      null;
+    if (selectedSlot && !selectedSlot.tab) {
+      tabsLayout.setSelectedSlotTab(tab.id);
     }
   });
 
@@ -706,12 +811,7 @@ export function createSeedBibleState(
         return seedBibleTitle;
       }
 
-      const chapter = selectedTab.value.readingState.chapterData.value;
-      if (!chapter) {
-        return seedBibleTitle;
-      }
-
-      return `${chapter.book.name} ${chapter.chapter.number} - ${chapter.translation.name} | ${seedBibleTitle}`;
+      return `${selectedTab.value.readingState.title.value} - ${selectedTab.value.readingState.subTitle.value} | ${seedBibleTitle}`;
     };
 
     return `${isRtl ? RTLE_CHAR : ""}${getTitle()}`;
@@ -1136,8 +1236,6 @@ export function createSeedBibleState(
     await handleJoinSharedSession(initialSessionId);
   };
 
-  void setupInitialSession();
-
   // App-level toast: a single popup shown at the bottom of the screen for 3.5s.
   // A new call overwrites the current toast and restarts the timer, so only the
   // most recent message is ever visible. The incrementing id keys the render so
@@ -1155,6 +1253,70 @@ export function createSeedBibleState(
       toastTimer = null;
     }, 3500);
   };
+
+  // const isDiscoverOpen = signal(false);
+  const handleOpenDiscover = () => {
+    if (!playlists.view.peek()) {
+      playlists.view.value = playlists.playing.peek()
+        ? "play_playlist"
+        : "discover";
+    } else {
+      playlists.view.value = null;
+    }
+  };
+  const handleCloseDiscover = () => {
+    playlists.view.value = null;
+  };
+
+  effect(() => {
+    const isPlaying = !!playlists.playing.value;
+    if (isPlaying && !isMobile.value) {
+      playlists.view.value = playlists.playing.peek()
+        ? "play_playlist"
+        : "discover";
+    }
+  });
+
+  // // When the app is opened via a shared `?playlist={recordName}.{id}` link,
+  // // load that playlist and start playing it immediately. The locator's `id` is
+  // // always `playlist_<uuid>` (never contains a dot), so we split on the LAST dot
+  // // to stay correct even when the `recordName` itself contains dots.
+  // const setupInitialPlaylist = async () => {
+  //   // Loading/playing touches the network and the reader — never during SSR.
+  //   if (typeof window === "undefined") {
+  //     return;
+  //   }
+  //   const locator = navigation.currentUrl.value.searchParams.get("playlist");
+  //   if (!locator) {
+  //     return;
+  //   }
+  //   const lastDot = locator.lastIndexOf(".");
+  //   if (lastDot <= 0 || lastDot === locator.length - 1) {
+  //     console.error("Invalid playlist locator:", locator);
+  //     return;
+  //   }
+  //   const recordName = locator.slice(0, lastDot);
+  //   const id = locator.slice(lastDot + 1);
+  //   try {
+  //     const playlist = await playlists.loadPlaylist(recordName, id);
+  //     playlists.startPlaying(playlist);
+  //     handleOpenDiscover();
+  //   } catch (error) {
+  //     console.error("Failed to load playlist from URL:", error);
+  //     const { t } = i18n;
+  //     toast(
+  //       t("failed-to-load-playlist", {
+  //         defaultValue: "Failed to load playlist",
+  //       })
+  //     );
+  //   }
+  // };
+
+  // Run the playlist setup after the session join: `startPlaying` prefers a
+  // shared-session tab, so a link carrying both `?sessionId=` and `?playlist=`
+  // should target the session tab created by the join.
+  void setupInitialSession();
+  //.then(() => setupInitialPlaylist());
 
   const state: SeedBibleState = {
     os,
@@ -1184,7 +1346,11 @@ export function createSeedBibleState(
     search,
     navigation,
     i18n,
+    discover,
+    readingExtensions,
     extensions,
+    readingPlans,
+    playlists,
     tutorial,
     onboarding,
     isTermsOpen,
@@ -1196,6 +1362,7 @@ export function createSeedBibleState(
     isCodeOfConductOpen,
     openCodeOfConduct,
     closeCodeOfConduct,
+    features,
     app: {
       createSharedSession: handleCreateSharedSession,
       joinSharedSession: handleJoinSharedSession,
@@ -1225,8 +1392,63 @@ export function createSeedBibleState(
       socialTitle,
       currentToast,
       toast,
+      isDiscoverOpen: playlists.isDiscoverOpen,
+      openDiscover: handleOpenDiscover,
+      closeDiscover: handleCloseDiscover,
     },
   };
+
+  // Discover is rendered as the app's single managed side pane, mirrored from
+  // `playlists.view` (defined here rather than next to `handleOpenDiscover`
+  // above so the pane's `component` thunk can close over the finished `state`).
+  // `view` stays the source of truth for both whether Discover is open and
+  // which sub-view shows inside it; DiscoverPane routes discover/create/play
+  // internally off the same signal.
+  const DISCOVER_PANE_ID = "discover-pane";
+
+  // view -> pane: open (or refresh, by reusing the id) while a view is set,
+  // close when it clears. Subscribes only to `view`, so the user closing the
+  // pane below doesn't retrigger this.
+  effect(() => {
+    if (playlists.view.value) {
+      panes.openPane({
+        id: DISCOVER_PANE_ID,
+        placement: "side",
+        title: () => <DiscoverPaneTitle playlists={playlists} />,
+        header: () => <DiscoverPaneHeader playlists={playlists} />,
+        onUserClose: () => {
+          const currentlyPlaying = playlists.playing.value;
+          if (currentlyPlaying) {
+            playlists.stopPlaying();
+          }
+        },
+        component: () => (
+          <DiscoverPane
+            state={state}
+            tabs={tabs}
+            playlists={playlists}
+            modals={modals}
+            toast={state.app.toast}
+          />
+        ),
+      });
+    } else {
+      panes.closePane(DISCOVER_PANE_ID); // no-op when already closed
+    }
+  });
+
+  // pane -> view: when the pane is closed via its header, or replaced by
+  // another side pane (only one side pane may be open at a time), clear the
+  // view so the toggle re-opens it on the next click. `peek()` keeps this from
+  // looping against the effect above.
+  effect(() => {
+    const paneOpen = panes.panes.value.some(
+      (pane) => pane.id === DISCOVER_PANE_ID
+    );
+    if (!paneOpen && playlists.view.peek()) {
+      playlists.view.value = null;
+    }
+  });
 
   // Settings UI language changes also select the nearest available Bible
   // translation (preferred ID → same language in catalog → LANG_META.fallback

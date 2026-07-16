@@ -1,0 +1,18 @@
+.sb-discover-section {
+  margin-bottom: 16px;
+}
+
+.sb-discover-section-title {
+  margin: 0 0 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+.sb-discover-empty {
+  padding: 12px 8px;
+  font-size: 0.8125rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+}

@@ -31,6 +31,20 @@ describe("createPanes", () => {
       expect(panes.selectedPaneId.value).toBe(pane.id);
     });
 
+    it("stores a render-function title as-is", () => {
+      const panes = createPanes();
+
+      const title = componentReturning("Rendered Title");
+      const pane = panes.openPane({
+        placement: "floating",
+        title,
+        component: componentReturning("Body"),
+      });
+
+      expect(typeof pane.title).toBe("function");
+      expect(pane.title).toBe(title);
+    });
+
     it("allows multiple floating panes to coexist, stacked/offset from one another", () => {
       const panes = createPanes();
 

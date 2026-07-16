@@ -777,13 +777,12 @@ export function TabsHeader(props: TabsHeaderProps) {
             title={t("more", { defaultValue: "More" })}
           >
             <ContextMenuItem
-              className="sb-tab-menu-item"
               onClick={() => {
                 createSharedSession();
               }}
             >
               <MaterialIcon
-                className="sb-tab-menu-item-icon"
+                className="sb-context-menu-item-icon"
                 aria-hidden="true"
               >
                 fiber_smart_record
@@ -795,7 +794,7 @@ export function TabsHeader(props: TabsHeaderProps) {
               </span>
             </ContextMenuItem>
             <ContextMenuItem
-              className="sb-tab-menu-item"
+              className="sb-context-menu-item"
               onClick={() => {
                 window.open(
                   "https://docs.google.com/forms/d/e/1FAIpQLSejiuVM8xguEHKZ2Kv5DX-jE98zYwxFiPwpYrFSmvVgMejZzQ/viewform",
@@ -804,7 +803,7 @@ export function TabsHeader(props: TabsHeaderProps) {
               }}
             >
               <MaterialIcon
-                className="sb-tab-menu-item-icon"
+                className="sb-context-menu-item-icon"
                 aria-hidden="true"
               >
                 bug_report
@@ -822,7 +821,7 @@ export function TabsHeader(props: TabsHeaderProps) {
             >
               <span className="sb-context-menu-toggle-label">
                 <MaterialIcon
-                  className="sb-tab-menu-item-icon"
+                  className="sb-context-menu-item-icon"
                   aria-hidden="true"
                 >
                   light_mode
@@ -946,18 +945,8 @@ function TabRow(props: TabRowProps) {
   const { app, bookmarks } = state;
   const { t } = useI18n();
 
-  const currentBookId = tab.readingState.bookId.value;
-  const currentBookName =
-    tab.readingState.translationBooks.value?.books.find(
-      (book) => book.id === currentBookId
-    )?.name ??
-    currentBookId ??
-    "-";
-  const currentChapter = tab.readingState.chapterNumber.value;
-  const currentTranslation =
-    tab.readingState.translationId.value ??
-    tab.readingState.defaultTranslation.id;
-  const title = currentBookName;
+  const shortSubTitle = tab.readingState.shortSubTitle.value;
+  const title = tab.readingState.title.value;
   const connectedUsers = tab.sharedSession?.connectedUsers.value ?? [];
   const isTabBookmarked = bookmarks.isLocationBookmarked(
     tab.readingState.translationId.value,
@@ -999,13 +988,11 @@ function TabRow(props: TabRowProps) {
         className={`sb-tab-button`}
       >
         <div className="sb-tab-main-content">
-          <span className="sb-tab-main-title">
-            {`${title} - ${currentChapter}`}
-          </span>
+          <span className="sb-tab-main-title">{title}</span>
           <span className="sb-tab-main-sep" aria-hidden="true">
             •
           </span>
-          <span className="sb-tab-main-translation">{currentTranslation}</span>
+          <span className="sb-tab-main-translation">{shortSubTitle}</span>
         </div>
 
         {tab.sharedSession && connectedUsers.length > 0 && (
@@ -1112,7 +1099,7 @@ function TabRow(props: TabRowProps) {
                   }}
                 >
                   <MaterialIcon
-                    className="sb-tab-menu-item-icon"
+                    className="sb-context-menu-item-icon"
                     aria-hidden="true"
                   >
                     settings
@@ -1142,7 +1129,7 @@ function TabRow(props: TabRowProps) {
               }}
             >
               <MaterialIcon
-                className="sb-tab-menu-item-icon"
+                className="sb-context-menu-item-icon"
                 aria-hidden="true"
               >
                 ios_share
@@ -1166,7 +1153,7 @@ function TabRow(props: TabRowProps) {
                 }}
               >
                 <MaterialIcon
-                  className="sb-tab-menu-item-icon"
+                  className="sb-context-menu-item-icon"
                   aria-hidden="true"
                 >
                   chat_bubble_outline
@@ -1187,7 +1174,10 @@ function TabRow(props: TabRowProps) {
               handleBookmarkAction();
             }}
           >
-            <MaterialIcon className="sb-tab-menu-item-icon" aria-hidden="true">
+            <MaterialIcon
+              className="sb-context-menu-item-icon"
+              aria-hidden="true"
+            >
               {isTabBookmarked ? "bookmark_remove" : "bookmark_add"}
             </MaterialIcon>
             <span>
@@ -1205,7 +1195,10 @@ function TabRow(props: TabRowProps) {
             }}
             className="sb-tab-menu-item"
           >
-            <MaterialIcon className="sb-tab-menu-item-icon" aria-hidden="true">
+            <MaterialIcon
+              className="sb-context-menu-item-icon"
+              aria-hidden="true"
+            >
               splitscreen_right
             </MaterialIcon>
             <span>
@@ -1219,7 +1212,10 @@ function TabRow(props: TabRowProps) {
             requestCloseTab(state, tab);
           }}
         >
-          <MaterialIcon className="sb-tab-menu-item-icon" aria-hidden="true">
+          <MaterialIcon
+            className="sb-context-menu-item-icon"
+            aria-hidden="true"
+          >
             close
           </MaterialIcon>
           <span>{t("close", { defaultValue: "Close" })}</span>
@@ -1749,11 +1745,7 @@ export function Tabs(props: TabsProps) {
       <div className="sb-sidebar-collapsed-tab-list">
         {tabs.map((tab) => {
           const isSelected = tab.id === selectedTabId;
-          const bookId = tab.readingState.bookId.value ?? "-";
-          const bookName =
-            tab.readingState.chapterData.value?.book.name ?? bookId;
-          const chapter = tab.readingState.chapterNumber.value;
-
+          const shortTitle = tab.readingState.shortTitle.value;
           const session = tab.sharedSession;
           const sessionUsers = session?.connectedUsers.value ?? [];
 
@@ -1770,24 +1762,22 @@ export function Tabs(props: TabsProps) {
               }${session ? " sb-collapsed-tab-tile-shared" : ""}`}
               aria-label={
                 session && sessionUsers.length > 0
-                  ? t("collapsed-tab-shared_x", {
-                      book: bookName,
-                      chapter,
+                  ? t("collapsed-tab-shared-label", {
+                      title: shortTitle,
                       count: sessionUsers.length,
                       defaultValue:
-                        "{{book}} {{chapter}} — shared session, {{count}} present",
+                        "{{title}} — shared session, {{count}} present",
                     })
-                  : `${bookName} ${chapter}`
+                  : shortTitle
               }
-              title={`${bookName} ${chapter}`}
+              title={shortTitle}
             >
               {session && (
                 <span className="sb-collapsed-tab-tag">
                   {t("shared", { defaultValue: "Shared" })}
                 </span>
               )}
-              <span className="sb-collapsed-tab-book">{bookId}</span>
-              <span className="sb-collapsed-tab-chapter">{chapter}</span>
+              <span className="sb-collapsed-tab-title">{shortTitle}</span>
               {session &&
                 sessionUsers.length > 0 &&
                 (() => {

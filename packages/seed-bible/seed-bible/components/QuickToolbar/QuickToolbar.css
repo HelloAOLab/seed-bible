@@ -61,3 +61,23 @@
   width: 1.5rem; /* 24px */
   height: 1.5rem;
 }
+
+.sb-quick-toolbar-current-playlist {
+  > .sb-quick-toolbar-button {
+    width: fit-content;
+    height: fit-content;
+  }
+}
+
+.sb-now-playing-icon {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  padding: 0.35rem;
+}
+
+.sb-now-playing-icon-title {
+  margin: 0;
+}

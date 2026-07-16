@@ -449,9 +449,78 @@ function ScriptureLineHeightIcon({ index }: { index: number }) {
   );
 }
 
+function ThemesGallerySection(props: { state: SeedBibleState }) {
+  const { themes, selectedThemeId, setTheme } = props.state.theme;
+  const { t } = useI18n();
+
+  if (themes.value.length <= 1) {
+    return null;
+  }
+
+  return (
+    <section className="sb-settings-section">
+      <h3 className="sb-settings-subheading">
+        {t("themes", { defaultValue: "Themes" })}
+      </h3>
+      <div
+        className="sb-theme-ready-gallery"
+        role="radiogroup"
+        onKeyDown={(event) => {
+          handleGridKeyNav(event, event.currentTarget);
+        }}
+      >
+        {themes.value.map((theme) => {
+          const isSelected = theme.id === selectedThemeId.value;
+          const vars = theme.variables;
+          return (
+            <button
+              key={theme.id}
+              type="button"
+              className={`sb-theme-ready-card${
+                isSelected ? " sb-theme-ready-card-selected" : ""
+              }`}
+              onClick={() => setTheme(theme.id)}
+            >
+              <div
+                className="sb-theme-ready-preview"
+                style={{
+                  background: vars.readerBackground ?? vars.background,
+                }}
+              >
+                <div
+                  className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
+                  style={{ background: vars.primaryColor }}
+                />
+                <div
+                  className="sb-theme-ready-swatch sb-theme-ready-swatch-b"
+                  style={{ background: vars.secondaryColor }}
+                />
+                <div
+                  className="sb-theme-ready-swatch sb-theme-ready-swatch-c"
+                  style={{ background: vars.tertiaryColor }}
+                />
+              </div>
+              <div className="sb-theme-ready-label">
+                <span>{theme.name}</span>
+                {isSelected && (
+                  <span
+                    className="material-symbols-outlined sb-theme-ready-check"
+                    aria-label={t("selected", { defaultValue: "Selected" })}
+                  >
+                    check_circle
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { themes, selectedThemeId, setTheme } = state.theme;
   const { config, setFontSize } = state.config;
   const selectedFontSize = config.value.fontSize;
   const settings = state.settings;
@@ -527,64 +596,9 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
         })}
       />
 
-      <section className="sb-settings-section">
-        <h3 className="sb-settings-subheading">
-          {t("themes", { defaultValue: "Themes" })}
-        </h3>
-        <div
-          className="sb-theme-ready-gallery"
-          role="radiogroup"
-          onKeyDown={(event) => {
-            handleGridKeyNav(event, event.currentTarget);
-          }}
-        >
-          {themes.value.map((theme) => {
-            const isSelected = theme.id === selectedThemeId.value;
-            const vars = theme.variables;
-            return (
-              <button
-                key={theme.id}
-                type="button"
-                className={`sb-theme-ready-card${
-                  isSelected ? " sb-theme-ready-card-selected" : ""
-                }`}
-                onClick={() => setTheme(theme.id)}
-              >
-                <div
-                  className="sb-theme-ready-preview"
-                  style={{
-                    background: vars.readerBackground ?? vars.background,
-                  }}
-                >
-                  <div
-                    className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
-                    style={{ background: vars.primaryColor }}
-                  />
-                  <div
-                    className="sb-theme-ready-swatch sb-theme-ready-swatch-b"
-                    style={{ background: vars.secondaryColor }}
-                  />
-                  <div
-                    className="sb-theme-ready-swatch sb-theme-ready-swatch-c"
-                    style={{ background: vars.tertiaryColor }}
-                  />
-                </div>
-                <div className="sb-theme-ready-label">
-                  <span>{theme.name}</span>
-                  {isSelected && (
-                    <span
-                      className="material-symbols-outlined sb-theme-ready-check"
-                      aria-label={t("selected", { defaultValue: "Selected" })}
-                    >
-                      check_circle
-                    </span>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+      <ThemesGallerySection state={state} />
 
+      <section className="sb-settings-section">
         <h3 className="sb-settings-subheading">
           {t("scripture-settings", { defaultValue: "Scripture settings" })}
         </h3>
@@ -1095,7 +1109,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                     </span>
                     <div className="sb-extension-row-content">
                       <span className="sb-extension-name">
-                        {/* eslint-disable-next-line seed-bible-i18n/translation-missing-keys */}
+                        {}
                         {t("title", { ns: id, defaultValue: id })}
                       </span>
                       <span className="sb-extension-description">

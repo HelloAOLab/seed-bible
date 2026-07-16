@@ -7,19 +7,36 @@ import type { ComponentChild } from "preact";
  */
 export type PanePlacement = "fullscreen" | "side" | "floating";
 
+/**
+ * A pane title: either a plain string, or a render function (like `header`)
+ * rendered as a component in the header so it can use hooks (i18n, signals).
+ */
+export type PaneTitle = string | (() => ComponentChild);
+
 export interface Pane {
   /** Stable pane identifier. */
   id: string;
   /** Title shown in the pane's header. */
-  title: string;
+  title: PaneTitle;
   /** Custom component rendered in this pane. */
   component: () => ComponentChild;
+  /**
+   * Optional icon rendered before the title in the pane's header. Rendered as
+   * a component so it can use hooks.
+   */
+  icon?: () => ComponentChild;
   /**
    * Optional custom header content rendered inside the pane's header, between
    * the title and the close button. Rendered as a component so it can use
    * hooks (i18n, signals). Omit for a plain title-and-close header.
    */
   header?: () => ComponentChild;
+  /**
+   * Optional callback invoked when the user closes the pane by clicking the
+   * header's close (X) button. Not called for programmatic closes via
+   * `closePane`/`closeAll`, or when a pane is displaced by another opening.
+   */
+  onClose?: () => void;
   /** Placement mode, fixed at creation time. */
   placement: PanePlacement;
   /** Pane X position for floating placement. */
@@ -35,16 +52,32 @@ export interface Pane {
 export interface PaneOpenOptions {
   /** Placement mode for the new pane. Immutable after creation. */
   placement: PanePlacement;
-  /** Title shown in the pane's header. */
-  title: string;
+
+  /**
+   * Title shown in the pane's header. Either a plain string, or a render
+   * function (like `header`) rendered as a component so it can use hooks
+   * (i18n, signals) — e.g. for a translated or reactive title.
+   */
+  title: PaneTitle;
   /** Custom component rendered in the pane. */
   component: () => ComponentChild;
+  /**
+   * Optional icon rendered before the title in the pane's header. Rendered as
+   * a component so it can use hooks.
+   */
+  icon?: () => ComponentChild;
   /**
    * Optional custom header content rendered inside the pane's header, between
    * the title and the close button. Rendered as a component so it can use
    * hooks (i18n, signals). Omit for a plain title-and-close header.
    */
   header?: () => ComponentChild;
+  /**
+   * Optional callback invoked when the user closes the pane by clicking the
+   * header's close (X) button. Not called for programmatic closes via
+   * `closePane`/`closeAll`, or when a pane is displaced by another opening.
+   */
+  onUserClose?: () => void;
   /**
    * Optional stable pane identifier.
    * When provided, an existing pane with this ID is reused and updated with
@@ -111,11 +144,13 @@ function createPaneFactory() {
   let nextPaneId = 1;
 
   return (
-    title: string,
+    title: PaneTitle,
     component: () => ComponentChild,
     placement: PanePlacement,
     customId?: string,
-    header?: () => ComponentChild
+    header?: () => ComponentChild,
+    icon?: () => ComponentChild,
+    onClose?: () => void
   ): Pane => {
     const paneId = nextPaneId;
     nextPaneId += 1;
@@ -125,7 +160,9 @@ function createPaneFactory() {
       id: customId ?? `pane-${paneId}`,
       title,
       component,
+      icon,
       header,
+      onClose,
       placement,
       x: 48 + offset,
       y: 48 + offset,
@@ -180,20 +217,24 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
 
     if (options.id) {
       const existingPane =
-        panes.value.find((pane) => pane.id === options.id) ?? null;
+        panes.peek().find((pane) => pane.id === options.id) ?? null;
       if (existingPane) {
         const updatedPane: Pane = {
           ...existingPane,
           title: options.title,
           component: options.component,
+          icon: options.icon,
           header: options.header,
+          onClose: options.onUserClose,
         };
         syncPaneState(
           willFillScreen
             ? [updatedPane]
-            : panes.value.map((pane) =>
-                pane.id === updatedPane.id ? updatedPane : pane
-              ),
+            : panes
+                .peek()
+                .map((pane) =>
+                  pane.id === updatedPane.id ? updatedPane : pane
+                ),
           updatedPane.id
         );
         return updatedPane;
@@ -213,7 +254,9 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
       options.component,
       options.placement,
       options.id,
-      options.header
+      options.header,
+      options.icon,
+      options.onUserClose
     );
     syncPaneState([...basePanes, nextPane], nextPane.id);
     return nextPane;
