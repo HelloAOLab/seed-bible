@@ -463,6 +463,105 @@ describe("createBibleToolsManager", () => {
     );
   });
 
+  describe("copy-verse / share-verse formatting", () => {
+    function createVerseContext(
+      overrides?: Partial<BibleReadingState>
+    ): BibleToolContext {
+      return {
+        ...createContext(),
+        readingState: {
+          chapterData: signal({
+            book: { id: "PSA", name: "Psalms" },
+          }),
+          loading: signal(false),
+          translation: signal({ id: "NIV" }),
+          bookId: signal("PSA"),
+          selectedVerses: signal([
+            {
+              bookId: "PSA",
+              chapterNumber: 2,
+              translationId: "NIV",
+              verse: {
+                number: 2,
+                content: [
+                  "The kings of the earth take their stand ",
+                  "and the rulers gather together, ",
+                  "against the LORD ",
+                  "and against His Anointed One:",
+                ],
+              },
+            },
+          ]),
+          clearSelectedVerses: vi.fn(),
+          loadPreviousChapter: vi.fn(),
+          loadNextChapter: vi.fn(),
+          ...overrides,
+        } as any,
+      };
+    }
+
+    beforeEach(() => {
+      (window.navigator as any).clipboard = {
+        writeText: vi.fn().mockResolvedValue(undefined),
+      };
+      (window.navigator as any).share = vi.fn();
+    });
+
+    it("copy-verse uses the full book name instead of the book ID", async () => {
+      const manager = createBibleToolsManager();
+      const context = createVerseContext();
+
+      const tool = manager
+        .getVerseToolbarTools(context)
+        .find((t) => t.id === "copy-verse");
+
+      await tool?.onSelect();
+
+      expect(window.navigator.clipboard.writeText).toHaveBeenCalledWith(
+        "The kings of the earth take their stand and the rulers gather together, against the LORD and against His Anointed One: (Psalms 2:2)"
+      );
+    });
+
+    it("copy-verse falls back to the book ID when chapter data is unavailable", async () => {
+      const manager = createBibleToolsManager();
+      const context = createVerseContext({
+        chapterData: signal(null),
+      });
+
+      const tool = manager
+        .getVerseToolbarTools(context)
+        .find((t) => t.id === "copy-verse");
+
+      await tool?.onSelect();
+
+      expect(window.navigator.clipboard.writeText).toHaveBeenCalledWith(
+        expect.stringContaining("(PSA 2:2)")
+      );
+    });
+
+    it("share-verse uses the full book name instead of the book ID", () => {
+      const manager = createBibleToolsManager();
+      const context = createVerseContext();
+
+      const tool = manager
+        .getVerseToolbarTools(context)
+        .find((t) => t.id === "share-verse");
+
+      tool?.onSelect();
+
+      expect(window.navigator.share).toHaveBeenCalledWith(
+        expect.objectContaining({
+          text: expect.stringContaining("(Psalms 2:2)"),
+        })
+      );
+      expect(window.navigator.share).toHaveBeenCalledWith(
+        expect.objectContaining({
+          text: expect.not.stringContaining("(PSA 2:2)"),
+        })
+      );
+    });
+  });
+
   describe("open-chat tool visibility", () => {
     it("is invisible when there are no providers and no chats", () => {
       const manager = createBibleToolsManager();
