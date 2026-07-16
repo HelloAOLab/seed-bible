@@ -44,19 +44,20 @@ export const SpaceDefaultIcon = () => {
     </div>
   );
 };
+
+import SeedBibleLogo from "../img/SeedBibleLogo.svg";
+
 export function SeedBibleIcon({
   size = 32,
   ...props
 }: { size?: number; [key: string]: any } = {}) {
   return (
-    <img
-      src="https://favicon.ao.bot/assets/seed-bible-isolated-minified.png"
-      style={{
-        width: `${size}px`,
-        height: `${size}px`,
-        objectFit: "contain",
-      }}
-      alt="Seed Bible Icon"
+    <svg
+      role="img"
+      aria-label="Seed Bible Icon"
+      href={SeedBibleLogo}
+      width={size}
+      height={size}
       {...props}
     />
   );
