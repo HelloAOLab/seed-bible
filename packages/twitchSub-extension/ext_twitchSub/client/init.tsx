@@ -1,7 +1,7 @@
+import { TwitchIcon } from "./icons";
 import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { CreateTwitchSubState } from "./twitchSubManager";
-import TwitchHeader from "./header";
 import App from "./App";
 
 export default function initTwitchSubExtension() {
@@ -28,10 +28,13 @@ export default function initTwitchSubExtension() {
                 />
               );
             },
-            title: "Twitch Settings",
-            header: () => (
-              <TwitchHeader settingsOpened={twitchSubState.settingsOpened} />
+            title: "Twitch",
+            icon: () => (
+              <TwitchIcon style={{ width: "24px", height: "24px" }} />
             ),
+            onUserClose: () => {
+              twitchSubState.settingsOpened.value = false;
+            },
           });
         } else if (
           !twitchSubState.settingsOpened.value &&

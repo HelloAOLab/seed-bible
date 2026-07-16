@@ -1,3 +1,4 @@
+import { TwitchIcon } from "./icons";
 import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { CreateTwitchPubState } from "./twitchPubManager";
@@ -60,6 +61,12 @@ export default function initTwitchPubExtension() {
             },
             title: "Twitch",
             header: () => <TwitchHeader state={twitchPubState} />,
+            icon: () => (
+              <TwitchIcon style={{ width: "24px", height: "24px" }} />
+            ),
+            onUserClose: () => {
+              twitchPubState.interfaceEnabled.value = false;
+            },
           });
         }
       });
