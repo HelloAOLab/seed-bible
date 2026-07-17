@@ -12,8 +12,10 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", () => ({
 import {
   createExtensionManager,
   ExtensionInitalizer,
+  mergeInstalledExtensionIds,
   registerExtension,
   type ExtensionSet,
+  type InstalledExtensionsMeta,
 } from "@packages/seed-bible/seed-bible/managers/ExtensionManager";
 import type { Mock } from "vitest";
 
@@ -1634,6 +1636,79 @@ describe("createExtensionManager", () => {
     ]);
   });
 
+  it("does not reinstall an extension that was uninstalled on another device, and propagates the uninstall to a stale local cache (regression for #1454)", async () => {
+    const crossDeviceExtension = {
+      url: "pkg://cross-device",
+      meta: {
+        id: "ext.cross-device",
+        translations: {
+          en: { title: "Cross Device", description: "Cross Device" },
+        },
+      },
+    };
+    const extensionSet: ExtensionSet = {
+      id: "set.cross-device",
+      extensions: [crossDeviceExtension],
+    };
+    mockExtensionModule("pkg://cross-device");
+
+    // Device A: install the extension while logged in. This writes the ID
+    // and its install-time metadata to both local storage and the profile.
+    login = createTestLogin({
+      userId: "user-1",
+      profile: { name: "Test" } as UserProfile,
+    });
+    const deviceA = createExtensionManager(login, {
+      defaultExtensions: extensionSet,
+    });
+    await deviceA.loadExtension(crossDeviceExtension);
+    expect(getProfileInstalled(login)).toEqual(["ext.cross-device"]);
+
+    // Device B: simulate having earlier pulled the profile down and cached
+    // the extension in its own (separate) local storage — captured here,
+    // before device A's uninstall below changes the profile.
+    const deviceBLocalIds = localStorage.getItem("sb-installed-extensions");
+    const deviceBLocalMeta = localStorage.getItem(
+      "sb-installed-extensions-meta"
+    );
+
+    // Device A: uninstall the extension. This removes it — and bumps the
+    // sync metadata — on both local storage and the profile.
+    deviceA.unloadExtension("ext.cross-device");
+    expect(getProfileInstalled(login)).toEqual([]);
+
+    // Switch the shared local storage to device B's stale, pre-uninstall
+    // snapshot, and boot a fresh manager for it (same account/profile, since
+    // the profile is the synced, server-side source of truth both devices
+    // read from).
+    localStorage.setItem("sb-installed-extensions", deviceBLocalIds ?? "[]");
+    if (deviceBLocalMeta) {
+      localStorage.setItem("sb-installed-extensions-meta", deviceBLocalMeta);
+    }
+    const deviceB = createExtensionManager(login, {
+      defaultExtensions: extensionSet,
+    });
+
+    // Reset the load log — it already recorded device A's earlier install —
+    // so it only reflects what device B's own sync does.
+    loadedModules.length = 0;
+    await deviceB.loadSavedExtensions();
+
+    // Device B must NOT resurrect the extension...
+    expect(loadedModules).toEqual([]);
+    expect(
+      deviceB.getExtensions().find((e) => e.id === "ext.cross-device")
+        ?.installed
+    ).toBeFalsy();
+    // ...and must NOT write it back into the profile, undoing device A's
+    // uninstall for every other device.
+    expect(getProfileInstalled(login)).toEqual([]);
+    // Device B's own stale cache is corrected to match.
+    expect(
+      JSON.parse(localStorage.getItem("sb-installed-extensions") ?? "[]")
+    ).toEqual([]);
+  });
+
   it("does not wipe the profile when the boot-time extension sync races the profile load (regression for #1318)", async () => {
     localStorage.setItem(
       "sb-installed-extensions",
@@ -1774,7 +1849,113 @@ describe("createExtensionManager", () => {
 
     // This is the actual bug report (#1357): loading the app was writing the
     // profile repeatedly with no user action. Merging both extensions should
-    // take exactly one write, not one per extension racing the profile load.
-    expect(updateProfileSpy).toHaveBeenCalledTimes(1);
+    // take exactly one write per config key, not one per extension racing
+    // the profile load. There are two calls (not one) because the #1454 fix
+    // added a second config key (`installedExtensionsMeta`, the per-extension
+    // install-time bookkeeping) alongside the existing `installedExtensions`
+    // ID list — each is written once, not once per extension.
+    expect(updateProfileSpy).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("mergeInstalledExtensionIds()", () => {
+  const meta = (
+    overrides: Partial<InstalledExtensionsMeta> = {}
+  ): InstalledExtensionsMeta => ({
+    installedAtMs: {},
+    updatedAtMs: 0,
+    ...overrides,
+  });
+
+  it("keeps an ID that's installed on both sides", () => {
+    const result = mergeInstalledExtensionIds(
+      {
+        ids: new Set(["ext.a"]),
+        meta: meta({ installedAtMs: { "ext.a": 100 }, updatedAtMs: 100 }),
+      },
+      {
+        ids: new Set(["ext.a"]),
+        meta: meta({ installedAtMs: { "ext.a": 100 }, updatedAtMs: 100 }),
+      },
+      200
+    );
+
+    expect([...result.ids]).toEqual(["ext.a"]);
+  });
+
+  it("adopts a local-only install into the profile when the profile hasn't caught up yet", () => {
+    const result = mergeInstalledExtensionIds(
+      {
+        ids: new Set(["ext.a"]),
+        meta: meta({ installedAtMs: { "ext.a": 100 }, updatedAtMs: 100 }),
+      },
+      { ids: new Set(), meta: meta() },
+      200
+    );
+
+    expect([...result.ids]).toEqual(["ext.a"]);
+    expect(result.profileMeta.installedAtMs["ext.a"]).toBe(100);
+  });
+
+  it("adopts a profile-only install into local storage when local hasn't caught up yet", () => {
+    const result = mergeInstalledExtensionIds(
+      { ids: new Set(), meta: meta() },
+      {
+        ids: new Set(["ext.a"]),
+        meta: meta({ installedAtMs: { "ext.a": 100 }, updatedAtMs: 100 }),
+      },
+      200
+    );
+
+    expect([...result.ids]).toEqual(["ext.a"]);
+    expect(result.localMeta.installedAtMs["ext.a"]).toBe(100);
+  });
+
+  it("infers a local-only extension was uninstalled elsewhere when the profile was updated after it was installed locally (core #1454 repro)", () => {
+    // Device A installs X, device B's stale local cache still has it, but
+    // device A already uninstalled X from the profile after B's cached copy
+    // was installed — the profile's `updatedAtMs` (300) is newer than B's
+    // recorded install time for X (100), and the profile doesn't have X.
+    const result = mergeInstalledExtensionIds(
+      {
+        ids: new Set(["ext.x"]),
+        meta: meta({ installedAtMs: { "ext.x": 100 }, updatedAtMs: 100 }),
+      },
+      { ids: new Set(), meta: meta({ updatedAtMs: 300 }) },
+      400
+    );
+
+    expect([...result.ids]).toEqual([]);
+    expect(result.localMeta.installedAtMs["ext.x"]).toBeUndefined();
+  });
+
+  it("infers a profile-only extension was uninstalled locally when local was updated after it was installed on the profile (symmetric case)", () => {
+    const result = mergeInstalledExtensionIds(
+      { ids: new Set(), meta: meta({ updatedAtMs: 300 }) },
+      {
+        ids: new Set(["ext.x"]),
+        meta: meta({ installedAtMs: { "ext.x": 100 }, updatedAtMs: 100 }),
+      },
+      400
+    );
+
+    expect([...result.ids]).toEqual([]);
+    expect(result.profileMeta.installedAtMs["ext.x"]).toBeUndefined();
+  });
+
+  it("does not infer a deletion for an ID with no recorded install time, even if the other side was updated more recently", () => {
+    // Legacy data from before this metadata existed (or any ID with an
+    // untracked install time) must never be treated as deleted just because
+    // the other store's single `updatedAtMs` scalar (bumped by *any*
+    // unrelated add/remove) happens to be more recent — that scalar isn't
+    // per-extension, so there's no real evidence this specific ID was
+    // actually removed. Falls back to the pre-fix adopt behavior instead.
+    const result = mergeInstalledExtensionIds(
+      { ids: new Set(["ext.legacy"]), meta: meta() },
+      { ids: new Set(), meta: meta({ updatedAtMs: 300 }) },
+      400
+    );
+
+    expect([...result.ids]).toEqual(["ext.legacy"]);
   });
 });
