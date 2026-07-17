@@ -24,7 +24,7 @@ export default function initTwitchSubExtension() {
             icon: () => (
               <TwitchIcon style={{ width: "24px", height: "24px" }} />
             ),
-            onUserClose: () => {
+            onClose: () => {
               twitchSubState.settingsOpened.value = false;
             },
           });

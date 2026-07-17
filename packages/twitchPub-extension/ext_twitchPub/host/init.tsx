@@ -55,7 +55,7 @@ export default function initTwitchPubExtension() {
             icon: () => (
               <TwitchIcon style={{ width: "24px", height: "24px" }} />
             ),
-            onUserClose: () => {
+            onClose: () => {
               twitchPubState.interfaceEnabled.value = false;
             },
           });
