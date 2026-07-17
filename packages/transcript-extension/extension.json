@@ -2,8 +2,8 @@
   "id": "ext_AI_Transcript",
   "translations": {
     "en": {
-      "title": "AI Transcript",
-      "toolbarTitle": "AI Transcript",
+      "title": "AI Transcript core",
+      "toolbarTitle": "AI Transcript core",
       "description": "An extension for the Seed Bible that generates AI-powered transcripts.",
       "donate": "Donate",
       "donateAmount": "Donate {{amount}}",
@@ -18,8 +18,8 @@
       "close": "Close"
     },
     "es": {
-      "title": "Transcripción IA",
-      "toolbarTitle": "Transcripción IA",
+      "title": "Núcleo de Transcripción IA",
+      "toolbarTitle": "Núcleo de Transcripción IA",
       "description": "Una extensión para el Seed Bible que genera transcripciones con IA.",
       "donate": "Donar",
       "donateAmount": "Donar {{amount}}",
@@ -34,8 +34,8 @@
       "close": "Cerrar"
     },
     "am": {
-      "title": "የAI ግልባጭ",
-      "toolbarTitle": "የAI ግልባጭ",
+      "title": "ዋና የAI ግልባጭ",
+      "toolbarTitle": "ዋና የAI ግልባጭ",
       "description": "ለ Seed Bible በAI የተደገፉ ግልባጮችን የሚፈጥር ኤክስቴንሽን ነው።",
       "donate": "ይለግሱ",
       "donateAmount": "{{amount}} ይለግሱ",
@@ -50,8 +50,8 @@
       "close": "ዝጋ"
     },
     "ar": {
-      "title": "نسخ بالذكاء الاصطناعي",
-      "toolbarTitle": "نسخ بالذكاء الاصطناعي",
+      "title": "نواة النسخ بالذكاء الاصطناعي",
+      "toolbarTitle": "نواة النسخ بالذكاء الاصطناعي",
       "description": "امتداد لمشروع Seed Bible لإنشاء نصوص مدعومة بالذكاء الاصطناعي.",
       "donate": "تبرّع",
       "donateAmount": "تبرّع بـ {{amount}}",
@@ -66,8 +66,8 @@
       "close": "إغلاق"
     },
     "bn": {
-      "title": "AI ট্রান্সক্রিপ্ট",
-      "toolbarTitle": "AI ট্রান্সক্রিপ্ট",
+      "title": "AI ট্রান্সক্রিপ্ট কোর",
+      "toolbarTitle": "AI ট্রান্সক্রিপ্ট কোর",
       "description": "Seed Bible প্রকল্পের জন্য AI-চালিত ট্রান্সক্রিপ্ট তৈরি করার একটি এক্সটেনশন।",
       "donate": "দান করুন",
       "donateAmount": "{{amount}} দান করুন",
@@ -82,8 +82,8 @@
       "close": "বন্ধ করুন"
     },
     "fa": {
-      "title": "رونویسی هوش مصنوعی",
-      "toolbarTitle": "رونویسی هوش مصنوعی",
+      "title": "هستهٔ رونویسی هوش مصنوعی",
+      "toolbarTitle": "هستهٔ رونویسی هوش مصنوعی",
       "description": "یک افزونه برای پروژه Seed Bible برای ایجاد رونویسی‌های مبتنی بر هوش مصنوعی.",
       "donate": "اهدا کنید",
       "donateAmount": "{{amount}} اهدا کنید",
@@ -98,8 +98,8 @@
       "close": "بستن"
     },
     "fr": {
-      "title": "Transcription IA",
-      "toolbarTitle": "Transcription IA",
+      "title": "Noyau de Transcription IA",
+      "toolbarTitle": "Noyau de Transcription IA",
       "description": "Une extension pour le projet Seed Bible qui génère des transcriptions assistées par IA.",
       "donate": "Faire un don",
       "donateAmount": "Faire un don de {{amount}}",
@@ -114,8 +114,8 @@
       "close": "Fermer"
     },
     "hi": {
-      "title": "एआई ट्रांसक्रिप्ट",
-      "toolbarTitle": "एआई ट्रांसक्रिप्ट",
+      "title": "एआई ट्रांसक्रिप्ट कोर",
+      "toolbarTitle": "एआई ट्रांसक्रिप्ट कोर",
       "description": "Seed Bible परियोजना के लिए एआई-संचालित ट्रांसक्रिप्ट बनाने वाला एक एक्सटेंशन।",
       "donate": "दान करें",
       "donateAmount": "{{amount}} दान करें",
@@ -130,8 +130,8 @@
       "close": "बंद करें"
     },
     "id": {
-      "title": "Transkrip AI",
-      "toolbarTitle": "Transkrip AI",
+      "title": "Inti Transkrip AI",
+      "toolbarTitle": "Inti Transkrip AI",
       "description": "Sebuah ekstensi untuk proyek Seed Bible yang menghasilkan transkrip bertenaga AI.",
       "donate": "Donasi",
       "donateAmount": "Donasi {{amount}}",
@@ -146,8 +146,8 @@
       "close": "Tutup"
     },
     "ja": {
-      "title": "AI文字起こし",
-      "toolbarTitle": "AI文字起こし",
+      "title": "AI文字起こしコア",
+      "toolbarTitle": "AI文字起こしコア",
       "description": "Seed Bible プロジェクト向けに AI による文字起こしを生成する拡張機能。",
       "donate": "寄付する",
       "donateAmount": "{{amount}}を寄付する",
@@ -162,8 +162,8 @@
       "close": "閉じる"
     },
     "ko": {
-      "title": "AI 전사",
-      "toolbarTitle": "AI 전사",
+      "title": "AI 전사 코어",
+      "toolbarTitle": "AI 전사 코어",
       "description": "Seed Bible 프로젝트를 위해 AI 기반 전사를 생성하는 확장 기능입니다.",
       "donate": "기부하기",
       "donateAmount": "{{amount}} 기부하기",
@@ -178,8 +178,8 @@
       "close": "닫기"
     },
     "mn": {
-      "title": "AI хуулбар",
-      "toolbarTitle": "AI хуулбар",
+      "title": "AI хуулбарын цөм",
+      "toolbarTitle": "AI хуулбарын цөм",
       "description": "Seed Bible төсөлд зориулсан AI-д суурилсан хуулбар үүсгэх өргөтгөл.",
       "donate": "Хандив өгөх",
       "donateAmount": "{{amount}} хандивлах",
@@ -194,8 +194,8 @@
       "close": "Хаах"
     },
     "ne": {
-      "title": "एआई ट्रान्सक्रिप्ट",
-      "toolbarTitle": "एआई ट्रान्सक्रिप्ट",
+      "title": "एआई ट्रान्सक्रिप्ट कोर",
+      "toolbarTitle": "एआई ट्रान्सक्रिप्ट कोर",
       "description": "Seed Bible परियोजनाको लागि एआई-संचालित ट्रान्सक्रिप्ट सिर्जना गर्ने विस्तार।",
       "donate": "दान गर्नुहोस्",
       "donateAmount": "{{amount}} दान गर्नुहोस्",
@@ -210,8 +210,8 @@
       "close": "बन्द गर्नुहोस्"
     },
     "ps": {
-      "title": "د AI لیکنه",
-      "toolbarTitle": "د AI لیکنه",
+      "title": "د AI اصلي لیکنه",
+      "toolbarTitle": "د AI اصلي لیکنه",
       "description": "د Seed Bible پروژې لپاره د AI پر بنسټ لیکنې جوړولو توسیع.",
       "donate": "بسپنه ورکړئ",
       "donateAmount": "{{amount}} بسپنه ورکړئ",
@@ -226,8 +226,8 @@
       "close": "بند کړئ"
     },
     "pt": {
-      "title": "Transcrição IA",
-      "toolbarTitle": "Transcrição IA",
+      "title": "Núcleo de Transcrição IA",
+      "toolbarTitle": "Núcleo de Transcrição IA",
       "description": "Uma extensão para o projeto Seed Bible que gera transcrições com IA.",
       "donate": "Doar",
       "donateAmount": "Doar {{amount}}",
@@ -242,8 +242,8 @@
       "close": "Fechar"
     },
     "ru": {
-      "title": "ИИ-транскрипция",
-      "toolbarTitle": "ИИ-транскрипция",
+      "title": "Ядро ИИ-транскрипции",
+      "toolbarTitle": "Ядро ИИ-транскрипции",
       "description": "Расширение для проекта Seed Bible, создающее транскрипции на основе ИИ.",
       "donate": "Пожертвовать",
       "donateAmount": "Пожертвовать {{amount}}",
@@ -258,8 +258,8 @@
       "close": "Закрыть"
     },
     "sw": {
-      "title": "Nakala ya AI",
-      "toolbarTitle": "Nakala ya AI",
+      "title": "Kiini cha Nakala ya AI",
+      "toolbarTitle": "Kiini cha Nakala ya AI",
       "description": "Upanuzi kwa mradi wa Seed Bible unaotengeneza nakala zinazoendeshwa na AI.",
       "donate": "Changia",
       "donateAmount": "Changia {{amount}}",
@@ -274,8 +274,8 @@
       "close": "Funga"
     },
     "ti": {
-      "title": "AI ቅዳሕ",
-      "toolbarTitle": "AI ቅዳሕ",
+      "title": "ማእከላይ AI ቅዳሕ",
+      "toolbarTitle": "ማእከላይ AI ቅዳሕ",
       "description": "ለ Seed Bible ፕሮጀክት ብAI ዝሰርሑ ቅዳሓት ዝፈጥር ኤክስቴንሽን እዩ።",
       "donate": "ወፍዩ",
       "donateAmount": "{{amount}} ወፍዩ",
@@ -290,8 +290,8 @@
       "close": "ዕጸዉ"
     },
     "tr": {
-      "title": "AI Transkript",
-      "toolbarTitle": "AI Transkript",
+      "title": "AI Transkript Çekirdeği",
+      "toolbarTitle": "AI Transkript Çekirdeği",
       "description": "Seed Bible projesi için AI destekli transkriptler oluşturan bir uzantı.",
       "donate": "Bağış yap",
       "donateAmount": "{{amount}} Bağışla",
@@ -306,8 +306,8 @@
       "close": "Kapat"
     },
     "ug": {
-      "title": "AI يېزىقلاشتۇرۇش",
-      "toolbarTitle": "AI يېزىقلاشتۇرۇش",
+      "title": "AI يېزىقلاشتۇرۇش يادروسى",
+      "toolbarTitle": "AI يېزىقلاشتۇرۇش يادروسى",
       "description": "Seed Bible تۈرى ئۈچۈن AI ئاساسىدىكى يېزىقلاشتۇرۇش ھاسىل قىلىدىغان كېڭەيتىلمە.",
       "donate": "ئىئانە قىلىڭ",
       "donateAmount": "{{amount}} ئىئانە قىلىڭ",
@@ -322,8 +322,8 @@
       "close": "تاقاش"
     },
     "uk": {
-      "title": "ШІ-транскрипція",
-      "toolbarTitle": "ШІ-транскрипція",
+      "title": "Ядро ШІ-транскрипції",
+      "toolbarTitle": "Ядро ШІ-транскрипції",
       "description": "Розширення для проєкту Seed Bible, що створює транскрипції на основі ШІ.",
       "donate": "Пожертвувати",
       "donateAmount": "Пожертвувати {{amount}}",
@@ -338,8 +338,8 @@
       "close": "Закрити"
     },
     "ur": {
-      "title": "اے آئی ٹرانسکرپٹ",
-      "toolbarTitle": "اے آئی ٹرانسکرپٹ",
+      "title": "اے آئی ٹرانسکرپٹ کور",
+      "toolbarTitle": "اے آئی ٹرانسکرپٹ کور",
       "description": "Seed Bible پروجیکٹ کے لیے اے آئی پر مبنی ٹرانسکرپٹ بنانے والی ایک ایکسٹینشن۔",
       "donate": "عطیہ دیں",
       "donateAmount": "{{amount}} عطیہ کریں",
@@ -354,8 +354,8 @@
       "close": "بند کریں"
     },
     "vi": {
-      "title": "Bản ghi AI",
-      "toolbarTitle": "Bản ghi AI",
+      "title": "Lõi Bản ghi AI",
+      "toolbarTitle": "Lõi Bản ghi AI",
       "description": "Một tiện ích mở rộng cho dự án Seed Bible tạo bản ghi bằng AI.",
       "donate": "Quyên góp",
       "donateAmount": "Quyên góp {{amount}}",
@@ -370,8 +370,8 @@
       "close": "Đóng"
     },
     "zh": {
-      "title": "AI 转录",
-      "toolbarTitle": "AI 转录",
+      "title": "AI 转录核心",
+      "toolbarTitle": "AI 转录核心",
       "description": "为 Seed Bible 项目生成 AI 转录的扩展。",
       "donate": "捐赠",
       "donateAmount": "捐赠 {{amount}}",
@@ -386,8 +386,8 @@
       "close": "关闭"
     },
     "ind": {
-      "title": "Transkrip AI",
-      "toolbarTitle": "Transkrip AI",
+      "title": "Inti Transkrip AI",
+      "toolbarTitle": "Inti Transkrip AI",
       "description": "Ekstensi untuk proyek Seed Bible yang menghasilkan transkrip bertenaga AI.",
       "donate": "Donasi",
       "donateAmount": "Donasi {{amount}}",
@@ -402,8 +402,8 @@
       "close": "Tutup"
     },
     "af": {
-      "title": "KI-transkripsie",
-      "toolbarTitle": "KI-transkripsie",
+      "title": "KI-transkripsie-kern",
+      "toolbarTitle": "KI-transkripsie-kern",
       "description": "'n Uitbreiding vir die Seed Bible wat KI-aangedrewe transkripsies genereer.",
       "donate": "Skenk",
       "donateAmount": "Skenk {{amount}}",
@@ -418,8 +418,8 @@
       "close": "Maak toe"
     },
     "az": {
-      "title": "AI Transkripti",
-      "toolbarTitle": "AI Transkripti",
+      "title": "AI Transkript Nüvəsi",
+      "toolbarTitle": "AI Transkript Nüvəsi",
       "description": "Seed Bible layihəsi üçün AI əsaslı transkriptlər yaradan genişləndirmə.",
       "donate": "İanə et",
       "donateAmount": "{{amount}} ianə edin",
@@ -434,8 +434,8 @@
       "close": "Bağla"
     },
     "be": {
-      "title": "ШІ-транскрыпцыя",
-      "toolbarTitle": "ШІ-транскрыпцыя",
+      "title": "Ядро ШІ-транскрыпцыі",
+      "toolbarTitle": "Ядро ШІ-транскрыпцыі",
       "description": "Пашырэнне для праекта Seed Bible, якое стварае транскрыпцыі на аснове ШІ.",
       "donate": "Ахвяраваць",
       "donateAmount": "Ахвяраваць {{amount}}",
@@ -450,8 +450,8 @@
       "close": "Закрыць"
     },
     "bg": {
-      "title": "AI транскрипция",
-      "toolbarTitle": "AI транскрипция",
+      "title": "Ядро на AI транскрипция",
+      "toolbarTitle": "Ядро на AI транскрипция",
       "description": "Разширение за проекта Seed Bible, което генерира транскрипции с AI.",
       "donate": "Дарете",
       "donateAmount": "Дарете {{amount}}",
@@ -466,8 +466,8 @@
       "close": "Затвори"
     },
     "bs": {
-      "title": "AI transkript",
-      "toolbarTitle": "AI transkript",
+      "title": "Jezgro AI transkripta",
+      "toolbarTitle": "Jezgro AI transkripta",
       "description": "Proširenje za Seed Bible koje generiše transkripte pomoću AI-a.",
       "donate": "Doniraj",
       "donateAmount": "Donirajte {{amount}}",
@@ -482,8 +482,8 @@
       "close": "Zatvori"
     },
     "ca": {
-      "title": "Transcripció IA",
-      "toolbarTitle": "Transcripció IA",
+      "title": "Nucli de Transcripció IA",
+      "toolbarTitle": "Nucli de Transcripció IA",
       "description": "Una extensió per a la Seed Bible que genera transcripcions amb IA.",
       "donate": "Fes una donació",
       "donateAmount": "Dona {{amount}}",
@@ -498,8 +498,8 @@
       "close": "Tanca"
     },
     "cs": {
-      "title": "AI přepis",
-      "toolbarTitle": "AI přepis",
+      "title": "Jádro AI přepisu",
+      "toolbarTitle": "Jádro AI přepisu",
       "description": "Rozšíření pro Seed Bible, které generuje přepisy pomocí AI.",
       "donate": "Darovat",
       "donateAmount": "Darovat {{amount}}",
@@ -514,8 +514,8 @@
       "close": "Zavřít"
     },
     "cy": {
-      "title": "Trawsgrifiad AI",
-      "toolbarTitle": "Trawsgrifiad AI",
+      "title": "Craidd Trawsgrifiad AI",
+      "toolbarTitle": "Craidd Trawsgrifiad AI",
       "description": "Estyniad ar gyfer y Beibl Seed sy'n cynhyrchu trawsgrifiadau wedi'u pweru gan AI.",
       "donate": "Rhoi rhodd",
       "donateAmount": "Rhoi {{amount}}",
@@ -530,8 +530,8 @@
       "close": "Cau"
     },
     "da": {
-      "title": "AI-transskription",
-      "toolbarTitle": "AI-transskription",
+      "title": "AI-transskriptionskerne",
+      "toolbarTitle": "AI-transskriptionskerne",
       "description": "En udvidelse til Seed Bible, der genererer AI-drevne transskriptioner.",
       "donate": "Doner",
       "donateAmount": "Donér {{amount}}",
@@ -546,8 +546,8 @@
       "close": "Luk"
     },
     "de": {
-      "title": "KI-Transkript",
-      "toolbarTitle": "KI-Transkript",
+      "title": "KI-Transkript-Kern",
+      "toolbarTitle": "KI-Transkript-Kern",
       "description": "Eine Erweiterung für die Seed Bible, die KI-gestützte Transkripte erstellt.",
       "donate": "Spenden",
       "donateAmount": "{{amount}} spenden",
@@ -562,8 +562,8 @@
       "close": "Schließen"
     },
     "el": {
-      "title": "Μεταγραφή AI",
-      "toolbarTitle": "Μεταγραφή AI",
+      "title": "Πυρήνας Μεταγραφής AI",
+      "toolbarTitle": "Πυρήνας Μεταγραφής AI",
       "description": "Μια επέκταση για το Seed Bible που δημιουργεί μεταγραφές με χρήση AI.",
       "donate": "Δωρεά",
       "donateAmount": "Δωρεά {{amount}}",
@@ -578,8 +578,8 @@
       "close": "Κλείσιμο"
     },
     "et": {
-      "title": "AI transkriptsioon",
-      "toolbarTitle": "AI transkriptsioon",
+      "title": "AI transkriptsiooni tuum",
+      "toolbarTitle": "AI transkriptsiooni tuum",
       "description": "Seed Bible'i laiendus, mis loob AI-põhiseid transkriptsioone.",
       "donate": "Anneta",
       "donateAmount": "Anneta {{amount}}",
@@ -594,8 +594,8 @@
       "close": "Sulge"
     },
     "fi": {
-      "title": "AI-transkriptio",
-      "toolbarTitle": "AI-transkriptio",
+      "title": "AI-transkription ydin",
+      "toolbarTitle": "AI-transkription ydin",
       "description": "Seed Biblen laajennus, joka luo tekoälypohjaisia transkriptioita.",
       "donate": "Lahjoita",
       "donateAmount": "Lahjoita {{amount}}",
@@ -610,8 +610,8 @@
       "close": "Sulje"
     },
     "fil": {
-      "title": "AI Transcript",
-      "toolbarTitle": "AI Transcript",
+      "title": "AI Transcript core",
+      "toolbarTitle": "AI Transcript core",
       "description": "Isang extension para sa Seed Bible na gumagawa ng mga transcript na pinapagana ng AI.",
       "donate": "Mag-donate",
       "donateAmount": "Mag-donate ng {{amount}}",
@@ -626,8 +626,8 @@
       "close": "Isara"
     },
     "fy": {
-      "title": "AI-transkripsje",
-      "toolbarTitle": "AI-transkripsje",
+      "title": "KI-transkripsje-kearn",
+      "toolbarTitle": "KI-transkripsje-kearn",
       "description": "In útwreiding foar de Seed Bible dy't AI-oandreaune transkripsjes makket.",
       "donate": "Donearje",
       "donateAmount": "Doneer {{amount}}",
@@ -642,8 +642,8 @@
       "close": "Slute"
     },
     "gl": {
-      "title": "Transcrición IA",
-      "toolbarTitle": "Transcrición IA",
+      "title": "Núcleo de Transcrición IA",
+      "toolbarTitle": "Núcleo de Transcrición IA",
       "description": "Unha extensión para a Biblia das Sementes que xera transcricións con IA.",
       "donate": "Doar",
       "donateAmount": "Doar {{amount}}",
@@ -658,8 +658,8 @@
       "close": "Pechar"
     },
     "gn": {
-      "title": "AI Ñe'ẽhaipyre",
-      "toolbarTitle": "AI Ñe'ẽhaipyre",
+      "title": "AI Ñe'ẽhaipyre mbyte",
+      "toolbarTitle": "AI Ñe'ẽhaipyre mbyte",
       "description": "Peteĩ extensión pe Biblia Semilla-pe g̃uarã ojapóva ñe'ẽhaipyre AI rupive.",
       "donate": "Eme'ẽ",
       "donateAmount": "Emeʼẽ {{amount}}",
@@ -674,8 +674,8 @@
       "close": "Emboty"
     },
     "gu": {
-      "title": "AI ટ્રાન્સક્રિપ્ટ",
-      "toolbarTitle": "AI ટ્રાન્સક્રિપ્ટ",
+      "title": "AI ટ્રાન્સક્રિપ્ટ કોર",
+      "toolbarTitle": "AI ટ્રાન્સક્રિપ્ટ કોર",
       "description": "સીડ બાઇબલ માટે AI-સંચાલિત ટ્રાન્સક્રિપ્ટ બનાવતું એક એક્સટેન્શન.",
       "donate": "દાન કરો",
       "donateAmount": "{{amount}} દાન કરો",
@@ -690,8 +690,8 @@
       "close": "બંધ કરો"
     },
     "he": {
-      "title": "תמלול AI",
-      "toolbarTitle": "תמלול AI",
+      "title": "ליבת תמלול AI",
+      "toolbarTitle": "ליבת תמלול AI",
       "description": "הרחבה עבור Seed Bible שיוצרת תמלולים מבוססי בינה מלאכותית.",
       "donate": "תרמו",
       "donateAmount": "תרמו {{amount}}",
@@ -706,8 +706,8 @@
       "close": "סגירה"
     },
     "hr": {
-      "title": "AI transkript",
-      "toolbarTitle": "AI transkript",
+      "title": "Jezgra AI transkripta",
+      "toolbarTitle": "Jezgra AI transkripta",
       "description": "Proširenje za Seed Bible koje stvara transkripte pomoću AI-a.",
       "donate": "Doniraj",
       "donateAmount": "Doniraj {{amount}}",
@@ -722,8 +722,8 @@
       "close": "Zatvori"
     },
     "hu": {
-      "title": "AI átirat",
-      "toolbarTitle": "AI átirat",
+      "title": "AI átirat mag",
+      "toolbarTitle": "AI átirat mag",
       "description": "Egy kiterjesztés a Seed Bible-hez, amely AI-alapú átiratokat készít.",
       "donate": "Adományozás",
       "donateAmount": "Adományozz {{amount}}",
@@ -738,8 +738,8 @@
       "close": "Bezárás"
     },
     "is": {
-      "title": "AI uppskrift",
-      "toolbarTitle": "AI uppskrift",
+      "title": "AI uppskrift kjarni",
+      "toolbarTitle": "AI uppskrift kjarni",
       "description": "Viðbót fyrir Seed Bible sem býr til uppskriftir með aðstoð gervigreindar.",
       "donate": "Styrkja",
       "donateAmount": "Styrkja {{amount}}",
@@ -754,8 +754,8 @@
       "close": "Loka"
     },
     "it": {
-      "title": "Trascrizione IA",
-      "toolbarTitle": "Trascrizione IA",
+      "title": "Nucleo di Trascrizione IA",
+      "toolbarTitle": "Nucleo di Trascrizione IA",
       "description": "Un'estensione per la Seed Bible che genera trascrizioni basate sull'IA.",
       "donate": "Dona",
       "donateAmount": "Dona {{amount}}",
@@ -770,8 +770,8 @@
       "close": "Chiudi"
     },
     "iw": {
-      "title": "תמלול AI",
-      "toolbarTitle": "תמלול AI",
+      "title": "ליבת תמלול AI",
+      "toolbarTitle": "ליבת תמלול AI",
       "description": "הרחבה עבור Seed Bible שיוצרת תמלולים מבוססי בינה מלאכותית.",
       "donate": "תרמו",
       "donateAmount": "תרמו {{amount}}",
@@ -786,8 +786,8 @@
       "close": "סגירה"
     },
     "ka": {
-      "title": "AI ტრანსკრიფცია",
-      "toolbarTitle": "AI ტრანსკრიფცია",
+      "title": "AI ტრანსკრიფციის ბირთვი",
+      "toolbarTitle": "AI ტრანსკრიფციის ბირთვი",
       "description": "Seed Bible-ის გაფართოება, რომელიც ქმნის AI-ზე დაფუძნებულ ტრანსკრიფციებს.",
       "donate": "შემოწირვა",
       "donateAmount": "შემოწირეთ {{amount}}",
@@ -802,8 +802,8 @@
       "close": "დახურვა"
     },
     "km": {
-      "title": "ប្រតិចារឹក AI",
-      "toolbarTitle": "ប្រតិចារឹក AI",
+      "title": "ស្នូលប្រតិចារឹក AI",
+      "toolbarTitle": "ស្នូលប្រតិចារឹក AI",
       "description": "ផ្នែកបន្ថែមសម្រាប់ Seed Bible ដែលបង្កើតប្រតិចារឹកដោយប្រើ AI។",
       "donate": "បរិច្ចាគ",
       "donateAmount": "បរិច្ចាគ {{amount}}",
@@ -818,8 +818,8 @@
       "close": "បិទ"
     },
     "kn": {
-      "title": "AI ಪ್ರತಿಲೇಖನ",
-      "toolbarTitle": "AI ಪ್ರತಿಲೇಖನ",
+      "title": "AI ಪ್ರತಿಲೇಖನ ಕೋರ್",
+      "toolbarTitle": "AI ಪ್ರತಿಲೇಖನ ಕೋರ್",
       "description": "ಸೀಡ್ ಬೈಬಲ್‌ಗಾಗಿ AI-ಆಧಾರಿತ ಪ್ರತಿಲೇಖನಗಳನ್ನು ರಚಿಸುವ ಒಂದು ವಿಸ್ತರಣೆ.",
       "donate": "ದೇಣಿಗೆ ನೀಡಿ",
       "donateAmount": "{{amount}} ದೇಣಿಗೆ ನೀಡಿ",
@@ -834,8 +834,8 @@
       "close": "ಮುಚ್ಚಿ"
     },
     "ky": {
-      "title": "AI транскрипция",
-      "toolbarTitle": "AI транскрипция",
+      "title": "AI транскрипциянын өзөгү",
+      "toolbarTitle": "AI транскрипциянын өзөгү",
       "description": "Seed Bible долбоору үчүн AI негизиндеги транскрипцияларды түзгөн кеңейтүү.",
       "donate": "Кайрымдуулук кылуу",
       "donateAmount": "{{amount}} кайрымдуулук кылуу",
@@ -850,8 +850,8 @@
       "close": "Жабуу"
     },
     "ln": {
-      "title": "AI Bobakisi",
-      "toolbarTitle": "AI Bobakisi",
+      "title": "AI Bobakisi Kati",
+      "toolbarTitle": "AI Bobakisi Kati",
       "description": "Bobakisi mpo na Biblia ya Momboto oyo esalaka makomi na nzela ya AI.",
       "donate": "Pesa likabo",
       "donateAmount": "Pesa likabo ya {{amount}}",
@@ -866,8 +866,8 @@
       "close": "Kanga"
     },
     "lo": {
-      "title": "ການຖອດຄວາມ AI",
-      "toolbarTitle": "ການຖອດຄວາມ AI",
+      "title": "ການຖອດຄວາມ AI ຫຼັກ",
+      "toolbarTitle": "ການຖອດຄວາມ AI ຫຼັກ",
       "description": "ສ່ວນຂະຫຍາຍສຳລັບ Seed Bible ທີ່ສ້າງການຖອດຄວາມໂດຍໃຊ້ AI.",
       "donate": "ບໍລິຈາກ",
       "donateAmount": "ບໍລິຈາກ {{amount}}",
@@ -882,8 +882,8 @@
       "close": "ປິດ"
     },
     "lt": {
-      "title": "AI transkripcija",
-      "toolbarTitle": "AI transkripcija",
+      "title": "AI transkripcijos branduolys",
+      "toolbarTitle": "AI transkripcijos branduolys",
       "description": "„Seed Bible“ plėtinys, kuriantis dirbtinio intelekto pagrindu sukurtas transkripcijas.",
       "donate": "Aukoti",
       "donateAmount": "Paaukoti {{amount}}",
@@ -898,8 +898,8 @@
       "close": "Uždaryti"
     },
     "lv": {
-      "title": "AI transkripcija",
-      "toolbarTitle": "AI transkripcija",
+      "title": "AI transkripcijas kodols",
+      "toolbarTitle": "AI transkripcijas kodols",
       "description": "Seed Bible paplašinājums, kas ģenerē AI veidotas transkripcijas.",
       "donate": "Ziedot",
       "donateAmount": "Ziedot {{amount}}",
@@ -914,8 +914,8 @@
       "close": "Aizvērt"
     },
     "mk": {
-      "title": "AI транскрипција",
-      "toolbarTitle": "AI транскрипција",
+      "title": "Јадро на AI транскрипција",
+      "toolbarTitle": "Јадро на AI транскрипција",
       "description": "Додаток за Seed Bible што генерира транскрипции со помош на AI.",
       "donate": "Донирај",
       "donateAmount": "Донирај {{amount}}",
@@ -930,8 +930,8 @@
       "close": "Затвори"
     },
     "ml": {
-      "title": "AI ട്രാൻസ്ക്രിപ്റ്റ്",
-      "toolbarTitle": "AI ട്രാൻസ്ക്രിപ്റ്റ്",
+      "title": "AI ട്രാൻസ്ക്രിപ്റ്റ് കോർ",
+      "toolbarTitle": "AI ട്രാൻസ്ക്രിപ്റ്റ് കോർ",
       "description": "Seed Bible-നായി AI അധിഷ്ഠിത ട്രാൻസ്ക്രിപ്റ്റുകൾ സൃഷ്ടിക്കുന്ന ഒരു വിപുലീകരണം.",
       "donate": "സംഭാവന ചെയ്യുക",
       "donateAmount": "{{amount}} സംഭാവന ചെയ്യുക",
@@ -946,8 +946,8 @@
       "close": "അടയ്ക്കുക"
     },
     "mr": {
-      "title": "एआय ट्रान्सक्रिप्ट",
-      "toolbarTitle": "एआय ट्रान्सक्रिप्ट",
+      "title": "एआय ट्रान्सक्रिप्ट कोर",
+      "toolbarTitle": "एआय ट्रान्सक्रिप्ट कोर",
       "description": "सीड बायबलसाठी एआय-आधारित ट्रान्सक्रिप्ट तयार करणारे एक एक्सटेंशन.",
       "donate": "देणगी द्या",
       "donateAmount": "{{amount}} देणगी द्या",
@@ -962,8 +962,8 @@
       "close": "बंद करा"
     },
     "ms": {
-      "title": "Transkrip AI",
-      "toolbarTitle": "Transkrip AI",
+      "title": "Teras Transkrip AI",
+      "toolbarTitle": "Teras Transkrip AI",
       "description": "Sambungan untuk Seed Bible yang menjana transkrip berkuasa AI.",
       "donate": "Derma",
       "donateAmount": "Derma {{amount}}",
@@ -978,8 +978,8 @@
       "close": "Tutup"
     },
     "my": {
-      "title": "AI စာသား",
-      "toolbarTitle": "AI စာသား",
+      "title": "AI စာသား အဓိက",
+      "toolbarTitle": "AI စာသား အဓိက",
       "description": "Seed Bible အတွက် AI ဖြင့် စာသားများ ဖန်တီးပေးသော extension တစ်ခု။",
       "donate": "လှူဒါန်းရန်",
       "donateAmount": "{{amount}} လှူဒါန်းပါ",
@@ -994,8 +994,8 @@
       "close": "ပိတ်ပါ"
     },
     "nb": {
-      "title": "AI-transkripsjon",
-      "toolbarTitle": "AI-transkripsjon",
+      "title": "AI-transkripsjonskjerne",
+      "toolbarTitle": "AI-transkripsjonskjerne",
       "description": "En utvidelse for Seed Bible som genererer AI-drevne transkripsjoner.",
       "donate": "Doner",
       "donateAmount": "Doner {{amount}}",
@@ -1010,8 +1010,8 @@
       "close": "Lukk"
     },
     "nl": {
-      "title": "AI-transcriptie",
-      "toolbarTitle": "AI-transcriptie",
+      "title": "AI-transcriptiekern",
+      "toolbarTitle": "AI-transcriptiekern",
       "description": "Een uitbreiding voor de Seed Bible die AI-gestuurde transcripties genereert.",
       "donate": "Doneren",
       "donateAmount": "Doneer {{amount}}",
@@ -1026,8 +1026,8 @@
       "close": "Sluiten"
     },
     "no": {
-      "title": "AI-transkripsjon",
-      "toolbarTitle": "AI-transkripsjon",
+      "title": "AI-transkripsjonskjerne",
+      "toolbarTitle": "AI-transkripsjonskjerne",
       "description": "En utvidelse for Seed Bible som genererer AI-drevne transkripsjoner.",
       "donate": "Doner",
       "donateAmount": "Doner {{amount}}",
@@ -1042,8 +1042,8 @@
       "close": "Lukk"
     },
     "pa": {
-      "title": "AI ਟ੍ਰਾਂਸਕ੍ਰਿਪਟ",
-      "toolbarTitle": "AI ਟ੍ਰਾਂਸਕ੍ਰਿਪਟ",
+      "title": "AI ਟ੍ਰਾਂਸਕ੍ਰਿਪਟ ਕੋਰ",
+      "toolbarTitle": "AI ਟ੍ਰਾਂਸਕ੍ਰਿਪਟ ਕੋਰ",
       "description": "ਸੀਡ ਬਾਈਬਲ ਲਈ AI-ਸੰਚਾਲਿਤ ਟ੍ਰਾਂਸਕ੍ਰਿਪਟ ਬਣਾਉਣ ਵਾਲਾ ਇੱਕ ਐਕਸਟੈਂਸ਼ਨ।",
       "donate": "ਦਾਨ ਕਰੋ",
       "donateAmount": "{{amount}} ਦਾਨ ਕਰੋ",
@@ -1058,8 +1058,8 @@
       "close": "ਬੰਦ ਕਰੋ"
     },
     "pl": {
-      "title": "Transkrypcja AI",
-      "toolbarTitle": "Transkrypcja AI",
+      "title": "Rdzeń Transkrypcji AI",
+      "toolbarTitle": "Rdzeń Transkrypcji AI",
       "description": "Rozszerzenie Seed Bible generujące transkrypcje oparte na AI.",
       "donate": "Przekaż darowiznę",
       "donateAmount": "Przekaż {{amount}}",
@@ -1074,8 +1074,8 @@
       "close": "Zamknij"
     },
     "ro": {
-      "title": "Transcriere AI",
-      "toolbarTitle": "Transcriere AI",
+      "title": "Nucleu Transcriere AI",
+      "toolbarTitle": "Nucleu Transcriere AI",
       "description": "O extensie pentru Biblia Semințelor care generează transcrieri bazate pe IA.",
       "donate": "Donează",
       "donateAmount": "Donează {{amount}}",
@@ -1090,8 +1090,8 @@
       "close": "Închide"
     },
     "sk": {
-      "title": "AI prepis",
-      "toolbarTitle": "AI prepis",
+      "title": "Jadro AI prepisu",
+      "toolbarTitle": "Jadro AI prepisu",
       "description": "Rozšírenie pre Seed Bible, ktoré generuje prepisy pomocou AI.",
       "donate": "Darovať",
       "donateAmount": "Darovať {{amount}}",
@@ -1106,8 +1106,8 @@
       "close": "Zavrieť"
     },
     "sl": {
-      "title": "AI prepis",
-      "toolbarTitle": "AI prepis",
+      "title": "Jedro AI prepisa",
+      "toolbarTitle": "Jedro AI prepisa",
       "description": "Razširitev za Seed Bible, ki ustvarja prepise s pomočjo umetne inteligence.",
       "donate": "Doniraj",
       "donateAmount": "Darujte {{amount}}",
@@ -1122,8 +1122,8 @@
       "close": "Zapri"
     },
     "sq": {
-      "title": "Transkriptim AI",
-      "toolbarTitle": "Transkriptim AI",
+      "title": "Bërthama e Transkriptimit AI",
+      "toolbarTitle": "Bërthama e Transkriptimit AI",
       "description": "Një zgjerim për Seed Bible që gjeneron transkriptime me ndihmën e AI-së.",
       "donate": "Dhuro",
       "donateAmount": "Dhuroni {{amount}}",
@@ -1138,8 +1138,8 @@
       "close": "Mbyll"
     },
     "sv": {
-      "title": "AI-transkription",
-      "toolbarTitle": "AI-transkription",
+      "title": "AI-transkriptionskärna",
+      "toolbarTitle": "AI-transkriptionskärna",
       "description": "Ett tillägg för Seed Bible som genererar AI-drivna transkriptioner.",
       "donate": "Donera",
       "donateAmount": "Donera {{amount}}",
@@ -1154,8 +1154,8 @@
       "close": "Stäng"
     },
     "ta": {
-      "title": "AI படியெடுப்பு",
-      "toolbarTitle": "AI படியெடுப்பு",
+      "title": "AI படியெடுப்பு மையம்",
+      "toolbarTitle": "AI படியெடுப்பு மையம்",
       "description": "சீட் பைபிளுக்கு AI அடிப்படையிலான படியெடுப்புகளை உருவாக்கும் ஒரு நீட்டிப்பு.",
       "donate": "நன்கொடை அளிக்கவும்",
       "donateAmount": "{{amount}} நன்கொடை அளியுங்கள்",
@@ -1170,8 +1170,8 @@
       "close": "மூடு"
     },
     "te": {
-      "title": "AI ట్రాన్స్క్రిప్ట్",
-      "toolbarTitle": "AI ట్రాన్స్క్రిప్ట్",
+      "title": "AI ట్రాన్స్క్రిప్ట్ కోర్",
+      "toolbarTitle": "AI ట్రాన్స్క్రిప్ట్ కోర్",
       "description": "సీడ్ బైబిల్ కోసం AI ఆధారిత ట్రాన్స్క్రిప్ట్‌లను రూపొందించే ఒక పొడిగింపు.",
       "donate": "విరాళం ఇవ్వండి",
       "donateAmount": "{{amount}} విరాళంగా ఇవ్వండి",
@@ -1186,8 +1186,8 @@
       "close": "మూసివేయండి"
     },
     "th": {
-      "title": "การถอดความ AI",
-      "toolbarTitle": "การถอดความ AI",
+      "title": "การถอดความ AI หลัก",
+      "toolbarTitle": "การถอดความ AI หลัก",
       "description": "ส่วนเสริมสำหรับ Seed Bible ที่สร้างการถอดความด้วย AI",
       "donate": "บริจาค",
       "donateAmount": "บริจาค {{amount}}",
@@ -1202,8 +1202,8 @@
       "close": "ปิด"
     },
     "tl": {
-      "title": "AI Transcript",
-      "toolbarTitle": "AI Transcript",
+      "title": "AI Transcript core",
+      "toolbarTitle": "AI Transcript core",
       "description": "Isang extension para sa Seed Bible na gumagawa ng mga transcript na pinapagana ng AI.",
       "donate": "Mag-donate",
       "donateAmount": "Mag-donate ng {{amount}}",
@@ -1218,8 +1218,8 @@
       "close": "Isara"
     },
     "uz": {
-      "title": "AI transkripti",
-      "toolbarTitle": "AI transkripti",
+      "title": "AI transkripti yadrosi",
+      "toolbarTitle": "AI transkripti yadrosi",
       "description": "Seed Bible loyihasi uchun AI asosidagi transkriptlar yaratadigan kengaytma.",
       "donate": "Xayriya qilish",
       "donateAmount": "{{amount}} xayriya qiling",
@@ -1234,8 +1234,8 @@
       "close": "Yopish"
     },
     "zu": {
-      "title": "Umbhalo we-AI",
-      "toolbarTitle": "Umbhalo we-AI",
+      "title": "Umongo woMbhalo we-AI",
+      "toolbarTitle": "Umongo woMbhalo we-AI",
       "description": "Isandiso seSeed Bible esikhiqiza imibhalo eqhutshwa yi-AI.",
       "donate": "Nikela",
       "donateAmount": "Nikela ngo-{{amount}}",

@@ -262,7 +262,10 @@ export function FullscreenPane(props: FullscreenPaneProps) {
         title={pane.title}
         icon={pane.icon}
         header={pane.header}
-        onClose={() => panesManager.closePane(pane.id)}
+        onClose={() => {
+          pane.onClose?.();
+          panesManager.closePane(pane.id);
+        }}
       />
       <div className="sb-pane-detached-body">
         <div className="sb-pane-component">
