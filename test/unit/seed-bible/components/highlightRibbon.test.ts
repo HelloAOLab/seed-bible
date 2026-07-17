@@ -87,6 +87,85 @@ describe("buildRibbonPath", () => {
     expect(buildRibbonPath(lines, 8, 4, PITCH)).toContain("Q");
   });
 
+  it("drops the horizontal pad on trimmed leading/trailing edges", () => {
+    const lines: RibbonRect[] = [
+      { left: 100, right: 500, top: 10, bottom: 55 },
+    ];
+    // radius 0 so the corners land exactly on the (padded) edges.
+    const full = buildRibbonPath(lines, 0, 4, PITCH);
+    expect(Math.min(...xsIn(full))).toBeCloseTo(96, 1); // 100 - 4
+    expect(Math.max(...xsIn(full))).toBeCloseTo(504, 1); // 500 + 4
+
+    // Trimming the leading edge pulls the left back to the glyph edge; the
+    // trailing edge still pads by padX.
+    const lead = buildRibbonPath(lines, 0, 4, PITCH, { leadPad: 0 });
+    expect(Math.min(...xsIn(lead))).toBeCloseTo(100, 1);
+    expect(Math.max(...xsIn(lead))).toBeCloseTo(504, 1);
+
+    // Trimming the trailing edge pulls the right back; the leading edge still pads.
+    const trail = buildRibbonPath(lines, 0, 4, PITCH, { trailPad: 0 });
+    expect(Math.min(...xsIn(trail))).toBeCloseTo(96, 1);
+    expect(Math.max(...xsIn(trail))).toBeCloseTo(500, 1);
+  });
+
+  it("maps lead/trail to mirrored physical edges in RTL", () => {
+    const lines: RibbonRect[] = [
+      { left: 100, right: 500, top: 10, bottom: 55 },
+    ];
+    // In RTL the run STARTS on the right, so leadPad trims the right edge and
+    // trailPad trims the left edge — the mirror of LTR.
+    const lead = buildRibbonPath(lines, 0, 4, PITCH, { leadPad: 0, rtl: true });
+    expect(Math.max(...xsIn(lead))).toBeCloseTo(500, 1); // right (start) trimmed
+    expect(Math.min(...xsIn(lead))).toBeCloseTo(96, 1); // left still padded
+
+    const trail = buildRibbonPath(lines, 0, 4, PITCH, {
+      trailPad: 0,
+      rtl: true,
+    });
+    expect(Math.min(...xsIn(trail))).toBeCloseTo(100, 1); // left (end) trimmed
+    expect(Math.max(...xsIn(trail))).toBeCloseTo(504, 1); // right still padded
+  });
+
+  it("trims only the outer boundary lines, not interior line edges", () => {
+    // A 3-line run: leadPad trims the FIRST line's left only; interior + last
+    // lines keep padX on the left, and every right edge but the last keeps padX.
+    const lines: RibbonRect[] = [
+      { left: 200, right: 500, top: 0, bottom: 45 },
+      { left: 100, right: 500, top: 65, bottom: 110 },
+      { left: 100, right: 300, top: 130, bottom: 175 },
+    ];
+    const d = buildRibbonPath(lines, 0, 4, PITCH, { leadPad: 0, trailPad: 0 });
+    const xs = xsIn(d);
+    // First line left is untrimmed-glyph (200); interior lines still reach 100-4=96.
+    expect(Math.min(...xs)).toBeCloseTo(96, 1);
+    // Last line right is trimmed to the glyph (300); wider lines still reach 500+4=504.
+    expect(Math.max(...xs)).toBeCloseTo(504, 1);
+    expect(xs).toContain(200); // first line's trimmed leading edge is present
+  });
+
+  it("splits a run into separate ribbons when consecutive lines don't overlap", () => {
+    // RTL mid-line start: the first (partial) line sits on the left, the wrapped
+    // line lands on the right with no horizontal overlap. Forcing one polygon
+    // would self-cross; instead we expect two disjoint sub-paths.
+    const disjoint: RibbonRect[] = [
+      { left: 100, right: 500, top: 0, bottom: 45 },
+      { left: 550, right: 1000, top: 52, bottom: 97 },
+    ];
+    const d = buildRibbonPath(disjoint, 8, 4, PITCH, { rtl: true });
+    expect((d.match(/M /g) ?? []).length).toBe(2); // two sub-paths
+    expect(d).not.toContain("NaN");
+    expect(numbersIn(d).every(Number.isFinite)).toBe(true);
+  });
+
+  it("keeps a run as one ribbon when consecutive lines overlap", () => {
+    const overlapping: RibbonRect[] = [
+      { left: 100, right: 500, top: 0, bottom: 45 },
+      { left: 300, right: 1000, top: 52, bottom: 97 }, // overlaps [300,500]
+    ];
+    const d = buildRibbonPath(overlapping, 8, 4, PITCH);
+    expect((d.match(/M /g) ?? []).length).toBe(1); // one continuous body
+  });
+
   it("makes two vertically-adjacent runs meet at the shared slot boundary", () => {
     // Two single-line runs on consecutive lines (pitch 65): run A on the first
     // slot, run B on the next. Their touching edges should land on the same y.

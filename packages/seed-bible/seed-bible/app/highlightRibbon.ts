@@ -70,18 +70,40 @@ function simplify(points: Point[]): Point[] {
 // line slots too. That makes a ribbon meet a vertically-adjacent ribbon (even a
 // different color) exactly at the shared slot boundary, with no leading gap
 // between them, at any line height.
+//
+// `leadPad`/`trailPad` override padX on the run's two edges that can face a
+// horizontal neighbour: the leading edge (where the run starts) and the trailing
+// edge (where it ends). Which physical side that is depends on text direction —
+// LTR: lead = first line's left, trail = last line's right; RTL mirrors it
+// (lead = first line's right, trail = last line's left). The caller sets these to
+// 0 where a differently-colored run abuts on the same visual line so the two
+// colors don't crowd (see `measureRibbons`). Every other edge always uses padX.
 function inflate(
   lines: RibbonRect[],
   padX: number,
-  linePitch: number
+  linePitch: number,
+  leadPad: number,
+  trailPad: number,
+  rtl: boolean
 ): RibbonRect[] {
-  const out = lines.map((l) => ({
-    left: l.left - padX,
-    right: l.right + padX,
-    top: l.top,
-    bottom: l.bottom,
-  }));
-  const n = out.length;
+  const n = lines.length;
+  const out = lines.map((l, i) => {
+    let leftPad = padX;
+    let rightPad = padX;
+    if (rtl) {
+      if (i === 0) rightPad = leadPad; // run starts on the right
+      if (i === n - 1) leftPad = trailPad; // run ends on the left
+    } else {
+      if (i === 0) leftPad = leadPad; // run starts on the left
+      if (i === n - 1) rightPad = trailPad; // run ends on the right
+    }
+    return {
+      left: l.left - leftPad,
+      right: l.right + rightPad,
+      top: l.top,
+      bottom: l.bottom,
+    };
+  });
   // Prefer the measured spacing between the first two lines; fall back to the
   // passed line-height for single-line runs.
   const pitch = n > 1 ? out[1]!.top - out[0]!.top : linePitch;
@@ -156,20 +178,68 @@ function roundedPath(points: Point[], radius: number): string {
   return d + " Z";
 }
 
+// A run's measured lines usually stack into one continuous body: each line
+// horizontally overlaps the next, so the wrapped text flows underneath the line
+// above it. When a run starts mid-line, though, its first (partial) line can sit
+// to one side while its wrapped continuation lands on the *other* side of the
+// next line with no horizontal overlap — most often in RTL, where a verse that
+// begins mid-line is pushed to the left while its wrap starts back at the right
+// margin. The two pieces never sit over each other, so forcing them into one
+// polygon makes the outline self-cross (it renders as outward "points"). Split
+// the lines into maximal groups of consecutive, horizontally-overlapping lines
+// so each disjoint piece becomes its own clean ribbon.
+function splitContiguousRuns(lines: RibbonRect[]): RibbonRect[][] {
+  const groups: RibbonRect[][] = [];
+  for (const line of lines) {
+    const group = groups[groups.length - 1];
+    const prev = group?.[group.length - 1];
+    if (group && prev && line.left < prev.right && prev.left < line.right) {
+      group.push(line);
+    } else {
+      groups.push([line]);
+    }
+  }
+  return groups;
+}
+
 /**
  * Build the rounded SVG path (`d` attribute) for one highlighted run from its
  * per-line rectangles. `linePitch` is the line-height in px (used only for
  * single-line runs; multi-line runs derive the pitch from the measured lines).
+ * `edges` overrides the horizontal pad on the run's leading and trailing edges
+ * — pass 0 where a differently-colored run abuts on the same visual line so the
+ * colors don't crowd; omit to pad both edges by padX like every other edge. Set
+ * `edges.rtl` for right-to-left runs so lead/trail map to the mirrored physical
+ * sides (see `inflate`). A run whose wrapped lines don't sit over one another is
+ * split into several disjoint sub-paths (see `splitContiguousRuns`); the leading
+ * pad applies only to the first piece and the trailing pad only to the last.
  * Returns "" when there is nothing to draw.
  */
 export function buildRibbonPath(
   lines: RibbonRect[],
   radius: number,
   padX: number,
-  linePitch: number
+  linePitch: number,
+  edges?: { leadPad?: number; trailPad?: number; rtl?: boolean }
 ): string {
   if (!lines.length) return "";
-  return roundedPath(outline(inflate(lines, padX, linePitch)), radius);
+  const leadPad = edges?.leadPad ?? padX;
+  const trailPad = edges?.trailPad ?? padX;
+  const rtl = edges?.rtl ?? false;
+  const groups = splitContiguousRuns(lines);
+  const paths: string[] = [];
+  for (let g = 0; g < groups.length; g++) {
+    // The run's leading edge lives in the first piece, its trailing edge in the
+    // last; interior pieces pad every edge normally.
+    const gLead = g === 0 ? leadPad : padX;
+    const gTrail = g === groups.length - 1 ? trailPad : padX;
+    const sub = roundedPath(
+      outline(inflate(groups[g]!, padX, linePitch, gLead, gTrail, rtl)),
+      radius
+    );
+    if (sub) paths.push(sub);
+  }
+  return paths.join(" ");
 }
 
 function isBlockLevel(node: Node): boolean {

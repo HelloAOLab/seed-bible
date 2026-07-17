@@ -989,21 +989,62 @@ function ChapterContent(props: ChapterContentProps) {
     // non-px / "normal" computed line-height by falling back to ~1.5em.
     const computedPitch = parseFloat(style.lineHeight);
     const linePitch = computedPitch > fontSize ? computedPitch : fontSize * 1.5;
+    const rtl = style.direction === "rtl";
+
+    // Phase 1: measure every highlighted run's per-line geometry. `leadPad` /
+    // `trailPad` default to padX and may be dropped to 0 below where two colors
+    // abut horizontally.
+    const runs = Array.from(
+      content.querySelectorAll<HTMLElement>("[data-highlight-fill]")
+    )
+      .map((el) => ({
+        fill: el.getAttribute("data-highlight-fill") ?? "",
+        lines: collectLineRects(el, box.left, box.top),
+        leadPad: padX,
+        trailPad: padX,
+      }))
+      .filter((run) => run.fill !== "" && run.lines.length > 0);
+
+    // Phase 2: where two different-colored runs sit side by side on the same
+    // visual line (e.g. "...garden, ³but about..."), their facing pads would eat
+    // the small gap the verse-number margin leaves and the colors would nearly
+    // touch (and, when they overlap, the rounded ends read as points). Drop the
+    // pad on just those two facing edges — the earlier run's trailing edge (where
+    // it ends) and the later run's leading edge (where the next starts) — so that
+    // margin reads as a clean gutter. In RTL the earlier run sits to the right of
+    // the later one, so the gap is measured on the mirrored sides. Only
+    // consecutive runs that actually abut (a sub-em gap, not an unhighlighted
+    // verse between them) are trimmed.
+    const abutMax = fontSize; // ~1em: covers the verse-number margin, far under a verse's width
+    for (let k = 1; k < runs.length; k++) {
+      const prev = runs[k - 1]!;
+      const cur = runs[k]!;
+      if (prev.fill === cur.fill) continue;
+      const prevLast = prev.lines[prev.lines.length - 1]!;
+      const curFirst = cur.lines[0]!;
+      const sharesLine =
+        curFirst.top < prevLast.bottom - 2 &&
+        prevLast.top < curFirst.bottom - 2;
+      // Reading-order gap between where `prev` ends and `cur` begins: in LTR that
+      // is prev's right edge to cur's left edge; in RTL it mirrors.
+      const gap = rtl
+        ? prevLast.left - curFirst.right
+        : curFirst.left - prevLast.right;
+      if (sharesLine && gap >= 0 && gap < abutMax) {
+        prev.trailPad = 0;
+        cur.leadPad = 0;
+      }
+    }
 
     const next: Array<{ d: string; fill: string }> = [];
-    content
-      .querySelectorAll<HTMLElement>("[data-highlight-fill]")
-      .forEach((el) => {
-        const fill = el.getAttribute("data-highlight-fill");
-        if (!fill) return;
-        const d = buildRibbonPath(
-          collectLineRects(el, box.left, box.top),
-          radius,
-          padX,
-          linePitch
-        );
-        if (d) next.push({ d, fill });
+    for (const run of runs) {
+      const d = buildRibbonPath(run.lines, radius, padX, linePitch, {
+        leadPad: run.leadPad,
+        trailPad: run.trailPad,
+        rtl,
       });
+      if (d) next.push({ d, fill: run.fill });
+    }
 
     const signature = JSON.stringify(next);
     if (signature !== signatureRef.current) {
