@@ -1121,10 +1121,16 @@ export function createPlaylistManager(
       return;
     }
 
+    const generatedPlaylist: GeneratedPlaylist = {
+      title: editingPlaylist.value?.title ?? null,
+      description: editingPlaylist.value?.description ?? null,
+      items:
+        editingPlaylist.value?.items.map((i) => convertToAiPlaylistItem(i)) ??
+        [],
+    };
     chats.addContext({
       id: PLAYLIST_EDITOR_CHAT_CONTEXT_ID,
-      instructions:
-        "The user is currently creating or editing a Bible reading playlist. Use the provided tools to add, update, or remove playlist items, and to update the playlist's title and description, as the user asks.",
+      instructions: `The user is currently creating or editing a Bible reading playlist. Use the provided tools to add, update, or remove playlist items, and to update the playlist's title and description, as the user asks. Playlist: ${JSON.stringify(generatedPlaylist)}`,
       tools: getEditPlaylistTools(),
     });
   });

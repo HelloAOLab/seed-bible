@@ -3,6 +3,7 @@ import { i18n } from "seed-bible/i18n";
 import { z } from "zod";
 import { v4 as uuid } from "uuid";
 import { DateTime } from "luxon";
+import { resolveMessageAuthors } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 
 const completionsSchema = z.object({
   data: z.array(
@@ -91,50 +92,125 @@ export default function initApologistExtension() {
             chatContext.messages[chatContext.messages.length - 1];
           console.log("Generating response for message:", lastMessage);
 
+          console.log("Chat context:", chatContext);
+
+          const instructions =
+            chatContext.instructions ??
+            `Currently reading: ${context.app.selectedTab.value?.readingState.bookId} ${context.app.selectedTab.value?.readingState.chapterNumber}`;
+
           const contextMessage = {
-            role: "user",
-            content: `Currently reading: ${context.app.selectedTab.value?.readingState.bookId} ${context.app.selectedTab.value?.readingState.chapterNumber}`,
+            role: "developer",
+            content: instructions,
           };
 
-          const response = await fetch(
-            `https://${apologistDomain}/api/v1/chat/completions`,
-            {
-              method: "POST",
-              body: JSON.stringify({
-                model: apologistModel,
-                stream: false,
-                metadata: {
-                  bible: "bsb",
-                  language: i18n.language,
-                },
-                messages: [
-                  contextMessage,
-                  ...chatContext.messages.map((m) => ({
-                    role: m.authors.some(
-                      (a) => a === chatContext.participant.id
-                    )
-                      ? "user"
-                      : "assistant",
-                    content: m.text,
-                  })),
-                ],
-              }),
-              headers: apologistApiKey
-                ? {
-                    Authorization: `Bearer ${apologistApiKey}`,
-                  }
-                : {},
+          const tools = chatContext.tools?.map((t) => ({
+            type: t.type,
+            name: t.name,
+            description: t.description,
+            parameters: t.parameters,
+            strict: true,
+            function: {
+              name: t.name,
+              description: t.description,
+              parameters: t.parameters,
+              strict: true,
+            },
+          }));
+
+          let messages = [contextMessage];
+
+          for (const m of chatContext.messages) {
+            const authors = resolveMessageAuthors(chatContext.participants, m);
+            if (authors.some((a) => a.isSelf)) {
+              messages.push({
+                role: "user",
+                content: m.text,
+              });
+            } else if (
+              authors.some((a) => a.isAI && a.providerId === PROVIDER_ID)
+            ) {
+              messages.push({
+                role: "assistant",
+                content: m.text,
+              });
+            } else {
+              messages.push({
+                role: "user",
+                content: m.text,
+              });
             }
-          );
+          }
 
-          const responseData = await response.json();
-          const message = responseData.choices[0].message;
+          while (true) {
+            const response = await fetch(
+              `https://${apologistDomain}/api/v1/chat/completions`,
+              {
+                method: "POST",
+                body: JSON.stringify({
+                  model: apologistModel,
+                  stream: false,
+                  metadata: {
+                    bible: "bsb",
+                    language: i18n.language,
+                  },
+                  messages: messages,
+                  tools,
+                }),
+                headers: apologistApiKey
+                  ? {
+                      Authorization: `Bearer ${apologistApiKey}`,
+                    }
+                  : {},
+              }
+            );
 
-          if (message) {
-            return {
-              type: "text",
-              text: message.content,
-            };
+            const responseData = await response.json();
+
+            console.log("[Apologist] Chat completion response:", responseData);
+
+            const choice = responseData.choices[0];
+            const message = choice.message;
+
+            if (message) {
+              messages.push(message);
+
+              if (message.tool_calls) {
+                // Resolve tool calls
+                for (const call of message.tool_calls) {
+                  if (call.function) {
+                    console.log("[Apologist] Tool call:", call);
+
+                    const tool = chatContext.tools?.find(
+                      (t) => t.name === call.function.name
+                    );
+                    if (!tool) {
+                      throw new Error(`Tool not found: ${call.function.name}`);
+                    }
+
+                    const args = JSON.parse(call.function.arguments);
+                    const result = await tool.function(args);
+
+                    messages.push({
+                      role: "tool",
+                      tool_call_id: call.call_id,
+                      name: call.function.name,
+                      content: JSON.stringify(result),
+                    });
+                  }
+                }
+              }
+
+              if (message.content) {
+                return {
+                  type: "text",
+                  text: message.content,
+                };
+              }
+            }
+
+            if (choice.stop_reason === "stop") {
+              break;
+            }
           }
 
           return null;

@@ -832,7 +832,7 @@ export function resolveMessageTargets(
   return Array.from(matches.values());
 }
 
-function resolveMessageAuthors(
+export function resolveMessageAuthors(
   participants: ChatParticipant[],
   message: ChatMessage,
   participantIdAliases: Readonly<Record<string, string>> = {}
