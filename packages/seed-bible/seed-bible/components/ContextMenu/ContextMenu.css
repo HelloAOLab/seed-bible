@@ -26,7 +26,7 @@
 }
 
 .sb-context-menu {
-  position: absolute;
+  position: fixed;
   width: max-content;
   min-width: 12.5rem;
   max-width: 17.5rem;
