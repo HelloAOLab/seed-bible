@@ -597,7 +597,8 @@ export function createSeedBibleState(
     modals,
     i18n,
     readingExtensions,
-    ai
+    ai,
+    chats
   );
   // Close any fullscreen pane when the book/chapter/verse params change, so
   // navigating reveals the reader (every navigation path writes these params).
@@ -1418,7 +1419,13 @@ export function createSeedBibleState(
       panes.openPane({
         id: DISCOVER_PANE_ID,
         placement: "side",
-        title: () => <DiscoverPaneTitle playlists={playlists} />,
+        title: () => (
+          <DiscoverPaneTitle
+            playlists={playlists}
+            chats={chats}
+            openChatPanel={sidebar.openChatPanel}
+          />
+        ),
         header: () => <DiscoverPaneHeader playlists={playlists} />,
         onUserClose: () => {
           const currentlyPlaying = playlists.playing.value;

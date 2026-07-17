@@ -2117,19 +2117,25 @@ export function createChatsManager(
   const context = computed<LocalChatContext>(() =>
     mergeLocalChatContexts([defaultContext.value, ...additionalContexts.value])
   );
+  // Reads via `.peek()` (not `.value`) when deriving the next value from the
+  // current one: these are called from reactive effects that toggle a
+  // context on/off (e.g. `PlaylistManager` while a playlist is being edited),
+  // and a tracked read here would make `additionalContexts`/`defaultContext` a
+  // dependency of that calling effect — which its own write to the same
+  // signal would then re-trigger, looping forever.
   const setContext = (next: LocalChatContext) => {
-    defaultContext.value = { ...defaultContext.value, ...next };
+    defaultContext.value = { ...defaultContext.peek(), ...next };
   };
   const addContext = (next: IdentifiedLocalChatContext) => {
     additionalContexts.value = [
-      ...additionalContexts.value.filter((c) => c.id !== next.id),
+      ...additionalContexts.peek().filter((c) => c.id !== next.id),
       next,
     ];
   };
   const removeContext = (id: string) => {
-    additionalContexts.value = additionalContexts.value.filter(
-      (c) => c.id !== id
-    );
+    additionalContexts.value = additionalContexts
+      .peek()
+      .filter((c) => c.id !== id);
   };
   const selectedChatId = signal<string | null>(null);
   const selectedChat = computed(

@@ -51,6 +51,32 @@
   opacity: 0.9;
 }
 
+/* "AI" button shown next to the title input while editing/creating a
+   playlist (see `DiscoverPaneTitle`). Sits at the end of the flexed title
+   row, so it stays a fixed size while the input truncates around it. */
+.sb-discover-title-ai {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border: 1px solid var(--sb-primary-color);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-primary-color);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sb-discover-title-ai:hover {
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+}
+
+.sb-discover-title-ai .material-symbols-outlined {
+  font-size: 1rem;
+}
+
 /*
  * List/item primitives below back the "discover list" markup pattern (a
  * `.sb-discover-list` of `.sb-discover-item`s) rendered by this file's own

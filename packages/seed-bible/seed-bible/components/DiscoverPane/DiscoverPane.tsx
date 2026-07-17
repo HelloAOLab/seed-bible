@@ -6,6 +6,9 @@ import type { Playlist, PlaylistManager } from "../../managers/PlaylistManager";
 import type { DiscoverReference } from "../../managers/DiscoverManager";
 import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
 import type { ModalManager } from "../../managers/ModalManager";
+import type { ChatsManager } from "../../managers/ChatsManager";
+import { translateTitle } from "../../app/utils";
+import { v4 as uuid } from "uuid";
 import { MaterialIcon } from "../icons";
 import {
   ContextMenuWithButton,
@@ -63,8 +66,12 @@ export function DiscoverPaneHeader(props: { playlists: PlaylistManager }) {
  * `actualView`/`playing`/`editingPlaylist` signals, so it stays reactive and
  * resets alongside the pane body when the active tab stops playing.
  */
-export function DiscoverPaneTitle(props: { playlists: PlaylistManager }) {
-  const { playlists } = props;
+export function DiscoverPaneTitle(props: {
+  playlists: PlaylistManager;
+  chats: ChatsManager;
+  openChatPanel: () => void;
+}) {
+  const { playlists, chats, openChatPanel } = props;
   const { t } = useI18n();
   const view = playlists.actualView.value;
 
@@ -92,6 +99,39 @@ export function DiscoverPaneTitle(props: { playlists: PlaylistManager }) {
 
   if (view === "create_playlist") {
     const editing = playlists.editingPlaylist.value;
+    const providers = chats.providers.value;
+    // Opens the chat panel on a fresh local chat, seeded with an anonymous
+    // prompt message inviting the user to describe what they want changed,
+    // with the given AI provider (if any) already added as a participant.
+    // `PlaylistManager` already exposes the playlist-editing tools to every
+    // chat while a playlist is being edited, so replying here lets the AI
+    // add/update/remove items and edit the title/description.
+    const startAiChat = (providerId: string | null) => {
+      const chat = chats.createLocalSession({
+        messages: [
+          {
+            id: uuid(),
+            authors: [],
+            timeMs: Date.now(),
+            targets: [],
+            type: "text",
+            text: t("ai-playlist-chat-prompt", {
+              defaultValue: "What do you want to add/change?",
+            }),
+          },
+        ],
+        providerIds: [],
+      });
+      if (providerId) {
+        chat.addParticipant(providerId);
+      }
+      chats.selectChat(chat.id);
+      openChatPanel();
+    };
+    const aiButtonLabel = t("ai", { defaultValue: "AI" });
+    const aiButtonAriaLabel = t("ai-edit-playlist", {
+      defaultValue: "Edit playlist with AI",
+    });
     return (
       <div className="sb-discover-title-row">
         <button
@@ -120,6 +160,41 @@ export function DiscoverPaneTitle(props: { playlists: PlaylistManager }) {
             defaultValue: "Playlist title",
           })}
         />
+        {providers.length > 1 ? (
+          // Multiple providers: let the user pick which one starts the chat.
+          <ContextMenuWithButton
+            buttonClassName="sb-discover-title-ai"
+            aria-label={aiButtonAriaLabel}
+            icon={
+              <>
+                <MaterialIcon>auto_awesome</MaterialIcon>
+                {aiButtonLabel}
+              </>
+            }
+          >
+            {providers.map((provider) => (
+              <ContextMenuItem
+                key={provider.id}
+                onClick={() => startAiChat(provider.id)}
+              >
+                {translateTitle(t, provider.name)}
+              </ContextMenuItem>
+            ))}
+          </ContextMenuWithButton>
+        ) : (
+          // Zero or one provider: no choice to make, so skip the menu. A
+          // single provider is added automatically; with none, the chat opens
+          // with just the prompt message.
+          <button
+            type="button"
+            className="sb-discover-title-ai"
+            aria-label={aiButtonAriaLabel}
+            onClick={() => startAiChat(providers[0]?.id ?? null)}
+          >
+            <MaterialIcon>auto_awesome</MaterialIcon>
+            {aiButtonLabel}
+          </button>
+        )}
       </div>
     );
   }

@@ -17,6 +17,7 @@ import type {
   ReaderTab,
 } from "@packages/seed-bible/seed-bible/managers/TabsManager";
 import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import type { Mock } from "vitest";
 
 vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
   const actual = await vi.importActual<
@@ -156,6 +157,41 @@ function createMockPlaylists(
     getPlaylistUrl,
     cancelEditingPlaylist,
     goBackFromPlayingView,
+  };
+}
+
+type ChatProvider =
+  import("@packages/seed-bible/seed-bible/managers/ChatsManager").ChatProvider;
+
+interface MockChatsResult {
+  chats: import("@packages/seed-bible/seed-bible/managers/ChatsManager").ChatsManager;
+  createLocalSession: ReturnType<typeof vi.fn>;
+  selectChat: ReturnType<typeof vi.fn>;
+  addParticipant: ReturnType<typeof vi.fn>;
+  providers: ReturnType<typeof signal<ChatProvider[]>>;
+}
+
+function createMockProvider(id: string, name = id): ChatProvider {
+  return { id, name, supportsSharedChats: false } as unknown as ChatProvider;
+}
+
+/** A fake `ChatsManager` exposing just the surface `DiscoverPaneTitle`'s AI button uses. */
+function createMockChats(providers: ChatProvider[] = []): MockChatsResult {
+  const selectChat = vi.fn();
+  const addParticipant = vi.fn();
+  const createLocalSession = vi.fn(() => ({ id: "chat-1", addParticipant }));
+  const providersSignal = signal(providers);
+  const chats = {
+    createLocalSession,
+    selectChat,
+    providers: providersSignal,
+  } as unknown as import("@packages/seed-bible/seed-bible/managers/ChatsManager").ChatsManager;
+  return {
+    chats,
+    createLocalSession,
+    selectChat,
+    addParticipant,
+    providers: providersSignal,
   };
 }
 
@@ -752,10 +788,14 @@ describe("DiscoverPane", () => {
 
 describe("DiscoverPaneTitle", () => {
   let container: HTMLDivElement;
+  let chatsFixture: MockChatsResult;
+  let openChatPanel: Mock<() => void>;
 
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
+    chatsFixture = createMockChats();
+    openChatPanel = vi.fn<() => void>();
   });
 
   afterEach(() => {
@@ -768,7 +808,14 @@ describe("DiscoverPaneTitle", () => {
     const { playlists } = createMockPlaylists({ view: "discover" });
 
     act(() => {
-      render(<DiscoverPaneTitle playlists={playlists} />, container);
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+        container
+      );
     });
 
     expect(container.textContent).toBe("Discover");
@@ -784,7 +831,14 @@ describe("DiscoverPaneTitle", () => {
     });
 
     act(() => {
-      render(<DiscoverPaneTitle playlists={playlists} />, container);
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+        container
+      );
     });
 
     expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
@@ -807,7 +861,14 @@ describe("DiscoverPaneTitle", () => {
     });
 
     act(() => {
-      render(<DiscoverPaneTitle playlists={playlists} />, container);
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+        container
+      );
     });
 
     expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
@@ -843,7 +904,14 @@ describe("DiscoverPaneTitle", () => {
     } as unknown as PlaylistManager;
 
     act(() => {
-      render(<DiscoverPaneTitle playlists={playlists} />, container);
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+        container
+      );
     });
     expect(container.querySelector(".sb-discover-title")?.textContent).toBe(
       "Evening Reading"
@@ -866,7 +934,14 @@ describe("DiscoverPaneTitle", () => {
     });
 
     act(() => {
-      render(<DiscoverPaneTitle playlists={playlists} />, container);
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+        container
+      );
     });
 
     const input = container.querySelector(
@@ -889,6 +964,134 @@ describe("DiscoverPaneTitle", () => {
     expect(cancelEditingPlaylist).toHaveBeenCalledTimes(1);
   });
 
+  it("with no AI providers, the AI button starts a local chat seeded with a prompt message and no participant", () => {
+    const { playlists } = createMockPlaylists({
+      view: "create_playlist",
+      editingPlaylist: createPlaylist({ title: "Draft" }),
+    });
+
+    act(() => {
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+        container
+      );
+    });
+
+    // No menu with zero (or one) provider: a plain button, not the
+    // context-menu trigger.
+    expect(container.querySelector('[role="menu"]')).toBeNull();
+
+    const aiButton = container.querySelector(
+      ".sb-discover-title-ai"
+    ) as HTMLButtonElement;
+    expect(aiButton).not.toBeNull();
+
+    act(() => {
+      aiButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(chatsFixture.createLocalSession).toHaveBeenCalledTimes(1);
+    const history = chatsFixture.createLocalSession.mock.calls[0]![0];
+    expect(history.providerIds).toEqual([]);
+    expect(history.messages).toHaveLength(1);
+    expect(history.messages[0]).toMatchObject({
+      authors: [],
+      type: "text",
+      text: "What do you want to add/change?",
+    });
+
+    expect(chatsFixture.addParticipant).not.toHaveBeenCalled();
+    expect(chatsFixture.selectChat).toHaveBeenCalledWith("chat-1");
+    expect(openChatPanel).toHaveBeenCalledTimes(1);
+  });
+
+  it("with exactly one AI provider, the AI button adds it automatically without showing a menu", () => {
+    chatsFixture = createMockChats([createMockProvider("provider-1")]);
+    const { playlists } = createMockPlaylists({
+      view: "create_playlist",
+      editingPlaylist: createPlaylist({ title: "Draft" }),
+    });
+
+    act(() => {
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+        container
+      );
+    });
+
+    expect(container.querySelector('[role="menu"]')).toBeNull();
+
+    const aiButton = container.querySelector(
+      ".sb-discover-title-ai"
+    ) as HTMLButtonElement;
+    act(() => {
+      aiButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(chatsFixture.createLocalSession).toHaveBeenCalledTimes(1);
+    expect(chatsFixture.addParticipant).toHaveBeenCalledWith("provider-1");
+    expect(chatsFixture.selectChat).toHaveBeenCalledWith("chat-1");
+    expect(openChatPanel).toHaveBeenCalledTimes(1);
+  });
+
+  it("with multiple AI providers, the AI button shows a menu and starts the chat with the selected provider", () => {
+    chatsFixture = createMockChats([
+      createMockProvider("provider-1", "Provider One"),
+      createMockProvider("provider-2", "Provider Two"),
+    ]);
+    const { playlists } = createMockPlaylists({
+      view: "create_playlist",
+      editingPlaylist: createPlaylist({ title: "Draft" }),
+    });
+
+    act(() => {
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+        container
+      );
+    });
+
+    const aiButton = container.querySelector(
+      ".sb-discover-title-ai"
+    ) as HTMLButtonElement;
+    expect(aiButton).not.toBeNull();
+    // Not yet started: opening the menu shouldn't create a chat by itself.
+    expect(chatsFixture.createLocalSession).not.toHaveBeenCalled();
+
+    act(() => {
+      aiButton.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    const menuItems = Array.from(
+      container.querySelectorAll('[role="menuitem"]')
+    ) as HTMLButtonElement[];
+    expect(menuItems.map((item) => item.textContent)).toEqual([
+      "Provider One",
+      "Provider Two",
+    ]);
+
+    act(() => {
+      menuItems[1]!.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(chatsFixture.createLocalSession).toHaveBeenCalledTimes(1);
+    expect(chatsFixture.addParticipant).toHaveBeenCalledWith("provider-2");
+    expect(chatsFixture.selectChat).toHaveBeenCalledWith("chat-1");
+    expect(openChatPanel).toHaveBeenCalledTimes(1);
+  });
+
   it("stores a whitespace-only title as null in the create view", () => {
     const { playlists } = createMockPlaylists({
       view: "create_playlist",
@@ -896,7 +1099,14 @@ describe("DiscoverPaneTitle", () => {
     });
 
     act(() => {
-      render(<DiscoverPaneTitle playlists={playlists} />, container);
+      render(
+        <DiscoverPaneTitle
+          playlists={playlists}
+          chats={chatsFixture.chats}
+          openChatPanel={openChatPanel}
+        />,
+        container
+      );
     });
 
     const input = container.querySelector(
