@@ -732,7 +732,7 @@ const DARK_THEME: BibleTheme = {
   // muddy and washed out, so solid colors are used.)
   highlightColors: {
     yellow: {
-      color: "#7a6420",
+      color: "#756a0a",
       fontColor: "#ffffff",
       wordsOfJesusFontColor: "#ff9e80",
     },
