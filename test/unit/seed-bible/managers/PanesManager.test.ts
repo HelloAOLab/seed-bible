@@ -448,6 +448,168 @@ describe("createPanes", () => {
     });
   });
 
+  describe("onClose", () => {
+    it("calls onClose with 'programmatic' when closed via closePane", () => {
+      const panes = createPanes();
+      const onClose = vi.fn();
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+        onClose,
+      });
+
+      panes.closePane(pane.id);
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(onClose).toHaveBeenCalledWith("programmatic");
+    });
+
+    it("calls onClose with 'user' when closePane is given the user reason", () => {
+      const panes = createPanes();
+      const onClose = vi.fn();
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+        onClose,
+      });
+
+      panes.closePane(pane.id, "user");
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(onClose).toHaveBeenCalledWith("user");
+    });
+
+    it("calls onClose for every pane closed via closeAll", () => {
+      const panes = createPanes();
+      const firstClose = vi.fn();
+      const secondClose = vi.fn();
+      panes.openPane({
+        placement: "floating",
+        title: "First",
+        component: componentReturning("First"),
+        onClose: firstClose,
+      });
+      panes.openPane({
+        placement: "floating",
+        title: "Second",
+        component: componentReturning("Second"),
+        onClose: secondClose,
+      });
+
+      panes.closeAll();
+
+      expect(firstClose).toHaveBeenCalledTimes(1);
+      expect(firstClose).toHaveBeenCalledWith("programmatic");
+      expect(secondClose).toHaveBeenCalledTimes(1);
+      expect(secondClose).toHaveBeenCalledWith("programmatic");
+    });
+
+    it("calls onClose for a pane displaced when a fullscreen pane opens", () => {
+      const panes = createPanes();
+      const displacedClose = vi.fn();
+      panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+        onClose: displacedClose,
+      });
+
+      panes.openPane({
+        placement: "fullscreen",
+        title: "Fullscreen",
+        component: componentReturning("Fullscreen"),
+      });
+
+      expect(displacedClose).toHaveBeenCalledTimes(1);
+      expect(displacedClose).toHaveBeenCalledWith("displaced");
+    });
+
+    it("calls onClose for a pane displaced on a mobile viewport", () => {
+      const isMobile = signal(true);
+      const panes = createPanes(isMobile);
+      const firstClose = vi.fn();
+      panes.openPane({
+        placement: "floating",
+        title: "First",
+        component: componentReturning("First"),
+        onClose: firstClose,
+      });
+
+      panes.openPane({
+        placement: "floating",
+        title: "Second",
+        component: componentReturning("Second"),
+      });
+
+      expect(firstClose).toHaveBeenCalledTimes(1);
+      expect(firstClose).toHaveBeenCalledWith("displaced");
+    });
+
+    it("calls onClose with 'programmatic' via closeFullscreenPanes", () => {
+      const isMobile = signal(true);
+      const panes = createPanes(isMobile);
+      const onClose = vi.fn();
+      panes.openPane({
+        placement: "floating",
+        title: "Panel",
+        component: componentReturning("Panel"),
+        onClose,
+      });
+
+      panes.closeFullscreenPanes();
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(onClose).toHaveBeenCalledWith("programmatic");
+    });
+
+    it("does not call onClose when a pane is reused/updated by id", () => {
+      const panes = createPanes();
+      const onClose = vi.fn();
+      panes.openPane({
+        id: "shared",
+        placement: "floating",
+        title: "First",
+        component: componentReturning("First"),
+        onClose,
+      });
+
+      panes.openPane({
+        id: "shared",
+        placement: "floating",
+        title: "Updated",
+        component: componentReturning("Updated"),
+        onClose,
+      });
+
+      expect(onClose).not.toHaveBeenCalled();
+      expect(panes.panes.value).toHaveLength(1);
+    });
+
+    it("calls onClose exactly once even when the handler re-runs closePane", () => {
+      const panes = createPanes();
+      let paneId: string | undefined;
+      const onClose = vi.fn(() => {
+        // Extensions typically react to a close by running their own
+        // closePane on the id they tracked. The pane is already gone, so this
+        // must be a safe no-op that does not re-fire onClose.
+        if (paneId) panes.closePane(paneId);
+      });
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Panel",
+        component: componentReturning("Panel"),
+        onClose,
+      });
+      paneId = pane.id;
+
+      panes.closePane(pane.id);
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+  });
+
   describe("selectPane / selectedPaneId", () => {
     it("selects a pane by id", () => {
       const panes = createPanes();
