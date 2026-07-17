@@ -1,12 +1,27 @@
 import { PieceMapper } from "../mappers/PieceMapper";
 import { LayoutConfigProvider } from "../config/layout/LayoutConfigProvider";
 import { ObjectPooler } from "../adapters/environment/ObjectPooler";
-import type { BibleStackObjectPoolerMap } from "../models/objectPooler";
+import type {
+  BibleStackObjectPoolerMap,
+  PieceListeners,
+  PoolData,
+} from "../models/objectPooler";
+import { ListenTagEventManager } from "../adapters/events/ListenTagEventManager";
+import type {
+  BookBot,
+  BotTypeMap,
+  ChapterBot,
+  CrossLineBot,
+  SectionBot,
+  TestamentBot,
+  VerseBot,
+  VersesBundleBot,
+} from "../models/stack";
 import {
   BiblePieces,
+  SelectionModalities,
+  type BiblePiece,
   type Piece,
-  type PieceState,
-  type SectionShadow,
 } from "../../domain/models/canvas";
 import { thisTypedBot as testamentPrefab } from "../prefabs/testament/botAdapter";
 import { AudioAdapter } from "../adapters/audio/AudioAdapter";
@@ -60,6 +75,7 @@ import { thisTypedBot as crossLinePrefab } from "../prefabs/crossLine/botAdapter
 import { thisTypedBot as sectionShadowPrefab } from "../prefabs/sectionShadow/botAdapter";
 import { thisTypedBot as bibleTransformerPrefab } from "../prefabs/bibleTransformer/botAdapter";
 import { thisTypedBot as bibleShadowPrefab } from "../prefabs/shadow/botAdapter";
+import { thisTypedBot as entrypointBot } from "../entrypoints/botAdapter";
 import { StackTestamentMapper } from "../mappers/StackTestamentMapper";
 import { StackSectionMapper } from "../mappers/StackSectionMapper";
 import { StackSectionBookMapper } from "../mappers/StackSectionBookMapper";
@@ -149,10 +165,7 @@ import { LabelAdapter } from "../adapters/labels/LabelAdapter";
 import { LabelsConfigProvider } from "../config/labels/LabelsConfigProvider";
 import { LabelDateService } from "../../application/services/LabelDateService";
 import { PiecesConfigProvider } from "../config/pieces.tsx/PiecesConfigProvider";
-import { CapitalizeFirstLetter } from "../../domain/functions/string";
 import { TranslationsConfigProvider } from "../config/translation/TranslationsConfigProvider";
-import type { ArrangementTranslationKey } from "../config/translation/ArrangementTranslations";
-import { ComputeDateLabelText } from "../../domain/functions/time";
 import { ScriptureService } from "../../application/services/ScriptureService";
 import type { ArrangementInfo } from "../../domain/models/arrangement";
 import { RenderOrderAdapter } from "../adapters/environment/RenderOrderAdapter";
@@ -168,15 +181,23 @@ import { VerseInteractionController } from "../controllers/stack/VerseInteractio
 import { VersesBundleInteractionController } from "../controllers/stack/VersesBundleInteractionController";
 import { RelocationEventMapper } from "../mappers/RelocationEventMapper";
 import { BotStateController } from "../controllers/stack/BotStateController";
-import {
-  bookStateUpdateStrategy,
-  labelRelocationStrategy,
-} from "../controllers/stack/PieceStateUpdateStrategies";
-import type { SectionBot, TestamentBot } from "../models/stack";
-import type { PieceBotTags } from "../models/casualos";
+import { CrossLineInteractionController } from "../controllers/stack/CrossLineInteractionController";
+import { createPieceStateMap } from "../controllers/stack/pieceStateMap";
+import { createBotStateChangeStrategyFactory } from "../controllers/stack/botStateChangeStrategy";
+import { makeLabelPropertiesStrategies } from "../config/labels/makeLabelPropertiesStrategies";
 import { PieceStateService } from "../../application/services/PieceStateService";
+import { onClickArg } from "@casual-simulation/aux-common";
+import type { Vector2 } from "../../../../pattern-typings/AuxLibraryDefinitions";
+import type { BotListenerParametersMap, PieceBot } from "../models/casualos";
+import { ObjectPoolerConfigProvider } from "../config/objectPool/ObjectPoolConfigProvider";
+
+let initialized = false;
 
 export const bootstrapExtension = () => {
+  if (initialized) return;
+
+  initialized = true;
+
   // // 1. Instantiating mappers
 
   const pieceMapper = new PieceMapper();
@@ -228,105 +249,55 @@ export const bootstrapExtension = () => {
   const translationsConfigProvider = new TranslationsConfigProvider(
     configBot.tags.language
   );
+  const objectPoolerConfigProvider = new ObjectPoolerConfigProvider();
 
   // // 3. Instantiating adapters
 
+  const scripturePiecesStateService = new ScripturePiecesStateService();
+
+  const listenTagEventBus = new ListenTagEventManager();
+
+  const makeListeners = <K extends BiblePiece>(
+    tags: (keyof BotListenerParametersMap<BotTypeMap[K]>)[]
+  ): PieceListeners<BotTypeMap[K]> => {
+    const listeners = {} as PieceListeners<BotTypeMap[K]>;
+
+    for (const tag of tags) {
+      listeners[tag] = (params, bot) =>
+        listenTagEventBus.emit(tag, { bot, params });
+    }
+
+    return listeners;
+  };
+
+  const makePoolData = <K extends keyof BotTypeMap>(
+    key: K,
+    prefab: BotTypeMap[K],
+    size: number
+  ): PoolData<K, BotTypeMap[K]> => ({
+    key,
+    prefab,
+    customTags: piecesConfigProvider.getInitialConfig(key),
+    listeners: makeListeners(
+      objectPoolerConfigProvider.getListenTags(key) ?? []
+    ),
+    size,
+  });
+
   const objectPooler = new ObjectPooler<BibleStackObjectPoolerMap>(
     [
-      {
-        key: BiblePieces.StackTestament,
-        prefab: testamentPrefab,
-        customTags: piecesConfigProvider.getInitialConfig(
-          BiblePieces.StackTestament
-        ),
-        size: 2,
-      },
-      {
-        key: BiblePieces.StackSection,
-        prefab: sectionPrefab,
-        customTags: piecesConfigProvider.getInitialConfig(
-          BiblePieces.StackSection
-        ),
-        size: 8,
-      },
-      {
-        key: BiblePieces.StackBook,
-        prefab: bookPrefab,
-        customTags: piecesConfigProvider.getInitialConfig(
-          BiblePieces.StackBook
-        ),
-        size: 20,
-      },
-      {
-        key: BiblePieces.StackSectionBook,
-        prefab: bookPrefab,
-        customTags: piecesConfigProvider.getInitialConfig(
-          BiblePieces.StackSectionBook
-        ),
-        size: 8,
-      },
-      {
-        key: BiblePieces.StackChapter,
-        prefab: chapterPrefab,
-        customTags: piecesConfigProvider.getInitialConfig(
-          BiblePieces.StackChapter
-        ),
-        size: 20,
-      },
-      {
-        key: BiblePieces.StackSectionShadow,
-        prefab: sectionShadowPrefab,
-        customTags: piecesConfigProvider.getInitialConfig(
-          BiblePieces.StackSectionShadow
-        ),
-        size: 8,
-      },
-      {
-        key: BiblePieces.VersesBundle,
-        prefab: versesBunblePrefab,
-        customTags: piecesConfigProvider.getInitialConfig(
-          BiblePieces.VersesBundle
-        ),
-        size: 3,
-      },
-      {
-        key: BiblePieces.Verse,
-        prefab: versePrefab,
-        customTags: piecesConfigProvider.getInitialConfig(BiblePieces.Verse),
-        size: 3,
-      },
-      {
-        key: BiblePieces.StackCover,
-        prefab: coverPrefab,
-        customTags: piecesConfigProvider.getInitialConfig(
-          BiblePieces.StackCover
-        ),
-        size: 3,
-      },
-      {
-        key: BiblePieces.StackCrossLine,
-        prefab: crossLinePrefab,
-        customTags: piecesConfigProvider.getInitialConfig(
-          BiblePieces.StackCrossLine
-        ),
-        size: 2,
-      },
-      {
-        key: BiblePieces.StackTransformer,
-        prefab: bibleTransformerPrefab,
-        customTags: piecesConfigProvider.getInitialConfig(
-          BiblePieces.StackTransformer
-        ),
-        size: 1,
-      },
-      {
-        key: BiblePieces.StackShadow,
-        prefab: bibleShadowPrefab,
-        customTags: piecesConfigProvider.getInitialConfig(
-          BiblePieces.StackShadow
-        ),
-        size: 1,
-      },
+      makePoolData(BiblePieces.StackTestament, testamentPrefab, 2),
+      makePoolData(BiblePieces.StackSection, sectionPrefab, 8),
+      makePoolData(BiblePieces.StackBook, bookPrefab, 20),
+      makePoolData(BiblePieces.StackSectionBook, bookPrefab, 8),
+      makePoolData(BiblePieces.StackChapter, chapterPrefab, 20),
+      makePoolData(BiblePieces.StackSectionShadow, sectionShadowPrefab, 8),
+      makePoolData(BiblePieces.VersesBundle, versesBunblePrefab, 3),
+      makePoolData(BiblePieces.Verse, versePrefab, 3),
+      makePoolData(BiblePieces.StackCover, coverPrefab, 3),
+      makePoolData(BiblePieces.StackCrossLine, crossLinePrefab, 2),
+      makePoolData(BiblePieces.StackTransformer, bibleTransformerPrefab, 1),
+      makePoolData(BiblePieces.StackShadow, bibleShadowPrefab, 1),
     ],
     {
       getDimension: () => os.getCurrentDimension(),
@@ -685,361 +656,15 @@ export const bootstrapExtension = () => {
     },
     activityIndicatorsAdapterPort: activityIndicatorsAdapter,
     labelAnimationAdapterPort: labelFeedbackAdapter,
-    labelPropertiesStrategies: {
-      [BiblePieces.StackTestament]: {
-        getLabel: (piece: Piece<"StackTestament">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `BibleStack bootstrap: data not found at getLabel at createPieceLabelService`
-            );
-          }
-          return data.getPieceInfoProperty("name");
-        },
-        getColor: (piece: Piece<"StackTestament">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `BibleStack bootstrap: data not found at getColor at createPieceLabelService`
-            );
-          }
-          return "#ffffff";
-        },
-        getLabelColor: (piece: Piece<"StackTestament">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `BibleStack bootstrap: data not found at getColor at createPieceLabelService`
-            );
-          }
-          return visualStateRegistry.getStateProperty({
-            piece,
-            property: "labelTextColor",
-          });
-        },
-        getLabelPositioning: (piece: Piece<"StackTestament">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `bible-stack bootstrap: data not found at getLabelPositioning at pieceLabelService`
-            );
-          }
-          return data.isOnTheGround ? "Top" : "LeftSided";
-        },
-        isInteractable: true,
-        makesAttentionFeedback: false,
-      },
-      [BiblePieces.StackSection]: {
-        getLabel: (piece: Piece<"StackSection">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `BibleStack bootstrap: data not found at getLabel at createPieceLabelService`
-            );
-          }
-          let name: string | undefined;
-          const translationKey = data.getPieceInfoProperty("translationKey");
-          if (translationKey) {
-            const translatedName =
-              translationsConfigProvider.getArrangementTranslation(
-                translationKey as ArrangementTranslationKey
-              );
-            if (translatedName) {
-              name = translatedName;
-            }
-          }
-          if (!name) {
-            name = data.getPieceInfoProperty("name");
-          }
-          return CapitalizeFirstLetter(name.split("-").join(" "));
-        },
-        getColor: (piece: Piece<"StackSection">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `BibleStack bootstrap: data not found at getColor at createPieceLabelService`
-            );
-          }
-          return data.getPieceInfoProperty("color");
-        },
-        getLabelColor: (piece: Piece<"StackSection">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `BibleStack bootstrap: data not found at getColor at createPieceLabelService`
-            );
-          }
-          return visualStateRegistry.getStateProperty({
-            piece,
-            property: "labelTextColor",
-          });
-        },
-        getLabelPositioning: (piece: Piece<"StackSection">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `bible-stack bootstrap: data not found at getLabelPositioning at pieceLabelService`
-            );
-          }
-          return data.isOnTheGround ? "Top" : "LeftSided";
-        },
-        makesAttentionFeedback: true,
-        isInteractable: true,
-      },
-      [BiblePieces.StackSectionShadow]: {
-        getLabel: (piece: Piece<"StackSectionShadow">) => {
-          const sectionData = pieceDataRepository.getDataById(
-            "StackSection",
-            (piece as SectionShadow).sectionDataId
-          );
-          if (!sectionData) {
-            throw new Error(
-              "bible-stack bootstrap: sectionData not fonud at getLabel"
-            );
-          }
-          let name: string | undefined;
-          const translationKey =
-            sectionData.getPieceInfoProperty("translationKey");
-          if (translationKey) {
-            const translatedName =
-              translationsConfigProvider.getArrangementTranslation(
-                translationKey as ArrangementTranslationKey
-              );
-            if (translatedName) {
-              name = translatedName;
-            }
-          }
-          if (!name) {
-            name = sectionData.getPieceInfoProperty("name");
-          }
-          return CapitalizeFirstLetter(name.split("-").join(" "));
-        },
-        getColor: (piece: Piece<"StackSectionShadow">) => {
-          const sectionData = pieceDataRepository.getDataById(
-            "StackSection",
-            (piece as SectionShadow).sectionDataId
-          );
-          if (!sectionData) {
-            throw new Error(
-              "bible-stack bootstrap: sectionData not fonud at getLabel"
-            );
-          }
-          if (!sectionData.piece) {
-            throw new Error(
-              "bible-stack bootstrap: sectionData.piede not defined at getLabel"
-            );
-          }
-          return visualStateRegistry.getStateProperty({
-            piece: sectionData.piece,
-            property: "labelTextColor",
-          });
-        },
-        getLabelColor: () => {
-          return "#ffffff";
-        },
-        getLabelPositioning: (piece: Piece<"StackSectionShadow">) => {
-          const sectionData = pieceDataRepository.getDataById(
-            "StackSection",
-            (piece as SectionShadow).sectionDataId
-          );
-          if (!sectionData) {
-            throw new Error(
-              "bible-stack bootstrap: sectionData not fonud at getLabel"
-            );
-          }
-          if (sectionData.isOnTheGround) {
-            return "Top";
-          }
-          return "RightSidedCorner";
-        },
-        isInteractable: true,
-        makesAttentionFeedback: false,
-      },
-      [BiblePieces.StackSectionBook]: {
-        getLabel: (piece: Piece<"StackSectionBook">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `BibleStack bootstrap: data not found at getLabel at pieceLabelService`
-            );
-          }
-          const bookId = data.getPieceBookInfoProperty("bookId");
-          return bookNamesProvider.getBookName(bookId) ?? bookId;
-        },
-        getDate: (piece: Piece<"StackSectionBook">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `BibleStack bootstrap: data not found at getLabel at pieceLabelService`
-            );
-          }
-          if (scripturePiecesStateService.shouldShowLabelDates) {
-            const staticInfo = booksStaticInfoRepository.getBookStaticInfo(
-              data.getPieceBookInfoProperty("bookId")
-            );
-            if (staticInfo) {
-              const currentYear = new Date().getFullYear();
-              return staticInfo.relativeDateRange
-                ? ComputeDateLabelText({
-                    format: labelDateService.dateFormat,
-                    range: staticInfo.relativeDateRange,
-                    currentYear,
-                  })
-                : undefined;
-            }
-          }
-          return undefined;
-        },
-        getColor: (piece: Piece<"StackSectionBook">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `BibleStack bootstrap: data not found at getColor at pieceLabelService`
-            );
-          }
-          if (data.selectionState === "Selected") {
-            return visualStateRegistry.getStateProperty({
-              piece,
-              property: "labelTextColor",
-            });
-          }
-          return "#ffffff";
-        },
-        getLabelColor: (piece: Piece<"StackSectionBook">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `BibleStack bootstrap: data not found at getLabelColor at pieceLabelService`
-            );
-          }
-          if (data.selectionState === "Selected") {
-            return "#ffffff";
-          }
-          return visualStateRegistry.getStateProperty({
-            piece,
-            property: "labelTextColor",
-          });
-        },
-        getLabelPositioning: (piece: Piece<"StackSectionBook">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `BibleStack bootstrap: data not found at getLabelPositioning at pieceLabelService`
-            );
-          }
-          return data.isOnTheGround ? "Top" : "LeftSided";
-        },
-        isInteractable: true,
-        makesAttentionFeedback: true,
-      },
-      [BiblePieces.StackBook]: {
-        getLabel: (piece: Piece<"StackBook">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `BibleStack bootstrap: data not found at getLabel at pieceLabelService`
-            );
-          }
-          const bookId = data.getPieceInfoProperty("bookId");
-          return bookNamesProvider.getBookName(bookId) ?? bookId;
-        },
-        getDate: (piece: Piece<"StackBook">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `BibleStack bootstrap: data not found at getLabel at pieceLabelService`
-            );
-          }
-          if (scripturePiecesStateService.shouldShowLabelDates) {
-            const staticInfo = booksStaticInfoRepository.getBookStaticInfo(
-              data.getPieceInfoProperty("bookId")
-            );
-            if (staticInfo) {
-              const currentYear = new Date().getFullYear();
-              return staticInfo.relativeDateRange
-                ? ComputeDateLabelText({
-                    format: labelDateService.dateFormat,
-                    range: staticInfo.relativeDateRange,
-                    currentYear,
-                  })
-                : undefined;
-            }
-          }
-          return undefined;
-        },
-        getColor: (piece: Piece<"StackBook">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `BibleStack bootstrap: data not found at getColor at pieceLabelService`
-            );
-          }
-          if (data.selectionState === "Selected") {
-            return visualStateRegistry.getStateProperty({
-              piece,
-              property: "labelTextColor",
-            });
-          }
-          return "#ffffff";
-        },
-        getLabelColor: (piece: Piece<"StackBook">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `BibleStack bootstrap: data not found at getLabelColor at pieceLabelService`
-            );
-          }
-          if (data.selectionState === "Selected") {
-            return "#ffffff";
-          }
-          return visualStateRegistry.getStateProperty({
-            piece,
-            property: "labelTextColor",
-          });
-        },
-        getLabelPositioning: (piece: Piece<"StackBook">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `BibleStack bootstrap: data not found at getLabelPositioning at pieceLabelService`
-            );
-          }
-          return data.isOnTheGround ? "Top" : "LeftSided";
-        },
-        isInteractable: true,
-        makesAttentionFeedback: true,
-      },
-      [BiblePieces.StackChapter]: {
-        getLabel: (piece: Piece<"StackChapter">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `bible-stack bootstrap: data not found at getLabel at pieceLabelService`
-            );
-          }
-          const bookId = data.getCreationParam("bookId");
-          const bookName = bookNamesProvider.getBookName(bookId) ?? bookId;
-          return `${bookName} ${data.getPieceInfoProperty("number")}`;
-        },
-        getColor: () => {
-          return "#ffffff";
-        },
-        getLabelColor: () => {
-          return "#000000";
-        },
-        getLabelPositioning: (piece: Piece<"StackChapter">) => {
-          const data = pieceDataRepository.getPieceData(piece);
-          if (!data) {
-            throw new Error(
-              `bible-Stack bootstrap: data not found at getLabelPositioning at pieceLabelService`
-            );
-          }
-          return data.isOnTheGround ? "Top" : "LeftSided";
-        },
-        isInteractable: false,
-        makesAttentionFeedback: false,
-      },
-    },
+    labelPropertiesStrategies: makeLabelPropertiesStrategies({
+      pieceDataRepository,
+      visualStateRegistry,
+      translationsConfigProvider,
+      bookNamesProvider,
+      booksStaticInfoRepository,
+      labelDateService,
+      scripturePiecesStateService,
+    }),
   });
 
   const pieceHierarchyService = new PieceHierarchyService({
@@ -1058,7 +683,6 @@ export const bootstrapExtension = () => {
   });
   const explodedViewService = new ExplodedViewService();
   const testamentSelectionService = new TestamentSelectionService();
-  const scripturePiecesStateService = new ScripturePiecesStateService();
   const pieceInteractabilityService = new PieceInteractabilityService();
   const bookChaptersManagementService = new BookChaptersManagementService();
 
@@ -1321,7 +945,13 @@ export const bootstrapExtension = () => {
       sleep: (ms) => os.sleep(ms),
     },
   });
-  const pieceStateService = new PieceStateService();
+  const pieceStateService = new PieceStateService({
+    labelPositionUpdaterPort: pieceLabelService,
+    pieceDataRepositoryPort: pieceDataRepository,
+    bookChaptersManagementServicePort: bookChaptersManagementService,
+    activityIndicatorsAdapterPort: activityIndicatorsAdapter,
+    activityNotificationAdapterPort: activityNotificationAdapter,
+  });
 
   // 5. Instantiating controllers
 
@@ -1395,92 +1025,269 @@ export const bootstrapExtension = () => {
 
   const dimension = os.getCurrentDimension();
 
-  const pieceStateMap: Partial<Record<string, keyof PieceState>> = {
-    [dimension + "X"]: "positionX",
-    [dimension + "Y"]: "positionY",
-    [dimension + "Z"]: "positionZ",
-    scaleX: "sizeX",
-    scaleY: "sizeY",
-    scaleZ: "sizeZ",
-  };
+  const pieceStateMap = createPieceStateMap(dimension);
+
+  const makeBotStateChangeStrategy = createBotStateChangeStrategyFactory({
+    pieceStateMap,
+    pieceStateService,
+  });
 
   const botStateController = new BotStateController({
     stateChangeStrategies: {
-      StackTestament: (bot, changedTags) => {
-        if (!bot.tags.isInUse) return;
-        const changedProperties: Array<keyof PieceState> = [];
-        for (const tag of changedTags) {
-          const property = pieceStateMap[tag];
-          if (property) {
-            changedProperties.push(property);
-          }
-        }
-        if (changedProperties.length > 0) {
-          const piece = stackTestamentMapper.toDomain(bot);
-          pieceStateService.handleTestamentStateChanged({
-            piece,
-            changedProperties,
-          });
-        }
-      },
-      StackSection: (bot, changedTags) => {
-        if (!bot.tags.isInUse) return;
-
-        const changedProperties: Array<keyof PieceState> = [];
-        for (const tag of changedTags) {
-          const property = pieceStateMap[tag];
-          if (property) {
-            changedProperties.push(property);
-          }
-        }
-        if (changedProperties.length > 0) {
-          const piece = stackSectionMapper.toDomain(bot);
-          pieceStateService.handleSectionStateChanged({
-            piece,
-            changedProperties,
-          });
-        }
-      },
-      StackBook: (bot, changedTags) => {
-        if (!bot.tags.isInUse) return;
-
-        const changedProperties: Array<keyof PieceState> = [];
-        for (const tag of changedTags) {
-          const property = pieceStateMap[tag];
-          if (property) {
-            changedProperties.push(property);
-          }
-        }
-        if (changedProperties.length > 0) {
-          const piece = stackBookMapper.toDomain(bot);
-          pieceStateService.handleBookStateChanged({
-            piece,
-            changedProperties,
-          });
-        }
-      },
-      StackChapter: (bot, changedTags) => {
-        if (!bot.tags.isInUse) return;
-
-        const changedProperties: Array<keyof PieceState> = [];
-        for (const tag of changedTags) {
-          const property = pieceStateMap[tag];
-          if (property) {
-            changedProperties.push(property);
-          }
-        }
-        if (changedProperties.length > 0) {
-          const piece = stackChapterMapper.toDomain(bot);
-          pieceStateService.handlechapterStateChanged({
-            piece,
-            changedProperties,
-          });
-        }
-      },
+      StackTestament: makeBotStateChangeStrategy(stackTestamentMapper),
+      StackSection: makeBotStateChangeStrategy(stackSectionMapper),
+      StackBook: makeBotStateChangeStrategy(stackBookMapper),
+      StackChapter: makeBotStateChangeStrategy(stackChapterMapper),
+      StackSectionShadow: makeBotStateChangeStrategy({
+        toDomain: (bot: typeof sectionShadowPrefab) =>
+          stackSectionShadowMapper.toDomain(bot, bot.tags.sectionDataId),
+      }),
     },
   });
 
+  const crossLineInteractionController = new CrossLineInteractionController({
+    pieceMapperPort: pieceMapper,
+  });
+
   // 6. Event wiring
+
+  listenTagEventBus.subscribe("onBotChanged", ({ bot, params }) => {
+    botStateController.handleStateChanged(bot, params.tags);
+  });
+
+  listenTagEventBus.subscribe("onClick", ({ bot, params }) => {
+    switch (bot.tags.type) {
+      case "StackTestament":
+        testamentInteractionController.handleTestamentClick({
+          testament: bot as TestamentBot,
+          interaction: params.modality,
+        });
+        break;
+      case "StackSection":
+        sectionInteractionController.handleSectionClick({
+          section: bot as SectionBot,
+          typeOfInteraction: params.modality,
+        });
+        break;
+      case "StackBook":
+      case "StackSectionBook":
+        bookInteractionController.handleBookClick({
+          book: bot as BookBot,
+          interaction: params.modality,
+        });
+        break;
+      case "StackChapter":
+        chapterInteractionController.handleChapterClick({
+          chapter: bot as ChapterBot,
+          interaction: params.modality,
+        });
+        break;
+      case "StackCover":
+        coverInteractionController.handleCoverClick();
+        break;
+      case "Verse":
+        verseInteractionController.handleVerseClick(bot as VerseBot);
+        break;
+      case "VersesBundle":
+        versesBundleInteractionController.handleBundleClick(
+          bot as VersesBundleBot
+        );
+        break;
+      default:
+        break;
+    }
+  });
+
+  listenTagEventBus.subscribe("onDrag", ({ bot }) => {
+    switch (bot.tags.type) {
+      case "StackTestament":
+        testamentInteractionController.handleTestamentDrag(bot as TestamentBot);
+        break;
+      case "StackSection":
+        sectionInteractionController.handleSectionDrag(bot as SectionBot);
+        break;
+      case "StackBook":
+      case "StackSectionBook":
+        bookInteractionController.handleBookDrag({ book: bot as BookBot });
+        break;
+      case "StackChapter":
+        chapterInteractionController.handleChapterDrag(bot as ChapterBot);
+        break;
+      default:
+        break;
+    }
+    os.enableCustomDragging();
+  });
+
+  listenTagEventBus.subscribe("onDragging", ({ bot, params }) => {
+    switch (bot.tags.type) {
+      case "StackTestament":
+        testamentInteractionController.handleTestamentDragging({
+          testament: bot as TestamentBot,
+          draggingEvent: params,
+        });
+        break;
+      case "StackSection":
+        sectionInteractionController.handleSectionDragging({
+          section: bot as SectionBot,
+          draggingEvent: params,
+        });
+        break;
+      case "StackBook":
+      case "StackSectionBook":
+        bookInteractionController.handleBookDragging({
+          book: bot as BookBot,
+          draggingEvent: params,
+        });
+        break;
+      case "StackChapter":
+        chapterInteractionController.handleChapterDragging({
+          chapter: bot as ChapterBot,
+          draggingEvent: params,
+        });
+        break;
+      default:
+        break;
+    }
+  });
+
+  listenTagEventBus.subscribe("onDrop", ({ bot, params }) => {
+    switch (bot.tags.type) {
+      case "StackTestament":
+        testamentInteractionController.handleTestamentDrop({
+          testament: bot as TestamentBot,
+          dropEvent: params,
+        });
+        break;
+      case "StackSection":
+        sectionInteractionController.handleSectionDrop({
+          section: bot as SectionBot,
+          dropEvent: params,
+        });
+        break;
+      case "StackBook":
+      case "StackSectionBook":
+        bookInteractionController.handleBookDrop({
+          book: bot as BookBot,
+          dropEvent: params,
+        });
+        break;
+      case "StackChapter":
+        chapterInteractionController.handleChapterDrop({
+          chapter: bot as ChapterBot,
+          dropEvent: params,
+        });
+        break;
+      default:
+        break;
+    }
+  });
+
+  listenTagEventBus.subscribe("onPointerEnter", ({ bot }) => {
+    switch (bot.tags.type) {
+      case "StackTestament":
+        testamentInteractionController.handleTestamentPointerEnter(
+          bot as TestamentBot
+        );
+        break;
+      case "StackSection":
+        sectionInteractionController.handleSectionPointerEnter(
+          bot as SectionBot
+        );
+        break;
+      case "StackBook":
+      case "StackSectionBook":
+        bookInteractionController.handleBookPointerEnter(bot as BookBot);
+        break;
+      case "StackChapter":
+        chapterInteractionController.handleChapterPointerEnter(
+          bot as ChapterBot
+        );
+        break;
+      case "VersesBundle":
+        versesBundleInteractionController.handleVersesBundlePointerEnter(
+          bot as VersesBundleBot
+        );
+        break;
+      default:
+        break;
+    }
+  });
+
+  listenTagEventBus.subscribe("onPointerExit", ({ bot }) => {
+    switch (bot.tags.type) {
+      case "StackSection":
+        sectionInteractionController.handleSectionPointerExit(
+          bot as SectionBot
+        );
+        break;
+      case "StackBook":
+      case "StackSectionBook":
+        bookInteractionController.handleBookPointerExit(bot as BookBot);
+        break;
+      case "StackChapter":
+        chapterInteractionController.handleChapterPointerExit(
+          bot as ChapterBot
+        );
+        break;
+      case "VersesBundle":
+        versesBundleInteractionController.handleVersesBundlePointerExit(
+          bot as VersesBundleBot
+        );
+        break;
+      default:
+        break;
+    }
+  });
+
+  listenTagEventBus.subscribe("onPointerUp", ({ bot }) => {
+    switch (bot.tags.type) {
+      case "StackTestament":
+        testamentInteractionController.handleTestamentPointerUp({
+          testament: bot as TestamentBot,
+        });
+        break;
+      case "StackSection":
+        sectionInteractionController.handleSectionPointerUp(bot as SectionBot);
+        break;
+      case "StackBook":
+      case "StackSectionBook":
+        bookInteractionController.handleBookPointerUp(bot as BookBot);
+        break;
+      case "StackChapter":
+        chapterInteractionController.handleChapterPointerUp(bot as ChapterBot);
+        break;
+      case "StackCrossLine":
+        crossLineInteractionController.handleCrossLinePointerUp(
+          bot as CrossLineBot
+        );
+        break;
+      default:
+        break;
+    }
+  });
+
+  listenTagEventBus.subscribe("onPointerDown", ({ bot }) => {
+    switch (bot.tags.type) {
+      case "StackCrossLine":
+        crossLineInteractionController.handleCrossLinePointerDown(
+          bot as CrossLineBot
+        );
+        break;
+      default:
+        break;
+    }
+  });
+
+  // Global grid events fire on the entrypoint bot (not a pooled piece), so its
+  // listener is attached here directly, calling the controller straight from the
+  // native callback — no listen-tag bus in between.
+  os.addBotListener(entrypointBot, "onGridUp", () =>
+    canvasInteractionController.handleOnGridUp()
+  );
+
+  // TODO: Add an onBotChanged event listener to the configBot to listen to camera rotation changes.
+  // call to an environment or camera controller to update all the activity notifications.
 
   // 7. Disposers
 };

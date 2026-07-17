@@ -9,9 +9,7 @@
  * thisBot.HandleTestamentInteraction({testament: someTestament, typeOfInteraction: CanvasInteractions.Drag, dragEvent: someDragInfo});
  */
 
-import { CanvasInteractions } from "bibleVizUtils.models.canvas";
-import type { BibleStackEvents } from "bibleStack.domain.models.events";
-import type { TestamentBot } from "bibleStack.models.stack";
+import type { TestamentBot } from "../../models/stack";
 import type {
   DragServicePort,
   DraggingEventMapperPort,
@@ -21,11 +19,11 @@ import type {
   PieceMapperPort,
   SelectionReleaseServicePort,
   TestamentInteractionServicePort,
-} from "bibleStack.application.ports.testaments";
+} from "../../../application/ports/testaments";
 import type {
-  DraggingEvent,
-  DropEvent,
-} from "bibleVizUtils.infrastructure.models.casualos";
+  BaseRelocationEvent,
+  BotListenerParametersMap,
+} from "../../models/casualos";
 
 interface ControllerParams {
   testamentInteractionServicePort: TestamentInteractionServicePort;
@@ -73,14 +71,12 @@ export class TestamentInteractionController {
     interaction,
   }: {
     testament: TestamentBot;
-    interaction:
-      | (typeof CanvasInteractions)["Tap"]
-      | (typeof CanvasInteractions)["Click"];
+    interaction: BotListenerParametersMap<TestamentBot>["onClick"]["modality"];
   }) {
     const piece = this.#pieceMapperPort.toDomain(testament);
     this.#testamentInteractionServicePort.handleTestamentSelection({
       testament: piece,
-      interaction: interaction === "Click" ? "Precise" : "Coarse",
+      interaction: interaction === "mouse" ? "Precise" : "Coarse",
     });
   }
 
@@ -99,7 +95,7 @@ export class TestamentInteractionController {
     draggingEvent,
   }: {
     testament: TestamentBot;
-    draggingEvent: DraggingEvent;
+    draggingEvent: BaseRelocationEvent;
   }) {
     const piece = this.#pieceMapperPort.toDomain(testament);
     const domainDraggingEvent =
@@ -107,9 +103,7 @@ export class TestamentInteractionController {
     this.#draggingServicePort.handlePieceDragging(piece, domainDraggingEvent);
   }
 
-  handleTestamentPointerUp({
-    testament,
-  }: BibleStackEvents["OnTestamentPointerUp"]) {
+  handleTestamentPointerUp({ testament }: { testament: TestamentBot }) {
     const piece = this.#pieceMapperPort.toDomain(testament);
     this.#selectionReleaseServicePort.handlePieceSelectionRelease(piece);
   }
@@ -119,7 +113,7 @@ export class TestamentInteractionController {
     dropEvent,
   }: {
     testament: TestamentBot;
-    dropEvent: DropEvent;
+    dropEvent: BaseRelocationEvent;
   }) {
     const piece = this.#pieceMapperPort.toDomain(testament);
     const domainDropEvent = this.#dropEventMapperPort.toDomain(dropEvent);

@@ -18,11 +18,12 @@ export class VersesBundleSelectionService implements VersesBundleSelectionServic
   selectBundle(data: VersesBundleData): void {
     data.select();
     this.#sequenceStateServicePort.startSequence();
-    // await chunkOfVerses.Select(); // Probably call VersesBundleAdapter.select()?
+    // TODO: await chunkOfVerses.Select(); // Probably call VersesBundleAdapter.select()?
     this.#sequenceStateServicePort.endSequence();
   }
 
   deselectBundle(data: VersesBundleData): void {
     data.deselect();
+    // TODO: perform deselect sequence on an adapter
   }
 }

@@ -69,8 +69,7 @@ export class SectionInteractionController {
     const piece = this.#pieceMapperPort.toDomain(section);
     this.#sectionInteractionServicePort.handleSectionSelection({
       section: piece,
-      interaction:
-        typeOfInteraction === CanvasInteractions.Click ? "Precise" : "Coarse",
+      interaction: typeOfInteraction === "mouse" ? "Precise" : "Coarse",
     });
   }
 

@@ -7,7 +7,7 @@ import type {
   BotVars,
   BotTags,
 } from "../../../../pattern-typings/AuxLibraryDefinitions";
-import type { BiblePiece, PieceState } from "../../domain/models/canvas";
+import type { BiblePiece } from "../../domain/models/canvas";
 
 export interface BaseTagData<T> {
   bot: Bot;
@@ -41,17 +41,6 @@ export interface BaseRelocationEvent {
 export type DropEvent = BaseRelocationEvent;
 
 export type DraggingEvent = BaseRelocationEvent;
-
-export interface DragEvent {
-  bot: Bot;
-  face: "left" | "right" | "front" | "back" | "top" | "bottom";
-  from: {
-    x: number;
-    y: number;
-    dimension: string;
-  };
-  uv: Vector2;
-}
 
 export const ClickModalities = {
   mouse: "mouse",
@@ -109,3 +98,37 @@ export interface PieceBotTags<T extends BiblePiece = BiblePiece> {
 export type PieceBot<T extends BiblePiece = BiblePiece> = TypedBot<
   PieceBotTags<T>
 >;
+
+export interface BotListenerParametersMap<B extends PieceBot> {
+  onBotChanged: {
+    tags: (keyof B["tags"])[];
+  };
+  onClick: {
+    face: "left" | "right" | "front" | "back" | "top" | "bottom";
+    dimension: string;
+    uv: Vector2;
+    modality: "mouse" | "touch" | "controller" | "finger";
+    hand: "left" | "right";
+    finger: "index" | "middle" | "ring" | "pinky" | "thumb" | "unknown";
+    buttonId: "left" | "middle" | "right";
+    codeBot?: Bot;
+    codeTag?: string;
+    codeTagSpace?: string;
+  };
+  onDrag: {
+    bot: Bot;
+    face: "left" | "right" | "front" | "back" | "top" | "bottom";
+    from: {
+      x: number;
+      y: number;
+      dimension: string;
+    };
+    uv: Vector2;
+  };
+  onDragging: BaseRelocationEvent;
+  onDrop: BaseRelocationEvent;
+  onPointerDown: { bot: Bot; dimension: string };
+  onPointerEnter: { bot: Bot; dimension: string };
+  onPointerExit: { bot: Bot; dimension: string };
+  onPointerUp: { bot: Bot; dimension: string };
+}

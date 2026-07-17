@@ -49,6 +49,12 @@ export class ObjectPooler<P extends Record<keyof P, TypedBot<PieceBotTags>>> {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (object.tags as any)[tag] = value;
     }
+    // Attach listeners last: the setup above runs before they exist (so it
+    // never triggers them), and every object — eager or on-demand — gets them.
+    for (const [tag, callback] of Object.entries(poolData.listeners ?? {})) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      os.addBotListener(object, tag, callback as any);
+    }
     return object;
   }
   getObject<K extends keyof P>(key: K): P[K] {

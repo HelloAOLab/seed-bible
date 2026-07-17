@@ -68,7 +68,7 @@ export class BookInteractionController {
     const piece = this.#pieceMapperPort.toDomain(book);
     this.#bookInteractionServicePort.handleBookSelection({
       book: piece,
-      interaction: interaction === "Click" ? "Precise" : "Coarse",
+      interaction: interaction === "mouse" ? "Precise" : "Coarse",
     });
   }
 

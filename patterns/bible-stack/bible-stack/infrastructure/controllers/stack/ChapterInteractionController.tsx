@@ -68,8 +68,7 @@ export class ChapterInteractionController {
     const piece = this.#pieceMapperPort.toDomain(chapter);
     this.#chapterInteractionServicePort.handleChapterSelection({
       chapter: piece,
-      interaction:
-        interaction === CanvasInteractions.Click ? "Precise" : "Coarse",
+      interaction: interaction === "mouse" ? "Precise" : "Coarse",
     });
   }
 
