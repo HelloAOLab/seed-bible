@@ -14,6 +14,7 @@ import { range } from "es-toolkit";
 import type { NavigationManager } from "./NavigationManager";
 import { parseNumber } from "./Utils";
 import type { ModalManager } from "./ModalManager";
+import type { ChatsManager } from "./ChatsManager";
 import { PlaylistHtmlContent } from "../components/PlaylistHtmlContent/PlaylistHtmlContent";
 import { PlaylistLinkContent } from "../components/PlaylistLinkContent/PlaylistLinkContent";
 import type { I18nManager } from "../i18n";
@@ -444,6 +445,9 @@ const PLAYLIST_ITEM_MODAL_ID = "playlist-item-content";
  */
 const PLAYLIST_READING_EXTENSION_ID = "playlist";
 
+/** Id under which the playlist-editing tools are registered with `ChatsManager`. */
+const PLAYLIST_EDITOR_CHAT_CONTEXT_ID = "playlist-editor";
+
 export function createPlaylistManager(
   os: CasualOSManager,
   login: LoginManager,
@@ -453,7 +457,8 @@ export function createPlaylistManager(
   modals: ModalManager,
   i18n: I18nManager,
   readingExtensionManager: BibleReadingExtensionManager,
-  ai: AIManager
+  ai: AIManager,
+  chats: ChatsManager
 ) {
   const initialPlaylistLocator = signal(
     navigation.currentUrl.value.searchParams.get("playlist")
@@ -1029,12 +1034,13 @@ export function createPlaylistManager(
   }
 
   /**
-   * Builds the AI tools that let a provider edit the given playlist while
-   * generating: add/update/delete items and update the playlist metadata. Each
-   * tool operates on the currently-edited playlist via this manager's editing
-   * methods; `targetPlaylist` is the snapshot the metadata tool merges into.
+   * Builds the AI tools that let a provider edit whatever playlist is
+   * currently open in the editor (`editingPlaylist`): add/update/delete items
+   * and update the playlist metadata. Each tool reads `editingPlaylist` live
+   * at call time, so it always targets the playlist being edited at that
+   * moment rather than a fixed snapshot.
    */
-  const getEditPlaylistTools = (targetPlaylist: Playlist) => {
+  const getEditPlaylistTools = () => {
     const addPlaylistItemTool = generateFunctionTool({
       name: "addPlaylistItem",
       description: "Adds an item to the playlist.",
@@ -1080,10 +1086,15 @@ export function createPlaylistManager(
         description: z.string().nullable(),
       }),
       function: async (args) => {
+        const current = editingPlaylist.value;
+        if (!current) {
+          return "error: no playlist is currently being edited";
+        }
+
         editingPlaylist.value = {
-          ...targetPlaylist,
+          ...current,
           title: args.title,
-          description: args.description ?? targetPlaylist.description ?? null,
+          description: args.description ?? current.description ?? null,
         };
 
         return "success";
@@ -1097,6 +1108,26 @@ export function createPlaylistManager(
       deletePlaylistItemTool.tool,
     ];
   };
+
+  // While a playlist is open in the editor, expose the playlist-editing tools
+  // to every AI chat via `ChatsManager`, so an AI participant can add/update/
+  // remove items and edit the title/description as the user asks. Withdrawn
+  // as soon as the user leaves the editor (save or cancel), so the tools
+  // aren't offered outside of an actual editing session.
+  const isEditingAPlaylist = computed(() => editingPlaylist.value !== null);
+  effect(() => {
+    if (!isEditingAPlaylist.value) {
+      chats.removeContext(PLAYLIST_EDITOR_CHAT_CONTEXT_ID);
+      return;
+    }
+
+    chats.addContext({
+      id: PLAYLIST_EDITOR_CHAT_CONTEXT_ID,
+      instructions:
+        "The user is currently creating or editing a Bible reading playlist. Use the provided tools to add, update, or remove playlist items, and to update the playlist's title and description, as the user asks.",
+      tools: getEditPlaylistTools(),
+    });
+  });
 
   /**
    * Attempts to update the given playlist from the given prompt using one of the
@@ -1128,7 +1159,7 @@ export function createPlaylistManager(
     };
 
     yield* provider.updatePlaylist(aiPlaylist, prompt, {
-      tools: [...ai.tools.value, ...getEditPlaylistTools(playlist)],
+      tools: [...ai.tools.value, ...getEditPlaylistTools()],
       cancelToken: cancelController.signal,
     });
   };

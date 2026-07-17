@@ -19,6 +19,7 @@ import {
   type PlaylistReadingData,
   type PlaylistReadingExtensionInstance,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import type { IdentifiedLocalChatContext } from "@packages/seed-bible/seed-bible/managers/ChatsManager";
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { computed, signal } from "@preact/signals";
 import type { Mock } from "vitest";
@@ -76,7 +77,20 @@ describe("Playlist schemas", () => {
 
 type LoginArg = Parameters<typeof createPlaylistManager>[1];
 type TabsArg = Parameters<typeof createPlaylistManager>[2];
+type ChatsArg = Parameters<typeof createPlaylistManager>[9];
 type TabArg = Parameters<typeof createPlayingState>[1];
+
+/** A minimal `ChatsManager` fake exposing just the context registration surface. */
+function makeChats(): {
+  chats: ChatsArg;
+  addContext: Mock;
+  removeContext: Mock;
+} {
+  const addContext = vi.fn();
+  const removeContext = vi.fn();
+  const chats = { addContext, removeContext } as unknown as ChatsArg;
+  return { chats, addContext, removeContext };
+}
 
 /**
  * The reading-extension registry shared by the fake reading states and the
@@ -229,6 +243,9 @@ describe("createPlaylistManager", () => {
   let lastReadingExtensionManager: ReturnType<
     typeof createBibleReadingExtensionManager
   >;
+  /** The fake `ChatsManager`'s `addContext`/`removeContext` spies from the most recent `makeManager()` call. */
+  let lastChatsAddContext: Mock;
+  let lastChatsRemoveContext: Mock;
 
   const makeManager = (
     id: string | null = "user-1",
@@ -256,8 +273,11 @@ describe("createPlaylistManager", () => {
     // Reuse the registry the fake reading states share, so the extension the
     // manager registers is the one those tabs can enable.
     const readingExtensionManager = sharedReadingExtensionManager!;
+    const { chats, addContext, removeContext } = makeChats();
     lastNavigation = navigation;
     lastReadingExtensionManager = readingExtensionManager;
+    lastChatsAddContext = addContext;
+    lastChatsRemoveContext = removeContext;
     return createPlaylistManager(
       os,
       login,
@@ -267,7 +287,8 @@ describe("createPlaylistManager", () => {
       modals,
       i18n,
       readingExtensionManager,
-      createAIManager()
+      createAIManager(),
+      chats
     );
   };
 
@@ -595,6 +616,113 @@ describe("createPlaylistManager", () => {
     expect(manager.editingPlaylist.value).toBeNull();
     expect(manager.view.value).toBe("discover");
     expect(recordDataMock).not.toHaveBeenCalled();
+  });
+
+  describe("chat AI context", () => {
+    /** Finds a registered tool by name from the most recent `addContext` call. */
+    const getTool = (name: string) => {
+      const call = lastChatsAddContext.mock.calls.at(
+        -1
+      )?.[0] as IdentifiedLocalChatContext;
+      const tool = call.tools?.find((t) => t.name === name);
+      if (!tool) {
+        throw new Error(`Tool "${name}" was not registered`);
+      }
+      return tool;
+    };
+
+    it("registers the playlist-editing tools once the editor opens", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      expect(lastChatsAddContext).not.toHaveBeenCalled();
+
+      await manager.createNewPlaylist();
+
+      expect(lastChatsAddContext).toHaveBeenCalledTimes(1);
+      const context = lastChatsAddContext.mock.calls[0]![0];
+      expect(context.id).toBe("playlist-editor");
+      expect(context.tools.map((t: { name: string }) => t.name).sort()).toEqual(
+        [
+          "addPlaylistItem",
+          "deletePlaylistItem",
+          "updatePlaylistItem",
+          "updatePlaylistMetadata",
+        ].sort()
+      );
+    });
+
+    it("withdraws the tools when the editor closes via cancel", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      // The registration effect also fires once at manager creation (while
+      // nothing is being edited yet), so reset the spy to isolate the call
+      // that matters: the one triggered by leaving the editor.
+      lastChatsRemoveContext.mockClear();
+
+      manager.cancelEditingPlaylist();
+
+      expect(lastChatsRemoveContext).toHaveBeenCalledWith("playlist-editor");
+    });
+
+    it("withdraws the tools when the editor closes via save", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+
+      await manager.saveEditingPlaylist();
+
+      expect(lastChatsRemoveContext).toHaveBeenCalledWith("playlist-editor");
+    });
+
+    it("does not register tools when no playlist is being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+
+      expect(manager.editingPlaylist.value).toBeNull();
+      expect(lastChatsAddContext).not.toHaveBeenCalled();
+    });
+
+    it("the registered tools operate on whatever playlist is currently being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+
+      await getTool("addPlaylistItem").function({
+        type: "link",
+        bibleVerse: null,
+        link: { title: null, url: "https://example.com" },
+        html: null,
+      });
+      expect(manager.editingPlaylist.value!.items).toEqual([
+        { type: "link", url: "https://example.com" },
+      ]);
+
+      await getTool("updatePlaylistMetadata").function({
+        title: "My AI Playlist",
+        description: "Made with AI",
+      });
+      expect(manager.editingPlaylist.value!.title).toBe("My AI Playlist");
+      expect(manager.editingPlaylist.value!.description).toBe("Made with AI");
+
+      await getTool("deletePlaylistItem").function({ index: 0 });
+      expect(manager.editingPlaylist.value!.items).toEqual([]);
+    });
+
+    it("updatePlaylistMetadata reports an error when nothing is being edited", async () => {
+      const manager = makeManager("user-1");
+      await flush();
+      await manager.createNewPlaylist();
+      const updatePlaylistMetadata = getTool("updatePlaylistMetadata");
+      manager.cancelEditingPlaylist();
+
+      await expect(
+        updatePlaylistMetadata.function({
+          title: "Too late",
+          description: null,
+        })
+      ).resolves.toBe("error: no playlist is currently being edited");
+    });
   });
 
   it("startPlaying prefers always uses the selected tab", async () => {
