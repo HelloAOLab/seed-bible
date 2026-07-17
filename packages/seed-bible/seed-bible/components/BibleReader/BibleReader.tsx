@@ -869,12 +869,21 @@ function renderChapterContent(
       }
 
       const presentation = getHighlightPresentation(highlight);
+      // Ribbon key: the run's verse range. Stable across reflow/recolor (same
+      // verses -> same key -> reused), so those don't churn the element; fades
+      // are decided from coverage, not this key (see `measureRibbons`). `i` is
+      // the run's first entry; its last is runIndices' tail.
+      const firstVerse = (entries[i] as ChapterVerse).number;
+      const lastIdx = runIndices[runIndices.length - 1]!;
+      const lastVerse = (entries[lastIdx] as ChapterVerse).number;
+      const runKey = `${firstVerse}-${lastVerse}`;
       nodes.push(
         <span
           key={`highlight-run-${i}`}
           className={presentation.className}
           style={presentation.style}
           data-highlight-fill={presentation.fill ?? undefined}
+          data-highlight-key={runKey}
         >
           {runIndices.map((idx) =>
             renderVerseNode(entries[idx] as ChapterVerse, idx)
@@ -933,6 +942,20 @@ function renderStaticChapterContent(
   );
 }
 
+// One drawn highlight ribbon. `key` is the run's verse range ("5-8"); `first`/
+// `last` are it as numbers (coverage checks). `enter` = fade in (a new highlight,
+// not a reshape); `exiting` = fading out before removal.
+interface Ribbon {
+  key: string;
+  d: string;
+  fill: string;
+  first: number;
+  last: number;
+  enter: boolean;
+  exiting: boolean;
+}
+const RIBBON_FADE_MS = 250;
+
 interface ChapterContentProps {
   chapterData: Signal<TranslationBookChapter | null>;
   chapterDataPromise: Promise<void>;
@@ -965,10 +988,26 @@ function ChapterContent(props: ChapterContentProps) {
   } = props;
 
   const contentRef = useRef<HTMLDivElement>(null);
-  const [ribbons, setRibbons] = useState<Array<{ d: string; fill: string }>>(
-    []
-  );
+  const [ribbons, setRibbons] = useState<Ribbon[]>([]);
+  // What's on screen (including ribbons fading out) so the reconcile can diff.
+  const renderedRef = useRef<Ribbon[]>([]);
+  // Fade-out removal timers, keyed by ribbon key.
+  const exitTimers = useRef<Map<string, number>>(new Map());
+  // Verses highlighted (any color) last measure; distinguishes new from reshaped.
+  const prevCoverageRef = useRef<Set<number>>(new Set());
+  // Identity of the chapter last measured. This component is reused across
+  // navigation, so on a change we reset the bookkeeping above — otherwise the
+  // previous chapter's ribbons would fade out at stale positions or be matched
+  // against this chapter's.
+  const chapterIdRef = useRef("");
   const signatureRef = useRef("");
+
+  // Drop a ribbon after its fade-out.
+  const removeRibbon = (key: string) => {
+    exitTimers.current.delete(key);
+    renderedRef.current = renderedRef.current.filter((r) => r.key !== key);
+    setRibbons(renderedRef.current);
+  };
 
   // Measure the highlighted runs' live text geometry and turn each into a
   // rounded ribbon path drawn behind the text by the SVG layer. Runs after
@@ -978,6 +1017,23 @@ function ChapterContent(props: ChapterContentProps) {
   const measureRibbons = () => {
     const content = contentRef.current;
     if (!content) return;
+
+    // This component is reused as the reader navigates. When the chapter changes,
+    // drop the previous chapter's ribbon bookkeeping so its ribbons don't fade
+    // out at stale positions or get matched against this chapter's runs.
+    const chapter = chapterData.value;
+    const chapterId = chapter
+      ? `${chapter.translation.id}:${chapter.book.id}:${chapter.chapter.number}`
+      : "";
+    if (chapterId !== chapterIdRef.current) {
+      chapterIdRef.current = chapterId;
+      renderedRef.current = [];
+      prevCoverageRef.current = new Set();
+      signatureRef.current = "";
+      exitTimers.current.forEach((id) => clearTimeout(id));
+      exitTimers.current.clear();
+    }
+
     const box = content.getBoundingClientRect();
     const style = getComputedStyle(content);
     const fontSize = parseFloat(style.fontSize) || 16;
@@ -997,7 +1053,8 @@ function ChapterContent(props: ChapterContentProps) {
     const runs = Array.from(
       content.querySelectorAll<HTMLElement>("[data-highlight-fill]")
     )
-      .map((el) => ({
+      .map((el, index) => ({
+        key: el.getAttribute("data-highlight-key") || `i${index}`,
         fill: el.getAttribute("data-highlight-fill") ?? "",
         lines: collectLineRects(el, box.left, box.top),
         leadPad: padX,
@@ -1036,21 +1093,108 @@ function ChapterContent(props: ChapterContentProps) {
       }
     }
 
-    const next: Array<{ d: string; fill: string }> = [];
+    const next: Array<{
+      key: string;
+      d: string;
+      fill: string;
+      first: number;
+      last: number;
+    }> = [];
     for (const run of runs) {
       const d = buildRibbonPath(run.lines, radius, padX, linePitch, {
         leadPad: run.leadPad,
         trailPad: run.trailPad,
         rtl,
       });
-      if (d) next.push({ d, fill: run.fill });
+      if (!d) continue;
+      // Split the "5-8" range back to numbers for the coverage checks below, and
+      // prefix the chapter so keys never collide across chapters.
+      const dash = run.key.indexOf("-");
+      const first = dash >= 0 ? Number(run.key.slice(0, dash)) : NaN;
+      const last = dash >= 0 ? Number(run.key.slice(dash + 1)) : NaN;
+      next.push({
+        key: `${chapterId}:${run.key}`,
+        d,
+        fill: run.fill,
+        first,
+        last,
+      });
     }
 
     const signature = JSON.stringify(next);
-    if (signature !== signatureRef.current) {
-      signatureRef.current = signature;
-      setRibbons(next);
+    if (signature === signatureRef.current) return;
+    signatureRef.current = signature;
+
+    // Reconcile with what's on screen. A run fades in only if none of its verses
+    // were highlighted before, and fades out only if none are highlighted now;
+    // otherwise it just reshaped (edit/reflow) -> snap.
+    const liveCoverage = new Set<number>();
+    for (const r of next) {
+      for (let v = r.first; v <= r.last; v++) liveCoverage.add(v);
     }
+    const prevCoverage = prevCoverageRef.current;
+    const prevLiveKeys = new Set(
+      renderedRef.current.filter((p) => !p.exiting).map((p) => p.key)
+    );
+    const liveKeys = new Set(next.map((r) => r.key));
+
+    const result: Ribbon[] = next.map((r) => {
+      const timer = exitTimers.current.get(r.key);
+      if (timer !== undefined) {
+        // Re-highlighted mid-fade — cancel its removal.
+        clearTimeout(timer);
+        exitTimers.current.delete(r.key);
+      }
+      // New key + no verse highlighted before = genuinely new -> fade in; a
+      // reused key or already-highlighted verses (reshape) snaps.
+      let enter = !prevLiveKeys.has(r.key);
+      if (enter) {
+        for (let v = r.first; v <= r.last; v++) {
+          if (prevCoverage.has(v)) {
+            enter = false;
+            break;
+          }
+        }
+      }
+      return {
+        key: r.key,
+        d: r.d,
+        fill: r.fill,
+        first: r.first,
+        last: r.last,
+        enter,
+        exiting: false,
+      };
+    });
+
+    for (const prev of renderedRef.current) {
+      if (liveKeys.has(prev.key)) continue;
+      if (prev.exiting) {
+        // Already fading out — keep it until its timer fires.
+        if (exitTimers.current.has(prev.key)) result.push(prev);
+        continue;
+      }
+      // Verses still highlighted elsewhere = reshaped/merged -> drop now, no
+      // fade; otherwise it's a real removal -> fade out.
+      let stillCovered = false;
+      for (let v = prev.first; v <= prev.last; v++) {
+        if (liveCoverage.has(v)) {
+          stillCovered = true;
+          break;
+        }
+      }
+      if (stillCovered) continue;
+      result.push({ ...prev, enter: false, exiting: true });
+      const key = prev.key;
+      exitTimers.current.set(
+        key,
+        window.setTimeout(() => removeRibbon(key), RIBBON_FADE_MS + 50)
+      );
+    }
+
+    renderedRef.current = result;
+    prevCoverageRef.current = liveCoverage;
+    setRibbons(result);
   };
 
   useLayoutEffect(() => {
@@ -1063,6 +1207,15 @@ function ChapterContent(props: ChapterContentProps) {
     const observer = new ResizeObserver(() => measureRibbons());
     observer.observe(content);
     return () => observer.disconnect();
+  }, []);
+
+  // Clear pending fade-out timers on unmount.
+  useLayoutEffect(() => {
+    const timers = exitTimers.current;
+    return () => {
+      timers.forEach((id) => clearTimeout(id));
+      timers.clear();
+    };
   }, []);
 
   if (chapterData.value === null) {
@@ -1079,8 +1232,20 @@ function ChapterContent(props: ChapterContentProps) {
       onPointerUp={selectVersesFromTextSelection}
     >
       <svg className="sb-highlight-layer" aria-hidden="true">
-        {ribbons.map((ribbon, index) => (
-          <path key={index} d={ribbon.d} style={{ fill: ribbon.fill }} />
+        {ribbons.map((ribbon) => (
+          <path
+            key={ribbon.key}
+            className={
+              ribbon.enter
+                ? "sb-highlight-ribbon sb-highlight-ribbon-enter"
+                : "sb-highlight-ribbon"
+            }
+            d={ribbon.d}
+            style={{
+              fill: ribbon.fill,
+              opacity: ribbon.exiting ? 0 : undefined,
+            }}
+          />
         ))}
       </svg>
       {renderChapterContent(

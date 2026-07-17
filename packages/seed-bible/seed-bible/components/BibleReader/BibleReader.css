@@ -428,6 +428,31 @@
   overflow: visible;
 }
 
+/* Highlights fade in when they genuinely appear and fade out when removed; run
+   edits (extend/shrink/split/merge) and reflow snap. `fill` transitions so a
+   recolor cross-fades. Keep the duration in sync with RIBBON_FADE_MS in
+   BibleReader.tsx. */
+.sb-highlight-ribbon {
+  opacity: 1;
+  transition:
+    opacity 0.25s ease,
+    fill 0.25s ease;
+}
+
+/* Only genuinely-new ribbons (`-enter`) start transparent and fade in; reshaped
+   runs mount at full opacity. */
+@starting-style {
+  .sb-highlight-ribbon-enter {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-highlight-ribbon {
+    transition: none;
+  }
+}
+
 @media (max-width: 480px) {
   .sb-chapter-content {
     padding-inline: 0.625rem;
