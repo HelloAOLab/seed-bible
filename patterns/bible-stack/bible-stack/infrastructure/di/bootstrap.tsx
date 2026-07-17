@@ -94,6 +94,7 @@ import { InfoLabelTailMapper } from "../mappers/InfoLabelTailMapper";
 import { InfoLabelDateMapper } from "../mappers/InfoLabelDateMapper";
 import { InfoLabelTextMapper } from "../mappers/InfoLabelTextMapper";
 import { ActivityIndicatorMapper } from "../mappers/ActivityIndicatorMapper";
+import { ActivityNotificationMapper } from "../mappers/ActivityNotificationMapper";
 import { LabelFeedbackConfigProvider } from "../config/labels/LabelFeedbackConfigProvider";
 import { ColorLerper } from "../adapters/environment/ColorLerper";
 import { LoggerAdapter } from "../adapters/environment/LoggerAdapter";
@@ -227,6 +228,7 @@ export const bootstrapExtension = () => {
     pieceMapperPort: pieceMapper,
   });
   const activityIndicatorMapper = new ActivityIndicatorMapper();
+  const activityNotificationMapper = new ActivityNotificationMapper();
 
   // // 2. Instantiating config providers
 
@@ -576,6 +578,7 @@ export const bootstrapExtension = () => {
       getDimension: () => os.getCurrentDimension(),
     },
     pieceMapperPort: pieceMapper,
+    activityNotificationMapper,
   });
   const labelAdapter = new LabelAdapter({
     objectPooler,
@@ -1291,195 +1294,3 @@ export const bootstrapExtension = () => {
 
   // 7. Disposers
 };
-
-// // 1. Instantiating adapters
-
-// const pieceDataRepository = new PieceDataRepository();
-// const bibleDataRepository = new BibleDataRepository();
-// const tourGuideAdapter = new TourGuideAdapter();
-
-// // 2, Instantiating services
-
-// const stackPieceLabelService = bibleVizAPI?.createPieceLabelService({
-//   [BiblePieces.StackTestament]: {
-//     getLabel: (piece: Piece<"StackTestament">) => {
-//       const data = pieceDataRepository.getPieceData(piece);
-//       if (!data) {
-//         throw new Error(
-//           `BibleStack bootstrap: data not found at getLabel at createPieceLabelService`
-//         );
-//       }
-//       return data.getPieceInfoProperty("name");
-//     },
-//     getDate: (piece: Piece<"StackTestament">) => undefined, // TODO: Properly find the date
-//     getColor: (piece: Piece<"StackTestament">) => {
-//       const data = pieceDataRepository.getPieceData(piece);
-//       if (!data) {
-//         throw new Error(
-//           `BibleStack bootstrap: data not found at getColor at createPieceLabelService`
-//         );
-//       }
-//       return data.getPieceInfoProperty("color") ?? "#ffffff"; // TODO: Properly find the color
-//     },
-//     getLabelColor: (piece: Piece<"StackTestament">) => {
-//       const data = pieceDataRepository.getPieceData(piece);
-//       if (!data) {
-//         throw new Error(
-//           `BibleStack bootstrap: data not found at getColor at createPieceLabelService`
-//         );
-//       }
-//       return data.getPieceInfoProperty("color") ?? "#ffffff"; // TODO: Properly find the color
-//     },
-//     labelPositioning: "LeftSided",
-//     isInteractable: true,
-//   },
-//   [BiblePieces.StackSection]: {
-//     getLabel: (piece: Piece<"StackSection">) => {
-//       const data = pieceDataRepository.getPieceData(piece);
-//       if (!data) {
-//         throw new Error(
-//           `BibleStack bootstrap: data not found at getLabel at createPieceLabelService`
-//         );
-//       }
-//       return data.getPieceInfoProperty("name");
-//     },
-//     getDate: (piece: Piece<"StackSection">) => undefined, // TODO: Properly find the date
-//     getColor: (piece: Piece<"StackSection">) => {
-//       const data = pieceDataRepository.getPieceData(piece);
-//       if (!data) {
-//         throw new Error(
-//           `BibleStack bootstrap: data not found at getColor at createPieceLabelService`
-//         );
-//       }
-//       return data.getPieceInfoProperty("color") ?? "#ffffff"; // TODO: Properly find the color
-//     },
-//     getLabelColor: (piece: Piece<"StackSection">) => {
-//       const data = pieceDataRepository.getPieceData(piece);
-//       if (!data) {
-//         throw new Error(
-//           `BibleStack bootstrap: data not found at getColor at createPieceLabelService`
-//         );
-//       }
-//       return data.getPieceInfoProperty("color") ?? "#ffffff"; // TODO: Properly find the color
-//     },
-//     labelPositioning: "LeftSided",
-//     isInteractable: true,
-//   },
-//   [BiblePieces.StackSectionShadow]: {
-//     getLabel: (piece: Piece<"StackSectionShadow">) => {
-//       return "";
-//     },
-//     getDate: (piece: Piece<"StackSectionShadow">) => undefined, // TODO: Properly find the date
-//     getColor: (piece: Piece<"StackSectionShadow">) => {
-//       return "";
-//     },
-//     getLabelColor: (piece: Piece<"StackSectionShadow">) => {
-//       return "";
-//     },
-//     labelPositioning: "LeftSided",
-//     isInteractable: true,
-//   },
-//   [BiblePieces.StackSectionBook]: {
-//     getLabel: (piece: Piece<"StackSectionBook">) => {
-//       return "";
-//     },
-//     getDate: (piece: Piece<"StackSectionBook">) => undefined, // TODO: Properly find the date
-//     getColor: (piece: Piece<"StackSectionBook">) => {
-//       return "";
-//     },
-//     getLabelColor: (piece: Piece<"StackSectionBook">) => {
-//       return "";
-//     },
-//     labelPositioning: "LeftSided",
-//     isInteractable: true,
-//   },
-//   [BiblePieces.StackBook]: {
-//     getLabel: (piece: Piece<"StackBook">) => {
-//       return "";
-//     },
-//     getDate: (piece: Piece<"StackBook">) => undefined, // TODO: Properly find the date
-//     getColor: (piece: Piece<"StackBook">) => {
-//       return "";
-//     },
-//     getLabelColor: (piece: Piece<"StackBook">) => {
-//       return "";
-//     },
-//     labelPositioning: "LeftSided",
-//     isInteractable: true,
-//   },
-//   [BiblePieces.StackChapter]: {
-//     getLabel: (piece: Piece<"StackChapter">) => {
-//       return "";
-//     },
-//     getDate: (piece: Piece<"StackChapter">) => undefined, // TODO: Properly find the date
-//     getColor: (piece: Piece<"StackChapter">) => {
-//       return "";
-//     },
-//     getLabelColor: (piece: Piece<"StackChapter">) => {
-//       return "";
-//     },
-//     labelPositioning: "LeftSided",
-//     isInteractable: true,
-//   },
-// });
-// const pieceHighlightService = new PieceHighlightService();
-// const explodedViewService = new ExplodedViewService();
-// const bookSelectionService = new BookSelectionService();
-// const tourGuideService = new TourGuideService({
-//   tourGuieAdapterPort: tourGuideAdapter,
-// });
-// const pieceHierarchyService = new PieceHierarchyService({
-//   pieceDataRepositoryPort: pieceDataRepository,
-//   bibleDataRepositoryPort: bibleDataRepository,
-// });
-// const bookInteractionService = new BookInteractionService({
-//   bookDataRepositoryPort: pieceDataRepository,
-//   pieceHierarchyServicePort: pieceHierarchyService,
-//   tourGuideServicePort: tourGuideService,
-//   bookSelectionServicePort: bookSelectionService,
-//   pieceHighlightServicePort: pieceHighlightService,
-//   explodedViewServicePort: explodedViewService,
-// });
-
-// // 3. Instantiating controllers
-
-// bookInteractionController = new BookInteractionController(
-//   bookInteractionService
-// );
-
-// testamentInteractionController = new TestamentInteractionController(
-//   {} as any
-// );
-// sectionInteractionController = new SectionInteractionController({} as any);
-// chapterInteractionController = new ChapterInteractionController({} as any);
-// experienceController = new ExperienceController();
-
-// // 4. Event wiring
-// // TODO: Wire events on the go
-
-// // 5. Adding dispose functions to disposal list
-
-// disposeFunctions
-//   .push
-//   // TODO: Create and add service dispose functions on the go
-//   ();
-
-// console.log(`Bible Stack successfully initialized.`);
-// };
-
-// export const teardownApp = () => {
-//   if (!isInitialized) {
-//     return;
-//   }
-//   isInitialized = false;
-
-//   console.log(`Uninstalling Bible Stack.`);
-
-//   disposeFunctions.forEach((func) => func());
-//   bookInteractionController = undefined;
-//   testamentInteractionController = undefined;
-//   sectionInteractionController = undefined;
-//   chapterInteractionController = undefined;
-
-//   console.log(`Bible Stack successfully uninstalled.`);
-// };

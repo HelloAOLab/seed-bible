@@ -5,7 +5,7 @@ import type {
   ShowNotificationCommand,
 } from "../../../application/ports/out/PieceActivity";
 import type { ActivityNotification } from "../../../domain/models/canvas";
-import { ActivityNotificationMapper } from "../../mappers/ActivityNotificationMapper";
+import type { ActivityNotificationMapper } from "../../mappers/ActivityNotificationMapper";
 import { BiblePieces } from "../../../domain/models/canvas";
 import type {
   ActivityNotificationBot,
@@ -24,25 +24,29 @@ interface AdapterParams {
   objectPooler: ObjectPooler<BibleStackObjectPoolerMap>;
   dimensionProviderPort: DimensionProviderPort;
   pieceMapperPort: PieceMapperPort;
+  activityNotificationMapper: ActivityNotificationMapper;
 }
 
 export class ActivityNotificationAdapter implements ActivityNotificationAdapterPort {
   #objectPooler: AdapterParams["objectPooler"];
   #dimensionProviderPort: DimensionProviderPort;
   #pieceMapperPort: AdapterParams["pieceMapperPort"];
+  #activityNotificationMapper: AdapterParams["activityNotificationMapper"];
   constructor({
     objectPooler,
     dimensionProviderPort,
     pieceMapperPort,
+    activityNotificationMapper,
   }: AdapterParams) {
     this.#objectPooler = objectPooler;
     this.#dimensionProviderPort = dimensionProviderPort;
     this.#pieceMapperPort = pieceMapperPort;
+    this.#activityNotificationMapper = activityNotificationMapper;
   }
 
   hideNotification(notification: ActivityNotification) {
     const notificationBot =
-      ActivityNotificationMapper.toInfrastructure(notification);
+      this.#activityNotificationMapper.toInfrastructure(notification);
     if (!notificationBot) {
       throw new Error(
         `ActivityNotificationAdapter: notificationBot not found at hideNotification.`
@@ -68,7 +72,7 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
     let notificationBot: ActivityNotificationBot | undefined;
     if (notification) {
       notificationBot =
-        ActivityNotificationMapper.toInfrastructure(notification);
+        this.#activityNotificationMapper.toInfrastructure(notification);
     } else {
       notificationBot = this.#objectPooler.getObject(
         BiblePieces.ActivityNotification
@@ -106,7 +110,7 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
     };
 
     applyMod(notificationBot, mod);
-    return ActivityNotificationMapper.toDomain(notificationBot);
+    return this.#activityNotificationMapper.toDomain(notificationBot);
   }
   updateNotificationPosition(container: StackChapterData) {
     if (!container.activityNotification) {
@@ -114,7 +118,7 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
         `ActivityNotificationAdapter: container.activityNotification not defined at updateNotificationPosition`
       );
     }
-    const notificationBot = ActivityNotificationMapper.toInfrastructure(
+    const notificationBot = this.#activityNotificationMapper.toInfrastructure(
       container.activityNotification
     );
     if (!notificationBot) {
@@ -193,7 +197,7 @@ export class ActivityNotificationAdapter implements ActivityNotificationAdapterP
     const isValid = pieceBot?.tags.isInUse && container.activityNotification;
 
     if (!isValid) return;
-    const notificationBot = ActivityNotificationMapper.toInfrastructure(
+    const notificationBot = this.#activityNotificationMapper.toInfrastructure(
       container.activityNotification
     );
 

@@ -1,20 +1,16 @@
 import type { BiblePieces } from "../../domain/models/canvas";
+import type { BotListenerParametersMap, PieceBot, TypedBot } from "./casualos";
 import type {
   ActivityIndicatorBot,
   ActivityNotificationBot,
-  BotListenerParametersMap,
-  InfoLabelDateBot,
-  InfoLabelTailBot,
-  InfoLabelTextBot,
-  InfoLabelTransformerBot,
-  PieceBot,
-  TypedBot,
-} from "./casualos";
-import type {
   BookBot,
   ChapterBot,
   CoverBot,
   CrossLineBot,
+  InfoLabelDateBot,
+  InfoLabelTailBot,
+  InfoLabelTextBot,
+  InfoLabelTransformerBot,
   SectionBot,
   SectionShadowBot,
   TestamentBot,
