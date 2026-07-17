@@ -7,6 +7,7 @@ import { safeLocalStorage } from "../app/ssrEnv";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
+  saveProfileConfigValues,
 } from "./ProfileConfigSync";
 import hash from "hash.js";
 import stringify from "@casual-simulation/fast-json-stable-stringify";
@@ -640,9 +641,20 @@ export function createExtensionManager(
       )
     );
 
-  /** Writes the given installed-extensions sync metadata to the user's profile config. */
-  const writeProfileExtensionsMeta = (meta: InstalledExtensionsMeta) => {
-    saveProfileConfigValue(login, INSTALLED_EXTENSIONS_META_CONFIG_KEY, meta);
+  /**
+   * Writes the given installed-extension IDs and their sync metadata to the
+   * user's profile config in a single write (one `login.updateProfile`
+   * call), rather than one write per key — the two always change together,
+   * so there's no reason for them to reach the server as separate writes.
+   */
+  const writeProfileExtensionState = (
+    ids: Set<string>,
+    meta: InstalledExtensionsMeta
+  ) => {
+    saveProfileConfigValues(login, {
+      [INSTALLED_EXTENSIONS_CONFIG_KEY]: [...ids],
+      [INSTALLED_EXTENSIONS_META_CONFIG_KEY]: meta,
+    });
   };
 
   /**
@@ -679,15 +691,6 @@ export function createExtensionManager(
       return new Set(value.filter((id) => typeof id === "string"));
     }
     return new Set();
-  };
-
-  /**
-   * Writes the given set of installed extension IDs to the user's profile config.
-   * No-ops when logged out or when the value is unchanged (handled by
-   * saveProfileConfigValue).
-   */
-  const writeProfileExtensionIds = (ids: Set<string>) => {
-    saveProfileConfigValue(login, INSTALLED_EXTENSIONS_CONFIG_KEY, [...ids]);
   };
 
   /**
@@ -776,11 +779,10 @@ export function createExtensionManager(
       const profileIds = readProfileExtensionIds();
       if (!profileIds.has(id)) {
         profileIds.add(id);
-        writeProfileExtensionIds(profileIds);
         const profileMeta = readProfileExtensionsMeta();
         profileMeta.installedAtMs[id] = now;
         profileMeta.updatedAtMs = now;
-        writeProfileExtensionsMeta(profileMeta);
+        writeProfileExtensionState(profileIds, profileMeta);
       }
     };
 
@@ -812,11 +814,10 @@ export function createExtensionManager(
     const forgetFromProfile = () => {
       const profileIds = readProfileExtensionIds();
       if (profileIds.delete(id)) {
-        writeProfileExtensionIds(profileIds);
         const profileMeta = readProfileExtensionsMeta();
         delete profileMeta.installedAtMs[id];
         profileMeta.updatedAtMs = now;
-        writeProfileExtensionsMeta(profileMeta);
+        writeProfileExtensionState(profileIds, profileMeta);
       }
     };
 
@@ -1145,8 +1146,7 @@ export function createExtensionManager(
       writePersistedExtensionsMeta(merged.localMeta);
     }
     if (!setsEqual(profileIds, savedIds)) {
-      writeProfileExtensionIds(savedIds);
-      writeProfileExtensionsMeta(merged.profileMeta);
+      writeProfileExtensionState(savedIds, merged.profileMeta);
     }
 
     const promises: Promise<boolean>[] = [];

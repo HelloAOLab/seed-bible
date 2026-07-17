@@ -1849,12 +1849,12 @@ describe("createExtensionManager", () => {
 
     // This is the actual bug report (#1357): loading the app was writing the
     // profile repeatedly with no user action. Merging both extensions should
-    // take exactly one write per config key, not one per extension racing
-    // the profile load. There are two calls (not one) because the #1454 fix
-    // added a second config key (`installedExtensionsMeta`, the per-extension
-    // install-time bookkeeping) alongside the existing `installedExtensions`
-    // ID list — each is written once, not once per extension.
-    expect(updateProfileSpy).toHaveBeenCalledTimes(2);
+    // take exactly one write, not one per extension racing the profile load.
+    // The #1454 fix added a second config key (`installedExtensionsMeta`,
+    // the per-extension install-time bookkeeping) that's always written
+    // alongside `installedExtensions`, via `saveProfileConfigValues` — both
+    // keys land in the same `updateProfile` call, so this is still 1.
+    expect(updateProfileSpy).toHaveBeenCalledTimes(1);
   });
 });
 
