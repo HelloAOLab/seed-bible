@@ -125,23 +125,6 @@ export function CreateTwitchSubState(
     }
   });
 
-  effect(() => {
-    void seedBibleState.app.isMobile.value;
-    if (
-      websocketSessionID.value &&
-      webSocketClient.value &&
-      seedBibleState.app.currentReadingState.value
-    ) {
-      setTimeout(() => {
-        addTwitchIcon({
-          wsPaused,
-          settingsOpened,
-          isMobile: seedBibleState.app.isMobile.value,
-        });
-      }, 200);
-    }
-  });
-
   async function highlightRefVerse(
     seedBibleState: SeedBibleState,
     bookData: {
@@ -474,7 +457,7 @@ async function openBookAndChapter(
   );
 }
 
-async function addTwitchIcon({
+export async function addTwitchIcon({
   wsPaused,
   settingsOpened,
   isMobile,
