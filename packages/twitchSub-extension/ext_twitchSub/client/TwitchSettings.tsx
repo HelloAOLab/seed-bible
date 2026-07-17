@@ -183,7 +183,7 @@ const TwitchSettings = (props: {
   );
 };
 
-export const InfoTooltip = ({ text }: { text: string }) => {
+const InfoTooltip = ({ text }: { text: string }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
 
