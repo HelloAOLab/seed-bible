@@ -32,6 +32,7 @@ import {
 } from "../components/Onboarding/Onboarding";
 import { Tutorial } from "../components/Tutorial/Tutorial";
 import { TutorialPrompt } from "../components/TutorialPrompt/TutorialPrompt";
+import { RibbonPerfHud } from "../components/RibbonPerfHud/RibbonPerfHud";
 
 /**
  * A collection of link/script's providing expected resources from external sources.
@@ -222,6 +223,10 @@ function MainContent(props: {
 
         <LanguageUnavailableModal className={`${webkitClass}`} />
       </div>
+
+      {/* Dev-only highlight-ribbon performance readout; renders nothing unless
+          the probe is enabled (see ribbonPerf.ts). */}
+      <RibbonPerfHud />
     </>
   );
 }

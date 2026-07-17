@@ -12,6 +12,7 @@ import {
   RIBBON_RADIUS_EM,
   RIBBON_PAD_X_EM,
 } from "../../app/highlightRibbon";
+import { ribbonPerfEnabled, recordRibbonMeasure } from "../../app/ribbonPerf";
 import type {
   BibleReadingState,
   BibleSelectedVerse,
@@ -975,9 +976,13 @@ function ChapterContent(props: ChapterContentProps) {
   // every render (highlights/chapter/settings changes re-render this component)
   // and on reflow via the ResizeObserver below. The signature guard keeps the
   // measure -> setState -> re-render cycle from looping.
-  const measureRibbons = () => {
+  const measureRibbons = (trigger: "layout" | "resize") => {
     const content = contentRef.current;
     if (!content) return;
+    // Timing is only taken while the perf probe is enabled; otherwise this is a
+    // single boolean check and a few `perf ? ... : 0` no-ops (see ribbonPerf.ts).
+    const perf = ribbonPerfEnabled();
+    const t0 = perf ? performance.now() : 0;
     const box = content.getBoundingClientRect();
     const style = getComputedStyle(content);
     const fontSize = parseFloat(style.fontSize) || 16;
@@ -1004,6 +1009,7 @@ function ChapterContent(props: ChapterContentProps) {
         trailPad: padX,
       }))
       .filter((run) => run.fill !== "" && run.lines.length > 0);
+    const tMeasured = perf ? performance.now() : 0;
 
     // Phase 2: where two different-colored runs sit side by side on the same
     // visual line (e.g. "...garden, ³but about..."), their facing pads would eat
@@ -1045,22 +1051,44 @@ function ChapterContent(props: ChapterContentProps) {
       });
       if (d) next.push({ d, fill: run.fill });
     }
+    const tBuilt = perf ? performance.now() : 0;
 
     const signature = JSON.stringify(next);
-    if (signature !== signatureRef.current) {
+    const tStringified = perf ? performance.now() : 0;
+    const changed = signature !== signatureRef.current;
+    if (changed) {
       signatureRef.current = signature;
       setRibbons(next);
+    }
+
+    if (perf) {
+      let rects = 0;
+      for (const run of runs) rects += run.lines.length;
+      let pathChars = 0;
+      for (const ribbon of next) pathChars += ribbon.d.length;
+      recordRibbonMeasure({
+        trigger,
+        totalMs: tStringified - t0,
+        measureMs: tMeasured - t0,
+        buildMs: tBuilt - tMeasured,
+        stringifyMs: tStringified - tBuilt,
+        changed,
+        runs: runs.length,
+        rects,
+        paths: next.length,
+        pathChars,
+      });
     }
   };
 
   useLayoutEffect(() => {
-    measureRibbons();
+    measureRibbons("layout");
   });
 
   useLayoutEffect(() => {
     const content = contentRef.current;
     if (!content || typeof ResizeObserver === "undefined") return;
-    const observer = new ResizeObserver(() => measureRibbons());
+    const observer = new ResizeObserver(() => measureRibbons("resize"));
     observer.observe(content);
     return () => observer.disconnect();
   }, []);

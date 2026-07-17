@@ -1,0 +1,65 @@
+/* Highlight-ribbon performance HUD. Fixed, always-on-top, and non-interactive
+   so it can't affect the scroll/touch behaviour it is measuring. */
+.sb-ribbon-perf-hud {
+  position: fixed;
+  bottom: 0.5rem;
+  left: 0.5rem;
+  z-index: 2147483647;
+  pointer-events: none;
+  user-select: none;
+
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #d7ffe0;
+  background: rgba(0, 0, 0, 0.74);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 6px 8px;
+  min-width: 170px;
+  white-space: pre;
+}
+
+.sb-ribbon-perf-hud-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 3px;
+}
+
+.sb-ribbon-perf-hud-title {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+/* The overlay is pointer-events: none; re-enable it here so the button (and only
+   the button) is tappable while profiling. */
+.sb-ribbon-perf-hud-copy {
+  pointer-events: auto;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+  line-height: 1;
+  color: #d7ffe0;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  padding: 3px 7px;
+}
+
+.sb-ribbon-perf-hud-copy:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.sb-ribbon-perf-hud-copy:active {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.sb-ribbon-perf-hud-sep {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.16);
+  margin: 4px 0;
+}
