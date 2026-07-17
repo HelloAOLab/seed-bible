@@ -276,7 +276,7 @@ const ToggleBtn = ({
           />
           <span
             className={`track-${id} track`}
-            style={wsActive ? { background: "var(--sb-tertiary-color" } : {}}
+            style={wsActive ? { background: "var(--sb-tertiary-color)" } : {}}
           ></span>
           <span className={`thumb-${id} thumb`}></span>
         </label>

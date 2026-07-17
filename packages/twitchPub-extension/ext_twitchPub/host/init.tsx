@@ -33,7 +33,7 @@ export default function initTwitchPubExtension() {
         priority: 950,
       });
 
-      effect(() => {
+      yield effect(() => {
         if (
           !twitchPubState.interfaceEnabled.value &&
           twitchPubState.currentPane.value
@@ -61,6 +61,18 @@ export default function initTwitchPubExtension() {
           });
         }
       });
+
+      // On teardown, close the pane if it's open and stop any live
+      // transcription so nothing is left rendered or running after the
+      // extension is uninstalled. Runs after the effect above is disposed, so
+      // closing the pane can't re-trigger it.
+      yield () => {
+        if (twitchPubState.currentPane.value) {
+          context.panes.closePane(twitchPubState.currentPane.value.id);
+          twitchPubState.currentPane.value = null;
+        }
+        transcriptionManager.stopLive();
+      };
 
       yield effect(() => {
         if (context.app.currentReadingState.value) {
