@@ -126,6 +126,57 @@ function handleWebSocketMessage(
   }
 }
 
+async function purgeStaleSubscriptions(twitchSubManager: TwitchSubInterface) {
+  const config = twitchSubManager.config.value;
+  const headers = {
+    Authorization: "Bearer " + config.accessToken.value!,
+    "Client-Id": config.clientId.value!,
+  };
+
+  try {
+    const listResponse = await fetch(
+      "https://api.twitch.tv/helix/eventsub/subscriptions?type=channel.chat.message",
+      { method: "GET", headers }
+    );
+    if (!listResponse.ok) {
+      console.error(
+        "wsss:- Could not list existing subscriptions to purge (status " +
+          listResponse.status +
+          ")."
+      );
+      return;
+    }
+
+    const { data = [] } = (await listResponse.json()) as {
+      data?: Array<{ id: string; status: string }>;
+    };
+
+    const stale = data.filter((sub) => sub.status !== "enabled");
+    if (stale.length === 0) {
+      return;
+    }
+
+    await Promise.all(
+      stale.map((sub) =>
+        fetch(
+          "https://api.twitch.tv/helix/eventsub/subscriptions?id=" +
+            encodeURIComponent(sub.id),
+          { method: "DELETE", headers }
+        ).catch((e) =>
+          console.error("wsss:- Failed to delete subscription " + sub.id, e)
+        )
+      )
+    );
+    console.log(
+      "wsss:- Purged " +
+        stale.length +
+        " stale channel.chat.message subscription(s)."
+    );
+  } catch (e) {
+    console.error("wsss:- Failed to purge stale subscriptions:", e);
+  }
+}
+
 async function registerEventSubListeners(
   twitchSubManager: TwitchSubInterface,
   onSubscribed: () => void
@@ -135,6 +186,8 @@ async function registerEventSubListeners(
     console.error("wsss:- Twitch config not available.");
     return;
   }
+
+  await purgeStaleSubscriptions(twitchSubManager);
 
   const response = await fetch(
     "https://api.twitch.tv/helix/eventsub/subscriptions",

@@ -17,12 +17,12 @@ const TwitchSettings = (props: { state: TwitchPubState }) => {
 
   return (
     <>
-      <div className="twitchPub-page">
+      <div className="twitchPub-page" style={{ justifyContent: "flex-start" }}>
         <div
           className="twitchPub-content"
           style={{
             height: seedBibleState.app.isMobile.value
-              ? "calc(100% - 90px)"
+              ? "calc(100% - 70px)"
               : "100%",
             justifyContent: "space-between",
           }}

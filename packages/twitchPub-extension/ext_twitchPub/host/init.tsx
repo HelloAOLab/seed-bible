@@ -1,4 +1,4 @@
-import { TwitchIcon } from "./icons";
+import { TwitchIcon, AppIcon } from "./icons";
 import { effect } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { CreateTwitchPubState } from "./twitchPubManager";
@@ -25,16 +25,7 @@ export default function initTwitchPubExtension() {
           defaultValue: "Twitch Panel",
           ns: "ext_twitchPub",
         },
-        icon: () => (
-          <img
-            src="https://res.cloudinary.com/dacw0qnpr/image/upload/v1774035767/Vector_6_if8usw.svg"
-            style={{
-              width: "24px",
-              height: "24px",
-              objectFit: "contain",
-            }}
-          />
-        ),
+        icon: () => <AppIcon style={{ width: "24px", height: "24px" }} />,
         onSelect: () => {
           twitchPubState.interfaceEnabled.value =
             !twitchPubState.interfaceEnabled.value;

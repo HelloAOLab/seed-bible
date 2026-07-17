@@ -260,6 +260,7 @@ export function CreateTwitchPubState({
   };
 
   const hideUI = () => {
+    if (seedBibleState.app.isMobile.value) return;
     if (uiHiddenTimeout) {
       clearTimeout(uiHiddenTimeout);
     }

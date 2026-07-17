@@ -1,14 +1,15 @@
 import { useI18n } from "seed-bible/i18n";
 import { type TwitchSubInterface } from "./interface";
+import type { SeedBibleState } from "seed-bible";
 import { useRef, useEffect, useState } from "preact/hooks";
 
 const TwitchSettings = (props: {
-  settings: TwitchSubInterface["settings"];
-  wsPaused: TwitchSubInterface["wsPaused"];
-  settingsOpened: TwitchSubInterface["settingsOpened"];
-  isMobile: boolean;
+  twitchSubState: TwitchSubInterface;
+  context: SeedBibleState;
 }) => {
   const { t } = useI18n();
+  const { settings, wsPaused } = props.twitchSubState;
+  const isMobile = props.context.app.isMobile.value;
 
   return (
     <>
@@ -26,7 +27,7 @@ const TwitchSettings = (props: {
           className="twitchSub-content"
           style={{
             justifyContent: "flex-start",
-            height: props.isMobile ? "calc(100% - 90px)" : "100%",
+            height: isMobile ? "calc(100% - 70px)" : "100%",
           }}
         >
           <div
@@ -54,11 +55,12 @@ const TwitchSettings = (props: {
                 />
               </span>
               <ToggleBtn
-                toggle={props.settings.value.translationEnabled.value}
+                toggle={settings.value.translationEnabled.value}
                 setToggle={(value) =>
-                  (props.settings.value.translationEnabled.value = value)
+                  (settings.value.translationEnabled.value = value)
                 }
                 id={"translationToggle"}
+                wsActive={wsPaused.value}
               />
             </div>
             <div className="twitchSub-settings-item">
@@ -82,11 +84,12 @@ const TwitchSettings = (props: {
                 />
               </span>
               <ToggleBtn
-                toggle={props.settings.value.chapterFollowEnabled.value}
+                toggle={settings.value.chapterFollowEnabled.value}
                 setToggle={(value) =>
-                  (props.settings.value.chapterFollowEnabled.value = value)
+                  (settings.value.chapterFollowEnabled.value = value)
                 }
                 id={"chapterFollowToggle"}
+                wsActive={wsPaused.value}
               />
             </div>
             <div className="twitchSub-settings-item">
@@ -109,11 +112,12 @@ const TwitchSettings = (props: {
                 />
               </span>
               <ToggleBtn
-                toggle={props.settings.value.highlightEnabled.value}
+                toggle={settings.value.highlightEnabled.value}
                 setToggle={(value) =>
-                  (props.settings.value.highlightEnabled.value = value)
+                  (settings.value.highlightEnabled.value = value)
                 }
                 id={"highlightToggle"}
+                wsActive={wsPaused.value}
               />
             </div>
             <div className="twitchSub-settings-item">
@@ -137,11 +141,12 @@ const TwitchSettings = (props: {
                 />
               </span>
               <ToggleBtn
-                toggle={props.settings.value.refFollowEnabled.value}
+                toggle={settings.value.refFollowEnabled.value}
                 setToggle={(value) =>
-                  (props.settings.value.refFollowEnabled.value = value)
+                  (settings.value.refFollowEnabled.value = value)
                 }
                 id={"refFollowToggle"}
+                wsActive={wsPaused.value}
               />
             </div>
             <div
@@ -155,13 +160,13 @@ const TwitchSettings = (props: {
           <div className="twitchSub-settings-item">
             <div></div>
             <button
-              className={`session-btn ${props.wsPaused.value ? "rejoin-session-btn" : "leave-session-btn"}`}
-              onClick={() => (props.wsPaused.value = !props.wsPaused.value)}
+              className={`session-btn ${wsPaused.value ? "rejoin-session-btn" : "leave-session-btn"}`}
+              onClick={() => (wsPaused.value = !wsPaused.value)}
             >
               <span className="material-symbols-outlined">
-                {props.wsPaused.value ? "link" : "link_off"}
+                {wsPaused.value ? "link" : "link_off"}
               </span>
-              {props.wsPaused.value
+              {wsPaused.value
                 ? t("rejoinSession", {
                     ns: "ext_twitchSub",
                     defaultValue: "Rejoin session",
@@ -231,10 +236,12 @@ const ToggleBtn = ({
   toggle,
   setToggle,
   id,
+  wsActive,
 }: {
   toggle: boolean;
   setToggle: (value: boolean) => void;
   id: string;
+  wsActive: boolean;
 }) => {
   return (
     <>
@@ -265,8 +272,12 @@ const ToggleBtn = ({
               e.stopPropagation();
               setToggle(!toggle);
             }}
+            disabled={wsActive}
           />
-          <span className={`track-${id} track`}></span>
+          <span
+            className={`track-${id} track`}
+            style={wsActive ? { background: "var(--sb-tertiary-color" } : {}}
+          ></span>
           <span className={`thumb-${id} thumb`}></span>
         </label>
       </div>

@@ -5,23 +5,19 @@ import type { SeedBibleState } from "seed-bible";
 import { I18nProvider } from "seed-bible/i18n";
 
 function App(props: {
-  settings: TwitchSubInterface["settings"];
-  wsPaused: TwitchSubInterface["wsPaused"];
-  settingsOpened: TwitchSubInterface["settingsOpened"];
-  i18n: SeedBibleState["i18n"];
-  isMobile: boolean;
+  twitchSubState: TwitchSubInterface;
+  context: SeedBibleState;
 }) {
+  const { twitchSubState, context } = props;
   return (
     <>
-      <I18nProvider i18n={props.i18n}>
+      <I18nProvider i18n={context.i18n}>
         {
           (
             <div className="twitchSub-container">
               <TwitchSettings
-                settings={props.settings}
-                wsPaused={props.wsPaused}
-                settingsOpened={props.settingsOpened}
-                isMobile={props.isMobile}
+                twitchSubState={twitchSubState}
+                context={context}
               />
             </div>
           ) as unknown as HTMLElement

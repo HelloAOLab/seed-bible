@@ -18,15 +18,7 @@ export default function initTwitchSubExtension() {
           twitchSubState.currentPane.value = context.panes.openPane({
             placement: "floating",
             component: () => {
-              return (
-                <App
-                  wsPaused={twitchSubState.wsPaused}
-                  settingsOpened={twitchSubState.settingsOpened}
-                  settings={twitchSubState.settings}
-                  i18n={context.i18n}
-                  isMobile={context.app.isMobile.value}
-                />
-              );
+              return <App twitchSubState={twitchSubState} context={context} />;
             },
             title: "Twitch",
             icon: () => (
