@@ -11,15 +11,21 @@ module.exports = async ({
   const marker = "<!-- deployment-link -->";
 
   try {
+    // Without a buildId, the link points at the bare `/b/<branch>` path,
+    // which the host resolves + redirects to the latest build itself (see
+    // resolveRoute()/302 handling in server/index.ts) — no buildId needed.
     const url =
       branch === "main"
         ? "https://prod.seedbible.org"
-        : `https://alpha.seedbible.org/b/${branch}/${buildId}`;
+        : buildId
+          ? `https://alpha.seedbible.org/b/${branch}/${buildId}`
+          : `https://alpha.seedbible.org/b/${branch}`;
     const summary =
       branch === "main"
         ? `Deployed **main** to the site root → ${url}`
         : `Deployed branch **${branch}** → ${url}`;
-    const body = `${marker}\n## 🚀 Deployment\n\n${summary}\n\nCommit: \`${buildId}\``;
+    const commitLine = buildId ? `\n\nCommit: \`${buildId}\`` : "";
+    const body = `${marker}\n## 🚀 Deployment\n\n${summary}${commitLine}`;
 
     for (const prNumber of prNumbers) {
       const { data: comments } = await github.rest.issues.listComments({
