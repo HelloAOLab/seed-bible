@@ -20,10 +20,6 @@
   flex-shrink: 0;
   position: relative;
   user-select: none;
-  /* The sidebar itself doesn't scroll — the header, search box, and bottom
-     actions stay pinned. Only the tab list (.sb-sidebar-tab-list) scrolls when
-     the tabs overflow the visible height. */
-  overflow: hidden;
   min-height: 0;
 }
 
