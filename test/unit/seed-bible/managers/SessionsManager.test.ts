@@ -1518,6 +1518,31 @@ describe("SessionsManager", () => {
       });
     });
 
+    it("does not sync extension data (e.g. playlist advance) when the current user is not an allowed navigator", async () => {
+      mockLoginManager.userId.value = "user-blocked";
+      const registry = createBibleReadingExtensionManager();
+      registry.registerReadingExtension({
+        id: "playlist",
+        activate: () => ({}),
+      });
+      const session =
+        await createManagerWith(registry).joinSession("group-abc");
+
+      mockOptionsMap.setEmitOnSet(true);
+      session.updateOptions({
+        allowedNavigators: ["user-allowed", "conn-self"],
+      });
+
+      mockExtensionsMap.set.mockClear();
+
+      // Simulates a restricted (non-host) participant advancing a playlist:
+      // its outbound `data` mirror must not reach the shared map, the same
+      // restriction that already applies to ordinary chapter navigation.
+      session.readingState.enableExtension("playlist", { step: 1 });
+
+      expect(mockExtensionsMap.set).not.toHaveBeenCalled();
+    });
+
     it("disables an extension when it is removed from the shared map", async () => {
       mockExtensionsMap.setEmitOnSet(true);
       mockExtensionsMap.set("x", { enabled: true, data: {} });

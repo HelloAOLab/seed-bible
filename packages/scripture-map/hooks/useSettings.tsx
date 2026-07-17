@@ -32,7 +32,6 @@ interface UseSettingsType {
   legendSquaresData: SettingsLegendSquareData[];
   yearSelectorLabelTextContent: string;
   yearSelectorOptionsData: SettingsYearselectorOptionData[];
-  title: string;
   optionsTitle: string;
   optionsDescription: string;
   lessText: string;
@@ -57,7 +56,7 @@ export const useSettings: UseSettings = () => {
     project,
     isInSelectionMode,
     handleShowAllChaptersToggle,
-    showingAllChapters,
+    anyBookOpen,
     setShowingBooksColors,
     showingBooksColors,
     setIsReadingHistoryEnabled,
@@ -177,7 +176,7 @@ export const useSettings: UseSettings = () => {
       {
         type: "dynamic",
         callback: handleShowAllChaptersToggle,
-        condition: showingAllChapters,
+        condition: anyBookOpen,
         enabledText: translate("Close"),
         disabledText: translate("Open"),
         staticText: translate("books"),
@@ -245,7 +244,7 @@ export const useSettings: UseSettings = () => {
     timelineRangeMethod,
     translate,
     handleShowAllChaptersToggle,
-    showingAllChapters,
+    anyBookOpen,
     setShowingBooksColors,
     showingBooksColors,
     shouldShowReadingHistoryOption,
@@ -333,10 +332,6 @@ export const useSettings: UseSettings = () => {
     setShowOptions,
   ]);
 
-  const title = useMemo(() => {
-    return translate("scripture-map");
-  }, [translate]);
-
   const optionsTitle = useMemo(() => {
     return translate("options-title");
   }, [translate]);
@@ -368,7 +363,6 @@ export const useSettings: UseSettings = () => {
     legendSquaresData,
     yearSelectorLabelTextContent,
     yearSelectorOptionsData,
-    title,
     optionsTitle,
     optionsDescription,
     lessText,

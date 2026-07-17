@@ -1,6 +1,6 @@
 import { effect, signal } from "@preact/signals";
 import i18n from "i18next";
-import type { LoginManager, UserProfile } from "../managers/LoginManager";
+import type { LoginManager } from "../managers/LoginManager";
 import {
   getProfileConfigValue,
   saveProfileConfigValue,
@@ -171,35 +171,45 @@ export function createConfig(
 
   const config = signal<AppConfig>(readConfig());
 
-  // Set while `syncConfigFromBot` is applying a language it just read from the
-  // profile, so the `languageChanged` listener below doesn't mistake that
-  // profile-to-i18n sync for a user-driven change and write the same value
-  // straight back to the profile it came from.
-  let isApplyingProfileLanguage = false;
-
-  const syncConfigFromBot = (
-    profile: UserProfile | null = login.profile.value
-  ) => {
-    const url = navigation.currentUrl.value;
+  // Re-read the URL/profile-derived config (font size, panels, preset) whenever
+  // either the URL or the profile changes.
+  effect(() => {
     config.value = readConfig();
+  });
 
-    const profileLanguage = getProfileConfigValue(profile, "lang");
+  // Apply the profile's saved UI language, but ONLY when the profile itself
+  // changes (i.e. on login / profile load) — deliberately NOT on every URL
+  // change.
+  //
+  // The `?lang=` query param is owned by I18nManager (see its
+  // `syncSignalsToUrl({ lang })`), which is the single source of truth for the
+  // URL <-> `i18n.language` relationship. If this ran on URL changes too, it
+  // would fight the user's in-session language switch: picking a language
+  // writes `?lang=` first, that URL write would re-run this effect, and the
+  // profile's still-unsaved previous language would revert `i18n.language`
+  // (leaving only `?translation=` applied). Only read `login.profile` here so
+  // the effect subscribes to the profile alone.
+  effect(() => {
+    const profileLanguage = getProfileConfigValue(login.profile.value, "lang");
     const nextLanguage =
       typeof profileLanguage === "string" && profileLanguage.trim().length > 0
         ? profileLanguage
-        : url.searchParams.get("lang");
+        : null;
 
     if (nextLanguage && nextLanguage !== i18n.language) {
-      isApplyingProfileLanguage = true;
-      void i18n.changeLanguage(nextLanguage).finally(() => {
-        isApplyingProfileLanguage = false;
-      });
+      void i18n.changeLanguage(nextLanguage);
     }
-  };
-
-  effect(() => {
-    syncConfigFromBot(login.profile.value);
   });
+
+  // Persist the user's chosen UI language to their profile. Wired into
+  // I18nManager's `requestLanguageChange` (the selector path) via
+  // `setLanguagePersister`, so it runs ONLY for explicit selector choices —
+  // never for URL-driven changes (a shared `?lang=` link or browser
+  // back/forward), which stay view-only, and never for the profile-to-i18n
+  // sync above (which would just write the value straight back).
+  const persistLanguage = (language: string) => {
+    void saveProfileConfigValue(login, "lang", language);
+  };
 
   const setDisablePanels = (disablePanels: boolean) => {
     const nextConfig = {
@@ -222,17 +232,10 @@ export function createConfig(
     saveProfileConfigValue(login, "fontSize", nextFontSize);
   };
 
-  i18n.on("languageChanged", (language: string) => {
-    if (isApplyingProfileLanguage) {
-      return;
-    }
-    console.log("languageChanged event received from i18n:", language);
-    saveProfileConfigValue(login, "lang", language);
-  });
-
   return {
     config,
     setDisablePanels,
     setFontSize,
+    persistLanguage,
   };
 }

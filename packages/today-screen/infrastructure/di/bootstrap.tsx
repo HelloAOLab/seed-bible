@@ -357,7 +357,13 @@ export const bootstrapExtension = () => {
         context.panes.openPane({
           id: TODAY_PANE_ID,
           placement: "fullscreen",
-          title: "Today",
+          title: () => {
+            const { t } = useI18n();
+            return t("today", {
+              ns: "today-screen",
+              defaultValue: "Today",
+            });
+          },
           component,
         });
       };

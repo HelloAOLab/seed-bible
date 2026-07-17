@@ -12,6 +12,11 @@ export interface PaneHeaderProps {
   /** Called when the close button is pressed. */
   onClose: () => void;
   /**
+   * Optional icon rendered before the title. Rendered as a component so it
+   * can use hooks.
+   */
+  icon?: () => ComponentChild;
+  /**
    * Optional custom header content rendered between the title and the close
    * button. Rendered as a component so it can use hooks (i18n, signals).
    */
@@ -29,13 +34,26 @@ export interface PaneHeaderProps {
  * header slot, and a close button.
  */
 export function PaneHeader(props: PaneHeaderProps) {
-  const { title: Title, onClose, header: Header, onPointerDown } = props;
+  const {
+    title: Title,
+    onClose,
+    icon: Icon,
+    header: Header,
+    onPointerDown,
+  } = props;
   const { t } = useI18n();
 
   return (
     <div className="sb-pane-header" onPointerDown={onPointerDown}>
       <div className="sb-pane-header-title">
-        {typeof Title === "function" ? <Title /> : Title}
+        {Icon && (
+          <span className="sb-pane-header-icon">
+            <Icon />
+          </span>
+        )}
+        <span className="sb-pane-header-title-text">
+          {typeof Title === "function" ? <Title /> : Title}
+        </span>
       </div>
       {Header && (
         <div

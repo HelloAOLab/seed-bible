@@ -695,4 +695,65 @@ describe("createPanes", () => {
       expect(panes.panes.value).toEqual(before);
     });
   });
+
+  describe("closeFullscreenPanes", () => {
+    it("closes a fullscreen pane on desktop", () => {
+      const panes = createPanes();
+      panes.openPane({
+        placement: "fullscreen",
+        title: "Full",
+        component: componentReturning("Full"),
+      });
+
+      panes.closeFullscreenPanes();
+
+      expect(panes.panes.value).toHaveLength(0);
+      expect(panes.selectedPaneId.value).toBeNull();
+    });
+
+    it("leaves floating panes open on desktop", () => {
+      const panes = createPanes();
+      const floating = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+      });
+
+      panes.closeFullscreenPanes();
+
+      expect(panes.panes.value).toHaveLength(1);
+      expect(panes.panes.value[0]?.id).toBe(floating.id);
+      expect(panes.selectedPaneId.value).toBe(floating.id);
+    });
+
+    it("closes every pane on mobile, where all panes display fullscreen", () => {
+      const isMobile = signal(true);
+      const panes = createPanes(isMobile);
+      panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+      });
+
+      panes.closeFullscreenPanes();
+
+      expect(panes.panes.value).toHaveLength(0);
+    });
+
+    it("does not write when nothing is filling the screen", () => {
+      const panes = createPanes();
+      panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+      });
+      const before = panes.panes.value;
+
+      panes.closeFullscreenPanes();
+
+      // No fullscreen pane to close, so the signal is left untouched (same
+      // reference) — navigation must not thrash panes state on every change.
+      expect(panes.panes.value).toBe(before);
+    });
+  });
 });

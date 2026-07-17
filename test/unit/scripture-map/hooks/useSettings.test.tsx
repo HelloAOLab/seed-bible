@@ -34,7 +34,7 @@ function makeScriptureMapContext(overrides: Record<string, unknown> = {}) {
     project: null,
     isInSelectionMode: false,
     handleShowAllChaptersToggle: vi.fn(),
-    showingAllChapters: false,
+    anyBookOpen: false,
     setShowingBooksColors: vi.fn(),
     showingBooksColors: false,
     setIsReadingHistoryEnabled: vi.fn(),
@@ -149,5 +149,29 @@ describe("useSettings", () => {
     );
     const result = setup();
     expect(result.current.shouldShowReadingHistory).toBe(false);
+  });
+
+  describe("books toggle condition", () => {
+    function booksOption(result: ReturnType<typeof setup>) {
+      return result.current.optionsData.find((d) => d.key === "books") as {
+        condition: boolean;
+      };
+    }
+
+    it("passes anyBookOpen=false through as the 'books' option condition", () => {
+      (useScriptureMapContext as Mock).mockReturnValue(
+        makeScriptureMapContext({ anyBookOpen: false })
+      );
+      const result = setup();
+      expect(booksOption(result).condition).toBe(false);
+    });
+
+    it("passes anyBookOpen=true through as the 'books' option condition", () => {
+      (useScriptureMapContext as Mock).mockReturnValue(
+        makeScriptureMapContext({ anyBookOpen: true })
+      );
+      const result = setup();
+      expect(booksOption(result).condition).toBe(true);
+    });
   });
 });

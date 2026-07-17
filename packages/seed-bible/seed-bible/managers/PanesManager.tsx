@@ -21,6 +21,11 @@ export interface Pane {
   /** Custom component rendered in this pane. */
   component: () => ComponentChild;
   /**
+   * Optional icon rendered before the title in the pane's header. Rendered as
+   * a component so it can use hooks.
+   */
+  icon?: () => ComponentChild;
+  /**
    * Optional custom header content rendered inside the pane's header, between
    * the title and the close button. Rendered as a component so it can use
    * hooks (i18n, signals). Omit for a plain title-and-close header.
@@ -56,6 +61,11 @@ export interface PaneOpenOptions {
   title: PaneTitle;
   /** Custom component rendered in the pane. */
   component: () => ComponentChild;
+  /**
+   * Optional icon rendered before the title in the pane's header. Rendered as
+   * a component so it can use hooks.
+   */
+  icon?: () => ComponentChild;
   /**
    * Optional custom header content rendered inside the pane's header, between
    * the title and the close button. Rendered as a component so it can use
@@ -106,6 +116,14 @@ export interface PanesManager {
   /** Closes all panes. */
   closeAll: () => void;
 
+  /**
+   * Closes every pane currently filling the reader area — `"fullscreen"` panes
+   * on desktop, and (since mobile displays every pane fullscreen) all panes on
+   * mobile. Used to reveal the reader when the user navigates to a new
+   * location. No-op when nothing is filling the screen.
+   */
+  closeFullscreenPanes: () => void;
+
   /** Sets the absolute position (CSS left/top) of a floating pane. */
   setPanePosition: (paneId: string, x: number, y: number) => void;
 
@@ -131,6 +149,7 @@ function createPaneFactory() {
     placement: PanePlacement,
     customId?: string,
     header?: () => ComponentChild,
+    icon?: () => ComponentChild,
     onClose?: () => void
   ): Pane => {
     const paneId = nextPaneId;
@@ -141,6 +160,7 @@ function createPaneFactory() {
       id: customId ?? `pane-${paneId}`,
       title,
       component,
+      icon,
       header,
       onClose,
       placement,
@@ -203,6 +223,7 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
           ...existingPane,
           title: options.title,
           component: options.component,
+          icon: options.icon,
           header: options.header,
           onClose: options.onUserClose,
         };
@@ -234,6 +255,7 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
       options.placement,
       options.id,
       options.header,
+      options.icon,
       options.onUserClose
     );
     syncPaneState([...basePanes, nextPane], nextPane.id);
@@ -305,6 +327,20 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
     syncPaneState([]);
   };
 
+  const closeFullscreenPanes = () => {
+    // On mobile every pane is displayed fullscreen (see effectivePanes /
+    // openPane's willFillScreen), so treat them all as fullscreen there; on
+    // desktop only real fullscreen panes fill the reader.
+    const remaining =
+      (isMobile?.value ?? false)
+        ? []
+        : panes.value.filter((pane) => pane.placement !== "fullscreen");
+    if (remaining.length === panes.value.length) {
+      return;
+    }
+    syncPaneState(remaining);
+  };
+
   return {
     panes,
     selectedPaneId,
@@ -314,5 +350,6 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
     setPanePosition,
     resizePane,
     closeAll,
+    closeFullscreenPanes,
   };
 }

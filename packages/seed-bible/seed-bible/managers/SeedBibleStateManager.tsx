@@ -204,6 +204,8 @@ export interface AppState {
   selectSlot: (slotId: string) => void;
   /** Selects a custom pane. */
   selectPane: (paneId: string) => void;
+  /** Closes any pane filling the reader. */
+  closeFullscreenPanes: () => void;
   /** Creates a shared reading session and opens it in a new tab. */
   createSharedSession: () => Promise<BibleReadingSession>;
   /** Joins an existing shared session and opens it in a new tab. */
@@ -413,6 +415,10 @@ export function createSeedBibleState(
   const highlights = createHighlightsManager(os, login);
   const bookmarks = createBookmarksManager(os, login);
   const config = createConfig(login, navigation);
+  // Persist a user's explicit language selection to their profile. Wiring it
+  // through `requestLanguageChange` (rather than a blanket `languageChanged`
+  // listener) keeps URL-driven language changes view-only.
+  i18n.setLanguagePersister(config.persistLanguage);
   const panelsEnabled = computed(() => !config.config.value.disablePanels);
   const themeManager = createTheme(login, navigation);
   const chats = createChatsManager(login, i18n);
@@ -593,6 +599,30 @@ export function createSeedBibleState(
     readingExtensions,
     ai
   );
+  // Close any fullscreen pane when the book/chapter/verse params change, so
+  // navigating reveals the reader (every navigation path writes these params).
+  // The first location only sets a baseline, so load-time init doesn't close a
+  // pane auto-opened for the same load (e.g. Today via `?today=open`).
+  let lastReadingLocation: string | null = null;
+  effect(() => {
+    const url = navigation.currentUrl.value;
+    const book = url.searchParams.get("book");
+    const chapter = url.searchParams.get("chapter");
+    const verse = url.searchParams.get("verse");
+    if (!book || !chapter) {
+      return;
+    }
+
+    const location = `${book}|${chapter}|${verse ?? ""}`;
+    const previous = lastReadingLocation;
+    lastReadingLocation = location;
+
+    if (previous === null || previous === location) {
+      return;
+    }
+    panes.closeFullscreenPanes();
+  });
+
   const tutorial = createTutorialManager(
     login,
     onboarding,
@@ -734,15 +764,37 @@ export function createSeedBibleState(
     };
   });
 
+  // Keep selection and slots aligned. Clicking a tab goes through
+  // handleSelectTab (which also calls setSelectedSlotTab). removeTab only
+  // updates selectedTabId — TabsLayoutManager's sync then clears the closed
+  // tab from its slot (tab → null). If that emptied slot is still selected,
+  // put the newly selected tab into it so TabsLayout keeps rendering a reader.
+  //
+  // Only fill empty slots: never overwrite a slot that already has a tab.
+  // openInNewSlot clones via addTab (which selects the clone) before the new
+  // slot exists; overwriting here would steal the original slot and leave an
+  // empty pane after layout de-dupes the shared tab id.
   effect(() => {
-    if (selectedTab.value) {
-      const matchingSlot =
-        tabsLayout.slots.value.find(
-          (s) => s.tab?.id === selectedTab.value?.id
-        ) ?? null;
-      if (matchingSlot) {
-        tabsLayout.selectSlot(matchingSlot.id);
-      }
+    const tab = selectedTab.value;
+    if (!tab) {
+      return;
+    }
+
+    const matchingSlot =
+      tabsLayout.slots.value.find((s) => s.tab?.id === tab.id) ?? null;
+    if (matchingSlot) {
+      tabsLayout.selectSlot(matchingSlot.id);
+      return;
+    }
+
+    const selectedSlot =
+      tabsLayout.slots.value.find(
+        (s) => s.id === tabsLayout.selectedSlotId.value
+      ) ??
+      tabsLayout.slots.value[0] ??
+      null;
+    if (selectedSlot && !selectedSlot.tab) {
+      tabsLayout.setSelectedSlotTab(tab.id);
     }
   });
 
@@ -884,6 +936,7 @@ export function createSeedBibleState(
     closeSidebarAndSettings();
     tabs.selectTab(tabId);
     tabsLayout.setSelectedSlotTab(tabId);
+    panes.closeFullscreenPanes();
   };
 
   const handleAddTab = () => {
@@ -1125,6 +1178,7 @@ export function createSeedBibleState(
   };
 
   const handleOpenVerseReference = async (ref: VerseRef) => {
+    panes.closeFullscreenPanes();
     let tab = selectedTab.value;
 
     if (!tab) {
@@ -1332,6 +1386,7 @@ export function createSeedBibleState(
       openInNewSlot: handleOpenInNewSlot,
       selectSlot: handleSelectSlot,
       selectPane: handleSelectPane,
+      closeFullscreenPanes: panes.closeFullscreenPanes,
       openVerseReference: handleOpenVerseReference,
       openChat: handleOpenChat,
       title,

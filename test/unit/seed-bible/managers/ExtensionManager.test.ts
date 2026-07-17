@@ -676,6 +676,144 @@ describe("createExtensionManager", () => {
     expect(loadedModules).toEqual(["pkg://autoinstall"]);
   });
 
+  it("loadDefaultExtensions() does not reinstall an autoinstall extension after it has been uninstalled, across a reload", async () => {
+    const defaultExtensions: ExtensionSet = {
+      id: "set.autoinstall-uninstall",
+      extensions: [
+        {
+          url: "pkg://autoinstall-uninstall",
+          meta: {
+            id: "ext.autoinstall-uninstall",
+            translations: {
+              en: {
+                title: "Autoinstall",
+                description: "Autoinstall extension",
+              },
+            },
+            autoinstall: true,
+          },
+        },
+      ],
+    };
+    mockExtensionModule("pkg://autoinstall-uninstall");
+
+    const manager1 = createExtensionManager(login, { defaultExtensions });
+    await manager1.loadDefaultExtensions();
+
+    expect(loadedModules).toEqual(["pkg://autoinstall-uninstall"]);
+    expect(manager1.getExtensions()[0]?.installed).toBe(true);
+
+    manager1.unloadExtension("ext.autoinstall-uninstall");
+    expect(manager1.getExtensions()[0]?.installed).toBe(false);
+
+    // Simulate a real page reload: a fresh manager instance backed by the
+    // same persisted local storage, since in-memory state (like
+    // installedExtensionIds) never survives a reload — only what was
+    // written to storage does.
+    loadedModules.length = 0;
+    const manager2 = createExtensionManager(login, { defaultExtensions });
+    await manager2.loadDefaultExtensions();
+
+    expect(loadedModules).toEqual([]);
+    expect(manager2.getExtensions()[0]?.installed).toBe(false);
+  });
+
+  it("loadDefaultExtensions() does not reinstall an autoinstall extension's forced dependency after both have been uninstalled, across a reload", async () => {
+    const defaultExtensions: ExtensionSet = {
+      id: "set.autoinstall-dependency",
+      extensions: [
+        {
+          url: "pkg://autoinstall-dependent",
+          meta: {
+            id: "ext.autoinstall-dependent",
+            translations: {
+              en: { title: "Dependent", description: "Dependent extension" },
+            },
+            autoinstall: true,
+            dependencies: ["ext.autoinstall-dependency"],
+          },
+        },
+        {
+          url: "pkg://autoinstall-dependency",
+          meta: {
+            id: "ext.autoinstall-dependency",
+            // No autoinstall flag - only force-installed as a dependency,
+            // mirroring seed-bible-utils/today-screen in production.
+            translations: {
+              en: {
+                title: "Dependency",
+                description: "Dependency extension",
+              },
+            },
+          },
+        },
+      ],
+    };
+    mockExtensionModule("pkg://autoinstall-dependent");
+    mockExtensionModule("pkg://autoinstall-dependency");
+
+    const manager1 = createExtensionManager(login, { defaultExtensions });
+    await manager1.loadDefaultExtensions();
+
+    expect([...loadedModules].sort()).toEqual(
+      ["pkg://autoinstall-dependency", "pkg://autoinstall-dependent"].sort()
+    );
+
+    manager1.unloadExtension("ext.autoinstall-dependent");
+    manager1.unloadExtension("ext.autoinstall-dependency");
+
+    loadedModules.length = 0;
+    const manager2 = createExtensionManager(login, { defaultExtensions });
+    await manager2.loadDefaultExtensions();
+
+    expect(loadedModules).toEqual([]);
+    const known = manager2.getExtensions();
+    expect(
+      known.find((e) => e.id === "ext.autoinstall-dependent")?.installed
+    ).toBe(false);
+    expect(
+      known.find((e) => e.id === "ext.autoinstall-dependency")?.installed
+    ).toBe(false);
+  });
+
+  it("loadDefaultExtensions() still installs via URL override even when the extension is already in the autoinstall-handled set", async () => {
+    localStorage.setItem(
+      "sb-autoinstall-handled-extensions",
+      JSON.stringify(["ext.url-override-handled"])
+    );
+
+    const defaultExtensions: ExtensionSet = {
+      id: "set.url-override-handled",
+      extensions: [
+        {
+          url: "pkg://url-override-handled",
+          meta: {
+            id: "ext.url-override-handled",
+            translations: {
+              en: { title: "Override", description: "Override extension" },
+            },
+            autoinstall: true,
+          },
+        },
+      ],
+    };
+    const manager = createExtensionManager(login, { defaultExtensions });
+    mockExtensionModule("pkg://url-override-handled");
+
+    window.history.replaceState(
+      null,
+      "",
+      "/?autoinstall-ext.url-override-handled=true"
+    );
+    try {
+      await manager.loadDefaultExtensions();
+    } finally {
+      window.history.replaceState(null, "", "/");
+    }
+
+    expect(loadedModules).toEqual(["pkg://url-override-handled"]);
+  });
+
   it("getExtensions() lists known extensions from loaded sets even when not installed", async () => {
     const manager = createExtensionManager(login);
     mockExtensionModule("pkg://known-only");
@@ -1192,6 +1330,33 @@ describe("createExtensionManager", () => {
     ).toEqual([]);
   });
 
+  it("unloadExtension() records the extension in the autoinstall-handled set even when it never had autoinstall:true", async () => {
+    // Mirrors seed-bible-utils in production: an extension that's only ever
+    // force-installed as another extension's dependency, never carrying
+    // autoinstall:true itself, so loadDefaultExtensions's batch marking never
+    // touches it - this is the only path that records its uninstall.
+    const manager = createExtensionManager(login);
+    mockExtensionModule("pkg://handled-on-uninstall");
+
+    await manager.loadExtension({
+      url: "pkg://handled-on-uninstall",
+      meta: {
+        id: "ext.handled-on-uninstall",
+        translations: {
+          en: { title: "Handled", description: "Handled extension" },
+        },
+      },
+    });
+
+    manager.unloadExtension("ext.handled-on-uninstall");
+
+    expect(
+      JSON.parse(
+        localStorage.getItem("sb-autoinstall-handled-extensions") ?? "[]"
+      )
+    ).toEqual(["ext.handled-on-uninstall"]);
+  });
+
   it("loadSavedExtensions() re-loads extensions saved in local storage", async () => {
     localStorage.setItem(
       "sb-installed-extensions",
@@ -1280,6 +1445,14 @@ describe("createExtensionManager", () => {
       | Record<string, unknown>
       | undefined;
     return config?.installedExtensions;
+  }
+
+  /** Reads the autoinstall-handled extension IDs persisted to a login's profile config. */
+  function getProfileHandled(l: LoginManager): unknown {
+    const config = l.profile.value?.config as
+      | Record<string, unknown>
+      | undefined;
+    return config?.autoinstallHandledExtensions;
   }
 
   /** Polls until `check()` is true, or throws after `timeoutMs`. */
@@ -1424,6 +1597,41 @@ describe("createExtensionManager", () => {
     });
 
     expect(getProfileInstalled(login)).toEqual(["ext.local-only"]);
+  });
+
+  it("loadDefaultExtensions() merges the autoinstall-handled set between local storage and the profile config", async () => {
+    localStorage.setItem(
+      "sb-autoinstall-handled-extensions",
+      JSON.stringify(["ext.handled-local-only"])
+    );
+
+    login = createTestLogin({
+      userId: "user-1",
+      profile: {
+        name: "Test",
+        config: {
+          autoinstallHandledExtensions: ["ext.handled-profile-only"],
+        },
+      } as UserProfile,
+    });
+
+    const manager = createExtensionManager(login, {
+      defaultExtensions: { id: "set.empty-handled-merge", extensions: [] },
+    });
+
+    await manager.loadDefaultExtensions();
+
+    expect(
+      (
+        JSON.parse(
+          localStorage.getItem("sb-autoinstall-handled-extensions") ?? "[]"
+        ) as string[]
+      ).sort()
+    ).toEqual(["ext.handled-local-only", "ext.handled-profile-only"]);
+    expect((getProfileHandled(login) as string[]).sort()).toEqual([
+      "ext.handled-local-only",
+      "ext.handled-profile-only",
+    ]);
   });
 
   it("does not wipe the profile when the boot-time extension sync races the profile load (regression for #1318)", async () => {

@@ -1156,6 +1156,14 @@ async function createBibleReadingSession(
         return;
       }
 
+      // Extension data (e.g. playlist queue/step) drives navigation just like
+      // ordinary chapter navigation, so it's gated by the same "only host can
+      // navigate" restriction as `stopSync` above — otherwise a restricted
+      // participant could still advance a playlist for everyone.
+      if (!userCanNavigate(localSessionId.value)) {
+        return;
+      }
+
       const localIds = new Set(snapshot.map((entry) => entry.id));
 
       const keysToDelete: string[] = [];

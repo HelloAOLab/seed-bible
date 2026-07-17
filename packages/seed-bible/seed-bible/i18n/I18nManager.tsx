@@ -187,7 +187,16 @@ export function createI18nManager(
         return null;
       },
       set value(newValue: string | null) {
-        language.value = newValue ?? defaultLanguage;
+        // Invoked when the URL's `?lang=` changes on its own — deep links and
+        // browser back/forward. Route through `i18n.changeLanguage` so the
+        // actual translations reload; the `languageChanged` listener above then
+        // moves the `language` signal to match. Assigning the signal directly
+        // here would desync `i18n.language` (and therefore every `t()` call)
+        // from the URL.
+        const next = newValue ?? defaultLanguage;
+        if (next !== i18n.language) {
+          void i18n.changeLanguage(next);
+        }
       },
     },
   });
@@ -224,6 +233,21 @@ export function createI18nManager(
     ensureTranslationsLoaded = loadTranslations;
   };
 
+  /**
+   * Wired by SeedBibleState to persist the user's chosen UI language (e.g. to
+   * their profile). Invoked ONLY for selector-driven changes via
+   * `requestLanguageChange` — never for URL-driven changes (deep links,
+   * browser back/forward) or profile-applied changes, so opening a shared
+   * `?lang=` link updates the view without overwriting the account's saved
+   * language.
+   */
+  let persistLanguage: ((language: string) => void) | null = null;
+  const setLanguagePersister = (
+    persister: ((language: string) => void) | null
+  ) => {
+    persistLanguage = persister;
+  };
+
   const changeLanguage = i18n.changeLanguage.bind(i18n);
 
   const applyBibleTranslationForUiLanguage = async (uiLanguage: string) => {
@@ -258,6 +282,10 @@ export function createI18nManager(
     if (nextLanguage !== language.value) {
       await changeLanguage(nextLanguage);
     }
+    // Persist the user's explicit selection. Only selector-driven changes reach
+    // this function; URL-driven changes go through the `syncSignalsToUrl`
+    // setter above and are deliberately left un-persisted.
+    persistLanguage?.(nextLanguage);
     await applyBibleTranslationForUiLanguage(nextLanguage);
   };
 
@@ -282,6 +310,7 @@ export function createI18nManager(
     confirmLanguageFallback,
     cancelLanguageFallback,
     setBibleTranslationApplicator,
+    setLanguagePersister,
     languageFallbackPrompt,
     defaultLanguage,
     availableLanguages,

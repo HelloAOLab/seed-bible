@@ -19,6 +19,7 @@ import {
   type PlaylistReadingData,
   type PlaylistReadingExtensionInstance,
 } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
+import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { computed, signal } from "@preact/signals";
 import type { Mock } from "vitest";
 
@@ -105,6 +106,10 @@ function makeReadingState(
     // a re-navigation is needed when the step is unchanged.
     bookId: signal<string | null>(null),
     chapterNumber: signal<number>(1),
+    // `navigateToCurrentItem` reads this to resolve a `toEndOfChapter`
+    // fragment's real end verse; defaults to null (unloaded), settable per
+    // test via `tab.readingState.chapterData.value = {...}`.
+    chapterData: signal<TranslationBookChapter | null>(null),
     decorateVerses: vi.fn(),
     removeDecoration: vi.fn(),
     enabledExtensions: computed(() => Array.from(runtimes.value.values())),
@@ -644,6 +649,47 @@ describe("createPlaylistManager", () => {
     manager.stopPlaying();
     expect(manager.playing.value).toBeNull();
     expect(manager.view.value).toBe("discover");
+  });
+
+  it("startPlaying expands a cross-chapter item into one queue item per chapter", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    const playlist = makePlaylist({
+      items: [
+        {
+          type: "bible-verse",
+          ref: {
+            bookId: "GEN",
+            chapter: 1,
+            verse: 2,
+            endChapter: 3,
+            endVerse: 4,
+          },
+        },
+      ],
+    });
+
+    manager.startPlaying(playlist);
+
+    expect(manager.playing.value?.queue.value).toEqual([
+      {
+        type: "bible-verse",
+        translationId: undefined,
+        ref: { bookId: "GEN", chapter: 1, verse: 2, toEndOfChapter: true },
+      },
+      {
+        type: "bible-verse",
+        translationId: undefined,
+        ref: { bookId: "GEN", chapter: 2 },
+      },
+      {
+        type: "bible-verse",
+        translationId: undefined,
+        ref: { bookId: "GEN", chapter: 3, verse: 1, endVerse: 4 },
+      },
+    ]);
+    // The saved playlist itself is untouched by expansion.
+    expect(manager.playing.value?.playlists.value).toEqual([playlist]);
   });
 
   it("startPlaying accepts multiple playlists", async () => {
@@ -1437,6 +1483,34 @@ describe("createPlayingState", () => {
       expect(state.tab).toBeNull();
     });
 
+    it("highlights the full verse range, including the end verse", async () => {
+      const nav = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", nav, "BSB");
+      const decorateVerses = tab.readingState.decorateVerses as unknown as Mock;
+      const state = createPlayingState(
+        [
+          makePlaylist({
+            items: [
+              {
+                type: "bible-verse",
+                ref: { bookId: "EXO", chapter: 5, verse: 2, endVerse: 5 },
+              },
+            ],
+          }),
+        ],
+        tab
+      );
+
+      await state.jumpTo(0);
+
+      expect(decorateVerses).toHaveBeenCalledWith(
+        "EXO",
+        5,
+        [2, 3, 4, 5],
+        expect.any(Object)
+      );
+    });
+
     it("dispose removes the active verse decoration", async () => {
       const nav = vi.fn().mockResolvedValue(undefined);
       const tab = makeTab("tab-1", nav, "BSB");
@@ -1453,6 +1527,229 @@ describe("createPlayingState", () => {
       state.dispose();
 
       expect(tab.readingState.removeDecoration).toHaveBeenCalledWith("dec-1");
+    });
+  });
+
+  describe("cross-chapter expansion", () => {
+    it("expands a verse-anchored cross-chapter range into one item per chapter", () => {
+      const state = createPlayingState([
+        makePlaylist({
+          items: [
+            {
+              type: "bible-verse",
+              ref: {
+                bookId: "GEN",
+                chapter: 1,
+                verse: 2,
+                endChapter: 3,
+                endVerse: 4,
+              },
+            },
+          ],
+        }),
+      ]);
+
+      expect(state.queue.value).toEqual([
+        {
+          type: "bible-verse",
+          translationId: undefined,
+          ref: { bookId: "GEN", chapter: 1, verse: 2, toEndOfChapter: true },
+        },
+        {
+          type: "bible-verse",
+          translationId: undefined,
+          ref: { bookId: "GEN", chapter: 2 },
+        },
+        {
+          type: "bible-verse",
+          translationId: undefined,
+          ref: { bookId: "GEN", chapter: 3, verse: 1, endVerse: 4 },
+        },
+      ]);
+    });
+
+    it("expands a pure chapter range (no verse anchor) into whole-chapter items", () => {
+      const state = createPlayingState([
+        makePlaylist({
+          items: [
+            {
+              type: "bible-verse",
+              ref: { bookId: "JHN", chapter: 1, endChapter: 3 },
+            },
+          ],
+        }),
+      ]);
+
+      expect(state.queue.value).toEqual([
+        {
+          type: "bible-verse",
+          translationId: undefined,
+          ref: { bookId: "JHN", chapter: 1 },
+        },
+        {
+          type: "bible-verse",
+          translationId: undefined,
+          ref: { bookId: "JHN", chapter: 2 },
+        },
+        {
+          type: "bible-verse",
+          translationId: undefined,
+          ref: { bookId: "JHN", chapter: 3 },
+        },
+      ]);
+    });
+
+    it("does not expand when endChapter equals chapter", () => {
+      const item: PlaylistItemData = {
+        type: "bible-verse",
+        ref: {
+          bookId: "GEN",
+          chapter: 1,
+          verse: 2,
+          endChapter: 1,
+          endVerse: 4,
+        },
+      };
+      const state = createPlayingState([makePlaylist({ items: [item] })]);
+
+      expect(state.queue.value).toEqual([item]);
+    });
+
+    it("does not expand non-bible-verse items", () => {
+      const item: PlaylistItemData = { type: "html", html: "<p>hi</p>" };
+      const state = createPlayingState([makePlaylist({ items: [item] })]);
+
+      expect(state.queue.value).toEqual([item]);
+    });
+
+    it("does not expand when endChapter exceeds the maximum possible chapter number", () => {
+      const item: PlaylistItemData = {
+        type: "bible-verse",
+        ref: { bookId: "GEN", chapter: 1, endChapter: 999 },
+      };
+      const state = createPlayingState([makePlaylist({ items: [item] })]);
+
+      expect(state.queue.value).toEqual([item]);
+    });
+
+    it("addToQueue also expands a cross-chapter item", () => {
+      const state = createPlayingState([makePlaylist({ items: [] })]);
+
+      state.addToQueue({
+        type: "bible-verse",
+        ref: { bookId: "GEN", chapter: 1, endChapter: 2 },
+      });
+
+      expect(state.queue.value).toEqual([
+        {
+          type: "bible-verse",
+          translationId: undefined,
+          ref: { bookId: "GEN", chapter: 1 },
+        },
+        {
+          type: "bible-verse",
+          translationId: undefined,
+          ref: { bookId: "GEN", chapter: 2 },
+        },
+      ]);
+    });
+
+    it("resolves the toEndOfChapter highlight from the loaded chapter data", async () => {
+      const nav = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", nav, "BSB");
+      const decorateVerses = tab.readingState.decorateVerses as unknown as Mock;
+      tab.readingState.chapterData.value = {
+        book: { id: "GEN" },
+        chapter: { number: 1, numberOfVerses: 31 },
+        numberOfVerses: 31,
+      } as any;
+      const state = createPlayingState(
+        [
+          makePlaylist({
+            items: [
+              {
+                type: "bible-verse",
+                ref: { bookId: "GEN", chapter: 1, verse: 29, endChapter: 2 },
+              },
+            ],
+          }),
+        ],
+        tab
+      );
+
+      await state.jumpTo(0); // the first fragment: GEN 1:29, toEndOfChapter
+
+      expect(decorateVerses).toHaveBeenCalledWith(
+        "GEN",
+        1,
+        [29, 30, 31],
+        expect.any(Object)
+      );
+    });
+
+    it("falls back to a single-verse highlight when chapter data hasn't loaded yet", async () => {
+      const nav = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", nav, "BSB");
+      const decorateVerses = tab.readingState.decorateVerses as unknown as Mock;
+      // chapterData defaults to null in the fixture: simulates navigation
+      // not having resolved chapter data yet.
+      const state = createPlayingState(
+        [
+          makePlaylist({
+            items: [
+              {
+                type: "bible-verse",
+                ref: { bookId: "GEN", chapter: 1, verse: 29, endChapter: 2 },
+              },
+            ],
+          }),
+        ],
+        tab
+      );
+
+      await state.jumpTo(0);
+
+      expect(decorateVerses).toHaveBeenCalledWith(
+        "GEN",
+        1,
+        [29],
+        expect.any(Object)
+      );
+    });
+
+    it("falls back to a single-verse highlight when chapter data belongs to a different chapter (stale fetch)", async () => {
+      const nav = vi.fn().mockResolvedValue(undefined);
+      const tab = makeTab("tab-1", nav, "BSB");
+      const decorateVerses = tab.readingState.decorateVerses as unknown as Mock;
+      // Simulates a failed fetch: `chapterData` still holds a previous,
+      // unrelated chapter rather than being cleared.
+      tab.readingState.chapterData.value = {
+        book: { id: "GEN" },
+        chapter: { number: 9, numberOfVerses: 29 },
+        numberOfVerses: 29,
+      } as any;
+      const state = createPlayingState(
+        [
+          makePlaylist({
+            items: [
+              {
+                type: "bible-verse",
+                ref: { bookId: "GEN", chapter: 1, verse: 29, endChapter: 2 },
+              },
+            ],
+          }),
+        ],
+        tab
+      );
+
+      await state.jumpTo(0);
+
+      expect(decorateVerses).toHaveBeenCalledWith(
+        "GEN",
+        1,
+        [29],
+        expect.any(Object)
+      );
     });
   });
 });
