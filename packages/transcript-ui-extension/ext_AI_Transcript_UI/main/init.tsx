@@ -48,7 +48,6 @@ export default function initTranscriptUI() {
                 });
               },
               onUserClose: () => {
-                console.log("onUserClose", currentPane);
                 if (currentPane) {
                   context.panes.closePane(currentPane.id);
                   currentPane = null;
