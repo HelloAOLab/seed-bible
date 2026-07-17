@@ -12,14 +12,19 @@ interface ChannelChatMessageEvent {
   message: { text: string };
 }
 
-const RECONNECT_DELAY_MS = 1000;
+const RECONNECT_BASE_DELAY_MS = 1000;
+const RECONNECT_MAX_DELAY_MS = 60000;
 
-function startWebSocketClient(twitchSubManager: TwitchSubInterface) {
+function startWebSocketClient(
+  twitchSubManager: TwitchSubInterface,
+  reconnectAttempt = 0
+) {
   const config = twitchSubManager.config.value;
   if (!config.accessToken.value) {
     console.error("wsss:- Twitch config not available.");
     return;
   }
+
   const websocketClient = new WebSocket(config.eventSubWebsocketUrl.value!);
 
   websocketClient.onerror = (event) => {
@@ -35,24 +40,30 @@ function startWebSocketClient(twitchSubManager: TwitchSubInterface) {
   };
 
   websocketClient.onmessage = (event) => {
-    handleWebSocketMessage(JSON.parse(event.data), twitchSubManager);
+    handleWebSocketMessage(JSON.parse(event.data), twitchSubManager, () => {
+      reconnectAttempt = 0;
+    });
   };
 
   websocketClient.onclose = (event) => {
-    console.warn(
-      "wsss:- " +
-        `WebSocket connection closed (code: ${event.code}, reason: ${event.reason || "none"}). Restarting...`
-    );
-
     twitchSubManager.webSocketClient.value = null;
     twitchSubManager.websocketSessionID.value = null;
+
+    const delay = Math.min(
+      RECONNECT_BASE_DELAY_MS * 2 ** reconnectAttempt,
+      RECONNECT_MAX_DELAY_MS
+    );
+    console.warn(
+      "wsss:- " +
+        `WebSocket connection closed (code: ${event.code}, reason: ${event.reason || "none"}). Reconnecting in ${delay}ms...`
+    );
 
     setTimeout(() => {
       if (!twitchSubManager.config.value.accessToken.value) {
         return;
       }
-      startWebSocketClient(twitchSubManager);
-    }, RECONNECT_DELAY_MS);
+      startWebSocketClient(twitchSubManager, reconnectAttempt + 1);
+    }, delay);
   };
 
   twitchSubManager.webSocketClient.value = websocketClient;
@@ -60,7 +71,8 @@ function startWebSocketClient(twitchSubManager: TwitchSubInterface) {
 
 function handleWebSocketMessage(
   data: WSTwitchMessage,
-  twitchSubManager: TwitchSubInterface
+  twitchSubManager: TwitchSubInterface,
+  onSubscribed: () => void
 ) {
   const config = twitchSubManager.config.value;
   if (!config.accessToken.value) {
@@ -72,14 +84,21 @@ function handleWebSocketMessage(
     case "session_welcome": {
       const welcome = data as WSWelcomeMessage;
       twitchSubManager.websocketSessionID.value = welcome.payload.session.id;
-      registerEventSubListeners(twitchSubManager);
+      registerEventSubListeners(twitchSubManager, onSubscribed);
       break;
     }
     case "notification": {
       const notification =
         data as unknown as WSNotificationMessage<ChannelChatMessageEvent>;
+      console.log(notification);
       switch (notification.metadata.subscription_type) {
         case "channel.chat.message":
+          console.log(
+            notification.payload.event.broadcaster_user_id,
+            config.channelId.value,
+            notification.payload.event.chatter_user_id,
+            config.broadcasterId.value
+          );
           if (
             notification.payload.event.broadcaster_user_id ===
               config.channelId.value &&
@@ -107,7 +126,10 @@ function handleWebSocketMessage(
   }
 }
 
-async function registerEventSubListeners(twitchSubManager: TwitchSubInterface) {
+async function registerEventSubListeners(
+  twitchSubManager: TwitchSubInterface,
+  onSubscribed: () => void
+) {
   const config = twitchSubManager.config.value;
   if (!config.accessToken.value) {
     console.error("wsss:- Twitch config not available.");
@@ -145,12 +167,13 @@ async function registerEventSubListeners(twitchSubManager: TwitchSubInterface) {
         "Failed to subscribe to channel.chat.message. API call returned status code " +
         response.status
     );
-    console.error("wsss:- " + data);
+    console.error("wsss:- " + JSON.stringify(data));
   } else {
     const data = await response.json();
     console.log(
       "wsss:- " + `Subscribed to channel.chat.message [${data.data[0].id}]`
     );
+    onSubscribed();
   }
 }
 

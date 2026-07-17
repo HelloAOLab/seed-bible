@@ -203,7 +203,8 @@ export function CreateTwitchSubState(
     }
   }
 
-  const handleWSEvents = async (config: { type: string; payload: string }) => {
+  async function handleWSEvents(config: { type: string; payload: string }) {
+    console.log(config);
     if (!wsPaused.value && websocketSessionID.value && webSocketClient.value) {
       switch (config.type) {
         case "bookChanged": {
@@ -329,7 +330,7 @@ export function CreateTwitchSubState(
         }
       }
     }
-  };
+  }
 
   effect(() => {
     window.sessionStorage.setItem(
