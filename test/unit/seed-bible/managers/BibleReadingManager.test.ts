@@ -749,6 +749,67 @@ describe("createBibleReadingState", () => {
     expect(state.chapterData.value?.chapter.number).toBe(1);
   });
 
+  it("queues rapid repeated loadNextChapter() calls instead of racing or blocking (#1414)", async () => {
+    const responses = createReadingManagerResponseMap();
+    responses[makeExampleUrl("/api/AAB/GEN/3.json")] = createResponse(
+      makeChapter(aabBooks, "GEN", 3)
+    );
+    responses[makeExampleUrl("/api/AAB/GEN/4.json")] = createResponse(
+      makeChapter(aabBooks, "GEN", 4)
+    );
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+
+    // Simulate tapping "next" three times in quick succession, before the
+    // first request has resolved. None of these calls should be blocked or
+    // dropped: each should queue behind the last and advance one further
+    // chapter, ending on chapter 4 rather than racing/overwriting back to
+    // an earlier chapter.
+    const first = state.loadNextChapter();
+    const second = state.loadNextChapter();
+    const third = state.loadNextChapter();
+
+    expect(state.loading.value).toBe(true);
+
+    await Promise.all([first, second, third]);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      makeExampleUrl("/api/AAB/GEN/2.json")
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      makeExampleUrl("/api/AAB/GEN/3.json")
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      makeExampleUrl("/api/AAB/GEN/4.json")
+    );
+    expect(state.chapterNumber.value).toBe(4);
+    expect(state.chapterData.value?.chapter.number).toBe(4);
+    expect(state.loading.value).toBe(false);
+  });
+
+  it("queues a loadPreviousChapter() call issued while loadNextChapter() is still in flight (#1414)", async () => {
+    const responses = createReadingManagerResponseMap();
+    responses[makeExampleUrl("/api/AAB/GEN/3.json")] = createResponse(
+      makeChapter(aabBooks, "GEN", 3)
+    );
+    setWebResponses(responses);
+    const state = createBibleReadingState(createDataManager());
+    await waitForInitialLoad(state);
+    await state.selectChapter("GEN", 2);
+
+    const next = state.loadNextChapter();
+    const previous = state.loadPreviousChapter();
+
+    await Promise.all([next, previous]);
+
+    // next() runs first (GEN 2 -> GEN 3), then previous() runs against the
+    // now-current chapter (GEN 3 -> GEN 2) — in call order, rather than both
+    // racing off the GEN 2 snapshot that was current when they were called.
+    expect(state.chapterNumber.value).toBe(2);
+    expect(state.chapterData.value?.chapter.number).toBe(2);
+  });
+
   it("selectVerse() selects a verse", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const state = createBibleReadingState(createDataManager());

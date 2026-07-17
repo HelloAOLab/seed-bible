@@ -1434,224 +1434,250 @@ export function createBibleReadingState(
       .filter((decoration) => decoration.id !== decorationId);
   };
 
-  const loadPreviousChapter = async () => {
-    if (!chapterData.value) {
-      return;
-    }
+  // Chapter/book navigation must never block on an in-flight text request
+  // (issue #1414): callers can invoke these repeatedly (e.g. tapping "next"
+  // in quick succession) without waiting for a prior request to resolve.
+  // Instead of racing, each navigation is queued behind the previous one so
+  // they run in call order, always reading fresh state (translationId,
+  // bookId, chapterData) once it's their turn — no stale response can ever
+  // clobber a newer one, and `loading` stays true for the whole queue rather
+  // than flickering between queued navigations.
+  let navigationQueue: Promise<void> = Promise.resolve();
+  let pendingNavigationCount = 0;
 
-    const outcome = await runNavigationHooks("previous");
-    if (outcome.type === "handled") {
-      emitNavigate({ replace: false });
-      return;
-    } else if (outcome.type === "prevent") {
-      return;
-    }
-
+  const queueNavigation = <T,>(task: () => Promise<T>): Promise<T> => {
+    pendingNavigationCount++;
     loading.value = true;
-    error.value = null;
 
-    try {
-      const chapter =
-        outcome.type === "navigate"
-          ? outcome.chapter
-          : await dataManager.getPreviousChapter(chapterData.value);
-      if (!chapter) {
+    const previousNavigation = navigationQueue;
+    const run = (async () => {
+      await previousNavigation;
+      try {
+        return await task();
+      } finally {
+        pendingNavigationCount--;
+        if (pendingNavigationCount === 0) {
+          loading.value = false;
+        }
+      }
+    })();
+
+    navigationQueue = run.then(
+      () => undefined,
+      () => undefined
+    );
+
+    return run;
+  };
+
+  const loadPreviousChapter = () =>
+    queueNavigation(async () => {
+      if (!chapterData.value) {
         return;
       }
-      await syncStateFromChapter(chapter);
 
-      emitNavigate({ replace: false });
-    } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to load previous chapter.";
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  const selectTranslation = async (translation: string) => {
-    loading.value = true;
-    error.value = null;
-
-    try {
-      const nextTranslationId = await resolveTranslationInput(translation);
-
-      const books = await dataManager.getTranslationBooks(nextTranslationId);
-      const firstBook = books.books[0];
-      if (!firstBook) {
-        throw new Error("No books available for selected translation.");
+      const outcome = await runNavigationHooks("previous");
+      if (outcome.type === "handled") {
+        emitNavigate({ replace: false });
+        return;
+      } else if (outcome.type === "prevent") {
+        return;
       }
 
-      const firstChapterNumber = firstBook.firstChapterNumber ?? 1;
-      const chapter = await dataManager.getTranslationBookChapter(
-        nextTranslationId,
-        firstBook.id,
-        firstChapterNumber
-      );
+      error.value = null;
 
-      await batch(async () => {
-        availableTranslations.value = toAvailableTranslations(
-          dataManager.availableTranslations.value
-        );
+      try {
+        const chapter =
+          outcome.type === "navigate"
+            ? outcome.chapter
+            : await dataManager.getPreviousChapter(chapterData.value);
+        if (!chapter) {
+          return;
+        }
         await syncStateFromChapter(chapter);
-      });
 
-      emitNavigate({ replace: false });
-    } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to select translation.";
-    } finally {
-      loading.value = false;
-    }
-  };
+        emitNavigate({ replace: false });
+      } catch (err) {
+        error.value =
+          err instanceof Error
+            ? err.message
+            : "Failed to load previous chapter.";
+      }
+    });
 
-  const selectBook = async (book: string) => {
-    if (!translationBooks.value) {
-      return;
-    }
+  const selectTranslation = (translation: string) =>
+    queueNavigation(async () => {
+      error.value = null;
 
-    const selectedBook = translationBooks.value.books.find(
-      (entry) => entry.id === book
-    );
-    if (!selectedBook) {
-      return;
-    }
+      try {
+        const nextTranslationId = await resolveTranslationInput(translation);
 
-    loading.value = true;
-    error.value = null;
+        const books = await dataManager.getTranslationBooks(nextTranslationId);
+        const firstBook = books.books[0];
+        if (!firstBook) {
+          throw new Error("No books available for selected translation.");
+        }
 
-    try {
-      const nextChapterNumber = selectedBook.firstChapterNumber ?? 1;
-      const chapter = await dataManager.getTranslationBookChapter(
-        translationId.value,
-        book,
-        nextChapterNumber
+        const firstChapterNumber = firstBook.firstChapterNumber ?? 1;
+        const chapter = await dataManager.getTranslationBookChapter(
+          nextTranslationId,
+          firstBook.id,
+          firstChapterNumber
+        );
+
+        await batch(async () => {
+          availableTranslations.value = toAvailableTranslations(
+            dataManager.availableTranslations.value
+          );
+          await syncStateFromChapter(chapter);
+        });
+
+        emitNavigate({ replace: false });
+      } catch (err) {
+        error.value =
+          err instanceof Error ? err.message : "Failed to select translation.";
+      }
+    });
+
+  const selectBook = (book: string) =>
+    queueNavigation(async () => {
+      if (!translationBooks.value) {
+        return;
+      }
+
+      const selectedBook = translationBooks.value.books.find(
+        (entry) => entry.id === book
       );
+      if (!selectedBook) {
+        return;
+      }
 
-      await syncStateFromChapter(chapter);
+      error.value = null;
 
-      emitNavigate({ replace: false });
-    } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to select book.";
-    } finally {
-      loading.value = false;
-    }
-  };
+      try {
+        const nextChapterNumber = selectedBook.firstChapterNumber ?? 1;
+        const chapter = await dataManager.getTranslationBookChapter(
+          translationId.value,
+          book,
+          nextChapterNumber
+        );
 
-  const selectTranslationAndChapter = async (
+        await syncStateFromChapter(chapter);
+
+        emitNavigate({ replace: false });
+      } catch (err) {
+        error.value =
+          err instanceof Error ? err.message : "Failed to select book.";
+      }
+    });
+
+  const selectTranslationAndChapter = (
     nextTranslationIdOrUrl: string,
     nextBookId: string,
     nextChapterNumber: number,
     options?: SelectTranslationAndChapterOptions
-  ) => {
-    loading.value = true;
-    error.value = null;
+  ) =>
+    queueNavigation(async () => {
+      error.value = null;
 
-    try {
-      const nextTranslationId = await resolveTranslationInput(
-        nextTranslationIdOrUrl
-      );
-
-      const books = await dataManager.getTranslationBooks(nextTranslationId);
-      const selectedBook = books.books.find((book) => book.id === nextBookId);
-      if (!selectedBook) {
-        throw new Error(
-          `Book with ID "${nextBookId}" not available for translation "${nextTranslationId}".`
+      try {
+        const nextTranslationId = await resolveTranslationInput(
+          nextTranslationIdOrUrl
         );
+
+        const books = await dataManager.getTranslationBooks(nextTranslationId);
+        const selectedBook = books.books.find((book) => book.id === nextBookId);
+        if (!selectedBook) {
+          throw new Error(
+            `Book with ID "${nextBookId}" not available for translation "${nextTranslationId}".`
+          );
+        }
+
+        const firstChapterNumber = selectedBook.firstChapterNumber ?? 1;
+        const maxChapterNumber =
+          firstChapterNumber + selectedBook.numberOfChapters - 1;
+        const clampedChapterNumber =
+          nextChapterNumber >= firstChapterNumber &&
+          nextChapterNumber <= maxChapterNumber
+            ? nextChapterNumber
+            : firstChapterNumber;
+
+        const chapter = await dataManager.getTranslationBookChapter(
+          nextTranslationId,
+          selectedBook.id,
+          clampedChapterNumber
+        );
+
+        await batch(async () => {
+          availableTranslations.value = toAvailableTranslations(
+            dataManager.availableTranslations.value
+          );
+          await syncStateFromChapter(chapter, options);
+        });
+
+        if (options?.updateUrl !== false) {
+          emitNavigate({ replace: false });
+        }
+      } catch (err) {
+        error.value =
+          err instanceof Error
+            ? err.message
+            : "Failed to select translation and chapter.";
       }
+    });
 
-      const firstChapterNumber = selectedBook.firstChapterNumber ?? 1;
-      const maxChapterNumber =
-        firstChapterNumber + selectedBook.numberOfChapters - 1;
-      const clampedChapterNumber =
-        nextChapterNumber >= firstChapterNumber &&
-        nextChapterNumber <= maxChapterNumber
-          ? nextChapterNumber
-          : firstChapterNumber;
+  const selectChapter = (book: string, chapter: number) =>
+    queueNavigation(async () => {
+      error.value = null;
 
-      const chapter = await dataManager.getTranslationBookChapter(
-        nextTranslationId,
-        selectedBook.id,
-        clampedChapterNumber
-      );
-
-      await batch(async () => {
-        availableTranslations.value = toAvailableTranslations(
-          dataManager.availableTranslations.value
+      try {
+        const nextChapterData = await dataManager.getTranslationBookChapter(
+          translationId.value,
+          book,
+          chapter
         );
-        await syncStateFromChapter(chapter, options);
-      });
 
-      if (options?.updateUrl !== false) {
+        await syncStateFromChapter(nextChapterData);
+
         emitNavigate({ replace: false });
+      } catch (err) {
+        error.value =
+          err instanceof Error ? err.message : "Failed to select chapter.";
       }
-    } catch (err) {
-      error.value =
-        err instanceof Error
-          ? err.message
-          : "Failed to select translation and chapter.";
-    } finally {
-      loading.value = false;
-    }
-  };
+    });
 
-  const selectChapter = async (book: string, chapter: number) => {
-    loading.value = true;
-    error.value = null;
-
-    try {
-      const nextChapterData = await dataManager.getTranslationBookChapter(
-        translationId.value,
-        book,
-        chapter
-      );
-
-      await syncStateFromChapter(nextChapterData);
-
-      emitNavigate({ replace: false });
-    } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to select chapter.";
-    } finally {
-      loading.value = false;
-    }
-  };
-
-  const loadNextChapter = async () => {
-    if (!chapterData.value) {
-      return;
-    }
-
-    const outcome = await runNavigationHooks("next");
-    if (outcome.type === "handled") {
-      emitNavigate({ replace: false });
-      return;
-    } else if (outcome.type === "prevent") {
-      return;
-    }
-
-    loading.value = true;
-    error.value = null;
-
-    try {
-      const chapter =
-        outcome.type === "navigate"
-          ? outcome.chapter
-          : await dataManager.getNextChapter(chapterData.value);
-      if (!chapter) {
+  const loadNextChapter = () =>
+    queueNavigation(async () => {
+      if (!chapterData.value) {
         return;
       }
-      await syncStateFromChapter(chapter);
 
-      emitNavigate({ replace: false });
-    } catch (err) {
-      error.value =
-        err instanceof Error ? err.message : "Failed to load next chapter.";
-    } finally {
-      loading.value = false;
-    }
-  };
+      const outcome = await runNavigationHooks("next");
+      if (outcome.type === "handled") {
+        emitNavigate({ replace: false });
+        return;
+      } else if (outcome.type === "prevent") {
+        return;
+      }
+
+      error.value = null;
+
+      try {
+        const chapter =
+          outcome.type === "navigate"
+            ? outcome.chapter
+            : await dataManager.getNextChapter(chapterData.value);
+        if (!chapter) {
+          return;
+        }
+        await syncStateFromChapter(chapter);
+
+        emitNavigate({ replace: false });
+      } catch (err) {
+        error.value =
+          err instanceof Error ? err.message : "Failed to load next chapter.";
+      }
+    });
 
   const loadInitialData = async () => {
     loading.value = true;

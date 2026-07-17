@@ -614,4 +614,52 @@ describe("createBibleToolsManager", () => {
       expect(tool?.visible.value).toBe(true);
     });
   });
+
+  describe("chapter navigation tools stay enabled while loading (#1414)", () => {
+    function createNavigableContext(): ReturnType<typeof createContext> {
+      const context = createContext();
+      (context.readingState as any).chapterData = signal({
+        previousChapterApiLink: "/api/AAB/GEN/1.json",
+        nextChapterApiLink: "/api/AAB/GEN/3.json",
+      });
+      context.readingState.loading.value = true;
+      return context;
+    }
+
+    it("does not disable previous-chapter while a request is in flight", () => {
+      const manager = createBibleToolsManager();
+      const context = createNavigableContext();
+
+      const tool = manager
+        .getToolbarTools(context)
+        .find((t) => t.id === "previous-chapter");
+
+      expect(tool).toBeDefined();
+      expect(tool?.disabled.value).toBe(false);
+    });
+
+    it("does not disable next-chapter while a request is in flight", () => {
+      const manager = createBibleToolsManager();
+      const context = createNavigableContext();
+
+      const tool = manager
+        .getToolbarTools(context)
+        .find((t) => t.id === "next-chapter");
+
+      expect(tool).toBeDefined();
+      expect(tool?.disabled.value).toBe(false);
+    });
+
+    it("does not disable open-selector while a request is in flight", () => {
+      const manager = createBibleToolsManager();
+      const context = createNavigableContext();
+
+      const tool = manager
+        .getToolbarTools(context)
+        .find((t) => t.id === "open-selector");
+
+      expect(tool).toBeDefined();
+      expect(tool?.disabled.value).toBe(false);
+    });
+  });
 });
