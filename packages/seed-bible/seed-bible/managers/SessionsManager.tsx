@@ -501,6 +501,15 @@ export interface BibleReadingSession {
   currentUser: ReadonlySignal<ConnectedSessionUser | null>;
 
   /**
+   * Whether this client's own connection to the shared document is
+   * currently synced. False while resyncing (e.g. right after a mobile
+   * device resumes from the background) — during that window, this
+   * client's own view of `connectedUsers` can't be trusted to reflect who
+   * is actually still connected.
+   */
+  isSynced: ReadonlySignal<boolean>;
+
+  /**
    * Whether the given user is the session host, based on the session's current options.
    * @param user The user to check.
    */
@@ -973,6 +982,19 @@ async function createBibleReadingSession(
     }
   );
 
+  // `getSharedDocument()` already awaited the first sync before returning,
+  // so we start out synced. Keep listening for the life of the session —
+  // unlike that initial await, this lets callers tell "my own connection
+  // just dropped/is resyncing" apart from "the other client actually left".
+  const isSynced = signal(true);
+  const statusUpdatedSubscription = document.onStatusUpdated.subscribe(
+    (status) => {
+      if (status.type === "sync") {
+        isSynced.value = status.synced;
+      }
+    }
+  );
+
   void syncConnectedUsers(++remoteClientsVersion);
 
   const stopSync = effect(() => {
@@ -1329,6 +1351,7 @@ async function createBibleReadingSession(
     extensionsSubscription?.unsubscribe();
     userProfilesSubscription.unsubscribe();
     remoteClientsSubscription.unsubscribe();
+    statusUpdatedSubscription.unsubscribe();
     stopSync();
     stopDecorationSync();
     stopExtensionSync?.();
@@ -1363,6 +1386,7 @@ async function createBibleReadingSession(
     allUsers,
     connectedUsers,
     currentUser,
+    isSynced,
     removeSharedDecoration,
     dispose,
     isHost,

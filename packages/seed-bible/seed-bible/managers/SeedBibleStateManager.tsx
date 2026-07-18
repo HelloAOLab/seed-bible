@@ -970,6 +970,28 @@ export function createSeedBibleState(
     panes.selectPane(paneId);
   };
 
+  // App-level toast: a single popup shown at the bottom of the screen for 3.5s.
+  // A new call overwrites the current toast and restarts the timer, so only the
+  // most recent message is ever visible. The incrementing id keys the render so
+  // the slide-in animation replays even for a repeated message.
+  //
+  // Defined here (rather than further down, where it's exposed on `state`)
+  // because the host-disconnect handling below also calls it, and that
+  // effect runs immediately when constructed.
+  const currentToast = signal<{ id: number; message: string } | null>(null);
+  let toastSeq = 0;
+  let toastTimer: ReturnType<typeof setTimeout> | null = null;
+  const toast = (message: string) => {
+    if (toastTimer !== null) {
+      clearTimeout(toastTimer);
+    }
+    currentToast.value = { id: ++toastSeq, message };
+    toastTimer = setTimeout(() => {
+      currentToast.value = null;
+      toastTimer = null;
+    }, 3500);
+  };
+
   // Wraps a session so that when it's disposed (via tabs.removeTab), its
   // entry is removed from the global shared-sessions registry too. The
   // registry is opened by every client, so other users see the session
@@ -1036,6 +1058,31 @@ export function createSeedBibleState(
   // never through the disconnect heuristic.
   const locallyHostedSessionIds = new Set<string>();
 
+  // Suppresses the host-disconnect grace timer for a short window right
+  // after the tab returns to the foreground. On mobile, backgrounding the
+  // app lets its own connection go stale; right as it resumes, this
+  // client's own `connectedUsers` view can still read "host missing" for a
+  // few seconds even though the host never left. `session.isSynced` (below)
+  // covers most of this, but the underlying connection can briefly report
+  // itself synced again a beat before it's actually caught up, so this is
+  // extra insurance layered on top of it.
+  const RESUME_GRACE_MS = 5000;
+  const justResumedFromBackground = signal(false);
+  let resumeGraceTimer: ReturnType<typeof setTimeout> | null = null;
+  if (typeof document !== "undefined") {
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState !== "visible") return;
+      justResumedFromBackground.value = true;
+      if (resumeGraceTimer !== null) {
+        clearTimeout(resumeGraceTimer);
+      }
+      resumeGraceTimer = setTimeout(() => {
+        justResumedFromBackground.value = false;
+        resumeGraceTimer = null;
+      }, RESUME_GRACE_MS);
+    });
+  }
+
   // Auto-close participant tabs when the host goes away. Two signals:
   //  (a) `options.endedAt` was written by the host (clean "End Session"
   //      action — works when the CRDT flushes before the host disconnects).
@@ -1049,19 +1096,34 @@ export function createSeedBibleState(
   // host who logs in mid-session will briefly look disconnected (their
   // OS connection re-establishes with a new identity), and we want their
   // updated `hostUserId` to land via the CRDT before we close the tab.
+  //
+  // Signal (b) is judged from THIS client's own `connectedUsers` view,
+  // which is only trustworthy while this client's own connection is
+  // synced (`session.isSynced`) and not still catching up right after a
+  // mobile resume (`justResumedFromBackground`). Otherwise a client's own
+  // stale/resyncing connection can make the host look gone when it never
+  // left — see issue #1346.
   const sessionsWhereHostWasSeen = new Set<string>();
   const HOST_DISCONNECT_GRACE_MS = 8000;
   const pendingHostDisconnectTimers = new Map<
     string,
     ReturnType<typeof setTimeout>
   >();
-  const clearPendingHostDisconnect = (sessionId: string) => {
+  const clearPendingHostDisconnect = (sessionId: string): boolean => {
     const timer = pendingHostDisconnectTimers.get(sessionId);
     if (timer !== undefined) {
       clearTimeout(timer);
       pendingHostDisconnectTimers.delete(sessionId);
+      return true;
     }
+    return false;
   };
+  const sessionHostIsConnected = (session: BibleReadingSession): boolean =>
+    session.connectedUsers.value.some(
+      (user) =>
+        isSessionHost(session.options.value, user.userId) ||
+        isSessionHost(session.options.value, user.connectionId)
+    );
   effect(() => {
     for (const tab of tabs.tabs.value) {
       const session = tab.sharedSession;
@@ -1082,34 +1144,71 @@ export function createSeedBibleState(
       const hostId = session.options.value.hostUserId;
       if (!hostId) continue;
 
-      const users = session.connectedUsers.value;
       // A session stays alive as long as the host OR any co-host is present,
       // so appointing a co-host lets the original host leave without kicking
       // everyone else out.
-      const hostIsConnected = users.some(
-        (user) =>
-          isSessionHost(session.options.value, user.userId) ||
-          isSessionHost(session.options.value, user.connectionId)
-      );
+      const hostIsConnected = sessionHostIsConnected(session);
+      const { t } = i18n;
 
       if (hostIsConnected) {
         sessionsWhereHostWasSeen.add(session.id);
         // Host came back (e.g. reconnected after their login flow) — cancel
         // any pending close so the tab survives the round-trip.
-        clearPendingHostDisconnect(session.id);
+        if (clearPendingHostDisconnect(session.id)) {
+          toast(
+            t("session-host-reconnected", {
+              defaultValue: "Reconnected to the session",
+            })
+          );
+        }
       } else if (
         sessionsWhereHostWasSeen.has(session.id) &&
-        !pendingHostDisconnectTimers.has(session.id)
+        !pendingHostDisconnectTimers.has(session.id) &&
+        session.isSynced.value &&
+        !justResumedFromBackground.value
       ) {
         // Host appears to have left, but it may be a transient reconnect
         // (host logging in/out) — wait briefly to give the CRDT time to
         // deliver a new `hostUserId` or for the host's connection to
-        // re-appear before tearing down.
+        // re-appear before tearing down. We only get here once THIS
+        // client's own connection is synced and past its post-resume grace
+        // window, so this reading is trustworthy enough to start the timer
+        // (though it's re-verified again below right before acting on it).
         const tabId = tab.id;
         const sessionId = session.id;
+        toast(
+          t("session-host-reconnecting", {
+            defaultValue: "Reconnecting to the session…",
+          })
+        );
         const timer = setTimeout(() => {
           pendingHostDisconnectTimers.delete(sessionId);
+          const currentTab = tabs.tabs.value.find(
+            (candidateTab) => candidateTab.id === tabId
+          );
+          const currentSession = currentTab?.sharedSession;
+          if (!currentSession || currentSession.id !== sessionId) {
+            // Tab/session already gone (e.g. closed some other way).
+            sessionsWhereHostWasSeen.delete(sessionId);
+            return;
+          }
+          if (
+            !currentSession.isSynced.value ||
+            sessionHostIsConnected(currentSession)
+          ) {
+            // Our own connection is still resyncing, or the host is
+            // actually back — don't tear down on stale/incomplete
+            // information. The effect above will re-evaluate and re-arm
+            // this timer if the host is still genuinely gone once this
+            // client is back in sync.
+            return;
+          }
           sessionsWhereHostWasSeen.delete(sessionId);
+          toast(
+            t("session-host-left", {
+              defaultValue: "The host left — you were removed from the session",
+            })
+          );
           tabs.removeTab(tabId);
         }, HOST_DISCONNECT_GRACE_MS);
         pendingHostDisconnectTimers.set(sessionId, timer);
@@ -1234,24 +1333,6 @@ export function createSeedBibleState(
     }
 
     await handleJoinSharedSession(initialSessionId);
-  };
-
-  // App-level toast: a single popup shown at the bottom of the screen for 3.5s.
-  // A new call overwrites the current toast and restarts the timer, so only the
-  // most recent message is ever visible. The incrementing id keys the render so
-  // the slide-in animation replays even for a repeated message.
-  const currentToast = signal<{ id: number; message: string } | null>(null);
-  let toastSeq = 0;
-  let toastTimer: ReturnType<typeof setTimeout> | null = null;
-  const toast = (message: string) => {
-    if (toastTimer !== null) {
-      clearTimeout(toastTimer);
-    }
-    currentToast.value = { id: ++toastSeq, message };
-    toastTimer = setTimeout(() => {
-      currentToast.value = null;
-      toastTimer = null;
-    }, 3500);
   };
 
   // const isDiscoverOpen = signal(false);

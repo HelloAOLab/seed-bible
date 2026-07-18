@@ -58,6 +58,28 @@ function createMockRemoteClientsObservable() {
   };
 }
 
+function createMockStatusUpdatedObservable() {
+  const subscribers = new Set<
+    (status: { type: string; synced?: boolean }) => void
+  >();
+
+  return {
+    subscribe: vi.fn(
+      (handler: (status: { type: string; synced?: boolean }) => void) => {
+        subscribers.add(handler);
+        return {
+          unsubscribe: () => subscribers.delete(handler),
+        };
+      }
+    ),
+    emit: (status: { type: string; synced?: boolean }) => {
+      for (const subscriber of subscribers) {
+        subscriber(status);
+      }
+    },
+  };
+}
+
 function createMockSharedMap(initial: Record<string, unknown> = {}) {
   const store = new Map<string, unknown>(Object.entries(initial));
   const subscribers = new Set<MockChangesSubscriber>();
@@ -267,11 +289,15 @@ describe("SessionsManager", () => {
   let mockOptionsMap: ReturnType<typeof createMockSharedMap>;
   let mockDecorationsMap: ReturnType<typeof createMockSharedMap>;
   let mockRemoteClients: ReturnType<typeof createMockRemoteClientsObservable>;
+  let mockStatusUpdated: ReturnType<typeof createMockStatusUpdatedObservable>;
   let mockDocument: {
     getMap: Mock;
     transact: Mock;
     unsubscribe: Mock;
     remoteClients: {
+      subscribe: Mock;
+    };
+    onStatusUpdated: {
       subscribe: Mock;
     };
   };
@@ -305,6 +331,7 @@ describe("SessionsManager", () => {
     mockUserProfilesMap = createMockSharedMap();
     mockExtensionsMap = createMockSharedMap();
     mockRemoteClients = createMockRemoteClientsObservable();
+    mockStatusUpdated = createMockStatusUpdatedObservable();
     mockDocument = {
       getMap: vi.fn((name: string) => {
         if (name === "options") {
@@ -329,6 +356,9 @@ describe("SessionsManager", () => {
       unsubscribe: vi.fn(),
       remoteClients: {
         subscribe: mockRemoteClients.subscribe,
+      },
+      onStatusUpdated: {
+        subscribe: mockStatusUpdated.subscribe,
       },
     };
 
@@ -1261,6 +1291,49 @@ describe("SessionsManager", () => {
     session.dispose();
 
     expect(mockDocument.unsubscribe).toHaveBeenCalled();
+  });
+
+  it("isSynced starts true and tracks the document's sync status updates", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    // getSharedDocument() already awaited the first sync before resolving,
+    // so a freshly joined session starts out trusted.
+    expect(session.isSynced.value).toBe(true);
+
+    mockStatusUpdated.emit({ type: "sync", synced: false });
+    expect(session.isSynced.value).toBe(false);
+
+    mockStatusUpdated.emit({ type: "sync", synced: true });
+    expect(session.isSynced.value).toBe(true);
+
+    // Other status message types (e.g. "connection") don't affect it.
+    mockStatusUpdated.emit({ type: "connection" });
+    expect(session.isSynced.value).toBe(true);
+  });
+
+  it("dispose() unsubscribes from the status-updated observable", async () => {
+    const manager = createSessionsManager(
+      os,
+      mockDataManager as any,
+      mockLoginManager as any,
+      mockHighlightsManager as any,
+      i18n
+    );
+    const session = await manager.joinSession("group-abc");
+
+    session.dispose();
+    mockStatusUpdated.emit({ type: "sync", synced: false });
+
+    // The subscription was torn down by dispose(), so this emission after
+    // teardown should not reach the (now-stale) signal.
+    expect(session.isSynced.value).toBe(true);
   });
 
   it("tracks connected users from remoteClients and loads profiles for authenticated users", async () => {
