@@ -593,6 +593,11 @@
   flex: 1;
   padding: 5px;
 }
+@media (max-width: 480px) {
+  .sb-sidebar-settings-view {
+    padding: 5px 12px;
+  }
+}
 
 .sb-sidebar-settings-close-button {
   border: none;
