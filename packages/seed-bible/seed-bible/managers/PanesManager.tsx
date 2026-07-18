@@ -205,18 +205,28 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
   const panes = signal<Pane[]>([]);
   const selectedPaneId = signal<string | null>(null);
 
+  // These command methods read the manager's own signals (`panes`,
+  // `selectedPaneId`) exclusively through `.peek()`, never `.value`. A command
+  // reads the current state, then writes it — and a read via `.value` inside a
+  // caller's reactive scope (effect/computed) would subscribe that caller to
+  // the very signal the command then writes. That makes the write re-enter the
+  // caller, re-run the command, and preact throws "Cycle detected". `.peek()`
+  // reads without subscribing, so invoking any command from an effect never
+  // couples that effect to pane state. (`isMobile` is an external, read-only
+  // input this manager never writes, so it can't form a cycle and stays a
+  // reactive `.value` read.)
   const syncPaneState = (
     nextPanes: Pane[],
     nextSelectedPaneId?: string | null,
     closeReason: PaneCloseReason = "programmatic"
   ) => {
-    const prevPanes = panes.value;
+    const prevPanes = panes.peek();
     panes.value = nextPanes;
 
     const desiredPaneId =
       nextSelectedPaneId !== undefined
         ? nextSelectedPaneId
-        : selectedPaneId.value;
+        : selectedPaneId.peek();
     if (desiredPaneId && nextPanes.some((pane) => pane.id === desiredPaneId)) {
       selectedPaneId.value = desiredPaneId;
     } else {
@@ -240,7 +250,7 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
   };
 
   const selectPane = (paneId: string) => {
-    if (panes.value.some((pane) => pane.id === paneId)) {
+    if (panes.peek().some((pane) => pane.id === paneId)) {
       selectedPaneId.value = paneId;
     }
   };
@@ -284,8 +294,8 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
     const basePanes = willFillScreen
       ? []
       : options.placement === "side"
-        ? panes.value.filter((pane) => pane.placement !== "side")
-        : panes.value;
+        ? panes.peek().filter((pane) => pane.placement !== "side")
+        : panes.peek();
 
     const nextPane = createPane(
       options.title,
@@ -304,12 +314,12 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
     paneId: string,
     reason: PaneCloseReason = "programmatic"
   ) => {
-    if (!panes.value.some((pane) => pane.id === paneId)) {
+    if (!panes.peek().some((pane) => pane.id === paneId)) {
       return false;
     }
 
     syncPaneState(
-      panes.value.filter((pane) => pane.id !== paneId),
+      panes.peek().filter((pane) => pane.id !== paneId),
       undefined,
       reason
     );
@@ -325,7 +335,7 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
    * ancestor in play.
    */
   const setPanePosition = (paneId: string, x: number, y: number) => {
-    panes.value = panes.value.map((pane) => {
+    panes.value = panes.peek().map((pane) => {
       if (pane.id !== paneId || pane.placement !== "floating") {
         return pane;
       }
@@ -344,7 +354,7 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
     deltaHeight: number,
     uiScale: number
   ) => {
-    panes.value = panes.value.map((pane) => {
+    panes.value = panes.peek().map((pane) => {
       if (pane.id !== paneId) {
         return pane;
       }
@@ -379,8 +389,8 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
     const remaining =
       (isMobile?.value ?? false)
         ? []
-        : panes.value.filter((pane) => pane.placement !== "fullscreen");
-    if (remaining.length === panes.value.length) {
+        : panes.peek().filter((pane) => pane.placement !== "fullscreen");
+    if (remaining.length === panes.peek().length) {
       return;
     }
     syncPaneState(remaining);

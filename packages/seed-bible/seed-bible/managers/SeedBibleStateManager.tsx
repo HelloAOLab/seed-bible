@@ -1407,8 +1407,11 @@ export function createSeedBibleState(
   const DISCOVER_PANE_ID = "discover-pane";
 
   // view -> pane: open (or refresh, by reusing the id) while a view is set,
-  // close when it clears. Subscribes only to `view`, so the user closing the
-  // pane below doesn't retrigger this.
+  // close when it clears. The pane commands read pane state via peek()
+  // internally (see PanesManager), so this effect does NOT subscribe to
+  // `panes` — closing the pane below (which mutates `panes`) can't retrigger
+  // this effect and re-open the pane mid-update, which would trip preact's
+  // "Cycle detected". The pane -> view effect below clears `view` on close.
   effect(() => {
     if (playlists.view.value) {
       panes.openPane({

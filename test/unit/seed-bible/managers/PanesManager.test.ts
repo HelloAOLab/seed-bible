@@ -1,5 +1,5 @@
 import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
-import { signal } from "@preact/signals";
+import { effect, signal } from "@preact/signals";
 import type { ComponentChild } from "preact";
 
 function componentReturning(value: string): () => ComponentChild {
@@ -607,6 +607,45 @@ describe("createPanes", () => {
       panes.closePane(pane.id);
 
       expect(onClose).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // Commands read pane state via peek(), so invoking one inside an effect must
+  // not subscribe that effect to `panes`/`selectedPaneId`. Otherwise mutating
+  // pane state (e.g. closing a pane) re-runs the effect, which re-opens the
+  // pane mid-update, and preact throws "Cycle detected". This mirrors the
+  // real-world regression where closing the Discover side pane crashed.
+  describe("commands invoked inside an effect do not subscribe to pane state", () => {
+    it("opening a pane in an effect does not couple that effect to pane mutations", () => {
+      const panes = createPanes();
+      const trigger = signal("a");
+      let runs = 0;
+
+      const dispose = effect(() => {
+        // `trigger` is the effect's only intended dependency.
+        trigger.value;
+        runs++;
+        panes.openPane({
+          id: "effect-pane",
+          placement: "side",
+          title: "Effect Pane",
+          component: componentReturning("Effect Pane"),
+        });
+      });
+
+      expect(runs).toBe(1);
+
+      // Closing the pane from outside mutates `panes`. With peek()-based reads
+      // the effect is not subscribed to `panes`, so it must not re-run (and
+      // must not throw "Cycle detected").
+      panes.closePane("effect-pane");
+      expect(runs).toBe(1);
+
+      // The effect still reacts to its real dependency.
+      trigger.value = "b";
+      expect(runs).toBe(2);
+
+      dispose();
     });
   });
 
