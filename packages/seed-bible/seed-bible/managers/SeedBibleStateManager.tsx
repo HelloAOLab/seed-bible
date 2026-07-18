@@ -1104,7 +1104,7 @@ export function createSeedBibleState(
   // stale/resyncing connection can make the host look gone when it never
   // left — see issue #1346.
   const sessionsWhereHostWasSeen = new Set<string>();
-  const HOST_DISCONNECT_GRACE_MS = 8000;
+  const HOST_DISCONNECT_GRACE_MS = 30000;
   const pendingHostDisconnectTimers = new Map<
     string,
     ReturnType<typeof setTimeout>

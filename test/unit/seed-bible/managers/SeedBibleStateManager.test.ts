@@ -507,7 +507,7 @@ describe("createSeedBibleState", () => {
       );
       expect(originalDispose).not.toHaveBeenCalled();
 
-      vi.advanceTimersByTime(7999);
+      vi.advanceTimersByTime(29_999);
       expect(originalDispose).not.toHaveBeenCalled();
 
       vi.advanceTimersByTime(1);
@@ -529,14 +529,14 @@ describe("createSeedBibleState", () => {
       )!.id;
 
       session.connectedUsers.value = [];
-      vi.advanceTimersByTime(4000);
+      vi.advanceTimersByTime(15_000);
 
       session.connectedUsers.value = [hostConnectedUser];
       expect(state.app.currentToast.value?.message).toBe(
         "Reconnected to the session"
       );
 
-      vi.advanceTimersByTime(10_000);
+      vi.advanceTimersByTime(20_000);
 
       expect(originalDispose).not.toHaveBeenCalled();
       expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
@@ -560,7 +560,7 @@ describe("createSeedBibleState", () => {
       // trustworthy.
       session.isSynced.value = false;
 
-      vi.advanceTimersByTime(7000);
+      vi.advanceTimersByTime(29_000);
 
       expect(originalDispose).not.toHaveBeenCalled();
       expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
@@ -589,7 +589,7 @@ describe("createSeedBibleState", () => {
         "Reconnecting to the session…"
       );
 
-      vi.advanceTimersByTime(8000);
+      vi.advanceTimersByTime(30_000);
       expect(originalDispose).toHaveBeenCalledTimes(1);
     });
   });
