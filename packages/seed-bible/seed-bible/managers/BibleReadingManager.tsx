@@ -427,7 +427,7 @@ const FALLBACK_TRANSLATION: TranslationWithLanguage = {
  * Includes aliases so we can match the nearest available text even when the
  * preferred hardcoded ID is missing from the loaded catalog.
  */
-const UI_TO_BIBLE_LANGUAGE_CODES: Record<string, string[]> = {
+export const UI_TO_BIBLE_LANGUAGE_CODES: Record<string, string[]> = {
   am: ["amh"],
   ar: ["arb", "ara"],
   bn: ["ben"],
