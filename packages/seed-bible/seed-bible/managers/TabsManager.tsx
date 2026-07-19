@@ -296,7 +296,7 @@ export function createTabs(
       highlightsManager,
       i18nManager,
       {
-        translationId: initialTranslationId,
+        translationId: defaultTranslationID.value,
         bookId: initialBookId,
         chapter: initialChapter,
         highlightedVerses: getInitialHighlightedVerses(
