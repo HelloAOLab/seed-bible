@@ -26,6 +26,7 @@ import {
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import type { Mock } from "vitest";
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
+import type { LoginManager } from "@packages/seed-bible/seed-bible/managers";
 
 let webGetMock: Mock;
 const originalFetch = globalThis.fetch;
@@ -42,6 +43,21 @@ afterEach(() => {
   // don't leak into the next test's selector instance.
   window.history.replaceState(null, "", window.location.pathname);
 });
+function createLoginManagerMock() {
+  const userId = signal<string | null>(null);
+  const profile = signal<{ name: string } | null>(null);
+
+  const loginManager = {
+    userId,
+    profile,
+  } as LoginManager;
+
+  return {
+    userId,
+    profile,
+    loginManager,
+  };
+}
 
 function setWebResponses(responses: WebResponseMap): void {
   webGetMock.mockImplementation((url: string) => {
@@ -165,7 +181,9 @@ async function createManagersWithSelectedSlot(): Promise<{
 }> {
   const dataManager = createDataManager();
   const navigation = createNavigationManager();
+  const { loginManager } = createLoginManagerMock();
   const tabsManager = createTabs(
+    loginManager,
     navigation,
     dataManager,
     createHighlightsManagerMock() as any,
@@ -471,7 +489,9 @@ describe("createBibleSelectorState", () => {
 
     const dataManager = createDataManager();
     const navigation = createNavigationManager();
+    const { loginManager } = createLoginManagerMock();
     const tabsManager = createTabs(
+      loginManager,
       navigation,
       dataManager,
       createHighlightsManagerMock() as any,
@@ -564,7 +584,9 @@ describe("createBibleSelectorState", () => {
 
     const dataManager = createDataManager();
     const navigation = createNavigationManager();
+    const { loginManager } = createLoginManagerMock();
     const tabsManager = createTabs(
+      loginManager,
       navigation,
       dataManager,
       createHighlightsManagerMock() as any,
@@ -609,7 +631,9 @@ describe("createBibleSelectorState", () => {
     function createManagersWithTablessSlot() {
       const dataManager = createDataManager();
       const navigation = createNavigationManager();
+      const { loginManager } = createLoginManagerMock();
       const tabsManager = createTabs(
+        loginManager,
         navigation,
         dataManager,
         createHighlightsManagerMock() as any,

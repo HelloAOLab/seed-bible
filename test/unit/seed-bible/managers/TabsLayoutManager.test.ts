@@ -15,6 +15,7 @@ import { effect, signal, type ReadonlySignal } from "@preact/signals";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import type { Mock } from "vitest";
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
+import type { LoginManager } from "@packages/seed-bible/seed-bible/managers";
 
 let fetchMock: Mock;
 let logSpy: Mock;
@@ -31,6 +32,12 @@ afterEach(() => {
   logSpy.mockRestore();
   globalThis.fetch = originalFetch;
 });
+export function createLoginManager(): LoginManager {
+  return {
+    userId: signal<string | null>(null),
+    profile: signal(null),
+  } as LoginManager;
+}
 
 function setWebResponses(responses: WebResponseMap): void {
   fetchMock.mockImplementation((url: string) => {
@@ -86,6 +93,7 @@ async function createManagers(
   setWebResponses(createExampleManagerResponseMap());
   const navigation = createNavigationManager();
   const tabsManager = createTabs(
+    createLoginManager(),
     navigation,
     createDataManager(),
     createHighlightsManagerMock() as any,

@@ -22,6 +22,7 @@ import { createNavigationManager } from "@packages/seed-bible/seed-bible/manager
 import type { SharedDocument } from "@casual-simulation/aux-common/documents/SharedDocument";
 import type { Mock } from "vitest";
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
+import type { LoginManager } from "@packages/seed-bible/seed-bible/managers";
 
 let webGetMock: Mock;
 let logSpy: Mock;
@@ -50,6 +51,12 @@ function setWebResponses(responses: WebResponseMap): void {
     }
     return Promise.resolve(response);
   });
+}
+export function createLoginManager(): LoginManager {
+  return {
+    userId: signal<string | null>(null),
+    profile: signal(null),
+  } as LoginManager;
 }
 
 function createApi(): FreeUseBibleAPI {
@@ -153,6 +160,7 @@ function createTabsManager({
   const highlightsManager = createHighlightsManagerMock() as any;
   const i18nManager = i18n || createI18nManager(navigation, ["en"]);
   const tabs = createTabs(
+    createLoginManager(),
     navigation,
     dataManager,
     highlightsManager,
@@ -235,6 +243,7 @@ describe("createTabs", () => {
     await waitForTabsToLoad(manager.tabs.value);
 
     const readingState = createBibleReadingState(
+      createLoginManager(),
       dataManager,
       createHighlightsManagerMock() as any,
       i18nManager
@@ -566,7 +575,7 @@ describe("createTabs", () => {
       const { tabs: manager } = createTabsManager();
       await waitForTabsToLoad(manager.tabs.value);
 
-      const initialOptions = createBibleReadingStateSpy.mock.calls[0]?.[3];
+      const initialOptions = createBibleReadingStateSpy.mock.calls[0]?.[4];
       expect(initialOptions?.scrollToVerse).toBe(7);
     } finally {
       createBibleReadingStateSpy.mockRestore();

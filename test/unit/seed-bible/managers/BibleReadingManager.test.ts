@@ -35,6 +35,7 @@ import {
   createBibleReadingExtensionManager,
   type ReadingExtensionInstance,
 } from "@packages/seed-bible/seed-bible/managers/BibleReadingExtensionManager";
+import type { LoginManager } from "@packages/seed-bible/seed-bible/managers";
 
 const nivTranslation = translations.translations[1]!;
 
@@ -59,7 +60,12 @@ function setWebResponses(responses: WebResponseMap): void {
     return Promise.resolve(response);
   });
 }
-
+export function createLoginManager(): LoginManager {
+  return {
+    userId: signal<string | null>(null),
+    profile: signal(null),
+  } as LoginManager;
+}
 function createApi(): FreeUseBibleAPI {
   return new FreeUseBibleAPI(EXAMPLE_API_ENDPOINT);
 }
@@ -91,7 +97,9 @@ function createBibleReadingState(
   } = {}
 ) {
   const i18nManager = createI18nManager(createNavigationManager(), ["en"]);
+
   return createRawBibleReadingState(
+    createLoginManager(),
     dataManager,
     createHighlightsManagerMock() as any,
     i18nManager,
@@ -146,7 +154,9 @@ describe("createBibleReadingState", () => {
   it("loads highlights for the current chapter during initial load", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const highlightsManager = createHighlightsManagerMock();
+
     const state = createRawBibleReadingState(
+      createLoginManager(),
       createDataManager(),
       highlightsManager as any,
       createI18nManager(createNavigationManager(), ["en"])
@@ -179,6 +189,7 @@ describe("createBibleReadingState", () => {
     });
 
     const state = createRawBibleReadingState(
+      createLoginManager(),
       createDataManager(),
       highlightsManager as any,
       createI18nManager(createNavigationManager(), ["en"])
@@ -241,6 +252,7 @@ describe("createBibleReadingState", () => {
     });
 
     const state = createRawBibleReadingState(
+      createLoginManager(),
       createDataManager(),
       highlightsManager as any,
       createI18nManager(createNavigationManager(), ["en"])
@@ -285,7 +297,9 @@ describe("createBibleReadingState", () => {
   it("unhighlightSelectedVerses() does nothing when no verses are selected", async () => {
     setWebResponses(createReadingManagerResponseMap());
     const highlightsManager = createHighlightsManagerMock();
+
     const state = createRawBibleReadingState(
+      createLoginManager(),
       createDataManager(),
       highlightsManager as any,
       createI18nManager(createNavigationManager(), ["en"])
@@ -704,6 +718,7 @@ describe("createBibleReadingState", () => {
     setWebResponses(createReadingManagerResponseMap());
     const highlightsManager = createHighlightsManagerMock();
     const state = createRawBibleReadingState(
+      createLoginManager(),
       createDataManager(),
       highlightsManager as any,
       createI18nManager(createNavigationManager(), ["en"])
@@ -1340,7 +1355,9 @@ describe("createBibleReadingState", () => {
 
     it("all three signals are empty when no discoverManager is provided", async () => {
       setWebResponses(createReadingManagerResponseMap());
+
       const state = createRawBibleReadingState(
+        createLoginManager(),
         createDataManager(),
         createHighlightsManagerMock() as any,
         createI18nManager(createNavigationManager(), ["en"])
@@ -1378,7 +1395,9 @@ describe("createBibleReadingState", () => {
       ]);
 
       setWebResponses(createReadingManagerResponseMap());
+
       const state = createRawBibleReadingState(
+        createLoginManager(),
         createDataManager(),
         createHighlightsManagerMock() as any,
         createI18nManager(createNavigationManager(), ["en"]),
@@ -1433,7 +1452,9 @@ describe("createBibleReadingState", () => {
       ]);
 
       setWebResponses(createReadingManagerResponseMap());
+
       const state = createRawBibleReadingState(
+        createLoginManager(),
         createDataManager(),
         createHighlightsManagerMock() as any,
         createI18nManager(createNavigationManager(), ["en"]),
@@ -1492,6 +1513,7 @@ describe("createBibleReadingState", () => {
 
       setWebResponses(createReadingManagerResponseMap());
       const state = createRawBibleReadingState(
+        createLoginManager(),
         createDataManager(),
         createHighlightsManagerMock() as any,
         createI18nManager(createNavigationManager(), ["en"]),
@@ -1552,6 +1574,7 @@ describe("createBibleReadingState", () => {
 
       setWebResponses(createReadingManagerResponseMap());
       const state = createRawBibleReadingState(
+        createLoginManager(),
         createDataManager(),
         createHighlightsManagerMock() as any,
         createI18nManager(createNavigationManager(), ["en"]),
@@ -1612,6 +1635,7 @@ describe("createBibleReadingState", () => {
 
       setWebResponses(createReadingManagerResponseMap());
       const state = createRawBibleReadingState(
+        createLoginManager(),
         createDataManager(),
         createHighlightsManagerMock() as any,
         createI18nManager(createNavigationManager(), ["en"]),
@@ -1648,6 +1672,7 @@ describe("createBibleReadingState", () => {
 
       setWebResponses(responses);
       const state = createRawBibleReadingState(
+        createLoginManager(),
         createDataManager(),
         createHighlightsManagerMock() as any,
         createI18nManager(createNavigationManager(), ["en"]),
@@ -1698,6 +1723,7 @@ describe("createBibleReadingState", () => {
       discoverManager?: DiscoverManager
     ) {
       return createRawBibleReadingState(
+        createLoginManager(),
         createDataManager(),
         createHighlightsManagerMock() as any,
         createI18nManager(createNavigationManager(), ["en"]),
@@ -1990,6 +2016,7 @@ describe("createBibleReadingState", () => {
       const manager = createBibleReadingExtensionManager();
       manager.registerReadingExtension({ id: "x", activate: () => instance });
       return createRawBibleReadingState(
+        createLoginManager(),
         createDataManager(),
         createHighlightsManagerMock() as any,
         createI18nManager(createNavigationManager(), ["en"]),
@@ -2124,6 +2151,7 @@ describe("createBibleReadingState", () => {
       manager.registerReadingExtension({ id: "x", activate: () => ({}) });
 
       const state = createRawBibleReadingState(
+        createLoginManager(),
         createDataManager(),
         createHighlightsManagerMock() as any,
         createI18nManager(createNavigationManager(), ["en"]),
@@ -2183,6 +2211,8 @@ describe("createBibleReadingState", () => {
       manager.registerReadingExtension({ id: "x", activate: () => ({}) });
 
       const state = createRawBibleReadingState(
+        createLoginManager(),
+
         createDataManager(),
         createHighlightsManagerMock() as any,
         createI18nManager(createNavigationManager(), ["en"]),
@@ -2250,6 +2280,7 @@ describe("createBibleReadingState", () => {
       >
     ) {
       return createRawBibleReadingState(
+        createLoginManager(),
         createDataManager(),
         createHighlightsManagerMock() as any,
         createI18nManager(createNavigationManager(), ["en"]),
