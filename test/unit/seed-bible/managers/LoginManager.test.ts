@@ -3,6 +3,7 @@ import {
   userProfileSchema,
   type LoginManager,
 } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import { saveProfileConfigValue } from "@packages/seed-bible/seed-bible/managers/ProfileConfigSync";
 import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import { formatV1SessionKey } from "@casual-simulation/aux-common";
 import type { Mock } from "vitest";
@@ -587,6 +588,99 @@ describe("createLoginManager", () => {
       await waitFor(() => manager.userId.value === null);
       expect(manager.cachedProfile.value).toBeNull();
     });
+
+    it("clears the cached profile when switching accounts", async () => {
+      // Mirrors "drops the previous account's profile when switching accounts
+      // and the new load fails" above, but for `cachedProfile`.
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { name: "Alice" },
+      });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.cachedProfile.value?.name === "Alice");
+
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "not_authorized",
+        errorMessage: "stale key",
+      });
+
+      // Swap the session key to a different account's key without logging
+      // out first — moves user-1 -> user-2 directly.
+      os.sessionKey.value = formatV1SessionKey(
+        "user-2",
+        "session-2",
+        "secret-2",
+        Date.now() + 1000 * 60 * 60 * 24 * 14
+      );
+      await waitFor(() => manager.userId.value === "user-2");
+      await flush();
+
+      expect(manager.cachedProfile.value).toBeNull();
+    });
+
+    it("does not leak a different user's cached profile", async () => {
+      localStorage.setItem(
+        "sb-profile-cache-user-2",
+        JSON.stringify({ name: "Not Erin" })
+      );
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userId.value === USER_ID);
+
+      expect(manager.cachedProfile.value).toBeNull();
+    });
+
+    it("ignores malformed JSON in the cache instead of throwing", async () => {
+      localStorage.setItem(`sb-profile-cache-${USER_ID}`, "not json");
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userId.value === USER_ID);
+
+      expect(manager.cachedProfile.value).toBeNull();
+    });
+
+    it("ignores schema-invalid cached profile data", async () => {
+      localStorage.setItem(
+        `sb-profile-cache-${USER_ID}`,
+        JSON.stringify({ name: 123 })
+      );
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userId.value === USER_ID);
+
+      expect(manager.cachedProfile.value).toBeNull();
+    });
+
+    it("swallows a localStorage.setItem failure instead of throwing", async () => {
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value !== null);
+
+      const originalSetItem = Storage.prototype.setItem;
+      const setItemSpy = vi
+        .spyOn(Storage.prototype, "setItem")
+        .mockImplementation(function (
+          this: Storage,
+          key: string,
+          value: string
+        ) {
+          if (key.startsWith("sb-profile-cache-")) {
+            throw new DOMException("QuotaExceededError");
+          }
+          return originalSetItem.call(this, key, value);
+        });
+
+      try {
+        expect(() =>
+          manager.updateProfile({ name: "Persisted?" })
+        ).not.toThrow();
+        // The in-memory signal still updates even though persistence failed.
+        expect(manager.cachedProfile.value).toEqual({ name: "Persisted?" });
+      } finally {
+        setItemSpy.mockRestore();
+      }
+    });
   });
 
   describe("profile", () => {
@@ -801,6 +895,94 @@ describe("createLoginManager", () => {
       expect(localStorage.getItem("sb-profile-config-local")).toBe(
         JSON.stringify({ fontSize: "L" })
       );
+    });
+
+    it("ignores malformed JSON in the local config store", () => {
+      localStorage.setItem("sb-profile-config-local", "not json");
+
+      const manager = createLoginManager({ os });
+
+      expect(manager.localConfig.value).toEqual({});
+    });
+
+    it("ignores non-object JSON in the local config store", () => {
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify([1, 2, 3])
+      );
+
+      const manager = createLoginManager({ os });
+
+      expect(manager.localConfig.value).toEqual({});
+    });
+
+    it("swallows a localStorage.setItem failure instead of throwing", () => {
+      const manager = createLoginManager({ os });
+
+      const originalSetItem = Storage.prototype.setItem;
+      const setItemSpy = vi
+        .spyOn(Storage.prototype, "setItem")
+        .mockImplementation(function (
+          this: Storage,
+          key: string,
+          value: string
+        ) {
+          if (key === "sb-profile-config-local") {
+            throw new DOMException("QuotaExceededError");
+          }
+          return originalSetItem.call(this, key, value);
+        });
+
+      try {
+        expect(() => {
+          manager.localConfig.value = { fontSize: "L" };
+        }).not.toThrow();
+        // The in-memory signal still updates even though persistence failed.
+        expect(manager.localConfig.value).toEqual({ fontSize: "L" });
+      } finally {
+        setItemSpy.mockRestore();
+      }
+    });
+  });
+
+  describe("anonymous edit then login (end-to-end)", () => {
+    it("adopts config saved anonymously via saveProfileConfigValue into a brand-new account on first login", async () => {
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "No data found for the given key.",
+      });
+
+      const manager = createLoginManager({ os });
+      expect(manager.userId.value).toBeNull();
+
+      // Save a config value the way a real caller (ConfigManager, etc.) would,
+      // through the shared helper, rather than seeding localStorage directly.
+      await saveProfileConfigValue(manager, "fontSize", "L");
+      expect(manager.localConfig.value).toEqual({ fontSize: "L" });
+
+      const loginPromise = manager.login();
+      const request = await manager.requestLoginByEmail(EMAIL);
+      if (!request.success) {
+        throw new Error("expected login request to succeed");
+      }
+      await manager.submitLoginCode("123456", request);
+      await loginPromise;
+
+      await waitFor(() => manager.profile.value !== null);
+
+      expect(manager.profile.value).toEqual({
+        name: "",
+        config: { fontSize: "L" },
+      });
+      expect(recordDataMock).toHaveBeenCalledWith(
+        USER_ID,
+        "profile",
+        { name: "", config: { fontSize: "L" } },
+        { marker: "publicRead" }
+      );
+      // Adopted and persisted, so the anonymous local store is now empty.
+      expect(manager.localConfig.value).toEqual({});
     });
   });
 
