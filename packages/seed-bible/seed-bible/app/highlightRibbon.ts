@@ -242,7 +242,7 @@ export function buildRibbonPath(
   return paths.join(" ");
 }
 
-function isBlockLevel(node: Node): boolean {
+export function isBlockLevel(node: Node): boolean {
   if (node.nodeType !== 1) return false;
   const display = getComputedStyle(node as Element).display;
   return (
@@ -323,4 +323,68 @@ export function collectLineRects(
     }
   }
   return lines;
+}
+
+/**
+ * Measure the inline text sitting immediately next to `el` in reading order —
+ * `side: "before"` for the content that precedes it, `"after"` for what follows
+ * — as a rectangle relative to (originLeft, originTop). Returns the rect nearest
+ * to `el` (the previous content's last visual line, or the next content's first).
+ *
+ * Returns null when a block boundary — a line break, heading, block-level poetry
+ * line, or the absolutely-positioned ribbon layer — or the start/end of the flow
+ * sits on that side, because then nothing shares a text line with `el`'s edge.
+ *
+ * The caller compares this against the run's own first/last line to tell whether
+ * a highlight begins or ends mid-line, with another verse's text right beside it.
+ * Where it does, the run's horizontal pad on that edge is dropped so the ribbon
+ * doesn't reach over into that neighbouring text (see `measureRibbons`).
+ */
+export function adjacentInlineRect(
+  el: Element,
+  side: "before" | "after",
+  originLeft: number,
+  originTop: number
+): RibbonRect | null {
+  const range = document.createRange();
+  // No layout to measure against in jsdom (unit tests) — bail cleanly.
+  if (typeof range.getClientRects !== "function") return null;
+  const step = (n: Node): Node | null =>
+    side === "before" ? n.previousSibling : n.nextSibling;
+  for (let sib = step(el); sib; sib = step(sib)) {
+    if (sib.nodeType === 3) {
+      // Skip whitespace-only text nodes between elements.
+      if (!sib.textContent || !sib.textContent.trim()) continue;
+    } else if (sib.nodeType === 1) {
+      const style = getComputedStyle(sib as Element);
+      if (
+        isBlockLevel(sib) ||
+        style.position === "absolute" ||
+        style.position === "fixed"
+      ) {
+        return null;
+      }
+    } else {
+      continue;
+    }
+    range.selectNodeContents(sib);
+    const rects = range.getClientRects();
+    // The edge we face: the last drawable rect before us, or the first after us.
+    let pick: DOMRect | null = null;
+    for (let i = 0; i < rects.length; i++) {
+      const r = rects[i];
+      if (!r || r.width <= 0 || r.height <= 0) continue;
+      if (side === "before" || !pick) pick = r;
+    }
+    if (pick) {
+      return {
+        left: pick.left - originLeft,
+        right: pick.right - originLeft,
+        top: pick.top - originTop,
+        bottom: pick.bottom - originTop,
+      };
+    }
+    // Inline sibling with nothing drawable (e.g. empty) — keep scanning outward.
+  }
+  return null;
 }
