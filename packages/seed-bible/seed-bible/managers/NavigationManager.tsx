@@ -242,7 +242,7 @@ export function createNavigationManager(
     if (import.meta.env.SSR) {
       // Don't allow syncing signals to the URL during SSR, as it would be meaningless
       // and could cause errors between different requests.
-      return;
+      return () => {};
     }
 
     const cleanup1 = effect(() => {
