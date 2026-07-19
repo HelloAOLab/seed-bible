@@ -231,7 +231,12 @@ function resolveRoute(rawUrl: string): Route {
   };
 }
 
-/** Runs an SSR render() over the given pre-rendered HTML and writes the result. */
+/**
+ * Runs an SSR render() over the given pre-rendered HTML and writes the
+ * result. If render() throws, the error is logged and the unrendered
+ * `preRenderedHtml` is served as-is instead of failing the request — the
+ * client still gets a working page (just without server-rendered content).
+ */
 async function renderAndRespond(
   req: IncomingMessage,
   res: ServerResponse,
@@ -243,16 +248,25 @@ async function renderAndRespond(
     req.headers
   );
 
-  const html = await render({
-    path: route.appUrl,
-    config: {
-      basePath: route.basePath,
-      assetHost: ASSET_HOST,
-      renderedAsMobile,
-      acceptedLanguages,
-    },
-    html: preRenderedHtml,
-  });
+  let html: string;
+  try {
+    html = await render({
+      path: route.appUrl,
+      config: {
+        basePath: route.basePath,
+        assetHost: ASSET_HOST,
+        renderedAsMobile,
+        acceptedLanguages,
+      },
+      html: preRenderedHtml,
+    });
+  } catch (err) {
+    console.error(
+      `SSR render() failed for branch "${route.branch}" (${route.appUrl}); falling back to unrendered HTML:`,
+      err
+    );
+    html = preRenderedHtml;
+  }
 
   res.writeHead(200, {
     "content-type": "text/html; charset=utf-8",
@@ -515,16 +529,27 @@ async function startDevServer(): Promise<void> {
       return;
     }
 
+    // 1. Read index.html. A failure here means there's nothing to fall back
+    //    to, so it's a genuine error.
+    let template: string;
     try {
-      // 1. Read index.html.
-      let template = fs.readFileSync(
+      template = fs.readFileSync(
         path.resolve(import.meta.dirname, "..", "index.html"),
         "utf-8"
       );
+    } catch (e) {
+      console.error(e);
+      next(e);
+      return;
+    }
 
+    try {
       // 2. Apply Vite HTML transforms (injects the HMR client + plugin
       //    preambles).
-      template = await vite.transformIndexHtml(req.originalUrl, template);
+      const transformed = await vite.transformIndexHtml(
+        req.originalUrl,
+        template
+      );
 
       // 3. Load the server entry. ssrLoadModule transforms ESM source to be
       //    usable in Node.js with efficient HMR-style invalidation.
@@ -545,18 +570,22 @@ async function startDevServer(): Promise<void> {
           renderedAsMobile,
           acceptedLanguages,
         },
-        html: template,
+        html: transformed,
       });
 
       // 5. Send the rendered HTML back.
       res.status(200).set({ "Content-Type": "text/html" }).end(html);
     } catch (e) {
-      console.error(e);
       if (e instanceof Error) {
         // Let Vite fix the stack trace so it maps back to the actual source.
         vite.ssrFixStacktrace(e);
       }
-      next(e);
+      console.error(
+        `SSR render failed for ${req.originalUrl}; falling back to unrendered index.html:`,
+        e
+      );
+      // Serve the unrendered index.html rather than failing the request.
+      res.status(200).set({ "Content-Type": "text/html" }).end(template);
     }
   });
 
