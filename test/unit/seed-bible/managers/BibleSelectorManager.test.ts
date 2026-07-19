@@ -67,6 +67,15 @@ function createHighlightsManagerMock() {
   };
 }
 
+function createLoginManagerMock() {
+  return {
+    userId: signal<string | null>(null),
+    profile: signal(null),
+    profilePromise: null,
+    updateProfile: vi.fn(),
+  };
+}
+
 function createSettingsManagerMock() {
   return {
     settings: signal({
@@ -170,7 +179,8 @@ async function createManagersWithSelectedSlot(): Promise<{
     dataManager,
     createHighlightsManagerMock() as any,
     {} as any,
-    createI18nManager(navigation, ["en"])
+    createI18nManager(navigation, ["en"]),
+    createLoginManagerMock() as any
   );
   const tabsLayoutManager = createTabsLayout(tabsManager, signal(true));
 
@@ -476,7 +486,8 @@ describe("createBibleSelectorState", () => {
       dataManager,
       createHighlightsManagerMock() as any,
       {} as any,
-      createI18nManager(navigation, ["en"])
+      createI18nManager(navigation, ["en"]),
+      createLoginManagerMock() as any
     );
     const tabsLayoutManager = createTabsLayout(tabsManager, signal(true));
 
@@ -569,7 +580,8 @@ describe("createBibleSelectorState", () => {
       dataManager,
       createHighlightsManagerMock() as any,
       {} as any,
-      createI18nManager(navigation, ["en"])
+      createI18nManager(navigation, ["en"]),
+      createLoginManagerMock() as any
     );
     const tabsLayoutManager = createTabsLayout(tabsManager, signal(true));
 
@@ -614,7 +626,8 @@ describe("createBibleSelectorState", () => {
         dataManager,
         createHighlightsManagerMock() as any,
         {} as any,
-        createI18nManager(navigation, ["en"])
+        createI18nManager(navigation, ["en"]),
+        createLoginManagerMock() as any
       );
       const tabsLayoutManager = createTabsLayout(tabsManager, signal(true));
 

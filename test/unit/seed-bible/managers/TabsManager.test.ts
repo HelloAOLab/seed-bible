@@ -66,6 +66,21 @@ function createHighlightsManagerMock() {
   };
 }
 
+function createLoginManagerMock() {
+  const userId = signal<string | null>(null);
+  const profile = signal<{
+    name: string;
+    config?: Record<string, unknown>;
+  } | null>(null);
+  const updateProfile = vi.fn((newData: Record<string, unknown>) => {
+    profile.value = {
+      ...(profile.value ?? { name: "" }),
+      ...newData,
+    } as { name: string; config?: Record<string, unknown> };
+  });
+  return { userId, profile, profilePromise: null, updateProfile };
+}
+
 async function waitFor(
   condition: () => boolean,
   timeoutMs = 1000
@@ -152,15 +167,24 @@ function createTabsManager({
   const dataManager = data || createDataManager();
   const highlightsManager = createHighlightsManagerMock() as any;
   const i18nManager = i18n || createI18nManager(navigation, ["en"]);
+  const login = createLoginManagerMock() as any;
   const tabs = createTabs(
     navigation,
     dataManager,
     highlightsManager,
     {} as any,
-    i18nManager
+    i18nManager,
+    login
   );
 
-  return { navigation, dataManager, highlightsManager, i18nManager, tabs };
+  return {
+    navigation,
+    dataManager,
+    highlightsManager,
+    i18nManager,
+    login,
+    tabs,
+  };
 }
 
 describe("createTabs", () => {
@@ -334,6 +358,92 @@ describe("createTabs", () => {
 
     const firstTab = manager.tabs.value[0]!;
     expect(firstTab.readingState.translationId.value).toBe("NIV");
+  });
+
+  it("applies the saved profile translation to the selected tab once the profile loads, when the URL has no explicit translation", async () => {
+    window.history.replaceState(null, "", "?book=MAT&chapter=1");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager, login } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const firstTab = manager.tabs.value[0]!;
+    expect(firstTab.readingState.translationId.value).toBe("AAB");
+
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: { translationId: "NIV" } };
+
+    await waitFor(() => firstTab.readingState.translationId.value === "NIV");
+    await waitForInitialLoad(firstTab.readingState);
+
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+    // Only the translation should change; the reading position is preserved.
+    expect(firstTab.readingState.bookId.value).toBe("MAT");
+    expect(firstTab.readingState.chapterNumber.value).toBe(1);
+  });
+
+  it("keeps an explicit URL translation over a saved profile translation", async () => {
+    window.history.replaceState(
+      null,
+      "",
+      "?translation=NIV&book=MAT&chapter=1"
+    );
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager, login } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const firstTab = manager.tabs.value[0]!;
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: { translationId: "AAB" } };
+
+    // The profile-apply effect runs synchronously off the profile signal; a
+    // differing saved value must not override an explicit URL translation.
+    expect(firstTab.readingState.translationId.value).toBe("NIV");
+  });
+
+  it("persists an explicit translation selection to the user's profile", async () => {
+    window.history.replaceState(null, "", "?book=MAT&chapter=1");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager, login } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: {} };
+
+    const firstTab = manager.tabs.value[0]!;
+    await firstTab.readingState.selectTranslation("NIV");
+
+    expect(login.updateProfile).toHaveBeenCalledWith({
+      config: { translationId: "NIV" },
+    });
+    expect(login.profile.value).toEqual({
+      name: "",
+      config: { translationId: "NIV" },
+    });
+  });
+
+  it("does not persist a translation change driven by URL sync (e.g. browser back/forward or a deep link)", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager, navigation, login } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: {} };
+
+    navigation.push("?translation=NIV&book=MAT&chapter=1");
+
+    const selectedTab = manager.tabs.value.find(
+      (tab) => tab.id === manager.selectedTabId.value
+    )!;
+    await waitFor(() => selectedTab.readingState.translationId.value === "NIV");
+    await waitForInitialLoad(selectedTab.readingState);
+
+    expect(login.updateProfile).not.toHaveBeenCalled();
+    expect(login.profile.value).toEqual({ name: "", config: {} });
   });
 
   it("saves a full custom-endpoint URL to the translation URL param", async () => {

@@ -18,6 +18,11 @@ import {
   type TranslationWithLanguage,
 } from "../managers/BibleReadingManager";
 import type { HighlightsManager } from "../managers/HighlightsManager";
+import type { LoginManager } from "../managers/LoginManager";
+import {
+  getProfileConfigValue,
+  saveProfileConfigValue,
+} from "../managers/ProfileConfigSync";
 
 export function formatVerseSelection(verseNumbers: number[]): string | null {
   const sorted = Array.from(new Set(verseNumbers))
@@ -92,6 +97,10 @@ export interface ReaderTab {
 function getInitialFirstTabBookId(url: URL): string {
   return url.searchParams.get("book") ?? DEFAULT_BOOK_ID;
 }
+
+// profile.config key the selected translation is persisted under, matching
+// the PROFILE_THEME_ID convention in ThemeManager.tsx.
+const PROFILE_TRANSLATION_ID = "translationId";
 
 function getInitialTranslationId(url: URL, language: string): string {
   return (
@@ -254,6 +263,7 @@ export function createTabs(
   highlightsManager: HighlightsManager,
   chatsManager: ReturnType<typeof createChatsManager>,
   i18nManager: I18nManager,
+  login: LoginManager,
   discoverManager?: DiscoverManager,
   readingExtensionManager?: BibleReadingExtensionManager
 ): TabsManager {
@@ -418,11 +428,61 @@ export function createTabs(
       return undefined;
     }
 
-    const dispose = readingState.onNavigate((options) =>
-      commitSelectedTabToUrl(options)
-    );
+    const dispose = readingState.onNavigate((options) => {
+      commitSelectedTabToUrl(options);
+      // Persist on every real (non-URL-sync) navigation rather than only on
+      // explicit translation switches: saveProfileConfigValue already no-ops
+      // when the value is unchanged, not logged in, or the profile hasn't
+      // loaded, so this stays cheap while covering every UI call site that
+      // can change the selected tab's translation.
+      void saveProfileConfigValue(
+        login,
+        PROFILE_TRANSLATION_ID,
+        readingState.translationId.peek()
+      );
+    });
     commitSelectedTabToUrl({ replace: true });
     return dispose;
+  });
+
+  // Apply the profile's saved translation to the selected tab, but ONLY when
+  // the profile itself changes (login/profile load) — never on URL changes —
+  // so it doesn't fight an explicit `?translation=`/`?translationId=` deep
+  // link or an in-session pick. Mirrors ConfigManager's `lang` profile-sync
+  // effect.
+  effect(() => {
+    const savedTranslationId = getProfileConfigValue(
+      login.profile.value,
+      PROFILE_TRANSLATION_ID
+    );
+    if (typeof savedTranslationId !== "string" || !savedTranslationId) {
+      return;
+    }
+
+    untracked(() => {
+      const url = navigation.currentUrl.peek();
+      const hasExplicitUrlTranslation =
+        url.searchParams.has("translationId") ||
+        url.searchParams.has("translation");
+      if (hasExplicitUrlTranslation) {
+        return;
+      }
+
+      const readingState = selectedTab.peek()?.readingState;
+      if (
+        !readingState ||
+        readingState.translationId.peek() === savedTranslationId
+      ) {
+        return;
+      }
+
+      void readingState.selectTranslationAndChapter(
+        savedTranslationId,
+        readingState.bookId.peek() ?? DEFAULT_BOOK_ID,
+        readingState.chapterNumber.peek(),
+        { updateUrl: false }
+      );
+    });
   });
 
   effect(() => {

@@ -429,6 +429,7 @@ export function createSeedBibleState(
     highlights,
     chats,
     i18n,
+    login,
     discover,
     readingExtensions
   );
