@@ -239,6 +239,12 @@ export function createNavigationManager(
   const syncSignalsToUrl = (
     signals: Record<string, SimpleSignal<string | null>>
   ) => {
+    if (import.meta.env.SSR) {
+      // Don't allow syncing signals to the URL during SSR, as it would be meaningless
+      // and could cause errors between different requests.
+      return;
+    }
+
     const cleanup1 = effect(() => {
       const update: Record<string, string | null> = {};
       for (const [key, signal] of Object.entries(signals)) {
