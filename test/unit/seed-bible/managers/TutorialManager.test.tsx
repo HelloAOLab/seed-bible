@@ -13,6 +13,7 @@ function createLogin(): LoginManager {
   return {
     userId: signal(null),
     profile: signal(null),
+    localConfig: signal({}),
     updateProfile: vi.fn(),
   } as unknown as LoginManager;
 }

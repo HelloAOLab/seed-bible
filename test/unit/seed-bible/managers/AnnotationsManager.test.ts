@@ -47,6 +47,8 @@ describe("AnnotationsManager", () => {
       userId: signal("user-1"),
       connectionId: "conn-1",
       profile: signal(null),
+      cachedProfile: signal(null),
+      localConfig: signal({}),
       profilePromise: null,
       login: vi.fn().mockResolvedValue(undefined),
       logout: vi.fn().mockResolvedValue(undefined),

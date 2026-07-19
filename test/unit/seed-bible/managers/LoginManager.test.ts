@@ -536,6 +536,59 @@ describe("createLoginManager", () => {
     });
   });
 
+  describe("cachedProfile", () => {
+    it("caches a confirmed profile load to localStorage, keyed by user id", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: { name: "Erin" } });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value?.name === "Erin");
+
+      expect(localStorage.getItem(`sb-profile-cache-${USER_ID}`)).toBe(
+        JSON.stringify({ name: "Erin" })
+      );
+      expect(manager.cachedProfile.value).toEqual({ name: "Erin" });
+    });
+
+    it("shows the cached profile immediately, before the network load resolves", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: { name: "Erin" } });
+      const first = createAuthenticatedManager();
+      await waitFor(() => first.profile.value?.name === "Erin");
+
+      // A fresh manager for the same stored session key should see the
+      // cached profile right away, even while the network call is stalled.
+      getDataMock.mockReturnValue(new Promise(() => undefined));
+      const second = createLoginManager({ os });
+
+      await waitFor(() => second.userId.value === USER_ID);
+      expect(second.cachedProfile.value).toEqual({ name: "Erin" });
+      expect(second.profile.value).toBeNull();
+    });
+
+    it("updates the cache immediately when updateProfile() writes locally", async () => {
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value !== null);
+
+      manager.updateProfile({ name: "Updated" });
+
+      expect(manager.cachedProfile.value).toEqual({ name: "Updated" });
+      expect(localStorage.getItem(`sb-profile-cache-${USER_ID}`)).toBe(
+        JSON.stringify({ name: "Updated" })
+      );
+    });
+
+    it("clears the cached profile on logout", async () => {
+      getDataMock.mockResolvedValue({ success: true, data: { name: "Frank" } });
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.profile.value?.name === "Frank");
+      expect(manager.cachedProfile.value).toEqual({ name: "Frank" });
+
+      await manager.logout();
+
+      await waitFor(() => manager.userId.value === null);
+      expect(manager.cachedProfile.value).toBeNull();
+    });
+  });
+
   describe("profile", () => {
     it("login() authenticates and loads the profile", async () => {
       getDataMock.mockResolvedValue({ success: true, data: { name: "Bob" } });
@@ -653,6 +706,101 @@ describe("createLoginManager", () => {
       } finally {
         delete (globalThis as any).posthog;
       }
+    });
+  });
+
+  describe("localConfig (anonymous device-local config)", () => {
+    it("reads a previously-saved local config on construction", () => {
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ fontSize: "XL" })
+      );
+
+      const manager = createLoginManager({ os });
+
+      expect(manager.localConfig.value).toEqual({ fontSize: "XL" });
+    });
+
+    it("persists localConfig writes to localStorage", () => {
+      const manager = createLoginManager({ os });
+
+      manager.localConfig.value = { fontSize: "L" };
+
+      expect(localStorage.getItem("sb-profile-config-local")).toBe(
+        JSON.stringify({ fontSize: "L" })
+      );
+    });
+
+    it("adopts local config into a brand-new account's profile on first login and persists it", async () => {
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ fontSize: "L", themeId: "dark" })
+      );
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "No data found for the given key.",
+      });
+
+      const manager = createAuthenticatedManager();
+
+      await waitFor(() => manager.profile.value !== null);
+
+      expect(manager.profile.value).toEqual({
+        name: "",
+        config: { fontSize: "L", themeId: "dark" },
+      });
+      expect(recordDataMock).toHaveBeenCalledWith(
+        USER_ID,
+        "profile",
+        { name: "", config: { fontSize: "L", themeId: "dark" } },
+        { marker: "publicRead" }
+      );
+      // Adoption succeeded, so the local store is cleared — it shouldn't be
+      // silently adopted again by a different account on the same device.
+      expect(manager.localConfig.value).toEqual({});
+      expect(localStorage.getItem("sb-profile-config-local")).toBe("{}");
+    });
+
+    it("does not adopt anything when there is no saved local config", async () => {
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "No data found for the given key.",
+      });
+
+      const manager = createAuthenticatedManager();
+
+      await waitFor(() => manager.profile.value !== null);
+
+      expect(manager.profile.value).toEqual({ name: "" });
+      expect(recordDataMock).not.toHaveBeenCalled();
+    });
+
+    it("keeps the local config in place if persisting the adopted profile fails", async () => {
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ fontSize: "L" })
+      );
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "data_not_found",
+        errorMessage: "No data found for the given key.",
+      });
+      recordDataMock.mockRejectedValueOnce(new Error("network error"));
+
+      const manager = createAuthenticatedManager();
+
+      await waitFor(() => manager.profile.value !== null);
+
+      expect(manager.profile.value).toEqual({
+        name: "",
+        config: { fontSize: "L" },
+      });
+      expect(manager.localConfig.value).toEqual({ fontSize: "L" });
+      expect(localStorage.getItem("sb-profile-config-local")).toBe(
+        JSON.stringify({ fontSize: "L" })
+      );
     });
   });
 
