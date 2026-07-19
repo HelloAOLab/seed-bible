@@ -558,6 +558,7 @@ async function createBibleReadingSession(
   defaultOptions?: SessionOptions
 ): Promise<BibleReadingSession> {
   const readingState = createBibleReadingState(
+    loginManager,
     dataManager,
     highlightsManager,
     i18nManager,

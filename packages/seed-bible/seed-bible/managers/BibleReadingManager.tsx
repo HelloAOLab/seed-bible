@@ -39,6 +39,8 @@ import type {
   ReadingExtensionRuntime,
   ReadingNavigationOutcome,
 } from "../managers/BibleReadingExtensionManager";
+import { saveProfileConfigValue } from "./ProfileConfigSync";
+import type { LoginManager } from "./LoginManager";
 
 export interface DiscoverTypedProviderResults<TResult> {
   providerId: string;
@@ -776,6 +778,7 @@ function parseTranslationInput(value?: string | null): ParsedTranslationInput {
 }
 
 export function createBibleReadingState(
+  login: LoginManager,
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager,
   i18nManager: I18nManager,
@@ -1550,6 +1553,11 @@ export function createBibleReadingState(
 
     try {
       const nextTranslationId = await resolveTranslationInput(
+        nextTranslationIdOrUrl
+      );
+      saveProfileConfigValue(
+        login,
+        "preferredTranslation",
         nextTranslationIdOrUrl
       );
 

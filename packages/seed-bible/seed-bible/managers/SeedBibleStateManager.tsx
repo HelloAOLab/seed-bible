@@ -424,6 +424,7 @@ export function createSeedBibleState(
   const discover = createDiscoverManager();
   const readingExtensions = createBibleReadingExtensionManager();
   const tabs = createTabs(
+    login,
     navigation,
     data,
     highlights,

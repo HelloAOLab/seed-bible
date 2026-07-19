@@ -18,6 +18,11 @@ import {
   type TranslationWithLanguage,
 } from "../managers/BibleReadingManager";
 import type { HighlightsManager } from "../managers/HighlightsManager";
+function parseTranslationId(value: unknown, fallback: string): string {
+  return typeof value === "string" && value.trim().length > 0
+    ? value
+    : fallback;
+}
 
 export function formatVerseSelection(verseNumbers: number[]): string | null {
   const sorted = Array.from(new Set(verseNumbers))
@@ -67,6 +72,8 @@ import type { I18nManager } from "../i18n";
 import type { DiscoverManager } from "./DiscoverManager";
 import type { BibleReadingExtensionManager } from "./BibleReadingExtensionManager";
 import { difference } from "es-toolkit";
+import { getProfileConfigValue } from "./ProfileConfigSync";
+import type { LoginManager } from "./LoginManager";
 
 export interface ReaderTab {
   /** Unique tab identifier (for example: tab-1, tab-2). */
@@ -125,6 +132,7 @@ export interface InitialTabsOptions {
 }
 
 export function createInitialTabs(
+  login: LoginManager,
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager,
   i18nManager: I18nManager,
@@ -138,6 +146,7 @@ export function createInitialTabs(
     id: "tab-1",
     title: "Tab 1",
     readingState: createBibleReadingState(
+      login,
       dataManager,
       highlightsManager,
       i18nManager,
@@ -249,6 +258,7 @@ export interface TabsManager {
  *   reading state accordingly.
  */
 export function createTabs(
+  login: LoginManager,
   navigation: NavigationManager,
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager,
@@ -264,6 +274,12 @@ export function createTabs(
     navigation.currentUrl.value,
     i18nManager.defaultLanguage
   );
+  const defaultTranslationID = computed(() =>
+    parseTranslationId(
+      getProfileConfigValue(login.profile.value, "preferredTranslation"),
+      initialTranslationId
+    )
+  );
   const initialBookId = getInitialFirstTabBookId(navigation.currentUrl.value);
   const initialChapter = getInitialFirstTabChapter(navigation.currentUrl.value);
 
@@ -275,6 +291,7 @@ export function createTabs(
 
   const tabs = signal<ReaderTab[]>(
     createInitialTabs(
+      login,
       dataManager,
       highlightsManager,
       i18nManager,
@@ -290,11 +307,29 @@ export function createTabs(
       readingExtensionManager
     )
   );
+
   const selectedTabId = signal<string>(tabs.value[0]?.id ?? "");
+
   const selectedTab = computed(
     () => tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null
   );
+  effect(() => {
+    const profile = login.profile.value;
+    const tab = selectedTab.value;
 
+    if (!profile || !tab) return;
+
+    const preferredTranslation = parseTranslationId(
+      getProfileConfigValue(profile, "preferredTranslation"),
+      initialTranslationId
+    );
+
+    if (tab.readingState.translationId.value === preferredTranslation) {
+      return;
+    }
+
+    void tab.readingState.selectTranslation(preferredTranslation);
+  });
   const syncSelectedTabFromUrl = async () => {
     const selectedTab =
       tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null;
@@ -471,6 +506,7 @@ export function createTabs(
         sharedSession?.readingState ??
         readingState ??
         createBibleReadingState(
+          login,
           dataManager,
           highlightsManager,
           i18nManager,
