@@ -369,6 +369,7 @@ export function createLoginManager({
     batch(() => {
       sessionKey.value = null;
       connectionKey.value = null;
+      userInfo.value = null;
     });
   };
 
