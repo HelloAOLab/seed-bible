@@ -364,6 +364,7 @@
   "edit-playlist": "Ойнотмо тизмени түзөтүү",
   "remove-playlist-item": "Нерсени алып салуу",
   "edit-playlist-item": "Элементти түзөтүү",
+  "drag-to-reorder-playlist-item": "Кайра иреттөө үчүн сүйрөңүз",
   "playlist-add-item": "Нерсе кошуу",
   "playlist-edit-item": "Элементти түзөтүү",
   "playlist-save-item": "Өзгөрүүлөрдү сактоо",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" жок кылынсынбы? Муну артка кайтаруу мүмкүн эмес.",
   "delete-playlist-failed": "Ойнотмо тизме өчүрүлгөн жок.",
   "collapsed-tab-shared-label": "{{title}} — бөлүшүлгөн сессия, {{count}} катышууда",
-  "playlist-add-mode-label": "Буюмдун түрү"
+  "playlist-add-mode-label": "Буюмдун түрү",
+  "saving": "Сакталууда…",
+  "unsaved-item-confirm-title": "Сакталбаган элемент",
+  "unsaved-item-confirm-message": "Сиз ойнотуу тизмесине азырынча кошулбаган нерсени кошо баштадыңыз. Эмне кылгыңыз келет?",
+  "discard-and-save": "Жокко чыгаруу жана сактоо",
+  "add-and-save": "Кошуу жана сактоо"
 }

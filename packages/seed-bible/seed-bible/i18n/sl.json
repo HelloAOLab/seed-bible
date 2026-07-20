@@ -364,6 +364,7 @@
   "edit-playlist": "Uredi seznam predvajanja",
   "remove-playlist-item": "Odstrani element",
   "edit-playlist-item": "Uredi element",
+  "drag-to-reorder-playlist-item": "Povlecite za spremembo vrstnega reda",
   "playlist-add-item": "Dodaj element",
   "playlist-edit-item": "Uredi element",
   "playlist-save-item": "Shrani spremembe",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "Želite izbrisati » {{title}} «? Tega ni mogoče razveljaviti.",
   "delete-playlist-failed": "Seznama predvajanja ni bilo mogoče izbrisati.",
   "collapsed-tab-shared-label": "{{title}} — deljena seja, {{count}} prisotnih",
-  "playlist-add-mode-label": "Vrsta elementa"
+  "playlist-add-mode-label": "Vrsta elementa",
+  "saving": "Shranjevanje…",
+  "unsaved-item-confirm-title": "Neshranjen element",
+  "unsaved-item-confirm-message": "Začeli ste dodajati element, ki še ni bil dodan na seznam predvajanja. Kaj želite storiti?",
+  "discard-and-save": "Zavrzi in shrani",
+  "add-and-save": "Dodaj in shrani"
 }

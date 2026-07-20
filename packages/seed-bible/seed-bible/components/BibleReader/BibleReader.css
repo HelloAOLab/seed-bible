@@ -646,6 +646,22 @@
   font-weight: 600;
 }
 
+/* Embedded playlist links/videos want to fill a large portion of the screen
+ * rather than sit in the small default modal box, so grow the shared modal
+ * frame (and let its content area stretch) whenever it's showing one. */
+.sb-footnote-modal:has(.sb-play-playlist-content-embed) {
+  width: min(94vw, 1400px);
+  max-height: min(92dvh, 900px);
+  height: min(92dvh, 900px);
+}
+
+.sb-footnote-modal:has(.sb-play-playlist-content-embed)
+  .sb-footnote-modal-content {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
 /* Mobile: dock the picker modal to the bottom of the screen as a sheet
  * (matches the design spec). The modal frame itself is reused, but the
  * outer overlay aligns it to the bottom and stretches it to full width. */
@@ -664,15 +680,41 @@
   }
 }
 
-.sb-verse-decoration-search-result,
-.sb-verse-decoration-initial-verse-highlight,
-.sb-verse-decoration-open-reference-highlight,
-.sb-verse-decoration-playlist-verse-highlight {
+.sb-verse-decoration-highlight {
   background: color-mix(
     in srgb,
     var(--sb-secondary-color),
-    transparent 28%
+    transparent 20%
   ) !important;
+}
+
+.sb-chapter-decoration-diminish {
+  .sb-verse,
+  .sb-chapter-heading {
+    animation: diminish-in-out 3s ease-in-out;
+  }
+}
+
+@keyframes diminish-in-out {
+  0% {
+    opacity: 1;
+  }
+
+  10%,
+  90% {
+    opacity: 0.4;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.sb-verse {
+  &:has(.sb-verse-decoration-diminish) {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 .sb-highlight-preview-pill {

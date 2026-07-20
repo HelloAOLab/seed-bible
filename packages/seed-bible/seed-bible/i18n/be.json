@@ -364,6 +364,7 @@
   "edit-playlist": "Рэдагаваць плэйліст",
   "remove-playlist-item": "Выдаліць элемент",
   "edit-playlist-item": "Рэдагаваць элемент",
+  "drag-to-reorder-playlist-item": "Перацягніце, каб змяніць парадак",
   "playlist-add-item": "Дадаць элемент",
   "playlist-edit-item": "Рэдагаваць элемент",
   "playlist-save-item": "Захаваць змены",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "Выдаліць \" {{title}} \"? Гэта нельга адмяніць.",
   "delete-playlist-failed": "Не атрымалася выдаліць плэйліст.",
   "collapsed-tab-shared-label": "{{title}} — агульная сесія, {{count}} прысутных",
-  "playlist-add-mode-label": "Тып элемента"
+  "playlist-add-mode-label": "Тып элемента",
+  "saving": "Захаванне…",
+  "unsaved-item-confirm-title": "Незахаваны элемент",
+  "unsaved-item-confirm-message": "Вы пачалі дадаваць элемент, які яшчэ не быў дададзены ў плэйліст. Што вы хочаце зрабіць?",
+  "discard-and-save": "Адхіліць і захаваць",
+  "add-and-save": "Дадаць і захаваць"
 }

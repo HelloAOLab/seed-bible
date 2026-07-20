@@ -364,6 +364,7 @@
   "edit-playlist": "Уреди плејлиста за уредување",
   "remove-playlist-item": "Отстрани ставка",
   "edit-playlist-item": "Уреди ставка",
+  "drag-to-reorder-playlist-item": "Повлечете за да го промените редоследот",
   "playlist-add-item": "Додај ставка",
   "playlist-edit-item": "Уреди ставка",
   "playlist-save-item": "Зачувај ги промените",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "Да се ​​избрише „ {{title}} “? Ова не може да се врати.",
   "delete-playlist-failed": "Не можеше да се избрише плејлистата.",
   "collapsed-tab-shared-label": "{{title}} — споделена сесија, {{count}} присутни",
-  "playlist-add-mode-label": "Тип на ставка"
+  "playlist-add-mode-label": "Тип на ставка",
+  "saving": "Зачувување…",
+  "unsaved-item-confirm-title": "Незачувана ставка",
+  "unsaved-item-confirm-message": "Започнавте да додавате ставка која сè уште не е додадена во плејлистата. Што сакате да направите?",
+  "discard-and-save": "Отфрли и зачувај",
+  "add-and-save": "Додај и зачувај"
 }

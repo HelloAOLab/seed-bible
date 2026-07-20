@@ -364,6 +364,7 @@
   "edit-playlist": "Oynatma listesini düzenle",
   "remove-playlist-item": "Öğeyi kaldır",
   "edit-playlist-item": "Öğeyi düzenle",
+  "drag-to-reorder-playlist-item": "Yeniden sıralamak için sürükleyin",
   "playlist-add-item": "Ürün ekle",
   "playlist-edit-item": "Öğeyi düzenle",
   "playlist-save-item": "Değişiklikleri kaydet",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" silinsin mi? Bu işlem geri alınamaz.",
   "delete-playlist-failed": "Çalma listesini silemedim.",
   "collapsed-tab-shared-label": "{{title}} — paylaşılan oturum, {{count}} katılımcı",
-  "playlist-add-mode-label": "Ürün türü"
+  "playlist-add-mode-label": "Ürün türü",
+  "saving": "Kaydediliyor…",
+  "unsaved-item-confirm-title": "Kaydedilmemiş öğe",
+  "unsaved-item-confirm-message": "Henüz oynatma listesine eklenmemiş bir öğe eklemeye başladınız. Ne yapmak istersiniz?",
+  "discard-and-save": "Vazgeç ve kaydet",
+  "add-and-save": "Ekle ve kaydet"
 }

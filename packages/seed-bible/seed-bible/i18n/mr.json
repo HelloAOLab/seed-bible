@@ -364,6 +364,7 @@
   "edit-playlist": "प्लेलिस्ट संपादित करा",
   "remove-playlist-item": "वस्तू काढा",
   "edit-playlist-item": "आयटम संपादित करा",
+  "drag-to-reorder-playlist-item": "पुन्हा क्रमवारी लावण्यासाठी ओढा",
   "playlist-add-item": "आयटम जोडा",
   "playlist-edit-item": "आयटम संपादित करा",
   "playlist-save-item": "बदल जतन करा",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" हटवायचे आहे का? हे पूर्ववत करता येणार नाही.",
   "delete-playlist-failed": "प्लेलिस्ट डिलीट करता आली नाही.",
   "collapsed-tab-shared-label": "{{title}} — सामायिक सत्र, {{count}} उपस्थित",
-  "playlist-add-mode-label": "वस्तूचा प्रकार"
+  "playlist-add-mode-label": "वस्तूचा प्रकार",
+  "saving": "सेव्ह करत आहे…",
+  "unsaved-item-confirm-title": "सेव्ह न केलेली आयटम",
+  "unsaved-item-confirm-message": "तुम्ही एक आयटम जोडण्यास सुरुवात केली आहे जी अद्याप प्लेलिस्टमध्ये जोडलेली नाही. तुम्हाला काय करायचे आहे?",
+  "discard-and-save": "रद्द करा आणि सेव्ह करा",
+  "add-and-save": "जोडा आणि सेव्ह करा"
 }

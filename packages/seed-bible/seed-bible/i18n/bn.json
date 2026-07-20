@@ -364,6 +364,7 @@
   "edit-playlist": "প্লেলিস্ট সম্পাদনা করুন",
   "remove-playlist-item": "আইটেমটি সরান",
   "edit-playlist-item": "আইটেম সম্পাদনা করুন",
+  "drag-to-reorder-playlist-item": "পুনরায় সাজাতে টেনে আনুন",
   "playlist-add-item": "আইটেম যোগ করুন",
   "playlist-edit-item": "আইটেম সম্পাদনা করুন",
   "playlist-save-item": "পরিবর্তনগুলি সংরক্ষণ করুন",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" মুছে ফেলবেন? এটি আর পূর্বাবস্থায় ফেরানো যাবে না।",
   "delete-playlist-failed": "প্লেলিস্টটি মুছে ফেলা যায়নি।",
   "collapsed-tab-shared-label": "{{title}} — যৌথ অধিবেশন, {{count}} জন উপস্থিত",
-  "playlist-add-mode-label": "আইটেমের ধরন"
+  "playlist-add-mode-label": "আইটেমের ধরন",
+  "saving": "সংরক্ষণ করা হচ্ছে…",
+  "unsaved-item-confirm-title": "অসংরক্ষিত আইটেম",
+  "unsaved-item-confirm-message": "আপনি একটি আইটেম যোগ করা শুরু করেছেন যা এখনও প্লেলিস্টে যোগ করা হয়নি। আপনি কী করতে চান?",
+  "discard-and-save": "বাতিল করুন এবং সংরক্ষণ করুন",
+  "add-and-save": "যোগ করুন এবং সংরক্ষণ করুন"
 }

@@ -364,6 +364,7 @@
   "edit-playlist": "Modifier la playlist",
   "remove-playlist-item": "Supprimer l'élément",
   "edit-playlist-item": "Modifier l'élément",
+  "drag-to-reorder-playlist-item": "Faites glisser pour réorganiser",
   "playlist-add-item": "Ajouter un élément",
   "playlist-edit-item": "Modifier l'élément",
   "playlist-save-item": "Enregistrer les modifications",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "Supprimer « {{title}} » ? Cette action est irréversible.",
   "delete-playlist-failed": "Impossible de supprimer la playlist.",
   "collapsed-tab-shared-label": "{{title}} — session partagée, {{count}} présents",
-  "playlist-add-mode-label": "Type d'article"
+  "playlist-add-mode-label": "Type d'article",
+  "saving": "Enregistrement…",
+  "unsaved-item-confirm-title": "Élément non enregistré",
+  "unsaved-item-confirm-message": "Vous avez commencé à ajouter un élément qui n'a pas encore été ajouté à la playlist. Que souhaitez-vous faire ?",
+  "discard-and-save": "Ignorer et enregistrer",
+  "add-and-save": "Ajouter et enregistrer"
 }

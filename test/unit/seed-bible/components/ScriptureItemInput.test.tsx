@@ -1,6 +1,9 @@
-import { render } from "preact";
+import { render, createRef } from "preact";
 import { act } from "preact/test-utils";
-import { ScriptureItemInput } from "@packages/seed-bible/seed-bible/components/ScriptureItemInput/ScriptureItemInput";
+import {
+  ScriptureItemInput,
+  type ScriptureItemInputHandle,
+} from "@packages/seed-bible/seed-bible/components/ScriptureItemInput/ScriptureItemInput";
 import type { TranslationBook } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { PlaylistItemData } from "@packages/seed-bible/seed-bible/managers/PlaylistManager";
 
@@ -289,5 +292,69 @@ describe("ScriptureItemInput", () => {
       type: "bible-verse",
       ref: { bookId: "JUD", chapter: 1 },
     } satisfies PlaylistItemData);
+  });
+
+  describe("imperative handle", () => {
+    it("isDirty is false when empty and true once text is typed", () => {
+      const handleRef = createRef<ScriptureItemInputHandle>();
+      act(() => {
+        render(
+          <ScriptureItemInput ref={handleRef} books={BOOKS} onAdd={vi.fn()} />,
+          container
+        );
+      });
+
+      expect(handleRef.current?.isDirty()).toBe(false);
+
+      act(() => {
+        setValue(input(), "John 3");
+      });
+
+      expect(handleRef.current?.isDirty()).toBe(true);
+    });
+
+    it("commit() adds the highlighted reference and returns true", () => {
+      const onAdd = vi.fn();
+      const handleRef = createRef<ScriptureItemInputHandle>();
+      act(() => {
+        render(
+          <ScriptureItemInput ref={handleRef} books={BOOKS} onAdd={onAdd} />,
+          container
+        );
+        input().focus();
+        setValue(input(), "Philemon");
+      });
+
+      let result: boolean | undefined;
+      act(() => {
+        result = handleRef.current?.commit();
+      });
+
+      expect(result).toBe(true);
+      expect(onAdd).toHaveBeenCalledWith({
+        type: "bible-verse",
+        ref: { bookId: "PHM", chapter: 1 },
+      } satisfies PlaylistItemData);
+      expect(handleRef.current?.isDirty()).toBe(false);
+    });
+
+    it("commit() returns false and does not add when the reference is empty", () => {
+      const onAdd = vi.fn();
+      const handleRef = createRef<ScriptureItemInputHandle>();
+      act(() => {
+        render(
+          <ScriptureItemInput ref={handleRef} books={BOOKS} onAdd={onAdd} />,
+          container
+        );
+      });
+
+      let result: boolean | undefined;
+      act(() => {
+        result = handleRef.current?.commit();
+      });
+
+      expect(result).toBe(false);
+      expect(onAdd).not.toHaveBeenCalled();
+    });
   });
 });

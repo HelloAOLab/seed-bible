@@ -364,6 +364,7 @@
   "edit-playlist": "แก้ไขเพลย์ลิสต์",
   "remove-playlist-item": "ลบรายการ",
   "edit-playlist-item": "แก้ไขรายการ",
+  "drag-to-reorder-playlist-item": "ลากเพื่อจัดเรียงใหม่",
   "playlist-add-item": "เพิ่มรายการ",
   "playlist-edit-item": "แก้ไขรายการ",
   "playlist-save-item": "บันทึกการเปลี่ยนแปลง",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "ลบ \" {{title}} \"? ไม่สามารถย้อนกลับได้",
   "delete-playlist-failed": "ไม่สามารถลบเพลย์ลิสต์ได้",
   "collapsed-tab-shared-label": "{{title}} — เซสชันที่ใช้ร่วมกัน มีผู้เข้าร่วม {{count}} คน",
-  "playlist-add-mode-label": "ประเภทสินค้า"
+  "playlist-add-mode-label": "ประเภทสินค้า",
+  "saving": "กำลังบันทึก…",
+  "unsaved-item-confirm-title": "รายการที่ยังไม่ได้บันทึก",
+  "unsaved-item-confirm-message": "คุณเริ่มเพิ่มรายการที่ยังไม่ได้เพิ่มลงในเพลย์ลิสต์ คุณต้องการทำอะไร?",
+  "discard-and-save": "ละทิ้งและบันทึก",
+  "add-and-save": "เพิ่มและบันทึก"
 }

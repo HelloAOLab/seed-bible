@@ -364,6 +364,7 @@
   "edit-playlist": "Muuda esitusloendit",
   "remove-playlist-item": "Eemalda üksus",
   "edit-playlist-item": "Redigeeri üksust",
+  "drag-to-reorder-playlist-item": "Lohista ümberjärjestamiseks",
   "playlist-add-item": "Lisa üksus",
   "playlist-edit-item": "Redigeeri üksust",
   "playlist-save-item": "Salvesta muudatused",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "Kas kustutada \" {{title}} \"? Seda toimingut ei saa tagasi võtta.",
   "delete-playlist-failed": "Esitusloendit ei saanud kustutada.",
   "collapsed-tab-shared-label": "{{title}} — jagatud seanss, kohal {{count}}",
-  "playlist-add-mode-label": "Toote tüüp"
+  "playlist-add-mode-label": "Toote tüüp",
+  "saving": "Salvestamine…",
+  "unsaved-item-confirm-title": "Salvestamata üksus",
+  "unsaved-item-confirm-message": "Oled hakanud lisama üksust, mida pole veel esitusloendisse lisatud. Mida soovid teha?",
+  "discard-and-save": "Loobu ja salvesta",
+  "add-and-save": "Lisa ja salvesta"
 }

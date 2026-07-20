@@ -364,6 +364,7 @@
   "edit-playlist": "Edytuj playlistę",
   "remove-playlist-item": "Usuń element",
   "edit-playlist-item": "Edytuj element",
+  "drag-to-reorder-playlist-item": "Przeciągnij, aby zmienić kolejność",
   "playlist-add-item": "Dodaj element",
   "playlist-edit-item": "Edytuj element",
   "playlist-save-item": "Zapisz zmiany",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "Usunąć „ {{title}} ”? Tego nie da się cofnąć.",
   "delete-playlist-failed": "Nie udało się usunąć listy odtwarzania.",
   "collapsed-tab-shared-label": "{{title}} — sesja współdzielona, ​​obecnych jest {{count}}",
-  "playlist-add-mode-label": "Typ przedmiotu"
+  "playlist-add-mode-label": "Typ przedmiotu",
+  "saving": "Zapisywanie…",
+  "unsaved-item-confirm-title": "Niezapisany element",
+  "unsaved-item-confirm-message": "Zacząłeś dodawać element, który nie został jeszcze dodany do playlisty. Co chcesz zrobić?",
+  "discard-and-save": "Odrzuć i zapisz",
+  "add-and-save": "Dodaj i zapisz"
 }

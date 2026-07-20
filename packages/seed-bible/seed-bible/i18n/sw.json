@@ -364,6 +364,7 @@
   "edit-playlist": "Hariri orodha ya kucheza",
   "remove-playlist-item": "Ondoa kipengee",
   "edit-playlist-item": "Hariri kipengee",
+  "drag-to-reorder-playlist-item": "Buruta ili kupanga upya",
   "playlist-add-item": "Ongeza kipengee",
   "playlist-edit-item": "Hariri kipengee",
   "playlist-save-item": "Hifadhi mabadiliko",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "Futa \" {{title}} \"? Hii haiwezi kutenduliwa.",
   "delete-playlist-failed": "Haikuweza kufuta orodha ya kucheza.",
   "collapsed-tab-shared-label": "{{title}} — kipindi kilichoshirikiwa, {{count}} kinawasilisha",
-  "playlist-add-mode-label": "Aina ya kipengee"
+  "playlist-add-mode-label": "Aina ya kipengee",
+  "saving": "Inahifadhi…",
+  "unsaved-item-confirm-title": "Kipengee kisichohifadhiwa",
+  "unsaved-item-confirm-message": "Umeanza kuongeza kipengee ambacho bado hakijaongezwa kwenye orodha ya kucheza. Ungependa kufanya nini?",
+  "discard-and-save": "Ondoa na uhifadhi",
+  "add-and-save": "Ongeza na uhifadhi"
 }

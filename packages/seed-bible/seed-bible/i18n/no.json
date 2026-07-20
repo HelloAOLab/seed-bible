@@ -364,6 +364,7 @@
   "edit-playlist": "Rediger spilleliste",
   "remove-playlist-item": "Fjern elementet",
   "edit-playlist-item": "Rediger element",
+  "drag-to-reorder-playlist-item": "Dra for å endre rekkefølge",
   "playlist-add-item": "Legg til element",
   "playlist-edit-item": "Rediger element",
   "playlist-save-item": "Lagre endringer",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "Slette « {{title}} »? Dette kan ikke angres.",
   "delete-playlist-failed": "Kunne ikke slette spillelisten.",
   "collapsed-tab-shared-label": "{{title}} — delt økt, {{count}} tilstede",
-  "playlist-add-mode-label": "Varetype"
+  "playlist-add-mode-label": "Varetype",
+  "saving": "Lagrer…",
+  "unsaved-item-confirm-title": "Ulagret element",
+  "unsaved-item-confirm-message": "Du har begynt å legge til et element som ikke er lagt til spillelisten ennå. Hva vil du gjøre?",
+  "discard-and-save": "Forkast og lagre",
+  "add-and-save": "Legg til og lagre"
 }

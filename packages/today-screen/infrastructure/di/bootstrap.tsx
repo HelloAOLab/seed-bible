@@ -289,7 +289,8 @@ export const bootstrapExtension = () => {
                   // decoration (same pattern as the reader's search panel).
                   if (verse !== undefined) {
                     tab.readingState.decorateVerses(bookId, chapter, verse, {
-                      className: "sb-verse-decoration-search-result",
+                      className: "sb-verse-decoration-diminish",
+                      containerClassName: "sb-chapter-decoration-diminish",
                       removeAfterMs: 3000,
                     });
                   }

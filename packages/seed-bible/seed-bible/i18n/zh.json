@@ -364,6 +364,7 @@
   "edit-playlist": "编辑播放列表",
   "remove-playlist-item": "移除项目",
   "edit-playlist-item": "编辑项目",
+  "drag-to-reorder-playlist-item": "拖动以重新排序",
   "playlist-add-item": "添加项目",
   "playlist-edit-item": "编辑项目",
   "playlist-save-item": "保存更改",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "删除“ {{title}} ”？此操作无法撤销。",
   "delete-playlist-failed": "无法删除播放列表。",
   "collapsed-tab-shared-label": "{{title}} — 共享会话， {{count}}人",
-  "playlist-add-mode-label": "物品类型"
+  "playlist-add-mode-label": "物品类型",
+  "saving": "保存中…",
+  "unsaved-item-confirm-title": "未保存的项目",
+  "unsaved-item-confirm-message": "您已开始添加一个尚未加入播放列表的项目。您想怎么做?",
+  "discard-and-save": "放弃并保存",
+  "add-and-save": "添加并保存"
 }

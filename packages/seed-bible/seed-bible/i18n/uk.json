@@ -364,6 +364,7 @@
   "edit-playlist": "Редагувати список відтворення",
   "remove-playlist-item": "Видалити елемент",
   "edit-playlist-item": "Редагувати елемент",
+  "drag-to-reorder-playlist-item": "Перетягніть, щоб змінити порядок",
   "playlist-add-item": "Додати елемент",
   "playlist-edit-item": "Редагувати елемент",
   "playlist-save-item": "Зберегти зміни",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "Видалити \" {{title}} \"? Цю дію не можна скасувати.",
   "delete-playlist-failed": "Не вдалося видалити список відтворення.",
   "collapsed-tab-shared-label": "{{title}} — спільний сеанс, присутніх {{count}}",
-  "playlist-add-mode-label": "Тип елемента"
+  "playlist-add-mode-label": "Тип елемента",
+  "saving": "Збереження…",
+  "unsaved-item-confirm-title": "Незбережений елемент",
+  "unsaved-item-confirm-message": "Ви почали додавати елемент, який ще не додано до плейлиста. Що ви хочете зробити?",
+  "discard-and-save": "Скасувати та зберегти",
+  "add-and-save": "Додати та зберегти"
 }

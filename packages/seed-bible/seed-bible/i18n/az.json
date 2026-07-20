@@ -364,6 +364,7 @@
   "edit-playlist": "Pleylisti redaktə edin",
   "remove-playlist-item": "Elementi silin",
   "edit-playlist-item": "Elementi redaktə edin",
+  "drag-to-reorder-playlist-item": "Yenidən sıralamaq üçün sürükləyin",
   "playlist-add-item": "Element əlavə edin",
   "playlist-edit-item": "Elementi redaktə edin",
   "playlist-save-item": "Dəyişiklikləri yadda saxla",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" silinsin? Bunu geri qaytarmaq mümkün deyil.",
   "delete-playlist-failed": "Pleylist silinə bilmədi.",
   "collapsed-tab-shared-label": "{{title}} — paylaşılan sessiya, {{count}} təqdimat",
-  "playlist-add-mode-label": "Məhsul növü"
+  "playlist-add-mode-label": "Məhsul növü",
+  "saving": "Yadda saxlanılır…",
+  "unsaved-item-confirm-title": "Saxlanılmamış element",
+  "unsaved-item-confirm-message": "Siz siyahıya hələ əlavə edilməmiş bir element daxil etməyə başlamısınız. Nə etmək istəyirsiniz?",
+  "discard-and-save": "Ləğv et və yadda saxla",
+  "add-and-save": "Əlavə et və yadda saxla"
 }

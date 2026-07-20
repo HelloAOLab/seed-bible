@@ -364,6 +364,7 @@
   "edit-playlist": "ዝርዝር ደርፍታት ኣርትዕ",
   "remove-playlist-item": "ኣቕሓ ኣውጽእ",
   "edit-playlist-item": "ኣርትዖት ኣቕሓ",
+  "drag-to-reorder-playlist-item": "ንምስራዕ ጎትት",
   "playlist-add-item": "ኣቕሓ ምውሳኽ",
   "playlist-edit-item": "ኣርትዖት ኣቕሓ",
   "playlist-save-item": "ለውጢ ምዕቃብ",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" ምድምሳስ? እዚ ክምለስ ኣይክእልን እዩ።",
   "delete-playlist-failed": "ነቲ ዝርዝር ደርፍታት ክድምስሶ ኣይከኣለን።",
   "collapsed-tab-shared-label": "{{title}} — ዝተኻፈለ ክፍለ ግዜ፣ {{count}} ኣሎ።",
-  "playlist-add-mode-label": "ዓይነት ኣቕሓ"
+  "playlist-add-mode-label": "ዓይነት ኣቕሓ",
+  "saving": "የቐምጥ ኣሎ…",
+  "unsaved-item-confirm-title": "ዘይተዓቀበ ኣቕሓ",
+  "unsaved-item-confirm-message": "ናብ ፕለይሊስት ገና ዘይተወሰኸ ኣቕሓ ክትውስኽ ጀሚርካ ኣለኻ። እንታይ ክትገብር ደሊኻ?",
+  "discard-and-save": "ስረዝ እሞ ኣቐምጥ",
+  "add-and-save": "ወስኽ እሞ ኣቐምጥ"
 }

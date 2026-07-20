@@ -364,6 +364,7 @@
   "edit-playlist": "Editar lista de reproducción",
   "remove-playlist-item": "Eliminar elemento",
   "edit-playlist-item": "Editar elemento",
+  "drag-to-reorder-playlist-item": "Arrastra para reordenar",
   "playlist-add-item": "Agregar artículo",
   "playlist-edit-item": "Editar elemento",
   "playlist-save-item": "Guardar cambios",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "¿Eliminar \" {{title}} \"? Esto no se puede deshacer.",
   "delete-playlist-failed": "No se pudo eliminar la lista de reproducción.",
   "collapsed-tab-shared-label": "{{title}} — sesión compartida, {{count}} presentes",
-  "playlist-add-mode-label": "Tipo de artículo"
+  "playlist-add-mode-label": "Tipo de artículo",
+  "saving": "Guardando…",
+  "unsaved-item-confirm-title": "Elemento sin guardar",
+  "unsaved-item-confirm-message": "Has empezado a añadir un elemento que todavía no se ha añadido a la lista de reproducción. ¿Qué te gustaría hacer?",
+  "discard-and-save": "Descartar y guardar",
+  "add-and-save": "Añadir y guardar"
 }

@@ -132,6 +132,43 @@
   font-weight: 500;
 }
 
+/* Leading type icon in a row (e.g. playlist item type). */
+.sb-discover-item-icon {
+  flex-shrink: 0;
+  font-size: 1.125rem;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+}
+
+/*
+ * Drag-to-reorder handle + drag-state classes. Only the playlist editor's
+ * Items list and the playback Queue list render these — no other
+ * `.sb-discover-item` consumer (playlists list, cross-references, study
+ * notes, reading plans) does, so this is inert everywhere else.
+ */
+.sb-discover-item-drag-handle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: grab;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 30%);
+  /* Stop the browser's own scroll gesture from stealing a vertical drag. */
+  touch-action: none;
+}
+
+.sb-discover-item-drag-handle:hover {
+  background: var(--sb-divider-color);
+  color: var(--sb-font-color);
+}
+
+.sb-discover-item--dragging {
+  opacity: 0.6;
+}
+
 .sb-discover-item-description {
   font-size: 0.75rem;
   color: color-mix(in srgb, var(--sb-font-color), transparent 40%);

@@ -364,6 +364,7 @@
   "edit-playlist": "I-edit ang playlist",
   "remove-playlist-item": "Alisin ang item",
   "edit-playlist-item": "I-edit ang item",
+  "drag-to-reorder-playlist-item": "I-drag upang ayusing muli",
   "playlist-add-item": "Magdagdag ng item",
   "playlist-edit-item": "I-edit ang item",
   "playlist-save-item": "I-save ang mga pagbabago",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "Burahin ang \" {{title}} \"? Hindi na ito maaaring i-undo.",
   "delete-playlist-failed": "Hindi mabura ang playlist.",
   "collapsed-tab-shared-label": "{{title}} — nakabahaging sesyon, {{count}} ang naroroon",
-  "playlist-add-mode-label": "Uri ng item"
+  "playlist-add-mode-label": "Uri ng item",
+  "saving": "Sine-save…",
+  "unsaved-item-confirm-title": "Hindi na-save na item",
+  "unsaved-item-confirm-message": "Nagsimula kang magdagdag ng item na hindi pa naidaragdag sa playlist. Ano ang gusto mong gawin?",
+  "discard-and-save": "I-discard at i-save",
+  "add-and-save": "Idagdag at i-save"
 }

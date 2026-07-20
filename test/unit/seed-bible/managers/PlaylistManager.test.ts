@@ -581,6 +581,55 @@ describe("createPlaylistManager", () => {
     expect(manager.editingPlaylist.value).toBeNull();
   });
 
+  it("reorderEditingPlaylistItem moves an item within the draft", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.createNewPlaylist();
+
+    manager.addEditingPlaylistItem({
+      type: "bible-verse",
+      ref: { bookId: "JHN", chapter: 3, verse: 16 },
+    });
+    manager.addEditingPlaylistItem({
+      type: "link",
+      url: "https://example.com",
+    });
+    manager.addEditingPlaylistItem({ type: "html", html: "<p>hi</p>" });
+
+    manager.reorderEditingPlaylistItem(0, 2);
+
+    expect(manager.editingPlaylist.value!.items).toEqual([
+      { type: "link", url: "https://example.com" },
+      { type: "html", html: "<p>hi</p>" },
+      { type: "bible-verse", ref: { bookId: "JHN", chapter: 3, verse: 16 } },
+    ]);
+  });
+
+  it("reorderEditingPlaylistItem ignores out-of-range or no-op reorders", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+    await manager.createNewPlaylist();
+
+    manager.addEditingPlaylistItem({ type: "html", html: "<p>a</p>" });
+    manager.addEditingPlaylistItem({ type: "html", html: "<p>b</p>" });
+    const before = manager.editingPlaylist.value!.items;
+
+    manager.reorderEditingPlaylistItem(0, 0);
+    manager.reorderEditingPlaylistItem(5, 0);
+    manager.reorderEditingPlaylistItem(0, 5);
+
+    expect(manager.editingPlaylist.value!.items).toBe(before);
+  });
+
+  it("reorderEditingPlaylistItem is a no-op when nothing is being edited", async () => {
+    const manager = makeManager("user-1");
+    await flush();
+
+    manager.reorderEditingPlaylistItem(0, 1);
+
+    expect(manager.editingPlaylist.value).toBeNull();
+  });
+
   it("cancelEditingPlaylist discards the draft and returns to discover", async () => {
     const manager = makeManager("user-1");
     await flush();
