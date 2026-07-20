@@ -556,6 +556,15 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       bookmarks.isFilterActive.value
   );
 
+  // True when the sidebar drawer is open showing the tabs list (not the
+  // settings view and not the bookmark filter view).
+  const isTabsViewOpen = useComputed(
+    () =>
+      sidebar.isMobileOpen.value &&
+      !sidebar.isSettingsOpen.value &&
+      !bookmarks.isFilterActive.value
+  );
+
   const isTodayOpen = useComputed(() =>
     panes.panes.value.some((p) => p.id === "today-screen-pane")
   );
@@ -568,14 +577,18 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     // settings view no longer maps to a bottom-bar tab.
     if (sidebar.isSettingsOpen.value) return "none";
     if (isBookmarksViewOpen.value) {
-      // Bookmarks is a top-level tab only when there's no overflow. When it
-      // lives inside the More menu, keep nothing highlighted.
-      return moreTools.value.length > 0 ? "none" : "bookmarks";
+      // Bookmarks is always a top-level tab, so highlight it whenever its
+      // view is open.
+      return "bookmarks";
     }
     if (isTodayOpen.value) return "today";
     // Some other extension pane is covering the reader (opened from More).
     if (isFullscreenPaneVisible.value) return "more";
-    if (sidebar.isMobileOpen.value) return "tabs";
+    if (sidebar.isMobileOpen.value) {
+      // Tabs is a top-level tab only when there's no overflow. When it lives
+      // inside the More menu, keep nothing highlighted.
+      return moreTools.value.length > 0 ? "none" : "tabs";
+    }
     return "bible";
   });
 
@@ -860,6 +873,30 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
     }
   };
 
+  // Opens (or closes) the tabs list in the sidebar drawer. Shared by the Tabs
+  // bottom tab and the Tabs entry inside the More menu.
+  const openTabsView = () => {
+    isMoreMenuOpen.value = false;
+    if (isTabsViewOpen.value) {
+      // Already on the tabs list — tapping again closes it.
+      sidebar.closeSidebar();
+      return;
+    }
+    panes.closeAll();
+    sidebar.closeSearchPanel();
+    sidebar.closeChatPanel();
+    sidebar.closeSettings();
+    // Show the tabs list, not the bookmark filter view.
+    if (bookmarks.isFilterActive.value) {
+      bookmarks.toggleFilter();
+    }
+    bookmarks.openedFromToolbar.value = false;
+    // Opened straight from the toolbar (not the book selector), so the tabs
+    // header should show a Close (X), not a Back arrow to the selector.
+    sidebar.tabsOpenedFromToolbar.value = true;
+    sidebar.openSidebar();
+  };
+
   // Opens (or closes) the bookmarks view in the sidebar drawer. Shared by the
   // Bookmarks bottom tab and the Bookmarks entry inside the More menu.
   const openBookmarksView = () => {
@@ -1138,31 +1175,31 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 />
 
                 <MobileBottomTab
-                  iconNode={<SbTabsIcon />}
-                  label={t("tabs", { defaultValue: "Tabs" })}
-                  active={activeMobileTab.value === "tabs"}
-                  onClick={() => {
-                    isMoreMenuOpen.value = false;
-                    if (activeMobileTab.value === "tabs") {
-                      // Already on the tabs list — tapping again closes it.
-                      sidebar.closeSidebar();
-                      return;
-                    }
-                    panes.closeAll();
-                    sidebar.closeSearchPanel();
-                    sidebar.closeChatPanel();
-                    sidebar.closeSettings();
-                    // Show the tabs list, not the bookmark filter view.
-                    if (bookmarks.isFilterActive.value) {
-                      bookmarks.toggleFilter();
-                    }
-                    bookmarks.openedFromToolbar.value = false;
-                    // Opened straight from the toolbar (not the book selector),
-                    // so the tabs header should show a Close (X), not a Back
-                    // arrow to the selector.
-                    sidebar.tabsOpenedFromToolbar.value = true;
-                    sidebar.openSidebar();
-                  }}
+                  iconNode={
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill={
+                        activeMobileTab.value === "bookmarks"
+                          ? "currentColor"
+                          : "none"
+                      }
+                      xmlns="http://www.w3.org/2000/svg"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  }
+                  label={t("bookmarks", { defaultValue: "Bookmarks" })}
+                  active={activeMobileTab.value === "bookmarks"}
+                  onClick={openBookmarksView}
                 />
 
                 {moreTools.value.length > 0 ? (
@@ -1228,29 +1265,12 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                         hasTypingInChats={hasTypingInChats.value}
                         pinnedItems={[
                           {
-                            id: "bookmarks",
-                            label: t("bookmarks", {
-                              defaultValue: "Bookmarks",
+                            id: "tabs",
+                            label: t("tabs", {
+                              defaultValue: "Tabs",
                             }),
-                            iconNode: (
-                              <svg
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                                aria-hidden="true"
-                              >
-                                <path
-                                  d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-                                  stroke="currentColor"
-                                  stroke-width="1.5"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                />
-                              </svg>
-                            ),
-                            onClick: openBookmarksView,
+                            iconNode: <SbTabsIcon />,
+                            onClick: openTabsView,
                           },
                         ]}
                         onClose={() => {
@@ -1261,31 +1281,10 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   </div>
                 ) : (
                   <MobileBottomTab
-                    iconNode={
-                      <svg
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill={
-                          activeMobileTab.value === "bookmarks"
-                            ? "currentColor"
-                            : "none"
-                        }
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden="true"
-                      >
-                        <path
-                          d="M18 7V21L12 17L6 21V7C6 5.93913 6.42143 4.92172 7.17157 4.17157C7.92172 3.42143 8.93913 3 10 3H14C15.0609 3 16.0783 3.42143 16.8284 4.17157C17.5786 4.92172 18 5.93913 18 7Z"
-                          stroke="currentColor"
-                          stroke-width="1.5"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        />
-                      </svg>
-                    }
-                    label={t("bookmarks", { defaultValue: "Bookmarks" })}
-                    active={activeMobileTab.value === "bookmarks"}
-                    onClick={openBookmarksView}
+                    iconNode={<SbTabsIcon />}
+                    label={t("tabs", { defaultValue: "Tabs" })}
+                    active={activeMobileTab.value === "tabs"}
+                    onClick={openTabsView}
                   />
                 )}
               </>
