@@ -1,6 +1,7 @@
 export * from "./SeedBibleStateManager";
 export * from "./AnnotationsManager";
 export * from "./BibleReadingManager";
+export * from "./BibleReadingExtensionManager";
 export * from "./BibleSelectorManager";
 export * from "./BibleToolsManager";
 export * from "./BookmarksManager";

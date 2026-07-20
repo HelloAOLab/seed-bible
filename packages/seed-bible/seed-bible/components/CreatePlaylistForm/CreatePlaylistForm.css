@@ -1,0 +1,21 @@
+/* Clickable item label that opens the item for editing. */
+.sb-discover-item-button {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.sb-discover-item--editing {
+  border-color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 90%);
+}
+
+.sb-discover-item--editing .sb-discover-item-title {
+  color: var(--sb-primary-color);
+}

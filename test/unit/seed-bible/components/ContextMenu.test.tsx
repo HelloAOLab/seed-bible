@@ -38,6 +38,11 @@ describe("ContextMenu", () => {
   afterEach(() => {
     render(null, container);
     container.remove();
+    // The menu portals directly to document.body; make sure nothing survives
+    // between tests even if a test forgot to unmount cleanly.
+    document.body
+      .querySelectorAll('[role="menu"]')
+      .forEach((node) => node.remove());
     vi.restoreAllMocks();
   });
 
@@ -134,7 +139,7 @@ describe("ContextMenu", () => {
       );
     });
 
-    expect(container.querySelector('[role="menu"]')).toBeNull();
+    expect(document.body.querySelector('[role="menu"]')).toBeNull();
 
     const button = container.querySelector(
       ".sb-context-menu-button"
@@ -146,7 +151,7 @@ describe("ContextMenu", () => {
       button?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    const menu = container.querySelector('[role="menu"]');
+    const menu = document.body.querySelector('[role="menu"]');
     expect(menu).not.toBeNull();
     expect(menu?.textContent).toContain("Delete");
   });
@@ -213,24 +218,28 @@ describe("ContextMenu", () => {
       leftButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    const leftMenu = container.querySelector(
+    const leftMenu = document.body.querySelector(
       '[role="menu"]'
     ) as HTMLDivElement | null;
 
     expect(leftMenu).not.toBeNull();
-    expect(leftMenu?.style.left).toBe("0px");
+    // Menu is portaled to document.body and positioned in viewport-fixed
+    // coordinates, so its left edge lines up with the anchor's left edge.
+    expect(leftMenu?.style.left).toBe("10px");
     expect(leftMenu?.style.right).toBe("");
 
     act(() => {
       rightButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     });
 
-    const rightMenu = container.querySelector(
+    const rightMenu = document.body.querySelector(
       '[role="menu"]'
     ) as HTMLDivElement | null;
 
     expect(rightMenu).not.toBeNull();
-    expect(rightMenu?.style.right).toBe("0px");
+    // Right anchor sits at `window.innerWidth - 10`, so its right edge is
+    // 10px from the viewport's right edge.
+    expect(rightMenu?.style.right).toBe("10px");
     expect(rightMenu?.style.left).toBe("");
   });
 });

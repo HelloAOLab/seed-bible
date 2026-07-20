@@ -7,19 +7,50 @@ import type { ComponentChild } from "preact";
  */
 export type PanePlacement = "fullscreen" | "side" | "floating";
 
+/**
+ * A pane title: either a plain string, or a render function (like `header`)
+ * rendered as a component in the header so it can use hooks (i18n, signals).
+ */
+export type PaneTitle = string | (() => ComponentChild);
+
+/**
+ * Why a pane closed, passed to its `onClose` handler so consumers can react
+ * differently to an explicit dismissal vs. the system taking the pane away:
+ * - "user": the viewer clicked the pane header's close (X) button.
+ * - "displaced": the pane was closed to make room for another pane opening (a
+ *   fullscreen/mobile pane closes all others; a new side pane replaces the old).
+ * - "programmatic": closed by an explicit `closePane`/`closeAll`/
+ *   `closeFullscreenPanes` call (e.g. navigation revealing the reader).
+ */
+export type PaneCloseReason = "user" | "displaced" | "programmatic";
+
 export interface Pane {
   /** Stable pane identifier. */
   id: string;
   /** Title shown in the pane's header. */
-  title: string;
+  title: PaneTitle;
   /** Custom component rendered in this pane. */
   component: () => ComponentChild;
+  /**
+   * Optional icon rendered before the title in the pane's header. Rendered as
+   * a component so it can use hooks.
+   */
+  icon?: () => ComponentChild;
   /**
    * Optional custom header content rendered inside the pane's header, between
    * the title and the close button. Rendered as a component so it can use
    * hooks (i18n, signals). Omit for a plain title-and-close header.
    */
   header?: () => ComponentChild;
+  /**
+   * Optional callback invoked once when the pane closes, by any path: the
+   * header's close (X) button, a programmatic `closePane`/`closeAll`/
+   * `closeFullscreenPanes`, or displacement when another pane opens. Receives
+   * why it closed (see `PaneCloseReason`) so a handler can distinguish an
+   * explicit user dismissal from the system taking the pane away. Use it to
+   * sync external state that mirrors the pane's open/closed status.
+   */
+  onClose?: (reason: PaneCloseReason) => void;
   /** Placement mode, fixed at creation time. */
   placement: PanePlacement;
   /** Pane X position for floating placement. */
@@ -35,16 +66,35 @@ export interface Pane {
 export interface PaneOpenOptions {
   /** Placement mode for the new pane. Immutable after creation. */
   placement: PanePlacement;
-  /** Title shown in the pane's header. */
-  title: string;
+
+  /**
+   * Title shown in the pane's header. Either a plain string, or a render
+   * function (like `header`) rendered as a component so it can use hooks
+   * (i18n, signals) — e.g. for a translated or reactive title.
+   */
+  title: PaneTitle;
   /** Custom component rendered in the pane. */
   component: () => ComponentChild;
+  /**
+   * Optional icon rendered before the title in the pane's header. Rendered as
+   * a component so it can use hooks.
+   */
+  icon?: () => ComponentChild;
   /**
    * Optional custom header content rendered inside the pane's header, between
    * the title and the close button. Rendered as a component so it can use
    * hooks (i18n, signals). Omit for a plain title-and-close header.
    */
   header?: () => ComponentChild;
+  /**
+   * Optional callback invoked once when the pane closes, by any path: the
+   * header's close (X) button, a programmatic `closePane`/`closeAll`/
+   * `closeFullscreenPanes`, or displacement when another pane opens. Receives
+   * why it closed (see `PaneCloseReason`) so a handler can distinguish an
+   * explicit user dismissal from the system taking the pane away. Use it to
+   * sync external state that mirrors the pane's open/closed status.
+   */
+  onClose?: (reason: PaneCloseReason) => void;
   /**
    * Optional stable pane identifier.
    * When provided, an existing pane with this ID is reused and updated with
@@ -77,8 +127,12 @@ export interface PanesManager {
    */
   openPane: (options: PaneOpenOptions) => Pane;
 
-  /** Closes a pane. Returns true when a pane was closed. */
-  closePane: (paneId: string) => boolean;
+  /**
+   * Closes a pane. Returns true when a pane was closed. `reason` is forwarded
+   * to the pane's `onClose` handler and defaults to `"programmatic"`; the
+   * header's close button passes `"user"`.
+   */
+  closePane: (paneId: string, reason?: PaneCloseReason) => boolean;
 
   /** Closes all panes. */
   closeAll: () => void;
@@ -111,11 +165,13 @@ function createPaneFactory() {
   let nextPaneId = 1;
 
   return (
-    title: string,
+    title: PaneTitle,
     component: () => ComponentChild,
     placement: PanePlacement,
     customId?: string,
-    header?: () => ComponentChild
+    header?: () => ComponentChild,
+    icon?: () => ComponentChild,
+    onClose?: (reason: PaneCloseReason) => void
   ): Pane => {
     const paneId = nextPaneId;
     nextPaneId += 1;
@@ -125,7 +181,9 @@ function createPaneFactory() {
       id: customId ?? `pane-${paneId}`,
       title,
       component,
+      icon,
       header,
+      onClose,
       placement,
       x: 48 + offset,
       y: 48 + offset,
@@ -147,26 +205,52 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
   const panes = signal<Pane[]>([]);
   const selectedPaneId = signal<string | null>(null);
 
+  // These command methods read the manager's own signals (`panes`,
+  // `selectedPaneId`) exclusively through `.peek()`, never `.value`. A command
+  // reads the current state, then writes it — and a read via `.value` inside a
+  // caller's reactive scope (effect/computed) would subscribe that caller to
+  // the very signal the command then writes. That makes the write re-enter the
+  // caller, re-run the command, and preact throws "Cycle detected". `.peek()`
+  // reads without subscribing, so invoking any command from an effect never
+  // couples that effect to pane state. (`isMobile` is an external, read-only
+  // input this manager never writes, so it can't form a cycle and stays a
+  // reactive `.value` read.)
   const syncPaneState = (
     nextPanes: Pane[],
-    nextSelectedPaneId?: string | null
+    nextSelectedPaneId?: string | null,
+    closeReason: PaneCloseReason = "programmatic"
   ) => {
+    const prevPanes = panes.peek();
     panes.value = nextPanes;
 
     const desiredPaneId =
       nextSelectedPaneId !== undefined
         ? nextSelectedPaneId
-        : selectedPaneId.value;
+        : selectedPaneId.peek();
     if (desiredPaneId && nextPanes.some((pane) => pane.id === desiredPaneId)) {
       selectedPaneId.value = desiredPaneId;
-      return;
+    } else {
+      selectedPaneId.value = nextPanes[nextPanes.length - 1]?.id ?? null;
     }
 
-    selectedPaneId.value = nextPanes[nextPanes.length - 1]?.id ?? null;
+    // Notify any pane that just left the list — however it left: the header's
+    // close (X) button, a programmatic closePane/closeAll/closeFullscreenPanes,
+    // or displacement when another pane opens. This is the single place panes
+    // are told they've closed, so an `onClose` handler runs exactly once per
+    // removal no matter which path removed the pane, and receives why it closed
+    // (`closeReason`). Fired after the signals are updated so the manager is
+    // already consistent if a handler re-enters (e.g. calls closePane again — a
+    // no-op, since the pane is already gone). Matched by id, so reusing a pane
+    // id via openPane (an update, not a close) does not fire it.
+    for (const prev of prevPanes) {
+      if (!nextPanes.some((pane) => pane.id === prev.id)) {
+        prev.onClose?.(closeReason);
+      }
+    }
   };
 
   const selectPane = (paneId: string) => {
-    if (panes.value.some((pane) => pane.id === paneId)) {
+    if (panes.peek().some((pane) => pane.id === paneId)) {
       selectedPaneId.value = paneId;
     }
   };
@@ -180,21 +264,26 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
 
     if (options.id) {
       const existingPane =
-        panes.value.find((pane) => pane.id === options.id) ?? null;
+        panes.peek().find((pane) => pane.id === options.id) ?? null;
       if (existingPane) {
         const updatedPane: Pane = {
           ...existingPane,
           title: options.title,
           component: options.component,
+          icon: options.icon,
           header: options.header,
+          onClose: options.onClose,
         };
         syncPaneState(
           willFillScreen
             ? [updatedPane]
-            : panes.value.map((pane) =>
-                pane.id === updatedPane.id ? updatedPane : pane
-              ),
-          updatedPane.id
+            : panes
+                .peek()
+                .map((pane) =>
+                  pane.id === updatedPane.id ? updatedPane : pane
+                ),
+          updatedPane.id,
+          "displaced"
         );
         return updatedPane;
       }
@@ -205,26 +294,35 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
     const basePanes = willFillScreen
       ? []
       : options.placement === "side"
-        ? panes.value.filter((pane) => pane.placement !== "side")
-        : panes.value;
+        ? panes.peek().filter((pane) => pane.placement !== "side")
+        : panes.peek();
 
     const nextPane = createPane(
       options.title,
       options.component,
       options.placement,
       options.id,
-      options.header
+      options.header,
+      options.icon,
+      options.onClose
     );
-    syncPaneState([...basePanes, nextPane], nextPane.id);
+    syncPaneState([...basePanes, nextPane], nextPane.id, "displaced");
     return nextPane;
   };
 
-  const closePane = (paneId: string) => {
-    if (!panes.value.some((pane) => pane.id === paneId)) {
+  const closePane = (
+    paneId: string,
+    reason: PaneCloseReason = "programmatic"
+  ) => {
+    if (!panes.peek().some((pane) => pane.id === paneId)) {
       return false;
     }
 
-    syncPaneState(panes.value.filter((pane) => pane.id !== paneId));
+    syncPaneState(
+      panes.peek().filter((pane) => pane.id !== paneId),
+      undefined,
+      reason
+    );
     return true;
   };
 
@@ -237,7 +335,7 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
    * ancestor in play.
    */
   const setPanePosition = (paneId: string, x: number, y: number) => {
-    panes.value = panes.value.map((pane) => {
+    panes.value = panes.peek().map((pane) => {
       if (pane.id !== paneId || pane.placement !== "floating") {
         return pane;
       }
@@ -256,7 +354,7 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
     deltaHeight: number,
     uiScale: number
   ) => {
-    panes.value = panes.value.map((pane) => {
+    panes.value = panes.peek().map((pane) => {
       if (pane.id !== paneId) {
         return pane;
       }
@@ -291,8 +389,8 @@ export function createPanes(isMobile?: ReadonlySignal<boolean>): PanesManager {
     const remaining =
       (isMobile?.value ?? false)
         ? []
-        : panes.value.filter((pane) => pane.placement !== "fullscreen");
-    if (remaining.length === panes.value.length) {
+        : panes.peek().filter((pane) => pane.placement !== "fullscreen");
+    if (remaining.length === panes.peek().length) {
       return;
     }
     syncPaneState(remaining);

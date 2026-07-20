@@ -1122,7 +1122,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                     </span>
                     <div className="sb-extension-row-content">
                       <span className="sb-extension-name">
-                        {/* eslint-disable-next-line seed-bible-i18n/translation-missing-keys */}
+                        {}
                         {t("title", { ns: id, defaultValue: id })}
                       </span>
                       <span className="sb-extension-description">

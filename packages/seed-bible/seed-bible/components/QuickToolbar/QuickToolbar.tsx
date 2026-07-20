@@ -5,10 +5,14 @@ import { useI18n } from "../../i18n/I18nManager";
 import { translateTitle } from "../../app/utils";
 import { handleHorizontalListKeyNav } from "../../app/keyboardNav";
 import { useState } from "preact/hooks";
+import type { PlaylistManager } from "../../managers/PlaylistManager";
+import type { FeaturesManager } from "../../managers/FeaturesManager";
 
 interface QuickToolbarProps {
   toolsManager: ToolsManager;
   readingState: BibleReadingState;
+  playlists: PlaylistManager;
+  features: FeaturesManager;
   /** Extra class for layout differences (e.g. desktop vs mobile header). */
   className?: string;
 }
@@ -21,11 +25,15 @@ interface QuickToolbarProps {
  * no quick tool is currently visible.
  */
 export function QuickToolbar(props: QuickToolbarProps) {
-  const { toolsManager, readingState } = props;
+  const { toolsManager, readingState, playlists } = props;
   const { t } = useI18n();
   const [selectedToolId, setSelectedToolId] = useState<string | null>(null);
 
-  const tools = toolsManager.getQuickTools({ readingState });
+  const tools = toolsManager.getQuickTools({
+    readingState,
+    playlists,
+    features: props.features,
+  });
   const visibleTools = tools.filter((tool) => tool.visible.value);
 
   if (visibleTools.length === 0) {
@@ -43,7 +51,10 @@ export function QuickToolbar(props: QuickToolbarProps) {
           tool.getItems?.().filter((item) => item.visible.value) ?? [];
         const hasMenuItems = menuItems.length > 0;
         return (
-          <div key={tool.id} className="sb-quick-toolbar-item">
+          <div
+            key={tool.id}
+            className={`sb-quick-toolbar-item${tool.className ? ` ${tool.className}` : ""}`}
+          >
             <button
               type="button"
               disabled={tool.disabled.value}

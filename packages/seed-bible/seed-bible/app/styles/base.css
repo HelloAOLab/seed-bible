@@ -118,8 +118,8 @@
   --sb-verse-words-of-jesus-font-family: inherit;
   --sb-verse-words-of-jesus-font-style: inherit;
 
-  --sb-selected-verse-border-bottom: 2px dashed currentColor;
-  --sb-selected-verse-text-decoration: none;
+  --sb-selected-verse-border-bottom: none;
+  --sb-selected-verse-text-decoration: underline dotted;
   --sb-selected-verse-text-decoration-color: currentColor;
 
   --sb-hebrew-subtitle-font-family: "Newsreader", serif;
@@ -400,4 +400,21 @@ a:visited {
   min-width: 0;
   min-height: 0;
   position: relative;
+}
+
+/* Used for TipTap created content */
+.text-left {
+  text-align: left;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-justify {
+  text-align: justify;
 }

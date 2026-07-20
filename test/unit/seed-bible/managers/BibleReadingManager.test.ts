@@ -27,6 +27,14 @@ import { effect, signal } from "@preact/signals";
 import type { Mock } from "vitest";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n";
+import type {
+  DiscoverManager,
+  DiscoverProviderResults,
+} from "@packages/seed-bible/seed-bible/managers/DiscoverManager";
+import {
+  createBibleReadingExtensionManager,
+  type ReadingExtensionInstance,
+} from "@packages/seed-bible/seed-bible/managers/BibleReadingExtensionManager";
 
 const nivTranslation = translations.translations[1]!;
 
@@ -1310,5 +1318,1071 @@ describe("createBibleReadingState", () => {
       "Failed request to https://example.test/api/AAB/GEN/3.json. Status: 500 Server Error"
     );
     expect(state.loading.value).toBe(false);
+  });
+
+  describe("discoveredCrossReferences, discoveredContent, discoveredStudyNotes", () => {
+    function createDiscoverManagerMock(
+      responses: DiscoverProviderResults[][] = []
+    ): DiscoverManager {
+      let callIndex = 0;
+      return {
+        registerDiscoverProvider: vi.fn(),
+        discover: vi.fn().mockImplementation(async function* () {
+          const results = responses[callIndex++] ?? [];
+          for (const result of results) {
+            yield result;
+          }
+        }),
+      };
+    }
+
+    const genBookData = aabBooks.books[0]!;
+
+    it("all three signals are empty when no discoverManager is provided", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"])
+      );
+      await waitForInitialLoad(state);
+
+      expect(state.discoveredCrossReferences.value).toEqual([]);
+      expect(state.discoveredContent.value).toEqual([]);
+      expect(state.discoveredStudyNotes.value).toEqual([]);
+    });
+
+    it("discoveredContent only contains 'content' results for the current chapter", async () => {
+      const discoverManager = createDiscoverManagerMock([
+        [
+          {
+            providerId: "p1",
+            results: [
+              {
+                type: "content",
+                title: "Note 1",
+                description: "desc",
+                reference: { book: "GEN", chapter: 1, verse: 1 },
+                content: null as any,
+              },
+              {
+                type: "content",
+                title: "Note 2",
+                description: "desc",
+                reference: { book: "EXO", chapter: 1, verse: 1 },
+                content: null as any,
+              },
+            ],
+          },
+        ],
+      ]);
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      await waitFor(() => state.discoveredContent.value.length > 0);
+
+      expect(state.discoveredContent.value).toEqual([
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "content",
+              title: "Note 1",
+              description: "desc",
+              reference: {
+                book: "GEN",
+                chapter: 1,
+                verse: 1,
+                bookData: genBookData,
+              },
+              content: null,
+            },
+          ],
+        },
+      ]);
+      expect(state.discoveredCrossReferences.value).toEqual([]);
+      expect(state.discoveredStudyNotes.value).toEqual([]);
+    });
+
+    it("discoveredCrossReferences only contains 'cross-reference' results for the current chapter", async () => {
+      const discoverManager = createDiscoverManagerMock([
+        [
+          {
+            providerId: "p1",
+            results: [
+              {
+                type: "cross-reference",
+                reference: { book: "GEN", chapter: 1, verse: 3 },
+                crossReference: { book: "GEN", chapter: 2, verse: 1 },
+              },
+              {
+                type: "cross-reference",
+                reference: { book: "EXO", chapter: 1, verse: 1 },
+                crossReference: { book: "GEN", chapter: 1, verse: 1 },
+              },
+            ],
+          },
+        ],
+      ]);
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      await waitFor(() => state.discoveredCrossReferences.value.length > 0);
+
+      expect(state.discoveredCrossReferences.value).toEqual([
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "cross-reference",
+              reference: {
+                book: "GEN",
+                chapter: 1,
+                verse: 3,
+                bookData: genBookData,
+              },
+              crossReference: {
+                book: "GEN",
+                chapter: 2,
+                verse: 1,
+                bookData: genBookData,
+              },
+            },
+          ],
+        },
+      ]);
+      expect(state.discoveredContent.value).toEqual([]);
+      expect(state.discoveredStudyNotes.value).toEqual([]);
+    });
+
+    it("discoveredStudyNotes only contains 'study-note' results for the current chapter", async () => {
+      const discoverManager = createDiscoverManagerMock([
+        [
+          {
+            providerId: "p1",
+            results: [
+              {
+                type: "study-note",
+                reference: { book: "GEN", chapter: 1, verse: 2 },
+                content: null as any,
+              },
+              {
+                type: "study-note",
+                reference: { book: "MAT", chapter: 1, verse: 1 },
+                content: null as any,
+              },
+            ],
+          },
+        ],
+      ]);
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      await waitFor(() => state.discoveredStudyNotes.value.length > 0);
+
+      expect(state.discoveredStudyNotes.value).toEqual([
+        {
+          providerId: "p1",
+          results: [
+            {
+              type: "study-note",
+              reference: {
+                book: "GEN",
+                chapter: 1,
+                verse: 2,
+                bookData: genBookData,
+              },
+              content: null,
+            },
+          ],
+        },
+      ]);
+      expect(state.discoveredCrossReferences.value).toEqual([]);
+      expect(state.discoveredContent.value).toEqual([]);
+    });
+
+    it("mixed results from a single provider are split into separate signals", async () => {
+      const discoverManager = createDiscoverManagerMock([
+        [
+          {
+            providerId: "p1",
+            results: [
+              {
+                type: "cross-reference",
+                reference: { book: "GEN", chapter: 1, verse: 1 },
+                crossReference: { book: "GEN", chapter: 2, verse: 1 },
+              },
+              {
+                type: "content",
+                title: "A Title",
+                description: "desc",
+                reference: { book: "GEN", chapter: 1, verse: 1 },
+                content: null as any,
+              },
+              {
+                type: "study-note",
+                reference: { book: "GEN", chapter: 1, verse: 1 },
+                content: null as any,
+              },
+            ],
+          },
+        ],
+      ]);
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      await waitFor(
+        () =>
+          state.discoveredCrossReferences.value.length > 0 &&
+          state.discoveredContent.value.length > 0 &&
+          state.discoveredStudyNotes.value.length > 0
+      );
+
+      expect(state.discoveredCrossReferences.value[0]!.results).toHaveLength(1);
+      expect(state.discoveredCrossReferences.value[0]!.results[0]!.type).toBe(
+        "cross-reference"
+      );
+      expect(state.discoveredContent.value[0]!.results).toHaveLength(1);
+      expect(state.discoveredContent.value[0]!.results[0]!.type).toBe(
+        "content"
+      );
+      expect(state.discoveredStudyNotes.value[0]!.results).toHaveLength(1);
+      expect(state.discoveredStudyNotes.value[0]!.results[0]!.type).toBe(
+        "study-note"
+      );
+    });
+
+    it("results from multiple providers are grouped by providerId", async () => {
+      const discoverManager = createDiscoverManagerMock([
+        [
+          {
+            providerId: "providerA",
+            results: [
+              {
+                type: "content",
+                title: "From A",
+                description: "desc",
+                reference: { book: "GEN", chapter: 1, verse: 1 },
+                content: null as any,
+              },
+            ],
+          },
+          {
+            providerId: "providerB",
+            results: [
+              {
+                type: "content",
+                title: "From B",
+                description: "desc",
+                reference: { book: "GEN", chapter: 1, verse: 2 },
+                content: null as any,
+              },
+            ],
+          },
+        ],
+      ]);
+
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      await waitFor(() => state.discoveredContent.value.length === 2);
+
+      const providerIds = state.discoveredContent.value.map(
+        (r) => r.providerId
+      );
+      expect(providerIds).toContain("providerA");
+      expect(providerIds).toContain("providerB");
+    });
+
+    it("signals reset when chapter changes", async () => {
+      const responses = createReadingManagerResponseMap();
+      const discoverManager = createDiscoverManagerMock([
+        [
+          {
+            providerId: "p1",
+            results: [
+              {
+                type: "study-note",
+                reference: { book: "GEN", chapter: 1, verse: 1 },
+                content: null as any,
+              },
+            ],
+          },
+        ],
+        [],
+      ]);
+
+      setWebResponses(responses);
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager
+      );
+      await waitForInitialLoad(state);
+      await waitFor(() => state.discoveredStudyNotes.value.length > 0);
+
+      expect(state.discoveredStudyNotes.value).toHaveLength(1);
+
+      await state.selectChapter("GEN", 2);
+      await waitFor(() => state.chapterNumber.value === 2);
+
+      expect(state.discoveredStudyNotes.value).toEqual([]);
+      expect(state.discoveredCrossReferences.value).toEqual([]);
+      expect(state.discoveredContent.value).toEqual([]);
+    });
+  });
+
+  describe("reading extensions", () => {
+    const genBookData = aabBooks.books.find((book) => book.id === "GEN")!;
+
+    function createContentDiscoverManager(): DiscoverManager {
+      return {
+        registerDiscoverProvider: vi.fn(),
+        discover: vi.fn().mockImplementation(async function* () {
+          yield {
+            providerId: "p1",
+            results: [
+              {
+                type: "content",
+                title: "Base note",
+                description: "desc",
+                reference: { book: "GEN", chapter: 1, verse: 1 },
+                content: null as any,
+              },
+            ],
+          } satisfies DiscoverProviderResults;
+        }),
+      };
+    }
+
+    function createStateWithExtensions(
+      readingExtensionManager: ReturnType<
+        typeof createBibleReadingExtensionManager
+      >,
+      discoverManager?: DiscoverManager
+    ) {
+      return createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        discoverManager,
+        readingExtensionManager
+      );
+    }
+
+    it("enableExtension activates the extension and passes context", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const manager = createBibleReadingExtensionManager();
+      const activate = vi.fn().mockReturnValue({});
+      manager.registerReadingExtension({ id: "x", activate });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+
+      expect(state.isExtensionEnabled("x")).toBe(false);
+      state.enableExtension("x", { count: 1 });
+
+      expect(state.isExtensionEnabled("x")).toBe(true);
+      expect(activate).toHaveBeenCalledTimes(1);
+      const ctx = activate.mock.calls[0]![0]!;
+      expect(ctx.readingState).toBe(state);
+      expect(ctx.data.value).toEqual({ count: 1 });
+      expect(state.enabledExtensions.value.map((r) => r.id)).toEqual(["x"]);
+    });
+
+    it("disableExtension runs the instance dispose and removes it", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const manager = createBibleReadingExtensionManager();
+      const dispose = vi.fn();
+      manager.registerReadingExtension({
+        id: "x",
+        activate: () => ({ dispose }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+
+      state.enableExtension("x");
+      state.disableExtension("x");
+
+      expect(dispose).toHaveBeenCalledTimes(1);
+      expect(state.isExtensionEnabled("x")).toBe(false);
+      expect(state.enabledExtensions.value).toEqual([]);
+    });
+
+    it("re-enabling an already-enabled extension updates its data without re-activating", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const manager = createBibleReadingExtensionManager();
+      const activate = vi.fn().mockReturnValue({});
+      manager.registerReadingExtension({ id: "x", activate });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+
+      state.enableExtension("x", { count: 1 });
+      const dataSignal = activate.mock.calls[0]![0]!.data;
+      state.enableExtension("x", { count: 2 });
+
+      expect(activate).toHaveBeenCalledTimes(1);
+      expect(dataSignal.value).toEqual({ count: 2 });
+    });
+
+    it("enabling an unregistered extension is a no-op", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const warnSpy = vi
+        .spyOn(console, "warn")
+        .mockImplementation(() => undefined);
+      const manager = createBibleReadingExtensionManager();
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+
+      state.enableExtension("missing");
+
+      expect(state.isExtensionEnabled("missing")).toBe(false);
+      expect(warnSpy).toHaveBeenCalled();
+      warnSpy.mockRestore();
+    });
+
+    it("navigateNext returning 'prevent' blocks normal navigation", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({
+        id: "x",
+        activate: (): ReadingExtensionInstance => ({
+          navigateNext: () => ({ type: "prevent" }),
+        }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+      state.enableExtension("x");
+
+      await state.loadNextChapter();
+
+      expect(state.chapterNumber.value).toBe(1);
+    });
+
+    it("navigateNext returning 'handled' blocks normal navigation", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const manager = createBibleReadingExtensionManager();
+      const navigateNext = vi.fn().mockReturnValue({ type: "handled" });
+      manager.registerReadingExtension({
+        id: "x",
+        activate: (): ReadingExtensionInstance => ({ navigateNext }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+      state.enableExtension("x");
+
+      await state.loadNextChapter();
+
+      expect(navigateNext).toHaveBeenCalledTimes(1);
+      expect(state.chapterNumber.value).toBe(1);
+    });
+
+    it("navigateNext returning 'navigate' goes to the chosen chapter", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const targetChapter = makeChapter(aabBooks, "GEN", 3);
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({
+        id: "x",
+        activate: (): ReadingExtensionInstance => ({
+          navigateNext: () => ({ type: "navigate", chapter: targetChapter }),
+        }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+      state.enableExtension("x");
+
+      await state.loadNextChapter();
+
+      expect(state.chapterNumber.value).toBe(3);
+    });
+
+    it("resolves navigation hooks by priority (higher first wins)", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const chapterThree = makeChapter(aabBooks, "GEN", 3);
+      const chapterFive = makeChapter(aabBooks, "GEN", 5);
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({
+        id: "low",
+        priority: 1,
+        activate: (): ReadingExtensionInstance => ({
+          navigateNext: () => ({ type: "navigate", chapter: chapterFive }),
+        }),
+      });
+      manager.registerReadingExtension({
+        id: "high",
+        priority: 100,
+        activate: (): ReadingExtensionInstance => ({
+          navigateNext: () => ({ type: "navigate", chapter: chapterThree }),
+        }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+      state.enableExtension("low");
+      state.enableExtension("high");
+
+      await state.loadNextChapter();
+
+      expect(state.chapterNumber.value).toBe(3);
+    });
+
+    it("transformDiscoveredContent can add content", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({
+        id: "x",
+        activate: (): ReadingExtensionInstance => ({
+          transformDiscoveredContent: ({ results }) => [
+            ...results,
+            {
+              providerId: "ext",
+              results: [
+                {
+                  type: "content",
+                  title: "Injected",
+                  description: "from extension",
+                  reference: {
+                    book: "GEN",
+                    chapter: 1,
+                    verse: 1,
+                    bookData: genBookData,
+                  },
+                  content: null as any,
+                },
+              ],
+            },
+          ],
+        }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+
+      expect(state.discoveredContent.value).toEqual([]);
+      state.enableExtension("x");
+
+      expect(state.discoveredContent.value).toEqual([
+        {
+          providerId: "ext",
+          results: [
+            expect.objectContaining({ type: "content", title: "Injected" }),
+          ],
+        },
+      ]);
+    });
+
+    it("transformDiscoveredContent can suppress content by returning []", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({
+        id: "x",
+        activate: (): ReadingExtensionInstance => ({
+          transformDiscoveredContent: () => [],
+        }),
+      });
+
+      const state = createStateWithExtensions(
+        manager,
+        createContentDiscoverManager()
+      );
+      await waitForInitialLoad(state);
+      await waitFor(() => state.discoveredContent.value.length > 0);
+
+      state.enableExtension("x");
+
+      expect(state.discoveredContent.value).toEqual([]);
+    });
+
+    it("dispose() disables all enabled extensions", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const manager = createBibleReadingExtensionManager();
+      const disposeA = vi.fn();
+      const disposeB = vi.fn();
+      manager.registerReadingExtension({
+        id: "a",
+        activate: () => ({ dispose: disposeA }),
+      });
+      manager.registerReadingExtension({
+        id: "b",
+        activate: () => ({ dispose: disposeB }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+      state.enableExtension("a");
+      state.enableExtension("b");
+
+      state.dispose();
+
+      expect(disposeA).toHaveBeenCalledTimes(1);
+      expect(disposeB).toHaveBeenCalledTimes(1);
+      expect(state.enabledExtensions.value).toEqual([]);
+    });
+  });
+
+  describe("onNavigate", () => {
+    function withNivResponses(responses: WebResponseMap): WebResponseMap {
+      responses[makeExampleUrl("/api/NIV/books.json")] =
+        createResponse(nivBooks);
+      responses[makeExampleUrl("/api/NIV/MAT/1.json")] = createResponse({
+        ...makeChapter(bsbBooks, "MAT", 1),
+        translation: nivTranslation,
+        book: nivBooks.books[0]!,
+        thisChapterLink: "/api/NIV/MAT/1.json",
+        nextChapterApiLink: "/api/NIV/MAT/2.json",
+        previousChapterApiLink: null,
+      });
+      responses[makeExampleUrl("/api/NIV/MAT/3.json")] = createResponse({
+        ...makeChapter(nivBooks, "MAT", 3),
+        translation: nivTranslation,
+        book: nivBooks.books[0]!,
+        thisChapterLink: "/api/NIV/MAT/3.json",
+        nextChapterApiLink: "/api/NIV/MAT/4.json",
+        previousChapterApiLink: "/api/NIV/MAT/2.json",
+      });
+      return responses;
+    }
+
+    function createStateWithExtension(instance: ReadingExtensionInstance) {
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({ id: "x", activate: () => instance });
+      return createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        manager
+      );
+    }
+
+    it("does not fire during initial load", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      const listener = vi.fn();
+      // Subscribe before the initial load settles so any emit would be caught.
+      state.onNavigate(listener);
+
+      await waitForInitialLoad(state);
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it("fires once with { replace: false } when selecting a chapter", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.selectChapter("GEN", 5);
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({ replace: false });
+    });
+
+    it("fires once with { replace: false } when selecting a book", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.selectBook("EXO");
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({ replace: false });
+    });
+
+    it("fires once with { replace: false } when selecting a translation", async () => {
+      setWebResponses(withNivResponses(createReadingManagerResponseMap()));
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.selectTranslation("NIV");
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({ replace: false });
+    });
+
+    it("fires once with { replace: false } when selecting a translation, book, and chapter", async () => {
+      setWebResponses(withNivResponses(createReadingManagerResponseMap()));
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.selectTranslationAndChapter("NIV", "MAT", 3);
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({ replace: false });
+    });
+
+    it("fires once with { replace: false } when loading the next and previous chapter", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.loadNextChapter();
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenLastCalledWith({ replace: false });
+
+      await state.loadPreviousChapter();
+      expect(listener).toHaveBeenCalledTimes(2);
+      expect(listener).toHaveBeenLastCalledWith({ replace: false });
+    });
+
+    it("does not fire when the navigation is driven from the URL (updateUrl: false)", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.selectTranslationAndChapter("AAB", "GEN", 5, {
+        updateUrl: false,
+      });
+
+      expect(state.chapterNumber.value).toBe(5);
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it("does not fire for verse selection or clearing", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      state.selectVerse(
+        { bookId: "GEN", chapterNumber: 1, verse: makeVerse(1) } as any,
+        0,
+        0
+      );
+      state.clearSelectedVerses();
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it("fires with { replace: true } when enabling and disabling an extension", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({ id: "x", activate: () => ({}) });
+
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        manager
+      );
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      state.enableExtension("x");
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenLastCalledWith({ replace: true });
+
+      state.disableExtension("x");
+      expect(listener).toHaveBeenCalledTimes(2);
+      expect(listener).toHaveBeenLastCalledWith({ replace: true });
+    });
+
+    it("stops notifying after the returned unsubscribe is called", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const listener = vi.fn();
+      const unsubscribe = state.onNavigate(listener);
+
+      await state.selectChapter("GEN", 2);
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      unsubscribe();
+      await state.selectChapter("GEN", 5);
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    it("notifies every subscribed listener", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      const first = vi.fn();
+      const second = vi.fn();
+      state.onNavigate(first);
+      state.onNavigate(second);
+
+      await state.selectChapter("GEN", 2);
+
+      expect(first).toHaveBeenCalledTimes(1);
+      expect(second).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not notify listeners after the reading state is disposed", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({ id: "x", activate: () => ({}) });
+
+      const state = createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        manager
+      );
+      await waitForInitialLoad(state);
+
+      state.enableExtension("x");
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      // dispose() disables extensions internally; that must not emit to
+      // listeners of a state that is being torn down.
+      state.dispose();
+
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it("fires once with { replace: false } when a hook handles loading the next chapter", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const navigateNext = vi.fn().mockReturnValue({ type: "handled" });
+      const state = createStateWithExtension({ navigateNext });
+      await waitForInitialLoad(state);
+      state.enableExtension("x");
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.loadNextChapter();
+
+      // The extension handled the navigation itself, so the chapter does not
+      // change here — but the URL still needs to be updated to match.
+      expect(navigateNext).toHaveBeenCalledTimes(1);
+      expect(state.chapterNumber.value).toBe(1);
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({ replace: false });
+    });
+
+    it("fires once with { replace: false } when a hook handles loading the previous chapter", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const navigatePrevious = vi.fn().mockReturnValue({ type: "handled" });
+      const state = createStateWithExtension({ navigatePrevious });
+      await waitForInitialLoad(state);
+      state.enableExtension("x");
+
+      const listener = vi.fn();
+      state.onNavigate(listener);
+
+      await state.loadPreviousChapter();
+
+      expect(navigatePrevious).toHaveBeenCalledTimes(1);
+      expect(state.chapterNumber.value).toBe(1);
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith({ replace: false });
+    });
+  });
+
+  describe("title / shortTitle / subTitle", () => {
+    function createStateWithExtensions(
+      readingExtensionManager: ReturnType<
+        typeof createBibleReadingExtensionManager
+      >
+    ) {
+      return createRawBibleReadingState(
+        createDataManager(),
+        createHighlightsManagerMock() as any,
+        createI18nManager(createNavigationManager(), ["en"]),
+        {},
+        undefined,
+        readingExtensionManager
+      );
+    }
+
+    it("title defaults to '<book name> <chapter>' and tracks navigation", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      expect(state.title.value).toBe("Genesis 1");
+
+      await state.selectChapter("GEN", 5);
+      expect(state.title.value).toBe("Genesis 5");
+
+      await state.selectBook("EXO");
+      expect(state.title.value).toBe("Exodus 1");
+    });
+
+    it("shortTitle defaults to '<book id> <chapter>' and tracks navigation", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      expect(state.shortTitle.value).toBe("GEN 1");
+
+      await state.selectChapter("GEN", 5);
+      expect(state.shortTitle.value).toBe("GEN 5");
+
+      await state.selectBook("EXO");
+      expect(state.shortTitle.value).toBe("EXO 1");
+    });
+
+    it("subTitle defaults to the current translation name", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      expect(state.subTitle.value).toBe("Accessible Ancients Bible");
+    });
+
+    it("shortSubTitle defaults to the current translation short name", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const state = createBibleReadingState(createDataManager());
+      await waitForInitialLoad(state);
+
+      expect(state.shortSubTitle.value).toBe("AAB");
+    });
+
+    it("lets an enabled extension override each title, restoring the defaults on disable", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({
+        id: "x",
+        activate: (): ReadingExtensionInstance => ({
+          transformTitle: ({ label }) => `title: ${label}`,
+          transformShortTitle: ({ label }) => `short: ${label}`,
+          transformSubTitle: ({ label }) => `sub: ${label}`,
+          transformShortSubTitle: ({ label }) => `shortSub: ${label}`,
+        }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+
+      expect(state.title.value).toBe("Genesis 1");
+      expect(state.shortTitle.value).toBe("GEN 1");
+      expect(state.subTitle.value).toBe("Accessible Ancients Bible");
+      expect(state.shortSubTitle.value).toBe("AAB");
+
+      state.enableExtension("x");
+      expect(state.title.value).toBe("title: Genesis 1");
+      expect(state.shortTitle.value).toBe("short: GEN 1");
+      expect(state.subTitle.value).toBe("sub: Accessible Ancients Bible");
+      expect(state.shortSubTitle.value).toBe("shortSub: AAB");
+
+      state.disableExtension("x");
+      expect(state.title.value).toBe("Genesis 1");
+      expect(state.shortTitle.value).toBe("GEN 1");
+      expect(state.subTitle.value).toBe("Accessible Ancients Bible");
+      expect(state.shortSubTitle.value).toBe("AAB");
+    });
+
+    it("each title transform is independent (an extension can override one without touching the others)", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({
+        id: "x",
+        activate: (): ReadingExtensionInstance => ({
+          transformShortTitle: () => "custom short",
+        }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+      state.enableExtension("x");
+
+      expect(state.shortTitle.value).toBe("custom short");
+      // Untouched hooks fall through to the defaults.
+      expect(state.title.value).toBe("Genesis 1");
+      expect(state.subTitle.value).toBe("Accessible Ancients Bible");
+      expect(state.shortSubTitle.value).toBe("AAB");
+    });
+
+    it("applies transform hooks in priority order (higher first)", async () => {
+      setWebResponses(createReadingManagerResponseMap());
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({
+        id: "low",
+        priority: 1,
+        activate: (): ReadingExtensionInstance => ({
+          transformTitle: ({ label }) => `L>${label}`,
+        }),
+      });
+      manager.registerReadingExtension({
+        id: "high",
+        priority: 100,
+        activate: (): ReadingExtensionInstance => ({
+          transformTitle: ({ label }) => `H>${label}`,
+        }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+      state.enableExtension("low");
+      state.enableExtension("high");
+
+      // "high" runs first (inner), "low" wraps its output (outer).
+      expect(state.title.value).toBe("L>H>Genesis 1");
+    });
   });
 });

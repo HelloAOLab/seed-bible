@@ -553,7 +553,7 @@
 .sb-settings-text-input {
   border: none;
   border-radius: 0.5rem;
-  padding: 0.875rem 1rem;
+  padding: 0.375rem 0.5rem;
   background: color-mix(in srgb, var(--sb-font-color), transparent 90%);
   color: var(--sb-font-color);
   font-size: 0.9375rem;

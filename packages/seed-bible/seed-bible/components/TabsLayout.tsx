@@ -536,6 +536,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
           toast={state.app.toast}
           openChat={state.sidebar.openChatPanel}
           chats={state.chats}
+          features={state.features}
         />
       )}
     </div>

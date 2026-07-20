@@ -251,7 +251,6 @@ export function createTabsLayout(
       if (!slot.tab) {
         return slot;
       }
-
       const nextTab = tabMap.value.get(slot.tab.id) ?? null;
       return { ...slot, tab: nextTab };
     })

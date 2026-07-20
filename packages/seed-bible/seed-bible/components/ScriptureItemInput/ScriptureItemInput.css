@@ -1,0 +1,71 @@
+.sb-scripture-input {
+  position: relative;
+}
+
+.sb-scripture-suggestions {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 6px;
+  border: 1px solid var(--sb-secondary-color);
+  border-radius: 0.5rem;
+  background: var(--sb-menu-background);
+  color: var(--sb-menu-font-color);
+  max-height: min(18rem, 45vh);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sb-scripture-suggestion {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sb-scripture-suggestion-book {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 25%);
+}
+
+.sb-scripture-chapter-list {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow-x: auto;
+  /* Keep the horizontal scrollbar from clipping the focus/hover outlines. */
+  padding-bottom: 8px;
+  scrollbar-width: thin;
+}
+
+.sb-scripture-chapter-button {
+  flex: 0 0 auto;
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: 0.25rem 0.5rem;
+  border: 2px solid transparent;
+  border-radius: 0.375rem;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
+  color: var(--sb-font-color);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .sb-scripture-chapter-button {
+    min-width: 4rem;
+    min-height: 4rem;
+  }
+}
+
+.sb-scripture-chapter-button:hover {
+  background: color-mix(in srgb, var(--sb-font-color), transparent 86%);
+}
+
+/* The highlighted option — the one Enter will pick and that arrow keys move. */
+.sb-scripture-chapter-button--highlighted {
+  border-color: var(--sb-primary-color);
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 82%);
+}
