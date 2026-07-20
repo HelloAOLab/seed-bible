@@ -6,12 +6,14 @@ import type {
   VersesBundleSelectionServicePort,
 } from "../ports/versesBundle";
 import type { VersesBundleAdapterPort } from "../ports/versesBundle";
+import type { PaintPort } from "../ports/in/Paint";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
   versesBundleDataRepositoryPort: VersesBundleDataRepositoryPort;
   versesBundleSelectionServicePort: VersesBundleSelectionServicePort;
   versesBundleAdapterPort: VersesBundleAdapterPort;
+  paintPort: PaintPort;
 }
 
 export class VersesBundleInteractionService implements VersesBundleInteractionServicePort {
@@ -19,17 +21,20 @@ export class VersesBundleInteractionService implements VersesBundleInteractionSe
   #versesBundleDataRepositoryPort: ServiceParams["versesBundleDataRepositoryPort"];
   #versesBundleSelectionServicePort: ServiceParams["versesBundleSelectionServicePort"];
   #versesBundleAdapterPort: ServiceParams["versesBundleAdapterPort"];
+  #paintPort: ServiceParams["paintPort"];
 
   constructor({
     sequenceStateServicePort,
     versesBundleDataRepositoryPort,
     versesBundleSelectionServicePort,
     versesBundleAdapterPort,
+    paintPort,
   }: ServiceParams) {
     this.#sequenceStateServicePort = sequenceStateServicePort;
     this.#versesBundleDataRepositoryPort = versesBundleDataRepositoryPort;
     this.#versesBundleSelectionServicePort = versesBundleSelectionServicePort;
     this.#versesBundleAdapterPort = versesBundleAdapterPort;
+    this.#paintPort = paintPort;
   }
 
   handleBundleSelection(bundle: Piece<"VersesBundle">): void {
@@ -44,9 +49,8 @@ export class VersesBundleInteractionService implements VersesBundleInteractionSe
       );
     }
 
-    if (BibleVizUtils.Data.masks.isHighlightToolEnabled) {
-      // TODO: Refactor the logic to piece highlight to its own service/adapter
-      BibleVizUtils.Functions.HighlightBiblePiece({ piece: bundle });
+    if (this.#paintPort.isActive) {
+      this.#paintPort.paint(bundle);
     } else {
       if (!bundleData.isSelected) {
         this.#versesBundleSelectionServicePort.selectBundle(bundleData);

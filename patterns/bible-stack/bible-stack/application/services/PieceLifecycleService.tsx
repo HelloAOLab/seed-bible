@@ -26,7 +26,10 @@ import type { BookInfo, ChapterInfo } from "../../domain/models/arrangement";
 import { VersesBundleData } from "../../domain/entities/VersesBundleData";
 import { VerseData } from "../../domain/entities/VerseData";
 import { ShowSequencePacings } from "../../domain/models/label";
-import type { PieceLifecycleConfigProviderPort } from "../ports/out/PieceLifecycle";
+import type {
+  PieceLifecycleConfigProviderPort,
+  VerseDataRepositoryPort,
+} from "../ports/out/PieceLifecycle";
 import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 import { GetSectionLevels } from "../../domain/functions/arrangement";
 
@@ -39,6 +42,7 @@ interface PieceLifecycleServiceProps {
   idGenerator: IdGeneratorPort;
   scriptureServicePort: ScriptureServicePort;
   versesBundleDataRepositoryPort: VersesBundleDataRepositoryPort;
+  verseDataRepositoryPort: VerseDataRepositoryPort;
   configProviderPort: PieceLifecycleConfigProviderPort;
 }
 
@@ -51,6 +55,7 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
   #idGenerator: PieceLifecycleServiceProps["idGenerator"];
   #scriptureServicePort: PieceLifecycleServiceProps["scriptureServicePort"];
   #versesBundleDataRepositoryPort: PieceLifecycleServiceProps["versesBundleDataRepositoryPort"];
+  #verseDataRepositoryPort: PieceLifecycleServiceProps["verseDataRepositoryPort"];
   #configProviderPort: PieceLifecycleServiceProps["configProviderPort"];
 
   constructor({
@@ -62,6 +67,7 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
     idGenerator,
     scriptureServicePort,
     versesBundleDataRepositoryPort,
+    verseDataRepositoryPort,
     configProviderPort,
   }: PieceLifecycleServiceProps) {
     this.#pieceDataRepositoryPort = pieceDataRepositoryPort;
@@ -72,6 +78,7 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
     this.#idGenerator = idGenerator;
     this.#scriptureServicePort = scriptureServicePort;
     this.#versesBundleDataRepositoryPort = versesBundleDataRepositoryPort;
+    this.#verseDataRepositoryPort = verseDataRepositoryPort;
     this.#configProviderPort = configProviderPort;
   }
 
@@ -493,6 +500,8 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
       },
     });
 
+    this.#verseDataRepositoryPort.addVerseData(data);
+
     return data;
   }
 
@@ -636,6 +645,7 @@ export class PieceLifecycleService implements PieceLifecycleServicePort {
   }
 
   deleteVerse(verse: VerseData) {
+    this.#verseDataRepositoryPort.removeVerseData(verse);
     const piece = verse.clearPiece();
     if (piece) {
       this.clearPiece(piece);

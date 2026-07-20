@@ -1,6 +1,7 @@
 import type { Piece } from "bibleVizUtils.domain.models.canvas";
 import type { StackBibleData } from "bibleVizUtils.domain.entities.StackBibleData";
 import type { AnyStackData } from "../../application/ports/pieces";
+import type { StackTestamentData } from "../entities/StackTestamentData";
 import type { StackSectionBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionBookData";
 import type { StackBookData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackBookData";
 import type { StackSectionData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackSectionData";
@@ -30,6 +31,8 @@ export interface BibleStackEvents {
   OnBookEndDeselect: { data: StackBookData | StackSectionBookData };
   OnSectionBeginSelect: { data: StackSectionData };
   OnSectionEndSelect: { data: StackSectionData };
+  OnTestamentBeginSelect: { data: StackTestamentData };
+  OnTestamentEndSelect: { data: StackTestamentData };
   OnCameraRotationChanged: void;
   OnLabelDateFormatChange: void;
   OnArrangementIndexChanged: { newIndex: number };

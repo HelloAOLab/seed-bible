@@ -1,3 +1,6 @@
+import type { AnyStackData } from "../../application/ports/pieces";
+import type { VerseData } from "../entities/VerseData";
+import type { VersesBundleData } from "../entities/VersesBundleData";
 import type { Piece } from "./canvas";
 
 export const HighlightRequestSources = {
@@ -44,3 +47,5 @@ export type StackCover = Piece<"StackCover"> & StaticBiblePiece;
 export type StackCrossLine = Piece<"StackCrossLine"> & StaticBiblePiece;
 
 export type StackShadow = Piece<"StackShadow"> & StaticBiblePiece;
+
+export type PaintablePieceData = AnyStackData | VersesBundleData | VerseData;

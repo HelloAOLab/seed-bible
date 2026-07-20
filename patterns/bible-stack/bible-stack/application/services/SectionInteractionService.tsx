@@ -25,6 +25,7 @@ import {
 import { SectionInteractionDelays } from "../../infrastructure/config/sectionInteraction/delays";
 
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
+import type { PaintPort } from "../ports/in/Paint";
 
 type SectionDataRepositoryPort = Pick<PieceDataRepositoryPort, "getPieceData">;
 
@@ -36,6 +37,7 @@ interface ServiceParams {
   sectionInteractionConfigProviderPort: SectionInteractionConfigProviderPort;
   sequenceStateServicePort: SequenceStateServicePort;
   sectionSelectionServicePort: SectionSelectionServicePort;
+  paintPort: PaintPort;
 }
 
 export class SectionInteractionService implements SectionInteractionServicePort {
@@ -46,6 +48,7 @@ export class SectionInteractionService implements SectionInteractionServicePort 
   #sectionInteractionConfigProviderPort: ServiceParams["sectionInteractionConfigProviderPort"];
   #sectionSelectionServicePort: ServiceParams["sectionSelectionServicePort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];
+  #paintPort: ServiceParams["paintPort"];
 
   constructor({
     sectionDataRepositoryPort,
@@ -55,6 +58,7 @@ export class SectionInteractionService implements SectionInteractionServicePort 
     sectionInteractionConfigProviderPort,
     sectionSelectionServicePort,
     sequenceStateServicePort,
+    paintPort,
   }: ServiceParams) {
     this.#sectionDataRepositoryPort = sectionDataRepositoryPort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
@@ -64,6 +68,7 @@ export class SectionInteractionService implements SectionInteractionServicePort 
       sectionInteractionConfigProviderPort;
     this.#sectionSelectionServicePort = sectionSelectionServicePort;
     this.#sequenceStateServicePort = sequenceStateServicePort;
+    this.#paintPort = paintPort;
   }
 
   #meetsBaseInteractionConditions(section: Piece<"StackSection">) {
@@ -101,9 +106,8 @@ export class SectionInteractionService implements SectionInteractionServicePort 
 
     const { sectionData } = result;
 
-    // TDOO: Refactor highlight
-    if (BibleVizUtils.Data.masks.isHighlightToolEnabled) {
-      BibleVizUtils.Functions.HighlightBiblePiece({ data: sectionData });
+    if (this.#paintPort.isActive) {
+      this.#paintPort.paint(sectionData);
     } else {
       switch (interaction) {
         case SelectionModalities.Precise: {

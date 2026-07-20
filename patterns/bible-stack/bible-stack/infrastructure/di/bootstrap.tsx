@@ -17,12 +17,7 @@ import type {
   VerseBot,
   VersesBundleBot,
 } from "../models/stack";
-import {
-  BiblePieces,
-  SelectionModalities,
-  type BiblePiece,
-  type Piece,
-} from "../../domain/models/canvas";
+import { BiblePieces, type BiblePiece } from "../../domain/models/canvas";
 import { thisTypedBot as testamentPrefab } from "../prefabs/testament/botAdapter";
 import { AudioAdapter } from "../adapters/audio/AudioAdapter";
 import { BibleSetupCameraAdapter } from "../adapters/environment/BibleSetupCameraAdapter";
@@ -33,6 +28,7 @@ import { BibleSequenceAdapter } from "../adapters/sequences/BibleSequenceAdapter
 import { BibleDataRepository } from "../adapters/stacks/BibleDataRepository";
 import { PieceDataRepository } from "../adapters/stacks/PieceDataRepository";
 import { VersesBundleRepository } from "../adapters/stacks/VersesBundleDataRepository";
+import { VerseRepository } from "../adapters/stacks/VerseDataRepository";
 import { VisualStateRegistry } from "../adapters/stacks/VisualStateRegistry";
 import { InteractionRegistry } from "../adapters/stacks/InteractionRegistry";
 import { BibleSetupAdapter } from "../adapters/stacks/BibleSetupAdapter";
@@ -50,6 +46,7 @@ import { PieceHighlightAdapter } from "../adapters/stacks/PieceHighlightAdapter"
 import { PieceUnhighlightSchedulerAdapter } from "../adapters/stacks/PieceUnhighlightSchedulerAdapter";
 import { SectionSelectionAdapter } from "../adapters/stacks/SectionSelectionAdapter";
 import { ChapterSelectionAdapter } from "../adapters/stacks/ChapterSelectionAdapter";
+import { TestamentSelectionAdapter } from "../adapters/stacks/TestamentSelectionAdapter";
 import { VersesAdapter } from "../adapters/stacks/VersesAdapter";
 import { VersesBundleAdapter } from "../adapters/stacks/VersesBundleAdapter";
 import { TourGuideAdapter } from "../adapters/stacks/TourGuideAdapter";
@@ -187,10 +184,10 @@ import { createPieceStateMap } from "../controllers/stack/pieceStateMap";
 import { createBotStateChangeStrategyFactory } from "../controllers/stack/botStateChangeStrategy";
 import { makeLabelPropertiesStrategies } from "../config/labels/makeLabelPropertiesStrategies";
 import { PieceStateService } from "../../application/services/PieceStateService";
-import { onClickArg } from "@casual-simulation/aux-common";
-import type { Vector2 } from "../../../../pattern-typings/AuxLibraryDefinitions";
-import type { BotListenerParametersMap, PieceBot } from "../models/casualos";
+import type { BotListenerParametersMap } from "../models/casualos";
 import { ObjectPoolerConfigProvider } from "../config/objectPool/ObjectPoolConfigProvider";
+import { PaintService } from "../../application/services/PaintService";
+import { PaintAdapter } from "../adapters/stacks/PaintAdapter";
 
 let initialized = false;
 
@@ -308,6 +305,7 @@ export const bootstrapExtension = () => {
   const bibleDataRepository = new BibleDataRepository();
   const pieceDataRepository = new PieceDataRepository();
   const versesBundleRepository = new VersesBundleRepository();
+  const verseRepository = new VerseRepository();
   const visualStateRegistry = new VisualStateRegistry();
   const interactionRegistry = new InteractionRegistry();
 
@@ -598,18 +596,19 @@ export const bootstrapExtension = () => {
     },
     pieceMapperPort: pieceMapper,
   });
+  const paintAdapter = new PaintAdapter({
+    pieceMapper,
+    visualStateRegistry,
+  });
 
   // 4. Instantiating services
-  //
-  // Ordered leaf -> composite so acyclic (forward) service deps resolve. The
-  // only true cycle is PieceLifecycleService <-> StackStructureService: we build
-  // StackStructureService first with its pieceLifecycleServicePort left as a
-  // TODO (cyclic). TODOs also mark deps with no instance in the pattern (event
-  // ports, id/awaiter, and core-only services: arrangement/scripture/
-  // userPresence/pieceLabel).
 
-  // Single event bus for the whole stack, typed with the domain event map.
-  // Satisfies every `*EventPort` (each is a narrower view over BibleStackEvents).
+  const paintService = new PaintService({
+    stackDataRepository: pieceDataRepository,
+    verseDataRepository: verseRepository,
+    versesBundleDataRepository: versesBundleRepository,
+    paintAdapterPort: paintAdapter,
+  });
   const bibleStackEventManager = new BaseEventManager<BibleStackEvents>();
   const labelDateService = new LabelDateService({
     eventPort: bibleStackEventManager,
@@ -685,7 +684,6 @@ export const bootstrapExtension = () => {
     sequenceEventPort: bibleStackEventManager,
   });
   const explodedViewService = new ExplodedViewService();
-  const testamentSelectionService = new TestamentSelectionService();
   const pieceInteractabilityService = new PieceInteractabilityService();
   const bookChaptersManagementService = new BookChaptersManagementService();
 
@@ -703,6 +701,7 @@ export const bootstrapExtension = () => {
   });
   const versesInteractionService = new VersesInteractionService({
     sequenceStateServicePort: sequenceStateService,
+    paintPort: paintService,
   });
   const spatialNavigationService = new SpatialNavigationService({
     sequenceStateServicePort: sequenceStateService,
@@ -731,6 +730,7 @@ export const bootstrapExtension = () => {
     pieceDataRepositoryPort: pieceDataRepository,
     stackPieceLifecycleAdapterPort: stackPieceLifecycleAdapter,
     versesBundleDataRepositoryPort: versesBundleRepository,
+    verseDataRepositoryPort: verseRepository,
     pieceLifecycleEventPort: bibleStackEventManager,
     pieceLabelServicePort: pieceLabelService,
     scriptureServicePort: scriptureService,
@@ -808,6 +808,22 @@ export const bootstrapExtension = () => {
     bookStackUpdaterPort: bookStackUpdaterService,
   });
 
+  const testamentSelectionAdapter = new TestamentSelectionAdapter({
+    getDimension: () => os.getCurrentDimension(),
+    testamentMapper: stackTestamentMapper,
+    sectionMapper: stackSectionMapper,
+    sectionBookMapper: stackSectionBookMapper,
+    configProvider: layoutConfigProvider,
+    visualStateRegistry,
+  });
+  const testamentSelectionService = new TestamentSelectionService({
+    testamentSelectionAdapterPort: testamentSelectionAdapter,
+    testamentSelectionEventPort: bibleStackEventManager,
+    sectionSpawnerPort: stackPieceLifecycleAdapter,
+    stackUpdateServicePort: stackUpdateService,
+    pieceLifecycleServicePort: pieceLifecycleService,
+  });
+
   const bookSelectionService = new BookSelectionService({
     pieceAdapterPort: pieceAdapter,
     stackUpdateServicePort: stackUpdateService,
@@ -874,6 +890,7 @@ export const bootstrapExtension = () => {
     sequenceStateServicePort: sequenceStateService,
     bookInteractionConfigProviderPort: bookInteractionConfigProvider,
     pieceAdapterPort: pieceAdapter,
+    paintPort: paintService,
   });
   const sectionInteractionService = new SectionInteractionService({
     sectionDataRepositoryPort: pieceDataRepository,
@@ -883,6 +900,7 @@ export const bootstrapExtension = () => {
     sectionInteractionConfigProviderPort: sectionInteractionConfigProvider,
     sectionSelectionServicePort: sectionSelectionService,
     sequenceStateServicePort: sequenceStateService,
+    paintPort: paintService,
   });
   const testamentInteractionService = new TestamentInteractionService({
     sequenceStateServicePort: sequenceStateService,
@@ -891,6 +909,7 @@ export const bootstrapExtension = () => {
     tourGuideServicePort: tourGuideService,
     testamentSelectionServicePort: testamentSelectionService,
     pieceHighlightServicePort: pieceHighlightService,
+    paintPort: paintService,
   });
   const chapterInteractionService = new ChapterInteractionService({
     chapterDataRepositoryPort: pieceDataRepository,
@@ -903,12 +922,14 @@ export const bootstrapExtension = () => {
     chapterNavigationServicePort: {
       openChapter: () => {},
     },
+    paintPort: paintService,
   });
   const versesBundleInteractionService = new VersesBundleInteractionService({
     sequenceStateServicePort: sequenceStateService,
     versesBundleDataRepositoryPort: versesBundleRepository,
     versesBundleSelectionServicePort: versesBundleSelectionService,
     versesBundleAdapterPort: versesBundleAdapter,
+    paintPort: paintService,
   });
   const stackPresenceNavigationService = new StackPresenceNavigationService({
     bibleDataRepositoryPort: bibleDataRepository,

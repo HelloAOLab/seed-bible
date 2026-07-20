@@ -1,14 +1,11 @@
-import type { Piece } from "bibleVizUtils.domain.models.canvas";
-import type { VersesBundleAdapterPort } from "bibleStack.application.ports.versesBundle";
+import type { Piece } from "../../../domain/models/canvas";
+import type { VersesBundleAdapterPort } from "../../../application/ports/versesBundle";
 import type { Easing } from "../../../../../pattern-typings/AuxLibraryDefinitions";
-import {
-  AnimateStrictTag,
-  SetStrictTag,
-} from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/functions/casualos";
+import { AnimateStrictTag, SetStrictTag } from "../../functions/casualos";
 import type { VersesBundleMapper } from "../../mappers/VersesBundleMapper";
-import type { VersesBundleTags } from "@packages/Bible Stack/bibleStack/models/stack";
+import type { VersesBundleTags } from "../../models/stack";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
-import type { VersesBundleData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/VersesBunbleData";
+import type { VersesBundleData } from "../../../domain/entities/VersesBundleData";
 import type { VersesAdapter } from "./VersesAdapter";
 
 interface AdapterParams {

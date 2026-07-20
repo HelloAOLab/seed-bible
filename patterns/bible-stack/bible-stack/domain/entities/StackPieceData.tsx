@@ -64,7 +64,7 @@ export interface StackPieceDataParams<
   isHighlighted?: boolean;
   selectionFSM?: SelectionFSM;
 }
-type HighlightColor = undefined | HexString;
+type PaintColor = undefined | HexString;
 type LastInteractionSource = PieceSelectionSource | undefined;
 
 export class StackPieceData<
@@ -123,7 +123,7 @@ export class StackPieceData<
     TCreationParams,
     TPiece
   >["creationParams"];
-  #highlightColor: HighlightColor;
+  #paintColor: PaintColor;
   #lastInteractionSource: LastInteractionSource;
   // #isHighlighted: NonNullable<
   //   StackPieceDataParams<TChild, TPieceInfo, TCreationParams, TPiece>["isHighlighted"]
@@ -162,7 +162,7 @@ export class StackPieceData<
     this.#isHidden = isHidden;
     this.#isActive = isActive;
     this.#creationParams = creationParams;
-    this.#highlightColor = undefined;
+    this.#paintColor = undefined;
     this.#lastInteractionSource = undefined;
     this.#selectionFSM = selectionFSM;
     // this.#isHighlighted = isHighlighted;
@@ -359,14 +359,14 @@ export class StackPieceData<
   deactivate() {
     this.#isActive = false;
   }
-  get highlightColor() {
-    return this.#highlightColor;
+  get paintColor() {
+    return this.#paintColor;
   }
-  changeHighlightColor(color: HexString) {
-    this.#highlightColor = color;
+  paint(color: HexString) {
+    this.#paintColor = color;
   }
-  clearHighlightColor() {
-    this.#highlightColor = undefined;
+  unpaint() {
+    this.#paintColor = undefined;
   }
   get lastInteractionSource() {
     return this.#lastInteractionSource;

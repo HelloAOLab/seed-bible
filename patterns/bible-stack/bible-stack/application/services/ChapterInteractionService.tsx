@@ -18,6 +18,7 @@ import {
 } from "../../domain/models/pieces";
 import type { ChapterSelectionPort } from "../ports/in/ChapterSelection";
 import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
+import type { PaintPort } from "../ports/in/Paint";
 
 interface ServiceParams {
   chapterDataRepositoryPort: ChapterDataRepositoryPort;
@@ -26,6 +27,7 @@ interface ServiceParams {
   pieceHighlighterPort: PieceHighlighterPort;
   chapterNavigationServicePort: ChapterNavigationServicePort;
   userPresenceServicePort: UserPresenceServicePort;
+  paintPort: PaintPort;
 }
 
 export class ChapterInteractionService implements ChapterInteractionServicePort {
@@ -35,6 +37,7 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
   #pieceHighlighterPort: ServiceParams["pieceHighlighterPort"];
   #chapterNavigationServicePort: ServiceParams["chapterNavigationServicePort"];
   #userPresenceServicePort: ServiceParams["userPresenceServicePort"];
+  #paintPort: ServiceParams["paintPort"];
 
   constructor({
     chapterDataRepositoryPort,
@@ -43,6 +46,7 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
     pieceHighlighterPort,
     chapterNavigationServicePort,
     userPresenceServicePort,
+    paintPort,
   }: ServiceParams) {
     this.#chapterDataRepositoryPort = chapterDataRepositoryPort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
@@ -50,6 +54,7 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
     this.#pieceHighlighterPort = pieceHighlighterPort;
     this.#chapterNavigationServicePort = chapterNavigationServicePort;
     this.#userPresenceServicePort = userPresenceServicePort;
+    this.#paintPort = paintPort;
   }
 
   handleChapterSelection({
@@ -71,9 +76,8 @@ export class ChapterInteractionService implements ChapterInteractionServicePort 
       );
     const actualData = sectionBookData ?? bookData;
 
-    if (BibleVizUtils.Data.masks.isHighlightToolEnabled) {
-      // TODO: Refactor the logic to highlight pieces to match the Clean Architecture. Use "painted", "marked", "colored"?
-      BibleVizUtils.Functions.HighlightBiblePiece({ data: chapterData });
+    if (this.#paintPort.isActive) {
+      this.#paintPort.paint(chapterData);
       return;
     }
 

@@ -389,7 +389,7 @@ export class SectionSelectionAdapter implements SectionSelectionAdapterPort {
       // BibleVizUtils.Data.masks.isInHistoryMode
       //     ? BibleVizUtils.Functions.GetHistoryColor({ piece: data.piece })
       //     : (data.highlightColor ?? data.pieceInfo.color)
-      data.highlightColor ?? data.pieceInfo.color
+      data.paintColor ?? data.pieceInfo.color
     );
     SetStrictTag(sectionBot, "pointable", true);
 

@@ -7,12 +7,9 @@ import type {
   DraggingEvent as DomainDraggingEvent,
   DropEvent as DomainDropEvent,
   Piece,
-  PieceSelectionSource,
   SelectionModality,
 } from "../../domain/models/canvas";
 import type { PieceDataRepositoryPort } from "./pieces";
-import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
-import type { StackPresenceNavigationPacing } from "../../domain/models/userPresence";
 
 export interface TestamentInteractionServicePort {
   handleTestamentSelection({
@@ -37,15 +34,6 @@ export type TestamentDataRepositoryPort = Pick<
   PieceDataRepositoryPort,
   "getPieceData"
 >;
-
-export interface TestamentSelectionServicePort {
-  selectTestament: (params: {
-    data: StackTestamentData;
-    pacing?: StackPresenceNavigationPacing;
-    source: PieceSelectionSource;
-  }) => void;
-  deselectTestament: (data: StackTestamentData) => void;
-}
 
 export interface DragServicePort {
   handlePieceDrag: (piece: Piece<"StackTestament">) => Promise<void>;

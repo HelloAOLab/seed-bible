@@ -8,9 +8,7 @@ import {
 } from "../../domain/models/canvas";
 import type {
   TestamentInteractionServicePort,
-  SequenceStateServicePort,
   TestamentDataRepositoryPort,
-  TestamentSelectionServicePort,
 } from "../ports/testaments";
 import type {
   PieceHierarchyServicePort,
@@ -18,14 +16,18 @@ import type {
 } from "../ports/pieces";
 import type { TourGuideServicePort } from "../ports/tourGuide";
 import { HighlightRequestSources } from "../../domain/models/pieces";
+import type { PaintPort } from "../ports/in/Paint";
+import type { SequenceStateServicePort } from "../ports/in/SequenceState";
+import type { TestamentSelectionPort } from "../ports/in/TestamentSelection";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
   testamentDataRepositoryPort: TestamentDataRepositoryPort;
   pieceHierarchyServicePort: PieceHierarchyServicePort;
   tourGuideServicePort: TourGuideServicePort;
-  testamentSelectionServicePort: TestamentSelectionServicePort;
+  testamentSelectionServicePort: TestamentSelectionPort;
   pieceHighlightServicePort: PieceHighlighterPort;
+  paintPort: PaintPort;
 }
 
 export class TestamentInteractionService implements TestamentInteractionServicePort {
@@ -35,6 +37,7 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
   #tourGuideServicePort: ServiceParams["tourGuideServicePort"];
   #testamentSelectionServicePort: ServiceParams["testamentSelectionServicePort"];
   #pieceHighlightServicePort: ServiceParams["pieceHighlightServicePort"];
+  #paintPort: ServiceParams["paintPort"];
 
   constructor({
     sequenceStateServicePort,
@@ -43,6 +46,7 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
     tourGuideServicePort,
     testamentSelectionServicePort,
     pieceHighlightServicePort,
+    paintPort,
   }: ServiceParams) {
     this.#sequenceStateServicePort = sequenceStateServicePort;
     this.#testamentDataRepositoryPort = testamentDataRepositoryPort;
@@ -50,6 +54,7 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
     this.#tourGuideServicePort = tourGuideServicePort;
     this.#testamentSelectionServicePort = testamentSelectionServicePort;
     this.#pieceHighlightServicePort = pieceHighlightServicePort;
+    this.#paintPort = paintPort;
   }
 
   #meetsBaseInteractionConditions(testament: Piece<"StackTestament">) {
@@ -92,20 +97,19 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
 
     const { testamentData } = result;
 
-    // TODO: Refactor the logic to highlight pieces to match the Clean Architecture
-    if (BibleVizUtils.Data.masks.isHighlightToolEnabled) {
-      BibleVizUtils.Functions.HighlightBiblePiece({
-        data: testamentData,
-      });
+    if (this.#paintPort.isActive) {
+      this.#paintPort.paint(testamentData);
     } else {
       switch (interaction) {
         case SelectionModalities.Precise:
           {
             if (testamentData.highlightState === "Highlighted") {
-              this.#testamentSelectionServicePort.selectTestament({
-                data: testamentData,
-                source: PieceSelectionSources.UserSelection,
-              });
+              this.#sequenceStateServicePort.executeAsSequence(() =>
+                this.#testamentSelectionServicePort.select({
+                  data: testamentData,
+                  source: PieceSelectionSources.UserSelection,
+                })
+              );
             } else {
               this.#pieceHighlightServicePort.tryHighlightPiece({
                 piece: testament,
@@ -116,10 +120,12 @@ export class TestamentInteractionService implements TestamentInteractionServiceP
           break;
         case SelectionModalities.Coarse:
           {
-            this.#testamentSelectionServicePort.selectTestament({
-              data: testamentData,
-              source: PieceSelectionSources.UserSelection,
-            });
+            this.#sequenceStateServicePort.executeAsSequence(() =>
+              this.#testamentSelectionServicePort.select({
+                data: testamentData,
+                source: PieceSelectionSources.UserSelection,
+              })
+            );
           }
           break;
       }

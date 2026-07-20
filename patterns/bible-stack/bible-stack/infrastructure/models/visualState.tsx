@@ -61,6 +61,11 @@ export interface ChapterVisualState extends Pick<
 
 export interface VersesBundleVisualState {
   desiredScaleZ: number;
+  initialColor: string;
+}
+
+export interface VerseVisualState {
+  initialColor: string;
 }
 
 export interface VisualStateMap {
@@ -72,4 +77,5 @@ export interface VisualStateMap {
   [BiblePieces.StackBook]: BookVisualState;
   [BiblePieces.StackChapter]: ChapterVisualState;
   [BiblePieces.VersesBundle]: VersesBundleVisualState;
+  [BiblePieces.Verse]: VerseVisualState;
 }

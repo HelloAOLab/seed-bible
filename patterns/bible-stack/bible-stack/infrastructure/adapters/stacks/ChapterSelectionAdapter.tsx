@@ -1,28 +1,27 @@
 import type {
   ChapterSelectionAdapterPort,
   ChapterSelectionParams,
-} from "@packages/Bible Stack/bibleStack/application/ports/out/ChapterSelection";
-import type { StackChapterData } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/entities/StackChapterData";
+} from "../../../application/ports/out/ChapterSelection";
+import type { StackChapterData } from "../../../domain/entities/StackChapterData";
 import type { StackChapterMapper } from "../../mappers/StackChapterMapper";
 import type { ChapterSelectionConfigProvider } from "../../config/chapterSelection/ChapterSelectionConfigProvider";
-import type { ColorLerper } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/casualos/ColorLerper";
-import type { LabelDataStore } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/labels/LabelDataStore";
-import type { LabelFeedbackAdapter } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/adapters/labels/LabelFeedbackAdapter";
+import type { ColorLerper } from "../environment/ColorLerper";
+import type { LabelDataStore } from "../labels/LabelDataStore";
+import type { LabelFeedbackAdapter } from "../labels/LabelFeedbackAdapter";
 import {
   AnimateStrictTag,
   GetBotScales,
   SetStrictTag,
-} from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/functions/casualos";
-import { HexToRgb } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/functions/colors";
-import type { Piece } from "@packages/Bible Visualization Utils/bibleVizUtils/domain/models/canvas";
+} from "../../functions/casualos";
+import { HexToRgb } from "../../../domain/functions/colors";
+import type { Piece } from "../../../domain/models/canvas";
 import type { VisualStateRegistry } from "./VisualStateRegistry";
 import type { VersesBundleMapper } from "../../mappers/VersesBundleMapper";
-import type {
-  VersesBundleTags,
-  ChapterBot,
-} from "@packages/Bible Stack/bibleStack/models/stack";
+import type { VersesBundleTags, ChapterBot } from "../../models/stack";
 import type { VersesBundleAdapter } from "./VersesBundleAdapter";
-import type { StackConfigProvider } from "@packages/Bible Visualization Utils/bibleVizUtils/infrastructure/config/stacks/StackConfigProvider";
+import type { LayoutConfigProvider } from "../../config/layout/LayoutConfigProvider";
+import type { PiecesConfigProvider } from "../../config/pieces.tsx/PiecesConfigProvider";
+import type { VersesBundleVisualState } from "../../models/visualState";
 
 interface AdapterParams {
   getDimension(): string;
@@ -35,7 +34,8 @@ interface AdapterParams {
   visualStateRegistry: VisualStateRegistry;
   versesBundleMapper: VersesBundleMapper;
   versesBundleAdapter: VersesBundleAdapter;
-  stackConfigProvider: StackConfigProvider;
+  stackConfigProvider: LayoutConfigProvider;
+  piecesConfigProvider: PiecesConfigProvider;
 }
 
 /** Shared render context resolved by `select` and handed to each branch. */
@@ -61,6 +61,7 @@ export class ChapterSelectionAdapter implements ChapterSelectionAdapterPort {
   #versesBundleMapper: AdapterParams["versesBundleMapper"];
   #versesBundleAdapter: AdapterParams["versesBundleAdapter"];
   #stackConfigProvider: AdapterParams["stackConfigProvider"];
+  #piecesConfigProvider: AdapterParams["piecesConfigProvider"];
 
   constructor({
     getDimension,
@@ -74,6 +75,7 @@ export class ChapterSelectionAdapter implements ChapterSelectionAdapterPort {
     versesBundleMapper,
     versesBundleAdapter,
     stackConfigProvider,
+    piecesConfigProvider,
   }: AdapterParams) {
     this.#getDimension = getDimension;
     this.#configProvider = configProvider;
@@ -86,6 +88,7 @@ export class ChapterSelectionAdapter implements ChapterSelectionAdapterPort {
     this.#versesBundleMapper = versesBundleMapper;
     this.#versesBundleAdapter = versesBundleAdapter;
     this.#stackConfigProvider = stackConfigProvider;
+    this.#piecesConfigProvider = piecesConfigProvider;
   }
 
   async select({ data }: ChapterSelectionParams) {
@@ -151,9 +154,9 @@ export class ChapterSelectionAdapter implements ChapterSelectionAdapterPort {
     const targetColor = HexToRgb({
       // hexColor: BibleVizUtils.Data.masks.isInHistoryMode
       //   ? BibleVizUtils.Functions.GetHistoryColor({ piece: thisBot })
-      //   : (data.highlightColor ?? thisBot.tags.initialColor),
+      //   : (data.paintColor ?? thisBot.tags.initialColor),
       hexColor:
-        data.highlightColor ??
+        data.paintColor ??
         this.#visualStateRegistry.getStateProperty({
           piece: chapter,
           property: "initialColor",
@@ -239,6 +242,12 @@ export class ChapterSelectionAdapter implements ChapterSelectionAdapterPort {
           chapterPosition.z
         );
         SetStrictTag(bundleBot, "label", label);
+        this.#visualStateRegistry.registerState({
+          piece: bundle.piece,
+          state: this.#piecesConfigProvider.getInitialVisualState(
+            bundle.piece.type
+          ) as VersesBundleVisualState,
+        });
       }
 
       await Promise.all(
@@ -271,7 +280,7 @@ export class ChapterSelectionAdapter implements ChapterSelectionAdapterPort {
       //   ? BibleVizUtils.Functions.GetHistoryColor({ piece: thisBot })
       //   : (chapterData.highlightColor ?? thisBot.tags.selectedColor),
       hexColor:
-        data.highlightColor ??
+        data.paintColor ??
         this.#visualStateRegistry.getStateProperty({
           piece: chapter,
           property: "selectedColor",
@@ -367,7 +376,7 @@ export class ChapterSelectionAdapter implements ChapterSelectionAdapterPort {
     const chapterScales = GetBotScales(chapterBot);
     const targetColor = HexToRgb({
       hexColor:
-        data.highlightColor ??
+        data.paintColor ??
         this.#visualStateRegistry.getStateProperty({
           piece: chapter,
           property: "initialColor",
@@ -449,7 +458,7 @@ export class ChapterSelectionAdapter implements ChapterSelectionAdapterPort {
   }: ChapterSelectContext) {
     const targetColor = HexToRgb({
       hexColor:
-        data.highlightColor ??
+        data.paintColor ??
         this.#visualStateRegistry.getStateProperty({
           piece: chapter,
           property: "initialColor",

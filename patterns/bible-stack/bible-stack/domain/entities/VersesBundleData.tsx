@@ -1,5 +1,6 @@
 import { VerseData } from "./VerseData";
 import type { Piece, VersesBundleCreationParams } from "../models/canvas";
+import type { HexString } from "../models/commonTypes";
 
 interface DataParams {
   id: string;
@@ -15,6 +16,7 @@ export class VersesBundleData {
   #isSelected: boolean = false;
   #isBeingDragged: boolean = false;
   #creationParams: DataParams["creationParams"];
+  #paintColor: HexString | undefined;
 
   constructor({ verses = [], piece, id, creationParams }: DataParams) {
     this.#verses = new Map(verses.map((verse) => [verse.id, verse]));
@@ -77,6 +79,15 @@ export class VersesBundleData {
   }
   endDrag() {
     this.#isBeingDragged = false;
+  }
+  get paintColor() {
+    return this.#paintColor;
+  }
+  paint(color: HexString) {
+    this.#paintColor = color;
+  }
+  unpaint() {
+    this.#paintColor = undefined;
   }
   getCreationParam<K extends keyof VersesBundleCreationParams>(
     key: K

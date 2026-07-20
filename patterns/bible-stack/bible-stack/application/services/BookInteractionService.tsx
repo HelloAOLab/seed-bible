@@ -32,6 +32,7 @@ import type { StackSectionData } from "../../domain/entities/StackSectionData";
 import { LabelTranslucencyModes } from "../../domain/models/label";
 import type { BookInteractionConfigProviderPort } from "../../infrastructure/ports/bookInteraction";
 import { BookInteractionDelays } from "../../infrastructure/config/bookInteraction/delays";
+import type { PaintPort } from "../ports/in/Paint";
 
 interface ServiceParams {
   bookDataRepositoryPort: BookDataRepositoryPort;
@@ -43,6 +44,7 @@ interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
   pieceAdapterPort: PieceAdapterPort;
   bookInteractionConfigProviderPort: BookInteractionConfigProviderPort;
+  paintPort: PaintPort;
 }
 
 export class BookInteractionService implements BookInteractionServicePort {
@@ -55,6 +57,7 @@ export class BookInteractionService implements BookInteractionServicePort {
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];
   // #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #bookInteractionConfigProviderPort: ServiceParams["bookInteractionConfigProviderPort"];
+  #paintPort: ServiceParams["paintPort"];
 
   constructor({
     bookDataRepositoryPort,
@@ -66,6 +69,7 @@ export class BookInteractionService implements BookInteractionServicePort {
     sequenceStateServicePort,
     // pieceAdapterPort,
     bookInteractionConfigProviderPort,
+    paintPort,
   }: ServiceParams) {
     this.#bookDataRepositoryPort = bookDataRepositoryPort;
     this.#pieceHierarchyServicePort = pieceHierarchyServicePort;
@@ -76,6 +80,7 @@ export class BookInteractionService implements BookInteractionServicePort {
     this.#sequenceStateServicePort = sequenceStateServicePort;
     // this.#pieceAdapterPort = pieceAdapterPort;
     this.#bookInteractionConfigProviderPort = bookInteractionConfigProviderPort;
+    this.#paintPort = paintPort;
   }
 
   handleBookSelection({
@@ -102,9 +107,8 @@ export class BookInteractionService implements BookInteractionServicePort {
       return;
     }
 
-    if (BibleVizUtils.Data.masks.isHighlightToolEnabled) {
-      // TODO: Refactor the logic to highlight pieces to match the Clean Architecture. Use "painted", "marked", "colored"?
-      BibleVizUtils.Functions.HighlightBiblePiece({ data: bookData });
+    if (this.#paintPort.isActive) {
+      this.#paintPort.paint(bookData);
     } else {
       switch (interaction) {
         case SelectionModalities.Precise:

@@ -14,6 +14,7 @@ export class VisualStateRegistry {
     [BiblePieces.StackBook]: new Map(),
     [BiblePieces.StackChapter]: new Map(),
     [BiblePieces.VersesBundle]: new Map(),
+    [BiblePieces.Verse]: new Map(),
   };
 
   registerState<K extends keyof VisualStateMap>({
