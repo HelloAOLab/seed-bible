@@ -214,6 +214,7 @@
   grid-column: 1 / 2;
   grid-row: 1 / 2;
   font-size: 0.75rem;
+  color: var(--sb-font-color);
 }
 
 .today-header > h1 {
@@ -223,6 +224,7 @@
   text-box: auto;
   font-size: 1.5625rem;
   font-weight: 500;
+  color: var(--sb-font-color);
 }
 
 .today-header > h1 > span {
@@ -477,6 +479,7 @@
   gap: 0.5rem;
   position: relative;
   height: max-content;
+  color: var(--sb-font-color);
 }
 
 .today-container .history-card .user-filter-container .user-filter-label {
@@ -499,21 +502,19 @@
   scrollbar-width: none;
   gap: 0.25rem;
   padding: 0.5rem;
-  background-color: rgb(247 247 247);
   box-shadow: 0 0 12px 0 #00000038;
   z-index: 10;
   border-radius: 0.25rem;
   cursor: default;
+  background-color: var(--sb-reader-background);
 }
 
-.today-container .history-card .user-filter-container .date-label {
+.today-container .history-card .date-label {
+  color: var(--sb-font-color);
 }
 
 .today-container .user-filter-option {
   white-space: nowrap;
-  border: none;
-  width: 100%;
-  background-color: transparent;
   padding: 0.25rem 0.5rem;
   border-radius: 1.5625rem;
   display: flex;
@@ -521,7 +522,8 @@
   align-items: center;
   gap: 0.25rem;
   border: solid 1px var(--sb-divider-color);
-  background-color: #f3f3f3;
+  background-color: var(--sb-tertiary-color);
+  color: var(--sb-font-color);
   width: auto;
   font-size: 0.75rem;
 }
@@ -539,6 +541,7 @@
 .today-container .user-filter-option.user-filter-option-selected {
   background-color: var(--sb-secondary-color);
   border-color: var(--sb-primary-color);
+  color: var(--sb-secondary-font-color);
 }
 
 .today-container .history-card .timespan-filter-container {
@@ -627,6 +630,7 @@
 
 .today-container .filtered-reading-book > span {
   font-weight: 600;
+  color: var(--sb-font-color);
 }
 
 .today-container .filtered-reading-book-icon {
@@ -661,6 +665,7 @@
   width: 1.5rem;
   height: 1.5rem;
   background-color: var(--sb-divider-color);
+  color: var(--sb-font-color);
   border-radius: 0.125rem;
   font-size: 0.75rem;
   position: relative;

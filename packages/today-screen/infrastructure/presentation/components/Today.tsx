@@ -23,8 +23,10 @@ import "./../styles/styles.css";
 // import type { UserProfile } from "../../../../seed-bible/seed-bible/managers/LoginManager";
 
 import { memo } from "preact/compat";
+import type { ColorParserType } from "@packages/seed-bible-utils/domain/functions/colors";
 
 export interface TodayConfig {
+  ColorParser: ColorParserType;
   MaterialIcon: (props: {
     children: string;
     className?: string;
