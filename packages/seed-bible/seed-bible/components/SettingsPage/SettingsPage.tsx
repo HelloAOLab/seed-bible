@@ -22,6 +22,10 @@ import {
 } from "../../managers/ThemeManager";
 import { download, translateTitle } from "../../app/utils";
 import { ProfilePictureModalContent } from "../../components/ProfilePictureModal/ProfilePictureModal";
+import {
+  Skeleton,
+  SkeletonContainer,
+} from "../../components/Skeleton/Skeleton";
 import { ExtensionInitalizer } from "../../managers/ExtensionManager";
 import { useI18n } from "../../i18n/I18nManager";
 import {
@@ -166,40 +170,35 @@ function SettingsHero(props: {
 function AccountSettingsSkeleton() {
   const { t } = useI18n();
   return (
-    <div
-      className="sb-account-settings-layout sb-account-skeleton"
-      role="status"
-      aria-busy="true"
+    <SkeletonContainer
+      label={t("loading-profile", { defaultValue: "Loading your profile…" })}
+      className="sb-account-settings-layout"
     >
-      <span className="sr-only">
-        {t("loading-profile", { defaultValue: "Loading your profile…" })}
-      </span>
-
       <div className="sb-account-picture-row" aria-hidden="true">
-        <div className="sb-skeleton sb-account-skeleton-avatar" />
-        <div className="sb-skeleton sb-account-skeleton-button" />
+        <Skeleton shape="circle" width="3.875rem" height="3.875rem" />
+        <Skeleton shape="button" width="8.5rem" height="2.75rem" />
       </div>
 
       {[0, 1, 2].map((row) => (
         <div key={row} className="sb-settings-field-row" aria-hidden="true">
-          <div className="sb-skeleton sb-account-skeleton-label" />
-          <div
-            className={`sb-skeleton sb-account-skeleton-input${
-              row === 1 ? " sb-account-skeleton-textarea" : ""
-            }`}
+          <Skeleton shape="line" width="40%" />
+          <Skeleton
+            width="100%"
+            height={row === 1 ? "6.25rem" : "3rem"}
+            radius="0.625rem"
           />
         </div>
       ))}
 
       <div className="sb-settings-field-row" aria-hidden="true">
-        <div className="sb-skeleton sb-account-skeleton-label" />
-        <div className="sb-skeleton sb-account-skeleton-input" />
+        <Skeleton shape="line" width="40%" />
+        <Skeleton width="100%" height="3rem" radius="0.625rem" />
       </div>
 
       <div className="sb-settings-actions" aria-hidden="true">
-        <div className="sb-skeleton sb-account-skeleton-save" />
+        <Skeleton width="100%" height="3.25rem" radius="0.375rem" />
       </div>
-    </div>
+    </SkeletonContainer>
   );
 }
 

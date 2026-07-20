@@ -122,7 +122,7 @@ describe("AccountSettingsView", () => {
       render(<SettingsPage state={state} />, container);
     });
 
-    expect(container.querySelector(".sb-account-skeleton")).not.toBeNull();
+    expect(container.querySelector(".sb-skeleton-status")).not.toBeNull();
     expect(container.querySelector('[role="status"]')).not.toBeNull();
     expect(container.querySelector("#sb-profile-name")).toBeNull();
   });
@@ -133,14 +133,14 @@ describe("AccountSettingsView", () => {
       render(<SettingsPage state={state} />, container);
     });
 
-    expect(container.querySelector(".sb-account-skeleton")).not.toBeNull();
+    expect(container.querySelector(".sb-skeleton-status")).not.toBeNull();
 
     act(() => {
       state.login.profile.value = { name: "Test" };
       state.login.isProfileLoading.value = false;
     });
 
-    expect(container.querySelector(".sb-account-skeleton")).toBeNull();
+    expect(container.querySelector(".sb-skeleton-status")).toBeNull();
     expect(nameInput().value).toBe("Test");
   });
 
@@ -151,7 +151,7 @@ describe("AccountSettingsView", () => {
     });
 
     // A background re-fetch shouldn't hide data the user can already read.
-    expect(container.querySelector(".sb-account-skeleton")).toBeNull();
+    expect(container.querySelector(".sb-skeleton-status")).toBeNull();
     expect(nameInput().value).toBe("Cached");
   });
 
