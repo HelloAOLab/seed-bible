@@ -567,6 +567,23 @@ describe("createLoginManager", () => {
 
       await waitFor(() => manager.userId.value === null);
       await waitFor(() => manager.profile.value === null);
+      // login() caches userInfo to skip a redundant login flow while still
+      // authenticated; that cache must not survive logout, or a subsequent
+      // login() call resolves from the stale cache instead of reopening the
+      // login UI.
+      expect(manager.userInfo.value).toBeNull();
+    });
+
+    it("login() reopens the login UI after a logout", async () => {
+      const manager = createAuthenticatedManager();
+
+      await waitFor(() => manager.userId.value === USER_ID);
+      await manager.logout();
+      await waitFor(() => manager.userId.value === null);
+
+      void manager.login();
+
+      await waitFor(() => manager.isLoginOpen.value === true);
     });
 
     it("updateProfile() persists the profile when authenticated", async () => {
