@@ -2,8 +2,8 @@
   "id": "ext_AI_Transcript",
   "translations": {
     "en": {
-      "title": "AI Transcript",
-      "toolbarTitle": "AI Transcript",
+      "title": "AI Transcript core",
+      "toolbarTitle": "AI Transcript core",
       "description": "An extension for the Seed Bible that generates AI-powered transcripts.",
       "donate": "Donate",
       "donateAmount": "Donate {{amount}}",
@@ -18,8 +18,6 @@
       "close": "Close"
     },
     "es": {
-      "title": "Transcripción IA",
-      "toolbarTitle": "Transcripción IA",
       "description": "Una extensión para el Seed Bible que genera transcripciones con IA.",
       "donate": "Donar",
       "donateAmount": "Donar {{amount}}",
@@ -31,11 +29,11 @@
       "donationOther": "Otro",
       "donationDismiss": "Ahora no — volver",
       "donationSecure": "Pago seguro · único, sin necesidad de cuenta",
-      "close": "Cerrar"
+      "close": "Cerrar",
+      "title": "Núcleo de transcripción de IA",
+      "toolbarTitle": "Núcleo de transcripción de IA"
     },
     "am": {
-      "title": "የAI ግልባጭ",
-      "toolbarTitle": "የAI ግልባጭ",
       "description": "ለ Seed Bible በAI የተደገፉ ግልባጮችን የሚፈጥር ኤክስቴንሽን ነው።",
       "donate": "ይለግሱ",
       "donateAmount": "{{amount}} ይለግሱ",
@@ -47,11 +45,11 @@
       "donationOther": "ሌላ",
       "donationDismiss": "አሁን አይደለም — ወደ ኋላ መልሰኝ",
       "donationSecure": "ደህንነቱ የተጠበቀ ክፍያ · አንድ ጊዜ፣ መለያ አያስፈልግም",
-      "close": "ዝጋ"
+      "close": "ዝጋ",
+      "title": "የAI ትራንስክሪፕት ኮር",
+      "toolbarTitle": "የAI ትራንስክሪፕት ኮር"
     },
     "ar": {
-      "title": "نسخ بالذكاء الاصطناعي",
-      "toolbarTitle": "نسخ بالذكاء الاصطناعي",
       "description": "امتداد لمشروع Seed Bible لإنشاء نصوص مدعومة بالذكاء الاصطناعي.",
       "donate": "تبرّع",
       "donateAmount": "تبرّع بـ {{amount}}",
@@ -63,11 +61,11 @@
       "donationOther": "أخرى",
       "donationDismiss": "ليس الآن — أعِدني",
       "donationSecure": "دفع آمن · مرة واحدة، دون الحاجة إلى حساب",
-      "close": "إغلاق"
+      "close": "إغلاق",
+      "title": "نظام النسخ الآلي",
+      "toolbarTitle": "نظام النسخ الآلي"
     },
     "bn": {
-      "title": "AI ট্রান্সক্রিপ্ট",
-      "toolbarTitle": "AI ট্রান্সক্রিপ্ট",
       "description": "Seed Bible প্রকল্পের জন্য AI-চালিত ট্রান্সক্রিপ্ট তৈরি করার একটি এক্সটেনশন।",
       "donate": "দান করুন",
       "donateAmount": "{{amount}} দান করুন",
@@ -79,11 +77,11 @@
       "donationOther": "অন্যান্য",
       "donationDismiss": "এখন নয় — ফিরে যাই",
       "donationSecure": "নিরাপদ পেমেন্ট · একবারের, কোনো অ্যাকাউন্ট লাগবে না",
-      "close": "বন্ধ করুন"
+      "close": "বন্ধ করুন",
+      "title": "এআই ট্রান্সক্রিপ্ট কোর",
+      "toolbarTitle": "এআই ট্রান্সক্রিপ্ট কোর"
     },
     "fa": {
-      "title": "رونویسی هوش مصنوعی",
-      "toolbarTitle": "رونویسی هوش مصنوعی",
       "description": "یک افزونه برای پروژه Seed Bible برای ایجاد رونویسی‌های مبتنی بر هوش مصنوعی.",
       "donate": "اهدا کنید",
       "donateAmount": "{{amount}} اهدا کنید",
@@ -95,11 +93,11 @@
       "donationOther": "دیگر",
       "donationDismiss": "الان نه — بازگرد",
       "donationSecure": "پرداخت امن · یک‌بار، بدون نیاز به حساب",
-      "close": "بستن"
+      "close": "بستن",
+      "title": "هسته رونویسی هوش مصنوعی",
+      "toolbarTitle": "هسته رونویسی هوش مصنوعی"
     },
     "fr": {
-      "title": "Transcription IA",
-      "toolbarTitle": "Transcription IA",
       "description": "Une extension pour le projet Seed Bible qui génère des transcriptions assistées par IA.",
       "donate": "Faire un don",
       "donateAmount": "Faire un don de {{amount}}",
@@ -111,11 +109,11 @@
       "donationOther": "Autre",
       "donationDismiss": "Pas maintenant — retour",
       "donationSecure": "Paiement sécurisé · unique, sans compte requis",
-      "close": "Fermer"
+      "close": "Fermer",
+      "title": "Noyau de transcription IA",
+      "toolbarTitle": "Noyau de transcription IA"
     },
     "hi": {
-      "title": "एआई ट्रांसक्रिप्ट",
-      "toolbarTitle": "एआई ट्रांसक्रिप्ट",
       "description": "Seed Bible परियोजना के लिए एआई-संचालित ट्रांसक्रिप्ट बनाने वाला एक एक्सटेंशन।",
       "donate": "दान करें",
       "donateAmount": "{{amount}} दान करें",
@@ -127,11 +125,11 @@
       "donationOther": "अन्य",
       "donationDismiss": "अभी नहीं — मुझे वापस ले चलें",
       "donationSecure": "सुरक्षित भुगतान · एक बार, किसी खाते की ज़रूरत नहीं",
-      "close": "बंद करें"
+      "close": "बंद करें",
+      "title": "एआई ट्रांसक्रिप्ट कोर",
+      "toolbarTitle": "एआई ट्रांसक्रिप्ट कोर"
     },
     "id": {
-      "title": "Transkrip AI",
-      "toolbarTitle": "Transkrip AI",
       "description": "Sebuah ekstensi untuk proyek Seed Bible yang menghasilkan transkrip bertenaga AI.",
       "donate": "Donasi",
       "donateAmount": "Donasi {{amount}}",
@@ -143,11 +141,11 @@
       "donationOther": "Lainnya",
       "donationDismiss": "Jangan sekarang — kembali",
       "donationSecure": "Pembayaran aman · sekali bayar, tanpa perlu akun",
-      "close": "Tutup"
+      "close": "Tutup",
+      "title": "Inti Transkrip AI",
+      "toolbarTitle": "Inti Transkrip AI"
     },
     "ja": {
-      "title": "AI文字起こし",
-      "toolbarTitle": "AI文字起こし",
       "description": "Seed Bible プロジェクト向けに AI による文字起こしを生成する拡張機能。",
       "donate": "寄付する",
       "donateAmount": "{{amount}}を寄付する",
@@ -159,11 +157,11 @@
       "donationOther": "その他",
       "donationDismiss": "今はしない — 戻る",
       "donationSecure": "安全な決済 · 一回限り、アカウント不要",
-      "close": "閉じる"
+      "close": "閉じる",
+      "title": "AIトランスクリプトコア",
+      "toolbarTitle": "AIトランスクリプトコア"
     },
     "ko": {
-      "title": "AI 전사",
-      "toolbarTitle": "AI 전사",
       "description": "Seed Bible 프로젝트를 위해 AI 기반 전사를 생성하는 확장 기능입니다.",
       "donate": "기부하기",
       "donateAmount": "{{amount}} 기부하기",
@@ -175,11 +173,11 @@
       "donationOther": "기타",
       "donationDismiss": "지금은 안 할래요 — 돌아가기",
       "donationSecure": "안전한 결제 · 일회성, 계정 불필요",
-      "close": "닫기"
+      "close": "닫기",
+      "title": "AI 전사 코어",
+      "toolbarTitle": "AI 전사 코어"
     },
     "mn": {
-      "title": "AI хуулбар",
-      "toolbarTitle": "AI хуулбар",
       "description": "Seed Bible төсөлд зориулсан AI-д суурилсан хуулбар үүсгэх өргөтгөл.",
       "donate": "Хандив өгөх",
       "donateAmount": "{{amount}} хандивлах",
@@ -191,11 +189,11 @@
       "donationOther": "Бусад",
       "donationDismiss": "Одоо биш — буцаах",
       "donationSecure": "Аюулгүй төлбөр · нэг удаа, бүртгэл шаардлагагүй",
-      "close": "Хаах"
+      "close": "Хаах",
+      "title": "Хиймэл оюун ухааны транскрипцийн цөм",
+      "toolbarTitle": "Хиймэл оюун ухааны транскрипцийн цөм"
     },
     "ne": {
-      "title": "एआई ट्रान्सक्रिप्ट",
-      "toolbarTitle": "एआई ट्रान्सक्रिप्ट",
       "description": "Seed Bible परियोजनाको लागि एआई-संचालित ट्रान्सक्रिप्ट सिर्जना गर्ने विस्तार।",
       "donate": "दान गर्नुहोस्",
       "donateAmount": "{{amount}} दान गर्नुहोस्",
@@ -207,11 +205,11 @@
       "donationOther": "अन्य",
       "donationDismiss": "अहिले होइन — फर्काउनुहोस्",
       "donationSecure": "सुरक्षित भुक्तानी · एक पटक, खाता आवश्यक छैन",
-      "close": "बन्द गर्नुहोस्"
+      "close": "बन्द गर्नुहोस्",
+      "title": "एआई ट्रान्सक्रिप्ट कोर",
+      "toolbarTitle": "एआई ट्रान्सक्रिप्ट कोर"
     },
     "ps": {
-      "title": "د AI لیکنه",
-      "toolbarTitle": "د AI لیکنه",
       "description": "د Seed Bible پروژې لپاره د AI پر بنسټ لیکنې جوړولو توسیع.",
       "donate": "بسپنه ورکړئ",
       "donateAmount": "{{amount}} بسپنه ورکړئ",
@@ -223,11 +221,11 @@
       "donationOther": "نور",
       "donationDismiss": "اوس نه — بېرته یوسئ",
       "donationSecure": "خوندي تادیه · یو ځل، حساب ته اړتیا نشته",
-      "close": "بند کړئ"
+      "close": "بند کړئ",
+      "title": "د AI ټرانسکرپټ کور",
+      "toolbarTitle": "د AI ټرانسکرپټ کور"
     },
     "pt": {
-      "title": "Transcrição IA",
-      "toolbarTitle": "Transcrição IA",
       "description": "Uma extensão para o projeto Seed Bible que gera transcrições com IA.",
       "donate": "Doar",
       "donateAmount": "Doar {{amount}}",
@@ -239,11 +237,11 @@
       "donationOther": "Outro",
       "donationDismiss": "Agora não — voltar",
       "donationSecure": "Pagamento seguro · único, sem precisar de conta",
-      "close": "Fechar"
+      "close": "Fechar",
+      "title": "Núcleo de transcrição de IA",
+      "toolbarTitle": "Núcleo de transcrição de IA"
     },
     "ru": {
-      "title": "ИИ-транскрипция",
-      "toolbarTitle": "ИИ-транскрипция",
       "description": "Расширение для проекта Seed Bible, создающее транскрипции на основе ИИ.",
       "donate": "Пожертвовать",
       "donateAmount": "Пожертвовать {{amount}}",
@@ -255,11 +253,11 @@
       "donationOther": "Другое",
       "donationDismiss": "Не сейчас — вернуться",
       "donationSecure": "Безопасный платёж · разовый, аккаунт не нужен",
-      "close": "Закрыть"
+      "close": "Закрыть",
+      "title": "ядро AI Transcript",
+      "toolbarTitle": "ядро AI Transcript"
     },
     "sw": {
-      "title": "Nakala ya AI",
-      "toolbarTitle": "Nakala ya AI",
       "description": "Upanuzi kwa mradi wa Seed Bible unaotengeneza nakala zinazoendeshwa na AI.",
       "donate": "Changia",
       "donateAmount": "Changia {{amount}}",
@@ -271,11 +269,11 @@
       "donationOther": "Nyingine",
       "donationDismiss": "Si sasa — nirudishe",
       "donationSecure": "Malipo salama · mara moja, hakuna akaunti inayohitajika",
-      "close": "Funga"
+      "close": "Funga",
+      "title": "Kiini cha nakala ya AI",
+      "toolbarTitle": "Kiini cha nakala ya AI"
     },
     "ti": {
-      "title": "AI ቅዳሕ",
-      "toolbarTitle": "AI ቅዳሕ",
       "description": "ለ Seed Bible ፕሮጀክት ብAI ዝሰርሑ ቅዳሓት ዝፈጥር ኤክስቴንሽን እዩ።",
       "donate": "ወፍዩ",
       "donateAmount": "{{amount}} ወፍዩ",
@@ -287,11 +285,11 @@
       "donationOther": "ካልእ",
       "donationDismiss": "ሕጂ ኣይኮነን — ናብ ድሕሪት መልሰኒ",
       "donationSecure": "ውሑስ ክፍሊት · ሓደ ግዜ፡ ሕሳብ ኣየድልን",
-      "close": "ዕጸዉ"
+      "close": "ዕጸዉ",
+      "title": "AI ትራንስክሪፕት ኮር",
+      "toolbarTitle": "AI ትራንስክሪፕት ኮር"
     },
     "tr": {
-      "title": "AI Transkript",
-      "toolbarTitle": "AI Transkript",
       "description": "Seed Bible projesi için AI destekli transkriptler oluşturan bir uzantı.",
       "donate": "Bağış yap",
       "donateAmount": "{{amount}} Bağışla",
@@ -303,11 +301,11 @@
       "donationOther": "Diğer",
       "donationDismiss": "Şimdi değil — beni geri götür",
       "donationSecure": "Güvenli ödeme · tek seferlik, hesap gerekmez",
-      "close": "Kapat"
+      "close": "Kapat",
+      "title": "AI Transkript çekirdeği",
+      "toolbarTitle": "AI Transkript çekirdeği"
     },
     "ug": {
-      "title": "AI يېزىقلاشتۇرۇش",
-      "toolbarTitle": "AI يېزىقلاشتۇرۇش",
       "description": "Seed Bible تۈرى ئۈچۈن AI ئاساسىدىكى يېزىقلاشتۇرۇش ھاسىل قىلىدىغان كېڭەيتىلمە.",
       "donate": "ئىئانە قىلىڭ",
       "donateAmount": "{{amount}} ئىئانە قىلىڭ",
@@ -319,11 +317,11 @@
       "donationOther": "باشقا",
       "donationDismiss": "ھازىر ئەمەس — مېنى قايتۇرۇڭ",
       "donationSecure": "بىخەتەر تۆلەم · بىر قېتىملىق، ھېسابات كېرەك ئەمەس",
-      "close": "تاقاش"
+      "close": "تاقاش",
+      "title": "سۈنئىي ئەقىل تېكىستىنىڭ يادروسى",
+      "toolbarTitle": "سۈنئىي ئەقىل تېكىستىنىڭ يادروسى"
     },
     "uk": {
-      "title": "ШІ-транскрипція",
-      "toolbarTitle": "ШІ-транскрипція",
       "description": "Розширення для проєкту Seed Bible, що створює транскрипції на основі ШІ.",
       "donate": "Пожертвувати",
       "donateAmount": "Пожертвувати {{amount}}",
@@ -335,11 +333,11 @@
       "donationOther": "Інше",
       "donationDismiss": "Не зараз — поверніть мене назад",
       "donationSecure": "Безпечна оплата · одноразово, обліковий запис не потрібен",
-      "close": "Закрити"
+      "close": "Закрити",
+      "title": "Ядро ШІ-транскрипту",
+      "toolbarTitle": "Ядро ШІ-транскрипту"
     },
     "ur": {
-      "title": "اے آئی ٹرانسکرپٹ",
-      "toolbarTitle": "اے آئی ٹرانسکرپٹ",
       "description": "Seed Bible پروجیکٹ کے لیے اے آئی پر مبنی ٹرانسکرپٹ بنانے والی ایک ایکسٹینشن۔",
       "donate": "عطیہ دیں",
       "donateAmount": "{{amount}} عطیہ کریں",
@@ -351,11 +349,11 @@
       "donationOther": "دیگر",
       "donationDismiss": "ابھی نہیں — مجھے واپس لے جائیں",
       "donationSecure": "محفوظ ادائیگی · ایک بار، اکاؤنٹ کی ضرورت نہیں",
-      "close": "بند کریں"
+      "close": "بند کریں",
+      "title": "AI ٹرانسکرپٹ کور",
+      "toolbarTitle": "AI ٹرانسکرپٹ کور"
     },
     "vi": {
-      "title": "Bản ghi AI",
-      "toolbarTitle": "Bản ghi AI",
       "description": "Một tiện ích mở rộng cho dự án Seed Bible tạo bản ghi bằng AI.",
       "donate": "Quyên góp",
       "donateAmount": "Quyên góp {{amount}}",
@@ -367,11 +365,11 @@
       "donationOther": "Khác",
       "donationDismiss": "Không phải bây giờ — đưa tôi trở lại",
       "donationSecure": "Thanh toán an toàn · một lần, không cần tài khoản",
-      "close": "Đóng"
+      "close": "Đóng",
+      "title": "AI Transcript core",
+      "toolbarTitle": "AI Transcript core"
     },
     "zh": {
-      "title": "AI 转录",
-      "toolbarTitle": "AI 转录",
       "description": "为 Seed Bible 项目生成 AI 转录的扩展。",
       "donate": "捐赠",
       "donateAmount": "捐赠 {{amount}}",
@@ -383,11 +381,11 @@
       "donationOther": "其他",
       "donationDismiss": "暂时不用——带我返回",
       "donationSecure": "安全支付 · 一次性，无需账户",
-      "close": "关闭"
+      "close": "关闭",
+      "title": "AI转录核心",
+      "toolbarTitle": "AI转录核心"
     },
     "ind": {
-      "title": "Transkrip AI",
-      "toolbarTitle": "Transkrip AI",
       "description": "Ekstensi untuk proyek Seed Bible yang menghasilkan transkrip bertenaga AI.",
       "donate": "Donasi",
       "donateAmount": "Donasi {{amount}}",
@@ -399,11 +397,11 @@
       "donationOther": "Lainnya",
       "donationDismiss": "Nanti saja — bawa saya kembali",
       "donationSecure": "Pembayaran aman · sekali bayar, tanpa perlu akun",
-      "close": "Tutup"
+      "close": "Tutup",
+      "title": "Inti Transkrip AI",
+      "toolbarTitle": "Inti Transkrip AI"
     },
     "af": {
-      "title": "KI-transkripsie",
-      "toolbarTitle": "KI-transkripsie",
       "description": "'n Uitbreiding vir die Seed Bible wat KI-aangedrewe transkripsies genereer.",
       "donate": "Skenk",
       "donateAmount": "Skenk {{amount}}",
@@ -415,11 +413,11 @@
       "donationOther": "Ander",
       "donationDismiss": "Nie nou nie — neem my terug",
       "donationSecure": "Veilige betaling · eenmalig, geen rekening nodig nie",
-      "close": "Maak toe"
+      "close": "Maak toe",
+      "title": "KI-transkripsiekern",
+      "toolbarTitle": "KI-transkripsiekern"
     },
     "az": {
-      "title": "AI Transkripti",
-      "toolbarTitle": "AI Transkripti",
       "description": "Seed Bible layihəsi üçün AI əsaslı transkriptlər yaradan genişləndirmə.",
       "donate": "İanə et",
       "donateAmount": "{{amount}} ianə edin",
@@ -431,11 +429,11 @@
       "donationOther": "Digər",
       "donationDismiss": "İndi yox — məni geri qaytar",
       "donationSecure": "Təhlükəsiz ödəniş · birdəfəlik, hesab tələb olunmur",
-      "close": "Bağla"
+      "close": "Bağla",
+      "title": "Süni intellekt transkriptinin əsas hissəsi",
+      "toolbarTitle": "Süni intellekt transkriptinin əsas hissəsi"
     },
     "be": {
-      "title": "ШІ-транскрыпцыя",
-      "toolbarTitle": "ШІ-транскрыпцыя",
       "description": "Пашырэнне для праекта Seed Bible, якое стварае транскрыпцыі на аснове ШІ.",
       "donate": "Ахвяраваць",
       "donateAmount": "Ахвяраваць {{amount}}",
@@ -447,11 +445,11 @@
       "donationOther": "Іншае",
       "donationDismiss": "Не зараз — вярнуцца назад",
       "donationSecure": "Бяспечная аплата · аднаразова, без рэгістрацыі",
-      "close": "Закрыць"
+      "close": "Закрыць",
+      "title": "Ядро транскрыпцыі штучнага інтэлекту",
+      "toolbarTitle": "Ядро транскрыпцыі штучнага інтэлекту"
     },
     "bg": {
-      "title": "AI транскрипция",
-      "toolbarTitle": "AI транскрипция",
       "description": "Разширение за проекта Seed Bible, което генерира транскрипции с AI.",
       "donate": "Дарете",
       "donateAmount": "Дарете {{amount}}",
@@ -463,11 +461,11 @@
       "donationOther": "Друго",
       "donationDismiss": "Не сега — върни ме назад",
       "donationSecure": "Сигурно плащане · еднократно, без нужда от акаунт",
-      "close": "Затвори"
+      "close": "Затвори",
+      "title": "AI транскрипт ядро",
+      "toolbarTitle": "AI транскрипт ядро"
     },
     "bs": {
-      "title": "AI transkript",
-      "toolbarTitle": "AI transkript",
       "description": "Proširenje za Seed Bible koje generiše transkripte pomoću AI-a.",
       "donate": "Doniraj",
       "donateAmount": "Donirajte {{amount}}",
@@ -479,11 +477,11 @@
       "donationOther": "Ostalo",
       "donationDismiss": "Ne sada — vrati me nazad",
       "donationSecure": "Sigurno plaćanje · jednokratno, bez potrebe za računom",
-      "close": "Zatvori"
+      "close": "Zatvori",
+      "title": "Jezgro AI transkripta",
+      "toolbarTitle": "Jezgro AI transkripta"
     },
     "ca": {
-      "title": "Transcripció IA",
-      "toolbarTitle": "Transcripció IA",
       "description": "Una extensió per a la Seed Bible que genera transcripcions amb IA.",
       "donate": "Fes una donació",
       "donateAmount": "Dona {{amount}}",
@@ -495,11 +493,11 @@
       "donationOther": "Altres",
       "donationDismiss": "Ara no — torna'm enrere",
       "donationSecure": "Pagament segur · un sol cop, sense compte",
-      "close": "Tanca"
+      "close": "Tanca",
+      "title": "Nucli de transcripció d'IA",
+      "toolbarTitle": "Nucli de transcripció d'IA"
     },
     "cs": {
-      "title": "AI přepis",
-      "toolbarTitle": "AI přepis",
       "description": "Rozšíření pro Seed Bible, které generuje přepisy pomocí AI.",
       "donate": "Darovat",
       "donateAmount": "Darovat {{amount}}",
@@ -511,11 +509,11 @@
       "donationOther": "Jiné",
       "donationDismiss": "Teď ne — vrátit zpět",
       "donationSecure": "Bezpečná platba · jednorázově, bez nutnosti účtu",
-      "close": "Zavřít"
+      "close": "Zavřít",
+      "title": "Jádro přepisu umělé inteligence",
+      "toolbarTitle": "Jádro přepisu umělé inteligence"
     },
     "cy": {
-      "title": "Trawsgrifiad AI",
-      "toolbarTitle": "Trawsgrifiad AI",
       "description": "Estyniad ar gyfer y Beibl Seed sy'n cynhyrchu trawsgrifiadau wedi'u pweru gan AI.",
       "donate": "Rhoi rhodd",
       "donateAmount": "Rhoi {{amount}}",
@@ -527,11 +525,11 @@
       "donationOther": "Arall",
       "donationDismiss": "Nid nawr — ewch â mi'n ôl",
       "donationSecure": "Taliad diogel · unwaith, dim angen cyfrif",
-      "close": "Cau"
+      "close": "Cau",
+      "title": "Craidd Trawsgrifiad AI",
+      "toolbarTitle": "Craidd Trawsgrifiad AI"
     },
     "da": {
-      "title": "AI-transskription",
-      "toolbarTitle": "AI-transskription",
       "description": "En udvidelse til Seed Bible, der genererer AI-drevne transskriptioner.",
       "donate": "Doner",
       "donateAmount": "Donér {{amount}}",
@@ -543,11 +541,11 @@
       "donationOther": "Andet",
       "donationDismiss": "Ikke nu — tag mig tilbage",
       "donationSecure": "Sikker betaling · engangsbeløb, ingen konto nødvendig",
-      "close": "Luk"
+      "close": "Luk",
+      "title": "AI-transkriptionskerne",
+      "toolbarTitle": "AI-transkriptionskerne"
     },
     "de": {
-      "title": "KI-Transkript",
-      "toolbarTitle": "KI-Transkript",
       "description": "Eine Erweiterung für die Seed Bible, die KI-gestützte Transkripte erstellt.",
       "donate": "Spenden",
       "donateAmount": "{{amount}} spenden",
@@ -559,11 +557,11 @@
       "donationOther": "Andere",
       "donationDismiss": "Nicht jetzt — zurück",
       "donationSecure": "Sichere Zahlung · einmalig, kein Konto nötig",
-      "close": "Schließen"
+      "close": "Schließen",
+      "title": "KI-Transkriptkern",
+      "toolbarTitle": "KI-Transkriptkern"
     },
     "el": {
-      "title": "Μεταγραφή AI",
-      "toolbarTitle": "Μεταγραφή AI",
       "description": "Μια επέκταση για το Seed Bible που δημιουργεί μεταγραφές με χρήση AI.",
       "donate": "Δωρεά",
       "donateAmount": "Δωρεά {{amount}}",
@@ -575,11 +573,11 @@
       "donationOther": "Άλλο",
       "donationDismiss": "Όχι τώρα — επιστροφή",
       "donationSecure": "Ασφαλής πληρωμή · εφάπαξ, χωρίς λογαριασμό",
-      "close": "Κλείσιμο"
+      "close": "Κλείσιμο",
+      "title": "Πυρήνας μεταγραφής AI",
+      "toolbarTitle": "Πυρήνας μεταγραφής AI"
     },
     "et": {
-      "title": "AI transkriptsioon",
-      "toolbarTitle": "AI transkriptsioon",
       "description": "Seed Bible'i laiendus, mis loob AI-põhiseid transkriptsioone.",
       "donate": "Anneta",
       "donateAmount": "Anneta {{amount}}",
@@ -591,11 +589,11 @@
       "donationOther": "Muu",
       "donationDismiss": "Mitte praegu — vii mind tagasi",
       "donationSecure": "Turvaline makse · ühekordne, kontot pole vaja",
-      "close": "Sulge"
+      "close": "Sulge",
+      "title": "AI transkripti tuum",
+      "toolbarTitle": "AI transkripti tuum"
     },
     "fi": {
-      "title": "AI-transkriptio",
-      "toolbarTitle": "AI-transkriptio",
       "description": "Seed Biblen laajennus, joka luo tekoälypohjaisia transkriptioita.",
       "donate": "Lahjoita",
       "donateAmount": "Lahjoita {{amount}}",
@@ -607,11 +605,11 @@
       "donationOther": "Muu",
       "donationDismiss": "Ei nyt — takaisin",
       "donationSecure": "Turvallinen maksu · kertaluontoinen, ei tiliä tarvita",
-      "close": "Sulje"
+      "close": "Sulje",
+      "title": "AI-transkription ydin",
+      "toolbarTitle": "AI-transkription ydin"
     },
     "fil": {
-      "title": "AI Transcript",
-      "toolbarTitle": "AI Transcript",
       "description": "Isang extension para sa Seed Bible na gumagawa ng mga transcript na pinapagana ng AI.",
       "donate": "Mag-donate",
       "donateAmount": "Mag-donate ng {{amount}}",
@@ -623,11 +621,11 @@
       "donationOther": "Iba pa",
       "donationDismiss": "Hindi muna — ibalik ako",
       "donationSecure": "Ligtas na bayad · isang beses, walang kailangang account",
-      "close": "Isara"
+      "close": "Isara",
+      "title": "Pangunahing Transkripsyon ng AI",
+      "toolbarTitle": "Pangunahing Transkripsyon ng AI"
     },
     "fy": {
-      "title": "AI-transkripsje",
-      "toolbarTitle": "AI-transkripsje",
       "description": "In útwreiding foar de Seed Bible dy't AI-oandreaune transkripsjes makket.",
       "donate": "Donearje",
       "donateAmount": "Doneer {{amount}}",
@@ -639,11 +637,11 @@
       "donationOther": "Oars",
       "donationDismiss": "No net — bring my werom",
       "donationSecure": "Feilige betelling · ien kear, gjin akkount nedich",
-      "close": "Slute"
+      "close": "Slute",
+      "title": "AI-transkriptkearn",
+      "toolbarTitle": "AI-transkriptkearn"
     },
     "gl": {
-      "title": "Transcrición IA",
-      "toolbarTitle": "Transcrición IA",
       "description": "Unha extensión para a Biblia das Sementes que xera transcricións con IA.",
       "donate": "Doar",
       "donateAmount": "Doar {{amount}}",
@@ -655,11 +653,11 @@
       "donationOther": "Outro",
       "donationDismiss": "Agora non — lévame de volta",
       "donationSecure": "Pago seguro · unha soa vez, sen conta",
-      "close": "Pechar"
+      "close": "Pechar",
+      "title": "Núcleo de transcrición de IA",
+      "toolbarTitle": "Núcleo de transcrición de IA"
     },
     "gn": {
-      "title": "AI Ñe'ẽhaipyre",
-      "toolbarTitle": "AI Ñe'ẽhaipyre",
       "description": "Peteĩ extensión pe Biblia Semilla-pe g̃uarã ojapóva ñe'ẽhaipyre AI rupive.",
       "donate": "Eme'ẽ",
       "donateAmount": "Emeʼẽ {{amount}}",
@@ -671,11 +669,11 @@
       "donationOther": "Ambue",
       "donationDismiss": "Ani koʼág̃a — che rujevy",
       "donationSecure": "Jehepymeʼẽ hekorosãva · peteĩ jeýnte, ndoikotevẽi kuénta",
-      "close": "Emboty"
+      "close": "Emboty",
+      "title": "AI Transcripción núcleo rehegua",
+      "toolbarTitle": "AI Transcripción núcleo rehegua"
     },
     "gu": {
-      "title": "AI ટ્રાન્સક્રિપ્ટ",
-      "toolbarTitle": "AI ટ્રાન્સક્રિપ્ટ",
       "description": "સીડ બાઇબલ માટે AI-સંચાલિત ટ્રાન્સક્રિપ્ટ બનાવતું એક એક્સટેન્શન.",
       "donate": "દાન કરો",
       "donateAmount": "{{amount}} દાન કરો",
@@ -687,11 +685,11 @@
       "donationOther": "અન્ય",
       "donationDismiss": "હમણાં નહીં — મને પાછો લઈ જાઓ",
       "donationSecure": "સુરક્ષિત ચુકવણી · એક વખત, કોઈ ખાતું જરૂરી નથી",
-      "close": "બંધ કરો"
+      "close": "બંધ કરો",
+      "title": "AI ટ્રાન્સક્રિપ્ટ કોર",
+      "toolbarTitle": "AI ટ્રાન્સક્રિપ્ટ કોર"
     },
     "he": {
-      "title": "תמלול AI",
-      "toolbarTitle": "תמלול AI",
       "description": "הרחבה עבור Seed Bible שיוצרת תמלולים מבוססי בינה מלאכותית.",
       "donate": "תרמו",
       "donateAmount": "תרמו {{amount}}",
@@ -703,11 +701,11 @@
       "donationOther": "אחר",
       "donationDismiss": "לא עכשיו — קחו אותי חזרה",
       "donationSecure": "תשלום מאובטח · חד-פעמי, ללא צורך בחשבון",
-      "close": "סגירה"
+      "close": "סגירה",
+      "title": "ליבת תמלול בינה מלאכותית",
+      "toolbarTitle": "ליבת תמלול בינה מלאכותית"
     },
     "hr": {
-      "title": "AI transkript",
-      "toolbarTitle": "AI transkript",
       "description": "Proširenje za Seed Bible koje stvara transkripte pomoću AI-a.",
       "donate": "Doniraj",
       "donateAmount": "Doniraj {{amount}}",
@@ -719,11 +717,11 @@
       "donationOther": "Ostalo",
       "donationDismiss": "Ne sada — vrati me natrag",
       "donationSecure": "Sigurno plaćanje · jednokratno, bez računa",
-      "close": "Zatvori"
+      "close": "Zatvori",
+      "title": "Jezgra AI transkripta",
+      "toolbarTitle": "Jezgra AI transkripta"
     },
     "hu": {
-      "title": "AI átirat",
-      "toolbarTitle": "AI átirat",
       "description": "Egy kiterjesztés a Seed Bible-hez, amely AI-alapú átiratokat készít.",
       "donate": "Adományozás",
       "donateAmount": "Adományozz {{amount}}",
@@ -735,11 +733,11 @@
       "donationOther": "Egyéb",
       "donationDismiss": "Most nem — vigyél vissza",
       "donationSecure": "Biztonságos fizetés · egyszeri, nincs szükség fiókra",
-      "close": "Bezárás"
+      "close": "Bezárás",
+      "title": "AI átirat mag",
+      "toolbarTitle": "AI átirat mag"
     },
     "is": {
-      "title": "AI uppskrift",
-      "toolbarTitle": "AI uppskrift",
       "description": "Viðbót fyrir Seed Bible sem býr til uppskriftir með aðstoð gervigreindar.",
       "donate": "Styrkja",
       "donateAmount": "Styrkja {{amount}}",
@@ -751,11 +749,11 @@
       "donationOther": "Annað",
       "donationDismiss": "Ekki núna — farðu með mig til baka",
       "donationSecure": "Örugg greiðsla · í eitt skipti, enginn aðgangur nauðsynlegur",
-      "close": "Loka"
+      "close": "Loka",
+      "title": "Kjarni gervigreindarumritunar",
+      "toolbarTitle": "Kjarni gervigreindarumritunar"
     },
     "it": {
-      "title": "Trascrizione IA",
-      "toolbarTitle": "Trascrizione IA",
       "description": "Un'estensione per la Seed Bible che genera trascrizioni basate sull'IA.",
       "donate": "Dona",
       "donateAmount": "Dona {{amount}}",
@@ -767,11 +765,11 @@
       "donationOther": "Altro",
       "donationDismiss": "Non ora — torna indietro",
       "donationSecure": "Pagamento sicuro · una tantum, nessun account necessario",
-      "close": "Chiudi"
+      "close": "Chiudi",
+      "title": "Nucleo di trascrizione AI",
+      "toolbarTitle": "Nucleo di trascrizione AI"
     },
     "iw": {
-      "title": "תמלול AI",
-      "toolbarTitle": "תמלול AI",
       "description": "הרחבה עבור Seed Bible שיוצרת תמלולים מבוססי בינה מלאכותית.",
       "donate": "תרמו",
       "donateAmount": "תרמו {{amount}}",
@@ -783,11 +781,11 @@
       "donationOther": "אחר",
       "donationDismiss": "לא עכשיו — קחו אותי חזרה",
       "donationSecure": "תשלום מאובטח · חד-פעמי, ללא צורך בחשבון",
-      "close": "סגירה"
+      "close": "סגירה",
+      "title": "ליבת תמלול בינה מלאכותית",
+      "toolbarTitle": "ליבת תמלול בינה מלאכותית"
     },
     "ka": {
-      "title": "AI ტრანსკრიფცია",
-      "toolbarTitle": "AI ტრანსკრიფცია",
       "description": "Seed Bible-ის გაფართოება, რომელიც ქმნის AI-ზე დაფუძნებულ ტრანსკრიფციებს.",
       "donate": "შემოწირვა",
       "donateAmount": "შემოწირეთ {{amount}}",
@@ -799,11 +797,11 @@
       "donationOther": "სხვა",
       "donationDismiss": "ახლა არა — დამაბრუნეთ უკან",
       "donationSecure": "უსაფრთხო გადახდა · ერთჯერადი, ანგარიში საჭირო არ არის",
-      "close": "დახურვა"
+      "close": "დახურვა",
+      "title": "ხელოვნური ინტელექტის ტრანსკრიპტის ბირთვი",
+      "toolbarTitle": "ხელოვნური ინტელექტის ტრანსკრიპტის ბირთვი"
     },
     "km": {
-      "title": "ប្រតិចារឹក AI",
-      "toolbarTitle": "ប្រតិចារឹក AI",
       "description": "ផ្នែកបន្ថែមសម្រាប់ Seed Bible ដែលបង្កើតប្រតិចារឹកដោយប្រើ AI។",
       "donate": "បរិច្ចាគ",
       "donateAmount": "បរិច្ចាគ {{amount}}",
@@ -815,11 +813,11 @@
       "donationOther": "ផ្សេងទៀត",
       "donationDismiss": "មិនឥឡូវទេ — នាំខ្ញុំត្រឡប់ក្រោយ",
       "donationSecure": "ការទូទាត់សុវត្ថិភាព · តែម្តង មិនត្រូវការគណនី",
-      "close": "បិទ"
+      "close": "បិទ",
+      "title": "ស្នូលប្រតិចារិក AI",
+      "toolbarTitle": "ស្នូលប្រតិចារិក AI"
     },
     "kn": {
-      "title": "AI ಪ್ರತಿಲೇಖನ",
-      "toolbarTitle": "AI ಪ್ರತಿಲೇಖನ",
       "description": "ಸೀಡ್ ಬೈಬಲ್‌ಗಾಗಿ AI-ಆಧಾರಿತ ಪ್ರತಿಲೇಖನಗಳನ್ನು ರಚಿಸುವ ಒಂದು ವಿಸ್ತರಣೆ.",
       "donate": "ದೇಣಿಗೆ ನೀಡಿ",
       "donateAmount": "{{amount}} ದೇಣಿಗೆ ನೀಡಿ",
@@ -831,11 +829,11 @@
       "donationOther": "ಇತರೆ",
       "donationDismiss": "ಈಗ ಬೇಡ — ನನ್ನನ್ನು ಹಿಂತಿರುಗಿಸಿ",
       "donationSecure": "ಸುರಕ್ಷಿತ ಪಾವತಿ · ಒಂದು ಬಾರಿ, ಖಾತೆ ಅಗತ್ಯವಿಲ್ಲ",
-      "close": "ಮುಚ್ಚಿ"
+      "close": "ಮುಚ್ಚಿ",
+      "title": "AI ಟ್ರಾನ್ಸ್‌ಕ್ರಿಪ್ಟ್ ಕೋರ್",
+      "toolbarTitle": "AI ಟ್ರಾನ್ಸ್‌ಕ್ರಿಪ್ಟ್ ಕೋರ್"
     },
     "ky": {
-      "title": "AI транскрипция",
-      "toolbarTitle": "AI транскрипция",
       "description": "Seed Bible долбоору үчүн AI негизиндеги транскрипцияларды түзгөн кеңейтүү.",
       "donate": "Кайрымдуулук кылуу",
       "donateAmount": "{{amount}} кайрымдуулук кылуу",
@@ -847,11 +845,11 @@
       "donationOther": "Башка",
       "donationDismiss": "Азыр эмес — мени артка кайтаргыла",
       "donationSecure": "Коопсуз төлөм · бир жолку, аккаунт талап кылынбайт",
-      "close": "Жабуу"
+      "close": "Жабуу",
+      "title": "AI транскрипциясынын өзөгү",
+      "toolbarTitle": "AI транскрипциясынын өзөгү"
     },
     "ln": {
-      "title": "AI Bobakisi",
-      "toolbarTitle": "AI Bobakisi",
       "description": "Bobakisi mpo na Biblia ya Momboto oyo esalaka makomi na nzela ya AI.",
       "donate": "Pesa likabo",
       "donateAmount": "Pesa likabo ya {{amount}}",
@@ -863,11 +861,11 @@
       "donationOther": "Mosusu",
       "donationDismiss": "Sikoyo te — zongisa ngai",
       "donationSecure": "Kofuta ya libateli · mbala moko, kɔnti esengeli te",
-      "close": "Kanga"
+      "close": "Kanga",
+      "title": "AI Moboko ya Transcript",
+      "toolbarTitle": "AI Moboko ya Transcript"
     },
     "lo": {
-      "title": "ການຖອດຄວາມ AI",
-      "toolbarTitle": "ການຖອດຄວາມ AI",
       "description": "ສ່ວນຂະຫຍາຍສຳລັບ Seed Bible ທີ່ສ້າງການຖອດຄວາມໂດຍໃຊ້ AI.",
       "donate": "ບໍລິຈາກ",
       "donateAmount": "ບໍລິຈາກ {{amount}}",
@@ -879,11 +877,11 @@
       "donationOther": "ອື່ນໆ",
       "donationDismiss": "ບໍ່ຕອນນີ້ — ພາຂ້ອຍກັບຄືນ",
       "donationSecure": "ການຊຳລະທີ່ປອດໄພ · ຄັ້ງດຽວ, ບໍ່ຕ້ອງມີບັນຊີ",
-      "close": "ປິດ"
+      "close": "ປິດ",
+      "title": "ຫຼັກ AI Transcript",
+      "toolbarTitle": "ຫຼັກ AI Transcript"
     },
     "lt": {
-      "title": "AI transkripcija",
-      "toolbarTitle": "AI transkripcija",
       "description": "„Seed Bible“ plėtinys, kuriantis dirbtinio intelekto pagrindu sukurtas transkripcijas.",
       "donate": "Aukoti",
       "donateAmount": "Paaukoti {{amount}}",
@@ -895,11 +893,11 @@
       "donationOther": "Kita",
       "donationDismiss": "Ne dabar — grįžti atgal",
       "donationSecure": "Saugus mokėjimas · vienkartinis, paskyros nereikia",
-      "close": "Uždaryti"
+      "close": "Uždaryti",
+      "title": "DI transkripcijos branduolys",
+      "toolbarTitle": "DI transkripcijos branduolys"
     },
     "lv": {
-      "title": "AI transkripcija",
-      "toolbarTitle": "AI transkripcija",
       "description": "Seed Bible paplašinājums, kas ģenerē AI veidotas transkripcijas.",
       "donate": "Ziedot",
       "donateAmount": "Ziedot {{amount}}",
@@ -911,11 +909,11 @@
       "donationOther": "Cits",
       "donationDismiss": "Ne tagad — atgriezties",
       "donationSecure": "Droša samaksa · vienreizējs, konts nav nepieciešams",
-      "close": "Aizvērt"
+      "close": "Aizvērt",
+      "title": "AI transkripta kodols",
+      "toolbarTitle": "AI transkripta kodols"
     },
     "mk": {
-      "title": "AI транскрипција",
-      "toolbarTitle": "AI транскрипција",
       "description": "Додаток за Seed Bible што генерира транскрипции со помош на AI.",
       "donate": "Донирај",
       "donateAmount": "Донирај {{amount}}",
@@ -927,11 +925,11 @@
       "donationOther": "Друго",
       "donationDismiss": "Не сега — врати ме назад",
       "donationSecure": "Безбедно плаќање · еднократно, без потреба од сметка",
-      "close": "Затвори"
+      "close": "Затвори",
+      "title": "Јадро на транскриптот на вештачка интелигенција",
+      "toolbarTitle": "Јадро на транскриптот на вештачка интелигенција"
     },
     "ml": {
-      "title": "AI ട്രാൻസ്ക്രിപ്റ്റ്",
-      "toolbarTitle": "AI ട്രാൻസ്ക്രിപ്റ്റ്",
       "description": "Seed Bible-നായി AI അധിഷ്ഠിത ട്രാൻസ്ക്രിപ്റ്റുകൾ സൃഷ്ടിക്കുന്ന ഒരു വിപുലീകരണം.",
       "donate": "സംഭാവന ചെയ്യുക",
       "donateAmount": "{{amount}} സംഭാവന ചെയ്യുക",
@@ -943,11 +941,11 @@
       "donationOther": "മറ്റുള്ളവ",
       "donationDismiss": "ഇപ്പോൾ വേണ്ട — എന്നെ തിരികെ കൊണ്ടുപോകൂ",
       "donationSecure": "സുരക്ഷിത പേയ്‌മെന്റ് · ഒറ്റത്തവണ, അക്കൗണ്ട് ആവശ്യമില്ല",
-      "close": "അടയ്ക്കുക"
+      "close": "അടയ്ക്കുക",
+      "title": "AI ട്രാൻസ്ക്രിപ്റ്റ് കോർ",
+      "toolbarTitle": "AI ട്രാൻസ്ക്രിപ്റ്റ് കോർ"
     },
     "mr": {
-      "title": "एआय ट्रान्सक्रिप्ट",
-      "toolbarTitle": "एआय ट्रान्सक्रिप्ट",
       "description": "सीड बायबलसाठी एआय-आधारित ट्रान्सक्रिप्ट तयार करणारे एक एक्सटेंशन.",
       "donate": "देणगी द्या",
       "donateAmount": "{{amount}} देणगी द्या",
@@ -959,11 +957,11 @@
       "donationOther": "इतर",
       "donationDismiss": "आत्ता नको — मला परत घेऊन जा",
       "donationSecure": "सुरक्षित पेमेंट · एकदाच, खाते आवश्यक नाही",
-      "close": "बंद करा"
+      "close": "बंद करा",
+      "title": "एआय ट्रान्सक्रिप्ट कोर",
+      "toolbarTitle": "एआय ट्रान्सक्रिप्ट कोर"
     },
     "ms": {
-      "title": "Transkrip AI",
-      "toolbarTitle": "Transkrip AI",
       "description": "Sambungan untuk Seed Bible yang menjana transkrip berkuasa AI.",
       "donate": "Derma",
       "donateAmount": "Derma {{amount}}",
@@ -975,11 +973,11 @@
       "donationOther": "Lain-lain",
       "donationDismiss": "Bukan sekarang — bawa saya kembali",
       "donationSecure": "Pembayaran selamat · sekali sahaja, tiada akaun diperlukan",
-      "close": "Tutup"
+      "close": "Tutup",
+      "title": "Teras Transkrip AI",
+      "toolbarTitle": "Teras Transkrip AI"
     },
     "my": {
-      "title": "AI စာသား",
-      "toolbarTitle": "AI စာသား",
       "description": "Seed Bible အတွက် AI ဖြင့် စာသားများ ဖန်တီးပေးသော extension တစ်ခု။",
       "donate": "လှူဒါန်းရန်",
       "donateAmount": "{{amount}} လှူဒါန်းပါ",
@@ -991,11 +989,11 @@
       "donationOther": "အခြား",
       "donationDismiss": "ယခုမလုပ်သေးပါ — ပြန်ခေါ်သွားပါ",
       "donationSecure": "လုံခြုံသော ငွေပေးချေမှု · တစ်ကြိမ်တည်း၊ အကောင့်မလိုအပ်ပါ",
-      "close": "ပိတ်ပါ"
+      "close": "ပိတ်ပါ",
+      "title": "AI မှတ်တမ်းအဓိက",
+      "toolbarTitle": "AI မှတ်တမ်းအဓိက"
     },
     "nb": {
-      "title": "AI-transkripsjon",
-      "toolbarTitle": "AI-transkripsjon",
       "description": "En utvidelse for Seed Bible som genererer AI-drevne transkripsjoner.",
       "donate": "Doner",
       "donateAmount": "Doner {{amount}}",
@@ -1007,11 +1005,11 @@
       "donationOther": "Annet",
       "donationDismiss": "Ikke nå — ta meg tilbake",
       "donationSecure": "Sikker betaling · engangs, ingen konto nødvendig",
-      "close": "Lukk"
+      "close": "Lukk",
+      "title": "AI-transkriptkjerne",
+      "toolbarTitle": "AI-transkriptkjerne"
     },
     "nl": {
-      "title": "AI-transcriptie",
-      "toolbarTitle": "AI-transcriptie",
       "description": "Een uitbreiding voor de Seed Bible die AI-gestuurde transcripties genereert.",
       "donate": "Doneren",
       "donateAmount": "Doneer {{amount}}",
@@ -1023,11 +1021,11 @@
       "donationOther": "Anders",
       "donationDismiss": "Nu niet — breng me terug",
       "donationSecure": "Veilige betaling · eenmalig, geen account nodig",
-      "close": "Sluiten"
+      "close": "Sluiten",
+      "title": "AI-transcriptiekern",
+      "toolbarTitle": "AI-transcriptiekern"
     },
     "no": {
-      "title": "AI-transkripsjon",
-      "toolbarTitle": "AI-transkripsjon",
       "description": "En utvidelse for Seed Bible som genererer AI-drevne transkripsjoner.",
       "donate": "Doner",
       "donateAmount": "Doner {{amount}}",
@@ -1039,11 +1037,11 @@
       "donationOther": "Annet",
       "donationDismiss": "Ikke nå — ta meg tilbake",
       "donationSecure": "Sikker betaling · engangs, ingen konto nødvendig",
-      "close": "Lukk"
+      "close": "Lukk",
+      "title": "AI-transkriptkjerne",
+      "toolbarTitle": "AI-transkriptkjerne"
     },
     "pa": {
-      "title": "AI ਟ੍ਰਾਂਸਕ੍ਰਿਪਟ",
-      "toolbarTitle": "AI ਟ੍ਰਾਂਸਕ੍ਰਿਪਟ",
       "description": "ਸੀਡ ਬਾਈਬਲ ਲਈ AI-ਸੰਚਾਲਿਤ ਟ੍ਰਾਂਸਕ੍ਰਿਪਟ ਬਣਾਉਣ ਵਾਲਾ ਇੱਕ ਐਕਸਟੈਂਸ਼ਨ।",
       "donate": "ਦਾਨ ਕਰੋ",
       "donateAmount": "{{amount}} ਦਾਨ ਕਰੋ",
@@ -1055,11 +1053,11 @@
       "donationOther": "ਹੋਰ",
       "donationDismiss": "ਹੁਣੇ ਨਹੀਂ — ਮੈਨੂੰ ਵਾਪਸ ਲੈ ਜਾਓ",
       "donationSecure": "ਸੁਰੱਖਿਅਤ ਭੁਗਤਾਨ · ਇੱਕ-ਵਾਰੀ, ਕਿਸੇ ਖਾਤੇ ਦੀ ਲੋੜ ਨਹੀਂ",
-      "close": "ਬੰਦ ਕਰੋ"
+      "close": "ਬੰਦ ਕਰੋ",
+      "title": "ਏਆਈ ਟ੍ਰਾਂਸਕ੍ਰਿਪਟ ਕੋਰ",
+      "toolbarTitle": "ਏਆਈ ਟ੍ਰਾਂਸਕ੍ਰਿਪਟ ਕੋਰ"
     },
     "pl": {
-      "title": "Transkrypcja AI",
-      "toolbarTitle": "Transkrypcja AI",
       "description": "Rozszerzenie Seed Bible generujące transkrypcje oparte na AI.",
       "donate": "Przekaż darowiznę",
       "donateAmount": "Przekaż {{amount}}",
@@ -1071,11 +1069,11 @@
       "donationOther": "Inna",
       "donationDismiss": "Nie teraz — wróć",
       "donationSecure": "Bezpieczna płatność · jednorazowa, bez konta",
-      "close": "Zamknij"
+      "close": "Zamknij",
+      "title": "Rdzeń transkryptu AI",
+      "toolbarTitle": "Rdzeń transkryptu AI"
     },
     "ro": {
-      "title": "Transcriere AI",
-      "toolbarTitle": "Transcriere AI",
       "description": "O extensie pentru Biblia Semințelor care generează transcrieri bazate pe IA.",
       "donate": "Donează",
       "donateAmount": "Donează {{amount}}",
@@ -1087,11 +1085,11 @@
       "donationOther": "Alta",
       "donationDismiss": "Nu acum — du-mă înapoi",
       "donationSecure": "Plată securizată · o singură dată, fără cont",
-      "close": "Închide"
+      "close": "Închide",
+      "title": "Nucleul transcrierii AI",
+      "toolbarTitle": "Nucleul transcrierii AI"
     },
     "sk": {
-      "title": "AI prepis",
-      "toolbarTitle": "AI prepis",
       "description": "Rozšírenie pre Seed Bible, ktoré generuje prepisy pomocou AI.",
       "donate": "Darovať",
       "donateAmount": "Darovať {{amount}}",
@@ -1103,11 +1101,11 @@
       "donationOther": "Iné",
       "donationDismiss": "Teraz nie — vráťte ma späť",
       "donationSecure": "Bezpečná platba · jednorazovo, bez účtu",
-      "close": "Zavrieť"
+      "close": "Zavrieť",
+      "title": "Jadro prepisu AI",
+      "toolbarTitle": "Jadro prepisu AI"
     },
     "sl": {
-      "title": "AI prepis",
-      "toolbarTitle": "AI prepis",
       "description": "Razširitev za Seed Bible, ki ustvarja prepise s pomočjo umetne inteligence.",
       "donate": "Doniraj",
       "donateAmount": "Darujte {{amount}}",
@@ -1119,11 +1117,11 @@
       "donationOther": "Drugo",
       "donationDismiss": "Ne zdaj — vrni me nazaj",
       "donationSecure": "Varno plačilo · enkratno, brez računa",
-      "close": "Zapri"
+      "close": "Zapri",
+      "title": "Jedro prepisa umetne inteligence",
+      "toolbarTitle": "Jedro prepisa umetne inteligence"
     },
     "sq": {
-      "title": "Transkriptim AI",
-      "toolbarTitle": "Transkriptim AI",
       "description": "Një zgjerim për Seed Bible që gjeneron transkriptime me ndihmën e AI-së.",
       "donate": "Dhuro",
       "donateAmount": "Dhuroni {{amount}}",
@@ -1135,11 +1133,11 @@
       "donationOther": "Tjetër",
       "donationDismiss": "Jo tani — më kthe mbrapa",
       "donationSecure": "Pagesë e sigurt · një herë, pa llogari",
-      "close": "Mbyll"
+      "close": "Mbyll",
+      "title": "Bërthama e Transkriptit të AI-së",
+      "toolbarTitle": "Bërthama e Transkriptit të AI-së"
     },
     "sv": {
-      "title": "AI-transkription",
-      "toolbarTitle": "AI-transkription",
       "description": "Ett tillägg för Seed Bible som genererar AI-drivna transkriptioner.",
       "donate": "Donera",
       "donateAmount": "Donera {{amount}}",
@@ -1151,11 +1149,11 @@
       "donationOther": "Annat",
       "donationDismiss": "Inte nu — ta mig tillbaka",
       "donationSecure": "Säker betalning · engångsbetalning, inget konto krävs",
-      "close": "Stäng"
+      "close": "Stäng",
+      "title": "AI-transkriptkärna",
+      "toolbarTitle": "AI-transkriptkärna"
     },
     "ta": {
-      "title": "AI படியெடுப்பு",
-      "toolbarTitle": "AI படியெடுப்பு",
       "description": "சீட் பைபிளுக்கு AI அடிப்படையிலான படியெடுப்புகளை உருவாக்கும் ஒரு நீட்டிப்பு.",
       "donate": "நன்கொடை அளிக்கவும்",
       "donateAmount": "{{amount}} நன்கொடை அளியுங்கள்",
@@ -1167,11 +1165,11 @@
       "donationOther": "வேறு",
       "donationDismiss": "இப்போது வேண்டாம் — என்னை மீண்டும் அழைத்துச் செல்லுங்கள்",
       "donationSecure": "பாதுகாப்பான கட்டணம் · ஒரு முறை, கணக்கு தேவையில்லை",
-      "close": "மூடு"
+      "close": "மூடு",
+      "title": "AI டிரான்ஸ்கிரிப்ட் கோர்",
+      "toolbarTitle": "AI டிரான்ஸ்கிரிப்ட் கோர்"
     },
     "te": {
-      "title": "AI ట్రాన్స్క్రిప్ట్",
-      "toolbarTitle": "AI ట్రాన్స్క్రిప్ట్",
       "description": "సీడ్ బైబిల్ కోసం AI ఆధారిత ట్రాన్స్క్రిప్ట్‌లను రూపొందించే ఒక పొడిగింపు.",
       "donate": "విరాళం ఇవ్వండి",
       "donateAmount": "{{amount}} విరాళంగా ఇవ్వండి",
@@ -1183,11 +1181,11 @@
       "donationOther": "ఇతర",
       "donationDismiss": "ఇప్పుడు కాదు — నన్ను వెనక్కి తీసుకెళ్లండి",
       "donationSecure": "సురక్షిత చెల్లింపు · ఒకసారి, ఖాతా అవసరం లేదు",
-      "close": "మూసివేయండి"
+      "close": "మూసివేయండి",
+      "title": "AI ట్రాన్స్క్రిప్ట్ కోర్",
+      "toolbarTitle": "AI ట్రాన్స్క్రిప్ట్ కోర్"
     },
     "th": {
-      "title": "การถอดความ AI",
-      "toolbarTitle": "การถอดความ AI",
       "description": "ส่วนเสริมสำหรับ Seed Bible ที่สร้างการถอดความด้วย AI",
       "donate": "บริจาค",
       "donateAmount": "บริจาค {{amount}}",
@@ -1199,11 +1197,11 @@
       "donationOther": "อื่นๆ",
       "donationDismiss": "ยังไม่ใช่ตอนนี้ — พาฉันกลับไป",
       "donationSecure": "ชำระเงินอย่างปลอดภัย · ครั้งเดียว ไม่ต้องมีบัญชี",
-      "close": "ปิด"
+      "close": "ปิด",
+      "title": "แกนหลักของ AI Transcript",
+      "toolbarTitle": "แกนหลักของ AI Transcript"
     },
     "tl": {
-      "title": "AI Transcript",
-      "toolbarTitle": "AI Transcript",
       "description": "Isang extension para sa Seed Bible na gumagawa ng mga transcript na pinapagana ng AI.",
       "donate": "Mag-donate",
       "donateAmount": "Mag-donate ng {{amount}}",
@@ -1215,11 +1213,11 @@
       "donationOther": "Iba pa",
       "donationDismiss": "Hindi muna ngayon — ibalik mo ako",
       "donationSecure": "Ligtas na pagbabayad · isang beses, walang kailangang account",
-      "close": "Isara"
+      "close": "Isara",
+      "title": "Pangunahing Transkripsyon ng AI",
+      "toolbarTitle": "Pangunahing Transkripsyon ng AI"
     },
     "uz": {
-      "title": "AI transkripti",
-      "toolbarTitle": "AI transkripti",
       "description": "Seed Bible loyihasi uchun AI asosidagi transkriptlar yaratadigan kengaytma.",
       "donate": "Xayriya qilish",
       "donateAmount": "{{amount}} xayriya qiling",
@@ -1231,11 +1229,11 @@
       "donationOther": "Boshqa",
       "donationDismiss": "Hozir emas — meni ortga qaytar",
       "donationSecure": "Xavfsiz to‘lov · bir martalik, hisob qaydnomasi shart emas",
-      "close": "Yopish"
+      "close": "Yopish",
+      "title": "AI transkriptining yadrosi",
+      "toolbarTitle": "AI transkriptining yadrosi"
     },
     "zu": {
-      "title": "Umbhalo we-AI",
-      "toolbarTitle": "Umbhalo we-AI",
       "description": "Isandiso seSeed Bible esikhiqiza imibhalo eqhutshwa yi-AI.",
       "donate": "Nikela",
       "donateAmount": "Nikela ngo-{{amount}}",
@@ -1247,7 +1245,9 @@
       "donationOther": "Okunye",
       "donationDismiss": "Hhayi manje — ngibuyisele emuva",
       "donationSecure": "Inkokhelo ephephile · kanye, awudingi i-akhawunti",
-      "close": "Vala"
+      "close": "Vala",
+      "title": "Ingqikithi yombhalo we-AI",
+      "toolbarTitle": "Ingqikithi yombhalo we-AI"
     }
   }
 }
