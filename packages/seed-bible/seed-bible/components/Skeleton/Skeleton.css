@@ -1,0 +1,57 @@
+/* ─── Reusable loading skeleton ──────────────────────────────────────────── */
+/* A shimmering placeholder used wherever content is still loading, so a slow
+   surface reads as "loading" rather than blank or a deceptively-ready UI.
+   Dimensions are authored in `rem`/`%` by callers so blocks scale with the
+   "UI Size" setting (see app/styles/base.css). Only depends on the global
+   `--sb-font-color` token and the `.sr-only` utility (app/styles/utilities.css),
+   both already loaded globally by app/main.tsx. */
+
+.sb-skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
+}
+
+.sb-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--sb-font-color), transparent 80%),
+    transparent
+  );
+  animation: sb-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes sb-skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Shape defaults — callers can still override height/radius inline. */
+.sb-skeleton--line {
+  height: 0.8125rem;
+  border-radius: 0.25rem;
+}
+
+.sb-skeleton--circle {
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sb-skeleton--button {
+  border-radius: 0.25rem;
+}
+
+/* `.sb-skeleton--block` keeps the base 0.5rem radius (no override needed). */
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-skeleton::after {
+    animation: none;
+  }
+}
