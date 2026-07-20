@@ -364,6 +364,7 @@
   "edit-playlist": "Редактиране на плейлиста",
   "remove-playlist-item": "Премахване на елемент",
   "edit-playlist-item": "Редактиране на елемент",
+  "drag-to-reorder-playlist-item": "Плъзнете, за да пренаредите",
   "playlist-add-item": "Добавяне на елемент",
   "playlist-edit-item": "Редактиране на елемент",
   "playlist-save-item": "Запазване на промените",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "Да се ​​изтрие ли „ {{title}} “? Това не може да се отмени.",
   "delete-playlist-failed": "Плейлистът не можа да бъде изтрит.",
   "collapsed-tab-shared-label": "{{title}} — споделена сесия, {{count}} присъстващи",
-  "playlist-add-mode-label": "Тип артикул"
+  "playlist-add-mode-label": "Тип артикул",
+  "saving": "Запазване…",
+  "unsaved-item-confirm-title": "Незапазен елемент",
+  "unsaved-item-confirm-message": "Започнахте да добавяте елемент, който все още не е добавен към плейлистата. Какво искате да направите?",
+  "discard-and-save": "Отхвърли и запази",
+  "add-and-save": "Добави и запази"
 }

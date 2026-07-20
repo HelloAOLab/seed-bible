@@ -140,6 +140,8 @@ function createFixture(): ReaderFixture {
     selectChapter: vi.fn(async () => undefined),
     loadPreviousChapter: vi.fn(async () => undefined),
     loadNextChapter: vi.fn(async () => undefined),
+    hasNext: computed(() => !!chapterData.value?.nextChapterApiLink),
+    hasPrevious: computed(() => !!chapterData.value?.previousChapterApiLink),
     selectTranslationAndChapter: vi.fn(async () => undefined),
     highlights,
     defaultTranslation: { id: "BSB", language: "en" },

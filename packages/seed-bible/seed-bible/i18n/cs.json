@@ -364,6 +364,7 @@
   "edit-playlist": "Upravit playlist",
   "remove-playlist-item": "Odebrat položku",
   "edit-playlist-item": "Upravit položku",
+  "drag-to-reorder-playlist-item": "Přetažením změníte pořadí",
   "playlist-add-item": "Přidat položku",
   "playlist-edit-item": "Upravit položku",
   "playlist-save-item": "Uložit změny",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "Smazat „ {{title}} “? Tuto akci nelze vrátit zpět.",
   "delete-playlist-failed": "Seznam skladeb se nepodařilo smazat.",
   "collapsed-tab-shared-label": "{{title}} — sdílená relace, přítomných {{count}}",
-  "playlist-add-mode-label": "Typ položky"
+  "playlist-add-mode-label": "Typ položky",
+  "saving": "Ukládání…",
+  "unsaved-item-confirm-title": "Neuložená položka",
+  "unsaved-item-confirm-message": "Začali jste přidávat položku, která ještě nebyla přidána do playlistu. Co chcete udělat?",
+  "discard-and-save": "Zahodit a uložit",
+  "add-and-save": "Přidat a uložit"
 }

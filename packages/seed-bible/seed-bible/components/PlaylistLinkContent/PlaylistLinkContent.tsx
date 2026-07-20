@@ -23,25 +23,29 @@ export function PlaylistLinkContent(props: {
 
   if (media.kind === "video") {
     return (
-      <video
-        className="sb-play-playlist-content-video"
-        src={media.url}
-        controls
-        playsInline
-      />
+      <div className="sb-play-playlist-content-embed">
+        <video
+          className="sb-play-playlist-content-video"
+          src={media.url}
+          controls
+          playsInline
+        />
+      </div>
     );
   }
 
   if (media.kind === "embed" || (media.kind === "link" && props.embed)) {
     return (
-      <iframe
-        className="sb-play-playlist-content-iframe"
-        src={media.url}
-        allow="autoplay; encrypted-media; web-share; fullscreen"
-        referrerPolicy="strict-origin-when-cross-origin"
-        allowFullScreen
-        title={props.title?.trim() || props.url}
-      />
+      <div className="sb-play-playlist-content-embed">
+        <iframe
+          className="sb-play-playlist-content-iframe"
+          src={media.url}
+          allow="autoplay; encrypted-media; web-share; fullscreen"
+          referrerPolicy="strict-origin-when-cross-origin"
+          allowFullScreen
+          title={props.title?.trim() || props.url}
+        />
+      </div>
     );
   }
 

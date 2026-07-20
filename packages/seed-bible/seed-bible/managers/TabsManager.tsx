@@ -156,7 +156,8 @@ export function createInitialTabs(
 
   if (highlightedVerses.length > 0) {
     tab.readingState.decorateVerses(bookId, chapter, highlightedVerses, {
-      className: "sb-verse-decoration-initial-verse-highlight",
+      className: "sb-verse-decoration-diminish",
+      containerClassName: "sb-chapter-decoration-diminish",
       removeAfterMs: 5000,
     });
   }

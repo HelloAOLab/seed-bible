@@ -364,6 +364,7 @@
   "edit-playlist": "သီချင်းစာရင်းကို တည်းဖြတ်ပါ",
   "remove-playlist-item": "ပစ္စည်းကို ဖယ်ရှားပါ",
   "edit-playlist-item": "အကြောင်းအရာကို တည်းဖြတ်ပါ",
+  "drag-to-reorder-playlist-item": "အစီအစဉ်ပြန်လုပ်ရန် ဖိဆွဲပါ",
   "playlist-add-item": "ပစ္စည်းထည့်ပါ",
   "playlist-edit-item": "အကြောင်းအရာကို တည်းဖြတ်ပါ",
   "playlist-save-item": "ပြောင်းလဲမှုများကို သိမ်းဆည်းပါ",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" ကို ဖျက်မလား။ ၎င်းကို ပြန်ပြင်၍မရပါ။",
   "delete-playlist-failed": "သီချင်းစာရင်းကို ဖျက်၍မရပါ။",
   "collapsed-tab-shared-label": "{{title}} — မျှဝေထားသော အစည်းအဝေး၊ {{count}} ရှိနေသည်",
-  "playlist-add-mode-label": "ပစ္စည်းအမျိုးအစား"
+  "playlist-add-mode-label": "ပစ္စည်းအမျိုးအစား",
+  "saving": "သိမ်းဆည်းနေသည်…",
+  "unsaved-item-confirm-title": "မသိမ်းရသေးသော အရာ",
+  "unsaved-item-confirm-message": "ပလေးလစ်တွင် မထည့်ရသေးသော အရာတစ်ခုကို ထည့်နေပါသည်။ သင်ဘာလုပ်လိုပါသလဲ?",
+  "discard-and-save": "စွန့်ပယ်ပြီး သိမ်းမည်",
+  "add-and-save": "ထည့်ပြီး သိမ်းမည်"
 }

@@ -364,6 +364,7 @@
   "edit-playlist": "تعديل قائمة التشغيل",
   "remove-playlist-item": "إزالة العنصر",
   "edit-playlist-item": "تعديل العناصر",
+  "drag-to-reorder-playlist-item": "اسحب لإعادة الترتيب",
   "playlist-add-item": "إضافة عنصر",
   "playlist-edit-item": "تعديل العناصر",
   "playlist-save-item": "حفظ التغييرات",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "حذف \" {{title}} \"؟ لا يمكن التراجع عن هذا.",
   "delete-playlist-failed": "تعذر حذف قائمة التشغيل.",
   "collapsed-tab-shared-label": "{{title}} — جلسة مشتركة، {{count}} موجودون",
-  "playlist-add-mode-label": "نوع العنصر"
+  "playlist-add-mode-label": "نوع العنصر",
+  "saving": "جارٍ الحفظ…",
+  "unsaved-item-confirm-title": "عنصر غير محفوظ",
+  "unsaved-item-confirm-message": "لقد بدأت في إضافة عنصر لم تتم إضافته بعد إلى قائمة التشغيل. ماذا تريد أن تفعل؟",
+  "discard-and-save": "تجاهل وحفظ",
+  "add-and-save": "إضافة وحفظ"
 }

@@ -364,6 +364,7 @@
   "edit-playlist": "ویرایش لیست پخش",
   "remove-playlist-item": "حذف مورد",
   "edit-playlist-item": "ویرایش مورد",
+  "drag-to-reorder-playlist-item": "برای تغییر ترتیب بکشید",
   "playlist-add-item": "اضافه کردن آیتم",
   "playlist-edit-item": "ویرایش مورد",
   "playlist-save-item": "ذخیره تغییرات",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "حذف « {{title}} »؟ این قابل بازگشت نیست.",
   "delete-playlist-failed": "نتونستم لیست پخش رو حذف کنم.",
   "collapsed-tab-shared-label": "{{title}} — جلسه مشترک، {{count}} موجود",
-  "playlist-add-mode-label": "نوع کالا"
+  "playlist-add-mode-label": "نوع کالا",
+  "saving": "در حال ذخیره…",
+  "unsaved-item-confirm-title": "مورد ذخیره‌نشده",
+  "unsaved-item-confirm-message": "شما شروع به افزودن موردی کرده‌اید که هنوز به فهرست پخش اضافه نشده است. می‌خواهید چه کار کنید؟",
+  "discard-and-save": "نادیده گرفتن و ذخیره",
+  "add-and-save": "افزودن و ذخیره"
 }

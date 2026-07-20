@@ -364,6 +364,7 @@
   "edit-playlist": "د غږیز لیست سمول",
   "remove-playlist-item": "توکي لرې کړئ",
   "edit-playlist-item": "توکي سم کړئ",
+  "drag-to-reorder-playlist-item": "د ترتیب بدلولو لپاره کش کړئ",
   "playlist-add-item": "توکي اضافه کړئ",
   "playlist-edit-item": "توکي سم کړئ",
   "playlist-save-item": "بدلونونه خوندي کړئ",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "\" {{title}} \" ړنګ کړئ؟ دا بیرته نه شي راوستلی.",
   "delete-playlist-failed": "پلې لیست ړنګ نشو.",
   "collapsed-tab-shared-label": "{{title}} — شریکه غونډه، {{count}} حاضر",
-  "playlist-add-mode-label": "د توکي ډول"
+  "playlist-add-mode-label": "د توکي ډول",
+  "saving": "خوندي کول…",
+  "unsaved-item-confirm-title": "ناخوندي شوی توکی",
+  "unsaved-item-confirm-message": "تاسو د یو داسې توکي زیاتولو پیل کړی چې لا تر اوسه پلی لست ته نه دی زیات شوی. تاسو څه غواړئ وکړئ؟",
+  "discard-and-save": "لغوه کول او خوندي کول",
+  "add-and-save": "زیاتول او خوندي کول"
 }

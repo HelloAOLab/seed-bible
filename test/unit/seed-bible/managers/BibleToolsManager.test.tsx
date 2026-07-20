@@ -25,6 +25,8 @@ function createContext(): BibleToolContext {
       clearSelectedVerses: vi.fn(),
       loadPreviousChapter: vi.fn(),
       loadNextChapter: vi.fn(),
+      hasNext: signal(false),
+      hasPrevious: signal(false),
     } as any,
     sharedSession: null,
     selectorState: {

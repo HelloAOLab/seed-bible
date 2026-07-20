@@ -1215,10 +1215,20 @@ function ChapterContent(props: ChapterContentProps) {
     throw chapterDataPromise;
   }
 
+  const containerClasses = decorations.value
+    .filter(
+      (d) =>
+        d.containerClassName &&
+        d.bookId === chapterData.value?.book.id &&
+        d.chapterNumber === chapterData.value?.chapter.number
+    )
+    .map((d) => d.containerClassName)
+    .join(" ");
+
   return (
     <div
       ref={contentRef}
-      className="sb-chapter-content"
+      className={`sb-chapter-content ${containerClasses}`}
       onPointerDown={() => {
         justConvertedSelectionRef.current = false;
       }}

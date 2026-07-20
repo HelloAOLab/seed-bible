@@ -364,6 +364,7 @@
   "edit-playlist": "Redaguoti grojaraštį",
   "remove-playlist-item": "Pašalinti elementą",
   "edit-playlist-item": "Redaguoti elementą",
+  "drag-to-reorder-playlist-item": "Vilkite, kad pertvarkytumėte",
   "playlist-add-item": "Pridėti elementą",
   "playlist-edit-item": "Redaguoti elementą",
   "playlist-save-item": "Išsaugoti pakeitimus",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "Ištrinti „ {{title}} “? Šio veiksmo negalima atšaukti.",
   "delete-playlist-failed": "Nepavyko ištrinti grojaraščio.",
   "collapsed-tab-shared-label": "{{title}} — bendras seansas, dalyvauja {{count}}",
-  "playlist-add-mode-label": "Prekės tipas"
+  "playlist-add-mode-label": "Prekės tipas",
+  "saving": "Įrašoma…",
+  "unsaved-item-confirm-title": "Neišsaugotas elementas",
+  "unsaved-item-confirm-message": "Pradėjote pridėti elementą, kuris dar nepridėtas į grojaraštį. Ką norite daryti?",
+  "discard-and-save": "Atmesti ir įrašyti",
+  "add-and-save": "Pridėti ir įrašyti"
 }

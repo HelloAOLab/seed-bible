@@ -1207,7 +1207,8 @@ export function createSeedBibleState(
         ? range(ref.verse, ref.endVerse + 1)
         : ref.verse;
       tab.readingState.decorateVerses(ref.book, ref.chapter, verses, {
-        className: "sb-verse-decoration-open-reference-highlight",
+        className: "sb-verse-decoration-diminish",
+        containerClassName: "sb-chapter-decoration-diminish",
         removeAfterMs: 3000,
       });
     }

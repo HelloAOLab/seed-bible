@@ -71,6 +71,18 @@ export type TransformLabelHook<TData = unknown> = (ctx: {
  * Every hook is optional; an extension only implements what it needs.
  */
 export interface ReadingExtensionInstance<TData = unknown> {
+  /**
+   * Whether navigateNext should be enabled.
+   * If not provided, then next navigation will only be allowed if the reading state would normally be able to navigate.
+   */
+  hasNext?: ReadonlySignal<boolean>;
+
+  /**
+   * Whether navigatePrevious should be enabled.
+   * If not provided, then previous navigation will only be allowed if the reading state would normally be able to navigate.
+   */
+  hasPrevious?: ReadonlySignal<boolean>;
+
   /** Intercepts forward navigation (`loadNextChapter`). */
   navigateNext?: ReadingNavigationHook<TData>;
   /** Intercepts backward navigation (`loadPreviousChapter`). */

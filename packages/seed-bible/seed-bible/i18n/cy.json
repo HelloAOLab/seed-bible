@@ -364,6 +364,7 @@
   "edit-playlist": "Golygu rhestr chwarae",
   "remove-playlist-item": "Dileu eitem",
   "edit-playlist-item": "Golygu eitem",
+  "drag-to-reorder-playlist-item": "Llusgwch i ad-drefnu",
   "playlist-add-item": "Ychwanegu eitem",
   "playlist-edit-item": "Golygu eitem",
   "playlist-save-item": "Cadw newidiadau",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "Dileu \" {{title}} \"? Ni ellir dadwneud hyn.",
   "delete-playlist-failed": "Methwyd dileu'r rhestr chwarae.",
   "collapsed-tab-shared-label": "{{title}} — sesiwn a rennir, {{count}} yn bresennol",
-  "playlist-add-mode-label": "Math o eitem"
+  "playlist-add-mode-label": "Math o eitem",
+  "saving": "Yn cadw…",
+  "unsaved-item-confirm-title": "Eitem heb ei chadw",
+  "unsaved-item-confirm-message": "Rydych wedi dechrau ychwanegu eitem nad yw wedi'i hychwanegu at y rhestr chwarae eto. Beth hoffech chi ei wneud?",
+  "discard-and-save": "Dileu a chadw",
+  "add-and-save": "Ychwanegu a chadw"
 }

@@ -364,6 +364,7 @@
   "edit-playlist": "Rediģēt atskaņošanas sarakstu",
   "remove-playlist-item": "Noņemt vienumu",
   "edit-playlist-item": "Rediģēt vienumu",
+  "drag-to-reorder-playlist-item": "Velciet, lai mainītu secību",
   "playlist-add-item": "Pievienot vienumu",
   "playlist-edit-item": "Rediģēt vienumu",
   "playlist-save-item": "Saglabāt izmaiņas",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "Dzēst \" {{title}} \"? Šo darbību nevar atsaukt.",
   "delete-playlist-failed": "Nevarēja izdzēst atskaņošanas sarakstu.",
   "collapsed-tab-shared-label": "{{title}} — koplietota sesija, klātesoši ir {{count}}",
-  "playlist-add-mode-label": "Preces veids"
+  "playlist-add-mode-label": "Preces veids",
+  "saving": "Saglabā…",
+  "unsaved-item-confirm-title": "Nesaglabāts vienums",
+  "unsaved-item-confirm-message": "Jūs sākāt pievienot vienumu, kas vēl nav pievienots atskaņošanas sarakstam. Ko vēlaties darīt?",
+  "discard-and-save": "Atmest un saglabāt",
+  "add-and-save": "Pievienot un saglabāt"
 }

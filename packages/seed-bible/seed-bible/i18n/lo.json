@@ -364,6 +364,7 @@
   "edit-playlist": "ແກ້ໄຂລາຍການຫຼິ້ນ",
   "remove-playlist-item": "ລຶບລາຍການອອກ",
   "edit-playlist-item": "ແກ້ໄຂລາຍການ",
+  "drag-to-reorder-playlist-item": "ລາກເພື່ອຈັດລຽງໃໝ່",
   "playlist-add-item": "ເພີ່ມລາຍການ",
   "playlist-edit-item": "ແກ້ໄຂລາຍການ",
   "playlist-save-item": "ບັນທຶກການປ່ຽນແປງ",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "ລຶບ \" {{title}} \" ບໍ? ຂັ້ນຕອນນີ້ບໍ່ສາມາດຍົກເລີກໄດ້.",
   "delete-playlist-failed": "ບໍ່ສາມາດລຶບລາຍການຫຼິ້ນໄດ້.",
   "collapsed-tab-shared-label": "{{title}} — ເຊດຊັນທີ່ແບ່ງປັນ, ມີຢູ່ {{count}}",
-  "playlist-add-mode-label": "ປະເພດລາຍການ"
+  "playlist-add-mode-label": "ປະເພດລາຍການ",
+  "saving": "ກຳລັງບັນທຶກ…",
+  "unsaved-item-confirm-title": "ລາຍການທີ່ຍັງບໍ່ໄດ້ບັນທຶກ",
+  "unsaved-item-confirm-message": "ທ່ານໄດ້ເລີ່ມເພີ່ມລາຍການທີ່ຍັງບໍ່ໄດ້ຖືກເພີ່ມໃສ່ລາຍການຫຼິ້ນ. ທ່ານຕ້ອງການເຮັດຫຍັງ?",
+  "discard-and-save": "ຍົກເລີກ ແລະ ບັນທຶກ",
+  "add-and-save": "ເພີ່ມ ແລະ ບັນທຶກ"
 }

@@ -364,6 +364,7 @@
   "edit-playlist": "Uredi listu za reprodukciju",
   "remove-playlist-item": "Ukloni stavku",
   "edit-playlist-item": "Uredi stavku",
+  "drag-to-reorder-playlist-item": "Prevucite da promijenite redoslijed",
   "playlist-add-item": "Dodaj stavku",
   "playlist-edit-item": "Uredi stavku",
   "playlist-save-item": "Sačuvaj promjene",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "Izbrisati \" {{title}} \"? Ovo se ne može poništiti.",
   "delete-playlist-failed": "Brisanje plejliste nije uspjelo.",
   "collapsed-tab-shared-label": "{{title}} — dijeljena sesija, {{count}} prisutnih",
-  "playlist-add-mode-label": "Vrsta stavke"
+  "playlist-add-mode-label": "Vrsta stavke",
+  "saving": "Spremanje…",
+  "unsaved-item-confirm-title": "Nespremljena stavka",
+  "unsaved-item-confirm-message": "Počeli ste dodavati stavku koja još nije dodana na plejlistu. Šta želite uraditi?",
+  "discard-and-save": "Odbaci i spremi",
+  "add-and-save": "Dodaj i spremi"
 }

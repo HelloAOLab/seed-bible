@@ -364,6 +364,7 @@
   "edit-playlist": "Lejátszási lista szerkesztése",
   "remove-playlist-item": "Elem eltávolítása",
   "edit-playlist-item": "Elem szerkesztése",
+  "drag-to-reorder-playlist-item": "Húzza az átrendezéshez",
   "playlist-add-item": "Elem hozzáadása",
   "playlist-edit-item": "Elem szerkesztése",
   "playlist-save-item": "Változtatások mentése",
@@ -403,5 +404,10 @@
   "delete-playlist-confirm-message": "Törli a(z) „ {{title}} ” fájlt? Ez nem vonható vissza.",
   "delete-playlist-failed": "Nem sikerült törölni a lejátszási listát.",
   "collapsed-tab-shared-label": "{{title}} — megosztott munkamenet, {{count}} jelenlévő",
-  "playlist-add-mode-label": "Elemtípus"
+  "playlist-add-mode-label": "Elemtípus",
+  "saving": "Mentés…",
+  "unsaved-item-confirm-title": "Nem mentett elem",
+  "unsaved-item-confirm-message": "Elkezdett hozzáadni egy elemet, amelyet még nem adott hozzá a lejátszási listához. Mit szeretne tenni?",
+  "discard-and-save": "Elvetés és mentés",
+  "add-and-save": "Hozzáadás és mentés"
 }
