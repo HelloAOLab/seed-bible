@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Điều hướng",
   "session-settings-section-sharing": "Chia sẻ",
   "session-settings-section-participants": "Người tham gia",
-
   "shared": "Chia sẻ",
   "host": "Chủ nhà",
   "co-host": "Đồng chủ trì",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Kết thúc phiên",
   "dont-show-again": "Đừng hiển thị lại cái này nữa",
   "discover": "Phát hiện",
-
   "playlists": "Danh sách phát",
   "annotations": "Chú thích",
   "cross-references": "Tham chiếu chéo",
@@ -367,16 +365,13 @@
   "playlist-add-item": "Thêm mục",
   "playlist-edit-item": "Chỉnh sửa mục",
   "playlist-save-item": "Lưu thay đổi",
-
   "playlist-add-scripture-placeholder": "ví dụ Giăng 3 hoặc Giăng 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Thêm mục",
   "playlist-add-scripture-error": "Tôi không tìm thấy tài liệu tham khảo đó.",
   "playlist-add-link-error": "Nhập URL hợp lệ",
   "playlist-add-link-embed": "Nhúng liên kết này",
   "play-playlist": "Phát danh sách phát",
-
   "stop": "Dừng lại",
   "queue": "Hàng đợi",
   "previous": "Trước",
@@ -388,7 +383,6 @@
   "editor-align-center": "Căn giữa",
   "editor-align-right": "Căn chỉnh sang phải",
   "editor-align-justify": "Giải thích",
-
   "share-playlist": "Chia sẻ danh sách phát",
   "playlist-url-copied": "URL danh sách phát đã được sao chép vào clipboard",
   "current-playlist": "Danh sách phát hiện tại",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "Xóa \" {{title}} \"? Thao tác này không thể hoàn tác.",
   "delete-playlist-failed": "Không thể xóa danh sách phát.",
   "collapsed-tab-shared-label": "{{title}} — phiên họp chung, {{count}} người tham dự",
-  "playlist-add-mode-label": "Loại mặt hàng"
+  "playlist-add-mode-label": "Loại mặt hàng",
+  "session-host-reconnecting": "Đang kết nối lại với phiên…",
+  "session-host-reconnected": "Đã kết nối lại với phiên",
+  "session-host-left": "Người chủ trì đã rời đi — bạn đã bị loại khỏi phiên họp."
 }

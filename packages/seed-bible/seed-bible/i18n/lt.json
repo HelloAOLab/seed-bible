@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigacija",
   "session-settings-section-sharing": "Dalijimasis",
   "session-settings-section-participants": "Dalyviai",
-
   "shared": "Bendrinama",
   "host": "Šeimininkas",
   "co-host": "Bendrabučio šeimininkas",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Baigti sesiją",
   "dont-show-again": "Daugiau to nerodyti",
   "discover": "Atraskite",
-
   "playlists": "Grojaraščiai",
   "annotations": "Anotacijos",
   "cross-references": "Kryžminės nuorodos",
@@ -367,16 +365,13 @@
   "playlist-add-item": "Pridėti elementą",
   "playlist-edit-item": "Redaguoti elementą",
   "playlist-save-item": "Išsaugoti pakeitimus",
-
   "playlist-add-scripture-placeholder": "pvz., Jono 3 arba Jono 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Pridėti elementą",
   "playlist-add-scripture-error": "Nepavyko rasti tos nuorodos",
   "playlist-add-link-error": "Įveskite galiojantį URL",
   "playlist-add-link-embed": "Įterpti šią nuorodą",
   "play-playlist": "Leisti grojaraštį",
-
   "stop": "Stop",
   "queue": "Eilė",
   "previous": "Ankstesnis",
@@ -388,7 +383,6 @@
   "editor-align-center": "Sulygiuoti centrą",
   "editor-align-right": "Lygiuoti dešinėje",
   "editor-align-justify": "Lygiuoti",
-
   "share-playlist": "Bendrinti grojaraštį",
   "playlist-url-copied": "Grojaraščio URL nukopijuotas į iškarpinę",
   "current-playlist": "Dabartinis grojaraštis",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "Ištrinti „ {{title}} “? Šio veiksmo negalima atšaukti.",
   "delete-playlist-failed": "Nepavyko ištrinti grojaraščio.",
   "collapsed-tab-shared-label": "{{title}} — bendras seansas, dalyvauja {{count}}",
-  "playlist-add-mode-label": "Prekės tipas"
+  "playlist-add-mode-label": "Prekės tipas",
+  "session-host-reconnecting": "Iš naujo prisijungiama prie sesijos…",
+  "session-host-reconnected": "Vėl prisijungta prie sesijos",
+  "session-host-left": "Šeimininkas išėjo – buvote pašalintas iš sesijos"
 }

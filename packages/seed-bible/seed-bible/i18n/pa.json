@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "ਨੇਵੀਗੇਸ਼ਨ",
   "session-settings-section-sharing": "ਸਾਂਝਾ ਕਰਨਾ",
   "session-settings-section-participants": "ਭਾਗੀਦਾਰ",
-
   "shared": "ਸਾਂਝਾ ਕੀਤਾ ਗਿਆ",
   "host": "ਮੇਜ਼ਬਾਨ",
   "co-host": "ਸਹਿ-ਮੇਜ਼ਬਾਨ",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "ਸੈਸ਼ਨ ਸਮਾਪਤ ਕਰੋ",
   "dont-show-again": "ਇਸਨੂੰ ਦੁਬਾਰਾ ਨਾ ਦਿਖਾਓ",
   "discover": "ਖੋਜ ਕਰੋ",
-
   "playlists": "ਪਲੇਲਿਸਟਸ",
   "annotations": "ਐਨੋਟੇਸ਼ਨ",
   "cross-references": "ਕ੍ਰਾਸ ਹਵਾਲੇ",
@@ -367,16 +365,13 @@
   "playlist-add-item": "ਆਈਟਮ ਸ਼ਾਮਲ ਕਰੋ",
   "playlist-edit-item": "ਆਈਟਮ ਸੰਪਾਦਿਤ ਕਰੋ",
   "playlist-save-item": "ਬਦਲਾਅ ਸੁਰੱਖਿਅਤ ਕਰੋ",
-
   "playlist-add-scripture-placeholder": "ਜਿਵੇਂ ਕਿ ਯੂਹੰਨਾ 3 ਜਾਂ ਯੂਹੰਨਾ 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "ਆਈਟਮ ਸ਼ਾਮਲ ਕਰੋ",
   "playlist-add-scripture-error": "ਉਹ ਹਵਾਲਾ ਨਹੀਂ ਮਿਲਿਆ",
   "playlist-add-link-error": "ਇੱਕ ਵੈਧ URL ਦਾਖਲ ਕਰੋ",
   "playlist-add-link-embed": "ਇਸ ਲਿੰਕ ਨੂੰ ਏਮਬੈਡ ਕਰੋ",
   "play-playlist": "ਪਲੇਲਿਸਟ ਚਲਾਓ",
-
   "stop": "ਰੂਕੋ",
   "queue": "ਕਤਾਰ",
   "previous": "ਪਿਛਲਾ",
@@ -388,7 +383,6 @@
   "editor-align-center": "ਵਿਚਕਾਰ ਇਕਸਾਰ ਕਰੋ",
   "editor-align-right": "ਸੱਜੇ ਪਾਸੇ ਇਕਸਾਰ ਕਰੋ",
   "editor-align-justify": "ਇਕਸਾਰ ਕਰੋ",
-
   "share-playlist": "ਪਲੇਲਿਸਟ ਸਾਂਝੀ ਕਰੋ",
   "playlist-url-copied": "ਪਲੇਲਿਸਟ URL ਕਲਿੱਪਬੋਰਡ 'ਤੇ ਕਾਪੀ ਕੀਤਾ ਗਿਆ",
   "current-playlist": "ਮੌਜੂਦਾ ਪਲੇਲਿਸਟ",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "\" {{title}} \" ਮਿਟਾਉਣਾ ਹੈ? ਇਸਨੂੰ ਵਾਪਸ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।",
   "delete-playlist-failed": "ਪਲੇਲਿਸਟ ਨੂੰ ਮਿਟਾ ਨਹੀਂ ਸਕਿਆ।",
   "collapsed-tab-shared-label": "{{title}} — ਸਾਂਝਾ ਸੈਸ਼ਨ, {{count}} ਮੌਜੂਦ",
-  "playlist-add-mode-label": "ਆਈਟਮ ਦੀ ਕਿਸਮ"
+  "playlist-add-mode-label": "ਆਈਟਮ ਦੀ ਕਿਸਮ",
+  "session-host-reconnecting": "ਸੈਸ਼ਨ ਨਾਲ ਦੁਬਾਰਾ ਕਨੈਕਟ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ...",
+  "session-host-reconnected": "ਸੈਸ਼ਨ ਨਾਲ ਦੁਬਾਰਾ ਜੁੜਿਆ",
+  "session-host-left": "ਹੋਸਟ ਚਲਾ ਗਿਆ — ਤੁਹਾਨੂੰ ਸੈਸ਼ਨ ਤੋਂ ਹਟਾ ਦਿੱਤਾ ਗਿਆ ਸੀ"
 }

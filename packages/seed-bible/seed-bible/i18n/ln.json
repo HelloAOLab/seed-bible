@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Kosala navigation",
   "session-settings-section-sharing": "Kokabola",
   "session-settings-section-participants": "Bato oyo bakosangana na yango",
-
   "shared": "Bakabolaka yango",
   "host": "Moto ayambi bapaya",
   "co-host": "Co-moyambi ya bapaya",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Suka session",
   "dont-show-again": "Kolakisa lisusu likambo oyo te",
   "discover": "Komona",
-
   "playlists": "Ba liste ya ba nzembo",
   "annotations": "Ba annotations oyo esalemi",
   "cross-references": "Ba références croisées",
@@ -367,16 +365,13 @@
   "playlist-add-item": "Bakisa eloko",
   "playlist-edit-item": "Bobongisi eloko",
   "playlist-save-item": "Bomba mbongwana",
-
   "playlist-add-scripture-placeholder": "ndakisa Yoane 3 to Yoane 3:16",
-
   "playlist-add-link-placeholder": "https://ndakisa.com",
   "playlist-add-button": "Bakisa eloko",
   "playlist-add-scripture-error": "Akokaki kozwa référence wana te",
   "playlist-add-link-error": "Tyá URL oyo ezali na ntina",
   "playlist-add-link-embed": "Embed lien oyo",
   "play-playlist": "Bobɛta liste ya ba nzembo",
-
   "stop": "Kosukisa",
   "queue": "Molongo ya kozela",
   "previous": "Oyo eleki",
@@ -388,7 +383,6 @@
   "editor-align-center": "Aligner centre",
   "editor-align-right": "Aligner na droite",
   "editor-align-justify": "Komilongisa",
-
   "share-playlist": "Bokabola liste ya ba nzembo",
   "playlist-url-copied": "URL ya liste ya kobɛta oyo esalemi kopi na tableau de bord",
   "current-playlist": "Liste ya ba nzembo ya lelo",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "Bolongola \" {{title}} \"? Oyo ekoki kozongisama sima te.",
   "delete-playlist-failed": "Ekokaki te ko effacer liste ya ba playlist.",
   "collapsed-tab-shared-label": "{{title}} — session ya kokabola, {{count}} ezali",
-  "playlist-add-mode-label": "Lolenge ya eloko"
+  "playlist-add-mode-label": "Lolenge ya eloko",
+  "session-host-reconnecting": "Kozongisa boyokani na session...",
+  "session-host-reconnected": "Reconnecté na session",
+  "session-host-left": "Moyambi alongwaki — balongolaki yo na session"
 }

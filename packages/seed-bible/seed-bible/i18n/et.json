@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigeerimine",
   "session-settings-section-sharing": "Jagamine",
   "session-settings-section-participants": "Osalejad",
-
   "shared": "Jagatud",
   "host": "Host",
   "co-host": "Kaasvõõrustaja",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Lõpeta seanss",
   "dont-show-again": "Ära seda enam näita",
   "discover": "Avasta",
-
   "playlists": "Esitusloendid",
   "annotations": "Märkused",
   "cross-references": "Ristviited",
@@ -367,16 +365,13 @@
   "playlist-add-item": "Lisa üksus",
   "playlist-edit-item": "Redigeeri üksust",
   "playlist-save-item": "Salvesta muudatused",
-
   "playlist-add-scripture-placeholder": "nt Johannese 3 või Johannese 3:16",
-
   "playlist-add-link-placeholder": "https://näide.com",
   "playlist-add-button": "Lisa üksus",
   "playlist-add-scripture-error": "Seda viidet ei leitud",
   "playlist-add-link-error": "Sisestage kehtiv URL",
   "playlist-add-link-embed": "Manusta see link",
   "play-playlist": "Esita esitusloend",
-
   "stop": "Stopp",
   "queue": "Järjekord",
   "previous": "Eelmine",
@@ -388,7 +383,6 @@
   "editor-align-center": "Joonda keskele",
   "editor-align-right": "Joonda paremale",
   "editor-align-justify": "Joonda",
-
   "share-playlist": "Jaga esitusloendit",
   "playlist-url-copied": "Esitusloendi URL kopeeriti lõikelauale",
   "current-playlist": "Praegune esitusloend",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "Kas kustutada \" {{title}} \"? Seda toimingut ei saa tagasi võtta.",
   "delete-playlist-failed": "Esitusloendit ei saanud kustutada.",
   "collapsed-tab-shared-label": "{{title}} — jagatud seanss, kohal {{count}}",
-  "playlist-add-mode-label": "Toote tüüp"
+  "playlist-add-mode-label": "Toote tüüp",
+  "session-host-reconnecting": "Seansiga uuesti ühenduse loomine…",
+  "session-host-reconnected": "Seansiga uuesti ühendatud",
+  "session-host-left": "Saatejuht lahkus – teid eemaldati seansist"
 }

@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigasi",
   "session-settings-section-sharing": "Perkongsian",
   "session-settings-section-participants": "Peserta",
-
   "shared": "Dikongsi",
   "host": "Hos",
   "co-host": "Pengacara bersama",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Tamat sesi",
   "dont-show-again": "Jangan tunjukkan ini lagi",
   "discover": "Temui",
-
   "playlists": "Senarai main",
   "annotations": "Anotasi",
   "cross-references": "Rujukan silang",
@@ -367,16 +365,13 @@
   "playlist-add-item": "Tambah item",
   "playlist-edit-item": "Edit item",
   "playlist-save-item": "Simpan perubahan",
-
   "playlist-add-scripture-placeholder": "contohnya Yohanes 3 atau Yohanes 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Tambah item",
   "playlist-add-scripture-error": "Tidak dapat menemui rujukan itu",
   "playlist-add-link-error": "Masukkan URL yang sah",
   "playlist-add-link-embed": "Benamkan pautan ini",
   "play-playlist": "Mainkan senarai main",
-
   "stop": "Berhenti",
   "queue": "Baris",
   "previous": "Sebelumnya",
@@ -388,7 +383,6 @@
   "editor-align-center": "Jajarkan tengah",
   "editor-align-right": "Jajarkan ke kanan",
   "editor-align-justify": "Justifikasikan",
-
   "share-playlist": "Kongsi senarai main",
   "playlist-url-copied": "URL senarai main disalin ke papan keratan",
   "current-playlist": "Senarai main semasa",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "Padam \" {{title}} \"? Ini tidak boleh dibuat asal.",
   "delete-playlist-failed": "Tidak dapat memadam senarai main.",
   "collapsed-tab-shared-label": "{{title}} — sesi kongsi, {{count}} hadir",
-  "playlist-add-mode-label": "Jenis barang"
+  "playlist-add-mode-label": "Jenis barang",
+  "session-host-reconnecting": "Menyambung semula ke sesi…",
+  "session-host-reconnected": "Disambung semula ke sesi",
+  "session-host-left": "Hos telah pergi — anda telah dialih keluar daripada sesi"
 }

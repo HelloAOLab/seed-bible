@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Навігація",
   "session-settings-section-sharing": "Спільне використання",
   "session-settings-section-participants": "Учасники",
-
   "shared": "Спільний доступ",
   "host": "Хост",
   "co-host": "Співведучий",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Завершити сеанс",
   "dont-show-again": "Не показувати це більше",
   "discover": "Відкрийте",
-
   "playlists": "Списки відтворення",
   "annotations": "Анотації",
   "cross-references": "Перехресні посилання",
@@ -367,16 +365,13 @@
   "playlist-add-item": "Додати елемент",
   "playlist-edit-item": "Редагувати елемент",
   "playlist-save-item": "Зберегти зміни",
-
   "playlist-add-scripture-placeholder": "наприклад, Іван 3 або Іван 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Додати елемент",
   "playlist-add-scripture-error": "Не вдалося знайти це посилання",
   "playlist-add-link-error": "Введіть дійсну URL-адресу",
   "playlist-add-link-embed": "Вбудувати це посилання",
   "play-playlist": "Відтворити список відтворення",
-
   "stop": "СТІЙ",
   "queue": "Черга",
   "previous": "Попередній",
@@ -388,7 +383,6 @@
   "editor-align-center": "Вирівняти по центру",
   "editor-align-right": "Вирівняти по правому краю",
   "editor-align-justify": "Вирівнювання",
-
   "share-playlist": "Поділитися списком відтворення",
   "playlist-url-copied": "URL-адресу списку відтворення скопійовано в буфер обміну",
   "current-playlist": "Поточний плейлист",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "Видалити \" {{title}} \"? Цю дію не можна скасувати.",
   "delete-playlist-failed": "Не вдалося видалити список відтворення.",
   "collapsed-tab-shared-label": "{{title}} — спільний сеанс, присутніх {{count}}",
-  "playlist-add-mode-label": "Тип елемента"
+  "playlist-add-mode-label": "Тип елемента",
+  "session-host-reconnecting": "Повторне підключення до сеансу…",
+  "session-host-reconnected": "Повторно підключено до сеансу",
+  "session-host-left": "Ведучий пішов — вас виключили із сеансу"
 }

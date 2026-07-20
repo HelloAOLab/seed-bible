@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "ការរុករក",
   "session-settings-section-sharing": "ការចែករំលែក",
   "session-settings-section-participants": "អ្នកចូលរួម",
-
   "shared": "បានចែករំលែក",
   "host": "ម្ចាស់ផ្ទះ",
   "co-host": "សហម្ចាស់ផ្ទះ",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "បញ្ចប់វគ្គ",
   "dont-show-again": "កុំបង្ហាញវាម្តងទៀត",
   "discover": "ស្វែងយល់",
-
   "playlists": "បញ្ជីចាក់",
   "annotations": "ចំណារពន្យល់",
   "cross-references": "ឯកសារយោងឆ្លង",
@@ -367,16 +365,13 @@
   "playlist-add-item": "បន្ថែម​ធាតុ",
   "playlist-edit-item": "កែសម្រួល​ធាតុ",
   "playlist-save-item": "រក្សាទុកការផ្លាស់ប្តូរ",
-
   "playlist-add-scripture-placeholder": "ឧ. យ៉ូហាន ៣ ឬ យ៉ូហាន ៣:១៦",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "បន្ថែម​ធាតុ",
   "playlist-add-scripture-error": "មិនអាចរកឃើញឯកសារយោងនោះទេ",
   "playlist-add-link-error": "បញ្ចូល URL ដែលត្រឹមត្រូវ",
   "playlist-add-link-embed": "បង្កប់តំណភ្ជាប់នេះ",
   "play-playlist": "ចាក់​បញ្ជី​ចាក់",
-
   "stop": "ឈប់",
   "queue": "ជួរ",
   "previous": "មុន",
@@ -388,7 +383,6 @@
   "editor-align-center": "តម្រឹម​កណ្តាល",
   "editor-align-right": "តម្រឹម​ទៅ​ស្តាំ",
   "editor-align-justify": "បញ្ជាក់​ឲ្យ​ច្បាស់",
-
   "share-playlist": "ចែករំលែកបញ្ជីចាក់",
   "playlist-url-copied": "URL បញ្ជីចាក់ត្រូវបានចម្លងទៅក្ដារតម្បៀតខ្ទាស់",
   "current-playlist": "បញ្ជីចាក់បច្ចុប្បន្ន",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "លុប \" {{title}} \"? មិនអាច​ធ្វើ​វិញ​បាន​ទេ។",
   "delete-playlist-failed": "មិនអាចលុបបញ្ជីចាក់បានទេ។",
   "collapsed-tab-shared-label": "{{title}} — វគ្គដែលបានចែករំលែក, {{count}} មានវត្តមាន",
-  "playlist-add-mode-label": "ប្រភេទ​វត្ថុ"
+  "playlist-add-mode-label": "ប្រភេទ​វត្ថុ",
+  "session-host-reconnecting": "កំពុងភ្ជាប់ទៅវគ្គឡើងវិញ…",
+  "session-host-reconnected": "បានភ្ជាប់ទៅវគ្គឡើងវិញ",
+  "session-host-left": "ម្ចាស់ផ្ទះបានចាកចេញ — អ្នកត្រូវបានដកចេញពីវគ្គ"
 }

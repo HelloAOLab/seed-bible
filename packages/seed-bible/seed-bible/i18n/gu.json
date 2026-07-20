@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "નેવિગેશન",
   "session-settings-section-sharing": "શેરિંગ",
   "session-settings-section-participants": "સહભાગીઓ",
-
   "shared": "શેર કરેલ",
   "host": "યજમાન",
   "co-host": "સહ-યજમાન",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "સત્ર સમાપ્ત કરો",
   "dont-show-again": "આ ફરી બતાવશો નહીં",
   "discover": "શોધો",
-
   "playlists": "પ્લેલિસ્ટ્સ",
   "annotations": "ટીકાઓ",
   "cross-references": "ક્રોસ રેફરન્સ",
@@ -367,16 +365,13 @@
   "playlist-add-item": "આઇટમ ઉમેરો",
   "playlist-edit-item": "આઇટમ સંપાદિત કરો",
   "playlist-save-item": "ફેરફારો સાચવો",
-
   "playlist-add-scripture-placeholder": "દા.ત. યોહાન ૩ અથવા યોહાન ૩:૧૬",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "આઇટમ ઉમેરો",
   "playlist-add-scripture-error": "તે સંદર્ભ શોધી શકાયો નથી",
   "playlist-add-link-error": "માન્ય URL દાખલ કરો",
   "playlist-add-link-embed": "આ લિંક એમ્બેડ કરો",
   "play-playlist": "પ્લેલિસ્ટ ચલાવો",
-
   "stop": "બંધ",
   "queue": "કતાર",
   "previous": "પાછલું",
@@ -388,7 +383,6 @@
   "editor-align-center": "મધ્યમાં સંરેખિત કરો",
   "editor-align-right": "જમણે સંરેખિત કરો",
   "editor-align-justify": "સમન્વયિત કરો",
-
   "share-playlist": "પ્લેલિસ્ટ શેર કરો",
   "playlist-url-copied": "પ્લેલિસ્ટ URL ક્લિપબોર્ડ પર કૉપિ કર્યું",
   "current-playlist": "વર્તમાન પ્લેલિસ્ટ",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "\" {{title}} \" કાઢી નાખો છો? આ પૂર્વવત્ કરી શકાતું નથી.",
   "delete-playlist-failed": "પ્લેલિસ્ટ કાઢી શકાઈ નથી.",
   "collapsed-tab-shared-label": "{{title}} — શેર કરેલ સત્ર, {{count}} હાજર",
-  "playlist-add-mode-label": "વસ્તુનો પ્રકાર"
+  "playlist-add-mode-label": "વસ્તુનો પ્રકાર",
+  "session-host-reconnecting": "સત્ર સાથે ફરીથી કનેક્ટ કરી રહ્યું છે...",
+  "session-host-reconnected": "સત્ર સાથે ફરીથી કનેક્ટ થયા",
+  "session-host-left": "હોસ્ટ ચાલ્યો ગયો — તમને સત્રમાંથી દૂર કરવામાં આવ્યા"
 }

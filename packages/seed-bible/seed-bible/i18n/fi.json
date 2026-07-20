@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigointi",
   "session-settings-section-sharing": "Jakaminen",
   "session-settings-section-participants": "Osallistujat",
-
   "shared": "Jaettu",
   "host": "Isäntä",
   "co-host": "Yhteisisäntä",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Lopeta istunto",
   "dont-show-again": "Älä näytä tätä uudelleen",
   "discover": "Tutustu",
-
   "playlists": "Soittolistat",
   "annotations": "Merkinnät",
   "cross-references": "Ristiviittaukset",
@@ -367,16 +365,13 @@
   "playlist-add-item": "Lisää kohde",
   "playlist-edit-item": "Muokkaa kohdetta",
   "playlist-save-item": "Tallenna muutokset",
-
   "playlist-add-scripture-placeholder": "esim. Joh. 3 tai Joh. 3:16",
-
   "playlist-add-link-placeholder": "https://esimerkki.com",
   "playlist-add-button": "Lisää kohde",
   "playlist-add-scripture-error": "En löytänyt kyseistä viitettä",
   "playlist-add-link-error": "Anna kelvollinen URL-osoite",
   "playlist-add-link-embed": "Upota tämä linkki",
   "play-playlist": "Toista soittolista",
-
   "stop": "Stop",
   "queue": "Jonottaa",
   "previous": "Edellinen",
@@ -388,7 +383,6 @@
   "editor-align-center": "Tasaa keskelle",
   "editor-align-right": "Tasaa oikealle",
   "editor-align-justify": "Perustella",
-
   "share-playlist": "Jaa soittolista",
   "playlist-url-copied": "Soittolistan URL-osoite kopioitu leikepöydälle",
   "current-playlist": "Nykyinen soittolista",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "Poistetaanko \" {{title}} \"? Tätä ei voi perua.",
   "delete-playlist-failed": "Soittolistan poistaminen epäonnistui.",
   "collapsed-tab-shared-label": "{{title}} — jaettu istunto, läsnä {{count}}",
-  "playlist-add-mode-label": "Tuotetyyppi"
+  "playlist-add-mode-label": "Tuotetyyppi",
+  "session-host-reconnecting": "Yhdistetään uudelleen istuntoon…",
+  "session-host-reconnected": "Yhdistetty uudelleen istuntoon",
+  "session-host-left": "Isäntä lähti — sinut poistettiin istunnosta"
 }

@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "ການນຳທາງ",
   "session-settings-section-sharing": "ການແບ່ງປັນ",
   "session-settings-section-participants": "ຜູ້ເຂົ້າຮ່ວມ",
-
   "shared": "ແບ່ງປັນແລ້ວ",
   "host": "ໂຮສ",
   "co-host": "ຮ່ວມເປັນເຈົ້າພາບ",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "ສິ້ນສຸດກອງປະຊຸມ",
   "dont-show-again": "ຢ່າສະແດງສິ່ງນີ້ອີກ",
   "discover": "ຄົ້ນພົບ",
-
   "playlists": "ລາຍການເພງ",
   "annotations": "ຄຳອະທິບາຍປະກອບ",
   "cross-references": "ການອ້າງອີງຂ້າມ",
@@ -367,16 +365,13 @@
   "playlist-add-item": "ເພີ່ມລາຍການ",
   "playlist-edit-item": "ແກ້ໄຂລາຍການ",
   "playlist-save-item": "ບັນທຶກການປ່ຽນແປງ",
-
   "playlist-add-scripture-placeholder": "ຕົວຢ່າງ ໂຢຮັນ 3 ຫຼື ໂຢຮັນ 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "ເພີ່ມລາຍການ",
   "playlist-add-scripture-error": "ບໍ່ສາມາດຊອກຫາເອກະສານອ້າງອີງນັ້ນໄດ້",
   "playlist-add-link-error": "ໃສ່ URL ທີ່ຖືກຕ້ອງ",
   "playlist-add-link-embed": "ຝັງລິ້ງນີ້",
   "play-playlist": "ຫຼິ້ນລາຍການເພງ",
-
   "stop": "ຢຸດ",
   "queue": "ຄິວ",
   "previous": "ກ່ອນໜ້ານີ້",
@@ -388,7 +383,6 @@
   "editor-align-center": "ຈັດກາງ",
   "editor-align-right": "ຈັດໄປທາງຂວາ",
   "editor-align-justify": "ຈັດໃຫ້ຖືກຕ້ອງ",
-
   "share-playlist": "ແບ່ງປັນລາຍການຫຼິ້ນ",
   "playlist-url-copied": "ສຳເນົາ URL ລາຍການເພງໄປໃສ່ຄລິບບອດແລ້ວ",
   "current-playlist": "ລາຍການຫຼິ້ນປັດຈຸບັນ",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "ລຶບ \" {{title}} \" ບໍ? ຂັ້ນຕອນນີ້ບໍ່ສາມາດຍົກເລີກໄດ້.",
   "delete-playlist-failed": "ບໍ່ສາມາດລຶບລາຍການຫຼິ້ນໄດ້.",
   "collapsed-tab-shared-label": "{{title}} — ເຊດຊັນທີ່ແບ່ງປັນ, ມີຢູ່ {{count}}",
-  "playlist-add-mode-label": "ປະເພດລາຍການ"
+  "playlist-add-mode-label": "ປະເພດລາຍການ",
+  "session-host-reconnecting": "ກຳລັງເຊື່ອມຕໍ່ກັບເຊດຊັນຄືນໃໝ່…",
+  "session-host-reconnected": "ເຊື່ອມຕໍ່ກັບເຊດຊັນຄືນໃໝ່ແລ້ວ",
+  "session-host-left": "ຜູ້ຈັດງານໄດ້ອອກໄປແລ້ວ — ທ່ານຖືກລຶບອອກຈາກກອງປະຊຸມແລ້ວ"
 }

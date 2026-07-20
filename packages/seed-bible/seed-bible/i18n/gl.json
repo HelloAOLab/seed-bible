@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navegación",
   "session-settings-section-sharing": "Compartir",
   "session-settings-section-participants": "Participantes",
-
   "shared": "Compartido",
   "host": "Anfitrión",
   "co-host": "Copresentador/a",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Rematar sesión",
   "dont-show-again": "Non volver mostrar isto",
   "discover": "Descubrir",
-
   "playlists": "Listas de reprodución",
   "annotations": "Anotacións",
   "cross-references": "Referencias cruzadas",
@@ -367,16 +365,13 @@
   "playlist-add-item": "Engadir elemento",
   "playlist-edit-item": "Editar elemento",
   "playlist-save-item": "Gardar cambios",
-
   "playlist-add-scripture-placeholder": "por exemplo, Xoán 3 ou Xoán 3:16",
-
   "playlist-add-link-placeholder": "https://exemplo.com",
   "playlist-add-button": "Engadir elemento",
   "playlist-add-scripture-error": "Non se puido atopar esa referencia",
   "playlist-add-link-error": "Introduza un URL válido",
   "playlist-add-link-embed": "Incrustar esta ligazón",
   "play-playlist": "Reproducir lista de reprodución",
-
   "stop": "Parar",
   "queue": "Fila",
   "previous": "Anterior",
@@ -388,7 +383,6 @@
   "editor-align-center": "Aliñar no centro",
   "editor-align-right": "Aliñar á dereita",
   "editor-align-justify": "Xustificar",
-
   "share-playlist": "Compartir lista de reprodución",
   "playlist-url-copied": "URL da lista de reprodución copiada no portapapeis",
   "current-playlist": "Lista de reprodución actual",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "Eliminar \" {{title}} \"? Isto non se pode desfacer.",
   "delete-playlist-failed": "Non se puido eliminar a lista de reprodución.",
   "collapsed-tab-shared-label": "{{title}} — sesión compartida, {{count}} presentes",
-  "playlist-add-mode-label": "Tipo de elemento"
+  "playlist-add-mode-label": "Tipo de elemento",
+  "session-host-reconnecting": "Reconectando coa sesión…",
+  "session-host-reconnected": "Volveu conectarse á sesión",
+  "session-host-left": "O anfitrión marchou; elimináronte da sesión"
 }

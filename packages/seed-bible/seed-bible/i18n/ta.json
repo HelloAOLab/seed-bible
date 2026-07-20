@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "வழிசெலுத்தல்",
   "session-settings-section-sharing": "பகிர்வு",
   "session-settings-section-participants": "பங்கேற்பாளர்கள்",
-
   "shared": "பகிரப்பட்டது",
   "host": "ஹோஸ்ட்",
   "co-host": "இணை தொகுப்பாளர்",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "அமர்வை முடிக்கவும்",
   "dont-show-again": "இதை மீண்டும் காட்ட வேண்டாம்",
   "discover": "கண்டுபிடிப்பாளர்",
-
   "playlists": "பிளேலிஸ்ட்கள்",
   "annotations": "குறிப்புகள்",
   "cross-references": "குறுக்கு குறிப்புகள்",
@@ -367,16 +365,13 @@
   "playlist-add-item": "உருப்படியைச் சேர்க்கவும்",
   "playlist-edit-item": "உருப்படியைத் திருத்து",
   "playlist-save-item": "மாற்றங்களைச் சேமிக்கவும்",
-
   "playlist-add-scripture-placeholder": "உதாரணமாக யோவான் 3 அல்லது யோவான் 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "உருப்படியைச் சேர்க்கவும்",
   "playlist-add-scripture-error": "அந்தக் குறிப்பைக் கண்டுபிடிக்க முடியவில்லை.",
   "playlist-add-link-error": "சரியான URL-ஐ உள்ளிடவும்",
   "playlist-add-link-embed": "இந்த இணைப்பை உட்பொதி",
   "play-playlist": "பிளேலிஸ்ட்",
-
   "stop": "நிறுத்து",
   "queue": "வரிசை",
   "previous": "முந்தைய",
@@ -388,7 +383,6 @@
   "editor-align-center": "மையத்தில் சீரமைக்கவும்",
   "editor-align-right": "சரியாக சீரமைக்கவும்",
   "editor-align-justify": "நியாயப்படுத்துங்கள்",
-
   "share-playlist": "பிளேலிஸ்ட்டைப் பகிரவும்",
   "playlist-url-copied": "பிளேலிஸ்ட் URL கிளிப்போர்டுக்கு நகலெடுக்கப்பட்டது.",
   "current-playlist": "தற்போதைய பிளேலிஸ்ட்",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "\" {{title}} \" என்பதை நீக்கவா? இதை மீண்டும் பழைய நிலைக்குக் கொண்டுவர முடியாது.",
   "delete-playlist-failed": "பிளேலிஸ்ட்டை நீக்க முடியவில்லை.",
   "collapsed-tab-shared-label": "{{title}} — பகிரப்பட்ட அமர்வு, {{count}} பேர் கலந்துகொள்கின்றனர்",
-  "playlist-add-mode-label": "பொருள் வகை"
+  "playlist-add-mode-label": "பொருள் வகை",
+  "session-host-reconnecting": "அமர்வுடன் மீண்டும் இணைகிறது…",
+  "session-host-reconnected": "அமர்வுடன் மீண்டும் இணைக்கப்பட்டது",
+  "session-host-left": "தொகுப்பாளர் வெளியேறினார் — நீங்கள் அமர்விலிருந்து நீக்கப்பட்டீர்கள்."
 }

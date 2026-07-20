@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Навігацыя",
   "session-settings-section-sharing": "Сумеснае выкарыстанне",
   "session-settings-section-participants": "Удзельнікі",
-
   "shared": "Агульны доступ",
   "host": "Гаспадар",
   "co-host": "Сувядучы",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Завяршыць сеанс",
   "dont-show-again": "Больш не паказваць",
   "discover": "Адкрыйце для сябе",
-
   "playlists": "Плэйлісты",
   "annotations": "Анатацыі",
   "cross-references": "Перакрыжаваныя спасылкі",
@@ -367,16 +365,13 @@
   "playlist-add-item": "Дадаць элемент",
   "playlist-edit-item": "Рэдагаваць элемент",
   "playlist-save-item": "Захаваць змены",
-
   "playlist-add-scripture-placeholder": "напрыклад, Ян 3 або Ян 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Дадаць элемент",
   "playlist-add-scripture-error": "Не знайшоў гэтай спасылкі",
   "playlist-add-link-error": "Увядзіце сапраўдны URL-адрас",
   "playlist-add-link-embed": "Убудаваць гэту спасылку",
   "play-playlist": "Прайграць плэйліст",
-
   "stop": "Спыніцца",
   "queue": "Чарга",
   "previous": "Папярэдні",
@@ -388,7 +383,6 @@
   "editor-align-center": "Выраўнаваць па цэнтры",
   "editor-align-right": "Выраўнаваць па правым краі",
   "editor-align-justify": "Выраўнаваць па шырыні",
-
   "share-playlist": "Падзяліцца плэйлістам",
   "playlist-url-copied": "URL-адрас плэйліста скапіраваны ў буфер абмену",
   "current-playlist": "Бягучы плэйліст",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "Выдаліць \" {{title}} \"? Гэта нельга адмяніць.",
   "delete-playlist-failed": "Не атрымалася выдаліць плэйліст.",
   "collapsed-tab-shared-label": "{{title}} — агульная сесія, {{count}} прысутных",
-  "playlist-add-mode-label": "Тып элемента"
+  "playlist-add-mode-label": "Тып элемента",
+  "session-host-reconnecting": "Паўторнае падключэнне да сесіі…",
+  "session-host-reconnected": "Зноў падключаны да сесіі",
+  "session-host-left": "Вядучы сышоў — вас выдалілі з сесіі"
 }

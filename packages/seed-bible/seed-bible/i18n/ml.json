@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "നാവിഗേഷൻ",
   "session-settings-section-sharing": "പങ്കിടൽ",
   "session-settings-section-participants": "പങ്കെടുക്കുന്നവർ",
-
   "shared": "പങ്കിട്ടു",
   "host": "ഹോസ്റ്റ്",
   "co-host": "സഹ-ഹോസ്റ്റ്",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "സെഷൻ അവസാനിപ്പിക്കുക",
   "dont-show-again": "ഇത് വീണ്ടും കാണിക്കരുത്",
   "discover": "കണ്ടെത്തുക",
-
   "playlists": "പ്ലേലിസ്റ്റുകൾ",
   "annotations": "വ്യാഖ്യാനങ്ങൾ",
   "cross-references": "ക്രോസ് റഫറൻസുകൾ",
@@ -367,16 +365,13 @@
   "playlist-add-item": "ഇനം ചേർക്കുക",
   "playlist-edit-item": "ഇനം എഡിറ്റ് ചെയ്യുക",
   "playlist-save-item": "മാറ്റങ്ങൾ സംരക്ഷിക്കുക",
-
   "playlist-add-scripture-placeholder": "ഉദാ: യോഹന്നാൻ 3 അല്ലെങ്കിൽ യോഹന്നാൻ 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "ഇനം ചേർക്കുക",
   "playlist-add-scripture-error": "ആ റഫറൻസ് കണ്ടെത്താൻ കഴിഞ്ഞില്ല.",
   "playlist-add-link-error": "സാധുവായ ഒരു URL നൽകുക",
   "playlist-add-link-embed": "ഈ ലിങ്ക് ഉൾച്ചേർക്കുക",
   "play-playlist": "പ്ലേലിസ്റ്റ് പ്ലേ ചെയ്യുക",
-
   "stop": "നിർത്തുക",
   "queue": "ക്യൂ",
   "previous": "മുമ്പത്തേത്",
@@ -388,7 +383,6 @@
   "editor-align-center": "മധ്യഭാഗത്ത് വിന്യസിക്കുക",
   "editor-align-right": "വലതുവശത്ത് വിന്യസിക്കുക",
   "editor-align-justify": "ന്യായീകരിക്കുക",
-
   "share-playlist": "പ്ലേലിസ്റ്റ് പങ്കിടുക",
   "playlist-url-copied": "പ്ലേലിസ്റ്റ് URL ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി",
   "current-playlist": "നിലവിലെ പ്ലേലിസ്റ്റ്",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "\" {{title}} \" ഇല്ലാതാക്കണോ? ഇത് പഴയപടിയാക്കാൻ കഴിയില്ല.",
   "delete-playlist-failed": "പ്ലേലിസ്റ്റ് ഇല്ലാതാക്കാൻ കഴിഞ്ഞില്ല.",
   "collapsed-tab-shared-label": "{{title}} — പങ്കിട്ട സെഷൻ, {{count}} പേർ ഉണ്ട്",
-  "playlist-add-mode-label": "ഇന തരം"
+  "playlist-add-mode-label": "ഇന തരം",
+  "session-host-reconnecting": "സെഷനിലേക്ക് വീണ്ടും കണക്റ്റുചെയ്യുന്നു...",
+  "session-host-reconnected": "സെഷനിലേക്ക് വീണ്ടും ബന്ധിപ്പിച്ചു",
+  "session-host-left": "ഹോസ്റ്റ് പോയി — നിങ്ങളെ സെഷനിൽ നിന്ന് നീക്കം ചെയ്തു"
 }

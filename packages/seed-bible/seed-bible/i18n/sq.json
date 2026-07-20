@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigimi",
   "session-settings-section-sharing": "Ndarja",
   "session-settings-section-participants": "Pjesëmarrësit",
-
   "shared": "I ndarë",
   "host": "Pritës",
   "co-host": "Bashkë-prezantues",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Përfundo seancën",
   "dont-show-again": "Mos e shfaq më këtë",
   "discover": "Zbulo",
-
   "playlists": "Listat e dëgjimit",
   "annotations": "Shënime",
   "cross-references": "Referenca të kryqëzuara",
@@ -367,16 +365,13 @@
   "playlist-add-item": "Shto artikull",
   "playlist-edit-item": "Modifiko artikullin",
   "playlist-save-item": "Ruaj ndryshimet",
-
   "playlist-add-scripture-placeholder": "p.sh. Gjoni 3 ose Gjoni 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Shto artikull",
   "playlist-add-scripture-error": "Nuk munda ta gjej atë referencë",
   "playlist-add-link-error": "Fut një URL të vlefshme",
   "playlist-add-link-embed": "Vendos këtë lidhje",
   "play-playlist": "Luaj listën e luajtjes për luajtje",
-
   "stop": "Ndalo",
   "queue": "Radhë",
   "previous": "Mëparshme",
@@ -388,7 +383,6 @@
   "editor-align-center": "Vendos në qendër",
   "editor-align-right": "Vendos në të djathtë",
   "editor-align-justify": "Drejtvizo",
-
   "share-playlist": "Ndani listën e luajtjes për të ndarë.",
   "playlist-url-copied": "URL-ja e listës për luajtje u kopjua në kujtesën e përkohshme",
   "current-playlist": "Lista aktuale e luajtjes për luajtje është ajo e listave të luajtjes, të cilat janë aktualisht në dispozicion.",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "Të fshihet \" {{title}} \"? Kjo nuk mund të zhbëhet.",
   "delete-playlist-failed": "Lista e luajtjes nuk mund të fshihej.",
   "collapsed-tab-shared-label": "{{title}} — seancë e ndarë, {{count}} i pranishëm",
-  "playlist-add-mode-label": "Lloji i artikullit"
+  "playlist-add-mode-label": "Lloji i artikullit",
+  "session-host-reconnecting": "Duke u rilidhur me seancën…",
+  "session-host-reconnected": "U rilidh me seancën",
+  "session-host-left": "Organizatori u largua — ju u hoqët nga seanca"
 }

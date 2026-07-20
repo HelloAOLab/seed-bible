@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "ניווט",
   "session-settings-section-sharing": "שיתוף",
   "session-settings-section-participants": "משתתפים",
-
   "shared": "מְשׁוּתָף",
   "host": "מְאָרֵחַ",
   "co-host": "מארח משותף",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "סיום סשן",
   "dont-show-again": "אל תציג את זה שוב",
   "discover": "לְגַלוֹת",
-
   "playlists": "פלייליסטים",
   "annotations": "הערות",
   "cross-references": "הפניות צולבות",
@@ -367,16 +365,13 @@
   "playlist-add-item": "הוסף פריט",
   "playlist-edit-item": "עריכת פריט",
   "playlist-save-item": "שמירת שינויים",
-
   "playlist-add-scripture-placeholder": "לדוגמה יוחנן 3 או יוחנן 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "הוסף פריט",
   "playlist-add-scripture-error": "לא הצלחתי למצוא את ההפניה הזו",
   "playlist-add-link-error": "הזן כתובת URL חוקית",
   "playlist-add-link-embed": "הטמע קישור זה",
   "play-playlist": "הפעלת רשימת השמעה",
-
   "stop": "לְהַפְסִיק",
   "queue": "תוֹר",
   "previous": "קוֹדֵם",
@@ -388,7 +383,6 @@
   "editor-align-center": "יישור למרכז",
   "editor-align-right": "יישור ימינה",
   "editor-align-justify": "לְהַצְדִיק",
-
   "share-playlist": "שתף רשימת השמעה",
   "playlist-url-copied": "כתובת ה-URL של רשימת ההשמעה הועתקה ללוח",
   "current-playlist": "רשימת ההשמעה הנוכחית",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "למחוק את \" {{title}} \"? לא ניתן לבטל פעולה זו.",
   "delete-playlist-failed": "לא ניתן היה למחוק את רשימת ההשמעה.",
   "collapsed-tab-shared-label": "{{title}} — סשן משותף, {{count}} נוכחים",
-  "playlist-add-mode-label": "סוג הפריט"
+  "playlist-add-mode-label": "סוג הפריט",
+  "session-host-reconnecting": "מתחבר מחדש לסשן...",
+  "session-host-reconnected": "התחבר מחדש לסשן",
+  "session-host-left": "המארח עזב - הוסרת מהסשן"
 }

@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "ناوبری",
   "session-settings-section-sharing": "اشتراک‌گذاری",
   "session-settings-section-participants": "شرکت‌کنندگان",
-
   "shared": "اشتراکی",
   "host": "میزبان",
   "co-host": "میزبان مشترک",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "پایان جلسه",
   "dont-show-again": "اینو دیگه نشون نده",
   "discover": "کشف کنید",
-
   "playlists": "لیست‌های پخش",
   "annotations": "حاشیه‌نویسی‌ها",
   "cross-references": "ارجاعات متقابل",
@@ -367,16 +365,13 @@
   "playlist-add-item": "اضافه کردن آیتم",
   "playlist-edit-item": "ویرایش مورد",
   "playlist-save-item": "ذخیره تغییرات",
-
   "playlist-add-scripture-placeholder": "مثلاً یوحنا ۳ یا یوحنا ۳:۱۶",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "اضافه کردن آیتم",
   "playlist-add-scripture-error": "آن مرجع را پیدا نکردم",
   "playlist-add-link-error": "یک URL معتبر وارد کنید",
   "playlist-add-link-embed": "این لینک را جاسازی کنید",
   "play-playlist": "پخش لیست پخش",
-
   "stop": "توقف",
   "queue": "صف",
   "previous": "قبلی",
@@ -388,7 +383,6 @@
   "editor-align-center": "مرکز را تراز کنید",
   "editor-align-right": "ترازبندی از راست",
   "editor-align-justify": "توجیه کردن",
-
   "share-playlist": "اشتراک‌گذاری لیست پخش",
   "playlist-url-copied": "آدرس اینترنتی لیست پخش در کلیپ‌بورد کپی شد",
   "current-playlist": "لیست پخش فعلی",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "حذف « {{title}} »؟ این قابل بازگشت نیست.",
   "delete-playlist-failed": "نتونستم لیست پخش رو حذف کنم.",
   "collapsed-tab-shared-label": "{{title}} — جلسه مشترک، {{count}} موجود",
-  "playlist-add-mode-label": "نوع کالا"
+  "playlist-add-mode-label": "نوع کالا",
+  "session-host-reconnecting": "اتصال مجدد به جلسه…",
+  "session-host-reconnected": "دوباره به جلسه وصل شد",
+  "session-host-left": "میزبان رفت — شما از جلسه حذف شدید"
 }

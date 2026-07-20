@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigacija",
   "session-settings-section-sharing": "Dijeljenje",
   "session-settings-section-participants": "Sudionici",
-
   "shared": "Dijeljeno",
   "host": "Domaćin",
   "co-host": "Suvoditelj",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Završi sesiju",
   "dont-show-again": "Ne prikazuj ovo više",
   "discover": "Otkriti",
-
   "playlists": "Popisi za reprodukciju",
   "annotations": "Anotacije",
   "cross-references": "Unakrsne reference",
@@ -367,16 +365,13 @@
   "playlist-add-item": "Dodaj stavku",
   "playlist-edit-item": "Uredi stavku",
   "playlist-save-item": "Spremi promjene",
-
   "playlist-add-scripture-placeholder": "npr. Ivan 3 ili Ivan 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Dodaj stavku",
   "playlist-add-scripture-error": "Nisam mogao pronaći tu referencu",
   "playlist-add-link-error": "Unesite valjani URL",
   "playlist-add-link-embed": "Ugradi ovu poveznicu",
   "play-playlist": "Reproduciraj popis za reprodukciju",
-
   "stop": "Stop",
   "queue": "Red",
   "previous": "Prethodno",
@@ -388,7 +383,6 @@
   "editor-align-center": "Poravnaj po sredini",
   "editor-align-right": "Poravnaj desno",
   "editor-align-justify": "Opravdati",
-
   "share-playlist": "Podijeli popis za reprodukciju",
   "playlist-url-copied": "URL popisa za reprodukciju kopiran u međuspremnik",
   "current-playlist": "Trenutna popis pjesama za reprodukciju",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "Izbrisati \" {{title}} \"? To se ne može poništiti.",
   "delete-playlist-failed": "Popis za reprodukciju nije moguće izbrisati.",
   "collapsed-tab-shared-label": "{{title}} — dijeljena sesija, {{count}} prisutnih",
-  "playlist-add-mode-label": "Vrsta stavke"
+  "playlist-add-mode-label": "Vrsta stavke",
+  "session-host-reconnecting": "Ponovno povezivanje sa sesijom…",
+  "session-host-reconnected": "Ponovno povezan sa sesijom",
+  "session-host-left": "Domaćin je otišao — uklonjeni ste iz sesije"
 }

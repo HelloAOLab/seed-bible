@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Навигация",
   "session-settings-section-sharing": "Споделяне",
   "session-settings-section-participants": "Участници",
-
   "shared": "Споделено",
   "host": "Домакин",
   "co-host": "Съводещ",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Край на сесията",
   "dont-show-again": "Не показвай това отново",
   "discover": "Открийте",
-
   "playlists": "Плейлисти",
   "annotations": "Анотации",
   "cross-references": "Кръстосани препратки",
@@ -367,16 +365,13 @@
   "playlist-add-item": "Добавяне на елемент",
   "playlist-edit-item": "Редактиране на елемент",
   "playlist-save-item": "Запазване на промените",
-
   "playlist-add-scripture-placeholder": "напр. Йоан 3 или Йоан 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Добавяне на елемент",
   "playlist-add-scripture-error": "Не можах да намеря тази препратка",
   "playlist-add-link-error": "Въведете валиден URL адрес",
   "playlist-add-link-embed": "Вграждане на тази връзка",
   "play-playlist": "Пусни плейлист",
-
   "stop": "Спри",
   "queue": "Опашка",
   "previous": "Предишен",
@@ -388,7 +383,6 @@
   "editor-align-center": "Подравняване по центъра",
   "editor-align-right": "Подравняване вдясно",
   "editor-align-justify": "Подравняване",
-
   "share-playlist": "Споделяне на плейлист",
   "playlist-url-copied": "URL адресът на плейлиста е копиран в буферната памет",
   "current-playlist": "Текущ плейлист",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "Да се ​​изтрие ли „ {{title}} “? Това не може да се отмени.",
   "delete-playlist-failed": "Плейлистът не можа да бъде изтрит.",
   "collapsed-tab-shared-label": "{{title}} — споделена сесия, {{count}} присъстващи",
-  "playlist-add-mode-label": "Тип артикул"
+  "playlist-add-mode-label": "Тип артикул",
+  "session-host-reconnecting": "Повторно свързване към сесията…",
+  "session-host-reconnected": "Възстановена връзка със сесията",
+  "session-host-left": "Домакинът напусна — бяхте отстранени от сесията"
 }

@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigation",
   "session-settings-section-sharing": "Partage",
   "session-settings-section-participants": "Participants",
-
   "shared": "Commun",
   "host": "Hôte",
   "co-host": "Co-animateur",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Fin de la session",
   "dont-show-again": "Ne plus afficher ceci",
   "discover": "Découvrir",
-
   "playlists": "Listes de lecture",
   "annotations": "Annotations",
   "cross-references": "Références croisées",
@@ -367,16 +365,13 @@
   "playlist-add-item": "Ajouter un élément",
   "playlist-edit-item": "Modifier l'élément",
   "playlist-save-item": "Enregistrer les modifications",
-
   "playlist-add-scripture-placeholder": "par exemple Jean 3 ou Jean 3:16",
-
   "playlist-add-link-placeholder": "https://exemple.com",
   "playlist-add-button": "Ajouter un élément",
   "playlist-add-scripture-error": "Je n'ai pas trouvé cette référence.",
   "playlist-add-link-error": "Saisissez une URL valide",
   "playlist-add-link-embed": "Intégrez ce lien",
   "play-playlist": "Écouter la playlist",
-
   "stop": "Arrêt",
   "queue": "File d'attente",
   "previous": "Précédent",
@@ -388,7 +383,6 @@
   "editor-align-center": "Centre d'alignement",
   "editor-align-right": "Alignez à droite",
   "editor-align-justify": "Justifier",
-
   "share-playlist": "Partager la playlist",
   "playlist-url-copied": "URL de la playlist copiée dans le presse-papiers",
   "current-playlist": "Playlist actuelle",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "Supprimer « {{title}} » ? Cette action est irréversible.",
   "delete-playlist-failed": "Impossible de supprimer la playlist.",
   "collapsed-tab-shared-label": "{{title}} — session partagée, {{count}} présents",
-  "playlist-add-mode-label": "Type d'article"
+  "playlist-add-mode-label": "Type d'article",
+  "session-host-reconnecting": "Reconnexion à la session…",
+  "session-host-reconnected": "Reconnecté à la session",
+  "session-host-left": "L'animateur est parti — vous avez été retiré de la session"
 }

@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "ምድህሳስ",
   "session-settings-section-sharing": "ሼር ምግባር",
   "session-settings-section-participants": "ተሳተፍቲ",
-
   "shared": "ሼር ዝገበረ",
   "host": "መዳለዊ",
   "co-host": "ሓባራዊ ኣአንጋዲ",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "ክፍለ ግዜ ምዝዛም",
   "dont-show-again": "እዚ ዳግማይ ኣይተርእይዎ።",
   "discover": "ረኸበ",
-
   "playlists": "ዝርዝር ደርፍታት",
   "annotations": "መግለጺታት (annotations)",
   "cross-references": "መስቀላዊ መወከሲታት",
@@ -367,16 +365,13 @@
   "playlist-add-item": "ኣቕሓ ምውሳኽ",
   "playlist-edit-item": "ኣርትዖት ኣቕሓ",
   "playlist-save-item": "ለውጢ ምዕቃብ",
-
   "playlist-add-scripture-placeholder": "ንኣብነት ዮሃንስ 3 ወይ ዮሃንስ 3፡16",
-
   "playlist-add-link-placeholder": "https://ኣብነት.ኮም",
   "playlist-add-button": "ኣቕሓ ምውሳኽ",
   "playlist-add-scripture-error": "ነዚ መወከሲ ክረኽቦ ኣይከኣለን",
   "playlist-add-link-error": "ቅኑዕ URL ኣእቱ",
   "playlist-add-link-embed": "ነዚ ሊንክ ኣስፍርዎ።",
   "play-playlist": "ዝርዝር ደርፍታት ምጽዋት",
-
   "stop": "ጠጠው በል",
   "queue": "ተራ",
   "previous": "ዝሓለፈ",
@@ -388,7 +383,6 @@
   "editor-align-center": "ማእከል ኣሰላልፋ",
   "editor-align-right": "ንየማን ኣሰላልፍ",
   "editor-align-justify": "ኣረጋግፅ",
-
   "share-playlist": "ዝርዝር ደርፍታት ሼር ግበር",
   "playlist-url-copied": "ዝርዝር ደርፍታት URL ናብ ቅንጥብጣብ ሰሌዳ ተቐዲሑ",
   "current-playlist": "ናይ ሕጂ ዝርዝር ደርፍታት",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "\" {{title}} \" ምድምሳስ? እዚ ክምለስ ኣይክእልን እዩ።",
   "delete-playlist-failed": "ነቲ ዝርዝር ደርፍታት ክድምስሶ ኣይከኣለን።",
   "collapsed-tab-shared-label": "{{title}} — ዝተኻፈለ ክፍለ ግዜ፣ {{count}} ኣሎ።",
-  "playlist-add-mode-label": "ዓይነት ኣቕሓ"
+  "playlist-add-mode-label": "ዓይነት ኣቕሓ",
+  "session-host-reconnecting": "ምስቲ ክፍለ ግዜ ዳግማይ ምትእስሳር...",
+  "session-host-reconnected": "ምስቲ ክፍለ ግዜ ዳግማይ ተተሓሒዙ",
+  "session-host-left": "እቲ ኣአንጋዲ ከደ — ካብቲ ክፍለ ግዜ ተኣልዩ።"
 }

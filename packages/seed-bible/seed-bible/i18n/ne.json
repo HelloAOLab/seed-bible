@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "नेभिगेसन",
   "session-settings-section-sharing": "साझा गर्ने",
   "session-settings-section-participants": "सहभागीहरू",
-
   "shared": "साझा गरिएको",
   "host": "होस्ट",
   "co-host": "सह-आयोजक",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "सत्र समाप्त गर्नुहोस्",
   "dont-show-again": "यो फेरि नदेखाउनुहोस्",
   "discover": "पत्ता लगाउनुहोस्",
-
   "playlists": "प्लेलिस्टहरू",
   "annotations": "एनोटेसनहरू",
   "cross-references": "क्रस सन्दर्भहरू",
@@ -367,16 +365,13 @@
   "playlist-add-item": "वस्तु थप्नुहोस्",
   "playlist-edit-item": "वस्तु सम्पादन गर्नुहोस्",
   "playlist-save-item": "परिवर्तनहरू बचत गर्नुहोस्",
-
   "playlist-add-scripture-placeholder": "जस्तै यूहन्ना ३ वा यूहन्ना ३:१६",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "वस्तु थप्नुहोस्",
   "playlist-add-scripture-error": "त्यो सन्दर्भ फेला पार्न सकिएन।",
   "playlist-add-link-error": "मान्य URL प्रविष्ट गर्नुहोस्",
   "playlist-add-link-embed": "यो लिङ्क इम्बेड गर्नुहोस्",
   "play-playlist": "प्लेलिस्ट बजाउनुहोस्",
-
   "stop": "रोक्नुहोस्",
   "queue": "लाम",
   "previous": "अघिल्लो",
@@ -388,7 +383,6 @@
   "editor-align-center": "केन्द्रमा पङ्क्तिबद्ध गर्नुहोस्",
   "editor-align-right": "दायाँ पङ्क्तिबद्ध गर्नुहोस्",
   "editor-align-justify": "औचित्य दिनुहोस्",
-
   "share-playlist": "प्लेलिस्ट सेयर गर्नुहोस्",
   "playlist-url-copied": "प्लेलिस्टको URL क्लिपबोर्डमा प्रतिलिपि गरियो",
   "current-playlist": "हालको प्लेलिस्ट",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "\" {{title}} \" मेटाउने हो? यो पूर्ववत गर्न सकिँदैन।",
   "delete-playlist-failed": "प्लेलिस्ट मेटाउन सकिएन।",
   "collapsed-tab-shared-label": "{{title}} — साझा सत्र, {{count}} उपस्थित",
-  "playlist-add-mode-label": "वस्तु प्रकार"
+  "playlist-add-mode-label": "वस्तु प्रकार",
+  "session-host-reconnecting": "सत्रमा पुन: जडान गर्दै...",
+  "session-host-reconnected": "सत्रमा पुन: जडान गरियो",
+  "session-host-left": "होस्टले छोड्नुभयो — तपाईंलाई सत्रबाट हटाइयो"
 }

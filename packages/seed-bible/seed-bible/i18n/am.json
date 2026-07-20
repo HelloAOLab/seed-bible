@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "አሰሳ",
   "session-settings-section-sharing": "ማጋራት",
   "session-settings-section-participants": "ተሳታፊዎች",
-
   "shared": "የተጋራ",
   "host": "አስተናጋጅ",
   "co-host": "ተባባሪ አስተናጋጅ",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "ክፍለ ጊዜን ጨርስ",
   "dont-show-again": "ይህንን ዳግመኛ አታሳይ",
   "discover": "ዲስከቨር",
-
   "playlists": "የአጫዋች ዝርዝሮች",
   "annotations": "ማብራሪያዎች",
   "cross-references": "ተሻጋሪ ማጣቀሻዎች",
@@ -367,16 +365,13 @@
   "playlist-add-item": "ንጥል ያክሉ",
   "playlist-edit-item": "ንጥልን ያርትዑ",
   "playlist-save-item": "ለውጦችን አስቀምጥ",
-
   "playlist-add-scripture-placeholder": "ለምሳሌ ዮሐንስ 3 ወይም ዮሐንስ 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "ንጥል ያክሉ",
   "playlist-add-scripture-error": "ያንን ማጣቀሻ ማግኘት አልተቻለም",
   "playlist-add-link-error": "ትክክለኛ ዩአርኤል ያስገቡ",
   "playlist-add-link-embed": "ይህንን አገናኝ ይክተቱ",
   "play-playlist": "የአጫዋች ዝርዝር አጫውት",
-
   "stop": "ተወ",
   "queue": "ወረፋ",
   "previous": "ቀዳሚ",
@@ -388,7 +383,6 @@
   "editor-align-center": "መሃልን አሰልፍ",
   "editor-align-right": "ወደ ቀኝ አሰልፍ",
   "editor-align-justify": "አስተካክል",
-
   "share-playlist": "የአጫዋች ዝርዝር አጋራ",
   "playlist-url-copied": "የአጫዋች ዝርዝር ዩአርኤል ወደ ቅንጥብ ሰሌዳ ተቀድቷል",
   "current-playlist": "የአሁኑ የአጫዋች ዝርዝር",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "\" {{title}} \" ይሰረዝ? ይህ ሊቀለበስ አይችልም።",
   "delete-playlist-failed": "የአጫዋች ዝርዝሩን መሰረዝ አልተቻለም።",
   "collapsed-tab-shared-label": "{{title}} — የተጋራ ክፍለ ጊዜ፣ {{count}} አለ",
-  "playlist-add-mode-label": "የእቃ አይነት"
+  "playlist-add-mode-label": "የእቃ አይነት",
+  "session-host-reconnecting": "ከክፍለ ጊዜው ጋር እንደገና በመገናኘት ላይ…",
+  "session-host-reconnected": "ከክፍለ ጊዜው ጋር እንደገና ተገናኝቷል",
+  "session-host-left": "አስተናጋጁ ወጥቷል — ከክፍለ ጊዜው ተወግደዋል"
 }

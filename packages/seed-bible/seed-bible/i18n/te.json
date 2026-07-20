@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "నావిగేషన్",
   "session-settings-section-sharing": "పంచుకోవడం",
   "session-settings-section-participants": "పాల్గొనేవారు",
-
   "shared": "భాగస్వామ్యం చేయబడింది",
   "host": "హోస్ట్",
   "co-host": "సహ-హోస్ట్",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "సెషన్‌ను ముగించండి",
   "dont-show-again": "దీన్ని మళ్ళీ చూపించవద్దు",
   "discover": "కనుగొనండి",
-
   "playlists": "ప్లేజాబితాలు",
   "annotations": "వ్యాఖ్యానాలు",
   "cross-references": "క్రాస్ రిఫరెన్సులు",
@@ -367,16 +365,13 @@
   "playlist-add-item": "అంశాన్ని జోడించండి",
   "playlist-edit-item": "అంశాన్ని సవరించండి",
   "playlist-save-item": "మార్పులను సేవ్ చేయండి",
-
   "playlist-add-scripture-placeholder": "ఉదాహరణకు యోహాను 3 లేదా యోహాను 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "అంశాన్ని జోడించండి",
   "playlist-add-scripture-error": "ఆ సూచనను కనుగొనలేకపోయాను",
   "playlist-add-link-error": "చెల్లుబాటు అయ్యే URLను నమోదు చేయండి",
   "playlist-add-link-embed": "ఈ లింక్‌ను పొందుపరచండి",
   "play-playlist": "ప్లేలిస్ట్‌ను ప్లే చేయండి",
-
   "stop": "ఆపండి",
   "queue": "క్యూ",
   "previous": "మునుపటి",
@@ -388,7 +383,6 @@
   "editor-align-center": "కేంద్రాన్ని సమలేఖనం చేయండి",
   "editor-align-right": "కుడివైపు సమలేఖనం చేయండి",
   "editor-align-justify": "సమర్థించండి",
-
   "share-playlist": "ప్లేలిస్ట్‌ను పంచుకోండి",
   "playlist-url-copied": "ప్లేలిస్ట్ URL క్లిప్‌బోర్డ్‌కు కాపీ చేయబడింది",
   "current-playlist": "ప్రస్తుత ప్లేలిస్ట్",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "\" {{title}} \"ను తొలగించాలా? దీన్ని వెనక్కి తీసుకోలేరు.",
   "delete-playlist-failed": "ప్లేలిస్ట్‌ను తొలగించలేకపోయాను.",
   "collapsed-tab-shared-label": "{{title}} — భాగస్వామ్య సెషన్, {{count}} హాజరు",
-  "playlist-add-mode-label": "వస్తువు రకం"
+  "playlist-add-mode-label": "వస్తువు రకం",
+  "session-host-reconnecting": "సెషన్‌కు తిరిగి కనెక్ట్ అవుతోంది…",
+  "session-host-reconnected": "సెషన్‌కు తిరిగి కనెక్ట్ చేయబడింది",
+  "session-host-left": "హోస్ట్ నిష్క్రమించారు — మిమ్మల్ని సెషన్ నుండి తొలగించారు"
 }

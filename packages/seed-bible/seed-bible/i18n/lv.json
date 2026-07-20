@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigācija",
   "session-settings-section-sharing": "Kopīgošana",
   "session-settings-section-participants": "Dalībnieki",
-
   "shared": "Kopīgots",
   "host": "Uzņēmējs",
   "co-host": "Līdzsaimnieks",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Beigt sesiju",
   "dont-show-again": "Nerādīt šo vairs",
   "discover": "Atklājiet",
-
   "playlists": "Atskaņošanas saraksti",
   "annotations": "Anotācijas",
   "cross-references": "Savstarpējās atsauces",
@@ -367,16 +365,13 @@
   "playlist-add-item": "Pievienot vienumu",
   "playlist-edit-item": "Rediģēt vienumu",
   "playlist-save-item": "Saglabāt izmaiņas",
-
   "playlist-add-scripture-placeholder": "piemēram, Jāņa 3 vai Jāņa 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Pievienot vienumu",
   "playlist-add-scripture-error": "Nevarēju atrast šo atsauci",
   "playlist-add-link-error": "Ievadiet derīgu URL",
   "playlist-add-link-embed": "Iegult šo saiti",
   "play-playlist": "Atskaņot atskaņošanas sarakstu",
-
   "stop": "Apstāties",
   "queue": "Rinda",
   "previous": "Iepriekšējais",
@@ -388,7 +383,6 @@
   "editor-align-center": "Izlīdzināt centrā",
   "editor-align-right": "Izlīdzināt pa labi",
   "editor-align-justify": "Izlīdzināt",
-
   "share-playlist": "Kopīgot atskaņošanas sarakstu",
   "playlist-url-copied": "Atskaņošanas saraksta URL kopēts starpliktuvē",
   "current-playlist": "Pašreizējais atskaņošanas saraksts",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "Dzēst \" {{title}} \"? Šo darbību nevar atsaukt.",
   "delete-playlist-failed": "Nevarēja izdzēst atskaņošanas sarakstu.",
   "collapsed-tab-shared-label": "{{title}} — koplietota sesija, klātesoši ir {{count}}",
-  "playlist-add-mode-label": "Preces veids"
+  "playlist-add-mode-label": "Preces veids",
+  "session-host-reconnecting": "Notiek atkārtota savienojuma izveide ar sesiju…",
+  "session-host-reconnected": "Atkārtoti izveidots savienojums ar sesiju",
+  "session-host-left": "Saimnieks aizgāja — jūs tikāt izslēgts no sesijas."
 }

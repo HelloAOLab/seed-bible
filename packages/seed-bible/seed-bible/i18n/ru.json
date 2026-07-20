@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Навигация",
   "session-settings-section-sharing": "Совместное использование",
   "session-settings-section-participants": "Участники",
-
   "shared": "Общий",
   "host": "Хозяин",
   "co-host": "Соведущий",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Завершение сессии",
   "dont-show-again": "Больше не показывайте это",
   "discover": "Обнаружить",
-
   "playlists": "Плейлисты",
   "annotations": "Аннотации",
   "cross-references": "Перекрестные ссылки",
@@ -367,16 +365,13 @@
   "playlist-add-item": "Добавить элемент",
   "playlist-edit-item": "Редактировать элемент",
   "playlist-save-item": "Сохраните изменения",
-
   "playlist-add-scripture-placeholder": "например, Евангелие от Иоанна, глава 3, или Евангелие от Иоанна, глава 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Добавить элемент",
   "playlist-add-scripture-error": "Не смог найти эту ссылку.",
   "playlist-add-link-error": "Введите действительный URL-адрес",
   "playlist-add-link-embed": "Вставьте эту ссылку",
   "play-playlist": "Воспроизвести плейлист",
-
   "stop": "Останавливаться",
   "queue": "Очередь",
   "previous": "Предыдущий",
@@ -388,7 +383,6 @@
   "editor-align-center": "Выровнять по центру",
   "editor-align-right": "Выровняйте вправо",
   "editor-align-justify": "Оправдывать",
-
   "share-playlist": "Поделиться плейлистом",
   "playlist-url-copied": "URL плейлиста скопирован в буфер обмена.",
   "current-playlist": "Текущий плейлист",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "Удалить \" {{title}} \"? Это нельзя отменить.",
   "delete-playlist-failed": "Не удалось удалить плейлист.",
   "collapsed-tab-shared-label": "{{title}} — общая сессия, {{count}} присутствует",
-  "playlist-add-mode-label": "Тип товара"
+  "playlist-add-mode-label": "Тип товара",
+  "session-host-reconnecting": "Возвращаемся к сессии…",
+  "session-host-reconnected": "Снова подключился к сессии",
+  "session-host-left": "Ведущий покинул сессию — вас исключили из сессии."
 }

@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Πλοήγηση",
   "session-settings-section-sharing": "Μοιρασιά",
   "session-settings-section-participants": "Συμμετέχοντες",
-
   "shared": "Κοινόχρηστο",
   "host": "Πλήθος",
   "co-host": "Συνδιοργανωτής",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Λήξη συνεδρίας",
   "dont-show-again": "Να μην εμφανιστεί ξανά αυτό",
   "discover": "Ανακαλύπτω",
-
   "playlists": "Λίστες αναπαραγωγής",
   "annotations": "Σχολιασμοί",
   "cross-references": "Διασταυρούμενες παραπομπές",
@@ -367,16 +365,13 @@
   "playlist-add-item": "Προσθήκη στοιχείου",
   "playlist-edit-item": "Επεξεργασία στοιχείου",
   "playlist-save-item": "Αποθήκευση αλλαγών",
-
   "playlist-add-scripture-placeholder": "π.χ. Ιωάννης 3 ή Ιωάννης 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Προσθήκη στοιχείου",
   "playlist-add-scripture-error": "Δεν ήταν δυνατή η εύρεση αυτής της αναφοράς",
   "playlist-add-link-error": "Εισαγάγετε μια έγκυρη διεύθυνση URL",
   "playlist-add-link-embed": "Ενσωμάτωση αυτού του συνδέσμου",
   "play-playlist": "Αναπαραγωγή λίστας αναπαραγωγής με αναπαραγωγή",
-
   "stop": "Στάση",
   "queue": "Ουρά",
   "previous": "Προηγούμενος",
@@ -388,7 +383,6 @@
   "editor-align-center": "Στοίχιση στο κέντρο",
   "editor-align-right": "Στοίχιση δεξιά",
   "editor-align-justify": "Δικαιολογώ",
-
   "share-playlist": "Κοινοποίηση λίστας αναπαραγωγής με κοινή χρήση.",
   "playlist-url-copied": "Η διεύθυνση URL της λίστας αναπαραγωγής αντιγράφηκε στο πρόχειρο",
   "current-playlist": "Τρέχουσα λίστα αναπαραγωγής: Τρέχουσα λίστα αναπαραγωγής",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "Διαγραφή του \" {{title}} \"; Δεν είναι δυνατή η αναίρεση αυτής της ενέργειας.",
   "delete-playlist-failed": "Δεν ήταν δυνατή η διαγραφή της λίστας αναπαραγωγής.",
   "collapsed-tab-shared-label": "{{title}} — κοινόχρηστη συνεδρία, {{count}} παρόντες",
-  "playlist-add-mode-label": "Τύπος αντικειμένου"
+  "playlist-add-mode-label": "Τύπος αντικειμένου",
+  "session-host-reconnecting": "Επανασύνδεση στην περίοδο λειτουργίας…",
+  "session-host-reconnected": "Επανασυνδέθηκε στην περίοδο λειτουργίας",
+  "session-host-left": "Ο οικοδεσπότης αποχώρησε — εσείς αφαιρεθήκατε από την περίοδο σύνδεσης"
 }

@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navegación",
   "session-settings-section-sharing": "Intercambio",
   "session-settings-section-participants": "Participantes",
-
   "shared": "Compartido",
   "host": "Anfitrión",
   "co-host": "Copresentador",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Fin de la sesión",
   "dont-show-again": "No vuelvas a mostrar esto",
   "discover": "Descubrir",
-
   "playlists": "Listas de reproducción",
   "annotations": "Anotaciones",
   "cross-references": "Referencias cruzadas",
@@ -367,16 +365,13 @@
   "playlist-add-item": "Agregar artículo",
   "playlist-edit-item": "Editar elemento",
   "playlist-save-item": "Guardar cambios",
-
   "playlist-add-scripture-placeholder": "Por ejemplo, Juan 3 o Juan 3:16",
-
   "playlist-add-link-placeholder": "https://ejemplo.com",
   "playlist-add-button": "Agregar artículo",
   "playlist-add-scripture-error": "No pude encontrar esa referencia.",
   "playlist-add-link-error": "Introduzca una URL válida",
   "playlist-add-link-embed": "Inserta este enlace",
   "play-playlist": "Reproducir lista de reproducción",
-
   "stop": "Detener",
   "queue": "Cola",
   "previous": "Anterior",
@@ -388,7 +383,6 @@
   "editor-align-center": "Alinear al centro",
   "editor-align-right": "Alinear a la derecha",
   "editor-align-justify": "Justificar",
-
   "share-playlist": "Compartir lista de reproducción",
   "playlist-url-copied": "Se copió la URL de la lista de reproducción al portapapeles.",
   "current-playlist": "Lista de reproducción actual",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "¿Eliminar \" {{title}} \"? Esto no se puede deshacer.",
   "delete-playlist-failed": "No se pudo eliminar la lista de reproducción.",
   "collapsed-tab-shared-label": "{{title}} — sesión compartida, {{count}} presentes",
-  "playlist-add-mode-label": "Tipo de artículo"
+  "playlist-add-mode-label": "Tipo de artículo",
+  "session-host-reconnecting": "Reconectando con la sesión…",
+  "session-host-reconnected": "Reconectado a la sesión",
+  "session-host-left": "El anfitrión se fue; usted fue expulsado de la sesión."
 }

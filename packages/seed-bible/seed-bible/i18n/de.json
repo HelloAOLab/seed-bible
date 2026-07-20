@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigation",
   "session-settings-section-sharing": "Teilen",
   "session-settings-section-participants": "Teilnehmer",
-
   "shared": "Gemeinsam",
   "host": "Gastgeber",
   "co-host": "Co-Moderator",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Sitzung beenden",
   "dont-show-again": "Zeig das nicht noch einmal",
   "discover": "Entdecken",
-
   "playlists": "Wiedergabelisten",
   "annotations": "Anmerkungen",
   "cross-references": "Querverweise",
@@ -367,16 +365,13 @@
   "playlist-add-item": "Artikel hinzufügen",
   "playlist-edit-item": "Element bearbeiten",
   "playlist-save-item": "Änderungen speichern",
-
   "playlist-add-scripture-placeholder": "z. B. Johannes 3 oder Johannes 3,16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Artikel hinzufügen",
   "playlist-add-scripture-error": "Ich konnte die entsprechende Referenz nicht finden.",
   "playlist-add-link-error": "Geben Sie eine gültige URL ein.",
   "playlist-add-link-embed": "Diesen Link einbetten",
   "play-playlist": "Wiedergabeliste abspielen",
-
   "stop": "Stoppen",
   "queue": "Warteschlange",
   "previous": "Vorherige",
@@ -388,7 +383,6 @@
   "editor-align-center": "Zentrieren",
   "editor-align-right": "Rechts ausrichten",
   "editor-align-justify": "Rechtfertigen",
-
   "share-playlist": "Playlist teilen",
   "playlist-url-copied": "Playlist-URL in die Zwischenablage kopiert",
   "current-playlist": "Aktuelle Wiedergabeliste",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "Löschen Sie \" {{title}} \"? Dies kann nicht rückgängig gemacht werden.",
   "delete-playlist-failed": "Die Wiedergabeliste konnte nicht gelöscht werden.",
   "collapsed-tab-shared-label": "{{title}} — gemeinsame Sitzung, {{count}} anwesend",
-  "playlist-add-mode-label": "Artikeltyp"
+  "playlist-add-mode-label": "Artikeltyp",
+  "session-host-reconnecting": "Verbindung zur Sitzung wird wiederhergestellt…",
+  "session-host-reconnected": "Wieder mit der Sitzung verbunden",
+  "session-host-left": "Der Gastgeber hat die Sitzung verlassen – Sie wurden aus der Sitzung entfernt."
 }

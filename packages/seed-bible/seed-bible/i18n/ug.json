@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "يول باشلاش",
   "session-settings-section-sharing": "ئورتاقلىشىش",
   "session-settings-section-participants": "قاتناشقۇچىلار",
-
   "shared": "ئورتاقلاشتى",
   "host": "ساھىبخان",
   "co-host": "بىرلىكتە ساھىبخان",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "يىغىننى ئاخىرلاشتۇرۇڭ",
   "dont-show-again": "بۇنى قايتا كۆرسەتمەڭ",
   "discover": "بايقاش",
-
   "playlists": "قويۇش تىزىملىكى",
   "annotations": "ئىزاھاتلار",
   "cross-references": "كرېست پايدىلىنىش ماتېرىياللىرى",
@@ -367,16 +365,13 @@
   "playlist-add-item": "تۈر قوشۇش",
   "playlist-edit-item": "بۇيۇمنى تەھرىرلەش",
   "playlist-save-item": "ئۆزگەرتىشلەرنى ساقلاڭ",
-
   "playlist-add-scripture-placeholder": "مەسىلەن، يۇھاننا 3 ياكى يۇھاننا 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "تۈر قوشۇش",
   "playlist-add-scripture-error": "ئۇ پايدىلىنىش ماتېرىيالىنى تاپالمىدىم",
   "playlist-add-link-error": "توغرا URL كىرگۈزۈڭ",
   "playlist-add-link-embed": "بۇ ئۇلىنىشنى قىستۇرۇڭ",
   "play-playlist": "ناخشا تىزىملىكىنى قويۇش",
-
   "stop": "توختاڭ",
   "queue": "نۆۋەت",
   "previous": "ئالدىنقىسى",
@@ -388,7 +383,6 @@
   "editor-align-center": "مەركەزگە توغرىلاڭ",
   "editor-align-right": "ئوڭغا توغرىلاڭ",
   "editor-align-justify": "ئاقلاش",
-
   "share-playlist": "ناخشا تىزىملىكىنى ئورتاقلىشىش",
   "playlist-url-copied": "ناخشا قويۇش URL سى چاپلاش تاختىسىغا كۆچۈرۈلدى",
   "current-playlist": "نۆۋەتتىكى قويۇلۇش تىزىملىكى",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "« {{title}} » نى ئۆچۈرۈۋېتەمسىز؟ بۇنى ئەسلىگە كەلتۈرگىلى بولمايدۇ.",
   "delete-playlist-failed": "قويغۇچ تىزىملىكىنى ئۆچۈرگىلى بولمىدى.",
   "collapsed-tab-shared-label": "{{title}} — ئورتاقلاشقان سۆھبەت، {{count}} ھازىر",
-  "playlist-add-mode-label": "بۇيۇم تىپى"
+  "playlist-add-mode-label": "بۇيۇم تىپى",
+  "session-host-reconnecting": "بۇ يىغىنغا قايتا ئۇلىنىۋاتىدۇ…",
+  "session-host-reconnected": "يىغىنغا قايتا ئۇلاندى",
+  "session-host-left": "رىياسەتچى كەتتى — سىز يىغىندىن چىقىرىۋېتىلدىڭىز"
 }

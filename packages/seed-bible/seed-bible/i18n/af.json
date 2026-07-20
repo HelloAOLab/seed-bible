@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigasie",
   "session-settings-section-sharing": "Deling",
   "session-settings-section-participants": "Deelnemers",
-
   "shared": "Gedeel",
   "host": "Gasheer",
   "co-host": "Mede-aanbieder",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Eindig sessie",
   "dont-show-again": "Moenie dit weer wys nie",
   "discover": "Ontdek",
-
   "playlists": "Speellyste",
   "annotations": "Aantekeninge",
   "cross-references": "Kruisverwysings",
@@ -367,16 +365,13 @@
   "playlist-add-item": "Voeg item by",
   "playlist-edit-item": "Wysig item",
   "playlist-save-item": "Stoor veranderinge",
-
   "playlist-add-scripture-placeholder": "bv. Johannes 3 of Johannes 3:16",
-
   "playlist-add-link-placeholder": "https://voorbeeld.com",
   "playlist-add-button": "Voeg item by",
   "playlist-add-scripture-error": "Kon nie daardie verwysing vind nie",
   "playlist-add-link-error": "Voer 'n geldige URL in",
   "playlist-add-link-embed": "Voeg hierdie skakel in",
   "play-playlist": "Speel snitlys",
-
   "stop": "Stop",
   "queue": "Waglys",
   "previous": "Vorige",
@@ -388,7 +383,6 @@
   "editor-align-center": "Rig die middelpunt in lyn",
   "editor-align-right": "Rig regs",
   "editor-align-justify": "Regverdig",
-
   "share-playlist": "Deel snitlys",
   "playlist-url-copied": "Speellys-URL na knipbord gekopieer",
   "current-playlist": "Huidige snitlys",
@@ -403,5 +397,8 @@
   "delete-playlist-confirm-message": "Vee \" {{title}} \" uit? Dit kan nie ongedaan gemaak word nie.",
   "delete-playlist-failed": "Kon nie die snitlys uitvee nie.",
   "collapsed-tab-shared-label": "{{title}} — gedeelde sessie, {{count}} teenwoordig",
-  "playlist-add-mode-label": "Itemtipe"
+  "playlist-add-mode-label": "Itemtipe",
+  "session-host-reconnecting": "Verbind weer met die sessie…",
+  "session-host-reconnected": "Herverbind met die sessie",
+  "session-host-left": "Die gasheer het vertrek — jy is van die sessie verwyder"
 }
