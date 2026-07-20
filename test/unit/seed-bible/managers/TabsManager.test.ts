@@ -258,6 +258,24 @@ describe("createTabs", () => {
     expect(manager.tabs.value.some((tab) => tab.id === "tab-2")).toBe(false);
   });
 
+  it("regression #1442: removeTab() selects the tab before the removed one, not always the first tab", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const secondTab = manager.addTab();
+    await waitForInitialLoad(secondTab.readingState);
+    const thirdTab = manager.addTab();
+    await waitForInitialLoad(thirdTab.readingState);
+
+    manager.selectTab(thirdTab.id);
+    manager.removeTab(thirdTab.id);
+
+    // Removing the last (selected) tab of three should fall back to its
+    // immediate predecessor, not unconditionally to the first tab.
+    expect(manager.selectedTabId.value).toBe(secondTab.id);
+  });
+
   it("selectTab() sets the selected tab", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const { tabs: manager } = createTabsManager();

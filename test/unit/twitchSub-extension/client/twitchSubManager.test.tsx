@@ -70,6 +70,7 @@ function createSeedBibleStateMock() {
         bookId: "GEN",
         chapterNumber: 1,
       }),
+      isMobile: signal(false),
     },
     bibleData: {
       api: {

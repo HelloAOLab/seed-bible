@@ -761,15 +761,37 @@ export function createSeedBibleState(
     };
   });
 
+  // Keep selection and slots aligned. Clicking a tab goes through
+  // handleSelectTab (which also calls setSelectedSlotTab). removeTab only
+  // updates selectedTabId — TabsLayoutManager's sync then clears the closed
+  // tab from its slot (tab → null). If that emptied slot is still selected,
+  // put the newly selected tab into it so TabsLayout keeps rendering a reader.
+  //
+  // Only fill empty slots: never overwrite a slot that already has a tab.
+  // openInNewSlot clones via addTab (which selects the clone) before the new
+  // slot exists; overwriting here would steal the original slot and leave an
+  // empty pane after layout de-dupes the shared tab id.
   effect(() => {
-    if (selectedTab.value) {
-      const matchingSlot =
-        tabsLayout.slots.value.find(
-          (s) => s.tab?.id === selectedTab.value?.id
-        ) ?? null;
-      if (matchingSlot) {
-        tabsLayout.selectSlot(matchingSlot.id);
-      }
+    const tab = selectedTab.value;
+    if (!tab) {
+      return;
+    }
+
+    const matchingSlot =
+      tabsLayout.slots.value.find((s) => s.tab?.id === tab.id) ?? null;
+    if (matchingSlot) {
+      tabsLayout.selectSlot(matchingSlot.id);
+      return;
+    }
+
+    const selectedSlot =
+      tabsLayout.slots.value.find(
+        (s) => s.id === tabsLayout.selectedSlotId.value
+      ) ??
+      tabsLayout.slots.value[0] ??
+      null;
+    if (selectedSlot && !selectedSlot.tab) {
+      tabsLayout.setSelectedSlotTab(tab.id);
     }
   });
 
@@ -1386,8 +1408,11 @@ export function createSeedBibleState(
   const DISCOVER_PANE_ID = "discover-pane";
 
   // view -> pane: open (or refresh, by reusing the id) while a view is set,
-  // close when it clears. Subscribes only to `view`, so the user closing the
-  // pane below doesn't retrigger this.
+  // close when it clears. The pane commands read pane state via peek()
+  // internally (see PanesManager), so this effect does NOT subscribe to
+  // `panes` — closing the pane below (which mutates `panes`) can't retrigger
+  // this effect and re-open the pane mid-update, which would trip preact's
+  // "Cycle detected". The pane -> view effect below clears `view` on close.
   effect(() => {
     if (playlists.view.value) {
       panes.openPane({
@@ -1395,7 +1420,10 @@ export function createSeedBibleState(
         placement: "side",
         title: () => <DiscoverPaneTitle playlists={playlists} />,
         header: () => <DiscoverPaneHeader playlists={playlists} />,
-        onUserClose: () => {
+        onClose: (reason) => {
+          if (reason !== "user") {
+            return;
+          }
           const currentlyPlaying = playlists.playing.value;
           if (currentlyPlaying) {
             playlists.stopPlaying();

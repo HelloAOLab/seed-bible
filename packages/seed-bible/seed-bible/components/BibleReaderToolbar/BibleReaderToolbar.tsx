@@ -112,6 +112,15 @@ interface MobileMoreMenuProps {
     iconNode?: preact.ComponentChildren;
     onClick: () => void;
   }>;
+  /**
+   * New-message indicator for the chat tool (`id === "open-chat"`), mirroring
+   * the badge shown on the expanded toolbar. `unreadChatIndicator` is the badge
+   * text (a count, `"99+"`, or `"@"` for a mention), or `null` when there are
+   * no unread messages.
+   */
+  unreadChatIndicator?: string | null;
+  chatWasMentioned?: boolean;
+  hasTypingInChats?: boolean;
 }
 
 function MobileMoreMenu(props: MobileMoreMenuProps) {
@@ -184,6 +193,26 @@ function MobileMoreMenu(props: MobileMoreMenuProps) {
             </span>
           )}
           <span className="sb-mobile-more-menu-label">{item.label}</span>
+          {item.id === "open-chat" && props.unreadChatIndicator && (
+            <span
+              className="sb-mobile-more-menu-unread-indicator"
+              aria-label={
+                props.chatWasMentioned
+                  ? "Unread mention"
+                  : `Unread messages: ${props.unreadChatIndicator}`
+              }
+            >
+              {props.unreadChatIndicator}
+            </span>
+          )}
+          {item.id === "open-chat" && props.hasTypingInChats && (
+            <span
+              className="sb-mobile-more-menu-typing-indicator"
+              aria-label={t("someone-is-typing", {
+                defaultValue: "Someone is typing...",
+              })}
+            />
+          )}
         </button>
       ))}
       {/* <div className="sb-mobile-more-menu-item sb-mobile-more-menu-social">
@@ -451,6 +480,13 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       (tool) =>
         tool.visible.value && !hiddenToolIds.has(tool.id) && tool.isControllable
     )
+  );
+
+  // Whether the chat tool is tucked inside the mobile More menu. When it is, its
+  // unread badge is hidden until the menu is opened, so the More tab itself
+  // needs to carry the indicator.
+  const chatInMoreMenu = useComputed(() =>
+    moreTools.value.some((tool) => tool.id === "open-chat")
   );
 
   const verseToolbarTools = useComputed(() => {
@@ -1158,11 +1194,38 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                       <span className="sb-reader-toolbar-mobile-tab-label">
                         {t("more", { defaultValue: "More" })}
                       </span>
+                      {chatInMoreMenu.value &&
+                        !isMoreMenuOpen.value &&
+                        unreadChatIndicator.value && (
+                          <span
+                            className="sb-reader-toolbar-unread-indicator"
+                            aria-label={
+                              chats.wasMentioned.value
+                                ? "Unread mention"
+                                : `Unread messages: ${unreadChatIndicator.value}`
+                            }
+                          >
+                            {unreadChatIndicator.value}
+                          </span>
+                        )}
+                      {chatInMoreMenu.value &&
+                        !isMoreMenuOpen.value &&
+                        hasTypingInChats.value && (
+                          <span
+                            className="sb-reader-toolbar-typing-indicator"
+                            aria-label={t("someone-is-typing", {
+                              defaultValue: "Someone is typing...",
+                            })}
+                          />
+                        )}
                     </button>
 
                     {isMoreMenuOpen.value && (
                       <MobileMoreMenu
                         tools={moreTools.value}
+                        unreadChatIndicator={unreadChatIndicator.value}
+                        chatWasMentioned={chats.wasMentioned.value}
+                        hasTypingInChats={hasTypingInChats.value}
                         pinnedItems={[
                           {
                             id: "bookmarks",

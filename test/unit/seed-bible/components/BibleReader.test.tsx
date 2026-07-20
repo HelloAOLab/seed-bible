@@ -530,7 +530,7 @@ describe("BibleReader", () => {
     expect(poetryVerse?.classList.contains("sb-verse-selected")).toBe(true);
   });
 
-  it("applies sb-highlight-{colorId} class for color-id highlights", () => {
+  it("marks a color-id highlight on a wrapper with data-highlight-fill", () => {
     const { slot, selectorState, readingState, highlights } = createFixture();
 
     highlights.value = {
@@ -553,19 +553,121 @@ describe("BibleReader", () => {
       );
     });
 
-    const verses = container.querySelectorAll(".sb-verse");
-    const firstVerse = verses[0] as HTMLElement | undefined;
-    expect(firstVerse).toBeDefined();
-    const firstDecorator = firstVerse?.querySelector(
+    // The highlight lives on a wrapper whose fill the ribbon layer reads; the
+    // verse's own decorator stays clear (the layer paints the color behind it).
+    const wrapper = container.querySelector(
+      ".sb-highlight-yellow"
+    ) as HTMLElement | null;
+    expect(wrapper).not.toBeNull();
+    expect(wrapper?.getAttribute("data-highlight-fill")).toBe(
+      "var(--sb-highlight-yellow-color)"
+    );
+    const firstDecorator = container.querySelector(
       ".sb-verse-decorator"
     ) as HTMLElement | null;
-    expect(firstDecorator).not.toBeNull();
     expect(firstDecorator?.classList.contains("sb-highlight-yellow")).toBe(
-      true
+      false
     );
   });
 
-  it("applies inline custom highlight colors when highlight uses a custom color", () => {
+  it("merges contiguous same-color prose verses into one highlight ribbon", () => {
+    const { slot, selectorState, readingState, highlights, chapterData } =
+      createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          { type: "verse", number: 1, content: ["First verse. "] },
+          { type: "verse", number: 2, content: ["Second verse."] },
+        ],
+      },
+    };
+
+    highlights.value = {
+      highlights: [
+        { verse: 1, colorId: "yellow" },
+        { verse: 2, colorId: "yellow" },
+      ],
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // A single wrapper carries the highlight for the whole run — not the
+    // per-verse decorators — so the two verses paint one continuous ribbon.
+    const highlightEls = container.querySelectorAll(".sb-highlight-yellow");
+    expect(highlightEls.length).toBe(1);
+    const wrapper = highlightEls[0] as HTMLElement;
+    expect(wrapper.classList.contains("sb-verse-decorator")).toBe(false);
+    expect(wrapper.getAttribute("data-highlight-fill")).toBe(
+      "var(--sb-highlight-yellow-color)"
+    );
+    expect(wrapper.querySelectorAll(".sb-verse").length).toBe(2);
+    // The verses' own decorators stay transparent (no highlight of their own).
+    const decorators = wrapper.querySelectorAll(".sb-verse-decorator");
+    expect(decorators.length).toBe(2);
+    decorators.forEach((decorator) =>
+      expect(decorator.classList.contains("sb-highlight-yellow")).toBe(false)
+    );
+  });
+
+  it("does not merge adjacent verses highlighted with different colors", () => {
+    const { slot, selectorState, readingState, highlights, chapterData } =
+      createFixture();
+
+    chapterData.value = {
+      ...chapterData.value!,
+      chapter: {
+        ...chapterData.value!.chapter,
+        content: [
+          { type: "verse", number: 1, content: ["First verse. "] },
+          { type: "verse", number: 2, content: ["Second verse."] },
+        ],
+      },
+    };
+
+    highlights.value = {
+      highlights: [
+        { verse: 1, colorId: "yellow" },
+        { verse: 2, colorId: "green" },
+      ],
+    };
+
+    act(() => {
+      render(
+        <BibleReader
+          currentSlot={slot}
+          selectorState={selectorState}
+          readingState={readingState}
+        />,
+        container
+      );
+    });
+
+    // Different colors don't share a ribbon: each verse gets its own wrapper.
+    const yellowWrapper = container.querySelector(
+      ".sb-highlight-yellow"
+    ) as HTMLElement | null;
+    const greenWrapper = container.querySelector(
+      ".sb-highlight-green"
+    ) as HTMLElement | null;
+    expect(yellowWrapper).not.toBeNull();
+    expect(greenWrapper).not.toBeNull();
+    expect(yellowWrapper?.querySelectorAll(".sb-verse").length).toBe(1);
+    expect(greenWrapper?.querySelectorAll(".sb-verse").length).toBe(1);
+  });
+
+  it("carries a custom highlight color as the wrapper fill and font color", () => {
     const { slot, selectorState, readingState, highlights } = createFixture();
 
     highlights.value = {
@@ -590,18 +692,20 @@ describe("BibleReader", () => {
       );
     });
 
-    const verses = container.querySelectorAll(".sb-verse");
-    const firstVerse = verses[0] as HTMLElement | undefined;
-    expect(firstVerse).toBeDefined();
-    const firstDecorator = firstVerse?.querySelector(
+    // Custom color -> the wrapper carries the raw hex as its fill (for the layer)
+    // and the custom font color as inline color; it paints no background itself.
+    const wrapper = container.querySelector(
+      "[data-highlight-fill]"
+    ) as HTMLElement | null;
+    expect(wrapper).not.toBeNull();
+    expect(wrapper?.getAttribute("data-highlight-fill")).toBe("#123456");
+    expect(wrapper?.style.color).toBe("rgb(171, 205, 239)");
+    expect(wrapper?.style.backgroundColor).toBe("");
+    // The decorator itself has no highlight.
+    const firstDecorator = container.querySelector(
       ".sb-verse-decorator"
     ) as HTMLElement | null;
-    expect(firstDecorator).not.toBeNull();
-    expect(firstDecorator?.classList.contains("sb-highlight-yellow")).toBe(
-      false
-    );
-    expect(firstDecorator?.style.backgroundColor).toBe("rgb(18, 52, 86)");
-    expect(firstDecorator?.style.color).toBe("rgb(171, 205, 239)");
+    expect(firstDecorator?.style.backgroundColor).toBe("");
   });
 
   it("reacts to highlight signal changes for the current chapter", () => {
@@ -618,14 +722,7 @@ describe("BibleReader", () => {
       );
     });
 
-    let verses = container.querySelectorAll(".sb-verse");
-    let firstVerse = verses[0] as HTMLElement | undefined;
-    let firstDecorator = firstVerse?.querySelector(
-      ".sb-verse-decorator"
-    ) as HTMLElement | null;
-    expect(firstDecorator?.classList.contains("sb-highlight-yellow")).toBe(
-      false
-    );
+    expect(container.querySelector(".sb-highlight-yellow")).toBeNull();
 
     act(() => {
       highlights.value = {
@@ -638,17 +735,10 @@ describe("BibleReader", () => {
       };
     });
 
-    verses = container.querySelectorAll(".sb-verse");
-    firstVerse = verses[0] as HTMLElement | undefined;
-    firstDecorator = firstVerse?.querySelector(
-      ".sb-verse-decorator"
-    ) as HTMLElement | null;
-    expect(firstDecorator?.classList.contains("sb-highlight-yellow")).toBe(
-      true
-    );
+    expect(container.querySelector(".sb-highlight-yellow")).not.toBeNull();
   });
 
-  it("applies verse decorations and lets decoration styles override highlight styles", () => {
+  it("applies verse decorations on the decorator while the highlight sits on the wrapper", () => {
     const { slot, selectorState, readingState, highlights, decorations } =
       createFixture();
 
@@ -699,9 +789,15 @@ describe("BibleReader", () => {
     expect(firstDecorator?.classList.contains("sb-extra-decoration")).toBe(
       true
     );
-    expect(firstDecorator?.style.backgroundColor).toBe("rgb(18, 52, 86)");
+    // Decoration styles apply to the decorator; the highlight background is not
+    // here (it is the wrapper's fill), so only decoration styles show.
+    expect(firstDecorator?.style.backgroundColor).toBe("");
     expect(firstDecorator?.style.color).toBe("rgb(255, 0, 0)");
     expect(firstDecorator?.style.borderBottom).toBe("2px solid blue");
+    const wrapper = container.querySelector(
+      "[data-highlight-fill]"
+    ) as HTMLElement | null;
+    expect(wrapper?.getAttribute("data-highlight-fill")).toBe("#123456");
   });
 
   it("displays decorations for any translation when decoration translationId is null", () => {
@@ -886,12 +982,14 @@ describe("BibleReader", () => {
     ) as HTMLElement | null;
 
     expect(firstDecorator).not.toBeNull();
-    expect(firstDecorator?.classList.contains("sb-highlight-yellow")).toBe(
-      true
-    );
+    // Decoration on the decorator, highlight on the enclosing wrapper.
     expect(
       firstDecorator?.classList.contains("sb-decoration-with-highlight")
     ).toBe(true);
+    expect(firstDecorator?.classList.contains("sb-highlight-yellow")).toBe(
+      false
+    );
+    expect(container.querySelector(".sb-highlight-yellow")).not.toBeNull();
   });
 
   it("wraps inline verse groups in a verse decorator span", () => {
@@ -1256,6 +1354,8 @@ describe("BibleReader", () => {
     expect(firstDecorator?.className).not.toContain("sb-highlight-");
     expect(firstDecorator?.style.backgroundColor).toBe("");
     expect(firstDecorator?.style.color).toBe("");
+    // No highlight wrapper is emitted at all when highlights are hidden.
+    expect(container.querySelector("[data-highlight-fill]")).toBeNull();
   });
 
   it("omits sb-words-of-jesus class when scriptureElements.showRedLettering is false", () => {
