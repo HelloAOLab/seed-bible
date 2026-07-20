@@ -433,8 +433,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         return;
       }
 
+      // Navigation is never blocked by an in-flight text request (#1414) —
+      // repeated key presses queue behind each other instead of racing.
       const chapterData = readingState.chapterData.value;
-      if (!chapterData || readingState.loading.value) {
+      if (!chapterData) {
         return;
       }
 
