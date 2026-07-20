@@ -36,6 +36,14 @@ export async function saveProfileConfigValue(
   value: unknown
 ): Promise<void> {
   if (!login.userId.value) {
+    // Not logged in: persist to the device-local config store instead. If a
+    // brand-new account later logs in on this device for the first time,
+    // `LoginManager` adopts this as the starting `profile.config`.
+    const existingLocal = login.localConfig.value;
+    if (existingLocal[key] === value) {
+      return;
+    }
+    login.localConfig.value = { ...existingLocal, [key]: value };
     return;
   }
 

@@ -162,7 +162,9 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
   const { login } = state;
   const { t } = useI18n();
   const isLoggedIn = useComputed(() => login.userId.value !== null);
-  const profile = useComputed(() => login.profile.value);
+  const profile = useComputed(
+    () => login.profile.value ?? login.cachedProfile.value
+  );
 
   const newName = useSignal<string | null>(null);
   const name = useComputed(() => newName.value ?? profile.value?.name ?? "");

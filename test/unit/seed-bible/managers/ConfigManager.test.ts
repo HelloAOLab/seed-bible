@@ -19,6 +19,7 @@ function makeFakeLogin(initialProfile: UserProfile | null): LoginManager {
   return {
     userId,
     profile,
+    localConfig: signal({}),
     profilePromise: Promise.resolve(initialProfile),
     updateProfile: (newData: Partial<UserProfile>) => {
       if (!profile.value) return;
