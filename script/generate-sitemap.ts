@@ -115,14 +115,27 @@ function resolveOptions(): Options {
 }
 
 /**
- * On CI, only the `main` build's public files are synced to the bucket root, so
- * generating on other branch builds just hammers the Bible API for output that
- * is never uploaded. Skip those. Local runs (no DEPLOY_BRANCH) always run.
+ * Decides whether to skip generation, returning a human-readable reason or
+ * `null` to proceed.
+ *
+ * Only the `main` deploy build's public files are synced to the bucket root, so
+ * generating anywhere else just hammers the Bible API for output that is never
+ * uploaded. Two cases skip:
+ *   - A deploy build for a non-main branch (`DEPLOY_BRANCH` set and != "main").
+ *   - Any other CI build. `ci.yml` runs `pnpm build` — twice per PR — with no
+ *     `DEPLOY_BRANCH` set, purely to lint/test/size the bundle; it uploads
+ *     nothing. Without this, every CI run would make live catalog fetches,
+ *     adding an external-service dependency to an otherwise hermetic build.
+ * Direct or local runs (not in CI, no `DEPLOY_BRANCH`) still generate, so
+ * `pnpm sitemap` works for development.
  */
-function shouldSkipForBranch(): string | null {
+function skipReason(): string | null {
   const branch = process.env.DEPLOY_BRANCH?.trim();
-  if (branch && branch !== "main") {
-    return branch;
+  if (branch) {
+    return branch === "main" ? null : `deploy build for branch "${branch}"`;
+  }
+  if (process.env.CI) {
+    return "CI build without DEPLOY_BRANCH=main";
   }
   return null;
 }
@@ -328,10 +341,10 @@ async function main(): Promise<void> {
     return;
   }
 
-  const skippedBranch = shouldSkipForBranch();
-  if (skippedBranch) {
+  const skip = skipReason();
+  if (skip) {
     console.log(
-      `Skipping sitemap generation for branch "${skippedBranch}" (only the main build's public files are deployed).`
+      `Skipping sitemap generation (${skip}); only the main build's public files are deployed.`
     );
     return;
   }
