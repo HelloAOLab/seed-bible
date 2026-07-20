@@ -1284,11 +1284,6 @@
   min-width: 0;
 }
 
-/* Inline Sign out sits in the picture row on mobile only. */
-.sb-account-signout-inline {
-  display: none;
-}
-
 .sb-account-picture-preview,
 .sb-account-picture-placeholder {
   width: 3.875rem;
@@ -1423,6 +1418,12 @@
   background: color-mix(in srgb, #db1c1c, transparent 92%);
 }
 
+/* Inline Sign out is mobile-only; must beat .sb-account-signout-button's
+ * display:inline-flex so it stays hidden on desktop. */
+.sb-account-signout-button.sb-account-signout-inline {
+  display: none;
+}
+
 /* This can be added at main css too but that is not being used by setting bar to so avoid whole css load use here */
 @media screen and (max-width: 480px) {
   .hide-on-mobile {
@@ -1430,7 +1431,7 @@
   }
 
   /* Keep Sign out above the fold next to Update picture on mobile. */
-  .sb-account-signout-inline {
+  .sb-account-signout-button.sb-account-signout-inline {
     display: inline-flex;
     width: auto;
     flex: 1 1 auto;
@@ -1440,7 +1441,8 @@
     white-space: nowrap;
   }
 
-  .sb-account-signout-inline .material-symbols-outlined {
+  .sb-account-signout-button.sb-account-signout-inline
+    .material-symbols-outlined {
     font-size: 1.25rem;
   }
 
