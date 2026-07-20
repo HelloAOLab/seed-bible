@@ -1384,6 +1384,36 @@
   font-weight: 700;
 }
 
+.sb-account-save-button:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+
+.sb-account-save-saving {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.sb-account-save-spinner {
+  font-size: 1.125rem;
+  line-height: 1;
+  animation: sb-account-save-spin 0.9s linear infinite;
+}
+
+@keyframes sb-account-save-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-account-save-spinner {
+    animation: none;
+  }
+}
+
 .sb-account-signout-section {
   margin-top: 0.625rem;
   border-top: 1px solid
@@ -1408,6 +1438,77 @@
 
 .sb-account-signout-button:hover {
   background: color-mix(in srgb, #db1c1c, transparent 92%);
+}
+
+/* ─── Account page loading skeleton ──────────────────────────────────────── */
+/* Shown while the profile is still being fetched (e.g. on a slow connection),
+   so the page reads as "loading" rather than an empty, editable form. */
+.sb-skeleton {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--sb-font-color), transparent 88%);
+}
+
+.sb-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--sb-font-color), transparent 80%),
+    transparent
+  );
+  animation: sb-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes sb-skeleton-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.sb-account-skeleton-avatar {
+  width: 3.875rem;
+  height: 3.875rem;
+  border-radius: 62.4375rem;
+  flex-shrink: 0;
+}
+
+.sb-account-skeleton-button {
+  width: 8.5rem;
+  height: 2.75rem;
+  border-radius: 0.25rem;
+}
+
+.sb-account-skeleton-label {
+  width: 40%;
+  height: 0.8125rem;
+  border-radius: 0.25rem;
+}
+
+.sb-account-skeleton-input {
+  width: 100%;
+  height: 3rem;
+  border-radius: 0.625rem;
+}
+
+.sb-account-skeleton-textarea {
+  height: 6.25rem;
+}
+
+.sb-account-skeleton-save {
+  width: 100%;
+  height: 3.25rem;
+  border-radius: 0.375rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-skeleton::after {
+    animation: none;
+  }
 }
 
 /* This can be added at main css too but that is not being used by setting bar to so avoid whole css load use here */

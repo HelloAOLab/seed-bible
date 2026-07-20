@@ -157,12 +157,65 @@ function SettingsHero(props: {
   );
 }
 
+/**
+ * Placeholder shown while the user's profile is still being fetched. It mirrors
+ * the real form's layout (avatar, three fields, the ID row and the save button)
+ * with shimmering blocks, so on a slow connection the user can see the page is
+ * still loading instead of a deceptively empty, editable form.
+ */
+function AccountSettingsSkeleton() {
+  const { t } = useI18n();
+  return (
+    <div
+      className="sb-account-settings-layout sb-account-skeleton"
+      role="status"
+      aria-busy="true"
+    >
+      <span className="sr-only">
+        {t("loading-profile", { defaultValue: "Loading your profile…" })}
+      </span>
+
+      <div className="sb-account-picture-row" aria-hidden="true">
+        <div className="sb-skeleton sb-account-skeleton-avatar" />
+        <div className="sb-skeleton sb-account-skeleton-button" />
+      </div>
+
+      {[0, 1, 2].map((row) => (
+        <div key={row} className="sb-settings-field-row" aria-hidden="true">
+          <div className="sb-skeleton sb-account-skeleton-label" />
+          <div
+            className={`sb-skeleton sb-account-skeleton-input${
+              row === 1 ? " sb-account-skeleton-textarea" : ""
+            }`}
+          />
+        </div>
+      ))}
+
+      <div className="sb-settings-field-row" aria-hidden="true">
+        <div className="sb-skeleton sb-account-skeleton-label" />
+        <div className="sb-skeleton sb-account-skeleton-input" />
+      </div>
+
+      <div className="sb-settings-actions" aria-hidden="true">
+        <div className="sb-skeleton sb-account-skeleton-save" />
+      </div>
+    </div>
+  );
+}
+
 function AccountSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { login } = state;
   const { t } = useI18n();
   const isLoggedIn = useComputed(() => login.userId.value !== null);
   const profile = useComputed(() => login.profile.value);
+  // Show the loading state only while a fetch is in flight *and* we have no
+  // profile to display yet. If we already hold a cached profile (e.g. a
+  // background re-fetch), keep showing the real form rather than flashing
+  // skeletons over data the user can already read and edit.
+  const isProfileLoading = useComputed(
+    () => login.isProfileLoading.value && profile.value === null
+  );
 
   const newName = useSignal<string | null>(null);
   const name = useComputed(() => newName.value ?? profile.value?.name ?? "");
@@ -176,6 +229,7 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
   );
   const pictureUrl = useComputed(() => profile.value?.pictureUrl ?? "");
   const isUploadingPicture = useSignal(false);
+  const isSaving = useComputed(() => login.isSavingProfile.value);
   const uidCopied = useSignal(false);
 
   const handleSave = () => {
@@ -239,7 +293,9 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
         ]}
       />
       <section className="sb-settings-section">
-        {isLoggedIn.value ? (
+        {isLoggedIn.value && isProfileLoading.value ? (
+          <AccountSettingsSkeleton />
+        ) : isLoggedIn.value ? (
           <div className="sb-account-settings-layout">
             <p className="sb-account-settings-intro">
               {t("account-settings-intro", {
@@ -388,8 +444,22 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
               <button
                 className="sb-settings-save-button sb-account-save-button"
                 onClick={handleSave}
+                disabled={isSaving.value}
+                aria-busy={isSaving.value}
               >
-                {t("save-changes", { defaultValue: "Save changes" })}
+                {isSaving.value ? (
+                  <span className="sb-account-save-saving">
+                    <span
+                      className="material-symbols-outlined sb-account-save-spinner"
+                      aria-hidden="true"
+                    >
+                      progress_activity
+                    </span>
+                    {t("saving", { defaultValue: "Saving…" })}
+                  </span>
+                ) : (
+                  t("save-changes", { defaultValue: "Save changes" })
+                )}
               </button>
             </div>
 

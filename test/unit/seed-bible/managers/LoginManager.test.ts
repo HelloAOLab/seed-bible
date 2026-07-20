@@ -616,6 +616,53 @@ describe("createLoginManager", () => {
       );
     });
 
+    it("isSavingProfile is true while a write is in flight and false once it settles", async () => {
+      // Hold the write open so we can observe the in-flight state.
+      let resolveWrite: (() => void) | null = null;
+      recordDataMock.mockReturnValue(
+        new Promise<void>((resolve) => {
+          resolveWrite = () => resolve();
+        })
+      );
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userId.value === USER_ID);
+      await waitFor(() => manager.profile.value !== null);
+
+      expect(manager.isSavingProfile.value).toBe(false);
+
+      manager.updateProfile({ name: "Updated" });
+
+      expect(manager.isSavingProfile.value).toBe(true);
+
+      resolveWrite!();
+      await waitFor(() => manager.isSavingProfile.value === false);
+
+      expect(manager.isSavingProfile.value).toBe(false);
+    });
+
+    it("isSavingProfile resets to false when a write fails (no unhandled rejection)", async () => {
+      const errorSpy = vi
+        .spyOn(console, "error")
+        .mockImplementation(() => undefined);
+      recordDataMock.mockRejectedValue(new Error("network down"));
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.userId.value === USER_ID);
+      await waitFor(() => manager.profile.value !== null);
+
+      manager.updateProfile({ name: "Updated" });
+
+      await waitFor(() => manager.isSavingProfile.value === false);
+
+      expect(manager.isSavingProfile.value).toBe(false);
+      expect(errorSpy).toHaveBeenCalledWith(
+        "[LoginManager] Failed to persist profile",
+        expect.any(Error)
+      );
+      errorSpy.mockRestore();
+    });
+
     it("getUserProfile() retrieves the user profile from storage", async () => {
       getDataMock.mockResolvedValue({ success: true, data: { name: "Dave" } });
 
