@@ -42,6 +42,7 @@
   "copy": "コピー",
   "save-changes": "変更を保存する",
   "sign-out": "サインアウト",
+  "view-profile": "プロフィールを表示",
   "login-required-message": "プロフィールを閲覧・編集するには、ログインしてください。",
   "log-in": "ログイン",
   "session-settings": "セッション設定",

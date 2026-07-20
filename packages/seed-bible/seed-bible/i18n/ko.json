@@ -42,6 +42,7 @@
   "copy": "복사",
   "save-changes": "변경 사항 저장",
   "sign-out": "로그아웃",
+  "view-profile": "프로필 보기",
   "login-required-message": "프로필을 보고 수정하려면 로그인하십시오.",
   "log-in": "로그인",
   "session-settings": "세션 설정",

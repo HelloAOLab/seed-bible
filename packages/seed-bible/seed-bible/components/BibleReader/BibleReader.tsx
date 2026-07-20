@@ -4,8 +4,14 @@ import {
   type ChapterVerse,
 } from "../../managers/FreeUseBibleAPI";
 import type { JSX } from "preact";
-import { Suspense, useRef } from "preact/compat";
-import { computed, type ReadonlySignal, type Signal } from "@preact/signals";
+import { Suspense, createPortal, useRef } from "preact/compat";
+import { useEffect } from "preact/hooks";
+import {
+  computed,
+  useSignal,
+  type ReadonlySignal,
+  type Signal,
+} from "@preact/signals";
 import type {
   BibleReadingState,
   BibleSelectedVerse,
@@ -32,6 +38,182 @@ interface ReaderBookmarkButtonProps {
   translationId: string | null;
   bookId: string | null;
   chapterNumber: number | null;
+}
+
+/**
+ * Mobile header avatar: opens an account menu overlay instead of jumping
+ * straight into settings. Logged-in users get View profile + Sign out;
+ * guests get a single Log in action.
+ *
+ * Portaled to <body> because the mobile reader header uses overflow:hidden
+ * + max-height, which would clip an in-header dropdown.
+ */
+function MobileHeaderAccountButton(props: { state: SeedBibleState }) {
+  const { state } = props;
+  const { login, sidebar } = state;
+  const { t } = useI18n();
+  const isMenuOpen = useSignal(false);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const menuStyle = useSignal<JSX.CSSProperties | null>(null);
+  const isLoggedIn = login.userId.value !== null;
+  const displayName = getSelfDisplayName(state);
+
+  const closeMenu = () => {
+    isMenuOpen.value = false;
+    menuStyle.value = null;
+  };
+
+  const openMenu = () => {
+    const button = buttonRef.current;
+    if (!button) {
+      isMenuOpen.value = true;
+      return;
+    }
+    const rect = button.getBoundingClientRect();
+    const menuWidth = 184; // ~11.5rem
+    const right = Math.max(8, window.innerWidth - rect.right);
+    const top = rect.bottom + 6;
+    // Keep the menu on-screen if the avatar sits near the left edge.
+    const maxRight = Math.max(8, window.innerWidth - menuWidth - 8);
+    menuStyle.value = {
+      position: "fixed",
+      top: `${top}px`,
+      right: `${Math.min(right, maxRight)}px`,
+      minWidth: `${menuWidth}px`,
+    };
+    isMenuOpen.value = true;
+  };
+
+  useEffect(() => {
+    if (!isMenuOpen.value) return;
+
+    const handleResize = () => closeMenu();
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [isMenuOpen.value]);
+
+  const openAccountSettings = () => {
+    closeMenu();
+    sidebar.openSidebar();
+    sidebar.openSettingsToView("account");
+  };
+
+  return (
+    <>
+      <button
+        ref={buttonRef}
+        type="button"
+        className="sb-bible-reader-mobile-header-account"
+        aria-label={`Account menu (${displayName})`}
+        aria-expanded={isMenuOpen.value}
+        aria-haspopup="menu"
+        // The reader pane wrapper selects the pane on pointerdown/click
+        // (which runs closeSidebarAndSettings). Stop the tap here so it
+        // doesn't immediately dismiss the account view we're opening.
+        onPointerDown={(e: PointerEvent) => e.stopPropagation()}
+        onClick={(e: MouseEvent) => {
+          e.stopPropagation();
+          if (isMenuOpen.value) {
+            closeMenu();
+          } else {
+            openMenu();
+          }
+        }}
+      >
+        <SelfAvatarVisual state={state} />
+      </button>
+      {/* Portal to <body>: the mobile reader header clips overflow, so an
+       * in-tree dropdown would never be visible. */}
+      {isMenuOpen.value &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <>
+            <div
+              className="sb-bible-reader-mobile-account-menu-overlay"
+              onPointerDown={(e: PointerEvent) => {
+                e.stopPropagation();
+                closeMenu();
+              }}
+              aria-hidden="true"
+            />
+            <div
+              className="sb-bible-reader-mobile-account-menu"
+              role="menu"
+              style={menuStyle.value ?? undefined}
+              onPointerDown={(e: PointerEvent) => e.stopPropagation()}
+            >
+              {isLoggedIn ? (
+                <>
+                  <button
+                    type="button"
+                    className="sb-bible-reader-mobile-account-menu-item"
+                    role="menuitem"
+                    onClick={(e: MouseEvent) => {
+                      e.stopPropagation();
+                      openAccountSettings();
+                    }}
+                  >
+                    <span
+                      className="material-symbols-outlined sb-bible-reader-mobile-account-menu-icon"
+                      aria-hidden="true"
+                    >
+                      person
+                    </span>
+                    <span className="sb-bible-reader-mobile-account-menu-label">
+                      {t("view-profile", { defaultValue: "View profile" })}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="sb-bible-reader-mobile-account-menu-item sb-bible-reader-mobile-account-menu-item-danger"
+                    role="menuitem"
+                    onClick={(e: MouseEvent) => {
+                      e.stopPropagation();
+                      closeMenu();
+                      void login.logout();
+                    }}
+                  >
+                    <span
+                      className="material-symbols-outlined sb-bible-reader-mobile-account-menu-icon"
+                      aria-hidden="true"
+                    >
+                      logout
+                    </span>
+                    <span className="sb-bible-reader-mobile-account-menu-label">
+                      {t("sign-out", { defaultValue: "Sign out" })}
+                    </span>
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="sb-bible-reader-mobile-account-menu-item"
+                  role="menuitem"
+                  onClick={(e: MouseEvent) => {
+                    e.stopPropagation();
+                    closeMenu();
+                    void login.login();
+                  }}
+                >
+                  <span
+                    className="material-symbols-outlined sb-bible-reader-mobile-account-menu-icon"
+                    aria-hidden="true"
+                  >
+                    login
+                  </span>
+                  <span className="sb-bible-reader-mobile-account-menu-label">
+                    {t("log-in", { defaultValue: "Log in" })}
+                  </span>
+                </button>
+              )}
+            </div>
+          </>,
+          document.body
+        )}
+    </>
+  );
 }
 
 /**
@@ -1174,24 +1356,7 @@ export function BibleReader(props: BibleReaderProps) {
                 session={sharedSession}
               />
             ) : (
-              <button
-                type="button"
-                className="sb-bible-reader-mobile-header-account"
-                aria-label={`Open account settings (${getSelfDisplayName(
-                  state
-                )})`}
-                // The reader pane wrapper selects the pane on pointerdown/click
-                // (which runs closeSidebarAndSettings). Stop the tap here so it
-                // doesn't immediately dismiss the account view we're opening.
-                onPointerDown={(e: PointerEvent) => e.stopPropagation()}
-                onClick={(e: MouseEvent) => {
-                  e.stopPropagation();
-                  state.sidebar.openSidebar();
-                  state.sidebar.openSettingsToView("account");
-                }}
-              >
-                <SelfAvatarVisual state={state} />
-              </button>
+              <MobileHeaderAccountButton state={state} />
             )}
             <button
               type="button"

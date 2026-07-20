@@ -264,15 +264,27 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
                   <span className="material-symbols-outlined">person</span>
                 </div>
               )}
-              <button
-                className="sb-account-picture-button"
-                onClick={() => void handleUploadPicture()}
-                disabled={isUploadingPicture.value}
-              >
-                {isUploadingPicture.value
-                  ? t("uploading", { defaultValue: "Uploading..." })
-                  : t("update-picture", { defaultValue: "Update picture" })}
-              </button>
+              <div className="sb-account-picture-actions">
+                <button
+                  className="sb-account-picture-button"
+                  onClick={() => void handleUploadPicture()}
+                  disabled={isUploadingPicture.value}
+                >
+                  {isUploadingPicture.value
+                    ? t("uploading", { defaultValue: "Uploading..." })
+                    : t("update-picture", { defaultValue: "Update picture" })}
+                </button>
+                {/* Mobile-only: keep Sign out next to Update picture so it
+                    stays above the fold. Desktop still uses the section below. */}
+                <button
+                  type="button"
+                  className="sb-account-signout-button sb-account-signout-inline"
+                  onClick={() => void login.logout()}
+                >
+                  <span className="material-symbols-outlined">logout</span>
+                  {t("sign-out", { defaultValue: "Sign out" })}
+                </button>
+              </div>
             </div>
 
             <div className="sb-settings-field-row">
@@ -393,8 +405,9 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
               </button>
             </div>
 
-            <div className="sb-account-signout-section">
+            <div className="sb-account-signout-section sb-account-signout-section-desktop">
               <button
+                type="button"
                 className="sb-account-signout-button"
                 onClick={() => void login.logout()}
               >
