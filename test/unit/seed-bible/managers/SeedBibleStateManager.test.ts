@@ -32,9 +32,13 @@ vi.mock("@packages/seed-bible/seed-bible/managers/HighlightsManager", () => ({
   createHighlightsManager: () => mockHighlightsManager,
 }));
 
-vi.mock("@packages/seed-bible/seed-bible/managers/SessionsManager", () => ({
-  createSessionsManager: () => mockSessionsManager,
-}));
+vi.mock(
+  "@packages/seed-bible/seed-bible/managers/SessionsManager",
+  async (importOriginal) => ({
+    ...(await importOriginal<Record<string, unknown>>()),
+    createSessionsManager: () => mockSessionsManager,
+  })
+);
 
 vi.mock(
   "@packages/seed-bible/seed-bible/i18n/I18nManager",
@@ -105,6 +109,7 @@ function createMockSharedSession(id: string) {
       isExtensionEnabled: vi.fn().mockReturnValue(false),
       enableExtension: vi.fn(),
       disableExtension: vi.fn(),
+      dispose: vi.fn(),
     },
     document: {} as SharedDocument,
     options: signal({
@@ -115,6 +120,7 @@ function createMockSharedSession(id: string) {
       endedAt: null,
     }),
     connectedUsers: signal([]),
+    isSynced: signal(true),
     updateOptions: vi.fn(),
     removeSharedDecoration: vi.fn(),
     dispose: vi.fn(),
@@ -421,6 +427,171 @@ describe("createSeedBibleState", () => {
     } finally {
       window.history.replaceState(null, "", window.location.pathname);
     }
+  });
+
+  describe("host-disconnect grace timer", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    const HOST_ID = "host-user-1";
+    const hostConnectedUser = {
+      userId: HOST_ID,
+      connectionId: "host-connection",
+      isSelf: false,
+    };
+
+    function createMockHostedSession(id: string) {
+      const session = createMockSharedSession(id);
+      session.options.value = {
+        ...session.options.value,
+        hostUserId: HOST_ID,
+      };
+      return session;
+    }
+
+    async function joinAsHostedSession(state: SeedBibleState, id: string) {
+      const session = createMockHostedSession(id);
+      // `wrapSessionLifecycle` (invoked by `joinSharedSession` below)
+      // replaces `session.dispose` with its own wrapper, so the original
+      // spy must be captured before that happens in order to assert on it.
+      const originalDispose = session.dispose;
+      mockSessionsManager.joinSession.mockResolvedValue(session);
+      await state.app.joinSharedSession(id);
+      // Seed `sessionsWhereHostWasSeen` — the host must be observed as
+      // connected at least once before the disconnect heuristic applies,
+      // so joiners don't immediately close their own tab before they even
+      // see the host.
+      session.connectedUsers.value = [hostConnectedUser];
+      return { session, originalDispose };
+    }
+
+    it("does not start the disconnect timer while this client's own connection is unsynced", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-unsynced"
+      );
+      const tabId = state.tabs.tabs.value.find(
+        (tab) => tab.sharedSession === session
+      )!.id;
+
+      session.isSynced.value = false;
+      session.connectedUsers.value = [];
+
+      vi.advanceTimersByTime(20_000);
+
+      expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
+      expect(originalDispose).not.toHaveBeenCalled();
+      expect(state.app.currentToast.value).toBeNull();
+    });
+
+    it("shows a reconnecting toast and closes the tab after the grace period once synced and the host is still gone", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-grace"
+      );
+      const tabId = state.tabs.tabs.value.find(
+        (tab) => tab.sharedSession === session
+      )!.id;
+
+      session.connectedUsers.value = [];
+
+      expect(state.app.currentToast.value?.message).toBe(
+        "Reconnecting to the session…"
+      );
+      expect(originalDispose).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(29_999);
+      expect(originalDispose).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(1);
+      expect(originalDispose).toHaveBeenCalledTimes(1);
+      expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(false);
+      expect(state.app.currentToast.value?.message).toBe(
+        "The host left — you were removed from the session"
+      );
+    });
+
+    it("cancels the pending removal and shows a reconnected toast if the host reappears before the grace period elapses", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-recover"
+      );
+      const tabId = state.tabs.tabs.value.find(
+        (tab) => tab.sharedSession === session
+      )!.id;
+
+      session.connectedUsers.value = [];
+      vi.advanceTimersByTime(15_000);
+
+      session.connectedUsers.value = [hostConnectedUser];
+      expect(state.app.currentToast.value?.message).toBe(
+        "Reconnected to the session"
+      );
+
+      vi.advanceTimersByTime(20_000);
+
+      expect(originalDispose).not.toHaveBeenCalled();
+      expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
+    });
+
+    it("does not close the tab if this client's connection goes unsynced while the timer is pending", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-resync"
+      );
+      const tabId = state.tabs.tabs.value.find(
+        (tab) => tab.sharedSession === session
+      )!.id;
+
+      session.connectedUsers.value = [];
+      vi.advanceTimersByTime(1000);
+      // This client's own connection drops mid-wait (e.g. the phone was
+      // backgrounded right after the host first looked gone). The host is
+      // still absent from `connectedUsers`, but that reading is no longer
+      // trustworthy.
+      session.isSynced.value = false;
+
+      vi.advanceTimersByTime(29_000);
+
+      expect(originalDispose).not.toHaveBeenCalled();
+      expect(state.tabs.tabs.value.some((tab) => tab.id === tabId)).toBe(true);
+    });
+
+    it("suppresses arming the timer for a short window right after the tab returns to the foreground", async () => {
+      const state = await createStateWithTwoTabs();
+      const { session, originalDispose } = await joinAsHostedSession(
+        state,
+        "session-resume"
+      );
+
+      document.dispatchEvent(new Event("visibilitychange"));
+
+      session.connectedUsers.value = [];
+      expect(state.app.currentToast.value).toBeNull();
+
+      vi.advanceTimersByTime(4999);
+      expect(state.app.currentToast.value).toBeNull();
+      expect(originalDispose).not.toHaveBeenCalled();
+
+      // The post-resume grace window has now elapsed, so the effect re-runs
+      // and arms the timer.
+      vi.advanceTimersByTime(1);
+      expect(state.app.currentToast.value?.message).toBe(
+        "Reconnecting to the session…"
+      );
+
+      vi.advanceTimersByTime(30_000);
+      expect(originalDispose).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("tabs can be opened in new slots", async () => {

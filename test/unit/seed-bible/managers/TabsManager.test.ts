@@ -215,6 +215,7 @@ describe("createTabs", () => {
       dispose: vi.fn(),
       allUsers: signal([]),
       connectedUsers: signal([]),
+      isSynced: signal(true),
       localSessionId: signal("session-123"),
       userCanDecorate: vi.fn().mockReturnValue(true),
       userCanNavigate: vi.fn().mockReturnValue(true),
