@@ -1,4 +1,3 @@
-import App from "./App";
 import { TwitchIcon } from "./icons";
 import { initializeTwitchWS } from "./initializeTwitchWS";
 import { signal, effect, type Signal } from "@preact/signals";
@@ -7,6 +6,7 @@ import { type SeedBibleState } from "seed-bible";
 import { toByteArray } from "base64-js";
 import { render } from "preact";
 import type { NavigationManager } from "seed-bible/managers";
+import type { Pane } from "seed-bible/managers";
 
 function getBooleanMaskValue(value: unknown, defaultValue: boolean) {
   if (typeof value === "boolean") {
@@ -25,6 +25,7 @@ export function CreateTwitchSubState(
 ): TwitchSubInterface {
   const clientId = "cfjslv2429r70ek579iogr02vecn6d";
   const eventSubWebsocketUrl = "wss://eventsub.wss.twitch.tv/ws";
+  const currentPane = signal<Pane | null>(null);
 
   const wsPaused = signal(
     getBooleanMaskValue(
@@ -97,6 +98,7 @@ export function CreateTwitchSubState(
         settings,
         handleWSEvents,
         settingsOpened,
+        currentPane,
       });
     }
   });
@@ -120,16 +122,6 @@ export function CreateTwitchSubState(
         "twitchSubConfig",
         JSON.stringify(config.value)
       );
-    }
-  });
-
-  effect(() => {
-    if (
-      websocketSessionID.value &&
-      webSocketClient.value &&
-      seedBibleState.app.currentReadingState.value
-    ) {
-      addTwitchIcon({ wsPaused, settingsOpened });
     }
   });
 
@@ -186,7 +178,7 @@ export function CreateTwitchSubState(
           Number(chapter),
           Number(verse),
           {
-            className: "sb-verse-decoration-initial-verse-highlight",
+            className: "sb-verse-decoration-highlight",
             removeAfterMs: interval,
           }
         );
@@ -194,7 +186,8 @@ export function CreateTwitchSubState(
     }
   }
 
-  const handleWSEvents = async (config: { type: string; payload: string }) => {
+  async function handleWSEvents(config: { type: string; payload: string }) {
+    console.log(config);
     if (!wsPaused.value && websocketSessionID.value && webSocketClient.value) {
       switch (config.type) {
         case "bookChanged": {
@@ -320,34 +313,7 @@ export function CreateTwitchSubState(
         }
       }
     }
-  };
-
-  effect(() => {
-    if (settingsOpened.value) {
-      if (document.getElementById("twitchSub-container")) return;
-
-      const container = document.createElement("div");
-      container.id = "twitchSub-container";
-      container.className = "twitchSub";
-      document.body.appendChild(container);
-
-      render(
-        <App
-          wsPaused={wsPaused}
-          settingsOpened={settingsOpened}
-          settings={settings}
-          i18n={seedBibleState.i18n}
-        />,
-        container
-      );
-    } else {
-      const container = document.getElementById("twitchSub-container");
-      if (container) {
-        render(null, container);
-        container.remove();
-      }
-    }
-  });
+  }
 
   effect(() => {
     window.sessionStorage.setItem(
@@ -373,6 +339,7 @@ export function CreateTwitchSubState(
     wsPaused,
     handleWSEvents,
     settingsOpened,
+    currentPane,
   };
 }
 
@@ -454,10 +421,6 @@ async function getConfig({
   if (urlWithoutHash) {
     navigation.replace(urlWithoutHash);
   }
-  // Return the freshly built config so it's applied on this first load.
-  // `navigation.replace` only soft-updates the URL (history.replaceState, no
-  // reload), so returning null here would leave the config unapplied until the
-  // user manually refreshes and it's re-read from sessionStorage.
   return config;
 }
 
@@ -494,16 +457,18 @@ async function openBookAndChapter(
   );
 }
 
-function addTwitchIcon({
+export async function addTwitchIcon({
   wsPaused,
   settingsOpened,
+  isMobile,
 }: {
   wsPaused: Signal<boolean>;
   settingsOpened: Signal<boolean>;
+  isMobile: boolean;
 }) {
-  const container =
-    document.getElementsByClassName("sb-bible-reader-title")[0] ??
-    document.getElementsByClassName("sb-bible-reader-mobile-header-title")[0];
+  const container = !isMobile
+    ? document.getElementsByClassName("sb-bible-reader-title")[0]
+    : document.getElementsByClassName("sb-bible-reader-mobile-header-title")[0];
   if (!container) {
     console.error("Could not find container to add Twitch icon to");
     return;
@@ -517,8 +482,8 @@ function addTwitchIcon({
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
+    width: ${isMobile ? "24px" : "30px"};
+    height: ${isMobile ? "24px" : "30px"};
     margin-left: 12px;
     border-radius: 50%;
     box-shadow: ${
@@ -534,7 +499,10 @@ function addTwitchIcon({
   };
 
   container.appendChild(icon);
-  render(<TwitchIcon width={20} height={20} />, icon);
+  render(
+    <TwitchIcon width={isMobile ? 16 : 20} height={isMobile ? 16 : 20} />,
+    icon
+  );
 }
 
 function expandRange(range: [number, number]): number[] {

@@ -3,6 +3,7 @@ import {
   type ChapterFootnote,
   type ChapterVerse,
   type Translation,
+  type TranslationBook,
   type TranslationBookChapter,
   type TranslationBooks,
 } from "../managers/FreeUseBibleAPI";
@@ -25,6 +26,55 @@ import type {
 import { v4 as uuid } from "uuid";
 import type { I18nManager } from "../i18n";
 import { LANG_META } from "../i18n/languageMeta";
+import type {
+  DiscoverContentResult,
+  DiscoverCrossReferenceResult,
+  DiscoverManager,
+  DiscoverReference,
+  DiscoverStudyNoteResult,
+} from "../managers/DiscoverManager";
+import type {
+  BibleReadingExtensionManager,
+  ReadingExtensionInstance,
+  ReadingExtensionRuntime,
+  ReadingNavigationOutcome,
+} from "../managers/BibleReadingExtensionManager";
+
+export interface DiscoverTypedProviderResults<TResult> {
+  providerId: string;
+  results: TResult[];
+}
+
+type DiscoverReferenceWithBookData = DiscoverReference & {
+  bookData: TranslationBook;
+};
+
+type DiscoverContentResultWithBookData = Omit<
+  DiscoverContentResult,
+  "reference"
+> & {
+  reference: DiscoverReferenceWithBookData;
+};
+
+type DiscoverCrossReferenceResultWithBookData = Omit<
+  DiscoverCrossReferenceResult,
+  "reference" | "crossReference"
+> & {
+  reference: DiscoverReferenceWithBookData;
+  crossReference: DiscoverReferenceWithBookData;
+};
+
+type DiscoverStudyNoteResultWithBookData = Omit<
+  DiscoverStudyNoteResult,
+  "reference"
+> & {
+  reference: DiscoverReferenceWithBookData;
+};
+
+export type DiscoverResultWithBookData =
+  | DiscoverCrossReferenceResultWithBookData
+  | DiscoverContentResultWithBookData
+  | DiscoverStudyNoteResultWithBookData;
 
 export interface BibleSelectedVerse {
   /** Book identifier (for example: GEN, MAT). */
@@ -71,6 +121,8 @@ export interface VerseDecoration {
   endIndex?: number;
   /** Optional CSS class to apply to the decorated verse/range. */
   className?: string;
+  /** Optional CSS class to apply to the entire chapter container. */
+  containerClassName?: string;
   /** Optional inline style to apply to the decorated verse/range. */
   style?: JSX.CSSProperties;
   /** Optional delay in milliseconds before this decoration auto-removes itself. */
@@ -91,6 +143,9 @@ export interface VerseDecorationInput {
   endIndex?: number;
   /** Optional CSS class to apply to the decorated verse/range. */
   className?: string;
+  /** Optional CSS class to apply to the entire chapter container. */
+  containerClassName?: string;
+
   /** Optional inline style to apply to the decorated verse/range. */
   style?: JSX.CSSProperties;
   /** Optional delay in milliseconds before this decoration auto-removes itself. */
@@ -239,6 +294,113 @@ export interface BibleReadingState {
 
   /** Loads the next chapter relative to `chapterData` when available. */
   loadNextChapter: () => Promise<void>;
+
+  /**
+   * True when a next chapter is available to navigate to. Reflects the
+   * highest-priority enabled extension's `hasNext` override when one is
+   * provided; otherwise falls back to whether the current chapter has a
+   * `nextChapterApiLink`.
+   */
+  hasNext: ReadonlySignal<boolean>;
+
+  /**
+   * True when a previous chapter is available to navigate to. Reflects the
+   * highest-priority enabled extension's `hasPrevious` override when one is
+   * provided; otherwise falls back to whether the current chapter has a
+   * `previousChapterApiLink`.
+   */
+  hasPrevious: ReadonlySignal<boolean>;
+  /** Streaming discovered cross references for the current chapter, grouped by provider. */
+  discoveredCrossReferences: ReadonlySignal<
+    DiscoverTypedProviderResults<DiscoverCrossReferenceResultWithBookData>[]
+  >;
+  /** Streaming discovered content for the current chapter, grouped by provider. */
+  discoveredContent: ReadonlySignal<
+    DiscoverTypedProviderResults<DiscoverContentResultWithBookData>[]
+  >;
+  /** Streaming discovered study notes for the current chapter, grouped by provider. */
+  discoveredStudyNotes: ReadonlySignal<
+    DiscoverTypedProviderResults<DiscoverStudyNoteResultWithBookData>[]
+  >;
+
+  /**
+   * True while this reading state is part of a shared/multiplayer session.
+   * `SessionsManager` flips this on when it wraps the state; reading extensions
+   * observe it via their activation context.
+   */
+  isShared: ReadonlySignal<boolean>;
+
+  /**
+   * Human-readable title for this reading state ("Genesis 1" by default);
+   * reading extensions can override it via `transformTitle`.
+   */
+  title: ReadonlySignal<string>;
+
+  /**
+   * Compact title for tight spaces ("GEN 1" by default); reading extensions
+   * can override it via `transformShortTitle`.
+   */
+  shortTitle: ReadonlySignal<string>;
+
+  /**
+   * Secondary title line (the translation name by default); reading extensions
+   * can override it via `transformSubTitle`.
+   */
+  subTitle: ReadonlySignal<string>;
+
+  /**
+   * Compact secondary title for tight spaces (the translation short name by
+   * default); reading extensions can override it via `transformShortSubTitle`.
+   */
+  shortSubTitle: ReadonlySignal<string>;
+
+  /** Reading extensions currently enabled on this reading state. */
+  enabledExtensions: ReadonlySignal<ReadingExtensionRuntime[]>;
+
+  /** Returns true when the given reading extension is enabled on this state. */
+  isExtensionEnabled: (extensionId: string) => boolean;
+
+  /**
+   * Enables a registered reading extension for this reading state. Extensions
+   * are never enabled by default — this is how you turn one on.
+   *
+   * If the extension is already enabled, its custom data is updated (when
+   * `data` is provided) instead of re-activating. If no extension with the given
+   * id is registered, this is a no-op.
+   *
+   * @param extensionId The id of a registered reading extension.
+   * @param data Optional initial (or updated) custom data for the extension.
+   */
+  enableExtension: (extensionId: string, data?: unknown) => void;
+
+  /** Disables a reading extension for this state, running its cleanup. */
+  disableExtension: (extensionId: string) => void;
+
+  /**
+   * Gets the query parameters that should be set on this reading state's URL.
+   * @param currentUrl The current URL.
+   * @returns The query parameters that should be set the URL when this reading state is selected.
+   */
+  getUrlQueryParams: (currentUrl: URL) => Record<string, string | null>;
+
+  /**
+   * Subscribes to navigation events for this reading state. The listener is
+   * invoked once per completed navigation (chapter/book/translation change,
+   * extension toggle, etc.), which lets the owner prescriptively update the URL
+   * exactly once per navigation instead of reacting to each underlying signal.
+   * @param listener Called with the navigation's URL intent (push vs replace).
+   * @returns An unsubscribe function.
+   */
+  onNavigate: (
+    listener: (options: ReadingNavigationOptions) => void
+  ) => () => void;
+
+  /**
+   * Releases all resources held by this reading state: disables every enabled
+   * extension, clears pending decoration timers, and stops internal effects.
+   * Called when the owning tab is closed.
+   */
+  dispose: () => void;
 }
 
 export interface TranslationWithLanguage {
@@ -508,6 +670,13 @@ export interface InitialBibleReadingOptions {
    * The verse to scroll to after the initial chapter loads. Should be a valid verse number within the initial chapter, otherwise it will be ignored.
    */
   scrollToVerse?: number;
+
+  /**
+   * Whether this reading state is part of a shared/multiplayer session.
+   * `SessionsManager` sets this when it creates the session's reading state so
+   * reading extensions can observe it via `isShared`. Defaults to `false`.
+   */
+  isShared?: boolean;
 }
 
 export interface SelectTranslationAndChapterOptions {
@@ -515,6 +684,23 @@ export interface SelectTranslationAndChapterOptions {
    * The verse to scroll to after the chapter loads. Should be a valid verse number within the chapter, otherwise it will be ignored.
    */
   scrollToVerse?: number;
+
+  /**
+   * Whether this navigation should update the URL (emit a navigation event).
+   * Defaults to `true`. Pass `false` when the navigation is itself being
+   * driven _from_ the URL (deep link / back-forward sync) so it does not push
+   * a redundant history entry back onto the stack.
+   */
+  updateUrl?: boolean;
+}
+
+/** Options describing how a reading-state navigation should affect the URL. */
+export interface ReadingNavigationOptions {
+  /**
+   * When `true`, the URL should be updated with `replaceState` (no new history
+   * entry). When `false`/omitted, a new history entry is pushed.
+   */
+  replace?: boolean;
 }
 
 function normalizeDecorationVerses(verses: number | number[]): number[] {
@@ -614,7 +800,9 @@ export function createBibleReadingState(
   dataManager: BibleDataManager,
   highlightsManager: HighlightsManager,
   i18nManager: I18nManager,
-  options: InitialBibleReadingOptions = {}
+  options: InitialBibleReadingOptions = {},
+  discoverManager?: DiscoverManager,
+  readingExtensionManager?: BibleReadingExtensionManager
 ): BibleReadingState {
   const isSameSelectedVerse = (
     left: BibleSelectedVerse,
@@ -687,8 +875,257 @@ export function createBibleReadingState(
   const scrollPosition = signal<number>(0);
   const scrollToVerse = signal<number | null>(null);
 
+  // Reading-extension enablement (per reading state). Extensions are registered
+  // globally on the BibleReadingExtensionManager but never enabled by default;
+  // `enableExtension` turns one on for this state only.
+  const isShared = signal<boolean>(options.isShared ?? false);
+  const enabledRuntimes = signal<Map<string, ReadingExtensionRuntime>>(
+    new Map()
+  );
+  const enabledExtensions = computed<ReadingExtensionRuntime[]>(() =>
+    Array.from(enabledRuntimes.value.values())
+  );
+  const orderedEnabledRuntimes = computed<ReadingExtensionRuntime[]>(() =>
+    sortBy(enabledExtensions.value, [
+      (runtime) => -(runtime.definition.priority ?? 0),
+    ])
+  );
+
+  // Disposers for internal effects, released by `dispose()`.
+  const effectDisposers: Array<() => void> = [];
+
+  // Forward reference to the object returned by this factory. It is assigned
+  // just before `return`, so it is always set by the time any public method
+  // (which is what triggers extension activation) is invoked.
+  let readingStateRef!: BibleReadingState;
+
+  const enableExtension = (extensionId: string, data?: unknown) => {
+    const existing = enabledRuntimes.value.get(extensionId);
+    if (existing) {
+      if (data !== undefined) {
+        existing.data.value = data;
+      }
+      return;
+    }
+
+    const definition =
+      readingExtensionManager?.getReadingExtension(extensionId);
+    if (!definition) {
+      console.warn(
+        `Cannot enable reading extension "${extensionId}": it is not registered.`
+      );
+      return;
+    }
+
+    const dataSignal = signal<unknown>(data);
+    const instance: ReadingExtensionInstance = definition.activate({
+      readingState: readingStateRef,
+      data: dataSignal,
+      isShared,
+    });
+
+    const runtime: ReadingExtensionRuntime = {
+      id: extensionId,
+      definition,
+      instance,
+      data: dataSignal,
+    };
+
+    const nextRuntimes = new Map(enabledRuntimes.value);
+    nextRuntimes.set(extensionId, runtime);
+    enabledRuntimes.value = nextRuntimes;
+
+    // Enabling an extension can add query params (via transformQueryParams),
+    // but it is not a chapter navigation, so update the URL in place.
+    emitNavigate({ replace: true });
+  };
+
+  const disableExtension = (extensionId: string) => {
+    const runtime = enabledRuntimes.value.get(extensionId);
+    if (!runtime) {
+      return;
+    }
+
+    try {
+      runtime.instance.dispose?.();
+    } catch (err) {
+      console.error(`Error disposing reading extension "${extensionId}":`, err);
+    }
+
+    const nextRuntimes = new Map(enabledRuntimes.value);
+    nextRuntimes.delete(extensionId);
+    enabledRuntimes.value = nextRuntimes;
+
+    // Disabling drops the extension's query params; update the URL in place.
+    emitNavigate({ replace: true });
+  };
+
+  const isExtensionEnabled = (extensionId: string) =>
+    enabledRuntimes.value.has(extensionId);
+
+  /**
+   * Runs the enabled extensions' navigation hooks in priority order, returning
+   * the first non-`default` outcome (or `default` when none intervene).
+   */
+  const runNavigationHooks = async (
+    direction: "next" | "previous"
+  ): Promise<ReadingNavigationOutcome> => {
+    const currentChapter = chapterData.value;
+    if (!currentChapter) {
+      return { type: "default" };
+    }
+
+    for (const runtime of orderedEnabledRuntimes.value) {
+      const hook =
+        direction === "next"
+          ? runtime.instance.navigateNext
+          : runtime.instance.navigatePrevious;
+      if (!hook) {
+        continue;
+      }
+
+      const outcome = await hook({
+        readingState: readingStateRef,
+        currentChapter,
+        data: runtime.data,
+      });
+      if (outcome.type !== "default") {
+        return outcome;
+      }
+    }
+
+    return { type: "default" };
+  };
+
+  const navigationListeners = new Set<
+    (options: ReadingNavigationOptions) => void
+  >();
+
+  const onNavigate = (
+    listener: (options: ReadingNavigationOptions) => void
+  ) => {
+    navigationListeners.add(listener);
+    return () => {
+      navigationListeners.delete(listener);
+    };
+  };
+
+  const emitNavigate = (options: ReadingNavigationOptions = {}) => {
+    for (const listener of Array.from(navigationListeners)) {
+      listener(options);
+    }
+  };
+
+  const disposeReadingState = () => {
+    // Clear listeners first so extension teardown below cannot emit navigation
+    // events into an owner that is being torn down.
+    navigationListeners.clear();
+    for (const extensionId of Array.from(enabledRuntimes.value.keys())) {
+      disableExtension(extensionId);
+    }
+    for (const timer of decorationRemovalTimers.values()) {
+      clearTimeout(timer);
+    }
+    decorationRemovalTimers.clear();
+    for (const dispose of effectDisposers.splice(0)) {
+      dispose();
+    }
+  };
+
   const translation = computed(
     () => translationBooks.value?.translation ?? null
+  );
+
+  // Resolves the current book's display record from the loaded chapter when
+  // available, otherwise the books catalog by id.
+  const resolveCurrentBook = () => {
+    const chapterBook = chapterData.value?.book;
+    if (chapterBook) {
+      return chapterBook;
+    }
+    return translationBooks.value?.books.find((b) => b.id === bookId.value);
+  };
+
+  // Default title ("Genesis 1"), using the app-wide `name ?? commonName ?? id`
+  // idiom. Empty while no book is resolvable yet.
+  const baseTitle = computed<string>(() => {
+    const book = resolveCurrentBook();
+    const bookName = book?.name ?? book?.commonName ?? bookId.value;
+    if (!bookName) {
+      return "";
+    }
+    return `${bookName} ${chapterNumber.value}`;
+  });
+
+  // Default short title ("GEN 1"): the compact book id + chapter form used by
+  // the collapsed tab strip. Empty while no book is selected.
+  const baseShortTitle = computed<string>(() => {
+    const id = bookId.value;
+    if (!id) {
+      return "";
+    }
+    return `${id} ${chapterNumber.value}`;
+  });
+
+  // Default subtitle: the name of the current chapter's translation. Empty
+  // while it is not yet resolvable.
+  const baseSubTitle = computed<string>(() => {
+    return (
+      chapterData.value?.translation.name ??
+      translationBooks.value?.translation.name ??
+      ""
+    );
+  });
+
+  // Default compact subtitle: the current translation's short name (e.g.
+  // "AAB"). Empty while it is not yet resolvable.
+  const baseShortSubTitle = computed<string>(() => {
+    return (
+      chapterData.value?.translation.shortName ??
+      translationBooks.value?.translation.shortName ??
+      ""
+    );
+  });
+
+  // Folds a base string through each enabled extension's transform hook in
+  // priority order. Mirrors `discoveredResultsForDisplay` / `getUrlQueryParams`.
+  const applyTitleTransforms = (
+    base: string,
+    pick: (
+      instance: ReadingExtensionInstance
+    ) => ReadingExtensionInstance["transformTitle"]
+  ): string => {
+    let current = base;
+    for (const runtime of orderedEnabledRuntimes.value) {
+      const transform = pick(runtime.instance);
+      if (!transform) {
+        continue;
+      }
+      current = transform({
+        readingState: readingStateRef,
+        data: runtime.data,
+        label: current,
+      });
+    }
+    return current;
+  };
+
+  // Titles surfaced to consumers: the defaults passed through each enabled
+  // extension's matching transform hook in priority order.
+  const title = computed<string>(() =>
+    applyTitleTransforms(baseTitle.value, (i) => i.transformTitle)
+  );
+  const shortTitle = computed<string>(() =>
+    applyTitleTransforms(baseShortTitle.value, (i) => i.transformShortTitle)
+  );
+  const subTitle = computed<string>(() =>
+    applyTitleTransforms(baseSubTitle.value, (i) => i.transformSubTitle)
+  );
+  const shortSubTitle = computed<string>(() =>
+    applyTitleTransforms(
+      baseShortSubTitle.value,
+      (i) => i.transformShortSubTitle
+    )
   );
 
   const selectedFootnote = computed<SelectedFootnote | null>(() => {
@@ -969,9 +1406,9 @@ export function createBibleReadingState(
       decorationRemovalTimers.delete(id);
     }
 
-    const existingDecorationIndex = decorations.value.findIndex(
-      (currentDecoration) => currentDecoration.id === id
-    );
+    const existingDecorationIndex = decorations
+      .peek()
+      .findIndex((currentDecoration) => currentDecoration.id === id);
 
     const nextDecoration: VerseDecoration = {
       id,
@@ -983,11 +1420,13 @@ export function createBibleReadingState(
     };
 
     if (existingDecorationIndex >= 0) {
-      decorations.value = decorations.value.map((currentDecoration, index) =>
-        index === existingDecorationIndex ? nextDecoration : currentDecoration
-      );
+      decorations.value = decorations
+        .peek()
+        .map((currentDecoration, index) =>
+          index === existingDecorationIndex ? nextDecoration : currentDecoration
+        );
     } else {
-      decorations.value = [...decorations.value, nextDecoration];
+      decorations.value = [...decorations.peek(), nextDecoration];
     }
 
     if (
@@ -1011,9 +1450,9 @@ export function createBibleReadingState(
       decorationRemovalTimers.delete(decorationId);
     }
 
-    decorations.value = decorations.value.filter(
-      (decoration) => decoration.id !== decorationId
-    );
+    decorations.value = decorations
+      .peek()
+      .filter((decoration) => decoration.id !== decorationId);
   };
 
   const loadPreviousChapter = async () => {
@@ -1021,15 +1460,28 @@ export function createBibleReadingState(
       return;
     }
 
+    const outcome = await runNavigationHooks("previous");
+    if (outcome.type === "handled") {
+      emitNavigate({ replace: false });
+      return;
+    } else if (outcome.type === "prevent") {
+      return;
+    }
+
     loading.value = true;
     error.value = null;
 
     try {
-      const chapter = await dataManager.getPreviousChapter(chapterData.value);
+      const chapter =
+        outcome.type === "navigate"
+          ? outcome.chapter
+          : await dataManager.getPreviousChapter(chapterData.value);
       if (!chapter) {
         return;
       }
       await syncStateFromChapter(chapter);
+
+      emitNavigate({ replace: false });
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to load previous chapter.";
@@ -1064,6 +1516,8 @@ export function createBibleReadingState(
         );
         await syncStateFromChapter(chapter);
       });
+
+      emitNavigate({ replace: false });
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to select translation.";
@@ -1096,6 +1550,8 @@ export function createBibleReadingState(
       );
 
       await syncStateFromChapter(chapter);
+
+      emitNavigate({ replace: false });
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to select book.";
@@ -1147,6 +1603,10 @@ export function createBibleReadingState(
         );
         await syncStateFromChapter(chapter, options);
       });
+
+      if (options?.updateUrl !== false) {
+        emitNavigate({ replace: false });
+      }
     } catch (err) {
       error.value =
         err instanceof Error
@@ -1169,6 +1629,8 @@ export function createBibleReadingState(
       );
 
       await syncStateFromChapter(nextChapterData);
+
+      emitNavigate({ replace: false });
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to select chapter.";
@@ -1182,15 +1644,28 @@ export function createBibleReadingState(
       return;
     }
 
+    const outcome = await runNavigationHooks("next");
+    if (outcome.type === "handled") {
+      emitNavigate({ replace: false });
+      return;
+    } else if (outcome.type === "prevent") {
+      return;
+    }
+
     loading.value = true;
     error.value = null;
 
     try {
-      const chapter = await dataManager.getNextChapter(chapterData.value);
+      const chapter =
+        outcome.type === "navigate"
+          ? outcome.chapter
+          : await dataManager.getNextChapter(chapterData.value);
       if (!chapter) {
         return;
       }
       await syncStateFromChapter(chapter);
+
+      emitNavigate({ replace: false });
     } catch (err) {
       error.value =
         err instanceof Error ? err.message : "Failed to load next chapter.";
@@ -1279,9 +1754,264 @@ export function createBibleReadingState(
     selectedFootnoteId.value = noteId;
   };
 
+  const hasMatchingReference = (
+    result: { reference: DiscoverReference },
+    currentBookId: string,
+    currentChapterNumber: number
+  ) => {
+    return (
+      result.reference.book === currentBookId &&
+      result.reference.chapter === currentChapterNumber
+    );
+  };
+
+  const withBookData = (
+    reference: DiscoverReference,
+    bookData: TranslationBook
+  ): DiscoverReferenceWithBookData => {
+    return {
+      ...reference,
+      bookData,
+    };
+  };
+
+  const discoveredResults = signal<
+    DiscoverTypedProviderResults<DiscoverResultWithBookData>[]
+  >([]);
+
+  const discoveredResultsFiltered = computed<
+    DiscoverTypedProviderResults<DiscoverResultWithBookData>[]
+  >(() => {
+    const chapter = chapterData.value;
+    if (!chapter) {
+      return [];
+    }
+
+    const currentBookId = chapter.book.id;
+    const currentChapterNumber = chapter.chapter.number;
+    return discoveredResults.value
+      .map((providerResults) => ({
+        providerId: providerResults.providerId,
+        results: providerResults.results.filter((entry) =>
+          hasMatchingReference(entry, currentBookId, currentChapterNumber)
+        ),
+      }))
+      .filter((providerResults) => providerResults.results.length > 0);
+  });
+
+  // Discovered content shown to the user: the chapter-filtered provider results
+  // passed through each enabled extension's `transformDiscoveredContent` hook in
+  // priority order. Extensions can add content, filter it, or return `[]` to
+  // suppress everything. The three by-type computeds below read this.
+  const discoveredResultsForDisplay = computed<
+    DiscoverTypedProviderResults<DiscoverResultWithBookData>[]
+  >(() => {
+    let results = discoveredResultsFiltered.value;
+    for (const runtime of orderedEnabledRuntimes.value) {
+      const transform = runtime.instance.transformDiscoveredContent;
+      if (!transform) {
+        continue;
+      }
+      results = transform({
+        readingState: readingStateRef,
+        data: runtime.data,
+        results,
+      });
+    }
+    return results;
+  });
+
+  const discoveredCrossReferences = computed<
+    DiscoverTypedProviderResults<DiscoverCrossReferenceResultWithBookData>[]
+  >(() => {
+    return discoveredResultsForDisplay.value
+      .map((providerResults) => ({
+        providerId: providerResults.providerId,
+        results: providerResults.results.filter(
+          (entry): entry is DiscoverCrossReferenceResultWithBookData =>
+            entry.type === "cross-reference"
+        ),
+      }))
+      .filter((providerResults) => providerResults.results.length > 0);
+  });
+
+  const discoveredContent = computed<
+    DiscoverTypedProviderResults<DiscoverContentResultWithBookData>[]
+  >(() => {
+    return discoveredResultsForDisplay.value
+      .map((providerResults) => ({
+        providerId: providerResults.providerId,
+        results: providerResults.results.filter(
+          (entry): entry is DiscoverContentResultWithBookData =>
+            entry.type === "content"
+        ),
+      }))
+      .filter((providerResults) => providerResults.results.length > 0);
+  });
+
+  const discoveredStudyNotes = computed<
+    DiscoverTypedProviderResults<DiscoverStudyNoteResultWithBookData>[]
+  >(() => {
+    return discoveredResultsForDisplay.value
+      .map((providerResults) => ({
+        providerId: providerResults.providerId,
+        results: providerResults.results.filter(
+          (entry): entry is DiscoverStudyNoteResultWithBookData =>
+            entry.type === "study-note"
+        ),
+      }))
+      .filter((providerResults) => providerResults.results.length > 0);
+  });
+
+  if (discoverManager) {
+    let discoverGeneration = 0;
+
+    const stopDiscoverEffect = effect(() => {
+      const chapter = chapterData.value;
+      if (!chapter) {
+        discoveredResults.value = [];
+        return;
+      }
+
+      const generation = ++discoverGeneration;
+      discoveredResults.value = [];
+
+      const context = {
+        translationId: chapter.translation.id,
+        book: chapter.book.id,
+        chapter: chapter.chapter.number,
+        language: chapter.translation.language,
+      };
+      const currentBookData = chapter.book;
+
+      void (async () => {
+        for await (const result of discoverManager.discover(context)) {
+          if (generation !== discoverGeneration) return;
+
+          const enrichedResults: DiscoverResultWithBookData[] =
+            result.results.map((entry) => {
+              const refBookData =
+                translationBooks.value?.books.find(
+                  (b) => b.id === entry.reference.book
+                ) ?? currentBookData;
+
+              if (entry.type === "cross-reference") {
+                const crossRefBookData =
+                  translationBooks.value?.books.find(
+                    (b) => b.id === entry.crossReference.book
+                  ) ?? currentBookData;
+
+                return {
+                  ...entry,
+                  reference: withBookData(entry.reference, refBookData),
+                  crossReference: withBookData(
+                    entry.crossReference,
+                    crossRefBookData
+                  ),
+                };
+              }
+
+              return {
+                ...entry,
+                reference: withBookData(entry.reference, refBookData),
+              };
+            });
+
+          if (enrichedResults.length > 0) {
+            discoveredResults.value = [
+              ...discoveredResults.value,
+              {
+                providerId: result.providerId,
+                results: enrichedResults,
+              },
+            ];
+          }
+        }
+      })();
+    });
+    effectDisposers.push(stopDiscoverEffect);
+  }
+
+  /**
+   * Gets the URL query parameters for the current reading state.
+   * @param currentUrl The current URL.
+   * @returns An object representing the query parameters.
+   */
+  const getUrlQueryParams = (currentUrl: URL) => {
+    const selectedBookId = bookId.value;
+    const selectedChapter = chapterNumber.value;
+    const selectedTranslation = translationId.value;
+
+    let query: Record<string, string | null> = {};
+
+    const url = currentUrl;
+
+    query.book = selectedBookId ?? null;
+    query.chapter = selectedChapter ? String(selectedChapter) : null;
+
+    if (selectedTranslation) {
+      const translationId = dataManager.buildTranslationId(selectedTranslation);
+
+      if (url.searchParams.has("translationId")) {
+        query.translationId = translationId;
+        // navigation.updateQueryParam("translationId", translationId);
+      } else if (
+        url.searchParams.has("translation") ||
+        translationId !== defaultTranslation.id
+      ) {
+        query.translation = translationId;
+      }
+    }
+
+    for (const extension of enabledExtensions.value) {
+      if (extension.instance.transformQueryParams) {
+        query = extension.instance.transformQueryParams({
+          readingState: readingStateRef,
+          data: extension.data,
+          queryParams: query,
+        });
+      }
+    }
+
+    // const verseNumbers = selectedVerses.value
+    //   .filter(
+    //     (verse) =>
+    //       verse.bookId === selectedBookId &&
+    //       verse.chapterNumber === selectedChapter
+    //   )
+    //   .map((verse) => verse.verse.number);
+
+    // const formatted = verseNumbers ? formatVerseSelection(verseNumbers) : null;
+    // query.verse = formatted;
+    // // navigation.updateQueryParam("verse", formatted);
+
+    return query;
+  };
+
+  // Availability surfaced to consumers: the highest-priority enabled
+  // extension's hasNext/hasPrevious override, falling back to whether the
+  // current chapter has a next/previous chapter link.
+  const hasNext = computed<boolean>(() => {
+    for (const runtime of orderedEnabledRuntimes.value) {
+      if (runtime.instance.hasNext) {
+        return runtime.instance.hasNext.value;
+      }
+    }
+    return !!chapterData.value?.nextChapterApiLink;
+  });
+
+  const hasPrevious = computed<boolean>(() => {
+    for (const runtime of orderedEnabledRuntimes.value) {
+      if (runtime.instance.hasPrevious) {
+        return runtime.instance.hasPrevious.value;
+      }
+    }
+    return !!chapterData.value?.previousChapterApiLink;
+  });
+
   loadInitialData();
 
-  return {
+  readingStateRef = {
     defaultTranslation,
     translationId,
     translation,
@@ -1312,5 +2042,24 @@ export function createBibleReadingState(
     selectChapter,
     loadPreviousChapter,
     loadNextChapter,
+    hasNext,
+    hasPrevious,
+    discoveredCrossReferences,
+    discoveredContent,
+    discoveredStudyNotes,
+    title,
+    shortTitle,
+    subTitle,
+    shortSubTitle,
+    isShared: computed(() => isShared.value),
+    enabledExtensions,
+    isExtensionEnabled,
+    enableExtension,
+    disableExtension,
+    dispose: disposeReadingState,
+    getUrlQueryParams,
+    onNavigate,
   };
+
+  return readingStateRef;
 }

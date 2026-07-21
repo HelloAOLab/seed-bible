@@ -118,7 +118,11 @@ export default function initAudioReaderExtension() {
         },
         icon: () => (isPlaying.value ? <PauseIcon /> : <PlayIcon />),
         isVisible: (ctx) =>
-          computed(() => chapterAudioUrl(ctx.readingState) !== null),
+          computed(
+            () =>
+              !ctx.playlists.playing.value &&
+              chapterAudioUrl(ctx.readingState) !== null
+          ),
         onSelect: (ctx) => {
           const url = chapterAudioUrl(ctx.readingState);
           if (!url) {

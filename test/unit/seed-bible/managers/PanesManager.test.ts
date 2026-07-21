@@ -1,5 +1,5 @@
 import { createPanes } from "@packages/seed-bible/seed-bible/managers/PanesManager";
-import { signal } from "@preact/signals";
+import { effect, signal } from "@preact/signals";
 import type { ComponentChild } from "preact";
 
 function componentReturning(value: string): () => ComponentChild {
@@ -29,6 +29,20 @@ describe("createPanes", () => {
       expect(pane.title).toBe("Notes");
       expect(pane.component()).toBe("Notes Component");
       expect(panes.selectedPaneId.value).toBe(pane.id);
+    });
+
+    it("stores a render-function title as-is", () => {
+      const panes = createPanes();
+
+      const title = componentReturning("Rendered Title");
+      const pane = panes.openPane({
+        placement: "floating",
+        title,
+        component: componentReturning("Body"),
+      });
+
+      expect(typeof pane.title).toBe("function");
+      expect(pane.title).toBe(title);
     });
 
     it("allows multiple floating panes to coexist, stacked/offset from one another", () => {
@@ -431,6 +445,207 @@ describe("createPanes", () => {
       const result = panes.closePane(pane.id);
 
       expect(result).toBe(false);
+    });
+  });
+
+  describe("onClose", () => {
+    it("calls onClose with 'programmatic' when closed via closePane", () => {
+      const panes = createPanes();
+      const onClose = vi.fn();
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+        onClose,
+      });
+
+      panes.closePane(pane.id);
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(onClose).toHaveBeenCalledWith("programmatic");
+    });
+
+    it("calls onClose with 'user' when closePane is given the user reason", () => {
+      const panes = createPanes();
+      const onClose = vi.fn();
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Notes",
+        component: componentReturning("Notes"),
+        onClose,
+      });
+
+      panes.closePane(pane.id, "user");
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(onClose).toHaveBeenCalledWith("user");
+    });
+
+    it("calls onClose for every pane closed via closeAll", () => {
+      const panes = createPanes();
+      const firstClose = vi.fn();
+      const secondClose = vi.fn();
+      panes.openPane({
+        placement: "floating",
+        title: "First",
+        component: componentReturning("First"),
+        onClose: firstClose,
+      });
+      panes.openPane({
+        placement: "floating",
+        title: "Second",
+        component: componentReturning("Second"),
+        onClose: secondClose,
+      });
+
+      panes.closeAll();
+
+      expect(firstClose).toHaveBeenCalledTimes(1);
+      expect(firstClose).toHaveBeenCalledWith("programmatic");
+      expect(secondClose).toHaveBeenCalledTimes(1);
+      expect(secondClose).toHaveBeenCalledWith("programmatic");
+    });
+
+    it("calls onClose for a pane displaced when a fullscreen pane opens", () => {
+      const panes = createPanes();
+      const displacedClose = vi.fn();
+      panes.openPane({
+        placement: "floating",
+        title: "Floating",
+        component: componentReturning("Floating"),
+        onClose: displacedClose,
+      });
+
+      panes.openPane({
+        placement: "fullscreen",
+        title: "Fullscreen",
+        component: componentReturning("Fullscreen"),
+      });
+
+      expect(displacedClose).toHaveBeenCalledTimes(1);
+      expect(displacedClose).toHaveBeenCalledWith("displaced");
+    });
+
+    it("calls onClose for a pane displaced on a mobile viewport", () => {
+      const isMobile = signal(true);
+      const panes = createPanes(isMobile);
+      const firstClose = vi.fn();
+      panes.openPane({
+        placement: "floating",
+        title: "First",
+        component: componentReturning("First"),
+        onClose: firstClose,
+      });
+
+      panes.openPane({
+        placement: "floating",
+        title: "Second",
+        component: componentReturning("Second"),
+      });
+
+      expect(firstClose).toHaveBeenCalledTimes(1);
+      expect(firstClose).toHaveBeenCalledWith("displaced");
+    });
+
+    it("calls onClose with 'programmatic' via closeFullscreenPanes", () => {
+      const isMobile = signal(true);
+      const panes = createPanes(isMobile);
+      const onClose = vi.fn();
+      panes.openPane({
+        placement: "floating",
+        title: "Panel",
+        component: componentReturning("Panel"),
+        onClose,
+      });
+
+      panes.closeFullscreenPanes();
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+      expect(onClose).toHaveBeenCalledWith("programmatic");
+    });
+
+    it("does not call onClose when a pane is reused/updated by id", () => {
+      const panes = createPanes();
+      const onClose = vi.fn();
+      panes.openPane({
+        id: "shared",
+        placement: "floating",
+        title: "First",
+        component: componentReturning("First"),
+        onClose,
+      });
+
+      panes.openPane({
+        id: "shared",
+        placement: "floating",
+        title: "Updated",
+        component: componentReturning("Updated"),
+        onClose,
+      });
+
+      expect(onClose).not.toHaveBeenCalled();
+      expect(panes.panes.value).toHaveLength(1);
+    });
+
+    it("calls onClose exactly once even when the handler re-runs closePane", () => {
+      const panes = createPanes();
+      let paneId: string | undefined;
+      const onClose = vi.fn(() => {
+        // Extensions typically react to a close by running their own
+        // closePane on the id they tracked. The pane is already gone, so this
+        // must be a safe no-op that does not re-fire onClose.
+        if (paneId) panes.closePane(paneId);
+      });
+      const pane = panes.openPane({
+        placement: "floating",
+        title: "Panel",
+        component: componentReturning("Panel"),
+        onClose,
+      });
+      paneId = pane.id;
+
+      panes.closePane(pane.id);
+
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  // Commands read pane state via peek(), so invoking one inside an effect must
+  // not subscribe that effect to `panes`/`selectedPaneId`. Otherwise mutating
+  // pane state (e.g. closing a pane) re-runs the effect, which re-opens the
+  // pane mid-update, and preact throws "Cycle detected". This mirrors the
+  // real-world regression where closing the Discover side pane crashed.
+  describe("commands invoked inside an effect do not subscribe to pane state", () => {
+    it("opening a pane in an effect does not couple that effect to pane mutations", () => {
+      const panes = createPanes();
+      const trigger = signal("a");
+      let runs = 0;
+
+      const dispose = effect(() => {
+        // `trigger` is the effect's only intended dependency.
+        trigger.value;
+        runs++;
+        panes.openPane({
+          id: "effect-pane",
+          placement: "side",
+          title: "Effect Pane",
+          component: componentReturning("Effect Pane"),
+        });
+      });
+
+      expect(runs).toBe(1);
+
+      // Closing the pane from outside mutates `panes`. With peek()-based reads
+      // the effect is not subscribed to `panes`, so it must not re-run (and
+      // must not throw "Cycle detected").
+      panes.closePane("effect-pane");
+      expect(runs).toBe(1);
+
+      // The effect still reacts to its real dependency.
+      trigger.value = "b";
+      expect(runs).toBe(2);
+
+      dispose();
     });
   });
 

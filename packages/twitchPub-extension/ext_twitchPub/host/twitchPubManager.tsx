@@ -11,6 +11,8 @@ import sendMessage from "./sendMessage";
 import { fromByteArray } from "base64-js";
 import { v4 as uuid } from "uuid";
 import { type TranscriptionManager } from "@seed-bible/ai-transcript-extension/transcriptionManager";
+import type { Pane } from "seed-bible/managers";
+import { pick } from "es-toolkit";
 
 const sendAnnouncement = (
   accessToken: string,
@@ -180,6 +182,7 @@ export function CreateTwitchPubState({
   const currentPage = signal<
     "login" | "authorization" | "interface" | "settings"
   >(window.localStorage?.currentPage || "login");
+  const currentPane = signal<Pane | null>(null);
   const loading = signal<boolean>(false);
   const uiHidden = signal<boolean>(false);
   const savedSettings = (() => {
@@ -257,6 +260,7 @@ export function CreateTwitchPubState({
   };
 
   const hideUI = () => {
+    if (seedBibleState.app.isMobile.value) return;
     if (uiHiddenTimeout) {
       clearTimeout(uiHiddenTimeout);
     }
@@ -314,7 +318,12 @@ export function CreateTwitchPubState({
       );
     }
 
-    window.localStorage.setItem("prevSeedBibleState", JSON.stringify(current));
+    window.localStorage.setItem(
+      "prevSeedBibleState",
+      JSON.stringify(
+        pick(current, ["translationId", "bookId", "chapterNumber"])
+      )
+    );
   };
 
   const handleHighlightUpdate = (
@@ -540,7 +549,7 @@ export function CreateTwitchPubState({
           Number(chapter),
           Number(verse),
           {
-            className: "sb-verse-decoration-initial-verse-highlight",
+            className: "sb-verse-decoration-highlight",
             removeAfterMs: interval,
           }
         );
@@ -592,6 +601,8 @@ export function CreateTwitchPubState({
     loading,
     uiHidden,
     qrValue,
+    currentPane,
+    seedBibleState,
     getDeviceAuthUrl,
     settings,
     setCurrentPage,

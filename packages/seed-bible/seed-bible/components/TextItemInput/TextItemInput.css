@@ -1,0 +1,45 @@
+.sb-playlist-add-editor {
+  font-size: 0.875rem;
+  font-weight: 400;
+  padding: 10px 12px;
+}
+
+.sb-playlist-add-editor .ProseMirror {
+  min-height: 60px;
+  outline: none;
+}
+
+/* Placeholder shown while the TipTap bundle loads (see TextItemInput). */
+.sb-playlist-add-editor--loading {
+  display: flex;
+  align-items: center;
+  min-height: 68px;
+}
+
+.sb-playlist-add-editor--loading::before {
+  content: "";
+  display: block;
+  width: 40%;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--sb-divider-color);
+  animation: sb-playlist-add-editor-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes sb-playlist-add-editor-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.sb-playlist-add-editor .ProseMirror > *:first-child {
+  margin-top: 0;
+}
+
+.sb-playlist-add-editor .ProseMirror > *:last-child {
+  margin-bottom: 0;
+}

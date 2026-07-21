@@ -1,0 +1,93 @@
+/* Play-playlist view: scrollable queue above a pinned controls bar. */
+.sb-play-playlist {
+  padding-bottom: 0;
+}
+
+.sb-play-playlist-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.sb-play-playlist-item-button {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  /* Stretch to fill the row's full height (not just the label's own line),
+   * absorbing the row's own padding so the whole row is clickable. There's
+   * no sibling button in this row, so all four edges can extend evenly. */
+  align-self: stretch;
+  padding-block: 8px;
+  padding-inline: 10px;
+  margin-block: -8px;
+  margin-inline: -10px;
+}
+
+.sb-play-playlist-item--current {
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--sb-primary-color), transparent 85%);
+}
+
+.sb-play-playlist-item--current .sb-discover-item-title {
+  color: var(--sb-primary-color);
+  font-weight: 600;
+}
+
+.sb-play-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  margin-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  padding: 12px;
+  border: 1px solid var(--sb-divider-color);
+  border-radius: 12px;
+  background: var(--sb-background);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.sb-play-controls-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sb-play-controls-buttons {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 4px;
+}
+
+.sb-play-controls-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--sb-font-color);
+  cursor: pointer;
+}
+
+.sb-play-controls-button:hover:not(:disabled) {
+  background: var(--sb-divider-color);
+}
+
+.sb-play-controls-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

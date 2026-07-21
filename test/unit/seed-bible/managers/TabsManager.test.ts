@@ -163,7 +163,41 @@ function createTabsManager({
   return { navigation, dataManager, highlightsManager, i18nManager, tabs };
 }
 
+function createMockSharedSession(
+  id: string,
+  readingState: BibleReadingState
+): BibleReadingSession {
+  return {
+    id,
+    readingState,
+    document: {} as SharedDocument,
+    options: signal({
+      allowedNavigators: null,
+      allowedDecorators: null,
+      hostUserId: null,
+      highlightDurationSeconds: 16,
+      endedAt: null,
+      shareTranslation: false,
+      coHostUserIds: [],
+    }),
+    updateOptions: vi.fn(),
+    removeSharedDecoration: vi.fn(),
+    dispose: vi.fn(),
+    allUsers: signal([]),
+    connectedUsers: signal([]),
+    localSessionId: signal(id),
+    userCanDecorate: vi.fn().mockReturnValue(true),
+    userCanNavigate: vi.fn().mockReturnValue(true),
+    currentUser: signal(null),
+    isHost: vi.fn().mockReturnValue(false),
+  } as BibleReadingSession;
+}
+
 describe("createTabs", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("addTab() creates a new tab with new reading state", async () => {
     setWebResponses(createExampleManagerResponseMap());
     const { tabs: manager } = createTabsManager();
@@ -193,36 +227,62 @@ describe("createTabs", () => {
     const { tabs: manager } = createTabsManager();
     await waitForTabsToLoad(manager.tabs.value);
 
-    const sharedSession = {
-      id: "session-123",
-      readingState: manager.tabs.value[0]!.readingState,
-      document: {} as SharedDocument,
-      options: signal({
-        allowedNavigators: null,
-        allowedDecorators: null,
-        hostUserId: null,
-        highlightDurationSeconds: 16,
-        endedAt: null,
-        shareTranslation: false,
-        coHostUserIds: [],
-      }),
-      updateOptions: vi.fn(),
-      removeSharedDecoration: vi.fn(),
-      dispose: vi.fn(),
-      allUsers: signal([]),
-      connectedUsers: signal([]),
-      localSessionId: signal("session-123"),
-      userCanDecorate: vi.fn().mockReturnValue(true),
-      userCanNavigate: vi.fn().mockReturnValue(true),
-      currentUser: signal(null),
-      isHost: vi.fn().mockReturnValue(false),
-    } as BibleReadingSession;
+    const sharedSession = createMockSharedSession(
+      "session-123",
+      manager.tabs.value[0]!.readingState
+    );
 
     const nextTab = manager.addTab(sharedSession);
 
     expect(nextTab.readingState).toBe(sharedSession.readingState);
     expect(nextTab.sharedSession).toBe(sharedSession);
     expect(manager.selectedTabId.value).toBe(nextTab.id);
+  });
+
+  it("addTab() with a shared session writes its id to the URL as sessionId", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager, navigation } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const sharedSession = createMockSharedSession(
+      "session-456",
+      manager.tabs.value[0]!.readingState
+    );
+
+    manager.addTab(sharedSession);
+    await waitFor(
+      () => navigation.currentUrl.value.searchParams.get("sessionId") !== null
+    );
+
+    expect(navigation.currentUrl.value.searchParams.get("sessionId")).toBe(
+      "session-456"
+    );
+  });
+
+  it("selectTab() away from a shared-session tab removes sessionId from the URL", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager, navigation } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const plainTab = manager.tabs.value[0]!;
+    const sharedSession = createMockSharedSession(
+      "session-789",
+      plainTab.readingState
+    );
+    const sharedTab = manager.addTab(sharedSession);
+    await waitFor(
+      () => navigation.currentUrl.value.searchParams.get("sessionId") !== null
+    );
+
+    manager.selectTab(plainTab.id);
+    await waitFor(
+      () => navigation.currentUrl.value.searchParams.get("sessionId") === null
+    );
+
+    expect(
+      navigation.currentUrl.value.searchParams.get("sessionId")
+    ).toBeNull();
+    expect(sharedTab.sharedSession).toBe(sharedSession);
   });
 
   it("addTab() accepts a reading state for the new tab", async () => {
@@ -252,6 +312,24 @@ describe("createTabs", () => {
 
     expect(manager.tabs.value).toHaveLength(1);
     expect(manager.tabs.value.some((tab) => tab.id === "tab-2")).toBe(false);
+  });
+
+  it("regression #1442: removeTab() selects the tab before the removed one, not always the first tab", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const secondTab = manager.addTab();
+    await waitForInitialLoad(secondTab.readingState);
+    const thirdTab = manager.addTab();
+    await waitForInitialLoad(thirdTab.readingState);
+
+    manager.selectTab(thirdTab.id);
+    manager.removeTab(thirdTab.id);
+
+    // Removing the last (selected) tab of three should fall back to its
+    // immediate predecessor, not unconditionally to the first tab.
+    expect(manager.selectedTabId.value).toBe(secondTab.id);
   });
 
   it("selectTab() sets the selected tab", async () => {
@@ -351,6 +429,9 @@ describe("createTabs", () => {
     const currentBookId = readingState.bookId.value;
     const currentChapter = readingState.chapterNumber.value;
 
+    const pushSpy = vi.spyOn(window.history, "pushState");
+    const replaceSpy = vi.spyOn(window.history, "replaceState");
+
     readingState.selectedVerses.value = [
       {
         bookId: currentBookId,
@@ -370,7 +451,10 @@ describe("createTabs", () => {
     ];
 
     const url = new URL(window.location.href);
-    expect(url.searchParams.get("verse")).toBe("1,3");
+    expect(url.searchParams.get("verse")).toBe("1-3");
+
+    expect(pushSpy).not.toHaveBeenCalled();
+    expect(replaceSpy).toHaveBeenCalled();
   });
 
   it("clears the verse URL param when selected verses become empty", async () => {
@@ -433,6 +517,69 @@ describe("createTabs", () => {
     expect(url.searchParams.get("verse")).toBe("6");
   });
 
+  it("performs exactly one pushState for a single translation navigation", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const readingState = manager.tabs.value[0]!.readingState;
+
+    // Spy only after the initial mount commit (a replace) has happened.
+    const pushSpy = vi.spyOn(window.history, "pushState");
+
+    await readingState.selectTranslation("NIV");
+    await waitFor(() => readingState.translationId.value === "NIV");
+    await waitForInitialLoad(readingState);
+
+    // Selecting a translation loads its first book/chapter asynchronously in
+    // several steps; prescriptive updates collapse that into a single entry.
+    expect(readingState.bookId.value).toBe("MAT");
+    expect(pushSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("switching tabs replaces the URL without pushing a new history entry", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const secondTab = manager.addTab();
+    await waitForInitialLoad(secondTab.readingState);
+    // Move the second tab to a different position so switching back changes the
+    // URL (otherwise the commit would be a no-op).
+    await secondTab.readingState.selectChapter("EXO", 2);
+    await waitFor(() => secondTab.readingState.bookId.value === "EXO");
+
+    const pushSpy = vi.spyOn(window.history, "pushState");
+    const replaceSpy = vi.spyOn(window.history, "replaceState");
+
+    manager.selectTab(manager.tabs.value[0]!.id);
+    await waitFor(
+      () => new URL(window.location.href).searchParams.get("book") === "GEN"
+    );
+
+    expect(pushSpy).not.toHaveBeenCalled();
+    expect(replaceSpy).toHaveBeenCalled();
+  });
+
+  it("syncing reading state from the URL does not push a new history entry", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager, navigation } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const readingState = manager.tabs.value[0]!.readingState;
+
+    const pushSpy = vi.spyOn(window.history, "pushState");
+
+    // Simulate a back/forward / deep-link URL change; the reader should update
+    // the reading state without writing the URL back.
+    navigation.replace("?book=EXO&chapter=2");
+    await waitFor(() => readingState.bookId.value === "EXO");
+    await waitForInitialLoad(readingState);
+
+    expect(readingState.chapterNumber.value).toBe(2);
+    expect(pushSpy).not.toHaveBeenCalled();
+  });
+
   it("decorates initial verses from the verse URL param on the initial tab", async () => {
     window.history.replaceState(null, "", "?book=GEN&chapter=1&verse=3,5-6");
     setWebResponses(createExampleManagerResponseMap());
@@ -454,7 +601,8 @@ describe("createTabs", () => {
 
       expect(decorateVersesSpy).not.toBeNull();
       expect(decorateVersesSpy).toHaveBeenCalledWith("GEN", 1, [3, 5, 6], {
-        className: "sb-verse-decoration-initial-verse-highlight",
+        className: "sb-verse-decoration-diminish",
+        containerClassName: "sb-chapter-decoration-diminish",
         removeAfterMs: 5000,
       });
     } finally {

@@ -20,20 +20,68 @@ export function getProfileConfigValue(
 }
 
 /**
- * Persists a single config key to the logged-in user's profile, merging
- * with the existing profile.config so other keys aren't clobbered. No-ops
- * if the user isn't authenticated or the value matches what's already saved.
+ * For object/array values, deep-equality would be ideal but JSON.stringify
+ * is sufficient here since config values are always written as
+ * parsed/normalized shapes.
+ */
+function isEqualConfigValue(a: unknown, b: unknown): boolean {
+  if (a === b) {
+    return true;
+  }
+  if (
+    typeof a === "object" &&
+    a !== null &&
+    typeof b === "object" &&
+    b !== null
+  ) {
+    try {
+      return JSON.stringify(a) === JSON.stringify(b);
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
+/**
+ * Persists a single config key to the logged-in user's profile. Thin wrapper
+ * around `saveProfileConfigValues` for the common single-key case — see
+ * there for the merge/no-op/profile-load-guard behavior.
+ */
+export async function saveProfileConfigValue(
+  login: LoginManager,
+  key: string,
+  value: unknown
+): Promise<void> {
+  return saveProfileConfigValues(login, { [key]: value });
+}
+
+/**
+ * Persists multiple config keys to the logged-in user's profile in a single
+ * write, merging with the existing profile.config so other keys aren't
+ * clobbered. No-ops if the user isn't authenticated, the profile hasn't
+ * loaded yet, or none of the given values differ from what's already saved.
+ * Keys whose value is unchanged are left out of the write; if every key is
+ * unchanged, no write happens at all.
  *
  * Also no-ops while `login.profile` hasn't loaded yet. `profile` is fetched
  * asynchronously after login, so a null profile while `userId` is set means
  * the fetch is still in flight — not that the profile is empty. Writing in
  * that window would save a bare `{ name: "" }` profile and permanently wipe
  * whatever was actually stored on the account once the write lands.
+ *
+ * When the profile has already loaded, this runs synchronously up to (and
+ * including) the `login.updateProfile` call — no `await` is evaluated on
+ * that path — so callers that don't await this still observe the write
+ * within the same tick. Only awaits when a profile load is actually pending.
+ *
+ * Use this (instead of multiple `saveProfileConfigValue` calls) whenever
+ * several config keys must always land together — writing them one at a
+ * time would call `login.updateProfile` once per key instead of once total.
  */
-export async function saveProfileConfigValue(
+export async function saveProfileConfigValues(
   login: LoginManager,
-  key: string,
-  value: unknown
+  values: Record<string, unknown>
 ): Promise<void> {
   if (!login.userId.value) {
     return;
@@ -53,7 +101,7 @@ export async function saveProfileConfigValue(
 
     if (!login.profile.value) {
       console.warn(
-        "Cannot save profile config value: profile has not loaded yet"
+        "Cannot save profile config value(s): profile has not loaded yet"
       );
       return;
     }
@@ -65,31 +113,18 @@ export async function saveProfileConfigValue(
       ? (existingProfile.config as Record<string, unknown>)
       : {};
 
-  if (existingConfig[key] === value) {
-    return;
-  }
+  const changedEntries = Object.entries(values).filter(
+    ([key, value]) => !isEqualConfigValue(existingConfig[key], value)
+  );
 
-  // For object/array values, deep-equality would be ideal but JSON.stringify
-  // is sufficient here since we always write parsed/normalized shapes.
-  if (
-    typeof value === "object" &&
-    value !== null &&
-    typeof existingConfig[key] === "object" &&
-    existingConfig[key] !== null
-  ) {
-    try {
-      if (JSON.stringify(existingConfig[key]) === JSON.stringify(value)) {
-        return;
-      }
-    } catch {
-      // Fall through and write anyway.
-    }
+  if (changedEntries.length === 0) {
+    return;
   }
 
   login.updateProfile({
     config: {
       ...existingConfig,
-      [key]: value,
+      ...Object.fromEntries(changedEntries),
     },
   });
 }

@@ -10,7 +10,7 @@
   height: 100%;
   --timelineItemSize: 16px;
   position: relative;
-  padding-top: 1rem;
+  padding-top: 0.5rem;
   background-color: var(--sb-reader-background);
 }
 
@@ -30,41 +30,10 @@
   gap: 0.25rem;
   display: grid;
   grid-template-columns: 1rem 1fr 2.5rem 1rem;
-  grid-template-rows: 2.5rem 1.25rem auto auto;
 }
 
-.scripture-map-settings.collapsed {
-  grid-template-rows: 2.5rem 1.25rem;
-}
-
-.scripture-map-settings .horizontal-divider {
-  background-color: var(--sb-divider-color);
-  height: 1.5px;
-}
-
-.scripture-map-settings > :nth-child(1 of .horizontal-divider) {
-  grid-column: 1 / 6;
-  grid-row: 2 / 3;
-}
-
-.scripture-map-settings > :nth-child(2 of .horizontal-divider) {
-  grid-column: 2 / 5;
-  grid-row: 6 / 7;
-  align-self: center;
-}
-
-.settings-title {
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 0.5rem;
-  grid-column: 2 / 3;
-  grid-row: 1 / 2;
-}
-
-.settings-title > span {
-  font-size: 1.25rem;
-  font-weight: 600;
+.scripture-map-settings-header-slot {
+  display: contents;
 }
 
 .header-button {
@@ -73,26 +42,15 @@
   align-items: center;
   cursor: pointer;
   position: relative;
-  justify-self: center;
-  align-self: center;
-  grid-row: 1 / 2;
 }
 
 .settings-button {
-  grid-column: 3 / 4;
-  font-size: 1.75rem !important;
-  /* border: 1px solid var(--sb-divider-color); */
-  border-radius: 0.25rem;
-  padding: 0.375rem;
-}
-
-/* The settings icon is an <img> (not a font glyph), so the button's font-size
-   above doesn't size it — give it an explicit rem size so it scales with the
-   UI Size knob like the rest of the chrome. 1rem = its intrinsic 16px at
-   size M, so this is a no-op at M. */
-.settings-button .coloredIcon {
-  width: 1rem;
-  height: 1rem;
+  font-size: 1.375rem !important;
+  height: 2.5rem;
+  min-width: 2.5rem;
+  border-radius: 0.5rem;
+  padding: 0;
+  color: inherit;
 }
 
 .header-button.settings-button:hover:not(
@@ -573,6 +531,64 @@
   justify-items: center;
 }
 
+/* The flip cover: an overlay reading as the book's front cover. It sits over
+   the chapter grid while closed and swings open on its left-edge spine. */
+.book-container .book-cover-front {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  box-sizing: border-box;
+  border-top-left-radius: calc(3px * var(--scale-factor));
+  border-bottom-left-radius: calc(3px * var(--scale-factor));
+  border-top-right-radius: calc(6px * var(--scale-factor));
+  border-bottom-right-radius: calc(6px * var(--scale-factor));
+  background:
+    linear-gradient(
+      152deg,
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0.04) 36%,
+      rgba(0, 0, 0, 0.16) 150%
+    ),
+    var(--book-cover-color, var(--sb-tertiary-color));
+  box-shadow:
+    inset calc(9px * var(--scale-factor)) 0 calc(14px * var(--scale-factor))
+      calc(-8px * var(--scale-factor)) rgba(0, 0, 0, 0.3),
+    inset 0 calc(2px * var(--scale-factor)) 0 rgba(255, 255, 255, 0.25);
+  transform-origin: left center;
+  transition: transform 0.55s cubic-bezier(0.25, 0.75, 0.25, 1);
+  backface-visibility: hidden;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.book-container .book-cover-front::before {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  content: "";
+  width: calc(14px * var(--scale-factor));
+  box-shadow: inset -1px 0 2px rgba(0, 0, 0, 0.24);
+}
+
+.book-container.book-open .book-cover-front {
+  transform: perspective(calc(700px * var(--scale-factor))) rotateY(-150deg);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book-container .book-cover-front {
+    transition: opacity 0.25s ease;
+  }
+  .book-container.book-open .book-cover-front {
+    transform: none;
+    opacity: 0;
+  }
+  .book-header .book-caret {
+    transition: opacity 0.2s ease;
+  }
+}
+
 .book-container .book-header {
   cursor: pointer;
   width: 100%;
@@ -596,6 +612,23 @@
   font-size: calc(16px * var(--scale-factor));
   color: var(--sb-reader-font-color);
   font-style: italic;
+}
+
+/* Rotating caret signals the book is expandable, and which way it's going. */
+.book-header .book-caret {
+  flex: 0 0 auto;
+  width: calc(20px * var(--scale-factor));
+  height: calc(20px * var(--scale-factor));
+  color: var(--sb-reader-font-color);
+  opacity: 0.45;
+  transition:
+    transform 0.35s cubic-bezier(0.25, 0.75, 0.25, 1),
+    opacity 0.2s ease;
+}
+
+.book-container.book-open .book-header .book-caret {
+  transform: rotate(90deg);
+  opacity: 0.85;
 }
 
 .scripture-map-wrapper

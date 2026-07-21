@@ -51,7 +51,7 @@ export function createModalManager(): ModalManager {
 
   const openModal = (modal: ModalRegistration) => {
     const id = modal.id ?? `modal-${++nextModalId}`;
-    const existing = modals.value.filter((m) => m.id !== id);
+    const existing = modals.peek().filter((m) => m.id !== id);
 
     modals.value = [
       ...existing,
@@ -67,7 +67,7 @@ export function createModalManager(): ModalManager {
   };
 
   const closeModal = (id: string) => {
-    modals.value = modals.value.filter((m) => m.id !== id);
+    modals.value = modals.peek().filter((m) => m.id !== id);
   };
 
   const closeAllModals = () => {

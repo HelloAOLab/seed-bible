@@ -199,8 +199,9 @@ export function PaneLayout(props: PaneLayoutProps) {
         >
           <PaneHeader
             title={pane.title}
+            icon={pane.icon}
             header={pane.header}
-            onClose={() => panesManager.closePane(pane.id)}
+            onClose={() => panesManager.closePane(pane.id, "user")}
             onPointerDown={(event: PointerEvent) => startMove(pane, event)}
           />
           <div className="sb-pane-detached-body">
@@ -256,8 +257,9 @@ export function FullscreenPane(props: FullscreenPaneProps) {
     >
       <PaneHeader
         title={pane.title}
+        icon={pane.icon}
         header={pane.header}
-        onClose={() => panesManager.closePane(pane.id)}
+        onClose={() => panesManager.closePane(pane.id, "user")}
       />
       <div className="sb-pane-detached-body">
         <div className="sb-pane-component">
@@ -295,8 +297,9 @@ export function SidePane(props: SidePaneProps) {
     >
       <PaneHeader
         title={pane.title}
+        icon={pane.icon}
         header={pane.header}
-        onClose={() => panesManager.closePane(pane.id)}
+        onClose={() => panesManager.closePane(pane.id, "user")}
       />
       <div className="sb-pane-detached-body">
         <div className="sb-pane-component">

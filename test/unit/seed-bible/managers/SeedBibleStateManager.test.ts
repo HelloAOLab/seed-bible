@@ -96,6 +96,15 @@ function createMockSharedSession(id: string) {
       selectedVerses: signal([]),
       translationBooks: signal(null),
       selectTranslationAndChapter: vi.fn().mockResolvedValue(undefined),
+      getUrlQueryParams: vi.fn().mockReturnValue({}),
+      // TabsManager subscribes to reading-state navigation events to drive the
+      // URL; the mock just returns a no-op unsubscribe.
+      onNavigate: vi.fn().mockReturnValue(() => undefined),
+      // Reading-extension surface the (derived) playlist `playing` state reads.
+      enabledExtensions: signal([]),
+      isExtensionEnabled: vi.fn().mockReturnValue(false),
+      enableExtension: vi.fn(),
+      disableExtension: vi.fn(),
     },
     document: {} as SharedDocument,
     options: signal({
@@ -214,6 +223,35 @@ describe("createSeedBibleState", () => {
 
     expect(state.tabs.selectedTabId.value).toBe("tab-2");
     expect(selectedSlot?.tab?.id).toBe("tab-2");
+  });
+
+  it("regression #1442: deleting the selected tab displays the remaining tab instead of an empty slot", async () => {
+    // Reproduces https://github.com/HelloAOLab/seed-bible/issues/1442:
+    // 1. Start with one tab, add a second (auto-selected).
+    // 2. Select the second tab explicitly.
+    // 3. Delete the second tab.
+    // 4. The first tab should become selected AND should actually be shown in
+    //    the slot — not leave the slot pointing at the now-removed tab.
+    const state = await createState();
+    const firstTabId = state.tabs.selectedTabId.value;
+
+    const secondTab = state.tabs.addTab();
+    await waitForInitialLoad(secondTab.readingState, 1000);
+    state.app.selectTab(secondTab.id);
+
+    expect(state.tabs.selectedTabId.value).toBe(secondTab.id);
+
+    state.tabs.removeTab(secondTab.id);
+
+    expect(state.tabs.selectedTabId.value).toBe(firstTabId);
+    expect(state.app.selectedTab.value?.id).toBe(firstTabId);
+
+    const selectedSlot = state.tabsLayout.slots.value.find(
+      (slot) => slot.id === state.tabsLayout.selectedSlotId.value
+    );
+    // Before the fix, the slot that used to show the deleted tab was left
+    // empty (tab: null) even though selectedTabId pointed at the first tab.
+    expect(selectedSlot?.tab?.id).toBe(firstTabId);
   });
 
   it("adding a tab opens the bible selector in new-tab mode for the selected slot", async () => {
@@ -866,7 +904,8 @@ describe("createSeedBibleState", () => {
       });
 
       expect(decorateSpy).toHaveBeenCalledWith("JHN", 3, 16, {
-        className: "sb-verse-decoration-open-reference-highlight",
+        className: "sb-verse-decoration-diminish",
+        containerClassName: "sb-chapter-decoration-diminish",
         removeAfterMs: 3000,
       });
     });
@@ -888,7 +927,8 @@ describe("createSeedBibleState", () => {
       });
 
       expect(decorateSpy).toHaveBeenCalledWith("PSA", 23, [1, 2, 3], {
-        className: "sb-verse-decoration-open-reference-highlight",
+        className: "sb-verse-decoration-diminish",
+        containerClassName: "sb-chapter-decoration-diminish",
         removeAfterMs: 3000,
       });
     });
@@ -941,6 +981,8 @@ describe("createSeedBibleState", () => {
           (t) => t.id === state.tabs.selectedTabId.value
         ) ?? null;
       expect(tab).not.toBeNull();
+      tab!.readingState.bookId.value = bookId;
+      tab!.readingState.chapterNumber.value = chapterNumber;
       tab!.readingState.chapterData.value = {
         translation: {
           id: "test-translation",

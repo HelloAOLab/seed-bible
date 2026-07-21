@@ -102,7 +102,7 @@ The app deploys as a **web app, not a pattern**: `pnpm build` makes client + SSR
 
 **CasualOS access**: All CasualOS access goes through the `CasualOSManager` factory (`managers/OsManager.tsx`) — the SDK clients, not injected runtime globals (`os`/`thisBot`/`configBot` exist only inside `ao.bot` portal iframes).
 
-**Translations**: When adding or updating any translation key, update **all 24 locale files** in `packages/seed-bible/seed-bible/i18n/`, each in its native language (don't copy English into non-English files). A translation is only complete when all 24 are updated.
+**Translations**: When adding or updating any translation key, **only update en.json** in `packages/seed-bible/seed-bible/i18n/`, don't update other translation files, leave those for the professionals.
 
 **TypeScript**: Strict mode is on (`strict`, `noImplicitAny`, `strictNullChecks`). No `any` unless unavoidable.
 

@@ -23,12 +23,15 @@ vi.mock("@packages/seed-bible/seed-bible/i18n/I18nManager", async () => {
 
 function createMockState(
   profile: UserProfile | null,
-  updateProfile = vi.fn()
+  updateProfile = vi.fn(),
+  isProfileLoading = false
 ): { state: SeedBibleState; updateProfile: ReturnType<typeof vi.fn> } {
   const state = {
     login: {
       userId: signal<string | null>("user-1"),
       profile: signal<UserProfile | null>(profile),
+      isProfileLoading: signal<boolean>(isProfileLoading),
+      isSavingProfile: signal<boolean>(false),
       updateProfile,
       uploadProfilePicture: vi.fn().mockResolvedValue(undefined),
     },
@@ -108,6 +111,79 @@ describe("AccountSettingsView", () => {
     expect(descriptionInput().value).toBe("A description");
   });
 
+  // ─── Loading state ───────────────────────────────────────────────────────
+  // On a slow connection the profile can still be fetching. The page must show
+  // a loading skeleton instead of an empty, editable form (a form whose "Save"
+  // would silently no-op because the manager refuses to write a null profile).
+
+  it("shows a loading skeleton and no editable form while the profile is fetching", () => {
+    const { state } = createMockState(null, vi.fn(), true);
+    act(() => {
+      render(<SettingsPage state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-skeleton-status")).not.toBeNull();
+    expect(container.querySelector('[role="status"]')).not.toBeNull();
+    expect(container.querySelector("#sb-profile-name")).toBeNull();
+  });
+
+  it("swaps the skeleton for the form once the profile finishes loading", () => {
+    const { state } = createMockState(null, vi.fn(), true);
+    act(() => {
+      render(<SettingsPage state={state} />, container);
+    });
+
+    expect(container.querySelector(".sb-skeleton-status")).not.toBeNull();
+
+    act(() => {
+      state.login.profile.value = { name: "Test" };
+      state.login.isProfileLoading.value = false;
+    });
+
+    expect(container.querySelector(".sb-skeleton-status")).toBeNull();
+    expect(nameInput().value).toBe("Test");
+  });
+
+  it("shows the form (not a skeleton) when a cached profile exists during a re-fetch", () => {
+    const { state } = createMockState({ name: "Cached" }, vi.fn(), true);
+    act(() => {
+      render(<SettingsPage state={state} />, container);
+    });
+
+    // A background re-fetch shouldn't hide data the user can already read.
+    expect(container.querySelector(".sb-skeleton-status")).toBeNull();
+    expect(nameInput().value).toBe("Cached");
+  });
+
+  // ─── Saving indicator ─────────────────────────────────────────────────────
+  // Clicking "Save changes" persists in the background; on a slow connection
+  // that write takes a while, so the button must show it is in progress.
+
+  it("shows a saving indicator and disables the button while a save is in flight", () => {
+    const { state } = createMockState({ name: "Test" });
+    act(() => {
+      render(<SettingsPage state={state} />, container);
+    });
+
+    expect(saveButton().disabled).toBe(false);
+    expect(saveButton().textContent).toContain("Save changes");
+
+    act(() => {
+      state.login.isSavingProfile.value = true;
+    });
+
+    expect(saveButton().disabled).toBe(true);
+    expect(saveButton().textContent).toContain("Saving");
+    expect(container.querySelector(".sb-account-save-spinner")).not.toBeNull();
+
+    act(() => {
+      state.login.isSavingProfile.value = false;
+    });
+
+    expect(saveButton().disabled).toBe(false);
+    expect(saveButton().textContent).toContain("Save changes");
+  });
+
   // ─── The reported bug ────────────────────────────────────────────────────
   // Deleting the last character used to snap the field back to the stored
   // value because `newName.value || profile.name` treated "" as "unedited".
@@ -180,6 +256,8 @@ describe("AccountSettingsView", () => {
       login: {
         userId: signal<string | null>("user-1"),
         profile,
+        isProfileLoading: signal<boolean>(false),
+        isSavingProfile: signal<boolean>(false),
         updateProfile,
         uploadProfilePicture: vi.fn().mockResolvedValue(undefined),
       },

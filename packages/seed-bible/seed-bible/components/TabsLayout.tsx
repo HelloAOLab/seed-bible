@@ -197,7 +197,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
     let cancelled = false;
 
-    if (chapterData.previousChapterApiLink) {
+    if (readingState.hasPrevious.value) {
       state.bibleData
         .getPreviousChapter(chapterData)
         .then((result) => {
@@ -214,7 +214,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       setPrevChapterPreview(null);
     }
 
-    if (chapterData.nextChapterApiLink) {
+    if (readingState.hasNext.value) {
       state.bibleData
         .getNextChapter(chapterData)
         .then((result) => {
@@ -304,8 +304,8 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
       const isRtl =
         readingState.chapterData.value?.translation.textDirection === "rtl";
-      const hasNext = !!readingState.chapterData.value?.nextChapterApiLink;
-      const hasPrev = !!readingState.chapterData.value?.previousChapterApiLink;
+      const hasNext = readingState.hasNext.value;
+      const hasPrev = readingState.hasPrevious.value;
       let offset = dx;
       const attemptsNext = isRtl ? dx > 0 : dx < 0;
       const attemptsPrev = isRtl ? dx < 0 : dx > 0;
@@ -340,8 +340,8 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       const threshold = 80;
       const isRtl =
         readingState.chapterData.value?.translation.textDirection === "rtl";
-      const hasNext = !!readingState.chapterData.value?.nextChapterApiLink;
-      const hasPrev = !!readingState.chapterData.value?.previousChapterApiLink;
+      const hasNext = readingState.hasNext.value;
+      const hasPrev = readingState.hasPrevious.value;
       const swipedLeft = dx < -threshold;
       const swipedRight = dx > threshold;
       const shouldLoadNext = isRtl ? swipedRight : swipedLeft;
@@ -443,8 +443,8 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       const isRtl = chapterData.translation.textDirection === "rtl";
       const loadNext = event.key === (isRtl ? "ArrowLeft" : "ArrowRight");
       const canNavigate = loadNext
-        ? !!chapterData.nextChapterApiLink
-        : !!chapterData.previousChapterApiLink;
+        ? readingState.hasNext.value
+        : readingState.hasPrevious.value;
       if (!canNavigate) {
         return;
       }
@@ -536,6 +536,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
           toast={state.app.toast}
           openChat={state.sidebar.openChatPanel}
           chats={state.chats}
+          features={state.features}
         />
       )}
     </div>

@@ -237,6 +237,10 @@ export default defineConfig(({ isSsrBuild }) => ({
       "preact/jsx-runtime",
       "@preact/signals",
       "@preact/signals-core",
+      "prosemirror-model",
+      "prosemirror-state",
+      "prosemirror-transform",
+      "prosemirror-view",
     ],
   },
 

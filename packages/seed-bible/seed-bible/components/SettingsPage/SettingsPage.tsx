@@ -22,6 +22,10 @@ import {
 } from "../../managers/ThemeManager";
 import { download, translateTitle } from "../../app/utils";
 import { ProfilePictureModalContent } from "../../components/ProfilePictureModal/ProfilePictureModal";
+import {
+  Skeleton,
+  SkeletonContainer,
+} from "../../components/Skeleton/Skeleton";
 import { ExtensionInitalizer } from "../../managers/ExtensionManager";
 import { useI18n } from "../../i18n/I18nManager";
 import {
@@ -157,12 +161,60 @@ function SettingsHero(props: {
   );
 }
 
+/**
+ * Placeholder shown while the user's profile is still being fetched. It mirrors
+ * the real form's layout (avatar, three fields, the ID row and the save button)
+ * with shimmering blocks, so on a slow connection the user can see the page is
+ * still loading instead of a deceptively empty, editable form.
+ */
+function AccountSettingsSkeleton() {
+  const { t } = useI18n();
+  return (
+    <SkeletonContainer
+      label={t("loading-profile", { defaultValue: "Loading your profile…" })}
+      className="sb-account-settings-layout"
+    >
+      <div className="sb-account-picture-row" aria-hidden="true">
+        <Skeleton shape="circle" width="3.875rem" height="3.875rem" />
+        <Skeleton shape="button" width="8.5rem" height="2.75rem" />
+      </div>
+
+      {[0, 1, 2].map((row) => (
+        <div key={row} className="sb-settings-field-row" aria-hidden="true">
+          <Skeleton shape="line" width="40%" />
+          <Skeleton
+            width="100%"
+            height={row === 1 ? "6.25rem" : "3rem"}
+            radius="0.625rem"
+          />
+        </div>
+      ))}
+
+      <div className="sb-settings-field-row" aria-hidden="true">
+        <Skeleton shape="line" width="40%" />
+        <Skeleton width="100%" height="3rem" radius="0.625rem" />
+      </div>
+
+      <div className="sb-settings-actions" aria-hidden="true">
+        <Skeleton width="100%" height="3.25rem" radius="0.375rem" />
+      </div>
+    </SkeletonContainer>
+  );
+}
+
 function AccountSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { login } = state;
   const { t } = useI18n();
   const isLoggedIn = useComputed(() => login.userId.value !== null);
   const profile = useComputed(() => login.profile.value);
+  // Show the loading state only while a fetch is in flight *and* we have no
+  // profile to display yet. If we already hold a cached profile (e.g. a
+  // background re-fetch), keep showing the real form rather than flashing
+  // skeletons over data the user can already read and edit.
+  const isProfileLoading = useComputed(
+    () => login.isProfileLoading.value && profile.value === null
+  );
 
   const newName = useSignal<string | null>(null);
   const name = useComputed(() => newName.value ?? profile.value?.name ?? "");
@@ -176,6 +228,7 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
   );
   const pictureUrl = useComputed(() => profile.value?.pictureUrl ?? "");
   const isUploadingPicture = useSignal(false);
+  const isSaving = useComputed(() => login.isSavingProfile.value);
   const uidCopied = useSignal(false);
 
   const handleSave = () => {
@@ -239,7 +292,9 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
         ]}
       />
       <section className="sb-settings-section">
-        {isLoggedIn.value ? (
+        {isLoggedIn.value && isProfileLoading.value ? (
+          <AccountSettingsSkeleton />
+        ) : isLoggedIn.value ? (
           <div className="sb-account-settings-layout">
             <p className="sb-account-settings-intro">
               {t("account-settings-intro", {
@@ -388,8 +443,22 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
               <button
                 className="sb-settings-save-button sb-account-save-button"
                 onClick={handleSave}
+                disabled={isSaving.value}
+                aria-busy={isSaving.value}
               >
-                {t("save-changes", { defaultValue: "Save changes" })}
+                {isSaving.value ? (
+                  <span className="sb-account-save-saving">
+                    <span
+                      className="material-symbols-outlined sb-account-save-spinner"
+                      aria-hidden="true"
+                    >
+                      progress_activity
+                    </span>
+                    {t("saving", { defaultValue: "Saving…" })}
+                  </span>
+                ) : (
+                  t("save-changes", { defaultValue: "Save changes" })
+                )}
               </button>
             </div>
 
@@ -449,9 +518,78 @@ function ScriptureLineHeightIcon({ index }: { index: number }) {
   );
 }
 
+function ThemesGallerySection(props: { state: SeedBibleState }) {
+  const { themes, selectedThemeId, setTheme } = props.state.theme;
+  const { t } = useI18n();
+
+  if (themes.value.length <= 1) {
+    return null;
+  }
+
+  return (
+    <section className="sb-settings-section">
+      <h3 className="sb-settings-subheading">
+        {t("themes", { defaultValue: "Themes" })}
+      </h3>
+      <div
+        className="sb-theme-ready-gallery"
+        role="radiogroup"
+        onKeyDown={(event) => {
+          handleGridKeyNav(event, event.currentTarget);
+        }}
+      >
+        {themes.value.map((theme) => {
+          const isSelected = theme.id === selectedThemeId.value;
+          const vars = theme.variables;
+          return (
+            <button
+              key={theme.id}
+              type="button"
+              className={`sb-theme-ready-card${
+                isSelected ? " sb-theme-ready-card-selected" : ""
+              }`}
+              onClick={() => setTheme(theme.id)}
+            >
+              <div
+                className="sb-theme-ready-preview"
+                style={{
+                  background: vars.readerBackground ?? vars.background,
+                }}
+              >
+                <div
+                  className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
+                  style={{ background: vars.primaryColor }}
+                />
+                <div
+                  className="sb-theme-ready-swatch sb-theme-ready-swatch-b"
+                  style={{ background: vars.secondaryColor }}
+                />
+                <div
+                  className="sb-theme-ready-swatch sb-theme-ready-swatch-c"
+                  style={{ background: vars.tertiaryColor }}
+                />
+              </div>
+              <div className="sb-theme-ready-label">
+                <span>{theme.name}</span>
+                {isSelected && (
+                  <span
+                    className="material-symbols-outlined sb-theme-ready-check"
+                    aria-label={t("selected", { defaultValue: "Selected" })}
+                  >
+                    check_circle
+                  </span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { themes, selectedThemeId, setTheme } = state.theme;
   const { config, setFontSize } = state.config;
   const selectedFontSize = config.value.fontSize;
   const settings = state.settings;
@@ -527,64 +665,9 @@ function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
         })}
       />
 
-      <section className="sb-settings-section">
-        <h3 className="sb-settings-subheading">
-          {t("themes", { defaultValue: "Themes" })}
-        </h3>
-        <div
-          className="sb-theme-ready-gallery"
-          role="radiogroup"
-          onKeyDown={(event) => {
-            handleGridKeyNav(event, event.currentTarget);
-          }}
-        >
-          {themes.value.map((theme) => {
-            const isSelected = theme.id === selectedThemeId.value;
-            const vars = theme.variables;
-            return (
-              <button
-                key={theme.id}
-                type="button"
-                className={`sb-theme-ready-card${
-                  isSelected ? " sb-theme-ready-card-selected" : ""
-                }`}
-                onClick={() => setTheme(theme.id)}
-              >
-                <div
-                  className="sb-theme-ready-preview"
-                  style={{
-                    background: vars.readerBackground ?? vars.background,
-                  }}
-                >
-                  <div
-                    className="sb-theme-ready-swatch sb-theme-ready-swatch-a"
-                    style={{ background: vars.primaryColor }}
-                  />
-                  <div
-                    className="sb-theme-ready-swatch sb-theme-ready-swatch-b"
-                    style={{ background: vars.secondaryColor }}
-                  />
-                  <div
-                    className="sb-theme-ready-swatch sb-theme-ready-swatch-c"
-                    style={{ background: vars.tertiaryColor }}
-                  />
-                </div>
-                <div className="sb-theme-ready-label">
-                  <span>{theme.name}</span>
-                  {isSelected && (
-                    <span
-                      className="material-symbols-outlined sb-theme-ready-check"
-                      aria-label={t("selected", { defaultValue: "Selected" })}
-                    >
-                      check_circle
-                    </span>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+      <ThemesGallerySection state={state} />
 
+      <section className="sb-settings-section">
         <h3 className="sb-settings-subheading">
           {t("scripture-settings", { defaultValue: "Scripture settings" })}
         </h3>
@@ -1095,7 +1178,7 @@ function ExtensionsSettingsView(props: { state: SeedBibleState }) {
                     </span>
                     <div className="sb-extension-row-content">
                       <span className="sb-extension-name">
-                        {/* eslint-disable-next-line seed-bible-i18n/translation-missing-keys */}
+                        {}
                         {t("title", { ns: id, defaultValue: id })}
                       </span>
                       <span className="sb-extension-description">

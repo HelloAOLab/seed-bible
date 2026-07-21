@@ -13,6 +13,7 @@ import type { SeedBibleState } from "@packages/seed-bible/seed-bible/managers/Se
 import type { TranslationBookChapter } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { createBibleToolsManager } from "@packages/seed-bible/seed-bible/managers/BibleToolsManager";
 import type { Mock } from "vitest";
+import type { ReadingExtensionRuntime } from "@packages/seed-bible/seed-bible/managers";
 
 type ReaderFixture = {
   slot: TabSlot;
@@ -139,10 +140,27 @@ function createFixture(): ReaderFixture {
     selectChapter: vi.fn(async () => undefined),
     loadPreviousChapter: vi.fn(async () => undefined),
     loadNextChapter: vi.fn(async () => undefined),
+    hasNext: computed(() => !!chapterData.value?.nextChapterApiLink),
+    hasPrevious: computed(() => !!chapterData.value?.previousChapterApiLink),
     selectTranslationAndChapter: vi.fn(async () => undefined),
     highlights,
     defaultTranslation: { id: "BSB", language: "en" },
     chapterDataPromise: Promise.resolve(),
+    discoveredContent: signal([]),
+    discoveredCrossReferences: signal([]),
+    discoveredStudyNotes: signal([]),
+    disableExtension: vi.fn(async () => undefined),
+    enableExtension: vi.fn(async () => undefined),
+    isShared: signal(false),
+    dispose: vi.fn(async () => undefined),
+    enabledExtensions: signal<ReadingExtensionRuntime[]>([]),
+    isExtensionEnabled: vi.fn(() => false),
+    getUrlQueryParams: vi.fn(() => ({})),
+    onNavigate: vi.fn(() => () => {}),
+    shortSubTitle: signal<string>(""),
+    shortTitle: signal<string>(""),
+    subTitle: signal<string>(""),
+    title: signal<string>(""),
   } as BibleReadingState;
 
   const selectorState = {
@@ -205,6 +223,12 @@ function createMobileState(): SeedBibleState {
     bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
+    playlists: {
+      playing: signal(null),
+    },
+    features: {
+      isFeatureEnabled: vi.fn(() => true),
+    },
   } as any as SeedBibleState;
 }
 
@@ -229,6 +253,12 @@ function createDesktopState(): SeedBibleState {
     bookmarks: createBookmarksStub(),
     tabs: {} as any,
     panes: {} as any,
+    playlists: {
+      playing: signal(null),
+    },
+    features: {
+      isFeatureEnabled: vi.fn(() => true),
+    },
   } as any as SeedBibleState;
 }
 
