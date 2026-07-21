@@ -591,7 +591,12 @@
   gap: 0.625rem;
   min-height: 0;
   flex: 1;
-  padding: 5px;
+  padding: 0.3125rem;
+}
+@media (max-width: 480px) {
+  .sb-sidebar-settings-view {
+    padding: 0.3125rem 0.75rem;
+  }
 }
 @media (max-width: 480px) {
   .sb-sidebar-settings-view {
