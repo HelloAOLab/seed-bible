@@ -1249,28 +1249,46 @@ function getSessionUrl(session: BibleReadingSession) {
 
 /**
  * Modal body shown when the user triggers "Bookmark" from a tab menu, the
- * sidebar tab row, or the verse toolbar. Lets the user pick which folder the
- * new bookmark lands in. Folder creation only happens here — there is no
- * inline "+ New folder" button in the sidebar list anymore.
+ * sidebar tab row, the verse toolbar, or "Move to folder" from a bookmark's
+ * kebab menu. Lets the user pick which folder the bookmark lands in. Folder
+ * creation only happens here — there is no inline "+ New folder" button in
+ * the sidebar list anymore.
+ *
+ * In move mode the bookmark's current folder is filtered out so the list only
+ * offers other destinations (or "Move to new" when none remain).
  */
 function BookmarkCategoryPickerContent(props: {
   state: SeedBibleState;
   location: BookmarkLocation;
   onClose: () => void;
+  mode?: "add" | "move";
+  bookmarkId?: string;
+  excludeCategory?: string;
 }) {
-  const { state, location, onClose } = props;
+  const {
+    state,
+    location,
+    onClose,
+    mode = "add",
+    bookmarkId,
+    excludeCategory,
+  } = props;
   const { bookmarks } = state;
   const { t } = useI18n();
-  const categories = bookmarks.categories.value;
+  const isMove = mode === "move";
+  const categories = bookmarks.categories.value.filter(
+    (category) => category.name !== excludeCategory
+  );
 
-  const selectedCategory = useSignal<string>(DEFAULT_BOOKMARK_CATEGORY);
-  const isAddingNew = useSignal<boolean>(false);
+  const initialCategory = categories[0]?.name ?? "";
+  const selectedCategory = useSignal<string>(initialCategory);
+  const isAddingNew = useSignal<boolean>(categories.length === 0);
   const newCategoryName = useSignal<string>("");
 
   const trimmedNew = newCategoryName.value.trim();
   const newCategoryCollides =
     trimmedNew.length > 0 &&
-    categories.some((category) => category.name === trimmedNew);
+    bookmarks.categories.value.some((category) => category.name === trimmedNew);
   const canSave = isAddingNew.value
     ? trimmedNew.length > 0 && !newCategoryCollides
     : selectedCategory.value.length > 0;
@@ -1282,15 +1300,20 @@ function BookmarkCategoryPickerContent(props: {
       await bookmarks.createCategory(trimmedNew);
       category = trimmedNew;
     }
-    await bookmarks.addBookmark(
-      location.translationId,
-      location.bookId,
-      location.chapterNumber,
-      {
-        category,
-        ...(location.verse !== undefined ? { verse: location.verse } : {}),
-      }
-    );
+    if (isMove) {
+      if (!bookmarkId) return;
+      await bookmarks.moveBookmark(bookmarkId, category);
+    } else {
+      await bookmarks.addBookmark(
+        location.translationId,
+        location.bookId,
+        location.chapterNumber,
+        {
+          category,
+          ...(location.verse !== undefined ? { verse: location.verse } : {}),
+        }
+      );
+    }
     onClose();
   };
 
@@ -1349,6 +1372,10 @@ function BookmarkCategoryPickerContent(props: {
                 void handleSave();
               } else if (event.key === "Escape") {
                 event.preventDefault();
+                if (categories.length === 0) {
+                  onClose();
+                  return;
+                }
                 isAddingNew.value = false;
                 newCategoryName.value = "";
               }
@@ -1374,7 +1401,11 @@ function BookmarkCategoryPickerContent(props: {
           <span className="material-symbols-outlined" aria-hidden="true">
             add
           </span>
-          <span>{t("add-to-new", { defaultValue: "Add to new" })}</span>
+          <span>
+            {isMove
+              ? t("move-to-new", { defaultValue: "Move to new" })
+              : t("add-to-new", { defaultValue: "Add to new" })}
+          </span>
         </button>
       )}
 
@@ -1403,30 +1434,51 @@ function BookmarkCategoryPickerContent(props: {
 
 /**
  * Opens the bookmark category picker modal for the given location. Exported
- * so the verse toolbar (in BibleReaderToolbar) can open it for verse-scoped
- * bookmarks with the same UX as the sidebar tab-row bookmark button.
+ * so the verse toolbar (in BibleReaderToolbar) and the chapter bookmark
+ * button (in BibleReader) can open it with the same UX as the sidebar.
+ *
+ * Pass `mode: "move"` with `bookmarkId` / `excludeCategory` to relocate an
+ * existing bookmark — the current folder is hidden from the list.
  */
 export function openBookmarkCategoryModal(
   state: SeedBibleState,
-  location: BookmarkLocation
+  location: BookmarkLocation,
+  options?: {
+    mode?: "add" | "move";
+    bookmarkId?: string;
+    excludeCategory?: string;
+  }
 ) {
+  const mode = options?.mode ?? "add";
   const verseKey =
     location.verse === undefined
       ? "chapter"
       : Array.isArray(location.verse)
         ? `${location.verse[0]}-${location.verse[1]}`
         : String(location.verse);
-  const modalId = `bookmark-category-${location.translationId}-${location.bookId}-${location.chapterNumber}-${verseKey}`;
+  const modalId =
+    mode === "move" && options?.bookmarkId
+      ? `bookmark-move-${options.bookmarkId}`
+      : `bookmark-category-${location.translationId}-${location.bookId}-${location.chapterNumber}-${verseKey}`;
   state.modals.openModal({
     id: modalId,
-    title: {
-      key: "add-to-bookmark-category",
-      defaultValue: "Add to bookmark category",
-    },
+    title:
+      mode === "move"
+        ? {
+            key: "move-to-bookmark-category",
+            defaultValue: "Move to bookmark category",
+          }
+        : {
+            key: "add-to-bookmark-category",
+            defaultValue: "Add to bookmark category",
+          },
     content: () => (
       <BookmarkCategoryPickerContent
         state={state}
         location={location}
+        mode={mode}
+        bookmarkId={options?.bookmarkId}
+        excludeCategory={options?.excludeCategory}
         onClose={() => state.modals.closeModal(modalId)}
       />
     ),
@@ -1705,6 +1757,31 @@ function BookmarksSection(props: BookmarksSectionProps) {
                             defaultValue: "Bookmark options",
                           })}
                         >
+                          <ContextMenuItem
+                            className="sb-tab-menu-item"
+                            onClick={() => {
+                              openBookmarkCategoryModal(
+                                state,
+                                {
+                                  translationId: bookmark.translationId,
+                                  bookId: bookmark.bookId,
+                                  chapterNumber: bookmark.chapterNumber,
+                                  ...(bookmark.verse !== undefined
+                                    ? { verse: bookmark.verse }
+                                    : {}),
+                                },
+                                {
+                                  mode: "move",
+                                  bookmarkId: bookmark.id,
+                                  excludeCategory: bookmark.category,
+                                }
+                              );
+                            }}
+                          >
+                            {t("move-bookmark", {
+                              defaultValue: "Move to folder",
+                            })}
+                          </ContextMenuItem>
                           <ContextMenuItem
                             className="sb-tab-menu-item"
                             onClick={() => {
