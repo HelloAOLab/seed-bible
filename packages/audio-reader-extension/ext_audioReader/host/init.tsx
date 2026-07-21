@@ -120,6 +120,7 @@ export default function initAudioReaderExtension() {
         isVisible: (ctx) =>
           computed(
             () =>
+              !ctx.playlists.isMobile.value &&
               !ctx.playlists.playing.value &&
               chapterAudioUrl(ctx.readingState) !== null
           ),
