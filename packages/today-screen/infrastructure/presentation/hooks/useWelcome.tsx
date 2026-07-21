@@ -21,8 +21,6 @@ type UseWelcome = () => {
   startButtonText: string;
   startButtonIcon: string;
   handleStartButtonClick: () => void;
-  footerTitle: string;
-  footerContent: string;
   seedBibleIconStyle: React.CSSProperties;
 };
 
@@ -80,15 +78,12 @@ export const useWelcome: UseWelcome = () => {
     };
   }, [lastTranslationId.value]);
 
-  const { selectorText, startButtonText, footerTitle, footerContent } =
-    useMemo(() => {
-      return {
-        selectorText: translate("open-bible"),
-        startButtonText: translate("read-first-chapter"),
-        footerTitle: translate("everything-begins-small"),
-        footerContent: translate("no-rush"),
-      };
-    }, [translate]);
+  const { selectorText, startButtonText } = useMemo(() => {
+    return {
+      selectorText: translate("open-bible"),
+      startButtonText: translate("read-first-chapter"),
+    };
+  }, [translate]);
 
   const handleStartButtonClick = useCallback(() => {
     const defaultTranslation = getDefaultTranslation();
@@ -115,8 +110,6 @@ export const useWelcome: UseWelcome = () => {
     startButtonText,
     startButtonIcon: STRAT_BUTTON_ICON,
     handleStartButtonClick,
-    footerTitle,
-    footerContent,
     seedBibleIconStyle,
   };
 };

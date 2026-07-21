@@ -4,9 +4,9 @@ import { TodayContainer } from "./containers/TodayContainer";
 import type { ReadonlySignal, Signal } from "@preact/signals";
 import type {
   FilteredReading,
+  ReadingHistoryState,
   TimespanOption,
   TimespanOptionId,
-  UserLastReading,
 } from "../../../domain/models/readingHistory";
 import type { ReadingHistoryTimelineComponent } from "../../../../seed-bible-utils/infrastructure/models/seedBible";
 import type { GetDayRangeSecondsType } from "../../../../seed-bible-utils/domain/functions/time";
@@ -42,7 +42,11 @@ export interface TodayConfig {
       }
     | undefined;
   userId: string | undefined;
-  userLastReading: Signal<UserLastReading>;
+  /**
+   * Reading-history gate: `loading`/`ready` render the personalized layout,
+   * `empty` renders Welcome. See {@link ReadingHistoryState}.
+   */
+  readingHistory: ReadonlySignal<ReadingHistoryState>;
   getCommunityReading: (timespan: {
     from: number;
     to: number;

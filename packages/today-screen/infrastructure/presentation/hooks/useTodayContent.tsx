@@ -9,9 +9,13 @@ type UseTodayContent = () => {
 };
 
 export const useTodayContent: UseTodayContent = () => {
-  const { userLastReading, bookmarks } = useTodayContext();
+  const { readingHistory, bookmarks } = useTodayContext();
 
-  const showResumeReading = !!userLastReading.value;
+  // Show the resume section (as a placeholder) while history is still loading,
+  // and (with real data) once it is ready. `empty` renders Welcome instead, so
+  // it never reaches here.
+  const status = readingHistory.value.status;
+  const showResumeReading = status === "loading" || status === "ready";
   const showBookmarks = bookmarks.value.length > 0;
   const showSearch = true;
   const showRecommendations = false;

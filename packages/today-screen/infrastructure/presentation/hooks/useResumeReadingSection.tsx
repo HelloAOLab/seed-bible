@@ -7,14 +7,17 @@ type UseResumeReadingSection = () => {
     children: string;
     className?: string | undefined;
   }) => preact.JSX.Element;
-  cardData: ResumeReadingCardData;
+  /** True while history is still loading — render a placeholder card. */
+  isLoading: boolean;
+  /** The resume-card data, or `null` while loading. */
+  cardData: ResumeReadingCardData | null;
   handleButtonClick: () => void;
 };
 
 export const useResumeReadingSection: UseResumeReadingSection = () => {
   const {
     MaterialIcon,
-    userLastReading,
+    readingHistory,
     translate,
     bookNames,
     addTab,
@@ -22,34 +25,30 @@ export const useResumeReadingSection: UseResumeReadingSection = () => {
     getDefaultTranslation,
   } = useTodayContext();
 
-  if (!userLastReading.value) {
-    throw new Error(
-      `useResumeReadingSection: userLastReading.value is undefined`
-    );
-  }
+  const state = readingHistory.value;
+  // A resume position only exists in the `ready` state; in `loading` we render
+  // a placeholder instead of dereferencing a value that isn't there yet.
+  const lastReading = state.status === "ready" ? state.lastReading : undefined;
 
-  const cardData = useMemo<ResumeReadingCardData>(() => {
+  const cardData = useMemo<ResumeReadingCardData | null>(() => {
+    if (!lastReading) return null;
     return {
       title: translate("resume-reading"),
-      book:
-        bookNames.value.get(userLastReading.value!.bookId) ??
-        userLastReading.value!.bookId,
-      chapter: userLastReading.value!.chapter,
+      book: bookNames.value.get(lastReading.bookId) ?? lastReading.bookId,
+      chapter: lastReading.chapter,
       buttonIcon: "arrow_right_alt",
     };
-  }, [userLastReading.value, translate, bookNames.value]);
+  }, [lastReading, translate, bookNames.value]);
 
   const handleButtonClick = useCallback(() => {
-    addTab(
-      userLastReading.value!.bookId,
-      userLastReading.value!.chapter,
-      getDefaultTranslation()
-    );
+    if (!lastReading) return;
+    addTab(lastReading.bookId, lastReading.chapter, getDefaultTranslation());
     closeToday();
-  }, [userLastReading.value]);
+  }, [lastReading, addTab, closeToday, getDefaultTranslation]);
 
   return {
     MaterialIcon,
+    isLoading: state.status === "loading",
     cardData,
     handleButtonClick,
   };
