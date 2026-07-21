@@ -7,8 +7,22 @@ type UseResumeReadingSection = () => {
     children: string;
     className?: string | undefined;
   }) => preact.JSX.Element;
+  Skeleton: (props: {
+    shape?: "block" | "line" | "circle" | "button";
+    width?: string;
+    height?: string;
+    radius?: string;
+    className?: string;
+  }) => preact.JSX.Element;
+  SkeletonContainer: (props: {
+    label: string;
+    className?: string;
+    children: preact.ComponentChildren;
+  }) => preact.JSX.Element;
   /** True while history is still loading — render a placeholder card. */
   isLoading: boolean;
+  /** Already-translated status announced by the loading placeholder. */
+  loadingLabel: string;
   /** The resume-card data, or `null` while loading. */
   cardData: ResumeReadingCardData | null;
   handleButtonClick: () => void;
@@ -17,6 +31,8 @@ type UseResumeReadingSection = () => {
 export const useResumeReadingSection: UseResumeReadingSection = () => {
   const {
     MaterialIcon,
+    Skeleton,
+    SkeletonContainer,
     readingHistory,
     translate,
     bookNames,
@@ -48,7 +64,10 @@ export const useResumeReadingSection: UseResumeReadingSection = () => {
 
   return {
     MaterialIcon,
+    Skeleton,
+    SkeletonContainer,
     isLoading: state.status === "loading",
+    loadingLabel: translate("resume-reading-loading"),
     cardData,
     handleButtonClick,
   };

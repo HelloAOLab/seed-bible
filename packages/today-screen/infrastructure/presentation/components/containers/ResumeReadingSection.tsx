@@ -8,27 +8,30 @@ export interface ResumeReadingCardData {
 }
 
 export const ResumeReadingSection = () => {
-  const { MaterialIcon, isLoading, cardData, handleButtonClick } =
-    useResumeReadingSection();
+  const {
+    MaterialIcon,
+    Skeleton,
+    SkeletonContainer,
+    isLoading,
+    loadingLabel,
+    cardData,
+    handleButtonClick,
+  } = useResumeReadingSection();
 
   // History still loading: show a placeholder card so a returning user sees the
   // personalized layout (never Welcome) while the resume position is fetched.
   if (isLoading || !cardData) {
     return (
-      <div
+      <SkeletonContainer
+        label={loadingLabel}
         className="today-resume-card today-resume-card--loading"
-        aria-hidden="true"
       >
-        <span
-          className="today-resume-skeleton"
-          style={{ width: "45%", height: "0.75rem" }}
-        />
-        <span
-          className="today-resume-skeleton"
-          style={{ width: "60%", height: "1.5rem" }}
-        />
-        <span className="today-resume-skeleton today-resume-skeleton--button" />
-      </div>
+        <div className="today-resume-card-loading-text">
+          <Skeleton shape="line" width="45%" />
+          <Skeleton shape="line" width="60%" height="1.5rem" />
+        </div>
+        <Skeleton shape="circle" width="3rem" height="3rem" />
+      </SkeletonContainer>
     );
   }
 

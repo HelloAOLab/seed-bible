@@ -31,6 +31,20 @@ export interface TodayConfig {
     children: string;
     className?: string;
   }) => preact.JSX.Element;
+  /** Shared shimmering placeholder block (see the reader's `Skeleton`). */
+  Skeleton: (props: {
+    shape?: "block" | "line" | "circle" | "button";
+    width?: string;
+    height?: string;
+    radius?: string;
+    className?: string;
+  }) => preact.JSX.Element;
+  /** Accessible wrapper announcing a group of `Skeleton` blocks as loading. */
+  SkeletonContainer: (props: {
+    label: string;
+    className?: string;
+    children: preact.ComponentChildren;
+  }) => preact.JSX.Element;
   language: string;
   username: string | undefined;
   userProfile:

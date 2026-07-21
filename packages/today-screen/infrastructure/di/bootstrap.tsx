@@ -1,6 +1,10 @@
 import { computed, effect, signal } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { MaterialIcon } from "@packages/seed-bible/seed-bible/components";
+import {
+  Skeleton,
+  SkeletonContainer,
+} from "@packages/seed-bible/seed-bible/components/Skeleton/Skeleton";
 import { Today } from "../presentation/components/Today";
 import { useI18n } from "@packages/seed-bible/seed-bible/i18n";
 import { TodayReadingHistoryService } from "@packages/today-screen/application/services/TodayReadingHistoryService";
@@ -230,6 +234,8 @@ export const bootstrapExtension = () => {
               config={{
                 ColorParser,
                 MaterialIcon,
+                Skeleton,
+                SkeletonContainer,
                 language,
                 username: context.login.profile.value?.name,
                 userId: context.login.userId.value ?? undefined,
