@@ -76,9 +76,14 @@ export function createReadingHistoryState(deps: ReadingHistoryStateDeps): {
       .then((result) => {
         // Ignore a result for a user who is no longer current.
         if (deps.userId.peek() !== requestedUserId) return;
-        readingHistory.value = result
-          ? { status: "ready", lastReading: result }
-          : { status: "empty" };
+        if (result) {
+          readingHistory.value = { status: "ready", lastReading: result };
+        } else if (userChanged) {
+          // Fresh load / account switch with no history → Welcome.
+          readingHistory.value = { status: "empty" };
+        }
+        // Same-user refetch that came back empty: keep the card already showing
+        // rather than erasing a known-good position on a spurious empty result.
       })
       .catch((err) => {
         if (deps.userId.peek() !== requestedUserId) return;
@@ -87,7 +92,14 @@ export function createReadingHistoryState(deps: ReadingHistoryStateDeps): {
           userId,
           err
         );
-        readingHistory.value = { status: "empty" };
+        // Only surface Welcome when there was no prior card to keep — a fresh
+        // load or account switch. On a same-user refetch, a transient error
+        // must NOT flash a returning user back to Welcome. Gating on
+        // `userChanged` (not "is state ready?") keeps the cross-account
+        // guarantee: a failed account-switch fetch still clears the old card.
+        if (userChanged) {
+          readingHistory.value = { status: "empty" };
+        }
       });
   });
 

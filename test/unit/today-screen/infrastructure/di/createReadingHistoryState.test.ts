@@ -181,7 +181,7 @@ describe("createReadingHistoryState", () => {
     dispose();
   });
 
-  it("falls back to empty when the fetch fails", async () => {
+  it("falls back to empty when the initial load fails", async () => {
     const userId = signal<string | null>("A");
     const refetchTrigger = signal(0);
     const d = deferred<UserLastReading>();
@@ -199,6 +199,80 @@ describe("createReadingHistoryState", () => {
 
     expect(readingHistory.value).toEqual({ status: "empty" });
     errSpy.mockRestore();
+    dispose();
+  });
+
+  it("keeps the current card when a same-user refetch fails", async () => {
+    const userId = signal<string | null>("A");
+    const refetchTrigger = signal(0);
+    const d1 = deferred<UserLastReading>();
+    const d2 = deferred<UserLastReading>();
+    let call = 0;
+    const getUserLastReading = vi.fn(() =>
+      ++call === 1 ? d1.promise : d2.promise
+    );
+    const errSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const { readingHistory, dispose } = createReadingHistoryState({
+      userId,
+      refetchTrigger,
+      getUserLastReading,
+    });
+
+    d1.resolve({ bookId: "GEN", chapter: 1 });
+    await flush();
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "GEN", chapter: 1 },
+    });
+
+    // Reading progresses; the refetch fails on a transient error. A returning
+    // user must NOT be flashed back to Welcome — the existing card stays.
+    refetchTrigger.value = 1;
+    d2.reject(new Error("network blip"));
+    await flush();
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "GEN", chapter: 1 },
+    });
+
+    errSpy.mockRestore();
+    dispose();
+  });
+
+  it("keeps the current card when a same-user refetch returns no history", async () => {
+    const userId = signal<string | null>("A");
+    const refetchTrigger = signal(0);
+    const d1 = deferred<UserLastReading>();
+    const d2 = deferred<UserLastReading>();
+    let call = 0;
+    const getUserLastReading = vi.fn(() =>
+      ++call === 1 ? d1.promise : d2.promise
+    );
+
+    const { readingHistory, dispose } = createReadingHistoryState({
+      userId,
+      refetchTrigger,
+      getUserLastReading,
+    });
+
+    d1.resolve({ bookId: "GEN", chapter: 1 });
+    await flush();
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "GEN", chapter: 1 },
+    });
+
+    // A spurious empty result on a same-user refetch must not erase a
+    // known-good position.
+    refetchTrigger.value = 1;
+    d2.resolve(undefined);
+    await flush();
+    expect(readingHistory.value).toEqual({
+      status: "ready",
+      lastReading: { bookId: "GEN", chapter: 1 },
+    });
+
     dispose();
   });
 });
