@@ -6,6 +6,7 @@ import { useTodayContext } from "../../../../../../packages/today-screen/infrast
 import { useSocialSectionContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/socialSection/SocialSectionContext";
 import { useTimeContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/time/TimeContext";
 import { calculateReadingHistorySummary } from "../../../../../../packages/seed-bible/seed-bible/managers/ReadingHistoryManager";
+import { ColorParser } from "../../../../../../packages/seed-bible-utils/domain/functions/colors";
 
 vi.mock(
   "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
@@ -71,6 +72,7 @@ function makeToday(overrides: Record<string, unknown> = {}) {
     },
     readingHistoryService: { getColorByReadingTime },
     useHorizontalScroll,
+    ColorParser,
     ...overrides,
   };
 }

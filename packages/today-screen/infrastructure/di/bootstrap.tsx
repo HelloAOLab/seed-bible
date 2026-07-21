@@ -47,6 +47,7 @@ export const bootstrapExtension = () => {
         CapitalizeFirstLetter,
         readingHistoryService,
         useHorizontalScroll,
+        ColorParser,
       } = dependenciesMap[
         seedBibleUtilsId
       ] as DependenciesMap[typeof seedBibleUtilsId];
@@ -247,6 +248,7 @@ export const bootstrapExtension = () => {
           return (
             <Today
               config={{
+                ColorParser,
                 MaterialIcon,
                 language,
                 username: context.login.profile.value?.name,
