@@ -1,14 +1,16 @@
 import { computed, effect, signal } from "@preact/signals";
 import { registerExtension, type SeedBibleState } from "seed-bible";
 import { MaterialIcon } from "@packages/seed-bible/seed-bible/components";
+import {
+  Skeleton,
+  SkeletonContainer,
+} from "@packages/seed-bible/seed-bible/components/Skeleton/Skeleton";
 import { Today } from "../presentation/components/Today";
 import { useI18n } from "@packages/seed-bible/seed-bible/i18n";
 import { TodayReadingHistoryService } from "@packages/today-screen/application/services/TodayReadingHistoryService";
 import { SubscribedUsersProvider } from "../adapters/subscriptions/SubscribedUsersProvider";
-import type {
-  FilteredReading,
-  UserLastReading,
-} from "@packages/today-screen/domain/models/readingHistory";
+import type { FilteredReading } from "@packages/today-screen/domain/models/readingHistory";
+import { createReadingHistoryState } from "./createReadingHistoryState";
 import type { UtilsAPI } from "@packages/seed-bible-utils/infrastructure/models/seedBible";
 import { getReadingHistoryEvents } from "@packages/seed-bible/seed-bible/managers";
 import { getDefaultTranslationForLanguage } from "@packages/seed-bible/seed-bible/managers";
@@ -85,7 +87,16 @@ export const bootstrapExtension = () => {
         },
       });
 
-      const userLastReading = signal<UserLastReading>(undefined);
+      // Three-state reading-history gate (loading | empty | ready). Derived
+      // from `userId` (known synchronously at startup) so a returning user
+      // never flashes the Welcome page while their history loads.
+      const { readingHistory, dispose: disposeReadingHistory } =
+        createReadingHistoryState({
+          userId: context.login.userId,
+          refetchTrigger: context.app.currentReadingState,
+          getUserLastReading: (userId, range) =>
+            todayReadingHistoryService.getUserLastReading(userId, range),
+        });
 
       /**
        * Fetches the community reading for one exact period. The presentation
@@ -168,33 +179,6 @@ export const bootstrapExtension = () => {
           .trim();
       };
 
-      const cleanupUserLastReading = effect(() => {
-        const userId = context.login.userId.value;
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        context.app.currentReadingState.value;
-
-        if (!userId) {
-          userLastReading.value = undefined;
-          return;
-        }
-
-        const now = Math.floor(Date.now() / 1000);
-        const oneYearAgo = now - 365 * 24 * 60 * 60;
-
-        void todayReadingHistoryService
-          .getUserLastReading(userId, { from: oneYearAgo, to: now })
-          .then((result) => {
-            userLastReading.value = result;
-          })
-          .catch((err) => {
-            console.error(
-              "[Debug] [today-screen] getUserLastReading failed for userId",
-              userId,
-              err
-            );
-          });
-      });
-
       const lastTranslationBooks = signal<{
         books: Array<{
           id: string;
@@ -250,6 +234,8 @@ export const bootstrapExtension = () => {
               config={{
                 ColorParser,
                 MaterialIcon,
+                Skeleton,
+                SkeletonContainer,
                 language,
                 username: context.login.profile.value?.name,
                 userId: context.login.userId.value ?? undefined,
@@ -265,7 +251,7 @@ export const bootstrapExtension = () => {
                       ),
                     }
                   : undefined,
-                userLastReading,
+                readingHistory,
                 getCommunityReading,
                 translate: (key, options) =>
                   t(key, {
@@ -434,7 +420,7 @@ export const bootstrapExtension = () => {
       };
 
       yield () => {
-        cleanupUserLastReading();
+        disposeReadingHistory();
         cleanupTranslationBooks();
         cleanupTranslationId();
         cleanupTodayUrlSync();

@@ -4,9 +4,9 @@ import { TodayContainer } from "./containers/TodayContainer";
 import type { ReadonlySignal, Signal } from "@preact/signals";
 import type {
   FilteredReading,
+  ReadingHistoryState,
   TimespanOption,
   TimespanOptionId,
-  UserLastReading,
 } from "../../../domain/models/readingHistory";
 import type { ReadingHistoryTimelineComponent } from "../../../../seed-bible-utils/infrastructure/models/seedBible";
 import type { GetDayRangeSecondsType } from "../../../../seed-bible-utils/domain/functions/time";
@@ -31,6 +31,20 @@ export interface TodayConfig {
     children: string;
     className?: string;
   }) => preact.JSX.Element;
+  /** Shared shimmering placeholder block (see the reader's `Skeleton`). */
+  Skeleton: (props: {
+    shape?: "block" | "line" | "circle" | "button";
+    width?: string;
+    height?: string;
+    radius?: string;
+    className?: string;
+  }) => preact.JSX.Element;
+  /** Accessible wrapper announcing a group of `Skeleton` blocks as loading. */
+  SkeletonContainer: (props: {
+    label: string;
+    className?: string;
+    children: preact.ComponentChildren;
+  }) => preact.JSX.Element;
   language: string;
   username: string | undefined;
   userProfile:
@@ -42,7 +56,11 @@ export interface TodayConfig {
       }
     | undefined;
   userId: string | undefined;
-  userLastReading: Signal<UserLastReading>;
+  /**
+   * Reading-history gate: `loading`/`ready` render the personalized layout,
+   * `empty` renders Welcome. See {@link ReadingHistoryState}.
+   */
+  readingHistory: ReadonlySignal<ReadingHistoryState>;
   getCommunityReading: (timespan: {
     from: number;
     to: number;

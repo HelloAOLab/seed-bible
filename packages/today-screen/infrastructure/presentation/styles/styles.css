@@ -115,8 +115,7 @@
 }
 
 .welcome-screen .welcome-screen-greeting,
-.welcome-screen .welcome-screen-book,
-.welcome-screen-footer-content {
+.welcome-screen .welcome-screen-book {
   color: var(--grey);
 }
 
@@ -174,23 +173,6 @@
 
 .welcome-screen .welcome-screen-start-button > span {
   font-size: 1rem;
-}
-
-.welcome-screen .welcome-screen-footer {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-}
-
-.welcome-screen .welcome-screen-footer-title {
-  margin: 0.5rem 0 0;
-  font-family: "Newsreader";
-}
-
-.welcome-screen .welcome-screen-footer-content {
 }
 
 .today-content * {
@@ -307,6 +289,24 @@
 
 .today-container .today-resume-card > button > span {
   color: var(--sb-background);
+}
+
+/* Loading placeholder for the resume card — shown while the reading-history
+   fetch is in flight so a returning user sees the personalized layout rather
+   than the Welcome page. Overrides the card's grid with a simple row so the
+   shared <Skeleton> blocks (text stack + round button) mirror the real card. */
+.today-container .today-resume-card--loading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.today-container .today-resume-card--loading .today-resume-card-loading-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
 }
 
 .today-container .titled-section {

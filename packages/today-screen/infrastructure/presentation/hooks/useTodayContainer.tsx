@@ -10,9 +10,13 @@ type UseTodayContainer = () => {
 };
 
 export const useTodayContainer: UseTodayContainer = () => {
-  const { userId, userLastReading } = useTodayContext();
+  const { readingHistory } = useTodayContext();
+  const status = readingHistory.value.status;
   const { Component, style } = useMemo(() => {
-    if (!userId || !userLastReading.value) {
+    // Welcome is a definite state — shown only when the user is known to have
+    // no history (`empty`). `loading` and `ready` both render the personalized
+    // layout, so a returning user never sees Welcome while history loads.
+    if (status === "empty") {
       return {
         Component: Welcome,
         style: { alignItems: "safe center" },
@@ -22,7 +26,7 @@ export const useTodayContainer: UseTodayContainer = () => {
       Component: TodayContent,
       style: { alignItems: "flex-start" },
     };
-  }, [userId, userLastReading.value]);
+  }, [status]);
 
   return {
     Component,
