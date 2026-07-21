@@ -55,6 +55,7 @@ interface ExtensionMetaFile {
   translations: Record<string, ExtensionTranslationFile>;
   dependencies?: string[];
   autoinstall?: boolean;
+  hidden?: boolean;
 }
 
 async function readExtensionMeta(folder: string): Promise<ExtensionMetaFile> {
@@ -65,9 +66,10 @@ async function readExtensionMeta(folder: string): Promise<ExtensionMetaFile> {
 /**
  * Reduces an extension's meta to just what's needed before it's installed:
  * `title`/`description` per locale (for the Settings extensions list), plus
- * `id`/`dependencies`/`autoinstall` (needed to resolve install order and
- * auto-install eligibility). Every other translation key is dropped — it's
- * only available via the extension's `loadFullTranslations()` thunk.
+ * `id`/`dependencies`/`autoinstall`/`hidden` (needed to resolve install order,
+ * auto-install eligibility, and whether the extension should appear in the
+ * Settings list). Every other translation key is dropped — it's only available
+ * via the extension's `loadFullTranslations()` thunk.
  */
 function trimMeta(meta: ExtensionMetaFile): ExtensionMetaFile {
   const translations: Record<string, ExtensionTranslationFile> = {};
@@ -85,6 +87,7 @@ function trimMeta(meta: ExtensionMetaFile): ExtensionMetaFile {
     ...(meta.autoinstall !== undefined
       ? { autoinstall: meta.autoinstall }
       : {}),
+    ...(meta.hidden !== undefined ? { hidden: meta.hidden } : {}),
   };
 }
 

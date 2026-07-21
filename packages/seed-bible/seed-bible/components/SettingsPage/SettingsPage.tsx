@@ -1031,7 +1031,9 @@ function getExtensionInstallState(
 function ExtensionsSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { extensions } = state;
-  const extensionsList = extensions.extensions.value;
+  const extensionsList = extensions.extensions.value.filter(
+    (entry) => !entry.extension?.meta.hidden
+  );
   const installingIds = useSignal<Set<string>>(new Set());
   const isDownloadingSet = useSignal(false);
   const isUploadingSet = useSignal(false);

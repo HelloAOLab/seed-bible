@@ -76,6 +76,28 @@ describe("ExtensionInitalizer", () => {
     expect(init).toHaveBeenCalledTimes(1);
   });
 
+  it("skips registration when an extension ID is already registered", () => {
+    const init1 = vi.fn(() => ({ version: 1 }));
+    const init2 = vi.fn(() => ({ version: 2 }));
+
+    initializer.setupExtensionContext(context);
+
+    initializer.registerExtension({
+      id: "ext.duplicate",
+      init: init1,
+    });
+    initializer.registerExtension({
+      id: "ext.duplicate",
+      init: init2,
+    });
+
+    expect(init1).toHaveBeenCalledTimes(1);
+    expect(init2).not.toHaveBeenCalled();
+    expect(
+      initializer.getExtensionExports<{ version: number }>("ext.duplicate")
+    ).toEqual({ version: 1 });
+  });
+
   it("supports registering extensions before context setup", () => {
     const init = vi.fn(() => ({}));
 

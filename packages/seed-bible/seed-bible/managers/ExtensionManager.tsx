@@ -64,6 +64,13 @@ export interface ExtensionMeta {
    * Defaults to false.
    */
   autoinstall?: boolean;
+
+  /**
+   * When true, this extension is omitted from the Settings extensions list.
+   * Use for internal packages that only exist as dependencies of other
+   * extensions (e.g. `ext_AI_Transcript` behind `ext_AI_Transcript_UI`).
+   */
+  hidden?: boolean;
 }
 
 export type Extension = UploadedExtension | ImportExtension;
@@ -216,10 +223,15 @@ export class ExtensionInitalizer {
       );
     }
 
-    this.registeredExtensions.set(extension.id, extension);
+    if (this.registeredExtensions.has(extension.id)) {
+      console.log(
+        `[ExtensionManager] Extension '${extension.id}' already registered, skipping`
+      );
+      // No-op cleanup: the first registrant owns unregister.
+      return () => {};
+    }
 
-    // Allow a replacement registration for the same id to re-run init.
-    this.initializedExtensionIds.delete(extension.id);
+    this.registeredExtensions.set(extension.id, extension);
 
     this.tryInitializeRegisteredExtensions();
 

@@ -1,5 +1,6 @@
 {
   "id": "ext_AI_Transcript",
+  "hidden": true,
   "translations": {
     "en": {
       "title": "AI Transcript core",
