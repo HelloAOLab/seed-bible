@@ -139,6 +139,7 @@ export interface TodayConfig {
     rawVerseText: string
   ) => string;
   useHorizontalScroll: UseHorizontalScroll;
+  isLoadingLastReading: Signal<boolean>;
 }
 
 type TodayProps = {

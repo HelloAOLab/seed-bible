@@ -12,7 +12,7 @@ type UseTodayContainer = () => {
 export const useTodayContainer: UseTodayContainer = () => {
   const { userId, userLastReading } = useTodayContext();
   const { Component, style } = useMemo(() => {
-    if (!userId || !userLastReading.value) {
+    if (!userId && !userLastReading.value) {
       return {
         Component: Welcome,
         style: { alignItems: "safe center" },

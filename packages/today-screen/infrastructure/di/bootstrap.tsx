@@ -167,6 +167,8 @@ export const bootstrapExtension = () => {
           .trim();
       };
 
+      const isLoadingLastReading = signal<boolean>(false);
+
       const cleanupUserLastReading = effect(() => {
         const userId = context.login.userId.value;
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -174,8 +176,11 @@ export const bootstrapExtension = () => {
 
         if (!userId) {
           userLastReading.value = undefined;
+          isLoadingLastReading.value = false;
           return;
         }
+
+        isLoadingLastReading.value = true;
 
         const now = Math.floor(Date.now() / 1000);
         const oneYearAgo = now - 365 * 24 * 60 * 60;
@@ -191,7 +196,18 @@ export const bootstrapExtension = () => {
               userId,
               err
             );
+          })
+          .finally(() => {
+            isLoadingLastReading.value = false;
           });
+      });
+
+      effect(() => {
+        console.log(`[Debug] bootstrap`, {
+          isLoadingLastReading: isLoadingLastReading.value,
+          userId: context.login.userId.value,
+          userLastReading: userLastReading.value,
+        });
       });
 
       const lastTranslationBooks = signal<{
@@ -247,6 +263,7 @@ export const bootstrapExtension = () => {
           return (
             <Today
               config={{
+                isLoadingLastReading,
                 MaterialIcon,
                 language,
                 username: context.login.profile.value?.name,
