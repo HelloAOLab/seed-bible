@@ -61,19 +61,25 @@ describe("useTodayContainer", () => {
     return result;
   }
 
-  it("shows Welcome (safe-centered) when there is no user", () => {
-    const result = setup({
-      userId: undefined,
-      lastReading: { bookId: "GEN", chapter: 1 },
-    });
+  it("shows Welcome (safe-centered) when there is neither user nor last reading", () => {
+    const result = setup({ userId: undefined, lastReading: undefined });
     expect(result.current.Component).toBe(Welcome);
     expect(result.current.style).toEqual({ alignItems: "safe center" });
   });
 
-  it("shows Welcome when the user has no last reading", () => {
+  it("shows TodayContent when there is no user but there is a last reading", () => {
+    const result = setup({
+      userId: undefined,
+      lastReading: { bookId: "GEN", chapter: 1 },
+    });
+    expect(result.current.Component).toBe(TodayContent);
+    expect(result.current.style).toEqual({ alignItems: "flex-start" });
+  });
+
+  it("shows TodayContent when the user has no last reading yet", () => {
     const result = setup({ userId: "user-1", lastReading: undefined });
-    expect(result.current.Component).toBe(Welcome);
-    expect(result.current.style).toEqual({ alignItems: "safe center" });
+    expect(result.current.Component).toBe(TodayContent);
+    expect(result.current.style).toEqual({ alignItems: "flex-start" });
   });
 
   it("shows TodayContent (top-aligned) when the user has a last reading", () => {

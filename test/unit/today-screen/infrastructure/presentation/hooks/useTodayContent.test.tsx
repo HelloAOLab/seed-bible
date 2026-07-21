@@ -4,6 +4,8 @@ import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { useTodayContent } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useTodayContent";
 import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
+import { LoadingContent } from "../../../../../../packages/today-screen/infrastructure/presentation/components/ui/LoadingContent";
+import { LoadedContent } from "../../../../../../packages/today-screen/infrastructure/presentation/components/ui/LoadedContent";
 
 vi.mock(
   "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext",
@@ -31,10 +33,12 @@ describe("useTodayContent", () => {
   function setup(options: {
     lastReading?: { bookId: string; chapter: number } | undefined;
     bookmarks?: unknown[];
+    isLoadingLastReading?: boolean;
   }) {
     (useTodayContext as Mock).mockReturnValue({
       userLastReading: signal(options.lastReading),
       bookmarks: signal(options.bookmarks ?? []),
+      isLoadingLastReading: signal(options.isLoadingLastReading ?? false),
     });
     const result = { current: null as unknown as Result };
     function TestComponent() {
@@ -70,6 +74,18 @@ describe("useTodayContent", () => {
     it("omits bookmarks when there are none", () => {
       const result = setup({ bookmarks: [] });
       expect(result.current.dividedSectionsIds).toEqual(["search", "social"]);
+    });
+  });
+
+  describe("Content", () => {
+    it("is LoadingContent while the last reading is loading", () => {
+      const result = setup({ isLoadingLastReading: true });
+      expect(result.current.Content).toBe(LoadingContent);
+    });
+
+    it("is LoadedContent once the last reading has loaded", () => {
+      const result = setup({ isLoadingLastReading: false });
+      expect(result.current.Content).toBe(LoadedContent);
     });
   });
 });
