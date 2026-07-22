@@ -5,8 +5,6 @@
     "en": {
       "title": "Today screen",
       "description": "Personalized daily home screen for the reader: time-based greeting, resume-reading shortcut, bookmarks, verse search, a community panel with live sessions and other readers' activity, a reading-history timeline, and chapter recommendations.",
-      "everything-begins-small": "Everything begins small.",
-      "no-rush": "Take your time. — there is no streak to keep, or race to win.",
       "read-first-chapter": "Read the first chapter",
       "open-bible": "Open Bible",
       "anonymous-greeting": "Welcome!",
@@ -22,6 +20,7 @@
       "wednesday-short": "Wed",
       "friday-short": "Fri",
       "resume-reading": "CONTINUE WHERE YOU LEFT",
+      "resume-reading-loading": "Loading your reading history…",
       "greeting-morning": "Good morning",
       "greeting-afternoon": "Good afternoon",
       "greeting-evening": "Good evening",

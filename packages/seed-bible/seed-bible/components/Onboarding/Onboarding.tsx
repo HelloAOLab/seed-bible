@@ -2,17 +2,13 @@ import "./Onboarding.css";
 import type { ComponentChildren } from "preact";
 import { useI18n } from "../../i18n/I18nManager";
 import { LANG_META } from "../../i18n/languageMeta";
-import {
-  SeedBibleWordmark,
-  InstallAppsIcon,
-  SafariIcon,
-} from "../../components/icons";
+import { InstallAppsIcon, SafariIcon } from "../../components/icons";
 import type { OnboardingManager } from "../../managers/OnboardingManager";
 import type { CasualOSManager } from "../../managers/OsManager";
 
 /**
- * First-run onboarding modals: a welcome notice, then a device-aware prompt to
- * install the app / add it to the home screen.
+ * First-run onboarding modal: a device-aware prompt to install the app / add it
+ * to the home screen.
  *
  * The install affordance differs per platform:
  *  - Android / PC: a real "Install App" button that triggers the native PWA
@@ -32,7 +28,6 @@ export function OnboardingModals({
   toast: (message: string) => void;
   className?: string;
 }) {
-  const { t } = useI18n();
   const step = onboarding.step.value;
 
   if (step === "done") {
@@ -51,39 +46,6 @@ export function OnboardingModals({
       </div>
     </div>
   );
-
-  if (step === "welcome") {
-    return card(
-      <>
-        <div className="sb-onboarding-logo">
-          <SeedBibleWordmark height={52} />
-        </div>
-        <h2 className="sb-onboarding-title">
-          {t("onboarding.welcomeTitle", { defaultValue: "Welcome!" })}
-        </h2>
-        {/* <p className="sb-onboarding-body">
-          {t("onboarding.welcomeBodyPre", {
-            defaultValue: "This scripture session is ",
-          })}
-          <strong>
-            {t("onboarding.welcomeBodyEmphasis", { defaultValue: "temporary" })}
-          </strong>
-          {t("onboarding.welcomeBodyPost", {
-            defaultValue: " and will erase in 12 hours for your privacy.",
-          })}
-        </p> */}
-        <div className="sb-onboarding-actions">
-          <button
-            type="button"
-            className="sb-onboarding-btn sb-onboarding-btn-primary"
-            onClick={onboarding.completeWelcome}
-          >
-            {t("onboarding.continue", { defaultValue: "Continue" })}
-          </button>
-        </div>
-      </>
-    );
-  }
 
   // step === "install" — but never prompt someone who already has the app
   // (e.g. the profile loaded after mount and reported it installed).
