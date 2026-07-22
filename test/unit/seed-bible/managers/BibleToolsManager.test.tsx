@@ -549,13 +549,14 @@ describe("createBibleToolsManager", () => {
       const context = createVerseContext({
         chapterData: signal({
           book: { id: "GEN", name: "Genesis" },
-        }),
+        } as BibleReadingState["chapterData"]["value"]),
         selectedVerses: signal([
           {
             bookId: "GEN",
             chapterNumber: 1,
             translationId: "BSB",
             verse: {
+              type: "verse",
               number: 1,
               content: [
                 "In the beginning ",
@@ -571,6 +572,7 @@ describe("createBibleToolsManager", () => {
             chapterNumber: 1,
             translationId: "BSB",
             verse: {
+              type: "verse",
               number: 2,
               content: [
                 { text: "Poetry A", poem: 2 },
