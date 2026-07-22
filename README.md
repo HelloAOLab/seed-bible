@@ -79,6 +79,8 @@ This does three things in one commit's worth of edits:
 
 Review the diff, commit on `develop`, and open a PR. Then merge `develop` → `main` as usual. On that push, [`release.yml`](./.github/workflows/release.yml) reads the version, tags the commit `v<version>`, and publishes a GitHub Release whose notes are that version's CHANGELOG section. It is idempotent — a push to `main` that didn't bump the version (e.g. a hotfix) deploys but creates no release.
 
+The same workflow reposts the release notes to the Discord #announcements channel with a link to [seedbible.org](https://seedbible.org). This requires a repo secret `DISCORD_ANNOUNCE_WEBHOOK` (a Discord channel webhook URL: Channel → Edit Channel → Integrations → Webhooks → New Webhook → Copy Webhook URL). If the secret is unset the announcement step simply no-ops, and a Discord failure never fails the release. Pre-releases (e.g. `1.2.0-rc.1`) are not announced.
+
 ## About Us
 
 [AO Lab](https://helloao.org/) is a non-profit company dedicated to loving and living out the Word of God. The goal of this project is to make the Bible (and related resources) freely available to anyone who should need it in a format that is optimized for use by applications.

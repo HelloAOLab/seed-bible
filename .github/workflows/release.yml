@@ -85,3 +85,19 @@ jobs:
             --target "$GITHUB_SHA" \
             $PRERELEASE
           echo "Published release **v$VERSION**." >> "$GITHUB_STEP_SUMMARY"
+
+      # Repost the release notes to the Discord #announcements channel with a
+      # link to the site. No-ops when DISCORD_ANNOUNCE_WEBHOOK is unset, and
+      # never fails the job (the release is already published). Skipped for
+      # pre-releases (e.g. 1.2.0-rc.1).
+      - name: Announce on Discord
+        if: steps.check.outputs.should_release == 'true' && !contains(steps.check.outputs.version, '-')
+        env:
+          VERSION: ${{ steps.check.outputs.version }}
+          DISCORD_ANNOUNCE_WEBHOOK: ${{ secrets.DISCORD_ANNOUNCE_WEBHOOK }}
+        run: |
+          pnpm notify discord-release \
+            --version "$VERSION" \
+            --notes-file notes.md \
+            --site-url "https://seedbible.org" \
+            --release-url "https://github.com/$GITHUB_REPOSITORY/releases/tag/v$VERSION"
