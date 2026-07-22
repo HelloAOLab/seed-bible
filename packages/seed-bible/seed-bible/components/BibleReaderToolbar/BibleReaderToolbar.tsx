@@ -449,6 +449,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       openChat: sidebar.openChatPanel,
       openDiscover: props.state.app.openDiscover,
       toast: props.state.app.toast,
+      modals: props.state.modals,
+      app: props.state.app,
     });
     return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
   });
@@ -509,6 +511,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       openChat: sidebar.openChatPanel,
       openDiscover: props.state.app.openDiscover,
       toast: props.state.app.toast,
+      modals: props.state.modals,
+      app: props.state.app,
     });
 
     const { selectionUI } = settings.settings.value;

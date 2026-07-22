@@ -16,6 +16,8 @@ import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import { sortBy } from "es-toolkit";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import type { ChatsManager } from "./ChatsManager";
+import type { ModalManager } from "./ModalManager";
+import type { AppState } from "./SeedBibleStateManager";
 import type { ReadingPlansManager } from "../managers/ReadingPlansManager";
 import { ReadingPlansPane } from "../components/ReadingPlansPane/ReadingPlansPane";
 import type { PlaylistManager } from "./PlaylistManager";
@@ -25,6 +27,7 @@ import {
   type FeaturesManager,
 } from "./FeaturesManager";
 import { playlistItemLabel } from "../components/playlistItemLabel";
+import { ShareModal } from "../components/ShareModal/shareModal";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -159,6 +162,15 @@ export interface BibleToolContext {
 
   /** Features manager */
   features: FeaturesManager;
+
+  /** Modals manager */
+  modals?: ModalManager;
+
+  /**
+   * App-level state. Optional like the other managers above; tools that need
+   * shared-session actions (create/share the live session) should guard on it.
+   */
+  app?: AppState;
 }
 
 /** Fully resolved reader toolbar tool ready for rendering. */
@@ -809,17 +821,36 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       onSelect: (context) => {
         if (context.readingState.selectedVerses.value.length === 0) return;
 
-        let verseTexts = formatSelectedVerses(context.readingState);
+        const modals = context.modals;
+        if (!modals) return;
 
-        const url = getShareUrl(context.readingState);
+        const app = context.app;
 
-        verseTexts += `\n\n${url.toString()}`;
+        if (!app) return;
 
-        navigator.share({
-          title:
-            "Bible Verse" +
-            (context.readingState.selectedVerses.value.length > 1 ? "s" : ""),
-          text: verseTexts,
+        const shareUrl = getShareUrl(context.readingState);
+
+        const modalId = modals.openModal({
+          title: { key: "share-sheet-title", defaultValue: "Share" },
+          content: () => (
+            <ShareModal
+              app={app}
+              onClose={() => modals.closeModal(modalId)}
+              onShareLink={() => {
+                navigator.clipboard.writeText(shareUrl.toString());
+                context.toast("Copied!");
+                modals.closeModal(modalId);
+              }}
+              onShareVia={() => {
+                void navigator.share?.({
+                  title: document.title,
+                  text: formatSelectedVerses(context.readingState),
+                  url: shareUrl.toString(),
+                });
+                modals.closeModal(modalId);
+              }}
+            />
+          ),
         });
       },
     },
@@ -926,17 +957,19 @@ export function getShareUrl(readingState: BibleReadingState) {
   const translation =
     readingState.translation.value?.id ?? readingState.defaultTranslation.id;
   const bookId = readingState.bookId.value ?? DEFAULT_BOOK_ID;
+  const chapter = readingState.chapterNumber.value;
   url.searchParams.set("translation", translation);
   url.searchParams.set("book", bookId);
+  url.searchParams.set("chapter", String(chapter));
 
   if (readingState.selectedVerses.value.length > 0) {
     const verses = readingState.selectedVerses.value
-      .filter((v) => v.bookId === bookId && v.translationId === translation)
+      .filter((v) => v.bookId === bookId && v.chapterNumber === chapter)
       .map((v) => v.verse.number);
     if (verses.length > 0) {
       const formatted = formatVerseSelection(verses);
       if (formatted) {
-        url.search += `&verse=${formatted}`;
+        url.searchParams.set("verse", formatted);
       }
     }
   }
