@@ -1,0 +1,87 @@
+# Release
+#
+# Publishes a GitHub Release when a version-bumped commit lands on `main`
+# (normally via a develop -> main merge). Deployment to prod.seedbible.org is
+# handled separately by cd.yml; this workflow only tags the commit and creates
+# the Release, using the version already bumped on develop
+# (packages/seed-bible/package.json) and the CHANGELOG section already stamped
+# there by `pnpm release:prepare`.
+#
+# It is idempotent: if a release for the current version already exists, it does
+# nothing — so a push to `main` that didn't bump the version (e.g. a hotfix)
+# deploys but creates no release, and re-runs never duplicate one.
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+permissions:
+  contents: write # create the tag + GitHub Release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+
+      # Resolve the app version and decide whether there's anything to release.
+      - name: Resolve version + check for existing release
+        id: check
+        run: |
+          VERSION=$(node -p "require('./packages/seed-bible/package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "Release v$VERSION already exists — nothing to do."
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Will release v$VERSION."
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Bun
+        if: steps.check.outputs.should_release == 'true'
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install
+        if: steps.check.outputs.should_release == 'true'
+        run: |
+          corepack enable
+          pnpm install
+
+      # Pull the release notes straight from the (already stamped) CHANGELOG.
+      # Fails the job if the section is missing/empty, so we never publish an
+      # empty release.
+      - name: Extract release notes
+        if: steps.check.outputs.should_release == 'true'
+        env:
+          VERSION: ${{ steps.check.outputs.version }}
+        run: pnpm --silent changelog:extract "$VERSION" > notes.md
+
+      # gh creates the tag `v<version>` at this commit (= the commit cd.yml
+      # deploys) and the Release in one call. A pre-release suffix (e.g.
+      # 1.2.0-rc.1) marks the Release as a pre-release.
+      - name: Create GitHub Release + tag
+        if: steps.check.outputs.should_release == 'true'
+        env:
+          VERSION: ${{ steps.check.outputs.version }}
+        run: |
+          PRERELEASE=""
+          case "$VERSION" in *-*) PRERELEASE="--prerelease" ;; esac
+          gh release create "v$VERSION" \
+            --title "v$VERSION" \
+            --notes-file notes.md \
+            --target "$GITHUB_SHA" \
+            $PRERELEASE
+          echo "Published release **v$VERSION**." >> "$GITHUB_STEP_SUMMARY"
