@@ -1,5 +1,6 @@
 import {
   bumpVersion,
+  ChangelogSectionNotFoundError,
   extractSection,
   isPrerelease,
   isValidVersion,
@@ -114,13 +115,29 @@ describe("extractSection", () => {
     expect(notes).toBe("### ✨ Added\n\n- The very first release.");
   });
 
-  it("throws for a missing version", () => {
-    expect(() => extractSection(SAMPLE, "9.9.9")).toThrow();
+  it("throws a ChangelogSectionNotFoundError for a missing version", () => {
+    expect(() => extractSection(SAMPLE, "9.9.9")).toThrow(
+      ChangelogSectionNotFoundError
+    );
   });
 
-  it("throws for an empty section", () => {
+  it("throws a ChangelogSectionNotFoundError for an empty section", () => {
     const empty =
       "# Changelog\n\n## v1.0.0 — 2026-01-01\n\n## v0.9.0 — 2025-12-01\n";
-    expect(() => extractSection(empty, "1.0.0")).toThrow();
+    expect(() => extractSection(empty, "1.0.0")).toThrow(
+      ChangelogSectionNotFoundError
+    );
+  });
+
+  it("distinguishes the not-found case from other errors by type", () => {
+    // This is the property release.yml relies on to tell "changelog isn't
+    // stamped" (skip gracefully) apart from a genuine bug (fail the job).
+    try {
+      extractSection(SAMPLE, "9.9.9");
+      expect.unreachable();
+    } catch (error) {
+      expect(error).toBeInstanceOf(ChangelogSectionNotFoundError);
+      expect(error).toBeInstanceOf(Error);
+    }
   });
 });

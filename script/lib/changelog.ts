@@ -29,6 +29,31 @@ export const FRESH_TBD_SECTION = `## TBD
 
 export type ReleaseType = "major" | "minor" | "patch";
 
+/**
+ * Thrown by `extractSection` when a version has no stamped changelog section
+ * (or the section is empty) — the *expected* failure mode when someone merges
+ * to `main` without running `pnpm release:prepare` on `develop` first.
+ *
+ * `script/changelog.ts extract` catches this specifically and exits with a
+ * distinct, documented status (see EXTRACT_NOT_FOUND_EXIT_CODE) so callers —
+ * namely release.yml — can tell "changelog isn't stamped" apart from a genuine
+ * bug in the script, which should surface as a real failure instead of being
+ * silently treated the same way.
+ */
+export class ChangelogSectionNotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ChangelogSectionNotFoundError";
+  }
+}
+
+/**
+ * The process exit code `script/changelog.ts extract` uses for a
+ * `ChangelogSectionNotFoundError` — the expected "not stamped yet" outcome.
+ * Any other non-zero exit code from that command indicates a real bug.
+ */
+export const EXTRACT_NOT_FOUND_EXIT_CODE = 2;
+
 // A plain MAJOR.MINOR.PATCH version (what we can bump from).
 const SEMVER_CORE = /^(\d+)\.(\d+)\.(\d+)$/;
 // A full semver, allowing an optional pre-release and build-metadata suffix.
@@ -111,8 +136,9 @@ export function stampChangelog(
 /**
  * Returns the release notes for `version`: the lines under the
  * `## v<version> …` heading up to (but excluding) the next `## ` heading,
- * trimmed. Throws if the section is missing or empty so CI never publishes an
- * empty release.
+ * trimmed. Throws a `ChangelogSectionNotFoundError` if the section is missing
+ * or empty, so CI never publishes an empty release and can distinguish this
+ * expected outcome from a genuine bug.
  */
 export function extractSection(text: string, version: string): string {
   const lines = text.split("\n");
@@ -120,7 +146,9 @@ export function extractSection(text: string, version: string): string {
   const headingRe = new RegExp(`^##\\s+v${escaped}(?:\\s|$)`);
   const start = lines.findIndex((line) => headingRe.test(line));
   if (start === -1) {
-    throw new Error(`No changelog section found for version "v${version}".`);
+    throw new ChangelogSectionNotFoundError(
+      `No changelog section found for version "v${version}".`
+    );
   }
 
   const body: string[] = [];
@@ -133,7 +161,7 @@ export function extractSection(text: string, version: string): string {
 
   const section = body.join("\n").trim();
   if (!section) {
-    throw new Error(
+    throw new ChangelogSectionNotFoundError(
       `The changelog section for "v${version}" is empty. Add release notes before releasing.`
     );
   }

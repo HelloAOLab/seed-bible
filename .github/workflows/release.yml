@@ -66,20 +66,28 @@ jobs:
           corepack enable
           pnpm install
 
-      # Pull the release notes straight from the (already stamped) CHANGELOG. A
-      # missing/empty section is not a hard failure: we log a warning and skip
-      # the rest of the release (no tag, no GitHub Release, no announcement)
-      # rather than failing the job, so an accidental unstamped merge to `main`
-      # still deploys cleanly without a red X.
+      # Pull the release notes straight from the (already stamped) CHANGELOG.
+      # `changelog:extract` exits 2 for the expected "not stamped yet" case
+      # (see EXTRACT_NOT_FOUND_EXIT_CODE in script/lib/changelog.ts) — that's
+      # not a hard failure: we log a warning and skip the rest of the release
+      # (no tag, no GitHub Release, no announcement), so an accidental
+      # unstamped merge to `main` still deploys cleanly without a red X. Any
+      # OTHER non-zero exit is a genuine bug in the script, not an unstamped
+      # changelog, and is left to fail the job with its stack trace intact.
       - name: Extract release notes
         id: extract
         if: steps.check.outputs.should_release == 'true'
         env:
           VERSION: ${{ steps.check.outputs.version }}
         run: |
-          if pnpm --silent changelog:extract "$VERSION" > notes.md 2>extract-error.log; then
+          set +e
+          pnpm --silent changelog:extract "$VERSION" > notes.md 2>extract-error.log
+          EXIT_CODE=$?
+          set -e
+
+          if [ "$EXIT_CODE" -eq 0 ]; then
             echo "notes_available=true" >> "$GITHUB_OUTPUT"
-          else
+          elif [ "$EXIT_CODE" -eq 2 ]; then
             echo "notes_available=false" >> "$GITHUB_OUTPUT"
             cat extract-error.log
             echo "::warning::No stamped CHANGELOG section found for v$VERSION — skipping the release. Run 'pnpm release:prepare' on develop before merging to main next time."
@@ -90,6 +98,10 @@ jobs:
               echo ""
               echo "Run \`pnpm release:prepare\` on \`develop\` before merging to \`main\` next time."
             } >> "$GITHUB_STEP_SUMMARY"
+          else
+            cat extract-error.log
+            echo "::error::changelog:extract failed unexpectedly (exit $EXIT_CODE) for v$VERSION — this looks like a bug in the script, not an unstamped changelog. See the log above."
+            exit "$EXIT_CODE"
           fi
 
       # gh creates the tag `v<version>` at this commit (= the commit cd.yml
