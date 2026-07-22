@@ -669,6 +669,62 @@ export function createBibleSelectorState(
     }
   };
 
+  /**
+   * Maps `expandedBookId` onto the SideBarBooks accordion signals
+   * (`bookData` / `lastBookClicked` / `chT`) so the open book is actually
+   * expanded in the grid. Returns false when the book isn't in the current
+   * filtered testament list (e.g. search hid it).
+   */
+  const applyExpandedBookToSidebar = (bookId: string | null): boolean => {
+    if (!bookId) {
+      lastBookClicked.value = -1;
+      bookData.value = null;
+      chT.value = 0;
+      return true;
+    }
+
+    const { oldTestament, newTestament, apocrypha } = groupedBooks.value;
+    const lst = localSelectedTestament.value;
+
+    const findIn = (
+      books: TranslationBook[],
+      testamentHint: number
+    ): { book: TranslationBook; index: number; cht: number } | null => {
+      const index = books.findIndex((book) => book.id === bookId);
+      const book = index >= 0 ? books[index] : undefined;
+      if (!book) return null;
+      return { book, index, cht: testamentHint };
+    };
+
+    let match: { book: TranslationBook; index: number; cht: number } | null =
+      null;
+    if (lst === 0) {
+      match = findIn(oldTestament, 0);
+    } else if (lst === 1) {
+      match = findIn(newTestament, 1);
+    } else if (lst === 3) {
+      // Single-testament apocrypha view has no chapterHint, so cht stays 0.
+      match = findIn(apocrypha, 0);
+    } else {
+      match =
+        findIn(oldTestament, 0) ??
+        findIn(newTestament, 1) ??
+        findIn(apocrypha, 1);
+    }
+
+    if (!match) {
+      lastBookClicked.value = -1;
+      bookData.value = null;
+      chT.value = 0;
+      return false;
+    }
+
+    bookData.value = match.book;
+    lastBookClicked.value = match.index;
+    chT.value = match.cht;
+    return true;
+  };
+
   const handleChapterClick = (props: {
     index: number;
     book: TranslationBook;
@@ -679,10 +735,12 @@ export function createBibleSelectorState(
       bookData.value = null;
       chT.value = 0;
       lastBookClicked.value = -1;
+      expandedBookId.value = null;
     } else {
       bookData.value = book;
       chT.value = cht;
       lastBookClicked.value = index;
+      expandedBookId.value = book.id;
     }
   };
 
@@ -733,19 +791,43 @@ export function createBibleSelectorState(
     }
   });
 
+  // Keep the chapter accordion in sync with expandedBookId while open.
+  // localSelectedTestament / groupedBooks are dependencies so a testament
+  // filter or search that still includes the book re-applies the correct index.
   effect(() => {
+    if (!isOpen.value) return;
+    const bookId = expandedBookId.value;
+    // Touch filtered lists so testament/search changes re-run this effect.
+    void localSelectedTestament.value;
+    void groupedBooks.value;
+    applyExpandedBookToSidebar(bookId);
+  });
+
+  // When search narrows to a single book, expand it. Do not clear expansion
+  // when multiple books are visible — that used to wipe the current book on open.
+  effect(() => {
+    if (!isOpen.value) return;
     const bd = selectedTestamentData.value;
     if (bd && bd.length === 1 && bd[0]) {
-      lastBookClicked.value = 0;
-      bookData.value = bd[0];
-      chT.value = bd[0].order > 39 ? 1 : 0;
-    } else {
-      lastBookClicked.value = -1;
-      bookData.value = null;
-      chT.value = 0;
+      expandedBookId.value = bd[0].id;
     }
   });
 
+  // Mark the reading-position chapter while its book is expanded.
+  effect(() => {
+    const chapter = currentChapterNumber.value;
+    const readingBookId = currentBookId.value;
+    const expandedId = bookData.value?.id ?? null;
+    if (
+      chapter != null &&
+      readingBookId != null &&
+      expandedId === readingBookId
+    ) {
+      highLightedButtonsID.value = { [chapter]: true };
+    } else {
+      highLightedButtonsID.value = {};
+    }
+  });
   effect(() => {
     const st = selectedTestament.value;
     const bd = selectedTranslationBooks.value?.books;

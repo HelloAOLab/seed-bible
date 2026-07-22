@@ -781,10 +781,33 @@
   color: var(--sb-primary-color);
   border-radius: 0.5rem;
   border-bottom-color: transparent;
+  background-color: color-mix(
+    in srgb,
+    var(--sb-primary-color),
+    transparent 88%
+  );
 }
 
 .sidebar-selected-itm .material-symbols-outlined {
   color: var(--sb-primary-color);
+}
+
+.chapter-btn-current,
+.chapter-btn.chapter-btn-current {
+  background-color: var(--sb-primary-color);
+  color: var(--sb-background);
+  font-weight: 600;
+}
+
+.chapter-btn-current:hover,
+.chapter-btn.chapter-btn-current:hover {
+  background-color: var(--sb-primary-color);
+  color: var(--sb-background);
+}
+
+.sidebar-chapter-itm.highlight {
+  color: inherit;
+  font-weight: 600;
 }
 
 .open-sideBar {

@@ -467,6 +467,8 @@ const SideBarBooks = (props: {
             <div
               class={`sidebar-itm flex-between-center ${isSelected ? "sidebar-selected-itm" : ""}`}
               tabIndex={index + 1}
+              aria-current={isSelected ? "true" : undefined}
+              aria-expanded={isSelected}
               onClick={() =>
                 handleClick({
                   index,
@@ -704,6 +706,8 @@ const SideBarChapters = (props: {
     currentPsalms,
     selectChapter,
     isOpen,
+    currentChapterNumber,
+    currentBookId,
   } = bibleSelectorState;
 
   const psalmsPartName = (props: {
@@ -724,32 +728,43 @@ const SideBarChapters = (props: {
   };
 
   const openBookId = bookData.value?.id ?? null;
+  const activeChapter =
+    openBookId && openBookId === currentBookId.value
+      ? currentChapterNumber.value
+      : null;
+
+  // Ensure the Psalm book-group containing the current chapter is expanded
+  // so the chapter button is visible for highlight + scroll-into-view.
+  useEffect(() => {
+    if (openBookId !== "PSA" || activeChapter == null) return;
+    const partName = psalmsPartName({ chapterNumber: activeChapter });
+    if (!currentPsalms.value.includes(partName)) {
+      currentPsalms.value = [...currentPsalms.value, partName];
+    }
+  }, [openBookId, activeChapter]);
 
   useEffect(() => {
-    if (!openBookId) return;
+    if (!openBookId || !isOpen.value) return;
 
     const timeout = window.setTimeout(() => {
       const bookTab = document.getElementById(`booktab-${openBookId}`);
       const booksItem = bookTab?.closest(".books-item");
-      if (!booksItem) return;
+      if (!bookTab || !booksItem) return;
+
+      bookTab.focus({ preventScroll: true });
 
       const chapterPanel = booksItem.querySelector(".show-sidebar-chapter");
-      if (!chapterPanel) return;
-
-      const chapterButtons = Array.from(
-        booksItem.querySelectorAll<HTMLElement>(
-          ".show-sidebar-chapter .chapter-btn"
-        )
-      );
-      const lastVisibleChapter = [...chapterButtons]
-        .reverse()
-        .find(
-          (btn) => btn.style.display !== "none" && btn.offsetParent !== null
-        );
-      const target = lastVisibleChapter ?? (chapterPanel as HTMLElement);
+      const currentChapterButton =
+        activeChapter != null
+          ? booksItem.querySelector<HTMLElement>(
+              `.show-sidebar-chapter #chapter-btn-${activeChapter}`
+            )
+          : null;
+      const target =
+        currentChapterButton ?? (chapterPanel as HTMLElement | null) ?? bookTab;
 
       // Scroll the specific books-item (OT / NT / AP / single-testament)
-      // so the last chapter sits in view without relying on the wrong container.
+      // so the current book/chapter sits in view.
       const itemRect = booksItem.getBoundingClientRect();
       const targetRect = target.getBoundingClientRect();
       if (targetRect.bottom > itemRect.bottom) {
@@ -758,7 +773,7 @@ const SideBarChapters = (props: {
         booksItem.scrollTop -= itemRect.top - targetRect.top + 8;
       }
 
-      // Mobile also scrolls the outer books-container.
+      // Mobile (and tall chapter grids) also scroll the outer books-container.
       const booksContainer = booksItem.closest(".books-container");
       if (booksContainer) {
         const containerRect = booksContainer.getBoundingClientRect();
@@ -774,7 +789,7 @@ const SideBarChapters = (props: {
     }, 50);
 
     return () => window.clearTimeout(timeout);
-  }, [openBookId]);
+  }, [openBookId, activeChapter, isOpen.value]);
 
   const renderChapters = computed(() => {
     const bd = bookData.value;
@@ -807,6 +822,7 @@ const SideBarChapters = (props: {
       isLast?: boolean;
     }) => {
       const { chapterNumber, isVisible, isLast } = props;
+      const isCurrentChapter = Boolean(hlb[chapterNumber]);
       const { cancel, ...chapterPressHandler } = useLongPress(() => {
         if (!isMobile.value) return;
         bibleSelectorState.forceNewTab.value = true;
@@ -817,12 +833,16 @@ const SideBarChapters = (props: {
       }, 1000);
       return (
         <button
+          id={`chapter-btn-${chapterNumber}`}
           style={
             isVisible === undefined
               ? undefined
               : { display: isVisible ? "flex" : "none" }
           }
-          class={`chapter-btn flex-center ${isLast ? "lastOne" : ""}`}
+          class={`chapter-btn flex-center ${isLast ? "lastOne" : ""} ${
+            isCurrentChapter ? "chapter-btn-current" : ""
+          }`}
+          aria-current={isCurrentChapter ? "true" : undefined}
           onClick={() => {
             cancel();
             selectChapter(bd.id, chapterNumber);
@@ -832,7 +852,7 @@ const SideBarChapters = (props: {
           {...chapterPressHandler}
         >
           <span
-            className={`sidebar-chapter-itm ${hlb[chapterNumber] ? "highlight" : "un-highlight"}`}
+            className={`sidebar-chapter-itm ${isCurrentChapter ? "highlight" : "un-highlight"}`}
           >
             {chapterNumber}
           </span>
