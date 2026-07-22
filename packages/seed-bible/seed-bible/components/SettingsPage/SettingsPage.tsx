@@ -1920,13 +1920,18 @@ function SettingsVersionFooter() {
   const copied = useSignal(false);
 
   const onCopy = () => {
-    void navigator.clipboard?.writeText(
-      `v${__APP_VERSION__} (${__GIT_COMMIT__})`
-    );
-    copied.value = true;
-    setTimeout(() => {
-      copied.value = false;
-    }, 1500);
+    navigator.clipboard
+      ?.writeText(`v${__APP_VERSION__} (${__GIT_COMMIT__})`)
+      .then(() => {
+        copied.value = true;
+        setTimeout(() => {
+          copied.value = false;
+        }, 1500);
+      })
+      .catch(() => {
+        // Clipboard write was denied/unsupported — leave the label unchanged
+        // rather than falsely reporting success.
+      });
   };
 
   return (
