@@ -3,10 +3,6 @@ import { signal } from "@preact/signals";
 import { createOnboardingManager } from "@packages/seed-bible/seed-bible/managers/OnboardingManager";
 import type { LoginManager } from "@packages/seed-bible/seed-bible/managers/LoginManager";
 
-// Logged out: the startup effect that can auto-close the install prompt only
-// fires for logged-in users (or when install is already known), so this keeps
-// the initial `step` equal to what computeInitialStep returned — which is what
-// we're asserting.
 function createLogin(): LoginManager {
   return {
     userId: signal(null),
@@ -15,29 +11,49 @@ function createLogin(): LoginManager {
   } as unknown as LoginManager;
 }
 
-describe("createOnboardingManager — initial step", () => {
+describe("createOnboardingManager", () => {
   beforeEach(() => {
     // Flags persist in localStorage; start each test clean so a leftover
-    // install-dismissed flag doesn't mask the install vs. done distinction.
+    // install-dismissed/installed flag doesn't leak between cases.
     window.localStorage.clear();
   });
 
-  it("starts at 'done' when joined via a session link", () => {
-    // A session-link join must not interrupt with the install prompt, even
-    // though a normal first visit would show it.
-    const onboarding = createOnboardingManager(
-      createLogin(),
-      /* joinedViaSessionLink */ true
-    );
+  it("starts at 'done' — the install prompt no longer auto-shows on load", () => {
+    const onboarding = createOnboardingManager(createLogin());
 
     expect(onboarding.step.value).toBe("done");
   });
 
-  it("starts at 'install' on a normal (non-session-link) first visit", () => {
-    // Clean state: not installed, not dismissed — so the install prompt is the
-    // first thing shown (there is no longer a welcome step ahead of it).
+  it("reports installAvailable when not installed and not dismissed", () => {
     const onboarding = createOnboardingManager(createLogin());
 
+    expect(onboarding.installAvailable.value).toBe(true);
+  });
+
+  it("openInstall() shows the prompt on demand", () => {
+    const onboarding = createOnboardingManager(createLogin());
+
+    onboarding.openInstall();
+
     expect(onboarding.step.value).toBe("install");
+  });
+
+  it("dismissInstall() hides the prompt and clears installAvailable", () => {
+    const onboarding = createOnboardingManager(createLogin());
+
+    onboarding.openInstall();
+    onboarding.dismissInstall();
+
+    expect(onboarding.step.value).toBe("done");
+    expect(onboarding.installAvailable.value).toBe(false);
+  });
+
+  it("markInstalled() clears installAvailable", () => {
+    const onboarding = createOnboardingManager(createLogin());
+
+    onboarding.markInstalled();
+
+    expect(onboarding.installAvailable.value).toBe(false);
+    expect(onboarding.installed.value).toBe(true);
   });
 });

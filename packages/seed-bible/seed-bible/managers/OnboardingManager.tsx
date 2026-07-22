@@ -108,9 +108,15 @@ export interface OnboardingManager {
   installed: ReadonlySignal<boolean>;
   /** The onboarding modal that should currently be shown. */
   step: ReadonlySignal<OnboardingStep>;
+  /**
+   * Whether the install prompt could be shown right now — not yet installed
+   * and not previously dismissed. Used by the caller to decide whether to
+   * call `openInstall()` once the tutorial has been resolved.
+   */
+  installAvailable: ReadonlySignal<boolean>;
   /** Dismisses the install prompt (either after installing or "maybe later"). */
   dismissInstall: () => void;
-  /** Re-opens the install prompt on demand (e.g. from Settings). */
+  /** Re-opens the install prompt on demand (e.g. from Settings, or once the tutorial is resolved). */
   openInstall: () => void;
   /**
    * Records that the user has the app installed, persisting to their profile
@@ -123,10 +129,13 @@ export interface OnboardingManager {
  * Drives the first-run onboarding flow: a device-appropriate "install to home
  * screen" prompt. Whether the user already has the app is recorded on their
  * profile so the prompt — and the Settings entry — are hidden once installed.
+ *
+ * The prompt does not show itself on startup — the caller decides when to
+ * call `openInstall()` (e.g. once the tutorial has been resolved and the
+ * reader is visible). `step` starts at `"done"`.
  */
 export function createOnboardingManager(
-  login: LoginManager,
-  joinedViaSessionLink = false
+  login: LoginManager
 ): OnboardingManager {
   const platform = getPlatform();
   const standalone = isStandalone();
@@ -187,58 +196,15 @@ export function createOnboardingManager(
     return fromProfile === true || fromProfile === "true";
   });
 
-  const installAvailable = () => !installed.value && !dismissed.value;
+  const installAvailable = computed<boolean>(
+    () => !installed.value && !dismissed.value
+  );
 
-  const computeInitialStep = (): OnboardingStep => {
-    // Opened via a shared-session invite link: don't interrupt the join with
-    // the first-run install prompt.
-    if (joinedViaSessionLink) {
-      return "done";
-    }
-    if (installAvailable()) {
-      return "install";
-    }
-    return "done";
-  };
-
-  const step = signal<OnboardingStep>(computeInitialStep());
-
-  // The onboarding install prompt is only auto-managed during the startup
-  // window. `startupSettled` flips true after the first resolution so later
-  // *explicit* opens (e.g. the "Install app" Settings entry) aren't auto-closed
-  // by the effect below.
-  let startupSettled = false;
-
-  // Auth and the profile both resolve a moment after load, while the install
-  // prompt may already be showing (the initial step is computed from
-  // localStorage alone). Close the transient prompt when:
-  //  - login detected → a logged-in user's real install state lives on their
-  //    profile and they can install from Settings, so don't flash a stale
-  //    prompt.
-  //  - profile says installed/dismissed → close the transient prompt.
-  effect(() => {
-    if (startupSettled) {
-      return;
-    }
-    const loggedIn = login.userId.value !== null;
-    const knownInstalledOrDismissed = installed.value || dismissed.value;
-    // Read step without subscribing so this effect only re-runs on login /
-    // profile changes — not when a later openInstall() sets step to "install".
-    const current = step.peek();
-
-    if (loggedIn) {
-      if (current === "install") {
-        step.value = "done";
-      }
-      startupSettled = true;
-    } else if (knownInstalledOrDismissed && current === "install") {
-      step.value = "done";
-      startupSettled = true;
-    }
-  });
+  // The prompt no longer auto-shows on startup — it starts resolved and the
+  // caller opens it explicitly (Settings, or once the tutorial is resolved).
+  const step = signal<OnboardingStep>("done");
 
   const dismissInstall = () => {
-    startupSettled = true;
     writeFlag(INSTALL_DISMISSED_KEY);
     dismissedLocally.value = true;
     saveProfileConfigValue(login, PROFILE_INSTALL_DISMISSED, true);
@@ -246,8 +212,6 @@ export function createOnboardingManager(
   };
 
   const openInstall = () => {
-    // Explicit user action — opt out of startup auto-close so it stays open.
-    startupSettled = true;
     step.value = "install";
   };
 
@@ -256,6 +220,7 @@ export function createOnboardingManager(
     standalone,
     installed,
     step,
+    installAvailable,
     dismissInstall,
     openInstall,
     markInstalled,

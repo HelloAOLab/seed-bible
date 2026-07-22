@@ -1,6 +1,5 @@
 import { computed, effect, signal, type ReadonlySignal } from "@preact/signals";
 import type { LoginManager } from "../managers/LoginManager";
-import type { OnboardingManager } from "../managers/OnboardingManager";
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import type { PanesManager } from "../managers/PanesManager";
 import { createSidebar } from "../managers/SidebarManager";
@@ -341,13 +340,14 @@ export interface TutorialManager {
 }
 
 /**
- * Drives the guided coachmark tour. Auto-starts once for new users after the
- * welcome/install onboarding has finished, and can be replayed from Settings.
- * Completion is recorded on the user's profile (backend) plus a local cache.
+ * Drives the guided coachmark tour. Offers itself once for new users once the
+ * reader is open to a chapter and visible (no fullscreen pane covering it),
+ * and can be replayed from Settings. Completion is recorded on the user's
+ * profile (backend) plus a local cache.
  */
 export function createTutorialManager(
   login: LoginManager,
-  onboarding: OnboardingManager,
+  readerVisible: ReadonlySignal<boolean>,
   selector: BibleSelectorState,
   isMobile: ReadonlySignal<boolean>,
   panes: PanesManager,
@@ -629,12 +629,12 @@ export function createTutorialManager(
     }
   };
 
-  // Offer the tour once for new users, but only after the welcome/install
-  // onboarding is out of the way, and (when logged in) after the profile has
-  // loaded — otherwise a returning user could see the offer flash before their
-  // recorded completion arrives. Rather than launching the tour unannounced we
-  // surface the offer card; accepting it starts the tour. One-shot via
-  // `autoStartChecked`.
+  // Offer the tour once for new users, but only once the reader is open to a
+  // chapter and visible — no fullscreen pane (e.g. Today) covering it — and
+  // (when logged in) after the profile has loaded, otherwise a returning user
+  // could see the offer flash before their recorded completion arrives.
+  // Rather than launching the tour unannounced we surface the offer card;
+  // accepting it starts the tour. One-shot via `autoStartChecked`.
   let autoStartChecked = false;
   effect(() => {
     if (autoStartChecked || running.value) {
@@ -646,7 +646,7 @@ export function createTutorialManager(
     if (joinedViaSessionLink) {
       return;
     }
-    if (onboarding.step.value !== "done") {
+    if (!readerVisible.value) {
       return;
     }
     if (login.userId.value && login.profile.value === null) {
