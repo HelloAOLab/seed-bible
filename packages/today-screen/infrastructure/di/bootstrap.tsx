@@ -232,6 +232,7 @@ export const bootstrapExtension = () => {
           return (
             <Today
               config={{
+                isMobile: context.app.isMobile,
                 ColorParser,
                 MaterialIcon,
                 Skeleton,

@@ -13,7 +13,7 @@ type UseSearchSection = () => {
 };
 
 export const useSearchSection: UseSearchSection = () => {
-  const { translate, openBookSelector, MaterialIcon, theme } =
+  const { translate, openBookSelector, MaterialIcon, theme, isMobile } =
     useTodayContext();
 
   const { title, selectorText } = useMemo(() => {
@@ -25,11 +25,11 @@ export const useSearchSection: UseSearchSection = () => {
 
   const seedBibleIconStyle = useMemo<React.CSSProperties>(() => {
     return {
-      width: "1.5rem",
-      height: "1.5rem",
+      width: isMobile.value ? "1.25rem" : "1.5rem",
+      height: isMobile.value ? "1.25rem" : "1.5rem",
       backgroundColor: theme.variables.secondaryFontColor,
     };
-  }, [theme]);
+  }, [theme, isMobile.value]);
 
   return {
     title,
