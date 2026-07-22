@@ -579,6 +579,46 @@ const SideBarBooks = (props: {
       const OTBooks = ghostArray(oldTestament, otColumns);
       const NTBooks = ghostArray(newTestament, ntColumns);
       const APBooks = ghostArray(apocrypha, ntColumns);
+      // Hint 2 is reserved for apocrypha so its chapter panel doesn't collide
+      // with the NT grid (hint 1). On desktop All Books there is no apocrypha
+      // column, so when the expanded book is apocrypha we short-circuit to the
+      // apocrypha-only grid (same layout as the Apocrypha filter).
+      const expandedIsApocrypha =
+        !!bd && apocrypha.some((book) => book.id === bd.id);
+      if (ws > MOBILE_BREAKPOINT && expandedIsApocrypha) {
+        return (
+          <div
+            class="books-container flex-gap-md"
+            dir={
+              bibleSelectorState.selectedTranslation.value?.textDirection ??
+              "ltr"
+            }
+          >
+            <div
+              class="testament-container flex-col-gap-sm"
+              style={{ width: "100%" }}
+            >
+              <span class="testament-title">
+                {t("extrabiblical-writings", {
+                  defaultValue: "Extrabiblical writings",
+                })}
+                <span
+                  class="material-symbols-outlined"
+                  onClick={() => {
+                    showApocryphaInfo.value = true;
+                  }}
+                >
+                  info
+                </span>
+              </span>
+              {renderBooksGrid(
+                ghostArray(apocrypha, singleColumns),
+                singleColumns
+              )}
+            </div>
+          </div>
+        );
+      }
       return (
         <div
           class="books-container flex-gap-md"
@@ -613,7 +653,7 @@ const SideBarBooks = (props: {
               <div
                 class="testament-container flex-col-gap-sm"
                 style={{
-                  width: `100%`,
+                  width: "100%",
                   color: "var(--sb-font-color)",
                   opacity: "0.7",
                 }}
@@ -631,7 +671,7 @@ const SideBarBooks = (props: {
                     info
                   </span>
                 </span>
-                {renderBooksGrid(APBooks, ntColumns, 1, undefined, true)}
+                {renderBooksGrid(APBooks, ntColumns, 2, undefined, true)}
               </div>
             </>
           )}
@@ -751,7 +791,12 @@ const SideBarChapters = (props: {
       const booksItem = bookTab?.closest(".books-item");
       if (!bookTab || !booksItem) return;
 
-      bookTab.focus({ preventScroll: true });
+      // Don't yank focus off the search field while the user is typing.
+      // openBookId also changes when search narrows to a single book.
+      const active = document.activeElement as HTMLElement | null;
+      if (!active?.closest(".searchbar")) {
+        bookTab.focus({ preventScroll: true });
+      }
 
       const chapterPanel = booksItem.querySelector(".show-sidebar-chapter");
       const currentChapterButton =

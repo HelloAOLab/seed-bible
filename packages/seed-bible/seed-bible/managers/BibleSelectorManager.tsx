@@ -706,10 +706,12 @@ export function createBibleSelectorState(
       // Single-testament apocrypha view has no chapterHint, so cht stays 0.
       match = findIn(apocrypha, 0);
     } else {
+      // Apocrypha uses hint 2 so its chapter panel doesn't collide with the
+      // NT grid (which uses hint 1) in the All Books view.
       match =
         findIn(oldTestament, 0) ??
         findIn(newTestament, 1) ??
-        findIn(apocrypha, 1);
+        findIn(apocrypha, 2);
     }
 
     if (!match) {
@@ -815,6 +817,7 @@ export function createBibleSelectorState(
 
   // Mark the reading-position chapter while its book is expanded.
   effect(() => {
+    if (!isOpen.value) return;
     const chapter = currentChapterNumber.value;
     const readingBookId = currentBookId.value;
     const expandedId = bookData.value?.id ?? null;
