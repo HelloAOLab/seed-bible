@@ -789,10 +789,6 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       onSelect: async (context) => {
         if (context.readingState.selectedVerses.value.length === 0) return;
 
-        console.log(
-          "logs copy-verse",
-          context.readingState.selectedVerses.value
-        );
         const verseTexts = formatSelectedVerses(context.readingState);
 
         try {
