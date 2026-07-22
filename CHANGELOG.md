@@ -15,6 +15,7 @@ This release rebuilds the verse highlighting system on an SVG layer, smooths the
 - Add loading skeletons and a saving indicator for account settings.
 - Add a shared skeleton placeholder for the Today resume card.
 - Show the build version and commit hash in the Settings page footer.
+- Add a "Move to folder" option to move an existing bookmark into a different category.
 
 ### 🔧 Changed
 
@@ -24,6 +25,7 @@ This release rebuilds the verse highlighting system on an SVG layer, smooths the
 - Only show the audio reader in the toolbar when on desktop. Mobile has its own dedicated place for it on the navigation bar.
 - Port the Twitch apps to the system floating window and refine the pane component header.
 - Replace the Seed Bible icon with an SVG so it matches theme colors automatically.
+- Bookmarking a chapter now opens the folder picker to choose or create a category, instead of saving straight to the default folder.
 
 ### 🐛 Fixed
 
@@ -39,6 +41,8 @@ This release rebuilds the verse highlighting system on an SVG layer, smooths the
 - Fix extensions being reinstalled after being uninstalled on another device.
 - Make playlist content embeds fill the largest available size.
 - Fixed numerous dark theme issues.
+- Fix copying verses with line breaks (e.g. poetry) running words together without a space.
+- Always copy the new shared session link to the clipboard with a confirmation toast, regardless of which menu started it, and show the link directly if the clipboard write fails.
 
 ### 🗑️ Removed
 
