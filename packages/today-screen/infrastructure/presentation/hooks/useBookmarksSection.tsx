@@ -5,19 +5,16 @@ import {
   type ReadonlySignal,
 } from "@preact/signals";
 import { useTodayContext } from "../contexts/today/TodayContext";
-import type {
-  BookmarkData,
-  MoreButtonData,
-} from "../components/containers/BookmarksSection";
+import type { CategorizedBookmarks } from "../components/containers/BookmarksSection";
 import type { MutableRef } from "preact/hooks";
 import type { TranslationBooks } from "../../../../seed-bible/seed-bible/managers/FreeUseBibleAPI";
 
-import { useEffect, useLayoutEffect, useRef } from "preact/hooks";
+import { useEffect, useRef } from "preact/hooks";
 
 type UseBookmarksSection = () => {
   label: ReadonlySignal<string>;
-  bookmarksData: ReadonlySignal<Array<BookmarkData>>;
-  moreButtonData: ReadonlySignal<MoreButtonData | undefined>;
+  categorizedBookmarks: ReadonlySignal<CategorizedBookmarks>;
+  // moreButtonData: ReadonlySignal<MoreButtonData | undefined>;
   containerRef: MutableRef<HTMLDivElement | null>;
 };
 
@@ -57,9 +54,13 @@ export const useBookmarksSection: UseBookmarksSection = () => {
     }
   });
 
-  const bookmarksData = useComputed<Array<BookmarkData>>(() => {
-    return bookmarks.value.map((bookmark) => {
-      const { bookId, chapterNumber, translationId } = bookmark;
+  const categorizedBookmarks = useComputed<CategorizedBookmarks>(() => {
+    const categorized: CategorizedBookmarks = {};
+    for (const bookmark of bookmarks.value) {
+      const { bookId, chapterNumber, translationId, category } = bookmark;
+      if (!categorized[category]) {
+        categorized[category] = [];
+      }
       const translationBooks = booksByTranslation.value.get(translationId);
       // Falls back to the raw bookId until the books for this translation load.
       const name =
@@ -67,68 +68,67 @@ export const useBookmarksSection: UseBookmarksSection = () => {
           return book.id === bookId;
         })?.name ?? bookId;
 
-      return {
+      const data = {
         text: `${name} ${chapterNumber}`,
         handleClick: () => {
           addTab(bookId, chapterNumber, translationId);
           closeToday();
         },
         key: bookmark.id,
-        // iconName: "home",
-        // MaterialIcon
       };
-    });
-  });
-
-  const isOverflowing = useSignal(false);
-
-  useLayoutEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const checkOverflow = () => {
-      const children = Array.from(container.children) as HTMLElement[];
-      if (children.length === 0) {
-        isOverflowing.value = false;
-        return;
-      }
-
-      const firstItemTop = children[0]?.offsetTop;
-      if (firstItemTop === undefined) {
-        isOverflowing.value = false;
-        return;
-      }
-      const currOverflowing = children.some(
-        (child) => child.offsetTop > firstItemTop
-      );
-
-      isOverflowing.value = currOverflowing;
-    };
-
-    const observer = new ResizeObserver(checkOverflow);
-    observer.observe(container);
-    checkOverflow();
-
-    return () => observer.disconnect();
-  }, [bookmarksData.value]);
-
-  const moreButtonData = useComputed<MoreButtonData | undefined>(() => {
-    if (!isOverflowing.value) {
-      return undefined;
+      categorized[category].push(data);
     }
-
-    return {
-      handleClick: () => {
-        console.log(`useBookmarksSection: Show more bookmarks`);
-      },
-      text: translateSignal.value("VIEW-MORE"),
-    };
+    return categorized;
   });
+
+  // const isOverflowing = useSignal(false);
+  // useLayoutEffect(() => {
+  //   const container = containerRef.current;
+  //   if (!container) return;
+
+  //   const checkOverflow = () => {
+  //     const children = Array.from(container.children) as HTMLElement[];
+  //     if (children.length === 0) {
+  //       isOverflowing.value = false;
+  //       return;
+  //     }
+
+  //     const firstItemTop = children[0]?.offsetTop;
+  //     if (firstItemTop === undefined) {
+  //       isOverflowing.value = false;
+  //       return;
+  //     }
+  //     const currOverflowing = children.some(
+  //       (child) => child.offsetTop > firstItemTop
+  //     );
+
+  //     isOverflowing.value = currOverflowing;
+  //   };
+
+  //   const observer = new ResizeObserver(checkOverflow);
+  //   observer.observe(container);
+  //   checkOverflow();
+
+  //   return () => observer.disconnect();
+  // }, [categorizedBookmarks.value]);
+
+  // const moreButtonData = useComputed<MoreButtonData | undefined>(() => {
+  //   if (!isOverflowing.value) {
+  //     return undefined;
+  //   }
+
+  //   return {
+  //     handleClick: () => {
+  //       console.log(`useBookmarksSection: Show more bookmarks`);
+  //     },
+  //     text: translateSignal.value("VIEW-MORE"),
+  //   };
+  // });
 
   return {
     label,
-    bookmarksData,
-    moreButtonData,
+    categorizedBookmarks,
+    // moreButtonData,
     containerRef,
   };
 };
