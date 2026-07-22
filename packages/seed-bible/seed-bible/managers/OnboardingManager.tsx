@@ -16,9 +16,8 @@ import {
 export type Platform = "android" | "ios" | "pc";
 
 /** Which onboarding modal is currently visible, if any. */
-export type OnboardingStep = "welcome" | "install" | "done";
+export type OnboardingStep = "install" | "done";
 
-const WELCOME_SEEN_KEY = "sb-welcome-seen";
 const INSTALL_DISMISSED_KEY = "sb-install-dismissed";
 const APP_INSTALLED_KEY = "sb-app-installed";
 
@@ -109,8 +108,6 @@ export interface OnboardingManager {
   installed: ReadonlySignal<boolean>;
   /** The onboarding modal that should currently be shown. */
   step: ReadonlySignal<OnboardingStep>;
-  /** Advances past the welcome screen, into the install prompt when relevant. */
-  completeWelcome: () => void;
   /** Dismisses the install prompt (either after installing or "maybe later"). */
   dismissInstall: () => void;
   /** Re-opens the install prompt on demand (e.g. from Settings). */
@@ -123,10 +120,9 @@ export interface OnboardingManager {
 }
 
 /**
- * Drives the first-run onboarding flow: a welcome notice followed by a
- * device-appropriate "install to home screen" prompt. Whether the user already
- * has the app is recorded on their profile so the prompt — and the Settings
- * entry — are hidden once installed.
+ * Drives the first-run onboarding flow: a device-appropriate "install to home
+ * screen" prompt. Whether the user already has the app is recorded on their
+ * profile so the prompt — and the Settings entry — are hidden once installed.
  */
 export function createOnboardingManager(
   login: LoginManager,
@@ -195,13 +191,9 @@ export function createOnboardingManager(
 
   const computeInitialStep = (): OnboardingStep => {
     // Opened via a shared-session invite link: don't interrupt the join with
-    // the first-run welcome/install prompts. We deliberately don't write
-    // WELCOME_SEEN_KEY, so a later visit without a session link still shows it.
+    // the first-run install prompt.
     if (joinedViaSessionLink) {
       return "done";
-    }
-    if (!readFlag(WELCOME_SEEN_KEY)) {
-      return "welcome";
     }
     if (installAvailable()) {
       return "install";
@@ -211,23 +203,18 @@ export function createOnboardingManager(
 
   const step = signal<OnboardingStep>(computeInitialStep());
 
-  const completeWelcome = () => {
-    writeFlag(WELCOME_SEEN_KEY);
-    step.value = installAvailable() ? "install" : "done";
-  };
-
-  // The onboarding prompts (welcome + install) are only auto-managed during the
-  // startup window. `startupSettled` flips true after the first resolution so
-  // later *explicit* opens (e.g. the "Install app" Settings entry) aren't
-  // auto-closed by the effect below.
+  // The onboarding install prompt is only auto-managed during the startup
+  // window. `startupSettled` flips true after the first resolution so later
+  // *explicit* opens (e.g. the "Install app" Settings entry) aren't auto-closed
+  // by the effect below.
   let startupSettled = false;
 
-  // Auth and the profile both resolve a moment after load, while a prompt may
-  // already be showing (the initial step is computed from localStorage alone).
-  // Mirror the welcome behavior for both prompts:
-  //  - login detected → a logged-in user isn't in a temporary session, so close
-  //    the welcome; likewise don't flash a stale install prompt (their real
-  //    state lives on the profile and they can install from Settings).
+  // Auth and the profile both resolve a moment after load, while the install
+  // prompt may already be showing (the initial step is computed from
+  // localStorage alone). Close the transient prompt when:
+  //  - login detected → a logged-in user's real install state lives on their
+  //    profile and they can install from Settings, so don't flash a stale
+  //    prompt.
   //  - profile says installed/dismissed → close the transient prompt.
   effect(() => {
     if (startupSettled) {
@@ -240,17 +227,11 @@ export function createOnboardingManager(
     const current = step.peek();
 
     if (loggedIn) {
-      if (current === "welcome") {
-        writeFlag(WELCOME_SEEN_KEY);
-      }
-      if (current === "welcome" || current === "install") {
+      if (current === "install") {
         step.value = "done";
       }
       startupSettled = true;
-    } else if (
-      knownInstalledOrDismissed &&
-      (current === "welcome" || current === "install")
-    ) {
+    } else if (knownInstalledOrDismissed && current === "install") {
       step.value = "done";
       startupSettled = true;
     }
@@ -275,7 +256,6 @@ export function createOnboardingManager(
     standalone,
     installed,
     step,
-    completeWelcome,
     dismissInstall,
     openInstall,
     markInstalled,
