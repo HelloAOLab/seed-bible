@@ -10,6 +10,12 @@
 # It is idempotent: if a release for the current version already exists, it does
 # nothing — so a push to `main` that didn't bump the version (e.g. a hotfix)
 # deploys but creates no release, and re-runs never duplicate one.
+#
+# It is also tolerant of an unstamped CHANGELOG: if `main`'s version has no
+# matching `## v<version>` section (e.g. someone merged without running
+# `pnpm release:prepare` on develop first), the job logs a warning and skips
+# the release rather than failing — a missed release shouldn't put a red X on
+# the protected branch.
 name: Release
 
 on:
@@ -60,20 +66,37 @@ jobs:
           corepack enable
           pnpm install
 
-      # Pull the release notes straight from the (already stamped) CHANGELOG.
-      # Fails the job if the section is missing/empty, so we never publish an
-      # empty release.
+      # Pull the release notes straight from the (already stamped) CHANGELOG. A
+      # missing/empty section is not a hard failure: we log a warning and skip
+      # the rest of the release (no tag, no GitHub Release, no announcement)
+      # rather than failing the job, so an accidental unstamped merge to `main`
+      # still deploys cleanly without a red X.
       - name: Extract release notes
+        id: extract
         if: steps.check.outputs.should_release == 'true'
         env:
           VERSION: ${{ steps.check.outputs.version }}
-        run: pnpm --silent changelog:extract "$VERSION" > notes.md
+        run: |
+          if pnpm --silent changelog:extract "$VERSION" > notes.md 2>extract-error.log; then
+            echo "notes_available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "notes_available=false" >> "$GITHUB_OUTPUT"
+            cat extract-error.log
+            echo "::warning::No stamped CHANGELOG section found for v$VERSION — skipping the release. Run 'pnpm release:prepare' on develop before merging to main next time."
+            {
+              echo "### ⚠️ Release v$VERSION skipped"
+              echo ""
+              echo "No stamped \`## v$VERSION\` section was found in CHANGELOG.md, so no tag, GitHub Release, or Discord announcement was created."
+              echo ""
+              echo "Run \`pnpm release:prepare\` on \`develop\` before merging to \`main\` next time."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       # gh creates the tag `v<version>` at this commit (= the commit cd.yml
       # deploys) and the Release in one call. A pre-release suffix (e.g.
       # 1.2.0-rc.1) marks the Release as a pre-release.
       - name: Create GitHub Release + tag
-        if: steps.check.outputs.should_release == 'true'
+        if: steps.check.outputs.should_release == 'true' && steps.extract.outputs.notes_available == 'true'
         env:
           VERSION: ${{ steps.check.outputs.version }}
         run: |
@@ -91,7 +114,7 @@ jobs:
       # never fails the job (the release is already published). Skipped for
       # pre-releases (e.g. 1.2.0-rc.1).
       - name: Announce on Discord
-        if: steps.check.outputs.should_release == 'true' && !contains(steps.check.outputs.version, '-')
+        if: steps.check.outputs.should_release == 'true' && steps.extract.outputs.notes_available == 'true' && !contains(steps.check.outputs.version, '-')
         env:
           VERSION: ${{ steps.check.outputs.version }}
           DISCORD_ANNOUNCE_WEBHOOK: ${{ secrets.DISCORD_ANNOUNCE_WEBHOOK }}

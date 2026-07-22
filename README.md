@@ -77,7 +77,7 @@ This does three things in one commit's worth of edits:
 - rewrites the CHANGELOG's `## TBD` heading to `## v<version> — <YYYY-MM-DD>`, and
 - inserts a fresh, empty `## TBD` above it so `develop` is ready for the next cycle.
 
-Review the diff, commit on `develop`, and open a PR. Then merge `develop` → `main` as usual. On that push, [`release.yml`](./.github/workflows/release.yml) reads the version, tags the commit `v<version>`, and publishes a GitHub Release whose notes are that version's CHANGELOG section. It is idempotent — a push to `main` that didn't bump the version (e.g. a hotfix) deploys but creates no release.
+Review the diff, commit on `develop`, and open a PR. Then merge `develop` → `main` as usual. On that push, [`release.yml`](./.github/workflows/release.yml) reads the version, tags the commit `v<version>`, and publishes a GitHub Release whose notes are that version's CHANGELOG section. It is idempotent — a push to `main` that didn't bump the version (e.g. a hotfix) deploys but creates no release. If `main`'s version has no matching stamped CHANGELOG section (e.g. `release:prepare` was skipped before merging), the workflow logs a warning and skips the release instead of failing — the deploy still goes through cleanly.
 
 The same workflow reposts the release notes to the Discord #announcements channel with a link to [seedbible.org](https://seedbible.org). This requires a repo secret `DISCORD_ANNOUNCE_WEBHOOK` (a Discord channel webhook URL: Channel → Edit Channel → Integrations → Webhooks → New Webhook → Copy Webhook URL). If the secret is unset the announcement step simply no-ops, and a Discord failure never fails the release. Pre-releases (e.g. `1.2.0-rc.1`) are not announced.
 
