@@ -521,7 +521,11 @@
   margin-top: 0.25rem;
 }
 
-.sb-bookmark-picker-cancel,
+.sb-bookmark-picker-category:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .sb-bookmark-picker-save {
   min-width: 5.25rem;
   height: 2.25rem;
@@ -536,19 +540,6 @@
     background-color 0.15s ease,
     color 0.15s ease,
     opacity 0.15s ease;
-}
-
-.sb-bookmark-picker-cancel {
-  background: transparent;
-  color: var(--sb-font-color);
-  border-color: color-mix(in srgb, var(--sb-font-color), transparent 80%);
-}
-
-.sb-bookmark-picker-cancel:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 94%);
-}
-
-.sb-bookmark-picker-save {
   background: var(--sb-primary-color);
   color: var(--sb-primary-font-color);
   border-color: var(--sb-primary-color);
