@@ -954,14 +954,20 @@ function formatSelectedVerses(readingState: BibleReadingState) {
   return readingState.selectedVerses.value
     .map((verse) => {
       const verseReference = `${bookName ?? verse.bookId} ${verse.chapterNumber}:${verse.verse.number}`;
-      return `${verse.verse.content
+      // Join raw parts, then collapse whitespace so empty non-text parts
+      // (line breaks, footnotes, headings) don't leave double spaces.
+      const text = verse.verse.content
         .map((part) => {
           if (typeof part === "string") return part;
           if (part && typeof part === "object" && "text" in part)
             return (part as { text: string }).text;
           return "";
         })
-        .join("")} (${verseReference})`;
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .replace(/\s+([,.;:!?’”)\]])/g, "$1")
+        .trim();
+      return `${text} (${verseReference})`;
     })
     .join("\n\n");
 }
