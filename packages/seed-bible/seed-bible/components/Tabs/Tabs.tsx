@@ -60,7 +60,6 @@ interface TabsHeaderProps {
   toggleLayoutMenu: () => void;
   closeLayoutMenu: () => void;
   setLayout: (layout: TabSlotLayoutId) => void;
-  createSharedSession: () => void;
 }
 
 interface SettingsProps {
@@ -710,7 +709,6 @@ export function TabsHeader(props: TabsHeaderProps) {
     toggleLayoutMenu,
     closeLayoutMenu,
     setLayout,
-    createSharedSession,
   } = props;
   const { sidebar, settings } = state;
   const isAwake = settings.settings.value.keepScreenAwake;
@@ -805,7 +803,7 @@ export function TabsHeader(props: TabsHeaderProps) {
           >
             <ContextMenuItem
               onClick={() => {
-                createSharedSession();
+                void createSharedSessionAndCopyLink(state, t);
               }}
             >
               <MaterialIcon
@@ -1269,57 +1267,141 @@ function getSessionUrl(session: BibleReadingSession) {
   return url;
 }
 
+async function createSharedSessionAndCopyLink(
+  state: SeedBibleState,
+  t: ReturnType<typeof useI18n>["t"]
+) {
+  const linkText = state.app
+    .createSharedSession()
+    .then((session) => getSessionUrl(session).href);
+
+  try {
+    if (typeof ClipboardItem !== "undefined") {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/plain": linkText.then(
+            (text) => new Blob([text], { type: "text/plain" })
+          ),
+        }),
+      ]);
+    } else {
+      await navigator.clipboard.writeText(await linkText);
+    }
+    state.app.toast(
+      t("link-to-join-shared-session-copied", {
+        defaultValue:
+          "A link to join the shared session was copied to your clipboard",
+      })
+    );
+  } catch {
+    // Fall back: still surface the link so the session isn't lost if clipboard
+    // access fails (e.g. permission denied after the async session create).
+    try {
+      state.app.toast(await linkText);
+    } catch {
+      // Session creation failed; nothing left to surface.
+    }
+  }
+}
+
 /**
  * Modal body shown when the user triggers "Bookmark" from a tab menu, the
- * sidebar tab row, or the verse toolbar. Lets the user pick which folder the
- * new bookmark lands in. Folder creation only happens here — there is no
- * inline "+ New folder" button in the sidebar list anymore.
+ * sidebar tab row, the verse toolbar, or "Move to folder" from a bookmark's
+ * kebab menu. Lets the user pick which folder the bookmark lands in. Folder
+ * creation only happens here — there is no inline "+ New folder" button in
+ * the sidebar list anymore.
+ *
+ * In move mode the bookmark's current folder is filtered out so the list only
+ * offers other destinations (or "Move to new" when none remain).
  */
 function BookmarkCategoryPickerContent(props: {
   state: SeedBibleState;
   location: BookmarkLocation;
   onClose: () => void;
+  mode?: "add" | "move";
+  bookmarkId?: string;
+  excludeCategory?: string;
 }) {
-  const { state, location, onClose } = props;
+  const {
+    state,
+    location,
+    onClose,
+    mode = "add",
+    bookmarkId,
+    excludeCategory,
+  } = props;
   const { bookmarks } = state;
   const { t } = useI18n();
-  const categories = bookmarks.categories.value;
+  const isMove = mode === "move";
+  const categories = bookmarks.categories.value.filter(
+    (category) => category.name !== excludeCategory
+  );
 
-  const selectedCategory = useSignal<string>(DEFAULT_BOOKMARK_CATEGORY);
-  const isAddingNew = useSignal<boolean>(false);
+  const initialCategory = categories[0]?.name ?? "";
+  const selectedCategory = useSignal<string>(initialCategory);
+  const isAddingNew = useSignal<boolean>(categories.length === 0);
   const newCategoryName = useSignal<string>("");
+  const isSaving = useSignal<boolean>(false);
+  const savingToNewCategory = useSignal<string | null>(null);
 
   const trimmedNew = newCategoryName.value.trim();
   const newCategoryCollides =
     trimmedNew.length > 0 &&
-    categories.some((category) => category.name === trimmedNew);
+    bookmarks.categories.value.some((category) => category.name === trimmedNew);
   const canSave = isAddingNew.value
     ? trimmedNew.length > 0 && !newCategoryCollides
     : selectedCategory.value.length > 0;
 
+  const pendingCategoryName = savingToNewCategory.value;
+  const displayCategories =
+    pendingCategoryName &&
+    !categories.some((category) => category.name === pendingCategoryName)
+      ? [...categories, { name: pendingCategoryName }]
+      : categories;
+
   const handleSave = async () => {
+    if (isSaving.value) return;
+
     let category = selectedCategory.value;
     if (isAddingNew.value) {
       if (!trimmedNew || newCategoryCollides) return;
-      await bookmarks.createCategory(trimmedNew);
+      savingToNewCategory.value = trimmedNew;
+      isAddingNew.value = false;
+      selectedCategory.value = trimmedNew;
       category = trimmedNew;
+    } else if (!category) {
+      return;
     }
-    await bookmarks.addBookmark(
-      location.translationId,
-      location.bookId,
-      location.chapterNumber,
-      {
-        category,
-        ...(location.verse !== undefined ? { verse: location.verse } : {}),
+
+    isSaving.value = true;
+    try {
+      if (isMove) {
+        if (!bookmarkId) return;
+        await bookmarks.moveBookmark(bookmarkId, category);
+      } else {
+        if (savingToNewCategory.value) {
+          await bookmarks.createCategory(category);
+        }
+        await bookmarks.addBookmark(
+          location.translationId,
+          location.bookId,
+          location.chapterNumber,
+          {
+            category,
+            ...(location.verse !== undefined ? { verse: location.verse } : {}),
+          }
+        );
       }
-    );
-    onClose();
+      onClose();
+    } finally {
+      isSaving.value = false;
+    }
   };
 
   return (
     <div className="sb-bookmark-picker">
       <div className="sb-bookmark-picker-categories" role="radiogroup">
-        {categories.map((category) => {
+        {displayCategories.map((category) => {
           const isSelected =
             !isAddingNew.value && selectedCategory.value === category.name;
           return (
@@ -1328,10 +1410,12 @@ function BookmarkCategoryPickerContent(props: {
               type="button"
               role="radio"
               aria-checked={isSelected}
+              disabled={isSaving.value}
               className={`sb-bookmark-picker-category${
                 isSelected ? " sb-bookmark-picker-category-selected" : ""
               }`}
               onClick={() => {
+                if (isSaving.value) return;
                 isAddingNew.value = false;
                 selectedCategory.value = category.name;
               }}
@@ -1350,73 +1434,80 @@ function BookmarkCategoryPickerContent(props: {
         })}
       </div>
 
-      <div className="sb-bookmark-picker-divider" role="separator" />
+      {!isSaving.value && (
+        <>
+          <div className="sb-bookmark-picker-divider" role="separator" />
 
-      {isAddingNew.value ? (
-        <div className="sb-bookmark-picker-new-row">
-          <input
-            autoFocus
-            className="sb-bookmark-picker-new-input"
-            placeholder={t("new-folder-placeholder", {
-              defaultValue: "New folder name",
-            })}
-            value={newCategoryName.value}
-            onInput={(event: Event) => {
-              const target = event.target as HTMLInputElement;
-              newCategoryName.value = target.value;
-            }}
-            onKeyDown={(event: KeyboardEvent) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                void handleSave();
-              } else if (event.key === "Escape") {
-                event.preventDefault();
-                isAddingNew.value = false;
-                newCategoryName.value = "";
-              }
-            }}
-          />
-          {newCategoryCollides && (
-            <div className="sb-bookmark-picker-new-error">
-              {t("folder-name-taken", {
-                defaultValue: "A folder with that name already exists.",
-              })}
+          {isAddingNew.value ? (
+            <div className="sb-bookmark-picker-new-row">
+              <input
+                autoFocus
+                className="sb-bookmark-picker-new-input"
+                placeholder={t("new-folder-placeholder", {
+                  defaultValue: "New folder name",
+                })}
+                value={newCategoryName.value}
+                onInput={(event: Event) => {
+                  const target = event.target as HTMLInputElement;
+                  newCategoryName.value = target.value;
+                }}
+                onKeyDown={(event: KeyboardEvent) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    void handleSave();
+                  } else if (event.key === "Escape") {
+                    event.preventDefault();
+                    if (categories.length === 0) {
+                      onClose();
+                      return;
+                    }
+                    isAddingNew.value = false;
+                    newCategoryName.value = "";
+                  }
+                }}
+              />
+              {newCategoryCollides && (
+                <div className="sb-bookmark-picker-new-error">
+                  {t("folder-name-taken", {
+                    defaultValue: "A folder with that name already exists.",
+                  })}
+                </div>
+              )}
             </div>
+          ) : (
+            <button
+              type="button"
+              className="sb-bookmark-picker-add-new"
+              onClick={() => {
+                isAddingNew.value = true;
+                newCategoryName.value = "";
+              }}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                add
+              </span>
+              <span>
+                {isMove
+                  ? t("move-to-new", { defaultValue: "Move to new" })
+                  : t("add-to-new", { defaultValue: "Add to new" })}
+              </span>
+            </button>
           )}
-        </div>
-      ) : (
-        <button
-          type="button"
-          className="sb-bookmark-picker-add-new"
-          onClick={() => {
-            isAddingNew.value = true;
-            newCategoryName.value = "";
-          }}
-        >
-          <span className="material-symbols-outlined" aria-hidden="true">
-            add
-          </span>
-          <span>{t("add-to-new", { defaultValue: "Add to new" })}</span>
-        </button>
+        </>
       )}
 
       <div className="sb-bookmark-picker-actions">
         <button
           type="button"
-          className="sb-bookmark-picker-cancel"
-          onClick={onClose}
-        >
-          {t("cancel", { defaultValue: "Cancel" })}
-        </button>
-        <button
-          type="button"
           className="sb-bookmark-picker-save"
-          disabled={!canSave}
+          disabled={!canSave || isSaving.value}
           onClick={() => {
             void handleSave();
           }}
         >
-          {t("save", { defaultValue: "Save" })}
+          {isSaving.value
+            ? t("saving", { defaultValue: "Saving…" })
+            : t("save", { defaultValue: "Save" })}
         </button>
       </div>
     </div>
@@ -1425,30 +1516,51 @@ function BookmarkCategoryPickerContent(props: {
 
 /**
  * Opens the bookmark category picker modal for the given location. Exported
- * so the verse toolbar (in BibleReaderToolbar) can open it for verse-scoped
- * bookmarks with the same UX as the sidebar tab-row bookmark button.
+ * so the verse toolbar (in BibleReaderToolbar) and the chapter bookmark
+ * button (in BibleReader) can open it with the same UX as the sidebar.
+ *
+ * Pass `mode: "move"` with `bookmarkId` / `excludeCategory` to relocate an
+ * existing bookmark — the current folder is hidden from the list.
  */
 export function openBookmarkCategoryModal(
   state: SeedBibleState,
-  location: BookmarkLocation
+  location: BookmarkLocation,
+  options?: {
+    mode?: "add" | "move";
+    bookmarkId?: string;
+    excludeCategory?: string;
+  }
 ) {
+  const mode = options?.mode ?? "add";
   const verseKey =
     location.verse === undefined
       ? "chapter"
       : Array.isArray(location.verse)
         ? `${location.verse[0]}-${location.verse[1]}`
         : String(location.verse);
-  const modalId = `bookmark-category-${location.translationId}-${location.bookId}-${location.chapterNumber}-${verseKey}`;
+  const modalId =
+    mode === "move" && options?.bookmarkId
+      ? `bookmark-move-${options.bookmarkId}`
+      : `bookmark-category-${location.translationId}-${location.bookId}-${location.chapterNumber}-${verseKey}`;
   state.modals.openModal({
     id: modalId,
-    title: {
-      key: "add-to-bookmark-category",
-      defaultValue: "Add to bookmark category",
-    },
+    title:
+      mode === "move"
+        ? {
+            key: "move-to-bookmark-category",
+            defaultValue: "Move to bookmark category",
+          }
+        : {
+            key: "add-to-bookmark-category",
+            defaultValue: "Add to bookmark category",
+          },
     content: () => (
       <BookmarkCategoryPickerContent
         state={state}
         location={location}
+        mode={mode}
+        bookmarkId={options?.bookmarkId}
+        excludeCategory={options?.excludeCategory}
         onClose={() => state.modals.closeModal(modalId)}
       />
     ),
@@ -1727,6 +1839,31 @@ function BookmarksSection(props: BookmarksSectionProps) {
                             defaultValue: "Bookmark options",
                           })}
                         >
+                          <ContextMenuItem
+                            className="sb-tab-menu-item"
+                            onClick={() => {
+                              openBookmarkCategoryModal(
+                                state,
+                                {
+                                  translationId: bookmark.translationId,
+                                  bookId: bookmark.bookId,
+                                  chapterNumber: bookmark.chapterNumber,
+                                  ...(bookmark.verse !== undefined
+                                    ? { verse: bookmark.verse }
+                                    : {}),
+                                },
+                                {
+                                  mode: "move",
+                                  bookmarkId: bookmark.id,
+                                  excludeCategory: bookmark.category,
+                                }
+                              );
+                            }}
+                          >
+                            {t("move-bookmark", {
+                              defaultValue: "Move to folder",
+                            })}
+                          </ContextMenuItem>
                           <ContextMenuItem
                             className="sb-tab-menu-item"
                             onClick={() => {
@@ -2122,7 +2259,7 @@ export function Tabs(props: TabsProps) {
                 defaultValue: "New shared session",
               })}
               onClick={() => {
-                void state.app.createSharedSession();
+                void createSharedSessionAndCopyLink(state, t);
               }}
             >
               <MaterialIcon aria-hidden="true">fiber_smart_record</MaterialIcon>
@@ -2406,18 +2543,6 @@ export function Sidebar(props: SidebarProps) {
             setLayout={(layout) => {
               tabsLayout.setLayout(layout);
               closeLayoutMenu();
-            }}
-            createSharedSession={async () => {
-              const session = await state.app.createSharedSession();
-              const url = getSessionUrl(session);
-
-              navigator.clipboard.writeText(url.href);
-              state.app.toast(
-                t("link-to-join-shared-session-copied", {
-                  defaultValue:
-                    "A link to join the shared session was copied to your clipboard",
-                })
-              );
             }}
           />
         )}

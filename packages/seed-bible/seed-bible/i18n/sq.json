@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigimi",
   "session-settings-section-sharing": "Ndarja",
   "session-settings-section-participants": "Pjesëmarrësit",
-
   "shared": "I ndarë",
   "host": "Pritës",
   "co-host": "Bashkë-prezantues",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Përfundo seancën",
   "dont-show-again": "Mos e shfaq më këtë",
   "discover": "Zbulo",
-
   "playlists": "Listat e dëgjimit",
   "annotations": "Shënime",
   "cross-references": "Referenca të kryqëzuara",
@@ -368,16 +366,13 @@
   "playlist-add-item": "Shto artikull",
   "playlist-edit-item": "Modifiko artikullin",
   "playlist-save-item": "Ruaj ndryshimet",
-
   "playlist-add-scripture-placeholder": "p.sh. Gjoni 3 ose Gjoni 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Shto artikull",
   "playlist-add-scripture-error": "Nuk munda ta gjej atë referencë",
   "playlist-add-link-error": "Fut një URL të vlefshme",
   "playlist-add-link-embed": "Vendos këtë lidhje",
   "play-playlist": "Luaj listën e luajtjes për luajtje",
-
   "stop": "Ndalo",
   "queue": "Radhë",
   "previous": "Mëparshme",
@@ -389,7 +384,6 @@
   "editor-align-center": "Vendos në qendër",
   "editor-align-right": "Vendos në të djathtë",
   "editor-align-justify": "Drejtvizo",
-
   "share-playlist": "Ndani listën e luajtjes për të ndarë.",
   "playlist-url-copied": "URL-ja e listës për luajtje u kopjua në kujtesën e përkohshme",
   "current-playlist": "Lista aktuale e luajtjes për luajtje është ajo e listave të luajtjes, të cilat janë aktualisht në dispozicion.",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "Artikull i paruajtur",
   "unsaved-item-confirm-message": "Keni filluar të shtoni një artikull që nuk është shtuar ende në listën e luajtjes. Çfarë do të donit të bënit?",
   "discard-and-save": "Hidhe dhe ruaj",
-  "add-and-save": "Shto dhe ruaj"
+  "add-and-save": "Shto dhe ruaj",
+  "loading-profile": "Duke ngarkuar profilin tënd…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Zhvendos te kategoria e faqeshënuesve",
+  "move-bookmark": "Zhvendos në dosje",
+  "move-to-new": "Zhvendos në të renë"
 }

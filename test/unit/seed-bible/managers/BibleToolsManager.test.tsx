@@ -551,7 +551,58 @@ describe("createBibleToolsManager", () => {
       );
     });
 
-    it("share-verse opens a share modal whose share-via action uses the full book name", () => {
+    it("copy-verse collapses whitespace around non-text parts and poem FormattedText", async () => {
+      const manager = createBibleToolsManager();
+      const context = createVerseContext({
+        chapterData: signal({
+          book: { id: "GEN", name: "Genesis" },
+        } as BibleReadingState["chapterData"]["value"]),
+        selectedVerses: signal([
+          {
+            bookId: "GEN",
+            chapterNumber: 1,
+            translationId: "BSB",
+            verse: {
+              type: "verse",
+              number: 1,
+              content: [
+                "In the beginning ",
+                { text: "I am the light", wordsOfJesus: true },
+                { lineBreak: true },
+                { noteId: 7 },
+                "God created.",
+              ],
+            },
+          },
+          {
+            bookId: "GEN",
+            chapterNumber: 1,
+            translationId: "BSB",
+            verse: {
+              type: "verse",
+              number: 2,
+              content: [
+                { text: "Poetry A", poem: 2 },
+                { lineBreak: true },
+                { text: "Poetry B", poem: 1 },
+              ],
+            },
+          },
+        ]),
+      });
+
+      const tool = manager
+        .getVerseToolbarTools(context)
+        .find((t) => t.id === "copy-verse");
+
+      await tool?.onSelect();
+
+      expect(window.navigator.clipboard.writeText).toHaveBeenCalledWith(
+        "In the beginning I am the light God created. (Genesis 1:1)\n\nPoetry A Poetry B (Genesis 1:2)"
+      );
+    });
+
+    it("share-verse uses the full book name instead of the book ID", () => {
       const manager = createBibleToolsManager();
       const context = createVerseContext();
 

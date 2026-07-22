@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navegación",
   "session-settings-section-sharing": "Compartir",
   "session-settings-section-participants": "Participantes",
-
   "shared": "Compartido",
   "host": "Anfitrión",
   "co-host": "Copresentador/a",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Rematar sesión",
   "dont-show-again": "Non volver mostrar isto",
   "discover": "Descubrir",
-
   "playlists": "Listas de reprodución",
   "annotations": "Anotacións",
   "cross-references": "Referencias cruzadas",
@@ -368,16 +366,13 @@
   "playlist-add-item": "Engadir elemento",
   "playlist-edit-item": "Editar elemento",
   "playlist-save-item": "Gardar cambios",
-
   "playlist-add-scripture-placeholder": "por exemplo, Xoán 3 ou Xoán 3:16",
-
   "playlist-add-link-placeholder": "https://exemplo.com",
   "playlist-add-button": "Engadir elemento",
   "playlist-add-scripture-error": "Non se puido atopar esa referencia",
   "playlist-add-link-error": "Introduza un URL válido",
   "playlist-add-link-embed": "Incrustar esta ligazón",
   "play-playlist": "Reproducir lista de reprodución",
-
   "stop": "Parar",
   "queue": "Fila",
   "previous": "Anterior",
@@ -389,7 +384,6 @@
   "editor-align-center": "Aliñar no centro",
   "editor-align-right": "Aliñar á dereita",
   "editor-align-justify": "Xustificar",
-
   "share-playlist": "Compartir lista de reprodución",
   "playlist-url-copied": "URL da lista de reprodución copiada no portapapeis",
   "current-playlist": "Lista de reprodución actual",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "Elemento sen gardar",
   "unsaved-item-confirm-message": "Comezaches a engadir un elemento que aínda non foi engadido á lista de reprodución. Que che gustaría facer?",
   "discard-and-save": "Descartar e gardar",
-  "add-and-save": "Engadir e gardar"
+  "add-and-save": "Engadir e gardar",
+  "loading-profile": "Cargando o teu perfil…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Mover á categoría de marcadores",
+  "move-bookmark": "Mover á carpeta",
+  "move-to-new": "Mover a novo"
 }

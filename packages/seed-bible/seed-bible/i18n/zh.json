@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "导航",
   "session-settings-section-sharing": "分享",
   "session-settings-section-participants": "参与者",
-
   "shared": "共享",
   "host": "主持人",
   "co-host": "联合主持人",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "会议结束",
   "dont-show-again": "不要再次显示此内容",
   "discover": "发现",
-
   "playlists": "播放列表",
   "annotations": "注释",
   "cross-references": "交叉引用",
@@ -368,16 +366,13 @@
   "playlist-add-item": "添加项目",
   "playlist-edit-item": "编辑项目",
   "playlist-save-item": "保存更改",
-
   "playlist-add-scripture-placeholder": "例如约翰福音3章或约翰福音3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "添加项目",
   "playlist-add-scripture-error": "找不到那篇参考文献",
   "playlist-add-link-error": "请输入有效的网址",
   "playlist-add-link-embed": "嵌入此链接",
   "play-playlist": "播放列表",
-
   "stop": "停止",
   "queue": "队列",
   "previous": "以前的",
@@ -389,7 +384,6 @@
   "editor-align-center": "居中对齐",
   "editor-align-right": "右对齐",
   "editor-align-justify": "证明合法",
-
   "share-playlist": "分享播放列表",
   "playlist-url-copied": "播放列表网址已复制到剪贴板",
   "current-playlist": "当前播放列表",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "未保存的项目",
   "unsaved-item-confirm-message": "您已开始添加一个尚未加入播放列表的项目。您想怎么做?",
   "discard-and-save": "放弃并保存",
-  "add-and-save": "添加并保存"
+  "add-and-save": "添加并保存",
+  "loading-profile": "正在加载您的个人资料…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "移至书签类别",
+  "move-bookmark": "移至文件夹",
+  "move-to-new": "搬到新"
 }

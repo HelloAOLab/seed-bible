@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigation",
   "session-settings-section-sharing": "Deling",
   "session-settings-section-participants": "Deltagere",
-
   "shared": "Delt",
   "host": "Vært",
   "co-host": "Medvært",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Afslut session",
   "dont-show-again": "Vis ikke dette igen",
   "discover": "Opdage",
-
   "playlists": "Afspilningslister",
   "annotations": "Annotationer",
   "cross-references": "Krydsreferencer",
@@ -368,16 +366,13 @@
   "playlist-add-item": "Tilføj vare",
   "playlist-edit-item": "Rediger element",
   "playlist-save-item": "Gem ændringer",
-
   "playlist-add-scripture-placeholder": "f.eks. Johannes 3 eller Johannes 3:16",
-
   "playlist-add-link-placeholder": "https://eksempel.com",
   "playlist-add-button": "Tilføj vare",
   "playlist-add-scripture-error": "Kunne ikke finde den reference",
   "playlist-add-link-error": "Indtast en gyldig URL",
   "playlist-add-link-embed": "Integrer dette link",
   "play-playlist": "Afspil playliste",
-
   "stop": "Stop",
   "queue": "Kø",
   "previous": "Tidligere",
@@ -389,7 +384,6 @@
   "editor-align-center": "Juster center",
   "editor-align-right": "Juster til højre",
   "editor-align-justify": "Begrund",
-
   "share-playlist": "Del playliste",
   "playlist-url-copied": "URL til afspilningsliste kopieret til udklipsholder",
   "current-playlist": "Aktuel playliste",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "Ugemt element",
   "unsaved-item-confirm-message": "Du er begyndt at tilføje et element, der endnu ikke er føjet til playlisten. Hvad vil du gøre?",
   "discard-and-save": "Kassér og gem",
-  "add-and-save": "Tilføj og gem"
+  "add-and-save": "Tilføj og gem",
+  "loading-profile": "Indlæser din profil…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Flyt til bogmærkekategori",
+  "move-bookmark": "Flyt til mappe",
+  "move-to-new": "Flyt til nyt"
 }

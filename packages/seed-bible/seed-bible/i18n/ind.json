@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigasi",
   "session-settings-section-sharing": "Membagikan",
   "session-settings-section-participants": "Peserta",
-
   "shared": "Dibagikan",
   "host": "Tuan rumah",
   "co-host": "Pembawa acara bersama",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Akhiri sesi",
   "dont-show-again": "Jangan tampilkan ini lagi",
   "discover": "Menemukan",
-
   "playlists": "Daftar Putar",
   "annotations": "Catatan",
   "cross-references": "Referensi silang",
@@ -368,16 +366,13 @@
   "playlist-add-item": "Tambahkan item",
   "playlist-edit-item": "Edit item",
   "playlist-save-item": "Simpan perubahan",
-
   "playlist-add-scripture-placeholder": "misalnya Yohanes 3 atau Yohanes 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Tambahkan item",
   "playlist-add-scripture-error": "Tidak dapat menemukan referensi tersebut.",
   "playlist-add-link-error": "Masukkan URL yang valid",
   "playlist-add-link-embed": "Sematkan tautan ini",
   "play-playlist": "Putar daftar putar",
-
   "stop": "Berhenti",
   "queue": "Antre",
   "previous": "Sebelumnya",
@@ -389,7 +384,6 @@
   "editor-align-center": "Sejajarkan tengah",
   "editor-align-right": "Ratakan ke kanan",
   "editor-align-justify": "Membenarkan",
-
   "share-playlist": "Bagikan daftar putar",
   "playlist-url-copied": "URL daftar putar disalin ke papan klip",
   "current-playlist": "Daftar putar saat ini",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "Item belum disimpan",
   "unsaved-item-confirm-message": "Anda mulai menambahkan item yang belum ditambahkan ke daftar putar. Apa yang ingin Anda lakukan?",
   "discard-and-save": "Buang dan simpan",
-  "add-and-save": "Tambah dan simpan"
+  "add-and-save": "Tambah dan simpan",
+  "loading-profile": "Sedang memuat profil Anda…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Pindah ke kategori bookmark",
+  "move-bookmark": "Pindahkan ke folder",
+  "move-to-new": "Pindah ke yang baru"
 }

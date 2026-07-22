@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigácia",
   "session-settings-section-sharing": "Zdieľanie",
   "session-settings-section-participants": "Účastníci",
-
   "shared": "Zdieľané",
   "host": "Hostiteľ",
   "co-host": "Spoluhostiteľ",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Ukončiť reláciu",
   "dont-show-again": "Toto už viac nezobrazovať",
   "discover": "Objavte",
-
   "playlists": "Zoznamy skladieb",
   "annotations": "Anotácie",
   "cross-references": "Krížové odkazy",
@@ -368,16 +366,13 @@
   "playlist-add-item": "Pridať položku",
   "playlist-edit-item": "Upraviť položku",
   "playlist-save-item": "Uložiť zmeny",
-
   "playlist-add-scripture-placeholder": "napr. Ján 3 alebo Ján 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Pridať položku",
   "playlist-add-scripture-error": "Nepodarilo sa mi nájsť túto referenciu",
   "playlist-add-link-error": "Zadajte platnú URL adresu",
   "playlist-add-link-embed": "Vložiť tento odkaz",
   "play-playlist": "Prehrať playlist",
-
   "stop": "Zastaviť",
   "queue": "Rad",
   "previous": "Predchádzajúce",
@@ -389,7 +384,6 @@
   "editor-align-center": "Zarovnať na stred",
   "editor-align-right": "Zarovnať doprava",
   "editor-align-justify": "Zarovnať",
-
   "share-playlist": "Zdieľať zoznam skladieb",
   "playlist-url-copied": "URL zoznamu skladieb skopírovaná do schránky",
   "current-playlist": "Aktuálny zoznam skladieb",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "Neuložená položka",
   "unsaved-item-confirm-message": "Začali ste pridávať položku, ktorá zatiaľ nebola pridaná do playlistu. Čo by ste chceli urobiť?",
   "discard-and-save": "Zahodiť a uložiť",
-  "add-and-save": "Pridať a uložiť"
+  "add-and-save": "Pridať a uložiť",
+  "loading-profile": "Načítava sa váš profil…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Presunúť do kategórie záložiek",
+  "move-bookmark": "Presunúť do priečinka",
+  "move-to-new": "Presunúť na nové"
 }

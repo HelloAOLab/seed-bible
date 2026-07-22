@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Навигация",
   "session-settings-section-sharing": "Совместное использование",
   "session-settings-section-participants": "Участники",
-
   "shared": "Общий",
   "host": "Хозяин",
   "co-host": "Соведущий",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Завершение сессии",
   "dont-show-again": "Больше не показывайте это",
   "discover": "Обнаружить",
-
   "playlists": "Плейлисты",
   "annotations": "Аннотации",
   "cross-references": "Перекрестные ссылки",
@@ -368,16 +366,13 @@
   "playlist-add-item": "Добавить элемент",
   "playlist-edit-item": "Редактировать элемент",
   "playlist-save-item": "Сохраните изменения",
-
   "playlist-add-scripture-placeholder": "например, Евангелие от Иоанна, глава 3, или Евангелие от Иоанна, глава 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Добавить элемент",
   "playlist-add-scripture-error": "Не смог найти эту ссылку.",
   "playlist-add-link-error": "Введите действительный URL-адрес",
   "playlist-add-link-embed": "Вставьте эту ссылку",
   "play-playlist": "Воспроизвести плейлист",
-
   "stop": "Останавливаться",
   "queue": "Очередь",
   "previous": "Предыдущий",
@@ -389,7 +384,6 @@
   "editor-align-center": "Выровнять по центру",
   "editor-align-right": "Выровняйте вправо",
   "editor-align-justify": "Оправдывать",
-
   "share-playlist": "Поделиться плейлистом",
   "playlist-url-copied": "URL плейлиста скопирован в буфер обмена.",
   "current-playlist": "Текущий плейлист",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "Несохранённый элемент",
   "unsaved-item-confirm-message": "Вы начали добавлять элемент, который ещё не добавлен в плейлист. Что вы хотите сделать?",
   "discard-and-save": "Отменить и сохранить",
-  "add-and-save": "Добавить и сохранить"
+  "add-and-save": "Добавить и сохранить",
+  "loading-profile": "Загрузка вашего профиля…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Переместить в категорию закладок",
+  "move-bookmark": "Переместить в папку",
+  "move-to-new": "Переехать в новый"
 }

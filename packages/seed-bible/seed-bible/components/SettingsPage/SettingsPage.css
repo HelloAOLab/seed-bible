@@ -1187,6 +1187,24 @@
   white-space: nowrap;
 }
 
+.sb-settings-version {
+  align-self: center;
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.6875rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 60%);
+}
+
+@media (hover: hover) {
+  .sb-settings-version:hover {
+    color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  }
+}
+
 .sb-theme-color-row-controls {
   display: flex;
   align-items: center;
@@ -1384,6 +1402,36 @@
   font-weight: 700;
 }
 
+.sb-account-save-button:disabled {
+  opacity: 0.75;
+  cursor: default;
+}
+
+.sb-account-save-saving {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.sb-account-save-spinner {
+  font-size: 1.125rem;
+  line-height: 1;
+  animation: sb-account-save-spin 0.9s linear infinite;
+}
+
+@keyframes sb-account-save-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-account-save-spinner {
+    animation: none;
+  }
+}
+
 .sb-account-signout-section {
   margin-top: 0.625rem;
   border-top: 1px solid
@@ -1409,6 +1457,11 @@
 .sb-account-signout-button:hover {
   background: color-mix(in srgb, #db1c1c, transparent 92%);
 }
+
+/* Account-page loading skeleton — the generic shimmer primitives and shape
+   classes now live in components/Skeleton/Skeleton.css (see <Skeleton> /
+   <SkeletonContainer>); AccountSettingsSkeleton composes them with the
+   sb-account-settings-layout / sb-settings-field-row layout classes above. */
 
 /* This can be added at main css too but that is not being used by setting bar to so avoid whole css load use here */
 @media screen and (max-width: 480px) {

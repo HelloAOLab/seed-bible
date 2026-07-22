@@ -33,7 +33,11 @@ import { MobileSettingsSheet } from "../../components/MobileSettingsSheet/Mobile
 import { MobileSessionParticipants } from "../../components/SessionParticipants/SessionParticipants";
 import { InfoSettingsIcon } from "../../components/icons";
 import { QuickToolbar } from "../../components/QuickToolbar/QuickToolbar";
-import { SelfAvatarVisual, getSelfDisplayName } from "../Tabs/Tabs";
+import {
+  SelfAvatarVisual,
+  getSelfDisplayName,
+  openBookmarkCategoryModal,
+} from "../Tabs/Tabs";
 
 interface ReaderBookmarkButtonProps {
   state: SeedBibleState;
@@ -45,8 +49,8 @@ interface ReaderBookmarkButtonProps {
 /**
  * Toggle for the chapter currently shown in the reader. Sits in the top-right
  * of the chapter content area: filled + orange when the chapter is saved,
- * outlined when not. The per-tab-row bookmark button was removed in favor of
- * this single control because only one chapter is ever in view at a time.
+ * outlined when not. Opens the category picker to save into an existing or
+ * new folder; when already bookmarked, removes the chapter-level bookmark.
  */
 function ReaderBookmarkButton(props: ReaderBookmarkButtonProps) {
   const { state, translationId, bookId, chapterNumber } = props;
@@ -63,12 +67,22 @@ function ReaderBookmarkButton(props: ReaderBookmarkButtonProps) {
         isBookmarked ? " sb-bible-reader-bookmark-button-active" : ""
       }`}
       onClick={() => {
-        if (!canBookmark) return;
-        void state.bookmarks.toggleBookmarkAtLocation(
+        if (!canBookmark || !translationId || !bookId || !chapterNumber) {
+          return;
+        }
+        if (isBookmarked) {
+          void state.bookmarks.removeBookmarkForLocation(
+            translationId,
+            bookId,
+            chapterNumber
+          );
+          return;
+        }
+        openBookmarkCategoryModal(state, {
           translationId,
           bookId,
-          chapterNumber
-        );
+          chapterNumber,
+        });
       }}
       disabled={!canBookmark}
       aria-pressed={isBookmarked}

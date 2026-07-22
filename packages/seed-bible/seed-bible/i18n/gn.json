@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navegación rehegua",
   "session-settings-section-sharing": "Ñemboja’o",
   "session-settings-section-participants": "Umi oikeva’ekue",
-
   "shared": "Oñemboja’o",
   "host": "Ogajára",
   "co-host": "Co-anfitrión",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Oñemohu’ã sesión",
   "dont-show-again": "Ani rehechauka jey ko mba'e",
   "discover": "Juhu",
-
   "playlists": "Ñembopu lista-kuéra",
   "annotations": "Anotaciones rehegua",
   "cross-references": "Umi referencia cruzada rehegua",
@@ -368,16 +366,13 @@
   "playlist-add-item": "Oñemoĩve mba’e",
   "playlist-edit-item": "Omohenda mba’e",
   "playlist-save-item": "Eñongatu umi ñemoambue",
-
   "playlist-add-scripture-placeholder": "por ehémplo Juan 3 térã Juan 3:16",
-
   "playlist-add-link-placeholder": "https://techapyrã.com",
   "playlist-add-button": "Oñemoĩve mba’e",
   "playlist-add-scripture-error": "Ndojuhúi upe referencia",
   "playlist-add-link-error": "Emoinge peteĩ URL añetegua",
   "playlist-add-link-embed": "Emoinge ko enlace",
   "play-playlist": "Embopu lista de reproducción",
-
   "stop": "Pyta",
   "queue": "Tuguái",
   "previous": "Mboyvegua",
@@ -389,7 +384,6 @@
   "editor-align-center": "Oñemohenda centro",
   "editor-align-right": "Oñemohenda derecha gotyo",
   "editor-align-justify": "Mba'érepa",
-
   "share-playlist": "Compartir lista de reproducción rehegua",
   "playlist-url-copied": "URL lista de reproducción ojekopia portapapeles-pe",
   "current-playlist": "Ñembopu lista ko’áĝagua",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "Mba'e ndoñongatuiva",
   "unsaved-item-confirm-message": "Reñepyrũ emoĩ peteĩ mba'e ndojejapóiva gueteri playlist-pe. Mba'épa reipota?",
   "discard-and-save": "Emombo ha eñongatu",
-  "add-and-save": "Emoĩ ha eñongatu"
+  "add-and-save": "Emoĩ ha eñongatu",
+  "loading-profile": "Ojekargávo nde perfil...",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Emoinge categoría marcador-pe",
+  "move-bookmark": "Emoinge carpeta-pe",
+  "move-to-new": "Eñemoambue pyahúpe"
 }

@@ -122,10 +122,6 @@ export const useSocialSection: UseSocialSection = () => {
     });
   }, [userProfileMap]);
 
-  useEffect(() => {
-    console.log(`[Debug] useSocialSection`, { userFilters, userProfileMap });
-  }, [userFilters, userProfileMap]);
-
   const toggleUserFilter = useCallback(
     (id: string) => {
       setUserFilters((prev) => {
