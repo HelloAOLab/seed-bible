@@ -789,6 +789,10 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
       onSelect: async (context) => {
         if (context.readingState.selectedVerses.value.length === 0) return;
 
+        console.log(
+          "logs copy-verse",
+          context.readingState.selectedVerses.value
+        );
         const verseTexts = formatSelectedVerses(context.readingState);
 
         try {
@@ -956,12 +960,12 @@ function formatSelectedVerses(readingState: BibleReadingState) {
       const verseReference = `${bookName ?? verse.bookId} ${verse.chapterNumber}:${verse.verse.number}`;
       return `${verse.verse.content
         .map((part) => {
-          if (typeof part === "string") return part;
+          if (typeof part === "string") return part.trim();
           if (part && typeof part === "object" && "text" in part)
-            return (part as { text: string }).text;
+            return (part as { text: string }).text.trim();
           return "";
         })
-        .join("")} (${verseReference})`;
+        .join(" ")} (${verseReference})`;
     })
     .join("\n\n");
 }
