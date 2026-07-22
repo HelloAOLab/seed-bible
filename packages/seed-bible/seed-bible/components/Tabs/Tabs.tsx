@@ -1249,15 +1249,37 @@ async function createSharedSessionAndCopyLink(
   state: SeedBibleState,
   t: ReturnType<typeof useI18n>["t"]
 ) {
-  const session = await state.app.createSharedSession();
-  const url = getSessionUrl(session);
-  await navigator.clipboard.writeText(url.href);
-  state.app.toast(
-    t("link-to-join-shared-session-copied", {
-      defaultValue:
-        "A link to join the shared session was copied to your clipboard",
-    })
-  );
+  const linkText = state.app
+    .createSharedSession()
+    .then((session) => getSessionUrl(session).href);
+
+  try {
+    if (typeof ClipboardItem !== "undefined") {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/plain": linkText.then(
+            (text) => new Blob([text], { type: "text/plain" })
+          ),
+        }),
+      ]);
+    } else {
+      await navigator.clipboard.writeText(await linkText);
+    }
+    state.app.toast(
+      t("link-to-join-shared-session-copied", {
+        defaultValue:
+          "A link to join the shared session was copied to your clipboard",
+      })
+    );
+  } catch {
+    // Fall back: still surface the link so the session isn't lost if clipboard
+    // access fails (e.g. permission denied after the async session create).
+    try {
+      state.app.toast(await linkText);
+    } catch {
+      // Session creation failed; nothing left to surface.
+    }
+  }
 }
 
 /**
