@@ -1284,6 +1284,8 @@ function BookmarkCategoryPickerContent(props: {
   const selectedCategory = useSignal<string>(initialCategory);
   const isAddingNew = useSignal<boolean>(categories.length === 0);
   const newCategoryName = useSignal<string>("");
+  const isSaving = useSignal<boolean>(false);
+  const savingToNewCategory = useSignal<string | null>(null);
 
   const trimmedNew = newCategoryName.value.trim();
   const newCategoryCollides =
@@ -1293,34 +1295,56 @@ function BookmarkCategoryPickerContent(props: {
     ? trimmedNew.length > 0 && !newCategoryCollides
     : selectedCategory.value.length > 0;
 
+  const pendingCategoryName = savingToNewCategory.value;
+  const displayCategories =
+    pendingCategoryName &&
+    !categories.some((category) => category.name === pendingCategoryName)
+      ? [...categories, { name: pendingCategoryName }]
+      : categories;
+
   const handleSave = async () => {
+    if (isSaving.value) return;
+
     let category = selectedCategory.value;
     if (isAddingNew.value) {
       if (!trimmedNew || newCategoryCollides) return;
-      await bookmarks.createCategory(trimmedNew);
+      savingToNewCategory.value = trimmedNew;
+      isAddingNew.value = false;
+      selectedCategory.value = trimmedNew;
       category = trimmedNew;
+    } else if (!category) {
+      return;
     }
-    if (isMove) {
-      if (!bookmarkId) return;
-      await bookmarks.moveBookmark(bookmarkId, category);
-    } else {
-      await bookmarks.addBookmark(
-        location.translationId,
-        location.bookId,
-        location.chapterNumber,
-        {
-          category,
-          ...(location.verse !== undefined ? { verse: location.verse } : {}),
+
+    isSaving.value = true;
+    try {
+      if (isMove) {
+        if (!bookmarkId) return;
+        await bookmarks.moveBookmark(bookmarkId, category);
+      } else {
+        if (savingToNewCategory.value) {
+          await bookmarks.createCategory(category);
         }
-      );
+        await bookmarks.addBookmark(
+          location.translationId,
+          location.bookId,
+          location.chapterNumber,
+          {
+            category,
+            ...(location.verse !== undefined ? { verse: location.verse } : {}),
+          }
+        );
+      }
+      onClose();
+    } finally {
+      isSaving.value = false;
     }
-    onClose();
   };
 
   return (
     <div className="sb-bookmark-picker">
       <div className="sb-bookmark-picker-categories" role="radiogroup">
-        {categories.map((category) => {
+        {displayCategories.map((category) => {
           const isSelected =
             !isAddingNew.value && selectedCategory.value === category.name;
           return (
@@ -1329,10 +1353,12 @@ function BookmarkCategoryPickerContent(props: {
               type="button"
               role="radio"
               aria-checked={isSelected}
+              disabled={isSaving.value}
               className={`sb-bookmark-picker-category${
                 isSelected ? " sb-bookmark-picker-category-selected" : ""
               }`}
               onClick={() => {
+                if (isSaving.value) return;
                 isAddingNew.value = false;
                 selectedCategory.value = category.name;
               }}
@@ -1351,81 +1377,80 @@ function BookmarkCategoryPickerContent(props: {
         })}
       </div>
 
-      <div className="sb-bookmark-picker-divider" role="separator" />
+      {!isSaving.value && (
+        <>
+          <div className="sb-bookmark-picker-divider" role="separator" />
 
-      {isAddingNew.value ? (
-        <div className="sb-bookmark-picker-new-row">
-          <input
-            autoFocus
-            className="sb-bookmark-picker-new-input"
-            placeholder={t("new-folder-placeholder", {
-              defaultValue: "New folder name",
-            })}
-            value={newCategoryName.value}
-            onInput={(event: Event) => {
-              const target = event.target as HTMLInputElement;
-              newCategoryName.value = target.value;
-            }}
-            onKeyDown={(event: KeyboardEvent) => {
-              if (event.key === "Enter") {
-                event.preventDefault();
-                void handleSave();
-              } else if (event.key === "Escape") {
-                event.preventDefault();
-                if (categories.length === 0) {
-                  onClose();
-                  return;
-                }
-                isAddingNew.value = false;
-                newCategoryName.value = "";
-              }
-            }}
-          />
-          {newCategoryCollides && (
-            <div className="sb-bookmark-picker-new-error">
-              {t("folder-name-taken", {
-                defaultValue: "A folder with that name already exists.",
-              })}
+          {isAddingNew.value ? (
+            <div className="sb-bookmark-picker-new-row">
+              <input
+                autoFocus
+                className="sb-bookmark-picker-new-input"
+                placeholder={t("new-folder-placeholder", {
+                  defaultValue: "New folder name",
+                })}
+                value={newCategoryName.value}
+                onInput={(event: Event) => {
+                  const target = event.target as HTMLInputElement;
+                  newCategoryName.value = target.value;
+                }}
+                onKeyDown={(event: KeyboardEvent) => {
+                  if (event.key === "Enter") {
+                    event.preventDefault();
+                    void handleSave();
+                  } else if (event.key === "Escape") {
+                    event.preventDefault();
+                    if (categories.length === 0) {
+                      onClose();
+                      return;
+                    }
+                    isAddingNew.value = false;
+                    newCategoryName.value = "";
+                  }
+                }}
+              />
+              {newCategoryCollides && (
+                <div className="sb-bookmark-picker-new-error">
+                  {t("folder-name-taken", {
+                    defaultValue: "A folder with that name already exists.",
+                  })}
+                </div>
+              )}
             </div>
+          ) : (
+            <button
+              type="button"
+              className="sb-bookmark-picker-add-new"
+              onClick={() => {
+                isAddingNew.value = true;
+                newCategoryName.value = "";
+              }}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                add
+              </span>
+              <span>
+                {isMove
+                  ? t("move-to-new", { defaultValue: "Move to new" })
+                  : t("add-to-new", { defaultValue: "Add to new" })}
+              </span>
+            </button>
           )}
-        </div>
-      ) : (
-        <button
-          type="button"
-          className="sb-bookmark-picker-add-new"
-          onClick={() => {
-            isAddingNew.value = true;
-            newCategoryName.value = "";
-          }}
-        >
-          <span className="material-symbols-outlined" aria-hidden="true">
-            add
-          </span>
-          <span>
-            {isMove
-              ? t("move-to-new", { defaultValue: "Move to new" })
-              : t("add-to-new", { defaultValue: "Add to new" })}
-          </span>
-        </button>
+        </>
       )}
 
       <div className="sb-bookmark-picker-actions">
         <button
           type="button"
-          className="sb-bookmark-picker-cancel"
-          onClick={onClose}
-        >
-          {t("cancel", { defaultValue: "Cancel" })}
-        </button>
-        <button
-          type="button"
           className="sb-bookmark-picker-save"
-          disabled={!canSave}
+          disabled={!canSave || isSaving.value}
           onClick={() => {
             void handleSave();
           }}
         >
-          {t("save", { defaultValue: "Save" })}
+          {isSaving.value
+            ? t("saving", { defaultValue: "Saving…" })
+            : t("save", { defaultValue: "Save" })}
         </button>
       </div>
     </div>
