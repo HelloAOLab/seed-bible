@@ -60,6 +60,27 @@
   box-shadow: 0 0 0 2px var(--sb-reader-background, #fff);
 }
 
+.sb-session-participants-sheet-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.sb-session-participants-sheet-share {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  padding: 0.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sb-session-participants-sheet-share:active {
+  color: var(--sb-primary-color);
+}
+
 /* Participants sheet — reuses the mobile settings sheet shell, adds a roster. */
 .sb-session-participants-list {
   list-style: none;

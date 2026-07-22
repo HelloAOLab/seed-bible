@@ -1,15 +1,16 @@
 import "./shareModal.css";
-import { useSignal } from "@preact/signals";
+import { useComputed } from "@preact/signals";
 import { useEffect } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { AppState } from "../../managers/SeedBibleStateManager";
 import { type BibleReadingSession } from "../../managers/SessionsManager";
-export type ShareScope = "verse" | "chapter";
 
 export interface ShareModalProps {
   /** Called when the sheet should close (Cancel or Escape). */
   onClose?: () => void;
+  /** Copy a shareable link to the clipboard. */
   onShareLink?: () => void;
+  /** Open the device's native share sheet. */
   onShareVia?: () => void;
   app: AppState;
   hideShareLink?: boolean;
@@ -18,7 +19,9 @@ export interface ShareModalProps {
 export const ShareModal = (props: ShareModalProps) => {
   const { t } = useI18n();
 
-  const sessionActive = useSignal(false);
+  const sessionActive = useComputed(
+    () => !!props.app.currentReadingState.value?.tab.sharedSession?.id
+  );
 
   const close = () => props.onClose?.();
 
@@ -32,11 +35,25 @@ export const ShareModal = (props: ShareModalProps) => {
     return () => document.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  useEffect(() => {
-    if (props.app.currentReadingState.value?.tab.sharedSession?.id) {
-      sessionActive.value = true;
+  const canShareVia =
+    typeof navigator !== "undefined" && typeof navigator.share === "function";
+
+  const copySessionLink = async (session: BibleReadingSession) => {
+    try {
+      const url = getSessionUrl(session);
+      await navigator.clipboard.writeText(url.href);
+      props.app.toast(
+        t("link-to-join-shared-session-copied", {
+          defaultValue:
+            "A link to join the shared session was copied to your clipboard",
+        })
+      );
+    } catch (error) {
+      console.error("Failed to copy the shared session link.", error);
+    } finally {
+      props.onClose?.();
     }
-  }, [props.app.currentReadingState.value?.tab.sharedSession?.id]);
+  };
 
   const actions = [
     {
@@ -46,20 +63,21 @@ export const ShareModal = (props: ShareModalProps) => {
       subtitle: t("share-link-subtitle", { defaultValue: "Copy to clipboard" }),
       onClick: () => props.onShareLink?.(),
     },
-    {
-      key: "via",
-      icon: "ios_share",
-      title: t("share-via", { defaultValue: "Share via…" }),
-      subtitle: t("share-via-subtitle", {
-        defaultValue: "Use your device share sheet",
-      }),
-      onClick: () => props.onShareVia?.(),
-    },
+    canShareVia
+      ? {
+          key: "via",
+          icon: "ios_share",
+          title: t("share-via", { defaultValue: "Share via…" }),
+          subtitle: t("share-via-subtitle", {
+            defaultValue: "Use your device share sheet",
+          }),
+          onClick: () => props.onShareVia?.(),
+        }
+      : null,
     sessionActive.value
       ? {
           key: "session",
           icon: "group",
-          active: false,
           title: t("share-current-session", {
             defaultValue: "Share current session",
           }),
@@ -70,21 +88,12 @@ export const ShareModal = (props: ShareModalProps) => {
             const session =
               props.app.currentReadingState.value?.tab.sharedSession;
             if (!session) return;
-            const url = getSessionUrl(session);
-            navigator.clipboard.writeText(url.href);
-            props.app.toast(
-              t("link-to-join-shared-session-copied", {
-                defaultValue:
-                  "A link to join the shared session was copied to your clipboard",
-              })
-            );
-            props.onClose?.();
+            void copySessionLink(session);
           },
         }
       : {
           key: "session",
           icon: "group",
-          active: false,
           title: t("start-share-session", {
             defaultValue: "Start and share session",
           }),
@@ -92,20 +101,19 @@ export const ShareModal = (props: ShareModalProps) => {
             defaultValue: "Invite others to read along live",
           }),
           onClick: async () => {
-            const session = await props.app.createSharedSession();
-            const url = getSessionUrl(session);
-
-            navigator.clipboard.writeText(url.href);
-            props.app.toast(
-              t("link-to-join-shared-session-copied", {
-                defaultValue:
-                  "A link to join the shared session was copied to your clipboard",
-              })
-            );
-            props.onClose?.();
+            try {
+              const session = await props.app.createSharedSession();
+              await copySessionLink(session);
+            } catch (error) {
+              console.error("Failed to start and share a session.", error);
+              props.onClose?.();
+            }
           },
         },
-  ].filter((action) => !(props.hideShareLink && action.key === "link"));
+  ].filter(
+    (action): action is NonNullable<typeof action> =>
+      action !== null && !(props.hideShareLink && action.key === "link")
+  );
 
   return (
     <div className="sb-share">
@@ -114,12 +122,7 @@ export const ShareModal = (props: ShareModalProps) => {
           <button
             key={action.key}
             type="button"
-            className={
-              "sb-share-action" +
-              ("active" in action && action.active
-                ? " sb-share-action--active"
-                : "")
-            }
+            className="sb-share-action"
             onClick={action.onClick}
           >
             <span className="sb-share-action-icon material-symbols-outlined">
@@ -137,10 +140,6 @@ export const ShareModal = (props: ShareModalProps) => {
           </button>
         ))}
       </div>
-
-      <button type="button" className="sb-share-cancel" onClick={close}>
-        {t("cancel", { defaultValue: "Cancel" })}
-      </button>
     </div>
   );
 };

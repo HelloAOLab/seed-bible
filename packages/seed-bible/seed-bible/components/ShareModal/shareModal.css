@@ -37,10 +37,6 @@
   color: var(--sb-primary-color);
 }
 
-.sb-share-action--active .sb-share-action-icon {
-  color: var(--sb-error-color, #d64545);
-}
-
 .sb-share-action-text {
   display: flex;
   flex-direction: column;
@@ -81,28 +77,5 @@
 }
 
 .sb-share-cancel:hover {
-  background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
-}
-
-.sb-share-preview {
-  display: flex;
-  gap: 0.625rem;
-}
-
-.sb-share-preview-button {
-  flex: 1 1 0;
-  padding: 0.625rem 0.5rem;
-  border: 1px solid var(--sb-divider-color);
-  border-radius: 0.625rem;
-  background: transparent;
-  color: var(--sb-font-color);
-  font-family: inherit;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.sb-share-preview-button:hover {
   background: color-mix(in srgb, var(--sb-font-color), transparent 92%);
 }

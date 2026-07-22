@@ -410,13 +410,11 @@
   "share-sheet-title": "Share",
   "share-link": "Share a link",
   "share-link-subtitle": "Copy to clipboard",
-  "share-link-chapter-subtitle": "Copy chapter link to clipboard",
+  "share-link-copied": "Copied!",
   "share-via": "Share via…",
   "share-via-subtitle": "Use your device share sheet",
   "start-share-session": "Start and share session",
   "start-share-session-subtitle": "Invite others to read along live",
   "share-current-session": "Share current session",
-  "share-current-session-subtitle": "Copy a link to invite others to read along live",
-  "preview-toggle-session": "Preview: toggle session",
-  "preview-toggle-verse": "Preview: toggle verse"
+  "share-current-session-subtitle": "Copy a link to invite others to read along live"
 }

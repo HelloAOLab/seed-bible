@@ -21,7 +21,7 @@ import type { AppState } from "./SeedBibleStateManager";
 import type { ReadingPlansManager } from "../managers/ReadingPlansManager";
 import { ReadingPlansPane } from "../components/ReadingPlansPane/ReadingPlansPane";
 import type { PlaylistManager } from "./PlaylistManager";
-import { useI18n } from "../i18n";
+import { i18n, useI18n } from "../i18n";
 import {
   FEATURE_KEY_READING_PLANS,
   type FeaturesManager,
@@ -805,7 +805,9 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
 
         try {
           navigator.clipboard.writeText(verseTexts);
-          context.toast("Copied!");
+          context.toast(
+            i18n.t("share-link-copied", { defaultValue: "Copied!" })
+          );
         } catch (err) {
           console.error("Failed to copy verse:", err);
         }
@@ -838,7 +840,9 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
               onClose={() => modals.closeModal(modalId)}
               onShareLink={() => {
                 navigator.clipboard.writeText(shareUrl.toString());
-                context.toast("Copied!");
+                context.toast(
+                  i18n.t("share-link-copied", { defaultValue: "Copied!" })
+                );
                 modals.closeModal(modalId);
               }}
               onShareVia={() => {
@@ -964,7 +968,12 @@ export function getShareUrl(readingState: BibleReadingState) {
 
   if (readingState.selectedVerses.value.length > 0) {
     const verses = readingState.selectedVerses.value
-      .filter((v) => v.bookId === bookId && v.chapterNumber === chapter)
+      .filter(
+        (v) =>
+          v.bookId === bookId &&
+          v.chapterNumber === chapter &&
+          v.translationId === translation
+      )
       .map((v) => v.verse.number);
     if (verses.length > 0) {
       const formatted = formatVerseSelection(verses);

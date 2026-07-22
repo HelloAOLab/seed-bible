@@ -11,7 +11,11 @@ import {
   getUserSessionRole,
   sessionRoleRank,
 } from "../Avatar/Avatar";
-import { isLocalSessionHost, openSessionSettingsModal } from "../Tabs/Tabs";
+import {
+  isLocalSessionHost,
+  openSessionSettingsModal,
+  openShareSessionModal,
+} from "../Tabs/Tabs";
 import { MaterialIcon } from "../icons";
 
 /** How many avatars the compact stack shows before collapsing into a "+N" chip. */
@@ -124,16 +128,35 @@ export function MobileSessionParticipants({
                     {t("participants", { defaultValue: "Participants" })}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  className="sb-mobile-settings-sheet-close"
-                  onClick={() => {
-                    isSheetOpen.value = false;
-                  }}
-                  aria-label={t("close", { defaultValue: "Close" })}
-                >
-                  <span className="material-symbols-outlined">close</span>
-                </button>
+
+                <div className="sb-session-participants-sheet-actions">
+                  <button
+                    type="button"
+                    className="sb-session-participants-sheet-share"
+                    onClick={() => {
+                      isSheetOpen.value = false;
+                      openShareSessionModal(state, session);
+                    }}
+                    aria-label={t("share-session", {
+                      defaultValue: "Share session",
+                    })}
+                    title={t("share-session", {
+                      defaultValue: "Share session",
+                    })}
+                  >
+                    <span className="material-symbols-outlined">ios_share</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="sb-mobile-settings-sheet-close"
+                    onClick={() => {
+                      isSheetOpen.value = false;
+                    }}
+                    aria-label={t("close", { defaultValue: "Close" })}
+                  >
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                </div>
               </div>
               <ul className="sb-session-participants-list">
                 {sortedUsers.map((user) => {
