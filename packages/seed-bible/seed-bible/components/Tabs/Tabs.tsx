@@ -59,7 +59,6 @@ interface TabsHeaderProps {
   toggleLayoutMenu: () => void;
   closeLayoutMenu: () => void;
   setLayout: (layout: TabSlotLayoutId) => void;
-  createSharedSession: () => void;
 }
 
 interface SettingsProps {
@@ -683,7 +682,6 @@ export function TabsHeader(props: TabsHeaderProps) {
     toggleLayoutMenu,
     closeLayoutMenu,
     setLayout,
-    createSharedSession,
   } = props;
   const { sidebar, settings } = state;
   const isAwake = settings.settings.value.keepScreenAwake;
@@ -778,7 +776,7 @@ export function TabsHeader(props: TabsHeaderProps) {
           >
             <ContextMenuItem
               onClick={() => {
-                createSharedSession();
+                void createSharedSessionAndCopyLink(state, t);
               }}
             >
               <MaterialIcon
@@ -1245,6 +1243,43 @@ function getSessionUrl(session: BibleReadingSession) {
     url.searchParams.set("pattern", pattern);
   }
   return url;
+}
+
+async function createSharedSessionAndCopyLink(
+  state: SeedBibleState,
+  t: ReturnType<typeof useI18n>["t"]
+) {
+  const linkText = state.app
+    .createSharedSession()
+    .then((session) => getSessionUrl(session).href);
+
+  try {
+    if (typeof ClipboardItem !== "undefined") {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/plain": linkText.then(
+            (text) => new Blob([text], { type: "text/plain" })
+          ),
+        }),
+      ]);
+    } else {
+      await navigator.clipboard.writeText(await linkText);
+    }
+    state.app.toast(
+      t("link-to-join-shared-session-copied", {
+        defaultValue:
+          "A link to join the shared session was copied to your clipboard",
+      })
+    );
+  } catch {
+    // Fall back: still surface the link so the session isn't lost if clipboard
+    // access fails (e.g. permission denied after the async session create).
+    try {
+      state.app.toast(await linkText);
+    } catch {
+      // Session creation failed; nothing left to surface.
+    }
+  }
 }
 
 /**
@@ -2202,7 +2237,7 @@ export function Tabs(props: TabsProps) {
                 defaultValue: "New shared session",
               })}
               onClick={() => {
-                void state.app.createSharedSession();
+                void createSharedSessionAndCopyLink(state, t);
               }}
             >
               <MaterialIcon aria-hidden="true">fiber_smart_record</MaterialIcon>
@@ -2486,18 +2521,6 @@ export function Sidebar(props: SidebarProps) {
             setLayout={(layout) => {
               tabsLayout.setLayout(layout);
               closeLayoutMenu();
-            }}
-            createSharedSession={async () => {
-              const session = await state.app.createSharedSession();
-              const url = getSessionUrl(session);
-
-              navigator.clipboard.writeText(url.href);
-              state.app.toast(
-                t("link-to-join-shared-session-copied", {
-                  defaultValue:
-                    "A link to join the shared session was copied to your clipboard",
-                })
-              );
             }}
           />
         )}
