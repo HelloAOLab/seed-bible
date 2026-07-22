@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigace",
   "session-settings-section-sharing": "Sdílení",
   "session-settings-section-participants": "Účastníci",
-
   "shared": "Sdílené",
   "host": "Hostitel",
   "co-host": "Spoluhostitel",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Ukončit relaci",
   "dont-show-again": "Tohle už znovu nezobrazovat",
   "discover": "Objevit",
-
   "playlists": "Seznamy skladeb",
   "annotations": "Anotace",
   "cross-references": "Křížové odkazy",
@@ -364,19 +362,17 @@
   "edit-playlist": "Upravit playlist",
   "remove-playlist-item": "Odebrat položku",
   "edit-playlist-item": "Upravit položku",
+  "drag-to-reorder-playlist-item": "Přetažením změníte pořadí",
   "playlist-add-item": "Přidat položku",
   "playlist-edit-item": "Upravit položku",
   "playlist-save-item": "Uložit změny",
-
   "playlist-add-scripture-placeholder": "např. Jan 3 nebo Jan 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Přidat položku",
   "playlist-add-scripture-error": "Tuto referenci se nepodařilo najít.",
   "playlist-add-link-error": "Zadejte platnou URL adresu",
   "playlist-add-link-embed": "Vložit tento odkaz",
   "play-playlist": "Přehrát playlist",
-
   "stop": "Zastávka",
   "queue": "Fronta",
   "previous": "Předchozí",
@@ -388,7 +384,6 @@
   "editor-align-center": "Zarovnat na střed",
   "editor-align-right": "Zarovnat vpravo",
   "editor-align-justify": "Zarovnat",
-
   "share-playlist": "Sdílet playlist",
   "playlist-url-copied": "URL playlistu zkopírována do schránky",
   "current-playlist": "Aktuální playlist",
@@ -403,5 +398,15 @@
   "delete-playlist-confirm-message": "Smazat „ {{title}} “? Tuto akci nelze vrátit zpět.",
   "delete-playlist-failed": "Seznam skladeb se nepodařilo smazat.",
   "collapsed-tab-shared-label": "{{title}} — sdílená relace, přítomných {{count}}",
-  "playlist-add-mode-label": "Typ položky"
+  "playlist-add-mode-label": "Typ položky",
+  "saving": "Ukládání…",
+  "unsaved-item-confirm-title": "Neuložená položka",
+  "unsaved-item-confirm-message": "Začali jste přidávat položku, která ještě nebyla přidána do playlistu. Co chcete udělat?",
+  "discard-and-save": "Zahodit a uložit",
+  "add-and-save": "Přidat a uložit",
+  "loading-profile": "Načítání vašeho profilu…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Přesunout do kategorie záložek",
+  "move-bookmark": "Přesunout do složky",
+  "move-to-new": "Přesunout do nového"
 }

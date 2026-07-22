@@ -121,6 +121,8 @@ export interface VerseDecoration {
   endIndex?: number;
   /** Optional CSS class to apply to the decorated verse/range. */
   className?: string;
+  /** Optional CSS class to apply to the entire chapter container. */
+  containerClassName?: string;
   /** Optional inline style to apply to the decorated verse/range. */
   style?: JSX.CSSProperties;
   /** Optional delay in milliseconds before this decoration auto-removes itself. */
@@ -141,6 +143,9 @@ export interface VerseDecorationInput {
   endIndex?: number;
   /** Optional CSS class to apply to the decorated verse/range. */
   className?: string;
+  /** Optional CSS class to apply to the entire chapter container. */
+  containerClassName?: string;
+
   /** Optional inline style to apply to the decorated verse/range. */
   style?: JSX.CSSProperties;
   /** Optional delay in milliseconds before this decoration auto-removes itself. */
@@ -289,6 +294,22 @@ export interface BibleReadingState {
 
   /** Loads the next chapter relative to `chapterData` when available. */
   loadNextChapter: () => Promise<void>;
+
+  /**
+   * True when a next chapter is available to navigate to. Reflects the
+   * highest-priority enabled extension's `hasNext` override when one is
+   * provided; otherwise falls back to whether the current chapter has a
+   * `nextChapterApiLink`.
+   */
+  hasNext: ReadonlySignal<boolean>;
+
+  /**
+   * True when a previous chapter is available to navigate to. Reflects the
+   * highest-priority enabled extension's `hasPrevious` override when one is
+   * provided; otherwise falls back to whether the current chapter has a
+   * `previousChapterApiLink`.
+   */
+  hasPrevious: ReadonlySignal<boolean>;
   /** Streaming discovered cross references for the current chapter, grouped by provider. */
   discoveredCrossReferences: ReadonlySignal<
     DiscoverTypedProviderResults<DiscoverCrossReferenceResultWithBookData>[]
@@ -1967,6 +1988,27 @@ export function createBibleReadingState(
     return query;
   };
 
+  // Availability surfaced to consumers: the highest-priority enabled
+  // extension's hasNext/hasPrevious override, falling back to whether the
+  // current chapter has a next/previous chapter link.
+  const hasNext = computed<boolean>(() => {
+    for (const runtime of orderedEnabledRuntimes.value) {
+      if (runtime.instance.hasNext) {
+        return runtime.instance.hasNext.value;
+      }
+    }
+    return !!chapterData.value?.nextChapterApiLink;
+  });
+
+  const hasPrevious = computed<boolean>(() => {
+    for (const runtime of orderedEnabledRuntimes.value) {
+      if (runtime.instance.hasPrevious) {
+        return runtime.instance.hasPrevious.value;
+      }
+    }
+    return !!chapterData.value?.previousChapterApiLink;
+  });
+
   loadInitialData();
 
   readingStateRef = {
@@ -2000,6 +2042,8 @@ export function createBibleReadingState(
     selectChapter,
     loadPreviousChapter,
     loadNextChapter,
+    hasNext,
+    hasPrevious,
     discoveredCrossReferences,
     discoveredContent,
     discoveredStudyNotes,

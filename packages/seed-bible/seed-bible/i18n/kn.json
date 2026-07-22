@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "ಸಂಚರಣೆ",
   "session-settings-section-sharing": "ಹಂಚಿಕೊಳ್ಳುವುದು",
   "session-settings-section-participants": "ಭಾಗವಹಿಸುವವರು",
-
   "shared": "ಹಂಚಿಕೊಳ್ಳಲಾಗಿದೆ",
   "host": "ಹೋಸ್ಟ್",
   "co-host": "ಸಹ-ನಿರೂಪಕ",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "ಅಧಿವೇಶನ ಅಂತ್ಯಗೊಳಿಸಿ",
   "dont-show-again": "ಇದನ್ನು ಮತ್ತೆ ತೋರಿಸಬೇಡಿ",
   "discover": "ಅನ್ವೇಷಿಸಿ",
-
   "playlists": "ಪ್ಲೇಪಟ್ಟಿಗಳು",
   "annotations": "ಟಿಪ್ಪಣಿಗಳು",
   "cross-references": "ಅಡ್ಡ ಉಲ್ಲೇಖಗಳು",
@@ -364,19 +362,17 @@
   "edit-playlist": "ಪ್ಲೇಪಟ್ಟಿಯನ್ನು ಸಂಪಾದಿಸಿ",
   "remove-playlist-item": "ಐಟಂ ತೆಗೆದುಹಾಕಿ",
   "edit-playlist-item": "ಐಟಂ ಸಂಪಾದಿಸಿ",
+  "drag-to-reorder-playlist-item": "ಮರುಕ್ರಮಗೊಳಿಸಲು ಎಳೆಯಿರಿ",
   "playlist-add-item": "ಐಟಂ ಸೇರಿಸಿ",
   "playlist-edit-item": "ಐಟಂ ಸಂಪಾದಿಸಿ",
   "playlist-save-item": "ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಿ",
-
   "playlist-add-scripture-placeholder": "ಉದಾ: ಯೋಹಾನ 3 ಅಥವಾ ಯೋಹಾನ 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "ಐಟಂ ಸೇರಿಸಿ",
   "playlist-add-scripture-error": "ಆ ಉಲ್ಲೇಖ ಸಿಗಲಿಲ್ಲ.",
   "playlist-add-link-error": "ಮಾನ್ಯವಾದ URL ಅನ್ನು ನಮೂದಿಸಿ",
   "playlist-add-link-embed": "ಈ ಲಿಂಕ್ ಅನ್ನು ಎಂಬೆಡ್ ಮಾಡಿ",
   "play-playlist": "ಪ್ಲೇಪಟ್ಟಿ ಪ್ಲೇ ಮಾಡಿ",
-
   "stop": "ನಿಲ್ಲಿಸಿ",
   "queue": "ಸರದಿ",
   "previous": "ಹಿಂದಿನದು",
@@ -388,7 +384,6 @@
   "editor-align-center": "ಮಧ್ಯಕ್ಕೆ ಜೋಡಿಸಿ",
   "editor-align-right": "ಬಲಕ್ಕೆ ಜೋಡಿಸಿ",
   "editor-align-justify": "ಸಮರ್ಥಿಸಿ",
-
   "share-playlist": "ಪ್ಲೇಪಟ್ಟಿ ಹಂಚಿಕೊಳ್ಳಿ",
   "playlist-url-copied": "ಪ್ಲೇಪಟ್ಟಿ URL ಅನ್ನು ಕ್ಲಿಪ್‌ಬೋರ್ಡ್‌ಗೆ ನಕಲಿಸಲಾಗಿದೆ",
   "current-playlist": "ಪ್ರಸ್ತುತ ಪ್ಲೇಪಟ್ಟಿ",
@@ -403,5 +398,15 @@
   "delete-playlist-confirm-message": "\" {{title}} \" ಅನ್ನು ಅಳಿಸುವುದೇ? ಇದನ್ನು ರದ್ದುಗೊಳಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.",
   "delete-playlist-failed": "ಪ್ಲೇಪಟ್ಟಿಯನ್ನು ಅಳಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
   "collapsed-tab-shared-label": "{{title}} — ಹಂಚಿಕೊಂಡ ಅವಧಿ, {{count}} ಪ್ರಸ್ತುತ",
-  "playlist-add-mode-label": "ಐಟಂ ಪ್ರಕಾರ"
+  "playlist-add-mode-label": "ಐಟಂ ಪ್ರಕಾರ",
+  "saving": "ಉಳಿಸಲಾಗುತ್ತಿದೆ…",
+  "unsaved-item-confirm-title": "ಉಳಿಸದ ಐಟಂ",
+  "unsaved-item-confirm-message": "ನೀವು ಇನ್ನೂ ಪ್ಲೇಪಟ್ಟಿಗೆ ಸೇರಿಸದ ಐಟಂ ಅನ್ನು ಸೇರಿಸಲು ಪ್ರಾರಂಭಿಸಿದ್ದೀರಿ. ನೀವು ಏನು ಮಾಡಲು ಬಯಸುತ್ತೀರಿ?",
+  "discard-and-save": "ತಿರಸ್ಕರಿಸಿ ಮತ್ತು ಉಳಿಸಿ",
+  "add-and-save": "ಸೇರಿಸಿ ಮತ್ತು ಉಳಿಸಿ",
+  "loading-profile": "ನಿಮ್ಮ ಪ್ರೊಫೈಲ್ ಲೋಡ್ ಆಗುತ್ತಿದೆ...",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "ಬುಕ್‌ಮಾರ್ಕ್ ವರ್ಗಕ್ಕೆ ಸರಿಸಿ",
+  "move-bookmark": "ಫೋಲ್ಡರ್‌ಗೆ ಸರಿಸಿ",
+  "move-to-new": "ಹೊಸದಕ್ಕೆ ಸರಿಸಿ"
 }

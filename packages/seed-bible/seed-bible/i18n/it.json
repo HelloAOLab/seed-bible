@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigazione",
   "session-settings-section-sharing": "Condivisione",
   "session-settings-section-participants": "Partecipanti",
-
   "shared": "Condiviso",
   "host": "Ospite",
   "co-host": "Co-conduttore",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Fine della sessione",
   "dont-show-again": "Non mostrare più questo contenuto",
   "discover": "Scoprire",
-
   "playlists": "Playlist",
   "annotations": "Annotazioni",
   "cross-references": "Riferimenti incrociati",
@@ -364,19 +362,17 @@
   "edit-playlist": "Modifica playlist",
   "remove-playlist-item": "Rimuovere l'elemento",
   "edit-playlist-item": "Modifica elemento",
+  "drag-to-reorder-playlist-item": "Trascina per riordinare",
   "playlist-add-item": "Aggiungi elemento",
   "playlist-edit-item": "Modifica elemento",
   "playlist-save-item": "Salva le modifiche",
-
   "playlist-add-scripture-placeholder": "ad esempio Giovanni 3 o Giovanni 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Aggiungi elemento",
   "playlist-add-scripture-error": "Non sono riuscito a trovare quel riferimento",
   "playlist-add-link-error": "Inserisci un URL valido",
   "playlist-add-link-embed": "Incorpora questo link",
   "play-playlist": "Riproduci la playlist",
-
   "stop": "Fermare",
   "queue": "Coda",
   "previous": "Precedente",
@@ -388,7 +384,6 @@
   "editor-align-center": "Allinea al centro",
   "editor-align-right": "Allinea a destra",
   "editor-align-justify": "Giustificare",
-
   "share-playlist": "Condividi la playlist",
   "playlist-url-copied": "URL della playlist copiato negli appunti",
   "current-playlist": "Playlist attuale",
@@ -403,5 +398,15 @@
   "delete-playlist-confirm-message": "Eliminare \" {{title}} \"? Questa operazione non può essere annullata.",
   "delete-playlist-failed": "Impossibile eliminare la playlist.",
   "collapsed-tab-shared-label": "{{title}} — sessione condivisa, {{count}} presenti",
-  "playlist-add-mode-label": "Tipo di articolo"
+  "playlist-add-mode-label": "Tipo di articolo",
+  "saving": "Salvataggio…",
+  "unsaved-item-confirm-title": "Elemento non salvato",
+  "unsaved-item-confirm-message": "Hai iniziato ad aggiungere un elemento che non è ancora stato aggiunto alla playlist. Cosa vorresti fare?",
+  "discard-and-save": "Scarta e salva",
+  "add-and-save": "Aggiungi e salva",
+  "loading-profile": "Caricamento del profilo in corso…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Sposta nella categoria segnalibro",
+  "move-bookmark": "Sposta nella cartella",
+  "move-to-new": "Passa a nuovo"
 }

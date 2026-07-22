@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Навигация",
   "session-settings-section-sharing": "Бөлүшүү",
   "session-settings-section-participants": "Катышуучулар",
-
   "shared": "Бөлүшүлгөн",
   "host": "Хост",
   "co-host": "Биргелешип алып баруучу",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Сеансты аяктоо",
   "dont-show-again": "Муну экинчи көрсөтпө",
   "discover": "Ачылыш",
-
   "playlists": "Ойнотмо тизмелер",
   "annotations": "Аннотациялар",
   "cross-references": "Кайчылаш шилтемелер",
@@ -364,19 +362,17 @@
   "edit-playlist": "Ойнотмо тизмени түзөтүү",
   "remove-playlist-item": "Нерсени алып салуу",
   "edit-playlist-item": "Элементти түзөтүү",
+  "drag-to-reorder-playlist-item": "Кайра иреттөө үчүн сүйрөңүз",
   "playlist-add-item": "Нерсе кошуу",
   "playlist-edit-item": "Элементти түзөтүү",
   "playlist-save-item": "Өзгөрүүлөрдү сактоо",
-
   "playlist-add-scripture-placeholder": "мисалы, Жакан 3 же Жакан 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Нерсе кошуу",
   "playlist-add-scripture-error": "Ал шилтемени таба алган жокмун",
   "playlist-add-link-error": "Жарактуу URL дарегин киргизиңиз",
   "playlist-add-link-embed": "Бул шилтемени кыстаруу",
   "play-playlist": "Ойнотмо тизмени ойнотуу",
-
   "stop": "Токтотуу",
   "queue": "Кезек",
   "previous": "Мурунку",
@@ -388,7 +384,6 @@
   "editor-align-center": "Борборго тегиздөө",
   "editor-align-right": "Оңго тегиздөө",
   "editor-align-justify": "Түзөтүү",
-
   "share-playlist": "Ойнотмо тизмени бөлүшүү",
   "playlist-url-copied": "Ойнотмо тизменин URL дареги алмашуу буферине көчүрүлдү",
   "current-playlist": "Учурдагы ойнотмо тизме",
@@ -403,5 +398,15 @@
   "delete-playlist-confirm-message": "\" {{title}} \" жок кылынсынбы? Муну артка кайтаруу мүмкүн эмес.",
   "delete-playlist-failed": "Ойнотмо тизме өчүрүлгөн жок.",
   "collapsed-tab-shared-label": "{{title}} — бөлүшүлгөн сессия, {{count}} катышууда",
-  "playlist-add-mode-label": "Буюмдун түрү"
+  "playlist-add-mode-label": "Буюмдун түрү",
+  "saving": "Сакталууда…",
+  "unsaved-item-confirm-title": "Сакталбаган элемент",
+  "unsaved-item-confirm-message": "Сиз ойнотуу тизмесине азырынча кошулбаган нерсени кошо баштадыңыз. Эмне кылгыңыз келет?",
+  "discard-and-save": "Жокко чыгаруу жана сактоо",
+  "add-and-save": "Кошуу жана сактоо",
+  "loading-profile": "Профилиңиз жүктөлүүдө…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Кыстарма категориясына жылдыруу",
+  "move-bookmark": "Папкага жылдыруу",
+  "move-to-new": "Жаңысына көчүү"
 }

@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "ਨੇਵੀਗੇਸ਼ਨ",
   "session-settings-section-sharing": "ਸਾਂਝਾ ਕਰਨਾ",
   "session-settings-section-participants": "ਭਾਗੀਦਾਰ",
-
   "shared": "ਸਾਂਝਾ ਕੀਤਾ ਗਿਆ",
   "host": "ਮੇਜ਼ਬਾਨ",
   "co-host": "ਸਹਿ-ਮੇਜ਼ਬਾਨ",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "ਸੈਸ਼ਨ ਸਮਾਪਤ ਕਰੋ",
   "dont-show-again": "ਇਸਨੂੰ ਦੁਬਾਰਾ ਨਾ ਦਿਖਾਓ",
   "discover": "ਖੋਜ ਕਰੋ",
-
   "playlists": "ਪਲੇਲਿਸਟਸ",
   "annotations": "ਐਨੋਟੇਸ਼ਨ",
   "cross-references": "ਕ੍ਰਾਸ ਹਵਾਲੇ",
@@ -364,19 +362,17 @@
   "edit-playlist": "ਪਲੇਲਿਸਟ ਸੰਪਾਦਿਤ ਕਰੋ",
   "remove-playlist-item": "ਆਈਟਮ ਹਟਾਓ",
   "edit-playlist-item": "ਆਈਟਮ ਸੰਪਾਦਿਤ ਕਰੋ",
+  "drag-to-reorder-playlist-item": "ਮੁੜ ਕ੍ਰਮਬੱਧ ਕਰਨ ਲਈ ਖਿੱਚੋ",
   "playlist-add-item": "ਆਈਟਮ ਸ਼ਾਮਲ ਕਰੋ",
   "playlist-edit-item": "ਆਈਟਮ ਸੰਪਾਦਿਤ ਕਰੋ",
   "playlist-save-item": "ਬਦਲਾਅ ਸੁਰੱਖਿਅਤ ਕਰੋ",
-
   "playlist-add-scripture-placeholder": "ਜਿਵੇਂ ਕਿ ਯੂਹੰਨਾ 3 ਜਾਂ ਯੂਹੰਨਾ 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "ਆਈਟਮ ਸ਼ਾਮਲ ਕਰੋ",
   "playlist-add-scripture-error": "ਉਹ ਹਵਾਲਾ ਨਹੀਂ ਮਿਲਿਆ",
   "playlist-add-link-error": "ਇੱਕ ਵੈਧ URL ਦਾਖਲ ਕਰੋ",
   "playlist-add-link-embed": "ਇਸ ਲਿੰਕ ਨੂੰ ਏਮਬੈਡ ਕਰੋ",
   "play-playlist": "ਪਲੇਲਿਸਟ ਚਲਾਓ",
-
   "stop": "ਰੂਕੋ",
   "queue": "ਕਤਾਰ",
   "previous": "ਪਿਛਲਾ",
@@ -388,7 +384,6 @@
   "editor-align-center": "ਵਿਚਕਾਰ ਇਕਸਾਰ ਕਰੋ",
   "editor-align-right": "ਸੱਜੇ ਪਾਸੇ ਇਕਸਾਰ ਕਰੋ",
   "editor-align-justify": "ਇਕਸਾਰ ਕਰੋ",
-
   "share-playlist": "ਪਲੇਲਿਸਟ ਸਾਂਝੀ ਕਰੋ",
   "playlist-url-copied": "ਪਲੇਲਿਸਟ URL ਕਲਿੱਪਬੋਰਡ 'ਤੇ ਕਾਪੀ ਕੀਤਾ ਗਿਆ",
   "current-playlist": "ਮੌਜੂਦਾ ਪਲੇਲਿਸਟ",
@@ -403,5 +398,15 @@
   "delete-playlist-confirm-message": "\" {{title}} \" ਮਿਟਾਉਣਾ ਹੈ? ਇਸਨੂੰ ਵਾਪਸ ਨਹੀਂ ਕੀਤਾ ਜਾ ਸਕਦਾ।",
   "delete-playlist-failed": "ਪਲੇਲਿਸਟ ਨੂੰ ਮਿਟਾ ਨਹੀਂ ਸਕਿਆ।",
   "collapsed-tab-shared-label": "{{title}} — ਸਾਂਝਾ ਸੈਸ਼ਨ, {{count}} ਮੌਜੂਦ",
-  "playlist-add-mode-label": "ਆਈਟਮ ਦੀ ਕਿਸਮ"
+  "playlist-add-mode-label": "ਆਈਟਮ ਦੀ ਕਿਸਮ",
+  "saving": "ਸੇਵ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ…",
+  "unsaved-item-confirm-title": "ਨਾ-ਸੇਵ ਕੀਤੀ ਆਈਟਮ",
+  "unsaved-item-confirm-message": "ਤੁਸੀਂ ਇੱਕ ਆਈਟਮ ਜੋੜਨੀ ਸ਼ੁਰੂ ਕੀਤੀ ਹੈ ਜੋ ਅਜੇ ਪਲੇਲਿਸਟ ਵਿੱਚ ਸ਼ਾਮਲ ਨਹੀਂ ਕੀਤੀ ਗਈ। ਤੁਸੀਂ ਕੀ ਕਰਨਾ ਚਾਹੋਗੇ?",
+  "discard-and-save": "ਰੱਦ ਕਰੋ ਅਤੇ ਸੇਵ ਕਰੋ",
+  "add-and-save": "ਸ਼ਾਮਲ ਕਰੋ ਅਤੇ ਸੇਵ ਕਰੋ",
+  "loading-profile": "ਤੁਹਾਡਾ ਪ੍ਰੋਫਾਈਲ ਲੋਡ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "ਬੁੱਕਮਾਰਕ ਸ਼੍ਰੇਣੀ ਵਿੱਚ ਜਾਓ",
+  "move-bookmark": "ਫੋਲਡਰ ਵਿੱਚ ਭੇਜੋ",
+  "move-to-new": "ਨਵੇਂ 'ਤੇ ਜਾਓ"
 }

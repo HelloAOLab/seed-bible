@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigacija",
   "session-settings-section-sharing": "Dijeljenje",
   "session-settings-section-participants": "Učesnici",
-
   "shared": "Dijeljeno",
   "host": "Domaćin",
   "co-host": "Suvoditelj/ica",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Završi sesiju",
   "dont-show-again": "Ne prikazuj ovo više",
   "discover": "Otkrijte",
-
   "playlists": "Plejliste",
   "annotations": "Anotacije",
   "cross-references": "Unakrsne reference",
@@ -364,19 +362,17 @@
   "edit-playlist": "Uredi listu za reprodukciju",
   "remove-playlist-item": "Ukloni stavku",
   "edit-playlist-item": "Uredi stavku",
+  "drag-to-reorder-playlist-item": "Prevucite da promijenite redoslijed",
   "playlist-add-item": "Dodaj stavku",
   "playlist-edit-item": "Uredi stavku",
   "playlist-save-item": "Sačuvaj promjene",
-
   "playlist-add-scripture-placeholder": "npr. Ivan 3 ili Ivan 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Dodaj stavku",
   "playlist-add-scripture-error": "Nisam mogao/la pronaći tu referencu",
   "playlist-add-link-error": "Unesite važeći URL",
   "playlist-add-link-embed": "Ugradi ovaj link",
   "play-playlist": "Reproduciraj listu pjesama",
-
   "stop": "Zaustavi",
   "queue": "Red čekanja",
   "previous": "Prethodno",
@@ -388,7 +384,6 @@
   "editor-align-center": "Poravnaj po sredini",
   "editor-align-right": "Poravnaj desno",
   "editor-align-justify": "Poravnaj",
-
   "share-playlist": "Podijeli listu za reprodukciju",
   "playlist-url-copied": "URL plejliste kopiran u međuspremnik",
   "current-playlist": "Trenutna plejlista",
@@ -403,5 +398,15 @@
   "delete-playlist-confirm-message": "Izbrisati \" {{title}} \"? Ovo se ne može poništiti.",
   "delete-playlist-failed": "Brisanje plejliste nije uspjelo.",
   "collapsed-tab-shared-label": "{{title}} — dijeljena sesija, {{count}} prisutnih",
-  "playlist-add-mode-label": "Vrsta stavke"
+  "playlist-add-mode-label": "Vrsta stavke",
+  "saving": "Spremanje…",
+  "unsaved-item-confirm-title": "Nespremljena stavka",
+  "unsaved-item-confirm-message": "Počeli ste dodavati stavku koja još nije dodana na plejlistu. Šta želite uraditi?",
+  "discard-and-save": "Odbaci i spremi",
+  "add-and-save": "Dodaj i spremi",
+  "loading-profile": "Učitavanje vašeg profila…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Premjesti u kategoriju oznaka",
+  "move-bookmark": "Premjesti u mapu",
+  "move-to-new": "Premjesti na novo"
 }

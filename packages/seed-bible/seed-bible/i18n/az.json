@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Naviqasiya",
   "session-settings-section-sharing": "Paylaşma",
   "session-settings-section-participants": "İştirakçılar",
-
   "shared": "Paylaşılan",
   "host": "Ev sahibi",
   "co-host": "Birgə ev sahibi",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Sessiyanı bitirin",
   "dont-show-again": "Bunu bir daha göstərməyin",
   "discover": "Kəşf edin",
-
   "playlists": "Pleylistlər",
   "annotations": "Annotasiyalar",
   "cross-references": "Çarpaz istinadlar",
@@ -364,19 +362,17 @@
   "edit-playlist": "Pleylisti redaktə edin",
   "remove-playlist-item": "Elementi silin",
   "edit-playlist-item": "Elementi redaktə edin",
+  "drag-to-reorder-playlist-item": "Yenidən sıralamaq üçün sürükləyin",
   "playlist-add-item": "Element əlavə edin",
   "playlist-edit-item": "Elementi redaktə edin",
   "playlist-save-item": "Dəyişiklikləri yadda saxla",
-
   "playlist-add-scripture-placeholder": "məsələn, Yəhya 3 və ya Yəhya 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Element əlavə edin",
   "playlist-add-scripture-error": "Həmin istinadı tapa bilmədim",
   "playlist-add-link-error": "Düzgün URL daxil edin",
   "playlist-add-link-embed": "Bu linki yerləşdirin",
   "play-playlist": "Pleylisti oxut",
-
   "stop": "Dayan",
   "queue": "Növbə",
   "previous": "Əvvəlki",
@@ -388,7 +384,6 @@
   "editor-align-center": "Mərkəzə düzləndirin",
   "editor-align-right": "Sağa düzləndirin",
   "editor-align-justify": "Əsaslandırın",
-
   "share-playlist": "Pleylisti paylaşın",
   "playlist-url-copied": "Pleylist URL-i panoya kopyalandı",
   "current-playlist": "Cari pleylist",
@@ -403,5 +398,15 @@
   "delete-playlist-confirm-message": "\" {{title}} \" silinsin? Bunu geri qaytarmaq mümkün deyil.",
   "delete-playlist-failed": "Pleylist silinə bilmədi.",
   "collapsed-tab-shared-label": "{{title}} — paylaşılan sessiya, {{count}} təqdimat",
-  "playlist-add-mode-label": "Məhsul növü"
+  "playlist-add-mode-label": "Məhsul növü",
+  "saving": "Yadda saxlanılır…",
+  "unsaved-item-confirm-title": "Saxlanılmamış element",
+  "unsaved-item-confirm-message": "Siz siyahıya hələ əlavə edilməmiş bir element daxil etməyə başlamısınız. Nə etmək istəyirsiniz?",
+  "discard-and-save": "Ləğv et və yadda saxla",
+  "add-and-save": "Əlavə et və yadda saxla",
+  "loading-profile": "Profiliniz yüklənir…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Əlfəcin kateqoriyasına keçin",
+  "move-bookmark": "Qovluğa köçürün",
+  "move-to-new": "Yenisinə keçin"
 }

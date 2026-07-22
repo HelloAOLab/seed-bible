@@ -1,29 +1,114 @@
 import "./CreatePlaylistForm.css";
-import { useState } from "preact/hooks";
+import { useRef, useState } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { TabsManager } from "../../managers/TabsManager";
 import type { PlaylistManager } from "../../managers/PlaylistManager";
+import type { ModalManager } from "../../managers/ModalManager";
 import { MaterialIcon } from "../icons";
 import {
   DiscoverSection,
   DiscoverEmpty,
 } from "../DiscoverPane/DiscoverSection";
-import { PlaylistItemInput } from "../PlaylistItemInput/PlaylistItemInput";
+import {
+  PlaylistItemInput,
+  type PlaylistItemInputHandle,
+} from "../PlaylistItemInput/PlaylistItemInput";
 import { playlistItemLabel } from "../playlistItemLabel";
+import { playlistItemIcon } from "../playlistItemIcon";
+import { useDragReorder } from "../useDragReorder";
 
 interface CreatePlaylistFormProps {
   playlists: PlaylistManager;
   tabs: TabsManager;
+  modals: ModalManager;
+}
+
+const UNSAVED_ITEM_CONFIRM_MODAL_ID = "playlist-unsaved-item-confirm";
+
+/**
+ * Confirmation body shown when Save is clicked while the "Add item" section
+ * has in-progress, un-added content, so it isn't silently discarded.
+ */
+function UnsavedItemConfirmModalContent(props: {
+  onGoBack: () => void;
+  onDiscardAndSave: () => void;
+  onAddAndSave: () => void;
+}) {
+  const { onGoBack, onDiscardAndSave, onAddAndSave } = props;
+  const { t } = useI18n();
+
+  return (
+    <div className="sb-confirm-delete">
+      <p className="sb-confirm-delete-message">
+        {t("unsaved-item-confirm-message", {
+          defaultValue:
+            "You've started adding an item that hasn't been added to the playlist yet. What would you like to do?",
+        })}
+      </p>
+      <div className="sb-confirm-delete-actions">
+        <button
+          type="button"
+          className="sb-session-settings-cancel"
+          onClick={onGoBack}
+        >
+          {t("back", { defaultValue: "Back" })}
+        </button>
+        <button
+          type="button"
+          className="sb-session-settings-cancel"
+          onClick={onDiscardAndSave}
+        >
+          {t("discard-and-save", { defaultValue: "Discard and save" })}
+        </button>
+        <button
+          type="button"
+          className="sb-session-settings-end"
+          onClick={onAddAndSave}
+        >
+          {t("add-and-save", { defaultValue: "Add and save" })}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Opens the unsaved-item confirmation modal. */
+function openUnsavedItemConfirm(
+  modals: ModalManager,
+  onDiscardAndSave: () => void,
+  onAddAndSave: () => void
+) {
+  modals.openModal({
+    id: UNSAVED_ITEM_CONFIRM_MODAL_ID,
+    title: {
+      key: "unsaved-item-confirm-title",
+      defaultValue: "Unsaved item",
+    },
+    content: () => (
+      <UnsavedItemConfirmModalContent
+        onGoBack={() => modals.closeModal(UNSAVED_ITEM_CONFIRM_MODAL_ID)}
+        onDiscardAndSave={() => {
+          modals.closeModal(UNSAVED_ITEM_CONFIRM_MODAL_ID);
+          onDiscardAndSave();
+        }}
+        onAddAndSave={() => {
+          modals.closeModal(UNSAVED_ITEM_CONFIRM_MODAL_ID);
+          onAddAndSave();
+        }}
+      />
+    ),
+  });
 }
 
 /** Create-playlist screen shown inside the discover pane. */
 export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
-  const { playlists, tabs } = props;
+  const { playlists, tabs, modals } = props;
   const { t } = useI18n();
   const [saving, setSaving] = useState(false);
   // Index of the item currently open for editing in the input section below, or
   // null when the section is adding a new item.
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const inputRef = useRef<PlaylistItemInputHandle>(null);
 
   // The playlist being edited is owned by the manager; edits update the signal.
   const editing = playlists.editingPlaylist.value;
@@ -43,10 +128,23 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
     return book?.name ?? book?.commonName ?? bookId;
   };
 
-  const handleSave = async () => {
-    if (saving) {
-      return;
-    }
+  const { getRowClassName, getHandleProps } = useDragReorder({
+    itemCount: editing?.items.length ?? 0,
+    onReorder: (from, to) => {
+      playlists.reorderEditingPlaylistItem(from, to);
+      // Keep the edit target pointed at the same logical item, mirroring the
+      // arithmetic `reorderQueue` already applies to `currentIndex`.
+      setEditingIndex((current) => {
+        if (current === null) return null;
+        if (current === from) return to;
+        if (from < current && to >= current) return current - 1;
+        if (from > current && to <= current) return current + 1;
+        return current;
+      });
+    },
+  });
+
+  const doSave = async () => {
     setSaving(true);
     try {
       await playlists.saveEditingPlaylist();
@@ -54,6 +152,32 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
       console.error("Failed to save playlist:", error);
       setSaving(false);
     }
+  };
+
+  const handleSave = () => {
+    if (saving) {
+      return;
+    }
+    // Only guards the "add new item" flow, not being mid-edit of an existing
+    // item — the Add Item section is what silently loses content today.
+    if (editingIndex === null && inputRef.current?.isDirty()) {
+      openUnsavedItemConfirm(
+        modals,
+        () => void doSave(),
+        () => {
+          void (async () => {
+            const added = await inputRef.current?.commit();
+            if (added) {
+              await doSave();
+            }
+            // If commit() failed (e.g. invalid input), leave the user in the
+            // form with their draft and its inline error still visible.
+          })();
+        }
+      );
+      return;
+    }
+    void doSave();
   };
 
   return (
@@ -70,9 +194,20 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
                 key={index}
                 className={
                   "sb-discover-item sb-discover-item--row" +
-                  (index === editingIndex ? " sb-discover-item--editing" : "")
+                  (index === editingIndex ? " sb-discover-item--editing" : "") +
+                  getRowClassName(index)
                 }
               >
+                <button
+                  type="button"
+                  className="sb-discover-item-drag-handle"
+                  aria-label={t("drag-to-reorder-playlist-item", {
+                    defaultValue: "Drag to reorder",
+                  })}
+                  {...getHandleProps(index)}
+                >
+                  <MaterialIcon>drag_indicator</MaterialIcon>
+                </button>
                 <button
                   type="button"
                   className="sb-discover-item-button"
@@ -82,6 +217,9 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
                   aria-current={index === editingIndex}
                   onClick={() => setEditingIndex(index)}
                 >
+                  <MaterialIcon className="sb-discover-item-icon">
+                    {playlistItemIcon(item)}
+                  </MaterialIcon>
                   <span className="sb-discover-item-title" dir="auto">
                     {playlistItemLabel(item, t, resolveBookName)}
                   </span>
@@ -112,6 +250,7 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
       </DiscoverSection>
 
       <PlaylistItemInput
+        ref={inputRef}
         // Remount when the edit target changes so the sub-inputs seed fresh
         // values from the newly-selected item (or reset for adding).
         key={editingItem ? `edit-${editingIndex}` : "add"}
@@ -143,10 +282,12 @@ export function CreatePlaylistForm(props: CreatePlaylistFormProps) {
         <button
           type="button"
           className="sb-settings-save-button"
-          onClick={() => void handleSave()}
+          onClick={handleSave}
           disabled={saving}
         >
-          {t("save", { defaultValue: "Save" })}
+          {saving
+            ? t("saving", { defaultValue: "Saving…" })
+            : t("save", { defaultValue: "Save" })}
         </button>
       </div>
     </div>

@@ -471,7 +471,7 @@ export function createSeedBibleState(
     (!!navigation.currentUrl.value.searchParams.get("sessionId") ||
       !!navigation.currentUrl.value.searchParams.get("playlist"));
 
-  const onboarding = createOnboardingManager(login, openedViaContentLink);
+  const onboarding = createOnboardingManager(login);
 
   // Terms of Service modal. Two-way bound to the `?terms=open` query param so
   // it can be deep-linked: setting the param opens the modal, and closing the
@@ -619,15 +619,96 @@ export function createSeedBibleState(
     panes.closeFullscreenPanes();
   });
 
+  // Whether Today will auto-open over the reader on this cold load — mirrors
+  // the predicate in `today-screen`'s bootstrap (an explicit `?today` param
+  // wins; otherwise it opens unless the boot URL already points somewhere
+  // specific). Read from `initialUrl`, not the live `currentUrl`, for the same
+  // reason today-screen does: TabsManager echoes the reader's book/chapter
+  // into the live URL before extensions finish loading.
+  const initialUrlParams = navigation.initialUrl.searchParams;
+  const todayWillAutoOpen =
+    initialUrlParams.get("today") !== null
+      ? initialUrlParams.get("today") === "open"
+      : !(
+          initialUrlParams.has("book") ||
+          initialUrlParams.has("chapter") ||
+          initialUrlParams.has("verse") ||
+          initialUrlParams.has("sessionId")
+        );
+
+  // Latches true the first time Today's pane is observed open, so the
+  // "about to be covered by Today" window (the gap between the chapter
+  // loading and Today's pane actually opening) doesn't read as reader-visible.
+  const todayHasOpened = signal(false);
+  effect(() => {
+    if (panes.panes.value.some((pane) => pane.id === "today-screen-pane")) {
+      todayHasOpened.value = true;
+    }
+  });
+
+  // The reader is visible when a chapter is loaded, no fullscreen pane covers
+  // it (matching `isFullscreenPaneVisible` in BibleReaderToolbar — on mobile
+  // any open pane covers the reader), and Today isn't about to auto-open over
+  // it for this load.
+  const readerVisible = computed<boolean>(() => {
+    const chapterLoaded =
+      selectedTab.value?.readingState.chapterData.value != null;
+    if (!chapterLoaded) {
+      return false;
+    }
+    const coveredByPane = panes.panes.value.some(
+      (pane) => pane.placement === "fullscreen" || isMobile.value
+    );
+    if (coveredByPane) {
+      return false;
+    }
+    if (todayWillAutoOpen && !todayHasOpened.value) {
+      return false;
+    }
+    return true;
+  });
+
   const tutorial = createTutorialManager(
     login,
-    onboarding,
+    readerVisible,
     selector,
     isMobile,
     panes,
     sidebar,
     openedViaContentLink
   );
+
+  // Once the tutorial has been resolved (seen, skipped, declined, or opted
+  // out) and the reader is visible, offer the install prompt — to any
+  // not-yet-installed user, logged in or not. Deferring past the tutorial
+  // means the profile has had time to load, so there's no "stale prompt"
+  // concern the way there was on startup. One-shot via `installOfferChecked`.
+  let installOfferChecked = false;
+  effect(() => {
+    if (installOfferChecked) {
+      return;
+    }
+    if (openedViaContentLink) {
+      return;
+    }
+    if (login.userId.value && login.profile.value === null) {
+      return;
+    }
+    if (!readerVisible.value) {
+      return;
+    }
+    const tutorialResolved =
+      !tutorial.promptVisible.value &&
+      !tutorial.running.value &&
+      (tutorial.completed.value || tutorial.optedOut.value);
+    if (!tutorialResolved) {
+      return;
+    }
+    installOfferChecked = true;
+    if (onboarding.installAvailable.value) {
+      onboarding.openInstall();
+    }
+  });
 
   // A phone held sideways: landscape orientation with the short viewport
   // height typical of phones. Tablets/desktops in landscape have more
@@ -1207,7 +1288,8 @@ export function createSeedBibleState(
         ? range(ref.verse, ref.endVerse + 1)
         : ref.verse;
       tab.readingState.decorateVerses(ref.book, ref.chapter, verses, {
-        className: "sb-verse-decoration-open-reference-highlight",
+        className: "sb-verse-decoration-diminish",
+        containerClassName: "sb-chapter-decoration-diminish",
         removeAfterMs: 3000,
       });
     }
@@ -1407,8 +1489,11 @@ export function createSeedBibleState(
   const DISCOVER_PANE_ID = "discover-pane";
 
   // view -> pane: open (or refresh, by reusing the id) while a view is set,
-  // close when it clears. Subscribes only to `view`, so the user closing the
-  // pane below doesn't retrigger this.
+  // close when it clears. The pane commands read pane state via peek()
+  // internally (see PanesManager), so this effect does NOT subscribe to
+  // `panes` — closing the pane below (which mutates `panes`) can't retrigger
+  // this effect and re-open the pane mid-update, which would trip preact's
+  // "Cycle detected". The pane -> view effect below clears `view` on close.
   effect(() => {
     if (playlists.view.value) {
       panes.openPane({
@@ -1416,7 +1501,10 @@ export function createSeedBibleState(
         placement: "side",
         title: () => <DiscoverPaneTitle playlists={playlists} />,
         header: () => <DiscoverPaneHeader playlists={playlists} />,
-        onUserClose: () => {
+        onClose: (reason) => {
+          if (reason !== "user") {
+            return;
+          }
           const currentlyPlaying = playlists.playing.value;
           if (currentlyPlaying) {
             playlists.stopPlaying();

@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Навігація",
   "session-settings-section-sharing": "Спільне використання",
   "session-settings-section-participants": "Учасники",
-
   "shared": "Спільний доступ",
   "host": "Хост",
   "co-host": "Співведучий",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Завершити сеанс",
   "dont-show-again": "Не показувати це більше",
   "discover": "Відкрийте",
-
   "playlists": "Списки відтворення",
   "annotations": "Анотації",
   "cross-references": "Перехресні посилання",
@@ -364,19 +362,17 @@
   "edit-playlist": "Редагувати список відтворення",
   "remove-playlist-item": "Видалити елемент",
   "edit-playlist-item": "Редагувати елемент",
+  "drag-to-reorder-playlist-item": "Перетягніть, щоб змінити порядок",
   "playlist-add-item": "Додати елемент",
   "playlist-edit-item": "Редагувати елемент",
   "playlist-save-item": "Зберегти зміни",
-
   "playlist-add-scripture-placeholder": "наприклад, Іван 3 або Іван 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Додати елемент",
   "playlist-add-scripture-error": "Не вдалося знайти це посилання",
   "playlist-add-link-error": "Введіть дійсну URL-адресу",
   "playlist-add-link-embed": "Вбудувати це посилання",
   "play-playlist": "Відтворити список відтворення",
-
   "stop": "СТІЙ",
   "queue": "Черга",
   "previous": "Попередній",
@@ -388,7 +384,6 @@
   "editor-align-center": "Вирівняти по центру",
   "editor-align-right": "Вирівняти по правому краю",
   "editor-align-justify": "Вирівнювання",
-
   "share-playlist": "Поділитися списком відтворення",
   "playlist-url-copied": "URL-адресу списку відтворення скопійовано в буфер обміну",
   "current-playlist": "Поточний плейлист",
@@ -403,5 +398,15 @@
   "delete-playlist-confirm-message": "Видалити \" {{title}} \"? Цю дію не можна скасувати.",
   "delete-playlist-failed": "Не вдалося видалити список відтворення.",
   "collapsed-tab-shared-label": "{{title}} — спільний сеанс, присутніх {{count}}",
-  "playlist-add-mode-label": "Тип елемента"
+  "playlist-add-mode-label": "Тип елемента",
+  "saving": "Збереження…",
+  "unsaved-item-confirm-title": "Незбережений елемент",
+  "unsaved-item-confirm-message": "Ви почали додавати елемент, який ще не додано до плейлиста. Що ви хочете зробити?",
+  "discard-and-save": "Скасувати та зберегти",
+  "add-and-save": "Додати та зберегти",
+  "loading-profile": "Завантаження вашого профілю…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Перейти до категорії закладок",
+  "move-bookmark": "Перемістити до папки",
+  "move-to-new": "Перейти до нового"
 }

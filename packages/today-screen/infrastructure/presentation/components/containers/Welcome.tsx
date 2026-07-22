@@ -1,5 +1,4 @@
 import { useWelcome } from "../../hooks/useWelcome";
-import { SpinnerIcon } from "../ui/SpinnerIcon";
 import { SeedBibleIcon } from "../ui/SeedBibleIcon";
 
 export const Welcome = () => {
@@ -13,8 +12,6 @@ export const Welcome = () => {
     startButtonText,
     startButtonIcon,
     handleStartButtonClick,
-    footerTitle,
-    footerContent,
     seedBibleIconStyle,
   } = useWelcome();
 
@@ -42,11 +39,6 @@ export const Welcome = () => {
           {startButtonText}
           <MaterialIcon>{startButtonIcon}</MaterialIcon>
         </button>
-      </div>
-      <div className={"welcome-screen-footer"}>
-        {<SpinnerIcon style={{ width: "2.25rem", height: "2.25rem" }} />}
-        <h3 className={"welcome-screen-footer-title"}>{footerTitle}</h3>
-        <span className={"welcome-screen-footer-content"}>{footerContent}</span>
       </div>
     </div>
   );

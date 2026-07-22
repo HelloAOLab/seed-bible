@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Điều hướng",
   "session-settings-section-sharing": "Chia sẻ",
   "session-settings-section-participants": "Người tham gia",
-
   "shared": "Chia sẻ",
   "host": "Chủ nhà",
   "co-host": "Đồng chủ trì",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Kết thúc phiên",
   "dont-show-again": "Đừng hiển thị lại cái này nữa",
   "discover": "Phát hiện",
-
   "playlists": "Danh sách phát",
   "annotations": "Chú thích",
   "cross-references": "Tham chiếu chéo",
@@ -364,19 +362,17 @@
   "edit-playlist": "Chỉnh sửa danh sách phát",
   "remove-playlist-item": "Xóa mục",
   "edit-playlist-item": "Chỉnh sửa mục",
+  "drag-to-reorder-playlist-item": "Kéo để sắp xếp lại",
   "playlist-add-item": "Thêm mục",
   "playlist-edit-item": "Chỉnh sửa mục",
   "playlist-save-item": "Lưu thay đổi",
-
   "playlist-add-scripture-placeholder": "ví dụ Giăng 3 hoặc Giăng 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Thêm mục",
   "playlist-add-scripture-error": "Tôi không tìm thấy tài liệu tham khảo đó.",
   "playlist-add-link-error": "Nhập URL hợp lệ",
   "playlist-add-link-embed": "Nhúng liên kết này",
   "play-playlist": "Phát danh sách phát",
-
   "stop": "Dừng lại",
   "queue": "Hàng đợi",
   "previous": "Trước",
@@ -388,7 +384,6 @@
   "editor-align-center": "Căn giữa",
   "editor-align-right": "Căn chỉnh sang phải",
   "editor-align-justify": "Giải thích",
-
   "share-playlist": "Chia sẻ danh sách phát",
   "playlist-url-copied": "URL danh sách phát đã được sao chép vào clipboard",
   "current-playlist": "Danh sách phát hiện tại",
@@ -403,5 +398,15 @@
   "delete-playlist-confirm-message": "Xóa \" {{title}} \"? Thao tác này không thể hoàn tác.",
   "delete-playlist-failed": "Không thể xóa danh sách phát.",
   "collapsed-tab-shared-label": "{{title}} — phiên họp chung, {{count}} người tham dự",
-  "playlist-add-mode-label": "Loại mặt hàng"
+  "playlist-add-mode-label": "Loại mặt hàng",
+  "saving": "Đang lưu…",
+  "unsaved-item-confirm-title": "Mục chưa lưu",
+  "unsaved-item-confirm-message": "Bạn đã bắt đầu thêm một mục chưa được thêm vào danh sách phát. Bạn muốn làm gì?",
+  "discard-and-save": "Bỏ qua và lưu",
+  "add-and-save": "Thêm và lưu",
+  "loading-profile": "Đang tải hồ sơ của bạn…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Chuyển sang danh mục đánh dấu trang",
+  "move-bookmark": "Di chuyển vào thư mục",
+  "move-to-new": "Chuyển đến nơi mới"
 }

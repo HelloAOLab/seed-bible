@@ -407,6 +407,50 @@
   font-size: 1em;
 
   padding-bottom: 8.125rem;
+
+  /* Positioning context + own stacking context so the highlight ribbon layer
+     can sit behind the scripture text (z-index: -1) without slipping behind the
+     page background. */
+  position: relative;
+  isolation: isolate;
+}
+
+/* The highlight ribbons are drawn here, behind the text: an SVG overlay sized to
+   the content box, filled by measured rounded paths (see ChapterContent). Behind
+   the text it can never shift a line or cover a glyph. */
+.sb-highlight-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/* Highlights fade in when they genuinely appear and fade out when removed; run
+   edits (extend/shrink/split/merge) and reflow snap. `fill` transitions so a
+   recolor cross-fades. Keep the duration in sync with RIBBON_FADE_MS in
+   BibleReader.tsx. */
+.sb-highlight-ribbon {
+  opacity: 1;
+  transition:
+    opacity 0.25s ease,
+    fill 0.25s ease;
+}
+
+/* Only genuinely-new ribbons (`-enter`) start transparent and fade in; reshaped
+   runs mount at full opacity. */
+@starting-style {
+  .sb-highlight-ribbon-enter {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-highlight-ribbon {
+    transition: none;
+  }
 }
 
 @media (max-width: 480px) {
@@ -469,6 +513,16 @@
     color 0.2s ease;
 }
 
+/* Wrapper around a highlighted run (one prose run, or one poetry verse). It
+   paints no background itself — the ribbon layer draws the highlight behind the
+   text. `display: contents` means the wrapper adds no box of its own, so it
+   never affects layout; it only carries the readable font color (via
+   `.sb-highlight-<id>`, or an inline color for custom highlights) and the
+   `data-highlight-fill` the layer reads. */
+.sb-highlight {
+  display: contents;
+}
+
 .sb-verse-poetry {
   display: block;
 }
@@ -485,6 +539,8 @@
   border-bottom: var(--sb-selected-verse-border-bottom);
   text-decoration: var(--sb-selected-verse-text-decoration);
   text-decoration-color: var(--sb-selected-verse-text-decoration-color);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.4em;
 }
 
 .sb-verse-number {
@@ -590,6 +646,22 @@
   font-weight: 600;
 }
 
+/* Embedded playlist links/videos want to fill a large portion of the screen
+ * rather than sit in the small default modal box, so grow the shared modal
+ * frame (and let its content area stretch) whenever it's showing one. */
+.sb-footnote-modal:has(.sb-play-playlist-content-embed) {
+  width: min(94vw, 1400px);
+  max-height: min(92dvh, 900px);
+  height: min(92dvh, 900px);
+}
+
+.sb-footnote-modal:has(.sb-play-playlist-content-embed)
+  .sb-footnote-modal-content {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
 /* Mobile: dock the picker modal to the bottom of the screen as a sheet
  * (matches the design spec). The modal frame itself is reused, but the
  * outer overlay aligns it to the bottom and stretches it to full width. */
@@ -608,15 +680,41 @@
   }
 }
 
-.sb-verse-decoration-search-result,
-.sb-verse-decoration-initial-verse-highlight,
-.sb-verse-decoration-open-reference-highlight,
-.sb-verse-decoration-playlist-verse-highlight {
+.sb-verse-decoration-highlight {
   background: color-mix(
     in srgb,
     var(--sb-secondary-color),
-    transparent 28%
+    transparent 20%
   ) !important;
+}
+
+.sb-chapter-decoration-diminish {
+  .sb-verse,
+  .sb-chapter-heading {
+    animation: diminish-in-out 3s ease-in-out;
+  }
+}
+
+@keyframes diminish-in-out {
+  0% {
+    opacity: 1;
+  }
+
+  10%,
+  90% {
+    opacity: 0.4;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+.sb-verse {
+  &:has(.sb-verse-decoration-diminish) {
+    animation: none;
+    opacity: 1;
+  }
 }
 
 .sb-highlight-preview-pill {

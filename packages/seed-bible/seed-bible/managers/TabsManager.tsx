@@ -156,7 +156,8 @@ export function createInitialTabs(
 
   if (highlightedVerses.length > 0) {
     tab.readingState.decorateVerses(bookId, chapter, highlightedVerses, {
-      className: "sb-verse-decoration-initial-verse-highlight",
+      className: "sb-verse-decoration-diminish",
+      containerClassName: "sb-chapter-decoration-diminish",
       removeAfterMs: 5000,
     });
   }
@@ -386,9 +387,16 @@ export function createTabs(
     // change and re-commit, defeating the prescriptive (one-write-per-nav)
     // design.
     untracked(() => {
-      const readingState = selectedTab.peek()?.readingState;
-      const nextQueryParams =
-        readingState?.getUrlQueryParams(navigation.currentUrl.peek()) ?? {};
+      const tab = selectedTab.peek();
+      const nextQueryParams: Record<string, string | null> =
+        tab?.readingState.getUrlQueryParams(navigation.currentUrl.peek()) ?? {};
+
+      // Keep a shared session's id in the URL so a refresh rejoins it (see
+      // `setupInitialSession` in SeedBibleStateManager, which reads this
+      // param back on startup) instead of silently dropping the user.
+      if (tab?.sharedSession) {
+        nextQueryParams.sessionId = tab.sharedSession.id;
+      }
 
       const oldKeys = Object.keys(oldQueryParams);
       const newKeys = Object.keys(nextQueryParams);
