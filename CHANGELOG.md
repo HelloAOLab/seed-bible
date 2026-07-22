@@ -2,6 +2,16 @@
 
 ## TBD
 
+### ✨ Added
+
+### 🔧 Changed
+
+### 🐛 Fixed
+
+### 🗑️ Removed
+
+## v1.2.0 — 2026-07-22
+
 This release rebuilds the verse highlighting system on an SVG layer, smooths the first-run and onboarding experience, expands playlists, and fixes a wide range of chat, pane, context-menu, and mobile issues.
 
 ### ✨ Added
