@@ -38,19 +38,25 @@ export interface DiscordWebhookPayload {
   allowed_mentions: { parse: string[] };
 }
 
+// Appended directly to the cut text (no separating space/newline) when notes
+// are truncated, so a mid-sentence cutoff reads as clearly intentional rather
+// than looking like a rendering bug.
+const TRUNCATION_ELLIPSIS = "…";
+
 /**
  * Builds the webhook payload for a release announcement: an embed titled with
  * the version and linked to the site, whose description is the release notes
- * (truncated to fit Discord's limit) followed by a direct link to the site.
+ * (truncated to fit Discord's limit, with an ellipsis marking the cutoff)
+ * followed by a direct link to the site.
  */
 export function buildReleaseEmbed(
   options: DiscordReleaseOptions
 ): DiscordWebhookPayload {
   const siteLink = `**[Open Seed Bible →](${options.siteUrl})**`;
   const footer = `\n\n${siteLink}`;
-  const truncNotice = options.releaseUrl
-    ? `\n\n… [read the full release notes](${options.releaseUrl})`
-    : "\n\n…";
+  const readMoreLine = options.releaseUrl
+    ? `\n\n[read the full release notes](${options.releaseUrl})`
+    : "";
 
   const notes = options.notes.trim();
   let description: string;
@@ -58,8 +64,12 @@ export function buildReleaseEmbed(
     description = `${notes}${footer}`;
   } else {
     const budget =
-      DISCORD_DESCRIPTION_LIMIT - footer.length - truncNotice.length;
-    description = `${notes.slice(0, budget).trimEnd()}${truncNotice}${footer}`;
+      DISCORD_DESCRIPTION_LIMIT -
+      footer.length -
+      readMoreLine.length -
+      TRUNCATION_ELLIPSIS.length;
+    const truncated = notes.slice(0, budget).trimEnd();
+    description = `${truncated}${TRUNCATION_ELLIPSIS}${readMoreLine}${footer}`;
   }
 
   return {

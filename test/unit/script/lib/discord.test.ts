@@ -45,6 +45,29 @@ describe("buildReleaseEmbed", () => {
     expect(description).toContain("https://seedbible.org");
   });
 
+  it("appends an ellipsis directly to the cut text to mark an intentional truncation", () => {
+    const notes = "x".repeat(DISCORD_DESCRIPTION_LIMIT * 2);
+    const payload = buildReleaseEmbed({ ...BASE, notes });
+    const description = payload.embeds[0]?.description ?? "";
+    // The ellipsis sits immediately after the last kept "x" — no separating
+    // space or newline — so the cutoff reads as intentional, not a glitch.
+    expect(description).toContain("xx…");
+    expect(description).not.toMatch(/x\s+…/);
+  });
+
+  it("truncates without a releaseUrl by still marking the cutoff with an ellipsis", () => {
+    const notes = "x".repeat(DISCORD_DESCRIPTION_LIMIT * 2);
+    const payload = buildReleaseEmbed({
+      version: BASE.version,
+      siteUrl: BASE.siteUrl,
+      notes,
+    });
+    const description = payload.embeds[0]?.description ?? "";
+    expect(description.length).toBeLessThanOrEqual(DISCORD_DESCRIPTION_LIMIT);
+    expect(description).toContain("xx…");
+    expect(description).not.toContain("read the full release notes");
+  });
+
   it("does not truncate notes that already fit", () => {
     const payload = buildReleaseEmbed({ ...BASE, notes: "Short and sweet." });
     const description = payload.embeds[0]?.description ?? "";
