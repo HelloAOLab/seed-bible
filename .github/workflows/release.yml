@@ -1,14 +1,21 @@
 # Release
 #
 # Publishes a GitHub Release when a version-bumped commit lands on `main`
-# (normally via a develop -> main merge). Deployment to prod.seedbible.org is
-# handled separately by cd.yml; this workflow only tags the commit and creates
-# the Release, using the version already bumped on develop
-# (packages/seed-bible/package.json) and the CHANGELOG section already stamped
-# there by `pnpm release:prepare`.
+# (normally via a develop -> main merge), using the version already bumped on
+# develop (packages/seed-bible/package.json) and the CHANGELOG section already
+# stamped there by `pnpm release:prepare`.
+#
+# Triggered by `workflow_run` off cd.yml ("Continuous Deployment") rather than
+# `push`, and gated on that run's conclusion being "success" — NOT on push
+# directly. Both workflows used to trigger independently on the same push, so
+# this one (checkout + a version check + a changelog read) regularly finished
+# — and posted the Discord announcement — before cd.yml's much longer
+# lint/test/build/S3-deploy had actually landed the release on
+# prod.seedbible.org. Gating on cd.yml's completion means we only ever
+# announce a release that is confirmed live.
 #
 # It is idempotent: if a release for the current version already exists, it does
-# nothing — so a push to `main` that didn't bump the version (e.g. a hotfix)
+# nothing — so a deploy that didn't bump the version (e.g. a hotfix) still
 # deploys but creates no release, and re-runs never duplicate one.
 #
 # It is also tolerant of an unstamped CHANGELOG: if `main`'s version has no
@@ -16,10 +23,20 @@
 # `pnpm release:prepare` on develop first), the job logs a warning and skips
 # the release rather than failing — a missed release shouldn't put a red X on
 # the protected branch.
+#
+# NOTE: this repo's GitHub-configured default branch is `develop`, not `main`.
+# `workflow_run` always registers its listener — and reads which jobs/steps to
+# run — from the copy of THIS FILE on the default branch, not from whichever
+# branch the triggering run happened on. That's harmless given the normal
+# develop -> main flow (this file reaches develop before it ever reaches
+# main), but it means testing changes to this workflow purely on a feature
+# branch, without going through develop first, will not behave as expected.
 name: Release
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Continuous Deployment"]
+    types: [completed]
     branches: [main]
 
 concurrency:
@@ -31,11 +48,21 @@ permissions:
 
 jobs:
   release:
+    # Only run after a successful prod deploy — never for a failed/cancelled
+    # cd.yml run, and (via the trigger's `branches: [main]` filter above)
+    # never for cd.yml runs on other branches.
+    if: github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # cd.yml's own $GITHUB_SHA would be *this* workflow's ref, not the
+      # commit that was actually deployed — always use the triggering run's
+      # head SHA instead.
+      RELEASE_SHA: ${{ github.event.workflow_run.head_sha }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_SHA }}
 
       - name: Use Node.js 24.x
         uses: actions/setup-node@v4
@@ -104,9 +131,11 @@ jobs:
             exit "$EXIT_CODE"
           fi
 
-      # gh creates the tag `v<version>` at this commit (= the commit cd.yml
-      # deploys) and the Release in one call. A pre-release suffix (e.g.
-      # 1.2.0-rc.1) marks the Release as a pre-release.
+      # gh creates the tag `v<version>` at the deployed commit (RELEASE_SHA —
+      # NOT $GITHUB_SHA, which in a workflow_run-triggered job is unrelated to
+      # the commit that was actually deployed) and the Release in one call. A
+      # pre-release suffix (e.g. 1.2.0-rc.1) marks the Release as a
+      # pre-release.
       - name: Create GitHub Release + tag
         if: steps.check.outputs.should_release == 'true' && steps.extract.outputs.notes_available == 'true'
         env:
@@ -117,7 +146,7 @@ jobs:
           gh release create "v$VERSION" \
             --title "v$VERSION" \
             --notes-file notes.md \
-            --target "$GITHUB_SHA" \
+            --target "$RELEASE_SHA" \
             $PRERELEASE
           echo "Published release **v$VERSION**." >> "$GITHUB_STEP_SUMMARY"
 
