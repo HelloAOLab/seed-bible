@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "নেভিগেশন",
   "session-settings-section-sharing": "শেয়ারিং",
   "session-settings-section-participants": "অংশগ্রহণকারীরা",
-
   "shared": "শেয়ার করা",
   "host": "হোস্ট",
   "co-host": "সহ-উপস্থাপক",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "অধিবেশন শেষ করুন",
   "dont-show-again": "এটা আবার দেখাবেন না",
   "discover": "আবিষ্কার করুন",
-
   "playlists": "প্লেলিস্ট",
   "annotations": "টীকা",
   "cross-references": "ক্রস রেফারেন্স",
@@ -368,16 +366,13 @@
   "playlist-add-item": "আইটেম যোগ করুন",
   "playlist-edit-item": "আইটেম সম্পাদনা করুন",
   "playlist-save-item": "পরিবর্তনগুলি সংরক্ষণ করুন",
-
   "playlist-add-scripture-placeholder": "যেমন যোহন ৩ বা যোহন ৩:১৬",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "আইটেম যোগ করুন",
   "playlist-add-scripture-error": "সেই তথ্যসূত্রটি খুঁজে পাওয়া যায়নি।",
   "playlist-add-link-error": "একটি বৈধ URL লিখুন",
   "playlist-add-link-embed": "এই লিঙ্কটি এমবেড করুন",
   "play-playlist": "প্লেলিস্ট চালান",
-
   "stop": "থামুন",
   "queue": "সারি",
   "previous": "পূর্ববর্তী",
@@ -389,7 +384,6 @@
   "editor-align-center": "কেন্দ্র সারিবদ্ধ করুন",
   "editor-align-right": "ডানদিকে সারিবদ্ধ করুন",
   "editor-align-justify": "ন্যায্যতা প্রমাণ করুন",
-
   "share-playlist": "প্লেলিস্ট শেয়ার করুন",
   "playlist-url-copied": "প্লেলিস্ট ইউআরএল ক্লিপবোর্ডে কপি করা হয়েছে",
   "current-playlist": "বর্তমান প্লেলিস্ট",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "অসংরক্ষিত আইটেম",
   "unsaved-item-confirm-message": "আপনি একটি আইটেম যোগ করা শুরু করেছেন যা এখনও প্লেলিস্টে যোগ করা হয়নি। আপনি কী করতে চান?",
   "discard-and-save": "বাতিল করুন এবং সংরক্ষণ করুন",
-  "add-and-save": "যোগ করুন এবং সংরক্ষণ করুন"
+  "add-and-save": "যোগ করুন এবং সংরক্ষণ করুন",
+  "loading-profile": "আপনার প্রোফাইল লোড হচ্ছে…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "বুকমার্ক বিভাগে যান",
+  "move-bookmark": "ফোল্ডারে সরান",
+  "move-to-new": "নতুন জায়গায় চলে যান"
 }

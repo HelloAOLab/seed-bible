@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "ناوبری",
   "session-settings-section-sharing": "اشتراک‌گذاری",
   "session-settings-section-participants": "شرکت‌کنندگان",
-
   "shared": "اشتراکی",
   "host": "میزبان",
   "co-host": "میزبان مشترک",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "پایان جلسه",
   "dont-show-again": "اینو دیگه نشون نده",
   "discover": "کشف کنید",
-
   "playlists": "لیست‌های پخش",
   "annotations": "حاشیه‌نویسی‌ها",
   "cross-references": "ارجاعات متقابل",
@@ -368,16 +366,13 @@
   "playlist-add-item": "اضافه کردن آیتم",
   "playlist-edit-item": "ویرایش مورد",
   "playlist-save-item": "ذخیره تغییرات",
-
   "playlist-add-scripture-placeholder": "مثلاً یوحنا ۳ یا یوحنا ۳:۱۶",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "اضافه کردن آیتم",
   "playlist-add-scripture-error": "آن مرجع را پیدا نکردم",
   "playlist-add-link-error": "یک URL معتبر وارد کنید",
   "playlist-add-link-embed": "این لینک را جاسازی کنید",
   "play-playlist": "پخش لیست پخش",
-
   "stop": "توقف",
   "queue": "صف",
   "previous": "قبلی",
@@ -389,7 +384,6 @@
   "editor-align-center": "مرکز را تراز کنید",
   "editor-align-right": "ترازبندی از راست",
   "editor-align-justify": "توجیه کردن",
-
   "share-playlist": "اشتراک‌گذاری لیست پخش",
   "playlist-url-copied": "آدرس اینترنتی لیست پخش در کلیپ‌بورد کپی شد",
   "current-playlist": "لیست پخش فعلی",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "مورد ذخیره‌نشده",
   "unsaved-item-confirm-message": "شما شروع به افزودن موردی کرده‌اید که هنوز به فهرست پخش اضافه نشده است. می‌خواهید چه کار کنید؟",
   "discard-and-save": "نادیده گرفتن و ذخیره",
-  "add-and-save": "افزودن و ذخیره"
+  "add-and-save": "افزودن و ذخیره",
+  "loading-profile": "در حال بارگذاری پروفایل شما…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "انتقال به دسته بندی نشانه گذاری شده",
+  "move-bookmark": "انتقال به پوشه",
+  "move-to-new": "انتقال به جدید"
 }

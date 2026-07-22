@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "ملاحة",
   "session-settings-section-sharing": "مشاركة",
   "session-settings-section-participants": "مشاركون",
-
   "shared": "مشترك",
   "host": "يستضيف",
   "co-host": "مقدم مشارك",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "إنهاء الجلسة",
   "dont-show-again": "لا تعرض هذا مرة أخرى",
   "discover": "يكتشف",
-
   "playlists": "قوائم التشغيل",
   "annotations": "التعليقات التوضيحية",
   "cross-references": "المراجع المتقاطعة",
@@ -368,16 +366,13 @@
   "playlist-add-item": "إضافة عنصر",
   "playlist-edit-item": "تعديل العناصر",
   "playlist-save-item": "حفظ التغييرات",
-
   "playlist-add-scripture-placeholder": "مثال: يوحنا 3 أو يوحنا 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "إضافة عنصر",
   "playlist-add-scripture-error": "لم أجد تلك الإشارة",
   "playlist-add-link-error": "أدخل عنوان URL صالحًا",
   "playlist-add-link-embed": "قم بتضمين هذا الرابط",
   "play-playlist": "تشغيل قائمة التشغيل",
-
   "stop": "قف",
   "queue": "طابور",
   "previous": "سابق",
@@ -389,7 +384,6 @@
   "editor-align-center": "محاذاة المركز",
   "editor-align-right": "محاذاة إلى اليمين",
   "editor-align-justify": "يبرر",
-
   "share-playlist": "مشاركة قائمة التشغيل",
   "playlist-url-copied": "تم نسخ رابط قائمة التشغيل إلى الحافظة",
   "current-playlist": "قائمة التشغيل الحالية",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "عنصر غير محفوظ",
   "unsaved-item-confirm-message": "لقد بدأت في إضافة عنصر لم تتم إضافته بعد إلى قائمة التشغيل. ماذا تريد أن تفعل؟",
   "discard-and-save": "تجاهل وحفظ",
-  "add-and-save": "إضافة وحفظ"
+  "add-and-save": "إضافة وحفظ",
+  "loading-profile": "جارٍ تحميل ملفك الشخصي…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "نقل إلى فئة الإشارات المرجعية",
+  "move-bookmark": "نقل إلى المجلد",
+  "move-to-new": "الانتقال إلى جديد"
 }

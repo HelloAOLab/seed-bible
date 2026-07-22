@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigeerimine",
   "session-settings-section-sharing": "Jagamine",
   "session-settings-section-participants": "Osalejad",
-
   "shared": "Jagatud",
   "host": "Host",
   "co-host": "Kaasvõõrustaja",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Lõpeta seanss",
   "dont-show-again": "Ära seda enam näita",
   "discover": "Avasta",
-
   "playlists": "Esitusloendid",
   "annotations": "Märkused",
   "cross-references": "Ristviited",
@@ -368,16 +366,13 @@
   "playlist-add-item": "Lisa üksus",
   "playlist-edit-item": "Redigeeri üksust",
   "playlist-save-item": "Salvesta muudatused",
-
   "playlist-add-scripture-placeholder": "nt Johannese 3 või Johannese 3:16",
-
   "playlist-add-link-placeholder": "https://näide.com",
   "playlist-add-button": "Lisa üksus",
   "playlist-add-scripture-error": "Seda viidet ei leitud",
   "playlist-add-link-error": "Sisestage kehtiv URL",
   "playlist-add-link-embed": "Manusta see link",
   "play-playlist": "Esita esitusloend",
-
   "stop": "Stopp",
   "queue": "Järjekord",
   "previous": "Eelmine",
@@ -389,7 +384,6 @@
   "editor-align-center": "Joonda keskele",
   "editor-align-right": "Joonda paremale",
   "editor-align-justify": "Joonda",
-
   "share-playlist": "Jaga esitusloendit",
   "playlist-url-copied": "Esitusloendi URL kopeeriti lõikelauale",
   "current-playlist": "Praegune esitusloend",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "Salvestamata üksus",
   "unsaved-item-confirm-message": "Oled hakanud lisama üksust, mida pole veel esitusloendisse lisatud. Mida soovid teha?",
   "discard-and-save": "Loobu ja salvesta",
-  "add-and-save": "Lisa ja salvesta"
+  "add-and-save": "Lisa ja salvesta",
+  "loading-profile": "Profiili laadimine…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Liigu järjehoidjate kategooriasse",
+  "move-bookmark": "Teisalda kausta",
+  "move-to-new": "Kolimine uude"
 }

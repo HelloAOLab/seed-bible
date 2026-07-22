@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "การนำทาง",
   "session-settings-section-sharing": "การแบ่งปัน",
   "session-settings-section-participants": "ผู้เข้าร่วม",
-
   "shared": "แชร์",
   "host": "เจ้าภาพ",
   "co-host": "พิธีกรร่วม",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "สิ้นสุดการประชุม",
   "dont-show-again": "อย่าแสดงสิ่งนี้อีก",
   "discover": "ค้นพบ",
-
   "playlists": "เพลย์ลิสต์",
   "annotations": "คำอธิบายประกอบ",
   "cross-references": "การอ้างอิงโยง",
@@ -368,16 +366,13 @@
   "playlist-add-item": "เพิ่มรายการ",
   "playlist-edit-item": "แก้ไขรายการ",
   "playlist-save-item": "บันทึกการเปลี่ยนแปลง",
-
   "playlist-add-scripture-placeholder": "เช่น ยอห์น 3 หรือ ยอห์น 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "เพิ่มรายการ",
   "playlist-add-scripture-error": "ไม่พบข้อมูลอ้างอิงนั้น",
   "playlist-add-link-error": "ป้อน URL ที่ถูกต้อง",
   "playlist-add-link-embed": "ฝังลิงก์นี้",
   "play-playlist": "เล่นเพลย์ลิสต์",
-
   "stop": "หยุด",
   "queue": "คิว",
   "previous": "ก่อนหน้า",
@@ -389,7 +384,6 @@
   "editor-align-center": "จัดแนวให้อยู่ตรงกลาง",
   "editor-align-right": "จัดชิดขวา",
   "editor-align-justify": "พิสูจน์",
-
   "share-playlist": "แชร์เพลย์ลิสต์",
   "playlist-url-copied": "คัดลอก URL ของเพลย์ลิสต์ไปยังคลิปบอร์ดแล้ว",
   "current-playlist": "เพลย์ลิสต์ปัจจุบัน",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "รายการที่ยังไม่ได้บันทึก",
   "unsaved-item-confirm-message": "คุณเริ่มเพิ่มรายการที่ยังไม่ได้เพิ่มลงในเพลย์ลิสต์ คุณต้องการทำอะไร?",
   "discard-and-save": "ละทิ้งและบันทึก",
-  "add-and-save": "เพิ่มและบันทึก"
+  "add-and-save": "เพิ่มและบันทึก",
+  "loading-profile": "กำลังโหลดโปรไฟล์ของคุณ…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "ย้ายไปยังหมวดหมู่บุ๊กมาร์ก",
+  "move-bookmark": "ย้ายไปยังโฟลเดอร์",
+  "move-to-new": "ย้ายไปยังที่ใหม่"
 }

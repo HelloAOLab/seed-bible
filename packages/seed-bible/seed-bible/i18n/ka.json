@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "ნავიგაცია",
   "session-settings-section-sharing": "გაზიარება",
   "session-settings-section-participants": "მონაწილეები",
-
   "shared": "გაზიარებული",
   "host": "მასპინძელი",
   "co-host": "თანამასპინძელი",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "სესიის დასრულება",
   "dont-show-again": "ეს აღარ აჩვენო",
   "discover": "აღმოაჩინეთ",
-
   "playlists": "დასაკრავი სიები",
   "annotations": "ანოტაციები",
   "cross-references": "ჯვარედინი მითითებები",
@@ -368,16 +366,13 @@
   "playlist-add-item": "ნივთის დამატება",
   "playlist-edit-item": "ელემენტის რედაქტირება",
   "playlist-save-item": "ცვლილებების შენახვა",
-
   "playlist-add-scripture-placeholder": "მაგ. იოანე 3 ან იოანე 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "ნივთის დამატება",
   "playlist-add-scripture-error": "ეს მითითება ვერ მოიძებნა",
   "playlist-add-link-error": "შეიყვანეთ სწორი URL",
   "playlist-add-link-embed": "ამ ბმულის ჩასმა",
   "play-playlist": "დასაკრავი სიის დაკვრა დასაკრავი სიის დაკვრით",
-
   "stop": "გაჩერება",
   "queue": "რიგი",
   "previous": "წინა",
@@ -389,7 +384,6 @@
   "editor-align-center": "ცენტრში გასწორება",
   "editor-align-right": "მარჯვნივ გასწორება",
   "editor-align-justify": "გასწორება",
-
   "share-playlist": "დასაკრავი სიის გაზიარება დასაკრავი სიის გაზიარებით",
   "playlist-url-copied": "დასაკრავი სიის URL კოპირებულია ბუფერში",
   "current-playlist": "მიმდინარე დასაკრავი სია მიმდინარე დასაკრავი სიიდან.",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "შეუნახავი ერთეული",
   "unsaved-item-confirm-message": "თქვენ დაიწყეთ ისეთი ერთეულის დამატება, რომელიც ჯერ არ დამატებულა პლეილისტში. რა გსურთ გააკეთოთ?",
   "discard-and-save": "გაუქმება და შენახვა",
-  "add-and-save": "დამატება და შენახვა"
+  "add-and-save": "დამატება და შენახვა",
+  "loading-profile": "თქვენი პროფილი იტვირთება…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "სანიშნეების კატეგორიაში გადატანა",
+  "move-bookmark": "საქაღალდეში გადატანა",
+  "move-to-new": "ახალზე გადასვლა"
 }

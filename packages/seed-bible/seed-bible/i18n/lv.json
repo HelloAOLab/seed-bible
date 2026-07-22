@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigācija",
   "session-settings-section-sharing": "Kopīgošana",
   "session-settings-section-participants": "Dalībnieki",
-
   "shared": "Kopīgots",
   "host": "Uzņēmējs",
   "co-host": "Līdzsaimnieks",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Beigt sesiju",
   "dont-show-again": "Nerādīt šo vairs",
   "discover": "Atklājiet",
-
   "playlists": "Atskaņošanas saraksti",
   "annotations": "Anotācijas",
   "cross-references": "Savstarpējās atsauces",
@@ -368,16 +366,13 @@
   "playlist-add-item": "Pievienot vienumu",
   "playlist-edit-item": "Rediģēt vienumu",
   "playlist-save-item": "Saglabāt izmaiņas",
-
   "playlist-add-scripture-placeholder": "piemēram, Jāņa 3 vai Jāņa 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Pievienot vienumu",
   "playlist-add-scripture-error": "Nevarēju atrast šo atsauci",
   "playlist-add-link-error": "Ievadiet derīgu URL",
   "playlist-add-link-embed": "Iegult šo saiti",
   "play-playlist": "Atskaņot atskaņošanas sarakstu",
-
   "stop": "Apstāties",
   "queue": "Rinda",
   "previous": "Iepriekšējais",
@@ -389,7 +384,6 @@
   "editor-align-center": "Izlīdzināt centrā",
   "editor-align-right": "Izlīdzināt pa labi",
   "editor-align-justify": "Izlīdzināt",
-
   "share-playlist": "Kopīgot atskaņošanas sarakstu",
   "playlist-url-copied": "Atskaņošanas saraksta URL kopēts starpliktuvē",
   "current-playlist": "Pašreizējais atskaņošanas saraksts",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "Nesaglabāts vienums",
   "unsaved-item-confirm-message": "Jūs sākāt pievienot vienumu, kas vēl nav pievienots atskaņošanas sarakstam. Ko vēlaties darīt?",
   "discard-and-save": "Atmest un saglabāt",
-  "add-and-save": "Pievienot un saglabāt"
+  "add-and-save": "Pievienot un saglabāt",
+  "loading-profile": "Notiek jūsu profila ielāde…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Pārvietot uz grāmatzīmju kategoriju",
+  "move-bookmark": "Pārvietot uz mapi",
+  "move-to-new": "Pārvietot uz jaunu"
 }

@@ -67,7 +67,8 @@
       "None": "Geen",
       "title": "Vandag se skerm",
       "description": "Gepersonaliseerde daaglikse tuisskerm vir die leser: tydgebaseerde groet, kortpad vir die lees van CV's, boekmerke, verssoektog, 'n gemeenskapspaneel met regstreekse sessies en ander lesers se aktiwiteit, 'n tydlyn vir leesgeskiedenis en hoofstukaanbevelings.",
-      "today": "Vandag"
+      "today": "Vandag",
+      "resume-reading-loading": "Laai jou leesgeskiedenis…"
     },
     "am": {
       "everything-begins-small": "ሁሉም ነገር የሚጀምረው በትንሽ መጠን ነው።",
@@ -101,7 +102,8 @@
       "None": "ምንም",
       "title": "የዛሬው ማያ ገጽ",
       "description": "ለአንባቢው የግል ዕለታዊ የመነሻ ማያ ገጽ፡- በጊዜ ላይ የተመሠረተ ሰላምታ፣ የሪዚሜ ንባብ አቋራጭ፣ ዕልባቶች፣ የቅኔ ፍለጋ፣ የቀጥታ ክፍለ ጊዜዎች እና የሌሎች አንባቢዎች እንቅስቃሴ ያለው የማህበረሰብ ፓነል፣ የንባብ-ታሪክ የጊዜ መስመር እና የምዕራፍ ምክሮች።",
-      "today": "ዛሬ"
+      "today": "ዛሬ",
+      "resume-reading-loading": "የንባብ ታሪክዎን በመጫን ላይ…"
     },
     "ar": {
       "everything-begins-small": "كل شيء يبدأ صغيراً.",
@@ -135,7 +137,8 @@
       "description": "شاشة رئيسية يومية مخصصة للقارئ: تحية تعتمد على الوقت، اختصار لاستئناف القراءة، إشارات مرجعية، بحث عن الآيات، لوحة مجتمعية مع جلسات مباشرة ونشاط القراء الآخرين، جدول زمني لتاريخ القراءة، وتوصيات للفصول.",
       "Custom": "مخصص",
       "None": "لا أحد",
-      "today": "اليوم"
+      "today": "اليوم",
+      "resume-reading-loading": "جارٍ تحميل سجل القراءة الخاص بك…"
     },
     "az": {
       "everything-begins-small": "Hər şey kiçikdən başlayır.",
@@ -169,7 +172,8 @@
       "None": "Heç biri",
       "title": "Bugünkü ekran",
       "description": "Oxucu üçün fərdiləşdirilmiş gündəlik ana ekran: vaxta əsaslanan salamlama, CV oxumaq üçün qısa yol, əlfəcinlər, ayə axtarışı, canlı sessiyalar və digər oxucuların fəaliyyəti ilə icma paneli, oxu tarixi xronologiyası və fəsil tövsiyələri.",
-      "today": "Bu gün"
+      "today": "Bu gün",
+      "resume-reading-loading": "Oxu tarixçəniz yüklənir..."
     },
     "be": {
       "everything-begins-small": "Усё пачынаецца з малога.",
@@ -203,7 +207,8 @@
       "None": "Няма",
       "title": "Экран сёння",
       "description": "Персаналізаваны штодзённы галоўны экран для чытача: прывітанне з улікам часу, хуткі доступ да чытання па спасылцы, закладкі, пошук вершаў, панэль супольнасці з жывымі сесіямі і актыўнасцю іншых чытачоў, храналогія гісторыі чытання і рэкамендацыі па раздзелах.",
-      "today": "Сёння"
+      "today": "Сёння",
+      "resume-reading-loading": "Загрузка гісторыі чытання…"
     },
     "bg": {
       "everything-begins-small": "Всичко започва с малко.",
@@ -237,7 +242,8 @@
       "None": "Няма",
       "title": "Екран „Днес“",
       "description": "Персонализиран начален екран за читателя: поздрав, базиран на време, пряк път за възобновяване на четенето, отметки, търсене на стихове, панел на общността със сесии на живо и активност на други читатели, времева линия на историята на четенето и препоръки за глави.",
-      "today": "Днес"
+      "today": "Днес",
+      "resume-reading-loading": "Зареждане на историята ви на четене…"
     },
     "bn": {
       "everything-begins-small": "সবকিছুর শুরুই হয় ছোট থেকে।",
@@ -271,7 +277,8 @@
       "None": "কোনোটিই না",
       "title": "আজকের স্ক্রিন",
       "description": "পাঠকের জন্য ব্যক্তিগতকৃত দৈনিক হোম স্ক্রিন: সময়-ভিত্তিক শুভেচ্ছাবার্তা, পড়া পুনরায় শুরু করার শর্টকাট, বুকমার্ক, পদ্যাংশ অনুসন্ধান, লাইভ সেশন ও অন্যান্য পাঠকের কার্যকলাপসহ একটি কমিউনিটি প্যানেল, পঠন-ইতিহাসের টাইমলাইন, এবং অধ্যায়-ভিত্তিক সুপারিশ।",
-      "today": "আজ"
+      "today": "আজ",
+      "resume-reading-loading": "আপনার পঠন ইতিহাস লোড হচ্ছে…"
     },
     "bs": {
       "everything-begins-small": "Sve počinje s malim stvarima.",
@@ -305,7 +312,8 @@
       "None": "Nijedan",
       "title": "Današnji ekran",
       "description": "Personalizirani dnevni početni ekran za čitatelja: pozdrav zasnovan na vremenu, prečica za nastavak čitanja, oznake, pretraga stihova, panel zajednice sa sesijama uživo i aktivnostima drugih čitatelja, vremenska crta historije čitanja i preporuke poglavlja.",
-      "today": "Danas"
+      "today": "Danas",
+      "resume-reading-loading": "Učitavanje vaše historije čitanja…"
     },
     "ca": {
       "everything-begins-small": "Tot comença petit.",
@@ -339,7 +347,8 @@
       "None": "Cap",
       "title": "Pantalla d'avui",
       "description": "Pantalla d'inici diària personalitzada per al lector: salutació basada en el temps, drecera per reprendre la lectura, marcadors, cerca de versos, un panell comunitari amb sessions en directe i activitat d'altres lectors, una cronologia de l'historial de lectura i recomanacions de capítols.",
-      "today": "Avui"
+      "today": "Avui",
+      "resume-reading-loading": "S'està carregant l'historial de lectura…"
     },
     "cs": {
       "everything-begins-small": "Všechno začíná v malém.",
@@ -373,7 +382,8 @@
       "None": "Žádný",
       "title": "Obrazovka Dnešní",
       "description": "Personalizovaná denní domovská obrazovka pro čtenáře: pozdrav založený na čase, zkratka pro obnovení čtení, záložky, vyhledávání veršů, komunitní panel s živými čteními a aktivitou ostatních čtenářů, časová osa historie čtení a doporučení kapitol.",
-      "today": "Dnes"
+      "today": "Dnes",
+      "resume-reading-loading": "Načítání historie čtení…"
     },
     "cy": {
       "everything-begins-small": "Mae popeth yn dechrau'n fach.",
@@ -407,7 +417,8 @@
       "None": "Dim",
       "title": "Sgrin heddiw",
       "description": "Sgrin gartref ddyddiol bersonol ar gyfer y darllenydd: cyfarchiad amser-seiliedig, llwybr byr darllen CV, nodau tudalen, chwilio am adnodau, panel cymunedol gyda sesiynau byw a gweithgaredd darllenwyr eraill, llinell amser hanes darllen, ac argymhellion penodau.",
-      "today": "Heddiw"
+      "today": "Heddiw",
+      "resume-reading-loading": "Wrthi'n llwytho eich hanes darllen…"
     },
     "da": {
       "everything-begins-small": "Alt begynder småt.",
@@ -441,7 +452,8 @@
       "None": "Ingen",
       "title": "I dag-skærmen",
       "description": "Personlig daglig startskærm til læseren: tidsbaseret hilsen, genvej til at læse CV'er, bogmærker, verssøgning, et fællesskabspanel med live-sessioner og andre læseres aktivitet, en tidslinje for læsehistorik og kapitelanbefalinger.",
-      "today": "I dag"
+      "today": "I dag",
+      "resume-reading-loading": "Indlæser din læsehistorik…"
     },
     "de": {
       "everything-begins-small": "Alles fängt klein an.",
@@ -475,7 +487,8 @@
       "None": "Keiner",
       "title": "Heute-Bildschirm",
       "description": "Personalisierter Startbildschirm für den Leser: zeitbasierte Begrüßung, Lesefortsetzungs-Verknüpfung, Lesezeichen, Verssuche, ein Community-Panel mit Live-Sitzungen und Aktivitäten anderer Leser, eine Leseverlaufs-Zeitleiste und Kapitelempfehlungen.",
-      "today": "Heute"
+      "today": "Heute",
+      "resume-reading-loading": "Ihr Leseverlauf wird geladen…"
     },
     "el": {
       "everything-begins-small": "Όλα ξεκινούν μικρά.",
@@ -509,7 +522,8 @@
       "None": "Κανένας",
       "title": "Οθόνη Σήμερα",
       "description": "Εξατομικευμένη καθημερινή αρχική οθόνη για τον αναγνώστη: χαιρετισμός βάσει χρόνου, συντόμευση ανάγνωσης βιογραφικού, σελιδοδείκτες, αναζήτηση στίχων, ένας πίνακας κοινότητας με ζωντανές συνεδρίες και δραστηριότητα άλλων αναγνωστών, ένα χρονοδιάγραμμα ιστορικού ανάγνωσης και προτάσεις κεφαλαίων.",
-      "today": "Σήμερα"
+      "today": "Σήμερα",
+      "resume-reading-loading": "Φόρτωση του ιστορικού ανάγνωσής σας…"
     },
     "es": {
       "everything-begins-small": "Todo empieza pequeño.",
@@ -543,7 +557,8 @@
       "None": "Ninguno",
       "title": "Pantalla de hoy",
       "description": "Pantalla de inicio diaria personalizada para el lector: saludo basado en la hora, acceso directo para reanudar la lectura, marcadores, búsqueda de versículos, un panel comunitario con sesiones en vivo y actividad de otros lectores, una cronología del historial de lectura y recomendaciones de capítulos.",
-      "today": "Hoy"
+      "today": "Hoy",
+      "resume-reading-loading": "Cargando tu historial de lectura…"
     },
     "et": {
       "everything-begins-small": "Kõik algab väikesest.",
@@ -577,7 +592,8 @@
       "None": "Puudub",
       "title": "Tänane ekraan",
       "description": "Lugejale isikupärastatud igapäevane avakuva: ajapõhine tervitus, lugemise jätkamise otsetee, järjehoidjad, salmiotsing, kogukonnapaneel reaalajas seansside ja teiste lugejate tegevusega, lugemisajaloo ajajoon ja peatükkide soovitused.",
-      "today": "Täna"
+      "today": "Täna",
+      "resume-reading-loading": "Lugemisajaloo laadimine…"
     },
     "fa": {
       "everything-begins-small": "همه چیز از کوچک شروع می‌شود.",
@@ -611,7 +627,8 @@
       "None": "هیچکدام",
       "title": "صفحه نمایش امروز",
       "description": "صفحه اصلی روزانه شخصی‌سازی‌شده برای خواننده: خوشامدگویی بر اساس زمان، میانبر از سرگیری مطالعه، نشانک‌ها، جستجوی آیه، یک پنل انجمن با جلسات زنده و فعالیت سایر خوانندگان، جدول زمانی تاریخچه مطالعه و توصیه‌های فصل.",
-      "today": "امروز"
+      "today": "امروز",
+      "resume-reading-loading": "در حال بارگذاری سابقه مطالعه شما…"
     },
     "fi": {
       "everything-begins-small": "Kaikki alkaa pienestä.",
@@ -645,7 +662,8 @@
       "None": "Ei mitään",
       "title": "Tänään-näyttö",
       "description": "Lukijalle räätälöity päivittäinen aloitusnäyttö: aikaan perustuva tervehdys, lukemisen jatkamisen pikakuvake, kirjanmerkit, jaehaku, yhteisöpaneeli reaaliaikaisilla lukuistunnoilla ja muiden lukijoiden toiminnalla, lukuhistorian aikajana ja lukusuositukset.",
-      "today": "Tänään"
+      "today": "Tänään",
+      "resume-reading-loading": "Ladataan lukuhistoriaasi…"
     },
     "fil": {
       "everything-begins-small": "Lahat ay nagsisimula sa maliit.",
@@ -679,7 +697,8 @@
       "None": "Wala",
       "title": "Screen ngayon",
       "description": "Personalized na pang-araw-araw na home screen para sa mambabasa: pagbati batay sa oras, shortcut sa pagbabasa ng resume, mga bookmark, paghahanap ng mga talata, isang community panel na may mga live session at aktibidad ng iba pang mambabasa, isang timeline ng kasaysayan ng pagbabasa, at mga rekomendasyon ng kabanata.",
-      "today": "Ngayon"
+      "today": "Ngayon",
+      "resume-reading-loading": "Nilo-load ang iyong history ng pagbabasa…"
     },
     "fr": {
       "everything-begins-small": "Tout commence petit.",
@@ -713,7 +732,8 @@
       "None": "Aucun",
       "title": "Écran Aujourd'hui",
       "description": "Écran d'accueil quotidien personnalisé pour le lecteur : message de bienvenue basé sur l'heure, raccourci pour reprendre la lecture, signets, recherche de versets, panneau communautaire avec sessions en direct et activité des autres lecteurs, chronologie de l'historique de lecture et recommandations de chapitres.",
-      "today": "Aujourd'hui"
+      "today": "Aujourd'hui",
+      "resume-reading-loading": "Chargement de votre historique de lecture…"
     },
     "fy": {
       "everything-begins-small": "Alles begjint lyts.",
@@ -747,7 +767,8 @@
       "None": "Gjin",
       "title": "Skerm fan hjoed",
       "description": "Persoanlik deistich thússkerm foar de lêzer: tiidbasearre groet, fluchtoets foar it lêzen fan in CV, blêdwizers, sykjen nei fersen, in mienskipspaniel mei live sesjes en aktiviteit fan oare lêzers, in tiidsline foar de lêshistoarje en oanbefellings foar haadstikken.",
-      "today": "Hjoed"
+      "today": "Hjoed",
+      "resume-reading-loading": "Dyn lêshistoarje oan it laden…"
     },
     "gl": {
       "everything-begins-small": "Todo comeza pequeno.",
@@ -781,7 +802,8 @@
       "None": "Ningún",
       "title": "Pantalla de hoxe",
       "description": "Pantalla de inicio diaria personalizada para o lector: saúdo baseado na hora, atallo para continuar a lectura, marcadores, busca de versos, un panel da comunidade con sesións en directo e a actividade doutros lectores, unha liña de tempo do historial de lectura e recomendacións de capítulos.",
-      "today": "Hoxe"
+      "today": "Hoxe",
+      "resume-reading-loading": "Cargando o historial de lectura…"
     },
     "gn": {
       "everything-begins-small": "Opa mba’e oñepyrũ michĩmi.",
@@ -815,7 +837,8 @@
       "None": "Avave",
       "title": "Ko árape pantalla",
       "description": "Pantalla de inicio ára ha ára personalizada moñe’ẽhárape g̃uarã: maitei ojejapóva aravo rupive, tape mbyky currículum-pe moñe’ẽrã, marcador, verso jeheka, peteĩ panel comunitario orekóva sesiones en vivo ha ambue moñe’ẽhára rembiapo, peteĩ línea de tiempo moñe’ẽrã-historia ha recomendación capítulo rehegua.",
-      "today": "Ko árape"
+      "today": "Ko árape",
+      "resume-reading-loading": "Okargávo nde rembiasakue moñe'ẽrã..."
     },
     "gu": {
       "everything-begins-small": "બધું નાની શરૂઆતથી થાય છે.",
@@ -849,7 +872,8 @@
       "None": "કોઈ નહીં",
       "title": "આજની સ્ક્રીન",
       "description": "વાચક માટે વ્યક્તિગત દૈનિક હોમ સ્ક્રીન: સમય-આધારિત શુભેચ્છા, રિઝ્યુમ-વાંચન શોર્ટકટ, બુકમાર્ક્સ, શ્લોક શોધ, લાઇવ સત્રો અને અન્ય વાચકોની પ્રવૃત્તિ સાથેનું સમુદાય પેનલ, વાંચન-ઇતિહાસ સમયરેખા અને પ્રકરણ ભલામણો.",
-      "today": "આજે"
+      "today": "આજે",
+      "resume-reading-loading": "તમારો વાંચન ઇતિહાસ લોડ કરી રહ્યું છે…"
     },
     "he": {
       "everything-begins-small": "הכל מתחיל בקטן.",
@@ -883,7 +907,8 @@
       "None": "אַף לֹא אֶחָד",
       "title": "מסך היום",
       "description": "מסך בית יומי מותאם אישית לקורא: ברכה מבוססת זמן, קיצור דרך לקריאת קורות חיים, סימניות, חיפוש פסוקים, פאנל קהילתי עם מפגשים חיים ופעילות של קוראים אחרים, ציר זמן של היסטוריית קריאה והמלצות לפרקים.",
-      "today": "הַיוֹם"
+      "today": "הַיוֹם",
+      "resume-reading-loading": "טוען את היסטוריית הקריאה שלך…"
     },
     "hi": {
       "everything-begins-small": "हर चीज की शुरुआत छोटी होती है।",
@@ -917,7 +942,8 @@
       "None": "कोई नहीं",
       "title": "आज स्क्रीन",
       "description": "पाठक के लिए वैयक्तिकृत दैनिक होम स्क्रीन: समय-आधारित अभिवादन, पढ़ने को पुनः शुरू करने का शॉर्टकट, बुकमार्क, श्लोक खोज, लाइव सत्रों और अन्य पाठकों की गतिविधियों के साथ एक सामुदायिक पैनल, एक पठन-इतिहास समयरेखा और अध्याय अनुशंसाएँ।",
-      "today": "आज"
+      "today": "आज",
+      "resume-reading-loading": "आपकी पठन सामग्री लोड हो रही है…"
     },
     "hr": {
       "everything-begins-small": "Sve počinje s malim stvarima.",
@@ -951,7 +977,8 @@
       "None": "Ništa",
       "title": "Današnji zaslon",
       "description": "Personalizirani dnevni početni zaslon za čitatelja: pozdrav temeljen na vremenu, prečac za nastavak čitanja, oznake, pretraživanje stihova, panel zajednice sa sesijama uživo i aktivnostima drugih čitatelja, vremenska crta povijesti čitanja i preporuke poglavlja.",
-      "today": "Danas"
+      "today": "Danas",
+      "resume-reading-loading": "Učitavanje vaše povijesti čitanja…"
     },
     "hu": {
       "everything-begins-small": "Minden kicsiben kezdődik.",
@@ -985,7 +1012,8 @@
       "None": "Egyik sem",
       "title": "Mai képernyő",
       "description": "Személyre szabott napi kezdőképernyő az olvasó számára: időalapú üdvözlés, olvasási folytatás gyorsbillentyűje, könyvjelzők, verskeresés, közösségi panel élő ülésekkel és más olvasók tevékenységeivel, olvasási előzmények idővonala és fejezetajánlók.",
-      "today": "Ma"
+      "today": "Ma",
+      "resume-reading-loading": "Olvasási előzmények betöltése…"
     },
     "ind": {
       "everything-begins-small": "Semuanya berawal dari hal kecil.",
@@ -1019,7 +1047,8 @@
       "None": "Tidak ada",
       "title": "Layar hari ini",
       "description": "Tampilan layar utama harian yang dipersonalisasi untuk pembaca: sapaan berdasarkan waktu, pintasan melanjutkan membaca, penanda halaman, pencarian ayat, panel komunitas dengan sesi langsung dan aktivitas pembaca lain, garis waktu riwayat bacaan, dan rekomendasi bab.",
-      "today": "Hari ini"
+      "today": "Hari ini",
+      "resume-reading-loading": "Memuat riwayat bacaan Anda…"
     },
     "is": {
       "everything-begins-small": "Allt byrjar smátt.",
@@ -1053,7 +1082,8 @@
       "None": "Enginn",
       "title": "Skjár í dag",
       "description": "Sérsniðinn daglegur heimaskjár fyrir lesandann: tímabundin kveðja, flýtileið til að lesa ferilskrá, bókamerki, leit að versum, samfélagsspjald með beinum fundum og virkni annarra lesenda, tímalína lestrarferils og tillögur að köflum.",
-      "today": "Í dag"
+      "today": "Í dag",
+      "resume-reading-loading": "Hleður lestrarsöguna þína…"
     },
     "it": {
       "everything-begins-small": "Tutto inizia in piccolo.",
@@ -1087,7 +1117,8 @@
       "None": "Nessuno",
       "title": "Schermata di oggi",
       "description": "Schermata iniziale giornaliera personalizzata per il lettore: saluto basato sull'orario, scorciatoia per riprendere la lettura, segnalibri, ricerca di versetti, un pannello della community con sessioni dal vivo e attività di altri lettori, una cronologia di lettura e consigli sui capitoli.",
-      "today": "Oggi"
+      "today": "Oggi",
+      "resume-reading-loading": "Caricamento della cronologia di lettura…"
     },
     "iw": {
       "everything-begins-small": "הכל מתחיל בקטן.",
@@ -1121,7 +1152,8 @@
       "None": "אַף לֹא אֶחָד",
       "title": "מסך היום",
       "description": "מסך בית יומי מותאם אישית לקורא: ברכה מבוססת זמן, קיצור דרך לקריאת קורות חיים, סימניות, חיפוש פסוקים, פאנל קהילתי עם מפגשים חיים ופעילות של קוראים אחרים, ציר זמן של היסטוריית קריאה והמלצות לפרקים.",
-      "today": "הַיוֹם"
+      "today": "הַיוֹם",
+      "resume-reading-loading": "טוען את היסטוריית הקריאה שלך…"
     },
     "ja": {
       "everything-begins-small": "すべては小さなことから始まる。",
@@ -1155,7 +1187,8 @@
       "None": "なし",
       "title": "今日の画面",
       "description": "読者向けにパーソナライズされた毎日のホーム画面：時間に基づいた挨拶、読書再開ショートカット、ブックマーク、詩の検索、ライブセッションや他の読者の活動を表示するコミュニティパネル、読書履歴タイムライン、章のおすすめなど。",
-      "today": "今日"
+      "today": "今日",
+      "resume-reading-loading": "閲覧履歴を読み込んでいます…"
     },
     "ka": {
       "everything-begins-small": "ყველაფერი პატარადან იწყება.",
@@ -1189,7 +1222,8 @@
       "None": "არცერთი",
       "title": "დღევანდელი ეკრანი",
       "description": "მკითხველისთვის პერსონალიზებული ყოველდღიური მთავარი ეკრანი: დროზე დაფუძნებული მისალმება, რეზიუმეს წაკითხვის მალსახმობი, სანიშნეები, ლექსის ძებნა, საზოგადოების პანელი პირდაპირი სესიებით და სხვა მკითხველების აქტივობებით, კითხვის ისტორიის ვადები და თავების რეკომენდაციები.",
-      "today": "დღეს"
+      "today": "დღეს",
+      "resume-reading-loading": "თქვენი კითხვის ისტორიის ჩატვირთვა…"
     },
     "km": {
       "everything-begins-small": "អ្វីៗចាប់ផ្តើមតូច។",
@@ -1223,7 +1257,8 @@
       "None": "គ្មាន",
       "title": "អេក្រង់ថ្ងៃនេះ",
       "description": "អេក្រង់ដើមប្រចាំថ្ងៃផ្ទាល់ខ្លួនសម្រាប់អ្នកអាន៖ ការស្វាគមន៍ផ្អែកលើពេលវេលា ផ្លូវកាត់អានប្រវត្តិរូបសង្ខេប ចំណាំ ការស្វែងរកខគម្ពីរ បន្ទះសហគមន៍ដែលមានវគ្គផ្សាយផ្ទាល់ និងសកម្មភាពរបស់អ្នកអានផ្សេងទៀត បន្ទាត់ពេលវេលាប្រវត្តិអាន និងការណែនាំជំពូក។",
-      "today": "ថ្ងៃនេះ"
+      "today": "ថ្ងៃនេះ",
+      "resume-reading-loading": "កំពុងផ្ទុកប្រវត្តិអានរបស់អ្នក..."
     },
     "kn": {
       "everything-begins-small": "ಎಲ್ಲವೂ ಚಿಕ್ಕದಾಗಿ ಪ್ರಾರಂಭವಾಗುತ್ತದೆ.",
@@ -1257,7 +1292,8 @@
       "None": "ಯಾವುದೂ ಇಲ್ಲ",
       "title": "ಇಂದಿನ ಪರದೆ",
       "description": "ಓದುಗರಿಗಾಗಿ ವೈಯಕ್ತಿಕಗೊಳಿಸಿದ ದೈನಂದಿನ ಮುಖಪುಟ ಪರದೆ: ಸಮಯ-ಆಧಾರಿತ ಶುಭಾಶಯ, ಪುನರಾರಂಭ-ಓದುವ ಶಾರ್ಟ್‌ಕಟ್, ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು, ಪದ್ಯ ಹುಡುಕಾಟ, ಲೈವ್ ಸೆಷನ್‌ಗಳು ಮತ್ತು ಇತರ ಓದುಗರ ಚಟುವಟಿಕೆಗಳೊಂದಿಗೆ ಸಮುದಾಯ ಫಲಕ, ಓದುವ-ಇತಿಹಾಸದ ಟೈಮ್‌ಲೈನ್ ಮತ್ತು ಅಧ್ಯಾಯ ಶಿಫಾರಸುಗಳು.",
-      "today": "ಇಂದು"
+      "today": "ಇಂದು",
+      "resume-reading-loading": "ನಿಮ್ಮ ಓದುವ ಇತಿಹಾಸವನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ..."
     },
     "ko": {
       "everything-begins-small": "모든 것은 작은 것에서 시작됩니다.",
@@ -1291,7 +1327,8 @@
       "None": "없음",
       "title": "오늘의 화면",
       "description": "독자를 위한 맞춤형 일일 홈 화면: 시간 기반 인사말, 읽기 재개 바로가기, 책갈피, 구절 검색, 실시간 세션 및 다른 독자들의 활동을 볼 수 있는 커뮤니티 패널, 읽기 기록 타임라인, 장 추천 기능 등을 제공합니다.",
-      "today": "오늘"
+      "today": "오늘",
+      "resume-reading-loading": "읽기 기록을 불러오는 중…"
     },
     "ky": {
       "everything-begins-small": "Баары кичинекейден башталат.",
@@ -1325,7 +1362,8 @@
       "None": "Эч бири",
       "title": "Бүгүнкү экран",
       "description": "Окурман үчүн жекелештирилген күнүмдүк башкы экран: убакытка негизделген саламдашуу, резюме окуу үчүн кыска жол, кыстармалар, аяттарды издөө, түз эфирдеги сессиялар жана башка окурмандардын иш-аракеттери менен коомчулук панели, окуу тарыхынын убакыт тилкеси жана бөлүм боюнча сунуштар.",
-      "today": "Бүгүн"
+      "today": "Бүгүн",
+      "resume-reading-loading": "Окуу тарыхыңыз жүктөлүүдө…"
     },
     "ln": {
       "everything-begins-small": "Makambo nyonso ebandaka na moke.",
@@ -1359,7 +1397,8 @@
       "None": "Moko te",
       "title": "Lelo écran",
       "description": "Écran d’accueil ya mokolo na mokolo oyo ebongisami mpo na motángi: mbote oyo esalemi na kotalela ntango, nzela mokuse ya kotánga CV, bilembo ya bilembo, koluka bavɛrsɛ, panneau ya lisanga oyo ezali na biteni ya bomoi mpe mosala mosusu ya batángi, ntango ya kotánga-histoire, mpe makanisi ya mikapo.",
-      "today": "Lelo"
+      "today": "Lelo",
+      "resume-reading-loading": "Ko charger histoire ya botangi na yo..."
     },
     "lo": {
       "everything-begins-small": "ທຸກຢ່າງເລີ່ມຕົ້ນຈາກສິ່ງນ້ອຍໆ.",
@@ -1393,7 +1432,8 @@
       "None": "ບໍ່ມີ",
       "title": "ໜ້າຈໍມື້ນີ້",
       "description": "ໜ້າຈໍຫຼັກປະຈຳວັນສ່ວນຕົວສຳລັບຜູ້ອ່ານ: ຄຳທັກທາຍຕາມເວລາ, ທາງລັດການອ່ານຊີວະປະຫວັດ, ບຸກມາກ, ການຄົ້ນຫາຂໍ້ພຣະຄຳພີ, ແຜງຊຸມຊົນທີ່ມີກອງປະຊຸມສົດ ແລະ ກິດຈະກຳຂອງຜູ້ອ່ານຄົນອື່ນໆ, ໄລຍະເວລາຂອງປະຫວັດການອ່ານ, ແລະ ການແນະນຳບົດຕ່າງໆ.",
-      "today": "ມື້ນີ້"
+      "today": "ມື້ນີ້",
+      "resume-reading-loading": "ກຳລັງໂຫຼດປະຫວັດການອ່ານຂອງທ່ານ…"
     },
     "lt": {
       "everything-begins-small": "Viskas prasideda nuo mažų dalykų.",
@@ -1427,7 +1467,8 @@
       "None": "Nėra",
       "title": "Šiandienos ekranas",
       "description": "Skaitytojui suasmenintas kasdienis pagrindinis ekranas: laiku pagrįstas pasisveikinimas, skaitymo tęsimo spartusis klavišas, žymės, eilėraščių paieška, bendruomenės skydelis su tiesioginiais seansais ir kitų skaitytojų veikla, skaitymo istorijos laiko juosta ir skyrių rekomendacijos.",
-      "today": "Šiandien"
+      "today": "Šiandien",
+      "resume-reading-loading": "Įkeliama jūsų skaitymo istorija…"
     },
     "lv": {
       "everything-begins-small": "Viss sākas ar mazumiņu.",
@@ -1461,7 +1502,8 @@
       "None": "Neviens",
       "title": "Šodienas ekrāns",
       "description": "Personalizēts ikdienas sākuma ekrāns lasītājam: uz laiku balstīts sveiciens, lasīšanas atsākšanas saīsne, grāmatzīmes, pantu meklēšana, kopienas panelis ar tiešraides sesijām un citu lasītāju aktivitātēm, lasīšanas vēstures laika skala un nodaļu ieteikumi.",
-      "today": "Šodien"
+      "today": "Šodien",
+      "resume-reading-loading": "Notiek lasīšanas vēstures ielāde…"
     },
     "mk": {
       "everything-begins-small": "Сè започнува мало.",
@@ -1495,7 +1537,8 @@
       "None": "Ништо",
       "title": "Екран денес",
       "description": "Персонализиран дневен почетен екран за читателот: поздрав базиран на време, кратенка за читање на резимеа, обележувачи, пребарување стихови, панел на заедницата со сесии во живо и активности на други читатели, временска рамка за историја на читање и препораки за поглавја.",
-      "today": "Денес"
+      "today": "Денес",
+      "resume-reading-loading": "Се вчитува вашата историја на читање…"
     },
     "ml": {
       "everything-begins-small": "എല്ലാം ചെറുതായി തുടങ്ങുന്നു.",
@@ -1529,7 +1572,8 @@
       "None": "ഒന്നുമില്ല",
       "title": "ഇന്നത്തെ സ്ക്രീൻ",
       "description": "വായനക്കാർക്കായി വ്യക്തിഗതമാക്കിയ ദൈനംദിന ഹോം സ്‌ക്രീൻ: സമയാധിഷ്ഠിത ആശംസ, റെസ്യൂമെ-വായന കുറുക്കുവഴി, ബുക്ക്‌മാർക്കുകൾ, പദ്യ തിരയൽ, തത്സമയ സെഷനുകളും മറ്റ് വായനക്കാരുടെ പ്രവർത്തനങ്ങളുമുള്ള ഒരു കമ്മ്യൂണിറ്റി പാനൽ, വായന-ചരിത്ര ടൈംലൈൻ, അധ്യായ ശുപാർശകൾ.",
-      "today": "ഇന്ന്"
+      "today": "ഇന്ന്",
+      "resume-reading-loading": "നിങ്ങളുടെ വായനാ ചരിത്രം ലോഡ് ചെയ്യുന്നു..."
     },
     "mn": {
       "everything-begins-small": "Бүх зүйл багаас эхэлдэг.",
@@ -1563,7 +1607,8 @@
       "None": "Байхгүй",
       "title": "Өнөөдрийн дэлгэц",
       "description": "Уншигчдад зориулсан өдөр тутмын хувийн дэлгэц: цаг дээр суурилсан мэндчилгээ, анкет унших товчлол, хавчуурга, шүлэг хайх, шууд хичээл болон бусад уншигчдын үйл ажиллагаатай олон нийтийн самбар, уншлагын түүхийн цагийн хуваарь, бүлгийн зөвлөмж.",
-      "today": "Өнөөдөр"
+      "today": "Өнөөдөр",
+      "resume-reading-loading": "Уншлагын түүхийг тань ачаалж байна..."
     },
     "mr": {
       "everything-begins-small": "प्रत्येक गोष्टीची सुरुवात लहानपणापासूनच होते.",
@@ -1597,7 +1642,8 @@
       "None": "काहीही नाही",
       "title": "आज स्क्रीन",
       "description": "वाचकासाठी वैयक्तिकृत दैनिक होम स्क्रीन: वेळेनुसार अभिवादन, वाचन पुन्हा सुरू करण्याचा शॉर्टकट, बुकमार्क्स, श्लोक शोध, थेट सत्रे आणि इतर वाचकांच्या हालचालींसह एक समुदाय पॅनेल, वाचन-इतिहासाची टाइमलाइन आणि अध्याय शिफारसी.",
-      "today": "आज"
+      "today": "आज",
+      "resume-reading-loading": "तुमचा वाचन इतिहास लोड होत आहे…"
     },
     "ms": {
       "everything-begins-small": "Semuanya bermula dari kecil.",
@@ -1631,7 +1677,8 @@
       "None": "Tiada",
       "title": "Skrin hari ini",
       "description": "Skrin utama harian yang diperibadikan untuk pembaca: ucapan berasaskan masa, pintasan bacaan resume, penanda buku, carian ayat, panel komuniti dengan sesi langsung dan aktiviti pembaca lain, garis masa sejarah bacaan dan cadangan bab.",
-      "today": "Hari ini"
+      "today": "Hari ini",
+      "resume-reading-loading": "Memuatkan sejarah bacaan anda…"
     },
     "my": {
       "everything-begins-small": "အရာအားလုံးက သေးငယ်တဲ့အရာကနေ စတင်ပါတယ်။",
@@ -1665,7 +1712,8 @@
       "None": "မရှိပါ",
       "title": "ယနေ့ မျက်နှာပြင်",
       "description": "စာဖတ်သူအတွက် စိတ်ကြိုက်ပြင်ဆင်ထားသော နေ့စဉ်ပင်မစာမျက်နှာ- အချိန်အလိုက် နှုတ်ခွန်းဆက်စကား၊ ကိုယ်ရေးရာဇဝင်ဖတ်ရှုခြင်း အတိုကောက်၊ စာညှပ်များ၊ ကဗျာရှာဖွေမှု၊ တိုက်ရိုက်အစည်းအဝေးများနှင့် အခြားစာဖတ်သူများ၏ လှုပ်ရှားမှုများပါရှိသော အသိုင်းအဝိုင်းဘောင်၊ ဖတ်ရှုခြင်းမှတ်တမ်း အချိန်ဇယားနှင့် အခန်းအကြံပြုချက်များ။",
-      "today": "ယနေ့"
+      "today": "ယနေ့",
+      "resume-reading-loading": "သင့်ဖတ်ရှုမှုမှတ်တမ်းကို တင်နေသည်…"
     },
     "nb": {
       "everything-begins-small": "Alt begynner i det små.",
@@ -1699,7 +1747,8 @@
       "None": "Ingen",
       "title": "Dagens skjerm",
       "description": "Personlig daglig startskjerm for leseren: tidsbasert hilsen, snarvei for å lese CV, bokmerker, verssøk, et fellesskapspanel med live-økter og andre leseres aktivitet, en tidslinje for lesehistorikk og kapittelanbefalinger.",
-      "today": "I dag"
+      "today": "I dag",
+      "resume-reading-loading": "Laster inn leseloggen din …"
     },
     "ne": {
       "everything-begins-small": "सबै कुरा सानोबाट सुरु हुन्छ।",
@@ -1733,7 +1782,8 @@
       "None": "कुनै पनि होइन",
       "title": "आजको स्क्रिन",
       "description": "पाठकको लागि व्यक्तिगत दैनिक गृह स्क्रिन: समय-आधारित अभिवादन, रिजुम-पठन सर्टकट, बुकमार्कहरू, पद खोजी, प्रत्यक्ष सत्रहरू र अन्य पाठकहरूको गतिविधि सहितको समुदाय प्यानल, पठन-इतिहास समयरेखा, र अध्याय सिफारिसहरू।",
-      "today": "आज"
+      "today": "आज",
+      "resume-reading-loading": "तपाईंको पठन इतिहास लोड गर्दै..."
     },
     "nl": {
       "everything-begins-small": "Alles begint klein.",
@@ -1767,7 +1817,8 @@
       "None": "Geen",
       "title": "Vandaag scherm",
       "description": "Een gepersonaliseerd dagelijks startscherm voor de lezer: een tijdsgebonden begroeting, een snelkoppeling om verder te lezen, bladwijzers, een zoekfunctie voor verzen, een communitypaneel met live sessies en activiteiten van andere lezers, een tijdlijn van de leesgeschiedenis en hoofdstukaanbevelingen.",
-      "today": "Vandaag"
+      "today": "Vandaag",
+      "resume-reading-loading": "Je leesgeschiedenis wordt geladen..."
     },
     "no": {
       "everything-begins-small": "Alt begynner i det små.",
@@ -1801,7 +1852,8 @@
       "None": "Ingen",
       "title": "Dagens skjerm",
       "description": "Personlig daglig startskjerm for leseren: tidsbasert hilsen, snarvei for å lese CV, bokmerker, verssøk, et fellesskapspanel med live-økter og andre leseres aktivitet, en tidslinje for lesehistorikk og kapittelanbefalinger.",
-      "today": "I dag"
+      "today": "I dag",
+      "resume-reading-loading": "Laster inn lesehistorikken din …"
     },
     "pa": {
       "everything-begins-small": "ਹਰ ਚੀਜ਼ ਛੋਟੀ ਤੋਂ ਸ਼ੁਰੂ ਹੁੰਦੀ ਹੈ।",
@@ -1835,7 +1887,8 @@
       "None": "ਕੋਈ ਨਹੀਂ",
       "title": "ਅੱਜ ਦੀ ਸਕ੍ਰੀਨ",
       "description": "ਪਾਠਕ ਲਈ ਵਿਅਕਤੀਗਤ ਰੋਜ਼ਾਨਾ ਹੋਮ ਸਕ੍ਰੀਨ: ਸਮਾਂ-ਅਧਾਰਤ ਸ਼ੁਭਕਾਮਨਾਵਾਂ, ਰੈਜ਼ਿਊਮੇ-ਰੀਡਿੰਗ ਸ਼ਾਰਟਕੱਟ, ਬੁੱਕਮਾਰਕ, ਆਇਤ ਖੋਜ, ਲਾਈਵ ਸੈਸ਼ਨਾਂ ਅਤੇ ਹੋਰ ਪਾਠਕਾਂ ਦੀ ਗਤੀਵਿਧੀ ਵਾਲਾ ਇੱਕ ਕਮਿਊਨਿਟੀ ਪੈਨਲ, ਇੱਕ ਪੜ੍ਹਨ-ਇਤਿਹਾਸ ਸਮਾਂਰੇਖਾ, ਅਤੇ ਅਧਿਆਇ ਸਿਫ਼ਾਰਸ਼ਾਂ।",
-      "today": "ਅੱਜ"
+      "today": "ਅੱਜ",
+      "resume-reading-loading": "ਤੁਹਾਡਾ ਪੜ੍ਹਨ ਦਾ ਇਤਿਹਾਸ ਲੋਡ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ…"
     },
     "pl": {
       "everything-begins-small": "Wszystko zaczyna się od małych rzeczy.",
@@ -1869,7 +1922,8 @@
       "None": "Nic",
       "title": "Ekran dzisiejszy",
       "description": "Spersonalizowany, codzienny ekran główny dla czytelnika: powitanie oparte na czasie, skrót do wznowienia czytania, zakładki, wyszukiwanie wersetów, panel społecznościowy z sesjami na żywo i aktywnością innych czytelników, oś czasu historii czytania oraz rekomendacje rozdziałów.",
-      "today": "Dzisiaj"
+      "today": "Dzisiaj",
+      "resume-reading-loading": "Ładowanie historii odczytów…"
     },
     "ps": {
       "everything-begins-small": "هر څه له کوچني پیل کیږي.",
@@ -1903,7 +1957,8 @@
       "None": "هیڅ نه",
       "title": "د نن ورځې سکرین",
       "description": "د لوستونکي لپاره شخصي شوی ورځنی کور سکرین: د وخت پر بنسټ سلامونه، د CV لوستلو لنډلارې، بک مارکونه، د آیتونو لټون، د ژوندیو غونډو او نورو لوستونکو فعالیت سره د ټولنې پینل، د لوستلو تاریخ مهال ویش، او د فصل سپارښتنې.",
-      "today": "نن"
+      "today": "نن",
+      "resume-reading-loading": "ستاسو د لوستلو تاریخ پورته کیږي…"
     },
     "pt": {
       "everything-begins-small": "Tudo começa pequeno.",
@@ -1937,7 +1992,8 @@
       "None": "Nenhum",
       "title": "Tela de hoje",
       "description": "Tela inicial personalizada para o leitor: saudação baseada no horário, atalho para retomar a leitura, marcadores, busca de versículos, painel da comunidade com sessões ao vivo e atividades de outros leitores, linha do tempo do histórico de leitura e recomendações de capítulos.",
-      "today": "Hoje"
+      "today": "Hoje",
+      "resume-reading-loading": "Carregando seu histórico de leitura…"
     },
     "ro": {
       "everything-begins-small": "Totul începe de la mic.",
@@ -1971,7 +2027,8 @@
       "None": "Nici unul",
       "title": "Ecranul de astăzi",
       "description": "Ecran de pornire personalizat zilnic pentru cititor: salut în funcție de oră, comandă rapidă pentru reluarea lecturii, marcaje, căutare de versete, un panou comunitar cu sesiuni live și activitatea altor cititori, o cronologie a istoricului lecturii și recomandări de capitole.",
-      "today": "Astăzi"
+      "today": "Astăzi",
+      "resume-reading-loading": "Se încarcă istoricul de lectură…"
     },
     "ru": {
       "everything-begins-small": "Всё начинается с малого.",
@@ -2005,7 +2062,8 @@
       "None": "Никто",
       "title": "Сегодняшний экран",
       "description": "Персонализированный ежедневный домашний экран для читателя: приветствие в зависимости от времени, ярлык для продолжения чтения, закладки, поиск стихов, панель сообщества с онлайн-сессиями и активностью других читателей, хронология истории чтения и рекомендации по главам.",
-      "today": "Сегодня"
+      "today": "Сегодня",
+      "resume-reading-loading": "Загрузка истории прочтения…"
     },
     "sk": {
       "everything-begins-small": "Všetko začína v malom.",
@@ -2039,7 +2097,8 @@
       "None": "Žiadne",
       "title": "Obrazovka Dnešná",
       "description": "Personalizovaná denná domovská obrazovka pre čitateľa: pozdrav založený na čase, skratka pre obnovenie čítania, záložky, vyhľadávanie veršov, komunitný panel so živými stretnutiami a aktivitou ostatných čitateľov, časová os histórie čítania a odporúčania kapitol.",
-      "today": "Dnes"
+      "today": "Dnes",
+      "resume-reading-loading": "Načítava sa vaša história čítania…"
     },
     "sl": {
       "everything-begins-small": "Vse se začne z majhnimi stvarmi.",
@@ -2073,7 +2132,8 @@
       "None": "Nobena",
       "title": "Današnji zaslon",
       "description": "Prilagojen dnevni začetni zaslon za bralca: pozdrav, ki temelji na času, bližnjica za nadaljevanje branja, zaznamki, iskanje verzov, skupnostna plošča z branjem v živo in dejavnostmi drugih bralcev, časovnica zgodovine branja in priporočila poglavij.",
-      "today": "Danes"
+      "today": "Danes",
+      "resume-reading-loading": "Nalaganje zgodovine branja …"
     },
     "sq": {
       "everything-begins-small": "Gjithçka fillon e vogël.",
@@ -2107,7 +2167,8 @@
       "None": "Asnjë",
       "title": "Ekrani i sotëm",
       "description": "Ekran kryesor i personalizuar ditor për lexuesin: përshëndetje e bazuar në kohë, shkurtore për leximin e CV-së, faqeshënues, kërkim vargjesh, një panel komuniteti me seanca të drejtpërdrejta dhe aktivitet të lexuesve të tjerë, një kronologji e historikut të leximit dhe rekomandime kapitujsh.",
-      "today": "Sot"
+      "today": "Sot",
+      "resume-reading-loading": "Duke ngarkuar historikun tënd të leximit…"
     },
     "sv": {
       "everything-begins-small": "Allt börjar i det lilla.",
@@ -2141,7 +2202,8 @@
       "None": "Ingen",
       "title": "Dagens skärm",
       "description": "Personlig daglig startskärm för läsaren: tidsbaserad hälsning, genväg för att läsa CV, bokmärken, verssökning, en communitypanel med livesessioner och andra läsares aktivitet, en tidslinje för läshistorik och kapitelrekommendationer.",
-      "today": "I dag"
+      "today": "I dag",
+      "resume-reading-loading": "Läser in din läshistorik…"
     },
     "sw": {
       "everything-begins-small": "Kila kitu huanza kidogo.",
@@ -2175,7 +2237,8 @@
       "None": "Hakuna",
       "title": "Skrini ya leo",
       "description": "Skrini ya nyumbani ya kila siku iliyobinafsishwa kwa msomaji: salamu kulingana na wakati, njia ya mkato ya kusoma wasifu, alamisho, utafutaji wa mistari, jopo la jumuiya lenye vipindi vya moja kwa moja na shughuli zingine za wasomaji, ratiba ya historia ya usomaji, na mapendekezo ya sura.",
-      "today": "Leo"
+      "today": "Leo",
+      "resume-reading-loading": "Inapakia historia yako ya usomaji…"
     },
     "ta": {
       "everything-begins-small": "எல்லாம் சிறியதாகவே தொடங்குகிறது.",
@@ -2209,7 +2272,8 @@
       "None": "ஏதுமில்லை",
       "title": "இன்றைய திரை",
       "description": "வாசகருக்கான தனிப்பயனாக்கப்பட்ட தினசரி முகப்புத் திரை: நேர அடிப்படையிலான வாழ்த்து, வாசிப்பைத் தொடர்வதற்கான குறுக்குவழி, புக்மார்க்குகள், செய்யுள் தேடல், நேரலை அமர்வுகள் மற்றும் பிற வாசகர்களின் செயல்பாடுகளைக் கொண்ட ஒரு சமூகக் குழு, வாசிப்பு வரலாற்று காலவரிசை மற்றும் அத்தியாயப் பரிந்துரைகள்.",
-      "today": "இன்று"
+      "today": "இன்று",
+      "resume-reading-loading": "உங்கள் வாசிப்பு வரலாறு ஏற்றப்படுகிறது…"
     },
     "te": {
       "everything-begins-small": "ప్రతిదీ చిన్నగా మొదలవుతుంది.",
@@ -2243,7 +2307,8 @@
       "None": "ఏదీ లేదు",
       "title": "ఈరోజు స్క్రీన్",
       "description": "పాఠకుల కోసం వ్యక్తిగతీకరించిన రోజువారీ హోమ్ స్క్రీన్: సమయం ఆధారిత శుభాకాంక్షలు, పఠనాన్ని పునఃప్రారంభించే షార్ట్‌కట్, బుక్‌మార్క్‌లు, పద్య శోధన, ప్రత్యక్ష సెషన్‌లు మరియు ఇతర పాఠకుల కార్యకలాపాలతో కూడిన కమ్యూనిటీ ప్యానెల్, పఠన చరిత్ర టైమ్‌లైన్ మరియు అధ్యాయ సిఫార్సులు.",
-      "today": "ఈరోజు"
+      "today": "ఈరోజు",
+      "resume-reading-loading": "మీ పఠన చరిత్ర లోడ్ అవుతోంది…"
     },
     "th": {
       "everything-begins-small": "ทุกสิ่งทุกอย่างเริ่มต้นจากสิ่งเล็กๆ",
@@ -2277,7 +2342,8 @@
       "None": "ไม่มี",
       "title": "หน้าจอวันนี้",
       "description": "หน้าจอหลักส่วนตัวสำหรับผู้อ่านในแต่ละวัน: คำทักทายตามเวลา, ทางลัดสำหรับอ่านต่อ, ที่คั่นหนังสือ, การค้นหาข้อความ, แผงชุมชนพร้อมการสนทนาสดและกิจกรรมของผู้อ่านคนอื่นๆ, ไทม์ไลน์ประวัติการอ่าน และคำแนะนำบทต่างๆ",
-      "today": "วันนี้"
+      "today": "วันนี้",
+      "resume-reading-loading": "กำลังโหลดประวัติการอ่านของคุณ…"
     },
     "ti": {
       "everything-begins-small": "ኩሉ ብንእሽቶ እዩ ዝጅምር።",
@@ -2311,7 +2377,8 @@
       "None": "ዋላ ሓደ",
       "title": "ናይ ሎሚ ስክሪን",
       "description": "ንኣንባቢ ብሕታዊ ዝኾነ ናይ መጀመርታ ስክሪን: ኣብ ግዜ ዝተመርኮሰ ሰላምታ፣ ኣቋራጭ ንባብ ሪዝዩም፣ ዕልባት፣ ምድላይ ጥቕስታት፣ ቀጥታዊ ክፍለ ግዜታትን ካልእ ንጥፈታት ኣንበብትን ዘለዎ ማሕበረሰባዊ ፓነል፣ መስመር ግዜ ንባብ-ታሪኽን ለበዋታት ምዕራፋትን።",
-      "today": "ሎምዓንቲ"
+      "today": "ሎምዓንቲ",
+      "resume-reading-loading": "ታሪኽ ንባብካ ኣብ ምጽዓን..."
     },
     "tl": {
       "everything-begins-small": "Lahat ay nagsisimula sa maliit.",
@@ -2345,7 +2412,8 @@
       "None": "Wala",
       "title": "Screen ngayon",
       "description": "Personalized na pang-araw-araw na home screen para sa mambabasa: pagbati batay sa oras, shortcut sa pagbabasa ng resume, mga bookmark, paghahanap ng mga talata, isang community panel na may mga live session at aktibidad ng iba pang mambabasa, isang timeline ng kasaysayan ng pagbabasa, at mga rekomendasyon ng kabanata.",
-      "today": "Ngayon"
+      "today": "Ngayon",
+      "resume-reading-loading": "Nilo-load ang iyong history ng pagbabasa…"
     },
     "tr": {
       "everything-begins-small": "Her şey küçük başlar.",
@@ -2379,7 +2447,8 @@
       "None": "Hiçbiri",
       "title": "Bugünün ekranı",
       "description": "Okuyucu için kişiselleştirilmiş günlük ana ekran: zamana dayalı karşılama mesajı, okumaya devam etme kısayolu, yer imleri, ayet arama, canlı oturumlar ve diğer okuyucuların etkinliklerini içeren bir topluluk paneli, okuma geçmişi zaman çizelgesi ve bölüm önerileri.",
-      "today": "Bugün"
+      "today": "Bugün",
+      "resume-reading-loading": "Okuma geçmişiniz yükleniyor…"
     },
     "ug": {
       "everything-begins-small": "ھەممە نەرسە كىچىكتىن باشلىنىدۇ.",
@@ -2413,7 +2482,8 @@
       "None": "يوق",
       "title": "بۈگۈنكى ئېكران",
       "description": "ئوقۇرمەنلەر ئۈچۈن شەخسىيلەشتۈرۈلگەن كۈندىلىك باش بەت: ۋاقىتقا ئاساسەن سالاملىشىش، رېزىيۇمې ئوقۇش قىسقا يولى، خەتكۈچلەر، ئايەت ئىزدەش، نەق مەيدان دەرسلىرى ۋە باشقا ئوقۇرمەنلەرنىڭ پائالىيەتلىرىنى ئۆز ئىچىگە ئالغان مەھەللە تاختىسى، ئوقۇش تارىخى ۋاقىت جەدۋىلى ۋە باب تەۋسىيەلىرى.",
-      "today": "بۈگۈن"
+      "today": "بۈگۈن",
+      "resume-reading-loading": "ئوقۇش تارىخىڭىز يۈكلەنمەكتە…"
     },
     "uk": {
       "everything-begins-small": "Все починається з малого.",
@@ -2447,7 +2517,8 @@
       "None": "Жоден",
       "title": "Екран «Сьогодні»",
       "description": "Персоналізований щоденний головний екран для читача: привітання з фіксованим часом, швидкий доступ до продовження читання, закладки, пошук віршів, панель спільноти з живими сесіями та активністю інших читачів, хронологія історії читання та рекомендації розділів.",
-      "today": "Сьогодні"
+      "today": "Сьогодні",
+      "resume-reading-loading": "Завантаження історії читання…"
     },
     "ur": {
       "everything-begins-small": "ہر چیز چھوٹی سے شروع ہوتی ہے۔",
@@ -2481,7 +2552,8 @@
       "None": "کوئی نہیں۔",
       "title": "آج کی سکرین",
       "description": "قارئین کے لیے ذاتی روزانہ ہوم اسکرین: وقت پر مبنی سلام، دوبارہ شروع پڑھنے کا شارٹ کٹ، بُک مارکس، آیت کی تلاش، لائیو سیشنز اور دیگر قارئین کی سرگرمیوں کے ساتھ کمیونٹی پینل، پڑھنے کی تاریخ کی ٹائم لائن، اور باب کی سفارشات۔",
-      "today": "آج"
+      "today": "آج",
+      "resume-reading-loading": "آپ کی پڑھنے کی سرگزشت لوڈ ہو رہی ہے…"
     },
     "uz": {
       "everything-begins-small": "Hamma narsa kichikdan boshlanadi.",
@@ -2515,7 +2587,8 @@
       "None": "Hech biri",
       "title": "Bugungi ekran",
       "description": "O'quvchi uchun shaxsiylashtirilgan kundalik bosh ekran: vaqtga asoslangan salomlashish, rezyume o'qish uchun yorliq, xatcho'plar, oyatlarni qidirish, jonli sessiyalar va boshqa o'quvchilarning faoliyati bilan hamjamiyat paneli, o'qish tarixi xronologiyasi va bob tavsiyalari.",
-      "today": "Bugun"
+      "today": "Bugun",
+      "resume-reading-loading": "O'qish tarixingiz yuklanmoqda…"
     },
     "vi": {
       "everything-begins-small": "Mọi thứ đều bắt đầu từ những điều nhỏ bé.",
@@ -2549,7 +2622,8 @@
       "None": "Không có",
       "title": "Màn hình hôm nay",
       "description": "Màn hình chính được cá nhân hóa hàng ngày dành cho người đọc: lời chào theo thời gian, phím tắt tiếp tục đọc, đánh dấu trang, tìm kiếm câu thơ, bảng cộng đồng với các phiên trực tiếp và hoạt động của những người đọc khác, dòng thời gian lịch sử đọc và đề xuất chương.",
-      "today": "Hôm nay"
+      "today": "Hôm nay",
+      "resume-reading-loading": "Đang tải lịch sử đọc của bạn…"
     },
     "zh": {
       "everything-begins-small": "一切都始于微小之处。",
@@ -2583,7 +2657,8 @@
       "None": "没有任何",
       "title": "今日屏幕",
       "description": "为读者提供个性化的每日主屏幕：基于时间的问候语、继续阅读快捷方式、书签、诗歌搜索、包含实时会话和其他读者活动的社区面板、阅读历史时间线和章节推荐。",
-      "today": "今天"
+      "today": "今天",
+      "resume-reading-loading": "正在加载您的阅读历史记录…"
     },
     "zu": {
       "everything-begins-small": "Konke kuqala kancane.",
@@ -2617,7 +2692,8 @@
       "None": "Akukho",
       "title": "Isikrini sanamuhla",
       "description": "Isikrini sasekhaya sansuku zonke esenzelwe umfundi: ukubingelela okusekelwe esikhathini, isinqamuleli sokufunda i-resume, amabhukumaka, ukusesha amavesi, iphaneli yomphakathi enezikhathi ezibukhoma kanye neminye imisebenzi yabafundi, umugqa wesikhathi wokufunda nomlando, kanye nezincomo zezahluko.",
-      "today": "Namuhla"
+      "today": "Namuhla",
+      "resume-reading-loading": "Ilayisha umlando wakho wokufunda…"
     }
   },
   "autoinstall": true
