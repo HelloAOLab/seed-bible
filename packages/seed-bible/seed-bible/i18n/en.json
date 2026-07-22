@@ -134,6 +134,7 @@
   "keep-screen-awake": "Keep screen awake",
   "language": "Language",
   "report-a-bug": "Report a bug",
+  "app-version": "v{{version}} · {{commit}}",
   "session-settings-host-only_note": "Only the session host can change these settings.",
   "session-settings-host-only_navigate": "Only host can navigate",
   "session-settings-host-only_highlight": "Only host can highlight",

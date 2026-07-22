@@ -1,0 +1,138 @@
+# Release
+#
+# Publishes a GitHub Release when a version-bumped commit lands on `main`
+# (normally via a develop -> main merge). Deployment to prod.seedbible.org is
+# handled separately by cd.yml; this workflow only tags the commit and creates
+# the Release, using the version already bumped on develop
+# (packages/seed-bible/package.json) and the CHANGELOG section already stamped
+# there by `pnpm release:prepare`.
+#
+# It is idempotent: if a release for the current version already exists, it does
+# nothing — so a push to `main` that didn't bump the version (e.g. a hotfix)
+# deploys but creates no release, and re-runs never duplicate one.
+#
+# It is also tolerant of an unstamped CHANGELOG: if `main`'s version has no
+# matching `## v<version>` section (e.g. someone merged without running
+# `pnpm release:prepare` on develop first), the job logs a warning and skips
+# the release rather than failing — a missed release shouldn't put a red X on
+# the protected branch.
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+permissions:
+  contents: write # create the tag + GitHub Release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+
+      # Resolve the app version and decide whether there's anything to release.
+      - name: Resolve version + check for existing release
+        id: check
+        run: |
+          VERSION=$(node -p "require('./packages/seed-bible/package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo "Release v$VERSION already exists — nothing to do."
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Will release v$VERSION."
+            echo "should_release=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Bun
+        if: steps.check.outputs.should_release == 'true'
+        uses: oven-sh/setup-bun@v2
+
+      - name: Install
+        if: steps.check.outputs.should_release == 'true'
+        run: |
+          corepack enable
+          pnpm install
+
+      # Pull the release notes straight from the (already stamped) CHANGELOG.
+      # `changelog:extract` exits 2 for the expected "not stamped yet" case
+      # (see EXTRACT_NOT_FOUND_EXIT_CODE in script/lib/changelog.ts) — that's
+      # not a hard failure: we log a warning and skip the rest of the release
+      # (no tag, no GitHub Release, no announcement), so an accidental
+      # unstamped merge to `main` still deploys cleanly without a red X. Any
+      # OTHER non-zero exit is a genuine bug in the script, not an unstamped
+      # changelog, and is left to fail the job with its stack trace intact.
+      - name: Extract release notes
+        id: extract
+        if: steps.check.outputs.should_release == 'true'
+        env:
+          VERSION: ${{ steps.check.outputs.version }}
+        run: |
+          set +e
+          pnpm --silent changelog:extract "$VERSION" > notes.md 2>extract-error.log
+          EXIT_CODE=$?
+          set -e
+
+          if [ "$EXIT_CODE" -eq 0 ]; then
+            echo "notes_available=true" >> "$GITHUB_OUTPUT"
+          elif [ "$EXIT_CODE" -eq 2 ]; then
+            echo "notes_available=false" >> "$GITHUB_OUTPUT"
+            cat extract-error.log
+            echo "::warning::No stamped CHANGELOG section found for v$VERSION — skipping the release. Run 'pnpm release:prepare' on develop before merging to main next time."
+            {
+              echo "### ⚠️ Release v$VERSION skipped"
+              echo ""
+              echo "No stamped \`## v$VERSION\` section was found in CHANGELOG.md, so no tag, GitHub Release, or Discord announcement was created."
+              echo ""
+              echo "Run \`pnpm release:prepare\` on \`develop\` before merging to \`main\` next time."
+            } >> "$GITHUB_STEP_SUMMARY"
+          else
+            cat extract-error.log
+            echo "::error::changelog:extract failed unexpectedly (exit $EXIT_CODE) for v$VERSION — this looks like a bug in the script, not an unstamped changelog. See the log above."
+            exit "$EXIT_CODE"
+          fi
+
+      # gh creates the tag `v<version>` at this commit (= the commit cd.yml
+      # deploys) and the Release in one call. A pre-release suffix (e.g.
+      # 1.2.0-rc.1) marks the Release as a pre-release.
+      - name: Create GitHub Release + tag
+        if: steps.check.outputs.should_release == 'true' && steps.extract.outputs.notes_available == 'true'
+        env:
+          VERSION: ${{ steps.check.outputs.version }}
+        run: |
+          PRERELEASE=""
+          case "$VERSION" in *-*) PRERELEASE="--prerelease" ;; esac
+          gh release create "v$VERSION" \
+            --title "v$VERSION" \
+            --notes-file notes.md \
+            --target "$GITHUB_SHA" \
+            $PRERELEASE
+          echo "Published release **v$VERSION**." >> "$GITHUB_STEP_SUMMARY"
+
+      # Repost the release notes to the Discord #announcements channel with a
+      # link to the site. No-ops when DISCORD_ANNOUNCE_WEBHOOK is unset, and
+      # never fails the job (the release is already published). Skipped for
+      # pre-releases (e.g. 1.2.0-rc.1).
+      - name: Announce on Discord
+        if: steps.check.outputs.should_release == 'true' && steps.extract.outputs.notes_available == 'true' && !contains(steps.check.outputs.version, '-')
+        env:
+          VERSION: ${{ steps.check.outputs.version }}
+          DISCORD_ANNOUNCE_WEBHOOK: ${{ secrets.DISCORD_ANNOUNCE_WEBHOOK }}
+        run: |
+          pnpm notify discord-release \
+            --version "$VERSION" \
+            --notes-file notes.md \
+            --site-url "https://seedbible.org" \
+            --release-url "https://github.com/$GITHUB_REPOSITORY/releases/tag/v$VERSION"
