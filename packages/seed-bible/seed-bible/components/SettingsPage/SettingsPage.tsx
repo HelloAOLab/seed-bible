@@ -1915,6 +1915,38 @@ function AllSettingsView(props: { state: SeedBibleState }) {
   );
 }
 
+function SettingsVersionFooter() {
+  const { t } = useI18n();
+  const copied = useSignal(false);
+
+  const onCopy = () => {
+    void navigator.clipboard?.writeText(
+      `v${__APP_VERSION__} (${__GIT_COMMIT__})`
+    );
+    copied.value = true;
+    setTimeout(() => {
+      copied.value = false;
+    }, 1500);
+  };
+
+  return (
+    <button
+      type="button"
+      className="sb-settings-version"
+      onClick={onCopy}
+      title={t("copy", { defaultValue: "Copy" })}
+    >
+      {copied.value
+        ? t("copied", { defaultValue: "Copied" })
+        : t("app-version", {
+            version: __APP_VERSION__,
+            commit: __GIT_COMMIT__.slice(0, 7),
+            defaultValue: "v{{version}} · {{commit}}",
+          })}
+    </button>
+  );
+}
+
 function SettingsMainView(props: { state: SeedBibleState }) {
   const { state } = props;
   const { t, language, availableLanguages, setLanguage } = useI18n();
@@ -2219,6 +2251,7 @@ function SettingsMainView(props: { state: SeedBibleState }) {
             </div>
           </li>
         </ul>
+        <SettingsVersionFooter />
       </section>
     </div>
   );
