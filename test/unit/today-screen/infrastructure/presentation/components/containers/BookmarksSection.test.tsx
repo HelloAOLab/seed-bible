@@ -47,10 +47,13 @@ type HookResult = ReturnType<typeof useBookmarksSection>;
 function makeHookResult(options: {
   label?: string;
   categorized?: CategorizedBookmarks;
+  moreButton?: { label: string; onClick: () => void };
 }): HookResult {
   return {
     label: signal(options.label ?? "BOOKMARKS"),
-    categorizedBookmarks: signal(options.categorized ?? {}),
+    categorizedBookmarks: signal(options.categorized ?? new Map()),
+    moreButtonData: signal(options.moreButton),
+    containerRef: { current: null },
   } as unknown as HookResult;
 }
 
@@ -80,22 +83,47 @@ describe("BookmarksSection", () => {
     );
   }
 
+  function moreButton() {
+    return container.querySelector<HTMLButtonElement>(
+      ".titled-section-header > button"
+    );
+  }
+
   describe("title", () => {
     it("renders the label in the section heading", () => {
       setup({ label: "MARCADORES" });
-      expect(container.querySelector(".titled-section > h5")!.textContent).toBe(
-        "MARCADORES"
-      );
+      expect(
+        container.querySelector(".titled-section-header > h5")!.textContent
+      ).toBe("MARCADORES");
+    });
+  });
+
+  describe("more button", () => {
+    it("renders the more button in the header when moreButtonData is present", () => {
+      const onClick = vi.fn();
+      setup({ moreButton: { label: "VIEW MORE", onClick } });
+      expect(moreButton()).not.toBeNull();
+      expect(moreButton()!.textContent).toBe("VIEW MORE");
+      act(() => moreButton()!.click());
+      expect(onClick).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not render the more button when moreButtonData is undefined", () => {
+      setup();
+      expect(moreButton()).toBeNull();
     });
   });
 
   describe("categories", () => {
     it("renders one BookmarksCategory per category, preserving order", () => {
       setup({
-        categorized: {
-          Favorites: [{ key: "a", text: "Genesis 1", handleClick: vi.fn() }],
-          "To Read": [{ key: "b", text: "John 3", handleClick: vi.fn() }],
-        },
+        categorized: new Map([
+          [
+            "Favorites",
+            [{ key: "a", text: "Genesis 1", handleClick: vi.fn() }],
+          ],
+          ["To Read", [{ key: "b", text: "John 3", handleClick: vi.fn() }]],
+        ]),
       });
       const labels = Array.from(categories()).map((el) =>
         el.getAttribute("data-label")
@@ -108,7 +136,7 @@ describe("BookmarksSection", () => {
         { key: "a", text: "Genesis 1", handleClick: vi.fn() },
         { key: "b", text: "Exodus 2", handleClick: vi.fn() },
       ];
-      setup({ categorized: { Favorites: favorites } });
+      setup({ categorized: new Map([["Favorites", favorites]]) });
 
       const texts = Array.from(categories()[0]!.querySelectorAll(".bm")).map(
         (el) => el.textContent
@@ -126,7 +154,7 @@ describe("BookmarksSection", () => {
     });
 
     it("renders no categories when there are none", () => {
-      setup({ categorized: {} });
+      setup({ categorized: new Map() });
       expect(categories()).toHaveLength(0);
     });
   });

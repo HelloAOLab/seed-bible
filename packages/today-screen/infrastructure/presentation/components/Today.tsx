@@ -160,6 +160,8 @@ export interface TodayConfig {
   ) => string;
   useHorizontalScroll: UseHorizontalScroll;
   isMobile: Signal<boolean>;
+  isBookmarksListOpen: boolean;
+  showBookmarksList: () => void;
 }
 
 type TodayProps = {

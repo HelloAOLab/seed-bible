@@ -27,10 +27,17 @@ function books(entries: { id: string; name: string }[]): TranslationBooks {
 
 type UseBookmarksResult = ReturnType<typeof useBookmarksSection>;
 
+class MockResizeObserver {
+  constructor(public cb: () => void) {}
+  observe() {}
+  disconnect() {}
+}
+
 describe("useBookmarksSection", () => {
   let container: HTMLDivElement;
   const addTab = vi.fn();
   const closeToday = vi.fn();
+  let offsetTopDesc: PropertyDescriptor | undefined;
 
   function configure(
     options: {
@@ -54,20 +61,61 @@ describe("useBookmarksSection", () => {
   beforeEach(() => {
     container = document.createElement("div");
     document.body.appendChild(container);
+
+    (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver =
+      MockResizeObserver;
+
+    // jsdom does not lay out, so drive each strip child's offsetTop from a data
+    // attribute to simulate items wrapping onto a second line.
+    offsetTopDesc = Object.getOwnPropertyDescriptor(
+      HTMLElement.prototype,
+      "offsetTop"
+    );
+    Object.defineProperty(HTMLElement.prototype, "offsetTop", {
+      configurable: true,
+      get(this: HTMLElement) {
+        const v = this.getAttribute("data-top");
+        return v === null ? 0 : Number(v);
+      },
+    });
   });
 
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
+    if (offsetTopDesc) {
+      Object.defineProperty(HTMLElement.prototype, "offsetTop", offsetTopDesc);
+    } else {
+      delete (HTMLElement.prototype as { offsetTop?: number }).offsetTop;
+    }
+    delete (globalThis as unknown as { ResizeObserver?: unknown })
+      .ResizeObserver;
     vi.clearAllMocks();
   });
 
-  function setup(options: Parameters<typeof configure>[0] = {}) {
+  // Each entry is a strip; each number is one child's offsetTop (a value above
+  // the first child's top means that item wrapped to a new line).
+  function setup(
+    options: Parameters<typeof configure>[0] = {},
+    strips?: number[][]
+  ) {
     const ctx = configure(options);
     const result = { current: null as unknown as UseBookmarksResult };
     function TestComponent() {
-      result.current = useBookmarksSection();
-      return null;
+      const r = useBookmarksSection();
+      result.current = r;
+      if (!strips) return null;
+      return (
+        <div ref={r.containerRef}>
+          {strips.map((childTops, index) => (
+            <div key={index} className="bookmarks-section-container">
+              {childTops.map((top, childIndex) => (
+                <button key={childIndex} data-top={top} />
+              ))}
+            </div>
+          ))}
+        </div>
+      );
     }
     act(() => render(<TestComponent />, container));
     return { result, ctx };
@@ -100,7 +148,7 @@ describe("useBookmarksSection", () => {
       result: { current: UseBookmarksResult },
       category: string
     ) {
-      return result.current.categorizedBookmarks.value[category]![0]!;
+      return result.current.categorizedBookmarks.value.get(category)![0]!;
     }
 
     it("groups bookmarks by their category", () => {
@@ -112,9 +160,22 @@ describe("useBookmarksSection", () => {
         ]),
       });
       const categorized = result.current.categorizedBookmarks.value;
-      expect(Object.keys(categorized)).toEqual(["Favorites", "To Read"]);
-      expect(categorized["Favorites"]).toHaveLength(2);
-      expect(categorized["To Read"]).toHaveLength(1);
+      expect(Array.from(categorized.keys())).toEqual(["Favorites", "To Read"]);
+      expect(categorized.get("Favorites")).toHaveLength(2);
+      expect(categorized.get("To Read")).toHaveLength(1);
+    });
+
+    it("preserves first-appearance order for numeric-looking category names", () => {
+      const { result } = setup({
+        bookmarks: signal<FakeBookmark[]>([
+          { ...bookmark, id: "b1", category: "Favorites" },
+          { ...bookmark, id: "b2", category: "2024" },
+        ]),
+      });
+      // A plain object would hoist the integer-like "2024" to the front.
+      expect(
+        Array.from(result.current.categorizedBookmarks.value.keys())
+      ).toEqual(["Favorites", "2024"]);
     });
 
     it("falls back to the bookId before the translation books load", () => {
@@ -230,6 +291,28 @@ describe("useBookmarksSection", () => {
       });
       await flush();
       expect(getTranslationBooks).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("moreButtonData", () => {
+    it("is undefined when no category strip wraps to a new line", () => {
+      const { result } = setup({}, [[0, 0]]);
+      expect(result.current.moreButtonData.value).toBeUndefined();
+    });
+
+    it("is undefined when there is no container to measure", () => {
+      const { result } = setup();
+      expect(result.current.moreButtonData.value).toBeUndefined();
+    });
+
+    it("is defined (with a translated label) when any strip wraps to a new line", () => {
+      const { result } = setup({ translate: vi.fn((key) => `[${key}]`) }, [
+        [0, 0],
+        [0, 20],
+      ]);
+      const more = result.current.moreButtonData.value;
+      expect(more).toBeDefined();
+      expect(more!.label).toBe("[VIEW-MORE]");
     });
   });
 });
