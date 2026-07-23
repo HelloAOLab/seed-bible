@@ -378,7 +378,7 @@
   overflow-y: auto;
 }
 
-.testament-container {
+.books-container .testament-container {
   flex: 0 1 auto;
   min-width: 0;
   min-height: 0;
@@ -1240,11 +1240,9 @@
 }
 
 /* BibleSelector's testament columns stack full-width on mobile. Migrated from
-   the former global legacy.css. The bare selector also matches scripture-map's
-   .testament-container, but harmlessly: scripture-map sets its own width via a
-   higher-specificity rule and colors its text on child elements. */
+   the former global legacy.css. */
 @media only screen and (max-width: 480px) {
-  .testament-container {
+  .books-container .testament-container {
     width: 100%;
     color: var(--sb-font-color);
   }
