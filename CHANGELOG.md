@@ -4,9 +4,13 @@
 
 ### ✨ Added
 
+- Add a unified share sheet: copy a link, share via the device share sheet, or start and share a live session. Reachable from the verse toolbar, the tab options menu, the mobile session participants drawer, and the reader toolbar. ([#1499](https://github.com/HelloAOLab/seed-bible/pull/1499))
+
 ### 🔧 Changed
 
 ### 🐛 Fixed
+
+- Include the chapter in shared verse links so they open to the right chapter instead of sometimes landing on the wrong one. ([#1499](https://github.com/HelloAOLab/seed-bible/pull/1499))
 
 ### 🗑️ Removed
 
