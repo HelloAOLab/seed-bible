@@ -6,10 +6,7 @@ import {
   type Piece,
   type SelectionModality,
 } from "../../domain/models/canvas";
-import type {
-  SectionInteractionServicePort,
-  SectionSelectionServicePort,
-} from "../ports/sections";
+import type { SectionInteractionServicePort } from "../ports/sections";
 import type {
   PieceHierarchyServicePort,
   StackParentDataIds,
@@ -23,6 +20,7 @@ import {
   UnhighlightRequestSources,
 } from "../../domain/models/pieces";
 import { SectionInteractionDelays } from "../../infrastructure/config/sectionInteraction/delays";
+import type { SectionSelectionServicePort } from "../ports/in/SectionSelection";
 
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";
 import type { PaintPort } from "../ports/in/Paint";

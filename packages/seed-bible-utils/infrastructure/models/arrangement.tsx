@@ -38,8 +38,8 @@ export interface CompleteBookInfoConfig extends BaseBookInfoConfig {
 export interface SubsetBookInfoConfig extends BaseBookInfoConfig {
   readonly type: "subset";
   readonly completeBookId: string;
-  readonly startIndex?: number;
-  readonly endIndex?: number;
+  readonly startIndex: number;
+  readonly endIndex: number;
   readonly translationRule?: string;
 }
 

@@ -1,7 +1,13 @@
 import type { AnyStackData } from "../../application/ports/pieces";
 import type { VerseData } from "../entities/VerseData";
 import type { VersesBundleData } from "../entities/VersesBundleData";
-import type { Piece } from "./canvas";
+import type {
+  ActivityIndicator,
+  ActivityNotification,
+  BiblePieces,
+  Piece,
+  SectionShadow,
+} from "./canvas";
 
 export const HighlightRequestSources = {
   UserSelection: "UserSelection",
@@ -49,3 +55,24 @@ export type StackCrossLine = Piece<"StackCrossLine"> & StaticBiblePiece;
 export type StackShadow = Piece<"StackShadow"> & StaticBiblePiece;
 
 export type PaintablePieceData = AnyStackData | VersesBundleData | VerseData;
+
+export interface PieceTypeMap {
+  [BiblePieces.ActivityIndicator]: ActivityIndicator;
+  [BiblePieces.ActivityNotification]: ActivityNotification;
+  [BiblePieces.InfoLabelDate]: Piece<"InfoLabelDate">;
+  [BiblePieces.InfoLabelTail]: Piece<"InfoLabelTail">;
+  [BiblePieces.InfoLabelText]: Piece<"InfoLabelText">;
+  [BiblePieces.InfoLabelTransformer]: Piece<"InfoLabelTransformer">;
+  [BiblePieces.StackBook]: Piece<"StackBook">;
+  [BiblePieces.StackChapter]: Piece<"StackChapter">;
+  [BiblePieces.StackCover]: StackCover;
+  [BiblePieces.StackCrossLine]: StackCrossLine;
+  [BiblePieces.StackSection]: Piece<"StackSection">;
+  [BiblePieces.StackSectionBook]: Piece<"StackSectionBook">;
+  [BiblePieces.StackSectionShadow]: SectionShadow;
+  [BiblePieces.StackShadow]: StackShadow;
+  [BiblePieces.StackTestament]: Piece<"StackTestament">;
+  [BiblePieces.StackTransformer]: StackTransformer;
+  [BiblePieces.Verse]: Piece<"Verse">;
+  [BiblePieces.VersesBundle]: Piece<"VersesBundle">;
+}

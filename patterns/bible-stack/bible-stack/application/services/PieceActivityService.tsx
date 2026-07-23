@@ -10,7 +10,6 @@ import { HighlightStates } from "../../domain/models/highlight";
 import type { LabelDataStorePort } from "../ports/out/PieceActivity";
 import type {
   DataRegistryPort,
-  ArrangementServicePort,
   UserPresenceServicePort,
   ActivityIndicatorsAdapterPort,
   ActivityNotificationAdapterPort,
@@ -28,6 +27,8 @@ import type {
   NotificationDeleterPort,
   IndicatorsUpdaterPort,
 } from "../ports/in/PieceActivity";
+import type { PieceTypeMap } from "../../domain/models/pieces";
+import type { ArrangementServicePort } from "../ports/in/Arrangement";
 
 interface ServiceParams {
   dataRegistryPort: DataRegistryPort;
@@ -43,7 +44,7 @@ interface ServiceParams {
 }
 
 type ActivityStrategyType<T extends BiblePiece = BiblePiece> = (
-  piece: Piece<T>,
+  piece: PieceTypeMap[T],
   dataRegistryPort: DataRegistryPort
 ) => {
   key: string;
@@ -58,6 +59,11 @@ const testamentActivityStrategy: ActivityStrategyType<"StackTestament"> = (
     id: piece.id,
     type: piece.type,
   });
+  if (!data) {
+    throw new Error(
+      "PieceActvityService: data not found at testamentActivityStrategy"
+    );
+  }
   const key = data.getPieceInfoProperty("name");
   const typeOfPiece = BiblePieces.StackTestament;
 
@@ -67,10 +73,17 @@ const testamentActivityStrategy: ActivityStrategyType<"StackTestament"> = (
 const sectionActivityStrategy: ActivityStrategyType<
   "StackSection" | "StackSectionShadow"
 > = (piece, dataRegistryPort) => {
+  const id = piece.type === "StackSection" ? piece.id : piece.sectionDataId;
   const data = dataRegistryPort.getDataById({
-    id: piece.id,
-    type: piece.type,
+    id,
+    type: "StackSection",
   });
+
+  if (!data) {
+    throw new Error(
+      "PieceActivityService: data not found at sectionActivityStrategy"
+    );
+  }
   const key = data.getPieceInfoProperty("name");
   const typeOfPiece = BiblePieces.StackSection;
 
@@ -85,6 +98,12 @@ const bookActivityStrategy: ActivityStrategyType<"StackBook"> = (
     id: piece.id,
     type: piece.type,
   });
+
+  if (!data) {
+    throw new Error(
+      "PieceActivityService: data not found at bookActivityStrategy"
+    );
+  }
   const key = data.getPieceInfoProperty("bookId");
   const typeOfPiece = BiblePieces.StackBook;
 
@@ -99,6 +118,12 @@ const sectionBookActivityStrategy: ActivityStrategyType<"StackSectionBook"> = (
     id: piece.id,
     type: piece.type,
   });
+
+  if (!data) {
+    throw new Error(
+      "PieceActivityService: data not found at sectionBookActivityStrategy"
+    );
+  }
   const key = data.getPieceBookInfoProperty("bookId");
   const typeOfPiece = BiblePieces.StackBook;
 
@@ -113,6 +138,12 @@ const chapterActivityStrategy: ActivityStrategyType<"StackChapter"> = (
     id: piece.id,
     type: piece.type,
   });
+
+  if (!data) {
+    throw new Error(
+      "PieceActivityService: data not found at chapterActivityStrategy"
+    );
+  }
   const key = `${data.getCreationParam("bookId")} ${data.getPieceInfoProperty("number")}`;
   const typeOfPiece = BiblePieces.StackChapter;
 
@@ -231,7 +262,7 @@ export class PieceActivityService
     for (const readingInstance of allReadingInstances) {
       const { bookId, chapter } = readingInstance;
 
-      let { found, testamentIndex, sectionIndex } =
+      let { found, testamentIndex, sectionIndex, arrangementIndex } =
         this.#arrangementServicePort.getBookInfoPathById({
           id: bookId,
         });
@@ -242,7 +273,7 @@ export class PieceActivityService
             chapterNumber: chapter,
           });
         if (bookSubset) {
-          ({ found, testamentIndex, sectionIndex } =
+          ({ found, testamentIndex, sectionIndex, arrangementIndex } =
             this.#arrangementServicePort.getBookInfoPathById({
               id: bookSubset.bookId,
             }));
@@ -251,6 +282,7 @@ export class PieceActivityService
       if (found) {
         const testament = this.#arrangementServicePort.getTestamentByIndices({
           testamentIndex: testamentIndex as number,
+          arrangementIndex: arrangementIndex as number,
         });
         if (!testament) {
           throw new Error(
@@ -259,6 +291,7 @@ export class PieceActivityService
         }
         const testamentName = testament.name;
         const section = this.#arrangementServicePort.getSectionByIndices({
+          arrangementIndex: arrangementIndex as number,
           testamentIndex: testamentIndex as number,
           sectionIndex: sectionIndex as number,
         });
@@ -304,7 +337,11 @@ export class PieceActivityService
       return [];
     }
 
-    const { key, typeOfPiece } = strategy(piece, this.#dataRegistryPort);
+    // `strategy` was looked up by `piece.type`, so it matches this piece at runtime.
+    const { key, typeOfPiece } = strategy(
+      piece as PieceTypeMap[keyof PieceTypeMap],
+      this.#dataRegistryPort
+    );
 
     const activity = allReadingInstances.filter((readingInstance) => {
       const instancePath = instancePathMap.get(readingInstance);

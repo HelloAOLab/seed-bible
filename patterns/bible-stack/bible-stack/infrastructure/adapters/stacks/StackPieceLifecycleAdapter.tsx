@@ -158,6 +158,10 @@ export class StackPieceLifecycleAdapter
     return this.#objectPoolerPort.getObject("StackChapter");
   }
 
+  spawnChapterDomain(): Piece<"StackChapter"> {
+    return this.#chapterMapperPort.toDomain(this.spawnChapter());
+  }
+
   despawnChapter(piece: Piece<"StackChapter">): void {
     const bot = this.#chapterMapperPort.toInfrastructure(piece);
     if (bot) this.#objectPoolerPort.releaseObject(bot, "StackChapter");

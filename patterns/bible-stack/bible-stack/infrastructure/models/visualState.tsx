@@ -52,7 +52,6 @@ export interface ChapterVisualState extends Pick<
   BaseScripturePieceVisualState,
   "initialColor" | "initialScaleX" | "initialScaleZ" | "initialScaleY"
 > {
-  highlightedColor: HexString;
   expandedScaleZ: number;
   highlightedScaleZ: number;
   selectedColor: HexString;

@@ -33,28 +33,28 @@ export class PieceHierarchyService implements PieceHierarchyServicePort {
           )
         : undefined,
       testamentData: parentDataIds.stackTestamentId
-        ? this.#pieceDataRepositoryPort.getDataById(
-            "StackTestament",
-            parentDataIds.stackTestamentId
-          )
+        ? this.#pieceDataRepositoryPort.getDataById({
+            type: "StackTestament",
+            id: parentDataIds.stackTestamentId,
+          })
         : undefined,
       sectionData: parentDataIds.stackSectionId
-        ? this.#pieceDataRepositoryPort.getDataById(
-            "StackSection",
-            parentDataIds.stackSectionId
-          )
+        ? this.#pieceDataRepositoryPort.getDataById({
+            type: "StackSection",
+            id: parentDataIds.stackSectionId,
+          })
         : undefined,
       sectionBookData: parentDataIds.stackSectionBookId
-        ? this.#pieceDataRepositoryPort.getDataById(
-            "StackSectionBook",
-            parentDataIds.stackSectionBookId
-          )
+        ? this.#pieceDataRepositoryPort.getDataById({
+            type: "StackSectionBook",
+            id: parentDataIds.stackSectionBookId,
+          })
         : undefined,
       bookData: parentDataIds.stackBookId
-        ? this.#pieceDataRepositoryPort.getDataById(
-            "StackBook",
-            parentDataIds.stackBookId
-          )
+        ? this.#pieceDataRepositoryPort.getDataById({
+            type: "StackBook",
+            id: parentDataIds.stackBookId,
+          })
         : undefined,
     };
   };

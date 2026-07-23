@@ -1,4 +1,4 @@
-import type { ScripturePiecesStateServicePort } from "../ports/experience";
+import type { ScripturePiecesStateServicePort } from "../ports/in/ScripturePiecesState";
 
 const ARE_PIECES_DRAGGABLE_DEFAULT = false;
 const SHOULD_SHOW_LABELS_DEFAULT = false;

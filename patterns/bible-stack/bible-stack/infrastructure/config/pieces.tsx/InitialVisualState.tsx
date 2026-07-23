@@ -9,7 +9,9 @@ export const INITIAL_VISUAL_STATE_MAP: {
   [BiblePieces.StackSection]: {},
   [BiblePieces.StackBook]: {},
   [BiblePieces.StackSectionBook]: {},
-  [BiblePieces.StackChapter]: {},
+  [BiblePieces.StackChapter]: {
+    selectedColor: "#f8c471",
+  },
   [BiblePieces.StackSectionShadow]: {},
   [BiblePieces.VersesBundle]: {
     desiredScaleZ: 0.25,

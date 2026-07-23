@@ -128,6 +128,13 @@ export abstract class StackBookBaseData<
     this.#currentSelectedChapterData = undefined;
   }
 
+  get previousHighlightedChapterData() {
+    return this.#previousHighlightedChapterData;
+  }
+  clearPreviousHighlightedChapterData() {
+    this.#previousHighlightedChapterData = undefined;
+  }
+
   get isInsideTestament() {
     return this.#isInsideTestament;
   }

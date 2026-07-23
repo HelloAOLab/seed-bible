@@ -1,6 +1,5 @@
 import type { StackTestamentData } from "../../domain/entities/StackTestamentData";
 import type { PieceSelectionSource } from "../../domain/models/canvas";
-import type { StackPresenceNavigationPacing } from "../../domain/models/userPresence";
 import type { TestamentSelectionPort } from "../ports/in/TestamentSelection";
 import type {
   TestamentSelectionAdapterPort,
@@ -8,7 +7,7 @@ import type {
 } from "../ports/out/TestamentSelection";
 import type { SectionSpawnerPort } from "../ports/in/PieceSpawn";
 import type { StackUpdateServicePort } from "../ports/in/StackUpdate";
-import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
+// import type { PieceLifecycleServicePort } from "../ports/in/PieceLifecycle";
 import type { StackUpdatePacing } from "../../domain/models/stacks";
 
 interface ServiceParams {
@@ -16,7 +15,7 @@ interface ServiceParams {
   testamentSelectionEventPort: TestamentSelectionEventPort;
   sectionSpawnerPort: SectionSpawnerPort;
   stackUpdateServicePort: StackUpdateServicePort;
-  pieceLifecycleServicePort: PieceLifecycleServicePort;
+  // pieceLifecycleServicePort: PieceLifecycleServicePort;
 }
 
 export class TestamentSelectionService implements TestamentSelectionPort {
@@ -24,20 +23,20 @@ export class TestamentSelectionService implements TestamentSelectionPort {
   #testamentSelectionEventPort: ServiceParams["testamentSelectionEventPort"];
   #sectionSpawnerPort: ServiceParams["sectionSpawnerPort"];
   #stackUpdateServicePort: ServiceParams["stackUpdateServicePort"];
-  #pieceLifecycleServicePort: ServiceParams["pieceLifecycleServicePort"];
+  // #pieceLifecycleServicePort: ServiceParams["pieceLifecycleServicePort"];
 
   constructor({
     testamentSelectionAdapterPort,
     testamentSelectionEventPort,
     sectionSpawnerPort,
     stackUpdateServicePort,
-    pieceLifecycleServicePort,
+    // pieceLifecycleServicePort,
   }: ServiceParams) {
     this.#testamentSelectionAdapterPort = testamentSelectionAdapterPort;
     this.#testamentSelectionEventPort = testamentSelectionEventPort;
     this.#sectionSpawnerPort = sectionSpawnerPort;
     this.#stackUpdateServicePort = stackUpdateServicePort;
-    this.#pieceLifecycleServicePort = pieceLifecycleServicePort;
+    // this.#pieceLifecycleServicePort = pieceLifecycleServicePort;
   }
 
   /**
@@ -100,26 +99,24 @@ export class TestamentSelectionService implements TestamentSelectionPort {
     this.#finalizeSelection(data);
   }
 
-  async deselect(data: StackTestamentData): Promise<void> {
-    await this.#testamentSelectionAdapterPort.deselect(data);
-
-    const piecesToRelease = data.resetHierarchy(false);
-    await Promise.all(
-      piecesToRelease.map((piece) =>
-        this.#pieceLifecycleServicePort.clearPiece(piece)
-      )
-    );
-
-    const stack = (data.parentDataIds
-      ? data.getOldestAncestor()
-      : undefined) ?? {
-      id: data.id,
-      type: data.type,
-    };
-    await this.#stackUpdateServicePort.updateStack(
-      stack.id,
-      stack.type,
-      "Regular"
-    );
+  async deselect(/*data: StackTestamentData*/): Promise<void> {
+    // await this.#testamentSelectionAdapterPort.deselect(data);
+    // const piecesToRelease = data.resetHierarchy(false);
+    // await Promise.all(
+    //   piecesToRelease.map((piece) =>
+    //     this.#pieceLifecycleServicePort.clearPiece(piece)
+    //   )
+    // );
+    // const stack = (data.parentDataIds
+    //   ? data.getOldestAncestor()
+    //   : undefined) ?? {
+    //   id: data.id,
+    //   type: data.type,
+    // };
+    // await this.#stackUpdateServicePort.updateStack(
+    //   stack.id,
+    //   stack.type,
+    //   "Regular"
+    // );
   }
 }

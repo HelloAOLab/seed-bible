@@ -117,32 +117,35 @@ export class StackUpdateService implements StackUpdateServicePort {
         return;
       }
       case "StackTestament": {
-        const data = this.#pieceDataRepositoryPort.getDataById(
-          "StackTestament",
-          id
-        );
+        const data = this.#pieceDataRepositoryPort.getDataById({
+          type: "StackTestament",
+          id,
+        });
         if (data)
           await this.#testamentStackUpdaterPort.update({ data, pacing });
         return;
       }
       case "StackSection": {
-        const data = this.#pieceDataRepositoryPort.getDataById(
-          "StackSection",
-          id
-        );
+        const data = this.#pieceDataRepositoryPort.getDataById({
+          type: "StackSection",
+          id,
+        });
         if (data) await this.#sectiontackUpdaterPort.update({ data, pacing });
         return;
       }
       case "StackSectionBook": {
-        const data = this.#pieceDataRepositoryPort.getDataById(
-          "StackSectionBook",
-          id
-        );
+        const data = this.#pieceDataRepositoryPort.getDataById({
+          type: "StackSectionBook",
+          id,
+        });
         if (data) await this.#bookStackUpdaterPort.update({ data, pacing });
         return;
       }
       case "StackBook": {
-        const data = this.#pieceDataRepositoryPort.getDataById("StackBook", id);
+        const data = this.#pieceDataRepositoryPort.getDataById({
+          type: "StackBook",
+          id,
+        });
         if (data) await this.#bookStackUpdaterPort.update({ data, pacing });
         return;
       }

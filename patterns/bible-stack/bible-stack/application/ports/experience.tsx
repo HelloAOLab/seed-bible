@@ -22,11 +22,6 @@ export interface ExperienceAdapterPort {
   displayExperience(): string;
 }
 
-export interface ScripturePiecesStateServicePort {
-  resetToDefault(): void;
-  readonly arePiecesDraggable: boolean;
-}
-
 export interface ExperienceConfigProviderPort {
   getInitialBibleCreationDelay(): number;
   getBibleCreationPosition(): WorldPosition;

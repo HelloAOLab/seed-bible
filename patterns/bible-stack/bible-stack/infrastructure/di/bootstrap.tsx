@@ -519,6 +519,7 @@ export const bootstrapExtension = () => {
     labelFeedbackAdapter: labelFeedbackAdapter,
     stackConfigProvider: layoutConfigProvider,
     getBookName: bookNamesProvider.getBookName,
+    piecesConfigProvider,
   });
   const tourGuideAdapter = new TourGuideAdapter();
   const bibleRecenterAdapter = new BibleRecenterAdapter({

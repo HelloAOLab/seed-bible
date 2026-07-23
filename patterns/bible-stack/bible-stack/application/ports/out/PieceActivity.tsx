@@ -1,13 +1,5 @@
 import type { InfoLabelData } from "../../../domain/entities/InfoLabelData";
-import type {
-  TestamentInfo,
-  SectionInfo,
-  SubsetBookInfo,
-} from "../../../domain/models/arrangement";
-import type {
-  TestamentPathIndices,
-  SectionPathIndices,
-} from "../../../domain/models/arrangement";
+import type { SubsetBookInfo } from "../../../domain/models/arrangement";
 import type {
   UserIds,
   UserPresence,
@@ -70,26 +62,6 @@ export interface LabelDataStorePort {
 
 export interface IndicatorsRepositoryPort {
   getIndicatorsByPieceId: (pieceDataId: string) => ActivityIndicator[];
-}
-
-export interface ArrangementServicePort {
-  getTestamentByIndices: (
-    path: TestamentPathIndices
-  ) => TestamentInfo | undefined;
-  getSectionByIndices: (path: SectionPathIndices) => SectionInfo | undefined;
-  getBookInfoPathById: (params: { id: string }) => {
-    found: boolean;
-    testamentIndex?: number | undefined;
-    sectionIndex?: number | undefined;
-    bookIndex?: number | undefined;
-  };
-  getBookSubsetByCompleteId({
-    id,
-    chapterNumber,
-  }: {
-    id: string;
-    chapterNumber: number;
-  }): SubsetBookInfo | undefined;
 }
 
 export interface ScriptureServicePort {

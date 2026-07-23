@@ -4,6 +4,7 @@ export const StackPieceMeasurements = {
   MinChapterBackDepth: 0.5,
   ChapterFrontDepth: 0.01,
   ChapterFrontSelectedDepth: 0.25,
+  ChapterPaddingY: 0.1,
   EmptySectionShadowScaleZ: 1,
   CoverScales: new Vector3(2.53, 3.85, 0.1),
   TestamentScales: new Vector3(2.27, 3.47, 0.825),

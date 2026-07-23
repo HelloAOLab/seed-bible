@@ -2,7 +2,6 @@ import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import type {
   BookDataRepositoryPort,
   BookInteractionServicePort,
-  BookSelectionServicePort,
   PieceAdapterPort,
   SequenceStateServicePort,
 } from "../ports/books";
@@ -33,6 +32,7 @@ import { LabelTranslucencyModes } from "../../domain/models/label";
 import type { BookInteractionConfigProviderPort } from "../../infrastructure/ports/bookInteraction";
 import { BookInteractionDelays } from "../../infrastructure/config/bookInteraction/delays";
 import type { PaintPort } from "../ports/in/Paint";
+import type { BookSelectionServicePort } from "../ports/in/BookSelection";
 
 interface ServiceParams {
   bookDataRepositoryPort: BookDataRepositoryPort;

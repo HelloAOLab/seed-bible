@@ -3,7 +3,7 @@ import type {
   UserPresence,
 } from "../../domain/models/userPresence";
 import type { UserPresenceProviderPort } from "../../application/ports/out/UserPresence";
-import type { UserPresencePort } from "../ports/in/userPresence";
+import type { UserPresencePort } from "../ports/in/UserPresence";
 
 interface UserPresenceParams {
   userPresenceProviderPort: UserPresenceProviderPort;

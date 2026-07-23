@@ -2,6 +2,11 @@ import type {
   ArrangementInfo,
   BookInfo,
   BookPathIndices,
+  SectionInfo,
+  SectionPathIndices,
+  SubsetBookInfo,
+  TestamentInfo,
+  TestamentPathIndices,
 } from "../../../domain/models/arrangement";
 
 export interface ArrangementServicePort {
@@ -24,4 +29,15 @@ export interface ArrangementServicePort {
     bookIndex?: number | undefined;
   };
   getBookByIndices(path: BookPathIndices): BookInfo | undefined;
+  getTestamentByIndices(path: TestamentPathIndices): TestamentInfo | undefined;
+  getBookSubsetByCompleteId({
+    id,
+    chapterNumber,
+    arrangementIndex,
+  }: {
+    id: string;
+    chapterNumber: number;
+    arrangementIndex?: number | undefined;
+  }): SubsetBookInfo | undefined;
+  getSectionByIndices(path: SectionPathIndices): SectionInfo | undefined;
 }
