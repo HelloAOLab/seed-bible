@@ -821,11 +821,15 @@ const SideBarChapters = (props: {
       const scrollTargetInto = (scroller: HTMLElement) => {
         const scrollerRect = scroller.getBoundingClientRect();
         const targetRect = target.getBoundingClientRect();
+        // For a large book (e.g. Psalms) the chapter grid can be taller than
+        // the scroller — only chase the bottom edge when it fits, or this
+        // scrolls past the book's title to reveal the last chapters instead.
+        const targetFits = targetRect.height <= scrollerRect.height;
         let delta = 0;
-        if (targetRect.bottom > scrollerRect.bottom) {
-          delta = targetRect.bottom - scrollerRect.bottom + 8;
-        } else if (targetRect.top < scrollerRect.top) {
+        if (targetRect.top < scrollerRect.top) {
           delta = -(scrollerRect.top - targetRect.top + 8);
+        } else if (targetFits && targetRect.bottom > scrollerRect.bottom) {
+          delta = targetRect.bottom - scrollerRect.bottom + 8;
         }
         if (delta !== 0) {
           // `behavior: "auto"` overrides `.sidebar-results { scroll-behavior:
