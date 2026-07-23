@@ -158,11 +158,7 @@ export interface BibleSelectorState {
   highLightedButtonsID: Signal<Record<number, boolean>>;
   currentPsalms: Signal<BibleSelectorPsalmsGroups[]>;
   selectedTestamentData: Signal<TranslationBook[] | null>;
-  handleChapterClick: (props: {
-    index: number;
-    book: TranslationBook;
-    cht?: number;
-  }) => void;
+  handleChapterClick: (props: { book: TranslationBook }) => void;
   calcChapterPos: (index: number, separator: number) => number;
   isBook: (book: BibleSelectorBookItem) => book is TranslationBook;
   ghostArray: (
@@ -688,7 +684,7 @@ export function createBibleSelectorState(
 
     const findIn = (
       books: TranslationBook[],
-      testamentHint: number
+      testamentHint = 0
     ): { book: TranslationBook; index: number; cht: number } | null => {
       const index = books.findIndex((book) => book.id === bookId);
       const book = index >= 0 ? books[index] : undefined;
@@ -699,15 +695,17 @@ export function createBibleSelectorState(
     let match: { book: TranslationBook; index: number; cht: number } | null =
       null;
     if (lst === 0) {
-      match = findIn(oldTestament, 0);
+      match = findIn(oldTestament);
     } else if (lst === 1) {
-      match = findIn(newTestament, 1);
+      match = findIn(newTestament);
     } else if (lst === 3) {
-      // Single-testament apocrypha view has no chapterHint, so cht stays 0.
-      match = findIn(apocrypha, 0);
+      match = findIn(apocrypha);
     } else {
-      // Apocrypha uses hint 2 so its chapter panel doesn't collide with the
-      // NT grid (which uses hint 1) in the All Books view.
+      // All Books view: OT/NT/AP grids render together, so each needs its own
+      // hint (0/1/2) — that's how a book's chapter panel opens under the
+      // right grid instead of colliding with a different testament's.
+      // Single-testament views above never pass a chapterHint at render time,
+      // so `cht` is inert there; the default 0 is just a placeholder.
       match =
         findIn(oldTestament, 0) ??
         findIn(newTestament, 1) ??
@@ -727,23 +725,12 @@ export function createBibleSelectorState(
     return true;
   };
 
-  const handleChapterClick = (props: {
-    index: number;
-    book: TranslationBook;
-    cht?: number;
-  }): void => {
-    const { index, book, cht = 0 } = props;
-    if (bookData?.value?.id === book.id) {
-      bookData.value = null;
-      chT.value = 0;
-      lastBookClicked.value = -1;
-      expandedBookId.value = null;
-    } else {
-      bookData.value = book;
-      chT.value = cht;
-      lastBookClicked.value = index;
-      expandedBookId.value = book.id;
-    }
+  // Delegates the toggle to `setExpandedBook` — the `applyExpandedBookToSidebar`
+  // effect above is the single place that derives `bookData` / `lastBookClicked`
+  // / `chT` from `expandedBookId`, so writing those signals here too would just
+  // be a second, immediately-overwritten source of truth.
+  const handleChapterClick = (props: { book: TranslationBook }): void => {
+    setExpandedBook(props.book.id);
   };
 
   const calcChapterPos = (index: number, separator: number): number =>

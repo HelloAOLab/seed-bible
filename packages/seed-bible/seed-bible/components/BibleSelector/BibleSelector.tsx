@@ -469,13 +469,7 @@ const SideBarBooks = (props: {
               tabIndex={index + 1}
               aria-current={isSelected ? "true" : undefined}
               aria-expanded={isSelected}
-              onClick={() =>
-                handleClick({
-                  index,
-                  book,
-                  ...(chapterHint !== undefined ? { cht: chapterHint } : {}),
-                })
-              }
+              onClick={() => handleClick({ book })}
               id={`booktab-${book.id}`}
               style={itemGridStyle}
             >
