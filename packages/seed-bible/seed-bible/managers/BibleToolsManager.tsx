@@ -720,6 +720,16 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       },
     },
     {
+      id: "share",
+      priority: 130,
+      title: { key: "share", defaultValue: "Share" },
+      icon: () => <MaterialIcon>share</MaterialIcon>,
+      isVisible: (context) => !!context.modals && !!context.app,
+      onSelect: (context) => {
+        openShareModal(context, getShareUrl(context.readingState));
+      },
+    },
+    {
       id: "next-chapter",
       priority: 1000,
       hideLabel: true,
@@ -805,9 +815,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
 
         try {
           navigator.clipboard.writeText(verseTexts);
-          context.toast(
-            i18n.t("share-link-copied", { defaultValue: "Copied!" })
-          );
+          context.toast(i18n.t("copied", { defaultValue: "Copied" }));
         } catch (err) {
           console.error("Failed to copy verse:", err);
         }
@@ -822,40 +830,11 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
         context.readingState.selectedVerses.value.length > 0,
       onSelect: (context) => {
         if (context.readingState.selectedVerses.value.length === 0) return;
-
-        const modals = context.modals;
-        if (!modals) return;
-
-        const app = context.app;
-
-        if (!app) return;
-
-        const shareUrl = getShareUrl(context.readingState);
-
-        const modalId = modals.openModal({
-          title: { key: "share-sheet-title", defaultValue: "Share" },
-          content: () => (
-            <ShareModal
-              app={app}
-              onClose={() => modals.closeModal(modalId)}
-              onShareLink={() => {
-                navigator.clipboard.writeText(shareUrl.toString());
-                context.toast(
-                  i18n.t("share-link-copied", { defaultValue: "Copied!" })
-                );
-                modals.closeModal(modalId);
-              }}
-              onShareVia={() => {
-                void navigator.share?.({
-                  title: document.title,
-                  text: formatSelectedVerses(context.readingState),
-                  url: shareUrl.toString(),
-                });
-                modals.closeModal(modalId);
-              }}
-            />
-          ),
-        });
+        openShareModal(
+          context,
+          getShareUrl(context.readingState),
+          formatSelectedVerses(context.readingState)
+        );
       },
     },
     {
@@ -983,6 +962,49 @@ export function getShareUrl(readingState: BibleReadingState) {
     }
   }
   return url;
+}
+
+/**
+ * Opens the unified share sheet for a reading surface. Shared by the verse
+ * toolbar's "Share" tool and the reader toolbar's "Share" tool so both open the
+ * exact same modal. `shareText` is only passed by the verse flow (the selected
+ * verses' text) for the native share sheet; the reader flow shares a link only.
+ * The session comes from `context.sharedSession` — the tool's own reading
+ * surface — never from global app state, so a background surface can't be
+ * shared by mistake.
+ */
+function openShareModal(
+  context: BibleToolContext,
+  shareUrl: URL,
+  shareText?: string
+) {
+  const modals = context.modals;
+  const app = context.app;
+  if (!modals || !app) return;
+
+  const modalId = modals.openModal({
+    title: { key: "share-sheet-title", defaultValue: "Share" },
+    content: () => (
+      <ShareModal
+        app={app}
+        session={context.sharedSession}
+        onClose={() => modals.closeModal(modalId)}
+        onShareLink={() => {
+          navigator.clipboard.writeText(shareUrl.toString());
+          context.toast(i18n.t("copied", { defaultValue: "Copied" }));
+          modals.closeModal(modalId);
+        }}
+        onShareVia={() => {
+          void navigator.share?.({
+            title: document.title,
+            ...(shareText ? { text: shareText } : {}),
+            url: shareUrl.toString(),
+          });
+          modals.closeModal(modalId);
+        }}
+      />
+    ),
+  });
 }
 
 /**

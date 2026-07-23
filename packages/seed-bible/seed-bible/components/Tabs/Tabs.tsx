@@ -650,6 +650,7 @@ export function openShareSessionModal(
     content: () => (
       <ShareModal
         app={state.app}
+        session={session}
         hideShareLink
         onClose={() => state.modals.closeModal(modalId)}
         onShareVia={() => {

@@ -1845,14 +1845,14 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                 const primaryCards = needsToggle
                   ? actionCards.slice(0, COLLAPSED_COUNT)
                   : actionCards;
-                // const overflowCards = needsToggle
-                //   ? actionCards.slice(COLLAPSED_COUNT)
-                //   : [];
+                const overflowCards = needsToggle
+                  ? actionCards.slice(COLLAPSED_COUNT)
+                  : [];
 
                 return (
                   <>
                     {primaryCards}
-                    {/* {needsToggle && (
+                    {needsToggle && (
                       <div
                         key="more-less"
                         className="sb-verse-toolbar-action-item"
@@ -1894,8 +1894,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                           </span>
                         </button>
                       </div>
-                    )} */}
-                    {/* {isVerseSheetExpanded.value && overflowCards} */}
+                    )}
+                    {isVerseSheetExpanded.value && overflowCards}
                   </>
                 );
               })()}

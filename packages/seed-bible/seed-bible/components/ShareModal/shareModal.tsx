@@ -1,5 +1,4 @@
 import "./shareModal.css";
-import { useComputed } from "@preact/signals";
 import { useEffect } from "preact/hooks";
 import { useI18n } from "../../i18n/I18nManager";
 import type { AppState } from "../../managers/SeedBibleStateManager";
@@ -14,14 +13,14 @@ export interface ShareModalProps {
   onShareVia?: () => void;
   app: AppState;
   hideShareLink?: boolean;
+  /** The session to share, or null. */
+  session: BibleReadingSession | null;
 }
 
 export const ShareModal = (props: ShareModalProps) => {
   const { t } = useI18n();
 
-  const sessionActive = useComputed(
-    () => !!props.app.currentReadingState.value?.tab.sharedSession?.id
-  );
+  const sessionActive = props.session !== null;
 
   const close = () => props.onClose?.();
 
@@ -74,7 +73,7 @@ export const ShareModal = (props: ShareModalProps) => {
           onClick: () => props.onShareVia?.(),
         }
       : null,
-    sessionActive.value
+    sessionActive
       ? {
           key: "session",
           icon: "group",
@@ -85,8 +84,7 @@ export const ShareModal = (props: ShareModalProps) => {
             defaultValue: "Copy a link to invite others to read along live",
           }),
           onClick: () => {
-            const session =
-              props.app.currentReadingState.value?.tab.sharedSession;
+            const session = props.session;
             if (!session) return;
             void copySessionLink(session);
           },
