@@ -773,18 +773,23 @@ const SideBarChapters = (props: {
       ? currentChapterNumber.value
       : null;
 
-  // Ensure the Psalm book-group containing the current chapter is expanded
-  // so the chapter button is visible for highlight + scroll-into-view.
-  useEffect(() => {
-    if (openBookId !== "PSA" || activeChapter == null) return;
-    const partName = psalmsPartName({ chapterNumber: activeChapter });
-    if (!currentPsalms.value.includes(partName)) {
-      currentPsalms.value = [...currentPsalms.value, partName];
-    }
-  }, [openBookId, activeChapter]);
-
   useEffect(() => {
     if (!openBookId || !isOpen.value) return;
+
+    // Ensure the Psalm book-group containing the current chapter is expanded
+    // so the chapter button is visible for highlight + scroll-into-view.
+    // This must stay in the same effect as the scroll/focus logic below
+    // (rather than a separate effect keyed off `currentPsalms.value`) —
+    // `currentPsalms` is also written when the user manually opens/closes a
+    // Psalms section, and re-running the scroll/focus effect off that same
+    // signal would snap the view back to the current chapter every time,
+    // undoing the user's manual browsing.
+    if (openBookId === "PSA" && activeChapter != null) {
+      const partName = psalmsPartName({ chapterNumber: activeChapter });
+      if (!currentPsalms.value.includes(partName)) {
+        currentPsalms.value = [...currentPsalms.value, partName];
+      }
+    }
 
     const timeout = window.setTimeout(() => {
       const bookTab = document.getElementById(`booktab-${openBookId}`);
@@ -855,8 +860,8 @@ const SideBarChapters = (props: {
     }, 50);
 
     return () => window.clearTimeout(timeout);
-    // Re-run after Psalm group auto-expand so the chapter button is visible.
-  }, [openBookId, activeChapter, isOpen.value, currentPsalms.value]);
+    // Deliberately excludes `currentPsalms.value` — see comment above.
+  }, [openBookId, activeChapter, isOpen.value]);
 
   const renderChapters = computed(() => {
     const bd = bookData.value;
