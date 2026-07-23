@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Навигаци",
   "session-settings-section-sharing": "Хуваалцах",
   "session-settings-section-participants": "Оролцогчид",
-
   "shared": "Хуваалцсан",
   "host": "Хост",
   "co-host": "Хамтран зохион байгуулагч",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Хуралдааныг дуусгах",
   "dont-show-again": "Үүнийг дахин бүү харуул",
   "discover": "Нээх",
-
   "playlists": "Тоглуулах жагсаалтууд",
   "annotations": "Тэмдэглэгээ",
   "cross-references": "Хөндлөн лавлагаа",
@@ -368,16 +366,13 @@
   "playlist-add-item": "Зүйл нэмэх",
   "playlist-edit-item": "Зүйлийг засах",
   "playlist-save-item": "Өөрчлөлтүүдийг хадгалах",
-
   "playlist-add-scripture-placeholder": "жишээ нь Иохан 3 эсвэл Иохан 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Зүйл нэмэх",
   "playlist-add-scripture-error": "Тэр лавлагааг олж чадсангүй",
   "playlist-add-link-error": "Хүчинтэй URL оруулна уу",
   "playlist-add-link-embed": "Энэ холбоосыг оруулах",
   "play-playlist": "Тоглуулах жагсаалтыг тоглуулах",
-
   "stop": "Зогсоох",
   "queue": "Дараалал",
   "previous": "Өмнөх",
@@ -389,7 +384,6 @@
   "editor-align-center": "Төвийг нь тэгшлэх",
   "editor-align-right": "Баруун тийш зэрэгцүүлэх",
   "editor-align-justify": "Тэгшлэх",
-
   "share-playlist": "Тоглуулах жагсаалтыг хуваалцах",
   "playlist-url-copied": "Тоглуулах жагсаалтын URL-г санах ойд хуулсан",
   "current-playlist": "Одоогийн тоглуулах жагсаалт",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "Хадгалаагүй зүйл",
   "unsaved-item-confirm-message": "Та тоглуулах жагсаалтад хараахан нэмэгдээгүй зүйл нэмж эхэлсэн байна. Та юу хийхийг хүсэж байна вэ?",
   "discard-and-save": "Цуцлаад хадгалах",
-  "add-and-save": "Нэмээд хадгалах"
+  "add-and-save": "Нэмээд хадгалах",
+  "loading-profile": "Таны профайлыг ачаалж байна…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Хавчуургын ангилал руу шилжих",
+  "move-bookmark": "Хавтас руу зөөх",
+  "move-to-new": "Шинэ рүү шилжих"
 }

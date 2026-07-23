@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigáció",
   "session-settings-section-sharing": "Megosztás",
   "session-settings-section-participants": "Résztvevők",
-
   "shared": "Megosztott",
   "host": "Házigazda",
   "co-host": "Társházigazdák",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Munkamenet vége",
   "dont-show-again": "Ne mutasd ezt újra",
   "discover": "Felfedezés",
-
   "playlists": "Lejátszási listák",
   "annotations": "Jegyzetek",
   "cross-references": "Kereszthivatkozások",
@@ -368,16 +366,13 @@
   "playlist-add-item": "Elem hozzáadása",
   "playlist-edit-item": "Elem szerkesztése",
   "playlist-save-item": "Változtatások mentése",
-
   "playlist-add-scripture-placeholder": "pl. János 3 vagy János 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Elem hozzáadása",
   "playlist-add-scripture-error": "Nem találtam a hivatkozást",
   "playlist-add-link-error": "Adjon meg egy érvényes URL-címet",
   "playlist-add-link-embed": "Beágyazza ezt a linket",
   "play-playlist": "Lejátszási lista lejátszása",
-
   "stop": "Stop",
   "queue": "Sorban",
   "previous": "Előző",
@@ -389,7 +384,6 @@
   "editor-align-center": "Középre igazítás",
   "editor-align-right": "Jobbra igazítás",
   "editor-align-justify": "Sorkizárás",
-
   "share-playlist": "Lejátszási lista megosztása",
   "playlist-url-copied": "Lejátszási lista URL-címe a vágólapra másolva",
   "current-playlist": "Aktuális lejátszási lista",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "Nem mentett elem",
   "unsaved-item-confirm-message": "Elkezdett hozzáadni egy elemet, amelyet még nem adott hozzá a lejátszási listához. Mit szeretne tenni?",
   "discard-and-save": "Elvetés és mentés",
-  "add-and-save": "Hozzáadás és mentés"
+  "add-and-save": "Hozzáadás és mentés",
+  "loading-profile": "Profil betöltése…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Áthelyezés könyvjelző kategóriába",
+  "move-bookmark": "Áthelyezés mappába",
+  "move-to-new": "Áthelyezés az új oldalra"
 }

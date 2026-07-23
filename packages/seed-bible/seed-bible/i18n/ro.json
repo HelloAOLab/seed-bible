@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Navigare",
   "session-settings-section-sharing": "Partajare",
   "session-settings-section-participants": "Participanți",
-
   "shared": "Partajat",
   "host": "Gazdă",
   "co-host": "Co-gazdă",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Încheiați sesiunea",
   "dont-show-again": "Nu mai afișa asta",
   "discover": "Descoperi",
-
   "playlists": "Liste de redare",
   "annotations": "Adnotări",
   "cross-references": "Referințe încrucișate",
@@ -368,16 +366,13 @@
   "playlist-add-item": "Adăugați element",
   "playlist-edit-item": "Editați elementul",
   "playlist-save-item": "Salvați modificările",
-
   "playlist-add-scripture-placeholder": "de exemplu Ioan 3 sau Ioan 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Adăugați element",
   "playlist-add-scripture-error": "Nu am găsit acea referință",
   "playlist-add-link-error": "Introduceți o adresă URL validă",
   "playlist-add-link-embed": "Încorporați acest link",
   "play-playlist": "Redă lista de redare",
-
   "stop": "Stop",
   "queue": "Coadă",
   "previous": "Anterior",
@@ -389,7 +384,6 @@
   "editor-align-center": "Aliniere la centru",
   "editor-align-right": "Aliniere la dreapta",
   "editor-align-justify": "Justifica",
-
   "share-playlist": "Distribuie playlist",
   "playlist-url-copied": "Adresa URL a listei de redare a fost copiată în clipboard",
   "current-playlist": "Playlist curent",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "Element nesalvat",
   "unsaved-item-confirm-message": "Ați început să adăugați un element care nu a fost încă adăugat în playlist. Ce doriți să faceți?",
   "discard-and-save": "Renunță și salvează",
-  "add-and-save": "Adaugă și salvează"
+  "add-and-save": "Adaugă și salvează",
+  "loading-profile": "Se încarcă profilul tău…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Mută ​​la categoria de marcaje",
+  "move-bookmark": "Mută ​​în folder",
+  "move-to-new": "Mută ​​la nou"
 }

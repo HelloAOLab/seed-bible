@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "ການນຳທາງ",
   "session-settings-section-sharing": "ການແບ່ງປັນ",
   "session-settings-section-participants": "ຜູ້ເຂົ້າຮ່ວມ",
-
   "shared": "ແບ່ງປັນແລ້ວ",
   "host": "ໂຮສ",
   "co-host": "ຮ່ວມເປັນເຈົ້າພາບ",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "ສິ້ນສຸດກອງປະຊຸມ",
   "dont-show-again": "ຢ່າສະແດງສິ່ງນີ້ອີກ",
   "discover": "ຄົ້ນພົບ",
-
   "playlists": "ລາຍການເພງ",
   "annotations": "ຄຳອະທິບາຍປະກອບ",
   "cross-references": "ການອ້າງອີງຂ້າມ",
@@ -368,16 +366,13 @@
   "playlist-add-item": "ເພີ່ມລາຍການ",
   "playlist-edit-item": "ແກ້ໄຂລາຍການ",
   "playlist-save-item": "ບັນທຶກການປ່ຽນແປງ",
-
   "playlist-add-scripture-placeholder": "ຕົວຢ່າງ ໂຢຮັນ 3 ຫຼື ໂຢຮັນ 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "ເພີ່ມລາຍການ",
   "playlist-add-scripture-error": "ບໍ່ສາມາດຊອກຫາເອກະສານອ້າງອີງນັ້ນໄດ້",
   "playlist-add-link-error": "ໃສ່ URL ທີ່ຖືກຕ້ອງ",
   "playlist-add-link-embed": "ຝັງລິ້ງນີ້",
   "play-playlist": "ຫຼິ້ນລາຍການເພງ",
-
   "stop": "ຢຸດ",
   "queue": "ຄິວ",
   "previous": "ກ່ອນໜ້ານີ້",
@@ -389,7 +384,6 @@
   "editor-align-center": "ຈັດກາງ",
   "editor-align-right": "ຈັດໄປທາງຂວາ",
   "editor-align-justify": "ຈັດໃຫ້ຖືກຕ້ອງ",
-
   "share-playlist": "ແບ່ງປັນລາຍການຫຼິ້ນ",
   "playlist-url-copied": "ສຳເນົາ URL ລາຍການເພງໄປໃສ່ຄລິບບອດແລ້ວ",
   "current-playlist": "ລາຍການຫຼິ້ນປັດຈຸບັນ",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "ລາຍການທີ່ຍັງບໍ່ໄດ້ບັນທຶກ",
   "unsaved-item-confirm-message": "ທ່ານໄດ້ເລີ່ມເພີ່ມລາຍການທີ່ຍັງບໍ່ໄດ້ຖືກເພີ່ມໃສ່ລາຍການຫຼິ້ນ. ທ່ານຕ້ອງການເຮັດຫຍັງ?",
   "discard-and-save": "ຍົກເລີກ ແລະ ບັນທຶກ",
-  "add-and-save": "ເພີ່ມ ແລະ ບັນທຶກ"
+  "add-and-save": "ເພີ່ມ ແລະ ບັນທຶກ",
+  "loading-profile": "ກຳລັງໂຫຼດໂປຣໄຟລ໌ຂອງທ່ານ…",
+  "app-version": "ວ {{version}} · {{commit}}",
+  "move-to-bookmark-category": "ຍ້າຍໄປໝວດໝູ່ບຸກມາກ",
+  "move-bookmark": "ຍ້າຍໄປຫາໂຟນເດີ",
+  "move-to-new": "ຍ້າຍໄປບ່ອນໃໝ່"
 }

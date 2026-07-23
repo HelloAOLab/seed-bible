@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Urambazaji",
   "session-settings-section-sharing": "Kushiriki",
   "session-settings-section-participants": "Washiriki",
-
   "shared": "Imeshirikiwa",
   "host": "Mwenyeji",
   "co-host": "Mwenyeji mwenza",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Maliza kipindi",
   "dont-show-again": "Usionyeshe hii tena",
   "discover": "Gundua",
-
   "playlists": "Orodha za kucheza",
   "annotations": "Maelezo",
   "cross-references": "Marejeleo ya msalaba",
@@ -368,16 +366,13 @@
   "playlist-add-item": "Ongeza kipengee",
   "playlist-edit-item": "Hariri kipengee",
   "playlist-save-item": "Hifadhi mabadiliko",
-
   "playlist-add-scripture-placeholder": "mfano Yohana 3 au Yohana 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Ongeza kipengee",
   "playlist-add-scripture-error": "Sikuweza kupata marejeleo hayo",
   "playlist-add-link-error": "Weka URL halali",
   "playlist-add-link-embed": "Pachika kiungo hiki",
   "play-playlist": "Cheza orodha ya kucheza",
-
   "stop": "Simamisha",
   "queue": "Foleni",
   "previous": "Iliyotangulia",
@@ -389,7 +384,6 @@
   "editor-align-center": "Panga katikati",
   "editor-align-right": "Pangilia kulia",
   "editor-align-justify": "Thibitisha",
-
   "share-playlist": "Shiriki orodha ya kucheza",
   "playlist-url-copied": "URL ya Orodha ya Kucheza Imenakiliwa kwenye ubao wa kunakili",
   "current-playlist": "Orodha ya kucheza ya sasa",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "Kipengee kisichohifadhiwa",
   "unsaved-item-confirm-message": "Umeanza kuongeza kipengee ambacho bado hakijaongezwa kwenye orodha ya kucheza. Ungependa kufanya nini?",
   "discard-and-save": "Ondoa na uhifadhi",
-  "add-and-save": "Ongeza na uhifadhi"
+  "add-and-save": "Ongeza na uhifadhi",
+  "loading-profile": "Inapakia wasifu wako…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Hamisha hadi kwenye kategoria ya alamisho",
+  "move-bookmark": "Hamisha hadi kwenye folda",
+  "move-to-new": "Hamia hadi mpya"
 }
