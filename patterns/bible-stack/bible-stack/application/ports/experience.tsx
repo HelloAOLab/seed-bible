@@ -35,10 +35,6 @@ export interface AwaiterPort {
   sleep(ms: number): Promise<void>;
 }
 
-export interface StackPresenceNavigationServicePort {
-  update(): Promise<void>;
-}
-
 export interface AwaiterPort {
   sleep(ms: number): Promise<void>;
 }

@@ -1,15 +1,15 @@
 import { CanvasInteractions } from "bibleVizUtils.infrastructure.models.canvas";
 import type { ChapterBot } from "bibleStack.models.stack";
 import type {
-  ChapterInteractionServicePort,
-  DragServicePort,
   DraggingEventMapperPort,
-  DraggingServicePort,
   DropEventMapperPort,
-  DropServicePort,
   PieceMapperPort,
-  SelectionReleaseServicePort,
 } from "bibleStack.application.ports.chapters";
+import type { ChapterInteractionServicePort } from "bibleStack.application.ports.in.ChapterInteraction";
+import type { ChapterDragServicePort } from "bibleStack.application.ports.in.ScripturePieceDrag";
+import type { ChapterDraggingServicePort } from "bibleStack.application.ports.in.ScripturePieceDragging";
+import type { ChapterDropServicePort } from "bibleStack.application.ports.in.ScripturePieceDrop";
+import type { ChapterSelectionReleaseServicePort } from "bibleStack.application.ports.in.ScripturePieceSelectionRelease";
 import type {
   DraggingEvent,
   DropEvent,
@@ -18,12 +18,12 @@ import type {
 interface ControllerParams {
   chapterInteractionServicePort: ChapterInteractionServicePort;
   pieceMapperPort: PieceMapperPort;
-  dragServicePort: DragServicePort;
-  draggingServicePort: DraggingServicePort;
+  dragServicePort: ChapterDragServicePort;
+  draggingServicePort: ChapterDraggingServicePort;
   draggingEventMapperPort: DraggingEventMapperPort;
-  selectionReleaseServicePort: SelectionReleaseServicePort;
+  selectionReleaseServicePort: ChapterSelectionReleaseServicePort;
   dropEventMapperPort: DropEventMapperPort;
-  dropServicePort: DropServicePort;
+  dropServicePort: ChapterDropServicePort;
 }
 
 export class ChapterInteractionController {

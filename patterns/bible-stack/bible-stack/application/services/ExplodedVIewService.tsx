@@ -1,15 +1,8 @@
 import type { StackSectionData } from "../../domain/entities/StackSectionData";
-import type { ExplodedViewServicePort as DomainExplodedViewServicePort } from "../ports/explodedView";
-import type { ExplodedViewServicePort } from "../ports/userPresence";
-import type { ExplodedViewServicePort as ExplodedSectionRegistryPort } from "../ports/in/ExplodedView";
+import type { ExplodedViewServicePort } from "../ports/in/ExplodedView";
 import type { StackPresenceNavigationPacing } from "../../domain/models/userPresence";
 
-export class ExplodedViewService
-  implements
-    DomainExplodedViewServicePort,
-    ExplodedViewServicePort,
-    ExplodedSectionRegistryPort
-{
+export class ExplodedViewService implements ExplodedViewServicePort {
   #currentExplodedSection: StackSectionData | undefined;
 
   get currentExplodedSection(): StackSectionData | undefined {

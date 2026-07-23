@@ -2,9 +2,9 @@ import type {
   ParentDataChain,
   PieceHierarchyPieceDataRepositoryPort,
   PieceHierarchyStackDataRepositoryPort,
-  PieceHierarchyServicePort,
   StackParentDataIds,
 } from "../ports/pieces";
+import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 
 interface ServiceParams {
   pieceDataRepositoryPort: PieceHierarchyPieceDataRepositoryPort;

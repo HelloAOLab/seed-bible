@@ -6,12 +6,10 @@ import {
   type Piece,
   type SelectionModality,
 } from "../../domain/models/canvas";
-import type { SectionInteractionServicePort } from "../ports/sections";
-import type {
-  PieceHierarchyServicePort,
-  StackParentDataIds,
-} from "../ports/pieces";
-import type { TourGuideServicePort } from "../ports/tourGuide";
+import type { SectionInteractionServicePort } from "../ports/in/SectionInteraction";
+import type { StackParentDataIds } from "../ports/pieces";
+import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
+import type { TourGuideServicePort } from "../ports/in/TourGuide";
 import type { PieceDataRepositoryPort } from "../ports/pieces";
 import type { SectionInteractionConfigProviderPort } from "../../infrastructure/ports/sectionInteraction";
 import {

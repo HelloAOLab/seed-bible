@@ -1,15 +1,15 @@
 import type { BookBot } from "bibleStack.models.stack";
 import { CanvasInteractions } from "bibleVizUtils.infrastructure.models.canvas";
 import type {
-  BookInteractionServicePort,
   DraggingEventMapperPort,
   DraggingServicePort,
-  DragServicePort,
   DropEventMapperPort,
-  DropServicePort,
   PieceMapperPort,
   SelectionReleaseServicePort,
 } from "bibleStack.application.ports.books";
+import type { BookInteractionServicePort } from "bibleStack.application.ports.in.BookInteraction";
+import type { BookDragServicePort } from "bibleStack.application.ports.in.ScripturePieceDrag";
+import type { BookDropServicePort } from "bibleStack.application.ports.in.ScripturePieceDrop";
 import type {
   DraggingEvent,
   DropEvent,
@@ -17,12 +17,12 @@ import type {
 
 interface ControllerParams {
   bookInteractionServicePort: BookInteractionServicePort;
-  dragServicePort: DragServicePort;
+  dragServicePort: BookDragServicePort;
   draggingServicePort: DraggingServicePort;
   draggingEventMapperPort: DraggingEventMapperPort;
   selectionReleaseServicePort: SelectionReleaseServicePort;
   dropEventMapperPort: DropEventMapperPort;
-  dropServicePort: DropServicePort;
+  dropServicePort: BookDropServicePort;
   pieceMapperPort: PieceMapperPort;
 }
 

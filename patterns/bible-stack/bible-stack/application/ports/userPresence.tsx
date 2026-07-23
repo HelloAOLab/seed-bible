@@ -58,10 +58,3 @@ export interface SectionSelectionServicePort {
     source: PieceSelectionSource;
   }): Promise<void>;
 }
-
-export interface ExplodedViewServicePort {
-  explodeSection(params: {
-    data: StackSectionData;
-    pacing: StackPresenceNavigationPacing;
-  }): Promise<void>;
-}

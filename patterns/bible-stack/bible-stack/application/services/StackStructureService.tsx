@@ -1,4 +1,4 @@
-import type { StackStructureServicePort as PieceDragStackStructureServicePort } from "../ports/scripturePieceDrag";
+import type { StackStructureServicePort as PieceDragStackStructureServicePort } from "../ports/in/StackStructure";
 import { StackTestamentData } from "../../domain/entities/StackTestamentData";
 import { StackSectionData } from "../../domain/entities/StackSectionData";
 import { StackSectionBookData } from "../../domain/entities/StackSectionBookData";

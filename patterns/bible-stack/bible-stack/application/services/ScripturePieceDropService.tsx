@@ -10,14 +10,14 @@ import type {
   ScripturePieceDropDataRepositoryPort,
 } from "../ports/scripturePieceDrop";
 import type { SequenceStateServicePort } from "../ports/scripturePieceDrag";
+import type { StackParentDataIds } from "../ports/pieces";
+import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type {
-  PieceHierarchyServicePort,
-  StackParentDataIds,
-} from "../ports/pieces";
-import type { DropServicePort as BookControllerDropServicePort } from "../ports/books";
-import type { DropServicePort as TestamentControllerDropServicePort } from "../ports/testaments";
-import type { DropServicePort as SectionControllerDropServicePort } from "../ports/sections";
-import type { DropServicePort as ChapterControllerDropServicePort } from "../ports/chapters";
+  BookDropServicePort,
+  TestamentDropServicePort,
+  SectionDropServicePort,
+  ChapterDropServicePort,
+} from "../ports/in/ScripturePieceDrop";
 import { HighlightRequestSources } from "../../domain/models/pieces";
 import type { ChapterSelectionPort } from "../ports/in/ChapterSelection";
 
@@ -33,10 +33,10 @@ interface ServiceParams {
 
 export class ScripturePieceDropService
   implements
-    BookControllerDropServicePort,
-    TestamentControllerDropServicePort,
-    SectionControllerDropServicePort,
-    ChapterControllerDropServicePort
+    BookDropServicePort,
+    TestamentDropServicePort,
+    SectionDropServicePort,
+    ChapterDropServicePort
 {
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];

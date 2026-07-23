@@ -1,11 +1,11 @@
 import type { Piece } from "../../domain/models/canvas";
 import type {
-  VersesBundleInteractionServicePort,
   SequenceStateServicePort,
   VersesBundleDataRepositoryPort,
-  VersesBundleSelectionServicePort,
 } from "../ports/versesBundle";
 import type { VersesBundleAdapterPort } from "../ports/versesBundle";
+import type { VersesBundleInteractionServicePort } from "../ports/in/VersesBundleInteraction";
+import type { VersesBundleSelectionServicePort } from "../ports/in/VersesBundleSelection";
 import type { PaintPort } from "../ports/in/Paint";
 
 interface ServiceParams {

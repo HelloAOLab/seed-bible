@@ -16,11 +16,11 @@ import type {
   PieceHighlightActivityServicePort,
   PieceHighlightLabelServicePort,
   PieceUnhighlightSchedulerAdapterPort,
-  PieceHierarchyServicePort,
   StackParentDataIds,
   HighlightConfigProviderPort,
   AnyStackData,
 } from "../ports/pieces";
+import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import { HighlightDelays } from "../ports/pieces";
 import {

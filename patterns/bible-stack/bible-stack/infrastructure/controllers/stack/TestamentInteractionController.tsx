@@ -11,15 +11,15 @@
 
 import type { TestamentBot } from "../../models/stack";
 import type {
-  DragServicePort,
   DraggingEventMapperPort,
-  DraggingServicePort,
   DropEventMapperPort,
-  DropServicePort,
   PieceMapperPort,
-  SelectionReleaseServicePort,
-  TestamentInteractionServicePort,
 } from "../../../application/ports/testaments";
+import type { TestamentInteractionServicePort } from "../../../application/ports/in/TestamentInteraction";
+import type { TestamentDragServicePort } from "../../../application/ports/in/ScripturePieceDrag";
+import type { TestamentDraggingServicePort } from "../../../application/ports/in/ScripturePieceDragging";
+import type { TestamentDropServicePort } from "../../../application/ports/in/ScripturePieceDrop";
+import type { TestamentSelectionReleaseServicePort } from "../../../application/ports/in/ScripturePieceSelectionRelease";
 import type {
   BaseRelocationEvent,
   BotListenerParametersMap,
@@ -28,12 +28,12 @@ import type {
 interface ControllerParams {
   testamentInteractionServicePort: TestamentInteractionServicePort;
   pieceMapperPort: PieceMapperPort;
-  dragServicePort: DragServicePort;
-  draggingServicePort: DraggingServicePort;
+  dragServicePort: TestamentDragServicePort;
+  draggingServicePort: TestamentDraggingServicePort;
   draggingEventMapperPort: DraggingEventMapperPort;
-  selectionReleaseServicePort: SelectionReleaseServicePort;
+  selectionReleaseServicePort: TestamentSelectionReleaseServicePort;
   dropEventMapperPort: DropEventMapperPort;
-  dropServicePort: DropServicePort;
+  dropServicePort: TestamentDropServicePort;
 }
 
 export class TestamentInteractionController {

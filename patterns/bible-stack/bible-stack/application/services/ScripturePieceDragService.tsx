@@ -9,19 +9,19 @@ import type {
   SequenceStateServicePort,
   PieceAdapterPort,
   ScripturePieceDataRepositoryPort,
-  StackStructureServicePort,
 } from "../ports/scripturePieceDrag";
-import type {
-  PieceHierarchyServicePort,
-  StackParentDataIds,
-} from "../ports/pieces";
+import type { StackStructureServicePort } from "../ports/in/StackStructure";
+import type { StackParentDataIds } from "../ports/pieces";
+import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import {
   HighlightPacings,
   UnhighlightRequestSources,
 } from "../../domain/models/pieces";
-import type { DragServicePort as BookInteractionControllerDragServicePort } from "../ports/books";
-import type { DragServicePort as TestamentInteractionControllerDragServicePort } from "../ports/testaments";
-import type { DragServicePort as ChapterInteractionControllerDragServicePort } from "../ports/chapters";
+import type {
+  BookDragServicePort,
+  TestamentDragServicePort,
+  ChapterDragServicePort,
+} from "../ports/in/ScripturePieceDrag";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;
@@ -52,9 +52,9 @@ const pieceConditionStrategy: Partial<
 
 export class ScripturePieceDragService
   implements
-    BookInteractionControllerDragServicePort,
-    TestamentInteractionControllerDragServicePort,
-    ChapterInteractionControllerDragServicePort
+    BookDragServicePort,
+    TestamentDragServicePort,
+    ChapterDragServicePort
 {
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #sequenceStateServicePort: ServiceParams["sequenceStateServicePort"];

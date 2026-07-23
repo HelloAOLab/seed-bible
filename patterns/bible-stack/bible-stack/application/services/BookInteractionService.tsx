@@ -1,10 +1,10 @@
 import type { PieceHighlighterPort } from "../ports/in/PieceHighlight";
 import type {
   BookDataRepositoryPort,
-  BookInteractionServicePort,
   PieceAdapterPort,
   SequenceStateServicePort,
 } from "../ports/books";
+import type { BookInteractionServicePort } from "../ports/in/BookInteraction";
 import {
   BibleStates,
   BibleVisualizationStates,
@@ -14,17 +14,15 @@ import {
   type Piece,
   type SelectionModality,
 } from "../../domain/models/canvas";
-import type {
-  PieceHierarchyServicePort,
-  StackParentDataIds,
-} from "../ports/pieces";
-import type { TourGuideServicePort } from "../ports/tourGuide";
+import type { StackParentDataIds } from "../ports/pieces";
+import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
+import type { TourGuideServicePort } from "../ports/in/TourGuide";
 import {
   HighlightRequestSources,
   HighlightPacings,
   UnhighlightRequestSources,
 } from "../../domain/models/pieces";
-import type { ExplodedViewServicePort } from "../ports/explodedView";
+import type { ExplodedViewServicePort } from "../ports/in/ExplodedView";
 import type { StackBookData } from "../../domain/entities/StackBookData";
 import type { StackSectionBookData } from "../../domain/entities/StackSectionBookData";
 import type { StackSectionData } from "../../domain/entities/StackSectionData";

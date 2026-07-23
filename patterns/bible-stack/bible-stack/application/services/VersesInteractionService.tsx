@@ -1,7 +1,5 @@
-import type {
-  VersesInteractionServicePort,
-  SequenceStateServicePort,
-} from "../ports/verses";
+import type { SequenceStateServicePort } from "../ports/verses";
+import type { VersesInteractionServicePort } from "../ports/in/VersesInteraction";
 import type { Piece } from "../../domain/models/canvas";
 import type { PaintPort } from "../ports/in/Paint";
 

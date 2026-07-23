@@ -1,8 +1,6 @@
 import type { VersesBundleData } from "../../domain/entities/VersesBundleData";
-import type {
-  SequenceStateServicePort,
-  VersesBundleSelectionServicePort,
-} from "../ports/versesBundle";
+import type { SequenceStateServicePort } from "../ports/versesBundle";
+import type { VersesBundleSelectionServicePort } from "../ports/in/VersesBundleSelection";
 
 interface ServiceParams {
   sequenceStateServicePort: SequenceStateServicePort;

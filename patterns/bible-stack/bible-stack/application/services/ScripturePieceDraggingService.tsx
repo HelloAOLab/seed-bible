@@ -8,13 +8,13 @@ import type {
   ScripturePieceDraggingDataRepositoryPort,
 } from "../ports/scripturePieceDragging";
 import type { SequenceStateServicePort } from "../ports/scripturePieceDrag";
+import type { StackParentDataIds } from "../ports/pieces";
+import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type {
-  PieceHierarchyServicePort,
-  StackParentDataIds,
-} from "../ports/pieces";
-import type { DraggingServicePort as TestamentControllerDraggingServicePort } from "../ports/testaments";
-import type { DraggingServicePort as SectionControllerDraggingServicePort } from "../ports/sections";
-import type { DraggingServicePort as ChapterControllerDraggingServicePort } from "../ports/chapters";
+  TestamentDraggingServicePort,
+  SectionDraggingServicePort,
+  ChapterDraggingServicePort,
+} from "../ports/in/ScripturePieceDragging";
 
 interface ServiceParams {
   pieceAdapterPort: PieceAdapterPort;
@@ -25,9 +25,9 @@ interface ServiceParams {
 
 export class ScripturePieceDraggingService
   implements
-    TestamentControllerDraggingServicePort,
-    SectionControllerDraggingServicePort,
-    ChapterControllerDraggingServicePort
+    TestamentDraggingServicePort,
+    SectionDraggingServicePort,
+    ChapterDraggingServicePort
 {
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];

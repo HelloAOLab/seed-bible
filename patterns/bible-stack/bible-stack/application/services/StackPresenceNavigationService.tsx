@@ -7,20 +7,20 @@ import type { ScripturePort } from "../ports/in/Scripture";
 import type { BibleDataRepositoryPort } from "../ports/stacks";
 import type {
   PieceDataRepositoryPort,
-  PieceHierarchyServicePort,
   StackParentDataIds,
 } from "../ports/pieces";
+import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type {
   PresenceProviderPort,
   PieceAdapterPort,
   SequenceStateServicePort,
   AwaiterPort,
   TestamentSelectionServicePort,
-  ExplodedViewServicePort,
 } from "../ports/userPresence";
+import type { ExplodedViewServicePort } from "../ports/in/ExplodedView";
 import type { ChapterSelectionPort } from "../ports/in/ChapterSelection";
 import { StackPresenceNavigationPacings } from "../../domain/models/userPresence";
-import type { StackPresenceNavigationServicePort } from "../ports/experience";
+import type { StackPresenceNavigationServicePort } from "../ports/in/StackPresenceNavigation";
 import type { ArrangementServicePort } from "../ports/in/Arrangement";
 import type {
   BookInfo,

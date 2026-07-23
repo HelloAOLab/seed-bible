@@ -7,9 +7,9 @@ import type {
   ScripturePiecesStateServicePort,
   ExperienceConfigProviderPort,
   SequenceStateServicePort,
-  StackPresenceNavigationServicePort,
   AwaiterPort,
 } from "../ports/experience";
+import type { StackPresenceNavigationServicePort } from "../ports/in/StackPresenceNavigation";
 import type {
   CameraAdapterPort,
   BibleLifecycleServicePort,

@@ -1,8 +1,6 @@
 import type { StackSectionData } from "../../domain/entities/StackSectionData";
-import type {
-  TourGuideServicePort,
-  TourGuieAdapterPort,
-} from "../ports/tourGuide";
+import type { TourGuieAdapterPort } from "../ports/tourGuide";
+import type { TourGuideServicePort } from "../ports/in/TourGuide";
 
 interface ServiceParams {
   tourGuieAdapterPort: TourGuieAdapterPort;

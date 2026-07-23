@@ -4,13 +4,13 @@ import type {
   ScripturePieceSelectionReleaseDataRepositoryPort,
 } from "../ports/scripturePieceSelectionRelease";
 import type { SequenceStateServicePort } from "../ports/scripturePieceDrag";
+import type { StackParentDataIds } from "../ports/pieces";
+import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
 import type {
-  PieceHierarchyServicePort,
-  StackParentDataIds,
-} from "../ports/pieces";
-import type { SelectionReleaseServicePort as TestamentControllerSelectionReleaseServicePort } from "../ports/testaments";
-import type { SelectionReleaseServicePort as SectionControllerSelectionReleaseServicePort } from "../ports/sections";
-import type { SelectionReleaseServicePort as ChapterControllerSelectionReleaseServicePort } from "../ports/chapters";
+  TestamentSelectionReleaseServicePort,
+  SectionSelectionReleaseServicePort,
+  ChapterSelectionReleaseServicePort,
+} from "../ports/in/ScripturePieceSelectionRelease";
 
 interface ServiceParams {
   pieceAdapterPort: PieceAdapterPort;
@@ -21,9 +21,9 @@ interface ServiceParams {
 
 export class ScripturePieceSelectionReleaseService
   implements
-    TestamentControllerSelectionReleaseServicePort,
-    SectionControllerSelectionReleaseServicePort,
-    ChapterControllerSelectionReleaseServicePort
+    TestamentSelectionReleaseServicePort,
+    SectionSelectionReleaseServicePort,
+    ChapterSelectionReleaseServicePort
 {
   #pieceAdapterPort: ServiceParams["pieceAdapterPort"];
   #pieceDataRepositoryPort: ServiceParams["pieceDataRepositoryPort"];

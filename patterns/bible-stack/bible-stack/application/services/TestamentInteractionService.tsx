@@ -6,15 +6,11 @@ import {
   type Piece,
   type SelectionModality,
 } from "../../domain/models/canvas";
-import type {
-  TestamentInteractionServicePort,
-  TestamentDataRepositoryPort,
-} from "../ports/testaments";
-import type {
-  PieceHierarchyServicePort,
-  StackParentDataIds,
-} from "../ports/pieces";
-import type { TourGuideServicePort } from "../ports/tourGuide";
+import type { TestamentDataRepositoryPort } from "../ports/testaments";
+import type { TestamentInteractionServicePort } from "../ports/in/TestamentInteraction";
+import type { StackParentDataIds } from "../ports/pieces";
+import type { PieceHierarchyServicePort } from "../ports/in/PieceHierarchy";
+import type { TourGuideServicePort } from "../ports/in/TourGuide";
 import { HighlightRequestSources } from "../../domain/models/pieces";
 import type { PaintPort } from "../ports/in/Paint";
 import type { SequenceStateServicePort } from "../ports/in/SequenceState";

@@ -1,7 +1,5 @@
-import type {
-  VersesInteractionServicePort,
-  PieceMapperPort,
-} from "bibleStack.application.ports.verses";
+import type { PieceMapperPort } from "bibleStack.application.ports.verses";
+import type { VersesInteractionServicePort } from "bibleStack.application.ports.in.VersesInteraction";
 import type { VerseBot } from "bibleStack.models.stack";
 
 interface ControllerParams {

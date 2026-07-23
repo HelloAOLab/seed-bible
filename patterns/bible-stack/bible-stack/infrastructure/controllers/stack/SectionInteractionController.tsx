@@ -3,13 +3,13 @@ import type { SectionBot } from "bibleStack.models.stack";
 import type {
   DragServicePort,
   DraggingEventMapperPort,
-  DraggingServicePort,
   DropEventMapperPort,
-  DropServicePort,
   PieceMapperPort,
-  SectionInteractionServicePort,
-  SelectionReleaseServicePort,
 } from "bibleStack.application.ports.sections";
+import type { SectionInteractionServicePort } from "bibleStack.application.ports.in.SectionInteraction";
+import type { SectionDraggingServicePort } from "bibleStack.application.ports.in.ScripturePieceDragging";
+import type { SectionDropServicePort } from "bibleStack.application.ports.in.ScripturePieceDrop";
+import type { SectionSelectionReleaseServicePort } from "bibleStack.application.ports.in.ScripturePieceSelectionRelease";
 
 import type {
   DraggingEvent,
@@ -20,11 +20,11 @@ interface ControllerParams {
   sectionInteractionServicePort: SectionInteractionServicePort;
   pieceMapperPort: PieceMapperPort;
   dragServicePort: DragServicePort;
-  draggingServicePort: DraggingServicePort;
+  draggingServicePort: SectionDraggingServicePort;
   draggingEventMapperPort: DraggingEventMapperPort;
-  selectionReleaseServicePort: SelectionReleaseServicePort;
+  selectionReleaseServicePort: SectionSelectionReleaseServicePort;
   dropEventMapperPort: DropEventMapperPort;
-  dropServicePort: DropServicePort;
+  dropServicePort: SectionDropServicePort;
 }
 
 export class SectionInteractionController {

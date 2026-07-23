@@ -167,10 +167,6 @@ export type PieceHierarchyStackDataRepositoryPort = Pick<
   "getBibleDataById"
 >;
 
-export interface PieceHierarchyServicePort {
-  getParentDataChain: (parentDataIds: StackParentDataIds) => ParentDataChain;
-}
-
 export const HighlightDelays = {
   UserFocusUnhighlightDelay: "UserFocusUnhighlightDelay",
   TransitionUnhighlightDelay: "TransitionUnhighlightDelay",
