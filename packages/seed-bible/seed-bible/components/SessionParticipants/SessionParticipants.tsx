@@ -166,6 +166,7 @@ export function MobileSessionParticipants({
                   );
                 })}
               </ul>
+              <div className="sb-mobile-settings-sheet-divider" />
               {isHost && (
                 <button
                   type="button"
