@@ -107,6 +107,83 @@ describe("stampChangelog", () => {
       )
     ).toThrow();
   });
+
+  it("drops unused subsections from the stamped version, keeping the fresh TBD scaffold intact", () => {
+    const withEmptySections = `# Changelog
+
+## TBD
+
+### ✨ Added
+
+### 🔧 Changed
+
+- Changed a thing.
+
+### 🐛 Fixed
+
+- Fixed a thing.
+
+### 🗑️ Removed
+
+## v1.0.0 — 2026-01-01
+
+### ✨ Added
+
+- The very first release.
+`;
+    const out = stampChangelog(withEmptySections, "1.1.0", "2026-07-22");
+
+    const tbdIndex = out.indexOf(TBD_HEADING);
+    const versionIndex = out.indexOf("## v1.1.0");
+    const nextVersionIndex = out.indexOf("## v1.0.0");
+
+    // The fresh TBD keeps every subsection, even the ones with no entries yet.
+    const freshTbd = out.slice(tbdIndex, versionIndex);
+    expect(freshTbd).toContain("### ✨ Added");
+    expect(freshTbd).toContain("### 🔧 Changed");
+    expect(freshTbd).toContain("### 🐛 Fixed");
+    expect(freshTbd).toContain("### 🗑️ Removed");
+
+    // The stamped v1.1.0 section drops the empty Added/Removed subsections
+    // but keeps the ones with entries.
+    const stamped = out.slice(versionIndex, nextVersionIndex);
+    expect(stamped).not.toContain("### ✨ Added");
+    expect(stamped).not.toContain("### 🗑️ Removed");
+    expect(stamped).toContain("### 🔧 Changed");
+    expect(stamped).toContain("- Changed a thing.");
+    expect(stamped).toContain("### 🐛 Fixed");
+    expect(stamped).toContain("- Fixed a thing.");
+
+    // Older, already-stamped sections are untouched.
+    expect(out).toContain("## v1.0.0 — 2026-01-01");
+    expect(out).toContain("- The very first release.");
+  });
+
+  it("drops every subsection when the whole TBD section is empty", () => {
+    const allEmpty = `# Changelog
+
+## TBD
+
+### ✨ Added
+
+### 🔧 Changed
+
+### 🐛 Fixed
+
+### 🗑️ Removed
+
+## v1.0.0 — 2026-01-01
+
+### ✨ Added
+
+- The very first release.
+`;
+    const out = stampChangelog(allEmpty, "1.1.0", "2026-07-22");
+    const versionIndex = out.indexOf("## v1.1.0");
+    const nextVersionIndex = out.indexOf("## v1.0.0");
+    const stamped = out.slice(versionIndex, nextVersionIndex).trim();
+    expect(stamped).toBe("## v1.1.0 — 2026-07-22");
+  });
 });
 
 describe("extractSection", () => {

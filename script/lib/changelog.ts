@@ -107,9 +107,43 @@ export function bumpVersion(current: string, spec: string): string {
 }
 
 /**
+ * Drops `### ` subsections (e.g. "### ✨ Added") that have no content — just
+ * blank lines before the next `##`/`###` heading or the end of the text —
+ * from a changelog section body. Content that isn't under a `### ` heading
+ * (e.g. a summary paragraph) is left untouched.
+ */
+function pruneEmptySubsections(body: string): string {
+  const lines = body.split("\n");
+  const kept: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i]!;
+    if (/^###\s/.test(line)) {
+      let end = i + 1;
+      while (end < lines.length && !/^#{2,3}\s/.test(lines[end]!)) {
+        end++;
+      }
+      const content = lines.slice(i + 1, end);
+      if (content.some((l) => l.trim() !== "")) {
+        kept.push(line, ...content);
+      }
+      i = end;
+    } else {
+      kept.push(line);
+      i++;
+    }
+  }
+  return kept.join("\n");
+}
+
+/**
  * Converts the first `## TBD` heading into `## v<version> — <date>` (em dash)
  * and inserts a fresh empty TBD section above it, so `develop` is ready for the
  * next cycle. Returns the new changelog text. Throws if there is no TBD section.
+ *
+ * Before stamping, any unused `### ` subsections (e.g. "### ✨ Added" with no
+ * entries) are dropped from the version being prepared, so the release notes
+ * don't ship empty headings. The fresh TBD section keeps the full scaffold.
  */
 export function stampChangelog(
   text: string,
@@ -124,12 +158,20 @@ export function stampChangelog(
     );
   }
 
+  // The TBD section body runs until the next level-2 heading (or EOF).
+  let end = index + 1;
+  while (end < lines.length && !/^##\s/.test(lines[end]!)) {
+    end++;
+  }
+  const body = pruneEmptySubsections(lines.slice(index + 1, end).join("\n"));
+
   const stampedHeading = `## v${version} — ${date}`;
-  // Replace the single TBD heading line with a fresh empty TBD block followed by
-  // the stamped heading. FRESH_TBD_SECTION already ends in a newline; the extra
-  // blank line keeps Markdown spacing before the stamped heading.
-  const replacement = `${FRESH_TBD_SECTION}\n${stampedHeading}`;
-  lines.splice(index, 1, replacement);
+  // Replace the TBD heading and its body with a fresh empty TBD block, the
+  // stamped heading, and the pruned body. FRESH_TBD_SECTION already ends in a
+  // newline; the extra blank line keeps Markdown spacing before the stamped
+  // heading.
+  const replacement = `${FRESH_TBD_SECTION}\n${stampedHeading}\n${body}`;
+  lines.splice(index, end - index, replacement);
   return lines.join("\n");
 }
 
