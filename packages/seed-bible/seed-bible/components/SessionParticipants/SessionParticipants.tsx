@@ -129,34 +129,16 @@ export function MobileSessionParticipants({
                   </span>
                 </div>
 
-                <div className="sb-session-participants-sheet-actions">
-                  <button
-                    type="button"
-                    className="sb-session-participants-sheet-share"
-                    onClick={() => {
-                      isSheetOpen.value = false;
-                      openShareSessionModal(state, session);
-                    }}
-                    aria-label={t("share-session", {
-                      defaultValue: "Share session",
-                    })}
-                    title={t("share-session", {
-                      defaultValue: "Share session",
-                    })}
-                  >
-                    <span className="material-symbols-outlined">ios_share</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="sb-mobile-settings-sheet-close"
-                    onClick={() => {
-                      isSheetOpen.value = false;
-                    }}
-                    aria-label={t("close", { defaultValue: "Close" })}
-                  >
-                    <span className="material-symbols-outlined">close</span>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  className="sb-mobile-settings-sheet-close"
+                  onClick={() => {
+                    isSheetOpen.value = false;
+                  }}
+                  aria-label={t("close", { defaultValue: "Close" })}
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
               </div>
               <ul className="sb-session-participants-list">
                 {sortedUsers.map((user) => {
@@ -212,6 +194,30 @@ export function MobileSessionParticipants({
                   </MaterialIcon>
                 </button>
               )}
+              <button
+                type="button"
+                className="sb-session-participants-share-button"
+                onClick={() => {
+                  isSheetOpen.value = false;
+                  openShareSessionModal(state, session);
+                }}
+              >
+                <MaterialIcon
+                  className="sb-session-participants-share-icon"
+                  aria-hidden="true"
+                >
+                  share
+                </MaterialIcon>
+                <span className="sb-session-participants-share-label">
+                  {t("share-session", { defaultValue: "Share session" })}
+                </span>
+                <MaterialIcon
+                  className="sb-session-participants-share-chevron"
+                  aria-hidden="true"
+                >
+                  chevron_right
+                </MaterialIcon>
+              </button>
             </div>
           </>,
           document.body
