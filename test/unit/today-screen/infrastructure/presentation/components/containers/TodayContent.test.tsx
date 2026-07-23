@@ -62,7 +62,7 @@ vi.mock(
   })
 );
 
-type DividedSection = "search" | "recommendations" | "social" | "bookmarks";
+type DividedSection = "search" | "recommendations" | "social";
 
 describe("TodayContent", () => {
   let container: HTMLDivElement;
@@ -82,11 +82,13 @@ describe("TodayContent", () => {
     options: {
       dividedSectionsIds?: DividedSection[];
       showResumeReading?: boolean;
+      showBookmarks?: boolean;
     } = {}
   ) {
     (useTodayContent as Mock).mockReturnValue({
       dividedSectionsIds: options.dividedSectionsIds ?? [],
       showResumeReading: options.showResumeReading ?? false,
+      showBookmarks: options.showBookmarks ?? false,
     });
     act(() => render(<TodayContent />, container));
   }
@@ -111,24 +113,30 @@ describe("TodayContent", () => {
     });
   });
 
+  describe("bookmarks", () => {
+    it("renders the BookmarksSection when showBookmarks is true", () => {
+      setup({ showBookmarks: true });
+      expect(q("[data-testid='section-bookmarks']")).not.toBeNull();
+    });
+
+    it("does not render the BookmarksSection when showBookmarks is false", () => {
+      setup({ showBookmarks: false });
+      expect(q("[data-testid='section-bookmarks']")).toBeNull();
+    });
+  });
+
   describe("divided sections", () => {
     it("renders the component mapped to each section id", () => {
       setup({
-        dividedSectionsIds: [
-          "search",
-          "recommendations",
-          "social",
-          "bookmarks",
-        ],
+        dividedSectionsIds: ["search", "recommendations", "social"],
       });
       expect(q("[data-testid='section-search']")).not.toBeNull();
       expect(q("[data-testid='section-recommendations']")).not.toBeNull();
       expect(q("[data-testid='section-social']")).not.toBeNull();
-      expect(q("[data-testid='section-bookmarks']")).not.toBeNull();
     });
 
     it("renders a divider between sections but not after the last", () => {
-      setup({ dividedSectionsIds: ["search", "social", "bookmarks"] });
+      setup({ dividedSectionsIds: ["search", "recommendations", "social"] });
       expect(count("[data-testid='divider']")).toBe(2); // 3 sections → 2 dividers
     });
 
@@ -145,11 +153,11 @@ describe("TodayContent", () => {
     });
 
     it("preserves the order of the section ids", () => {
-      setup({ dividedSectionsIds: ["bookmarks", "search"] });
+      setup({ dividedSectionsIds: ["social", "search"] });
       const sections = Array.from(
         container.querySelectorAll("[data-testid^='section-']")
       ).map((el) => el.getAttribute("data-testid"));
-      expect(sections).toEqual(["section-bookmarks", "section-search"]);
+      expect(sections).toEqual(["section-social", "section-search"]);
     });
   });
 });

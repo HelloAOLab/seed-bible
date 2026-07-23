@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`ThemeManager CSS helpers > generateThemeCssClasses > generates a highlight class for each highlight color 1`] = `
 ".sb-highlight-yellow {
