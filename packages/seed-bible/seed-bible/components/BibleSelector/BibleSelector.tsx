@@ -816,8 +816,9 @@ const SideBarChapters = (props: {
         visibleChapterButton ?? (chapterPanel as HTMLElement | null) ?? bookTab;
 
       // Scroll every overflow-y ancestor through the selector panel.
-      // Desktop usually only needs `.books-item`. On mobile `.books-container`
-      // is `height: auto`, so the real scroller is `.sidebar-results`.
+      // Desktop usually only needs `.books-item`. On mobile both
+      // `.books-container` and `.sidebar-results` are `overflow: auto`, so
+      // either (or both) may need to scroll.
       const scrollTargetInto = (scroller: HTMLElement) => {
         const scrollerRect = scroller.getBoundingClientRect();
         const targetRect = target.getBoundingClientRect();
