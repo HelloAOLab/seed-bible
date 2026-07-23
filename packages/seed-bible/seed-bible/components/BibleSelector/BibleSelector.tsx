@@ -805,36 +805,58 @@ const SideBarChapters = (props: {
               `.show-sidebar-chapter #chapter-btn-${activeChapter}`
             )
           : null;
+      // Psalms hide chapters outside the expanded group (`display: none`);
+      // those have a zero-size rect and must not be used as the scroll target.
+      const visibleChapterButton =
+        currentChapterButton &&
+        currentChapterButton.style.display !== "none" &&
+        currentChapterButton.offsetParent !== null
+          ? currentChapterButton
+          : null;
       const target =
-        currentChapterButton ?? (chapterPanel as HTMLElement | null) ?? bookTab;
+        visibleChapterButton ?? (chapterPanel as HTMLElement | null) ?? bookTab;
 
-      // Scroll the specific books-item (OT / NT / AP / single-testament)
-      // so the current book/chapter sits in view.
-      const itemRect = booksItem.getBoundingClientRect();
-      const targetRect = target.getBoundingClientRect();
-      if (targetRect.bottom > itemRect.bottom) {
-        booksItem.scrollTop += targetRect.bottom - itemRect.bottom + 8;
-      } else if (targetRect.top < itemRect.top) {
-        booksItem.scrollTop -= itemRect.top - targetRect.top + 8;
-      }
-
-      // Mobile (and tall chapter grids) also scroll the outer books-container.
-      const booksContainer = booksItem.closest(".books-container");
-      if (booksContainer) {
-        const containerRect = booksContainer.getBoundingClientRect();
-        const updatedTargetRect = target.getBoundingClientRect();
-        if (updatedTargetRect.bottom > containerRect.bottom) {
-          booksContainer.scrollTop +=
-            updatedTargetRect.bottom - containerRect.bottom + 8;
-        } else if (updatedTargetRect.top < containerRect.top) {
-          booksContainer.scrollTop -=
-            containerRect.top - updatedTargetRect.top + 8;
+      // Scroll every overflow-y ancestor through the selector panel.
+      // Desktop usually only needs `.books-item`. On mobile `.books-container`
+      // is `height: auto`, so the real scroller is `.sidebar-results`.
+      const scrollTargetInto = (scroller: HTMLElement) => {
+        const scrollerRect = scroller.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+        let delta = 0;
+        if (targetRect.bottom > scrollerRect.bottom) {
+          delta = targetRect.bottom - scrollerRect.bottom + 8;
+        } else if (targetRect.top < scrollerRect.top) {
+          delta = -(scrollerRect.top - targetRect.top + 8);
         }
+        if (delta !== 0) {
+          // `behavior: "auto"` overrides `.sidebar-results { scroll-behavior:
+          // smooth }` so nested ancestor scrolls measure stable rects.
+          scroller.scrollTo({
+            top: scroller.scrollTop + delta,
+            behavior: "auto",
+          });
+        }
+      };
+
+      let node: HTMLElement | null = target.parentElement;
+      while (node) {
+        const { overflowY } = window.getComputedStyle(node);
+        if (
+          (overflowY === "auto" ||
+            overflowY === "scroll" ||
+            overflowY === "overlay") &&
+          node.scrollHeight > node.clientHeight + 1
+        ) {
+          scrollTargetInto(node);
+        }
+        if (node.classList.contains("sb-selector-panel")) break;
+        node = node.parentElement;
       }
     }, 50);
 
     return () => window.clearTimeout(timeout);
-  }, [openBookId, activeChapter, isOpen.value]);
+    // Re-run after Psalm group auto-expand so the chapter button is visible.
+  }, [openBookId, activeChapter, isOpen.value, currentPsalms.value]);
 
   const renderChapters = computed(() => {
     const bd = bookData.value;
