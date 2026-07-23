@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Leiðsögn",
   "session-settings-section-sharing": "Deiling",
   "session-settings-section-participants": "Þátttakendur",
-
   "shared": "Deilt",
   "host": "Gestgjafi",
   "co-host": "Meðgestgjafi",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Loka lotu",
   "dont-show-again": "Ekki sýna þetta aftur",
   "discover": "Uppgötva",
-
   "playlists": "Spilunarlistar",
   "annotations": "Skýringar",
   "cross-references": "Krossvísanir",
@@ -368,16 +366,13 @@
   "playlist-add-item": "Bæta við hlut",
   "playlist-edit-item": "Breyta atriði",
   "playlist-save-item": "Vista breytingar",
-
   "playlist-add-scripture-placeholder": "t.d. Jóhannes 3 eða Jóhannes 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Bæta við hlut",
   "playlist-add-scripture-error": "Fann ekki þessa tilvísun",
   "playlist-add-link-error": "Sláðu inn gilda vefslóð",
   "playlist-add-link-embed": "Innfella þennan tengil",
   "play-playlist": "Spila spilunarlista",
-
   "stop": "Stöðva",
   "queue": "Biðröð",
   "previous": "Fyrri",
@@ -389,7 +384,6 @@
   "editor-align-center": "Miðja",
   "editor-align-right": "Hægrar stilling",
   "editor-align-justify": "Réttlæta",
-
   "share-playlist": "Deila spilunarlista",
   "playlist-url-copied": "Vefslóð spilunarlista afrituð á klippiborð",
   "current-playlist": "Núverandi spilunarlisti",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "Óvistað atriði",
   "unsaved-item-confirm-message": "Þú ert byrjaður að bæta við atriði sem hefur ekki enn verið bætt við spilunarlistann. Hvað viltu gera?",
   "discard-and-save": "Henda og vista",
-  "add-and-save": "Bæta við og vista"
+  "add-and-save": "Bæta við og vista",
+  "loading-profile": "Hleður prófílinn þinn…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Færa í bókamerkjaflokk",
+  "move-bookmark": "Færa í möppu",
+  "move-to-new": "Flytja í nýtt"
 }

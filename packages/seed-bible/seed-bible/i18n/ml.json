@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "നാവിഗേഷൻ",
   "session-settings-section-sharing": "പങ്കിടൽ",
   "session-settings-section-participants": "പങ്കെടുക്കുന്നവർ",
-
   "shared": "പങ്കിട്ടു",
   "host": "ഹോസ്റ്റ്",
   "co-host": "സഹ-ഹോസ്റ്റ്",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "സെഷൻ അവസാനിപ്പിക്കുക",
   "dont-show-again": "ഇത് വീണ്ടും കാണിക്കരുത്",
   "discover": "കണ്ടെത്തുക",
-
   "playlists": "പ്ലേലിസ്റ്റുകൾ",
   "annotations": "വ്യാഖ്യാനങ്ങൾ",
   "cross-references": "ക്രോസ് റഫറൻസുകൾ",
@@ -368,16 +366,13 @@
   "playlist-add-item": "ഇനം ചേർക്കുക",
   "playlist-edit-item": "ഇനം എഡിറ്റ് ചെയ്യുക",
   "playlist-save-item": "മാറ്റങ്ങൾ സംരക്ഷിക്കുക",
-
   "playlist-add-scripture-placeholder": "ഉദാ: യോഹന്നാൻ 3 അല്ലെങ്കിൽ യോഹന്നാൻ 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "ഇനം ചേർക്കുക",
   "playlist-add-scripture-error": "ആ റഫറൻസ് കണ്ടെത്താൻ കഴിഞ്ഞില്ല.",
   "playlist-add-link-error": "സാധുവായ ഒരു URL നൽകുക",
   "playlist-add-link-embed": "ഈ ലിങ്ക് ഉൾച്ചേർക്കുക",
   "play-playlist": "പ്ലേലിസ്റ്റ് പ്ലേ ചെയ്യുക",
-
   "stop": "നിർത്തുക",
   "queue": "ക്യൂ",
   "previous": "മുമ്പത്തേത്",
@@ -389,7 +384,6 @@
   "editor-align-center": "മധ്യഭാഗത്ത് വിന്യസിക്കുക",
   "editor-align-right": "വലതുവശത്ത് വിന്യസിക്കുക",
   "editor-align-justify": "ന്യായീകരിക്കുക",
-
   "share-playlist": "പ്ലേലിസ്റ്റ് പങ്കിടുക",
   "playlist-url-copied": "പ്ലേലിസ്റ്റ് URL ക്ലിപ്പ്ബോർഡിലേക്ക് പകർത്തി",
   "current-playlist": "നിലവിലെ പ്ലേലിസ്റ്റ്",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "സേവ് ചെയ്യാത്ത ഇനം",
   "unsaved-item-confirm-message": "പ്ലേലിസ്റ്റിലേക്ക് ഇതുവരെ ചേർക്കാത്ത ഒരു ഇനം നിങ്ങൾ ചേർക്കാൻ തുടങ്ങിയിരിക്കുന്നു. നിങ്ങൾക്ക് എന്ത് ചെയ്യണം?",
   "discard-and-save": "നിരസിച്ച് സേവ് ചെയ്യുക",
-  "add-and-save": "ചേർത്ത് സേവ് ചെയ്യുക"
+  "add-and-save": "ചേർത്ത് സേവ് ചെയ്യുക",
+  "loading-profile": "നിങ്ങളുടെ പ്രൊഫൈൽ ലോഡ് ചെയ്യുന്നു...",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "ബുക്ക്മാർക്ക് വിഭാഗത്തിലേക്ക് നീങ്ങുക",
+  "move-bookmark": "ഫോൾഡറിലേക്ക് നീക്കുക",
+  "move-to-new": "പുതിയതിലേക്ക് മാറ്റുക"
 }

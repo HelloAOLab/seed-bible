@@ -1187,6 +1187,24 @@
   white-space: nowrap;
 }
 
+.sb-settings-version {
+  align-self: center;
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.6875rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: color-mix(in srgb, var(--sb-font-color), transparent 60%);
+}
+
+@media (hover: hover) {
+  .sb-settings-version:hover {
+    color: color-mix(in srgb, var(--sb-font-color), transparent 40%);
+  }
+}
+
 .sb-theme-color-row-controls {
   display: flex;
   align-items: center;

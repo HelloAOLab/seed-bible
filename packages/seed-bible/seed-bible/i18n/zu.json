@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Ukuzulazula",
   "session-settings-section-sharing": "Ukwabelana",
   "session-settings-section-participants": "Abahlanganyeli",
-
   "shared": "Kwabiwe",
   "host": "Umsingathi",
   "co-host": "Umsizi ohambisanayo",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Qeda iseshini",
   "dont-show-again": "Ungabonisi lokhu futhi",
   "discover": "Thola",
-
   "playlists": "Uhlu lwadlalwayo",
   "annotations": "Izichasiselo",
   "cross-references": "Izinkomba ezihambisanayo",
@@ -368,16 +366,13 @@
   "playlist-add-item": "Engeza into",
   "playlist-edit-item": "Hlela into",
   "playlist-save-item": "Londoloza izinguquko",
-
   "playlist-add-scripture-placeholder": "isibonelo uJohane 3 noma uJohane 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Engeza into",
   "playlist-add-scripture-error": "Angikwazanga ukuthola leso sithenjwa",
   "playlist-add-link-error": "Faka i-URL evumelekile",
   "playlist-add-link-embed": "Shumeka lesi sixhumanisi",
   "play-playlist": "Dlala uhlu lwadlalwayo",
-
   "stop": "Ima",
   "queue": "Umugqa",
   "previous": "Okwangaphambilini",
@@ -389,7 +384,6 @@
   "editor-align-center": "Qondanisa phakathi nendawo",
   "editor-align-right": "Qondanisa ngakwesokudla",
   "editor-align-justify": "Qinisekisa",
-
   "share-playlist": "Yabelana ngohlu lwadlalwayo",
   "playlist-url-copied": "I-URL yohlu lokudlalayo ikopishwe ebhodini lokunamathisela",
   "current-playlist": "Uhlu lwadlalwayo lwamanje",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "Into engalondolozwanga",
   "unsaved-item-confirm-message": "Uqale ukungeza into engakangezwa ohlwini lokudlala. Yini ongathanda ukuyenza?",
   "discard-and-save": "Lahla futhi ulondoloze",
-  "add-and-save": "Ngeza futhi ulondoloze"
+  "add-and-save": "Ngeza futhi ulondoloze",
+  "loading-profile": "Ilayisha iphrofayela yakho…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Yiya esigabeni sebhukhimakhi",
+  "move-bookmark": "Hambisa kufolda",
+  "move-to-new": "Hambisa kokusha"
 }

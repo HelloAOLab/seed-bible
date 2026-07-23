@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "ナビゲーション",
   "session-settings-section-sharing": "共有",
   "session-settings-section-participants": "参加者",
-
   "shared": "共有",
   "host": "ホスト",
   "co-host": "共同司会者",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "セッションを終了する",
   "dont-show-again": "今後表示しない",
   "discover": "発見する",
-
   "playlists": "プレイリスト",
   "annotations": "注釈",
   "cross-references": "相互参照",
@@ -368,16 +366,13 @@
   "playlist-add-item": "アイテムを追加",
   "playlist-edit-item": "アイテムを編集",
   "playlist-save-item": "変更を保存する",
-
   "playlist-add-scripture-placeholder": "例えばヨハネ3章、またはヨハネ3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "アイテムを追加",
   "playlist-add-scripture-error": "その参照元が見つかりませんでした",
   "playlist-add-link-error": "有効なURLを入力してください",
   "playlist-add-link-embed": "このリンクを埋め込む",
   "play-playlist": "プレイリストを再生",
-
   "stop": "停止",
   "queue": "列",
   "previous": "前の",
@@ -389,7 +384,6 @@
   "editor-align-center": "中央揃え",
   "editor-align-right": "右揃え",
   "editor-align-justify": "正当化する",
-
   "share-playlist": "プレイリストを共有する",
   "playlist-url-copied": "プレイリストのURLがクリップボードにコピーされました",
   "current-playlist": "現在のプレイリスト",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "未保存のアイテム",
   "unsaved-item-confirm-message": "まだプレイリストに追加されていないアイテムの入力を開始しています。どうしますか?",
   "discard-and-save": "破棄して保存",
-  "add-and-save": "追加して保存"
+  "add-and-save": "追加して保存",
+  "loading-profile": "プロフィールを読み込んでいます…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "ブックマークカテゴリに移動",
+  "move-bookmark": "フォルダに移動",
+  "move-to-new": "新しい"
 }

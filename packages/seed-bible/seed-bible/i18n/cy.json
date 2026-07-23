@@ -320,7 +320,6 @@
   "session-settings-section-navigation": "Mordwyo",
   "session-settings-section-sharing": "Rhannu",
   "session-settings-section-participants": "Cyfranogwyr",
-
   "shared": "Wedi'i rannu",
   "host": "Gwesteiwr",
   "co-host": "Cyd-gynhaliwr",
@@ -340,7 +339,6 @@
   "end-session-for-everyone": "Gorffen sesiwn",
   "dont-show-again": "Peidiwch â dangos hyn eto",
   "discover": "Darganfod",
-
   "playlists": "Rhestrau chwarae",
   "annotations": "Anodiadau",
   "cross-references": "Croesgyfeiriadau",
@@ -368,16 +366,13 @@
   "playlist-add-item": "Ychwanegu eitem",
   "playlist-edit-item": "Golygu eitem",
   "playlist-save-item": "Cadw newidiadau",
-
   "playlist-add-scripture-placeholder": "e.e. Ioan 3 neu Ioan 3:16",
-
   "playlist-add-link-placeholder": "https://example.com",
   "playlist-add-button": "Ychwanegu eitem",
   "playlist-add-scripture-error": "Methu dod o hyd i'r cyfeirnod hwnnw",
   "playlist-add-link-error": "Rhowch URL dilys",
   "playlist-add-link-embed": "Mewnosod y ddolen hon",
   "play-playlist": "Chwarae rhestr chwarae",
-
   "stop": "Stopiwch",
   "queue": "Ciw",
   "previous": "Blaenorol",
@@ -389,7 +384,6 @@
   "editor-align-center": "Alinio canol",
   "editor-align-right": "Alinio i'r dde",
   "editor-align-justify": "Cyfiawnhau",
-
   "share-playlist": "Rhannu rhestr chwarae",
   "playlist-url-copied": "URL y rhestr chwarae wedi'i gopïo i'r clipfwrdd",
   "current-playlist": "Rhestr chwarae gyfredol",
@@ -409,5 +403,10 @@
   "unsaved-item-confirm-title": "Eitem heb ei chadw",
   "unsaved-item-confirm-message": "Rydych wedi dechrau ychwanegu eitem nad yw wedi'i hychwanegu at y rhestr chwarae eto. Beth hoffech chi ei wneud?",
   "discard-and-save": "Dileu a chadw",
-  "add-and-save": "Ychwanegu a chadw"
+  "add-and-save": "Ychwanegu a chadw",
+  "loading-profile": "Wrthi'n llwytho eich proffil…",
+  "app-version": "v {{version}} · {{commit}}",
+  "move-to-bookmark-category": "Symud i gategori nod tudalen",
+  "move-bookmark": "Symud i ffolder",
+  "move-to-new": "Symud i un newydd"
 }
