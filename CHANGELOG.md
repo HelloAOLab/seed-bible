@@ -8,6 +8,8 @@
 
 ### 🐛 Fixed
 
+- Show the host in the session settings participant list, sorted first with a "Host" badge, instead of filtering them out. ([#1500](https://github.com/HelloAOLab/seed-bible/pull/1500))
+
 ### 🗑️ Removed
 
 ## v1.2.0 — 2026-07-22
