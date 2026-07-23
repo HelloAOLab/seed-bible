@@ -195,7 +195,6 @@ function SessionSettingsModalContent(props: {
     session.updateOptions({ shareTranslation: share });
   };
 
-  const coHostUserIds = options.coHostUserIds ?? [];
   const setCoHost = (coHostKey: string, makeCoHost: boolean) => {
     if (!isHost) return;
     const existing = options.coHostUserIds ?? [];
@@ -207,12 +206,15 @@ function SessionSettingsModalContent(props: {
     session.updateOptions({ coHostUserIds: next });
   };
 
-  // Everyone connected except the immutable host, so the host can promote or
-  // demote co-hosts inline.
-  const participants = session.connectedUsers.value.filter(
-    (user) =>
-      options.hostUserId !== user.userId &&
-      options.hostUserId !== user.connectionId
+  // Everyone connected, host first, then co-hosts, then peers (Array.sort is
+  // stable so peers keep their existing order within a rank — matches the
+  // sidebar tab row and the mobile sheet). The host is listed like any other
+  // user, with a "Host" badge, but can't be promoted, so their row shows no
+  // co-host action.
+  const participants = [...session.connectedUsers.value].sort(
+    (a, b) =>
+      sessionRoleRank(getUserSessionRole(options, a)) -
+      sessionRoleRank(getUserSessionRole(options, b))
   );
 
   return (
@@ -402,7 +404,9 @@ function SessionSettingsModalContent(props: {
           <ul className="sb-session-participants">
             {participants.map((user) => {
               const coHostKey = getConnectedUserVisualKey(user);
-              const isCoHost = coHostUserIds.includes(coHostKey);
+              const role = getUserSessionRole(options, user);
+              const isHostUser = role === "host";
+              const isCoHost = role === "co-host";
               const visual = getUserAnimalVisual(coHostKey);
               const imageUrl = user.profile?.pictureUrl ?? null;
               return (
@@ -428,21 +432,30 @@ function SessionSettingsModalContent(props: {
                     title={getUserDisplayName(user)}
                   >
                     {getUserDisplayName(user)}
+                    {isHostUser && (
+                      <span className="sb-session-participant-badge">
+                        {t("host", { defaultValue: "Host" })}
+                      </span>
+                    )}
                     {isCoHost && (
                       <span className="sb-session-participant-badge">
                         {t("co-host", { defaultValue: "Co-host" })}
                       </span>
                     )}
                   </span>
-                  <button
-                    type="button"
-                    className={`sb-session-participant-action${isCoHost ? " sb-session-participant-action-active" : ""}`}
-                    onClick={() => setCoHost(coHostKey, !isCoHost)}
-                  >
-                    {isCoHost
-                      ? t("remove-co-host", { defaultValue: "Remove co-host" })
-                      : t("make-co-host", { defaultValue: "Make co-host" })}
-                  </button>
+                  {!isHostUser && (
+                    <button
+                      type="button"
+                      className={`sb-session-participant-action${isCoHost ? " sb-session-participant-action-active" : ""}`}
+                      onClick={() => setCoHost(coHostKey, !isCoHost)}
+                    >
+                      {isCoHost
+                        ? t("remove-co-host", {
+                            defaultValue: "Remove co-host",
+                          })
+                        : t("make-co-host", { defaultValue: "Make co-host" })}
+                    </button>
+                  )}
                 </li>
               );
             })}
