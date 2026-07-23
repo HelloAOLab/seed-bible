@@ -62,6 +62,7 @@ function createShareUrlReadingState(overrides?: Partial<BibleReadingState>) {
   return {
     translation: signal({ id: "NIV" }),
     bookId: signal("GEN"),
+    chapterNumber: signal(1),
     selectedVerses: signal([]),
     ...overrides,
   };
@@ -74,7 +75,7 @@ describe("getShareUrl", () => {
     });
   });
 
-  it("builds a share URL with the current translation, book, and selected verses", () => {
+  it("builds a share URL with the current translation, book, chapter, and selected verses", () => {
     const readingState = createShareUrlReadingState({
       selectedVerses: signal([
         {
@@ -97,8 +98,8 @@ describe("getShareUrl", () => {
         },
         {
           bookId: "GEN",
-          chapterNumber: 1,
-          translationId: "AAB",
+          chapterNumber: 2,
+          translationId: "NIV",
           verse: { number: 8 },
         },
       ] as any),
@@ -107,7 +108,7 @@ describe("getShareUrl", () => {
     const url = getShareUrl(readingState as any);
 
     expect(url.toString()).toBe(
-      "https://example.test/reader?translation=NIV&book=GEN&verse=1,3"
+      "https://example.test/reader?translation=NIV&book=GEN&chapter=1&verse=1%2C3"
     );
   });
 
@@ -140,8 +141,8 @@ describe("getShareUrl", () => {
         },
         {
           bookId: "GEN",
-          chapterNumber: 1,
-          translationId: "AAB",
+          chapterNumber: 2,
+          translationId: "NIV",
           verse: { number: 8 },
         },
       ] as any),
@@ -150,11 +151,11 @@ describe("getShareUrl", () => {
     const url = getShareUrl(readingState as any);
 
     expect(url.toString()).toBe(
-      "https://example.test/reader?translation=NIV&book=GEN&verse=1-3"
+      "https://example.test/reader?translation=NIV&book=GEN&chapter=1&verse=1-3"
     );
   });
 
-  it("omits the verse query when no selected verses match the current translation and book", () => {
+  it("omits the verse query when no selected verses match the current book and chapter", () => {
     const readingState = createShareUrlReadingState({
       translation: signal(null),
       bookId: signal(null),
@@ -172,7 +173,7 @@ describe("getShareUrl", () => {
     const url = getShareUrl(readingState as any);
 
     expect(url.toString()).toBe(
-      "https://example.test/reader?translation=AAB&book=GEN"
+      "https://example.test/reader?translation=AAB&book=GEN&chapter=1"
     );
   });
 });
@@ -474,6 +475,11 @@ describe("createBibleToolsManager", () => {
     ): BibleToolContext {
       return {
         ...createContext(),
+        modals: {
+          openModal: vi.fn().mockReturnValue("modal-1"),
+          closeModal: vi.fn(),
+        } as any,
+        app: {} as any,
         readingState: {
           chapterData: signal({
             book: { id: "PSA", name: "Psalms" },
@@ -481,6 +487,7 @@ describe("createBibleToolsManager", () => {
           loading: signal(false),
           translation: signal({ id: "NIV" }),
           bookId: signal("PSA"),
+          chapterNumber: signal(2),
           selectedVerses: signal([
             {
               bookId: "PSA",
@@ -604,6 +611,12 @@ describe("createBibleToolsManager", () => {
         .find((t) => t.id === "share-verse");
 
       tool?.onSelect();
+
+      const openModal = (context.modals as any).openModal;
+      expect(openModal).toHaveBeenCalledTimes(1);
+
+      const shareModal = openModal.mock.calls[0][0].content();
+      shareModal.props.onShareVia();
 
       expect(window.navigator.share).toHaveBeenCalledWith(
         expect.objectContaining({

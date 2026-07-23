@@ -16,15 +16,18 @@ import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import { sortBy } from "es-toolkit";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import type { ChatsManager } from "./ChatsManager";
+import type { ModalManager } from "./ModalManager";
+import type { AppState } from "./SeedBibleStateManager";
 import type { ReadingPlansManager } from "../managers/ReadingPlansManager";
 import { ReadingPlansPane } from "../components/ReadingPlansPane/ReadingPlansPane";
 import type { PlaylistManager } from "./PlaylistManager";
-import { useI18n } from "../i18n";
+import { i18n, useI18n } from "../i18n";
 import {
   FEATURE_KEY_READING_PLANS,
   type FeaturesManager,
 } from "./FeaturesManager";
 import { playlistItemLabel } from "../components/playlistItemLabel";
+import { ShareModal } from "../components/ShareModal/shareModal";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -159,6 +162,15 @@ export interface BibleToolContext {
 
   /** Features manager */
   features: FeaturesManager;
+
+  /** Modals manager */
+  modals?: ModalManager;
+
+  /**
+   * App-level state. Optional like the other managers above; tools that need
+   * shared-session actions (create/share the live session) should guard on it.
+   */
+  app?: AppState;
 }
 
 /** Fully resolved reader toolbar tool ready for rendering. */
@@ -708,6 +720,16 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
       },
     },
     {
+      id: "share",
+      priority: 130,
+      title: { key: "share", defaultValue: "Share" },
+      icon: () => <MaterialIcon>share</MaterialIcon>,
+      isVisible: (context) => !!context.modals && !!context.app,
+      onSelect: (context) => {
+        openShareModal(context, getShareUrl(context.readingState));
+      },
+    },
+    {
       id: "next-chapter",
       priority: 1000,
       hideLabel: true,
@@ -793,7 +815,7 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
 
         try {
           navigator.clipboard.writeText(verseTexts);
-          context.toast("Copied!");
+          context.toast(i18n.t("copied", { defaultValue: "Copied" }));
         } catch (err) {
           console.error("Failed to copy verse:", err);
         }
@@ -808,19 +830,11 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
         context.readingState.selectedVerses.value.length > 0,
       onSelect: (context) => {
         if (context.readingState.selectedVerses.value.length === 0) return;
-
-        let verseTexts = formatSelectedVerses(context.readingState);
-
-        const url = getShareUrl(context.readingState);
-
-        verseTexts += `\n\n${url.toString()}`;
-
-        navigator.share({
-          title:
-            "Bible Verse" +
-            (context.readingState.selectedVerses.value.length > 1 ? "s" : ""),
-          text: verseTexts,
-        });
+        openShareModal(
+          context,
+          getShareUrl(context.readingState),
+          formatSelectedVerses(context.readingState)
+        );
       },
     },
     {
@@ -926,21 +940,71 @@ export function getShareUrl(readingState: BibleReadingState) {
   const translation =
     readingState.translation.value?.id ?? readingState.defaultTranslation.id;
   const bookId = readingState.bookId.value ?? DEFAULT_BOOK_ID;
+  const chapter = readingState.chapterNumber.value;
   url.searchParams.set("translation", translation);
   url.searchParams.set("book", bookId);
+  url.searchParams.set("chapter", String(chapter));
 
   if (readingState.selectedVerses.value.length > 0) {
     const verses = readingState.selectedVerses.value
-      .filter((v) => v.bookId === bookId && v.translationId === translation)
+      .filter(
+        (v) =>
+          v.bookId === bookId &&
+          v.chapterNumber === chapter &&
+          v.translationId === translation
+      )
       .map((v) => v.verse.number);
     if (verses.length > 0) {
       const formatted = formatVerseSelection(verses);
       if (formatted) {
-        url.search += `&verse=${formatted}`;
+        url.searchParams.set("verse", formatted);
       }
     }
   }
   return url;
+}
+
+/**
+ * Opens the unified share sheet for a reading surface. Shared by the verse
+ * toolbar's "Share" tool and the reader toolbar's "Share" tool so both open the
+ * exact same modal. `shareText` is only passed by the verse flow (the selected
+ * verses' text) for the native share sheet; the reader flow shares a link only.
+ * The session comes from `context.sharedSession` — the tool's own reading
+ * surface — never from global app state, so a background surface can't be
+ * shared by mistake.
+ */
+function openShareModal(
+  context: BibleToolContext,
+  shareUrl: URL,
+  shareText?: string
+) {
+  const modals = context.modals;
+  const app = context.app;
+  if (!modals || !app) return;
+
+  const modalId = modals.openModal({
+    title: { key: "share-sheet-title", defaultValue: "Share" },
+    content: () => (
+      <ShareModal
+        app={app}
+        session={context.sharedSession}
+        onClose={() => modals.closeModal(modalId)}
+        onShareLink={() => {
+          navigator.clipboard.writeText(shareUrl.toString());
+          context.toast(i18n.t("copied", { defaultValue: "Copied" }));
+          modals.closeModal(modalId);
+        }}
+        onShareVia={() => {
+          void navigator.share?.({
+            title: document.title,
+            ...(shareText ? { text: shareText } : {}),
+            url: shareUrl.toString(),
+          });
+          modals.closeModal(modalId);
+        }}
+      />
+    ),
+  });
 }
 
 /**

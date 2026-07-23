@@ -17,6 +17,7 @@ import {
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
 import { MaterialIcon, SettingsIcon } from "../../components/icons";
 import { SettingsPage } from "../../components/SettingsPage/SettingsPage";
+import { ShareModal } from "../ShareModal/shareModal";
 import {
   isSessionHost,
   type BibleReadingSession,
@@ -650,6 +651,33 @@ export function openSessionSettingsModal(
   });
 }
 
+export function openShareSessionModal(
+  state: SeedBibleState,
+  session: BibleReadingSession
+) {
+  const shareUrl = getSessionUrl(session);
+  const modalId = `share-session-${session.id}`;
+  state.modals.openModal({
+    id: modalId,
+    title: { key: "share-sheet-title", defaultValue: "Share" },
+    content: () => (
+      <ShareModal
+        app={state.app}
+        session={session}
+        hideShareLink
+        onClose={() => state.modals.closeModal(modalId)}
+        onShareVia={() => {
+          void navigator.share?.({
+            title: document.title,
+            url: shareUrl.href,
+          });
+          state.modals.closeModal(modalId);
+        }}
+      />
+    ),
+  });
+}
+
 /**
  * Entry point for closing a tab. A host closing a session that still has
  * other participants gets the end/hand-off confirmation; everyone else (and
@@ -1129,14 +1157,9 @@ function TabRow(props: TabRowProps) {
                 defaultValue: `Share session`,
               })}
               onClick={() => {
-                if (tab.sharedSession) {
-                  const url = getSessionUrl(tab.sharedSession);
-
-                  navigator.share({
-                    title: document.title,
-                    url: url.href,
-                  });
-                }
+                const session = tab.sharedSession;
+                if (!session) return;
+                openShareSessionModal(state, session);
               }}
             >
               <MaterialIcon

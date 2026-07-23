@@ -11,7 +11,11 @@ import {
   getUserSessionRole,
   sessionRoleRank,
 } from "../Avatar/Avatar";
-import { isLocalSessionHost, openSessionSettingsModal } from "../Tabs/Tabs";
+import {
+  isLocalSessionHost,
+  openSessionSettingsModal,
+  openShareSessionModal,
+} from "../Tabs/Tabs";
 import { MaterialIcon } from "../icons";
 
 /** How many avatars the compact stack shows before collapsing into a "+N" chip. */
@@ -124,6 +128,7 @@ export function MobileSessionParticipants({
                     {t("participants", { defaultValue: "Participants" })}
                   </span>
                 </div>
+
                 <button
                   type="button"
                   className="sb-mobile-settings-sheet-close"
@@ -135,32 +140,35 @@ export function MobileSessionParticipants({
                   <span className="material-symbols-outlined">close</span>
                 </button>
               </div>
-              <ul className="sb-session-participants-list">
-                {sortedUsers.map((user) => {
-                  const role = getUserSessionRole(options, user);
-                  const roleLabel =
-                    role === "host"
-                      ? t("host", { defaultValue: "Host" })
-                      : role === "co-host"
-                        ? t("co-host", { defaultValue: "Co-host" })
-                        : undefined;
-                  return (
-                    <li
-                      key={user.connectionId}
-                      className="sb-session-participants-list-item"
-                    >
-                      <SessionUserAvatar
-                        user={user}
-                        role={role}
-                        roleLabel={roleLabel}
-                      />
-                      <span className="sb-session-participants-list-name">
-                        {getUserDisplayName(user)}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
+              <div className="sb-mobile-settings-sheet-body">
+                <ul className="sb-session-participants-list">
+                  {sortedUsers.map((user) => {
+                    const role = getUserSessionRole(options, user);
+                    const roleLabel =
+                      role === "host"
+                        ? t("host", { defaultValue: "Host" })
+                        : role === "co-host"
+                          ? t("co-host", { defaultValue: "Co-host" })
+                          : undefined;
+                    return (
+                      <li
+                        key={user.connectionId}
+                        className="sb-session-participants-list-item"
+                      >
+                        <SessionUserAvatar
+                          user={user}
+                          role={role}
+                          roleLabel={roleLabel}
+                        />
+                        <span className="sb-session-participants-list-name">
+                          {getUserDisplayName(user)}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+              <div className="sb-mobile-settings-sheet-divider" />
               {isHost && (
                 <button
                   type="button"
@@ -189,6 +197,30 @@ export function MobileSessionParticipants({
                   </MaterialIcon>
                 </button>
               )}
+              <button
+                type="button"
+                className="sb-session-participants-share-button"
+                onClick={() => {
+                  isSheetOpen.value = false;
+                  openShareSessionModal(state, session);
+                }}
+              >
+                <MaterialIcon
+                  className="sb-session-participants-share-icon"
+                  aria-hidden="true"
+                >
+                  share
+                </MaterialIcon>
+                <span className="sb-session-participants-share-label">
+                  {t("share-session", { defaultValue: "Share session" })}
+                </span>
+                <MaterialIcon
+                  className="sb-session-participants-share-chevron"
+                  aria-hidden="true"
+                >
+                  chevron_right
+                </MaterialIcon>
+              </button>
             </div>
           </>,
           document.body
