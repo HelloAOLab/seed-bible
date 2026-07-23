@@ -26,6 +26,7 @@
 - Fix the mobile settings sheet's header scrolling away with the rest of its content instead of staying pinned in place. ([#1499](https://github.com/HelloAOLab/seed-bible/pull/1499))
 - Show the host in the session settings participant list, sorted first with a "Host" badge, instead of filtering them out. ([#1500](https://github.com/HelloAOLab/seed-bible/pull/1500))
 - Removed 1 pixel border line from the top of the screen on mobile.
+- Scope the Bible selector's testament column styles to its own book list instead of a bare selector that could collide with Scripture Map's styles.
 
 ## v1.2.0 — 2026-07-22
 
