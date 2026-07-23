@@ -6,6 +6,8 @@
 
 ### 🔧 Changed
 
+- Opening the Bible selector now expands to your current book, scrolls to it, and highlights your current chapter, instead of always opening fully collapsed. ([#1498](https://github.com/HelloAOLab/seed-bible/pull/1498))
+
 ### 🐛 Fixed
 
 - Show the host in the session settings participant list, sorted first with a "Host" badge, instead of filtering them out. ([#1500](https://github.com/HelloAOLab/seed-bible/pull/1500))
