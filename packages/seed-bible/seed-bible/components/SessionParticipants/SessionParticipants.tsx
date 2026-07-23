@@ -140,32 +140,34 @@ export function MobileSessionParticipants({
                   <span className="material-symbols-outlined">close</span>
                 </button>
               </div>
-              <ul className="sb-session-participants-list">
-                {sortedUsers.map((user) => {
-                  const role = getUserSessionRole(options, user);
-                  const roleLabel =
-                    role === "host"
-                      ? t("host", { defaultValue: "Host" })
-                      : role === "co-host"
-                        ? t("co-host", { defaultValue: "Co-host" })
-                        : undefined;
-                  return (
-                    <li
-                      key={user.connectionId}
-                      className="sb-session-participants-list-item"
-                    >
-                      <SessionUserAvatar
-                        user={user}
-                        role={role}
-                        roleLabel={roleLabel}
-                      />
-                      <span className="sb-session-participants-list-name">
-                        {getUserDisplayName(user)}
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
+              <div className="sb-mobile-settings-sheet-body">
+                <ul className="sb-session-participants-list">
+                  {sortedUsers.map((user) => {
+                    const role = getUserSessionRole(options, user);
+                    const roleLabel =
+                      role === "host"
+                        ? t("host", { defaultValue: "Host" })
+                        : role === "co-host"
+                          ? t("co-host", { defaultValue: "Co-host" })
+                          : undefined;
+                    return (
+                      <li
+                        key={user.connectionId}
+                        className="sb-session-participants-list-item"
+                      >
+                        <SessionUserAvatar
+                          user={user}
+                          role={role}
+                          roleLabel={roleLabel}
+                        />
+                        <span className="sb-session-participants-list-name">
+                          {getUserDisplayName(user)}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
               <div className="sb-mobile-settings-sheet-divider" />
               {isHost && (
                 <button
