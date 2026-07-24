@@ -18,6 +18,8 @@ import {
   type TranslationWithLanguage,
 } from "../managers/BibleReadingManager";
 import type { HighlightsManager } from "../managers/HighlightsManager";
+import type { LoginManager } from "../managers/LoginManager";
+import { getProfileConfigValue } from "../managers/ProfileConfigSync";
 
 export function formatVerseSelection(verseNumbers: number[]): string | null {
   const sorted = Array.from(new Set(verseNumbers))
@@ -92,6 +94,12 @@ export interface ReaderTab {
 function getInitialFirstTabBookId(url: URL): string {
   return url.searchParams.get("book") ?? DEFAULT_BOOK_ID;
 }
+
+// profile.config key the selected translation is persisted under, matching
+// the PROFILE_THEME_ID convention in ThemeManager.tsx. Written by
+// BibleSelectorManager.tsx when the user explicitly picks a translation from
+// the selector; read here to restore it once the profile loads.
+export const PROFILE_TRANSLATION_ID = "translationId";
 
 function getInitialTranslationId(url: URL, language: string): string {
   return (
@@ -255,6 +263,7 @@ export function createTabs(
   highlightsManager: HighlightsManager,
   chatsManager: ReturnType<typeof createChatsManager>,
   i18nManager: I18nManager,
+  login: LoginManager,
   discoverManager?: DiscoverManager,
   readingExtensionManager?: BibleReadingExtensionManager
 ): TabsManager {
@@ -431,6 +440,94 @@ export function createTabs(
     );
     commitSelectedTabToUrl({ replace: true });
     return dispose;
+  });
+
+  // Restores the profile's saved translation on the given reading state.
+  // `selectTranslationAndChapter` clamps an out-of-range chapter but throws
+  // if the current book isn't in the target translation at all (a partial/
+  // NT-only translation, for example) — so resolve the saved translation's
+  // own book catalog first and fall back to its first book, mirroring the
+  // same guard `syncSelectedTabFromUrl` above already applies for the URL
+  // path.
+  const applySavedTranslation = async (
+    readingState: BibleReadingState,
+    savedTranslationId: string
+  ) => {
+    const books = await dataManager
+      .getTranslationBooks(savedTranslationId)
+      .then((result) => result.books)
+      .catch((err) => {
+        console.warn(
+          "Failed to load books for saved profile translation:",
+          savedTranslationId,
+          err
+        );
+        return null;
+      });
+    if (!books) {
+      return;
+    }
+
+    const currentBookId = readingState.bookId.peek() ?? DEFAULT_BOOK_ID;
+    const matchingBook = books.find((book) => book.id === currentBookId);
+    const targetBook = matchingBook ?? books[0];
+    if (!targetBook) {
+      return;
+    }
+
+    const firstChapterNumber =
+      targetBook.firstChapterNumber ?? DEFAULT_CHAPTER_NUMBER;
+    const maxChapterNumber =
+      firstChapterNumber + targetBook.numberOfChapters - 1;
+    const requestedChapter = readingState.chapterNumber.peek();
+    const nextChapter =
+      matchingBook &&
+      requestedChapter >= firstChapterNumber &&
+      requestedChapter <= maxChapterNumber
+        ? requestedChapter
+        : firstChapterNumber;
+
+    await readingState.selectTranslationAndChapter(
+      savedTranslationId,
+      targetBook.id,
+      nextChapter,
+      { updateUrl: false }
+    );
+  };
+
+  // Apply the profile's saved translation to the selected tab, but ONLY when
+  // the profile itself changes (login/profile load) — never on URL changes —
+  // so it doesn't fight an explicit `?translation=`/`?translationId=` deep
+  // link or an in-session pick. Mirrors ConfigManager's `lang` profile-sync
+  // effect.
+  effect(() => {
+    const savedTranslationId = getProfileConfigValue(
+      login.profile.value,
+      PROFILE_TRANSLATION_ID
+    );
+    if (typeof savedTranslationId !== "string" || !savedTranslationId) {
+      return;
+    }
+
+    untracked(() => {
+      const url = navigation.currentUrl.peek();
+      const hasExplicitUrlTranslation =
+        url.searchParams.has("translationId") ||
+        url.searchParams.has("translation");
+      if (hasExplicitUrlTranslation) {
+        return;
+      }
+
+      const readingState = selectedTab.peek()?.readingState;
+      if (
+        !readingState ||
+        readingState.translationId.peek() === savedTranslationId
+      ) {
+        return;
+      }
+
+      void applySavedTranslation(readingState, savedTranslationId);
+    });
   });
 
   effect(() => {

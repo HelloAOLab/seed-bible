@@ -429,6 +429,7 @@ export function createSeedBibleState(
     highlights,
     chats,
     i18n,
+    login,
     discover,
     readingExtensions
   );
@@ -441,7 +442,8 @@ export function createSeedBibleState(
     settings,
     sidebar,
     bookmarks,
-    navigation
+    navigation,
+    login
   );
   const tools = createBibleToolsManager();
   const readingHistory = createReadingHistoryManager(os, login);
