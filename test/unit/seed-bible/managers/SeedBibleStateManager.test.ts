@@ -206,6 +206,23 @@ describe("createSeedBibleState", () => {
     expect(state.bibleData.api.endpoint).toBe("https://bible.helloao.org/");
   });
 
+  it("echoes an explicit ?lang= in the canonical URL so language-specific sitemap URLs stay self-canonical", async () => {
+    const state = await createState();
+
+    // A crawler lands on a language-specific sitemap URL.
+    window.history.replaceState(null, "", "/?lang=es");
+
+    expect(state.app.canonicalUrl.value).toContain("lang=es");
+  });
+
+  it("omits lang from the canonical URL when the page URL has none", async () => {
+    const state = await createState();
+
+    window.history.replaceState(null, "", "/?foo=bar");
+
+    expect(state.app.canonicalUrl.value).not.toContain("lang=");
+  });
+
   it("selecting a tab selects the tab and switches the slot to display the selected tab", async () => {
     const state = await createStateWithTwoTabs();
 

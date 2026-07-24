@@ -22,7 +22,7 @@
  *
  * Usage:
  *   pnpm sitemap
- *   pnpm sitemap --base-url=https://prod.seedbible.org --endpoint=https://bible.helloao.org/
+ *   pnpm sitemap --base-url=https://seedbible.org --endpoint=https://bible.helloao.org/
  *   pnpm sitemap --mapped-only --strict --out=standalone/dist/client
  */
 import { mkdir, rm, writeFile } from "node:fs/promises";
@@ -34,17 +34,19 @@ import {
 } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import {
   bibleLanguageToUiLocale,
+  buildTranslationParam,
   chapterUrlsForTranslation,
   chunk,
   renderSitemapIndex,
   renderUrlset,
+  trimTrailingSlash,
   uniqueSitemapName,
   MAX_URLS_PER_SITEMAP,
   type BookChapters,
   type SitemapIndexEntry,
 } from "./lib/sitemap";
 
-const DEFAULT_ORIGIN = "https://prod.seedbible.org";
+const DEFAULT_ORIGIN = "https://seedbible.org";
 const DEFAULT_OUT_DIR = path.join("standalone", "dist", "client");
 const SITEMAPS_SUBDIR = "sitemaps";
 const DEFAULT_CONCURRENCY = 8;
@@ -175,7 +177,9 @@ async function buildTranslationSitemap(
   api: FreeUseBibleAPI,
   origin: string,
   translation: Translation,
-  mappedOnly: boolean
+  mappedOnly: boolean,
+  endpoint: string,
+  defaultEndpoint: string
 ): Promise<TranslationSitemap | null> {
   const uiLocale = bibleLanguageToUiLocale(translation.language);
   if (mappedOnly && !uiLocale) {
@@ -199,9 +203,18 @@ async function buildTranslationSitemap(
     return null;
   }
 
+  // Match the app's canonical `translation` param exactly (bare id for the
+  // default endpoint, full books.json URL otherwise); the filename keeps the
+  // raw id.
+  const translationParam = buildTranslationParam(
+    translation.id,
+    endpoint,
+    defaultEndpoint
+  );
+
   const urls = chapterUrlsForTranslation(
     origin,
-    translation.id,
+    translationParam,
     uiLocale,
     books
   );
@@ -221,6 +234,8 @@ async function generate(options: Options): Promise<void> {
   console.log(`Mapped only: ${options.mappedOnly}`);
   console.log("");
 
+  const defaultEndpoint = getDefaultAPIEndpoint(new URL(origin));
+
   const api = new FreeUseBibleAPI(endpoint);
   const { translations } = await api.getAvailableTranslations();
   console.log(`Fetched ${translations.length} translations.`);
@@ -229,7 +244,14 @@ async function generate(options: Options): Promise<void> {
     translations,
     options.concurrency,
     (translation) =>
-      buildTranslationSitemap(api, origin, translation, options.mappedOnly)
+      buildTranslationSitemap(
+        api,
+        origin,
+        translation,
+        options.mappedOnly,
+        endpoint,
+        defaultEndpoint
+      )
   );
 
   const sitemaps = built.filter(
@@ -249,7 +271,6 @@ async function generate(options: Options): Promise<void> {
 
   const usedNames = new Set<string>();
   const indexEntries: SitemapIndexEntry[] = [];
-  const lastmod = new Date().toISOString().slice(0, 10);
   let totalUrls = 0;
 
   for (const sitemap of sitemaps) {
@@ -273,7 +294,6 @@ async function generate(options: Options): Promise<void> {
       );
       indexEntries.push({
         loc: `${trimTrailingSlash(origin)}/${SITEMAPS_SUBDIR}/${fileName}`,
-        lastmod,
       });
     }
   }
@@ -298,7 +318,6 @@ async function generate(options: Options): Promise<void> {
       );
       rootEntries.push({
         loc: `${trimTrailingSlash(origin)}/${fileName}`,
-        lastmod,
       });
     }
     await writeFile(
@@ -329,10 +348,6 @@ function renderRobots(origin: string): string {
     `\n` +
     `Sitemap: ${trimTrailingSlash(origin)}/sitemap.xml\n`
   );
-}
-
-function trimTrailingSlash(url: string): string {
-  return url.endsWith("/") ? url.slice(0, -1) : url;
 }
 
 async function main(): Promise<void> {

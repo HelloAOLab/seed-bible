@@ -7,10 +7,7 @@
  * splitting URL sets across the 50,000-per-file sitemap limit — can be verified
  * without hitting the network.
  */
-import {
-  DEFAULT_TRANSLATIONS_BY_LANGUAGE,
-  UI_TO_BIBLE_LANGUAGE_CODES,
-} from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
+import { UI_TO_BIBLE_LANGUAGE_CODES } from "@packages/seed-bible/seed-bible/managers/BibleReadingManager";
 
 /**
  * The largest number of `<url>` (or `<sitemap>`) entries a single sitemap file
@@ -26,24 +23,15 @@ export const MAX_URLS_PER_SITEMAP = 50000;
  * wrap it (e.g. "es").
  *
  * Some UI locales share a Bible language (e.g. `he`/`iw` both map to `heb`,
- * `fil`/`tl` to `tgl`). The pick is deterministic:
- *   1. UI locales that have a hardcoded default translation
- *      (`DEFAULT_TRANSLATIONS_BY_LANGUAGE`) win, so e.g. `en` beats a
- *      hypothetical alias for `eng`.
- *   2. Otherwise the first locale in `UI_TO_BIBLE_LANGUAGE_CODES` insertion
- *      order wins (which yields the canonical two-letter code: `he` over `iw`,
- *      `fil` over `tl`, `no` over `nb`).
+ * `fil`/`tl` to `tgl`, `no`/`nb` to `nob`/`nor`). Ties are broken by insertion
+ * order in `UI_TO_BIBLE_LANGUAGE_CODES`: the first locale listed for a code
+ * wins, which is the canonical two-letter code (`he` over `iw`, `fil` over
+ * `tl`, `no` over `nb`).
  */
 export function buildBibleLanguageToUiLocale(): Map<string, string> {
   const map = new Map<string, string>();
-  const entries = Object.entries(UI_TO_BIBLE_LANGUAGE_CODES);
 
-  const prioritized = [
-    ...entries.filter(([ui]) => DEFAULT_TRANSLATIONS_BY_LANGUAGE.has(ui)),
-    ...entries.filter(([ui]) => !DEFAULT_TRANSLATIONS_BY_LANGUAGE.has(ui)),
-  ];
-
-  for (const [ui, codes] of prioritized) {
+  for (const [ui, codes] of Object.entries(UI_TO_BIBLE_LANGUAGE_CODES)) {
     for (const code of codes) {
       const key = code.toLowerCase();
       if (!map.has(key)) {
@@ -82,8 +70,31 @@ export interface ChapterUrlParams {
 }
 
 /**
- * Builds a canonical reader URL for a chapter, matching the app's own
- * `SeedBibleStateManager.canonicalUrl` shape:
+ * Produces the value for the `translation` query param, mirroring the app's
+ * `BibleDataManager.buildTranslationId`: the bare translation ID when the
+ * catalog endpoint is the app's default endpoint, otherwise the full
+ * `…/api/{id}/books.json` URL. Keeping this in lock-step with the app ensures
+ * sitemap URLs match the site's own canonical URLs regardless of which endpoint
+ * the catalog is fetched from.
+ */
+export function buildTranslationParam(
+  translationId: string,
+  endpoint: string,
+  defaultEndpoint: string
+): string {
+  if (ensureTrailingSlash(endpoint) === ensureTrailingSlash(defaultEndpoint)) {
+    return translationId;
+  }
+  return new URL(
+    `api/${translationId}/books.json`,
+    ensureTrailingSlash(endpoint)
+  ).href;
+}
+
+/**
+ * Builds a canonical reader URL for a chapter. This mirrors the app's own
+ * `SeedBibleStateManager.canonicalUrl` (the on-page source of truth for the
+ * shape):
  *   `<origin>/?translation=<id>&book=<BOOK>&chapter=<n>[&lang=<locale>]`
  */
 export function buildChapterUrl(
@@ -226,6 +237,10 @@ export function uniqueSitemapName(id: string, used: Set<string>): string {
   return candidate;
 }
 
-function ensureTrailingSlash(url: string): string {
+export function ensureTrailingSlash(url: string): string {
   return url.endsWith("/") ? url : `${url}/`;
+}
+
+export function trimTrailingSlash(url: string): string {
+  return url.endsWith("/") ? url.slice(0, -1) : url;
 }

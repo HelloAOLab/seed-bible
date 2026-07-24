@@ -2,18 +2,20 @@ import {
   bibleLanguageToUiLocale,
   buildBibleLanguageToUiLocale,
   buildChapterUrl,
+  buildTranslationParam,
   chapterUrlsForTranslation,
   chunk,
   escapeXml,
   renderSitemapIndex,
   renderUrlset,
   sanitizeSitemapName,
+  trimTrailingSlash,
   uniqueSitemapName,
   MAX_URLS_PER_SITEMAP,
   type BookChapters,
 } from "../../../../script/lib/sitemap";
 
-const ORIGIN = "https://prod.seedbible.org";
+const ORIGIN = "https://seedbible.org";
 
 describe("bibleLanguageToUiLocale", () => {
   it("maps common Bible languages to their UI locale", () => {
@@ -72,7 +74,7 @@ describe("buildChapterUrl", () => {
         uiLocale: "es",
       })
     ).toBe(
-      "https://prod.seedbible.org/?translation=spa_onbv&book=GEN&chapter=1&lang=es"
+      "https://seedbible.org/?translation=spa_onbv&book=GEN&chapter=1&lang=es"
     );
   });
 
@@ -84,7 +86,7 @@ describe("buildChapterUrl", () => {
         chapter: 22,
       })
     ).toBe(
-      "https://prod.seedbible.org/?translation=xyz_translation&book=REV&chapter=22"
+      "https://seedbible.org/?translation=xyz_translation&book=REV&chapter=22"
     );
   });
 
@@ -114,6 +116,42 @@ describe("buildChapterUrl", () => {
   });
 });
 
+describe("buildTranslationParam", () => {
+  const DEFAULT = "https://vmfnri.helloao.org/";
+
+  it("returns the bare id when the endpoint is the default", () => {
+    expect(buildTranslationParam("BSB", DEFAULT, DEFAULT)).toBe("BSB");
+  });
+
+  it("ignores trailing-slash differences when comparing endpoints", () => {
+    expect(
+      buildTranslationParam("BSB", "https://vmfnri.helloao.org", DEFAULT)
+    ).toBe("BSB");
+  });
+
+  it("returns the full books.json URL for a non-default endpoint", () => {
+    expect(
+      buildTranslationParam("BSB", "https://bible.helloao.org/", DEFAULT)
+    ).toBe("https://bible.helloao.org/api/BSB/books.json");
+  });
+
+  it("encodes reserved characters in the id for a non-default endpoint", () => {
+    expect(
+      buildTranslationParam("eng/esv", "https://bible.helloao.org/", DEFAULT)
+    ).toBe("https://bible.helloao.org/api/eng/esv/books.json");
+  });
+});
+
+describe("trimTrailingSlash", () => {
+  it("removes a single trailing slash", () => {
+    expect(trimTrailingSlash("https://x.org/")).toBe("https://x.org");
+  });
+
+  it("leaves a slash-free URL untouched", () => {
+    expect(trimTrailingSlash("https://x.org")).toBe("https://x.org");
+  });
+});
+
 describe("chapterUrlsForTranslation", () => {
   const books: BookChapters[] = [
     { bookId: "GEN", firstChapterNumber: 1, numberOfChapters: 3 },
@@ -124,13 +162,13 @@ describe("chapterUrlsForTranslation", () => {
     const urls = chapterUrlsForTranslation(ORIGIN, "t", "en", books);
     expect(urls).toHaveLength(5);
     expect(urls[0]).toBe(
-      "https://prod.seedbible.org/?translation=t&book=GEN&chapter=1&lang=en"
+      "https://seedbible.org/?translation=t&book=GEN&chapter=1&lang=en"
     );
     expect(urls[2]).toBe(
-      "https://prod.seedbible.org/?translation=t&book=GEN&chapter=3&lang=en"
+      "https://seedbible.org/?translation=t&book=GEN&chapter=3&lang=en"
     );
     expect(urls[4]).toBe(
-      "https://prod.seedbible.org/?translation=t&book=EXO&chapter=2&lang=en"
+      "https://seedbible.org/?translation=t&book=EXO&chapter=2&lang=en"
     );
   });
 
@@ -139,8 +177,8 @@ describe("chapterUrlsForTranslation", () => {
       { bookId: "PSA", firstChapterNumber: 42, numberOfChapters: 2 },
     ]);
     expect(urls).toEqual([
-      "https://prod.seedbible.org/?translation=t&book=PSA&chapter=42",
-      "https://prod.seedbible.org/?translation=t&book=PSA&chapter=43",
+      "https://seedbible.org/?translation=t&book=PSA&chapter=42",
+      "https://seedbible.org/?translation=t&book=PSA&chapter=43",
     ]);
   });
 
