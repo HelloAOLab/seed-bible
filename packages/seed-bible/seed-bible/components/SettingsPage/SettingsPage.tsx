@@ -165,6 +165,11 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
   const profile = useComputed(
     () => login.profile.value ?? login.cachedProfile.value
   );
+  // `profile` above can be showing a cached value while `login.profile` (the
+  // network-confirmed one `updateProfile` actually writes against) is still
+  // null — Save must not let the user believe an edit was saved in that
+  // window.
+  const isProfileLoaded = useComputed(() => login.profile.value !== null);
 
   const newName = useSignal<string | null>(null);
   const name = useComputed(() => newName.value ?? profile.value?.name ?? "");
@@ -181,6 +186,11 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
   const uidCopied = useSignal(false);
 
   const handleSave = () => {
+    if (!isProfileLoaded.value) {
+      // `updateProfile` would silently no-op here (profile not confirmed
+      // yet) — refuse instead of clearing the user's in-progress edits below.
+      return;
+    }
     login.updateProfile({
       name: name.value,
       location: location.value || null,
@@ -390,8 +400,13 @@ function AccountSettingsView(props: { state: SeedBibleState }) {
               <button
                 className="sb-settings-save-button sb-account-save-button"
                 onClick={handleSave}
+                disabled={!isProfileLoaded.value}
               >
-                {t("save-changes", { defaultValue: "Save changes" })}
+                {isProfileLoaded.value
+                  ? t("save-changes", { defaultValue: "Save changes" })
+                  : t("profile-loading", {
+                      defaultValue: "Loading your profile…",
+                    })}
               </button>
             </div>
 

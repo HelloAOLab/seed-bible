@@ -620,6 +620,62 @@ describe("createLoginManager", () => {
       expect(manager.cachedProfile.value).toBeNull();
     });
 
+    it("clears a stale cachedProfile when switching accounts while the previous load is still pending", async () => {
+      // Pre-seed user-1's cache so `cachedProfile` is non-null before its
+      // network load resolves — this is the exact scenario a guard keyed on
+      // "is `profileUserId` set" or "is `cachedProfile` null" both miss:
+      // `profileUserId` stays null while pending, but `cachedProfile` already
+      // holds a non-null value read from the cache.
+      localStorage.setItem(
+        `sb-profile-cache-${USER_ID}`,
+        JSON.stringify({ name: "Alice" })
+      );
+      getDataMock.mockReturnValue(new Promise(() => undefined));
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.cachedProfile.value?.name === "Alice");
+      expect(manager.profile.value).toBeNull();
+
+      os.sessionKey.value = formatV1SessionKey(
+        "user-2",
+        "session-2",
+        "secret-2",
+        Date.now() + 1000 * 60 * 60 * 24 * 14
+      );
+      await waitFor(() => manager.userId.value === "user-2");
+      await flush();
+
+      expect(manager.cachedProfile.value).toBeNull();
+    });
+
+    it("clears a stale cachedProfile when switching accounts after the previous load already failed", async () => {
+      localStorage.setItem(
+        `sb-profile-cache-${USER_ID}`,
+        JSON.stringify({ name: "Alice" })
+      );
+      getDataMock.mockResolvedValue({
+        success: false,
+        errorCode: "not_authorized",
+        errorMessage: "stale key",
+      });
+
+      const manager = createAuthenticatedManager();
+      await waitFor(() => manager.cachedProfile.value?.name === "Alice");
+      await flush();
+      expect(manager.profile.value).toBeNull();
+
+      os.sessionKey.value = formatV1SessionKey(
+        "user-2",
+        "session-2",
+        "secret-2",
+        Date.now() + 1000 * 60 * 60 * 24 * 14
+      );
+      await waitFor(() => manager.userId.value === "user-2");
+      await flush();
+
+      expect(manager.cachedProfile.value).toBeNull();
+    });
+
     it("does not leak a different user's cached profile", async () => {
       localStorage.setItem(
         "sb-profile-cache-user-2",
@@ -823,6 +879,28 @@ describe("createLoginManager", () => {
       expect(localStorage.getItem("sb-profile-config-local")).toBe(
         JSON.stringify({ fontSize: "L" })
       );
+    });
+
+    it("clears local config on login into an existing account, even without adoption", async () => {
+      // The account already has a profile, so no adoption happens — but the
+      // leftover anonymous config must still be consumed here, or it could
+      // later be silently adopted by an unrelated account signing up on this
+      // same (possibly shared) device.
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ fontSize: "L" })
+      );
+      getDataMock.mockResolvedValue({
+        success: true,
+        data: { name: "Existing User" },
+      });
+
+      const manager = createAuthenticatedManager();
+
+      await waitFor(() => manager.profile.value?.name === "Existing User");
+
+      expect(manager.localConfig.value).toEqual({});
+      expect(localStorage.getItem("sb-profile-config-local")).toBe("{}");
     });
 
     it("adopts local config into a brand-new account's profile on first login and persists it", async () => {

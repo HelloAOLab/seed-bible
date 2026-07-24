@@ -242,6 +242,12 @@ export function createLoginManager({
   // switch can never leave the previous account's profile in place (which a
   // later write would then merge into the new account's record).
   let profileUserId: string | null = null;
+  // Tracks which account `cachedProfile.value` currently belongs to. Kept
+  // separate from `profileUserId` (which is only set once a load *succeeds*)
+  // so a switch that happens while the previous account's load is still
+  // pending — or after it failed — is still caught: gating on "is
+  // `cachedProfile` null" isn't enough once a value has been assigned.
+  let cachedProfileUserId: string | null = null;
 
   effect(() => {
     writeLocalConfig(localConfig.value);
@@ -307,6 +313,17 @@ export function createLoginManager({
       console.warn("Failed to parse user profile data:", parsed.error);
       throw new Error("[LoginManager] Stored profile failed validation");
     }
+
+    // This account already has a real profile, so no adoption happened —
+    // but any leftover anonymous local config must still be consumed here.
+    // Otherwise it would sit around and could later be silently adopted by a
+    // different, unrelated account signing up on this same (possibly
+    // shared) device — the exact leak the brand-new-account adoption/clear
+    // above exists to prevent, just via this other path.
+    if (Object.keys(localConfig.value).length > 0) {
+      localConfig.value = {};
+    }
+
     return parsed.data;
   };
 
@@ -492,6 +509,7 @@ export function createLoginManager({
       // Logging out drops the per-account cache too — the next display falls
       // back to `localConfig`/anonymous defaults, never a stale account's data.
       cachedProfile.value = null;
+      cachedProfileUserId = null;
       return;
     }
 
@@ -518,11 +536,14 @@ export function createLoginManager({
     // Show the last-known cached profile for this account immediately, while
     // the network load below is still in flight. This is display-only —
     // `profile`/`profileUserId` (what writes gate on) are untouched here.
-    // `.peek()` reads without subscribing — this effect must not re-run every
-    // time `cachedProfile` itself changes (including from its own writes
-    // below), or it would refetch the profile in an infinite loop.
-    if (cachedProfile.peek() === null) {
+    // Keyed on `cachedProfileUserId` rather than "is `cachedProfile` null" —
+    // gating on nullness alone would miss a switch that happens while the
+    // previous account's load is still pending, or after it failed, since
+    // `cachedProfile` would already hold a (now-stale) non-null value from
+    // that previous account.
+    if (cachedProfileUserId !== loadingForUserId) {
       cachedProfile.value = readCachedProfile(loadingForUserId);
+      cachedProfileUserId = loadingForUserId;
     }
 
     const loadPromise = getUserProfile(loadingForUserId)
@@ -534,6 +555,7 @@ export function createLoginManager({
           profile.value = p;
           profileUserId = loadingForUserId;
           cachedProfile.value = p;
+          cachedProfileUserId = loadingForUserId;
           writeCachedProfile(loadingForUserId, p);
         }
         return p;
