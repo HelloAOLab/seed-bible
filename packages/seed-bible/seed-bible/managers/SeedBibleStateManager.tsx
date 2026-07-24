@@ -968,6 +968,18 @@ export function createSeedBibleState(
       canonicalUrl.searchParams.set("chapter", String(chapter.chapter.number));
     }
 
+    // Preserve an explicit `?lang=` so the canonical is self-referential for
+    // the language-specific URLs the sitemap emits (otherwise search engines
+    // collapse every `?lang=` variant onto the lang-less URL and none of them
+    // index distinctly). Echo only the explicit URL param — deriving it from
+    // the active i18n language would make the canonical vary by
+    // Accept-Language, which must not happen. Set last to match the sitemap's
+    // `translation,book,chapter,lang` ordering.
+    const lang = currentUrl.searchParams.get("lang");
+    if (lang) {
+      canonicalUrl.searchParams.set("lang", lang);
+    }
+
     return `${canonicalUrl.pathname}${canonicalUrl.search}`;
   });
 

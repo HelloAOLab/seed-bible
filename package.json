@@ -8,7 +8,7 @@
     "test": "vitest",
     "test:watch": "vitest watch",
     "dev": "bun server/index.ts",
-    "build": "pnpm build:client && pnpm build:ssr && pnpm build:server",
+    "build": "pnpm build:client && pnpm build:ssr && pnpm build:server && pnpm sitemap",
     "build:client": "vite build",
     "build:ssr": "vite build --ssr standalone/entry-ssr.tsx",
     "build:server": "bun build --target=bun --external express --external vite --outfile=server/dist/index.js ./server/index.ts",
@@ -24,6 +24,7 @@
     "build-size-report": "tsx script/build-size-report.ts",
     "i18n": "tsx script/i18n.ts",
     "list-bible-translations": "tsx script/list-bible-translations.ts",
+    "sitemap": "tsx script/generate-sitemap.ts",
     "format": "prettier --write \"packages/**/*.{js,jsx,ts,tsx,css}\"",
     "format:changed": "pretty-quick",
     "prepare": "husky && tsx script/setupMergeDriver.ts"
