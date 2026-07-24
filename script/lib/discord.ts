@@ -76,8 +76,8 @@ export function buildReleaseEmbed(
     username: "Seed Bible",
     embeds: [
       {
-        title: `Seed Bible v${options.version} 🎉`,
-        url: options.siteUrl,
+        title: `Release: Seed Bible v${options.version} 🎉`,
+        url: options.releaseUrl || options.siteUrl,
         description,
         color: EMBED_COLOR,
       },

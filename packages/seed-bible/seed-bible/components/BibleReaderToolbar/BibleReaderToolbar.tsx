@@ -449,6 +449,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       openChat: sidebar.openChatPanel,
       openDiscover: props.state.app.openDiscover,
       toast: props.state.app.toast,
+      modals: props.state.modals,
+      app: props.state.app,
     });
     return applyToolbarCustomization(resolved, settings.settings.value.toolbar);
   });
@@ -509,6 +511,8 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
       openChat: sidebar.openChatPanel,
       openDiscover: props.state.app.openDiscover,
       toast: props.state.app.toast,
+      modals: props.state.modals,
+      app: props.state.app,
     });
 
     const { selectionUI } = settings.settings.value;
@@ -1836,7 +1840,7 @@ export function BibleReaderToolbar(props: BibleReaderToolbarProps) {
                   ...nonCancel.map(renderTool),
                 ].filter(Boolean);
 
-                const COLLAPSED_COUNT = 3;
+                const COLLAPSED_COUNT = 4;
                 const needsToggle = actionCards.length > COLLAPSED_COUNT;
                 const primaryCards = needsToggle
                   ? actionCards.slice(0, COLLAPSED_COUNT)

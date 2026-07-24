@@ -1213,7 +1213,6 @@
   .sb-panes-layout .sb-pane-shell {
     grid-column: auto !important;
     grid-row: auto !important;
-    border-top: 1px solid var(--sb-primary-color) !important;
   }
 
   .sb-pane-resize-handle,

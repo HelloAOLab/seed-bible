@@ -10,11 +10,11 @@ const BASE = {
 };
 
 describe("buildReleaseEmbed", () => {
-  it("titles the embed with the version and links it to the site", () => {
+  it("titles the embed with the version and links it to the GitHub release", () => {
     const payload = buildReleaseEmbed({ ...BASE, notes: "Some notes." });
     const embed = payload.embeds[0];
     expect(embed?.title).toContain("v1.2.0");
-    expect(embed?.url).toBe("https://seedbible.org");
+    expect(embed?.url).toBe(BASE.releaseUrl);
     expect(payload.username).toBe("Seed Bible");
   });
 
@@ -73,5 +73,15 @@ describe("buildReleaseEmbed", () => {
     const description = payload.embeds[0]?.description ?? "";
     expect(description).not.toContain("read the full release notes");
     expect(description.startsWith("Short and sweet.")).toBe(true);
+  });
+
+  it("falls back to siteUrl for the title link when releaseUrl is not provided", () => {
+    const payload = buildReleaseEmbed({
+      version: BASE.version,
+      siteUrl: BASE.siteUrl,
+      notes: "Some notes.",
+    });
+    const embed = payload.embeds[0];
+    expect(embed?.url).toBe("https://seedbible.org");
   });
 });
