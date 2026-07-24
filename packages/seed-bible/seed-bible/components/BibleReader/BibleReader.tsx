@@ -4,7 +4,13 @@ import {
   type ChapterVerse,
 } from "../../managers/FreeUseBibleAPI";
 import type { JSX } from "preact";
-import { Suspense, useRef, useLayoutEffect, useState } from "preact/compat";
+import {
+  Suspense,
+  useRef,
+  useLayoutEffect,
+  useState,
+  useEffect,
+} from "preact/compat";
 import { computed, type ReadonlySignal, type Signal } from "@preact/signals";
 import {
   adjacentInlineRect,
@@ -958,6 +964,67 @@ function renderStaticChapterContent(
   );
 }
 
+/** Wait this long after a chapter load starts before blanking the page. Fast
+ *  cached responses never flash a spinner; slow networks get a clear wait state. */
+const CHAPTER_LOADING_DELAY_MS = 1000;
+
+/**
+ * Returns true only after `active` has stayed true for `delayMs`. Used so
+ * chapter navigation can keep the previous page on screen for quick loads.
+ */
+function useDelayedFlag(active: boolean, delayMs: number): boolean {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    if (!active) {
+      setShow(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setShow(true);
+    }, delayMs);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [active, delayMs]);
+
+  return show;
+}
+
+function ChapterLoadingPlaceholder() {
+  return (
+    <div
+      className="sb-chapter-loading"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <span
+        className="material-symbols-outlined sb-chapter-loading-spinner"
+        aria-hidden="true"
+      >
+        progress_activity
+      </span>
+    </div>
+  );
+}
+
+/** Blank + spinner after the delay — used for swipe side panels with no
+ *  prefetched chapter. Pass `immediate` once a load is already in flight so
+ *  a committed swipe onto an empty panel does not sit blank for another second. */
+function DelayedChapterLoadingPlaceholder(props: {
+  active: boolean;
+  immediate?: boolean;
+}) {
+  const showDelayed = useDelayedFlag(props.active, CHAPTER_LOADING_DELAY_MS);
+  if (!props.active || (!props.immediate && !showDelayed)) {
+    return null;
+  }
+  return <ChapterLoadingPlaceholder />;
+}
+
 // One drawn highlight ribbon. `key` is the run's verse range ("5-8"); `first`/
 // `last` are it as numbers (coverage checks). `enter` = fade in (a new highlight,
 // not a reshape); `exiting` = fading out before removal.
@@ -1432,6 +1499,13 @@ export function BibleReader(props: BibleReaderProps) {
     }
   };
 
+  // Keep the previous chapter visible until the fetch has been slow for a
+  // full second, then blank the page and show a spinner (YouVersion-style).
+  const showChapterLoading = useDelayedFlag(
+    loading.value,
+    CHAPTER_LOADING_DELAY_MS
+  );
+
   const renderMobileChapterTitle = (
     bookName: string,
     chapter: number | string
@@ -1442,71 +1516,86 @@ export function BibleReader(props: BibleReaderProps) {
     </h2>
   );
 
-  const renderMainContent = () => (
-    <>
-      {isMobile &&
-        renderMobileChapterTitle(
-          currentBook.value?.name ?? bookId.value ?? "",
-          chapterNumber.value ?? ""
+  const renderMainContent = () => {
+    if (showChapterLoading) {
+      return (
+        <>
+          {isMobile &&
+            renderMobileChapterTitle(
+              currentBook.value?.name ?? bookId.value ?? "",
+              chapterNumber.value ?? ""
+            )}
+          <ChapterLoadingPlaceholder />
+        </>
+      );
+    }
+
+    return (
+      <>
+        {isMobile &&
+          renderMobileChapterTitle(
+            currentBook.value?.name ?? bookId.value ?? "",
+            chapterNumber.value ?? ""
+          )}
+
+        {error.value && !loading.value && (
+          <p className="sb-reader-error">{error.value}</p>
         )}
 
-      {error.value && !loading.value && (
-        <p className="sb-reader-error">{error.value}</p>
-      )}
+        {!error.value && (
+          <Suspense
+            fallback={
+              <p>
+                {t("no-chapter-content-found", {
+                  defaultValue: "No chapter content found.",
+                })}
+              </p>
+            }
+          >
+            <ChapterContent
+              chapterData={chapterData}
+              chapterDataPromise={readingState.chapterDataPromise}
+              selectedVerses={selectedVerses}
+              selectVersesFromTextSelection={selectVersesFromTextSelection}
+              justConvertedSelectionRef={justConvertedSelectionRef}
+              highlights={highlights}
+              decorations={decorations}
+              selectVerse={selectVerse}
+              selectFootnote={selectFootnote}
+              scriptureElements={scriptureElements}
+            />
+          </Suspense>
+        )}
 
-      {!error.value && (
-        <Suspense
-          fallback={
-            <p>
-              {t("no-chapter-content-found", {
-                defaultValue: "No chapter content found.",
-              })}
-            </p>
-          }
-        >
-          <ChapterContent
-            chapterData={chapterData}
-            chapterDataPromise={readingState.chapterDataPromise}
-            selectedVerses={selectedVerses}
-            selectVersesFromTextSelection={selectVersesFromTextSelection}
-            justConvertedSelectionRef={justConvertedSelectionRef}
-            highlights={highlights}
-            decorations={decorations}
-            selectVerse={selectVerse}
-            selectFootnote={selectFootnote}
-            scriptureElements={scriptureElements}
-          />
-        </Suspense>
-      )}
-
-      {!availableTranslations.value && !error.value && (
-        <p>
-          {t("no-translations-available", {
-            defaultValue: "No translations available.",
-          })}
-        </p>
-      )}
-
-      {!error.value && translationLicenseNotice.value.length > 0 && (
-        <>
-          <p className="sb-translation-license-notice">
-            {translationLicenseNotice.value}
+        {!availableTranslations.value && !error.value && (
+          <p>
+            {t("no-translations-available", {
+              defaultValue: "No translations available.",
+            })}
           </p>
-          {translationWebsite.value.length > 0 && (
-            <p className="sb-translation-website">
-              <a
-                href={translationWebsite.value}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {translationWebsite.value}
-              </a>
+        )}
+
+        {!error.value && translationLicenseNotice.value.length > 0 && (
+          <>
+            <p className="sb-translation-license-notice">
+              {translationLicenseNotice.value}
             </p>
-          )}
-        </>
-      )}
-    </>
-  );
+            {translationWebsite.value.length > 0 && (
+              <p className="sb-translation-website">
+                <a
+                  href={translationWebsite.value}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {translationWebsite.value}
+                </a>
+              </p>
+            )}
+          </>
+        )}
+      </>
+    );
+  };
 
   return (
     <div
@@ -1607,17 +1696,25 @@ export function BibleReader(props: BibleReaderProps) {
                 className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
                 aria-hidden="true"
               >
-                {mobileChrome?.prevChapterPreview &&
-                  renderMobileChapterTitle(
-                    mobileChrome.prevChapterPreview.book.name,
-                    mobileChrome.prevChapterPreview.chapter.number
-                  )}
-                <div className="sb-chapter-content">
-                  {renderStaticChapterContent(
-                    mobileChrome?.prevChapterPreview ?? null,
-                    scriptureElements
-                  )}
-                </div>
+                {mobileChrome?.prevChapterPreview ? (
+                  <>
+                    {renderMobileChapterTitle(
+                      mobileChrome.prevChapterPreview.book.name,
+                      mobileChrome.prevChapterPreview.chapter.number
+                    )}
+                    <div className="sb-chapter-content">
+                      {renderStaticChapterContent(
+                        mobileChrome.prevChapterPreview,
+                        scriptureElements
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <DelayedChapterLoadingPlaceholder
+                    active={isMobile && readingState.hasPrevious.value}
+                    immediate={loading.value}
+                  />
+                )}
               </div>
               <div
                 ref={mobileChrome?.currentScrollerRefCallback}
@@ -1629,17 +1726,25 @@ export function BibleReader(props: BibleReaderProps) {
                 className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
                 aria-hidden="true"
               >
-                {mobileChrome?.nextChapterPreview &&
-                  renderMobileChapterTitle(
-                    mobileChrome.nextChapterPreview.book.name,
-                    mobileChrome.nextChapterPreview.chapter.number
-                  )}
-                <div className="sb-chapter-content">
-                  {renderStaticChapterContent(
-                    mobileChrome?.nextChapterPreview ?? null,
-                    scriptureElements
-                  )}
-                </div>
+                {mobileChrome?.nextChapterPreview ? (
+                  <>
+                    {renderMobileChapterTitle(
+                      mobileChrome.nextChapterPreview.book.name,
+                      mobileChrome.nextChapterPreview.chapter.number
+                    )}
+                    <div className="sb-chapter-content">
+                      {renderStaticChapterContent(
+                        mobileChrome.nextChapterPreview,
+                        scriptureElements
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <DelayedChapterLoadingPlaceholder
+                    active={isMobile && readingState.hasNext.value}
+                    immediate={loading.value}
+                  />
+                )}
               </div>
             </div>
           </div>

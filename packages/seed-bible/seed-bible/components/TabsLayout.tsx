@@ -36,8 +36,12 @@ export function TabSlotReader(props: TabSlotReaderProps) {
   const swipeTouchStartY = useRef<number | null>(null);
   const swipeDirectionLocked = useRef<"h" | "v" | null>(null);
   const swipeCurrentDx = useRef(0);
+  // True from a committed swipe until the chapter load finishes and the track
+  // snaps back to center — blocks overlapping gestures during slow fetches.
+  const swipeNavigatingRef = useRef(false);
   const currentChapterRef = useRef(readingState.chapterData.value);
   const lastScrollTopRef = useRef(0);
+  const isProgrammaticScrollRef = useRef(false);
   const scrollerCleanupRef = useRef<(() => void) | null>(null);
 
   const [prevChapterPreview, setPrevChapterPreview] =
@@ -63,6 +67,36 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     };
   }, [isMobile, isScrolled]);
 
+  // Programmatic jumps (restoring scroll, scroll-to-verse from search/Today)
+  // must not be treated as user scroll-down — otherwise the top bar hides the
+  // moment a search result opens a book mid-chapter.
+  const beginProgrammaticScroll = () => {
+    isProgrammaticScrollRef.current = true;
+  };
+
+  /**
+   * @param deferClear When true, keep ignoring scroll until the next frame
+   *   (needed for `scrollIntoView`, which can emit scroll events after this
+   *   call returns). Direct `scrollTop` assignment can clear synchronously —
+   *   its scroll event runs while the flag is still set, then user scrolls
+   *   work immediately (including in tests that never flush rAF).
+   */
+  const endProgrammaticScroll = (
+    element: HTMLDivElement,
+    deferClear = false
+  ) => {
+    lastScrollTopRef.current = element.scrollTop;
+    setIsScrolled(false);
+    if (!deferClear) {
+      isProgrammaticScrollRef.current = false;
+      return;
+    }
+    requestAnimationFrame(() => {
+      isProgrammaticScrollRef.current = false;
+      lastScrollTopRef.current = element.scrollTop;
+    });
+  };
+
   const attachScroller = (element: HTMLDivElement | null) => {
     scrollerCleanupRef.current?.();
     scrollerCleanupRef.current = null;
@@ -73,7 +107,9 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
     const cleanup = effect(() => {
       if (readingState.chapterData.value) {
+        beginProgrammaticScroll();
         element.scrollTop = readingState.scrollPosition.peek();
+        endProgrammaticScroll(element);
       }
 
       const verseToScroll = readingState.scrollToVerse.value;
@@ -86,11 +122,13 @@ export function TabSlotReader(props: TabSlotReaderProps) {
             return;
           }
 
+          beginProgrammaticScroll();
           targetVerse.scrollIntoView({ block: "center", inline: "nearest" });
           batch(() => {
             readingState.scrollToVerse.value = null;
             readingState.scrollPosition.value = element.scrollTop;
           });
+          endProgrammaticScroll(element, true);
         });
       }
 
@@ -112,6 +150,11 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         }
 
         const currentScrollTop = element.scrollTop;
+        if (isProgrammaticScrollRef.current) {
+          lastScrollTopRef.current = currentScrollTop;
+          return;
+        }
+
         // Distance from the current scroll position to the very bottom of the
         // chapter. When the reader lands within a small threshold of the end,
         // re-show the toolbar so the chapter-navigation controls are within
@@ -148,16 +191,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
   const slotScrollerRefCallback = (element: HTMLDivElement | null) => {
     slotScrollerRef.current = element;
-    if (!isMobile) {
-      attachScroller(element);
-    }
   };
 
   const currentScrollerRefCallback = (element: HTMLDivElement | null) => {
     mobileScrollerRef.current = element;
-    if (isMobile) {
-      attachScroller(element);
-    }
   };
 
   const swipeViewportRefCallback = (element: HTMLDivElement | null) => {
@@ -168,6 +205,8 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     swipeTrackRef.current = element;
   };
 
+  // Attach here (not in the ref callbacks) so re-renders from `isScrolled`
+  // don't tear down the listener and force the header visible again.
   useEffect(() => {
     attachScroller(
       isMobile ? mobileScrollerRef.current : slotScrollerRef.current
@@ -255,6 +294,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     const PANEL_PCT = 100 / 3;
 
     const onTouchStart = (event: TouchEvent) => {
+      if (readingState.loading.value || swipeNavigatingRef.current) {
+        return;
+      }
+
       const touch = event.touches[0];
       if (!touch) {
         return;
@@ -357,26 +400,39 @@ export function TabSlotReader(props: TabSlotReaderProps) {
       }
 
       if (shouldLoadNext && hasNext) {
+        swipeNavigatingRef.current = true;
         track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
         const sign = isRtl ? 1 : -1;
         const nextTransform = `translateX(${sign * PANEL_PCT * 2}%)`;
         track.style.transform = nextTransform;
         readingState.clearSelectedVerses();
+        // Stay on the destination panel until the chapter arrives, then snap
+        // back to center (which now holds the new chapter). Snapping earlier
+        // would flash the previous chapter during slow loads.
         window.setTimeout(async () => {
-          track.style.transition = "none";
-          track.style.transform = `translateX(${sign * PANEL_PCT}%)`;
-          await readingState.loadNextChapter();
+          try {
+            await readingState.loadNextChapter();
+          } finally {
+            track.style.transition = "none";
+            track.style.transform = `translateX(${sign * PANEL_PCT}%)`;
+            swipeNavigatingRef.current = false;
+          }
         }, 250);
       } else if (shouldLoadPrev && hasPrev) {
+        swipeNavigatingRef.current = true;
         track.style.transition = "transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)";
         const sign = isRtl ? 1 : -1;
         const prevTransform = "translateX(0%)";
         track.style.transform = prevTransform;
         readingState.clearSelectedVerses();
         window.setTimeout(async () => {
-          track.style.transition = "none";
-          track.style.transform = `translateX(${sign * PANEL_PCT}%)`;
-          await readingState.loadPreviousChapter();
+          try {
+            await readingState.loadPreviousChapter();
+          } finally {
+            track.style.transition = "none";
+            track.style.transform = `translateX(${sign * PANEL_PCT}%)`;
+            swipeNavigatingRef.current = false;
+          }
         }, 250);
       } else {
         track.style.transition = "transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)";

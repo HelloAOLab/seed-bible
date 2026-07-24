@@ -354,6 +354,35 @@
   opacity: 0.85;
 }
 
+.sb-chapter-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: min(50vh, 100%);
+  padding: 4rem 1rem;
+  color: var(--sb-font-color);
+  opacity: 0.55;
+}
+
+.sb-chapter-loading-spinner {
+  font-size: 2rem;
+  line-height: 1;
+  animation: sb-chapter-loading-spin 0.9s linear infinite;
+}
+
+@keyframes sb-chapter-loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sb-chapter-loading-spinner {
+    animation: none;
+  }
+}
+
 .sb-bible-reader-mobile-content-title {
   margin: 2rem 0 2rem;
   text-align: center;
