@@ -1,25 +1,32 @@
 import { createI18nManager } from "@packages/seed-bible/seed-bible/i18n/I18nManager";
 import { createNavigationManager } from "@packages/seed-bible/seed-bible/managers/NavigationManager";
-import { createConfig } from "@packages/seed-bible/seed-bible/managers/ConfigManager";
-import type {
-  LoginManager,
-  UserProfile,
+import {
+  createSettings,
+  type SettingsManager,
+} from "@packages/seed-bible/seed-bible/managers/SettingsManager";
+import {
+  createLoginManager,
+  type LoginManager,
+  type UserProfile,
 } from "@packages/seed-bible/seed-bible/managers/LoginManager";
+import { CasualOSManager } from "@packages/seed-bible/seed-bible/managers/OsManager";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import { signal } from "@preact/signals";
 
 /**
  * Minimal LoginManager stand-in. `updateProfile` optimistically updates the
- * `profile` signal the same way the real manager does, which is what the
- * ConfigManager's profile-language effect subscribes to.
+ * `profile` signal the same way the real manager does, which is what
+ * SettingsManager's profile-language effect and profile/localConfig fallback
+ * reads subscribe to.
  */
 function makeFakeLogin(initialProfile: UserProfile | null): LoginManager {
   const userId = signal<string | null>(initialProfile ? "user-1" : null);
   const profile = signal<UserProfile | null>(initialProfile);
+  const localConfig = signal<Record<string, unknown>>({});
   return {
     userId,
     profile,
-    localConfig: signal({}),
+    localConfig,
     profilePromise: Promise.resolve(initialProfile),
     updateProfile: (newData: Partial<UserProfile>) => {
       if (!profile.value) return;
@@ -37,7 +44,13 @@ function getProfileLang(login: LoginManager): string | undefined {
     ?.lang;
 }
 
-describe("ConfigManager language handling", () => {
+function navWith(hrefSuffix = ""): ReturnType<typeof createNavigationManager> {
+  return createNavigationManager({
+    initialHref: `http://localhost:3000/${hrefSuffix}`,
+  });
+}
+
+describe("SettingsManager language handling", () => {
   let logSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
@@ -55,7 +68,7 @@ describe("ConfigManager language handling", () => {
 
   // Regression for #1443: changing the UI language in the settings screen
   // must change the interface language (`?lang=`), not only the scripture
-  // translation (`?translation=`). The bug was that ConfigManager re-applied
+  // translation (`?translation=`). The bug was that the manager re-applied
   // the profile's still-unsaved previous language whenever the URL changed —
   // and the language switch itself writes `?lang=` — so it reverted the switch.
   it("keeps a logged-in user's newly selected UI language (does not revert to the profile's previous language)", async () => {
@@ -64,10 +77,10 @@ describe("ConfigManager language handling", () => {
     await i18n.ready;
 
     const login = makeFakeLogin(profileWithLang("en"));
-    const config = createConfig(login, nav);
+    const settings = createSettings(CasualOSManager(), login, nav);
     // Selector-driven changes persist to the profile via this wiring (done by
     // SeedBibleState in production).
-    i18n.setLanguagePersister(config.persistLanguage);
+    i18n.setLanguagePersister(settings.persistLanguage);
 
     // The scripture-translation side-effect writes `?translation=`.
     const apply = vi.fn(async () => {
@@ -102,7 +115,7 @@ describe("ConfigManager language handling", () => {
 
     // Start logged out, then "log in" by populating the profile signal.
     const login = makeFakeLogin(null);
-    createConfig(login, nav);
+    createSettings(CasualOSManager(), login, nav);
 
     login.profile.value = profileWithLang("fr");
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -119,8 +132,8 @@ describe("ConfigManager language handling", () => {
     await i18n.ready;
 
     const login = makeFakeLogin(profileWithLang("en"));
-    const config = createConfig(login, nav);
-    i18n.setLanguagePersister(config.persistLanguage);
+    const settings = createSettings(CasualOSManager(), login, nav);
+    i18n.setLanguagePersister(settings.persistLanguage);
 
     // Deep-link / back-forward navigation that puts ?lang=de in the URL.
     window.history.pushState({}, "", "/?lang=de");
@@ -145,8 +158,8 @@ describe("ConfigManager language handling", () => {
       name: "Test",
       config: {},
     } as unknown as UserProfile);
-    const config = createConfig(login, nav);
-    i18n.setLanguagePersister(config.persistLanguage);
+    const settings = createSettings(CasualOSManager(), login, nav);
+    i18n.setLanguagePersister(settings.persistLanguage);
     i18n.setBibleTranslationApplicator(vi.fn(), () => null, null);
 
     await i18n.requestLanguageChange("de");
@@ -163,7 +176,7 @@ describe("ConfigManager language handling", () => {
 //   3. Not signed in                      -> use the URL param.
 // And in every case, merely loading a `?lang=` URL must never overwrite the
 // saved profile language (only the selector persists).
-describe("ConfigManager initial load with ?lang= URL parameter", () => {
+describe("SettingsManager initial load with ?lang= URL parameter", () => {
   let logSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
@@ -200,8 +213,8 @@ describe("ConfigManager initial load with ?lang= URL parameter", () => {
     await i18n.ready;
 
     const login = makeFakeLogin(profileWithLang("en"));
-    const config = createConfig(login, nav);
-    i18n.setLanguagePersister(config.persistLanguage);
+    const settings = createSettings(CasualOSManager(), login, nav);
+    i18n.setLanguagePersister(settings.persistLanguage);
 
     await settle();
 
@@ -218,8 +231,8 @@ describe("ConfigManager initial load with ?lang= URL parameter", () => {
     const nav = navWithLang("de");
     const i18n = createI18nManager(nav, []);
     const login = makeFakeLogin(null);
-    const config = createConfig(login, nav);
-    i18n.setLanguagePersister(config.persistLanguage);
+    const settings = createSettings(CasualOSManager(), login, nav);
+    i18n.setLanguagePersister(settings.persistLanguage);
 
     await i18n.ready;
     await settle();
@@ -247,8 +260,8 @@ describe("ConfigManager initial load with ?lang= URL parameter", () => {
       name: "Test",
       config: {},
     } as unknown as UserProfile);
-    const config = createConfig(login, nav);
-    i18n.setLanguagePersister(config.persistLanguage);
+    const settings = createSettings(CasualOSManager(), login, nav);
+    i18n.setLanguagePersister(settings.persistLanguage);
 
     await i18n.ready;
     await settle();
@@ -262,12 +275,156 @@ describe("ConfigManager initial load with ?lang= URL parameter", () => {
     const nav = navWithLang("de");
     const i18n = createI18nManager(nav, []);
     const login = makeFakeLogin(null);
-    const config = createConfig(login, nav);
-    i18n.setLanguagePersister(config.persistLanguage);
+    const settings = createSettings(CasualOSManager(), login, nav);
+    i18n.setLanguagePersister(settings.persistLanguage);
 
     await i18n.ready;
     await settle();
 
     expect(i18n.i18n.language).toBe("de");
+  });
+});
+
+describe("fontSize / disablePanels (merged from ConfigManager)", () => {
+  it("setFontSize updates the signal and persists to the profile when logged in", () => {
+    const login = makeFakeLogin({
+      name: "Test",
+      config: {},
+    } as unknown as UserProfile);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setFontSize("L");
+
+    expect(settings.settings.value.fontSize).toBe("L");
+    expect((login.profile.value as any)?.config?.fontSize).toBe("L");
+  });
+
+  it("setDisablePanels persists to login.localConfig when anonymous", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setDisablePanels(true);
+
+    expect(settings.settings.value.disablePanels).toBe(true);
+    expect(login.localConfig.value.disablePanels).toBe(true);
+  });
+
+  it("?settingsPreset=minimal drives only the fontSize/disablePanels defaults", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(
+      CasualOSManager(),
+      login,
+      navWith("?settingsPreset=minimal")
+    );
+
+    expect(settings.settings.value.disablePanels).toBe(true);
+    expect(settings.settings.value.fontSize).toBe("M");
+    // Unrelated fields keep their own default, unaffected by the preset.
+    expect(settings.settings.value.bookOrientation).toBe("traditional");
+  });
+
+  it("resetToDefaults resets fontSize and disablePanels along with everything else", () => {
+    const login = makeFakeLogin({
+      name: "Test",
+      config: {},
+    } as unknown as UserProfile);
+    const settings = createSettings(CasualOSManager(), login, navWith());
+
+    settings.setFontSize("XL");
+    settings.setDisablePanels(true);
+    settings.setBookOrientation("tanakh");
+
+    settings.resetToDefaults();
+
+    expect(settings.settings.value.fontSize).toBe("M");
+    expect(settings.settings.value.disablePanels).toBe(false);
+    expect(settings.settings.value.bookOrientation).toBe("traditional");
+  });
+});
+
+describe("unified anonymous fallback precedence (profile > URL > login.localConfig > default)", () => {
+  const os = CasualOSManager();
+
+  it("fontSize: profile wins over both the URL param and login.localConfig", () => {
+    const login = makeFakeLogin({
+      name: "Test",
+      config: { fontSize: "S" },
+    } as unknown as UserProfile);
+    login.localConfig.value = { fontSize: "L" };
+
+    const settings = createSettings(os, login, navWith("?app.fontSize=XL"));
+
+    expect(settings.settings.value.fontSize).toBe("S");
+  });
+
+  it("fontSize: URL param wins over login.localConfig when anonymous", () => {
+    const login = makeFakeLogin(null);
+    login.localConfig.value = { fontSize: "L" };
+
+    const settings = createSettings(os, login, navWith("?app.fontSize=XL"));
+
+    expect(settings.settings.value.fontSize).toBe("XL");
+  });
+
+  it("fontSize: login.localConfig wins over the preset default", () => {
+    const login = makeFakeLogin(null);
+    login.localConfig.value = { fontSize: "L" };
+
+    const settings = createSettings(os, login, navWith());
+
+    expect(settings.settings.value.fontSize).toBe("L");
+  });
+
+  it("bookOrientation (an ex-SettingsManager field) follows the exact same precedence", () => {
+    const loggedIn = makeFakeLogin({
+      name: "Test",
+      config: { bookOrientation: "tanakh" },
+    } as unknown as UserProfile);
+    loggedIn.localConfig.value = { bookOrientation: "traditional" };
+    const profileWins = createSettings(
+      os,
+      loggedIn,
+      navWith("?app.bookOrientation=traditional")
+    );
+    expect(profileWins.settings.value.bookOrientation).toBe("tanakh");
+
+    const anon = makeFakeLogin(null);
+    anon.localConfig.value = { bookOrientation: "traditional" };
+    const urlWins = createSettings(
+      os,
+      anon,
+      navWith("?app.bookOrientation=tanakh")
+    );
+    expect(urlWins.settings.value.bookOrientation).toBe("tanakh");
+
+    const localWins = createSettings(os, anon, navWith());
+    expect(localWins.settings.value.bookOrientation).toBe("traditional");
+  });
+});
+
+describe("anonymous settings survive a simulated page refresh", () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it("a book orientation set anonymously is picked up by a fresh manager pair sharing the same localStorage", () => {
+    const os = CasualOSManager();
+    const nav = navWith();
+    const login1 = createLoginManager({ os });
+    const settings1 = createSettings(os, login1, nav);
+
+    settings1.setBookOrientation("tanakh");
+
+    // Simulate a fresh page load: a brand-new LoginManager/SettingsManager
+    // pair, backed by the same (real) localStorage that `login1`'s anonymous
+    // write just persisted to.
+    const login2 = createLoginManager({ os });
+    const settings2 = createSettings(os, login2, nav);
+
+    expect(settings2.settings.value.bookOrientation).toBe("tanakh");
   });
 });

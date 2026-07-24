@@ -875,7 +875,7 @@ const TAG_CUSTOM_THEME = "app.customTheme";
 const TAG_CUSTOM_HIGHLIGHTS = "app.customHighlights";
 
 // Profile.config keys (matches the unprefixed convention used by
-// ConfigManager / SettingsManager).
+// SettingsManager).
 const PROFILE_THEME_ID = "themeId";
 const PROFILE_CUSTOM_THEME = "customTheme";
 const PROFILE_CUSTOM_HIGHLIGHTS = "customHighlights";

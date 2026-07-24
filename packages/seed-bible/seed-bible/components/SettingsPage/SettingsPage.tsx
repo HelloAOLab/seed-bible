@@ -1,7 +1,6 @@
 import "./SettingsPage.css";
 import { useComputed, useSignal } from "@preact/signals";
 import type { SeedBibleState } from "../../managers/SeedBibleStateManager";
-import type { TextSize } from "../../managers/ConfigManager";
 import {
   TEXT_FONT_OPTIONS,
   TEXT_SECTION_THEME_COLOR_VAR,
@@ -13,6 +12,7 @@ import {
   type TextAlignment,
   type TextSectionConfig,
   type TextSectionId,
+  type TextSize,
   type UISize,
 } from "../../managers/SettingsManager";
 import {
@@ -538,10 +538,10 @@ function ThemesGallerySection(props: { state: SeedBibleState }) {
 
 function DisplayAndThemeSettingsView(props: { state: SeedBibleState }) {
   const { state } = props;
-  const { config, setFontSize } = state.config;
-  const selectedFontSize = config.value.fontSize;
   const settings = state.settings;
+  const { setFontSize } = settings;
   const current = settings.settings.value;
+  const selectedFontSize = current.fontSize;
   const isMobile = state.app.isMobile.value;
 
   const verseConfig = settings.settings.value.textConfig.verse;

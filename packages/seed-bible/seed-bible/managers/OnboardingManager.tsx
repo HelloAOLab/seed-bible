@@ -23,7 +23,7 @@ const INSTALL_DISMISSED_KEY = "sb-install-dismissed";
 const APP_INSTALLED_KEY = "sb-app-installed";
 
 // Stored unprefixed on profile.config, matching the pattern set by
-// ConfigManager/SettingsManager for `fontSize`, `lang`, etc. These are the
+// SettingsManager for `fontSize`, `lang`, etc. These are the
 // backend records of whether the user already has the app installed and
 // whether they've dismissed the install prompt ("Maybe later").
 const PROFILE_APP_INSTALLED = "appInstalled";

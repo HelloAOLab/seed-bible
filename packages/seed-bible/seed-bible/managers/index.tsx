@@ -5,7 +5,6 @@ export * from "./BibleReadingExtensionManager";
 export * from "./BibleSelectorManager";
 export * from "./BibleToolsManager";
 export * from "./BookmarksManager";
-export * from "./ConfigManager";
 export * from "./ExtensionManager";
 export * from "./FreeUseBibleAPI";
 export * from "./InvitationsManager";

@@ -151,7 +151,7 @@ describe("createSeedBibleState", () => {
   it("created with default values", async () => {
     const state = await createState();
 
-    expect(state.config.config.value.disablePanels).toBe(false);
+    expect(state.settings.settings.value.disablePanels).toBe(false);
     expect(state.app.panelsEnabled.value).toBe(true);
 
     expect(state.tabs.tabs.value).toHaveLength(1);
@@ -183,7 +183,7 @@ describe("createSeedBibleState", () => {
 
     const state = await createState();
 
-    expect(state.config.config.value.disablePanels).toBe(false);
+    expect(state.settings.settings.value.disablePanels).toBe(false);
     expect(state.app.panelsEnabled.value).toBe(true);
 
     expect(state.tabs.tabs.value).toHaveLength(1);
@@ -541,7 +541,7 @@ describe("createSeedBibleState", () => {
       state.tabsLayout.openTabInSlot(secondSlot.id, "tab-2");
       state.app.selectTab("tab-2");
 
-      state.config.setDisablePanels(true);
+      state.settings.setDisablePanels(true);
 
       expect(state.app.panelsEnabled.value).toBe(false);
       expect(state.app.effectiveSlots.value).toHaveLength(1);
