@@ -74,9 +74,23 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     isProgrammaticScrollRef.current = true;
   };
 
-  const endProgrammaticScroll = (element: HTMLDivElement) => {
+  /**
+   * @param deferClear When true, keep ignoring scroll until the next frame
+   *   (needed for `scrollIntoView`, which can emit scroll events after this
+   *   call returns). Direct `scrollTop` assignment can clear synchronously —
+   *   its scroll event runs while the flag is still set, then user scrolls
+   *   work immediately (including in tests that never flush rAF).
+   */
+  const endProgrammaticScroll = (
+    element: HTMLDivElement,
+    deferClear = false
+  ) => {
     lastScrollTopRef.current = element.scrollTop;
     setIsScrolled(false);
+    if (!deferClear) {
+      isProgrammaticScrollRef.current = false;
+      return;
+    }
     requestAnimationFrame(() => {
       isProgrammaticScrollRef.current = false;
       lastScrollTopRef.current = element.scrollTop;
@@ -114,7 +128,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
             readingState.scrollToVerse.value = null;
             readingState.scrollPosition.value = element.scrollTop;
           });
-          endProgrammaticScroll(element);
+          endProgrammaticScroll(element, true);
         });
       }
 
@@ -177,16 +191,10 @@ export function TabSlotReader(props: TabSlotReaderProps) {
 
   const slotScrollerRefCallback = (element: HTMLDivElement | null) => {
     slotScrollerRef.current = element;
-    if (!isMobile) {
-      attachScroller(element);
-    }
   };
 
   const currentScrollerRefCallback = (element: HTMLDivElement | null) => {
     mobileScrollerRef.current = element;
-    if (isMobile) {
-      attachScroller(element);
-    }
   };
 
   const swipeViewportRefCallback = (element: HTMLDivElement | null) => {
@@ -197,6 +205,8 @@ export function TabSlotReader(props: TabSlotReaderProps) {
     swipeTrackRef.current = element;
   };
 
+  // Attach here (not in the ref callbacks) so re-renders from `isScrolled`
+  // don't tear down the listener and force the header visible again.
   useEffect(() => {
     attachScroller(
       isMobile ? mobileScrollerRef.current : slotScrollerRef.current

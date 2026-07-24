@@ -1011,6 +1011,20 @@ function ChapterLoadingPlaceholder() {
   );
 }
 
+/** Blank + spinner after the delay — used for swipe side panels with no
+ *  prefetched chapter. Pass `immediate` once a load is already in flight so
+ *  a committed swipe onto an empty panel does not sit blank for another second. */
+function DelayedChapterLoadingPlaceholder(props: {
+  active: boolean;
+  immediate?: boolean;
+}) {
+  const showDelayed = useDelayedFlag(props.active, CHAPTER_LOADING_DELAY_MS);
+  if (!props.active || (!props.immediate && !showDelayed)) {
+    return null;
+  }
+  return <ChapterLoadingPlaceholder />;
+}
+
 // One drawn highlight ribbon. `key` is the run's verse range ("5-8"); `first`/
 // `last` are it as numbers (coverage checks). `enter` = fade in (a new highlight,
 // not a reshape); `exiting` = fading out before removal.
@@ -1682,17 +1696,25 @@ export function BibleReader(props: BibleReaderProps) {
                 className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
                 aria-hidden="true"
               >
-                {mobileChrome?.prevChapterPreview &&
-                  renderMobileChapterTitle(
-                    mobileChrome.prevChapterPreview.book.name,
-                    mobileChrome.prevChapterPreview.chapter.number
-                  )}
-                <div className="sb-chapter-content">
-                  {renderStaticChapterContent(
-                    mobileChrome?.prevChapterPreview ?? null,
-                    scriptureElements
-                  )}
-                </div>
+                {mobileChrome?.prevChapterPreview ? (
+                  <>
+                    {renderMobileChapterTitle(
+                      mobileChrome.prevChapterPreview.book.name,
+                      mobileChrome.prevChapterPreview.chapter.number
+                    )}
+                    <div className="sb-chapter-content">
+                      {renderStaticChapterContent(
+                        mobileChrome.prevChapterPreview,
+                        scriptureElements
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <DelayedChapterLoadingPlaceholder
+                    active={isMobile && readingState.hasPrevious.value}
+                    immediate={loading.value}
+                  />
+                )}
               </div>
               <div
                 ref={mobileChrome?.currentScrollerRefCallback}
@@ -1704,17 +1726,25 @@ export function BibleReader(props: BibleReaderProps) {
                 className="sb-reader-swipe-panel sb-reader-swipe-panel-side"
                 aria-hidden="true"
               >
-                {mobileChrome?.nextChapterPreview &&
-                  renderMobileChapterTitle(
-                    mobileChrome.nextChapterPreview.book.name,
-                    mobileChrome.nextChapterPreview.chapter.number
-                  )}
-                <div className="sb-chapter-content">
-                  {renderStaticChapterContent(
-                    mobileChrome?.nextChapterPreview ?? null,
-                    scriptureElements
-                  )}
-                </div>
+                {mobileChrome?.nextChapterPreview ? (
+                  <>
+                    {renderMobileChapterTitle(
+                      mobileChrome.nextChapterPreview.book.name,
+                      mobileChrome.nextChapterPreview.chapter.number
+                    )}
+                    <div className="sb-chapter-content">
+                      {renderStaticChapterContent(
+                        mobileChrome.nextChapterPreview,
+                        scriptureElements
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <DelayedChapterLoadingPlaceholder
+                    active={isMobile && readingState.hasNext.value}
+                    immediate={loading.value}
+                  />
+                )}
               </div>
             </div>
           </div>

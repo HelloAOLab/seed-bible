@@ -1110,6 +1110,49 @@ export function createBibleReadingState(
     });
   };
 
+  // Monotonic counter so overlapping navigations don't apply a stale success
+  // or revert over a newer in-flight request.
+  let navigationEpoch = 0;
+  // Scroll to restore when an optimistic nav fails — captured when leaving a
+  // location that still matches the loaded `chapterData`.
+  let revertScrollPosition = 0;
+
+  const beginOptimisticNavigation = (location: {
+    bookId: string;
+    chapterNumber: number;
+  }): number => {
+    const loaded = chapterData.value;
+    const isStable =
+      !!loaded &&
+      loaded.book.id === bookId.value &&
+      loaded.chapter.number === chapterNumber.value;
+    if (isStable) {
+      revertScrollPosition = scrollPosition.value;
+    }
+    const epoch = ++navigationEpoch;
+    applyOptimisticChapterLocation(location);
+    return epoch;
+  };
+
+  const isNavigationCurrent = (epoch: number) => epoch === navigationEpoch;
+
+  /** Restore heading/scroll to the still-loaded chapter after a failed nav. */
+  const revertOptimisticNavigation = (epoch: number): boolean => {
+    if (!isNavigationCurrent(epoch)) {
+      return false;
+    }
+    const loaded = chapterData.value;
+    if (!loaded) {
+      return true;
+    }
+    batch(() => {
+      bookId.value = loaded.book.id;
+      chapterNumber.value = loaded.chapter.number;
+      scrollPosition.value = revertScrollPosition;
+    });
+    return true;
+  };
+
   // Default title ("Genesis 1"), using the app-wide `name ?? commonName ?? id`
   // idiom. Empty while no book is resolvable yet.
   const baseTitle = computed<string>(() => {
@@ -1532,8 +1575,6 @@ export function createBibleReadingState(
       return;
     }
 
-    const previousBookId = bookId.value;
-    const previousChapterNumber = chapterNumber.value;
     const optimistic =
       outcome.type === "navigate"
         ? {
@@ -1542,39 +1583,41 @@ export function createBibleReadingState(
           }
         : resolveAdjacentChapterLocation("previous");
 
-    const revertOptimisticLocation = () => {
-      if (!optimistic) {
-        return;
-      }
-      bookId.value = previousBookId;
-      chapterNumber.value = previousChapterNumber;
-    };
-
     loading.value = true;
     error.value = null;
 
-    if (optimistic) {
-      applyOptimisticChapterLocation(optimistic);
-    }
+    const epoch = optimistic
+      ? beginOptimisticNavigation(optimistic)
+      : ++navigationEpoch;
 
     try {
       const chapter =
         outcome.type === "navigate"
           ? outcome.chapter
           : await dataManager.getPreviousChapter(chapterData.value);
+      if (!isNavigationCurrent(epoch)) {
+        return;
+      }
       if (!chapter) {
-        revertOptimisticLocation();
+        revertOptimisticNavigation(epoch);
         return;
       }
       await syncStateFromChapter(chapter);
+      if (!isNavigationCurrent(epoch)) {
+        return;
+      }
 
       emitNavigate({ replace: false });
     } catch (err) {
-      revertOptimisticLocation();
+      if (!revertOptimisticNavigation(epoch)) {
+        return;
+      }
       error.value =
         err instanceof Error ? err.message : "Failed to load previous chapter.";
     } finally {
-      loading.value = false;
+      if (isNavigationCurrent(epoch)) {
+        loading.value = false;
+      }
     }
   };
 
@@ -1706,12 +1749,12 @@ export function createBibleReadingState(
   };
 
   const selectChapter = async (book: string, chapter: number) => {
-    const previousBookId = bookId.value;
-    const previousChapterNumber = chapterNumber.value;
-
     loading.value = true;
     error.value = null;
-    applyOptimisticChapterLocation({ bookId: book, chapterNumber: chapter });
+    const epoch = beginOptimisticNavigation({
+      bookId: book,
+      chapterNumber: chapter,
+    });
 
     try {
       const nextChapterData = await dataManager.getTranslationBookChapter(
@@ -1719,17 +1762,26 @@ export function createBibleReadingState(
         book,
         chapter
       );
+      if (!isNavigationCurrent(epoch)) {
+        return;
+      }
 
       await syncStateFromChapter(nextChapterData);
+      if (!isNavigationCurrent(epoch)) {
+        return;
+      }
 
       emitNavigate({ replace: false });
     } catch (err) {
-      bookId.value = previousBookId;
-      chapterNumber.value = previousChapterNumber;
+      if (!revertOptimisticNavigation(epoch)) {
+        return;
+      }
       error.value =
         err instanceof Error ? err.message : "Failed to select chapter.";
     } finally {
-      loading.value = false;
+      if (isNavigationCurrent(epoch)) {
+        loading.value = false;
+      }
     }
   };
 
@@ -1746,8 +1798,6 @@ export function createBibleReadingState(
       return;
     }
 
-    const previousBookId = bookId.value;
-    const previousChapterNumber = chapterNumber.value;
     const optimistic =
       outcome.type === "navigate"
         ? {
@@ -1756,39 +1806,41 @@ export function createBibleReadingState(
           }
         : resolveAdjacentChapterLocation("next");
 
-    const revertOptimisticLocation = () => {
-      if (!optimistic) {
-        return;
-      }
-      bookId.value = previousBookId;
-      chapterNumber.value = previousChapterNumber;
-    };
-
     loading.value = true;
     error.value = null;
 
-    if (optimistic) {
-      applyOptimisticChapterLocation(optimistic);
-    }
+    const epoch = optimistic
+      ? beginOptimisticNavigation(optimistic)
+      : ++navigationEpoch;
 
     try {
       const chapter =
         outcome.type === "navigate"
           ? outcome.chapter
           : await dataManager.getNextChapter(chapterData.value);
+      if (!isNavigationCurrent(epoch)) {
+        return;
+      }
       if (!chapter) {
-        revertOptimisticLocation();
+        revertOptimisticNavigation(epoch);
         return;
       }
       await syncStateFromChapter(chapter);
+      if (!isNavigationCurrent(epoch)) {
+        return;
+      }
 
       emitNavigate({ replace: false });
     } catch (err) {
-      revertOptimisticLocation();
+      if (!revertOptimisticNavigation(epoch)) {
+        return;
+      }
       error.value =
         err instanceof Error ? err.message : "Failed to load next chapter.";
     } finally {
-      loading.value = false;
+      if (isNavigationCurrent(epoch)) {
+        loading.value = false;
+      }
     }
   };
 
