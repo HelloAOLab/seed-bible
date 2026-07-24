@@ -1,6 +1,7 @@
 import type { Mock } from "vitest";
 import { render } from "preact";
 import { act } from "preact/test-utils";
+import { signal } from "@preact/signals";
 import { useSearchSection } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useSearchSection";
 import { useTodayContext } from "../../../../../../packages/today-screen/infrastructure/presentation/contexts/today/TodayContext";
 
@@ -33,12 +34,13 @@ describe("useSearchSection", () => {
     vi.clearAllMocks();
   });
 
-  function setup(secondaryFontColor = "#abcdef") {
+  function setup(secondaryFontColor = "#abcdef", isMobile = false) {
     (useTodayContext as Mock).mockReturnValue({
       translate: vi.fn((key: string) => key),
       openBookSelector,
       MaterialIcon,
       theme: { variables: { secondaryFontColor } },
+      isMobile: signal(isMobile),
     });
     const result = { current: null as unknown as Result };
     function TestComponent() {
@@ -61,6 +63,14 @@ describe("useSearchSection", () => {
       width: "1.5rem",
       height: "1.5rem",
       backgroundColor: "rgb(10, 20, 30)",
+    });
+  });
+
+  it("uses a smaller seed-bible icon on mobile", () => {
+    const result = setup("#abcdef", true);
+    expect(result.current.seedBibleIconStyle).toMatchObject({
+      width: "1.25rem",
+      height: "1.25rem",
     });
   });
 

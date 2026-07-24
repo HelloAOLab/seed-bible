@@ -319,11 +319,34 @@
   margin-top: 0.5rem;
 }
 
-.today-container .titled-section > h5,
-.today-container .bookmarks-section-label {
-  margin: 0;
+.today-container .titled-section .titled-section-header > h5 {
+  font-size: 0.9rem;
   font-weight: 600;
+}
+
+.today-container .titled-section .titled-section-header > h5,
+.today-container .titled-section .titled-section-header > button {
+  margin: 0;
   color: var(--grey);
+}
+
+.today-container .titled-section .titled-section-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.today-container .titled-section .titled-section-header > button {
+  font-weight: 400;
+  flex-shrink: 0;
+  appearance: none;
+  border: none;
+  background-color: transparent;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 .today-container .search-container {
@@ -797,15 +820,21 @@
 .today-container .bookmarks-section {
   width: 100%;
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1rem;
+}
+
+.today-container .bookmarks-section > div {
+  width: 100%;
+  display: flex;
   align-items: center;
 }
 
-.today-container .bookmarks-section .bookmarks-section-label,
-.today-container .bookmarks-section .bookmarks-section-more-button {
-  flex-shrink: 0;
-}
-
 .today-container .bookmarks-section .bookmarks-section-label {
+  flex-shrink: 0;
+  margin: 0;
+  color: var(--sb-font-color);
 }
 
 .today-container .bookmarks-section .bookmarks-section-container {
@@ -832,6 +861,7 @@
   gap: 0.25rem;
   background-color: var(--sb-secondary-color);
   color: var(--sb-secondary-font-color);
+  white-space: nowrap;
 }
 
 .today-container .bookmarks-section .bookmarks-section-bookmark > svg > path {
@@ -842,17 +872,15 @@
   font-size: 1rem;
 }
 
-.today-container .bookmarks-section .bookmarks-section-more-button {
-  appearance: none;
-  border: none;
-  background-color: transparent;
-  font-size: 0.875rem;
-  text-decoration: underline;
-  text-underline-offset: 4px;
-  color: var(--sb-reader-font-color);
-}
-
 @media (width <= 480px) {
+  .today-content,
+  .welcome-screen {
+    margin-top: 1rem;
+    gap: 1rem;
+  }
+  .today-header > h1 {
+    font-size: 1.2rem;
+  }
   .welcome-screen .welcome-screen-navigation {
     flex-direction: column-reverse;
     align-items: stretch;
@@ -878,5 +906,58 @@
       black calc(100% - 8px),
       transparent 100%
     );
+  }
+
+  .today-container .bookmarks-section .bookmarks-section-bookmark {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.7rem;
+    gap: 0.25rem;
+  }
+  .today-container .search-container .today-searchbar {
+    gap: 0.3rem;
+  }
+  .today-container .search-container .today-searchbar > span {
+    font-size: 1.2rem;
+  }
+
+  .today-container .bookmarks-section .bookmarks-section-bookmark > svg {
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+  .today-container .search-container .today-searchbar > input {
+    font-size: 0.9rem;
+  }
+
+  .today-container .bookmarks-section .bookmarks-section-container {
+    gap: 0.3rem;
+  }
+  .today-container .search-container .book-selector-button {
+    font-size: 0.85rem;
+    padding: 0.4rem 0.65rem;
+  }
+  .today-container .search-container .book-selector-button > .seed-bible-icon {
+    width: 1rem;
+    height: 1rem;
+  }
+  .today-container .history-card .user-filter-container .user-filter-label {
+    font-size: 0.95rem;
+  }
+
+  .today-container
+    .history-card
+    .timespan-filter-container
+    .timespan-filter-option {
+    padding: 0.4rem 0.65rem;
+    font-size: 0.6rem;
+    font-weight: 400;
+    min-width: 3.25rem;
+  }
+
+  .today-container .filtered-reading-book > span {
+    font-size: 0.8rem;
+  }
+
+  .today-container .titled-section .titled-section-header > button {
+    font-size: 0.75rem;
   }
 }

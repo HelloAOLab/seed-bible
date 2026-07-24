@@ -1,5 +1,5 @@
 import type { Mock } from "vitest";
-import { render, type ComponentChildren } from "preact";
+import { render } from "preact";
 import { act } from "preact/test-utils";
 import { signal } from "@preact/signals";
 import { useBookmarksSection } from "../../../../../../packages/today-screen/infrastructure/presentation/hooks/useBookmarksSection";
@@ -18,6 +18,7 @@ interface FakeBookmark {
   bookId: string;
   chapterNumber: number;
   translationId: string;
+  category: string;
 }
 
 function books(entries: { id: string; name: string }[]): TranslationBooks {
@@ -36,7 +37,7 @@ describe("useBookmarksSection", () => {
   let container: HTMLDivElement;
   const addTab = vi.fn();
   const closeToday = vi.fn();
-  let offsetTopDescriptor: PropertyDescriptor | undefined;
+  let offsetTopDesc: PropertyDescriptor | undefined;
 
   function configure(
     options: {
@@ -64,17 +65,17 @@ describe("useBookmarksSection", () => {
     (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver =
       MockResizeObserver;
 
-    // Drive offsetTop from a data attribute so overflow can be simulated.
-    offsetTopDescriptor = Object.getOwnPropertyDescriptor(
+    // jsdom does not lay out, so drive each strip child's offsetTop from a data
+    // attribute to simulate items wrapping onto a second line.
+    offsetTopDesc = Object.getOwnPropertyDescriptor(
       HTMLElement.prototype,
       "offsetTop"
     );
     Object.defineProperty(HTMLElement.prototype, "offsetTop", {
       configurable: true,
       get(this: HTMLElement) {
-        if (this.hasAttribute("data-undef-top")) return undefined;
-        const t = this.getAttribute("data-top");
-        return t === null ? 0 : Number(t);
+        const v = this.getAttribute("data-top");
+        return v === null ? 0 : Number(v);
       },
     });
   });
@@ -82,28 +83,39 @@ describe("useBookmarksSection", () => {
   afterEach(() => {
     act(() => render(null, container));
     container.remove();
-    if (offsetTopDescriptor) {
-      Object.defineProperty(
-        HTMLElement.prototype,
-        "offsetTop",
-        offsetTopDescriptor
-      );
+    if (offsetTopDesc) {
+      Object.defineProperty(HTMLElement.prototype, "offsetTop", offsetTopDesc);
+    } else {
+      delete (HTMLElement.prototype as { offsetTop?: number }).offsetTop;
     }
     delete (globalThis as unknown as { ResizeObserver?: unknown })
       .ResizeObserver;
     vi.clearAllMocks();
   });
 
+  // Each entry is a strip; each number is one child's offsetTop (a value above
+  // the first child's top means that item wrapped to a new line).
   function setup(
     options: Parameters<typeof configure>[0] = {},
-    children?: ComponentChildren
+    strips?: number[][]
   ) {
     const ctx = configure(options);
     const result = { current: null as unknown as UseBookmarksResult };
     function TestComponent() {
       const r = useBookmarksSection();
       result.current = r;
-      return children ? <div ref={r.containerRef}>{children}</div> : null;
+      if (!strips) return null;
+      return (
+        <div ref={r.containerRef}>
+          {strips.map((childTops, index) => (
+            <div key={index} className="bookmarks-section-container">
+              {childTops.map((top, childIndex) => (
+                <button key={childIndex} data-top={top} />
+              ))}
+            </div>
+          ))}
+        </div>
+      );
     }
     act(() => render(<TestComponent />, container));
     return { result, ctx };
@@ -123,20 +135,55 @@ describe("useBookmarksSection", () => {
     });
   });
 
-  describe("bookmarksData", () => {
+  describe("categorizedBookmarks", () => {
     const bookmark: FakeBookmark = {
       id: "b1",
       bookId: "GEN",
       chapterNumber: 3,
       translationId: "T1",
+      category: "Favorites",
     };
+
+    function firstIn(
+      result: { current: UseBookmarksResult },
+      category: string
+    ) {
+      return result.current.categorizedBookmarks.value.get(category)![0]!;
+    }
+
+    it("groups bookmarks by their category", () => {
+      const { result } = setup({
+        bookmarks: signal<FakeBookmark[]>([
+          { ...bookmark, id: "b1", category: "Favorites" },
+          { ...bookmark, id: "b2", category: "Favorites" },
+          { ...bookmark, id: "b3", category: "To Read" },
+        ]),
+      });
+      const categorized = result.current.categorizedBookmarks.value;
+      expect(Array.from(categorized.keys())).toEqual(["Favorites", "To Read"]);
+      expect(categorized.get("Favorites")).toHaveLength(2);
+      expect(categorized.get("To Read")).toHaveLength(1);
+    });
+
+    it("preserves first-appearance order for numeric-looking category names", () => {
+      const { result } = setup({
+        bookmarks: signal<FakeBookmark[]>([
+          { ...bookmark, id: "b1", category: "Favorites" },
+          { ...bookmark, id: "b2", category: "2024" },
+        ]),
+      });
+      // A plain object would hoist the integer-like "2024" to the front.
+      expect(
+        Array.from(result.current.categorizedBookmarks.value.keys())
+      ).toEqual(["Favorites", "2024"]);
+    });
 
     it("falls back to the bookId before the translation books load", () => {
       const { result } = setup({
         bookmarks: signal<FakeBookmark[]>([bookmark]),
       });
-      expect(result.current.bookmarksData.value[0]!.text).toBe("GEN 3");
-      expect(result.current.bookmarksData.value[0]!.key).toBe("b1");
+      expect(firstIn(result, "Favorites").text).toBe("GEN 3");
+      expect(firstIn(result, "Favorites").key).toBe("b1");
     });
 
     it("resolves the book name once the translation books load", async () => {
@@ -147,7 +194,7 @@ describe("useBookmarksSection", () => {
         ),
       });
       await flush();
-      expect(result.current.bookmarksData.value[0]!.text).toBe("Genesis 3");
+      expect(firstIn(result, "Favorites").text).toBe("Genesis 3");
     });
 
     it("keeps the bookId when the book is not in the loaded translation", async () => {
@@ -158,14 +205,14 @@ describe("useBookmarksSection", () => {
         ),
       });
       await flush();
-      expect(result.current.bookmarksData.value[0]!.text).toBe("XYZ 3");
+      expect(firstIn(result, "Favorites").text).toBe("XYZ 3");
     });
 
     it("opens a tab for the bookmark location on click", () => {
       const { result } = setup({
         bookmarks: signal<FakeBookmark[]>([bookmark]),
       });
-      act(() => result.current.bookmarksData.value[0]!.handleClick());
+      act(() => firstIn(result, "Favorites").handleClick());
       expect(addTab).toHaveBeenCalledWith("GEN", 3, "T1");
     });
 
@@ -173,7 +220,7 @@ describe("useBookmarksSection", () => {
       const { result } = setup({
         bookmarks: signal<FakeBookmark[]>([bookmark]),
       });
-      act(() => result.current.bookmarksData.value[0]!.handleClick());
+      act(() => firstIn(result, "Favorites").handleClick());
       expect(closeToday).toHaveBeenCalledTimes(1);
     });
   });
@@ -183,9 +230,27 @@ describe("useBookmarksSection", () => {
       const getTranslationBooks = vi.fn(async () => books([]));
       setup({
         bookmarks: signal<FakeBookmark[]>([
-          { id: "b1", bookId: "GEN", chapterNumber: 1, translationId: "T1" },
-          { id: "b2", bookId: "EXO", chapterNumber: 1, translationId: "T1" },
-          { id: "b3", bookId: "MAT", chapterNumber: 1, translationId: "T2" },
+          {
+            id: "b1",
+            bookId: "GEN",
+            chapterNumber: 1,
+            translationId: "T1",
+            category: "Favorites",
+          },
+          {
+            id: "b2",
+            bookId: "EXO",
+            chapterNumber: 1,
+            translationId: "T1",
+            category: "Favorites",
+          },
+          {
+            id: "b3",
+            bookId: "MAT",
+            chapterNumber: 1,
+            translationId: "T2",
+            category: "To Read",
+          },
         ]),
         getTranslationBooks,
       });
@@ -199,7 +264,13 @@ describe("useBookmarksSection", () => {
         books([{ id: "GEN", name: "Genesis" }])
       );
       const bookmarks = signal<FakeBookmark[]>([
-        { id: "b1", bookId: "GEN", chapterNumber: 1, translationId: "T1" },
+        {
+          id: "b1",
+          bookId: "GEN",
+          chapterNumber: 1,
+          translationId: "T1",
+          category: "Favorites",
+        },
       ]);
       setup({ bookmarks, getTranslationBooks });
       await flush();
@@ -209,7 +280,13 @@ describe("useBookmarksSection", () => {
       act(() => {
         bookmarks.value = [
           ...bookmarks.value,
-          { id: "b2", bookId: "EXO", chapterNumber: 2, translationId: "T1" },
+          {
+            id: "b2",
+            bookId: "EXO",
+            chapterNumber: 2,
+            translationId: "T1",
+            category: "Favorites",
+          },
         ];
       });
       await flush();
@@ -217,54 +294,25 @@ describe("useBookmarksSection", () => {
     });
   });
 
-  describe("moreButtonData / overflow", () => {
-    it("is undefined when there is no container", () => {
+  describe("moreButtonData", () => {
+    it("is undefined when no category strip wraps to a new line", () => {
+      const { result } = setup({}, [[0, 0]]);
+      expect(result.current.moreButtonData.value).toBeUndefined();
+    });
+
+    it("is undefined when there is no container to measure", () => {
       const { result } = setup();
       expect(result.current.moreButtonData.value).toBeUndefined();
     });
 
-    it("is undefined when the rows do not overflow", () => {
-      const { result } = setup({}, [
-        <button data-top="0" key="a" />,
-        <button data-top="0" key="b" />,
-      ]);
-      expect(result.current.moreButtonData.value).toBeUndefined();
-    });
-
-    it("is undefined when the container has no children", () => {
-      const { result } = setup({}, <Fragmentless />);
-      expect(result.current.moreButtonData.value).toBeUndefined();
-    });
-
-    it("is undefined when the first row's offset cannot be measured", () => {
-      const { result } = setup({}, [<button data-undef-top key="a" />]);
-      expect(result.current.moreButtonData.value).toBeUndefined();
-    });
-
-    it("is defined (with a translated label) when the rows overflow", () => {
+    it("is defined (with a translated label) when any strip wraps to a new line", () => {
       const { result } = setup({ translate: vi.fn((key) => `[${key}]`) }, [
-        <button data-top="0" key="a" />,
-        <button data-top="20" key="b" />,
+        [0, 0],
+        [0, 20],
       ]);
       const more = result.current.moreButtonData.value;
       expect(more).toBeDefined();
-      expect(more!.text).toBe("[VIEW-MORE]");
-    });
-
-    it("logs when the more button is clicked", () => {
-      const consoleLog = vi.spyOn(console, "log").mockImplementation(() => {});
-      const { result } = setup({}, [
-        <button data-top="0" key="a" />,
-        <button data-top="20" key="b" />,
-      ]);
-      act(() => result.current.moreButtonData.value!.handleClick());
-      expect(consoleLog).toHaveBeenCalled();
-      consoleLog.mockRestore();
+      expect(more!.label).toBe("[VIEW-MORE]");
     });
   });
 });
-
-// Renders nothing — used to give the container zero element children.
-function Fragmentless() {
-  return null;
-}
