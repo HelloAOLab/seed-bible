@@ -994,6 +994,36 @@ describe("createLoginManager", () => {
       expect(manager.localConfig.value).toEqual({});
     });
 
+    it("ignores an oversized local config store instead of adopting it verbatim", () => {
+      // A brand-new account's first login adopts this data verbatim into its
+      // profile (see the "adopts local config..." test below) — an
+      // oversized/corrupt entry must not become durable account state.
+      const oversized = { blob: "x".repeat(60_000) };
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify(oversized)
+      );
+
+      const manager = createLoginManager({ os });
+
+      expect(manager.localConfig.value).toEqual({});
+    });
+
+    it("ignores a local config store with an implausible number of keys", () => {
+      const tooManyKeys: Record<string, string> = {};
+      for (let i = 0; i < 200; i++) {
+        tooManyKeys[`key-${i}`] = "value";
+      }
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify(tooManyKeys)
+      );
+
+      const manager = createLoginManager({ os });
+
+      expect(manager.localConfig.value).toEqual({});
+    });
+
     it("swallows a localStorage.setItem failure instead of throwing", () => {
       const manager = createLoginManager({ os });
 

@@ -126,6 +126,17 @@ export type UserProfile = z.infer<typeof userProfileSchema>;
 
 const PROFILE_CACHE_KEY_PREFIX = "sb-profile-cache-";
 const LOCAL_CONFIG_STORAGE_KEY = "sb-profile-config-local";
+// Sanity caps for the anonymous local config store. Every real key it holds
+// today (font size, theme id, book orientation, etc.) is tiny, so these are
+// generous — they exist to reject corrupt/tampered-with storage, not to
+// constrain legitimate use. This matters because a brand-new account's
+// first login adopts this data verbatim into its profile (see
+// `getUserProfile`'s `data_not_found` branch) — unlike `readCachedProfile`,
+// there's no fixed schema to validate this free-form bag against, so a
+// size/shape sanity check is the next best thing to keep corrupt data from
+// becoming durable account state.
+const MAX_LOCAL_CONFIG_JSON_LENGTH = 50_000;
+const MAX_LOCAL_CONFIG_KEYS = 100;
 
 function readCachedProfile(userId: string): UserProfile | null {
   if (typeof localStorage === "undefined") {
@@ -167,8 +178,19 @@ function readLocalConfig(): Record<string, unknown> {
     if (!raw) {
       return {};
     }
+    if (raw.length > MAX_LOCAL_CONFIG_JSON_LENGTH) {
+      console.warn(
+        "[LoginManager] Ignoring oversized local config store; treating as corrupt"
+      );
+      return {};
+    }
     const parsed = JSON.parse(raw);
-    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      !Array.isArray(parsed) &&
+      Object.keys(parsed).length <= MAX_LOCAL_CONFIG_KEYS
+    ) {
       return parsed as Record<string, unknown>;
     }
   } catch {
