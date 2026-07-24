@@ -1,7 +1,6 @@
 .sb-chat-view {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
   min-height: 13.75rem;
   flex: 1 1 auto;
 }
@@ -9,7 +8,6 @@
 .sb-chat-view-messages {
   flex: 1;
   min-height: 0;
-  max-height: 17.5rem;
   overflow: auto;
   display: flex;
   flex-direction: column;
