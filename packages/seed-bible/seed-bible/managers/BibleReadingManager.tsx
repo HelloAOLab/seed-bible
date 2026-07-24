@@ -1036,14 +1036,78 @@ export function createBibleReadingState(
     () => translationBooks.value?.translation ?? null
   );
 
-  // Resolves the current book's display record from the loaded chapter when
-  // available, otherwise the books catalog by id.
+  // Resolves the current book's display record. Prefer the catalog entry for
+  // `bookId` when it has already moved ahead of `chapterData` (optimistic
+  // chapter navigation), so headings update before the chapter body arrives.
   const resolveCurrentBook = () => {
     const chapterBook = chapterData.value?.book;
-    if (chapterBook) {
+    if (chapterBook && chapterBook.id === bookId.value) {
       return chapterBook;
     }
-    return translationBooks.value?.books.find((b) => b.id === bookId.value);
+    return (
+      translationBooks.value?.books.find((b) => b.id === bookId.value) ??
+      chapterBook ??
+      undefined
+    );
+  };
+
+  /** Adjacent chapter location from the books catalog (no network). Used to
+   *  update headings immediately on next/previous before the chapter fetch. */
+  const resolveAdjacentChapterLocation = (
+    direction: "next" | "previous"
+  ): { bookId: string; chapterNumber: number } | null => {
+    const current = chapterData.value;
+    const books = translationBooks.value?.books;
+    if (!current || !books?.length) {
+      return null;
+    }
+
+    const bookIndex = books.findIndex((b) => b.id === current.book.id);
+    if (bookIndex < 0) {
+      return null;
+    }
+
+    const book = books[bookIndex]!;
+    const first = book.firstChapterNumber ?? 1;
+    const last = book.lastChapterNumber ?? first + book.numberOfChapters - 1;
+    const chapter = current.chapter.number;
+
+    if (direction === "next") {
+      if (chapter < last) {
+        return { bookId: book.id, chapterNumber: chapter + 1 };
+      }
+      const nextBook = books[bookIndex + 1];
+      if (!nextBook) {
+        return null;
+      }
+      return {
+        bookId: nextBook.id,
+        chapterNumber: nextBook.firstChapterNumber ?? 1,
+      };
+    }
+
+    if (chapter > first) {
+      return { bookId: book.id, chapterNumber: chapter - 1 };
+    }
+    const prevBook = books[bookIndex - 1];
+    if (!prevBook) {
+      return null;
+    }
+    const prevFirst = prevBook.firstChapterNumber ?? 1;
+    const prevLast =
+      prevBook.lastChapterNumber ?? prevFirst + prevBook.numberOfChapters - 1;
+    return { bookId: prevBook.id, chapterNumber: prevLast };
+  };
+
+  const applyOptimisticChapterLocation = (location: {
+    bookId: string;
+    chapterNumber: number;
+  }) => {
+    batch(() => {
+      bookId.value = location.bookId;
+      chapterNumber.value = location.chapterNumber;
+      scrollPosition.value = 0;
+    });
   };
 
   // Default title ("Genesis 1"), using the app-wide `name ?? commonName ?? id`
@@ -1468,8 +1532,30 @@ export function createBibleReadingState(
       return;
     }
 
+    const previousBookId = bookId.value;
+    const previousChapterNumber = chapterNumber.value;
+    const optimistic =
+      outcome.type === "navigate"
+        ? {
+            bookId: outcome.chapter.book.id,
+            chapterNumber: outcome.chapter.chapter.number,
+          }
+        : resolveAdjacentChapterLocation("previous");
+
+    const revertOptimisticLocation = () => {
+      if (!optimistic) {
+        return;
+      }
+      bookId.value = previousBookId;
+      chapterNumber.value = previousChapterNumber;
+    };
+
     loading.value = true;
     error.value = null;
+
+    if (optimistic) {
+      applyOptimisticChapterLocation(optimistic);
+    }
 
     try {
       const chapter =
@@ -1477,12 +1563,14 @@ export function createBibleReadingState(
           ? outcome.chapter
           : await dataManager.getPreviousChapter(chapterData.value);
       if (!chapter) {
+        revertOptimisticLocation();
         return;
       }
       await syncStateFromChapter(chapter);
 
       emitNavigate({ replace: false });
     } catch (err) {
+      revertOptimisticLocation();
       error.value =
         err instanceof Error ? err.message : "Failed to load previous chapter.";
     } finally {
@@ -1618,8 +1706,12 @@ export function createBibleReadingState(
   };
 
   const selectChapter = async (book: string, chapter: number) => {
+    const previousBookId = bookId.value;
+    const previousChapterNumber = chapterNumber.value;
+
     loading.value = true;
     error.value = null;
+    applyOptimisticChapterLocation({ bookId: book, chapterNumber: chapter });
 
     try {
       const nextChapterData = await dataManager.getTranslationBookChapter(
@@ -1632,6 +1724,8 @@ export function createBibleReadingState(
 
       emitNavigate({ replace: false });
     } catch (err) {
+      bookId.value = previousBookId;
+      chapterNumber.value = previousChapterNumber;
       error.value =
         err instanceof Error ? err.message : "Failed to select chapter.";
     } finally {
@@ -1652,8 +1746,30 @@ export function createBibleReadingState(
       return;
     }
 
+    const previousBookId = bookId.value;
+    const previousChapterNumber = chapterNumber.value;
+    const optimistic =
+      outcome.type === "navigate"
+        ? {
+            bookId: outcome.chapter.book.id,
+            chapterNumber: outcome.chapter.chapter.number,
+          }
+        : resolveAdjacentChapterLocation("next");
+
+    const revertOptimisticLocation = () => {
+      if (!optimistic) {
+        return;
+      }
+      bookId.value = previousBookId;
+      chapterNumber.value = previousChapterNumber;
+    };
+
     loading.value = true;
     error.value = null;
+
+    if (optimistic) {
+      applyOptimisticChapterLocation(optimistic);
+    }
 
     try {
       const chapter =
@@ -1661,12 +1777,14 @@ export function createBibleReadingState(
           ? outcome.chapter
           : await dataManager.getNextChapter(chapterData.value);
       if (!chapter) {
+        revertOptimisticLocation();
         return;
       }
       await syncStateFromChapter(chapter);
 
       emitNavigate({ replace: false });
     } catch (err) {
+      revertOptimisticLocation();
       error.value =
         err instanceof Error ? err.message : "Failed to load next chapter.";
     } finally {
