@@ -434,6 +434,59 @@ export function createTabs(
     return dispose;
   });
 
+  // Restores the profile's saved translation on the given reading state.
+  // `selectTranslationAndChapter` clamps an out-of-range chapter but throws
+  // if the current book isn't in the target translation at all (a partial/
+  // NT-only translation, for example) — so resolve the saved translation's
+  // own book catalog first and fall back to its first book, mirroring the
+  // same guard `syncSelectedTabFromUrl` above already applies for the URL
+  // path.
+  const applySavedTranslation = async (
+    readingState: BibleReadingState,
+    savedTranslationId: string
+  ) => {
+    const books = await dataManager
+      .getTranslationBooks(savedTranslationId)
+      .then((result) => result.books)
+      .catch((err) => {
+        console.warn(
+          "Failed to load books for saved profile translation:",
+          savedTranslationId,
+          err
+        );
+        return null;
+      });
+    if (!books) {
+      return;
+    }
+
+    const currentBookId = readingState.bookId.peek() ?? DEFAULT_BOOK_ID;
+    const matchingBook = books.find((book) => book.id === currentBookId);
+    const targetBook = matchingBook ?? books[0];
+    if (!targetBook) {
+      return;
+    }
+
+    const firstChapterNumber =
+      targetBook.firstChapterNumber ?? DEFAULT_CHAPTER_NUMBER;
+    const maxChapterNumber =
+      firstChapterNumber + targetBook.numberOfChapters - 1;
+    const requestedChapter = readingState.chapterNumber.peek();
+    const nextChapter =
+      matchingBook &&
+      requestedChapter >= firstChapterNumber &&
+      requestedChapter <= maxChapterNumber
+        ? requestedChapter
+        : firstChapterNumber;
+
+    await readingState.selectTranslationAndChapter(
+      savedTranslationId,
+      targetBook.id,
+      nextChapter,
+      { updateUrl: false }
+    );
+  };
+
   // Apply the profile's saved translation to the selected tab, but ONLY when
   // the profile itself changes (login/profile load) — never on URL changes —
   // so it doesn't fight an explicit `?translation=`/`?translationId=` deep
@@ -465,12 +518,7 @@ export function createTabs(
         return;
       }
 
-      void readingState.selectTranslationAndChapter(
-        savedTranslationId,
-        readingState.bookId.peek() ?? DEFAULT_BOOK_ID,
-        readingState.chapterNumber.peek(),
-        { updateUrl: false }
-      );
+      void applySavedTranslation(readingState, savedTranslationId);
     });
   });
 

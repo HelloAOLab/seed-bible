@@ -404,6 +404,30 @@ describe("createTabs", () => {
     expect(firstTab.readingState.translationId.value).toBe("NIV");
   });
 
+  it("falls back to the saved translation's first book when it doesn't contain the current book", async () => {
+    // No `?book=` param, so the initial tab is on the default book (GEN),
+    // which AAB has but NIV (mocked with a single book, MAT) does not.
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager, login } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const firstTab = manager.tabs.value[0]!;
+    expect(firstTab.readingState.translationId.value).toBe("AAB");
+    expect(firstTab.readingState.bookId.value).toBe("GEN");
+
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: { translationId: "NIV" } };
+
+    await waitFor(() => firstTab.readingState.translationId.value === "NIV");
+    await waitForInitialLoad(firstTab.readingState);
+
+    // Falls back to NIV's first available book/chapter instead of failing.
+    expect(firstTab.readingState.bookId.value).toBe("MAT");
+    expect(firstTab.readingState.chapterNumber.value).toBe(1);
+    expect(firstTab.readingState.error.value).toBeNull();
+  });
+
   it("does not persist a translation change by itself — only the Bible selector's explicit pick does", async () => {
     // TabsManager only reads the saved translation (to restore it on login);
     // persisting it is BibleSelectorManager's job, wired to the explicit
