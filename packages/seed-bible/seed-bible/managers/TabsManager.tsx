@@ -19,10 +19,7 @@ import {
 } from "../managers/BibleReadingManager";
 import type { HighlightsManager } from "../managers/HighlightsManager";
 import type { LoginManager } from "../managers/LoginManager";
-import {
-  getProfileConfigValue,
-  saveProfileConfigValue,
-} from "../managers/ProfileConfigSync";
+import { getProfileConfigValue } from "../managers/ProfileConfigSync";
 
 export function formatVerseSelection(verseNumbers: number[]): string | null {
   const sorted = Array.from(new Set(verseNumbers))
@@ -99,8 +96,10 @@ function getInitialFirstTabBookId(url: URL): string {
 }
 
 // profile.config key the selected translation is persisted under, matching
-// the PROFILE_THEME_ID convention in ThemeManager.tsx.
-const PROFILE_TRANSLATION_ID = "translationId";
+// the PROFILE_THEME_ID convention in ThemeManager.tsx. Written by
+// BibleSelectorManager.tsx when the user explicitly picks a translation from
+// the selector; read here to restore it once the profile loads.
+export const PROFILE_TRANSLATION_ID = "translationId";
 
 function getInitialTranslationId(url: URL, language: string): string {
   return (
@@ -428,19 +427,9 @@ export function createTabs(
       return undefined;
     }
 
-    const dispose = readingState.onNavigate((options) => {
-      commitSelectedTabToUrl(options);
-      // Persist on every real (non-URL-sync) navigation rather than only on
-      // explicit translation switches: saveProfileConfigValue already no-ops
-      // when the value is unchanged, not logged in, or the profile hasn't
-      // loaded, so this stays cheap while covering every UI call site that
-      // can change the selected tab's translation.
-      void saveProfileConfigValue(
-        login,
-        PROFILE_TRANSLATION_ID,
-        readingState.translationId.peek()
-      );
-    });
+    const dispose = readingState.onNavigate((options) =>
+      commitSelectedTabToUrl(options)
+    );
     commitSelectedTabToUrl({ replace: true });
     return dispose;
   });

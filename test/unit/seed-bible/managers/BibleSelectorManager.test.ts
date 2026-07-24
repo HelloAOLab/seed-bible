@@ -68,12 +68,18 @@ function createHighlightsManagerMock() {
 }
 
 function createLoginManagerMock() {
-  return {
-    userId: signal<string | null>(null),
-    profile: signal(null),
-    profilePromise: null,
-    updateProfile: vi.fn(),
-  };
+  const userId = signal<string | null>(null);
+  const profile = signal<{
+    name: string;
+    config?: Record<string, unknown>;
+  } | null>(null);
+  const updateProfile = vi.fn((newData: Record<string, unknown>) => {
+    profile.value = {
+      ...(profile.value ?? { name: "" }),
+      ...newData,
+    } as { name: string; config?: Record<string, unknown> };
+  });
+  return { userId, profile, profilePromise: null, updateProfile };
 }
 
 function createSettingsManagerMock() {
@@ -100,7 +106,8 @@ function createBookmarksManagerMock() {
 function createSelectorState(
   dataManager: ReturnType<typeof createDataManager>,
   tabsManager: ReturnType<typeof createTabs>,
-  tabsLayoutManager: ReturnType<typeof createTabsLayout>
+  tabsLayoutManager: ReturnType<typeof createTabsLayout>,
+  login: ReturnType<typeof createLoginManagerMock> = createLoginManagerMock()
 ): BibleSelectorState {
   return createBibleSelectorState(
     dataManager,
@@ -109,7 +116,8 @@ function createSelectorState(
     createSettingsManagerMock() as any,
     createSidebarManagerMock() as any,
     createBookmarksManagerMock() as any,
-    createNavigationManager()
+    createNavigationManager(),
+    login as any
   );
 }
 
@@ -342,6 +350,58 @@ describe("createBibleSelectorState", () => {
     expect(readingState.translationId.value).toBe("NIV");
     expect(readingState.bookId.value).toBe("MAT");
     expect(readingState.chapterNumber.value).toBe(1);
+  });
+
+  it("pickTranslation() behaves like selectTranslation() and persists the choice to the user's profile", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { dataManager, readingState, slot, tabsManager, tabsLayoutManager } =
+      await createManagersWithSelectedSlot();
+    const login = createLoginManagerMock();
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: {} };
+
+    const selector = createSelectorState(
+      dataManager,
+      tabsManager,
+      tabsLayoutManager,
+      login
+    );
+
+    await selector.setOpen(true, slot);
+    await selector.pickTranslation("NIV");
+
+    expect(selector.selectedTranslationId.value).toBe("NIV");
+    expect(readingState.translationId.value).toBe("NIV");
+    expect(login.updateProfile).toHaveBeenCalledWith({
+      config: { translationId: "NIV" },
+    });
+    expect(login.profile.value).toEqual({
+      name: "",
+      config: { translationId: "NIV" },
+    });
+  });
+
+  it("selectTranslation() does not persist to the profile (only an explicit selector pick via pickTranslation() does)", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { dataManager, slot, tabsManager, tabsLayoutManager } =
+      await createManagersWithSelectedSlot();
+    const login = createLoginManagerMock();
+    login.userId.value = "user-1";
+    login.profile.value = { name: "", config: {} };
+
+    const selector = createSelectorState(
+      dataManager,
+      tabsManager,
+      tabsLayoutManager,
+      login
+    );
+
+    await selector.setOpen(true, slot);
+    await selector.selectTranslation("NIV");
+
+    expect(selector.selectedTranslationId.value).toBe("NIV");
+    expect(login.updateProfile).not.toHaveBeenCalled();
+    expect(login.profile.value).toEqual({ name: "", config: {} });
   });
 
   it("selectChapter() applies selector translation and chapter to reading state", async () => {

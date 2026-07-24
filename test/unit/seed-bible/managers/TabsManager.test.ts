@@ -404,7 +404,12 @@ describe("createTabs", () => {
     expect(firstTab.readingState.translationId.value).toBe("NIV");
   });
 
-  it("persists an explicit translation selection to the user's profile", async () => {
+  it("does not persist a translation change by itself — only the Bible selector's explicit pick does", async () => {
+    // TabsManager only reads the saved translation (to restore it on login);
+    // persisting it is BibleSelectorManager's job, wired to the explicit
+    // pick in the selector UI. A translation change driven directly through
+    // the reading state (as any of the many non-selector call sites do)
+    // should never write to the profile on its own.
     window.history.replaceState(null, "", "?book=MAT&chapter=1");
     setWebResponses(createExampleManagerResponseMap());
 
@@ -417,13 +422,8 @@ describe("createTabs", () => {
     const firstTab = manager.tabs.value[0]!;
     await firstTab.readingState.selectTranslation("NIV");
 
-    expect(login.updateProfile).toHaveBeenCalledWith({
-      config: { translationId: "NIV" },
-    });
-    expect(login.profile.value).toEqual({
-      name: "",
-      config: { translationId: "NIV" },
-    });
+    expect(login.updateProfile).not.toHaveBeenCalled();
+    expect(login.profile.value).toEqual({ name: "", config: {} });
   });
 
   it("does not persist a translation change driven by URL sync (e.g. browser back/forward or a deep link)", async () => {

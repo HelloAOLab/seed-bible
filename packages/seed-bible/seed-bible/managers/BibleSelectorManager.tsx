@@ -7,7 +7,12 @@ import { safeLocalStorage } from "../app/ssrEnv";
 import type { BibleDataManager } from "../managers/BibleDataManager";
 import { type BibleReadingState } from "../managers/BibleReadingManager";
 import type { TabSlot, TabsLayoutManager } from "../managers/TabsLayoutManager";
-import type { TabsManager } from "../managers/TabsManager";
+import {
+  PROFILE_TRANSLATION_ID,
+  type TabsManager,
+} from "../managers/TabsManager";
+import type { LoginManager } from "../managers/LoginManager";
+import { saveProfileConfigValue } from "../managers/ProfileConfigSync";
 import type {
   BookOrientation,
   SettingsManager,
@@ -142,6 +147,17 @@ export interface BibleSelectorState {
   selectTranslation: (translationId: string) => Promise<void>;
 
   /**
+   * Explicit user pick from the translation list in the selector UI. Behaves
+   * like `selectTranslation`, but also persists the choice to the user's
+   * profile so it's restored the next time they open the app. Programmatic
+   * translation changes (selector sync on open, language-driven translation
+   * switch, custom translation URL addition) should keep using
+   * `selectTranslation` instead, since those aren't a deliberate pick from
+   * the list.
+   */
+  pickTranslation: (translationId: string) => Promise<void>;
+
+  /**
    * Applies chapter selection to the bound slot/tab and closes selector.
    * Creates a new tab if needed when the bound slot has no tab content,
    * or when `forceNewTab` is true.
@@ -234,7 +250,8 @@ export function createBibleSelectorState(
   settings: SettingsManager,
   sidebar: SidebarManager,
   bookmarks: BookmarksManager,
-  navigation: NavigationManager
+  navigation: NavigationManager,
+  login: LoginManager
 ): BibleSelectorState {
   const isOpen = signal(false);
   const slot = signal<TabSlot | null>(null);
@@ -497,6 +514,20 @@ export function createBibleSelectorState(
 
   const selectTranslation = async (nextTranslationId: string) => {
     await handleTranslationSelect(nextTranslationId);
+  };
+
+  // The only entry point that should persist to the profile: a deliberate
+  // click on a translation in the selector's list (BibleSelector.tsx). Other
+  // callers of `selectTranslation` (selector-open sync, language-driven
+  // translation switch, custom translation URL addition) are programmatic,
+  // not a user pick, and stay unpersisted.
+  const pickTranslation = async (nextTranslationId: string) => {
+    await selectTranslation(nextTranslationId);
+    void saveProfileConfigValue(
+      login,
+      PROFILE_TRANSLATION_ID,
+      nextTranslationId
+    );
   };
 
   const languageQuery = signal<string>("");
@@ -955,6 +986,7 @@ export function createBibleSelectorState(
     setSearch,
     setExpandedBook,
     selectTranslation,
+    pickTranslation,
     selectChapter: handleChapterSelect,
     selectedTestament,
     apocryphaAvailable,
