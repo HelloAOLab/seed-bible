@@ -67,6 +67,13 @@ import type { I18nManager } from "../i18n";
 import type { DiscoverManager } from "./DiscoverManager";
 import type { BibleReadingExtensionManager } from "./BibleReadingExtensionManager";
 import { difference } from "es-toolkit";
+import {
+  normalizeStoredTabsState,
+  readQueryReadingParams,
+  readStoredTabsState,
+  reconcileStoredTabs,
+  type PersistedTab,
+} from "./TabsPersistence";
 
 export interface ReaderTab {
   /** Unique tab identifier (for example: tab-1, tab-2). */
@@ -261,21 +268,84 @@ export function createTabs(
   const defaultTranslation = getDefaultTranslationForLanguage(
     i18nManager.defaultLanguage
   );
-  const initialTranslationId = getInitialTranslationId(
-    navigation.currentUrl.value,
-    i18nManager.defaultLanguage
+
+  const highlightedVerses = getInitialHighlightedVerses(
+    navigation.currentUrl.value
   );
-  const initialBookId = getInitialFirstTabBookId(navigation.currentUrl.value);
-  const initialChapter = getInitialFirstTabChapter(navigation.currentUrl.value);
 
-  console.log("Creating TabsManager with initial URL parameters:", {
-    initialTranslationId,
-    initialBookId,
-    initialChapter,
-  });
+  // Builds a reader tab from a persisted descriptor, seeding its reading state
+  // so it loads the stored chapter directly (no Genesis 1 flash). The selected
+  // tab also picks up any `?verse=` scroll/highlight, matching createInitialTabs.
+  const buildRestoredTab = (
+    descriptor: PersistedTab,
+    index: number,
+    selectedId: string
+  ): ReaderTab => {
+    const isSelected = descriptor.id === selectedId;
+    const readingState = createBibleReadingState(
+      dataManager,
+      highlightsManager,
+      i18nManager,
+      {
+        initialTranslationId: descriptor.translationId,
+        initialBookId: descriptor.bookId,
+        initialChapterNumber: descriptor.chapterNumber,
+        scrollToVerse:
+          isSelected && highlightedVerses.length > 0
+            ? highlightedVerses[0]
+            : undefined,
+      },
+      discoverManager,
+      readingExtensionManager
+    );
 
-  const tabs = signal<ReaderTab[]>(
-    createInitialTabs(
+    if (isSelected && highlightedVerses.length > 0 && descriptor.bookId) {
+      readingState.decorateVerses(
+        descriptor.bookId,
+        descriptor.chapterNumber,
+        highlightedVerses,
+        {
+          className: "sb-verse-decoration-diminish",
+          containerClassName: "sb-chapter-decoration-diminish",
+          removeAfterMs: 5000,
+        }
+      );
+    }
+
+    return {
+      id: descriptor.id,
+      title: `Tab ${index + 1}`,
+      readingState,
+      sharedSession: null,
+      sharedChat: null,
+      slotOnly: descriptor.slotOnly ?? false,
+    };
+  };
+
+  const storedState = normalizeStoredTabsState(readStoredTabsState());
+
+  let initialTabs: ReaderTab[];
+  let initialSelectedTabId: string;
+
+  if (!storedState || storedState.tabs.length === 0) {
+    // No stored state (SSR or first-ever visit): seed a single tab from the URL
+    // reading params, or the defaults — the original behavior.
+    const initialTranslationId = getInitialTranslationId(
+      navigation.currentUrl.value,
+      i18nManager.defaultLanguage
+    );
+    const initialBookId = getInitialFirstTabBookId(navigation.currentUrl.value);
+    const initialChapter = getInitialFirstTabChapter(
+      navigation.currentUrl.value
+    );
+
+    console.log("Creating TabsManager with initial URL parameters:", {
+      initialTranslationId,
+      initialBookId,
+      initialChapter,
+    });
+
+    initialTabs = createInitialTabs(
       dataManager,
       highlightsManager,
       i18nManager,
@@ -283,15 +353,38 @@ export function createTabs(
         translationId: initialTranslationId,
         bookId: initialBookId,
         chapter: initialChapter,
-        highlightedVerses: getInitialHighlightedVerses(
-          navigation.currentUrl.value
-        ),
+        highlightedVerses,
       },
       discoverManager,
       readingExtensionManager
-    )
-  );
-  const selectedTabId = signal<string>(tabs.value[0]?.id ?? "");
+    );
+    initialSelectedTabId = initialTabs[0]?.id ?? "";
+  } else {
+    // Restore the stored tabs, reconciled against the URL reading params. Read
+    // the params from `initialUrl` (the frozen pre-echo snapshot) so we compare
+    // against what the user actually linked with, not a position the reader may
+    // have already written back.
+    const query = readQueryReadingParams(navigation.initialUrl);
+    const { tabs: descriptors, selectedTabId } = reconcileStoredTabs(
+      storedState,
+      query,
+      defaultTranslation.id
+    );
+
+    console.log("Restoring TabsManager from stored state:", {
+      tabCount: descriptors.length,
+      selectedTabId,
+      querySpecified: query.specified,
+    });
+
+    initialTabs = descriptors.map((descriptor, index) =>
+      buildRestoredTab(descriptor, index, selectedTabId)
+    );
+    initialSelectedTabId = selectedTabId;
+  }
+
+  const tabs = signal<ReaderTab[]>(initialTabs);
+  const selectedTabId = signal<string>(initialSelectedTabId);
   const selectedTab = computed(
     () => tabs.value.find((tab) => tab.id === selectedTabId.value) ?? null
   );

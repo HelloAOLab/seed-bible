@@ -196,6 +196,8 @@ function createMockSharedSession(
 describe("createTabs", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    // Clear persisted tab state so a restore test can't leak into the next.
+    window.localStorage.clear();
   });
 
   it("addTab() creates a new tab with new reading state", async () => {
@@ -390,6 +392,87 @@ describe("createTabs", () => {
 
     const firstTab = manager.tabs.value[0]!;
     expect(firstTab.readingState.translationId.value).toBe("NIV");
+  });
+
+  it("restores stored tabs when the URL has no reading params", async () => {
+    window.localStorage.clear();
+    window.history.replaceState(null, "", "/");
+    window.localStorage.setItem(
+      "sb-tabs-state",
+      JSON.stringify({
+        version: 1,
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "AAB",
+            bookId: "EXO",
+            chapterNumber: 2,
+          },
+        ],
+        selectedTabId: "tab-1",
+        layout: "single",
+        slotTabIds: ["tab-1"],
+        selectedSlotIndex: 0,
+      })
+    );
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    expect(manager.tabs.value).toHaveLength(1);
+    const readingState = manager.tabs.value[0]!.readingState;
+    expect(readingState.translationId.value).toBe("AAB");
+    expect(readingState.bookId.value).toBe("EXO");
+    expect(readingState.chapterNumber.value).toBe(2);
+  });
+
+  it("reconciles a deep link against stored tabs, selecting the matching tab", async () => {
+    window.localStorage.clear();
+    window.history.replaceState(
+      null,
+      "",
+      "/?translation=NIV&book=MAT&chapter=1"
+    );
+    window.localStorage.setItem(
+      "sb-tabs-state",
+      JSON.stringify({
+        version: 1,
+        tabs: [
+          {
+            id: "tab-1",
+            translationId: "AAB",
+            bookId: "GEN",
+            chapterNumber: 1,
+          },
+          {
+            id: "tab-2",
+            translationId: "NIV",
+            bookId: "MAT",
+            chapterNumber: 1,
+          },
+        ],
+        selectedTabId: "tab-1",
+        layout: "split-2v",
+        slotTabIds: ["tab-1", "tab-2"],
+        selectedSlotIndex: 0,
+      })
+    );
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    // The query translation (NIV) matches the second stored tab, so it is
+    // updated to the query position and selected; the first tab is untouched.
+    expect(manager.tabs.value).toHaveLength(2);
+    expect(manager.selectedTabId.value).toBe("tab-2");
+    const selected = manager.tabs.value.find(
+      (tab) => tab.id === "tab-2"
+    )!.readingState;
+    expect(selected.translationId.value).toBe("NIV");
+    expect(selected.bookId.value).toBe("MAT");
+    expect(selected.chapterNumber.value).toBe(1);
   });
 
   it("saves a full custom-endpoint URL to the translation URL param", async () => {
