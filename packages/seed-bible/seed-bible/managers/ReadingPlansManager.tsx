@@ -71,9 +71,18 @@ export type PlanReading = z.infer<typeof PlanReadingSchema>;
 export const ReadingPlanSessionSchema = z.object({
   id: z.string(),
   title: z.string().nullable().optional(),
+  // Optional author reflection/prompt shown on the day (the "Reflect" card).
+  note: z.string().nullable().optional(),
   readings: z.array(PlanReadingSchema).min(1),
 });
 export type ReadingPlanSession = z.infer<typeof ReadingPlanSessionSchema>;
+
+// How a plan is meant to be followed. "flexible" plans are read at the user's
+// own pace with no fixed calendar; "scheduled" plans suggest a start date the
+// user is meant to begin on. Both still resolve their day-by-day rhythm from
+// the cadence — this only records the author's intent for display/onboarding.
+export const ReadingPlanTypeSchema = z.enum(["flexible", "scheduled"]);
+export type ReadingPlanType = z.infer<typeof ReadingPlanTypeSchema>;
 
 export const ReadingPlanMetadataSchema = z.object({
   address: z.string(),
@@ -84,6 +93,12 @@ export const ReadingPlanMetadataSchema = z.object({
   description: z.string().nullable(),
   cadenceOptions: z.array(CadenceOptionSchema).min(1),
   defaultCadenceId: z.string().nullable().optional(),
+  // Optional so older records (written before these fields existed) still parse.
+  planType: ReadingPlanTypeSchema.nullable().optional(),
+  // Author's suggested start date for a "scheduled" plan (epoch ms).
+  suggestedStartDateMs: z.number().positive().nullable().optional(),
+  // Intended length of the plan in days, used to derive an end date for display.
+  durationDays: z.number().int().positive().nullable().optional(),
   schemaVersion: z.number().int().default(1),
   createdAtMs: z.number().positive(),
   updatedAtMs: z.number().positive(),
@@ -199,6 +214,9 @@ export function createReadingPlan(
     description?: string | null;
     cadenceOptions?: CadenceOption[];
     defaultCadenceId?: string | null;
+    planType?: ReadingPlanType | null;
+    suggestedStartDateMs?: number | null;
+    durationDays?: number | null;
   } = {}
 ): ReadingPlan {
   const cadenceOptions = options.cadenceOptions?.length
@@ -213,6 +231,9 @@ export function createReadingPlan(
     description: options.description ?? null,
     cadenceOptions,
     defaultCadenceId: options.defaultCadenceId ?? cadenceOptions[0]?.id ?? null,
+    planType: options.planType ?? null,
+    suggestedStartDateMs: options.suggestedStartDateMs ?? null,
+    durationDays: options.durationDays ?? null,
     sessions: [],
     createdAtMs: nowMs,
     updatedAtMs: nowMs,
@@ -467,6 +488,30 @@ export function planCompletion(
     doneReadings,
     totalReadings,
   };
+}
+
+/**
+ * True when a session contains at least one bible-verse reading that covers the
+ * given passage (book + chapter). A reading's `endChapter` (when present) makes
+ * it span a chapter range; a chapter falls inside `[chapter, endChapter]`.
+ */
+export function sessionMatchesPassage(
+  session: ReadingPlanSession,
+  bookId: string,
+  chapter: number
+): boolean {
+  return session.readings.some((reading) => {
+    const item = reading.item;
+    if (item.type !== "bible-verse") {
+      return false;
+    }
+    const ref = item.ref;
+    if (ref.bookId !== bookId) {
+      return false;
+    }
+    const endChapter = ref.endChapter ?? ref.chapter;
+    return chapter >= ref.chapter && chapter <= endChapter;
+  });
 }
 
 /**
@@ -763,12 +808,114 @@ export function getReadingCalendar(
   return entries;
 }
 
+/**
+ * Rough reading-time estimate in minutes for a set of readings, at ~3 minutes
+ * per chapter (a verse-level reading still counts as its one chapter). Used for
+ * the "~N min" hints; it's an estimate, not measured content length.
+ */
+export function estimateReadingMinutes(readings: PlanReading[]): number {
+  let chapters = 0;
+  for (const reading of readings) {
+    const item = reading.item;
+    if (item.type === "bible-verse") {
+      const ref = item.ref;
+      chapters += Math.max(
+        1,
+        (ref.endChapter ?? ref.chapter) - ref.chapter + 1
+      );
+    } else {
+      chapters += 1;
+    }
+  }
+  return Math.max(1, chapters * 3);
+}
+
+/** Derived, at-a-glance stats about a user's progress through a plan's calendar. */
+export interface CalendarSummary {
+  /** The reading days (skip ranges removed), in order. */
+  readingDays: CalendarReadingDay[];
+  totalDays: number;
+  doneDays: number;
+  /** Consecutive completed days ending at today (today may still be pending). */
+  streak: number;
+  /** Count of strictly-past reading days that were never completed. */
+  behind: number;
+  /** The reading day that contains "now", if any. */
+  today: CalendarReadingDay | null;
+  /** The earliest not-yet-completed reading day. */
+  next: CalendarReadingDay | null;
+  /** 1-based ordinal of `next` among reading days. */
+  nextDayNumber: number | null;
+  lastDay: CalendarReadingDay | null;
+}
+
+/**
+ * Summarizes a reading calendar (from `getReadingCalendar`) into the stats the
+ * plans list and detail views show: totals, streak, how far behind, and the
+ * next day to read. Pure — `nowMs` is passed so it stays deterministic.
+ */
+export function summarizeCalendar(
+  entries: ReadingCalendarEntry[],
+  nowMs: number
+): CalendarSummary {
+  const readingDays = entries.filter(
+    (entry): entry is CalendarReadingDay => entry.type === "reading"
+  );
+  const totalDays = readingDays.length;
+  const nowStart = DateTime.fromMillis(nowMs).startOf("day").toMillis();
+
+  let doneDays = 0;
+  let behind = 0;
+  for (const day of readingDays) {
+    if (day.completedAtMs != null) {
+      doneDays++;
+    }
+    const isStrictlyPast = !day.containsNow && day.date.toMillis() < nowStart;
+    if (isStrictlyPast && day.completedAtMs == null) {
+      behind++;
+    }
+  }
+
+  const dueDays = readingDays.filter(
+    (day) => day.containsNow || day.date.toMillis() <= nowStart
+  );
+  let streak = 0;
+  for (let i = dueDays.length - 1; i >= 0; i--) {
+    if (dueDays[i]!.completedAtMs != null) {
+      streak++;
+    } else if (i === dueDays.length - 1) {
+      // The most recent due day (usually today) can still be pending without
+      // breaking a streak built on the days before it.
+      continue;
+    } else {
+      break;
+    }
+  }
+
+  const nextIndex = readingDays.findIndex((day) => day.completedAtMs == null);
+  return {
+    readingDays,
+    totalDays,
+    doneDays,
+    streak,
+    behind,
+    today: readingDays.find((day) => day.containsNow) ?? null,
+    next: nextIndex >= 0 ? readingDays[nextIndex]! : null,
+    nextDayNumber: nextIndex >= 0 ? nextIndex + 1 : null,
+    lastDay: readingDays[readingDays.length - 1] ?? null,
+  };
+}
+
 export function createReadingPlansManager(
   os: CasualOSManager,
   login: LoginManager
 ) {
   const userReadingPlanProgresses = signal<ReadingPlanProgress[]>([]);
   const userReadingPlans = signal<ReadingPlanMetadata[]>([]);
+  // Fully-loaded plans (with `sessions`) for the user's own plans. Needed to
+  // match the current passage against readings; `userReadingPlans` is metadata
+  // only. Kept in sync by an effect that follows `userReadingPlans`.
+  const fullReadingPlans = signal<ReadingPlan[]>([]);
   const selectedReadingPlan = signal<ReadingPlan | null>(null);
   const selectedReadingPlanProgress = signal<ReadingPlanProgress | null>(null);
   const canEditSelectedPlan = computed(() => {
@@ -880,6 +1027,28 @@ export function createReadingPlansManager(
     }
   };
 
+  // Loads the full plan (with sessions) for each metadata entry so consumers can
+  // match passages against readings. Skips any that fail to load.
+  const syncFullReadingPlans = async () => {
+    const metas = userReadingPlans.value;
+    if (!login.userId.value || metas.length === 0) {
+      fullReadingPlans.value = [];
+      return;
+    }
+    try {
+      const loaded = await Promise.all(
+        metas.map((meta) =>
+          getReadingPlan(meta.recordName, meta.address).catch(() => null)
+        )
+      );
+      fullReadingPlans.value = loaded.filter(
+        (plan): plan is ReadingPlan => plan !== null
+      );
+    } catch (error) {
+      console.error("Failed to load full reading plans:", error);
+    }
+  };
+
   const selectReadingPlan = async (plan: ReadingPlanMetadata | null) => {
     if (!plan) {
       selectedReadingPlan.value = null;
@@ -967,6 +1136,44 @@ export function createReadingPlansManager(
   };
 
   /**
+   * Marks a session complete/incomplete for a specific progress (by id), not
+   * necessarily the currently-selected one. Recomputes derived stats against the
+   * matching full plan when it's cached, updates in-memory state (list + the
+   * selected progress if it matches), and persists. Used by the in-reader
+   * "this reading belongs to" card, which acts on plans the user isn't actively
+   * viewing. No-op when the progress isn't found.
+   */
+  const setSessionCompleteForProgress = async (
+    progressId: string,
+    session: ReadingPlanSession,
+    complete: boolean
+  ) => {
+    const current = userReadingPlanProgresses.value.find(
+      (p) => p.id === progressId
+    );
+    if (!current) {
+      return;
+    }
+    const updated = markSessionCompleteInProgress(
+      current,
+      session,
+      Date.now(),
+      complete
+    );
+    const plan = fullReadingPlans.value.find(
+      (p) => formatReadingPlanId(p.recordName, p.address) === updated.planId
+    );
+    const next = plan ? withProgressStats(plan, updated) : updated;
+    userReadingPlanProgresses.value = userReadingPlanProgresses.value.map(
+      (p) => (p.id === next.id ? next : p)
+    );
+    if (selectedReadingPlanProgress.value?.id === next.id) {
+      selectedReadingPlanProgress.value = next;
+    }
+    await saveReadingPlanProgress(next);
+  };
+
+  /**
    * Starts a plan for the signed-in user: creates a fresh progress, persists it,
    * and adds it to the list. Always creates a new record (a user may have more
    * than one progress for the same plan). Does not select/activate the plan.
@@ -1004,6 +1211,9 @@ export function createReadingPlansManager(
     locale?: string;
     cadenceOptions?: CadenceOption[];
     defaultCadenceId?: string | null;
+    planType?: ReadingPlanType | null;
+    suggestedStartDateMs?: number | null;
+    durationDays?: number | null;
   }): Promise<ReadingPlan> => {
     if (!login.userId.value) {
       throw new Error("Not signed in");
@@ -1047,12 +1257,34 @@ export function createReadingPlansManager(
     return updated;
   };
 
+  /**
+   * Appends a session to a plan identified by its metadata (as listed in
+   * `userReadingPlans`, which carries no `sessions`). Loads the full plan first,
+   * then delegates to `addSessionToReadingPlan`. Used by the verse toolbar's
+   * "add to reading plan" action, where only metadata is on hand.
+   */
+  const addSessionToPlanByMetadata = async (
+    plan: ReadingPlanMetadata,
+    session: ReadingPlanSession
+  ): Promise<ReadingPlan> => {
+    const full = await getReadingPlan(plan.recordName, plan.address);
+    return addSessionToReadingPlan(full, session);
+  };
+
   effect(() => {
     void syncReadingPlanProgresses();
     void syncReadingPlans();
   });
 
+  // Follows `userReadingPlans` (read via `.value` inside `syncFullReadingPlans`)
+  // to keep the full-plan cache current after plans are created or edited.
+  effect(() => {
+    void syncFullReadingPlans();
+  });
+
   return {
+    fullReadingPlans,
+    setSessionCompleteForProgress,
     userReadingPlanProgresses,
     userReadingPlans,
     selectedReadingPlan,
@@ -1067,6 +1299,7 @@ export function createReadingPlansManager(
     markDayComplete,
     createNewReadingPlan,
     addSessionToReadingPlan,
+    addSessionToPlanByMetadata,
     canEditSelectedPlan,
   };
 }

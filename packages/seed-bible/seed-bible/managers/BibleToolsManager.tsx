@@ -28,6 +28,7 @@ import {
 } from "./FeaturesManager";
 import { playlistItemLabel } from "../components/playlistItemLabel";
 import { ShareModal } from "../components/ShareModal/shareModal";
+import { v4 as uuid } from "uuid";
 
 type BibleToolIcon<TContext> = (context: TContext) => JSX.Element | VNode;
 type ResolvedBibleToolIcon = () => JSX.Element | VNode;
@@ -696,13 +697,19 @@ function getDefaultToolbarTools(): ManagedBibleToolbarTool[] {
         if (!readingPlans) {
           return;
         }
+        const readingState = context.readingState;
         context.panesManager.openPane({
           id: "reading-plans-pane",
           placement: "side",
 
           // TODO: Translate this title
           title: "Reading Plans",
-          component: () => <ReadingPlansPane readingPlans={readingPlans} />,
+          component: () => (
+            <ReadingPlansPane
+              readingPlans={readingPlans}
+              books={readingState.translationBooks.value?.books ?? []}
+            />
+          ),
         });
       },
     },
@@ -799,6 +806,97 @@ function getDefaultVerseToolbarTools(): ManagedBibleVerseToolbarTool[] {
         };
 
         context.readingState.clearSelectedVerses();
+      },
+    },
+    {
+      id: "add-to-reading-plan",
+      priority: 150,
+      title: { key: "add-to-reading-plan", defaultValue: "Add to plan" },
+      icon: () => <MaterialIcon>library_add</MaterialIcon>,
+      isVisible: (context) =>
+        !!context.readingPlans &&
+        context.features.isFeatureEnabled(FEATURE_KEY_READING_PLANS) &&
+        context.readingState.selectedVerses.value.length > 0,
+      getItems: (context) => {
+        const readingPlans = context.readingPlans;
+        if (!readingPlans) {
+          return [];
+        }
+        const plans = readingPlans.userReadingPlans.value;
+        if (plans.length === 0) {
+          return [
+            {
+              id: "add-to-reading-plan-empty",
+              title: {
+                key: "reading-plan-none-yet",
+                defaultValue: "No plans yet",
+              },
+              icon: () => <MaterialIcon>info</MaterialIcon>,
+              isDisabled: () => true,
+            },
+          ];
+        }
+        return plans.map((plan) => {
+          const planName =
+            plan.title ??
+            i18n.t("untitled-reading-plan", { defaultValue: "Untitled plan" });
+          return {
+            id: `add-to-reading-plan-${plan.recordName}-${plan.address}`,
+            title: planName,
+            icon: () => <MaterialIcon>menu_book</MaterialIcon>,
+            onSelect: async (ctx) => {
+              const verses = ctx.readingState.selectedVerses.value;
+              if (verses.length === 0) {
+                return;
+              }
+              // Collapse the (single-chapter) selection into one reading that
+              // spans the lowest→highest selected verse.
+              const first = verses[0]!;
+              const verseNumbers = verses
+                .map((v) => v.verse.number)
+                .sort((a, b) => a - b);
+              const lowVerse = verseNumbers[0]!;
+              const highVerse = verseNumbers[verseNumbers.length - 1]!;
+              const session = {
+                id: uuid(),
+                title: null,
+                readings: [
+                  {
+                    id: uuid(),
+                    item: {
+                      type: "bible-verse" as const,
+                      ref: {
+                        bookId: first.bookId,
+                        chapter: first.chapterNumber,
+                        verse: lowVerse,
+                        ...(highVerse !== lowVerse
+                          ? { endVerse: highVerse }
+                          : {}),
+                      },
+                    },
+                  },
+                ],
+              };
+              try {
+                await readingPlans.addSessionToPlanByMetadata(plan, session);
+                ctx.toast(
+                  i18n.t("added-to-reading-plan", {
+                    defaultValue: "Added to {{plan}}",
+                    plan: planName,
+                  })
+                );
+                ctx.readingState.clearSelectedVerses();
+              } catch (error) {
+                console.error("Failed to add to reading plan:", error);
+                ctx.toast(
+                  i18n.t("reading-plan-add-failed", {
+                    defaultValue: "Couldn't add to plan",
+                  })
+                );
+              }
+            },
+          };
+        });
       },
     },
     {

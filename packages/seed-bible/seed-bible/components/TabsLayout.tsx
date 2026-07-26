@@ -1,5 +1,6 @@
 import { BibleReader } from "./BibleReader/BibleReader";
 import { BelowReaderToolbar } from "./BelowReaderToolbar/BelowReaderToolbar";
+import { ReadingPlanBelongsCard } from "./ReadingPlanBelongsCard/ReadingPlanBelongsCard";
 import type { TranslationBookChapter } from "../managers/FreeUseBibleAPI";
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import type { ReaderTab, TabsManager } from "../managers/TabsManager";
@@ -521,6 +522,7 @@ export function TabSlotReader(props: TabSlotReaderProps) {
         mobileChrome={mobileChrome}
         sharedSession={tab.sharedSession}
       />
+      <ReadingPlanBelongsCard state={state} readingState={readingState} />
       {!isMobile && (
         <BelowReaderToolbar
           toolsManager={state.tools}

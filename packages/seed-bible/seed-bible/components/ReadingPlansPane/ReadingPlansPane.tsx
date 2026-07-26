@@ -1,27 +1,87 @@
 import "./ReadingPlansPane.css";
+import type { ComponentChildren } from "preact";
 import { useState } from "preact/hooks";
+import { DateTime } from "luxon";
+import { MaterialIcon } from "../icons";
 import { useI18n } from "../../i18n/I18nManager";
-import type { ReadingPlansManager } from "../../managers/ReadingPlansManager";
+import {
+  formatReadingPlanId,
+  getReadingCalendar,
+  summarizeCalendar,
+  type CalendarReadingDay,
+  type CalendarSummary,
+  type ReadingPlan,
+  type ReadingPlanMetadata,
+  type ReadingPlanProgress,
+  type ReadingPlansManager,
+} from "../../managers/ReadingPlansManager";
+import type { TranslationBook } from "../../managers/FreeUseBibleAPI";
+import { formatRefLabel } from "../ScriptureItemInput/scriptureSuggestions";
+import { CreateReadingPlanWizard } from "./CreateReadingPlanWizard";
+import { ReadingPlanDetail } from "./ReadingPlanDetail";
 
 interface ReadingPlansPaneProps {
   readingPlans: ReadingPlansManager;
+  /** Books of the active translation, for the scripture typeahead + labels. */
+  books: TranslationBook[];
 }
 
-type ReadingPlansView = "list" | "create";
+type ReadingPlansView = "list" | "create" | "detail";
+
+/** The most recent progress the user has for a given plan id, if any. */
+function latestProgress(
+  progresses: ReadingPlanProgress[],
+  planId: string
+): ReadingPlanProgress | null {
+  return (
+    progresses
+      .filter((p) => p.planId === planId)
+      .sort((a, b) => b.startedAtMs - a.startedAtMs)[0] ?? null
+  );
+}
 
 /**
- * Pane content for reading plans. Shows the user's plans (with a button to
- * start authoring a new one) and the create-plan form screen.
+ * Pane content for reading plans. Switches between the user's list of plans,
+ * the create-plan wizard, and a single-plan detail view.
  */
 export function ReadingPlansPane(props: ReadingPlansPaneProps) {
-  const { readingPlans } = props;
+  const { readingPlans, books } = props;
   const [view, setView] = useState<ReadingPlansView>("list");
+
+  const openDetail = async (plan: ReadingPlanMetadata) => {
+    await readingPlans.selectReadingPlan(plan);
+    const planId = formatReadingPlanId(plan.recordName, plan.address);
+    const progress = latestProgress(
+      readingPlans.userReadingPlanProgresses.value,
+      planId
+    );
+    await readingPlans.selectReadingPlanProgress(progress);
+    setView("detail");
+  };
+
+  const backToList = () => {
+    void readingPlans.selectReadingPlan(null);
+    void readingPlans.selectReadingPlanProgress(null);
+    setView("list");
+  };
 
   if (view === "create") {
     return (
-      <CreateReadingPlanForm
+      <CreateReadingPlanWizard
         readingPlans={readingPlans}
-        onDone={() => setView("list")}
+        books={books}
+        onCancel={() => setView("list")}
+        onCreated={() => setView("list")}
+      />
+    );
+  }
+
+  if (view === "detail") {
+    return (
+      <ReadingPlanDetail
+        readingPlans={readingPlans}
+        books={books}
+        onBack={backToList}
       />
     );
   }
@@ -29,39 +89,109 @@ export function ReadingPlansPane(props: ReadingPlansPaneProps) {
   return (
     <ReadingPlansList
       readingPlans={readingPlans}
+      books={books}
       onCreate={() => setView("create")}
+      onOpen={(plan) => void openDetail(plan)}
     />
   );
 }
 
+interface PlanRow {
+  meta: ReadingPlanMetadata;
+  planId: string;
+  full: ReadingPlan | null;
+  progress: ReadingPlanProgress | null;
+  summary: CalendarSummary | null;
+  state: "active" | "notstarted" | "completed";
+}
+
 interface ReadingPlansListProps {
   readingPlans: ReadingPlansManager;
+  books: TranslationBook[];
   onCreate: () => void;
+  onOpen: (plan: ReadingPlanMetadata) => void;
 }
 
 function ReadingPlansList(props: ReadingPlansListProps) {
-  const { readingPlans, onCreate } = props;
+  const { readingPlans, books, onCreate, onOpen } = props;
   const { t } = useI18n();
 
   // Reading `.value` during render subscribes the component to updates.
-  const plans = readingPlans.userReadingPlans.value;
+  const metas = readingPlans.userReadingPlans.value;
+  const fullPlans = readingPlans.fullReadingPlans.value;
+  const progresses = readingPlans.userReadingPlanProgresses.value;
+
+  const resolveBookName = (bookId: string): string => {
+    const book = books.find((b) => b.id === bookId);
+    return book?.name ?? book?.commonName ?? bookId;
+  };
+
+  const dayReadingsLabel = (day: CalendarReadingDay): string =>
+    day.sessions
+      .flatMap((cs) => cs.session.readings)
+      .map((r) =>
+        r.item.type === "bible-verse"
+          ? `${resolveBookName(r.item.ref.bookId)} ${formatRefLabel(r.item.ref)}`.trim()
+          : (r.item.title ?? "")
+      )
+      .filter(Boolean)
+      .slice(0, 3)
+      .join(", ");
+
+  const nowMs = Date.now();
+  const fullById = new Map(
+    fullPlans.map((p) => [formatReadingPlanId(p.recordName, p.address), p])
+  );
+
+  const rows: PlanRow[] = metas.map((meta) => {
+    const planId = formatReadingPlanId(meta.recordName, meta.address);
+    const progress = latestProgress(progresses, planId);
+    const full = fullById.get(planId) ?? null;
+    let summary: CalendarSummary | null = null;
+    let state: PlanRow["state"] = "notstarted";
+    if (progress && full) {
+      summary = summarizeCalendar(
+        getReadingCalendar(full, progress, nowMs),
+        nowMs
+      );
+      state =
+        summary.totalDays > 0 && summary.doneDays === summary.totalDays
+          ? "completed"
+          : "active";
+    } else if (progress) {
+      state = "active";
+    }
+    return { meta, planId, full, progress, summary, state };
+  });
+
+  const active = rows.filter((r) => r.state === "active");
+  const notStarted = rows.filter((r) => r.state === "notstarted");
+  const completed = rows.filter((r) => r.state === "completed");
+
+  // Today hero: the first active plan that has a next day due.
+  const hero = active.find((r) => r.summary?.next != null) ?? null;
+
+  const planTitle = (meta: ReadingPlanMetadata) =>
+    meta.title ?? t("untitled-reading-plan", { defaultValue: "Untitled plan" });
 
   return (
     <div className="sb-reading-plans-pane">
       <div className="sb-reading-plans-header">
         <h2 className="sb-reading-plans-title">
-          {t("reading-plans", { defaultValue: "Reading Plans" })}
+          <MaterialIcon>menu_book</MaterialIcon>
+          {t("reading-plans", { defaultValue: "Reading plans" })}
         </h2>
         <button
           type="button"
           className="sb-reading-plans-create"
           onClick={onCreate}
+          aria-label={t("create-reading-plan", { defaultValue: "New plan" })}
         >
-          {t("create-reading-plan", { defaultValue: "New plan" })}
+          <MaterialIcon>add</MaterialIcon>
         </button>
       </div>
 
-      {plans.length === 0 ? (
+      {rows.length === 0 ? (
         <div className="sb-reading-plans-empty">
           {t("reading-plans-empty", {
             defaultValue:
@@ -69,152 +199,245 @@ function ReadingPlansList(props: ReadingPlansListProps) {
           })}
         </div>
       ) : (
-        <ul className="sb-reading-plans-list">
-          {plans.map((plan) => (
-            <li
-              key={`${plan.recordName}/${plan.address}`}
-              className="sb-reading-plan-item"
-              dir="auto"
+        <div className="sb-reading-plans-scroll">
+          {hero && hero.summary?.next ? (
+            <button
+              type="button"
+              className="sb-rp-today"
+              onClick={() => onOpen(hero.meta)}
             >
-              <button
-                type="button"
-                className="sb-reading-plan-item-button"
-                onClick={() => void readingPlans.selectReadingPlan(plan)}
-              >
-                <span className="sb-reading-plan-item-title">
-                  {plan.title ??
-                    t("untitled-reading-plan", {
-                      defaultValue: "Untitled plan",
-                    })}
+              <div className="sb-rp-today-text">
+                <span className="sb-rp-today-eyebrow">
+                  {t("reading-plan-today-eyebrow", {
+                    defaultValue: "Today · Day {{day}}",
+                    day: hero.summary.nextDayNumber ?? 1,
+                  })}
                 </span>
-                {plan.description ? (
-                  <span className="sb-reading-plan-item-description">
-                    {plan.description}
+                <span className="sb-rp-today-title" dir="auto">
+                  {planTitle(hero.meta)}
+                </span>
+                <span className="sb-rp-today-readings">
+                  {dayReadingsLabel(hero.summary.next)}
+                </span>
+              </div>
+              <span className="sb-rp-today-go" aria-hidden="true">
+                <MaterialIcon>arrow_forward</MaterialIcon>
+              </span>
+            </button>
+          ) : null}
+
+          {active.length > 0 ? (
+            <PlanSection
+              label={t("reading-plan-active", { defaultValue: "Active" })}
+              count={active.length}
+            >
+              {active.map((row) => (
+                <ActivePlanCard
+                  key={row.planId}
+                  row={row}
+                  title={planTitle(row.meta)}
+                  dayReadingsLabel={dayReadingsLabel}
+                  onOpen={() => onOpen(row.meta)}
+                  t={t}
+                />
+              ))}
+            </PlanSection>
+          ) : null}
+
+          {notStarted.length > 0 ? (
+            <PlanSection
+              label={t("reading-plan-not-started", {
+                defaultValue: "Not started",
+              })}
+              count={notStarted.length}
+            >
+              {notStarted.map((row) => (
+                <button
+                  key={row.planId}
+                  type="button"
+                  className="sb-rp-card"
+                  onClick={() => onOpen(row.meta)}
+                >
+                  <span className="sb-rp-card-tile" aria-hidden="true">
+                    <MaterialIcon>menu_book</MaterialIcon>
                   </span>
-                ) : null}
-              </button>
-            </li>
-          ))}
-        </ul>
+                  <span className="sb-rp-card-body">
+                    <span className="sb-rp-card-title" dir="auto">
+                      {planTitle(row.meta)}
+                    </span>
+                    <span className="sb-rp-card-sub">
+                      {t("reading-plan-not-started", {
+                        defaultValue: "Not started",
+                      })}
+                    </span>
+                  </span>
+                  <MaterialIcon className="sb-rp-card-chevron">
+                    chevron_right
+                  </MaterialIcon>
+                </button>
+              ))}
+            </PlanSection>
+          ) : null}
+
+          {completed.length > 0 ? (
+            <PlanSection
+              label={t("reading-plan-completed", { defaultValue: "Completed" })}
+              count={completed.length}
+            >
+              {completed.map((row) => {
+                const finishedMs =
+                  row.summary?.lastDay?.completedAtMs ??
+                  row.progress?.updatedAtMs ??
+                  null;
+                return (
+                  <div
+                    key={row.planId}
+                    className="sb-rp-card sb-rp-card-static"
+                  >
+                    <span
+                      className="sb-rp-card-tile sb-rp-card-tile-done"
+                      aria-hidden="true"
+                    >
+                      <MaterialIcon>check</MaterialIcon>
+                    </span>
+                    <span className="sb-rp-card-body">
+                      <span className="sb-rp-card-title" dir="auto">
+                        {planTitle(row.meta)}
+                      </span>
+                      <span className="sb-rp-card-sub">
+                        {finishedMs != null
+                          ? `${t("reading-plan-finished", {
+                              defaultValue: "Finished {{date}}",
+                              date: DateTime.fromMillis(
+                                finishedMs
+                              ).toLocaleString({
+                                month: "short",
+                                day: "numeric",
+                              }),
+                            })} · ${row.summary?.doneDays ?? 0}/${row.summary?.totalDays ?? 0}`
+                          : `${row.summary?.doneDays ?? 0}/${row.summary?.totalDays ?? 0}`}
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      className="sb-rp-restart"
+                      onClick={() => onOpen(row.meta)}
+                    >
+                      {t("reading-plan-restart", { defaultValue: "Restart" })}
+                    </button>
+                  </div>
+                );
+              })}
+            </PlanSection>
+          ) : null}
+        </div>
       )}
     </div>
   );
 }
 
-interface CreateReadingPlanFormProps {
-  readingPlans: ReadingPlansManager;
-  onDone: () => void;
+function PlanSection(props: {
+  label: string;
+  count: number;
+  children: ComponentChildren;
+}) {
+  return (
+    <section className="sb-rp-section">
+      <h3 className="sb-rp-section-label">
+        {props.label} · {props.count}
+      </h3>
+      <div className="sb-rp-section-cards">{props.children}</div>
+    </section>
+  );
 }
 
-function CreateReadingPlanForm(props: CreateReadingPlanFormProps) {
-  const { readingPlans, onDone } = props;
-  const { t, language } = useI18n();
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [locale, setLocale] = useState(language);
-  const [saving, setSaving] = useState(false);
-
-  const handleCreate = async () => {
-    if (saving) {
-      return;
-    }
-    setSaving(true);
-    try {
-      await readingPlans.createNewReadingPlan({
-        title: title.trim() || null,
-        description: description.trim() || null,
-        locale: locale.trim() || language,
-      });
-      onDone();
-    } catch (error) {
-      console.error("Failed to create reading plan:", error);
-      setSaving(false);
-    }
-  };
+function ActivePlanCard(props: {
+  row: PlanRow;
+  title: string;
+  dayReadingsLabel: (day: CalendarReadingDay) => string;
+  onOpen: () => void;
+  t: ReturnType<typeof useI18n>["t"];
+}) {
+  const { row, title, dayReadingsLabel, onOpen, t } = props;
+  const summary = row.summary;
+  const total = summary?.totalDays ?? 0;
+  const done = summary?.doneDays ?? 0;
+  const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+  const startedMs = row.progress?.startedAtMs ?? null;
 
   return (
-    <div className="sb-reading-plans-pane">
-      <div className="sb-reading-plans-header">
-        <button
-          type="button"
-          className="sb-reading-plans-back"
-          onClick={onDone}
-        >
-          <span className="material-symbols-outlined">arrow_back</span>
-          {t("back", { defaultValue: "Back" })}
-        </button>
-        <h2 className="sb-reading-plans-title">
-          {t("create-reading-plan", { defaultValue: "Create reading plan" })}
-        </h2>
+    <button type="button" className="sb-rp-card sb-rp-card-lg" onClick={onOpen}>
+      <div className="sb-rp-card-row">
+        <span className="sb-rp-card-tile" aria-hidden="true">
+          <MaterialIcon>wb_sunny</MaterialIcon>
+        </span>
+        <span className="sb-rp-card-body">
+          <span className="sb-rp-card-title" dir="auto">
+            {title}
+          </span>
+          <span className="sb-rp-card-sub">
+            {t("reading-plan-duration-days", {
+              defaultValue: "{{count}} days",
+              count: total,
+            })}
+            {startedMs != null
+              ? ` · ${t("reading-plan-started-on", {
+                  defaultValue: "started {{date}}",
+                  date: DateTime.fromMillis(startedMs).toLocaleString({
+                    month: "short",
+                    day: "numeric",
+                  }),
+                })}`
+              : ""}
+          </span>
+        </span>
+        <MaterialIcon className="sb-rp-card-chevron">
+          arrow_forward
+        </MaterialIcon>
       </div>
 
-      <div className="sb-reading-plans-form">
-        <div className="sb-settings-field-row">
-          <label className="sb-settings-field-label" htmlFor="sb-plan-title">
-            {t("title", { defaultValue: "Title" })}
-          </label>
-          <input
-            id="sb-plan-title"
-            className="sb-settings-text-input"
-            type="text"
-            value={title}
-            onInput={(event: Event) =>
-              setTitle((event.currentTarget as HTMLInputElement).value)
-            }
-            placeholder={t("reading-plan-title_placeholder", {
-              defaultValue: "e.g. Bible in a Year",
-            })}
+      <div className="sb-rp-card-progress">
+        <span className="sb-rp-card-progress-bar">
+          <span
+            className="sb-rp-card-progress-fill"
+            style={{ width: `${percent}%` }}
           />
-        </div>
-
-        <div className="sb-settings-field-row">
-          <label
-            className="sb-settings-field-label"
-            htmlFor="sb-plan-description"
-          >
-            {t("description", { defaultValue: "Description" })}
-          </label>
-          <textarea
-            id="sb-plan-description"
-            className="sb-settings-text-input sb-settings-textarea"
-            value={description}
-            maxLength={500}
-            onInput={(event: Event) =>
-              setDescription((event.currentTarget as HTMLTextAreaElement).value)
-            }
-            placeholder={t("reading-plan-description_placeholder", {
-              defaultValue: "What is this plan about?",
-            })}
-          />
-        </div>
-
-        <div className="sb-settings-field-row">
-          <label className="sb-settings-field-label" htmlFor="sb-plan-locale">
-            {t("language", { defaultValue: "Language" })}
-          </label>
-          <input
-            id="sb-plan-locale"
-            className="sb-settings-text-input"
-            type="text"
-            value={locale}
-            onInput={(event: Event) =>
-              setLocale((event.currentTarget as HTMLInputElement).value)
-            }
-          />
-        </div>
-
-        <div className="sb-settings-actions">
-          <button
-            type="button"
-            className="sb-settings-save-button"
-            onClick={() => void handleCreate()}
-            disabled={saving}
-          >
-            {t("save", { defaultValue: "Save" })}
-          </button>
-        </div>
+        </span>
+        <span className="sb-rp-card-progress-label">
+          {done}/{total}
+        </span>
       </div>
-    </div>
+
+      <div className="sb-rp-card-footer">
+        {summary && summary.behind > 0 ? (
+          <span className="sb-rp-chip sb-rp-chip-warn">
+            <MaterialIcon>warning</MaterialIcon>
+            {t("reading-plan-days-behind", {
+              defaultValue: "{{count}} days behind",
+              count: summary.behind,
+            })}
+          </span>
+        ) : summary && summary.streak > 0 ? (
+          <span className="sb-rp-chip sb-rp-chip-streak">
+            🔥{" "}
+            {t("reading-plan-streak", {
+              defaultValue: "{{count}}-day streak",
+              count: summary.streak,
+            })}
+          </span>
+        ) : (
+          <span />
+        )}
+        {summary?.next ? (
+          <span className="sb-rp-card-next">
+            {t("reading-plan-next", {
+              defaultValue: "Next: Day {{day}} · {{readings}}",
+              day: summary.nextDayNumber ?? 1,
+              readings: dayReadingsLabel(summary.next),
+            })}
+          </span>
+        ) : null}
+      </div>
+    </button>
   );
 }
