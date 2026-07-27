@@ -56,6 +56,13 @@ export const useMasonryLayout = (
 
     let frameId = 0;
     let isLayingOut = false;
+    let lastLayoutSignature = "";
+
+    const observeChildren = (observer: ResizeObserver, parent: HTMLElement) => {
+      for (const child of Array.from(parent.children)) {
+        observer.observe(child);
+      }
+    };
 
     const layout = () => {
       if (isLayingOut) return;
@@ -64,29 +71,36 @@ export const useMasonryLayout = (
       try {
         const items = Array.from(container.children) as HTMLElement[];
         if (items.length === 0) {
+          lastLayoutSignature = "";
           clearContainerStyles(container);
           return;
         }
 
-        for (const item of items) {
-          clearItemStyles(item);
-        }
-        clearContainerStyles(container);
-
         const { contentWidth, outerWidth, gap } = getMasonryMetrics(container);
         if (outerWidth <= 0) return;
 
+        const contentWidthPx = `${contentWidth}px`;
         for (const item of items) {
-          item.style.width = `${contentWidth}px`;
+          if (item.style.width !== contentWidthPx) {
+            item.style.width = contentWidthPx;
+          }
         }
 
         const columnCount = Math.max(
           1,
           Math.floor((container.clientWidth + gap) / (outerWidth + gap))
         );
+        const heights = items.map((item) => item.offsetHeight);
+        const signature = `${container.clientWidth}|${columnCount}|${heights.join(",")}`;
+
+        if (signature === lastLayoutSignature) return;
+        lastLayoutSignature = signature;
+
         const columnHeights = new Array<number>(columnCount).fill(0);
 
-        container.style.position = "relative";
+        if (container.style.position !== "relative") {
+          container.style.position = "relative";
+        }
 
         for (const item of items) {
           const height = item.offsetHeight;
@@ -99,30 +113,36 @@ export const useMasonryLayout = (
 
           const x = column * (outerWidth + gap);
           const y = columnHeights[column]!;
-          item.style.position = "absolute";
-          item.style.left = `${x}px`;
-          item.style.top = `${y}px`;
-          item.style.width = `${contentWidth}px`;
+          const leftPx = `${x}px`;
+          const topPx = `${y}px`;
+
+          if (item.style.position !== "absolute") {
+            item.style.position = "absolute";
+          }
+          if (item.style.left !== leftPx) {
+            item.style.left = leftPx;
+          }
+          if (item.style.top !== topPx) {
+            item.style.top = topPx;
+          }
           columnHeights[column] = y + height + gap;
         }
 
         const tallest = Math.max(...columnHeights);
-        container.style.height = `${Math.max(0, tallest - gap)}px`;
+        const heightPx = `${Math.max(0, tallest - gap)}px`;
+        if (container.style.height !== heightPx) {
+          container.style.height = heightPx;
+        }
       } finally {
         isLayingOut = false;
       }
     };
 
-    const scheduleLayout = () => {
-      cancelAnimationFrame(frameId);
-      frameId = requestAnimationFrame(layout);
-    };
-
-    layout();
-
     if (typeof ResizeObserver === "undefined") {
+      layout();
       return () => {
         cancelAnimationFrame(frameId);
+        lastLayoutSignature = "";
         clearContainerStyles(container);
         for (const child of Array.from(container.children)) {
           clearItemStyles(child as HTMLElement);
@@ -130,24 +150,33 @@ export const useMasonryLayout = (
       };
     }
 
-    const observer = new ResizeObserver(scheduleLayout);
-    observer.observe(container);
-    for (const child of Array.from(container.children)) {
-      observer.observe(child);
-    }
+    const observer = new ResizeObserver(() => {
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(runLayout);
+    });
 
     const mutationObserver = new MutationObserver(() => {
-      for (const child of Array.from(container.children)) {
-        observer.observe(child);
-      }
-      scheduleLayout();
+      lastLayoutSignature = "";
+      cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(runLayout);
     });
-    mutationObserver.observe(container, { childList: true });
+
+    const runLayout = () => {
+      observer.disconnect();
+      mutationObserver.disconnect();
+      layout();
+      observer.observe(container);
+      observeChildren(observer, container);
+      mutationObserver.observe(container, { childList: true });
+    };
+
+    runLayout();
 
     return () => {
       cancelAnimationFrame(frameId);
       observer.disconnect();
       mutationObserver.disconnect();
+      lastLayoutSignature = "";
       clearContainerStyles(container);
       for (const child of Array.from(container.children)) {
         clearItemStyles(child as HTMLElement);
