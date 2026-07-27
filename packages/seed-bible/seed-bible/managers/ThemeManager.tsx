@@ -488,7 +488,7 @@ const LIGHT_THEME: BibleTheme = {
 
     tertiaryColor: "#f0f0f0",
 
-    linkColor: "#b34d1c",
+    linkColor: "#e07b4c",
     linkVisitedColor: "#8d5a6b",
 
     background: "#f8fafc",
@@ -633,7 +633,7 @@ const DARK_THEME: BibleTheme = {
 
     tertiaryColor: "#1c1c1c",
 
-    linkColor: "#ff9e80",
+    linkColor: "#e07b4c",
     linkVisitedColor: "#d99bb0",
 
     background: "#0a0a0a",
