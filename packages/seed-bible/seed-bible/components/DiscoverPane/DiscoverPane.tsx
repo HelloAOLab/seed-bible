@@ -174,10 +174,10 @@ export function DiscoverPaneTitle(props: {
           <ContextMenuWithButton
             buttonClassName="sb-discover-title-ai"
             aria-label={aiButtonAriaLabel}
+            title={aiButtonLabel}
             icon={
               <>
                 <MaterialIcon>auto_awesome</MaterialIcon>
-                {aiButtonLabel}
               </>
             }
           >
@@ -198,10 +198,10 @@ export function DiscoverPaneTitle(props: {
             type="button"
             className="sb-discover-title-ai"
             aria-label={aiButtonAriaLabel}
+            title={aiButtonLabel}
             onClick={() => startAiChat(providers[0]?.id ?? null)}
           >
             <MaterialIcon>auto_awesome</MaterialIcon>
-            {aiButtonLabel}
           </button>
         )}
       </div>
