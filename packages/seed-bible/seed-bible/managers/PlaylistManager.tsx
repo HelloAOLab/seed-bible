@@ -676,15 +676,42 @@ export function createPlaylistManager(
    * Appends an item to the currently-edited playlist. No-op when there is no
    * playlist being edited. Persisting happens later via `saveEditingPlaylist`.
    */
-  const addEditingPlaylistItem = (item: PlaylistItemData): void => {
+  const addEditingPlaylistItem = (item: PlaylistItemData): string => {
     const current = editingPlaylist.value;
     if (!current) {
-      return;
+      return "error: no editing playlist";
     }
     editingPlaylist.value = {
       ...current,
       items: [...current.items, item],
     };
+    return "success";
+  };
+
+  /**
+   * Inserts an item at the given index in the currently-edited playlist. No-op when there is no
+   * playlist being edited. Persisting happens later via `saveEditingPlaylist`.
+   */
+  const insertEditingPlaylistItem = (
+    index: number,
+    item: PlaylistItemData
+  ): string => {
+    const current = editingPlaylist.value;
+    if (!current) {
+      return "error: no editing playlist";
+    }
+    if (index < 0 || index > current.items.length) {
+      return `error: index out of range (0-${current.items.length})`;
+    }
+    editingPlaylist.value = {
+      ...current,
+      items: [
+        ...current.items.slice(0, index),
+        item,
+        ...current.items.slice(index),
+      ],
+    };
+    return "success";
   };
 
   /**
@@ -695,10 +722,13 @@ export function createPlaylistManager(
   const updateEditingPlaylistItem = (
     index: number,
     item: PlaylistItemData
-  ): void => {
+  ): string => {
     const current = editingPlaylist.value;
-    if (!current || index < 0 || index >= current.items.length) {
-      return;
+    if (!current) {
+      return "error: no editing playlist";
+    }
+    if (index < 0 || index >= current.items.length) {
+      return `error: index out of range (0-${current.items.length - 1})`;
     }
     editingPlaylist.value = {
       ...current,
@@ -706,6 +736,7 @@ export function createPlaylistManager(
         i === index ? item : existing
       ),
     };
+    return "success";
   };
 
   /**
@@ -713,15 +744,16 @@ export function createPlaylistManager(
    * No-op when there is no playlist being edited. Persisting happens later via
    * `saveEditingPlaylist`.
    */
-  const removeEditingPlaylistItem = (index: number): void => {
+  const removeEditingPlaylistItem = (index: number): string => {
     const current = editingPlaylist.value;
     if (!current) {
-      return;
+      return "error: no editing playlist";
     }
     editingPlaylist.value = {
       ...current,
       items: current.items.filter((_, i) => i !== index),
     };
+    return "success";
   };
 
   /**
@@ -732,22 +764,27 @@ export function createPlaylistManager(
    * follow along here — the caller is responsible for keeping any "currently
    * being edited" index pointed at the same logical item.
    */
-  const reorderEditingPlaylistItem = (from: number, to: number): void => {
+  const reorderEditingPlaylistItem = (from: number, to: number): string => {
     const current = editingPlaylist.value;
     if (!current) {
-      return;
+      return "error: no editing playlist";
     }
     const length = current.items.length;
-    if (from < 0 || from >= length || to < 0 || to >= length || from === to) {
-      return;
+    if (from < 0 || from >= length) {
+      return `error: original index out of range (0-${length - 1}) or equal`;
+    } else if (to < 0 || to >= length) {
+      return `error: target index out of range (0-${length - 1}) or equal`;
+    } else if (from === to) {
+      return "success";
     }
     const nextItems = [...current.items];
     const [moved] = nextItems.splice(from, 1);
     if (!moved) {
-      return;
+      return "success";
     }
     nextItems.splice(to, 0, moved);
     editingPlaylist.value = { ...current, items: nextItems };
+    return "success";
   };
 
   /** Discards the current edit and returns to the discover view. */
@@ -1072,15 +1109,14 @@ export function createPlaylistManager(
    * moment rather than a fixed snapshot.
    */
   const getEditPlaylistTools = () => {
-    const addPlaylistItemTool = generateFunctionTool({
-      name: "addPlaylistItem",
-      description: "Adds an item to the playlist.",
-      parameters: AIPlaylistItemSchema,
-      function: async (args) => {
-        addEditingPlaylistItem(convertToPlaylistItem(args));
-
-        return "success";
-      },
+    const insertPlaylistItemTool = generateFunctionTool({
+      name: "insertPlaylistItem",
+      description: "Inserts an item into the playlist.",
+      parameters: AIPlaylistItemSchema.extend({
+        index: z.number(),
+      }),
+      function: async (args) =>
+        insertEditingPlaylistItem(args.index, convertToPlaylistItem(args)),
     });
 
     const updatePlaylistItemTool = generateFunctionTool({
@@ -1089,11 +1125,19 @@ export function createPlaylistManager(
       parameters: AIPlaylistItemSchema.extend({
         index: z.number(),
       }),
-      function: async (args) => {
-        updateEditingPlaylistItem(args.index, convertToPlaylistItem(args));
+      function: async (args) =>
+        updateEditingPlaylistItem(args.index, convertToPlaylistItem(args)),
+    });
 
-        return "success";
-      },
+    const movePlaylistItemTool = generateFunctionTool({
+      name: "movePlaylistItem",
+      description: "Moves an item in the playlist.",
+      parameters: z.object({
+        originalIndex: z.number(),
+        newIndex: z.number(),
+      }),
+      function: async (args) =>
+        reorderEditingPlaylistItem(args.originalIndex, args.newIndex),
     });
 
     const deletePlaylistItemTool = generateFunctionTool({
@@ -1102,11 +1146,7 @@ export function createPlaylistManager(
       parameters: z.object({
         index: z.number(),
       }),
-      function: async (args) => {
-        removeEditingPlaylistItem(args.index);
-
-        return "success";
-      },
+      function: async (args) => removeEditingPlaylistItem(args.index),
     });
 
     const updatePlaylistTool = generateFunctionTool({
@@ -1134,9 +1174,10 @@ export function createPlaylistManager(
 
     return [
       updatePlaylistTool.tool,
-      addPlaylistItemTool.tool,
+      insertPlaylistItemTool.tool,
       updatePlaylistItemTool.tool,
       deletePlaylistItemTool.tool,
+      movePlaylistItemTool.tool,
     ];
   };
 
@@ -1209,6 +1250,7 @@ export function createPlaylistManager(
     editPlaylist,
     saveEditingPlaylist,
     addEditingPlaylistItem,
+    insertEditingPlaylistItem,
     updateEditingPlaylistItem,
     removeEditingPlaylistItem,
     reorderEditingPlaylistItem,
