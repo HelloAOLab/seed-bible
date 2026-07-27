@@ -1,7 +1,7 @@
 .sb-chat-view {
   display: flex;
   flex-direction: column;
-  min-height: 13.75rem;
+  min-height: 0;
   flex: 1 1 auto;
 }
 
