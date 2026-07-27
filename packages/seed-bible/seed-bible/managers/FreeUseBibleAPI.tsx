@@ -1023,9 +1023,24 @@ export interface ApiRequestOptions {
   signal?: AbortSignal;
 }
 
+/** Per-URL bookkeeping for an in-flight request shared by multiple callers. */
+interface PendingRequestSubscription {
+  /** Owns the actual `fetch()` call — never a caller's own signal. */
+  controller: AbortController;
+  /**
+   * Number of callers still relying on this request, including ones that
+   * passed no `signal` (and so can never voluntarily walk away — their
+   * presence permanently keeps this above zero until the request settles
+   * naturally). Only reaches zero once every caller who *could* cancel has
+   * done so, at which point the real request is safe to cancel too.
+   */
+  subscriberCount: number;
+}
+
 export class FreeUseBibleAPI {
   endpoint: string;
   private _responseCache = new Map<string, Promise<unknown>>();
+  private _requestSubscriptions = new Map<string, PendingRequestSubscription>();
 
   constructor(endpoint: string) {
     this.endpoint = endpoint;
@@ -1110,15 +1125,18 @@ export class FreeUseBibleAPI {
     const url = this._buildUrl(path, endpoint);
     const existing = this._responseCache.get(url) as Promise<T> | undefined;
     if (existing) {
-      // Deliberately never re-wire a different caller's signal onto a
-      // promise other callers may already be sharing — aborting one
-      // caller's request must not reject an unrelated caller's identical
-      // in-flight request.
-      return existing;
+      return this._subscribeToRequest(url, existing, options?.signal);
     }
 
-    const signal = options?.signal;
-    const request: Promise<T> = (signal ? fetch(url, { signal }) : fetch(url))
+    // Own controller for the real fetch — deliberately never a caller's own
+    // signal, so one caller aborting can't tear down the network request
+    // other callers sharing this URL are still relying on. It's only
+    // aborted once every subscriber has walked away (see
+    // `_subscribeToRequest`).
+    const controller = new AbortController();
+    this._requestSubscriptions.set(url, { controller, subscriberCount: 0 });
+
+    const request: Promise<T> = fetch(url, { signal: controller.signal })
       .then(async (response) => {
         if (response.status < 200 || response.status >= 300) {
           throw new Error(
@@ -1130,10 +1148,84 @@ export class FreeUseBibleAPI {
       .catch((error) => {
         this._responseCache.delete(url);
         throw error;
+      })
+      .finally(() => {
+        this._requestSubscriptions.delete(url);
       });
 
     this._responseCache.set(url, request);
-    return request;
+    return this._subscribeToRequest(url, request, options?.signal);
+  }
+
+  /**
+   * Hands a caller its own view of a shared in-flight request. A caller with
+   * no `signal` (or one requesting an already-settled response) just gets
+   * the shared promise directly. A caller with a `signal` gets a wrapper
+   * promise that rejects the moment *its own* signal aborts — without
+   * affecting any other subscriber — and, only once every subscriber has
+   * done the same, aborts the real underlying request.
+   */
+  private _subscribeToRequest<T>(
+    url: string,
+    sharedPromise: Promise<T>,
+    signal?: AbortSignal
+  ): Promise<T> {
+    const subscription = this._requestSubscriptions.get(url);
+    if (!subscription) {
+      // Already settled — nothing left to subscribe to or cancel.
+      return sharedPromise;
+    }
+
+    subscription.subscriberCount++;
+
+    if (!signal) {
+      return sharedPromise;
+    }
+
+    return new Promise<T>((resolve, reject) => {
+      let settled = false;
+
+      const onAbort = () => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        subscription.subscriberCount--;
+        if (subscription.subscriberCount <= 0) {
+          subscription.controller.abort();
+        }
+        reject(this._abortError());
+      };
+
+      if (signal.aborted) {
+        onAbort();
+        return;
+      }
+      signal.addEventListener("abort", onAbort, { once: true });
+
+      sharedPromise.then(
+        (value) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          signal.removeEventListener("abort", onAbort);
+          resolve(value);
+        },
+        (error) => {
+          if (settled) {
+            return;
+          }
+          settled = true;
+          signal.removeEventListener("abort", onAbort);
+          reject(error);
+        }
+      );
+    });
+  }
+
+  private _abortError(): DOMException {
+    return new DOMException("The operation was aborted.", "AbortError");
   }
 
   private _buildUrl(path: string, endpoint?: string): string {

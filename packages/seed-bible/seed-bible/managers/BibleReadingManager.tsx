@@ -1637,33 +1637,45 @@ export function createBibleReadingState(
         signal: AbortSignal
       ) => Promise<TranslationBookChapter | null>;
 
-      if (outcome.type === "navigate") {
-        const navigateChapter = outcome.chapter;
-        target = await chainPosition(async () => ({
-          translationId: navigateChapter.translation.id,
-          bookId: navigateChapter.book.id,
-          chapterNumber: navigateChapter.chapter.number,
-        }));
-        fetchChapter = async () => navigateChapter;
-      } else {
-        target = await chainPosition(async (base) => {
-          if (!base) {
-            return null; // before initial load — matches the old `!chapterData.value` guard
+      try {
+        if (outcome.type === "navigate") {
+          const navigateChapter = outcome.chapter;
+          target = await chainPosition(async () => ({
+            translationId: navigateChapter.translation.id,
+            bookId: navigateChapter.book.id,
+            chapterNumber: navigateChapter.chapter.number,
+          }));
+          fetchChapter = async () => navigateChapter;
+        } else {
+          target = await chainPosition(async (base) => {
+            if (!base) {
+              return null; // before initial load — matches the old `!chapterData.value` guard
+            }
+            const books = await getBooksForPosition(base.translationId);
+            return computeAdjacentPosition(books, base, direction);
+          });
+          if (!target) {
+            return; // boundary no-op, or nothing to advance from yet
           }
-          const books = await getBooksForPosition(base.translationId);
-          return computeAdjacentPosition(books, base, direction);
-        });
-        if (!target) {
-          return; // boundary no-op, or nothing to advance from yet
+          const resolvedTarget = target;
+          fetchChapter = (signal) =>
+            dataManager.getTranslationBookChapter(
+              resolvedTarget.translationId,
+              resolvedTarget.bookId,
+              resolvedTarget.chapterNumber,
+              { signal }
+            );
         }
-        const resolvedTarget = target;
-        fetchChapter = (signal) =>
-          dataManager.getTranslationBookChapter(
-            resolvedTarget.translationId,
-            resolvedTarget.bookId,
-            resolvedTarget.chapterNumber,
-            { signal }
-          );
+      } catch (err) {
+        // e.g. the book metadata fetch (`getBooksForPosition`) failed while
+        // computing the target — surface it like every other navigation
+        // method does, instead of letting it escape as an unhandled
+        // rejection (callers invoke these fire-and-forget).
+        error.value =
+          err instanceof Error
+            ? err.message
+            : `Failed to load ${direction} chapter.`;
+        return;
       }
       if (!target) {
         return;

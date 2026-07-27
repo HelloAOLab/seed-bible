@@ -571,7 +571,8 @@ describe("createBibleReadingState", () => {
     await waitForInitialLoad(state);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      makeExampleUrl("/api/AAB/books.json")
+      makeExampleUrl("/api/AAB/books.json"),
+      expect.anything()
     );
     expect(state.translationBooks.value).toEqual(aabBooks);
   });
@@ -748,7 +749,8 @@ describe("createBibleReadingState", () => {
     await state.loadPreviousChapter();
 
     expect(fetchMock).toHaveBeenCalledWith(
-      makeExampleUrl("/api/AAB/GEN/1.json")
+      makeExampleUrl("/api/AAB/GEN/1.json"),
+      expect.anything()
     );
     expect(state.chapterNumber.value).toBe(1);
     expect(state.chapterData.value?.chapter.number).toBe(1);
@@ -1224,7 +1226,8 @@ describe("createBibleReadingState", () => {
     await state.selectTranslation("NIV");
 
     expect(fetchMock).toHaveBeenCalledWith(
-      makeExampleUrl("/api/NIV/books.json")
+      makeExampleUrl("/api/NIV/books.json"),
+      expect.anything()
     );
     expect(fetchMock).toHaveBeenCalledWith(
       makeExampleUrl("/api/NIV/MAT/1.json"),
@@ -1322,9 +1325,13 @@ describe("createBibleReadingState", () => {
     );
 
     expect(fetchMock).toHaveBeenCalledWith(
-      makeAltUrl("/api/available_translations.json")
+      makeAltUrl("/api/available_translations.json"),
+      expect.anything()
     );
-    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/books.json"));
+    expect(fetchMock).toHaveBeenCalledWith(
+      makeAltUrl("/api/NIV/books.json"),
+      expect.anything()
+    );
     expect(fetchMock).toHaveBeenCalledWith(
       makeAltUrl("/api/NIV/MAT/1.json"),
       expect.anything()
@@ -1359,9 +1366,13 @@ describe("createBibleReadingState", () => {
     await state.selectTranslation(`${ALT_API_ENDPOINT}/api/BSB/books.json`);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      makeAltUrl("/api/available_translations.json")
+      makeAltUrl("/api/available_translations.json"),
+      expect.anything()
     );
-    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/BSB/books.json"));
+    expect(fetchMock).toHaveBeenCalledWith(
+      makeAltUrl("/api/BSB/books.json"),
+      expect.anything()
+    );
     expect(fetchMock).toHaveBeenCalledWith(
       makeAltUrl("/api/BSB/GEN/1.json"),
       expect.anything()
@@ -1392,9 +1403,13 @@ describe("createBibleReadingState", () => {
     await state.selectTranslation(`${ALT_API_ENDPOINT}/api/ZZZ/books.json`);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      makeAltUrl("/api/available_translations.json")
+      makeAltUrl("/api/available_translations.json"),
+      expect.anything()
     );
-    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/books.json"));
+    expect(fetchMock).toHaveBeenCalledWith(
+      makeAltUrl("/api/NIV/books.json"),
+      expect.anything()
+    );
     expect(fetchMock).toHaveBeenCalledWith(
       makeAltUrl("/api/NIV/MAT/1.json"),
       expect.anything()
@@ -1423,7 +1438,8 @@ describe("createBibleReadingState", () => {
     await state.selectTranslationAndChapter("NIV", "MAT", 3);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      makeExampleUrl("/api/NIV/books.json")
+      makeExampleUrl("/api/NIV/books.json"),
+      expect.anything()
     );
     expect(fetchMock).toHaveBeenCalledWith(
       makeExampleUrl("/api/NIV/MAT/3.json"),
@@ -1462,9 +1478,13 @@ describe("createBibleReadingState", () => {
     );
 
     expect(fetchMock).toHaveBeenCalledWith(
-      makeAltUrl("/api/available_translations.json")
+      makeAltUrl("/api/available_translations.json"),
+      expect.anything()
     );
-    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/books.json"));
+    expect(fetchMock).toHaveBeenCalledWith(
+      makeAltUrl("/api/NIV/books.json"),
+      expect.anything()
+    );
     expect(fetchMock).toHaveBeenCalledWith(
       makeAltUrl("/api/NIV/MAT/2.json"),
       expect.anything()
@@ -1503,9 +1523,13 @@ describe("createBibleReadingState", () => {
     );
 
     expect(fetchMock).toHaveBeenCalledWith(
-      makeAltUrl("/api/available_translations.json")
+      makeAltUrl("/api/available_translations.json"),
+      expect.anything()
     );
-    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/BSB/books.json"));
+    expect(fetchMock).toHaveBeenCalledWith(
+      makeAltUrl("/api/BSB/books.json"),
+      expect.anything()
+    );
     expect(fetchMock).toHaveBeenCalledWith(
       makeAltUrl("/api/BSB/GEN/2.json"),
       expect.anything()
@@ -1536,10 +1560,17 @@ describe("createBibleReadingState", () => {
     await waitForInitialLoad(state);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      makeAltUrl("/api/available_translations.json")
+      makeAltUrl("/api/available_translations.json"),
+      expect.anything()
     );
-    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/books.json"));
-    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/MAT/1.json"));
+    expect(fetchMock).toHaveBeenCalledWith(
+      makeAltUrl("/api/NIV/books.json"),
+      expect.anything()
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      makeAltUrl("/api/NIV/MAT/1.json"),
+      expect.anything()
+    );
     expect(state.translationId.value).toBe("NIV");
     expect(state.bookId.value).toBe("MAT");
     expect(state.chapterNumber.value).toBe(1);
@@ -1566,10 +1597,17 @@ describe("createBibleReadingState", () => {
     await waitForInitialLoad(state);
 
     expect(fetchMock).toHaveBeenCalledWith(
-      makeAltUrl("/api/available_translations.json")
+      makeAltUrl("/api/available_translations.json"),
+      expect.anything()
     );
-    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/books.json"));
-    expect(fetchMock).toHaveBeenCalledWith(makeAltUrl("/api/NIV/MAT/1.json"));
+    expect(fetchMock).toHaveBeenCalledWith(
+      makeAltUrl("/api/NIV/books.json"),
+      expect.anything()
+    );
+    expect(fetchMock).toHaveBeenCalledWith(
+      makeAltUrl("/api/NIV/MAT/1.json"),
+      expect.anything()
+    );
     expect(state.translationId.value).toBe("NIV");
     expect(state.bookId.value).toBe("MAT");
     expect(state.chapterNumber.value).toBe(1);
@@ -2112,6 +2150,51 @@ describe("createBibleReadingState", () => {
       await state.loadNextChapter();
 
       expect(state.chapterNumber.value).toBe(3);
+    });
+
+    it("sets state.error instead of leaving an unhandled rejection when book metadata fails while computing a next/previous target", async () => {
+      const responses = createReadingManagerResponseMap();
+      responses[makeExampleUrl("/api/NIV/books.json")] = createResponse(
+        { error: true },
+        500,
+        "Server Error"
+      );
+      setWebResponses(responses);
+
+      const navigateChapter = makeChapter(nivBooks, "MAT", 1);
+      const manager = createBibleReadingExtensionManager();
+      manager.registerReadingExtension({
+        id: "x",
+        activate: (): ReadingExtensionInstance => ({
+          navigateNext: () => ({ type: "navigate", chapter: navigateChapter }),
+        }),
+      });
+
+      const state = createStateWithExtensions(manager);
+      await waitForInitialLoad(state);
+      state.enableExtension("x");
+
+      // First tap: the extension supplies the target chapter directly (no
+      // book metadata needed to compute it), so this moves the reading
+      // position to NIV — but syncing NIV's own book metadata afterward
+      // fails, leaving `translationBooks` stale (still AAB's).
+      await state.loadNextChapter();
+      expect(state.translationId.value).toBe("NIV");
+      expect(state.bookId.value).toBe("MAT");
+
+      state.disableExtension("x");
+      state.error.value = null;
+
+      // Second tap: no extension override this time, so the target must be
+      // computed from NIV's book metadata — not cached (the previous fetch
+      // failed), so this fetch is attempted fresh and fails again. This
+      // must surface as state.error, not escape as an unhandled rejection.
+      await expect(state.loadNextChapter()).resolves.toBeUndefined();
+
+      expect(state.error.value).toBe(
+        "Failed request to https://example.test/api/NIV/books.json. Status: 500 Server Error"
+      );
+      expect(state.loading.value).toBe(false);
     });
 
     it("resolves navigation hooks by priority (higher first wins)", async () => {
