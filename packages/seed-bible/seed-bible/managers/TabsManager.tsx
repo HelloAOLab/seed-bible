@@ -5,7 +5,8 @@ import {
   untracked,
   type Signal,
 } from "@preact/signals";
-import type { BibleDataManager } from "./BibleDataManager";
+import { getBookId, getBookSlug } from "./BibleDataManager";
+import type { BibleDataManager, BookId } from "./BibleDataManager";
 import type { BibleReadingSession } from "../managers/SessionsManager";
 import { createChatsManager, type ChatSession } from "./ChatsManager";
 import {
@@ -89,8 +90,38 @@ export interface ReaderTab {
   slotOnly?: boolean;
 }
 
-function getInitialFirstTabBookId(url: URL): string {
-  return url.searchParams.get("book") ?? DEFAULT_BOOK_ID;
+/**
+ * Parses the book/chapter path segments (e.g. "/genesis/1") out of a URL,
+ * ignoring the deployment prefix. Returns nulls when the path doesn't match
+ * a known book — callers fall back to the legacy `book`/`chapter` query
+ * params in that case.
+ */
+function parseBookChapterFromPath(
+  url: URL,
+  basePath: string
+): { bookId: string | null; chapter: number | null } {
+  const pathname =
+    basePath.length > 0 && url.pathname.startsWith(basePath)
+      ? url.pathname.slice(basePath.length)
+      : url.pathname;
+  const segments = pathname.split("/").filter(Boolean);
+  const bookId = segments[0] ? getBookId(segments[0]) : null;
+  if (!bookId) {
+    return { bookId: null, chapter: null };
+  }
+
+  const chapterValue = segments[1] ? Number(segments[1]) : NaN;
+  const chapter =
+    Number.isFinite(chapterValue) && chapterValue > 0
+      ? Math.floor(chapterValue)
+      : null;
+
+  return { bookId, chapter };
+}
+
+function getInitialFirstTabBookId(url: URL, basePath: string): string {
+  const { bookId } = parseBookChapterFromPath(url, basePath);
+  return bookId ?? url.searchParams.get("book") ?? DEFAULT_BOOK_ID;
 }
 
 function getInitialTranslationId(url: URL, language: string): string {
@@ -101,7 +132,12 @@ function getInitialTranslationId(url: URL, language: string): string {
   );
 }
 
-function getInitialFirstTabChapter(url: URL): number {
+function getInitialFirstTabChapter(url: URL, basePath: string): number {
+  const { chapter } = parseBookChapterFromPath(url, basePath);
+  if (chapter) {
+    return chapter;
+  }
+
   const value = Number(url.searchParams.get("chapter"));
   return Number.isFinite(value) && value > 0
     ? Math.floor(value)
@@ -264,8 +300,14 @@ export function createTabs(
     navigation.currentUrl.value,
     i18nManager.defaultLanguage
   );
-  const initialBookId = getInitialFirstTabBookId(navigation.currentUrl.value);
-  const initialChapter = getInitialFirstTabChapter(navigation.currentUrl.value);
+  const initialBookId = getInitialFirstTabBookId(
+    navigation.currentUrl.value,
+    navigation.basePath
+  );
+  const initialChapter = getInitialFirstTabChapter(
+    navigation.currentUrl.value,
+    navigation.basePath
+  );
 
   console.log("Creating TabsManager with initial URL parameters:", {
     initialTranslationId,
@@ -308,10 +350,12 @@ export function createTabs(
       i18nManager.defaultLanguage
     );
     const requestedBookId = getInitialFirstTabBookId(
-      navigation.currentUrl.value
+      navigation.currentUrl.value,
+      navigation.basePath
     );
     const requestedChapter = getInitialFirstTabChapter(
-      navigation.currentUrl.value
+      navigation.currentUrl.value,
+      navigation.basePath
     );
     const readingState = selectedTab.readingState;
 
@@ -367,9 +411,14 @@ export function createTabs(
 
   const writeUrl = (
     update: Record<string, string | null>,
-    replace?: boolean
+    replace?: boolean,
+    pathname?: string
   ) => {
-    navigation.updateQueryParams(update, replace);
+    if (pathname !== undefined) {
+      navigation.updatePathAndQueryParams(pathname, update, replace);
+    } else {
+      navigation.updateQueryParams(update, replace);
+    }
     lastSelfWrittenHref = navigation.currentUrl.peek().href;
   };
 
@@ -402,7 +451,23 @@ export function createTabs(
         queryUpdate[key] = null;
       }
 
-      writeUrl(queryUpdate, options.replace);
+      // Book/chapter move into the path (e.g. "/genesis/1") rather than
+      // staying as query params; everything else `getUrlQueryParams` returns
+      // (translation, verse, extension params) stays a query param. Setting
+      // them to null (rather than just omitting the keys) also strips any
+      // stale `book`/`chapter` left over from a legacy query-param URL that
+      // hasn't been redirected yet.
+      const bookId = queryUpdate.book;
+      const chapter = queryUpdate.chapter;
+      queryUpdate.book = null;
+      queryUpdate.chapter = null;
+
+      if (bookId && chapter) {
+        const slug = getBookSlug(bookId as BookId);
+        writeUrl(queryUpdate, options.replace, `/${slug}/${chapter}`);
+      } else {
+        writeUrl(queryUpdate, options.replace);
+      }
     });
   };
 

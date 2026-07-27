@@ -236,6 +236,48 @@ export function createNavigationManager(
     }
   };
 
+  /**
+   * Sets the pathname and updates the given query parameters in one history
+   * operation. `pathname` should be root-absolute and WITHOUT the deployment
+   * prefix — it is prefixed with `basePath` here, mirroring how `currentUrl`
+   * always includes that prefix.
+   */
+  const updatePathAndQueryParams = (
+    pathname: string,
+    update: Record<string, string | null>,
+    replaceState: boolean = false
+  ) => {
+    const current = currentUrl.peek();
+    const nextPathname = `${basePath}${pathname}`;
+    let hasChanges = current.pathname !== nextPathname;
+
+    const next = new URL(current);
+    next.pathname = nextPathname;
+
+    for (const [key, value] of Object.entries(update)) {
+      if (current.searchParams.get(key) === value) {
+        continue;
+      }
+      hasChanges = true;
+
+      if (!value) {
+        next.searchParams.delete(key);
+      } else {
+        next.searchParams.set(key, value);
+      }
+    }
+
+    if (!hasChanges) {
+      return;
+    }
+
+    if (replaceState) {
+      replace(next);
+    } else {
+      push(next);
+    }
+  };
+
   const syncSignalsToUrl = (
     signals: Record<string, SimpleSignal<string | null>>
   ) => {
@@ -281,11 +323,13 @@ export function createNavigationManager(
   return {
     currentUrl: computed(() => currentUrl.value),
     initialUrl,
+    basePath,
     go,
     replace,
     push,
     updateQueryParam,
     updateQueryParams,
+    updatePathAndQueryParams,
     syncSignalsToUrl,
     linkToQuery,
   };

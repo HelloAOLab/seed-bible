@@ -2,6 +2,10 @@ import { renderToStringAsync } from "preact-render-to-string";
 import { Main } from "../packages/seed-bible/seed-bible/app/main";
 import type { AppConfig } from "../packages/seed-bible/seed-bible/app/appConfig";
 import { createSeedBibleState } from "@packages/seed-bible/seed-bible/managers/SeedBibleStateManager";
+import {
+  getBookId,
+  getBookSlug,
+} from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 
 /** A single chunk record from a Vite client manifest. */
 interface ManifestChunk {
@@ -37,14 +41,67 @@ export interface RenderOptions {
 const escapeForScript = (json: string): string => json.replace(/</g, "\\u003c");
 
 /**
+ * Detects a legacy `?book=GEN&chapter=1` request at the app root and
+ * computes the equivalent clean path (e.g. "/genesis/1") to 301 to, dropping
+ * `book`/`chapter` and preserving every other query param. Returns null when
+ * the request isn't a legacy URL (no redirect needed) or the book isn't
+ * recognized (falls through to the normal render, which shows the app's own
+ * default/not-found handling).
+ */
+function legacyQueryParamRedirect(
+  path: string,
+  basePath: string
+): string | null {
+  const url = new URL(path, "http://ssr.local");
+  const pathname =
+    basePath.length > 0 && url.pathname.startsWith(basePath)
+      ? url.pathname.slice(basePath.length)
+      : url.pathname;
+
+  if (pathname !== "" && pathname !== "/") {
+    return null;
+  }
+
+  const bookParam = url.searchParams.get("book");
+  if (!bookParam) {
+    return null;
+  }
+
+  const bookId = getBookId(bookParam);
+  if (!bookId) {
+    return null;
+  }
+
+  const chapterParam = Number(url.searchParams.get("chapter"));
+  const chapter =
+    Number.isFinite(chapterParam) && chapterParam > 0
+      ? Math.floor(chapterParam)
+      : 1;
+
+  const remainingParams = new URLSearchParams(url.search);
+  remainingParams.delete("book");
+  remainingParams.delete("chapter");
+  const query = remainingParams.toString();
+
+  return `${basePath}/${getBookSlug(bookId)}/${chapter}${query ? `?${query}` : ""}`;
+}
+
+/**
  * Server-side renders the app to a complete HTML document.
  *
  * The app shell (chrome, theme, head) renders on the server; verse content
  * is fetched and filled in by the client after hydration — standard for a
  * data-driven SPA that does not block first paint on network fetches.
  */
-export async function render(options: RenderOptions): Promise<string> {
+export async function render(
+  options: RenderOptions
+): Promise<{ html: string } | { redirectTo: string }> {
   const { config } = options;
+
+  const redirectTo = legacyQueryParamRedirect(options.path, config.basePath);
+  if (redirectTo) {
+    return { redirectTo };
+  }
 
   const href = `http://ssr.local${options.path}`;
   const state = createSeedBibleState({
@@ -89,8 +146,10 @@ export async function render(options: RenderOptions): Promise<string> {
 
   const configJson = escapeForScript(JSON.stringify(config));
 
-  return options.html
-    .replace("<!-- META -->", metaHtml) // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
-    .replace("<!-- CONFIG_JSON -->", configJson)
-    .replace("<!-- APP_HTML -->", appHtml);
+  return {
+    html: options.html
+      .replace("<!-- META -->", metaHtml) // No additional meta tags for now, but this allows it to be customized per request in the future if needed.
+      .replace("<!-- CONFIG_JSON -->", configJson)
+      .replace("<!-- APP_HTML -->", appHtml),
+  };
 }

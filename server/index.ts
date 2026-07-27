@@ -88,7 +88,7 @@ type RenderFn = (opts: {
     acceptedLanguages: string[];
   };
   html: string;
-}) => Promise<string>;
+}) => Promise<{ html: string } | { redirectTo: string }>;
 
 /** Derives per-client render config (mobile, languages) from request headers. */
 function clientConfigFromHeaders(headers: IncomingHttpHeaders): ClientConfig {
@@ -243,7 +243,7 @@ async function renderAndRespond(
     req.headers
   );
 
-  const html = await render({
+  const result = await render({
     path: route.appUrl,
     config: {
       basePath: route.basePath,
@@ -254,13 +254,19 @@ async function renderAndRespond(
     html: preRenderedHtml,
   });
 
+  if ("redirectTo" in result) {
+    res.writeHead(301, { location: result.redirectTo });
+    res.end();
+    return;
+  }
+
   res.writeHead(200, {
     "content-type": "text/html; charset=utf-8",
     // The HTML is per-build and cheap to regenerate; let the CDN cache it
     // briefly but always revalidate so a pointer flip is picked up fast.
     "cache-control": "public, max-age=0, must-revalidate",
   });
-  res.end(html);
+  res.end(result.html);
 }
 
 /**
@@ -537,7 +543,7 @@ async function startDevServer(): Promise<void> {
       );
 
       // 4. Render the app HTML.
-      const html = await render({
+      const result = await render({
         path: req.originalUrl,
         config: {
           basePath: "",
@@ -548,8 +554,13 @@ async function startDevServer(): Promise<void> {
         html: template,
       });
 
-      // 5. Send the rendered HTML back.
-      res.status(200).set({ "Content-Type": "text/html" }).end(html);
+      // 5. Send the rendered HTML back (or redirect, for legacy query-param
+      // URLs being migrated to path-based routes).
+      if ("redirectTo" in result) {
+        res.redirect(301, result.redirectTo);
+        return;
+      }
+      res.status(200).set({ "Content-Type": "text/html" }).end(result.html);
     } catch (e) {
       console.error(e);
       if (e instanceof Error) {

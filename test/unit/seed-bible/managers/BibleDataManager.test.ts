@@ -1,9 +1,11 @@
 import {
   createBibleDataManager,
   getBookId,
+  getBookSlug,
   parseVerseReference,
   parseVerseReferences,
   type BibleDataManager,
+  type BookId,
 } from "@packages/seed-bible/seed-bible/managers/BibleDataManager";
 import { FreeUseBibleAPI } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
 import type { Translation } from "@packages/seed-bible/seed-bible/managers/FreeUseBibleAPI";
@@ -517,5 +519,32 @@ describe("getBookId()", () => {
     expect(getBookId("Nah")).toBe("NAM");
     expect(getBookId("Phil")).toBe("PHP");
     expect(getBookId("Phlm")).toBe("PHM");
+  });
+
+  it("resolves hyphenated URL slugs (path-based routing)", () => {
+    expect(getBookId("genesis")).toBe("GEN");
+    expect(getBookId("song-of-solomon")).toBe("SNG");
+    expect(getBookId("1-kings")).toBe("1KI");
+    expect(getBookId("1-corinthians")).toBe("1CO");
+  });
+});
+
+describe("getBookSlug()", () => {
+  it("returns the canonical URL slug for a book", () => {
+    expect(getBookSlug("GEN")).toBe("genesis");
+    expect(getBookSlug("SNG")).toBe("song-of-solomon");
+    expect(getBookSlug("1KI")).toBe("1-kings");
+  });
+
+  it("round-trips through getBookId", () => {
+    expect(getBookId(getBookSlug("REV"))).toBe("REV");
+    expect(getBookId(getBookSlug("1CO"))).toBe("1CO");
+  });
+
+  it("falls back to a lowercased version of an unrecognized id instead of returning undefined", () => {
+    // Callers on the legacy-URL fallback path (an old `?book=` link with a
+    // value that isn't a real book) pass an unvalidated string through as if
+    // it were a BookId; this must never surface "undefined" in a URL path.
+    expect(getBookSlug("NOTABOOK" as BookId)).toBe("notabook");
   });
 });

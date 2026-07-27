@@ -2,7 +2,9 @@ import { createBibleSelectorState } from "../managers/BibleSelectorManager";
 import type { BibleSelectorState } from "../managers/BibleSelectorManager";
 import {
   createBibleDataManager,
+  getBookSlug,
   type BibleDataManager,
+  type BookId,
   type VerseRef,
 } from "../managers/BibleDataManager";
 import { createBibleToolsManager } from "../managers/BibleToolsManager";
@@ -874,18 +876,22 @@ export function createSeedBibleState(
 
   const canonicalUrl = computed(() => {
     const currentUrl = navigation.currentUrl.value;
-
-    const canonicalUrl = new URL("/", currentUrl);
     const chapter = selectedTab.value?.readingState.chapterData.value;
 
-    if (chapter) {
-      canonicalUrl.searchParams.set(
-        "translation",
-        data.buildTranslationId(chapter.translation.id)
-      );
-      canonicalUrl.searchParams.set("book", chapter.book.id);
-      canonicalUrl.searchParams.set("chapter", String(chapter.chapter.number));
+    const canonicalUrl = new URL("/", currentUrl);
+
+    if (!chapter) {
+      canonicalUrl.pathname = navigation.basePath || "/";
+      return `${canonicalUrl.pathname}${canonicalUrl.search}`;
     }
+
+    canonicalUrl.pathname = `${navigation.basePath}/${getBookSlug(
+      chapter.book.id as BookId
+    )}/${chapter.chapter.number}`;
+    canonicalUrl.searchParams.set(
+      "translation",
+      data.buildTranslationId(chapter.translation.id)
+    );
 
     return `${canonicalUrl.pathname}${canonicalUrl.search}`;
   });

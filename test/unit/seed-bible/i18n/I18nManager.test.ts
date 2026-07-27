@@ -49,6 +49,7 @@ describe("I18nManager getInitialLanguage()", () => {
     nav = {
       currentUrl,
       initialUrl: currentUrl.peek(),
+      basePath: "",
       syncSignalsToUrl: vi.fn(),
       go: vi.fn(),
       replace: vi.fn(),
@@ -56,6 +57,7 @@ describe("I18nManager getInitialLanguage()", () => {
       updateQueryParam: vi.fn(),
       linkToQuery: vi.fn(),
       updateQueryParams: vi.fn(),
+      updatePathAndQueryParams: vi.fn(),
     } as NavigationManager;
     manager = createI18nManager(nav, ssrLanguages);
   });
@@ -149,12 +151,14 @@ describe("I18nManager language fallback prompt", () => {
     nav = {
       currentUrl,
       initialUrl: currentUrl.peek(),
+      basePath: "",
       syncSignalsToUrl: vi.fn(),
       go: vi.fn(),
       replace: vi.fn(),
       push: vi.fn(),
       updateQueryParam: vi.fn(),
       updateQueryParams: vi.fn(),
+      updatePathAndQueryParams: vi.fn(),
       linkToQuery: vi.fn(),
     } as NavigationManager;
     manager = createI18nManager(nav, ["en"]);

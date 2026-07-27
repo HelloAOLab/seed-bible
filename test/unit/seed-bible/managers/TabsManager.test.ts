@@ -36,9 +36,9 @@ beforeEach(() => {
 
 afterEach(() => {
   logSpy.mockRestore();
-  // Clear any query params written by tab/URL sync effects so they don't
-  // leak into the next test's initial tab state.
-  window.history.replaceState(null, "", window.location.pathname);
+  // Reset to "/" so neither query params nor a book/chapter path written by
+  // tab/URL sync effects leak into the next test's initial tab state.
+  window.history.replaceState(null, "", "/");
   globalThis.fetch = originalFetch;
 });
 
@@ -294,7 +294,10 @@ describe("createTabs", () => {
     await waitForInitialLoad(secondTab.readingState);
     manager.selectTab(secondTab.id);
 
-    navigation.push("?translation=NIV&book=MAT&chapter=1");
+    // Absolute path "/" (rather than a bare relative "?...") so this
+    // simulates a genuine legacy query-param-only URL instead of inheriting
+    // whatever path-based URL the initial mount already wrote.
+    navigation.push("/?translation=NIV&book=MAT&chapter=1");
 
     const selectedTab = manager.tabs.value.find(
       (tab) => tab.id === manager.selectedTabId.value
@@ -308,6 +311,58 @@ describe("createTabs", () => {
     expect(selectedTab!.readingState.translationId.value).toBe("NIV");
     expect(selectedTab!.readingState.bookId.value).toBe("MAT");
     expect(selectedTab!.readingState.chapterNumber.value).toBe(1);
+  });
+
+  it("syncs the selected tab to match a path-based URL", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager, navigation } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+    const secondTab = manager.addTab();
+    await waitForInitialLoad(secondTab.readingState);
+    manager.selectTab(secondTab.id);
+
+    navigation.push("/matthew/1?translation=NIV");
+
+    const selectedTab = manager.tabs.value.find(
+      (tab) => tab.id === manager.selectedTabId.value
+    );
+    expect(selectedTab).toBeDefined();
+    await waitFor(
+      () => selectedTab!.readingState.translationId.value === "NIV"
+    );
+    await waitForInitialLoad(selectedTab!.readingState);
+
+    expect(selectedTab!.readingState.translationId.value).toBe("NIV");
+    expect(selectedTab!.readingState.bookId.value).toBe("MAT");
+    expect(selectedTab!.readingState.chapterNumber.value).toBe(1);
+  });
+
+  it("clears stale book/chapter from a legacy query-param URL when writing the path, even for an unrecognized book", async () => {
+    window.history.replaceState(null, "", "/?book=NOTABOOK&chapter=1");
+    setWebResponses(createExampleManagerResponseMap());
+
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const url = new URL(window.location.href);
+    expect(url.pathname).toBe("/notabook/1");
+    expect(url.searchParams.has("book")).toBe(false);
+    expect(url.searchParams.has("chapter")).toBe(false);
+  });
+
+  it("writes book/chapter navigation to the URL path instead of query params", async () => {
+    setWebResponses(createExampleManagerResponseMap());
+    const { tabs: manager } = createTabsManager();
+    await waitForTabsToLoad(manager.tabs.value);
+
+    const readingState = manager.tabs.value[0]!.readingState;
+    await readingState.selectChapter("EXO", 2);
+    await waitFor(() => readingState.bookId.value === "EXO");
+
+    const url = new URL(window.location.href);
+    expect(url.pathname).toBe("/exodus/2");
+    expect(url.searchParams.has("book")).toBe(false);
+    expect(url.searchParams.has("chapter")).toBe(false);
   });
 
   it("reuses the translationId URL param instead of writing the translation param", async () => {
@@ -498,7 +553,7 @@ describe("createTabs", () => {
 
     manager.selectTab(manager.tabs.value[0]!.id);
     await waitFor(
-      () => new URL(window.location.href).searchParams.get("book") === "GEN"
+      () => new URL(window.location.href).pathname === "/genesis/1"
     );
 
     expect(pushSpy).not.toHaveBeenCalled();
@@ -515,8 +570,10 @@ describe("createTabs", () => {
     const pushSpy = vi.spyOn(window.history, "pushState");
 
     // Simulate a back/forward / deep-link URL change; the reader should update
-    // the reading state without writing the URL back.
-    navigation.replace("?book=EXO&chapter=2");
+    // the reading state without writing the URL back. Absolute path "/" (not
+    // a bare relative "?...") so this is a genuine legacy query-param-only
+    // URL rather than inheriting the path the initial mount already wrote.
+    navigation.replace("/?book=EXO&chapter=2");
     await waitFor(() => readingState.bookId.value === "EXO");
     await waitForInitialLoad(readingState);
 

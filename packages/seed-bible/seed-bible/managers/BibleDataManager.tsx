@@ -468,10 +468,11 @@ const BOOK_ID_MAP: Map<string, BookId> = new Map([
 /**
  * Gets the ID of the given book.
  * Returns null if the ID could not be found.
- * @param book The name/ID of the book.
+ * @param book The name/ID of the book. Whitespace and hyphens are ignored, so
+ * both "Song of Solomon" and the URL slug "song-of-solomon" resolve.
  */
 export function getBookId(book: string): BookId | null {
-  const bookLower = book.toLowerCase().replaceAll(/\s+/g, "");
+  const bookLower = book.toLowerCase().replaceAll(/[\s-]+/g, "");
 
   const id = BOOK_ID_MAP.get(bookLower);
   if (id) {
@@ -485,6 +486,126 @@ export function getBookId(book: string): BookId | null {
   }
 
   return null;
+}
+
+/**
+ * Canonical, human-readable URL slug for each book, used for path-based
+ * routing (e.g. "/genesis/1"). Apocrypha books fall back to their lowercase
+ * USFM code since they have no full-name entry in `BOOK_ID_MAP`.
+ */
+const BOOK_SLUGS: Record<BookId, string> = {
+  GEN: "genesis",
+  EXO: "exodus",
+  LEV: "leviticus",
+  NUM: "numbers",
+  DEU: "deuteronomy",
+  JOS: "joshua",
+  JDG: "judges",
+  RUT: "ruth",
+  "1SA": "1-samuel",
+  "2SA": "2-samuel",
+  "1KI": "1-kings",
+  "2KI": "2-kings",
+  "1CH": "1-chronicles",
+  "2CH": "2-chronicles",
+  EZR: "ezra",
+  NEH: "nehemiah",
+  EST: "esther",
+  JOB: "job",
+  PSA: "psalms",
+  PRO: "proverbs",
+  ECC: "ecclesiastes",
+  SNG: "song-of-solomon",
+  ISA: "isaiah",
+  JER: "jeremiah",
+  LAM: "lamentations",
+  EZK: "ezekiel",
+  DAN: "daniel",
+  HOS: "hosea",
+  JOL: "joel",
+  AMO: "amos",
+  OBA: "obadiah",
+  JON: "jonah",
+  MIC: "micah",
+  NAM: "nahum",
+  HAB: "habakkuk",
+  ZEP: "zephaniah",
+  HAG: "haggai",
+  ZEC: "zechariah",
+  MAL: "malachi",
+  MAT: "matthew",
+  MRK: "mark",
+  LUK: "luke",
+  JHN: "john",
+  ACT: "acts",
+  ROM: "romans",
+  "1CO": "1-corinthians",
+  "2CO": "2-corinthians",
+  GAL: "galatians",
+  EPH: "ephesians",
+  PHP: "philippians",
+  COL: "colossians",
+  "1TH": "1-thessalonians",
+  "2TH": "2-thessalonians",
+  "1TI": "1-timothy",
+  "2TI": "2-timothy",
+  TIT: "titus",
+  PHM: "philemon",
+  HEB: "hebrews",
+  JAS: "james",
+  "1PE": "1-peter",
+  "2PE": "2-peter",
+  "1JN": "1-john",
+  "2JN": "2-john",
+  "3JN": "3-john",
+  JUD: "jude",
+  REV: "revelation",
+  TOB: "tob",
+  JDT: "jdt",
+  ESG: "esg",
+  WIS: "wis",
+  SIR: "sir",
+  BAR: "bar",
+  LJE: "lje",
+  S3Y: "s3y",
+  SUS: "sus",
+  BEL: "bel",
+  "1MA": "1ma",
+  "2MA": "2ma",
+  "3MA": "3ma",
+  "4MA": "4ma",
+  "1ES": "1es",
+  "2ES": "2es",
+  MAN: "man",
+  PS2: "ps2",
+  ODA: "oda",
+  PSS: "pss",
+  EZA: "eza",
+  "5EZ": "5ez",
+  "6EZ": "6ez",
+  DAG: "dag",
+  PS3: "ps3",
+  "2BA": "2ba",
+  LBA: "lba",
+  JUB: "jub",
+  ENO: "eno",
+  "1MQ": "1mq",
+  "2MQ": "2mq",
+  "3MQ": "3mq",
+  REP: "rep",
+  "4BA": "4ba",
+  LAO: "lao",
+};
+
+/**
+ * Gets the canonical URL slug for a book (e.g. "GEN" -> "genesis"), used to
+ * build path-based routes and the canonical URL. Falls back to a lowercased
+ * version of the id itself for an unrecognized value (e.g. a malformed
+ * `?book=` from an old link) rather than emitting "undefined" as a path
+ * segment.
+ */
+export function getBookSlug(bookId: BookId): string {
+  return BOOK_SLUGS[bookId] ?? String(bookId).toLowerCase();
 }
 
 export function createBibleDataManager(api: FreeUseBibleAPI): BibleDataManager {
