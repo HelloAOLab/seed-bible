@@ -502,18 +502,7 @@
 
 .testament-content .scripture-map-books-container-masonry {
   display: block;
-  column-width: var(--book-width);
-  column-gap: calc(12px * var(--scale-factor));
-}
-
-.scripture-map-books-container.scripture-map-books-container-masonry
-  .book-container {
-  display: inline-flex;
-  width: 100%;
-  margin-bottom: calc(12px * var(--scale-factor));
-  break-inside: avoid;
-  -webkit-column-break-inside: avoid;
-  page-break-inside: avoid;
+  position: relative;
 }
 
 .scripture-map-books-container .book-container {
