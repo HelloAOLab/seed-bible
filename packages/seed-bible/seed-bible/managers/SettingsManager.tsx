@@ -648,26 +648,39 @@ export function createSettings(
   login: LoginManager,
   navigation: NavigationManager
 ): SettingsManager {
-  // Read each setting with the precedence: user profile > URL query param
-  // override (deep-linking) > `login.localConfig` (the anonymous, device-only
+  // A per-instance, non-persisted overlay: seeded once from the URL's query
+  // params at construction (deep-linking — e.g. a partner site embedding
+  // Seed Bible with `?app.fontSize=XL` to preset a starting value), then
+  // kept up to date by every setter below (mirroring the pre-merge
+  // `configBot.tags` this replaces). It sits between `profile` and
+  // `login.localConfig` in the read precedence, so a URL param only ever
+  // sets the *starting* value for this session: if `readSettings()` instead
+  // re-read `navigation.currentUrl.value` fresh on every call, the
+  // still-present param would permanently outrank `login.localConfig`,
+  // reverting every anonymous edit back to the URL's value in the same tick
+  // it was made (since every setter's `saveProfileConfigValue` call writes
+  // to `login.localConfig`, which the effect below reactively re-reads).
+  const sessionOverrides: Record<string, unknown> = Object.fromEntries(
+    navigation.currentUrl.value.searchParams
+  );
+
+  // Read each setting with the precedence: user profile > this session's
+  // URL/override cache > `login.localConfig` (the anonymous, device-only
   // store shared with every other config/settings caller via
-  // `saveProfileConfigValue`) > preset/default. The profile is the source of
-  // truth once logged in; `login.localConfig` covers anonymous use and
+  // `saveProfileConfigValue`) > preset/default. The profile is the source
+  // of truth once logged in; `login.localConfig` covers anonymous use and
   // offline bootstrapping before the profile loads — every setter below
   // already writes there via `saveProfileConfigValue`, so reading it back
   // here is what makes anonymous edits survive a refresh.
   const readSettings = (): AppSettings => {
     const profile = login.profile.value;
-    const url = navigation.currentUrl.value;
     const local = login.localConfig.value;
-    const settingsPreset = parseSettingsPreset(
-      url.searchParams.get("settingsPreset")
-    );
+    const settingsPreset = parseSettingsPreset(sessionOverrides.settingsPreset);
     const presetConfig = getPresetConfig(settingsPreset);
 
     const read = (profileKey: string, urlKey: string): unknown =>
       getProfileConfigValue(profile, profileKey) ??
-      url.searchParams.get(urlKey) ??
+      sessionOverrides[urlKey] ??
       local[profileKey];
 
     return {
@@ -719,10 +732,13 @@ export function createSettings(
 
   const settings = signal<AppSettings>(readSettings());
 
-  // Re-read whenever the profile, the URL, or the anonymous local config
-  // changes — `readSettings()` reads all three, so this effect stays in
-  // sync with login/logout, deep-link query params, and anonymous edits
-  // (which land in `login.localConfig` via `saveProfileConfigValue`).
+  // Re-read whenever the profile or the anonymous local config changes —
+  // `readSettings()` reads both, so this effect stays in sync with
+  // login/logout and anonymous edits (which land in `login.localConfig` via
+  // `saveProfileConfigValue`). Safe to also depend on `login.localConfig`
+  // now: `sessionOverrides` (above), not a fresh URL read, is what sits
+  // above it in precedence, and setters keep both in sync, so a re-read
+  // triggered by this effect can no longer revert a same-session edit.
   effect(() => {
     settings.value = readSettings();
   });
@@ -730,11 +746,13 @@ export function createSettings(
   const setFontSize = (fontSize: TextSize) => {
     const nextFontSize = parseFontSize(fontSize, settings.value.fontSize);
     settings.value = { ...settings.value, fontSize: nextFontSize };
+    sessionOverrides[TAG_FONT_SIZE] = nextFontSize;
     saveProfileConfigValue(login, PROFILE_FONT_SIZE, nextFontSize);
   };
 
   const setDisablePanels = (disablePanels: boolean) => {
     settings.value = { ...settings.value, disablePanels };
+    sessionOverrides[TAG_DISABLE_PANELS] = disablePanels;
     saveProfileConfigValue(login, PROFILE_DISABLE_PANELS, disablePanels);
   };
 
@@ -768,28 +786,33 @@ export function createSettings(
 
   const setBookOrientation = (orientation: BookOrientation) => {
     settings.value = { ...settings.value, bookOrientation: orientation };
+    sessionOverrides[TAG_BOOK_ORIENTATION] = orientation;
     saveProfileConfigValue(login, PROFILE_BOOK_ORIENTATION, orientation);
   };
 
   const setUISize = (size: UISize) => {
     settings.value = { ...settings.value, uiSize: size };
+    sessionOverrides[TAG_UI_SIZE] = size;
     saveProfileConfigValue(login, PROFILE_UI_SIZE, size);
   };
 
   const setSelectionUI = (patch: Partial<SelectionUIBehavior>) => {
     const next = { ...settings.value.selectionUI, ...patch };
     settings.value = { ...settings.value, selectionUI: next };
+    sessionOverrides[TAG_SELECTION_UI] = next;
     saveProfileConfigValue(login, PROFILE_SELECTION_UI, next);
   };
 
   const setScriptureElements = (patch: Partial<ScriptureElementsBehavior>) => {
     const next = { ...settings.value.scriptureElements, ...patch };
     settings.value = { ...settings.value, scriptureElements: next };
+    sessionOverrides[TAG_SCRIPTURE_ELEMENTS] = next;
     saveProfileConfigValue(login, PROFILE_SCRIPTURE_ELEMENTS, next);
   };
 
   const writeTextConfig = (next: TextConfig) => {
     settings.value = { ...settings.value, textConfig: next };
+    sessionOverrides[TAG_TEXT_CONFIG] = next;
     saveProfileConfigValue(login, PROFILE_TEXT_CONFIG, next);
   };
 
@@ -809,6 +832,7 @@ export function createSettings(
     if (!Number.isFinite(margin)) return;
     const clamped = Math.max(0, Math.min(45, margin));
     settings.value = { ...settings.value, scriptureMargin: clamped };
+    sessionOverrides[TAG_SCRIPTURE_MARGIN] = clamped;
     saveProfileConfigValue(login, PROFILE_SCRIPTURE_MARGIN, clamped);
   };
 
@@ -824,6 +848,7 @@ export function createSettings(
 
   const resetTextConfig = () => {
     settings.value = { ...settings.value, textConfig: DEFAULT_TEXT_CONFIG };
+    sessionOverrides[TAG_TEXT_CONFIG] = DEFAULT_TEXT_CONFIG;
     saveProfileConfigValue(login, PROFILE_TEXT_CONFIG, DEFAULT_TEXT_CONFIG);
   };
 
@@ -846,6 +871,7 @@ export function createSettings(
 
   const writeToolbarConfig = (next: ToolbarCustomization) => {
     settings.value = { ...settings.value, toolbar: next };
+    sessionOverrides[TAG_TOOLBAR] = next;
     saveProfileConfigValue(login, PROFILE_TOOLBAR, next);
   };
 
@@ -878,11 +904,13 @@ export function createSettings(
       os.disableWakeLock();
     }
     settings.value = { ...settings.value, keepScreenAwake: nextValue };
+    sessionOverrides[TAG_KEEP_AWAKE] = nextValue;
     saveProfileConfigValue(login, PROFILE_KEEP_AWAKE, nextValue);
   };
 
   const writeCustomHighlightColors = (colors: string[]) => {
     settings.value = { ...settings.value, customHighlightColors: colors };
+    sessionOverrides[TAG_CUSTOM_HIGHLIGHT_COLORS] = colors;
     saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHT_COLORS, colors);
   };
 
@@ -924,6 +952,18 @@ export function createSettings(
 
   const resetToDefaults = () => {
     settings.value = DEFAULT_SETTINGS;
+    sessionOverrides[TAG_FONT_SIZE] = DEFAULT_SETTINGS.fontSize;
+    sessionOverrides[TAG_DISABLE_PANELS] = DEFAULT_SETTINGS.disablePanels;
+    sessionOverrides[TAG_BOOK_ORIENTATION] = DEFAULT_SETTINGS.bookOrientation;
+    sessionOverrides[TAG_UI_SIZE] = DEFAULT_SETTINGS.uiSize;
+    sessionOverrides[TAG_SELECTION_UI] = DEFAULT_SETTINGS.selectionUI;
+    sessionOverrides[TAG_SCRIPTURE_ELEMENTS] =
+      DEFAULT_SETTINGS.scriptureElements;
+    sessionOverrides[TAG_TEXT_CONFIG] = DEFAULT_SETTINGS.textConfig;
+    sessionOverrides[TAG_TOOLBAR] = DEFAULT_SETTINGS.toolbar;
+    sessionOverrides[TAG_KEEP_AWAKE] = DEFAULT_SETTINGS.keepScreenAwake;
+    sessionOverrides[TAG_CUSTOM_HIGHLIGHT_COLORS] = [];
+    sessionOverrides[TAG_SCRIPTURE_MARGIN] = DEFAULT_SETTINGS.scriptureMargin;
     saveProfileConfigValue(login, PROFILE_FONT_SIZE, DEFAULT_SETTINGS.fontSize);
     saveProfileConfigValue(
       login,

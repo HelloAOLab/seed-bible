@@ -400,6 +400,40 @@ describe("unified anonymous fallback precedence (profile > URL > login.localConf
     const localWins = createSettings(os, anon, navWith());
     expect(localWins.settings.value.bookOrientation).toBe("traditional");
   });
+
+  it("an anonymous user's edit sticks even when the URL carries a matching app.* param (does not revert)", () => {
+    // Regression: readSettings() used to re-read `navigation.currentUrl`
+    // fresh on every call, and the wrapping effect reacts to
+    // `login.localConfig` (which every anonymous setter writes to) — so a
+    // URL-provided starting value would immediately win again over the
+    // user's own edit, in the same tick, since URL sat above `localConfig`
+    // in the read precedence. The URL must only set the *starting* value.
+    const login = makeFakeLogin(null);
+    const settings = createSettings(os, login, navWith("?app.fontSize=XL"));
+
+    expect(settings.settings.value.fontSize).toBe("XL");
+
+    settings.setFontSize("L");
+
+    expect(login.localConfig.value.fontSize).toBe("L");
+    expect(settings.settings.value.fontSize).toBe("L");
+  });
+
+  it("applies to ex-SettingsManager fields too, not just fontSize/disablePanels", () => {
+    const login = makeFakeLogin(null);
+    const settings = createSettings(
+      os,
+      login,
+      navWith("?app.bookOrientation=tanakh")
+    );
+
+    expect(settings.settings.value.bookOrientation).toBe("tanakh");
+
+    settings.setBookOrientation("traditional");
+
+    expect(login.localConfig.value.bookOrientation).toBe("traditional");
+    expect(settings.settings.value.bookOrientation).toBe("traditional");
+  });
 });
 
 describe("anonymous settings survive a simulated page refresh", () => {
