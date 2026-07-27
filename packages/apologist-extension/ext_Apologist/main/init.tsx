@@ -192,7 +192,7 @@ export default function initApologistExtension() {
 
                     messages.push({
                       role: "tool",
-                      tool_call_id: call.call_id,
+                      tool_call_id: call.id,
                       name: call.function.name,
                       content: JSON.stringify(result),
                     });
