@@ -881,6 +881,23 @@ describe("createLoginManager", () => {
       );
     });
 
+    it("does not redundantly re-write the store on construction", () => {
+      localStorage.setItem(
+        "sb-profile-config-local",
+        JSON.stringify({ fontSize: "XL" })
+      );
+      const setItemSpy = vi.spyOn(Storage.prototype, "setItem");
+
+      createLoginManager({ os });
+
+      expect(setItemSpy).not.toHaveBeenCalledWith(
+        "sb-profile-config-local",
+        expect.anything()
+      );
+
+      setItemSpy.mockRestore();
+    });
+
     it("clears local config on login into an existing account, even without adoption", async () => {
       // The account already has a profile, so no adoption happens — but the
       // leftover anonymous config must still be consumed here, or it could

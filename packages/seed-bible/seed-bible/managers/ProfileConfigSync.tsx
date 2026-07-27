@@ -20,6 +20,38 @@ export function getProfileConfigValue(
 }
 
 /**
+ * Whether `key` in `existingConfig` already equals `value`, so a write can be
+ * skipped. Reference equality covers primitives; for object/array values
+ * (deep-equality would be ideal, but `JSON.stringify` is sufficient here
+ * since we always write parsed/normalized shapes) falls back to comparing
+ * their serialized form.
+ */
+function isConfigValueUnchanged(
+  existingConfig: Record<string, unknown>,
+  key: string,
+  value: unknown
+): boolean {
+  if (existingConfig[key] === value) {
+    return true;
+  }
+
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    typeof existingConfig[key] === "object" &&
+    existingConfig[key] !== null
+  ) {
+    try {
+      return JSON.stringify(existingConfig[key]) === JSON.stringify(value);
+    } catch {
+      return false;
+    }
+  }
+
+  return false;
+}
+
+/**
  * Persists a single config key to the logged-in user's profile, merging
  * with the existing profile.config so other keys aren't clobbered. No-ops
  * if the user isn't authenticated or the value matches what's already saved.
@@ -40,7 +72,7 @@ export async function saveProfileConfigValue(
     // brand-new account later logs in on this device for the first time,
     // `LoginManager` adopts this as the starting `profile.config`.
     const existingLocal = login.localConfig.value;
-    if (existingLocal[key] === value) {
+    if (isConfigValueUnchanged(existingLocal, key, value)) {
       return;
     }
     login.localConfig.value = { ...existingLocal, [key]: value };
@@ -73,25 +105,8 @@ export async function saveProfileConfigValue(
       ? (existingProfile.config as Record<string, unknown>)
       : {};
 
-  if (existingConfig[key] === value) {
+  if (isConfigValueUnchanged(existingConfig, key, value)) {
     return;
-  }
-
-  // For object/array values, deep-equality would be ideal but JSON.stringify
-  // is sufficient here since we always write parsed/normalized shapes.
-  if (
-    typeof value === "object" &&
-    value !== null &&
-    typeof existingConfig[key] === "object" &&
-    existingConfig[key] !== null
-  ) {
-    try {
-      if (JSON.stringify(existingConfig[key]) === JSON.stringify(value)) {
-        return;
-      }
-    } catch {
-      // Fall through and write anyway.
-    }
   }
 
   login.updateProfile({

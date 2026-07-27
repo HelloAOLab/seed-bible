@@ -68,6 +68,24 @@ describe("saveProfileConfigValue", () => {
     expect(login.localConfig.value).toBe(localConfig);
   });
 
+  it("does not write to the local config store when an object value is unchanged by content", () => {
+    // Anonymous saves cover object-shaped settings (selectionUI, textConfig,
+    // etc.) too, not just primitives — a new object literal with the same
+    // content (e.g. `{ ...current, ...patch }` where the patch changes
+    // nothing) must not be treated as a change just because it's a new
+    // reference.
+    const login = createTestLogin({
+      localConfig: { selectionUI: { showSelectedItems: true } },
+    });
+    const localConfig = login.localConfig.value;
+
+    saveProfileConfigValue(login, "selectionUI", {
+      showSelectedItems: true,
+    });
+
+    expect(login.localConfig.value).toBe(localConfig);
+  });
+
   it("does not write, and does not overwrite the profile, while the profile is still loading", () => {
     // userId is set (session restored) but the async profile fetch hasn't
     // resolved yet — this is the exact window in which commit 4e15dad's

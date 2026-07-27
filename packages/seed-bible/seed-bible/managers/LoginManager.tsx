@@ -271,8 +271,18 @@ export function createLoginManager({
   // `cachedProfile` null" isn't enough once a value has been assigned.
   let cachedProfileUserId: string | null = null;
 
+  // Persist `localConfig` on every change. Skip the effect's first,
+  // unconditional run — `localConfig` was just seeded from `readLocalConfig()`
+  // above, so writing it back immediately would just re-serialize the exact
+  // data that was read a moment ago.
+  let isFirstLocalConfigWrite = true;
   effect(() => {
-    writeLocalConfig(localConfig.value);
+    const config = localConfig.value;
+    if (isFirstLocalConfigWrite) {
+      isFirstLocalConfigWrite = false;
+      return;
+    }
+    writeLocalConfig(config);
   });
 
   const getUserProfile = async (userId: string): Promise<UserProfile> => {
