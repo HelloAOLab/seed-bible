@@ -8,6 +8,7 @@ import {
 import * as z from "zod/v4";
 import type { CasualOSManager } from "./OsManager";
 import type { NavigationManager } from "./NavigationManager";
+import type { ThemeHighlightColor } from "./ThemeManager";
 import { parseNumber } from "./Utils";
 
 export type BookOrientation = "traditional" | "tanakh";
@@ -128,6 +129,12 @@ export interface AppSettings {
   customHighlightColors: string[];
   /** Horizontal padding (px) applied to the bible reader container. */
   scriptureMargin: number;
+  /** Selected theme preset id (owned/consumed by ThemeManager). */
+  themeId: string;
+  /** User color overrides layered on top of the selected theme preset. */
+  customTheme: Record<string, string>;
+  /** User highlight-color overrides layered on top of the preset highlights. */
+  customHighlights: Record<string, Partial<ThemeHighlightColor>>;
 }
 
 export const AppSettingsSchema = z.object({
@@ -192,6 +199,16 @@ export const AppSettingsSchema = z.object({
   keepScreenAwake: z.boolean(),
   customHighlightColors: z.array(z.string()).max(3),
   scriptureMargin: z.number().min(0).max(45),
+  themeId: z.string(),
+  customTheme: z.record(z.string(), z.string()),
+  customHighlights: z.record(
+    z.string(),
+    z.object({
+      color: z.string().optional(),
+      fontColor: z.string().optional(),
+      wordsOfJesusFontColor: z.string().optional(),
+    })
+  ),
 });
 
 export const DEFAULT_SCRIPTURE_MARGIN = 27;
@@ -210,6 +227,9 @@ const TAG_TOOLBAR = "app.toolbarConfig";
 const TAG_KEEP_AWAKE = "app.keepScreenAwake";
 const TAG_CUSTOM_HIGHLIGHT_COLORS = "app.customHighlightColors";
 const TAG_SCRIPTURE_MARGIN = "app.scriptureMargin";
+const TAG_THEME_ID = "app.themeId";
+const TAG_CUSTOM_THEME = "app.customTheme";
+const TAG_CUSTOM_HIGHLIGHTS = "app.customHighlights";
 
 // Profile.config keys are stored unprefixed.
 const PROFILE_FONT_SIZE = "fontSize";
@@ -223,6 +243,9 @@ const PROFILE_TOOLBAR = "toolbarConfig";
 const PROFILE_KEEP_AWAKE = "keepScreenAwake";
 const PROFILE_CUSTOM_HIGHLIGHT_COLORS = "customHighlightColors";
 const PROFILE_SCRIPTURE_MARGIN = "scriptureMargin";
+const PROFILE_THEME_ID = "themeId";
+const PROFILE_CUSTOM_THEME = "customTheme";
+const PROFILE_CUSTOM_HIGHLIGHTS = "customHighlights";
 
 export const TEXT_FONT_OPTIONS: { value: string; label: string }[] = [
   { value: "'Newsreader', serif", label: "Newsreader" },
@@ -332,6 +355,9 @@ const DEFAULT_SETTINGS: AppSettings = {
   keepScreenAwake: false,
   customHighlightColors: [],
   scriptureMargin: DEFAULT_SCRIPTURE_MARGIN,
+  themeId: "light",
+  customTheme: {},
+  customHighlights: {},
 };
 
 function parseCustomHighlightColors(value: unknown): string[] {
@@ -347,6 +373,63 @@ function parseCustomHighlightColors(value: unknown): string[] {
   return parsed
     .filter((v): v is string => typeof v === "string" && v.length > 0)
     .slice(0, MAX_CUSTOM_HIGHLIGHT_COLORS);
+}
+
+function parseThemeId(value: unknown, fallback: string): string {
+  return typeof value === "string" && value.trim().length > 0
+    ? value
+    : fallback;
+}
+
+function parseStringRecord(value: unknown): Record<string, string> {
+  let parsed: unknown = value;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return {};
+    }
+  }
+  if (!parsed || typeof parsed !== "object") {
+    return {};
+  }
+  const result: Record<string, string> = {};
+  for (const [key, v] of Object.entries(parsed as Record<string, unknown>)) {
+    if (typeof v === "string") {
+      result[key] = v;
+    }
+  }
+  return result;
+}
+
+function parseHighlightOverrides(
+  value: unknown
+): Record<string, Partial<ThemeHighlightColor>> {
+  let parsed: unknown = value;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      return {};
+    }
+  }
+  if (!parsed || typeof parsed !== "object") {
+    return {};
+  }
+  const obj = parsed as Record<string, unknown>;
+  const overrides: Record<string, Partial<ThemeHighlightColor>> = {};
+  for (const [id, entry] of Object.entries(obj)) {
+    if (!entry || typeof entry !== "object") continue;
+    const e = entry as Record<string, unknown>;
+    const sub: Partial<ThemeHighlightColor> = {};
+    if (typeof e.color === "string") sub.color = e.color;
+    if (typeof e.fontColor === "string") sub.fontColor = e.fontColor;
+    if (typeof e.wordsOfJesusFontColor === "string") {
+      sub.wordsOfJesusFontColor = e.wordsOfJesusFontColor;
+    }
+    if (Object.keys(sub).length > 0) overrides[id] = sub;
+  }
+  return overrides;
 }
 
 function parseBoolean(value: unknown, fallback: boolean): boolean {
@@ -641,6 +724,14 @@ export interface SettingsManager {
   removeCustomHighlightColor: (color: string) => void;
   setAllSettings: (next: AppSettings) => void;
   resetToDefaults: () => void;
+  /** Persists the selected theme preset id. Consumed by ThemeManager. */
+  setThemeId: (themeId: string) => void;
+  /** Persists theme color overrides. Consumed by ThemeManager. */
+  setCustomTheme: (next: Record<string, string>) => void;
+  /** Persists theme highlight-color overrides. Consumed by ThemeManager. */
+  setCustomHighlights: (
+    next: Record<string, Partial<ThemeHighlightColor>>
+  ) => void;
 }
 
 export function createSettings(
@@ -726,6 +817,16 @@ export function createSettings(
       scriptureMargin: parseNumber(
         read(PROFILE_SCRIPTURE_MARGIN, TAG_SCRIPTURE_MARGIN),
         DEFAULT_SETTINGS.scriptureMargin
+      ),
+      themeId: parseThemeId(
+        read(PROFILE_THEME_ID, TAG_THEME_ID),
+        DEFAULT_SETTINGS.themeId
+      ),
+      customTheme: parseStringRecord(
+        read(PROFILE_CUSTOM_THEME, TAG_CUSTOM_THEME)
+      ),
+      customHighlights: parseHighlightOverrides(
+        read(PROFILE_CUSTOM_HIGHLIGHTS, TAG_CUSTOM_HIGHLIGHTS)
       ),
     };
   };
@@ -936,6 +1037,26 @@ export function createSettings(
     );
   };
 
+  const setThemeId = (themeId: string) => {
+    settings.value = { ...settings.value, themeId };
+    sessionOverrides[TAG_THEME_ID] = themeId;
+    saveProfileConfigValue(login, PROFILE_THEME_ID, themeId);
+  };
+
+  const setCustomTheme = (next: Record<string, string>) => {
+    settings.value = { ...settings.value, customTheme: next };
+    sessionOverrides[TAG_CUSTOM_THEME] = next;
+    saveProfileConfigValue(login, PROFILE_CUSTOM_THEME, next);
+  };
+
+  const setCustomHighlights = (
+    next: Record<string, Partial<ThemeHighlightColor>>
+  ) => {
+    settings.value = { ...settings.value, customHighlights: next };
+    sessionOverrides[TAG_CUSTOM_HIGHLIGHTS] = next;
+    saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHTS, next);
+  };
+
   const setAllSettings = (next: AppSettings) => {
     next = AppSettingsSchema.parse(next);
     settings.value = next;
@@ -964,6 +1085,9 @@ export function createSettings(
     sessionOverrides[TAG_KEEP_AWAKE] = DEFAULT_SETTINGS.keepScreenAwake;
     sessionOverrides[TAG_CUSTOM_HIGHLIGHT_COLORS] = [];
     sessionOverrides[TAG_SCRIPTURE_MARGIN] = DEFAULT_SETTINGS.scriptureMargin;
+    sessionOverrides[TAG_THEME_ID] = DEFAULT_SETTINGS.themeId;
+    sessionOverrides[TAG_CUSTOM_THEME] = {};
+    sessionOverrides[TAG_CUSTOM_HIGHLIGHTS] = {};
     saveProfileConfigValue(login, PROFILE_FONT_SIZE, DEFAULT_SETTINGS.fontSize);
     saveProfileConfigValue(
       login,
@@ -1003,6 +1127,9 @@ export function createSettings(
       PROFILE_SCRIPTURE_MARGIN,
       DEFAULT_SETTINGS.scriptureMargin
     );
+    saveProfileConfigValue(login, PROFILE_THEME_ID, DEFAULT_SETTINGS.themeId);
+    saveProfileConfigValue(login, PROFILE_CUSTOM_THEME, {});
+    saveProfileConfigValue(login, PROFILE_CUSTOM_HIGHLIGHTS, {});
   };
 
   // Scale UI surfaces via `--sb-ui-scale`, which drives `html { font-size }`
@@ -1066,5 +1193,8 @@ export function createSettings(
     removeCustomHighlightColor,
     setAllSettings,
     resetToDefaults,
+    setThemeId,
+    setCustomTheme,
+    setCustomHighlights,
   };
 }

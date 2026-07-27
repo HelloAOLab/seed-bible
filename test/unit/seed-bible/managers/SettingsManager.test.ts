@@ -333,12 +333,18 @@ describe("fontSize / disablePanels (merged from ConfigManager)", () => {
     settings.setFontSize("XL");
     settings.setDisablePanels(true);
     settings.setBookOrientation("tanakh");
+    settings.setThemeId("dark");
+    settings.setCustomTheme({ primaryColor: "#000000" });
+    settings.setCustomHighlights({ yellow: { color: "#ffff00" } });
 
     settings.resetToDefaults();
 
     expect(settings.settings.value.fontSize).toBe("M");
     expect(settings.settings.value.disablePanels).toBe(false);
     expect(settings.settings.value.bookOrientation).toBe("traditional");
+    expect(settings.settings.value.themeId).toBe("light");
+    expect(settings.settings.value.customTheme).toEqual({});
+    expect(settings.settings.value.customHighlights).toEqual({});
   });
 });
 
@@ -433,6 +439,27 @@ describe("unified anonymous fallback precedence (profile > URL > login.localConf
 
     expect(login.localConfig.value.bookOrientation).toBe("traditional");
     expect(settings.settings.value.bookOrientation).toBe("traditional");
+  });
+
+  it("themeId (moved from ThemeManager) follows the exact same precedence", () => {
+    const loggedIn = makeFakeLogin({
+      name: "Test",
+      config: { themeId: "dark" },
+    } as unknown as UserProfile);
+    const profileWins = createSettings(
+      os,
+      loggedIn,
+      navWith("?app.themeId=light")
+    );
+    expect(profileWins.settings.value.themeId).toBe("dark");
+
+    const anon = makeFakeLogin(null);
+    anon.localConfig.value = { themeId: "dark" };
+    const urlWins = createSettings(os, anon, navWith("?app.themeId=light"));
+    expect(urlWins.settings.value.themeId).toBe("light");
+
+    const localWins = createSettings(os, anon, navWith());
+    expect(localWins.settings.value.themeId).toBe("dark");
   });
 });
 

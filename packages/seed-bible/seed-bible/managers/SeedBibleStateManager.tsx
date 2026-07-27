@@ -414,7 +414,7 @@ export function createSeedBibleState(
   // listener) keeps URL-driven language changes view-only.
   i18n.setLanguagePersister(settings.persistLanguage);
   const panelsEnabled = computed(() => !settings.settings.value.disablePanels);
-  const themeManager = createTheme(login, navigation);
+  const themeManager = createTheme(settings);
   const chats = createChatsManager(login, i18n);
   const sidebar = createSidebar({ navigation, chatsManager: chats });
   const discover = createDiscoverManager();
